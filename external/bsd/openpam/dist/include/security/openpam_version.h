@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_version.h,v 1.1.1.8 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2023 Dag-Erling Smørgrav
@@ -39,7 +37,7 @@
 #define SECURITY_OPENPAM_VERSION_H_INCLUDED
 
 #define OPENPAM
-#define OPENPAM_VERSION	20230627
-#define OPENPAM_RELEASE	"Ximenia"
+#define OPENPAM_VERSION	20250531
+#define OPENPAM_RELEASE	"Zingiber"
 
 #endif /* !SECURITY_OPENPAM_VERSION_H_INCLUDED */

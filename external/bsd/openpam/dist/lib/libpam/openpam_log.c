@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_log.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -38,9 +36,6 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_log.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
 
 #include <errno.h>
 #include <stdarg.h>
@@ -97,9 +92,6 @@ openpam_log(int level, const char *fmt, ...)
 
 #else
 
-#if defined(__clang__) || __GNUC_PREREQ__(4, 5)
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#endif
 void
 _openpam_log(int level, const char *func, const char *fmt, ...)
 {
@@ -108,7 +100,7 @@ _openpam_log(int level, const char *func, const char *fmt, ...)
 	int priority;
 	int serrno;
 
-	switch ((enum openpam_log_primitives)level) {
+	switch (level) {
 	case PAM_LOG_LIBDEBUG:
 	case PAM_LOG_DEBUG:
 		if (!openpam_debug)

@@ -1,5 +1,3 @@
-/*	$NetBSD: pam_set_item.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2017 Dag-Erling Smørgrav
@@ -39,11 +37,7 @@
 # include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_set_item.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
-
 #include <sys/param.h>
-#include <sys/socket.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,12 +64,12 @@ pam_set_item(pam_handle_t *pamh,
 	ENTERI(item_type);
 	slot = &pamh->item[item_type];
 	osize = nsize = 0;
-	switch ((enum openpam_item_primitives)item_type) {
+	switch (item_type) {
 	case PAM_SERVICE:
 		/* set once only, by pam_start() */
 		if (*slot != NULL && item != NULL)
 			RETURNC(PAM_BAD_ITEM);
-		/* FALLTHROUGH */
+		/* fall through */
 	case PAM_USER:
 	case PAM_AUTHTOK:
 	case PAM_OLDAUTHTOK:
@@ -86,7 +80,6 @@ pam_set_item(pam_handle_t *pamh,
 	case PAM_AUTHTOK_PROMPT:
 	case PAM_OLDAUTHTOK_PROMPT:
 	case PAM_HOST:
-	case PAM_NUSER:
 		if (*slot != NULL)
 			osize = strlen(*slot) + 1;
 		if (item != NULL)
@@ -97,9 +90,6 @@ pam_set_item(pam_handle_t *pamh,
 		break;
 	case PAM_CONV:
 		osize = nsize = sizeof(struct pam_conv);
-		break;
-	case PAM_SOCKADDR:
-		osize = nsize = sizeof(struct sockaddr_storage);
 		break;
 	default:
 		RETURNC(PAM_BAD_ITEM);

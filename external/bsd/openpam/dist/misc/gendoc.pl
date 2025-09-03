@@ -53,11 +53,11 @@ DARPA/SPAWAR contract N66001-01-C-8035
 as part of the DARPA CHATS research program.
 .Pp
 The OpenPAM library is maintained by
-.An Dag-Erling Sm\\(/orgrav Aq Mt des\@des.no .",
+.An Dag-Erling Sm\\(/orgrav Aq Mt des\@des.dev .",
     UIO => "developed for the University of Oslo by
-.An Dag-Erling Sm\\(/orgrav Aq Mt des\@des.no .",
+.An Dag-Erling Sm\\(/orgrav Aq Mt des\@des.dev .",
     DES => "developed by
-.An Dag-Erling Sm\\(/orgrav Aq Mt des\@des.no .",
+.An Dag-Erling Sm\\(/orgrav Aq Mt des\@des.dev .",
 );
 
 %PAMERR = (
@@ -438,11 +438,8 @@ sub gendoc($) {
 
     return if defined($$func{nodoc});
 
-    $mdoc = ".\\\"\t\$".
-"NetBSD\$
-.\\\"
     $$func{source} =~ m/([^\/]+)$/;
-    $mdoc .= ".\\\" Generated from $1 by gendoc.pl\n";
+    $mdoc = ".\\\" Generated from $1 by gendoc.pl\n";
     if ($$func{version}) {
 	$mdoc .= ".\\\" $$func{version}\n";
     }

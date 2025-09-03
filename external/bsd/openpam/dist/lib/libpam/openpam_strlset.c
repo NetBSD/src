@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_strlset.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2014 Dag-Erling Smørgrav
  * All rights reserved.
@@ -33,9 +31,6 @@
 # include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_strlset.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
-
 #ifndef HAVE_STRLSET
 
 #include <stddef.h>
@@ -53,7 +48,7 @@ openpam_strlset(char *str, int ch, size_t size)
 	size_t len;
 
 	for (len = 0; *str && size > 1; ++len, --size)
-		*str++ = (char)ch;
+		*str++ = ch;
 	*str = '\0';
 	return (++len);
 }

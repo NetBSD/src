@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_attr.h,v 1.1.1.7 2025/09/03 15:55:57 christos Exp $	*/
-
 #ifndef SECURITY_OPENPAM_ATTR_H_INCLUDED
 #define SECURITY_OPENPAM_ATTR_H_INCLUDED
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_free_data.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,9 +37,6 @@
 # include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_free_data.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -62,9 +57,7 @@ openpam_free_data(pam_handle_t *pamh,
 {
 
 	ENTER();
-	/*LINTED unused*/
 	(void)pamh;
-	/*LINTED unused*/
 	(void)status;
 	FREE(data);
 	RETURNV();

@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_cred.h,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav

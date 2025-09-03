@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_subst.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2011-2023 Dag-Erling Smørgrav
  * All rights reserved.
@@ -33,25 +31,22 @@
 # include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_subst.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
-
 #include <security/pam_appl.h>
 
 #include "openpam_impl.h"
 
 #define subst_char(ch) do {			\
-	char ch_ = (ch);			\
+	int ch_ = (ch);				\
 	if (buf && len < *bufsize)		\
 		*buf++ = ch_;			\
 	++len;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define subst_string(s) do {			\
 	const char *s_ = (s);			\
 	while (*s_)				\
 		subst_char(*s_++);		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define subst_item(i) do {			\
 	int i_ = (i);				\
@@ -59,7 +54,7 @@ __RCSID("$NetBSD: openpam_subst.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $")
 	ret = pam_get_item(pamh, i_, &p_);	\
 	if (ret == PAM_SUCCESS && p_ != NULL)	\
 		subst_string(p_);		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * OpenPAM internal

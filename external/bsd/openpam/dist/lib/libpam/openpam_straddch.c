@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_straddch.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
  * All rights reserved.
@@ -32,9 +30,6 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_straddch.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
 
 #include <errno.h>
 #include <stdlib.h>
@@ -78,7 +73,7 @@ openpam_straddch(char **str, size_t *size, size_t *len, int ch)
 		*str = tmpstr;
 	}
 	if (ch != 0) {
-		(*str)[*len] = (char)ch;
+		(*str)[*len] = ch;
 		++*len;
 	}
 	(*str)[*len] = '\0';

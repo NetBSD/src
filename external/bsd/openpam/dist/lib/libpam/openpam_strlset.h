@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_strlset.h,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2014 Dag-Erling Smørgrav
  * All rights reserved.

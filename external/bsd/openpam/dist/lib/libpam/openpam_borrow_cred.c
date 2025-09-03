@@ -1,8 +1,6 @@
-/*	$NetBSD: openpam_borrow_cred.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2025 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -38,9 +36,6 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
 
 #include <sys/param.h>
 
@@ -81,7 +76,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 		    (int)geteuid());
 		RETURNC(PAM_PERM_DENIED);
 	}
-	scred = calloc((size_t)1, sizeof *scred);
+	scred = calloc(1, sizeof *scred);
 	if (scred == NULL)
 		RETURNC(PAM_BUF_ERR);
 	scred->euid = geteuid();

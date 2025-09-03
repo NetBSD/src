@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_findenv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2017 Dag-Erling Smørgrav
@@ -39,9 +37,6 @@
 # include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_findenv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
-
 #include <errno.h>
 #include <string.h>
 
@@ -60,13 +55,13 @@ openpam_findenv(pam_handle_t *pamh,
 	const char *name,
 	size_t len)
 {
-	size_t i;
+	int i;
 
 	ENTER();
 	for (i = 0; i < pamh->env_count; ++i)
 		if (strncmp(pamh->env[i], name, len) == 0 &&
 		    pamh->env[i][len] == '=')
-			RETURNN((int)i);
+			RETURNN(i);
 	errno = ENOENT;
 	RETURNN(-1);
 }

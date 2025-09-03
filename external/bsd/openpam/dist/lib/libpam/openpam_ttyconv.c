@@ -1,5 +1,3 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2014 Dag-Erling Smørgrav
@@ -39,9 +37,6 @@
 # include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_ttyconv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
-
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/time.h>
@@ -54,7 +49,6 @@ __RCSID("$NetBSD: openpam_ttyconv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include <paths.h>
 
 #include <security/pam_appl.h>
 
@@ -63,26 +57,8 @@ __RCSID("$NetBSD: openpam_ttyconv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $
 
 int openpam_ttyconv_timeout = 0;
 
-#ifdef GETPASS_ECHO
-static int
-prompt(const char *message, char *response, int echo)
-{
-	char *rv;
-
-	rv = getpassfd(message, response, PAM_MAX_RESP_SIZE, NULL,
-	    GETPASS_NEED_TTY | GETPASS_FAIL_EOF | GETPASS_NO_SIGNAL |
-	    (echo ? GETPASS_ECHO : 0), openpam_ttyconv_timeout);
-	if (rv == NULL) {
-		fprintf(stderr, " %s\n", strerror(errno));
-		return -1;
-	} else if (echo == 0)
-		fputs("\n", stderr);
-	return 0;
-}
-
-#else
-
 static volatile sig_atomic_t caught_signal;
+
 /*
  * Handle incoming signals during tty conversation
  */
@@ -330,7 +306,6 @@ prompt(const char *message, char *response, int echo)
 		close(ifd);
 	return (ret);
 }
-#endif
 
 /*
  * OpenPAM extension
@@ -347,30 +322,17 @@ openpam_ttyconv(int n,
 	char respbuf[PAM_MAX_RESP_SIZE];
 	struct pam_response *aresp;
 	int i;
-	FILE *infp, *outfp, *errfp;
 
 	ENTER();
-	/*LINTED unused*/
 	(void)data;
 	if (n <= 0 || n > PAM_MAX_NUM_MSG)
 		RETURNC(PAM_CONV_ERR);
-	if ((aresp = calloc((size_t)n, sizeof *aresp)) == NULL)
+	if ((aresp = calloc(n, sizeof *aresp)) == NULL)
 		RETURNC(PAM_BUF_ERR);
-
-	/*
-	 * read and write to /dev/tty if possible; else read from
-	 * stdin and write to stderr.
-	 */ 
-	if ((outfp = infp = errfp = fopen(_PATH_TTY, "w+")) == NULL) {
-		errfp = stderr;
-		outfp = stderr;
-		infp = stdin;
-	} 
-
 	for (i = 0; i < n; ++i) {
 		aresp[i].resp_retcode = 0;
 		aresp[i].resp = NULL;
-		switch ((enum openpam_message_items)msg[i]->msg_style) {
+		switch (msg[i]->msg_style) {
 		case PAM_PROMPT_ECHO_OFF:
 			if (prompt(msg[i]->msg, respbuf, 0) < 0 ||
 			    (aresp[i].resp = strdup(respbuf)) == NULL)
@@ -382,23 +344,21 @@ openpam_ttyconv(int n,
 				goto fail;
 			break;
 		case PAM_ERROR_MSG:
-			fputs(msg[i]->msg, errfp);
+			fputs(msg[i]->msg, stderr);
 			if (strlen(msg[i]->msg) > 0 &&
 			    msg[i]->msg[strlen(msg[i]->msg) - 1] != '\n')
-				fputc('\n', errfp);
+				fputc('\n', stderr);
 			break;
 		case PAM_TEXT_INFO:
-			fputs(msg[i]->msg, outfp);
+			fputs(msg[i]->msg, stdout);
 			if (strlen(msg[i]->msg) > 0 &&
 			    msg[i]->msg[strlen(msg[i]->msg) - 1] != '\n')
-				fputc('\n', outfp);
+				fputc('\n', stdout);
 			break;
 		default:
 			goto fail;
 		}
 	}
-	if (infp != stdin)
-		(void)fclose(infp);
 	*resp = aresp;
 	memset(respbuf, 0, sizeof respbuf);
 	RETURNC(PAM_SUCCESS);
@@ -409,9 +369,7 @@ fail:
 			FREE(aresp[i].resp);
 		}
 	}
-	if (infp != stdin)
-		(void)fclose(infp);
-	memset(aresp, 0, (size_t)n * sizeof *aresp);
+	memset(aresp, 0, n * sizeof *aresp);
 	FREE(aresp);
 	*resp = NULL;
 	memset(respbuf, 0, sizeof respbuf);
@@ -432,11 +390,6 @@ fail:
  * It should be adequate for the needs of most text-based interactive
  * programs.
  *
- * The =openpam_ttyconv function displays a prompt to, and reads in a
- * password from /dev/tty. If this file is not accessible, =openpam_ttyconv
- * displays the prompt on the standard error output and reads from the
- * standard input.
- *
  * The =openpam_ttyconv function allows the application to specify a
  * timeout for user input by setting the global integer variable
  * :openpam_ttyconv_timeout to the length of the timeout in seconds.
@@ -444,5 +397,4 @@ fail:
  * >openpam_nullconv
  * >pam_prompt
  * >pam_vprompt
- * >getpass
  */
