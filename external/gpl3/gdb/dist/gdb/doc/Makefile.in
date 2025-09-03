@@ -664,6 +664,7 @@ annotate/index.html: $(ANNOTATE_DOC_FILES)
 # included, pre-built, as part of a release.
 $(MAN1S) $(MAN5S) : version.subst $(GDB_DOC_FILES)
 	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_MANXS:
 	$(ECHO_TEXI2POD) $(TEXI2POD) $(MANCONF) -D$(basename $@) \
 		< $(srcdir)/gdb.texinfo > $(basename $@).pod
 	$(ECHO_TEXI2MAN) ($(POD2MAN) --section=$(subst .,,$(suffix $@)) \
