@@ -1,8 +1,8 @@
-/*	$NetBSD: openpam_borrow_cred.c,v 1.5 2023/06/30 21:46:20 christos Exp $	*/
+/*	$NetBSD: openpam_borrow_cred.c,v 1.6 2025/09/03 16:06:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2025 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.5 2023/06/30 21:46:20 christos Exp $");
+__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.6 2025/09/03 16:06:26 christos Exp $");
 
 #include <sys/param.h>
 
