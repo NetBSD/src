@@ -438,8 +438,11 @@ sub gendoc($) {
 
     return if defined($$func{nodoc});
 
+    $mdoc = ".\\\"\t\$".
+"NetBSD\$
+.\\\"
     $$func{source} =~ m/([^\/]+)$/;
-    $mdoc = ".\\\" Generated from $1 by gendoc.pl\n";
+    $mdoc .= ".\\\" Generated from $1 by gendoc.pl\n";
     if ($$func{version}) {
 	$mdoc .= ".\\\" $$func{version}\n";
     }

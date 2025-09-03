@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_check_owner_perms.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
  * All rights reserved.
@@ -31,6 +33,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_check_owner_perms.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -63,7 +68,7 @@ openpam_check_desc_owner_perms(const char *name, int fd)
 	arbitrator = geteuid();
 	if (fstat(fd, &sb) != 0) {
 		serrno = errno;
-		openpam_log(PAM_LOG_ERROR, "%s: %m", name);
+		openpam_log(PAM_LOG_ERROR, "%s: %s", name, strerror(errno));
 		errno = serrno;
 		return (-1);
 	}
@@ -101,7 +106,8 @@ openpam_check_path_owner_perms(const char *path)
 	uid_t root, arbitrator;
 	char pathbuf[PATH_MAX];
 	struct stat sb;
-	int len, serrno, tip;
+	size_t len;
+	int serrno, tip;
 
 	tip = 1;
 	root = 0;

@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_dlfunc.h,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2013 Dag-Erling Smørgrav
  * All rights reserved.
@@ -31,7 +33,20 @@
 #define OPENPAM_DLFCN_H_INCLUDED
 
 #ifndef HAVE_DLFUNC
-typedef void (*dlfunc_t)();
+/*-
+ * The actual type declared by this typedef is immaterial, provided that
+ * it is a function pointer.  Its purpose is to provide a return type for
+ * dlfunc() which can be cast to a function pointer type without depending
+ * on behavior undefined by the C standard, which might trigger a compiler
+ * diagnostic.  We intentionally declare a unique type signature to force
+ * a diagnostic should the application not cast the return value of dlfunc()
+ * appropriately.       
+ */
+struct __dlfunc_arg {   
+	int	__dlfunc_dummy; 
+};
+
+typedef void (*dlfunc_t)(struct __dlfunc_arg);
 
 static inline dlfunc_t
 dlfunc(void *handle, const char *symbol)

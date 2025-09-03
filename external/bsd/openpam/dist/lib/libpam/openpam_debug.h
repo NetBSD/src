@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_debug.h,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -44,18 +46,18 @@
 		openpam_log(PAM_LOG_LIBDEBUG, "entering: %s", pam_item_name[i_]); \
 	else \
 		openpam_log(PAM_LOG_LIBDEBUG, "entering: %d", i_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define ENTERN(n) do { \
-	int n_ = (n); \
-	openpam_log(PAM_LOG_LIBDEBUG, "entering: %d", n_); \
-} while (0)
+	intmax_t n_ = (n); \
+	openpam_log(PAM_LOG_LIBDEBUG, "entering: %jd", n_); \
+} while (/*CONSTCOND*/0)
 #define ENTERS(s) do { \
 	const char *s_ = (s); \
 	if (s_ == NULL) \
 		openpam_log(PAM_LOG_LIBDEBUG, "entering: NULL"); \
 	else \
 		openpam_log(PAM_LOG_LIBDEBUG, "entering: '%s'", s_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define ENTERF(f) do { \
 	int f_ = (f); \
 	if (f_ >= 0 && f_ <= OPENPAM_NUM_FEATURES) \
@@ -63,7 +65,7 @@
 		    openpam_features[f_].name); \
 	else \
 		openpam_log(PAM_LOG_LIBDEBUG, "entering: %d", f_); \
-} while (0)
+} while (/*CONSTCOND*/0)
 #define	RETURNV() openpam_log(PAM_LOG_LIBDEBUG, "returning")
 #define RETURNC(c) do { \
 	int c_ = (c); \
@@ -72,12 +74,12 @@
 	else \
 		openpam_log(PAM_LOG_LIBDEBUG, "returning %d!", c_); \
 	return (c_); \
-} while (0)
+} while (/*CONSTCOND*/0)/*NOTREACHED*/
 #define	RETURNN(n) do { \
 	int n_ = (n); \
 	openpam_log(PAM_LOG_LIBDEBUG, "returning %d", n_); \
 	return (n_); \
-} while (0)
+} while (/*CONSTCOND*/0)/*NOTREACHED*/
 #define	RETURNP(p) do { \
 	void *p_ = (p); \
 	if (p_ == NULL) \
@@ -85,7 +87,7 @@
 	else \
 		openpam_log(PAM_LOG_LIBDEBUG, "returning %p", p_); \
 	return (p_); \
-} while (0)
+} while (/*CONSTCOND*/0)/*NOTREACHED*/
 #define	RETURNS(s) do { \
 	const char *s_ = (s); \
 	if (s_ == NULL) \
@@ -93,7 +95,7 @@
 	else \
 		openpam_log(PAM_LOG_LIBDEBUG, "returning '%s'", s_); \
 	return (s_); \
-} while (0)
+} while (/*CONSTCOND*/0)/*NOTREACHED*/
 #else
 #define ENTER()
 #define ENTERI(i)

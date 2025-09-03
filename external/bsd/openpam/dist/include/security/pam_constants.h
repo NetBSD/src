@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_constants.h,v 1.1.1.7 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2017 Dag-Erling Smørgrav
@@ -86,7 +88,7 @@ enum {
 /*
  * XSSO 5.3
  */
-enum {
+enum openpam_message_items {
 	PAM_PROMPT_ECHO_OFF		=   1,
 	PAM_PROMPT_ECHO_ON		=   2,
 	PAM_ERROR_MSG			=   3,
@@ -115,7 +117,7 @@ enum {
 /*
  * XSSO 5.5
  */
-enum {
+enum openpam_item_primitives {
 	PAM_SERVICE			=   1,
 	PAM_USER			=   2,
 	PAM_TTY				=   3,
@@ -129,6 +131,8 @@ enum {
 	PAM_AUTHTOK_PROMPT		=  11,		/* OpenPAM extension */
 	PAM_OLDAUTHTOK_PROMPT		=  12,		/* OpenPAM extension */
 	PAM_HOST			=  13,		/* OpenPAM extension */
+	PAM_SOCKADDR			=  14,		/* NetBSD extension */
+	PAM_NUSER			=  15,		/* NetBSD extension */
 	PAM_NUM_ITEMS					/* OpenPAM extension */
 };
 

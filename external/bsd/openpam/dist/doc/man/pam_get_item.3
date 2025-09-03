@@ -1,3 +1,5 @@
+.\"	$NetBSD: pam_get_item.3,v 1.1.1.8 2025/09/03 15:55:57 christos Exp $
+.\"
 .\" Generated from pam_get_item.c by gendoc.pl
 .Dd June 27, 2023
 .Dt PAM_GET_ITEM 3
@@ -61,13 +63,20 @@ The prompt to use when asking the applicant for an
 expired authentication token prior to changing it.
 .It Dv PAM_HOST
 The name of the host the application runs on.
+.It Dv PAM_SOCKADDR
+The sockaddr_storage of the applicants's host.
+.It Dv PAM_NUSER
+The
+.Do
+nested
+.Dc
+user if this is a login on top of a previous one.
 .El
 .Pp
 See
 .Xr pam_start 3
 for a description of
 .Vt struct pam_conv .
-.Pp
 .Sh RETURN VALUES
 The
 .Fn pam_get_item

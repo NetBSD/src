@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_putenv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2017 Dag-Erling Smørgrav
@@ -37,6 +39,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_putenv.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +61,8 @@ int
 pam_putenv(pam_handle_t *pamh,
 	const char *namevalue)
 {
-	char **env, *p;
+	char **env; 
+	const char *p;
 	size_t env_size;
 	int i;
 
@@ -69,18 +75,20 @@ pam_putenv(pam_handle_t *pamh,
 	}
 
 	/* see if the variable is already in the environment */
-	if ((i = openpam_findenv(pamh, namevalue, p - namevalue)) >= 0) {
-		if ((p = strdup(namevalue)) == NULL)
+	if ((i = openpam_findenv(pamh, namevalue,
+	    (size_t)(p - namevalue))) >= 0) {
+		char *q;
+		if ((q = strdup(namevalue)) == NULL)
 			RETURNC(PAM_BUF_ERR);
 		FREE(pamh->env[i]);
-		pamh->env[i] = p;
+		pamh->env[i] = q;
 		RETURNC(PAM_SUCCESS);
 	}
 
 	/* grow the environment list if necessary */
 	if (pamh->env_count == pamh->env_size) {
 		env_size = pamh->env_size * 2 + 1;
-		env = realloc(pamh->env, sizeof(char *) * env_size);
+		env = realloc(pamh->env, sizeof(*env) * env_size);
 		if (env == NULL)
 			RETURNC(PAM_BUF_ERR);
 		pamh->env = env;

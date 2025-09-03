@@ -1,3 +1,5 @@
+.\"	$NetBSD: pam.conf.5,v 1.1.1.8 2025/09/03 15:55:57 christos Exp $
+.\"
 .\"-
 .\" Copyright (c) 2005-2017 Dag-Erling Smørgrav
 .\" All rights reserved.
@@ -40,10 +42,10 @@ decreasing order of preference:
 .Pa /etc/pam.d/ Ns Ar service-name
 .It
 .Pa /etc/pam.conf
-.It
-.Pa /usr/local/etc/pam.d/ Ns Ar service-name
-.It
-.Pa /usr/local/etc/pam.conf
+.\" .It
+.\" .Pa /usr/local/etc/pam.d/ Ns Ar service-name
+.\" .It
+.\" .Pa /usr/local/etc/pam.conf
 .El
 .Pp
 If none of these locations contains a policy for the given service,
@@ -142,12 +144,13 @@ The
 .Ar module-path
 field specifies the name or full path of the module to call.
 If only the name is specified, the PAM library will search for it in
-the following locations:
+the following location:
 .Bl -enum
 .It
-.Pa /usr/lib
-.It
-.Pa /usr/local/lib
+.\" .Pa /usr/lib
+.Pa /usr/lib/security
+.\" .It
+.\" .Pa /usr/local/lib
 .El
 .Pp
 The remaining fields, if any, are passed unmodified to the module if

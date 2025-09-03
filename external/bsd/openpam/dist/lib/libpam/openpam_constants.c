@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_constants.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2017 Dag-Erling Smørgrav
@@ -36,6 +38,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_constants.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
 
 #include <security/pam_appl.h>
 
@@ -167,8 +172,10 @@ const char *pam_sm_func_name[PAM_NUM_PRIMITIVES] = {
 const char *openpam_policy_path[] = {
 	"/etc/pam.d/",
 	"/etc/pam.conf",
+#ifndef __NetBSD__
 	"/usr/local/etc/pam.d/",
 	"/usr/local/etc/pam.conf",
+#endif
 	NULL
 };
 

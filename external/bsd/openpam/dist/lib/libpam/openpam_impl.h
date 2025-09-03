@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_impl.h,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2017 Dag-Erling Smørgrav
@@ -116,8 +118,8 @@ struct pam_handle {
 
 	/* environment list */
 	char	       **env;
-	int		 env_count;
-	int		 env_size;
+	size_t		 env_count;
+	size_t		 env_size;
 };
 
 /*
@@ -155,7 +157,7 @@ pam_module_t	*openpam_dynamic(const char *)
 	do {					\
 		free(p);			\
 		(p) = NULL;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FREEV(c, v)				\
 	do {					\
@@ -164,7 +166,7 @@ pam_module_t	*openpam_dynamic(const char *)
 				FREE((v)[(c)]);	\
 			FREE(v);		\
 		}				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #include "openpam_constants.h"
 #include "openpam_debug.h"

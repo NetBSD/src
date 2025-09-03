@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam.h,v 1.1.1.7 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2015 Dag-Erling Smørgrav
@@ -88,7 +90,7 @@ int
 pam_error(const pam_handle_t *_pamh,
 	const char *_fmt,
 	...)
-	OPENPAM_FORMAT ((__printf__, 2, 3))
+	OPENPAM_FORMAT ((__syslog__, 2, 3))
 	OPENPAM_NONNULL((1,2));
 
 int
@@ -102,7 +104,7 @@ int
 pam_info(const pam_handle_t *_pamh,
 	const char *_fmt,
 	...)
-	OPENPAM_FORMAT ((__printf__, 2, 3))
+	OPENPAM_FORMAT ((__syslog__, 2, 3))
 	OPENPAM_NONNULL((1,2));
 
 int
@@ -125,14 +127,14 @@ int
 pam_vinfo(const pam_handle_t *_pamh,
 	const char *_fmt,
 	va_list _ap)
-	OPENPAM_FORMAT ((__printf__, 2, 0))
+	OPENPAM_FORMAT ((__syslog__, 2, 0))
 	OPENPAM_NONNULL((1,2));
 
 int
 pam_verror(const pam_handle_t *_pamh,
 	const char *_fmt,
 	va_list _ap)
-	OPENPAM_FORMAT ((__printf__, 2, 0))
+	OPENPAM_FORMAT ((__syslog__, 2, 0))
 	OPENPAM_NONNULL((1,2));
 
 int
@@ -197,7 +199,7 @@ openpam_get_feature(int _feature, int *_onoff);
 /*
  * Log levels
  */
-enum {
+enum openpam_log_primitives {
 	PAM_LOG_LIBDEBUG = -1,
 	PAM_LOG_DEBUG,
 	PAM_LOG_VERBOSE,
@@ -213,7 +215,7 @@ _openpam_log(int _level,
 	const char *_func,
 	const char *_fmt,
 	...)
-	OPENPAM_FORMAT ((__printf__, 3, 4))
+	OPENPAM_FORMAT ((__syslog__, 3, 4))
 	OPENPAM_NONNULL((3));
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
@@ -225,15 +227,15 @@ _openpam_log(int _level,
 #elif defined(__GNUC__) && (__GNUC__ >= 2) && (__GNUC_MINOR__ >= 95)
 #define openpam_log(lvl, fmt...) \
 	_openpam_log((lvl), __func__, ##fmt)
-#elif defined(__GNUC__) && defined(__FUNCTION__)
+#elif defined(__GNUC__) && defined(__func__)
 #define openpam_log(lvl, fmt...) \
-	_openpam_log((lvl), __FUNCTION__, ##fmt)
+	_openpam_log((lvl), __func__, ##fmt)
 #else
 void
 openpam_log(int _level,
 	const char *_format,
 	...)
-	OPENPAM_FORMAT ((__printf__, 2, 3))
+	OPENPAM_FORMAT ((__syslog__, 2, 3))
 	OPENPAM_NONNULL((2));
 #endif
 
@@ -260,7 +262,7 @@ int openpam_nullconv(int _n,
 /*
  * PAM primitives
  */
-enum {
+enum openpam_sm_primitives {
 	PAM_SM_AUTHENTICATE,
 	PAM_SM_SETCRED,
 	PAM_SM_ACCT_MGMT,
@@ -355,13 +357,16 @@ struct pam_module {
 # define PAM_SOEXT ".so"
 #endif
 
-#if defined(OPENPAM_STATIC_MODULES)
-# if !defined(__GNUC__)
-#  error "Don't know how to build static modules on non-GNU compilers"
-# endif
-/* gcc, static linking */
+#if (defined(__GNUC__) || defined(__PCC__)) && defined(OPENPAM_STATIC_MODULES)
 # include <sys/cdefs.h>
-# include <linker_set.h>
+# ifdef __FreeBSD__
+#  include <linker_set.h>
+# endif
+# ifdef __NetBSD__
+#  define DATA_SET(a, b) __link_set_add_data(a, b)
+#  define SET_DECLARE(a, b) __link_set_decl(a, b)
+#  define SET_FOREACH(a, b) __link_set_foreach(a, b)
+# endif
 # define PAM_EXTERN static
 # define PAM_MODULE_ENTRY(name)						\
 	static char _pam_name[] = name PAM_SOEXT;			\
@@ -376,7 +381,7 @@ struct pam_module {
 			[PAM_SM_CHAUTHTOK] = _PAM_SM_CHAUTHTOK		\
 		},							\
 	};								\
-	DATA_SET(_openpam_static_modules, _pam_module)
+	DATA_SET(openpam_static_modules, _pam_module)
 #else
 /* normal case */
 # define PAM_EXTERN

@@ -176,6 +176,19 @@ T_FUNC(multiple_whitespace, "multiple whitespace")
 	return (ret);
 }
 
+T_FUNC(line_continuation_in_whitespace, "line continuation in whitespace")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, " \\\n \n");
+	t_frewind(tf);
+	ret = orw_expect(tf, NULL, 1 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
 T_FUNC(comment, "comment")
 {
 	struct t_file *tf;
@@ -489,6 +502,33 @@ T_FUNC(escape_at_eof, "escape at end of file")
 
 
 /***************************************************************************
+T_FUNC(escaped_comment, "escaped comment")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, " \\# comment\n");
+	t_frewind(tf);
+	ret = orw_expect(tf, "#", 0 /*lines*/, 0 /*eof*/, 0 /*eol*/) &&
+	    orw_expect(tf, "comment", 0 /*lines*/, 0 /*eof*/, 1 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
+T_FUNC(escape_at_eof, "escape at end of file")
+{
+	struct t_file *tf;
+	int ret;
+
+	tf = t_fopen(NULL);
+	t_fprintf(tf, "z\\");
+	t_frewind(tf);
+	ret = orw_expect(tf, NULL, 0 /*lines*/, 1 /*eof*/, 0 /*eol*/);
+	t_fclose(tf);
+	return (ret);
+}
+
  * Quotes
  */
 

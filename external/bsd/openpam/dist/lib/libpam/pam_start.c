@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_start.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -37,6 +39,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_start.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -46,11 +51,6 @@
 #include "openpam_impl.h"
 #include "openpam_strlcpy.h"
 
-#ifdef _SC_HOST_NAME_MAX
-#define HOST_NAME_MAX sysconf(_SC_HOST_NAME_MAX)
-#else
-#define HOST_NAME_MAX 1024
-#endif
 
 /*
  * XSSO 4.2.1
@@ -65,17 +65,28 @@ pam_start(const char *service,
 	const struct pam_conv *pam_conv,
 	pam_handle_t **pamh)
 {
-	char hostname[HOST_NAME_MAX + 1];
+	char *hostname = NULL;
 	struct pam_handle *ph;
 	int r;
+	size_t hostname_size;
+	long h;
+
+#ifdef _SC_HOST_NAME_MAX
+	h = sysconf(_SC_HOST_NAME_MAX);
+#else
+	h = -1;
+#endif
+	hostname_size = (size_t)(h < 10 ? 1024 : h) + 1;
 
 	ENTER();
-	if ((ph = calloc(1, sizeof *ph)) == NULL)
+	if ((ph = calloc((size_t)1, sizeof *ph)) == NULL)
 		RETURNC(PAM_BUF_ERR);
 	if ((r = pam_set_item(ph, PAM_SERVICE, service)) != PAM_SUCCESS)
 		goto fail;
-	if (gethostname(hostname, sizeof hostname) != 0)
-		strlcpy(hostname, "localhost", sizeof hostname);
+	if ((hostname = malloc(hostname_size)) == NULL)
+		goto fail;
+	if (gethostname(hostname, hostname_size) != 0)
+		strlcpy(hostname, "localhost", hostname_size);
 	if ((r = pam_set_item(ph, PAM_HOST, hostname)) != PAM_SUCCESS)
 		goto fail;
 	if ((r = pam_set_item(ph, PAM_USER, user)) != PAM_SUCCESS)
@@ -84,10 +95,12 @@ pam_start(const char *service,
 		goto fail;
 	if ((r = openpam_configure(ph, service)) != PAM_SUCCESS)
 		goto fail;
+	free(hostname);
 	*pamh = ph;
 	openpam_log(PAM_LOG_DEBUG, "pam_start(\"%s\") succeeded", service);
 	RETURNC(PAM_SUCCESS);
 fail:
+	free(hostname);
 	pam_end(ph, r);
 	RETURNC(r);
 }

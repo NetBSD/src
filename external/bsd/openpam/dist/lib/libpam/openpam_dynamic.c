@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_dynamic.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -37,6 +39,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_dynamic.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
+
 #include <sys/param.h>
 
 #include <dlfcn.h>
@@ -66,7 +71,7 @@
 
 #ifdef HAVE_FDLOPEN
 static void *
-try_dlopen(const char *modfn)
+try_dlopen(const char *modfn, int *error)
 {
 	void *dlh;
 	int fd;

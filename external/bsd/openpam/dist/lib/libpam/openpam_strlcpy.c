@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_strlcpy.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $	*/
+
 /*-
  * Copyright (c) 2011-2012 Dag-Erling Smørgrav
  * All rights reserved.
@@ -30,6 +32,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_strlcpy.c,v 1.1.1.4 2025/09/03 15:55:57 christos Exp $");
 
 #ifndef HAVE_STRLCPY
 
