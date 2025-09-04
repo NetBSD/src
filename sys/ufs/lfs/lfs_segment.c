@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.289 2025/09/02 00:24:10 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.290 2025/09/04 03:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.289 2025/09/02 00:24:10 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.290 2025/09/04 03:55:49 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1784,7 +1784,7 @@ lfs_rewind(struct lfs *fs, int newsn)
  * Otherwise, return 0.
  */
 int
-lfs_initseg(struct lfs *fs)
+lfs_initseg(struct lfs *fs, uint16_t flags)
 {
 	struct segment *sp = fs->lfs_sp;
 	SEGSUM *ssp;
@@ -1875,6 +1875,7 @@ lfs_initseg(struct lfs *fs)
 	lfs_ss_setnfinfo(fs, ssp, 0);
 	lfs_ss_setninos(fs, ssp, 0);
 	lfs_ss_setmagic(fs, ssp, SS_MAGIC);
+	lfs_ss_setflags(fs, ssp, flags);
 
 	/* Set pointer to first FINFO, initialize it. */
 	sp->fip = SEGSUM_FINFOBASE(fs, sp->segsum);
@@ -2038,6 +2039,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	int changed;
 	u_int32_t sum;
 	size_t sumstart;
+	uint16_t oflags;
 #ifdef DEBUG
 	FINFO *fip;
 	int findex;
@@ -2067,6 +2069,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) | SS_RECLAIM);
 		lfs_ss_setreclino(fs, ssp, fs->lfs_reclino);
 	}
+	/* Save flags to attach to a new partial segment, if we need one */
+	oflags = lfs_ss_getflags(fs, ssp);
 
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
@@ -2389,7 +2393,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		}
 	}
 
-	return (lfs_initseg(fs) || do_again);
+	return (lfs_initseg(fs, oflags) || do_again);
 }
 
 void

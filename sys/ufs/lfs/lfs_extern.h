@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.119 2025/09/02 00:24:10 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.120 2025/09/04 03:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
 void lfs_updatemeta(struct segment *);
 int lfs_rewind(struct lfs *, int);
 void lfs_unset_inval_all(struct lfs *);
-int lfs_initseg(struct lfs *);
+int lfs_initseg(struct lfs *, uint16_t);
 int lfs_writeseg(struct lfs *, struct segment *);
 void lfs_writesuper(struct lfs *, daddr_t);
 int lfs_match_data(struct lfs *, struct buf *);

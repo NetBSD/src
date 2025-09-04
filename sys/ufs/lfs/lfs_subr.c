@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.103 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.104 2025/09/04 03:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.103 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.104 2025/09/04 03:55:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	sp->seg_flags = flags;
 	sp->vp = NULL;
 	sp->seg_iocount = 0;
-	(void) lfs_initseg(fs);
+	(void) lfs_initseg(fs, 0);
 
 	/*
 	 * Keep a cumulative count of the outstanding I/O operations.  If the
