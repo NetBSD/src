@@ -1,9 +1,9 @@
-/*	$NetBSD: upstream.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: upstream.c,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: upstream.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: upstream.c,v 1.3 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -44,6 +44,27 @@ static const sasl_callback_t client_callbacks[] = {
 #endif /* HAVE_CYRUS_SASL */
 
 static void upstream_unlink( LloadConnection *upstream );
+
+int
+lload_upstream_entry_cmp( const void *l, const void *r )
+{
+    return SLAP_PTRCMP( l, r );
+}
+
+static void
+linked_upstream_lost( LloadConnection *client )
+{
+    int gentle = 1;
+
+    CONNECTION_LOCK(client);
+    assert( client->c_restricted >= LLOAD_OP_RESTRICTED_UPSTREAM );
+    assert( client->c_linked_upstream );
+
+    client->c_restricted = LLOAD_OP_NOT_RESTRICTED;
+    client->c_linked_upstream = NULL;
+    CONNECTION_UNLOCK(client);
+    lload_connection_close( client, &gentle );
+}
 
 int
 forward_response( LloadConnection *client, LloadOperation *op, BerElement *ber )
@@ -113,7 +134,7 @@ forward_final_response(
 
     op->o_res = LLOAD_OP_COMPLETED;
     if ( !op->o_pin_id ) {
-        operation_unlink( op );
+        OPERATION_UNLINK(op);
     }
 
     return rc;
@@ -123,17 +144,22 @@ static int
 handle_unsolicited( LloadConnection *c, BerElement *ber )
 {
     CONNECTION_ASSERT_LOCKED(c);
-    if ( c->c_state != LLOAD_C_PREPARING ) {
-        c->c_state = LLOAD_C_CLOSING;
+
+    assert( c->c_state != LLOAD_C_INVALID );
+    if ( c->c_state == LLOAD_C_DYING ) {
+        CONNECTION_UNLOCK(c);
+        goto out;
     }
+    c->c_state = LLOAD_C_CLOSING;
 
     Debug( LDAP_DEBUG_STATS, "handle_unsolicited: "
             "teardown for upstream connection connid=%lu\n",
             c->c_connid );
 
     CONNECTION_DESTROY(c);
-    ber_free( ber, 1 );
 
+out:
+    ber_free( ber, 1 );
     return -1;
 }
 
@@ -233,7 +259,21 @@ handle_one_response( LloadConnection *c )
         }
     }
     if ( op ) {
-        op->o_last_response = slap_get_time();
+        struct timeval tv, tvdiff;
+        uintptr_t diff;
+
+        gettimeofday( &tv, NULL );
+        if ( !timerisset( &op->o_last_response ) ) {
+            LloadBackend *b = c->c_backend;
+
+            timersub( &tv, &op->o_start, &tvdiff );
+            diff = 1000000 * tvdiff.tv_sec + tvdiff.tv_usec;
+
+            __atomic_add_fetch( &b->b_operation_count, 1, __ATOMIC_RELAXED );
+            __atomic_add_fetch( &b->b_operation_time, diff, __ATOMIC_RELAXED );
+        }
+        op->o_last_response = tv;
+
         Debug( LDAP_DEBUG_STATS2, "handle_one_response: "
                 "upstream connid=%lu, processing response for "
                 "client connid=%lu, msgid=%d\n",
@@ -495,8 +535,9 @@ upstream_bind_cb( LloadConnection *c )
             c->c_type = LLOAD_C_OPEN;
             c->c_read_timeout = NULL;
             Debug( LDAP_DEBUG_CONNS, "upstream_bind_cb: "
-                    "connid=%lu finished binding, now active\n",
-                    c->c_connid );
+                    "connection connid=%lu for backend server '%s' is ready "
+                    "for use\n",
+                    c->c_connid, b->b_name.bv_val );
             CONNECTION_UNLOCK(c);
             checked_lock( &b->b_mutex );
             LDAP_CIRCLEQ_REMOVE( &b->b_preparing, c, c_next );
@@ -932,6 +973,23 @@ upstream_init( ber_socket_t s, LloadBackend *b )
     /* We only add the write event when we have data pending */
     c->c_write_event = event;
 
+#ifdef BALANCER_MODULE
+    if ( b->b_monitor ) {
+        acquire_ref( &c->c_refcnt );
+        CONNECTION_UNLOCK(c);
+        checked_unlock( &b->b_mutex );
+        if ( lload_monitor_conn_entry_create( c, b->b_monitor ) ) {
+            RELEASE_REF( c, c_refcnt, c->c_destroy );
+            checked_lock( &b->b_mutex );
+            CONNECTION_LOCK(c);
+            goto fail;
+        }
+        checked_lock( &b->b_mutex );
+        CONNECTION_LOCK(c);
+        RELEASE_REF( c, c_refcnt, c->c_destroy );
+    }
+#endif /* BALANCER_MODULE */
+
     c->c_destroy = upstream_destroy;
     c->c_unlink = upstream_unlink;
 
@@ -978,6 +1036,14 @@ upstream_init( ber_socket_t s, LloadBackend *b )
     return c;
 
 fail:
+    if ( !IS_ALIVE( c, c_live ) ) {
+        /*
+         * Released while we were unlocked, it's scheduled for destruction
+         * already
+         */
+        return NULL;
+    }
+
     if ( c->c_write_event ) {
         event_del( c->c_write_event );
         event_free( c->c_write_event );
@@ -1000,7 +1066,7 @@ upstream_unlink( LloadConnection *c )
 {
     LloadBackend *b = c->c_backend;
     struct event *read_event, *write_event;
-    TAvlnode *root;
+    TAvlnode *root, *linked_root;
     long freed, executing;
 
     Debug( LDAP_DEBUG_CONNS, "upstream_unlink: "
@@ -1021,10 +1087,15 @@ upstream_unlink( LloadConnection *c )
     executing = c->c_n_ops_executing;
     c->c_n_ops_executing = 0;
 
+    linked_root = c->c_linked;
+    c->c_linked = NULL;
+
     CONNECTION_UNLOCK(c);
 
     freed = ldap_tavl_free( root, (AVL_FREE)operation_lost_upstream );
     assert( freed == executing );
+
+    ldap_tavl_free( linked_root, (AVL_FREE)linked_upstream_lost );
 
     /*
      * Avoid a deadlock:
@@ -1086,6 +1157,17 @@ upstream_destroy( LloadConnection *c )
 
     CONNECTION_LOCK(c);
     assert( c->c_state == LLOAD_C_DYING );
+
+#ifdef BALANCER_MODULE
+    /*
+     * Can't do this in upstream_unlink as that could be run from cn=monitor
+     * modify callback.
+     */
+    if ( !BER_BVISNULL( &c->c_monitor_dn ) ) {
+        lload_monitor_conn_unlink( c );
+    }
+#endif /* BALANCER_MODULE */
+
     c->c_state = LLOAD_C_INVALID;
 
     assert( c->c_ops == NULL );

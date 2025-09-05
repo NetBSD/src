@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -331,8 +331,8 @@ meta_back_map_free( struct ldapmap *lm )
 	lm->map = NULL;
 }
 
-static void
-target_free(
+void
+meta_back_target_free(
 	metatarget_t	*mt )
 {
 	if ( mt->mt_uri ) {
@@ -438,7 +438,7 @@ meta_back_db_destroy(
 					ldap_pvt_thread_mutex_destroy( &mt->mt_quarantine_mutex );
 				}
 
-				target_free( mt );
+				meta_back_target_free( mt );
 			}
 
 			free( mi->mi_targets );

@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.4 2025/09/05 21:16:31 christos Exp $	*/
 
 /* search.c - sock backend search function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2021 The OpenLDAP Foundation.
+ * Copyright 2007-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.4 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 

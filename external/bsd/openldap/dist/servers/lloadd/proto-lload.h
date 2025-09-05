@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-lload.h,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: proto-lload.h,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,12 @@ LDAP_BEGIN_DECL
 LDAP_SLAPD_F (void) backend_connect( evutil_socket_t s, short what, void *arg );
 LDAP_SLAPD_F (void *) backend_connect_task( void *ctx, void *arg );
 LDAP_SLAPD_F (void) backend_retry( LloadBackend *b );
-LDAP_SLAPD_F (LloadConnection *) backend_select( LloadOperation *op, int *res );
+LDAP_SLAPD_F (int) upstream_select( LloadOperation *op, LloadConnection **c, int *res, char **message );
+LDAP_SLAPD_F (int) backend_select( LloadBackend *b, LloadOperation *op, LloadConnection **c, int *res, char **message );
+LDAP_SLAPD_F (int) try_upstream( LloadBackend *b, lload_c_head *head, LloadOperation *op, LloadConnection *c, int *res, char **message );
 LDAP_SLAPD_F (void) backend_reset( LloadBackend *b, int gentle );
+LDAP_SLAPD_F (LloadBackend *) lload_backend_new( void );
 LDAP_SLAPD_F (void) lload_backend_destroy( LloadBackend *b );
-LDAP_SLAPD_F (void) lload_backends_destroy( void );
 
 /*
  * bind.c
@@ -81,6 +83,7 @@ LDAP_SLAPD_F (int) lload_bindconf_parse( const char *word, slap_bindconf *bc );
 LDAP_SLAPD_F (int) lload_bindconf_unparse( slap_bindconf *bc, struct berval *bv );
 LDAP_SLAPD_F (int) lload_bindconf_tls_set( slap_bindconf *bc, LDAP *ld );
 LDAP_SLAPD_F (void) lload_bindconf_free( slap_bindconf *bc );
+LDAP_SLAPD_F (void) lload_restriction_free( struct restriction_entry *entry );
 #ifdef BALANCER_MODULE
 LDAP_SLAPD_F (int) lload_back_init_cf( BackendInfo *bi );
 #endif
@@ -143,11 +146,13 @@ LDAP_SLAPD_V (Avlnode *) lload_exop_handlers;
 LDAP_SLAPD_F (int) exop_handler_cmp( const void *l, const void *r );
 LDAP_SLAPD_F (int) request_extended( LloadConnection *c, LloadOperation *op );
 LDAP_SLAPD_F (int) lload_exop_init( void );
+LDAP_SLAPD_F (void) lload_exop_destroy( void );
 
 /*
  * init.c
  */
 LDAP_SLAPD_F (int) lload_global_init( void );
+LDAP_SLAPD_F (int) lload_global_destroy( void );
 LDAP_SLAPD_F (int) lload_tls_init( void );
 LDAP_SLAPD_F (int) lload_init( int mode, const char *name );
 LDAP_SLAPD_F (int) lload_destroy( void );
@@ -163,8 +168,12 @@ LDAP_SLAPD_F (void) lload_libevent_destroy( void );
 /*
  * monitor.c
  */
+LDAP_SLAPD_V (monitor_subsys_t *) lload_monitor_client_subsys;
 LDAP_SLAPD_F (int) lload_monitor_open( void );
-LDAP_SLAPD_F (int) lload_monitor_backend_init( BackendInfo *bi, LloadBackend *b );
+LDAP_SLAPD_F (int) lload_monitor_conn_entry_create( LloadConnection *c, monitor_subsys_t *ms );
+LDAP_SLAPD_F (int) lload_monitor_conn_unlink( LloadConnection *c );
+LDAP_SLAPD_F (int) lload_monitor_backend_init( BackendInfo *bi, monitor_subsys_t *ms, LloadBackend *b );
+LDAP_SLAPD_F (int) lload_monitor_tier_init( BackendInfo *bi, LloadTier *tier );
 #endif /* BALANCER_MODULE */
 
 /*
@@ -172,6 +181,10 @@ LDAP_SLAPD_F (int) lload_monitor_backend_init( BackendInfo *bi, LloadBackend *b 
  */
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t) lload_pin_mutex;
 LDAP_SLAPD_V (unsigned long) lload_next_pin;
+LDAP_SLAPD_V (TAvlnode *) lload_control_actions;
+LDAP_SLAPD_V (TAvlnode *) lload_exop_actions;
+LDAP_SLAPD_V (enum op_restriction) lload_default_exop_action;
+LDAP_SLAPD_F (int) lload_restriction_cmp( const void *left, const void *right );
 LDAP_SLAPD_F (const char *) lload_msgtype2str( ber_tag_t tag );
 LDAP_SLAPD_F (int) operation_upstream_cmp( const void *l, const void *r );
 LDAP_SLAPD_F (int) operation_client_cmp( const void *l, const void *r );
@@ -189,9 +202,23 @@ LDAP_SLAPD_F (void) operations_timeout( evutil_socket_t s, short what, void *arg
 LDAP_SLAPD_F (void) operation_update_conn_counters( LloadOperation *op, LloadConnection *upstream );
 LDAP_SLAPD_F (void) operation_update_backend_counters( LloadOperation *op, LloadBackend *b );
 LDAP_SLAPD_F (void) operation_update_global_rejected( LloadOperation *op );
+
+/*
+ * tier.c
+ */
+LDAP_SLAPD_F (int) tier_startup( LloadTier *tier );
+LDAP_SLAPD_F (int) tier_reset( LloadTier *tier, int shutdown );
+LDAP_SLAPD_F (int) tier_destroy( LloadTier *tier );
+LDAP_SLAPD_F (void) lload_tiers_shutdown( void );
+LDAP_SLAPD_F (void) lload_tiers_reset( int shutdown );
+LDAP_SLAPD_F (void) lload_tiers_update( evutil_socket_t s, short what, void *arg );
+LDAP_SLAPD_F (void) lload_tiers_destroy( void );
+LDAP_SLAPD_F (struct lload_tier_type *) lload_tier_find( char *type );
+
 /*
  * upstream.c
  */
+LDAP_SLAPD_F (int) lload_upstream_entry_cmp( const void *l, const void *r );
 LDAP_SLAPD_F (int) forward_final_response( LloadConnection *client, LloadOperation *op, BerElement *ber );
 LDAP_SLAPD_F (int) forward_response( LloadConnection *client, LloadOperation *op, BerElement *ber );
 LDAP_SLAPD_F (void *) upstream_bind( void *ctx, void *arg );
@@ -201,6 +228,8 @@ LDAP_SLAPD_F (void) upstream_destroy( LloadConnection *c );
 LDAP_SLAPD_V (ber_len_t) sockbuf_max_incoming_client;
 LDAP_SLAPD_V (ber_len_t) sockbuf_max_incoming_upstream;
 LDAP_SLAPD_V (int) lload_conn_max_pdus_per_cycle;
+
+LDAP_SLAPD_V (int) lload_write_coherence;
 
 LDAP_SLAPD_V (lload_features_t) lload_features;
 

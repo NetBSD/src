@@ -1,10 +1,10 @@
-/*	$NetBSD: compare.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.3 2025/09/05 21:16:31 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compare.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.3 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 
@@ -41,22 +41,20 @@ wt_compare( Operation *op, SlapReply *rs )
 	int rc;
 	wt_ctx *wc = NULL;
 
-	Debug( LDAP_DEBUG_ARGS, "==> " LDAP_XSTRING(wt_compare) ": %s\n",
+	Debug( LDAP_DEBUG_ARGS, "==> wt_compare: %s\n",
 		   op->o_req_dn.bv_val );
 
 	wc = wt_ctx_get(op, wi);
 	if( !wc ){
-		Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(wt_compare)
-			   ": wt_ctx_get failed\n" );
+		Debug( LDAP_DEBUG_ANY, "wt_compare: wt_ctx_get failed\n" );
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "internal error";
         send_ldap_result( op, rs );
         return rs->sr_err;
 	}
 
-	rs->sr_err = wt_dn2entry(op->o_bd, wc, &op->o_req_ndn, &e);
-	switch( rs->sr_err ) {
+	rc = wt_dn2entry(op->o_bd, wc, &op->o_req_ndn, &e);
+	switch( rc ) {
 	case 0:
 	case WT_NOTFOUND:
 		break;
@@ -66,37 +64,45 @@ wt_compare( Operation *op, SlapReply *rs )
 		goto return_results;
 	}
 
-	if ( rs->sr_err == WT_NOTFOUND ) {
-		if ( e != NULL ) {
-			/* return referral only if "disclose" is granted on the object */
-			if ( ! access_allowed( op, e, slap_schema.si_ad_entry,
-								   NULL, ACL_DISCLOSE, NULL ) )
-			{
+	if ( rc == WT_NOTFOUND ||
+		 (!manageDSAit && e && is_entry_glue( e ) )) {
+
+		if ( !e ) {
+			rc = wt_dn2aentry(op->o_bd, wc, &op->o_req_ndn, &e);
+			switch( rc ) {
+			case 0:
+				break;
+			case WT_NOTFOUND:
 				rs->sr_err = LDAP_NO_SUCH_OBJECT;
-			} else {
-				rs->sr_matched = ch_strdup( e->e_dn );
-				if ( is_entry_referral( e )) {
-					BerVarray ref = get_entry_referrals( op, e );
-					rs->sr_ref = referral_rewrite( ref,
-												   &e->e_name,
-												   &op->o_req_dn,
-												   LDAP_SCOPE_DEFAULT );
-					ber_bvarray_free( ref );
-				} else {
-					rs->sr_ref = NULL;
-				}
-				rs->sr_err = LDAP_REFERRAL;
+				goto return_results;
+			default:
+				Debug( LDAP_DEBUG_ANY, "wt_compare: wt_dn2aentry failed (%d)\n",
+					   rc );
+				rs->sr_err = LDAP_OTHER;
+				rs->sr_text = "internal error";
+				goto return_results;
 			}
-			wt_entry_return( e );
-			e = NULL;
-		} else {
-			rs->sr_ref = referral_rewrite( default_referral,
-										   NULL,
-										   &op->o_req_dn,
-										   LDAP_SCOPE_DEFAULT );
-			rs->sr_err = rs->sr_ref ? LDAP_REFERRAL : LDAP_NO_SUCH_OBJECT;
 		}
 
+		/* return referral only if "disclose" is granted on the object */
+		if ( ! access_allowed( op, e, slap_schema.si_ad_entry,
+							   NULL, ACL_DISCLOSE, NULL ) )
+		{
+			rs->sr_err = LDAP_NO_SUCH_OBJECT;
+		} else {
+			rs->sr_matched = ch_strdup( e->e_dn );
+			if ( is_entry_referral( e )) {
+				BerVarray ref = get_entry_referrals( op, e );
+				rs->sr_ref = referral_rewrite( ref,
+											   &e->e_name,
+											   &op->o_req_dn,
+											   LDAP_SCOPE_DEFAULT );
+				ber_bvarray_free( ref );
+			} else {
+				rs->sr_ref = NULL;
+			}
+			rs->sr_err = LDAP_REFERRAL;
+		}
 		rs->sr_flags = REP_MATCHED_MUSTBEFREED | REP_REF_MUSTBEFREED;
 		send_ldap_result( op, rs );
 		goto done;

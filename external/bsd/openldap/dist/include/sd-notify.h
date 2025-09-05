@@ -1,4 +1,4 @@
-/*	$NetBSD: sd-notify.h,v 1.1.1.1 2025/09/05 21:09:31 christos Exp $	*/
+/*	$NetBSD: sd-notify.h,v 1.2 2025/09/05 21:16:19 christos Exp $	*/
 
 /* SPDX-License-Identifier: MIT-0 */
 /* Implement the systemd notify protocol without external dependencies.

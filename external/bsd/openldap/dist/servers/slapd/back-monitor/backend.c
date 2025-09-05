@@ -1,10 +1,10 @@
-/*	$NetBSD: backend.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: backend.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* backend.c - deals with backend subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backend.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: backend.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -43,7 +43,7 @@ monitor_subsys_backend_init(
 )
 {
 	monitor_info_t		*mi;
-	Entry			*e_backend, **ep;
+	Entry			*e_backend;
 	int			i;
 	monitor_entry_t		*mp;
 	monitor_subsys_t	*ms_database;
@@ -68,10 +68,6 @@ monitor_subsys_backend_init(
 			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
-
-	mp = ( monitor_entry_t * )e_backend->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
 
 	i = -1;
 	LDAP_STAILQ_FOREACH( bi, &backendInfo, bi_next ) {
@@ -144,7 +140,7 @@ monitor_subsys_backend_init(
 		mp->mp_info = ms;
 		mp->mp_flags = ms->mss_flags | MONITOR_F_SUB;
 
-		if ( monitor_cache_add( mi, e ) ) {
+		if ( monitor_cache_add( mi, e, e_backend ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_backend_init: "
 				"unable to add entry \"cn=Backend %d,%s\"\n",
@@ -152,9 +148,6 @@ monitor_subsys_backend_init(
 					ms->mss_ndn.bv_val );
 			return( -1 );
 		}
-
-		*ep = e;
-		ep = &mp->mp_next;
 	}
 	
 	monitor_cache_release( mi, e_backend );

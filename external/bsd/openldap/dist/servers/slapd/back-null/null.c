@@ -1,10 +1,10 @@
-/*	$NetBSD: null.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: null.c,v 1.4 2025/09/05 21:16:30 christos Exp $	*/
 
 /* null.c - the null backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: null.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: null.c,v 1.4 2025/09/05 21:16:30 christos Exp $");
 
 #include "portable.h"
 
@@ -77,8 +77,8 @@ null_back_db_open( BackendDB *be, ConfigReply *cr )
 
 	if ( ni->ni_dosearch ) {
 		e = entry_alloc();
-		e->e_name = be->be_suffix[0];
-		e->e_nname = be->be_nsuffix[0];
+		ber_dupbv( &e->e_name, &be->be_suffix[0] );
+		ber_dupbv( &e->e_nname, &be->be_nsuffix[0] );
 
 		dnRdn( &e->e_nname, &bv[0] );
 		bv[1].bv_val = strchr(bv[0].bv_val, '=') + 1;

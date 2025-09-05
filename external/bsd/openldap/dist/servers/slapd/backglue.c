@@ -1,10 +1,10 @@
-/*	$NetBSD: backglue.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: backglue.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* backglue.c - backend glue */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backglue.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: backglue.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -97,6 +97,12 @@ typedef struct glue_state {
 	int nrefs;
 	int nctrls;
 } glue_state;
+
+typedef struct glue_entry {
+	BackendDB *ge_be;
+	BackendInfo *ge_bi;
+	void *ge_orig;
+} glue_entry;
 
 static int
 glue_op_cleanup( Operation *op, SlapReply *rs )
@@ -368,6 +374,8 @@ glue_sub_search( Operation *op, SlapReply *rs, BackendDB *b0,
 		BackendInfo *bi = op->o_bd->bd_info;
 		int rc = SLAP_CB_CONTINUE;
 		for ( on=on->on_next; on; on=on->on_next ) {
+			if ( on->on_bi.bi_flags & SLAPO_BFLAG_DISABLED )
+				continue;
 			op->o_bd->bd_info = (BackendInfo *)on;
 			if ( on->on_bi.bi_op_search ) {
 				rc = on->on_bi.bi_op_search( op, rs );
@@ -549,6 +557,11 @@ glue_op_search ( Operation *op, SlapReply *rs )
 				rs->sr_err = glue_sub_search( op, rs, b0, on );
 			}
 
+			if ( rs->sr_err == SLAPD_NO_REPLY ) {
+				gs.err = rs->sr_err;
+				break;
+			}
+
 			switch ( gs.err ) {
 
 			/*
@@ -715,7 +728,8 @@ end_of_loop:;
 	}
 	rs->sr_ctrls = gs.ctrls;
 
-	send_ldap_result( op, rs );
+	if ( rs->sr_err != SLAPD_NO_REPLY )
+		send_ldap_result( op, rs );
 
 	op->o_bd = b0;
 	op->o_bd->bd_info = bi0;
@@ -912,10 +926,35 @@ glue_entry_get_rw (
 
 	if ( op->o_bd->be_fetch ) {
 		rc = op->o_bd->be_fetch( op, dn, oc, ad, rw, e );
+		if ( rc == LDAP_SUCCESS && *e ) {
+			glue_entry *ge = op->o_tmpcalloc( 1, sizeof(glue_entry),
+					op->o_tmpmemctx );
+
+			if ( !ge ) {
+				if ( op->o_bd->be_release ) {
+					op->o_bd->be_release( op, *e, rw );
+				} else {
+					entry_free( *e );
+				}
+				rc = LDAP_OTHER;
+				goto out;
+			}
+
+			/* b0 is on overlay_entry_get_ov's stack, we'll be passed a fresh
+			 * one at release time */
+			if ( op->o_bd != b0 ) {
+				ge->ge_be = op->o_bd;
+			}
+			ge->ge_bi = op->o_bd->bd_info;
+			ge->ge_orig = (*e)->e_private;
+			(*e)->e_private = ge;
+		}
 	} else {
 		rc = LDAP_UNWILLING_TO_PERFORM;
 	}
-	op->o_bd =b0;
+
+out:
+	op->o_bd = b0;
 	return rc;
 }
 
@@ -926,10 +965,22 @@ glue_entry_release_rw (
 	int rw
 )
 {
+	glue_entry *ge = e->e_private;
 	BackendDB *b0 = op->o_bd;
 	int rc = -1;
 
-	op->o_bd = glue_back_select (b0, &e->e_nname);
+	if ( glueBack ) {
+		op->o_bd = glueBack;
+	} else if ( ge ) {
+		assert( ge->ge_bi != NULL );
+		if ( ge->ge_be )
+			op->o_bd = ge->ge_be;
+		op->o_bd->bd_info = ge->ge_bi;
+		e->e_private = ge->ge_orig;
+		op->o_tmpfree( ge, op->o_tmpmemctx );
+	} else {
+		op->o_bd = glue_back_select( b0, &e->e_nname );
+	}
 
 	if ( op->o_bd->be_release ) {
 		rc = op->o_bd->be_release( op, e, rw );
@@ -1386,6 +1437,11 @@ glue_sub_del( BackendDB *b0 )
 				gi->gi_nodes--;
 			}
 		}
+		/* Mark as no longer linked/sub */
+		b0->be_flags &= ~(SLAP_DBFLAG_GLUE_SUBORDINATE|SLAP_DBFLAG_GLUE_LINKED|
+			SLAP_DBFLAG_GLUE_ADVERTISE);
+		b0->be_pcsn_p = &b0->be_pcsn_st;
+		break;
 	}
 	if ( be == NULL )
 		rc = LDAP_NO_SUCH_OBJECT;
@@ -1445,6 +1501,7 @@ glue_sub_attach( int online )
 				&gi->gi_n[gi->gi_nodes].gn_pdn );
 			gi->gi_nodes++;
 			on->on_bi.bi_private = gi;
+			ga->ga_be->be_pcsn_p = be->be_pcsn_p;
 			ga->ga_be->be_flags |= SLAP_DBFLAG_GLUE_LINKED;
 			break;
 		}

@@ -1,10 +1,10 @@
-/*	$NetBSD: time.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.4 2025/09/05 21:16:29 christos Exp $	*/
 
 /* time.c - deal with time subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: time.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.4 2025/09/05 21:16:29 christos Exp $");
 
 #include "portable.h"
 
@@ -49,7 +49,7 @@ monitor_subsys_time_init(
 {
 	monitor_info_t	*mi;
 	
-	Entry		*e, **ep, *e_time;
+	Entry		*e, *e_time;
 	monitor_entry_t	*mp;
 	struct berval	bv, value;
 
@@ -67,10 +67,6 @@ monitor_subsys_time_init(
 			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
-
-	mp = ( monitor_entry_t * )e_time->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
 
 	BER_BVSTR( &bv, "cn=Start" );
 	e = monitor_entry_stub( &ms->mss_dn, &ms->mss_ndn, &bv,
@@ -94,7 +90,7 @@ monitor_subsys_time_init(
 	mp->mp_flags = ms->mss_flags \
 		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_time ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_time_init: "
 			"unable to add entry \"%s,%s\"\n",
@@ -102,9 +98,6 @@ monitor_subsys_time_init(
 		return( -1 );
 	}
 	
-	*ep = e;
-	ep = &mp->mp_next;
-
 	/*
 	 * Current
 	 */
@@ -130,7 +123,7 @@ monitor_subsys_time_init(
 	mp->mp_flags = ms->mss_flags \
 		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_time ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_time_init: "
 			"unable to add entry \"%s,%s\"\n",
@@ -138,9 +131,6 @@ monitor_subsys_time_init(
 		return( -1 );
 	}
 	
-	*ep = e;
-	ep = &mp->mp_next;
-
 	/*
 	 * Uptime
 	 */
@@ -167,7 +157,7 @@ monitor_subsys_time_init(
 	mp->mp_flags = ms->mss_flags \
 		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_time ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_time_init: "
 			"unable to add entry \"%s,%s\"\n",
@@ -175,9 +165,6 @@ monitor_subsys_time_init(
 		return( -1 );
 	}
 	
-	*ep = e;
-	ep = &mp->mp_next;
-
 	monitor_cache_release( mi, e_time );
 
 	return( 0 );

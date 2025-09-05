@@ -1,4 +1,4 @@
-/*	$NetBSD: emptyds.c,v 1.1.1.1 2025/09/05 21:09:44 christos Exp $	*/
+/*	$NetBSD: emptyds.c,v 1.2 2025/09/05 21:16:16 christos Exp $	*/
 
 /* emptyds.c */
 /* $OpenLDAP$ */
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: emptyds.c,v 1.1.1.1 2025/09/05 21:09:44 christos Exp $");
+__RCSID("$NetBSD: emptyds.c,v 1.2 2025/09/05 21:16:16 christos Exp $");
 
 #include "portable.h"
 #include "slap.h"

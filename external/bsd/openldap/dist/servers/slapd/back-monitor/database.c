@@ -1,10 +1,10 @@
-/*	$NetBSD: database.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* database.c - deals with database subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: database.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -173,7 +173,7 @@ monitor_subsys_overlay_init_one(
 
 	} else {
 		attr_merge( e_overlay, slap_schema.si_ad_namingContexts,
-				be->be_suffix, NULL );
+				be->be_suffix, be->be_nsuffix );
 	}
 
 	mp_overlay = monitor_entrypriv_create();
@@ -184,7 +184,7 @@ monitor_subsys_overlay_init_one(
 	mp_overlay->mp_info = ms;
 	mp_overlay->mp_flags = ms->mss_flags | MONITOR_F_SUB;
 	
-	if ( monitor_cache_add( mi, e_overlay ) ) {
+	if ( monitor_cache_add( mi, e_overlay, e_database ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_overlay_init_one: "
 			"unable to add entry "
@@ -194,8 +194,6 @@ monitor_subsys_overlay_init_one(
 	}
 
 	*ep_overlay = e_overlay;
-	ep_overlay = &mp_overlay->mp_next;
-
 	return 0;
 }
 
@@ -208,7 +206,8 @@ monitor_subsys_database_init_one(
 	monitor_subsys_t	*ms_overlay,
 	struct berval		*rdn,
 	Entry			*e_database,
-	Entry			***epp )
+	struct slap_overinst	*overlay,
+	Entry			**ep )
 {
 	char			buf[ BACKMONITOR_BUFSIZE ];
 	int			j;
@@ -259,9 +258,9 @@ monitor_subsys_database_init_one(
 
 	} else {
 		attr_merge( e, slap_schema.si_ad_namingContexts,
-			be->be_suffix, NULL );
+			be->be_suffix, be->be_nsuffix );
 		attr_merge( e_database, slap_schema.si_ad_namingContexts,
-			be->be_suffix, NULL );
+			be->be_suffix, be->be_nsuffix );
 
 		if ( SLAP_GLUE_SUBORDINATE( be ) ) {
 			BackendDB *sup_be = select_backend( &be->be_nsuffix[ 0 ], 1 );
@@ -353,7 +352,7 @@ monitor_subsys_database_init_one(
 		| MONITOR_F_SUB;
 	mp->mp_private = be;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_database ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_database_init_one: "
 			"unable to add entry \"%s,%s\"\n",
@@ -366,17 +365,20 @@ monitor_subsys_database_init_one(
 #endif /* defined(LDAP_SLAPI) */
 
 	if ( oi != NULL ) {
-		Entry		**ep_overlay = &mp->mp_children;
+		Entry		*e_overlay;
 		slap_overinst	*on = oi->oi_list;
 
 		for ( ; on; on = on->on_next ) {
 			monitor_subsys_overlay_init_one( mi, be,
-				ms, ms_overlay, on, e, ep_overlay );
+				ms, ms_overlay, on, e, &e_overlay );
+			if ( overlay == on ) {
+				*ep = e_overlay;
+			}
 		}
 	}
-
-	**epp = e;
-	*epp = &mp->mp_next;
+	if ( overlay == NULL ) {
+		*ep = e;
+	}
 
 	return 0;
 }
@@ -388,7 +390,7 @@ monitor_back_register_database_and_overlay(
 	struct berval		*ndn_out )
 {
 	monitor_info_t		*mi;
-	Entry			*e_database, **ep;
+	Entry			*e_database, *e = NULL;
 	int			i, rc;
 	monitor_entry_t		*mp;
 	monitor_subsys_t	*ms_backend,
@@ -448,16 +450,17 @@ monitor_back_register_database_and_overlay(
 		return( -1 );
 	}
 
+	/* FIXME: It's only safe since we're paused */
 	mp = ( monitor_entry_t * )e_database->e_private;
-	for ( i = -1, ep = &mp->mp_children; *ep; i++ ) {
-		mp = ( monitor_entry_t * )(*ep)->e_private;
+	for ( i = -1, e = mp->mp_children; e; i++ ) {
+		mp = ( monitor_entry_t * )e->e_private;
 
 		assert( mp != NULL );
 		if ( mp->mp_private == be->bd_self ) {
 			rc = 0;
 			goto done;
 		}
-		ep = &mp->mp_next;
+		e = mp->mp_next;
 	}
 
 	bv.bv_val = buf;
@@ -468,40 +471,15 @@ monitor_back_register_database_and_overlay(
 	}
 	
 	rc = monitor_subsys_database_init_one( mi, be,
-		ms_database, ms_backend, ms_overlay, &bv, e_database, &ep );
+		ms_database, ms_backend, ms_overlay, &bv, e_database, on, &e );
 	if ( rc != 0 ) {
 		goto done;
 	}
-	/* database_init_one advanced ep past where we want.
-	 * But it stored the entry we want in mp->mp_next.
-	 */
-	ep = &mp->mp_next;
 
 done:;
 	monitor_cache_release( mi, e_database );
-	if ( rc == 0 && ndn_out && ep && *ep ) {
-		if ( on ) {
-			Entry *e_ov;
-			struct berval ov_type;
-
-			ber_str2bv( on->on_bi.bi_type, 0, 0, &ov_type );
-
-			mp = ( monitor_entry_t * ) (*ep)->e_private;
-			for ( e_ov = mp->mp_children; e_ov; ) {
-				Attribute *a = attr_find( e_ov->e_attrs, mi->mi_ad_monitoredInfo );
-
-				if ( a != NULL && bvmatch( &a->a_nvals[ 0 ], &ov_type ) ) {
-					*ndn_out = e_ov->e_nname;
-					break;
-				}
-
-				mp = ( monitor_entry_t * ) e_ov->e_private;
-				e_ov = mp->mp_next;
-			}
-			
-		} else {
-			*ndn_out = (*ep)->e_nname;
-		}
+	if ( rc == 0 && ndn_out && e ) {
+		*ndn_out = e->e_nname;
 	}
 
 	return rc;
@@ -530,9 +508,8 @@ monitor_subsys_database_init(
 	monitor_subsys_t	*ms )
 {
 	monitor_info_t		*mi;
-	Entry			*e_database, **ep;
+	Entry			*e_database, *e;
 	int			i, rc;
-	monitor_entry_t		*mp;
 	monitor_subsys_t	*ms_backend,
 				*ms_overlay;
 	struct berval		bv;
@@ -574,13 +551,9 @@ monitor_subsys_database_init(
 	(void)init_readOnly( mi, e_database, frontendDB->be_restrictops );
 	(void)init_restrictedOperation( mi, e_database, frontendDB->be_restrictops );
 
-	mp = ( monitor_entry_t * )e_database->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
-
 	BER_BVSTR( &bv, "cn=Frontend" );
 	rc = monitor_subsys_database_init_one( mi, frontendDB,
-		ms, ms_backend, ms_overlay, &bv, e_database, &ep );
+		ms, ms_backend, ms_overlay, &bv, e_database, NULL, &e );
 	if ( rc != 0 ) {
 		return rc;
 	}
@@ -596,7 +569,7 @@ monitor_subsys_database_init(
 		}
 		
 		rc = monitor_subsys_database_init_one( mi, be,
-			ms, ms_backend, ms_overlay, &bv, e_database, &ep );
+			ms, ms_backend, ms_overlay, &bv, e_database, NULL, &e );
 		if ( rc != 0 ) {
 			return rc;
 		}

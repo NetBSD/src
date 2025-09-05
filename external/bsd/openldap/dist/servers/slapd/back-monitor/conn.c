@@ -1,10 +1,10 @@
-/*	$NetBSD: conn.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: conn.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* conn.c - deal with connection subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conn.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: conn.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -53,7 +53,7 @@ monitor_subsys_conn_init(
 	monitor_subsys_t	*ms )
 {
 	monitor_info_t	*mi;
-	Entry		*e, **ep, *e_conn;
+	Entry		*e, *e_conn;
 	monitor_entry_t	*mp;
 	char		buf[ BACKMONITOR_BUFSIZE ];
 	struct berval	bv;
@@ -74,8 +74,6 @@ monitor_subsys_conn_init(
 	}
 
 	mp = ( monitor_entry_t * )e_conn->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
 
 	/*
 	 * Max file descriptors
@@ -111,7 +109,7 @@ monitor_subsys_conn_init(
 		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 	mp->mp_flags &= ~MONITOR_F_VOLATILE_CH;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_conn ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_conn_init: "
 			"unable to add entry \"cn=Total,%s\"\n",
@@ -119,9 +117,6 @@ monitor_subsys_conn_init(
 		return( -1 );
 	}
 
-	*ep = e;
-	ep = &mp->mp_next;
-	
 	/*
 	 * Total conns
 	 */
@@ -150,7 +145,7 @@ monitor_subsys_conn_init(
 		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 	mp->mp_flags &= ~MONITOR_F_VOLATILE_CH;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_conn ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_conn_init: "
 			"unable to add entry \"cn=Total,%s\"\n",
@@ -158,9 +153,6 @@ monitor_subsys_conn_init(
 		return( -1 );
 	}
 
-	*ep = e;
-	ep = &mp->mp_next;
-	
 	/*
 	 * Current conns
 	 */
@@ -189,7 +181,7 @@ monitor_subsys_conn_init(
 		| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 	mp->mp_flags &= ~MONITOR_F_VOLATILE_CH;
 
-	if ( monitor_cache_add( mi, e ) ) {
+	if ( monitor_cache_add( mi, e, e_conn ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_conn_init: "
 			"unable to add entry \"cn=Current,%s\"\n",
@@ -197,9 +189,6 @@ monitor_subsys_conn_init(
 		return( -1 );
 	}
 	
-	*ep = e;
-	ep = &mp->mp_next;
-
 	monitor_cache_release( mi, e_conn );
 
 	return( 0 );
@@ -373,6 +362,9 @@ conn_create(
 
 	bv.bv_len = snprintf( buf, sizeof( buf ), "%ld", c->c_n_ops_completed );
 	attr_merge_one( e, mi->mi_ad_monitorConnectionOpsCompleted, &bv, NULL );
+
+	bv.bv_len = snprintf( buf, sizeof( buf ), "%ld", c->c_n_ops_async );
+	attr_merge_one( e, mi->mi_ad_monitorConnectionOpsAsync, &bv, NULL );
 
 	bv.bv_len = snprintf( buf, sizeof( buf ), "%ld", c->c_n_get );
 	attr_merge_one( e, mi->mi_ad_monitorConnectionGet, &bv, NULL );

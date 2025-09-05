@@ -1,9 +1,9 @@
-/*	$NetBSD: sql-wrap.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
+/*	$NetBSD: sql-wrap.c,v 1.4 2025/09/05 21:16:31 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sql-wrap.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
+__RCSID("$NetBSD: sql-wrap.c,v 1.4 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 

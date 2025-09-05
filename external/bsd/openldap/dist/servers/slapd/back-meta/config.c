@@ -1,9 +1,9 @@
-/*	$NetBSD: config.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -570,16 +570,10 @@ meta_rwi_init( struct rewrite_info **rwm_rw )
 
 static int
 meta_back_new_target(
-	metatarget_t	**mtp )
+	metatarget_t	*mt )
 {
-	metatarget_t		*mt;
-
-	*mtp = NULL;
-
-	mt = ch_calloc( sizeof( metatarget_t ), 1 );
 
 	if ( meta_rwi_init( &mt->mt_rwmap.rwm_rw )) {
-		ch_free( mt );
 		return -1;
 	}
 
@@ -591,8 +585,6 @@ meta_back_new_target(
 
 	/* by default, use proxyAuthz control on each operation */
 	mt->mt_idassert_flags = LDAP_BACK_AUTH_PRESCRIPTIVE;
-
-	*mtp = mt;
 
 	return 0;
 }
@@ -1965,7 +1957,6 @@ meta_back_cf_gen( ConfigArgs *c )
 		LDAPURLDesc 	*ludp;
 		struct berval	dn;
 		int		j;
-
 		char		**uris = NULL;
 
 		if ( c->be->be_nsuffix == NULL ) {
@@ -1975,38 +1966,16 @@ meta_back_cf_gen( ConfigArgs *c )
 			return 1;
 		}
 
-		i = mi->mi_ntargets++;
-
-		mi->mi_targets = ( metatarget_t ** )ch_realloc( mi->mi_targets,
-			sizeof( metatarget_t * ) * mi->mi_ntargets );
-		if ( mi->mi_targets == NULL ) {
-			snprintf( c->cr_msg, sizeof( c->cr_msg ),
-				"out of memory while storing server name"
-				" in \"%s <protocol>://<server>[:port]/<naming context>\"",
-				c->argv[0] );
-			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
-			return 1;
-		}
-
-		if ( meta_back_new_target( &mi->mi_targets[ i ] ) != 0 ) {
+		mt = ch_calloc( sizeof( metatarget_t ), 1 );
+		if ( meta_back_new_target( mt ) != 0 ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"unable to init server"
 				" in \"%s <protocol>://<server>[:port]/<naming context>\"",
 				c->argv[0] );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
+			meta_back_target_free( mt );
 			return 1;
 		}
-
-		mt = mi->mi_targets[ i ];
-
-		mt->mt_rebind_f = mi->mi_rebind_f;
-		mt->mt_urllist_f = mi->mi_urllist_f;
-		mt->mt_urllist_p = mt;
-
-		if ( META_BACK_QUARANTINE( mi ) ) {
-			ldap_pvt_thread_mutex_init( &mt->mt_quarantine_mutex );
-		}
-		mt->mt_mc = mi->mi_mc;
 
 		for ( j = 1; j < c->argc; j++ ) {
 			char	**tmpuris = ldap_str2charray( c->argv[ j ], "\t" );
@@ -2017,6 +1986,7 @@ meta_back_cf_gen( ConfigArgs *c )
 					" in \"%s <protocol>://<server>[:port]/<naming context>\"",
 					j-1, c->argv[0] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
+				meta_back_target_free( mt );
 				return 1;
 			}
 
@@ -2045,6 +2015,7 @@ meta_back_cf_gen( ConfigArgs *c )
 					j-1, c->argv[0] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				ldap_charray_free( uris );
+				meta_back_target_free( mt );
 				return 1;
 			}
 
@@ -2061,6 +2032,7 @@ meta_back_cf_gen( ConfigArgs *c )
 					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					ldap_free_urllist( ludp );
 					ldap_charray_free( uris );
+					meta_back_target_free( mt );
 					return 1;
 				}
 
@@ -2077,6 +2049,7 @@ meta_back_cf_gen( ConfigArgs *c )
 					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					ldap_free_urllist( ludp );
 					ldap_charray_free( uris );
+					meta_back_target_free( mt );
 					return( 1 );
 				}
 
@@ -2099,6 +2072,7 @@ meta_back_cf_gen( ConfigArgs *c )
 					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					ldap_free_urllist( ludp );
 					ldap_charray_free( uris );
+					meta_back_target_free( mt );
 					return( 1 );
 				}
 
@@ -2110,6 +2084,7 @@ meta_back_cf_gen( ConfigArgs *c )
 					Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 					ldap_free_urllist( ludp );
 					ldap_charray_free( uris );
+					meta_back_target_free( mt );
 					return( 1 );
 
 				}
@@ -2121,6 +2096,7 @@ meta_back_cf_gen( ConfigArgs *c )
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "no memory?" );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 				ldap_charray_free( uris );
+				meta_back_target_free( mt );
 				return( 1 );
 			}
 			ldap_memfree( uris[ j ] );
@@ -2132,6 +2108,7 @@ meta_back_cf_gen( ConfigArgs *c )
 		if ( mt->mt_uri == NULL) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "no memory?" );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
+			meta_back_target_free( mt );
 			return( 1 );
 		}
 
@@ -2148,8 +2125,34 @@ meta_back_cf_gen( ConfigArgs *c )
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"<naming context> of URI must be within the naming context of this database." );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
+			meta_back_target_free( mt );
 			return 1;
 		}
+
+		i = mi->mi_ntargets++;
+
+		mi->mi_targets = ( metatarget_t ** )ch_realloc( mi->mi_targets,
+			sizeof( metatarget_t * ) * mi->mi_ntargets );
+		if ( mi->mi_targets == NULL ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"out of memory while storing server name"
+				" in \"%s <protocol>://<server>[:port]/<naming context>\"",
+				c->argv[0] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
+			meta_back_target_free( mt );
+			return 1;
+		}
+
+		mi->mi_targets[i] = mt;
+		mt->mt_rebind_f = mi->mi_rebind_f;
+		mt->mt_urllist_f = mi->mi_urllist_f;
+		mt->mt_urllist_p = mt;
+
+		if ( META_BACK_QUARANTINE( mi ) ) {
+			ldap_pvt_thread_mutex_init( &mt->mt_quarantine_mutex );
+		}
+
+		mt->mt_mc = mi->mi_mc;
 		c->ca_private = mt;
 		config_push_cleanup( c, meta_cf_cleanup );
 	} break;
@@ -2667,7 +2670,6 @@ idassert-authzFrom	"dn:<rootdn>"
 						c->fname, c->lineno, ca.argc, ca.argv );
 				}
 				assert( rc == 0 );
-				ch_free( ca.argv );
 				ch_free( ca.tline );
 			}
 		}
@@ -2704,9 +2706,9 @@ idassert-authzFrom	"dn:<rootdn>"
 						c->fname, c->lineno, ca.argc, argv );
 				}
 				assert( rc == 0 );
-				ch_free( ca.argv );
 				ch_free( ca.tline );
 			}
+			ch_free( ca.argv );
 		}
 
 		/* save the rule info */
@@ -2723,7 +2725,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			/* move it to the right slot */
 			if ( ix < cnt ) {
 				for ( i=cnt; i>ix; i-- )
-					mt->mt_rwmap.rwm_bva_rewrite[i+1] = mt->mt_rwmap.rwm_bva_rewrite[i];
+					mt->mt_rwmap.rwm_bva_rewrite[i] = mt->mt_rwmap.rwm_bva_rewrite[i-1];
 				mt->mt_rwmap.rwm_bva_rewrite[i] = bv;
 
 				/* destroy old rules */
@@ -2735,7 +2737,7 @@ idassert-authzFrom	"dn:<rootdn>"
 	case LDAP_BACK_CFG_MAP: {
 	/* objectclass/attribute mapping */
 		ConfigArgs ca = { 0 };
-		char *argv[5];
+		char *argv[5], **argvp;
 		struct ldapmap rwm_oc;
 		struct ldapmap rwm_at;
 		int cnt = 0, ix = c->valx;
@@ -2768,7 +2770,8 @@ idassert-authzFrom	"dn:<rootdn>"
 				argv[2] = ca.argv[1];
 				argv[3] = ca.argv[2];
 				argv[4] = ca.argv[3];
-				ch_free( ca.argv );
+
+				argvp = ca.argv;
 				ca.argv = argv;
 				ca.argc++;
 				rc = ldap_back_map_config( &ca, &mt->mt_rwmap.rwm_oc,
@@ -2776,7 +2779,7 @@ idassert-authzFrom	"dn:<rootdn>"
 
 				ch_free( ca.tline );
 				ca.tline = NULL;
-				ca.argv = NULL;
+				ca.argv = argvp;
 
 				/* in case of failure, restore
 				 * the existing mapping */
@@ -2793,7 +2796,7 @@ idassert-authzFrom	"dn:<rootdn>"
 		}
 
 		if ( ix < cnt ) {
-			for ( ; i<cnt ; cnt++ ) {
+			for ( ; i<cnt ; i++ ) {
 				ca.line = mt->mt_rwmap.rwm_bva_map[ i ].bv_val;
 				ca.argc = 0;
 				config_fp_parse_line( &ca );
@@ -2803,7 +2806,7 @@ idassert-authzFrom	"dn:<rootdn>"
 				argv[3] = ca.argv[2];
 				argv[4] = ca.argv[3];
 
-				ch_free( ca.argv );
+				argvp = ca.argv;
 				ca.argv = argv;
 				ca.argc++;
 				rc = ldap_back_map_config( &ca, &mt->mt_rwmap.rwm_oc,
@@ -2811,7 +2814,7 @@ idassert-authzFrom	"dn:<rootdn>"
 
 				ch_free( ca.tline );
 				ca.tline = NULL;
-				ca.argv = NULL;
+				ca.argv = argvp;
 
 				/* in case of failure, restore
 				 * the existing mapping */
@@ -2819,6 +2822,7 @@ idassert-authzFrom	"dn:<rootdn>"
 					goto map_fail;
 				}
 			}
+			ch_free( ca.argv );
 		}
 
 		/* save the map info */
@@ -2830,7 +2834,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			/* move it to the right slot */
 			if ( ix < cnt ) {
 				for ( i=cnt; i>ix; i-- )
-					mt->mt_rwmap.rwm_bva_map[i+1] = mt->mt_rwmap.rwm_bva_map[i];
+					mt->mt_rwmap.rwm_bva_map[i] = mt->mt_rwmap.rwm_bva_map[i-1];
 				mt->mt_rwmap.rwm_bva_map[i] = bv;
 
 				/* destroy old mapping */
@@ -2846,6 +2850,7 @@ map_fail:;
 			meta_back_map_free( &mt->mt_rwmap.rwm_at );
 			mt->mt_rwmap.rwm_oc = rwm_oc;
 			mt->mt_rwmap.rwm_at = rwm_at;
+			ch_free( ca.argv );
 		}
 		} break;
 
@@ -2918,9 +2923,11 @@ map_fail:;
 		break;
 #endif /* SLAPD_META_CLIENT_PR */
 
-	case LDAP_BACK_CFG_KEEPALIVE:
-		slap_keepalive_parse( ber_bvstrdup(c->argv[1]),
-				 &mt->mt_tls.sb_keepalive, 0, 0, 0);
+	case LDAP_BACK_CFG_KEEPALIVE: {
+		struct berval bv;
+		ber_str2bv( c->argv[ 1 ], 0, 1, &bv );
+		slap_keepalive_parse( &bv, &mt->mt_tls.sb_keepalive, 0, 0, 0 );
+		}
 		break;
 
 	case LDAP_BACK_CFG_TCP_USER_TIMEOUT:

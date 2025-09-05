@@ -1,10 +1,10 @@
-/*	$NetBSD: id2entry.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: id2entry.c,v 1.4 2025/09/05 21:16:27 christos Exp $	*/
 
 /* id2entry.c - routines to deal with the id2entry database */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: id2entry.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: id2entry.c,v 1.4 2025/09/05 21:16:27 christos Exp $");
 
 #include "portable.h"
 
@@ -91,7 +91,7 @@ mdb_id2v_dupsort(
 	bv1.bv_val = usrkey[1].mv_data;
 	bv1.bv_len = usrkey[1].mv_size;
 
-	if (ad) {
+	if (ad && ad->ad_type->sat_equality) {
 		MatchingRule *mr = ad->ad_type->sat_equality;
 		rc = mr->smr_match(&match, SLAP_MR_EQUALITY
 		| SLAP_MR_VALUE_OF_ASSERTION_SYNTAX
@@ -470,10 +470,13 @@ int mdb_id2entry_delete(
 	MDB_dbi dbi = mdb->mi_id2entry;
 	MDB_val key;
 	MDB_cursor *mvc;
+	char kbuf[sizeof(ID) + sizeof(unsigned short)];
 	int rc;
 
-	key.mv_data = &e->e_id;
-	key.mv_size = sizeof(ID);
+	memcpy( kbuf, &e->e_id, sizeof(ID) );
+	memset( kbuf+sizeof(ID), 0, sizeof(unsigned short) );
+	key.mv_data = kbuf;
+	key.mv_size = sizeof(kbuf);
 
 	/* delete from database */
 	rc = mdb_del( tid, dbi, &key, NULL );
@@ -495,7 +498,8 @@ int mdb_id2entry_delete(
 			return rc;
 		rc = mdb_cursor_get( mvc, &key, NULL, MDB_GET_CURRENT );
 		if (rc) {
-			if (rc == MDB_NOTFOUND)
+			/* no record or DB is empty */
+			if (rc == MDB_NOTFOUND || rc == EINVAL)
 				rc = MDB_SUCCESS;
 			break;
 		}
@@ -553,17 +557,23 @@ int mdb_entry_release(
 {
 	struct mdb_info *mdb = (struct mdb_info *) op->o_bd->be_private;
 	struct mdb_op_info *moi = NULL;
+	int release = 1;
  
 	/* slapMode : SLAP_SERVER_MODE, SLAP_TOOL_MODE,
 			SLAP_TRUNCATE_MODE, SLAP_UNDEFINED_MODE */
  
-	int release = 1;
 	if ( slapMode & SLAP_SERVER_MODE ) {
 		OpExtra *oex;
+
+		/* Only Add ops call with rw set, and in that case the entry
+		 * was not created by the backend. So always just release it.
+		 *
+		 * Otherwise, the entry was read from a backend, and we need
+		 * to be sure it was read from this backend, otherwise leave
+		 * it alone for someone else to release.
+		 */
 		LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
-			release = 0;
 			if ( oex->oe_key == mdb ) {
-				mdb_entry_return( op, e );
 				moi = (mdb_op_info *)oex;
 				/* If it was setup by entry_get we should probably free it */
 				if (( moi->moi_flag & (MOI_FREEIT|MOI_KEEPER)) == MOI_FREEIT ) {
@@ -578,12 +588,15 @@ int mdb_entry_release(
 				break;
 			}
 		}
+		/* If read, other backends were in use, and not ours, don't release */
+		if ( !rw && ( LDAP_SLIST_FIRST( &op->o_extra ) && !oex ))
+			release = 0;
 	}
 
 	if (release)
 		mdb_entry_return( op, e );
  
-	return 0;
+	return release ? 0 : SLAP_CB_CONTINUE;
 }
 
 /* return LDAP_SUCCESS IFF we can retrieve the specified entry.
@@ -780,7 +793,17 @@ mdb_opinfo_get( Operation *op, struct mdb_info *mdb, int rdonly, mdb_op_info **m
 			return rc;
 		}
 		if ( ldap_pvt_thread_pool_getkey( ctx, mdb->mi_dbenv, &data, NULL ) ) {
+			int retried = 0;
+retry:
 			rc = mdb_txn_begin( mdb->mi_dbenv, NULL, MDB_RDONLY, &moi->moi_txn );
+			if (rc == MDB_READERS_FULL && !retried) {
+				int dead;
+				/* if any stale readers were cleared, a slot should be available */
+				if (!mdb_reader_check( mdb->mi_dbenv, &dead ) && dead) {
+					retried = 1;
+					goto retry;
+				}
+			}
 			if (rc) {
 				Debug( LDAP_DEBUG_ANY, "mdb_opinfo_get: err %s(%d)\n",
 					mdb_strerror(rc), rc );

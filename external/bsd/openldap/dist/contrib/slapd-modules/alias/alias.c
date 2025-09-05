@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.1.1.1 2025/09/05 21:09:45 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.2 2025/09/05 21:16:15 christos Exp $	*/
 
 /* alias.c - expose an attribute under a different name */
 /* $OpenLDAP$ */
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alias.c,v 1.1.1.1 2025/09/05 21:09:45 christos Exp $");
+__RCSID("$NetBSD: alias.c,v 1.2 2025/09/05 21:16:15 christos Exp $");
 
 #include "portable.h"
 

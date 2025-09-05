@@ -1,9 +1,9 @@
-/*	$NetBSD: tpool.c,v 1.2 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: tpool.c,v 1.3 2025/09/05 21:16:22 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tpool.c,v 1.2 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: tpool.c,v 1.3 2025/09/05 21:16:22 christos Exp $");
 
 #include "portable.h"
 
@@ -774,6 +774,12 @@ ldap_pvt_thread_pool_query(
 		}
 		break;
 
+	case LDAP_PVT_THREAD_POOL_PARAM_PAUSED:
+		ldap_pvt_thread_mutex_lock(&pool->ltp_mutex);
+		count = (pool->ltp_pause == PAUSED);
+		ldap_pvt_thread_mutex_unlock(&pool->ltp_mutex);
+		break;
+
 	case LDAP_PVT_THREAD_POOL_PARAM_UNKNOWN:
 		break;
 	}
@@ -1241,9 +1247,24 @@ ldap_pvt_thread_pool_unidle( ldap_pvt_thread_pool_t *tpool )
  * Return 1 if we waited, 0 if not, -1 at parameter error.
  */
 int
-ldap_pvt_thread_pool_pausecheck( ldap_pvt_thread_pool_t *tpool )
+ldap_pvt_thread_pool_pausewait( ldap_pvt_thread_pool_t *tpool )
 {
 	return handle_pause(tpool, PAUSE_ARG(CHECK_PAUSE));
+}
+
+/* Return 1 if a pause has been requested */
+int
+ldap_pvt_thread_pool_pausequery( ldap_pvt_thread_pool_t *tpool )
+{
+	struct ldap_int_thread_pool_s *pool;
+	if ( !tpool )
+		return -1;
+
+	pool = *tpool;
+	if ( !pool )
+		return 0;
+
+	return pool->ltp_pause != 0;
 }
 
 /*

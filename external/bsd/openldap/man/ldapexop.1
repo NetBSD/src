@@ -43,10 +43,6 @@ ldapexop
 [\c
 .BI \-H \ URI\fR]
 [\c
-.BI \-h \ ldaphost\fR]
-[\c
-.BI \-p \ ldapport\fR]
-[\c
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
 [\c
 .BI \-o \ opt \fR[= optparam \fR]]
@@ -91,7 +87,7 @@ or using the additional parameters in the case of the specially named extended
 operations above.
 
 Please note that ldapexop behaves differently for the same extended operation
-when it was given as an OID or as a specialliy named operation:
+when it was given as an OID or as a specially named operation:
 
 Calling ldapexop with the OID of the \fBwhoami\fP (RFC 4532) extended operation
 .nf
@@ -161,14 +157,6 @@ Specify URI(s) referring to the ldap server(s); only the protocol/host/port
 fields are allowed; a list of URI, separated by whitespace or commas
 is expected.
 .TP
-.BI \-h \ ldaphost
-Specify the host on which the ldap server is running.
-Deprecated in favor of \fB\-H\fP.
-.TP
-.BI \-p \ ldapport
-Specify the TCP port where the ldap server is listening.
-Deprecated in favor of \fB\-H\fP.
-.TP
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 Specify general extensions.  \'!\' indicates criticality.
 .nf
@@ -182,7 +170,7 @@ Specify general extensions.  \'!\' indicates criticality.
   [!]postread[=<attrs>] (a comma-separated attribute list)
   [!]preread[=<attrs>]  (a comma-separated attribute list)
   [!]relax
-  sessiontracking
+  sessiontracking[=<username>]
   abandon,cancel,ignore (SIGINT sends abandon/cancel,
   or ignores response; if critical, doesn't wait for SIGINT.
   not really controls)
@@ -190,13 +178,14 @@ Specify general extensions.  \'!\' indicates criticality.
 .TP
 .BI \-o \ opt \fR[= optparam \fR]
 
-Specify general options.
-
-General options:
+Specify any
+.BR ldap.conf (5)
+option or one of the following:
 .nf
   nettimeout=<timeout>  (in seconds, or "none" or "max")
-  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+  ldif_wrap=<width>     (in columns, or "no" for no wrapping)
 .fi
+
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.
@@ -256,5 +245,5 @@ Do not expect it to be complete or absolutely correct.
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 253 stdin
+.lf 242 stdin
 

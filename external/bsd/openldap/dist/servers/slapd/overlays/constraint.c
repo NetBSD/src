@@ -1,4 +1,4 @@
-/*	$NetBSD: constraint.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: constraint.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* constraint.c - Overlay to constrain attributes to certain values */
@@ -20,7 +20,7 @@
  *			Emmanuel Dreyfus <manu@netbsd.org>
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: constraint.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: constraint.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -374,6 +374,7 @@ constraint_cf_gen( ConfigArgs *c )
 						ap.attrs[i] = NULL;
 						if ( slap_str2ad( ap.lud->lud_attrs[i], &ap.attrs[i], &text ) ) {
 							ch_free( ap.attrs );
+							ap.attrs = NULL;
 							snprintf( c->cr_msg, sizeof( c->cr_msg ),
 								"%s <%s>: %s\n", c->argv[0], ap.lud->lud_attrs[i], text );
 							rc = ARG_BAD_CONF;
@@ -542,8 +543,8 @@ constraint_cf_gen( ConfigArgs *c )
 
 done:;
 			if ( rc == LDAP_SUCCESS ) {
-				constraint *a2 = ch_calloc( sizeof(constraint), 1 );
-				a2->ap_next = on->on_bi.bi_private;
+				constraint **app, *a2 = ch_calloc( sizeof(constraint), 1 );
+
 				a2->ap = ap.ap;
 				a2->type = ap.type;
 				a2->re = ap.re;
@@ -561,7 +562,12 @@ done:;
 				a2->restrict_ndn = ap.restrict_ndn;
 				a2->restrict_filter = ap.restrict_filter;
 				a2->restrict_val = ap.restrict_val;
-				on->on_bi.bi_private = a2;
+
+				for ( app = (constraint **)&on->on_bi.bi_private; *app; app = &(*app)->ap_next )
+					/* Get to the end */ ;
+
+				a2->ap_next = *app;
+				*app = a2;
 
 			} else {
 				Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
@@ -816,7 +822,7 @@ constraint_add( Operation *op, SlapReply *rs )
 	int rc = 0;
 	char *msg = NULL;
 
-	if (get_relax(op) || SLAPD_SYNC_IS_SYNCCONN( op->o_connid )) {
+	if ( get_relax(op) || be_shadow_update( op ) ) {
 		return SLAP_CB_CONTINUE;
 	}
 
@@ -958,7 +964,7 @@ constraint_update( Operation *op, SlapReply *rs )
 	char *msg = NULL;
 	int is_v;
 
-	if (get_relax(op) || SLAPD_SYNC_IS_SYNCCONN( op->o_connid )) {
+	if ( get_relax(op) || be_shadow_update( op ) ) {
 		return SLAP_CB_CONTINUE;
 	}
 
@@ -1056,23 +1062,10 @@ constraint_update( Operation *op, SlapReply *rs )
 
 					target_entry_copy = entry_dup(target_entry);
 
-					/* if rename, set the new entry's name
-					 * (in normalized form only) */
+					/* if rename, set the new entry's name */
 					if ( op->o_tag == LDAP_REQ_MODRDN ) {
-						struct berval pdn, ndn = BER_BVNULL;
-
-						if ( op->orr_nnewSup ) {
-							pdn = *op->orr_nnewSup;
-
-						} else {
-							dnParent( &target_entry_copy->e_nname, &pdn );
-						}
-
-						build_new_dn( &ndn, &pdn, &op->orr_nnewrdn, NULL ); 
-
-						ber_memfree( target_entry_copy->e_nname.bv_val );
-						target_entry_copy->e_nname = ndn;
-						ber_bvreplace( &target_entry_copy->e_name, &ndn );
+						ber_bvreplace( &target_entry_copy->e_name, &op->orr_newDN );
+						ber_bvreplace( &target_entry_copy->e_nname, &op->orr_nnewDN );
 					}
 
 					/* apply modifications, in an attempt

@@ -1,10 +1,10 @@
-/*	$NetBSD: valsort.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: valsort.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* valsort.c - sort attribute values */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2021 The OpenLDAP Foundation.
+ * Copyright 2005-2024 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -26,7 +26,7 @@
  * them in a search response.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: valsort.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: valsort.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -93,7 +93,7 @@ static Syntax *syn_numericString;
 static int
 valsort_cf_func(ConfigArgs *c) {
 	slap_overinst *on = (slap_overinst *)c->bi;
-	valsort_info vitmp, *vi;
+	valsort_info vitmp, *vi, **vip;
 	const char *text = NULL;
 	int i, is_numeric;
 	struct berval bv = BER_BVNULL;
@@ -205,10 +205,14 @@ valsort_cf_func(ConfigArgs *c) {
 			c->log, c->cr_msg, c->argv[1] );
 		return(1);
 	}
+
+	for ( vip = (valsort_info **)&on->on_bi.bi_private; *vip; vip = &(*vip)->vi_next )
+		/* Get to the end */ ;
+
 	vi = ch_malloc( sizeof(valsort_info) );
 	*vi = vitmp;
-	vi->vi_next = on->on_bi.bi_private;
-	on->on_bi.bi_private = vi;
+	vi->vi_next = *vip;
+	*vip = vi;
 	return 0;
 }
 

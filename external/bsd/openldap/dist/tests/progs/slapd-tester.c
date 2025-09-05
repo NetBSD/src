@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-tester.c,v 1.3 2021/08/14 16:15:03 christos Exp $	*/
+/*	$NetBSD: slapd-tester.c,v 1.4 2025/09/05 21:16:33 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapd-tester.c,v 1.3 2021/08/14 16:15:03 christos Exp $");
+__RCSID("$NetBSD: slapd-tester.c,v 1.4 2025/09/05 21:16:33 christos Exp $");
 
 #include "portable.h"
 
@@ -411,6 +411,9 @@ main( int argc, char **argv )
 
 	if ( pw_ask ) {
 		passwd = getpassphrase( _("Enter LDAP Password: ") );
+		if ( passwd == NULL ) { /* Allow EOF to exit. */
+			exit( EXIT_FAILURE );
+		}
 
 	} else if ( pw_file ) {
 		struct berval	pw;

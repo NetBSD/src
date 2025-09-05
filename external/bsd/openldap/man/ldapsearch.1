@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAPSEARCH 1 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAPSEARCH 1 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapsearch \- LDAP search tool
@@ -57,10 +57,6 @@ ldapsearch \- LDAP search tool
 .BI \-y \ passwdfile\fR]
 [\c
 .BI \-H \ ldapuri\fR]
-[\c
-.BI \-h \ ldaphost\fR]
-[\c
-.BI \-p \ ldapport\fR]
 [\c
 .BR \-P \ { 2 \||\| 3 }]
 [\c
@@ -148,11 +144,13 @@ files.
 .TP
 .BI \-T \ path
 Write temporary files to directory specified by \fIpath\fP (default:
-\fB/var/tmp/\fP)
+\fBsystem default tmp directory\fP). The environment variables \fBTMPDIR\fP,
+\fBTMP\fP, or \fBTEMP\fP will override the default path.
 .TP
 .BI \-F \ prefix
 URL prefix for temporary files.  Default is \fBfile://\fIpath\fP where
-\fIpath\fP is \fB/var/tmp/\fP or specified with \fB\-T\fP.
+\fIpath\fP is the \fBsystem default tmp directory\fP or the value specified
+with \fB\-T\fP.
 .TP
 .B \-A
 Retrieve attributes only (no values).  This is useful when you just want to
@@ -280,14 +278,6 @@ DNS SRV records, according to RFC 2782.  The DN must be a non-empty
 sequence of AVAs whose attribute type is "dc" (domain component),
 and must be escaped according to RFC 2396.
 .TP
-.BI \-h \ ldaphost
-Specify an alternate host on which the ldap server is running.
-Deprecated in favor of \fB\-H\fP.
-.TP
-.BI \-p \ ldapport
-Specify an alternate TCP port where the ldap server is listening.
-Deprecated in favor of \fB\-H\fP.
-.TP
 .BR \-P \ { 2 \||\| 3 }
 Specify the LDAP protocol version to use.
 .TP
@@ -310,7 +300,7 @@ General extensions:
   [!]postread[=<attrs>] (a comma-separated attribute list)
   [!]preread[=<attrs>]  (a comma-separated attribute list)
   [!]relax
-  sessiontracking
+  sessiontracking[=<username>]
   abandon,cancel,ignore (SIGINT sends abandon/cancel,
   or ignores response; if critical, doesn't wait for SIGINT.
   not really controls)
@@ -328,18 +318,19 @@ Search extensions:
           rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)
   [!]vlv=<before>/<after>(/<offset>/<count>|:<value>)  (virtual list view)
   [!]deref=derefAttr:attr[,attr[...]][;derefAttr:attr[,attr[...]]]
-  [!]<oid>[=<value>]
+  [!]<oid>[=:<value>|::<b64value>]
 .fi
 .TP
 .BI \-o \ opt \fR[= optparam \fR]
 
-Specify general options.
-
-General options:
+Specify any
+.BR ldap.conf (5)
+option or one of the following:
 .nf
   nettimeout=<timeout>  (in seconds, or "none" or "max")
-  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+  ldif_wrap=<width>     (in columns, or "no" for no wrapping)
 .fi
+
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.
@@ -465,7 +456,7 @@ and printed to standard output, resulting in output similar to this:
 .nf
     dn: o=University of Alaska Fairbanks,c=US
     o: University of Alaska Fairbanks
-    description: Preparing Alaska for a brave new yesterday
+    description: Naturally Inspiring
     description: leaf node only
 
     dn: o=University of Colorado at Boulder,c=US
@@ -510,4 +501,4 @@ The OpenLDAP Project <http://www.openldap.org/>
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 507 stdin
+.lf 498 stdin

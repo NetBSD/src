@@ -1,10 +1,10 @@
-/*	$NetBSD: op.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
+/*	$NetBSD: op.c,v 1.4 2025/09/05 21:16:30 christos Exp $	*/
 
 /* op.c - relay backend operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: op.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
+__RCSID("$NetBSD: op.c,v 1.4 2025/09/05 21:16:30 christos Exp $");
 
 #include "portable.h"
 

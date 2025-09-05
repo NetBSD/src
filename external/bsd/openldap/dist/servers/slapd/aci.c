@@ -1,10 +1,10 @@
-/*	$NetBSD: aci.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: aci.c,v 1.4 2025/09/05 21:16:24 christos Exp $	*/
 
 /* aci.c - routines to parse and check acl's */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aci.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: aci.c,v 1.4 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: aci.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 #include "slap.h"
 #include "lber_pvt.h"
 #include "lutil.h"
+#include "slap-config.h"
 
 /* use most appropriate size */
 #define ACI_BUF_SIZE 			1024
@@ -746,8 +747,7 @@ aci_init( void )
 
 static int
 dynacl_aci_parse(
-	const char *fname,
-	int lineno,
+	ConfigArgs *c,
 	const char *opts,
 	slap_style_t sty,
 	const char *right,
@@ -757,17 +757,19 @@ dynacl_aci_parse(
 	const char		*text = NULL;
 
 	if ( sty != ACL_STYLE_REGEX && sty != ACL_STYLE_BASE ) {
-		fprintf( stderr, "%s: line %d: "
-			"inappropriate style \"%s\" in \"aci\" by clause\n",
-			fname, lineno, style_strings[sty] );
+		snprintf( c->cr_msg, sizeof( c->cr_msg ),
+			"inappropriate style \"%s\" in \"aci\" by clause",
+			style_strings[sty] );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 		return -1;
 	}
 
 	if ( right != NULL && *right != '\0' ) {
 		if ( slap_str2ad( right, &ad, &text ) != LDAP_SUCCESS ) {
-			fprintf( stderr,
-				"%s: line %d: aci \"%s\": %s\n",
-				fname, lineno, right, text );
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"aci \"%s\": %s",
+				right, text );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 			return -1;
 		}
 
@@ -776,10 +778,10 @@ dynacl_aci_parse(
 	}
 
 	if ( !is_at_syntax( ad->ad_type, SLAPD_ACI_SYNTAX) ) {
-		fprintf( stderr, "%s: line %d: "
-			"aci \"%s\": inappropriate syntax: %s\n",
-			fname, lineno, right,
-			ad->ad_type->sat_syntax_oid );
+		snprintf( c->cr_msg, sizeof( c->cr_msg ),
+			"aci \"%s\": inappropriate syntax: %s",
+			right, ad->ad_type->sat_syntax_oid );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 		return -1;
 	}
 

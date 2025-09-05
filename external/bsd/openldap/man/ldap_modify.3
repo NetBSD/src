@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAP_MODIFY 3 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAP_MODIFY 3 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_modify_ext, ldap_modify_ext_s \- Perform an LDAP modify operation
@@ -61,7 +61,6 @@ defined below.
 	        char **modv_strvals;
 	        struct berval **modv_bvals;
 	    } mod_vals;
-	    struct ldapmod *mod_next;
 	} LDAPMod;
 	#define mod_values mod_vals.modv_strvals
 	#define mod_bvalues mod_vals.modv_bvals
@@ -72,9 +71,7 @@ The \fImod_op\fP field is used to specify the type of modification to
 perform and should be one of LDAP_MOD_ADD, LDAP_MOD_DELETE, or
 LDAP_MOD_REPLACE.  The \fImod_type\fP and \fImod_values\fP fields
 specify the attribute type to modify and a null-terminated array of
-values to add, delete, or replace respectively.  The \fImod_next\fP
-field is used only by the LDAP server and may be ignored by the
-client.
+values to add, delete, or replace respectively.
 .LP
 If you need to specify a non-string value (e.g., to add a
 photo or audio attribute value), you should set \fImod_op\fP to the
@@ -137,7 +134,7 @@ deprecated interfaces.  It is recommended that developers writing new
 programs, or updating old programs, avoid use of deprecated interfaces.
 Over time, it is expected that documentation (and, eventually, support) for
 deprecated interfaces to be eliminated.
-.lf 132 stdin
+.lf 129 stdin
 .SH SEE ALSO
 .BR ldap (3),
 .BR ldap_error (3),
@@ -148,5 +145,5 @@ deprecated interfaces to be eliminated.
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 137 stdin
+.lf 134 stdin
 

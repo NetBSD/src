@@ -1,10 +1,10 @@
-/*	$NetBSD: lastmod.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
+/*	$NetBSD: lastmod.c,v 1.4 2025/09/05 21:16:16 christos Exp $	*/
 
 /* lastmod.c - returns last modification info */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lastmod.c,v 1.3 2021/08/14 16:14:52 christos Exp $");
+__RCSID("$NetBSD: lastmod.c,v 1.4 2025/09/05 21:16:16 christos Exp $");
 
 #include "portable.h"
 
@@ -377,7 +377,7 @@ best_guess( Operation *op,
 	
 		entryCSN.bv_val = csnbuf;
 		entryCSN.bv_len = sizeof( csnbuf );
-		slap_get_csn( NULL, &entryCSN, 0 );
+		slap_get_csn( op, &entryCSN, 0 );
 
 		ber_dupbv( bv_entryCSN, &entryCSN );
 		ber_dupbv( bv_nentryCSN, &entryCSN );
@@ -550,26 +550,12 @@ lastmod_update( Operation *op, SlapReply *rs )
 		lmt = LASTMOD_MODRDN;
 		e = NULL;
 
-		if ( op->orr_newSup && !BER_BVISNULL( op->orr_newSup ) ) {
-			build_new_dn( &bv_name, op->orr_newSup, &op->orr_newrdn, NULL );
-			build_new_dn( &bv_nname, op->orr_nnewSup, &op->orr_nnewrdn, NULL );
-
-		} else {
-			struct berval	pdn;
-
-			dnParent( &op->o_req_dn, &pdn );
-			build_new_dn( &bv_name, &pdn, &op->orr_newrdn, NULL );
-
-			dnParent( &op->o_req_ndn, &pdn );
-			build_new_dn( &bv_nname, &pdn, &op->orr_nnewrdn, NULL );
-		}
-
 		if ( on->on_info->oi_orig->bi_entry_get_rw ) {
 			BackendInfo	*bi = op->o_bd->bd_info;
 			int		rc;
 
 			op->o_bd->bd_info = (BackendInfo *)on->on_info->oi_orig;
-			rc = op->o_bd->bd_info->bi_entry_get_rw( op, &bv_name, NULL, NULL, 0, &e );
+			rc = op->o_bd->bd_info->bi_entry_get_rw( op, &op->orr_nnewDN, NULL, NULL, 0, &e );
 			if ( rc == LDAP_SUCCESS ) {
 				a = attr_find( e->e_attrs, slap_schema.si_ad_modifiersName );
 				if ( a != NULL ) {
@@ -595,14 +581,16 @@ lastmod_update( Operation *op, SlapReply *rs )
 					}
 				}
 
-				assert( dn_match( &bv_name, &e->e_name ) );
-				assert( dn_match( &bv_nname, &e->e_nname ) );
+				assert( dn_match( &op->orr_newDN, &e->e_name ) );
+				assert( dn_match( &op->orr_nnewDN, &e->e_nname ) );
 
 				op->o_bd->bd_info->bi_entry_release_rw( op, e, 0 );
 			}
 
 			op->o_bd->bd_info = bi;
 
+			ber_dupbv( &bv_name, &op->orr_newDN );
+			ber_dupbv( &bv_nname, &op->orr_nnewDN );
 		}
 
 		/* if !bi_entry_get_rw || bi_entry_get_rw failed for any reason... */
@@ -838,6 +826,11 @@ lastmod_db_open( BackendDB *be, ConfigReply *cr )
 	static char		tmbuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 
 	char			csnbuf[ LDAP_PVT_CSNSTR_BUFSIZE ];
+	void			*thrctx = ldap_pvt_thread_pool_context();
+	Connection		conn = { 0 };
+	OperationBuffer		opbuf;
+	Operation		*op;
+
 	struct berval		entryCSN;
 	struct berval timestamp;
 
@@ -845,6 +838,9 @@ lastmod_db_open( BackendDB *be, ConfigReply *cr )
 		fprintf( stderr, "set \"lastmod on\" to make this overlay effective\n" );
 		return -1;
 	}
+
+	connection_fake_init2( &conn, &opbuf, thrctx, 0 );
+	op = &opbuf.ob_op;
 
 	/*
 	 * Start
@@ -855,7 +851,7 @@ lastmod_db_open( BackendDB *be, ConfigReply *cr )
 
 	entryCSN.bv_val = csnbuf;
 	entryCSN.bv_len = sizeof( csnbuf );
-	slap_get_csn( NULL, &entryCSN, 0 );
+	slap_get_csn( op, &entryCSN, 0 );
 
 	if ( BER_BVISNULL( &lmi->lmi_rdnvalue ) ) {
 		ber_str2bv( "Lastmod", 0, 1, &lmi->lmi_rdnvalue );

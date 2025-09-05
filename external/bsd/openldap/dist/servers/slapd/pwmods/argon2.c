@@ -1,10 +1,10 @@
-/*	$NetBSD: argon2.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: argon2.c,v 1.3 2025/09/05 21:16:32 christos Exp $	*/
 
 /* argon2.c - Password module for argon2 */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2017-2021 The OpenLDAP Foundation.
+ * Copyright 2017-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: argon2.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: argon2.c,v 1.3 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 #ifdef SLAPD_PWMOD_PW_ARGON2
@@ -34,11 +34,11 @@ __RCSID("$NetBSD: argon2.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
 #include <argon2.h>
 
 /*
- * For now, we hardcode the default values from the argon2 command line tool
- * (as of argon2 release 20161029)
+ * Use OWASP recommended values (retrieved on 2023-08-07)
+ * @see https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
  */
-#define SLAPD_ARGON2_ITERATIONS 3
-#define SLAPD_ARGON2_MEMORY (1 << 12)
+#define SLAPD_ARGON2_ITERATIONS 5
+#define SLAPD_ARGON2_MEMORY 7168
 #define SLAPD_ARGON2_PARALLELISM 1
 #define SLAPD_ARGON2_SALT_LENGTH 16
 #define SLAPD_ARGON2_HASH_LENGTH 32
@@ -113,7 +113,7 @@ slapd_argon2_hash(
 	/*
 	 * Do the actual heavy lifting
 	 */
-	if ( argon2i_hash_encoded( iterations, memory, parallelism,
+	if ( argon2id_hash_encoded( iterations, memory, parallelism,
 				passwd->bv_val, passwd->bv_len,
 				salt.bv_val, salt_length, hash_length,
 				p, encoded_length ) == 0 ) {

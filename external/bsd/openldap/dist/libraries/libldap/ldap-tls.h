@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap-tls.h,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: ldap-tls.h,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /*  ldap-tls.h - TLS defines & prototypes internal to the LDAP library */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2021 The OpenLDAP Foundation.
+ * Copyright 2008-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,8 @@ struct tls_impl;
 struct tls_ctx;
 struct tls_session;
 
+#define CERTPATHSEP	";"
+
 typedef struct tls_ctx tls_ctx;
 typedef struct tls_session tls_session;
 
@@ -33,7 +35,8 @@ typedef void (TI_tls_destroy)(void);
 typedef tls_ctx *(TI_ctx_new)(struct ldapoptions *lo);
 typedef void (TI_ctx_ref)(tls_ctx *ctx);
 typedef void (TI_ctx_free)(tls_ctx *ctx);
-typedef int (TI_ctx_init)(struct ldapoptions *lo, struct ldaptls *lt, int is_server);
+#define ERRBUFSIZE	256
+typedef int (TI_ctx_init)(struct ldapoptions *lo, struct ldaptls *lt, int is_server, char *errmsg);
 
 typedef tls_session *(TI_session_new)(tls_ctx *ctx, int is_server);
 typedef int (TI_session_connect)(LDAP *ld, tls_session *s, const char *name_in);

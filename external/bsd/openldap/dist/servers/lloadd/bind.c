@@ -1,9 +1,9 @@
-/*	$NetBSD: bind.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.3 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -200,7 +200,9 @@ request_bind( LloadConnection *client, LloadOperation *op )
     ber_int_t version;
     ber_tag_t tag;
     unsigned long pin;
-    int res, rc = LDAP_SUCCESS;
+    int res = LDAP_UNAVAILABLE, rc = LDAP_SUCCESS;
+    char *message = "no connections available";
+    enum op_restriction client_restricted;
 
     CONNECTION_LOCK(client);
     pin = client->c_pin_id;
@@ -339,21 +341,23 @@ request_bind( LloadConnection *client, LloadOperation *op )
     rc = ldap_tavl_insert( &client->c_ops, op, operation_client_cmp, ldap_avl_dup_error );
     assert( rc == LDAP_SUCCESS );
     client->c_n_ops_executing++;
+
+    client_restricted = client->c_restricted;
     CONNECTION_UNLOCK(client);
 
     if ( pin ) {
         checked_lock( &op->o_link_mutex );
         upstream = op->o_upstream;
         checked_unlock( &op->o_link_mutex );
+    }
 
-        if ( upstream ) {
-            checked_lock( &upstream->c_io_mutex );
-            CONNECTION_LOCK(upstream);
-            if ( !IS_ALIVE( upstream, c_live ) ) {
-                CONNECTION_UNLOCK(upstream);
-                checked_unlock( &upstream->c_io_mutex );
-                upstream = NULL;
-            }
+    if ( upstream ) {
+        checked_lock( &upstream->c_io_mutex );
+        CONNECTION_LOCK(upstream);
+        if ( !IS_ALIVE( upstream, c_live ) ) {
+            CONNECTION_UNLOCK(upstream);
+            checked_unlock( &upstream->c_io_mutex );
+            upstream = NULL;
         }
     }
 
@@ -361,8 +365,8 @@ request_bind( LloadConnection *client, LloadOperation *op )
      * have to reject the op and clear pin */
     if ( upstream ) {
         /* No need to do anything */
-    } else if ( !pin ) {
-        upstream = backend_select( op, &res );
+    } else if ( !pin && client_restricted != LLOAD_OP_RESTRICTED_ISOLATE ) {
+        upstream_select( op, &upstream, &res, &message );
     } else {
         Debug( LDAP_DEBUG_STATS, "request_bind: "
                 "connid=%lu, msgid=%d pinned upstream lost\n",
@@ -377,7 +381,7 @@ request_bind( LloadConnection *client, LloadOperation *op )
         Debug( LDAP_DEBUG_STATS, "request_bind: "
                 "connid=%lu, msgid=%d no available connection found\n",
                 op->o_client_connid, op->o_client_msgid );
-        operation_send_reject( op, res, "no connections available", 1 );
+        operation_send_reject( op, res, message, 1 );
         assert( client->c_pin_id == 0 );
         goto done;
     }
@@ -411,7 +415,7 @@ request_bind( LloadConnection *client, LloadOperation *op )
         Debug( LDAP_DEBUG_ANY, "request_bind: "
                 "ber_alloc failed\n" );
 
-        operation_unlink( op );
+        OPERATION_UNLINK(op);
 
         CONNECTION_LOCK(client);
         goto fail;
@@ -990,7 +994,7 @@ handle_vc_bind_response(
     }
 
 done:
-    operation_unlink( op );
+    OPERATION_UNLINK(op);
     ber_free( ber, 1 );
     return rc;
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2025/09/05 21:16:27 christos Exp $	*/
 
 /* config.c - mdb backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.4 2025/09/05 21:16:27 christos Exp $");
 
 #include "portable.h"
 
@@ -172,7 +172,8 @@ mdb_bk_cfg( ConfigArgs *c )
 		mdb_idl_reset();
 		c->bi->bi_private = 0;
 	} else {
-		if ( c->value_int >= MDB_IDL_LOGN && c->value_int < sizeof(int) * CHAR_BIT ) {
+		/* with 32 bit ints, db_size max is 2^30 and um_size max is 2^31 */
+		if ( c->value_int >= MDB_IDL_LOGN && ( c->value_int < sizeof(int) * CHAR_BIT - 1 )) {
 			MDB_idl_logn = c->value_int;
 			mdb_idl_reset();
 			c->bi->bi_private = (void *)8;	/* non-NULL to show we're using it */
@@ -215,23 +216,56 @@ mdb_online_index( void *ctx, void *arg )
 	ID id;
 	Entry *e;
 	int rc, getnext = 1;
-	int i;
+	int i, first = 1;
+	int intr = 0;
+
+	Debug( LDAP_DEBUG_ARGS,
+		LDAP_XSTRING(mdb_online_index) ": database %s: "
+		"starting\n", be->be_suffix[0].bv_val );
 
 	connection_fake_init( &conn, &opbuf, ctx );
 	op = &opbuf.ob_op;
 
 	op->o_bd = be;
 
-	id = 1;
 	key.mv_size = sizeof(ID);
 
 	while ( 1 ) {
-		if ( slapd_shutdown )
-			break;
-
 		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
 		if ( rc )
 			break;
+
+		/* pick up where we left off */
+		if ( first ) {
+			MDB_val k0;
+			unsigned short s = 0;
+
+			first = 0;
+			k0.mv_size = sizeof(s);
+			k0.mv_data = &s;
+			rc = mdb_get( txn, mdb->mi_idxckp, &k0, &data );
+			if ( rc ) {
+				mdb_txn_abort( txn );
+				break;
+			}
+			memcpy( &id, data.mv_data, sizeof( id ));
+		}
+
+		/* Save our stopping point */
+		if ( slapd_shutdown || ldap_pvt_thread_pool_pausequery( &connection_pool )) {
+			MDB_val k0;
+			unsigned short s = 0;
+
+			k0.mv_size = sizeof(s);
+			k0.mv_data = &s;
+			data.mv_data = &id;
+			data.mv_size = sizeof( id );
+			mdb_put( txn, mdb->mi_idxckp, &k0, &data, 0 );
+			mdb_txn_commit( txn );
+			intr = 1;
+			break;
+		}
+
 		rc = mdb_cursor_open( txn, mdb->mi_id2entry, &curs );
 		if ( rc ) {
 			mdb_txn_abort( txn );
@@ -249,6 +283,10 @@ mdb_online_index( void *ctx, void *arg )
 			}
 			memcpy( &id, key.mv_data, sizeof( id ));
 		}
+
+		Debug( LDAP_DEBUG_ARGS,
+			LDAP_XSTRING(mdb_online_index) ": database %s: "
+			"indexing %lx\n", be->be_suffix[0].bv_val, (long)id );
 
 		rc = mdb_id2entry( op, curs, id, &e );
 		mdb_cursor_close( curs );
@@ -281,23 +319,164 @@ mdb_online_index( void *ctx, void *arg )
 		getnext = 1;
 	}
 
-	for ( i = 0; i < mdb->mi_nattrs; i++ ) {
-		if ( mdb->mi_attrs[ i ]->ai_indexmask & MDB_INDEX_DELETING
-			|| mdb->mi_attrs[ i ]->ai_newmask == 0 )
-		{
-			continue;
+	/* all done */
+	if ( !intr ) {
+		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				LDAP_XSTRING(mdb_online_index) ": database %s: "
+				"final txn_begin failed: %s (%d)\n",
+				be->be_suffix[0].bv_val, mdb_strerror(rc), rc );
+			intr = 1; /* maybe it will succeed on a future retry */
+		} else {
+			for ( i = 0; i < mdb->mi_nattrs; i++ ) {
+				if ( mdb->mi_attrs[ i ]->ai_indexmask & MDB_INDEX_DELETING
+					|| mdb->mi_attrs[ i ]->ai_newmask == 0 )
+				{
+					continue;
+				}
+				mdb->mi_attrs[ i ]->ai_indexmask = mdb->mi_attrs[ i ]->ai_newmask;
+				mdb->mi_attrs[ i ]->ai_newmask = 0;
+			}
+
+			/* zero out checkpoint DB */
+			mdb_drop( txn, mdb->mi_idxckp, 0 );
+			mdb_txn_commit( txn );
 		}
-		mdb->mi_attrs[ i ]->ai_indexmask = mdb->mi_attrs[ i ]->ai_newmask;
-		mdb->mi_attrs[ i ]->ai_newmask = 0;
 	}
 
+	Debug( LDAP_DEBUG_ARGS,
+		LDAP_XSTRING(mdb_online_index) ": database %s: "
+		"stopping, %s done\n", be->be_suffix[0].bv_val, intr ? "not" : "all" );
+
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
-	ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );
-	mdb->mi_index_task = NULL;
-	ldap_pvt_runqueue_remove( &slapd_rq, rtask );
+	if ( ldap_pvt_runqueue_isrunning( &slapd_rq, rtask ))
+		ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );
+	if ( intr && !slapd_shutdown ) {
+		/* on pause, resched to run again immediately */
+		time_t t = rtask->interval.tv_sec;
+		rtask->interval.tv_sec = 0;
+		ldap_pvt_runqueue_resched( &slapd_rq, rtask, 0 );
+		rtask->interval.tv_sec = t;
+	} else if ( mdb->mi_index_task ) {
+		mdb->mi_index_task = NULL;
+		ldap_pvt_runqueue_remove( &slapd_rq, rtask );
+	}
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
 	return NULL;
+}
+
+static int
+mdb_setup_indexer( struct mdb_info *mdb )
+{
+	MDB_txn *txn;
+	MDB_cursor *curs;
+	MDB_val key, data;
+	int i, rc, changed = 0;
+	unsigned short s;
+
+	if ( !mdb->mi_nattrs )
+		return 0;
+
+	rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
+	if ( rc )
+		return rc;
+	rc = mdb_cursor_open( txn, mdb->mi_idxckp, &curs );
+	if ( rc ) {
+		mdb_txn_abort( txn );
+		return rc;
+	}
+
+	Debug( LDAP_DEBUG_ARGS,
+		LDAP_XSTRING(mdb_setup_indexer) ": path %s: "
+		"starting\n", mdb->mi_dbenv_home );
+
+	key.mv_size = sizeof( s );
+	key.mv_data = &s;
+
+	/* record current and new index masks for all new index definitions */
+	{
+		slap_mask_t mask[2];
+		data.mv_size = sizeof(mask);
+		data.mv_data = mask;
+
+		for ( i = 0; i < mdb->mi_nattrs; i++ ) {
+			if ( !mdb->mi_attrs[i]->ai_newmask ) continue;
+			s = mdb->mi_adxs[ mdb->mi_attrs[i]->ai_desc->ad_index ];
+			mask[0] = mdb->mi_attrs[i]->ai_indexmask;
+			mask[1] = mdb->mi_attrs[i]->ai_newmask;
+			rc = mdb_cursor_put( curs, &key, &data, 0 );
+			if ( rc )
+				goto done;
+			changed = 1;
+		}
+	}
+
+	/* set indexer task to start at first entry */
+	if ( changed ) {
+		ID id = 0;
+		s = 0;			/* key 0 records next entryID to index */
+		data.mv_size = sizeof( ID );
+		data.mv_data = &id;
+		rc = mdb_cursor_put( curs, &key, &data, 0 );
+		Debug( LDAP_DEBUG_ARGS,
+			LDAP_XSTRING(mdb_setup_indexer) ": path %s: "
+			"resetting to 0\n", mdb->mi_dbenv_home );
+	}
+
+done:
+	mdb_cursor_close( curs );
+	if ( !rc )
+		mdb_txn_commit( txn );
+	else
+		mdb_txn_abort( txn );
+	return rc;
+}
+
+int
+mdb_resume_index( BackendDB *be, MDB_txn *txn )
+{
+	struct mdb_info *mdb = be->be_private;
+	MDB_cursor *curs;
+	MDB_val key, data;
+	int i, rc, do_task = 0;
+	unsigned short *s;
+	slap_mask_t *mask;
+	AttributeDescription *ad;
+
+	rc = mdb_cursor_open( txn, mdb->mi_idxckp, &curs );
+	if ( rc )
+		return 0;
+
+	while(( rc = mdb_cursor_get( curs, &key, &data, MDB_NEXT )) == 0) {
+		s = key.mv_data;
+		if ( !*s )
+			continue;
+		ad = mdb->mi_ads[*s];
+		for ( i=0; i<mdb->mi_nattrs; i++) {
+			if (mdb->mi_attrs[i]->ai_desc == ad ) {
+				mask = data.mv_data;
+				mdb->mi_attrs[i]->ai_indexmask = mask[0];
+				mdb->mi_attrs[i]->ai_newmask = mask[1];
+				do_task = 1;
+				break;
+			}
+		}
+	}
+	mdb_cursor_close( curs );
+	return do_task;
+}
+
+void
+mdb_start_index_task( BackendDB *be )
+{
+	struct mdb_info *mdb = be->be_private;
+	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+	mdb->mi_index_task = ldap_pvt_runqueue_insert( &slapd_rq, 36000,
+		mdb_online_index, be,
+		LDAP_XSTRING(mdb_online_index), be->be_suffix[0].bv_val );
+	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 }
 
 /* Cleanup loose ends after Modify completes */
@@ -333,6 +512,7 @@ mdb_cf_cleanup( ConfigArgs *c )
 		rc = mdb_attr_dbs_open( c->be, NULL, &c->reply );
 		if ( rc )
 			rc = LDAP_OTHER;
+		mdb_setup_indexer( mdb );
 	}
 	return rc;
 }

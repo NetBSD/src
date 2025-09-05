@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -434,7 +434,7 @@ fe_op_lastbind( Operation *op )
 			lutil_tm2time( &tm, &tt );
 			bindtime = tt.tt_sec;
 		}
-		Debug( LDAP_DEBUG_ANY, "fe_op_lastbind: "
+		Debug( LDAP_DEBUG_TRACE, "fe_op_lastbind: "
 				"old pwdLastSuccess value=%s %lds ago\n",
 				a->a_nvals[0].bv_val, bindtime == (time_t)-1 ? -1 : op->o_time - bindtime );
 
@@ -442,7 +442,8 @@ fe_op_lastbind( Operation *op )
 		 * TODO: If the recorded bind time is within configurable precision,
 		 * it doesn't need to be updated (save a write for nothing)
 		 */
-		if ( bindtime != (time_t)-1 && op->o_time <= bindtime ) {
+		if ( bindtime != (time_t)-1 &&
+				op->o_time <= bindtime + op->o_bd->be_lastbind_precision ) {
 			be_entry_release_r( op, e );
 			return LDAP_SUCCESS;
 		}
@@ -477,9 +478,6 @@ fe_op_lastbind( Operation *op )
 	op2.o_ndn = op->o_bd->be_rootndn;
 
 	/*
-	 * TODO: this is core+frontend, not everything works the same way?
-	 */
-	/*
 	 * Code for forwarding of updates adapted from ppolicy.c of slapo-ppolicy
 	 *
 	 * If this server is a shadow and forward_updates is true,
@@ -489,6 +487,8 @@ fe_op_lastbind( Operation *op )
 	 * must be configured appropriately for this to be useful.
 	 */
 	if ( SLAP_SHADOW( op->o_bd ) ) {
+		op2.o_bd = frontendDB;
+
 		/* Must use Relax control since these are no-user-mod */
 		op2.o_relax = SLAP_CONTROL_CRITICAL;
 		op2.o_ctrls = ca;
@@ -505,7 +505,7 @@ fe_op_lastbind( Operation *op )
 		}
 	}
 
-	rc = op->o_bd->be_modify( &op2, &r2 );
+	rc = op2.o_bd->be_modify( &op2, &r2 );
 	slap_mods_free( m, 1 );
 
 done:

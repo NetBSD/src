@@ -1,10 +1,10 @@
-/*	$NetBSD: back-mdb.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: back-mdb.h,v 1.4 2025/09/05 21:16:27 christos Exp $	*/
 
 /* back-mdb.h - mdb back-end header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,8 @@ LDAP_BEGIN_DECL
 #define MDB_DN2ID		1
 #define MDB_ID2ENTRY	2
 #define MDB_ID2VAL		3
-#define MDB_NDB			4
+#define MDB_IDXCKP		4
+#define MDB_NDB			5
 
 /* The default search IDL stack cache depth */
 #define DEFAULT_SEARCH_STACK_DEPTH	16
@@ -43,7 +44,7 @@ LDAP_BEGIN_DECL
 /* The minimum we can function with */
 #define MINIMUM_SEARCH_STACK_DEPTH	8
 
-#define MDB_INDICES		128
+#define MDB_INDICES		256
 
 #define	MDB_MAXADS	65536
 
@@ -124,6 +125,7 @@ struct mdb_info {
 #define mi_dn2id	mi_dbis[MDB_DN2ID]
 #define mi_ad2id	mi_dbis[MDB_AD2ID]
 #define mi_id2val	mi_dbis[MDB_ID2VAL]
+#define mi_idxckp	mi_dbis[MDB_IDXCKP]
 
 typedef struct mdb_op_info {
 	OpExtra		moi_oe;

@@ -1,9 +1,9 @@
-/*	$NetBSD: extended.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: extended.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: extended.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: extended.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -230,7 +230,8 @@ fe_extended( Operation *op, SlapReply *rs )
 
 		rs->sr_err = (ext->ext_main)( op, rs );
 
-		if( rs->sr_err != SLAPD_ABANDON ) {
+		if( rs->sr_err != SLAPD_ABANDON && rs->sr_err != SLAPD_ASYNCOP &&
+			rs->sr_err != SLAPD_NO_REPLY ) {
 			if ( rs->sr_err == LDAP_REFERRAL && rs->sr_ref == NULL ) {
 				rs->sr_ref = referral_rewrite( default_referral,
 					NULL, NULL, LDAP_SCOPE_DEFAULT );

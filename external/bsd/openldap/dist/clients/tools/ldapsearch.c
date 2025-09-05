@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapsearch.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
+/*	$NetBSD: ldapsearch.c,v 1.4 2025/09/05 21:16:13 christos Exp $	*/
 
 /* ldapsearch -- a tool for searching LDAP directories */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapsearch.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
+__RCSID("$NetBSD: ldapsearch.c,v 1.4 2025/09/05 21:16:13 christos Exp $");
 
 #include "portable.h"
 
@@ -368,7 +368,7 @@ parse_vlv(char *cvalue)
 }
 
 const char options[] = "a:Ab:cE:F:l:Ls:S:tT:uz:"
-	"Cd:D:e:f:h:H:IMnNO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"Cd:D:e:f:H:IMnNO:o:P:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -899,7 +899,7 @@ handle_private_option( int i )
 		break;
 	case 'F':	/* uri prefix */
 		if( urlpre ) free( urlpre );
-		urlpre = optarg;
+		urlpre = strdup( optarg );
 		break;
 	case 'l':	/* time limit */
 		if ( strcasecmp( optarg, "none" ) == 0 ) {
@@ -950,7 +950,7 @@ handle_private_option( int i )
 		break;
 	case 'T':	/* tmpdir */
 		if( tmpdir ) free( tmpdir );
-		tmpdir = optarg;
+		tmpdir = strdup( optarg );
 		break;
 	case 'u':	/* include UFN */
 		++includeufn;
@@ -1003,10 +1003,7 @@ main( int argc, char **argv )
 	FILE		*fp = NULL;
 	int			rc, rc1, i, first;
 	LDAP		*ld = NULL;
-	BerElement	*seber = NULL, *vrber = NULL;
-
-	BerElement      *syncber = NULL;
-	struct berval   *syncbvalp = NULL;
+	BerElement	*ber = NULL;
 	int		err;
 
 	tool_init( TOOL_SEARCH );
@@ -1205,20 +1202,21 @@ getNextPage:
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if (( seber = ber_alloc_t(LBER_USE_DER)) == NULL ) {
+			if (( ber = ber_alloc_t(LBER_USE_DER)) == NULL ) {
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			err = ber_printf( seber, "b", abs(subentries) == 1 ? 0 : 1 );
+			err = ber_printf( ber, "b", abs(subentries) == 1 ? 0 : 1 );
 			if ( err == -1 ) {
-				ber_free( seber, 1 );
+				ber_free( ber, 1 );
 				fprintf( stderr, _("Subentries control encoding error!\n") );
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if ( ber_flatten2( seber, &c[i].ldctl_value, 0 ) == -1 ) {
+			err = ber_flatten2( ber, &c[i].ldctl_value, 1 );
+			ber_free( ber, 1 );
+			if ( err == -1 )
 				tool_exit( ld, EXIT_FAILURE );
-			}
 
 			c[i].ldctl_oid = LDAP_CONTROL_SUBENTRIES;
 			c[i].ldctl_iscritical = subentries < 1;
@@ -1230,29 +1228,29 @@ getNextPage:
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if (( syncber = ber_alloc_t(LBER_USE_DER)) == NULL ) {
+			if (( ber = ber_alloc_t(LBER_USE_DER)) == NULL ) {
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
 			if ( sync_cookie.bv_len == 0 ) {
-				err = ber_printf( syncber, "{e}", abs(ldapsync) );
+				err = ber_printf( ber, "{e}", abs(ldapsync) );
 			} else {
-				err = ber_printf( syncber, "{eO}", abs(ldapsync),
+				err = ber_printf( ber, "{eO}", abs(ldapsync),
 							&sync_cookie );
 			}
 
 			if ( err == -1 ) {
-				ber_free( syncber, 1 );
+				ber_free( ber, 1 );
 				fprintf( stderr, _("ldap sync control encoding error!\n") );
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if ( ber_flatten( syncber, &syncbvalp ) == -1 ) {
+			err = ber_flatten2( ber, &c[i].ldctl_value, 1 );
+			ber_free( ber, 1 );
+			if ( err == -1 )
 				tool_exit( ld, EXIT_FAILURE );
-			}
 
 			c[i].ldctl_oid = LDAP_CONTROL_SYNC;
-			c[i].ldctl_value = (*syncbvalp);
 			c[i].ldctl_iscritical = ldapsync < 0;
 			i++;
 		}
@@ -1262,19 +1260,20 @@ getNextPage:
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if (( vrber = ber_alloc_t(LBER_USE_DER)) == NULL ) {
+			if (( ber = ber_alloc_t(LBER_USE_DER)) == NULL ) {
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if ( ( err = ldap_put_vrFilter( vrber, vrFilter ) ) == -1 ) {
-				ber_free( vrber, 1 );
+			if ( ( err = ldap_put_vrFilter( ber, vrFilter ) ) == -1 ) {
+				ber_free( ber, 1 );
 				fprintf( stderr, _("Bad ValuesReturnFilter: %s\n"), vrFilter );
 				tool_exit( ld, EXIT_FAILURE );
 			}
 
-			if ( ber_flatten2( vrber, &c[i].ldctl_value, 0 ) == -1 ) {
+			err = ber_flatten2( ber, &c[i].ldctl_value, 1 );
+			ber_free( ber, 1 );
+			if ( err == -1 )
 				tool_exit( ld, EXIT_FAILURE );
-			}
 
 			c[i].ldctl_oid = LDAP_CONTROL_VALUESRETURNFILTER;
 			c[i].ldctl_iscritical = valuesReturnFilter > 1;
@@ -1444,8 +1443,11 @@ getNextPage:
 
 	tool_server_controls( ld, c, i );
 
-	if ( seber ) ber_free( seber, 1 );
-	if ( vrber ) ber_free( vrber, 1 );
+	/* free any controls we added */
+	for ( ; nctrls-- > save_nctrls; ) {
+		if ( c[nctrls].ldctl_value.bv_val != derefval.bv_val )
+			ber_memfree( c[nctrls].ldctl_value.bv_val );
+	}
 
 	/* step back to the original number of controls, so that 
 	 * those set while parsing args are preserved */
@@ -1663,6 +1665,9 @@ getNextPage:
 			free( def_urlpre );
 		free( urlpre );
 	}
+	if ( tmpdir && tmpdir != def_tmpdir ) {
+		free( tmpdir );
+	}
 
 	if ( c ) {
 		for ( ; save_nctrls-- > 0; ) {
@@ -1871,12 +1876,13 @@ again:
 			if ( ldapsync && sync_slimit != -1 &&
 					nresponses_psearch >= sync_slimit ) {
 				BerElement *msgidber = NULL;
-				struct berval *msgidvalp = NULL;
+				struct berval msgidval;
 				msgidber = ber_alloc_t(LBER_USE_DER);
 				ber_printf(msgidber, "{i}", msgid);
-				ber_flatten(msgidber, &msgidvalp);
+				ber_flatten2( msgidber, &msgidval, 0 );
 				ldap_extended_operation(ld, LDAP_EXOP_CANCEL,
-					msgidvalp, NULL, NULL, &cancel_msgid);
+					&msgidval, NULL, NULL, &cancel_msgid);
+				ber_free( msgidber, 1 );
 				nresponses_psearch = -1;
 			}
 		}

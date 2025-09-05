@@ -1,9 +1,9 @@
-/*	$NetBSD: printmsg.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: printmsg.c,v 1.4 2025/09/05 21:16:33 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -34,6 +34,10 @@
 #include <slap.h>
 #include <slapi.h>
 
+#ifdef _WIN32
+#include <io.h>
+#endif
+
 #include <ldap_pvt_thread.h>
 
 /* Single threads access to routine */
@@ -62,18 +66,30 @@ slapi_int_log_error(
 
 	/* for now, we log all severities */
 	if ( level <= slapi_log_level ) {
+#ifdef _WIN32
+		intptr_t fhandle;
+#endif
 		fp = fopen( slapi_log_file, "a" );
 		if ( fp == NULL) {
 			rc = -1;
 			goto done;
 		}
 
+#ifdef _WIN32
+		fhandle = _get_osfhandle( fileno( fp ));
+#endif
 		/*
 		 * FIXME: could block
 		 */
+#ifdef _WIN32
+		while ( LockFile( fhandle, 0, 0, UINT_MAX, UINT_MAX ) == 0 ) {
+			/* DO NOTHING */ ;
+		}
+#else
 		while ( lockf( fileno( fp ), F_LOCK, 0 ) != 0 ) {
 			/* DO NOTHING */ ;
 		}
+#endif
 
 		time( &currentTime );
 		ltm = localtime( &currentTime );
@@ -87,7 +103,11 @@ slapi_int_log_error(
 		}
 		fflush( fp );
 
+#ifdef _WIN32
+		UnlockFile( fhandle, 0, 0, UINT_MAX, UINT_MAX );
+#else
 		lockf( fileno( fp ), F_ULOCK, 0 );
+#endif
 
 		fclose( fp );
 

@@ -4,7 +4,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation
+ * Copyright 1998-2024 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -549,6 +549,9 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
@@ -898,9 +901,6 @@
 /* define if sched_yield yields the entire process */
 #undef REPLACE_BROKEN_YIELD
 
-/* Define as the return type of signal handlers (`int' or `void'). */
-#undef RETSIGTYPE
-
 /* Define to the type of arg 1 for `select'. */
 #undef SELECT_TYPE_ARG1
 
@@ -958,9 +958,6 @@
 /* statically linked module */
 #undef SLAPD_MOD_STATIC
 
-/* define to support NDB backend */
-#undef SLAPD_NDB
-
 /* define to support NULL backend */
 #undef SLAPD_NULL
 
@@ -996,6 +993,9 @@
 
 /* define for Reverse Group Membership overlay */
 #undef SLAPD_OVER_MEMBEROF
+
+/* define for Nested Group overlay */
+#undef SLAPD_OVER_NESTGROUP
 
 /* define for OTP 2-factor Authentication overlay */
 #undef SLAPD_OVER_OTP
@@ -1066,11 +1066,10 @@
 /* define to support run-time loadable ACL */
 #undef SLAP_DYNACL
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
-
-/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
-#undef TIME_WITH_SYS_TIME
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
@@ -1149,6 +1148,8 @@
 
 
 /* begin of portable.h.post */
+
+#define RETSIGTYPE void
 
 #ifdef _WIN32
 	/* don't suck in all of the win32 api */

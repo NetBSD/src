@@ -1,4 +1,4 @@
-/*	$NetBSD: escapemap.c,v 1.1.1.1 2025/09/05 21:09:34 christos Exp $	*/
+/*	$NetBSD: escapemap.c,v 1.2 2025/09/05 21:16:23 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.

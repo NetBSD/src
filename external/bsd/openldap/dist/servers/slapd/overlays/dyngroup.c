@@ -1,10 +1,10 @@
-/*	$NetBSD: dyngroup.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: dyngroup.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* dyngroup.c - Demonstration of overlay code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dyngroup.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: dyngroup.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -95,7 +95,7 @@ static int dgroup_cf( ConfigArgs *c )
 	case SLAP_CONFIG_ADD:
 	case LDAP_MOD_ADD:
 		{
-		adpair ap = { NULL, NULL, NULL }, *a2;
+		adpair ap = { NULL, NULL, NULL }, **app, *a2;
 		const char *text;
 		if ( slap_str2ad( c->argv[1], &ap.ap_mem, &text ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s attribute description unknown: \"%s\"",
@@ -115,10 +115,14 @@ static int dgroup_cf( ConfigArgs *c )
 		 * anything this instance of the overlay needs.
 		 */
 		a2 = ch_malloc( sizeof(adpair) );
-		a2->ap_next = on->on_bi.bi_private;
+
+		for ( app = (adpair **)&on->on_bi.bi_private; *app; app = &(*app)->ap_next )
+			/* Get to the end */ ;
+
 		a2->ap_mem = ap.ap_mem;
 		a2->ap_uri = ap.ap_uri;
-		on->on_bi.bi_private = a2;
+		a2->ap_next = *app;
+		*app = a2;
 		rc = 0;
 		}
 	}

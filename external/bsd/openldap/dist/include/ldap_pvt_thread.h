@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_pvt_thread.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: ldap_pvt_thread.h,v 1.4 2025/09/05 21:16:19 christos Exp $	*/
 
 /* ldap_pvt_thread.h - ldap threads header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -255,7 +255,8 @@ typedef enum {
 	LDAP_PVT_THREAD_POOL_PARAM_ACTIVE_MAX,
 	LDAP_PVT_THREAD_POOL_PARAM_PENDING_MAX,
 	LDAP_PVT_THREAD_POOL_PARAM_BACKLOAD_MAX,
-	LDAP_PVT_THREAD_POOL_PARAM_STATE
+	LDAP_PVT_THREAD_POOL_PARAM_STATE,
+	LDAP_PVT_THREAD_POOL_PARAM_PAUSED
 } ldap_pvt_thread_pool_param_t;
 #endif /* !LDAP_PVT_THREAD_H_DONE */
 
@@ -281,7 +282,11 @@ ldap_pvt_thread_pool_unidle LDAP_P((
 	ldap_pvt_thread_pool_t *pool ));
 
 LDAP_F( int )
-ldap_pvt_thread_pool_pausecheck LDAP_P((
+ldap_pvt_thread_pool_pausequery LDAP_P((
+	ldap_pvt_thread_pool_t *pool ));
+
+LDAP_F( int )
+ldap_pvt_thread_pool_pausewait LDAP_P((
 	ldap_pvt_thread_pool_t *pool ));
 
 LDAP_F( int )

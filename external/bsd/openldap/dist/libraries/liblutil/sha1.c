@@ -1,9 +1,9 @@
-/*	$NetBSD: sha1.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.4 2025/09/05 21:16:23 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sha1.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.4 2025/09/05 21:16:23 christos Exp $");
 
 #include "portable.h"
 #include <ac/param.h>
@@ -161,7 +161,7 @@ lutil_SHA1Update(
     uint32		len
 )
 {
-    u_int i, j;
+    unsigned int i, j;
 
     j = context->count[0];
     if ((context->count[0] += len << 3) < j)
@@ -186,7 +186,7 @@ lutil_SHA1Update(
 void
 lutil_SHA1Final( unsigned char *digest, lutil_SHA1_CTX *context )
 {
-    u_int i;
+    unsigned int i;
     unsigned char finalcount[8];
 
     for (i = 0; i < 8; i++) {

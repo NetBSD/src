@@ -1,9 +1,9 @@
-/*	$NetBSD: ucpgba.h,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
+/*	$NetBSD: ucpgba.h,v 1.4 2025/09/05 21:16:22 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
 #define _h_ucpgba
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucpgba.h,v 1.3 2021/08/14 16:14:57 christos Exp $");
+__RCSID("$NetBSD: ucpgba.h,v 1.4 2025/09/05 21:16:22 christos Exp $");
 
 #include "portable.h"
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.4 2025/09/05 21:16:31 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.4 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 
@@ -67,6 +67,38 @@ static void send_paged_response(
 	SlapReply *rs,
 	ID  *lastid );
 #endif /* ! BACKSQL_ARBITRARY_KEY */
+
+/* Look for chars that need to be escaped, return count of them.
+ * If out is non-NULL, copy escape'd val to it.
+ */
+static int
+backsql_val_escape( Operation *op, struct berval *in, struct berval *out )
+{
+	char *ptr, *end;
+	int q = 0;
+
+	ptr = in->bv_val;
+	end = ptr + in->bv_len;
+	while (ptr < end) {
+		if ( *ptr == '\'' )
+			q++;
+		ptr++;
+	}
+	if ( q && out ) {
+		char *dst;
+		out->bv_len = in->bv_len + q;
+		out->bv_val = op->o_tmpalloc( out->bv_len + 1, op->o_tmpmemctx );
+		ptr = in->bv_val;
+		dst = out->bv_val;
+		while (ptr < end ) {
+			if ( *ptr == '\'' )
+				*dst++ = '\'';
+			*dst++ = *ptr++;
+		}
+		*dst = '\0';
+	}
+	return q;
+}
 
 static int
 backsql_attrlist_add( backsql_srch_info *bsi, AttributeDescription *ad )
@@ -434,6 +466,8 @@ backsql_process_sub_filter( backsql_srch_info *bsi, Filter *f,
 	backsql_info		*bi = (backsql_info *)bsi->bsi_op->o_bd->be_private;
 	int			i;
 	int			casefold = 0;
+	int			escaped = 0;
+	struct berval	escval, *fvalue;
 
 	if ( !f ) {
 		return 0;
@@ -467,50 +501,68 @@ backsql_process_sub_filter( backsql_srch_info *bsi, Filter *f,
 
 		BER_BVZERO( &bv );
 		if ( f->f_sub_initial.bv_val ) {
-			bv.bv_len += f->f_sub_initial.bv_len;
+			bv.bv_len += f->f_sub_initial.bv_len + backsql_val_escape( NULL, &f->f_sub_initial, NULL );
 		}
 		if ( f->f_sub_any != NULL ) {
 			for ( a = 0; f->f_sub_any[ a ].bv_val != NULL; a++ ) {
-				bv.bv_len += f->f_sub_any[ a ].bv_len;
+				bv.bv_len += f->f_sub_any[ a ].bv_len + backsql_val_escape( NULL, &f->f_sub_any[ a ], NULL );
 			}
 		}
 		if ( f->f_sub_final.bv_val ) {
-			bv.bv_len += f->f_sub_final.bv_len;
+			bv.bv_len += f->f_sub_final.bv_len + backsql_val_escape( NULL, &f->f_sub_final, NULL );
 		}
 		bv.bv_len = 2 * bv.bv_len - 1;
 		bv.bv_val = ch_malloc( bv.bv_len + 1 );
 
 		s = 0;
 		if ( !BER_BVISNULL( &f->f_sub_initial ) ) {
-			bv.bv_val[ s ] = f->f_sub_initial.bv_val[ 0 ];
-			for ( i = 1; i < f->f_sub_initial.bv_len; i++ ) {
+			fvalue = &f->f_sub_initial;
+			escaped = backsql_val_escape( bsi->bsi_op, fvalue, &escval );
+			if ( escaped )
+				fvalue = &escval;
+			bv.bv_val[ s ] = fvalue->bv_val[ 0 ];
+			for ( i = 1; i < fvalue->bv_len; i++ ) {
 				bv.bv_val[ s + 2 * i - 1 ] = '%';
-				bv.bv_val[ s + 2 * i ] = f->f_sub_initial.bv_val[ i ];
+				bv.bv_val[ s + 2 * i ] = fvalue->bv_val[ i ];
 			}
 			bv.bv_val[ s + 2 * i - 1 ] = '%';
 			s += 2 * i;
+			if ( escaped )
+				bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
 		}
 
 		if ( f->f_sub_any != NULL ) {
 			for ( a = 0; !BER_BVISNULL( &f->f_sub_any[ a ] ); a++ ) {
-				bv.bv_val[ s ] = f->f_sub_any[ a ].bv_val[ 0 ];
-				for ( i = 1; i < f->f_sub_any[ a ].bv_len; i++ ) {
+				fvalue = &f->f_sub_any[ a ];
+				escaped = backsql_val_escape( bsi->bsi_op, fvalue, &escval );
+				if ( escaped )
+					fvalue = &escval;
+				bv.bv_val[ s ] = fvalue->bv_val[ 0 ];
+				for ( i = 1; i < fvalue->bv_len; i++ ) {
 					bv.bv_val[ s + 2 * i - 1 ] = '%';
-					bv.bv_val[ s + 2 * i ] = f->f_sub_any[ a ].bv_val[ i ];
+					bv.bv_val[ s + 2 * i ] = fvalue->bv_val[ i ];
 				}
 				bv.bv_val[ s + 2 * i - 1 ] = '%';
 				s += 2 * i;
+				if ( escaped )
+					bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
 			}
 		}
 
 		if ( !BER_BVISNULL( &f->f_sub_final ) ) {
-			bv.bv_val[ s ] = f->f_sub_final.bv_val[ 0 ];
-			for ( i = 1; i < f->f_sub_final.bv_len; i++ ) {
+			fvalue = &f->f_sub_final;
+			escaped = backsql_val_escape( bsi->bsi_op, fvalue, &escval );
+			if ( escaped )
+				fvalue = &escval;
+			bv.bv_val[ s ] = fvalue->bv_val[ 0 ];
+			for ( i = 1; i < fvalue->bv_len; i++ ) {
 				bv.bv_val[ s + 2 * i - 1 ] = '%';
-				bv.bv_val[ s + 2 * i ] = f->f_sub_final.bv_val[ i ];
+				bv.bv_val[ s + 2 * i ] = fvalue->bv_val[ i ];
 			}
-				bv.bv_val[ s + 2 * i - 1 ] = '%';
+			bv.bv_val[ s + 2 * i - 1 ] = '%';
 			s += 2 * i;
+			if ( escaped )
+				bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
 		}
 
 		bv.bv_val[ s - 1 ] = '\0';
@@ -566,11 +618,17 @@ backsql_process_sub_filter( backsql_srch_info *bsi, Filter *f,
 			f->f_sub_initial.bv_val );
 #endif /* BACKSQL_TRACE */
 
+		fvalue = &f->f_sub_initial;
+		escaped = backsql_val_escape( bsi->bsi_op, fvalue, &escval );
+		if ( escaped )
+			fvalue = &escval;
 		start = bsi->bsi_flt_where.bb_val.bv_len;
 		backsql_strfcat_x( &bsi->bsi_flt_where,
 				bsi->bsi_op->o_tmpmemctx,
 				"b",
-				&f->f_sub_initial );
+				fvalue );
+		if ( escaped )
+			bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
 		if ( casefold && BACKSQL_AT_CANUPPERCASE( at ) ) {
 			ldap_pvt_str2upper( &bsi->bsi_flt_where.bb_val.bv_val[ start ] );
 		}
@@ -591,12 +649,18 @@ backsql_process_sub_filter( backsql_srch_info *bsi, Filter *f,
 				i, f->f_sub_any[ i ].bv_val );
 #endif /* BACKSQL_TRACE */
 
+			fvalue = &f->f_sub_any[ i ];
+			escaped = backsql_val_escape( bsi->bsi_op, fvalue, &escval );
+			if ( escaped )
+				fvalue = &escval;
 			start = bsi->bsi_flt_where.bb_val.bv_len;
 			backsql_strfcat_x( &bsi->bsi_flt_where,
 					bsi->bsi_op->o_tmpmemctx,
 					"bc",
-					&f->f_sub_any[ i ],
+					fvalue,
 					'%' );
+			if ( escaped )
+				bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
 			if ( casefold && BACKSQL_AT_CANUPPERCASE( at ) ) {
 				/*
 				 * Note: toupper('%') = '%'
@@ -616,11 +680,17 @@ backsql_process_sub_filter( backsql_srch_info *bsi, Filter *f,
 			f->f_sub_final.bv_val );
 #endif /* BACKSQL_TRACE */
 
+		fvalue = &f->f_sub_final;
+		escaped = backsql_val_escape( bsi->bsi_op, fvalue, &escval );
+		if ( escaped )
+			fvalue = &escval;
 		start = bsi->bsi_flt_where.bb_val.bv_len;
     		backsql_strfcat_x( &bsi->bsi_flt_where,
 				bsi->bsi_op->o_tmpmemctx,
 				"b",
-				&f->f_sub_final );
+				fvalue );
+		if ( escaped )
+			bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
   		if ( casefold && BACKSQL_AT_CANUPPERCASE( at ) ) {
 			ldap_pvt_str2upper( &bsi->bsi_flt_where.bb_val.bv_val[ start ] );
 		}
@@ -1187,6 +1257,8 @@ backsql_process_filter_attr( backsql_srch_info *bsi, Filter *f, backsql_at_map_r
 	struct berval		*filter_value = NULL;
 	MatchingRule		*matching_rule = NULL;
 	struct berval		ordering = BER_BVC("<=");
+	struct berval		escval;
+	int					escaped = 0;
 
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_process_filter_attr(%s)\n",
 		at->bam_ad->ad_cname.bv_val );
@@ -1240,6 +1312,10 @@ equality_match:;
 		{
 			casefold = 1;
 		}
+
+		escaped = backsql_val_escape( bsi->bsi_op, filter_value, &escval );
+		if ( escaped )
+			filter_value = &escval;
 
 		/* FIXME: directoryString filtering should use a similar
 		 * approach to deal with non-prettified values like
@@ -1321,6 +1397,10 @@ equality_match:;
 			casefold = 1;
 		}
 
+		escaped = backsql_val_escape( bsi->bsi_op, filter_value, &escval );
+		if ( escaped )
+			filter_value = &escval;
+
 		/*
 		 * FIXME: should we uppercase the operands?
 		 */
@@ -1354,7 +1434,7 @@ equality_match:;
 					&at->bam_sel_expr,
 					&ordering,
 					'\'',
-					&f->f_av_value,
+					filter_value,
 					(ber_len_t)STRLENOF( /* (' */ "')" ),
 						/* ( */ "')" );
 		}
@@ -1378,13 +1458,17 @@ equality_match:;
 	case LDAP_FILTER_APPROX:
 		/* we do our best */
 
+		filter_value = &f->f_av_value;
+		escaped = backsql_val_escape( bsi->bsi_op, filter_value, &escval );
+		if ( escaped )
+			filter_value = &escval;
 		/*
 		 * maybe we should check type of at->sel_expr here somehow,
 		 * to know whether upper_func is applicable, but for now
 		 * upper_func stuff is made for Oracle, where UPPER is
 		 * safely applicable to NUMBER etc.
 		 */
-		(void)backsql_process_filter_like( bsi, at, 1, &f->f_av_value );
+		(void)backsql_process_filter_like( bsi, at, 1, filter_value );
 		break;
 
 	default:
@@ -1397,6 +1481,9 @@ equality_match:;
 		break;
 
 	}
+
+	if ( escaped )
+		bsi->bsi_op->o_tmpfree( escval.bv_val, bsi->bsi_op->o_tmpmemctx );
 
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_process_filter_attr(%s)\n",
 		at->bam_ad->ad_cname.bv_val );
@@ -2556,6 +2643,7 @@ done:;
 		op->ors_scope = LDAP_SCOPE_BASE;
 	}
 
+	SQLTransact( SQL_NULL_HENV, dbh, SQL_ROLLBACK );
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_search()\n" );
 
 	return rs->sr_err;

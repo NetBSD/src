@@ -1,10 +1,10 @@
-/*	$NetBSD: os-ip.c,v 1.11 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: os-ip.c,v 1.12 2025/09/05 21:16:21 christos Exp $	*/
 
 /* os-ip.c -- platform-specific TCP & UDP related code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: os-ip.c,v 1.11 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: os-ip.c,v 1.12 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -268,7 +268,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 		== AC_SOCKET_ERROR )
 	{
 		/* XXX: needs to be replace with ber_stream_read() */
-		(void)read(s, &ch, 1);
+		(void)!read(s, &ch, 1);
 		TRACE;
 		return -1;
 	}
@@ -702,6 +702,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 					struct sockaddr_in6 ip6addr;
 					char bind_addr[INET6_ADDRSTRLEN];
 					ip6addr.sin6_family = AF_INET6;
+					ip6addr.sin6_port = 0;
 					ip6addr.sin6_addr = ld->ld_options.ldo_local_ip_addrs.ip6_addr;
 					inet_ntop( AF_INET6,
 						&(ip6addr.sin6_addr),
@@ -730,6 +731,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 					struct sockaddr_in ip4addr;
 					char bind_addr[INET_ADDRSTRLEN];
 					ip4addr.sin_family = AF_INET;
+					ip4addr.sin_port = 0;
 					ip4addr.sin_addr = ld->ld_options.ldo_local_ip_addrs.ip4_addr;
 					inet_ntop( AF_INET,
 						&(ip4addr.sin_addr),

@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-back-monitor.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: proto-back-monitor.h,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -49,7 +49,8 @@ monitor_cache_dup LDAP_P((
 extern int
 monitor_cache_add LDAP_P((
 	monitor_info_t		*mi,
-	Entry			*e ));
+	Entry			*e,
+	Entry			*parent ));
 extern int
 monitor_cache_get LDAP_P((
 	monitor_info_t		*mi,

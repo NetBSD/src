@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-slapi.h,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: proto-slapi.h,v 1.4 2025/09/05 21:16:33 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -74,8 +74,7 @@ LDAP_SLAPI_F (int) slapi_int_register_extop LDAP_P((Backend *pBE, ExtendedOp **o
 LDAP_SLAPI_F (int) slapi_int_get_extop_plugin LDAP_P((struct berval  *reqoid, SLAPI_FUNC *pFuncAddr ));
 LDAP_SLAPI_F (struct berval *) slapi_int_get_supported_extop LDAP_P(( int ));
 LDAP_SLAPI_F (int) slapi_int_unregister_plugins LDAP_P((Backend *be, int index));
-LDAP_SLAPI_F (int) slapi_int_read_config LDAP_P((Backend *be, const char *fname, int lineno,
-		int argc, char **argv, int index ));
+LDAP_SLAPI_F (int) slapi_int_read_config LDAP_P(( struct config_args_s *c ));
 LDAP_SLAPI_F (void) slapi_int_plugin_unparse LDAP_P((Backend *be, BerVarray *out ));
 LDAP_SLAPI_F (int) slapi_int_initialize LDAP_P((void));
 

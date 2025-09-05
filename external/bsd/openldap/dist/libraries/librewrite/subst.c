@@ -1,9 +1,9 @@
-/*	$NetBSD: subst.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: subst.c,v 1.4 2025/09/05 21:16:23 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -133,6 +133,7 @@ rewrite_subst_compile(
 				map = rewrite_xmap_parse( info,
 						p + 3, (const char **)&begin );
 				if ( map == NULL ) {
+					nsub++;	/* make sure subs[nsub] is freed */
 					goto cleanup;
 				}
 				submatch[ nsub ].ls_map = map;
@@ -148,6 +149,7 @@ rewrite_subst_compile(
 			map = rewrite_map_parse( info, p + 2,
 					(const char **)&begin );
 			if ( map == NULL ) {
+				nsub++;	/* make sure subs[nsub] is freed */
 				goto cleanup;
 			}
 			p = begin - 1;
@@ -167,6 +169,7 @@ rewrite_subst_compile(
 			continue;
 
 		} else {
+			nsub++;	/* make sure subs[nsub] is freed */
 			goto cleanup;
 		}
 
@@ -178,10 +181,6 @@ rewrite_subst_compile(
 	 */
 	tmps = (struct berval * )realloc( subs, sizeof( struct berval )*( nsub + 1 ) );
 	if ( tmps == NULL ) {
-		/*
-		 * XXX need to free the value subst stuff!
-		 */
-		free( subs );
 		goto cleanup;
 	}
 	subs = tmps;
@@ -202,6 +201,7 @@ rewrite_subst_compile(
 
 	s = calloc( sizeof( struct rewrite_subst ), 1 );
 	if ( s == NULL ) {
+		nsub++;	/* make sure last elements are freed */
 		goto cleanup;
 	}
 
@@ -215,13 +215,13 @@ rewrite_subst_compile(
 cleanup:;
 	if ( subs ) {
 		for ( l=0; l<nsub; l++ ) {
-			free( subs[nsub].bv_val );
+			free( subs[l].bv_val );
 		}
 		free( subs );
 	}
 	if ( submatch ) {
 		for ( l=0; l<nsub; l++ ) {
-			free( submatch[nsub].ls_map );
+			free( submatch[l].ls_map );
 		}
 		free( submatch );
 	}

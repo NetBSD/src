@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb_load.c,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
+/*	$NetBSD: mdb_load.c,v 1.4 2025/09/05 21:16:22 christos Exp $	*/
 
 /* mdb_load.c - memory-mapped database load tool */
 /*
@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
 			if (rc == MDB_KEYEXIST && putflags)
 				continue;
 			if (rc) {
-				fprintf(stderr, "mdb_cursor_put failed, error %d %s\n", rc, mdb_strerror(rc));
+				fprintf(stderr, "%s: line %" Z "d: mdb_cursor_put failed, error %d %s\n", prog, lineno, rc, mdb_strerror(rc));
 				goto txn_abort;
 			}
 			batch++;
@@ -472,9 +472,11 @@ int main(int argc, char *argv[])
 					fprintf(stderr, "mdb_cursor_open failed, error %d %s\n", rc, mdb_strerror(rc));
 					goto txn_abort;
 				}
-				if (appflag & MDB_APPENDDUP) {
+				if (append) {
 					MDB_val k, d;
 					mdb_cursor_get(mc, &k, &d, MDB_LAST);
+					memcpy(prevk.mv_data, k.mv_data, k.mv_size);
+					prevk.mv_size = k.mv_size;
 				}
 				batch = 0;
 			}

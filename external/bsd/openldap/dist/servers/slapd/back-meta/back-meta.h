@@ -1,9 +1,9 @@
-/*	$NetBSD: back-meta.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: back-meta.h,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -491,7 +491,8 @@ meta_back_getconn(
 	Operation		*op,
 	SlapReply		*rs,
 	int			*candidate,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	SlapReply *candidates );
 
 extern void
 meta_back_release_conn_lock(
@@ -506,7 +507,8 @@ meta_back_retry(
 	SlapReply		*rs,
 	metaconn_t		**mcp,
 	int			candidate,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	SlapReply    *candidates );
 
 extern void
 meta_back_conn_free(
@@ -540,7 +542,8 @@ meta_back_dobind(
 	Operation		*op,
 	SlapReply		*rs,
 	metaconn_t		*mc,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	SlapReply		*candidates );
 
 extern int
 meta_back_single_dobind(
@@ -627,7 +630,8 @@ meta_back_select_unique_candidate(
 extern int
 meta_clear_unused_candidates(
 	Operation		*op,
-	int			candidate );
+	int			candidate,
+	SlapReply *candidates );
 
 extern int
 meta_clear_one_candidate(
@@ -682,6 +686,9 @@ extern int
 meta_target_finish( metainfo_t *mi, metatarget_t *mt,
 	const char *log, char *msg, size_t msize
 );
+
+extern void
+meta_back_target_free( metatarget_t	*mt );
 
 extern LDAP_REBIND_PROC		meta_back_default_rebind;
 extern LDAP_URLLIST_PROC	meta_back_default_urllist;

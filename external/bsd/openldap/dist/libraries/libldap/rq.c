@@ -1,9 +1,9 @@
-/*	$NetBSD: rq.c,v 1.2 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: rq.c,v 1.3 2025/09/05 21:16:21 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rq.c,v 1.2 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: rq.c,v 1.3 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 

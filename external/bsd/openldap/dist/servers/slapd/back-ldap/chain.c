@@ -1,10 +1,10 @@
-/*	$NetBSD: chain.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: chain.c,v 1.4 2025/09/05 21:16:27 christos Exp $	*/
 
 /* chain.c - chain LDAP operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chain.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: chain.c,v 1.4 2025/09/05 21:16:27 christos Exp $");
 
 #include "portable.h"
 
@@ -1045,7 +1045,7 @@ ldap_chain_response( Operation *op, SlapReply *rs )
 
 	/* we need this to know if back-ldap returned any result */
 	lb.lb_lc = lc;
-	sc2.sc_next = sc->sc_next;
+	sc2.sc_next = sc;
 	sc2.sc_private = &lb;
 	sc2.sc_response = ldap_chain_cb_response;
 	op->o_callback = &sc2;

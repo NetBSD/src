@@ -1,10 +1,10 @@
-/*	$NetBSD: slapcommon.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: slapcommon.c,v 1.4 2025/09/05 21:16:26 christos Exp $	*/
 
 /* slapcommon.c - common routine for the slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapcommon.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: slapcommon.c,v 1.4 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -55,7 +55,6 @@ static LDIFFP dummy;
 
 #if defined(LDAP_SYSLOG) && defined(LDAP_DEBUG)
 int start_syslog;
-static char **syslog_unknowns;
 #ifdef LOG_LOCAL4
 static int syslogUser = SLAP_DEFAULT_SYSLOG_USER;
 #endif /* LOG_LOCAL4 */
@@ -183,20 +182,20 @@ parse_slapopt( int tool, int *mode )
 
 #if defined(LDAP_SYSLOG) && defined(LDAP_DEBUG)
 	} else if ( strncasecmp( optarg, "syslog", len ) == 0 ) {
-		if ( parse_debug_level( p, &ldap_syslog, &syslog_unknowns ) ) {
+		if ( slap_parse_debug_level( p, &ldap_syslog, 1 ) ) {
 			return -1;
 		}
 		start_syslog = 1;
 
 	} else if ( strncasecmp( optarg, "syslog-level", len ) == 0 ) {
-		if ( parse_syslog_level( p, &ldap_syslog_level ) ) {
+		if ( slap_parse_syslog_level( p, &ldap_syslog_level ) ) {
 			return -1;
 		}
 		start_syslog = 1;
 
 #ifdef LOG_LOCAL4
 	} else if ( strncasecmp( optarg, "syslog-user", len ) == 0 ) {
-		if ( parse_syslog_user( p, &syslogUser ) ) {
+		if ( slap_parse_syslog_user( p, &syslogUser ) ) {
 			return -1;
 		}
 		start_syslog = 1;
@@ -291,7 +290,6 @@ slap_tool_init(
 	char *filterstr = NULL;
 	char *subtree = NULL;
 	char *ldiffile	= NULL;
-	char **debug_unknowns = NULL;
 	int rc, i;
 	int mode = SLAP_TOOL_MODE;
 	int truncatemode = 0;
@@ -389,7 +387,7 @@ slap_tool_init(
 		case 'd': {	/* turn on debugging */
 			int	level = 0;
 
-			if ( parse_debug_level( optarg, &level, &debug_unknowns ) ) {
+			if ( slap_parse_debug_level( optarg, &level, 0 ) ) {
 				usage( tool, progname );
 			}
 #ifdef LDAP_DEBUG
@@ -430,27 +428,42 @@ slap_tool_init(
 			rc = ldap_url_parse_ext( optarg, &ludp,
 				LDAP_PVT_URL_PARSE_NOEMPTY_HOST | LDAP_PVT_URL_PARSE_NOEMPTY_DN );
 			if ( rc != LDAP_URL_SUCCESS ) {
+				fprintf( stderr, "Cannot parse '%s' as LDAP URI.\n", optarg );
 				usage( tool, progname );
 			}
 
 			/* don't accept host, port, attrs, extensions */
 			if ( ldap_pvt_url_scheme2proto( ludp->lud_scheme ) != LDAP_PROTO_TCP ) {
+				fprintf( stderr, "%s URIs need to use ldap:// scheme.\n",
+						progname );
 				usage( tool, progname );
 			}
 
 			if ( ludp->lud_host != NULL ) {
+				fprintf( stderr, "%s URIs cannot carry a host. "
+						"Only base, scope and filter are accepted\n",
+						progname );
 				usage( tool, progname );
 			}
 
 			if ( ludp->lud_port != 0 ) {
+				fprintf( stderr, "%s URIs cannot carry a port. "
+						"Only base, scope and filter are accepted\n",
+						progname );
 				usage( tool, progname );
 			}
 
 			if ( ludp->lud_attrs != NULL ) {
+				fprintf( stderr, "%s URIs cannot carry an attribute specification. "
+						"Only base, scope and filter are accepted\n",
+						progname );
 				usage( tool, progname );
 			}
 
 			if ( ludp->lud_exts != NULL ) {
+				fprintf( stderr, "%s URIs cannot carry an extension specification. "
+						"Only base, scope and filter are accepted\n",
+						progname );
 				usage( tool, progname );
 			}
 
@@ -472,6 +485,7 @@ slap_tool_init(
 
 		case 'j':	/* jump to linenumber */
 			if ( lutil_atoul( &jumpline, optarg ) ) {
+				fprintf( stderr, "Invalid line number '%s'\n", optarg );
 				usage( tool, progname );
 			}
 			break;
@@ -486,6 +500,7 @@ slap_tool_init(
 
 		case 'N':
 			if ( dn_mode && dn_mode != SLAP_TOOL_LDAPDN_NORMAL ) {
+				fputs( "Invalid combination of -N/-P provided\n", stderr );
 				usage( tool, progname );
 			}
 			dn_mode = SLAP_TOOL_LDAPDN_NORMAL;
@@ -493,6 +508,7 @@ slap_tool_init(
 
 		case 'n':	/* which config file db to index */
 			if ( lutil_atoi( &dbnum, optarg ) || dbnum < 0 ) {
+				fputs( "Invalid database index provided\n", stderr );
 				usage( tool, progname );
 			}
 			break;
@@ -505,6 +521,7 @@ slap_tool_init(
 
 		case 'P':
 			if ( dn_mode && dn_mode != SLAP_TOOL_LDAPDN_PRETTY ) {
+				fputs( "Invalid combination of -N/-P provided\n", stderr );
 				usage( tool, progname );
 			}
 			dn_mode = SLAP_TOOL_LDAPDN_PRETTY;
@@ -527,6 +544,7 @@ slap_tool_init(
 			if ( lutil_atou( &csnsid, optarg )
 				|| csnsid > SLAP_SYNC_SID_MAX )
 			{
+				fputs( "Invalid serverid provided\n", stderr );
 				usage( tool, progname );
 			}
 			break;
@@ -543,7 +561,7 @@ slap_tool_init(
 			case SLAPSCHEMA:
 				/* dump subtree */
 				ch_free( subtree );
-				subtree = optarg;
+				subtree = ch_strdup( optarg );
 				break;
 			}
 			break;
@@ -559,6 +577,7 @@ slap_tool_init(
 
 		case 'u':	/* dry run */
 			dryrun++;
+			mode |= SLAP_TOOL_DRYRUN;
 			break;
 
 		case 'v':	/* turn on verbose */
@@ -578,6 +597,7 @@ slap_tool_init(
 			break;
 		}
 	}
+	slap_debug_orig = slap_debug;
 
 #if defined(LDAP_SYSLOG) && defined(LDAP_DEBUG)
 	if ( start_syslog ) {
@@ -692,23 +712,9 @@ slap_tool_init(
 		exit( EXIT_FAILURE );
 	}
 
-	if ( debug_unknowns ) {
-		rc = parse_debug_unknowns( debug_unknowns, &slap_debug );
-		ldap_charray_free( debug_unknowns );
-		debug_unknowns = NULL;
-		if ( rc )
-			exit( EXIT_FAILURE );
-	}
-
-#if defined(LDAP_SYSLOG) && defined(LDAP_DEBUG)
-	if ( syslog_unknowns ) {
-		rc = parse_debug_unknowns( syslog_unknowns, &ldap_syslog );
-		ldap_charray_free( syslog_unknowns );
-		syslog_unknowns = NULL;
-		if ( rc )
-			exit( EXIT_FAILURE );
-	}
-#endif
+	rc = slap_parse_debug_unknowns();
+	if ( rc )
+		exit( EXIT_FAILURE );
 
 	at_oc_cache = 1;
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: ctxcsn.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: ctxcsn.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* ctxcsn.c -- Context CSN Management Routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctxcsn.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: ctxcsn.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -59,9 +59,9 @@ slap_get_commit_csn(
 		sid = slap_parse_csn_sid( &op->o_csn );
 	}
 
-	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_lock( &be->be_pcsn_p->be_pcsn_mutex );
 
-	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
+	LDAP_TAILQ_FOREACH( csne, &be->be_pcsn_p->be_pcsn_list, ce_csn_link ) {
 		if ( csne->ce_op == op ) {
 			csne->ce_state = SLAP_CSN_COMMIT;
 			if ( foundit ) *foundit = 1;
@@ -69,7 +69,7 @@ slap_get_commit_csn(
 		}
 	}
 
-	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
+	LDAP_TAILQ_FOREACH( csne, &be->be_pcsn_p->be_pcsn_list, ce_csn_link ) {
 		if ( sid != -1 && sid == csne->ce_sid ) {
 			if ( csne->ce_state == SLAP_CSN_COMMIT ) committed_csne = csne;
 			if ( csne->ce_state == SLAP_CSN_PENDING ) break;
@@ -87,7 +87,7 @@ slap_get_commit_csn(
 			maxcsn->bv_val[0] = 0;
 		}
 	}
-	ldap_pvt_thread_mutex_unlock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_unlock( &be->be_pcsn_p->be_pcsn_mutex );
 }
 
 void
@@ -96,16 +96,16 @@ slap_rewind_commit_csn( Operation *op )
 	struct slap_csn_entry *csne;
 	BackendDB *be = op->o_bd->bd_self;
 
-	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_lock( &be->be_pcsn_p->be_pcsn_mutex );
 
-	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
+	LDAP_TAILQ_FOREACH( csne, &be->be_pcsn_p->be_pcsn_list, ce_csn_link ) {
 		if ( csne->ce_op == op ) {
 			csne->ce_state = SLAP_CSN_PENDING;
 			break;
 		}
 	}
 
-	ldap_pvt_thread_mutex_unlock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_unlock( &be->be_pcsn_p->be_pcsn_mutex );
 }
 
 void
@@ -118,11 +118,11 @@ slap_graduate_commit_csn( Operation *op )
 	if ( op->o_bd == NULL ) return;
 	be = op->o_bd->bd_self;
 
-	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_lock( &be->be_pcsn_p->be_pcsn_mutex );
 
-	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
+	LDAP_TAILQ_FOREACH( csne, &be->be_pcsn_p->be_pcsn_list, ce_csn_link ) {
 		if ( csne->ce_op == op ) {
-			LDAP_TAILQ_REMOVE( be->be_pending_csn_list,
+			LDAP_TAILQ_REMOVE( &be->be_pcsn_p->be_pcsn_list,
 				csne, ce_csn_link );
 			Debug( LDAP_DEBUG_SYNC, "slap_graduate_commit_csn: removing %p %s\n",
 				csne, csne->ce_csn.bv_val );
@@ -135,7 +135,7 @@ slap_graduate_commit_csn( Operation *op )
 		}
 	}
 
-	ldap_pvt_thread_mutex_unlock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_unlock( &be->be_pcsn_p->be_pcsn_mutex );
 
 	return;
 }
@@ -199,10 +199,10 @@ slap_queue_csn(
 	pending->ce_op = op;
 	pending->ce_state = SLAP_CSN_PENDING;
 
-	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
-	LDAP_TAILQ_INSERT_TAIL( be->be_pending_csn_list,
+	ldap_pvt_thread_mutex_lock( &be->be_pcsn_p->be_pcsn_mutex );
+	LDAP_TAILQ_INSERT_TAIL( &be->be_pcsn_p->be_pcsn_list,
 		pending, ce_csn_link );
-	ldap_pvt_thread_mutex_unlock( &be->be_pcl_mutex );
+	ldap_pvt_thread_mutex_unlock( &be->be_pcsn_p->be_pcsn_mutex );
 }
 
 int

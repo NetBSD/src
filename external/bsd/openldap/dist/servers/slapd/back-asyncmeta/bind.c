@@ -1,11 +1,11 @@
-/*	$NetBSD: bind.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.3 2025/09/05 21:16:26 christos Exp $	*/
 
 /* bind.c - bind request handler functions for binding
  * to remote targets for back-asyncmeta */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2021 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  * This work was sponsored by Ericsson. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.3 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -70,9 +70,8 @@ asyncmeta_back_bind( Operation *op, SlapReply *rs )
 			gotit = 0,
 			isroot = 0;
 
-	SlapReply	*candidates;
+	SlapReply	*candidates = NULL;
 
-	candidates = op->o_tmpcalloc(mi->mi_ntargets, sizeof(SlapReply),op->o_tmpmemctx);
 	rs->sr_err = LDAP_SUCCESS;
 
 	Debug( LDAP_DEBUG_ARGS, "%s asyncmeta_back_bind: dn=\"%s\".\n",
@@ -96,6 +95,16 @@ asyncmeta_back_bind( Operation *op, SlapReply *rs )
 		/* be_rootdn_bind() sent result */
 		return rs->sr_err;
 	}
+
+
+	if ( mi->mi_ntargets == 0 ) {
+		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+		rs->sr_text = "No targets are configured for this database";
+		send_ldap_result(op, rs);
+		return rs->sr_err;
+	}
+
+	candidates = op->o_tmpcalloc(mi->mi_ntargets, sizeof(SlapReply),op->o_tmpmemctx);
 
 	/* we need asyncmeta_getconn() not send result even on error,
 	 * because we want to intercept the error and make it
@@ -847,18 +856,29 @@ asyncmeta_back_proxy_authz_cred(
 				mt->mt_idassert_sasl_mech.bv_val, NULL, NULL,
 				LDAP_SASL_QUIET, lutil_sasl_interact,
 				defaults );
-
 		/* restore the old timeout just in case */
 		ldap_set_option( msc->msc_ld, LDAP_OPT_TIMEOUT, (void *)&old_tv );
 
 		rs->sr_err = slap_map_api2result( rs );
 		if ( rs->sr_err != LDAP_SUCCESS ) {
+			char *xtext = NULL;
+			rs->sr_text = "Failure to execute SASL bind to remote target.";
+			ldap_get_option( msc->msc_ld,
+							 LDAP_OPT_DIAGNOSTIC_MESSAGE, &xtext );
+			if ( xtext != NULL && xtext [ 0 ] == '\0' ) {
+				ldap_memfree( xtext );
+				xtext = NULL;
+			}
+
 			if ( LogTest( asyncmeta_debug ) ) {
 				char	time_buf[ SLAP_TEXT_BUFLEN ];
 				asyncmeta_get_timestamp(time_buf);
-				Debug( asyncmeta_debug, "[%s] asyncmeta_back_proxy_authz_cred failed bind msc: %p\n",
-				      time_buf, msc );
+				Debug( asyncmeta_debug, "[%s] asyncmeta_back_proxy_authz_cred failed bind msc: %p with message %s\n",
+					   time_buf, msc,  (xtext ? xtext : "") );
 			}
+			if ( xtext )
+				ldap_memfree( xtext );
+
 			LDAP_BACK_CONN_ISBOUND_CLEAR( msc );
 			if ( sendok & LDAP_BACK_SENDERR ) {
 				send_ldap_result( op, rs );
@@ -1697,10 +1717,13 @@ asyncmeta_dobind_init_with_retry(Operation *op, SlapReply *rs, bm_context_t *bc,
 retry_dobind:
 	ldap_pvt_thread_mutex_lock( &mc->mc_om_mutex );
 	rc = asyncmeta_dobind_init(op, rs, bc, mc, candidate);
-	if (rs->sr_err != LDAP_UNAVAILABLE && rs->sr_err != LDAP_BUSY) {
+	if (rs->sr_err != LDAP_UNAVAILABLE &&
+		rs->sr_err != LDAP_BUSY &&
+		rs->sr_err != LDAP_OTHER ) {
 		ldap_pvt_thread_mutex_unlock( &mc->mc_om_mutex );
 		return rc;
-	} else if (bc->nretries[candidate] == 0) {
+	} else if ( bc->nretries[candidate] == 0 ||
+				rs->sr_err == LDAP_OTHER ) {
 		char	buf[ SLAP_TEXT_BUFLEN ];
 		snprintf( buf, sizeof( buf ), "called from %s:%d", __FILE__, __LINE__ );
 		asyncmeta_reset_msc(NULL, mc, candidate, 0, buf);

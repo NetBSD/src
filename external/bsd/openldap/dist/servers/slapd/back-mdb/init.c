@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* init.c - initialize mdb backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -37,6 +37,7 @@ static const struct berval mdmi_databases[] = {
 	BER_BVC("dn2i"),
 	BER_BVC("id2e"),
 	BER_BVC("id2v"),
+	BER_BVC("ixck"),
 	BER_BVNULL
 };
 
@@ -95,6 +96,7 @@ mdb_db_open( BackendDB *be, ConfigReply *cr )
 	unsigned flags;
 	char *dbhome;
 	MDB_txn *txn;
+	int do_index = 0;
 
 	if ( be->be_suffix == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -220,15 +222,18 @@ mdb_db_open( BackendDB *be, ConfigReply *cr )
 			&mdb->mi_dbis[i] );
 
 		if ( rc != 0 ) {
-			snprintf( cr->msg, sizeof(cr->msg), "database \"%s\": "
-				"mdb_dbi_open(%s/%s) failed: %s (%d).", 
-				be->be_suffix[0].bv_val, 
-				mdb->mi_dbenv_home, mdmi_databases[i].bv_val,
-				mdb_strerror(rc), rc );
-			Debug( LDAP_DEBUG_ANY,
-				LDAP_XSTRING(mdb_db_open) ": %s\n",
-				cr->msg );
-			goto fail;
+			/* when read-only, it's ok for ID2VAL or IDXCKP to not exist */
+			if (( flags & MDB_CREATE ) || ( i < MDB_ID2VAL )) {
+				snprintf( cr->msg, sizeof(cr->msg), "database \"%s\": "
+					"mdb_dbi_open(%s/%s) failed: %s (%d).",
+					be->be_suffix[0].bv_val,
+					mdb->mi_dbenv_home, mdmi_databases[i].bv_val,
+					mdb_strerror(rc), rc );
+				Debug( LDAP_DEBUG_ANY,
+					LDAP_XSTRING(mdb_db_open) ": %s\n",
+					cr->msg );
+				goto fail;
+			}
 		}
 
 		if ( i == MDB_ID2ENTRY )
@@ -288,6 +293,13 @@ mdb_db_open( BackendDB *be, ConfigReply *cr )
 		}
 	}
 
+	if ( slapMode & SLAP_SERVER_MODE ) {
+		MDB_stat st;
+		rc = mdb_stat( txn, mdb->mi_idxckp, &st );
+		if ( st.ms_entries )
+			do_index = mdb_resume_index( be, txn );
+	}
+
 	rc = mdb_txn_commit(txn);
 	if ( rc != 0 ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -304,6 +316,9 @@ mdb_db_open( BackendDB *be, ConfigReply *cr )
 	}
 
 	mdb->mi_flags |= MDB_IS_OPEN;
+
+	if ( do_index )
+		mdb_start_index_task( be->bd_self );
 
 	return 0;
 
@@ -323,11 +338,21 @@ mdb_db_close( BackendDB *be, ConfigReply *cr )
 
 	mdb->mi_flags &= ~MDB_IS_OPEN;
 
-	if( mdb->mi_dbenv ) {
-		mdb_reader_flush( mdb->mi_dbenv );
+	/* remove indexer task */
+	if ( mdb->mi_index_task ) {
+		struct re_s *re = mdb->mi_index_task;
+		ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+		mdb->mi_index_task = NULL;
+		/* can never actually be running at this point, but paranoia */
+		if ( ldap_pvt_runqueue_isrunning( &slapd_rq, re ) )
+			ldap_pvt_runqueue_stoptask( &slapd_rq, re );
+		ldap_pvt_runqueue_remove( &slapd_rq, re );
+		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 	}
 
 	if ( mdb->mi_dbenv ) {
+		mdb_reader_flush( mdb->mi_dbenv );
+
 		if ( mdb->mi_dbis[0] ) {
 			int i;
 

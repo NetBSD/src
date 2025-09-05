@@ -1,10 +1,10 @@
-/*	$NetBSD: base64.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.4 2025/09/05 21:16:23 christos Exp $	*/
 
 /* base64.c -- routines to encode/decode base64 data */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1995 IBM Corporation.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.4 2025/09/05 21:16:23 christos Exp $");
 
 #include "portable.h"
 
@@ -121,14 +121,14 @@ static const char Pad64 = '=';
 
 int
 lutil_b64_ntop(
-	u_char const *src,
+	unsigned char const *src,
 	size_t srclength,
 	char *target,
 	size_t targsize)
 {
 	size_t datalength = 0;
-	u_char input[3];
-	u_char output[4];
+	unsigned char input[3];
+	unsigned char output[4];
 	size_t i;
 
 	while (2 < srclength) {
@@ -193,7 +193,7 @@ lutil_b64_ntop(
 int
 lutil_b64_pton(
 	char const *src,
-	u_char *target, 
+	unsigned char *target,
 	size_t targsize)
 {
 	int tarindex, state, ch;

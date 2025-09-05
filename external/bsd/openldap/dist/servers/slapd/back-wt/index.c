@@ -1,10 +1,10 @@
-/*	$NetBSD: index.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: index.c,v 1.3 2025/09/05 21:16:32 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: index.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: index.c,v 1.3 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
 #include <stdio.h>
+#include <ac/string.h>
 #include "back-wt.h"
 #include "slap-config.h"
 
@@ -85,7 +86,6 @@ int wt_index_param(
 	struct berval *prefixp )
 {
 	AttrInfo *ai;
-	int rc;
 	slap_mask_t mask, type = 0;
 
 	ai = wt_index_mask( be, desc, prefixp );
@@ -153,17 +153,15 @@ static int indexer(
 	int opid,
 	slap_mask_t mask )
 {
-	int rc, i;
+	int rc = LDAP_SUCCESS, i;
 	struct berval *keys;
 	WT_CURSOR *cursor = NULL;
-	WT_SESSION *session = wc->session;
 	assert( mask != 0 );
 
-	cursor = wt_ctx_index_cursor(wc, atname, 1);
+	cursor = wt_index_open(wc, atname, 1);
 	if( !cursor ) {
 		Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(indexer)
-			   ": open index cursor failed: %s\n",
+			   "indexer: open index cursor failed: %s\n",
 			   atname->bv_val );
 		goto done;
 	}
@@ -241,9 +239,7 @@ static int indexer(
 	}
 
 done:
-	if(cursor){
-		cursor->close(cursor);
-	}
+	cursor->close(cursor);
 	return rc;
 }
 
@@ -257,7 +253,7 @@ static int index_at_values(
 	ID id,
 	int opid )
 {
-	int rc;
+	int rc = LDAP_SUCCESS;
 	slap_mask_t mask = 0;
 	int ixop = opid;
 	AttrInfo *ai = NULL;
@@ -385,6 +381,42 @@ wt_index_entry( Operation *op, wt_ctx *wc, int opid, Entry *e )
 		   opid == SLAP_INDEX_DELETE_OP ? "del" : "add",
 		   (long) e->e_id, e->e_dn ? e->e_dn : "" );
 	return 0;
+}
+
+WT_CURSOR *
+wt_index_open(wt_ctx *wc, struct berval *name, int create)
+{
+	WT_CURSOR *cursor = NULL;
+	WT_SESSION *session = wc->session;
+	char uri[1024];
+	int rc;
+
+	snprintf(uri, sizeof(uri), "table:%s", name->bv_val);
+
+	rc = session->open_cursor(session, uri, NULL, "overwrite=false", &cursor);
+	if (rc == ENOENT && create) {
+		rc = session->create(session, uri,
+							 "key_format=uQ,"
+							 "value_format=x,"
+							 "columns=(key, id, none)");
+		if( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				   "wt_index_open: table \"%s\": "
+				   "cannot create index table: %s (%d)\n",
+				   uri, wiredtiger_strerror(rc), rc);
+			return NULL;
+		}
+		rc = session->open_cursor(session, uri, NULL,
+								  "overwrite=false", &cursor);
+	}
+	if ( rc ) {
+		Debug( LDAP_DEBUG_ANY,
+			   "wt_index_open: table \"%s\": "
+			   ": open cursor failed: %s (%d)\n",
+			   uri, wiredtiger_strerror(rc), rc);
+		return NULL;
+	}
+	return cursor;
 }
 
 /*

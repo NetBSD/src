@@ -1,10 +1,10 @@
-/*	$NetBSD: filter.c,v 1.8 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.9 2025/09/05 21:16:25 christos Exp $	*/
 
 /* filter.c - routines for parsing and dealing with filters */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.8 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.9 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -915,12 +915,7 @@ filter_dup( Filter *f, void *memctx )
 	case LDAP_FILTER_GE:
 	case LDAP_FILTER_LE:
 	case LDAP_FILTER_APPROX:
-		/* Should this be ava_dup() ? */
-		n->f_ava = mf->bmf_calloc( 1, sizeof(AttributeAssertion), memctx );
-		*n->f_ava = *f->f_ava;
-		if ( f->f_av_desc->ad_flags & SLAP_DESC_TEMPORARY )
-			n->f_av_desc = slap_bv2tmp_ad( &f->f_av_desc->ad_cname, memctx );
-		ber_dupbv_x( &n->f_av_value, &f->f_av_value, memctx );
+		n->f_ava = ava_dup( f->f_ava, memctx );
 		break;
 	case LDAP_FILTER_SUBSTRINGS:
 		n->f_sub = mf->bmf_calloc( 1, sizeof(SubstringsAssertion), memctx );

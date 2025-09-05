@@ -1,9 +1,9 @@
-/*	$NetBSD: deref.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: deref.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deref.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
+__RCSID("$NetBSD: deref.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -165,7 +165,8 @@ ldap_parse_derefresponse_control(
 	LDAPControl	*ctrl,
 	LDAPDerefRes	**drp2 )
 {
-	BerElement *ber;
+	BerElementBuffer berbuf;
+	BerElement *ber = (BerElement *)&berbuf;
 	ber_tag_t tag;
 	ber_len_t len;
 	char *last;
@@ -177,13 +178,8 @@ ldap_parse_derefresponse_control(
 		return LDAP_PARAM_ERROR;
 	}
 
-	/* Create a BerElement from the berval returned in the control. */
-	ber = ber_init( &ctrl->ldctl_value );
-
-	if ( ber == NULL ) {
-		ld->ld_errno = LDAP_NO_MEMORY;
-		return ld->ld_errno;
-	}
+	/* Set up a BerElement from the berval returned in the control. */
+	ber_init2( ber, &ctrl->ldctl_value, 0 );
 
 	/* Extract the count and cookie from the control. */
 	drp = &drhead;
@@ -248,8 +244,6 @@ ldap_parse_derefresponse_control(
 	tag = 0;
 
 done:;
-        ber_free( ber, 1 );
-
 	if ( tag == LBER_ERROR ) {
 		if ( drhead != NULL ) {
 			ldap_derefresponse_free( drhead );

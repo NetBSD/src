@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* result.c - wait for an ldap result */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: result.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: result.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -151,8 +151,32 @@ chkResponseList(
 		"ldap_chkResponseList ld %p msgid %d all %d\n",
 		(void *)ld, msgid, all );
 
+	lm = ld->ld_responses;
+	if ( lm && msgid == LDAP_RES_ANY && all == LDAP_MSG_RECEIVED ) {
+		/*
+		 * ITS#10229: asked to return all messages received so far,
+		 * draft-ietf-ldapext-ldap-c-api which defines LDAP_MSG_RECEIVED lets
+		 * us mix different msgids in what we return
+		 *
+		 * We have two choices in *how* we return the messages:
+		 * - we link all chains together
+		 * - we keep the chains intact and use lm_next
+		 *
+		 * The former will make life harder for ldap_parse_result finding a
+		 * result message, the latter affects routines that iterate over
+		 * messages. This take does the former.
+		 */
+		ld->ld_responses = NULL;
+		while ( lm->lm_next ) {
+			lm->lm_chain_tail->lm_chain = lm->lm_next;
+			lm->lm_chain_tail = lm->lm_next->lm_chain_tail;
+			lm->lm_next = lm->lm_next->lm_next;
+		}
+		return lm;
+	}
+
 	lastlm = &ld->ld_responses;
-	for ( lm = ld->ld_responses; lm != NULL; lm = nextlm ) {
+	for ( ; lm != NULL; lm = nextlm ) {
 		nextlm = lm->lm_next;
 		++cnt;
 
@@ -392,6 +416,37 @@ wait4msg(
 			LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
 		}
 
+		if ( all == LDAP_MSG_RECEIVED ) {
+			/*
+			 * ITS#10229: we looped over all ready connections accumulating
+			 * messages in ld_responses, check if we have something to return
+			 * right now.
+			 */
+			LDAPMessage **lp, *lm = ld->ld_responses;
+
+			if ( lm && msgid == LDAP_RES_ANY ) {
+				*result = lm;
+
+				ld->ld_responses = NULL;
+				while ( lm->lm_next ) {
+					lm->lm_chain_tail->lm_chain = lm->lm_next;
+					lm->lm_chain_tail = lm->lm_next->lm_chain_tail;
+					lm->lm_next = lm->lm_next->lm_next;
+				}
+				rc = lm->lm_msgtype;
+				break;
+			}
+
+			for ( lp = &ld->ld_responses; lm; lp = &lm->lm_next, lm = *lp ) {
+				if ( msgid == lm->lm_msgid ) break;
+			}
+			if ( lm ) {
+				*lp = lm->lm_next;
+				*result = lm;
+				rc = lm->lm_msgtype;
+			}
+		}
+
 		if ( rc == LDAP_MSG_X_KEEP_LOOKING && tvp != NULL ) {
 			struct timeval	curr_time_tv = { 0 },
 					delta_time_tv = { 0 };
@@ -511,6 +566,16 @@ nextresp3:
 		lc->lconn_ber = NULL;
 		break;
 
+	default:
+		/*
+		 * We read a BerElement that isn't LDAP or the stream has desync'd.
+		 * In either case, anything we read from now on is probably garbage,
+		 * just drop the connection.
+		 */
+		ber_free( ber, 1 );
+		lc->lconn_ber = NULL;
+		/* FALLTHRU */
+
 	case LBER_DEFAULT:
 fail:
 		err = sock_errno();
@@ -525,10 +590,6 @@ fail:
 			--lc->lconn_refcnt;
 		}
 		lc->lconn_status = 0;
-		return -1;
-
-	default:
-		ld->ld_errno = LDAP_LOCAL_ERROR;
 		return -1;
 	}
 
@@ -897,6 +958,13 @@ nextresp2:
 
 				if ( lr != &dummy_lr ) {
 					ldap_return_request( ld, lr, 1 );
+				} else {
+					if ( lr->lr_res_matched ) {
+						LDAP_FREE( lr->lr_res_matched );
+					}
+					if ( lr->lr_res_error ) {
+						LDAP_FREE( lr->lr_res_error );
+					}
 				}
 				lr = NULL;
 			}
@@ -1088,7 +1156,10 @@ nextresp2:
 
 	/* is this the one we're looking for? */
 	if ( msgid == LDAP_RES_ANY || id == msgid ) {
-		if ( all == LDAP_MSG_ONE
+		if ( msgid == LDAP_RES_ANY && all == LDAP_MSG_RECEIVED ) {
+			/* ITS#10229: We want to keep going so long as there's anything to
+			 * read. */
+		} else if ( all == LDAP_MSG_ONE
 			|| ( newmsg->lm_msgtype != LDAP_RES_SEARCH_RESULT
 				&& newmsg->lm_msgtype != LDAP_RES_SEARCH_ENTRY
 				&& newmsg->lm_msgtype != LDAP_RES_INTERMEDIATE

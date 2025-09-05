@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -98,6 +98,10 @@ struct signal_handler {
 #endif
         { 0, NULL }
 };
+
+/* in logging.c */
+extern char *serverName;
+extern int slap_debug_orig;
 
 /*
  * when more than one lloadd is running on one machine, each one might have
@@ -372,7 +376,6 @@ main( int argc, char **argv )
 
     char *configfile = NULL;
     char *configdir = NULL;
-    char *serverName;
     int serverMode = SLAP_SERVER_MODE;
 
     char **debug_unknowns = NULL;
@@ -382,6 +385,9 @@ main( int argc, char **argv )
     int firstopt = 1;
 
     slap_sl_mem_init();
+
+    (void) ldap_pvt_thread_initialize();
+    ldap_pvt_thread_mutex_init( &logfile_mutex );
 
     serverName = lutil_progname( "lloadd", argc, argv );
 
@@ -599,9 +605,11 @@ unhandled_option:;
 
     if ( optind != argc ) goto unhandled_option;
 
+    ber_set_option( NULL, LBER_OPT_LOG_PRINT_FN, slap_debug_print );
     ber_set_option( NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug );
     ldap_set_option( NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug );
     ldif_debug = slap_debug;
+	slap_debug_orig = slap_debug;
 
     if ( version ) {
         fprintf( stderr, "%s\n", Versionstr );
@@ -834,7 +842,7 @@ unhandled_option:;
 
 #ifndef HAVE_WINSOCK
     if ( !no_detach ) {
-        write( waitfds[1], "1", 1 );
+        (void)!write( waitfds[1], "1", 1 );
         close( waitfds[1] );
     }
 #endif
@@ -867,6 +875,7 @@ destroy:
         (void)loglevel_print( stdout );
     }
     /* remember an error during destroy */
+    rc |= lload_global_destroy();
     rc |= lload_destroy();
 
 stop:
@@ -886,10 +895,6 @@ stop:
     lloadd_daemon_destroy();
 
 #ifdef HAVE_TLS
-    if ( lload_tls_ld ) {
-        ldap_pvt_tls_ctx_free( lload_tls_ctx );
-        ldap_unbind_ext( lload_tls_ld, NULL, NULL );
-    }
     ldap_pvt_tls_destroy();
 #endif
 
@@ -910,6 +915,7 @@ stop:
     /* kludge, get symbols referenced */
     ldap_tavl_free( NULL, NULL );
 
+    ldap_pvt_thread_mutex_destroy( &logfile_mutex );
     MAIN_RETURN(rc);
 }
 

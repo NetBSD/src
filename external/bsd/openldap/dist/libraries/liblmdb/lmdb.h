@@ -1,4 +1,4 @@
-/*	$NetBSD: lmdb.h,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
+/*	$NetBSD: lmdb.h,v 1.4 2025/09/05 21:16:22 christos Exp $	*/
 
 /** @file lmdb.h
  *	@brief Lightning memory-mapped database library
@@ -202,7 +202,7 @@ typedef int mdb_filehandle_t;
 /** Library minor version */
 #define MDB_VERSION_MINOR	9
 /** Library patch version */
-#define MDB_VERSION_PATCH	29
+#define MDB_VERSION_PATCH	33
 
 /** Combine args a,b,c into a single integer for easy version comparisons */
 #define MDB_VERINT(a,b,c)	(((a) << 24) | ((b) << 16) | (c))
@@ -212,7 +212,7 @@ typedef int mdb_filehandle_t;
 	MDB_VERINT(MDB_VERSION_MAJOR,MDB_VERSION_MINOR,MDB_VERSION_PATCH)
 
 /** The release date of this library version */
-#define MDB_VERSION_DATE	"March 16, 2021"
+#define MDB_VERSION_DATE	"May 21, 2024"
 
 /** A stringifier for the version info */
 #define MDB_VERSTR(a,b,c,d)	"LMDB " #a "." #b "." #c ": (" d ")"

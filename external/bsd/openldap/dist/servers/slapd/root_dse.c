@@ -1,10 +1,10 @@
-/*	$NetBSD: root_dse.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: root_dse.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* root_dse.c - Provides the Root DSA-Specific Entry */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: root_dse.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: root_dse.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -283,12 +283,9 @@ fail:
 		if ( SLAP_GLUE_SUBORDINATE( be ) && !SLAP_GLUE_ADVERTISE( be ) ) {
 			continue;
 		}
-		for ( j = 0; be->be_suffix[j].bv_val != NULL; j++ ) {
-			if( attr_merge_one( e, ad_namingContexts,
-					&be->be_suffix[j], NULL ) )
-			{
-				goto fail;
-			}
+		if ( attr_merge( e, ad_namingContexts,
+				be->be_suffix, be->be_nsuffix ) ) {
+			goto fail;
 		}
 	}
 

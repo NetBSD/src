@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD-SOCK 5 "2020/04/28" "OpenLDAP 2.4.50"
-.\" Copyright 2007-2020 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD-SOCK 5 "2025/05/22" "OpenLDAP 2.6.10"
+.\" Copyright 2007-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -10,11 +10,9 @@ slapd\-sock \- Socket backend/overlay to slapd
 .SH DESCRIPTION
 The Socket backend to
 .BR slapd (8)
-uses an external program to handle queries, similarly to
-.BR slapd\-shell (5).
-However, in this case the external program listens on a Unix domain socket.
-This makes it possible to have a pool of processes, which persist between
-requests. This allows multithreaded operation and a higher level of
+uses an external program to handle queries that listens on a Unix domain
+socket.  This makes it possible to have a pool of processes, which persist
+between requests. This allows multithreaded operation and a high level of
 efficiency. The external program must have been started independently;
 .BR slapd (8)
 itself will not start it.
@@ -66,9 +64,7 @@ DNs matching the specified regular expression will be processed. The default
 is empty (all DNs are processed).
 
 .SH PROTOCOL
-The protocol is essentially the same as
-.BR slapd\-shell (5)
-with the addition of a newline to terminate the command parameters. The
+The protocol uses a newline to terminate the command parameters. The
 following commands are sent:
 .RS
 .nf
@@ -198,11 +194,19 @@ CONTINUE response if request processing should continue normally, or
 a regular RESULT response if the external program wishes to bypass the
 underlying database.
 
-If the overlay is configured to send response messages to the external
-program, they will appear as an extended RESULT message or as an
-ENTRY message, defined below. The RESULT message is similar to
-the one above, but also includes the msgid and any configured
-extensions:
+If
+.B sockresps
+includes
+.BR result
+or
+.BR search ,
+the overlay will also send any response messages to the external program (also
+see KNOWN LIMITATIONS). These will appear as an extended RESULT message or an
+ENTRY message respectively, both are defined below and the program is not
+expected to respond to these.
+
+The extended RESULT message is similar to the one above, but also includes the
+msgid and any configured extensions:
 .RS
 .nf
 RESULT
@@ -229,6 +233,17 @@ msgid: <message id>
 The
 .B sock
 backend does not process extended operation results from an external program.
+
+If
+.B sockresps
+is configured,
+.B sock
+overlay does not consider
+.B sockops
+nor
+.B sockdnpat
+to decide which responses are passed onto the external program, instead, all
+responses are currently passed on.
 
 .SH ACCESS CONTROL
 The

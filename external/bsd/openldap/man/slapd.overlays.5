@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD.OVERLAYS 5 "2020/04/28" "OpenLDAP 2.4.50"
-.\" Copyright 2006-2020 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD.OVERLAYS 5 "2025/05/22" "OpenLDAP 2.6.10"
+.\" Copyright 2006-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -31,6 +31,12 @@ This overlay records changes on a given backend database to an LDIF log
 file.
 By default it is not built.
 .TP
+.B autoca
+Automatic Certificate Authority overlay.
+This overlay can generate X.509 certificate/key pairs for
+entries in the directory if slapd is linked to OpenSSL.
+By default it is not built.
+.TP
 .B chain
 Chaining.
 This overlay allows automatic referral chasing when a referral would
@@ -54,6 +60,11 @@ Dynamic Directory Services.
 This overlay supports dynamic objects, which have a limited life after
 which they expire and are automatically deleted.
 .TP
+.B deref
+Dereference Control.
+This overlay implements the draft Dereference control. The overlay can be
+used with any backend or globally for all backends.
+.TP
 .B dyngroup
 Dynamic Group.
 This is a demo overlay which extends the Compare operation to detect
@@ -64,10 +75,22 @@ It has no effect on any other operations.
 Dynamic List.
 This overlay allows expansion of dynamic groups and more.
 .TP
+.B homedir
+Home Directory Provisioning.
+This overlay manages creation/deletion of home directories for LDAP-based
+Unix accounts.
+.TP
 .B memberof
 MemberOf.
 This overlay maintains automatic reverse group membership values,
-typically stored in an attribute called memberOf.
+typically stored in an attribute called memberOf. This overlay
+is deprecated and should be replaced with dynlist.
+.TP
+.B otp
+OATH One-Time Password module.
+This module allows time-based one-time password, AKA "authenticator-style",
+and HMAC-based one-time password authentication to be used in conjunction
+with a standard LDAP password for two factor authentication.
 .TP
 .B pbind
 Proxybind.
@@ -92,9 +115,13 @@ password resets, etc.
 .B refint
 Referential Integrity.
 This overlay can be used with a backend database such as
-.BR slapd\-bdb (5)
+.BR slapd\-mdb (5)
 to maintain the cohesiveness of a schema which utilizes reference
 attributes.
+.TP
+.B remoteauth
+Remote Authentication.
+This overlay delegates authentication requests to remote directories.
 .TP
 .B retcode
 Return Code.
@@ -122,7 +149,7 @@ replication, including persistent search functionality.
 .B translucent
 Translucent Proxy.
 This overlay can be used with a backend database such as
-.BR slapd\-bdb (5)
+.BR slapd\-mdb (5)
 to create a "translucent proxy".
 Content of entries retrieved from a remote LDAP server can be partially
 overridden by the database.
@@ -130,7 +157,7 @@ overridden by the database.
 .B unique
 Attribute Uniqueness.
 This overlay can be used with a backend database such as
-.BR slapd\-bdb (5)
+.BR slapd\-mdb (5)
 to enforce the uniqueness of some or all attributes within a subtree.
 .TP
 .B valsort
@@ -148,10 +175,12 @@ default slapd configuration directory
 .BR ldap (3),
 .BR slapo\-accesslog (5),
 .BR slapo\-auditlog (5),
+.BR slapo\-autoca (5),
 .BR slapo\-chain (5),
 .BR slapo\-collect (5),
 .BR slapo\-constraint (5),
 .BR slapo\-dds (5),
+.BR slapo\-deref (5),
 .BR slapo\-dyngroup (5),
 .BR slapo\-dynlist (5),
 .BR slapo\-memberof (5),
@@ -159,6 +188,7 @@ default slapd configuration directory
 .BR slapo\-pcache (5),
 .BR slapo\-ppolicy (5),
 .BR slapo\-refint (5),
+.BR slapo\-remoteauth (5),
 .BR slapo\-retcode (5),
 .BR slapo\-rwm (5),
 .BR slapo\-sssvlv (5),
@@ -178,4 +208,4 @@ default slapd configuration directory
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 175 stdin
+.lf 205 stdin

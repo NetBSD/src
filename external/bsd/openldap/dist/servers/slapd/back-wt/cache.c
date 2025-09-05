@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.1 2025/09/05 21:09:50 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.2 2025/09/05 21:16:31 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cache.c,v 1.1.1.1 2025/09/05 21:09:50 christos Exp $");
+__RCSID("$NetBSD: cache.c,v 1.2 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 

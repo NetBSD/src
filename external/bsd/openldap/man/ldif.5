@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDIF 5 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDIF 5 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldif \- LDAP Data Interchange Format
@@ -58,7 +58,7 @@ Multiple attribute values are specified on separate lines, e.g.,
 .ft
 .fi
 .LP
-If a value contains a non-printing character, or begins
+If an value contains a non-printing character, or begins
 with a space or a colon ':', the <attrtype> is followed by a
 double colon and the value is encoded in base 64 notation. e.g.,
 the value " begins with a space" would be encoded like this:

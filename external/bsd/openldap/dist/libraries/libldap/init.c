@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -104,9 +104,9 @@ static const struct ol_attribute {
 	{0, ATTR_OPTION,	"URI",			NULL,	LDAP_OPT_URI}, /* replaces HOST/PORT */
 	{0, ATTR_OPTION,	"SOCKET_BIND_ADDRESSES",	NULL,	LDAP_OPT_SOCKET_BIND_ADDRESSES},
 	{0, ATTR_BOOL,		"REFERRALS",	NULL,	LDAP_BOOL_REFERRALS},
-	{0, ATTR_INT,		"KEEPALIVE_IDLE",	NULL,	LDAP_OPT_X_KEEPALIVE_IDLE},
-	{0, ATTR_INT,		"KEEPALIVE_PROBES",	NULL,	LDAP_OPT_X_KEEPALIVE_PROBES},
-	{0, ATTR_INT,		"KEEPALIVE_INTERVAL",	NULL,	LDAP_OPT_X_KEEPALIVE_INTERVAL},
+	{0, ATTR_OPT_INT,	"KEEPALIVE_IDLE",	NULL,	LDAP_OPT_X_KEEPALIVE_IDLE},
+	{0, ATTR_OPT_INT,	"KEEPALIVE_PROBES",	NULL,	LDAP_OPT_X_KEEPALIVE_PROBES},
+	{0, ATTR_OPT_INT,	"KEEPALIVE_INTERVAL",	NULL,	LDAP_OPT_X_KEEPALIVE_INTERVAL},
 
 #if 0
 	/* This should only be allowed via ldap_set_option(3) */

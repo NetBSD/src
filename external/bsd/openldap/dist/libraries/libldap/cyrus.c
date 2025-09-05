@@ -1,9 +1,9 @@
-/*	$NetBSD: cyrus.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: cyrus.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyrus.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
+__RCSID("$NetBSD: cyrus.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -394,7 +394,7 @@ void *ldap_pvt_sasl_cbinding( void *ssl, int type, int is_server )
 	char endpoint_prefix[] = "tls-server-end-point:";
 	char cbinding[ 64 ];
 	struct berval cbv = { 64, cbinding };
-	void *cb_data; /* used since cb->data is const* */
+	unsigned char *cb_data; /* used since cb->data is const* */
 	sasl_channel_binding_t *cb;
 	char *prefix;
 	int plen;
@@ -420,7 +420,7 @@ void *ldap_pvt_sasl_cbinding( void *ssl, int type, int is_server )
 
 	cb = ldap_memalloc( sizeof(*cb) + plen + cbv.bv_len );
 	cb->len = plen + cbv.bv_len;
-	cb->data = cb_data = cb+1;
+	cb->data = cb_data = (unsigned char *)(cb+1);
 	memcpy( cb_data, prefix, plen );
 	memcpy( cb_data + plen, cbv.bv_val, cbv.bv_len );
 	cb->name = "ldap";

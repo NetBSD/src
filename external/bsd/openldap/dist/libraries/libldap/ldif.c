@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: ldif.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* ldif.c - routines for dealing with LDIF files */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldif.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: ldif.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -734,7 +734,8 @@ ldif_open(
 	if ( fp ) {
 		lfp = ber_memalloc( sizeof( LDIFFP ));
 		if ( lfp == NULL ) {
-		    return NULL;
+			fclose( fp );
+			return NULL;
 		}
 		lfp->fp = fp;
 		lfp->prev = NULL;
@@ -801,6 +802,7 @@ ldif_read_record(
 		 * back to a previous file. (return from an include)
 		 */
 		while ( feof( lfp->fp )) {
+pop:
 			if ( lfp->prev ) {
 				LDIFFP *tmp = lfp->prev;
 				fclose( lfp->fp );
@@ -813,6 +815,10 @@ ldif_read_record(
 		}
 		if ( !stop ) {
 			if ( fgets( line, sizeof( line ), lfp->fp ) == NULL ) {
+				if ( !found_entry && !ferror( lfp->fp ) ) {
+					/* ITS#9811 Reached the end looking for an entry, try again */
+					goto pop;
+				}
 				stop = 1;
 				len = 0;
 			} else {

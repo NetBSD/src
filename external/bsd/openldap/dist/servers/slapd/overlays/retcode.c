@@ -1,10 +1,10 @@
-/*	$NetBSD: retcode.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: retcode.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* retcode.c - customizable response for client testing purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2021 The OpenLDAP Foundation.
+ * Copyright 2005-2024 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: retcode.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: retcode.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -716,7 +716,6 @@ retcode_entry_response( Operation *op, SlapReply *rs, BackendInfo *bi, Entry *e 
 			return rs->sr_err = SLAPD_DISCONNECT;
 		}
 	
-		op->o_abandon = 1;
 		return rs->sr_err;
 	}
 
@@ -1243,10 +1242,14 @@ rc_cf_gen( ConfigArgs *c )
 		}
 		*--next = '\0';
 		
-		for ( rdip = &rd->rd_item; *rdip; rdip = &(*rdip)->rdi_next )
-			/* go to last */ ;
+		/* We're marked X-ORDERED 'VALUES', valx might be valid */
+		for ( i = 0, rdip = &rd->rd_item;
+			*rdip && (c->valx < 0 || i < c->valx);
+			rdip = &(*rdip)->rdi_next, i++ )
+			/* go to position */ ;
 
 		
+		rdi.rdi_next = *rdip;
 		*rdip = ( retcode_item_t * )ch_malloc( sizeof( retcode_item_t ) );
 		*(*rdip) = rdi;
 

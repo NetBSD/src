@@ -1,10 +1,10 @@
-/*	$NetBSD: rbac.c,v 1.2 2021/08/14 16:14:53 christos Exp $	*/
+/*	$NetBSD: rbac.c,v 1.3 2025/09/05 21:16:18 christos Exp $	*/
 
 /* rbac.c - RBAC main file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2013-2021 The OpenLDAP Foundation.
+ * Copyright 2013-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rbac.c,v 1.2 2021/08/14 16:14:53 christos Exp $");
+__RCSID("$NetBSD: rbac.c,v 1.3 2025/09/05 21:16:18 christos Exp $");
 
 #include "portable.h"
 
@@ -1082,7 +1082,7 @@ decoding_error:;
 	return rc;
 }
 
-// checkAcess F  (ALL)
+// checkAccess F  (ALL)
 static int
 rbac_check_access( Operation *op, SlapReply *rs )
 {
@@ -1151,7 +1151,7 @@ done:
 	return rs->sr_err;
 }
 
-// checkAcess A loop back
+// checkAccess A loop back
 static int
 rbac_check_accessA( Operation *op, SlapReply *rs )
 {
@@ -1167,7 +1167,7 @@ rbac_check_accessA( Operation *op, SlapReply *rs )
 	return rc;
 }
 
-// checkAcess B parse
+// checkAccess B parse
 static int
 rbac_check_accessB( Operation *op, SlapReply *rs )
 {
@@ -1195,7 +1195,7 @@ rbac_check_accessB( Operation *op, SlapReply *rs )
 	return rc;
 }
 
-// checkAcess C - parse request & read session record
+// checkAccess C - parse request & read session record
 static int
 rbac_check_accessC( Operation *op, SlapReply *rs )
 {
@@ -1235,7 +1235,7 @@ done:
 	return rc;
 }
 
-// checkAcess D, parse, read perm
+// checkAccess D, parse, read perm
 static int
 rbac_check_accessD( Operation *op, SlapReply *rs )
 {
@@ -1287,7 +1287,7 @@ done:
 	return rc;
 }
 
-// checkAcess E everything but the audit insert
+// checkAccess E everything but the audit insert
 static int
 rbac_check_accessE( Operation *op, SlapReply *rs )
 {

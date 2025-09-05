@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: daemon.c,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: daemon.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: daemon.c,v 1.3 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: daemon.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
 
 #include "ldap_rq.h"
 
-#ifdef HAVE_SYSTEMD_SD_DAEMON_H
-#include <systemd/sd-daemon.h>
+#ifdef HAVE_SYSTEMD
+#include "sd-notify.h"
 #endif
 
 #ifdef LDAP_PF_LOCAL
@@ -97,10 +97,16 @@ struct event_base *listener_base = NULL;
 LloadListener **lload_listeners = NULL;
 static ldap_pvt_thread_t listener_tid, *daemon_tid;
 
+#ifndef RESOLV_CONF_PATH
+#define RESOLV_CONF_PATH "/etc/resolv.conf"
+#endif
+char *lload_resolvconf_path = RESOLV_CONF_PATH;
+
 struct event_base *daemon_base = NULL;
 struct evdns_base *dnsbase;
 
 struct event *lload_timeout_event;
+struct event *lload_stats_event;
 
 /*
  * global lload statistics. Not mutex protected to preserve performance -
@@ -784,6 +790,9 @@ lloadd_daemon_destroy( void )
             }
         }
 
+        event_free( lload_stats_event );
+        event_free( lload_timeout_event );
+
         event_base_free( daemon_base );
         daemon_base = NULL;
 
@@ -951,7 +960,8 @@ lload_listener(
 static void *
 lload_listener_thread( void *ctx )
 {
-    int rc = event_base_dispatch( listener_base );
+    /* ITS#9984 Survive the listeners being paused if we run out of fds */
+    int rc = event_base_loop( listener_base, EVLOOP_NO_EXIT_ON_EMPTY );
     Debug( LDAP_DEBUG_ANY, "lload_listener_thread: "
             "event loop finished: rc=%d\n",
             rc );
@@ -1236,18 +1246,28 @@ int
 lloadd_daemon( struct event_base *daemon_base )
 {
     int i, rc;
-    LloadBackend *b;
+    LloadTier *tier;
     struct event_base *base;
     struct event *event;
+    struct timeval second = { 1, 0 };
 
     assert( daemon_base != NULL );
 
-    dnsbase = evdns_base_new( daemon_base, EVDNS_BASE_INITIALIZE_NAMESERVERS );
+    dnsbase = evdns_base_new( daemon_base, 0 );
     if ( !dnsbase ) {
         Debug( LDAP_DEBUG_ANY, "lloadd startup: "
                 "failed to set up for async name resolution\n" );
         return -1;
     }
+
+    /*
+     * ITS#10070: Allow both operation without working DNS (test environments)
+     * and e.g. containers that don't have a /etc/resolv.conf but do have a
+     * server listening on 127.0.0.1 which is the default.
+     */
+    (void)evdns_base_resolv_conf_parse( dnsbase,
+            DNS_OPTION_NAMESERVERS|DNS_OPTION_HOSTSFILE,
+            lload_resolvconf_path );
 
     if ( lload_daemon_threads > SLAPD_MAX_DAEMON_THREADS )
         lload_daemon_threads = SLAPD_MAX_DAEMON_THREADS;
@@ -1281,22 +1301,21 @@ lloadd_daemon( struct event_base *daemon_base )
         return rc;
     }
 
-    if ( !LDAP_CIRCLEQ_EMPTY( &backend ) ) {
-        current_backend = LDAP_CIRCLEQ_FIRST( &backend );
-        LDAP_CIRCLEQ_FOREACH ( b, &backend, b_next ) {
-            event = evtimer_new( daemon_base, backend_connect, b );
-            if ( !event ) {
-                Debug( LDAP_DEBUG_ANY, "lloadd: "
-                        "failed to allocate retry event\n" );
-                return -1;
-            }
-
-            checked_lock( &b->b_mutex );
-            b->b_retry_event = event;
-            backend_retry( b );
-            checked_unlock( &b->b_mutex );
+    LDAP_STAILQ_FOREACH ( tier, &tiers, t_next ) {
+        if ( tier->t_type.tier_startup( tier ) ) {
+            return -1;
         }
     }
+
+    event = event_new( daemon_base, -1, EV_TIMEOUT|EV_PERSIST,
+            lload_tiers_update, NULL );
+    if ( !event ) {
+        Debug( LDAP_DEBUG_ANY, "lloadd: "
+                "failed to allocate stats update event\n" );
+        return -1;
+    }
+    lload_stats_event = event;
+    event_add( event, &second );
 
     event = evtimer_new( daemon_base, operations_timeout, event_self_cbarg() );
     if ( !event ) {
@@ -1336,16 +1355,7 @@ lloadd_daemon( struct event_base *daemon_base )
     destroy_listeners();
 
     /* Mark upstream connections closing and prevent from opening new ones */
-    LDAP_CIRCLEQ_FOREACH ( b, &backend, b_next ) {
-        epoch_t epoch = epoch_join();
-
-        checked_lock( &b->b_mutex );
-        b->b_numconns = b->b_numbindconns = 0;
-        backend_reset( b, 1 );
-        checked_unlock( &b->b_mutex );
-
-        epoch_leave( epoch );
-    }
+    lload_tiers_shutdown();
 
     /* Do the same for clients */
     clients_destroy( 1 );
@@ -1373,7 +1383,7 @@ lloadd_daemon( struct event_base *daemon_base )
     ldap_pvt_thread_pool_close( &connection_pool, 1 );
 #endif
 
-    lload_backends_destroy();
+    lload_tiers_destroy();
     clients_destroy( 0 );
     lload_bindconf_free( &bindconf );
     evdns_base_free( dnsbase, 0 );
@@ -1434,10 +1444,46 @@ client_tls_cb( ldap_pvt_thread_start_t *start, void *startarg, void *arg )
 }
 #endif /* HAVE_TLS */
 
+static int
+detach_linked_backend_cb( LloadConnection *client, LloadBackend *b )
+{
+    int rc = LDAP_SUCCESS;
+
+    if ( client->c_backend != b ) {
+        return rc;
+    }
+
+    Debug( LDAP_DEBUG_CONNS, "detach_linked_backend_cb: "
+            "detaching backend '%s' from connid=%lu%s\n",
+            b->b_name.bv_val, client->c_connid,
+            client->c_restricted == LLOAD_OP_RESTRICTED_BACKEND ?
+                " and closing the connection" :
+                "" );
+
+    /* We were approached from the connection list */
+    assert( IS_ALIVE( client, c_refcnt ) );
+
+    assert( client->c_restricted == LLOAD_OP_RESTRICTED_WRITE ||
+            client->c_restricted == LLOAD_OP_RESTRICTED_BACKEND );
+    if ( client->c_restricted == LLOAD_OP_RESTRICTED_BACKEND ) {
+        int gentle = 1;
+        CONNECTION_LOCK(client);
+        rc = lload_connection_close( client, &gentle );
+        CONNECTION_UNLOCK(client);
+    }
+
+    client->c_restricted = LLOAD_OP_NOT_RESTRICTED;
+    client->c_restricted_at = 0;
+    client->c_restricted_inflight = 0;
+
+    return rc;
+}
+
 void
 lload_handle_backend_invalidation( LloadChange *change )
 {
     LloadBackend *b = change->target;
+    LloadTier *tier = b->b_tier;
 
     assert( change->object == LLOAD_BACKEND );
 
@@ -1447,13 +1493,14 @@ lload_handle_backend_invalidation( LloadChange *change )
         if ( mi ) {
             monitor_extra_t *mbe = mi->bi_extra;
             if ( mbe->is_configured() ) {
-                lload_monitor_backend_init( mi, b );
+                lload_monitor_backend_init( mi, tier->t_monitor, b );
             }
         }
 
-        if ( !current_backend ) {
-            current_backend = b;
+        if ( tier->t_type.tier_change ) {
+            tier->t_type.tier_change( tier, change );
         }
+
         checked_lock( &b->b_mutex );
         backend_retry( b );
         checked_unlock( &b->b_mutex );
@@ -1463,6 +1510,16 @@ lload_handle_backend_invalidation( LloadChange *change )
                 &connection_pool, handle_pdus, backend_conn_cb, b );
         ldap_pvt_thread_pool_walk(
                 &connection_pool, upstream_bind, backend_conn_cb, b );
+
+        checked_lock( &clients_mutex );
+        connections_walk(
+                &clients_mutex, &clients,
+                (CONNCB)detach_linked_backend_cb, b );
+        checked_unlock( &clients_mutex );
+
+        if ( tier->t_type.tier_change ) {
+            tier->t_type.tier_change( tier, change );
+        }
         lload_backend_destroy( b );
         return;
     }
@@ -1601,6 +1658,44 @@ lload_handle_backend_invalidation( LloadChange *change )
 }
 
 void
+lload_handle_tier_invalidation( LloadChange *change )
+{
+    LloadTier *tier;
+
+    assert( change->object == LLOAD_TIER );
+    tier = change->target;
+
+    if ( change->type == LLOAD_CHANGE_ADD ) {
+        BackendInfo *mi = backend_info( "monitor" );
+
+        if ( mi ) {
+            monitor_extra_t *mbe = mi->bi_extra;
+            if ( mbe->is_configured() ) {
+                lload_monitor_tier_init( mi, tier );
+            }
+        }
+
+        tier->t_type.tier_startup( tier );
+        if ( LDAP_STAILQ_EMPTY( &tiers ) ) {
+            LDAP_STAILQ_INSERT_HEAD( &tiers, tier, t_next );
+        } else {
+            LDAP_STAILQ_INSERT_TAIL( &tiers, tier, t_next );
+        }
+        return;
+    } else if ( change->type == LLOAD_CHANGE_DEL ) {
+        LDAP_STAILQ_REMOVE( &tiers, tier, LloadTier, t_next );
+        tier->t_type.tier_reset( tier, 1 );
+        tier->t_type.tier_destroy( tier );
+        return;
+    }
+    assert( change->type == LLOAD_CHANGE_MODIFY );
+
+    if ( tier->t_type.tier_change ) {
+        tier->t_type.tier_change( tier, change );
+    }
+}
+
+void
 lload_handle_global_invalidation( LloadChange *change )
 {
     assert( change->type == LLOAD_CHANGE_MODIFY );
@@ -1685,7 +1780,6 @@ lload_handle_global_invalidation( LloadChange *change )
 #endif /* HAVE_TLS */
 
     if ( change->flags.daemon & LLOAD_DAEMON_MOD_BINDCONF ) {
-        LloadBackend *b;
         LloadConnection *c;
 
         /*
@@ -1697,12 +1791,7 @@ lload_handle_global_invalidation( LloadChange *change )
         ldap_pvt_thread_pool_walk(
                 &connection_pool, upstream_bind, backend_conn_cb, NULL );
 
-        LDAP_CIRCLEQ_FOREACH ( b, &backend, b_next ) {
-            checked_lock( &b->b_mutex );
-            backend_reset( b, 0 );
-            backend_retry( b );
-            checked_unlock( &b->b_mutex );
-        }
+        lload_tiers_reset( 0 );
 
         /* Reconsider the PRIVILEGED flag on all clients */
         LDAP_CIRCLEQ_FOREACH ( c, &clients, c_next ) {
@@ -1729,6 +1818,9 @@ lload_handle_invalidation( LloadChange *change )
     switch ( change->object ) {
         case LLOAD_BACKEND:
             lload_handle_backend_invalidation( change );
+            break;
+        case LLOAD_TIER:
+            lload_handle_tier_invalidation( change );
             break;
         case LLOAD_DAEMON:
             lload_handle_global_invalidation( change );

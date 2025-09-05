@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap-int.h,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: ldap-int.h,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -383,6 +383,7 @@ typedef struct ldap_conn {
 #define LDAP_CONNST_NEEDSOCKET		1
 #define LDAP_CONNST_CONNECTING		2
 #define LDAP_CONNST_CONNECTED		3
+#define LDAP_CONNST_TLS_INPROGRESS	4
 	LDAPURLDesc		*lconn_server;
 	BerElement		*lconn_ber;	/* ber receiving on this conn. */
 

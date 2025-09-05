@@ -1,10 +1,10 @@
-/*	$NetBSD: socket.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.4 2025/09/05 21:16:20 christos Exp $	*/
 
 /* Generic socket.h */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@
 #ifdef HAVE_WINSOCK2
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#elif HAVE_WINSOCK
+#elif defined(HAVE_WINSOCK)
 #include <winsock.h>
 #endif
 
@@ -113,22 +113,20 @@
 
 LBER_F( char * ) ber_pvt_wsa_err2string LDAP_P((int));
 
-#elif MACOS
+#elif defined(MACOS)
 #	define tcp_close( s )		tcpclose( s )
 #	define tcp_read( s, buf, len )	tcpread( s, buf, len )
 #	define tcp_write( s, buf, len )	tcpwrite( s, buf, len )
 
-#elif DOS
-#	ifdef PCNFS
-#		define tcp_close( s )	close( s )
-#		define tcp_read( s, buf, len )	recv( s, buf, len, 0 )
-#		define tcp_write( s, buf, len )	send( s, buf, len, 0 )
-#	endif /* PCNFS */
-#	ifdef NCSA
-#		define tcp_close( s )	do { netclose( s ); netshut() } while(0)
-#		define tcp_read( s, buf, len )	nread( s, buf, len )
-#		define tcp_write( s, buf, len )	netwrite( s, buf, len )
-#	endif /* NCSA */
+#elif defined(HAVE_PCNFS)
+#	define tcp_close( s )	close( s )
+#	define tcp_read( s, buf, len )	recv( s, buf, len, 0 )
+#	define tcp_write( s, buf, len )	send( s, buf, len, 0 )
+
+#elif defined(HAVE_NCSA)
+#	define tcp_close( s )	do { netclose( s ); netshut() } while(0)
+#	define tcp_read( s, buf, len )	nread( s, buf, len )
+#	define tcp_write( s, buf, len )	netwrite( s, buf, len )
 
 #elif defined(HAVE_CLOSESOCKET)
 #	define tcp_close( s )		closesocket( s )
@@ -236,7 +234,7 @@ LDAP_LUTIL_F( int ) lutil_getpeereid( int s, uid_t *, gid_t * );
 #define	LUTIL_GETPEEREID( s, uid, gid, bv )	lutil_getpeereid( s, uid, gid )
 #endif
 
-union Sockaddr {
+typedef union Sockaddr {
 	struct sockaddr sa_addr;
 	struct sockaddr_in sa_in_addr;
 #ifdef LDAP_PF_INET6
@@ -246,7 +244,7 @@ union Sockaddr {
 #ifdef LDAP_PF_LOCAL
 	struct sockaddr_un sa_un_addr;
 #endif
-};
+} Sockaddr;
 
 /* DNS RFC defines max host name as 255. New systems seem to use 1024 */
 #ifndef NI_MAXHOST

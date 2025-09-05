@@ -1,4 +1,4 @@
-/*	$NetBSD: slap-cfglog.h,v 1.1.1.1 2025/09/05 21:09:46 christos Exp $	*/
+/*	$NetBSD: slap-cfglog.h,v 1.2 2025/09/05 21:16:25 christos Exp $	*/
 
 /* slap-cfglog.h - logging configuration */
 /* $OpenLDAP$ */

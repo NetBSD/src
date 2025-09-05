@@ -1,9 +1,9 @@
-/*	$NetBSD: turn.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: turn.c,v 1.4 2025/09/05 21:16:22 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2021 The OpenLDAP Foundation.
+ * Copyright 2005-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: turn.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: turn.c,v 1.4 2025/09/05 21:16:22 christos Exp $");
 
 #include "portable.h"
 
@@ -49,7 +49,7 @@ ldap_turn(
 {
 #ifdef LDAP_EXOP_X_TURN
 	BerElement *turnvalber = NULL;
-	struct berval *turnvalp = NULL;
+	struct berval turnval;
 	int rc;
 
 	turnvalber = ber_alloc_t( LBER_USE_DER );
@@ -58,10 +58,10 @@ ldap_turn(
 	} else {
 		ber_printf( turnvalber, "{s}", identifier );
 	}
-	ber_flatten( turnvalber, &turnvalp );
+	ber_flatten2( turnvalber, &turnval, 0 );
 
 	rc = ldap_extended_operation( ld, LDAP_EXOP_X_TURN,
-			turnvalp, sctrls, cctrls, msgidp );
+			&turnval, sctrls, cctrls, msgidp );
 	ber_free( turnvalber, 1 );
 	return rc;
 #else
@@ -79,7 +79,7 @@ ldap_turn_s(
 {
 #ifdef LDAP_EXOP_X_TURN
 	BerElement *turnvalber = NULL;
-	struct berval *turnvalp = NULL;
+	struct berval turnval;
 	int rc;
 
 	turnvalber = ber_alloc_t( LBER_USE_DER );
@@ -88,10 +88,10 @@ ldap_turn_s(
 	} else {
 		ber_printf( turnvalber, "{s}", identifier );
 	}
-	ber_flatten( turnvalber, &turnvalp );
+	ber_flatten2( turnvalber, &turnval, 0 );
 
 	rc = ldap_extended_operation_s( ld, LDAP_EXOP_X_TURN,
-			turnvalp, sctrls, cctrls, NULL, NULL );
+			&turnval, sctrls, cctrls, NULL, NULL );
 	ber_free( turnvalber, 1 );
 	return rc;
 #else

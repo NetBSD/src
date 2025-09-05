@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* log.c - deal with log subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: log.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -64,12 +64,10 @@ monitor_subsys_log_init(
 	BackendDB		*be,
 	monitor_subsys_t	*ms )
 {
-	ms->mss_open = monitor_subsys_log_open;
+	ldap_pvt_thread_mutex_init( &monitor_log_mutex );
 	ms->mss_modify = monitor_subsys_log_modify;
 
-	ldap_pvt_thread_mutex_init( &monitor_log_mutex );
-
-	return( 0 );
+	return monitor_subsys_log_open( be, ms );
 }
 
 /*
@@ -81,13 +79,10 @@ monitor_subsys_log_open(
 	monitor_subsys_t	*ms )
 {
 	BerVarray	bva = NULL;
+	monitor_info_t	*mi = ( monitor_info_t * )be->be_private;
+	Entry *e = NULL;
 
-	if ( loglevel2bvarray( ldap_syslog, &bva ) == 0 && bva != NULL ) {
-		monitor_info_t	*mi;
-		Entry		*e;
-
-		mi = ( monitor_info_t * )be->be_private;
-
+	if ( loglevel2bvarray( slap_debug_get(), &bva ) == 0 && bva != NULL ) {
 		if ( monitor_cache_get( mi, &ms->mss_ndn, &e ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_log_init: "
@@ -97,11 +92,27 @@ monitor_subsys_log_open(
 			return( -1 );
 		}
 
-		attr_merge_normalize( e, mi->mi_ad_managedInfo, bva, NULL );
+		attr_merge_normalize( e, mi->mi_ad_monitorDebugLevel, bva, NULL );
 		ber_bvarray_free( bva );
-
-		monitor_cache_release( mi, e );
+		bva = NULL;
 	}
+
+	if ( loglevel2bvarray( slap_syslog_get(), &bva ) == 0 && bva != NULL ) {
+		if ( !e && monitor_cache_get( mi, &ms->mss_ndn, &e ) ) {
+			Debug( LDAP_DEBUG_ANY,
+				"monitor_subsys_log_init: "
+				"unable to get entry \"%s\"\n",
+				ms->mss_ndn.bv_val );
+			ber_bvarray_free( bva );
+			return( -1 );
+		}
+
+		attr_merge_normalize( e, mi->mi_ad_monitorLogLevel, bva, NULL );
+		ber_bvarray_free( bva );
+	}
+
+	if ( e )
+		monitor_cache_release( mi, e );
 
 	return( 0 );
 }
@@ -114,12 +125,15 @@ monitor_subsys_log_modify(
 {
 	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	int		rc = LDAP_OTHER;
-	int		newlevel = ldap_syslog;
+	int		newdebug, newsyslog, *newptr;
 	Attribute	*save_attrs;
 	Modifications	*modlist = op->orm_modlist;
 	Modifications	*ml;
 
 	ldap_pvt_thread_mutex_lock( &monitor_log_mutex );
+
+	newdebug = slap_debug_get();
+	newsyslog = slap_syslog_get();
 
 	save_attrs = e->e_attrs;
 	e->e_attrs = attrs_dup( e->e_attrs );
@@ -142,24 +156,30 @@ monitor_subsys_log_modify(
 			continue;
 
 		/*
-		 * only the "managedInfo" attribute can be modified
+		 * only the monitorDebugLevel and monitorLogLevel attributes can be modified
 		 */
-		} else if ( mod->sm_desc != mi->mi_ad_managedInfo ) {
-			rc = rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
-			break;
+		} else {
+			if ( mod->sm_desc == mi->mi_ad_monitorDebugLevel ) {
+				newptr = &newdebug;
+			} else if ( mod->sm_desc == mi->mi_ad_monitorLogLevel ) {
+				newptr = &newsyslog;
+			} else {
+				rc = rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+				break;
+			}
 		}
 
 		switch ( mod->sm_op ) {
 		case LDAP_MOD_ADD:
-			rc = add_values( op, e, mod, &newlevel );
+			rc = add_values( op, e, mod, newptr );
 			break;
 			
 		case LDAP_MOD_DELETE:
-			rc = delete_values( op, e, mod, &newlevel );
+			rc = delete_values( op, e, mod, newptr );
 			break;
 
 		case LDAP_MOD_REPLACE:
-			rc = replace_values( op, e, mod, &newlevel );
+			rc = replace_values( op, e, mod, newptr );
 			break;
 
 		default:
@@ -196,15 +216,8 @@ monitor_subsys_log_modify(
 		/*
 		 * Do we need to protect this with a mutex?
 		 */
-		ldap_syslog = newlevel;
-
-#if 0	/* debug rather than log */
-		slap_debug = newlevel;
-		lutil_set_debug_level( "slapd", slap_debug );
-		ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug);
-		ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug);
-		ldif_debug = slap_debug;
-#endif
+		slap_syslog_set( newsyslog );
+		slap_debug_set( newdebug );
 	}
 
 cleanup:;

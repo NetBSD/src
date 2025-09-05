@@ -1,9 +1,9 @@
-/*	$NetBSD: connection.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: connection.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: connection.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -217,7 +217,7 @@ int connections_timeout_idle(time_t now)
 		/* Don't timeout a slow-running request or a persistent
 		 * outbound connection.
 		 */
-		if(( c->c_n_ops_executing && !c->c_writewaiter)
+		if( c->c_n_ops_executing || c->c_n_ops_async
 			|| c->c_conn_state == SLAP_C_CLIENT ) {
 			continue;
 		}
@@ -249,7 +249,7 @@ void connections_drop()
 		/* Don't close a slow-running request or a persistent
 		 * outbound connection.
 		 */
-		if(( c->c_n_ops_executing && !c->c_writewaiter)
+		if( c->c_n_ops_executing || c->c_n_ops_async
 			|| c->c_conn_state == SLAP_C_CLIENT ) {
 			continue;
 		}
@@ -433,6 +433,7 @@ Connection * connection_init(
 	c->c_n_ops_executing = 0;
 	c->c_n_ops_pending = 0;
 	c->c_n_ops_completed = 0;
+	c->c_n_ops_async = 0;
 
 	c->c_n_get = 0;
 	c->c_n_read = 0;
@@ -738,6 +739,7 @@ static void connection_abandon( Connection *c )
 		LDAP_STAILQ_NEXT(o, o_next) = NULL;
 		slap_op_free( o, NULL );
 	}
+	c->c_n_ops_pending = 0;
 }
 
 static void
@@ -874,13 +876,14 @@ Connection* connection_next( Connection *c, ber_socket_t *index )
 
 	for(; *index < dtblsize; (*index)++) {
 		if( connections[*index].c_sb ) {
-			c = &connections[(*index)++];
+			c = &connections[*index];
 			ldap_pvt_thread_mutex_lock( &c->c_mutex );
 			if ( c->c_conn_state == SLAP_C_INVALID ) {
 				ldap_pvt_thread_mutex_unlock( &c->c_mutex );
 				c = NULL;
 				continue;
 			}
+			(*index)++;
 			break;
 		}
 	}
@@ -967,18 +970,18 @@ conn_counter_destroy( void *key, void *data )
 	ldap_pvt_thread_mutex_unlock( &slap_counters.sc_mutex );
 }
 
-static void
-conn_counter_init( Operation *op, void *ctx )
+void
+operation_counter_init( Operation *op, void *ctx )
 {
 	slap_counters_t *sc;
 	void *vsc = NULL;
 
 	if ( ldap_pvt_thread_pool_getkey(
-			ctx, (void *)conn_counter_init, &vsc, NULL ) || !vsc ) {
+			ctx, (void *)operation_counter_init, &vsc, NULL ) || !vsc ) {
 		vsc = ch_malloc( sizeof( slap_counters_t ));
 		sc = vsc;
 		slap_counters_init( sc );
-		ldap_pvt_thread_pool_setkey( ctx, (void*)conn_counter_init, vsc,
+		ldap_pvt_thread_pool_setkey( ctx, (void*)operation_counter_init, vsc,
 			conn_counter_destroy, NULL, NULL );
 
 		ldap_pvt_thread_mutex_lock( &slap_counters.sc_mutex );
@@ -990,7 +993,7 @@ conn_counter_init( Operation *op, void *ctx )
 }
 
 void
-connection_op_finish( Operation *op )
+connection_op_finish( Operation *op, int lock )
 {
 	Connection *conn = op->o_conn;
 	void *memctx_null = NULL;
@@ -999,7 +1002,8 @@ connection_op_finish( Operation *op )
 
 	INCR_OP_COMPLETED( opidx );
 
-	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+	if ( lock )
+		ldap_pvt_thread_mutex_lock( &conn->c_mutex );
 
 	if ( op->o_tag == LDAP_REQ_BIND && conn->c_conn_state == SLAP_C_BINDING )
 		conn->c_conn_state = SLAP_C_ACTIVE;
@@ -1008,10 +1012,11 @@ connection_op_finish( Operation *op )
 
 	LDAP_STAILQ_REMOVE( &conn->c_ops, op, Operation, o_next);
 	LDAP_STAILQ_NEXT(op, o_next) = NULL;
-	conn->c_n_ops_executing--;
+	conn->c_n_ops_async--;
 	conn->c_n_ops_completed++;
 	connection_resched( conn );
-	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+	if ( lock )
+		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 }
 
 static void *
@@ -1034,7 +1039,7 @@ connection_operation( void *ctx, void *arg_v )
 		op->o_qtime.tv_sec--;
 	}
 	op->o_qtime.tv_sec -= op->o_time;
-	conn_counter_init( op, ctx );
+	operation_counter_init( op, ctx );
 	ldap_pvt_thread_mutex_lock( &op->o_counters->sc_mutex );
 	/* FIXME: returns 0 in case of failure */
 	ldap_pvt_mp_add_ulong(op->o_counters->sc_ops_initiated, 1);
@@ -1125,6 +1130,8 @@ operations_error:
 		 */
 		slap_sl_mem_setctx( ctx, NULL );
 		ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+		conn->c_n_ops_executing--;
+		conn->c_n_ops_async++;
 		connection_resched( conn );
 		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 		return NULL;

@@ -1,10 +1,10 @@
-/*	$NetBSD: thread.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.4 2025/09/05 21:16:29 christos Exp $	*/
 
 /* thread.c - deal with thread subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: thread.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.4 2025/09/05 21:16:29 christos Exp $");
 
 #include "portable.h"
 
@@ -111,7 +111,7 @@ monitor_subsys_thread_init(
 {
 	monitor_info_t	*mi;
 	monitor_entry_t	*mp;
-	Entry		*e, **ep, *e_thread;
+	Entry		*e, *e_thread;
 	int		i;
 
 	ms->mss_update = monitor_subsys_thread_update;
@@ -124,10 +124,6 @@ monitor_subsys_thread_init(
 			ms->mss_dn.bv_val );
 		return( -1 );
 	}
-
-	mp = ( monitor_entry_t * )e_thread->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
 
 	for ( i = 0; !BER_BVISNULL( &mt[ i ].rdn ); i++ ) {
 		static char	buf[ BACKMONITOR_BUFSIZE ];
@@ -197,7 +193,7 @@ monitor_subsys_thread_init(
 		mp->mp_flags = ms->mss_flags \
 			| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 
-		if ( monitor_cache_add( mi, e ) ) {
+		if ( monitor_cache_add( mi, e, e_thread ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_thread_init: "
 				"unable to add entry \"%s,%s\"\n",
@@ -205,9 +201,6 @@ monitor_subsys_thread_init(
 				ms->mss_dn.bv_val );
 			return( -1 );
 		}
-	
-		*ep = e;
-		ep = &mp->mp_next;
 	}
 
 	monitor_cache_release( mi, e_thread );

@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.4 2025/09/05 21:16:27 christos Exp $	*/
 
 /* search.c - DNS SRV backend search function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.4 2025/09/05 21:16:27 christos Exp $");
 
 #include "portable.h"
 

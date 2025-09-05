@@ -1,10 +1,10 @@
-/*	$NetBSD: attr.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: attr.c,v 1.3 2025/09/05 21:16:31 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,7 @@
 
 #include "back-wt.h"
 #include "slap-config.h"
+#include "lutil.h"
 
 /* Find the ad, return -1 if not found,
  * set point for insertion if ins is non-NULL
@@ -59,7 +60,7 @@ wt_attr_slot( struct wt_info *wi, AttributeDescription *ad, int *ins )
 static int
 ainfo_insert( struct wt_info *wi, AttrInfo *a )
 {
-	int x;
+	int x = INT_MAX;
 	int i = wt_attr_slot( wi, a->ai_desc, &x );
 
 	/* Is it a dup? */
@@ -359,6 +360,44 @@ done:
 	return rc;
 }
 
+static int
+wt_attr_index_unparser( void *v1, void *v2 )
+{
+	AttrInfo *ai = v1;
+	BerVarray *bva = v2;
+	struct berval bv;
+	char *ptr;
+
+	slap_index2bvlen( ai->ai_indexmask, &bv );
+	if ( bv.bv_len ) {
+		bv.bv_len += ai->ai_desc->ad_cname.bv_len + 1;
+		ptr = ch_malloc( bv.bv_len+1 );
+		bv.bv_val = lutil_strcopy(ptr,
+								  (const char*)ai->ai_desc->ad_cname.bv_val );
+		*bv.bv_val++ = ' ';
+		slap_index2bv( ai->ai_indexmask, &bv );
+		bv.bv_val = ptr;
+		ber_bvarray_add( bva, &bv );
+	}
+	return 0;
+}
+
+static AttributeDescription addef = { NULL, NULL, BER_BVC("default") };
+static AttrInfo aidef = { &addef };
+
+void
+wt_attr_index_unparse( struct wt_info *wi, BerVarray *bva )
+{
+	int i;
+
+	if ( wi->wi_defaultmask ) {
+		aidef.ai_indexmask = wi->wi_defaultmask;
+		wt_attr_index_unparser( &aidef, bva );
+	}
+	for ( i=0; i<wi->wi_nattrs; i++ )
+		wt_attr_index_unparser( wi->wi_attrs[i], bva );
+}
+
 void
 wt_attr_info_free( AttrInfo *ai )
 {
@@ -378,8 +417,6 @@ wt_attr_index_destroy( struct wt_info *wi )
 
 	free( wi->wi_attrs );
 }
-
-
 
 /*
  * Local variables:

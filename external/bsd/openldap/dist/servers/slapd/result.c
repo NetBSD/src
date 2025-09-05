@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* result.c - routines to send ldap results, errors, and referrals */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: result.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: result.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -359,9 +359,7 @@ static long send_ldap_ber(
 	conn->c_writers++;
 
 	while ( conn->c_writers > 0 && conn->c_writing ) {
-		ldap_pvt_thread_pool_idle( &connection_pool );
 		ldap_pvt_thread_cond_wait( &conn->c_write1_cv, &conn->c_write1_mutex );
-		ldap_pvt_thread_pool_unidle( &connection_pool );
 	}
 
 	/* connection was closed under us */
@@ -405,20 +403,28 @@ fail:
 			conn->c_writing = 0;
 			ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 			ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-			connection_closing( conn, close_reason );
+			/* conn may have been reused by the time we get the mutex */
+			if ( op->o_connid == conn->c_connid )
+				connection_closing( conn, close_reason );
 			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 			return -1;
+		}
+
+		/* if writer is blocked and we're waiting for a pool pause,
+		 * just drop this connection.
+		 */
+		if ( ldap_pvt_thread_pool_pausing( &connection_pool ) > 0 ) {
+			close_reason = "writer blocked and pool pause pending";
+			goto fail;
 		}
 
 		/* wait for socket to be write-ready */
 		do_resume = 1;
 		conn->c_writewaiter = 1;
 		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
-		ldap_pvt_thread_pool_idle( &connection_pool );
 		slap_writewait_play( op );
 		err = slapd_wait_writer( conn->c_sd );
 		conn->c_writewaiter = 0;
-		ldap_pvt_thread_pool_unidle( &connection_pool );
 		ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
 		/* 0 is timeout, so we close it.
 		 * -1 is an error, close it.
@@ -1811,7 +1817,7 @@ int slap_read_controls(
 	LDAPControl c;
 	Operation myop;
 
-	Debug( LDAP_DEBUG_ANY, "%s slap_read_controls: (%s) %s\n",
+	Debug( LDAP_DEBUG_STATS, "%s slap_read_controls: (%s) %s\n",
 		op->o_log_prefix, oid->bv_val, e->e_dn );
 
 	rs->sr_entry = e;

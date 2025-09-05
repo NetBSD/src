@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_defaults.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: ldap_defaults.h,v 1.4 2025/09/05 21:16:19 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,17 +41,24 @@
 #define LDAP_ENV_PREFIX "LDAP"
 
 /* default ldapi:// socket */
+#ifndef LDAPI_SOCK
 #define LDAPI_SOCK LDAP_RUNDIR LDAP_DIRSEP "run" LDAP_DIRSEP "ldapi"
+#endif
 
 /*
  * SLAPD DEFINITIONS
  */
 	/* location of the default slapd config file */
+#ifndef SLAPD_DEFAULT_CONFIGFILE
 #define SLAPD_DEFAULT_CONFIGFILE	LDAP_SYSCONFDIR LDAP_DIRSEP "slapd.conf"
+#endif
+#ifndef SLAPD_DEFAULT_CONFIGDIR
 #define SLAPD_DEFAULT_CONFIGDIR		LDAP_SYSCONFDIR LDAP_DIRSEP "slapd.d"
+#endif
+#ifndef SLAPD_DEFAULT_DB_DIR
 #define SLAPD_DEFAULT_DB_DIR		LDAP_RUNDIR LDAP_DIRSEP "openldap-data"
+#endif
 #define SLAPD_DEFAULT_DB_MODE		0600
-#define SLAPD_DEFAULT_UCDATA		LDAP_DATADIR LDAP_DIRSEP "ucdata"
 	/* default max deref depth for aliases */
 #define SLAPD_DEFAULT_MAXDEREFDEPTH	15
 	/* default sizelimit on number of entries from a search */

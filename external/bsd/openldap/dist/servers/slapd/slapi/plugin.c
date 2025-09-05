@@ -1,9 +1,9 @@
-/*	$NetBSD: plugin.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: plugin.c,v 1.4 2025/09/05 21:16:33 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: plugin.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: plugin.c,v 1.4 2025/09/05 21:16:33 christos Exp $");
 
 #include "portable.h"
 
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: plugin.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 #include <ltdl.h>
 
 static int slapi_int_load_plugin( Slapi_PBlock *, const char *, const char *, int, 
-	SLAPI_FUNC *, lt_dlhandle * );
+	SLAPI_FUNC *, lt_dlhandle *, ConfigArgs *c );
 
 /* pointer to link list of extended objects */
 static ExtendedOp *pGExtendedOps = NULL;
@@ -73,15 +73,15 @@ static Slapi_PBlock *
 plugin_pblock_new(
 	int type, 
 	int argc, 
-	char *argv[] ) 
+	ConfigArgs *c )
 {
 	Slapi_PBlock	*pPlugin = NULL; 
 	Slapi_PluginDesc *pPluginDesc = NULL;
 	lt_dlhandle	hdLoadHandle;
 	int		rc;
 	char		**av2 = NULL, **ppPluginArgv;
-	char		*path = argv[2];
-	char		*initfunc = argv[3];
+	char		*path = c->argv[2];
+	char		*initfunc = c->argv[3];
 
 	pPlugin = slapi_pblock_new();
 	if ( pPlugin == NULL ) {
@@ -92,7 +92,7 @@ plugin_pblock_new(
 	slapi_pblock_set( pPlugin, SLAPI_PLUGIN_TYPE, (void *)&type );
 	slapi_pblock_set( pPlugin, SLAPI_PLUGIN_ARGC, (void *)&argc );
 
-	av2 = ldap_charray_dup( argv );
+	av2 = ldap_charray_dup( c->argv );
 	if ( av2 == NULL ) {
 		rc = LDAP_NO_MEMORY;
 		goto done;
@@ -107,7 +107,7 @@ plugin_pblock_new(
 	slapi_pblock_set( pPlugin, SLAPI_PLUGIN_ARGV, (void *)ppPluginArgv );
 	slapi_pblock_set( pPlugin, SLAPI_X_CONFIG_ARGV, (void *)av2 );
 
-	rc = slapi_int_load_plugin( pPlugin, path, initfunc, 1, NULL, &hdLoadHandle );
+	rc = slapi_int_load_plugin( pPlugin, path, initfunc, 1, NULL, &hdLoadHandle, c );
 	if ( rc != 0 ) {
 		goto done;
 	}
@@ -561,7 +561,8 @@ slapi_int_load_plugin(
 	const char	*initfunc, 
 	int		doInit,
 	SLAPI_FUNC	*pInitFunc,
-	lt_dlhandle	*pLdHandle ) 
+	lt_dlhandle	*pLdHandle,
+	ConfigArgs *c )
 {
 	int		rc = LDAP_SUCCESS;
 	SLAPI_FUNC	fpInitFunc = NULL;
@@ -575,15 +576,17 @@ slapi_int_load_plugin(
 	/* load in the module */
 	*pLdHandle = lt_dlopen( path );
 	if ( *pLdHandle == NULL ) {
-		fprintf( stderr, "failed to load plugin %s: %s\n",
+		snprintf( c->cr_msg, sizeof( c->cr_msg ), "failed to load plugin %s: %s",
 			 path, lt_dlerror() );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 		return LDAP_LOCAL_ERROR;
 	}
 
 	fpInitFunc = (SLAPI_FUNC)lt_dlsym( *pLdHandle, initfunc );
 	if ( fpInitFunc == NULL ) {
-		fprintf( stderr, "failed to find symbol %s in plugin %s: %s\n",
+		snprintf( c->cr_msg, sizeof( c->cr_msg ), "failed to find symbol %s in plugin %s: %s",
 			 initfunc, path, lt_dlerror() );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 		lt_dlclose( *pLdHandle );
 		return LDAP_LOCAL_ERROR;
 	}
@@ -648,50 +651,46 @@ slapi_int_call_plugins(
 
 int
 slapi_int_read_config(
-	Backend		*be, 		
-	const char	*fname, 
-	int		lineno, 
-	int		argc, 
-	char		**argv,
-	int		index )
+	struct config_args_s *c )
 {
 	int		iType = -1;
 	int		numPluginArgc = 0;
 
-	if ( argc < 4 ) {
-		fprintf( stderr,
-			"%s: line %d: missing arguments "
+	if ( c->argc < 4 ) {
+		snprintf( c->cr_msg, sizeof( c->cr_msg ),
+			"missing arguments "
 			"in \"plugin <plugin_type> <lib_path> "
-			"<init_function> [<arguments>]\" line\n",
-			fname, lineno );
+			"<init_function> [<arguments>]\" line" );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 		return 1;
 	}
 
 	/* automatically instantiate overlay if necessary */
-	if ( !slapi_over_is_inst( be ) ) {
-		ConfigReply cr = { 0 };
-		if ( slapi_over_config( be, &cr ) != 0 ) {
-			fprintf( stderr, "Failed to instantiate SLAPI overlay: "
-				"err=%d msg=\"%s\"\n", cr.err, cr.msg );
+	if ( !slapi_over_is_inst( c->be ) ) {
+		if ( slapi_over_config( c->be, &c->reply ) != 0 ) {
+			Debug( LDAP_DEBUG_ANY, "%s: "
+			"Failed to instantiate SLAPI overlay: "
+				"err=%d msg=\"%s\"\n", c->log, c->reply.err, c->reply.msg );
 			return -1;
 		}
 	}
 	
-	if ( strcasecmp( argv[1], "preoperation" ) == 0 ) {
+	if ( strcasecmp( c->argv[1], "preoperation" ) == 0 ) {
 		iType = SLAPI_PLUGIN_PREOPERATION;
-	} else if ( strcasecmp( argv[1], "postoperation" ) == 0 ) {
+	} else if ( strcasecmp( c->argv[1], "postoperation" ) == 0 ) {
 		iType = SLAPI_PLUGIN_POSTOPERATION;
-	} else if ( strcasecmp( argv[1], "extendedop" ) == 0 ) {
+	} else if ( strcasecmp( c->argv[1], "extendedop" ) == 0 ) {
 		iType = SLAPI_PLUGIN_EXTENDEDOP;
-	} else if ( strcasecmp( argv[1], "object" ) == 0 ) {
+	} else if ( strcasecmp( c->argv[1], "object" ) == 0 ) {
 		iType = SLAPI_PLUGIN_OBJECT;
 	} else {
-		fprintf( stderr, "%s: line %d: invalid plugin type \"%s\".\n",
-				fname, lineno, argv[1] );
+		snprintf( c->cr_msg, sizeof( c->cr_msg ),
+			"invalid plugin type \"%s\"", c->argv[1] );
+		Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg );
 		return 1;
 	}
 	
-	numPluginArgc = argc - 4;
+	numPluginArgc = c->argc - 4;
 
 	if ( iType == SLAPI_PLUGIN_PREOPERATION ||
 		  	iType == SLAPI_PLUGIN_EXTENDEDOP ||
@@ -700,23 +699,23 @@ slapi_int_read_config(
 		int rc;
 		Slapi_PBlock *pPlugin;
 
-		pPlugin = plugin_pblock_new( iType, numPluginArgc, argv );
+		pPlugin = plugin_pblock_new( iType, numPluginArgc, c );
 		if (pPlugin == NULL) {
 			return 1;
 		}
 
 		if (iType == SLAPI_PLUGIN_EXTENDEDOP) {
-			rc = slapi_int_register_extop(be, &pGExtendedOps, pPlugin);
+			rc = slapi_int_register_extop(c->be, &pGExtendedOps, pPlugin);
 			if ( rc != LDAP_SUCCESS ) {
 				slapi_pblock_destroy( pPlugin );
 				return 1;
 			}
 		}
 
-		rc = slapi_int_register_plugin_index( be, pPlugin, index );
+		rc = slapi_int_register_plugin_index( c->be, pPlugin, c->valx );
 		if ( rc != LDAP_SUCCESS ) {
 			if ( iType == SLAPI_PLUGIN_EXTENDEDOP ) {
-				slapi_int_unregister_extop( be, &pGExtendedOps, pPlugin );
+				slapi_int_unregister_extop( c->be, &pGExtendedOps, pPlugin );
 			}
 			slapi_pblock_destroy( pPlugin );
 			return 1;

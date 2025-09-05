@@ -1,10 +1,10 @@
-/*	$NetBSD: ldappasswd.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
+/*	$NetBSD: ldappasswd.c,v 1.4 2025/09/05 21:16:13 christos Exp $	*/
 
 /* ldappasswd -- a tool for change LDAP passwords */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldappasswd.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
+__RCSID("$NetBSD: ldappasswd.c,v 1.4 2025/09/05 21:16:13 christos Exp $");
 
 #include "portable.h"
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: ldappasswd.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
 static struct berval newpw = { 0, NULL };
 static struct berval oldpw = { 0, NULL };
 
+static int   want_bindearly = 0;
 static int   want_newpw = 0;
 static int   want_oldpw = 0;
 
@@ -74,6 +75,7 @@ usage( void )
 	fprintf( stderr,_("usage: %s [options] [user]\n"), prog);
 	fprintf( stderr, _("  user: the authentication identity, commonly a DN\n"));
 	fprintf( stderr, _("Password change options:\n"));
+	fprintf( stderr, _("  -E         bind early\n"));
 	fprintf( stderr, _("  -a secret  old password\n"));
 	fprintf( stderr, _("  -A         prompt for old password\n"));
 	fprintf( stderr, _("  -t file    read file for old password\n"));
@@ -85,8 +87,8 @@ usage( void )
 }
 
 
-const char options[] = "a:As:St:T:"
-	"d:D:e:h:H:InNO:o:p:QR:U:vVw:WxX:y:Y:Z";
+const char options[] = "Ea:As:St:T:"
+	"d:D:e:H:InNO:o:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -121,6 +123,11 @@ handle_private_option( int i )
 		usage();
 		}
 #endif
+
+	case 'E':	/* bind to the LDAP server before other actions */
+		want_bindearly++;
+		break;
+
 
 	case 'a':	/* old password (secret) */
 		oldpw.bv_val = strdup( optarg );
@@ -200,6 +207,13 @@ main( int argc, char *argv[] )
 		user = NULL;
 	}
 
+	if( want_bindearly ) {
+		/* bind */
+		ld = tool_conn_setup( 0, 0 );
+
+		tool_bind( ld );
+	}
+
 	if( oldpwfile ) {
 		rc = lutil_get_filed_password( oldpwfile, &oldpw );
 		if( rc ) {
@@ -211,7 +225,12 @@ main( int argc, char *argv[] )
 	if( want_oldpw && oldpw.bv_val == NULL ) {
 		/* prompt for old password */
 		char *ckoldpw;
-		oldpw.bv_val = strdup(getpassphrase(_("Old password: ")));
+		ckoldpw = getpassphrase(_("Old password: "));
+		if ( ckoldpw == NULL ) { /* Allow EOF to exit. */
+			rc = EXIT_FAILURE;
+			goto done;
+		}
+		oldpw.bv_val = strdup( ckoldpw );
 		ckoldpw = getpassphrase(_("Re-enter old password: "));
 
 		if( oldpw.bv_val == NULL || ckoldpw == NULL ||
@@ -236,7 +255,12 @@ main( int argc, char *argv[] )
 	if( want_newpw && newpw.bv_val == NULL ) {
 		/* prompt for new password */
 		char *cknewpw;
-		newpw.bv_val = strdup(getpassphrase(_("New password: ")));
+		cknewpw = getpassphrase(_("New password: "));
+		if ( cknewpw == NULL ) { /* Allow EOF to exit. */
+			rc = EXIT_FAILURE;
+			goto done;
+		}
+		newpw.bv_val = strdup( cknewpw );
 		cknewpw = getpassphrase(_("Re-enter new password: "));
 
 		if( newpw.bv_val == NULL || cknewpw == NULL ||
@@ -250,9 +274,12 @@ main( int argc, char *argv[] )
 		newpw.bv_len = strlen( newpw.bv_val );
 	}
 
-	ld = tool_conn_setup( 0, 0 );
+	if( ! want_bindearly ) {
+		/* bind */
+		ld = tool_conn_setup( 0, 0 );
 
-	tool_bind( ld );
+		tool_bind( ld );
+	}
 
 	if( user != NULL || oldpw.bv_val != NULL || newpw.bv_val != NULL ) {
 		/* build the password modify request data */

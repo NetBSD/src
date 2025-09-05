@@ -1,4 +1,4 @@
-/*	$NetBSD: tclAppInit.c,v 1.2 2021/08/14 16:14:50 christos Exp $	*/
+/*	$NetBSD: tclAppInit.c,v 1.3 2025/09/05 21:16:14 christos Exp $	*/
 
 /* 
  * tclAppInit.c --
@@ -47,9 +47,7 @@ EXTERN int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
  */
 
 int
-main(argc, argv)
-    int argc;			/* Number of command-line arguments. */
-    char **argv;		/* Values of command-line arguments. */
+main(int argc, char **argv)
 {
 #ifdef USE_TCLX
     TclX_Main(argc, argv, Tcl_AppInit);

@@ -1,10 +1,10 @@
-/*	$NetBSD: txn.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: txn.c,v 1.4 2025/09/05 21:16:26 christos Exp $	*/
 
 /* txn.c - LDAP Transactions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: txn.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: txn.c,v 1.4 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -265,6 +265,7 @@ int txn_end_extop(
 				rc = (&o->o_bd->bd_info->bi_op_bind)[opidx]( o, &rs );
 				ldap_pvt_thread_mutex_lock( &c->c_mutex );
 			}
+			LDAP_SLIST_REMOVE( &o->o_extra, txn, OpExtra, oe_next );
 			if ( rc ) {
 				struct berval *bv = NULL;
 				BerElementBuffer berbuf;
@@ -309,8 +310,53 @@ int txn_end_extop(
 drain:
 	/* drain txn ops list */
 	while (( o = LDAP_STAILQ_FIRST( &c->c_txn_ops )) != NULL ) {
+		int freevals = 1;
+
 		LDAP_STAILQ_REMOVE_HEAD( &c->c_txn_ops, o_next );
 		LDAP_STAILQ_NEXT( o, o_next ) = NULL;
+
+		switch ( o->o_tag ) {
+			case LDAP_REQ_ADD: {
+				if ( o->ora_e != NULL ) {
+					OpExtra *oex;
+					OpExtraDB *oexdb = NULL;
+					LDAP_SLIST_FOREACH(oex, &o->o_extra, oe_next) {
+						if ( oex->oe_key == (void *)do_add ) {
+							oexdb = (OpExtraDB *)oex;
+							break;
+						}
+					}
+					if ( oexdb && oexdb->oe_db ) {
+						BackendDB *bd = o->o_bd;
+						o->o_bd = oexdb->oe_db;
+
+						be_entry_release_w( o, o->ora_e );
+
+						o->ora_e = NULL;
+						o->o_bd = bd;
+					} else {
+						entry_free( o->ora_e );
+					}
+					if ( oexdb ) {
+						o->o_tmpfree( oexdb, o->o_tmpmemctx );
+					}
+				}
+				freevals = 0;
+				} /* fallthru */
+			case LDAP_REQ_MODIFY:
+			case LDAP_REQ_MODRDN:
+				if ( o->orr_modlist != NULL ) {
+					slap_mods_free( o->orr_modlist, freevals );
+				}
+				break;
+			case LDAP_REQ_DELETE:
+			case LDAP_REQ_EXTENDED:
+				break;
+			default:
+				assert( 0 );
+		}
+		o->o_tmpfree( o->o_req_dn.bv_val, o->o_tmpmemctx );
+		o->o_tmpfree( o->o_req_ndn.bv_val, o->o_tmpmemctx );
 		slap_op_free( o, NULL );
 	}
 

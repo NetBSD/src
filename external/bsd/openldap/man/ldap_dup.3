@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAP_OPEN 3 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAP_OPEN 3 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_dup, ldap_destroy, \- Duplicate and destroy LDAP session handles
@@ -47,7 +47,6 @@ and
 functions are used in conjunction with a "thread safe" version
 of
 .B libldap
-.RB ( libldap_r )
 to enable operation thread safe API calls, so that a single session
 may be simultaneously used across multiple threads with consistent
 error handling.
@@ -130,4 +129,4 @@ effort.
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 127 stdin
+.lf 126 stdin

@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.3 2025/09/05 21:16:26 christos Exp $	*/
 
 /* search.c - search request handler for back-asyncmeta */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2021 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  * This work was sponsored by Ericsson. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.3 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -63,6 +63,7 @@ asyncmeta_handle_onerr_stop(Operation *op,
 		}
 	}
 	slap_sl_mem_setctx(op->o_threadctx, op->o_tmpmemctx);
+	operation_counter_init( op, op->o_threadctx );
 	ldap_pvt_thread_mutex_unlock( &mc->mc_om_mutex);
 	send_ldap_result(op, rs);
 }
@@ -691,6 +692,13 @@ asyncmeta_back_search( Operation *op, SlapReply *rs )
 
 	rs_assert_ready( rs );
 	rs->sr_flags &= ~REP_ENTRY_MASK; /* paranoia, we can set rs = non-entry */
+
+	if ( mi->mi_ntargets == 0 ) {
+		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+		rs->sr_text = "No targets are configured for this database";
+		send_ldap_result(op, rs);
+		return rs->sr_err;
+	}
 
 	/*
 	 * controls are set in ldap_back_dobind()

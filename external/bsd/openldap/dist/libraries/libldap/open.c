@@ -1,9 +1,9 @@
-/*	$NetBSD: open.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: open.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: open.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: open.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -506,6 +506,11 @@ ldap_int_open_connection(
 	if( proto == LDAP_PROTO_UDP ) return 0;
 #endif
 
+	if ( async && rc == -2) {
+		/* Need to let the connect complete asynchronously before we continue */
+		return -2;
+	}
+
 #ifdef HAVE_TLS
 	if ((rc == 0 || rc == -2) && ( ld->ld_options.ldo_tls_mode == LDAP_OPT_X_TLS_HARD ||
 		strcmp( srv->lud_scheme, "ldaps" ) == 0 ))
@@ -543,6 +548,7 @@ ldap_int_open_connection(
 				LDAP_MUTEX_UNLOCK( &lo->ldo_mutex );
 			}
 			ber_int_sb_close( conn->lconn_sb );
+			ber_int_sb_destroy( conn->lconn_sb );
 			return -1;
 		}
 	}
@@ -590,9 +596,9 @@ ldap_open_internal_connection( LDAP **ldp, ber_socket_t *fdp )
 	/* Attach the passed socket as the *LDAP's connection */
 	c = ldap_new_connection( ld, NULL, 1, 0, NULL, 0, 0 );
 	if( c == NULL ) {
+		LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
 		ldap_unbind_ext( ld, NULL, NULL );
 		*ldp = NULL;
-		LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
 		return( LDAP_NO_MEMORY );
 	}
 	ber_sockbuf_ctrl( c->lconn_sb, LBER_SB_OPT_SET_FD, fdp );

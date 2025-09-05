@@ -1,10 +1,10 @@
-/*	$NetBSD: rwm.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: rwm.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* rwm.c - rewrite/remap operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rwm.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: rwm.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -126,6 +126,12 @@ rwm_op_rollback( Operation *op, SlapReply *rs, rwm_op_state *ros )
 			ch_free( op->orr_nnewrdn.bv_val );
 			op->orr_newrdn = ros->orr_newrdn;
 			op->orr_nnewrdn = ros->orr_nnewrdn;
+		}
+		if ( op->orr_newDN.bv_val != ros->orr_newDN.bv_val ) {
+			ch_free( op->orr_newDN.bv_val );
+			ch_free( op->orr_nnewDN.bv_val );
+			op->orr_newDN = ros->orr_newDN;
+			op->orr_nnewDN = ros->orr_nnewDN;
 		}
 		break;
 	case LDAP_REQ_SEARCH:
@@ -729,6 +735,7 @@ rwm_op_modrdn( Operation *op, SlapReply *rs )
 	slap_overinst		*on = (slap_overinst *) op->o_bd->bd_info;
 	struct ldaprwmap	*rwmap = 
 			(struct ldaprwmap *)on->on_bi.bi_private;
+	struct berval pdn, pndn;
 	
 	int			rc;
 	dncookie		dc;
@@ -763,6 +770,8 @@ rwm_op_modrdn( Operation *op, SlapReply *rs )
 			*op->orr_newSup = newSup;
 			*op->orr_nnewSup = nnewSup;
 		}
+		pdn = newSup;
+		pndn = nnewSup;
 	}
 
 	/*
@@ -800,6 +809,16 @@ rwm_op_modrdn( Operation *op, SlapReply *rs )
 		send_ldap_error( op, rs, rc, "renameDN massage error" );
 		goto err;
 	}
+	if ( !op->orr_newSup ) {
+		dnParent( &op->o_req_dn, &pdn );
+		dnParent( &op->o_req_ndn, &pndn );
+	}
+
+	/*
+	 * Update the new DN
+	 */
+	build_new_dn( &op->orr_newDN, &pdn, &op->orr_newrdn, op->o_tmpmemctx );
+	build_new_dn( &op->orr_nnewDN, &pndn, &op->orr_nnewrdn, op->o_tmpmemctx );
 
 	op->o_callback = &roc->cb;
 
@@ -821,6 +840,13 @@ err:;
 			ch_free( op->orr_nnewrdn.bv_val );
 			op->orr_newrdn = roc->ros.orr_newrdn;
 			op->orr_nnewrdn = roc->ros.orr_nnewrdn;
+		}
+
+		if ( op->orr_newDN.bv_val != roc->ros.orr_newDN.bv_val ) {
+			op->o_tmpfree( op->orr_newDN.bv_val, op->o_tmpmemctx );
+			op->o_tmpfree( op->orr_nnewDN.bv_val, op->o_tmpmemctx );
+			op->orr_newDN = roc->ros.orr_newDN;
+			op->orr_nnewDN = roc->ros.orr_nnewDN;
 		}
 	}
 
@@ -872,6 +898,8 @@ rwm_entry_release_rw( Operation *op, Entry *e, int rw )
 	return SLAP_CB_CONTINUE;
 }
 
+static struct berval *passwd_oid;
+
 static int
 rwm_entry_get_rw( Operation *op, struct berval *ndn,
 	ObjectClass *oc, AttributeDescription *at, int rw, Entry **ep )
@@ -886,6 +914,11 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 	struct berval		mndn = BER_BVNULL;
 
 	if ( ((BackendInfo *)on->on_info->oi_orig)->bi_entry_get_rw == NULL ) {
+		return SLAP_CB_CONTINUE;
+	}
+
+	/* If we're fetching the target of a password mod, must let real DNs thru */
+	if ( op->o_tag == LDAP_REQ_EXTENDED && bvmatch( passwd_oid, &op->oq_extended.rs_reqoid ) ) {
 		return SLAP_CB_CONTINUE;
 	}
 
@@ -1120,6 +1153,8 @@ static struct exop {
 	{ BER_BVC(LDAP_EXOP_MODIFY_PASSWD),	rwm_exop_passwd },
 	{ BER_BVNULL, NULL }
 };
+
+static struct berval *passwd_oid = &exop_table[0].oid;
 
 static int
 rwm_extended( Operation *op, SlapReply *rs )
@@ -1783,6 +1818,16 @@ rwm_response( Operation *op, SlapReply *rs )
 
 		rwm_matched( op, rs );
 		break;
+	}
+
+	if ( op->o_tag == LDAP_REQ_ADD && op->ora_e ) {
+		/*
+		 * Rewrite back the dn and attributes of the added entry op->ora_e
+		 */
+		SlapReply rs2 = *rs;
+		rs2.sr_entry = op->ora_e;
+		rs2.sr_flags |= REP_ENTRY_MODIFIABLE;
+		return rwm_send_entry( op, &rs2 );
 	}
 
 	return SLAP_CB_CONTINUE;

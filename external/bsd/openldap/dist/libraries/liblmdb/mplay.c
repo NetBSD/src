@@ -1,4 +1,4 @@
-/*	$NetBSD: mplay.c,v 1.1.1.1 2025/09/05 21:09:33 christos Exp $	*/
+/*	$NetBSD: mplay.c,v 1.2 2025/09/05 21:16:22 christos Exp $	*/
 
 /* mplay.c - memory-mapped database log replay */
 /*

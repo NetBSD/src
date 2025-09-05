@@ -1,10 +1,10 @@
-/*	$NetBSD: slapd-totp.c,v 1.2 2021/08/14 16:14:53 christos Exp $	*/
+/*	$NetBSD: slapd-totp.c,v 1.3 2025/09/05 21:16:18 christos Exp $	*/
 
 /* slapd-totp.c - Password module and overlay for TOTP */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2015-2021 The OpenLDAP Foundation.
+ * Copyright 2015-2024 The OpenLDAP Foundation.
  * Portions Copyright 2015 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -135,15 +135,15 @@ static const char Pad32 = '=';
 
 static int
 totp_b32_ntop(
-	u_char const *src,
+	unsigned char const *src,
 	size_t srclength,
 	char *target,
 	size_t targsize)
 {
 	size_t datalength = 0;
-	u_char input0;
-	u_int input1;	/* assumed to be at least 32 bits */
-	u_char output[8];
+	unsigned char input0;
+	unsigned int input1;	/* assumed to be at least 32 bits */
+	unsigned char output[8];
 	int i;
 
 	while (4 < srclength) {
@@ -206,7 +206,7 @@ totp_b32_ntop(
 static int
 totp_b32_pton(
 	char const *src,
-	u_char *target, 
+	unsigned char *target, 
 	size_t targsize)
 {
 	int tarindex, state, ch;

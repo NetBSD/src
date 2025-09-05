@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: modify.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* modify.c - monitor backend modify routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: modify.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 

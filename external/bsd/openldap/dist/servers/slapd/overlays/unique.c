@@ -1,10 +1,10 @@
-/*	$NetBSD: unique.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: unique.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* unique.c - attribute uniqueness module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unique.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: unique.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -556,6 +556,13 @@ unique_cf_attrs( ConfigArgs *c )
 		rc = 0;
 		break;
 	case LDAP_MOD_ADD:
+		if ( c->argc > 2 ) {
+			Debug ( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "unique config: "
+				"Supplying multiple names in a single %s value is unsupported "
+				"and will be disallowed in a future version\n",
+				c->argv[0] );
+		}
+		/* FALLTHRU */
 	case SLAP_CONFIG_ADD:
 		if ( domains ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
@@ -1001,6 +1008,7 @@ unique_search(
 	nop->ors_tlimit	= SLAP_NO_LIMIT;
 	nop->ors_attrs	= slap_anlist_no_attrs;
 	nop->ors_attrsonly = 1;
+	memset( nop->o_ctrlflag, 0, sizeof( nop->o_ctrlflag ));
 
 	uq.ndn = &op->o_req_ndn;
 
@@ -1071,7 +1079,7 @@ unique_add(
 	Debug(LDAP_DEBUG_TRACE, "==> unique_add <%s>\n",
 	      op->o_req_dn.bv_val );
 
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) || (
+	if ( be_shadow_update( op ) || (
 			get_relax(op) > SLAP_CONTROL_IGNORED
 			&& access_allowed( op, op->ora_e,
 				slap_schema.si_ad_entry, NULL,
@@ -1223,13 +1231,15 @@ unique_modify(
 		return rc;
 	}
 
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) || (
-			get_relax(op) > SLAP_CONTROL_IGNORED
-			&& overlay_entry_get_ov(op, &op->o_req_ndn, NULL, NULL, 0, &e, on) == LDAP_SUCCESS
-			&& e
-			&& access_allowed( op, e,
-				slap_schema.si_ad_entry, NULL,
-				ACL_MANAGE, NULL ) ) ) {
+	if ( be_shadow_update( op ) ) {
+		return rc;
+	}
+	if ( get_relax(op) > SLAP_CONTROL_IGNORED
+		&& overlay_entry_get_ov( op, &op->o_req_ndn, NULL, NULL, 0, &e, on ) == LDAP_SUCCESS
+		&& e
+		&& access_allowed( op, e,
+			slap_schema.si_ad_entry, NULL,
+			ACL_MANAGE, NULL ) ) {
 		overlay_entry_release_ov( op, e, 0, on );
 		return rc;
 	}
@@ -1361,13 +1371,15 @@ unique_modrdn(
 	Debug(LDAP_DEBUG_TRACE, "==> unique_modrdn <%s> <%s>\n",
 		op->o_req_dn.bv_val, op->orr_newrdn.bv_val );
 
-	if ( SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) || (
-			get_relax(op) > SLAP_CONTROL_IGNORED
-			&& overlay_entry_get_ov(op, &op->o_req_ndn, NULL, NULL, 0, &e, on) == LDAP_SUCCESS
-			&& e
-			&& access_allowed( op, e,
-				slap_schema.si_ad_entry, NULL,
-				ACL_MANAGE, NULL ) ) ) {
+	if ( be_shadow_update( op ) ) {
+		return rc;
+	}
+	if ( get_relax(op) > SLAP_CONTROL_IGNORED
+		&& overlay_entry_get_ov( op, &op->o_req_ndn, NULL, NULL, 0, &e, on ) == LDAP_SUCCESS
+		&& e
+		&& access_allowed( op, e,
+			slap_schema.si_ad_entry, NULL,
+			ACL_MANAGE, NULL ) ) {
 		overlay_entry_release_ov( op, e, 0, on );
 		return rc;
 	}

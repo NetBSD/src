@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapmodrdn.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
+/*	$NetBSD: ldapmodrdn.c,v 1.4 2025/09/05 21:16:13 christos Exp $	*/
 
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -46,7 +46,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapmodrdn.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
+__RCSID("$NetBSD: ldapmodrdn.c,v 1.4 2025/09/05 21:16:13 christos Exp $");
 
 #include "portable.h"
 
@@ -100,7 +100,7 @@ usage( void )
 
 
 const char options[] = "rs:"
-	"cd:D:e:f:h:H:IMnNO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"cd:D:e:f:H:IMnNO:o:P:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )

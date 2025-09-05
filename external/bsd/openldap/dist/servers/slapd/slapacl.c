@@ -1,9 +1,9 @@
-/*	$NetBSD: slapacl.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: slapacl.c,v 1.4 2025/09/05 21:16:26 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapacl.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: slapacl.c,v 1.4 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -63,6 +63,18 @@ print_access(
 			accessmask2str( mask, accessmaskbuf, 1 ) );
 
 	return rc;
+}
+
+static int
+slapacl_entry_get(
+	Operation *op,
+	struct berval *dn,
+	ObjectClass *oc,
+	AttributeDescription *ad,
+	int rw,
+	Entry **e )
+{
+	return LDAP_UNWILLING_TO_PERFORM;
 }
 
 int
@@ -298,6 +310,8 @@ slapacl( int argc, char **argv )
 				}
 			}
 		}
+	} else {
+		op->o_bd->be_fetch = slapacl_entry_get;
 	}
 
 	for ( ; argc--; argv++ ) {

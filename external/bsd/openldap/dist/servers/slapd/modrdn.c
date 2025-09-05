@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -59,6 +59,7 @@ do_modrdn(
 	struct berval pnewSuperior = BER_BVNULL;
 
 	struct berval nnewSuperior = BER_BVNULL;
+	struct berval dest_pdn, dest_pndn;
 
 	ber_len_t	length;
 
@@ -172,7 +173,15 @@ do_modrdn(
 			send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid newSuperior" );
 			goto cleanup;
 		}
+
+		dest_pdn = pnewSuperior;
+		dest_pndn = nnewSuperior;
+	} else {
+		dnParent( &op->o_req_dn, &dest_pdn );
+		dnParent( &op->o_req_ndn, &dest_pndn );
 	}
+	build_new_dn( &op->orr_newDN, &dest_pdn, &op->orr_newrdn, op->o_tmpmemctx );
+	build_new_dn( &op->orr_nnewDN, &dest_pndn, &op->orr_nnewrdn, op->o_tmpmemctx );
 
 	Debug( LDAP_DEBUG_STATS, "%s MODRDN dn=\"%s\"\n",
 	    op->o_log_prefix, op->o_req_dn.bv_val );
@@ -206,6 +215,9 @@ cleanup:
 	op->o_tmpfree( op->orr_newrdn.bv_val, op->o_tmpmemctx );	
 	op->o_tmpfree( op->orr_nnewrdn.bv_val, op->o_tmpmemctx );	
 
+	op->o_tmpfree( op->orr_newDN.bv_val, op->o_tmpmemctx );
+	op->o_tmpfree( op->orr_nnewDN.bv_val, op->o_tmpmemctx );
+
 	if ( op->orr_modlist != NULL )
 		slap_mods_free( op->orr_modlist, 1 );
 
@@ -222,7 +234,7 @@ cleanup:
 int
 fe_op_modrdn( Operation *op, SlapReply *rs )
 {
-	struct berval	dest_ndn = BER_BVNULL, dest_pndn, pdn = BER_BVNULL;
+	struct berval pdn = BER_BVNULL;
 	BackendDB	*op_be, *bd = op->o_bd;
 	ber_slen_t	diff;
 	
@@ -242,16 +254,9 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 		goto cleanup;
 	}
 
-	if( op->orr_nnewSup ) {
-		dest_pndn = *op->orr_nnewSup;
-	} else {
-		dnParent( &op->o_req_ndn, &dest_pndn );
-	}
-	build_new_dn( &dest_ndn, &dest_pndn, &op->orr_nnewrdn, op->o_tmpmemctx );
-
-	diff = (ber_slen_t) dest_ndn.bv_len - (ber_slen_t) op->o_req_ndn.bv_len;
-	if ( diff > 0 ? dnIsSuffix( &dest_ndn, &op->o_req_ndn )
-		: diff < 0 && dnIsSuffix( &op->o_req_ndn, &dest_ndn ) )
+	diff = (ber_slen_t) op->orr_nnewDN.bv_len - (ber_slen_t) op->o_req_ndn.bv_len;
+	if ( diff > 0 ? dnIsSuffix( &op->orr_nnewDN, &op->o_req_ndn )
+		: diff < 0 && dnIsSuffix( &op->o_req_ndn, &op->orr_nnewDN ) )
 	{
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			diff > 0 ? "cannot place an entry below itself"
@@ -301,7 +306,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	}
 
 	/* check that destination DN is in the same backend as source DN */
-	if ( select_backend( &dest_ndn, 0 ) != op->o_bd ) {
+	if ( select_backend( &op->orr_nnewDN, 0 ) != op->o_bd ) {
 			send_ldap_error( op, rs, LDAP_AFFECTS_MULTIPLE_DSAS,
 				"cannot rename between DSAs" );
 			goto cleanup;
@@ -389,8 +394,6 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	}
 
 cleanup:;
-	if ( dest_ndn.bv_val != NULL )
-		ber_memfree_x( dest_ndn.bv_val, op->o_tmpmemctx );
 	op->o_bd = bd;
 	return rs->sr_err;
 }

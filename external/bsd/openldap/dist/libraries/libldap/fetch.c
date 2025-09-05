@@ -1,10 +1,10 @@
-/*	$NetBSD: fetch.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* fetch.c - routines for fetching data at URLs */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fetch.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -74,6 +74,8 @@ ldif_open_url(
 		}
 
 		p = ber_strdup( urlstr );
+		if ( p == NULL )
+			return NULL;
 
 		/* But we should convert to LDAP_DIRSEP before use */
 		if ( LDAP_DIRSEP[0] != '/' ) {

@@ -1,10 +1,10 @@
-/*	$NetBSD: unistd.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.4 2025/09/05 21:16:20 christos Exp $	*/
 
 /* Generic unistd.h */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,12 +63,12 @@ LDAP_LUTIL_F(char*)(lutil_getpass) LDAP_P((const char *getpass));
 /*
  * Windows: although sleep() will be resolved by both MSVC and Mingw GCC
  * linkers, the function is not declared in header files. This is
- * because Windows' version of the function is called _sleep(), and it
- * is declared in stdlib.h
+ * because Windows' version of the function is called Sleep(), and it
+ * is declared in windows.h
  */
 
 #ifdef _WIN32
-#define sleep _sleep
+#define sleep(x)	Sleep((x) * 1000)
 #endif
 
 #endif /* _AC_UNISTD_H */

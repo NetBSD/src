@@ -1,10 +1,10 @@
-/*	$NetBSD: common.c,v 1.10 2021/08/14 16:14:49 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.11 2025/09/05 21:16:13 christos Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.10 2021/08/14 16:14:49 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.11 2025/09/05 21:16:13 christos Exp $");
 
 #include "portable.h"
 
@@ -785,6 +785,9 @@ tool_args( int argc, char **argv )
 				exit( EXIT_FAILURE );
 			}
 			ldapuri = ber_strdup( optarg );
+			if ( ldapuri == NULL ) {
+				exit( EXIT_FAILURE );
+			}
 			break;
 		case 'I':
 #ifdef HAVE_CYRUS_SASL
@@ -985,6 +988,9 @@ tool_args( int argc, char **argv )
 			break;
 		case 'w':	/* password */
 			passwd.bv_val = ber_strdup( optarg );
+			if ( passwd.bv_val == NULL ) {
+				exit( EXIT_FAILURE );
+			}
 			{
 				char* p;
 
@@ -1171,6 +1177,7 @@ tool_conn_setup( int dont, void (*private_setup)( LDAP * ) )
 	LDAP *ld = NULL;
 
 	if ( debug ) {
+#ifdef LDAP_DEBUG
 		if( ber_set_option( NULL, LBER_OPT_DEBUG_LEVEL, &debug )
 			!= LBER_OPT_SUCCESS )
 		{
@@ -1183,6 +1190,10 @@ tool_conn_setup( int dont, void (*private_setup)( LDAP * ) )
 			fprintf( stderr,
 				"Could not set LDAP_OPT_DEBUG_LEVEL %d\n", debug );
 		}
+#else /* !LDAP_DEBUG */
+		fprintf( stderr,
+				"Must compile with LDAP_DEBUG for debugging\n", prog );
+#endif /* !LDAP_DEBUG */
 	}
 
 #ifdef SIGPIPE
@@ -1479,10 +1490,14 @@ tool_bind( LDAP *ld )
 
 		} else {
 			char *pw = getpassphrase( _("Enter LDAP Password: ") );
-			if ( pw ) {
-				passwd.bv_val = ber_strdup( pw );
-				passwd.bv_len = strlen( passwd.bv_val );
+			if ( pw == NULL ) { /* Allow EOF to exit. */
+				tool_exit( ld, EXIT_FAILURE );
 			}
+			passwd.bv_val = ber_strdup( pw );
+			if ( passwd.bv_val == NULL ) {
+				tool_exit( ld, EXIT_FAILURE );
+			}
+			passwd.bv_len = strlen( passwd.bv_val );
 		}
 	}
 
@@ -2217,7 +2232,7 @@ print_vlv( LDAP *ld, LDAPControl *ctrl )
 			ber_memfree( bv.bv_val );
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-			ldif ? "vlvResult" : "vlvResult", buf, rc );
+			ldif ? "vlvResult: " : "vlvResult", buf, rc );
 	}
 
 	return rc;

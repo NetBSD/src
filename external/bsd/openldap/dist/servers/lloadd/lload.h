@@ -1,10 +1,10 @@
-/*	$NetBSD: lload.h,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: lload.h,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* lload.h - load balancer include file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,7 @@ LDAP_BEGIN_DECL
 #define assert_locked( mutex ) ( (void)0 )
 #endif
 
+typedef struct LloadTier LloadTier;
 typedef struct LloadBackend LloadBackend;
 typedef struct LloadPendingConnection LloadPendingConnection;
 typedef struct LloadConnection LloadConnection;
@@ -107,13 +108,12 @@ typedef struct LloadOperation LloadOperation;
 typedef struct LloadChange LloadChange;
 /* end of forward declarations */
 
+typedef LDAP_STAILQ_HEAD(TierSt, LloadTier) lload_t_head;
 typedef LDAP_CIRCLEQ_HEAD(BeSt, LloadBackend) lload_b_head;
 typedef LDAP_CIRCLEQ_HEAD(ConnSt, LloadConnection) lload_c_head;
 
-LDAP_SLAPD_V (lload_b_head) backend;
+LDAP_SLAPD_V (lload_t_head) tiers;
 LDAP_SLAPD_V (lload_c_head) clients;
-LDAP_SLAPD_V (ldap_pvt_thread_mutex_t) backend_mutex;
-LDAP_SLAPD_V (LloadBackend *) current_backend;
 LDAP_SLAPD_V (struct slap_bindconf) bindconf;
 LDAP_SLAPD_V (struct berval) lloadd_identity;
 
@@ -143,6 +143,7 @@ enum lc_object {
     /*
     LLOAD_BINDCONF,
     */
+    LLOAD_TIER,
     LLOAD_BACKEND,
 };
 
@@ -153,6 +154,10 @@ enum lcf_daemon {
     LLOAD_DAEMON_MOD_LISTENER_ADD = 1 << 3,
     LLOAD_DAEMON_MOD_LISTENER_REPLACE = 1 << 4,
     LLOAD_DAEMON_MOD_BINDCONF = 1 << 5,
+};
+
+enum lcf_tier {
+    LLOAD_TIER_MOD_TYPE = 1 << 0,
 };
 
 enum lcf_backend {
@@ -166,6 +171,7 @@ struct LloadChange {
     union {
         int generic;
         enum lcf_daemon daemon;
+        enum lcf_tier tier;
         enum lcf_backend backend;
     } flags;
     void *target;
@@ -226,6 +232,59 @@ typedef struct lload_global_stats_t {
     lload_counters_t counters[LLOAD_STATS_OPS_LAST];
 } lload_global_stats_t;
 
+typedef LloadTier *(LloadTierInit)( void );
+typedef int (LloadTierConfigCb)( LloadTier *tier, char *arg );
+typedef int (LloadTierBackendConfigCb)( LloadTier *tier, LloadBackend *b, char *arg );
+typedef int (LloadTierCb)( LloadTier *tier );
+typedef int (LloadTierResetCb)( LloadTier *tier, int shutdown );
+typedef int (LloadTierBackendCb)( LloadTier *tier, LloadBackend *b );
+typedef void (LloadTierChange)( LloadTier *tier, LloadChange *change );
+typedef int (LloadTierSelect)( LloadTier *tier,
+        LloadOperation *op,
+        LloadConnection **cp,
+        int *res,
+        char **message );
+
+struct lload_tier_type {
+    char *tier_name;
+
+    struct berval tier_oc, tier_backend_oc;
+
+    LloadTierInit *tier_init;
+    LloadTierConfigCb *tier_config;
+    LloadTierBackendConfigCb *tier_backend_config;
+    LloadTierCb *tier_startup;
+    LloadTierCb *tier_update;
+    LloadTierResetCb *tier_reset;
+    LloadTierCb *tier_destroy;
+
+    LloadTierBackendCb *tier_add_backend;
+    LloadTierBackendCb *tier_remove_backend;
+    LloadTierChange *tier_change;
+
+    LloadTierSelect *tier_select;
+};
+
+struct LloadTier {
+    struct lload_tier_type t_type;
+    ldap_pvt_thread_mutex_t t_mutex;
+
+    lload_b_head t_backends;
+    int t_nbackends;
+
+    enum {
+        LLOAD_TIER_EXCLUSIVE = 1 << 0, /* Reject if busy */
+    } t_flags;
+
+    struct berval t_name;
+#ifdef BALANCER_MODULE
+    monitor_subsys_t *t_monitor;
+#endif /* BALANCER_MODULE */
+
+    void *t_private;
+    LDAP_STAILQ_ENTRY(LloadTier) t_next;
+};
+
 /* Can hold mutex when locking a linked connection */
 struct LloadBackend {
     ldap_pvt_thread_mutex_t b_mutex;
@@ -249,6 +308,15 @@ struct LloadBackend {
     long b_n_ops_executing;
 
     lload_counters_t b_counters[LLOAD_STATS_OPS_LAST];
+
+    LloadTier *b_tier;
+
+    time_t b_last_update;
+    uintptr_t b_fitness;
+    int b_weight;
+
+    uintptr_t b_operation_count;
+    uintptr_t b_operation_time;
 
 #ifdef BALANCER_MODULE
     monitor_subsys_t *b_monitor;
@@ -297,6 +365,23 @@ enum sc_io_state {
                                      * sent */
 };
 
+/* Tracking whether an operation might cause a client to restrict which
+ * upstreams are eligible */
+enum op_restriction {
+    LLOAD_OP_NOT_RESTRICTED, /* no restrictions in place */
+    LLOAD_OP_RESTRICTED_WRITE, /* client is restricted to a certain backend with
+                                * a timeout attached */
+    LLOAD_OP_RESTRICTED_BACKEND, /* client is restricted to a certain backend,
+                                  * without a timeout */
+    LLOAD_OP_RESTRICTED_UPSTREAM, /* client is restricted to a certain upstream */
+    LLOAD_OP_RESTRICTED_ISOLATE, /* TODO: client is restricted to a certain
+                                  * upstream and removes the upstream from the
+                                  * pool */
+    LLOAD_OP_RESTRICTED_REJECT, /* operation should not be forwarded to any
+                                 * backend, either it is processed internally
+                                 * or rejected */
+};
+
 /*
  * represents a connection from an ldap client/to ldap server
  */
@@ -339,8 +424,8 @@ struct LloadConnection {
 #define CONNECTION_UNLINK_(c) \
     do { \
         if ( __atomic_exchange_n( &(c)->c_live, 0, __ATOMIC_ACQ_REL ) ) { \
-            RELEASE_REF( (c), c_refcnt, c->c_destroy ); \
             (c)->c_unlink( (c) ); \
+            RELEASE_REF( (c), c_refcnt, c->c_destroy ); \
         } \
     } while (0)
 #define CONNECTION_DESTROY(c) \
@@ -404,7 +489,17 @@ struct LloadConnection {
     long c_n_ops_completed;      /* num of ops completed */
     lload_counters_t c_counters; /* per connection operation counters */
 
+    enum op_restriction c_restricted;
+    uintptr_t c_restricted_inflight;
+    time_t c_restricted_at;
     LloadBackend *c_backend;
+    LloadConnection *c_linked_upstream;
+
+    TAvlnode *c_linked;
+
+#ifdef BALANCER_MODULE
+    struct berval c_monitor_dn;
+#endif /* BALANCER_MODULE */
 
     /*
      * Protected by the CIRCLEQ mutex:
@@ -433,32 +528,42 @@ enum op_result {
 /*
  * Operation reference tracking:
  * - o_refcnt is set to 1, never incremented
- * - operation_unlink sets it to 0 and on transition from 1 clears both
+ * - OPERATION_UNLINK sets it to 0 and on transition from 1 clears both
  *   connection links (o_client, o_upstream)
  */
 struct LloadOperation {
     uintptr_t o_refcnt;
+#define OPERATION_UNLINK(op) \
+    try_release_ref( &(op)->o_refcnt, (op), \
+            (dispose_cb *)operation_unlink, \
+            (dispose_cb *)operation_destroy )
 
     LloadConnection *o_client;
     unsigned long o_client_connid;
     ber_int_t o_client_msgid;
     ber_int_t o_saved_msgid;
+    enum op_restriction o_restricted;
 
     LloadConnection *o_upstream;
     unsigned long o_upstream_connid;
     ber_int_t o_upstream_msgid;
-    time_t o_last_response;
+    struct timeval o_last_response;
 
     /* Protects o_client, o_upstream links */
     ldap_pvt_thread_mutex_t o_link_mutex;
 
     ber_tag_t o_tag;
-    time_t o_start;
+    struct timeval o_start;
     unsigned long o_pin_id;
 
     enum op_result o_res;
     BerElement *o_ber;
     BerValue o_request, o_ctrls;
+};
+
+struct restriction_entry {
+    struct berval oid;
+    enum op_restriction action;
 };
 
 /*
@@ -487,12 +592,6 @@ struct LloadListener {
 };
 
 typedef int (*CONNCB)( LloadConnection *c, void *arg );
-
-struct lload_monitor_conn_arg {
-    Operation *op;
-    monitor_subsys_t *ms;
-    Entry **ep;
-};
 
 /* config requires a bi_private with configuration data - dummy for now */
 struct lload_conf_info {

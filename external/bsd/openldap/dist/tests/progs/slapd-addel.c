@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-addel.c,v 1.3 2021/08/14 16:15:03 christos Exp $	*/
+/*	$NetBSD: slapd-addel.c,v 1.4 2025/09/05 21:16:33 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
  
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapd-addel.c,v 1.3 2021/08/14 16:15:03 christos Exp $");
+__RCSID("$NetBSD: slapd-addel.c,v 1.4 2025/09/05 21:16:33 christos Exp $");
 
 #include "portable.h"
 
@@ -70,9 +70,9 @@ main( int argc, char **argv )
 	char *filename = NULL, *buf = NULL;
 	int		friendly = 0;
 	struct LDIFFP *fp;
-	LDIFRecord	record = {};
+	LDIFRecord	record = {0};
 	struct tester_conn_args	*config;
-	struct berval bv = {};
+	struct berval bv = {0};
 	unsigned long lineno = 0;
 
 	config = tester_init( "slapd-addel", TESTER_ADDEL );

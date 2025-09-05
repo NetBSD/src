@@ -1,10 +1,10 @@
-/*	$NetBSD: translucent.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: translucent.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* translucent.c - translucent proxy module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: translucent.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: translucent.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -181,9 +181,9 @@ translucent_cfadd( Operation *op, SlapReply *rs, Entry *e, ConfigArgs *ca )
 
 	/* We can only create this entry if the database is table-driven
 	 */
-	if ( ov->db.bd_info->bi_cf_ocs )
+	if ( ov->db.be_cf_ocs )
 		config_build_entry( op, rs, cei, ca, &bv,
-				    ov->db.bd_info->bi_cf_ocs,
+				    ov->db.be_cf_ocs,
 				    &translucentocs[1] );
 
 	return 0;
@@ -223,6 +223,16 @@ translucent_cf_gen( ConfigArgs *c )
 		}
 		return 0;
 	}
+
+	/* cn=config values could be deleted later, we only want one name
+	 * per value for valx to match. */
+	if ( c->op != SLAP_CONFIG_ADD && strchr( c->argv[1], ',' ) ) {
+		Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: %s: "
+			"Supplying multiple attribute names in a single value is "
+			"unsupported and will be disallowed in a future version\n",
+			c->log, c->argv[0] );
+	}
+
 	a2 = str2anlist( *an, c->argv[1], "," );
 	if ( !a2 ) {
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s unable to parse attribute %s",
@@ -796,8 +806,8 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 
 	tc = op->o_callback->sc_private;
 
-	/* Don't let the op complete while we're gathering data */
-	if ( rs->sr_type == REP_RESULT && ( tc->step & USE_LIST ))
+	/* We took over the op, don't let it complete yet */
+	if ( rs->sr_type == REP_RESULT )
 		return 0;
 
 	if(rs->sr_type != REP_SEARCH || !rs->sr_entry)
@@ -994,7 +1004,6 @@ trans_filter_dup(Operation *op, Filter *f, AttributeName *an)
 	case LDAP_FILTER_GE:
 	case LDAP_FILTER_LE:
 	case LDAP_FILTER_APPROX:
-	case LDAP_FILTER_SUBSTRINGS:
 	case LDAP_FILTER_EXT:
 		if ( !f->f_av_desc || ad_inlist( f->f_av_desc, an )) {
 			AttributeAssertion *nava;
@@ -1007,6 +1016,29 @@ trans_filter_dup(Operation *op, Filter *f, AttributeName *an)
 			n->f_ava = nava;
 
 			ber_dupbv_x( &n->f_av_value, &f->f_av_value, op->o_tmpmemctx );
+			n->f_next = NULL;
+		}
+		break;
+
+	case LDAP_FILTER_SUBSTRINGS:
+		if ( !f->f_av_desc || ad_inlist( f->f_av_desc, an )) {
+			SubstringsAssertion *nsub;
+
+			n = op->o_tmpalloc( sizeof(Filter), op->o_tmpmemctx );
+			n->f_choice = f->f_choice;
+
+			nsub = op->o_tmpalloc( sizeof(SubstringsAssertion), op->o_tmpmemctx );
+			*nsub = *f->f_sub;
+			n->f_sub = nsub;
+
+			if ( !BER_BVISNULL( &f->f_sub_initial ))
+				ber_dupbv_x( &n->f_sub_initial, &f->f_sub_initial, op->o_tmpmemctx );
+
+			ber_bvarray_dup_x( &n->f_sub_any, f->f_sub_any, op->o_tmpmemctx );
+
+			if ( !BER_BVISNULL( &f->f_sub_final ))
+				ber_dupbv_x( &n->f_sub_final, &f->f_sub_final, op->o_tmpmemctx );
+
 			n->f_next = NULL;
 		}
 		break;
@@ -1147,6 +1179,7 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 		op2.o_hdr = &oh;
 		op2.o_extra = op->o_extra;
 		op2.o_callback = &cb;
+		op2.ors_attrs = slap_anlist_all_attributes;
 
 		tc.attrs = op->ors_attrs;
 		op->ors_slimit = SLAP_NO_LIMIT;
@@ -1202,9 +1235,9 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 			rs->sr_flags = 0;
 			rs->sr_entry = NULL;
 		}
-		send_ldap_result( op, rs );
 	}
 
+	send_ldap_result( op, rs );
 	op->ors_slimit = tc.slimit;
 
 	/* Free in reverse order */
@@ -1412,7 +1445,7 @@ translucent_db_destroy( BackendDB *be, ConfigReply *cr )
 			backend_stopdown_one( &ov->db );
 		}
 
-		ldap_pvt_thread_mutex_destroy( &ov->db.be_pcl_mutex );
+		ldap_pvt_thread_mutex_destroy( &ov->db.be_pcsn_st.be_pcsn_mutex );
 		ch_free(ov);
 		on->on_bi.bi_private = NULL;
 	}

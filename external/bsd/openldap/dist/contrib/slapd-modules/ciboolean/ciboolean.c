@@ -1,4 +1,4 @@
-/*	$NetBSD: ciboolean.c,v 1.1.1.1 2025/09/05 21:09:44 christos Exp $	*/
+/*	$NetBSD: ciboolean.c,v 1.2 2025/09/05 21:16:15 christos Exp $	*/
 
 /* ciboolean.c - enable case-insensitive boolean values */
 /* $OpenLDAP$ */
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ciboolean.c,v 1.1.1.1 2025/09/05 21:09:44 christos Exp $");
+__RCSID("$NetBSD: ciboolean.c,v 1.2 2025/09/05 21:16:15 christos Exp $");
 
 #include "portable.h"
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: getdn.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: getdn.c,v 1.4 2025/09/05 21:16:21 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdn.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: getdn.c,v 1.4 2025/09/05 21:16:21 christos Exp $");
 
 #include "portable.h"
 
@@ -2567,6 +2567,8 @@ rdn2strlen( LDAPRDN rdn, unsigned flags, ber_len_t *len,
 			l += vl;
 		}
 	}
+	if ( !iAVA )
+		return( -1 );	/* RDN ::= SET SIZE (1..MAX) OF AVA */
 	
 	*len = l;
 	
@@ -2640,6 +2642,8 @@ rdn2DCEstrlen( LDAPRDN rdn, unsigned flags, ber_len_t *len )
 			l += vl;
 		}
 	}
+	if ( !iAVA )
+		return( -1 );	/* RDN ::= SET SIZE (1..MAX) OF AVA */
 	
 	*len = l;
 	
@@ -2721,6 +2725,8 @@ rdn2UFNstrlen( LDAPRDN rdn, unsigned flags, ber_len_t *len )
 			l += vl;
 		}
 	}
+	if ( !iAVA )
+		return( -1 );	/* RDN ::= SET SIZE (1..MAX) OF AVA */
 	
 	*len = l;
 	
@@ -2799,6 +2805,8 @@ rdn2ADstrlen( LDAPRDN rdn, unsigned flags, ber_len_t *len )
 			l += vl;
 		}
 	}
+	if ( !iAVA )
+		return( -1 );	/* RDN ::= SET SIZE (1..MAX) OF AVA */
 	
 	*len = l;
 	

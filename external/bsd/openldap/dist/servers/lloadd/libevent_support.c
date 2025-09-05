@@ -1,10 +1,10 @@
-/*	$NetBSD: libevent_support.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: libevent_support.c,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* libevent_support.c - routines to bridge libldap and libevent */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2017-2021 The OpenLDAP Foundation.
+ * Copyright 2017-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: libevent_support.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: libevent_support.c,v 1.3 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -136,6 +136,12 @@ lload_libevent_cond_timedwait(
     return ldap_pvt_thread_cond_wait( cond, mutex );
 }
 
+unsigned long
+lload_libevent_thread_self( void )
+{
+    return (unsigned long)ldap_pvt_thread_self();
+}
+
 int
 lload_libevent_init( void )
 {
@@ -155,17 +161,9 @@ lload_libevent_init( void )
         lload_libevent_cond_timedwait
     };
 
-#ifndef BALANCER_MODULE
-    /* only necessary if lload is a server, slapd already calls
-     * ldap_pvt_thread_initialize() */
-    if ( ldap_pvt_thread_initialize() ) {
-        return -1;
-    }
-#endif
-
     evthread_set_lock_callbacks( &cbs );
     evthread_set_condition_callbacks( &cond_cbs );
-    evthread_set_id_callback( ldap_pvt_thread_self );
+    evthread_set_id_callback( lload_libevent_thread_self );
     return 0;
 }
 

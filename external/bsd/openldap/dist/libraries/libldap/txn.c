@@ -1,9 +1,9 @@
-/*	$NetBSD: txn.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: txn.c,v 1.4 2025/09/05 21:16:22 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2021 The OpenLDAP Foundation.
+ * Copyright 2006-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: txn.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: txn.c,v 1.4 2025/09/05 21:16:22 christos Exp $");
 
 #include "portable.h"
 
@@ -73,7 +73,7 @@ ldap_txn_end(
 {
 	int rc;
 	BerElement *txnber = NULL;
-	struct berval *txnval = NULL;
+	struct berval txnval;
 
 	assert( txnid != NULL );
 
@@ -85,10 +85,10 @@ ldap_txn_end(
 		ber_printf( txnber, "{bON}", commit, txnid );
 	}
 
-	ber_flatten( txnber, &txnval );
+	ber_flatten2( txnber, &txnval, 0 );
 
 	rc = ldap_extended_operation( ld, LDAP_EXOP_TXN_END,
-		txnval, sctrls, cctrls, msgidp );
+		&txnval, sctrls, cctrls, msgidp );
 
 	ber_free( txnber, 1 );
 	return rc;
@@ -105,7 +105,7 @@ ldap_txn_end_s(
 {
 	int rc;
 	BerElement *txnber = NULL;
-	struct berval *txnval = NULL;
+	struct berval txnval;
 	struct berval *retdata = NULL;
 
 	if ( retidp != NULL ) *retidp = -1;
@@ -118,10 +118,10 @@ ldap_txn_end_s(
 		ber_printf( txnber, "{bON}", commit, txnid );
 	}
 
-	ber_flatten( txnber, &txnval );
+	ber_flatten2( txnber, &txnval, 0 );
 
 	rc = ldap_extended_operation_s( ld, LDAP_EXOP_TXN_END,
-		txnval, sctrls, cctrls, NULL, &retdata );
+		&txnval, sctrls, cctrls, NULL, &retdata );
 
 	ber_free( txnber, 1 );
 

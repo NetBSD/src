@@ -1,10 +1,10 @@
-/*	$NetBSD: time.h,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.4 2025/09/05 21:16:20 christos Exp $	*/
 
 /* Generic time.h */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,17 +19,13 @@
 #ifndef _AC_TIME_H
 #define _AC_TIME_H
 
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#elif defined(HAVE_SYS_TIME_H)
+#if defined(HAVE_SYS_TIME_H)
 # include <sys/time.h>
 # ifdef HAVE_SYS_TIMEB_H
 #  include <sys/timeb.h>
 # endif
-#else
-# include <time.h>
 #endif
+# include <time.h>
 
 #if defined(_WIN32) && !defined(HAVE_CLOCK_GETTIME)
 	struct timespec {

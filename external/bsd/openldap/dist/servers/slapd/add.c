@@ -1,9 +1,9 @@
-/*	$NetBSD: add.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: add.c,v 1.4 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: add.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.4 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -203,7 +203,6 @@ do_add( Operation *op, SlapReply *rs )
 		return rc;
 	}
 
-	LDAP_SLIST_REMOVE(&op->o_extra, &oex->oe, OpExtra, oe_next);
 	if ( rc == LDAP_TXN_SPECIFY_OKAY ) {
 		/* skip cleanup */
 		return rc;
@@ -219,6 +218,7 @@ do_add( Operation *op, SlapReply *rs )
 			op->o_bd = bd;
 		}
 	}
+	LDAP_SLIST_REMOVE(&op->o_extra, &oex->oe, OpExtra, oe_next);
 	op->o_tmpfree( oex, op->o_tmpmemctx );
 
 done:;

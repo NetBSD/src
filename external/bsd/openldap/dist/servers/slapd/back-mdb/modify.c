@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: modify.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* modify.c - mdb backend modify routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modify.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: modify.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -32,11 +32,14 @@ static struct berval scbva[] = {
 	BER_BVNULL
 };
 
+#define	CHECK_ADD	1
+#define	CHECK_DEL	2
+
 static void
 mdb_modify_idxflags(
 	Operation *op,
 	AttributeDescription *desc,
-	int got_delete,
+	int ixcheck,
 	Attribute *newattrs,
 	Attribute *oldattrs )
 {
@@ -47,7 +50,7 @@ mdb_modify_idxflags(
 	 * but not in case of NOOP... */
 	ai = mdb_index_mask( op->o_bd, desc, &ix_at );
 	if ( ai ) {
-		if ( got_delete ) {
+		if ( ixcheck & CHECK_DEL ) {
 			Attribute 	*ap;
 			struct berval	ix2;
 
@@ -70,7 +73,8 @@ mdb_modify_idxflags(
 				}
 			}
 
-		} else {
+		}
+		if ( ixcheck & CHECK_ADD ) {
 			Attribute 	*ap;
 
 			ap = attr_find( newattrs, desc );
@@ -96,7 +100,7 @@ int mdb_modify_internal(
 	Attribute 	*ap, *aold, *anew;
 	int			glue_attr_delete = 0;
 	int			softop, chkpresent;
-	int			got_delete;
+	int			ixcheck;
 	int			a_flags;
 	MDB_cursor	*mvc = NULL;
 
@@ -145,7 +149,7 @@ int mdb_modify_internal(
 
 	for ( ml = modlist; ml != NULL; ml = ml->sml_next ) {
 		mod = &ml->sml_mod;
-		got_delete = 0;
+		ixcheck = 0;
 
 		aold = attr_find( e->e_attrs, mod->sm_desc );
 		if (aold)
@@ -212,6 +216,7 @@ mval_fail:					strncpy( textbuf, mdb_strerror( err ), textlen );
 					if ( err )
 						goto mval_fail;
 				}
+				ixcheck |= CHECK_ADD;
 			}
 			break;
 
@@ -242,7 +247,7 @@ do_del:
 					err, *text );
 			} else {
 				if (softop != 2)
-					got_delete = 1;
+					ixcheck |= CHECK_DEL;
 				/* check for big multivalued attrs */
 				if (a_flags & SLAP_ATTR_BIG_MULTI) {
 					Attribute a_dummy;
@@ -290,7 +295,9 @@ do_del:
 					err, *text );
 			} else {
 				unsigned hi;
-				got_delete = 1;
+				ixcheck = CHECK_DEL;
+				if ( mod->sm_numvals )
+					ixcheck |= CHECK_ADD;
 				if (a_flags & SLAP_ATTR_BIG_MULTI) {
 					Attribute a_dummy;
 					if (!mvc) {
@@ -336,7 +343,7 @@ do_del:
 					"mdb_modify_internal: %d %s\n",
 					err, *text );
 			} else {
-				got_delete = 1;
+				ixcheck = CHECK_ADD|CHECK_DEL;
 			}
 			break;
 
@@ -408,7 +415,7 @@ do_del:
 		/* check if modified attribute was indexed
 		 * but not in case of NOOP... */
 		if ( !op->o_noop ) {
-			mdb_modify_idxflags( op, mod->sm_desc, got_delete, e->e_attrs, save_attrs );
+			mdb_modify_idxflags( op, mod->sm_desc, ixcheck, e->e_attrs, save_attrs );
 		}
 	}
 
@@ -439,7 +446,7 @@ do_del:
 		assert( ap->a_desc == slap_schema.si_ad_structuralObjectClass );
 		if ( !op->o_noop ) {
 			mdb_modify_idxflags( op, slap_schema.si_ad_structuralObjectClass,
-				1, e->e_attrs, save_attrs );
+				CHECK_ADD|CHECK_DEL, e->e_attrs, save_attrs );
 		}
 	}
 

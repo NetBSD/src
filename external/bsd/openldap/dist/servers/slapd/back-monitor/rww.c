@@ -1,10 +1,10 @@
-/*	$NetBSD: rww.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: rww.c,v 1.4 2025/09/05 21:16:29 christos Exp $	*/
 
 /* readw.c - deal with read waiters subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rww.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: rww.c,v 1.4 2025/09/05 21:16:29 christos Exp $");
 
 #include "portable.h"
 
@@ -67,7 +67,7 @@ monitor_subsys_rww_init(
 {
 	monitor_info_t	*mi;
 	
-	Entry		**ep, *e_conn;
+	Entry		*e_conn;
 	monitor_entry_t	*mp;
 	int			i;
 
@@ -85,10 +85,6 @@ monitor_subsys_rww_init(
 			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
-
-	mp = ( monitor_entry_t * )e_conn->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
 
 	for ( i = 0; i < MONITOR_RWW_LAST; i++ ) {
 		struct berval		nrdn, bv;
@@ -120,7 +116,7 @@ monitor_subsys_rww_init(
 		mp->mp_flags = ms->mss_flags \
 			| MONITOR_F_SUB | MONITOR_F_PERSISTENT;
 
-		if ( monitor_cache_add( mi, e ) ) {
+		if ( monitor_cache_add( mi, e, e_conn ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_rww_init: "
 				"unable to add entry \"%s,%s\"\n",
@@ -128,9 +124,6 @@ monitor_subsys_rww_init(
 				ms->mss_ndn.bv_val );
 			return( -1 );
 		}
-	
-		*ep = e;
-		ep = &mp->mp_next;
 	}
 
 	monitor_cache_release( mi, e_conn );

@@ -1,10 +1,10 @@
-/*	$NetBSD: map.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.3 2025/09/05 21:16:26 christos Exp $	*/
 
 /* map.c - ldap backend mapping routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2021 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: map.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.3 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -202,16 +202,26 @@ ignore:
 	}
 
 	/* DN longer than our suffix and doesn't match */
-	if ( diff > 0 && !DN_SEPARATOR(dn->bv_val[diff-1]))
+	if ( osuff->bv_len != 0 && diff > 0 && !DN_SEPARATOR(dn->bv_val[diff-1]) )
 		goto ignore;
 
 	/* suffix is same length as ours, but doesn't match */
 	if ( strcasecmp( osuff->bv_val, &dn->bv_val[diff] ))
 		goto ignore;
 
+	/* if remote suffix is empty, remove or add the dn separator*/
+	if ( nsuff->bv_len == 0 ) {
+		diff--;
+	} else if ( osuff->bv_len == 0 ) {
+		diff++;
+	}
+
+
 	res->bv_len = diff + nsuff->bv_len;
 	res->bv_val = dc->op->o_tmpalloc( res->bv_len + 1, dc->memctx );
 	strncpy( res->bv_val, dn->bv_val, diff );
+	if ( osuff->bv_len == 0 )
+		res->bv_val[diff-1] = ',';
 	strcpy( &res->bv_val[diff], nsuff->bv_val );
 
 	if (pretty.bv_val)

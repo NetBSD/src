@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPAttribute.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
+/*	$NetBSD: LDAPAttribute.h,v 1.4 2025/09/05 21:16:14 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2024 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

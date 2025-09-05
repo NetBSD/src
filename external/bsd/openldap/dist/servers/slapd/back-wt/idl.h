@@ -1,10 +1,10 @@
-/*	$NetBSD: idl.h,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: idl.h,v 1.3 2025/09/05 21:16:31 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  * WiredTiger is a product of MongoDB Inc.
  */
 
-#ifndef _WI_IDL_H_
+#ifndef _WT_IDL_H_
 #define _WT_IDL_H_
 
 /* IDL sizes - likely should be even bigger

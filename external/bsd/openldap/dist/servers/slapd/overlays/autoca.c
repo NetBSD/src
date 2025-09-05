@@ -1,10 +1,10 @@
-/*	$NetBSD: autoca.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: autoca.c,v 1.3 2025/09/05 21:16:32 christos Exp $	*/
 
 /* autoca.c - Automatic Certificate Authority */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2021 The OpenLDAP Foundation.
+ * Copyright 2009-2024 The OpenLDAP Foundation.
  * Copyright 2009-2018 by Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: autoca.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: autoca.c,v 1.3 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -51,6 +51,10 @@ __RCSID("$NetBSD: autoca.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
 #include <openssl/rsa.h>
 #define X509_get_notBefore(x)	X509_getm_notBefore(x)
 #define X509_get_notAfter(x)	X509_getm_notAfter(x)
+#endif
+
+#if OPENSSL_VERSION_MAJOR >= 3
+#define BN_pseudo_rand(bn, bits, top, bottom)	BN_rand(bn, bits, top, bottom)
 #endif
 
 /* This overlay implements a certificate authority that can generate
@@ -671,6 +675,7 @@ static int autoca_cf( ConfigArgs *c )
 				else
 					rc = 1;
 			}
+			break;
 		case ACA_USRKEYBITS:
 			if ( c->value_int < MIN_KEYBITS )
 				rc = 1;

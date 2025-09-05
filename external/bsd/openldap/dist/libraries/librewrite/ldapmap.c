@@ -1,9 +1,9 @@
-/*	$NetBSD: ldapmap.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: ldapmap.c,v 1.4 2025/09/05 21:16:23 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -345,6 +345,7 @@ do_bind:;
 			NULL, NULL, NULL );
 		if ( rc == LDAP_SERVER_DOWN && first_try ) {
 			first_try = 0;
+			ldap_unbind_ext( ld, NULL, NULL );
 			if ( ldap_initialize( &ld, data->lm_url ) != LDAP_SUCCESS ) {
 				rc = REWRITE_ERR;
 				goto rc_return;
@@ -362,11 +363,14 @@ do_bind:;
 			data->lm_attrs, 0, NULL, NULL, NULL, 1, &res );
 	if ( rc == LDAP_SERVER_DOWN && first_try ) {
 		first_try = 0;
-                if ( ldap_initialize( &ld, data->lm_url ) != LDAP_SUCCESS ) {
+		ldap_unbind_ext( ld, NULL, NULL );
+		if ( ldap_initialize( &ld, data->lm_url ) != LDAP_SUCCESS ) {
 			rc = REWRITE_ERR;
 			goto rc_return;
 		}
 		set_version = 1;
+		ldap_msgfree( res );
+		res = NULL;
 		goto do_bind;
 
 	} else if ( rc != LDAP_SUCCESS ) {
@@ -375,7 +379,6 @@ do_bind:;
 	}
 
 	if ( ldap_count_entries( ld, res ) != 1 ) {
-		ldap_msgfree( res );
 		rc = REWRITE_ERR;
 		goto rc_return;
 	}
@@ -410,14 +413,14 @@ do_bind:;
 		}
 	}
 	
-	ldap_msgfree( res );
-
 	if ( val->bv_val == NULL ) {
 		rc = REWRITE_ERR;
 		goto rc_return;
 	}
 
 rc_return:;
+	ldap_msgfree( res );
+
 	if ( data->lm_when == MAP_LDAP_EVERYTIME ) {
 		if ( ld != NULL ) {
 			ldap_unbind_ext( ld, NULL, NULL );

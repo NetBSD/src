@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/08/11 13:15:33 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2025/09/05 21:16:13 christos Exp $
 
 .include "openldap.mk"
 
@@ -30,8 +30,8 @@ CONFIGURE_ARGS+=	--sysconfdir=${LDAP_ETCDIR}
 CONFIGURE_ARGS+=	--localstatedir=${LDAP_RUNDIR}
 
 CONFIGURE_ARGS+=	--enable-dynamic
-CONFIGURE_ARGS+=	--disable-bdb
-CONFIGURE_ARGS+=	--disable-hdb
+#CONFIGURE_ARGS+=	--disable-bdb
+#CONFIGURE_ARGS+=	--disable-hdb
 CONFIGURE_ARGS+=	--disable-slapd
 CONFIGURE_ARGS+=	--with-tls=openssl
 CONFIGURE_ARGS+=	--with-threads
@@ -39,10 +39,10 @@ CONFIGURE_ARGS+=	--without-cyrus-sasl
 
 configure: work/config.status .PHONY 
 
-work/config.status: ${LDAP_DISTDIR}/configure Makefile openldap.mk
+work/config.status: ${LDAP_BUILDDIR}/configure Makefile openldap.mk
 	mkdir -p work
 	(cd work \
-	    && ${CONFIGURE_ENV} sh ${LDAP_DISTDIR}/configure ${CONFIGURE_ARGS} \
+	    && ${CONFIGURE_ENV} sh ${LDAP_BUILDDIR}/configure ${CONFIGURE_ARGS} \
 	    || false)
 
 update-include: work/config.status .PHONY

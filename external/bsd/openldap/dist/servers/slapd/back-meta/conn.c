@@ -1,9 +1,9 @@
-/*	$NetBSD: conn.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: conn.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conn.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: conn.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -704,7 +704,8 @@ meta_back_retry(
 	SlapReply		*rs,
 	metaconn_t		**mcp,
 	int			candidate,
-	ldap_back_send_t	sendok )
+	ldap_back_send_t	sendok,
+	SlapReply      *candidates )
 {
 	metainfo_t		*mi = ( metainfo_t * )op->o_bd->be_private;
 	metatarget_t		*mt = mi->mi_targets[ candidate ];
@@ -976,64 +977,14 @@ meta_back_get_candidate(
 	return candidate;
 }
 
-static void	*meta_back_candidates_dummy;
-
-static void
-meta_back_candidates_keyfree(
-	void		*key,
-	void		*data )
-{
-	metacandidates_t	*mc = (metacandidates_t *)data;
-
-	ber_memfree_x( mc->mc_candidates, NULL );
-	ber_memfree_x( data, NULL );
-}
-
 SlapReply *
 meta_back_candidates_get( Operation *op )
 {
 	metainfo_t		*mi = ( metainfo_t * )op->o_bd->be_private;
-	metacandidates_t	*mc;
+	SlapReply 	*candidates;
 
-	if ( op->o_threadctx ) {
-		void		*data = NULL;
-
-		ldap_pvt_thread_pool_getkey( op->o_threadctx,
-				&meta_back_candidates_dummy, &data, NULL );
-		mc = (metacandidates_t *)data;
-
-	} else {
-		mc = mi->mi_candidates;
-	}
-
-	if ( mc == NULL ) {
-		mc = ch_calloc( sizeof( metacandidates_t ), 1 );
-		mc->mc_ntargets = mi->mi_ntargets;
-		mc->mc_candidates = ch_calloc( sizeof( SlapReply ), mc->mc_ntargets );
-		if ( op->o_threadctx ) {
-			void		*data = NULL;
-
-			data = (void *)mc;
-			ldap_pvt_thread_pool_setkey( op->o_threadctx,
-					&meta_back_candidates_dummy, data,
-					meta_back_candidates_keyfree,
-					NULL, NULL );
-
-		} else {
-			mi->mi_candidates = mc;
-		}
-
-	} else if ( mc->mc_ntargets < mi->mi_ntargets ) {
-		/* NOTE: in the future, may want to allow back-config
-		 * to add/remove targets from back-meta... */
-		mc->mc_candidates = ch_realloc( mc->mc_candidates,
-				sizeof( SlapReply ) * mi->mi_ntargets );
-		memset( &mc->mc_candidates[ mc->mc_ntargets ], 0,
-			sizeof( SlapReply ) * ( mi->mi_ntargets - mc->mc_ntargets ) );
-		mc->mc_ntargets = mi->mi_ntargets;
-	}
-
-	return mc->mc_candidates;
+	candidates = op->o_tmpcalloc( mi->mi_ntargets, sizeof( SlapReply ), op->o_tmpmemctx );
+	return candidates;
 }
 
 /*
@@ -1071,10 +1022,11 @@ meta_back_candidates_get( Operation *op )
  */
 metaconn_t *
 meta_back_getconn(
-       	Operation 		*op,
+	Operation 		*op,
 	SlapReply		*rs,
 	int 			*candidate,
-	ldap_back_send_t	sendok )
+	ldap_back_send_t	sendok,
+	SlapReply	*candidates )
 {
 	metainfo_t	*mi = ( metainfo_t * )op->o_bd->be_private;
 	metaconn_t	*mc = NULL,
@@ -1094,8 +1046,6 @@ meta_back_getconn(
 	}		dn_type = META_DNTYPE_ENTRY;
 	struct berval	ndn = op->o_req_ndn,
 			pndn;
-
-	SlapReply	*candidates = meta_back_candidates_get( op );
 
 	/* Internal searches are privileged and shared. So is root. */
 	if ( ( !BER_BVISEMPTY( &op->o_ndn ) && META_BACK_PROXYAUTHZ_ALWAYS( mi ) )
@@ -1479,7 +1429,7 @@ retry_lock2:;
 		/*
 		 * Clear all other candidates
 		 */
-		( void )meta_clear_unused_candidates( op, i );
+		( void )meta_clear_unused_candidates( op, i, candidates );
 
 		mt = mi->mi_targets[ i ];
 		msc = &mc->mc_conns[ i ];

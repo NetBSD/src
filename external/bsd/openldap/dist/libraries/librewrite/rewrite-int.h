@@ -1,9 +1,9 @@
-/*	$NetBSD: rewrite-int.h,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: rewrite-int.h,v 1.4 2025/09/05 21:16:23 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,17 +42,17 @@
 
 #include <rewrite.h>
 
+#ifndef NO_THREADS
+#define USE_REWRITE_LDAP_PVT_THREADS
+#include <ldap_pvt_thread.h>
+#endif
+
 #define malloc(x)	ber_memalloc(x)
 #define calloc(x,y)	ber_memcalloc(x,y)
 #define realloc(x,y)	ber_memrealloc(x,y)
 #define free(x)	ber_memfree(x)
 #undef strdup
 #define	strdup(x)	ber_strdup(x)
-
-#ifndef NO_THREADS
-#define USE_REWRITE_LDAP_PVT_THREADS
-#include <ldap_pvt_thread.h>
-#endif
 
 /*
  * For details, see RATIONALE.

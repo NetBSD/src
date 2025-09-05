@@ -1,10 +1,10 @@
-/*	$NetBSD: vc.c,v 1.2 2021/08/14 16:14:54 christos Exp $	*/
+/*	$NetBSD: vc.c,v 1.3 2025/09/05 21:16:19 christos Exp $	*/
 
 /* vc.c - LDAP Verify Credentials extop (no spec yet) */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2021 The OpenLDAP Foundation.
+ * Copyright 2010-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vc.c,v 1.2 2021/08/14 16:14:54 christos Exp $");
+__RCSID("$NetBSD: vc.c,v 1.3 2025/09/05 21:16:19 christos Exp $");
 
 #include "portable.h"
 
@@ -294,16 +294,14 @@ vc_exop(
 			goto done;
 		}
 		conn->refcnt++;
+		operation_counter_init( conn->op, op->o_threadctx );
 		ldap_pvt_thread_mutex_unlock( &vc_mutex );
 
 	} else {
-		void *thrctx;
-
 		conn = (vc_conn_t *)SLAP_CALLOC( 1, sizeof( vc_conn_t ) );
 		conn->refcnt = 1;
 
-		thrctx = ldap_pvt_thread_pool_context();
-		connection_fake_init2( &conn->connbuf, &conn->opbuf, thrctx, 0 );
+		connection_fake_init2( &conn->connbuf, &conn->opbuf, op->o_threadctx, 0 );
 		conn->op = &conn->opbuf.ob_op;
 		snprintf( conn->op->o_log_prefix, sizeof( conn->op->o_log_prefix ),
 			"%s VERIFYCREDENTIALS", op->o_log_prefix );

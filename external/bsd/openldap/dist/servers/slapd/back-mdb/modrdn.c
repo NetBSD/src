@@ -1,10 +1,10 @@
-/*	$NetBSD: modrdn.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* modrdn.c - mdb backend modrdn routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -33,7 +33,6 @@ mdb_modrdn( Operation	*op, SlapReply *rs )
 	AttributeDescription *children = slap_schema.si_ad_children;
 	AttributeDescription *entry = slap_schema.si_ad_entry;
 	struct berval	p_dn, p_ndn;
-	struct berval	new_dn = {0, NULL}, new_ndn = {0, NULL};
 	Entry		*e = NULL;
 	Entry		*p = NULL;
 	/* LDAP v2 supporting correct attribute handling. */
@@ -375,20 +374,12 @@ mdb_modrdn( Operation	*op, SlapReply *rs )
 		new_parent_dn = np_dn;
 	}
 
-	/* Build target dn and make sure target entry doesn't exist already. */
-	if (!new_dn.bv_val) {
-		build_new_dn( &new_dn, new_parent_dn, &op->oq_modrdn.rs_newrdn, op->o_tmpmemctx );
-	}
-
-	if (!new_ndn.bv_val) {
-		dnNormalize( 0, NULL, NULL, &new_dn, &new_ndn, op->o_tmpmemctx );
-	}
-
+	/* Make sure target entry doesn't exist already. */
 	Debug( LDAP_DEBUG_TRACE, LDAP_XSTRING(mdb_modrdn) ": new ndn=%s\n",
-		new_ndn.bv_val );
+		op->orr_nnewDN.bv_val );
 
 	/* Shortcut the search */
-	rs->sr_err = mdb_dn2id ( op, txn, NULL, &new_ndn, &nid, NULL, NULL, NULL );
+	rs->sr_err = mdb_dn2id ( op, txn, NULL, &op->orr_nnewDN, &nid, NULL, NULL, NULL );
 	switch( rs->sr_err ) {
 	case MDB_NOTFOUND:
 		break;
@@ -440,8 +431,8 @@ mdb_modrdn( Operation	*op, SlapReply *rs )
 
 	/* copy the entry, then override some fields */
 	dummy = *e;
-	dummy.e_name = new_dn;
-	dummy.e_nname = new_ndn;
+	dummy.e_name = op->orr_newDN;
+	dummy.e_nname = op->orr_nnewDN;
 	dummy.e_attrs = NULL;
 
 	/* add new DN */
@@ -586,9 +577,6 @@ return_results:
 
 done:
 	slap_graduate_commit_csn( op );
-
-	if( new_ndn.bv_val != NULL ) op->o_tmpfree( new_ndn.bv_val, op->o_tmpmemctx );
-	if( new_dn.bv_val != NULL ) op->o_tmpfree( new_dn.bv_val, op->o_tmpmemctx );
 
 	/* LDAP v3 Support */
 	if( np != NULL ) {

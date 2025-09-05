@@ -1,10 +1,10 @@
-/*	$NetBSD: meta_result.c,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: meta_result.c,v 1.3 2025/09/05 21:16:26 christos Exp $	*/
 
 /* meta_result.c - target responses processing */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2021 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  * This work was sponsored by Ericsson. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: meta_result.c,v 1.2 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: meta_result.c,v 1.3 2025/09/05 21:16:26 christos Exp $");
 
 #include "portable.h"
 
@@ -655,6 +655,7 @@ asyncmeta_send_all_pending_ops(a_metaconn_t *mc, int candidate, void *ctx, int d
 		bc->op->o_threadctx = ctx;
 		bc->op->o_tid = ldap_pvt_thread_pool_tid( ctx );
 		slap_sl_mem_setctx(ctx, bc->op->o_tmpmemctx);
+		operation_counter_init( bc->op, ctx );
 		bc->bc_active++;
 		ret = asyncmeta_send_pending_op(bc, candidate);
 		if (ret != META_SEARCH_CANDIDATE) {
@@ -704,6 +705,7 @@ asyncmeta_return_bind_errors(a_metaconn_t *mc, int candidate, SlapReply *bind_re
 			bc->op->o_threadctx = ctx;
 			bc->op->o_tid = ldap_pvt_thread_pool_tid( ctx );
 			slap_sl_mem_setctx(ctx, bc->op->o_tmpmemctx);
+			operation_counter_init( bc->op, ctx );
 			bc->rs.sr_err = bind_result->sr_err;
 			bc->rs.sr_text = bind_result->sr_text;
 			mc->pending_ops--;
@@ -1427,6 +1429,7 @@ asyncmeta_op_read_error(a_metaconn_t *mc, int candidate, int error, void* ctx)
 		bc->op->o_threadctx = ctx;
 		bc->op->o_tid = ldap_pvt_thread_pool_tid( ctx );
 		slap_sl_mem_setctx(ctx, bc->op->o_tmpmemctx);
+		operation_counter_init( bc->op, ctx );
 
 		op = bc->op;
 		rs = &bc->rs;
@@ -1488,6 +1491,11 @@ asyncmeta_op_handle_result(void *ctx, void *arg)
 	a_metasingleconn_t *msc;
 	bm_context_t *bc;
 	void *oldctx;
+
+/* exit if the database is disabled, this will let timeout_loop
+ * do it's job faster */
+	if ( mc->mc_info->mi_disabled > 0 )
+		return NULL;
 
 	ldap_pvt_thread_mutex_lock( &mc->mc_om_mutex );
 	rc = ++mc->mc_active;
@@ -1574,6 +1582,7 @@ retry_bc:
 		bc->op->o_threadctx = ctx;
 		bc->op->o_tid = ldap_pvt_thread_pool_tid( ctx );
 		slap_sl_mem_setctx(ctx, bc->op->o_tmpmemctx);
+		operation_counter_init( bc->op, ctx );
 		if (bc->op->o_abandon) {
 			ldap_pvt_thread_mutex_lock( &mc->mc_om_mutex );
 			asyncmeta_drop_bc( mc, bc);
@@ -1662,6 +1671,14 @@ void* asyncmeta_timeout_loop(void *ctx, void *arg)
 	LDAP_STAILQ_INIT( &timeout_list );
 
 	Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] start at [%ld] \n", rtask, current_time );
+	if ( mi->mi_disabled > 0 && asyncmeta_db_has_pending_ops( mi ) == 0 ) {
+		Debug( asyncmeta_debug, "asyncmeta_timeout_loop[%p] database disabled, clearing connections [%ld] \n", rtask, current_time );
+		ldap_pvt_thread_mutex_lock( &mi->mi_mc_mutex );
+		asyncmeta_back_clear_miconns( mi );
+		mi->mi_task = NULL;
+		ldap_pvt_thread_mutex_unlock( &mi->mi_mc_mutex );
+		return NULL;
+	}
 	void *oldctx = slap_sl_mem_create(SLAP_SLAB_SIZE, SLAP_SLAB_STACK, ctx, 0);
 	for (i=0; i<mi->mi_num_conns; i++) {
 		a_metaconn_t * mc= &mi->mi_conns[i];
@@ -1672,12 +1689,18 @@ void* asyncmeta_timeout_loop(void *ctx, void *arg)
 				continue;
 			}
 
+			if (mi->mi_disabled > 0) {
+				bc->bc_invalid = 1;
+			}
+
 			if (bc->op->o_abandon ) {
-					/* set our memctx */
-				bc->op->o_threadctx = ctx;
-				bc->op->o_tid = ldap_pvt_thread_pool_tid( ctx );
-				slap_sl_mem_setctx(ctx, bc->op->o_tmpmemctx);
 				Operation *op = bc->op;
+
+				/* set our memctx */
+				op->o_threadctx = ctx;
+				op->o_tid = ldap_pvt_thread_pool_tid( ctx );
+				slap_sl_mem_setctx(ctx, op->o_tmpmemctx);
+				operation_counter_init( op, ctx );
 
 				LDAP_STAILQ_REMOVE(&mc->mc_om_list, bc, bm_context_t, bc_next);
 				mc->pending_ops--;
@@ -1735,6 +1758,7 @@ void* asyncmeta_timeout_loop(void *ctx, void *arg)
 			bc->op->o_threadctx = ctx;
 			bc->op->o_tid = ldap_pvt_thread_pool_tid( ctx );
 			slap_sl_mem_setctx(ctx, bc->op->o_tmpmemctx);
+			operation_counter_init( bc->op, ctx );
 
 			if (bc->searchtime) {
 				timeout_err = LDAP_TIMELIMIT_EXCEEDED;

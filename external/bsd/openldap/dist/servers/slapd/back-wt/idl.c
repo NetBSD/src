@@ -1,10 +1,10 @@
-/*	$NetBSD: idl.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: idl.c,v 1.3 2025/09/05 21:16:31 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: idl.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: idl.c,v 1.3 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 
@@ -36,8 +36,7 @@ __RCSID("$NetBSD: idl.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
 #define IDL_MIN(x,y)	( (x) < (y) ? (x) : (y) )
 #define IDL_CMP(x,y)	( (x) < (y) ? -1 : (x) > (y) )
 
-#if IDL_DEBUG > 0
-static void idl_check( ID *ids )
+void wt_idl_check( ID *ids )
 {
 	if( WT_IDL_IS_RANGE( ids ) ) {
 		assert( WT_IDL_RANGE_FIRST(ids) <= WT_IDL_RANGE_LAST(ids) );
@@ -49,8 +48,7 @@ static void idl_check( ID *ids )
 	}
 }
 
-#if IDL_DEBUG > 1
-static void idl_dump( ID *ids )
+void wt_idl_dump( ID *ids )
 {
 	if( WT_IDL_IS_RANGE( ids ) ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -60,22 +58,17 @@ static void idl_dump( ID *ids )
 
 	} else {
 		ID i;
-		Debug( LDAP_DEBUG_ANY, "IDL: size %ld", (long) ids[0] );
+		Debug( LDAP_DEBUG_ANY, "IDL: size %ld\n", (long) ids[0] );
 
 		for( i=1; i<=ids[0]; i++ ) {
-			if( i % 16 == 1 ) {
-				Debug( LDAP_DEBUG_ANY, "\n" );
-			}
-			Debug( LDAP_DEBUG_ANY, "  %02lx", (long) ids[i] );
+			Debug( LDAP_DEBUG_ANY, "  %ld\n", (long) ids[i] );
 		}
 
 		Debug( LDAP_DEBUG_ANY, "\n" );
 	}
 
-	idl_check( ids );
+	wt_idl_check( ids );
 }
-#endif /* IDL_DEBUG > 1 */
-#endif /* IDL_DEBUG > 0 */
 
 unsigned wt_idl_search( ID *ids, ID id )
 {
@@ -143,7 +136,7 @@ int wt_idl_insert( ID *ids, ID id )
 	Debug( LDAP_DEBUG_ANY, "insert: %04lx at %d\n", (long) id, x );
 	idl_dump( ids );
 #elif IDL_DEBUG > 0
-	idl_check( ids );
+	wt_idl_check( ids );
 #endif
 
 	if (WT_IDL_IS_RANGE( ids )) {
@@ -188,9 +181,9 @@ int wt_idl_insert( ID *ids, ID id )
 	}
 
 #if IDL_DEBUG > 1
-	idl_dump( ids );
+	wt_idl_dump( ids );
 #elif IDL_DEBUG > 0
-	idl_check( ids );
+	wt_idl_check( ids );
 #endif
 
 	return 0;
@@ -204,7 +197,7 @@ static int wt_idl_delete( ID *ids, ID id )
 	Debug( LDAP_DEBUG_ANY, "delete: %04lx at %d\n", (long) id, x );
 	idl_dump( ids );
 #elif IDL_DEBUG > 0
-	idl_check( ids );
+	wt_idl_check( ids );
 #endif
 
 	if (WT_IDL_IS_RANGE( ids )) {
@@ -245,9 +238,9 @@ static int wt_idl_delete( ID *ids, ID id )
 	}
 
 #if IDL_DEBUG > 1
-	idl_dump( ids );
+	wt_idl_dump( ids );
 #elif IDL_DEBUG > 0
-	idl_check( ids );
+	wt_idl_check( ids );
 #endif
 
 	return 0;
@@ -291,7 +284,9 @@ wt_idl_intersection(
 	if ( idmin > idmax ) {
 		a[0] = 0;
 		return 0;
-	} else if ( idmin == idmax ) {
+	} else if ( idmin == idmax &&
+			(( WT_IDL_FIRST(a) == WT_IDL_LAST(b)) ||
+			( WT_IDL_FIRST(b) == WT_IDL_LAST(a)))) {
 		a[0] = 1;
 		a[1] = idmin;
 		return 0;

@@ -1,10 +1,10 @@
-/*	$NetBSD: slap-config.h,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: slap-config.h,v 1.3 2025/09/05 21:16:26 christos Exp $	*/
 
 /* slap-config.h - configuration abstraction structure */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -178,7 +178,8 @@ typedef struct config_args_s {
 #define SLAP_CONFIG_CLEANUP_MAX	16
 #endif
 	ConfigDriver *cleanups[SLAP_CONFIG_CLEANUP_MAX];
-	ConfigType table;	/* which config table did we come from */
+	ConfigType table;	/* what kind of config table did we come from */
+	ConfigTable *ca_desc;
 	int num_cleanups;
 } ConfigArgs;
 
@@ -198,31 +199,31 @@ typedef struct config_args_s {
 #define value_ndn values.v_dn.vdn_ndn
 #define value_ad values.v_ad
 
-int config_fp_parse_line(ConfigArgs *c);
+LDAP_SLAPD_F (int) config_fp_parse_line(ConfigArgs *c);
 
-int config_register_schema(ConfigTable *ct, ConfigOCs *co);
-int config_del_vals(ConfigTable *cf, ConfigArgs *c);
-int config_get_vals(ConfigTable *ct, ConfigArgs *c);
-int config_add_vals(ConfigTable *ct, ConfigArgs *c);
+LDAP_SLAPD_F (int) config_register_schema(ConfigTable *ct, ConfigOCs *co);
+LDAP_SLAPD_F (int) config_del_vals(ConfigTable *cf, ConfigArgs *c);
+LDAP_SLAPD_F (int) config_get_vals(ConfigTable *ct, ConfigArgs *c);
+LDAP_SLAPD_F (int) config_add_vals(ConfigTable *ct, ConfigArgs *c);
 
-int config_push_cleanup(ConfigArgs *c, ConfigDriver *cleanup);
-int config_run_cleanup(ConfigArgs *c);
+LDAP_SLAPD_F (int) config_push_cleanup(ConfigArgs *c, ConfigDriver *cleanup);
+LDAP_SLAPD_F (int) config_run_cleanup(ConfigArgs *c);
 
-void init_config_argv( ConfigArgs *c );
-int init_config_attrs(ConfigTable *ct);
-int init_config_ocs( ConfigOCs *ocs );
-void config_parse_ldif( ConfigArgs *c );
-int config_parse_vals(ConfigTable *ct, ConfigArgs *c, int valx);
-int config_parse_add(ConfigTable *ct, ConfigArgs *c, int valx);
-int read_config_file(const char *fname, int depth, ConfigArgs *cf,
+LDAP_SLAPD_F (void) init_config_argv( ConfigArgs *c );
+LDAP_SLAPD_F (int) init_config_attrs(ConfigTable *ct);
+LDAP_SLAPD_F (int) init_config_ocs( ConfigOCs *ocs );
+LDAP_SLAPD_F (void) config_parse_ldif( ConfigArgs *c );
+LDAP_SLAPD_F (int) config_parse_vals(ConfigTable *ct, ConfigArgs *c, int valx);
+LDAP_SLAPD_F (int) config_parse_add(ConfigTable *ct, ConfigArgs *c, int valx);
+LDAP_SLAPD_F (int) read_config_file(const char *fname, int depth, ConfigArgs *cf,
 	ConfigTable *cft );
 
-ConfigTable * config_find_keyword(ConfigTable *ct, ConfigArgs *c);
-Entry * config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
+LDAP_SLAPD_F (ConfigTable *) config_find_keyword(ConfigTable *ct, ConfigArgs *c);
+LDAP_SLAPD_F (Entry *) config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	ConfigArgs *c, struct berval *rdn, ConfigOCs *main, ConfigOCs *extra );
 
-Listener *config_check_my_url(const char *url, LDAPURLDesc *lud);
-int config_shadow( ConfigArgs *c, slap_mask_t flag );
+LDAP_SLAPD_F (Listener *) config_check_my_url(const char *url, LDAPURLDesc *lud);
+LDAP_SLAPD_F (int) config_shadow( ConfigArgs *c, slap_mask_t flag );
 #define	config_slurp_shadow(c)	config_shadow((c), SLAP_DBFLAG_SLURP_SHADOW)
 #define	config_sync_shadow(c)	config_shadow((c), SLAP_DBFLAG_SYNC_SHADOW)
 
@@ -233,7 +234,7 @@ int config_shadow( ConfigArgs *c, slap_mask_t flag );
 #define	SLAP_X_ORDERED_FMT	"{%d}"
 
 LDAP_SLAPD_V (slap_verbmasks *) slap_ldap_response_code;
-extern int slap_ldap_response_code_register( struct berval *bv, int err );
+LDAP_SLAPD_F (int) slap_ldap_response_code_register( struct berval *bv, int err );
 
 LDAP_SLAPD_V (ConfigTable) olcDatabaseDummy[];
 

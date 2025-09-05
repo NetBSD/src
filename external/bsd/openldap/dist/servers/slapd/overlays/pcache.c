@@ -1,9 +1,9 @@
-/*	$NetBSD: pcache.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: pcache.c,v 1.4 2025/09/05 21:16:32 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003-2009 Symas Corporation.
  * All rights reserved.
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcache.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: pcache.c,v 1.4 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -754,7 +754,7 @@ url2query(
 		}
 	}
 
-	if ( got != GOT_ALL ) {
+	if ( (got & GOT_ALL) != GOT_ALL) {
 		rc = 1;
 		goto error;
 	}
@@ -807,7 +807,11 @@ url2query(
 			goto error;
 		}
 
-		cq = add_query( op, qm, &query, qt, PC_POSITIVE, 0 );
+		if (BER_BVISNULL( &uuid )) {
+		  cq = add_query( op, qm, &query, qt, PC_NEGATIVE, 0 );
+		} else {
+		  cq = add_query( op, qm, &query, qt, PC_POSITIVE, 0 );
+		}
 		if ( cq != NULL ) {
 			cq->expiry_time = expiry_time;
 			cq->refresh_time = refresh_time;
@@ -1585,6 +1589,8 @@ add_query(
 
 	case PC_NEGATIVE:
 		ttl = templ->negttl;
+		if ( templ->ttr )
+			ttr = now + templ->ttr;
 		break;
 
 	case PC_SIZELIMIT:
@@ -3519,7 +3525,7 @@ consistency_check(
 	Operation *op;
 
 	CachedQuery *query, *qprev;
-	CachedQuery *expires = NULL;
+	CachedQuery *expires;
 	int return_val, pause = PCACHE_CC_PAUSED;
 	QueryTemplate *templ;
 
@@ -3542,6 +3548,7 @@ consistency_check(
 		time_t ttl;
 		if ( !templ->query_last ) continue;
 		pause = 0;
+		expires = NULL;
 		op->o_time = slap_get_time();
 		if ( !templ->ttr ) {
 			ttl = templ->ttl;
@@ -3845,8 +3852,8 @@ pc_cfadd( Operation *op, SlapReply *rs, Entry *p, ConfigArgs *ca )
 
 	/* We can only create this entry if the database is table-driven
 	 */
-	if ( cm->db.bd_info->bi_cf_ocs )
-		config_build_entry( op, rs, pe, ca, &bv, cm->db.bd_info->bi_cf_ocs,
+	if ( cm->db.be_cf_ocs )
+		config_build_entry( op, rs, pe, ca, &bv, cm->db.be_cf_ocs,
 			&pcocs[1] );
 
 	return 0;
@@ -4545,7 +4552,6 @@ pcache_db_init(
 	SLAP_DBFLAGS(&cm->db) |= SLAP_DBFLAG_NO_SCHEMA_CHECK;
 	cm->db.be_private = NULL;
 	cm->db.bd_self = &cm->db;
-	cm->db.be_pending_csn_list = NULL;
 	cm->qm = qm;
 	cm->numattrsets = 0;
 	cm->num_entries_limit = 5;
@@ -5665,15 +5671,16 @@ pcache_monitor_db_close( BackendDB *be )
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	cache_manager *cm = on->on_bi.bi_private;
 
-	if ( cm->monitor_cb != NULL ) {
+	if ( !BER_BVISNULL( &cm->monitor_ndn )) {
 		BackendInfo		*mi = backend_info( "monitor" );
 		monitor_extra_t		*mbe;
 
 		if ( mi && mi->bi_extra ) {
+			struct berval dummy = BER_BVNULL;
 			mbe = mi->bi_extra;
 			mbe->unregister_entry_callback( &cm->monitor_ndn,
 				(monitor_callback_t *)cm->monitor_cb,
-				NULL, 0, NULL );
+				&dummy, 0, &dummy );
 		}
 	}
 

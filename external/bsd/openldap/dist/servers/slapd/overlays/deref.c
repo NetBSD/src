@@ -1,10 +1,10 @@
-/*	$NetBSD: deref.c,v 1.7 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: deref.c,v 1.8 2025/09/05 21:16:32 christos Exp $	*/
 
 /* deref.c - dereference overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deref.c,v 1.7 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: deref.c,v 1.8 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -444,7 +444,7 @@ deref_response( Operation *op, SlapReply *rs )
 						rc = ber_printf( ber, "{O[W]}",
 							&dr->dr_spec.ds_attributes[ j ]->ad_cname,
 							dr->dr_vals[ i ].dv_attrVals[ j ] );
-						op->o_tmpfree( dr->dr_vals[ i ].dv_attrVals[ j ],
+						ber_bvarray_free_x( dr->dr_vals[ i ].dv_attrVals[ j ],
 							op->o_tmpmemctx );
 					}
 				}

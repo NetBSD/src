@@ -1,9 +1,9 @@
-/*	$NetBSD: connection.c,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: connection.c,v 1.3 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: connection.c,v 1.2 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: connection.c,v 1.3 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 
@@ -520,17 +520,41 @@ connections_walk(
 int
 lload_connection_close( LloadConnection *c, void *arg )
 {
-    int gentle = *(int *)arg;
+    int unlock, gentle = *(int *)arg;
     LloadOperation *op;
 
     Debug( LDAP_DEBUG_CONNS, "lload_connection_close: "
             "marking connection connid=%lu closing\n",
             c->c_connid );
 
-    /* We were approached from the connection list */
+    /* We were approached from the connection list or cn=monitor */
     assert( IS_ALIVE( c, c_refcnt ) );
 
+    /* Need to acquire this first, even if we won't need it */
+    unlock = 1;
+    checked_lock( &c->c_io_mutex );
     CONNECTION_LOCK(c);
+
+    /* Only if it's a usable client */
+    if ( ( c->c_state == LLOAD_C_READY || c->c_state == LLOAD_C_BINDING ) &&
+            c->c_destroy == client_destroy ) {
+        if ( c->c_pendingber != NULL ||
+                (c->c_pendingber = ber_alloc()) != NULL ) {
+            ber_printf( c->c_pendingber, "t{tit{essts}}", LDAP_TAG_MESSAGE,
+                    LDAP_TAG_MSGID, LDAP_RES_UNSOLICITED,
+                    LDAP_RES_EXTENDED, LDAP_UNAVAILABLE, "",
+                    "connection closing",
+                    LDAP_TAG_EXOP_RES_OID, LDAP_NOTICE_OF_DISCONNECTION );
+            unlock = 0;
+            checked_unlock( &c->c_io_mutex );
+            CONNECTION_UNLOCK(c);
+            connection_write_cb( -1, 0, c );
+            CONNECTION_LOCK(c);
+        }
+    }
+    if ( unlock )
+        checked_unlock( &c->c_io_mutex );
+
     if ( !gentle || !c->c_ops ) {
         CONNECTION_DESTROY(c);
         return LDAP_SUCCESS;
@@ -550,7 +574,7 @@ lload_connection_close( LloadConnection *c, void *arg )
         }
 
         CONNECTION_UNLOCK(c);
-        operation_unlink( op );
+        OPERATION_UNLINK(op);
         CONNECTION_LOCK(c);
     } while ( c->c_ops );
 

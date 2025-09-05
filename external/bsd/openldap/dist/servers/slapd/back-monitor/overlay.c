@@ -1,9 +1,9 @@
-/*	$NetBSD: overlay.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: overlay.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* overlay.c - deals with overlay subsystem */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: overlay.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: overlay.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -42,7 +42,7 @@ monitor_subsys_overlay_init(
 )
 {
 	monitor_info_t		*mi;
-	Entry			*e_overlay, **ep;
+	Entry			*e_overlay;
 	int			i;
 	monitor_entry_t		*mp;
 	slap_overinst		*on;
@@ -67,10 +67,6 @@ monitor_subsys_overlay_init(
 			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
-
-	mp = ( monitor_entry_t * )e_overlay->e_private;
-	mp->mp_children = NULL;
-	ep = &mp->mp_children;
 
 	for ( on = overlay_next( NULL ), i = 0; on; on = overlay_next( on ), i++ ) {
 		char 		buf[ BACKMONITOR_BUFSIZE ];
@@ -126,16 +122,13 @@ monitor_subsys_overlay_init(
 		mp->mp_flags = ms->mss_flags
 			| MONITOR_F_SUB;
 
-		if ( monitor_cache_add( mi, e ) ) {
+		if ( monitor_cache_add( mi, e, e_overlay ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"monitor_subsys_overlay_init: "
 				"unable to add entry \"cn=Overlay %d,%s\"\n",
 				i, ms->mss_ndn.bv_val );
 			return( -1 );
 		}
-
-		*ep = e;
-		ep = &mp->mp_next;
 	}
 	
 	monitor_cache_release( mi, e_overlay );

@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi.h,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: slapi.h,v 1.4 2025/09/05 21:16:33 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *

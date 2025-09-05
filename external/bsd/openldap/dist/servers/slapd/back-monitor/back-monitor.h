@@ -1,10 +1,10 @@
-/*	$NetBSD: back-monitor.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: back-monitor.h,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* back-monitor.h - ldap monitor back-end header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -58,6 +58,7 @@ typedef struct monitor_entry_t {
 	ldap_pvt_thread_mutex_t	mp_mutex;	/* entry mutex */
 	Entry			*mp_next;	/* pointer to next sibling */
 	Entry			*mp_children;	/* pointer to first child */
+	Entry			*mp_last;	/* pointer to last child */
 	struct monitor_subsys_t	*mp_info;	/* subsystem info */
 #define mp_type		mp_info->mss_type
 	unsigned long		mp_flags;	/* flags */
@@ -83,9 +84,13 @@ typedef struct monitor_info_t {
 
 	/*
 	 * Internal data
+	 *
+	 * Lock order:
+	 * - cache first, then entry
+	 * - DIT in preorder DFS
 	 */
 	Avlnode			*mi_cache;
-	ldap_pvt_thread_mutex_t	mi_cache_mutex;
+	ldap_pvt_thread_mutex_t	mi_cache_lock;
 
 	/*
 	 * Config parameters
@@ -134,6 +139,9 @@ typedef struct monitor_info_t {
 	AttributeDescription	*mi_ad_monitorUpdateRef;
 	AttributeDescription	*mi_ad_monitorRuntimeConfig;
 	AttributeDescription	*mi_ad_monitorSuperiorDN;
+	AttributeDescription	*mi_ad_monitorConnectionOpsAsync;
+	AttributeDescription	*mi_ad_monitorLogLevel;
+	AttributeDescription	*mi_ad_monitorDebugLevel;
 
 	/*
 	 * Generic description attribute

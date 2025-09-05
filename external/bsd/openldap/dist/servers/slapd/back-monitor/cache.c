@@ -1,10 +1,10 @@
-/*	$NetBSD: cache.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* cache.c - routines to maintain an in-core cache of entries */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cache.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: cache.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -84,22 +84,74 @@ monitor_cache_dup(
 int
 monitor_cache_add(
 	monitor_info_t	*mi,
-	Entry		*e )
+	Entry		*e,
+	Entry		*parent )
 {
-	monitor_cache_t	*mc;
-	int		rc;
+	monitor_cache_t tmp_mc, *mc, *pmc = NULL;
+	Entry **ep = NULL, *prev = NULL;
+	int		rc = -1;
 
 	assert( mi != NULL );
 	assert( e != NULL );
 
+	dnParent( &e->e_nname, &tmp_mc.mc_ndn );
+
 	mc = ( monitor_cache_t * )ch_malloc( sizeof( monitor_cache_t ) );
 	mc->mc_ndn = e->e_nname;
 	mc->mc_e = e;
-	ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
-	rc = ldap_avl_insert( &mi->mi_cache, ( caddr_t )mc,
-			monitor_cache_cmp, monitor_cache_dup );
-	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
 
+	if ( parent ) {
+		/* Shortcut, but follow lock order as a fallback */
+		if ( ldap_pvt_thread_mutex_trylock( &mi->mi_cache_lock ) ) {
+			monitor_cache_release( mi, parent );
+			ldap_pvt_thread_mutex_lock( &mi->mi_cache_lock );
+			monitor_cache_lock( parent );
+		}
+	} else {
+		ldap_pvt_thread_mutex_lock( &mi->mi_cache_lock );
+	}
+
+	/* Allow database root be added */
+	if ( parent == NULL && mi->mi_cache != NULL ) {
+		pmc = ldap_avl_find( mi->mi_cache, &tmp_mc, monitor_cache_cmp );
+		if ( pmc == NULL ) {
+			goto done;
+		}
+		parent = pmc->mc_e;
+		monitor_cache_lock( parent );
+	}
+
+	rc = ldap_avl_insert( &mi->mi_cache, mc,
+			monitor_cache_cmp, monitor_cache_dup );
+	if ( rc != LDAP_SUCCESS ) {
+		goto done;
+	}
+
+	if ( parent != NULL ) {
+		monitor_entry_t *mp = parent->e_private;
+
+		if ( mp->mp_children ) {
+			monitor_entry_t *tail;
+
+			monitor_cache_lock( mp->mp_last );
+			tail = mp->mp_last->e_private;
+			tail->mp_next = e;
+			monitor_cache_release( mi, mp->mp_last );
+			mp->mp_last = e;
+		} else {
+			mp->mp_children = mp->mp_last = e;
+		}
+	}
+
+done:
+	if ( pmc != NULL ) {
+		monitor_cache_release( mi, parent );
+	}
+	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_lock );
+
+	if ( rc != LDAP_SUCCESS ) {
+		ch_free( mc );
+	}
 	return rc;
 }
 
@@ -156,22 +208,18 @@ monitor_cache_get(
 	*ep = NULL;
 
 	tmp_mc.mc_ndn = *ndn;
-retry:;
-	ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
+
+	ldap_pvt_thread_mutex_lock( &mi->mi_cache_lock );
 	mc = ( monitor_cache_t * )ldap_avl_find( mi->mi_cache,
 			( caddr_t )&tmp_mc, monitor_cache_cmp );
 
 	if ( mc != NULL ) {
 		/* entry is returned with mutex locked */
-		if ( monitor_cache_trylock( mc->mc_e ) ) {
-			ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
-			ldap_pvt_thread_yield();
-			goto retry;
-		}
+		monitor_cache_lock( mc->mc_e );
 		*ep = mc->mc_e;
 	}
 
-	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
+	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_lock );
 
 	return ( *ep == NULL ? -1 : 0 );
 }
@@ -198,7 +246,7 @@ monitor_cache_remove(
 	dnParent( ndn, &pndn );
 
 retry:;
-	ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
+	ldap_pvt_thread_mutex_lock( &mi->mi_cache_lock );
 
 	tmp_mc.mc_ndn = *ndn;
 	mc = ( monitor_cache_t * )ldap_avl_find( mi->mi_cache,
@@ -207,34 +255,37 @@ retry:;
 	if ( mc != NULL ) {
 		monitor_cache_t *pmc;
 
-		if ( monitor_cache_trylock( mc->mc_e ) ) {
-			ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
-			goto retry;
-		}
-
 		tmp_mc.mc_ndn = pndn;
 		pmc = ( monitor_cache_t * )ldap_avl_find( mi->mi_cache,
 			( caddr_t )&tmp_mc, monitor_cache_cmp );
 		if ( pmc != NULL ) {
 			monitor_entry_t	*mp = (monitor_entry_t *)mc->mc_e->e_private,
 					*pmp = (monitor_entry_t *)pmc->mc_e->e_private;
-			Entry		**entryp;
+			Entry		**entryp, *prev = NULL;
 
-			if ( monitor_cache_trylock( pmc->mc_e ) ) {
-				monitor_cache_release( mi, mc->mc_e );
-				ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
-				goto retry;
-			}
+			monitor_cache_lock( pmc->mc_e );
 
 			for ( entryp = &pmp->mp_children; *entryp != NULL;  ) {
 				monitor_entry_t	*next = (monitor_entry_t *)(*entryp)->e_private;
+
+				monitor_cache_lock( *entryp );
 				if ( next == mp ) {
+					if ( mc->mc_e == pmp->mp_last ) {
+						pmp->mp_last = prev;
+					}
 					*entryp = next->mp_next;
 					entryp = NULL;
 					break;
 				}
 
+				if ( prev != NULL ) {
+					monitor_cache_release( mi, prev );
+				}
+				prev = *entryp;
 				entryp = &next->mp_next;
+			}
+			if ( prev ) {
+				monitor_cache_release( mi, prev );
 			}
 
 			if ( entryp != NULL ) {
@@ -268,6 +319,7 @@ retry:;
 				ldap_pvt_thread_mutex_destroy( &mp->mp_mutex );
 				mp->mp_next = NULL;
 				mp->mp_children = NULL;
+				mp->mp_last = NULL;
 			}
 
 		}
@@ -277,7 +329,7 @@ retry:;
 		}
 	}
 
-	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
+	ldap_pvt_thread_mutex_unlock( &mi->mi_cache_lock );
 
 	return ( *ep == NULL ? -1 : 0 );
 }
@@ -367,18 +419,6 @@ monitor_cache_release(
 	mp = ( monitor_entry_t * )e->e_private;
 
 	if ( mp->mp_flags & MONITOR_F_VOLATILE ) {
-		monitor_cache_t	*mc, tmp_mc;
-
-		/* volatile entries do not return to cache */
-		ldap_pvt_thread_mutex_lock( &mi->mi_cache_mutex );
-		tmp_mc.mc_ndn = e->e_nname;
-		mc = ldap_avl_delete( &mi->mi_cache,
-				( caddr_t )&tmp_mc, monitor_cache_cmp );
-		ldap_pvt_thread_mutex_unlock( &mi->mi_cache_mutex );
-		if ( mc != NULL ) {
-			ch_free( mc );
-		}
-		
 		ldap_pvt_thread_mutex_unlock( &mp->mp_mutex );
 		ldap_pvt_thread_mutex_destroy( &mp->mp_mutex );
 		ch_free( mp );

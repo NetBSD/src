@@ -1,9 +1,9 @@
-/*	$NetBSD: add.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
+/*	$NetBSD: add.c,v 1.4 2025/09/05 21:16:31 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: add.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.4 2025/09/05 21:16:31 christos Exp $");
 
 #include "portable.h"
 
@@ -40,23 +40,50 @@ __RCSID("$NetBSD: add.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 #include <lutil.h>
 #endif /* BACKSQL_SYNCPROV */
 
+const char * processable_op_attrs[] = {
+		"pwdAccountLockedTime",
+		"pwdChangedTime",
+		"pwdFailureTime",
+		"pwdGraceUseTime",
+		"pwdHistory",
+		"pwdPolicySubentry",
+		"pwdReset",
+		"entryUUID"
+};
+
+#define processable_op_attrs_length (sizeof (processable_op_attrs) / sizeof (const char *))
+
+static int indexOf(const char *array[], int array_size, const char * value) {
+	for (int i = 0; i < array_size; ++i) {
+		if(strcmp(array[i], value) == 0) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static int is_processable_opattr(const char * attr) {
+	return indexOf(processable_op_attrs, processable_op_attrs_length, attr) >= 0;
+}
+
+#define backsql_opattr_skip(ad) \
+	(is_at_operational( (ad)->ad_type ) && (ad) != slap_schema.si_ad_ref )
+
 /*
  * Skip:
  * - null values (e.g. delete modification)
  * - single occurrence of objectClass, because it is already used
  *   to determine how to build the SQL entry
- * - operational attributes
+ * - operational attributes (except those in processable_op_attrs)
  * - empty attributes
  */
-#define backsql_opattr_skip(ad) \
-	(is_at_operational( (ad)->ad_type ) && (ad) != slap_schema.si_ad_ref )
 #define	backsql_attr_skip(ad, vals) \
 	( \
-		( (ad) == slap_schema.si_ad_objectClass \
+		( ( (ad) == slap_schema.si_ad_objectClass \
 				&& (vals) && BER_BVISNULL( &((vals)[ 1 ]) ) ) \
 		|| backsql_opattr_skip( (ad) ) \
 		|| ( (vals) && BER_BVISNULL( &((vals)[ 0 ]) ) ) \
-	)
+	) && !is_processable_opattr( ad->ad_cname.bv_val ) )
 
 int
 backsql_modify_delete_all_values(
@@ -307,6 +334,10 @@ backsql_modify_internal(
 			ad->ad_cname.bv_val, sm_ops[ sm_op ], BACKSQL_OC_NAME( oc ) );
 
 		if ( backsql_attr_skip( ad, sm_values ) ) {
+			Debug( LDAP_DEBUG_TRACE, "   backsql_modify_internal(): "
+				"skipping attribute \"%s\"\n",
+				ad->ad_cname.bv_val, 0, 0 );
+
 			continue;
 		}
 

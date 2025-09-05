@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.3 2025/09/05 21:16:32 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.3 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -52,8 +52,7 @@ static int base_candidate(
 	ID *ids )
 {
 	Debug(LDAP_DEBUG_ARGS,
-		  LDAP_XSTRING(base_candidate)
-		  ": base: \"%s\" (0x%08lx)\n",
+		  "base_candidate: base: \"%s\" (0x%08lx)\n",
 		  e->e_nname.bv_val, (long) e->e_id );
 
 	ids[0] = 1;
@@ -143,8 +142,7 @@ static int search_candidates(
 	AttributeAssertion aa_subentry = ATTRIBUTEASSERTION_INIT;
 
 	Debug(LDAP_DEBUG_TRACE,
-		  LDAP_XSTRING(wt_search_candidates)
-		  ": base=\"%s\" (0x%08lx) scope=%d\n",
+		  "wt_search_candidates: base=\"%s\" (0x%08lx) scope=%d\n",
 		  e->e_nname.bv_val, (long) e->e_id, op->oq_search.rs_scope );
 
 	xf.f_or = op->oq_search.rs_filter;
@@ -200,9 +198,9 @@ static int search_candidates(
     if( op->ors_deref & LDAP_DEREF_SEARCHING ) {
 		rc = search_aliases( op, rs, e, wc->session, ids, scopes, stack );
 		if ( WT_IDL_IS_ZERO( ids ) && rc == LDAP_SUCCESS )
-			rc = wt_dn2idl( op, wc->session, &e->e_nname, e, ids, stack );
+			rc = wt_dn2idl( op, wc, &e->e_nname, e, ids, stack );
 	} else {
-		rc = wt_dn2idl(op, wc->session, &e->e_nname, e, ids, stack );
+		rc = wt_dn2idl(op, wc, &e->e_nname, e, ids, stack );
 	}
 
 	if ( rc == LDAP_SUCCESS ) {
@@ -216,14 +214,11 @@ static int search_candidates(
 
     if( rc ) {
 		Debug(LDAP_DEBUG_TRACE,
-			  LDAP_XSTRING(wt_search_candidates)
-			  ": failed (rc=%d)\n",
-			  rc );
+			  "wt_search_candidates: failed (rc=%d)\n", rc );
 
 	} else {
 		Debug(LDAP_DEBUG_TRACE,
-			  LDAP_XSTRING(wt_search_candidates)
-			  ": id=%ld first=%ld last=%ld\n",
+			  "wt_search_candidates: id=%ld first=%ld last=%ld\n",
 			  (long) ids[0],
 			  (long) WT_IDL_FIRST(ids),
 			  (long) WT_IDL_LAST(ids));
@@ -252,7 +247,7 @@ parse_paged_cookie( Operation *op, SlapReply *rs )
 			goto done;
 		}
 
-		AC_MEMCPY( &reqcookie, ps->ps_cookieval.bv_val, sizeof( reqcookie ));
+		memcpy( &reqcookie, ps->ps_cookieval.bv_val, sizeof( reqcookie ));
 
 		if ( reqcookie > ps->ps_cookie ) {
 			/* bad cookie */
@@ -290,8 +285,7 @@ send_paged_response(
 	struct berval cookie;
 
 	Debug(LDAP_DEBUG_ARGS,
-		  LDAP_XSTRING(send_paged_response)
-		  ": lastid=0x%08lx nentries=%d\n",
+		  "send_paged_response: lastid=0x%08lx nentries=%d\n",
 		  lastid ? *lastid : 0, rs->sr_nentries );
 
 	ctrls[1] = NULL;
@@ -338,34 +332,28 @@ wt_search( Operation *op, SlapReply *rs )
     struct wt_info *wi = (struct wt_info *) op->o_bd->be_private;
 	ID id, cursor;
 	ID lastid = NOID;
-	AttributeName *attrs;
-	OpExtra *oex;
 	int manageDSAit;
 	wt_ctx *wc;
-	int rc;
+	int rc = LDAP_OTHER;
 	Entry *e = NULL;
+	Entry *ae = NULL;
 	Entry *base = NULL;
 	slap_mask_t mask;
 	time_t stoptime;
 
 	ID candidates[WT_IDL_UM_SIZE];
-	ID iscopes[WT_IDL_DB_SIZE];
 	ID scopes[WT_IDL_DB_SIZE];
 	int tentries = 0;
 	unsigned nentries = 0;
 
-	Debug( LDAP_DEBUG_ARGS, "==> " LDAP_XSTRING(wt_search) ": %s\n",
-		   op->o_req_dn.bv_val );
-    attrs = op->oq_search.rs_attrs;
+	Debug( LDAP_DEBUG_ARGS, "==> wt_search: %s\n", op->o_req_dn.bv_val );
 
 	manageDSAit = get_manageDSAit( op );
 
 	wc = wt_ctx_get(op, wi);
 	if( !wc ){
         Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(wt_search)
-			   ": wt_ctx_get failed: %d\n",
-			   rc );
+			   "wt_search: wt_ctx_get failed: %d\n", rc );
 		send_ldap_error( op, rs, LDAP_OTHER, "internal error" );
         return rc;
 	}
@@ -376,20 +364,12 @@ wt_search( Operation *op, SlapReply *rs )
 	case 0:
 		break;
 	case WT_NOTFOUND:
-		Debug( LDAP_DEBUG_ARGS,
-			   "<== " LDAP_XSTRING(wt_search)
-			   ": no such object %s\n",
-			   op->o_req_dn.bv_val );
-		rs->sr_err = LDAP_REFERRAL;
-		rs->sr_flags = REP_MATCHED_MUSTBEFREED | REP_REF_MUSTBEFREED;
-		send_ldap_result( op, rs );
-		goto done;
+		rc = wt_dn2aentry(op->o_bd, wc, &op->o_req_ndn, &ae);
+		break;
 	default:
 		/* TODO: error handling */
 		Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(wt_delete)
-			   ": error at wt_dn2entry() rc=%d\n",
-			   rc );
+			   "<== wt_search: error at wt_dn2entry() rc=%d\n", rc );
 		send_ldap_error( op, rs, LDAP_OTHER, "internal error" );
 		goto done;
 	}
@@ -399,7 +379,37 @@ wt_search( Operation *op, SlapReply *rs )
 	}
 
 	if ( e == NULL ) {
-		// TODO
+		if ( ae ) {
+			struct berval matched_dn = BER_BVNULL;
+			/* found ancestor entry */
+			if ( access_allowed( op, ae,
+								 slap_schema.si_ad_entry,
+								 NULL, ACL_DISCLOSE, NULL ) ) {
+				BerVarray erefs = NULL;
+				ber_dupbv( &matched_dn, &ae->e_name );
+				erefs = is_entry_referral( ae )
+					? get_entry_referrals( op, ae )
+					: NULL;
+				rs->sr_err = LDAP_REFERRAL;
+				rs->sr_matched = matched_dn.bv_val;
+				if ( erefs ) {
+					rs->sr_ref = referral_rewrite( erefs, &matched_dn,
+												   &op->o_req_dn, op->oq_search.rs_scope );
+					ber_bvarray_free( erefs );
+				}
+				Debug( LDAP_DEBUG_ARGS,
+					   "wt_search: ancestor is referral\n");
+				rs->sr_flags = REP_MATCHED_MUSTBEFREED | REP_REF_MUSTBEFREED;
+				send_ldap_result( op, rs );
+				goto done;
+			}
+		}
+		Debug( LDAP_DEBUG_ARGS,
+			   "wt_search: no such object %s\n",
+			   op->o_req_dn.bv_val);
+		rs->sr_err = LDAP_NO_SUCH_OBJECT;
+		send_ldap_result( op, rs );
+		goto done;
 	}
 
 	/* NOTE: __NEW__ "search" access is required
@@ -418,8 +428,27 @@ wt_search( Operation *op, SlapReply *rs )
 	}
 
 	if ( !manageDSAit && is_entry_referral( e ) ) {
-		/* entry is a referral */
-		/* TODO: */
+		struct berval matched_dn = BER_BVNULL;
+		BerVarray erefs = NULL;
+		ber_dupbv( &matched_dn, &e->e_name );
+		erefs = get_entry_referrals( op, e );
+		rs->sr_err = LDAP_REFERRAL;
+		if ( erefs ) {
+			rs->sr_ref = referral_rewrite( erefs, &matched_dn,
+										   &op->o_req_dn, op->oq_search.rs_scope );
+			ber_bvarray_free( erefs );
+			if ( !rs->sr_ref ) {
+				rs->sr_text = "bad_referral object";
+			}
+		}
+		Debug( LDAP_DEBUG_ARGS, "wt_search: entry is referral\n");
+		rs->sr_matched = matched_dn.bv_val;
+		send_ldap_result( op, rs );
+		ber_bvarray_free( rs->sr_ref );
+		rs->sr_ref = NULL;
+		ber_memfree( matched_dn.bv_val );
+		rs->sr_matched = NULL;
+		goto done;
 	}
 
 	if ( get_assert( op ) &&
@@ -450,8 +479,7 @@ wt_search( Operation *op, SlapReply *rs )
 		case WT_NOTFOUND:
 			break;
 		default:
-			Debug( LDAP_DEBUG_ANY,
-				   LDAP_XSTRING(wt_search) ": error search_candidates\n" );
+			Debug( LDAP_DEBUG_ANY, "wt_search: error search_candidates\n" );
 			send_ldap_error( op, rs, LDAP_OTHER, "internal error" );
 			goto done;
 		}
@@ -462,8 +490,7 @@ wt_search( Operation *op, SlapReply *rs )
 	cursor = 0;
 
 	if ( candidates[0] == 0 ) {
-		Debug( LDAP_DEBUG_TRACE,
-			   LDAP_XSTRING(wt_search) ": no candidates\n" );
+		Debug( LDAP_DEBUG_TRACE, "wt_search: no candidates\n" );
 		goto nochange;
 	}
 
@@ -502,9 +529,7 @@ wt_search( Operation *op, SlapReply *rs )
 		}
 		id = wt_idl_first( candidates, &cursor );
 		if ( id == NOID ) {
-			Debug( LDAP_DEBUG_TRACE,
-				   LDAP_XSTRING(wt_search)
-				   ": no paged results candidates\n" );
+			Debug( LDAP_DEBUG_TRACE, "wt_search: no paged results candidates\n" );
 			send_paged_response( op, rs, &lastid, 0 );
 
 			rs->sr_err = LDAP_OTHER;
@@ -554,7 +579,7 @@ loop_begin:
 
 	fetch_entry_retry:
 
-		rc = wt_id2entry(op->o_bd, wc->session, id, &e);
+		rc = wt_id2entry(op->o_bd, wc, id, &e);
 		/* TODO: error handling */
 		if ( e == NULL ) {
 			/* TODO: */
@@ -586,10 +611,13 @@ loop_begin:
 			if ( id == base->e_id ) scopeok = 1;
 			break;
 		case LDAP_SCOPE_ONELEVEL:
-			scopeok = 1;
+			scopeok = dnIsSuffixScope(&e->e_nname, &base->e_nname, LDAP_SCOPE_ONELEVEL);
 			break;
+		case LDAP_SCOPE_CHILDREN:
+			if ( id == base->e_id ) break;
+			/* Fall-thru */
 		case LDAP_SCOPE_SUBTREE:
-			scopeok = 1;
+ 			scopeok = dnIsSuffix(&e->e_nname, &base->e_nname);
 			break;
 		}
 
@@ -610,9 +638,7 @@ loop_begin:
 		/* Not in scope, ignore it */
 		if ( !scopeok )
 		{
-			Debug( LDAP_DEBUG_TRACE,
-				   LDAP_XSTRING(wt_search)
-				   ": %ld scope not okay\n",
+			Debug( LDAP_DEBUG_TRACE, "wt_search: %ld scope not okay\n",
 				   (long) id );
 			goto loop_continue;
 		}
@@ -625,7 +651,16 @@ loop_begin:
 		if ( !manageDSAit && op->oq_search.rs_scope != LDAP_SCOPE_BASE
 			 && is_entry_referral( e ) )
 		{
-			/* TODO: referral */
+			BerVarray erefs = get_entry_referrals( op, e );
+			rs->sr_ref = referral_rewrite( erefs, &e->e_name, NULL,
+										   op->oq_search.rs_scope == LDAP_SCOPE_ONELEVEL
+										   ? LDAP_SCOPE_BASE : LDAP_SCOPE_SUBTREE );
+			rs->sr_entry = e;
+			send_search_reference( op, rs );
+			rs->sr_entry = NULL;
+			ber_bvarray_free( rs->sr_ref );
+			ber_bvarray_free( erefs );
+			goto loop_continue;
 		}
 
 		if ( !manageDSAit && is_entry_glue( e )) {
@@ -637,7 +672,13 @@ loop_begin:
 		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
 			/* check size limit */
 			if ( get_pagedresults(op) > SLAP_CONTROL_IGNORED ) {
-				/* TODO: */
+				if ( rs->sr_nentries >= ((PagedResultsState *)op->o_pagedresults_state)->ps_size ) {
+					wt_entry_return( e );
+					e = NULL;
+					send_paged_response( op, rs, &lastid, tentries );
+					goto done;
+				}
+				lastid = id;
 			}
 
 			if (e) {
@@ -653,19 +694,28 @@ loop_begin:
 				rs->sr_attrs = NULL;
 				rs->sr_entry = NULL;
 				e = NULL;
-			}
-			switch ( rs->sr_err ) {
-			case LDAP_SUCCESS:  /* entry sent ok */
-				break;
-			default:
-				/* TODO: error handling */
-				break;
+
+				switch ( rs->sr_err ) {
+				case LDAP_SUCCESS:  /* entry sent ok */
+					break;
+				default: /* entry not sent */
+					break;
+				case LDAP_BUSY:
+					send_ldap_result( op, rs );
+					goto done;
+				case LDAP_UNAVAILABLE:
+					rs->sr_err = LDAP_OTHER;
+					goto done;
+				case LDAP_SIZELIMIT_EXCEEDED:
+					rs->sr_ref = rs->sr_v2ref;
+					send_ldap_result( op, rs );
+					rs->sr_err = LDAP_SUCCESS;
+					goto done;
+				}
 			}
 		} else {
 			Debug( LDAP_DEBUG_TRACE,
-				   LDAP_XSTRING(wt_search)
-				   ": %ld does not match filter\n",
-				   (long) id );
+				   "wt_search: %ld does not match filter\n", (long) id );
 		}
 
 	loop_continue:
@@ -681,8 +731,7 @@ nochange:
 	rs->sr_err = (rs->sr_v2ref == NULL) ? LDAP_SUCCESS : LDAP_REFERRAL;
 	rs->sr_rspoid = NULL;
 	if ( get_pagedresults(op) > SLAP_CONTROL_IGNORED ) {
-		/* not implement yet */
-		/* send_paged_response( op, rs, NULL, 0 ); */
+		send_paged_response( op, rs, NULL, 0 );
 	} else {
 		send_ldap_result( op, rs );
 	}
@@ -697,6 +746,10 @@ done:
 
 	if( e ) {
 		wt_entry_return( e );
+	}
+
+	if( ae ) {
+		wt_entry_return( ae );
 	}
 
     return rs->sr_err;

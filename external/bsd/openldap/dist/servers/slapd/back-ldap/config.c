@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2025/09/05 21:16:27 christos Exp $	*/
 
 /* config.c - ldap backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.4 2025/09/05 21:16:27 christos Exp $");
 
 #include "portable.h"
 
@@ -2056,9 +2056,11 @@ done_url:;
 		}
 		break;
 
-	case LDAP_BACK_CFG_KEEPALIVE:
-		slap_keepalive_parse( ber_bvstrdup(c->argv[1]),
-				 &li->li_tls.sb_keepalive, 0, 0, 0);
+	case LDAP_BACK_CFG_KEEPALIVE: {
+		struct berval bv;
+		ber_str2bv( c->argv[1], 0, 1, &bv );
+		slap_keepalive_parse( &bv, &li->li_tls.sb_keepalive, 0, 0, 0 );
+		}
 		break;
 
 	case LDAP_BACK_CFG_TCP_USER_TIMEOUT:

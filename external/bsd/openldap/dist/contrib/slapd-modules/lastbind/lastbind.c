@@ -1,4 +1,4 @@
-/*	$NetBSD: lastbind.c,v 1.2 2021/08/14 16:14:52 christos Exp $	*/
+/*	$NetBSD: lastbind.c,v 1.3 2025/09/05 21:16:16 christos Exp $	*/
 
 /* lastbind.c - Record timestamp of the last successful bind to entries */
 /* $OpenLDAP$ */
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lastbind.c,v 1.2 2021/08/14 16:14:52 christos Exp $");
+__RCSID("$NetBSD: lastbind.c,v 1.3 2025/09/05 21:16:16 christos Exp $");
 
 #include "portable.h"
 
@@ -28,8 +28,9 @@ __RCSID("$NetBSD: lastbind.c,v 1.2 2021/08/14 16:14:52 christos Exp $");
  * last successful bind operation in a directory entry.
  *
  * Optimization: to avoid performing a write on each bind,
- * a precision for this timestamp may be configured, causing it to
- * only be updated if it is older than a given number of seconds.
+ * a precision for this timestamp may be configured on the database,
+ * causing it to only be updated if it is older than a given number
+ * of seconds.
  */
 
 #ifdef SLAPD_OVER_LASTBIND
@@ -45,8 +46,6 @@ __RCSID("$NetBSD: lastbind.c,v 1.2 2021/08/14 16:14:52 christos Exp $");
 
 /* Per-instance configuration information */
 typedef struct lastbind_info {
-	/* precision to update timestamp in authTimestamp attribute */
-	int timestamp_precision;
 	int forward_updates;	/* use frontend for authTimestamp updates */
 } lastbind_info;
 
@@ -73,14 +72,6 @@ static struct schema_info {
 
 /* configuration attribute and objectclass */
 static ConfigTable lastbindcfg[] = {
-	{ "lastbind-precision", "seconds", 2, 2, 0,
-	  ARG_INT|ARG_OFFSET,
-	  (void *)offsetof(lastbind_info, timestamp_precision),
-	  "( OLcfgCtAt:5.1 "
-	  "NAME 'olcLastBindPrecision' "
-	  "DESC 'Precision of authTimestamp attribute' "
-	  "EQUALITY integerMatch "
-	  "SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "lastbind_forward_updates", "on|off", 1, 2, 0,
 	  ARG_ON_OFF|ARG_OFFSET,
 	  (void *)offsetof(lastbind_info,forward_updates),
@@ -96,7 +87,7 @@ static ConfigOCs lastbindocs[] = {
 	  "NAME 'olcLastBindConfig' "
 	  "DESC 'Last Bind configuration' "
 	  "SUP olcOverlayConfig "
-	  "MAY ( olcLastBindPrecision $ olcLastBindForwardUpdates) )",
+	  "MAY ( olcLastBindForwardUpdates) )",
 	  Cft_Overlay, lastbindcfg, NULL, NULL },
 	{ NULL, 0, NULL }
 };
@@ -153,7 +144,7 @@ lastbind_bind_response( Operation *op, SlapReply *rs )
 			if (bindtime != (time_t)-1) {
 				/* if the recorded bind time is within our precision, we're done
 				 * it doesn't need to be updated (save a write for nothing) */
-				if ((now - bindtime) < lbi->timestamp_precision) {
+				if ((now - bindtime) < op->o_bd->be_lastbind_precision) {
 					goto done;
 				}
 			}

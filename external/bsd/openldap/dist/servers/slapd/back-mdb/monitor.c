@@ -1,10 +1,10 @@
-/*	$NetBSD: monitor.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* monitor.c - monitor mdb backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: monitor.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -583,10 +583,11 @@ mdb_monitor_db_close( BackendDB *be )
 		monitor_extra_t		*mbe;
 
 		if ( mi && mi->bi_extra ) {
+			struct berval dummy = BER_BVNULL;
 			mbe = mi->bi_extra;
 			mbe->unregister_entry_callback( &mdb->mi_monitor.mdm_ndn,
 				(monitor_callback_t *)mdb->mi_monitor.mdm_cb,
-				NULL, 0, NULL );
+				&dummy, 0, &dummy );
 		}
 
 		memset( &mdb->mi_monitor, 0, sizeof( mdb->mi_monitor ) );

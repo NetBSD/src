@@ -1,10 +1,10 @@
-/*	$NetBSD: remoteauth.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: remoteauth.c,v 1.3 2025/09/05 21:16:32 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* remoteauth.c - Overlay to delegate bind processing to a remote server */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2024 The OpenLDAP Foundation.
  * Portions Copyright 2017-2021 Ondřej Kuzník, Symas Corporation.
  * Portions Copyright 2004-2017 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: remoteauth.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: remoteauth.c,v 1.3 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -209,12 +209,12 @@ remoteauth_cf_gen( ConfigArgs *c )
 						str = ch_malloc( strlen( map->domain ) +
 								strlen( map->realm ) + 2 );
 						sprintf( str, "%s %s", map->domain, map->realm );
-						ber_str2bv( str, strlen( str ), 1, &bv );
-						ch_free( str );
+						ber_str2bv( str, 0, 0, &bv );
 						rc = value_add_one( &c->rvalue_vals, &bv );
-						if ( rc ) return rc;
-						rc = value_add_one( &c->rvalue_nvals, &bv );
-						if ( rc ) return rc;
+						if ( !rc )
+							rc = value_add_one( &c->rvalue_nvals, &bv );
+						ch_free( str );
+						if ( rc ) break;
 					}
 					break;
 				case REMOTE_AUTH_DN_ATTRIBUTE:
@@ -228,13 +228,13 @@ remoteauth_cf_gen( ConfigArgs *c )
 					break;
 				case REMOTE_AUTH_DEFAULT_DOMAIN:
 					if ( ad->default_domain ) {
-						ber_str2bv( ad->default_domain, 0, 1, &bv );
+						ber_str2bv( ad->default_domain, 0, 0, &bv );
 						value_add_one( &c->rvalue_vals, &bv );
 					}
 					break;
 				case REMOTE_AUTH_DEFAULT_REALM:
 					if ( ad->default_realm ) {
-						ber_str2bv( ad->default_realm, 0, 1, &bv );
+						ber_str2bv( ad->default_realm, 0, 0, &bv );
 						value_add_one( &c->rvalue_vals, &bv );
 					}
 					break;
@@ -251,6 +251,7 @@ remoteauth_cf_gen( ConfigArgs *c )
 					}
 
 					value_add_one( &c->rvalue_vals, &bv );
+					ch_free( bv.bv_val );
 					break;
 				case REMOTE_AUTH_TLS_PIN: {
 					ad_pin *pin = ad->pins;
@@ -955,14 +956,19 @@ remoteauth_db_destroy( BackendDB *be, ConfigReply *cr )
 	ad_info *ai = ap->mappings;
 
 	while ( ai ) {
+		ad_info *next = ai->next;
+
 		if ( ai->domain ) ch_free( ai->domain );
 		if ( ai->realm ) ch_free( ai->realm );
-		ai = ai->next;
+
+		ch_free( ai );
+		ai = next;
 	}
 
 	if ( ap->dn ) ch_free( ap->dn );
 	if ( ap->default_domain ) ch_free( ap->default_domain );
 	if ( ap->default_realm ) ch_free( ap->default_realm );
+	if ( ap->domain_attr ) ch_free( ap->domain_attr );
 
 	bindconf_free( &ap->ad_tls );
 

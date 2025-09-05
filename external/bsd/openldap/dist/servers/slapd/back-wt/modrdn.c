@@ -1,4 +1,4 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.1 2025/09/05 21:09:50 christos Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.2 2025/09/05 21:16:32 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: modrdn.c,v 1.1.1.1 2025/09/05 21:09:50 christos Exp $");
+__RCSID("$NetBSD: modrdn.c,v 1.2 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: daemon.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: daemon.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: daemon.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -46,8 +46,8 @@ __RCSID("$NetBSD: daemon.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "ldap_rq.h"
 
-#ifdef HAVE_SYSTEMD_SD_DAEMON_H
-#include <systemd/sd-daemon.h>
+#ifdef HAVE_SYSTEMD
+#include "sd-notify.h"
 #endif
 
 #ifdef HAVE_POLL
@@ -232,11 +232,10 @@ static slap_daemon_st *slap_daemon;
     slap_daemon[t].sd_kq = kqueue(); \
 } while (0)
 
-/* a kqueue fd obtained before a fork can't be used in child process.
- * close it and reacquire it.
+/* a kqueue fd obtained before a fork isn't inherited by child process.
+ * reacquire it.
  */
 # define SLAP_SOCK_INIT2() do { \
-	close(slap_daemon[0].sd_kq); \
 	slap_daemon[0].sd_kq = kqueue(); \
 } while (0)
 
@@ -2115,7 +2114,6 @@ slap_listener(
 	struct berval peerbv = BER_BVC(peername);
 #ifdef LDAP_PF_LOCAL_SENDMSG
 	char peerbuf[8];
-	struct berval peerbv = BER_BVNULL;
 #endif
 	int cflag;
 	int tid;
@@ -2268,9 +2266,9 @@ slap_listener(
 					STRLENOF( "gidNumber=4294967295+uidNumber=4294967295,"
 					"cn=peercred,cn=external,cn=auth" ) + 1 );
 				authid.bv_len = sprintf( authid.bv_val,
-					"gidNumber=%d+uidNumber=%d,"
+					"gidNumber=%u+uidNumber=%u,"
 					"cn=peercred,cn=external,cn=auth",
-					(int) gid, (int) uid );
+					gid, uid );
 				assert( authid.bv_len <=
 					STRLENOF( "gidNumber=4294967295+uidNumber=4294967295,"
 					"cn=peercred,cn=external,cn=auth" ) );
@@ -2416,6 +2414,18 @@ slap_listener_activate(
 			sl->sl_sd, rc );
 	}
 	return rc;
+}
+
+static void *
+slapd_rtask_trampoline(
+	void	*ctx,
+	void	*arg )
+{
+	struct re_s *rtask = arg;
+
+	/* invalidate pool_cookie */
+	rtask->pool_cookie = NULL;
+	return rtask->routine( ctx, arg );
 }
 
 static void *
@@ -2781,7 +2791,7 @@ loop:
 					ldap_pvt_runqueue_resched( &slapd_rq, rtask, 0 );
 					ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 					ldap_pvt_thread_pool_submit2( &connection_pool,
-						rtask->routine, (void *) rtask, &rtask->pool_cookie );
+						slapd_rtask_trampoline, (void *) rtask, &rtask->pool_cookie );
 					ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 				}
 				rtask = ldap_pvt_runqueue_next_sched( &slapd_rq, &cat );

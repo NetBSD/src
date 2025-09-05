@@ -1,9 +1,9 @@
-/*	$NetBSD: bind.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.4 2025/09/05 21:16:28 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.4 2025/09/05 21:16:28 christos Exp $");
 
 #include "portable.h"
 
@@ -94,10 +94,11 @@ meta_back_bind( Operation *op, SlapReply *rs )
 		return rs->sr_err;
 	}
 
+	candidates = meta_back_candidates_get( op );
 	/* we need meta_back_getconn() not send result even on error,
 	 * because we want to intercept the error and make it
 	 * invalidCredentials */
-	mc = meta_back_getconn( op, rs, NULL, LDAP_BACK_BIND_DONTSEND );
+	mc = meta_back_getconn( op, rs, NULL, LDAP_BACK_BIND_DONTSEND, candidates );
 	if ( !mc ) {
 		Debug(LDAP_DEBUG_ANY,
 		      "%s meta_back_bind: no target " "for dn \"%s\" (%d%s%s).\n",
@@ -115,10 +116,9 @@ meta_back_bind( Operation *op, SlapReply *rs )
 			break;
 		}
 		send_ldap_result( op, rs );
+		op->o_tmpfree( candidates, op->o_tmpmemctx );
 		return rs->sr_err;
 	}
-
-	candidates = meta_back_candidates_get( op );
 
 	/*
 	 * Each target is scanned ...
@@ -289,10 +289,12 @@ meta_back_bind( Operation *op, SlapReply *rs )
 			rs->sr_err = slap_map_api2result( rs );
 		}
 		send_ldap_result( op, rs );
+		op->o_tmpfree( candidates, op->o_tmpmemctx );
 		return rs->sr_err;
 
 	}
 
+	op->o_tmpfree( candidates, op->o_tmpmemctx );
 	return LDAP_SUCCESS;
 }
 
@@ -677,15 +679,14 @@ meta_back_dobind(
 	Operation		*op,
 	SlapReply		*rs,
 	metaconn_t		*mc,
-	ldap_back_send_t	sendok )
+	ldap_back_send_t	sendok,
+	SlapReply		*candidates )
 {
 	metainfo_t		*mi = ( metainfo_t * )op->o_bd->be_private;
 
 	int			bound = 0,
 				i,
 				isroot = 0;
-
-	SlapReply		*candidates;
 
 	if ( be_isroot( op ) ) {
 		isroot = 1;
@@ -708,8 +709,6 @@ meta_back_dobind(
 		bound = 1;
 		goto done;
 	}
-
-	candidates = meta_back_candidates_get( op );
 
 	for ( i = 0; i < mi->mi_ntargets; i++ ) {
 		metatarget_t		*mt = mi->mi_targets[ i ];
@@ -766,7 +765,7 @@ retry_binding:;
 			if ( rc == LDAP_UNAVAILABLE ) {
 				/* FIXME: meta_back_retry() already re-calls
 				 * meta_back_single_dobind() */
-				if ( meta_back_retry( op, rs, &mc, i, sendok ) ) {
+				if ( meta_back_retry( op, rs, &mc, i, sendok, candidates ) ) {
 					goto retry_ok;
 				}
 

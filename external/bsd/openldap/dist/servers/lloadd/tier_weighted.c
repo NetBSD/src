@@ -1,4 +1,4 @@
-/*	$NetBSD: tier_weighted.c,v 1.1.1.1 2025/09/05 21:09:46 christos Exp $	*/
+/*	$NetBSD: tier_weighted.c,v 1.2 2025/09/05 21:16:24 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tier_weighted.c,v 1.1.1.1 2025/09/05 21:09:46 christos Exp $");
+__RCSID("$NetBSD: tier_weighted.c,v 1.2 2025/09/05 21:16:24 christos Exp $");
 
 #include "portable.h"
 

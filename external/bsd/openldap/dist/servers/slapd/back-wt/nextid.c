@@ -1,10 +1,10 @@
-/*	$NetBSD: nextid.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
+/*	$NetBSD: nextid.c,v 1.3 2025/09/05 21:16:32 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nextid.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
+__RCSID("$NetBSD: nextid.c,v 1.3 2025/09/05 21:16:32 christos Exp $");
 
 #include "portable.h"
 
@@ -46,8 +46,7 @@ int wt_last_id( BackendDB *be, WT_SESSION *session, ID *out )
     rc = session->open_cursor(session, WT_TABLE_ID2ENTRY, NULL, NULL, &cursor);
     if(rc){
 		Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(wt_last_id)
-			   ": open_cursor failed: %s (%d)\n",
+			   "wt_last_id: open_cursor failed: %s (%d)\n",
 			   wiredtiger_strerror(rc), rc );
 		return rc;
     }
@@ -58,8 +57,7 @@ int wt_last_id( BackendDB *be, WT_SESSION *session, ID *out )
 		rc = cursor->get_key(cursor, &id);
 		if ( rc ) {
 			Debug( LDAP_DEBUG_ANY,
-				   LDAP_XSTRING(wt_last_id)
-				   ": get_key failed: %s (%d)\n",
+				   "wt_last_id: get_key failed: %s (%d)\n",
 				   wiredtiger_strerror(rc), rc );
 			return rc;
 		}
@@ -71,16 +69,14 @@ int wt_last_id( BackendDB *be, WT_SESSION *session, ID *out )
 		break;
 	default:
 		Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(wt_last_id)
-			   ": prev failed: %s (%d)\n",
+			   "wt_last_id: prev failed: %s (%d)\n",
 			   wiredtiger_strerror(rc), rc );
     }
 
     rc = cursor->close(cursor);
     if ( rc ) {
 		Debug( LDAP_DEBUG_ANY,
-			   LDAP_XSTRING(wt_last_id)
-			   ": close failed: %s (%d)\n",
+			   "wt_last_id: close failed: %s (%d)\n",
 			   wiredtiger_strerror(rc), rc );
 		return rc;
     }

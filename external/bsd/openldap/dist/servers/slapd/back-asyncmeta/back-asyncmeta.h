@@ -1,10 +1,10 @@
-/*	$NetBSD: back-asyncmeta.h,v 1.2 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: back-asyncmeta.h,v 1.3 2025/09/05 21:16:26 christos Exp $	*/
 
 /* back-asyncmeta.h - main header file for back-asyncmeta module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2021 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -429,6 +429,7 @@ typedef struct a_metainfo_t {
 	a_metaconn_t          *mi_conns;
 
 	struct berval		mi_suffix;
+	volatile int          mi_disabled;
 } a_metainfo_t;
 
 typedef enum meta_op_type {
@@ -772,6 +773,18 @@ asyncmeta_return_bind_errors(a_metaconn_t *mc,
 			     SlapReply    *bind_result,
 			     void         *ctx,
 			     int          dolock);
+
+int
+asyncmeta_db_has_pending_ops(a_metainfo_t *mi);
+
+int
+asyncmeta_db_has_mscs(a_metainfo_t *mi);
+
+void
+asyncmeta_target_free(a_metatarget_t *mt);
+
+void
+asyncmeta_back_clear_miconns(a_metainfo_t *mi);
 
 /* The the maximum time in seconds after a result has been received on a connection,
  * after which it can be reset if a sender error occurs. Should this be configurable? */

@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAPMODIFY 1 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAPMODIFY 1 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
@@ -22,6 +22,8 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 [\c
 .BI \-f \ file\fR]
 [\c
+.BI \-j \ lineno\fR]
+[\c
 .BI \-S \ file\fR]
 [\c
 .BR \-M [ M ]]
@@ -37,10 +39,6 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 .BI \-y \ passwdfile\fR]
 [\c
 .BI \-H \ ldapuri\fR]
-[\c
-.BI \-h \ ldaphost\fR]
-[\c
-.BI \-p \ ldapport\fR]
 [\c
 .BR \-P \ { 2 \||\| 3 }]
 [\c
@@ -82,6 +80,8 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 [\c
 .BI \-f \ file\fR]
 [\c
+.BI \-j \ lineno\fR]
+[\c
 .BI \-S \ file\fR]
 [\c
 .BR \-M [ M ]]
@@ -97,10 +97,6 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 .BI \-y \ passwdfile\fR]
 [\c
 .BI \-H \ ldapuri\fR]
-[\c
-.BI \-h \ ldaphost\fR]
-[\c
-.BI \-p \ ldapport\fR]
 [\c
 .BR \-P \ { 2 \||\| 3 }]
 [\c
@@ -180,6 +176,11 @@ reporting an error.
 Read the entry modification information from \fIfile\fP instead of from
 standard input.
 .TP
+.BI \-j \ lineno
+Jump to the specified line number in the LDIF file before processing any entries.
+This allows a load that was aborted due to errors in the input LDIF to be resumed
+after the errors are corrected.
+.TP
 .BI \-S \ file
 Add or change records which were skipped due to an error are written to \fIfile\fP 
 and the error message returned by the server is added as a comment. Most useful in 
@@ -213,14 +214,6 @@ Specify URI(s) referring to the ldap server(s); only the protocol/host/port
 fields are allowed; a list of URI, separated by whitespace or commas
 is expected.
 .TP
-.BI \-h \ ldaphost
-Specify an alternate host on which the ldap server is running.
-Deprecated in favor of \fB\-H\fP.
-.TP
-.BI \-p \ ldapport
-Specify an alternate TCP port where the ldap server is listening.
-Deprecated in favor of \fB\-H\fP.
-.TP
 .BR \-P \ { 2 \||\| 3 }
 Specify the LDAP protocol version to use.
 .TP
@@ -243,7 +236,7 @@ General extensions:
   [!]postread[=<attrs>] (a comma-separated attribute list)
   [!]preread[=<attrs>]  (a comma-separated attribute list)
   [!]relax
-  sessiontracking
+  sessiontracking[=<username>]
   abandon,cancel,ignore (SIGINT sends abandon/cancel,
   or ignores response; if critical, doesn't wait for SIGINT.
   not really controls)
@@ -256,13 +249,14 @@ Modify extensions:
 .TP
 .BI \-o \ opt \fR[= optparam \fR]]
 
-Specify general options.
-
-General options:
+Specify any
+.BR ldap.conf (5)
+option or one of the following:
 .nf
   nettimeout=<timeout>  (in seconds, or "none" or "max")
-  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+  ldif_wrap=<width>     (in columns, or "no" for no wrapping)
 .fi
+
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.
@@ -409,4 +403,4 @@ The OpenLDAP Project <http://www.openldap.org/>
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 406 stdin
+.lf 400 stdin

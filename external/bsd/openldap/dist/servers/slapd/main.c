@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2025/09/05 21:16:25 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2025/09/05 21:16:25 christos Exp $");
 
 #include "portable.h"
 
@@ -167,173 +167,6 @@ struct option_helper {
 	{ BER_BVNULL, 0, NULL, NULL }
 };
 
-#if defined(LDAP_DEBUG) && defined(LDAP_SYSLOG)
-#ifdef LOG_LOCAL4
-int
-parse_syslog_user( const char *arg, int *syslogUser )
-{
-	static slap_verbmasks syslogUsers[] = {
-		{ BER_BVC( "LOCAL0" ), LOG_LOCAL0 },
-		{ BER_BVC( "LOCAL1" ), LOG_LOCAL1 },
-		{ BER_BVC( "LOCAL2" ), LOG_LOCAL2 },
-		{ BER_BVC( "LOCAL3" ), LOG_LOCAL3 },
-		{ BER_BVC( "LOCAL4" ), LOG_LOCAL4 },
-		{ BER_BVC( "LOCAL5" ), LOG_LOCAL5 },
-		{ BER_BVC( "LOCAL6" ), LOG_LOCAL6 },
-		{ BER_BVC( "LOCAL7" ), LOG_LOCAL7 },
-#ifdef LOG_USER
-		{ BER_BVC( "USER" ), LOG_USER },
-#endif /* LOG_USER */
-#ifdef LOG_DAEMON
-		{ BER_BVC( "DAEMON" ), LOG_DAEMON },
-#endif /* LOG_DAEMON */
-		{ BER_BVNULL, 0 }
-	};
-	int i = verb_to_mask( arg, syslogUsers );
-
-	if ( BER_BVISNULL( &syslogUsers[ i ].word ) ) {
-		Debug( LDAP_DEBUG_ANY,
-			"unrecognized syslog user \"%s\".\n",
-			arg );
-		return 1;
-	}
-
-	*syslogUser = syslogUsers[ i ].mask;
-
-	return 0;
-}
-#endif /* LOG_LOCAL4 */
-
-int
-parse_syslog_level( const char *arg, int *levelp )
-{
-	static slap_verbmasks	str2syslog_level[] = {
-		{ BER_BVC( "EMERG" ),	LOG_EMERG },
-		{ BER_BVC( "ALERT" ),	LOG_ALERT },
-		{ BER_BVC( "CRIT" ),	LOG_CRIT },
-		{ BER_BVC( "ERR" ),	LOG_ERR },
-		{ BER_BVC( "WARNING" ),	LOG_WARNING },
-		{ BER_BVC( "NOTICE" ),	LOG_NOTICE },
-		{ BER_BVC( "INFO" ),	LOG_INFO },
-		{ BER_BVC( "DEBUG" ),	LOG_DEBUG },
-		{ BER_BVNULL, 0 }
-	};
-	int i = verb_to_mask( arg, str2syslog_level );
-	if ( BER_BVISNULL( &str2syslog_level[ i ].word ) ) {
-		Debug( LDAP_DEBUG_ANY,
-			"unknown syslog level \"%s\".\n",
-			arg );
-		return 1;
-	}
-	
-	*levelp = str2syslog_level[ i ].mask;
-
-	return 0;
-}
-#endif /* LDAP_DEBUG && LDAP_SYSLOG */
-
-static char **debug_unknowns;
-static char **syslog_unknowns;
-
-int
-parse_debug_unknowns( char **unknowns, int *levelp )
-{
-	int i, level, rc = 0;
-
-	for ( i = 0; unknowns[ i ] != NULL; i++ ) {
-		level = 0;
-		if ( str2loglevel( unknowns[ i ], &level )) {
-			fprintf( stderr,
-				"unrecognized log level \"%s\"\n", unknowns[ i ] );
-			rc = 1;
-		} else {
-			*levelp |= level;
-		}
-	}
-	return rc;
-}
-
-int
-parse_debug_level( const char *arg, int *levelp, char ***unknowns )
-{
-	int	level;
-
-	if ( arg && arg[ 0 ] != '-' && !isdigit( (unsigned char) arg[ 0 ] ) )
-	{
-		int	i;
-		char	**levels;
-
-		levels = ldap_str2charray( arg, "," );
-
-		for ( i = 0; levels[ i ] != NULL; i++ ) {
-			level = 0;
-
-			if ( str2loglevel( levels[ i ], &level ) ) {
-				/* remember this for later */
-				ldap_charray_add( unknowns, levels[ i ] );
-				fprintf( stderr,
-					"unrecognized log level \"%s\" (deferred)\n",
-					levels[ i ] );
-			} else {
-				*levelp |= level;
-			}
-		}
-
-		ldap_charray_free( levels );
-
-	} else {
-		int rc;
-
-		if ( arg[0] == '-' ) {
-			rc = lutil_atoix( &level, arg, 0 );
-		} else {
-			unsigned ulevel;
-
-			rc = lutil_atoux( &ulevel, arg, 0 );
-			level = (int)ulevel;
-		}
-
-		if ( rc ) {
-			fprintf( stderr,
-				"unrecognized log level "
-				"\"%s\"\n", arg );
-			return 1;
-		}
-
-		if ( level == 0 ) {
-			*levelp = 0;
-
-		} else {
-			*levelp |= level;
-		}
-	}
-
-	return 0;
-}
-
-void slap_check_unknown_level( char *levelstr, int level )
-{
-	int i;
-
-	if ( debug_unknowns ) {
-		for ( i = 0; debug_unknowns[ i ]; i++ ) {
-			if ( !strcasecmp( debug_unknowns[ i ], levelstr )) {
-				slap_debug |= level;
-				break;
-			}
-		}
-	}
-
-	if ( syslog_unknowns ) {
-		for ( i = 0; syslog_unknowns[ i ]; i++ ) {
-			if ( !strcasecmp( syslog_unknowns[ i ], levelstr )) {
-				ldap_syslog |= level;
-				break;
-			}
-		}
-	}
-}
-
 static void
 usage( char *name )
 {
@@ -382,29 +215,6 @@ usage( char *name )
     );
 }
 
-typedef void (BER_logger)(const char *buf);
-static BER_logger *ber_logger;
-static void debug_print( const char *data )
-{
-	char buf[4136];	/* 4096 + 40 */
-#ifdef HAVE_CLOCK_GETTIME
-	struct timespec tv;
-#define	TS	"%08x"
-#define	Tfrac	tv.tv_nsec
-	clock_gettime( CLOCK_REALTIME, &tv );
-#else
-	struct timeval tv;
-#define	TS	"%05x"
-#define	Tfrac	tv.tv_usec
-	gettimeofday( &tv, NULL );
-#endif
-
-	buf[sizeof(buf)-1] = '\0';
-	snprintf( buf, sizeof(buf)-1, "%lx." TS " %p %s",
-		(long)tv.tv_sec, Tfrac, (void *)ldap_pvt_thread_self(), data );
-	ber_logger( buf );
-}
-
 #ifdef HAVE_NT_SERVICE_MANAGER
 void WINAPI ServiceMain( DWORD argc, LPTSTR *argv )
 #else
@@ -433,7 +243,6 @@ int main( int argc, char **argv )
 
 	char *configfile = NULL;
 	char *configdir = NULL;
-	char *serverName;
 	int serverMode = SLAP_SERVER_MODE;
 
 	struct sync_cookie *scp = NULL;
@@ -454,8 +263,25 @@ int main( int argc, char **argv )
 
 	slap_sl_mem_init();
 
-
 	(void) ldap_pvt_thread_initialize();
+	ldap_pvt_thread_mutex_init( &logfile_mutex );
+
+#ifdef HAVE_TLS
+	rc = ldap_create( &slap_tls_ld );
+	if ( rc ) {
+		MAIN_RETURN( rc );
+	}
+	/* Library defaults to full certificate checking. This is correct when
+	 * a client is verifying a server because all servers should have a
+	 * valid cert. But few clients have valid certs, so we want our default
+	 * to be no checking. The config file can override this as usual.
+	 */
+	rc = LDAP_OPT_X_TLS_NEVER;
+	(void) ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
+#endif
+
+	global_host = ldap_pvt_get_fqdn( NULL );
+	ber_str2bv( global_host, 0, 0, &global_host_bv );
 
 	serverName = lutil_progname( "slapd", argc, argv );
 
@@ -495,9 +321,6 @@ int main( int argc, char **argv )
 
 		newUrls = (char *) lutil_getRegParam(regService, "Urls");
 		if (newUrls) {
-		    if (urls)
-			ch_free(urls);
-
 		    urls = ch_strdup(newUrls);
 		    Debug(LDAP_DEBUG_ANY, "new urls from registry: %s\n",
 				urls );
@@ -546,7 +369,6 @@ int main( int argc, char **argv )
 #endif
 
 		case 'h':	/* listen URLs */
-			if ( urls != NULL ) free( urls );
 			urls = optarg;
 			break;
 
@@ -586,7 +408,7 @@ int main( int argc, char **argv )
 			}
 
 			no_detach = 1;
-			if ( parse_debug_level( optarg, &level, &debug_unknowns ) ) {
+			if ( slap_parse_debug_level( optarg, &level, 0 ) ) {
 				goto destroy;
 			}
 #ifdef LDAP_DEBUG
@@ -645,21 +467,21 @@ int main( int argc, char **argv )
 				break;
 			}
 
-			if ( parse_debug_level( optarg, &ldap_syslog, &syslog_unknowns ) ) {
+			if ( slap_parse_debug_level( optarg, &ldap_syslog, 1 ) ) {
 				goto destroy;
 			}
 			break;
 
 #if defined(LDAP_DEBUG) && defined(LDAP_SYSLOG)
 		case 'S':
-			if ( parse_syslog_level( optarg, &ldap_syslog_level ) ) {
+			if ( slap_parse_syslog_level( optarg, &ldap_syslog_level ) ) {
 				goto destroy;
 			}
 			break;
 
 #ifdef LOG_LOCAL4
 		case 'l':	/* set syslog local user */
-			if ( parse_syslog_user( optarg, &syslogUser ) ) {
+			if ( slap_parse_syslog_user( optarg, &syslogUser ) ) {
 				goto destroy;
 			}
 			break;
@@ -747,11 +569,11 @@ unhandled_option:;
 	if ( optind != argc )
 		goto unhandled_option;
 
-	ber_get_option(NULL, LBER_OPT_LOG_PRINT_FN, &ber_logger);
-	ber_set_option(NULL, LBER_OPT_LOG_PRINT_FN, debug_print);
+	ber_set_option(NULL, LBER_OPT_LOG_PRINT_FN, slap_debug_print);
 	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug);
 	ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug);
 	ldif_debug = slap_debug;
+	slap_debug_orig = slap_debug;
 
 	if ( version ) {
 		fprintf( stderr, "%s\n", Versionstr );
@@ -796,9 +618,6 @@ unhandled_option:;
 
 	Debug( LDAP_DEBUG_ANY, "%s", Versionstr );
 
-	global_host = ldap_pvt_get_fqdn( NULL );
-	ber_str2bv( global_host, 0, 0, &global_host_bv );
-
 	if( check == CHECK_NONE && slapd_daemon_init( urls ) != 0 ) {
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 16 );
@@ -834,21 +653,6 @@ unhandled_option:;
 	extops_init();
 	lutil_passwd_init();
 
-#ifdef HAVE_TLS
-	rc = ldap_create( &slap_tls_ld );
-	if ( rc ) {
-		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
-		goto destroy;
-	}
-	/* Library defaults to full certificate checking. This is correct when
-	 * a client is verifying a server because all servers should have a
-	 * valid cert. But few clients have valid certs, so we want our default
-	 * to be no checking. The config file can override this as usual.
-	 */
-	rc = LDAP_OPT_X_TLS_NEVER;
-	(void) ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
-#endif
-
 	rc = slap_init( serverMode, serverName );
 	if ( rc ) {
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 18 );
@@ -866,22 +670,9 @@ unhandled_option:;
 		goto destroy;
 	}
 
-	if ( debug_unknowns ) {
-		rc = parse_debug_unknowns( debug_unknowns, &slap_debug );
-		ldap_charray_free( debug_unknowns );
-		debug_unknowns = NULL;
-		if ( rc )
-			goto destroy;
-		ber_set_option( NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug );
-		ldap_set_option( NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug );
-	}
-	if ( syslog_unknowns ) {
-		rc = parse_debug_unknowns( syslog_unknowns, &ldap_syslog );
-		ldap_charray_free( syslog_unknowns );
-		syslog_unknowns = NULL;
-		if ( rc )
-			goto destroy;
-	}	
+	rc = slap_parse_debug_unknowns();
+	if ( rc )
+		goto destroy;
 
 	if ( check & CHECK_LOGLEVEL ) {
 		rc = 0;
@@ -933,9 +724,12 @@ unhandled_option:;
 			ldap_pvt_tls_get_option( slap_tls_ld, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
 			load_extop( &slap_EXOP_START_TLS, 0, starttls_extop );
 		} else if ( rc != LDAP_NOT_SUPPORTED ) {
+			char *errmsg = NULL;
+			ldap_get_option( slap_tls_ld, LDAP_OPT_DIAGNOSTIC_MESSAGE, &errmsg );
 			Debug( LDAP_DEBUG_ANY,
-			    "main: TLS init def ctx failed: %d\n",
-			    rc );
+			    "main: TLS init def ctx failed: %d %s\n",
+			    rc, errmsg ? errmsg : "" );
+			ldap_memfree( errmsg );
 			rc = 1;
 			SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 			goto destroy;
@@ -1166,6 +960,7 @@ stop:
 	mal_dumpleaktrace( leakfile );
 #endif
 
+	ldap_pvt_thread_mutex_destroy( &logfile_mutex );
 	MAIN_RETURN(rc);
 }
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_g.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.4 2025/09/05 21:16:22 christos Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2021 The OpenLDAP Foundation.
+ * Copyright 2008-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_g.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: tls_g.c,v 1.4 2025/09/05 21:16:22 christos Exp $");
 
 #include "portable.h"
 
@@ -186,7 +186,7 @@ tlsg_getfile( const char *path, gnutls_datum_t *buf )
  * initialize a new TLS context
  */
 static int
-tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
+tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server, char *errmsg )
 {
 	tlsg_ctx *ctx = lo->ldo_tls_ctx;
 	int rc;
@@ -200,20 +200,26 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
  	}
 
 	if (lo->ldo_tls_cacertdir != NULL) {
-		rc = gnutls_certificate_set_x509_trust_dir(
-			ctx->cred,
-			lt->lt_cacertdir,
-			GNUTLS_X509_FMT_PEM );
-		if ( rc > 0 ) {
-			Debug2( LDAP_DEBUG_TRACE,
-				"TLS: loaded %d CA certificates from directory `%s'.\n",
-				rc, lt->lt_cacertdir );
-		} else {
-			Debug1( LDAP_DEBUG_ANY,
-				"TLS: warning: no certificate found in CA certificate directory `%s'.\n",
-				lt->lt_cacertdir );
-			/* only warn, no return */
+		char **dirs = ldap_str2charray( lt->lt_cacertdir, CERTPATHSEP );
+		int i;
+		for ( i=0; dirs[i]; i++ ) {
+			rc = gnutls_certificate_set_x509_trust_dir(
+				ctx->cred,
+				dirs[i],
+				GNUTLS_X509_FMT_PEM );
+			if ( rc > 0 ) {
+				Debug2( LDAP_DEBUG_TRACE,
+					"TLS: loaded %d CA certificates from directory `%s'.\n",
+					rc, dirs[i] );
+			} else {
+				Debug1( LDAP_DEBUG_ANY,
+					"TLS: warning: no certificate found in CA certificate directory `%s'.\n",
+					dirs[i] );
+				/* only warn, no return */
+				strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
+			}
 		}
+		ldap_charray_free( dirs );
 	}
 
 	if (lo->ldo_tls_cacertfile != NULL) {
@@ -233,6 +239,7 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 				"TLS: warning: no certificate loaded from CA certificate file `%s'.\n",
 				lo->ldo_tls_cacertfile );
 			/* only warn, no return */
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
 		}
 	}
 
@@ -249,6 +256,7 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 				"TLS: could not use CA certificate: %s (%d)\n",
 				gnutls_strerror( rc ),
 				rc );
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
 			return -1;
 		}
 	}
@@ -261,7 +269,10 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		unsigned int max = VERIFY_DEPTH;
 
 		rc = gnutls_x509_privkey_init( &key );
-		if ( rc ) return -1;
+		if ( rc ) {
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
+			return -1;
+		}
 
 		/* OpenSSL builds the cert chain for us, but GnuTLS
 		 * expects it to be present in the certfile. If it's
@@ -290,6 +301,7 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 				"TLS: could not use private key: %s (%d)\n",
 				gnutls_strerror( rc ),
 				rc );
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
 			return rc;
 		}
 
@@ -315,6 +327,7 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 				"TLS: could not use certificate: %s (%d)\n",
 				gnutls_strerror( rc ),
 				rc );
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
 			return rc;
 		}
 
@@ -338,6 +351,7 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 				"TLS: could not use certificate with key: %s (%d)\n",
 				gnutls_strerror( rc ),
 				rc );
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
 			return -1;
 		}
 	} else if (( lo->ldo_tls_certfile || lo->ldo_tls_keyfile )) {
@@ -355,7 +369,10 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 			ctx->cred,
 			lt->lt_crlfile,
 			GNUTLS_X509_FMT_PEM );
-		if ( rc < 0 ) return -1;
+		if ( rc < 0 ) {
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
+			return -1;
+		}
 		rc = 0;
 	}
 
@@ -374,7 +391,10 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 			rc = gnutls_dh_params_import_pkcs3( ctx->dh_params, &buf,
 				GNUTLS_X509_FMT_PEM );
 		LDAP_FREE( buf.data );
-		if ( rc ) return -1;
+		if ( rc ) {
+			strncpy( errmsg, gnutls_strerror( rc ), ERRBUFSIZE );
+			return -1;
+		}
 		gnutls_certificate_set_dh_params( ctx->cred, ctx->dh_params );
 	}
 
@@ -950,12 +970,13 @@ tlsg_session_pinning( LDAP *ld, tls_session *sess, char *hashalg, struct berval 
 	}
 
 	if ( hashalg ) {
-		keyhash.bv_len = gnutls_hash_get_len( alg );
-		keyhash.bv_val = LDAP_MALLOC( keyhash.bv_len );
+		len = gnutls_hash_get_len( alg );
+		keyhash.bv_val = LDAP_MALLOC( len );
 		if ( !keyhash.bv_val || gnutls_fingerprint( alg, &key,
-					keyhash.bv_val, &keyhash.bv_len ) < 0 ) {
+					keyhash.bv_val, &len ) < 0 ) {
 			goto done;
 		}
+		keyhash.bv_len = len;
 	} else {
 		keyhash.bv_val = (char *)key.data;
 		keyhash.bv_len = key.size;
