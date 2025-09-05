@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.54 2022/06/26 11:14:36 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.54.12.1 2025/09/05 09:21:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.54 2022/06/26 11:14:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.54.12.1 2025/09/05 09:21:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.54 2022/06/26 11:14:36 jmcneill Exp $");
 #define	LPITOSOFTC(lpi) \
 	container_of(lpi, struct gicv3_softc, sc_lpi)
 
-#define	IPL_TO_PRIORITY(sc, ipl)	(((0xff - (ipl)) << (sc)->sc_priority_shift) & 0xff)
-#define	IPL_TO_PMR(sc, ipl)		(((0xff - (ipl)) << (sc)->sc_pmr_shift) & 0xff)
+#define	IPL_TO_PRIORITY(sc, ipl)	(((0xffU - (ipl)) << (sc)->sc_priority_shift) & 0xffU)
+#define	IPL_TO_PMR(sc, ipl)		(((0xffU - (ipl)) << (sc)->sc_pmr_shift) & 0xffU)
 #define	IPL_TO_HWPL(ipl)		((ipl) >= IPL_VM ? (ipl) : IPL_NONE)
 
 #define	GIC_SUPPORTS_1OFN(sc)		(((sc)->sc_gicd_typer & GICD_TYPER_No1N) == 0)
@@ -189,9 +189,9 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		for (n = 0; n < sc->sc_bsh_r_count; n++) {
 			icfg = gicr_read_4(sc, n, GICR_ICFGRn(is->is_irq / 16));
 			if (is->is_type == IST_LEVEL)
-				icfg &= ~(0x2 << icfg_shift);
+				icfg &= ~(0x2U << icfg_shift);
 			if (is->is_type == IST_EDGE)
-				icfg |= (0x2 << icfg_shift);
+				icfg |= (0x2U << icfg_shift);
 			gicr_write_4(sc, n, GICR_ICFGRn(is->is_irq / 16), icfg);
 
 			ipriority = gicr_read_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4));
@@ -214,9 +214,9 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		/* Update interrupt configuration */
 		icfg = gicd_read_4(sc, GICD_ICFGRn(is->is_irq / 16));
 		if (is->is_type == IST_LEVEL)
-			icfg &= ~(0x2 << icfg_shift);
+			icfg &= ~(0x2U << icfg_shift);
 		if (is->is_type == IST_EDGE)
-			icfg |= (0x2 << icfg_shift);
+			icfg |= (0x2U << icfg_shift);
 		gicd_write_4(sc, GICD_ICFGRn(is->is_irq / 16), icfg);
 
 		/* Update interrupt priority */
@@ -323,7 +323,7 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 	for (n = 0, icfg = 0; n < 16; n++) {
 		struct intrsource * const is = sc->sc_pic.pic_sources[16 + n];
 		if (is != NULL && is->is_type == IST_EDGE)
-			icfg |= (0x2 << (n * 2));
+			icfg |= (0x2U << (n * 2));
 	}
 	gicr_write_4(sc, ci->ci_gic_redist, GICR_ICFGRn(1), icfg);
 
