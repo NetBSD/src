@@ -1,0 +1,325 @@
+# $OpenLDAP$
+# Copyright 2021-2024 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+H1: Load Balancing with lloadd
+
+As covered in the {{SECT:Replication}} chapter, replication is a fundamental
+requirement for delivering a resilient enterprise deployment.  As such
+there's a need for an LDAPv3 capable load balancer to spread the load between the
+various directory instances.
+
+{{lloadd}}(8) provides the capability to distribute LDAP v3 requests between a
+set of running {{slapd}} instances.  It can run as a standalone daemon
+{{lloadd}}, or as an embedded module running inside of {{slapd}}.
+
+H2: Overview
+
+{{lloadd}}(8) was designed to handle LDAP loads.
+It is protocol-aware and can balance LDAP loads on a per-operation basis rather
+than on a per-connection basis.
+
+{{lloadd}}(8) distributes the load across a set of slapd instances. The client
+connects to the load balancer instance which forwards the request to one
+of the servers and returns the response back to the client.
+
+H2: When to use the OpenLDAP load balancer
+
+In general, the OpenLDAP load balancer spreads the load across configured backend servers.  It does not perform
+so-called intelligent routing. It does not understand semantics behind the operations being performed by the clients.
+
+More considerations:
+
+ - Servers are indistinguishable with respect to data contents.  The exact same copy of data resides on every server.
+ - The sequence of operations isn't important.  For example, read after update isn't required by the client.
+ - If your client can handle both connection pooling and load distribution then it's preferable to lloadd.
+ - Clients with different requirements (e.g. a coherent session vs. simple but high traffic clients) are directed to separate lloadd configurations.
+
+H2: Directing operations to backends
+
+
+H3: Default behaviour
+
+In the simplest configuration several backends would be configured within a single roundrobin tier:
+
+>       feature proxyauthz
+>
+>       bindconf bindmethod=simple
+>                binddn="cn=Manager,dc=example,dc=com"
+>                credentials=secret
+>
+>       tier roundrobin
+>       backend-server uri=ldap://server1.example.com
+>                      numconns=5 bindconns=5
+>                      max-pending-ops=10 conn-max-pending=3
+>                      retry=5000
+>       backend-server uri=ldap://server2.example.com
+>                      numconns=5 bindconns=5
+>                      max-pending-ops=10 conn-max-pending=3
+>                      retry=5000
+
+After startup {{lloadd}} will open 10 connections to each
+{{B:ldap://server1.example.com}} and {{B:ldap://server2.example.com}},
+5 for regular requests, where it will bind as {{B:cn=Manager,dc=example,dc=com}},
+and 5 dedicated to serving client Bind requests. If connection set up fails, it
+will wait 5000ms (5 seconds) before making another attempt to that server.
+
+When a new Bind request comes from a client, it will be allocated to one of the
+available {{bind connections}}, each of which can only carry one request at a
+time. For other requests that need to be passed on to the backends, backends are
+considered in order:
+* if the number of pending/in-flight for that backend is at or above 10, it is
+skipped
+* the first appropriate upstream connection is chosen:
+** an idle {{bind connection}} for Bind requests
+** a {{regular connection}} with less than 3 pending operations for other
+types of requests
+* if no such connection is available, the next backend in order is checked
+* if we go through the whole list without choosing an upstream connection,
+we return a failure to the client, either an {{B:LDAP_UNAVAILABLE}} if no
+connections of the appropriate type have been established at all or
+{{B:LDAP_BUSY}} otherwise
+
+When a connection is chosen, the operation is forwarded and response(s)
+returned to the client. Should that connection go away before the final
+response is received, the client is notified with a {{B:LDAP_OTHER}} failure
+code.
+
+So long as {{feature proxyauthz}} is configured, every operation forwarded over
+a {{regular connection}} has the {{B:PROXYAUTHZ}} control ({{REF:RFC4370}})
+prepended indicating the client's bound identity, unless that identity matches
+the {{binddn}} configured in {{bindconf}}.
+
+If another tier is configured:
+
+>       tier roundrobin
+>       backend-server uri=ldap://fallback.example.com
+>                      numconns=5 bindconns=5
+>                      max-pending-ops=10 conn-max-pending=3
+>                      retry=5000
+
+Backends in this tier will only be considered when {{lloadd}} would have
+returned {{B:LDAP_UNAVAILABLE}} in the above case.
+
+
+H3: Alternate selection strategies
+
+For various reasons, the {{roundrobin}} tier is appropriate in the majority of
+use cases as it is both very scalable in terms of its implementation and how
+its self-limiting interacts with backends when multiple {{lloadd}} instances
+are being used at the same time.
+
+Two alternative selection strategies have been implemented:
+
+- {{tier weighted}} applies predefined weights to how often a backend is
+  considered first
+- {{tier bestof}} measures the time to first response from each backend, when a
+  new operation needs to be forwarded, two backends are selected at random and
+  the backend with better response time is considered first. If connections on
+  neither backend can be used, selection falls back to the regular strategy
+  used by the roundrobin backend
+
+The {{weighted}} tier might be appropriate when servers have differing load
+capacity. Due to its reinforced self-limiting feedback, the {{bestof}} tier
+might be appropriate in large scale environments where each backend's
+capacity/latency fluctuates widely and rapidly.
+
+
+H3: Coherence
+
+H4: Write coherence
+
+In default configurations, every operation submitted by the client is either
+processed internally (e.g. StartTLS, Abandon, Unbind, ...) or is forwarded to a
+connection of lloadd's choosing, independent of any other other operation
+submitted by the same client.
+
+There are certain traffic patterns where such such freedom is undesirable and
+some kind of coherency is required. This applies to write traffic, controls
+like Paged Results or many extended operations.
+
+Client's operations can be pinned to the same backend as the last write
+operation:
+
+>       write_coherence 5
+
+In this case, client's requests will be passed over to the same backend (not
+necessarily over the same upstream connection) from the moment a write request
+is passed on till at least 5 seconds have elapsed since last write operation
+has finished.
+
+>       write_coherence -1
+
+Here, there is no timeout and the moment a write request is passed on to a
+backend, the client's operations will forever be passed on to this backend.
+
+In both cases above, this limitation is lifted the moment a Bind request is
+received from the client connection.
+
+H4: Extended operations/controls
+
+Many controls and Extended operations establish shared state on the session.
+While {{lloadd}} implements some of these (StartTLS being one example), it
+supports the administrator in defining how to deal with those it does not
+implement special handling for.
+
+>       restrict_exop 1.1 reject
+>       # TXN Exop
+>       restrict_exop 1.3.6.1.1.21.1 connection
+>       # Password Modify Exop
+>       restrict_exop 1.3.6.1.4.1.4203.1.11.1 write
+>
+>       # Paged Results Control
+>       restrict_control 1.2.840.113556.1.4.319 connection
+>       # Syncrepl
+>       restrict_control 1.3.6.1.4.1.4203.1.9.1 reject
+
+The above configuration uses the special invalid OID of {{1.1}} to instruct
+{{lloadd}} to reject any Extended operation it does not recognize, except for
+Password Modify operation which is treated according to {{write_coherence}}
+above and the LDAP transactions, where it forwards all subsequent requests over
+to the same upstream connection. Similarly, once a Paged results control is
+seen on an operation, subsequent request will stick to the same upstream
+connection while LDAP Syncrepl requests will be rejected outright.
+
+With both {{restrict_exop}} and {{restrict_control}}, any such limitation is
+lifted when a new Bind request comes in as any client state is assumed to be
+reset.
+
+When configuring these to anything else than {{reject}}, keep in mind that many
+extensions have not been designed or implemented with a multiplexing proxy like
+{{lloadd}} in mind and might open considerable operational and/or security
+concerns when allowed.
+
+
+H2: Runtime configurations
+
+It deploys in one of two ways:
+
+^ Standalone daemon: {{ lloadd }}
++ Loaded into the slapd daemon as a module: {{ lloadd.la }}
+
+It is recommended to run with the balancer module embedded in slapd because dynamic configuration (cn=config) and the monitor backend are then available.
+
+{{B: Sample load balancer scenario:}}
+
+!import "load-balancer-scenario.png"; align="center"; title="Load Balancer Scenario"
+FT[align="Center"] Figure: Load balancer sample scenario
+
+^ The LDAP client submits an LDAP operation to
+the load balancer daemon.
+
++ The load balancer forwards the request to one of the backend instances in its pool of servers.
+
++ The backend slapd server processes the request and returns the response to
+the load balancer instance.
+
++ The load balancer returns the response to the client.  The client's unaware that it's connecting to a load balancer instead of slapd.
+
+H2: Build Notes
+
+To build the load balancer from source, follow the instructions in the
+{{SECT: A Quick-Start Guide}} substituting the following commands:
+
+^ To configure as standalone daemon:
+
+..{{EX:./configure --enable-balancer=yes}}
+
++ To configure as embedded module to slapd:
+
+..{{EX:./configure --enable-modules --enable-balancer=mod}}
+
+H2: Sample Runtime
+
+^ To run embedded as {{ lloadd }} module:
+
+..{{EX: slapd [-h URLs]  [-f lloadd-config-file] [-u user] [-g group]}}
+
+ - the startup is the same as starting the {{ slapd }} daemon.
+ - URLs is for slapd management. The load balancer's listener URLs set in the configuration file or node. (more later)
+
++ To run as standalone daemon:
+
+..{{EX: lloadd [-h URLs]  [-f lloadd-config-file] [-u user] [-g group]}}
+
+ - Other than a different daemon name, running standalone has the same options as starting {{ slapd }}.
+ - -h URLs specify the lloadd's interface directly, there is no management interface.
+
+For a complete list of options, checkout the man page {{ lloadd.8 }}
+
+H2: Configuring load balancer
+
+H3: Common configuration options
+
+Many of the same configuration options as slapd. For complete list, check
+the {{lloadd}}(5) man page.
+
+.{{S: }}
+{{B:Edit the slapd.conf or cn=config configuration file}}.
+
+To configure your working {{lloadd}}(8) you need to make the following changes to your configuration file:
+  ^ include {{ core.schema }} (embedded only)
+  + {{ TLSShareSlapdCTX { on | off } }}
+  + Other common TLS slapd options
+  + Setup argsfile/pidfile
+  + Setup moduleload path (embedded mode only)
+  + {{ moduleload      lloadd.la }}
+  + loglevel, threads, ACL's
+  + {{ backend lload }} begin lloadd specific backend configurations
+  + {{ listen ldap://:PORT }} Specify listen port for load balancer
+  + {{ feature proxyauthz }} Use the proxy authZ control to forward client's identity
+  + {{ io-threads INT }} specify the number of threads to use for the connection manager.  The default is 1 and this is typically adequate for up to 16 CPU cores
+
+H3: Sample backend config
+
+Sample setup config for load balancer running in front of four slapd instances.
+
+>backend lload
+>
+># The Load Balancer manages its own sockets, so they have to be separate
+># from the ones slapd manages (as specified with the -h "URLS" option at
+># startup).
+>listen ldap://:1389
+>
+># Enable authorization tracking
+>feature proxyauthz
+>
+># Specify the number of threads to use for the connection manager.  The default is 1 and this is typically adequate for up to 16 CPU cores.
+># The value should be set to a power of 2:
+>io-threads  2
+>
+># If TLS is configured above, use the same context for the Load Balancer
+># If using cn=config, this can be set to false and different settings
+># can be used for the Load Balancer
+>TLSShareSlapdCTX true
+>
+># Authentication and other options (timeouts) shared between backends.
+>bindconf bindmethod=simple
+>         binddn=dc=example,dc=com credentials=secret
+>         network-timeout=5
+>         tls_cacert="/usr/local/etc/openldap/ca.crt"
+>         tls_cert="/usr/local/etc/openldap/host.crt"
+>         tls_key="/usr/local/etc/openldap/host.pem"
+>
+>
+># List the backends we should relay operations to, they all have to be
+># practically indistinguishable. Only TLS settings can be specified on
+># a per-backend basis.
+>
+>tier roundrobin
+>backend-server uri=ldap://ldaphost01 starttls=critical retry=5000
+>               max-pending-ops=50 conn-max-pending=10
+>               numconns=10 bindconns=5
+>backend-server uri=ldap://ldaphost02 starttls=critical retry=5000
+>               max-pending-ops=50 conn-max-pending=10
+>               numconns=10 bindconns=5
+>backend-server uri=ldap://ldaphost03 starttls=critical retry=5000
+>               max-pending-ops=50 conn-max-pending=10
+>               numconns=10 bindconns=5
+>backend-server uri=ldap://ldaphost04 starttls=critical retry=5000
+>               max-pending-ops=50 conn-max-pending=10
+>               numconns=10 bindconns=5
+>
+>#######################################################################
+># Monitor database
+>#######################################################################
+>database        monitor

@@ -1,0 +1,240 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2024 The OpenLDAP Foundation.
+## Copyright 2022 Symas Corp.
+##
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This work was developed in 2022 by Nadezhda Ivanova for Symas Corp.
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+echo ""
+
+rm -rf $TESTDIR
+
+mkdir -p $TESTDIR $DBDIR1
+
+echo "Starting slapd on TCP/IP port $PORT1..."
+. $CONFFILTER $BACKEND < data/slapd.conf > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+    echo PID $PID
+    read foo
+fi
+KILLPIDS="$PID"
+
+sleep 1
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Using ldapadd to populate the database..."
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
+	data/test001-add.ldif > $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+cat /dev/null > $SEARCHOUT
+
+echo "Searching base=\"$BASEDN\"..."
+echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+	echo "Search failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+echo "Filtering original ldif used to create database..."
+$LDIFFILTER < data/test001-add.ldif > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "comparison failed - database population didn't succeed"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+#
+# Do some modifications
+#
+
+echo "Modifying database \"$BASEDN\" with TRUE..."
+$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -H $URI1 -w $PASSWD \
+	-M >> $TESTOUT 2>&1 << EOMODS
+dn: cn=user01,ou=people,$BASEDN
+changetype: modify
+replace: IsBusy
+IsBusy: TRUE
+EOMODS
+
+RC=$?
+if test $RC != 0 ; then
+	echo "Modify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Modifying database \"$BASEDN\" with false..."
+$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -H $URI1 -w $PASSWD \
+	-M >> $TESTOUT 2>&1 << EOMODS
+dn: cn=user06,ou=people,$BASEDN
+changetype: modify
+replace: IsBusy
+IsBusy: false
+EOMODS
+
+RC=$?
+if test $RC != 0 ; then
+	echo "Modify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Modifying database \"$BASEDN\"with TRUA..."
+$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -H $URI1 -w $PASSWD \
+	-M >> $TESTOUT 2>&1 << EOMODS
+dn: cn=user02,ou=people,$BASEDN
+changetype: modify
+replace: IsBusy
+IsBusy: TRUA
+
+EOMODS
+
+RC=$?
+if test $RC != 21 ; then
+	echo "Modify with an incorrect value failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+cat /dev/null > $SEARCHOUT
+
+echo "	base=\"$BASEDN\"..."
+echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" -M "(IsBusy=false)" '*' ref \
+			>> $SEARCHOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "Search failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+echo "Filtering partial ldif used to create database..."
+$LDIFFILTER < data/test001-search_1.ldif > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "comparison failed - search for (IsBusy=false) didn't succeed"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+cat /dev/null > $SEARCHOUT
+
+echo "	base=\"$BASEDN\"..."
+echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" -M "(IsBusy=TRUE)" '*' ref \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "Search failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+echo "Filtering partial ldif used to create database..."
+$LDIFFILTER < data/test001-search_2.ldif > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "comparison failed - search for (IsBusy=TRUE) didn't succeed"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo "Modifying cn=config, setting olcReadOnly to True"
+$LDAPMODIFY -v -D "cn=manager,cn=config" -H $URI1 -w $PASSWD \
+	-M >> $TESTOUT 2>&1 << EOMODS
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+replace: olcReadOnly
+olcReadOnly: True
+EOMODS
+
+RC=$?
+if test $RC != 0 ; then
+	echo "Modify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Modifying database \"$BASEDN\" to verify olcReadOnly value"
+$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -H $URI1 -w $PASSWD \
+	-M >> $TESTOUT 2>&1 << EOMODS
+dn: cn=user06,ou=people,$BASEDN
+changetype: modify
+replace: IsBusy
+IsBusy: false
+EOMODS
+
+RC=$?
+if test $RC != 53 ; then
+	echo "Modify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

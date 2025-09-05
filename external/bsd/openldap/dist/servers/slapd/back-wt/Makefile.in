@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,18 +14,18 @@
 ## <http://www.OpenLDAP.org/license.html>.
 
 SRCS = init.c tools.c config.c \
-       add.c bind.c compare.c delete.c modify.c search.c \
-       operational.c \
+       add.c bind.c compare.c delete.c modify.c modrdn.c search.c \
+       extended.c operational.c \
        attr.c index.c key.c filterindex.c \
        dn2entry.c dn2id.c id2entry.c idl.c \
-       nextid.c ctx.c
+       nextid.c ctx.c cache.c
 
 OBJS = init.lo tools.lo config.lo \
-       add.lo bind.lo compare.lo delete.lo modify.lo search.lo \
-       operational.lo \
+       add.lo bind.lo compare.lo delete.lo modify.lo modrdn.lo search.lo \
+       extended.lo operational.lo \
        attr.lo index.lo key.lo filterindex.lo \
        dn2entry.lo dn2id.lo id2entry.lo idl.lo \
-       nextid.lo ctx.lo
+       nextid.lo ctx.lo cache.lo
 
 LDAP_INCDIR= ../../../include
 LDAP_LIBDIR= ../../../libraries

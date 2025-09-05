@@ -1,8 +1,8 @@
-# Makefile.in for Load Balancer
+# Makefile.in for standalone Load Balancer
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,35 +16,22 @@
 PROGRAMS = lloadd
 XPROGRAMS = slloadd
 
-XSRCS	= version.c
-
 NT_SRCS = ../slapd/nt_svc.c
 NT_OBJS = ../slapd/nt_svc.o ../../libraries/liblutil/slapdmsg.res
 
 SRCS	+= main.c value.c \
-		  ../slapd/ch_malloc.c ../slapd/proxyp.c ../slapd/sl_malloc.c ../slapd/user.c
+		  ../slapd/ch_malloc.c ../slapd/logging.c ../slapd/proxyp.c \
+		  ../slapd/sl_malloc.c ../slapd/user.c ../slapd/verbs.c
 
-OBJS	= $(patsubst %.c,%.o,$(SRCS)) $(@PLAT@_OBJS)
+OBJS	+= main.o value.o \
+		  ../slapd/ch_malloc.o ../slapd/logging.o ../slapd/proxyp.o \
+		  ../slapd/sl_malloc.o ../slapd/user.o ../slapd/verbs.o \
+		  $(@PLAT@_OBJS)
 
 BUILD_OPT = "--enable-balancer"
 BUILD_SRV = @BUILD_BALANCER@
 
 all-local-srv: 	$(PROGRAMS) all-cffiles
-
-# $(LTHREAD_LIBS) must be last!
-XLIBS = $(LLOADD_L)
-XXLIBS = $(LLOADD_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS) $(SYSTEMD_LIBS)
-XXXLIBS = $(LTHREAD_LIBS)
-
-NT_DEPENDS = slapd.exp
-NT_OBJECTS = slapd.exp symdummy.o $(LLOADD_OBJS) version.o
-
-UNIX_DEPENDS = version.o $(LLOADD_L)
-UNIX_OBJECTS = $(OBJS) version.o
-
-LLOADD_DEPENDS = $(@PLAT@_DEPENDS)
-LLOADD_OBJECTS = $(@PLAT@_OBJECTS)
-
 
 lloadd:	$(LLOADD_DEPENDS) version.o
 	$(LTLINK) -o $@ $(OBJS) version.o $(LIBS)

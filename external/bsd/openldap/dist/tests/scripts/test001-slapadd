@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ if test $BACKEND = ldif ; then
 else
 
 kill -HUP $KILLPIDS
-
+wait
 rm -f $DBDIR1/*
 
 BASE2="ou=test,dc=example,dc=com"

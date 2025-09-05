@@ -1,0 +1,205 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo ""
+echo "  Searching a translucent overlay with subordinate backend."
+echo ""
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+PERSONAL="(objectClass=inetOrgPerson)"
+NOWHERE="/dev/null"
+FAILURE="additional info:"
+
+if test $TRANSLUCENT = translucentno ; then 
+	echo "Translucent Proxy overlay not available, test skipped"
+	exit 0
+fi 
+
+if test $AC_ldap = ldapno ; then
+	echo "Translucent Proxy overlay requires back-ldap backend, test skipped"
+	exit 0
+fi
+
+mkdir -p $TESTDIR $DBDIR1A $DBDIR2A $DBDIR2B
+
+ITS=10248
+ITSDIR=$DATADIR/regressions/its$ITS
+LDIFSUBUSER=$ITSDIR/subuser.ldif
+
+# configure backside
+
+$SLAPPASSWD -g -n >$CONFIGPWF
+echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
+
+. $CONFFILTER $BACKEND $MONITORDB < $TRANSLUCENTREMOTECONF > $CONF1
+echo "Running slapadd to build remote slapd database..."
+$SLAPADD -f $CONF1 -l $LDIFTRANSLUCENTCONFIG
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
+
+echo "Starting remote slapd on TCP/IP port $PORT1..."
+$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+    echo PID $PID
+    read foo
+fi
+REMOTEPID="$PID"
+KILLPIDS="$PID"
+
+sleep 1
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for remote slapd to start..."
+	sleep 5
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+# configure frontside
+
+. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd-local.conf > $CONF2
+echo "Starting local slapd on TCP/IP port $PORT2..."
+$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+    echo PID $PID
+    read foo
+fi
+LOCALPID="$PID"
+KILLPIDS="$LOCALPID $REMOTEPID"
+
+sleep 1
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for local slapd to start..."
+	sleep 5
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Populating remote database..."
+
+$LDAPADD -D "$TRANSLUCENTROOT" -H $URI1 \
+	-w $PASSWD < $LDIFTRANSLUCENTDATA > $NOWHERE 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Populating local database..."
+
+$LDAPADD -D "$TRANSLUCENTROOT" -H $URI2 \
+	-w $PASSWD < $LDIFTRANSLUCENTADD > $TESTOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	grep "$FAILURE" $TESTOUT
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Populating local subordinate database..."
+
+$LDAPADD -D "ou=sub,o=translucent" -H $URI2 -w $PASSWD \
+	> $TESTOUT 2>&1 << EOF_ADD1
+dn: ou=sub,o=translucent
+objectClass: top
+objectClass: organizationalUnit
+ou: sub
+
+dn: ou=users,ou=sub,o=translucent
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+EOF_ADD1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	grep "$FAILURE" $TESTOUT
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDAPADD -D "ou=sub,o=translucent" -H $URI2 -w $PASSWD \
+	< $LDIFSUBUSER > $TESTOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	grep "$FAILURE" $TESTOUT
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Search for subordiante entry..."
+
+$LDAPSEARCH -H $URI2 -b "o=translucent" "uid=subuser" > $SEARCHOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $LDIFSUBUSER > $LDIFFLT
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed -- subordinate user not found!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+if test $KILLSERVERS != no ; then
+	kill -HUP $KILLPIDS
+	wait
+fi
+
+exit 0

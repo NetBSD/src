@@ -6,12 +6,18 @@ LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/s
 LDAP_LIB = $(LDAP_BUILD)/libraries/libldap/libldap.la \
 	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
+PLAT = UNIX
+NT_LIB = -L$(LDAP_BUILD)/servers/slapd -lslapd
+NT_LDFLAGS = -no-undefined -avoid-version
+UNIX_LDFLAGS = -version-info $(LTVER)
+
 LIBTOOL = $(LDAP_BUILD)/libtool
 CC = gcc
 OPT = -g -O2
 DEFS = -DSLAPD_OVER_DENYOP=SLAPD_MOD_DYNAMIC
 INCS = $(LDAP_INC)
-LIBS = $(LDAP_LIB)
+LIBS = $($(PLAT)_LIB) $(LDAP_LIB)
+LD_FLAGS = $(LDFLAGS) $($(PLAT)_LDFLAGS) -rpath $(moduledir) -module
 
 PROGRAMS = denyop.la
 LTVER = 0:0:0
@@ -32,8 +38,7 @@ moduledir = $(libexecdir)$(ldap_subdir)
 all: $(PROGRAMS)
 
 denyop.la: denyop.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 clean:
 	rm -rf *.o *.lo *.la .libs

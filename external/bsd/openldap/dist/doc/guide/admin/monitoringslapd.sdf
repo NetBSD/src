@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Monitoring
 
@@ -20,7 +20,7 @@ returns objects in response to search requests in the {{cn=Monitor}}
 subtree.  Each object contains information about a particular aspect
 of the server.  The information is held in a combination of user
 applications and operational attributes.   This information can be
-access with {{ldapsearch(1)}}, with any general-purpose LDAP browser,
+accessed with {{ldapsearch(1)}}, with any general-purpose LDAP browser,
 or with specialized monitoring tools.  The {{SECT:Accessing Monitoring
 Information}} section provides a brief tutorial on how to use
 {{ldapsearch}}(1) to access monitoring information, while the
@@ -210,9 +210,9 @@ trimmed to show only key information.
 
 H3: Backends
 
-The {{EX:cn=Backends,cn=Monitor}} object, itself, provides a list
-of available backends.  The list of available backends all builtin
-backends, as well as backends loaded by modules.  For example:
+The {{EX:cn=Backends,cn=Monitor}} object provides a list of available
+backends.  The list of available backends includes all builtin backends,
+as well as those backends loaded by modules.  For example:
 
 >	dn: cn=Backends,cn=Monitor          
 >	monitoredInfo: config                 

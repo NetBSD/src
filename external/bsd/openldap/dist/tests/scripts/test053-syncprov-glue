@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -74,6 +74,11 @@ olcDatabase: {0}config
 olcRootPW:< file://$CONFIGPWF
 
 EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
 
 echo "Initializing provider2 configurations..."
 $SLAPADD -F $CFPRO2 -n 0 <<EOF
@@ -87,6 +92,11 @@ olcDatabase: {0}config
 olcRootPW:< file://$CONFIGPWF
 
 EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
 
 $SLAPADD -F $CFCONS -n 0 <<EOF
 dn: cn=config
@@ -98,6 +108,11 @@ objectClass: olcDatabaseConfig
 olcDatabase: {0}config
 olcRootPW:< file://$CONFIGPWF
 EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
 
 echo "Starting provider slapd on TCP/IP port $PORT1..."
 cd $PRODDIR

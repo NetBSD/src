@@ -341,14 +341,14 @@ olcVariantEntry: dc=example,dc=com
 
 # share the Headquarters' address as the company address
 dn: olcVariantVariantAttribute=postaladdress,name={0}example,olcOverlay={x}variant,$DATABASE
-objectClass: olcVariantVariantAttribute
+objectClass: olcVariantAttribute
 olcVariantVariantAttribute: postaladdress
 olcVariantAlternativeAttribute: postaladdress
 olcVariantAlternativeEntry: ou=Headquarters,dc=example,dc=com
 
 # populate telephonenumber from CEO's home phone
 dn: name=Take phone from CEO entry,name={0}example,olcOverlay={x}variant,$DATABASE
-objectClass: olcVariantVariantAttribute
+objectClass: olcVariantAttribute
 olcVariantVariantAttribute: telephonenumber
 olcVariantAlternativeAttribute: homephone
 olcVariantAlternativeEntry: cn=John Doe,ou=People,dc=example,dc=com

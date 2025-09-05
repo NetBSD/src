@@ -1,0 +1,5 @@
+dn: mobile=\+1 313 555 4474,dc=example,dc=com
+changetype: add
+objectClass: OpenLDAPperson
+cn: Just a phone
+sn: Mobile

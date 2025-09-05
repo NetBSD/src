@@ -1,0 +1,20 @@
+# making a filter from a DN
+uid=test\20\2c\31\\ -> (&(uid=test ,1\5C)(entryDN:dnOneLevelMatch:=)) [0:ok]
+uid=test,ou=People,dc=example,dc=com -> (&(uid=test)(entryDN:dnOneLevelMatch:=ou=People,dc=example,dc=com)) [0:ok]
+cn=test\00)(uid=test,dc=example,dc=com -> (&(cn=test\00\29\28uid=test)(entryDN:dnOneLevelMatch:=dc=example,dc=com)) [0:ok]
+cn=* -> (&(cn=\2A)(entryDN:dnOneLevelMatch:=)) [0:ok]
+cn=*\\ -> (&(cn=\2A\5C)(entryDN:dnOneLevelMatch:=)) [0:ok]
+cn=*\ -> (null) [-1:error]
+
+# pasting a DN into a filter
+uid=test\20\31\\ -> entryDN=uid=test\5C20\5C31\5C\5C [0:ok]
+cn=test)(uid=test,dc=example,dc=com -> entryDN=cn=test\29\28uid=test,dc=example,dc=com [0:ok]
+cn=* -> entryDN=cn=\2A [0:ok]
+cn=*\\ -> entryDN=cn=\2A\5C\5C [0:ok]
+cn=*\ -> entryDN=cn=\2A\5C [0:ok]
+
+# pasting a filter into a DN
+(uid=test) -> uid=test,dc=example,dc=com [0:ok]
+(cn=something ,\29+\28 \2A=) -> cn=something \2C)\2B( *\3D,dc=example,dc=com [0:ok]
+(description=test\20\31*) -> (null) [-1:error]
+(description=test\20\31) -> description=test 1,dc=example,dc=com [0:ok]

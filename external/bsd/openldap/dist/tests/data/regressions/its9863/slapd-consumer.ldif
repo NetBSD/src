@@ -1,0 +1,154 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcLogLevel: Sync
+olcLogLevel: Stats
+olcTLSCACertificateFile: @TESTDIR@/tls/ca/certs/testsuiteCA.crt
+olcTLSCertificateKeyFile: @TESTDIR@/tls/private/localhost.key
+olcTLSCertificateFile: @TESTDIR@/tls/certs/localhost.crt
+olcTLSVerifyClient: hard
+olcIndexHash64: TRUE
+olcAuthzPolicy: to
+olcAuthzRegexp: {0}"cn=ldap-server,ou=OpenLDAP Test Suite,o=OpenLDAP Foundation,ST=CA,C=US" "cn=ldap-server,dc=example,dc=com"
+olcPidFile: @TESTDIR@/slapd.2.pid
+olcArgsFile: @TESTDIR@/slapd.2.args
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://@TESTWD@/@SCHEMADIR@/core.ldif
+include: file://@TESTWD@/@SCHEMADIR@/cosine.ldif
+include: file://@TESTWD@/@SCHEMADIR@/inetorgperson.ldif
+include: file://@TESTWD@/@SCHEMADIR@/misc.ldif
+include: file://@TESTWD@/@SCHEMADIR@/nis.ldif
+
+#mod#dn: cn=module{0},cn=config
+#mod#objectClass: olcModuleList
+#mod#cn: module{0}
+#mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
+#mod#olcModuleLoad: {0}back_@BACKEND@.la
+
+#mod#dn: cn=module{1},cn=config
+#mod#objectClass: olcModuleList
+#mod#cn: module{1}
+#mod#olcModulePath: @TESTWD@/../servers/slapd/back-ldap/
+#mod#olcModuleLoad: {0}back_ldap.la
+
+dn: cn=module{2},cn=config
+objectClass: olcModuleList
+cn: module{2}
+olcModulePath: @TESTWD@/../servers/slapd/overlays
+olcModuleLoad: {0}syncprov.la
+olcModuleLoad: {1}unique.la
+olcModuleLoad: {2}constraint.la
+
+#mdb#dn: olcBackend={0}mdb,cn=config
+#mdb#objectClass: olcBackendConfig
+#mdb#objectClass: olcMdbBkConfig
+#mdb#olcBackend: {0}mdb
+#mdb#olcBkMdbIdlExp: 18
+
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+olcAccess: {0}to dn.base=""  by * read
+olcAccess: {1}to dn.base="cn=Subschema"  by * read
+
+dn: olcOverlay={0}chain,olcDatabase={-1}frontend,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcChainConfig
+olcOverlay: {0}chain
+olcChainCacheURI: FALSE
+olcChainMaxReferralDepth: 1
+olcChainReturnError: TRUE
+
+dn: olcDatabase={0}ldap,olcOverlay={0}chain,olcDatabase={-1}frontend,cn=config
+objectClass: olcLDAPConfig
+objectClass: olcChainDatabase
+olcDatabase: {0}ldap
+olcDbIDAssertBind: mode=self flags=override,prescriptive,proxy-authz-critical 
+ bindmethod=sasl saslmech=external tls_cert=@TESTDIR@/tls/certs/ldap-server.crt 
+ tls_key=@TESTDIR@/tls/private/ldap-server.key 
+ tls_cacert=@TESTDIR@/tls/ca/certs/testsuiteCA.crt 
+ authzid="dn:cn=manager,dc=example,dc=com"
+olcDbRebindAsUser: TRUE
+olcDbChaseReferrals: TRUE
+olcDbProxyWhoAmI: FALSE
+olcDbProtocolVersion: 3
+olcDbSingleConn: FALSE
+olcDbCancel: abandon
+olcDbUseTemporaryConn: FALSE
+olcDbConnectionPoolMax: 8
+olcDbSessionTrackingRequest: TRUE
+olcDbNoRefs: FALSE
+olcDbNoUndefFilter: FALSE
+olcDbURI: @SURIP2@
+
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcRootPW:< file://@TESTDIR@/configpw
+olcAccess: {0}to *  by * none
+
+dn: olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {1}@BACKEND@
+olcSuffix: dc=example,dc=com
+olcRootDN: cn=manager,dc=example,dc=com
+olcRootPW: secret
+olcLastBindPrecision: 3600
+olcLastBind: TRUE
+#~null~#olcDbDirectory: @TESTDIR@/cons/db
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: cn
+#indexdb#olcDbIndex: entryUUID
+#indexdb#olcDbIndex: entryCSN
+#indexdb#olcDbIndex: mail
+#indexdb#olcDbIndex: uid
+#indexdb#olcDbIndex: uidNumber
+#indexdb#olcDbIndex: gidNumber
+#mdb#olcDbMaxSize: 33554432
+#mdb#olcDbMultival: default 100,10
+olcLimits: {0}dn.exact="cn=replicator,dc=example,dc=com" time.soft=unlimited 
+  time.hard=unlimited size.soft=unlimited size.hard=unlimited
+olcAccess: {0}to attrs=userPassword  by self write  by dn.exact="cn=replicator,dc=example,dc=com" read  by anonymous auth
+olcAccess: {1}to attrs=authzto  by dn.exact="cn=replicator,dc=example,dc=com" read  by * auth
+olcAccess: {2}to *  by * read
+olcSyncrepl: {0}rid=100 provider=@SURIP2@ bindmethod=sasl 
+ saslmech=external authzid="dn:cn=replicator,dc=example,dc=com" 
+ searchbase="dc=example,dc=com" 
+ type=refreshAndPersist keepalive=60:5:2 retry="5 6 60 +" 
+ tls_cert=@TESTDIR@/tls/certs/ldap-server.crt 
+ tls_key=@TESTDIR@/tls/private/ldap-server.key 
+ tls_cacert=@TESTDIR@/tls/ca/certs/testsuiteCA.crt 
+ timeout=3
+olcUpdateRef: @SURIP2@
+
+dn: olcOverlay={0}syncprov,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: {0}syncprov
+olcSpCheckpoint: 20 10
+
+dn: olcOverlay={1}unique,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcUniqueConfig
+olcOverlay: {1}unique
+olcUniqueURI: ldap:///?uid?sub?
+olcUniqueURI: ldap:///?uidNumber?sub?
+olcUniqueURI: ldap:///?mail?sub?
+
+dn: olcOverlay={2}constraint,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcConstraintConfig
+olcOverlay: {2}constraint
+olcConstraintAttribute: gidNumber regex ^[0-9]{4,5}$
+
+dn: olcDatabase={2}monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {2}monitor
+olcAccess: {0}to dn.subtree="cn=monitor"  by * read

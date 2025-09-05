@@ -1,0 +1,75 @@
+.TH SLAPO-CIBOOLEAN 5 "RELEASEDATE" "OpenLDAP"
+.\" Copyright 1998-2024 The OpenLDAP Foundation.
+.\" Copyright 2022 Symas Corp. All Rights Reserved.
+.\" Copying restrictions apply.  See LICENSE.
+.SH NAME
+slapo\-ciboolean \- enable support for case-insensitive boolean values
+.SH SYNOPSIS
+By default
+.BR slapd (8)
+is strictly compliant with
+.B RFC4517
+and the only accepted values for a Boolean attribute are
+.B TRUE
+and
+.B FALSE.
+This module allows for case-insensitive comparison and syntax-checking.
+.SH DESCRIPTION
+The
+.B ciboolean
+module to
+.BR slapd (8)
+allows Boolean-type attributes to have values such as
+.B True, False, true, false,
+and any other combination of upper and lower-case values. Comparison is also case-insensitive, so a search filter of
+.B (attribute=false)
+will return objects with all versions of
+.B FALSE.
+When the module is loaded, it installs a new syntax-checker and a new normalizer in the
+.B Boolean
+syntax.
+
+
+.SH CONFIGURATION
+
+The
+.B ciboolean
+module does not have any configuration directives. To enable it, instruct the server to load it with the
+.B moduleload
+directive in
+.B slapd.conf:
+
+.TP
+.B moduleload /usr/local/libexec/openldap/ciboolean.la
+
+.SH LIMITATIONS
+
+Adding a normalizer to the syntax changes value storage format in most backend types.
+Removing the
+.B ciboolean
+module from
+.BR slapd(8)
+configuration will not automatically convert any non-standard values to
+.B TRUE
+or
+.B FALSE,
+or update value storage format. Therefore, if
+.B ciboolean
+is added or removed in configuration, all databases that have been in use before the change need to be fully reloaded to ensure correct operation, including
+.B cn=config.
+
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.TP
+ETCDIR/slapd.d
+default slapd configuration directory
+.SH SEE ALSO
+.BR slapd-config (5),
+.BR slapd.conf (5),
+.BR slapd (8)
+
+.SH ACKNOWLEDGEMENTS
+This module was developed in 2022 by Nadezhda Ivanova for Symas Corp.

@@ -26,15 +26,13 @@ olcPidFile: %LOCALSTATEDIR%/run/slapd.pid
 #
 # Load dynamic backend modules:
 #
-#dn: cn=module,cn=config
-#objectClass: olcModuleList
-#cn: module
-#olcModulepath:	%MODULEDIR%
-#olcModuleload:	back_mdb.la
+dn: cn=module,cn=config
+objectClass: olcModuleList
+cn: module
+olcModulepath:	%MODULEDIR%
+olcModuleload:	back_mdb.la
 #olcModuleload:	back_ldap.la
 #olcModuleload:	back_passwd.la
-#olcModuleload:	back_shell.la
-
 
 dn: cn=schema,cn=config
 objectClass: olcSchemaConfig

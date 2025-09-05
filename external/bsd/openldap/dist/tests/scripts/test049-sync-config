@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,12 @@ esac
 echo "Starting provider slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND < $DYNAMICCONF > $CONFLDIF
 $SLAPADD -F $CFPRO -n 0 -l $CONFLDIF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
+
 cd $PRODIR
 $SLAPD -F ./slapd.d -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
@@ -134,6 +140,13 @@ fi
 
 echo "Starting consumer slapd on TCP/IP port $PORT2..."
 $SLAPADD -F $CFCON -n 0 -l $CONFLDIF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
 cd $CONDIR
 $SLAPD -F ./slapd.d -h $URI2 -d $LVL > $LOG2 2>&1 &
 CONSUMERPID=$!

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: The slapd Configuration File
@@ -269,7 +269,6 @@ ldif	Lightweight Data Interchange Format backend
 mdb	Memory-Mapped DB backend
 meta	Metadirectory backend
 monitor	Monitor backend
-ndb	MySQL NDB backend
 null	Null backend
 passwd	Provides read-only access to {{passwd}}(5)
 perl	Perl Programmable backend
@@ -595,7 +594,7 @@ H4: idlexp <exponent>
 
 Specify a power of 2 for the maximum size of an index slot.
 The default is 16, yielding a maximum slot size of 2^16 or 65536.
-The specified value must be in the range of 16-31.
+The specified value must be in the range of 16-30.
 
 This setting helps with the case where certain search filters are
 slow to return results due to an index slot having collapsed to a

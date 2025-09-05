@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,10 +14,10 @@
 ## <http://www.OpenLDAP.org/license.html>.
 ol_package=OpenLDAP
 ol_major=2
-ol_minor=5
-ol_patch=6
-ol_api_inc=20506
-ol_api_current=1
-ol_api_revision=1
-ol_api_age=1
-ol_release_date="2021/07/27"
+ol_minor=6
+ol_patch=10
+ol_api_inc=20610
+ol_api_current=2
+ol_api_revision=200
+ol_api_age=0
+ol_release_date="2025/05/22"

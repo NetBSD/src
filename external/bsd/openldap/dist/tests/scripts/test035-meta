@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -491,7 +491,7 @@ case $RC,$BACKEND in
 	0,*)
 		echo "Search should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
-		exit -1
+		exit 1
 	;;
 	*)
 		echo "Search failed ($RC)!"
@@ -515,7 +515,7 @@ case $RC,$BACKEND in
 	0,*)
 		echo "Search should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
-		exit -1
+		exit 1
 	;;
 	*)
 		echo "Search failed ($RC)!"
@@ -673,7 +673,7 @@ case $RC,$BACKEND in
 	0,*)
 		echo "WhoAmI should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
-		exit -1
+		exit 1
 	;;
 	51,*)
 		echo "### Hit LDAP_BUSY problem; you may want to re-run the test"
@@ -698,7 +698,7 @@ case $RC,$BACKEND in
 	0,*)
 		echo "WhoAmI should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
-		exit -1
+		exit 1
 	;;
 	51,*)
 		echo "### Hit LDAP_BUSY problem; you may want to re-run the test"
@@ -715,7 +715,7 @@ RC=$?
 #if test $RC != 6 ; then
 #	echo "Compare failed ($RC)!"
 #	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-#	exit -1
+#	exit 1
 #fi
 case $RC,$BACKEND in
 	6,* | 5,null)

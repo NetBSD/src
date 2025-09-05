@@ -1,6 +1,6 @@
 .TH LDAP_GET_OPTION 3 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_get_option, ldap_set_option \- LDAP option handling routines
@@ -455,9 +455,15 @@ This option is OpenLDAP specific.
 .B LDAP_OPT_TCP_USER_TIMEOUT
 Allows to configure TCP_USER_TIMEOUT in milliseconds on the connection, overriding the operating system setting.
 This option is OpenLDAP specific and supported only on Linux 2.6.37 or higher.
+.B invalue
+must be a
+.BR "const unsigned int *" ;
+.BR outvalue
+must be an
+.BR "unsigned int *" .
 
 .SH SASL OPTIONS
-The SASL options are OpenLDAP specific.
+The SASL options are OpenLDAP specific and unless otherwise noted, require an LDAP handle to be passed.
 .TP
 .B LDAP_OPT_X_SASL_AUTHCID
 Gets the SASL authentication identity;
@@ -501,7 +507,7 @@ in form of a NULL-terminated array of strings;
 .BR outvalue
 must be
 .BR "char ***" .
-The caller must not free or otherwise muck with it.
+The caller must not free or otherwise muck with it. This option can be used globally.
 .TP
 .B LDAP_OPT_X_SASL_NOCANON
 Sets/gets the NOCANON flag.
@@ -587,6 +593,7 @@ must be a
 .BR "char **" .
 Its content needs to be freed by the caller using
 .BR ldap_memfree (3).
+.TP
 .B LDAP_OPT_X_SASL_CBINDING
 Sets/gets the channel-binding type to use in SASL,
 one of
@@ -602,7 +609,6 @@ must be
 .BR outvalue
 must be
 .BR "int *" .
-.TP
 .SH TCP OPTIONS
 The TCP options are OpenLDAP specific.
 Mainly intended for use with Linux, they may not be portable.
@@ -642,7 +648,8 @@ The TLS options are OpenLDAP specific.
 .\"Sets/gets the TLS mode.
 .TP
 .B LDAP_OPT_X_TLS_CACERTDIR
-Sets/gets the path of the directory containing CA certificates.
+Sets/gets the path of the directories containing CA certificates.
+Multiple directories may be specified, separated by a semi-colon.
 .BR invalue
 must be
 .BR "const char *" ;
@@ -873,6 +880,21 @@ must be
 .BR "char **" ,
 and its contents need to be freed by the caller using
 .BR ldap_memfree (3).
+.TP
+.B LDAP_OPT_X_TLS_PEERKEY_HASH
+Sets the (public) key that the application expects the peer to be using.
+.B invalue
+must be
+.BR "const char *"
+containing the base64 encoding of the expected peer's key or in the format
+.B "<hashalg>:<peerkey hash base64 encoded>"
+where as a TLS session is established, the library will hash the peer's key
+with the provided hash algorithm and compare it with value provided and will
+only allow the session to continue if they match. This happens regardless of
+certificate checking strategy. The list of supported
+.B hashalg
+values depends on the crypto library used, check its documentation to get
+a list.
 .SH ERRORS
 On success, the functions return
 .BR LDAP_OPT_SUCCESS ,

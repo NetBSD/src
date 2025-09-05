@@ -1,5 +1,5 @@
 .TH SLAPO-MEMBEROF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -16,10 +16,8 @@ Any time a group entry is modified, its members are modified as appropriate
 in order to keep a DN-valued "is member of" attribute updated with the DN
 of the group.
 .LP
-Note that this overlay is deprecated and support will be dropped in future
-OpenLDAP releases. Installations should use the \fBdynlist\fP
-overlay instead. Using this overlay in a replicated environment is especially
-discouraged.
+Note that the \fBdynlist\fP overlay can also provide this functionality
+and may be suitable for less demanding environments.
 
 .SH CONFIGURATION
 The config directives that are specific to the
@@ -107,6 +105,23 @@ If set to
 when an entry containing values of the "is member of" attribute is modified,
 the corresponding groups are modified as well.
 
+.TP
+.BI "memberof\-addcheck {" true "|" FALSE "}"
+This option determines whether the overlay will check newly added
+entries for membership in any existing groups. This check is useful
+if populated groups are created in the directory before the entries
+they reference. The situation often occurs during replication, which
+may replicate entries in random order.
+If set to
+.IR TRUE ,
+every Add operation will search for groups referencing the added
+entry and populate its memberof attribute with the group DNs. Note
+that
+.BR memberof\-dangling
+must be left on its default setting of
+.I ignore
+for this option to work.
+
 .LP
 The memberof overlay may be used with any backend that provides full 
 read-write functionality, but it is mainly intended for use 
@@ -114,10 +129,9 @@ with local storage backends. The maintenance operations it performs
 are internal to the server on which the overlay is configured and
 are never replicated. Consumer servers should be configured with their
 own instances of the memberOf overlay if it is desired to maintain
-these memberOf attributes on the consumers.  Note that slapo-memberOf
-is not compatible with syncrepl based replication, and should not be
-used in a replicated environment. An alternative is to use slapo-dynlist
-to emulate slapo-memberOf behavior.
+these memberOf attributes on the consumers. Consumers must also be
+configured to exclude the \fImemberof\fP attribute from replication.
+(See the \fBexattrs\fP option in the consumer configuration.)
 
 .SH FILES
 .TP

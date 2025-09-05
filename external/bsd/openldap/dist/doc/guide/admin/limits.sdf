@@ -1,5 +1,5 @@
 # Id
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 # This contribution is derived from OpenLDAP Software.
@@ -254,6 +254,7 @@ E:   limits users size.soft=5 size.hard=100 size.prtotal=disabled
 E:   limits anonymous size.soft=2 size.hard=5 size.prtotal=disabled
 
 H2: Glued/Subordinate database configurations
+
 When using subordinate databases, it is necessary for any limits that
 are to be applied across the parent and its subordinates to be defined in both
 the parent and its subordinates. Otherwise the settings on the subordinate databases

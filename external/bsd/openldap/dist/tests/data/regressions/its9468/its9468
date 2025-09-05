@@ -1,0 +1,422 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2024 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+ITS=9468
+ITSDIR=$DATADIR/regressions/its$ITS
+
+if test $BACKLDAP = "ldapno" ; then
+	echo "LDAP backend not available, test skipped"
+	exit 0
+fi
+if test $RWM = "rwmno" ; then
+        echo "rwm (rewrite/remap) overlay not available, test skipped"
+        exit 0
+fi
+
+mkdir -p $TESTDIR $DBDIR1 $DBDIR2
+
+echo "This test checks back-ldap connection retry behavior when the connection"
+echo "to remote LDAP server is disconnected due to:"
+echo " - remote server disconnecting the proxy connection"
+echo " - proxy disconnecting the remote server connection due to timeout/ttl"
+
+#
+# Start slapd that acts as a remote LDAP server that will be proxied
+#
+echo "Running slapadd to build database for the remote slapd server..."
+. $CONFFILTER $BACKEND <  $ITSDIR/slapd-remote.conf > $CONF1
+$SLAPADD -f $CONF1 -l $LDIFORDERED
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
+
+echo "Starting remote slapd server on TCP/IP port $PORT1..."
+$SLAPD -f $CONF1 -h "$URI1" -d $LVL > $LOG1 2>&1 &
+SERVERPID=$!
+if test $WAIT != 0 ; then
+	echo SERVERPID $SERVERPID
+	read foo
+fi
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITORDN" -H $URI1 \
+		-D $MANAGERDN \
+		-w $PASSWD \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP0 seconds for slapd to start..."
+	sleep $SLEEP0
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $SERVERPID
+	exit $RC
+fi
+KILLPIDS="$KILLPIDS $SERVERPID"
+
+#
+# Start slapd that will proxy for the remote server
+#
+echo "Starting slapd proxy on TCP/IP port $PORT2..."
+. $CONFFILTER $BACKEND < $ITSDIR/slapd-proxy.conf > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
+PROXYPID=$!
+if test $WAIT != 0 ; then
+	echo PROXYPID $PROXYPID
+	read foo
+fi
+KILLPIDS="$KILLPIDS $PROXYPID"
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITORDN" -H $URI2 \
+		-D "cn=Manager,dc=local,dc=com" \
+		-w $PASSWD \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP0 seconds for slapd to start..."
+	sleep $SLEEP0
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+# Create fifo that is used to pass searches from the test case to ldapsearch without
+# disconnecting the client -> proxy connection
+rm -f $TESTDIR/ldapsearch.fifo
+mkfifo $TESTDIR/ldapsearch.fifo
+
+#############################################################################
+#
+# Test 1: Check that proxy WILL NOT try to re-establish connection and rebind
+# after server has disconnected the connection towards proxy.
+#
+# Proxy config is
+# - rebind-as-user no
+# - no idle-timeout of conn-ttl set
+#
+
+echo "Test 1"
+
+# Start ldapsearch on background and have it read search filters from fifo,
+# so that single client connection will persist over many searches
+echo "Make the proxy to connect the remote LDAP server..."
+$LDAPSEARCH -b "dc=no-rebind,dc=no-timeout,$BASEDN" \
+	-D "cn=Barbara Jensen,dc=no-rebind,dc=no-timeout,$BASEDN" \
+	-w "bjensen"  \
+	-H $URI2 \
+	-f $TESTDIR/ldapsearch.fifo > $TESTOUT 2>&1 &
+LDAPSEARCHPID=$!
+KILLPIDS="$KILLPIDS $LDAPSEARCHPID"
+
+# Open fifo as file descriptor
+exec 3>$TESTDIR/ldapsearch.fifo
+
+# Trigger LDAP connections towards the proxy by executing a search
+echo 'objectclass=*' >&3
+# Wait for ldapsearch process on the background to catch up reading the fifo
+sleep 2
+
+# Check the number of bind operations that proxy has executed so far
+NUM_PROXY_BINDS_BEFORE=`$LDAPSEARCH -LLL \
+	-H $URI2 \
+	-D "cn=Manager,dc=local,dc=com" \
+	-w $PASSWD \
+	-b "cn=Bind,cn=Operations,cn=database 2,cn=databases,cn=monitor" olmDbOperation | \
+	tee -a $TESTOUT | \
+	sed -n 's/^olmDbOperation: \(.*\)/\1/p'`
+
+# Restart the remote server to invalidate TCP connection between proxy and remote
+echo "Killing and re-starting remote slapd server on TCP/IP port $PORT1..."
+kill -HUP $SERVERPID
+sleep 2
+
+# When forking slapd on background, close filehandle 3 to avoid leaving fifo hanging uncloseable
+$SLAPD -f $CONF1 -h "$URI1" -d $LVL >> $LOG1 2>&1 3>&- &
+SERVERPID=$!
+KILLPIDS="$KILLPIDS $SERVERPID"
+
+echo "Using ldapsearch to check that remote slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITORDN" -H $URI1 \
+		-D $MANAGERDN \
+		-w $PASSWD \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP0 seconds for slapd to start..."
+	sleep $SLEEP0
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit $RC
+fi
+
+echo "Use ldapsearch to trigger proxy retry logic"
+echo 'objectclass=*' >&3
+# Wait for ldapsearch process on the background to catch up reading the fifo
+sleep 2
+
+# Check how many binds have been executed after retry
+NUM_PROXY_BINDS_AFTER=`$LDAPSEARCH -LLL \
+	-H $URI2 \
+	-D "cn=Manager,dc=local,dc=com" \
+	-w $PASSWD \
+	-b "cn=Bind,cn=Operations,cn=database 2,cn=databases,cn=monitor" olmDbOperation | \
+	tee -a $TESTOUT | \
+	sed -n 's/^olmDbOperation: \(.*\)/\1/p'`
+
+echo "Checking if proxy tried to re-bind to the remote server"
+if test $NUM_PROXY_BINDS_BEFORE != $NUM_PROXY_BINDS_AFTER ; then
+	echo "Failure: expected proxy bind operation count not to increase ($NUM_PROXY_BINDS_BEFORE != $NUM_PROXY_BINDS_AFTER)"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit 1
+fi
+
+echo "Checking ldapsearch status"
+exec 3>&-
+wait $LDAPSEARCHPID
+RC=$?
+if test $RC != 52 ; then
+	echo "Failure: expected ldapsearch to return error unavailable (52) from proxy but got $RC"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit 1
+fi
+
+#############################################################################
+#
+# Test 2: Check that proxy WILL re-establish connection and rebind after
+# remote server has disconnected the connection towards proxy.
+#
+# Proxy config is
+# - rebind-as-user yes
+# - no idle-timeout or conn-ttl set
+#
+
+echo "Test 2"
+
+echo "Make the proxy to connect the remote LDAP server..."
+$LDAPSEARCH -b "dc=rebind,dc=no-timeout,$BASEDN" \
+	-D "cn=Barbara Jensen,dc=rebind,dc=no-timeout,$BASEDN" \
+	-w "bjensen"  \
+	-H $URI2 \
+	-f $TESTDIR/ldapsearch.fifo >> $TESTOUT 2>&1 &
+LDAPSEARCHPID=$!
+KILLPIDS="$SERVERPID $PROXYPID $LDAPSEARCHPID"
+
+exec 3>$TESTDIR/ldapsearch.fifo
+
+echo 'objectclass=*' >&3
+sleep 2
+
+echo "Killing and re-starting remote slapd server on TCP/IP port $PORT1..."
+kill -HUP $SERVERPID
+sleep 2
+
+$SLAPD -f $CONF1 -h "$URI1" -d $LVL >> $LOG1 2>&1 3>&- &
+SERVERPID=$!
+KILLPIDS="$KILLPIDS $SERVERPID"
+
+echo "Using ldapsearch to check that remote slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITORDN" -H $URI1 \
+		-D $MANAGERDN \
+		-w $PASSWD \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting $SLEEP0 seconds for slapd to start..."
+	sleep $SLEEP0
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit $RC
+fi
+
+echo "Use ldapsearch to trigger proxy retry logic"
+echo 'objectclass=*' >&3
+sleep 2
+
+echo "Checking ldapsearch status"
+exec 3>&-
+wait $LDAPSEARCHPID
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit $RC
+fi
+
+#############################################################################
+#
+# Test 3: Check that proxy WILL NOT re-establish connection and rebind after
+# it disconnected the connection after idle-timeout or conn-ttl
+#
+# Proxy config is
+# - rebind-as-user no
+# - no idle-timeout or conn-ttl set
+#
+
+echo "Test 3"
+
+echo "Make the proxy to connect the remote LDAP server..."
+$LDAPSEARCH -b "dc=no-rebind,dc=timeout,$BASEDN" \
+	-D "cn=Barbara Jensen,dc=no-rebind,dc=timeout,$BASEDN" \
+	-w "bjensen"  \
+	-H $URI2 \
+	-f $TESTDIR/ldapsearch.fifo >> $TESTOUT 2>&1 &
+LDAPSEARCHPID=$!
+KILLPIDS="$SERVERPID $PROXYPID $LDAPSEARCHPID"
+
+exec 3>$TESTDIR/ldapsearch.fifo
+
+echo 'objectclass=*' >&3
+# Wait for proxy->remote server timeout to expire
+sleep 4
+
+NUM_PROXY_BINDS_BEFORE=`$LDAPSEARCH -LLL \
+	-H $URI2 \
+	-D "cn=Manager,dc=local,dc=com" \
+	-w $PASSWD \
+	-b "cn=Bind,cn=Operations,cn=database 2,cn=databases,cn=monitor" olmDbOperation | \
+	tee -a $TESTOUT | \
+	sed -n 's/^olmDbOperation: \(.*\)/\1/p'`
+
+echo "Use ldapsearch to trigger proxy retry logic"
+echo 'objectclass=*' >&3
+sleep 2
+
+NUM_PROXY_BINDS_AFTER=`$LDAPSEARCH -LLL \
+	-H $URI2 \
+	-D "cn=Manager,dc=local,dc=com" \
+	-w $PASSWD \
+	-b "cn=Bind,cn=Operations,cn=database 2,cn=databases,cn=monitor" olmDbOperation | \
+	tee -a $TESTOUT | \
+	sed -n 's/^olmDbOperation: \(.*\)/\1/p'`
+
+echo "Checking if proxy tried to re-bind to the remote server"
+if test $NUM_PROXY_BINDS_BEFORE != $NUM_PROXY_BINDS_AFTER ; then
+	echo "Failure: expected proxy bind operation count not to increase ($NUM_PROXY_BINDS_BEFORE != $NUM_PROXY_BINDS_AFTER)"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit 1
+fi
+
+echo "Checking ldapsearch status"
+exec 3>&-
+wait $LDAPSEARCHPID
+RC=$?
+if test $RC != 52 ; then
+	echo "Failure: expected ldapsearch to return error unavailable (52) from proxy but got $RC"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit 1
+fi
+
+#############################################################################
+#
+# Test 4: Check that proxy WILL NOT re-establish connection and rebind after
+# it disconnected the connection after idle-timeout or conn-ttl
+#
+# Proxy config is
+# - rebind-as-user yes
+# - no idle-timeout or conn-ttl set
+#
+
+echo "Test 4"
+
+echo "Make the proxy to connect the remote LDAP server..."
+$LDAPSEARCH -b "dc=rebind,dc=timeout,$BASEDN" \
+	-D "cn=Barbara Jensen,dc=rebind,dc=timeout,$BASEDN" \
+	-w "bjensen"  \
+	-H $URI2 \
+	-f $TESTDIR/ldapsearch.fifo >> $TESTOUT 2>&1 &
+LDAPSEARCHPID=$!
+KILLPIDS="$SERVERPID $PROXYPID $LDAPSEARCHPID"
+
+exec 3>$TESTDIR/ldapsearch.fifo
+
+echo 'objectclass=*' >&3
+# Wait for proxy->remote server timeout to expire
+sleep 4
+
+NUM_PROXY_BINDS_BEFORE=`$LDAPSEARCH -LLL \
+	-H $URI2 \
+	-D "cn=Manager,dc=local,dc=com" \
+	-w $PASSWD \
+	-b "cn=Bind,cn=Operations,cn=database 2,cn=databases,cn=monitor" olmDbOperation | \
+	tee -a $TESTOUT | \
+	sed -n 's/^olmDbOperation: \(.*\)/\1/p'`
+
+echo "Use ldapsearch to trigger proxy retry logic"
+echo 'objectclass=*' >&3
+sleep 2
+
+NUM_PROXY_BINDS_AFTER=`$LDAPSEARCH -LLL \
+	-H $URI2 \
+	-D "cn=Manager,dc=local,dc=com" \
+	-w $PASSWD \
+	-b "cn=Bind,cn=Operations,cn=database 2,cn=databases,cn=monitor" olmDbOperation | \
+	tee -a $TESTOUT | \
+	sed -n 's/^olmDbOperation: \(.*\)/\1/p'`
+
+echo "Checking if proxy tried to re-bind to the remote server"
+if test $NUM_PROXY_BINDS_BEFORE != $NUM_PROXY_BINDS_AFTER ; then
+	echo "Failure: expected proxy bind operation count not to increase ($NUM_PROXY_BINDS_BEFORE != $NUM_PROXY_BINDS_AFTER)"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit 1
+fi
+
+echo "Checking ldapsearch status"
+exec 3>&-
+wait $LDAPSEARCHPID
+RC=$?
+if test $RC != 52 ; then
+	echo "Failure: expected ldapsearch to return error unavailable (52) from proxy but got $RC"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+	exit 1
+fi
+
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS 2>/dev/null
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

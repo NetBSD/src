@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Building and Installing OpenLDAP Software
@@ -103,7 +103,7 @@ the {{TERM:GSSAPI}} mechanism.  This feature requires, in addition to
 Cyrus SASL libraries, either {{PRD:Heimdal}} or {{PRD:MIT Kerberos}}
 V libraries.
 
-Heimdal Kerberos is available from {{URL:http://www.pdc.kth.se/heimdal/}}.
+Heimdal Kerberos is available from {{URL:https://github.com/heimdal/heimdal/}}.
 MIT Kerberos is available from {{URL:http://web.mit.edu/kerberos/www/}}.
 
 Use of strong authentication services, such as those provided by

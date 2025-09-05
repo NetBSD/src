@@ -234,7 +234,7 @@ The accessControlSchemes attribute in the ldapACISubEntry
 indicates which access control mechanism is in effect for
 the scope of that ldapACISubEntry.  The
 supportedAccessControlSchemes attribute in the rootDSE
-indicates which acess control mechanisms are supported by
+indicates which access control mechanisms are supported by
 the server; those mechanisms are in effect in that server's
 DIT unless overridden by a mechanism defined in a
 ldapACISubEntry elsewhere in that DIT.

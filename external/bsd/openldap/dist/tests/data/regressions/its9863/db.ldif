@@ -1,0 +1,39 @@
+dn: dc=example,dc=com
+objectClass: top
+objectClass: organization
+objectClass: dcObject
+o: example
+dc: example
+
+dn: cn=replicator,dc=example,dc=com
+objectClass: top
+objectClass: organizationalRole
+objectClass: simpleSecurityObject
+cn: replicator
+description: Replication user
+userPassword: secret
+
+dn: cn=ldap-server,dc=example,dc=com
+objectClass: top
+objectClass: organizationalRole
+objectClass: simpleSecurityObject
+cn: ldap-server
+description: ldap-server sasl object
+userPassword: secret
+authzTo: {0}dn.regex:^(.+,)+dc=example,dc=com$
+
+dn: ou=people,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+dn: uid=test,ou=people,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: inetOrgPerson
+cn: test test
+uid: test
+sn: Test
+givenName: Test
+userPassword: secret
+

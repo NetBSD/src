@@ -1,0 +1,68 @@
+.TH SLAPO-EDS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2022-2024 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 2018 Tamim Ziai 
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapo-emptyds \- Remove Empty values from Directory String attributes
+Overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+Some non-conformant clients will provide empty values for Directory String
+attributes with certain operations. This overlay makes empty values acceptable
+for the Directory String syntax and will adjust all operations to make sure
+these values are never actually stored in the database.
+.LP
+.nf
+.ft tt
+	dn: cn=alex,cn=people,dc=example,dc=org
+	changeType: add                  changeType: add
+	sn: <empty>              -->     sn: blah
+	sn: blah
+
+	dn: cn=alex,cn=people,dc=example,dc=org
+	changeType: modify               changeType: modify
+	add: sn                  -->     add: sn
+	sn: <empty>                      sn: blah
+	sn: blah
+
+	dn: cn=alex,cn=people,dc=example,dc=org
+	changeType: modify               changeType: modify
+	delete: sn               -->     delete: sn
+	sn: <empty>                      sn: blah
+	sn: blah
+
+	dn: cn=alex,cn=people,dc=example,dc=org
+	changeType: modify               changeType: modify
+	replace: sn              -->     replace: sn
+	sn: <empty>
+
+	dn: cn=alex,cn=people,dc=example,dc=org
+	changeType: modify               changeType: modify
+	replace: sn              -->     replace: sn
+	sn: <empty>                      sn: blah
+	sn: blah
+.ft
+.fi
+.LP
+.SH CONFIGURATION
+This overlay has no specific configuration, however in order to ensure that it
+does what it needs to do, it should be the last overlay configured so it will
+run before the other overlays.
+.SH EXAMPLES
+.LP
+.RS
+.nf
+overlay emptyds
+.RE
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.SH SEE ALSO
+.BR slapd.conf (5).
+.SH ACKNOWLEDGEMENTS
+This module was written in 2014 by Tamim Ziai for DAASI International and
+updated in 2022 by Ondřej Kuzník for inclusion in the OpenLDAP project.
+.so ../Project

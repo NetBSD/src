@@ -1,0 +1,137 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2022-2024 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2019 by Tamim Ziai for DAASI International
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+LDIF=${TOPDIR}/tests/data/test001.out
+
+if test $ACCESSLOG = accesslogno; then
+	echo "Accesslog overlay not available, test skipped"
+	exit 0
+fi
+
+mkdir -p $TESTDIR $DBDIR1A $DBDIR1B
+
+. $CONFFILTER $BACKEND < "${TOPDIR}/tests/data/emptyds.conf" > $CONF1
+
+echo "Running slapadd to build slapd database... "
+$SLAPADD -f $CONF1 -l $LDIFORDERED
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
+
+echo "Starting slapd on TCP/IP port $PORT1..."
+$SLAPD -f $CONF1 -h $URI1 -d $LVL >> $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+	echo PID $PID
+	read foo
+fi
+KILLPIDS="$PID"
+
+sleep $SLEEP0
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting ${SLEEP1} seconds for slapd to start..."
+	sleep ${SLEEP1}
+done
+
+echo "Checking add/modify handling... "
+
+$LDAPMODIFY -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+	> $TESTOUT -f "${TOPDIR}/tests/data/test001.ldif"
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Checking modrdn handling (should still fail with invalidDNSyntax)... "
+
+$LDAPMODIFY -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+	>> $TESTOUT 2>&1 <<EOMOD
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modrdn
+newrdn: cn=
+deleteoldrdn: 0
+EOMOD
+RC=$?
+case $RC in
+34)
+	echo "	ldapmodify failed ($RC)"
+	;;
+0)
+	echo "	ldapmodify should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+	;;
+*)
+	echo "	ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+esac
+
+echo "Dumping accesslog..."
+
+$LDAPSEARCH -b "cn=log" -H $URI1 \
+	'objectClass=auditWriteObject' reqDN reqMod | \
+	grep -v -e 'entryCSN' -e '\(create\|modify\)Timestamp' \
+		-e '\(modifier\|creator\)sName' -e 'entryUUID' | \
+	sed -e 's/reqStart=[^,]*,/reqStart=timestamp,/' \
+	> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+# Expectations:
+# - all empty values for directoryString pruned
+# - empty adds/deletes removed, empty replaces kept
+# - remaining values keep the same order as submitted
+# - other syntaxes (especially DNs) are kept intact
+echo "Filtering ldapsearch results..."
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $LDIF > $LDIFFLT
+
+echo "Comparing filter output..."
+$CMP $LDIFFLT $SEARCHFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0
