@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.12 2025/09/02 17:49:09 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.13 2025/09/05 09:21:53 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -150,4 +150,9 @@ bin/sh/cd.c					1.54-1.56
 	sh(1): PR 59565: cd "" is now an error, not == cd .
 	Improve error messages from the "cd" builtin.
 	[kre, ticket #24]
+
+sys/arch/arm/cortex/gicv3.c			1.55,1.56
+
+	gicv3: Appease KUBSAN (avoid undefined left-shift out of range).
+	[rin, ticket #25]
 
