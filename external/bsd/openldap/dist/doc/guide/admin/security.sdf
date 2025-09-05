@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # Portions Copyright 2008 Andrew Findlay.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -290,7 +290,7 @@ Note: This is not the same as using a SASL mechanism to
 authenticate the LDAP session.
 
 Pass-Through authentication works only with plaintext passwords, as 
-used in the "simple bind" and "SASL PLAIN" authentication mechanisms.}}
+used in the "simple bind" and "SASL PLAIN" authentication mechanisms.
 
 Pass-Through authentication is selective: it only affects users whose
 {{userPassword}} attribute has a value marked with the "{SASL}"

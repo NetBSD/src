@@ -1,0 +1,6 @@
+dn: uid=subuser,ou=users,ou=sub,o=translucent
+objectClass: inetOrgPerson
+uid: subuser
+cn: subuser
+sn: subuser
+

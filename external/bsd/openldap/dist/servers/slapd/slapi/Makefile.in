@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## Portions Copyright IBM Corp. 1997,2002,2003
 ## All rights reserved.
 ##
@@ -19,9 +19,6 @@ LIBRARY = libslapi.la
 #all-common: $(LIBRARY) $(PROGRAMS)
 #	@touch plugin.c slapi_pblock.c slapi_utils.c slapi_ops.c slapi_ext.c
 
-NT_SRCS = nt_err.c
-NT_OBJS = nt_err.lo
-
 LIB_DEFS = -DSLAPI_LIBRARY
 
 SRCS=  plugin.c slapi_pblock.c slapi_utils.c printmsg.c slapi_ops.c slapi_dn.c slapi_ext.c slapi_overlay.c \
@@ -31,12 +28,15 @@ OBJS=  plugin.lo slapi_pblock.lo slapi_utils.lo printmsg.lo slapi_ops.lo slapi_d
 
 XSRCS= version.c
 
-LDAP_INCDIR= ../../../include -I.. -I.       
-LDAP_LIBDIR= ../../../libraries       
+LDAP_INCDIR= ../../../include -I.. -I.
+LDAP_LIBDIR= ../../../libraries
+
+shared_LDAP_LIBS = $(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
 
 XLIBS = $(LIBRARY)
 XXLIBS = 
-NT_LINK_LIBS = $(AC_LIBS)
+MOD_LIBS = $(MODULES_LIBS)
+NT_LINK_LIBS = $(AC_LIBS) -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 
 XINCPATH = -I$(srcdir)/.. -I$(srcdir)
 XDEFS = $(MODULES_CPPFLAGS)

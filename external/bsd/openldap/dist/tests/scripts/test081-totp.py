@@ -3,7 +3,7 @@
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2016-2021 Ondřej Kuzník, Symas Corp.
-## Copyright 2021 The OpenLDAP Foundation.
+## Copyright 2021-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

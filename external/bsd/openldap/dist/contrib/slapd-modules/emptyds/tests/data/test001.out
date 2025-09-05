@@ -1,0 +1,54 @@
+dn: reqStart=timestamp,cn=log
+reqDN: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+reqMod: description:+ one
+reqMod: description:+ two
+reqMod: description:+ three
+reqMod: description:+ four
+# "description:+    " that's a space, then 3 spaces for value
+reqMod:: ZGVzY3JpcHRpb246KyAgICA=
+reqMod: drink:= Earl Grey, hot
+# second mod was removed, so we have two replaces in succession now and need
+# to separate them (":")
+reqMod:: Og==
+reqMod: drink:= Earl Grey, hot
+
+dn: reqStart=timestamp,cn=log
+reqDN: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+reqMod: description:- four
+reqMod: description:- three
+reqMod: description:- two
+reqMod: description:- one
+# second mod is removed
+
+dn: reqStart=timestamp,cn=log
+reqDN: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+reqMod: drink:=
+
+dn: reqStart=timestamp,cn=log
+reqDN: cn=All Staff,ou=Groups,dc=example,dc=com
+reqMod: member:-
+# "member:+ " adding an empty DN
+reqMod:: bWVtYmVyOisg
+reqMod: member:+ cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example
+ ,dc=com
+
+dn: reqStart=timestamp,cn=log
+reqDN: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,
+ dc=com
+reqMod: objectClass:+ testPerson
+reqMod: cn:+ Gern Jensen
+reqMod: sn:+ Jensen
+reqMod: uid:+ gjensen
+reqMod: postalAddress:+ ITD $ 535 W. William St $ Anytown, MI 48103
+reqMod: seeAlso:+ cn=All Staff,ou=Groups,dc=example,dc=com
+reqMod: drink:+ Coffee
+reqMod: homePostalAddress:+ 844 Brown St. Apt. 4 $ Anytown, MI 48104
+reqMod: description:+ Very odd
+reqMod: description:+ More than you think
+reqMod: facsimileTelephoneNumber:+ +1 313 555 7557
+reqMod: telephoneNumber:+ +1 313 555 8343
+reqMod: mail:+ gjensen@mailgw.example.com
+reqMod: homePhone:+ +1 313 555 8844
+reqMod: testTime:+ 20050304001801.234Z
+reqMod: structuralObjectClass:+ testPerson
+

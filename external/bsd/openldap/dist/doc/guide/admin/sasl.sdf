@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using SASL
@@ -560,6 +560,9 @@ into the LDAP database entries. By default, the authorization
 features are disabled, and must be explicitly configured by the
 LDAP administrator before use.
 
+The rules governing proxy authorization are not just used for SASL:
+they also control the use of the LDAP Proxied Authorization Control
+(RFC 4370).
 
 H3: Uses of Proxy Authorization
 
@@ -738,4 +741,19 @@ entries, then they can write rules that would allow them to authorize
 as anyone else.  As such, when using source rules, the
 {{EX:authzTo}} attribute should be protected with an ACL that
 only allows privileged users to set its values.
+
+H4: Access Control requirements
+
+When checking whether a particular DN may authorize as another DN,
+the server applies access control rules to the {{EX:authzTo}} and
+{{EX:authzFrom}} attributes. The {{EX:auth}} privilege is required
+for an attribute to be used.
+
+For example, suppose Alice has authenticated using her own ID and password,
+and wants to perform an LDAP operation using Bob's permissions.
+If authorization is granted by an {{EX:authzTo}} attribute in Alice's
+entry then Alice needs the {{EX:auth}} privilege on that attribute.
+Similarly, if authorization is granted by an {{EX:authzFrom}} attribute
+in Bob's entry then Alice needs the {{EX:auth}} privilege on that.
+Alice does not need any other access privilege to do a proxy operation.
 

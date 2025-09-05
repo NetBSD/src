@@ -1,0 +1,117 @@
+dn: cn=config
+objectClass: olcGlobal
+cn: config
+olcLogLevel: Sync
+olcLogLevel: Stats
+olcTLSCACertificateFile: @TESTDIR@/tls/ca/certs/testsuiteCA.crt
+olcTLSCertificateKeyFile: @TESTDIR@/tls/private/localhost.key
+olcTLSCertificateFile: @TESTDIR@/tls/certs/localhost.crt
+olcTLSVerifyClient: hard
+olcIndexHash64: TRUE
+olcAuthzPolicy: to
+olcAuthzRegexp: {0}"cn=ldap-server,ou=OpenLDAP Test Suite,o=OpenLDAP Foundation,ST=CA,C=US" "cn=ldap-server,dc=example,dc=com"
+olcPidFile: @TESTDIR@/slapd.1.pid
+olcArgsFile: @TESTDIR@/slapd.1.args
+
+dn: cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schema
+
+include: file://@TESTWD@/@SCHEMADIR@/core.ldif
+include: file://@TESTWD@/@SCHEMADIR@/cosine.ldif
+include: file://@TESTWD@/@SCHEMADIR@/inetorgperson.ldif
+include: file://@TESTWD@/@SCHEMADIR@/misc.ldif
+include: file://@TESTWD@/@SCHEMADIR@/nis.ldif
+
+#mod#dn: cn=module{0},cn=config
+#mod#objectClass: olcModuleList
+#mod#cn: module{0}
+#mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
+#mod#olcModuleLoad: {0}back_@BACKEND@.la
+
+dn: cn=module{1},cn=config
+objectClass: olcModuleList
+cn: module{1}
+olcModulePath: @TESTWD@/../servers/slapd/overlays
+olcModuleLoad: {0}syncprov.la
+olcModuleLoad: {1}auditlog.la
+olcModuleLoad: {2}unique.la
+olcModuleLoad: {3}constraint.la
+
+#mdb#dn: olcBackend={0}mdb,cn=config
+#mdb#objectClass: olcBackendConfig
+#mdb#objectClass: olcMdbBkConfig
+#mdb#olcBackend: {0}mdb
+#mdb#olcBkMdbIdlExp: 18
+
+dn: olcDatabase={-1}frontend,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
+olcDatabase: {-1}frontend
+olcAccess: {0}to dn.base=""  by * read
+olcAccess: {1}to dn.base="cn=Subschema"  by * read
+
+dn: olcDatabase={0}config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {0}config
+olcRootPW:< file://@TESTDIR@/configpw
+olcAccess: {0}to *  by * none
+
+dn: olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcDatabaseConfig
+objectClass: olc@BACKEND@Config
+olcDatabase: {1}@BACKEND@
+olcSuffix: dc=example,dc=com
+olcRootDN: cn=Manager,dc=example,dc=com
+olcRootPW: secret
+olcLastBindPrecision: 3600
+olcLastBind: FALSE
+olcLimits: {0}dn.exact="cn=replicator,dc=example,dc=com" time.soft=unlimited
+  time.hard=unlimited size.soft=unlimited size.hard=unlimited
+olcAccess: {0}to attrs=userPassword  by self write  by dn.exact="cn=replicator,dc=example,dc=com" read  by anonymous auth
+olcAccess: {1}to attrs=authzto  by dn.exact="cn=replicator,dc=example,dc=com" read  by * auth
+olcAccess: {2}to *  by * read
+#~null~#olcDbDirectory: @TESTDIR@/prov/db
+#indexdb#olcDbIndex: default eq
+#indexdb#olcDbIndex: objectClass
+#indexdb#olcDbIndex: cn
+#indexdb#olcDbIndex: entryUUID
+#indexdb#olcDbIndex: entryCSN
+#indexdb#olcDbIndex: mail
+#indexdb#olcDbIndex: uid
+#indexdb#olcDbIndex: uidNumber
+#indexdb#olcDbIndex: gidNumber
+#mdb#olcDbMaxSize: 33554432
+#mdb#olcDbMultival: default 100,10
+
+dn: olcOverlay={0}syncprov,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcSyncProvConfig
+olcOverlay: {0}syncprov
+olcSpCheckpoint: 20 10
+olcSpSessionlog: 150000
+
+dn: olcOverlay={1}auditlog,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcAuditlogConfig
+olcOverlay: {1}auditlog
+olcAuditlogFile: @TESTDIR@/audit.log
+
+dn: olcOverlay={2}unique,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcUniqueConfig
+olcOverlay: {2}unique
+olcUniqueURI: ldap:///?uid?sub?
+olcUniqueURI: ldap:///?uidNumber?sub?
+olcUniqueURI: ldap:///?mail?sub?
+
+dn: olcOverlay={3}constraint,olcDatabase={1}@BACKEND@,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcConstraintConfig
+olcOverlay: {3}constraint
+olcConstraintAttribute: gidNumber regex ^[0-9]{4,5}$
+
+dn: olcDatabase={2}monitor,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: {2}monitor
+olcAccess: {0}to dn.subtree="cn=monitor"  by * read

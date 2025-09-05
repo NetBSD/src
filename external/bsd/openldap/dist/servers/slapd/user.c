@@ -1,10 +1,10 @@
-/*	$NetBSD: user.c,v 1.1.1.9 2021/08/14 16:05:22 christos Exp $	*/
+/*	$NetBSD: user.c,v 1.1.1.10 2025/09/05 21:09:46 christos Exp $	*/
 
 /* user.c - set user id, group id and group access list */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1999 PM Lashley.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: user.c,v 1.1.1.9 2021/08/14 16:05:22 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.1.1.10 2025/09/05 21:09:46 christos Exp $");
 
 #include "portable.h"
 

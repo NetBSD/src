@@ -59,10 +59,13 @@ TEST=ppm_test
 EXAMPLE=ppm.example
 TESTS=./unit_tests.sh
 
+MANDOC=slapm-ppm.5
+MDDOC=ppm.md
+
 all: 	ppm $(TEST)
 
 $(TEST): ppm
-	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(LDFLAGS) $(INCS) $(LDAP_LIBS) -Wl,-rpath=. -o $(TEST) ppm_test.c $(PROGRAMS) $(LDAP_LIBS) $(CRACKLIB)
+	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(DEFS) $(LDFLAGS) $(INCS) -Wl,-rpath=. -o $(TEST) ppm_test.c $(PROGRAMS) $(LDAP_LIBS) $(CRACKLIB)
 
 ppm.o:
 	$(CC) $(CFLAGS) $(OPT) $(CPPFLAGS) $(DEFS) -c $(INCS) ppm.c
@@ -76,6 +79,7 @@ install: ppm
 		$(LIBTOOL) --mode=install cp $$p $(DESTDIR)/$(moduledir) ; \
 	done
 	$(INSTALL) -m 644 $(EXAMPLE) $(DESTDIR)$(sysconfdir)/
+	$(INSTALL) -m 644 $(MANDOC) $(DESTDIR)$(man5dir)/
 #	$(INSTALL) -m 755 $(TEST) $(libdir)
 
 .PHONY: clean
@@ -87,4 +91,7 @@ clean:
 test: ppm $(TEST)
 	LDAP_SRC=$(LDAP_SRC) $(TESTS)
 
+doc:
+	pandoc $(MDDOC) -s -t man -o $(MANDOC)
+	sed -i -e 's#ETCDIR#$(DESTDIR)$(sysconfdir)#g' $(MANDOC)
 

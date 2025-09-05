@@ -1,0 +1,151 @@
+#! /bin/sh
+## $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2016-2022 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2016 by Ondřej Kuzník for Symas Corp.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+. ${SCRIPTDIR}/common.sh
+
+echo "Comparing aliased attribute..."
+$LDAPCOMPARE -H $URI1 \
+	"cn=Mark Elliot,ou=Alumni Association,ou=People,$BASEDN" \
+	"mobile:+1 313 555 7671" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 6 && test $RC,$BACKEND != 5,null ; then
+	echo "ldapcompare failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+$LDAPCOMPARE -H $URI1 \
+	"cn=Mark Elliot,ou=Alumni Association,ou=People,$BASEDN" \
+	"mobile:+1 313 555 4177" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 5 ; then
+	echo "ldapcompare should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo "Listing alias attribute specifically..."
+echo "# Listing aliased attribute..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 "uid=bjensen" mobile \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Not asking for alias attribute..."
+echo >> $SEARCHOUT
+echo "# A search when aliased attribute is not requested..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 "uid=bjensen" pager \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Retrieving both the aliased attribute and the source..."
+echo >> $SEARCHOUT
+echo "# A search when both are requested (explicitly)..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 "uid=bjensen" mobile pager \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Retrieving both the aliased attribute and the source..."
+echo >> $SEARCHOUT
+echo "# A search when both are requested (implicitly)..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 "uid=bjensen" \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing searches filtering on aliased attributes..."
+echo >> $SEARCHOUT
+echo "# Testing searches filtering on aliased attributes..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 \
+	"(|(mobile=+1 313 555 3233)(mobile=*4474)(&(mobile=*)(uid=jdoe)))" \
+	mobile \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Reconfiguring alias definition..."
+. $CONFFILTER $BACKEND $MONITORDB < data/test003-config.ldif | \
+$LDAPMODIFY -v -D cn=config -H $URI1 -y $CONFIGPWF \
+	>> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing searches with new attributes..."
+echo >> $SEARCHOUT
+echo "# Testing search with new attributes..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 \
+	"employeetype=*director*" \
+	employeetype mobile \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+LDIF=data/test003-out.ldif
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER -s e < $SEARCHOUT > $SEARCHFLT
+echo "Filtering expected entries..."
+$LDIFFILTER -s e < $LDIF > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

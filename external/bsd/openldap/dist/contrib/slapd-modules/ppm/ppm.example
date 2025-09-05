@@ -15,7 +15,7 @@
 #   cn: default
 #   pwdMinLength: 6
 #   pwdCheckModule: /usr/local/lib/ppm.so
-#   pwdCheckModuleArg:: bWluUXVhbGl0eSAzCmNoZWNrUkROIDAKZm9yYmlkZGVuQ2hhcnMKbWF4Q29uc2VjdXRpdmVQZXJDbGFzcyAwCnVzZUNyYWNrbGliIDAKY3JhY2tsaWJEaWN0IC92YXIvY2FjaGUvY3JhY2tsaWIvY3JhY2tsaWJfZGljdApjbGFzcy11cHBlckNhc2UgQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVogMCAxCmNsYXNzLWxvd2VyQ2FzZSBhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eiAwIDEKY2xhc3MtZGlnaXQgMDEyMzQ1Njc4OSAwIDEKY2xhc3Mtc3BlY2lhbCA8Piw/Oy46LyHCp8O5JSrCtV7CqCTCo8KyJsOpfiIjJ3soWy18w6hgX1zDp17DoEApXcKwPX0rIDAgMQ==
+#   pwdCheckModuleArg:: bWluUXVhbGl0eSAzCmNoZWNrUkROIDAKY2hlY2tBdHRyaWJ1dGVzCmZvcmJpZGRlbkNoYXJzCm1heENvbnNlY3V0aXZlUGVyQ2xhc3MgMAp1c2VDcmFja2xpYiAwCmNyYWNrbGliRGljdCAvdmFyL2NhY2hlL2NyYWNrbGliL2NyYWNrbGliX2RpY3QKY2xhc3MtdXBwZXJDYXNlIEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaIDAgMSAwCmNsYXNzLWxvd2VyQ2FzZSBhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eiAwIDEgMApjbGFzcy1kaWdpdCAwMTIzNDU2Nzg5IDAgMSAwCmNsYXNzLXNwZWNpYWwgPD4sPzsuOi8hwqfDuSUqwrVewqgkwqPCsibDqX4iIyd7KFstfMOoYF9cw6dew6BAKV3CsD19KyAwIDEgMAo=
 #
 # Different parameters are separated by a linefeed (\n)
 # Parameters starting with a # are ignored
@@ -40,6 +40,17 @@ minQuality 3
 # If set to 1, password must not contain a token from the RDN.
 # Tokens are separated by these delimiters : space tabulation _ - , ; £
 checkRDN 0
+
+# checkAttributes parameter
+# Format:
+# checkAttributes [ATTR1,ATTR2,...]
+# Description:
+# Password must not contain a token from the values in the given list of attributes
+# Tokens are substrings of the values of the given attributes,
+# delimited by: space tabulation _ - , ; @
+# For example, if uid="the wonderful entry",
+# password must not contain "the", nor "wonderful", nor "entry"
+checkAttributes
 
 # forbiddenChars parameter
 # Format:
@@ -79,7 +90,8 @@ cracklibDict /var/cache/cracklib/cracklib_dict
 # [CHARACTERS_DEFINING_CLASS]: characters defining the class (no separator)
 # [MIN]: If at least [MIN] characters of this class is not found in the password, then it is rejected
 # [MIN_FOR_POINT]: one point is granted if password contains at least [MIN_FOR_POINT] character numbers of this class
-class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1
-class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1
-class-digit 0123456789 0 1
-class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'{([-|è`_\ç^à@)]°=}+ 0 1
+# [MAX]: if > [MAX] occurrences of characters from this class are found, then the password is rejected (0 means no maximum)
+class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1 0
+class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1 0
+class-digit 0123456789 0 1 0
+class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'{([-|è`_\ç^à@)]°=}+ 0 1 0

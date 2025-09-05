@@ -1,10 +1,10 @@
-/*	$NetBSD: homedir.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.1.1.2 2025/09/05 21:09:49 christos Exp $	*/
 
 /* homedir.c - create/remove user home directories */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2010 The OpenLDAP Foundation.
+ * Copyright 2009-2024 The OpenLDAP Foundation.
  * Portions copyright 2009-2010 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: homedir.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $");
+__RCSID("$NetBSD: homedir.c,v 1.1.1.2 2025/09/05 21:09:49 christos Exp $");
 
 #include "portable.h"
 

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -432,6 +432,61 @@ fi
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after updating memberof configuration..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to enable add checking..."
+$LDAPMODIFY -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={0}memberof,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcMemberOfAddCheck
+olcMemberOfAddCheck: TRUE
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Adding group and users out of order..."
+$LDAPADD -H $URI1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 <<EOF
+dn: cn=group3,ou=Groups,$BASEDN
+objectclass: groupOfNames
+cn: group3
+member: cn=New Person,ou=People,$BASEDN
+member: cn=New Group,ou=Groups,$BASEDN
+
+dn: cn=New Group,ou=Groups,$BASEDN
+objectclass: groupOfNames
+cn: New Group
+member: cn=New Person,ou=People,$BASEDN
+
+dn: cn=New Person,ou=People,$BASEDN
+objectclass: person
+cn: New Person
+sn: Person
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database after adding out-of-order groups/users..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?

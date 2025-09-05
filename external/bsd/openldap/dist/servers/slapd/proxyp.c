@@ -1,9 +1,9 @@
-/*	$NetBSD: proxyp.c,v 1.1.1.1 2021/08/14 16:05:20 christos Exp $	*/
+/*	$NetBSD: proxyp.c,v 1.1.1.2 2025/09/05 21:09:47 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: proxyp.c,v 1.1.1.1 2021/08/14 16:05:20 christos Exp $");
+__RCSID("$NetBSD: proxyp.c,v 1.1.1.2 2025/09/05 21:09:47 christos Exp $");
 
 #include "portable.h"
 #include "slap.h"

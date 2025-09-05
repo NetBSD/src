@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.1.1.1 2021/08/14 16:05:20 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.1.1.2 2025/09/05 21:09:47 christos Exp $	*/
 
 /*	$OpenBSD: syslog.c,v 1.29 2007/11/09 18:40:19 millert Exp $ */
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syslog.c,v 1.1.1.1 2021/08/14 16:05:20 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.1.1.2 2025/09/05 21:09:47 christos Exp $");
 
 #include "portable.h"
 
@@ -214,7 +214,7 @@ openlog(const char *ident, int logstat, int logfac)
 }
 
 void
-closelog()
+closelog(void)
 {
 	(void)close(LogFile);
 	LogFile = -1;

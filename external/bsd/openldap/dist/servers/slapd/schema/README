@@ -7,15 +7,17 @@ collective.schema       Collective attributes (experimental)
 corba.schema            Corba Object
 core.schema             OpenLDAP "core"
 cosine.schema           COSINE Pilot
+dsee.schema             Sun DSEE compatibility schema for replication
 duaconf.schema          Client Configuration (work in progress)
 dyngroup.schema			Dynamic Group (experimental)
 inetorgperson.schema    InetOrgPerson
 java.schema             Java Object
 misc.schema             Miscellaneous Schema (experimental)
-nadf.schema             North American Directory Forum (obsolete)
+msuser.schema           Microsoft's Active Directory schema for replication
+namedobject.schema      namedObject draft schema (work in progress)
 nis.schema              Network Information Service (experimental)
 openldap.schema         OpenLDAP Project (FYI)
-ppolicy.schema          Password Policy Schema (work in progress)
+pmi.schema              ITU X.509 PMI support (experimental)
 
 Additional "generally useful" schema definitions can be submitted
 using the OpenLDAP Issue Tracking System <http://www.openldap.org/its/>.
@@ -34,7 +36,7 @@ convert schema files in general.
 
 This notice applies to all files in this directory.
 
-Copyright 1998-2021 The OpenLDAP Foundation, Redwood City, California, USA
+Copyright 1998-2024 The OpenLDAP Foundation, Redwood City, California, USA
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

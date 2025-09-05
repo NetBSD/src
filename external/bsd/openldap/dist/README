@@ -1,10 +1,10 @@
-OpenLDAP 2.5 README
+OpenLDAP 2.6 README
     For a description of what this distribution contains, see the
     ANNOUNCEMENT file in this directory.  For a description of
     changes from previous releases, see the CHANGES file in this
     directory.
 
-    This is 2.5 release, it includes significant changes from prior
+    This is 2.6 release, it includes significant changes from prior
     releases.
 
 REQUIRED SOFTWARE
@@ -50,9 +50,6 @@ DOCUMENTATION
     news, releases announcements, pointers to other LDAP resources,
     etc..  It is located at <http://www.OpenLDAP.org/>.
 
-    The OpenLDAP Software FAQ is available at
-    <http://www.openldap.org/faq/>.
-
 
 SUPPORT / FEEDBACK / PROBLEM REPORTS / DISCUSSIONS
     OpenLDAP Software is user supported.  If you have problems, please
@@ -81,7 +78,7 @@ CONTRIBUTING
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2021 The OpenLDAP Foundation.
+Copyright 1998-2024 The OpenLDAP Foundation.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -1,8 +1,8 @@
-/*	$NetBSD: TlsOptions.h,v 1.1.1.7 2021/08/14 16:05:13 christos Exp $	*/
+/*	$NetBSD: TlsOptions.h,v 1.1.1.8 2025/09/05 21:09:44 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2010-2021 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2010-2024 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #ifndef TLS_OPTIONS_H

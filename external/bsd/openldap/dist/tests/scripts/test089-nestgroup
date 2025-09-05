@@ -1,0 +1,699 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2024 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+if test $NESTGROUP = nestgroupno; then
+	echo "Nestgroup overlay not available, test skipped"
+	exit 0
+fi
+if test $MEMBEROF = memberofno; then
+	echo "Memberof overlay not available, memberof testing disabled"
+fi
+
+mkdir -p $TESTDIR $DBDIR1 $TESTDIR/confdir
+
+$SLAPPASSWD -g -n >$CONFIGPWF
+echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
+
+echo "Starting slapd on TCP/IP port $PORT1..."
+. $CONFFILTER $BACKEND < $NAKEDCONF > $CONF1
+$SLAPD -f $CONF1 -F $TESTDIR/confdir -h $URI1 -d $LVL > $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+    echo PID $PID
+    read foo
+fi
+KILLPIDS="$PID"
+
+sleep 1
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+cat /dev/null > $TESTOUT
+
+if [ "$NESTGROUP" = nestgroupmod ]; then
+	echo "Inserting nestgroup overlay on provider..."
+	$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
+dn: cn=module,cn=config
+objectClass: olcModuleList
+cn: module
+olcModulePath: ../servers/slapd/overlays
+olcModuleLoad: nestgroup.la
+EOF
+	RC=$?
+	if test $RC != 0 ; then
+		echo "ldapadd failed for moduleLoad ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+fi
+
+indexInclude="" mainInclude="" nullExclude=""
+test $INDEXDB = indexdb	|| indexInclude="# "
+test $MAINDB  = maindb	|| mainInclude="# "
+case $BACKEND in
+null) nullExclude="# " ;;
+esac
+
+echo "Running ldapadd to build slapd config database..."
+$LDAPADD -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcDatabase={1}$BACKEND,cn=config
+objectClass: olcDatabaseConfig
+${nullExclude}objectClass: olc${BACKEND}Config
+olcDatabase: {1}$BACKEND
+olcSuffix: $BASEDN
+olcRootDN: cn=Manager,$BASEDN
+olcRootPW:: c2VjcmV0
+olcMonitoring: TRUE
+${nullExclude}olcDbDirectory: $TESTDIR/db.1.a/
+${indexInclude}olcDbIndex: objectClass eq
+${indexInclude}olcDbIndex: cn pres,eq,sub
+${indexInclude}olcDbIndex: uid pres,eq,sub
+${indexInclude}olcDbIndex: sn pres,eq,sub
+${indexInclude}olcDbIndex: member,memberOf eq
+${mainInclude}olcDbMode: 384"
+
+dn: olcOverlay={0}nestgroup,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcNestGroupConfig
+olcOverlay: {0}nestgroup
+olcNestgroupMember: member
+olcNestgroupMemberOf: memberOf
+olcNestgroupBase: ou=Groups,$BASEDN
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapadd to build slapd database..."
+$LDAPADD -H $URI1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 << EOF
+dn: $BASEDN
+objectClass: organization
+objectClass: dcObject
+o: Example, Inc.
+dc: example
+
+dn: ou=People,$BASEDN
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Groups,$BASEDN
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=Roger Rabbit,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Roger Rabbit
+sn: Rabbit
+
+dn: cn=Baby Herman,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Baby Herman
+sn: Herman
+
+dn: cn=Jessica Rabbit,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Jessica Rabbit
+sn: Rabbit
+
+dn: cn=Bugs Bunny,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Bugs Bunny
+sn: Bunny
+
+dn: cn=Daffy Duck,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Daffy Duck
+sn: Duck
+
+dn: cn=Elmer Fudd,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Elmer Fudd
+sn: Fudd
+
+dn: cn=Yosemite Sam,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Yosemite Sam
+sn: Sam
+
+dn: cn=Foghorn Leghorn,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Foghorn Leghorn
+sn: Leghorn
+
+dn: cn=Wile E. Coyote,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Wile E. Coyote
+sn: Coyote
+
+dn: cn=Road Runner,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Road Runner
+sn: Runner
+
+dn: cn=Tweety Bird,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Tweety Bird
+sn: Bird
+
+dn: cn=Porky Pig,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Porky Pig
+sn: Pig
+
+dn: cn=Tom Riddle,ou=People,$BASEDN
+objectClass: inetOrgPerson
+cn: Tom Riddle
+sn: Riddle
+
+dn: cn=Rabbits,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Rabbits
+member: cn=Roger Rabbit,ou=People,$BASEDN
+member: cn=Jessica Rabbit,ou=People,$BASEDN
+
+dn: cn=Leporidae,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Leporidae
+member: cn=Bugs Bunny,ou=People,$BASEDN
+member: cn=Rabbits,ou=Groups,$BASEDN
+
+dn: cn=A-M,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: A-M
+member: cn=Baby Herman,ou=People,$BASEDN
+member: cn=Bugs Bunny,ou=People,$BASEDN
+member: cn=Daffy Duck,ou=People,$BASEDN
+member: cn=Elmer Fudd,ou=People,$BASEDN
+member: cn=Foghorn Leghorn,ou=People,$BASEDN
+member: cn=Jessica Rabbit,ou=People,$BASEDN
+
+dn: cn=N-Z,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: N-Z
+member: cn=Porky Pig,ou=People,$BASEDN
+member: cn=Road Runner,ou=People,$BASEDN
+member: cn=Roger Rabbit,ou=People,$BASEDN
+member: cn=Tweety Bird,ou=People,$BASEDN
+member: cn=Wile E. Coyote,ou=People,$BASEDN
+member: cn=Yosemite Sam,ou=People,$BASEDN
+
+dn: cn=Humans,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Humans
+member: cn=Elmer Fudd,ou=People,$BASEDN
+member: cn=Yosemite Sam,ou=People,$BASEDN
+
+dn: cn=Looney Tunes,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Looney Tunes
+member: cn=Porky Pig,ou=People,$BASEDN
+member: cn=Daffy Duck,ou=People,$BASEDN
+member: cn=Elmer Fudd,ou=People,$BASEDN
+member: cn=Bugs Bunny,ou=People,$BASEDN
+member: cn=Tweety Bird,ou=People,$BASEDN
+
+dn: cn=Desert Foes,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Desert Foes
+member: cn=Road Runner,ou=People,$BASEDN
+member: cn=Wile E. Coyote,ou=People,$BASEDN
+
+dn: cn=Mixer1,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Mixer1
+member: cn=Leporidae,ou=Groups,$BASEDN
+member: cn=Desert Foes,ou=Groups,$BASEDN
+member: cn=Foghorn Leghorn,ou=People,$BASEDN
+
+dn: cn=Mixer2,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Mixer2
+member: cn=Humans,ou=Groups,$BASEDN
+member: cn=Baby Herman,ou=People,$BASEDN
+
+dn: cn=Mixer3,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Mixer3
+member: cn=Desert Foes,ou=Groups,$BASEDN
+member: cn=Porky Pig,ou=People,$BASEDN
+
+dn: cn=Mixer4,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Mixer4
+member: cn=Mixer1,ou=Groups,$BASEDN
+member: cn=Mixer2,ou=Groups,$BASEDN
+member: cn=Foghorn Leghorn,ou=People,$BASEDN
+
+dn: cn=Mixer5,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Mixer5
+member: cn=Mixer2,ou=Groups,$BASEDN
+member: cn=Mixer3,ou=Groups,$BASEDN
+member: cn=A-M,ou=Groups,$BASEDN
+
+dn: cn=Endless Loop,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Endless Loop
+member: cn=Road Runner,ou=People,$BASEDN
+member: cn=Loop\, Endless,ou=Groups,$BASEDN
+
+dn: cn=Loop\, Endless,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Loop, Endless
+member: cn=Wile E. Coyote,ou=People,$BASEDN
+member: cn=Endless Loop,ou=Groups,$BASEDN
+
+dn: cn=Strays,ou=Groups,$BASEDN
+objectClass: groupOfNames
+cn: Strays
+member: cn=Tom Riddle,ou=People,$BASEDN
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Search the entire database..."
+echo "# Search the entire database..." > $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	'(objectClass=*)' '*' >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Search for member=cn=Bugs Bunny..."
+echo "# Search for member=cn=Bugs Bunny..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(member=cn=Bugs Bunny,ou=People,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Search for non-nested member=cn=Tom Riddle..."
+echo "# Search for non-nested member=cn=Tom Riddle..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(member=cn=Tom Riddle,ou=People,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to enable nested member filter..."
+$LDAPMODIFY -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={0}nestgroup,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcNestgroupFlags
+olcNestgroupFlags: member-filter
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search for nested member=cn=Bugs Bunny..."
+echo "# Re-search for nested member=cn=Bugs Bunny..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(member=cn=Bugs Bunny,ou=People,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search for non-nested member=cn=Tom Riddle..."
+echo "# Re-search for non-nested member=cn=Tom Riddle..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(member=cn=Tom Riddle,ou=People,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to enable nested member values..."
+$LDAPMODIFY -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={0}nestgroup,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcNestgroupFlags
+olcNestgroupFlags: member-values
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Search the expanded groups..."
+echo "# Search the expanded groups..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "ou=Groups,$BASEDN" -H $URI1 \
+	'(objectClass=*)' '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+LDIF=$NESTGROUPOUT1
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+echo "Filtering original ldif used to create database..."
+$LDIFFILTER < $LDIF > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo ">>>>> Test succeeded (first half)"
+
+if [ "$MEMBEROF" = memberofno ]; then
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+	test $KILLSERVERS != no && wait
+
+	exit 0
+fi
+
+echo "Adding memberof overlay to database configuration..."
+
+if [ "$MEMBEROF" = memberofmod ]; then
+	echo "Inserting memberof module on provider..."
+	$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
+dn: cn=module,cn=config
+objectClass: olcModuleList
+cn: module
+olcModulePath: ../servers/slapd/overlays
+olcModuleLoad: memberof.la
+EOF
+	RC=$?
+	if test $RC != 0 ; then
+		echo "ldapadd failed for moduleLoad ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+fi
+
+$LDAPADD -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={1}memberof,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcMemberofConfig
+olcOverlay: {1}memberof
+olcMemberOfGroupOC: groupOfNames
+olcMemberOfMemberAD: member
+olcMemberOfMemberOfAD: memberOf
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Recreating group entries to set memberof values..."
+$LDAPMODIFY -H $URI1 \
+	-D "cn=Manager,$BASEDN" -w secret \
+	>> $TESTOUT 2>&1 <<EOF
+dn: cn=Rabbits,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Roger Rabbit,ou=People,$BASEDN
+member: cn=Jessica Rabbit,ou=People,$BASEDN
+
+dn: cn=Leporidae,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Bugs Bunny,ou=People,$BASEDN
+member: cn=Rabbits,ou=Groups,$BASEDN
+
+dn: cn=A-M,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Baby Herman,ou=People,$BASEDN
+member: cn=Bugs Bunny,ou=People,$BASEDN
+member: cn=Daffy Duck,ou=People,$BASEDN
+member: cn=Elmer Fudd,ou=People,$BASEDN
+member: cn=Foghorn Leghorn,ou=People,$BASEDN
+member: cn=Jessica Rabbit,ou=People,$BASEDN
+
+dn: cn=N-Z,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Porky Pig,ou=People,$BASEDN
+member: cn=Road Runner,ou=People,$BASEDN
+member: cn=Roger Rabbit,ou=People,$BASEDN
+member: cn=Tweety Bird,ou=People,$BASEDN
+member: cn=Wile E. Coyote,ou=People,$BASEDN
+member: cn=Yosemite Sam,ou=People,$BASEDN
+
+dn: cn=Humans,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Elmer Fudd,ou=People,$BASEDN
+member: cn=Yosemite Sam,ou=People,$BASEDN
+
+dn: cn=Looney Tunes,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Porky Pig,ou=People,$BASEDN
+member: cn=Daffy Duck,ou=People,$BASEDN
+member: cn=Elmer Fudd,ou=People,$BASEDN
+member: cn=Bugs Bunny,ou=People,$BASEDN
+member: cn=Tweety Bird,ou=People,$BASEDN
+
+dn: cn=Desert Foes,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Road Runner,ou=People,$BASEDN
+member: cn=Wile E. Coyote,ou=People,$BASEDN
+
+dn: cn=Mixer1,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Leporidae,ou=Groups,$BASEDN
+member: cn=Desert Foes,ou=Groups,$BASEDN
+member: cn=Foghorn Leghorn,ou=People,$BASEDN
+
+dn: cn=Mixer2,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Humans,ou=Groups,$BASEDN
+member: cn=Baby Herman,ou=People,$BASEDN
+
+dn: cn=Mixer3,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Desert Foes,ou=Groups,$BASEDN
+member: cn=Porky Pig,ou=People,$BASEDN
+
+dn: cn=Mixer4,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Mixer1,ou=Groups,$BASEDN
+member: cn=Mixer2,ou=Groups,$BASEDN
+member: cn=Foghorn Leghorn,ou=People,$BASEDN
+
+dn: cn=Mixer5,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Mixer2,ou=Groups,$BASEDN
+member: cn=Mixer3,ou=Groups,$BASEDN
+member: cn=A-M,ou=Groups,$BASEDN
+
+dn: cn=Endless Loop,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Road Runner,ou=People,$BASEDN
+member: cn=Loop\, Endless,ou=Groups,$BASEDN
+
+dn: cn=Loop\, Endless,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Wile E. Coyote,ou=People,$BASEDN
+member: cn=Endless Loop,ou=Groups,$BASEDN
+
+dn: cn=Strays,ou=Groups,$BASEDN
+changetype: modify
+replace: member
+member: cn=Tom Riddle,ou=People,$BASEDN
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Moving previous results to $SEARCHOUT.0"
+mv $SEARCHOUT $SEARCHOUT.0
+
+echo "Re-search the entire database..."
+echo "# Re-search the entire database after adding memberof configuration..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Search for memberOf=cn=Mixer3..."
+echo "# Search for memberOf=cn=Mixer3..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(memberOf=cn=Mixer3,ou=Groups,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to enable nested memberOf filter..."
+$LDAPMODIFY -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={0}nestgroup,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcNestgroupFlags
+olcNestgroupFlags: memberof-filter
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search for memberOf=cn=Mixer3 with filter nesting..."
+echo "# Re-search for memberOf=cn=Mixer3 with filter nesting..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(memberOf=cn=Mixer3,ou=Groups,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Running ldapmodify to also enable nested memberOf values..."
+$LDAPMODIFY -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
+	>> $TESTOUT 2>&1 <<EOF
+dn: olcOverlay={0}nestgroup,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+add: olcNestgroupFlags
+olcNestgroupFlags: memberof-values
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search for memberOf=cn=Mixer3 with filter and value nesting..."
+echo "# Re-search for memberOf=cn=Mixer3 with filter and value nesting..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	"(memberOf=cn=Mixer3,ou=Groups,$BASEDN)" '*' memberof >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Re-search the entire database with memberof value nesting..."
+echo "# Re-search the entire database with memberof value nesting..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+LDIF=$NESTGROUPOUT2
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+echo "Filtering original ldif used to create database..."
+$LDIFFILTER < $LDIF > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

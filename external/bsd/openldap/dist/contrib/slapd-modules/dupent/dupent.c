@@ -1,10 +1,10 @@
-/*	$NetBSD: dupent.c,v 1.1.1.6 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: dupent.c,v 1.1.1.7 2025/09/05 21:09:45 christos Exp $	*/
 
 /* dupent.c - LDAP Control for a Duplicate Entry Representation of Search Results */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2021 The OpenLDAP Foundation.
+ * Copyright 2006-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dupent.c,v 1.1.1.6 2021/08/14 16:05:14 christos Exp $");
+__RCSID("$NetBSD: dupent.c,v 1.1.1.7 2025/09/05 21:09:45 christos Exp $");
 
 #include "portable.h"
 

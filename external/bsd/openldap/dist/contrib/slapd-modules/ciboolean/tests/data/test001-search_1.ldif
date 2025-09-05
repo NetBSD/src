@@ -1,0 +1,45 @@
+dn: cn=user02,ou=people,dc=example,dc=com
+cn: user02
+objectClass: inetOrgPerson
+objectClass: BusyClass
+userPassword:: UEBzc3cwcmQ=
+roomNumber: 102
+carLicense: 1234hb
+sn: user02
+mobile: 12345678
+mobile: 987654321
+IsBusy: False
+ou: people
+preferredLanguage: English
+description: This is user user02
+
+dn: cn=user03,ou=people,dc=example,dc=com
+cn: user03
+objectClass: inetOrgPerson
+objectClass: BusyClass
+userPassword:: UEBzc3cwcmQ=
+roomNumber: 103
+carLicense: 1234hc
+sn: user03
+mobile: 12345678
+mobile: 987654321
+IsBusy: FALSE
+ou: people
+preferredLanguage: English
+description: This is user user03
+
+dn: cn=user06,ou=people,dc=example,dc=com
+cn: user06
+objectClass: inetOrgPerson
+objectClass: BusyClass
+userPassword:: UEBzc3cwcmQ=
+roomNumber: 106
+carLicense: 1234hc
+sn: user06
+mobile: 12345678
+mobile: 987654321
+ou: people
+preferredLanguage: English
+description: This is user user03
+IsBusy: false
+

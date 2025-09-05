@@ -1,6 +1,6 @@
 .TH LDAPMODIFY 1 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
@@ -20,6 +20,8 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 .BR \-c ]
 [\c
 .BI \-f \ file\fR]
+[\c
+.BI \-j \ lineno\fR]
 [\c
 .BI \-S \ file\fR]
 [\c
@@ -76,6 +78,8 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 .BR \-c ]
 [\c
 .BI \-f \ file\fR]
+[\c
+.BI \-j \ lineno\fR]
 [\c
 .BI \-S \ file\fR]
 [\c
@@ -170,6 +174,11 @@ reporting an error.
 .BI \-f \ file
 Read the entry modification information from \fIfile\fP instead of from
 standard input.
+.TP
+.BI \-j \ lineno
+Jump to the specified line number in the LDIF file before processing any entries.
+This allows a load that was aborted due to errors in the input LDIF to be resumed
+after the errors are corrected.
 .TP
 .BI \-S \ file
 Add or change records which were skipped due to an error are written to \fIfile\fP 

@@ -1,0 +1,5 @@
+dn: olcOverlay={0}alias,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectclass: olcAliasConfig
+olcAliasMapping: pager mobile

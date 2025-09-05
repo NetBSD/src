@@ -1,0 +1,3 @@
+dn: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+delete: mobile

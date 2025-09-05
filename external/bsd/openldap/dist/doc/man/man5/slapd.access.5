@@ -1,5 +1,5 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -1083,9 +1083,11 @@ attribute).
 Some internal operations and some
 .B controls
 require specific access privileges.
-The
+
+.LP
+The SASL
 .B authzID
-mapping and the 
+mapping and the LDAP
 .B proxyAuthz
 control require
 .B auth (=x)
@@ -1099,6 +1101,11 @@ privileges are also required on the
 attribute of the authorizing identity and/or on the 
 .B authzFrom
 attribute of the authorized identity.
+In both cases, it is the authorizing identity that requires the privileges
+(i.e. the identity that has authenticated and is now trying to do
+some operation using another entity's permissions).
+
+.LP
 In general, when an internal lookup is performed for authentication
 or authorization purposes, search-specific privileges (see the access
 requirements for the search operation illustrated above) are relaxed to
@@ -1109,10 +1116,10 @@ Access control to search entries is checked by the frontend,
 so it is fully honored by all backends; for all other operations
 and for the discovery phase of the search operation,
 full ACL semantics is only supported by the primary backends, i.e.
-.BR back\-mdb (5).
+.BR slapd\-mdb (5).
 
 Some other backend, like
-.BR back\-sql (5),
+.BR slapd\-sql (5),
 may fully support them; others may only support a portion of the 
 described semantics, or even differ in some aspects.
 The relevant details are described in the backend-specific man pages.

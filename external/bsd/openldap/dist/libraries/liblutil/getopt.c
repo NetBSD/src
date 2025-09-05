@@ -1,10 +1,10 @@
-/*	$NetBSD: getopt.c,v 1.1.1.9 2021/08/14 16:05:28 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1.1.10 2025/09/05 21:09:34 christos Exp $	*/
 
 /* getopt.c -- replacement getopt(3) routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt.c,v 1.1.1.9 2021/08/14 16:05:28 christos Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.1.1.10 2025/09/05 21:09:34 christos Exp $");
 
 #include "portable.h"
 

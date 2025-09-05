@@ -1,6 +1,6 @@
 .TH LDAPSEARCH 1 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapsearch \- LDAP search tool
@@ -143,11 +143,13 @@ files.
 .TP
 .BI \-T \ path
 Write temporary files to directory specified by \fIpath\fP (default:
-\fB/var/tmp/\fP)
+\fBsystem default tmp directory\fP). The environment variables \fBTMPDIR\fP,
+\fBTMP\fP, or \fBTEMP\fP will override the default path.
 .TP
 .BI \-F \ prefix
 URL prefix for temporary files.  Default is \fBfile://\fIpath\fP where
-\fIpath\fP is \fB/var/tmp/\fP or specified with \fB\-T\fP.
+\fIpath\fP is the \fBsystem default tmp directory\fP or the value specified
+with \fB\-T\fP.
 .TP
 .B \-A
 Retrieve attributes only (no values).  This is useful when you just want to

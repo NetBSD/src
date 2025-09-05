@@ -1,5 +1,5 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -197,8 +197,12 @@ This directive defines the maximum size of the privileged connections pool.
 
 .TP
 .B conn\-ttl <time>
-This directive causes a cached connection to be dropped and recreated
-after a given ttl, regardless of being idle or not.
+This directive causes a cached connection to be dropped after a given ttl,
+regardless of being idle or not.  If a client connection outlives the remote
+connection, the client will receive
+.IR LDAP_UNAVAILABLE
+when it executes the next operation.
+
 
 .TP
 .B idassert\-authzFrom <authz-regexp>
@@ -268,7 +272,9 @@ where
 .B none
 is the default, i.e. no \fIidentity assertion\fP is performed.
 
-The authz parameter is used to instruct the SASL bind to exploit 
+The
+.B authz
+parameter is used to instruct the SASL bind to exploit
 .B native 
 SASL authorization, if available; since connections are cached,
 this should only be used when authorizing with a fixed identity
@@ -400,6 +406,7 @@ which defaults to "allow".
 The identity associated to this directive is also used for privileged
 operations whenever \fBidassert\-bind\fP is defined and \fBacl\-bind\fP
 is not.  See \fBacl\-bind\fP for details.
+.RE
 
 .TP
 .B idassert-passthru <authz-regexp>
@@ -420,8 +427,11 @@ for details on the syntax of this field.
 
 .TP
 .B idle\-timeout <time>
-This directive causes a cached connection to be dropped an recreated
-after it has been idle for the specified time.
+This directive causes a cached connection to be dropped after it has been idle
+for the specified time.  If a client connection outlives the remote connection,
+the client will receive
+.IR LDAP_UNAVAILABLE
+when it executes the next operation.
 
 .TP
 .B keepalive  <idle>:<probes>:<interval>
@@ -536,6 +546,11 @@ or when chasing a referral, if
 .B chase\-referrals
 is set to
 .IR yes .
+Note, however, that connection is not re-established automatically after it
+was dropped due to
+.B idle\-timeout
+or
+.B conn\-ttl .
 
 .TP
 .B session\-tracking\-request {NO|yes}
@@ -614,7 +629,7 @@ connection unless the URI directive protocol scheme is \fBldaps://\fP.
 In that case this keyword may only be set to "ldaps" and the StartTLS
 operation will not be used.
 
-With \fBpropagate\fP, the proxy issues StartTLS operation only if
+With \fBpropagate\fP, the proxy issues the StartTLS operation only if
 the original connection has a TLS layer set up.
 The \fBtry\-\fP prefix instructs the proxy to continue operations
 if the StartTLS operation failed; its use is \fBnot\fP recommended.

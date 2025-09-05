@@ -1,10 +1,10 @@
-/*	$NetBSD: idl.h,v 1.1.1.6 2021/08/14 16:05:23 christos Exp $	*/
+/*	$NetBSD: idl.h,v 1.1.1.7 2025/09/05 21:09:49 christos Exp $	*/
 
 /* idl.h - ldap mdb back-end ID list header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,0 +1,628 @@
+# Re-search the entire database after adding memberof configuration...
+dn: cn=A-M,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: A-M
+member: cn=Baby Herman,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Daffy Duck,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Baby Herman,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Baby Herman
+sn: Herman
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer2,ou=Groups,dc=example,dc=com
+
+dn: cn=Bugs Bunny,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Bugs Bunny
+sn: Bunny
+memberOf: cn=Leporidae,ou=Groups,dc=example,dc=com
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+
+dn: cn=Daffy Duck,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Daffy Duck
+sn: Duck
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+
+dn: cn=Desert Foes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Desert Foes
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+
+dn: cn=Elmer Fudd,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Elmer Fudd
+sn: Fudd
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Humans,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+
+dn: cn=Endless Loop,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Endless Loop
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Endless Loop,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+
+dn: dc=example,dc=com
+objectClass: organization
+objectClass: dcObject
+o: Example, Inc.
+dc: example
+
+dn: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Foghorn Leghorn
+sn: Leghorn
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=Humans,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Humans
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+memberOf: cn=Mixer2,ou=Groups,dc=example,dc=com
+
+dn: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Jessica Rabbit
+sn: Rabbit
+memberOf: cn=Rabbits,ou=Groups,dc=example,dc=com
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+
+dn: cn=Leporidae,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Leporidae
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Rabbits,ou=Groups,dc=example,dc=com
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+
+dn: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Looney Tunes
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+member: cn=Daffy Duck,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Tweety Bird,ou=People,dc=example,dc=com
+
+dn: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Loop, Endless
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Endless Loop,ou=Groups,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer1,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer1
+member: cn=Leporidae,ou=Groups,dc=example,dc=com
+member: cn=Desert Foes,ou=Groups,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Rabbits,ou=Groups,dc=example,dc=com
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer2,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer2
+member: cn=Humans,ou=Groups,dc=example,dc=com
+member: cn=Baby Herman,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer3,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer3
+member: cn=Desert Foes,ou=Groups,dc=example,dc=com
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer4,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer4
+member: cn=Mixer1,ou=Groups,dc=example,dc=com
+member: cn=Mixer2,ou=Groups,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+member: cn=Leporidae,ou=Groups,dc=example,dc=com
+member: cn=Desert Foes,ou=Groups,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Rabbits,ou=Groups,dc=example,dc=com
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+member: cn=Humans,ou=Groups,dc=example,dc=com
+member: cn=Baby Herman,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+
+dn: cn=Mixer5,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer5
+member: cn=Mixer2,ou=Groups,dc=example,dc=com
+member: cn=Mixer3,ou=Groups,dc=example,dc=com
+member: cn=A-M,ou=Groups,dc=example,dc=com
+member: cn=Humans,ou=Groups,dc=example,dc=com
+member: cn=Baby Herman,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+member: cn=Desert Foes,ou=Groups,dc=example,dc=com
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Daffy Duck,ou=People,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+
+dn: cn=N-Z,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: N-Z
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Tweety Bird,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+
+dn: ou=People,dc=example,dc=com
+objectClass: organizationalUnit
+ou: People
+
+dn: cn=Porky Pig,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Porky Pig
+sn: Pig
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+
+dn: cn=Rabbits,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Rabbits
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+memberOf: cn=Leporidae,ou=Groups,dc=example,dc=com
+
+dn: cn=Road Runner,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Road Runner
+sn: Runner
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+
+dn: cn=Roger Rabbit,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Roger Rabbit
+sn: Rabbit
+memberOf: cn=Rabbits,ou=Groups,dc=example,dc=com
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+
+dn: cn=Strays,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Strays
+member: cn=Tom Riddle,ou=People,dc=example,dc=com
+
+dn: cn=Tom Riddle,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Tom Riddle
+sn: Riddle
+memberOf: cn=Strays,ou=Groups,dc=example,dc=com
+
+dn: cn=Tweety Bird,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Tweety Bird
+sn: Bird
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+
+dn: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Wile E. Coyote
+sn: Coyote
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+
+dn: cn=Yosemite Sam,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Yosemite Sam
+sn: Sam
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Humans,ou=Groups,dc=example,dc=com
+
+# Search for memberOf=cn=Mixer3...
+dn: cn=Desert Foes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Desert Foes
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+
+dn: cn=Porky Pig,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Porky Pig
+sn: Pig
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+
+# Re-search for memberOf=cn=Mixer3 with filter nesting...
+dn: cn=Desert Foes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Desert Foes
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+
+dn: cn=Porky Pig,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Porky Pig
+sn: Pig
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+
+dn: cn=Road Runner,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Road Runner
+sn: Runner
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+
+dn: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Wile E. Coyote
+sn: Coyote
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+
+# Re-search for memberOf=cn=Mixer3 with filter and value nesting...
+dn: cn=Desert Foes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Desert Foes
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Porky Pig,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Porky Pig
+sn: Pig
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Road Runner,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Road Runner
+sn: Runner
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+
+dn: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Wile E. Coyote
+sn: Coyote
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+
+# Re-search the entire database with memberof value nesting...
+dn: cn=A-M,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: A-M
+member: cn=Baby Herman,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Daffy Duck,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Baby Herman,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Baby Herman
+sn: Herman
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer2,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Bugs Bunny,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Bugs Bunny
+sn: Bunny
+memberOf: cn=Leporidae,ou=Groups,dc=example,dc=com
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Daffy Duck,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Daffy Duck
+sn: Duck
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Desert Foes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Desert Foes
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Elmer Fudd,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Elmer Fudd
+sn: Fudd
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Humans,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer2,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Endless Loop,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Endless Loop
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+
+dn: dc=example,dc=com
+objectClass: organization
+objectClass: dcObject
+o: Example, Inc.
+dc: example
+
+dn: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Foghorn Leghorn
+sn: Leghorn
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=Humans,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Humans
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+memberOf: cn=Mixer2,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Jessica Rabbit
+sn: Rabbit
+memberOf: cn=Rabbits,ou=Groups,dc=example,dc=com
+memberOf: cn=A-M,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+memberOf: cn=Leporidae,ou=Groups,dc=example,dc=com
+
+dn: cn=Leporidae,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Leporidae
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Rabbits,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+
+dn: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Looney Tunes
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+member: cn=Daffy Duck,ou=People,dc=example,dc=com
+member: cn=Elmer Fudd,ou=People,dc=example,dc=com
+member: cn=Bugs Bunny,ou=People,dc=example,dc=com
+member: cn=Tweety Bird,ou=People,dc=example,dc=com
+
+dn: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Loop, Endless
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Endless Loop,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer1,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer1
+member: cn=Leporidae,ou=Groups,dc=example,dc=com
+member: cn=Desert Foes,ou=Groups,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer2,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer2
+member: cn=Humans,ou=Groups,dc=example,dc=com
+member: cn=Baby Herman,ou=People,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer3,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer3
+member: cn=Desert Foes,ou=Groups,dc=example,dc=com
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Mixer4,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer4
+member: cn=Mixer1,ou=Groups,dc=example,dc=com
+member: cn=Mixer2,ou=Groups,dc=example,dc=com
+member: cn=Foghorn Leghorn,ou=People,dc=example,dc=com
+
+dn: cn=Mixer5,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Mixer5
+member: cn=Mixer2,ou=Groups,dc=example,dc=com
+member: cn=Mixer3,ou=Groups,dc=example,dc=com
+member: cn=A-M,ou=Groups,dc=example,dc=com
+
+dn: cn=N-Z,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: N-Z
+member: cn=Porky Pig,ou=People,dc=example,dc=com
+member: cn=Road Runner,ou=People,dc=example,dc=com
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Tweety Bird,ou=People,dc=example,dc=com
+member: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+member: cn=Yosemite Sam,ou=People,dc=example,dc=com
+
+dn: ou=People,dc=example,dc=com
+objectClass: organizationalUnit
+ou: People
+
+dn: cn=Porky Pig,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Porky Pig
+sn: Pig
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+
+dn: cn=Rabbits,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Rabbits
+member: cn=Roger Rabbit,ou=People,dc=example,dc=com
+member: cn=Jessica Rabbit,ou=People,dc=example,dc=com
+memberOf: cn=Leporidae,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+
+dn: cn=Road Runner,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Road Runner
+sn: Runner
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+
+dn: cn=Roger Rabbit,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Roger Rabbit
+sn: Rabbit
+memberOf: cn=Rabbits,ou=Groups,dc=example,dc=com
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Leporidae,ou=Groups,dc=example,dc=com
+
+dn: cn=Strays,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: Strays
+member: cn=Tom Riddle,ou=People,dc=example,dc=com
+
+dn: cn=Tom Riddle,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Tom Riddle
+sn: Riddle
+memberOf: cn=Strays,ou=Groups,dc=example,dc=com
+
+dn: cn=Tweety Bird,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Tweety Bird
+sn: Bird
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Looney Tunes,ou=Groups,dc=example,dc=com
+
+dn: cn=Wile E. Coyote,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Wile E. Coyote
+sn: Coyote
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Desert Foes,ou=Groups,dc=example,dc=com
+memberOf: cn=Loop\2C Endless,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer1,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer3,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+memberOf: cn=Endless Loop,ou=Groups,dc=example,dc=com
+
+dn: cn=Yosemite Sam,ou=People,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Yosemite Sam
+sn: Sam
+memberOf: cn=N-Z,ou=Groups,dc=example,dc=com
+memberOf: cn=Humans,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer2,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer4,ou=Groups,dc=example,dc=com
+memberOf: cn=Mixer5,ou=Groups,dc=example,dc=com
+

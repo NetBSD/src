@@ -1,10 +1,10 @@
-/*	$NetBSD: slapi_overlay.c,v 1.1.1.10 2021/08/14 16:05:25 christos Exp $	*/
+/*	$NetBSD: slapi_overlay.c,v 1.1.1.11 2025/09/05 21:09:49 christos Exp $	*/
 
 /* slapi_overlay.c - SLAPI overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2021 The OpenLDAP Foundation.
+ * Copyright 2001-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapi_overlay.c,v 1.1.1.10 2021/08/14 16:05:25 christos Exp $");
+__RCSID("$NetBSD: slapi_overlay.c,v 1.1.1.11 2025/09/05 21:09:49 christos Exp $");
 
 #include "portable.h"
 

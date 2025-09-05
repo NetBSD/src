@@ -1,0 +1,4 @@
+dn: name={3}regex,olcOverlay={0}variant,olcDatabase={1}mdb,cn=config
+changetype: modify
+replace: olcVariantEntryRegex
+olcVariantEntryRegex: (.*),(ou=.*technology.*)(,)dc=example,dc=com

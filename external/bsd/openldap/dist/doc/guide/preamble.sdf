@@ -1,19 +1,19 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
  
 #
 # Preamble for all OpenLDAP SDF documents
 #
 
-!default VERSION 2.5
+!default VERSION 2.6
 
 #
 # Paths are relative to the main subdirectories
 #
 
 !define DOC_AUTHOR	"The OpenLDAP Project <{{URL:https://www.openldap.org/}}>"
-!define DOC_NAME    "OpenLDAP Software 2.5"
+!define DOC_NAME    "OpenLDAP Software 2.6"
 !define DOC_TYPE    "Guide"
 
 !define DOC_LOGO	"../images/LDAPlogo.gif"
@@ -55,7 +55,7 @@
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2011-2021, <A HREF="https://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011-2024, <A HREF="https://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 	!endblock
 !endmacro
@@ -91,7 +91,7 @@ ________________<BR>
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2011-2021, <A HREF="https://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011-2024, <A HREF="https://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 	!endblock
 !endmacro
@@ -295,6 +295,7 @@ RFC3384|I|Lightweight Directory Access Protocol (version 3) Replication Requirem
 RFC3494|I|Lightweight Directory Access Protocol version 2 (LDAPv2) to Historic Status|https://www.rfc-editor.org/rfc/rfc3494.txt
 RFC4013|PS|SASLprep: Stringprep Profile for User Names and Passwords|https://www.rfc-editor.org/rfc/rfc4013.txt
 RFC4346|PS|The Transport Layer Security (TLS) Protocol, Version 1.1|https://www.rfc-editor.org/rfc/rfc4346.txt
+RFC4370|PS|Lightweight Directory Access Protocol (LDAP) Proxied Authorization Control|https://www.rfc-editor.org/rfc/rfc4370.txt
 RFC4422|PS|Simple Authentication and Security Layer (SASL)|https://www.rfc-editor.org/rfc/rfc4422.txt
 RFC4510|PS|Lightweight Directory Access Protocol (LDAP): Technical Specification Roadmap|https://www.rfc-editor.org/rfc/rfc4510.txt
 RFC4511|PS|Lightweight Directory Access Protocol (LDAP): The Protocol|https://www.rfc-editor.org/rfc/rfc4511.txt

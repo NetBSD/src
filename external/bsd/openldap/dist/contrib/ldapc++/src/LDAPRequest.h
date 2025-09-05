@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPRequest.h,v 1.1.1.8 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: LDAPRequest.h,v 1.1.1.9 2025/09/05 21:09:44 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2024 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

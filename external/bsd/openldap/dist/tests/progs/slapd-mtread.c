@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-mtread.c,v 1.1.1.6 2021/08/14 16:05:12 christos Exp $	*/
+/*	$NetBSD: slapd-mtread.c,v 1.1.1.7 2025/09/05 21:09:35 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapd-mtread.c,v 1.1.1.6 2021/08/14 16:05:12 christos Exp $");
+__RCSID("$NetBSD: slapd-mtread.c,v 1.1.1.7 2025/09/05 21:09:35 christos Exp $");
 
 #include "portable.h"
 
@@ -533,6 +533,7 @@ do_random( LDAP *ld,
 			if ( rc ) {
 				tester_ldap_error( ld, "ldap_search_ext_s", NULL );
 			}
+			ldap_msgfree( res );
 			break;
 		}
 
@@ -571,6 +572,7 @@ do_random( LDAP *ld,
 
 	default:
 		tester_ldap_error( ld, "ldap_search_ext_s", NULL );
+		ldap_msgfree( res );
 		break;
 	}
 

@@ -23,10 +23,10 @@ forbiddenChars
 maxConsecutivePerClass 0
 useCracklib 0
 cracklibDict /var/cache/cracklib/cracklib_dict
-class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1
-class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1
-class-digit 0123456789 0 1
-class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'\''{([-|è`_\ç^à@)]°=}+ 0 1'
+class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1 0
+class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1 0
+class-digit 0123456789 0 1 0
+class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'\''{([-|è`_\ç^à@)]°=}+ 0 1 0'
 
 PPM_CONF_2='minQuality 3
 checkRDN 0
@@ -34,10 +34,10 @@ forbiddenChars à
 maxConsecutivePerClass 5
 useCracklib 0
 cracklibDict /var/cache/cracklib/cracklib_dict
-class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 2 4
-class-lowerCase abcdefghijklmnopqrstuvwxyz 3 4
-class-digit 0123456789 2 4
-class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'\''{([-|è`_\ç^à@)]°=}+ 0 4'
+class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 2 4 10
+class-lowerCase abcdefghijklmnopqrstuvwxyz 3 4 12
+class-digit 0123456789 2 4 10
+class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'\''{([-|è`_\ç^à@)]°=}+ 0 4 10'
 
 PPM_CONF_3='minQuality 3
 checkRDN 1
@@ -45,10 +45,10 @@ forbiddenChars
 maxConsecutivePerClass 0
 useCracklib 0
 cracklibDict /var/cache/cracklib/cracklib_dict
-class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1
-class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1
-class-digit 0123456789 0 1
-class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'\''{([-|è`_\ç^à@)]°=}+ 0 1'
+class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1 0
+class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1 0
+class-digit 0123456789 0 1 0
+class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'\''{([-|è`_\ç^à@)]°=}+ 0 1 0'
 
 
 echo "$PPM_CONF_1" > ppm1.conf
@@ -98,12 +98,20 @@ launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AAaaa01AAaaa01A
 launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AAaaa01AAaaa01AAAAAA" "FAIL"
 # not enough upper
 launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "Aaaaa01aaaaa01aa.;.;" "FAIL"
-# not enough lower
+# not enough lower/
 launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "aaAAA01BB0123AAA.;.;" "FAIL"
 # not enough digit
 launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "1AAAA.;BBB.;.;AA.;.;" "FAIL"
 # not enough points (no point for digit)
 launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AAaaaBBBBaaa01AAaaaa" "FAIL"
+# too much upper
+launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AAaa01AAaa01AA..AA..AAAA" "FAIL"
+# too much lower
+launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AAaaa01AAaaa01AAaaa0aaaa" "FAIL"
+# too much digit
+launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AA11aa11AA11aa11..11..11" "FAIL"
+# too much special
+launch_test "ppm2.conf" "uid=test,ou=users,dc=my-domain,dc=com" "AA..aa..11..AA..aa..11.." "FAIL"
 
 # password in RDN
 launch_test "ppm3.conf" "uid=User_Password10-test,ou=users,dc=my-domain,dc=com" "Password10" "FAIL"

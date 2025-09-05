@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -17,11 +17,11 @@
 ##
 
 SRCS = config.c context.c info.c ldapmap.c map.c params.c rule.c \
-	session.c subst.c var.c xmap.c \
+	session.c subst.c var.c xmap.c escapemap.c \
 	parse.c rewrite.c
 XSRCS = version.c
 OBJS = config.o context.o info.o ldapmap.o map.o params.o rule.o \
-	session.o subst.o var.o xmap.o
+	session.o subst.o var.o xmap.o escapemap.o
 
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries

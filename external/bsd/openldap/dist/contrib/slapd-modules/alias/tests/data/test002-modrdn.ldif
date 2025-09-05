@@ -1,0 +1,5 @@
+dn: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example
+ ,dc=com
+changetype: modrdn
+newrdn: mobile=\+1 313 555 4474
+deleteoldrdn: 0

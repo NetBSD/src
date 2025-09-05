@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,9 @@ SRCS	= main.c globals.c bconfig.c config.c daemon.c \
 		connection.c search.c filter.c add.c cr.c \
 		attr.c entry.c backend.c result.c operation.c \
 		dn.c compare.c modify.c delete.c modrdn.c ch_malloc.c \
-		value.c ava.c bind.c unbind.c abandon.c filterentry.c \
+		value.c verbs.c ava.c bind.c unbind.c abandon.c filterentry.c \
 		phonetic.c acl.c str2filter.c aclparse.c init.c user.c \
-		lock.c controls.c extended.c passwd.c proxyp.c \
+		lock.c logging.c controls.c extended.c passwd.c proxyp.c \
 		schema.c schema_check.c schema_init.c schema_prep.c \
 		schemaparse.c ad.c at.c mr.c syntax.c oc.c saslauthz.c \
 		oidm.c starttls.c index.c sets.c referral.c root_dse.c \
@@ -45,9 +45,9 @@ OBJS	= main.o globals.o bconfig.o config.o daemon.o \
 		connection.o search.o filter.o add.o cr.o \
 		attr.o entry.o backend.o backends.o result.o operation.o \
 		dn.o compare.o modify.o delete.o modrdn.o ch_malloc.o \
-		value.o ava.o bind.o unbind.o abandon.o filterentry.o \
+		value.o verbs.o ava.o bind.o unbind.o abandon.o filterentry.o \
 		phonetic.o acl.o str2filter.o aclparse.o init.o user.o \
-		lock.o controls.o extended.o passwd.o proxyp.o \
+		lock.o logging.o controls.o extended.o passwd.o proxyp.o \
 		schema.o schema_check.o schema_init.o schema_prep.o \
 		schemaparse.o ad.o at.o mr.o syntax.o oc.o saslauthz.o \
 		oidm.o starttls.o index.o sets.o referral.o root_dse.o \
@@ -118,7 +118,7 @@ SLAPD_OBJECTS = $(@PLAT@_SLAPD_OBJECTS)
 #
 # 2) be used to generate the symdummy.c file.
 #
-# 3) be used to help create slapd.exp, the binary-formated slapd export file.
+# 3) be used to help create slapd.exp, the binary-formatted slapd export file.
 #
 # The import library is used by dynamic modules at link time. With this
 # library, dynamic modules indicate to the linker that it will resolve

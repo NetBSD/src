@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## Portions Copyright 2008 Red Hat, Inc. 
 ## All rights reserved.
 ##
@@ -20,12 +20,17 @@ echo "running defines.sh"
 if test $MEMBEROF = memberofno; then 
 	echo "Memberof overlay not available, test skipped"
 	exit 0
-fi 
+fi
 
 if test $REFINT = refintno; then 
 	echo "Referential Integrity overlay not available, test skipped"
 	exit 0
-fi 
+fi
+
+if test $BACKEND = wt ; then
+	echo "back-wt does not support subtree rename"
+	exit 0
+fi
 
 mkdir -p $TESTDIR $DBDIR1 $TESTDIR/confdir
 

@@ -1,0 +1,92 @@
+.TH SLAPO-NESTGROUP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2024 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copying restrictions apply.  See the COPYRIGHT file.
+.\" $OpenLDAP$
+.SH NAME
+slapo\-nestgroup \- Nested Group overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The
+.B nestgroup
+overlay to
+.BR slapd (8)
+supports evaluation of nested groups in Search operations. Support consists
+of four possible features: inclusion of parent groups when searching with
+(member=) filters, inclusion of child groups when searching with (memberOf=)
+filters, expansion of child groups when returning member attributes, and
+expansion of parent groups when returning memberOf attributes. Each of
+these features may be enabled independently. By default, no features are
+enabled, so this overlay does nothing unless explicitly enabled.
+
+.SH CONFIGURATION
+The config directives that are specific to the
+.B nestgroup
+overlay must be prefixed by
+.BR nestgroup\- ,
+to avoid potential conflicts with directives specific to the underlying
+database or to other stacked overlays.
+
+.TP
+.B overlay nestgroup
+This directive adds the nestgroup overlay to the current database; see
+.BR slapd.conf (5)
+for details.
+
+.LP
+The following
+.B slapd.conf
+configuration options are defined for the nestgroup overlay.
+
+.TP
+.BI nestgroup\-member \ <member-ad>
+The value
+.I <member-ad>
+is the name of the attribute that contains the names of the members
+in the group objects; it must be DN-valued.
+It defaults to \fImember\fP.
+
+.TP
+.BI nestgroup\-memberof \ <memberof-ad>
+The value
+.I <memberof-ad>
+is the name of the attribute that contains the names of the groups
+an entry is member of; it must be DN-valued.
+It defaults to \fImemberOf\fP.
+
+.TP
+.BI nestgroup\-base \ <dn>
+The value
+.I <dn>
+specifies a subtree that contains group entries in the DIT. This
+may be specified multiple times for multiple distinct subtrees.
+It has no default and the overlay does no processing unless it is
+explicitly configured.
+
+.TP
+.BI "nestgroup\-flags {" member-filter ", " memberof-filter ", " member-values ", " memberof-values "}"
+This option specifies which features to enable in the overlay.
+By default, nothing is enabled and the overlay is a no-op.
+
+.LP
+The nestgroup overlay may be used with any backend that provides standard
+search functionality.
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.SH SEE ALSO
+.BR slapo\-dynlist (5),
+.BR slapo\-memberof (5),
+.BR slapd.conf (5),
+.BR slapd\-config (5),
+.BR slapd (8).
+The
+.BR slapo\-nestgroup (5)
+overlay supports dynamic configuration via
+.BR back-config .
+.SH ACKNOWLEDGEMENTS
+.P
+This module was written in 2024 by Howard Chu of Symas Corporation.
+

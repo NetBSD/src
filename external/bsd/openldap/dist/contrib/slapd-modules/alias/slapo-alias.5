@@ -1,0 +1,121 @@
+.TH SLAPO-ALIAS 5 "RELEASEDATE" "OpenLDAP"
+.\" Copyright 2023 Symas Corp. All Rights Reserved.
+.\" Copying restrictions apply.  See LICENSE.
+.SH NAME
+slapo\-alias \- expose an attribute under a different name
+.SH SYNOPSIS
+olcOverlay=alias
+.SH DESCRIPTION
+The
+.B alias
+overlay to
+.BR slapd (8)
+allows migrations for existing attributes exposed through a name that is
+now deprecated where using
+.BR slapo-rwm (5)
+is not applicable. For this reason, the aliased attributes are not writable
+in any way. In particular:
+
+.RS
+.TP
+.B Search
+
+Instances of the aliased attribute in the
+.B Search
+request filter are replaced by the source attribute.
+
+If the attribute is requested, the values are copied from the source
+attribute, however unlike with
+.BR slapo-rwm (5),
+if the source attribute is also requested, both will be returned.
+.TP
+.B Compare
+The request is mapped to the source attribute before processing.
+.TP
+.B Add, Modify, ModRDN
+Requests affecting aliased attributes are rejected with a
+.B Constraint
+.BR Violation .
+.RE
+
+
+.SH CONFIGURATION LAYOUT
+
+The overlay has to be instantiated under a database adding an entry of
+.B olcOverlay=alias
+with objectClass of
+.BR olcAliasConfig.
+
+These are the available options:
+
+.RS
+.TP
+.B olcAliasMapping: <source-attribute> <aliased-attribute>
+Any time
+.B aliased-attribute
+is requested (explicitly or through
+.B * +
+shorthands), the values of
+.B source-attribute
+are returned. The attributes need to be compatible i.e. both have to be
+operational or neither should, same with the
+.B SINGLE-VALUE
+option, syntax or matching rules. The
+.BR slapd.conf (5)
+equivalent is
+.BR alias_attribute .
+It can be provided multiple times.
+.RE
+
+.SH EXAMPLE
+
+The following is an example of a configured overlay, substitute
+.B $DATABASE
+for the DN of the database it is attached to and
+.B {x}
+with the desired position of the overlay in the overlay stack.
+
+.nf
+dn: olcOverlay={x}alias,$DATABASE
+objectClass: olcAliasConfig
+olcOverlay: alias
+olcAliasMapping: source-attribute aliased-attribute
+.fi
+
+The
+.BR slapd.conf (5)
+equivalent of the above follows:
+
+.nf
+overlay alias
+
+alias_attribute source-attribute aliased-attribute
+.fi
+
+.SH NOTES
+When mapping an operational attribute, you might need to use
+.BR slapo-dsaschema (5)
+contrib module to provide its definition into the schema.
+
+.SH BUGS AND LIMITATIONS
+Setting ACLs that differ between the aliased and its source attribute is not
+supported, they have to match or risk information disclosure.
+
+It is also expected that the aliased attributes are never physically present in
+the database.
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.TP
+ETCDIR/slapd.d
+default slapd configuration directory
+.SH SEE ALSO
+.BR slapd-config (5),
+.BR slapd.conf (5),
+.BR slapd.overlays (5),
+.BR slapo-dsaschema (5),
+.BR slapd (8)
+.SH ACKNOWLEDGEMENTS
+This module was developed in 2023 by Ondřej Kuzník for Symas Corp.

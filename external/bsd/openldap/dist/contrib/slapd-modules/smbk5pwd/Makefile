@@ -1,7 +1,7 @@
 # $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2021 The OpenLDAP Foundation.
+# Copyright 1998-2024 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,11 @@ SSL_LIB = -lcrypto
 HEIMDAL_INC = -I/usr/heimdal/include
 HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
 
+PLAT = UNIX
+NT_LIB = -L$(LDAP_BUILD)/servers/slapd -lslapd
+NT_LDFLAGS = -no-undefined -avoid-version
+UNIX_LDFLAGS = -version-info $(LTVER)
+
 LIBTOOL = $(LDAP_BUILD)/libtool
 INSTALL = /usr/bin/install
 CC = gcc
@@ -31,7 +36,8 @@ OPT = -g -O2
 # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
 DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
 INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
-LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
+LIBS = $($(PLAT)_LIB) $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
+LD_FLAGS = $(LDFLAGS) $($(PLAT)_LDFLAGS) -rpath $(moduledir) -module
 
 PROGRAMS = smbk5pwd.la
 MANPAGES = slapo-smbk5pwd.5
@@ -55,8 +61,7 @@ man5dir = $(mandir)/man5
 all: $(PROGRAMS)
 
 smbk5pwd.la:	smbk5pwd.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 clean:
 	rm -rf *.o *.lo *.la .libs

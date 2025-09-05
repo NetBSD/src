@@ -1,10 +1,10 @@
-/*	$NetBSD: pam.c,v 1.1.1.8 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: pam.c,v 1.1.1.9 2025/09/05 21:09:45 christos Exp $	*/
 
 /* pam.c - pam processing routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2021 The OpenLDAP Foundation.
+ * Copyright 2008-2024 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * Portions Copyright 2013 by Ted C. Cheng, Symas Corp.
  * All rights reserved.

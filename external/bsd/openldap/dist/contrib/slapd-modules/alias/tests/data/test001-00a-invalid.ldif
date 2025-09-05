@@ -1,0 +1,4 @@
+dn: olcOverlay={0}alias,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+add: olcAliasMapping
+olcAliasMapping: description invalidAttr

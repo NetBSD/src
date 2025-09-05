@@ -680,7 +680,6 @@ affectsMultipleDSAs
 Preprocessor
 lastName
 lldap
-cachesize
 slapauth
 attributeType
 attributetype

@@ -1,10 +1,10 @@
-/*	$NetBSD: dncache.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $	*/
+/*	$NetBSD: dncache.c,v 1.1.1.2 2025/09/05 21:09:48 christos Exp $	*/
 
 /* dncache.c - dn caching for back-asyncmeta */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2016-2021 The OpenLDAP Foundation.
+ * Copyright 2016-2024 The OpenLDAP Foundation.
  * Portions Copyright 2016 Symas Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  * This work was sponsored by Ericsson. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dncache.c,v 1.1.1.1 2021/08/14 16:05:23 christos Exp $");
+__RCSID("$NetBSD: dncache.c,v 1.1.1.2 2025/09/05 21:09:48 christos Exp $");
 
 #include "portable.h"
 

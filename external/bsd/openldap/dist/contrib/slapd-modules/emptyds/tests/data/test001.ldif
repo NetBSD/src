@@ -1,0 +1,71 @@
+# slapd prevents us from adding the same value multiple times
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+add: description
+description: one
+description: 
+description: two
+description: three
+description: four
+# a space is distinct from an empty value
+description:: ICAg
+-
+replace: drink
+drink: Earl Grey, hot
+-
+delete: description
+description: 
+-
+replace: drink
+drink: Earl Grey, hot
+
+# there is no such restriction on deletes, so we exercise this part of the overlay here
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+delete: description
+description: 
+description: four
+description: 
+description: three
+description: two
+description: 
+description: 
+description: one
+description: 
+-
+add: description
+description: 
+
+dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+replace: drink
+drink: 
+
+dn: cn=All Staff,ou=Groups,dc=example,dc=com
+changetype: modify
+delete: member
+-
+add: member
+# an empty DN should not be stripped
+member: 
+member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+
+dn: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: add
+objectclass: testPerson
+cn: Gern Jensen
+sn: Jensen
+uid: gjensen
+title: 
+postaladdress: ITD $ 535 W. William St $ Anytown, MI 48103
+seealso: cn=All Staff,ou=Groups,dc=example,dc=com
+drink: Coffee
+homepostaladdress: 844 Brown St. Apt. 4 $ Anytown, MI 48104
+description: Very odd
+description: 
+description: More than you think
+facsimiletelephonenumber: +1 313 555 7557
+telephonenumber: +1 313 555 8343
+mail: gjensen@mailgw.example.com
+homephone: +1 313 555 8844
+testTime: 20050304001801.234Z

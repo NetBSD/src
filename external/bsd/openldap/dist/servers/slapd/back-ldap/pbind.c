@@ -1,10 +1,10 @@
-/*	$NetBSD: pbind.c,v 1.1.1.7 2021/08/14 16:05:24 christos Exp $	*/
+/*	$NetBSD: pbind.c,v 1.1.1.8 2025/09/05 21:09:50 christos Exp $	*/
 
 /* pbind.c - passthru Bind overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003-2010 Howard Chu.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pbind.c,v 1.1.1.7 2021/08/14 16:05:24 christos Exp $");
+__RCSID("$NetBSD: pbind.c,v 1.1.1.8 2025/09/05 21:09:50 christos Exp $");
 
 #include "portable.h"
 

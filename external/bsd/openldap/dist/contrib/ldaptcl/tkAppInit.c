@@ -1,4 +1,4 @@
-/*	$NetBSD: tkAppInit.c,v 1.1.1.5 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: tkAppInit.c,v 1.1.1.6 2025/09/05 21:09:43 christos Exp $	*/
 
 /* 
  * tkXAppInit.c --
@@ -39,16 +39,9 @@ int (*tclDummyMathPtr)() = matherr;
  * This is the main program for the application.
  *-----------------------------------------------------------------------------
  */
-#ifdef __cplusplus
 int
 main (int    argc,
       char **argv)
-#else
-int
-main (argc, argv)
-    int    argc;
-    char **argv;
-#endif
 {
 #ifdef USE_TCLX
     TkX_Main(argc, argv, Tcl_AppInit);
@@ -70,14 +63,8 @@ main (argc, argv)
  * interp->result if an error occurs.
  *-----------------------------------------------------------------------------
  */
-#ifdef __cplusplus
 int
 Tcl_AppInit (Tcl_Interp *interp)
-#else
-int
-Tcl_AppInit (interp)
-    Tcl_Interp *interp;
-#endif
 {
     if (Tcl_Init (interp) == TCL_ERROR) {
         return TCL_ERROR;
