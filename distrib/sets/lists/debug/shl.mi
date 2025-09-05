@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.369 2025/08/27 16:08:11 christos Exp $
+# $NetBSD: shl.mi,v 1.370 2025/09/05 21:19:37 christos Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -150,7 +150,8 @@
 ./usr/libdata/debug/usr/lib/libkvm.so.6.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblber.so.5.0.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/libldap.so.6.0.debug		comp-ldap-debug	debug,compatfile,ldap
-./usr/libdata/debug/usr/lib/libldap_r.so.6.0.debug		comp-ldap-debug	debug,compatfile,ldap
+./usr/libdata/debug/usr/lib/libldap_r.so.6.0.debug		comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/libldap_r.so.7.0.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/liblsan.so.2.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=10
 ./usr/libdata/debug/usr/lib/liblsan.so.3.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/liblua.so.6.1.debug			comp-sys-debug	debug,compatfile

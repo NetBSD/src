@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1009 2025/08/25 19:11:30 christos Exp $
+# $NetBSD: shl.mi,v 1.1010 2025/09/05 21:19:37 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -433,8 +433,10 @@
 ./usr/lib/libldap.so.6				base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap.so.6.0			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap,compatfile
-./usr/lib/libldap_r.so.6			base-ldap-shlib		ldap,compatfile
-./usr/lib/libldap_r.so.6.0			base-ldap-shlib		ldap,compatfile
+./usr/lib/libldap_r.so.6			base-obsolete		obsolete
+./usr/lib/libldap_r.so.6.0			base-obsolete		obsolete
+./usr/lib/libldap_r.so.7			base-ldap-shlib		ldap,compatfile
+./usr/lib/libldap_r.so.7.0			base-ldap-shlib		ldap,compatfile
 ./usr/lib/liblsan.so				base-sys-shlib		compatfile,cxx,gcccmds,gcc
 ./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,cxx,gcccmds,gcc=10
 ./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcccmds,gcc=10
