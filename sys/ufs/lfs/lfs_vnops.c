@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.340 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.341 2025/09/05 05:14:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.340 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.341 2025/09/05 05:14:29 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1137,15 +1137,17 @@ lfs_link(void *v)
 		return EROFS;
 	}
 
-	error = lfs_set_dirop(dvp, NULL);
+	error = lfs_set_dirop(dvp, ap->a_vp);
 	if (error) {
 		return error;
 	}
 
 	error = ulfs_link(ap);
 
+	UNMARK_VNODE(ap->a_vp);
 	UNMARK_VNODE(dvp);
 	lfs_unset_dirop(fs, dvp, "link");
+	vrele(ap->a_vp);
 	vrele(dvp);
 
 	return (error);
