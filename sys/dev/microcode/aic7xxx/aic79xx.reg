@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.17 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.18 2025/09/06 21:09:27 andvar Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -1827,7 +1827,7 @@ register SSTAT0	{
 	field	SELDO		0x40	/* Selection Done */
 	field	SELDI		0x20	/* Board has been selected */
 	field	SELINGO		0x10	/* Selection In Progress */
-	field	IOERR		0x08	/* LVD Tranceiver mode changed */
+	field	IOERR		0x08	/* LVD Transceiver mode changed */
 	field	OVERRUN		0x04	/* SCSI Offset overrun detected */
 	field	SPIORDY		0x02	/* SCSI PIO Ready */
 	field	ARBDO		0x01	/* Arbitration Done Out */
