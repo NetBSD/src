@@ -1,4 +1,4 @@
-#	$NetBSD: files.vexpress,v 1.6 2018/08/11 10:20:44 jmcneill Exp $
+#	$NetBSD: files.vexpress,v 1.7 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for ARM Ltd. Versatile Express peripherals
 #
@@ -6,6 +6,6 @@
 
 file	arch/arm/vexpress/vexpress_platform.c
 
-device	vxsysreg
+device	vxsysreg: fdt_power
 attach	vxsysreg at fdt with vexpress_sysreg
 file	arch/arm/vexpress/vexpress_sysreg.c	vexpress_sysreg	

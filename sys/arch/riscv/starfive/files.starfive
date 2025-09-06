@@ -1,66 +1,66 @@
-#	$NetBSD: files.starfive,v 1.11 2025/02/08 16:12:20 skrll Exp $
+#	$NetBSD: files.starfive,v 1.12 2025/09/06 15:44:04 thorpej Exp $
 #
 # Configuration info for StarFive SoCs
 #
 
 # JH71x0 Clock controllers
-device	jh7100clkc
+device	jh7100clkc: fdt_clock
 attach	jh7100clkc at fdt with jh7100_clkc
 file	arch/riscv/starfive/jh7100_clkc.c		jh7100_clkc
 
-device	jh7110clkc
+device	jh7110clkc: fdt_clock, fdt_reset
 attach	jh7110clkc at fdt with jh7110_clkc
 file	arch/riscv/starfive/jh7110_clkc.c		jh7110_clkc
 
 file	arch/riscv/starfive/jh71x0_clkc.c		jh7100_clkc | jh7110_clkc
 
 # JH71x0 USB
-device	jh71x0usb
+device	jh71x0usb: fdt_syscon
 attach	jh71x0usb at fdt with jh71x0_usb
 file	arch/riscv/starfive/jh71x0_usb.c		jh71x0_usb
 
 # JH7100 Pin control
-device	jh7100pinctrl
+device	jh7100pinctrl: fdt_gpio, fdt_pinctrl
 attach	jh7100pinctrl at fdt with jh7100_pinctrl
 file	arch/riscv/starfive/jh7100_pinctrl.c		jh7100_pinctrl
 
 # JH7100 Pin control
-device	jh7110pinctrl
+device	jh7110pinctrl: fdt_gpio, fdt_pinctrl
 attach	jh7110pinctrl at fdt with jh7110_pinctrl
 file	arch/riscv/starfive/jh7110_pinctrl.c		jh7110_pinctrl
 
 # Ethernet
 # JH7100 GMAC
-attach	awge at fdt with jh7100_gmac
+attach	awge at fdt with jh7100_gmac: fdt_clock, fdt_reset, fdt_syscon
 
 # JH7110 EOQS
-attach	eqos at fdt with jh7110_eqos
+attach	eqos at fdt with jh7110_eqos: fdt_clock, fdt_reset, fdt_syscon
 
 file	arch/riscv/starfive/jh7100_gmac.c		jh7100_gmac
 file	arch/riscv/starfive/jh7110_eqos.c		jh7110_eqos
 file	arch/riscv/starfive/jh71x0_eth.c		jh7100_gmac | jh7110_eqos
 
 # JH7110 PCIe PHY
-device	jh7110pciephy
+device	jh7110pciephy: fdt_phy
 attach	jh7110pciephy at fdt with jh7110_pciephy
 file	arch/riscv/starfive/jh7110_pciephy.c		jh7110_pciephy
 
 # JH7110 PCIe
-device	jh7110pcie: pcibus, pcihost_fdt
+device	jh7110pcie: fdt_clock, fdt_gpio, fdt_reset, fdt_syscon, pcibus, pcihost_fdt
 attach	jh7110pcie at fdt with jh7110_pcie
 file	arch/riscv/starfive/jh7110_pcie.c		jh7110_pcie
 
 # JH7110 system control
-device	jh7110syscon
+device	jh7110syscon: fdt_syscon
 attach	jh7110syscon at fdt with jh7110_syscon
 file	arch/riscv/starfive/jh7110_syscon.c		jh7110_syscon
 
 # JH71x0 temperature sensor
-device	jh71x0temp
+device	jh71x0temp: fdt_reset
 attach	jh71x0temp at fdt with jh71x0_temp
 file	arch/riscv/starfive/jh71x0_temp.c		jh71x0_temp
 
 # JH7110 TRNG
-device	jh7110trng
+device	jh7110trng: fdt_reset
 attach	jh7110trng at fdt with jh7110_trng
 file	arch/riscv/starfive/jh7110_trng.c		jh7110_trng

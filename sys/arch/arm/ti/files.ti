@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.22 2022/07/20 10:01:11 riastradh Exp $
+#	$NetBSD: files.ti,v 1.23 2025/09/06 15:44:03 thorpej Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -16,7 +16,7 @@ attach	tisysc at fdt with ti_sysc
 file	arch/arm/ti/ti_sysc.c		ti_sysc
 
 # PRCM
-define	ti_prcm
+define	ti_prcm: fdt_clock
 file	arch/arm/ti/ti_prcm.c		ti_prcm
 
 # PRCM (AM3xxx)
@@ -35,15 +35,15 @@ attach	omap3prm at fdt with omap3_prm
 file	arch/arm/ti/omap3_prm.c		omap3_prm
 
 # Clocks
-device	timuxclk
+device	timuxclk: fdt_clock
 attach	timuxclk at fdt with ti_mux_clock
 file	arch/arm/ti/ti_mux_clock.c	ti_mux_clock
 
-device	tidivclk
+device	tidivclk: fdt_clock
 attach	tidivclk at fdt with ti_div_clock
 file	arch/arm/ti/ti_div_clock.c	ti_div_clock
 
-device	tidpllclk
+device	tidpllclk: fdt_clock
 attach	tidpllclk at fdt with ti_dpll_clock
 file	arch/arm/ti/ti_dpll_clock.c	ti_dpll_clock
 
@@ -57,12 +57,12 @@ attach  omaptimer at fdt
 file	arch/arm/ti/ti_omaptimer.c	omaptimer
 
 # GPIO
-device	tigpio: gpiobus
+device	tigpio: fdt_gpio, gpiobus
 attach	tigpio at fdt with ti_gpio
 file	arch/arm/ti/ti_gpio.c		ti_gpio
 
 # I2C
-device	tiiic: i2cbus, i2cexec
+device	tiiic: fdt_i2c, i2cbus, i2cexec
 attach	tiiic at fdt with ti_iic
 file	arch/arm/ti/ti_iic.c		ti_iic
 
@@ -96,7 +96,7 @@ device	tiusbtll
 attach	tiusbtll at fdt with ti_usbtll
 file	arch/arm/ti/ti_usbtll.c		ti_usbtll
 
-attach	ehci at fdt with ti_ehci
+attach	ehci at fdt with ti_ehci: fdt_clock, fdt_phy, fdt_reset
 file	arch/arm/ti/ti_ehci.c		ti_ehci
 
 attach	motg at fdt with ti_motg
@@ -138,7 +138,7 @@ device	tiwdt: sysmon_wdog
 attach	tiwdt at fdt with ti_wdt
 file	arch/arm/ti/ti_wdt.c		ti_wdt
 
-# SOC parameters
-defflag	opt_soc.h			SOC_TI
+# SOC parameters			XXX FDT_SYSCON
+defflag	opt_soc.h			SOC_TI: FDT_SYSCON
 defflag	opt_soc.h			SOC_AM33XX: SOC_TI
 defflag	opt_soc.h			SOC_OMAP3: SOC_TI

@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.30 2025/06/03 19:10:26 rjs Exp $
+#	$NetBSD: files.rockchip,v 1.31 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -9,6 +9,7 @@ file	arch/arm/rockchip/rk_platform.c		soc_rockchip
 file	arch/arm/rockchip/rk3066_smp.c		soc_rk3288 & multiprocessor
 
 # Clock and reset unit (CRU)
+define	rk_cru: fdt_clock, fdt_reset, fdt_syscon
 device	rkcru: rk_cru
 file	arch/arm/rockchip/rk_cru.c		rk_cru
 file	arch/arm/rockchip/rk_cru_arm.c		rk_cru
@@ -46,78 +47,78 @@ device	rkiomux { }
 
 ifdef arm
 
-attach	rkiomux at fdt with rk3288_iomux
+attach	rkiomux at fdt with rk3288_iomux: fdt_syscon, fdt_pinctrl
 file	arch/arm/rockchip/rk3288_iomux.c	rk3288_iomux & soc_rk3288
 
 else
 
-attach	rkiomux at fdt with rk3328_iomux
+attach	rkiomux at fdt with rk3328_iomux: fdt_syscon, fdt_pinctrl
 file	arch/arm/rockchip/rk3328_iomux.c	rk3328_iomux & soc_rk3328
-attach	rkiomux at fdt with rk3399_iomux
+attach	rkiomux at fdt with rk3399_iomux: fdt_syscon, fdt_pinctrl
 file	arch/arm/rockchip/rk3399_iomux.c	rk3399_iomux & soc_rk3399
-attach	rkiomux at fdt with rk3588_iomux
+attach	rkiomux at fdt with rk3588_iomux: fdt_syscon, fdt_pinctrl
 file	arch/arm/rockchip/rk3588_iomux.c	rk3588_iomux & soc_rk3588
 
 endif
 
 # GPIO
-device	rkgpio: gpiobus
+device	rkgpio: fdt_clock, fdt_gpio, gpiobus
 attach	rkgpio at rkiomux with rk_gpio
 file	arch/arm/rockchip/rk_gpio.c		rk_gpio
 
 # I2C
-device	rkiic: i2cbus, i2cexec
+device	rkiic: fdt_clock, fdt_i2c, i2cbus, i2cexec
 attach	rkiic at fdt with rk_i2c
 file	arch/arm/rockchip/rk_i2c.c		rk_i2c
 
 # SPI
-device	rkspi: spibus
+device	rkspi: fdt_clock, fdt_spi, spibus
 attach	rkspi at fdt with rk_spi
 file	arch/arm/rockchip/rk_spi.c		rk_spi
 
 # USB PHY
-device	rkusb { }
+device	rkusb { }: fdt_clock, fdt_syscon
 attach	rkusb at fdt with rk_usb
-device	rkusbphy
+device	rkusbphy: fdt_phy, fdt_regulator
 attach	rkusbphy at rkusb with rk_usbphy
 file	arch/arm/rockchip/rk_usb.c		rk_usb | rk_usbphy
 
-device	rk3288usb { }
+device	rk3288usb { }: fdt_reset, fdt_syscon
 attach	rk3288usb at fdt with rk3288_usb
-device	rk3288usbphy
+device	rk3288usbphy: fdt_phy
 attach	rk3288usbphy at rk3288usb with rk3288_usbphy
 file	arch/arm/rockchip/rk3288_usb.c		rk3288_usb | rk3288_usbphy
 
 # GMAC
-attach	awge at fdt with rk_gmac
+attach	awge at fdt with rk_gmac: fdt_clock, fdt_gpio, fdt_reset, fdt_syscon
 file	arch/arm/rockchip/rk_gmac.c		rk_gmac
 
 # EQOS
-attach	eqos at fdt with rk_eqos
+attach	eqos at fdt with rk_eqos: fdt_clock, fdt_gpio, fdt_reset, fdt_syscon
 file	arch/arm/rockchip/rk_eqos.c		rk_eqos
 
 # PCIe PHY
-device	rkpciephy
+device	rkpciephy: fdt_clock, fdt_phy, fdt_reset, fdt_syscon
 attach	rkpciephy at fdt
 file	arch/arm/rockchip/rk3399_pcie_phy.c	rkpciephy
 
 # PCIe host
-device	rkpcie: pcibus, pcihost_fdt
+device	rkpcie: fdt_gpio, fdt_phy, fdt_regulator, fdt_reset, pcibus, pcihost_fdt
 attach	rkpcie at fdt
 file	arch/arm/rockchip/rk3399_pcie.c		rkpcie
 
 # eMMC PHY
-device	rkemmcphy
+device	rkemmcphy: fdt_clock, fdt_phy, fdt_syscon
 attach	rkemmcphy at fdt
 file	arch/arm/rockchip/rk_emmcphy.c		rkemmcphy
 
 # TSADC temperature sensors
-device	rktsadc: sysmon_envsys
+device	rktsadc: fdt_clock, fdt_reset, fdt_syscon, sysmon_envsys
 attach	rktsadc at fdt with rk_tsadc
 file	arch/arm/rockchip/rk_tsadc.c		rk_tsadc
 
 # PWM
-device	rkpwm: pwm
+device	rkpwm: fdt_clock, fdt_pwm
 attach	rkpwm at fdt with rk_pwm
 file	arch/arm/rockchip/rk_pwm.c		rk_pwm
 
@@ -135,35 +136,35 @@ file	arch/arm/rockchip/rk_fb.c		rk_fb
 makeoptions	rk_fb	"CPPFLAGS.rk_fb"+="${CPPFLAGS.drmkms}"
 
 # Visual Output Processor
-device	rkvop: drmkms
+device	rkvop: fdt_clock, fdt_reset, drmkms
 attach	rkvop at fdt with rk_vop
 file	arch/arm/rockchip/rk_vop.c		rk_vop
 makeoptions	rk_vop	"CPPFLAGS.rk_vop"+="${CPPFLAGS.drmkms}"
 
 # HDMI TX (Designware based)
-attach	dwhdmi at fdt with rk_dwhdmi
+attach	dwhdmi at fdt with rk_dwhdmi: fdt_clock, fdt_dai, fdt_i2c, fdt_syscon
 file	arch/arm/rockchip/rk_dwhdmi.c		rk_dwhdmi
 makeoptions	rk_dwhdmi	"CPPFLAGS.rk_dwhdmi"+="${CPPFLAGS.drmkms}"
 
 # DP/eDP (Analogix-based)
-attach	anxdp at fdt with rk_anxdp
+attach	anxdp at fdt with rk_anxdp: fdt_dai, fdt_syscon
 file	arch/arm/rockchip/rk_anxdp.c		rk_anxdp
 makeoptions	rk_anxdp	"CPPFLAGS.rk_anxdp"+="${CPPFLAGS.drmkms}"
 
 # I2S/PCM controller
-device	rki2s
+device	rki2s: fdt_dai, fdt_syscon
 attach  rki2s at fdt with rk_i2s
 file    arch/arm/rockchip/rk_i2s.c		rk_i2s
 
 # Crypto engine v1
-device	rkv1crypto
+device	rkv1crypto: fdt_reset
 attach	rkv1crypto at fdt with rk_v1crypto
 file	arch/arm/rockchip/rk_v1crypto.c		rk_v1crypto
 
 # USB-C PHY
 device	rktypec { }
 attach	rktypec at fdt with rk_typec
-device	rktcphy
+device	rktcphy: fdt_clock, fdt_phy, fdt_reset, fdt_syscon
 attach	rktcphy at rktypec with rk_tcphy
 file 	arch/arm/rockchip/rk_tcphy.c		rk_typec | rk_tcphy
 

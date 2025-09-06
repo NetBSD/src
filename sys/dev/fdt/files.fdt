@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.73 2024/05/09 12:09:59 pho Exp $
+# $NetBSD: files.fdt,v 1.74 2025/09/06 15:44:04 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -7,7 +7,79 @@ defflag	opt_fdt.h				FDT: FDTBASE
 defparam opt_fdt.h				FDT_MEMORY_RANGES
 defparam opt_fdt.h				FDT_DEFAULT_STDOUT_PATH
 
-define	fdt { [pass = 10] } : clk, pwm
+file	dev/fdt/fdt_boot.c			fdtbase
+file	dev/fdt/fdt_memory.c			fdtbase
+file	dev/fdt/fdt_openfirm.c			fdtbase
+file	dev/fdt/fdt_platform.c			fdtbase
+file	dev/fdt/fdt_stub.c			fdtbase
+file	dev/fdt/fdt_subr.c			fdtbase
+
+define	fdt_clock: clk
+file	dev/fdt/fdt_clock.c			fdt & fdt_clock
+
+define	fdt_dai
+file	dev/fdt/fdt_dai.c			fdt & fdt_dai
+
+define	fdt_dma
+file	dev/fdt/fdt_dma.c			fdt & fdt_dma
+
+file	dev/fdt/fdt_ddb.c			fdt & ddb
+
+define	fdt_display_timing
+file	dev/fdt/display_timing.c		fdt & fdt_display_timing
+
+define	fdt_gpio
+file	dev/fdt/fdt_gpio.c			fdt & fdt_gpio
+
+define	fdt_i2c
+file	dev/fdt/fdt_i2c.c			fdt & fdt_i2c
+
+# Interrupt support is basically always required.
+# XXX Maybe it should be considered FDTBASE?
+file	dev/fdt/fdt_intr.c			fdt
+
+define	fdt_iommu
+file	dev/fdt/fdt_iommu.c			fdt & fdt_iommu
+
+define	fdt_mbox
+file	dev/fdt/fdt_mbox.c			fdt & fdt_mbox
+
+define	fdt_mmc_pwrseq
+file	dev/fdt/fdt_mmc_pwrseq.c		fdt & fdt_mmc_pwrseq
+
+define	fdt_phy
+file	dev/fdt/fdt_phy.c			fdt & fdt_phy
+
+define	fdt_power
+file	dev/fdt/fdt_power.c			fdt & fdt_power
+
+define	fdt_powerdomain
+file	dev/fdt/fdt_powerdomain.c		fdt & fdt_powerdomain
+
+define	fdt_pwm: pwm
+file	dev/fdt/fdt_pwm.c			fdt & fdt_pwm
+
+define	fdt_regulator
+file	dev/fdt/fdt_regulator.c			fdt & fdt_regulator
+
+define	fdt_reset
+file	dev/fdt/fdt_reset.c			fdt & fdt_reset
+
+# XXX See kern/59630
+file	dev/fdt/fdt_rtc.c			fdt
+
+define	fdt_spi
+file	dev/fdt/fdt_spi.c			fdt & fdt_spi
+
+# XXX arch/arm/ti/files.ti -- ti_cpufreq.c
+defflag	opt_fdt.h				FDT_SYSCON
+define	fdt_syscon
+file	dev/fdt/fdt_syscon.c			fdt & fdt_syscon
+
+define	fdt_pinctrl
+file	dev/fdt/fdt_pinctrl.c			fdt & fdt_pinctrl
+
+define	fdt { [pass = 10] }
 
 device	simplebus: fdt
 attach	simplebus at fdt
@@ -15,31 +87,31 @@ file	dev/fdt/fdtbus.c			fdt
 
 file	dev/fdt/fdt_userconf.c			fdt & userconf
 
-device	fregulator
+device	fregulator: fdt_gpio, fdt_regulator
 attach	fregulator at fdt
 file	dev/fdt/fixedregulator.c		fregulator
 
-device	gregulator
+device	gregulator: fdt_gpio, fdt_regulator
 attach	gregulator at fdt
 file	dev/fdt/gpioregulator.c			gregulator
 
-device	pregulator
+device	pregulator: fdt_gpio, fdt_pwm, fdt_regulator
 attach	pregulator at fdt
 file	dev/fdt/pwmregulator.c			pregulator
 
-device	fclock: clk
+device	fclock: fdt_clock
 attach	fclock at fdt
 file	dev/fdt/fixedclock.c			fclock
 
-device	ffclock: clk
+device	ffclock: fdt_clock
 attach	ffclock at fdt
 file	dev/fdt/fixedfactorclock.c		ffclock
 
-device	gpiokeys: sysmon_envsys, sysmon_power, wskbddev, linux_keymap
+device	gpiokeys: fdt_gpio, sysmon_envsys, sysmon_power, wskbddev, linux_keymap
 attach	gpiokeys at fdt
 file	dev/fdt/gpiokeys.c			gpiokeys
 
-device	gpioleds: leds
+device	gpioleds: fdt_gpio, leds
 attach	gpioleds at fdt
 file	dev/fdt/gpioleds.c			gpioleds
 
@@ -49,125 +121,95 @@ device	connector: fdt_port
 attach	connector at fdt with fdt_connector
 file	dev/fdt/connector_fdt.c			fdt_connector
 
-device	panel: fdt_port
+device	panel: fdt_gpio, fdt_port
 attach	panel at fdt with fdt_panel
 file	dev/fdt/panel_fdt.c			fdt_panel
 
-attach	panel at fdt with panel_fdt: drmkms
+attach	panel at fdt with panel_fdt: fdt_gpio, fdt_regulator, drmkms
 file	dev/fdt/fdt_panel.c			panel_fdt
 makeoptions	panel_fdt	"CPPFLAGS.panel_fdt"+="${CPPFLAGS.drmkms}"
 
-device	dispcon: fdt_port, drmkms, ddc_read_edid
+device	dispcon: fdt_gpio, fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
 file	dev/fdt/hdmi_connector.c		dispcon_hdmi
 makeoptions	dispcon_hdmi	"CPPFLAGS.dispcon_hdmi"+="${CPPFLAGS.drmkms}"
 
-device	iicmux: i2cbus, i2cmux
-attach	iicmux at fdt with iicmux_fdt
+device	iicmux: fdt_i2c, i2cbus, i2cmux
+attach	iicmux at fdt with iicmux_fdt: fdt_gpio, fdt_pinctrl
 file	dev/fdt/i2cmux_fdt.c			iicmux_fdt
-
-file	dev/fdt/fdt_boot.c			fdtbase
-file	dev/fdt/fdt_memory.c			fdtbase
-file	dev/fdt/fdt_openfirm.c			fdtbase
-file	dev/fdt/fdt_platform.c			fdtbase
-file	dev/fdt/fdt_subr.c			fdtbase
-
-file	dev/fdt/fdt_clock.c			fdt
-file	dev/fdt/fdt_dai.c			fdt
-file	dev/fdt/fdt_dma.c			fdt
-file	dev/fdt/fdt_ddb.c			fdt & ddb
-file	dev/fdt/fdt_gpio.c			fdt
-file	dev/fdt/fdt_i2c.c			fdt
-file	dev/fdt/fdt_iommu.c			fdt
-file	dev/fdt/fdt_intr.c			fdt
-file	dev/fdt/fdt_mbox.c			fdt
-file	dev/fdt/fdt_mmc_pwrseq.c		fdt
-file	dev/fdt/fdt_phy.c			fdt
-file	dev/fdt/fdt_power.c			fdt
-file	dev/fdt/fdt_powerdomain.c		fdt
-file	dev/fdt/fdt_pwm.c			fdt
-file	dev/fdt/fdt_regulator.c			fdt
-file	dev/fdt/fdt_reset.c			fdt
-file	dev/fdt/fdt_rtc.c			fdt
-file	dev/fdt/fdt_spi.c			fdt
-file	dev/fdt/fdt_syscon.c			fdt
-file	dev/fdt/fdt_pinctrl.c			fdt
 
 device	cpus: fdt
 attach	cpus at fdt
 file	dev/fdt/cpus.c				cpus
 
-device	mmcpwrseq
-attach	mmcpwrseq at fdt with mmcpwrseq_simple
+device	mmcpwrseq: fdt_gpio, fdt_mmc_pwrseq
+attach	mmcpwrseq at fdt with mmcpwrseq_simple: fdt_clock
 file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq_simple
 attach	mmcpwrseq at fdt with mmcpwrseq_emmc
 file	dev/fdt/mmc_pwrseq_emmc.c		mmcpwrseq_emmc
 
-device	syscon: fdt
+device	syscon: fdt, fdt_syscon
 attach	syscon at fdt
 file	dev/fdt/syscon.c			syscon
 
-device	pinctrl
+device	pinctrl: fdt_pinctrl
 attach	pinctrl at fdt with pinctrl_single
 file	dev/fdt/pinctrl_single.c		pinctrl_single
 
-device	pwmbacklight
+device	pwmbacklight: fdt_gpio, fdt_pwm
 attach	pwmbacklight at fdt
 file	dev/fdt/pwm_backlight.c			pwmbacklight
 
-device	pwmfan
+device	pwmfan: fdt_pwm
 attach	pwmfan at fdt
 file	dev/fdt/pwm_fan.c			pwmfan
 
-device	ausoc: audiobus
+device	ausoc: fdt_dai, audiobus
 attach	ausoc at fdt
 file	dev/fdt/ausoc.c				ausoc
 
-device	spdiftx
+device	spdiftx: fdt_dai
 attach	spdiftx at fdt
 file	dev/fdt/spdif_tx.c			spdiftx
-
-define	fdt_display_timing
-file	dev/fdt/display_timing.c		fdt_display_timing
 
 # Display controller
 attach	genfb at fdt with simplefb
 file	dev/fdt/simplefb.c			simplefb
 
 # NS 8250 compatible UART
-attach	com at fdt with ns8250_uart
+attach	com at fdt with ns8250_uart: fdt_clock
 file	dev/fdt/ns8250_uart.c			ns8250_uart
 
 # Designware APB UART
-attach	com at fdt with dw_apb_uart
+attach	com at fdt with dw_apb_uart: fdt_clock, fdt_reset
 file	dev/fdt/dw_apb_uart.c			dw_apb_uart
 
 # EHCI
-attach	ehci at fdt with ehci_fdt
+attach	ehci at fdt with ehci_fdt: fdt_clock, fdt_phy, fdt_reset
 file	dev/fdt/ehci_fdt.c			ehci_fdt
 
 # OHCI
-attach	ohci at fdt with ohci_fdt
+attach	ohci at fdt with ohci_fdt: fdt_clock, fdt_phy, fdt_reset
 file	dev/fdt/ohci_fdt.c			ohci_fdt
 
 # Cadence USB3 XHCI
-attach	xhci at fdt with cdns3_fdt
+attach	xhci at fdt with cdns3_fdt: fdt_phy
 file	dev/fdt/cdns3_fdt.c			cdns3_fdt
 
 # Designware USB2 OTG
-attach	dwctwo at fdt with dwc2_fdt
+attach	dwctwo at fdt with dwc2_fdt: fdt_clock, fdt_phy
 file	dev/fdt/dwc2_fdt.c			dwc2_fdt
 
 # Designware USB3 XHCI
-attach	xhci at fdt with dwc3_fdt
+attach	xhci at fdt with dwc3_fdt: fdt_clock, fdt_phy, fdt_reset
 file	dev/fdt/dwc3_fdt.c			dwc3_fdt
 
 # Designware SD/MMC
-attach	dwcmmc at fdt with dwcmmc_fdt
+attach	dwcmmc at fdt with dwcmmc_fdt: fdt_clock, fdt_gpio, fdt_mmc_pwrseq, fdt_regulator
 file	dev/fdt/dwcmmc_fdt.c			dwcmmc_fdt
 
 # Designware Watchdog Timer
-attach	dwcwdt at fdt with dwcwdt_fdt
+attach	dwcwdt at fdt with dwcwdt_fdt: fdt_clock, fdt_reset
 file	dev/fdt/dwcwdt_fdt.c			dwcwdt_fdt
 
 # Virtio virtio,mmio
@@ -179,19 +221,19 @@ attach 	qemufwcfg at fdt with qemufwcfg_fdt
 file	dev/fdt/qemufwcfg_fdt.c			qemufwcfg_fdt
 
 # ARM PrimeCell General Purpose Input/Output (PL061)
-attach 	plgpio at fdt with plgpio_fdt
+attach 	plgpio at fdt with plgpio_fdt: fdt_gpio
 file	dev/fdt/pl061gpio_fdt.c			plgpio_fdt
 
 # AHCI SATA controller
-attach	ahcisata at fdt with ahcisata_fdt
+attach	ahcisata at fdt with ahcisata_fdt: fdt_clock, fdt_reset
 file	dev/fdt/ahcisata_fdt.c			ahcisata_fdt
 
 # Designware I2C
-attach 	dwiic at fdt with dwiic_fdt
+attach 	dwiic at fdt with dwiic_fdt: fdt_clock, fdt_i2c, fdt_reset
 file	dev/fdt/dwiic_fdt.c			dwiic_fdt
 
 # Cadence I2C
-attach	cdnsiic at fdt with cdnsiic_fdt
+attach	cdnsiic at fdt with cdnsiic_fdt: fdt_clock, fdt_i2c
 file	dev/fdt/cdnsiic_fdt.c			cdnsiic_fdt
 
 # AMD Cryptographic Coprocessor
@@ -199,16 +241,16 @@ attach	amdccp at fdt with amdccp_fdt
 file	dev/fdt/amdccp_fdt.c			amdccp_fdt
 
 # Arasan SDHCI controller
-attach	sdhc at fdt with arasan_sdhc_fdt
+attach	sdhc at fdt with arasan_sdhc_fdt: fdt_clock, fdt_phy, fdt_syscon
 file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
 
 # Generic USB PHY
-device	usbnopphy
+device	usbnopphy: fdt_clock, fdt_gpio, fdt_phy, fdt_regulator
 attach	usbnopphy at fdt
 file	dev/fdt/usbnopphy.c			usbnopphy
 
 # Simple Amplifier Audio Driver
-device	simpleamp
+device	simpleamp: fdt_dai, fdt_gpio, fdt_regulator
 attach	simpleamp at fdt
 file	dev/fdt/simple_amplifier.c		simpleamp
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.52 2020/08/29 19:06:17 jakllsch Exp $
+#	$NetBSD: files.tegra,v 1.53 2025/09/06 15:44:02 thorpej Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -9,7 +9,7 @@ file	arch/arm/nvidia/tegra_cpufreq.c
 
 # Tegra T124 (32-bit K1) support
 file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
-device	tegra124cpu
+device	tegra124cpu: fdt_clock, fdt_regulator
 attach	tegra124cpu at cpu with tegra124_cpu
 file	arch/arm/nvidia/tegra124_cpu.c		tegra124_cpu
 
@@ -29,22 +29,22 @@ attach	tegrapmc at fdt with tegra_pmc
 file	arch/arm/nvidia/tegra_pmc.c		tegra_pmc
 
 # eFUSE
-device	tegrafuse
+device	tegrafuse: fdt_clock, fdt_reset
 attach	tegrafuse at fdt with tegra_fuse
 file	arch/arm/nvidia/tegra_fuse.c		tegra_fuse
 
 # Clock and Reset controller (T124)
-device	tegra124car: clk
+device	tegra124car: fdt_clock, fdt_reset
 attach	tegra124car at fdt with tegra124_car
 file	arch/arm/nvidia/tegra124_car.c		tegra124_car
 
 # Clock and Reset controller (T210)
-device	tegra210car: clk
+device	tegra210car: fdt_clock, fdt_reset
 attach	tegra210car at fdt with tegra210_car
 file	arch/arm/nvidia/tegra210_car.c		tegra210_car
 
 # GPIO controller
-device	tegragpio: gpiobus
+device	tegragpio: fdt_gpio, gpiobus
 attach	tegragpio at fdt with tegra_gpio
 file	arch/arm/nvidia/tegra_gpio.c		tegra_gpio
 
@@ -54,13 +54,13 @@ attach	tegratimer at fdt with tegra_timer
 file	arch/arm/nvidia/tegra_timer.c		tegra_timer
 
 # MPIO / Pinmux
-device	tegrapinmux
+device	tegrapinmux: fdt_pinctrl
 attach	tegrapinmux at fdt with tegra_pinmux
 file	arch/arm/nvidia/tegra_pinmux.c		tegra_pinmux
 file	arch/arm/nvidia/tegra210_pinmux.c	tegra_pinmux & soc_tegra210
 
 # APB DMA
-device	tegraapbdma
+device	tegraapbdma: fdt_clock, fdt_dma, fdt_reset
 attach	tegraapbdma at fdt with tegra_apbdma
 file	arch/arm/nvidia/tegra_apbdma.c		tegra_apbdma
 
@@ -74,19 +74,19 @@ attach	tegra124xpad at fdt with tegra124_xusbpad
 file	arch/arm/nvidia/tegra124_xusbpad.c	tegra124_xusbpad
 
 # XUSB PADCTL (Tegra210)
-device	tegra210xpad { }: tegra_xusbpad
-device	tegra210xphy: tegra210xpad
+device	tegra210xpad { }: fdt_clock, fdt_regulator, fdt_reset, tegra_xusbpad
+device	tegra210xphy: fdt_phy, tegra210xpad
 attach	tegra210xpad at fdt with tegra210_xusbpad
 attach	tegra210xphy at tegra210xpad
 file	arch/arm/nvidia/tegra210_xusbpad.c	tegra210_xusbpad
 
 
 # UART
-attach	com at fdt with tegra_com
+attach	com at fdt with tegra_com: fdt_clock, fdt_reset
 file	arch/arm/nvidia/tegra_com.c		tegra_com
 
 # I2C
-device	tegrai2c: i2cbus, i2cexec
+device	tegrai2c: fdt_clock, fdt_i2c, fdt_reset, i2cbus, i2cexec
 attach	tegrai2c at fdt with tegra_i2c
 file	arch/arm/nvidia/tegra_i2c.c		tegra_i2c
 
@@ -96,7 +96,7 @@ attach	tegrartc at fdt with tegra_rtc
 file	arch/arm/nvidia/tegra_rtc.c		tegra_rtc
 
 # USB PHY
-device	tegrausbphy
+device	tegrausbphy: fdt_clock, fdt_regulator, fdt_reset
 attach	tegrausbphy at fdt with tegra_usbphy
 file	arch/arm/nvidia/tegra_usbphy.c		tegra_usbphy
 
@@ -105,42 +105,42 @@ attach	ehci at fdt with tegra_ehci
 file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 
 # XUSB (USB 3.0)
-attach	xhci at fdt with tegra_xusb : firmload
+attach	xhci at fdt with tegra_xusb : fdt_clock, fdt_phy, fdt_regulator, fdt_reset, firmload
 file	arch/arm/nvidia/tegra_xusb.c		tegra_xusb
 defflag	opt_tegra.h				TEGRA_XUSB_DEBUG
 defflag	opt_tegra.h				TEGRA124_XUSB_BIN_STATIC
 defflag	opt_tegra.h				TEGRA210_XUSB_BIN_STATIC
 
 # SDMMC
-attach	sdhc at fdt with tegra_sdhc
+attach	sdhc at fdt with tegra_sdhc: fdt_clock, fdt_gpio, fdt_regulator, fdt_reset
 file	arch/arm/nvidia/tegra_sdhc.c		tegra_sdhc
 
 # Thermal throttling controller
-device	tegrasoctherm: sysmon_envsys
+device	tegrasoctherm: fdt_clock, fdt_reset, sysmon_envsys
 attach	tegrasoctherm at fdt with tegra_soctherm
 file	arch/arm/nvidia/tegra_soctherm.c	tegra_soctherm
 
 # PCIE
-device	tegrapcie: pcibus
+device	tegrapcie: fdt_clock, fdt_phy, fdt_reset, pcibus
 attach	tegrapcie at fdt with tegra_pcie
 file	arch/arm/nvidia/tegra_pcie.c		tegra_pcie
 
 # SATA
-attach	ahcisata at fdt with tegra_ahcisata
+attach	ahcisata at fdt with tegra_ahcisata: fdt_clock, fdt_phy, fdt_regulator, fdt_reset
 file	arch/arm/nvidia/tegra_ahcisata.c	tegra_ahcisata
 
 # HDA
-attach	hdaudio at fdt with tegra_hdaudio
+attach	hdaudio at fdt with tegra_hdaudio: fdt_clock, fdt_reset
 file	arch/arm/nvidia/tegra_hdaudio.c		tegra_hdaudio
 
 # HDMI CEC
-device	tegracec: hdmicecbus
+device	tegracec: fdt_clock, fdt_reset, hdmicecbus
 attach	tegracec at fdt with tegra_cec
 file	arch/arm/nvidia/tegra_cec.c		tegra_cec
 
 # Display
 define	tegrafbbus { }
-device	tegradrm: drmkms, ddc_read_edid, tegrafbbus
+device	tegradrm: fdt_clock, fdt_gpio, fdt_i2c, fdt_regulator, fdt_reset, drmkms, ddc_read_edid, tegrafbbus
 attach	tegradrm at fdt with tegra_drm
 file	arch/arm/nvidia/tegra_drm.c		tegra_drm
 file	arch/arm/nvidia/tegra_drm_mode.c	tegra_drm
@@ -152,7 +152,7 @@ attach	tegrafb at tegrafbbus with tegra_fb
 file	arch/arm/nvidia/tegra_fb.c		tegra_fb
 
 # GPU
-attach	nouveau at fdt with tegra_nouveau
+attach	nouveau at fdt with tegra_nouveau: fdt_clock, fdt_reset
 file	arch/arm/nvidia/tegra_nouveau.c		tegra_nouveau
 
 # SOC parameters

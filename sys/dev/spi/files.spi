@@ -1,4 +1,4 @@
-#	$NetBSD: files.spi,v 1.10 2022/12/03 01:04:43 brad Exp $
+#	$NetBSD: files.spi,v 1.11 2025/09/06 15:44:04 thorpej Exp $
 
 define	spibus { }
 
@@ -36,7 +36,7 @@ attach	mcpgpio at spi with mcpgpio_spi
 file	dev/spi/mcp23xxxgpio_spi.c	mcpgpio_spi
 
 # Solomon Systech SSD13xx PLED/OLED display
-attach	ssdfb at spi with ssdfb_spi
+attach	ssdfb at spi with ssdfb_spi: fdt_gpio
 file	dev/spi/ssdfb_spi.c		ssdfb_spi
 
 # MCP3x0x ADC

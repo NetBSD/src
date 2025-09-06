@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.72 2022/07/20 10:01:11 riastradh Exp $
+#	$NetBSD: files.sunxi,v 1.73 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -10,7 +10,7 @@ file	arch/arm/sunxi/sunxi_mc_smp.c		soc_sunxi_mc
 file	arch/arm/sunxi/sunxi_mc_mpstart.S	soc_sunxi_mc
 
 # CCU
-define	sunxi_ccu
+define	sunxi_ccu: fdt_clock, fdt_reset
 file	arch/arm/sunxi/sunxi_ccu.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_div.c		sunxi_ccu
 file	arch/arm/sunxi/sunxi_ccu_fixed_factor.c	sunxi_ccu
@@ -84,37 +84,37 @@ attach	sun50ih6rccu at fdt with sunxi_h6_r_ccu
 file	arch/arm/sunxi/sun50i_h6_r_ccu.c	sunxi_h6_r_ccu
 
 # Misc. clock resets
-device	sunxiresets
+device	sunxiresets: fdt_reset
 attach	sunxiresets at fdt with sunxi_resets
 file	arch/arm/sunxi/sunxi_resets.c		sunxi_resets
 
 # Misc. clock gates
-device	sunxigates
+device	sunxigates: fdt_clock
 attach	sunxigates at fdt with sunxi_gates
 file	arch/arm/sunxi/sunxi_gates.c		sunxi_gates
 
 # GMAC MII/RGMII clock mux
-device	sunxigmacclk
+device	sunxigmacclk: fdt_clock
 attach	sunxigmacclk at fdt with sunxi_gmacclk
 file	arch/arm/sunxi/sunxi_gmacclk.c		sunxi_gmacclk
 
 # SD/MMC-COMM (A80)
-device	sun9immcclk
+device	sun9immcclk: fdt_clock, fdt_reset
 attach	sun9immcclk at fdt with sunxi_a80_mmcclk
 file	arch/arm/sunxi/sun9i_a80_mmcclk.c	sunxi_a80_mmcclk
 
 # USB HCI clocks (A80)
-device	sun9iusbclk
+device	sun9iusbclk: fdt_clock
 attach	sun9iusbclk at fdt with sunxi_a80_usbclk
 file	arch/arm/sunxi/sun9i_a80_usbclk.c	sunxi_a80_usbclk
 
 # CPUS clock driver (A80)
-device	sun9icpusclk
+device	sun9icpusclk: fdt_clock
 attach	sun9icpusclk at fdt with sunxi_a80_cpusclk
 file	arch/arm/sunxi/sun9i_a80_cpusclk.c	sunxi_a80_cpusclk
 
 # APB0 clock driver (A80)
-device	sun8iapbclk
+device	sun8iapbclk: fdt_clock
 attach	sun8iapbclk at fdt with sunxi_a23_apbclk
 file	arch/arm/sunxi/sun8i_a23_apbclk.c	sunxi_a23_apbclk
 
@@ -128,7 +128,7 @@ attach	sunxinmi at fdt with sunxi_nmi
 file	arch/arm/sunxi/sunxi_nmi.c		sunxi_nmi
 
 # GPIO
-device	sunxigpio: gpiobus
+device	sunxigpio: fdt_clock, fdt_gpio, fdt_regulator, fdt_reset, fdt_pinctrl, gpiobus
 attach	sunxigpio at fdt with sunxi_gpio
 file	arch/arm/sunxi/sunxi_gpio.c		sunxi_gpio
 file	arch/arm/sunxi/sun4i_a10_gpio.c		sunxi_gpio & soc_sun4i_a10
@@ -143,41 +143,41 @@ file	arch/arm/sunxi/sun50i_a64_gpio.c	sunxi_gpio & soc_sun50i_a64
 file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
 
 # PWM
-device	sunxipwm: pwm
+device	sunxipwm: fdt_clock, fdt_pwm
 attach	sunxipwm at fdt with sunxi_pwm
 file	arch/arm/sunxi/sunxi_pwm.c		sunxi_pwm
 
 # SD/MMC
-device	sunximmc: sdmmcbus
+device	sunximmc: fdt_clock, fdt_gpio, fdt_mmc_pwrseq, fdt_regulator, fdt_reset, sdmmcbus
 attach	sunximmc at fdt with sunxi_mmc
 file	arch/arm/sunxi/sunxi_mmc.c		sunxi_mmc
 defparam opt_sunximmc.h				SUNXI_MMC_DEBUG
 
 # USB PHY
-device	sunxiusbphy
+device	sunxiusbphy: fdt_clock, fdt_phy, fdt_regulator, fdt_reset
 attach	sunxiusbphy at fdt with sunxi_usbphy
 file	arch/arm/sunxi/sunxi_usbphy.c		sunxi_usbphy
 
-device	sunxiusb3phy
+device	sunxiusb3phy: fdt_clock, fdt_phy, fdt_regulator, fdt_reset
 attach	sunxiusb3phy at fdt with sunxi_usb3phy
 file	arch/arm/sunxi/sunxi_usb3phy.c		sunxi_usb3phy
 
-device	sun9iusbphy
+device	sun9iusbphy: fdt_clock, fdt_phy, fdt_regulator, fdt_reset
 attach	sun9iusbphy at fdt with sunxi_a80_usbphy
 file	arch/arm/sunxi/sun9i_a80_usbphy.c	sunxi_a80_usbphy
 
 # TWI
-device	sunxitwi: i2cbus, i2cexec, mvi2c
+device	sunxitwi: fdt_clock, fdt_i2c, fdt_reset, i2cbus, i2cexec, mvi2c
 attach	sunxitwi at fdt with sunxi_twi
 file	arch/arm/sunxi/sunxi_twi.c		sunxi_twi
 
 # P2WI/RSB
-device	sunxirsb: i2cbus, i2cexec
+device	sunxirsb: fdt_clock, fdt_i2c, fdt_reset, i2cbus, i2cexec
 attach	sunxirsb at fdt with sunxi_rsb
 file	arch/arm/sunxi/sunxi_rsb.c		sunxi_rsb
 
 # RTC
-device	sunxirtc
+device	sunxirtc: fdt_clock
 attach	sunxirtc at fdt with sunxi_rtc
 file	arch/arm/sunxi/sunxi_rtc.c		sunxi_rtc
 
@@ -186,25 +186,25 @@ device	emac: arp, ether, ifnet, mii
 
 # EMAC (sun4i/sun5i/sun7i)
 ifdef arm
-attach	emac at fdt with sun4i_emac
+attach	emac at fdt with sun4i_emac: fdt_clock
 file	arch/arm/sunxi/sun4i_emac.c		sun4i_emac
 endif
 
 # EMAC (sun8i/sun50i)
-attach	emac at fdt with sunxi_emac
+attach	emac at fdt with sunxi_emac: fdt_clock, fdt_gpio, fdt_regulator, fdt_reset, fdt_syscon
 file	arch/arm/sunxi/sunxi_emac.c		sunxi_emac
 
 # GMAC
-attach	awge at fdt with sunxi_gmac
+attach	awge at fdt with sunxi_gmac: fdt_clock, fdt_gpio, fdt_regulator
 file	arch/arm/sunxi/sunxi_gmac.c		sunxi_gmac
 
 # Timer
-device	sunxitimer
+device	sunxitimer: fdt_clock
 attach	sunxitimer at fdt with sunxi_timer
 file	arch/arm/sunxi/sunxi_timer.c		sunxi_timer
 
 # High Speed Timer
-device	sunxihstimer
+device	sunxihstimer: fdt_clock
 attach	sunxihstimer at fdt with sunxi_hstimer
 file	arch/arm/sunxi/sunxi_hstimer.c		sunxi_hstimer
 
@@ -214,24 +214,24 @@ attach	sunxiwdt at fdt with sunxi_wdt
 file	arch/arm/sunxi/sunxi_wdt.c		sunxi_wdt
 
 # DMA controller (sun4i)
-device	sun4idma
+device	sun4idma: fdt_clock, fdt_dma
 attach	sun4idma at fdt with sun4i_dma
 file	arch/arm/sunxi/sun4i_dma.c		sun4i_dma
 
 # DMA controller (sun6i)
-device	sun6idma
+device	sun6idma: fdt_clock, fdt_dma, fdt_reset
 attach	sun6idma at fdt with sun6i_dma
 file	arch/arm/sunxi/sun6i_dma.c		sun6i_dma
 
 # Audio codec
-device	sunxicodec: audiobus
+device	sunxicodec: fdt_clock, fdt_dma, fdt_gpio, fdt_reset, audiobus
 attach	sunxicodec at fdt with sunxi_codec
 file	arch/arm/sunxi/sunxi_codec.c		sunxi_codec
 file	arch/arm/sunxi/sun4i_a10_codec.c	sunxi_codec
 file	arch/arm/sunxi/sun6i_a31_codec.c	sunxi_codec
 
 # Audio codec (sun8i)
-device	sun8icodec
+device	sun8icodec: fdt_clock, fdt_dai, fdt_gpio
 attach	sun8icodec at fdt with sun8i_codec
 file	arch/arm/sunxi/sun8i_codec.c		sun8i_codec
 
@@ -246,29 +246,29 @@ attach	v3scodec at fdt with v3s_codec
 file	arch/arm/sunxi/sun8i_v3s_codec.c	v3s_codec needs-flag
 
 # A64 Audio codec (analog part)
-device	a64acodec
+device	a64acodec: fdt_dai
 attach	a64acodec at fdt with a64_acodec
 file	arch/arm/sunxi/sun50i_a64_acodec.c	a64_acodec
 
 # I2S/PCM controller
-device	sunxii2s
+device	sunxii2s: fdt_clock, fdt_dai, fdt_dma, fdt_reset
 attach	sunxii2s at fdt with sunxi_i2s
 file	arch/arm/sunxi/sunxi_i2s.c		sunxi_i2s
 
 # A10/A20 LCD/TV timing controller (TCON)
-device	sunxitcon
+device	sunxitcon: fdt_clock, fdt_reset
 attach	sunxitcon at fdt with sunxi_tcon
 file	arch/arm/sunxi/sunxi_tcon.c		sunxi_tcon needs-flag
 
 # A10/A20 Display engine backend (DE-BE)
-device	sunxidebe { }
+device	sunxidebe { }: fdt_clock, fdt_reset
 attach	sunxidebe at fdt with sunxi_debe
 file	arch/arm/sunxi/sunxi_debe.c		sunxi_debe needs-flag
 
 attach	genfb at sunxidebe with sunxi_befb
 
 # A10/A20 HDMI
-device	sunxihdmi: edid, videomode
+device	sunxihdmi: fdt_clock, edid, videomode
 attach	sunxihdmi at fdt with sunxi_hdmi
 file	arch/arm/sunxi/sunxi_hdmi.c		sunxi_hdmi needs-flag
 
@@ -283,7 +283,7 @@ attach	sunxits at fdt with sunxi_ts
 file	arch/arm/sunxi/sunxi_ts.c		sunxi_ts
 
 # USB OTG
-attach	motg at fdt with sunxi_musb
+attach	motg at fdt with sunxi_musb: fdt_clock, fdt_phy, fdt_reset
 file	arch/arm/sunxi/sunxi_musb.c		sunxi_musb
 
 # Security ID EFUSE
@@ -292,39 +292,40 @@ attach	sunxisid at fdt with sunxi_sid
 file	arch/arm/sunxi/sunxi_sid.c		sunxi_sid
 
 # Thermal sensor controller
-device	sunxithermal: sysmon_envsys, sysmon_taskq
+device	sunxithermal: fdt_clock, fdt_reset, sysmon_envsys, sysmon_taskq
 attach	sunxithermal at fdt with sunxi_thermal
 file	arch/arm/sunxi/sunxi_thermal.c		sunxi_thermal
 
 # SATA
-attach	ahcisata at fdt with sunxi_sata
+attach	ahcisata at fdt with sunxi_sata: fdt_clock
 file	arch/arm/sunxi/sunxi_sata.c		sunxi_sata
 
 # SRAM Controller
-device	sunxisramc
+device	sunxisramc: fdt_syscon
 attach	sunxisramc at fdt with sunxi_sramc
 file	arch/arm/sunxi/sunxi_sramc.c		sunxi_sramc
 
 # NAND Flash Controller
-device	sunxinand: nandbus
+device	sunxinand: fdt_clock, fdt_reset, nandbus
 attach	sunxinand at fdt with sunxi_nand
 file	arch/arm/sunxi/sunxi_nand.c		sunxi_nand
 
 # SPI Controller
-device	sun4ispi: spibus
+device	sun4ispi: fdt_clock, fdt_spi, spibus
 attach	sun4ispi at fdt with sun4i_spi
 file	arch/arm/sunxi/sun4i_spi.c		sun4i_spi
-device	sun6ispi: spibus
+
+device	sun6ispi: fdt_clock, fdt_reset, spibus
 attach	sun6ispi at fdt with sun6i_spi
 file	arch/arm/sunxi/sun6i_spi.c		sun6i_spi
 
 # A10/A20 CAN
-device	sunxican { } : ifnet
+device	sunxican { } : fdt_clock, fdt_reset, ifnet
 attach	sunxican at fdt with sunxi_can
 file	arch/arm/sunxi/sunxi_can.c		sunxi_can
 
 # LRADC
-device	sunxilradc
+device	sunxilradc: fdt_clock, fdt_regulator, fdt_reset
 attach	sunxilradc at fdt with sunxi_lradc
 file	arch/arm/sunxi/sunxi_lradc.c		sunxi_lradc
 
@@ -334,18 +335,18 @@ attach	sunxide2bus at fdt with sunxi_de2bus
 file	arch/arm/sunxi/sunxi_de2.c		sunxi_de2bus
 
 # DE2 clocks
-device	sunxide2ccu: sunxi_ccu
+device	sunxide2ccu: fdt_reset, sunxi_ccu
 attach	sunxide2ccu at fdt with sunxi_de2ccu
 file	arch/arm/sunxi/sunxi_de2_ccu.c		sunxi_de2ccu
 
 # DE2 mixer
-device	sunximixer: drmkms
+device	sunximixer: fdt_clock, fdt_reset, drmkms
 attach	sunximixer at fdt with sunxi_mixer
 file	arch/arm/sunxi/sunxi_mixer.c		sunxi_mixer
 makeoptions	sunxi_mixer	"CPPFLAGS.sunxi_mixer"+="${CPPFLAGS.drmkms}"
 
 # DE2 timing controller
-device	sunxilcdc: drmkms
+device	sunxilcdc: fdt_clock, fdt_reset, drmkms
 attach	sunxilcdc at fdt with sunxi_lcdc
 file	arch/arm/sunxi/sunxi_lcdc.c		sunxi_lcdc
 makeoptions	sunxi_lcdc	"CPPFLAGS.sunxi_lcdc"+="${CPPFLAGS.drmkms}"
@@ -364,17 +365,17 @@ file	arch/arm/sunxi/sunxi_fb.c		sunxi_fb
 makeoptions	sunxi_fb	"CPPFLAGS.sunxi_fb"+="${CPPFLAGS.drmkms}"
 
 # Allwinner HDMI (Designware based)
-attach	dwhdmi at fdt with sunxi_dwhdmi
+attach	dwhdmi at fdt with sunxi_dwhdmi: fdt_clock, fdt_dai, fdt_phy, fdt_regulator, fdt_reset
 file	arch/arm/sunxi/sunxi_dwhdmi.c		sunxi_dwhdmi
 makeoptions	sunxi_dwhdmi	"CPPFLAGS.sunxi_dwhdmi"+="${CPPFLAGS.drmkms}"
 
 # Allwinner HDMI TX PHY
-device	sunxihdmiphy: drmkms
+device	sunxihdmiphy: fdt_clock, fdt_phy, fdt_reset, drmkms
 attach	sunxihdmiphy at fdt with sunxi_hdmiphy
 file	arch/arm/sunxi/sunxi_hdmiphy.c		sunxi_hdmiphy | sunxi_dwhdmi
 
 # Allwinner Crypto Engine
-device	sun8icrypto
+device	sun8icrypto: fdt_clock, fdt_reset
 attach	sun8icrypto at fdt with sun8i_crypto
 file	arch/arm/sunxi/sun8i_crypto.c		sun8i_crypto
 

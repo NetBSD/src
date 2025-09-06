@@ -1,4 +1,4 @@
-#	$NetBSD: files.sociox,v 1.11 2022/02/01 09:08:33 nisimura Exp $
+#	$NetBSD: files.sociox,v 1.12 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for Socionext SC2A11
 #
@@ -17,7 +17,7 @@ attach	sniemmc at fdt with sniemmc_fdt
 file	arch/arm/sociox/sni_emmc.c		sniemmc
 
 # Socionext I2C
-device	sniiic: i2cbus
+device	sniiic: fdt_i2c, i2cbus
 attach	sniiic at acpinodebus with sniiic_acpi
 attach	sniiic at fdt with sniiic_fdt
 file	arch/arm/sociox/sni_i2c.c		sniiic	needs-flag

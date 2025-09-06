@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.43 2022/04/22 12:41:06 skrll Exp $
+#	$NetBSD: files.bcm2835,v 1.44 2025/09/06 15:44:02 thorpej Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -31,7 +31,7 @@ attach	bcmtmr at fdt with bcmtmr_fdt
 file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr & !soc_bcm2836
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpmwdog: sysmon_wdog
+device	bcmpmwdog: fdt_power, sysmon_wdog
 attach	bcmpmwdog at fdt with bcmpmwdog_fdt
 file	arch/arm/broadcom/bcm2835_pmwdog.c	bcmpmwdog_fdt
 
@@ -52,12 +52,12 @@ attach bcm2838pcie at fdt with bcm2838pcie_fdt
 file	arch/arm/broadcom/bcm2838_pcie.c	bcm2838pcie
 
 # AUX
-device	bcmaux
+device	bcmaux: fdt_clock
 attach	bcmaux at fdt with bcmaux_fdt
 file	arch/arm/broadcom/bcm2835_aux.c		bcmaux
 
 # AUX UART (BCM2835_AUX_UART_BASE)
-attach	com at fdt with bcmcom
+attach	com at fdt with bcmcom: fdt_clock
 file	arch/arm/broadcom/bcm2835_com.c		bcmcom
 
 ifdef acpinodebus
@@ -66,7 +66,7 @@ file	arch/arm/broadcom/bcm2835_com_acpi.c	bcmcom_acpi
 endif
 
 # External Mass Media Controller (BCM2835_EMMC_BASE)
-attach	sdhc at fdt with bcmemmc
+attach	sdhc at fdt with bcmemmc: fdt_clock
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 
 ifdef acpinodebus
@@ -78,7 +78,7 @@ endif
 
 # SD Host Controller (BCM2835_SDHOST_BASE)
 device	bcmsdhost: sdmmcbus
-attach	bcmsdhost at fdt with bcmsdhost
+attach	bcmsdhost at fdt with bcmsdhost: fdt_clock
 file	arch/arm/broadcom/bcm2835_sdhost.c	bcmsdhost	needs-flag
 
 # DMA Controller (BCM2835_DMA0_BASE)
@@ -98,7 +98,7 @@ file	arch/arm/broadcom/bcm2835_spi.c		bcmspi	needs-flag
 # BSC (I2C) controller (BCM2835_BSC[01]_BASE)
 device	bsciic: i2cbus, bcm2835_gpio_subr
 file	arch/arm/broadcom/bcm2835_bsc.c		bsciic	needs-flag
-attach	bsciic at fdt with bsciic_fdt
+attach	bsciic at fdt with bsciic_fdt: fdt_clock, fdt_i2c
 file	arch/arm/broadcom/bcm2835_bsc_fdt.c	bsciic_fdt
 ifdef acpinodebus
 attach	bsciic at acpinodebus with bsciic_acpi
@@ -118,18 +118,18 @@ attach	vcaudio at vchiqbus
 file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
 
 # GPIO
-device	bcmgpio: gpiobus
+device	bcmgpio: fdt_gpio, fdt_pinctrl, gpiobus
 attach	bcmgpio at fdt
 file	arch/arm/broadcom/bcm2835_gpio.c
 
 # Clock Manager (BCM2835_CM_BASE)
-device	bcmcprman
+device	bcmcprman: fdt_clock
 attach	bcmcprman at fdt with bcmcprman_fdt
 file	arch/arm/broadcom/bcm2835_cprman.c	bcmcprman	needs-flag
 
 # PWM Controller (BCM2835_PWM_BASE)
 device	bcmpwm
-attach	bcmpwm at fdt with bcmpwm
+attach	bcmpwm at fdt with bcmpwm: fdt_clock
 file	arch/arm/broadcom/bcm2835_pwm.c		bcmpwm		needs-flag
 
 # VideoCore IV property interface

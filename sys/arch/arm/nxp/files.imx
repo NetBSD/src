@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx,v 1.3 2023/05/04 13:25:07 bouyer Exp $
+#	$NetBSD: files.imx,v 1.4 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -16,18 +16,18 @@ defflag	opt_soc.h				SOC_IMX7D: SOC_IMX
 defflag opt_imx.h				IMX6
 
 # Clock
-device	imx6ccm : clk
+device	imx6ccm : fdt_clock
 attach	imx6ccm at fdt
 file	arch/arm/nxp/imx6_clk.c			imx6ccm
 
-device	imx6sxccm : clk
+device	imx6sxccm : fdt_clock
 attach	imx6sxccm at fdt
 file	arch/arm/nxp/imx6sx_clk.c		imx6sxccm
 
 file	arch/arm/nxp/imx6_ccm.c			imx6ccm | imx6sxccm
 
 # Common FDT clock framework
-define	imx_ccm: clk
+define	imx_ccm: fdt_clock
 file	arch/arm/nxp/imx_ccm.c			imx_ccm
 file	arch/arm/nxp/imx_ccm_composite.c	imx_ccm
 file	arch/arm/nxp/imx_ccm_div.c		imx_ccm
@@ -58,35 +58,35 @@ attach	imx7gpc at fdt
 file	arch/arm/nxp/imx7_gpc.c	imx7gpc
 
 # IOMUX
-device	imxiomux
+device	imxiomux: fdt_pinctrl
 attach	imxiomux at fdt
 file	arch/arm/nxp/imx6_iomux.c		imxiomux
 
 # GPIO controller
-device	imxgpio: gpiobus
+device	imxgpio: fdt_gpio, gpiobus
 attach	imxgpio at fdt
 file	arch/arm/imx/imxgpio.c			imxgpio	needs-flag
 file	arch/arm/nxp/imx_gpio.c			imxgpio
 
 # UART
 device	imxuart: tty
-attach	imxuart at fdt with imx_com
+attach	imxuart at fdt with imx_com: fdt_clock
 file	arch/arm/imx/imxuart.c			imxuart	needs-flag
 file	arch/arm/nxp/imx_com.c			imx_com needs-flag
 defflag opt_imxuart.h				IMXUARTCONSOLE
 
 # FEC
-device	enet: ether, ifnet, arp, mii, bus_dma_generic
+device	enet: fdt_clock, fdt_gpio, ether, ifnet, arp, mii, bus_dma_generic
 attach	enet at fdt with enet_fdt
 file	arch/arm/imx/if_enet.c			enet
 file	arch/arm/nxp/if_enet_imx.c		enet_fdt
 
 # SATA
-attach	ahcisata at fdt with imx_ahcisata
+attach	ahcisata at fdt with imx_ahcisata: fdt_clock
 file	arch/arm/nxp/imx_ahcisata.c		imx_ahcisata
 
 # USB Controller
-device	imxusbc { [unit=-1], [irq=-1] } : bus_dma_generic
+device	imxusbc { [unit=-1], [irq=-1] } : fdt_clock, fdt_regulator, bus_dma_generic
 attach	imxusbc at fdt with imxusbc_fdt
 file	arch/arm/nxp/imx6_usb.c			imxusbc_fdt
 
@@ -95,39 +95,39 @@ file	arch/arm/imx/imxusb.c			imxehci
 
 # USB PHY
 device	imxusbphy
-attach	imxusbphy at fdt
+attach	imxusbphy at fdt: fdt_clock
 file	arch/arm/nxp/imx6_usbphy.c		imxusbphy
 
-device	imx8mqusbphy
+device	imx8mqusbphy: fdt_phy, fdt_regulator
 attach	imx8mqusbphy at fdt
 file	arch/arm/nxp/imx8mq_usbphy.c	imx8mqusbphy
 
 # SDMMC
-attach	sdhc at fdt with imx_sdhc
+attach	sdhc at fdt with imx_sdhc: fdt_clock, fdt_gpio, fdt_regulator
 file	arch/arm/nxp/imx_sdhc.c			imx_sdhc
 
 # PCIe
-device	imxpcie: pcibus, clk
-attach	imxpcie at fdt with imxpcie_fdt
+device	imxpcie: pcibus
+attach	imxpcie at fdt with imxpcie_fdt: fdt_clock, fdt_gpio, fdt_regulator
 file	arch/arm/nxp/imxpcie.c			imxpcie
 file	arch/arm/nxp/imx6_pcie.c		imxpcie_fdt
 
 # iMX iic controller
-device	imxi2c: motoi2c, i2cbus, i2cexec
+device	imxi2c: fdt_clock, motoi2c, i2cbus, i2cexec
 attach	imxi2c at fdt
 file	arch/arm/imx/imxi2c.c			imxi2c
 file	arch/arm/nxp/imx_i2c.c			imxi2c
 
 # SPI bus controller
 device	imxspi: spibus
-attach	imxspi at fdt with imxspi_fdt
+attach	imxspi at fdt with imxspi_fdt: fdt_clock, fdt_gpio, fdt_spi
 file	arch/arm/imx/imxspi.c			imxspi
 file	arch/arm/nxp/imx6_spi.c			imxspi_fdt
 defparam opt_imxspi.h				IMXSPI_DEBUG
 
 # iMX6 On-Chip OTP controller
 device	imxocotp
-attach	imxocotp at fdt
+attach	imxocotp at fdt: fdt_clock
 file	arch/arm/nxp/imx6_ocotp.c		imxocotp	needs-flag
 
 # iMX6 Enhanced Periodic Interrupt Timer
@@ -148,12 +148,12 @@ attach imxwdog at fdt
 file	arch/arm/nxp/imxwdog.c			imxwdog
 
 # PWM
-device	imxpwm: pwm, clk
-attach	imxpwm at fdt with imxpwm_fdt
+device	imxpwm
+attach	imxpwm at fdt with imxpwm_fdt: fdt_clock, fdt_pwm
 file	arch/arm/imx/imxpwm.c			imxpwm
 file	arch/arm/nxp/imx6_pwm.c			imxpwm_fdt
 
 # HDMI TX (Designware based)
-attach	dwhdmi at fdt with imx6_dwhdmi
+attach	dwhdmi at fdt with imx6_dwhdmi: fdt_dai, fdt_i2c
 file	arch/arm/nxp/imx6_dwhdmi.c		imx6_dwhdmi
 makeoptions	imx6_dwhdmi	"CPPFLAGS.imx6_dwhdmi"+="${CPPFLAGS.drmkms}"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.37 2020/09/29 19:58:50 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.38 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -50,52 +50,52 @@ attach	exyowdt at fdt with exynos_wdt
 file	arch/arm/samsung/exynos_wdt.c		exynos_wdt needs-flag
 
 # UARTs
-device	exuart
+device	exuart: fdt_clock
 attach	exuart at fdt with exynos_uart
 file	arch/arm/samsung/exynos_uart.c		exynos_uart
 
 # PINCTL
-device  exyopctl : gpiobus
+device  exyopctl : fdt_gpio, fdt_pinctrl, gpiobus
 attach  exyopctl at fdt with exynos_pinctrl
 file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctrl needs-flag
 file	arch/arm/samsung/exynos_gpio.c		exynos_pinctrl needs-flag
 
 # USB2 PHY
-device	exusbphy
+device	exusbphy: fdt_clock, fdt_phy, fdt_syscon
 attach  exusbphy at fdt with exynos_usbphy
 file    arch/arm/samsung/exynos_usbphy.c	exynos_usbphy
 
 # USB DRD PHY
-device	exusbdrdphy
+device	exusbdrdphy: fdt_clock, fdt_phy, fdt_syscon
 attach	exusbdrdphy at fdt with exynos_usbdrdphy
 file	arch/arm/samsung/exynos_usbdrdphy.c	exynos_usbdrdphy
 
 # USB2 Host Controller (OHCI)
-attach	ohci at fdt with exynos_ohci
+attach	ohci at fdt with exynos_ohci: fdt_clock, fdt_phy
 file	arch/arm/samsung/exynos_ohci.c		exynos_ohci
 
 # USB 2 Host Controller (EHCI)
-attach	ehci at fdt with exynos_ehci
+attach	ehci at fdt with exynos_ehci: fdt_clock, fdt_phy
 file	arch/arm/samsung/exynos_ehci.c		exynos_ehci
 
 # SD/MMC Host Controller
-attach	dwcmmc at fdt with exynos_dwcmmc
+attach	dwcmmc at fdt with exynos_dwcmmc: fdt_clock, fdt_gpio
 file	arch/arm/samsung/exynos_dwcmmc.c	exynos_dwcmmc
 
 # I2C support, bitbanging through GPIO
-device	exyoi2c: i2cbus, i2c_bitbang
+device	exyoi2c: fdt_i2c, i2cbus, i2c_bitbang
 attach	exyoi2c at fdt with exynos_i2c
 file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
 
 # PWM timer
-device	expwm: pwm
+device	expwm: fdt_clock, fdt_pwm
 attach	expwm at fdt with exynos_pwm
 file	arch/arm/samsung/exynos_pwm.c		exynos_pwm
 
-device	exy5422clk: clk
+device	exy5422clk: fdt_clock
 attach	exy5422clk at fdt with exynos5422_clock
 file	arch/arm/samsung/exynos5422_clock.c	exynos5422_clock
 
-device	exy5410clk: clk
+device	exy5410clk: fdt_clock
 attach	exy5410clk at fdt with exynos5410_clock
 file	arch/arm/samsung/exynos5410_clock.c	exynos5410_clock

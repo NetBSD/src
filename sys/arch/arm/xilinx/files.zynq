@@ -1,4 +1,4 @@
-#	$NetBSD: files.zynq,v 1.5 2022/11/11 20:31:30 jmcneill Exp $
+#	$NetBSD: files.zynq,v 1.6 2025/09/06 15:44:03 thorpej Exp $
 #
 # Configuration info for Xilinx Zynq-7000 SoC
 #
@@ -11,12 +11,12 @@ defflag	opt_soc.h				SOC_ZYNQ
 defflag	opt_soc.h				SOC_ZYNQ7000: SOC_ZYNQ
 
 # PS clock subsystem
-device	zynqclk
+device	zynqclk: fdt_clock, fdt_syscon
 attach	zynqclk at fdt with zynq7000_clkc
 file	arch/arm/xilinx/zynq7000_clkc.c		zynq7000_clkc
 
 # GPIO
-device	zynqgpio: gpiobus
+device	zynqgpio: fdt_gpio, gpiobus
 attach	zynqgpio at fdt
 file	arch/arm/xilinx/zynq_gpio.c		zynqgpio
 
@@ -39,6 +39,6 @@ file	arch/arm/xilinx/zynq_usb.c		zynqusb
 file	arch/arm/xilinx/zynq7000_usb.c		zynqusb
 
 # Xilinx 7 series ADC
-device	zynqxadc: sysmon_envsys
+device	zynqxadc: fdt_clock, sysmon_envsys
 attach	zynqxadc at fdt
 file	arch/arm/xilinx/zynq_xadc.c		zynqxadc

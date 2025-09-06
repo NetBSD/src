@@ -1,4 +1,4 @@
-#	$NetBSD: files.altera,v 1.2 2018/11/22 21:08:19 aymeric Exp $
+#	$NetBSD: files.altera,v 1.3 2025/09/06 15:44:02 thorpej Exp $
 #
 # Configuration for Altera SoC
 #
@@ -10,19 +10,19 @@ attach 	cycvfdt at mainbus with cycv_fdt
 file 	arch/arm/altera/cycv_fdt.c			cycv_fdt
 
 # Clock manager
-device 	cycvclkmgr : fdtbus
+device 	cycvclkmgr : fdtbus, fdt_clock
 attach 	cycvclkmgr at fdt
 file 	arch/arm/altera/cycv_clkmgr.c			cycvclkmgr
 
 # Reset manager
-device 	cycvrstmgr : fdtbus
+device 	cycvrstmgr : fdtbus, fdt_reset
 attach 	cycvrstmgr at fdt
 file 	arch/arm/altera/cycv_rstmgr.c			cycvrstmgr
 
 # GMAC
-attach	awge at fdt with cycv_gmac
+attach	awge at fdt with cycv_gmac: fdt_clock, fdt_reset
 file	arch/arm/altera/cycv_gmac.c			cycv_gmac
 
 # SD/MMC Host Controller
-attach	dwcmmc at fdt with cycv_dwcmmc
+attach	dwcmmc at fdt with cycv_dwcmmc: fdt_clock, fdt_gpio
 file	arch/arm/altera/cycv_dwcmmc.c			cycv_dwcmmc
