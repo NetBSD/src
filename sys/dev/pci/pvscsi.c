@@ -59,7 +59,7 @@ in the file called LICENSE.GPL.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.4 2025/09/06 02:56:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.5 2025/09/06 02:56:52 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -623,6 +623,10 @@ pvscsi_dma_alloc_ppns(struct pvscsi_softc *sc, struct pvscsi_dma *dma,
 		return (error);
 	}
 
+	memset(dma->vaddr, 0, num_pages * PAGE_SIZE);
+	bus_dmamap_sync(sc->sc_dmat, dma->map, 0, num_pages * PAGE_SIZE,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	ppn = dma->paddr >> PAGE_SHIFT;
 	for (i = 0; i < num_pages; i++) {
 		ppn_list[i] = ppn + i;
@@ -718,6 +722,16 @@ fail:
 static void
 pvscsi_free_rings(struct pvscsi_softc *sc)
 {
+
+	bus_dmamap_sync(sc->sc_dmat, sc->rings_state_dma.map,
+	    0, sc->rings_state_dma.size,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->req_ring_dma.map,
+	    0, sc->req_ring_dma.size,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->cmp_ring_dma.map,
+	    0, sc->cmp_ring_dma.size,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	pvscsi_dma_free(sc, &sc->rings_state_dma);
 	pvscsi_dma_free(sc, &sc->req_ring_dma);
