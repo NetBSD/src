@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.80 2024/12/21 17:40:11 tsutsui Exp $	*/
+/*	$NetBSD: xd.c,v 1.81 2025/09/06 21:20:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.80 2024/12/21 17:40:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.81 2025/09/06 21:20:20 andvar Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -2274,7 +2274,7 @@ xdc_e2str(int no)
 	case XD_ERR_IHD:
 		return "Illegal head address";
 	case XD_ERR_ISEC:
-		return "Illgal sector address";
+		return "Illegal sector address";
 	case XD_ERR_CZER:
 		return "Count zero";
 	case XD_ERR_UIMP:
