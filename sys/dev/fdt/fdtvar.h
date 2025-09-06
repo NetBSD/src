@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.82 2025/09/06 21:02:42 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.83 2025/09/06 21:11:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -102,8 +102,6 @@ static const struct fdt_opp_info __CONCAT(_name,_oppinfo) = {		\
 	.opp_supported = (_suppfn)					\
 };									\
 _FDT_OPP_REGISTER(_name)
-
-TAILQ_HEAD(fdt_conslist, fdt_console_info);
 
 struct fdt_dma_range {
 	paddr_t		dr_sysbase;

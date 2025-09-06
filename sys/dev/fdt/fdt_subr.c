@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.40 2025/09/06 21:11:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.40 2025/09/06 21:11:06 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -43,9 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $"
 #endif
 
 static const void *fdt_data;
-
-static struct fdt_conslist fdt_console_list =
-    TAILQ_HEAD_INITIALIZER(fdt_console_list);
 
 bool
 fdtbus_init(const void *data)
