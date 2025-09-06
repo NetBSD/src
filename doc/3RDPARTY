@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2134 2025/09/06 15:18:18 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2135 2025/09/06 15:55:19 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -37,6 +37,7 @@
 # Location:	comma-separated list of subdirectories in the NetBSD src tree
 # Vendor tag:	name of branch where vendor imports go (usually uppercase)
 # Release tag:	tag of the latest vendor import (lowercase with version number)
+# Current tag:	actual latest tag (not symbolic like release tag)
 # Notes:
 # Multiple lines of free-form text,
 # Must be last.
@@ -589,20 +590,26 @@ Current Vers:	5.1.2
 Maintainer:	Darren Reed
 Archive Site:	rsync -a a.cvs.sourceforge.net::cvsroot/ipfilter/
 Home Page:	https://www.phildev.net/ipf/
-Date:		2024-10-17
+Date:		2025-09-06
 Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, christos
 License:	BSD-based; see src/external/bsd/ipf/dist/IPFILTER.LICENCE
 Location:	external/bsd/ipf,sys/external/bsd/ipf
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
+all the original download places are gone.
+Latest release was July 22, 2012
+https://fossies.org/linux/misc/old/ip_fil5.1.2.tar.gz
+The changes between 5.1.1 and 5.1.2 from what I can tell by looking at
+the diffs in the DARRENR branch and the tar file (since there is no
+more 5.1.1 avalaible anymore) are in test data and a perl script
 
 Package:	ipsec-tools
 Version:	(ipsec-tools head is NetBSD-current head)
 Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
-Date:		2019-01-09
+Date:		2025-09-06
 Mailing List:	ipsec-tools-devel@lists.sourceforge.net
 Responsible:	manu, vanhu, mgrooms
 License:	BSD (3-clause)
@@ -633,12 +640,14 @@ Current Vers:	5.3.0
 Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
-Date:		2024-09-23
+Date:		2025-09-06
 Mailing List:
 Responsible:	christos
 License:	BSD
 Location:	external/bsd/jemalloc
 Notes:
+Jason Evans post-mortem for jemalloc; there will be no further development:
+https://jasone.github.io/2025/06/12/jemalloc-postmortem/
 There are two versions of this in-tree, the principal one tracking the
 modern upstream, and a much older one found directly at src/lib/libc/stdlib
 which is still in use and receiving local updates as well.
@@ -649,12 +658,13 @@ Current Vers:	KAME/NetBSD SNAP kit (shipped every week)
 Maintainer:	KAME Project <kame@kame.net>
 Archive Site:	http://www.kame.net/
 Home Page:	http://www.kame.net/
-Date:		2019-01-09
+Date:		2025-09-06
 Mailing List:	snap-users@kame.net
 Responsible:
 License:	BSD (3-clause)
 Location:	sys/netinet6
 Notes:
+KAME project was completed at 2006-03
 IPv6 part is based on KAME/NetBSD142 SNAP as of early June 2000, with
 more conservative implementation policy.
 IPsec part is based on KAME/NetBSD14 SNAP as of 12 June 2000.
@@ -733,7 +743,7 @@ Current Vers:	3.8.1
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2025-07-01
+Date:		2025-09-06
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
@@ -806,7 +816,7 @@ Current Vers:	1.10.5
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2023-09-01
+Date:		2025-09-06
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -822,7 +832,7 @@ Current Vers:	4.99.5
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2023-09-01
+Date:		2025-09-03
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
@@ -837,7 +847,7 @@ Current Vers:	tcp_wrappers 7.6-ipv6.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
-Date:		2020-06-13
+Date:		2025-09-06
 Mailing List:
 Responsible:	cjs
 License:	BSD-like
@@ -893,11 +903,11 @@ Uses libc's ohash
 
 Package:	mDNSResponder
 Version:	2559.1.1
-Current Vers:	2559.1.1
+Current Vers:	2600.140.3
 Maintainer:	Apple
 Archive Site:	https://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	https://developer.apple.com/bonjour/
-Date:		2024-10-26
+Date:		2025-09-06
 Mailing List:	bonjour-dev@lists.apple.com
 License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
 		BSD 3-clause like (dns-sd)
@@ -1500,7 +1510,7 @@ Current Vers:	2.11
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/
-Date:		2024-09-18
+Date:		2025-09-06
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
@@ -1698,7 +1708,7 @@ Current Vers:	0.7.1
 Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
 Archive Site:	none
 Home Page:	http://elftoolchain.sourceforge.net
-Date:		2024-03-03
+Date:		2025-09-06
 Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
