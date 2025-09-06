@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_vprompt.c,v 1.4 2023/06/30 21:46:21 christos Exp $	*/
+/*	$NetBSD: pam_vprompt.c,v 1.5 2025/09/06 12:33:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_vprompt.c,v 1.4 2023/06/30 21:46:21 christos Exp $");
+__RCSID("$NetBSD: pam_vprompt.c,v 1.5 2025/09/06 12:33:44 riastradh Exp $");
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -80,7 +80,7 @@ pam_vprompt(const pam_handle_t *pamh,
 		openpam_log(PAM_LOG_ERROR, "no conversation function");
 		RETURNC(PAM_SYSTEM_ERR);
 	}
-	vsnprintf(msgbuf, (size_t)PAM_MAX_MSG_SIZE, fmt, ap);
+	vsnprintf(msgbuf, PAM_MAX_MSG_SIZE, fmt, ap);
 	msg.msg_style = style;
 	msg.msg = msgbuf;
 	msgp = &msg;
