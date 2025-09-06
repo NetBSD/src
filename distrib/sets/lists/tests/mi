@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1392 2025/08/31 20:43:27 rillig Exp $
+# $NetBSD: mi,v 1.1393 2025/09/06 20:18:41 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -7217,6 +7217,7 @@
 ./usr/tests/usr.bin/xlint/lint1/msg_117.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_118.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_118.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/msg_118_ilp32.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_119.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_119.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_120.c			tests-usr.bin-tests	compattestfile,atf

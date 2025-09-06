@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.275 2025/08/31 20:43:27 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.276 2025/09/06 20:18:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.275 2025/08/31 20:43:27 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.276 2025/09/06 20:18:41 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -173,7 +173,7 @@ static const char *const msgs[] = {
 	"%soperand of '%s' must be modifiable lvalue",			// 115
 	"invalid pointer subtraction",					// 116
 	"bitwise '%s' on signed value possibly nonportable",		// 117
-	"semantics of '%s' change in C90; use explicit cast",		// 118
+	"'%s' %s '%s' differs between traditional C and C90",		// 118
 	"conversion of '%s' to '%s' is out of range",			// 119
 	"bitwise '%s' on signed value nonportable",			// 120
 	"negative shift",						// 121
