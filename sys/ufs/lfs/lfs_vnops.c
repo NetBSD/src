@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.341 2025/09/05 05:14:29 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.342 2025/09/06 05:02:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.341 2025/09/05 05:14:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.342 2025/09/06 05:02:07 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1124,10 +1124,11 @@ lfs_link(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct lfs *fs;
-	struct vnode *dvp;
+	struct vnode *dvp, *vp;
 	int error;
 
 	dvp = ap->a_dvp;
+	vp = ap->a_vp;
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
@@ -1137,17 +1138,20 @@ lfs_link(void *v)
 		return EROFS;
 	}
 
-	error = lfs_set_dirop(dvp, ap->a_vp);
-	if (error) {
+        error = vn_lock(vp, LK_EXCLUSIVE);
+        if (error)
+                return error;
+	error = lfs_set_dirop(dvp, vp);
+	VOP_UNLOCK(vp);
+	if (error)
 		return error;
-	}
 
 	error = ulfs_link(ap);
 
-	UNMARK_VNODE(ap->a_vp);
+	UNMARK_VNODE(vp);
 	UNMARK_VNODE(dvp);
 	lfs_unset_dirop(fs, dvp, "link");
-	vrele(ap->a_vp);
+	vrele(vp);
 	vrele(dvp);
 
 	return (error);
