@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $ */
+/* $NetBSD: db_trace.c,v 1.25 2025/09/06 06:49:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.25 2025/09/06 06:49:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -45,13 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $"
 
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
-#include <ddb/db_output.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_proc.h>
-#include <ddb/db_lwp.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_lwp.h>
+#include <ddb/db_output.h>
+#include <ddb/db_proc.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_variables.h>
 
 #ifdef _KERNEL
 extern char el0_trap[];
