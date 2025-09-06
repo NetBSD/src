@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.65 2025/09/06 02:53:23 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.66 2025/09/06 12:42:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019, 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.65 2025/09/06 02:53:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.66 2025/09/06 12:42:16 riastradh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1227,6 +1227,10 @@ paravirt_membar_sync(void)
 	 *     MIPS32 Instruction Set, Document Number: MD00086,
 	 *     Revision 0.95, March 12, 2001, MIPS Technologies, p. 215
 	 */
-	__asm volatile("sync");
+	__asm volatile(
+	    ".set push"			"\n\t"
+	    ".set mips2"		"\n\t"
+	    "sync"			"\n\t"
+	    ".set pop");
 }
 #endif	/* !MIPS1 */
