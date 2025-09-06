@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.50 2025/09/05 09:23:42 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.51 2025/09/06 09:34:11 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1036,4 +1036,10 @@ sys/arch/arm/cortex/gicv3.c			1.55,1.56
 
 	gicv3: Appease KUBSAN (avoid undefined left-shift out of range).
 	[rin, ticket #1156]
+
+external/gpl3/binutils/dist/gas/config/tc-vax.c	1.22
+
+	vax: gas: PR 59326: use GOT for pointer for global function
+	in same file, instead of PLT.
+	[rin, ticket #1157]
 
