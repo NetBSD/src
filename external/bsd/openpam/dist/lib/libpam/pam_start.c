@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_start.c,v 1.4 2023/06/30 21:46:21 christos Exp $	*/
+/*	$NetBSD: pam_start.c,v 1.5 2025/09/06 12:23:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_start.c,v 1.4 2023/06/30 21:46:21 christos Exp $");
+__RCSID("$NetBSD: pam_start.c,v 1.5 2025/09/06 12:23:17 riastradh Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -79,7 +79,7 @@ pam_start(const char *service,
 	hostname_size = (size_t)(h < 10 ? 1024 : h) + 1;
 
 	ENTER();
-	if ((ph = calloc((size_t)1, sizeof *ph)) == NULL)
+	if ((ph = calloc(1, sizeof *ph)) == NULL)
 		RETURNC(PAM_BUF_ERR);
 	if ((r = pam_set_item(ph, PAM_SERVICE, service)) != PAM_SUCCESS)
 		goto fail;

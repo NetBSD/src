@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.7 2025/09/06 12:17:09 riastradh Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.8 2025/09/06 12:23:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_configure.c,v 1.7 2025/09/06 12:17:09 riastradh Exp $");
+__RCSID("$NetBSD: openpam_configure.c,v 1.8 2025/09/06 12:23:17 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -301,7 +301,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 		}
 
 		/* allocate new entry */
-		if ((this = calloc((size_t)1, sizeof *this)) == NULL)
+		if ((this = calloc(1, sizeof *this)) == NULL)
 			goto syserr;
 		this->flag = (int)ctlf;
 		this->module = module;

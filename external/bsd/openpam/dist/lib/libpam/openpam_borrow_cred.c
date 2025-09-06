@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_borrow_cred.c,v 1.6 2025/09/03 16:06:26 christos Exp $	*/
+/*	$NetBSD: openpam_borrow_cred.c,v 1.7 2025/09/06 12:23:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.6 2025/09/03 16:06:26 christos Exp $");
+__RCSID("$NetBSD: openpam_borrow_cred.c,v 1.7 2025/09/06 12:23:17 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -81,7 +81,7 @@ openpam_borrow_cred(pam_handle_t *pamh,
 		    (int)geteuid());
 		RETURNC(PAM_PERM_DENIED);
 	}
-	scred = calloc((size_t)1, sizeof *scred);
+	scred = calloc(1, sizeof *scred);
 	if (scred == NULL)
 		RETURNC(PAM_BUF_ERR);
 	scred->euid = geteuid();
