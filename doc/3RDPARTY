@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2132 2025/09/05 21:20:45 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2133 2025/09/06 13:19:32 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -43,16 +43,19 @@
 #
 
 Package:	acpica
-Version:	20241212
+Version:	20250807
 Current Vers:	20250807
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2025-08-24
+Date:		2025-09-06
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho,christos
 Location:	sys/external/bsd/acpica/dist
+Vendor tag:	intel
+Release tag:	acpica-YYYYMMDD
+Current tag:	acpica-20250807
 Notes:
 You want the unix2 (dual-licensed) tar file.
 Please read src/sys/dev/acpi/acpica/README before any modification.
@@ -172,7 +175,7 @@ Current Vers:	1.23.1
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2025-07-29
+Date:		2025-09-06
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -1041,6 +1044,9 @@ Mailing List:
 Responsible:
 License:	BSD (3-clause)
 Location:	external/bsd/openldap/dist
+Vendor tag:	OPENLDAP
+Release tag:	OPENLDAPM_m_t
+Current tag:	OPENLDAP2_6_10
 Notes:
 
 Package:	OpenPAM
@@ -1054,6 +1060,9 @@ Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
 Location:	external/bsd/openpam/dist
+Vendor tag:	OPENPAM
+Release tag:	name-YYYY-MM-DD
+Current tag:	zingiber-2025-05-31
 Notes:
 
 Package:	openresolv
