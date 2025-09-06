@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.81 2025/09/06 20:11:30 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.82 2025/09/06 21:02:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -104,45 +104,6 @@ static const struct fdt_opp_info __CONCAT(_name,_oppinfo) = {		\
 _FDT_OPP_REGISTER(_name)
 
 TAILQ_HEAD(fdt_conslist, fdt_console_info);
-
-/*
- * Platform-specific data
- */
-
-struct fdt_platform {
-	const struct pmap_devmap *
-				(*fp_devmap)(void);
-	void			(*fp_bootstrap)(void);
-	int			(*fp_mpstart)(void);
-	void			(*fp_startup)(void);
-	void			(*fp_init_attach_args)(struct fdt_attach_args *);
-	void			(*fp_device_register)(device_t, void *);
-	void			(*fp_device_register_post_config)(device_t, void *);
-	void			(*fp_reset)(void);
-	void			(*fp_delay)(u_int);
-	u_int			(*fp_uart_freq)(void);
-};
-
-struct fdt_platform_info {
-	const char *			fpi_compat;
-	const struct fdt_platform *	fpi_ops;
-};
-
-#define FDT_PLATFORM_DEFAULT		""
-
-#define _FDT_PLATFORM_REGISTER(name)	\
-	__link_set_add_rodata(fdt_platforms, __CONCAT(name,_platinfo));
-
-#define FDT_PLATFORM(_name, _compat, _ops)				\
-static const struct fdt_platform_info __CONCAT(_name,_platinfo) = {	\
-	.fpi_compat = (_compat),					\
-	.fpi_ops = (_ops)						\
-};									\
-_FDT_PLATFORM_REGISTER(_name)
-
-const struct fdt_platform *
-		fdt_platform_find(void);
-
 
 struct fdt_dma_range {
 	paddr_t		dr_sysbase;

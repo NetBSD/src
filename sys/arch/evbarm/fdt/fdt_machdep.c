@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.109 2025/03/08 14:30:05 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.110 2025/09/06 21:02:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.109 2025/03/08 14:30:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.110 2025/09/06 21:02:41 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.109 2025/03/08 14:30:05 jmcneill E
 #include <dev/fdt/fdt_boot.h>
 #include <dev/fdt/fdt_private.h>
 #include <dev/fdt/fdt_memory.h>
+#include <dev/fdt/fdt_platform.h>
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>

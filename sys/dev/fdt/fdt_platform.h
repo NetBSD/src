@@ -1,7 +1,7 @@
-/* $NetBSD: fdt_bus_machdep.c,v 1.4 2025/09/06 21:02:41 thorpej Exp $ */
+/*	$NetBSD: fdt_platform.h,v 1.1 2025/09/06 21:02:41 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,45 +26,47 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.4 2025/09/06 21:02:41 thorpej Exp $");
+#ifndef _DEV_FDT_FDT_PLATFORM_H_
+#define	_DEV_FDT_FDT_PLATFORM_H_
 
-#include <sys/param.h>
-#include <sys/bus.h>
-#include <sys/kmem.h>
+#include <sys/device.h>
 
-#include <dev/fdt/fdtvar.h>
-#include <dev/fdt/fdt_platform.h>
+struct fdt_attach_args;
+struct pmap_devmap;
 
-#include <arm/fdt/arm_fdtvar.h>
+struct fdt_platform {
+	const struct pmap_devmap *
+				(*fp_devmap)(void);
+	void			(*fp_bootstrap)(void);
+	int			(*fp_mpstart)(void);
+	void			(*fp_startup)(void);
+	void			(*fp_init_attach_args)(struct fdt_attach_args *);
+	void			(*fp_device_register)(device_t, void *);
+	void			(*fp_device_register_post_config)(device_t,
+				    void *);
+	void			(*fp_reset)(void);
+	void			(*fp_delay)(u_int);
+	u_int			(*fp_uart_freq)(void);
+};
 
-extern struct bus_space arm_generic_bs_tag;
+struct fdt_platform_info {
+	const char *			fpi_compat;
+	const struct fdt_platform *	fpi_ops;
+};
 
-static int
-nonposted_mmio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
-    bus_space_handle_t *bshp)
-{
-	if (flag == 0) {
-		flag |= BUS_SPACE_MAP_NONPOSTED;
-	}
+#define	FDT_PLATFORM_DEFAULT		""
 
-	return bus_space_map(&arm_generic_bs_tag, bpa, size, flag, bshp);
-}
+#define	_FDT_PLATFORM_REGISTER(name)	\
+	__link_set_add_rodata(fdt_platforms, __CONCAT(name,_platinfo));
 
-bus_space_tag_t
-fdtbus_bus_tag_create(int phandle, uint32_t flags)
-{
-	const struct fdt_platform *plat = fdt_platform_find();
-	struct bus_space *tagp;
-	struct fdt_attach_args faa;
+#define	FDT_PLATFORM(_name, _compat, _ops)				\
+static const struct fdt_platform_info __CONCAT(_name,_platinfo) = {	\
+	.fpi_compat = (_compat),					\
+	.fpi_ops = (_ops)						\
+};									\
+_FDT_PLATFORM_REGISTER(_name)
 
-	plat->fp_init_attach_args(&faa);
+const struct fdt_platform *
+		fdt_platform_find(void);
 
-	tagp = kmem_alloc(sizeof(*tagp), KM_SLEEP);
-	*tagp = *faa.faa_bst;
-	if ((flags & FDT_BUS_SPACE_FLAG_NONPOSTED_MMIO) != 0) {
-		tagp->bs_map = nonposted_mmio_bs_map;
-	}
-
-	return tagp;
-}
+#endif /* _DEV_FDT_FDT_PLATFORM_H_ */

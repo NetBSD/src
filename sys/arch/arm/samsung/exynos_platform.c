@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.40 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.41 2025/09/06 21:02:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.40 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.41 2025/09/06 21:02:41 thorpej Exp $");
 
 #define	EXYNOS_CORE_VBASE	KERNEL_IO_VBASE
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.40 2023/04/07 08:55:30 skrll E
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>
 

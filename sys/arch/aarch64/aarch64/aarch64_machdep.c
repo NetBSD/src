@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastradh Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.71 2025/09/06 21:02:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.71 2025/09/06 21:02:39 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastra
 #include <arm/fdt/arm_fdtvar.h>
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_memory.h>
+#include <dev/fdt/fdt_platform.h>
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)

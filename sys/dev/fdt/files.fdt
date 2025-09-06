@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.74 2025/09/06 15:44:04 thorpej Exp $
+# $NetBSD: files.fdt,v 1.75 2025/09/06 21:02:42 thorpej Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -10,7 +10,6 @@ defparam opt_fdt.h				FDT_DEFAULT_STDOUT_PATH
 file	dev/fdt/fdt_boot.c			fdtbase
 file	dev/fdt/fdt_memory.c			fdtbase
 file	dev/fdt/fdt_openfirm.c			fdtbase
-file	dev/fdt/fdt_platform.c			fdtbase
 file	dev/fdt/fdt_stub.c			fdtbase
 file	dev/fdt/fdt_subr.c			fdtbase
 

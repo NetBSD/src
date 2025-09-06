@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.38 2024/12/08 20:55:18 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.39 2025/09/06 21:02:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.38 2024/12/08 20:55:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.39 2025/09/06 21:02:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.38 2024/12/08 20:55:18 jmcneill 
 #include <sys/kprintf.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>
 

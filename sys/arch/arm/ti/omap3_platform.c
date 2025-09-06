@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.8 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.9 2025/09/06 21:02:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.8 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.9 2025/09/06 21:02:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.8 2023/04/07 08:55:30 skrll Exp
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 

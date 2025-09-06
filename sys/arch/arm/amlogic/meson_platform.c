@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Exp $ */
+/* $NetBSD: meson_platform.c,v 1.22 2025/09/06 21:02:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.22 2025/09/06 21:02:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Ex
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 

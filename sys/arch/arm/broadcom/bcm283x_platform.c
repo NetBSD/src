@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.49 2023/04/07 08:55:30 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.50 2025/09/06 21:02:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.49 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.50 2025/09/06 21:02:40 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.49 2023/04/07 08:55:30 skrll 
 #include <prop/proplib.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.12 2025/09/06 21:02:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.12 2025/09/06 21:02:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp
 #include <sys/device.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>

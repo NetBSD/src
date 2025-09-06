@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_platform.c,v 1.1 2023/04/07 08:55:31 skrll Exp $ */
+/* $NetBSD: fdt_platform.c,v 1.2 2025/09/06 21:02:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_platform.c,v 1.1 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_platform.c,v 1.2 2025/09/06 21:02:41 thorpej Exp $");
 
 #include <sys/param.h>
 
 #include <dev/ofw/openfirm.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 const struct fdt_platform *
 fdt_platform_find(void)

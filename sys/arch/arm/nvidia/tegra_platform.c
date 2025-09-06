@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.29 2025/09/06 21:02:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.29 2025/09/06 21:02:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Ex
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>
 

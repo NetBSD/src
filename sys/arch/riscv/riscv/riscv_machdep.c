@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.43 2025/03/02 08:14:26 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.44 2025/09/06 21:02:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.43 2025/03/02 08:14:26 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.44 2025/09/06 21:02:41 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: riscv_machdep.c,v 1.43 2025/03/02 08:14:26 skrll Exp $");
 #include <dev/fdt/fdt_boot.h>
 #include <dev/fdt/fdt_memory.h>
 #include <dev/fdt/fdt_private.h>
+#include <dev/fdt/fdt_platform.h>
 
 int cpu_printfataltraps = 1;
 char machine[] = MACHINE;

@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.22 2025/01/30 11:09:53 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.23 2025/09/06 21:02:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.22 2025/01/30 11:09:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.23 2025/09/06 21:02:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.22 2025/01/30 11:09:53 jmcneill Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <dev/ofw/openfirm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.9 2023/05/24 16:43:40 bouyer Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.10 2025/09/06 21:02:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.9 2023/05/24 16:43:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.10 2025/09/06 21:02:40 thorpej Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.9 2023/05/24 16:43:40 bouyer Exp
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 

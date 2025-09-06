@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.17 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: rk_platform.c,v 1.18 2025/09/06 21:02:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018,2021 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.17 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.18 2025/09/06 21:02:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.17 2023/04/07 08:55:30 skrll Exp $
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
