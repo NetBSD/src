@@ -1,4 +1,4 @@
-/* $NetBSD: ti_cpufreq.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_cpufreq.c,v 1.5 2025/09/06 21:24:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.5 2025/09/06 21:24:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.4 2021/01/27 03:10:20 thorpej Exp $
 #include <sys/bus.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_opp.h>
 #include <dev/fdt/syscon.h>
 
 static bool		ti_opp_probed = false;

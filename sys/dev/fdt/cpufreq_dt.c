@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.19 2021/02/22 06:21:35 ryo Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.20 2025/09/06 21:24:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.19 2021/02/22 06:21:35 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.20 2025/09/06 21:24:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.19 2021/02/22 06:21:35 ryo Exp $");
 #include <sys/cpu.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_opp.h>
 
 struct cpufreq_dt_table {
 	int			phandle;
