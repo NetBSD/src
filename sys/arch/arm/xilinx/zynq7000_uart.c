@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_uart.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp $	*/
+/*	$NetBSD: zynq7000_uart.c,v 1.4 2025/09/06 22:53:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.3 2022/10/25 22:49:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.4 2025/09/06 22:53:48 thorpej Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq7000_uart.c,v 1.3 2022/10/25 22:49:39 jmcneill E
 #include <arm/xilinx/zynq_uartvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "xlnx,xuartps" },

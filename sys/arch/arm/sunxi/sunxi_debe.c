@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.17 2024/02/02 22:14:04 andvar Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.18 2025/09/06 22:53:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.17 2024/02/02 22:14:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.18 2025/09/06 22:53:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.17 2024/02/02 22:14:04 andvar Exp $
 #include <sys/condvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/fdt_port.h>
 
 #include <dev/videomode/videomode.h>

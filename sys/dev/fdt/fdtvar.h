@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.84 2025/09/06 21:24:05 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.85 2025/09/06 22:53:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,6 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
-#include <sys/termios.h>
 
 #include <dev/clock_subr.h>
 
@@ -64,29 +63,11 @@ struct fdt_attach_args {
 	int faa_quiet;
 };
 
-struct fdt_console {
-	int	(*match)(int);
-	void	(*consinit)(struct fdt_attach_args *, u_int);
-};
-
-struct fdt_console_info {
-	const struct fdt_console *ops;
-};
-
 struct fdt_phandle_data {
 	int phandle;
 	int count;
 	const u_int *values;
 };
-
-#define	_FDT_CONSOLE_REGISTER(name)	\
-	__link_set_add_rodata(fdt_consoles, __CONCAT(name,_consinfo));
-
-#define	FDT_CONSOLE(_name, _ops)					\
-static const struct fdt_console_info __CONCAT(_name,_consinfo) = {	\
-	.ops = (_ops)							\
-};									\
-_FDT_CONSOLE_REGISTER(_name)
 
 struct fdt_dma_range {
 	paddr_t		dr_sysbase;
@@ -117,14 +98,6 @@ const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
 bool		fdtbus_get_path(int, char *, size_t);
-
-const struct fdt_console *
-		fdtbus_get_console(void);
-
-const char *	fdtbus_get_stdout_path(void);
-int		fdtbus_get_stdout_phandle(void);
-int		fdtbus_get_stdout_speed(void);
-tcflag_t	fdtbus_get_stdout_flags(void);
 
 bool		fdtbus_status_okay(int);
 

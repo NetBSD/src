@@ -1,4 +1,4 @@
-/* $NetBSD: arm_platform.c,v 1.8 2025/09/06 21:02:40 thorpej Exp $ */
+/* $NetBSD: arm_platform.c,v 1.9 2025/09/06 22:53:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.8 2025/09/06 21:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.9 2025/09/06 22:53:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.8 2025/09/06 21:02:40 thorpej Exp
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>

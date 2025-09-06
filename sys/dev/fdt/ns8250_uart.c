@@ -1,4 +1,4 @@
-/* $NetBSD: ns8250_uart.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: ns8250_uart.c,v 1.8 2025/09/06 22:53:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017-2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.8 2025/09/06 22:53:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.7 2021/01/27 03:10:21 thorpej Exp 
 #include <dev/ic/comvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 static int ns8250_uart_match(device_t, cfdata_t, void *);
 static void ns8250_uart_attach(device_t, device_t, void *);

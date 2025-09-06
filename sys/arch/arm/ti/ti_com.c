@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.12 2023/09/05 02:59:07 gutteridge Exp $ */
+/* $NetBSD: ti_com.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.12 2023/09/05 02:59:07 gutteridge Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.12 2023/09/05 02:59:07 gutteridge Exp $
 #include <dev/ic/comvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <arch/arm/ti/ti_prcm.h>
 

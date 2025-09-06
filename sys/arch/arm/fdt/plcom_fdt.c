@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_fdt.c,v 1.6 2023/01/24 06:56:40 mlelstv Exp $ */
+/* $NetBSD: plcom_fdt.c,v 1.7 2025/09/06 22:53:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.6 2023/01/24 06:56:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.7 2025/09/06 22:53:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.6 2023/01/24 06:56:40 mlelstv Exp $"
 #include <sys/kernel.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>

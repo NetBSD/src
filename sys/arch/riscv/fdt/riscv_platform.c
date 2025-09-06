@@ -1,4 +1,4 @@
-/* $NetBSD: riscv_platform.c,v 1.3 2025/09/06 21:02:41 thorpej Exp $ */
+/* $NetBSD: riscv_platform.c,v 1.4 2025/09/06 22:53:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: riscv_platform.c,v 1.3 2025/09/06 21:02:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: riscv_platform.c,v 1.4 2025/09/06 22:53:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>

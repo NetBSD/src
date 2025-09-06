@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.7 2025/09/06 21:02:40 thorpej Exp $ */
+/* $NetBSD: apple_platform.c,v 1.8 2025/09/06 22:53:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.7 2025/09/06 21:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.8 2025/09/06 22:53:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.7 2025/09/06 21:02:40 thorpej E
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: plfb_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: plfb_fdt.c,v 1.6 2025/09/06 22:53:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.6 2025/09/06 22:53:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: plfb_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $")
 #include <dev/wsfb/genfbvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/display_timing.h>
 
 #define	LCDTIMING0		0x000

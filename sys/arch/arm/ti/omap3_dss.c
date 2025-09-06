@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_dss.c,v 1.7 2022/09/27 06:36:43 skrll Exp $	*/
+/*	$NetBSD: omap3_dss.c,v 1.8 2025/09/06 22:53:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.7 2022/09/27 06:36:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.8 2025/09/06 22:53:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_dss.c,v 1.7 2022/09/27 06:36:43 skrll Exp $");
 #include <dev/videomode/edidvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <arm/ti/omap3_dssreg.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2021/09/06 14:03:18 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2025/09/06 22:53:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2021/09/06 14:03:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2025/09/06 22:53:48 thorpej Exp $");
 
 #define	_MIPS_BUS_DMA_PRIVATE
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2021/09/06 14:03:18 jmcneill Exp $"
 #include <mips/cavium/octeonvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 static int	mainbus_match(device_t, struct cfdata *, void *);
 static void	mainbus_attach(device_t, device_t, void *);

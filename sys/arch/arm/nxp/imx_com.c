@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_com.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx_com.c,v 1.4 2025/09/06 22:53:47 thorpej Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_com.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_com.c,v 1.4 2025/09/06 22:53:47 thorpej Exp $");
 
 #include "opt_fdt.h"
 #include "opt_imxuart.h"
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx_com.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
 #include <sys/device.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>

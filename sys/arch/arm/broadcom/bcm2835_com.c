@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.9 2023/12/11 12:53:08 mlelstv Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.10 2025/09/06 22:53:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.9 2023/12/11 12:53:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.10 2025/09/06 22:53:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.9 2023/12/11 12:53:08 mlelstv Exp 
 #include <arm/broadcom/bcm2835_intr.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <dev/ic/comvar.h>
 

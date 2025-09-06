@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.12 2022/04/08 10:17:54 andvar Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.12 2022/04/08 10:17:54 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.12 2022/04/08 10:17:54 andvar Exp 
 #include <dev/ic/comvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 static int dw_apb_uart_match(device_t, cfdata_t, void *);
 static void dw_apb_uart_attach(device_t, device_t, void *);
