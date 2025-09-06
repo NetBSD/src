@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.8 2025/09/06 23:36:55 nat Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.9 2025/09/06 23:38:54 nat Exp $	*/
 
 /* This is a derivative work. */
 
@@ -57,8 +57,8 @@ typedef unsigned int float32;
 typedef unsigned long long float64;
 #ifdef FLOATX80
 typedef struct {
-    unsigned short high;
     unsigned long long low;
+    unsigned short high;
 } floatx80;
 #endif
 #ifdef FLOAT128
