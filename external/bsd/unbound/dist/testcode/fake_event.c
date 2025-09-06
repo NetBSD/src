@@ -52,6 +52,7 @@
 #include "util/data/msgreply.h"
 #include "util/data/msgencode.h"
 #include "util/data/dname.h"
+#include "util/storage/slabhash.h"
 #include "util/edns.h"
 #include "util/config_file.h"
 #include "services/listen_dnsport.h"
@@ -65,6 +66,7 @@
 #include "sldns/wire2str.h"
 #include "sldns/str2wire.h"
 #include "daemon/remote.h"
+#include "daemon/daemon.h"
 #include "util/timeval_func.h"
 #include <signal.h>
 struct worker;
@@ -154,6 +156,8 @@ repevt_string(enum replay_event_type t)
 	case repevt_assign:	 return "ASSIGN";
 	case repevt_traffic:	 return "TRAFFIC";
 	case repevt_infra_rtt:	 return "INFRA_RTT";
+	case repevt_flush_message: return "FLUSH_MESSAGE";
+	case repevt_expire_message: return "EXPIRE_MESSAGE";
 	default:		 return "UNKNOWN";
 	}
 }
@@ -691,6 +695,66 @@ do_infra_rtt(struct replay_runtime* runtime)
 	free(dp);
 }
 
+/** Flush message from message cache. */
+static void
+do_flush_message(struct replay_runtime* runtime)
+{
+	struct replay_moment* now = runtime->now;
+	uint8_t rr[1024];
+	size_t rr_len = sizeof(rr), dname_len = 0;
+	hashvalue_type h;
+	struct query_info k;
+
+	if(sldns_str2wire_rr_question_buf(now->string, rr, &rr_len,
+		&dname_len, NULL, 0, NULL, 0) != 0)
+		fatal_exit("could not parse '%s'", now->string);
+
+	log_info("remove message %s", now->string);
+	k.qname = rr;
+	k.qname_len = dname_len;
+	k.qtype = sldns_wirerr_get_type(rr, rr_len, dname_len);
+	k.qclass = sldns_wirerr_get_class(rr, rr_len, dname_len);
+	k.local_alias = NULL;
+	h = query_info_hash(&k, 0);
+	slabhash_remove(runtime->daemon->env->msg_cache, h, &k);
+}
+
+/** Expire message from message cache. */
+static void
+do_expire_message(struct replay_runtime* runtime)
+{
+	struct replay_moment* now = runtime->now;
+	uint8_t rr[1024];
+	size_t rr_len = sizeof(rr), dname_len = 0;
+	hashvalue_type h;
+	struct query_info k;
+	struct lruhash_entry* e;
+
+	if(sldns_str2wire_rr_question_buf(now->string, rr, &rr_len,
+		&dname_len, NULL, 0, NULL, 0) != 0)
+		fatal_exit("could not parse '%s'", now->string);
+
+	log_info("expire message %s", now->string);
+	k.qname = rr;
+	k.qname_len = dname_len;
+	k.qtype = sldns_wirerr_get_type(rr, rr_len, dname_len);
+	k.qclass = sldns_wirerr_get_class(rr, rr_len, dname_len);
+	k.local_alias = NULL;
+	h = query_info_hash(&k, 0);
+
+	e = slabhash_lookup(runtime->daemon->env->msg_cache, h, &k, 0);
+	if(e) {
+		struct msgreply_entry* msg = (struct msgreply_entry*)e->key;
+		struct reply_info* rep = (struct reply_info*)msg->entry.data;
+		time_t expired = runtime->now_secs;
+		expired -= 3;
+		rep->ttl = expired;
+		rep->prefetch_ttl = expired;
+		rep->serve_expired_ttl = expired;
+		lock_rw_unlock(&msg->entry.lock);
+	}
+}
+
 /** perform exponential backoff on the timeout */
 static void
 expon_timeout_backoff(struct replay_runtime* runtime)
@@ -796,6 +860,14 @@ do_moment_and_advance(struct replay_runtime* runtime)
 		do_infra_rtt(runtime);
 		advance_moment(runtime);
 		break;
+	case repevt_flush_message:
+		do_flush_message(runtime);
+		advance_moment(runtime);
+		break;
+	case repevt_expire_message:
+		do_expire_message(runtime);
+		advance_moment(runtime);
+		break;
 	default:
 		fatal_exit("testbound: unknown event type %d",
 			runtime->now->evt_type);
@@ -866,7 +938,12 @@ listen_create(struct comm_base* base, struct listen_port* ATTR_UNUSED(ports),
 	char* ATTR_UNUSED(http_endpoint),
 	int ATTR_UNUSED(http_notls),
 	struct tcl_list* ATTR_UNUSED(tcp_conn_limit),
-	void* ATTR_UNUSED(sslctx), struct dt_env* ATTR_UNUSED(dtenv),
+	void* ATTR_UNUSED(dot_sslctx), void* ATTR_UNUSED(doh_sslctx),
+	void* ATTR_UNUSED(quic_ssl),
+	struct dt_env* ATTR_UNUSED(dtenv),
+	struct doq_table* ATTR_UNUSED(table),
+	struct ub_randstate* ATTR_UNUSED(rnd),
+	struct config_file* ATTR_UNUSED(cfg),
 	comm_point_callback_type* cb, void *cb_arg)
 {
 	struct replay_runtime* runtime = (struct replay_runtime*)base;
@@ -1187,7 +1264,7 @@ struct serviced_query* outnet_serviced_query(struct outside_network* outnet,
 	struct replay_runtime* runtime = (struct replay_runtime*)outnet->base;
 	struct fake_pending* pend = (struct fake_pending*)calloc(1,
 		sizeof(struct fake_pending));
-	char z[256];
+	char z[LDNS_MAX_DOMAINLEN];
 	log_assert(pend);
 	log_nametypeclass(VERB_OPS, "pending serviced query",
 		qinfo->qname, qinfo->qtype, qinfo->qclass);
@@ -1407,6 +1484,11 @@ size_t comm_point_get_mem(struct comm_point* ATTR_UNUSED(c))
 	return 0;
 }
 
+size_t comm_timer_get_mem(struct comm_timer* ATTR_UNUSED(timer))
+{
+	return 0;
+}
+
 size_t serviced_get_mem(struct serviced_query* ATTR_UNUSED(c))
 {
 	return 0;
@@ -1581,6 +1663,12 @@ void comm_timer_set(struct comm_timer* timer, struct timeval* tv)
 	log_info("fake timer set %d.%6.6d",
 		(int)t->tv.tv_sec, (int)t->tv.tv_usec);
 	timeval_add(&t->tv, &t->runtime->now_tv);
+}
+
+int comm_timer_is_set(struct comm_timer* timer)
+{
+	struct fake_timer* t = (struct fake_timer*)timer;
+	return t->enabled;
 }
 
 void comm_timer_delete(struct comm_timer* timer)
@@ -1856,7 +1944,8 @@ int comm_point_send_udp_msg(struct comm_point *c, sldns_buffer* packet,
 }
 
 int outnet_get_tcp_fd(struct sockaddr_storage* ATTR_UNUSED(addr),
-	socklen_t ATTR_UNUSED(addrlen), int ATTR_UNUSED(tcp_mss), int ATTR_UNUSED(dscp))
+	socklen_t ATTR_UNUSED(addrlen), int ATTR_UNUSED(tcp_mss),
+	int ATTR_UNUSED(dscp), int ATTR_UNUSED(nodelay))
 {
 	log_assert(0);
 	return -1;
@@ -1904,6 +1993,30 @@ http2_get_response_buffer_size(void)
 void http2_stream_add_meshstate(struct http2_stream* ATTR_UNUSED(h2_stream),
 	struct mesh_area* ATTR_UNUSED(mesh), struct mesh_state* ATTR_UNUSED(m))
 {
+}
+
+void http2_stream_remove_mesh_state(struct http2_stream* ATTR_UNUSED(h2_stream))
+{
+}
+
+void fast_reload_service_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(event),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+
+void fast_reload_thread_stop(
+	struct fast_reload_thread* ATTR_UNUSED(fast_reload_thread))
+{
+	/* nothing */
+}
+
+int fast_reload_client_callback(struct comm_point* ATTR_UNUSED(c),
+	void* ATTR_UNUSED(arg), int ATTR_UNUSED(error),
+        struct comm_reply* ATTR_UNUSED(repinfo))
+{
+	log_assert(0);
+	return 0;
 }
 
 /*********** End of Dummy routines ***********/
