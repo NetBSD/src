@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.3 2025/04/30 04:42:17 perseant Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2025/09/06 21:51:10 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -17,11 +17,10 @@ DPADD+=${LIBPROP}
 #LDADD+=-lefence -Wl,-rpath,/usr/pkg/lib -L/usr/pkg/lib
 
 FSCK=${NETBSDSRCDIR}/sbin/fsck
-FSCK_LFS=${NETBSDSRCDIR}/sbin/fsck_lfs
 NEWFS_EXFATFS=${NETBSDSRCDIR}/sbin/newfs_exfatfs
 DUMPEXFATFS=${NETBSDSRCDIR}/usr.sbin/dumpexfatfs
 EXFATFS=${NETBSDSRCDIR}/sys/fs/exfatfs
-CPPFLAGS+=-I${.CURDIR} -I${FSCK} -I${FSCK_LFS} -I${NEWFS_EXFATFS} -g -O0
-.PATH:  ${FSCK} ${FSCK_LFS} ${NEWFS_EXFATFS} ${DUMPEXFATFS} ${EXFATFS}
+CPPFLAGS+=-I${.CURDIR} -I${FSCK} -I${NEWFS_EXFATFS} -g -O0
+.PATH:  ${FSCK} ${NEWFS_EXFATFS} ${DUMPEXFATFS} ${EXFATFS}
 
 .include <bsd.prog.mk>

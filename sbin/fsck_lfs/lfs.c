@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.75.8.1 2024/06/29 19:43:25 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.75.8.2 2025/09/06 21:51:09 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -335,7 +335,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, daddr_t daddr)
 	struct inode *ip;
 	union lfs_dinode *dip;
 	struct ubuf *bp;
-	int i;
+	int i, hash;
 
 	vp = ecalloc(1, sizeof(*vp));
 	vp->v_fd = fd;
@@ -393,11 +393,16 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, daddr_t daddr)
 		if (lfs_dino_getdb(fs, ip->i_din, i) != 0)
 			ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 
+	++nvnodes;
+	hash = ((int)(intptr_t)fs + ino) & (VNODE_HASH_MAX - 1);
+	LIST_INSERT_HEAD(&getvnodelist[hash], vp, v_getvnodes);
+	LIST_INSERT_HEAD(&vnodelist, vp, v_mntvnodes);
+
 	return vp;
 }
 
 static struct uvnode *
-lfs_vget(void *vfs, ino_t ino, void *arg)
+lfs_vget(void *vfs, ino_t ino)
 {
 	struct lfs *fs = (struct lfs *)vfs;
 	daddr_t daddr;
@@ -410,16 +415,6 @@ lfs_vget(void *vfs, ino_t ino, void *arg)
 	if (daddr <= 0 || lfs_dtosn(fs, daddr) >= lfs_sb_getnseg(fs))
 		return NULL;
 	return lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
-}
-
-
-static int
-lfs_vnode_destroy(struct uvnode *tossvp)
-{
-	free(VTOI(tossvp)->inode_ext.lfs);
-	free(VTOI(tossvp)->i_din);
-	memset(VTOI(tossvp), 0, sizeof(struct inode));
-	return 0;
 }
 
 /*
@@ -577,7 +572,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	if (fs->lfs_ivnode == NULL)
 		return NULL;
 
-	register_vget((void *)fs, lfs_vget, lfs_vnode_destroy);
+	register_vget((void *)fs, lfs_vget);
 
 	return fs;
 }

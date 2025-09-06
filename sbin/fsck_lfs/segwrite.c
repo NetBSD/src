@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.48.8.1 2024/06/29 19:43:25 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.48.8.2 2025/09/06 21:51:10 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1008,7 +1008,7 @@ lfs_writevnodes(struct lfs *fs, struct segment *sp, int op)
 	struct uvnode *vp;
 	int inodes_written = 0;
 	
-	TAILQ_FOREACH(vp, &vnodetq, v_mntvnodes) {
+	LIST_FOREACH(vp, &vnodelist, v_mntvnodes) {
 		if (vp->v_bmap_op != lfs_vop_bmap)
 			continue;
 
