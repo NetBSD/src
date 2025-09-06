@@ -1,0 +1,63 @@
+/*	$NetBSD: fdt_regulator.h,v 1.1 2025/09/06 20:11:30 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _DEV_FDT_FDT_REGULATOR_H_
+#define	_DEV_FDT_FDT_REGULATOR_H_
+
+#include <sys/device.h>
+
+struct fdtbus_regulator_controller;
+
+struct fdtbus_regulator {
+	struct fdtbus_regulator_controller *reg_rc;
+};
+
+struct fdtbus_regulator_controller_func {
+	int	(*acquire)(device_t);
+	void	(*release)(device_t);
+	int	(*enable)(device_t, bool);
+	int	(*set_voltage)(device_t, u_int, u_int);
+	int	(*get_voltage)(device_t, u_int *);
+};
+
+int		fdtbus_register_regulator_controller(device_t, int,
+		    const struct fdtbus_regulator_controller_func *);
+
+struct fdtbus_regulator *
+		fdtbus_regulator_acquire(int, const char *);
+void		fdtbus_regulator_release(struct fdtbus_regulator *);
+int		fdtbus_regulator_enable(struct fdtbus_regulator *);
+int		fdtbus_regulator_disable(struct fdtbus_regulator *);
+int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
+		    u_int, u_int);
+int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
+		    u_int *);
+int		fdtbus_regulator_supports_voltage(struct fdtbus_regulator *,
+		    u_int, u_int);
+
+#endif /* _DEV_FDT_FDT_REGULATOR_H_ */
