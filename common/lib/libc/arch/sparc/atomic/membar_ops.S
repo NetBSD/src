@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.8 2022/04/09 23:32:52 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.9 2025/09/06 02:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,11 +42,16 @@
  * store-before-load but nothing else.  Hence, only membar_sync (and
  * its deprecated alias membar_enter) must issue anything --
  * specifically, an LDSTUB, which (along with SWAP) is the only
- * instruction that implies a sequential consistency barrier.
+ * instruction that implies a sequential consistency barrier.  (SWAP is
+ * not available in sparcv7, and maybe not all sparcv8, so we use
+ * LDSTUB here.)
  *
  * If we ran with Partial Store Order (PSO), we would also need to
  * issue STBAR for membar_release (load/store-before-store) and
  * membar_producer (store-before-store).
+ *
+ * Sync membar_sync with paravirt_membar_sync in
+ * sys/arch/sparc/sparc/locore.s.
  */
 
 ENTRY(_membar_acquire)

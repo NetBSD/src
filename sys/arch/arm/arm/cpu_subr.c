@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.5 2021/11/14 16:56:32 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.6 2025/09/06 02:53:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,11 +33,12 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5 2021/11/14 16:56:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.6 2025/09/06 02:53:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/paravirt_membar.h>
 #include <sys/reboot.h>
 
 #include <arm/cpufunc.h>
@@ -145,3 +146,33 @@ cpu_clr_mbox(int cpuindex)
 }
 
 #endif
+
+#if defined _ARM_ARCH_6 || defined _ARM_ARCH_7 /* see below regarding armv<6 */
+void
+paravirt_membar_sync(void)
+{
+
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 *
+	 * Prior to armv6, there was no data memory barrier
+	 * instruction.  Such CPUs presumably don't exist in
+	 * multiprocessor configurations.  But what if we're running a
+	 * _kernel_ built for a uniprocessor armv5 CPU, as a virtual
+	 * machine guest of a _host_ with a newer multiprocessor CPU?
+	 * How do we enforce store-before-load ordering for a
+	 * paravirtualized device driver, coordinating with host
+	 * software `device' potentially on another CPU?  You'll have
+	 * to answer that before you can use virtio drivers!
+	 */
+	dmb(ish);
+}
+#endif	/* defined _ARM_ARCH_6 || defined _ARM_ARCH_7 */

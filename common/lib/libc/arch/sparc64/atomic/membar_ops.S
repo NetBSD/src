@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.9 2022/04/09 23:32:52 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.10 2025/09/06 02:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@ ENTRY(_membar_sync)
 	 *	https://www.oracle.com/technetwork/server-storage/sun-sparc-enterprise/documentation/sparc-2i-usersmanual-2516677.pdf#page=518
 	 *
 	 * So let's avoid doing that.
+	 *
+	 * Sync with paravirt_membar_sync in
+	 * sys/arch/sparc64/sparc64/locore.s.
 	 */
 	membar	#StoreLoad
 	retl
