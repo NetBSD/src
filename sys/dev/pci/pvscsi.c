@@ -59,7 +59,7 @@ in the file called LICENSE.GPL.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.2 2025/08/05 08:30:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.3 2025/09/06 02:56:30 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.2 2025/08/05 08:30:23 skrll Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/paravirt_membar.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -379,6 +380,12 @@ pvscsi_kick_io(struct pvscsi_softc *sc, uint8_t cdb0)
 	    cdb0 == SCSI_WRITE_6_COMMAND || cdb0 == WRITE_10 ||
 	    cdb0 == WRITE_12 || cdb0 == WRITE_16) {
 		s = sc->rings_state;
+
+		/*
+		 * Ensure the command has been published before we test
+		 * whether we need to kick the host.
+		 */
+		paravirt_membar_sync();
 
 		DEBUG_PRINTF(2, sc->dev, "%s req prod %d cons %d\n", __func__,
 		    s->req_prod_idx, s->req_cons_idx);
