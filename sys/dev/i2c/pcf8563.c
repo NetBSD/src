@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.16 2025/09/07 04:47:00 thorpej Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.17 2025/09/07 21:45:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.16 2025/09/07 04:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.17 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = pcf8563rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
 
@@ -131,7 +131,7 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 static int
 pcf8563rtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct pcf8563rtc_softc *sc = ch->cookie;
+	struct pcf8563rtc_softc *sc = device_private(ch->todr_dev);
 
 	return pcf8563rtc_clock_read(sc, dt);
 }
@@ -139,7 +139,7 @@ pcf8563rtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 pcf8563rtc_settime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-        struct pcf8563rtc_softc *sc = ch->cookie;
+        struct pcf8563rtc_softc *sc = device_private(ch->todr_dev);
 
 	return pcf8563rtc_clock_write(sc, dt);
 }

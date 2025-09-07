@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.66 2025/09/07 04:46:59 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.67 2025/09/07 21:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.66 2025/09/07 04:46:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67 2025/09/07 21:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -174,7 +174,7 @@ clockattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	tch = &sc->sc_handle;
-	tch->cookie = sc;
+	tch->todr_dev = self;
 	tch->todr_gettime_ymdhms = atari_rtc_get;
 	tch->todr_settime_ymdhms = atari_rtc_set;
 

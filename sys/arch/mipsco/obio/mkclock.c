@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.12 2014/11/20 16:34:25 christos Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.13 2025/09/07 21:45:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12 2014/11/20 16:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.13 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.12 2014/11/20 16:34:25 christos Exp $"
 #include <mipsco/obio/clockreg.h>
 
 struct	mkclock_softc {
+	device_t sc_dev;
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
 	struct todr_chip_handle sc_todr;
@@ -77,6 +78,7 @@ mkclock_attach(device_t parent, device_t self, void *aux)
         struct mkclock_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ca->ca_bustag;
 	if (bus_space_map(ca->ca_bustag, ca->ca_addr,
 			  0x10000,	
@@ -88,7 +90,7 @@ mkclock_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_settime_ymdhms = mkclock_write;
 	sc->sc_todr.todr_gettime_ymdhms = mkclock_read;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 
 	printf("\n");
@@ -113,7 +115,7 @@ mk_write(struct mkclock_softc *sc, int reg, int val)
 int
 mkclock_read(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct mkclock_softc *sc = tch->cookie;
+	struct mkclock_softc *sc = device_private(tch->todr_dev);
 	int s = splclock();
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RTC_PORT, READ_CLOCK); 
@@ -134,7 +136,7 @@ mkclock_read(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 int
 mkclock_write(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct mkclock_softc *sc = tch->cookie;
+	struct mkclock_softc *sc = device_private(tch->todr_dev);
 	int year, s;
 
 	year = dt->dt_year % 100;

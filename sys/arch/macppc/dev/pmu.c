@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.42 2025/08/12 05:37:30 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.43 2025/09/07 21:45:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.42 2025/08/12 05:37:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.43 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			aprint_normal_dev(self, "initializing RTC\n");
 			sc->sc_todr.todr_gettime = pmu_todr_get;
 			sc->sc_todr.todr_settime = pmu_todr_set;
-			sc->sc_todr.cookie = sc;
+			sc->sc_todr.todr_dev = self;
 			todr_attach(&sc->sc_todr);
 			goto next;
 		}
@@ -777,7 +777,7 @@ done:
 static int
 pmu_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct pmu_softc *sc = tch->cookie;
+	struct pmu_softc *sc = device_private(tch->todr_dev);
 	uint32_t sec;
 	int count = 10;
 	int ok = FALSE;
@@ -807,7 +807,7 @@ pmu_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 static int
 pmu_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct pmu_softc *sc = tch->cookie;
+	struct pmu_softc *sc = device_private(tch->todr_dev);
 	uint32_t sec;
 	uint8_t resp[16];
 

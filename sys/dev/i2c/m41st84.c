@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.33 2025/09/07 04:47:00 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.34 2025/09/07 21:45:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.33 2025/09/07 04:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.34 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_model = sm;
 	sc->sc_dev = self;
 	sc->sc_open = 0;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = strtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = strtc_settime_ymdhms;
 
@@ -323,7 +323,7 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 static int
 strtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct strtc_softc *sc = ch->cookie;
+	struct strtc_softc *sc = device_private(ch->todr_dev);
 	struct clock_ymdhms check;
 	int retries, error;
 
@@ -418,7 +418,7 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 static int
 strtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct strtc_softc *sc = ch->cookie;
+	struct strtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[2];
 	int i, error;
 

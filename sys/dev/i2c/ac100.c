@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.8 2025/09/07 03:53:37 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.9 2025/09/07 21:45:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.8 2025/09/07 03:53:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.9 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ ac100rtc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_gettime_ymdhms = ac100_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = ac100_rtc_settime;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 
 	fdtbus_todr_attach(self, faa->faa_phandle, &sc->sc_todr);
 }
@@ -210,8 +210,7 @@ ac100_write(struct ac100_softc *sc, uint8_t reg, uint16_t val)
 static int
 ac100_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ac100rtc_softc *rtc_sc = tch->cookie;
-	struct ac100_softc *sc = device_private(device_parent(rtc_sc->sc_dev));
+	struct ac100_softc *sc = device_private(device_parent(tch->todr_dev));
 	uint16_t sec, min, hou, wee, day, mon, yea;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
@@ -238,8 +237,7 @@ ac100_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 ac100_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ac100rtc_softc *rtc_sc = tch->cookie;
-	struct ac100_softc *sc = device_private(device_parent(rtc_sc->sc_dev));
+	struct ac100_softc *sc = device_private(device_parent(tch->todr_dev));
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	ac100_write(sc, AC100_RTC_SEC_REG, bintobcd(dt->dt_sec) & 0x7f);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_rtc.c,v 1.8 2024/02/24 12:04:16 andvar Exp $	*/
+/*	$NetBSD: pxa2x0_rtc.c,v 1.9 2025/09/07 21:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.8 2024/02/24 12:04:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_rtc.c,v 1.9 2025/09/07 21:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ pxartc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	memset(&sc->sc_todr, 0, sizeof(sc->sc_todr));
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	if (pxa->pxa_size == PXA270_RTC_SIZE) {
 		aprint_normal("%s: using wristwatch register\n",
 		    device_xname(sc->sc_dev));
@@ -118,7 +118,7 @@ pxartc_attach(device_t parent, device_t self, void *aux)
 static int
 pxartc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct pxartc_softc *sc = ch->cookie;
+	struct pxartc_softc *sc = device_private(ch->todr_dev);
 
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_RCNR);
 	tv->tv_usec = 0;
@@ -138,7 +138,7 @@ pxartc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 static int
 pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct pxartc_softc *sc = ch->cookie;
+	struct pxartc_softc *sc = device_private(ch->todr_dev);
 
 #ifdef PXARTC_DEBUG
 	struct clock_ymdhms dt;
@@ -171,7 +171,7 @@ pxartc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 static int
 pxartc_wristwatch_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct pxartc_softc *sc = ch->cookie;
+	struct pxartc_softc *sc = device_private(ch->todr_dev);
 	uint32_t dayr, yearr;
 	int s;
 
@@ -204,7 +204,7 @@ pxartc_wristwatch_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 static int
 pxartc_wristwatch_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct pxartc_softc *sc = ch->cookie;
+	struct pxartc_softc *sc = device_private(ch->todr_dev);
 	uint32_t dayr, yearr;
 	uint32_t wom;	/* week of month: 1=first week of month */
 	int s;

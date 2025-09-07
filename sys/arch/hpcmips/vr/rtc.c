@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.36 2022/07/21 10:09:21 andvar Exp $	*/
+/*	$NetBSD: rtc.c,v 1.37 2025/09/07 21:45:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.36 2022/07/21 10:09:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.37 2025/09/07 21:45:13 thorpej Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -153,6 +153,7 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* SINGLE_VRIP_BASE */
 
+	sc->sc_dev = self;
 	sc->sc_iot = va->va_iot;
 	if (bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
 	    0 /* no flags */, &sc->sc_ioh)) {
@@ -214,7 +215,7 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_todr.todr_settime = vrrtc_set;
 	sc->sc_todr.todr_gettime = vrrtc_get;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 
 	platform_clock_attach(self, &vr_clock);
@@ -273,7 +274,7 @@ vrrtc_get_timecount(struct timecounter *tc)
 int
 vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
+	struct vrrtc_softc *sc = device_private(tch->todr_dev);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	uint32_t timeh;		/* elapse time (2*timeh sec) */
@@ -304,7 +305,7 @@ vrrtc_get(todr_chip_handle_t tch, struct timeval *tvp)
 int
 vrrtc_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)tch->cookie;
+	struct vrrtc_softc *sc = device_private(tch->todr_dev);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	uint32_t timeh;		/* elapse time (2*timeh sec) */

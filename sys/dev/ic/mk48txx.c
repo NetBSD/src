@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.28 2020/01/01 19:24:03 thorpej Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.29 2025/09/07 21:45:16 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.28 2020/01/01 19:24:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.29 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,8 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	sc->sc_clkoffset = mk48txx_models[i].clkoff;
 
 	handle = &sc->sc_handle;
-	handle->cookie = sc;
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
+	KASSERT(sc->sc_dev != NULL);
+	handle->todr_dev = sc->sc_dev;
 	handle->todr_gettime_ymdhms = mk48txx_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mk48txx_settime_ymdhms;
 
@@ -105,12 +104,11 @@ mk48txx_attach(struct mk48txx_softc *sc)
 int
 mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mk48txx_softc *sc;
+	struct mk48txx_softc *sc = device_private(handle->todr_dev);
 	bus_size_t clkoff;
 	int year;
 	uint8_t csr;
 
-	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
 
 	/* enable read (stop time) */
@@ -152,13 +150,12 @@ mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 int
 mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mk48txx_softc *sc;
+	struct mk48txx_softc *sc = device_private(handle->todr_dev);
 	bus_size_t clkoff;
 	uint8_t csr;
 	int year;
 	int cent;
 
-	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
 
 	if ((sc->sc_flag & MK48TXX_HAVE_CENT_REG) == 0) {
@@ -207,9 +204,8 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 int
 mk48txx_get_nvram_size(todr_chip_handle_t handle, bus_size_t *vp)
 {
-	struct mk48txx_softc *sc;
+	struct mk48txx_softc *sc = device_private(handle->todr_dev);
 
-	sc = handle->cookie;
 	*vp = sc->sc_nvramsz;
 	return 0;
 }

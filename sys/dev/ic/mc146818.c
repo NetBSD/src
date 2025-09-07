@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.21 2024/03/06 02:31:44 thorpej Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.22 2025/09/07 21:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.21 2024/03/06 02:31:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.22 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ mc146818_attach(struct mc146818_softc *sc)
 	aprint_normal(": mc146818 compatible time-of-day clock");
 
 	handle = &sc->sc_handle;
-	handle->cookie = sc;
+	handle->todr_dev = sc->sc_dev;
 	KASSERT(handle->todr_gettime == NULL);
 	KASSERT(handle->todr_settime == NULL);
 	if (handle->todr_gettime_ymdhms == NULL) {
@@ -78,10 +78,8 @@ mc146818_attach(struct mc146818_softc *sc)
 int
 mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mc146818_softc *sc;
+	struct mc146818_softc *sc = device_private(handle->todr_dev);
 	int s, timeout, cent, year;
-
-	sc = handle->cookie;
 
 	s = splclock();		/* XXX really needed? */
 
@@ -130,10 +128,8 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 int
 mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mc146818_softc *sc;
+	struct mc146818_softc *sc = device_private(handle->todr_dev);
 	int s, cent, year;
-
-	sc = handle->cookie;
 
 	s = splclock();		/* XXX really needed? */
 

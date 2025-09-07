@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.23 2011/07/26 08:59:38 mrg Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.24 2025/09/07 21:45:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.23 2011/07/26 08:59:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.24 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ ofrtc_attach(device_t parent, device_t self, void *aux)
 
 	of->sc_todr.todr_gettime_ymdhms = ofrtc_gettod;
 	of->sc_todr.todr_settime_ymdhms = ofrtc_settod;
-	of->sc_todr.cookie = of;
+	of->sc_todr.todr_dev = self;
 	todr_attach(&of->sc_todr);
 	printf(": %s\n", name);
 }
@@ -158,7 +158,7 @@ ofrtc_attach(device_t parent, device_t self, void *aux)
 int
 ofrtc_gettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ofrtc_softc *of = tch->cookie;
+	struct ofrtc_softc *of = device_private(tch->todr_dev);
 	int date[6];
 
 	/*
@@ -187,7 +187,7 @@ ofrtc_gettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 int
 ofrtc_settod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ofrtc_softc *of = tch->cookie;
+	struct ofrtc_softc *of = device_private(tch->todr_dev);
 	int sec, minute, hr, dom, mon, yr;
 
 	sec = dt->dt_sec;

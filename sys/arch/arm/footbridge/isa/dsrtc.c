@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.13 2021/08/13 11:40:43 skrll Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.14 2025/09/07 21:45:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.13 2021/08/13 11:40:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.14 2025/09/07 21:45:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.13 2021/08/13 11:40:43 skrll Exp $");
 #define NRTC_PORTS	2
 
 struct dsrtc_softc {
+	device_t sc_dev;
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct todr_chip_handle sc_todr;
@@ -146,7 +147,7 @@ ds1687_ram_write(struct dsrtc_softc *sc, int addr, int val)
 static int
 dsrtc_write(todr_chip_handle_t tc, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = tc->cookie;
+	struct dsrtc_softc *sc = device_private(tc->todr_dev);
 
 	ds1687_write(sc, RTC_SECONDS, dt->dt_sec);
 	ds1687_write(sc, RTC_MINUTES, dt->dt_min);
@@ -163,7 +164,7 @@ dsrtc_write(todr_chip_handle_t tc, struct clock_ymdhms *dt)
 static int
 dsrtc_read(todr_chip_handle_t tc, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = tc->cookie;
+	struct dsrtc_softc *sc = device_private(tc->todr_dev);
 
 	dt->dt_sec   = ds1687_read(sc, RTC_SECONDS);
 	dt->dt_min   = ds1687_read(sc, RTC_MINUTES);
@@ -219,6 +220,7 @@ dsrtcattach(device_t parent, device_t self, void *aux)
 	struct dsrtc_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
@@ -235,7 +237,7 @@ dsrtcattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_gettime_ymdhms = dsrtc_read;
 	sc->sc_todr.todr_settime_ymdhms = dsrtc_write;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 }
 

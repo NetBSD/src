@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.21 2016/07/21 17:02:15 christos Exp $ */
+/* $NetBSD: rtc.c,v 1.22 2025/09/07 21:45:14 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2016/07/21 17:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.22 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,7 +137,7 @@ xirtc_attach(device_t parent, device_t self, void *aux)
 
 
 	/* Set up MI todr(9) stuff */
-	sc->sc_ct.cookie = sc;
+	sc->sc_ct.todr_dev = self;
 	sc->sc_ct.todr_settime_ymdhms = xirtc_settime;
 	sc->sc_ct.todr_gettime_ymdhms = xirtc_gettime;
 
@@ -150,7 +150,7 @@ xirtc_attach(device_t parent, device_t self, void *aux)
 static int
 xirtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
-	struct rtc_softc *sc = handle->cookie;
+	struct rtc_softc *sc = device_private(handle->todr_dev);
 	uint8_t year, y2k;
 
 	time_smbus_init(sc->sc_smbus_chan);
@@ -182,7 +182,7 @@ xirtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 static int
 xirtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
-	struct rtc_softc *sc = handle->cookie;
+	struct rtc_softc *sc = device_private(handle->todr_dev);
 	uint8_t hour, year, y2k;
 	uint8_t status;
 
@@ -247,7 +247,7 @@ strtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_type = SMB_1BYTE_ADDR;	/* One-byte register addresses on the ST */
 
 	/* Set up MI todr(9) stuff */
-	sc->sc_ct.cookie = sc;
+	sc->sc_ct.todr_dev = self;
 	sc->sc_ct.todr_settime_ymdhms = strtc_settime;
 	sc->sc_ct.todr_gettime_ymdhms = strtc_gettime;
 
@@ -260,7 +260,7 @@ strtc_attach(device_t parent, device_t self, void *aux)
 static int
 strtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
-	struct rtc_softc *sc = handle->cookie;
+	struct rtc_softc *sc = device_private(handle->todr_dev);
 	uint8_t hour;
 
 	time_smbus_init(sc->sc_smbus_chan);
@@ -285,7 +285,7 @@ strtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 static int
 strtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 {
-	struct rtc_softc *sc = handle->cookie;
+	struct rtc_softc *sc = device_private(handle->todr_dev);
 	uint8_t hour;
 
 	time_smbus_init(sc->sc_smbus_chan);

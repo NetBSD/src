@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocrtc.c,v 1.4 2025/09/07 04:46:59 thorpej Exp $	*/
+/*	$NetBSD: mvsocrtc.c,v 1.5 2025/09/07 21:45:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.4 2025/09/07 04:46:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.5 2025/09/07 21:45:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ mvsocrtc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = mvsocrtc_todr_gettime;
 	sc->sc_todr.todr_settime_ymdhms = mvsocrtc_todr_settime;
 
@@ -107,7 +107,7 @@ mvsocrtc_attach(device_t parent, device_t self, void *aux)
 static int
 mvsocrtc_todr_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct mvsocrtc_softc * const sc = ch->cookie;
+	struct mvsocrtc_softc * const sc = device_private(ch->todr_dev);
 	bool tried = false;
 	uint32_t rtcdate, rtctime;
 	uint8_t rtcday, rtchour, rtcmin, rtcmonth, rtcsec, rtcyear;
@@ -152,7 +152,7 @@ again:
 static int
 mvsocrtc_todr_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct mvsocrtc_softc * const sc = ch->cookie;
+	struct mvsocrtc_softc * const sc = device_private(ch->todr_dev);
 	uint32_t reg;
 
 	/* compose & write time register contents */

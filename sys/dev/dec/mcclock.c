@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.31 2025/09/07 14:31:58 thorpej Exp $ */
+/* $NetBSD: mcclock.c,v 1.32 2025/09/07 21:45:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.31 2025/09/07 14:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.32 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,7 +79,8 @@ mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 
 	sc->sc_todr.todr_gettime = mcclock_get;
 	sc->sc_todr.todr_settime = mcclock_set;
-	sc->sc_todr.cookie = sc;
+	KASSERT(sc->sc_dev != NULL);
+	sc->sc_todr.todr_dev = sc->sc_dev;
 	todr_attach(&sc->sc_todr);
 }
 
@@ -151,7 +152,7 @@ again:
 int
 mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct mcclock_softc *sc = tch->cookie;
+	struct mcclock_softc *sc = device_private(tch->todr_dev);
 	uint32_t yearsecs;
 	mc_todregs regs;
 	int s;
@@ -197,7 +198,7 @@ mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 int
 mcclock_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct mcclock_softc *sc = tch->cookie;
+	struct mcclock_softc *sc = device_private(tch->todr_dev);
 	struct clock_ymdhms dt;
 	uint32_t yearsecs;
 	mc_todregs regs;

@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.8 2016/10/09 14:41:47 christos Exp $ */
+/* $NetBSD: g2rtc.c,v 1.9 2025/09/07 21:45:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.8 2016/10/09 14:41:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.9 2025/09/07 21:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ g2rtc_attach(device_t parent, device_t self, void *aux)
 	printf(": time-of-day clock\n");
 
 	tch = &sc->sc_tch;
-	tch->cookie = sc;
+	tch->todr_dev = self;
 	tch->todr_gettime = g2rtc_todr_gettime;
 	tch->todr_settime = g2rtc_todr_settime;
 	todr_attach(tch);
@@ -121,7 +121,7 @@ g2rtc_read(bus_space_tag_t bt, bus_space_handle_t bh)
 static int
 g2rtc_todr_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	struct g2rtc_softc *sc = handle->cookie;
+	struct g2rtc_softc *sc = device_private(handle->todr_dev);
 	uint32_t new, old;
 	int i;
 
@@ -151,7 +151,7 @@ g2rtc_todr_gettime(todr_chip_handle_t handle, struct timeval *tv)
 static int
 g2rtc_todr_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	struct g2rtc_softc *sc = handle->cookie;
+	struct g2rtc_softc *sc = device_private(handle->todr_dev);
 	uint32_t secs;
 	int i, retry;
 

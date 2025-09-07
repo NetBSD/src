@@ -1,4 +1,4 @@
-/* $NetBSD: rtcsram.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $ */
+/* $NetBSD: rtcsram.c,v 1.3 2025/09/07 21:45:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.3 2025/09/07 21:45:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,7 @@ struct rtcsram_sram {
 CTASSERT(sizeof(struct rtcsram_sram) == 64);
 
 struct rtcsram_softc {
+	device_t		sc_dev;
 	struct todr_chip_handle	sc_todr;
 
 	uint8_t			sc_chan;
@@ -105,6 +106,7 @@ rtcsram_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": RTC/SRAM\n");
 
+	sc->sc_dev = self;
 	sc->sc_chan = eaa->eaa_chan;
 	sc->sc_device = eaa->eaa_device;
 
@@ -114,7 +116,7 @@ rtcsram_attach(device_t parent, device_t self, void *aux)
 	hexdump(aprint_debug, device_xname(self), &sc->sc_sram,
 	    sizeof(sc->sc_sram));
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = rtcsram_gettime;
 	sc->sc_todr.todr_settime = rtcsram_settime;
 	todr_attach(&sc->sc_todr);
@@ -157,7 +159,7 @@ rtcsram_read_buf(struct rtcsram_softc *sc, uint32_t offset, void *data,
 static int
 rtcsram_gettime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct rtcsram_softc * const sc = ch->cookie;
+	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
 	uint32_t val;
 
 	val = rtcsram_read_4(sc, RTC_BASE);
@@ -170,7 +172,7 @@ rtcsram_gettime(todr_chip_handle_t ch, struct timeval *tv)
 static int
 rtcsram_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct rtcsram_softc * const sc = ch->cookie;
+	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
 
 	rtcsram_write_4(sc, RTC_BASE, tv->tv_sec - sc->sc_sram.counter_bias);
 

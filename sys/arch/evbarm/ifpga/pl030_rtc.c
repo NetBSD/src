@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.10 2009/12/12 14:44:09 tsutsui Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.11 2025/09/07 21:45:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.10 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.11 2025/09/07 21:45:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.10 2009/12/12 14:44:09 tsutsui Exp $
 #define PL030_RTC_SIZE	0x14
 
 struct plrtc_softc {
+	device_t		    sc_dev;
 	bus_space_tag_t		    sc_iot;
 	bus_space_handle_t	    sc_ioh;
 	struct todr_chip_handle     sc_todr;
@@ -66,9 +67,8 @@ CFATTACH_DECL_NEW(plrtc, sizeof(struct plrtc_softc),
 static int
 plrtc_gettime(todr_chip_handle_t todr, struct timeval *tv)
 {
-	struct plrtc_softc *sc;
+	struct plrtc_softc *sc = device_private(todr->todr_dev);
 
- 	sc = (struct plrtc_softc *)todr->cookie;
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IFPGA_RTC_DR);
 	/* initialize tv_usec? */
 	return 0;
@@ -77,9 +77,8 @@ plrtc_gettime(todr_chip_handle_t todr, struct timeval *tv)
 static int
 plrtc_settime(todr_chip_handle_t todr, struct timeval *tv)
 {
-	struct plrtc_softc *sc;
+	struct plrtc_softc *sc = device_private(todr->todr_dev);
 
- 	sc = (struct plrtc_softc *)todr->cookie;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IFPGA_RTC_LR, tv->tv_sec);
 	return 0;
 }
@@ -96,6 +95,7 @@ plrtc_attach(device_t parent, device_t self, void *aux)
 	struct ifpga_attach_args *ifa = aux;
 	struct plrtc_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_iot = ifa->ifa_iot;
 	if (bus_space_map(ifa->ifa_iot, ifa->ifa_addr, PL030_RTC_SIZE, 0,
 	    &sc->sc_ioh)) {
@@ -104,7 +104,7 @@ plrtc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	memset(&sc->sc_todr, 0, sizeof(struct todr_chip_handle));
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = plrtc_gettime;
 	sc->sc_todr.todr_settime = plrtc_settime;
 

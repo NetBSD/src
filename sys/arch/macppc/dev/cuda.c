@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.31 2025/09/07 21:45:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.31 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ cuda_attach(device_t parent, device_t self, void *aux)
 
 			sc->sc_todr.todr_gettime = cuda_todr_get;
 			sc->sc_todr.todr_settime = cuda_todr_set;
-			sc->sc_todr.cookie = sc;
+			sc->sc_todr.todr_dev = self;
 			todr_attach(&sc->sc_todr);
 		} 
 		child = OF_peer(child);
@@ -777,7 +777,7 @@ cuda_todr_handler(void *cookie, int len, uint8_t *data)
 static int
 cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct cuda_softc *sc = tch->cookie;
+	struct cuda_softc *sc = device_private(tch->todr_dev);
 	int cnt = 0;
 	uint8_t cmd[] = { CUDA_PSEUDO, CMD_READ_RTC};
 
@@ -816,7 +816,7 @@ cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 static int
 cuda_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct cuda_softc *sc = tch->cookie;
+	struct cuda_softc *sc = device_private(tch->todr_dev);
 	uint32_t sec;
 	uint8_t cmd[] = {CUDA_PSEUDO, CMD_WRITE_RTC, 0, 0, 0, 0};
 

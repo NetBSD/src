@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.14 2021/08/07 16:19:11 thorpej Exp $ */
+/* $NetBSD: rkpmic.c,v 1.15 2025/09/07 21:45:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.14 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.15 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ rkpmic_write(struct rkpmic_softc *sc, uint8_t reg, uint8_t val, int flags)
 static int
 rkpmic_todr_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct rkpmic_softc * const sc = ch->cookie;
+	struct rkpmic_softc * const sc = device_private(ch->todr_dev);
 	uint8_t val;
 	int error;
 
@@ -297,7 +297,7 @@ rkpmic_todr_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 static int
 rkpmic_todr_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct rkpmic_softc * const sc = ch->cookie;
+	struct rkpmic_softc * const sc = device_private(ch->todr_dev);
 	uint8_t val;
 	int error;
 
@@ -476,12 +476,13 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_conf = entry->data;
 
 	memset(&sc->sc_todr, 0, sizeof(sc->sc_todr));
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = rkpmic_todr_gettime;
 	sc->sc_todr.todr_settime_ymdhms = rkpmic_todr_settime;
 
 	aprint_naive("\n");
-	aprint_normal(": %s Power Management and Real Time Clock IC\n", sc->sc_conf->name);
+	aprint_normal(": %s Power Management and Real Time Clock IC\n",
+	    sc->sc_conf->name);
 
 	I2C_LOCK(sc);
 	chipid = I2C_READ(sc, CHIP_NAME_REG) << 8;

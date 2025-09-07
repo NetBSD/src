@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.15 2014/11/20 16:34:25 christos Exp $ */
+/* $NetBSD: timekeeper.c,v 1.16 2025/09/07 21:45:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.15 2014/11/20 16:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.16 2025/09/07 21:45:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ clock_attach(device_t parent, device_t self, void *aux)
 		sc->sc_nvramsize = 2040;
 		sc->sc_todr.todr_gettime_ymdhms = mkclock_get;
 		sc->sc_todr.todr_settime_ymdhms = mkclock_set;
-		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_dev = self;
 		aprint_normal(": mk48t02\n");
 		break;
 	case LUNA_II: /* Dallas DS1287A */
@@ -103,7 +103,7 @@ clock_attach(device_t parent, device_t self, void *aux)
 		sc->sc_nvramsize = 50;
 		sc->sc_todr.todr_gettime_ymdhms = dsclock_get;
 		sc->sc_todr.todr_settime_ymdhms = dsclock_set;
-		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_dev = self;
 		dsclock_init(sc);
 		aprint_normal(": ds1287a\n");
 		break;
@@ -118,7 +118,7 @@ clock_attach(device_t parent, device_t self, void *aux)
 static int
 mkclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct timekeeper_softc *sc = (void *)tch->cookie;
+	struct timekeeper_softc *sc = device_private(tch->todr_dev);
 	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	int s;
 
@@ -142,7 +142,7 @@ mkclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 mkclock_set(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct timekeeper_softc *sc = (void *)tch->cookie;
+	struct timekeeper_softc *sc = device_private(tch->todr_dev);
 	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	volatile uint8_t *stamp = (uint8_t *)sc->sc_nvram + 0x10;
 	int s;
@@ -191,7 +191,7 @@ dsclock_init(struct timekeeper_softc *sc)
 static int
 dsclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct timekeeper_softc *sc = (void *)tch->cookie;
+	struct timekeeper_softc *sc = device_private(tch->todr_dev);
 	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	int s;
 
@@ -216,7 +216,7 @@ dsclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 dsclock_set(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct timekeeper_softc *sc = (void *)tch->cookie;
+	struct timekeeper_softc *sc = device_private(tch->todr_dev);
 	volatile uint8_t *chiptime = (void *)sc->sc_clock;
 	int s;
 

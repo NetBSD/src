@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rtc.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_rtc.c,v 1.11 2025/09/07 21:45:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.11 2025/09/07 21:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -393,7 +393,7 @@ sunxi_rtc_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_clk_mutex, MUTEX_DEFAULT, IPL_HIGH);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = sunxi_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = sunxi_rtc_settime;
 
@@ -440,7 +440,7 @@ sunxi_rtc_attach(device_t parent, device_t self, void *aux)
 static int
 sunxi_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct sunxi_rtc_softc *sc = tch->cookie;
+	struct sunxi_rtc_softc *sc = device_private(tch->todr_dev);
 	const struct sunxi_rtc_config *conf = sc->sc_conf;
 
 	const uint32_t yymmdd = RTC_READ(sc, conf->yy_mm_dd_reg);
@@ -460,7 +460,7 @@ sunxi_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 sunxi_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct sunxi_rtc_softc *sc = tch->cookie;
+	struct sunxi_rtc_softc *sc = device_private(tch->todr_dev);
 	const struct sunxi_rtc_config *conf = sc->sc_conf;
 	uint32_t yymmdd, hhmmss, maxyear;
 

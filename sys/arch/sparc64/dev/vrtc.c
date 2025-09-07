@@ -1,4 +1,4 @@
-/*	$NetBSD: vrtc.c,v 1.4 2025/09/07 01:18:16 thorpej Exp $	*/
+/*	$NetBSD: vrtc.c,v 1.5 2025/09/07 21:45:15 thorpej Exp $	*/
 /*	$OpenBSD: vrtc.c,v 1.1 2008/03/08 19:19:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -61,7 +61,6 @@ vrtc_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	sc->sc_dev = self;
-	sc->sc_todr.cookie = self;
 	sc->sc_todr.todr_gettime = vrtc_gettime;
 	sc->sc_todr.todr_settime = vrtc_settime;
 

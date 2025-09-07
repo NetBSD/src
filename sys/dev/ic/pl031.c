@@ -1,4 +1,4 @@
-/* $NetBSD: pl031.c,v 1.1 2017/06/08 21:00:43 jmcneill Exp $ */
+/* $NetBSD: pl031.c,v 1.2 2025/09/07 21:45:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl031.c,v 1.1 2017/06/08 21:00:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl031.c,v 1.2 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pl031.c,v 1.1 2017/06/08 21:00:43 jmcneill Exp $");
 static int
 plrtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 {
-	struct plrtc_softc * const sc = tch->cookie;
+	struct plrtc_softc * const sc = device_private(tch->todr_dev);
 
 	tv->tv_sec = RTC_READ(sc, RTCDR);
 	tv->tv_usec = 0;
@@ -63,7 +63,7 @@ plrtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 static int
 plrtc_settime(todr_chip_handle_t tch, struct timeval *tv)
 {
-	struct plrtc_softc * const sc = tch->cookie;
+	struct plrtc_softc * const sc = device_private(tch->todr_dev);
 
 	RTC_WRITE(sc, RTCLR, tv->tv_sec);
 
@@ -78,7 +78,7 @@ plrtc_attach(struct plrtc_softc *sc)
 
 	sc->sc_todr.todr_gettime = plrtc_gettime;
 	sc->sc_todr.todr_settime = plrtc_settime;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = sc->sc_dev;
 
 	RTC_WRITE(sc, RTCCR, RTCCR_START);
 }

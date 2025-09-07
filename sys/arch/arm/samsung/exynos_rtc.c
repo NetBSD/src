@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_rtc.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
+/*	$NetBSD: exynos_rtc.c,v 1.5 2025/09/07 21:45:12 thorpej Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_rtc.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_rtc.c,v 1.5 2025/09/07 21:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,7 +116,7 @@ exynos_rtc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_gettime = exynos_rtc_gettime;
 	sc->sc_todr.todr_settime = exynos_rtc_settime;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 
 }
@@ -124,7 +124,7 @@ exynos_rtc_attach(device_t parent, device_t self, void *aux)
 static int
 exynos_rtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 {
-	struct exynos_rtc_softc * const sc = tch->cookie;
+	struct exynos_rtc_softc * const sc = device_private(tch->todr_dev);
 
 	tv->tv_sec = RTC_READ(sc, EXYNOS5_RTC_OFFSET);
 	tv->tv_usec = 0;
@@ -135,7 +135,7 @@ exynos_rtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 static int
 exynos_rtc_settime(todr_chip_handle_t tch, struct timeval *tv)
 {
-	struct exynos_rtc_softc * const sc = tch->cookie;
+	struct exynos_rtc_softc * const sc = device_private(tch->todr_dev);
 	int retry = 500;
 
 	while (--retry > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.6 2025/09/07 01:09:22 thorpej Exp $	*/
+/*	$NetBSD: pdc.c,v 1.7 2025/09/07 21:45:13 thorpej Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.6 2025/09/07 01:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.7 2025/09/07 21:45:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ pdcattach(device_t parent, device_t self, void *aux)
 	/* attach the TOD clock */
 	sc->sc_todr.todr_settime = pdcsettod;
 	sc->sc_todr.todr_gettime = pdcgettod;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 
 	aprint_normal("\n");

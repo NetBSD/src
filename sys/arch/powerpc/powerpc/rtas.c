@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.15 2025/09/07 04:47:00 thorpej Exp $ */
+/*	$NetBSD: rtas.c,v 1.16 2025/09/07 21:45:14 thorpej Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.15 2025/09/07 04:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.16 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -30,6 +30,7 @@ bool machine_has_rtas;
 struct rtas_softc *rtas0_softc;
 
 struct rtas_softc {
+	device_t ra_dev;
 	int ra_phandle;
 	int ra_version;
 
@@ -108,6 +109,7 @@ rtas_attach(device_t parent, device_t self, void *aux)
 
 	machine_has_rtas = true;
 	
+	sc->ra_dev = self;
 	sc->ra_phandle = ph;
 	if (OF_getprop(ph, "rtas-version", buf, sizeof buf) != sizeof buf)
 		goto fail;
@@ -163,7 +165,7 @@ rtas_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialise TODR support
 	 */
-	sc->ra_todr_handle.cookie = sc;
+	sc->ra_todr_handle.todr_dev = self;
 	sc->ra_todr_handle.todr_gettime_ymdhms = rtas_todr_gettime_ymdhms;
 	sc->ra_todr_handle.todr_settime_ymdhms = rtas_todr_settime_ymdhms;
 	todr_attach(&sc->ra_todr_handle);

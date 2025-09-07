@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.25 2025/09/07 04:47:00 thorpej Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.26 2025/09/07 21:45:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.25 2025/09/07 04:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.26 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ m41t00_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": M41T00 Real-time Clock\n");
 
 	sc->sc_open = 0;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = m41t00_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = m41t00_settime_ymdhms;
 
@@ -250,7 +250,7 @@ static int m41t00_rtc_offset[] = {
 static int
 m41t00_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct m41t00_softc *sc = ch->cookie;
+	struct m41t00_softc *sc = device_private(ch->todr_dev);
 	u_int8_t bcd[M41T00_NBYTES], cmdbuf[1];
 	int i, n, error;
 
@@ -303,7 +303,7 @@ m41t00_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 m41t00_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct m41t00_softc *sc = ch->cookie;
+	struct m41t00_softc *sc = device_private(ch->todr_dev);
 	uint8_t bcd[M41T00_DATE_BYTES], cmdbuf[2];
 	uint8_t init_seconds, final_seconds;
 	int i, error;

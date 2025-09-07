@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.20 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: mkclock.c,v 1.21 2025/09/07 21:45:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.20 2021/01/24 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.21 2025/09/07 21:45:15 thorpej Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -169,6 +169,8 @@ clockattach_obio(device_t parent, device_t self, void *aux)
 	union obio_attach_args *uoba = aux;
 	int node;
 
+	sc->sc_dev = self;
+
 	if (uoba->uoba_isobio4 == 0) {
 		/* sun4m clock at obio */
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -209,7 +211,9 @@ clockattach_bootbus(device_t parent, device_t self, void *aux)
 {
 	struct mk48txx_softc *sc = device_private(self);
 	struct bootbus_attach_args *baa = aux;
+
 	sc->sc_bst = baa->ba_bustag;
+	sc->sc_dev = self;
 
 	if (bus_space_map(sc->sc_bst,
 			  BUS_ADDR(baa->ba_reg[0].oa_space,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.8 2014/02/24 14:26:11 martin Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.9 2025/09/07 21:45:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.8 2014/02/24 14:26:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.9 2025/09/07 21:45:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,7 +121,7 @@ __eclock_init(device_t dev)
 static int
 eclock_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 {
-	struct eclock_softc *sc = todr->cookie;
+	struct eclock_softc *sc = device_private(todr->todr_dev);
 	struct _Tc *tc = sc->sc_dp;
 	uint64_t free;
 	int s;
@@ -184,7 +184,7 @@ eclock_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 static int
 eclock_settime(struct todr_chip_handle *todr, struct timeval *tv)
 {
-	struct eclock_softc *sc = todr->cookie;
+	struct eclock_softc *sc = device_private(todr->todr_dev);
 	struct _Tc *tc = sc->sc_dp;
 	uint64_t free, su;
 	uint32_t uu;
@@ -332,7 +332,7 @@ eclock_ebus_attach(device_t parent, device_t self, void *aux)
 
 	clockdev = self;
 	memset(&sc->sc_todr, 0, sizeof sc->sc_todr);
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = eclock_gettime;
 	sc->sc_todr.todr_settime = eclock_settime;
 	todr_attach(&sc->sc_todr);

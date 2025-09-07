@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.10 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.11 2025/09/07 21:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.10 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.11 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ rs5c313_attach(struct rs5c313_softc *sc)
 	aprint_naive("\n");
 	aprint_normal(": RICOH %s real time clock\n", model);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = rs5c313_todr_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = rs5c313_todr_settime_ymdhms;
 
@@ -143,7 +143,7 @@ rs5c313_init(struct rs5c313_softc *sc)
 static int
 rs5c313_todr_gettime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 {
-	struct rs5c313_softc *sc = todr->cookie;
+	struct rs5c313_softc *sc = device_private(todr->todr_dev);
 	int retry;
 	int s;
 
@@ -203,7 +203,7 @@ rs5c313_todr_gettime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 static int
 rs5c313_todr_settime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 {
-	struct rs5c313_softc *sc = todr->cookie;
+	struct rs5c313_softc *sc = device_private(todr->todr_dev);
 	int retry;
 	int t;
 	int s;

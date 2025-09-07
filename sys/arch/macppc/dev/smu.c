@@ -223,7 +223,7 @@ smu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_gettime_ymdhms = smu_todr_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = smu_todr_settime_ymdhms;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 
 	/* calibration data */
@@ -605,7 +605,7 @@ smu_restart(void)
 static int
 smu_todr_gettime_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct smu_softc *sc = tch->cookie;
+	struct smu_softc *sc = device_private(tch->todr_dev);
 	struct smu_cmd cmd;
 	int ret;
 
@@ -631,7 +631,7 @@ smu_todr_gettime_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 smu_todr_settime_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct smu_softc *sc = tch->cookie;
+	struct smu_softc *sc = device_private(tch->todr_dev);
 	struct smu_cmd cmd;
 
 	cmd.cmd = SMU_CMD_RTC;

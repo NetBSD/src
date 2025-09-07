@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.15 2025/09/07 04:46:59 thorpej Exp $ */
+/* $NetBSD: aurtc.c,v 1.16 2025/09/07 21:45:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.15 2025/09/07 04:46:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.16 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ aurtc_attach(device_t parent, device_t self, void *aux)
 	printf(": Au1X00 programmable clock\n");
 	
 	sc->sc_dev = self;
-	sc->sc_tch.cookie = sc;
+	sc->sc_tch.todr_dev = self;
 	sc->sc_tch.todr_gettime = aurtc_gettime;
 	sc->sc_tch.todr_settime = aurtc_settime;
 

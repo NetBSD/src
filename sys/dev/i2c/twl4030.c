@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: twl4030.c,v 1.7 2025/09/07 21:45:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.7 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ twl_rtc_enable(struct twl_softc *sc, bool onoff)
 static int
 twl_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct twl_softc *sc = tch->cookie;
+	struct twl_softc *sc = device_private(tch->todr_dev);
 	uint8_t seconds_reg, minutes_reg, hours_reg,
 	    days_reg, months_reg, years_reg, weeks_reg;
 
@@ -197,7 +197,7 @@ twl_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 twl_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct twl_softc *sc = tch->cookie;
+	struct twl_softc *sc = device_private(tch->todr_dev);
 
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
 	twl_rtc_enable(sc, false);
@@ -341,7 +341,7 @@ twl_rtc_attach(struct twl_softc *sc, const int phandle)
 
 	sc->sc_todr.todr_gettime_ymdhms = twl_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = twl_rtc_settime;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = sc->sc_dev;
 #ifdef FDT
 	fdtbus_todr_attach(sc->sc_dev, phandle, &sc->sc_todr);
 #else

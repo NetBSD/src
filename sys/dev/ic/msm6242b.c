@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242b.c,v 1.6 2025/09/07 04:47:01 thorpej Exp $ */
+/*      $NetBSD: msm6242b.c,v 1.7 2025/09/07 21:45:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.6 2025/09/07 04:47:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.7 2025/09/07 21:45:16 thorpej Exp $");
 
 /* 
  * Driver for OKI MSM6242B Real Time Clock. Somewhat based on an ancient, amiga
@@ -67,7 +67,7 @@ msm6242b_attach(struct msm6242b_softc *sc)
 	aprint_normal(": OKI MSM6242B\n");
 
 	handle = &sc->sc_handle;
-	handle->cookie = sc;
+	handle->todr_dev = sc->sc_dev;
 	handle->todr_gettime_ymdhms = msm6242b_gettime_ymdhms;
 	handle->todr_settime_ymdhms = msm6242b_settime_ymdhms;
 
@@ -86,9 +86,8 @@ msm6242b_attach(struct msm6242b_softc *sc)
 static int
 msm6242b_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct msm6242b_softc *sc;
+	struct msm6242b_softc *sc = device_private(handle->todr_dev);
 	
-	sc = handle->cookie;
 	/* XXX: splsched(); */
 
 	if(!msm6242b_hold(sc))
@@ -209,11 +208,10 @@ msm6242b_unset(struct msm6242b_softc *sc, uint8_t reg, uint8_t bits)
 int 
 msm6242b_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt) 
 {
-	struct msm6242b_softc *sc;
+	struct msm6242b_softc *sc = device_private(handle->todr_dev);
 	int ampm;
-	/* XXX: splsched(); */
 
-	sc = handle->cookie;
+	/* XXX: splsched(); */
 
 	if(!msm6242b_hold(sc))
 		return (ENXIO);

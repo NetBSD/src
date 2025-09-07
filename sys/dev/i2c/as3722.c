@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.24 2021/08/07 16:19:11 thorpej Exp $ */
+/* $NetBSD: as3722.c,v 1.25 2025/09/07 21:45:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.24 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.25 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,7 +327,7 @@ as3722_rtc_attach(struct as3722_softc *sc)
 
 	sc->sc_todr.todr_gettime_ymdhms = as3722_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = as3722_rtc_settime;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = sc->sc_dev;
 #ifdef FDT
 	fdtbus_todr_attach(sc->sc_dev, sc->sc_phandle, &sc->sc_todr);
 #else
@@ -422,7 +422,7 @@ as3722_wdt_tickle(struct sysmon_wdog *smw)
 static int
 as3722_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct as3722_softc * const sc = tch->cookie;
+	struct as3722_softc * const sc = device_private(tch->todr_dev);
 	uint8_t buf[6];
 	int error = 0;
 
@@ -454,7 +454,7 @@ as3722_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 as3722_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct as3722_softc * const sc = tch->cookie;
+	struct as3722_softc * const sc = device_private(tch->todr_dev);
 	uint8_t buf[6];
 	int error = 0;
 

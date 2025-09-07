@@ -1,4 +1,4 @@
-/* $NetBSD: meson_rtc.c,v 1.3 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: meson_rtc.c,v 1.4 2025/09/07 21:45:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_rtc.c,v 1.3 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_rtc.c,v 1.4 2025/09/07 21:45:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -139,7 +139,7 @@ meson_rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_osc_failed = meson_rtc_check_osc_clk(sc);
 
 	memset(&sc->sc_todr, 0, sizeof(sc->sc_todr));
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = meson_rtc_todr_gettime;
 	sc->sc_todr.todr_settime = meson_rtc_todr_settime;
 
@@ -353,7 +353,7 @@ meson_rtc_serial_write(struct meson_rtc_softc *sc, uint32_t addr,
 static int
 meson_rtc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct meson_rtc_softc * const sc = ch->cookie;
+	struct meson_rtc_softc * const sc = device_private(ch->todr_dev);
 	uint32_t sec;
 	int rv;
 
@@ -373,7 +373,7 @@ meson_rtc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 static int
 meson_rtc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct meson_rtc_softc * const sc = ch->cookie;
+	struct meson_rtc_softc * const sc = device_private(ch->todr_dev);
 	int rv;
 
 	if (atomic_swap_uint(&sc->sc_busy, 1))

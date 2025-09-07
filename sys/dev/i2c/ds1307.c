@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.41 2025/09/07 04:47:00 thorpej Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.42 2025/09/07 21:45:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.41 2025/09/07 04:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.42 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_model = *dm;
 	sc->sc_dev = self;
 	sc->sc_open = 0;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	
 	if (dm->dm_flags & DSRTC_FLAG_BCD) {
 		sc->sc_todr.todr_gettime_ymdhms = dsrtc_gettime_ymdhms;
@@ -482,7 +482,7 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 static int
 dsrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 	struct clock_ymdhms check;
 	int retries;
 
@@ -505,7 +505,7 @@ dsrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 dsrtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 
 	if (dsrtc_clock_write_ymdhms(sc, dt) == 0)
 		return -1;
@@ -694,7 +694,7 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 static int
 dsrtc_gettime_timeval(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 	struct timeval check;
 	int retries;
 
@@ -717,7 +717,7 @@ dsrtc_gettime_timeval(struct todr_chip_handle *ch, struct timeval *tv)
 static int
 dsrtc_settime_timeval(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 
 	if (dsrtc_clock_write_timeval(sc, tv->tv_sec) == 0)
 		return -1;

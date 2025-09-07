@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.18 2025/09/07 14:31:58 thorpej Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.19 2025/09/07 21:45:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.18 2025/09/07 14:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.19 2025/09/07 21:45:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ mm58167_attach(struct mm58167_softc *sc)
 
 	handle = &sc->_mm58167_todr_handle;
 	memset(handle, 0, sizeof(*handle));
-	handle->cookie = sc;
+	handle->todr_dev = sc->mm58167_dev;
 	handle->todr_gettime_ymdhms = mm58167_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mm58167_settime_ymdhms;
 	return handle;
@@ -80,7 +80,7 @@ mm58167_attach(struct mm58167_softc *sc)
 int
 mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mm58167_softc *sc = handle->cookie;
+	struct mm58167_softc *sc = device_private(handle->todr_dev);
 	struct clock_ymdhms dt_reasonable;
 	struct timeval now;
 	int s;
@@ -230,7 +230,7 @@ mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 int
 mm58167_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mm58167_softc *sc = handle->cookie;
+	struct mm58167_softc *sc = device_private(handle->todr_dev);
 	int s;
 	uint8_t byte_value;
 

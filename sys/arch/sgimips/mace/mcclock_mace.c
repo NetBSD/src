@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.18 2025/09/07 04:47:00 thorpej Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.19 2025/09/07 21:45:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.18 2025/09/07 04:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.19 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ mcclock_mace_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	sc->sc_todrch.cookie = sc;
+	sc->sc_todrch.todr_dev = self;
 	sc->sc_todrch.todr_gettime_ymdhms = mcclock_mace_gettime_ymdhms;
 	sc->sc_todrch.todr_settime_ymdhms = mcclock_mace_settime_ymdhms;
 
@@ -178,7 +178,7 @@ ds1687_write(void *arg, unsigned int addr, unsigned int data)
 static int
 mcclock_mace_gettime_ymdhms(todr_chip_handle_t todrch, struct clock_ymdhms *dt)
 {
-	struct mcclock_mace_softc *sc = todrch->cookie;
+	struct mcclock_mace_softc *sc = device_private(todrch->todr_dev);
 	ds1687_todregs regs;
 	int s;
 
@@ -201,7 +201,7 @@ mcclock_mace_gettime_ymdhms(todr_chip_handle_t todrch, struct clock_ymdhms *dt)
 static int
 mcclock_mace_settime_ymdhms(todr_chip_handle_t todrch, struct clock_ymdhms *dt)
 {
-	struct mcclock_mace_softc *sc = todrch->cookie;
+	struct mcclock_mace_softc *sc = device_private(todrch->todr_dev);
 	ds1687_todregs regs;
 	int s;
 

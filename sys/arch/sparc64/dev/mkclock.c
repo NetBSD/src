@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.13 2023/12/20 05:33:58 thorpej Exp $ */
+/*	$NetBSD: mkclock.c,v 1.14 2025/09/07 21:45:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.13 2023/12/20 05:33:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.14 2025/09/07 21:45:15 thorpej Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -270,7 +270,7 @@ mkclock_attach(struct mk48txx_softc *sc, int node)
 static int
 mkclock_wenable(struct todr_chip_handle *handle, int onoff)
 {
-	struct mk48txx_softc *sc;
+	struct mk48txx_softc *sc = device_private(handle->todr_dev);
 	vm_prot_t prot;
 	vaddr_t va;
 	int s, err = 0;
@@ -286,7 +286,6 @@ mkclock_wenable(struct todr_chip_handle *handle, int onoff)
 	if (prot == VM_PROT_NONE) {
 		return 0;
 	}
-	sc = handle->cookie;
 	va = (vaddr_t)bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 	if (va == 0UL) {
 		printf("clock_wenable: WARNING -- cannot get va\n");

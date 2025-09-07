@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.25 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.26 2025/09/07 21:45:15 thorpej Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.25 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.26 2025/09/07 21:45:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = ia->ia_bst;
 	bus_space_map(sc->sc_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = rtgettod;
 	sc->sc_todr.todr_settime_ymdhms = rtsettod;
 	todr_attach(&sc->sc_todr);
@@ -115,7 +115,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 static int
 rtgettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *rtc = tch->cookie;
+	struct rtc_softc *rtc = device_private(tch->todr_dev);
 
 	/* hold clock */
 	RTC_WRITE(RTC_MODE, RTC_HOLD_CLOCK);
@@ -138,7 +138,7 @@ rtgettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 rtsettod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *rtc = tch->cookie;
+	struct rtc_softc *rtc = device_private(tch->todr_dev);
 	u_char sec1, sec2;
 	u_char min1, min2;
 	u_char hour1, hour2;

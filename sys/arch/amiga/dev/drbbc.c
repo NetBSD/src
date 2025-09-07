@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.21 2025/09/07 00:50:29 thorpej Exp $ */
+/*	$NetBSD: drbbc.c,v 1.22 2025/09/07 21:45:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.21 2025/09/07 00:50:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.22 2025/09/07 21:45:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -111,7 +111,7 @@ drbbc_attach(device_t parent, device_t self, void *aux)
 		rombuf[3], rombuf[2], rombuf[1], rombuf[0],
 		hostid);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = dracougettod;
 	sc->sc_todr.todr_settime = dracousettod;
 	todr_attach(&sc->sc_todr);
@@ -161,7 +161,7 @@ draco_ds_reset(void *p)
 static int
 dracougettod(todr_chip_handle_t h, struct timeval *tvp)
 {
-	struct drbbc_softc *sc = h->cookie;
+	struct drbbc_softc *sc = device_private(h->todr_dev);
 	u_int32_t clkbuf;
 	u_int32_t usecs;
 

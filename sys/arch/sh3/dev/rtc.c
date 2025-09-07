@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2023/12/20 15:34:45 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.12 2025/09/07 21:45:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11 2023/12/20 15:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2025/09/07 21:45:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,7 +119,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 	/* Clock runs, no periodic interrupts, no 30-sec adjustment */
 	_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = rtc_settime_ymdhms;
 
@@ -153,7 +153,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 static int
 rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *sc = h->cookie;
+	struct rtc_softc *sc = device_private(h->todr_dev);
 	unsigned int year;
 	int retry = 8;
 
@@ -222,7 +222,7 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 static int
 rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *sc = h->cookie;
+	struct rtc_softc *sc = device_private(h->todr_dev);
 	unsigned int year;
 	uint8_t r;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.24 2025/09/07 00:41:19 thorpej Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.25 2025/09/07 21:45:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.24 2025/09/07 00:41:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.25 2025/09/07 21:45:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,7 +108,7 @@ a34kbbc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_addr = ztwomap(0xdc0000);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = a34kugettod;
 	sc->sc_todr.todr_settime_ymdhms = a34kusettod;
 	todr_attach(&sc->sc_todr);
@@ -156,7 +156,7 @@ a34kbbc_read(volatile struct rtclock3000 *rt, struct clock_ymdhms *dt)
 static int
 a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct a34kbbc_softc *sc = h->cookie;
+	struct a34kbbc_softc *sc = device_private(h->todr_dev);
 
 	return a34kbbc_read(sc->sc_addr, dt);
 }
@@ -164,7 +164,7 @@ a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 static int
 a34kusettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct a34kbbc_softc *sc = h->cookie;
+	struct a34kbbc_softc *sc = device_private(h->todr_dev);
 	volatile struct rtclock3000 *rt = sc->sc_addr;
 
 	/*

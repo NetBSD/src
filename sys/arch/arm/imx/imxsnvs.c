@@ -1,4 +1,4 @@
-/*	$NetBSD: imxsnvs.c,v 1.2 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: imxsnvs.c,v 1.3 2025/09/07 21:45:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu
@@ -30,7 +30,7 @@
  * i.MX6,7 Secure Non-Volatile Storage
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxsnvs.c,v 1.2 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxsnvs.c,v 1.3 2025/09/07 21:45:11 thorpej Exp $");
 
 #include "locators.h"
 #include <sys/bus.h>
@@ -103,7 +103,7 @@ imxsnvs_attach_common(device_t parent __unused, device_t self,
 
 	sc->sc_todr.todr_gettime = imxsnvs_gettime;
 	sc->sc_todr.todr_settime = imxsnvs_settime;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	todr_attach(&sc->sc_todr);
 
 	return 0;
@@ -150,10 +150,8 @@ imxsnvs_rtc_disable(struct imxsnvs_softc *sc)
 static int
 imxsnvs_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct imxsnvs_softc *sc;
+	struct imxsnvs_softc *sc = device_private(tch->todr_dev);
 	uint64_t c1, c2;
-
-	sc = tch->cookie;
 
 	c2 = ((uint64_t)SNVS_READ(sc, SNVS_LPSRTCMR) << 32) +
 	    SNVS_READ(sc, SNVS_LPSRTCLR);
@@ -172,7 +170,7 @@ imxsnvs_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 static int
 imxsnvs_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct imxsnvs_softc *sc;
+	struct imxsnvs_softc *sc = device_private(tch->todr_dev);
 	uint64_t c, h, l;
 	int rv;
 
@@ -181,7 +179,6 @@ imxsnvs_settime(todr_chip_handle_t tch, struct timeval *tvp)
 	h = __SHIFTIN((c >> 32) & SNVS_LPSRTCMR_SRTC, SNVS_LPSRTCMR_SRTC);
 	l = c & 0xffffffff;
 
-	sc = tch->cookie;
 	if ((rv = imxsnvs_rtc_disable(sc)) != 0)
 		return rv;
 
