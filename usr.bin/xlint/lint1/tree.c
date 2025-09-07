@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.688 2025/09/06 20:18:41 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.689 2025/09/07 09:53:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.688 2025/09/06 20:18:41 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.689 2025/09/07 09:53:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2566,8 +2566,10 @@ typeok_shr(const tnode_t *ln, tspec_t lt,
 	tspec_t olt = before_conversion(ln)->tn_type->t_tspec;
 	tspec_t ort = before_conversion(rn)->tn_type->t_tspec;
 
-	/* operands have integer types (checked in typeok) */
-	if (pflag && !is_uinteger(olt)) {
+	if (is_uinteger(olt))
+		return;
+
+	if (pflag) {
 		integer_constraints lc = ic_expr(ln);
 		if (lc.bclr >> 63 != 0)
 			return;
@@ -2578,39 +2580,32 @@ typeok_shr(const tnode_t *ln, tspec_t lt,
 		else if (ln->u.value.u.integer < 0)
 			/* bitwise '%s' on signed value nonportable */
 			warning(120, ">>");
-	} else if (allow_trad && allow_c90 &&
-	    !is_uinteger(olt) && is_uinteger(ort)) {
-		/* The left operand would become unsigned in traditional C. */
-		if (hflag && (ln->tn_op != CON || ln->u.value.u.integer < 0))
-			/* '%s' %s '%s' differs between traditional C and C90 */
-			warning(118,
-			    tspec_name(lt), ">>", tspec_name(rt));
-	} else if (allow_trad && allow_c90 &&
-	    !is_uinteger(olt) && !is_uinteger(ort) &&
-	    portable_rank_cmp(lt, rt) < 0) {
-		/*
-		 * In traditional C, the left operand would be extended
-		 * (possibly sign-extended) and then shifted.
-		 */
-		if (hflag && (ln->tn_op != CON || ln->u.value.u.integer < 0))
-			/* '%s' %s '%s' differs between traditional C and C90 */
-			warning(118, tspec_name(lt), ">>", tspec_name(rt));
+		return;
 	}
+
+	/* The left operand would become unsigned in traditional C. */
+	if (allow_trad && allow_c90 && hflag && is_uinteger(ort)
+	    && !(ln->tn_op == CON && ln->u.value.u.integer >= 0))
+		/* '%s' %s '%s' differs between traditional C and C90 */
+		warning(118, tspec_name(lt), ">>", tspec_name(rt));
+
+	/*
+	 * In traditional C, the left operand would be extended
+	 * (possibly sign-extended) and then shifted.
+	 */
+	if (allow_trad && allow_c90 && hflag && !is_uinteger(ort)
+	    && portable_rank_cmp(lt, rt) < 0
+	    && !(ln->tn_op == CON && ln->u.value.u.integer >= 0))
+		/* '%s' %s '%s' differs between traditional C and C90 */
+		warning(118, tspec_name(lt), ">>", tspec_name(rt));
 }
 
 static void
 typeok_shl(tspec_t lt, tspec_t rt)
 {
 	/*
-	 * C90 does not perform balancing for shift operations, but traditional
-	 * C does. If the width of the right operand is greater than the width
-	 * of the left operand, then in traditional C the left operand is
-	 * extended to the width of the right operand. For SHL this may result
-	 * in different results.
-	 */
-	/*
-	 * XXX If both operands are constant, make sure that there is
-	 * really a difference between C90 and traditional C.
+	 * Traditional C performs the usual arithmetic conversions on the
+	 * operands, C90 and later don't.
 	 */
 	if (hflag && allow_trad && allow_c90 && portable_rank_cmp(lt, rt) < 0)
 		/* '%s' %s '%s' differs between traditional C and C90 */
