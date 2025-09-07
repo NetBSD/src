@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.134 2025/09/06 15:44:04 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.135 2025/09/07 03:53:37 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -248,8 +248,10 @@ attach	axp809pm at iic
 file	dev/i2c/axp809.c			axp809pm	needs-flag
 
 # AC100 integrated audio codec and RTC
-device	ac100ic
+device	ac100ic { }: fdt
 attach	ac100ic at iic
+device	ac100rtc
+attach	ac100rtc at ac100ic
 file	dev/i2c/ac100.c				ac100ic		needs-flag
 
 # ACT8846 Power Management Unit

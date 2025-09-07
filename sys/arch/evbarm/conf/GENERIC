@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.123 2025/04/03 16:33:48 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.124 2025/09/07 03:53:37 thorpej Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -380,6 +380,7 @@ iic* 		at i2cbus?
 
 # I2C devices
 ac100ic* 	at iic?			# AC100 integrated audio codec and RTC
+ac100rtc*	at ac100ic?
 as3722pmic* 	at iic?
 as3722reg* 	at as3722pmic?
 axp20x* 	at iic?			# AXP209 Power Management IC

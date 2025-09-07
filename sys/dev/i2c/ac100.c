@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.8 2025/09/07 03:53:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.7 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.8 2025/09/07 03:53:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,6 @@ struct ac100_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-
-	struct todr_chip_handle sc_todr;
 };
 
 static int	ac100_match(device_t, cfdata_t, void *);
@@ -116,6 +114,18 @@ static int	ac100_write(struct ac100_softc *, uint8_t, uint16_t);
 
 CFATTACH_DECL_NEW(ac100ic, sizeof(struct ac100_softc),
     ac100_match, ac100_attach, NULL, NULL);
+
+struct ac100rtc_softc {
+	device_t	sc_dev;
+
+	struct todr_chip_handle sc_todr;
+};
+
+static int	ac100rtc_match(device_t, cfdata_t, void *);
+static void	ac100rtc_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(ac100rtc, sizeof(struct ac100rtc_softc),
+    ac100rtc_match, ac100rtc_attach, NULL, NULL);
 
 static int
 ac100_match(device_t parent, cfdata_t match, void *aux)
@@ -148,19 +158,42 @@ ac100_attach(device_t parent, device_t self, void *aux)
 	ac100_write(sc, AC100_RTC_CTRL_REG, AC100_RTC_CTRL_12H_24H_MODE);
 	iic_release_bus(sc->sc_i2c, 0);
 
+#ifdef FDT
+	fdt_add_bus(self, (int)ia->ia_cookie, NULL);
+#endif
+}
+
+#ifdef FDT
+static const struct device_compatible_entry rtc_compat_data[] = {
+	{ .compat = "x-powers,ac100-rtc" },
+	DEVICE_COMPAT_EOL
+};
+
+static int
+ac100rtc_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct fdt_attach_args * const faa = aux;
+
+	return of_compatible_match(faa->faa_phandle, rtc_compat_data);
+}
+
+static void
+ac100rtc_attach(device_t parent, device_t self, void *aux)
+{
+	struct ac100rtc_softc *sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+
+	sc->sc_dev = self;
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	sc->sc_todr.todr_gettime_ymdhms = ac100_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = ac100_rtc_settime;
 	sc->sc_todr.cookie = sc;
 
-#ifdef FDT
-	const int phandle = ia->ia_cookie;
-	const int rtc_phandle = of_find_firstchild_byname(phandle, "rtc");
-	if (rtc_phandle > 0)
-		fdtbus_todr_attach(self, rtc_phandle, &sc->sc_todr);
-#else
-	todr_attach(&sc->sc_todr);
-#endif
+	fdtbus_todr_attach(self, faa->faa_phandle, &sc->sc_todr);
 }
+#endif /* FDT */
 
 static int
 ac100_read(struct ac100_softc *sc, uint8_t reg, uint16_t *val)
@@ -177,7 +210,8 @@ ac100_write(struct ac100_softc *sc, uint8_t reg, uint16_t val)
 static int
 ac100_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ac100_softc *sc = tch->cookie;
+	struct ac100rtc_softc *rtc_sc = tch->cookie;
+	struct ac100_softc *sc = device_private(device_parent(rtc_sc->sc_dev));
 	uint16_t sec, min, hou, wee, day, mon, yea;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
@@ -204,7 +238,8 @@ ac100_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 ac100_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct ac100_softc *sc = tch->cookie;
+	struct ac100rtc_softc *rtc_sc = tch->cookie;
+	struct ac100_softc *sc = device_private(device_parent(rtc_sc->sc_dev));
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	ac100_write(sc, AC100_RTC_SEC_REG, bintobcd(dt->dt_sec) & 0x7f);
