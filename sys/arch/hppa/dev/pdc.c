@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.5 2025/04/02 18:10:50 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.6 2025/09/07 01:09:22 thorpej Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.5 2025/04/02 18:10:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.6 2025/09/07 01:09:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ struct pdc_softc {
 	device_t sc_dv;
 	struct tty *sc_tty;
 	struct callout sc_to;
+	struct todr_chip_handle sc_todr;
 } pdcsoftc_t;
 
 pdcio_t pdc;
@@ -236,10 +237,6 @@ pdcmatch(device_t parent, cfdata_t cf, void *aux)
 void
 pdcattach(device_t parent, device_t self, void *aux)
 {
-	static struct todr_chip_handle todr = {
-		.todr_settime = pdcsettod,
-		.todr_gettime = pdcgettod,
-	};
 	struct pdc_softc *sc = device_private(self);
 
 	sc->sc_dv = self;
@@ -251,7 +248,10 @@ pdcattach(device_t parent, device_t self, void *aux)
 	cn_set_magic("+++++");
 
 	/* attach the TOD clock */
-	todr_attach(&todr);
+	sc->sc_todr.todr_settime = pdcsettod;
+	sc->sc_todr.todr_gettime = pdcgettod;
+	sc->sc_todr.cookie = sc;
+	todr_attach(&sc->sc_todr);
 
 	aprint_normal("\n");
 
