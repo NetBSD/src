@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.23 2012/10/27 17:17:26 chs Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.24 2025/09/07 00:41:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.23 2012/10/27 17:17:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.24 2025/09/07 00:41:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,18 +55,24 @@ __KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.23 2012/10/27 17:17:26 chs Exp $");
 
 #include <dev/clock_subr.h>
 
-int a34kbbc_match(device_t, cfdata_t, void *);
-void a34kbbc_attach(device_t, device_t, void *);
+static int	a34kbbc_match(device_t, cfdata_t, void *);
+static void	a34kbbc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(a34kbbc, 0,
+struct a34kbbc_softc {
+	device_t sc_dev;
+	struct todr_chip_handle sc_todr;
+	volatile struct rtclock3000 *sc_addr;
+};
+
+CFATTACH_DECL_NEW(a34kbbc, sizeof(struct a34kbbc_softc),
     a34kbbc_match, a34kbbc_attach, NULL, NULL);
 
-void *a34kclockaddr;
-int a34kugettod(todr_chip_handle_t, struct clock_ymdhms *);
-int a34kusettod(todr_chip_handle_t, struct clock_ymdhms *);
-static struct todr_chip_handle a34ktodr;
+static int	a34kbbc_read(volatile struct rtclock3000 *,
+		    struct clock_ymdhms *);
+static int	a34kugettod(todr_chip_handle_t, struct clock_ymdhms *);
+static int	a34kusettod(todr_chip_handle_t, struct clock_ymdhms *);
 
-int
+static int
 a34kbbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct clock_ymdhms dt;
@@ -82,8 +88,7 @@ a34kbbc_match(device_t parent, cfdata_t cf, void *aux)
 	if (!(is_a3000() || is_a4000()))
 		return(0);
 
-	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
-	if (a34kugettod(&a34ktodr, &dt) != 0)
+	if (a34kbbc_read(ztwomap(0xdc0000), &dt) != 0)
 		return(0);
 
 	a34kbbc_matched = 1;
@@ -93,24 +98,25 @@ a34kbbc_match(device_t parent, cfdata_t cf, void *aux)
 /*
  * Attach us to the rtc function pointers.
  */
-void
+static void
 a34kbbc_attach(device_t parent, device_t self, void *aux)
 {
-	printf("\n");
-	a34kclockaddr = (void *)__UNVOLATILE(ztwomap(0xdc0000));
+	struct a34kbbc_softc *sc = device_private(self);
 
-	a34ktodr.cookie = a34kclockaddr;
-	a34ktodr.todr_gettime_ymdhms = a34kugettod;
-	a34ktodr.todr_settime_ymdhms = a34kusettod;
-	todr_attach(&a34ktodr);
+	printf("\n");
+
+	sc->sc_dev = self;
+	sc->sc_addr = ztwomap(0xdc0000);
+
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime_ymdhms = a34kugettod;
+	sc->sc_todr.todr_settime_ymdhms = a34kusettod;
+	todr_attach(&sc->sc_todr);
 }
 
-int
-a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
+static int
+a34kbbc_read(volatile struct rtclock3000 *rt, struct clock_ymdhms *dt)
 {
-	struct rtclock3000 *rt;
-
-	rt = a34kclockaddr;
 
 	/* hold clock */
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;
@@ -131,7 +137,6 @@ a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 	if (dt->dt_year < STARTOFTIME)
 		dt->dt_year += 100;
 
-
 	/*
 	 * These checks are mostly redundant against those already in the
 	 * generic todr, but apparently the attach code checks against the
@@ -148,19 +153,24 @@ a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 	return (0);
 }
 
-int
+static int
+a34kugettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
+{
+	struct a34kbbc_softc *sc = h->cookie;
+
+	return a34kbbc_read(sc->sc_addr, dt);
+}
+
+static int
 a34kusettod(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct rtclock3000 *rt;
+	struct a34kbbc_softc *sc = h->cookie;
+	volatile struct rtclock3000 *rt = sc->sc_addr;
 
-	rt = a34kclockaddr;
 	/*
 	 * there seem to be problems with the bitfield addressing
 	 * currently used..
 	 */
-
-	if (! rt)
-		return (ENXIO);
 
 	rt->control1 = A3CONTROL1_HOLD_CLOCK;		/* implies mode 0 */
 	rt->second1 = dt->dt_sec / 10;
