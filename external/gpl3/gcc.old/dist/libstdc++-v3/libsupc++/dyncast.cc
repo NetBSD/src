@@ -1,4 +1,4 @@
-// Copyright (C) 1994-2020 Free Software Foundation, Inc.
+// Copyright (C) 1994-2022 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -47,10 +47,13 @@ __dynamic_cast (const void *src_ptr,    // object started from
                 const __class_type_info *dst_type, // desired target type
                 ptrdiff_t src2dst) // how src and dst are related
   {
+  if (__builtin_expect(!src_ptr, 0))
+    return NULL; // Handle precondition violations gracefully.
+
   const void *vtable = *static_cast <const void *const *> (src_ptr);
   const vtable_prefix *prefix =
-      adjust_pointer <vtable_prefix> (vtable, 
-				      -offsetof (vtable_prefix, origin));
+    (adjust_pointer <vtable_prefix>
+     (vtable,  -ptrdiff_t (offsetof (vtable_prefix, origin))));
   const void *whole_ptr =
       adjust_pointer <void> (src_ptr, prefix->whole_object);
   const __class_type_info *whole_type = prefix->whole_type;
@@ -63,11 +66,11 @@ __dynamic_cast (const void *src_ptr,    // object started from
   // segfault later trying to use a vbase offset that doesn't exist.
   const void *whole_vtable = *static_cast <const void *const *> (whole_ptr);
   const vtable_prefix *whole_prefix =
-    adjust_pointer <vtable_prefix> (whole_vtable,
-				    -offsetof (vtable_prefix, origin));
+    (adjust_pointer <vtable_prefix>
+     (whole_vtable, -ptrdiff_t (offsetof (vtable_prefix, origin))));
   if (whole_prefix->whole_type != whole_type)
     return NULL;
-  
+
   whole_type->__do_dyncast (src2dst, __class_type_info::__contained_public,
                             dst_type, whole_ptr, src_type, src_ptr, result);
   if (!result.dst_ptr)
@@ -75,7 +78,8 @@ __dynamic_cast (const void *src_ptr,    // object started from
   if (contained_public_p (result.dst2src))
     // Src is known to be a public base of dst.
     return const_cast <void *> (result.dst_ptr);
-  if (contained_public_p (__class_type_info::__sub_kind (result.whole2src & result.whole2dst)))
+  if (contained_public_p (__class_type_info::__sub_kind
+			  (result.whole2src & result.whole2dst)))
     // Both src and dst are known to be public bases of whole. Found a valid
     // cross cast.
     return const_cast <void *> (result.dst_ptr);

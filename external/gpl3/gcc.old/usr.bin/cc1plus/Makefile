@@ -1,17 +1,20 @@
-#	$NetBSD: Makefile,v 1.1.1.7 2023/02/20 02:01:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.8 2025/09/07 02:59:20 mrg Exp $
 
 PROG=		cc1plus
-SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:S,constraint.o,constraint.cc,:S,logic.o,logic.cc,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:S,coroutines.o,coroutines.cc,:Nlibcpp.a:.o=.c}
-SRCS+=		main.c ${PROG}-checksum.c
+SRCS=		${G_CXX_OBJS:S,c-family/,,:S,cp/,,:S,constraint.o,constraint.cc,:S,logic.o,logic.cc,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:S,coroutines.o,coroutines.cc,:Nlibcpp.a:.o=.cc}
+SRCS+=		main.cc ${PROG}-checksum.cc
 
 # XXX
 NOMAN=	1
 
 CPPFLAGS+=	-I${DIST}/gcc/cp
-CPPFLAGS.prefix.c+=     -DPREFIX=\"/usr\"
+CPPFLAGS.prefix.cc+=	-DPREFIX=\"/usr\"
+CPPFLAGS.module.cc+=	-DTARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\" \
+			-DHOST_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
+.include "../Makefile.libcody"
 .include "../Makefile.libcpp"
 .include "../Makefile.libdecnumber"
 
@@ -31,25 +34,8 @@ CHECKSUM_OBJS= ${LIBBACKTRACEOBJ}/libbacktrace.a \
 
 CFLAGS+=	-Wno-error=stack-protector
 
-.if ${MACHINE_ARCH} == "vax"
-COPTS.call.c+=-O0
-COPTS.decl.c+=-O0
-COPTS.typeck2.c+=-O0
-COPTS.class.c+=-O0
-COPTS.typeck.c+=-O0
-COPTS.init.c+=-O0
-COPTS.semantics.c+=-O0
-COPTS.mangle.c+=-O0
-COPTS.constexpr.c+=-O0
-COPTS.c-common.c+=-O0
-COPTS.c-ada-spec.c+=-O0
-COPTS.cilk.c+=-O0
-COPTS.c-ubsan.c+=-O0
-COPTS.cc1plus-checksum.c+=-O0
-.endif
-
 .if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
-COPTS.c-common.c+=-O3
+#COPTS.c-common.cc+=-O3
 .endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm

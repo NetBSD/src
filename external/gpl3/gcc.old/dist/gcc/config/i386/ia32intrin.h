@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -21,8 +21,8 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
-#ifndef _X86INTRIN_H_INCLUDED
-# error "Never use <ia32intrin.h> directly; include <x86intrin.h> instead."
+#ifndef _X86GPRINTRIN_H_INCLUDED
+# error "Never use <ia32intrin.h> directly; include <x86gprintrin.h> instead."
 #endif
 
 /* 32bit bsf */
@@ -51,11 +51,11 @@ __bswapd (int __X)
 
 #ifndef __iamcu__
 
-#ifndef __SSE4_2__
+#ifndef __CRC32__
 #pragma GCC push_options
-#pragma GCC target("sse4.2")
-#define __DISABLE_SSE4_2__
-#endif /* __SSE4_2__ */
+#pragma GCC target("crc32")
+#define __DISABLE_CRC32__
+#endif /* __CRC32__ */
 
 /* 32bit accumulate CRC32 (polynomial 0x11EDC6F41) value.  */
 extern __inline unsigned int
@@ -79,10 +79,10 @@ __crc32d (unsigned int __C, unsigned int __V)
   return __builtin_ia32_crc32si (__C, __V);
 }
 
-#ifdef __DISABLE_SSE4_2__
-#undef __DISABLE_SSE4_2__
+#ifdef __DISABLE_CRC32__
+#undef __DISABLE_CRC32__
 #pragma GCC pop_options
-#endif /* __DISABLE_SSE4_2__ */
+#endif /* __DISABLE_CRC32__ */
 
 #endif /* __iamcu__ */
 
@@ -209,11 +209,11 @@ __bswapq (long long __X)
   return __builtin_bswap64 (__X);
 }
 
-#ifndef __SSE4_2__
+#ifndef __CRC32__
 #pragma GCC push_options
-#pragma GCC target("sse4.2")
-#define __DISABLE_SSE4_2__
-#endif /* __SSE4_2__ */
+#pragma GCC target("crc32")
+#define __DISABLE_CRC32__
+#endif /* __CRC32__ */
 
 /* 64bit accumulate CRC32 (polynomial 0x11EDC6F41) value.  */
 extern __inline unsigned long long
@@ -223,10 +223,10 @@ __crc32q (unsigned long long __C, unsigned long long __V)
   return __builtin_ia32_crc32di (__C, __V);
 }
 
-#ifdef __DISABLE_SSE4_2__
-#undef __DISABLE_SSE4_2__
+#ifdef __DISABLE_CRC32__
+#undef __DISABLE_CRC32__
 #pragma GCC pop_options
-#endif /* __DISABLE_SSE4_2__ */
+#endif /* __DISABLE_CRC32__ */
 
 /* 64bit popcnt */
 extern __inline long long

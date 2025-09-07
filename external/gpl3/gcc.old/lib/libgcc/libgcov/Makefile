@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2017/07/23 01:05:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2025/09/07 02:59:19 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -8,6 +8,7 @@ NOLINT=		# defined
 LIB=		gcov
 
 .include "../../../Makefile.gcc_path"
+
 .include <bsd.own.mk>
 .include <bsd.init.mk>
 
@@ -29,6 +30,8 @@ CPPFLAGS+=	-Wno-stack-protector
 DPSRCS+=	${.CURDIR}/arch/${LIBGCC_MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
 
+${OBJS}:	version.h
+
 CLEANFILES+=	${LIBGCOVSRCS}
 
 ${LIBGCOVMERGESRCS}: ${.CURDIR}/Makefile
@@ -46,6 +49,12 @@ ${LIBGCOVINTERFACESRCS}: ${.CURDIR}/Makefile
 ${LIBGCOVDRIVERSRCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <libgcov-driver.c>\n' >${.TARGET}
+
+.include "../../../../lgpl3/gmp/Makefile.arch"
+.include "../../../Makefile.version_h"
+.include "../../../Makefile.autobuild_h"
+
+DPSRCS+=	version.h
 
 .include <bsd.lib.mk>
 .else

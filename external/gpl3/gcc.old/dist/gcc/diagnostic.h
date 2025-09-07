@@ -1,5 +1,5 @@
 /* Various declarations for language-independent diagnostics subroutines.
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@codesourcery.com>
 
 This file is part of GCC.
@@ -23,6 +23,34 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "pretty-print.h"
 #include "diagnostic-core.h"
+
+/* An enum for controlling what units to use for the column number
+   when diagnostics are output, used by the -fdiagnostics-column-unit option.
+   Tabs will be expanded or not according to the value of -ftabstop.  The origin
+   (default 1) is controlled by -fdiagnostics-column-origin.  */
+
+enum diagnostics_column_unit
+{
+  /* The default from GCC 11 onwards: display columns.  */
+  DIAGNOSTICS_COLUMN_UNIT_DISPLAY,
+
+  /* The behavior in GCC 10 and earlier: simple bytes.  */
+  DIAGNOSTICS_COLUMN_UNIT_BYTE
+};
+
+/* An enum for controlling how to print non-ASCII characters/bytes when
+   a diagnostic suggests escaping the source code on output.  */
+
+enum diagnostics_escape_format
+{
+  /* Escape non-ASCII Unicode characters in the form <U+XXXX> and
+     non-UTF-8 bytes in the form <XX>.  */
+  DIAGNOSTICS_ESCAPE_FORMAT_UNICODE,
+
+  /* Escape non-ASCII bytes in the form <XX> (thus showing the underlying
+     encoding of non-ASCII Unicode characters).  */
+  DIAGNOSTICS_ESCAPE_FORMAT_BYTES
+};
 
 /* Enum for overriding the standard output format.  */
 
@@ -52,11 +80,32 @@ enum diagnostic_path_format
   DPF_INLINE_EVENTS
 };
 
+/* An enum for capturing values of GCC_EXTRA_DIAGNOSTIC_OUTPUT,
+   and for -fdiagnostics-parseable-fixits.  */
+
+enum diagnostics_extra_output_kind
+{
+  /* No extra output, or an unrecognized value.  */
+  EXTRA_DIAGNOSTIC_OUTPUT_none,
+
+  /* Emit fix-it hints using the "fixits-v1" format, equivalent to
+     -fdiagnostics-parseable-fixits.  */
+  EXTRA_DIAGNOSTIC_OUTPUT_fixits_v1,
+
+  /* Emit fix-it hints using the "fixits-v2" format.  */
+  EXTRA_DIAGNOSTIC_OUTPUT_fixits_v2
+};
+
 /* A diagnostic is described by the MESSAGE to send, the FILE and LINE of
    its context and its KIND (ice, error, warning, note, ...)  See complete
    list in diagnostic.def.  */
 struct diagnostic_info
 {
+  diagnostic_info ()
+    : message (), richloc (), metadata (), x_data (), kind (), option_index (),
+      m_iinfo ()
+  { }
+
   /* Text to be formatted.  */
   text_info message;
 
@@ -73,6 +122,18 @@ struct diagnostic_info
   diagnostic_t kind;
   /* Which OPT_* directly controls this diagnostic.  */
   int option_index;
+
+  /* Inlining context containing locations for each call site along
+     the inlining stack.  */
+  struct inlining_info
+  {
+    /* Locations along the inlining stack.  */
+    auto_vec<location_t, 8> m_ilocs;
+    /* The abstract origin of the location.  */
+    void *m_ao;
+    /* Set if every M_ILOCS element is in a system header.  */
+    bool m_allsyslocs;
+  } m_iinfo;
 };
 
 /* Each time a diagnostic's classification is changed with a pragma,
@@ -105,6 +166,9 @@ struct diagnostic_context
 {
   /* Where most of the diagnostic formatting work is done.  */
   pretty_printer *printer;
+
+  /* Cache of source code.  */
+  file_cache *m_file_cache;
 
   /* The number of times we have issued diagnostics.  */
   int diagnostic_count[DK_LAST_DIAGNOSTIC_KIND];
@@ -276,9 +340,26 @@ struct diagnostic_context
      source output.  */
   bool show_ruler_p;
 
-  /* If true, print fixits in machine-parseable form after the
-     rest of the diagnostic.  */
-  bool parseable_fixits_p;
+  /* True if -freport-bug option is used.  */
+  bool report_bug;
+
+  /* Used to specify additional diagnostic output to be emitted after the
+     rest of the diagnostic.  This is for implementing
+     -fdiagnostics-parseable-fixits and GCC_EXTRA_DIAGNOSTIC_OUTPUT.  */
+  enum diagnostics_extra_output_kind extra_output_kind;
+
+  /* What units to use when outputting the column number.  */
+  enum diagnostics_column_unit column_unit;
+
+  /* The origin for the column number (1-based or 0-based typically).  */
+  int column_origin;
+
+  /* The size of the tabstop for tab expansion.  */
+  int tabstop;
+
+  /* How should non-ASCII/non-printable bytes be escaped when
+     a diagnostic suggests escaping the source code on output.  */
+  enum diagnostics_escape_format escape_format;
 
   /* If non-NULL, an edit_context to which fix-it hints should be
      applied, for generating patches.  */
@@ -303,6 +384,16 @@ struct diagnostic_context
 
   /* Callback for final cleanup.  */
   void (*final_cb) (diagnostic_context *context);
+
+  /* Callback to set the locations of call sites along the inlining
+     stack corresponding to a diagnostic location.  Needed to traverse
+     the BLOCK_SUPERCONTEXT() chain hanging off the LOCATION_BLOCK()
+     of a diagnostic's location.  */
+  void (*set_locations_cb)(diagnostic_context *, diagnostic_info *);
+
+  /* Include files that diagnostic_report_current_module has already listed the
+     include path for.  */
+  hash_set<location_t, false, location_hash> *includes_seen;
 };
 
 static inline void
@@ -379,6 +470,25 @@ extern void diagnostic_show_locus (diagnostic_context *,
 				   rich_location *richloc,
 				   diagnostic_t diagnostic_kind);
 extern void diagnostic_show_any_path (diagnostic_context *, diagnostic_info *);
+
+/* Because we read source files a second time after the frontend did it the
+   first time, we need to know how the frontend handled things like character
+   set conversion and UTF-8 BOM stripping, in order to make everything
+   consistent.  This function needs to be called by each frontend that requires
+   non-default behavior, to inform the diagnostics infrastructure how input is
+   to be processed.  The default behavior is to do no conversion and not to
+   strip a UTF-8 BOM.
+
+   The callback should return the input charset to be used to convert the given
+   file's contents to UTF-8, or it should return NULL if no conversion is needed
+   for this file.  SHOULD_SKIP_BOM only applies in case no conversion was
+   performed, and if true, it will cause a UTF-8 BOM to be skipped at the
+   beginning of the file.  (In case a conversion was performed, the BOM is
+   rather skipped as part of the conversion process.)  */
+
+void diagnostic_initialize_input_context (diagnostic_context *context,
+					  diagnostic_input_charset_callback ccb,
+					  bool should_skip_bom);
 
 /* Force diagnostics controlled by OPTIDX to be kind KIND.  */
 extern diagnostic_t diagnostic_classify_diagnostic (diagnostic_context *,
@@ -458,6 +568,8 @@ diagnostic_same_line (const diagnostic_context *context,
 }
 
 extern const char *diagnostic_get_color_for_kind (diagnostic_t kind);
+extern int diagnostic_converted_column (diagnostic_context *context,
+					expanded_location s);
 
 /* Pure text formatting support functions.  */
 extern char *file_name_as_prefix (diagnostic_context *, const char *);
@@ -470,6 +582,9 @@ extern void diagnostic_output_format_init (diagnostic_context *,
 /* Compute the number of digits in the decimal representation of an integer.  */
 extern int num_digits (int);
 
-extern json::value *json_from_expanded_location (location_t loc);
+extern json::value *json_from_expanded_location (diagnostic_context *context,
+						 location_t loc);
+
+extern bool warning_enabled_at (location_t, int);
 
 #endif /* ! GCC_DIAGNOSTIC_H */

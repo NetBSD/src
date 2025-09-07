@@ -1,30 +1,25 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2023/02/20 02:01:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2025/09/07 02:59:21 mrg Exp $
 
 PROG=		lto1
-SRCS=		attribs.c \
-		lto-common.c \
-		lto-lang.c \
-		lto-object.c \
-		lto-partition.c \
-		lto-symtab.c \
-		lto.c \
-		main.c
+SRCS=		attribs.cc \
+		lto-common.cc \
+		lto-lang.cc \
+		lto-object.cc \
+		lto-partition.cc \
+		lto-symtab.cc \
+		lto.cc \
+		main.cc
 
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
-COPTS.lto.c+=		-Wno-stack-protector
-COPTS.lto-lang.c+=	-Wno-stack-protector
-COPTS.lto-common.c+=	-Wno-stack-protector
+COPTS.lto.cc+=		-Wno-error=stack-protector
+COPTS.lto-lang.cc+=	-Wno-error=stack-protector
+COPTS.lto-common.cc+=	-Wno-error=stack-protector
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
 .include "../Makefile.libcpp"
 .include "../Makefile.libdecnumber"
-
-.if ${MACHINE_ARCH} == "vax"
-COPTS.lto-lang.c+=-O0
-COPTS.lto-symtab.c+=-O0
-.endif
 
 LDADD+= ${LIBIBERTYOBJ}/libiberty.a
 DPADD+= ${LIBIBERTYOBJ}/libiberty.a

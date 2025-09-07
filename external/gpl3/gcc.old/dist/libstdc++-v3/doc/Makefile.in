@@ -144,6 +144,7 @@ ABI_TWEAKS_SRCDIR = @ABI_TWEAKS_SRCDIR@
 ACLOCAL = @ACLOCAL@
 ALLOCATOR_H = @ALLOCATOR_H@
 ALLOCATOR_NAME = @ALLOCATOR_NAME@
+ALLOC_FILE = @ALLOC_FILE@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
@@ -155,6 +156,10 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BACKTRACE_CPPFLAGS = @BACKTRACE_CPPFLAGS@
+BACKTRACE_SUPPORTED = @BACKTRACE_SUPPORTED@
+BACKTRACE_SUPPORTS_THREADS = @BACKTRACE_SUPPORTS_THREADS@
+BACKTRACE_USES_MALLOC = @BACKTRACE_USES_MALLOC@
 BASIC_FILE_CC = @BASIC_FILE_CC@
 BASIC_FILE_H = @BASIC_FILE_H@
 CC = @CC@
@@ -199,6 +204,8 @@ EXEEXT = @EXEEXT@
 EXTRA_CFLAGS = @EXTRA_CFLAGS@
 EXTRA_CXX_FLAGS = @EXTRA_CXX_FLAGS@
 FGREP = @FGREP@
+FORMAT_FILE = @FORMAT_FILE@
+FREESTANDING_FLAGS = @FREESTANDING_FLAGS@
 GLIBCXX_INCLUDES = @GLIBCXX_INCLUDES@
 GLIBCXX_LIBS = @GLIBCXX_LIBS@
 GREP = @GREP@
@@ -216,6 +223,8 @@ LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
+LONG_DOUBLE_128_FLAGS = @LONG_DOUBLE_128_FLAGS@
+LONG_DOUBLE_ALT128_COMPAT_FLAGS = @LONG_DOUBLE_ALT128_COMPAT_FLAGS@
 LONG_DOUBLE_COMPAT_FLAGS = @LONG_DOUBLE_COMPAT_FLAGS@
 LTLIBICONV = @LTLIBICONV@
 LTLIBOBJS = @LTLIBOBJS@
@@ -251,6 +260,7 @@ SYMVER_FILE = @SYMVER_FILE@
 TOPLEVEL_INCLUDES = @TOPLEVEL_INCLUDES@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+VIEW_FILE = @VIEW_FILE@
 VTV_CXXFLAGS = @VTV_CXXFLAGS@
 VTV_CXXLINKFLAGS = @VTV_CXXLINKFLAGS@
 VTV_PCH_CXXFLAGS = @VTV_PCH_CXXFLAGS@
@@ -346,6 +356,7 @@ target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
 thread_header = @thread_header@
+tmake_file = @tmake_file@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
@@ -364,11 +375,13 @@ toolexeclibdir = $(glibcxx_toolexeclibdir)
 @ENABLE_WERROR_TRUE@WERROR_FLAG = -Werror
 @ENABLE_EXTERN_TEMPLATE_FALSE@XTEMPLATE_FLAGS = 
 @ENABLE_EXTERN_TEMPLATE_TRUE@XTEMPLATE_FLAGS = -fno-implicit-templates
+@GLIBCXX_LDBL_ALT128_COMPAT_FALSE@LDBL_128_FLAGS = 
+@GLIBCXX_LDBL_ALT128_COMPAT_TRUE@LDBL_128_FLAGS = $(LONG_DOUBLE_128_FLAGS)
 
 # These bits are all figured out from configure.  Look in acinclude.m4
 # or configure.ac to see how they are set.  See GLIBCXX_EXPORT_FLAGS.
 CONFIG_CXXFLAGS = \
-	$(SECTION_FLAGS) $(HWCAP_CFLAGS) -frandom-seed=$@
+	$(SECTION_FLAGS) $(HWCAP_CFLAGS) -frandom-seed=$@ $(LDBL_128_FLAGS)
 
 WARN_CXXFLAGS = \
 	$(WARN_FLAGS) $(WERROR_FLAG) -fdiagnostics-show-location=once 
@@ -912,10 +925,11 @@ ${doxygen_outdir}/man:
 	mkdir -p ${doxygen_outdir}/man
 
 stamp-xml-doxygen: ${doxygen_outdir}/xml
-	-(srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
+	-srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
 	  builddir=`cd ..; ${PWD_COMMAND}`; \
 	  ${SHELL} ${doxygen_script} \
-	  --host_alias=${host_alias} --mode=xml $${srcdir} $${builddir} NO)
+	  --host_alias=${host_alias} --mode=xml \
+	  "$${srcdir}" "$${builddir}" NO
 	$(STAMP) stamp-xml-doxygen
 
 stamp-xml-single-doxygen: stamp-xml-doxygen
@@ -925,43 +939,48 @@ stamp-xml-single-doxygen: stamp-xml-doxygen
 	$(STAMP) stamp-xml-single-doxygen
 
 stamp-html-doxygen: ${doxygen_outdir}/html
-	-(srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
+	-srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
 	  builddir=`cd ..; ${PWD_COMMAND}`; \
 	  ${SHELL} ${doxygen_script} \
-	  --host_alias=${host_alias} --mode=html $${srcdir} $${builddir} YES)
+	  --host_alias=${host_alias} --mode=html \
+	  "$${srcdir}" "$${builddir}" YES
 	$(STAMP) stamp-html-doxygen
 
 stamp-latex-doxygen: ${doxygen_outdir}/latex
-	-(srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
+	-srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
 	  builddir=`cd ..; ${PWD_COMMAND}`; \
 	  ${SHELL} ${doxygen_script} \
-	  --host_alias=${host_alias} --mode=latex $${srcdir} $${builddir} NO)
+	  --host_alias=${host_alias} --mode=latex --latex_cmd=$(LATEX_CMD) \
+	  "$${srcdir}" "$${builddir}" NO
 	$(STAMP) stamp-latex-doxygen
 
 # Chance of loooooonnggg creation time on this rule.  Iff this fails,
 # look at refman.log and see if TeX's memory is exhausted. Symptoms
 # include asking a wizard to enlarge capacity. If this is the case,
 # find texmf.cnf and add a zero for pool_size, string_vacancies,
-# max_strings, and pool_free values.
+# max_strings, and pool_free values. A much simpler workaround is to
+# install lualatex and set LATEX_CMD=lualatex when running make.
 # Errors like "File `foo.sty' not found" mean a TeX package is missing.
 stamp-pdf-doxygen: stamp-latex-doxygen ${doxygen_outdir}/pdf
-	-(cd ${doxygen_outdir}/latex && $(MAKE) -i pdf;)
-	echo "Generating doxygen pdf file...";
-	if [ -f ${doxygen_pdf} ]; then \
+	@echo "Generating doxygen pdf file...";
+	-$(MAKE) -C ${doxygen_outdir}/latex -i pdf
+	@if [ -f ${doxygen_pdf} ]; then \
 	  mv ${doxygen_pdf} ${api_pdf} ; \
 	  echo ":: PDF file is ${api_pdf}"; \
 	else \
 	  echo "... error"; \
 	  grep -F 'LaTeX Error' ${doxygen_outdir}/latex/refman.log; \
+	  grep -F 'TeX capacity exceeded, sorry' ${doxygen_outdir}/latex/refman.log; \
 	  exit 12; \
 	fi
 	$(STAMP) stamp-pdf-doxygen
 
 stamp-man-doxygen: ${doxygen_outdir}/man
-	-(srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
+	-srcdir=`cd ${top_srcdir}; ${PWD_COMMAND}`; \
 	  builddir=`cd ..; ${PWD_COMMAND}`; \
 	  ${SHELL} ${doxygen_script} \
-	  --host_alias=${host_alias} --mode=man $${srcdir} $${builddir} YES)
+	  --host_alias=${host_alias} --mode=man \
+	  "$${srcdir}" "$${builddir}" YES
 	$(STAMP) stamp-man-doxygen
 
 doc-xml-doxygen: stamp-xml-doxygen

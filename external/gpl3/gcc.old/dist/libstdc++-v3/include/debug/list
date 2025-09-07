@@ -1,6 +1,6 @@
 // Debugging list implementation -*- C++ -*-
 
-// Copyright (C) 2003-2020 Free Software Foundation, Inc.
+// Copyright (C) 2003-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -65,6 +65,16 @@ namespace __debug
       template<typename _ItT, typename _SeqT, typename _CatT>
 	friend class ::__gnu_debug::_Safe_iterator;
 
+      // Reference wrapper for base class. Disambiguates list(const _Base&)
+      // from copy constructor by requiring a user-defined conversion.
+      // See PR libstdc++/90102.
+      struct _Base_ref
+      {
+	_Base_ref(const _Base& __r) : _M_ref(__r) { }
+
+	const _Base& _M_ref;
+      };
+
     public:
       typedef typename _Base::reference			reference;
       typedef typename _Base::const_reference		const_reference;
@@ -105,11 +115,15 @@ namespace __debug
 
       ~list() = default;
 
-      list(const list& __x, const allocator_type& __a)
+      list(const list& __x, const __type_identity_t<allocator_type>& __a)
       : _Base(__x, __a) { }
 
-      list(list&& __x, const allocator_type& __a)
-      : _Base(std::move(__x), __a) { }
+      list(list&& __x, const __type_identity_t<allocator_type>& __a)
+	noexcept(
+	  std::is_nothrow_constructible<_Base,
+	    _Base, const allocator_type&>::value )
+      : _Safe(std::move(__x), __a),
+	_Base(std::move(__x), __a) { }
 #endif
 
       explicit
@@ -121,7 +135,7 @@ namespace __debug
       list(size_type __n, const allocator_type& __a = allocator_type())
       : _Base(__n, __a) { }
 
-      list(size_type __n, const _Tp& __value,
+      list(size_type __n, const __type_identity_t<_Tp>& __value,
 	   const _Allocator& __a = _Allocator())
       : _Base(__n, __value, __a) { }
 #else
@@ -144,18 +158,10 @@ namespace __debug
 		__gnu_debug::__base(__last), __a)
 	{ }
 
-      list(const _Base& __x)
-      : _Base(__x) { }
+      list(_Base_ref __x)
+      : _Base(__x._M_ref) { }
 
-#if __cplusplus < 201103L
-      list&
-      operator=(const list& __x)
-      {
-	this->_M_safe() = __x;
-	_M_base() = __x;
-	return *this;
-      }
-#else
+#if __cplusplus >= 201103L
       list&
       operator=(const list&) = default;
 
@@ -166,7 +172,7 @@ namespace __debug
       operator=(initializer_list<value_type> __l)
       {
 	this->_M_invalidate_all();
-	_M_base() = __l;
+	_Base::operator=(__l);
 	return *this;
       }
 
@@ -209,51 +215,63 @@ namespace __debug
       using _Base::get_allocator;
 
       // iterators:
+      _GLIBCXX_NODISCARD
       iterator
       begin() _GLIBCXX_NOEXCEPT
       { return iterator(_Base::begin(), this); }
 
+      _GLIBCXX_NODISCARD
       const_iterator
       begin() const _GLIBCXX_NOEXCEPT
       { return const_iterator(_Base::begin(), this); }
 
+      _GLIBCXX_NODISCARD
       iterator
       end() _GLIBCXX_NOEXCEPT
       { return iterator(_Base::end(), this); }
 
+      _GLIBCXX_NODISCARD
       const_iterator
       end() const _GLIBCXX_NOEXCEPT
       { return const_iterator(_Base::end(), this); }
 
+      _GLIBCXX_NODISCARD
       reverse_iterator
       rbegin() _GLIBCXX_NOEXCEPT
       { return reverse_iterator(end()); }
 
+      _GLIBCXX_NODISCARD
       const_reverse_iterator
       rbegin() const _GLIBCXX_NOEXCEPT
       { return const_reverse_iterator(end()); }
 
+      _GLIBCXX_NODISCARD
       reverse_iterator
       rend() _GLIBCXX_NOEXCEPT
       { return reverse_iterator(begin()); }
 
+      _GLIBCXX_NODISCARD
       const_reverse_iterator
       rend() const _GLIBCXX_NOEXCEPT
       { return const_reverse_iterator(begin()); }
 
 #if __cplusplus >= 201103L
+      [[__nodiscard__]]
       const_iterator
       cbegin() const noexcept
       { return const_iterator(_Base::begin(), this); }
 
+      [[__nodiscard__]]
       const_iterator
       cend() const noexcept
       { return const_iterator(_Base::end(), this); }
 
+      [[__nodiscard__]]
       const_reverse_iterator
       crbegin() const noexcept
       { return const_reverse_iterator(end()); }
 
+      [[__nodiscard__]]
       const_reverse_iterator
       crend() const noexcept
       { return const_reverse_iterator(begin()); }
@@ -342,6 +360,7 @@ namespace __debug
 #endif
 
       // element access:
+      _GLIBCXX_NODISCARD
       reference
       front() _GLIBCXX_NOEXCEPT
       {
@@ -349,6 +368,7 @@ namespace __debug
 	return _Base::front();
       }
 
+      _GLIBCXX_NODISCARD
       const_reference
       front() const _GLIBCXX_NOEXCEPT
       {
@@ -356,6 +376,7 @@ namespace __debug
 	return _Base::front();
       }
 
+      _GLIBCXX_NODISCARD
       reference
       back() _GLIBCXX_NOEXCEPT
       {
@@ -363,6 +384,7 @@ namespace __debug
 	return _Base::back();
       }
 
+      _GLIBCXX_NODISCARD
       const_reference
       back() const _GLIBCXX_NOEXCEPT
       {
@@ -561,7 +583,7 @@ namespace __debug
 			      _M_message(__gnu_debug::__msg_self_splice)
 			      ._M_sequence(*this, "this"));
 	this->_M_transfer_from_if(__x, _Not_equal(__x._M_base().end()));
-	_Base::splice(__position.base(), _GLIBCXX_MOVE(__x._M_base()));
+	_Base::splice(__position.base(), _GLIBCXX_MOVE(__x));
       }
 
 #if __cplusplus >= 201103L
@@ -592,7 +614,7 @@ namespace __debug
 	// _GLIBCXX_RESOLVE_LIB_DEFECTS
 	// 250. splicing invalidates iterators
 	this->_M_transfer_from_if(__x, _Equal(__i.base()));
-	_Base::splice(__position.base(), _GLIBCXX_MOVE(__x._M_base()),
+	_Base::splice(__position.base(), _GLIBCXX_MOVE(__x),
 		      __i.base());
       }
 
@@ -640,7 +662,7 @@ namespace __debug
 	    this->_M_transfer_from_if(__x, _Equal(__tmp));
 	  }
 
-	_Base::splice(__position.base(), _GLIBCXX_MOVE(__x._M_base()),
+	_Base::splice(__position.base(), _GLIBCXX_MOVE(__x),
 		      __first.base(), __last.base());
       }
 
@@ -671,36 +693,36 @@ namespace __debug
 	if (!this->_M_iterators && !this->_M_const_iterators)
 	  return _Base::remove(__value);
 
+#if !_GLIBCXX_USE_CXX11_ABI
 	size_type __removed __attribute__((__unused__)) = 0;
+#endif
+	_Base __to_destroy(get_allocator());
 	_Base_iterator __first = _Base::begin();
 	_Base_iterator __last = _Base::end();
-	_Base_iterator __extra = __last;
 	while (__first != __last)
 	  {
+	    _Base_iterator __next = __first;
+	    ++__next;
 	    if (*__first == __value)
-	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-	      // 526. Is it undefined if a function in the standard changes
-	      // in parameters?
-	      if (std::__addressof(*__first) != std::__addressof(__value))
-		{
-		  __first = _M_erase(__first);
-		  _GLIBCXX20_ONLY( __removed++ );
-		}
-	      else
-		{
-		  __extra = __first;
-		  ++__first;
-		}
-	    else
-	      ++__first;
+	      {
+		// _GLIBCXX_RESOLVE_LIB_DEFECTS
+		// 526. Is it undefined if a function in the standard changes
+		// in parameters?
+		this->_M_invalidate_if(_Equal(__first));
+		__to_destroy.splice(__to_destroy.begin(), *this, __first);
+#if !_GLIBCXX_USE_CXX11_ABI
+		_GLIBCXX20_ONLY( __removed++ );
+#endif
+	      }
+
+	    __first = __next;
 	  }
 
-	if (__extra != __last)
-	  {
-	    _M_erase(__extra);
-	    _GLIBCXX20_ONLY( __removed++ );
-	  }
+#if !_GLIBCXX_USE_CXX11_ABI
 	return _GLIBCXX20_ONLY( __removed );
+#else
+	return _GLIBCXX20_ONLY( __to_destroy.size() );
+#endif
       }
 
       template<class _Predicate>
@@ -710,17 +732,31 @@ namespace __debug
 	  if (!this->_M_iterators && !this->_M_const_iterators)
 	    return _Base::remove_if(__pred);
 
+#if !_GLIBCXX_USE_CXX11_ABI
 	  size_type __removed __attribute__((__unused__)) = 0;
+#endif
+	  _Base __to_destroy(get_allocator());
 	  for (_Base_iterator __x = _Base::begin(); __x != _Base::end(); )
+	  {
+	    _Base_iterator __next = __x;
+	    ++__next;
 	    if (__pred(*__x))
 	      {
-		__x = _M_erase(__x);
+		this->_M_invalidate_if(_Equal(__x));
+		__to_destroy.splice(__to_destroy.begin(), *this, __x);
+#if !_GLIBCXX_USE_CXX11_ABI
 		_GLIBCXX20_ONLY( __removed++ );
+#endif
 	      }
-	    else
-	      ++__x;
 
+	    __x = __next;
+	  }
+
+#if !_GLIBCXX_USE_CXX11_ABI
 	  return _GLIBCXX20_ONLY( __removed );
+#else
+	  return _GLIBCXX20_ONLY( __to_destroy.size() );
+#endif
 	}
 
       _GLIBCXX_LIST_REMOVE_RETURN_TYPE_TAG
@@ -733,21 +769,31 @@ namespace __debug
 	if (empty())
 	  return _GLIBCXX20_ONLY(0);
 
+#if !_GLIBCXX_USE_CXX11_ABI
         size_type __removed __attribute__((__unused__)) = 0;
+#endif
+	_Base __to_destroy(get_allocator());
 	_Base_iterator __first = _Base::begin();
 	_Base_iterator __last = _Base::end();
 	_Base_iterator __next = __first;
 	while (++__next != __last)
 	  if (*__first == *__next)
 	    {
-	      _M_erase(__next);
+	      this->_M_invalidate_if(_Equal(__next));
+	      __to_destroy.splice(__to_destroy.begin(), *this, __next);
 	      __next = __first;
+#if !_GLIBCXX_USE_CXX11_ABI
 	      _GLIBCXX20_ONLY( __removed++ );
+#endif
 	    }
 	  else
 	    __first = __next;
 
+#if !_GLIBCXX_USE_CXX11_ABI
 	return _GLIBCXX20_ONLY( __removed );
+#else
+	return _GLIBCXX20_ONLY( __to_destroy.size() );
+#endif
       }
 
       template<class _BinaryPredicate>
@@ -760,21 +806,32 @@ namespace __debug
 	  if (empty())
 	    return _GLIBCXX20_ONLY(0);
 
+
+#if !_GLIBCXX_USE_CXX11_ABI
 	  size_type __removed __attribute__((__unused__)) = 0;
+#endif
+	  _Base __to_destroy(get_allocator());
 	  _Base_iterator __first = _Base::begin();
 	  _Base_iterator __last = _Base::end();
-	  _Base_iterator __next = __first;;
+	  _Base_iterator __next = __first;
 	  while (++__next != __last)
 	    if (__binary_pred(*__first, *__next))
 	      {
-		_M_erase(__next);
+		this->_M_invalidate_if(_Equal(__next));
+		__to_destroy.splice(__to_destroy.begin(), *this, __next);
 		__next = __first;
+#if !_GLIBCXX_USE_CXX11_ABI
 		_GLIBCXX20_ONLY( __removed++ );
+#endif
 	      }
 	    else
 	      __first = __next;
 
-	  return _GLIBCXX20_ONLY( __removed );
+#if !_GLIBCXX_USE_CXX11_ABI
+	return _GLIBCXX20_ONLY( __removed );
+#else
+	return _GLIBCXX20_ONLY( __to_destroy.size() );
+#endif
 	}
 
 #undef _GLIBCXX_LIST_REMOVE_RETURN_TYPE_TAG
@@ -794,7 +851,7 @@ namespace __debug
 	    __glibcxx_check_sorted(_Base::begin(), _Base::end());
 	    __glibcxx_check_sorted(__x.begin().base(), __x.end().base());
 	    this->_M_transfer_from_if(__x, _Not_equal(__x._M_base().end()));
-	    _Base::merge(_GLIBCXX_MOVE(__x._M_base()));
+	    _Base::merge(_GLIBCXX_MOVE(__x));
 	  }
       }
 
@@ -821,7 +878,7 @@ namespace __debug
 	      __glibcxx_check_sorted_pred(__x.begin().base(), __x.end().base(),
 					  __comp);
 	      this->_M_transfer_from_if(__x, _Not_equal(__x._M_base().end()));
-	      _Base::merge(_GLIBCXX_MOVE(__x._M_base()), __comp);
+	      _Base::merge(_GLIBCXX_MOVE(__x), __comp);
 	    }
 	}
 
@@ -856,6 +913,11 @@ namespace __debug
 	   typename = _RequireAllocator<_Allocator>>
     list(_InputIterator, _InputIterator, _Allocator = _Allocator())
       -> list<_ValT, _Allocator>;
+
+  template<typename _Tp, typename _Allocator = allocator<_Tp>,
+	   typename = _RequireAllocator<_Allocator>>
+    list(size_t, _Tp, _Allocator = _Allocator())
+      -> list<_Tp, _Allocator>;
 #endif
 
   template<typename _Tp, typename _Alloc>

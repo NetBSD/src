@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.6 2019/09/26 05:45:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.7 2025/09/07 02:59:19 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -115,3 +115,6 @@ COPTS.archive.c+=	-Wno-error
 COPTS.sendmsg.c+=	-Wno-error
 COPTS.encoding.c+=	-Wno-pointer-arith	# sizeof(void)
 COPTS+=			-Wno-missing-prototypes
+
+# XXXGCC12
+OBJCOPTS.Object.m+=	-Wno-error=objc-root-class

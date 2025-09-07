@@ -1,5 +1,5 @@
 ;;  Machine Description for Renesas RX processors
-;;  Copyright (C) 2008-2020 Free Software Foundation, Inc.
+;;  Copyright (C) 2008-2022 Free Software Foundation, Inc.
 ;;  Contributed by Red Hat.
 
 ;; This file is part of GCC.
@@ -77,6 +77,7 @@
    (UNSPEC_PID_ADDR	   52)
 
    (CTRLREG_PSW		    0)
+   (CTRLREG_PC		    1)
    (CTRLREG_USP		    2)
    (CTRLREG_FPSW	    3)
    (CTRLREG_BPSW	    8)

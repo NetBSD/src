@@ -1,14 +1,30 @@
-#ifndef OR1K_OPTS_H
-#define OR1K_OPTS_H
+/* Definitions for option handling for OpenRISC.
+   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Contributed by Stafford Horne.
 
-enum or1k_delay {
-  OR1K_DELAY_OFF = 0,
-  OR1K_DELAY_ON = 1,
-  OR1K_DELAY_COMPAT = 2
+   This file is part of GCC.
+
+   GCC is free software; you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published
+   by the Free Software Foundation; either version 3, or (at your
+   option) any later version.
+
+   GCC is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+   License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with GCC; see the file COPYING3.  If not see
+   <http://www.gnu.org/licenses/>.  */
+
+#ifndef GCC_OR1K_OPTS_H
+#define GCC_OR1K_OPTS_H
+
+/* The OpenRISC code generation models available.  */
+enum or1k_cmodel_type {
+  CMODEL_SMALL,
+  CMODEL_LARGE
 };
 
-#define TARGET_DELAY_ON     (or1k_delay_selected == OR1K_DELAY_ON)
-#define TARGET_DELAY_OFF    (or1k_delay_selected == OR1K_DELAY_OFF)
-#define TARGET_DELAY_COMPAT (or1k_delay_selected == OR1K_DELAY_COMPAT)
-
-#endif
+#endif /* GCC_OR1K_OPTS_H */

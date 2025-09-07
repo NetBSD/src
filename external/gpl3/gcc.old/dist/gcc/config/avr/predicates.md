@@ -1,5 +1,5 @@
 ;; Predicate definitions for ATMEL AVR micro controllers.
-;; Copyright (C) 2006-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2022 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -26,6 +26,11 @@
 (define_predicate "d_register_operand"
   (and (match_code "reg")
        (match_test "REGNO (op) >= 16 && REGNO (op) <= 31")))
+
+(define_predicate "scratch_or_d_register_operand"
+  (ior (match_operand 0 "d_register_operand")
+       (and (match_code ("scratch"))
+            (match_operand 0 "scratch_operand"))))
 
 (define_predicate "even_register_operand"
   (and (match_code "reg")

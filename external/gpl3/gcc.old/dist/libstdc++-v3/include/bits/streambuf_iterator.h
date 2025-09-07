@@ -1,6 +1,6 @@
 // Streambuf iterators
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -44,6 +44,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    * @{
    */
 
+// Ignore warnings about std::iterator.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   // 24.5.3 Template class istreambuf_iterator
   /// Provides input iterator semantics for streambufs.
   template<typename _CharT, typename _Traits>
@@ -82,11 +85,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__copy_move_a2(istreambuf_iterator<_CharT2>,
 		       istreambuf_iterator<_CharT2>, _CharT2*);
 
-#if __cplusplus >= 201103L
       template<typename _CharT2, typename _Size>
-	friend __enable_if_t<__is_char<_CharT2>::__value, _CharT2*>
-	__copy_n_a(istreambuf_iterator<_CharT2>, _Size, _CharT2*);
-#endif
+	friend typename __gnu_cxx::__enable_if<__is_char<_CharT2>::__value,
+					       _CharT2*>::__type
+	__copy_n_a(istreambuf_iterator<_CharT2>, _Size, _CharT2*, bool);
 
       template<typename _CharT2>
 	friend typename __gnu_cxx::__enable_if<__is_char<_CharT2>::__value,
@@ -142,6 +144,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       ///  Return the current character pointed to by iterator.  This returns
       ///  streambuf.sgetc().  It cannot be assigned.  NB: The result of
       ///  operator*() on an end of stream is undefined.
+      _GLIBCXX_NODISCARD
       char_type
       operator*() const
       {
@@ -190,6 +193,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // 110 istreambuf_iterator::equal not const
       // NB: there is also number 111 (NAD) relevant to this function.
       /// Return true both iterators are end or both are not end.
+      _GLIBCXX_NODISCARD
       bool
       equal(const istreambuf_iterator& __b) const
       { return _M_at_eof() == __b._M_at_eof(); }
@@ -216,6 +220,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
 #if __cplusplus > 201703L && __cpp_lib_concepts
+      [[nodiscard]]
       friend bool
       operator==(const istreambuf_iterator& __i, default_sentinel_t __s)
       { return __i._M_at_eof(); }
@@ -223,16 +228,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     };
 
   template<typename _CharT, typename _Traits>
+    _GLIBCXX_NODISCARD
     inline bool
     operator==(const istreambuf_iterator<_CharT, _Traits>& __a,
 	       const istreambuf_iterator<_CharT, _Traits>& __b)
     { return __a.equal(__b); }
 
+#if __cpp_impl_three_way_comparison < 201907L
   template<typename _CharT, typename _Traits>
+    _GLIBCXX_NODISCARD
     inline bool
     operator!=(const istreambuf_iterator<_CharT, _Traits>& __a,
 	       const istreambuf_iterator<_CharT, _Traits>& __b)
     { return !__a.equal(__b); }
+#endif
 
   /// Provides output iterator semantics for streambufs.
   template<typename _CharT, typename _Traits>
@@ -289,6 +298,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       }
 
       /// Return *this.
+      _GLIBCXX_NODISCARD
       ostreambuf_iterator&
       operator*()
       { return *this; }
@@ -304,6 +314,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return *this; }
 
       /// Return true if previous operator=() failed.
+      _GLIBCXX_NODISCARD
       bool
       failed() const _GLIBCXX_USE_NOEXCEPT
       { return _M_failed; }
@@ -318,6 +329,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	return *this;
       }
     };
+#pragma GCC diagnostic pop
 
   // Overloads for streambuf iterators.
   template<typename _CharT>
@@ -396,10 +408,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __result;
     }
 
-#if __cplusplus >= 201103L
   template<typename _CharT, typename _Size>
-    __enable_if_t<__is_char<_CharT>::__value, _CharT*>
-    __copy_n_a(istreambuf_iterator<_CharT> __it, _Size __n, _CharT* __result)
+    typename __gnu_cxx::__enable_if<__is_char<_CharT>::__value,
+				    _CharT*>::__type
+    __copy_n_a(istreambuf_iterator<_CharT> __it, _Size __n, _CharT* __result,
+	       bool __strict __attribute__((__unused__)))
     {
       if (__n == 0)
 	return __result;
@@ -409,12 +422,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 			      ._M_iterator(__it));
       _CharT* __beg = __result;
       __result += __it._M_sbuf->sgetn(__beg, __n);
-      __glibcxx_requires_cond(__result - __beg == __n,
+      __glibcxx_requires_cond(!__strict || __result - __beg == __n,
 			      _M_message(__gnu_debug::__msg_inc_istreambuf)
 			      ._M_iterator(__it));
       return __result;
     }
-#endif // C++11
 
   template<typename _CharT>
     typename __gnu_cxx::__enable_if<__is_char<_CharT>::__value,

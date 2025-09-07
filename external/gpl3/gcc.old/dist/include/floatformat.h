@@ -1,5 +1,5 @@
 /* IEEE floating point support declarations, for GDB, the GNU Debugger.
-   Copyright (C) 1991-2020 Free Software Foundation, Inc.
+   Copyright (C) 1991-2022 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -91,13 +91,13 @@ struct floatformat
 
   /* Is the format actually the sum of two smaller floating point
      formats (IBM long double, as described in
-     gcc/config/rs6000/darwin-ldouble-format)?  If so, this is the
+     libgcc/config/rs6000/ibm-ldouble-format)?  If so, this is the
      smaller format in question, and the fields sign_start through
      intbit describe the first half.  If not, this is NULL.  */
   const struct floatformat *split_half;
 };
 
-/* floatformats for IEEE single and double, big and little endian.  */
+/* floatformats for IEEE half, single, double and quad, big and little endian.  */
 
 extern const struct floatformat floatformat_ieee_half_big;
 extern const struct floatformat floatformat_ieee_half_little;
@@ -105,6 +105,8 @@ extern const struct floatformat floatformat_ieee_single_big;
 extern const struct floatformat floatformat_ieee_single_little;
 extern const struct floatformat floatformat_ieee_double_big;
 extern const struct floatformat floatformat_ieee_double_little;
+extern const struct floatformat floatformat_ieee_quad_big;
+extern const struct floatformat floatformat_ieee_quad_little;
 
 /* floatformat for ARM IEEE double, little endian bytes and big endian words */
 
@@ -128,11 +130,12 @@ extern const struct floatformat floatformat_arm_ext_littlebyte_bigword;
 /* IA-64 Floating Point register spilt into memory.  */
 extern const struct floatformat floatformat_ia64_spill_big;
 extern const struct floatformat floatformat_ia64_spill_little;
-extern const struct floatformat floatformat_ia64_quad_big;
-extern const struct floatformat floatformat_ia64_quad_little;
 /* IBM long double (double+double).  */
 extern const struct floatformat floatformat_ibm_long_double_big;
 extern const struct floatformat floatformat_ibm_long_double_little;
+/* bfloat16.  */
+extern const struct floatformat floatformat_bfloat16_big;
+extern const struct floatformat floatformat_bfloat16_little;
 
 /* Convert from FMT to a double.
    FROM is the address of the extended float.
