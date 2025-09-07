@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.10 2021/11/01 21:28:02 andvar Exp $ */
+/* $NetBSD: nvram.h,v 1.11 2025/09/07 21:27:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -201,27 +201,16 @@ struct pnviocdesc {
 
 #if defined(_KERNEL)
 struct prep_mk48txx_softc {
-	device_t *sc_dev;
-	bus_space_tag_t sc_bst;	 /* bus tag & handle */
-	bus_space_handle_t sc_bsh;      /* */
+	struct mk48txx_softc sc_mk48txx;
 
-	struct todr_chip_handle sc_handle; /* TODR handle */
-	const char	*sc_model;	/* chip model name */
-	bus_size_t	sc_nvramsz;	/* Size of NVRAM on the chip */
-	bus_size_t	sc_clkoffset;	/* Offset in NVRAM to clock bits */
-	u_int		sc_year0;	/* What year is represented on
-					   the system by the chip's year
-					   counter at 0 */
-	u_int		sc_flag;
-#define MK48TXX_NO_CENT_ADJUST  0x0001
-
-	mk48txx_nvrd_t	sc_nvrd;	/* NVRAM/RTC read function */
-	mk48txx_nvwr_t	sc_nvwr;	/* NVRAM/RTC write function */
 	bus_space_tag_t sc_data;
 	bus_space_handle_t sc_datah;
 };
 
 struct nvram_pnpbus_softc {
+	/* clock bits for mk48txx */
+	struct prep_mk48txx_softc sc_mksc; /* mk48txx softc */
+
 	bus_space_tag_t sc_iot;		/* io space tag */
 	bus_space_tag_t sc_as;		/* addr line */
 	bus_space_handle_t sc_ash;
@@ -229,9 +218,6 @@ struct nvram_pnpbus_softc {
 
 	bus_space_tag_t sc_data;	/* data line */
 	bus_space_handle_t sc_datah;
-
-	/* clock bits for mk48txx */
-	struct prep_mk48txx_softc sc_mksc; /* mk48txx softc */
 
 	u_char  sc_open;		/* single use device */
 };

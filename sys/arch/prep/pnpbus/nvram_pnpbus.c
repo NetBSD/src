@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.22 2019/11/10 21:16:32 chs Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.23 2025/09/07 21:27:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.22 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.23 2025/09/07 21:27:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,6 +131,7 @@ nvram_pnpbus_attach(device_t parent, device_t self, void *aux)
 	uint8_t *p;
 	HEADER prep_nvram_header;
 
+	sc->sc_mksc.sc_mk48txx.sc_dev = self;
 	sc->sc_iot = pna->pna_iot;
 
 	pnpbus_getioport(&pna->pna_res, 0, &as_iobase, &as_len);
@@ -192,22 +193,22 @@ nvram_pnpbus_attach(device_t parent, device_t self, void *aux)
 #endif
 	strncpy(bootpath, prep_nvram_get_var("fw-boot-device"), 256);
 
-
 	if (prep_clock_mk48txx == 0)
 		return;
+
 	/* otherwise, we have a motorolla clock chip.  Set it up. */
-	sc->sc_mksc.sc_model = "mk48t18";
-	sc->sc_mksc.sc_year0 = 1900;
-	sc->sc_mksc.sc_nvrd = mkclock_pnpbus_nvrd;
-	sc->sc_mksc.sc_nvwr = mkclock_pnpbus_nvwr;
+	sc->sc_mksc.sc_mk48txx.sc_model = "mk48t18";
+	sc->sc_mksc.sc_mk48txx.sc_year0 = 1900;
+	sc->sc_mksc.sc_mk48txx.sc_nvrd = mkclock_pnpbus_nvrd;
+	sc->sc_mksc.sc_mk48txx.sc_nvwr = mkclock_pnpbus_nvwr;
 	/* copy down the bus space tags */
-	sc->sc_mksc.sc_bst = sc->sc_as;
-	sc->sc_mksc.sc_bsh = sc->sc_ash;
+	sc->sc_mksc.sc_mk48txx.sc_bst = sc->sc_as;
+	sc->sc_mksc.sc_mk48txx.sc_bsh = sc->sc_ash;
 	sc->sc_mksc.sc_data = sc->sc_data;
 	sc->sc_mksc.sc_datah = sc->sc_datah;
 
 	aprint_normal("%s: attaching clock", device_xname(self));
-	mk48txx_attach((struct mk48txx_softc *)&sc->sc_mksc);
+	mk48txx_attach((struct mk48txx_softc *)&sc->sc_mksc.sc_mk48txx);
 	aprint_normal("\n");
 }
 
@@ -527,8 +528,8 @@ mkclock_pnpbus_nvrd(struct mk48txx_softc *osc, int off)
 	aprint_debug("mkclock_pnpbus_nvrd(%d)", off);
 #endif
 	s = splclock();
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, off & 0xff);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, off >> 8);
+	bus_space_write_1(osc->sc_bst, osc->sc_bsh, 0, off & 0xff);
+	bus_space_write_1(osc->sc_bst, osc->sc_bsh, 1, off >> 8);
 	datum = bus_space_read_1(sc->sc_data, sc->sc_datah, 0);
 	splx(s);
 #ifdef DEBUG
@@ -547,8 +548,8 @@ mkclock_pnpbus_nvwr(struct mk48txx_softc *osc, int off, uint8_t datum)
 	aprint_debug("mkclock_isa_nvwr(%d, %02x)\n", off, datum);
 #endif
 	s = splclock();
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, off & 0xff);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 1, off >> 8);
+	bus_space_write_1(osc->sc_bst, osc->sc_bsh, 0, off & 0xff);
+	bus_space_write_1(osc->sc_bst, osc->sc_bsh, 1, off >> 8);
 	bus_space_write_1(sc->sc_data, sc->sc_datah, 0, datum);
 	splx(s);
 }
