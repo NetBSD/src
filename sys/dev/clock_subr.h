@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.30 2020/01/01 23:07:38 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.31 2025/09/07 14:31:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2020 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct timeval;
 struct todr_chip_handle {
 	void	*cookie;	/* Device specific data */
 	void	*bus_cookie;	/* Bus specific data */
-	time_t	base_time;	/* Base time (e.g. rootfs time) */
+	time_t	todr_base_time;	/* Base time (e.g. rootfs time) */
 
 	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);

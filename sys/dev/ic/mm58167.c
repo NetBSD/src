@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.17 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.18 2025/09/07 14:31:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.17 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.18 2025/09/07 14:31:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		 * Assume called from inittodr(9) on boot and
 		 * use file system time set in inittodr(9).
 		 */
-		clock_secs_to_ymdhms(handle->base_time, &dt_reasonable);
+		clock_secs_to_ymdhms(handle->todr_base_time, &dt_reasonable);
 	}
 
 	/*

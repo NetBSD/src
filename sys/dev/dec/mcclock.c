@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.30 2024/02/02 15:44:43 tsutsui Exp $ */
+/* $NetBSD: mcclock.c,v 1.31 2025/09/07 14:31:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.30 2024/02/02 15:44:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.31 2025/09/07 14:31:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -182,7 +182,7 @@ mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 	dt.dt_sec = 0;
 	for(;;) {
 		tvp->tv_sec = yearsecs + clock_ymdhms_to_secs(&dt);
-		if (tvp->tv_sec > tch->base_time - 2 * SECS_PER_DAY)
+		if (tvp->tv_sec > tch->todr_base_time - 2 * SECS_PER_DAY)
 			break;
 		dt.dt_year++;
 	}

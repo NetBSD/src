@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.60 2020/07/03 16:23:03 maxv Exp $	 */
+/*	$NetBSD: clock.c,v 1.61 2025/09/07 14:31:58 thorpej Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2020/07/03 16:23:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.61 2025/09/07 14:31:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ cpu_initclocks(void)
 int
 vax_gettime(todr_chip_handle_t handle, struct timeval *tvp)
 {
-	tvp->tv_sec = handle->base_time;
+	tvp->tv_sec = handle->todr_base_time;
 	return (*dep_call->cpu_gettime)(tvp);
 }
 

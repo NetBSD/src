@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.47 2021/04/03 12:06:53 simonb Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.48 2025/09/07 14:31:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.47 2021/04/03 12:06:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.48 2025/09/07 14:31:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -210,7 +210,7 @@ todr_set_systime(time_t base)
 	 * Some ports need to be supplied base in order to fabricate a time_t.
 	 */
 	if (todr_handle)
-		todr_handle->base_time = base;
+		todr_handle->todr_base_time = base;
 
 	memset(&tv, 0, sizeof(tv));
 
