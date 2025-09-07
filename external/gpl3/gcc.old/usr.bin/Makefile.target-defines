@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.target-defines,v 1.5 2023/02/20 02:12:29 mrg Exp $
+#	$NetBSD: Makefile.target-defines,v 1.6 2025/09/07 04:12:28 mrg Exp $
 
 CPPFLAGS+=	-I${BACKENDOBJ}
 CPPFLAGS+=	-DCONFIGURE_SPECS="\"\"" \

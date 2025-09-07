@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for GNU C - C language.
-# Copyright (C) 1994-2020 Free Software Foundation, Inc.
+# Copyright (C) 1994-2022 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -37,6 +37,7 @@
 #
 # Define the names for selecting c in LANGUAGES.
 c: cc1$(exeext)
+c.serial = cc1$(exeext)
 
 # Tell GNU make to ignore these if they exist.
 .PHONY: c gcc
@@ -70,20 +71,22 @@ endif
 # compute checksum over all object files and the options
 # re-use the checksum from the prev-final stage so it passes
 # the bootstrap comparison and allows comparing of the cc1 binary
-cc1-checksum.c : build/genchecksum$(build_exeext) checksum-options \
+cc1-checksum.cc : build/genchecksum$(build_exeext) checksum-options \
 	$(C_OBJS) $(BACKEND) $(LIBDEPS) 
 	if [ -f ../stage_final ] \
 	   && cmp -s ../stage_current ../stage_final; then \
-	  cp ../prev-gcc/cc1-checksum.c cc1-checksum.c; \
+	  cp ../prev-gcc/cc1-checksum.cc cc1-checksum.cc; \
 	else \
 	  build/genchecksum$(build_exeext) $(C_OBJS) $(BACKEND) $(LIBDEPS) \
-                     checksum-options > cc1-checksum.c.tmp && 		 \
-	  $(SHELL) $(srcdir)/../move-if-change cc1-checksum.c.tmp cc1-checksum.c; \
+                     checksum-options > cc1-checksum.cc.tmp && 		 \
+	  $(SHELL) $(srcdir)/../move-if-change cc1-checksum.cc.tmp cc1-checksum.cc; \
 	fi
 
 cc1$(exeext): $(C_OBJS) cc1-checksum.o $(BACKEND) $(LIBDEPS)
+	@$(call LINK_PROGRESS,$(INDEX.c),start)
 	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ $(C_OBJS) \
 	  cc1-checksum.o $(BACKEND) $(LIBS) $(BACKENDLIBS)
+	@$(call LINK_PROGRESS,$(INDEX.c),end)
 
 cc1.fda: ../stage1-gcc/cc1$(exeext) ../prev-gcc/$(PERF_DATA)
 	$(CREATE_GCOV) -binary ../stage1-gcc/cc1$(exeext) -gcov cc1.fda -profile ../prev-gcc/$(PERF_DATA) -gcov_version 1
@@ -96,17 +99,18 @@ c.dvi:
 c.pdf:
 c.html:
 c.install-info:
+c.install-dvi:
 c.install-pdf:
 c.install-html:
 c.all.cross:
 c.start.encap:
 c.rest.encap:
 c.srcinfo:
-c.srcextra: gengtype-lex.c
+c.srcextra: gengtype-lex.cc
 	-cp -p $^ $(srcdir)
 c.tags: force
-	cd $(srcdir)/c; etags -o TAGS.sub *.c *.h; \
-	etags --include TAGS.sub --include ../TAGS.sub
+	cd $(srcdir)/c; $(ETAGS) -o TAGS.sub *.c *.h; \
+	$(ETAGS) --include TAGS.sub --include ../TAGS.sub
 c.man:
 c.srcman:
 
@@ -164,7 +168,7 @@ c.install-plugin: installdirs
 # Install import library.
 ifeq ($(plugin_implib),yes)
 	$(mkinstalldirs) $(DESTDIR)$(plugin_resourcesdir)
-	$(INSTALL_DATA) cc1$(exeext).a $(DESTDIR)/$(plugin_resourcesdir)/cc1$(exeext).a
+	$(INSTALL_DATA) cc1$(exeext).a $(DESTDIR)$(plugin_resourcesdir)/cc1$(exeext).a
 endif
 
 c.uninstall:

@@ -1,4 +1,4 @@
-#	$NetBSD: rs6000-inc.mk,v 1.1.1.1 2025/09/07 02:59:20 mrg Exp $
+#	$NetBSD: rs6000-inc.mk,v 1.2 2025/09/07 04:12:28 mrg Exp $
 
 # makefile snippet to build the rs6000-vecdefs files, used by include and
 # usr.bin.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2023/02/20 02:12:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2025/09/07 04:12:26 mrg Exp $
 
 SUBDIR=		bits
 

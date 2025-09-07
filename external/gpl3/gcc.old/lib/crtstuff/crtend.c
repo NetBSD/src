@@ -1,4 +1,4 @@
-/*	$NetBSD: crtend.c,v 1.10 2023/02/20 02:11:57 mrg Exp $	*/
+/*	$NetBSD: crtend.c,v 1.11 2025/09/07 04:11:47 mrg Exp $	*/
 
 /*
  * Written by Jason R. Thorpe, August 24, 2004.

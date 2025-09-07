@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/10/07 12:15:51 rin Exp $
+#	$NetBSD: Makefile,v 1.15 2025/09/07 04:12:46 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -13,6 +13,7 @@ LIB=		decnumber
 SRCS=		decNumber.c decContext.c decimal32.c decimal64.c decimal128.c
 CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH} -I${DIST}/libdecnumber
 CPPFLAGS+=	-I${DIST}/libgcc
+
 
 .include <bsd.lib.mk>
 

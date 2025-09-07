@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2023/02/20 02:12:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2025/09/07 04:12:40 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -10,6 +10,8 @@ SUBDIR=	sanitizer
 
 INCS= ${G_EXTRA_HEADERS:T}
 
+.include "../rs6000-inc.mk"
+
 # Part of the standard headers, the rest of which we replace.
 INCS+=	stdatomic.h
 
@@ -17,10 +19,10 @@ INCS+=	stdatomic.h
 .if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
 INCS+=	mm_malloc.h
 
-# XXX we should put this in gcc/config.gcc and regenerate the i386/x86
-# mknative files
+.if !target(obj)
 mm_malloc.h: ${DIST}/gcc/config/i386/pmm_malloc.h
 	cp -f $> ${.TARGET}
+.endif
 
 CLEANFILES+=	mm_malloc.h
 .endif

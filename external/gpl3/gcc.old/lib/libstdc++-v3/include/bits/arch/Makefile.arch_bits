@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arch_bits,v 1.8 2023/02/20 02:12:25 mrg Exp $
+#	$NetBSD: Makefile.arch_bits,v 1.9 2025/09/07 04:12:24 mrg Exp $
 
 # define GCC_MACHINE_ARCH before including this.
 

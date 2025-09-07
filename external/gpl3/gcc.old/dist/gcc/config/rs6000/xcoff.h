@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 /* Definitions of target machine for GNU compiler,
    for some generic XCOFF file format
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -29,7 +30,7 @@
 /* Define the magic numbers that we recognize as COFF.
  
     AIX 4.3 adds U803XTOCMAGIC (0757) for 64-bit objects and AIX V5 adds
-    U64_TOCMAGIC (0767), but collect2.c does not include files in the
+    U64_TOCMAGIC (0767), but collect2.cc does not include files in the
     correct order to conditionally define the symbolic name in this macro.
  
     The AIX linker accepts import/export files as object files,
@@ -104,6 +105,8 @@
 #define TARGET_ENCODE_SECTION_INFO rs6000_xcoff_encode_section_info
 #endif
 #define ASM_OUTPUT_ALIGNED_DECL_COMMON  rs6000_xcoff_asm_output_aligned_decl_common
+#define ASM_OUTPUT_ALIGNED_DECL_LOCAL  rs6000_xcoff_asm_output_aligned_decl_common
+#define ASM_OUTPUT_ALIGNED_BSS  rs6000_xcoff_asm_output_aligned_decl_common
 
 /* FP save and restore routines.  */
 #define	SAVE_FP_PREFIX "._savef"
@@ -181,7 +184,7 @@
 #define ASM_OUTPUT_LABELREF(FILE,NAME)	\
   asm_fprintf ((FILE), "%U%s", rs6000_xcoff_strip_dollar (NAME))
 
-/* This is how to output an internal label prefix.  rs6000.c uses this
+/* This is how to output an internal label prefix.  rs6000.cc uses this
    when generating traceback tables.  */
 
 #define ASM_OUTPUT_INTERNAL_LABEL_PREFIX(FILE,PREFIX)   \
@@ -218,48 +221,12 @@
    to define a global common symbol.  */
 
 #define COMMON_ASM_OP "\t.comm "
-
-/* This says how to output an assembler line
-   to define a local common symbol.
-   The assembler in AIX 6.1 and later supports an alignment argument.
-   For earlier releases of AIX, we try to maintain
-   alignment after preceding TOC section if it was aligned
-   for 64-bit mode.  */
-
 #define LOCAL_COMMON_ASM_OP "\t.lcomm "
 
-#if TARGET_AIX_VERSION >= 61
-#define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGN)	\
-  do { fputs (LOCAL_COMMON_ASM_OP, (FILE));			\
-       RS6000_OUTPUT_BASENAME ((FILE), (NAME));			\
-       if ((ALIGN) > 32)					\
-	 fprintf ((FILE), "," HOST_WIDE_INT_PRINT_UNSIGNED",%s%u_,%u\n",	\
-		  (SIZE), xcoff_bss_section_name,			\
-		  floor_log2 ((ALIGN) / BITS_PER_UNIT),			\
-		  floor_log2 ((ALIGN) / BITS_PER_UNIT));		\
-       else if ((SIZE) > 4)					\
-	 fprintf ((FILE), "," HOST_WIDE_INT_PRINT_UNSIGNED",%s3_,3\n",	\
-		  (SIZE), xcoff_bss_section_name);		\
-       else							\
-	 fprintf ((FILE), "," HOST_WIDE_INT_PRINT_UNSIGNED",%s,2\n",	\
-		  (SIZE), xcoff_bss_section_name);		\
-     } while (0)
-#endif
-
-#define ASM_OUTPUT_LOCAL(FILE, NAME, SIZE, ROUNDED)	\
-  do { fputs (LOCAL_COMMON_ASM_OP, (FILE));		\
-       RS6000_OUTPUT_BASENAME ((FILE), (NAME));		\
-       fprintf ((FILE), "," HOST_WIDE_INT_PRINT_UNSIGNED",%s\n", \
-		(TARGET_32BIT ? (SIZE) : (ROUNDED)),	\
-		xcoff_bss_section_name);		\
-     } while (0)
-
 #ifdef HAVE_AS_TLS
-#define ASM_OUTPUT_TLS_COMMON(FILE, DECL, NAME, SIZE)	\
-  do { fputs (COMMON_ASM_OP, (FILE));			\
-       RS6000_OUTPUT_BASENAME ((FILE), (NAME));		\
-       fprintf ((FILE), "[UL]," HOST_WIDE_INT_PRINT_UNSIGNED"\n", \
-       (SIZE));						\
+#define ASM_OUTPUT_TLS_COMMON(FILE, DECL, NAME, SIZE)   \
+  do { \
+       rs6000_xcoff_asm_output_aligned_decl_common ((FILE), (DECL), (NAME), (SIZE), 0); \
   } while (0)
 #endif
 
@@ -273,7 +240,9 @@
    We still need to define this macro to let middle-end know that aliases are
    supported.
  */
-#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2) do { } while (0)
+#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2) do { (void) (FILE);	\
+						(void) (LABEL1); \
+						(void) (LABEL2); } while (0)
 
 /* Used by rs6000_assemble_integer, among others.  */
 
@@ -281,7 +250,7 @@
 #define DOUBLE_INT_ASM_OP "\t.llong\t"
 
 /* Output before instructions.  */
-#define TEXT_SECTION_ASM_OP "\t.csect .text[PR]"
+#define TEXT_SECTION_ASM_OP "\t.csect .text[PR],5"
 
 /* Output before writable data.  */
 #define DATA_SECTION_ASM_OP \

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.gcc-tool,v 1.8 2023/02/20 02:12:29 mrg Exp $
+#	$NetBSD: Makefile.gcc-tool,v 1.9 2025/09/07 04:12:28 mrg Exp $
 
 PROG=	gcc-${GCC_TOOL}
-SRCS=	gcc-ar.c file-find.c
+SRCS=	gcc-ar.cc file-find.cc
 
 CPPFLAGS= \
 	-DPERSONALITY=\"${GCC_TOOL}\" \

@@ -21,11 +21,11 @@
 <!-- Chapter 01 : Status -->
 <chapter xml:id="manual.intro.status" xreflabel="Status"><info><title>Status</title></info>
   <?dbhtml filename="status.html"?>
-  
+
 
   <!-- Section 01 : Implementation Status -->
   <section xml:id="manual.intro.status.iso" xreflabel="Status"><info><title>Implementation Status</title></info>
-    
+
 
     <!-- Section 01.1 : Status C++ 1998 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx1998.xml">
@@ -47,15 +47,19 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2020.xml">
     </xi:include>
 
-    <!-- Section 01.5 : Status C++ TR1 -->
+    <!-- Section 01.5 : Status C++ 2023 -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2023.xml">
+    </xi:include>
+
+    <!-- Section 01.6 : Status C++ TR1 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr1.xml">
     </xi:include>
 
-    <!-- Section 01.6 : Status C++ TR24733 -->
+    <!-- Section 01.7 : Status C++ TR24733 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr24733.xml">
     </xi:include>
 
-    <!-- Section 01.7 : Status C++ IS 29124 -->
+    <!-- Section 01.8 : Status C++ IS 29124 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxis29124.xml">
     </xi:include>
   </section>
@@ -63,7 +67,7 @@
   <!-- Section 02 : License -->
   <section xml:id="manual.intro.status.license" xreflabel="License"><info><title>License</title></info>
     <?dbhtml filename="license.html"?>
-    
+
     <para>
     There are two licenses affecting GNU libstdc++: one for the code,
     and one for the documentation.
@@ -75,7 +79,7 @@
     </para>
 
     <section xml:id="manual.intro.status.license.gpl" xreflabel="License GPL"><info><title>The Code: GPL</title></info>
-    
+
 
     <para>
       The source code is distributed under the <link linkend="appendix.gpl-3.0">GNU General Public License version 3</link>,
@@ -166,7 +170,7 @@ requirements of the license of GCC.
     </section>
 
     <section xml:id="manual.intro.status.license.fdl" xreflabel="License FDL"><info><title>The Documentation: GPL, FDL</title></info>
-    
+
 
     <para>
       The documentation shipped with the library and made available over
@@ -195,10 +199,10 @@ requirements of the license of GCC.
   <!-- Section 03 : Known Bugs -->
   <section xml:id="manual.intro.status.bugs" xreflabel="Bugs"><info><title>Bugs</title></info>
     <?dbhtml filename="bugs.html"?>
-    
+
 
     <section xml:id="manual.intro.status.bugs.impl" xreflabel="Bugs impl"><info><title>Implementation Bugs</title></info>
-      
+
     <para>
       Information on known bugs, details on efforts to fix them, and
       fixed bugs are all available as part of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gcc.gnu.org/bugs/">GCC bug tracking system</link>,
@@ -207,7 +211,7 @@ requirements of the license of GCC.
     </section>
 
     <section xml:id="manual.intro.status.bugs.iso" xreflabel="Bugs iso"><info><title>Standard Bugs</title></info>
-      
+
       <para>
 	Everybody's got issues.  Even the C++ Standard Library.
       </para>
@@ -634,6 +638,13 @@ requirements of the license of GCC.
     <listitem><para>Have <code>open</code> clear the error flags.
     </para></listitem></varlistentry>
 
+    <varlistentry xml:id="manual.bugs.dr415"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#415">415</link>:
+	<emphasis>Behavior of std::ws</emphasis>
+    </term>
+    <listitem><para>Change it to be an unformatted input function
+      (i.e. construct a sentry and catch exceptions).
+    </para></listitem></varlistentry>
+
     <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-closed.html#431">431</link>:
 	<emphasis>Swapping containers with unequal allocators</emphasis>
     </term>
@@ -743,6 +754,12 @@ requirements of the license of GCC.
     <listitem><para>In C++11 mode, remove the pow(float,int), etc., signatures.
     </para></listitem></varlistentry>
 
+    <varlistentry xml:id="manual.bugs.dr581"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#581">581</link>:
+	<emphasis><code>flush()</code> not unformatted function</emphasis>
+    </term>
+    <listitem><para>Change it to be a unformatted output function (i.e. construct a sentry and catch exceptions).
+    </para></listitem></varlistentry>
+
     <varlistentry xml:id="manual.bugs.dr586"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#586">586</link>:
 	<emphasis>string inserter not a formatted function</emphasis>
     </term>
@@ -833,6 +850,12 @@ requirements of the license of GCC.
     </term>
     <listitem><para>The traditional HP / SGI return type and value is blessed
 		    by the resolution of the DR.
+    </para></listitem></varlistentry>
+
+    <varlistentry xml:id="manual.bugs.dr1203"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#1203">1203</link>:
+       <emphasis>More useful rvalue stream insertion</emphasis>
+    </term>
+    <listitem><para>Return the stream as its original type, not the base class.
     </para></listitem></varlistentry>
 
     <varlistentry xml:id="manual.bugs.dr1339"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#1339">1339</link>:
@@ -1140,6 +1163,23 @@ requirements of the license of GCC.
     ill-formed.
     </para></listitem></varlistentry>
 
+    <varlistentry xml:id="manual.bugs.dr2487"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2487">2487</link>:
+       <emphasis><code>bind()</code> should be <code>const</code>-overloaded
+      not cv-overloaded
+       </emphasis>
+    </term>
+    <listitem><para>Deprecate volatile-qualified <code>operator()</code>
+    for C++17, make it ill-formed for C++20.
+    </para></listitem></varlistentry>
+
+    <varlistentry xml:id="manual.bugs.dr2499"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2499">2499</link>:
+       <emphasis><code>operator>>(basic_istream&amp;, CharT*)</code> makes it hard to avoid buffer overflows
+       </emphasis>
+    </term>
+    <listitem><para>Replace <code>operator>>(basic_istream&amp;, CharT*)</code>
+     and other overloads writing through pointers.
+    </para></listitem></varlistentry>
+
     <varlistentry xml:id="manual.bugs.dr2537"><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&DR;#2537">2537</link>:
        <emphasis>Constructors for <code>priority_queue</code> taking allocators
 	 should call <code>make_heap</code>
@@ -1285,7 +1325,7 @@ requirements of the license of GCC.
 <!-- Chapter 02 : Setup -->
 <chapter xml:id="manual.intro.setup" xreflabel="Setup"><info><title>Setup</title></info>
   <?dbhtml filename="setup.html"?>
-  
+
 
    <para>To transform libstdc++ sources into installed include files
    and properly built binaries useful for linking to other software is

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2023/07/14 19:46:40 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2025/09/07 04:12:28 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -55,46 +55,9 @@ HOSTLIBIBERTY=		${HOSTLIBIBERTYOBJ}/libiberty/libiberty.a
 HOSTLIBCPPOBJ!=		cd ${.CURDIR}/../host-libcpp && ${PRINTOBJDIR}
 HOSTLIBCPP=		${HOSTLIBCPPOBJ}/libcpp/libcpp.a
 
-BASEVER!=		cat ${GNUHOSTDIST}/gcc/BASE-VER
-.if exists(${GNUHOSTDIST}/gcc/DEV-PHASE)
-DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
-.else
-DEVPHASE=
-.endif
-.if ${DEVPHASE} == "release" || ${DEVPHASE} == ""
-DATESTAMP=
-.else
-DATESTAMP!=		cat ${GNUHOSTDIST}/gcc/DATESTAMP
-.endif
+.include "${.PARSEDIR}/../Makefile.version_h"
 
-BASEVERSTR=		"\"$(BASEVER)\""
-.if !empty(DEVPHASE)
-DEVPHASESTR=		"\" $(DEVPHASE)\""
-.else
-DEVPHASESTR=		"\"\""
-.endif
-.if !empty(DATESTAMP)
-DATESTAMPSTR=		"\" $(DATESTAMP)\""
-.else
-DATESTAMPSTR=		"\"\""
-.endif
-
-.include "${TOP}/tools/gcc/gcc-version.mk"
-
-# XXX pull this out of our configs
-G_BUGURL=<http://www.NetBSD.org/support/send-pr.html>
-G_BUGURL_s="\"${G_BUGURL}\""
-G_PKGVERSION=(${NETBSD_GCC_VERSION}) 
-G_PKGVERSION_s="\"${G_PKGVERSION} \""
-
-VER_CPPFLAGS=	-DBASEVER="\"${BASEVER}"\" \
-		-DDATESTAMP=$(DATESTAMP_s) \
-		-DREVISION=$(REVISION_s) \
-		-DDEVPHASE=$(DEVPHASE_s) \
-		-DPKGVERSION=$(G_PKGVERSION_s) \
-		-DBUGURL=$(G_BUGURL_s)
-
-VERFILES=	cppbuiltin.c c-cppbuiltin.c gcc.c version.c
+VERFILES=	cppbuiltin.cc c-cppbuiltin.cc gcc.cc version.cc
 
 .for _f in ${VERFILES}
 CPPFLAGS.${_f} +=	${VER_CPPFLAGS}
@@ -120,5 +83,13 @@ COPTS+=-Wno-narrowing -Wno-unused
 
 # Lots trigger this.
 CFLAGS+=	-Wno-format-diag
+
+# Avoid jump tables that don't fit.
+.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
+	${GCC_MACHINE_ARCH} == "coldfire"
+COPTS.c-omp.cc+=-fno-jump-tables
+COPTS.generic-match.cc+=-fno-jump-tables
+COPTS.gimple-match.cc+=-fno-jump-tables
+.endif
 
 .endif

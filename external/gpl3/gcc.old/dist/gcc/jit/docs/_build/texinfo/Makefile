@@ -18,13 +18,20 @@ pdf: $(addsuffix .pdf,$(ALLDOCS))
 
 install-info: info
 	for f in *.info; do \
-	  cp -t $(infodir) "$$f" && \
-	  $(INSTALL_INFO) --info-dir=$(infodir) "$$f" ; \
+	  mkdir -p $(infodir) && \
+	  cp "$$f" $(infodir) && \
+	  $(INSTALL_INFO) --info-dir=$(infodir) "$$f" && \
+	  \
+	  FIGURE_DIR="`basename \"$$f\" .info`-figures" && \
+	  if [ -e "$$FIGURE_DIR" ]; then \
+	    cp -r "$$FIGURE_DIR" $(infodir) ; \
+	  fi; \
 	done
 
 uninstall-info: info
 	for f in *.info; do \
 	  rm -f "$(infodir)/$$f"  ; \
+	  rm -rf "$(infodir)/`basename '$$f' .info`-figures" && \
 	  $(INSTALL_INFO) --delete --info-dir=$(infodir) "$$f" ; \
 	done
 
@@ -43,8 +50,8 @@ uninstall-info: info
 	-$(TEXI2PDF) '$<'
 
 clean:
-	-rm -f *.info *.pdf *.txt *.html
-	-rm -f *.log *.ind *.aux *.toc *.syn *.idx *.out *.ilg *.pla *.ky *.pg
-	-rm -f *.vr *.tp *.fn *.fns *.def *.defs *.cp *.cps *.ge *.ges *.mo
+	rm -f *.info *.pdf *.txt *.html
+	rm -f *.log *.ind *.aux *.toc *.syn *.idx *.out *.ilg *.pla *.ky *.pg
+	rm -f *.vr *.tp *.fn *.fns *.def *.defs *.cp *.cps *.ge *.ges *.mo
 
 .PHONY: all info plaintext html pdf install-info uninstall-info clean

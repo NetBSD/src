@@ -1,5 +1,5 @@
 /* CPP Library.
-   Copyright (C) 1986-2020 Free Software Foundation, Inc.
+   Copyright (C) 1986-2022 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -35,8 +35,13 @@ struct default_include
 {
   const char *const fname;	/* The name of the directory.  */
   const char *const component;	/* The component containing the directory
-				   (see update_path in prefix.c) */
-  const char cplusplus;		/* Only look here if we're compiling C++.  */
+				   (see update_path in prefix.cc) */
+  const char cplusplus;		/* When this is non-zero, we should only
+				   consider this if we're compiling C++.
+				   When the -stdlib option is configured, this
+				   may take values greater than 1 to indicate
+				   which C++ standard library should be
+				   used.  */
   const char cxx_aware;		/* Includes in this directory don't need to
 				   be wrapped in extern "C" when compiling
 				   C++.  */

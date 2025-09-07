@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backtrace,v 1.8 2023/02/20 02:12:29 mrg Exp $
+#	$NetBSD: Makefile.backtrace,v 1.9 2025/09/07 04:12:28 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKTRACE_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKTRACE_=1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.12 2023/02/20 02:12:29 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.13 2025/09/07 04:12:28 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
@@ -21,6 +21,7 @@ LDADD+=			${BACKENDOBJ}/libbackend.a
 .include "../Makefile.common"
 .include "../Makefile.libiberty"
 .include "../Makefile.prog"
+.include "../Makefile.isl"
 
 # Find our (local) libraries
 LIBGMPDIR!=	cd ${GMPDISTDIR}/lib/libgmp && ${PRINTOBJDIR}

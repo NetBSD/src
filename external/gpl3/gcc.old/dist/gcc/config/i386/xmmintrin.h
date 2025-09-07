@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -109,7 +109,10 @@ typedef float __v4sf __attribute__ ((__vector_size__ (16)));
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_undefined_ps (void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-self"
   __m128 __Y = __Y;
+#pragma GCC diagnostic pop
   return __Y;
 }
 
@@ -924,21 +927,21 @@ _mm_load_ps1 (float const *__P)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_load_ps (float const *__P)
 {
-  return *(__m128 *)__P;
+  return *(__m128 const *)__P;
 }
 
 /* Load four SPFP values from P.  The address need not be 16-byte aligned.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_ps (float const *__P)
 {
-  return *(__m128_u *)__P;
+  return *(__m128_u const *)__P;
 }
 
 /* Load four SPFP values in reverse order.  The address must be aligned.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadr_ps (float const *__P)
 {
-  __v4sf __tmp = *(__v4sf *)__P;
+  __v4sf __tmp = *(__v4sf const *)__P;
   return (__m128) __builtin_ia32_shufps (__tmp, __tmp, _MM_SHUFFLE (0,1,2,3));
 }
 
@@ -1022,7 +1025,7 @@ _mm_move_ss (__m128 __A, __m128 __B)
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_extract_pi16 (__m64 const __A, int const __N)
 {
-  return __builtin_ia32_vec_ext_v4hi ((__v4hi)__A, __N);
+  return (unsigned short) __builtin_ia32_vec_ext_v4hi ((__v4hi)__A, __N);
 }
 
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1032,7 +1035,7 @@ _m_pextrw (__m64 const __A, int const __N)
 }
 #else
 #define _mm_extract_pi16(A, N)	\
-  ((int) __builtin_ia32_vec_ext_v4hi ((__v4hi)(__m64)(A), (int)(N)))
+  ((int) (unsigned short) __builtin_ia32_vec_ext_v4hi ((__v4hi)(__m64)(A), (int)(N)))
 
 #define _m_pextrw(A, N) _mm_extract_pi16(A, N)
 #endif

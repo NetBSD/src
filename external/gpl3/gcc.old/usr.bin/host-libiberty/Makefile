@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/02/20 02:12:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2025/09/07 04:12:40 mrg Exp $
 
 libiberty/libiberty.a:
 	[ ! -d libiberty ] && mkdir libiberty || true
@@ -15,6 +15,6 @@ libiberty/libiberty.a:
 cleandir:
 	-rm -rf libiberty
 
-depend dependall all: libiberty/libiberty.a
+includes depend dependall all: libiberty/libiberty.a
 
 .include <bsd.prog.mk>

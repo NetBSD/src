@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for libgccjit.so.
-#   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
 #This file is part of GCC.
 
@@ -44,9 +44,28 @@ LIBGCCJIT_VERSION_NUM = 0
 LIBGCCJIT_MINOR_NUM = 0
 LIBGCCJIT_RELEASE_NUM = 1
 
+ifneq (,$(findstring mingw,$(target)))
+LIBGCCJIT_FILENAME = libgccjit-$(LIBGCCJIT_VERSION_NUM).dll
+LIBGCCJIT_IMPORT_LIB = libgccjit.dll.a
+
+jit: $(LIBGCCJIT_FILENAME) \
+	$(FULL_DRIVER_NAME)
+
+else
+
 ifneq (,$(findstring darwin,$(host)))
 
-LIBGCCJIT_AGE = 1
+# NOTE that we are building here for the host, and so tests for target-
+# specific functionality will only work when host == target.  This causes
+# fails when building cross-compilers with different object formats (at
+# least when the respective linkers do not accept the same command line
+# options).  Fortunately, for Darwin we can safely hard-code the relevant
+# host options, since all usable linkers support them).
+
+LIBGCCJIT_CURRENT = 24
+LIBGCCJIT_REVISION = 0
+LIBGCCJIT_AGE = 24
+LIBGCCJIT_COMPAT = 0
 LIBGCCJIT_BASENAME = libgccjit
 
 LIBGCCJIT_SONAME = \
@@ -54,18 +73,18 @@ LIBGCCJIT_SONAME = \
 LIBGCCJIT_FILENAME = $(LIBGCCJIT_BASENAME).$(LIBGCCJIT_VERSION_NUM).dylib
 LIBGCCJIT_LINKER_NAME = $(LIBGCCJIT_BASENAME).dylib
 
-# Conditionalize the use of the LD_VERSION_SCRIPT_OPTION and
-# LD_SONAME_OPTION depending if configure found them, using $(if)
-# We have to define a COMMA here, otherwise the commas in the "true"
-# result are treated as separators by the $(if).
+# Darwin does not have a version script option. Exported symbols are controlled
+# by the following, and library versioning is done using libtool.
+# We have to define a COMMA here, otherwise the commas are treated as
+# separators.
 COMMA := ,
 LIBGCCJIT_VERSION_SCRIPT_OPTION = \
-	$(if $(LD_VERSION_SCRIPT_OPTION),\
-	  -Wl$(COMMA)$(LD_VERSION_SCRIPT_OPTION)$(COMMA)$(srcdir)/jit/libgccjit.map)
+  -Wl$(COMMA)-exported_symbols_list$(COMMA)$(srcdir)/jit/libgccjit.exports
 
+# For Darwin host, we need a l64 or ld64-compatible linker, that uses
+# -install_name to introduce this.
 LIBGCCJIT_SONAME_OPTION = \
-	$(if $(LD_SONAME_OPTION), \
-	     -Wl$(COMMA)$(LD_SONAME_OPTION)$(COMMA)$(LIBGCCJIT_SONAME))
+  -Wl$(COMMA)-install_name$(COMMA)$(LIBGCCJIT_SONAME)
 
 LIBGCCJIT_SONAME_SYMLINK = $(LIBGCCJIT_FILENAME)
 LIBGCCJIT_LINKER_NAME_SYMLINK = $(LIBGCCJIT_LINKER_NAME)
@@ -104,6 +123,7 @@ jit: $(LIBGCCJIT_FILENAME) \
 	$(FULL_DRIVER_NAME)
 
 endif
+endif
 
 jit.serial = $(LIBGCCJIT_FILENAME)
 
@@ -122,19 +142,32 @@ jit_OBJS = attribs.o \
 	jit/jit-spec.o \
 	gcc.o
 
+ifneq (,$(findstring mingw,$(target)))
+jit_OBJS += jit/jit-w32.o
+endif
+
 # Use strict warnings for this front end.
 jit-warn = $(STRICT_WARN)
 
-ifneq (,$(findstring darwin,$(host)))
-# TODO : Construct a Darwin-style symbol export file.
-LIBGCCJIT_EXTRA_OPTS = -Wl,-compatibility_version,$(LIBGCCJIT_VERSION_NUM) \
-	-Wl,-current_version,$(LIBGCCJIT_VERSION_NUM).$(LIBGCCJIT_MINOR_NUM).$(LIBGCCJIT_AGE) \
-	$(LIBGCCJIT_VERSION_SCRIPT_OPTION) \
-	$(LIBGCCJIT_SONAME_OPTION)
+ifneq (,$(findstring mingw,$(target)))
+# Create import library
+LIBGCCJIT_EXTRA_OPTS = -Wl,--out-implib,$(LIBGCCJIT_IMPORT_LIB)
 else
-
+ifneq (,$(findstring darwin,$(host)))
+LIBGCCJIT_VERS = $(LIBGCCJIT_CURRENT).$(LIBGCCJIT_REVISION).$(LIBGCCJIT_AGE)
+LIBGCCJIT_EXTRA_OPTS = -Wl,-current_version,$(LIBGCCJIT_VERS) \
+ -Wl,-compatibility_version,$(LIBGCCJIT_COMPAT) \
+  $(LIBGCCJIT_VERSION_SCRIPT_OPTION) $(LIBGCCJIT_SONAME_OPTION)
+# Use the default (shared) libgcc.
+JIT_LDFLAGS = $(filter-out -static-libgcc, $(LDFLAGS))
+ifeq (,$(findstring darwin8,$(host)))
+JIT_LDFLAGS += -Wl,-rpath,@loader_path
+endif
+else
+JIT_LDFLAGS = $(LDFLAGS)
 LIBGCCJIT_EXTRA_OPTS = $(LIBGCCJIT_VERSION_SCRIPT_OPTION) \
 	$(LIBGCCJIT_SONAME_OPTION)
+endif
 endif
 
 # We avoid using $(BACKEND) from Makefile.in in order to avoid pulling
@@ -143,14 +176,17 @@ $(LIBGCCJIT_FILENAME): $(jit_OBJS) \
 	libbackend.a libcommon-target.a libcommon.a \
 	$(CPPLIB) $(LIBDECNUMBER) \
 	$(LIBDEPS) $(srcdir)/jit/libgccjit.map \
-	$(EXTRA_GCC_OBJS)
-	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ -shared \
+	$(EXTRA_GCC_OBJS) $(jit.prev)
+	@$(call LINK_PROGRESS,$(INDEX.jit),start)
+	+$(LLINKER) $(ALL_LINKERFLAGS) $(JIT_LDFLAGS) -o $@ -shared \
 	     $(jit_OBJS) libbackend.a libcommon-target.a libcommon.a \
 	     $(CPPLIB) $(LIBDECNUMBER) $(EXTRA_GCC_LIBS) $(LIBS) $(BACKENDLIBS) \
 	     $(EXTRA_GCC_OBJS) \
 	     $(LIBGCCJIT_EXTRA_OPTS)
+	@$(call LINK_PROGRESS,$(INDEX.jit),end)
 
-# Create symlinks
+# Create symlinks when not building for Windows
+ifeq (,$(findstring mingw,$(target)))
 
 ifeq (,$(findstring darwin,$(host)))
 # but only one level for Darwin, version info is embedded.
@@ -160,6 +196,7 @@ endif
 
 $(LIBGCCJIT_LINKER_NAME_SYMLINK): $(LIBGCCJIT_SONAME_SYMLINK)
 	ln -sf $(LIBGCCJIT_SONAME_SYMLINK) $(LIBGCCJIT_LINKER_NAME_SYMLINK)
+endif
 
 #
 # Build hooks:
@@ -273,7 +310,7 @@ jit.texinfo.install-pdf: doc/libgccjit.pdf
 SPHINX_BUILD_DIR=jit/sphinx-build
 
 jit.sphinx.html:
-	mkdir -p $(SPHINX_BUILD_DIR)
+	$(mkinstalldirs) $(SPHINX_BUILD_DIR)
 	(cd $(srcdir)/jit/docs && \
 	  make html BUILDDIR=$(PWD)/$(SPHINX_BUILD_DIR) )
 
@@ -294,7 +331,7 @@ jit.sphinx.install-html: jit.sphinx.html
 # see https://bugzilla.redhat.com/show_bug.cgi?id=1148845 )
 jit.sphinx.pdf: $(SPHINX_BUILD_DIR)/latex/libgccjit.pdf
 $(SPHINX_BUILD_DIR)/latex/libgccjit.pdf:
-	mkdir -p $(SPHINX_BUILD_DIR)
+	$(mkinstalldirs) $(SPHINX_BUILD_DIR)
 	(cd $(srcdir)/jit/docs && \
 	  make latexpdf BUILDDIR=$(PWD)/$(SPHINX_BUILD_DIR) )
 
@@ -329,14 +366,22 @@ selftest-jit:
 
 #
 # Install hooks:
-
 jit.install-headers: installdirs
 	$(INSTALL_DATA) $(srcdir)/jit/libgccjit.h \
 	  $(DESTDIR)$(includedir)/libgccjit.h
 	$(INSTALL_DATA) $(srcdir)/jit/libgccjit++.h \
 	  $(DESTDIR)$(includedir)/libgccjit++.h
 
+ifneq (,$(findstring mingw,$(target)))
+jit.install-common: installdirs jit.install-headers
+# Install import library
+	$(INSTALL_PROGRAM) $(LIBGCCJIT_IMPORT_LIB) \
+	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_IMPORT_LIB)
+# Install DLL file
+	$(INSTALL_PROGRAM) $(LIBGCCJIT_FILENAME) \
+	  $(DESTDIR)$(bindir)/$(LIBGCCJIT_FILENAME)
 
+else
 ifneq (,$(findstring darwin,$(host)))
 # but only one level for Darwin
 
@@ -350,13 +395,14 @@ jit.install-common: installdirs jit.install-headers
 else
 jit.install-common: installdirs jit.install-headers
 	$(INSTALL_PROGRAM) $(LIBGCCJIT_FILENAME) \
-	  $(DESTDIR)/$(libdir)/$(LIBGCCJIT_FILENAME)
+	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_FILENAME)
 	ln -sf \
 	  $(LIBGCCJIT_FILENAME) \
-	  $(DESTDIR)/$(libdir)/$(LIBGCCJIT_SONAME_SYMLINK)
+	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_SONAME_SYMLINK)
 	ln -sf \
 	  $(LIBGCCJIT_SONAME_SYMLINK)\
 	  $(DESTDIR)$(libdir)/$(LIBGCCJIT_LINKER_NAME_SYMLINK)
+endif
 endif
 
 jit.install-man:

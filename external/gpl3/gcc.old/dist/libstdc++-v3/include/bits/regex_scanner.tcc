@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2020 Free Software Foundation, Inc.
+// Copyright (C) 2013-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -54,8 +54,7 @@ namespace __detail
 {
   template<typename _CharT>
     _Scanner<_CharT>::
-    _Scanner(typename _Scanner::_IterT __begin,
-	     typename _Scanner::_IterT __end,
+    _Scanner(const _CharT* __begin, const _CharT* __end,
 	     _FlagT __flags, std::locale __loc)
     : _ScannerBase(__flags),
       _M_current(__begin), _M_end(__end),
@@ -84,7 +83,7 @@ namespace __detail
 	_M_scan_in_brace();
       else
 	{
-	  __glibcxx_assert(false);
+	  __glibcxx_assert(!"unexpected state while processing regex");
 	}
     }
 
@@ -98,7 +97,7 @@ namespace __detail
     {
       auto __c = *_M_current++;
 
-      if (std::strchr(_M_spec_char, _M_ctype.narrow(__c, ' ')) == nullptr)
+      if (__builtin_strchr(_M_spec_char, _M_ctype.narrow(__c, ' ')) == nullptr)
 	{
 	  _M_token = _S_token_ord_char;
 	  _M_value.assign(1, __c);
@@ -109,7 +108,7 @@ namespace __detail
 	  if (_M_current == _M_end)
 	    __throw_regex_error(
 	      regex_constants::error_escape,
-	      "Unexpected end of regex when escaping.");
+	      "Invalid escape at end of regular expression");
 
 	  if (!_M_is_basic()
 	      || (*_M_current != '('
@@ -126,9 +125,7 @@ namespace __detail
 	  if (_M_is_ecma() && *_M_current == '?')
 	    {
 	      if (++_M_current == _M_end)
-		__throw_regex_error(
-		  regex_constants::error_paren,
-		  "Unexpected end of regex when in an open parenthesis.");
+		__throw_regex_error(regex_constants::error_paren);
 
 	      if (*_M_current == ':')
 		{
@@ -148,9 +145,9 @@ namespace __detail
 		  _M_value.assign(1, 'n');
 		}
 	      else
-		__throw_regex_error(
-		  regex_constants::error_paren,
-		  "Invalid special open parenthesis.");
+		__throw_regex_error(regex_constants::error_paren,
+				    "Invalid '(?...)' zero-width assertion "
+				    "in regular expression");
 	    }
 	  else if (_M_flags & regex_constants::nosubs)
 	    _M_token = _S_token_subexpr_no_group_begin;
@@ -179,10 +176,7 @@ namespace __detail
       else if (__builtin_expect(__c == _CharT(0), false))
 	{
 	  if (!_M_is_ecma())
-	    {
-	      __throw_regex_error(regex_constants::_S_null,
-		  "Unexpected null character in regular expression");
-	    }
+	    __throw_regex_error(regex_constants::_S_null);
 	  _M_token = _S_token_ord_char;
 	  _M_value.assign(1, __c);
 	}
@@ -196,7 +190,7 @@ namespace __detail
 		_M_token = __it->second;
 		return;
 	      }
-	  __glibcxx_assert(false);
+	  __glibcxx_assert(!"unexpected special character in regex");
 	}
       else
 	{
@@ -214,9 +208,7 @@ namespace __detail
     _M_scan_in_bracket()
     {
       if (_M_current == _M_end)
-	__throw_regex_error(
-	  regex_constants::error_brack,
-	  "Unexpected end of regex when in bracket expression.");
+	__throw_regex_error(regex_constants::error_brack);
 
       auto __c = *_M_current++;
 
@@ -226,7 +218,8 @@ namespace __detail
 	{
 	  if (_M_current == _M_end)
 	    __throw_regex_error(regex_constants::error_brack,
-				"Unexpected character class open bracket.");
+				"Incomplete '[[' character class in "
+				"regular expression");
 
 	  if (*_M_current == '.')
 	    {
@@ -251,7 +244,7 @@ namespace __detail
 	}
       // In POSIX, when encountering "[]" or "[^]", the ']' is interpreted
       // literally. So "[]]" and "[^]]" are valid regexes. See the testcases
-      // `*/empty_range.cc`.
+      // `.../empty_range.cc`.
       else if (__c == ']' && (_M_is_ecma() || !_M_at_bracket_start))
 	{
 	  _M_token = _S_token_bracket_end;
@@ -276,9 +269,7 @@ namespace __detail
     _M_scan_in_brace()
     {
       if (_M_current == _M_end)
-	__throw_regex_error(
-	  regex_constants::error_brace,
-	  "Unexpected end of regex when in brace expression.");
+	__throw_regex_error(regex_constants::error_brace);
 
       auto __c = *_M_current++;
 
@@ -302,8 +293,7 @@ namespace __detail
 	      ++_M_current;
 	    }
 	  else
-	    __throw_regex_error(regex_constants::error_badbrace,
-				"Unexpected character in brace expression.");
+	    __throw_regex_error(regex_constants::error_badbrace);
 	}
       else if (__c == '}')
 	{
@@ -311,8 +301,7 @@ namespace __detail
 	  _M_token = _S_token_interval_end;
 	}
       else
-	__throw_regex_error(regex_constants::error_badbrace,
-			    "Unexpected character in brace expression.");
+	__throw_regex_error(regex_constants::error_badbrace);
     }
 
   template<typename _CharT>
@@ -321,8 +310,7 @@ namespace __detail
     _M_eat_escape_ecma()
     {
       if (_M_current == _M_end)
-	__throw_regex_error(regex_constants::error_escape,
-			    "Unexpected end of regex when escaping.");
+	__throw_regex_error(regex_constants::error_escape);
 
       auto __c = *_M_current++;
       auto __pos = _M_find_escape(_M_ctype.narrow(__c, '\0'));
@@ -356,22 +344,26 @@ namespace __detail
       else if (__c == 'c')
 	{
 	  if (_M_current == _M_end)
-	    __throw_regex_error(
-	      regex_constants::error_escape,
-	      "Unexpected end of regex when reading control code.");
+	    __throw_regex_error(regex_constants::error_escape,
+				"invalid '\\cX' control character in "
+				"regular expression");
 	  _M_token = _S_token_ord_char;
 	  _M_value.assign(1, *_M_current++);
 	}
       else if (__c == 'x' || __c == 'u')
 	{
-	  _M_value.erase();
-	  for (int __i = 0; __i < (__c == 'x' ? 2 : 4); __i++)
+	  _M_value.clear();
+	  const int __n = __c == 'x' ? 2 : 4;
+	  for (int __i = 0; __i < __n; __i++)
 	    {
 	      if (_M_current == _M_end
 		  || !_M_ctype.is(_CtypeT::xdigit, *_M_current))
-		__throw_regex_error(
-		  regex_constants::error_escape,
-		  "Unexpected end of regex when ascii character.");
+		__throw_regex_error(regex_constants::error_escape,
+				    __n == 2
+				    ? "Invalid '\\xNN' control character in "
+				      "regular expression"
+				    : "Invalid '\\uNNNN' control character in "
+				      "regular expression");
 	      _M_value += *_M_current++;
 	    }
 	  _M_token = _S_token_hex_num;
@@ -400,11 +392,10 @@ namespace __detail
     _M_eat_escape_posix()
     {
       if (_M_current == _M_end)
-	__throw_regex_error(regex_constants::error_escape,
-			    "Unexpected end of regex when escaping.");
+	__throw_regex_error(regex_constants::error_escape);
 
       auto __c = *_M_current;
-      auto __pos = std::strchr(_M_spec_char, _M_ctype.narrow(__c, '\0'));
+      auto __pos = __builtin_strchr(_M_spec_char, _M_ctype.narrow(__c, '\0'));
 
       if (__pos != nullptr && *__pos != '\0')
 	{
@@ -426,8 +417,7 @@ namespace __detail
 	{
 #ifdef __STRICT_ANSI__
 	  // POSIX says it is undefined to escape ordinary characters
-	  __throw_regex_error(regex_constants::error_escape,
-			      "Unexpected escape character.");
+	  __throw_regex_error(regex_constants::error_escape);
 #else
 	  _M_token = _S_token_ord_char;
 	  _M_value.assign(1, __c);
@@ -467,8 +457,7 @@ namespace __detail
 	  return;
 	}
       else
-	__throw_regex_error(regex_constants::error_escape,
-			    "Unexpected escape character.");
+	__throw_regex_error(regex_constants::error_escape);
     }
 
   // Eats a character class or throws an exception.
@@ -486,12 +475,8 @@ namespace __detail
 	  || _M_current == _M_end // skip __ch
 	  || *_M_current++ != ']') // skip ']'
 	{
-	  if (__ch == ':')
-	    __throw_regex_error(regex_constants::error_ctype,
-				"Unexpected end of character class.");
-	  else
-	    __throw_regex_error(regex_constants::error_collate,
-				"Unexpected end of character class.");
+	  __throw_regex_error(__ch == ':' ? regex_constants::error_ctype
+					  : regex_constants::error_collate);
 	}
     }
 
@@ -499,98 +484,98 @@ namespace __detail
   template<typename _CharT>
     std::ostream&
     _Scanner<_CharT>::
-    _M_print(std::ostream& ostr)
+    _M_print(std::ostream& __ostr)
     {
       switch (_M_token)
       {
       case _S_token_anychar:
-	ostr << "any-character\n";
+	__ostr << "any-character\n";
 	break;
       case _S_token_backref:
-	ostr << "backref\n";
+	__ostr << "backref\n";
 	break;
       case _S_token_bracket_begin:
-	ostr << "bracket-begin\n";
+	__ostr << "bracket-begin\n";
 	break;
       case _S_token_bracket_neg_begin:
-	ostr << "bracket-neg-begin\n";
+	__ostr << "bracket-neg-begin\n";
 	break;
       case _S_token_bracket_end:
-	ostr << "bracket-end\n";
+	__ostr << "bracket-end\n";
 	break;
       case _S_token_char_class_name:
-	ostr << "char-class-name \"" << _M_value << "\"\n";
+	__ostr << "char-class-name \"" << _M_value << "\"\n";
 	break;
       case _S_token_closure0:
-	ostr << "closure0\n";
+	__ostr << "closure0\n";
 	break;
       case _S_token_closure1:
-	ostr << "closure1\n";
+	__ostr << "closure1\n";
 	break;
       case _S_token_collsymbol:
-	ostr << "collsymbol \"" << _M_value << "\"\n";
+	__ostr << "collsymbol \"" << _M_value << "\"\n";
 	break;
       case _S_token_comma:
-	ostr << "comma\n";
+	__ostr << "comma\n";
 	break;
       case _S_token_dup_count:
-	ostr << "dup count: " << _M_value << "\n";
+	__ostr << "dup count: " << _M_value << "\n";
 	break;
       case _S_token_eof:
-	ostr << "EOF\n";
+	__ostr << "EOF\n";
 	break;
       case _S_token_equiv_class_name:
-	ostr << "equiv-class-name \"" << _M_value << "\"\n";
+	__ostr << "equiv-class-name \"" << _M_value << "\"\n";
 	break;
       case _S_token_interval_begin:
-	ostr << "interval begin\n";
+	__ostr << "interval begin\n";
 	break;
       case _S_token_interval_end:
-	ostr << "interval end\n";
+	__ostr << "interval end\n";
 	break;
       case _S_token_line_begin:
-	ostr << "line begin\n";
+	__ostr << "line begin\n";
 	break;
       case _S_token_line_end:
-	ostr << "line end\n";
+	__ostr << "line end\n";
 	break;
       case _S_token_opt:
-	ostr << "opt\n";
+	__ostr << "opt\n";
 	break;
       case _S_token_or:
-	ostr << "or\n";
+	__ostr << "or\n";
 	break;
       case _S_token_ord_char:
-	ostr << "ordinary character: \"" << _M_value << "\"\n";
+	__ostr << "ordinary character: \"" << _M_value << "\"\n";
 	break;
       case _S_token_subexpr_begin:
-	ostr << "subexpr begin\n";
+	__ostr << "subexpr begin\n";
 	break;
       case _S_token_subexpr_no_group_begin:
-	ostr << "no grouping subexpr begin\n";
+	__ostr << "no grouping subexpr begin\n";
 	break;
       case _S_token_subexpr_lookahead_begin:
-	ostr << "lookahead subexpr begin\n";
+	__ostr << "lookahead subexpr begin\n";
 	break;
       case _S_token_subexpr_end:
-	ostr << "subexpr end\n";
+	__ostr << "subexpr end\n";
 	break;
       case _S_token_unknown:
-	ostr << "-- unknown token --\n";
+	__ostr << "-- unknown token --\n";
 	break;
       case _S_token_oct_num:
-	ostr << "oct number " << _M_value << "\n";
+	__ostr << "oct number " << _M_value << "\n";
 	break;
       case _S_token_hex_num:
-	ostr << "hex number " << _M_value << "\n";
+	__ostr << "hex number " << _M_value << "\n";
 	break;
       case _S_token_quoted_class:
-	ostr << "quoted class " << "\\" << _M_value << "\n";
+	__ostr << "quoted class " << "\\" << _M_value << "\n";
 	break;
       default:
 	_GLIBCXX_DEBUG_ASSERT(false);
       }
-      return ostr;
+      return __ostr;
     }
 #endif
 

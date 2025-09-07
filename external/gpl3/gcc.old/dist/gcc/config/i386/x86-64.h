@@ -1,5 +1,5 @@
 /* OS independent definitions for AMD x86-64.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Contributed by Bo Thorsen <bo@suse.de>.
 
 This file is part of GCC.
@@ -59,31 +59,18 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define ASM_OUTPUT_ALIGNED_DECL_COMMON(FILE, DECL, NAME, SIZE, ALIGN)		\
   x86_elf_aligned_decl_common (FILE, DECL, NAME, SIZE, ALIGN);
 
-/* This is used to align code labels according to Intel recommendations.  */
+#undef  ASM_OUTPUT_ALIGNED_DECL_LOCAL
+#define ASM_OUTPUT_ALIGNED_DECL_LOCAL(FILE, DECL, NAME, SIZE, ALIGN)  \
+  do								      \
+    {								      \
+      fprintf ((FILE), "%s", LOCAL_ASM_OP);			      \
+      assemble_name ((FILE), (NAME));				      \
+      fprintf ((FILE), "\n");					      \
+      ASM_OUTPUT_ALIGNED_DECL_COMMON (FILE, DECL, NAME, SIZE, ALIGN); \
+    }								      \
+  while (0)
 
 #define SUBALIGN_LOG 3
-
-#ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
-#define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE,LOG,MAX_SKIP)			\
-  do {									\
-    if ((LOG) != 0) {							\
-      if ((MAX_SKIP) == 0 || (MAX_SKIP) >= (1 << (LOG)) - 1)		\
-	fprintf ((FILE), "\t.p2align %d\n", (LOG));			\
-      else								\
-	fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP));	\
-    }									\
-  } while (0)
-#undef  ASM_OUTPUT_MAX_SKIP_PAD
-#define ASM_OUTPUT_MAX_SKIP_PAD(FILE, LOG, MAX_SKIP)			\
-  if ((LOG) != 0)							\
-    {									\
-      if ((MAX_SKIP) == 0 || (MAX_SKIP) >= (1 << (LOG)) - 1)		\
-        fprintf ((FILE), "\t.p2align %d\n", (LOG));			\
-      else								\
-        fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP));	\
-    }
-#endif
-
 
 /* i386 System V Release 4 uses DWARF debugging info.
    x86-64 ABI specifies DWARF2.  */

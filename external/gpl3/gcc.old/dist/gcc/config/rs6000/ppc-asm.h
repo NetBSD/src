@@ -1,6 +1,6 @@
 /* PowerPC asm definitions for GNU C.
 
-Copyright (C) 2002-2020 Free Software Foundation, Inc.
+Copyright (C) 2002-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -384,7 +384,7 @@ GLUE(.L,name): \
 #endif
 #endif
 
-#if defined(__ELF__) && defined(__linux__) && !defined(__powerpc64__)
+#if defined __linux__ && !defined __powerpc64__
 	.section .note.GNU-stack
 	.previous
 #endif

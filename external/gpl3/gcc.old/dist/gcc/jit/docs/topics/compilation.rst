@@ -1,4 +1,4 @@
-.. Copyright (C) 2014-2020 Free Software Foundation, Inc.
+.. Copyright (C) 2014-2022 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -13,7 +13,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see
-   <http://www.gnu.org/licenses/>.
+   <https://www.gnu.org/licenses/>.
 
 .. default-domain:: c
 
@@ -146,6 +146,8 @@ can also be used for implementing more traditional ahead-of-time
 compilers, via the :c:func:`gcc_jit_context_compile_to_file`
 API entrypoint.
 
+For linking in object files, use :c:func:`gcc_jit_context_add_driver_option`.
+
 .. function:: void \
               gcc_jit_context_compile_to_file (gcc_jit_context *ctxt, \
                                                enum gcc_jit_output_kind output_kind,\
@@ -188,12 +190,6 @@ Output kind                                     Typical suffix
 
    Compile the context to a dynamic library.
 
-   There is currently no support for specifying other libraries to link
-   against.
-
 .. c:macro:: GCC_JIT_OUTPUT_KIND_EXECUTABLE
 
    Compile the context to an executable.
-
-   There is currently no support for specifying libraries to link
-   against.

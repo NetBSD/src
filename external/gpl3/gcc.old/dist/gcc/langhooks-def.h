@@ -1,5 +1,5 @@
 /* Default macros to initialize the lang_hooks data structure.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -55,7 +55,9 @@ extern void lhd_set_decl_assembler_name (tree decl);
 extern void lhd_overwrite_decl_assembler_name (tree decl, tree name);
 extern bool lhd_warn_unused_global_decl (const_tree);
 extern tree lhd_simulate_enum_decl (location_t, const char *,
-				    vec<string_int_pair>);
+				    vec<string_int_pair> *);
+extern tree lhd_simulate_record_decl (location_t, const char *,
+				      array_slice<const tree>);
 extern tree lhd_type_for_size (unsigned precision, int unsignedp);
 extern void lhd_incomplete_type_error (location_t, const_tree, const_tree);
 extern tree lhd_type_promotes_to (tree);
@@ -79,18 +81,22 @@ extern bool lhd_handle_option (size_t, const char *, HOST_WIDE_INT, int,
 /* Declarations for tree gimplification hooks.  */
 extern int lhd_gimplify_expr (tree *, gimple_seq *, gimple_seq *);
 extern enum omp_clause_default_kind lhd_omp_predetermined_sharing (tree);
+extern enum omp_clause_defaultmap_kind lhd_omp_predetermined_mapping (tree);
 extern tree lhd_omp_assignment (tree, tree, tree);
-extern void lhd_omp_finish_clause (tree, gimple_seq *);
+extern void lhd_omp_finish_clause (tree, gimple_seq *, bool);
 struct gimplify_omp_ctx;
 extern void lhd_omp_firstprivatize_type_sizes (struct gimplify_omp_ctx *,
 					       tree);
 extern bool lhd_omp_mappable_type (tree);
-extern bool lhd_omp_scalar_p (tree);
+extern bool lhd_omp_scalar_p (tree, bool);
+extern tree *lhd_omp_get_decl_init (tree);
+extern void lhd_omp_finish_decl_inits ();
 
 extern const char *lhd_get_substring_location (const substring_loc &,
 					       location_t *out_loc);
 extern int lhd_decl_dwarf_attribute (const_tree, int);
 extern int lhd_type_dwarf_attribute (const_tree, int);
+extern void lhd_finalize_early_debug (void);
 
 #define LANG_HOOKS_NAME			"GNU unknown"
 #define LANG_HOOKS_IDENTIFIER_SIZE	sizeof (struct lang_identifier)
@@ -101,6 +107,10 @@ extern int lhd_type_dwarf_attribute (const_tree, int);
 #define LANG_HOOKS_INIT_OPTIONS_STRUCT	hook_void_gcc_optionsp
 #define LANG_HOOKS_INIT_OPTIONS		lhd_init_options
 #define LANG_HOOKS_INITIALIZE_DIAGNOSTICS lhd_initialize_diagnostics
+#define LANG_HOOKS_PREPROCESS_MAIN_FILE NULL
+#define LANG_HOOKS_PREPROCESS_OPTIONS NULL
+#define LANG_HOOKS_PREPROCESS_UNDEF NULL
+#define LANG_HOOKS_PREPROCESS_TOKEN NULL
 #define LANG_HOOKS_REGISTER_DUMPS	lhd_register_dumps
 #define LANG_HOOKS_COMPLAIN_WRONG_LANG_P lhd_complain_wrong_lang_p
 #define LANG_HOOKS_HANDLE_OPTION	lhd_handle_option
@@ -138,6 +148,7 @@ extern int lhd_type_dwarf_attribute (const_tree, int);
 #define LANG_HOOKS_EMITS_BEGIN_STMT	false
 #define LANG_HOOKS_RUN_LANG_SELFTESTS   lhd_do_nothing
 #define LANG_HOOKS_GET_SUBSTRING_LOCATION lhd_get_substring_location
+#define LANG_HOOKS_FINALIZE_EARLY_DEBUG lhd_finalize_early_debug
 
 /* Attribute hooks.  */
 #define LANG_HOOKS_ATTRIBUTE_TABLE		NULL
@@ -174,6 +185,7 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
 
 #define LANG_HOOKS_MAKE_TYPE lhd_make_node
 #define LANG_HOOKS_SIMULATE_ENUM_DECL	lhd_simulate_enum_decl
+#define LANG_HOOKS_SIMULATE_RECORD_DECL	lhd_simulate_record_decl
 #define LANG_HOOKS_CLASSIFY_RECORD	NULL
 #define LANG_HOOKS_TYPE_FOR_SIZE	lhd_type_for_size
 #define LANG_HOOKS_INCOMPLETE_TYPE_ERROR lhd_incomplete_type_error
@@ -204,10 +216,12 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
 #define LANG_HOOKS_GET_FIXED_POINT_TYPE_INFO NULL
 #define LANG_HOOKS_TYPE_DWARF_ATTRIBUTE	lhd_type_dwarf_attribute
 #define LANG_HOOKS_UNIT_SIZE_WITHOUT_REUSABLE_PADDING lhd_unit_size_without_reusable_padding
+#define LANG_HOOKS_CLASSTYPE_AS_BASE	hook_tree_const_tree_null
 
 #define LANG_HOOKS_FOR_TYPES_INITIALIZER { \
   LANG_HOOKS_MAKE_TYPE, \
   LANG_HOOKS_SIMULATE_ENUM_DECL, \
+  LANG_HOOKS_SIMULATE_RECORD_DECL, \
   LANG_HOOKS_CLASSIFY_RECORD, \
   LANG_HOOKS_TYPE_FOR_MODE, \
   LANG_HOOKS_TYPE_FOR_SIZE, \
@@ -230,7 +244,8 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
   LANG_HOOKS_GET_DEBUG_TYPE, \
   LANG_HOOKS_GET_FIXED_POINT_TYPE_INFO, \
   LANG_HOOKS_TYPE_DWARF_ATTRIBUTE, \
-  LANG_HOOKS_UNIT_SIZE_WITHOUT_REUSABLE_PADDING \
+  LANG_HOOKS_UNIT_SIZE_WITHOUT_REUSABLE_PADDING, \
+  LANG_HOOKS_CLASSTYPE_AS_BASE \
 }
 
 /* Declaration hooks.  */
@@ -246,6 +261,7 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
 #define LANG_HOOKS_OMP_CHECK_OPTIONAL_ARGUMENT hook_tree_tree_bool_null
 #define LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE hook_bool_const_tree_false
 #define LANG_HOOKS_OMP_PREDETERMINED_SHARING lhd_omp_predetermined_sharing
+#define LANG_HOOKS_OMP_PREDETERMINED_MAPPING lhd_omp_predetermined_mapping
 #define LANG_HOOKS_OMP_REPORT_DECL lhd_pass_through_t
 #define LANG_HOOKS_OMP_DISREGARD_VALUE_EXPR hook_bool_tree_bool_false
 #define LANG_HOOKS_OMP_PRIVATE_DEBUG_CLAUSE hook_bool_tree_bool_false
@@ -256,7 +272,11 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
 #define LANG_HOOKS_OMP_CLAUSE_LINEAR_CTOR NULL
 #define LANG_HOOKS_OMP_CLAUSE_DTOR hook_tree_tree_tree_null
 #define LANG_HOOKS_OMP_FINISH_CLAUSE lhd_omp_finish_clause
+#define LANG_HOOKS_OMP_ALLOCATABLE_P hook_bool_tree_false
 #define LANG_HOOKS_OMP_SCALAR_P lhd_omp_scalar_p
+#define LANG_HOOKS_OMP_SCALAR_TARGET_P hook_bool_tree_false
+#define LANG_HOOKS_OMP_GET_DECL_INIT lhd_omp_get_decl_init
+#define LANG_HOOKS_OMP_FINISH_DECL_INITS lhd_omp_finish_decl_inits
 
 #define LANG_HOOKS_DECLS { \
   LANG_HOOKS_GLOBAL_BINDINGS_P, \
@@ -274,6 +294,7 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
   LANG_HOOKS_OMP_CHECK_OPTIONAL_ARGUMENT, \
   LANG_HOOKS_OMP_PRIVATIZE_BY_REFERENCE, \
   LANG_HOOKS_OMP_PREDETERMINED_SHARING, \
+  LANG_HOOKS_OMP_PREDETERMINED_MAPPING, \
   LANG_HOOKS_OMP_REPORT_DECL, \
   LANG_HOOKS_OMP_DISREGARD_VALUE_EXPR, \
   LANG_HOOKS_OMP_PRIVATE_DEBUG_CLAUSE, \
@@ -284,7 +305,11 @@ extern tree lhd_unit_size_without_reusable_padding (tree);
   LANG_HOOKS_OMP_CLAUSE_LINEAR_CTOR, \
   LANG_HOOKS_OMP_CLAUSE_DTOR, \
   LANG_HOOKS_OMP_FINISH_CLAUSE, \
-  LANG_HOOKS_OMP_SCALAR_P \
+  LANG_HOOKS_OMP_ALLOCATABLE_P, \
+  LANG_HOOKS_OMP_SCALAR_P, \
+  LANG_HOOKS_OMP_SCALAR_TARGET_P, \
+  LANG_HOOKS_OMP_GET_DECL_INIT, \
+  LANG_HOOKS_OMP_FINISH_DECL_INITS \
 }
 
 /* LTO hooks.  */
@@ -312,6 +337,10 @@ extern void lhd_end_section (void);
   LANG_HOOKS_INIT_OPTIONS_STRUCT, \
   LANG_HOOKS_INIT_OPTIONS, \
   LANG_HOOKS_INITIALIZE_DIAGNOSTICS, \
+  LANG_HOOKS_PREPROCESS_MAIN_FILE, \
+  LANG_HOOKS_PREPROCESS_OPTIONS, \
+  LANG_HOOKS_PREPROCESS_UNDEF, \
+  LANG_HOOKS_PREPROCESS_TOKEN, \
   LANG_HOOKS_REGISTER_DUMPS, \
   LANG_HOOKS_COMPLAIN_WRONG_LANG_P, \
   LANG_HOOKS_HANDLE_OPTION, \
@@ -361,7 +390,8 @@ extern void lhd_end_section (void);
   LANG_HOOKS_CUSTOM_FUNCTION_DESCRIPTORS, \
   LANG_HOOKS_EMITS_BEGIN_STMT, \
   LANG_HOOKS_RUN_LANG_SELFTESTS, \
-  LANG_HOOKS_GET_SUBSTRING_LOCATION \
+  LANG_HOOKS_GET_SUBSTRING_LOCATION, \
+  LANG_HOOKS_FINALIZE_EARLY_DEBUG \
 }
 
 #endif /* GCC_LANG_HOOKS_DEF_H */

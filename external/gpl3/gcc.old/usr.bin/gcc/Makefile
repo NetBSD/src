@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2023/10/07 12:15:51 rin Exp $
+#	$NetBSD: Makefile,v 1.12 2025/09/07 04:12:30 mrg Exp $
 
 PROG=		gcc
-SRCS=		gccspec.c ${G_GCC_OBJS:.o=.c}
+SRCS=		gccspec.cc ${G_GCC_OBJS:.o=.cc}
 
 .include "../Makefile.target-defines"
 
-COPTS.builtins.c = -Wno-stack-protector
+#COPTS.builtins.cc = -Wno-stack-protector
 
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
 
@@ -24,7 +24,7 @@ ${SRCS}: ${GCCARCH}/defs.mk
 
 .include <bsd.info.mk>
 
-COPTS.gcc.c=	-Wno-stack-protector
+COPTS.gcc.cc=	-Wno-error=stack-protector
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/doc ${DIST}/gcc/c
 

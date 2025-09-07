@@ -1,4 +1,4 @@
-/*	$NetBSD: regsub.cc,v 1.1.1.1 2025/09/07 02:58:39 mrg Exp $	*/
+/*	$NetBSD: regsub.cc,v 1.2 2025/09/07 04:08:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.

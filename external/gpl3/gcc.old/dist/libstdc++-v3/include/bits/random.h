@@ -1,6 +1,6 @@
 // random number generation -*- C++ -*-
 
-// Copyright (C) 2009-2020 Free Software Foundation, Inc.
+// Copyright (C) 2009-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -60,20 +60,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _RealType
     generate_canonical(_UniformRandomNumberGenerator& __g);
 
-  /*
-   * Implementation-space details.
-   */
+  /// @cond undocumented
+  // Implementation-space details.
   namespace __detail
   {
     template<typename _UIntType, size_t __w,
 	     bool = __w < static_cast<size_t>
 			  (std::numeric_limits<_UIntType>::digits)>
       struct _Shift
-      { static const _UIntType __value = 0; };
+      { static constexpr _UIntType __value = 0; };
 
     template<typename _UIntType, size_t __w>
       struct _Shift<_UIntType, __w, true>
-      { static const _UIntType __value = _UIntType(1) << __w; };
+      { static constexpr _UIntType __value = _UIntType(1) << __w; };
 
     template<int __s,
 	     int __which = ((__s <= __CHAR_BIT__ * sizeof (int))
@@ -89,20 +88,20 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     template<int __s>
       struct _Select_uint_least_t<__s, 4>
-      { typedef unsigned int type; };
+      { using type = unsigned int; };
 
     template<int __s>
       struct _Select_uint_least_t<__s, 3>
-      { typedef unsigned long type; };
+      { using type = unsigned long; };
 
     template<int __s>
       struct _Select_uint_least_t<__s, 2>
-      { typedef unsigned long long type; };
+      { using type = unsigned long long; };
 
-#ifdef _GLIBCXX_USE_INT128
+#if __SIZEOF_INT128__ > __SIZEOF_LONG_LONG__
     template<int __s>
       struct _Select_uint_least_t<__s, 1>
-      { typedef unsigned __int128 type; };
+      { __extension__ using type = unsigned __int128; };
 #endif
 
     // Assume a != 0, a < m, c < m, x < m.
@@ -112,11 +111,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
              bool __schrage_ok = __m % __a < __m / __a>
       struct _Mod
       {
-	typedef typename _Select_uint_least_t<std::__lg(__a)
-					      + std::__lg(__m) + 2>::type _Tp2;
 	static _Tp
 	__calc(_Tp __x)
-	{ return static_cast<_Tp>((_Tp2(__a) * __x + __c) % __m); }
+	{
+	  using _Tp2
+	    = typename _Select_uint_least_t<std::__lg(__a)
+					    + std::__lg(__m) + 2>::type;
+	  return static_cast<_Tp>((_Tp2(__a) * __x + __c) % __m);
+	}
       };
 
     // Schrage.
@@ -212,6 +214,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       >;
 
   } // namespace __detail
+  /// @endcond
 
   /**
    * @addtogroup random_generators Random Number Generators
@@ -710,9 +713,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static constexpr size_t      word_size    = __w;
       static constexpr size_t      short_lag    = __s;
       static constexpr size_t      long_lag     = __r;
-      static constexpr result_type default_seed = 19780503u;
+      static constexpr uint_least32_t default_seed = 19780503u;
 
-      subtract_with_carry_engine() : subtract_with_carry_engine(default_seed)
+      subtract_with_carry_engine() : subtract_with_carry_engine(0u)
       { }
 
       /**
@@ -747,7 +750,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        * set carry to 1, otherwise sets carry to 0.
        */
       void
-      seed(result_type __sd = default_seed);
+      seed(result_type __sd = 0u);
 
       /**
        * @brief Seeds the initial state @f$x_0@f$ of the
@@ -1099,7 +1102,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    * Produces random numbers by combining random numbers from some base
-   * engine to produce random numbers with a specifies number of bits @p __w.
+   * engine to produce random numbers with a specified number of bits @p __w.
    */
   template<typename _RandomNumberEngine, size_t __w, typename _UIntType>
     class independent_bits_engine
@@ -1316,9 +1319,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 
   /**
-   * @brief Produces random numbers by combining random numbers from some
-   * base engine to produce random numbers with a specifies number of bits
-   * @p __k.
+   * @brief Produces random numbers by reordering random numbers from some
+   * base engine.
+   *
+   * The values from the base engine are stored in a sequence of size @p __k
+   * and shuffled by an algorithm that depends on those values.
    */
   template<typename _RandomNumberEngine, size_t __k>
     class shuffle_order_engine
@@ -1661,7 +1666,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
     void _M_init(const char*, size_t); // not exported from the shared library
 
-    union
+    __extension__ union
     {
       struct
       {

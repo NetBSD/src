@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -99,7 +99,10 @@ _mm_setr_pd (double __W, double __X)
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_undefined_pd (void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-self"
   __m128d __Y = __Y;
+#pragma GCC diagnostic pop
   return __Y;
 }
 
@@ -121,14 +124,14 @@ _mm_move_sd (__m128d __A, __m128d __B)
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_load_pd (double const *__P)
 {
-  return *(__m128d *)__P;
+  return *(__m128d const *)__P;
 }
 
 /* Load two DPFP values from P.  The address need not be 16-byte aligned.  */
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_pd (double const *__P)
 {
-  return *(__m128d_u *)__P;
+  return *(__m128d_u const *)__P;
 }
 
 /* Create a vector with all two elements equal to *P.  */
@@ -706,13 +709,25 @@ _mm_loadu_si128 (__m128i_u const *__P)
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadl_epi64 (__m128i_u const *__P)
 {
-  return _mm_set_epi64 ((__m64)0LL, *(__m64_u *)__P);
+  return _mm_set_epi64 ((__m64)0LL, *(__m64_u const *)__P);
 }
 
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_loadu_si64 (void const *__P)
 {
-  return _mm_loadl_epi64 ((__m128i_u *)__P);
+  return _mm_loadl_epi64 ((__m128i_u const *)__P);
+}
+
+extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_loadu_si32 (void const *__P)
+{
+  return _mm_set_epi32 (0, 0, 0, (*(__m32_u const *)__P)[0]);
+}
+
+extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_loadu_si16 (void const *__P)
+{
+  return _mm_set_epi16 (0, 0, 0, 0, 0, 0, 0, (*(__m16_u const *)__P)[0]);
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -739,6 +754,18 @@ _mm_storeu_si64 (void *__P, __m128i __B)
   _mm_storel_epi64 ((__m128i_u *)__P, __B);
 }
 
+extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_storeu_si32 (void *__P, __m128i __B)
+{
+  *(__m32_u *)__P = (__m32) ((__v4si)__B)[0];
+}
+
+extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_mm_storeu_si16 (void *__P, __m128i __B)
+{
+  *(__m16_u *)__P = (__m16) ((__v8hi)__B)[0];
+}
+
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_movepi64_pi64 (__m128i __B)
 {
@@ -761,7 +788,10 @@ _mm_move_epi64 (__m128i __A)
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_undefined_si128 (void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-self"
   __m128i __Y = __Y;
+#pragma GCC diagnostic pop
   return __Y;
 }
 

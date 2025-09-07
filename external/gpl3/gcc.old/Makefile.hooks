@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.hooks,v 1.10 2023/02/20 02:11:03 mrg Exp $
+#	$NetBSD: Makefile.hooks,v 1.11 2025/09/07 04:08:23 mrg Exp $
 
 #
 # Makefile fragment to build genhooks and *target-hooks*.h
 #
 
 .for f in hooks
-gen${f}.lo: ${HH} gen${f}.c ${G_D_TARGET_DEF}
+gen${f}.lo: ${HH} gen${f}.cc ${G_D_TARGET_DEF}
 gen${f}: gen${f}.lo ${GENPROG_ERROR_DEPENDS} 
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}

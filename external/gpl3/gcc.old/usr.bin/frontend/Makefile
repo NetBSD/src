@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/07/14 19:46:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2025/09/07 04:12:29 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -8,12 +8,12 @@ LIBISPRIVATE=	yes
 
 LIB=		frontend
 
-SRCS=		gcc.c version.c prefix.c
+SRCS=		gcc.cc prefix.cc
 
 .include "../Makefile.driver"
 .include "../Makefile.target-defines"
 
-version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
+version.cc: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 CPPFLAGS+=	-I${GCCARCH} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \

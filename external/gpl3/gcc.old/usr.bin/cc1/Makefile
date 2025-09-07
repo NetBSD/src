@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2023/10/07 12:15:51 rin Exp $
+#	$NetBSD: Makefile,v 1.13 2025/09/07 04:12:29 mrg Exp $
 
 PROG=		cc1
-SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.c}
-SRCS+=		main.c ${PROG}-checksum.c
+SRCS=		${G_C_OBJS:S,c-family/,,:S,c/,,:S,known-headers.o,known-headers.cc,:S,c-spellcheck.o,c-spellcheck.cc,:Nlibcpp.a:.o=.cc}
+SRCS+=		main.cc ${PROG}-checksum.cc
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
 .include "../Makefile.backend"
@@ -26,28 +26,29 @@ CHECKSUM_OBJS=	${BACKENDOBJ}/libbackend.a \
 # XXX check this out, probably need it for plugins?
 # LDFLAGS+=	-rdynamic
 
-COPTS.c-ada-spec.c=	-Wno-stack-protector
-COPTS.c-attribs.c=	-Wno-stack-protector
-COPTS.c-aux-info.c=	-Wno-stack-protector
-COPTS.c-common.c=	-Wno-stack-protector
-COPTS.c-cppbuiltin.c=	-Wno-stack-protector
-COPTS.c-decl.c=		-Wno-stack-protector
-COPTS.c-format.c=	-Wno-stack-protector
-COPTS.c-format.h=	-Wno-stack-protector
-COPTS.c-lex.c=		-Wno-stack-protector
-COPTS.c-opts.c=		-Wno-stack-protector
-COPTS.c-ppoutput.c=	-Wno-stack-protector
-COPTS.c-pragma.c=	-Wno-stack-protector
-COPTS.c-typeck.c=	-Wno-stack-protector
+COPTS.c-ada-spec.cc+=		-Wno-error=stack-protector
+COPTS.c-attribs.cc+=		-Wno-error=stack-protector
+COPTS.c-aux-info.cc+=		-Wno-error=stack-protector
+COPTS.c-common.cc+=		-Wno-error=stack-protector
+COPTS.c-cppbuiltin.cc+=		-Wno-error=stack-protector
+COPTS.c-decl.cc+=		-Wno-error=stack-protector
+COPTS.c-format.cc+=		-Wno-error=stack-protector
+COPTS.c-lex.cc+=		-Wno-error=stack-protector
+COPTS.c-omp.cc+=		-Wno-error=stack-protector
+COPTS.c-opts.cc+=		-Wno-error=stack-protector
+COPTS.c-ppoutput.cc+=		-Wno-error=stack-protector
+COPTS.c-pragma.cc+=		-Wno-error=stack-protector
+COPTS.c-pretty-print.cc+=	-Wno-error=stack-protector
+COPTS.c-typeck.cc+=		-Wno-error=stack-protector
 
-CPPFLAGS.default-c.c+=	-I${BACKENDOBJ}
+CPPFLAGS.default-c.cc+=	-I${BACKENDOBJ}
 
 .if ${MACHINE_CPU} == "sh3"
 BUILDSYMLINKS+= ${GNUHOSTDIST}/gcc/config/sh/sh-c.cc sh-c.c
 .endif
 
 .if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
-COPTS.c-common.c+=-O3
+#COPTS.c-common.cc+=-O3
 .endif
 
 LDADD+=	${LIBMPC} ${LIBMPFR} ${LIBGMP} -lintl -lz -lm

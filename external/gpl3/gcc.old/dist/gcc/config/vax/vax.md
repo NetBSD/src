@@ -1,5 +1,5 @@
 ;; Machine description for GNU compiler, VAX Version
-;; Copyright (C) 1987-2020 Free Software Foundation, Inc.
+;; Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
 ;; This file is part of GCC.
 
@@ -22,9 +22,6 @@
 ;;- the first one in the file is chosen.
 ;;-
 ;;- See file "rtl.def" for documentation on define_insn, match_*, et al.
-;;-
-;;- cpp macro #define NOTICE_UPDATE_CC in file tm.h handles condition code
-;;- updates for most instructions.
 
 ;; UNSPEC_VOLATILE usage:
 
@@ -37,12 +34,19 @@
   VUNSPEC_EH_RETURN
 ])
 
+;; UNSPEC usage:
+
+(define_c_enum "unspec" [
+  UNSPEC_SETMEM_FILL	    ; 'fill' operand to 'setmem' insn.
+])
+
 (define_constants
   [(VAX_AP_REGNUM 12)	    ; Register 12 contains the argument pointer
    (VAX_FP_REGNUM 13)	    ; Register 13 contains the frame pointer
    (VAX_SP_REGNUM 14)	    ; Register 14 contains the stack pointer
    (VAX_PC_REGNUM 15)	    ; Register 15 contains the program counter
-   (VAX_PSW_REGNUM 16)	    ; Program Status Word
+   (VAX_PSL_REGNUM 16)	    ; Register 16 contains the processor status
+			    ; and condition codes in particular
   ]
 )
 
@@ -60,34 +64,95 @@
 ;; Some output patterns want integer immediates with a prefix...
 (define_mode_attr  iprefx [(QI "B") (HI "H") (SI "N")])
 
+(define_mode_iterator VAXcc [CC CCN CCNZ CCZ])
+(define_mode_iterator VAXccnz [CCN CCNZ CCZ])
+
+(define_code_iterator any_extract [sign_extract zero_extract])
+
 ;;
 (include "constraints.md")
 (include "predicates.md")
 
-(define_insn "*cmp<mode>"
-  [(set (cc0)
-	(compare (match_operand:VAXint 0 "nonimmediate_operand" "nrmT,nrmT")
-		 (match_operand:VAXint 1 "general_operand" "I,nrmT")))]
+;; Make instructions that set the N, N+Z, and Z condition codes respectively.
+(define_subst "subst_<mode>"
+  [(set (match_operand 0 "")
+	(match_operand 1 ""))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
   ""
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz (match_dup 1)
+			 (const_int 0)))
+   (set (match_dup 0)
+	(match_dup 1))])
+
+(define_subst "subst_f<VAXccnz:mode>"
+  [(set (match_operand:VAXfp 0 "")
+	(match_operand:VAXfp 1 ""))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  ""
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz (match_dup 1)
+			 (const_double_zero:VAXfp)))
+   (set (match_dup 0)
+	(match_dup 1))])
+
+;; Select all from the attributes below that apply to a given insn that
+;; has a clobber on CC for the comparison elimination pass to use it in
+;; place of a subsequent comparison instruction matching the mode used
+;; by a comparison operator in branch.
+;;
+;; For example a branch doing `eq' in SImode will use `*cmpsi_ccz', so
+;; to eliminate it a `*movsi_ccz', etc. pattern will be required via the
+;; `ccz' substitution.  Analogously for the other CC modes.
+;;
+;; The general `cc' mode, which sets all of the C, N, V and Z condition
+;; codes, has to be handled specially as it makes no sense for the usual
+;; comparison against zero, so no substitution has been defined for it.
+(define_subst_attr "ccn" "subst_ccn" "" "_ccn")
+(define_subst_attr "ccnz" "subst_ccnz" "" "_ccnz")
+(define_subst_attr "ccz" "subst_ccz" "" "_ccz")
+(define_subst_attr "fccn" "subst_fccn" "" "_ccn")
+(define_subst_attr "fccnz" "subst_fccnz" "" "_ccnz")
+(define_subst_attr "fccz" "subst_fccz" "" "_ccz")
+
+(define_insn "*cmp<VAXint:mode>_<VAXcc:mode>"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc (match_operand:VAXint 0 "general_operand" "nrmT,nrmT")
+		       (match_operand:VAXint 1 "general_operand" "I,nrmT")))]
+  "reload_completed"
   "@
    tst<VAXint:isfx> %0
    cmp<VAXint:isfx> %0,%1")
 
-(define_insn "*cmp<mode>"
-  [(set (cc0)
-	(compare (match_operand:VAXfp 0 "general_operand" "gF,gF")
-		 (match_operand:VAXfp 1 "general_operand" "G,gF")))]
-  ""
+;; We don't have a CMPQ instruction, but we can set the N and Z condition
+;; codes with MOVQ, and also this comparison can be folded into a preceding
+;; operation by the post-reload comparison elimination pass.
+(define_insn "*cmpdi_<VAXccnz:mode>"
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz (match_operand:DI 0 "general_operand" "r,nmT")
+			 (match_operand:DI 1 "const_zero_operand" "I,I")))
+   (clobber (match_scratch:DI 2 "=X,r"))]
+  "reload_completed"
+  "@
+   movq %0,%0
+   movq %0,%2")
+
+(define_insn "*cmp<VAXfp:mode>_<VAXccnz:mode>"
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz (match_operand:VAXfp 0 "general_operand" "gF,gF")
+			 (match_operand:VAXfp 1 "general_operand" "G,gF")))]
+  "reload_completed"
   "@
    tst<VAXfp:fsfx> %0
    cmp<VAXfp:fsfx> %0,%1")
 
-(define_insn "*bit<mode>"
-  [(set (cc0)
-	(compare (and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
-			     (match_operand:VAXint 1 "general_operand" "nrmT"))
-		 (const_int 0)))]
-  ""
+(define_insn "*bit<VAXint:mode>_<VAXccnz:mode>"
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz
+	  (and:VAXint (match_operand:VAXint 0 "general_operand" "nrmT")
+		      (match_operand:VAXint 1 "general_operand" "nrmT"))
+	  (const_int 0)))]
+  "reload_completed"
   "bit<VAXint:isfx> %0,%1")
 
 ;; The VAX has no sCOND insns.  It does have add/subtract with carry
@@ -98,25 +163,76 @@
 ;; and has been deleted.
 
 
-(define_insn "mov<mode>"
+(define_insn_and_split "mov<mode>"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
 	(match_operand:VAXfp 1 "general_operand" "G,gF"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*mov<mode><fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
+	(match_operand:VAXfp 1 "general_operand" "G,gF"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    clr<VAXfp:fsfx> %0
    mov<VAXfp:fsfx> %1,%0")
 
 ;; Some VAXen don't support this instruction.
-;;(define_insn "movti"
-;;  [(set (match_operand:TI 0 "general_operand" "=g")
+;;(define_insn_and_split "movti"
+;;  [(set (match_operand:TI 0 "nonimmediate_operand" "=g")
 ;;	(match_operand:TI 1 "general_operand" "g"))]
 ;;  ""
-;;  "movh %1,%0")
+;;  "#"
+;;  "reload_completed"
+;;  [(parallel
+;;     [(set (match_dup 0)
+;;	   (match_dup 1))
+;;      (clobber (reg:CC VAX_PSL_REGNUM))])]
+;;  "")
+;;
+;;(define_insn "*movti<ccn><ccnz><ccz>"
+;;  [(set (match_operand:TI 0 "nonimmediate_operand" "=g")
+;;	(match_operand:TI 1 "general_operand" "g"))
+;;   (clobber (reg:CC VAX_PSL_REGNUM))]
+;;  "reload_completed"
+;;  "movo %1,%0")
 
-(define_insn "movdi"
+(define_insn_and_split "movdi"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(match_operand:DI 1 "general_operand" "g"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+;; In some cases `vax_output_int_move' splits a `DImode' move into a pair
+;; of `SImode' moves, in which case the flags aren't usefully set.  Have
+;; separate patterns then, for the cases where the move may and may not be
+;; split each.  We use the outer condition only so in some cases we will
+;; fail to notice the move does not actually get split, but this is OK.
+(define_insn "*movdi_maybe_split"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(match_operand:DI 1 "general_operand" "g"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed && vax_maybe_split_dimode_move (operands)"
+  "* return vax_output_int_move (insn, operands, DImode);")
+
+(define_insn "*movdi_unsplit<ccn><ccnz><ccz>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(match_operand:DI 1 "general_operand" "g"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed && !vax_maybe_split_dimode_move (operands)"
   "* return vax_output_int_move (insn, operands, DImode);")
 
 ;; The VAX move instructions have space-time tradeoffs.  On a MicroVAX
@@ -158,22 +274,83 @@
 #endif
 }")
 
-(define_insn "movsi_2"
+;; Split a store of the upper half of a 64 bit value in memory into
+;; two operations.
+(define_split
+  [(set (match_operand:SI 0 "nonimmediate_operand" "")
+        (subreg:SI
+	  (match_operand:DI 1 "indexed_memory_operand" "")
+	  4
+	  )
+    )
+   (clobber (match_scratch:DI 2 ""))
+   ]
+  ""
+  [
+   (set (match_dup 2)
+        (match_dup 1)
+	)
+   (set (match_dup 0)
+        (subreg:SI (match_dup 2) 4)
+	)
+  ]
+)
+
+(define_insn_and_split "movsi_2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(match_operand:SI 1 "nonsymbolic_operand" "nrmT"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movsi_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(match_operand:SI 1 "nonsymbolic_operand" "nrmT"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "* return vax_output_int_move (insn, operands, SImode);")
 
-(define_insn "mov<mode>"
+(define_insn_and_split "mov<mode>"
   [(set (match_operand:VAXintQH 0 "nonimmediate_operand" "=g")
 	(match_operand:VAXintQH 1 "general_operand" "g"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*mov<mode><ccn><ccnz><ccz>"
+  [(set (match_operand:VAXintQH 0 "nonimmediate_operand" "=g")
+	(match_operand:VAXintQH 1 "general_operand" "g"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "* return vax_output_int_move (insn, operands, <MODE>mode);")
 
-(define_insn "movstricthi"
-  [(set (strict_low_part (match_operand:HI 0 "register_operand" "+g"))
+(define_insn_and_split "movstricthi"
+  [(set (strict_low_part (match_operand:HI 0 "register_operand" "+r"))
 	(match_operand:HI 1 "general_operand" "g"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (strict_low_part (match_dup 0))
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movstricthi<ccn><ccnz><ccz>"
+  [(set (strict_low_part (match_operand:HI 0 "register_operand" "+r"))
+	(match_operand:HI 1 "general_operand" "g"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
   if (CONST_INT_P (operands[1]))
@@ -191,10 +368,23 @@
   return \"movw %1,%0\";
 }")
 
-(define_insn "movstrictqi"
-  [(set (strict_low_part (match_operand:QI 0 "register_operand" "+g"))
+(define_insn_and_split "movstrictqi"
+  [(set (strict_low_part (match_operand:QI 0 "register_operand" "+r"))
 	(match_operand:QI 1 "general_operand" "g"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (strict_low_part (match_dup 0))
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movstrictqi<ccn><ccnz><ccz>"
+  [(set (strict_low_part (match_operand:QI 0 "register_operand" "+r"))
+	(match_operand:QI 1 "general_operand" "g"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
   if (CONST_INT_P (operands[1]))
@@ -209,39 +399,37 @@
 }")
 
 ;; This is here to accept 4 arguments and pass the first 3 along
-;; to the cpymemhi1 pattern that really does the work.
+;; to the movmemhi1 pattern that really does the work.
 (define_expand "cpymemhi"
-  [(set (match_operand:BLK 0 "general_operand" "=g")
-	(match_operand:BLK 1 "general_operand" "g"))
-   (use (match_operand:HI 2 "general_operand" "g"))
+  [(set (match_operand:BLK 0 "memory_operand" "")
+	(match_operand:BLK 1 "memory_operand" ""))
+   (use (match_operand:HI 2 "general_operand" ""))
    (match_operand 3 "" "")]
   ""
   "
 {
-#if 0
-  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) <= 48)
-    {
-      emit_insn (gen_cpymemsi1_2 (operands[0], operands[1], operands[2]));
-      DONE;
-    }
-#endif
-  emit_insn (gen_cpymemhi1 (operands[0], operands[1], operands[2]));
+  emit_insn (gen_movmemhi1 (operands[0], operands[1], operands[2]));
   DONE;
 }")
 
-;;(define_insn "cpymemsi1_2"
-;;  [(set (match_operand:BLK 0 "memory_operand" "=B")
-;;	(match_operand:BLK 1 "memory_operand" "B"))
-;;   (use (match_operand:SI 2 "const_int_operand" "g"))]
-;;  "INTVAL (operands[2]) <= 48"
-;;  "* return vax_output_cpymemsi (insn, operands);")
+(define_expand "movmemhi"
+  [(set (match_operand:BLK 0 "memory_operand" "")
+	(match_operand:BLK 1 "memory_operand" ""))
+   (use (match_operand:HI 2 "general_operand" ""))
+   (match_operand 3 "" "")]
+  ""
+  "
+{
+  emit_insn (gen_movmemhi1 (operands[0], operands[1], operands[2]));
+  DONE;
+}")
 
 ;; The definition of this insn does not really explain what it does,
 ;; but it should suffice
 ;; that anything generated as this insn will be recognized as one
 ;; and that it won't successfully combine with anything.
 
-(define_insn "cpymemhi1"
+(define_insn_and_split "movmemhi1"
   [(set (match_operand:BLK 0 "memory_operand" "=o")
 	(match_operand:BLK 1 "memory_operand" "o"))
    (use (match_operand:HI 2 "general_operand" "g"))
@@ -252,90 +440,344 @@
    (clobber (reg:SI 4))
    (clobber (reg:SI 5))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (use (match_dup 2))
+      (clobber (reg:SI 0))
+      (clobber (reg:SI 1))
+      (clobber (reg:SI 2))
+      (clobber (reg:SI 3))
+      (clobber (reg:SI 4))
+      (clobber (reg:SI 5))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movmemhi1"
+  [(set (match_operand:BLK 0 "memory_operand" "=o")
+	(match_operand:BLK 1 "memory_operand" "o"))
+   (use (match_operand:HI 2 "general_operand" "g"))
+   (clobber (reg:SI 0))
+   (clobber (reg:SI 1))
+   (clobber (reg:SI 2))
+   (clobber (reg:SI 3))
+   (clobber (reg:SI 4))
+   (clobber (reg:SI 5))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "movc3 %2,%1,%0")
+
+;; This is here to accept 4 arguments and pass the first 3 along
+;; to the setmemhi1 pattern that really does the work.
+(define_expand "setmemhi"
+  [(set (match_operand:BLK 0 "memory_operand" "")
+	(match_operand:QI 2 "general_operand" ""))
+   (use (match_operand:HI 1 "general_operand" ""))
+   (match_operand 3 "" "")]
+  ""
+  "
+{
+  emit_insn (gen_setmemhi1 (operands[0], operands[1], operands[2]));
+  DONE;
+}")
+
+;; The srcaddr operand of MOVC5 is not dereferenced if srclen is zero, so we
+;; set it to (%ap) somewhat arbitrarily chosen for the shortest encoding.
+(define_insn_and_split "setmemhi1"
+  [(set (match_operand:BLK 0 "memory_operand" "=o")
+	(unspec:BLK [(use (match_operand:QI 2 "general_operand" "g"))]
+		    UNSPEC_SETMEM_FILL))
+   (use (match_operand:HI 1 "general_operand" "g"))
+   (clobber (reg:SI 0))
+   (clobber (reg:SI 1))
+   (clobber (reg:SI 2))
+   (clobber (reg:SI 3))
+   (clobber (reg:SI 4))
+   (clobber (reg:SI 5))]
+  ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (unspec:BLK [(use (match_dup 2))] UNSPEC_SETMEM_FILL))
+      (use (match_dup 1))
+      (clobber (reg:SI 0))
+      (clobber (reg:SI 1))
+      (clobber (reg:SI 2))
+      (clobber (reg:SI 3))
+      (clobber (reg:SI 4))
+      (clobber (reg:SI 5))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*setmemhi1"
+  [(set (match_operand:BLK 0 "memory_operand" "=o")
+	(unspec:BLK [(use (match_operand:QI 2 "general_operand" "g"))]
+		    UNSPEC_SETMEM_FILL))
+   (use (match_operand:HI 1 "general_operand" "g"))
+   (clobber (reg:SI 0))
+   (clobber (reg:SI 1))
+   (clobber (reg:SI 2))
+   (clobber (reg:SI 3))
+   (clobber (reg:SI 4))
+   (clobber (reg:SI 5))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
+  "movc5 $0,(%%ap),%2,%1,%0")
 
 ;; Extension and truncation insns.
 
-(define_insn "truncsiqi2"
+(define_insn_and_split "truncsiqi2"
   [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
 	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (truncate:QI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*truncsiqi2<ccn><ccnz><ccz>"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
+	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtlb %1,%0")
 
-(define_insn "truncsihi2"
+(define_insn_and_split "truncsihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
 	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (truncate:HI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*truncsihi2<ccn><ccnz><ccz>"
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
+	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "nrmT")))
+      (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtlw %1,%0")
 
-(define_insn "trunchiqi2"
+(define_insn_and_split "trunchiqi2"
   [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
 	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (truncate:QI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*trunchiqi2<ccn><ccnz><ccz>"
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=g")
+	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtwb %1,%0")
 
-(define_insn "extendhisi2"
+(define_insn_and_split "extendhisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (sign_extend:SI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extendhisi2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(sign_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtwl %1,%0")
 
-(define_insn "extendqihi2"
+(define_insn_and_split "extendqihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
 	(sign_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (sign_extend:HI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extendqihi2<ccn><ccnz><ccz>"
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
+	(sign_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtbw %1,%0")
 
-(define_insn "extendqisi2"
+(define_insn_and_split "extendqisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (sign_extend:SI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extendqisi2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(sign_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtbl %1,%0")
 
-(define_insn "extendsfdf2"
+(define_insn_and_split "extendsfdf2"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=g")
 	(float_extend:DF (match_operand:SF 1 "general_operand" "gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (float_extend:DF (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extendsfdf2<fccn><fccnz><fccz>"
+  [(set (match_operand:DF 0 "nonimmediate_operand" "=g")
+	(float_extend:DF (match_operand:SF 1 "general_operand" "gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvtf%# %1,%0")
 
-(define_insn "truncdfsf2"
+(define_insn_and_split "truncdfsf2"
   [(set (match_operand:SF 0 "nonimmediate_operand" "=g")
 	(float_truncate:SF (match_operand:DF 1 "general_operand" "gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (float_truncate:SF (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*truncdfsf2<fccn><fccnz><fccz>"
+  [(set (match_operand:SF 0 "nonimmediate_operand" "=g")
+	(float_truncate:SF (match_operand:DF 1 "general_operand" "gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvt%#f %1,%0")
 
-(define_insn "zero_extendhisi2"
+(define_insn_and_split "zero_extendhisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (zero_extend:SI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*zero_extendhisi2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "movzwl %1,%0")
 
-(define_insn "zero_extendqihi2"
+(define_insn_and_split "zero_extendqihi2"
   [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
 	(zero_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (zero_extend:HI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*zero_extendqihi2<ccn><ccnz><ccz>"
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=g")
+	(zero_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "movzbw %1,%0")
 
-(define_insn "zero_extendqisi2"
+(define_insn_and_split "zero_extendqisi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (zero_extend:SI (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*zero_extendqisi2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "movzbl %1,%0")
 
 ;; Fix-to-float conversion insns.
 
-(define_insn "float<VAXint:mode><VAXfp:mode>2"
+(define_insn_and_split "float<VAXint:mode><VAXfp:mode>2"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
 	(float:VAXfp (match_operand:VAXint 1 "nonimmediate_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (float:VAXfp (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*float<VAXint:mode><VAXfp:mode>2<fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
+	(float:VAXfp (match_operand:VAXint 1 "nonimmediate_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvt<VAXint:isfx><VAXfp:fsfx> %1,%0")
 
 ;; Float-to-fix conversion insns.
 
-(define_insn "fix_trunc<VAXfp:mode><VAXint:mode>2"
+(define_insn_and_split "fix_trunc<VAXfp:mode><VAXint:mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
 	(fix:VAXint (match_operand:VAXfp 1 "general_operand" "gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (fix:VAXint (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*fix_trunc<VAXfp:mode><VAXint:mode>2<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
+	(fix:VAXint (match_operand:VAXfp 1 "general_operand" "gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "cvt<VAXfp:fsfx><VAXint:isfx> %1,%0")
 
 (define_expand "fixuns_trunc<VAXfp:mode><VAXint:mode>2"
@@ -345,49 +787,51 @@
 
 ;;- All kinds of add instructions.
 
-(define_insn "add<mode>3"
+(define_insn_and_split "add<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g,g")
 	(plus:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF,gF")
 		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:VAXfp (match_dup 1)
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*add<mode>3<fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g,g")
+	(plus:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF,gF")
+		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    add<VAXfp:fsfx>2 %2,%0
    add<VAXfp:fsfx>2 %1,%0
    add<VAXfp:fsfx>3 %1,%2,%0")
 
-(define_insn "pushlclsymreg"
-  [(set (match_operand:SI 0 "push_operand" "=g")
-	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "local_symbolic_operand" "i")))]
-  "flag_pic"
-  "pushab %a2[%1]")
-
-(define_insn "pushextsymreg"
-  [(set (match_operand:SI 0 "push_operand" "=g")
-	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "external_symbolic_operand" "i")))]
-  "flag_pic"
-  "pushab %a2[%1]")
-
-(define_insn "movlclsymreg"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "local_symbolic_operand" "i")))]
-  "flag_pic"
-  "movab %a2[%1],%0")
-
-(define_insn "movextsymreg"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(plus:SI (match_operand:SI 1 "register_operand" "%r")
-		 (match_operand:SI 2 "external_symbolic_operand" "i")))]
-  "flag_pic"
-  "movab %a2[%1],%0")
-
-(define_insn "add<mode>3"
+(define_insn_and_split "add<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
 	(plus:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")
 		     (match_operand:VAXint 2 "general_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:VAXint (match_dup 1)
+			(match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*add<mode>3<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
+	(plus:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")
+		     (match_operand:VAXint 2 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "* return vax_output_int_add (insn, operands, <MODE>mode);")
 
 (define_expand "adddi3"
@@ -397,37 +841,109 @@
   "!reload_in_progress"
   "vax_expand_addsub_di_operands (operands, PLUS); DONE;")
 
-(define_insn "adcdi3"
+(define_insn_and_split "adcdi3"
   [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr")
 	(plus:DI (match_operand:DI 1 "general_addsub_di_operand" "%0")
 		 (match_operand:DI 2 "general_addsub_di_operand" "nRr")))]
   "TARGET_QMATH"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:DI (match_dup 1)
+		    (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*adcdi3<ccn>"
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=Rr")
+	(plus:DI (match_operand:DI 1 "general_addsub_di_operand" "%0")
+		 (match_operand:DI 2 "general_addsub_di_operand" "nRr")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "TARGET_QMATH && reload_completed"
   "* return vax_output_int_add (insn, operands, DImode);")
 
 ;; The add-with-carry (adwc) instruction only accepts two operands.
-(define_insn "adddi3_old"
+(define_insn_and_split "adddi3_old"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=ro>,ro>")
 	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
 		 (match_operand:DI 2 "general_operand" "Fsro,Fs")))]
   "!TARGET_QMATH"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:DI (match_dup 1)
+		    (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*adddi3_old<ccn>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=ro>,ro>")
+	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
+		 (match_operand:DI 2 "general_operand" "Fsro,Fs")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_QMATH && reload_completed"
   "* return vax_output_int_add (insn, operands, DImode);")
 
 ;;- All kinds of subtract instructions.
 
-(define_insn "sub<mode>3"
+(define_insn_and_split "sub<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
 	(minus:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF")
 		     (match_operand:VAXfp 2 "general_operand" "gF,gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (minus:VAXfp (match_dup 1)
+			(match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*sub<mode>3<fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
+	(minus:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF")
+		     (match_operand:VAXfp 2 "general_operand" "gF,gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    sub<VAXfp:fsfx>2 %2,%0
    sub<VAXfp:fsfx>3 %2,%1,%0")
 
-(define_insn "sub<mode>3"
+(define_insn_and_split "sub<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(minus:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
 		      (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (minus:VAXint (match_dup 1)
+			 (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*sub<mode>3<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
+	(minus:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
+		      (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
+  "@
+   sub<VAXint:isfx>2 %2,%0
+   sub<VAXint:isfx>3 %2,%1,%0")
+
+(define_insn "*sub<mode>3_cc"
+  [(set (reg:CC VAX_PSL_REGNUM)
+	(compare:CC (match_operand:VAXint 1 "general_operand" "0,nrmT")
+		    (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))
+   (set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
+	(minus:VAXint (match_dup 1)
+		      (match_dup 2)))]
+  "reload_completed"
   "@
    sub<VAXint:isfx>2 %2,%0
    sub<VAXint:isfx>3 %2,%1,%0")
@@ -439,74 +955,192 @@
   "!reload_in_progress"
   "vax_expand_addsub_di_operands (operands, MINUS); DONE;")
 
-(define_insn "sbcdi3"
+(define_insn_and_split "sbcdi3"
   [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=&Rr,&Rr")
 	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
 		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,Rr")))]
   "TARGET_QMATH"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (minus:DI (match_dup 1)
+		     (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*sbcdi3<ccn>"
+  [(set (match_operand:DI 0 "nonimmediate_addsub_di_operand" "=&Rr,&Rr")
+	(minus:DI (match_operand:DI 1 "general_addsub_di_operand" "0,I")
+		  (match_operand:DI 2 "general_addsub_di_operand" "nRr,Rr")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "TARGET_QMATH && reload_completed"
   "* return vax_output_int_subtract (insn, operands, DImode);")
 
 ;; The subtract-with-carry (sbwc) instruction only takes two operands.
-(define_insn "subdi3_old"
+(define_insn_and_split "subdi3_old"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=or>,or>")
 	(minus:DI (match_operand:DI 1 "general_operand" "0,or>")
 		  (match_operand:DI 2 "general_operand" "Fsor,Fs")))]
   "!TARGET_QMATH"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (minus:DI (match_dup 1)
+		     (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*subdi3_old<ccn>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=or>,or>")
+	(minus:DI (match_operand:DI 1 "general_operand" "0,or>")
+		  (match_operand:DI 2 "general_operand" "Fsor,Fs")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_QMATH && reload_completed"
   "* return vax_output_int_subtract (insn, operands, DImode);")
 
 ;;- Multiply instructions.
 
-(define_insn "mul<mode>3"
+(define_insn_and_split "mul<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g,g")
 	(mult:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF,gF")
 		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (mult:VAXfp (match_dup 1)
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*mul<mode>3<fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g,g")
+	(mult:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF,gF")
+		    (match_operand:VAXfp 2 "general_operand" "gF,0,gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    mul<VAXfp:fsfx>2 %2,%0
    mul<VAXfp:fsfx>2 %1,%0
    mul<VAXfp:fsfx>3 %1,%2,%0")
 
-(define_insn "mul<mode>3"
+(define_insn_and_split "mul<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(mult:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
 		     (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (mult:VAXint (match_dup 1)
+			(match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*mul<mode>3<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
+	(mult:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
+		     (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    mul<VAXint:isfx>2 %2,%0
    mul<VAXint:isfx>2 %1,%0
    mul<VAXint:isfx>3 %1,%2,%0")
 
-(define_insn "mulsidi3"
+(define_insn_and_split "mulsidi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
-	(mult:DI (sign_extend:DI
-		  (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
-		 (sign_extend:DI
-		  (match_operand:SI 2 "nonimmediate_operand" "nrmT"))))]
+	(mult:DI
+	  (sign_extend:DI (match_operand:SI 1 "general_operand" "nrmT"))
+	  (sign_extend:DI (match_operand:SI 2 "general_operand" "nrmT"))))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (mult:DI
+	     (sign_extend:DI (match_dup 1))
+	     (sign_extend:DI (match_dup 2))))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*mulsidi3<ccn><ccnz><ccz>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(mult:DI
+	  (sign_extend:DI (match_operand:SI 1 "general_operand" "nrmT"))
+	  (sign_extend:DI (match_operand:SI 2 "general_operand" "nrmT"))))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "emul %1,%2,$0,%0")
 
-(define_insn ""
+(define_insn_and_split "*maddsidi4"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(plus:DI
-	 (mult:DI (sign_extend:DI
-		   (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
-		  (sign_extend:DI
-		   (match_operand:SI 2 "nonimmediate_operand" "nrmT")))
-	 (sign_extend:DI (match_operand:SI 3 "nonimmediate_operand" "g"))))]
+	  (mult:DI
+	    (sign_extend:DI (match_operand:SI 1 "general_operand" "nrmT"))
+	    (sign_extend:DI (match_operand:SI 2 "general_operand" "nrmT")))
+	  (sign_extend:DI (match_operand:SI 3 "general_operand" "g"))))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:DI
+	     (mult:DI
+	       (sign_extend:DI (match_dup 1))
+	       (sign_extend:DI (match_dup 2)))
+	     (sign_extend:DI (match_dup 3))))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*maddsidi4_2<ccn><ccnz><ccz>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(plus:DI
+	  (mult:DI
+	    (sign_extend:DI (match_operand:SI 1 "general_operand" "nrmT"))
+	    (sign_extend:DI (match_operand:SI 2 "general_operand" "nrmT")))
+	  (sign_extend:DI (match_operand:SI 3 "nonimmediate_operand" "g"))))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "emul %1,%2,%3,%0")
 
 ;; 'F' constraint means type CONST_DOUBLE
-(define_insn ""
+(define_insn_and_split "*maddsidi4_const"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(plus:DI
-	 (mult:DI (sign_extend:DI
-		   (match_operand:SI 1 "nonimmediate_operand" "nrmT"))
-		  (sign_extend:DI
-		   (match_operand:SI 2 "nonimmediate_operand" "nrmT")))
-	 (match_operand:DI 3 "immediate_operand" "F")))]
+	  (mult:DI
+	    (sign_extend:DI (match_operand:SI 1 "general_operand" "nrmT"))
+	    (sign_extend:DI (match_operand:SI 2 "general_operand" "nrmT")))
+	  (match_operand:DI 3 "immediate_operand" "F")))]
   "GET_CODE (operands[3]) == CONST_DOUBLE
-    && CONST_DOUBLE_HIGH (operands[3]) == (CONST_DOUBLE_LOW (operands[3]) >> 31)"
+   && CONST_DOUBLE_HIGH (operands[3]) == (CONST_DOUBLE_LOW (operands[3]) >> 31)"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:DI
+	     (mult:DI
+	       (sign_extend:DI (match_dup 1))
+	       (sign_extend:DI (match_dup 2)))
+	     (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*maddsidi4_const_2<ccn><ccnz><ccz>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(plus:DI
+	  (mult:DI
+	    (sign_extend:DI (match_operand:SI 1 "general_operand" "nrmT"))
+	    (sign_extend:DI (match_operand:SI 2 "general_operand" "nrmT")))
+	  (match_operand:DI 3 "immediate_operand" "F")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "GET_CODE (operands[3]) == CONST_DOUBLE
+   && CONST_DOUBLE_HIGH (operands[3]) == (CONST_DOUBLE_LOW (operands[3]) >> 31)
+   && reload_completed"
   "*
 {
   if (CONST_DOUBLE_HIGH (operands[3]))
@@ -516,35 +1150,86 @@
 
 ;;- Divide instructions.
 
-(define_insn "div<mode>3"
+(define_insn_and_split "div<mode>3"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
 	(div:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF")
 		   (match_operand:VAXfp 2 "general_operand" "gF,gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (div:VAXfp (match_dup 1)
+		      (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*div<mode>3<fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g,g")
+	(div:VAXfp (match_operand:VAXfp 1 "general_operand" "0,gF")
+		   (match_operand:VAXfp 2 "general_operand" "gF,gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    div<VAXfp:fsfx>2 %2,%0
    div<VAXfp:fsfx>3 %2,%1,%0")
 
-(define_insn "div<mode>3"
+(define_insn_and_split "div<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(div:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
 		    (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (div:VAXint (match_dup 1)
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*div<mode>3<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
+	(div:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
+		    (match_operand:VAXint 2 "general_operand" "nrmT,nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    div<VAXint:isfx>2 %2,%0
    div<VAXint:isfx>3 %2,%1,%0")
 
-;This is left out because it is very slow;
-;we are better off programming around the "lack" of this insn.
-;(define_insn "divmoddisi4"
-;  [(set (match_operand:SI 0 "general_operand" "=g")
-;	(div:SI (match_operand:DI 1 "general_operand" "g")
-;		(match_operand:SI 2 "general_operand" "g")))
-;   (set (match_operand:SI 3 "general_operand" "=g")
-;	(mod:SI (match_operand:DI 1 "general_operand" "g")
-;		(match_operand:SI 2 "general_operand" "g")))]
-;  ""
-;  "ediv %2,%1,%0,%3")
+;; This is left out because it is very slow;
+;; we are better off programming around the "lack" of this insn.
+;;(define_insn_and_split "divmoddisi4"
+;;  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+;;	(div:SI (match_operand:DI 1 "general_operand" "g")
+;;		(match_operand:SI 2 "general_operand" "g")))
+;;   (set (match_operand:SI 3 "nonimmediate_operand" "=g")
+;;	(mod:SI (match_dup 1)
+;;		(match_dup 2)))]
+;;  ""
+;;  "#"
+;;  "reload_completed"
+;;  [(parallel
+;;     [(set (match_dup 0)
+;;	   (div:SI (match_dup 1)
+;;		   (match_dup 2)))
+;;      (set (match_dup 3)
+;;	   (mod:SI (match_dup 1)
+;;		   (match_dup 2)))
+;;      (clobber (reg:CC VAX_PSL_REGNUM))])]
+;;  "")
+;;
+;;(define_insn "*divmoddisi4<ccn><ccnz><ccz>"
+;;  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+;;	(div:SI (match_operand:DI 1 "general_operand" "g")
+;;		(match_operand:SI 2 "general_operand" "g")))
+;;   (set (match_operand:SI 3 "nonimmediate_operand" "=g")
+;;	(mod:SI (match_dup 1)
+;;		(match_dup 2)))
+;;   (clobber (reg:CC VAX_PSL_REGNUM))]
+;;  "reload_completed"
+;;  "ediv %2,%1,%0,%3")
 
 ;; Bit-and on the VAX is done with a clear-bits insn.
 (define_expand "and<mode>3"
@@ -570,11 +1255,29 @@
     operands[1] = expand_unop (<MODE>mode, one_cmpl_optab, op1, 0, 1);
 }")
 
-(define_insn "*and<mode>"
+(define_insn_and_split "*and<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
-	(and:VAXint (not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT,nrmT"))
+	(and:VAXint (not:VAXint
+		      (match_operand:VAXint 1 "general_operand" "nrmT,nrmT"))
 		    (match_operand:VAXint 2 "general_operand" "0,nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (and:VAXint (not:VAXint
+			 (match_dup 1))
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*and<mode>3_2<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
+	(and:VAXint (not:VAXint
+		      (match_operand:VAXint 1 "general_operand" "nrmT,nrmT"))
+		    (match_operand:VAXint 2 "general_operand" "0,nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    bic<VAXint:isfx>2 %1,%0
    bic<VAXint:isfx>3 %1,%2,%0")
@@ -582,25 +1285,82 @@
 ;; The following used to be needed because constant propagation can
 ;; create them starting from the bic insn patterns above.  This is no
 ;; longer a problem.  However, having these patterns allows optimization
-;; opportunities in combine.c.
+;; opportunities in combine.cc.
 
-(define_insn "*and<mode>_const_int"
+(define_insn_and_split "*and<mode>3_const_int"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
 	(and:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
 		    (match_operand:VAXint 2 "const_int_operand" "n,n")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (and:VAXint (match_dup 1)
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*and<mode>3_2_const_int<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
+	(and:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT")
+		    (match_operand:VAXint 2 "const_int_operand" "n,n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    bic<VAXint:isfx>2 %<VAXint:iprefx>2,%0
    bic<VAXint:isfx>3 %<VAXint:iprefx>2,%1,%0")
 
+;; We have no direct AND operation and consequently the RTL sequence
+;; the "and<mode>3" pattern produces does not match the instruction
+;; the "*bit<mode>" pattern does for the purpose of the compare
+;; elimination pass.  Try to get rid of the extra operation by hand
+;; and where the sequence is used to set the condition codes only
+;; convert MCOM/BIC => BIT.
+(define_peephole2
+  [(parallel
+     [(set (match_operand:VAXint 0 "register_operand")
+	   (not:VAXint (match_operand:VAXint 1 "general_operand")))
+      (clobber (reg:CC VAX_PSL_REGNUM))])
+   (parallel
+     [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	   (compare:VAXccnz
+	     (and:VAXint (not:VAXint (match_dup 0))
+			 (match_operand:VAXint 3 "general_operand"))
+	     (const_int 0)))
+      (set (match_operand:VAXint 2 "register_operand")
+	   (and:VAXint (not:VAXint (match_dup 0))
+		       (match_dup 3)))])]
+  "peep2_reg_dead_p (2, operands[0]) && peep2_reg_dead_p (2, operands[2])"
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz
+	  (and:VAXint (match_dup 1)
+		      (match_dup 3))
+	  (const_int 0)))]
+  "")
 
 ;;- Bit set instructions.
 
-(define_insn "ior<mode>3"
+(define_insn_and_split "ior<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(ior:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
 		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (ior:VAXint (match_dup 1)
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*ior<mode>3<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
+	(ior:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    bis<VAXint:isfx>2 %2,%0
    bis<VAXint:isfx>2 %1,%0
@@ -608,35 +1368,97 @@
 
 ;;- xor instructions.
 
-(define_insn "xor<mode>3"
+(define_insn_and_split "xor<mode>3"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
 	(xor:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
 		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (xor:VAXint (match_dup 1)
+		       (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*xor<mode>3<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g,g")
+	(xor:VAXint (match_operand:VAXint 1 "general_operand" "0,nrmT,nrmT")
+		    (match_operand:VAXint 2 "general_operand" "nrmT,0,nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "@
    xor<VAXint:isfx>2 %2,%0
    xor<VAXint:isfx>2 %1,%0
    xor<VAXint:isfx>3 %2,%1,%0")
-
 
-(define_insn "neg<mode>2"
+(define_insn_and_split "neg<mode>2"
   [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
 	(neg:VAXfp (match_operand:VAXfp 1 "general_operand" "gF")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (neg:VAXfp (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*neg<mode>2<fccn><fccnz><fccz>"
+  [(set (match_operand:VAXfp 0 "nonimmediate_operand" "=g")
+	(neg:VAXfp (match_operand:VAXfp 1 "general_operand" "gF")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "mneg<VAXfp:fsfx> %1,%0")
 
-(define_insn "neg<mode>2"
+(define_insn_and_split "neg<mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
 	(neg:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (neg:VAXint (match_dup 1)))
+	 (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*neg<mode>2<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
+	(neg:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "mneg<VAXint:isfx> %1,%0")
 
-(define_insn "one_cmpl<mode>2"
+(define_insn "*neg<mode>2_cc"
+  [(set (reg:CC VAX_PSL_REGNUM)
+	(compare:CC (const_int 0)
+		    (neg:VAXint
+		      (match_operand:VAXint 1 "general_operand" "0,nrmT"))))
+   (set (match_operand:VAXint 0 "nonimmediate_operand" "=g,g")
+	(neg:VAXint (match_dup 1)))]
+  "reload_completed"
+  "mneg<VAXint:isfx> %1,%0")
+
+(define_insn_and_split "one_cmpl<mode>2"
   [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
 	(not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))]
   ""
-  "mcom<VAXint:isfx> %1,%0")
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (not:VAXint (match_dup 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
 
+(define_insn "*one_cmpl<mode>2<ccn><ccnz><ccz>"
+  [(set (match_operand:VAXint 0 "nonimmediate_operand" "=g")
+	(not:VAXint (match_operand:VAXint 1 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
+  "mcom<VAXint:isfx> %1,%0")
 
 ;; Arithmetic right shift on the VAX works by negating the shift count,
 ;; then emitting a right shift with the shift count negated.  This means
@@ -650,29 +1472,74 @@
   ""
   "
 {
-  if (! CONST_INT_P (operands[2]))
+  if (! CONST_INT_P(operands[2]))
     operands[2] = gen_rtx_NEG (QImode, negate_rtx (QImode, operands[2]));
 }")
 
-(define_insn ""
+(define_insn_and_split "*ashlnegsi3_const_int"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (ashiftrt:SI (match_dup 1)
+			(match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*ashlnegsi3_const_int_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
+		     (match_operand:QI 2 "const_int_operand" "n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "ashl $%n2,%1,%0")
 
-(define_insn ""
+(define_insn_and_split "*ashlnegsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (ashiftrt:SI (match_dup 1)
+			(neg:QI (match_dup 2))))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*ashlnegsi3_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
+		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "ashl %2,%1,%0")
 
-(define_insn "ashlsi3"
+(define_insn_and_split "ashlsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
 		   (match_operand:QI 2 "general_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (ashift:SI (match_dup 1)
+		      (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*ashlsi3<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
+		   (match_operand:QI 2 "general_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
   if (operands[2] == const1_rtx && rtx_equal_p (operands[0], operands[1]))
@@ -709,18 +1576,48 @@
   operands[2] = gen_rtx_NEG (QImode, negate_rtx (QImode, operands[2]));
 }")
 
-(define_insn "ashldi3"
+(define_insn_and_split "ashldi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(ashift:DI (match_operand:DI 1 "general_operand" "g")
 		   (match_operand:QI 2 "general_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (ashift:DI (match_dup 1)
+		      (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*ashldi3<ccn><ccnz><ccz>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(ashift:DI (match_operand:DI 1 "general_operand" "g")
+		   (match_operand:QI 2 "general_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "ashq %2,%D1,%0")
 
-(define_insn ""
+(define_insn_and_split "*ashlnegdi3"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
 	(ashiftrt:DI (match_operand:DI 1 "general_operand" "g")
 		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (ashiftrt:DI (match_dup 1)
+			(neg:QI (match_dup 2))))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*ashlnegdi3_2<ccn><ccnz><ccz>"
+  [(set (match_operand:DI 0 "nonimmediate_operand" "=g")
+	(ashiftrt:DI (match_operand:DI 1 "general_operand" "g")
+		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "ashq %2,%D1,%0")
 
 ;; We used to have expand_shift handle logical right shifts by using extzv,
@@ -733,7 +1630,7 @@
 	(minus:QI (const_int 32)
 		  (match_dup 4)))
    (set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "general_operand" "g")
+	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
 			 (match_dup 3)
 			 (match_operand:SI 2 "register_operand" "g")))]
   ""
@@ -741,10 +1638,6 @@
 {
   operands[3] = gen_reg_rtx (QImode);
   operands[4] = gen_lowpart (QImode, operands[2]);
-  operands[4] = gen_rtx_MINUS (QImode, GEN_INT (32), operands[4]);
-  emit_move_insn (operands[3], operands[4]);
-  emit_insn (gen_extzv (operands[0], operands[1], operands[3], operands[2]));
-  DONE;
 }")
 
 ;; Rotate right on the VAX works by negating the shift count.
@@ -759,207 +1652,300 @@
     operands[2] = gen_rtx_NEG (QImode, negate_rtx (QImode, operands[2]));
 }")
 
-(define_insn "rotlsi3"
+(define_insn_and_split "rotlsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(rotate:SI (match_operand:SI 1 "general_operand" "nrmT")
 		   (match_operand:QI 2 "general_operand" "g")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (rotate:SI (match_dup 1)
+		      (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*rotlsi3<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(rotate:SI (match_operand:SI 1 "general_operand" "nrmT")
+		   (match_operand:QI 2 "general_operand" "g")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "rotl %2,%1,%0")
 
-(define_insn ""
+(define_insn_and_split "*rotrsi3_const_int"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (rotatert:SI (match_dup 1)
+			(match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*rotrsi3_const_int_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
+		     (match_operand:QI 2 "const_int_operand" "n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "rotl %R2,%1,%0")
 
-(define_insn ""
+(define_insn_and_split "*rotrnegsi3"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
 		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (rotatert:SI (match_dup 1)
+			(neg:QI (match_dup 2))))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*rotrnegsi3_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "general_operand" "nrmT")
+		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "rotl %2,%1,%0")
 
-;This insn is probably slower than a multiply and an add.
-;(define_insn ""
-;  [(set (match_operand:SI 0 "general_operand" "=g")
-;	(mult:SI (plus:SI (match_operand:SI 1 "general_operand" "g")
-;			  (match_operand:SI 2 "general_operand" "g"))
-;		 (match_operand:SI 3 "general_operand" "g")))]
-;  ""
-;  "index %1,$0x80000000,$0x7fffffff,%3,%2,%0")
+;; This insn is probably slower than a multiply and an add.
+;;(define_insn_and_split "*amulsi4"
+;;  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+;;	(mult:SI (plus:SI (match_operand:SI 1 "general_operand" "g")
+;;			  (match_operand:SI 2 "general_operand" "g"))
+;;		 (match_operand:SI 3 "general_operand" "g")))]
+;;  ""
+;;  "#"
+;;  "reload_completed"
+;;  [(parallel
+;;     [(set (match_dup 0)
+;;	   (mult:SI (plus:SI (match_dup 1)
+;;			     (match_dup 2))
+;;		    (match_dup 3)))
+;;      (clobber (reg:CC VAX_PSL_REGNUM))])]
+;;  "")
+;;
+;;(define_insn "*amulsi4_2<ccn><ccnz><ccz>"
+;;  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+;;	(mult:SI (plus:SI (match_operand:SI 1 "general_operand" "g")
+;;			  (match_operand:SI 2 "general_operand" "g"))
+;;		 (match_operand:SI 3 "general_operand" "g")))
+;;   (clobber (reg:CC VAX_PSL_REGNUM))]
+;;  "reload_completed"
+;;  "index %1,$0x80000000,$0x7fffffff,%3,%2,%0")
 
 ;; Special cases of bit-field insns which we should
 ;; recognize in preference to the general case.
-;; These handle aligned 8-bit and 16-bit fields,
-;; which can usually be done with move instructions.
+;; These handle aligned 8-bit and 16-bit fields
+;; that can be done with move or convert instructions.
 
-;; netbsd changed this to REG_P (operands[0]) || (MEM_P (operands[0]) && ...
-;; but gcc made it just !MEM_P (operands[0]) || ...
-
-(define_insn ""
-  [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+ro")
+(define_insn_and_split "*insv_aligned"
+  [(set (zero_extract:SI (match_operand:SI 0 "nonimmediate_operand" "+ro")
 			 (match_operand:QI 1 "const_int_operand" "n")
 			 (match_operand:SI 2 "const_int_operand" "n"))
 	(match_operand:SI 3 "general_operand" "g"))]
-   "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
+  "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
-   && (REG_P (operands[0])
-       || (MEM_P (operands[0])
-          && ! mode_dependent_address_p (XEXP (operands[0], 0),
-				       MEM_ADDR_SPACE (operands[0]))))"
+   && (!MEM_P (operands[0])
+       || ((!flag_pic
+	    || vax_acceptable_pic_operand_p (XEXP (operands[0], 0),
+					     true, true))
+	   && !mode_dependent_address_p (XEXP (operands[0], 0),
+					 MEM_ADDR_SPACE (operands[0]))))
+   && (!(REG_P (operands[0])
+	 || (SUBREG_P (operands[0]) && REG_P (SUBREG_REG (operands[0]))))
+       || INTVAL (operands[2]) == 0)"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (zero_extract:SI (match_dup 0)
+			    (match_dup 1)
+			    (match_dup 2))
+	   (match_dup 3))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*insv_aligned_2<ccn><ccnz><ccz>"
+  [(set (zero_extract:SI (match_operand:SI 0 "nonimmediate_operand" "+ro")
+			 (match_operand:QI 1 "const_int_operand" "n")
+			 (match_operand:SI 2 "const_int_operand" "n"))
+	(match_operand:SI 3 "general_operand" "g"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
+   && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
+   && (!MEM_P (operands[0])
+       || ((!flag_pic
+	    || vax_acceptable_pic_operand_p (XEXP (operands[0], 0),
+					     true, true))
+	   && !mode_dependent_address_p (XEXP (operands[0], 0),
+					 MEM_ADDR_SPACE (operands[0]))))
+   && (!(REG_P (operands[0])
+	 || (SUBREG_P (operands[0]) && REG_P (SUBREG_REG (operands[0]))))
+       || INTVAL (operands[2]) == 0)
+   && reload_completed"
   "*
 {
-  if (REG_P (operands[0]))
-    {
-      if (INTVAL (operands[2]) != 0)
-	return \"insv %3,%2,%1,%0\";
-    }
-  else
+  if (!REG_P (operands[0]))
     operands[0]
       = adjust_address (operands[0],
 			INTVAL (operands[1]) == 8 ? QImode : HImode,
 			INTVAL (operands[2]) / 8);
+  else
+    gcc_assert (INTVAL (operands[2]) == 0);
 
-  CC_STATUS_INIT;
   if (INTVAL (operands[1]) == 8)
     return \"movb %3,%0\";
   return \"movw %3,%0\";
 }")
 
-;;
-;; Register source, field width is either 8 or 16, field start
-;; is zero - simple, this is a mov[bl].
-;;
-(define_insn "*extzvQISI"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
-			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")))]
-  "INTVAL (operands[3]) == 0
-    && INTVAL (operands[2]) == GET_MODE_BITSIZE ( QImode )"
-  "movzbl %1, %0"
-)
-
-(define_insn "*extzvHISI"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
-			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")))]
-  "INTVAL (operands[3]) == 0
-    && INTVAL (operands[2]) == GET_MODE_BITSIZE ( HImode )"
-  "movzwl %1, %0"
-)
-
-;;
-;; Register source, field width is the entire register
-;;
-(define_insn "*extzvSISI"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
-			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")
-
-			 ))]
-  "INTVAL (operands[3]) == 0
-   && INTVAL (operands[2]) == GET_MODE_BITSIZE ( SImode )"
-  "*
-{
-  if (rtx_equal_p (operands[0], operands[1]))
-    return \"\";  /* no-op */
-  return \"movl %1,%0\";
-}")
-
-;; Register source, non-zero field start is handled elsewhere
-
-;; Offsettable memory, field width 8 or 16, field start on
-;; boundary matching the field width.
-
-(define_insn "*extzvQISI2"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "memory_operand" "o")
-			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")))]
-  "INTVAL (operands[2]) == 8
-   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && ! mode_dependent_address_p (XEXP (operands[1], 0),
-				  MEM_ADDR_SPACE (operands[1]))"
-  "*
-{
-  operands[1]
-    = adjust_address (operands[1],
-		      QImode,
-		      INTVAL (operands[3]) / 8);
-  return \"movzbl %1,%0\";
-}")
-
-(define_insn "*extzvHISI2"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(zero_extract:SI (match_operand:SI 1 "memory_operand" "o")
-			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")))]
-  "INTVAL (operands[2]) == 16
-   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && ! mode_dependent_address_p (XEXP (operands[1], 0),
-				  MEM_ADDR_SPACE (operands[1]))"
-  "*
-{
-  operands[1]
-    = adjust_address (operands[1],
-                      HImode,
-                      INTVAL (operands[3]) / 8);
-  return \"movzwl %1,%0\";
-}")
-
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
+(define_insn_and_split "*extzv_aligned"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
    && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
-   && (REG_P (operands[1])
-       || (MEM_P (operands[1])
-          && ! mode_dependent_address_p (XEXP (operands[1], 0),
-				      MEM_ADDR_SPACE (operands[1]))))"
+   && (!MEM_P (operands[1])
+       || ((!flag_pic
+	    || vax_acceptable_pic_operand_p (XEXP (operands[1], 0),
+					     true, true))
+	   && !mode_dependent_address_p (XEXP (operands[1], 0),
+					 MEM_ADDR_SPACE (operands[1]))))
+   && (!(REG_P (operands[1])
+	 || (SUBREG_P (operands[1]) && REG_P (SUBREG_REG (operands[1]))))
+       || INTVAL (operands[3]) == 0)"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (zero_extract:SI (match_dup 1)
+			    (match_dup 2)
+			    (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extzv_aligned_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
+   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
+   && (!MEM_P (operands[1])
+       || ((!flag_pic
+	    || vax_acceptable_pic_operand_p (XEXP (operands[1], 0),
+					     true, true))
+	   && !mode_dependent_address_p (XEXP (operands[1], 0),
+					 MEM_ADDR_SPACE (operands[1]))))
+   && (!(REG_P (operands[1])
+	 || (SUBREG_P (operands[1]) && REG_P (SUBREG_REG (operands[1]))))
+       || INTVAL (operands[3]) == 0)
+   && reload_completed"
   "*
 {
-  if (REG_P (operands[1]))
-    {
-      if (INTVAL (operands[3]) != 0)
-	return \"extv %3,%2,%1,%0\";
-    }
-  else
+  if (!REG_P (operands[1]))
     operands[1]
       = adjust_address (operands[1],
 			INTVAL (operands[2]) == 8 ? QImode : HImode,
 			INTVAL (operands[3]) / 8);
+  else
+    gcc_assert (INTVAL (operands[3]) == 0);
+
+  if (INTVAL (operands[2]) == 8)
+    return \"movzbl %1,%0\";
+  return \"movzwl %1,%0\";
+}")
+
+(define_insn_and_split "*extv_aligned"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(sign_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")))]
+  "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
+   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
+   && (!MEM_P (operands[1])
+       || ((!flag_pic
+	    || vax_acceptable_pic_operand_p (XEXP (operands[1], 0),
+					     true, true))
+	   && !mode_dependent_address_p (XEXP (operands[1], 0),
+					 MEM_ADDR_SPACE (operands[1]))))
+   && (!(REG_P (operands[1])
+	 || (SUBREG_P (operands[1]) && REG_P (SUBREG_REG (operands[1]))))
+       || INTVAL (operands[3]) == 0)"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (sign_extract:SI (match_dup 1)
+			    (match_dup 2)
+			    (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extv_aligned_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(sign_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
+			 (match_operand:QI 2 "const_int_operand" "n")
+			 (match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "(INTVAL (operands[2]) == 8 || INTVAL (operands[2]) == 16)
+   && INTVAL (operands[3]) % INTVAL (operands[2]) == 0
+   && (!MEM_P (operands[1])
+       || ((!flag_pic
+	    || vax_acceptable_pic_operand_p (XEXP (operands[1], 0),
+					     true, true))
+	   && !mode_dependent_address_p (XEXP (operands[1], 0),
+					 MEM_ADDR_SPACE (operands[1]))))
+   && (!(REG_P (operands[1])
+	 || (SUBREG_P (operands[1]) && REG_P (SUBREG_REG (operands[1]))))
+       || INTVAL (operands[3]) == 0)
+   && reload_completed"
+  "*
+{
+  if (!REG_P (operands[1]))
+    operands[1]
+      = adjust_address (operands[1],
+			INTVAL (operands[2]) == 8 ? QImode : HImode,
+			INTVAL (operands[3]) / 8);
+  else
+    gcc_assert (INTVAL (operands[3]) == 0);
 
   if (INTVAL (operands[2]) == 8)
     return \"cvtbl %1,%0\";
   return \"cvtwl %1,%0\";
 }")
 
-;; Register-only SImode cases of bit-field insns.
+;; Register and non-offsettable-memory SImode cases of bit-field insns.
 
-(define_insn ""
-  [(set (cc0)
-	(compare
-	 (sign_extract:SI (match_operand:SI 0 "register_operand" "r")
+(define_insn "*cmpv_<mode>"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc
+	 (sign_extract:SI (match_operand:SI 0 "nonimmediate_operand" "ro")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
 	 (match_operand:SI 3 "general_operand" "nrmT")))]
-  ""
+  "reload_completed"
   "cmpv %2,%1,%0,%3")
 
-(define_insn ""
-  [(set (cc0)
-	(compare
-	 (zero_extract:SI (match_operand:SI 0 "register_operand" "r")
+(define_insn "*cmpzv_<mode>"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc
+	 (zero_extract:SI (match_operand:SI 0 "nonimmediate_operand" "ro")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
 	 (match_operand:SI 3 "general_operand" "nrmT")))]
-  ""
+  "reload_completed"
   "cmpzv %2,%1,%0,%3")
 
 ;; When the field position and size are constant and the destination
@@ -967,12 +1953,29 @@
 ;; by a bicl or sign extension.  Because we might end up choosing ext[z]v
 ;; anyway, we can't allow immediate values for the primary source operand.
 
-(define_insn ""
+(define_insn_and_split "*extv_non_const"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
+	(sign_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
 			 (match_operand:QI 2 "general_operand" "g")
 			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (sign_extract:SI (match_dup 1)
+			    (match_dup 2)
+			    (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extv_non_const_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(sign_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
+			 (match_operand:QI 2 "general_operand" "g")
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
   if (! CONST_INT_P (operands[3]) || ! CONST_INT_P (operands[2])
@@ -984,26 +1987,34 @@
   return \"rotl %R3,%1,%0\;cvtwl %0,%0\";
 }")
 
-;; When the field position and size are constant and the destination
-;; is a register, extv and extzv are much slower than a rotate followed
-;; by a bicl or sign extension.  Because we might end up choosing ext[z]v
-;; anyway, we can't allow immediate values for the primary source operand.
+(define_insn_and_split "*extzv_non_const"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
+			 (match_operand:QI 2 "general_operand" "g")
+			 (match_operand:SI 3 "general_operand" "nrmT")))]
+  ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (zero_extract:SI (match_dup 1)
+			    (match_dup 2)
+			    (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
 
-;; Because some of the instruction sequences generated by this pattern
-;; overwrite the output operand part way through, the output operand
-;; must be marked earlyclobber, may only be a register or memory
-;; operand and must not have any side effects (e.g. pre/post increment)
-;;
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&ro")
-	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
-			 (match_operand:QI 2 "const_int_operand" "n")
-			 (match_operand:SI 3 "const_int_operand" "n")
-
-			 ))]
-  "INTVAL (operands[3]) != 0"
+(define_insn "*extzv_non_const_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
+			 (match_operand:QI 2 "general_operand" "g")
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
+  if (! CONST_INT_P (operands[3]) || ! CONST_INT_P (operands[2])
+      || ! REG_P (operands[0]))
+    return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
   if (INTVAL (operands[2]) == 16)
@@ -1026,69 +2037,61 @@
 ;; nonimmediate_operand is used to make sure that mode-ambiguous cases
 ;; don't match these (and therefore match the cases above instead).
 
-(define_insn ""
-  [(set (cc0)
-	(compare
+(define_insn "*cmpv_2_<mode>"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc
 	 (sign_extract:SI (match_operand:QI 0 "memory_operand" "m")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
 	 (match_operand:SI 3 "general_operand" "nrmT")))]
-  ""
+  "reload_completed"
   "cmpv %2,%1,%0,%3")
 
-(define_insn ""
-  [(set (cc0)
-	(compare
-	 (zero_extract:SI (match_operand:QI 0 "nonimmediate_operand" "rm")
+(define_insn "*cmpzv_2_<mode>"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc
+	 (zero_extract:SI (match_operand:QI 0 "memory_operand" "m")
 			  (match_operand:QI 1 "general_operand" "g")
 			  (match_operand:SI 2 "general_operand" "nrmT"))
 	 (match_operand:SI 3 "general_operand" "nrmT")))]
-  ""
+  "reload_completed"
   "cmpzv %2,%1,%0,%3")
 
 (define_expand "extv"
   [(set (match_operand:SI 0 "general_operand" "")
-	(sign_extract:SI (match_dup 4)
+	(sign_extract:SI (match_operand:SI 1 "general_operand" "")
 			 (match_operand:QI 2 "general_operand" "")
-			 (match_operand:SI 3 "general_operand" ""))
-   )]
+			 (match_operand:SI 3 "general_operand" "")))]
   ""
-  "{
-      /*
-       * If the source operand is a memory reference, and the address
-       * is a symbol, and we're in PIC mode, load the address into a
-       * register.  Don't evaluate the field start or width at this time.
-       */
-      operands[4] = operands[1];
-      if (flag_pic
-       /* && !reload_completed */
-	  && MEM_P (operands[1])
-	  && !mode_dependent_address_p (XEXP (operands[1], 0),
-					MEM_ADDR_SPACE (operands[1]))
-          && SYMBOL_REF_P (XEXP (operands[1], 0))
-	  && !SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0))
-	 )
-	{
-	  rtx address = XEXP (operands[1], 0);
-	  rtx temp = gen_reg_rtx (Pmode);
-	  emit_move_insn (temp, address);
-	  /* copy the original memory reference, replacing the address */
-	  operands[4] = change_address (operands[1], VOIDmode, temp);
-	  set_mem_align (operands[4], MEM_ALIGN (operands[1]));
-	}
-  }"
-)
+  "")
 
-(define_insn ""
+(define_insn_and_split "*extv"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
 			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (sign_extract:SI (match_dup 1)
+			    (match_dup 2)
+			    (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extv_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
+			 (match_operand:QI 2 "general_operand" "g")
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
-  if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
-      || ! CONST_INT_P (operands[3])
+  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
+      || !CONST_INT_P (operands[3])
       || (INTVAL (operands[2]) != 8 && INTVAL (operands[2]) != 16)
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
       || side_effects_p (operands[1])
@@ -1105,79 +2108,42 @@
   [(set (match_operand:SI 0 "general_operand" "")
 	(zero_extract:SI (match_operand:SI 1 "general_operand" "")
 			 (match_operand:QI 2 "general_operand" "")
-			 (match_operand:SI 3 "general_operand" ""))
-   )]
+			 (match_operand:SI 3 "general_operand" "")))]
   ""
-  "{
-    if (CONST_INT_P (operands[1]))
-      {
-	/*
-	 * extzv of a constant doesn't work, so load the constant
-	 * into a register.
-	 */
-	rtx temp = gen_reg_rtx (SImode);
-	emit_move_insn (temp, operands[1]);
-	operands[1] = temp;
-      }
+  "")
 
-
-    /*
-     * If the source operand is a memory reference, and the address
-     * is a symbol, and we're in PIC mode, load the address into a
-     * register.  Don't evaluate the field start or width at this time.
-     */
-    if (flag_pic
-     /*	&& !reload_completed */
-	&& MEM_P (operands[1])
-	&& !mode_dependent_address_p (XEXP (operands[1], 0),
-				      MEM_ADDR_SPACE (operands[1]))
-	&& SYMBOL_REF_P (XEXP (operands[1], 0))
-	&& !SYMBOL_REF_LOCAL_P (XEXP (operands[1], 0))
-       )
-      {
-	rtx address = XEXP (operands[1], 0);
-	rtx temp = gen_reg_rtx (Pmode);
-	emit_move_insn (temp, address);
-	/* copy the original memory reference, replacing the address */
-	operands[1] = change_address (operands[1], VOIDmode, temp);
-	set_mem_align (operands[1], MEM_ALIGN (operands[1]));
-      }
-    else
-      if ((MEM_P (operands[1]) && !CONST_INT_P (operands[2]))
-	  || SUBREG_P (operands[1])
-	 )
-	{
-	  /* Memory addresses for extzv are bytes, so load the source
-	     operand into a register */
-	  rtx temp = gen_reg_rtx (SImode);
-	  emit_move_insn (temp, operands[1]);
-	  operands[1] = temp;
-	}
-      else if (address_operand (operands[1], SImode))
-	{
-	  operands[1] = force_reg (SImode, operands[1]);
-	}
-
-  }"
-)
-
-;;
-;; Operand 1 must not, under any circumstances, be an indexed operand
-;; as extzv computes indices based on the size of a byte.
-;;
-
-(define_insn ""
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
-	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "rQ")
+(define_insn_and_split "*extzv"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:QI 1 "memory_operand" "m")
 			 (match_operand:QI 2 "general_operand" "g")
 			 (match_operand:SI 3 "general_operand" "nrmT")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (zero_extract:SI (match_dup 1)
+			    (match_dup 2)
+			    (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*extzv_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(zero_extract:SI (match_operand:QI 1 "memory_operand" "m")
+			 (match_operand:QI 2 "general_operand" "g")
+			 (match_operand:SI 3 "general_operand" "nrmT")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
-  if (! REG_P (operands[0]) || ! CONST_INT_P (operands[2])
-      || ! CONST_INT_P (operands[3])
+  if (!REG_P (operands[0]) || !CONST_INT_P (operands[2])
+      || !CONST_INT_P (operands[3])
       || INTVAL (operands[2]) + INTVAL (operands[3]) > 32
-      || side_effects_p (operands[1]))
+      || side_effects_p (operands[1])
+      || (MEM_P (operands[1])
+	  && mode_dependent_address_p (XEXP (operands[1], 0),
+				       MEM_ADDR_SPACE (operands[1]))))
     return \"extzv %3,%2,%1,%0\";
   if (INTVAL (operands[2]) == 8)
     return \"rotl %R3,%1,%0\;movzbl %0,%0\";
@@ -1208,40 +2174,39 @@
   return \"rotl %R3,%1,%0\;bicl2 %M2,%0\";
 }")
 
+;; Combine EXTV/CMPL and EXTZV/CMPL sequences where the output of
+;; extraction is used for the comparison only into CMPV and CMPZV
+;; respectively.
+(define_peephole2
+  [(parallel
+     [(set (match_operand:SI 0 "register_operand")
+	   (any_extract:SI (match_operand 1 "general_operand")
+			   (match_operand:QI 2 "general_operand")
+			   (match_operand:SI 3 "general_operand")))
+      (clobber (reg:CC VAX_PSL_REGNUM))])
+   (set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc (match_dup 0)
+		       (match_operand:SI 4 "general_operand")))]
+  "peep2_reg_dead_p (2, operands[0])"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc
+	  (any_extract:SI (match_dup 1)
+			  (match_dup 2)
+			  (match_dup 3))
+	  (match_dup 4)))]
+  "")
+
 (define_expand "insv"
-  [(set (zero_extract:SI (match_dup 4)
+  [(set (zero_extract:SI (match_operand:SI 0 "general_operand" "")
 			 (match_operand:QI 1 "general_operand" "")
 			 (match_operand:SI 2 "general_operand" ""))
 	(match_operand:SI 3 "general_operand" ""))]
   ""
-  "{
-    /*
-     * If the destination operand is a memory reference, and the address
-     * is a symbol, and we're in PIC mode, load the address into a
-     * register.  Don't evaluate the field start or width at this time.
-     */
-    operands[4] = operands[0];
-    if (flag_pic
-     /*	&& !reload_completed */
-	&& MEM_P (operands[0])
-	&& !mode_dependent_address_p (XEXP (operands[0], 0),
-				       MEM_ADDR_SPACE (operands[0]))
-	&& SYMBOL_REF_P (XEXP (operands[0], 0))
-	&& !SYMBOL_REF_LOCAL_P (XEXP (operands[0], 0))
-       )
-      {
-	rtx address = XEXP (operands[0], 0);
-	rtx temp = gen_reg_rtx (Pmode);
-	emit_move_insn (temp, address);
-	/* copy the original memory reference, replacing the address */
-	operands[4] = change_address (operands[0], VOIDmode, temp);
-	set_mem_align (operands[4], MEM_ALIGN (operands[0]));
-      }
+  "")
 
-  }")
-
-(define_insn ""
-  [(set (zero_extract:SI (match_operand:QI 0 "memory_operand" "+g")
+;; This one actually doesn't change CC.
+(define_insn "*insv"
+  [(set (zero_extract:SI (match_operand:QI 0 "memory_operand" "+m")
 			 (match_operand:QI 1 "general_operand" "g")
 			 (match_operand:SI 2 "general_operand" "nrmT"))
 	(match_operand:SI 3 "general_operand" "nrmT"))]
@@ -1271,8 +2236,9 @@
   return \"insv %3,%2,%1,%0\";
 }")
 
-(define_insn ""
-  [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+r")
+;; This one actually doesn't change CC.
+(define_insn "*insv_2"
+  [(set (zero_extract:SI (match_operand:SI 0 "nonimmediate_operand" "+ro")
 			 (match_operand:QI 1 "general_operand" "g")
 			 (match_operand:SI 2 "general_operand" "nrmT"))
 	(match_operand:SI 3 "general_operand" "nrmT"))]
@@ -1289,49 +2255,89 @@
 ;; Conditional jumps
 
 (define_expand "cbranch<mode>4"
-  [(set (cc0)
-        (compare (match_operand:VAXint 1 "nonimmediate_operand" "")
-                 (match_operand:VAXint 2 "general_operand" "")))
+  [(set (pc)
+	(if_then_else
+	  (match_operator 0 "ordered_comparison_operator"
+			  [(match_operand:VAXint 1 "general_operand" "")
+			   (match_operand:VAXint 2 "general_operand" "")])
+	  (label_ref (match_operand 3 "" ""))
+	  (pc)))]
+  ""
+  "")
+
+(define_insn_and_split "*cbranch<VAXint:mode>4_<VAXcc:mode>"
+  [(set (pc)
+	(if_then_else
+	  (match_operator 0 "vax_<VAXcc:mode>_comparison_operator"
+			  [(match_operand:VAXint 1 "general_operand" "nrmT")
+			   (match_operand:VAXint 2 "general_operand" "nrmT")])
+	  (label_ref (match_operand 3 "" ""))
+	  (pc)))]
+  ""
+  "#"
+  "reload_completed"
+  [(set (reg:VAXcc VAX_PSL_REGNUM)
+	(compare:VAXcc (match_dup 1) (match_dup 2)))
    (set (pc)
-        (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
-                                                               (const_int 0)])
-              (label_ref (match_operand 3 "" ""))
-              (pc)))]
- "")
+	(if_then_else
+	  (match_op_dup 0 [(reg:VAXcc VAX_PSL_REGNUM)
+			   (const_int 0)])
+	 (label_ref (match_operand 3 "" ""))
+	 (pc)))]
+  "")
 
 (define_expand "cbranch<mode>4"
-  [(set (cc0)
-        (compare (match_operand:VAXfp 1 "general_operand" "")
-                 (match_operand:VAXfp 2 "general_operand" "")))
-   (set (pc)
-        (if_then_else
-              (match_operator 0 "ordered_comparison_operator" [(cc0)
-                                                               (const_int 0)])
-              (label_ref (match_operand 3 "" ""))
-              (pc)))]
- "")
-
-(define_insn "*branch"
   [(set (pc)
-	(if_then_else (match_operator 0 "ordered_comparison_operator"
-				      [(cc0)
+	(if_then_else
+	  (match_operator 0 "ordered_comparison_operator"
+			  [(match_operand:VAXfp 1 "general_operand" "")
+			   (match_operand:VAXfp 2 "general_operand" "")])
+	  (label_ref (match_operand 3 "" ""))
+	  (pc)))]
+  ""
+  "")
+
+(define_insn_and_split "*cbranch<VAXfp:mode>4_<VAXccnz:mode>"
+  [(set (pc)
+	(if_then_else
+	  (match_operator 0 "vax_<VAXccnz:mode>_comparison_operator"
+			  [(match_operand:VAXfp 1 "general_operand" "gF")
+			   (match_operand:VAXfp 2 "general_operand" "gF")])
+	  (label_ref (match_operand 3 "" ""))
+	  (pc)))]
+  ""
+  "#"
+  "reload_completed"
+  [(set (reg:VAXccnz VAX_PSL_REGNUM)
+	(compare:VAXccnz (match_dup 1) (match_dup 2)))
+   (set (pc)
+	(if_then_else
+ 	  (match_op_dup 0 [(reg:VAXccnz VAX_PSL_REGNUM)
+			   (const_int 0)])
+	  (label_ref (match_operand 3 "" ""))
+	  (pc)))]
+  "")
+
+(define_insn "*branch_<mode>"
+  [(set (pc)
+	(if_then_else (match_operator 0 "vax_<mode>_comparison_operator"
+				      [(reg:VAXcc VAX_PSL_REGNUM)
 				       (const_int 0)])
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
-  ""
-  "j%c0 %l1")
+  "reload_completed"
+  "j%k0 %l1")
 
 ;; Recognize reversed jumps.
-(define_insn "*branch_reversed"
+(define_insn "*branch_<mode>_reversed"
   [(set (pc)
-	(if_then_else (match_operator 0 "ordered_comparison_operator"
-				      [(cc0)
+	(if_then_else (match_operator 0 "vax_<mode>_comparison_operator"
+				      [(reg:VAXcc VAX_PSL_REGNUM)
 				       (const_int 0)])
 		      (pc)
 		      (label_ref (match_operand 1 "" ""))))]
-  ""
-  "j%C0 %l1") ; %C0 negates condition
+  "reload_completed"
+  "j%K0 %l1") ; %K0 negates condition
 
 ;; Recognize jbs, jlbs, jbc and jlbc instructions.  Note that the operand
 ;; of jlbs and jlbc insns are SImode in the hardware.  However, if it is
@@ -1400,7 +2406,7 @@
 
 ;; Normal sob insns.
 
-(define_insn ""
+(define_insn_and_split "*jsobgtr"
   [(set (pc)
 	(if_then_else
 	 (gt (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1412,9 +2418,38 @@
 	(plus:SI (match_dup 0)
 		 (const_int -1)))]
   "!TARGET_UNIX_ASM"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (gt (plus:SI (match_dup 0)
+			 (const_int -1))
+		(const_int 0))
+	    (label_ref (match_dup 1))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int -1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jsobgtr_2"
+  [(set (pc)
+	(if_then_else
+	 (gt (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
+		      (const_int -1))
+	     (const_int 0))
+	 (label_ref (match_operand 1 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int -1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_UNIX_ASM && reload_completed"
   "jsobgtr %0,%l1")
 
-(define_insn ""
+(define_insn_and_split "*jsobgeq"
   [(set (pc)
 	(if_then_else
 	 (ge (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1426,10 +2461,39 @@
 	(plus:SI (match_dup 0)
 		 (const_int -1)))]
   "!TARGET_UNIX_ASM"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (ge (plus:SI (match_dup 0)
+			 (const_int -1))
+		(const_int 0))
+	    (label_ref (match_dup 1))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int -1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jsobgeq_2"
+  [(set (pc)
+	(if_then_else
+	 (ge (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
+		      (const_int -1))
+	     (const_int 0))
+	 (label_ref (match_operand 1 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int -1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_UNIX_ASM && reload_completed"
   "jsobgeq %0,%l1")
 
 ;; Normal aob insns.  Define a version for when operands[1] is a constant.
-(define_insn ""
+(define_insn_and_split "*jaoblss"
   [(set (pc)
 	(if_then_else
 	 (lt (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1441,9 +2505,38 @@
 	(plus:SI (match_dup 0)
 		 (const_int 1)))]
   "!TARGET_UNIX_ASM"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (lt (plus:SI (match_dup 0)
+			 (const_int 1))
+		(match_dup 1))
+	    (label_ref (match_dup 2))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jaoblss_2"
+  [(set (pc)
+	(if_then_else
+	 (lt (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
+		      (const_int 1))
+	     (match_operand:SI 1 "general_operand" "nrmT"))
+	 (label_ref (match_operand 2 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int 1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_UNIX_ASM && reload_completed"
   "jaoblss %1,%0,%l2")
 
-(define_insn ""
+(define_insn_and_split "*jaoblss_const"
   [(set (pc)
 	(if_then_else
 	 (lt (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1454,9 +2547,36 @@
 	(plus:SI (match_dup 0)
 		 (const_int 1)))]
   "!TARGET_UNIX_ASM && CONST_INT_P (operands[1])"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (lt (match_dup 0)
+		(match_dup 1))
+	    (label_ref (match_dup 2))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jaoblss_const_2"
+  [(set (pc)
+	(if_then_else
+	 (lt (match_operand:SI 0 "nonimmediate_operand" "+g")
+	     (match_operand:SI 1 "general_operand" "nrmT"))
+	 (label_ref (match_operand 2 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int 1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_UNIX_ASM && CONST_INT_P (operands[1]) && reload_completed"
   "jaoblss %P1,%0,%l2")
 
-(define_insn ""
+(define_insn_and_split "*jaobleq"
   [(set (pc)
 	(if_then_else
 	 (le (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1468,9 +2588,38 @@
 	(plus:SI (match_dup 0)
 		 (const_int 1)))]
   "!TARGET_UNIX_ASM"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (le (plus:SI (match_dup 0)
+			 (const_int 1))
+		(match_dup 1))
+	    (label_ref (match_dup 2))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jaobleq_2"
+  [(set (pc)
+	(if_then_else
+	 (le (plus:SI (match_operand:SI 0 "nonimmediate_operand" "+g")
+		      (const_int 1))
+	     (match_operand:SI 1 "general_operand" "nrmT"))
+	 (label_ref (match_operand 2 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int 1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_UNIX_ASM && reload_completed"
   "jaobleq %1,%0,%l2")
 
-(define_insn ""
+(define_insn_and_split "*jaobleq_const"
   [(set (pc)
 	(if_then_else
 	 (le (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1481,12 +2630,39 @@
 	(plus:SI (match_dup 0)
 		 (const_int 1)))]
   "!TARGET_UNIX_ASM && CONST_INT_P (operands[1])"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (le (match_dup 0)
+		(match_dup 1))
+	    (label_ref (match_dup 2))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int 1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jaobleq_const_2"
+  [(set (pc)
+	(if_then_else
+	 (le (match_operand:SI 0 "nonimmediate_operand" "+g")
+	     (match_operand:SI 1 "general_operand" "nrmT"))
+	 (label_ref (match_operand 2 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int 1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "!TARGET_UNIX_ASM && CONST_INT_P (operands[1]) && reload_completed"
   "jaobleq %P1,%0,%l2")
 
 ;; Something like a sob insn, but compares against -1.
 ;; This finds `while (foo--)' which was changed to `while (--foo != -1)'.
 
-(define_insn ""
+(define_insn_and_split "*jsobneq_minus_one"
   [(set (pc)
 	(if_then_else
 	 (ne (match_operand:SI 0 "nonimmediate_operand" "+g")
@@ -1497,6 +2673,33 @@
 	(plus:SI (match_dup 0)
 		 (const_int -1)))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (pc)
+	   (if_then_else
+	    (ne (match_dup 0)
+		(const_int 0))
+	    (label_ref (match_dup 1))
+	    (pc)))
+      (set (match_dup 0)
+	   (plus:SI (match_dup 0)
+		    (const_int -1)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*jsobneq_minus_one_2"
+  [(set (pc)
+	(if_then_else
+	 (ne (match_operand:SI 0 "nonimmediate_operand" "+g")
+	     (const_int 0))
+	 (label_ref (match_operand 1 "" ""))
+	 (pc)))
+   (set (match_dup 0)
+	(plus:SI (match_dup 0)
+		 (const_int -1)))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "decl %0\;jgequ %l1")
 
 (define_expand "call_pop"
@@ -1679,14 +2882,14 @@
   "reload_completed"
   [(const_int 0)]
 {
-  /* the return address for the current frame is always at 0x10(%fp) */
-  rtx tmp = plus_constant(Pmode, frame_pointer_rtx, 4 * UNITS_PER_WORD);
-  tmp = gen_rtx_MEM (word_mode, tmp);
+  rtx tmp = RETURN_ADDR_RTX(0, frame_pointer_rtx);
   MEM_VOLATILE_P(tmp) = 1;
   tmp = gen_rtx_SET(tmp, operands[0]);
   emit_insn(tmp);
   DONE;
 })
+
+
 
 (define_insn "nop"
   [(const_int 0)]
@@ -1737,7 +2940,7 @@
       rtx index = gen_reg_rtx (SImode);
       emit_insn (gen_addsi3 (index,
 			     operands[0],
-			     GEN_INT (-INTVAL (operands[1]))));
+			     gen_int_mode (-INTVAL (operands[1]), SImode)));
       operands[0] = index;
     }
 
@@ -1753,40 +2956,131 @@
 ;; This insn is a bit of a lier.  It actually falls through if no case
 ;; matches.  But, we prevent that from ever happening by emitting a jump
 ;; before this, see the define_expand above.
-(define_insn "casesi1"
+(define_insn_and_split "casesi1"
   [(match_operand:SI 1 "const_int_operand" "n")
    (set (pc)
 	(plus:SI (sign_extend:SI
-		  (mem:HI (plus:SI (mult:SI (match_operand:SI 0 "general_operand" "nrmT")
-					    (const_int 2))
-			  (pc))))
+		   (mem:HI (plus:SI
+			     (mult:SI
+			       (match_operand:SI 0 "general_operand" "nrmT")
+			       (const_int 2))
+			     (pc))))
 		 (label_ref:SI (match_operand 2 "" ""))))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(use (match_dup 1))
+      (set (pc)
+	   (plus:SI (sign_extend:SI
+		      (mem:HI (plus:SI
+				(mult:SI
+				  (match_dup 0)
+				  (const_int 2))
+				(pc))))
+		    (label_ref:SI (match_dup 2))))
+      (clobber (reg:CC VAX_PSL_REGNUM))
+      (use (label_ref:SI (match_dup 2)))
+     ])]
+  "")
+
+(define_insn "*casesi1"
+  [(use (match_operand:SI 1 "const_int_operand" "n"))
+   (set (pc)
+	(plus:SI (sign_extend:SI
+		   (mem:HI (plus:SI
+			     (mult:SI
+			       (match_operand:SI 0 "general_operand" "nrmT")
+			       (const_int 2))
+			     (pc))))
+		 (label_ref:SI (match_operand 2 "" ""))))
+   (clobber (reg:CC VAX_PSL_REGNUM))
+   (use (label_ref:SI (match_dup 2)))
+   ]
+  "reload_completed"
   "casel %0,$0,%1")
 
-(define_insn "pushextsym"
+(define_insn_and_split "*pushsym"
   [(set (match_operand:SI 0 "push_operand" "=g")
-	(match_operand:SI 1 "external_symbolic_operand" "i"))]
+	(match_operand:SI 1 "pic_symbolic_operand" "A"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*pushsym_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:SI 1 "pic_symbolic_operand" "A"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "pushab %a1")
 
-(define_insn "movextsym"
+(define_insn_and_split "*movsym"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SI 1 "external_symbolic_operand" "i"))]
+	(match_operand:SI 1 "pic_symbolic_operand" "A"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movsym_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(match_operand:SI 1 "pic_symbolic_operand" "A"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "movab %a1,%0")
 
-(define_insn "pushlclsym"
+(define_insn_and_split "*pushsymreg"
   [(set (match_operand:SI 0 "push_operand" "=g")
-	(match_operand:SI 1 "local_symbolic_operand" "i"))]
-  ""
-  "pushab %a1")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "pic_symbolic_operand" "A")))]
+  "flag_pic"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:SI (match_dup 1)
+		    (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
 
-(define_insn "movlclsym"
+(define_insn "*pushsymreg_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "pic_symbolic_operand" "A")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "flag_pic && reload_completed"
+  "pushab %a2[%1]")
+
+(define_insn_and_split "*movsymreg"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
-	(match_operand:SI 1 "local_symbolic_operand" "i"))]
-  ""
-  "movab %a1,%0")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "pic_symbolic_operand" "A")))]
+  "flag_pic"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (plus:SI (match_dup 1)
+		    (match_dup 2)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movsymreg_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(plus:SI (match_operand:SI 1 "register_operand" "%r")
+		 (match_operand:SI 2 "pic_symbolic_operand" "A")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "flag_pic && reload_completed"
+  "movab %a2[%1],%0")
 
 ;;- load or push effective address
 ;; These come after the move and add/sub patterns
@@ -1796,28 +3090,80 @@
 ;; It does not work to use constraints to distinguish pushes from moves,
 ;; because < matches any autodecrement, not just a push.
 
-(define_insn "pushaddr<mode>"
+(define_insn_and_split "pushaddr<mode>"
   [(set (match_operand:SI 0 "push_operand" "=g")
 	(match_operand:VAXintQHSD 1 "address_operand" "p"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*pushaddr<mode><ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:VAXintQHSD 1 "address_operand" "p"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "pusha<VAXintQHSD:isfx> %a1")
 
-(define_insn "movaddr<mode>"
+(define_insn_and_split "movaddr<mode>"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(match_operand:VAXintQHSD 1 "address_operand" "p"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movaddr<mode><ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(match_operand:VAXintQHSD 1 "address_operand" "p"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "mova<VAXintQHSD:isfx> %a1,%0")
 
-(define_insn "pushaddr<mode>"
+(define_insn_and_split "pushaddr<mode>"
   [(set (match_operand:SI 0 "push_operand" "=g")
 	(match_operand:VAXfp 1 "address_operand" "p"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*pushaddr<mode><ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "push_operand" "=g")
+	(match_operand:VAXfp 1 "address_operand" "p"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "pusha<VAXfp:fsfx> %a1")
 
-(define_insn "movaddr<mode>"
+(define_insn_and_split "movaddr<mode>"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(match_operand:VAXfp 1 "address_operand" "p"))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (match_dup 1))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*movaddr<mode>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
+	(match_operand:VAXfp 1 "address_operand" "p"))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "mova<VAXfp:fsfx> %a1,%0")
 
 ;; These used to be peepholes, but it is more straightforward to do them
@@ -1833,12 +3179,30 @@
 ;; with other operands constant.  This is what the combiner converts the
 ;; above sequences to before attempting to recognize the new insn.
 
-(define_insn ""
+(define_insn_and_split "*andashlnegsi4"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
 	(and:SI (ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
 			     (match_operand:QI 2 "const_int_operand" "n"))
 		(match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[3]) & ~((1 << (32 - INTVAL (operands[2]))) - 1)) == 0"
+  "#"
+  "&& reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (and:SI (ashiftrt:SI (match_dup 1)
+				(match_dup 2))
+		   (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*andashlnegsi4_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
+	(and:SI (ashiftrt:SI (match_operand:SI 1 "general_operand" "nrmT")
+			     (match_operand:QI 2 "const_int_operand" "n"))
+		(match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "(INTVAL (operands[3]) & ~((1 << (32 - INTVAL (operands[2]))) - 1)) == 0
+   && reload_completed"
   "*
 {
   unsigned long mask1 = INTVAL (operands[3]);
@@ -1855,12 +3219,29 @@
 ;; bits that the ashl would anyways, in which case it should have been
 ;; optimized away.
 
-(define_insn ""
+(define_insn_and_split "*andashlsi4"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
 	(and:SI (ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
 			   (match_operand:QI 2 "const_int_operand" "n"))
 		(match_operand:SI 3 "const_int_operand" "n")))]
   ""
+  "#"
+  "reload_completed"
+  [(parallel
+     [(set (match_dup 0)
+	   (and:SI (ashift:SI (match_dup 1)
+			      (match_dup 2))
+		   (match_dup 3)))
+      (clobber (reg:CC VAX_PSL_REGNUM))])]
+  "")
+
+(define_insn "*andashlsi4_2<ccn><ccnz><ccz>"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=ro")
+	(and:SI (ashift:SI (match_operand:SI 1 "general_operand" "nrmT")
+			   (match_operand:QI 2 "const_int_operand" "n"))
+		(match_operand:SI 3 "const_int_operand" "n")))
+   (clobber (reg:CC VAX_PSL_REGNUM))]
+  "reload_completed"
   "*
 {
   operands[3]
@@ -1901,48 +3282,3 @@
 })
 
 (include "builtins.md")
-
-(define_peephole2
-  [(set (match_operand:SI 0 "push_operand" "")
-        (const_int 0))
-   (set (match_dup 0)
-        (match_operand:SI 1 "const_int_operand" ""))]
-  "INTVAL (operands[1]) >= 0"
-  [(set (match_dup 0)
-        (match_dup 1))]
-  "operands[0] = gen_rtx_MEM(DImode, XEXP (operands[0], 0));")
-
-(define_peephole2
-  [(set (match_operand:SI 0 "push_operand" "")
-        (match_operand:SI 1 "general_operand" ""))
-   (set (match_dup 0)
-        (match_operand:SI 2 "general_operand" ""))]
-  "vax_decomposed_dimode_operand_p (operands[2], operands[1])"
-  [(set (match_dup 0)
-        (match_dup 2))]
-  "{
-    operands[0] = gen_rtx_MEM(DImode, XEXP (operands[0], 0));
-    operands[2] = REG_P (operands[2])
-      ? gen_rtx_REG(DImode, REGNO (operands[2]))
-      : gen_rtx_MEM(DImode, XEXP (operands[2], 0));
-}")
-
-; Leave this commented out until we can determine whether the second move
-; precedes a jump which relies on the CC flags being set correctly.
-(define_peephole2
-  [(set (match_operand:SI 0 "nonimmediate_operand" "")
-        (match_operand:SI 1 "general_operand" ""))
-   (set (match_operand:SI 2 "nonimmediate_operand" "")
-        (match_operand:SI 3 "general_operand" ""))]
-  "0 && vax_decomposed_dimode_operand_p (operands[1], operands[3])
-   && vax_decomposed_dimode_operand_p (operands[0], operands[2])"
-  [(set (match_dup 0)
-        (match_dup 1))]
-  "{
-    operands[0] = REG_P (operands[0])
-      ? gen_rtx_REG(DImode, REGNO (operands[0]))
-      : gen_rtx_MEM(DImode, XEXP (operands[0], 0));
-    operands[1] = REG_P (operands[1])
-      ? gen_rtx_REG(DImode, REGNO (operands[1]))
-      : gen_rtx_MEM(DImode, XEXP (operands[1], 0));
-}")

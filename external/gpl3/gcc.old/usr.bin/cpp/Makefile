@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.10 2023/02/20 02:12:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2025/09/07 04:12:29 mrg Exp $
 
 .include <bsd.init.mk>
 
 PROG=		cpp
-SRCS=		cppspec.c ${G_GCC_OBJS:.o=.c}
+SRCS=		cppspec.cc ${G_GCC_OBJS:.o=.cc}
 
 .include "../Makefile.driver"
 .include "../Makefile.target-defines"
@@ -28,7 +28,7 @@ ${SRCS}: ${GCCARCH}/defs.mk
 
 .include <bsd.info.mk>
 
-COPTS.gcc.c=	-Wno-stack-protector
+COPTS.gcc.cc=	-Wno-error=stack-protector
 
 .PATH: ${DIST}/gcc ${DIST}/gcc/c-family ${DIST}/gcc/doc
 

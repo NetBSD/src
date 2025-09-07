@@ -1,6 +1,6 @@
 /* An SH specific RTL pass that tries to combine comparisons and redundant
    condition code register stores across multiple basic blocks.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -37,6 +37,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgrtl.h"
 #include "tree-pass.h"
 #include "expr.h"
+#include "tm-preds.h"
 
 /*
 This pass tries to optimize for example this:
@@ -426,10 +427,6 @@ is_conditional_insn (rtx_insn* i)
   return GET_CODE (p) == SET && GET_CODE (XEXP (p, 1)) == IF_THEN_ELSE;
 }
 
-// FIXME: Remove dependency on SH predicate function somehow.
-extern int t_reg_operand (rtx, machine_mode);
-extern int negt_reg_operand (rtx, machine_mode);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // RTL pass class
 
@@ -732,7 +729,14 @@ sh_treg_combine::record_set_of_reg (rtx reg, rtx_insn *start_insn,
 	}
       else if (REG_P (new_entry.cstore.set_src ()))
 	{
-	  // If it's a reg-reg copy follow the copied reg.
+	  // If it's a reg-reg copy follow the copied reg, but ignore
+	  // nop copies of the reg onto itself.
+	  if (REGNO (new_entry.cstore.set_src ()) == REGNO (reg))
+	    {
+	      i = prev_nonnote_nondebug_insn_bb (i);
+	      continue;
+	    }
+
 	  new_entry.cstore_reg_reg_copies.push_back (new_entry.cstore);
 	  reg = new_entry.cstore.set_src ();
 	  i = new_entry.cstore.insn;

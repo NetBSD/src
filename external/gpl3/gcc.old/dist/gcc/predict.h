@@ -1,5 +1,5 @@
 /* Definitions for branch prediction routines in the GNU compiler.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -48,7 +48,7 @@ enum prediction
    TAKEN
 };
 
-/* In emit-rtl.c.  */
+/* In emit-rtl.cc.  */
 extern profile_probability split_branch_probability;
 
 extern gcov_type get_hot_bb_threshold (void);
@@ -58,20 +58,20 @@ extern bool maybe_hot_bb_p (struct function *, const_basic_block);
 extern bool maybe_hot_edge_p (edge);
 extern bool probably_never_executed_bb_p (struct function *, const_basic_block);
 extern bool probably_never_executed_edge_p (struct function *, edge);
-extern bool optimize_function_for_size_p (struct function *);
+extern enum optimize_size_level optimize_function_for_size_p (struct function *);
 extern bool optimize_function_for_speed_p (struct function *);
 extern optimization_type function_optimization_type (struct function *);
-extern bool optimize_bb_for_size_p (const_basic_block);
+extern enum optimize_size_level optimize_bb_for_size_p (const_basic_block);
 extern bool optimize_bb_for_speed_p (const_basic_block);
 extern optimization_type bb_optimization_type (const_basic_block);
-extern bool optimize_edge_for_size_p (edge);
+extern enum optimize_size_level optimize_edge_for_size_p (edge);
 extern bool optimize_edge_for_speed_p (edge);
-extern bool optimize_insn_for_size_p (void);
+extern enum optimize_size_level optimize_insn_for_size_p (void);
 extern bool optimize_insn_for_speed_p (void);
-extern bool optimize_loop_for_size_p (class loop *);
+extern enum optimize_size_level optimize_loop_for_size_p (class loop *);
 extern bool optimize_loop_for_speed_p (class loop *);
 extern bool optimize_loop_nest_for_speed_p (class loop *);
-extern bool optimize_loop_nest_for_size_p (class loop *);
+extern enum optimize_size_level optimize_loop_nest_for_size_p (class loop *);
 extern bool predictable_edge_p (edge);
 extern void rtl_profile_for_bb (basic_block);
 extern void rtl_profile_for_edge (edge);
@@ -100,10 +100,11 @@ extern void rebuild_frequencies (void);
 extern void report_predictor_hitrates (void);
 extern void force_edge_cold (edge, bool);
 extern void propagate_unlikely_bbs_forward (void);
+extern void change_edge_frequency (edge, profile_probability);
 
 extern void add_reg_br_prob_note (rtx_insn *, profile_probability);
 
-/* In ipa-pure-const.c   */
+/* In ipa-pure-const.cc   */
 extern void warn_function_cold (tree);
 
 #endif  /* GCC_PREDICT_H */
