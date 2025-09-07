@@ -1,6 +1,6 @@
 #!/bin/sh -x
 #
-# $NetBSD: 99-ugen-perms-minipro,v 1.1 2024/03/30 16:47:55 thorpej Exp $
+# $NetBSD: 99-ugen-perms-minipro,v 1.1.4.1 2025/09/07 14:29:52 martin Exp $
 #
 # Look for a "Minipro" (https://gitlab.com/DavidGriffith/minipro) compatible
 # EEPROM programmer and change change the permissions to 0660.
@@ -49,7 +49,12 @@ is_target_device()
 	#	VID = 0xa466 (42086)
 	#	PID = 0x0a53 (2643)
 	#
-	# XXX Add the XGecu T48 programmer info here.
+	# The XGecu T48 and T56 use the same VID/PID as the TL866II+.
+	#
+	# The XGecu T76 uses:
+	#
+	#	VID = 0xa466 (42086)
+	#	PID = 0x1a86 (6790)
 	#
 
 	vendor_string="$(drvctl -p $1 vendor-string)"
@@ -67,10 +72,19 @@ is_target_device()
 	fi
 
 	#
-	# TL866II+
+	# TL866II+ / T48 / T56
 	#
 	if [ x"$vendor_id" = x"42086" -a \
 	     x"$product_id" = x"2643" ]; then
+		echo "yes"
+		return
+	fi
+
+	#
+	# T76
+	#
+	if [ x"$vendor_id" = x"42086" -a \
+	     x"$product_id" = x"6790" ]; then
 		echo "yes"
 		return
 	fi
