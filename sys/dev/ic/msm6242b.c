@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242b.c,v 1.5 2024/09/01 19:56:18 andvar Exp $ */
+/*      $NetBSD: msm6242b.c,v 1.6 2025/09/07 04:47:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.5 2024/09/01 19:56:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.6 2025/09/07 04:47:01 thorpej Exp $");
 
 /* 
  * Driver for OKI MSM6242B Real Time Clock. Somewhat based on an ancient, amiga
@@ -68,11 +68,8 @@ msm6242b_attach(struct msm6242b_softc *sc)
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
 	handle->todr_gettime_ymdhms = msm6242b_gettime_ymdhms;
 	handle->todr_settime_ymdhms = msm6242b_settime_ymdhms;
-	handle->todr_setwen = NULL;
 
 	if (msm6242b_gettime_ymdhms(handle, &dt) != 0) {
 		aprint_error_dev(sc->sc_dev, "RTC does not work correctly\n");

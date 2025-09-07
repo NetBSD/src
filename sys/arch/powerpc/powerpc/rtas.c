@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.14 2014/02/28 05:41:21 matt Exp $ */
+/*	$NetBSD: rtas.c,v 1.15 2025/09/07 04:47:00 thorpej Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.14 2014/02/28 05:41:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.15 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,12 +164,8 @@ rtas_attach(device_t parent, device_t self, void *aux)
 	 * Initialise TODR support
 	 */
 	sc->ra_todr_handle.cookie = sc;
-	sc->ra_todr_handle.bus_cookie = NULL;
-	sc->ra_todr_handle.todr_gettime = NULL;
-	sc->ra_todr_handle.todr_settime = NULL;
 	sc->ra_todr_handle.todr_gettime_ymdhms = rtas_todr_gettime_ymdhms;
 	sc->ra_todr_handle.todr_settime_ymdhms = rtas_todr_settime_ymdhms;
-	sc->ra_todr_handle.todr_setwen = NULL;
 	todr_attach(&sc->ra_todr_handle);
 
 	return;

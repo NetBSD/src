@@ -1,4 +1,4 @@
-/*      $NetBSD: clpsrtc.c,v 1.1 2013/04/28 11:57:13 kiyohara Exp $      */
+/*      $NetBSD: clpsrtc.c,v 1.2 2025/09/07 04:46:59 thorpej Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpsrtc.c,v 1.1 2013/04/28 11:57:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpsrtc.c,v 1.2 2025/09/07 04:46:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,6 @@ clpsrtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = clpsrtc_todr_gettime;
 	sc->sc_todr.todr_settime = clpsrtc_todr_settime;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 

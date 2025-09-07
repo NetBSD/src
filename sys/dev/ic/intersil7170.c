@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.12 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.13 2025/09/07 04:47:01 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.12 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.13 2025/09/07 04:47:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -59,11 +59,8 @@ intersil7170_attach(struct intersil7170_softc *sc)
 	handle = &sc->sc_handle;
 
 	handle->cookie = sc;
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
 	handle->todr_gettime_ymdhms = intersil7170_gettime_ymdhms;
 	handle->todr_settime_ymdhms = intersil7170_settime_ymdhms;
-	handle->todr_setwen = NULL;
 
 	todr_attach(handle);
 }

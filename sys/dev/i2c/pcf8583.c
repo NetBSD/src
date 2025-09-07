@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.19 2020/01/02 16:53:05 thorpej Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.20 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.19 2020/01/02 16:53:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.20 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ pcfrtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = pcfrtc_gettime;
 	sc->sc_todr.todr_settime = pcfrtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

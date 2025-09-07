@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.22 2025/09/07 04:47:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.22 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -132,12 +132,8 @@ rtcattach_ebus(device_t parent, device_t self, void *aux)
 	/* setup our todr_handle */
 	handle = &sc->sc_todr;
 	handle->cookie = sc;
-	handle->bus_cookie = NULL; /* unused */
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
 	handle->todr_gettime_ymdhms = rtc_gettime_ymdhms;
 	handle->todr_settime_ymdhms = rtc_settime_ymdhms;
-	handle->todr_setwen = NULL; /* not necessary, no idprom to protect */
 
 	todr_attach(handle);
 }

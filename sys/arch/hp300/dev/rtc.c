@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.23 2023/12/20 00:40:43 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.24 2025/09/07 04:46:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.23 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.24 2025/09/07 04:46:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,11 +109,8 @@ rtcattach(device_t parent, device_t self, void *aux)
 
 	todr_handle = &sc->sc_handle;
 	todr_handle->cookie = sc;
-	todr_handle->todr_gettime = NULL;
-	todr_handle->todr_settime = NULL;
 	todr_handle->todr_gettime_ymdhms = rtc_gettime_ymdhms;
 	todr_handle->todr_settime_ymdhms = rtc_settime_ymdhms;
-	todr_handle->todr_setwen = NULL;
 
 	todr_attach(todr_handle);
 }

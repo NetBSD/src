@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.7 2021/01/30 17:38:57 thorpej Exp $	*/
+/*	$NetBSD: s390.c,v 1.8 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.7 2021/01/30 17:38:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.8 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,11 +116,8 @@ s390rtc_attach(device_t parent, device_t self, void *arg)
 	}
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = s390rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = s390rtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.6 2025/09/07 04:46:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.6 2025/09/07 04:46:59 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -106,7 +106,6 @@ gfrtc_attach(struct gfrtc_softc * const sc, bool todr)
 		sc->sc_todr.cookie = sc;
 		sc->sc_todr.todr_gettime = gfrtc_gettime;
 		sc->sc_todr.todr_settime = gfrtc_settime;
-		sc->sc_todr.todr_setwen = NULL;
 		todr_attach(&sc->sc_todr);
 	}
 }

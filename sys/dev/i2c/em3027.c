@@ -1,4 +1,4 @@
-/*	$NetBSD: em3027.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $ */
+/*	$NetBSD: em3027.c,v 1.9 2025/09/07 04:47:00 thorpej Exp $ */
 /*
  * Copyright (c) 2018 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * EM Microelectronic EM3027 RTC
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.9 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,6 @@ em3027rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime_ymdhms = em3027rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = em3027rtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 

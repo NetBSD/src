@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.8 2025/09/07 04:46:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.8 2025/09/07 04:46:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ eprtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = eprtc_gettime;
 	sc->sc_todr.todr_settime = eprtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 

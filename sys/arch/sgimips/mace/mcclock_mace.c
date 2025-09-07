@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.17 2015/02/18 16:47:59 macallan Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.18 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.17 2015/02/18 16:47:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.18 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,6 @@ mcclock_mace_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todrch.cookie = sc;
 	sc->sc_todrch.todr_gettime_ymdhms = mcclock_mace_gettime_ymdhms;
 	sc->sc_todrch.todr_settime_ymdhms = mcclock_mace_settime_ymdhms;
-	sc->sc_todrch.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todrch);
 	mace0 = sc;

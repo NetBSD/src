@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.7 2020/01/02 23:51:48 thorpej Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.8 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -129,11 +129,8 @@ dpclock_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_todrch.cookie = sc;
-	sc->sc_todrch.todr_gettime = NULL;
-	sc->sc_todrch.todr_settime = NULL;
 	sc->sc_todrch.todr_gettime_ymdhms = dpclock_gettime_ymdhms;
 	sc->sc_todrch.todr_settime_ymdhms = dpclock_settime_ymdhms;
-	sc->sc_todrch.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todrch);
 }

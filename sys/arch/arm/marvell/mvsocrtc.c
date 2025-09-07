@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocrtc.c,v 1.3 2014/11/20 16:34:25 christos Exp $	*/
+/*	$NetBSD: mvsocrtc.c,v 1.4 2025/09/07 04:46:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.3 2014/11/20 16:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocrtc.c,v 1.4 2025/09/07 04:46:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,8 @@ mvsocrtc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = mvsocrtc_todr_gettime;
 	sc->sc_todr.todr_settime_ymdhms = mvsocrtc_todr_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

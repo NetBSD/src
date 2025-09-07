@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.32 2021/05/21 21:21:01 macallan Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.33 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.32 2021/05/21 21:21:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.33 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,11 +203,8 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = strtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = strtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

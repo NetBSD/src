@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.41 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.41 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,6 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 		sc->sc_todr.todr_gettime = dsrtc_gettime_timeval;
 		sc->sc_todr.todr_settime = dsrtc_settime_timeval;
 	}
-	sc->sc_todr.todr_setwen = NULL;
 
 #ifdef DSRTC_YEAR_START_2K
 	sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;

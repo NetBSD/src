@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.23 2020/01/02 19:00:34 thorpej Exp $	*/
+/*	$NetBSD: x1226.c,v 1.24 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.23 2020/01/02 19:00:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.24 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,11 +126,8 @@ xrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = xrtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = xrtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

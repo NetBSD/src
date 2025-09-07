@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.10 2020/01/02 19:00:34 thorpej Exp $ */
+/* $NetBSD: r2025.c,v 1.11 2025/09/07 04:47:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.10 2020/01/02 19:00:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.11 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,11 +96,8 @@ r2025rtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = r2025rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = r2025rtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

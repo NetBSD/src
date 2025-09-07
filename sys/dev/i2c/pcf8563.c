@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.16 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.16 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,6 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime_ymdhms = pcf8563rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,

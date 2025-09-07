@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.20 2023/10/19 22:07:13 andvar Exp $        */
+/*      $NetBSD: rtc.c,v 1.21 2025/09/07 04:47:00 thorpej Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20 2023/10/19 22:07:13 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -100,7 +100,6 @@ rtc_init(void)
 		tch.todr_gettime = NULL;
 		tch.todr_settime = NULL;
 	}
-	tch.todr_setwen = NULL;
 
 	todr_attach(&tch);
 }

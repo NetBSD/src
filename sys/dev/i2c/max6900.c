@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.19 2025/01/07 17:39:45 andvar Exp $	*/
+/*	$NetBSD: max6900.c,v 1.20 2025/09/07 04:47:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.19 2025/01/07 17:39:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.20 2025/09/07 04:47:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,11 +119,8 @@ maxrtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_open = 0;
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = maxrtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = maxrtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

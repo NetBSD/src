@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2440_rtc.c,v 1.3 2020/01/02 22:24:11 thorpej Exp $ */
+/* $NetBSD: s3c2440_rtc.c,v 1.4 2025/09/07 04:46:59 thorpej Exp $ */
 
 /*--
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -92,11 +92,8 @@ ssrtc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": RTC \n");
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
 	sc->sc_todr.todr_gettime_ymdhms = ssrtc_todr_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = ssrtc_todr_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }

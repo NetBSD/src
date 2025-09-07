@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.14 2012/01/03 07:36:02 kiyohara Exp $ */
+/* $NetBSD: aurtc.c,v 1.15 2025/09/07 04:46:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.14 2012/01/03 07:36:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.15 2025/09/07 04:46:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,10 +123,8 @@ aurtc_attach(device_t parent, device_t self, void *aux)
 	
 	sc->sc_dev = self;
 	sc->sc_tch.cookie = sc;
-	sc->sc_tch.bus_cookie = NULL;
 	sc->sc_tch.todr_gettime = aurtc_gettime;
 	sc->sc_tch.todr_settime = aurtc_settime;
-	sc->sc_tch.todr_setwen = NULL;
 
 	sc->sc_shutdownhook = shutdownhook_establish(aurtc_shutdown, NULL);
 
