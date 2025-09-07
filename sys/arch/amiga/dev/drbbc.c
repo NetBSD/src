@@ -1,4 +1,4 @@
-/*	$NetBSD: drbbc.c,v 1.20 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: drbbc.c,v 1.21 2025/09/07 00:50:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.20 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.21 2025/09/07 00:50:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,27 +50,26 @@ __KERNEL_RCSID(0, "$NetBSD: drbbc.c,v 1.20 2012/10/27 17:17:28 chs Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ic/ds.h>
 
-int draco_ds_read_bit(void *);
-void draco_ds_write_bit(void *, int);
-void draco_ds_reset(void *);
+static int	draco_ds_read_bit(void *);
+static void	draco_ds_write_bit(void *, int);
+static void	draco_ds_reset(void *);
 
-void drbbc_attach(device_t, device_t, void *);
-int drbbc_match(device_t, cfdata_t, void *);
+static void	drbbc_attach(device_t, device_t, void *);
+static int	drbbc_match(device_t, cfdata_t, void *);
 
-int dracougettod(todr_chip_handle_t, struct timeval *);
-int dracousettod(todr_chip_handle_t, struct timeval *);
+static int	dracougettod(todr_chip_handle_t, struct timeval *);
+static int	dracousettod(todr_chip_handle_t, struct timeval *);
 
-static struct todr_chip_handle dracotodr;
 struct drbbc_softc {
+	device_t sc_dev;
 	struct ds_handle sc_dsh;
+	struct todr_chip_handle sc_todr;
 };
 
 CFATTACH_DECL_NEW(drbbc, sizeof(struct drbbc_softc),
     drbbc_match, drbbc_attach, NULL, NULL);
 
-struct drbbc_softc *drbbc_sc;
-
-int
+static int
 drbbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	static int drbbc_matched = 0;
@@ -83,7 +82,7 @@ drbbc_match(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-void
+static void
 drbbc_attach(device_t parent, device_t self, void *aux)
 {
 	int i;
@@ -91,6 +90,7 @@ drbbc_attach(device_t parent, device_t self, void *aux)
 	u_int8_t rombuf[8];
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 
 	sc->sc_dsh.ds_read_bit = draco_ds_read_bit;
 	sc->sc_dsh.ds_write_bit = draco_ds_write_bit;
@@ -111,14 +111,13 @@ drbbc_attach(device_t parent, device_t self, void *aux)
 		rombuf[3], rombuf[2], rombuf[1], rombuf[0],
 		hostid);
 
-	drbbc_sc = sc;
-	dracotodr.cookie = sc;
-	dracotodr.todr_gettime = dracougettod;
-	dracotodr.todr_settime = dracousettod;
-	todr_attach(&dracotodr);
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime = dracougettod;
+	sc->sc_todr.todr_settime = dracousettod;
+	todr_attach(&sc->sc_todr);
 }
 
-int
+static int
 draco_ds_read_bit(void *p)
 {
 	struct drioct *draco_ioctl;
@@ -134,7 +133,7 @@ draco_ds_read_bit(void *p)
 	return (draco_ioctl->io_status & DRSTAT_CLKDAT);
 }
 
-void
+static void
 draco_ds_write_bit(void *p, int b)
 {
 	struct drioct *draco_ioctl;
@@ -149,7 +148,7 @@ draco_ds_write_bit(void *p, int b)
 		draco_ioctl->io_clockw0 = 0;
 }
 
-void
+static void
 draco_ds_reset(void *p)
 {
 	struct drioct *draco_ioctl;
@@ -159,26 +158,27 @@ draco_ds_reset(void *p)
 	draco_ioctl->io_clockrst = 0;
 }
 
-int
+static int
 dracougettod(todr_chip_handle_t h, struct timeval *tvp)
 {
+	struct drbbc_softc *sc = h->cookie;
 	u_int32_t clkbuf;
 	u_int32_t usecs;
 
-	drbbc_sc->sc_dsh.ds_reset(drbbc_sc->sc_dsh.ds_hw_handle);
+	sc->sc_dsh.ds_reset(sc->sc_dsh.ds_hw_handle);
 
-	ds_write_byte(&drbbc_sc->sc_dsh, DS_ROM_SKIP);
+	ds_write_byte(&sc->sc_dsh, DS_ROM_SKIP);
 
-	ds_write_byte(&drbbc_sc->sc_dsh, DS_MEM_READ_MEMORY);
+	ds_write_byte(&sc->sc_dsh, DS_MEM_READ_MEMORY);
 	/* address of seconds/256: */
-	ds_write_byte(&drbbc_sc->sc_dsh, 0x02);
-	ds_write_byte(&drbbc_sc->sc_dsh, 0x02);
+	ds_write_byte(&sc->sc_dsh, 0x02);
+	ds_write_byte(&sc->sc_dsh, 0x02);
 
-	usecs = (ds_read_byte(&drbbc_sc->sc_dsh) * 1000000) / 256;
-	clkbuf = ds_read_byte(&drbbc_sc->sc_dsh)
-	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<8)
-	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<16)
-	    + (ds_read_byte(&drbbc_sc->sc_dsh)<<24);
+	usecs = (ds_read_byte(&sc->sc_dsh) * 1000000) / 256;
+	clkbuf = ds_read_byte(&sc->sc_dsh)
+	    + (ds_read_byte(&sc->sc_dsh)<<8)
+	    + (ds_read_byte(&sc->sc_dsh)<<16)
+	    + (ds_read_byte(&sc->sc_dsh)<<24);
 
 	/* BSD time is wrt. 1.1.1970; AmigaOS time wrt. 1.1.1978 */
 
@@ -190,7 +190,7 @@ dracougettod(todr_chip_handle_t h, struct timeval *tvp)
 	return (0);
 }
 
-int
+static int
 dracousettod(todr_chip_handle_t h, struct timeval *tvp)
 {
 	return (ENXIO);
