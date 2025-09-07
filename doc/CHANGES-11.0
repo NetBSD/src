@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.14 2025/09/06 09:32:31 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.15 2025/09/07 14:30:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -161,4 +161,11 @@ external/gpl3/binutils/dist/gas/config/tc-vax.c	1.22
 	vax: gas: PR 59326: use GOT for pointer for global function
 	in same file, instead of PLT.
 	[rin, ticket #26]
+
+share/examples/devpubd/hooks/99-ugen-perms-minipro 1.2
+
+	devpubd(8): update for newer "minipro" programmers:
+	- T48 / T56 use the same USB VID/PID as the TL866II+.
+	- Add the T76 USB VID/PID.
+	[thorpej, ticket #27]
 
