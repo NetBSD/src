@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2023/02/20 02:01:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2025/09/07 02:59:21 mrg Exp $
 
 .include <bsd.init.mk>
 
 PROG=           gcov-dump
-SRCS=		${G_GCOV_DUMP_OBJS:.o=.c}
+SRCS=		${G_GCOV_DUMP_OBJS:.o=.cc}
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 

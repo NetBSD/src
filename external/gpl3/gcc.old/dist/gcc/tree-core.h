@@ -1,5 +1,5 @@
 /* Core data structures for the 'tree' type.
-   Copyright (C) 1989-2020 Free Software Foundation, Inc.
+   Copyright (C) 1989-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -97,18 +97,29 @@ struct die_struct;
 #define ECF_COLD		  (1 << 15)
 
 /* Call argument flags.  */
-/* Nonzero if the argument is not dereferenced recursively, thus only
-   directly reachable memory is read or written.  */
-#define EAF_DIRECT		(1 << 0)
-
-/* Nonzero if memory reached by the argument is not clobbered.  */
-#define EAF_NOCLOBBER		(1 << 1)
-
-/* Nonzero if the argument does not escape.  */
-#define EAF_NOESCAPE		(1 << 2)
 
 /* Nonzero if the argument is not used by the function.  */
-#define EAF_UNUSED		(1 << 3)
+#define EAF_UNUSED		(1 << 1)
+
+/* Following flags come in pairs.  First one is about direct dereferences
+   from the parameter, while the second is about memory reachable by
+   recursive dereferences.  */
+
+/* Nonzero if memory reached by the argument is not clobbered.  */
+#define EAF_NO_DIRECT_CLOBBER	(1 << 2)
+#define EAF_NO_INDIRECT_CLOBBER	(1 << 3)
+
+/* Nonzero if the argument does not escape.  */
+#define EAF_NO_DIRECT_ESCAPE	(1 << 4)
+#define EAF_NO_INDIRECT_ESCAPE	(1 << 5)
+
+/* Nonzero if the argument does not escape to return value.  */
+#define EAF_NOT_RETURNED_DIRECTLY (1 << 6)
+#define EAF_NOT_RETURNED_INDIRECTLY (1 << 7)
+
+/* Nonzero if the argument is not read.  */
+#define EAF_NO_DIRECT_READ	(1 << 8)
+#define EAF_NO_INDIRECT_READ	(1 << 9)
 
 /* Call return flags.  */
 /* Mask for the argument number that is returned.  Lower two bits of
@@ -273,8 +284,14 @@ enum omp_clause_code {
   /* OpenMP clause: linear (variable-list[:linear-step]).  */
   OMP_CLAUSE_LINEAR,
 
+  /* OpenMP clause: affinity([depend-modifier :] variable-list).  */
+  OMP_CLAUSE_AFFINITY,
+
   /* OpenMP clause: aligned (variable-list[:alignment]).  */
   OMP_CLAUSE_ALIGNED,
+
+  /* OpenMP clause: allocate ([allocator:]variable-list).  */
+  OMP_CLAUSE_ALLOCATE,
 
   /* OpenMP clause: depend ({in,out,inout}:variable-list).  */
   OMP_CLAUSE_DEPEND,
@@ -292,19 +309,8 @@ enum omp_clause_code {
   /* OpenMP clause: link (variable-list).  */
   OMP_CLAUSE_LINK,
 
-  /* OpenMP clause: from (variable-list).  */
-  OMP_CLAUSE_FROM,
-
-  /* OpenMP clause: to (variable-list).  */
-  OMP_CLAUSE_TO,
-
-  /* OpenACC clauses: {copy, copyin, copyout, create, delete, deviceptr,
-     device, host (self), present, present_or_copy (pcopy), present_or_copyin
-     (pcopyin), present_or_copyout (pcopyout), present_or_create (pcreate)}
-     (variable-list).
-
-     OpenMP clause: map ({alloc:,to:,from:,tofrom:,}variable-list).  */
-  OMP_CLAUSE_MAP,
+  /* OpenMP clause: detach (event-handle).  */
+  OMP_CLAUSE_DETACH,
 
   /* OpenACC clause: use_device (variable-list).
      OpenMP clause: use_device_ptr (ptr-list).  */
@@ -321,6 +327,23 @@ enum omp_clause_code {
 
   /* OpenMP clause: exclusive (variable-list).  */
   OMP_CLAUSE_EXCLUSIVE,
+
+  /* OpenMP clause: from (variable-list).  */
+  OMP_CLAUSE_FROM,
+
+  /* OpenMP clause: to (variable-list).  */
+  OMP_CLAUSE_TO,
+
+  /* OpenACC clauses: {copy, copyin, copyout, create, delete, deviceptr,
+     device, host (self), present, present_or_copy (pcopy), present_or_copyin
+     (pcopyin), present_or_copyout (pcopyout), present_or_create (pcreate)}
+     (variable-list).
+
+     OpenMP clause: map ({alloc:,to:,from:,tofrom:,}variable-list).  */
+  OMP_CLAUSE_MAP,
+
+  /* OpenMP clause: has_device_addr (variable-list).  */
+  OMP_CLAUSE_HAS_DEVICE_ADDR,
 
   /* Internal structure to hold OpenACC cache directive's variable-list.
      #pragma acc cache (variable-list).  */
@@ -460,6 +483,9 @@ enum omp_clause_code {
   /* OpenMP clause: bind (binding).  */
   OMP_CLAUSE_BIND,
 
+  /* OpenMP clause: filter (integer-expression).  */
+  OMP_CLAUSE_FILTER,
+
   /* Internally used only clause, holding SIMD uid.  */
   OMP_CLAUSE__SIMDUID_,
 
@@ -488,15 +514,14 @@ enum omp_clause_code {
   /* OpenACC clause: tile ( size-expr-list ).  */
   OMP_CLAUSE_TILE,
 
-  /* OpenMP internal-only clause to specify grid dimensions of a gridified
-     kernel.  */
-  OMP_CLAUSE__GRIDDIM_,
-
   /* OpenACC clause: if_present.  */
   OMP_CLAUSE_IF_PRESENT,
 
   /* OpenACC clause: finalize.  */
-  OMP_CLAUSE_FINALIZE
+  OMP_CLAUSE_FINALIZE,
+
+  /* OpenACC clause: nohost.  */
+  OMP_CLAUSE_NOHOST,
 };
 
 #undef DEFTREESTRUCT
@@ -562,8 +587,17 @@ enum omp_memory_order {
   OMP_MEMORY_ORDER_ACQUIRE,
   OMP_MEMORY_ORDER_RELEASE,
   OMP_MEMORY_ORDER_ACQ_REL,
-  OMP_MEMORY_ORDER_SEQ_CST
+  OMP_MEMORY_ORDER_SEQ_CST,
+  OMP_MEMORY_ORDER_MASK = 7,
+  OMP_FAIL_MEMORY_ORDER_UNSPECIFIED = OMP_MEMORY_ORDER_UNSPECIFIED * 8,
+  OMP_FAIL_MEMORY_ORDER_RELAXED = OMP_MEMORY_ORDER_RELAXED * 8,
+  OMP_FAIL_MEMORY_ORDER_ACQUIRE = OMP_MEMORY_ORDER_ACQUIRE * 8,
+  OMP_FAIL_MEMORY_ORDER_RELEASE = OMP_MEMORY_ORDER_RELEASE * 8,
+  OMP_FAIL_MEMORY_ORDER_ACQ_REL = OMP_MEMORY_ORDER_ACQ_REL * 8,
+  OMP_FAIL_MEMORY_ORDER_SEQ_CST = OMP_MEMORY_ORDER_SEQ_CST * 8,
+  OMP_FAIL_MEMORY_ORDER_MASK = OMP_MEMORY_ORDER_MASK * 8
 };
+#define OMP_FAIL_MEMORY_ORDER_SHIFT 3
 
 /* There is a TYPE_QUAL value for each type qualifier.  They can be
    combined by bitwise-or to form the complete set of qualifiers for a
@@ -600,6 +634,7 @@ enum tree_index {
   TI_UINT16_TYPE,
   TI_UINT32_TYPE,
   TI_UINT64_TYPE,
+  TI_UINT128_TYPE,
 
   TI_VOID,
 
@@ -654,7 +689,7 @@ enum tree_index {
 
   /* Put the complex types after their component types, so that in (sequential)
      tree streaming we can assert that their component types have already been
-     handled (see tree-streamer.c:record_common_node).  */
+     handled (see tree-streamer.cc:record_common_node).  */
   TI_COMPLEX_INTEGER_TYPE,
   TI_COMPLEX_FLOAT_TYPE,
   TI_COMPLEX_DOUBLE_TYPE,
@@ -769,6 +804,10 @@ enum tree_index {
   TI_SAT_UDA_TYPE,
   TI_SAT_UTA_TYPE,
 
+  TI_MODULE_HWM,
+  /* Nodes below here change during compilation, and should therefore
+     not be in the C++ module's global tree table.  */
+
   TI_OPTIMIZATION_DEFAULT,
   TI_OPTIMIZATION_CURRENT,
   TI_TARGET_OPTION_DEFAULT,
@@ -785,7 +824,7 @@ enum tree_index {
 /* An enumeration of the standard C integer types.  These must be
    ordered so that shorter types appear before longer ones, and so
    that signed types appear before unsigned ones, for the correct
-   functioning of interpret_integer() in c-lex.c.  */
+   functioning of interpret_integer() in c-lex.cc.  */
 enum integer_type_kind {
   itk_char,
   itk_signed_char,
@@ -859,7 +898,10 @@ enum attribute_flags {
      are not in fact compatible with the function type.  */
   ATTR_FLAG_BUILT_IN = 16,
   /* A given attribute has been parsed as a C++-11 attribute.  */
-  ATTR_FLAG_CXX11 = 32
+  ATTR_FLAG_CXX11 = 32,
+  /* The attribute handler is being invoked with an internal argument
+     that may not otherwise be valid when specified in source code.  */
+  ATTR_FLAG_INTERNAL = 64
 };
 
 /* Types used to represent sizes.  */
@@ -871,6 +913,7 @@ enum size_type_kind {
   stk_type_kind_last
 };
 
+/* Flags controlling operand_equal_p() behavior.  */
 enum operand_equal_flag {
   OEP_ONLY_CONST = 1,
   OEP_PURE_SAME = 2,
@@ -882,11 +925,18 @@ enum operand_equal_flag {
   OEP_HASH_CHECK = 32,
   /* Makes operand_equal_p handle more expressions:  */
   OEP_LEXICOGRAPHIC = 64,
-  OEP_BITWISE = 128
+  OEP_BITWISE = 128,
+  /* For OEP_ADDRESS_OF of COMPONENT_REFs, only consider same fields as
+     equivalent rather than also different fields with the same offset.  */
+  OEP_ADDRESS_OF_SAME_FIELD = 256,
+  /* In conjunction with OEP_LEXICOGRAPHIC considers names of declarations
+     of the same kind.  Used to compare VLA bounds involving parameters
+     across redeclarations of the same function.  */
+  OEP_DECL_NAME = 512
 };
 
 /* Enum and arrays used for tree allocation stats.
-   Keep in sync with tree.c:tree_node_kind_names.  */
+   Keep in sync with tree.cc:tree_node_kind_names.  */
 enum tree_node_kind {
   d_kind,
   t_kind,
@@ -914,6 +964,15 @@ enum annot_expr_kind {
   annot_expr_vector_kind,
   annot_expr_parallel_kind,
   annot_expr_kind_last
+};
+
+/* The kind of a TREE_CLOBBER_P CONSTRUCTOR node.  */
+enum clobber_kind {
+  /* Unspecified, this clobber acts as a store of an undefined value.  */
+  CLOBBER_UNDEF,
+  /* This clobber ends the lifetime of the storage.  */
+  CLOBBER_EOL,
+  CLOBBER_LAST
 };
 
 /*---------------------------------------------------------------------------
@@ -1001,13 +1060,15 @@ struct GTY(()) tree_base {
       unsigned user_align : 1;
       unsigned nameless_flag : 1;
       unsigned atomic_flag : 1;
-      unsigned spare0 : 3;
+      unsigned unavailable_flag : 1;
+      unsigned spare0 : 2;
 
       unsigned spare1 : 8;
 
       /* This field is only used with TREE_TYPE nodes; the only reason it is
 	 present in tree_base instead of tree_type is to save space.  The size
-	 of the field must be large enough to hold addr_space_t values.  */
+	 of the field must be large enough to hold addr_space_t values.
+	 For CONSTRUCTOR nodes this holds the clobber_kind enum.  */
       unsigned address_space : 8;
     } bits;
 
@@ -1093,6 +1154,9 @@ struct GTY(()) tree_base {
 
        PREDICT_EXPR_OUTCOME in
 	   PREDICT_EXPR
+
+       OMP_CLAUSE_MAP_DECL_MAKE_ADDRESSABLE in
+	   OMP_CLAUSE
 
    static_flag:
 
@@ -1223,7 +1287,8 @@ struct GTY(()) tree_base {
            all decls
 
        CALL_FROM_THUNK_P and
-       CALL_ALLOCA_FOR_VAR_P in
+       CALL_ALLOCA_FOR_VAR_P and
+       CALL_FROM_NEW_OR_DELETE_P in
            CALL_EXPR
 
        OMP_CLAUSE_LINEAR_VARIABLE_STRIDE in
@@ -1322,6 +1387,12 @@ struct GTY(()) tree_base {
        SSA_NAME_POINTS_TO_READONLY_MEMORY in
 	   SSA_NAME
 
+   unavailable_flag:
+
+       TREE_UNAVAILABLE in
+	   all decls
+	   all types
+
    visited:
 
        TREE_VISITED in
@@ -1369,6 +1440,7 @@ struct GTY(()) tree_base {
 
        CALL_EXPR_BY_DESCRIPTOR in
            CALL_EXPR
+
 */
 
 struct GTY(()) tree_typed {
@@ -1466,6 +1538,7 @@ enum omp_clause_proc_bind_kind
   /* Numbers should match omp_proc_bind_t enum in omp.h.  */
   OMP_CLAUSE_PROC_BIND_FALSE = 0,
   OMP_CLAUSE_PROC_BIND_TRUE = 1,
+  OMP_CLAUSE_PROC_BIND_PRIMARY = 2,
   OMP_CLAUSE_PROC_BIND_MASTER = 2,
   OMP_CLAUSE_PROC_BIND_CLOSE = 3,
   OMP_CLAUSE_PROC_BIND_SPREAD = 4,
@@ -1556,9 +1629,6 @@ struct GTY(()) tree_omp_clause {
     enum omp_clause_defaultmap_kind defaultmap_kind;
     enum omp_clause_bind_kind      bind_kind;
     enum omp_clause_device_type_kind device_type_kind;
-    /* The dimension a OMP_CLAUSE__GRIDDIM_ clause of a gridified target
-       construct describes.  */
-    unsigned int		   dimension;
   } GTY ((skip)) subcode;
 
   /* The gimplification of OMP_CLAUSE_REDUCTION_{INIT,MERGE} for omp-low's
@@ -1724,7 +1794,7 @@ struct GTY(()) tree_decl_common {
   unsigned decl_flag_3 : 1;
   /* Logically, these two would go in a theoretical base shared by var and
      parm decl. */
-  unsigned gimple_reg_flag : 1;
+  unsigned not_gimple_reg_flag : 1;
   /* In VAR_DECL, PARM_DECL and RESULT_DECL, this is DECL_BY_REFERENCE.  */
   unsigned decl_by_reference_flag : 1;
   /* In a VAR_DECL and PARM_DECL, this is DECL_READ_P.  */
@@ -1825,6 +1895,7 @@ struct GTY(()) tree_decl_with_vis {
  /* Belong to FUNCTION_DECL exclusively.  */
  unsigned regdecl_flag : 1;
  /* 14 unused bits. */
+ /* 32 more unused on 64 bit HW. */
 };
 
 struct GTY(()) tree_var_decl {
@@ -1900,12 +1971,13 @@ struct GTY(()) tree_function_decl {
   unsigned replaceable_operator : 1;
 
   /* 11 bits left for future expansion.  */
+  /* 32 bits on 64-bit HW.  */
 };
 
 struct GTY(()) tree_translation_unit_decl {
   struct tree_decl_common common;
   /* Source language of this translation unit.  Used for DWARF output.  */
-  const char * GTY((skip(""))) language;
+  const char *language;
   /* TODO: Non-optimization used to build this translation unit.  */
   /* TODO: Root of a partial DWARF tree for global types and decls.  */
 };
@@ -2021,7 +2093,9 @@ struct attribute_spec {
   /* The minimum length of the list of arguments of the attribute.  */
   int min_length;
   /* The maximum length of the list of arguments of the attribute
-     (-1 for no maximum).  */
+     (-1 for no maximum).  It can also be -2 for fake attributes
+     created for the sake of -Wno-attributes; in that case, we
+     should skip the balanced token sequence when parsing the attribute.  */
   int max_length;
   /* Whether this attribute requires a DECL.  If it does, it will be passed
      from types of DECLs, function return types and array element types to
@@ -2209,6 +2283,7 @@ extern const char * built_in_names[(int) END_BUILTINS];
 /* Number of operands and names for each OMP_CLAUSE node.  */
 extern unsigned const char omp_clause_num_ops[];
 extern const char * const omp_clause_code_name[];
+extern const char *user_omp_clause_code_name (tree, bool);
 
 /* A vector of all translation-units.  */
 extern GTY (()) vec<tree, va_gc> *all_translation_units;

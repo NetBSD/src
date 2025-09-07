@@ -1,6 +1,6 @@
 // Support routines for the -*- C++ -*- dynamic memory management.
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -46,26 +46,27 @@ using std::bad_alloc;
 using std::size_t;
 extern "C"
 {
-# if _GLIBCXX_HAVE_ALIGNED_ALLOC
+# if _GLIBCXX_HAVE_POSIX_MEMALIGN
+  int posix_memalign(void **, size_t alignment, size_t size);
+# elif _GLIBCXX_HAVE_ALIGNED_ALLOC
   void *aligned_alloc(size_t alignment, size_t size);
 # elif _GLIBCXX_HAVE__ALIGNED_MALLOC
   void *_aligned_malloc(size_t size, size_t alignment);
-# elif _GLIBCXX_HAVE_POSIX_MEMALIGN
-  void *posix_memalign(void **, size_t alignment, size_t size);
 # elif _GLIBCXX_HAVE_MEMALIGN
   void *memalign(size_t alignment, size_t size);
+# else
+  // A freestanding C runtime may not provide "malloc" -- but there is no
+  // other reasonable way to implement "operator new".
+  void *malloc(size_t);
 # endif
 }
 #endif
 
 namespace __gnu_cxx {
-#if _GLIBCXX_HAVE_ALIGNED_ALLOC
-using ::aligned_alloc;
-#elif _GLIBCXX_HAVE__ALIGNED_MALLOC
-static inline void*
-aligned_alloc (std::size_t al, std::size_t sz)
-{ return _aligned_malloc(sz, al); }
-#elif _GLIBCXX_HAVE_POSIX_MEMALIGN
+// Prefer posix_memalign if available, because it's older than aligned_alloc
+// and so more likely to be provided by replacement malloc libraries that
+// predate the addition of aligned_alloc. See PR libstdc++/113258.
+#if _GLIBCXX_HAVE_POSIX_MEMALIGN
 static inline void*
 aligned_alloc (std::size_t al, std::size_t sz)
 {
@@ -79,10 +80,18 @@ aligned_alloc (std::size_t al, std::size_t sz)
     return ptr;
   return nullptr;
 }
+#elif _GLIBCXX_HAVE_ALIGNED_ALLOC
+using ::aligned_alloc;
+#elif _GLIBCXX_HAVE__ALIGNED_MALLOC
+static inline void*
+aligned_alloc (std::size_t al, std::size_t sz)
+{ return _aligned_malloc(sz, al); }
 #elif _GLIBCXX_HAVE_MEMALIGN
 static inline void*
 aligned_alloc (std::size_t al, std::size_t sz)
 {
+  // Solaris requires al >= sizeof a word and QNX requires >= sizeof(void*)
+  // but they both provide posix_memalign, so will use the definition above.
   return memalign (al, sz);
 }
 #else // !HAVE__ALIGNED_MALLOC && !HAVE_POSIX_MEMALIGN && !HAVE_MEMALIGN
@@ -122,7 +131,8 @@ operator new (std::size_t sz, std::align_val_t al)
   if (__builtin_expect (sz == 0, false))
     sz = 1;
 
-#if _GLIBCXX_HAVE_ALIGNED_ALLOC
+#if _GLIBCXX_HAVE_POSIX_MEMALIGN
+#elif _GLIBCXX_HAVE_ALIGNED_ALLOC
 # if defined _AIX || defined __APPLE__
   /* AIX 7.2.0.0 aligned_alloc incorrectly has posix_memalign's requirement
    * that alignment is a multiple of sizeof(void*).

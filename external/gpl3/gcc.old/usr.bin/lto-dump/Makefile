@@ -1,22 +1,22 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2023/02/20 02:01:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2025/09/07 02:59:21 mrg Exp $
 
 PROG=		lto-dump
 # XXX pullout from LTO_DUMP_OBJS
-SRCS=		lto-lang.c \
-		lto-object.c \
-		attribs.c \
-		lto-partition.c \
-		lto-symtab.c \
-		lto-dump.c \
-		lto-common.c \
-		main.c
+SRCS=		lto-lang.cc \
+		lto-object.cc \
+		attribs.cc \
+		lto-partition.cc \
+		lto-symtab.cc \
+		lto-dump.cc \
+		lto-common.cc \
+		main.cc
 
 BINDIR=		/usr/bin
 
 CPPFLAGS+=	-DPREFIX=\"/usr\"
 
-COPTS.lto-lang.c+=	-Wno-stack-protector
-COPTS.lto-common.c+=	-Wno-stack-protector
+COPTS.lto-lang.cc+=	-Wno-error=stack-protector
+COPTS.lto-common.cc+=	-Wno-error=stack-protector
 
 .include "../Makefile.backend"
 .include "../Makefile.target-defines"
@@ -24,7 +24,7 @@ COPTS.lto-common.c+=	-Wno-stack-protector
 .include "../Makefile.backtrace"
 .include "../Makefile.libdecnumber"
 
-.if ${MACHINE_ARCH} == "vax"
+.if ${MACHINE_ARCH} == "vax" && 0
 COPTS.lto-lang.c+=-O0
 COPTS.lto-symtab.c+=-O0
 .endif

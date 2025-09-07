@@ -1,7 +1,8 @@
 //===-- tsan_ignoreset.h ----------------------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,17 +19,16 @@ namespace __tsan {
 
 class IgnoreSet {
  public:
-  static const uptr kMaxSize = 16;
-
   IgnoreSet();
-  void Add(u32 stack_id);
-  void Reset();
-  uptr Size() const;
-  u32 At(uptr i) const;
+  void Add(StackID stack_id);
+  void Reset() { size_ = 0; }
+  uptr Size() const { return size_; }
+  StackID At(uptr i) const;
 
  private:
+  static constexpr uptr kMaxSize = 16;
   uptr size_;
-  u32 stacks_[kMaxSize];
+  StackID stacks_[kMaxSize];
 };
 
 }  // namespace __tsan

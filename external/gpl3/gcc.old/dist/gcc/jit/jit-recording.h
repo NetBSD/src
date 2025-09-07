@@ -1,5 +1,5 @@
 /* Internals of libgccjit: classes for recording calls made to the JIT API.
-   Copyright (C) 2013-2020 Free Software Foundation, Inc.
+   Copyright (C) 2013-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -74,7 +74,7 @@ public:
   void disassociate_from_playback ();
 
   string *
-  new_string (const char *text);
+  new_string (const char *text, bool escaped = false);
 
   location *
   new_location (const char *filename,
@@ -149,6 +149,17 @@ public:
 	      type *type,
 	      const char *name);
 
+  rvalue *
+  new_ctor (location *loc,
+	    type *type,
+	    size_t num_values,
+	    field **fields,
+	    rvalue **values);
+
+  void
+  new_global_init_rvalue (lvalue *variable,
+			  rvalue *init);
+
   template <typename HOST_TYPE>
   rvalue *
   new_rvalue_from_const (type *type,
@@ -193,6 +204,11 @@ public:
   new_cast (location *loc,
 	    rvalue *expr,
 	    type *type_);
+
+  rvalue *
+  new_bitcast (location *loc,
+	       rvalue *expr,
+	       type *type_);
 
   lvalue *
   new_array_access (location *loc,
@@ -301,6 +317,8 @@ public:
   void set_timer (timer *t) { m_timer = t; }
   timer *get_timer () const { return m_timer; }
 
+  void add_top_level_asm (location *loc, const char *asm_stmts);
+
 private:
   void log_all_options () const;
   void log_str_option (enum gcc_jit_str_option opt) const;
@@ -344,6 +362,7 @@ private:
   auto_vec<compound_type *> m_compound_types;
   auto_vec<global *> m_globals;
   auto_vec<function *> m_functions;
+  auto_vec<top_level_asm *> m_top_level_asms;
 
   type *m_basic_types[NUM_GCC_JIT_TYPES];
   type *m_FILE_type;
@@ -414,7 +433,7 @@ private:
 class string : public memento
 {
 public:
-  string (context *ctxt, const char *text);
+  string (context *ctxt, const char *text, bool escaped);
   ~string ();
 
   const char *c_str () { return m_buffer; }
@@ -431,6 +450,11 @@ private:
 private:
   size_t m_len;
   char *m_buffer;
+
+  /* Flag to track if this string is the result of string::make_debug_string,
+     to avoid infinite recursion when logging all mementos: don't re-escape
+     such strings.  */
+  bool m_escaped;
 };
 
 class location : public memento
@@ -502,6 +526,12 @@ public:
      This will return NULL if it's not valid to dereference this type.
      The caller is responsible for setting an error.  */
   virtual type *dereference () = 0;
+  /* Get the type size in bytes.
+
+     This is implemented only for memento_of_get_type and
+     memento_of_get_pointer as it is used for initializing globals of
+     these types.  */
+  virtual size_t get_size () { gcc_unreachable (); }
 
   /* Dynamic casts.  */
   virtual function_type *dyn_cast_function_type () { return NULL; }
@@ -531,9 +561,15 @@ public:
   virtual bool is_float () const = 0;
   virtual bool is_bool () const = 0;
   virtual type *is_pointer () = 0;
+  virtual type *is_volatile () { return NULL; }
+  virtual type *is_const () { return NULL; }
   virtual type *is_array () = 0;
+  virtual struct_ *is_struct () { return NULL; }
+  virtual bool is_union () const { return false; }
   virtual bool is_void () const { return false; }
+  virtual vector_type *is_vector () { return NULL; }
   virtual bool has_known_size () const { return true; }
+  virtual bool is_signed () const = 0;
 
   bool is_numeric () const
   {
@@ -569,15 +605,26 @@ public:
 
   type *dereference () FINAL OVERRIDE;
 
+  size_t get_size () FINAL OVERRIDE;
+
   bool accepts_writes_from (type *rtype) FINAL OVERRIDE
   {
     if (m_kind == GCC_JIT_TYPE_VOID_PTR)
-      if (rtype->is_pointer ())
-	{
-	  /* LHS (this) is type (void *), and the RHS is a pointer:
-	     accept it:  */
-	  return true;
-	}
+      {
+	if (rtype->is_pointer ())
+	  {
+	    /* LHS (this) is type (void *), and the RHS is a pointer:
+	       accept it:  */
+	    return true;
+	  }
+      } else if (is_int ()
+		 && rtype->is_int ()
+		 && get_size () == rtype->get_size ()
+		 && is_signed () == rtype->is_signed ())
+      {
+	/* LHS (this) is an integer of the same size and sign as rtype.  */
+	return true;
+      }
 
     return type::accepts_writes_from (rtype);
   }
@@ -588,6 +635,7 @@ public:
   type *is_pointer () FINAL OVERRIDE { return dereference (); }
   type *is_array () FINAL OVERRIDE { return NULL; }
   bool is_void () const FINAL OVERRIDE { return m_kind == GCC_JIT_TYPE_VOID; }
+  bool is_signed () const FINAL OVERRIDE;
 
 public:
   void replay_into (replayer *r) FINAL OVERRIDE;
@@ -610,6 +658,8 @@ public:
 
   type *dereference () FINAL OVERRIDE { return m_other_type; }
 
+  size_t get_size () FINAL OVERRIDE;
+
   bool accepts_writes_from (type *rtype) FINAL OVERRIDE;
 
   void replay_into (replayer *r) FINAL OVERRIDE;
@@ -619,6 +669,7 @@ public:
   bool is_bool () const FINAL OVERRIDE { return false; }
   type *is_pointer () FINAL OVERRIDE { return m_other_type; }
   type *is_array () FINAL OVERRIDE { return NULL; }
+  bool is_signed () const FINAL OVERRIDE { return false; }
 
 private:
   string * make_debug_string () FINAL OVERRIDE;
@@ -640,11 +691,15 @@ public:
 
   type *dereference () FINAL OVERRIDE { return m_other_type->dereference (); }
 
+  size_t get_size () FINAL OVERRIDE { return m_other_type->get_size (); };
+
   bool is_int () const FINAL OVERRIDE { return m_other_type->is_int (); }
   bool is_float () const FINAL OVERRIDE { return m_other_type->is_float (); }
   bool is_bool () const FINAL OVERRIDE { return m_other_type->is_bool (); }
   type *is_pointer () FINAL OVERRIDE { return m_other_type->is_pointer (); }
   type *is_array () FINAL OVERRIDE { return m_other_type->is_array (); }
+  struct_ *is_struct () FINAL OVERRIDE { return m_other_type->is_struct (); }
+  bool is_signed () const FINAL OVERRIDE { return m_other_type->is_signed (); }
 
 protected:
   type *m_other_type;
@@ -666,6 +721,15 @@ public:
   /* Strip off the "const", giving the underlying type.  */
   type *unqualified () FINAL OVERRIDE { return m_other_type; }
 
+  virtual bool is_same_type_as (type *other)
+  {
+    if (!other->is_const ())
+      return false;
+    return m_other_type->is_same_type_as (other->is_const ());
+  }
+
+  virtual type *is_const () { return m_other_type; }
+
   void replay_into (replayer *) FINAL OVERRIDE;
 
 private:
@@ -680,8 +744,17 @@ public:
   memento_of_get_volatile (type *other_type)
   : decorated_type (other_type) {}
 
+  virtual bool is_same_type_as (type *other)
+  {
+    if (!other->is_volatile ())
+      return false;
+    return m_other_type->is_same_type_as (other->is_volatile ());
+  }
+
   /* Strip off the "volatile", giving the underlying type.  */
   type *unqualified () FINAL OVERRIDE { return m_other_type; }
+
+  virtual type *is_volatile () { return m_other_type; }
 
   void replay_into (replayer *) FINAL OVERRIDE;
 
@@ -727,6 +800,8 @@ public:
 
   void replay_into (replayer *) FINAL OVERRIDE;
 
+  vector_type *is_vector () FINAL OVERRIDE { return this; }
+
 private:
   string * make_debug_string () FINAL OVERRIDE;
   void write_reproducer (reproducer &r) FINAL OVERRIDE;
@@ -755,6 +830,8 @@ class array_type : public type
   bool is_bool () const FINAL OVERRIDE { return false; }
   type *is_pointer () FINAL OVERRIDE { return NULL; }
   type *is_array () FINAL OVERRIDE { return m_element_type; }
+  int num_elements () { return m_num_elements; }
+  bool is_signed () const FINAL OVERRIDE { return false; }
 
   void replay_into (replayer *) FINAL OVERRIDE;
 
@@ -788,6 +865,7 @@ public:
   bool is_bool () const FINAL OVERRIDE { return false; }
   type *is_pointer () FINAL OVERRIDE { return NULL; }
   type *is_array () FINAL OVERRIDE { return NULL; }
+  bool is_signed () const FINAL OVERRIDE { return false; }
 
   void replay_into (replayer *) FINAL OVERRIDE;
 
@@ -901,6 +979,7 @@ public:
   bool is_bool () const FINAL OVERRIDE { return false; }
   type *is_pointer () FINAL OVERRIDE { return NULL; }
   type *is_array () FINAL OVERRIDE { return NULL; }
+  bool is_signed () const FINAL OVERRIDE { return false; }
 
   bool has_known_size () const FINAL OVERRIDE { return m_fields != NULL; }
 
@@ -931,6 +1010,8 @@ public:
   void replay_into (replayer *r) FINAL OVERRIDE;
 
   const char *access_as_type (reproducer &r) FINAL OVERRIDE;
+
+  struct_ *is_struct () FINAL OVERRIDE { return this; }
 
 private:
   string * make_debug_string () FINAL OVERRIDE;
@@ -970,6 +1051,8 @@ public:
 
   void replay_into (replayer *r) FINAL OVERRIDE;
 
+  virtual bool is_union () const FINAL OVERRIDE { return true; }
+
 private:
   string * make_debug_string () FINAL OVERRIDE;
   void write_reproducer (reproducer &r) FINAL OVERRIDE;
@@ -978,7 +1061,7 @@ private:
 /* An abstract base class for operations that visit all rvalues within an
    expression tree.
    Currently the only implementation is class rvalue_usage_validator within
-   jit-recording.c.  */
+   jit-recording.cc.  */
 
 class rvalue_visitor
 {
@@ -1086,8 +1169,12 @@ public:
   lvalue (context *ctxt,
 	  location *loc,
 	  type *type_)
-    : rvalue (ctxt, loc, type_)
-    {}
+  : rvalue (ctxt, loc, type_),
+    m_link_section (NULL),
+    m_reg_name (NULL),
+    m_tls_model (GCC_JIT_TLS_MODEL_NONE),
+    m_alignment (0)
+  {}
 
   playback::lvalue *
   playback_lvalue () const
@@ -1107,6 +1194,18 @@ public:
 
   const char *access_as_rvalue (reproducer &r) OVERRIDE;
   virtual const char *access_as_lvalue (reproducer &r);
+  virtual bool is_global () const { return false; }
+  void set_tls_model (enum gcc_jit_tls_model model);
+  void set_link_section (const char *name);
+  void set_register_name (const char *reg_name);
+  void set_alignment (unsigned bytes);
+  unsigned get_alignment () const { return m_alignment; }
+
+protected:
+  string *m_link_section;
+  string *m_reg_name;
+  enum gcc_jit_tls_model m_tls_model;
+  unsigned m_alignment;
 };
 
 class param : public lvalue
@@ -1258,6 +1357,10 @@ public:
   add_comment (location *loc,
 	       const char *text);
 
+  extended_asm *
+  add_extended_asm (location *loc,
+		    const char *asm_template);
+
   statement *
   end_with_conditional (location *loc,
 			rvalue *boolval,
@@ -1278,6 +1381,13 @@ public:
 		   block *default_block,
 		   int num_cases,
 		   case_ **cases);
+
+  extended_asm *
+  end_with_extended_asm_goto (location *loc,
+			      const char *asm_template,
+			      int num_goto_blocks,
+			      block **goto_blocks,
+			      block *fallthrough_block);
 
   playback::block *
   playback_block () const
@@ -1327,7 +1437,14 @@ public:
   : lvalue (ctxt, loc, type),
     m_kind (kind),
     m_name (name)
-  {}
+  {
+    m_initializer = NULL;
+    m_initializer_num_bytes = 0;
+  }
+  ~global ()
+  {
+    free (m_initializer);
+  }
 
   void replay_into (replayer *) FINAL OVERRIDE;
 
@@ -1335,8 +1452,40 @@ public:
 
   void write_to_dump (dump &d) FINAL OVERRIDE;
 
+  bool is_global () const FINAL OVERRIDE { return true; }
+
+  void
+  set_initializer (const void *initializer,
+                   size_t num_bytes)
+  {
+    if (m_initializer)
+      free (m_initializer);
+    m_initializer = xmalloc (num_bytes);
+    memcpy (m_initializer, initializer, num_bytes);
+    m_initializer_num_bytes = num_bytes;
+  }
+
+  void set_flags (int flag_fields)
+  {
+    m_flags = (enum global_var_flags)(m_flags | flag_fields);
+  }
+  /* Returns true if any of the flags in the argument is set.  */
+  bool test_flags_anyof (int flag_fields) const
+  {
+    return m_flags & flag_fields;
+  }
+
+  enum gcc_jit_global_kind get_kind () const
+  {
+    return m_kind;
+  }
+
+  void set_rvalue_init (rvalue *val) { m_rvalue_init = val; }
+
 private:
   string * make_debug_string () FINAL OVERRIDE { return m_name; }
+  template <typename T>
+  void write_initializer_reproducer (const char *id, reproducer &r);
   void write_reproducer (reproducer &r) FINAL OVERRIDE;
   enum precedence get_precedence () const FINAL OVERRIDE
   {
@@ -1345,7 +1494,11 @@ private:
 
 private:
   enum gcc_jit_global_kind m_kind;
+  enum global_var_flags m_flags = GLOBAL_VAR_FLAGS_NONE;
   string *m_name;
+  void *m_initializer;
+  rvalue *m_rvalue_init = nullptr; /* Only needed for write_dump.  */
+  size_t m_initializer_num_bytes;
 };
 
 template <typename HOST_TYPE>
@@ -1427,6 +1580,32 @@ private:
 private:
   vector_type *m_vector_type;
   auto_vec<rvalue *> m_elements;
+};
+
+class ctor : public rvalue
+{
+public:
+  ctor (context *ctxt,
+	location *loc,
+	type *type)
+  : rvalue (ctxt, loc, type)
+  { }
+
+  void replay_into (replayer *r) FINAL OVERRIDE;
+
+  void visit_children (rvalue_visitor *) FINAL OVERRIDE;
+
+private:
+  string * make_debug_string () FINAL OVERRIDE;
+  void write_reproducer (reproducer &r) FINAL OVERRIDE;
+  enum precedence get_precedence () const FINAL OVERRIDE
+  {
+    return PRECEDENCE_PRIMARY;
+  }
+
+public:
+  auto_vec<field *> m_fields;
+  auto_vec<rvalue *> m_values;
 };
 
 class unary_op : public rvalue
@@ -1522,6 +1701,33 @@ public:
 	location *loc,
 	rvalue *a,
 	type *type_)
+  : rvalue (ctxt, loc, type_),
+    m_rvalue (a)
+  {}
+
+  void replay_into (replayer *r) FINAL OVERRIDE;
+
+  void visit_children (rvalue_visitor *v) FINAL OVERRIDE;
+
+private:
+  string * make_debug_string () FINAL OVERRIDE;
+  void write_reproducer (reproducer &r) FINAL OVERRIDE;
+  enum precedence get_precedence () const FINAL OVERRIDE
+  {
+    return PRECEDENCE_CAST;
+  }
+
+private:
+  rvalue *m_rvalue;
+};
+
+class bitcast : public rvalue
+{
+public:
+  bitcast (context *ctxt,
+	   location *loc,
+	   rvalue *a,
+	   type *type_)
   : rvalue (ctxt, loc, type_),
     m_rvalue (a)
   {}
@@ -2071,6 +2277,225 @@ private:
   auto_vec <case_ *> m_cases;
 };
 
+class asm_operand : public memento
+{
+public:
+  asm_operand (extended_asm *ext_asm,
+	       string *asm_symbolic_name,
+	       string *constraint);
+
+  const char *get_symbolic_name () const
+  {
+    if (m_asm_symbolic_name)
+      return m_asm_symbolic_name->c_str ();
+    else
+      return NULL;
+  }
+
+  const char *get_constraint () const
+  {
+    return m_constraint->c_str ();
+  }
+
+  virtual void print (pretty_printer *pp) const;
+
+private:
+  string * make_debug_string () FINAL OVERRIDE;
+
+protected:
+  extended_asm *m_ext_asm;
+  string *m_asm_symbolic_name;
+  string *m_constraint;
+};
+
+class output_asm_operand : public asm_operand
+{
+public:
+  output_asm_operand (extended_asm *ext_asm,
+		      string *asm_symbolic_name,
+		      string *constraint,
+		      lvalue *dest)
+  : asm_operand (ext_asm, asm_symbolic_name, constraint),
+    m_dest (dest)
+  {}
+
+  lvalue *get_lvalue () const { return m_dest; }
+
+  void replay_into (replayer *) FINAL OVERRIDE {}
+
+  void print (pretty_printer *pp) const FINAL OVERRIDE;
+
+private:
+  void write_reproducer (reproducer &r) FINAL OVERRIDE;
+
+private:
+  lvalue *m_dest;
+};
+
+class input_asm_operand : public asm_operand
+{
+public:
+  input_asm_operand (extended_asm *ext_asm,
+		     string *asm_symbolic_name,
+		     string *constraint,
+		     rvalue *src)
+  : asm_operand (ext_asm, asm_symbolic_name, constraint),
+    m_src (src)
+  {}
+
+  rvalue *get_rvalue () const { return m_src; }
+
+  void replay_into (replayer *) FINAL OVERRIDE {}
+
+  void print (pretty_printer *pp) const FINAL OVERRIDE;
+
+private:
+  void write_reproducer (reproducer &r) FINAL OVERRIDE;
+
+private:
+  rvalue *m_src;
+};
+
+/* Abstract base class for extended_asm statements.  */
+
+class extended_asm : public statement
+{
+public:
+  extended_asm (block *b,
+		location *loc,
+		string *asm_template)
+  : statement (b, loc),
+    m_asm_template (asm_template),
+    m_is_volatile (false),
+    m_is_inline (false)
+  {}
+
+  void set_volatile_flag (bool flag) { m_is_volatile = flag; }
+  void set_inline_flag (bool flag) { m_is_inline = flag; }
+
+  void add_output_operand (const char *asm_symbolic_name,
+			   const char *constraint,
+			   lvalue *dest);
+  void add_input_operand (const char *asm_symbolic_name,
+			  const char *constraint,
+			  rvalue *src);
+  void add_clobber (const char *victim);
+
+  void replay_into (replayer *r) OVERRIDE;
+
+  string *get_asm_template () const { return m_asm_template; }
+
+  virtual bool is_goto () const = 0;
+  virtual void maybe_print_gotos (pretty_printer *) const = 0;
+
+protected:
+  void write_flags (reproducer &r);
+  void write_clobbers (reproducer &r);
+
+private:
+  string * make_debug_string () FINAL OVERRIDE;
+  virtual void maybe_populate_playback_blocks
+    (auto_vec <playback::block *> *out) = 0;
+
+protected:
+  string *m_asm_template;
+  bool m_is_volatile;
+  bool m_is_inline;
+  auto_vec<output_asm_operand *> m_output_ops;
+  auto_vec<input_asm_operand *> m_input_ops;
+  auto_vec<string *> m_clobbers;
+};
+
+/* An extended_asm that's not a goto, as created by
+   gcc_jit_block_add_extended_asm. */
+
+class extended_asm_simple : public extended_asm
+{
+public:
+  extended_asm_simple (block *b,
+		       location *loc,
+		       string *asm_template)
+  : extended_asm (b, loc, asm_template)
+  {}
+
+  void write_reproducer (reproducer &r) OVERRIDE;
+  bool is_goto () const FINAL OVERRIDE { return false; }
+  void maybe_print_gotos (pretty_printer *) const FINAL OVERRIDE {}
+
+private:
+  void maybe_populate_playback_blocks
+    (auto_vec <playback::block *> *) FINAL OVERRIDE
+  {}
+};
+
+/* An extended_asm that's a asm goto, as created by
+   gcc_jit_block_end_with_extended_asm_goto.  */
+
+class extended_asm_goto : public extended_asm
+{
+public:
+  extended_asm_goto (block *b,
+		     location *loc,
+		     string *asm_template,
+		     int num_goto_blocks,
+		     block **goto_blocks,
+		     block *fallthrough_block);
+
+  void replay_into (replayer *r) FINAL OVERRIDE;
+  void write_reproducer (reproducer &r) OVERRIDE;
+
+  vec <block *> get_successor_blocks () const FINAL OVERRIDE;
+
+  bool is_goto () const FINAL OVERRIDE { return true; }
+  void maybe_print_gotos (pretty_printer *) const FINAL OVERRIDE;
+
+private:
+  void maybe_populate_playback_blocks
+    (auto_vec <playback::block *> *out) FINAL OVERRIDE;
+
+private:
+  auto_vec <block *> m_goto_blocks;
+  block *m_fallthrough_block;
+};
+
+/* A group of top-level asm statements, as created by
+   gcc_jit_context_add_top_level_asm.  */
+
+class top_level_asm : public memento
+{
+public:
+  top_level_asm (context *ctxt, location *loc, string *asm_stmts);
+
+  void write_to_dump (dump &d) FINAL OVERRIDE;
+
+private:
+  void replay_into (replayer *r) FINAL OVERRIDE;
+  string * make_debug_string () FINAL OVERRIDE;
+  void write_reproducer (reproducer &r) FINAL OVERRIDE;
+
+private:
+  location *m_loc;
+  string *m_asm_stmts;
+};
+
+class global_init_rvalue : public memento
+{
+public:
+  global_init_rvalue (context *ctxt, lvalue *variable, rvalue *init) :
+    memento (ctxt), m_variable (variable), m_init (init) {};
+
+  void write_to_dump (dump &d) FINAL OVERRIDE;
+
+private:
+  void replay_into (replayer *r) FINAL OVERRIDE;
+  string * make_debug_string () FINAL OVERRIDE;
+  void write_reproducer (reproducer &r) FINAL OVERRIDE;
+
+private:
+  lvalue *m_variable;
+  rvalue *m_init;
+};
+
 } // namespace gcc::jit::recording
 
 /* Create a recording::memento_of_new_rvalue_from_const instance and add
@@ -2088,6 +2513,23 @@ recording::context::new_rvalue_from_const (recording::type *type,
     new memento_of_new_rvalue_from_const <HOST_TYPE> (this, NULL, type, value);
   record (result);
   return result;
+}
+
+/* Don't call this directly.  Call types_kinda_same.  */
+bool
+types_kinda_same_internal (recording::type *a,
+			   recording::type *b);
+
+/* Strip all qualifiers and count pointer depth, returning true
+   if the types and pointer depth are the same, otherwise false.
+
+   For array and vector types the number of element also
+   has to match, aswell as the element types themself.  */
+static inline bool
+types_kinda_same (recording::type *a, recording::type *b)
+{
+  /* Handle trivial case here, to allow for inlining.  */
+  return a == b || types_kinda_same_internal (a, b);
 }
 
 } // namespace gcc::jit

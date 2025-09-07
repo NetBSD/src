@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.7 2023/07/14 19:36:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.8 2025/09/07 02:59:21 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -9,7 +9,7 @@ LIBISPRIVATE=	yes
 LIB=		common-target
 
 .include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk"
-SRCS=		${G_OBJS-libcommon-target:S/common\///:.o=.c}
+SRCS=		${G_OBJS-libcommon-target:S/common\///:.o=.cc}
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
@@ -19,12 +19,12 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		-DCONFIGURE_SPECS="\"\"" \
 		-I${BACKENDOBJ}
 
-COPTS.prefix.c+=	-Wno-stack-protector
-COPTS.opts-common.c+=	-Wno-stack-protector
-COPTS.rs6000-common.c+=	-Wno-stack-protector
-COPTS.arm-common.c+=	-Wno-stack-protector
+COPTS.prefix.cc+=	-Wno-error=stack-protector
+COPTS.opts-common.cc+=	-Wno-error=stack-protector
+COPTS.rs6000-common.cc+=	-Wno-error=stack-protector
+COPTS.arm-common.cc+=	-Wno-error=stack-protector
 .if ${MACHINE_CPU} == "sh3"
-COPTS.opts.c+=		${CC_WNO_FORMAT_TRUNCATION}
+COPTS.opts.cc+=		${CC_WNO_FORMAT_TRUNCATION}
 .endif
 
 GENPROG_ERROR_DEPENDS=errors.lo

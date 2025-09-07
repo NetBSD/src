@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -17,7 +17,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /* Since Darwin's ld will not allow zero-sized objects, and gcc wants them,
-   we emit one byte (in darwin.c) when such an object is encountered.
+   we emit one byte (in darwin.cc) when such an object is encountered.
 
    This messes up section anchoring because the emitted byte is not counted
    outside the port.  To cope with this, we set aside sections for zero-sized
@@ -25,9 +25,9 @@ along with GCC; see the file COPYING3.  If not see
    ("zobj_" sections, below).
    
    Items that might be coalesced by the linker are prevented from participating,
-   (and those in mergeable sections are disallowed in varasm.c).  */
+   (and those in mergeable sections are disallowed in varasm.cc).  */
 
-/* The .text section is generated in varasm.c  */
+/* The .text section is generated in varasm.cc  */
 DEF_SECTION (text_coal_section, SECTION_CODE|SECTION_NO_ANCHOR,
 	     ".section __TEXT,__textcoal_nt,coalesced,pure_instructions", 0)
 
@@ -62,7 +62,7 @@ DEF_SECTION (const_coal_section, SECTION_NO_ANCHOR,
 DEF_SECTION (zobj_const_section, SECTION_NO_ANCHOR, 
 	     ".section\t__DATA,__zobj_const", 0)
 
-/* Write-able data.  '.data'  handled in varasm.c  */
+/* Write-able data.  '.data'  handled in varasm.cc  */
 DEF_SECTION (static_data_section, SECTION_WRITE, ".static_data", 0)
 DEF_SECTION (data_coal_section, SECTION_WRITE|SECTION_NO_ANCHOR,
 	     ".section __DATA,__datacoal_nt,coalesced", 0)
@@ -98,6 +98,8 @@ DEF_SECTION (mod_init_section, 0, ".mod_init_func", 0)
 DEF_SECTION (mod_term_section, 0, ".mod_term_func", 0)
 DEF_SECTION (constructor_section, 0, ".constructor", 0)
 DEF_SECTION (destructor_section, 0, ".destructor", 0)
+DEF_SECTION (static_init_section, SECTION_CODE,
+	     ".section\t__TEXT,__StaticInit,regular,pure_instructions", 0)
 
 /* Objective-C ABI=0 (Original version) sections.  */
 DEF_SECTION (objc_class_section, 0, ".objc_class", 1)
@@ -157,7 +159,7 @@ DEF_SECTION (machopic_picsymbol_stub3_section, SECTION_NO_ANCHOR,
 
 /* Exception-related.  */
 DEF_SECTION (darwin_exception_section, SECTION_NO_ANCHOR,
-	     ".section __DATA,__gcc_except_tab", 0)
+	     ".section __TEXT,__gcc_except_tab", 0)
 DEF_SECTION (darwin_eh_frame_section, SECTION_NO_ANCHOR,
 	     ".section " EH_FRAME_SECTION_NAME ",__eh_frame"
 	     EH_FRAME_SECTION_ATTR, 0)
@@ -201,7 +203,6 @@ DEF_SECTION (objc2_constant_string_object_section, 0,
 
 /* Additions for compatibility with later runtime conventions especially for
    sections containing strings.  */
-
 DEF_SECTION (objc2_data_section, 0, ".section __DATA, __data", 1)
 
 DEF_SECTION (objc2_ivar_section, 0, ".section __DATA, __objc_ivar", 1)

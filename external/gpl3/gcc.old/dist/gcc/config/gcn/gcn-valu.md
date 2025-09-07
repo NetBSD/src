@@ -1,4 +1,4 @@
-;; Copyright (C) 2016-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2022 Free Software Foundation, Inc.
 
 ;; This file is free software; you can redistribute it and/or modify it under
 ;; the terms of the GNU General Public License as published by the Free
@@ -703,6 +703,8 @@
 ;; - The address space and glc (volatile) fields are there to replace the
 ;;   fields normally found in a MEM.
 ;; - Multiple forms of address expression are supported, below.
+;;
+;; TODO: implement combined gather and zero_extend, but only for -msram-ecc=on
 
 (define_expand "gather_load<mode><vnsi>"
   [(match_operand:V_ALL 0 "register_operand")
@@ -825,8 +827,12 @@
 	/* Work around assembler bug in which a 64-bit register is expected,
 	but a 32-bit value would be correct.  */
 	int reg = REGNO (operands[2]) - FIRST_VGPR_REG;
-	sprintf (buf, "global_load%%o0\t%%0, v[%d:%d], %%1 offset:%%3%s\;"
-		      "s_waitcnt\tvmcnt(0)", reg, reg + 1, glc);
+	if (HAVE_GCN_ASM_GLOBAL_LOAD_FIXED)
+	  sprintf (buf, "global_load%%o0\t%%0, v%d, %%1 offset:%%3%s\;"
+			"s_waitcnt\tvmcnt(0)", reg, glc);
+	else
+	  sprintf (buf, "global_load%%o0\t%%0, v[%d:%d], %%1 offset:%%3%s\;"
+			"s_waitcnt\tvmcnt(0)", reg, reg + 1, glc);
       }
     else
       gcc_unreachable ();
@@ -923,7 +929,7 @@
   {
     addr_space_t as = INTVAL (operands[3]);
     static char buf[200];
-    sprintf (buf, "ds_write%%b2\t%%0, %%2 offset:%%1%s",
+    sprintf (buf, "ds_write%%b2\t%%0, %%2 offset:%%1%s\;s_waitcnt\tlgkmcnt(0)",
 	     (AS_GDS_P (as) ? " gds" : ""));
     return buf;
   }
@@ -956,8 +962,12 @@
 	/* Work around assembler bug in which a 64-bit register is expected,
 	but a 32-bit value would be correct.  */
 	int reg = REGNO (operands[1]) - FIRST_VGPR_REG;
-	sprintf (buf, "global_store%%s3\tv[%d:%d], %%3, %%0 offset:%%2%s",
-		 reg, reg + 1, glc);
+	if (HAVE_GCN_ASM_GLOBAL_LOAD_FIXED)
+	  sprintf (buf, "global_store%%s3\tv%d, %%3, %%0 offset:%%2%s",
+		   reg, glc);
+	else
+	  sprintf (buf, "global_store%%s3\tv[%d:%d], %%3, %%0 offset:%%2%s",
+		   reg, reg + 1, glc);
       }
     else
       gcc_unreachable ();
@@ -2185,7 +2195,7 @@
   [(set_attr "type" "vop3a")
    (set_attr "length" "8,8")])
 
-(define_insn "subdf"
+(define_insn "subdf3"
   [(set (match_operand:DF 0 "register_operand"  "=  v,   v")
 	(minus:DF
 	  (match_operand:DF 1 "gcn_alu_operand" "vSvB,   v")
@@ -2351,9 +2361,9 @@
 
 (define_insn "recip<mode>2<exec>"
   [(set (match_operand:V_FP 0 "register_operand"  "=  v")
-	(div:V_FP
-	  (vec_duplicate:V_FP (float:<SCALAR_MODE> (const_int 1)))
-	  (match_operand:V_FP 1 "gcn_alu_operand" "vSvB")))]
+	(unspec:V_FP
+	  [(match_operand:V_FP 1 "gcn_alu_operand" "vSvB")]
+	  UNSPEC_RCP))]
   ""
   "v_rcp%i0\t%0, %1"
   [(set_attr "type" "vop1")
@@ -2361,9 +2371,9 @@
 
 (define_insn "recip<mode>2"
   [(set (match_operand:FP 0 "register_operand"	 "=  v")
-	(div:FP
-	  (float:FP (const_int 1))
-	  (match_operand:FP 1 "gcn_alu_operand"	 "vSvB")))]
+	(unspec:FP
+	  [(match_operand:FP 1 "gcn_alu_operand" "vSvB")]
+	  UNSPEC_RCP))]
   ""
   "v_rcp%i0\t%0, %1"
   [(set_attr "type" "vop1")
@@ -2382,28 +2392,39 @@
    (match_operand:V_FP 2 "gcn_valu_src0_operand")]
   "flag_reciprocal_math"
   {
-    rtx two = gcn_vec_constant (<MODE>mode,
-		  const_double_from_real_value (dconst2, <SCALAR_MODE>mode));
+    rtx one = gcn_vec_constant (<MODE>mode,
+		  const_double_from_real_value (dconst1, <SCALAR_MODE>mode));
     rtx initrcp = gen_reg_rtx (<MODE>mode);
     rtx fma = gen_reg_rtx (<MODE>mode);
     rtx rcp;
+    rtx num = operands[1], denom = operands[2];
 
-    bool is_rcp = (GET_CODE (operands[1]) == CONST_VECTOR
+    bool is_rcp = (GET_CODE (num) == CONST_VECTOR
 		   && real_identical
 		        (CONST_DOUBLE_REAL_VALUE
-			  (CONST_VECTOR_ELT (operands[1], 0)), &dconstm1));
+			  (CONST_VECTOR_ELT (num, 0)), &dconstm1));
 
     if (is_rcp)
       rcp = operands[0];
     else
       rcp = gen_reg_rtx (<MODE>mode);
 
-    emit_insn (gen_recip<mode>2 (initrcp, operands[2]));
-    emit_insn (gen_fma<mode>4_negop2 (fma, initrcp, operands[2], two));
-    emit_insn (gen_mul<mode>3 (rcp, initrcp, fma));
+    emit_insn (gen_recip<mode>2 (initrcp, denom));
+    emit_insn (gen_fma<mode>4_negop2 (fma, initrcp, denom, one));
+    emit_insn (gen_fma<mode>4 (rcp, fma, initrcp, initrcp));
 
     if (!is_rcp)
-      emit_insn (gen_mul<mode>3 (operands[0], operands[1], rcp));
+      {
+	rtx div_est = gen_reg_rtx (<MODE>mode);
+	rtx fma2 = gen_reg_rtx (<MODE>mode);
+	rtx fma3 = gen_reg_rtx (<MODE>mode);
+	rtx fma4 = gen_reg_rtx (<MODE>mode);
+	emit_insn (gen_mul<mode>3 (div_est, num, rcp));
+	emit_insn (gen_fma<mode>4_negop2 (fma2, div_est, denom, num));
+	emit_insn (gen_fma<mode>4 (fma3, fma2, rcp, div_est));
+	emit_insn (gen_fma<mode>4_negop2 (fma4, fma3, denom, num));
+	emit_insn (gen_fma<mode>4 (operands[0], fma4, rcp, fma3));
+      }
 
     DONE;
   })
@@ -2414,10 +2435,11 @@
    (match_operand:FP 2 "gcn_valu_src0_operand")]
   "flag_reciprocal_math"
   {
-    rtx two = const_double_from_real_value (dconst2, <MODE>mode);
+    rtx one = const_double_from_real_value (dconst1, <MODE>mode);
     rtx initrcp = gen_reg_rtx (<MODE>mode);
     rtx fma = gen_reg_rtx (<MODE>mode);
     rtx rcp;
+    rtx num = operands[1], denom = operands[2];
 
     bool is_rcp = (GET_CODE (operands[1]) == CONST_DOUBLE
 		   && real_identical (CONST_DOUBLE_REAL_VALUE (operands[1]),
@@ -2428,12 +2450,22 @@
     else
       rcp = gen_reg_rtx (<MODE>mode);
 
-    emit_insn (gen_recip<mode>2 (initrcp, operands[2]));
-    emit_insn (gen_fma<mode>4_negop2 (fma, initrcp, operands[2], two));
-    emit_insn (gen_mul<mode>3 (rcp, initrcp, fma));
+    emit_insn (gen_recip<mode>2 (initrcp, denom));
+    emit_insn (gen_fma<mode>4_negop2 (fma, initrcp, denom, one));
+    emit_insn (gen_fma<mode>4 (rcp, fma, initrcp, initrcp));
 
     if (!is_rcp)
-      emit_insn (gen_mul<mode>3 (operands[0], operands[1], rcp));
+      {
+	rtx div_est = gen_reg_rtx (<MODE>mode);
+	rtx fma2 = gen_reg_rtx (<MODE>mode);
+	rtx fma3 = gen_reg_rtx (<MODE>mode);
+	rtx fma4 = gen_reg_rtx (<MODE>mode);
+	emit_insn (gen_mul<mode>3 (div_est, num, rcp));
+	emit_insn (gen_fma<mode>4_negop2 (fma2, div_est, denom, num));
+	emit_insn (gen_fma<mode>4 (fma3, fma2, rcp, div_est));
+	emit_insn (gen_fma<mode>4_negop2 (fma4, fma3, denom, num));
+	emit_insn (gen_fma<mode>4 (operands[0], fma4, rcp, fma3));
+      }
 
     DONE;
   })
@@ -3076,6 +3108,26 @@
     DONE;
   })
 
+;; Warning: This "-ffast-math" implementation converts in-order reductions
+;;          into associative reductions. It's also used where OpenMP or
+;;          OpenACC paralellization has already broken the in-order semantics.
+(define_expand "fold_left_plus_<mode>"
+ [(match_operand:<SCALAR_MODE> 0 "register_operand")
+  (match_operand:<SCALAR_MODE> 1 "gcn_alu_operand")
+  (match_operand:V_FP 2 "gcn_alu_operand")]
+  "can_create_pseudo_p ()
+   && (flag_openacc || flag_openmp
+       || flag_associative_math)"
+  {
+    rtx dest = operands[0];
+    rtx scalar = operands[1];
+    rtx vector = operands[2];
+    rtx tmp = gen_reg_rtx (<SCALAR_MODE>mode);
+
+    emit_insn (gen_reduc_plus_scal_<mode> (tmp, vector));
+    emit_insn (gen_add<scalar_mode>3 (dest, scalar, tmp));
+     DONE;
+   })
 
 (define_insn "*<reduc_op>_dpp_shr_<mode>"
   [(set (match_operand:V_1REG 0 "register_operand"   "=v")

@@ -1,5 +1,5 @@
-/* Declarations for objc-act.c.
-   Copyright (C) 1990-2020 Free Software Foundation, Inc.
+/* Declarations for objc-act.cc.
+   Copyright (C) 1990-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -29,7 +29,7 @@ int objc_gimplify_expr (tree *, gimple_seq *, gimple_seq *);
 void objc_common_init_ts (void);
 
 /* NB: The remaining public functions are prototyped in c-common.h, for the
-   benefit of stub-objc.c and objc-act.c.  */
+   benefit of stub-objc.cc and objc-act.cc.  */
 
 /* Objective-C structures */
 
@@ -136,6 +136,20 @@ enum objc_property_assign_semantics {
    1.  */
 #define PROPERTY_OPTIONAL(DECL) \
   DECL_LANG_FLAG_5 (PROPERTY_DECL_CHECK (DECL))
+
+/* PROPERTY_CLASS can be 0 or 1.  */
+#define PROPERTY_CLASS(DECL) \
+   DECL_LANG_FLAG_6 (PROPERTY_DECL_CHECK (DECL))
+
+/* PROPERTY_NULLABILITY attributes added to the decl attributes.
+   effectively, __attribute__((objc_nullability(kind))),   */
+enum objc_property_nullability {
+  OBJC_PROPERTY_NULL_UNSPECIFIED = 0,
+  OBJC_PROPERTY_NULLABLE,
+  OBJC_PROPERTY_NONNULL,
+  OBJC_PROPERTY_NULL_RESETTABLE,
+  OBJC_PROPERTY_NULL_UNSET
+};
 
 /* PROPERTY_REF.  A PROPERTY_REF represents an 'object.property'
    expression.  It is normally used for property access, but when

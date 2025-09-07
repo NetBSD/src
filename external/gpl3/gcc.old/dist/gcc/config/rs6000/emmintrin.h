@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -427,170 +427,166 @@ _mm_cmpnge_pd (__m128d __A, __m128d __B)
   return ((__m128d)vec_cmplt ((__v2df) __A, (__v2df) __B));
 }
 
-#if _ARCH_PWR8
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpord_pd (__m128d __A, __m128d __B)
 {
-  __v2du c, d;
+  __v2du __c, __d;
   /* Compare against self will return false (0's) if NAN.  */
-  c = (__v2du)vec_cmpeq (__A, __A);
-  d = (__v2du)vec_cmpeq (__B, __B);
+  __c = (__v2du)vec_cmpeq (__A, __A);
+  __d = (__v2du)vec_cmpeq (__B, __B);
   /* A != NAN and B != NAN.  */
-  return ((__m128d)vec_and(c, d));
+  return ((__m128d)vec_and(__c, __d));
 }
-#endif
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpunord_pd (__m128d __A, __m128d __B)
 {
 #if _ARCH_PWR8
-  __v2du c, d;
+  __v2du __c, __d;
   /* Compare against self will return false (0's) if NAN.  */
-  c = (__v2du)vec_cmpeq ((__v2df)__A, (__v2df)__A);
-  d = (__v2du)vec_cmpeq ((__v2df)__B, (__v2df)__B);
+  __c = (__v2du)vec_cmpeq ((__v2df)__A, (__v2df)__A);
+  __d = (__v2du)vec_cmpeq ((__v2df)__B, (__v2df)__B);
   /* A == NAN OR B == NAN converts too:
      NOT(A != NAN) OR NOT(B != NAN).  */
-  c = vec_nor (c, c);
-  return ((__m128d)vec_orc(c, d));
+  __c = vec_nor (__c, __c);
+  return ((__m128d)vec_orc(__c, __d));
 #else
-  __v2du c, d;
+  __v2du __c, __d;
   /* Compare against self will return false (0's) if NAN.  */
-  c = (__v2du)vec_cmpeq ((__v2df)__A, (__v2df)__A);
-  d = (__v2du)vec_cmpeq ((__v2df)__B, (__v2df)__B);
+  __c = (__v2du)vec_cmpeq ((__v2df)__A, (__v2df)__A);
+  __d = (__v2du)vec_cmpeq ((__v2df)__B, (__v2df)__B);
   /* Convert the true ('1's) is NAN.  */
-  c = vec_nor (c, c);
-  d = vec_nor (d, d);
-  return ((__m128d)vec_or(c, d));
+  __c = vec_nor (__c, __c);
+  __d = vec_nor (__d, __d);
+  return ((__m128d)vec_or(__c, __d));
 #endif
 }
 
 extern __inline  __m128d  __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpeq_sd(__m128d  __A, __m128d  __B)
 {
-  __v2df a, b, c;
+  __v2df __a, __b, __c;
   /* PowerISA VSX does not allow partial (for just lower double)
      results. So to insure we don't generate spurious exceptions
      (from the upper double values) we splat the lower double
      before we do the operation. */
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
-  c = (__v2df) vec_cmpeq(a, b);
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
+  __c = (__v2df) vec_cmpeq(__a, __b);
   /* Then we merge the lower double result with the original upper
      double from __A.  */
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmplt_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
-  c = (__v2df) vec_cmplt(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
+  __c = (__v2df) vec_cmplt(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmple_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
-  c = (__v2df) vec_cmple(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
+  __c = (__v2df) vec_cmple(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpgt_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
-  c = (__v2df) vec_cmpgt(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
+  __c = (__v2df) vec_cmpgt(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpge_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
-  c = (__v2df) vec_cmpge(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
+  __c = (__v2df) vec_cmpge(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpneq_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
-  c = (__v2df) vec_cmpeq(a, b);
-  c = vec_nor (c, c);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
+  __c = (__v2df) vec_cmpeq(__a, __b);
+  __c = vec_nor (__c, __c);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpnlt_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
   /* Not less than is just greater than or equal.  */
-  c = (__v2df) vec_cmpge(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __c = (__v2df) vec_cmpge(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpnle_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
   /* Not less than or equal is just greater than.  */
-  c = (__v2df) vec_cmpge(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __c = (__v2df) vec_cmpge(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpngt_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
   /* Not greater than is just less than or equal.  */
-  c = (__v2df) vec_cmple(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __c = (__v2df) vec_cmple(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpnge_sd (__m128d __A, __m128d __B)
 {
-  __v2df a, b, c;
-  a = vec_splats (__A[0]);
-  b = vec_splats (__B[0]);
+  __v2df __a, __b, __c;
+  __a = vec_splats (__A[0]);
+  __b = vec_splats (__B[0]);
   /* Not greater than or equal is just less than.  */
-  c = (__v2df) vec_cmplt(a, b);
-  return (__m128d) _mm_setr_pd (c[0], __A[1]);
+  __c = (__v2df) vec_cmplt(__a, __b);
+  return (__m128d) _mm_setr_pd (__c[0], __A[1]);
 }
 
-#if _ARCH_PWR8
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpord_sd (__m128d __A, __m128d __B)
 {
-  __v2df r;
-  r = (__v2df)_mm_cmpord_pd (vec_splats (__A[0]), vec_splats (__B[0]));
-  return (__m128d) _mm_setr_pd (r[0], ((__v2df)__A)[1]);
+  __v2df __r;
+  __r = (__v2df)_mm_cmpord_pd (vec_splats (__A[0]), vec_splats (__B[0]));
+  return (__m128d) _mm_setr_pd (__r[0], ((__v2df)__A)[1]);
 }
-#endif
 
 extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpunord_sd (__m128d __A, __m128d __B)
 {
-  __v2df r;
-  r = _mm_cmpunord_pd (vec_splats (__A[0]), vec_splats (__B[0]));
-  return (__m128d) _mm_setr_pd (r[0], __A[1]);
+  __v2df __r;
+  __r = _mm_cmpunord_pd (vec_splats (__A[0]), vec_splats (__B[0]));
+  return (__m128d) _mm_setr_pd (__r[0], __A[1]);
 }
 
 /* FIXME
@@ -1237,6 +1233,9 @@ _mm_loadl_pd (__m128d __A, double const *__B)
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_movemask_pd (__m128d  __A)
 {
+#ifdef _ARCH_PWR10
+  return vec_extractm ((__v2du) __A);
+#else
   __vector unsigned long long __result;
   static const __vector unsigned int __perm_mask =
     {
@@ -1256,6 +1255,7 @@ _mm_movemask_pd (__m128d  __A)
 #else
   return __result[0];
 #endif
+#endif /* !_ARCH_PWR10 */
 }
 #endif /* _ARCH_PWR8 */
 
@@ -1466,10 +1466,11 @@ _mm_mul_su32 (__m64 __A, __m64 __B)
   return ((__m64)__a * (__m64)__b);
 }
 
+#ifdef _ARCH_PWR8
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_mul_epu32 (__m128i __A, __m128i __B)
 {
-#if __GNUC__ < 8 || !defined (_ARCH_PWR8)
+#if __GNUC__ < 8
   __v2du __result;
 
 #ifdef __LITTLE_ENDIAN__
@@ -1492,6 +1493,7 @@ _mm_mul_epu32 (__m128i __A, __m128i __B)
   return (__m128i) vec_mule ((__v4su)__A, (__v4su)__B);
 #endif
 }
+#endif
 
 extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_slli_epi16 (__m128i __A, int __B)
@@ -2027,10 +2029,14 @@ _mm_min_epu8 (__m128i __A, __m128i __B)
 #ifdef _ARCH_PWR8
 /* Intrinsic functions that require PowerISA 2.07 minimum.  */
 
-/* Creates a 4-bit mask from the most significant bits of the SPFP values.  */
+/* Return a mask created from the most significant bit of each 8-bit
+   element in A.  */
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_movemask_epi8 (__m128i __A)
 {
+#ifdef _ARCH_PWR10
+  return vec_extractm ((__v16qu) __A);
+#else
   __vector unsigned long long __result;
   static const __vector unsigned char __perm_mask =
     {
@@ -2047,6 +2053,7 @@ _mm_movemask_epi8 (__m128i __A)
 #else
   return __result[0];
 #endif
+#endif /* !_ARCH_PWR10 */
 }
 #endif /* _ARCH_PWR8 */
 
@@ -2190,27 +2197,37 @@ extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __arti
 _mm_sad_epu8 (__m128i __A, __m128i __B)
 {
   __v16qu __a, __b;
-  __v16qu __vmin, __vmax, __vabsdiff;
+  __v16qu __vabsdiff;
   __v4si __vsum;
   const __v4su __zero = { 0, 0, 0, 0 };
   __v4si __result;
 
   __a = (__v16qu) __A;
   __b = (__v16qu) __B;
-  __vmin = vec_min (__a, __b);
-  __vmax = vec_max (__a, __b);
+#ifndef _ARCH_PWR9
+  __v16qu __vmin = vec_min (__a, __b);
+  __v16qu __vmax = vec_max (__a, __b);
   __vabsdiff = vec_sub (__vmax, __vmin);
+#else
+  __vabsdiff = vec_absd (__a, __b);
+#endif
   /* Sum four groups of bytes into integers.  */
   __vsum = (__vector signed int) vec_sum4s (__vabsdiff, __zero);
+#ifdef __LITTLE_ENDIAN__
+  /* Sum across four integers with two integer results.  */
+  __asm__ ("vsum2sws %0,%1,%2" : "=v" (__result) : "v" (__vsum), "v" (__zero));
+  /* Note: vec_sum2s could be used here, but on little-endian, vector
+     shifts are added that are not needed for this use-case.
+     A vector shift to correctly position the 32-bit integer results
+     (currently at [0] and [2]) to [1] and [3] would then need to be
+     swapped back again since the desired results are two 64-bit
+     integers ([1]|[0] and [3]|[2]).  Thus, no shift is performed.  */
+#else
   /* Sum across four integers with two integer results.  */
   __result = vec_sum2s (__vsum, (__vector signed int) __zero);
   /* Rotate the sums into the correct position.  */
-#ifdef __LITTLE_ENDIAN__
-  __result = vec_sld (__result, __result, 4);
-#else
   __result = vec_sld (__result, __result, 6);
 #endif
-  /* Rotate the sums into the correct position.  */
   return (__m128i) __result;
 }
 

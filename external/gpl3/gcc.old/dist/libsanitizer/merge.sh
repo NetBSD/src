@@ -4,21 +4,18 @@
 
 # This script merges libsanitizer sources from upstream.
 
-VCS=${1:-svn}
-
 get_upstream() {
   rm -rf upstream
-  #cp -rf orig upstream
-  svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk upstream
+  git clone https://github.com/llvm/llvm-project.git upstream
 }
 
 get_current_rev() {
   cd upstream
-  svn info | grep Revision | grep -o '[0-9]*'
+  git rev-parse HEAD
 }
 
 list_files() {
-  (cd $1; ls *.{cc,h,inc,S} 2> /dev/null)
+  (cd $1; ls *.{cc,cpp,h,inc,S} 2> /dev/null)
 
 }
 
@@ -34,7 +31,7 @@ change_comment_headers() {
 # This function merges changes from the directory upstream_path to
 # the directory  local_path.
 merge() {
-  upstream_path=upstream/$1
+  upstream_path=upstream/compiler-rt/$1
   local_path=$2
   change_comment_headers $upstream_path
   echo MERGE: $upstream_path
@@ -48,10 +45,10 @@ merge() {
     elif [ -f $upstream_path/$f ]; then
       echo "FOUND IN UPSTREAM :" $f
       cp -v $upstream_path/$f $local_path
-      $VCS add $local_path/$f
+      git add $local_path/$f
     elif [ -f $local_path/$f ]; then
       echo "FOUND IN LOCAL    :" $f
-      $VCS rm $local_path/$f
+      git rm $local_path/$f
     fi
   done
 
@@ -74,10 +71,11 @@ merge lib/tsan/rtl tsan
 merge lib/sanitizer_common sanitizer_common
 merge lib/interception interception
 merge lib/ubsan ubsan
+merge lib/hwasan hwasan
 
 # Need to merge lib/builtins/assembly.h file:
 mkdir -p builtins
-cp -v upstream/lib/builtins/assembly.h builtins/assembly.h
+cp -v upstream/compiler-rt/lib/builtins/assembly.h builtins/assembly.h
 
 rm -rf upstream
 
@@ -85,6 +83,6 @@ rm -rf upstream
 cat << EOF > MERGE
 $CUR_REV
 
-The first line of this file holds the svn revision number of the
+The first line of this file holds the git revision number of the
 last merge done from the master library sources.
 EOF

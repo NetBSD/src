@@ -180,6 +180,52 @@ OMP_5.0 {
 	omp_pause_resource_all_;
 } OMP_4.5;
 
+OMP_5.0.1 {
+  global:
+	omp_set_default_allocator;
+	omp_set_default_allocator_;
+	omp_get_default_allocator;
+	omp_get_default_allocator_;
+	omp_init_allocator;
+	omp_init_allocator_;
+	omp_init_allocator_8_;
+	omp_destroy_allocator;
+	omp_destroy_allocator_;
+	omp_alloc;
+	omp_free;
+	omp_get_supported_active_levels;
+	omp_get_supported_active_levels_;
+	omp_fulfill_event;
+	omp_fulfill_event_;
+} OMP_5.0;
+
+OMP_5.0.2 {
+  global:
+	omp_get_device_num;
+	omp_get_device_num_;
+	omp_aligned_alloc;
+	omp_calloc;
+	omp_aligned_calloc;
+	omp_realloc;
+} OMP_5.0.1;
+
+OMP_5.1 {
+  global:
+	omp_display_env;
+	omp_display_env_;
+	omp_display_env_8_;
+	omp_set_num_teams;
+	omp_set_num_teams_;
+	omp_set_num_teams_8_;
+	omp_get_max_teams;
+	omp_get_max_teams_;
+	omp_set_teams_thread_limit;
+	omp_set_teams_thread_limit_;
+	omp_set_teams_thread_limit_8_;
+	omp_get_teams_thread_limit;
+	omp_get_teams_thread_limit_;
+} OMP_5.0.2;
+
 GOMP_1.0 {
   global:
 	GOMP_atomic_end;
@@ -341,6 +387,20 @@ GOMP_5.0 {
 	GOMP_teams_reg;
 	GOMP_workshare_task_reduction_unregister;
 } GOMP_4.5;
+
+GOMP_5.0.1 {
+  global:
+	GOMP_alloc;
+	GOMP_free;
+} GOMP_5.0;
+
+GOMP_5.1 {
+  global:
+	GOMP_error;
+	GOMP_scope_start;
+	GOMP_warning;
+	GOMP_teams4;
+} GOMP_5.0.1;
 
 OACC_2.0 {
   global:
@@ -515,6 +575,12 @@ GOACC_2.0.1 {
 	GOACC_declare;
 	GOACC_parallel_keyed;
 } GOACC_2.0;
+
+GOACC_2.0.2 {
+  global:
+	GOACC_enter_data;
+	GOACC_exit_data;
+} GOACC_2.0.1;
 
 GOMP_PLUGIN_1.0 {
   global:

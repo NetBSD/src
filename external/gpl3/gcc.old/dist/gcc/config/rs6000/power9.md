@@ -1,5 +1,5 @@
 ;; Scheduling description for IBM POWER9 processor.
-;; Copyright (C) 2016-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2022 Free Software Foundation, Inc.
 ;;
 ;; Contributed by Pat Haugen (pthaugen@us.ibm.com).
 
@@ -466,13 +466,13 @@
        (eq_attr "cpu" "power9"))
   "DU_super_power9,dfu_power9*8")
 
-(define_insn_reservation "power9-mffgpr" 2
-  (and (eq_attr "type" "mffgpr")
+(define_insn_reservation "power9-mtvsr" 2
+  (and (eq_attr "type" "mtvsr")
        (eq_attr "cpu" "power9"))
   "DU_slice_3_power9,VSU_power9")
 
-(define_insn_reservation "power9-mftgpr" 2
-  (and (eq_attr "type" "mftgpr")
+(define_insn_reservation "power9-mfvsr" 2
+  (and (eq_attr "type" "mfvsr")
        (eq_attr "cpu" "power9"))
   "DU_slice_3_power9,VSU_power9")
 

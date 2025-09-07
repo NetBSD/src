@@ -1,5 +1,5 @@
 /* Support for suggestions about missing #include directives.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,6 +22,9 @@ along with GCC; see the file COPYING3.  If not see
 
 extern const char *get_c_stdlib_header_for_name (const char *name);
 extern const char *get_cp_stdlib_header_for_name (const char *name);
+
+extern const char *get_c_stdlib_header_for_string_macro_name (const char *n);
+extern const char *get_cp_stdlib_header_for_string_macro_name (const char *n);
 
 /* Subclass of deferred_diagnostic for suggesting to the user
    that they have missed a #include.  */

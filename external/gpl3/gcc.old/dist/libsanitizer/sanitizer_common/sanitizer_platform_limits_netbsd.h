@@ -394,6 +394,7 @@ struct __sanitizer_glob_t {
 
 extern int glob_nomatch;
 extern int glob_altdirfunc;
+extern const int wordexp_wrde_dooffs;
 
 extern unsigned path_max;
 
@@ -2408,7 +2409,7 @@ struct __sanitizer_cdbw {
   COMPILER_CHECK(offsetof(struct __sanitizer_##CLASS, MEMBER) ==         \
                  offsetof(struct CLASS, MEMBER))
 
-#define SIGACTION_SYMNAME __sigaction_siginfo
+#define SIGACTION_SYMNAME __sigaction14
 
 // Compat with 9.0
 extern unsigned struct_statvfs90_sz;

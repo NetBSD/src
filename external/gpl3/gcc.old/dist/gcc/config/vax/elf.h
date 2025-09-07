@@ -1,5 +1,5 @@
 /* Target definitions for GNU compiler for VAX using ELF
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Contributed by Matt Thomas <matt@3am-software.com>
 
 This file is part of GCC.
@@ -26,7 +26,8 @@ along with GCC; see the file COPYING3.  If not see
 #define REGISTER_PREFIX "%"
 #define REGISTER_NAMES \
   { "%r0", "%r1",  "%r2",  "%r3", "%r4", "%r5", "%r6", "%r7", \
-    "%r8", "%r9", "%r10", "%r11", "%ap", "%fp", "%sp", "%pc", }
+    "%r8", "%r9", "%r10", "%r11", "%ap", "%fp", "%sp", "%pc", \
+    "%psl" }
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
@@ -45,7 +46,9 @@ along with GCC; see the file COPYING3.  If not see
    count pushed by the CALLS and before the start of the saved registers.  */
 #define INCOMING_FRAME_SP_OFFSET 0
 
-/* Offset from the frame pointer register value to the top of the stack.  */
+/* Offset from the frame pointer register value to the DWARF Canonical Frame
+   Address. */
+#undef FRAME_POINTER_CFA_OFFSET
 #define FRAME_POINTER_CFA_OFFSET(FNDECL) 0
 
 /* We use R2-R5 (call-clobbered) registers for exceptions.  */
@@ -56,14 +59,14 @@ along with GCC; see the file COPYING3.  If not see
   gen_rtx_MEM (SImode,							\
 	       plus_constant (Pmode,					\
 			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
-			      -4))
+			      -1 * UNITS_PER_WORD))
 
 /* Simple store the return handler into the call frame.  */
 #define EH_RETURN_HANDLER_RTX						\
   gen_rtx_MEM (Pmode,							\
 	       plus_constant (Pmode,					\
 			      gen_rtx_REG (Pmode, FRAME_POINTER_REGNUM),\
-			      16))
+			      RETURN_ADDRESS_OFFSET))
 
 
 /* The VAX wants no space between the case instruction and the jump table.  */
@@ -89,6 +92,16 @@ along with GCC; see the file COPYING3.  If not see
      %{!fpic: \
        %{!fPIC:-fPIC}}}"
 
+/* Don't let the LTO compiler switch the PIC options off.  */
+#define VAX_CC1_SPEC \
+  VAX_CC1_AND_CC1PLUS_SPEC \
+  " %{flinker-output=exec" \
+  ":%{no-pie:-flinker-output=exec;:-flinker-output=pie};" \
+  ":%{flinker-output=*}}" \
+  "%<flinker-output*"
+#define VAX_CC1PLUS_SPEC \
+  VAX_CC1_AND_CC1PLUS_SPEC
+
 /* VAX ELF is always gas; override the generic VAX ASM_SPEC.  */
 
 #undef ASM_SPEC
@@ -104,5 +117,5 @@ along with GCC; see the file COPYING3.  If not see
     fputs (integer_asm_op (SIZE, FALSE), FILE);		\
     fprintf (FILE, "%%pcrel%d(", SIZE * 8);		\
     assemble_name (FILE, LABEL);			\
-    fprintf (FILE, "%+d)", SIZE);			\
+    fputc (')', FILE);					\
   } while (0)

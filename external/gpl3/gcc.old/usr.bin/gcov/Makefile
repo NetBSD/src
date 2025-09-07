@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.6 2021/04/09 22:33:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.7 2025/09/07 02:59:21 mrg Exp $
 
 .include <bsd.init.mk>
 
 PROG=           gcov
-SRCS=		${G_GCOV_OBJS:S/json.o/json.cc/:.o=.c}
+SRCS=		${G_GCOV_OBJS:S/json.o/json.cc/:.o=.cc}
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 DPADD+=		${LIBZ}
@@ -21,7 +21,7 @@ MAN=		gcov.1
 .include "../Makefile.libiberty"
 .include "../Makefile.libdecnumber"
 
-COPTS.gcov.c += -Wno-stack-protector
+COPTS.gcov.cc += -Wno-error=stack-protector
 
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}

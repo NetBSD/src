@@ -1,5 +1,5 @@
 /* Target definitions for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 1997-2020 Free Software Foundation, Inc.
+   Copyright (C) 1997-2022 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
    This file is part of GCC.
@@ -98,7 +98,7 @@
    Include libmx when targeting Darwin 7.0 and above, but before libSystem,
    since the functions are actually in libSystem but for 7.x compatibility
    we want them to be looked for in libmx first.
-   Include libSystemStubs when compiling against 10.3 - 10.5 SDKs (we assume
+   Include libSystemStubs when compiling against 10.3 - 10.6 SDKs (we assume
    this is the case when targetting these) - but not for 64-bit long double.
    Don't do either for m64, the library is either a dummy or non-existent.
 */
@@ -107,8 +107,8 @@
 #define LIB_SPEC \
 "%{!static:								\
   %{!m64:%{!mlong-double-64:						\
-    %{pg:%:version-compare(>< 10.3 10.5 mmacosx-version-min= -lSystemStubs_profile)} \
-    %{!pg:%:version-compare(>< 10.3 10.5 mmacosx-version-min= -lSystemStubs)} \
+    %{pg:%:version-compare(>< 10.3 10.7 mmacosx-version-min= -lSystemStubs_profile)} \
+    %{!pg:%:version-compare(>< 10.3 10.7 mmacosx-version-min= -lSystemStubs)} \
      %:version-compare(>< 10.3 10.4 mmacosx-version-min= -lmx)}}	\
   -lSystem								\
 }"
@@ -246,10 +246,10 @@
 
    The default value for this macro is `STACK_POINTER_OFFSET' plus the
    length of the outgoing arguments.  The default is correct for most
-   machines.  See `function.c' for details.
+   machines.  See `function.cc' for details.
 
    This value must be a multiple of STACK_BOUNDARY (hard coded in
-   `emit-rtl.c').  */
+   `emit-rtl.cc').  */
 
 #undef STACK_DYNAMIC_OFFSET
 #define STACK_DYNAMIC_OFFSET(FUNDECL)					\
@@ -306,7 +306,7 @@
 #define GLOBAL_ASM_OP "\t.globl "
 #undef TARGET_ASM_GLOBALIZE_LABEL
 
-/* This is how to output an internal label prefix.  rs6000.c uses this
+/* This is how to output an internal label prefix.  rs6000.cc uses this
    when generating traceback tables.  */
 /* Not really used for Darwin?  */
 
@@ -507,8 +507,8 @@
 #define SUBTARGET_INIT_BUILTINS						\
 do {									\
   darwin_patch_builtins ();						\
-  rs6000_builtin_decls[(unsigned) (RS6000_BUILTIN_CFSTRING)]		\
-    = darwin_init_cfstring_builtins ((unsigned) (RS6000_BUILTIN_CFSTRING)); \
+  rs6000_builtin_decls[(unsigned) (RS6000_BIF_CFSTRING)]		\
+    = darwin_init_cfstring_builtins ((unsigned) (RS6000_BIF_CFSTRING)); \
 } while(0)
 
 /* So far, there is no rs6000_fold_builtin, if one is introduced, then

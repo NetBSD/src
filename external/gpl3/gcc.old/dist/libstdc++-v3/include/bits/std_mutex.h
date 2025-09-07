@@ -1,6 +1,6 @@
 // std::mutex implementation -*- C++ -*-
 
-// Copyright (C) 2003-2020 Free Software Foundation, Inc.
+// Copyright (C) 2003-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -53,6 +53,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    */
 
 #ifdef _GLIBCXX_HAS_GTHREADS
+  /// @cond undocumented
+
   // Common base class for std::mutex and std::timed_mutex
   class __mutex_base
   {
@@ -78,8 +80,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     __mutex_base(const __mutex_base&) = delete;
     __mutex_base& operator=(const __mutex_base&) = delete;
   };
+  /// @endcond
 
-  /// The standard mutex type.
+  /** The standard mutex type.
+   *
+   * A simple, non-recursive, non-timed mutex.
+   *
+   * Do not call `lock()` and `unlock()` directly, use a scoped lock type
+   * such as `std::unique_lock`, `std::lock_guard`, or (since C++17)
+   * `std::scoped_lock`.
+   *
+   * @headerfile mutex
+   * @since C++11
+   */
   class mutex : private __mutex_base
   {
   public:
@@ -123,6 +136,79 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     { return &_M_mutex; }
   };
 
+  /// @cond undocumented
+
+  // Implementation details for std::condition_variable
+  class __condvar
+  {
+    using timespec = __gthread_time_t;
+
+  public:
+    __condvar() noexcept
+    {
+#ifndef __GTHREAD_COND_INIT
+      __GTHREAD_COND_INIT_FUNCTION(&_M_cond);
+#endif
+    }
+
+    ~__condvar()
+    {
+      int __e __attribute__((__unused__)) = __gthread_cond_destroy(&_M_cond);
+      __glibcxx_assert(__e != EBUSY); // threads are still blocked
+    }
+
+    __condvar(const __condvar&) = delete;
+    __condvar& operator=(const __condvar&) = delete;
+
+    __gthread_cond_t* native_handle() noexcept { return &_M_cond; }
+
+    // Expects: Calling thread has locked __m.
+    void
+    wait(mutex& __m)
+    {
+      int __e __attribute__((__unused__))
+	= __gthread_cond_wait(&_M_cond, __m.native_handle());
+      __glibcxx_assert(__e == 0);
+    }
+
+    void
+    wait_until(mutex& __m, timespec& __abs_time)
+    {
+      __gthread_cond_timedwait(&_M_cond, __m.native_handle(), &__abs_time);
+    }
+
+#ifdef _GLIBCXX_USE_PTHREAD_COND_CLOCKWAIT
+    void
+    wait_until(mutex& __m, clockid_t __clock, timespec& __abs_time)
+    {
+      pthread_cond_clockwait(&_M_cond, __m.native_handle(), __clock,
+			     &__abs_time);
+    }
+#endif
+
+    void
+    notify_one() noexcept
+    {
+      int __e __attribute__((__unused__)) = __gthread_cond_signal(&_M_cond);
+      __glibcxx_assert(__e == 0);
+    }
+
+    void
+    notify_all() noexcept
+    {
+      int __e __attribute__((__unused__)) = __gthread_cond_broadcast(&_M_cond);
+      __glibcxx_assert(__e == 0);
+    }
+
+  protected:
+#ifdef __GTHREAD_COND_INIT
+    __gthread_cond_t _M_cond = __GTHREAD_COND_INIT;
+#else
+    __gthread_cond_t _M_cond;
+#endif
+  };
+  /// @endcond
+
 #endif // _GLIBCXX_HAS_GTHREADS
 
   /// Do not acquire ownership of the mutex.
@@ -148,6 +234,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *
    * A lock_guard controls mutex ownership within a scope, releasing
    * ownership in the destructor.
+   *
+   * @headerfile mutex
+   * @since C++11
    */
   template<typename _Mutex>
     class lock_guard

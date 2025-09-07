@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2018/08/01 22:19:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2025/09/07 02:59:20 mrg Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
-SRCS=		${G_GXX_OBJS:S/cp\///:.o=.c}
+SRCS=		${G_GXX_OBJS:S/cp\///:.o=.cc}
 
 NOMAN=		# Linked to gcc.1
 .include <bsd.init.mk>
@@ -18,6 +18,6 @@ DPADD+=		${LIBINTL}
 
 ${SRCS}: ${GCCARCH}/defs.mk
 
-COPTS.gcc.c=	-Wno-stack-protector
+COPTS.gcc.cc=	-Wno-error=stack-protector
 
 .PATH: ${DIST}/gcc/cp ${DIST}/gcc ${DIST}/gcc/cp

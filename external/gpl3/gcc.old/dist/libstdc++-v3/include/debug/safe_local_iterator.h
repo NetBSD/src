@@ -1,6 +1,6 @@
 // Safe iterator implementation  -*- C++ -*-
 
-// Copyright (C) 2011-2020 Free Software Foundation, Inc.
+// Copyright (C) 2011-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -32,7 +32,9 @@
 #include <debug/safe_unordered_base.h>
 
 #define _GLIBCXX_DEBUG_VERIFY_OPERANDS(_Lhs, _Rhs) \
-  _GLIBCXX_DEBUG_VERIFY(!_Lhs._M_singular() && !_Rhs._M_singular(),	\
+  _GLIBCXX_DEBUG_VERIFY(!_Lhs._M_singular() && !_Rhs._M_singular()	\
+			|| (_Lhs.base() == _Iterator{}			\
+			    && _Rhs.base() == _Iterator{}),		\
 			_M_message(__msg_iter_compare_bad)		\
 			._M_iterator(_Lhs, "lhs")			\
 			._M_iterator(_Rhs, "rhs"));			\
@@ -209,14 +211,14 @@ namespace __gnu_debug
       _Safe_local_iterator&
       operator=(_Safe_local_iterator&& __x) noexcept
       {
-	_GLIBCXX_DEBUG_VERIFY(this != &__x,
-			      _M_message(__msg_self_move_assign)
-			      ._M_iterator(*this, "this"));
 	_GLIBCXX_DEBUG_VERIFY(!__x._M_singular()
 			      || __x.base() == _Iterator(),
 			      _M_message(__msg_copy_singular)
 			      ._M_iterator(*this, "this")
 			      ._M_iterator(__x, "other"));
+
+	if (std::__addressof(__x) == this)
+	  return *this;
 
 	if (this->_M_sequence && this->_M_sequence == __x._M_sequence)
 	  {
