@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.23 2025/09/06 21:02:40 thorpej Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.24 2025/09/07 15:01:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.23 2025/09/06 21:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.24 2025/09/07 15:01:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,6 @@ arm_fdt_efi_init(device_t dev)
 
 	if (arm_efirt_gettime(&tm, NULL) == 0) {
 		aprint_normal_dev(dev, "using EFI runtime services for RTC\n");
-		efi_todr.cookie = NULL;
 		efi_todr.todr_gettime_ymdhms = arm_fdt_efi_rtc_gettime;
 		efi_todr.todr_settime_ymdhms = arm_fdt_efi_rtc_settime;
 		todr_attach(&efi_todr);
