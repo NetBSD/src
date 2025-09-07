@@ -1,4 +1,4 @@
-/*	$NetBSD: vrtc.c,v 1.3 2021/01/04 14:48:52 thorpej Exp $	*/
+/*	$NetBSD: vrtc.c,v 1.4 2025/09/07 01:18:16 thorpej Exp $	*/
 /*	$OpenBSD: vrtc.c,v 1.1 2008/03/08 19:19:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -28,18 +28,21 @@
 #include <dev/clock_subr.h>
 #include <sparc64/dev/vbusvar.h>
 
-extern todr_chip_handle_t todr_handle;
+static int	vrtc_match(device_t, cfdata_t, void *);
+static void	vrtc_attach(device_t, device_t, void *);
 
-int	vrtc_match(device_t, cfdata_t, void *);
-void	vrtc_attach(device_t, device_t, void *);
+struct vrtc_softc {
+	device_t	sc_dev;
+	struct todr_chip_handle sc_todr;
+};
 
-CFATTACH_DECL_NEW(vrtc, sizeof(device_t),
+CFATTACH_DECL_NEW(vrtc, sizeof(struct vrtc_softc),
     vrtc_match, vrtc_attach, NULL, NULL);
 
-int	vrtc_gettime(todr_chip_handle_t, struct timeval *);
-int	vrtc_settime(todr_chip_handle_t, struct timeval *);
+static int	vrtc_gettime(todr_chip_handle_t, struct timeval *);
+static int	vrtc_settime(todr_chip_handle_t, struct timeval *);
 
-int
+static int
 vrtc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct vbus_attach_args *va = aux;
@@ -50,25 +53,22 @@ vrtc_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 vrtc_attach(device_t parent, device_t self, void *aux)
 {
-	todr_chip_handle_t handle;
+	struct vrtc_softc *sc = device_private(self);
 
 	printf("\n");
 
-	handle = kmem_alloc(sizeof(struct todr_chip_handle), KM_SLEEP);
-	handle->cookie = self;
-	handle->todr_gettime = vrtc_gettime;
-	handle->todr_settime = vrtc_settime;
+	sc->sc_dev = self;
+	sc->sc_todr.cookie = self;
+	sc->sc_todr.todr_gettime = vrtc_gettime;
+	sc->sc_todr.todr_settime = vrtc_settime;
 
-	handle->bus_cookie = NULL;
-	handle->todr_setwen = NULL;
-
-	todr_attach(handle);
+	todr_attach(&sc->sc_todr);
 }
 
-int
+static int
 vrtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	u_int64_t tod;
@@ -81,11 +81,11 @@ vrtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	return (0);
 }
 
-int
+static int
 vrtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	if (hv_tod_set(tv->tv_sec) != H_EOK)
 		return (1);
 
 	return (0);
-}		
+}
