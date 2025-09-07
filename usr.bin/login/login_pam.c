@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.28 2022/01/24 09:14:37 andvar Exp $       */
+/*     $NetBSD: login_pam.c,v 1.29 2025/09/07 21:31:20 andvar Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.28 2022/01/24 09:14:37 andvar Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.29 2025/09/07 21:31:20 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -596,7 +596,7 @@ skip_auth:
 	(void)setenv("USER", pwd->pw_name, 1);
 
 	/*
-	 * Add PAM environement
+	 * Add PAM environment
 	 */
 	if ((pamenv = pam_getenvlist(pamh)) != NULL) {
 		char **envitem;

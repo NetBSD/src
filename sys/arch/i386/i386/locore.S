@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.202 2025/09/03 16:14:52 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.203 2025/09/07 21:31:20 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.202 2025/09/03 16:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.203 2025/09/07 21:31:20 andvar Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1290,7 +1290,7 @@ ENTRY(start_pvh)
 	 * we have:
 	 * |   kernel   |
 	 * -------------- kernel_end
-	 *     alignement
+	 *     alignment
 	 * -------------- bsd_symtab
 	 * | size (int) |
 	 * | elf_header |

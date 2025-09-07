@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.290 2024/08/15 21:08:20 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.291 2025/09/07 21:31:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.290 2024/08/15 21:08:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.291 2025/09/07 21:31:21 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -853,7 +853,7 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 }
 
 /*
- * Handes the read/write request given in 'bp' using the vnode's VOP_BMAP
+ * Handles the read/write request given in 'bp' using the vnode's VOP_BMAP
  * and VOP_STRATEGY operations.
  *
  * 'obp' is a pointer to the original request fed to the vnd device.

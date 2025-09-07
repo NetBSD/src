@@ -1,7 +1,7 @@
 #
-# deafult config file.
+# default config file.
 #
-# 	$NetBSD: config.playstation2,v 1.28 2022/09/29 10:10:09 riastradh Exp $
+# 	$NetBSD: config.playstation2,v 1.29 2025/09/07 21:31:21 andvar Exp $
 #
 
 maxusers	16

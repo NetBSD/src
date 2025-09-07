@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.48 2023/12/12 20:24:00 andvar Exp $ */
+/* $NetBSD: TODO,v 1.49 2025/09/07 21:31:21 andvar Exp $ */
 
 Things to be done:
 
@@ -45,7 +45,7 @@ sun4v:
 - vbus.c: handle prom_getprop() memory leaks
 - locore.s: rft_user (sun4v specific manual fill) - seems to work, but is it good enough (compared to openbsds rft_user?
 - openfirmware interface
-    bounce handlng could need rework
+    bounce handling could need rework
       - only #if __arch64__ independent for SUN4V, as OF for all ultrasparcs is
         plain 32bit code too (and this #if only because the point below becomes
         always false otherwise)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_gpioreg.h,v 1.7 2022/05/18 13:38:47 andvar Exp $	*/
+/*	$NetBSD: ipaq_gpioreg.h,v 1.8 2025/09/07 21:31:20 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -50,7 +50,7 @@ port	I/O(Active)	name 	desc
 21	I(L)	CARD_IRQ0#	PCMCIA slot0 IRQ	
 22	I(L)	LOCK#		expansion pack lock/unlock signal
 23	I(H)	COM_DCD		RS-232 DCD
-24	I(H)	OPT_IRQ		expansion pach shared IRQ
+24	I(H)	OPT_IRQ		expansion pack shared IRQ
 25	I(H)	COM_CTS		RS-232 CTS
 26	O(H)	COM_RTS		RS-232 RTS
 27	O(L)	OPT_DETECT#	Indicates presence of expansion pack inserted

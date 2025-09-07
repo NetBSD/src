@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.46 2024/03/05 20:58:05 andvar Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.47 2025/09/07 21:31:20 andvar Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.46 2024/03/05 20:58:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.47 2025/09/07 21:31:20 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -856,7 +856,7 @@ adb_soft_intr(void)
 		 * the completion routine, so that the completion
 		 * routine can reentrantly process the queue.  For
 		 * example, this happens when polling is turned on
-		 * by entering the debuger by keystroke.
+		 * by entering the debugger by keystroke.
 		 */
 		s = splhigh();
 		adbInCount--;

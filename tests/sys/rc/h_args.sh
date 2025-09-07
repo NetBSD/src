@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: h_args.sh,v 1.1 2010/03/15 19:03:08 jmmv Exp $
+# $NetBSD: h_args.sh,v 1.2 2025/09/07 21:31:21 andvar Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@
 #
 
 #
-# An rc.d script that overrides all standard comands and adds a non-standard
+# An rc.d script that overrides all standard commands and adds a non-standard
 # command.  All of them print the set of arguments passed to them and take no
 # further action.
 #

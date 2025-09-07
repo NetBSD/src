@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.19 2022/05/28 21:14:57 andvar Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.20 2025/09/07 21:31:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.19 2022/05/28 21:14:57 andvar Exp $
+ * $Id: rfcomm.h,v 1.20 2025/09/07 21:31:21 andvar Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -326,7 +326,7 @@ struct rfcomm_dlc {
 	struct sockaddr_bt	 rd_laddr;   /* local address */
 	struct sockaddr_bt	 rd_raddr;   /* remote address */
 
-	uint8_t			 rd_lmodem;  /* local modem signls */
+	uint8_t			 rd_lmodem;  /* local modem signals */
 	uint8_t			 rd_rmodem;  /* remote modem signals */
 
 	int			 rd_rxcred;  /* receive credits (sent) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.231 2025/09/03 16:14:52 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.232 2025/09/07 21:31:20 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1135,7 +1135,7 @@ ENTRY(start_pvh)
 	 * We have:
 	 * |   kernel   |
 	 * -------------- kernel_end
-	 *     alignement
+	 *     alignment
 	 * -------------- bsd_symtab
 	 * | size (int) |
 	 * | elf_header |

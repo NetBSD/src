@@ -571,7 +571,7 @@ group_opts
 
 layer
 	: L2 { $$ = NPF_RULE_LAYER_2; }
-	| 	{ $$ =  NPF_RULE_LAYER_3; } /* ret layer3 by defualt */
+	| 	{ $$ =  NPF_RULE_LAYER_3; } /* ret layer3 by default */
 	;
 
 ruleset_block

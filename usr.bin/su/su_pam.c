@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.24 2023/03/24 16:58:24 kre Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.25 2025/09/07 21:31:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.24 2023/03/24 16:58:24 kre Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.25 2025/09/07 21:31:20 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,7 +468,7 @@ out:
 			environ[0] = NULL;
 
 			/*
-			 * Add PAM environement, before the LOGIN_CAP stuff:
+			 * Add PAM environment, before the LOGIN_CAP stuff:
 			 * if the login class is unspecified, we'll get the
 			 * same data from PAM, if -c was used, the specified
 			 * class must override PAM.
