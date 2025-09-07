@@ -1,5 +1,5 @@
 /* ztest.c -- Test for libbacktrace inflate code.
-   Copyright (C) 2017-2020 Free Software Foundation, Inc.
+   Copyright (C) 2017-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 Redistribution and use in source and binary forms, with or without
@@ -294,7 +294,7 @@ average_time (const size_t *times, size_t trials)
 /* Test a larger text, if available.  */
 
 static void
-test_large (struct backtrace_state *state)
+test_large (struct backtrace_state *state ATTRIBUTE_UNUSED)
 {
 #ifdef HAVE_ZLIB
   unsigned char *orig_buf;

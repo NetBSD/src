@@ -1,6 +1,6 @@
 // <experimental/buffer> -*- C++ -*-
 
-// Copyright (C) 2015-2020 Free Software Foundation, Inc.
+// Copyright (C) 2015-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -315,7 +315,7 @@ inline namespace v1
     inline size_t
     buffer_copy(const _MutableBufferSequence& __dest,
 		const _ConstBufferSequence& __source) noexcept
-    { return net::buffer_copy(__dest, __source, size_t{-1}); }
+    { return net::buffer_copy(__dest, __source, size_t(-1)); }
 
 
   // buffer arithmetic:
@@ -488,8 +488,8 @@ inline namespace v1
     {
     public:
       // types:
-      typedef const_buffer const_buffers_type;
-      typedef mutable_buffer mutable_buffers_type;
+      using const_buffers_type = const_buffer;
+      using mutable_buffers_type = mutable_buffer;
 
       // constructors:
       explicit

@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -29,8 +29,8 @@
    standard C or GNU C extensions, which are more portable and better
    optimized across multiple targets.  */
 
-#if !defined _X86INTRIN_H_INCLUDED
-# error "Never use <bmi2intrin.h> directly; include <x86intrin.h> instead."
+#if !defined _X86GPRINTRIN_H_INCLUDED
+# error "Never use <bmi2intrin.h> directly; include <x86gprintrin.h> instead."
 #endif
 
 #ifndef _BMI2INTRIN_H_INCLUDED
@@ -118,7 +118,8 @@ _pext_u64 (unsigned long long __X, unsigned long long __M)
       /* Also if the pext mask is constant, then the popcount is
        constant, we can evaluate the following loop at compile
        time and use a constant bit permute vector.  */
-      for (long __i = 0; __i < __builtin_popcountl (__M); __i++)
+      long __i;
+      for (__i = 0; __i < __builtin_popcountl (__M); __i++)
 	{
 	  __c = __builtin_clzl (__m);
 	  __p = (__p << 8) | __c;
@@ -133,7 +134,7 @@ _pext_u64 (unsigned long long __X, unsigned long long __M)
       /* We could a use a for loop here, but that combined with
        -funroll-loops can expand to a lot of code.  The while
        loop avoids unrolling and the compiler commons the xor
-       from clearing the mask bit with the (__m != 0) test.  The
+       from clearing the mask bit with the (m != 0) test.  The
        result is a more compact loop setup and body.  */
       while (__m != 0)
 	{

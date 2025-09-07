@@ -2,12 +2,9 @@
  * Contains the implementation for object monitors.
  *
  * Copyright: Copyright Digital Mars 2000 - 2015.
- * License:   $(WEB www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+ * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
  * Authors:   Walter Bright, Sean Kelly, Martin Nowak
- */
-
-/* NOTE: This file has been patched from the original DMD distribution to
- * work with the GDC compiler.
+ * Source: $(DRUNTIMESRC rt/_monitor_.d)
  */
 module rt.monitor_;
 
@@ -25,18 +22,14 @@ in
 {
     assert(ownee.__monitor is null);
 }
-body
+do
 {
     auto m = ensureMonitor(cast(Object) owner);
-    auto i = m.impl;
-    if (i is null)
+    if (m.impl is null)
     {
         atomicOp!("+=")(m.refs, cast(size_t) 1);
-        ownee.__monitor = owner.__monitor;
-        return;
     }
-    // If m.impl is set (ie. if this is a user-created monitor), assume
-    // the monitor is garbage collected and simply copy the reference.
+    // Assume the monitor is garbage collected and simply copy the reference.
     ownee.__monitor = owner.__monitor;
 }
 
@@ -60,12 +53,32 @@ extern (C) void _d_monitordelete(Object h, bool det)
     }
 }
 
+// does not call dispose events, for internal use only
+extern (C) void _d_monitordelete_nogc(Object h) @nogc
+{
+    auto m = getMonitor(h);
+    if (m is null)
+        return;
+
+    if (m.impl)
+    {
+        // let the GC collect the monitor
+        setMonitor(h, null);
+    }
+    else if (!atomicOp!("-=")(m.refs, cast(size_t) 1))
+    {
+        // refcount == 0 means unshared => no synchronization required
+        deleteMonitor(cast(Monitor*) m);
+        setMonitor(h, null);
+    }
+}
+
 extern (C) void _d_monitorenter(Object h)
 in
 {
     assert(h !is null, "Synchronized object must not be null.");
 }
-body
+do
 {
     auto m = cast(Monitor*) ensureMonitor(h);
     auto i = m.impl;
@@ -158,36 +171,7 @@ package:
 alias IMonitor = Object.Monitor;
 alias DEvent = void delegate(Object);
 
-version (GNU)
-{
-    import gcc.config;
-    static if (GNU_Thread_Model == ThreadModel.Single)
-        version = SingleThreaded;
-    // Ignore ThreadModel, we don't want posix threads on windows and
-    // will always use native threading instead.
-}
-
-version (SingleThreaded)
-{
-    alias Mutex = int;
-
-    void initMutex(Mutex* mtx)
-    {
-    }
-
-    void destroyMutex(Mutex* mtx)
-    {
-    }
-
-    void lockMutex(Mutex* mtx)
-    {
-    }
-
-    void unlockMutex(Mutex* mtx)
-    {
-    }
-}
-else version (Windows)
+version (Windows)
 {
     version (CRuntime_DigitalMars)
     {
@@ -246,7 +230,7 @@ struct Monitor
 
 private:
 
-@property ref shared(Monitor*) monitor(Object h) pure nothrow @nogc
+@property ref shared(Monitor*) monitor(return scope Object h) pure nothrow @nogc
 {
     return *cast(shared Monitor**)&h.__monitor;
 }

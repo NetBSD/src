@@ -1,7 +1,7 @@
 ;; Machine Description for MIPS MSA ASE
 ;; Based on the MIPS MSA spec Revision 1.11 8/4/2014
 ;;
-;; Copyright (C) 2015-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2022 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -231,6 +231,10 @@
    (V4SI  "uimm5")
    (V2DI  "uimm6")])
 
+;; The index of sign bit in FP vector elements.
+(define_mode_attr elmsgnbit [(V2DF "63") (V4DF "63")
+			     (V4SF "31") (V8SF "31")])
+
 (define_expand "vec_init<mode><unitmode>"
   [(match_operand:MSA 0 "register_operand")
    (match_operand:MSA 1 "")]
@@ -435,6 +439,28 @@
   DONE;
 })
 
+(define_expand "vec_cmp<MSA:mode><mode_i>"
+  [(match_operand:<VIMODE> 0 "register_operand")
+   (match_operator 1 ""
+     [(match_operand:MSA 2 "register_operand")
+      (match_operand:MSA 3 "register_operand")])]
+  "ISA_HAS_MSA"
+{
+  mips_expand_vec_cmp_expr (operands);
+  DONE;
+})
+
+(define_expand "vec_cmpu<IMSA:mode><mode_i>"
+  [(match_operand:<VIMODE> 0 "register_operand")
+   (match_operator 1 ""
+     [(match_operand:IMSA 2 "register_operand")
+      (match_operand:IMSA 3 "register_operand")])]
+  "ISA_HAS_MSA"
+{
+  mips_expand_vec_cmp_expr (operands);
+  DONE;
+})
+
 (define_insn "msa_insert_<msafmt_f>"
   [(set (match_operand:MSA 0 "register_operand" "=f,f")
 	(vec_merge:MSA
@@ -575,15 +601,23 @@
 })
 
 (define_expand "neg<mode>2"
-  [(set (match_operand:MSA 0 "register_operand")
-	(minus:MSA (match_dup 2)
-		   (match_operand:MSA 1 "register_operand")))]
+  [(set (match_operand:IMSA 0 "register_operand")
+	(minus:IMSA (match_dup 2)
+		   (match_operand:IMSA 1 "register_operand")))]
   "ISA_HAS_MSA"
 {
   rtx reg = gen_reg_rtx (<MODE>mode);
   emit_move_insn (reg, CONST0_RTX (<MODE>mode));
   operands[2] = reg;
 })
+
+(define_insn "neg<mode>2"
+  [(set (match_operand:FMSA 0 "register_operand" "=f")
+	(neg:FMSA (match_operand:FMSA 1 "register_operand" "f")))]
+  "ISA_HAS_MSA"
+  "bnegi.<msafmt>\t%w0,%w1,<elmsgnbit>"
+  [(set_attr "type" "simd_bit")
+   (set_attr "mode" "<MODE>")])
 
 (define_expand "msa_ldi<mode>"
   [(match_operand:IMSA 0 "register_operand")
@@ -848,9 +882,12 @@
 	  (match_operand:IMSA 1 "register_operand" "f,f")
 	  (match_operand:IMSA 2 "reg_or_vector_same_uimm6_operand" "f,Uuv6")))]
   "ISA_HAS_MSA"
-  "@
-   srl.<msafmt>\t%w0,%w1,%w2
-   srli.<msafmt>\t%w0,%w1,%E2"
+{
+  if (which_alternative == 0)
+    return "srl.<msafmt>\t%w0,%w1,%w2";
+
+  return mips_msa_output_shift_immediate("srli.<msafmt>\t%w0,%w1,%E2", operands);
+}
   [(set_attr "type" "simd_shift")
    (set_attr "mode" "<MODE>")])
 
@@ -860,9 +897,12 @@
 	  (match_operand:IMSA 1 "register_operand" "f,f")
 	  (match_operand:IMSA 2 "reg_or_vector_same_uimm6_operand" "f,Uuv6")))]
   "ISA_HAS_MSA"
-  "@
-   sra.<msafmt>\t%w0,%w1,%w2
-   srai.<msafmt>\t%w0,%w1,%E2"
+{
+  if (which_alternative == 0)
+    return "sra.<msafmt>\t%w0,%w1,%w2";
+
+  return mips_msa_output_shift_immediate("srai.<msafmt>\t%w0,%w1,%E2", operands);
+}
   [(set_attr "type" "simd_shift")
    (set_attr "mode" "<MODE>")])
 
@@ -872,9 +912,12 @@
 	  (match_operand:IMSA 1 "register_operand" "f,f")
 	  (match_operand:IMSA 2 "reg_or_vector_same_uimm6_operand" "f,Uuv6")))]
   "ISA_HAS_MSA"
-  "@
-   sll.<msafmt>\t%w0,%w1,%w2
-   slli.<msafmt>\t%w0,%w1,%E2"
+{
+  if (which_alternative == 0)
+    return "sll.<msafmt>\t%w0,%w1,%w2";
+
+  return mips_msa_output_shift_immediate("slli.<msafmt>\t%w0,%w1,%E2", operands);
+}
   [(set_attr "type" "simd_shift")
    (set_attr "mode" "<MODE>")])
 

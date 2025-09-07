@@ -21,52 +21,66 @@
 #
 #
 
-import sys
 import argparse
+
 
 def skip_warning(filename, message):
     ignores = {
-            '': ['-Warray-bounds', '-Wmismatched-tags', 'gcc_gfc: -Wignored-attributes', '-Wchar-subscripts',
-                'string literal (potentially insecure): -Wformat-security', '-Wdeprecated-register',
-                '-Wvarargs', 'keyword is hidden by macro definition', "but the argument has type 'char *': -Wformat-pedantic",
-                '-Wnested-anon-types', 'qualifier in explicit instantiation of', 'attribute argument not supported: asm_fprintf',
-                'when in C++ mode, this behavior is deprecated', '-Wignored-attributes', '-Wgnu-zero-variadic-macro-arguments',
-                '-Wformat-security'],
-            'insn-modes.c': ['-Wshift-count-overflow'],
-            'insn-emit.c': ['-Wtautological-compare'],
-            'insn-attrtab.c': ['-Wparentheses-equality'],
-            'gimple-match.c': ['-Wunused-', '-Wtautological-compare'],
-            'generic-match.c': ['-Wunused-', '-Wtautological-compare'],
-            'i386.md': ['-Wparentheses-equality', '-Wtautological-compare'],
-            'sse.md': ['-Wparentheses-equality', '-Wtautological-compare'],
-            'genautomata.c': ['-Wstring-plus-int']
-
+            '': ['-Warray-bounds', '-Wmismatched-tags',
+                 'gcc_gfc: -Wignored-attributes', '-Wchar-subscripts',
+                 'string literal (potentially insecure): -Wformat-security',
+                 '-Wdeprecated-register',
+                 '-Wvarargs', 'keyword is hidden by macro definition',
+                 "but the argument has type 'char *': -Wformat-pedantic",
+                 '-Wnested-anon-types',
+                 'qualifier in explicit instantiation of',
+                 'attribute argument not supported: asm_fprintf',
+                 'when in C++ mode, this behavior is deprecated',
+                 '-Wignored-attributes', '-Wgnu-zero-variadic-macro-arguments',
+                 '-Wformat-security', '-Wundefined-internal',
+                 '-Wunknown-warning-option', '-Wc++20-extensions',
+                 '-Wbitwise-instead-of-logical'],
+            'insn-modes.cc': ['-Wshift-count-overflow'],
+            'insn-emit.cc': ['-Wtautological-compare'],
+            'insn-attrtab.cc': ['-Wparentheses-equality'],
+            'gimple-match.cc': ['-Wunused-', '-Wtautological-compare'],
+            'generic-match.cc': ['-Wunused-', '-Wtautological-compare'],
+            'i386.md': ['-Wparentheses-equality', '-Wtautological-compare',
+                        '-Wtautological-overlap-compare'],
+            'sse.md': ['-Wparentheses-equality', '-Wtautological-compare',
+                       '-Wconstant-logical-operand'],
+            'mmx.md': ['-Wtautological-compare'],
+            'genautomata.cc': ['-Wstring-plus-int'],
+            'fold-const-call.cc': ['-Wreturn-type'],
+            'gfortran.texi': [''],
+            'libtool': [''],
+            'lex.cc': ['-Wc++20-attribute-extensions'],
     }
 
     for name, ignores in ignores.items():
         for i in ignores:
             if name in filename and i in message:
                 return True
-
     return False
 
+
 parser = argparse.ArgumentParser()
-parser.add_argument('log', help = 'Log file with clang warnings')
+parser.add_argument('log', help='Log file with clang warnings')
 args = parser.parse_args()
 
-lines = [l.strip() for l in open(args.log)]
+lines = [line.strip() for line in open(args.log)]
 total = 0
 messages = []
-for l in lines:
+for line in lines:
     token = ': warning: '
-    i = l.find(token)
+    i = line.find(token)
     if i != -1:
-        location = l[:i]
-        message = l[i + len(token):]
+        location = line[:i]
+        message = line[i + len(token):]
         if not skip_warning(location, message):
             total += 1
-            messages.append(l)
+            messages.append(line)
 
-for l in sorted(messages):
-    print(l)
+for line in sorted(messages):
+    print(line)
 print('\nTotal warnings: %d' % total)

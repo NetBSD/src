@@ -1,5 +1,5 @@
 /* Definition of the eBPF target for GCC.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -235,17 +235,9 @@ enum reg_class
 
 /**** Debugging Info ****/
 
-/* We cannot support DWARF2 because of the limitations of eBPF.  */
+/* In eBPF it is not possible to unwind frames. Disable CFA.  */
 
-/* elfos.h insists in using DWARF.  Undo that here.  */
-#ifdef DWARF2_DEBUGGING_INFO
-# undef DWARF2_DEBUGGING_INFO
-#endif
-#ifdef PREFERRED_DEBUGGING_TYPE
-# undef PREFERRED_DEBUGGING_TYPE
-#endif
-
-#define DBX_DEBUGGING_INFO
+#define DWARF2_FRAME_INFO 0
 
 /**** Stack Layout and Calling Conventions.  */
 
@@ -284,12 +276,9 @@ enum reg_class
 /*** Passing Function Arguments on the Stack.  */
 
 /* The eBPF ABI doesn't support passing arguments on the stack.  Only
-   in the first five registers.  Code in bpf.c assures the stack is
+   in the first five registers.  Code in bpf.cc assures the stack is
    never used when passing arguments.  However, we still have to
    define the constants below.  */
-
-/* If nonzero, push insns will be used to pass outgoing arguments.  */
-#define PUSH_ARGS 0
 
 /* If nonzero, function arguments will be evaluated from last to
    first, rather than from first to last.  */

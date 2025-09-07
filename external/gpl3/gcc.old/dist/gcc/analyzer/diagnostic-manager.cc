@@ -1,5 +1,5 @@
 /* Classes for saving, deduplicating, and emitting analyzer diagnostics.
-   Copyright (C) 2019-2020 Free Software Foundation, Inc.
+   Copyright (C) 2019-2022 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -37,11 +37,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "tristate.h"
 #include "selftest.h"
 #include "ordered-hash-map.h"
+#include "json.h"
 #include "analyzer/analyzer.h"
 #include "analyzer/analyzer-logging.h"
 #include "analyzer/sm.h"
 #include "analyzer/pending-diagnostic.h"
 #include "analyzer/diagnostic-manager.h"
+#include "analyzer/call-string.h"
+#include "analyzer/program-point.h"
+#include "analyzer/store.h"
 #include "analyzer/region-model.h"
 #include "analyzer/constraint-manager.h"
 #include "cfg.h"
@@ -51,16 +55,582 @@ along with GCC; see the file COPYING3.  If not see
 #include "cgraph.h"
 #include "digraph.h"
 #include "analyzer/supergraph.h"
-#include "analyzer/call-string.h"
-#include "analyzer/program-point.h"
 #include "analyzer/program-state.h"
 #include "analyzer/exploded-graph.h"
+#include "analyzer/trimmed-graph.h"
+#include "analyzer/feasible-graph.h"
 #include "analyzer/checker-path.h"
 #include "analyzer/reachability.h"
 
 #if ENABLE_ANALYZER
 
 namespace ana {
+
+class feasible_worklist;
+
+/* State for finding the shortest feasible exploded_path for a
+   saved_diagnostic.
+   This is shared between all diagnostics, so that we avoid repeating work.  */
+
+class epath_finder
+{
+public:
+  epath_finder (const exploded_graph &eg)
+  : m_eg (eg),
+    m_sep (NULL)
+  {
+    /* This is shared by all diagnostics, but only needed if
+       !flag_analyzer_feasibility.  */
+    if (!flag_analyzer_feasibility)
+      m_sep = new shortest_exploded_paths (eg, eg.get_origin (),
+					   SPS_FROM_GIVEN_ORIGIN);
+  }
+
+  ~epath_finder () { delete m_sep; }
+
+  logger *get_logger () const { return m_eg.get_logger (); }
+
+  exploded_path *get_best_epath (const exploded_node *target_enode,
+				 const char *desc, unsigned diag_idx,
+				 feasibility_problem **out_problem);
+
+private:
+  DISABLE_COPY_AND_ASSIGN(epath_finder);
+
+  exploded_path *explore_feasible_paths (const exploded_node *target_enode,
+					 const char *desc, unsigned diag_idx);
+  bool process_worklist_item (feasible_worklist *worklist,
+			      const trimmed_graph &tg,
+			      feasible_graph *fg,
+			      const exploded_node *target_enode,
+			      unsigned diag_idx,
+			      exploded_path **out_best_path) const;
+  void dump_trimmed_graph (const exploded_node *target_enode,
+			   const char *desc, unsigned diag_idx,
+			   const trimmed_graph &tg,
+			   const shortest_paths<eg_traits, exploded_path> &sep);
+  void dump_feasible_graph (const exploded_node *target_enode,
+			    const char *desc, unsigned diag_idx,
+			    const feasible_graph &fg);
+  void dump_feasible_path (const exploded_node *target_enode,
+			   unsigned diag_idx,
+			   const feasible_graph &fg,
+			   const feasible_node &fnode) const;
+
+  const exploded_graph &m_eg;
+  shortest_exploded_paths *m_sep;
+};
+
+/* class epath_finder.  */
+
+/* Get the "best" exploded_path for reaching ENODE from the origin,
+   returning ownership of it to the caller.
+
+   Ideally we want to report the shortest feasible path.
+   Return NULL if we could not find a feasible path
+   (when flag_analyzer_feasibility is true).
+
+   If flag_analyzer_feasibility is false, then simply return the
+   shortest path.
+
+   Use DESC and DIAG_IDX when logging.
+
+   Write any feasibility_problem to *OUT_PROBLEM.  */
+
+exploded_path *
+epath_finder::get_best_epath (const exploded_node *enode,
+			      const char *desc, unsigned diag_idx,
+			      feasibility_problem **out_problem)
+{
+  logger *logger = get_logger ();
+  LOG_SCOPE (logger);
+
+  unsigned snode_idx = enode->get_supernode ()->m_index;
+  if (logger)
+    logger->log ("considering %qs at EN: %i, SN: %i (sd: %i)",
+		 desc, enode->m_index, snode_idx, diag_idx);
+
+  /* State-merging means that not every path in the egraph corresponds
+     to a feasible one w.r.t. states.
+
+     We want to find the shortest feasible path from the origin to ENODE
+     in the egraph.  */
+
+  if (flag_analyzer_feasibility)
+    {
+      /* Attempt to find the shortest feasible path using feasible_graph.  */
+      if (logger)
+	logger->log ("trying to find shortest feasible path");
+      if (exploded_path *epath = explore_feasible_paths (enode, desc, diag_idx))
+	{
+	  if (logger)
+	    logger->log ("accepting %qs at EN: %i, SN: %i (sd: %i)"
+			 " with feasible path (length: %i)",
+			 desc, enode->m_index, snode_idx, diag_idx,
+			 epath->length ());
+	  return epath;
+	}
+      else
+	{
+	  if (logger)
+	    logger->log ("rejecting %qs at EN: %i, SN: %i (sd: %i)"
+			 " due to not finding feasible path",
+			 desc, enode->m_index, snode_idx, diag_idx);
+	  return NULL;
+	}
+    }
+  else
+    {
+      /* As a crude approximation to shortest feasible path, simply find
+	 the shortest path, and note whether it is feasible.
+	 There could be longer feasible paths within the egraph, so this
+	 approach would lead to diagnostics being falsely rejected
+	 (PR analyzer/96374).  */
+      if (logger)
+	logger->log ("trying to find shortest path ignoring feasibility");
+      gcc_assert (m_sep);
+      exploded_path *epath
+	= new exploded_path (m_sep->get_shortest_path (enode));
+      if (epath->feasible_p (logger, out_problem, m_eg.get_engine (), &m_eg))
+	{
+	  if (logger)
+	    logger->log ("accepting %qs at EN: %i, SN: %i (sn: %i)"
+			 " with feasible path (length: %i)",
+			 desc, enode->m_index, snode_idx, diag_idx,
+			 epath->length ());
+	}
+      else
+	{
+	  if (logger)
+	    logger->log ("accepting %qs at EN: %i, SN: %i (sn: %i) (length: %i)"
+			 " despite infeasible path (due to %qs)",
+			 desc, enode->m_index, snode_idx, diag_idx,
+			 epath->length (),
+			 "-fno-analyzer-feasibility");
+	}
+      return epath;
+    }
+}
+
+/* A class for managing the worklist of feasible_nodes in
+   epath_finder::explore_feasible_paths, prioritizing them
+   so that shorter paths appear earlier in the queue.  */
+
+class feasible_worklist
+{
+public:
+  feasible_worklist (const shortest_paths<eg_traits, exploded_path> &sep)
+  : m_queue (key_t (*this, NULL)),
+    m_sep (sep)
+  {
+  }
+
+  feasible_node *take_next () { return m_queue.extract_min (); }
+
+  void add_node (feasible_node *fnode)
+  {
+    m_queue.insert (key_t (*this, fnode), fnode);
+  }
+
+private:
+  struct key_t
+  {
+    key_t (const feasible_worklist &w, feasible_node *fnode)
+    : m_worklist (w), m_fnode (fnode)
+    {}
+
+    bool operator< (const key_t &other) const
+    {
+      return cmp (*this, other) < 0;
+    }
+
+    bool operator== (const key_t &other) const
+    {
+      return cmp (*this, other) == 0;
+    }
+
+    bool operator> (const key_t &other) const
+    {
+      return !(*this == other || *this < other);
+    }
+
+  private:
+    static int cmp (const key_t &ka, const key_t &kb)
+    {
+      /* Choose the node for which if the remaining path were feasible,
+	 it would be the shortest path (summing the length of the
+	 known-feasible path so far with that of the remaining
+	 possibly-feasible path).  */
+      int ca = ka.m_worklist.get_estimated_cost (ka.m_fnode);
+      int cb = kb.m_worklist.get_estimated_cost (kb.m_fnode);
+      return ca - cb;
+    }
+
+    const feasible_worklist &m_worklist;
+    feasible_node *m_fnode;
+  };
+
+  /* Get the estimated length of a path involving FNODE from
+     the origin to the target enode.
+     Sum the length of the known-feasible path so far with
+     that of the remaining possibly-feasible path.  */
+
+  int get_estimated_cost (const feasible_node *fnode) const
+  {
+    unsigned length_so_far = fnode->get_path_length ();
+    int shortest_remaining_path
+      = m_sep.get_shortest_distance (fnode->get_inner_node ());
+
+    gcc_assert (shortest_remaining_path >= 0);
+    /* This should be true since we're only exploring nodes within
+       the trimmed graph (and we anticipate it being much smaller
+       than this, and thus not overflowing the sum).  */
+    gcc_assert (shortest_remaining_path < INT_MAX);
+
+    return length_so_far + shortest_remaining_path;
+  }
+
+  /* Priority queue, backed by a fibonacci_heap.  */
+  typedef fibonacci_heap<key_t, feasible_node> queue_t;
+  queue_t m_queue;
+  const shortest_paths<eg_traits, exploded_path> &m_sep;
+};
+
+/* When we're building the exploded graph we want to simplify
+   overly-complicated symbolic values down to "UNKNOWN" to try to avoid
+   state explosions and unbounded chains of exploration.
+
+   However, when we're building the feasibility graph for a diagnostic
+   (actually a tree), we don't want UNKNOWN values, as conditions on them
+   are also unknown: we don't want to have a contradiction such as a path
+   where (VAL != 0) and then (VAL == 0) along the same path.
+
+   Hence this is an RAII class for temporarily disabling complexity-checking
+   in the region_model_manager, for use within
+   epath_finder::explore_feasible_paths.
+
+   We also disable the creation of unknown_svalue instances during feasibility
+   checking, instead creating unique svalues, to avoid paradoxes in paths.  */
+
+class auto_checking_feasibility
+{
+public:
+  auto_checking_feasibility (region_model_manager *mgr) : m_mgr (mgr)
+  {
+    m_mgr->begin_checking_feasibility ();
+  }
+  ~auto_checking_feasibility ()
+  {
+    m_mgr->end_checking_feasibility ();
+  }
+private:
+  region_model_manager *m_mgr;
+};
+
+/* Attempt to find the shortest feasible path from the origin to
+   TARGET_ENODE by iteratively building a feasible_graph, in which
+   every path to a feasible_node is feasible by construction.
+
+   We effectively explore the tree of feasible paths in order of shortest
+   path until we either find a feasible path to TARGET_ENODE, or hit
+   a limit and give up.
+
+   Preliminaries:
+   - Find the shortest path from each node to the TARGET_ENODE (without
+   checking feasibility), so that we can prioritize our worklist.
+   - Construct a trimmed_graph: the subset of nodes/edges that
+   are on a path that eventually reaches TARGET_ENODE.  We will only need
+   to consider these when considering the shortest feasible path.
+
+   Build a feasible_graph, in which every path to a feasible_node
+   is feasible by construction.
+   We use a worklist to flatten the exploration into an iteration.
+   Starting at the origin, find feasible out-edges within the trimmed graph.
+   At each stage, choose the node for which if the remaining path were feasible,
+   it would be the shortest path (summing the length of the known-feasible path
+   so far with that of the remaining possibly-feasible path).
+   This way, the first feasible path we find to TARGET_ENODE is the shortest.
+   We start by trying the shortest possible path, but if that fails,
+   we explore progressively longer paths, eventually trying iterations through
+   loops.  The exploration is captured in the feasible_graph, which can be
+   dumped as a .dot file to visualize the exploration.  The indices of the
+   feasible_nodes show the order in which they were created.
+
+   This is something of a brute-force approach, but the trimmed_graph
+   hopefully keeps the complexity manageable.
+
+   Terminate with failure when the number of infeasible edges exceeds
+   a threshold (--param=analyzer-max-infeasible-edges=).
+   This is guaranteed to eventually lead to terminatation, as
+   we can't keep creating feasible nodes without eventually
+   either reaching an infeasible edge, or reaching the
+   TARGET_ENODE.  Specifically, there can't be a cycle of
+   feasible edges that doesn't reach the target_enode without
+   an out-edge that either fails feasibility or gets closer
+   to the TARGET_ENODE: on each iteration we are either:
+   - effectively getting closer to the TARGET_ENODE (which can't
+     continue forever without reaching the target), or
+   - getting monotonically closer to the termination threshold.  */
+
+exploded_path *
+epath_finder::explore_feasible_paths (const exploded_node *target_enode,
+				      const char *desc, unsigned diag_idx)
+{
+  logger *logger = get_logger ();
+  LOG_SCOPE (logger);
+
+  region_model_manager *mgr = m_eg.get_engine ()->get_model_manager ();
+
+  /* Determine the shortest path to TARGET_ENODE from each node in
+     the exploded graph.  */
+  shortest_paths<eg_traits, exploded_path> sep
+    (m_eg, target_enode, SPS_TO_GIVEN_TARGET);
+
+  /* Construct a trimmed_graph: the subset of nodes/edges that
+     are on a path that eventually reaches TARGET_ENODE.
+     We only need to consider these when considering the shortest
+     feasible path.  */
+  trimmed_graph tg (m_eg, target_enode);
+
+  if (flag_dump_analyzer_feasibility)
+    dump_trimmed_graph (target_enode, desc, diag_idx, tg, sep);
+
+  feasible_graph fg;
+  feasible_worklist worklist (sep);
+
+  /* Populate the worklist with the origin node.  */
+  {
+    feasibility_state init_state (mgr, m_eg.get_supergraph ());
+    feasible_node *origin = fg.add_node (m_eg.get_origin (), init_state, 0);
+    worklist.add_node (origin);
+  }
+
+  /* Iteratively explore the tree of feasible paths in order of shortest
+     path until we either find a feasible path to TARGET_ENODE, or hit
+     a limit.  */
+
+  /* Set this if we find a feasible path to TARGET_ENODE.  */
+  exploded_path *best_path = NULL;
+
+  {
+    auto_checking_feasibility sentinel (mgr);
+
+    while (process_worklist_item (&worklist, tg, &fg, target_enode, diag_idx,
+				  &best_path))
+      {
+	/* Empty; the work is done within process_worklist_item.  */
+      }
+  }
+
+  if (logger)
+    {
+      logger->log ("tg for sd: %i:", diag_idx);
+      logger->inc_indent ();
+      tg.log_stats (logger);
+      logger->dec_indent ();
+
+      logger->log ("fg for sd: %i:", diag_idx);
+      logger->inc_indent ();
+      fg.log_stats (logger);
+      logger->dec_indent ();
+    }
+
+  /* Dump the feasible_graph.  */
+  if (flag_dump_analyzer_feasibility)
+    dump_feasible_graph (target_enode, desc, diag_idx, fg);
+
+  return best_path;
+}
+
+/* Process the next item in WORKLIST, potentially adding new items
+   based on feasible out-edges, and extending FG accordingly.
+   Use TG to ignore out-edges that don't lead to TARGET_ENODE.
+   Return true if the worklist processing should continue.
+   Return false if the processing of the worklist should stop
+   (either due to reaching TARGET_ENODE, or hitting a limit).
+   Write to *OUT_BEST_PATH if stopping due to finding a feasible path
+   to TARGET_ENODE.  */
+
+bool
+epath_finder::process_worklist_item (feasible_worklist *worklist,
+				     const trimmed_graph &tg,
+				     feasible_graph *fg,
+				     const exploded_node *target_enode,
+				     unsigned diag_idx,
+				     exploded_path **out_best_path) const
+{
+  logger *logger = get_logger ();
+
+  feasible_node *fnode = worklist->take_next ();
+  if (!fnode)
+    {
+      if (logger)
+	logger->log ("drained worklist for sd: %i"
+		     " without finding feasible path",
+		     diag_idx);
+      return false;
+    }
+
+  log_scope s (logger, "fg worklist item",
+	       "considering FN: %i (EN: %i) for sd: %i",
+	       fnode->get_index (), fnode->get_inner_node ()->m_index,
+	       diag_idx);
+
+  /* Iterate through all out-edges from this item.  */
+  unsigned i;
+  exploded_edge *succ_eedge;
+  FOR_EACH_VEC_ELT (fnode->get_inner_node ()->m_succs, i, succ_eedge)
+    {
+      log_scope s (logger, "edge", "considering edge: EN:%i -> EN:%i",
+		   succ_eedge->m_src->m_index,
+		   succ_eedge->m_dest->m_index);
+      /* Reject edges that aren't in the trimmed graph.  */
+      if (!tg.contains_p (succ_eedge))
+	{
+	  if (logger)
+	    logger->log ("rejecting: not in trimmed graph");
+	  continue;
+	}
+
+      feasibility_state succ_state (fnode->get_state ());
+      rejected_constraint *rc = NULL;
+      if (succ_state.maybe_update_for_edge (logger, succ_eedge, &rc))
+	{
+	  gcc_assert (rc == NULL);
+	  feasible_node *succ_fnode
+	    = fg->add_node (succ_eedge->m_dest,
+			    succ_state,
+			    fnode->get_path_length () + 1);
+	  if (logger)
+	    logger->log ("accepting as FN: %i", succ_fnode->get_index ());
+	  fg->add_edge (new feasible_edge (fnode, succ_fnode, succ_eedge));
+
+	  /* Have we reached TARGET_ENODE?  */
+	  if (succ_fnode->get_inner_node () == target_enode)
+	    {
+	      if (logger)
+		logger->log ("success: got feasible path to EN: %i (sd: %i)"
+			     " (length: %i)",
+			     target_enode->m_index, diag_idx,
+			     succ_fnode->get_path_length ());
+	      *out_best_path = fg->make_epath (succ_fnode);
+	      if (flag_dump_analyzer_feasibility)
+		dump_feasible_path (target_enode, diag_idx, *fg, *succ_fnode);
+
+	      /* Success: stop the worklist iteration.  */
+	      return false;
+	    }
+	  else
+	    worklist->add_node (succ_fnode);
+	}
+      else
+	{
+	  if (logger)
+	    logger->log ("infeasible");
+	  gcc_assert (rc);
+	  fg->add_feasibility_problem (fnode,
+				       succ_eedge,
+				       rc);
+
+	  /* Give up if there have been too many infeasible edges.  */
+	  if (fg->get_num_infeasible ()
+	      > (unsigned)param_analyzer_max_infeasible_edges)
+	    {
+	      if (logger)
+		logger->log ("too many infeasible edges (%i); giving up",
+			     fg->get_num_infeasible ());
+	      return false;
+	    }
+	}
+    }
+
+  /* Continue the worklist iteration.  */
+  return true;
+}
+
+/* Helper class for epath_finder::dump_trimmed_graph
+   to dump extra per-node information.
+   Use SEP to add the length of the shortest path from each
+   node to the target node to each node's dump.  */
+
+class dump_eg_with_shortest_path : public eg_traits::dump_args_t
+{
+public:
+  dump_eg_with_shortest_path
+    (const exploded_graph &eg,
+     const shortest_paths<eg_traits, exploded_path> &sep)
+  : dump_args_t (eg),
+    m_sep (sep)
+  {
+  }
+
+  void dump_extra_info (const exploded_node *enode,
+			pretty_printer *pp) const FINAL OVERRIDE
+  {
+    pp_printf (pp, "sp: %i", m_sep.get_shortest_path (enode).length ());
+    pp_newline (pp);
+  }
+
+private:
+  const shortest_paths<eg_traits, exploded_path> &m_sep;
+};
+
+/* Dump TG to "BASE_NAME.DESC.DIAG_IDX.to-enN.tg.dot",
+   annotating each node with the length of the shortest path
+   from that node to TARGET_ENODE (using SEP).  */
+
+void
+epath_finder::
+dump_trimmed_graph (const exploded_node *target_enode,
+		    const char *desc, unsigned diag_idx,
+		    const trimmed_graph &tg,
+		    const shortest_paths<eg_traits, exploded_path> &sep)
+{
+  auto_timevar tv (TV_ANALYZER_DUMP);
+  dump_eg_with_shortest_path inner_args (m_eg, sep);
+  trimmed_graph::dump_args_t args (inner_args);
+  pretty_printer pp;
+  pp_printf (&pp, "%s.%s.%i.to-en%i.tg.dot",
+	     dump_base_name, desc, diag_idx, target_enode->m_index);
+  char *filename = xstrdup (pp_formatted_text (&pp));
+  tg.dump_dot (filename, NULL, args);
+  free (filename);
+}
+
+/* Dump FG to "BASE_NAME.DESC.DIAG_IDX.to-enN.fg.dot".  */
+
+void
+epath_finder::dump_feasible_graph (const exploded_node *target_enode,
+				   const char *desc, unsigned diag_idx,
+				   const feasible_graph &fg)
+{
+  auto_timevar tv (TV_ANALYZER_DUMP);
+  exploded_graph::dump_args_t inner_args (m_eg);
+  feasible_graph::dump_args_t args (inner_args);
+  pretty_printer pp;
+  pp_printf (&pp, "%s.%s.%i.to-en%i.fg.dot",
+	     dump_base_name, desc, diag_idx, target_enode->m_index);
+  char *filename = xstrdup (pp_formatted_text (&pp));
+  fg.dump_dot (filename, NULL, args);
+  free (filename);
+}
+
+/* Dump the path to FNODE to "BASE_NAME.DIAG_IDX.to-enN.fpath.txt".  */
+
+void
+epath_finder::dump_feasible_path (const exploded_node *target_enode,
+				  unsigned diag_idx,
+				  const feasible_graph &fg,
+				  const feasible_node &fnode) const
+{
+  auto_timevar tv (TV_ANALYZER_DUMP);
+  pretty_printer pp;
+  pp_printf (&pp, "%s.%i.to-en%i.fpath.txt",
+	     dump_base_name, diag_idx, target_enode->m_index);
+  char *filename = xstrdup (pp_formatted_text (&pp));
+  fg.dump_feasible_path (fnode, filename);
+  free (filename);
+}
 
 /* class saved_diagnostic.  */
 
@@ -71,15 +641,20 @@ saved_diagnostic::saved_diagnostic (const state_machine *sm,
 				    const exploded_node *enode,
 				    const supernode *snode, const gimple *stmt,
 				    stmt_finder *stmt_finder,
-				    tree var, state_machine::state_t state,
-				    pending_diagnostic *d)
+				    tree var,
+				    const svalue *sval,
+				    state_machine::state_t state,
+				    pending_diagnostic *d,
+				    unsigned idx)
 : m_sm (sm), m_enode (enode), m_snode (snode), m_stmt (stmt),
  /* stmt_finder could be on-stack; we want our own copy that can
     outlive that.  */
   m_stmt_finder (stmt_finder ? stmt_finder->clone () : NULL),
-  m_var (var), m_state (state),
+  m_var (var), m_sval (sval), m_state (state),
   m_d (d), m_trailing_eedge (NULL),
-  m_status (STATUS_NEW), m_epath_length (0), m_problem (NULL)
+  m_idx (idx),
+  m_best_epath (NULL), m_problem (NULL),
+  m_notes ()
 {
   gcc_assert (m_stmt || m_stmt_finder);
 
@@ -94,12 +669,18 @@ saved_diagnostic::~saved_diagnostic ()
 {
   delete m_stmt_finder;
   delete m_d;
+  delete m_best_epath;
   delete m_problem;
 }
 
 bool
 saved_diagnostic::operator== (const saved_diagnostic &other) const
 {
+  if (m_notes.length () != other.m_notes.length ())
+    return false;
+  for (unsigned i = 0; i < m_notes.length (); i++)
+    if (!m_notes[i]->equal_p (*other.m_notes[i]))
+      return false;
   return (m_sm == other.m_sm
 	  /* We don't compare m_enode.  */
 	  && m_snode == other.m_snode
@@ -111,6 +692,194 @@ saved_diagnostic::operator== (const saved_diagnostic &other) const
 	  && m_trailing_eedge == other.m_trailing_eedge);
 }
 
+/* Add PN to this diagnostic, taking ownership of it.  */
+
+void
+saved_diagnostic::add_note (pending_note *pn)
+{
+  gcc_assert (pn);
+  m_notes.safe_push (pn);
+}
+
+/* Return a new json::object of the form
+   {"sm": optional str,
+    "enode": int,
+    "snode": int,
+    "sval": optional str,
+    "state": optional str,
+    "path_length": optional int,
+    "pending_diagnostic": str,
+    "idx": int}.  */
+
+json::object *
+saved_diagnostic::to_json () const
+{
+  json::object *sd_obj = new json::object ();
+
+  if (m_sm)
+    sd_obj->set ("sm", new json::string (m_sm->get_name ()));
+  sd_obj->set ("enode", new json::integer_number (m_enode->m_index));
+  sd_obj->set ("snode", new json::integer_number (m_snode->m_index));
+  if (m_sval)
+    sd_obj->set ("sval", m_sval->to_json ());
+  if (m_state)
+    sd_obj->set ("state", m_state->to_json ());
+  if (m_best_epath)
+    sd_obj->set ("path_length", new json::integer_number (get_epath_length ()));
+  sd_obj->set ("pending_diagnostic", new json::string (m_d->get_kind ()));
+  sd_obj->set ("idx", new json::integer_number (m_idx));
+
+  /* We're not yet JSONifying the following fields:
+     const gimple *m_stmt;
+     stmt_finder *m_stmt_finder;
+     tree m_var;
+     exploded_edge *m_trailing_eedge;
+     enum status m_status;
+     feasibility_problem *m_problem;
+     auto_delete_vec <pending_note> m_notes;
+  */
+
+  return sd_obj;
+}
+
+/* Dump this to PP in a form suitable for use as an id in .dot output.  */
+
+void
+saved_diagnostic::dump_dot_id (pretty_printer *pp) const
+{
+  pp_printf (pp, "sd_%i", m_idx);
+}
+
+/* Dump this to PP in a form suitable for use as a node in .dot output.  */
+
+void
+saved_diagnostic::dump_as_dot_node (pretty_printer *pp) const
+{
+  dump_dot_id (pp);
+  pp_printf (pp,
+	     " [shape=none,margin=0,style=filled,fillcolor=\"red\",label=\"");
+  pp_write_text_to_stream (pp);
+
+  /* Node label.  */
+  pp_printf (pp, "DIAGNOSTIC: %s (sd: %i)\n",
+	     m_d->get_kind (), m_idx);
+  if (m_sm)
+    {
+      pp_printf (pp, "sm: %s", m_sm->get_name ());
+      if (m_state)
+	{
+	  pp_printf (pp, "; state: ");
+	  m_state->dump_to_pp (pp);
+	}
+      pp_newline (pp);
+    }
+  if (m_stmt)
+    {
+      pp_string (pp, "stmt: ");
+      pp_gimple_stmt_1 (pp, m_stmt, 0, (dump_flags_t)0);
+      pp_newline (pp);
+    }
+  if (m_var)
+    pp_printf (pp, "var: %qE\n", m_var);
+  if (m_sval)
+    {
+      pp_string (pp, "sval: ");
+      m_sval->dump_to_pp (pp, true);
+      pp_newline (pp);
+    }
+  if (m_best_epath)
+    pp_printf (pp, "path length: %i\n", get_epath_length ());
+
+  pp_write_text_as_dot_label_to_stream (pp, /*for_record=*/true);
+  pp_string (pp, "\"];\n\n");
+
+  /* Show links to duplicates.  */
+  for (auto iter : m_duplicates)
+    {
+      dump_dot_id (pp);
+      pp_string (pp, " -> ");
+      iter->dump_dot_id (pp);
+      pp_string (pp, " [style=\"dotted\" arrowhead=\"none\"];");
+      pp_newline (pp);
+    }
+}
+
+/* Use PF to find the best exploded_path for this saved_diagnostic,
+   and store it in m_best_epath.
+   If m_stmt is still NULL, use m_stmt_finder on the epath to populate
+   m_stmt.
+   Return true if a best path was found.  */
+
+bool
+saved_diagnostic::calc_best_epath (epath_finder *pf)
+{
+  logger *logger = pf->get_logger ();
+  LOG_SCOPE (logger);
+  delete m_best_epath;
+  delete m_problem;
+  m_problem = NULL;
+
+  m_best_epath = pf->get_best_epath (m_enode, m_d->get_kind (), m_idx,
+				     &m_problem);
+
+  /* Handle failure to find a feasible path.  */
+  if (m_best_epath == NULL)
+    return false;
+
+  gcc_assert (m_best_epath);
+  if (m_stmt == NULL)
+    {
+      gcc_assert (m_stmt_finder);
+      m_stmt = m_stmt_finder->find_stmt (*m_best_epath);
+    }
+  gcc_assert (m_stmt);
+
+  return true;
+}
+
+unsigned
+saved_diagnostic::get_epath_length () const
+{
+  gcc_assert (m_best_epath);
+  return m_best_epath->length ();
+}
+
+/* Record that OTHER (and its duplicates) are duplicates
+   of this saved_diagnostic.  */
+
+void
+saved_diagnostic::add_duplicate (saved_diagnostic *other)
+{
+  gcc_assert (other);
+  m_duplicates.reserve (m_duplicates.length ()
+			+ other->m_duplicates.length ()
+			+ 1);
+  m_duplicates.splice (other->m_duplicates);
+  other->m_duplicates.truncate (0);
+  m_duplicates.safe_push (other);
+}
+
+/* Return true if this diagnostic supercedes OTHER, and that OTHER should
+   therefore not be emitted.  */
+
+bool
+saved_diagnostic::supercedes_p (const saved_diagnostic &other) const
+{
+  /* They should be at the same stmt.  */
+  if (m_stmt != other.m_stmt)
+    return false;
+  return m_d->supercedes_p (*other.m_d);
+}
+
+/* Emit any pending notes owned by this diagnostic.  */
+
+void
+saved_diagnostic::emit_any_notes () const
+{
+  for (auto pn : m_notes)
+    pn->emit ();
+}
+
 /* State for building a checker_path from a particular exploded_path.
    In particular, this precomputes reachability information: the set of
    source enodes for which a path be found to the diagnostic enode.  */
@@ -119,13 +888,22 @@ class path_builder
 {
 public:
   path_builder (const exploded_graph &eg,
-		const exploded_path &epath)
+		const exploded_path &epath,
+		const feasibility_problem *problem,
+		const saved_diagnostic &sd)
   : m_eg (eg),
     m_diag_enode (epath.get_final_enode ()),
-    m_reachability (eg, m_diag_enode)
+    m_sd (sd),
+    m_reachability (eg, m_diag_enode),
+    m_feasibility_problem (problem)
   {}
 
   const exploded_node *get_diag_node () const { return m_diag_enode; }
+
+  pending_diagnostic *get_pending_diagnostic () const
+  {
+    return m_sd.m_d;
+  }
 
   bool reachable_from_p (const exploded_node *src_enode) const
   {
@@ -133,6 +911,13 @@ public:
   }
 
   const extrinsic_state &get_ext_state () const { return m_eg.get_ext_state (); }
+
+  const feasibility_problem *get_feasibility_problem () const
+  {
+    return m_feasibility_problem;
+  }
+
+  const state_machine *get_sm () const { return m_sd.m_sm; }
 
 private:
   typedef reachability<eg_traits> enode_reachability;
@@ -142,27 +927,51 @@ private:
   /* The enode where the diagnostic occurs.  */
   const exploded_node *m_diag_enode;
 
+  const saved_diagnostic &m_sd;
+
   /* Precompute all enodes from which the diagnostic is reachable.  */
   enode_reachability m_reachability;
+
+  const feasibility_problem *m_feasibility_problem;
 };
+
+/* Determine the emission location for PD at STMT in FUN.  */
+
+static location_t
+get_emission_location (const gimple *stmt, function *fun,
+		       const pending_diagnostic &pd)
+{
+  location_t loc = get_stmt_location (stmt, fun);
+
+  /* Allow the pending_diagnostic to fix up the location.  */
+  loc = pd.fixup_location (loc);
+
+  return loc;
+}
 
 /* class diagnostic_manager.  */
 
 /* diagnostic_manager's ctor.  */
 
-diagnostic_manager::diagnostic_manager (logger *logger, int verbosity)
-: log_user (logger), m_verbosity (verbosity)
+diagnostic_manager::diagnostic_manager (logger *logger, engine *eng,
+					int verbosity)
+: log_user (logger), m_eng (eng), m_verbosity (verbosity),
+  m_num_disabled_diagnostics (0)
 {
 }
 
-/* Queue pending_diagnostic D at ENODE for later emission.  */
+/* Queue pending_diagnostic D at ENODE for later emission.
+   Return true/false signifying if the diagnostic was actually added.
+   Take ownership of D (or delete it).  */
 
-void
+bool
 diagnostic_manager::add_diagnostic (const state_machine *sm,
-				    const exploded_node *enode,
+				    exploded_node *enode,
 				    const supernode *snode, const gimple *stmt,
 				    stmt_finder *finder,
-				    tree var, state_machine::state_t state,
+				    tree var,
+				    const svalue *sval,
+				    state_machine::state_t state,
 				    pending_diagnostic *d)
 {
   LOG_FUNC (get_logger ());
@@ -171,46 +980,97 @@ diagnostic_manager::add_diagnostic (const state_machine *sm,
      through the exploded_graph to the diagnostic.  */
   gcc_assert (enode);
 
+  /* If this warning is ultimately going to be rejected by a -Wno-analyzer-*
+     flag, reject it now.
+     We can only do this for diagnostics where we already know the stmt,
+     and thus can determine the emission location.  */
+  if (stmt)
+    {
+      location_t loc = get_emission_location (stmt, snode->m_fun, *d);
+      int option = d->get_controlling_option ();
+      if (!warning_enabled_at (loc, option))
+	{
+	  if (get_logger ())
+	    get_logger ()->log ("rejecting disabled warning %qs",
+				d->get_kind ());
+	  delete d;
+	  m_num_disabled_diagnostics++;
+	  return false;
+	}
+    }
+
   saved_diagnostic *sd
-    = new saved_diagnostic (sm, enode, snode, stmt, finder, var, state, d);
+    = new saved_diagnostic (sm, enode, snode, stmt, finder, var, sval,
+			    state, d, m_saved_diagnostics.length ());
   m_saved_diagnostics.safe_push (sd);
+  enode->add_diagnostic (sd);
   if (get_logger ())
-    log ("adding saved diagnostic %i at SN %i: %qs",
-	 m_saved_diagnostics.length () - 1,
-	 snode->m_index, d->get_kind ());
+    log ("adding saved diagnostic %i at SN %i to EN %i: %qs",
+	 sd->get_index (),
+	 snode->m_index, enode->m_index, d->get_kind ());
+  return true;
 }
 
-/* Queue pending_diagnostic D at ENODE for later emission.  */
+/* Queue pending_diagnostic D at ENODE for later emission.
+   Return true/false signifying if the diagnostic was actually added.
+   Take ownership of D (or delete it).  */
 
-void
-diagnostic_manager::add_diagnostic (const exploded_node *enode,
+bool
+diagnostic_manager::add_diagnostic (exploded_node *enode,
 				    const supernode *snode, const gimple *stmt,
 				    stmt_finder *finder,
 				    pending_diagnostic *d)
 {
   gcc_assert (enode);
-  add_diagnostic (NULL, enode, snode, stmt, finder, NULL_TREE, 0, d);
+  return add_diagnostic (NULL, enode, snode, stmt, finder, NULL_TREE,
+			 NULL, 0, d);
+}
+
+/* Add PN to the most recent saved_diagnostic.  */
+
+void
+diagnostic_manager::add_note (pending_note *pn)
+{
+  LOG_FUNC (get_logger ());
+  gcc_assert (pn);
+
+  /* Get most recent saved_diagnostic.  */
+  gcc_assert (m_saved_diagnostics.length () > 0);
+  saved_diagnostic *sd = m_saved_diagnostics[m_saved_diagnostics.length () - 1];
+  sd->add_note (pn);
+}
+
+/* Return a new json::object of the form
+   {"diagnostics"  : [obj for saved_diagnostic]}.  */
+
+json::object *
+diagnostic_manager::to_json () const
+{
+  json::object *dm_obj = new json::object ();
+
+  {
+    json::array *sd_arr = new json::array ();
+    int i;
+    saved_diagnostic *sd;
+    FOR_EACH_VEC_ELT (m_saved_diagnostics, i, sd)
+      sd_arr->append (sd->to_json ());
+    dm_obj->set ("diagnostics", sd_arr);
+  }
+
+  return dm_obj;
 }
 
 /* A class for identifying sets of duplicated pending_diagnostic.
 
-   We want to find the simplest dedupe_candidate amongst those that share a
+   We want to find the simplest saved_diagnostic amongst those that share a
    dedupe_key.  */
 
 class dedupe_key
 {
 public:
-  dedupe_key (const saved_diagnostic &sd,
-	      const exploded_path &epath)
+  dedupe_key (const saved_diagnostic &sd)
   : m_sd (sd), m_stmt (sd.m_stmt)
   {
-    /* Support deferring the choice of stmt until after an emission path has
-     been built, using an optional stmt_finder.  */
-    if (m_stmt == NULL)
-      {
-	gcc_assert (sd.m_stmt_finder);
-	m_stmt = sd.m_stmt_finder->find_stmt (epath);
-      }
     gcc_assert (m_stmt);
   }
 
@@ -244,38 +1104,19 @@ public:
     location_t loc1 = pk1->get_location ();
     location_t loc2 = pk2->get_location ();
 
-    return linemap_compare_locations (line_table, loc2, loc1);
+    if (int cmp = linemap_compare_locations (line_table, loc2, loc1))
+      return cmp;
+    if (int cmp = ((int)pk1->m_sd.get_epath_length ()
+		   - (int)pk2->m_sd.get_epath_length ()))
+      return cmp;
+    if (int cmp = strcmp (pk1->m_sd.m_d->get_kind (),
+			  pk2->m_sd.m_d->get_kind ()))
+      return cmp;
+    return 0;
   }
 
   const saved_diagnostic &m_sd;
   const gimple *m_stmt;
-};
-
-/* The value of a slot for a dedupe_key within dedupe_winners:
-   the exploded_path for the best candidate for that key, and the
-   number of duplicates seen so far.  */
-
-class dedupe_candidate
-{
-public:
-  // has the exploded_path
-  dedupe_candidate (const shortest_exploded_paths &sp,
-		    saved_diagnostic *sd)
-  : m_epath (sp.get_shortest_path (sd->m_enode)),
-    m_num_dupes (0)
-  {
-  }
-
-  unsigned length () const { return m_epath.length (); }
-  const exploded_path &get_path () const { return m_epath; }
-
-  void add_duplicate () { m_num_dupes++; }
-  int get_num_dupes () const { return m_num_dupes; }
-
-private:
-  exploded_path m_epath;
-public:
-  int m_num_dupes;
 };
 
 /* Traits for use by dedupe_winners.  */
@@ -284,8 +1125,8 @@ class dedupe_hash_map_traits
 {
 public:
   typedef const dedupe_key *key_type;
-  typedef dedupe_candidate *value_type;
-  typedef dedupe_candidate *compare_type;
+  typedef saved_diagnostic *value_type;
+  typedef saved_diagnostic *compare_type;
 
   static inline hashval_t hash (const key_type &v)
   {
@@ -324,108 +1165,104 @@ public:
 };
 
 /* A class for deduplicating diagnostics and finding (and emitting) the
-   best diagnostic within each partition.  */
+   best saved_diagnostic within each partition.  */
 
 class dedupe_winners
 {
 public:
   ~dedupe_winners ()
   {
-    /* Delete all keys and candidates.  */
+    /* Delete all keys, but not the saved_diagnostics.  */
     for (map_t::iterator iter = m_map.begin ();
 	 iter != m_map.end ();
 	 ++iter)
-      {
-	delete (*iter).first;
-	delete (*iter).second;
-      }
+      delete (*iter).first;
   }
 
-  /* Determine an exploded_path for SD using SP and, if it's feasible,
-     determine if it's the best seen so far for its dedupe_key.
-     Retain the winner for each dedupe_key, and discard the rest.  */
+  /* Determine an exploded_path for SD using PF and, if it's feasible,
+     determine if SD is the best seen so far for its dedupe_key.
+     Record the winning SD for each dedupe_key.  */
 
   void add (logger *logger,
-	    const shortest_exploded_paths &sp,
+	    epath_finder *pf,
 	    saved_diagnostic *sd)
   {
-    /* Build a dedupe_candidate for SD.
-       This uses SP to build an exploded_path.  */
-    dedupe_candidate *dc = new dedupe_candidate (sp, sd);
+    /* Determine best epath for SD.  */
+    if (!sd->calc_best_epath (pf))
+      return;
 
-    sd->set_epath_length (dc->length ());
-
-    /* Verify that the epath is feasible.
-       State-merging means that not every path in the epath corresponds
-       to a feasible one w.r.t. states.
-       Here we simply check each duplicate saved_diagnostic's
-       shortest_path, and reject any that aren't feasible.
-       This could introduce false negatives, as there could be longer
-       feasible paths within the egraph.  */
-    if (logger)
-      logger->log ("considering %qs at EN: %i, SN: %i",
-		   sd->m_d->get_kind (), sd->m_enode->m_index,
-		   sd->m_snode->m_index);
-
-    feasibility_problem *p = NULL;
-    if (!dc->get_path ().feasible_p (logger, &p))
-      {
-	if (logger)
-	  logger->log ("rejecting %qs at EN: %i, SN: %i"
-		       " due to infeasible path",
-		       sd->m_d->get_kind (), sd->m_enode->m_index,
-		       sd->m_snode->m_index);
-	sd->set_infeasible (p);
-	delete dc;
-	return;
-      }
-    else
-      if (logger)
-	logger->log ("accepting %qs at EN: %i, SN: %i with feasible path",
-		     sd->m_d->get_kind (), sd->m_enode->m_index,
-		     sd->m_snode->m_index);
-
-    sd->set_feasible ();
-
-    dedupe_key *key = new dedupe_key (*sd, dc->get_path ());
-    if (dedupe_candidate **slot = m_map.get (key))
+    dedupe_key *key = new dedupe_key (*sd);
+    if (saved_diagnostic **slot = m_map.get (key))
       {
 	if (logger)
 	  logger->log ("already have this dedupe_key");
 
-	(*slot)->add_duplicate ();
+	saved_diagnostic *cur_best_sd = *slot;
 
-	if (dc->length () < (*slot)->length ())
+	if (sd->get_epath_length () < cur_best_sd->get_epath_length ())
 	  {
 	    /* We've got a shorter path for the key; replace
-	       the current candidate.  */
+	       the current candidate, marking it as a duplicate of SD.  */
 	    if (logger)
 	      logger->log ("length %i is better than existing length %i;"
 			   " taking over this dedupe_key",
-			   dc->length (), (*slot)->length ());
-	    dc->m_num_dupes = (*slot)->get_num_dupes ();
-	    delete *slot;
-	    *slot = dc;
+			   sd->get_epath_length (),
+			   cur_best_sd->get_epath_length ());
+	    sd->add_duplicate (cur_best_sd);
+	    *slot = sd;
 	  }
 	else
-	  /* We haven't beaten the current best candidate;
-	     drop the new candidate.  */
+	  /* We haven't beaten the current best candidate; add SD
+	     as a duplicate of it.  */
 	  {
 	    if (logger)
 	      logger->log ("length %i isn't better than existing length %i;"
 			   " dropping this candidate",
-			   dc->length (), (*slot)->length ());
-	    delete dc;
+			   sd->get_epath_length (),
+			   cur_best_sd->get_epath_length ());
+	    cur_best_sd->add_duplicate (sd);
 	  }
 	delete key;
       }
     else
       {
 	/* This is the first candidate for this key.  */
-	m_map.put (key, dc);
+	m_map.put (key, sd);
 	if (logger)
 	  logger->log ("first candidate for this dedupe_key");
       }
+  }
+
+  /* Handle interactions between the dedupe winners, so that some
+     diagnostics can supercede others (of different kinds).
+
+     We want use-after-free to supercede use-of-unitialized-value,
+     so that if we have these at the same stmt, we don't emit
+     a use-of-uninitialized, just the use-after-free.  */
+
+  void handle_interactions (diagnostic_manager *dm)
+  {
+    LOG_SCOPE (dm->get_logger ());
+    auto_vec<const dedupe_key *> superceded;
+    for (auto outer : m_map)
+      {
+	const saved_diagnostic *outer_sd = outer.second;
+	for (auto inner : m_map)
+	  {
+	    const saved_diagnostic *inner_sd = inner.second;
+	    if (inner_sd->supercedes_p (*outer_sd))
+	      {
+		superceded.safe_push (outer.first);
+		if (dm->get_logger ())
+		  dm->log ("sd[%i] \"%s\" superceded by sd[%i] \"%s\"",
+			   outer_sd->get_index (), outer_sd->m_d->get_kind (),
+			   inner_sd->get_index (), inner_sd->m_d->get_kind ());
+		break;
+	      }
+	  }
+      }
+    for (auto iter : superceded)
+      m_map.remove (iter);
   }
 
  /* Emit the simplest diagnostic within each set.  */
@@ -447,26 +1284,22 @@ public:
     /* Sort into a good emission order.  */
     keys.qsort (dedupe_key::comparator);
 
-    /* Emit the best candidate for each key.  */
+    /* Emit the best saved_diagnostics for each key.  */
     int i;
     const dedupe_key *key;
     FOR_EACH_VEC_ELT (keys, i, key)
       {
-	dedupe_candidate **slot = m_map.get (key);
+	saved_diagnostic **slot = m_map.get (key);
 	gcc_assert (*slot);
-	const dedupe_candidate &dc = **slot;
-
-	dm->emit_saved_diagnostic (eg, key->m_sd,
-				   dc.get_path (), key->m_stmt,
-				   dc.get_num_dupes ());
+	const saved_diagnostic *sd = *slot;
+	dm->emit_saved_diagnostic (eg, *sd);
       }
   }
 
 private:
+  /* This maps from each dedupe_key to a current best saved_diagnostic.  */
 
-  /* This maps from each dedupe_key to a current best dedupe_candidate.  */
-
-  typedef hash_map<const dedupe_key *, dedupe_candidate *,
+  typedef hash_map<const dedupe_key *, saved_diagnostic *,
 		   dedupe_hash_map_traits> map_t;
   map_t m_map;
 };
@@ -479,6 +1312,7 @@ diagnostic_manager::emit_saved_diagnostics (const exploded_graph &eg)
   LOG_SCOPE (get_logger ());
   auto_timevar tv (TV_ANALYZER_DIAGNOSTICS);
   log ("# saved diagnostics: %i", m_saved_diagnostics.length ());
+  log ("# disabled diagnostics: %i", m_num_disabled_diagnostics);
   if (get_logger ())
     {
       unsigned i;
@@ -493,7 +1327,7 @@ diagnostic_manager::emit_saved_diagnostics (const exploded_graph &eg)
     return;
 
   /* Compute the shortest_paths once, sharing it between all diagnostics.  */
-  shortest_exploded_paths sp (eg, eg.get_origin ());
+  epath_finder pf (eg);
 
   /* Iterate through all saved diagnostics, adding them to a dedupe_winners
      instance.  This partitions the saved diagnostics by dedupe_key,
@@ -504,121 +1338,93 @@ diagnostic_manager::emit_saved_diagnostics (const exploded_graph &eg)
   int i;
   saved_diagnostic *sd;
   FOR_EACH_VEC_ELT (m_saved_diagnostics, i, sd)
-    best_candidates.add (get_logger (), sp, sd);
+    best_candidates.add (get_logger (), &pf, sd);
+
+  best_candidates.handle_interactions (this);
 
   /* For each dedupe-key, call emit_saved_diagnostic on the "best"
      saved_diagnostic.  */
   best_candidates.emit_best (this, eg);
 }
 
-/* Given a saved_diagnostic SD at STMT with feasible path EPATH through EG,
+/* Given a saved_diagnostic SD with m_best_epath through EG,
    create an checker_path of suitable events and use it to call
    SD's underlying pending_diagnostic "emit" vfunc to emit a diagnostic.  */
 
 void
 diagnostic_manager::emit_saved_diagnostic (const exploded_graph &eg,
-					   const saved_diagnostic &sd,
-					   const exploded_path &epath,
-					   const gimple *stmt,
-					   int num_dupes)
+					   const saved_diagnostic &sd)
 {
   LOG_SCOPE (get_logger ());
   log ("sd: %qs at SN: %i", sd.m_d->get_kind (), sd.m_snode->m_index);
-  log ("num dupes: %i", num_dupes);
+  log ("num dupes: %i", sd.get_num_dupes ());
 
   pretty_printer *pp = global_dc->printer->clone ();
 
+  const exploded_path *epath = sd.get_best_epath ();
+  gcc_assert (epath);
+
   /* Precompute all enodes from which the diagnostic is reachable.  */
-  path_builder pb (eg, epath);
+  path_builder pb (eg, *epath, sd.get_feasibility_problem (), sd);
 
   /* This is the diagnostic_path subclass that will be built for
      the diagnostic.  */
   checker_path emission_path;
 
   /* Populate emission_path with a full description of EPATH.  */
-  build_emission_path (pb, epath, &emission_path);
+  build_emission_path (pb, *epath, &emission_path);
 
   /* Now prune it to just cover the most pertinent events.  */
-  prune_path (&emission_path, sd.m_sm, sd.m_var, sd.m_state);
+  prune_path (&emission_path, sd.m_sm, sd.m_sval, sd.m_state);
 
   /* Add a final event to the path, covering the diagnostic itself.
      We use the final enode from the epath, which might be different from
      the sd.m_enode, as the dedupe code doesn't care about enodes, just
      snodes.  */
-  emission_path.add_final_event (sd.m_sm, epath.get_final_enode (), stmt,
+  emission_path.add_final_event (sd.m_sm, epath->get_final_enode (), sd.m_stmt,
 				 sd.m_var, sd.m_state);
 
   /* The "final" event might not be final; if the saved_diagnostic has a
      trailing eedge stashed, add any events for it.  This is for use
      in handling longjmp, to show where a longjmp is rewinding to.  */
   if (sd.m_trailing_eedge)
-    add_events_for_eedge (pb, *sd.m_trailing_eedge, &emission_path);
+    add_events_for_eedge (pb, *sd.m_trailing_eedge, &emission_path, NULL);
 
   emission_path.prepare_for_emission (sd.m_d);
 
-  gcc_rich_location rich_loc (stmt->location);
+  location_t loc
+    = get_emission_location (sd.m_stmt, sd.m_snode->m_fun, *sd.m_d);
+
+  /* Allow the pending_diagnostic to fix up the locations of events.  */
+  emission_path.fixup_locations (sd.m_d);
+
+  gcc_rich_location rich_loc (loc);
   rich_loc.set_path (&emission_path);
 
   auto_diagnostic_group d;
   auto_cfun sentinel (sd.m_snode->m_fun);
   if (sd.m_d->emit (&rich_loc))
     {
+      sd.emit_any_notes ();
+
+      unsigned num_dupes = sd.get_num_dupes ();
       if (flag_analyzer_show_duplicate_count && num_dupes > 0)
-	inform_n (stmt->location, num_dupes,
+	inform_n (loc, num_dupes,
 		  "%i duplicate", "%i duplicates",
 		  num_dupes);
-    }
-  delete pp;
-}
-
-/* Given a state change to DST_REP, determine a tree that gives the origin
-   of that state at STMT, using DST_STATE's region model, so that state
-   changes based on assignments can be tracked back to their origins.
-
-   For example, if we have
-
-     (S1) _1 = malloc (64);
-     (S2) EXPR = _1;
-
-   then at stmt S2 we can get the origin of EXPR's state as being _1,
-   and thus track the allocation back to S1.  */
-
-static tree
-get_any_origin (const gimple *stmt,
-		tree dst_rep,
-		const program_state &dst_state)
-{
-  if (!stmt)
-    return NULL_TREE;
-
-  gcc_assert (dst_rep);
-
-  if (const gassign *assign = dyn_cast <const gassign *> (stmt))
-    {
-      tree lhs = gimple_assign_lhs (assign);
-      /* Use region IDs to compare lhs with DST_REP, bulletproofing against
-	 cases where they can't have lvalues by using
-	 tentative_region_model_context.  */
-      tentative_region_model_context ctxt;
-      region_id lhs_rid = dst_state.m_region_model->get_lvalue (lhs, &ctxt);
-      region_id dst_rep_rid
-	= dst_state.m_region_model->get_lvalue (dst_rep, &ctxt);
-      if (lhs_rid == dst_rep_rid && !ctxt.had_errors_p ())
+      if (flag_dump_analyzer_exploded_paths)
 	{
-	  tree rhs1 = gimple_assign_rhs1 (assign);
-	  enum tree_code op = gimple_assign_rhs_code (assign);
-	  switch (op)
-	    {
-	    default:
-	      //gcc_unreachable ();  // TODO
-	      break;
-	    case COMPONENT_REF:
-	    case SSA_NAME:
-	      return rhs1;
-	    }
+	  auto_timevar tv (TV_ANALYZER_DUMP);
+	  pretty_printer pp;
+	  pp_printf (&pp, "%s.%i.%s.epath.txt",
+		     dump_base_name, sd.get_index (), sd.m_d->get_kind ());
+	  char *filename = xstrdup (pp_formatted_text (&pp));
+	  epath->dump_to_file (filename, eg.get_ext_state ());
+	  inform (loc, "exploded path written to %qs", filename);
+	  free (filename);
 	}
     }
-  return NULL_TREE;
+  delete pp;
 }
 
 /* Emit a "path" of events to EMISSION_PATH describing the exploded path
@@ -630,10 +1436,42 @@ diagnostic_manager::build_emission_path (const path_builder &pb,
 					 checker_path *emission_path) const
 {
   LOG_SCOPE (get_logger ());
+
+  interesting_t interest;
+  pb.get_pending_diagnostic ()->mark_interesting_stuff (&interest);
+
+  /* Add region creation events for any globals of interest, at the
+     beginning of the path.  */
+  {
+    for (auto reg : interest.m_region_creation)
+      switch (reg->get_memory_space ())
+	{
+	default:
+	  continue;
+	case MEMSPACE_CODE:
+	case MEMSPACE_GLOBALS:
+	case MEMSPACE_READONLY_DATA:
+	  {
+	    const region *base_reg = reg->get_base_region ();
+	    if (tree decl = base_reg->maybe_get_decl ())
+	      if (DECL_P (decl)
+		  && DECL_SOURCE_LOCATION (decl) != UNKNOWN_LOCATION)
+		{
+		  emission_path->add_region_creation_event
+		    (reg,
+		     DECL_SOURCE_LOCATION (decl),
+		     NULL_TREE,
+		     0);
+		}
+	  }
+	}
+  }
+
+  /* Walk EPATH, adding events as appropriate.  */
   for (unsigned i = 0; i < epath.m_edges.length (); i++)
     {
       const exploded_edge *eedge = epath.m_edges[i];
-      add_events_for_eedge (pb, *eedge, emission_path);
+      add_events_for_eedge (pb, *eedge, emission_path, &interest);
     }
 }
 
@@ -643,9 +1481,11 @@ diagnostic_manager::build_emission_path (const path_builder &pb,
 class state_change_event_creator : public state_change_visitor
 {
 public:
-  state_change_event_creator (const exploded_edge &eedge,
+  state_change_event_creator (const path_builder &pb,
+			      const exploded_edge &eedge,
 			      checker_path *emission_path)
-    : m_eedge (eedge),
+    : m_pb (pb),
+      m_eedge (eedge),
       m_emission_path (emission_path)
   {}
 
@@ -654,6 +1494,8 @@ public:
 			       state_machine::state_t dst_sm_val)
     FINAL OVERRIDE
   {
+    if (&sm != m_pb.get_sm ())
+      return false;
     const exploded_node *src_node = m_eedge.m_src;
     const program_point &src_point = src_node->get_point ();
     const int src_stack_depth = src_point.get_stack_depth ();
@@ -668,10 +1510,10 @@ public:
 							stmt,
 							stack_depth,
 							sm,
-							NULL_TREE,
+							NULL,
 							src_sm_val,
 							dst_sm_val,
-							NULL_TREE,
+							NULL,
 							dst_state));
     return false;
   }
@@ -679,9 +1521,11 @@ public:
   bool on_state_change (const state_machine &sm,
 			state_machine::state_t src_sm_val,
 			state_machine::state_t dst_sm_val,
-			tree dst_rep,
-			svalue_id dst_origin_sid) FINAL OVERRIDE
+			const svalue *sval,
+			const svalue *dst_origin_sval) FINAL OVERRIDE
   {
+    if (&sm != m_pb.get_sm ())
+      return false;
     const exploded_node *src_node = m_eedge.m_src;
     const program_point &src_point = src_node->get_point ();
     const int src_stack_depth = src_point.get_stack_depth ();
@@ -705,23 +1549,19 @@ public:
     if (!stmt)
       return false;
 
-    tree origin_rep
-      = dst_state.get_representative_tree (dst_origin_sid);
-
-    if (origin_rep == NULL_TREE)
-      origin_rep = get_any_origin (stmt, dst_rep, dst_state);
     m_emission_path->add_event (new state_change_event (supernode,
 							stmt,
 							stack_depth,
 							sm,
-							dst_rep,
+							sval,
 							src_sm_val,
 							dst_sm_val,
-							origin_rep,
+							dst_origin_sval,
 							dst_state));
     return false;
   }
 
+  const path_builder &m_pb;
   const exploded_edge &m_eedge;
   checker_path *m_emission_path;
 };
@@ -771,43 +1611,172 @@ for_each_state_change (const program_state &src_state,
 	   iter != dst_smap.end ();
 	   ++iter)
 	{
-	  /* Ideally we'd directly compare the SM state between src state
-	     and dst state, but there's no guarantee that the IDs can
-	     be meaningfully compared.  */
-	  svalue_id dst_sid = (*iter).first;
+	  const svalue *sval = (*iter).first;
 	  state_machine::state_t dst_sm_val = (*iter).second.m_state;
-
-	  auto_vec<path_var> dst_pvs;
-	  dst_state.m_region_model->get_path_vars_for_svalue (dst_sid,
-							      &dst_pvs);
-
-	  unsigned j;
-	  path_var *dst_pv;
-	  FOR_EACH_VEC_ELT (dst_pvs, j, dst_pv)
+	  state_machine::state_t src_sm_val
+	    = src_smap.get_state (sval, ext_state);
+	  if (dst_sm_val != src_sm_val)
 	    {
-	      tree dst_rep = dst_pv->m_tree;
-	      gcc_assert (dst_rep);
-	      if (dst_pv->m_stack_depth
-		  >= src_state.m_region_model->get_stack_depth ())
-		continue;
-	      tentative_region_model_context ctxt;
-	      svalue_id src_sid
-		= src_state.m_region_model->get_rvalue (*dst_pv, &ctxt);
-	      if (src_sid.null_p () || ctxt.had_errors_p ())
-		continue;
-	      state_machine::state_t src_sm_val = src_smap.get_state (src_sid);
-	      if (dst_sm_val != src_sm_val)
-		{
-		  svalue_id dst_origin_sid = (*iter).second.m_origin;
-		  if (visitor->on_state_change (sm, src_sm_val, dst_sm_val,
-						dst_rep, dst_origin_sid))
-		    return true;
-		}
+	      const svalue *origin_sval = (*iter).second.m_origin;
+	      if (visitor->on_state_change (sm, src_sm_val, dst_sm_val,
+					    sval, origin_sval))
+		return true;
 	    }
 	}
     }
   return false;
 }
+
+/* An sm_context for adding state_change_event on assignments to NULL,
+   where the default state isn't m_start.  Storing such state in the
+   sm_state_map would lead to bloat of the exploded_graph, so we want
+   to leave it as a default state, and inject state change events here
+   when we have a diagnostic.
+   Find transitions of constants, for handling on_zero_assignment.  */
+
+struct null_assignment_sm_context : public sm_context
+{
+  null_assignment_sm_context (int sm_idx,
+			      const state_machine &sm,
+			      const program_state *old_state,
+			      const program_state *new_state,
+			      const gimple *stmt,
+			      const program_point *point,
+			      checker_path *emission_path,
+			      const extrinsic_state &ext_state)
+  : sm_context (sm_idx, sm), m_old_state (old_state), m_new_state (new_state),
+    m_stmt (stmt), m_point (point), m_emission_path (emission_path),
+    m_ext_state (ext_state)
+  {
+  }
+
+  tree get_fndecl_for_call (const gcall */*call*/) FINAL OVERRIDE
+  {
+    return NULL_TREE;
+  }
+
+  state_machine::state_t get_state (const gimple *stmt ATTRIBUTE_UNUSED,
+				    tree var) FINAL OVERRIDE
+  {
+    const svalue *var_old_sval
+      = m_old_state->m_region_model->get_rvalue (var, NULL);
+    const sm_state_map *old_smap = m_old_state->m_checker_states[m_sm_idx];
+
+    state_machine::state_t current
+      = old_smap->get_state (var_old_sval, m_ext_state);
+
+    return current;
+  }
+
+  state_machine::state_t get_state (const gimple *stmt ATTRIBUTE_UNUSED,
+				    const svalue *sval) FINAL OVERRIDE
+  {
+    const sm_state_map *old_smap = m_old_state->m_checker_states[m_sm_idx];
+    state_machine::state_t current = old_smap->get_state (sval, m_ext_state);
+    return current;
+  }
+
+  void set_next_state (const gimple *stmt,
+		       tree var,
+		       state_machine::state_t to,
+		       tree origin ATTRIBUTE_UNUSED) FINAL OVERRIDE
+  {
+    state_machine::state_t from = get_state (stmt, var);
+    if (from != m_sm.get_start_state ())
+      return;
+
+    const svalue *var_new_sval
+      = m_new_state->m_region_model->get_rvalue (var, NULL);
+    const supernode *supernode = m_point->get_supernode ();
+    int stack_depth = m_point->get_stack_depth ();
+
+    m_emission_path->add_event (new state_change_event (supernode,
+							m_stmt,
+							stack_depth,
+							m_sm,
+							var_new_sval,
+							from, to,
+							NULL,
+							*m_new_state));
+  }
+
+  void set_next_state (const gimple *stmt,
+		       const svalue *sval,
+		       state_machine::state_t to,
+		       tree origin ATTRIBUTE_UNUSED) FINAL OVERRIDE
+  {
+    state_machine::state_t from = get_state (stmt, sval);
+    if (from != m_sm.get_start_state ())
+      return;
+
+    const supernode *supernode = m_point->get_supernode ();
+    int stack_depth = m_point->get_stack_depth ();
+
+    m_emission_path->add_event (new state_change_event (supernode,
+							m_stmt,
+							stack_depth,
+							m_sm,
+							sval,
+							from, to,
+							NULL,
+							*m_new_state));
+  }
+
+  void warn (const supernode *, const gimple *,
+	     tree, pending_diagnostic *d) FINAL OVERRIDE
+  {
+    delete d;
+  }
+
+  tree get_diagnostic_tree (tree expr) FINAL OVERRIDE
+  {
+    return expr;
+  }
+
+  tree get_diagnostic_tree (const svalue *sval) FINAL OVERRIDE
+  {
+    return m_new_state->m_region_model->get_representative_tree (sval);
+  }
+
+  state_machine::state_t get_global_state () const FINAL OVERRIDE
+  {
+    return 0;
+  }
+
+  void set_global_state (state_machine::state_t) FINAL OVERRIDE
+  {
+    /* No-op.  */
+  }
+
+  void on_custom_transition (custom_transition *) FINAL OVERRIDE
+  {
+  }
+
+  tree is_zero_assignment (const gimple *stmt) FINAL OVERRIDE
+  {
+    const gassign *assign_stmt = dyn_cast <const gassign *> (stmt);
+    if (!assign_stmt)
+     return NULL_TREE;
+    if (const svalue *sval
+	= m_new_state->m_region_model->get_gassign_result (assign_stmt, NULL))
+      if (tree cst = sval->maybe_get_constant ())
+	if (::zerop(cst))
+	  return gimple_assign_lhs (assign_stmt);
+    return NULL_TREE;
+  }
+
+  const program_state *get_old_program_state () const FINAL OVERRIDE
+  {
+    return m_old_state;
+  }
+
+  const program_state *m_old_state;
+  const program_state *m_new_state;
+  const gimple *m_stmt;
+  const program_point *m_point;
+  checker_path *m_emission_path;
+  const extrinsic_state &m_ext_state;
+};
 
 /* Subroutine of diagnostic_manager::build_emission_path.
    Add any events for EEDGE to EMISSION_PATH.  */
@@ -815,10 +1784,12 @@ for_each_state_change (const program_state &src_state,
 void
 diagnostic_manager::add_events_for_eedge (const path_builder &pb,
 					  const exploded_edge &eedge,
-					  checker_path *emission_path) const
+					  checker_path *emission_path,
+					  interesting_t *interest) const
 {
   const exploded_node *src_node = eedge.m_src;
   const program_point &src_point = src_node->get_point ();
+  const int src_stack_depth = src_point.get_stack_depth ();
   const exploded_node *dst_node = eedge.m_dest;
   const program_point &dst_point = dst_node->get_point ();
   const int dst_stack_depth = dst_point.get_stack_depth ();
@@ -852,7 +1823,7 @@ diagnostic_manager::add_events_for_eedge (const path_builder &pb,
       | ~~~~~~~~~~~~~^~~~~
       |              |
       |              (3) ...to here        (end_cfg_edge_event).  */
-  state_change_event_creator visitor (eedge, emission_path);
+  state_change_event_creator visitor (pb, eedge, emission_path);
   for_each_state_change (src_state, dst_state, pb.get_ext_state (),
 			 &visitor);
 
@@ -880,6 +1851,29 @@ diagnostic_manager::add_events_for_eedge (const path_builder &pb,
 	     (dst_point.get_supernode ()->get_start_location (),
 	      dst_point.get_fndecl (),
 	      dst_stack_depth));
+	  /* Create region_creation_events for on-stack regions within
+	     this frame.  */
+	  if (interest)
+	    {
+	      unsigned i;
+	      const region *reg;
+	      FOR_EACH_VEC_ELT (interest->m_region_creation, i, reg)
+		if (const frame_region *frame = reg->maybe_get_frame_region ())
+		  if (frame->get_fndecl () == dst_point.get_fndecl ())
+		    {
+		      const region *base_reg = reg->get_base_region ();
+		      if (tree decl = base_reg->maybe_get_decl ())
+			if (DECL_P (decl)
+			    && DECL_SOURCE_LOCATION (decl) != UNKNOWN_LOCATION)
+			  {
+			    emission_path->add_region_creation_event
+			      (reg,
+			       DECL_SOURCE_LOCATION (decl),
+			       dst_point.get_fndecl (),
+			       dst_stack_depth);
+			  }
+		    }
+	    }
 	}
       break;
     case PK_BEFORE_STMT:
@@ -898,8 +1892,99 @@ diagnostic_manager::add_events_for_eedge (const path_builder &pb,
 	    (new statement_event (stmt,
 				  dst_point.get_fndecl (),
 				  dst_stack_depth, dst_state));
+
+	/* Create state change events for assignment to NULL.
+	   Iterate through the stmts in dst_enode, adding state change
+	   events for them.  */
+	if (dst_state.m_region_model)
+	  {
+	    program_state iter_state (dst_state);
+	    program_point iter_point (dst_point);
+	    while (1)
+	      {
+		const gimple *stmt = iter_point.get_stmt ();
+		if (const gassign *assign = dyn_cast<const gassign *> (stmt))
+		  {
+		    const extrinsic_state &ext_state = pb.get_ext_state ();
+		    program_state old_state (iter_state);
+		    iter_state.m_region_model->on_assignment (assign, NULL);
+		    for (unsigned i = 0; i < ext_state.get_num_checkers (); i++)
+		      {
+			const state_machine &sm = ext_state.get_sm (i);
+			null_assignment_sm_context sm_ctxt (i, sm,
+							    &old_state,
+							    &iter_state,
+							    stmt,
+							    &iter_point,
+							    emission_path,
+							    pb.get_ext_state ());
+			sm.on_stmt (&sm_ctxt, dst_point.get_supernode (), stmt);
+			// TODO: what about phi nodes?
+		      }
+		  }
+		iter_point.next_stmt ();
+		if (iter_point.get_kind () == PK_AFTER_SUPERNODE
+		    || (dst_node->m_succs.length () > 1
+			&& (iter_point
+			    == dst_node->m_succs[0]->m_dest->get_point ())))
+		  break;
+	      }
+
+	  }
       }
       break;
+    }
+
+  /* Look for changes in dynamic extents, which will identify
+     the creation of heap-based regions and alloca regions.  */
+  if (interest)
+    {
+      const region_model *src_model = src_state.m_region_model;
+      const region_model *dst_model = dst_state.m_region_model;
+      if (src_model->get_dynamic_extents ()
+	  != dst_model->get_dynamic_extents ())
+	{
+	  unsigned i;
+	  const region *reg;
+	  FOR_EACH_VEC_ELT (interest->m_region_creation, i, reg)
+	    {
+	      const region *base_reg = reg->get_base_region ();
+	      const svalue *old_extents
+		= src_model->get_dynamic_extents (base_reg);
+	      const svalue *new_extents
+		= dst_model->get_dynamic_extents (base_reg);
+	      if (old_extents == NULL && new_extents != NULL)
+		switch (base_reg->get_kind ())
+		  {
+		  default:
+		    break;
+		  case RK_HEAP_ALLOCATED:
+		  case RK_ALLOCA:
+		    emission_path->add_region_creation_event
+		      (reg,
+		       src_point.get_location (),
+		       src_point.get_fndecl (),
+		       src_stack_depth);
+		    break;
+		  }
+	    }
+	}
+    }
+
+  if (pb.get_feasibility_problem ()
+      && &pb.get_feasibility_problem ()->m_eedge == &eedge)
+    {
+      pretty_printer pp;
+      pp_format_decoder (&pp) = default_tree_printer;
+      pp_string (&pp,
+		 "this path would have been rejected as infeasible"
+		 " at this edge: ");
+      pb.get_feasibility_problem ()->dump_to_pp (&pp);
+      emission_path->add_event (new precanned_custom_event
+				(dst_point.get_location (),
+				 dst_point.get_fndecl (),
+				 dst_stack_depth,
+				 pp_formatted_text (&pp)));
     }
 }
 
@@ -986,6 +2071,11 @@ diagnostic_manager::add_events_for_superedge (const path_builder &pb,
   const
 {
   gcc_assert (eedge.m_sedge);
+
+  /* Give diagnostics an opportunity to override this function.  */
+  pending_diagnostic *pd = pb.get_pending_diagnostic ();
+  if (pd->maybe_add_custom_events_for_superedge (eedge, emission_path))
+    return;
 
   /* Don't add events for insignificant edges at verbosity levels below 3.  */
   if (m_verbosity < 3)
@@ -1076,13 +2166,14 @@ diagnostic_manager::add_events_for_superedge (const path_builder &pb,
 void
 diagnostic_manager::prune_path (checker_path *path,
 				const state_machine *sm,
-				tree var,
+				const svalue *sval,
 				state_machine::state_t state) const
 {
   LOG_FUNC (get_logger ());
   path->maybe_log (get_logger (), "path");
-  prune_for_sm_diagnostic (path, sm, var, state);
+  prune_for_sm_diagnostic (path, sm, sval, state);
   prune_interproc_events (path);
+  consolidate_conditions (path);
   finish_pruning (path);
   path->maybe_log (get_logger (), "pruned");
 }
@@ -1125,11 +2216,9 @@ can_be_expr_of_interest_p (tree expr)
 void
 diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 					     const state_machine *sm,
-					     tree var,
+					     const svalue *sval,
 					     state_machine::state_t state) const
 {
-  update_for_unsuitable_sm_exprs (&var);
-
   int idx = path->num_events () - 1;
   while (idx >= 0 && idx < (signed)path->num_events ())
     {
@@ -1138,17 +2227,23 @@ diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 	{
 	  if (sm)
 	    {
-	      if (var)
-		log ("considering event %i, with var: %qE, state: %qs",
-		     idx, var, sm->get_state_name (state));
+	      if (sval)
+		{
+		  label_text sval_desc = sval->get_desc ();
+		  log ("considering event %i (%s), with sval: %qs, state: %qs",
+		       idx, event_kind_to_string (base_event->m_kind),
+		       sval_desc.m_buffer, state->get_name ());
+		  sval_desc.maybe_free ();
+		}
 	      else
-		log ("considering event %i, with global state: %qs",
-		     idx, sm->get_state_name (state));
+		log ("considering event %i (%s), with global state: %qs",
+		     idx, event_kind_to_string (base_event->m_kind),
+		     state->get_name ());
 	    }
 	  else
 	    log ("considering event %i", idx);
 	}
-      gcc_assert (var == NULL || can_be_expr_of_interest_p (var));
+
       switch (base_event->m_kind)
 	{
 	default:
@@ -1168,25 +2263,16 @@ diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 
 	case EK_STMT:
 	  {
-	    /* If this stmt is the origin of "var", update var.  */
-	    if (var)
-	      {
-		statement_event *stmt_event = (statement_event *)base_event;
-		tree new_var = get_any_origin (stmt_event->m_stmt, var,
-					       stmt_event->m_dst_state);
-		if (new_var)
-		  {
-		    log ("event %i: switching var of interest from %qE to %qE",
-			 idx, var, new_var);
-		    var = new_var;
-		  }
-	      }
 	    if (m_verbosity < 4)
 	      {
 		log ("filtering event %i: statement event", idx);
 		path->delete_event (idx);
 	      }
 	  }
+	  break;
+
+	case EK_REGION_CREATION:
+	  /* Don't filter these.  */
 	  break;
 
 	case EK_FUNCTION_ENTRY:
@@ -1200,38 +2286,55 @@ diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 	case EK_STATE_CHANGE:
 	  {
 	    state_change_event *state_change = (state_change_event *)base_event;
-	    /* Use region IDs to compare var with the state_change's m_var,
-	       bulletproofing against cases where they can't have lvalues by
-	       using tentative_region_model_context.  */
-	    tentative_region_model_context ctxt;
-	    region_id state_var_rid
-	      = state_change->get_lvalue (state_change->m_var, &ctxt);
-	    region_id var_rid = state_change->get_lvalue (var, &ctxt);
-	    if (state_var_rid == var_rid && !ctxt.had_errors_p ())
+	    gcc_assert (state_change->m_dst_state.m_region_model);
+
+	    if (state_change->m_sval == sval)
 	      {
 		if (state_change->m_origin)
 		  {
-		    log ("event %i: switching var of interest from %qE to %qE",
-			 idx, var, state_change->m_origin);
-		    var = state_change->m_origin;
-		    update_for_unsuitable_sm_exprs (&var);
+		    if (get_logger ())
+		      {
+			label_text sval_desc = sval->get_desc ();
+			label_text origin_sval_desc
+			  = state_change->m_origin->get_desc ();
+			log ("event %i:"
+			     " switching var of interest from %qs to %qs",
+			     idx, sval_desc.m_buffer,
+			     origin_sval_desc.m_buffer);
+			sval_desc.maybe_free ();
+			origin_sval_desc.maybe_free ();
+		      }
+		    sval = state_change->m_origin;
 		  }
 		log ("event %i: switching state of interest from %qs to %qs",
-		     idx, sm->get_state_name (state_change->m_to),
-		     sm->get_state_name (state_change->m_from));
+		     idx, state_change->m_to->get_name (),
+		     state_change->m_from->get_name ());
 		state = state_change->m_from;
 	      }
 	    else if (m_verbosity < 4)
 	      {
-		if (var)
-		  log ("filtering event %i:"
-		       " state change to %qE unrelated to %qE",
-		       idx, state_change->m_var, var);
-		else
-		  log ("filtering event %i: state change to %qE",
-		       idx, state_change->m_var);
-		if (ctxt.had_errors_p ())
-		  log ("context had errors");
+		if (get_logger ())
+		  {
+		    if (state_change->m_sval)
+		      {
+			label_text change_sval_desc
+			  = state_change->m_sval->get_desc ();
+			if (sval)
+			  {
+			    label_text sval_desc = sval->get_desc ();
+			    log ("filtering event %i:"
+				 " state change to %qs unrelated to %qs",
+				 idx, change_sval_desc.m_buffer,
+				 sval_desc.m_buffer);
+			  }
+			else
+			  log ("filtering event %i: state change to %qs",
+			       idx, change_sval_desc.m_buffer);
+			change_sval_desc.maybe_free ();
+		      }
+		    else
+		      log ("filtering event %i: global state change", idx);
+		  }
 		path->delete_event (idx);
 	      }
 	  }
@@ -1240,34 +2343,6 @@ diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 	case EK_START_CFG_EDGE:
 	  {
 	    cfg_edge_event *event = (cfg_edge_event *)base_event;
-	    const cfg_superedge& cfg_superedge
-	      = event->get_cfg_superedge ();
-	    const supernode *dest = event->m_sedge->m_dest;
-	    /* Do we have an SSA_NAME defined via a phi node in
-	       the dest CFG node?  */
-	    if (var && TREE_CODE (var) == SSA_NAME)
-	      if (SSA_NAME_DEF_STMT (var)->bb == dest->m_bb)
-		{
-		  if (gphi *phi
-		      = dyn_cast <gphi *> (SSA_NAME_DEF_STMT (var)))
-		    {
-		      /* Update var based on its phi node.  */
-		      tree old_var = var;
-		      var = cfg_superedge.get_phi_arg (phi);
-		      log ("updating from %qE to %qE based on phi node",
-			   old_var, var);
-		      if (get_logger ())
-			{
-			  pretty_printer pp;
-			  pp_gimple_stmt_1 (&pp, phi, 0, (dump_flags_t)0);
-			  log ("  phi: %s", pp_formatted_text (&pp));
-			}
-		      /* If we've chosen a bad exploded_path, then the
-			 phi arg might be a constant.  Fail gracefully for
-			 this case.  */
-		      update_for_unsuitable_sm_exprs (&var);
-		    }
-		}
 
 	    /* TODO: is this edge significant to var?
 	       See if var can be in other states in the dest, but not
@@ -1276,7 +2351,7 @@ diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 
 	    if (event->should_filter_p (m_verbosity))
 	      {
-		log ("filtering event %i: CFG edge", idx);
+		log ("filtering events %i and %i: CFG edge", idx, idx + 1);
 		path->delete_event (idx);
 		/* Also delete the corresponding EK_END_CFG_EDGE.  */
 		gcc_assert (path->get_checker_event (idx)->m_kind
@@ -1294,47 +2369,85 @@ diagnostic_manager::prune_for_sm_diagnostic (checker_path *path,
 	case EK_CALL_EDGE:
 	  {
 	    call_event *event = (call_event *)base_event;
-	    const callgraph_superedge& cg_superedge
-	      = event->get_callgraph_superedge ();
+	    const region_model *callee_model
+	      = event->m_eedge.m_dest->get_state ().m_region_model;
+	    const region_model *caller_model
+	      = event->m_eedge.m_src->get_state ().m_region_model;
+	    tree callee_var = callee_model->get_representative_tree (sval);
 	    callsite_expr expr;
-	    tree caller_var
-	      = cg_superedge.map_expr_from_callee_to_caller (var, &expr);
+
+	    tree caller_var;
+            if(event->m_sedge)
+              {
+                const callgraph_superedge& cg_superedge
+                  = event->get_callgraph_superedge ();
+                if (cg_superedge.m_cedge)
+	          caller_var
+	            = cg_superedge.map_expr_from_callee_to_caller (callee_var,
+                                                                   &expr);
+                else
+                  caller_var = caller_model->get_representative_tree (sval);
+              }
+            else
+	      caller_var = caller_model->get_representative_tree (sval);
+
 	    if (caller_var)
 	      {
-		log ("event %i:"
-		     " switching var of interest"
-		     " from %qE in callee to %qE in caller",
-		     idx, var, caller_var);
-		var = caller_var;
+		if (get_logger ())
+		  {
+		    label_text sval_desc = sval->get_desc ();
+		    log ("event %i:"
+			 " recording critical state for %qs at call"
+			 " from %qE in callee to %qE in caller",
+			 idx, sval_desc.m_buffer, callee_var, caller_var);
+		    sval_desc.maybe_free ();
+		  }
 		if (expr.param_p ())
-		  event->record_critical_state (var, state);
-		update_for_unsuitable_sm_exprs (&var);
+		  event->record_critical_state (caller_var, state);
 	      }
 	  }
 	  break;
 
 	case EK_RETURN_EDGE:
-	  // TODO: potentially update var/state based on return value,
-	  // args etc
 	  {
-	    if (var)
+	    if (sval)
 	      {
 		return_event *event = (return_event *)base_event;
-		const callgraph_superedge& cg_superedge
-		  = event->get_callgraph_superedge ();
+                const region_model *caller_model
+                  = event->m_eedge.m_dest->get_state ().m_region_model;
+                tree caller_var = caller_model->get_representative_tree (sval);
+                const region_model *callee_model
+                  = event->m_eedge.m_src->get_state ().m_region_model;
 		callsite_expr expr;
-		tree callee_var
-		  = cg_superedge.map_expr_from_caller_to_callee (var, &expr);
+
+                tree callee_var;
+                if (event->m_sedge)
+                  {
+                    const callgraph_superedge& cg_superedge
+                      = event->get_callgraph_superedge ();
+                    if (cg_superedge.m_cedge)
+                      callee_var
+                        = cg_superedge.map_expr_from_caller_to_callee (caller_var,
+                                                                       &expr);
+                    else
+                      callee_var = callee_model->get_representative_tree (sval);
+                  }
+                else
+                  callee_var = callee_model->get_representative_tree (sval);
+
 		if (callee_var)
 		  {
-		    log ("event %i:"
-			 " switching var of interest"
-			 " from %qE in caller to %qE in callee",
-			 idx, var, callee_var);
-		    var = callee_var;
+		    if (get_logger ())
+		      {
+			label_text sval_desc = sval->get_desc ();
+			log ("event %i:"
+			     " recording critical state for %qs at return"
+			     " from %qE in caller to %qE in callee",
+			     idx, sval_desc.m_buffer, callee_var, callee_var);
+			sval_desc.maybe_free ();
+		      }
 		    if (expr.return_value_p ())
-		      event->record_critical_state (var, state);
-		    update_for_unsuitable_sm_exprs (&var);
+		      event->record_critical_state (callee_var, state);
 		  }
 	      }
 	  }
@@ -1394,7 +2507,7 @@ diagnostic_manager::prune_interproc_events (checker_path *path) const
   do
     {
       changed = false;
-      int idx = path->num_events () - 1;
+      int idx = (signed)path->num_events () - 1;
       while (idx >= 0)
 	{
 	  /* Prune [..., call, function-entry, return, ...] triples.  */
@@ -1447,6 +2560,153 @@ diagnostic_manager::prune_interproc_events (checker_path *path) const
 
     }
   while (changed);
+}
+
+/* Return true iff event IDX within PATH is on the same line as REF_EXP_LOC.  */
+
+static bool
+same_line_as_p (const expanded_location &ref_exp_loc,
+		checker_path *path, unsigned idx)
+{
+  const checker_event *ev = path->get_checker_event (idx);
+  expanded_location idx_exp_loc = expand_location (ev->get_location ());
+  gcc_assert (ref_exp_loc.file);
+  if (idx_exp_loc.file == NULL)
+    return false;
+  if (strcmp (ref_exp_loc.file, idx_exp_loc.file))
+    return false;
+  return ref_exp_loc.line == idx_exp_loc.line;
+}
+
+/* This path-readability optimization reduces the verbosity of compound
+   conditional statements (without needing to reconstruct the AST, which
+   has already been lost).
+
+   For example, it converts:
+
+    |   61 |   if (cp[0] != '\0' && cp[0] != '#')
+    |      |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    |      |      |              |    |
+    |      |      |              |    (6) ...to here
+    |      |      |              (7) following ‘true’ branch...
+    |      |      (5) following ‘true’ branch...
+    |   62 |     {
+    |   63 |       alias = cp++;
+    |      |               ~~~~
+    |      |                 |
+    |      |                 (8) ...to here
+
+   into:
+
+    |   61 |   if (cp[0] != '\0' && cp[0] != '#')
+    |      |      ~
+    |      |      |
+    |      |      (5) following ‘true’ branch...
+    |   62 |     {
+    |   63 |       alias = cp++;
+    |      |               ~~~~
+    |      |                 |
+    |      |                 (6) ...to here
+
+   by combining events 5-8 into new events 5-6.
+
+   Find runs of consecutive (start_cfg_edge_event, end_cfg_edge_event) pairs
+   in which all events apart from the final end_cfg_edge_event are on the same
+   line, and for which either all the CFG edges are TRUE edges, or all are
+   FALSE edges.
+
+   Consolidate each such run into a
+     (start_consolidated_cfg_edges_event, end_consolidated_cfg_edges_event)
+   pair.  */
+
+void
+diagnostic_manager::consolidate_conditions (checker_path *path) const
+{
+  /* Don't simplify edges if we're debugging them.  */
+  if (flag_analyzer_verbose_edges)
+    return;
+
+  for (int start_idx = 0;
+       start_idx < (signed)path->num_events () - 1;
+       start_idx++)
+    {
+      if (path->cfg_edge_pair_at_p (start_idx))
+	{
+	  const checker_event *old_start_ev
+	    = path->get_checker_event (start_idx);
+	  expanded_location start_exp_loc
+	    = expand_location (old_start_ev->get_location ());
+	  if (start_exp_loc.file == NULL)
+	    continue;
+	  if (!same_line_as_p (start_exp_loc, path, start_idx + 1))
+	    continue;
+
+	  /* Are we looking for a run of all TRUE edges, or all FALSE edges?  */
+	  gcc_assert (old_start_ev->m_kind == EK_START_CFG_EDGE);
+	  const start_cfg_edge_event *old_start_cfg_ev
+	    = (const start_cfg_edge_event *)old_start_ev;
+	  const cfg_superedge& first_cfg_sedge
+	    = old_start_cfg_ev->get_cfg_superedge ();
+	  bool edge_sense;
+	  if (first_cfg_sedge.true_value_p ())
+	    edge_sense = true;
+	  else if (first_cfg_sedge.false_value_p ())
+	    edge_sense = false;
+	  else
+	    continue;
+
+	  /* Find a run of CFG start/end event pairs from
+	       [start_idx, next_idx)
+	     where all apart from the final event are on the same line,
+	     and all are either TRUE or FALSE edges, matching the initial.  */
+	  int next_idx = start_idx + 2;
+	  while (path->cfg_edge_pair_at_p (next_idx)
+		 && same_line_as_p (start_exp_loc, path, next_idx))
+	    {
+	      const checker_event *iter_ev
+		= path->get_checker_event (next_idx);
+	      gcc_assert (iter_ev->m_kind == EK_START_CFG_EDGE);
+	      const start_cfg_edge_event *iter_cfg_ev
+		= (const start_cfg_edge_event *)iter_ev;
+	      const cfg_superedge& iter_cfg_sedge
+		= iter_cfg_ev->get_cfg_superedge ();
+	      if (edge_sense)
+		{
+		  if (!iter_cfg_sedge.true_value_p ())
+		    break;
+		}
+	      else
+		{
+		  if (!iter_cfg_sedge.false_value_p ())
+		    break;
+		}
+	      next_idx += 2;
+	    }
+
+	  /* If we have more than one pair in the run, consolidate.  */
+	  if (next_idx > start_idx + 2)
+	    {
+	      const checker_event *old_end_ev
+		= path->get_checker_event (next_idx - 1);
+	      log ("consolidating CFG edge events %i-%i into %i-%i",
+		   start_idx, next_idx - 1, start_idx, start_idx +1);
+	      start_consolidated_cfg_edges_event *new_start_ev
+		= new start_consolidated_cfg_edges_event
+		(old_start_ev->get_location (),
+		 old_start_ev->get_fndecl (),
+		 old_start_ev->get_stack_depth (),
+		 edge_sense);
+	      checker_event *new_end_ev
+		= new end_consolidated_cfg_edges_event
+		(old_end_ev->get_location (),
+		 old_end_ev->get_fndecl (),
+		 old_end_ev->get_stack_depth ());
+	      path->replace_event (start_idx, new_start_ev);
+	      path->replace_event (start_idx + 1, new_end_ev);
+	      path->delete_events (start_idx + 2, next_idx - (start_idx + 2));
+	    }
+	}
+    }
 }
 
 /* Final pass of diagnostic_manager::prune_path.

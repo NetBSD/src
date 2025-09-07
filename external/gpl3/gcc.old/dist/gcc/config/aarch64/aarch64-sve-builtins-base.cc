@@ -1,5 +1,5 @@
 /* ACLE support for AArch64 SVE (__ARM_FEATURE_SVE intrinsics)
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+   Copyright (C) 2018-2022 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -494,15 +494,22 @@ public:
   expand (function_expander &e) const OVERRIDE
   {
     machine_mode mode = e.vector_mode (0);
-    if (e.pred == PRED_x)
-      {
-	/* The pattern for CNOT includes an UNSPEC_PRED_Z, so needs
-	   a ptrue hint.  */
-	e.add_ptrue_hint (0, e.gp_mode (0));
-	return e.use_pred_x_insn (code_for_aarch64_pred_cnot (mode));
-      }
+    machine_mode pred_mode = e.gp_mode (0);
+    /* The underlying _x pattern is effectively:
 
-    return e.use_cond_insn (code_for_cond_cnot (mode), 0);
+	 dst = src == 0 ? 1 : 0
+
+       rather than an UNSPEC_PRED_X.  Using this form allows autovec
+       constructs to be matched by combine, but it means that the
+       predicate on the src == 0 comparison must be all-true.
+
+       For simplicity, represent other _x operations as fully-defined _m
+       operations rather than using a separate bespoke pattern.  */
+    if (e.pred == PRED_x
+	&& gen_lowpart (pred_mode, e.args[0]) == CONSTM1_RTX (pred_mode))
+      return e.use_pred_x_insn (code_for_aarch64_ptrue_cnot (mode));
+    return e.use_cond_insn (code_for_cond_cnot (mode),
+			    e.pred == PRED_x ? 1 : 0);
   }
 };
 
@@ -1123,7 +1130,7 @@ public:
   rtx
   expand (function_expander &e) const OVERRIDE
   {
-    insn_code icode = code_for_aarch64_load (extend_rtx_code (),
+    insn_code icode = code_for_aarch64_load (UNSPEC_LD1_SVE, extend_rtx_code (),
 					     e.vector_mode (0),
 					     e.memory_vector_mode ());
     return e.use_contiguous_load_insn (icode);
@@ -2295,17 +2302,6 @@ public:
   CONSTEXPR svundef_impl (unsigned int vectors_per_tuple)
     : quiet<multi_vector_function> (vectors_per_tuple) {}
 
-  gimple *
-  fold (gimple_folder &f) const OVERRIDE
-  {
-    /* Don't fold svundef at the gimple level.  There's no exact
-       correspondence for SSA_NAMEs, and we explicitly don't want
-       to generate a specific value (like an all-zeros vector).  */
-    if (vectors_per_tuple () == 1)
-      return NULL;
-    return gimple_build_assign (f.lhs, build_clobber (TREE_TYPE (f.lhs)));
-  }
-
   rtx
   expand (function_expander &e) const OVERRIDE
   {
@@ -2370,14 +2366,14 @@ public:
        version) is through the USDOT instruction but with the second and third
        inputs swapped.  */
     if (m_su)
-      e.rotate_inputs_left (1, 2);
+      e.rotate_inputs_left (1, 3);
     /* The ACLE function has the same order requirements as for svdot.
        While there's no requirement for the RTL pattern to have the same sort
        of order as that for <sur>dot_prod, it's easier to read.
        Hence we do the same rotation on arguments as svdot_impl does.  */
     e.rotate_inputs_left (0, 3);
     machine_mode mode = e.vector_mode (0);
-    insn_code icode = code_for_aarch64_dot_prod (UNSPEC_USDOT, mode);
+    insn_code icode = code_for_dot_prod (UNSPEC_USDOT, mode);
     return e.use_exact_insn (icode);
   }
 
@@ -2416,7 +2412,9 @@ public:
     : while_comparison (unspec_for_sint, unspec_for_uint), m_eq_p (eq_p)
   {}
 
-  /* Try to fold a call by treating its arguments as constants of type T.  */
+  /* Try to fold a call by treating its arguments as constants of type T.
+     We have already filtered out the degenerate cases of X .LT. MIN
+     and X .LE. MAX.  */
   template<typename T>
   gimple *
   fold_type (gimple_folder &f) const
@@ -2469,6 +2467,13 @@ public:
   gimple *
   fold (gimple_folder &f) const OVERRIDE
   {
+    /* Filter out cases where the condition is always true or always false.  */
+    tree arg1 = gimple_call_arg (f.call, 1);
+    if (!m_eq_p && operand_equal_p (arg1, TYPE_MIN_VALUE (TREE_TYPE (arg1))))
+      return f.fold_to_pfalse ();
+    if (m_eq_p && operand_equal_p (arg1, TYPE_MAX_VALUE (TREE_TYPE (arg1))))
+      return f.fold_to_ptrue ();
+
     if (f.type_suffix (1).unsigned_p)
       return fold_type<poly_uint64> (f);
     else

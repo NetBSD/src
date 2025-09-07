@@ -1,5 +1,5 @@
 ;; Machine Description for TI PRU.
-;; Copyright (C) 2014-2020 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2022 Free Software Foundation, Inc.
 ;; Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 ;; Based on the NIOS2 GCC port.
 ;;
@@ -36,6 +36,8 @@
    (MULSRC0_REGNUM		112) ; Multiply source register.
    (MULSRC1_REGNUM		116) ; Multiply source register.
    (LAST_NONIO_GP_REGNUM	119) ; Last non-I/O general purpose register.
+   (R30_REGNUM			120) ; R30 I/O register.
+   (R31_REGNUM			124) ; R31 I/O register.
    (LOOPCNTR_REGNUM		128) ; internal LOOP counter register
    (LAST_GP_REGNUM		132) ; Last general purpose register.
 
@@ -49,7 +51,18 @@
   ]
 )
 
+;; Enumerate address spaces.
+(define_constants
+  [
+   (ADDR_SPACE_REGIO		1) ; Access to R30 and R31 I/O registers.
+  ]
+)
+
 ;; Enumeration of UNSPECs.
+
+(define_c_enum "unspec" [
+  UNSPEC_LMBD
+])
 
 (define_c_enum "unspecv" [
   UNSPECV_DELAY_CYCLES_START
@@ -61,7 +74,12 @@
   UNSPECV_LOOP_BEGIN
   UNSPECV_LOOP_END
 
+  UNSPECV_HALT
+
   UNSPECV_BLOCKAGE
+
+  UNSPECV_REGIO_READ
+  UNSPECV_REGIO_WRITE
 ])
 
 ; Length of an instruction (in bytes).
@@ -123,11 +141,62 @@
 	(match_operand:MOV8_16_32 1 "general_operand"))]
   ""
 {
-  /* It helps to split constant loading and memory access
-     early, so that the LDI/LDI32 instructions can be hoisted
-     outside a loop body.  */
-  if (MEM_P (operands[0]))
-    operands[1] = force_reg (<MODE>mode, operands[1]);
+  if (MEM_P (operands[0])
+      && MEM_ADDR_SPACE (operands[0]) == ADDR_SPACE_REGIO)
+
+    {
+      /* Intercept writes to the SImode register I/O "address space".  */
+      gcc_assert (<MODE>mode == SImode);
+
+      if (!SYMBOL_REF_P (XEXP (operands[0], 0)))
+	{
+	  error ("invalid access to %<__regio_symbol%> address space");
+	  FAIL;
+	}
+
+      if (!REG_P (operands[1]))
+	operands[1] = force_reg (<MODE>mode, operands[1]);
+
+      int regiono = pru_symref2ioregno (XEXP (operands[0], 0));
+      gcc_assert (regiono >= 0);
+      rtx regio = gen_rtx_REG (<MODE>mode, regiono);
+      rtx unspecv = gen_rtx_UNSPEC_VOLATILE (<MODE>mode,
+					     gen_rtvec (1, operands[1]),
+					     UNSPECV_REGIO_WRITE);
+      emit_insn (gen_rtx_SET (regio, unspecv));
+      DONE;
+    }
+  else if (MEM_P (operands[1])
+	   && MEM_ADDR_SPACE (operands[1]) == ADDR_SPACE_REGIO)
+    {
+      /* Intercept reads from the SImode register I/O "address space".  */
+      gcc_assert (<MODE>mode == SImode);
+
+      if (!SYMBOL_REF_P (XEXP (operands[1], 0)))
+	{
+	  error ("invalid access to %<__regio_symbol%> address space");
+	  FAIL;
+	}
+
+      if (MEM_P (operands[0]))
+	operands[0] = force_reg (<MODE>mode, operands[0]);
+
+      int regiono = pru_symref2ioregno (XEXP (operands[1], 0));
+      gcc_assert (regiono >= 0);
+      rtx regio = gen_rtx_REG (<MODE>mode, regiono);
+      rtx unspecv = gen_rtx_UNSPEC_VOLATILE (<MODE>mode,
+					     gen_rtvec (1, regio),
+					     UNSPECV_REGIO_READ);
+      emit_insn (gen_rtx_SET (operands[0], unspecv));
+      DONE;
+    }
+  else if (MEM_P (operands[0]))
+    {
+    /* It helps to split constant loading and memory access
+       early, so that the LDI/LDI32 instructions can be hoisted
+       outside a loop body.  */
+      operands[1] = force_reg (<MODE>mode, operands[1]);
+    }
 })
 
 ;; Keep a single pattern for 32 bit MOV operations.  LRA requires that the
@@ -363,7 +432,7 @@
 ;; We define it solely to allow combine to choose SImode
 ;; for word mode when trying to match our cbranch_qbbx_* insn.
 ;;
-;; Check how combine.c:make_extraction() uses
+;; Check how combine.cc:make_extraction() uses
 ;; get_best_reg_extraction_insn() to select the op size.
 (define_insn "extzv<mode>"
   [(set (match_operand:QISI 0 "register_operand"	"=r")
@@ -539,6 +608,35 @@
 ;; the real insns are defined.
 
 (include "alu-zext.md")
+
+;; Patterns for accessing the R30/R31 I/O registers.
+
+(define_insn "*regio_readsi"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+    (unspec_volatile:SI
+      [(match_operand:SI 1 "regio_operand" "Rrio")]
+      UNSPECV_REGIO_READ))]
+  ""
+  "mov\\t%0, %1"
+  [(set_attr "type"     "alu")])
+
+(define_insn "*regio_nozext_writesi"
+  [(set (match_operand:SI 0 "regio_operand" "=Rrio")
+    (unspec_volatile:SI
+      [(match_operand:SI 1 "register_operand" "r")]
+      UNSPECV_REGIO_WRITE))]
+  ""
+  "mov\\t%0, %1"
+  [(set_attr "type"     "alu")])
+
+(define_insn "*regio_zext_write_r30<EQS0:mode>"
+  [(set (match_operand:SI 0 "regio_operand" "=Rrio")
+    (unspec_volatile:SI
+      [(zero_extend:SI (match_operand:EQS0 1 "register_operand" "r"))]
+      UNSPECV_REGIO_WRITE))]
+  ""
+  "mov\\t%0, %1"
+  [(set_attr "type"     "alu")])
 
 ;; DI logical ops could be automatically split into WORD-mode ops in
 ;; expand_binop().  But then we'll miss an opportunity to use SI mode
@@ -887,7 +985,7 @@
 ;; This insn is volatile because we'd like it to stay in its original
 ;; position, just before the loop header.  If it stays there, we might
 ;; be able to convert it into a "loop" insn.
-(define_insn "doloop_begin_internal<mode>"
+(define_insn "@doloop_begin_internal<mode>"
   [(set (match_operand:HISI 0 "register_operand" "=r")
 	(unspec_volatile:HISI
 	 [(match_operand:HISI 1 "reg_or_ubyte_operand" "rI")
@@ -909,7 +1007,7 @@
 ; Note: "JUMP_INSNs and CALL_INSNs are not allowed to have any output
 ; reloads;".  Hence this insn must be prepared for a counter that is
 ; not a register.
-(define_insn "doloop_end_internal<mode>"
+(define_insn "@doloop_end_internal<mode>"
   [(set (pc)
 	(if_then_else (ne (match_operand:HISI 0 "nonimmediate_operand" "+r,*m")
 			  (const_int 1))
@@ -951,7 +1049,7 @@
   DONE;
 })
 
-(define_insn "pruloop<mode>"
+(define_insn "@pruloop<mode>"
   [(set (reg:HISI LOOPCNTR_REGNUM)
 	(unspec:HISI [(match_operand:HISI 0 "reg_or_ubyte_operand" "rI")
 		    (label_ref (match_operand 1))]
@@ -1020,3 +1118,46 @@
   ""
   "nop\\t# Loop end guard"
   [(set_attr "type" "alu")])
+
+;; HALT instruction.
+(define_insn "pru_halt"
+  [(unspec_volatile [(const_int 0)] UNSPECV_HALT)]
+  ""
+  "halt"
+  [(set_attr "type" "control")])
+
+;; Count Leading Zeros implemented using LMBD.
+;;
+;; LMBD returns 32 if bit value is not present, for any kind of input MODE.
+;; The LMBD's search result for a "1" bit is subtracted from the
+;; mode bit size minus one, in order to get CLZ.
+;;
+;; Hence for SImode we get a defined value -1 for CLZ_DEFINED_VALUE_AT_ZERO.
+;;
+;; The QImode and HImode defined values for zero inputs end up to be
+;; non-standard (-25 and -17).  But this is considered acceptable in
+;; order to keep the CLZ expansion to only two instructions.
+(define_expand "clz<mode>2"
+  [(set (match_operand:QISI 0 "register_operand")
+	(clz:QISI (match_operand:QISI 1 "register_operand")))]
+  ""
+{
+  rtx dst = operands[0];
+  rtx src = operands[1];
+  rtx tmpval = gen_reg_rtx (<MODE>mode);
+
+  emit_insn (gen_pru_lmbd (<MODE>mode, tmpval, src, const1_rtx));
+  int msb_bitn = GET_MODE_BITSIZE (<MODE>mode) - 1;
+  emit_insn (gen_sub3_insn (dst, GEN_INT (msb_bitn), tmpval));
+  DONE;
+})
+
+;; Left Most Bit Detect operation, which maps to a single instruction.
+(define_expand "@pru_lmbd<mode>"
+  [(set (match_operand:QISI 0 "register_operand")
+	(unspec:QISI
+	  [(match_operand:QISI 1 "register_operand")
+	   (match_operand:QISI 2 "reg_or_ubyte_operand")]
+	  UNSPEC_LMBD))]
+  ""
+  "")

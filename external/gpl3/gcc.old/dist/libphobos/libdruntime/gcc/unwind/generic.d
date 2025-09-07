@@ -1,5 +1,5 @@
 // Exception handling and frame unwind runtime interface routines.
-// Copyright (C) 2011-2020 Free Software Foundation, Inc.
+// Copyright (C) 2011-2022 Free Software Foundation, Inc.
 
 // GCC is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -289,6 +289,6 @@ version (GNU_SEH_Exceptions)
         ExceptionCollidedUnwind
     }
 
-    extern(C) EXCEPTION_DISPOSITION _GCC_specific_handler(void*, void*, void*,
+    extern(C) EXCEPTION_DISPOSITION _GCC_specific_handler(void*, void*, void*, void*,
                                                           _Unwind_Personality_Fn);
 }

@@ -1,5 +1,5 @@
 /* d-incpath.cc -- Set up combined import paths for the D frontend.
-   Copyright (C) 2006-2020 Free Software Foundation, Inc.
+   Copyright (C) 2006-2022 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,21 +20,20 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 
 #include "dmd/globals.h"
+#include "d-frontend.h"
 
 #include "cppdefault.h"
 
 /* Look for directories that start with the standard prefix.
    "Translate" them, i.e: replace /usr/local/lib/gcc with
-   IPREFIX and search them first.  Based on incpath.c.  */
+   IPREFIX and search them first.  Based on incpath.cc.  */
 
 static char *
 prefixed_path (const char *path, const char *iprefix)
 {
-  size_t len;
-
-  if (cpp_relocated () && (len = cpp_PREFIX_len) != 0)
+  if (cpp_relocated () && cpp_PREFIX_len != 0)
   {
-    if (!strncmp (path, cpp_PREFIX, len))
+    if (!filename_ncmp (path, cpp_PREFIX, cpp_PREFIX_len))
       {
 	static const char *relocated_prefix;
 	/* If this path starts with the configure-time prefix,
@@ -52,14 +51,14 @@ prefixed_path (const char *path, const char *iprefix)
 	    free (dummy);
 	  }
 
-	return concat (relocated_prefix, path + len, NULL);
+	return concat (relocated_prefix, path + cpp_PREFIX_len, NULL);
       }
   }
 
-  if (iprefix && (len = cpp_GCC_INCLUDE_DIR_len) != 0)
+  if (iprefix && cpp_GCC_INCLUDE_DIR_len != 0)
     {
-      if (!strncmp (path, cpp_GCC_INCLUDE_DIR, len))
-	return concat (iprefix, path + len, NULL);
+      if (!filename_ncmp (path, cpp_GCC_INCLUDE_DIR, cpp_GCC_INCLUDE_DIR_len))
+	return concat (iprefix, path + cpp_GCC_INCLUDE_DIR_len, NULL);
     }
 
   return xstrdup (path);
@@ -73,9 +72,9 @@ add_globalpaths (Strings *paths)
   if (paths)
     {
       if (!global.path)
-	global.path = new Strings ();
+	global.path = d_gc_malloc<Strings> ();
 
-      for (size_t i = 0; i < paths->dim; i++)
+      for (size_t i = 0; i < paths->length; i++)
 	{
 	  const char *path = (*paths)[i];
 	  const char *target = lrealpath (path);
@@ -100,9 +99,9 @@ add_filepaths (Strings *paths)
   if (paths)
     {
       if (!global.filePath)
-	global.filePath = new Strings ();
+	global.filePath = d_gc_malloc<Strings> ();
 
-      for (size_t i = 0; i < paths->dim; i++)
+      for (size_t i = 0; i < paths->length; i++)
 	{
 	  const char *path = (*paths)[i];
 	  const char *target = lrealpath (path);
@@ -144,7 +143,7 @@ add_import_paths (const char *iprefix, const char *imultilib, bool stdinc)
 
 	  /* Ignore duplicate entries.  */
 	  bool found = false;
-	  for (size_t i = 0; i < global.params.imppath->dim; i++)
+	  for (size_t i = 0; i < global.params.imppath->length; i++)
 	    {
 	      if (strcmp (path, (*global.params.imppath)[i]) == 0)
 		{
@@ -173,7 +172,7 @@ add_import_paths (const char *iprefix, const char *imultilib, bool stdinc)
   /* Add import search paths.  */
   if (global.params.imppath)
     {
-      for (size_t i = 0; i < global.params.imppath->dim; i++)
+      for (size_t i = 0; i < global.params.imppath->length; i++)
 	{
 	  const char *path = (*global.params.imppath)[i];
 	  if (path)
@@ -184,7 +183,7 @@ add_import_paths (const char *iprefix, const char *imultilib, bool stdinc)
   /* Add string import search paths.  */
   if (global.params.fileImppath)
     {
-      for (size_t i = 0; i < global.params.fileImppath->dim; i++)
+      for (size_t i = 0; i < global.params.fileImppath->length; i++)
 	{
 	  const char *path = (*global.params.fileImppath)[i];
 	  if (path)

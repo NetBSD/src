@@ -1,46 +1,45 @@
 
 /* Compiler implementation of the D programming language
- * Copyright (C) 1999-2019 by The D Language Foundation, All Rights Reserved
+ * Copyright (C) 1999-2022 by The D Language Foundation, All Rights Reserved
  * written by Walter Bright
- * http://www.digitalmars.com
+ * https://www.digitalmars.com
  * Distributed under the Boost Software License, Version 1.0.
- * http://www.boost.org/LICENSE_1_0.txt
+ * https://www.boost.org/LICENSE_1_0.txt
  * https://github.com/dlang/dmd/blob/master/src/dmd/cond.h
  */
 
 #pragma once
 
+#include "ast_node.h"
 #include "globals.h"
 #include "visitor.h"
 
 class Expression;
 class Identifier;
-struct OutBuffer;
 class Module;
 struct Scope;
-class ScopeDsymbol;
 class DebugCondition;
 class ForeachStatement;
 class ForeachRangeStatement;
 
-int findCondition(Strings *ids, Identifier *ident);
+enum Include
+{
+    INCLUDEnotComputed, /// not computed yet
+    INCLUDEyes,         /// include the conditional code
+    INCLUDEno           /// do not include the conditional code
+};
 
-class Condition
+class Condition : public ASTNode
 {
 public:
     Loc loc;
-    // 0: not computed yet
-    // 1: include
-    // 2: do not include
-    int inc;
-
-    Condition(Loc loc);
+    Include inc;
 
     virtual Condition *syntaxCopy() = 0;
-    virtual int include(Scope *sc, ScopeDsymbol *sds) = 0;
+    virtual int include(Scope *sc) = 0;
     virtual DebugCondition *isDebugCondition() { return NULL; }
     virtual VersionCondition *isVersionCondition() { return NULL; }
-    virtual void accept(Visitor *v) { v->visit(this); }
+    void accept(Visitor *v) { v->visit(this); }
 };
 
 class StaticForeach
@@ -53,12 +52,8 @@ public:
 
     bool needExpansion;
 
-    StaticForeach(Loc loc, ForeachStatement *aggrfe, ForeachRangeStatement *rangefe);
     StaticForeach *syntaxCopy();
 };
-
-void staticForeachPrepare(StaticForeach *sfe, Scope *sc);
-bool staticForeachReady(StaticForeach *sfe);
 
 class DVCondition : public Condition
 {
@@ -67,21 +62,16 @@ public:
     Identifier *ident;
     Module *mod;
 
-    DVCondition(Module *mod, unsigned level, Identifier *ident);
-
-    Condition *syntaxCopy();
+    DVCondition *syntaxCopy();
     void accept(Visitor *v) { v->visit(this); }
 };
 
 class DebugCondition : public DVCondition
 {
 public:
-    static void setGlobalLevel(unsigned level);
     static void addGlobalIdent(const char *ident);
 
-    DebugCondition(Module *mod, unsigned level, Identifier *ident);
-
-    int include(Scope *sc, ScopeDsymbol *sds);
+    int include(Scope *sc);
     DebugCondition *isDebugCondition() { return this; }
     void accept(Visitor *v) { v->visit(this); }
 };
@@ -89,13 +79,10 @@ public:
 class VersionCondition : public DVCondition
 {
 public:
-    static void setGlobalLevel(unsigned level);
     static void addGlobalIdent(const char *ident);
     static void addPredefinedGlobalIdent(const char *ident);
 
-    VersionCondition(Module *mod, unsigned level, Identifier *ident);
-
-    int include(Scope *sc, ScopeDsymbol *sds);
+    int include(Scope *sc);
     VersionCondition *isVersionCondition() { return this; }
     void accept(Visitor *v) { v->visit(this); }
 };
@@ -105,8 +92,7 @@ class StaticIfCondition : public Condition
 public:
     Expression *exp;
 
-    StaticIfCondition(Loc loc, Expression *exp);
-    Condition *syntaxCopy();
-    int include(Scope *sc, ScopeDsymbol *sds);
+    StaticIfCondition *syntaxCopy();
+    int include(Scope *sc);
     void accept(Visitor *v) { v->visit(this); }
 };

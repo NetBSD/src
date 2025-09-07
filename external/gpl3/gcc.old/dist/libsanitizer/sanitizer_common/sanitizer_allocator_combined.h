@@ -1,7 +1,8 @@
 //===-- sanitizer_allocator_combined.h --------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,20 +19,26 @@
 //  When allocating 2^x bytes it should return 2^x aligned chunk.
 // PrimaryAllocator is used via a local AllocatorCache.
 // SecondaryAllocator can allocate anything, but is not efficient.
-template <class PrimaryAllocator, class AllocatorCache,
-          class SecondaryAllocator>  // NOLINT
+template <class PrimaryAllocator,
+          class LargeMmapAllocatorPtrArray = DefaultLargeMmapAllocatorPtrArray>
 class CombinedAllocator {
  public:
+  using AllocatorCache = typename PrimaryAllocator::AllocatorCache;
+  using SecondaryAllocator =
+      LargeMmapAllocator<typename PrimaryAllocator::MapUnmapCallback,
+                         LargeMmapAllocatorPtrArray,
+                         typename PrimaryAllocator::AddressSpaceView>;
+
   void InitLinkerInitialized(s32 release_to_os_interval_ms) {
+    stats_.InitLinkerInitialized();
     primary_.Init(release_to_os_interval_ms);
     secondary_.InitLinkerInitialized();
-    stats_.InitLinkerInitialized();
   }
 
-  void Init(s32 release_to_os_interval_ms) {
-    primary_.Init(release_to_os_interval_ms);
-    secondary_.Init();
+  void Init(s32 release_to_os_interval_ms, uptr heap_start = 0) {
     stats_.Init();
+    primary_.Init(release_to_os_interval_ms, heap_start);
+    secondary_.Init();
   }
 
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment) {
@@ -105,15 +112,13 @@ class CombinedAllocator {
     return new_p;
   }
 
-  bool PointerIsMine(void *p) {
+  bool PointerIsMine(const void *p) const {
     if (primary_.PointerIsMine(p))
       return true;
     return secondary_.PointerIsMine(p);
   }
 
-  bool FromPrimary(void *p) {
-    return primary_.PointerIsMine(p);
-  }
+  bool FromPrimary(const void *p) const { return primary_.PointerIsMine(p); }
 
   void *GetMetaData(const void *p) {
     if (primary_.PointerIsMine(p))
@@ -170,12 +175,12 @@ class CombinedAllocator {
 
   // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
   // introspection API.
-  void ForceLock() {
+  void ForceLock() NO_THREAD_SAFETY_ANALYSIS {
     primary_.ForceLock();
     secondary_.ForceLock();
   }
 
-  void ForceUnlock() {
+  void ForceUnlock() NO_THREAD_SAFETY_ANALYSIS {
     secondary_.ForceUnlock();
     primary_.ForceUnlock();
   }
