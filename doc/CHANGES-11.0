@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.15 2025/09/07 14:30:34 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.16 2025/09/08 12:35:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -168,4 +168,9 @@ share/examples/devpubd/hooks/99-ugen-perms-minipro 1.2
 	- T48 / T56 use the same USB VID/PID as the TL866II+.
 	- Add the T76 USB VID/PID.
 	[thorpej, ticket #27]
+
+tests/kernel/t_umount.sh			1.9
+
+	Update the kernel/t_umount test program to match new sh diagnostic.
+	[christos, ticket #28]
 
