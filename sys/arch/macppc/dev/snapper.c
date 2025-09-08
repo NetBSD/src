@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.69 2025/09/08 07:28:03 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.70 2025/09/08 08:06:19 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.69 2025/09/08 07:28:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.70 2025/09/08 08:06:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1627,25 +1627,6 @@ if (sc->sc_mode > 1) return;
 
 	tas3004_write(sc, DEQ_MIXER_R, regs);
 }
-
-#define CLKSRC_49MHz	0x80000000	/* Use 49152000Hz Osc. */
-#define CLKSRC_45MHz	0x40000000	/* Use 45158400Hz Osc. */
-#define CLKSRC_18MHz	0x00000000	/* Use 18432000Hz Osc. */
-#define MCLK_DIV	0x1f000000	/* MCLK = SRC / DIV */
-#define  MCLK_DIV1	0x14000000	/*  MCLK = SRC */
-#define  MCLK_DIV3	0x13000000	/*  MCLK = SRC / 3 */
-#define  MCLK_DIV5	0x12000000	/*  MCLK = SRC / 5 */
-#define SCLK_DIV	0x00f00000	/* SCLK = MCLK / DIV */
-#define  SCLK_DIV1	0x00800000
-#define  SCLK_DIV3	0x00900000
-#define SCLK_MASTER	0x00080000	/* Master mode */
-#define SCLK_SLAVE	0x00000000	/* Slave mode */
-#define SERIAL_FORMAT	0x00070000
-#define  SERIAL_SONY	0x00000000
-#define  SERIAL_64x	0x00010000
-#define  SERIAL_32x	0x00020000
-#define  SERIAL_DAV	0x00040000
-#define  SERIAL_SILICON	0x00050000
 
 /*
  * rate = fs = LRCLK
