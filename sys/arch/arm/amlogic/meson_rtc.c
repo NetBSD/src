@@ -1,4 +1,4 @@
-/* $NetBSD: meson_rtc.c,v 1.4 2025/09/07 21:45:11 thorpej Exp $ */
+/* $NetBSD: meson_rtc.c,v 1.5 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_rtc.c,v 1.4 2025/09/07 21:45:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_rtc.c,v 1.5 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -149,7 +149,7 @@ meson_rtc_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(" battery not present or discharged\n");
 	} else {
 		aprint_normal("\n");
-		fdtbus_todr_attach(self, phandle, &sc->sc_todr);
+		todr_attach(&sc->sc_todr);
 	}
 }
 

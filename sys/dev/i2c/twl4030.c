@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.7 2025/09/07 21:45:16 thorpej Exp $ */
+/* $NetBSD: twl4030.c,v 1.8 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.7 2025/09/07 21:45:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.8 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,11 +342,7 @@ twl_rtc_attach(struct twl_softc *sc, const int phandle)
 	sc->sc_todr.todr_gettime_ymdhms = twl_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = twl_rtc_settime;
 	sc->sc_todr.todr_dev = sc->sc_dev;
-#ifdef FDT
-	fdtbus_todr_attach(sc->sc_dev, phandle, &sc->sc_todr);
-#else
 	todr_attach(&sc->sc_todr);
-#endif
 }
 
 static void

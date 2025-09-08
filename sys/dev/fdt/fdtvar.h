@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.85 2025/09/06 22:53:49 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.86 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -91,10 +91,9 @@ int		fdtbus_get_phandle_with_data(int, const char *, const char *,
 		    int, struct fdt_phandle_data *);
 int		fdtbus_get_phandle_from_native(int);
 
-int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
-
 bool		fdtbus_init(const void *);
 const void *	fdtbus_get_data(void);
+
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
 bool		fdtbus_get_path(int, char *, size_t);

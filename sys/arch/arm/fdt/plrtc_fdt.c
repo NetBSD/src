@@ -1,4 +1,4 @@
-/* $NetBSD: plrtc_fdt.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: plrtc_fdt.c,v 1.3 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plrtc_fdt.c,v 1.2 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plrtc_fdt.c,v 1.3 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,6 +80,4 @@ plrtc_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	plrtc_attach(sc);
-
-	fdtbus_todr_attach(self, phandle, &sc->sc_todr);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rtc.c,v 1.11 2025/09/07 21:45:12 thorpej Exp $ */
+/* $NetBSD: sunxi_rtc.c,v 1.12 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.11 2025/09/07 21:45:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.12 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -397,7 +397,7 @@ sunxi_rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_gettime_ymdhms = sunxi_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = sunxi_rtc_settime;
 
-	fdtbus_todr_attach(self, phandle, &sc->sc_todr);
+	todr_attach(&sc->sc_todr);
 
 	sc->sc_parent_clk = fdtbus_clock_get_index(phandle, 0);
 

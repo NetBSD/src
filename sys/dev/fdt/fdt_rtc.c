@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_rtc.c,v 1.2 2025/09/08 00:12:21 thorpej Exp $ */
+/* $NetBSD: fdt_rtc.c,v 1.3 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_rtc.c,v 1.2 2025/09/08 00:12:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_rtc.c,v 1.3 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,27 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_rtc.c,v 1.2 2025/09/08 00:12:21 thorpej Exp $");
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
 #include <dev/ofw/openfirm.h>
-
-int
-fdtbus_todr_attach(device_t dev, int phandle, todr_chip_handle_t tch)
-{
-	const char *prop;
-
-	/*
-	 * The kernel will only use the first device to register with
-	 * todr_attach. If we have an "rtc0" alias, ensure that it matches
-	 * this phandle and ignore all other RTC devices.
-	 */
-	prop = fdt_get_alias(fdtbus_get_data(), "rtc0");
-	if (prop != NULL && OF_finddevice(prop) != phandle) {
-		device_printf(dev, "disabled\n");
-		return EINVAL;
-	}
-
-	todr_attach(tch);
-
-	return 0;
-}
 
 static int
 fdtbus_device_is_system_todr(device_t dev, devhandle_t call_handle, void *v)

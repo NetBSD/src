@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.9 2025/09/07 21:45:15 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.10 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.9 2025/09/07 21:45:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.10 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,6 @@ static void
 ac100rtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ac100rtc_softc *sc = device_private(self);
-	struct fdt_attach_args * const faa = aux;
 
 	sc->sc_dev = self;
 	aprint_naive("\n");
@@ -191,7 +190,7 @@ ac100rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = ac100_rtc_settime;
 	sc->sc_todr.todr_dev = self;
 
-	fdtbus_todr_attach(self, faa->faa_phandle, &sc->sc_todr);
+	todr_attach(&sc->sc_todr);
 }
 #endif /* FDT */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pl031.c,v 1.2 2025/09/07 21:45:16 thorpej Exp $ */
+/* $NetBSD: pl031.c,v 1.3 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl031.c,v 1.2 2025/09/07 21:45:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl031.c,v 1.3 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ plrtc_attach(struct plrtc_softc *sc)
 	sc->sc_todr.todr_gettime = plrtc_gettime;
 	sc->sc_todr.todr_settime = plrtc_settime;
 	sc->sc_todr.todr_dev = sc->sc_dev;
+	todr_attach(&sc->sc_todr);
 
 	RTC_WRITE(sc, RTCCR, RTCCR_START);
 }

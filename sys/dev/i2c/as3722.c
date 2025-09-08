@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.25 2025/09/07 21:45:15 thorpej Exp $ */
+/* $NetBSD: as3722.c,v 1.26 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.25 2025/09/07 21:45:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.26 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,11 +328,7 @@ as3722_rtc_attach(struct as3722_softc *sc)
 	sc->sc_todr.todr_gettime_ymdhms = as3722_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = as3722_rtc_settime;
 	sc->sc_todr.todr_dev = sc->sc_dev;
-#ifdef FDT
-	fdtbus_todr_attach(sc->sc_dev, sc->sc_phandle, &sc->sc_todr);
-#else
 	todr_attach(&sc->sc_todr);
-#endif
 }
 
 static int

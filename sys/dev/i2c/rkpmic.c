@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.15 2025/09/07 21:45:15 thorpej Exp $ */
+/* $NetBSD: rkpmic.c,v 1.16 2025/09/08 13:06:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.15 2025/09/07 21:45:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.16 2025/09/08 13:06:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,7 +494,7 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 	I2C_WRITE(sc, RTC_COMP_MSB_REG, 0);
 	I2C_UNLOCK(sc);
 
-	fdtbus_todr_attach(self, sc->sc_phandle, &sc->sc_todr);
+	todr_attach(&sc->sc_todr);
 
 	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &rkpmic_clk_funcs;
