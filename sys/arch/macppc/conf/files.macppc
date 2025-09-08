@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.126 2025/08/22 14:01:56 macallan Exp $
+#	$NetBSD: files.macppc,v 1.127 2025/09/08 08:08:15 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -347,3 +347,8 @@ defflag opt_obiofan.h OBIOFAN_DEBUG
 device	drivebay: leds
 attach	drivebay at iic
 file	arch/macppc/dev/drivebay.c			drivebay
+
+# LED bar found on Xserve
+device 	lightbar
+attach 	lightbar at obio
+file 	arch/macppc/dev/lightbar.c			lightbar
