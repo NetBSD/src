@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.68 2025/08/20 07:00:31 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.69 2025/09/08 07:28:03 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.68 2025/08/20 07:00:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.69 2025/09/08 07:28:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.68 2025/08/20 07:00:31 macallan Exp $"
 
 #include <macppc/dev/deqvar.h>
 #include <macppc/dev/obiovar.h>
+#include <macppc/dev/i2sreg.h>
 
 #include "opt_snapper.h"
 
@@ -529,35 +530,6 @@ static bus_size_t lineout_mute= 0;
 static bus_size_t owaddr = -1;
 static uint8_t headphone_detect_active = 0;
 static uint8_t lineout_detect_active = 0;
-
-
-/* I2S registers */
-#define I2S_INT		0x00
-#define I2S_FORMAT	0x10
-#define I2S_FRAMECOUNT	0x40
-#define I2S_FRAMEMATCH	0x50
-#define I2S_WORDSIZE	0x60
-
-/* I2S_INT register definitions */
-#define I2S_INT_CLKSTOPPEND 0x01000000  /* clock-stop interrupt pending */
-
-/* I2S_WORDSIZE register definitions */
-#define INPUT_STEREO            (2 << 24)
-#define INPUT_MONO              (1 << 24)
-#define INPUT_16BIT             (0 << 16)
-#define INPUT_24BIT             (3 << 16)
-#define OUTPUT_STEREO           (2 << 8)
-#define OUTPUT_MONO             (1 << 8)
-#define OUTPUT_16BIT            (0 << 0)
-#define OUTPUT_24BIT            (3 << 0)
-
-/* FCR(0x3c) bits */
-#define KEYLARGO_FCR1   0x3c
-#define  I2S0CLKEN      0x1000
-#define  I2S0EN         0x2000
-#define  I2S1CLKEN      0x080000
-#define  I2S1EN         0x100000
-#define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
 
 /* TAS3004/TAS3001 registers */
 #define DEQ_MCR1	0x01	/* Main control register 1 (1byte) */
