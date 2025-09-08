@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.74 2025/09/02 16:59:11 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.75 2025/09/08 19:44:40 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.74 2025/09/02 16:59:11 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.75 2025/09/08 19:44:40 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,8 +177,8 @@ main(int argc, char **argv)
 			m.getpath = 1;
 			break;
 		/*
-		 * The -f and -k options are backward compatible,
-		 * undocumented ways of calling whatis(1) and apropos(1).
+		 * The -f and -k options are backward compatible
+		 * ways of calling whatis(1) and apropos(1).
 		 */
 		case 'f':
 			jump(argv, "-f", "whatis");
