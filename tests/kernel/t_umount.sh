@@ -1,4 +1,4 @@
-# $NetBSD: t_umount.sh,v 1.8 2025/04/19 02:07:43 rin Exp $
+# $NetBSD: t_umount.sh,v 1.8.2.1 2025/09/08 12:34:40 martin Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,6 +45,7 @@ umount_body()
 		atf_skip "port-vax/59287 vnd(4) can cause kernel crash"
 	fi
 
+	mydir=$(pwd)
 	cat >disktab <<EOF
 floppy288|2.88MB 3.5in Extra High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
@@ -53,6 +54,12 @@ floppy288|2.88MB 3.5in Extra High Density Floppy:\
 	:pc#5760:oc#0:
 EOF
 
+	cat << EOF > dot
+cd: Can't cd to ".": No such file or directory
+EOF
+	cat << EOF > dotdot
+cd: Can't cd to "..": No such file or directory
+EOF
 	echo "*** Creating a dummy directory tree at" \
 	     "${TMPMP} mounted on ${TMPIM}"
 
@@ -69,17 +76,14 @@ EOF
 	test -e "${TMPMP}/in_mounted_directory" || \
 	    atf_fail "Test file not present in mounted directory!"
 
-	mydir="`pwd`"
 	cd "${TMPMP}"
 	atf_check -o ignore -e ignore umount -f "${BVND}${MPART}"
 
 	atf_check -s ne:0 -e inline:"ls: .: No such file or directory\n" ls .
 	atf_check -s ne:0 -e inline:"ls: ..: No such file or directory\n" ls ..
 
-	atf_check -s ne:0 -e ignore -o inline:"cd: can't cd to .\n" \
-	    -x "cd . 2>&1"
-	atf_check -s ne:0 -e ignore -o inline:"cd: can't cd to ..\n" \
-	    -x "cd .. 2>&1"
+	atf_check -s ne:0 -e ignore -o file:"${mydir}/dot" -x "cd . 2>&1"
+	atf_check -s ne:0 -e ignore -o file:"${mydir}/dotdot" -x "cd .. 2>&1"
 
 	cd "${mydir}"
 
