@@ -1,4 +1,4 @@
-$NetBSD: device_calls,v 1.1 2021/09/15 17:26:06 thorpej Exp $
+$NetBSD: device_calls,v 1.2 2025/09/08 00:12:21 thorpej Exp $
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -47,4 +47,17 @@ subsystem device;
 device-enumerate-children {
 	bool	(*callback)(device_t, devhandle_t, void *);
 	void *	callback_arg;
+};
+
+/*
+ * device-is-system-todr
+ *
+ * This is a filter that is considered when attaching the system TODR / RTC.
+ * For systems which may have multiple TODR / RTC devices, the platform
+ * device tree may have information about which is authoritative.  This is
+ * an optional method, and in its absence, the system will proceed as if
+ * the answer was "yes".
+ */
+device-is-system-todr {
+	bool	result;		/* OUT */
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_rtc.c,v 1.1 2017/04/22 13:24:20 jmcneill Exp $ */
+/* $NetBSD: fdt_rtc.c,v 1.2 2025/09/08 00:12:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,14 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_rtc.c,v 1.1 2017/04/22 13:24:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_rtc.c,v 1.2 2025/09/08 00:12:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <sys/kmem.h>
+#include <sys/device_calls.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
+#include <dev/ofw/openfirm.h>
 
 int
 fdtbus_todr_attach(device_t dev, int phandle, todr_chip_handle_t tch)
@@ -56,3 +57,27 @@ fdtbus_todr_attach(device_t dev, int phandle, todr_chip_handle_t tch)
 
 	return 0;
 }
+
+static int
+fdtbus_device_is_system_todr(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct device_is_system_todr_args *args = v;
+	int phandle = devhandle_to_of(call_handle);
+	const char *prop;
+
+	/*
+	 * The kernel will only use the first device to register with
+	 * todr_attach. If we have an "rtc0" alias, ensure that it matches
+	 * this phandle and ignore all other RTC devices.
+	 */
+	prop = fdt_get_alias(fdtbus_get_data(), "rtc0");
+	if (prop == NULL) {
+		/* No "rtc0" alias.  System gets default policy. */
+		return ESRCH;
+	}
+	args->result = OF_finddevice(prop) == phandle;
+	return 0;
+}
+
+OF_DEVICE_CALL_REGISTER(DEVICE_IS_SYSTEM_TODR_STR,
+			fdtbus_device_is_system_todr)

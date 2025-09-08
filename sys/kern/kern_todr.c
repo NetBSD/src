@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.48 2025/09/07 14:31:58 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.49 2025/09/08 00:12:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,12 +70,13 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.48 2025/09/07 14:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.49 2025/09/08 00:12:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/device_calls.h>
 #include <sys/timetc.h>
 #include <sys/intr.h>
 #include <sys/rndsource.h>
@@ -140,6 +141,36 @@ todr_lock_owned(void)
 }
 
 /*
+ * todr_should_skip:
+ *	Evaluate if we should skip attaching the clock device
+ *	specifed by the todr handle.
+ */
+static bool
+todr_should_skip(todr_chip_handle_t todr)
+{
+	device_t dev = todr->todr_dev;
+	struct device_is_system_todr_args args = { };
+
+	/* No basis for evaluation if no device backs the TODR. */
+	if (dev == NULL) {
+		return false;
+	}
+
+	if (device_call(dev, DEVICE_IS_SYSTEM_TODR(&args)) != 0) {
+		/* Call is not supported; proceed as if we should attach. */
+		return false;
+	}
+
+	if (args.result) {
+		/* This is the system TODR; proceed. */
+		return false;
+	}
+
+	aprint_normal_dev(dev, "disabled (not system TODR)\n");
+	return true;
+}
+
+/*
  * todr_attach:
  *	Attach the clock device to todr_handle.
  */
@@ -153,6 +184,10 @@ todr_attach(todr_chip_handle_t todr)
 	 * main().
 	 */
 	KASSERT(todr_initialized);
+
+	if (todr_should_skip(todr)) {
+		return;
+	}
 
 	todr_lock();
 	if (todr_handle) {
