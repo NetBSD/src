@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.32 2025/09/07 21:45:15 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.33 2025/09/09 14:52:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2020 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _DEV_CLOCK_SUBR_H_
 
 #include <sys/clock.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
 #include <sys/stdbool.h>
 
 /*
