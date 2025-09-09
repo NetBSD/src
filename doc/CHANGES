@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3187 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3188 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -34,7 +34,15 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	macppc: Added support for fan control on Xserve G4. [macallan 20250820]
 	acpi(4): Updated ACPICA to 20250807. [christos 20250824]
 	binutils: Import 2.45 and switch amd64 to it  [christos 20250826]
+	gffb(4): Add backlight control to the GeForce framebuffer driver.
+		[macallan 20250830]
+	man(1): Add -l flag to parse argument as file name.
+		[christos 20250902]
 	gdb: Import 16.3 and switch everyone to it [christos 20250902]
 	openpam(3): update to 20250531 (zingiber) [christos 20250903]
 	openldap: Import 2.6.10. [christos 20250904]
 	unbound(8): Import 1.23.1. [christos 20250906]
+	kernel: Add new memory barrier for paravirtualized drivers
+		requiring store-before-load ordering. [riastradh 20250906]
+	macppc: Add driver for the LED bar found on Xserve G4,
+		controls lights depending on CPU usage. [macallan 20250908]
