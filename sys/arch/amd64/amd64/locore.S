@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.232 2025/09/07 21:31:20 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.233 2025/09/09 11:34:25 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1145,16 +1145,15 @@ ENTRY(start_pvh)
 	addl $3, %ebp
 	andl $~3, %ebp
 	movl 0(%ebp), %eax /* read size */
-	testl $~0x3fffffff, %eax /* more than 1MB ? */
+	testl $~0x00ffffff, %eax /* more than 16MB ? */
 	jnz .bad_esym
 	addl %ebp, %eax /* compute esym */
 	/* check if start_info is within symbol table */
-	movl -4(%esp), %ebx
-	cmp %ebx, %ebp;
-	jl .save_esym /* %ebx < __kernel_end */
-	cmp %ebx, %eax
-	jg .save_esym /* %ebx > esym */
-	jz .save_esym /* %ebx == esym */
+	movl 0(%esp), %ebx
+	cmp %ebp, %ebx
+	jb .save_esym /* %ebx < __kernel_end */
+	cmp %eax, %ebx
+	jae .save_esym /* %ebx >= esym */
 
 .bad_esym:
 	movl $RELOC(__kernel_end), %eax
