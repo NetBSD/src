@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.28 2025/09/10 03:23:27 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.29 2025/09/10 04:11:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.28 2025/09/10 03:23:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.29 2025/09/10 04:11:32 thorpej Exp $");
 
 #include "locators.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.28 2025/09/10 03:23:27 thorpej Exp $");
 
 #ifdef FDT
 #include <dev/fdt/fdt_spi.h>	/* XXX */
+#include <dev/ofw/openfirm.h>	/* XXX */
 #endif
 
 #include "ioconf.h"
@@ -216,11 +217,11 @@ spi_fill_compat(struct spi_attach_args *sa, const char *compat, size_t len,
 }
 
 static void
-spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
-    prop_array_t child_devices)
+spi_direct_attach_child_devices(struct spi_softc *sc)
 {
 	unsigned int count;
 	prop_dictionary_t child;
+	prop_array_t child_devices;
 	prop_data_t cdata;
 	uint32_t slave;
 	uint64_t cookie;
@@ -228,6 +229,22 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 	int loc[SPICF_NLOCS];
 	char *buf;
 	int i;
+
+	/* XXX A better way is coming, I promise... */
+	switch (devhandle_type(device_handle(sc->sc_dev))) {
+#ifdef FDT
+	case DEVHANDLE_TYPE_OF:
+		child_devices = of_copy_spi_devs(sc->sc_dev);
+		break;
+#endif
+	default:
+		child_devices = NULL;
+		break;
+	}
+
+	if (child_devices == NULL) {
+		return;
+	}
 
 	memset(loc, 0, sizeof loc);
 	count = prop_array_count(child_devices);
@@ -237,7 +254,7 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 			continue;
 		if (!prop_dictionary_get_uint32(child, "slave", &slave))
 			continue;
-		if(slave >= sc->sc_controller->sct_nslaves)
+		if (slave >= sc->sc_controller->sct_nslaves)
 			continue;
 		if (!prop_dictionary_get_uint64(child, "cookie", &cookie))
 			continue;
@@ -257,7 +274,7 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 		spi_fill_compat(&sa,
 				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
-		config_found(parent, &sa, spi_print,
+		config_found(sc->sc_dev, &sa, spi_print,
 		    CFARGS(.locators = loc));
 
 		if (sa.sa_compat)
@@ -265,6 +282,7 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 		if (buf)
 			free(buf, M_TEMP);
 	}
+	prop_object_release(child_devices);
 }
 
 int
@@ -326,14 +344,20 @@ spi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slaves[i].sh_controller = sc->sc_controller;
 	}
 
-#ifdef FDT			/* XXX */
-	fdtbus_register_spi_controller(self, sc->sc_controller);
+	/* XXX Need a better way for this. */
+	switch (devhandle_type(device_handle(sc->sc_dev))) {
+#ifdef FDT
+	case DEVHANDLE_TYPE_OF:
+		fdtbus_register_spi_controller(self, sc->sc_controller);
+		break;
 #endif /* FDT */
-
-	/* First attach devices known to be present via fdt */
-	if (sba->sba_child_devices) {
-		spi_direct_attach_child_devices(self, sc, sba->sba_child_devices);
+	default:
+		break;
 	}
+
+	/* First attach devices known to be present via the device tree. */
+	spi_direct_attach_child_devices(sc);
+
 	/* Then do any other devices the user may have manually wired */
 	config_search(self, NULL,
 	    CFARGS(.search = spi_search));

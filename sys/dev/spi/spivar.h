@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.18 2025/09/10 03:23:27 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.19 2025/09/10 04:11:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -85,7 +85,6 @@ int	spibus_print(void *, const char *);
 /* one per chip select */
 struct spibus_attach_args {
 	const struct spi_controller *sba_controller;
-	prop_array_t		sba_child_devices;
 };
 
 struct spi_attach_args {
