@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.26 2022/05/17 05:05:20 andvar Exp $ */
+/* $NetBSD: spi.c,v 1.27 2025/09/10 03:16:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -41,8 +41,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_fdt.h"		/* XXX */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.26 2022/05/17 05:05:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.27 2025/09/10 03:16:57 thorpej Exp $");
 
 #include "locators.h"
 
@@ -57,6 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.26 2022/05/17 05:05:20 andvar Exp $");
 
 #include <dev/spi/spivar.h>
 #include <dev/spi/spi_io.h>
+
+#ifdef FDT
+#include <dev/fdt/fdt_spi.h>	/* XXX */
+#endif
 
 #include "ioconf.h"
 #include "locators.h"
@@ -301,7 +307,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cv, "spictl");
 
 	sc->sc_dev = self;
-	sc->sc_controller = *sba->sba_controller;
+	sc->sc_controller = *sba->sba_controller;	/* XXX copied??? */
 	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	/* allocate slave structures */
 	sc->sc_slaves = malloc(sizeof (struct spi_handle) * sc->sc_nslaves,
@@ -319,6 +325,10 @@ spi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slaves[i].sh_sc = sc;
 		sc->sc_slaves[i].sh_controller = &sc->sc_controller;
 	}
+
+#ifdef FDT			/* XXX */
+	fdtbus_register_spi_controller(self, &sc->sc_controller);
+#endif /* FDT */
 
 	/* First attach devices known to be present via fdt */
 	if (sba->sba_child_devices) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.13 2025/09/10 02:42:28 thorpej Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.14 2025/09/10 03:16:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.13 2025/09/10 02:42:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.14 2025/09/10 03:16:57 thorpej Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -124,7 +124,6 @@ imxspi_attach_common(device_t self)
 	WRITE_REG(sc, PERIODREG, 0x0);
 
 #ifdef FDT
-	fdtbus_register_spi_controller(self, &sc->sc_spi);
 	(void) fdtbus_attach_spibus(self, spibus_print);
 #else
 	spibus_attach(self, &sc->sc_spi);
