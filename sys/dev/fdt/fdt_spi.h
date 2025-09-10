@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_spi.h,v 1.3 2025/09/10 02:42:28 thorpej Exp $	*/
+/*	$NetBSD: fdt_spi.h,v 1.4 2025/09/10 03:23:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include <dev/spi/spivar.h>
 
 int		fdtbus_register_spi_controller(device_t,
-		    struct spi_controller *);
+		    const struct spi_controller *);
 
 device_t	fdtbus_attach_spibus(device_t, cfprint_t);
 

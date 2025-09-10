@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.17 2025/09/10 02:06:26 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.18 2025/09/10 03:23:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -84,7 +84,7 @@ int	spibus_print(void *, const char *);
 
 /* one per chip select */
 struct spibus_attach_args {
-	struct spi_controller	*sba_controller;
+	const struct spi_controller *sba_controller;
 	prop_array_t		sba_child_devices;
 };
 
@@ -149,7 +149,7 @@ SIMPLEQ_HEAD(spi_transq, spi_transfer);
 #define	SPI_F_ERROR		0x0002
 
 static inline device_t
-spibus_attach(device_t dev, struct spi_controller *sct)
+spibus_attach(device_t dev, const struct spi_controller *sct)
 {
 	struct spibus_attach_args sba = {
 		.sba_controller = sct,

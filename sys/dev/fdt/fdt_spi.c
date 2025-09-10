@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.6 2025/09/10 03:16:57 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.7 2025/09/10 03:23:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.6 2025/09/10 03:16:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.7 2025/09/10 03:23:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.6 2025/09/10 03:16:57 thorpej Exp $");
 
 struct fdtbus_spi_controller {
 	device_t spi_dev;
-	struct spi_controller *spi_controller;
+	const struct spi_controller *spi_controller;
 	LIST_ENTRY(fdtbus_spi_controller) spi_next;
 };
 
@@ -52,7 +52,7 @@ static LIST_HEAD(, fdtbus_spi_controller) fdtbus_spi_controllers =
 
 int
 fdtbus_register_spi_controller(device_t dev,
-    struct spi_controller *controller)
+    const struct spi_controller *controller)
 {
 	struct fdtbus_spi_controller *spi;
 
@@ -65,7 +65,7 @@ fdtbus_register_spi_controller(device_t dev,
 	return 0;
 }
 
-static struct spi_controller *
+static const struct spi_controller *
 fdtbus_get_spi_controller(int phandle)
 {
 	struct fdtbus_spi_controller *spi;
@@ -82,7 +82,7 @@ fdtbus_get_spi_controller(int phandle)
 device_t
 fdtbus_attach_spibus(device_t dev, cfprint_t print)
 {
-	struct spi_controller *spi;
+	const struct spi_controller *spi;
 	int phandle = devhandle_to_of(device_handle(dev));
 	struct spibus_attach_args sba;
 	prop_dictionary_t devs;

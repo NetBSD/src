@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.27 2025/09/10 03:16:57 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.28 2025/09/10 03:23:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.27 2025/09/10 03:16:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.28 2025/09/10 03:23:27 thorpej Exp $");
 
 #include "locators.h"
 
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.27 2025/09/10 03:16:57 thorpej Exp $");
 
 struct spi_softc {
 	device_t		sc_dev;
-	struct spi_controller	sc_controller;
+	const struct spi_controller *sc_controller;
 	int			sc_mode;
 	int			sc_speed;
 	int			sc_slave;
@@ -106,7 +106,7 @@ const struct cdevsw spi_cdevsw = {
  */
 struct spi_handle {
 	struct spi_softc	*sh_sc;
-	struct spi_controller	*sh_controller;
+	const struct spi_controller *sh_controller;
 	int			sh_slave;
 	int			sh_mode;
 	int			sh_speed;
@@ -157,7 +157,7 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	int addr;
 
 	addr = cf->cf_loc[SPICF_SLAVE];
-	if ((addr < 0) || (addr >= sc->sc_controller.sct_nslaves)) {
+	if ((addr < 0) || (addr >= sc->sc_controller->sct_nslaves)) {
 		return -1;
 	}
 
@@ -237,7 +237,7 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 			continue;
 		if (!prop_dictionary_get_uint32(child, "slave", &slave))
 			continue;
-		if(slave >= sc->sc_controller.sct_nslaves)
+		if(slave >= sc->sc_controller->sct_nslaves)
 			continue;
 		if (!prop_dictionary_get_uint64(child, "cookie", &cookie))
 			continue;
@@ -307,7 +307,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cv, "spictl");
 
 	sc->sc_dev = self;
-	sc->sc_controller = *sba->sba_controller;	/* XXX copied??? */
+	sc->sc_controller = sba->sba_controller;
 	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	/* allocate slave structures */
 	sc->sc_slaves = malloc(sizeof (struct spi_handle) * sc->sc_nslaves,
@@ -323,11 +323,11 @@ spi_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sc->sc_nslaves; i++) {
 		sc->sc_slaves[i].sh_slave = i;
 		sc->sc_slaves[i].sh_sc = sc;
-		sc->sc_slaves[i].sh_controller = &sc->sc_controller;
+		sc->sc_slaves[i].sh_controller = sc->sc_controller;
 	}
 
 #ifdef FDT			/* XXX */
-	fdtbus_register_spi_controller(self, &sc->sc_controller);
+	fdtbus_register_spi_controller(self, sc->sc_controller);
 #endif /* FDT */
 
 	/* First attach devices known to be present via fdt */
@@ -529,7 +529,7 @@ int
 spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
 {
 	struct spi_softc	*sc = sh->sh_sc;
-	struct spi_controller	*tag = sh->sh_controller;
+	const struct spi_controller *tag = sh->sh_controller;
 	struct spi_chunk	*chunk;
 	int error;
 
