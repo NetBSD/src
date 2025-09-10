@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.14 2025/09/10 00:55:24 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.15 2025/09/10 01:55:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,6 +147,15 @@ SIMPLEQ_HEAD(spi_transq, spi_transfer);
 
 #define	SPI_F_DONE		0x0001
 #define	SPI_F_ERROR		0x0002
+
+static inline device_t
+spibus_attach(device_t dev, struct spi_controller *sct)
+{
+	struct spibus_attach_args sba = {
+		.sba_controller = sct,
+	};
+	return config_found(dev, &sba, spibus_print, CFARGS_NONE);
+}
 
 int	spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
 	    const struct device_compatible_entry *);
