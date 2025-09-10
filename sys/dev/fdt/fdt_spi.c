@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.8 2025/09/10 03:43:38 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.9 2025/09/10 04:05:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.8 2025/09/10 03:43:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.9 2025/09/10 04:05:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,17 +86,13 @@ fdtbus_attach_spibus(device_t dev, cfprint_t print)
 	int phandle = devhandle_to_of(device_handle(dev));
 	struct spibus_attach_args sba;
 	device_t ret;
-	u_int address_cells;
-
-	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
-		address_cells = 1;
 
 	spi = fdtbus_get_spi_controller(phandle);
 	KASSERT(spi != NULL);
 	memset(&sba, 0, sizeof(sba));
 	sba.sba_controller = spi;
 
-	sba.sba_child_devices = of_copy_spi_devs(phandle, address_cells * 4);;
+	sba.sba_child_devices = of_copy_spi_devs(dev);
 
 	ret = config_found(dev, &sba, print,
 	    CFARGS(.iattr = "spibus",

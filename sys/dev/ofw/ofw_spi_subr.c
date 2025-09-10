@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_spi_subr.c,v 1.2 2025/09/10 03:43:38 thorpej Exp $	*/
+/*	$NetBSD: ofw_spi_subr.c,v 1.3 2025/09/10 04:05:48 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_spi_subr.c,v 1.2 2025/09/10 03:43:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_spi_subr.c,v 1.3 2025/09/10 04:05:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,17 +43,24 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_spi_subr.c,v 1.2 2025/09/10 03:43:38 thorpej Exp
 #include <dev/ofw/openfirm.h>
 
 prop_array_t
-of_copy_spi_devs(int ofnode, size_t cell_size)
+of_copy_spi_devs(device_t ctlrdev)
 {
+	int ofnode = devhandle_to_of(device_handle(ctlrdev));
 	int node, len;
 	char name[32];
 	uint64_t reg64;
 	uint32_t reg32;
 	uint32_t slave;
 	u_int32_t maxfreq;
+	u_int address_cells;
+	size_t cell_size;
 	prop_array_t array = NULL;
 	prop_dictionary_t dev;
 	int mode;
+
+	if (of_getprop_uint32(ofnode, "#address-cells", &address_cells))
+		address_cells = 1;
+	cell_size = address_cells * 4;
 
 	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
