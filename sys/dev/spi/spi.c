@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.29 2025/09/10 04:11:32 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.30 2025/09/10 04:33:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.29 2025/09/10 04:11:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.30 2025/09/10 04:33:46 thorpej Exp $");
 
 #include "locators.h"
 
@@ -223,6 +223,8 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 	prop_dictionary_t child;
 	prop_array_t child_devices;
 	prop_data_t cdata;
+	devhandle_t parent_handle = device_handle(sc->sc_dev);
+	devhandle_t child_handle;
 	uint32_t slave;
 	uint64_t cookie;
 	struct spi_attach_args sa;
@@ -231,7 +233,7 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 	int i;
 
 	/* XXX A better way is coming, I promise... */
-	switch (devhandle_type(device_handle(sc->sc_dev))) {
+	switch (devhandle_type(parent_handle)) {
 #ifdef FDT
 	case DEVHANDLE_TYPE_OF:
 		child_devices = of_copy_spi_devs(sc->sc_dev);
@@ -264,8 +266,19 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 
 		memset(&sa, 0, sizeof sa);
 		sa.sa_handle = &sc->sc_slaves[i];
-		sa.sa_prop = child;
-		sa.sa_cookie = cookie;
+
+		/* XXX Really, I promise, it'll get better... */
+		switch (devhandle_type(parent_handle)) {
+#ifdef FDT
+		case DEVHANDLE_TYPE_OF:
+			child_handle = devhandle_from_of(parent_handle,
+							 (int)cookie);
+			break;
+#endif
+		default:
+			child_handle = devhandle_invalid();
+		}
+
 		if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
 			continue;
 		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
@@ -275,7 +288,8 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
 		config_found(sc->sc_dev, &sa, spi_print,
-		    CFARGS(.locators = loc));
+		    CFARGS(.locators = loc,
+			   .devhandle = child_handle));
 
 		if (sa.sa_compat)
 			free(sa.sa_compat, M_TEMP);
