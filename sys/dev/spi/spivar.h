@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.13 2024/02/23 23:45:54 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.14 2025/09/10 00:55:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -80,7 +80,7 @@ struct spi_controller {
 	int	(*sct_transfer)(void *, struct spi_transfer *);
 };
 
-int spibus_print(void *, const char *);
+int	spibus_print(void *, const char *);
 
 /* one per chip select */
 struct spibus_attach_args {
@@ -148,22 +148,23 @@ SIMPLEQ_HEAD(spi_transq, spi_transfer);
 #define	SPI_F_DONE		0x0001
 #define	SPI_F_ERROR		0x0002
 
-int spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
-			  const struct device_compatible_entry *);
+int	spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
+	    const struct device_compatible_entry *);
 const struct device_compatible_entry *
-    spi_compatible_lookup(const struct spi_attach_args *,
-			  const struct device_compatible_entry *);
-int spi_configure(device_t, struct spi_handle *, int, int);
-int spi_transfer(struct spi_handle *, struct spi_transfer *);
-void spi_transfer_init(struct spi_transfer *);
-void spi_chunk_init(struct spi_chunk *, int, const uint8_t *, uint8_t *);
-void spi_transfer_add(struct spi_transfer *, struct spi_chunk *);
-void spi_wait(struct spi_transfer *);
-void spi_done(struct spi_transfer *, int);
+	spi_compatible_lookup(const struct spi_attach_args *,
+	    const struct device_compatible_entry *);
+int	spi_configure(device_t, struct spi_handle *, int, int);
+int	spi_transfer(struct spi_handle *, struct spi_transfer *);
+void	spi_transfer_init(struct spi_transfer *);
+void	spi_chunk_init(struct spi_chunk *, int, const uint8_t *, uint8_t *);
+void	spi_transfer_add(struct spi_transfer *, struct spi_chunk *);
+void	spi_wait(struct spi_transfer *);
+void	spi_done(struct spi_transfer *, int);
 
 /* convenience wrappers */
-int spi_send(struct spi_handle *, int, const uint8_t *);
-int spi_recv(struct spi_handle *, int, uint8_t *);
-int spi_send_recv(struct spi_handle *, int, const uint8_t *, int, uint8_t *);
+int	spi_send(struct spi_handle *, int, const uint8_t *);
+int	spi_recv(struct spi_handle *, int, uint8_t *);
+int	spi_send_recv(struct spi_handle *, int, const uint8_t *, int,
+	    uint8_t *);
 
 #endif	/* _DEV_SPI_SPIVAR_H_ */
