@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.16 2025/09/10 02:03:18 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.17 2025/09/10 02:06:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -155,7 +155,8 @@ spibus_attach(device_t dev, struct spi_controller *sct)
 		.sba_controller = sct,
 	};
 	return config_found(dev, &sba, spibus_print,
-	    CFARGS(.devhandle = device_handle(dev)));
+	    CFARGS(.iattr = "spibus",
+		   .devhandle = device_handle(dev)));
 }
 
 int	spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
