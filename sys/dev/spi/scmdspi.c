@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdspi.c,v 1.4 2025/07/08 18:07:08 gutteridge Exp $	*/
+/*	$NetBSD: scmdspi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.4 2025/07/08 18:07:08 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $");
 
 /*
  * SPI driver for the Sparkfun Serial motor controller.
@@ -167,7 +167,7 @@ scmdspi_release_bus(struct scmd_sc *sc)
 static int
 scmdspi_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct spi_attach_args *sa = aux;
+	/* struct spi_attach_args *sa = aux; */
 	const bool matchdebug = true;
 
 	if (matchdebug) {
@@ -205,7 +205,7 @@ scmdspi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cond_dying, "scmdspidc");
 
 	/* configure for 1MHz and SPI mode 0 according to the data sheet */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
 		return;
 	}

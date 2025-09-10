@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.14 2022/01/19 13:33:49 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.15 2025/09/10 00:50:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.14 2022/01/19 13:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.15 2025/09/10 00:50:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -130,7 +130,8 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
 	 */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 10000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
+	    SPI_FREQ_MHz(10));
 	if (error) {
 		return;
 	}

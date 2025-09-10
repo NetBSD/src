@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.7 2022/01/19 05:21:44 thorpej Exp $ */
+/* $NetBSD: tmp121.c,v 1.8 2025/09/10 00:50:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.7 2022/01/19 05:21:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.8 2025/09/10 00:50:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,8 @@ tmp121temp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": TI TMP121 Temperature Sensor\n");
 
 	/* configure for 10MHz */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
+	    SPI_FREQ_MHz(10));
 	if (error) {
 		return;
 	}

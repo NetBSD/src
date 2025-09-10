@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpspi.c,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
+/*	$NetBSD: bmx280thpspi.c,v 1.2 2025/09/10 00:50:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.1 2022/12/03 01:04:43 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.2 2025/09/10 00:50:33 thorpej Exp $");
 
 /*
  * SPI driver for the Bosch BMP280 / BME280 sensor.
@@ -176,7 +176,7 @@ bmx280thpspi_attach(device_t parent, device_t self, void *aux)
 	 * The chip will actually handle a number of different modes and
 	 * can go a lot faster, just use this for now...
 	 */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
 		return;
 	}

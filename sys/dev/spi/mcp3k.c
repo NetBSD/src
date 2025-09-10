@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.4 2022/01/19 05:21:44 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	    (unsigned)model->bits);
 
 	/* configure for 1MHz */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
 		return;
 	}
