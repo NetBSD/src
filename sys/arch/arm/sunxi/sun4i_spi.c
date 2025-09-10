@@ -1,4 +1,4 @@
-/*	$NetBSD: sun4i_spi.c,v 1.10 2025/09/10 03:16:57 thorpej Exp $	*/
+/*	$NetBSD: sun4i_spi.c,v 1.11 2025/09/10 04:17:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Nygren
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.10 2025/09/10 03:16:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun4i_spi.c,v 1.11 2025/09/10 04:17:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,7 +151,8 @@ sun4ispi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_configure = sun4ispi_configure;
 	sc->sc_spi.sct_transfer = sun4ispi_transfer;
 	(void) of_getprop_uint32(phandle, "num-cs", &sc->sc_spi.sct_nslaves);
-	(void) fdtbus_attach_spibus(self, spibus_print);
+
+	spibus_attach(self, &sc->sc_spi);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.14 2025/09/10 03:16:57 thorpej Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.15 2025/09/10 04:17:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.14 2025/09/10 03:16:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.15 2025/09/10 04:17:18 thorpej Exp $");
 
 #include "opt_imxspi.h"
-#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.14 2025/09/10 03:16:57 thorpej Exp $");
 
 #include <arm/imx/imxspivar.h>
 #include <arm/imx/imxspireg.h>
-
-#ifdef FDT
-#include <dev/fdt/fdtvar.h>
-#endif
 
 /* SPI service routines */
 static int imxspi_configure_enhanced(void *, int, int, int);
@@ -123,11 +118,7 @@ imxspi_attach_common(device_t self)
 
 	WRITE_REG(sc, PERIODREG, 0x0);
 
-#ifdef FDT
-	(void) fdtbus_attach_spibus(self, spibus_print);
-#else
 	spibus_attach(self, &sc->sc_spi);
-#endif
 
 	return 0;
 }

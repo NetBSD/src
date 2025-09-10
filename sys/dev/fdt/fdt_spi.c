@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.10 2025/09/10 04:11:32 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.11 2025/09/10 04:17:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.10 2025/09/10 04:11:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.11 2025/09/10 04:17:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,6 +50,7 @@ struct fdtbus_spi_controller {
 static LIST_HEAD(, fdtbus_spi_controller) fdtbus_spi_controllers =
     LIST_HEAD_INITIALIZER(fdtbus_spi_controllers);
 
+/* XXX Maybe garbage-collect this. */
 int
 fdtbus_register_spi_controller(device_t dev,
     const struct spi_controller *controller)
@@ -65,6 +66,7 @@ fdtbus_register_spi_controller(device_t dev,
 	return 0;
 }
 
+#if 0
 static const struct spi_controller *
 fdtbus_get_spi_controller(int phandle)
 {
@@ -78,15 +80,4 @@ fdtbus_get_spi_controller(int phandle)
 	}
 	return NULL;
 }
-
-device_t
-fdtbus_attach_spibus(device_t dev, cfprint_t print)
-{
-	const struct spi_controller *spi;
-	int phandle = devhandle_to_of(device_handle(dev));
-
-	spi = fdtbus_get_spi_controller(phandle);
-	KASSERT(spi != NULL);
-
-	return spibus_attach(dev, spi);
-}
+#endif
