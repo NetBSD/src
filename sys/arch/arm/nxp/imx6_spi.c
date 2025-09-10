@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.8 2023/05/04 13:29:33 bouyer Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.9 2025/09/10 02:42:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.8 2023/05/04 13:29:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.9 2025/09/10 02:42:28 thorpej Exp $");
 
 #include "opt_imxspi.h"
 
@@ -136,7 +136,6 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 	ifsc->sc_tag.spi_cs_enable = imxspi_cs_enable;
 	ifsc->sc_tag.spi_cs_disable = imxspi_cs_disable;
 
-	sc->sc_phandle = phandle;
 	sc->sc_iot = faa->faa_bst;
 
 	const struct imx_spi_config *config =

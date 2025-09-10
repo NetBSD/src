@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_spi.c,v 1.8 2025/09/10 02:21:18 thorpej Exp $	*/
+/*	$NetBSD: rk_spi.c,v 1.9 2025/09/10 02:42:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.8 2025/09/10 02:21:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.9 2025/09/10 02:42:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -251,8 +251,8 @@ rk_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_transfer = rk_spi_transfer;
 	sc->sc_spi.sct_nslaves = 2;
 
-	fdtbus_register_spi_controller(self, phandle, &sc->sc_spi);
-	(void) fdtbus_attach_spibus(self, phandle, spibus_print);
+	fdtbus_register_spi_controller(self, &sc->sc_spi);
+	(void) fdtbus_attach_spibus(self, spibus_print);
 }
 
 static int
