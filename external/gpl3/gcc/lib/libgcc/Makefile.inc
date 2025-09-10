@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.53 2023/08/01 05:57:56 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.54 2025/09/10 23:07:38 nat Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -153,6 +153,10 @@ CPICFLAGS:=
 BUILDSYMLINKS+=	${DIST}/libgcc/config/m68k/fpgnulib.c fpgnulib.c
 BUILDSYMLINKS+=	${DIST}/libgcc/config/m68k/fpgnulib.c xfgnulib.c
 CPPFLAGS.xfgnulib.c+=	-DEXTFLOAT=1
+.  if ${MKLIBCSOFTFLOAT} != "no"
+CPPFLAGS.fpgnulib.c+=-DLIBCSOFTFLOAT=1
+CPPFLAGS.xfgnulib.c+=-DLIBCSOFTFLOAT=1
+.  endif
 .endif
 
 ${LIB2FUNCS} ${LIB2FUNCS_ST}: ${.CURDIR}/Makefile

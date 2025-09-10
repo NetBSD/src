@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.54 2025/04/06 23:03:05 rillig Exp $
+# $NetBSD: Makefile.inc,v 1.55 2025/09/10 23:07:39 nat Exp $
 
 COMPILER_RT_DIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt
 COMPILER_RT_SRCDIR=	${COMPILER_RT_DIR}/dist
@@ -118,13 +118,16 @@ GENERIC_SRCS+=	\
 	floatundidf.c \
 	floatundisf.c \
 	floatundixf.c \
-	negdf2.c \
-	negsf2.c \
 	powidf2.c \
 	powisf2.c \
 	powitf2.c \
 	powixf2.c
 
+.  if ${MKLIBCSOFTFLOAT} != "no" || ${MKSOFTFLOAT} == "no"
+GENERIC_SRCS+=	\
+	negdf2.c \
+	negsf2.c
+.  endif
 .endif # IEEE 754 only machines
 
 .if ${LIBC_MACHINE_ARCH} != "m68k"

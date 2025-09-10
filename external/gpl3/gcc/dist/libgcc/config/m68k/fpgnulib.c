@@ -138,6 +138,7 @@ __unorddf2(double a, double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert unsigned int to double */
 double
 __floatunsidf (unsigned long a1)
@@ -411,6 +412,7 @@ __fixsfsi (float a1)
   return __fixdfsi (foo);
 }
 
+#endif
 #else /* EXTFLOAT */
 
 /* We do not need these routines for coldfire, as it has no extended
@@ -421,6 +423,7 @@ __fixsfsi (float a1)
 
    We assume all numbers are normalized, don't do any rounding, etc.  */
 
+#ifndef LIBCSOFTFLOAT
 /* Prototypes for the above in case we use them.  */
 double __floatunsidf (unsigned long);
 double __floatsidf (long);
@@ -430,6 +433,7 @@ float __truncdfsf2 (double);
 long __fixdfsi (double);
 long __fixsfsi (float);
 long __cmpdf2 (double, double);
+#endif
 
 int
 __unordxf2(long double a, long double b)
@@ -447,6 +451,7 @@ __unordxf2(long double a, long double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert double to long double */
 long double
 __extenddfxf2 (double d)
@@ -664,5 +669,6 @@ __gexf2 (long double x1, long double x2)
   return __cmpdf2 ((double) x1, (double) x2);
 }
 
+#endif
 #endif /* !__mcoldfire__ */
 #endif /* EXTFLOAT */

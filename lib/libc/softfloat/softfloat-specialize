@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.11 2025/05/06 23:18:27 riastradh Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.12 2025/09/10 23:07:39 nat Exp $	*/
 
 /* This is a derivative work. */
 
@@ -442,6 +442,7 @@ flag floatx80_is_signaling_nan( floatx80 a )
 
 }
 
+#ifndef SOFTFLOAT_BITS32
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the extended double-precision floating-
@@ -504,6 +505,7 @@ static floatx80 propagateFloatx80NaN( floatx80 a, floatx80 b )
 
 }
 
+#endif
 #endif
 
 #ifdef FLOAT128

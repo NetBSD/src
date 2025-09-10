@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2020/05/31 11:43:37 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2025/09/10 23:07:38 nat Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -23,8 +23,10 @@ SRCS+=	signbitl_ieee754.c
 .endif
 
 SRCS+=	ashlsi3.S ashrsi3.S \
-	lshlsi3.S lshrsi3.S \
-	negdf2.S negsf2.S
+	lshlsi3.S lshrsi3.S
+.if ${MKSOFTFLOAT} == "no" || ${MKLIBCSOFTFLOAT} != "no"
+SRCS+=	negdf2.S negsf2.S
+.endif
 SRCS+=	bswap16.S bswap32.S bswap64.S
 SRCS+=	_lwp.c
 CPPFLAGS._lwp.c	+= -D_LIBC_SOURCE

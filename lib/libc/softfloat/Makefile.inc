@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2016/03/13 01:06:51 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2025/09/10 23:07:39 nat Exp $
 
 SOFTFLOAT_BITS?=64
 .PATH:		${ARCHDIR}/softfloat \
@@ -9,8 +9,7 @@ CPPFLAGS+=	-DSOFTFLOAT_FOR_GCC
 
 SRCS.softfloat= softfloat.c
 
-SRCS.softfloat+=fpgetround.c fpsetround.c fpgetmask.c fpsetmask.c \
-		fpgetsticky.c fpsetsticky.c
+.include <softfloat/Makefile.fenv.inc>
 
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
 SRCS.softfloat+=__aeabi_dcmpeq.c __aeabi_fcmpeq.c

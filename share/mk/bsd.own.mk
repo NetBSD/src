@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1436 2025/09/08 18:17:05 mrg Exp $
+#      $NetBSD: bsd.own.mk,v 1.1437 2025/09/10 23:07:39 nat Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1165,6 +1165,16 @@ MKSOFTFLOAT=	yes
 
 .if ${MACHINE} == "emips"
 SOFTFLOAT_BITS=	32
+.endif
+
+MKSOFTFLOAT?=no
+#
+# Prefer libc's softfloat.c
+#
+.if ${MKSOFTFLOAT} != "no"
+MKLIBCSOFTFLOAT?= yes
+.else
+MKLIBCSOFTFLOAT= no
 .endif
 
 #
