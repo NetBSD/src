@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_spi.c,v 1.7 2021/05/15 08:46:00 mrg Exp $	*/
+/*	$NetBSD: rk_spi.c,v 1.8 2025/09/10 02:21:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.7 2021/05/15 08:46:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_spi.c,v 1.8 2025/09/10 02:21:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -168,7 +168,6 @@ struct rk_spi_softc {
 #define SPIREG_WRITE(sc, reg, val) \
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-static struct spi_controller *rk_spi_get_controller(device_t);
 static int rk_spi_match(device_t, cfdata_t, void *);
 static void rk_spi_attach(device_t, device_t, void *);
 
@@ -184,18 +183,6 @@ static int rk_spi_intr(void *);
 
 CFATTACH_DECL_NEW(rk_spi, sizeof(struct rk_spi_softc),
     rk_spi_match, rk_spi_attach, NULL, NULL);
-
-static const struct fdtbus_spi_controller_func rk_spi_funcs = {
-	.get_controller = rk_spi_get_controller
-};
-
-static struct spi_controller *
-rk_spi_get_controller(device_t dev)
-{
-	struct rk_spi_softc * const sc = device_private(dev);
-
-	return &sc->sc_spi;
-}
 
 static int
 rk_spi_match(device_t parent, cfdata_t cf, void *aux)
@@ -264,7 +251,7 @@ rk_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi.sct_transfer = rk_spi_transfer;
 	sc->sc_spi.sct_nslaves = 2;
 
-	fdtbus_register_spi_controller(self, phandle, &rk_spi_funcs);
+	fdtbus_register_spi_controller(self, phandle, &sc->sc_spi);
 	(void) fdtbus_attach_spibus(self, phandle, spibus_print);
 }
 

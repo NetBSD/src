@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.11 2025/09/10 01:55:07 thorpej Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.12 2025/09/10 02:21:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.11 2025/09/10 01:55:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.12 2025/09/10 02:21:18 thorpej Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -86,20 +86,6 @@ int imxspi_debug = IMXSPI_DEBUG;
 #define	DPRINTFN(n,x)
 #endif
 
-#ifdef FDT
-static struct spi_controller *
-imxspi_get_controller(device_t dev)
-{
-	struct imxspi_softc * const sc = device_private(dev);
-
-	return &sc->sc_spi;
-}
-
-static const struct fdtbus_spi_controller_func imxspi_funcs = {
-	.get_controller = imxspi_get_controller
-};
-#endif
-
 int
 imxspi_attach_common(device_t self)
 {
@@ -140,7 +126,7 @@ imxspi_attach_common(device_t self)
 #ifdef FDT
 	KASSERT(sc->sc_phandle != 0);
 
-	fdtbus_register_spi_controller(self, sc->sc_phandle, &imxspi_funcs);
+	fdtbus_register_spi_controller(self, sc->sc_phandle, &sc->sc_spi);
 	(void) fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
 #else
 	spibus_attach(self, &sc->sc_spi);

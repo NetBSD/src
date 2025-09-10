@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.3 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.4 2025/09/10 02:21:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.3 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.4 2025/09/10 02:21:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.3 2021/08/07 16:19:10 thorpej Exp $");
 struct fdtbus_spi_controller {
 	device_t spi_dev;
 	int spi_phandle;
-	const struct fdtbus_spi_controller_func *spi_funcs;
+	struct spi_controller *spi_controller;
 	LIST_ENTRY(fdtbus_spi_controller) spi_next;
 };
 
@@ -53,14 +53,14 @@ static LIST_HEAD(, fdtbus_spi_controller) fdtbus_spi_controllers =
 
 int
 fdtbus_register_spi_controller(device_t dev, int phandle,
-    const struct fdtbus_spi_controller_func *funcs)
+    struct spi_controller *controller)
 {
 	struct fdtbus_spi_controller *spi;
 
 	spi = kmem_alloc(sizeof(*spi), KM_SLEEP);
 	spi->spi_dev = dev;
 	spi->spi_phandle = phandle;
-	spi->spi_funcs = funcs;
+	spi->spi_controller = controller;
 
 	LIST_INSERT_HEAD(&fdtbus_spi_controllers, spi, spi_next);
 
@@ -74,7 +74,7 @@ fdtbus_get_spi_controller(int phandle)
 
 	LIST_FOREACH(spi, &fdtbus_spi_controllers, spi_next) {
 		if (spi->spi_phandle == phandle) {
-			return spi->spi_funcs->get_controller(spi->spi_dev);
+			return spi->spi_controller;
 		}
 	}
 	return NULL;
