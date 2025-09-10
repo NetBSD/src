@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.44 2025/09/06 15:44:02 thorpej Exp $
+#	$NetBSD: files.bcm2835,v 1.45 2025/09/10 13:06:22 thorpej Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -92,7 +92,7 @@ file	arch/arm/broadcom/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 
 # SPI controller (BCM2835_SPI0_BASE)
 device	bcmspi: spibus, bcm2835_gpio_subr
-attach	bcmspi at fdt
+attach	bcmspi at fdt: fdt_spi
 file	arch/arm/broadcom/bcm2835_spi.c		bcmspi	needs-flag
 
 # BSC (I2C) controller (BCM2835_BSC[01]_BASE)
