@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_spi_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $	*/
+/*	$NetBSD: ofw_spi_subr.c,v 1.2 2025/09/10 03:43:38 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_spi_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_spi_subr.c,v 1.2 2025/09/10 03:43:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_spi_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp
 #include <sys/systm.h>
 #include <dev/ofw/openfirm.h>
 
-void
-of_enter_spi_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
+prop_array_t
+of_copy_spi_devs(int ofnode, size_t cell_size)
 {
 	int node, len;
 	char name[32];
@@ -93,8 +93,5 @@ of_enter_spi_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 		prop_object_release(dev);
 	}
 
-	if (array != NULL) {
-		prop_dictionary_set(props, "spi-child-devices", array);
-		prop_object_release(array);
-	}
+	return array;
 }
