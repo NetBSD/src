@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetmask.c,v 1.4 2008/04/28 20:23:00 martin Exp $ */
+/* $NetBSD: fpgetmask.c,v 1.5 2025/09/10 23:31:02 nat Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetmask.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: fpgetmask.c,v 1.5 2025/09/10 23:31:02 nat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,6 +45,12 @@ __RCSID("$NetBSD: fpgetmask.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 
 #ifdef __weak_alias
 __weak_alias(fpgetmask,_fpgetmask)
+#endif
+
+#ifdef SOFTFLOATM68K_FOR_GCC
+fp_except _softfloat_float_exception_flags;
+fp_except _softfloat_float_exception_mask;
+fp_rnd 	 _softfloat_float_rounding_mode;
 #endif
 
 fp_except
