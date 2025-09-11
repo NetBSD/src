@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3188 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3189 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -46,3 +46,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		requiring store-before-load ordering. [riastradh 20250906]
 	macppc: Add driver for the LED bar found on Xserve G4,
 		controls lights depending on CPU usage. [macallan 20250908]
+	m68k: Change softfloat build to libc/softfloat. [nat 20250910]
