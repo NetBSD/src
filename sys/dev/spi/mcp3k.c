@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.6 2025/09/11 01:07:24 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.7 2025/09/11 14:19:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -91,112 +91,161 @@ static int	sysctl_mcp3kadc_vref(SYSCTLFN_ARGS);
 CFATTACH_DECL_NEW(mcp3kadc, sizeof(struct mcp3kadc_softc),
     mcp3kadc_match,  mcp3kadc_attach, NULL, NULL);
 
-static struct mcp3kadc_model mcp3k_models[] = {
-	{
-		.name = 3001,
-		.bits = 10,
-		.channels = 1,
-		.lead = 3,
-		.flags = 0
-	},
-	{
-		.name = 3002,
-		.bits = 10,
-		.channels = 2,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_MSBF
-	},
-	{
-		.name = 3004,
-		.bits = 10,
-		.channels = 4,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3008,
-		.bits = 10,
-		.channels = 8,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3201,
-		.bits = 12,
-		.channels = 1,
-		.lead = 3,
-		.flags = 0
-	},
-	{
-		.name = 3202,
-		.bits = 12,
-		.channels = 2,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_MSBF
-	},
-	{
-		.name = 3204,
-		.bits = 12,
-		.channels = 4,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3208,
-		.bits = 12,
-		.channels = 8,
-		.lead = 2,
-		.flags = M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3301,
-		.bits = 13,
-		.channels = 1,
-		.lead = 3,
-		.flags = M3K_SIGNED
-	},
-	{
-		.name = 3302,
-		.bits = 13,
-		.channels = 4,
-		.lead = 2,
-		.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
-	},
-	{
-		.name = 3304,
-		.bits = 13,
-		.channels = 8,
-		.lead = 2,
-		.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
-	},
+static const struct mcp3kadc_model mcp3001 = {
+	.name = 3001,
+	.bits = 10,
+	.channels = 1,
+	.lead = 3,
+	.flags = 0
 };
-static const int mcp3k_nmodels = __arraycount(mcp3k_models);
+
+static const struct mcp3kadc_model mcp3002 = {
+	.name = 3002,
+	.bits = 10,
+	.channels = 2,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_MSBF
+};
+
+static const struct mcp3kadc_model mcp3004 = {
+	.name = 3004,
+	.bits = 10,
+	.channels = 4,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3008 = {
+	.name = 3008,
+	.bits = 10,
+	.channels = 8,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3201 = {
+	.name = 3201,
+	.bits = 12,
+	.channels = 1,
+	.lead = 3,
+	.flags = 0
+};
+
+static const struct mcp3kadc_model mcp3202 = {
+	.name = 3202,
+	.bits = 12,
+	.channels = 2,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_MSBF
+};
+
+static const struct mcp3kadc_model mcp3204 = {
+	.name = 3204,
+	.bits = 12,
+	.channels = 4,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3208 = {
+	.name = 3208,
+	.bits = 12,
+	.channels = 8,
+	.lead = 2,
+	.flags = M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3301 = {
+	.name = 3301,
+	.bits = 13,
+	.channels = 1,
+	.lead = 3,
+	.flags = M3K_SIGNED
+};
+
+static const struct mcp3kadc_model mcp3302 = {
+	.name = 3302,
+	.bits = 13,
+	.channels = 4,
+	.lead = 2,
+	.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
+};
+
+static const struct mcp3kadc_model mcp3304 = {
+	.name = 3304,
+	.bits = 13,
+	.channels = 8,
+	.lead = 2,
+	.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
+};
+
+/*
+ * N.B. The order of this table is important!  It matches the order
+ * of the legacy mcp3k_models[] array, which is used to manually
+ * select the device type in the kernel configuration file when
+ * direct configuration is not available.
+ */
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "microchip,mcp3001",	.data = &mcp3001 },
+	{ .compat = "microchip,mcp3002",	.data = &mcp3002 },
+	{ .compat = "microchip,mcp3004",	.data = &mcp3004 },
+	{ .compat = "microchip,mcp3008",	.data = &mcp3008 },
+	{ .compat = "microchip,mcp3201",	.data = &mcp3201 },
+	{ .compat = "microchip,mcp3202",	.data = &mcp3202 },
+	{ .compat = "microchip,mcp3204",	.data = &mcp3204 },
+	{ .compat = "microchip,mcp3208",	.data = &mcp3208 },
+	{ .compat = "microchip,mcp3301",	.data = &mcp3301 },
+	{ .compat = "microchip,mcp3302",	.data = &mcp3302 },
+	{ .compat = "microchip,mcp3304",	.data = &mcp3304 },
+
+#if 0	/* We should also add support for these: */
+	{ .compat = "microchip,mcp3550-50" },
+	{ .compat = "microchip,mcp3550-60" },
+	{ .compat = "microchip,mcp3551" },
+	{ .compat = "microchip,mcp3553" },
+#endif
+
+	DEVICE_COMPAT_EOL
+};
+static const int mcp3k_nmodels = __arraycount(compat_data) - 1;
 
 static const struct mcp3kadc_model *
-mcp3kadc_lookup(const cfdata_t cf)
+mcp3kadc_lookup(const struct spi_attach_args *sa, const cfdata_t cf)
 {
-	if (cf->cf_flags < 0 || cf->cf_flags >= mcp3k_nmodels) {
-		return NULL;
+	if (sa->sa_ncompat > 0) {
+		const struct device_compatible_entry *dce =
+		    spi_compatible_lookup(sa, compat_data);
+		if (dce == NULL) {
+			return NULL;
+		}
+		return dce->data;
+	} else {
+		if (cf->cf_flags < 0 || cf->cf_flags >= mcp3k_nmodels) {
+			return NULL;
+		}
+		return compat_data[cf->cf_flags].data;
 	}
-	return &mcp3k_models[cf->cf_flags];
 }
 
 static int
 mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	if (strcmp(cf->cf_name, "mcp3kadc") != 0)
-		return 0;
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
 
 	/*
 	 * If we're doing indirect config, the user must
 	 * have specified a valid model.
 	 */
-	if (mcp3kadc_lookup(cf) == NULL) {
+	if (sa->sa_ncompat == 0 && mcp3kadc_lookup(sa, cf) == NULL) {
 		return 0;
 	}
 
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
@@ -211,7 +260,7 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 
-	model = mcp3kadc_lookup(device_cfdata(self));
+	model = mcp3kadc_lookup(sa, device_cfdata(self));
 	KASSERT(model != NULL);
 
 	sc->sc_model = model;
