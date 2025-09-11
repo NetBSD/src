@@ -1,4 +1,4 @@
-#	$NetBSD: files.spi,v 1.11 2025/09/06 15:44:04 thorpej Exp $
+#	$NetBSD: files.spi,v 1.12 2025/09/11 14:32:49 thorpej Exp $
 
 define	spibus { }
 
@@ -40,7 +40,7 @@ attach	ssdfb at spi with ssdfb_spi: fdt_gpio
 file	dev/spi/ssdfb_spi.c		ssdfb_spi
 
 # MCP3x0x ADC
-device	mcp3kadc: sysmon_envsys
+device	mcp3kadc: fdt_regulator, sysmon_envsys
 attach	mcp3kadc at spi
 file	dev/spi/mcp3k.c			mcp3kadc
 
