@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.20 2025/09/10 04:33:46 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.21 2025/09/11 13:24:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -155,6 +155,19 @@ spibus_attach(device_t dev, const struct spi_controller *sct)
 		   .devhandle = device_handle(dev)));
 }
 
+/*
+ * Constants to indicate the quality of a match made by a driver's
+ * match routine, from lowest to highest:
+ *
+ *	-- Default indirect match; rely on kernel config file.
+ *
+ *	-- Direct-config match by "compatible" string.
+ */
+#define	SPI_MATCH_DEFAULT		1
+#define	SPI_MATCH_DIRECT_COMPATIBLE	10	/* ...and up */
+
+bool	spi_use_direct_match(const struct spi_attach_args *,
+	    const struct device_compatible_entry *, int *);
 int	spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
 	    const struct device_compatible_entry *);
 const struct device_compatible_entry *

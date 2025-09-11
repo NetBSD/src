@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.31 2025/09/10 12:33:27 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.32 2025/09/11 13:24:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.31 2025/09/10 12:33:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.32 2025/09/11 13:24:11 thorpej Exp $");
 
 #include "locators.h"
 
@@ -300,22 +300,42 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 }
 
 int
-spi_compatible_match(const struct spi_attach_args *sa, const cfdata_t cf,
+spi_compatible_match(const struct spi_attach_args *sa,
+		     const cfdata_t cf __unused,
 		     const struct device_compatible_entry *compats)
 {
-	if (sa->sa_ncompat > 0)
-		return device_compatible_match(sa->sa_compat, sa->sa_ncompat,
-					       compats);
+	int match_result;
 
-	return 1;
+	match_result = device_compatible_match(sa->sa_compat, sa->sa_ncompat,
+					       compats);
+	if (match_result) {
+		match_result = SPI_MATCH_DIRECT_COMPATIBLE + match_result - 1;
+	}
+
+	return match_result ? match_result : SPI_MATCH_DEFAULT /* XXX */;
 }
 
 const struct device_compatible_entry *
 spi_compatible_lookup(const struct spi_attach_args *sa,
-    const struct device_compatible_entry *compats)
+		      const struct device_compatible_entry *compats)
 {
 	return device_compatible_lookup(sa->sa_compat, sa->sa_ncompat,
 					compats);
+}
+
+bool
+spi_use_direct_match(const struct spi_attach_args *sa,
+		     const struct device_compatible_entry *compats,
+		     int *match_resultp)
+{
+	KASSERT(match_resultp != NULL);
+
+	if (sa->sa_ncompat > 0 && sa->sa_compat != NULL) {
+		*match_resultp = spi_compatible_match(sa, NULL, compats);
+		return true;
+	}
+
+	return false;
 }
 
 /*
