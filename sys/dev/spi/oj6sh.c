@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.12 2025/09/10 00:50:33 thorpej Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.13 2025/09/11 14:11:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.12 2025/09/10 00:50:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.13 2025/09/11 14:11:38 thorpej Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -135,11 +135,13 @@ static int
 oj6sh_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	if (spi_compatible_match(sa, cf, compat_data) == 0)
-		return 0;
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
 
-	return 2;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
@@ -188,7 +190,7 @@ oj6sh_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": OJ6SH-T25 Optical Joystick\n");
 
 	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
-	    SPI_FREQ_KHz(2500));
+	    SPI_FREQ_kHz(2500));
 	if (error) {
 		return;
 	}

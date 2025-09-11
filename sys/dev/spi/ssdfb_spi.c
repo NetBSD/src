@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.16 2025/09/10 04:33:46 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.17 2025/09/11 14:11:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.16 2025/09/10 04:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.17 2025/09/11 14:11:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,8 +102,13 @@ static int
 ssdfb_spi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	return spi_compatible_match(sa, match, compat_data);
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
+
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
@@ -118,6 +123,7 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc.sc_cookie = (void *)sc;
+
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
 		const struct device_compatible_entry *dce =
 			spi_compatible_lookup(sa, compat_data);
