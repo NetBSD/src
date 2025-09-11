@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.6 2025/09/11 01:07:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -72,14 +72,14 @@ struct mcp3kadc_model {
 };
 
 struct mcp3kadc_softc {
-	device_t		sc_dev;
-	struct spi_handle 	*sc_sh;
-	int			sc_model;
-	uint32_t		sc_adc_max;
-	int32_t			sc_vref_mv;
+	device_t			sc_dev;
+	struct spi_handle 		*sc_sh;
+	const struct mcp3kadc_model	*sc_model;
+	uint32_t			sc_adc_max;
+	int32_t				sc_vref_mv;
 
-	struct sysmon_envsys 	*sc_sme;
-	envsys_data_t 		sc_sensors[M3K_MAX_SENSORS];
+	struct sysmon_envsys 		*sc_sme;
+	envsys_data_t 			sc_sensors[M3K_MAX_SENSORS];
 };
 
 static int	mcp3kadc_match(device_t, cfdata_t, void *);
@@ -170,6 +170,16 @@ static struct mcp3kadc_model mcp3k_models[] = {
 		.flags = M3K_SIGNED | M3K_SGLDIFF | M3K_D2D1D0
 	},
 };
+static const int mcp3k_nmodels = __arraycount(mcp3k_models);
+
+static const struct mcp3kadc_model *
+mcp3kadc_lookup(const cfdata_t cf)
+{
+	if (cf->cf_flags < 0 || cf->cf_flags >= mcp3k_nmodels) {
+		return NULL;
+	}
+	return &mcp3k_models[cf->cf_flags];
+}
 
 static int
 mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
@@ -178,6 +188,14 @@ mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 	if (strcmp(cf->cf_name, "mcp3kadc") != 0)
 		return 0;
 
+	/*
+	 * If we're doing indirect config, the user must
+	 * have specified a valid model.
+	 */
+	if (mcp3kadc_lookup(cf) == NULL) {
+		return 0;
+	}
+
 	return 1;
 }
 
@@ -185,19 +203,18 @@ static void
 mcp3kadc_attach(device_t parent, device_t self, void *aux)
 {
 	const struct sysctlnode *rnode, *node;
-	struct spi_attach_args *sa;
-	struct mcp3kadc_softc *sc;
-	struct mcp3kadc_model *model;
+	struct spi_attach_args *sa = aux;
+	struct mcp3kadc_softc *sc = device_private(self);;
+	const struct mcp3kadc_model *model;
 	int error, ch, i;
 
-	sa = aux;
-	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 
-	/* device flags define the model */
-	sc->sc_model = device_cfdata(sc->sc_dev)->cf_flags;
-	model = &mcp3k_models[sc->sc_model];
+	model = mcp3kadc_lookup(device_cfdata(self));
+	KASSERT(model != NULL);
+
+	sc->sc_model = model;
 
 	aprint_naive(": Analog to Digital converter\n");
 	aprint_normal(": MCP%u %u-channel %u-bit ADC\n",
@@ -207,6 +224,8 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	/* configure for 1MHz */
 	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
+		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
+		    error);
 		return;
 	}
 
@@ -280,12 +299,12 @@ static void
 mcp3kadc_envsys_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct mcp3kadc_softc *sc;
-	struct mcp3kadc_model *model;
+	const struct mcp3kadc_model *model;
 	uint8_t buf[2], ctrl;
 	int32_t val, scale;
 
 	sc = sme->sme_cookie;
-	model = &mcp3k_models[sc->sc_model];
+	model = sc->sc_model;
 	scale = sc->sc_adc_max + 1;
 
 	if (model->flags & M3K_CTRL_NEEDED) {
