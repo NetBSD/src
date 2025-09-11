@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2024/09/19 19:43:13 gdt Exp $
+# $NetBSD: Makefile,v 1.52 2025/09/11 05:16:23 nat Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,10 @@ TESTSDIR=	${TESTSBASE}/lib/libm
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .endif
 COPTS+=	-fno-builtin
+
+.if ${MACHINE} == "m68k" /* See doc/HACKS */
+CPPFLAGS+= -O0
+.endif
 
 CPPFLAGS.t_fenv.c+=	-D__TEST_FENV
 CPPFLAGS.t_fe_round.c+=	-D__TEST_FENV

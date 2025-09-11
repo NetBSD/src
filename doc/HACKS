@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.255 2025/09/02 08:15:33 rin Exp $
+# $NetBSD: HACKS,v 1.256 2025/09/11 05:16:24 nat Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1056,4 +1056,15 @@ descr
 	The problem has been reported to upstream:
 
 	https://sourceware.org/bugzilla/show_bug.cgi?id=33344
+kcah
+
+hack	tests/lib/libm:	Compile with -O0 on m68k.
+cdate	Thu Sept 11 04:06:39 UTC 2025
+who	nat
+file	tests/lib/libm/Makefile : 1.52
+descr
+	Tests are miscompiled on m68k at -O2.
+	The cause has not yet been fully analysed.  At -O2 some test would
+	segfault.  This has been mitigated by compiling the affected tests
+	at -O0.
 kcah
