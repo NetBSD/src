@@ -467,9 +467,9 @@ __extenddfxf2 (double d)
   ldl.l.upper = SIGND (dl);
 
   /* special case for inf. */
-  if ((dl.l.upper & POSS_INF_or_NaN) == 0x7FF00000 && dl.l.lower == 0)
+  if ((dl.l.upper & POSS_INF_or_NaN) == (EXPDMASK << 20) && dl.l.lower == 0)
     {
-      ldl.l.upper |= 0x7FFF0000;
+      ldl.l.upper |= EXPXMASK << 16;
       ldl.l.middle = 0;
       ldl.l.lower = 0;
       return ldl.ld;
@@ -519,10 +519,9 @@ __truncxfdf2 (long double ld)
   dl.l.upper = SIGNX (ldl);
 
   /* special case for inf. */
-  if ((ldl.l.upper & 0x7FFF0000) == 0x7FFF0000 &&
-      (ldl.l.middle | ldl.l.lower) == 0)
+  if ((EXPX(ldl) == EXPXMASK) && (ldl.l.middle | ldl.l.lower) == 0)
     {
-      dl.l.upper |= 0x7FF00000;
+      dl.l.upper |= EXPDMASK << 20;
       dl.l.lower = 0;
       return dl.d;
     }
