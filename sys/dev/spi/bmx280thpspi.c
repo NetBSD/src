@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpspi.c,v 1.2 2025/09/10 00:50:33 thorpej Exp $	*/
+/*	$NetBSD: bmx280thpspi.c,v 1.3 2025/09/11 14:12:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.2 2025/09/10 00:50:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.3 2025/09/11 14:12:38 thorpej Exp $");
 
 /*
  * SPI driver for the Bosch BMP280 / BME280 sensor.
@@ -151,7 +151,7 @@ bmx280thpspi_match(device_t parent, cfdata_t match, void *aux)
 		printf("Trying to match\n");
 	}
 
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void

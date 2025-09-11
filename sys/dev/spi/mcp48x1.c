@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp48x1.c,v 1.4 2025/09/10 00:50:33 thorpej Exp $ */
+/*      $NetBSD: mcp48x1.c,v 1.5 2025/09/11 14:12:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.4 2025/09/10 00:50:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.5 2025/09/11 14:12:38 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP4801/MCP4811/MCP4821 DAC. 
@@ -115,10 +115,7 @@ static struct mcp48x1dac_model mcp48x1_models[] = {
 static int
 mcp48x1dac_match(device_t parent, cfdata_t cf, void *aux)
 {
-
-	/* MCP48x1 is a write-only device, so no way to detect it! */
-
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void

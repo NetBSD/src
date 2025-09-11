@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $ */
+/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.6 2025/09/11 14:12:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.6 2025/09/11 14:12:38 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -175,10 +175,7 @@ static const struct mcpgpio_accessops mcpgpio_spi_accessops = {
 static int
 mcpgpio_spi_match(device_t parent, cfdata_t cf, void *aux)
 {
-
-	/* MCP23S17 has no way to detect it! */
-
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.8 2025/09/10 00:50:33 thorpej Exp $ */
+/* $NetBSD: tmp121.c,v 1.9 2025/09/11 14:12:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.8 2025/09/10 00:50:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.9 2025/09/11 14:12:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ CFATTACH_DECL_NEW(tmp121temp, sizeof(struct tmp121temp_softc),
 static int
 tmp121temp_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
