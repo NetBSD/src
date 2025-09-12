@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdspi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $	*/
+/*	$NetBSD: scmdspi.c,v 1.6 2025/09/12 13:48:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.6 2025/09/12 13:48:26 thorpej Exp $");
 
 /*
  * SPI driver for the Sparkfun Serial motor controller.
@@ -41,6 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.5 2025/09/10 00:50:33 thorpej Exp $");
 #include <dev/spi/spivar.h>
 #include <dev/ic/scmdreg.h>
 #include <dev/ic/scmdvar.h>
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "sparkfun,scmd-motor-driver" },
+
+	DEVICE_COMPAT_EOL
+};
 
 extern void	scmd_attach(struct scmd_sc *);
 
@@ -167,14 +173,14 @@ scmdspi_release_bus(struct scmd_sc *sc)
 static int
 scmdspi_match(device_t parent, cfdata_t match, void *aux)
 {
-	/* struct spi_attach_args *sa = aux; */
-	const bool matchdebug = true;
+	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	if (matchdebug) {
-		printf("Trying to match\n");
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
 	}
 
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void

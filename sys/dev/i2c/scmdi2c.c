@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdi2c.c,v 1.2 2022/03/30 00:06:50 pgoyette Exp $	*/
+/*	$NetBSD: scmdi2c.c,v 1.3 2025/09/12 13:48:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdi2c.c,v 1.2 2022/03/30 00:06:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdi2c.c,v 1.3 2025/09/12 13:48:26 thorpej Exp $");
 
 /*
  * I2C driver for the Sparkfun Serial motor controller.
@@ -41,6 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: scmdi2c.c,v 1.2 2022/03/30 00:06:50 pgoyette Exp $")
 #include <dev/spi/spivar.h>
 #include <dev/ic/scmdreg.h>
 #include <dev/ic/scmdvar.h>
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "sparkfun,scmd-motor-driver" },
+
+	DEVICE_COMPAT_EOL
+};
 
 extern struct cdevsw scmd_cdevsw;
 
@@ -121,13 +127,13 @@ scmdi2c_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
 }
 
 static int
-scmdi2c_match(device_t parent, cfdata_t match, void *aux)
+scmdi2c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int error, match_result;
 	const bool matchdebug = false;
 
-	if (iic_use_direct_match(ia, match, NULL, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	if (matchdebug) {
