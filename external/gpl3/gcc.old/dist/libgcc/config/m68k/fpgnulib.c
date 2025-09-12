@@ -54,7 +54,8 @@
 #define SIGNBIT		0x80000000L
 #define HIDDEN		(1L << 23L)
 #define SIGN(fp)	((fp) & SIGNBIT)
-#define EXP(fp)		(((fp) >> 23L) & 0xFF)
+#define EXPMASK		0xFF
+#define EXP(fp)		(((fp) >> 23L) & EXPMASK)
 #define MANT(fp)	(((fp) & 0x7FFFFFL) | HIDDEN)
 #define PACK(s,e,m)	((s) | ((e) << 23L) | (m))
 
@@ -138,6 +139,7 @@ __unorddf2(double a, double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert unsigned int to double */
 double
 __floatunsidf (unsigned long a1)
@@ -247,15 +249,15 @@ __extendsfdf2 (float a1)
   dl.l.upper = SIGN (fl1.l);
 
   /* special case for inf. */
-  if ((fl1.l & POSS_INF_or_NaN) == 0x7F800000)
+  if ((fl1.l & POSS_INF_or_NaN) == (EXPMASK << 23))
     {
-      dl.l.upper |= 0x7FF00000;
+      dl.l.upper |= EXPDMASK << 20;
       dl.l.lower = 0;
       return dl.d;
     }
 
   /* expand the right value for nan */
-  if ((fl1.l & QUIET_NaN) == QUIET_NaN)
+  if ((fl1.l & POSS_INF_or_NaN) > (EXPMASK << 23))
     {
       dl.l.upper = QUIET_NaN;
       dl.l.lower = QUIET_NaN;
@@ -303,14 +305,14 @@ __truncdfsf2 (double a1)
   dl1.d = a1;
 
   /* special case for inf. */
-  if ((dl1.l.upper & POSS_INF_or_NaN) == 0x7FF00000 && dl1.l.lower == 0)
+  if (EXPD(dl1) == EXPDMASK && dl1.l.lower == 0)
     {
-      fl.l = 0x7F800000 | SIGND(dl1);
+      fl.l = (EXPMASK << 23) | SIGND(dl1);
       return fl.f;
     }
 
   /* special case for nan. */
-  if ((dl1.l.upper & QUIET_NaN) == QUIET_NaN && dl1.l.lower == QUIET_NaN)
+  if (EXPD(dl1) == EXPDMASK && (dl1.l.lower | (dl1.l.upper & MANTDMASK)))
     {
       fl.l = QUIET_NaN;
       return fl.f;
@@ -411,6 +413,7 @@ __fixsfsi (float a1)
   return __fixdfsi (foo);
 }
 
+#endif
 #else /* EXTFLOAT */
 
 /* We do not need these routines for coldfire, as it has no extended
@@ -421,6 +424,7 @@ __fixsfsi (float a1)
 
    We assume all numbers are normalized, don't do any rounding, etc.  */
 
+#ifndef LIBCSOFTFLOAT
 /* Prototypes for the above in case we use them.  */
 double __floatunsidf (unsigned long);
 double __floatsidf (long);
@@ -430,6 +434,7 @@ float __truncdfsf2 (double);
 long __fixdfsi (double);
 long __fixsfsi (float);
 long __cmpdf2 (double, double);
+#endif
 
 int
 __unordxf2(long double a, long double b)
@@ -447,6 +452,7 @@ __unordxf2(long double a, long double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert double to long double */
 long double
 __extenddfxf2 (double d)
@@ -461,18 +467,18 @@ __extenddfxf2 (double d)
   ldl.l.upper = SIGND (dl);
 
   /* special case for inf. */
-  if ((dl.l.upper & POSS_INF_or_NaN) == 0x7FF00000 && dl.l.lower == 0)
+  if ((dl.l.upper & POSS_INF_or_NaN) == (EXPDMASK << 20) && dl.l.lower == 0)
     {
-      ldl.l.upper |= 0x7FFF0000;
+      ldl.l.upper |= EXPXMASK << 16;
       ldl.l.middle = 0;
       ldl.l.lower = 0;
       return ldl.ld;
     }
 
   /* special case for nan */
-  if ((dl.l.upper & QUIET_NaN) == QUIET_NaN && dl.l.lower == QUIET_NaN)
+  if (EXPD(dl) == EXPDMASK && (dl.l.lower | (dl.l.upper & MANTDMASK)))
     {
-      ldl.l.upper = 0xFFFF0000;
+      ldl.l.upper = EXPXMASK << 16;
       ldl.l.middle = QUIET_NaN;
       ldl.l.lower = QUIET_NaN;
       return ldl.ld;
@@ -513,17 +519,15 @@ __truncxfdf2 (long double ld)
   dl.l.upper = SIGNX (ldl);
 
   /* special case for inf. */
-  if ((ldl.l.upper & 0x7FFF0000) == 0x7FFF0000 &&
-      (ldl.l.middle | ldl.l.lower) == 0)
+  if ((EXPX(ldl) == EXPXMASK) && (ldl.l.middle | ldl.l.lower) == 0)
     {
-      dl.l.upper |= 0x7FF00000;
+      dl.l.upper |= EXPDMASK << 20;
       dl.l.lower = 0;
       return dl.d;
     }
 
   /* special case for nan */
-  if ((ldl.l.upper & 0xFFFF0000) == 0xFFFF0000 && ldl.l.middle == QUIET_NaN &&
-      ldl.l.lower == QUIET_NaN)
+  if (EXPX(ldl) == EXPXMASK && (ldl.l.middle | ldl.l.lower))
     {
       dl.l.upper = QUIET_NaN;
       dl.l.lower = QUIET_NaN;
@@ -664,5 +668,6 @@ __gexf2 (long double x1, long double x2)
   return __cmpdf2 ((double) x1, (double) x2);
 }
 
+#endif
 #endif /* !__mcoldfire__ */
 #endif /* EXTFLOAT */
