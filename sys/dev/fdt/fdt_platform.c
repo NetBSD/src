@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_platform.c,v 1.1 2023/04/07 08:55:31 skrll Exp $ */
+/* $NetBSD: fdt_platform.c,v 1.1.8.1 2025/09/12 14:51:40 snj Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_platform.c,v 1.1 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_platform.c,v 1.1.8.1 2025/09/12 14:51:40 snj Exp $");
 
 #include <sys/param.h>
 
@@ -78,6 +78,3 @@ fdt_platform_find(void)
 
 	return booted_platform == NULL ? NULL : booted_platform->fpi_ops;
 }
-
-// XXXNH remove this and rely on a default
-FDT_PLATFORM(dummy, NULL, NULL);
