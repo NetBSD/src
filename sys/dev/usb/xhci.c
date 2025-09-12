@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.188 2025/01/30 10:51:39 jmcneill Exp $	*/
+/*	$NetBSD: xhci.c,v 1.188.2.1 2025/09/12 14:48:04 snj Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.188 2025/01/30 10:51:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.188.2.1 2025/09/12 14:48:04 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4772,6 +4772,13 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	    (isread ? XHCI_TRB_3_ISP_BIT : 0) |
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_xfer_put_trb(xx, i++, parameter, status, control);
+
+	if (!isread && (xfer->ux_flags & USBD_FORCE_SHORT_XFER)) {
+		status = XHCI_TRB_2_IRQ_SET(0) |
+		    XHCI_TRB_2_TDSZ_SET(0) |
+		    XHCI_TRB_2_BYTES_SET(0);
+		xhci_xfer_put_trb(xx, i++, parameter, status, control);
+	}
 
 	if (!polling)
 		mutex_enter(&tr->xr_lock);
