@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdir.2,v 1.32 2020/02/05 08:14:36 wiz Exp $
+.\"	$NetBSD: mkdir.2,v 1.33 2025/09/12 14:54:36 jschauma Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mkdir.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd February 4, 2020
+.Dd September 12, 2025
 .Dt MKDIR 2
 .Os
 .Sh NAME
@@ -121,6 +121,9 @@ An I/O error occurred while making the directory entry or allocating the inode;
 or an I/O error occurred while reading from or writing to the file system.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
+.It Bq Er EMLINK
+The new directory cannot be created because the parent directory contains too
+many subdirectories.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
 .Brq Dv NAME_MAX
