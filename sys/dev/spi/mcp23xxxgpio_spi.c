@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.6 2025/09/11 14:12:38 thorpej Exp $ */
+/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.7 2025/09/12 01:53:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.6 2025/09/11 14:12:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.7 2025/09/12 01:53:56 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.6 2025/09/11 14:12:38 thorpej
  *	https://ww1.microchip.com/downloads/en/DeviceDoc/20001952C.pdf
  */
 
+#include "opt_fdt.h"
+
 #include <sys/types.h>
 #include <sys/bitops.h>
 #include <sys/device.h>
@@ -54,6 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.6 2025/09/11 14:12:38 thorpej
 #include <dev/ic/mcp23xxxgpiovar.h>
 
 #include <dev/spi/spivar.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
 
 /*
  * Multi-chip-on-select configurations appear to the upper layers like
@@ -89,33 +95,27 @@ struct mcpgpio_spi_softc {
 #define	MCPGPIO_TO_SPI(sc)					\
 	container_of((sc), struct mcpgpio_spi_softc, sc_mcpgpio)
 
-#if 0
 static const struct mcpgpio_variant mcp23s08 = {
 	.name = "MCP23S08",
 	.type = MCPGPIO_TYPE_23x08,
 };
-#endif
 
 static const struct mcpgpio_variant mcp23s17 = {
 	.name = "MCP23S17",
 	.type = MCPGPIO_TYPE_23x17,
 };
 
-#if 0
 static const struct mcpgpio_variant mcp23s18 = {
 	.name = "MCP23S18",
 	.type = MCPGPIO_TYPE_23x18,
 };
-#endif
 
-#if 0
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "microchip,mcp23s08",	.data = &mcp23s08 },
 	{ .compat = "microchip,mcp23s17",	.data = &mcp23s17 },
 	{ .compat = "microchip,mcp23s18",	.data = &mcp23s18 },
 	DEVICE_COMPAT_EOL
 };
-#endif
 
 static int
 mcpgpio_spi_lock(struct mcpgpio_softc *sc)
@@ -172,17 +172,70 @@ static const struct mcpgpio_accessops mcpgpio_spi_accessops = {
 	.write	=	mcpgpio_spi_write,
 };
 
+static const struct mcpgpio_variant *
+mcpgpio_spi_lookup(const struct spi_attach_args *sa)
+{
+	const struct device_compatible_entry *dce;
+
+	dce = spi_compatible_lookup(sa, compat_data);
+	if (dce == NULL) {
+		/*
+		 * Legacy indirect-config-only version of the driver
+		 * only supported MCP23S17, so that's what we go with.
+		 * If you want to use something else, then use a proper
+		 * device tree.
+		 */
+		return &mcp23s17;
+	}
+	return dce->data;
+}
+
 static int
 mcpgpio_spi_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct spi_attach_args *sa = aux;
+	int match_result;
+
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
+
 	return SPI_MATCH_DEFAULT;
 }
+
+#ifdef FDT
+static uint32_t
+mcpgpio_spi_present_mask_fdt(struct mcpgpio_softc *sc)
+{
+	devhandle_t devhandle = device_handle(sc->sc_dev);
+	int phandle = devhandle_to_of(devhandle);
+	uint32_t val;
+
+	/*
+	 * The number of devices sharing this chip select, along
+	 * with their assigned addresses, is encoded in the
+	 * "microchip,spi-present-mask" property.  Note that this
+	 * device tree binding means that we will just have a
+	 * single driver instance for however many chips are on
+	 * this chip select.  We treat them logically as banks.
+	 */
+	if (of_getprop_uint32(phandle, "microchip,spi-present-mask",
+			      &val) != 0 ||
+	    of_getprop_uint32(phandle, "mcp,spi-present-mask", &val) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "missing \"microchip,spi-present-mask\" property\n");
+		return 0;
+	}
+	return val;
+}
+#endif /* FDT */
 
 static void
 mcpgpio_spi_attach(device_t parent, device_t self, void *aux)
 {
 	struct mcpgpio_spi_softc *ssc = device_private(self);
 	struct mcpgpio_softc *sc = &ssc->sc_mcpgpio;
+	devhandle_t devhandle = device_handle(self);
 	struct spi_attach_args *sa = aux;
 	uint32_t spi_present_mask;
 	int bank, nchips, error, ha;
@@ -191,9 +244,8 @@ mcpgpio_spi_attach(device_t parent, device_t self, void *aux)
 	ssc->sc_sh = sa->sa_handle;
 
 	sc->sc_dev = self;
-	sc->sc_variant = &mcp23s17;		/* XXX */
+	sc->sc_variant = mcpgpio_spi_lookup(sa);
 	sc->sc_iocon = IOCON_HAEN | IOCON_SEQOP;
-	sc->sc_npins = MCP23x17_GPIO_NPINS;
 	sc->sc_accessops = &mcpgpio_spi_accessops;
 
 	aprint_naive("\n");	
@@ -229,30 +281,23 @@ mcpgpio_spi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#if 0
-	/*
-	 * The number of devices sharing this chip select, along
-	 * with their assigned addresses, is encoded in the
-	 * "microchip,spi-present-mask" property.  Note that this
-	 * device tree binding means that we will just have a
-	 * single driver instance for however many chips are on
-	 * this chip select.  We treat them logically as banks.
-	 */
-	if (of_getprop_uint32(phandle, "microchip,spi-present-mask",
-			      &spi_present_mask) != 0 ||
-	    of_getprop_uint32(phandle, "mcp,spi-present-mask",
-			      &spi_present_mask) != 0) {
-		aprint_error_dev(self,
-		    "missing \"microchip,spi-present-mask\" property\n");
-		return false;
+	switch (devhandle_type(devhandle)) {
+#ifdef FDT
+	case DEVHANDLE_TYPE_OF:
+		spi_present_mask = mcpgpio_spi_present_mask_fdt(sc);
+		if (spi_present_mask == 0) {
+			/* Error already displayed. */
+			return;
+		}
+		break;
+#endif /* FDT */
+	default:
+		/*
+		 * Legacy indirect-config-only only supported a single
+		 * chip on the chip-select.
+		 */
+		spi_present_mask = __BIT(device_cfdata(self)->cf_flags & 0x7);
 	}
-#else
-	/*
-	 * XXX Until we support decoding the DT properties that
-	 * XXX give us the topology information.
-	 */
-	spi_present_mask = __BIT(device_cfdata(self)->cf_flags & 0x7);
-#endif
 
 	/*
 	 * The 23S08 has 2 address pins (4 devices per chip select),
