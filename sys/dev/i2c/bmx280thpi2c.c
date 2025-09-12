@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpi2c.c,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
+/*	$NetBSD: bmx280thpi2c.c,v 1.2 2025/09/12 02:22:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.1 2022/12/03 01:04:43 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.2 2025/09/12 02:22:25 thorpej Exp $");
 
 /*
  * I2C driver for the Bosch BMP280 / BME280 sensor.
@@ -41,6 +41,25 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.1 2022/12/03 01:04:43 brad Exp $"
 #include <dev/spi/spivar.h>
 #include <dev/ic/bmx280reg.h>
 #include <dev/ic/bmx280var.h>
+
+/*
+ * XXX Should add configuration information for variants ...
+ * XXX E devices have humidity sensors, P devices do not.
+ */
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "bosch,bmp280" },
+	{ .compat = "bosch,bme280" },
+#if 0
+	/*
+	 * XXX Should also add support for:
+	 *	bosch,bmp085
+	 *	bosch,bmp180
+	 *	bosch,bmp380
+	 *	bosch,bmp580
+	 */
+#endif
+	DEVICE_COMPAT_EOL
+};
 
 extern void	bmx280_attach(struct bmx280_sc *);
 
@@ -148,14 +167,15 @@ bmx280thpi2c_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
 }
 
 static int
-bmx280thpi2c_match(device_t parent, cfdata_t match, void *aux)
+bmx280thpi2c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int error, match_result;
 	const bool matchdebug = false;
 
-	if (iic_use_direct_match(ia, match, NULL, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result)) {
 		return match_result;
+	}
 
 	/* indirect config - check for configured address */
 	if (ia->ia_addr != BMX280_TYPICAL_ADDR_1 &&
@@ -197,6 +217,14 @@ bmx280thpi2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_func_write_register = &bmx280thpi2c_write_register;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
+
+	/*
+	 * XXX Need to get this data from the device tree:
+	 *
+	 *	vddd-supply	(a regulator)
+	 *	vdda-supply	(a regulator)
+	 *	reset-gpios	(a gpio, active-low reset)
+	 */
 
 	bmx280_attach(sc);
 

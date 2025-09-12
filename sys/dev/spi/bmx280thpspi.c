@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpspi.c,v 1.3 2025/09/11 14:12:38 thorpej Exp $	*/
+/*	$NetBSD: bmx280thpspi.c,v 1.4 2025/09/12 02:23:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.3 2025/09/11 14:12:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.4 2025/09/12 02:23:06 thorpej Exp $");
 
 /*
  * SPI driver for the Bosch BMP280 / BME280 sensor.
@@ -41,6 +41,25 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.3 2025/09/11 14:12:38 thorpej Exp
 #include <dev/spi/spivar.h>
 #include <dev/ic/bmx280reg.h>
 #include <dev/ic/bmx280var.h>
+
+/*
+ * XXX Should add configuration information for variants ...
+ * XXX E devices have humidity sensors, P devices do not.
+ */
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "bosch,bmp280" },
+	{ .compat = "bosch,bme280" },
+#if 0
+	/*
+	 * XXX Should also add support for:
+	 *	bosch,bmp085
+	 *	bosch,bmp180
+	 *	bosch,bmp380
+	 *	bosch,bmp580
+	 */
+#endif
+	DEVICE_COMPAT_EOL
+};
 
 extern void	bmx280_attach(struct bmx280_sc *);
 
@@ -145,10 +164,11 @@ bmx280thpspi_release_bus(struct bmx280_sc *sc)
 static int
 bmx280thpspi_match(device_t parent, cfdata_t match, void *aux)
 {
-	const bool matchdebug = false;
+	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	if (matchdebug) {
-		printf("Trying to match\n");
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
 	}
 
 	return SPI_MATCH_DEFAULT;
@@ -180,6 +200,14 @@ bmx280thpspi_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		return;
 	}
+
+	/*
+	 * XXX Need to get this data from the device tree:
+	 *
+	 *	vddd-supply	(a regulator)
+	 *	vdda-supply	(a regulator)
+	 *	reset-gpios	(a gpio, active-low reset)
+	 */
 
 	/* Please note that if the pins are not set up for SPI, the attachment
 	 * will probably not work out.
