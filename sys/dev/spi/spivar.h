@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.22 2025/09/13 14:10:44 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.23 2025/09/13 17:51:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,6 +44,7 @@
 #ifndef	_DEV_SPI_SPIVAR_H_
 #define	_DEV_SPI_SPIVAR_H_
 
+#include <sys/device.h>
 #include <sys/queue.h>
 
 /*
@@ -96,6 +97,7 @@ struct spi_attach_args {
 	int		sa_ncompat;	/* number of pointers in the
 					   sa_compat array */
 	const char **	sa_compat;	/* chip names */
+	devhandle_t	sa_devhandle;	/* device handle for the device */
 };
 
 /*

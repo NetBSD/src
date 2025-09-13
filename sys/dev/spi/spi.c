@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.33 2025/09/13 14:10:44 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.34 2025/09/13 17:51:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.33 2025/09/13 14:10:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.34 2025/09/13 17:51:08 thorpej Exp $");
 
 #include "locators.h"
 
@@ -76,6 +76,7 @@ struct spi_softc {
 	int			sc_slave;
 	int			sc_nslaves;
 	spi_handle_t		sc_slaves;
+	kmutex_t		sc_slave_state_lock;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
 	kmutex_t		sc_dev_lock;
@@ -106,13 +107,15 @@ const struct cdevsw spi_cdevsw = {
  * SPI slave device.  We have one of these per slave.
  */
 struct spi_handle {
-	struct spi_softc	*sh_sc;
-	const struct spi_controller *sh_controller;
-	int			sh_slave;
-	int			sh_mode;
-	int			sh_speed;
-	int			sh_flags;
-#define SPIH_ATTACHED		1
+	struct spi_softc	*sh_sc;		    /* static */
+	const struct spi_controller *sh_controller; /* static */
+	int			sh_slave;	    /* static */
+	int			sh_mode;	/* locked by owning child */
+	int			sh_speed;	/* locked by owning child */
+	int			sh_flags;	/* vv slave_state_lock vv */
+#define SPIH_ATTACHED		__BIT(0)
+#define	SPIH_DIRECT		__BIT(1)
+	device_t		sh_dev;		/* ^^ slave_state_lock ^^ */
 };
 
 #define SPI_MAXDATA 4096
@@ -150,27 +153,78 @@ spi_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+static void
+spi_attach_child(struct spi_softc *sc, struct spi_attach_args *sa,
+    int chip_select, cfdata_t cf)
+{
+	spi_handle_t sh;
+	device_t newdev = NULL;
+	bool is_direct = cf == NULL;
+	const int skip_flags = is_direct ? SPIH_ATTACHED
+					 : (SPIH_ATTACHED | SPIH_DIRECT);
+	const int claim_flags = skip_flags ^ SPIH_DIRECT;
+	int locs[SPICF_NLOCS] = { 0 };
+
+	if (chip_select < 0 ||
+	    chip_select >= sc->sc_controller->sct_nslaves) {
+		return;
+	}
+
+	sh = &sc->sc_slaves[chip_select];
+
+	mutex_enter(&sc->sc_slave_state_lock);
+	if (ISSET(sh->sh_flags, skip_flags)) {
+		mutex_exit(&sc->sc_slave_state_lock);
+		return;
+	}
+
+	/* Keep others off of this chip select. */
+	SET(sh->sh_flags, claim_flags);
+	mutex_exit(&sc->sc_slave_state_lock);
+
+	locs[SPICF_SLAVE] = chip_select;
+	sa->sa_handle = sh;
+
+	if (is_direct) {
+		newdev = config_found(sc->sc_dev, sa, spi_print,
+		    CFARGS(.submatch = config_stdsubmatch,
+			   .locators = locs,
+			   .devhandle = sa->sa_devhandle));
+	} else {
+		if (config_probe(sc->sc_dev, cf, &sa)) {
+			newdev = config_attach(sc->sc_dev, cf, &sa, spi_print,
+			    CFARGS(.locators = locs));
+		}
+	}
+
+	mutex_enter(&sc->sc_slave_state_lock);
+	if (newdev == NULL) {
+		/*
+		 * Clear our claim on this chip select (yes, just
+		 * the ATTACHED flag; we want to keep indirects off
+		 * of chip selects for which there is a device tree
+		 * node).
+		 */
+		CLR(sh->sh_flags, SPIH_ATTACHED);
+	} else {
+		/* Record the child for posterity. */
+		sh->sh_dev = newdev;
+	}
+	mutex_exit(&sc->sc_slave_state_lock);
+}
+
 static int
 spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct spi_softc *sc = device_private(parent);
-	struct spi_attach_args sa;
-	int addr;
 
-	addr = cf->cf_loc[SPICF_SLAVE];
-	if ((addr < 0) || (addr >= sc->sc_controller->sct_nslaves)) {
-		return -1;
+	if (cf->cf_loc[SPICF_SLAVE] == SPICF_SLAVE_DEFAULT) {
+		/* No wildcards for indirect on SPI. */
+		return 0;
 	}
 
-	memset(&sa, 0, sizeof sa);
-	sa.sa_handle = &sc->sc_slaves[addr];
-	if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
-		return -1;
-
-	if (config_probe(parent, cf, &sa)) {
-		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
-		config_attach(parent, cf, &sa, spi_print, CFARGS_NONE);
-	}
+	struct spi_attach_args sa = { 0 };
+	spi_attach_child(sc, &sa, cf->cf_loc[SPICF_SLAVE], cf);
 
 	return 0;
 }
@@ -225,7 +279,7 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 	prop_data_t cdata;
 	devhandle_t parent_handle = device_handle(sc->sc_dev);
 	devhandle_t child_handle;
-	uint32_t slave;
+	uint32_t chip_select;
 	uint64_t cookie;
 	struct spi_attach_args sa;
 	int loc[SPICF_NLOCS];
@@ -254,18 +308,16 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 		child = prop_array_get(child_devices, i);
 		if (!child)
 			continue;
-		if (!prop_dictionary_get_uint32(child, "slave", &slave))
-			continue;
-		if (slave >= sc->sc_controller->sct_nslaves)
+		if (!prop_dictionary_get_uint32(child, "slave", &chip_select))
 			continue;
 		if (!prop_dictionary_get_uint64(child, "cookie", &cookie))
 			continue;
 		if (!(cdata = prop_dictionary_get(child, "compatible")))
 			continue;
-		loc[SPICF_SLAVE] = slave;
+		loc[SPICF_SLAVE] = chip_select;
 
 		memset(&sa, 0, sizeof sa);
-		sa.sa_handle = &sc->sc_slaves[slave];
+		sa.sa_handle = &sc->sc_slaves[chip_select];
 
 		/* XXX Really, I promise, it'll get better... */
 		switch (devhandle_type(parent_handle)) {
@@ -278,18 +330,14 @@ spi_direct_attach_child_devices(struct spi_softc *sc)
 		default:
 			child_handle = devhandle_invalid();
 		}
-
-		if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
-			continue;
-		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
+		sa.sa_devhandle = child_handle;
 
 		buf = NULL;
 		spi_fill_compat(&sa,
 				prop_data_value(cdata),
 				prop_data_size(cdata), &buf);
-		config_found(sc->sc_dev, &sa, spi_print,
-		    CFARGS(.locators = loc,
-			   .devhandle = child_handle));
+
+		spi_attach_child(sc, &sa, chip_select, NULL);
 
 		if (sa.sa_compat)
 			free(sa.sa_compat, M_TEMP);
@@ -356,6 +404,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_dev_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_slave_state_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "spictl");
 
 	sc->sc_dev = self;
