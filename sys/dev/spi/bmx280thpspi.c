@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpspi.c,v 1.4 2025/09/12 02:23:06 thorpej Exp $	*/
+/*	$NetBSD: bmx280thpspi.c,v 1.5 2025/09/13 14:10:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.4 2025/09/12 02:23:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.5 2025/09/13 14:10:44 thorpej Exp $");
 
 /*
  * SPI driver for the Bosch BMP280 / BME280 sensor.
@@ -90,7 +90,7 @@ CFATTACH_DECL_NEW(bmx280thpspi, sizeof(struct bmx280_sc),
  */
 
 static int
-bmx280thpspi_read_reg_direct(struct spi_handle *sh, uint8_t reg,
+bmx280thpspi_read_reg_direct(spi_handle_t sh, uint8_t reg,
     uint8_t *buf, size_t rlen)
 {
 	int err = 0;
@@ -117,7 +117,7 @@ bmx280thpspi_read_reg(struct bmx280_sc *sc, uint8_t reg, uint8_t *buf, size_t rl
  * data.  These pairs can be repeated as many times as you like.
  */
 static int
-bmx280thpspi_write_reg_direct(struct spi_handle *sh, uint8_t *buf, size_t slen)
+bmx280thpspi_write_reg_direct(spi_handle_t sh, uint8_t *buf, size_t slen)
 {
 	int err = 0;
 	int i;

@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.23 2025/09/13 13:24:46 thorpej Exp $ */
+/* $NetBSD: m25p.c,v 1.24 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.23 2025/09/13 13:24:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.24 2025/09/13 14:10:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,12 +62,12 @@ static int m25p_match(device_t , cfdata_t , void *);
 static void m25p_attach(device_t , device_t , void *);
 static void m25p_doattach(device_t);
 static const char *m25p_getname(void *);
-static struct spi_handle *m25p_gethandle(void *);
+static spi_handle_t m25p_gethandle(void *);
 static int m25p_getflags(void *);
 static int m25p_getsize(void *, int);
 
 struct m25p_softc {
-	struct spi_handle	*sc_sh;
+	spi_handle_t		sc_sh;
 	const char		*sc_name;
 	int			sc_sizes[SPIFLASH_SIZE_COUNT];
 	int			sc_flags;
@@ -226,7 +226,7 @@ m25p_getname(void *cookie)
 	return (sc->sc_name);
 }
 
-struct spi_handle *
+spi_handle_t
 m25p_gethandle(void *cookie)
 {
 	struct m25p_softc *sc = cookie;

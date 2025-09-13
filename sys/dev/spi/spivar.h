@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.21 2025/09/11 13:24:11 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.22 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -55,6 +55,8 @@
 struct spi_handle;
 struct spi_transfer;
 
+typedef struct spi_handle *spi_handle_t;
+
 #define	SPI_MODE_CPHA	__BIT(0)
 #define	SPI_MODE_CPOL	__BIT(1)
 
@@ -88,10 +90,11 @@ struct spibus_attach_args {
 };
 
 struct spi_attach_args {
-	struct spi_handle	*sa_handle;
+	spi_handle_t		sa_handle;
+
 	/* only set if using direct config */
 	int		sa_ncompat;	/* number of pointers in the
-					   ia_compat array */
+					   sa_compat array */
 	const char **	sa_compat;	/* chip names */
 };
 
@@ -173,8 +176,9 @@ int	spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
 const struct device_compatible_entry *
 	spi_compatible_lookup(const struct spi_attach_args *,
 	    const struct device_compatible_entry *);
-int	spi_configure(device_t, struct spi_handle *, int, int);
-int	spi_transfer(struct spi_handle *, struct spi_transfer *);
+
+int	spi_configure(device_t, spi_handle_t, int, int);
+int	spi_transfer(spi_handle_t, struct spi_transfer *);
 void	spi_transfer_init(struct spi_transfer *);
 void	spi_chunk_init(struct spi_chunk *, int, const uint8_t *, uint8_t *);
 void	spi_transfer_add(struct spi_transfer *, struct spi_chunk *);
@@ -182,9 +186,8 @@ void	spi_wait(struct spi_transfer *);
 void	spi_done(struct spi_transfer *, int);
 
 /* convenience wrappers */
-int	spi_send(struct spi_handle *, int, const uint8_t *);
-int	spi_recv(struct spi_handle *, int, uint8_t *);
-int	spi_send_recv(struct spi_handle *, int, const uint8_t *, int,
-	    uint8_t *);
+int	spi_send(spi_handle_t, int, const uint8_t *);
+int	spi_recv(spi_handle_t, int, uint8_t *);
+int	spi_send_recv(spi_handle_t, int, const uint8_t *, int, uint8_t *);
 
 #endif	/* _DEV_SPI_SPIVAR_H_ */

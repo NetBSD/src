@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.h,v 1.4 2009/05/12 14:45:08 cegger Exp $ */
+/* $NetBSD: spiflash.h,v 1.5 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -112,7 +112,7 @@ struct spiflash_hw_if {
 	 * Driver MUST provide these.
 	 */
 	const char *(*sf_getname)(void *);
-	struct spi_handle *(*sf_gethandle)(void *);
+	spi_handle_t (*sf_gethandle)(void *);
 	int	(*sf_getflags)(void *);
 	int	(*sf_getsize)(void *, int);
 

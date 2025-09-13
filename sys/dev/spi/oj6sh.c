@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.13 2025/09/11 14:11:38 thorpej Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.14 2025/09/13 14:10:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.13 2025/09/11 14:11:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.14 2025/09/13 14:10:44 thorpej Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -80,7 +80,7 @@ int oj6sh_debug = OJ6SH_DEBUG;
 struct oj6sh_softc {
 	device_t sc_dev;
 
-	struct spi_handle *sc_sh;
+	spi_handle_t sc_sh;
 	struct callout sc_c;
 
 	kmutex_t sc_lock;
@@ -97,19 +97,19 @@ struct oj6sh_delta {
 	int y;
 };
 
-static uint8_t oj6sh_read(struct spi_handle *, uint8_t);
-static void oj6sh_write(struct spi_handle *, uint8_t, uint8_t);
+static uint8_t oj6sh_read(spi_handle_t, uint8_t);
+static void oj6sh_write(spi_handle_t, uint8_t, uint8_t);
 
-static int oj6sh_match(device_t , cfdata_t , void *);
-static void oj6sh_attach(device_t , device_t , void *);
+static int oj6sh_match(device_t, cfdata_t, void *);
+static void oj6sh_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(oj6sh, sizeof(struct oj6sh_softc),
     oj6sh_match, oj6sh_attach, NULL, NULL);
 
-static bool oj6sh_motion(struct spi_handle *);
-static bool oj6sh_squal(struct spi_handle *);
-static bool oj6sh_shuttrer(struct spi_handle *);
-static int oj6sh_readdelta(struct spi_handle *, struct oj6sh_delta *);
+static bool oj6sh_motion(spi_handle_t);
+static bool oj6sh_squal(spi_handle_t);
+static bool oj6sh_shuttrer(spi_handle_t);
+static int oj6sh_readdelta(spi_handle_t, struct oj6sh_delta *);
 
 static void oj6sh_poll(void *);
 static void oj6sh_cb(struct work *, void *);
@@ -267,7 +267,7 @@ out:
 }
 
 static uint8_t
-oj6sh_read(struct spi_handle *spi, uint8_t reg)
+oj6sh_read(spi_handle_t spi, uint8_t reg)
 {
 	uint8_t ret = 0;
 
@@ -277,7 +277,7 @@ oj6sh_read(struct spi_handle *spi, uint8_t reg)
 }
 
 static void
-oj6sh_write(struct spi_handle *spi, uint8_t reg, uint8_t val)
+oj6sh_write(spi_handle_t spi, uint8_t reg, uint8_t val)
 {
 	uint8_t tmp[2] = {reg | 0x80, val};
 
@@ -287,7 +287,7 @@ oj6sh_write(struct spi_handle *spi, uint8_t reg, uint8_t val)
 }
 
 static bool
-oj6sh_motion(struct spi_handle *spi)
+oj6sh_motion(spi_handle_t spi)
 {
 	uint16_t motion;
 	motion = oj6sh_read(spi, OJ6SH_MOTION);
@@ -295,7 +295,7 @@ oj6sh_motion(struct spi_handle *spi)
 }
 
 static bool
-oj6sh_squal(struct spi_handle *spi)
+oj6sh_squal(spi_handle_t spi)
 {
 	uint16_t squal;
 	squal = oj6sh_read(spi, OJ6SH_SQUAL);
@@ -303,7 +303,7 @@ oj6sh_squal(struct spi_handle *spi)
 }
 
 static bool
-oj6sh_shuttrer(struct spi_handle *spi)
+oj6sh_shuttrer(spi_handle_t spi)
 {
 	uint16_t shutter;
 	shutter = oj6sh_read(spi, OJ6SH_SHUTTER) << 8;
@@ -312,7 +312,7 @@ oj6sh_shuttrer(struct spi_handle *spi)
 }
 
 static int
-oj6sh_readdelta(struct spi_handle *spi, struct oj6sh_delta *delta)
+oj6sh_readdelta(spi_handle_t spi, struct oj6sh_delta *delta)
 {
 	delta->x = (int8_t)oj6sh_read(spi, OJ6SH_DELTA_X);
 	delta->y = (int8_t)oj6sh_read(spi, OJ6SH_DELTA_Y);
@@ -401,4 +401,3 @@ oj6sh_resume(device_t dv, const pmf_qual_t *qual)
 
 	return true;
 }
-

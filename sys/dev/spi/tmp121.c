@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.11 2025/09/13 13:24:46 thorpej Exp $ */
+/* $NetBSD: tmp121.c,v 1.12 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.11 2025/09/13 13:24:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.12 2025/09/13 14:10:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.11 2025/09/13 13:24:46 thorpej Exp $");
 #include <dev/spi/spivar.h>
 
 struct tmp121temp_softc {
-	struct spi_handle *sc_sh;
+	spi_handle_t sc_sh;
 	
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;

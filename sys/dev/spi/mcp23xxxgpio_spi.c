@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.7 2025/09/12 01:53:56 thorpej Exp $ */
+/*      $NetBSD: mcp23xxxgpio_spi.c,v 1.8 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.7 2025/09/12 01:53:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp23xxxgpio_spi.c,v 1.8 2025/09/13 14:10:44 thorpej Exp $");
 
 /* 
  * Driver for Microchip serial I/O expanders:
@@ -75,7 +75,7 @@ struct mcpgpio_spi_softc {
 	struct mcpgpio_softc	sc_mcpgpio;
 
 	kmutex_t		sc_mutex;
-	struct spi_handle      *sc_sh; 
+	spi_handle_t		sc_sh;
 	uint8_t			sc_ha[MCPGPIO_SPI_MAXBANKS];
 };
 

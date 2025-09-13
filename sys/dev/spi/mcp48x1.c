@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp48x1.c,v 1.6 2025/09/13 13:25:54 thorpej Exp $ */
+/*      $NetBSD: mcp48x1.c,v 1.7 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.6 2025/09/13 13:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.7 2025/09/13 14:10:44 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP4801/MCP4811/MCP4821 DAC. 
@@ -64,7 +64,7 @@ struct mcp48x1dac_model {
 
 struct mcp48x1dac_softc {
 	device_t sc_dev;
-	struct spi_handle *sc_sh;
+	spi_handle_t sc_sh;
 
 	const struct mcp48x1dac_model *sc_dm;
 

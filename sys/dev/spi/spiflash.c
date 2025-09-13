@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.27 2022/10/26 21:56:19 andvar Exp $ */
+/* $NetBSD: spiflash.c,v 1.28 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.27 2022/10/26 21:56:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.28 2025/09/13 14:10:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -78,7 +78,7 @@ struct spiflash_softc {
 	void			*sc_cookie;
 
 	const char		*sc_name;
-	struct spi_handle	*sc_handle;
+	spi_handle_t		sc_handle;
 	int			sc_device_size;
 	int			sc_write_size;
 	int			sc_erase_size;

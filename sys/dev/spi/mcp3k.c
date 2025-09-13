@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.9 2025/09/13 13:25:26 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.10 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct mcp3kadc_model {
 
 struct mcp3kadc_softc {
 	device_t			sc_dev;
-	struct spi_handle 		*sc_sh;
+	spi_handle_t			sc_sh;
 	const struct mcp3kadc_model	*sc_model;
 	uint32_t			sc_adc_max;
 	int32_t				sc_vref_mv;

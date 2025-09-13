@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdspi.c,v 1.6 2025/09/12 13:48:26 thorpej Exp $	*/
+/*	$NetBSD: scmdspi.c,v 1.7 2025/09/13 14:10:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.6 2025/09/12 13:48:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.7 2025/09/13 14:10:44 thorpej Exp $");
 
 /*
  * SPI driver for the Sparkfun Serial motor controller.
@@ -83,8 +83,7 @@ CFATTACH_DECL_NEW(scmdspi, sizeof(struct scmd_sc),
  * Ardunio code does 50us, so do likewise.
  */
 static int
-scmdspi_read_reg_direct(struct spi_handle *sh, uint8_t reg,
-    uint8_t *buf)
+scmdspi_read_reg_direct(spi_handle_t sh, uint8_t reg, uint8_t *buf)
 {
 	int err;
 	uint8_t b;
@@ -126,8 +125,7 @@ scmdspi_read_reg(struct scmd_sc *sc, uint8_t reg, uint8_t *buf)
  * This does more or less what the Ardunio code does.
  */
 static int
-scmdspi_write_reg_direct(struct spi_handle *sh, uint8_t reg,
-    uint8_t buf)
+scmdspi_write_reg_direct(spi_handle_t sh, uint8_t reg, uint8_t buf)
 {
 	uint8_t rreg = reg & 0x7F;
 	int err;

@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.32 2025/09/11 13:24:11 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.33 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.32 2025/09/11 13:24:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.33 2025/09/13 14:10:44 thorpej Exp $");
 
 #include "locators.h"
 
@@ -75,7 +75,7 @@ struct spi_softc {
 	int			sc_speed;
 	int			sc_slave;
 	int			sc_nslaves;
-	struct spi_handle	*sc_slaves;
+	spi_handle_t		sc_slaves;
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
 	kmutex_t		sc_dev_lock;
@@ -362,7 +362,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_controller = sba->sba_controller;
 	sc->sc_nslaves = sba->sba_controller->sct_nslaves;
 	/* allocate slave structures */
-	sc->sc_slaves = malloc(sizeof (struct spi_handle) * sc->sc_nslaves,
+	sc->sc_slaves = malloc(sizeof(*sc->sc_slaves) * sc->sc_nslaves,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_speed = 0;
@@ -419,7 +419,7 @@ static int
 spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	struct spi_softc *sc = device_lookup_private(&spi_cd, minor(dev));
-	struct spi_handle *sh;
+	spi_handle_t sh;
 	spi_ioctl_configure_t *sic;
 	spi_ioctl_transfer_t *sit;
 	uint8_t *sbuf, *rbuf;
@@ -507,7 +507,7 @@ CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
  * returned.
  */
 int
-spi_configure(device_t dev __unused, struct spi_handle *sh, int mode, int speed)
+spi_configure(device_t dev __unused, spi_handle_t sh, int mode, int speed)
 {
 
 	sh->sh_mode = mode;
@@ -522,7 +522,7 @@ spi_configure(device_t dev __unused, struct spi_handle *sh, int mode, int speed)
  * Acquire controller
  */
 static void
-spi_acquire(struct spi_handle *sh)
+spi_acquire(spi_handle_t sh)
 {
 	struct spi_softc *sc = sh->sh_sc;
 
@@ -537,7 +537,7 @@ spi_acquire(struct spi_handle *sh)
  * Release controller
  */
 static void
-spi_release(struct spi_handle *sh)
+spi_release(spi_handle_t sh)
 {
 	struct spi_softc *sc = sh->sh_sc;
 
@@ -584,7 +584,7 @@ spi_transfer_add(struct spi_transfer *st, struct spi_chunk *chunk)
 }
 
 int
-spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
+spi_transfer(spi_handle_t sh, struct spi_transfer *st)
 {
 	struct spi_softc	*sc = sh->sh_sc;
 	const struct spi_controller *tag = sh->sh_controller;
@@ -640,7 +640,7 @@ spi_transfer(struct spi_handle *sh, struct spi_transfer *st)
 void
 spi_wait(struct spi_transfer *st)
 {
-	struct spi_handle *sh = st->st_spiprivate;
+	spi_handle_t sh = st->st_spiprivate;
 
 	mutex_enter(&st->st_lock);
 	while (!(st->st_flags & SPI_F_DONE)) {
@@ -687,7 +687,7 @@ spi_done(struct spi_transfer *st, int err)
  * wrappers.
  */
 int
-spi_recv(struct spi_handle *sh, int cnt, uint8_t *data)
+spi_recv(spi_handle_t sh, int cnt, uint8_t *data)
 {
 	struct spi_transfer	trans;
 	struct spi_chunk	chunk;
@@ -707,7 +707,7 @@ spi_recv(struct spi_handle *sh, int cnt, uint8_t *data)
 }
 
 int
-spi_send(struct spi_handle *sh, int cnt, const uint8_t *data)
+spi_send(spi_handle_t sh, int cnt, const uint8_t *data)
 {
 	struct spi_transfer	trans;
 	struct spi_chunk	chunk;
@@ -727,7 +727,7 @@ spi_send(struct spi_handle *sh, int cnt, const uint8_t *data)
 }
 
 int
-spi_send_recv(struct spi_handle *sh, int scnt, const uint8_t *snd,
+spi_send_recv(spi_handle_t sh, int scnt, const uint8_t *snd,
     int rcnt, uint8_t *rcv)
 {
 	struct spi_transfer	trans;

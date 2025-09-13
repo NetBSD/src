@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.17 2025/09/11 14:11:38 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.18 2025/09/13 14:10:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.17 2025/09/11 14:11:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.18 2025/09/13 14:10:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ struct bs_state {
 
 struct ssdfb_spi_softc {
 	struct ssdfb_softc	sc;
-	struct spi_handle	*sc_sh;
+	spi_handle_t		sc_sh;
 #ifdef FDT
 	struct fdtbus_gpio_pin	*sc_gpio_dc;
 	struct fdtbus_gpio_pin	*sc_gpio_res;
