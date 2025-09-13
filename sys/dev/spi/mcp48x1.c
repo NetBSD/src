@@ -1,4 +1,4 @@
-/*      $NetBSD: mcp48x1.c,v 1.5 2025/09/11 14:12:38 thorpej Exp $ */
+/*      $NetBSD: mcp48x1.c,v 1.6 2025/09/13 13:25:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.5 2025/09/11 14:12:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.6 2025/09/13 13:25:54 thorpej Exp $");
 
 /* 
  * Driver for Microchip MCP4801/MCP4811/MCP4821 DAC. 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcp48x1.c,v 1.5 2025/09/11 14:12:38 thorpej Exp $");
 #define MCP48X1DAC_DATA		__BITS(11,0)	/* data */
 
 struct mcp48x1dac_model {
-	const char *name;
+	unsigned int name;
 	uint8_t	resolution;
 	uint8_t	shift;			/* data left shift during write */
 };
@@ -66,7 +66,7 @@ struct mcp48x1dac_softc {
 	device_t sc_dev;
 	struct spi_handle *sc_sh;
 
-	struct mcp48x1dac_model *sc_dm;	/* struct describing DAC model */
+	const struct mcp48x1dac_model *sc_dm;
 
 	uint16_t sc_dac_data;
 	bool sc_dac_gain;
@@ -93,48 +93,100 @@ static int	sysctl_mcp48x1dac_gain(SYSCTLFN_ARGS);
 CFATTACH_DECL_NEW(mcp48x1dac, sizeof(struct mcp48x1dac_softc),
     mcp48x1dac_match, mcp48x1dac_attach, NULL, NULL);
 
-static struct mcp48x1dac_model mcp48x1_models[] = {
-	{
-		.name = "MCP4801",
-		.resolution = 8,
-		.shift = 4
-	},
-	{
-		.name = "MCP4811",
-		.resolution = 10,
-		.shift = 2
-	},
-	{
-		.name = "MCP4821",
-		.resolution = 12,
-		.shift = 0
-	}
+static const struct mcp48x1dac_model mcp4801 = {
+	.name = 4801,
+	.resolution = 8,
+	.shift = 4
 };
 
+static const struct mcp48x1dac_model mcp4811 = {
+	.name = 4811,
+	.resolution = 10,
+	.shift = 2
+};
+
+static const struct mcp48x1dac_model mcp4821 = {
+	.name = 4821,
+	.resolution = 12,
+	.shift = 0
+};
+
+/*
+ * N.B. The order of this table is important!  It matches the order
+ * of the legacy mcp48x1_models[] array, which is used to manually
+ * select the device type in the kernel configuration file when
+ * direct configuration is not available.
+ */
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "microchip,mcp4801",	.data = &mcp4801 },
+	{ .compat = "microchip,mcp4811",	.data = &mcp4811 },
+	{ .compat = "microchip,mcp4821",	.data = &mcp4821 },
+
+	DEVICE_COMPAT_EOL
+};
+static const int mcp48x1_nmodels = __arraycount(compat_data) - 1;
+
+static const struct mcp48x1dac_model *
+mcp48x1dac_lookup(const struct spi_attach_args *sa, const cfdata_t cf)
+{
+	const struct mcp48x1dac_model *model = NULL;
+	const struct device_compatible_entry *dce =
+	    spi_compatible_lookup(sa, compat_data);
+
+	if (dce != NULL) {
+		model = dce->data;
+	} else if (cf->cf_flags >= 0 && cf->cf_flags < mcp48x1_nmodels) {
+		model = compat_data[cf->cf_flags].data;
+	}
+	return model;
+}
 
 static int
 mcp48x1dac_match(device_t parent, cfdata_t cf, void *aux)
 {
+	struct spi_attach_args *sa = aux;
+	int match_result;
+
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
+
+	/*
+	 * If we're doing indirect config, the user must
+	 * have specified a valid model.
+	 */
+	if (mcp48x1dac_lookup(sa, cf) == NULL) {
+		return 0;
+	}
+
 	return SPI_MATCH_DEFAULT;
 }
 
 static void
 mcp48x1dac_attach(device_t parent, device_t self, void *aux)
 {
-	struct mcp48x1dac_softc *sc;
-	struct spi_attach_args *sa;
-	int error, cf_flags;
+	struct mcp48x1dac_softc *sc = device_private(self);
+	struct spi_attach_args *sa = aux;
+	const struct mcp48x1dac_model *model;
+	int error;
 
-	aprint_naive(": Digital to Analog converter\n");	
-	aprint_normal(": MCP48x1 DAC\n");
-
-	sa = aux;
-	sc = device_private(self);
 	sc->sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
-	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;
 
-	sc->sc_dm = &mcp48x1_models[cf_flags]; /* flag value defines model */
+	model = mcp48x1dac_lookup(sa, device_cfdata(self));
+	KASSERT(model != NULL);
+
+	sc->sc_dm = model;
+
+	aprint_naive(": Digital to Analog converter\n");	
+	aprint_normal(": MCP%u DAC\n", model->name);
+
+	/*
+	 * XXX Deal with other properties described in the device
+	 * tree bindings.
+	 *
+	 * https://www.kernel.org/doc/Documentation/devicetree/bindings/iio/dac/microchip%2Cmcp4821.yaml
+	 */
 
 	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
 	    SPI_FREQ_MHz(20));
@@ -142,7 +194,7 @@ mcp48x1dac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if(!mcp48x1dac_envsys_attach(sc)) {
+	if (!mcp48x1dac_envsys_attach(sc)) {
 		aprint_error_dev(sc->sc_dev, "failed to attach envsys\n");
 		return;
 	};
