@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.22 2025/09/11 14:11:38 thorpej Exp $ */
+/* $NetBSD: m25p.c,v 1.23 2025/09/13 13:24:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.22 2025/09/11 14:11:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.23 2025/09/13 13:24:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,6 @@ m25p_attach(device_t parent, device_t self, void *aux)
 	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
 	    SPI_FREQ_MHz(20));
 	if (error) {
-		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
-		    error);
 		return;
 	}
 
