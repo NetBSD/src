@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.37 2025/09/12 19:20:46 tsutsui Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.38 2025/09/13 17:08:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -83,7 +83,7 @@ static char   *saveRead(int, off_t, off_t, const char *);
 static void    safewrite(int, const void *, off_t, const char *);
 static void    copy(int, int, off_t, off_t);
 static void    combine(struct sect *, struct sect *, int);
-static size_t  estimate_stringsize(const Elf32_Sym *elf_syms, int nsymbols,
+static size_t  compute_stringsize(const Elf32_Sym *elf_syms, int nsymbols,
     const char *elf_stringbase);
 static void    translate_syms(struct elf_syms *, struct ecoff_syms *);
 static void    elf_symbol_table_to_ecoff(int, int, struct ecoff32_exechdr *,
@@ -718,12 +718,12 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 }
 
 /*
- * Estimate total ECOFF string table size.
+ * Compute the total ECOFF string table size.
  * ELF .strtab can share or overlap substrings,
  * but ECOFF table needs to have duplicated names.
  */
 static size_t
-estimate_stringsize(const Elf32_Sym *elf_syms, int nsyms,
+compute_stringsize(const Elf32_Sym *elf_syms, int nsyms,
     const char *stringbase)
 {
 	size_t stringsize = 0;
@@ -767,7 +767,7 @@ translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 	ecoffp->ecoff_syms = malloc(sizeof(struct ecoff_extsym) * nsyms);
 
 	/* ECOFF string table could be bigger than the ELF one. */
-	stringsize = estimate_stringsize(elfp->elf_syms, nsyms, oldstringbase);
+	stringsize = compute_stringsize(elfp->elf_syms, nsyms, oldstringbase);
 	if (debug) {
 		fprintf(stderr,
 		    "%zu (0x%zx) bytes ELF string table\n",
