@@ -1,5 +1,5 @@
 /* Definitions for specs for Objective-C++.
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -37,7 +37,7 @@ along with GCC; see the file COPYING3.  If not see
       cc1objplus %{save-temps*|no-integrated-cpp:-fpreprocessed %{save-temps*:%b.mii} %{!save-temps*:%g.mii}}\
 	      %{!save-temps*:%{!no-integrated-cpp:%(cpp_unique_options)}}\
 	%(cc1_options) %2\
-        -o %g.s %{!o*:--output-pch=%i.gch} %W{o*:--output-pch=%*}%V}}}",
+        -o %g.s %{!o*:--output-pch %i.gch} %W{o*:--output-pch %*}%V}}}",
      CPLUSPLUS_CPP_SPEC, 0, 0},
   {"@objective-c++",
     "%{E|M|MM:cc1objplus -E %(cpp_options) %2 %(cpp_debug_options)}\

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.
    Renesas H8/300 version
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -100,6 +100,7 @@ extern int h8300_initial_elimination_offset (int, int);
 extern int h8300_regs_ok_for_stm (int, rtx[]);
 extern int h8300_hard_regno_rename_ok (unsigned int, unsigned int);
 extern bool h8300_move_ok (rtx, rtx);
+extern bool pre_incdec_with_reg (rtx, unsigned int);
 
 struct cpp_reader;
 extern void h8300_pr_interrupt (struct cpp_reader *);
@@ -110,5 +111,6 @@ extern const char *    output_h8sx_shift (rtx *, int, int);
 extern bool            h8300_operands_match_p (rtx *);
 extern bool            h8sx_mergeable_memrefs_p (rtx, rtx);
 extern poly_int64      h8300_push_rounding (poly_int64);
+extern bool            use_extvsi (int, int);
 
 #endif /* ! GCC_H8300_PROTOS_H */

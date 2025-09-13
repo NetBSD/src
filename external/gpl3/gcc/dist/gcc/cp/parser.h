@@ -1,5 +1,5 @@
 /* Data structures and function exported by the C++ Parser.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -107,6 +107,10 @@ struct GTY (()) cp_lexer {
   /* The next lexer in a linked list of lexers.  */
   struct cp_lexer *next;
 
+  /* Set for omp::decl attribute parsing to the decl to which it
+     appertains.  */
+  tree in_omp_decl_attribute;
+
   /* True if we should output debugging information.  */
   bool debugging_p;
 
@@ -178,6 +182,9 @@ struct GTY(()) cp_unparsed_functions_entry {
 
   /* Functions with noexcept-specifiers that require post-processing.  */
   vec<tree, va_gc> *noexcepts;
+
+  /* Functions with contract attributes that require post-processing.  */
+  vec<tree, va_gc> *contracts;
 };
 
 
@@ -391,7 +398,7 @@ struct GTY(()) cp_parser {
   /* When parsing #pragma acc routine, this is a pointer to a helper data
      structure.  */
   cp_oacc_routine_data * GTY((skip)) oacc_routine;
-  
+
   /* Nonzero if parsing a parameter list where 'auto' should trigger an implicit
      template parameter.  */
   bool auto_is_implicit_function_template_parm_p;
@@ -401,8 +408,12 @@ struct GTY(()) cp_parser {
      identifiers) rather than an explicit template parameter list.  */
   bool fully_implicit_function_template_p;
 
-  /* TRUE if omp::directive or omp::sequence attributes may not appear.  */
+  /* TRUE if omp::directive, omp::decl or omp::sequence attributes may not
+     appear.  */
   bool omp_attrs_forbidden_p;
+
+  /* TRUE if an OpenMP array section is allowed.  */
+  bool omp_array_section_p;
 
   /* Tracks the function's template parameter list when declaring a function
      using generic type parameters.  This is either a new chain in the case of a
@@ -432,6 +443,9 @@ struct GTY(()) cp_parser {
      specification, if any, or UNKNOWN_LOCATION otherwise.  */
   location_t innermost_linkage_specification_location;
 
+  /* Pointer to state for parsing omp_loops.  Managed by
+     cp_parser_omp_for_loop in parser.cc and not used outside that file.  */
+  struct omp_for_parse_data * GTY((skip)) omp_for_parse_state;
 };
 
 /* In parser.cc  */

@@ -1,5 +1,5 @@
 /* Callgraph handling code.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -151,6 +151,9 @@ public:
 
   /* Remove symbol from symbol table.  */
   void remove (void);
+
+  /* Undo any definition or use of the symbol.  */
+  void reset (bool preserve_comdat_group = false);
 
   /* Dump symtab node to F.  */
   void dump (FILE *f);
@@ -632,7 +635,7 @@ public:
   /* File stream where this node is being written to.  */
   struct lto_file_decl_data * lto_file_data;
 
-  PTR GTY ((skip)) aux;
+  void *GTY ((skip)) aux;
 
   /* Comdat group the symbol is in.  Can be private if GGC allowed that.  */
   tree x_comdat_group;
@@ -895,7 +898,7 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
       versionable (false), can_change_signature (false),
       redefined_extern_inline (false), tm_may_enter_irr (false),
       ipcp_clone (false), declare_variant_alt (false),
-      calls_declare_variant_alt (false),
+      calls_declare_variant_alt (false), gc_candidate (false),
       called_by_ifunc_resolver (false),
       m_uid (uid), m_summary_id (-1)
   {}
@@ -1071,14 +1074,6 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   /* Expand function specified by node.  */
   void expand (void);
 
-  /* As an GCC extension we allow redefinition of the function.  The
-     semantics when both copies of bodies differ is not well defined.
-     We replace the old body with new body so in unit at a time mode
-     we always use new body, while in normal mode we may end up with
-     old body inlined into some functions and new body expanded and
-     inlined in others.  */
-  void reset (void);
-
   /* Creates a wrapper from cgraph_node to TARGET node. Thunk is used for this
      kind of wrapper method.  */
   void create_wrapper (cgraph_node *target);
@@ -1198,6 +1193,10 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
      Return true if any change was done. */
 
   bool set_pure_flag (bool pure, bool looping);
+
+  /* Add attribute ATTR to cgraph_node's decl and on aliases of the node
+     if any.  */
+  bool add_detected_attribute (const char *attr);
 
   /* Call callback on function and aliases associated to the function.
      When INCLUDE_OVERWRITABLE is false, overwritable aliases and thunks are
@@ -1496,6 +1495,10 @@ struct GTY((tag ("SYMTAB_FUNCTION"))) cgraph_node : public symtab_node
   unsigned declare_variant_alt : 1;
   /* True if the function calls declare_variant_alt functions.  */
   unsigned calls_declare_variant_alt : 1;
+  /* True if the function should only be emitted if it is used.  This flag
+     is set for local SIMD clones when they are created and cleared if the
+     vectorizer uses them.  */
+  unsigned gc_candidate : 1;
   /* Set if the function is called by an IFUNC resolver.  */
   unsigned called_by_ifunc_resolver : 1;
 
@@ -1910,7 +1913,7 @@ public:
   /* Additional information about an indirect call.  Not cleared when an edge
      becomes direct.  */
   cgraph_indirect_call_info *indirect_info;
-  PTR GTY ((skip (""))) aux;
+  void *GTY ((skip (""))) aux;
   /* When equal to CIF_OK, inline this call.  Otherwise, points to the
      explanation why function was not inlined.  */
   enum cgraph_inline_failed_t inline_failed;
@@ -2660,11 +2663,11 @@ symtab_node::real_symbol_p (void)
 /* Return true if DECL should have entry in symbol table if used.
    Those are functions and static & external variables.  */
 
-static inline bool
+inline bool
 decl_in_symtab_p (const_tree decl)
 {
   return (TREE_CODE (decl) == FUNCTION_DECL
-          || (TREE_CODE (decl) == VAR_DECL
+	  || (VAR_P (decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl))));
 }
 
@@ -3333,7 +3336,7 @@ cgraph_edge::frequency ()
 
 
 /* Return true if the TM_CLONE bit is set for a given FNDECL.  */
-static inline bool
+inline bool
 decl_is_tm_clone (const_tree fndecl)
 {
   cgraph_node *n = cgraph_node::get (fndecl);
@@ -3373,7 +3376,7 @@ cgraph_node::optimize_for_size_p (void)
 inline symtab_node *
 symtab_node::get_create (tree node)
 {
-  if (TREE_CODE (node) == VAR_DECL)
+  if (VAR_P (node))
     return varpool_node::get_create (node);
   else
     return cgraph_node::get_create (node);
@@ -3549,7 +3552,7 @@ ipa_polymorphic_call_context::useless_p () const
    the name documents the intent.  We require that no GC can occur
    within the fprintf call.  */
 
-static inline const char *
+inline const char *
 xstrdup_for_dump (const char *transient_str)
 {
   return ggc_strdup (transient_str);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,65 +26,22 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // Counting leading zeros in an unsigned 32-bit word
 // The "_nz" version will return the wrong answer (31) for zero inputs
 
-#define CLZ32_MASK16 0xFFFF0000ul
-#define CLZ32_MASK8  0xFF00FF00ul
-#define CLZ32_MASK4  0xF0F0F0F0ul
-#define CLZ32_MASK2  0xCCCCCCCCul
-#define CLZ32_MASK1  0xAAAAAAAAul
-
-#define clz32_nz(n)                                             \
- (((((n) & CLZ32_MASK16) <= ((n) & ~CLZ32_MASK16)) ? 16 : 0) +  \
-  ((((n) & CLZ32_MASK8) <= ((n) & ~CLZ32_MASK8)) ? 8 : 0) +     \
-  ((((n) & CLZ32_MASK4) <= ((n) & ~CLZ32_MASK4)) ? 4 : 0) +     \
-  ((((n) & CLZ32_MASK2) <= ((n) & ~CLZ32_MASK2)) ? 2 : 0) +     \
-  ((((n) & CLZ32_MASK1) <= ((n) & ~CLZ32_MASK1)) ? 1 : 0))
-
+#define clz32_nz(n) (__builtin_clz (n))
 #define clz32(n) (((n)==0) ? 32 : clz32_nz(n))
 
 // Counting trailing zeros in an unsigned 32-bit word
-// The ctz32_1bit version is for a single bit
+#define ctz32(n) (__builtin_ctz (n))
 
-#define ctz32_1bit(n)                                           \
- ((((n) & ~CLZ32_MASK16) ? 0 : 16) +                            \
-  (((n) & ~CLZ32_MASK8) ? 0 : 8) +                              \
-  (((n) & ~CLZ32_MASK4) ? 0 : 4) +                              \
-  (((n) & ~CLZ32_MASK2) ? 0 : 2) +                              \
-  (((n) & ~CLZ32_MASK1) ? 0 : 1))
-
-#define ctz32(n) (((n) == 0) ? 32 : ctz32_1bit((n) & -(n)))
 
 // Counting leading zeros in an unsigned 64-bit word
 // The "_nz" version will return the wrong answer (63) for zero inputs
 
-#define CLZ64_MASK32 0xFFFFFFFF00000000ull
-#define CLZ64_MASK16 0xFFFF0000FFFF0000ull
-#define CLZ64_MASK8  0xFF00FF00FF00FF00ull
-#define CLZ64_MASK4  0xF0F0F0F0F0F0F0F0ull
-#define CLZ64_MASK2  0xCCCCCCCCCCCCCCCCull
-#define CLZ64_MASK1  0xAAAAAAAAAAAAAAAAull
-
-#define clz64_nz(n)                                             \
- (((((n) & CLZ64_MASK32) <= ((n) & ~CLZ64_MASK32)) ? 32 : 0) +  \
-  ((((n) & CLZ64_MASK16) <= ((n) & ~CLZ64_MASK16)) ? 16 : 0) +  \
-  ((((n) & CLZ64_MASK8) <= ((n) & ~CLZ64_MASK8)) ? 8 : 0) +     \
-  ((((n) & CLZ64_MASK4) <= ((n) & ~CLZ64_MASK4)) ? 4 : 0) +     \
-  ((((n) & CLZ64_MASK2) <= ((n) & ~CLZ64_MASK2)) ? 2 : 0) +     \
-  ((((n) & CLZ64_MASK1) <= ((n) & ~CLZ64_MASK1)) ? 1 : 0))      \
-
+#define clz64_nz(n) ( (__SIZEOF_LONG__ == 8) ?__builtin_clzl(n) : __builtin_clzll(n) )
 #define clz64(n) (((n)==0) ? 64 : clz64_nz(n))
 
 // Counting trailing zeros in an unsigned 64-bit word
-// The ctz64_1bit version is for a single bit
+#define ctz64(n) ( (__SIZEOF_LONG__ == 8) ?__builtin_ctzl(n) : __builtin_ctzll(n) )
 
-#define ctz64_1bit(n)                                           \
- ((((n) & ~CLZ64_MASK32) ? 0 : 32) +                            \
-  (((n) & ~CLZ64_MASK16) ? 0 : 16) +                            \
-  (((n) & ~CLZ64_MASK8) ? 0 : 8) +                              \
-  (((n) & ~CLZ64_MASK4) ? 0 : 4) +                              \
-  (((n) & ~CLZ64_MASK2) ? 0 : 2) +                              \
-  (((n) & ~CLZ64_MASK1) ? 0 : 1))
-
-#define ctz64(n) (((n) == 0) ? 64 : ctz64_1bit((n) & -(n)))
 
 // Counting leading zeros in an unsigned 2-part 128-bit word
 

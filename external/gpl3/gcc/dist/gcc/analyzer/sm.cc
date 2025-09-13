@@ -1,5 +1,5 @@
 /* Modeling API uses and misuses via state machines.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,6 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
@@ -31,16 +32,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "pretty-print.h"
 #include "diagnostic.h"
 #include "tree-diagnostic.h"
-#include "json.h"
 #include "analyzer/analyzer.h"
 #include "analyzer/analyzer-logging.h"
 #include "analyzer/sm.h"
-#include "tristate.h"
 #include "analyzer/call-string.h"
 #include "analyzer/program-point.h"
 #include "analyzer/store.h"
 #include "analyzer/svalue.h"
 #include "analyzer/program-state.h"
+#include "analyzer/pending-diagnostic.h"
 
 #if ENABLE_ANALYZER
 
@@ -123,6 +123,14 @@ state_machine::get_state_by_name (const char *name) const
   gcc_unreachable ();
 }
 
+/* Base implementation of state_machine::on_leak.  */
+
+std::unique_ptr<pending_diagnostic>
+state_machine::on_leak (tree var ATTRIBUTE_UNUSED) const
+{
+  return NULL;
+}
+
 /* Dump a multiline representation of this state machine to PP.  */
 
 void
@@ -179,12 +187,11 @@ make_checkers (auto_delete_vec <state_machine> &out, logger *logger)
 {
   out.safe_push (make_malloc_state_machine (logger));
   out.safe_push (make_fileptr_state_machine (logger));
-  /* The "taint" checker must be explicitly enabled (as it currently
-     leads to state explosions that stop the other checkers working).  */
-  if (flag_analyzer_checker)
-    out.safe_push (make_taint_state_machine (logger));
+  out.safe_push (make_fd_state_machine (logger));
+  out.safe_push (make_taint_state_machine (logger));
   out.safe_push (make_sensitive_state_machine (logger));
   out.safe_push (make_signal_state_machine (logger));
+  out.safe_push (make_va_list_state_machine (logger));
 
   /* We only attempt to run the pattern tests if it might have been manually
      enabled (for DejaGnu purposes).  */

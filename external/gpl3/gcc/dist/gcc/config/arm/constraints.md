@@ -1,5 +1,5 @@
 ;; Constraint definitions for ARM and Thumb
-;; Copyright (C) 2006-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2024 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -32,14 +32,14 @@
 
 ;; The following multi-letter normal constraints have been used:
 ;; in ARM/Thumb-2 state: Da, Db, Dc, Dd, Dn, DN, Dm, Dl, DL, Do, Dv, Dy, Di,
-;;			 Ds, Dt, Dp, Dz, Tu, Te
+;;			 Dj, Ds, Dt, Dp, Dz, Tu, Te
 ;; in Thumb-1 state: Pa, Pb, Pc, Pd, Pe
 ;; in Thumb-2 state: Ha, Pj, PJ, Ps, Pt, Pu, Pv, Pw, Px, Py, Pz, Rd, Rf, Rb, Ra,
 ;;		     Rg, Ri
-;; in all states: Pf, Pg
+;; in all states: Pg
 
 ;; The following memory constraints have been used:
-;; in ARM/Thumb-2 state: Uh, Ut, Uv, Uy, Un, Um, Us, Up, Uf, Ux, Ul
+;; in ARM/Thumb-2 state: Uh, Ut, Uv, Uy, Un, Um, Us, Uo, Up, Uf, Ux, Ul, Uz
 ;; in ARM state: Uq
 ;; in Thumb state: Uu, Uw
 ;; in all states: Q
@@ -239,13 +239,6 @@
   (and (match_code "const_int")
        (match_test "TARGET_THUMB1 && ival >= 256 && ival <= 510")))
 
-(define_constraint "Pf"
-  "Memory models except relaxed, consume or release ones."
-  (and (match_code "const_int")
-       (match_test "!is_mm_relaxed (memmodel_from_int (ival))
-		    && !is_mm_consume (memmodel_from_int (ival))
-		    && !is_mm_release (memmodel_from_int (ival))")))
-
 (define_constraint "Pg"
   "@internal In Thumb-2 state a constant in range 1 to 32"
   (and (match_code "const_int")
@@ -312,7 +305,7 @@
  "@internal
   In ARM/Thumb-2 state with MVE a constant vector of booleans."
  (and (match_code "const_vector")
-      (match_test "TARGET_HAVE_MVE && GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL")))
+      (match_test "TARGET_HAVE_MVE && VALID_MVE_PRED_MODE (mode)")))
 
 (define_constraint "Da"
  "@internal
@@ -349,6 +342,14 @@
   and low SImode words can be generated as immediates in 32-bit instructions."
  (and (match_code "const_double,const_int")
       (match_test "TARGET_32BIT && arm_const_double_by_immediates (op)")))
+
+(define_constraint "Dj"
+  "@internal
+   In cores with the v6t2 ISA, a constant with exactly one consecutive
+   string of zero bits."
+  (and (match_code "const_int")
+       (match_test "arm_arch_thumb2
+		    && exact_log2 (~ival + (~ival & -~ival)) >= 0")))
 
 (define_constraint "Dm"
  "@internal
@@ -583,6 +584,12 @@
   A memory access that is accessible as an LDC/STC operand"
  (and (match_code "mem")
       (match_test "arm_coproc_ldc_stc_legitimate_address (op)")))
+
+(define_memory_constraint "Uo"
+ "@internal
+  A memory operand for Arm/Thumb-2 LDRD/STRD"
+ (and (match_code "mem")
+      (match_test "arm_ldrd_legitimate_address (op)")))
 
 ;; We used to have constraint letters for S and R in ARM state, but
 ;; all uses of these now appear to have been removed.

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for ARM with a.out
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rearnsha@armltd.co.uk).
    
    This file is part of GCC.
@@ -74,7 +74,8 @@
   "wr8",   "wr9",   "wr10",  "wr11",				\
   "wr12",  "wr13",  "wr14",  "wr15",				\
   "wcgr0", "wcgr1", "wcgr2", "wcgr3",				\
-  "cc", "vfpcc", "sfp", "afp", "apsrq", "apsrge", "p0"		\
+  "cc", "vfpcc", "sfp", "afp", "apsrq", "apsrge", "p0",		\
+  "ra_auth_code"						\
 }
 #endif
 
@@ -145,22 +146,13 @@
 #define NO_DOLLAR_IN_LABEL 1
 #endif
 
-/* Generate DBX debugging information.  riscix.h will undefine this because
-   the native assembler does not support stabs.  */
-#define DBX_DEBUGGING_INFO 1
-
-/* Acorn dbx moans about continuation chars, so don't use any.  */
-#ifndef DBX_CONTIN_LENGTH
-#define DBX_CONTIN_LENGTH  0
-#endif
-
 /* Output a function label definition.  */
 #ifndef ASM_DECLARE_FUNCTION_NAME
 #define ASM_DECLARE_FUNCTION_NAME(STREAM, NAME, DECL)	\
   do							\
     {							\
       ARM_DECLARE_FUNCTION_NAME (STREAM, NAME, DECL);   \
-      ASM_OUTPUT_LABEL (STREAM, NAME);			\
+      ASM_OUTPUT_FUNCTION_LABEL (STREAM, NAME, DECL);	\
     }							\
   while (0)
 #endif
@@ -191,7 +183,28 @@
   do									\
     {									\
       if (TARGET_ARM)							\
-	asm_fprintf (STREAM, "\tb\t%LL%d\n", VALUE);			\
+	{								\
+	  switch (GET_MODE (body))					\
+	    {								\
+	    case E_QImode:						\
+	      asm_fprintf (STREAM, "\t.byte\t(%LL%d-%LLrtx%d-4)/4\n",	\
+			   VALUE, REL);					\
+	      break;							\
+	    case E_HImode:						\
+	      asm_fprintf (STREAM, "\t.2byte\t(%LL%d-%LLrtx%d-4)/4\n",	\
+			   VALUE, REL);					\
+	      break;							\
+	    case E_SImode:						\
+	      if (flag_pic)						\
+		asm_fprintf (STREAM, "\t.word\t%LL%d-%LLrtx%d-4\n",	\
+			     VALUE, REL);				\
+	      else							\
+		asm_fprintf (STREAM, "\t.word\t%LL%d\n", VALUE);	\
+	      break;							\
+	    default:							\
+	      gcc_unreachable ();					\
+	    }								\
+	}								\
       else if (TARGET_THUMB1)						\
 	{								\
 	  if (flag_pic || optimize_size)				\

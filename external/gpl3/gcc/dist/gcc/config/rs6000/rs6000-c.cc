@@ -1,5 +1,5 @@
 /* Subroutines for the C front end on the PowerPC architecture.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Zack Weinberg <zack@codesourcery.com>
    and Paolo Bonzini <bonzini@gnu.org>
@@ -178,9 +178,8 @@ rid_int128(void)
   return RID_MAX + 1;
 }
 
-/* Called to decide whether a conditional macro should be expanded.
-   Since we have exactly one such macro (i.e, 'vector'), we do not
-   need to examine the 'tok' parameter.  */
+/* Called to decide whether a conditional macro should be expanded
+   by peeking two or more tokens(_bool/_pixel/int/long/double/...).  */
 
 static cpp_hashnode *
 rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
@@ -282,7 +281,9 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 		expand_bool_pixel = __pixel_keyword;
 	      else if (ident == C_CPP_HASHNODE (__bool_keyword))
 		expand_bool_pixel = __bool_keyword;
-	      else
+
+	      /* If there are more tokens to check.  */
+	      else if (ident)
 		{
 		  /* Try two tokens down, too.  */
 		  do
@@ -334,20 +335,16 @@ rs6000_define_or_undefine_macro (bool define_p, const char *name)
 }
 
 /* Define or undefine macros based on the current target.  If the user does
-   #pragma GCC target, we need to adjust the macros dynamically.  Note, some of
-   the options needed for builtins have been moved to separate variables, so
-   have both the target flags and the builtin flags as arguments.  */
+   #pragma GCC target, we need to adjust the macros dynamically.  */
 
 void
-rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
-			     HOST_WIDE_INT bu_mask)
+rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags)
 {
   if (TARGET_DEBUG_BUILTIN || TARGET_DEBUG_TARGET)
     fprintf (stderr,
-	     "rs6000_target_modify_macros (%s, " HOST_WIDE_INT_PRINT_HEX
-	     ", " HOST_WIDE_INT_PRINT_HEX ")\n",
+	     "rs6000_target_modify_macros (%s, " HOST_WIDE_INT_PRINT_HEX ")\n",
 	     (define_p) ? "define" : "undef",
-	     flags, bu_mask);
+	     flags);
 
   /* Each of the flags mentioned below controls whether certain
      preprocessor macros will be automatically defined when
@@ -383,7 +380,7 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
 	TARGET_DEFAULT macro is defined to equal zero, and
 	TARGET_POWERPC64 and
 	a) BYTES_BIG_ENDIAN and the flag to be enabled is either
-	   MASK_PPC_GFXOPT or MASK_POWERPC64 (flags for "powerpc64"
+	   OPTION_MASK_PPC_GFXOPT or MASK_POWERPC64 (flags for "powerpc64"
 	   target), or
 	b) !BYTES_BIG_ENDIAN and the flag to be enabled is either
 	   MASK_POWERPC64 or it is one of the flags included in
@@ -438,6 +435,8 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
     rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR9");
   if ((flags & OPTION_MASK_POWER10) != 0)
     rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR10");
+  if ((flags & OPTION_MASK_POWER11) != 0)
+    rs6000_define_or_undefine_macro (define_p, "_ARCH_PWR11");
   if ((flags & OPTION_MASK_SOFT_FLOAT) != 0)
     rs6000_define_or_undefine_macro (define_p, "_SOFT_FLOAT");
   if ((flags & OPTION_MASK_RECIP_PRECISION) != 0)
@@ -582,10 +581,8 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
   if ((flags & OPTION_MASK_FLOAT128_HW) != 0)
     rs6000_define_or_undefine_macro (define_p, "__FLOAT128_HARDWARE__");
 
-  /* options from the builtin masks.  */
-  /* Note that RS6000_BTM_CELL is enabled only if (rs6000_cpu ==
-     PROCESSOR_CELL) (e.g. -mcpu=cell).  */
-  if ((bu_mask & RS6000_BTM_CELL) != 0)
+  /* Tell the user if we are targeting CELL.  */
+  if (rs6000_cpu == PROCESSOR_CELL)
     rs6000_define_or_undefine_macro (define_p, "__PPU__");
 
   /* Tell the user if we support the MMA instructions.  */
@@ -597,14 +594,18 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
   /* Tell the user -mrop-protect is in play.  */
   if (rs6000_rop_protect)
     rs6000_define_or_undefine_macro (define_p, "__ROP_PROTECT__");
+  /* Tell the user __builtin_set_fpscr_rn now returns the FPSCR fields
+     in a double.  Originally the built-in returned void.  */
+  if ((flags & OPTION_MASK_SOFT_FLOAT) == 0)
+    rs6000_define_or_undefine_macro (define_p,
+				     "__SET_FPSCR_RN_RETURNS_FPSCR__");
 }
 
 void
 rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 {
   /* Define all of the common macros.  */
-  rs6000_target_modify_macros (true, rs6000_isa_flags,
-			       rs6000_builtin_mask_calculate ());
+  rs6000_target_modify_macros (true, rs6000_isa_flags);
 
   if (TARGET_FRE)
     builtin_define ("__RECIP__");
@@ -802,6 +803,7 @@ static inline bool
 is_float128_p (tree t)
 {
   return (t == float128_type_node
+	  || (t && t == float128t_type_node)
 	  || (TARGET_IEEEQUAD
 	      && TARGET_LONG_DOUBLE_128
 	      && t == long_double_type_node));
@@ -1656,18 +1658,19 @@ resolve_vec_step (resolution *res, vec<tree, va_gc> *arglist, unsigned nargs)
 /* Look for a matching instance in a chain of instances.  INSTANCE points to
    the chain of instances; INSTANCE_CODE is the code identifying the specific
    built-in being searched for; FCODE is the overloaded function code; TYPES
-   contains an array of two types that must match the types of the instance's
-   parameters; and ARGS contains an array of two arguments to be passed to
-   the instance.  If found, resolve the built-in and return it, unless the
-   built-in is not supported in context.  In that case, set
-   UNSUPPORTED_BUILTIN to true.  If we don't match, return error_mark_node
-   and leave UNSUPPORTED_BUILTIN alone.  */
+   contains an array of NARGS types that must match the types of the
+   instance's parameters; ARGS contains an array of NARGS arguments to be
+   passed to the instance; and NARGS is the number of built-in arguments to
+   check.  If found, resolve the built-in and return it, unless the built-in
+   is not supported in context.  In that case, set UNSUPPORTED_BUILTIN to
+   true.  If we don't match, return error_mark_node and leave
+   UNSUPPORTED_BUILTIN alone.  */
 
 static tree
 find_instance (bool *unsupported_builtin, int *instance,
 	       rs6000_gen_builtins instance_code,
 	       rs6000_gen_builtins fcode,
-	       tree *types, tree *args)
+	       tree *types, tree *args, int nargs)
 {
   while (*instance != -1
 	 && rs6000_instance_info[*instance].bifid != instance_code)
@@ -1682,17 +1685,27 @@ find_instance (bool *unsupported_builtin, int *instance,
     return error_mark_node;
   rs6000_gen_builtins bifid = rs6000_instance_info[inst].bifid;
   tree fntype = rs6000_builtin_info_fntype[bifid];
-  tree parmtype0 = TREE_VALUE (TYPE_ARG_TYPES (fntype));
-  tree parmtype1 = TREE_VALUE (TREE_CHAIN (TYPE_ARG_TYPES (fntype)));
+  tree argtype = TYPE_ARG_TYPES (fntype);
+  bool args_compatible = true;
 
-  if (rs6000_builtin_type_compatible (types[0], parmtype0)
-      && rs6000_builtin_type_compatible (types[1], parmtype1))
+  for (int i = 0; i < nargs; i++)
+    {
+      tree parmtype = TREE_VALUE (argtype);
+      if (!rs6000_builtin_type_compatible (types[i], parmtype))
+	{
+	  args_compatible = false;
+	  break;
+	}
+      argtype = TREE_CHAIN (argtype);
+    }
+
+  if (args_compatible)
     {
       if (rs6000_builtin_decl (bifid, false) != error_mark_node
 	  && rs6000_builtin_is_supported (bifid))
 	{
 	  tree ret_type = TREE_TYPE (rs6000_instance_info_fntype[inst]);
-	  return altivec_build_resolved_builtin (args, 2, fntype, ret_type,
+	  return altivec_build_resolved_builtin (args, nargs, fntype, ret_type,
 						 bifid, fcode);
 	}
       else
@@ -1912,7 +1925,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	  instance_code = RS6000_BIF_CMPB_32;
 
 	tree call = find_instance (&unsupported_builtin, &instance,
-				   instance_code, fcode, types, args);
+				   instance_code, fcode, types, args, nargs);
 	if (call != error_mark_node)
 	  return call;
 	break;
@@ -1925,11 +1938,15 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	   128-bit variant of built-in function.  */
 	if (GET_MODE_PRECISION (arg1_mode) > 64)
 	  {
-	    /* If first argument is of float variety, choose variant
-	       that expects __ieee128 argument.  Otherwise, expect
-	       __int128 argument.  */
+	    /* If first argument is of float variety, choose the variant that
+	       expects __ieee128 argument.  If the first argument is vector
+	       int, choose the variant that expects vector unsigned
+	       __int128 argument.  Otherwise, expect scalar __int128 argument.
+	    */
 	    if (GET_MODE_CLASS (arg1_mode) == MODE_FLOAT)
 	      instance_code = RS6000_BIF_VSIEQPF;
+	    else if (GET_MODE_CLASS (arg1_mode) == MODE_VECTOR_INT)
+	      instance_code = RS6000_BIF_VSIEQPV;
 	    else
 	      instance_code = RS6000_BIF_VSIEQP;
 	  }
@@ -1945,7 +1962,30 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	  }
 
 	tree call = find_instance (&unsupported_builtin, &instance,
-				   instance_code, fcode, types, args);
+				   instance_code, fcode, types, args, nargs);
+	if (call != error_mark_node)
+	  return call;
+	break;
+      }
+    case RS6000_OVLD_VEC_REPLACE_UN:
+      {
+	machine_mode arg2_mode = TYPE_MODE (types[1]);
+
+	if (arg2_mode == SImode)
+	  /* Signed and unsigned are handled the same.  */
+	  instance_code = RS6000_BIF_VREPLACE_UN_USI;
+	else if (arg2_mode == SFmode)
+	  instance_code = RS6000_BIF_VREPLACE_UN_SF;
+	else if (arg2_mode == DImode)
+	  /* Signed and unsigned are handled the same.  */
+	  instance_code = RS6000_BIF_VREPLACE_UN_UDI;
+	else if (arg2_mode == DFmode)
+	  instance_code = RS6000_BIF_VREPLACE_UN_DF;
+	else
+	  break;
+
+	tree call = find_instance (&unsupported_builtin, &instance,
+				   instance_code, fcode, types, args, nargs);
 	if (call != error_mark_node)
 	  return call;
 	break;

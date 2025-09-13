@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Vxworks PowerPC version.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -206,7 +206,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef  STARTFILE_PREFIX_SPEC
 #define STARTFILE_PREFIX_SPEC						\
- "%{mrtp:%{!shared:/lib/usr/lib/ppc/PPC32/common}}"
+ "%{mrtp:%{!shared:/lib%{msmp:_smp}/usr/lib/ppc/PPC32/common}}"
 
 /* For aggregates passing, use the same, consistent ABI as Linux.  */
 #define AGGREGATE_PADDING_FIXED 0
@@ -227,7 +227,7 @@ along with GCC; see the file COPYING3.  If not see
 #define LINK_SPEC VXWORKS_LINK_SPEC " " VXWORKS_RELAX_LINK_SPEC
 
 #undef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_EABI | MASK_STRICT_ALIGN)
+#define TARGET_DEFAULT (OPTION_MASK_EABI | MASK_STRICT_ALIGN)
 
 #undef PROCESSOR_DEFAULT
 #define PROCESSOR_DEFAULT PROCESSOR_PPC604
@@ -265,9 +265,10 @@ along with GCC; see the file COPYING3.  If not see
 #undef LINK_OS_EXTRA_SPEC64
 #define LINK_OS_EXTRA_SPEC64 VXWORKS_LINK_SPEC
 
-/* linux64.h enables this, not supported in vxWorks.  */
-#undef TARGET_FLOAT128_ENABLE_TYPE
-#define TARGET_FLOAT128_ENABLE_TYPE 0
+/* Leave TARGET_FLOAT128_ENABLE_TYPE alone here, possibly inherited from
+   a linux configuration file.  This lets compilation tests pass and will
+   trigger visible link errors (hence remain harmless) if the support isn't
+   really there.  */
 
 #endif /* TARGET_VXWORKS7 */
 

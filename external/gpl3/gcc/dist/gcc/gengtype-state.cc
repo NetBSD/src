@@ -1,7 +1,7 @@
 /* Gengtype persistent state serialization & de-serialization.
    Useful for gengtype in plugin mode.
 
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -313,7 +313,7 @@ fatal_reading_state (struct state_token_st* tok, const char*msg)
 static struct state_ident_st *
 state_ident_by_name (const char *name, enum insert_option optins)
 {
-  PTR *slot = NULL;
+  void **slot = NULL;
   int namlen = 0;
   struct state_ident_st *stid = NULL;
 
@@ -473,43 +473,33 @@ read_a_state_token (void)
 		{
 		case 'a':
 		  obstack_1grow (&bstring_obstack, '\a');
-		  c = getc (state_file);
 		  break;
 		case 'b':
 		  obstack_1grow (&bstring_obstack, '\b');
-		  c = getc (state_file);
 		  break;
 		case 't':
 		  obstack_1grow (&bstring_obstack, '\t');
-		  c = getc (state_file);
 		  break;
 		case 'n':
 		  obstack_1grow (&bstring_obstack, '\n');
-		  c = getc (state_file);
 		  break;
 		case 'v':
 		  obstack_1grow (&bstring_obstack, '\v');
-		  c = getc (state_file);
 		  break;
 		case 'f':
 		  obstack_1grow (&bstring_obstack, '\f');
-		  c = getc (state_file);
 		  break;
 		case 'r':
 		  obstack_1grow (&bstring_obstack, '\r');
-		  c = getc (state_file);
 		  break;
 		case '"':
 		  obstack_1grow (&bstring_obstack, '\"');
-		  c = getc (state_file);
 		  break;
 		case '\\':
 		  obstack_1grow (&bstring_obstack, '\\');
-		  c = getc (state_file);
 		  break;
 		case ' ':
 		  obstack_1grow (&bstring_obstack, ' ');
-		  c = getc (state_file);
 		  break;
 		case 'x':
 		  {
@@ -520,7 +510,7 @@ read_a_state_token (void)
 		      fatal_reading_state
 			(NULL_STATE_TOKEN,
 			 "Lexical error in string hex escape");
-		    c = getc (state_file);
+		    getc (state_file);
 		    break;
 		  }
 		default:
@@ -1435,7 +1425,7 @@ static void read_state_common_type_content (type_p current);
 static void
 record_type (type_p type)
 {
-  PTR *slot;
+  void **slot;
 
   slot = htab_find_slot (state_seen_types, type, INSERT);
   gcc_assert (slot);
@@ -1451,7 +1441,7 @@ read_state_already_seen_type (type_p *type)
 
   if (state_token_kind (t0) == STOK_INTEGER)
     {
-      PTR *slot = NULL;
+      void **slot = NULL;
       struct type loctype = { TYPE_SCALAR, 0, 0, 0, GC_UNUSED, {0} };
 
       loctype.state_number = t0->stok_un.stok_num;
@@ -2504,7 +2494,7 @@ read_state_files_list (void)
       build_headers = XCNEWVEC (const char *, num_build_headers);
       for (i = 0; i < (int) num_gt_files; i++)
 	{
-	  bool issrcfile = FALSE;
+	  bool issrcfile = false;
 	  t0 = t1 = t2 = NULL;
 	  t0 = peek_state_token (0);
 	  t1 = peek_state_token (1);

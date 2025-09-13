@@ -1,6 +1,6 @@
 // Deque implementation (out of line) -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -200,8 +200,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    return __tmp;
 	  }
 	else
-	  return _M_insert_aux(__position._M_const_cast(),
-			       std::forward<_Args>(__args)...);
+	  return _M_emplace_aux(__position._M_const_cast(),
+				std::forward<_Args>(__args)...);
       }
 #endif
 
@@ -646,7 +646,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     template<typename... _Args>
       typename deque<_Tp, _Alloc>::iterator
       deque<_Tp, _Alloc>::
-      _M_insert_aux(iterator __pos, _Args&&... __args)
+      _M_emplace_aux(iterator __pos, _Args&&... __args)
       {
 	value_type __x_copy(std::forward<_Args>(__args)...); // XXX copy
 #else

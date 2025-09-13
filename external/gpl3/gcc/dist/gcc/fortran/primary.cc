@@ -1,5 +1,5 @@
 /* Primary expression subroutines
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
 
 This file is part of GCC.
@@ -45,11 +45,11 @@ match_kind_param (int *kind, int *is_iso_c)
 
   *is_iso_c = 0;
 
-  m = gfc_match_small_literal_int (kind, NULL);
+  m = gfc_match_small_literal_int (kind, NULL, false);
   if (m != MATCH_NO)
     return m;
 
-  m = gfc_match_name (name);
+  m = gfc_match_name (name, false);
   if (m != MATCH_YES)
     return m;
 
@@ -95,7 +95,7 @@ get_kind (int *is_iso_c)
 
   *is_iso_c = 0;
 
-  if (gfc_match_char ('_') != MATCH_YES)
+  if (gfc_match_char ('_', false) != MATCH_YES)
     return -2;
 
   m = match_kind_param (&kind, is_iso_c);
@@ -109,10 +109,10 @@ get_kind (int *is_iso_c)
 /* Given a character and a radix, see if the character is a valid
    digit in that radix.  */
 
-int
+bool
 gfc_check_digit (char c, int radix)
 {
-  int r;
+  bool r;
 
   switch (radix)
     {
@@ -530,13 +530,13 @@ match_real_constant (gfc_expr **result, int signflag)
   seen_dp = 0;
   seen_digits = 0;
   exp_char = ' ';
-  negate = FALSE;
+  negate = false;
 
   c = gfc_next_ascii_char ();
   if (signflag && (c == '+' || c == '-'))
     {
       if (c == '-')
-	negate = TRUE;
+	negate = true;
 
       gfc_gobble_whitespace ();
       c = gfc_next_ascii_char ();
@@ -586,7 +586,7 @@ match_real_constant (gfc_expr **result, int signflag)
 
   if (c == 'q')
     {
-      if (!gfc_notify_std (GFC_STD_GNU, "exponent-letter 'q' in "
+      if (!gfc_notify_std (GFC_STD_GNU, "exponent-letter %<q%> in "
 			   "real-literal-constant at %C"))
 	return MATCH_ERROR;
       else if (warn_real_q_constant)
@@ -756,8 +756,8 @@ done:
     }
 
   /* Warn about trailing digits which suggest the user added too many
-     trailing digits, which may cause the appearance of higher pecision
-     than the kind kan support.
+     trailing digits, which may cause the appearance of higher precision
+     than the kind can support.
 
      This is done by replacing the rightmost non-zero digit with zero
      and comparing with the original value.  If these are equal, we
@@ -1074,16 +1074,8 @@ match_string_constant (gfc_expr **result)
       c = gfc_next_char ();
     }
 
-  if (c == ' ')
-    {
-      gfc_gobble_whitespace ();
-      c = gfc_next_char ();
-    }
-
   if (c != '_')
     goto no_match;
-
-  gfc_gobble_whitespace ();
 
   c = gfc_next_char ();
   if (c != '\'' && c != '"')
@@ -1198,14 +1190,14 @@ got_delim:
 	{
 	  if (istart < 1)
 	    {
-	      gfc_error ("Substring start index (%ld) at %L below 1",
-			 (long) istart, &e->ref->u.ss.start->where);
+	      gfc_error ("Substring start index (%td) at %L below 1",
+			 istart, &e->ref->u.ss.start->where);
 	      return MATCH_ERROR;
 	    }
 	  if (iend > (ssize_t) length)
 	    {
-	      gfc_error ("Substring end index (%ld) at %L exceeds string "
-			 "length", (long) iend, &e->ref->u.ss.end->where);
+	      gfc_error ("Substring end index (%td) at %L exceeds string "
+			 "length", iend, &e->ref->u.ss.end->where);
 	      return MATCH_ERROR;
 	    }
 	  length = iend - istart + 1;
@@ -2011,7 +2003,7 @@ extend_ref (gfc_expr *primary, gfc_ref *tail)
 
 /* Used by gfc_match_varspec() to match an inquiry reference.  */
 
-static bool
+bool
 is_inquiry_ref (const char *name, gfc_ref **ref)
 {
   inquiry_type type;
@@ -2043,6 +2035,29 @@ is_inquiry_ref (const char *name, gfc_ref **ref)
 }
 
 
+/* Check to see if functions in operator expressions can be resolved now.  */
+
+static bool
+resolvable_fcns (gfc_expr *e,
+		  gfc_symbol *sym ATTRIBUTE_UNUSED,
+		  int *f ATTRIBUTE_UNUSED)
+{
+  bool p;
+  gfc_symbol *s;
+
+  if (e->expr_type != EXPR_FUNCTION)
+    return false;
+
+  s = e && e->symtree && e->symtree->n.sym ? e->symtree->n.sym : NULL;
+  p = s && (s->attr.use_assoc
+	    || s->attr.host_assoc
+	    || s->attr.if_source == IFSRC_DECL
+	    || s->attr.proc == PROC_INTRINSIC
+	    || gfc_is_intrinsic (s, 0, e->where));
+  return !p;
+}
+
+
 /* Match any additional specifications associated with the current
    variable like member references or substrings.  If equiv_flag is
    set we only match stuff that is allowed inside an EQUIVALENCE
@@ -2065,6 +2080,7 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
   bool unknown;
   bool inquiry;
   bool intrinsic;
+  bool inferred_type;
   locus old_loc;
   char sep;
 
@@ -2078,8 +2094,8 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
 	  || (sym->ts.type == BT_CLASS && CLASS_DATA (sym)
 	      && CLASS_DATA (sym)->attr.dimension))
 	{
-	  gfc_error ("Array section designator, e.g. '(:)', is required "
-		     "besides the coarray designator '[...]' at %C");
+	  gfc_error ("Array section designator, e.g. %<(:)%>, is required "
+		     "besides the coarray designator %<[...]%> at %C");
 	  return MATCH_ERROR;
 	}
       if ((sym->ts.type != BT_CLASS && !sym->attr.codimension)
@@ -2094,6 +2110,18 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
 
   if (sym->assoc && sym->assoc->target)
     tgt_expr = sym->assoc->target;
+
+  inferred_type = IS_INFERRED_TYPE (primary);
+
+  /* SELECT TYPE temporaries within an ASSOCIATE block, whose selector has not
+     been parsed, can generate errors with array refs.. The SELECT TYPE
+     namespace is marked with 'assoc_name_inferred'. During resolution, this is
+     detected and gfc_fixup_inferred_type_refs is called.  */
+  if (!inferred_type
+      && sym->attr.select_type_temporary
+      && sym->ns->assoc_name_inferred
+      && !sym->attr.select_rank_temporary)
+    inferred_type = true;
 
   /* For associate names, we may not yet know whether they are arrays or not.
      If the selector expression is unambiguously an array; eg. a full array
@@ -2144,7 +2172,8 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
 	sym->ts.u.derived = tgt_expr->ts.u.derived;
     }
 
-  if ((equiv_flag && gfc_peek_ascii_char () == '(')
+  if ((inferred_type && !sym->as && gfc_peek_ascii_char () == '(')
+      || (equiv_flag && gfc_peek_ascii_char () == '(')
       || gfc_peek_ascii_char () == '[' || sym->attr.codimension
       || (sym->attr.dimension && sym->ts.type != BT_CLASS
 	  && !sym->attr.proc_pointer && !gfc_is_proc_ptr_comp (primary)
@@ -2202,13 +2231,13 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
   inquiry = false;
   if (m == MATCH_YES && sep == '%'
       && primary->ts.type != BT_CLASS
-      && primary->ts.type != BT_DERIVED)
+      && (primary->ts.type != BT_DERIVED || inferred_type))
     {
       match mm;
       old_loc = gfc_current_locus;
       mm = gfc_match_name (name);
 
-      /* Check to see if this has a default type.  */
+      /* Check to see if this has a default complex.  */
       if (sym->ts.type == BT_UNKNOWN && tgt_expr == NULL
 	  && gfc_get_default_type (sym->name, sym->ns)->type != BT_UNKNOWN)
 	{
@@ -2216,36 +2245,95 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
 	  primary->ts = sym->ts;
 	}
 
-      if (mm == MATCH_YES && is_inquiry_ref (name, &tmp))
+      /* This is a usable inquiry reference, if the symbol is already known
+	 to have a type or no derived types with a component of this name
+	 can be found.  If this was an inquiry reference with the same name
+	 as a derived component and the associate-name type is not derived
+	 or class, this is fixed up in 'gfc_fixup_inferred_type_refs'.  */
+      if (mm == MATCH_YES && is_inquiry_ref (name, &tmp)
+	  && !(sym->ts.type == BT_UNKNOWN
+		&& gfc_find_derived_types (sym, gfc_current_ns, name)))
 	inquiry = true;
       gfc_current_locus = old_loc;
     }
 
+  /* Use the default type if there is one.  */
   if (sym->ts.type == BT_UNKNOWN && m == MATCH_YES
       && gfc_get_default_type (sym->name, sym->ns)->type == BT_DERIVED)
     gfc_set_default_type (sym, 0, sym->ns);
 
-  /* See if there is a usable typespec in the "no IMPLICIT type" error.  */
-  if (sym->ts.type == BT_UNKNOWN && m == MATCH_YES)
+  /* See if the type can be determined by resolution of the selector expression,
+     if allowable now, or inferred from references.  */
+  if ((sym->ts.type == BT_UNKNOWN || inferred_type)
+      && m == MATCH_YES)
     {
-      bool permissible;
+      bool sym_present, resolved = false;
+      gfc_symbol *tgt_sym;
 
-      /* These target expressions can be resolved at any time.  */
-      permissible = tgt_expr && tgt_expr->symtree && tgt_expr->symtree->n.sym
-		    && (tgt_expr->symtree->n.sym->attr.use_assoc
-			|| tgt_expr->symtree->n.sym->attr.host_assoc
-			|| tgt_expr->symtree->n.sym->attr.if_source
-								== IFSRC_DECL);
-      permissible = permissible
-		    || (tgt_expr && tgt_expr->expr_type == EXPR_OP);
+      sym_present = tgt_expr && tgt_expr->symtree && tgt_expr->symtree->n.sym;
+      tgt_sym = sym_present ? tgt_expr->symtree->n.sym : NULL;
 
-      if (permissible)
+      /* These target expressions can be resolved at any time:
+	 (i) With a declared symbol or intrinsic function; or
+	 (ii) An operator expression,
+	 just as long as (iii) all the functions in the expression have been
+	 declared or are intrinsic.  */
+      if (((sym_present						      // (i)
+	    && (tgt_sym->attr.use_assoc
+		|| tgt_sym->attr.host_assoc
+		|| tgt_sym->attr.if_source == IFSRC_DECL
+		|| tgt_sym->attr.proc == PROC_INTRINSIC
+		|| gfc_is_intrinsic (tgt_sym, 0, tgt_expr->where)))
+	   || (tgt_expr && tgt_expr->expr_type == EXPR_OP))	      // (ii)
+	  && !gfc_traverse_expr (tgt_expr, NULL, resolvable_fcns, 0)  // (iii)
+	  && gfc_resolve_expr (tgt_expr))
 	{
-	  gfc_resolve_expr (tgt_expr);
 	  sym->ts = tgt_expr->ts;
+	  primary->ts = sym->ts;
+	  resolved = true;
 	}
 
-      if (sym->ts.type == BT_UNKNOWN)
+      /* If this hasn't done the trick and the target expression is a function,
+	 or an unresolved operator expression, then this must be a derived type
+	 if 'name' matches an accessible type both in this namespace and in the
+	 as yet unparsed contained function. In principle, the type could have
+	 already been inferred to be complex and yet a derived type with a
+	 component name 're' or 'im' could be found.  */
+      if (tgt_expr
+	  && (tgt_expr->expr_type == EXPR_FUNCTION
+	      || (!resolved && tgt_expr->expr_type == EXPR_OP))
+	  && (sym->ts.type == BT_UNKNOWN
+	      || (inferred_type && sym->ts.type != BT_COMPLEX))
+	  && gfc_find_derived_types (sym, gfc_current_ns, name, true))
+	{
+	  sym->assoc->inferred_type = 1;
+	  /* The first returned type is as good as any at this stage. The final
+	     determination is made in 'gfc_fixup_inferred_type_refs'*/
+	  gfc_symbol **dts = &sym->assoc->derived_types;
+	  tgt_expr->ts.type = BT_DERIVED;
+	  tgt_expr->ts.kind = 0;
+	  tgt_expr->ts.u.derived = *dts;
+	  sym->ts = tgt_expr->ts;
+	  primary->ts = sym->ts;
+	  /* Delete the dt list even if this process has to be done again for
+	     another primary expression.  */
+	  while (*dts && (*dts)->dt_next)
+	    {
+	      gfc_symbol **tmp = &(*dts)->dt_next;
+	      *dts = NULL;
+	      dts = tmp;
+	    }
+	}
+      /* If there is a usable inquiry reference not there are no matching
+	 derived types, force the inquiry reference by setting unknown the
+	 type of the primary expression.  */
+      else if (inquiry && (sym->ts.type == BT_DERIVED && inferred_type)
+	       && !gfc_find_derived_types (sym, gfc_current_ns, name))
+	primary->ts.type = BT_UNKNOWN;
+
+      /* An inquiry reference might determine the type, otherwise we have an
+	 error.  */
+      if (sym->ts.type == BT_UNKNOWN && !inquiry)
 	{
 	  gfc_error ("Symbol %qs at %C has no IMPLICIT type", sym->name);
 	  return MATCH_ERROR;
@@ -2290,6 +2378,7 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
 	    {
 	      if (tmp)
 		{
+		  gfc_symbol *s;
 		  switch (tmp->u.i)
 		    {
 		    case INQUIRY_RE:
@@ -2309,6 +2398,39 @@ gfc_match_varspec (gfc_expr *primary, int equiv_flag, bool sub_flag,
 		      if (!gfc_notify_std (GFC_STD_F2003, "LEN part_ref at %C"))
 			return MATCH_ERROR;
 		      break;
+		    }
+
+		  /* If necessary, infer the type of the primary expression
+		     and the associate-name using the the inquiry ref..  */
+		  s = primary->symtree ? primary->symtree->n.sym : NULL;
+		  if (s && s->assoc && s->assoc->target
+		      && (s->ts.type == BT_UNKNOWN
+			  || (primary->ts.type == BT_UNKNOWN
+			      && s->assoc->inferred_type
+			      && s->ts.type == BT_DERIVED)))
+		    {
+		      if (tmp->u.i == INQUIRY_RE || tmp->u.i == INQUIRY_IM)
+			{
+			  s->ts.type = BT_COMPLEX;
+			  s->ts.kind = gfc_default_real_kind;;
+			  s->assoc->inferred_type = 1;
+			  primary->ts = s->ts;
+			}
+		      else if (tmp->u.i == INQUIRY_LEN)
+			{
+			  s->ts.type = BT_CHARACTER;
+			  s->ts.kind = gfc_default_character_kind;;
+			  s->assoc->inferred_type = 1;
+			  primary->ts = s->ts;
+			}
+		      else if (s->ts.type == BT_UNKNOWN)
+			{
+			  /* KIND inquiry gives no clue as to symbol type.  */
+			  primary->ref = tmp;
+			  primary->ts.type = BT_INTEGER;
+			  primary->ts.kind = gfc_default_integer_kind;
+			  return MATCH_YES;
+			}
 		    }
 
 		  if ((tmp->u.i == INQUIRY_RE || tmp->u.i == INQUIRY_IM)
@@ -2643,8 +2765,11 @@ gfc_variable_attr (gfc_expr *expr, gfc_typespec *ts)
   gfc_symbol *sym;
   gfc_component *comp;
   bool has_inquiry_part;
+  bool has_substring_ref = false;
 
-  if (expr->expr_type != EXPR_VARIABLE && expr->expr_type != EXPR_FUNCTION)
+  if (expr->expr_type != EXPR_VARIABLE
+      && expr->expr_type != EXPR_FUNCTION
+      && !(expr->expr_type == EXPR_NULL && expr->ts.type != BT_UNKNOWN))
     gfc_internal_error ("gfc_variable_attr(): Expression isn't a variable");
 
   sym = expr->symtree->n.sym;
@@ -2670,6 +2795,22 @@ gfc_variable_attr (gfc_expr *expr, gfc_typespec *ts)
   if (pointer || attr.proc_pointer)
     target = 1;
 
+  /* F2018:11.1.3.3: Other attributes of associate names
+     "The associating entity does not have the ALLOCATABLE or POINTER
+     attributes; it has the TARGET attribute if and only if the selector is
+     a variable and has either the TARGET or POINTER attribute."  */
+  if (sym->attr.associate_var && sym->assoc && sym->assoc->target)
+    {
+      if (sym->assoc->target->expr_type == EXPR_VARIABLE)
+	{
+	  symbol_attribute tgt_attr;
+	  tgt_attr = gfc_expr_attr (sym->assoc->target);
+	  target = (tgt_attr.pointer || tgt_attr.target);
+	}
+      else
+	target = 0;
+    }
+
   if (ts != NULL && expr->ts.type == BT_UNKNOWN)
     *ts = sym->ts;
 
@@ -2687,7 +2828,12 @@ gfc_variable_attr (gfc_expr *expr, gfc_typespec *ts)
 
   has_inquiry_part = false;
   for (ref = expr->ref; ref; ref = ref->next)
-    if (ref->type == REF_INQUIRY)
+    if (ref->type == REF_SUBSTRING)
+      {
+	has_substring_ref = true;
+	optional = false;
+      }
+    else if (ref->type == REF_INQUIRY)
       {
 	has_inquiry_part = true;
 	optional = false;
@@ -2735,9 +2881,8 @@ gfc_variable_attr (gfc_expr *expr, gfc_typespec *ts)
 	    *ts = comp->ts;
 	    /* Don't set the string length if a substring reference
 	       follows.  */
-	    if (ts->type == BT_CHARACTER
-		&& ref->next && ref->next->type == REF_SUBSTRING)
-		ts->u.cl = NULL;
+	    if (ts->type == BT_CHARACTER && has_substring_ref)
+	      ts->u.cl = NULL;
 	  }
 
 	if (comp->ts.type == BT_CLASS)
@@ -2798,7 +2943,7 @@ gfc_expr_attr (gfc_expr *e)
 	{
 	  gfc_symbol *sym = e->value.function.esym->result;
 	  attr = sym->attr;
-	  if (sym->ts.type == BT_CLASS)
+	  if (sym->ts.type == BT_CLASS && sym->attr.class_ok)
 	    {
 	      attr.dimension = CLASS_DATA (sym)->attr.dimension;
 	      attr.pointer = CLASS_DATA (sym)->attr.class_pointer;
@@ -3089,7 +3234,7 @@ build_actual_constructor (gfc_structure_ctor_component **comp_head,
 		return false;
 	      value = gfc_get_null_expr (&gfc_current_locus);
 	    }
-	  /* ....(Preceeding sentence) If a component with default
+	  /* ....(Preceding sentence) If a component with default
 	     initialization has no corresponding component-data-source, then
 	     the default initialization is applied to that component.  */
 	  else if (comp->initializer)
@@ -3251,8 +3396,8 @@ gfc_convert_to_structure_constructor (gfc_expr *e, gfc_symbol *sym, gfc_expr **c
 	      if (warn_line_truncation && c < e1)
 		gfc_warning_now (OPT_Wcharacter_truncation,
 				 "CHARACTER expression will be truncated "
-				 "in constructor (%ld/%ld) at %L", (long int) c,
-				 (long int) e1, &actual->expr->where);
+				 "in constructor (%td/%td) at %L", c,
+				 e1, &actual->expr->where);
 	    }
 	}
 
@@ -4103,8 +4248,14 @@ match_variable (gfc_expr **result, int equiv_flag, int host_flag)
 	  gfc_error ("Named constant at %C in an EQUIVALENCE");
 	  return MATCH_ERROR;
 	}
-      /* Otherwise this is checked for and an error given in the
-	 variable definition context checks.  */
+      if (gfc_in_match_data())
+	{
+	  gfc_error ("PARAMETER %qs shall not appear in a DATA statement at %C",
+		      sym->name);
+	  return MATCH_ERROR;
+	}
+	/* Otherwise this is checked for an error given in the
+	   variable definition context checks.  */
       break;
 
     case FL_PROCEDURE:

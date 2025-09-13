@@ -1,6 +1,6 @@
 /* Definitions for LoongArch systems using GNU (glibc-based) userspace,
    or other userspace with libc derived from glibc.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -45,14 +45,17 @@ along with GCC; see the file COPYING3.  If not see
 #undef GNU_USER_TARGET_LINK_SPEC
 #define GNU_USER_TARGET_LINK_SPEC \
   "%{G*} %{shared} -m " GNU_USER_LINK_EMULATION \
-  "%{!shared: %{static} %{!static: %{rdynamic:-export-dynamic} " \
-  "-dynamic-linker " GNU_USER_DYNAMIC_LINKER "}}" \
+  "%{!shared: %{static} " \
+  "%{!static: %{!static-pie: %{rdynamic:-export-dynamic} " \
+  "-dynamic-linker " GNU_USER_DYNAMIC_LINKER "}} " \
+  "%{static-pie: -static -pie --no-dynamic-linker -z text}}" \
   "%{mno-relax: --no-relax}"
+
 
 /* Similar to standard Linux, but adding -ffast-math support.  */
 #undef GNU_USER_TARGET_MATHFILE_SPEC
 #define GNU_USER_TARGET_MATHFILE_SPEC \
-  "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s}"
+  "%{Ofast|ffast-math|funsafe-math-optimizations:%{!shared:crtfastmath.o%s}}"
 
 #undef LIB_SPEC
 #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC

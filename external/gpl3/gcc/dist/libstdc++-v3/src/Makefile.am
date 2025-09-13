@@ -1,6 +1,6 @@
 ## Makefile for the C++11 sources of the GNU C++ Standard library.
 ##
-## Copyright (C) 1997-2022 Free Software Foundation, Inc.
+## Copyright (C) 1997-2024 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -22,6 +22,7 @@
 
 include $(top_srcdir)/fragment.am
 
+if GLIBCXX_HOSTED
 if ENABLE_FILESYSTEM_TS
 filesystem_dir = filesystem
 else
@@ -30,14 +31,20 @@ endif
 
 if ENABLE_BACKTRACE
 backtrace_dir = libbacktrace
-backtrace_supported_h = $(backtrace_dir)/backtrace-supported.h
 else
 backtrace_dir =
-backtrace_supported_h =
+endif
+
+experimental_dir = experimental
+else
+filesystem_dir =
+backtrace_dir =
+experimental_dir =
 endif
 
 ## Keep this list sync'd with acinclude.m4:GLIBCXX_CONFIGURE.
-SUBDIRS = c++98 c++11 c++17 c++20 $(filesystem_dir) $(backtrace_dir)
+SUBDIRS = c++98 c++11 c++17 c++20 c++23 c++26 \
+	$(filesystem_dir) $(backtrace_dir) $(experimental_dir)
 
 # Cross compiler support.
 if VTV_CYGMIN
@@ -69,12 +76,15 @@ vpath % $(top_srcdir)/src/c++98
 vpath % $(top_srcdir)/src/c++11
 vpath % $(top_srcdir)/src/c++17
 vpath % $(top_srcdir)/src/c++20
+vpath % $(top_srcdir)/src/c++23
+vpath % $(top_srcdir)/src/c++26
 if ENABLE_FILESYSTEM_TS
 vpath % $(top_srcdir)/src/filesystem
 endif
 if ENABLE_BACKTRACE
 vpath % $(top_srcdir)/src/libbacktrace
 endif
+vpath % $(top_srcdir)/src/experimental
 
 if GLIBCXX_LDBL_COMPAT
 ldbl_compat_sources = compatibility-ldbl.cc
@@ -121,7 +131,13 @@ cxx11_sources = \
 	${cxx0x_compat_sources} \
 	${ldbl_alt128_compat_sources}
 
+if GLIBCXX_HOSTED
 libstdc___la_SOURCES = $(cxx98_sources) $(cxx11_sources)
+else
+# When freestanding, there's currently no compatibility to preserve.  Should
+# that change, any compatibility sources can be added here.
+libstdc___la_SOURCES =
+endif
 
 libstdc___la_LIBADD = \
 	$(GLIBCXX_LIBS) \
@@ -139,8 +155,13 @@ libstdc___la_DEPENDENCIES = \
 	$(top_builddir)/src/c++17/libc++17convenience.la \
 	$(top_builddir)/src/c++20/libc++20convenience.la
 
+if ENABLE_DARWIN_AT_RPATH
+libstdc___darwin_rpath = -Wc,-nodefaultrpaths
+libstdc___darwin_rpath += -Wl,-rpath,@loader_path
+endif
+
 libstdc___la_LDFLAGS = \
-	-version-info $(libtool_VERSION) ${version_arg} -lm
+	-version-info $(libtool_VERSION) ${version_arg} -lm $(libstdc___darwin_rpath)
 
 libstdc___la_LINK = $(CXXLINK) $(libstdc___la_LDFLAGS) $(lt_host_flags)
 
@@ -289,6 +310,7 @@ CXXLINK = \
 	-o $@
 
 # Symbol versioning for shared libraries.
+# See configure.host and configure.ac for port_specific_symbol_files.
 if ENABLE_SYMVERS
 libstdc++-symbols.ver:  ${glibcxx_srcdir}/$(SYMVER_FILE) \
 		$(port_specific_symbol_files)
@@ -370,7 +392,7 @@ libstdc++convenience.la: $(toolexeclib_LTLIBRARIES)
 	if test ! -f .libs/libstdc++.a; then \
 	  cp .libs/libstdc++convenience.a .libs/libstdc++.a; \
 	fi; \
-	echo `date` > stamp-libstdc++convenience;
+	date > stamp-libstdc++convenience;
 
 # Added rules.
 # 1 debug library
@@ -386,52 +408,43 @@ CLEAN_DEBUG =
 endif
 
 # Build a debug variant.
+
 # Take care to fix all possibly-relative paths.
-debugdir = ${glibcxx_builddir}/src/debug
-stamp-debug: Makefile $(foreach dir,$(SUBDIRS),$(dir)/Makefile)
-	if test ! -d ${debugdir} || test ! -f ${debugdir}/Makefile ; then \
-	  mkdir -p ${debugdir}; \
-	  for d in $(SUBDIRS); do mkdir -p  ${debugdir}/$$d; done; \
-	  (cd ${debugdir}; \
-	  sed -e 's/top_builddir = \.\./top_builddir = ..\/../' \
-	      -e 's/top_build_prefix = \.\./top_build_prefix = ..\/../' \
-	      -e 's/srcdir = \.\./srcdir = ..\/../' \
-	      -e 's/VPATH = \.\./VPATH = ..\/../' \
-	      -e 's/glibcxx_basedir = \.\./glibcxx_basedir = ..\/../' \
-	      -e 's/MKDIR_P = \.\./MKDIR_P = ..\/../' \
-	  < ../Makefile > Makefile ; \
-	  for d in . $(SUBDIRS); do \
-	  sed -e 's/top_builddir = \.\./top_builddir = ..\/../' \
-	      -e 's/top_build_prefix = \.\./top_build_prefix = ..\/../' \
-	      -e 's/srcdir = \.\./srcdir = ..\/../' \
-	      -e 's/VPATH = \.\./VPATH = ..\/../' \
-	      -e 's/glibcxx_basedir = \.\./glibcxx_basedir = ..\/../' \
-	      -e 's/MKDIR_P = \.\./MKDIR_P = ..\/../' \
-	  < ../$$d/Makefile > $$d/Makefile ; \
-	  done) ; \
-	fi; \
-	echo `date` > stamp-debug;
+debug/%/Makefile: %/Makefile
+	$(MKDIR_P) $(dir $@)
+	sed -e 's/top_builddir = \.\./top_builddir = ..\/../' \
+	    -e 's/top_build_prefix = \.\./top_build_prefix = ..\/../' \
+	    -e 's/srcdir = \.\./srcdir = ..\/../' \
+	    -e 's/VPATH = \.\./VPATH = ..\/../' \
+	    -e 's/glibcxx_basedir = \.\./glibcxx_basedir = ..\/../' \
+	    -e 's/MKDIR_P = \.\./MKDIR_P = ..\/../' \
+	  < $< > $@
+
+stamp-debug: $(foreach dir,. $(SUBDIRS),debug/$(dir)/Makefile)
+	mv debug/Makefile debug/Makefile.tmp
+	sed -e 's,all-local: all-once,all-local:,' \
+	    -e 's,install-data-local: install-data-once,install-data-local:,' \
+	    -e '/vpath/!s,src/c,src/debug/c,' \
+	  < debug/Makefile.tmp > debug/Makefile
+	rm -f debug/Makefile.tmp
+	date > stamp-debug;
+
+.SECONDARY: $(foreach dir,. $(SUBDIRS),debug/$(dir)/Makefile)
 
 if ENABLE_BACKTRACE
-${debugdir}/$(backtrace_supported_h): $(backtrace_supported_h) stamp-debug
+backtrace_supported_h = $(backtrace_dir)/backtrace-supported.h
+debug_backtrace_supported_h = debug/$(backtrace_supported_h)
+$(debug_backtrace_supported_h): $(backtrace_supported_h) stamp-debug
 	cp $< $@
-debug_backtrace_supported_h = ${debugdir}/$(backtrace_supported_h)
 else
 debug_backtrace_supported_h =
 endif
 
 build-debug: stamp-debug $(debug_backtrace_supported_h)
-	  (cd ${debugdir}; \
-	  mv Makefile Makefile.tmp; \
-	  sed -e 's,all-local: all-once,all-local:,' \
-	      -e 's,install-data-local: install-data-once,install-data-local:,' \
-	      -e '/vpath/!s,src/c,src/debug/c,' \
-	  < Makefile.tmp > Makefile ; \
-	  rm -f Makefile.tmp ; \
-	  $(MAKE) CXXFLAGS='$(DEBUG_FLAGS)' \
-	  toolexeclibdir=$(glibcxx_toolexeclibdir)/debug all) ;
+	  $(MAKE) -C debug CXXFLAGS='$(DEBUG_FLAGS)' \
+	    toolexeclibdir=$(glibcxx_toolexeclibdir)/debug all
 
 # Install debug library.
 install-debug: build-debug
-	(cd ${debugdir} && $(MAKE) CXXFLAGS='$(DEBUG_FLAGS)' \
-	toolexeclibdir=$(glibcxx_toolexeclibdir)/debug install) ;
+	$(MAKE) -C debug CXXFLAGS='$(DEBUG_FLAGS)' \
+	  toolexeclibdir=$(glibcxx_toolexeclibdir)/debug install

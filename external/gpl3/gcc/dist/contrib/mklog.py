@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2020 Free Software Foundation, Inc.
+# Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -28,6 +28,7 @@
 
 import argparse
 import datetime
+import json
 import os
 import re
 import subprocess
@@ -40,7 +41,34 @@ from unidiff import PatchSet
 
 LINE_LIMIT = 100
 TAB_WIDTH = 8
-CO_AUTHORED_BY_PREFIX = 'co-authored-by: '
+
+# Initial commit:
+#   +--------------------------------------------------+
+#   | gccrs: Some title                                |
+#   |                                                  | This is the "start"
+#   | This is some text explaining the commit.         |
+#   | There can be several lines.                      |
+#   |                                                  |<------------------->
+#   | Signed-off-by: My Name <my@mail.com>             | This is the "end"
+#   +--------------------------------------------------+
+#
+# Results in:
+#   +--------------------------------------------------+
+#   | gccrs: Some title                                |
+#   |                                                  |
+#   | This is some text explaining the commit.         | This is the "start"
+#   | There can be several lines.                      |
+#   |                                                  |<------------------->
+#   | gcc/rust/ChangeLog:                              |
+#   |                                                  | This is the generated
+#   |         * some_file (bla):                       | ChangeLog part
+#   |         (foo):                                   |
+#   |                                                  |<------------------->
+#   | Signed-off-by: My Name <my@mail.com>             | This is the "end"
+#   +--------------------------------------------------+
+
+# this regex matches the first line of the "end" in the initial commit message
+FIRST_LINE_OF_END_RE = re.compile('(?i)^(signed-off-by:|co-authored-by:|#)')
 
 pr_regex = re.compile(r'(\/(\/|\*)|[Cc*!])\s+(?P<pr>PR [a-z+-]+\/[0-9]+)')
 prnum_regex = re.compile(r'PR (?P<comp>[a-z+-]+)/(?P<num>[0-9]+)')
@@ -72,8 +100,6 @@ PATCH must be generated using diff(1)'s -up or -cp options
 
 script_folder = os.path.realpath(__file__)
 root = os.path.dirname(os.path.dirname(script_folder))
-
-firstpr = ''
 
 
 def find_changelog(path):
@@ -157,12 +183,13 @@ def get_rel_path_if_prefixed(path, folder):
 
 def generate_changelog(data, no_functions=False, fill_pr_titles=False,
                        additional_prs=None):
+    global prs
+    prs = []
+
     changelogs = {}
     changelog_list = []
-    prs = []
     out = ''
     diff = PatchSet(data)
-    global firstpr
 
     if additional_prs:
         for apr in additional_prs:
@@ -186,23 +213,26 @@ def generate_changelog(data, no_functions=False, fill_pr_titles=False,
             # contains commented code which a note that it
             # has not been tested due to a certain PR or DR.
             this_file_prs = []
-            for line in list(file)[0][0:10]:
-                m = pr_regex.search(line.value)
-                if m:
-                    pr = m.group('pr')
-                    if pr not in prs:
-                        prs.append(pr)
-                        this_file_prs.append(pr.split('/')[-1])
-                else:
-                    m = dr_regex.search(line.value)
+            hunks = list(file)
+            if hunks:
+                for line in hunks[0][0:10]:
+                    m = pr_regex.search(line.value)
                     if m:
-                        dr = m.group('dr')
-                        if dr not in prs:
-                            prs.append(dr)
-                            this_file_prs.append(dr.split('/')[-1])
-                    elif dg_regex.search(line.value):
-                        # Found dg-warning/dg-error line
-                        break
+                        pr = m.group('pr')
+                        if pr not in prs:
+                            prs.append(pr)
+                            this_file_prs.append(pr.split('/')[-1])
+                    else:
+                        m = dr_regex.search(line.value)
+                        if m:
+                            dr = m.group('dr')
+                            if dr not in prs:
+                                prs.append(dr)
+                                this_file_prs.append(dr.split('/')[-1])
+                        elif dg_regex.search(line.value):
+                            # Found dg-warning/dg-error line
+                            break
+
             # PR number in the file name
             fname = os.path.basename(file.path)
             m = pr_filename_regex.search(fname)
@@ -211,9 +241,6 @@ def generate_changelog(data, no_functions=False, fill_pr_titles=False,
                 pr2 = 'PR ' + pr
                 if pr not in this_file_prs and pr2 not in prs:
                     prs.append(pr2)
-
-    if prs:
-        firstpr = prs[0]
 
     if fill_pr_titles:
         out += get_pr_titles(prs)
@@ -250,7 +277,7 @@ def generate_changelog(data, no_functions=False, fill_pr_titles=False,
                 # it used to be path.source_file[2:]
                 relative_path = get_rel_path_if_prefixed(file.source_file[2:],
                                                          changelog)
-                out = append_changelog_line(out, relative_path, 'Moved to...')
+                out = append_changelog_line(out, relative_path, 'Move to...')
                 new_path = get_rel_path_if_prefixed(file.target_file[2:],
                                                     changelog)
                 out += f'\t* {new_path}: ...here.\n'
@@ -330,12 +357,14 @@ def update_copyright(data):
 
 
 def skip_line_in_changelog(line):
-    if line.lower().startswith(CO_AUTHORED_BY_PREFIX) or line.startswith('#'):
-        return False
-    return True
+    return FIRST_LINE_OF_END_RE.match(line) is None
 
 
 if __name__ == '__main__':
+    extra_args = os.getenv('GCC_MKLOG_ARGS')
+    if extra_args:
+        sys.argv += json.loads(extra_args)
+
     parser = argparse.ArgumentParser(description=help_message)
     parser.add_argument('input', nargs='?',
                         help='Patch file (or missing, read standard input)')
@@ -354,29 +383,57 @@ if __name__ == '__main__':
                              'file')
     parser.add_argument('--update-copyright', action='store_true',
                         help='Update copyright in ChangeLog files')
+    parser.add_argument('-a', '--append', action='store_true',
+                        help='Append the generate ChangeLog to the patch file')
     args = parser.parse_args()
     if args.input == '-':
         args.input = None
     if args.directory:
         root = args.directory
 
-    data = open(args.input) if args.input else sys.stdin
+    data = open(args.input, newline='\n') if args.input else sys.stdin
     if args.update_copyright:
         update_copyright(data)
     else:
         output = generate_changelog(data, args.no_functions,
                                     args.fill_up_bug_titles, args.pr_numbers)
-        if args.changelog:
+        if args.append:
+            if (not args.input):
+                raise Exception("`-a or --append` option not support standard "
+                                "input")
+            lines = []
+            with open(args.input, 'r', newline='\n') as f:
+                # 1 -> not find the possible start of diff log
+                # 2 -> find the possible start of diff log
+                # 3 -> finish add ChangeLog to the patch file
+                maybe_diff_log = 1
+                for line in f:
+                    if maybe_diff_log == 1 and line == "---\n":
+                        maybe_diff_log = 2
+                    elif (maybe_diff_log == 2 and
+                          re.match(r"\s[^\s]+\s+\|\s+\d+\s[+\-]+\n", line)):
+                        lines += [output, "---\n", line]
+                        maybe_diff_log = 3
+                    else:
+                        # the possible start is not the true start.
+                        if maybe_diff_log == 2:
+                            lines.append("---\n")
+                            maybe_diff_log = 1
+                        lines.append(line)
+            with open(args.input, "w") as f:
+                f.writelines(lines)
+        elif args.changelog:
             lines = open(args.changelog).read().split('\n')
             start = list(takewhile(skip_line_in_changelog, lines))
             end = lines[len(start):]
             with open(args.changelog, 'w') as f:
                 if not start or not start[0]:
-                    # initial commit subject line 'component: [PRnnnnn]'
-                    m = prnum_regex.match(firstpr)
-                    if m:
-                        title = f'{m.group("comp")}: [PR{m.group("num")}]'
-                        start.insert(0, title)
+                    if len(prs) == 1:
+                        # initial commit subject line 'component: [PRnnnnn]'
+                        m = prnum_regex.match(prs[0])
+                        if m:
+                            title = f'{m.group("comp")}: [PR{m.group("num")}]'
+                            start.insert(0, title)
                 if start:
                     # append empty line
                     if start[-1] != '':

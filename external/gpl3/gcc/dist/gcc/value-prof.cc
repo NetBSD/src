@@ -1,5 +1,5 @@
 /* Transformations based on profile information for values.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -331,18 +331,6 @@ stream_out_histogram_value (struct output_block *ob, histogram_value hist)
       /* When user uses an unsigned type with a big value, constant converted
 	 to gcov_type (a signed type) can be negative.  */
       gcov_type value = hist->hvalue.counters[i];
-      if (hist->type == HIST_TYPE_TOPN_VALUES
-	  || hist->type == HIST_TYPE_IOR)
-	/* Note that the IOR counter tracks pointer values and these can have
-	   sign bit set.  */
-	;
-      else if (hist->type == HIST_TYPE_INDIR_CALL && i == 0)
-	/* 'all' counter overflow is stored as a negative value. Individual
-	   counters and values are expected to be non-negative.  */
-	;
-      else
-	gcc_assert (value >= 0);
-
       streamer_write_gcov_count (ob, value);
     }
   if (hist->hvalue.next)
@@ -1198,7 +1186,11 @@ gimple_mod_subtract_transform (gimple_stmt_iterator *si)
   if (all > 0)
     {
       prob1 = profile_probability::probability_in_gcov_type (count1, all);
-      prob2 = profile_probability::probability_in_gcov_type (count2, all);
+      if (all == count1)
+	prob2 = profile_probability::even ();
+      else
+	prob2 = profile_probability::probability_in_gcov_type (count2, all
+							       - count1);
     }
   else
     {

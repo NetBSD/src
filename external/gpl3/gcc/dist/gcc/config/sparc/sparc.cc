@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.cc for SPARC.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
    64-bit SPARC-V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
    at Cygnus Support.
@@ -607,7 +607,8 @@ static void sparc_emit_set_const64 (rtx, rtx);
 static void sparc_output_addr_vec (rtx);
 static void sparc_output_addr_diff_vec (rtx);
 static void sparc_output_deferred_case_vectors (void);
-static bool sparc_legitimate_address_p (machine_mode, rtx, bool);
+static bool sparc_legitimate_address_p (machine_mode, rtx, bool,
+					code_helper = ERROR_MARK);
 static bool sparc_legitimate_constant_p (machine_mode, rtx);
 static rtx sparc_builtin_saveregs (void);
 static int epilogue_renumber (rtx *, int);
@@ -712,20 +713,20 @@ static bool sparc_modes_tieable_p (machine_mode, machine_mode);
 static bool sparc_can_change_mode_class (machine_mode, machine_mode,
 					 reg_class_t);
 static HOST_WIDE_INT sparc_constant_alignment (const_tree, HOST_WIDE_INT);
-static bool sparc_vectorize_vec_perm_const (machine_mode, rtx, rtx, rtx,
+static bool sparc_vectorize_vec_perm_const (machine_mode, machine_mode,
+					    rtx, rtx, rtx,
 					    const vec_perm_indices &);
 static bool sparc_can_follow_jump (const rtx_insn *, const rtx_insn *);
 static HARD_REG_SET sparc_zero_call_used_regs (HARD_REG_SET);
 
 #ifdef SUBTARGET_ATTRIBUTE_TABLE
 /* Table of valid machine attributes.  */
-static const struct attribute_spec sparc_attribute_table[] =
+TARGET_GNU_ATTRIBUTES (sparc_attribute_table,
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        do_diagnostic, handler, exclude } */
-  SUBTARGET_ATTRIBUTE_TABLE,
-  { NULL,        0, 0, false, false, false, false, NULL, NULL }
-};
+  SUBTARGET_ATTRIBUTE_TABLE
+});
 #endif
 
 char sparc_hard_reg_printed[8];
@@ -970,17 +971,6 @@ char sparc_hard_reg_printed[8];
 #undef TARGET_ZERO_CALL_USED_REGS
 #define TARGET_ZERO_CALL_USED_REGS sparc_zero_call_used_regs
 
-#ifdef SPARC_GCOV_TYPE_SIZE
-static HOST_WIDE_INT
-sparc_gcov_type_size (void)
-{
-  return SPARC_GCOV_TYPE_SIZE;
-}
-
-#undef TARGET_GCOV_TYPE_SIZE
-#define TARGET_GCOV_TYPE_SIZE sparc_gcov_type_size
-#endif
-
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 /* Return the memory reference contained in X if any, zero otherwise.  */
@@ -1062,6 +1052,7 @@ atomic_insn_for_leon3_p (rtx_insn *insn)
 {
   switch (INSN_CODE (insn))
     {
+    case CODE_FOR_membar_storeload:
     case CODE_FOR_swapsi:
     case CODE_FOR_ldstub:
     case CODE_FOR_atomic_compare_and_swap_leon3_1:
@@ -1128,6 +1119,7 @@ next_active_non_empty_insn (rtx_insn *insn)
   while (insn
 	 && (GET_CODE (PATTERN (insn)) == UNSPEC_VOLATILE
 	     || GET_CODE (PATTERN (insn)) == ASM_INPUT
+	     || get_attr_length (insn) == 0
 	     || (USEFUL_INSN_P (insn)
 		 && (asm_noperands (PATTERN (insn)) >= 0)
 		 && !strcmp (decode_asm_operands (PATTERN (insn),
@@ -4528,7 +4520,8 @@ sparc_pic_register_p (rtx x)
    ordinarily.  This changes a bit when generating PIC.  */
 
 static bool
-sparc_legitimate_address_p (machine_mode mode, rtx addr, bool strict)
+sparc_legitimate_address_p (machine_mode mode, rtx addr, bool strict,
+			    code_helper)
 {
   rtx rs1 = NULL, rs2 = NULL, imm1 = NULL;
 
@@ -6789,6 +6782,22 @@ sparc_pass_by_reference (cumulative_args_t, const function_arg_info &arg)
 	    || GET_MODE_SIZE (mode) > 16);
 }
 
+/* Return true if TYPE is considered as a floating-point type by the ABI.  */
+
+static bool
+fp_type_for_abi (const_tree type)
+{
+  /* This is the original GCC implementation.  */
+  if (FLOAT_TYPE_P (type) || VECTOR_TYPE_P (type))
+    return true;
+
+  /* This has been introduced in GCC 14 to match the vendor compiler.  */
+  if (SUN_V9_ABI_COMPATIBILITY && TREE_CODE (type) == ARRAY_TYPE)
+    return fp_type_for_abi (TREE_TYPE (type));
+
+  return false;
+}
+
 /* Traverse the record TYPE recursively and call FUNC on its fields.
    NAMED is true if this is for a named parameter.  DATA is passed
    to FUNC for each field.  OFFSET is the starting position and
@@ -6827,8 +6836,7 @@ traverse_record_type (const_tree type, bool named, T *data,
 					 packed);
 	else
 	  {
-	    const bool fp_type
-	      = FLOAT_TYPE_P (field_type) || VECTOR_TYPE_P (field_type);
+	    const bool fp_type = fp_type_for_abi (field_type);
 	    Func (field, bitpos, fp_type && named && !packed && TARGET_FPU,
 		  data);
 	  }
@@ -6903,7 +6911,7 @@ function_arg_slotno (const struct sparc_args *cum, machine_mode mode,
      their mode, depending upon whether VIS instructions are enabled.  */
   if (type && VECTOR_TYPE_P (type))
     {
-      if (TREE_CODE (TREE_TYPE (type)) == REAL_TYPE)
+      if (SCALAR_FLOAT_TYPE_P (TREE_TYPE (type)))
 	{
 	  /* The SPARC port defines no floating-point vector modes.  */
 	  gcc_assert (mode == BLKmode);
@@ -7078,6 +7086,13 @@ compute_fp_layout (const_tree field, int bitpos, assign_data_t *data,
     {
       mode = TYPE_MODE (TREE_TYPE (TREE_TYPE (field)));
       nregs = 2;
+    }
+  else if (TREE_CODE (TREE_TYPE (field)) == ARRAY_TYPE)
+    {
+      tree elt_type = strip_array_types (TREE_TYPE (field));
+      mode = TYPE_MODE (elt_type);
+      nregs
+	= int_size_in_bytes (TREE_TYPE (field)) / int_size_in_bytes (elt_type);
     }
   else
     nregs = 1;
@@ -13035,9 +13050,13 @@ sparc_expand_vec_perm_bmask (machine_mode vmode, rtx sel)
 /* Implement TARGET_VEC_PERM_CONST.  */
 
 static bool
-sparc_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
-				rtx op1, const vec_perm_indices &sel)
+sparc_vectorize_vec_perm_const (machine_mode vmode, machine_mode op_mode,
+				rtx target, rtx op0, rtx op1,
+				const vec_perm_indices &sel)
 {
+  if (vmode != op_mode)
+    return false;
+
   if (!TARGET_VIS2)
     return false;
 

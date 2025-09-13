@@ -1,6 +1,6 @@
 /* Handle modules, which amounts to loading and saving symbols and
    their attendant structures.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
 
 This file is part of GCC.
@@ -2098,6 +2098,7 @@ enum ab_attribute
   AB_OMP_REQ_REVERSE_OFFLOAD, AB_OMP_REQ_UNIFIED_ADDRESS,
   AB_OMP_REQ_UNIFIED_SHARED_MEMORY, AB_OMP_REQ_DYNAMIC_ALLOCATORS,
   AB_OMP_REQ_MEM_ORDER_SEQ_CST, AB_OMP_REQ_MEM_ORDER_ACQ_REL,
+  AB_OMP_REQ_MEM_ORDER_ACQUIRE, AB_OMP_REQ_MEM_ORDER_RELEASE,
   AB_OMP_REQ_MEM_ORDER_RELAXED, AB_OMP_DEVICE_TYPE_NOHOST,
   AB_OMP_DEVICE_TYPE_HOST, AB_OMP_DEVICE_TYPE_ANY
 };
@@ -2180,7 +2181,9 @@ static const mstring attr_bits[] =
     minit ("OMP_REQ_DYNAMIC_ALLOCATORS", AB_OMP_REQ_DYNAMIC_ALLOCATORS),
     minit ("OMP_REQ_MEM_ORDER_SEQ_CST", AB_OMP_REQ_MEM_ORDER_SEQ_CST),
     minit ("OMP_REQ_MEM_ORDER_ACQ_REL", AB_OMP_REQ_MEM_ORDER_ACQ_REL),
+    minit ("OMP_REQ_MEM_ORDER_ACQUIRE", AB_OMP_REQ_MEM_ORDER_ACQUIRE),
     minit ("OMP_REQ_MEM_ORDER_RELAXED", AB_OMP_REQ_MEM_ORDER_RELAXED),
+    minit ("OMP_REQ_MEM_ORDER_RELEASE", AB_OMP_REQ_MEM_ORDER_RELEASE),
     minit ("OMP_DEVICE_TYPE_HOST", AB_OMP_DEVICE_TYPE_HOST),
     minit ("OMP_DEVICE_TYPE_NOHOST", AB_OMP_DEVICE_TYPE_NOHOST),
     minit ("OMP_DEVICE_TYPE_ANYHOST", AB_OMP_DEVICE_TYPE_ANY),
@@ -2424,7 +2427,7 @@ mio_symbol_attribute (symbol_attribute *attr)
 	  MIO_NAME (ab_attribute) (AB_OACC_ROUTINE_LOP_SEQ, attr_bits);
 	  break;
 	case OACC_ROUTINE_LOP_ERROR:
-	  /* ... intentionally omitted here; it's only unsed internally.  */
+	  /* ... intentionally omitted here; it's only used internally.  */
 	default:
 	  gcc_unreachable ();
 	}
@@ -2448,8 +2451,14 @@ mio_symbol_attribute (symbol_attribute *attr)
 	      == OMP_REQ_ATOMIC_MEM_ORDER_ACQ_REL)
 	    MIO_NAME (ab_attribute) (AB_OMP_REQ_MEM_ORDER_ACQ_REL, attr_bits);
 	  if ((gfc_current_ns->omp_requires & OMP_REQ_ATOMIC_MEM_ORDER_MASK)
+	      == OMP_REQ_ATOMIC_MEM_ORDER_ACQUIRE)
+	    MIO_NAME (ab_attribute) (AB_OMP_REQ_MEM_ORDER_ACQUIRE, attr_bits);
+	  if ((gfc_current_ns->omp_requires & OMP_REQ_ATOMIC_MEM_ORDER_MASK)
 	      == OMP_REQ_ATOMIC_MEM_ORDER_RELAXED)
 	    MIO_NAME (ab_attribute) (AB_OMP_REQ_MEM_ORDER_RELAXED, attr_bits);
+	  if ((gfc_current_ns->omp_requires & OMP_REQ_ATOMIC_MEM_ORDER_MASK)
+	      == OMP_REQ_ATOMIC_MEM_ORDER_RELEASE)
+	    MIO_NAME (ab_attribute) (AB_OMP_REQ_MEM_ORDER_RELEASE, attr_bits);
 	}
       switch (attr->omp_device_type)
 	{
@@ -2729,9 +2738,19 @@ mio_symbol_attribute (symbol_attribute *attr)
 					   "acq_rel", &gfc_current_locus,
 					   module_name);
 	      break;
+	    case AB_OMP_REQ_MEM_ORDER_ACQUIRE:
+	      gfc_omp_requires_add_clause (OMP_REQ_ATOMIC_MEM_ORDER_ACQUIRE,
+					   "acquires", &gfc_current_locus,
+					   module_name);
+	      break;
 	    case AB_OMP_REQ_MEM_ORDER_RELAXED:
 	      gfc_omp_requires_add_clause (OMP_REQ_ATOMIC_MEM_ORDER_RELAXED,
 					   "relaxed", &gfc_current_locus,
+					   module_name);
+	      break;
+	    case AB_OMP_REQ_MEM_ORDER_RELEASE:
+	      gfc_omp_requires_add_clause (OMP_REQ_ATOMIC_MEM_ORDER_RELEASE,
+					   "release", &gfc_current_locus,
 					   module_name);
 	      break;
 	    case AB_OMP_DEVICE_TYPE_HOST:
@@ -4388,10 +4407,10 @@ mio_omp_declare_simd (gfc_namespace *ns, gfc_omp_declare_simd **odsp)
 	    }
 	  for (n = ods->clauses->lists[OMP_LIST_LINEAR]; n; n = n->next)
 	    {
-	      if (n->u.linear_op == OMP_LINEAR_DEFAULT)
+	      if (n->u.linear.op == OMP_LINEAR_DEFAULT)
 		mio_name (4, omp_declare_simd_clauses);
 	      else
-		mio_name (32 + n->u.linear_op, omp_declare_simd_clauses);
+		mio_name (32 + n->u.linear.op, omp_declare_simd_clauses);
 	      mio_symbol_ref (&n->sym);
 	      mio_expr (&n->expr);
 	    }
@@ -4443,7 +4462,7 @@ mio_omp_declare_simd (gfc_namespace *ns, gfc_omp_declare_simd **odsp)
 	    case 34:
 	    case 35:
 	      *ptrs[1] = n = gfc_get_omp_namelist ();
-	      n->u.linear_op = (enum gfc_omp_linear_op) (t - 32);
+	      n->u.linear.op = (enum gfc_omp_linear_op) (t - 32);
 	      t = 4;
 	      goto finish_namelist;
 	    }
@@ -5749,9 +5768,9 @@ check_access (gfc_access specific_access, gfc_access default_access)
     return true;
 
   if (specific_access == ACCESS_PUBLIC)
-    return TRUE;
+    return true;
   if (specific_access == ACCESS_PRIVATE)
-    return FALSE;
+    return false;
 
   if (flag_module_private)
     return default_access == ACCESS_PUBLIC;

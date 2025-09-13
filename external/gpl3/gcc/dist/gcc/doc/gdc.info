@@ -1,6 +1,6 @@
 This is gdc.info, produced by makeinfo version 6.5 from gdc.texi.
 
-Copyright (C) 2006-2022 Free Software Foundation, Inc.
+Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -14,7 +14,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -24,34 +24,2910 @@ copy of the license is included in the section entitled "GNU Free
 Documentation License".
 
 
-File: gdc.info,  Node: Top,  Next: Copying,  Up: (dir)
+File: gdc.info,  Node: Top,  Next: Invoking gdc,  Up: (dir)
 
 Introduction
 ************
 
 This manual describes how to use 'gdc', the GNU compiler for the D
-programming language.  This manual is specifically about 'gdc'.  For
-more information about the D programming language in general, including
+programming language.  This manual is specifically about how to invoke
+'gdc', as well as its features and incompatibilities.  For more
+information about the D programming language in general, including
 language specifications and standard package documentation, see
 <https://dlang.org/>.
 
 * Menu:
 
+* Invoking gdc::                How to run gdc.
+* D Implementation::            User-visible implementation details.
 * Copying::                     The GNU General Public License.
 * GNU Free Documentation License::
                                 How you can share and copy this manual.
-* Invoking gdc::                How to run gdc.
-* Index::                       Index.
+* Option Index::                Index of command line options.
+* Keyword Index::               Index of concepts.
 
 
-File: gdc.info,  Node: Copying,  Next: GNU Free Documentation License,  Prev: Top,  Up: Top
+File: gdc.info,  Node: Invoking gdc,  Next: D Implementation,  Prev: Top,  Up: Top
+
+1 Invoking gdc
+**************
+
+The 'gdc' command is the GNU compiler for the D language and supports
+many of the same options as 'gcc'.  *Note Option Summary: (gcc)Option
+Summary.  This manual only documents the options specific to 'gdc'.
+
+* Menu:
+
+* Input and Output files::  Controlling the kind of output:
+                            an executable, object files, assembler files,
+* Runtime Options::         Options controlling runtime behavior
+* Directory Options::       Where to find module files
+* Code Generation::         Options controlling the output of gdc
+* Warnings::                Options controlling warnings specific to gdc
+* Linking::                 Options influencing the linking step
+* Developer Options::       Options useful for developers of gdc
+
+
+File: gdc.info,  Node: Input and Output files,  Next: Runtime Options,  Up: Invoking gdc
+
+1.1 Input and Output files
+==========================
+
+For any given input file, the file name suffix determines what kind of
+compilation is done.  The following kinds of input file names are
+supported:
+
+'FILE.d'
+     D source files.
+'FILE.dd'
+     Ddoc source files.
+'FILE.di'
+     D interface files.
+
+   You can specify more than one input file on the 'gdc' command line,
+each being compiled separately in the compilation process.  If you
+specify a '-o FILE' option, all the input files are compiled together,
+producing a single output file, named FILE.  This is allowed even when
+using '-S' or '-c'.
+
+   A D interface file contains only what an import of the module needs,
+rather than the whole implementation of that module.  They can be
+created by 'gdc' from a D source file by using the '-H' option.  When
+the compiler resolves an import declaration, it searches for matching
+'.di' files first, then for '.d'.
+
+   A Ddoc source file contains code in the D macro processor language.
+It is primarily designed for use in producing user documentation from
+embedded comments, with a slight affinity towards HTML generation.  If a
+'.d' source file starts with the string 'Ddoc' then it is treated as
+general purpose documentation, not as a D source file.
+
+
+File: gdc.info,  Node: Runtime Options,  Next: Directory Options,  Prev: Input and Output files,  Up: Invoking gdc
+
+1.2 Runtime Options
+===================
+
+These options affect the runtime behavior of programs compiled with
+'gdc'.
+
+'-fall-instantiations'
+     Generate code for all template instantiations.  The default
+     template emission strategy is to not generate code for declarations
+     that were either instantiated speculatively, such as from
+     '__traits(compiles, ...)', or that come from an imported module not
+     being compiled.
+
+'-fno-assert'
+     Turn off code generation for 'assert' contracts.
+
+'-fno-bounds-check'
+     Turns off array bounds checking for all functions, which can
+     improve performance for code that uses arrays extensively.  Note
+     that this can result in unpredictable behavior if the code in
+     question actually does violate array bounds constraints.  It is
+     safe to use this option if you are sure that your code never throws
+     a 'RangeError'.
+
+'-fbounds-check=VALUE'
+     An alternative to '-fbounds-check' that allows more control as to
+     where bounds checking is turned on or off.  The following values
+     are supported:
+
+     'on'
+          Turns on array bounds checking for all functions.
+     'safeonly'
+          Turns on array bounds checking only for '@safe' functions.
+     'off'
+          Turns off array bounds checking completely.
+
+'-fno-builtin'
+     Don't recognize built-in functions unless they begin with the
+     prefix '__builtin_'.  By default, the compiler will recognize when
+     a function in the 'core.stdc' package is a built-in function.
+
+'-fcheckaction=VALUE'
+     This option controls what code is generated on an assertion, bounds
+     check, or final switch failure.  The following values are
+     supported:
+
+     'context'
+          Throw an 'AssertError' with extra context information.
+     'halt'
+          Halt the program execution.
+     'throw'
+          Throw an 'AssertError' (the default).
+
+'-fdebug'
+'-fdebug=VALUE'
+     Turn on compilation of conditional 'debug' code into the program.
+     The '-fdebug' option itself sets the debug level to '1', while
+     '-fdebug=' enables 'debug' code that are identified by any of the
+     following values:
+
+     'ident'
+          Turns on compilation of any 'debug' code identified by IDENT.
+
+'-fno-druntime'
+     Implements <https://dlang.org/spec/betterc.html>.  Assumes that
+     compilation targets an environment without a D runtime library.
+
+     This is equivalent to compiling with the following options:
+
+          gdc -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti
+
+'-fextern-std=STANDARD'
+     Sets the C++ name mangling compatibility to the version identified
+     by STANDARD.  The following values are supported:
+
+     'c++98'
+     'c++03'
+          Sets '__traits(getTargetInfo, "cppStd")' to '199711'.
+     'c++11'
+          Sets '__traits(getTargetInfo, "cppStd")' to '201103'.
+     'c++14'
+          Sets '__traits(getTargetInfo, "cppStd")' to '201402'.
+     'c++17'
+          Sets '__traits(getTargetInfo, "cppStd")' to '201703'.  This is
+          the default.
+     'c++20'
+          Sets '__traits(getTargetInfo, "cppStd")' to '202002'.
+
+'-fno-invariants'
+     Turns off code generation for class 'invariant' contracts.
+
+'-fmain'
+     Generates a default 'main()' function when compiling.  This is
+     useful when unittesting a library, as it enables running the
+     unittests in a library without having to manually define an
+     entry-point function.  This option does nothing when 'main' is
+     already defined in user code.
+
+'-fno-moduleinfo'
+     Turns off generation of the 'ModuleInfo' and related functions that
+     would become unreferenced without it, which may allow linking to
+     programs not written in D. Functions that are not be generated
+     include module constructors and destructors ('static this' and
+     'static ~this'), 'unittest' code, and 'DSO' registry functions for
+     dynamically linked code.
+
+'-fonly=FILENAME'
+     Tells the compiler to parse and run semantic analysis on all
+     modules on the command line, but only generate code for the module
+     specified by FILENAME.
+
+'-fno-postconditions'
+     Turns off code generation for postcondition 'out' contracts.
+
+'-fno-preconditions'
+     Turns off code generation for precondition 'in' contracts.
+
+'-fpreview=ID'
+     Turns on an upcoming D language change identified by ID.  The
+     following values are supported:
+
+     'all'
+          Turns on all upcoming D language features.
+     'bitfields'
+          Implements bit-fields in D.
+     'dip1000'
+          Implements
+          <https://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1000.md>
+          (Scoped pointers).
+     'dip1008'
+          Implements
+          <https://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1008.md>
+          (Allow exceptions in '@nogc' code).
+     'dip1021'
+          Implements
+          <https://github.com/dlang/DIPs/blob/master/DIPs/accepted/DIP1021.md>
+          (Mutable function arguments).
+     'dip25'
+          Implements
+          <https://github.com/dlang/DIPs/blob/master/DIPs/archive/DIP25.md>
+          (Sealed references).
+     'dtorfields'
+          Turns on generation for destructing fields of partially
+          constructed objects.
+     'fieldwise'
+          Turns on generation of struct equality to use field-wise
+          comparisons.
+     'fixaliasthis'
+          Implements new lookup rules that check the current scope for
+          'alias this' before searching in upper scopes.
+     'fiximmutableconv'
+          Disallows unsound immutable conversions that were formerly
+          incorrectly permitted.
+     'in'
+          Implements 'in' parameters to mean 'scope const [ref]' and
+          accepts rvalues.
+     'inclusiveincontracts'
+          Implements 'in' contracts of overridden methods to be a
+          superset of parent contract.
+     'nosharedaccess'
+          Turns off and disallows all access to shared memory objects.
+     'rvaluerefparam'
+          Implements rvalue arguments to 'ref' parameters.
+     'systemvariables'
+          Disables access to variables marked '@system' from '@safe'
+          code.
+
+'-frelease'
+     Turns on compiling in release mode, which means not emitting
+     runtime checks for contracts and asserts.  Array bounds checking is
+     not done for '@system' and '@trusted' functions, and assertion
+     failures are undefined behavior.
+
+     This is equivalent to compiling with the following options:
+
+          gdc -fno-assert -fbounds-check=safe -fno-invariants \
+              -fno-postconditions -fno-preconditions -fno-switch-errors
+
+'-frevert='
+     Turns off a D language feature identified by ID.  The following
+     values are supported:
+
+     'all'
+          Turns off all revertable D language features.
+     'dip1000'
+          Reverts
+          <https://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1000.md>
+          (Scoped pointers).
+     'dip25'
+          Reverts
+          <https://github.com/dlang/DIPs/blob/master/DIPs/archive/DIP25.md>
+          (Sealed references).
+     'dtorfields'
+          Turns off generation for destructing fields of partially
+          constructed objects.
+     'intpromote'
+          Turns off C-style integral promotion for unary '+', '-' and
+          '~' expressions.
+
+'-fno-rtti'
+     Turns off generation of run-time type information for all user
+     defined types.  Any code that uses features of the language that
+     require access to this information will result in an error.
+
+'-fno-switch-errors'
+     This option controls what code is generated when no case is matched
+     in a 'final switch' statement.  The default run time behavior is to
+     throw a 'SwitchError'.  Turning off '-fswitch-errors' means that
+     instead the execution of the program is immediately halted.
+
+'-funittest'
+     Turns on compilation of 'unittest' code, and turns on the
+     'version(unittest)' identifier.  This implies '-fassert'.
+
+'-fversion=VALUE'
+     Turns on compilation of conditional 'version' code into the program
+     identified by any of the following values:
+
+     'ident'
+          Turns on compilation of 'version' code identified by IDENT.
+
+'-fno-weak-templates'
+     Turns off emission of declarations that can be defined in multiple
+     objects as weak symbols.  The default is to emit all public symbols
+     as weak, unless the target lacks support for weak symbols.
+     Disabling this option means that common symbols are instead put in
+     COMDAT or become private.
+
+
+File: gdc.info,  Node: Directory Options,  Next: Code Generation,  Prev: Runtime Options,  Up: Invoking gdc
+
+1.3 Options for Directory Search
+================================
+
+These options specify directories to search for files, libraries, and
+other parts of the compiler:
+
+'-IDIR'
+     Specify a directory to use when searching for imported modules at
+     compile time.  Multiple '-I' options can be used, and the paths are
+     searched in the same order.
+
+'-JDIR'
+     Specify a directory to use when searching for files in string
+     imports at compile time.  This switch is required in order to use
+     'import(file)' expressions.  Multiple '-J' options can be used, and
+     the paths are searched in the same order.
+
+'-LDIR'
+     When linking, specify a library search directory, as with 'gcc'.
+
+'-BDIR'
+     This option specifies where to find the executables, libraries,
+     source files, and data files of the compiler itself, as with 'gcc'.
+
+'-fmodule-file=MODULE=SPEC'
+     This option manipulates file paths of imported modules, such that
+     if an imported module matches all or the leftmost part of MODULE,
+     the file path in SPEC is used as the location to search for D
+     sources.  This is used when the source file path and names are not
+     the same as the package and module hierarchy.  Consider the
+     following examples:
+
+          gdc test.d -fmodule-file=A.B=foo.d -fmodule-file=C=bar
+
+     This will tell the compiler to search in all import paths for the
+     source file FOO.D when importing A.B, and the directory BAR/ when
+     importing C, as annotated in the following D code:
+
+          module test;
+          import A.B;     // Matches A.B, searches for foo.d
+          import C.D.E;   // Matches C, searches for bar/D/E.d
+          import A.B.C;   // No match, searches for A/B/C.d
+
+'-imultilib DIR'
+     Use DIR as a subdirectory of the gcc directory containing
+     target-specific D sources and interfaces.
+
+'-iprefix PREFIX'
+     Specify PREFIX as the prefix for the gcc directory containing
+     target-specific D sources and interfaces.  If the PREFIX represents
+     a directory, you should include the final ''/''.
+
+'-nostdinc'
+     Do not search the standard system directories for D source and
+     interface files.  Only the directories that have been specified
+     with '-I' options (and the directory of the current file, if
+     appropriate) are searched.
+
+
+File: gdc.info,  Node: Code Generation,  Next: Warnings,  Prev: Directory Options,  Up: Invoking gdc
+
+1.4 Code Generation
+===================
+
+In addition to the many 'gcc' options controlling code generation, 'gdc'
+has several options specific to itself.
+
+'-H'
+     Generates D interface files for all modules being compiled.  The
+     compiler determines the output file based on the name of the input
+     file, removes any directory components and suffix, and applies the
+     '.di' suffix.
+
+'-Hd DIR'
+     Same as '-H', but writes interface files to directory DIR.  This
+     option can be used with '-Hf FILE' to independently set the output
+     file and directory path.
+
+'-Hf FILE'
+     Same as '-H' but writes interface files to FILE.  This option can
+     be used with '-Hd DIR' to independently set the output file and
+     directory path.
+
+'-M'
+     Output the module dependencies of all source files being compiled
+     in a format suitable for 'make'.  The compiler outputs one 'make'
+     rule containing the object file name for that source file, a colon,
+     and the names of all imported files.
+
+'-MM'
+     Like '-M' but does not mention imported modules from the D standard
+     library package directories.
+
+'-MF FILE'
+     When used with '-M' or '-MM', specifies a FILE to write the
+     dependencies to.  When used with the driver options '-MD' or
+     '-MMD', '-MF' overrides the default dependency output file.
+
+'-MG'
+     This option is for compatibility with 'gcc', and is ignored by the
+     compiler.
+
+'-MP'
+     Outputs a phony target for each dependency other than the modules
+     being compiled, causing each to depend on nothing.
+
+'-MT TARGET'
+     Change the TARGET of the rule emitted by dependency generation to
+     be exactly the string you specify.  If you want multiple targets,
+     you can specify them as a single argument to '-MT', or use multiple
+     '-MT' options.
+
+'-MQ TARGET'
+     Same as '-MT', but it quotes any characters which are special to
+     'make'.
+
+'-MD'
+     This option is equivalent to '-M -MF FILE'.  The driver determines
+     FILE by removing any directory components and suffix from the input
+     file, and then adding a '.deps' suffix.
+
+'-MMD'
+     Like '-MD' but does not mention imported modules from the D
+     standard library package directories.
+
+'-X'
+     Output information describing the contents of all source files
+     being compiled in JSON format to a file.  The driver determines
+     FILE by removing any directory components and suffix from the input
+     file, and then adding a '.json' suffix.
+
+'-Xf FILE'
+     Same as '-X', but writes all JSON contents to the specified FILE.
+
+'-fdoc'
+     Generates 'Ddoc' documentation and writes it to a file.  The
+     compiler determines FILE by removing any directory components and
+     suffix from the input file, and then adding a '.html' suffix.
+
+'-fdoc-dir=DIR'
+     Same as '-fdoc', but writes documentation to directory DIR.  This
+     option can be used with '-fdoc-file=FILE' to independently set the
+     output file and directory path.
+
+'-fdoc-file=FILE'
+     Same as '-fdoc', but writes documentation to FILE.  This option can
+     be used with '-fdoc-dir=DIR' to independently set the output file
+     and directory path.
+
+'-fdoc-inc=FILE'
+     Specify FILE as a DDOC macro file to be read.  Multiple '-fdoc-inc'
+     options can be used, and files are read and processed in the same
+     order.
+
+'-fdump-c++-spec=FILE'
+     For D source files, generate corresponding C++ declarations in
+     FILE.
+
+'-fdump-c++-spec-verbose'
+     In conjunction with '-fdump-c++-spec=' above, add comments for
+     ignored declarations in the generated C++ header.
+
+'-fsave-mixins=FILE'
+     Generates code expanded from D 'mixin' statements and writes the
+     processed sources to FILE.  This is useful to debug errors in
+     compilation and provides source for debuggers to show when
+     requested.
+
+
+File: gdc.info,  Node: Warnings,  Next: Linking,  Prev: Code Generation,  Up: Invoking gdc
+
+1.5 Warnings
+============
+
+Warnings are diagnostic messages that report constructions that are not
+inherently erroneous but that are risky or suggest there is likely to be
+a bug in the program.  Unless '-Werror' is specified, they do not
+prevent compilation of the program.
+
+'-Wall'
+     Turns on all warnings messages.  Warnings are not a defined part of
+     the D language, and all constructs for which this may generate a
+     warning message are valid code.
+
+'-Walloca'
+     This option warns on all uses of "alloca" in the source.
+
+'-Walloca-larger-than=N'
+     Warn on unbounded uses of alloca, and on bounded uses of alloca
+     whose bound can be larger than N bytes.  '-Wno-alloca-larger-than'
+     disables '-Walloca-larger-than' warning and is equivalent to
+     '-Walloca-larger-than=SIZE_MAX' or larger.
+
+'-Wno-builtin-declaration-mismatch'
+     Warn if a built-in function is declared with an incompatible
+     signature.
+
+'-Wcast-result'
+     Warn about casts that will produce a null or zero result.
+     Currently this is only done for casting between an imaginary and
+     non-imaginary data type, or casting between a D and C++ class.
+
+'-Wno-deprecated'
+     Do not warn about usage of deprecated features and symbols with
+     'deprecated' attributes.
+
+'-Werror'
+     Turns all warnings into errors.
+
+'-Wextra'
+     This enables some extra warning flags that are not enabled by
+     '-Wall'.
+
+          -Waddress
+          -Wcast-result
+          -Wmismatched-special-enum
+          -Wunknown-pragmas
+
+'-Wmismatched-special-enum'
+     Warn when an enum the compiler recognizes as special is declared
+     with a different size to the built-in type it is representing.
+
+'-Wspeculative'
+     List all error messages from speculative compiles, such as
+     '__traits(compiles, ...)'.  This option does not report messages as
+     warnings, and these messages therefore never become errors when the
+     '-Werror' option is also used.
+
+'-Wunknown-pragmas'
+     Warn when a 'pragma()' is encountered that is not understood by
+     'gdc'.  This differs from '-fignore-unknown-pragmas' where a pragma
+     that is part of the D language, but not implemented by the
+     compiler, won't get reported.
+
+'-Wno-varargs'
+     Do not warn upon questionable usage of the macros used to handle
+     variable arguments like 'va_start'.
+
+'-fno-ignore-unknown-pragmas'
+     Do not recognize unsupported pragmas.  Any 'pragma()' encountered
+     that is not part of the D language will result in an error.  This
+     option is now deprecated and will be removed in a future release.
+
+'-fmax-errors=N'
+     Limits the maximum number of error messages to N, at which point
+     'gdc' bails out rather than attempting to continue processing the
+     source code.  If N is 0 (the default), there is no limit on the
+     number of error messages produced.
+
+'-fsyntax-only'
+     Check the code for syntax errors, but do not actually compile it.
+     This can be used in conjunction with '-fdoc' or '-H' to generate
+     files for each module present on the command-line, but no other
+     output file.
+
+'-ftransition=ID'
+     Report additional information about D language changes identified
+     by ID.  The following values are supported:
+
+     'all'
+          List information on all D language transitions.
+     'complex'
+          List all usages of complex or imaginary types.
+     'field'
+          List all non-mutable fields which occupy an object instance.
+     'in'
+          List all usages of 'in' on parameter.
+     'nogc'
+          List all hidden GC allocations.
+     'templates'
+          List statistics on template instantiations.
+     'tls'
+          List all variables going into thread local storage.
+
+
+File: gdc.info,  Node: Linking,  Next: Developer Options,  Prev: Warnings,  Up: Invoking gdc
+
+1.6 Options for Linking
+=======================
+
+These options come into play when the compiler links object files into
+an executable output file.  They are meaningless if the compiler is not
+doing a link step.
+
+'-defaultlib=LIBNAME'
+     Specify the library to use instead of libphobos when linking.
+     Options specifying the linkage of libphobos, such as
+     '-static-libphobos' or '-shared-libphobos', are ignored.
+
+'-debuglib=LIBNAME'
+     Specify the debug library to use instead of libphobos when linking.
+     This option has no effect unless the '-g' option was also given on
+     the command line.  Options specifying the linkage of libphobos,
+     such as '-static-libphobos' or '-shared-libphobos', are ignored.
+
+'-nophoboslib'
+     Do not use the Phobos or D runtime library when linking.  Options
+     specifying the linkage of libphobos, such as '-static-libphobos' or
+     '-shared-libphobos', are ignored.  The standard system libraries
+     are used normally, unless '-nostdlib' or '-nodefaultlibs' is used.
+
+'-shared-libphobos'
+     On systems that provide 'libgphobos' and 'libgdruntime' as a shared
+     and a static library, this option forces the use of the shared
+     version.  If no shared version was built when the compiler was
+     configured, this option has no effect.
+
+'-static-libphobos'
+     On systems that provide 'libgphobos' and 'libgdruntime' as a shared
+     and a static library, this option forces the use of the static
+     version.  If no static version was built when the compiler was
+     configured, this option has no effect.
+
+
+File: gdc.info,  Node: Developer Options,  Prev: Linking,  Up: Invoking gdc
+
+1.7 Developer Options
+=====================
+
+This section describes command-line options that are primarily of
+interest to developers or language tooling.
+
+'-fdump-d-original'
+     Output the internal front-end AST after the 'semantic3' stage.
+     This option is only useful for debugging the GNU D compiler itself.
+
+'-v'
+     Dump information about the compiler language processing stages as
+     the source program is being compiled.  This includes listing all
+     modules that are processed through the 'parse', 'semantic',
+     'semantic2', and 'semantic3' stages; all 'import' modules and their
+     file paths; and all 'function' bodies that are being compiled.
+
+
+File: gdc.info,  Node: D Implementation,  Next: Copying,  Prev: Invoking gdc,  Up: Top
+
+2 Language Reference
+********************
+
+The implementation of the D programming language used by the GNU D
+compiler is shared with parts of the front-end for the Digital Mars D
+compiler, hosted at <https://github.com/dlang/dmd/>.  This common
+front-end covers lexical analysis, parsing, and semantic analysis of the
+D programming language defined in the documents at <https://dlang.org/>.
+
+   The implementation details described in this manual are GNU D
+extensions to the D programming language.  If you want to write code
+that checks whether these features are available, you can test for the
+predefined version 'GNU', or you can check whether a specific feature is
+compilable using '__traits(compiles)'.
+
+     version (GNU)
+     {
+         import gcc.builtins;
+         return __builtin_atan2(x, y);
+     }
+
+     static if (__traits(compiles, { asm {"";} }))
+     {
+         asm { "magic instruction"; }
+     }
+
+* Menu:
+
+* Attributes::          Implementation-defined attributes.
+* Builtin Functions::   GCC built-ins module.
+* ImportC::             Importing C sources into D.
+* Inline Assembly::     Interfacing D with assembler.
+* Intrinsics::          Intrinsic functions supported by GDC.
+* Predefined Pragmas::  Pragmas accepted by GDC.
+* Predefined Versions:: List of versions for conditional compilation.
+* Special Enums::       Intrinsic type interoperability with C and C++.
+* Traits::              Compile-time reflection extensions.
+* Vector Extensions::   Using vector types and supported operations.
+* Vector Intrinsics::   Vector instructions through intrinsics.
+* Missing Features::    Deviations from the D2 specification in GDC.
+
+
+File: gdc.info,  Node: Attributes,  Next: Builtin Functions,  Up: D Implementation
+
+2.1 Attributes
+==============
+
+User-Defined Attributes (UDA) are compile-time expressions introduced by
+the '@' token that can be attached to a declaration.  These attributes
+can then be queried, extracted, and manipulated at compile time.
+
+   GNU D provides a number of extra special attributes to control
+specific compiler behavior that may help the compiler optimize or check
+code more carefully for correctness.  The attributes are defined in the
+'gcc.attributes' module.
+
+   There is some overlap between the purposes of attributes and pragmas.
+It has been found more convenient to use '@attribute' to achieve a
+natural attachment of attributes to their corresponding declarations,
+whereas 'pragma' is of use for compatibility with other compilers or
+constructs that do not naturally form part of the grammar.
+
+* Menu:
+
+* Attribute Syntax::
+* Common Attributes::
+* Other Attributes::
+* Target Attributes::
+
+
+File: gdc.info,  Node: Attribute Syntax,  Next: Common Attributes,  Up: Attributes
+
+2.1.1 Attribute Syntax
+----------------------
+
+'@(gcc.attributes.attribute)' is the generic entrypoint for applying GCC
+attributes to a function, variable, or type.  There is no type checking
+done, as well as no deprecation path for attributes removed from the
+compiler.  So the recommendation is to use any of the other UDAs
+available as described in *note Common Attributes:: unless it is a
+target-specific attribute (*Note Target Attributes::).
+
+   Function attributes introduced by the '@attribute' UDA are used in
+the declaration of a function, followed by an attribute name string and
+any arguments separated by commas enclosed in parentheses.
+
+     import gcc.attributes;
+     @attribute("regparm", 1) int func(int size);
+
+Multiple attributes can be applied to a single declaration either with
+multiple '@attribute' attributes, or passing all attributes as a
+comma-separated list enclosed by parentheses.
+
+     // Both func1 and func2 have the same attributes applied.
+     @attribute("noinline") @attribute("noclone") void func1();
+     @(attribute("noinline"), attribute("noclone")) void func2();
+
+There are some problems with the semantics of such attributes in D. For
+example, there are no manglings for attributes, although they may affect
+code generation, so problems may arise when attributed types are used in
+conjunction with templates or overloading.  Similarly, 'typeid' does not
+distinguish between types with different attributes.  Support for
+attributes in D are restricted to declarations only.
+
+
+File: gdc.info,  Node: Common Attributes,  Next: Other Attributes,  Prev: Attribute Syntax,  Up: Attributes
+
+2.1.2 Common Attributes
+-----------------------
+
+The following attributes are supported on most targets.
+
+'@(gcc.attributes.alloc_size (SIZEARGIDX))'
+'@(gcc.attributes.alloc_size (SIZEARGIDX, NUMARGIDX))'
+'@(gcc.attributes.alloc_size (SIZEARGIDX, NUMARGIDX, ZEROBASEDNUMBERING))'
+
+     The '@alloc_size' attribute may be applied to a function - or a
+     function pointer variable - that returns a pointer and takes at
+     least one argument of an integer or enumerated type.  It indicates
+     that the returned pointer points to memory whose size is given by
+     the function argument at 'sizeArgIdx', or by the product of the
+     arguments at 'sizeArgIdx' and 'numArgIdx'.  Meaningful sizes are
+     positive values less than 'ptrdiff_t.max'.  Unless
+     'zeroBasedNumbering' is true, argument numbering starts at one for
+     ordinary functions, and at two for non-static member functions.
+
+     If 'numArgIdx' is less than '0', it is taken to mean there is no
+     argument specifying the element count.
+
+          @alloc_size(1) void* malloc(size_t);
+          @alloc_size(3,2) void* reallocarray(void *, size_t, size_t);
+          @alloc_size(1,2) void* my_calloc(size_t, size_t, bool);
+          void malloc_cb(@alloc_size(1) void* function(size_t) ptr) { }
+
+'@(gcc.attributes.always_inline)'
+
+     The '@always_inline' attribute inlines the function independent of
+     any restrictions that otherwise apply to inlining.  Failure to
+     inline such a function is diagnosed as an error.
+
+          @always_inline int func();
+
+'@(gcc.attributes.cold)'
+
+     The '@cold' attribute on functions is used to inform the compiler
+     that the function is unlikely to be executed.  The function is
+     optimized for size rather than speed and on many targets it is
+     placed into a special subsection of the text section so all cold
+     functions appear close together, improving code locality of
+     non-cold parts of program.  The paths leading to calls of cold
+     functions within code are considered to be cold too.
+
+          @cold int func();
+
+'@(gcc.attributes.flatten)'
+
+     The '@flatten' attribute is used to inform the compiler that every
+     call inside this function should be inlined, if possible.
+     Functions declared with attribute '@noinline' and similar are not
+     inlined.
+
+          @flatten int func();
+
+'@(gcc.attributes.no_icf)'
+
+     The '@no_icf' attribute prevents a function from being merged with
+     another semantically equivalent function.
+
+          @no_icf int func();
+
+'@(gcc.attributes.no_sanitize ("SANITIZE_OPTION"))'
+
+     The '@no_sanitize' attribute on functions is used to inform the
+     compiler that it should not do sanitization of any option mentioned
+     in SANITIZE_OPTION.  A list of values acceptable by the
+     '-fsanitize' option can be provided.
+
+          @no_sanitize("alignment", "object-size") void func1() { }
+          @no_sanitize("alignment,object-size") void func2() { }
+
+'@(gcc.attributes.noclone)'
+
+     The '@noclone' attribute prevents a function from being considered
+     for cloning - a mechanism that produces specialized copies of
+     functions and which is (currently) performed by interprocedural
+     constant propagation.
+
+          @noclone int func();
+
+'@(gcc.attributes.noinline)'
+
+     The '@noinline' attribute prevents a function from being considered
+     for inlining.  If the function does not have side effects, there
+     are optimizations other than inlining that cause function calls to
+     be optimized away, although the function call is live.  To keep
+     such calls from being optimized away, put 'asm { ""; }' in the
+     called function, to serve as a special side effect.
+
+          @noinline int func();
+
+'@(gcc.attributes.noipa)'
+
+     The '@noipa' attribute disables interprocedural optimizations
+     between the function with this attribute and its callers, as if the
+     body of the function is not available when optimizing callers and
+     the callers are unavailable when optimizing the body.  This
+     attribute implies '@noinline', '@noclone', and '@no_icf'
+     attributes.  However, this attribute is not equivalent to a
+     combination of other attributes, because its purpose is to suppress
+     existing and future optimizations employing interprocedural
+     analysis, including those that do not have an attribute suitable
+     for disabling them individually.
+
+     This attribute is supported mainly for the purpose of testing the
+     compiler.
+
+          @noipa int func();
+
+'@(gcc.attributes.noplt)'
+
+     The '@noplt' attribute is the counterpart to option '-fno-plt'.
+     Calls to functions marked with this attribute in
+     position-independent code do not use the PLT in
+     position-independent code.
+
+     In position-dependant code, a few targets also convert call to
+     functions that are marked to not use the PLT to use the GOT
+     instead.
+
+          @noplt int func();
+
+'@(gcc.attributes.optimize (ARGUMENTS))'
+
+     The '@optimize' attribute is used to specify that a function is to
+     be compiled with different optimization options than specified on
+     the command line.  Valid ARGUMENTS are constant non-negative
+     integers and strings.  Multiple arguments can be provided,
+     separated by commas to specify multiple options.  Each numeric
+     argument specifies an optimization level.  Each string argument
+     that begins with the letter 'O' refers to an optimization option
+     such as '-O0' or '-Os'.  Other options are taken as suffixes to the
+     '-f' prefix jointly forming the name of an optimization option.
+
+     Not every optimization option that starts with the '-f' prefix
+     specified by the attribute necessarily has an effect on the
+     function.  The '@optimize' attribute should be used for debugging
+     purposes only.  It is not suitable in production code.
+
+          @optimize(2) double fn0(double x);
+          @optimize("2") double fn1(double x);
+          @optimize("s") double fn2(double x);
+          @optimize("Ofast") double fn3(double x);
+          @optimize("-O2") double fn4(double x);
+          @optimize("tree-vectorize") double fn5(double x);
+          @optimize("-ftree-vectorize") double fn6(double x);
+          @optimize("no-finite-math-only", 3) double fn7(double x);
+
+'@(gcc.attributes.register ("REGISTERNAME"))'
+
+     The '@register' attribute specifies that a local or '__gshared'
+     variable is to be given a register storage-class in the C99 sense
+     of the term, and will be placed into a register named REGISTERNAME.
+
+     The variable needs to boiled down to a data type that fits the
+     target register.  It also cannot have either thread-local or
+     'extern' storage.  It is an error to take the address of a register
+     variable.
+
+          @register("ebx") __gshared int ebx = void;
+          void func() { @register("r10") long r10 = 0x2a; }
+
+'@(gcc.attributes.restrict)'
+
+     The '@restrict' attribute specifies that a function parameter is to
+     be restrict-qualified in the C99 sense of the term.  The parameter
+     needs to boil down to either a pointer or reference type, such as a
+     D pointer, class reference, or a 'ref' parameter.
+
+          void func(@restrict ref const float[16] array);
+
+'@(gcc.attributes.section ("SECTIONNAME"))'
+
+     The '@section' attribute specifies that a function or variable
+     lives in a particular section.  For when you need certain
+     particular functions to appear in special sections.
+
+     Some file formats do not support arbitrary sections so the section
+     attribute is not available on all platforms.  If you need to map
+     the entire contents of a module to a particular section, consider
+     using the facilities of the linker instead.
+
+          @section("bar") extern void func();
+          @section("stack") ubyte[10000] stack;
+
+'@(gcc.attributes.simd)'
+
+     The '@simd' attribute enables creation of one or more function
+     versions that can process multiple arguments using SIMD
+     instructions from a single invocation.  Specifying this attribute
+     allows compiler to assume that such versions are available at link
+     time (provided in the same or another module).  Generated versions
+     are target-dependent and described in the corresponding Vector ABI
+     document.
+
+          @simd double sqrt(double x);
+
+'@(gcc.attributes.simd_clones ("MASK"))'
+
+     The '@simd_clones' attribute is the same as '@simd', but also
+     includes a MASK argument.  Valid masks values are 'notinbranch' or
+     'inbranch', and instructs the compiler to generate non-masked or
+     masked clones correspondingly.
+
+          @simd_clones("notinbranch") double atan2(double y, double x);
+
+'@(gcc.attributes.symver ("ARGUMENTS"))'
+
+     The '@symver' attribute creates a symbol version on ELF targets.
+     The syntax of the string parameter is '"NAME@NODENAME"'.  The NAME
+     part of the parameter is the actual name of the symbol by which it
+     will be externally referenced.  The NODENAME portion should be the
+     name of a node specified in the version script supplied to the
+     linker when building a shared library.  Versioned symbol must be
+     defined and must be exported with default visibility.
+
+     Finally if the parameter is '"NAME@@NODENAME"' then in addition to
+     creating a symbol version (as if '"NAME@NODENAME"' was used) the
+     version will be also used to resolve NAME by the linker.
+
+          @symver("foo@VERS_1") int foo_v1();
+
+'@(gcc.attributes.target ("OPTIONS"))'
+
+     The '@target' attribute is used to specify that a function is to be
+     compiled with different target options than specified on the
+     command line.  One or more strings can be provided as arguments,
+     separated by commas to specify multiple options.  Each string
+     consists of one or more comma-separated suffixes to the '-m' prefix
+     jointly forming the name of a machine-dependent option.
+
+     The target attribute can be used for instance to have a function
+     compiled with a different ISA (instruction set architecture) than
+     the default.
+
+     The options supported are specific to each target.
+
+          @target("arch=core2") void core2_func();
+          @target("sse3") void sse3_func();
+
+'@(gcc.attributes.target_clones ("OPTIONS"))'
+
+     The '@target_clones' attribute is used to specify that a function
+     be cloned into multiple versions compiled with different target
+     OPTIONS than specified on the command line.  The supported options
+     and restrictions are the same as for '@target' attribute.
+
+     It also creates a resolver function that dynamically selects a
+     clone suitable for current architecture.  The resolver is created
+     only if there is a usage of a function with '@target_clones'
+     attribute.
+
+          @target_clones("sse4.1,avx,default") double func(double x);
+
+'@(gcc.attributes.used)'
+
+     The '@used' attribute, annotated to a function or variable, means
+     that code must be emitted for the function even if it appears that
+     the function is not referenced.  This is useful, for example, when
+     the function is referenced only in inline assembly.
+
+          @used __gshared int var = 0x1000;
+
+'@(gcc.attributes.visibility ("VISIBILITYNAME"))'
+
+     The '@visibility' attribute affects the linkage of the declaration
+     to which it is attached.  It can be applied to variables, types,
+     and functions.
+
+     There are four supported visibility_type values: 'default',
+     'hidden', 'protected', or 'internal' visibility.
+
+          @visibility("protected") void func() {  }
+
+'@(gcc.attributes.weak)'
+
+     The '@weak' attribute causes a declaration of an external symbol to
+     be emitted as a weak symbol rather than a global.  This is
+     primarily useful in defining library functions that can be
+     overridden in user code, though it can also be used with
+     non-function declarations.  The overriding symbol must have the
+     same type as the weak symbol.  In addition, if it designates a
+     variable it must also have the same size and alignment as the weak
+     symbol.
+
+     Weak symbols are supported for ELF targets, and also for a.out
+     targets when using the GNU assembler and linker.
+
+          @weak int func() { return 1; }
+
+
+File: gdc.info,  Node: Other Attributes,  Next: Target Attributes,  Prev: Common Attributes,  Up: Attributes
+
+2.1.3 Other Attributes
+----------------------
+
+The following attributes are defined for compatibility with other
+compilers.
+
+'@(gcc.attributes.allocSize (SIZEARGIDX))'
+'@(gcc.attributes.allocSize (SIZEARGIDX, NUMARGIDX))'
+'@(gcc.attributes.allocSize (SIZEARGIDX))'
+
+     These attributes are a synonym for '@alloc_size(SIZEARGIDX,
+     NUMARGIDX, true)'.  Unlike '@alloc_size', it uses 0-based index of
+     the function arguments.
+
+'@(gcc.attributes.assumeUsed)'
+
+     This attribute is a synonym for '@used'.
+
+'@(gcc.attributes.dynamicCompile)'
+'@(gcc.attributes.dynamicCompileConst)'
+'@(gcc.attributes.dynamicCompileEmit)'
+
+     These attributes are accepted, but have no effect.
+
+'@(gcc.attributes.fastmath)'
+
+     This attribute is a synonym for '@optimize("Ofast")'.  Explicitly
+     sets "fast-math" for a function, enabling aggressive math
+     optimizations.
+
+'@(gcc.attributes.hidden)'
+
+     This attribute is a synonym for '@visibility("hidden")'.  Sets the
+     visibility of a function or global variable to "hidden".
+
+'@(gcc.attributes.naked)'
+
+     This attribute is a synonym for '@attribute("naked")'.  Adds GCC's
+     "naked" attribute to a function, disabling function prologue /
+     epilogue emission.  Intended to be used in combination with basic
+     'asm' statements.  While using extended 'asm' or a mixture of basic
+     'asm' and D code may appear to work, they cannot be depended upon
+     to work reliably and are not supported.
+
+'@(gcc.attributes.noSanitize ("SANITIZE_OPTION"))'
+
+     This attribute is a synonym for '@no_sanitize("sanitize_option")'.
+
+'@(gcc.attributes.optStrategy ("STRATEGY"))'
+
+     This attribute is a synonym for '@optimize("O0")' and
+     '@optimize("Os")'.  Sets the optimization strategy for a function.
+     Valid strategies are "none", "optsize", "minsize".  The strategies
+     are mutually exclusive.
+
+'@(gcc.attributes.polly)'
+
+     This attribute is a synonym for '@optimize("loop-parallelize-all",
+     "loop-nest-optimize")'.  Only effective when GDC was built with ISL
+     included.
+
+
+File: gdc.info,  Node: Target Attributes,  Prev: Other Attributes,  Up: Attributes
+
+2.1.4 Target-specific Attributes
+--------------------------------
+
+Many targets have their own target-specific attributes.  These are also
+exposed via the 'gcc.attributes' module with use of the generic
+'@(gcc.attributes.attribute)' UDA function.
+
+   *Note Attribute Syntax::, for details of the exact syntax for using
+attributes.
+
+   See the function and variable attribute documentation in the GCC
+manual for more information about what attributes are available on each
+target.
+
+   Examples of using x86-specific target attributes are shown as
+follows:
+
+     import gcc.attributes;
+
+     @attribute("cdecl")
+     @attribute("fastcall")
+     @attribute("ms_abi")
+     @attribute("sysv_abi")
+     @attribute("callee_pop_aggregate_return", 1)
+     @attribute("ms_hook_prologue")
+     @attribute("naked")
+     @attribute("regparm", 2)
+     @attribute("sseregparm")
+     @attribute("force_align_arg_pointer")
+     @attribute("stdcall")
+     @attribute("no_caller_saved_registers")
+     @attribute("interrupt")
+     @attribute("indirect_branch", "thunk")
+     @attribute("function_return", "keep"))
+     @attribute("nocf_check")
+     @attribute("cf_check")
+     @attribute("indirect_return")
+     @attribute("fentry_name", "nop")
+     @attribute("fentry_section", "__entry_loc")
+     @attribute("nodirect_extern_access")
+
+
+
+File: gdc.info,  Node: Builtin Functions,  Next: ImportC,  Prev: Attributes,  Up: D Implementation
+
+2.2 Built-in Functions
+======================
+
+GCC provides a large number of built-in functions that are made
+available in GNU D by importing the 'gcc.builtins' module.  Declarations
+in this module are automatically created by the compiler.  All
+declarations start with '__builtin_'.  Refer to the built-in function
+documentation in the GCC manual for a full list of functions that are
+available.
+
+* Menu:
+
+* Builtin Types::
+* Query Builtins::
+* Other Builtins::
+
+
+File: gdc.info,  Node: Builtin Types,  Next: Query Builtins,  Up: Builtin Functions
+
+2.2.1 Built-in Types
+--------------------
+
+In addition to built-in functions, the following types are defined in
+the 'gcc.builtins' module.
+
+'___builtin_clong'
+     The D equivalent of the target's C 'long' type.
+
+'___builtin_clonglong'
+     The D equivalent of the target's C 'long long' type.
+
+'___builtin_culong'
+     The D equivalent of the target's C 'unsigned long' type.
+
+'___builtin_culonglong'
+     The D equivalent of the target's C 'unsigned long long' type.
+
+'___builtin_machine_byte'
+     Signed unit-sized integer type.
+
+'___builtin_machine_int'
+     Signed word-sized integer type.
+
+'___builtin_machine_ubyte'
+     Unsigned unit-sized integer type.
+
+'___builtin_machine_uint'
+     Unsigned word-sized integer type.
+
+'___builtin_pointer_int'
+     Signed pointer-sized integer type.
+
+'___builtin_pointer_uint'
+     Unsigned pointer-sized integer type.
+
+'___builtin_unwind_int'
+     The D equivalent of the target's C '_Unwind_Sword' type.
+
+'___builtin_unwind_uint'
+     The D equivalent of the target's C '_Unwind_Word' type.
+
+'___builtin_va_list'
+     The target's 'va_list' type.
+
+
+File: gdc.info,  Node: Query Builtins,  Next: Other Builtins,  Prev: Builtin Types,  Up: Builtin Functions
+
+2.2.2 Querying Available Built-ins
+----------------------------------
+
+Not all of the functions are supported, and some target-specific
+functions may only be available when compiling for a particular ISA. One
+way of finding out what is exposed by the built-ins module is by
+generating a D interface file.  Assuming you have no file 'builtins.d',
+the command
+       echo "module gcc.builtins;" > builtins.d; gdc -H -fsyntax-only builtins.d
+will save all built-in declarations to the file 'builtins.di'.
+
+   Another way to determine whether a specific built-in is available is
+by using compile-time reflection.
+     enum X86_HAVE_SSE3 = __traits(compiles, __builtin_ia32_haddps);
+     enum X86_HAVE_SSSE3 = __traits(compiles, __builtin_ia32_pmulhrsw128);
+     enum X86_HAVE_SSE41 = __traits(compiles, __builtin_ia32_dpps);
+     enum X86_HAVE_SSE42 = __traits(compiles, __builtin_ia32_pcmpgtq);
+     enum X86_HAVE_AVX = __traits(compiles, __builtin_ia32_vbroadcastf128_pd256);
+     enum X86_HAVE_AVX2 = __traits(compiles, __builtin_ia32_gathersiv2df);
+     enum X86_HAVE_BMI2 = __traits(compiles, __builtin_ia32_pext_si);
+
+
+File: gdc.info,  Node: Other Builtins,  Prev: Query Builtins,  Up: Builtin Functions
+
+2.2.3 Other Built-in Functions
+------------------------------
+
+As well as built-ins being available from the 'gcc.builtins' module, GNU
+D will also recognize when an 'extern(C)' library function is a GCC
+built-in.  Many of these functions are only optimized in certain cases;
+if they are not optimized in a particular case, a call to the library
+function is emitted.  This optimization can be disabled with the
+'-fno-builtin' option (*note Runtime Options::).
+
+   In the 'core.stdc.complex' module, the functions 'cabs', 'cabsf',
+'cabsl', 'cacos', 'cacosf', 'cacosh', 'cacoshf', 'cacoshl', 'cacosl',
+'carg', 'cargf', 'cargl', 'casin', 'casinf', 'casinh', 'casinhf',
+'casinhl', 'casinl', 'catan', 'catanf', 'catanh', 'catanhf', 'catanhl',
+'catanl', 'ccos', 'ccosf', 'ccosh', 'ccoshf', 'ccoshl', 'ccosl', 'cexp',
+'cexpf', 'cexpl', 'clog', 'clogf', 'clogl', 'conj', 'conjf', 'conjl',
+'cpow', 'cpowf', 'cpowl', 'cproj', 'cprojf', 'cprojl', 'csin', 'csinf',
+'csinh', 'csinhf', 'csinhl', 'csinl', 'csqrt', 'csqrtf', 'csqrtl',
+'ctan', 'ctanf', 'ctanh', 'ctanhf', 'ctanhl', 'ctanl' may be handled as
+built-in functions.  All these functions have corresponding versions
+prefixed with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.ctype' module, the functions 'isalnum', 'isalpha',
+'isblank', 'iscntrl', 'isdigit', 'isgraph', 'islower', 'isprint',
+'ispunct', 'isspace', 'isupper', 'isxdigit', 'tolower', 'toupper' may be
+handled as built-in functions.  All these functions have corresponding
+versions prefixed with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.fenv' module, the functions 'feclearexcept',
+'fegetenv', 'fegetexceptflag', 'fegetround', 'feholdexcept',
+'feraiseexcept', 'fesetenv', 'fesetexceptflag', 'fesetround',
+'fetestexcept', 'feupdateenv' may be handled as built-in functions.  All
+these functions have corresponding versions prefixed with '__builtin_'
+in the 'gcc.builtins' module.
+
+   In the 'core.stdc.inttypes' module, the function 'imaxabs' may be
+handled as a built-in function.  All these functions have corresponding
+versions prefixed with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.math' module, the functions 'acos', 'acosf',
+'acosh', 'acoshf', 'acoshl', 'acosl', 'asin', 'asinf', 'asinh',
+'asinhf', 'asinhl', 'asinl', 'atan', 'atan2', 'atan2f', 'atan2l',
+'atanf', 'atanh', 'atanhf', 'atanhl', 'atanl', 'cbrt', 'cbrtf', 'cbrtl',
+'ceil', 'ceilf', 'ceill', 'copysign', 'copysignf', 'copysignl', 'cos',
+'cosf', 'cosh', 'coshf', 'coshl', 'cosl', 'erf', 'erfc', 'erfcf',
+'erfcl', 'erff', 'erfl', 'exp', 'exp2', 'exp2f', 'exp2l', 'expf',
+'expl', 'expm1', 'expm1f', 'expm1l', 'fabs', 'fabsf', 'fabsl', 'fdim',
+'fdimf', 'fdiml', 'floor', 'floorf', 'floorl', 'fma', 'fmaf', 'fmal',
+'fmax', 'fmaxf', 'fmaxl', 'fmin', 'fminf', 'fminl', 'fmod', 'fmodf',
+'fmodl', 'frexp', 'frexpf', 'frexpl', 'hypot', 'hypotf', 'hypotl',
+'ilogb', 'ilogbf', 'ilogbl', 'isinf', 'isnan', 'ldexp', 'ldexpf',
+'ldexpl', 'lgamma', 'lgammaf', 'lgammal', 'llrint', 'llrintf',
+'llrintl', 'llround', 'llroundf', 'llroundl', 'log', 'log10', 'log10f',
+'log10l', 'log1p', 'log1pf', 'log1pl', 'log2', 'log2f', 'log2l', 'logb',
+'logbf', 'logbl', 'logf', 'logl', 'lrint', 'lrintf', 'lrintl', 'lround',
+'lroundf', 'lroundl', 'modf', 'modff', 'modfl', 'nan', 'nanf', 'nanl',
+'nearbyint', 'nearbyintf', 'nearbyintl', 'nextafter', 'nextafterf',
+'nextafterl', 'nexttoward', 'nexttowardf', 'nexttowardl', 'pow', 'powf',
+'powl', 'remainder', 'remainderf', 'remainderl', 'remquo', 'remquof',
+'remquol', 'rint', 'rintf', 'rintl', 'round', 'roundf', 'roundl',
+'scalbln', 'scalblnf', 'scalblnl', 'scalbn', 'scalbnf', 'scalbnl',
+'signbit', 'sin', 'sinf', 'sinh', 'sinhf', 'sinhl', 'sinl', 'sqrt',
+'sqrtf', 'sqrtl', 'tan', 'tanf', 'tanh', 'tanhf', 'tanhl', 'tanl',
+'tgamma', 'tgammaf', 'tgammal', 'trunc', 'truncf', 'truncl' may be
+handled as built-in functions.  All these functions have corresponding
+versions prefixed with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.stdio' module, the functions 'fprintf', 'fputc',
+'fputc_unlocked', 'fputs', 'fwrite', 'printf', 'puts', 'snprintf',
+'sprintf', 'vfprintf', 'vprintf', 'vsnprintf', 'vsprintf' may be handled
+as built-in functions.  All these functions have corresponding versions
+prefixed with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.stdlib' module, the functions 'abort', 'abs',
+'aligned_alloc', 'alloca', 'calloc', 'exit', '_Exit', 'free', 'labs',
+'llabs', 'malloc', 'realloc' may be handled as built-in functions.  All
+these functions have corresponding versions prefixed with '__builtin_'
+in the 'gcc.builtins' module.
+
+   In the 'core.stdc.string' module, the functions 'memchr', 'memcmp',
+'memcpy', 'memmove', 'memset', 'strcat', 'strchr', 'strcmp', 'strcpy',
+'strcspn', 'strdup', 'strlen', 'strncat', 'strncmp', 'strncpy',
+'strpbrk', 'strrchr', 'strspn', 'strstr' may be handled as built-in
+functions.  All these functions have corresponding versions prefixed
+with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.time' module, the function 'strftime' may be
+handled as a built-in function.  All these functions have corresponding
+versions prefixed with '__builtin_' in the 'gcc.builtins' module.
+
+   In the 'core.stdc.wctype' module, the functions 'iswalnum',
+'iswalpha', 'iswblank', 'iswcntrl', 'iswdigit', 'iswgraph', 'iswlower',
+'iswprint', 'iswpunct', 'iswspace', 'iswupper', 'iswxdigit', 'towlower',
+'towupper' may be handled as built-in functions.  All these functions
+have corresponding versions prefixed with '__builtin_' in the
+'gcc.builtins' module.
+
+   Within the 'core.sys' package for POSIX and platform definitions, the
+functions 'putchar_unlocked', 'putc_unlocked', 'posix_memalign', 'ffs',
+'strcasecmp', 'strncasecmp', 'stpcpy', 'stpncpy', 'strndup', 'strnlen',
+'execl', 'execle', 'execlp', 'execv', 'execve', 'execvp', '_exit',
+'fork' may be handled as built-in functions.  All these functions have
+corresponding versions prefixed with '__builtin_' in the 'gcc.builtins'
+module.
+
+
+File: gdc.info,  Node: ImportC,  Next: Inline Assembly,  Prev: Builtin Functions,  Up: D Implementation
+
+2.3 Importing C Sources into D
+==============================
+
+ImportC is a C preprocessor and parser embedded into the GNU D
+implementation.  It enables direct importation of C files, without
+needing to manually prepare a D file corresponding to the declarations
+in the C file.
+
+   ImportC is an implementation of ISO/IEC 9899:2011, which will be
+referred to as C11.  Prior versions, such as C99, C89, and K+R C, are
+not supported.
+
+   Assuming you have no file 'cstdio.c' or 'main.d', the commands
+       cat > cstdio.c << @EOC
+       int printf(const char*, ...);
+       @EOC
+       cat > main.d << @EOD
+       import cstdio;
+       void main() { printf("Hello ImportC\n"); }
+       @EOD
+       gdc main.d -o main; ./main
+   will generate a program which will print 'Hello ImportC'.
+
+   ImportC does not have a preprocessor.  It is designed to compile C
+files after they have been first run through the C preprocessor.  If the
+C file has a '.i' extension, the file is presumed to be already
+preprocessed.  Preprocessing can be run manually:
+       gcc -E file.c > file.i
+
+ImportC collects all the '#define' macros from the preprocessor run when
+it is run automatically.  The macros that look like manifest constants,
+such as:
+     #define COLOR 0x123456
+   are interpreted as D manifest constant declarations of the form:
+     enum COLOR = 0x123456;
+
+The variety of macros that can be interpreted as D declarations may be
+expanded, but will never encompass all the metaprogramming uses of C
+macros.
+
+   GNU D does not directly compile C files into modules that can be
+linked in with D code to form an executable.  When given a source file
+with the suffix '.c', the compiler driver program 'gdc' instead runs the
+subprogram 'cc1'.
+
+     gdc file1.d file2.c // d21 file1.d -o file1.s
+                         // cc1 file2.c -o file2.s
+                         // as file1.s -o file1.o
+                         // as file2.s -o file2.o
+                         // ld file1.o file2.o
+
+
+File: gdc.info,  Node: Inline Assembly,  Next: Intrinsics,  Prev: ImportC,  Up: D Implementation
+
+2.4 Inline Assembly
+===================
+
+The 'asm' keyword allows you to embed assembler instructions within D
+code.  GNU D provides two forms of inline 'asm' statements.  A "basic
+'asm'" statement is one with no operands, while an "extended 'asm'"
+statement includes one or more operands.
+
+     asm FUNCTIONATTRIBUTES {
+             ASSEMBLERINSTRUCTION ;
+     }
+
+     asm FUNCTIONATTRIBUTES {
+             ASSEMBLERTEMPLATE
+              : OUTPUTOPERANDS
+              [ : INPUTOPERANDS
+              [ : CLOBBERS
+              [ : GOTOLABELS ] ] ] ;
+     }
+
+The extended form is preferred for mixing D and assembly language within
+a function, but to include assembly language in a function declared with
+the 'naked' attribute you must use basic 'asm'.
+
+     uint incr (uint value)
+     {
+         uint result;
+         asm { "incl %0"
+               : "=a" (result)
+               : "a" (value);
+         }
+         return result;
+     }
+
+Multiple assembler instructions can appear within an 'asm' block, or the
+instruction template can be a multi-line or concatenated string.  In
+both cases, GCC's optimizers won't discard or move any instruction
+within the statement block.
+     bool hasCPUID()
+     {
+         uint flags = void;
+         asm nothrow @nogc {
+             "pushfl";
+             "pushfl";
+             "xorl %0, (%%esp)" :: "i" (0x00200000);
+             "popfl";
+             "pushfl";
+             "popl %0" : "=a" (flags);
+             "xorl (%%esp), %0" : "=a" (flags);
+             "popfl";
+         }
+         return (flags & 0x0020_0000) != 0;
+     }
+
+The instruction templates for both basic and extended 'asm' can be any
+expression that can be evaluated at compile-time to a string, not just
+string literals.
+
+     uint invert(uint v)
+     {
+         uint result;
+         asm @safe @nogc nothrow pure {
+             genAsmInsn(`invert`)
+             : [res] `=r` (result)
+             : [arg1] `r` (v);
+         }
+         return result;
+
+     }
+
+The total number of input + output + goto operands is limited to 30.
+
+
+File: gdc.info,  Node: Intrinsics,  Next: Predefined Pragmas,  Prev: Inline Assembly,  Up: D Implementation
+
+2.5 Intrinsics
+==============
+
+The D language specification itself does not define any intrinsics that
+a compatible compiler must implement.  Rather, within the D core library
+there are a number of modules that define primitives with generic
+implementations.  While the generic versions of these functions are
+computationally expensive relative to the cost of the operation itself,
+compiler implementations are free to recognize them and generate
+equivalent and faster code.
+
+   The following are the kinds of intrinsics recognized by GNU D.
+
+* Menu:
+
+* Bit Operation Intrinsics::
+* Integer Overflow Intrinsics::
+* Math Intrinsics::
+* Variadic Intrinsics::
+* Volatile Intrinsics::
+* CTFE Intrinsics::
+
+
+File: gdc.info,  Node: Bit Operation Intrinsics,  Next: Integer Overflow Intrinsics,  Up: Intrinsics
+
+2.5.1 Bit Operation Intrinsics
+------------------------------
+
+The following functions are a collection of intrinsics that do bit-level
+operations, available by importing the 'core.bitop' module.
+
+   Although most are named after x86 hardware instructions, it is not
+guaranteed that they will result in generating equivalent assembly on
+x86.  If the compiler determines there is a better way to get the same
+result in hardware, then that will be used instead.
+
+ -- Function: int core.bitop.bsf (uint V)
+ -- Function: int core.bitop.bsf (ulong V)
+
+     Scans the bits in V starting with bit '0', looking for the first
+     set bit.  Returns the bit number of the first bit set.  The return
+     value is undefined if V is zero.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_ctz'.
+
+ -- Function: int core.bitop.bsr (uint V)
+ -- Function: int core.bitop.bsr (ulong V)
+
+     Scans the bits in V from the most significant bit to the least
+     significant bit, looking for the first set bit.  Returns the bit
+     number of the first bit set.  The return value is undefined if V is
+     zero.
+
+     This intrinsic is equivalent to writing the following:
+          result = __builtin_clz(v) ^ (v.sizeof * 8 - 1)
+
+ -- Function: int core.bitop.bt (scope const(uint*) P, uint BITNUM)
+ -- Function: int core.bitop.bt (scope const(uint*) P, uint BITNUM)
+
+     Tests the bit BITNUM in the input parameter P.  Returns a non-zero
+     value if the bit was set, and a zero if it was clear.
+
+     This intrinsic is equivalent to writing the following:
+          immutable bits_per_unit = (*p).sizeof * 8;
+          immutable bit_mask = size_t(1) << (bitnum % bits_per_unit);
+
+          result = (p[bitnum / bits_per_unit] & bit_mask) != 0;
+
+ -- Function: int core.bitop.btc (uint* P, uint BITNUM)
+ -- Function: int core.bitop.btc (ulong* P, ulong BITNUM)
+
+     Tests and complements the bit BITNUM in the input parameter P.
+     Returns a non-zero value if the bit was set, and a zero if it was
+     clear.
+
+     This intrinsic is equivalent to writing the following:
+          immutable bits_per_unit = (*p).sizeof * 8;
+          immutable bit_mask = size_t(1) << (bitnum % bits_per_unit);
+
+          result = (p[bitnum / bits_per_unit] & bit_mask) != 0;
+
+          p[bitnum / bits_per_unit] ^= bit_mask;
+
+ -- Function: int core.bitop.btr (uint* P, uint BITNUM)
+ -- Function: int core.bitop.btr (ulong* P, ulong BITNUM)
+
+     Tests and resets (sets to 0) the bit BITNUM in the input parameter
+     P.  Returns a non-zero value if the bit was set, and a zero if it
+     was clear.
+
+     This intrinsic is equivalent to writing the following:
+          immutable bits_per_unit = (*p).sizeof * 8;
+          immutable bit_mask = size_t(1) << (bitnum % bits_per_unit);
+
+          result = (p[bitnum / bits_per_unit] & bit_mask) != 0;
+
+          p[bitnum / bits_per_unit] &= ~bit_mask;
+
+ -- Function: int core.bitop.bts (uint* P, uint BITNUM)
+ -- Function: int core.bitop.bts (ulong* P, ulong BITNUM)
+
+     Tests and sets the bit BITNUM in the input parameter P.  Returns a
+     non-zero value if the bit was set, and a zero if it was clear.
+
+     This intrinsic is equivalent to writing the following:
+          immutable bits_per_unit = (*p).sizeof * 8;
+          immutable bit_mask = size_t(1) << (bitnum % bits_per_unit);
+
+          result = (p[bitnum / bits_per_unit] & bit_mask) != 0;
+
+          p[bitnum / bits_per_unit] |= bit_mask;
+
+ -- Function: ushort core.bitop.byteswap (ushort X)
+ -- Function: uint core.bitop.bswap (uint X)
+ -- Function: ulong core.bitop.bswap (ulong X)
+
+     Swaps the bytes in X end-to-end; for example, in a 4-byte 'uint',
+     byte '0' becomes byte '3', byte '1' becomes byte '2', etc.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_bswap'.
+
+ -- Function: int core.bitop.popcnt (uint X)
+ -- Function: int core.bitop.popcnt (ulong X)
+
+     Calculates the number of set bits in X.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_popcount'.
+
+ -- Template: T core.bitop.rol (T)(const T VALUE, const uint COUNT)
+ -- Template: T core.bitop.rol (uint COUNT, T)(const T VALUE)
+
+     Bitwise rotate VALUE left by COUNT bit positions.
+
+     This intrinsic is equivalent to writing the following:
+          result = cast(T) ((value << count) | (value >> (T.sizeof * 8 - count)));
+
+ -- Template: T core.bitop.ror (T)(const T VALUE, const uint COUNT)
+ -- Template: T core.bitop.ror (uint COUNT, T)(const T VALUE)
+
+     Bitwise rotate VALUE right by COUNT bit positions.
+
+     This intrinsic is equivalent to writing the following:
+          result = cast(T) ((value >> count) | (value << (T.sizeof * 8 - count)));
+
+
+File: gdc.info,  Node: Integer Overflow Intrinsics,  Next: Math Intrinsics,  Prev: Bit Operation Intrinsics,  Up: Intrinsics
+
+2.5.2 Integer Overflow Intrinsics
+---------------------------------
+
+The following functions are a collection of intrinsics that implement
+integral arithmetic primitives that check for out-of-range results,
+available by importing the 'core.checkedint' module.
+
+   In all intrinsics, the overflow is sticky, meaning a sequence of
+operations can be done and overflow need only be checked at the end.
+
+ -- Function: int core.checkedint.adds (int X, int Y, ref bool OVERFLOW)
+ -- Function: long core.checkedint.adds (long X, long Y, ref bool
+          OVERFLOW)
+
+     Add two signed integers, checking for overflow.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_sadd_overflow'.
+
+ -- Function: int core.checkedint.addu (int X, int Y, ref bool OVERFLOW)
+ -- Function: long core.checkedint.addu (long X, long Y, ref bool
+          OVERFLOW)
+
+     Add two unsigned integers, checking for overflow.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_uadd_overflow'.
+
+ -- Function: int core.checkedint.muls (int X, int Y, ref bool OVERFLOW)
+ -- Function: long core.checkedint.muls (long X, long Y, ref bool
+          OVERFLOW)
+
+     Multiply two signed integers, checking for overflow.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_smul_overflow'.
+
+ -- Function: int core.checkedint.mulu (int X, int Y, ref bool OVERFLOW)
+ -- Function: long core.checkedint.mulu (long X, long Y, ref bool
+          OVERFLOW)
+
+     Multiply two unsigned integers, checking for overflow.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_umul_overflow'.
+
+ -- Function: int core.checkedint.negs (int X, ref bool OVERFLOW)
+ -- Function: long core.checkedint.negs (long X, ref bool OVERFLOW)
+
+     Negates an integer.
+
+     This intrinsic is equivalent to writing the following:
+          result = __builtin_ssub (0, x, overflow);
+
+ -- Function: int core.checkedint.subs (int X, int Y, ref bool OVERFLOW)
+ -- Function: long core.checkedint.subs (long X, long Y, ref bool
+          OVERFLOW)
+
+     Substract two signed integers, checking for overflow.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_ssub_overflow'.
+
+ -- Function: int core.checkedint.subu (int X, int Y, ref bool OVERFLOW)
+ -- Function: long core.checkedint.subu (long X, long Y, ref bool
+          OVERFLOW)
+
+     Substract two unsigned integers, checking for overflow.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_usub_overflow'.
+
+
+File: gdc.info,  Node: Math Intrinsics,  Next: Variadic Intrinsics,  Prev: Integer Overflow Intrinsics,  Up: Intrinsics
+
+2.5.3 Math Intrinsics
+---------------------
+
+The following functions are a collection of mathematical intrinsics,
+available by importing the 'core.math' module.
+
+ -- Function: float core.math.cos (float x)
+ -- Function: double core.math.cos (double x)
+ -- Function: real core.math.cos (real x)
+
+     Returns cosine of X, where X is in radians.  The return value is
+     undefined if X is greater than 2^{64}.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_cos'.
+
+ -- Function: float core.math.fabs (float x)
+ -- Function: double core.math.fabs (double x)
+ -- Function: real core.math.fabs (real x)
+
+     Compute the absolute value of X.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_fabs'.
+
+ -- Function: float core.math.ldexp (float n, int exp)
+ -- Function: double core.math.ldexp (double n, int exp)
+ -- Function: real core.math.ldexp (real n, int exp)
+
+     Compute n * 2^{exp}.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_ldexp'.
+
+ -- Function: float core.math.rint (float x)
+ -- Function: double core.math.rint (double x)
+ -- Function: real core.math.rint (real x)
+
+     Rounds X to the nearest integer value, using the current rounding
+     mode.  If the return value is not equal to X, the 'FE_INEXACT'
+     exception is raised.  'nearbyint' performs the same operation, but
+     does not set the 'FE_INEXACT' exception.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_rint'.
+
+ -- Function: float core.math.rndtol (float x)
+ -- Function: double core.math.rndtol (double x)
+ -- Function: real core.math.rndtol (real x)
+
+     Returns X rounded to a long value using the current rounding mode.
+     If the integer value of X is greater than 'long.max', the result is
+     indeterminate.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_llround'.
+
+ -- Function: float core.math.sin (float x)
+ -- Function: double core.math.sin (double x)
+ -- Function: real core.math.sin (real x)
+
+     Returns sine of X, where X is in radians.  The return value is
+     undefined if X is greater than 2^{64}.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_sin'.
+
+ -- Function: float core.math.sqrt (float x)
+ -- Function: double core.math.sqrt (double x)
+ -- Function: real core.math.sqrt (real x)
+
+     Compute the sqrt of X.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_sqrt'.
+
+ -- Template: T core.math.toPrec (T)(float f)
+ -- Template: T core.math.toPrec (T)(double f)
+ -- Template: T core.math.toPrec (T)(real f)
+
+     Round F to a specific precision.
+
+     In floating-point operations, D language types specify only a
+     minimum precision, not a maximum.  The 'toPrec' function forces
+     rounding of the argument F to the precision of the specified
+     floating point type 'T'.  The rounding mode used is inevitably
+     target-dependent, but will be done in a way to maximize accuracy.
+     In most cases, the default is round-to-nearest.
+
+
+File: gdc.info,  Node: Variadic Intrinsics,  Next: Volatile Intrinsics,  Prev: Math Intrinsics,  Up: Intrinsics
+
+2.5.4 Variadic Intrinsics
+-------------------------
+
+The following functions are a collection of variadic intrinsics,
+available by importing the 'core.stdc.stdarg' module.
+
+ -- Template: void core.stdc.stdarg.va_arg (T)(ref va_list ap, ref T
+          parmn)
+
+     Retrieve and store in PARMN the next value from the 'va_list' AP
+     that is of type 'T'.
+
+     This intrinsic is equivalent to writing the following:
+          parmn = __builtin_va_arg (ap, T);
+
+ -- Template: T core.stdc.stdarg.va_arg (T)(ref va_list ap)
+
+     Retrieve and return the next value from the 'va_list' AP that is of
+     type 'T'.
+
+     This intrinsic is equivalent to writing the following:
+          result = __builtin_va_arg (ap, T);
+
+ -- Function: void core.stdc.stdarg.va_copy (out va_list dest, va_list
+          src)
+
+     Make a copy of SRC in its current state and store to DEST.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_va_copy'.
+
+ -- Function: void core.stdc.stdarg.va_end (va_list ap)
+
+     Destroy AP so that it is no longer useable.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_va_end'.
+
+ -- Template: void core.stdc.stdarg.va_start (T)(out va_list ap, ref T
+          parmn)
+
+     Initialize AP so that it can be used to access the variable
+     arguments that follow the named argument PARMN.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_va_start'.
+
+
+File: gdc.info,  Node: Volatile Intrinsics,  Next: CTFE Intrinsics,  Prev: Variadic Intrinsics,  Up: Intrinsics
+
+2.5.5 Volatile Intrinsics
+-------------------------
+
+The following functions are a collection of intrinsics for volatile
+operations, available by importing the 'core.volatile' module.
+
+   Calls to them are guaranteed to not be removed (as dead assignment
+elimination or presumed to have no effect) or reordered in the same
+thread.
+
+   These reordering guarantees are only made with regards to other
+operations done through these functions; the compiler is free to reorder
+regular loads/stores with regards to loads/stores done through these
+functions.
+
+   This is useful when dealing with memory-mapped I/O (MMIO) where a
+store can have an effect other than just writing a value, or where
+sequential loads with no intervening stores can retrieve different
+values from the same location due to external stores to the location.
+
+   These functions will, when possible, do the load/store as a single
+operation.  In general, this is possible when the size of the operation
+is less than or equal to '(void*).sizeof', although some targets may
+support larger operations.  If the load/store cannot be done as a single
+operation, multiple smaller operations will be used.
+
+   These are not to be conflated with atomic operations.  They do not
+guarantee any atomicity.  This may be provided by coincidence as a
+result of the instructions used on the target, but this should not be
+relied on for portable programs.  Further, no memory fences are implied
+by these functions.  They should not be used for communication between
+threads.  They may be used to guarantee a write or read cycle occurs at
+a specified address.
+
+ -- Function: ubyte core.volatile.volatileLoad (ubyte* ptr)
+ -- Function: ushort core.volatile.volatileLoad (ushort* ptr)
+ -- Function: uint core.volatile.volatileLoad (uint* ptr)
+ -- Function: ulong core.volatile.volatileLoad (ulong* ptr)
+
+     Read value from the memory location indicated by PTR.
+
+ -- Function: ubyte core.volatile.volatileStore (ubyte* ptr, ubyte
+          value)
+ -- Function: ushort core.volatile.volatileStore (ushort* ptr, ushort
+          value)
+ -- Function: uint core.volatile.volatileStore (uint* ptr, uint value)
+ -- Function: ulong core.volatile.volatileStore (ulong* ptr, ulong
+          value)
+
+     Write VALUE to the memory location indicated by PTR.
+
+
+File: gdc.info,  Node: CTFE Intrinsics,  Prev: Volatile Intrinsics,  Up: Intrinsics
+
+2.5.6 CTFE Intrinsics
+---------------------
+
+The following functions are only treated as intrinsics during
+compile-time function execution (CTFE) phase of compilation to allow
+more functions to be computable at compile-time, either because their
+generic implementations are too complex, or do some low-level bit
+manipulation of floating point types.
+
+   Calls to these functions that exist after CTFE has finished will get
+standard code-generation without any special compiler intrinsic
+suppport.
+
+ -- Function: float std.math.exponential.exp (float x)
+ -- Function: double std.math.exponential.exp (double x)
+ -- Function: real std.math.exponential.exp (real x)
+
+     Calculates e^x.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_exp'.
+
+ -- Function: float std.math.exponential.expm1 (float x)
+ -- Function: double std.math.exponential.expm1 (double x)
+ -- Function: real std.math.exponential.expm1 (real x)
+
+     Calculates e^x-1.0.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_expm1'.
+
+ -- Function: float std.math.exponential.exp2 (float x)
+ -- Function: double std.math.exponential.exp2 (double x)
+ -- Function: real std.math.exponential.exp2 (real x)
+
+     Calculates 2^x.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_exp2'.
+
+ -- Function: float std.math.exponential.log (float x)
+ -- Function: double std.math.exponential.log (double x)
+ -- Function: real std.math.exponential.log (real x)
+
+     Calculate the natural logarithm of X.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_log'.
+
+ -- Function: float std.math.exponential.log10 (float x)
+ -- Function: double std.math.exponential.log10 (double x)
+ -- Function: real std.math.exponential.log10 (real x)
+
+     Calculates the base-10 logarithm of X.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_log10'.
+
+ -- Function: float std.math.exponential.log2 (float x)
+ -- Function: double std.math.exponential.log2 (double x)
+ -- Function: real std.math.exponential.log2 (real x)
+
+     Calculates the base-2 logarithm of X.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_log2'.
+
+ -- Template: Largest!(F, G) std.math.exponential.pow (F, G) (F x, G y)
+ -- Template: real std.math.exponential.pow (I, F)(I x, F y)
+
+     Calculates x^y, where Y is a float.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_pow'.
+
+ -- Template: F std.math.exponential.pow (F, G) (F x, G n)
+
+     Calculates x^n, where N is an integer.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_powi'.
+
+ -- Function: real std.math.operations.fma (real x, real y, real z)
+
+     Returns '(x * y) + z', rounding only once according to the current
+     rounding mode.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_fma'.
+
+ -- Template: F std.math.operations.fmax (F)(const F x, const F y)
+
+     Returns the larger of X and Y.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_fmax'.
+
+ -- Template: F std.math.operations.fmin (F)(const F x, const F y)
+
+     Returns the smaller of X and Y.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_fmin'.
+
+ -- Function: float std.math.rounding.ceil (float x)
+ -- Function: double std.math.rounding.ceil (double x)
+ -- Function: real std.math.rounding.ceil (real x)
+
+     Returns the value of X rounded upward to the next integer (toward
+     positive infinity).
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_ceil'.
+
+ -- Function: float std.math.rounding.floor (float x)
+ -- Function: double std.math.rounding.floor (double x)
+ -- Function: real std.math.rounding.floor (real x)
+
+     Returns the value of X rounded downward to the next integer (toward
+     negative infinity).
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_floor'.
+
+ -- Function: real std.math.rounding.round (real x)
+
+     Return the value of X rounded to the nearest integer.  If the
+     fractional part of X is exactly 0.5, the return value is rounded
+     away from zero.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_round'.
+
+ -- Function: real std.math.rounding.trunc (real x)
+
+     Returns the integer portion of X, dropping the fractional portion.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_trunc'.
+
+ -- Template: R std.math.traits.copysign (R, X)(R to, X from)
+
+     Returns a value composed of TO with FROM's sign bit.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_copysign'.
+
+ -- Template: bool std.math.traits.isFinite (X)(X x)
+
+     Returns true if X is finite.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_isfinite'.
+
+ -- Template: bool std.math.traits.isInfinity (X)(X x)
+
+     Returns true if X is infinite.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_isinf'.
+
+ -- Template: bool std.math.traits.isNaN (X)(X x)
+
+     Returns true if X is NaN.
+
+     This function is evaluated during CTFE as the GCC built-in function
+     '__builtin_isnan'.
+
+ -- Function: float std.math.trigoometry.tan (float x)
+ -- Function: double std.math.trigoometry.tan (double x)
+ -- Function: real std.math.trigonometry.tan (real x)
+
+     Returns tangent of X, where X is in radians.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_tan'.
+
+
+File: gdc.info,  Node: Predefined Pragmas,  Next: Predefined Versions,  Prev: Intrinsics,  Up: D Implementation
+
+2.6 Predefined Pragmas
+======================
+
+The 'pragma' operator is used as a way to pass special information to
+the implementation and allow the addition of vendor specific extensions.
+The standard predefined pragmas are documented by the D language
+specification hosted at
+<https://dlang.org/spec/pragma.html#predefined-pragmas>.  A D compiler
+must recognize, but is free to ignore any pragma in this list.
+
+   Where a pragma is ignored, the GNU D compiler will emit a warning
+when the '-Wunknown-pragmas' option is seen on the command-line.
+
+'pragma(crt_constructor)'
+     'pragma(crt_constructor)' annotates a function so it is run after
+     the C runtime library is initialized and before the D runtime
+     library is initialized.  Functions with this pragma must return
+     'void'.
+          pragma(crt_constructor) void init() { }
+
+'pragma(crt_destructor)'
+     'pragma(crt_destructor)' annotates a function so it is run after
+     the D runtime library is terminated and before the C runtime
+     library is terminated.  Calling 'exit' function also causes the
+     annotated functions to run.  Functions with this pragma must return
+     'void'.
+          pragma(crt_destructor) void init() { }
+
+'pragma(inline)'
+'pragma(inline, false)'
+'pragma(inline, true)'
+     'pragma(inline)' affects whether functions are declared inlined or
+     not.  The pragma takes two forms.  In the first form, inlining is
+     controlled by the command-line options for inlining.
+
+     Functions annotated with 'pragma(inline, false)' are marked
+     uninlinable.  Functions annotated with 'pragma(inline, true)' are
+     always inlined.
+
+'pragma(lib)'
+     This pragma is accepted, but has no effect.
+          pragma(lib, "advapi32");
+
+'pragma(linkerDirective)'
+     This pragma is accepted, but has no effect.
+          pragma(linkerDirective, "/FAILIFMISMATCH:_ITERATOR_DEBUG_LEVEL=2");
+
+'pragma(mangle)'
+     'pragma(mangle, "symbol_name")' overrides the default mangling for
+     a function or variable symbol.  The symbol name can be any
+     expression that must evaluate at compile time to a string literal.
+     This enables linking to a symbol which is a D keyword, since an
+     identifier cannot be a keyword.
+
+     Targets are free to apply a prefix to the user label of the symbol
+     name in assembly.  For example, on 'x86_64-apple-darwin',
+     'symbol_name' would produce '_symbol_name'.  If the mangle string
+     begins with '*', then 'pragma(mangle)' will output the rest of the
+     string unchanged.
+
+          pragma(mangle, "body")
+          extern(C) void body_func();
+
+          pragma(mangle, "function")
+          extern(C++) struct _function {}
+
+'pragma(msg)'
+     'pragma(msg, "message")' causes the compiler to print an
+     informational message with the text 'message'.  The pragma accepts
+     multiple arguments, each to which is evaluated at compile time and
+     then all are combined into one concatenated message.
+          pragma(msg, "compiling...", 6, 1.0); // prints "compiling...61.0"
+
+'pragma(printf)'
+'pragma(scanf)'
+
+     'pragma(printf)' and 'pragma(scanf)' specifies that a function
+     declaration with 'printf' or 'scanf' style arguments that should be
+     type-checked against a format string.
+
+     A printf-like or scanf-like function can either be an 'extern(C)'
+     or 'extern(C++)' function with a FORMAT parameter accepting a
+     pointer to a 0-terminated 'char' string, immediately followed by
+     either a '...' variadic argument list or a parameter of type
+     'va_list' as the last parameter.
+
+          extern(C):
+          pragma(printf)
+          int printf(scope const char* format, scope const ...);
+
+          pragma(scanf)
+          int vscanf(scope const char* format, va_list arg);
+
+'pragma(startaddress)'
+     This pragma is accepted, but has no effect.
+          void foo() { }
+          pragma(startaddress, foo);
+
+
+File: gdc.info,  Node: Predefined Versions,  Next: Special Enums,  Prev: Predefined Pragmas,  Up: D Implementation
+
+2.7 Predefined Versions
+=======================
+
+Several conditional version identifiers are predefined; you use them
+without supplying their definitions.  They fall into three classes:
+standard, common, and target-specific.
+
+   Predefined version identifiers from this list cannot be set from the
+command line or from version statements.  This prevents things like both
+'Windows' and 'linux' being simultaneously set.
+
+* Menu:
+
+* Standard Predefined Versions::
+* Common Predefined Versions::
+* Target Predefined Versions::
+
+
+File: gdc.info,  Node: Standard Predefined Versions,  Next: Common Predefined Versions,  Up: Predefined Versions
+
+2.7.1 Standard Predefined Versions
+----------------------------------
+
+The standard predefined versions are documented by the D language
+specification hosted at
+<https://dlang.org/spec/version.html#predefined-versions>.
+
+'all'
+'none'
+     Version 'none' is never defined; used to just disable a section of
+     code.  Version 'all' is always defined; used as the opposite of
+     'none'.
+
+'BigEndian'
+'LittleEndian'
+     These versions reflect the byte order of multi-byte data in memory.
+     'LittleEndian' is set when the least significant byte is first.
+     'BigEndian' is set when the most significant byte is first.
+
+'CRuntime_Bionic'
+'CRuntime_Glibc'
+'CRuntime_Microsoft'
+'CRuntime_Musl'
+'CRuntime_Newlib'
+'CRuntime_UClibc'
+
+     These versions reflect which standard C library is being linked in.
+     'CRuntime_Bionic' is set when Bionic is the default C library.
+     'CRuntime_Glibc' is set when GLIBC is the default C library.
+     'CRuntime_Microsoft' is set when MSVCRT is the default C library.
+     'CRuntime_Musl' is set when musl is the default C library.
+     'CRuntime_Newlib' is set when Newlib is the default C library.
+     'CRuntime_UClibc' is set when uClibc is the default C library.
+
+'CppRuntime_Gcc'
+     This version is defined when the standard C++ library being linked
+     in is 'libstdc++'.
+
+'D_BetterC'
+     This version is defined when the standard D libraries are not being
+     implicitly linked in.  This also implies that features of the D
+     language that rely on exceptions, module information, or run-time
+     type information are disabled as well.  Enabled by '-fno-druntime'.
+
+'D_Coverage'
+     This version is defined when code coverage analysis instrumentation
+     is being generated.  Enabled by '-ftest-coverage'.
+
+'D_Ddoc'
+     This version is defined when Ddoc documentation is being generated.
+     Enabled by '-fdoc'.
+
+'D_Exceptions'
+     This version is defined when exception handling is supported.
+     Disabled by '-fno-exceptions'.
+
+'D_HardFloat'
+'D_SoftFloat'
+     These versions reflect the floating-point ABI in use by the target.
+     'D_HardFloat' is set when the target hardware has a floating-point
+     unit.  'D_SoftFloat' is set when the target hardware does not have
+     a floating-point unit.
+
+'D_Invariants'
+     This version is defined when checks are being emitted for class
+     invariants and struct invariants.  Enabled by '-finvariants'.
+
+'D_LP64'
+     This version is defined when pointers are 64-bits.  Not to be
+     confused with with C's '__LP64__' model.
+
+'D_ModuleInfo'
+     This version is defined when run-time module information (also
+     known as 'ModuleInfo') is supported.  Disabled by
+     '-fno-moduleinfo'.
+
+'D_NoBoundsChecks'
+     This version is defined when array bounds checks are disabled.
+     Enabled by '-fno-bounds-checks'.
+
+'D_Optimized'
+     This version is defined in all optimizing compilations.
+
+'D_PIC'
+     This version is defined when position-independent code is being
+     generated.  Enabled by '-fPIC'.
+
+'D_PIE'
+     This version is defined when position-independent code that can be
+     only linked into executables is being generated.  Enabled by
+     '-fPIE'.
+
+'D_PreConditions'
+     This version is defined when checks are being emitted for 'in'
+     contracts.  Disabled by '-fno-preconditions'.
+
+'D_PostConditions'
+     This version is defined when checks are being emitted for 'out'
+     contracts.  Disabled by '-fno-postconditions'.
+
+'D_TypeInfo'
+     This version is defined when run-time type information (also known
+     as 'TypeInfo') is supported.  Disabled by '-fno-rtti'.
+
+'D_Version2'
+     This version defined when this is a D version 2 compiler.
+
+'unittest'
+     This version is defined when the 'unittest' code is being compiled
+     in.  Enabled by '-funittest'.
+
+
+File: gdc.info,  Node: Common Predefined Versions,  Next: Target Predefined Versions,  Prev: Standard Predefined Versions,  Up: Predefined Versions
+
+2.7.2 Common Predefined Versions
+--------------------------------
+
+The common predefined macros are GNU D extensions.  They are available
+with the same meanings regardless of the machine or operating system on
+which you are using GNU D. Their names all start with 'GNU'.
+
+'GNU'
+     This version is defined by the GNU D compiler.  If all you need to
+     know is whether or not your D program is being compiled by GDC, or
+     a non-GDC compiler, you can simply test 'version(GNU)'.
+
+'GNU_DWARF2_Exceptions'
+'GNU_SEH_Exceptions'
+'GNU_SjLj_Exceptions'
+     These versions reflect the mechanism that will be used for
+     exception handling by the target.  'GNU_DWARF2_Exceptions' is
+     defined when the target uses DWARF 2 exceptions.
+     'GNU_SEH_Exceptions' is defined when the target uses SEH
+     exceptions.  'GNU_SjLj_Exceptions' is defined when the target uses
+     the 'setjmp'/'longjmp'-based exception handling scheme.
+
+'GNU_EMUTLS'
+     This version is defined if the target does not support thread-local
+     storage, and an emulation layer is used instead.
+
+'GNU_InlineAsm'
+     This version is defined when 'asm' statements use GNU D style
+     syntax.  (*note Inline Assembly::)
+
+'GNU_StackGrowsDown'
+     This version is defined if pushing a word onto the stack moves the
+     stack pointer to a smaller address, and is undefined otherwise.
+
+
+File: gdc.info,  Node: Target Predefined Versions,  Prev: Common Predefined Versions,  Up: Predefined Versions
+
+2.7.3 Target-specific Predefined Versions
+-----------------------------------------
+
+The D compiler normally predefines several versions that indicate what
+type of system and machine is in use.  They are obviously different on
+each target supported by GCC.
+
+'AArch64'
+     Version relating to the AArch64 family of processors.
+
+'Android'
+     Version relating to the Android platform.
+
+'ARM'
+'ARM_HardFloat'
+'ARM_SoftFloat'
+'ARM_SoftFP'
+'ARM_Thumb'
+     Versions relating to the ARM family of processors.
+
+'Cygwin'
+     Version relating to the Cygwin environment.
+
+'darwin'
+     Deprecated; use 'OSX' instead.
+
+'DragonFlyBSD'
+     Versions relating to DragonFlyBSD systems.
+
+'FreeBSD'
+'FreeBSD_9'
+'FreeBSD_10'
+'FreeBSD_11'
+'FreeBSD_...'
+     Versions relating to FreeBSD systems.  The FreeBSD major version
+     number is inferred from the target triplet.
+
+'HPPA'
+'HPPA64'
+     Versions relating to the HPPA family of processors.
+
+'Hurd'
+     Version relating to GNU Hurd systems.
+
+'linux'
+     Version relating to Linux systems.
+
+'MinGW'
+     Version relating to the MinGW environment.
+
+'MIPS32'
+'MIPS64'
+'MIPS_EABI'
+'MIPS_HardFloat'
+'MIPS_N32'
+'MIPS_N64'
+'MIPS_O32'
+'MIPS_O64'
+'MIPS_SoftFloat'
+     Versions relating to the MIPS family of processors.
+
+'NetBSD'
+     Version relating to NetBSD systems.
+
+'OpenBSD'
+     Version relating to OpenBSD systems.
+
+'OSX'
+     Version relating to OSX systems.
+
+'Posix'
+     Version relating to POSIX systems (includes Linux, FreeBSD, OSX,
+     Solaris, etc).
+
+'PPC'
+'PPC64'
+'PPC_HardFloat'
+'PPC_SoftFloat'
+     Versions relating to the PowerPC family of processors.
+
+'RISCV32'
+'RISCV64'
+     Versions relating to the RISC-V family of processors.
+
+'S390'
+'SystemZ'
+     Versions relating to the S/390 and System Z family of processors.
+
+'S390X'
+     Deprecated; use 'SystemZ' instead.
+
+'Solaris'
+     Versions relating to Solaris systems.
+
+'SPARC'
+'SPARC64'
+'SPARC_HardFloat'
+'SPARC_SoftFloat'
+'SPARC_V8Plus'
+     Versions relating to the SPARC family of processors.
+
+'Thumb'
+     Deprecated; use 'ARM_Thumb' instead.
+
+'D_X32'
+'X86'
+'X86_64'
+     Versions relating to the x86-32 and x86-64 family of processors.
+
+'Windows'
+'Win32'
+'Win64'
+     Versions relating to Microsoft Windows systems.
+
+
+File: gdc.info,  Node: Special Enums,  Next: Traits,  Prev: Predefined Versions,  Up: D Implementation
+
+2.8 Special Enums
+=================
+
+Special 'enum' names are used to represent types that do not have an
+equivalent basic D type.  For example, C++ types used by the C++ name
+mangler.
+
+   Special enums are declared opaque, with a base type explicitly set.
+Unlike regular opaque enums, special enums can be used as any other
+value type.  They have a default '.init' value, as well as other enum
+properties available ('.min', '.max').  Special enums can be declared in
+any module, and will be recognized by the compiler.
+
+     import gcc.builtins;
+     enum __c_long : __builtin_clong;
+     __c_long var = 0x800A;
+
+The following identifiers are recognized by GNU D.
+
+'__c_complex_double'
+     C '_Complex double' type.
+'__c_complex_float'
+     C '_Complex float' type.
+'__c_complex_real'
+     C '_Complex long double' type.
+'__c_long'
+     C++ 'long' type.
+'__c_longlong'
+     C++ 'long long' type.
+'__c_long_double'
+     C 'long double' type.
+'__c_ulong'
+     C++ 'unsigned long' type.
+'__c_ulonglong'
+     C++ 'unsigned long long' type.
+'__c_wchar_t'
+     C++ 'wchar_t' type.
+
+   The 'core.stdc.config' module declares the following shorthand alias
+types for convenience: 'c_complex_double', 'c_complex_float',
+'c_complex_real', 'cpp_long', 'cpp_longlong', 'c_long_double',
+'cpp_ulong', 'cpp_ulonglong'.
+
+   It may cause undefined behavior at runtime if a special enum is
+declared with a base type that has a different size to the target C/C++
+type it is representing.  The GNU D compiler will catch such
+declarations and emit a warning when the '-Wmismatched-special-enum'
+option is seen on the command-line.
+
+
+File: gdc.info,  Node: Traits,  Next: Vector Extensions,  Prev: Special Enums,  Up: D Implementation
+
+2.9 Traits
+==========
+
+Traits are extensions to the D programming language to enable programs,
+at compile time, to get at information internal to the compiler.  This
+is also known as compile time reflection.
+
+   GNU D implements a '__traits(getTargetInfo)' trait that receives a
+string key as its argument.  The result is an expression describing the
+requested target information.
+
+     version (OSX)
+     {
+         static assert(__traits(getTargetInfo, "objectFormat") == "macho");
+     }
+
+Keys for the trait are implementation defined, allowing target-specific
+data for exotic targets.  A reliable subset exists which a D compiler
+must recognize.  These are documented by the D language specification
+hosted at <https://dlang.org/spec/traits.html#getTargetInfo>.
+
+   The following keys are recognized by GNU D.
+
+'cppRuntimeLibrary'
+     The C++ runtime library affinity for this toolchain.
+
+'cppStd'
+     The version of the C++ standard supported by 'extern(C++)' code,
+     equivalent to the '__cplusplus' macro in a C++ compiler.
+
+'floatAbi'
+     Floating point ABI; may be 'hard', 'soft', or 'softfp'.
+
+'objectFormat'
+     Target object format.
+
+
+File: gdc.info,  Node: Vector Extensions,  Next: Vector Intrinsics,  Prev: Traits,  Up: D Implementation
+
+2.10 Vector Extensions
+======================
+
+CPUs often support specialized vector types and vector operations (aka
+media instructions).  Vector types are a fixed array of floating or
+integer types, and vector operations operate simultaneously on them.
+
+     alias int4 = __vector(int[4]);
+
+All the basic integer types can be used as base types, both as signed
+and as unsigned: 'byte', 'short', 'int', 'long'.  In addition, 'float'
+and 'double' can be used to build floating-point vector types, and
+'void' to build vectors of untyped data.  Only sizes that are positive
+power-of-two multiples of the base type size are currently allowed.
+
+The 'core.simd' module has the following shorthand aliases for commonly
+supported vector types: 'byte8', 'byte16', 'byte32', 'byte64',
+'double1', 'double2', 'double4', 'double8', 'float2', 'float4',
+'float8', 'float16', 'int2', 'int4', 'int8', 'int16', 'long1', 'long2',
+'long4', 'long8', 'short4', 'short8', 'short16', 'short32', 'ubyte8',
+'ubyte16', 'ubyte32', 'ubyte64', 'uint2', 'uint4', 'uint8', 'uint16',
+'ulong1', 'ulong2', 'ulong4', 'ulong8', 'ushort4', 'ushort8',
+'ushort16', 'ushort32', 'void8', 'void16', 'void32', 'void64'.  All
+these aliases correspond to '__vector(type[N])'.
+
+   Which vector types are supported depends on the target.  Only vector
+types that are implemented for the current architecture are supported at
+compile-time.  Vector operations that are not supported in hardware
+cause GNU D to synthesize the instructions using a narrower mode.
+
+     alias v4i = __vector(int[4]);
+     alias v128f = __vector(float[128]);    // Error: not supported on this platform
+
+     int4 a, b, c;
+
+     c = a * b;    // Natively supported on x86 with SSE4
+     c = a / b;    // Always synthesized
+
+Vector types can be used with a subset of normal D operations.
+Currently, GNU D allows using the following operators on these types:
+'+, -, *, /, unary+, unary-'.
+
+     alias int4 = __vector(int[4]);
+
+     int4 a, b, c;
+
+     c = a + b;
+
+It is also possible to use shifting operators '<<', '>>', the modulus
+operator '%', logical operations '&, |, ^', and the complement operator
+'unary~' on integer-type vectors.
+
+   For convenience, it is allowed to use a binary vector operation where
+one operand is a scalar.  In that case the compiler transforms the
+scalar operand into a vector where each element is the scalar from the
+operation.  The transformation happens only if the scalar could be
+safely converted to the vector-element type.  Consider the following
+code.
+
+     alias int4 = __vector(int[4]);
+
+     int4 a, b;
+     long l;
+
+     a = b + 1;    // a = b + [1,1,1,1];
+     a = 2 * b;    // a = [2,2,2,2] * b;
+
+     a = l + a;    // Error, incompatible types.
+
+Vector comparison is supported with standard comparison operators: '==,
+!=, <, <=, >, >='.  Comparison operands can be vector expressions of
+integer-type or real-type.  Comparison between integer-type vectors and
+real-type vectors are not supported.  The result of the comparison is a
+vector of the same width and number of elements as the comparison
+operands with a signed integral element type.
+
+   Vectors are compared element-wise producing 0 when comparison is
+false and -1 (constant of the appropriate type where all bits are set)
+otherwise.  Consider the following example.
+
+     alias int4 = __vector(int[4]);
+
+     int4 a = [1,2,3,4];
+     int4 b = [3,2,1,4];
+     int4 c;
+
+     c = a >  b;     // The result would be [0, 0,-1, 0]
+     c = a == b;     // The result would be [0,-1, 0,-1]
+
+
+File: gdc.info,  Node: Vector Intrinsics,  Next: Missing Features,  Prev: Vector Extensions,  Up: D Implementation
+
+2.11 Vector Intrinsics
+======================
+
+The following functions are a collection of vector operation intrinsics,
+available by importing the 'gcc.simd' module.
+
+ -- Template: void gcc.simd.prefetch (bool RW, ubyte LOCALITY)
+          (const(void)* ADDR)
+
+     Emit the prefetch instruction.  The value of ADDR is the address of
+     the memory to prefetch.  The value of RW is a compile-time constant
+     one or zero; one means that the prefetch is preparing for a write
+     to the memory address and zero, the default, means that the
+     prefetch is preparing for a read.  The value LOCALITY must be a
+     compile-time constant integer between zero and three.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_prefetch'.
+
+          for (i = 0; i < n; i++)
+          {
+              import gcc.simd : prefetch;
+              a[i] = a[i] + b[i];
+              prefetch!(true, 1)(&a[i+j]);
+              prefetch!(false, 1)(&b[i+j]);
+              // ...
+          }
+
+ -- Template: V gcc.simd.loadUnaligned (V)(const V* P)
+
+     Load unaligned vector from the address P.
+
+          float4 v;
+          ubyte[16] arr;
+
+          v = loadUnaligned(cast(float4*)arr.ptr);
+
+ -- Template: V gcc.simd.storeUnaligned (V)(V* P, V VALUE)
+
+     Store vector VALUE to unaligned address P.
+
+          float4 v;
+          ubyte[16] arr;
+
+          storeUnaligned(cast(float4*)arr.ptr, v);
+
+ -- Template: V0 gcc.simd.shuffle (V0, V1, M)(V0 OP1, V1 OP2, M MASK)
+ -- Template: V gcc.simd.shuffle (V, M)(V OP1, M MASK)
+
+     Construct a permutation of elements from one or two vectors,
+     returning a vector of the same type as the input vector(s).  The
+     MASK is an integral vector with the same width and element count as
+     the output vector.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_shuffle'.
+
+          int4 a = [1, 2, 3, 4];
+          int4 b = [5, 6, 7, 8];
+          int4 mask1 = [0, 1, 1, 3];
+          int4 mask2 = [0, 4, 2, 5];
+          int4 res;
+
+          res = shuffle(a, mask1);    // res is [1,2,2,4]
+          res = shuffle(a, b, mask2); // res is [1,5,3,6]
+
+ -- Template: V gcc.simd.shufflevector (V1, V2, M...)(V1 OP1, V2 OP2, M
+          MASK)
+ -- Template: V gcc.simd.shufflevector (V, MASK...)(V OP1, V OP2)
+
+     Construct a permutation of elements from two vectors, returning a
+     vector with the same element type as the input vector(s), and same
+     length as the MASK.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_shufflevector'.
+
+          int8 a = [1, -2, 3, -4, 5, -6, 7, -8];
+          int4 b = shufflevector(a, a, 0, 2, 4, 6);   // b is [1,3,5,7]
+          int4 c = [-2, -4, -6, -8];
+          int8 d = shufflevector!(int8, 4, 0, 5, 1, 6, 2, 7, 3)(c, b); // d is a
+
+ -- Template: E gcc.simd.extractelement (V, int idx)(V VAL)
+     Extracts a single scalar element from a vector VAL at a specified
+     index IDX.
+
+          int4 a = [0, 10, 20, 30];
+          int k = extractelement!(int4, 2)(a);    // a is 20
+
+ -- Template: V gcc.simd.insertelement (V, int idx)(V val, B E)
+     Inserts a scalar element E into a vector VAL at a specified index
+     IDX.
+
+          int4 a = [0, 10, 20, 30];
+          int4 b = insertelement!(int4, 2)(a, 50); // b is [0,10,50,30]
+
+ -- Template: V gcc.simd.convertvector (V, T)(T val)
+     Convert a vector VAL from one integral or floating vector type to
+     another.  The result is an integral or floating vector that has had
+     every element cast to the element type of the return type.
+
+     This intrinsic is the same as the GCC built-in function
+     '__builtin_convertvector'.
+
+          int4 a = [1, -2, 3, -4];
+          float4 b = [1.5, -2.5, 3, 7];
+          float4 c = convertvector!float4(a);    // c is [1,-2,3,-4]
+          double4 d = convertvector!double4(a);  // d is [1,-2,3,-4]
+          double4 e = convertvector!double4(b);  // e is [1.5,-2.5,3,7]
+          int4 f = convertvector!int4(b);        // f is [1,-2,3,7]
+
+ -- Template: V0 gcc.simd.blendvector (V0, V1, M)(V0 OP0, V1 OP1, M
+          MASK)
+
+     Construct a conditional merge of elements from two vectors,
+     returning a vector of the same type as the input vector(s).  The
+     MASK is an integral vector with the same width and element count as
+     the output vector.
+
+          int4 a = [1, 2, 3, 4];
+          int4 b = [3, 2, 1, 4];
+          auto c = blendvector(a, b, a > b);  // c is [3,2,3,4]
+          auto d = blendvector(a, b, a < b);  // d is [1,2,1,4]
+
+
+File: gdc.info,  Node: Missing Features,  Prev: Vector Intrinsics,  Up: D Implementation
+
+2.12 Missing Features and Deviations
+====================================
+
+Some parts of the D specification are hard or impossible to implement
+with GCC, they should be listed here.
+
+Bit Operation Intrinsics
+     The Digital Mars D compiler implements the 'core.bitop' intrinsics
+     'inp', 'inpw', 'inpl', 'outp', 'outpw', and 'outpl'.  These are not
+     recognized by GNU D. On most targets, equivalent intrinsics that
+     have the same effect would be 'core.volatile.loadVolatile' and
+     'core.volatile.storeVolatile' respectively (*note Volatile
+     Intrinsics::).
+
+     On x86 targets, if an 'in' or 'out' instruction is specifically
+     required, that can be achieved using assembler statements instead.
+          ubyte inp(uint port)
+          {
+              ubyte value;
+              asm { "inb %w1, %b0" : "=a" (value) : "Nd" (port); }
+              return value;
+          }
+
+          void outp(uint port, ushort value)
+          {
+              asm { "outb %b0, %w1" : : "a" (value), "Nd" (port); }
+          }
+
+Floating-Point Intermediate Values
+
+     GNU D uses a software compile-time floating-point type that assists
+     in cross-compilation and support for arbitrary target 'real'
+     precisions wider than 80 bits.  Because of this, the result of
+     floating-point CTFE operations may have different results in GNU D
+     compared with other D compilers that use the host's native
+     floating-point type for storage and CTFE. In particular, GNU D
+     won't overflow or underflow when a target real features a higher
+     precision than the host.  Differences also extend to '.stringof'
+     representations of intermediate values due to formatting
+     differences with 'sprintf("%Lg")'.
+          version(GNU)
+              assert((25.5).stringof ~ (3.01).stringof == "2.55e+13.01e+0");
+          else
+              assert((25.5).stringof ~ (3.01).stringof == "25.53.01");
+
+Function Calling Conventions
+     GNU D does not implement the 'extern(D)' calling convention for x86
+     as described in the D specification hosted at
+     <https://dlang.org/spec/abi.html#function_calling_conventions>.
+
+     Instead, there is no distinction between 'extern(C)' and
+     'extern(D)' other than name mangling.
+
+ImportC Limitations
+     GNU D does not run the preprocessor automatically for any ImportC
+     sources.  Instead all C files are expected to be manually
+     preprocessed before they are imported into the compilation.
+
+Inline Assembler
+     GNU D does not implement the D inline assembler for x86 and x86_64
+     as described in the D specification hosted at
+     <https://dlang.org/spec/iasm.html>.  Nor does GNU D predefine the
+     'D_InlineAsm_X86' and 'D_InlineAsm_X86_64' version identifiers to
+     indicate support.
+
+     The GNU D compiler uses an alternative, GCC-based syntax for inline
+     assembler (*note Inline Assembly::).
+
+Interfacing to Objective-C
+     GNU D does not support interfacing with Objective-C, nor its
+     protocols, classes, subclasses, instance variables, instance
+     methods and class methods.  The 'extern(Objective-C)' linkage is
+     ignored, as are the '@optional' and '@selector' attributes.  The
+     'D_ObjectiveC' version identifier is not predefined for
+     compilations.
+
+Pragma Directives
+     Pragmas that are designed to embed information into object files or
+     otherwise pass options to the linker are not supported by GNU D.
+     These include 'pragma(lib)', 'pragma(linkerDirective)', and
+     'pragma(startaddress)'.
+
+SIMD Intrinsics
+     The Digital Mars D compiler implements the 'core.simd' intrinsics
+     '__simd', '__simd_ib', '__simd_sto'.  These are not recognized by
+     GNU D, nor does GNU D predefine the 'D_SIMD' version identifier to
+     indicate support.
+
+     On x86 targets, all intrinsics are available as functions in the
+     'gcc.builtins' module, and have predictable equivalents.
+          version (DigitalMars)
+          {
+              __simd(XMM.PSLLW, op1, op2);
+              __simd_ib(XMM.PSLLW, op1, imm8);
+          }
+          version (GNU)
+          {
+              __builtin_ia32_psllw(op1, op2);
+              __builtin_ia32_psllwi(op1, imm8);
+          }
+
+TypeInfo-based va_arg
+     The Digital Mars D compiler implements a version of
+     'core.vararg.va_arg' that accepts a run-time 'TypeInfo' argument
+     for use when the static type is not known.  This function is not
+     implemented by GNU D. It is more portable to use variadic template
+     functions instead.
+
+
+File: gdc.info,  Node: Copying,  Next: GNU Free Documentation License,  Prev: D Implementation,  Up: Top
 
 GNU General Public License
 **************************
 
                         Version 3, 29 June 2007
 
-     Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+     Copyright (C) 2007 Free Software Foundation, Inc. <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies of this
      license document, but changing it is not allowed.
@@ -760,7 +3636,7 @@ GNU Lesser General Public License instead of this License.  But first,
 please read <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
 
-File: gdc.info,  Node: GNU Free Documentation License,  Next: Invoking gdc,  Prev: Copying,  Up: Top
+File: gdc.info,  Node: GNU Free Documentation License,  Next: Option Index,  Prev: Copying,  Up: Top
 
 GNU Free Documentation License
 ******************************
@@ -768,7 +3644,7 @@ GNU Free Documentation License
                      Version 1.3, 3 November 2008
 
      Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
-     <https://fsf.org/>
+     <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -1242,760 +4118,431 @@ software license, such as the GNU General Public License, to permit
 their use in free software.
 
 
-File: gdc.info,  Node: Invoking gdc,  Next: Index,  Prev: GNU Free Documentation License,  Up: Top
-
-1 Invoking gdc
-**************
-
-The 'gdc' command is the GNU compiler for the D language and supports
-many of the same options as 'gcc'.  *Note Option Summary: (gcc)Option
-Summary.  This manual only documents the options specific to 'gdc'.
-
-* Menu:
-
-* Input and Output files::  Controlling the kind of output:
-                            an executable, object files, assembler files,
-* Runtime Options::         Options controlling runtime behavior
-* Directory Options::       Where to find module files
-* Code Generation::         Options controlling the output of gdc
-* Warnings::                Options controlling warnings specific to gdc
-* Linking::                 Options influencing the linking step
-* Developer Options::       Options useful for developers of gdc
-
-
-File: gdc.info,  Node: Input and Output files,  Next: Runtime Options,  Up: Invoking gdc
-
-1.1 Input and Output files
-==========================
-
-For any given input file, the file name suffix determines what kind of
-compilation is done.  The following kinds of input file names are
-supported:
-
-'FILE.d'
-     D source files.
-'FILE.dd'
-     Ddoc source files.
-'FILE.di'
-     D interface files.
-
-   You can specify more than one input file on the 'gdc' command line,
-each being compiled separately in the compilation process.  If you
-specify a '-o FILE' option, all the input files are compiled together,
-producing a single output file, named FILE.  This is allowed even when
-using '-S' or '-c'.
-
-   A D interface file contains only what an import of the module needs,
-rather than the whole implementation of that module.  They can be
-created by 'gdc' from a D source file by using the '-H' option.  When
-the compiler resolves an import declaration, it searches for matching
-'.di' files first, then for '.d'.
-
-   A Ddoc source file contains code in the D macro processor language.
-It is primarily designed for use in producing user documentation from
-embedded comments, with a slight affinity towards HTML generation.  If a
-'.d' source file starts with the string 'Ddoc' then it is treated as
-general purpose documentation, not as a D source file.
-
-
-File: gdc.info,  Node: Runtime Options,  Next: Directory Options,  Prev: Input and Output files,  Up: Invoking gdc
-
-1.2 Runtime Options
-===================
-
-These options affect the runtime behavior of programs compiled with
-'gdc'.
-
-'-fall-instantiations'
-     Generate code for all template instantiations.  The default
-     template emission strategy is to not generate code for declarations
-     that were either instantiated speculatively, such as from
-     '__traits(compiles, ...)', or that come from an imported module not
-     being compiled.
-
-'-fno-assert'
-     Turn off code generation for 'assert' contracts.
-
-'-fno-bounds-check'
-     Turns off array bounds checking for all functions, which can
-     improve performance for code that uses arrays extensively.  Note
-     that this can result in unpredictable behavior if the code in
-     question actually does violate array bounds constraints.  It is
-     safe to use this option if you are sure that your code never throws
-     a 'RangeError'.
-
-'-fbounds-check=VALUE'
-     An alternative to '-fbounds-check' that allows more control as to
-     where bounds checking is turned on or off.  The following values
-     are supported:
-
-     'on'
-          Turns on array bounds checking for all functions.
-     'safeonly'
-          Turns on array bounds checking only for '@safe' functions.
-     'off'
-          Turns off array bounds checking completely.
-
-'-fno-builtin'
-     Don't recognize built-in functions unless they begin with the
-     prefix '__builtin_'.  By default, the compiler will recognize when
-     a function in the 'core.stdc' package is a built-in function.
-
-'-fcheckaction=VALUE'
-     This option controls what code is generated on an assertion, bounds
-     check, or final switch failure.  The following values are
-     supported:
-
-     'context'
-          Throw an 'AssertError' with extra context information.
-     'halt'
-          Halt the program execution.
-     'throw'
-          Throw an 'AssertError' (the default).
-
-'-fdebug'
-'-fdebug=VALUE'
-     Turn on compilation of conditional 'debug' code into the program.
-     The '-fdebug' option itself sets the debug level to '1', while
-     '-fdebug=' enables 'debug' code that are identified by any of the
-     following values:
-
-     'level'
-          Sets the debug level to LEVEL, any 'debug' code <= LEVEL is
-          compiled into the program.
-     'ident'
-          Turns on compilation of any 'debug' code identified by IDENT.
-
-'-fno-druntime'
-     Implements <https://dlang.org/spec/betterc.html>.  Assumes that
-     compilation targets an environment without a D runtime library.
-
-     This is equivalent to compiling with the following options:
-
-          gdc -nophoboslib -fno-exceptions -fno-moduleinfo -fno-rtti
-
-'-fextern-std=STANDARD'
-     Sets the C++ name mangling compatibility to the version identified
-     by STANDARD.  The following values are supported:
-
-     'c++98'
-     'c++03'
-          Sets '__traits(getTargetInfo, "cppStd")' to '199711'.
-     'c++11'
-          Sets '__traits(getTargetInfo, "cppStd")' to '201103'.
-     'c++14'
-          Sets '__traits(getTargetInfo, "cppStd")' to '201402'.
-     'c++17'
-          Sets '__traits(getTargetInfo, "cppStd")' to '201703'.  This is
-          the default.
-     'c++20'
-          Sets '__traits(getTargetInfo, "cppStd")' to '202002'.
-
-'-fno-invariants'
-     Turns off code generation for class 'invariant' contracts.
-
-'-fmain'
-     Generates a default 'main()' function when compiling.  This is
-     useful when unittesting a library, as it enables running the
-     unittests in a library without having to manually define an
-     entry-point function.  This option does nothing when 'main' is
-     already defined in user code.
-
-'-fno-moduleinfo'
-     Turns off generation of the 'ModuleInfo' and related functions that
-     would become unreferenced without it, which may allow linking to
-     programs not written in D. Functions that are not be generated
-     include module constructors and destructors ('static this' and
-     'static ~this'), 'unittest' code, and 'DSO' registry functions for
-     dynamically linked code.
-
-'-fonly=FILENAME'
-     Tells the compiler to parse and run semantic analysis on all
-     modules on the command line, but only generate code for the module
-     specified by FILENAME.
-
-'-fno-postconditions'
-     Turns off code generation for postcondition 'out' contracts.
-
-'-fno-preconditions'
-     Turns off code generation for precondition 'in' contracts.
-
-'-fpreview=ID'
-     Turns on an upcoming D language change identified by ID.  The
-     following values are supported:
-
-     'all'
-          Turns on all upcoming D language features.
-     'dip1000'
-          Implements
-          <https://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1000.md>
-          (Scoped pointers).
-     'dip1008'
-          Implements
-          <https://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1008.md>
-          (Allow exceptions in '@nogc' code).
-     'dip1021'
-          Implements
-          <https://github.com/dlang/DIPs/blob/master/DIPs/accepted/DIP1021.md>
-          (Mutable function arguments).
-     'dip25'
-          Implements
-          <https://github.com/dlang/DIPs/blob/master/DIPs/archive/DIP25.md>
-          (Sealed references).
-     'dtorfields'
-          Turns on generation for destructing fields of partially
-          constructed objects.
-     'fieldwise'
-          Turns on generation of struct equality to use field-wise
-          comparisons.
-     'fixaliasthis'
-          Implements new lookup rules that check the current scope for
-          'alias this' before searching in upper scopes.
-     'in'
-          Implements 'in' parameters to mean 'scope const [ref]' and
-          accepts rvalues.
-     'inclusiveincontracts'
-          Implements 'in' contracts of overridden methods to be a
-          superset of parent contract.
-     'intpromote'
-          Implements C-style integral promotion for unary '+', '-' and
-          '~' expressions.
-     'nosharedaccess'
-          Turns off and disallows all access to shared memory objects.
-     'rvaluerefparam'
-          Implements rvalue arguments to 'ref' parameters.
-     'shortenedmethods'
-          Implements use of '=>' for methods and top-level functions in
-          addition to lambdas.
-
-'-frelease'
-     Turns on compiling in release mode, which means not emitting
-     runtime checks for contracts and asserts.  Array bounds checking is
-     not done for '@system' and '@trusted' functions, and assertion
-     failures are undefined behavior.
-
-     This is equivalent to compiling with the following options:
-
-          gdc -fno-assert -fbounds-check=safe -fno-invariants \
-              -fno-postconditions -fno-preconditions -fno-switch-errors
-
-'-frevert='
-     Turns off a D language feature identified by ID.  The following
-     values are supported:
-
-     'all'
-          Turns off all revertable D language features.
-     'dip25'
-          Reverts
-          <https://github.com/dlang/DIPs/blob/master/DIPs/archive/DIP25.md>
-          (Sealed references).
-     'dtorfields'
-          Turns off generation for destructing fields of partially
-          constructed objects.
-     'markdown'
-          Turns off Markdown replacements in Ddoc comments.
-
-'-fno-rtti'
-     Turns off generation of run-time type information for all user
-     defined types.  Any code that uses features of the language that
-     require access to this information will result in an error.
-
-'-fno-switch-errors'
-     This option controls what code is generated when no case is matched
-     in a 'final switch' statement.  The default run time behavior is to
-     throw a 'SwitchError'.  Turning off '-fswitch-errors' means that
-     instead the execution of the program is immediately halted.
-
-'-funittest'
-     Turns on compilation of 'unittest' code, and turns on the
-     'version(unittest)' identifier.  This implies '-fassert'.
-
-'-fversion=VALUE'
-     Turns on compilation of conditional 'version' code into the program
-     identified by any of the following values:
-
-     'level'
-          Sets the version level to LEVEL, any 'version' code >= LEVEL
-          is compiled into the program.
-     'ident'
-          Turns on compilation of 'version' code identified by IDENT.
-
-'-fno-weak-templates'
-     Turns off emission of declarations that can be defined in multiple
-     objects as weak symbols.  The default is to emit all public symbols
-     as weak, unless the target lacks support for weak symbols.
-     Disabling this option means that common symbols are instead put in
-     COMDAT or become private.
-
-
-File: gdc.info,  Node: Directory Options,  Next: Code Generation,  Prev: Runtime Options,  Up: Invoking gdc
-
-1.3 Options for Directory Search
-================================
-
-These options specify directories to search for files, libraries, and
-other parts of the compiler:
-
-'-IDIR'
-     Specify a directory to use when searching for imported modules at
-     compile time.  Multiple '-I' options can be used, and the paths are
-     searched in the same order.
-
-'-JDIR'
-     Specify a directory to use when searching for files in string
-     imports at compile time.  This switch is required in order to use
-     'import(file)' expressions.  Multiple '-J' options can be used, and
-     the paths are searched in the same order.
-
-'-LDIR'
-     When linking, specify a library search directory, as with 'gcc'.
-
-'-BDIR'
-     This option specifies where to find the executables, libraries,
-     source files, and data files of the compiler itself, as with 'gcc'.
-
-'-fmodule-file=MODULE=SPEC'
-     This option manipulates file paths of imported modules, such that
-     if an imported module matches all or the leftmost part of MODULE,
-     the file path in SPEC is used as the location to search for D
-     sources.  This is used when the source file path and names are not
-     the same as the package and module hierarchy.  Consider the
-     following examples:
-
-          gdc test.d -fmodule-file=A.B=foo.d -fmodule-file=C=bar
-
-     This will tell the compiler to search in all import paths for the
-     source file FOO.D when importing A.B, and the directory BAR/ when
-     importing C, as annotated in the following D code:
-
-          module test;
-          import A.B;     // Matches A.B, searches for foo.d
-          import C.D.E;   // Matches C, searches for bar/D/E.d
-          import A.B.C;   // No match, searches for A/B/C.d
-
-'-imultilib DIR'
-     Use DIR as a subdirectory of the gcc directory containing
-     target-specific D sources and interfaces.
-
-'-iprefix PREFIX'
-     Specify PREFIX as the prefix for the gcc directory containing
-     target-specific D sources and interfaces.  If the PREFIX represents
-     a directory, you should include the final ''/''.
-
-'-nostdinc'
-     Do not search the standard system directories for D source and
-     interface files.  Only the directories that have been specified
-     with '-I' options (and the directory of the current file, if
-     appropriate) are searched.
-
-
-File: gdc.info,  Node: Code Generation,  Next: Warnings,  Prev: Directory Options,  Up: Invoking gdc
-
-1.4 Code Generation
-===================
-
-In addition to the many 'gcc' options controlling code generation, 'gdc'
-has several options specific to itself.
-
-'-H'
-     Generates D interface files for all modules being compiled.  The
-     compiler determines the output file based on the name of the input
-     file, removes any directory components and suffix, and applies the
-     '.di' suffix.
-
-'-Hd DIR'
-     Same as '-H', but writes interface files to directory DIR.  This
-     option can be used with '-Hf FILE' to independently set the output
-     file and directory path.
-
-'-Hf FILE'
-     Same as '-H' but writes interface files to FILE.  This option can
-     be used with '-Hd DIR' to independently set the output file and
-     directory path.
-
-'-M'
-     Output the module dependencies of all source files being compiled
-     in a format suitable for 'make'.  The compiler outputs one 'make'
-     rule containing the object file name for that source file, a colon,
-     and the names of all imported files.
-
-'-MM'
-     Like '-M' but does not mention imported modules from the D standard
-     library package directories.
-
-'-MF FILE'
-     When used with '-M' or '-MM', specifies a FILE to write the
-     dependencies to.  When used with the driver options '-MD' or
-     '-MMD', '-MF' overrides the default dependency output file.
-
-'-MG'
-     This option is for compatibility with 'gcc', and is ignored by the
-     compiler.
-
-'-MP'
-     Outputs a phony target for each dependency other than the modules
-     being compiled, causing each to depend on nothing.
-
-'-MT TARGET'
-     Change the TARGET of the rule emitted by dependency generation to
-     be exactly the string you specify.  If you want multiple targets,
-     you can specify them as a single argument to '-MT', or use multiple
-     '-MT' options.
-
-'-MQ TARGET'
-     Same as '-MT', but it quotes any characters which are special to
-     'make'.
-
-'-MD'
-     This option is equivalent to '-M -MF FILE'.  The driver determines
-     FILE by removing any directory components and suffix from the input
-     file, and then adding a '.deps' suffix.
-
-'-MMD'
-     Like '-MD' but does not mention imported modules from the D
-     standard library package directories.
-
-'-X'
-     Output information describing the contents of all source files
-     being compiled in JSON format to a file.  The driver determines
-     FILE by removing any directory components and suffix from the input
-     file, and then adding a '.json' suffix.
-
-'-Xf FILE'
-     Same as '-X', but writes all JSON contents to the specified FILE.
-
-'-fdoc'
-     Generates 'Ddoc' documentation and writes it to a file.  The
-     compiler determines FILE by removing any directory components and
-     suffix from the input file, and then adding a '.html' suffix.
-
-'-fdoc-dir=DIR'
-     Same as '-fdoc', but writes documentation to directory DIR.  This
-     option can be used with '-fdoc-file=FILE' to independently set the
-     output file and directory path.
-
-'-fdoc-file=FILE'
-     Same as '-fdoc', but writes documentation to FILE.  This option can
-     be used with '-fdoc-dir=DIR' to independently set the output file
-     and directory path.
-
-'-fdoc-inc=FILE'
-     Specify FILE as a DDOC macro file to be read.  Multiple '-fdoc-inc'
-     options can be used, and files are read and processed in the same
-     order.
-
-'-fdump-c++-spec=FILE'
-     For D source files, generate corresponding C++ declarations in
-     FILE.
-
-'-fdump-c++-spec-verbose'
-     In conjunction with '-fdump-c++-spec=' above, add comments for
-     ignored declarations in the generated C++ header.
-
-'-fsave-mixins=FILE'
-     Generates code expanded from D 'mixin' statements and writes the
-     processed sources to FILE.  This is useful to debug errors in
-     compilation and provides source for debuggers to show when
-     requested.
-
-
-File: gdc.info,  Node: Warnings,  Next: Linking,  Prev: Code Generation,  Up: Invoking gdc
-
-1.5 Warnings
-============
-
-Warnings are diagnostic messages that report constructions that are not
-inherently erroneous but that are risky or suggest there is likely to be
-a bug in the program.  Unless '-Werror' is specified, they do not
-prevent compilation of the program.
-
-'-Wall'
-     Turns on all warnings messages.  Warnings are not a defined part of
-     the D language, and all constructs for which this may generate a
-     warning message are valid code.
-
-'-Walloca'
-     This option warns on all uses of "alloca" in the source.
-
-'-Walloca-larger-than=N'
-     Warn on unbounded uses of alloca, and on bounded uses of alloca
-     whose bound can be larger than N bytes.  '-Wno-alloca-larger-than'
-     disables '-Walloca-larger-than' warning and is equivalent to
-     '-Walloca-larger-than=SIZE_MAX' or larger.
-
-'-Wcast-result'
-     Warn about casts that will produce a null or zero result.
-     Currently this is only done for casting between an imaginary and
-     non-imaginary data type, or casting between a D and C++ class.
-
-'-Wno-deprecated'
-     Do not warn about usage of deprecated features and symbols with
-     'deprecated' attributes.
-
-'-Werror'
-     Turns all warnings into errors.
-
-'-Wspeculative'
-     List all error messages from speculative compiles, such as
-     '__traits(compiles, ...)'.  This option does not report messages as
-     warnings, and these messages therefore never become errors when the
-     '-Werror' option is also used.
-
-'-Wtemplates'
-     Warn when a template instantiation is encountered.  Some coding
-     rules disallow templates, and this may be used to enforce that
-     rule.
-
-'-Wunknown-pragmas'
-     Warn when a 'pragma()' is encountered that is not understood by
-     'gdc'.  This differs from '-fignore-unknown-pragmas' where a pragma
-     that is part of the D language, but not implemented by the
-     compiler, won't get reported.
-
-'-Wno-varargs'
-     Do not warn upon questionable usage of the macros used to handle
-     variable arguments like 'va_start'.
-
-'-fignore-unknown-pragmas'
-     Turns off errors for unsupported pragmas.
-
-'-fmax-errors=N'
-     Limits the maximum number of error messages to N, at which point
-     'gdc' bails out rather than attempting to continue processing the
-     source code.  If N is 0 (the default), there is no limit on the
-     number of error messages produced.
-
-'-fsyntax-only'
-     Check the code for syntax errors, but do not actually compile it.
-     This can be used in conjunction with '-fdoc' or '-H' to generate
-     files for each module present on the command-line, but no other
-     output file.
-
-'-ftransition=ID'
-     Report additional information about D language changes identified
-     by ID.  The following values are supported:
-
-     'all'
-          List information on all D language transitions.
-     'complex'
-          List all usages of complex or imaginary types.
-     'field'
-          List all non-mutable fields which occupy an object instance.
-     'in'
-          List all usages of 'in' on parameter.
-     'nogc'
-          List all hidden GC allocations.
-     'templates'
-          List statistics on template instantiations.
-     'tls'
-          List all variables going into thread local storage.
-     'vmarkdown'
-          List instances of Markdown replacements in Ddoc.
-
-
-File: gdc.info,  Node: Linking,  Next: Developer Options,  Prev: Warnings,  Up: Invoking gdc
-
-1.6 Options for Linking
-=======================
-
-These options come into play when the compiler links object files into
-an executable output file.  They are meaningless if the compiler is not
-doing a link step.
-
-'-defaultlib=LIBNAME'
-     Specify the library to use instead of libphobos when linking.
-     Options specifying the linkage of libphobos, such as
-     '-static-libphobos' or '-shared-libphobos', are ignored.
-
-'-debuglib=LIBNAME'
-     Specify the debug library to use instead of libphobos when linking.
-     This option has no effect unless the '-g' option was also given on
-     the command line.  Options specifying the linkage of libphobos,
-     such as '-static-libphobos' or '-shared-libphobos', are ignored.
-
-'-nophoboslib'
-     Do not use the Phobos or D runtime library when linking.  Options
-     specifying the linkage of libphobos, such as '-static-libphobos' or
-     '-shared-libphobos', are ignored.  The standard system libraries
-     are used normally, unless '-nostdlib' or '-nodefaultlibs' is used.
-
-'-shared-libphobos'
-     On systems that provide 'libgphobos' and 'libgdruntime' as a shared
-     and a static library, this option forces the use of the shared
-     version.  If no shared version was built when the compiler was
-     configured, this option has no effect.
-
-'-static-libphobos'
-     On systems that provide 'libgphobos' and 'libgdruntime' as a shared
-     and a static library, this option forces the use of the static
-     version.  If no static version was built when the compiler was
-     configured, this option has no effect.
-
-
-File: gdc.info,  Node: Developer Options,  Prev: Linking,  Up: Invoking gdc
-
-1.7 Developer Options
-=====================
-
-This section describes command-line options that are primarily of
-interest to developers or language tooling.
-
-'-fdump-d-original'
-     Output the internal front-end AST after the 'semantic3' stage.
-     This option is only useful for debugging the GNU D compiler itself.
-
-'-v'
-     Dump information about the compiler language processing stages as
-     the source program is being compiled.  This includes listing all
-     modules that are processed through the 'parse', 'semantic',
-     'semantic2', and 'semantic3' stages; all 'import' modules and their
-     file paths; and all 'function' bodies that are being compiled.
-
-
-File: gdc.info,  Node: Index,  Prev: Invoking gdc,  Up: Top
-
-Index
-*****
+File: gdc.info,  Node: Option Index,  Next: Keyword Index,  Prev: GNU Free Documentation License,  Up: Top
+
+Option Index
+************
+
+'gdc''s command line options are indexed here without any initial '-' or
+'--'.  Where an option has both positive and negative forms (such as
+'-fOPTION' and '-fno-OPTION'), relevant entries in the manual are
+indexed under the most appropriate form; it may sometimes be useful to
+look up both forms.
 
  [index ]
 * Menu:
 
-* -B:                                    Directory Options.   (line  24)
-* -debuglib=:                            Linking.             (line  16)
-* -defaultlib=:                          Linking.             (line  11)
-* -fall-instantiations:                  Runtime Options.     (line  10)
-* -fassert:                              Runtime Options.     (line  17)
-* -fbounds-check:                        Runtime Options.     (line  20)
-* -fbounds-check=:                       Runtime Options.     (line  28)
-* -fbuiltin:                             Runtime Options.     (line  40)
-* -fcheckaction:                         Runtime Options.     (line  45)
-* -fdebug:                               Runtime Options.     (line  58)
-* -fdoc:                                 Code Generation.     (line  77)
-* -fdoc-dir:                             Code Generation.     (line  82)
-* -fdoc-file:                            Code Generation.     (line  87)
-* -fdoc-inc:                             Code Generation.     (line  92)
-* -fdruntime:                            Runtime Options.     (line  70)
-* -fdump-d-original:                     Developer Options.   (line  10)
-* -fextern-std:                          Runtime Options.     (line  78)
-* -fignore-unknown-pragmas:              Warnings.            (line  59)
-* -finvariants:                          Runtime Options.     (line  95)
-* -fmain:                                Runtime Options.     (line  98)
-* -fmax-errors:                          Warnings.            (line  62)
-* -fmodule-file:                         Directory Options.   (line  28)
-* -fmoduleinfo:                          Runtime Options.     (line 105)
-* -fno-all-instantiations:               Runtime Options.     (line  10)
-* -fno-assert:                           Runtime Options.     (line  17)
-* -fno-bounds-check:                     Runtime Options.     (line  20)
-* -fno-builtin:                          Runtime Options.     (line  40)
-* -fno-debug:                            Runtime Options.     (line  58)
-* -fno-druntime:                         Runtime Options.     (line  70)
-* -fno-ignore-unknown-pragmas:           Warnings.            (line  59)
-* -fno-invariants:                       Runtime Options.     (line  95)
-* -fno-moduleinfo:                       Runtime Options.     (line 105)
-* -fno-postconditions:                   Runtime Options.     (line 118)
-* -fno-preconditions:                    Runtime Options.     (line 121)
-* -fno-release:                          Runtime Options.     (line 172)
-* -fno-rtti:                             Runtime Options.     (line 199)
-* -fno-switch-errors:                    Runtime Options.     (line 204)
-* -fno-syntax-only:                      Warnings.            (line  68)
-* -fno-unittest:                         Runtime Options.     (line 210)
-* -fno-weak-templates:                   Runtime Options.     (line 224)
-* -fonly:                                Runtime Options.     (line 113)
-* -fpostconditions:                      Runtime Options.     (line 118)
-* -fpreconditions:                       Runtime Options.     (line 121)
-* -fpreview:                             Runtime Options.     (line 124)
-* -frelease:                             Runtime Options.     (line 172)
-* -frevert:                              Runtime Options.     (line 183)
-* -frtti:                                Runtime Options.     (line 199)
-* -fsave-mixins:                         Code Generation.     (line 105)
-* -fswitch-errors:                       Runtime Options.     (line 204)
-* -fsyntax-only:                         Warnings.            (line  68)
-* -ftransition:                          Warnings.            (line  74)
-* -funittest:                            Runtime Options.     (line 210)
-* -fversion:                             Runtime Options.     (line 214)
-* -fweak-templates:                      Runtime Options.     (line 224)
-* -H:                                    Code Generation.     (line  10)
-* -Hd:                                   Code Generation.     (line  16)
-* -Hf:                                   Code Generation.     (line  21)
-* -I:                                    Directory Options.   (line  10)
-* -imultilib:                            Directory Options.   (line  47)
-* -iprefix:                              Directory Options.   (line  51)
-* -J:                                    Directory Options.   (line  15)
-* -L:                                    Directory Options.   (line  21)
-* -M:                                    Code Generation.     (line  26)
-* -MD:                                   Code Generation.     (line  59)
-* -MF:                                   Code Generation.     (line  36)
-* -MG:                                   Code Generation.     (line  41)
-* -MM:                                   Code Generation.     (line  32)
-* -MMD:                                  Code Generation.     (line  64)
-* -MP:                                   Code Generation.     (line  45)
-* -MQ:                                   Code Generation.     (line  55)
-* -MT:                                   Code Generation.     (line  49)
-* -nophoboslib:                          Linking.             (line  22)
-* -nostdinc:                             Directory Options.   (line  56)
-* -shared-libphobos:                     Linking.             (line  28)
-* -static-libphobos:                     Linking.             (line  34)
-* -v:                                    Developer Options.   (line  14)
-* -Wall:                                 Warnings.            (line  12)
-* -Walloca:                              Warnings.            (line  17)
-* -Walloca-larger-than:                  Warnings.            (line  20)
-* -Wcast-result:                         Warnings.            (line  26)
-* -Wdeprecated:                          Warnings.            (line  31)
-* -Werror:                               Warnings.            (line  35)
-* -Wno-all:                              Warnings.            (line  12)
-* -Wno-alloca-larger-than:               Warnings.            (line  20)
-* -Wno-cast-result:                      Warnings.            (line  26)
-* -Wno-deprecated:                       Warnings.            (line  31)
-* -Wno-error:                            Warnings.            (line  35)
-* -Wno-speculative:                      Warnings.            (line  38)
-* -Wno-templates:                        Warnings.            (line  44)
-* -Wno-unknown-pragmas:                  Warnings.            (line  49)
-* -Wspeculative:                         Warnings.            (line  38)
-* -Wtemplates:                           Warnings.            (line  44)
-* -Wunknown-pragmas:                     Warnings.            (line  49)
-* -X:                                    Code Generation.     (line  68)
-* -Xf:                                   Code Generation.     (line  74)
+* B:                                     Directory Options.   (line  23)
+* debuglib=:                             Linking.             (line  15)
+* defaultlib=:                           Linking.             (line  10)
+* fall-instantiations:                   Runtime Options.     (line   9)
+* fassert:                               Runtime Options.     (line  16)
+* fbounds-check:                         Runtime Options.     (line  19)
+* fbounds-check=:                        Runtime Options.     (line  27)
+* fbuiltin:                              Runtime Options.     (line  39)
+* fcheckaction:                          Runtime Options.     (line  44)
+* fdebug:                                Runtime Options.     (line  56)
+* fdoc:                                  Code Generation.     (line  76)
+* fdoc-dir:                              Code Generation.     (line  81)
+* fdoc-file:                             Code Generation.     (line  86)
+* fdoc-inc:                              Code Generation.     (line  91)
+* fdruntime:                             Runtime Options.     (line  66)
+* fdump-d-original:                      Developer Options.   (line   9)
+* fextern-std:                           Runtime Options.     (line  74)
+* fignore-unknown-pragmas:               Warnings.            (line  70)
+* finvariants:                           Runtime Options.     (line  91)
+* fmain:                                 Runtime Options.     (line  94)
+* fmax-errors:                           Warnings.            (line  75)
+* fmodule-file:                          Directory Options.   (line  27)
+* fmoduleinfo:                           Runtime Options.     (line 101)
+* fno-all-instantiations:                Runtime Options.     (line   9)
+* fno-assert:                            Runtime Options.     (line  16)
+* fno-bounds-check:                      Runtime Options.     (line  19)
+* fno-builtin:                           Runtime Options.     (line  39)
+* fno-builtin <1>:                       Other Builtins.      (line   6)
+* fno-debug:                             Runtime Options.     (line  56)
+* fno-druntime:                          Runtime Options.     (line  66)
+* fno-ignore-unknown-pragmas:            Warnings.            (line  70)
+* fno-invariants:                        Runtime Options.     (line  91)
+* fno-moduleinfo:                        Runtime Options.     (line 101)
+* fno-postconditions:                    Runtime Options.     (line 114)
+* fno-preconditions:                     Runtime Options.     (line 117)
+* fno-release:                           Runtime Options.     (line 170)
+* fno-rtti:                              Runtime Options.     (line 202)
+* fno-switch-errors:                     Runtime Options.     (line 207)
+* fno-syntax-only:                       Warnings.            (line  81)
+* fno-unittest:                          Runtime Options.     (line 213)
+* fno-weak-templates:                    Runtime Options.     (line 224)
+* fonly:                                 Runtime Options.     (line 109)
+* fpostconditions:                       Runtime Options.     (line 114)
+* fpreconditions:                        Runtime Options.     (line 117)
+* fpreview:                              Runtime Options.     (line 120)
+* frelease:                              Runtime Options.     (line 170)
+* frevert:                               Runtime Options.     (line 181)
+* frtti:                                 Runtime Options.     (line 202)
+* fsave-mixins:                          Code Generation.     (line 104)
+* fswitch-errors:                        Runtime Options.     (line 207)
+* fsyntax-only:                          Warnings.            (line  81)
+* ftransition:                           Warnings.            (line  87)
+* funittest:                             Runtime Options.     (line 213)
+* fversion:                              Runtime Options.     (line 217)
+* fweak-templates:                       Runtime Options.     (line 224)
+* H:                                     Code Generation.     (line   9)
+* Hd:                                    Code Generation.     (line  15)
+* Hf:                                    Code Generation.     (line  20)
+* I:                                     Directory Options.   (line   9)
+* imultilib:                             Directory Options.   (line  46)
+* iprefix:                               Directory Options.   (line  50)
+* J:                                     Directory Options.   (line  14)
+* L:                                     Directory Options.   (line  20)
+* M:                                     Code Generation.     (line  25)
+* MD:                                    Code Generation.     (line  58)
+* MF:                                    Code Generation.     (line  35)
+* MG:                                    Code Generation.     (line  40)
+* MM:                                    Code Generation.     (line  31)
+* MMD:                                   Code Generation.     (line  63)
+* MP:                                    Code Generation.     (line  44)
+* MQ:                                    Code Generation.     (line  54)
+* MT:                                    Code Generation.     (line  48)
+* nophoboslib:                           Linking.             (line  21)
+* nostdinc:                              Directory Options.   (line  55)
+* shared-libphobos:                      Linking.             (line  27)
+* static-libphobos:                      Linking.             (line  33)
+* v:                                     Developer Options.   (line  13)
+* Wall:                                  Warnings.            (line  11)
+* Walloca:                               Warnings.            (line  16)
+* Walloca-larger-than:                   Warnings.            (line  19)
+* Wbuiltin-declaration-mismatch:         Warnings.            (line  25)
+* Wcast-result:                          Warnings.            (line  29)
+* Wdeprecated:                           Warnings.            (line  34)
+* Werror:                                Warnings.            (line  38)
+* Wextra:                                Warnings.            (line  41)
+* Wmismatched-special-enum:              Warnings.            (line  50)
+* Wno-all:                               Warnings.            (line  11)
+* Wno-alloca-larger-than:                Warnings.            (line  19)
+* Wno-builtin-declaration-mismatch:      Warnings.            (line  25)
+* Wno-cast-result:                       Warnings.            (line  29)
+* Wno-deprecated:                        Warnings.            (line  34)
+* Wno-error:                             Warnings.            (line  38)
+* Wno-extra:                             Warnings.            (line  41)
+* Wno-mismatched-special-enum:           Warnings.            (line  50)
+* Wno-speculative:                       Warnings.            (line  54)
+* Wno-unknown-pragmas:                   Warnings.            (line  60)
+* Wno-varargs:                           Warnings.            (line  66)
+* Wspeculative:                          Warnings.            (line  54)
+* Wunknown-pragmas:                      Warnings.            (line  60)
+* Wvarargs:                              Warnings.            (line  66)
+* X:                                     Code Generation.     (line  67)
+* Xf:                                    Code Generation.     (line  73)
+
+
+File: gdc.info,  Node: Keyword Index,  Prev: Option Index,  Up: Top
+
+Keyword Index
+*************
+
+ [index ]
+* Menu:
+
+* allocSize function attribute:          Other Attributes.    (line   9)
+* alloc_size function attribute:         Common Attributes.   (line   8)
+* alloc_size variable attribute:         Common Attributes.   (line   8)
+* always_inline function attribute:      Common Attributes.   (line  30)
+* assembly language in D:                Inline Assembly.     (line   6)
+* assumeUsed function attribute:         Other Attributes.    (line  17)
+* assumeUsed variable attribute:         Other Attributes.    (line  17)
+* attributes:                            Attributes.          (line   6)
+* built-in functions:                    Builtin Functions.   (line   6)
+* built-in functions <1>:                Query Builtins.      (line   6)
+* built-in functions <2>:                Other Builtins.      (line   6)
+* built-in types:                        Builtin Types.       (line   6)
+* cold function attribute:               Common Attributes.   (line  38)
+* common predefined versions:            Common Predefined Versions.
+                                                              (line   6)
+* core.bitop.bsf:                        Bit Operation Intrinsics.
+                                                              (line  14)
+* core.bitop.bsf <1>:                    Bit Operation Intrinsics.
+                                                              (line  15)
+* core.bitop.bsr:                        Bit Operation Intrinsics.
+                                                              (line  24)
+* core.bitop.bsr <1>:                    Bit Operation Intrinsics.
+                                                              (line  25)
+* core.bitop.bswap:                      Bit Operation Intrinsics.
+                                                              (line  92)
+* core.bitop.bswap <1>:                  Bit Operation Intrinsics.
+                                                              (line  93)
+* core.bitop.bt:                         Bit Operation Intrinsics.
+                                                              (line  35)
+* core.bitop.bt <1>:                     Bit Operation Intrinsics.
+                                                              (line  36)
+* core.bitop.btc:                        Bit Operation Intrinsics.
+                                                              (line  47)
+* core.bitop.btc <1>:                    Bit Operation Intrinsics.
+                                                              (line  48)
+* core.bitop.btr:                        Bit Operation Intrinsics.
+                                                              (line  62)
+* core.bitop.btr <1>:                    Bit Operation Intrinsics.
+                                                              (line  63)
+* core.bitop.bts:                        Bit Operation Intrinsics.
+                                                              (line  77)
+* core.bitop.bts <1>:                    Bit Operation Intrinsics.
+                                                              (line  78)
+* core.bitop.byteswap:                   Bit Operation Intrinsics.
+                                                              (line  91)
+* core.bitop.popcnt:                     Bit Operation Intrinsics.
+                                                              (line 101)
+* core.bitop.popcnt <1>:                 Bit Operation Intrinsics.
+                                                              (line 102)
+* core.bitop.rol:                        Bit Operation Intrinsics.
+                                                              (line 109)
+* core.bitop.rol <1>:                    Bit Operation Intrinsics.
+                                                              (line 110)
+* core.bitop.ror:                        Bit Operation Intrinsics.
+                                                              (line 117)
+* core.bitop.ror <1>:                    Bit Operation Intrinsics.
+                                                              (line 118)
+* core.checkedint.adds:                  Integer Overflow Intrinsics.
+                                                              (line  13)
+* core.checkedint.adds <1>:              Integer Overflow Intrinsics.
+                                                              (line  14)
+* core.checkedint.addu:                  Integer Overflow Intrinsics.
+                                                              (line  22)
+* core.checkedint.addu <1>:              Integer Overflow Intrinsics.
+                                                              (line  23)
+* core.checkedint.muls:                  Integer Overflow Intrinsics.
+                                                              (line  31)
+* core.checkedint.muls <1>:              Integer Overflow Intrinsics.
+                                                              (line  32)
+* core.checkedint.mulu:                  Integer Overflow Intrinsics.
+                                                              (line  40)
+* core.checkedint.mulu <1>:              Integer Overflow Intrinsics.
+                                                              (line  41)
+* core.checkedint.negs:                  Integer Overflow Intrinsics.
+                                                              (line  49)
+* core.checkedint.negs <1>:              Integer Overflow Intrinsics.
+                                                              (line  50)
+* core.checkedint.subs:                  Integer Overflow Intrinsics.
+                                                              (line  57)
+* core.checkedint.subs <1>:              Integer Overflow Intrinsics.
+                                                              (line  58)
+* core.checkedint.subu:                  Integer Overflow Intrinsics.
+                                                              (line  66)
+* core.checkedint.subu <1>:              Integer Overflow Intrinsics.
+                                                              (line  67)
+* core.math.cos:                         Math Intrinsics.     (line   9)
+* core.math.cos <1>:                     Math Intrinsics.     (line  10)
+* core.math.cos <2>:                     Math Intrinsics.     (line  11)
+* core.math.fabs:                        Math Intrinsics.     (line  19)
+* core.math.fabs <1>:                    Math Intrinsics.     (line  20)
+* core.math.fabs <2>:                    Math Intrinsics.     (line  21)
+* core.math.ldexp:                       Math Intrinsics.     (line  28)
+* core.math.ldexp <1>:                   Math Intrinsics.     (line  29)
+* core.math.ldexp <2>:                   Math Intrinsics.     (line  30)
+* core.math.rint:                        Math Intrinsics.     (line  37)
+* core.math.rint <1>:                    Math Intrinsics.     (line  38)
+* core.math.rint <2>:                    Math Intrinsics.     (line  39)
+* core.math.rndtol:                      Math Intrinsics.     (line  49)
+* core.math.rndtol <1>:                  Math Intrinsics.     (line  50)
+* core.math.rndtol <2>:                  Math Intrinsics.     (line  51)
+* core.math.sin:                         Math Intrinsics.     (line  60)
+* core.math.sin <1>:                     Math Intrinsics.     (line  61)
+* core.math.sin <2>:                     Math Intrinsics.     (line  62)
+* core.math.sqrt:                        Math Intrinsics.     (line  70)
+* core.math.sqrt <1>:                    Math Intrinsics.     (line  71)
+* core.math.sqrt <2>:                    Math Intrinsics.     (line  72)
+* core.math.toPrec:                      Math Intrinsics.     (line  79)
+* core.math.toPrec <1>:                  Math Intrinsics.     (line  80)
+* core.math.toPrec <2>:                  Math Intrinsics.     (line  81)
+* core.stdc.stdarg.va_arg:               Variadic Intrinsics. (line   9)
+* core.stdc.stdarg.va_arg <1>:           Variadic Intrinsics. (line  18)
+* core.stdc.stdarg.va_copy:              Variadic Intrinsics. (line  26)
+* core.stdc.stdarg.va_end:               Variadic Intrinsics. (line  34)
+* core.stdc.stdarg.va_start:             Variadic Intrinsics. (line  41)
+* core.volatile.volatileLoad:            Volatile Intrinsics. (line  37)
+* core.volatile.volatileLoad <1>:        Volatile Intrinsics. (line  38)
+* core.volatile.volatileLoad <2>:        Volatile Intrinsics. (line  39)
+* core.volatile.volatileLoad <3>:        Volatile Intrinsics. (line  40)
+* core.volatile.volatileStore:           Volatile Intrinsics. (line  44)
+* core.volatile.volatileStore <1>:       Volatile Intrinsics. (line  46)
+* core.volatile.volatileStore <2>:       Volatile Intrinsics. (line  48)
+* core.volatile.volatileStore <3>:       Volatile Intrinsics. (line  49)
 * D interface files.:                    Input and Output files.
                                                               (line  23)
 * D source file suffixes:                Input and Output files.
                                                               (line   6)
+* D spec deviations:                     Missing Features.    (line   6)
 * Ddoc source files.:                    Input and Output files.
                                                               (line  29)
 * debug dump options:                    Developer Options.   (line   6)
 * developer options:                     Developer Options.   (line   6)
 * directory options:                     Directory Options.   (line   6)
 * dump options:                          Developer Options.   (line   6)
+* dynamicCompile function attribute:     Other Attributes.    (line  21)
+* fastmath function attribute:           Other Attributes.    (line  27)
 * FDL, GNU Free Documentation License:   GNU Free Documentation License.
                                                               (line   6)
+* flatten function attribute:            Common Attributes.   (line  50)
+* gcc.simd.blendvector:                  Vector Intrinsics.   (line 114)
+* gcc.simd.convertvector:                Vector Intrinsics.   (line  99)
+* gcc.simd.extractelement:               Vector Intrinsics.   (line  85)
+* gcc.simd.insertelement:                Vector Intrinsics.   (line  92)
+* gcc.simd.loadUnaligned:                Vector Intrinsics.   (line  31)
+* gcc.simd.prefetch:                     Vector Intrinsics.   (line   9)
+* gcc.simd.shuffle:                      Vector Intrinsics.   (line  49)
+* gcc.simd.shuffle <1>:                  Vector Intrinsics.   (line  50)
+* gcc.simd.shufflevector:                Vector Intrinsics.   (line  69)
+* gcc.simd.shufflevector <1>:            Vector Intrinsics.   (line  71)
+* gcc.simd.storeUnaligned:               Vector Intrinsics.   (line  40)
+* hidden function attribute:             Other Attributes.    (line  33)
+* hidden variable attribute:             Other Attributes.    (line  33)
+* importC:                               ImportC.             (line   6)
+* intrinsics:                            Intrinsics.          (line   6)
+* intrinsics, bitop:                     Bit Operation Intrinsics.
+                                                              (line   6)
+* intrinsics, checkedint:                Integer Overflow Intrinsics.
+                                                              (line   6)
+* intrinsics, ctfe:                      CTFE Intrinsics.     (line   6)
+* intrinsics, math:                      Math Intrinsics.     (line   6)
+* intrinsics, stdarg:                    Variadic Intrinsics. (line   6)
+* intrinsics, vector:                    Vector Intrinsics.   (line   6)
+* intrinsics, volatile:                  Volatile Intrinsics. (line   6)
+* language reference, D language:        D Implementation.    (line   6)
 * linking, static:                       Linking.             (line   6)
+* messages, error:                       Warnings.            (line   6)
 * messages, warning:                     Warnings.            (line   6)
-* options to control warnings:           Warnings.            (line   6)
+* missing features:                      Missing Features.    (line   6)
+* naked function attribute:              Other Attributes.    (line  38)
+* noclone function attribute:            Common Attributes.   (line  76)
+* noinline function attribute:           Common Attributes.   (line  85)
+* noipa function attribute:              Common Attributes.   (line  96)
+* noplt function attribute:              Common Attributes.   (line 114)
+* noSanitize function attribute:         Other Attributes.    (line  47)
+* no_icf function attribute:             Common Attributes.   (line  59)
+* no_sanitize function attribute:        Common Attributes.   (line  66)
+* optimize function attribute:           Common Attributes.   (line 127)
 * options, code generation:              Code Generation.     (line   6)
 * options, directory search:             Directory Options.   (line   6)
+* options, errors:                       Warnings.            (line   6)
 * options, linking:                      Linking.             (line   6)
 * options, runtime:                      Runtime Options.     (line   6)
+* options, warnings:                     Warnings.            (line   6)
+* optStrategy function attribute:        Other Attributes.    (line  51)
+* pragma:                                Predefined Pragmas.  (line   6)
+* predefined pragmas:                    Predefined Pragmas.  (line   6)
+* predefined versions:                   Predefined Versions. (line   6)
+* register variable attribute:           Common Attributes.   (line 153)
+* restrict parameter attribute:          Common Attributes.   (line 167)
 * search path:                           Directory Options.   (line   6)
+* section function attribute:            Common Attributes.   (line 176)
+* section variable attribute:            Common Attributes.   (line 176)
+* simd:                                  Vector Extensions.   (line   6)
+* simd function attribute:               Common Attributes.   (line 190)
+* simd_clones function attribute:        Common Attributes.   (line 202)
+* special enums:                         Special Enums.       (line   6)
+* standard predefined versions:          Standard Predefined Versions.
+                                                              (line   6)
+* std.math.exponential.exp:              CTFE Intrinsics.     (line  16)
+* std.math.exponential.exp <1>:          CTFE Intrinsics.     (line  17)
+* std.math.exponential.exp <2>:          CTFE Intrinsics.     (line  18)
+* std.math.exponential.exp2:             CTFE Intrinsics.     (line  34)
+* std.math.exponential.exp2 <1>:         CTFE Intrinsics.     (line  35)
+* std.math.exponential.exp2 <2>:         CTFE Intrinsics.     (line  36)
+* std.math.exponential.expm1:            CTFE Intrinsics.     (line  25)
+* std.math.exponential.expm1 <1>:        CTFE Intrinsics.     (line  26)
+* std.math.exponential.expm1 <2>:        CTFE Intrinsics.     (line  27)
+* std.math.exponential.log:              CTFE Intrinsics.     (line  43)
+* std.math.exponential.log <1>:          CTFE Intrinsics.     (line  44)
+* std.math.exponential.log <2>:          CTFE Intrinsics.     (line  45)
+* std.math.exponential.log10:            CTFE Intrinsics.     (line  52)
+* std.math.exponential.log10 <1>:        CTFE Intrinsics.     (line  53)
+* std.math.exponential.log10 <2>:        CTFE Intrinsics.     (line  54)
+* std.math.exponential.log2:             CTFE Intrinsics.     (line  61)
+* std.math.exponential.log2 <1>:         CTFE Intrinsics.     (line  62)
+* std.math.exponential.log2 <2>:         CTFE Intrinsics.     (line  63)
+* std.math.exponential.pow:              CTFE Intrinsics.     (line  70)
+* std.math.exponential.pow <1>:          CTFE Intrinsics.     (line  71)
+* std.math.exponential.pow <2>:          CTFE Intrinsics.     (line  78)
+* std.math.operations.fma:               CTFE Intrinsics.     (line  85)
+* std.math.operations.fmax:              CTFE Intrinsics.     (line  93)
+* std.math.operations.fmin:              CTFE Intrinsics.     (line 100)
+* std.math.rounding.ceil:                CTFE Intrinsics.     (line 107)
+* std.math.rounding.ceil <1>:            CTFE Intrinsics.     (line 108)
+* std.math.rounding.ceil <2>:            CTFE Intrinsics.     (line 109)
+* std.math.rounding.floor:               CTFE Intrinsics.     (line 117)
+* std.math.rounding.floor <1>:           CTFE Intrinsics.     (line 118)
+* std.math.rounding.floor <2>:           CTFE Intrinsics.     (line 119)
+* std.math.rounding.round:               CTFE Intrinsics.     (line 127)
+* std.math.rounding.trunc:               CTFE Intrinsics.     (line 136)
+* std.math.traits.copysign:              CTFE Intrinsics.     (line 143)
+* std.math.traits.isFinite:              CTFE Intrinsics.     (line 150)
+* std.math.traits.isInfinity:            CTFE Intrinsics.     (line 157)
+* std.math.traits.isNaN:                 CTFE Intrinsics.     (line 164)
+* std.math.trigonometry.tan:             CTFE Intrinsics.     (line 173)
+* std.math.trigoometry.tan:              CTFE Intrinsics.     (line 171)
+* std.math.trigoometry.tan <1>:          CTFE Intrinsics.     (line 172)
 * suffixes for D source:                 Input and Output files.
                                                               (line   6)
 * suppressing warnings:                  Warnings.            (line   6)
-* warning messages:                      Warnings.            (line   6)
-* Wno-varargs:                           Warnings.            (line  55)
-* Wvarargs:                              Warnings.            (line  55)
+* symver function attribute:             Common Attributes.   (line 211)
+* target function attribute:             Common Attributes.   (line 227)
+* target-specific predefined versions:   Target Predefined Versions.
+                                                              (line   6)
+* target_clones function attribute:      Common Attributes.   (line 245)
+* traits:                                Traits.              (line   6)
+* used function attribute:               Common Attributes.   (line 259)
+* used variable attribute:               Common Attributes.   (line 259)
+* vector extensions:                     Vector Extensions.   (line   6)
+* version:                               Predefined Versions. (line   6)
+* visibility function attribute:         Common Attributes.   (line 268)
+* visibility variable attribute:         Common Attributes.   (line 268)
+* warnings, suppressing:                 Warnings.            (line   6)
+* weak function attribute:               Common Attributes.   (line 279)
+* weak variable attribute:               Common Attributes.   (line 279)
 
 
 
 Tag Table:
 Node: Top1075
-Node: Copying1723
-Node: GNU Free Documentation License39257
-Node: Invoking gdc64383
-Node: Input and Output files65258
-Node: Runtime Options66606
-Node: Directory Options75222
-Node: Code Generation77645
-Node: Warnings81579
-Node: Linking84976
-Node: Developer Options86649
-Node: Index87399
+Node: Invoking gdc1933
+Node: Input and Output files2792
+Node: Runtime Options4140
+Node: Directory Options12735
+Node: Code Generation15158
+Node: Warnings19092
+Node: Linking22906
+Node: Developer Options24579
+Node: D Implementation25329
+Node: Attributes27073
+Node: Attribute Syntax28071
+Node: Common Attributes29675
+Node: Other Attributes42059
+Node: Target Attributes44223
+Node: Builtin Functions45628
+Node: Builtin Types46195
+Node: Query Builtins47378
+Node: Other Builtins48608
+Node: ImportC54735
+Node: Inline Assembly56826
+Node: Intrinsics58974
+Node: Bit Operation Intrinsics59787
+Node: Integer Overflow Intrinsics64601
+Node: Math Intrinsics67278
+Node: Variadic Intrinsics70462
+Node: Volatile Intrinsics72026
+Node: CTFE Intrinsics74437
+Node: Predefined Pragmas80293
+Node: Predefined Versions84303
+Node: Standard Predefined Versions84946
+Node: Common Predefined Versions88868
+Node: Target Predefined Versions90379
+Node: Special Enums92727
+Node: Traits94445
+Node: Vector Extensions95701
+Node: Vector Intrinsics99329
+Node: Missing Features103968
+Node: Copying108568
+Node: GNU Free Documentation License146118
+Node: Option Index171247
+Node: Keyword Index179152
 
 End Tag Table

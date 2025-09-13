@@ -1,6 +1,6 @@
 // Map implementation -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -180,7 +180,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef typename _Rep_type::reverse_iterator	 reverse_iterator;
       typedef typename _Rep_type::const_reverse_iterator const_reverse_iterator;
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17
       using node_type = typename _Rep_type::node_type;
       using insert_return_type = typename _Rep_type::insert_return_type;
 #endif
@@ -642,7 +642,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	}
 #endif
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17
       /// Extract a node.
       node_type
       extract(const_iterator __pos)
@@ -696,8 +696,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	{ merge(__source); }
 #endif // C++17
 
-#if __cplusplus > 201402L
-#define __cpp_lib_map_try_emplace 201411L
+#ifdef __glibcxx_map_try_emplace // C++ >= 17 && HOSTED
       /**
        *  @brief Attempts to build and insert a std::pair into the %map.
        *
@@ -849,7 +848,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	{
 #if __cplusplus >= 201703L
 	  using _P2 = remove_reference_t<_Pair>;
-	  if constexpr (__is_pair<_P2>)
+	  if constexpr (__is_pair<remove_const_t<_P2>>)
 	    if constexpr (is_same_v<allocator_type, allocator<value_type>>)
 	      if constexpr (__usable_key<typename _P2::first_type>)
 		{

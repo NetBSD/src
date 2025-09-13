@@ -1,5 +1,5 @@
 /* Search for references that a functions loads or stores.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
    Contributed by David Cepelik and Jan Hubicka
 
 This file is part of GCC.
@@ -75,6 +75,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-modref-tree.h"
 #include "ipa-modref.h"
 #include "value-range.h"
+#include "sreal.h"
+#include "ipa-cp.h"
 #include "ipa-prop.h"
 #include "ipa-fnsummary.h"
 #include "attr-fnspec.h"
@@ -119,10 +121,10 @@ public:
   fnspec_summaries_t (symbol_table *symtab)
       : call_summary <fnspec_summary *> (symtab) {}
   /* Hook that is called by summary when an edge is duplicated.  */
-  virtual void duplicate (cgraph_edge *,
-			  cgraph_edge *,
-			  fnspec_summary *src,
-			  fnspec_summary *dst)
+  void duplicate (cgraph_edge *,
+		  cgraph_edge *,
+		  fnspec_summary *src,
+		  fnspec_summary *dst) final override
   {
     dst->fnspec = xstrdup (src->fnspec);
   }
@@ -194,10 +196,10 @@ public:
   escape_summaries_t (symbol_table *symtab)
       : call_summary <escape_summary *> (symtab) {}
   /* Hook that is called by summary when an edge is duplicated.  */
-  virtual void duplicate (cgraph_edge *,
-			  cgraph_edge *,
-			  escape_summary *src,
-			  escape_summary *dst)
+  void duplicate (cgraph_edge *,
+		  cgraph_edge *,
+		  escape_summary *src,
+		  escape_summary *dst) final override
   {
     dst->esc = src->esc.copy ();
   }
@@ -217,11 +219,11 @@ class GTY((user)) modref_summaries
 public:
   modref_summaries (symbol_table *symtab)
       : fast_function_summary <modref_summary *, va_gc> (symtab) {}
-  virtual void insert (cgraph_node *, modref_summary *state);
-  virtual void duplicate (cgraph_node *src_node,
-			  cgraph_node *dst_node,
-			  modref_summary *src_data,
-			  modref_summary *dst_data);
+  void insert (cgraph_node *, modref_summary *state) final override;
+  void duplicate (cgraph_node *src_node,
+		  cgraph_node *dst_node,
+		  modref_summary *src_data,
+		  modref_summary *dst_data) final override;
   static modref_summaries *create_ggc (symbol_table *symtab)
   {
     return new (ggc_alloc_no_dtor<modref_summaries> ())
@@ -241,11 +243,11 @@ public:
   modref_summaries_lto (symbol_table *symtab)
       : fast_function_summary <modref_summary_lto *, va_gc> (symtab),
 	propagated (false) {}
-  virtual void insert (cgraph_node *, modref_summary_lto *state);
-  virtual void duplicate (cgraph_node *src_node,
-			  cgraph_node *dst_node,
-			  modref_summary_lto *src_data,
-			  modref_summary_lto *dst_data);
+  void insert (cgraph_node *, modref_summary_lto *state) final override;
+  void duplicate (cgraph_node *src_node,
+		  cgraph_node *dst_node,
+		  modref_summary_lto *src_data,
+		  modref_summary_lto *dst_data) final override;
   static modref_summaries_lto *create_ggc (symbol_table *symtab)
   {
     return new (ggc_alloc_no_dtor<modref_summaries_lto> ())
@@ -474,7 +476,7 @@ dump_lto_records (modref_records_lto *tt, FILE *out)
   FOR_EACH_VEC_SAFE_ELT (tt->bases, i, n)
     {
       fprintf (out, "      Base %i:", (int)i);
-      print_generic_expr (dump_file, n->base);
+      print_generic_expr (out, n->base);
       fprintf (out, " (alias set %i)\n",
 	       n->base ? get_alias_set (n->base) : 0);
       if (n->every_ref)
@@ -487,7 +489,7 @@ dump_lto_records (modref_records_lto *tt, FILE *out)
       FOR_EACH_VEC_SAFE_ELT (n->refs, j, r)
 	{
 	  fprintf (out, "        Ref %i:", (int)j);
-	  print_generic_expr (dump_file, r->ref);
+	  print_generic_expr (out, r->ref);
 	  fprintf (out, " (alias set %i)\n",
 		   r->ref ? get_alias_set (r->ref) : 0);
 	  if (r->every_access)
@@ -567,7 +569,7 @@ remove_modref_edge_summaries (cgraph_node *node)
 /* Dump summary.  */
 
 void
-modref_summary::dump (FILE *out)
+modref_summary::dump (FILE *out) const
 {
   if (loads)
     {
@@ -1331,7 +1333,7 @@ modref_access_analysis::merge_call_side_effects
 	  if (parm_map[i].parm_offset_known)
 	    {
 	      fprintf (dump_file, " offset:");
-	      print_dec ((poly_int64_pod)parm_map[i].parm_offset,
+	      print_dec ((poly_int64)parm_map[i].parm_offset,
 			 dump_file, SIGNED);
 	    }
 	}
@@ -1347,7 +1349,7 @@ modref_access_analysis::merge_call_side_effects
 	  if (chain_map.parm_offset_known)
 	    {
 	      fprintf (dump_file, " offset:");
-	      print_dec ((poly_int64_pod)chain_map.parm_offset,
+	      print_dec ((poly_int64)chain_map.parm_offset,
 			 dump_file, SIGNED);
 	    }
 	}
@@ -1880,11 +1882,11 @@ modref_access_analysis::analyze ()
      statement cannot be analyzed (for any reason), the entire function cannot
      be analyzed by modref.  */
   basic_block bb;
+  bitmap always_executed_bbs = find_always_executed_bbs (cfun, true);
   FOR_EACH_BB_FN (bb, cfun)
     {
       gimple_stmt_iterator si;
-      bool always_executed
-	      = bb == single_succ_edge (ENTRY_BLOCK_PTR_FOR_FN (cfun))->dest;
+      bool always_executed = bitmap_bit_p (always_executed_bbs, bb->index);
 
       for (si = gsi_start_nondebug_after_labels_bb (bb);
 	   !gsi_end_p (si); gsi_next_nondebug (&si))
@@ -1931,6 +1933,7 @@ modref_access_analysis::analyze ()
 	  && !finite_function_p ())
 	m_summary_lto->side_effects = true;
     }
+  BITMAP_FREE (always_executed_bbs);
 }
 
 /* Return true if OP accesses memory pointed to by SSA_NAME.  */
@@ -3520,15 +3523,15 @@ class pass_modref : public gimple_opt_pass
 	: gimple_opt_pass (pass_data_modref, ctxt) {}
 
     /* opt_pass methods: */
-    opt_pass *clone ()
+    opt_pass *clone () final override
     {
       return new pass_modref (m_ctxt);
     }
-    virtual bool gate (function *)
+    bool gate (function *) final override
     {
       return flag_ipa_modref;
     }
-    virtual unsigned int execute (function *);
+    unsigned int execute (function *) final override;
 };
 
 /* Encode TT to the output block OB using the summary streaming API.  */
@@ -3827,7 +3830,7 @@ read_section (struct lto_file_decl_data *file_data, const char *data,
   unsigned int f_count;
 
   lto_input_block ib ((const char *) data + main_offset, header->main_size,
-		      file_data->mode_table);
+		      file_data);
 
   data_in
     = lto_data_in_create (file_data, (const char *) data + string_offset,
@@ -4076,21 +4079,74 @@ remap_kills (vec <modref_access_node> &kills, const vec <int> &map)
       i++;
 }
 
+/* Return true if the V can overlap with KILL.  */
+
+static bool
+ipcp_argagg_and_kill_overlap_p (const ipa_argagg_value &v,
+				const modref_access_node &kill)
+{
+  if (kill.parm_index == v.index)
+    {
+      gcc_assert (kill.parm_offset_known);
+      gcc_assert (known_eq (kill.max_size, kill.size));
+      poly_int64 repl_size;
+      bool ok = poly_int_tree_p (TYPE_SIZE (TREE_TYPE (v.value)),
+				 &repl_size);
+      gcc_assert (ok);
+      poly_int64 repl_offset (v.unit_offset);
+      repl_offset <<= LOG2_BITS_PER_UNIT;
+      poly_int64 combined_offset
+	= (kill.parm_offset << LOG2_BITS_PER_UNIT) + kill.offset;
+      if (ranges_maybe_overlap_p (repl_offset, repl_size,
+				  combined_offset, kill.size))
+	return true;
+    }
+  return false;
+}
+
 /* If signature changed, update the summary.  */
 
 static void
 update_signature (struct cgraph_node *node)
 {
-  clone_info *info = clone_info::get (node);
-  if (!info || !info->param_adjustments)
-    return;
-
   modref_summary *r = optimization_summaries
 		      ? optimization_summaries->get (node) : NULL;
   modref_summary_lto *r_lto = summaries_lto
 			      ? summaries_lto->get (node) : NULL;
   if (!r && !r_lto)
     return;
+
+  /* Propagating constants in killed memory can lead to eliminated stores in
+     both callees (because they are considered redundant) and callers, leading
+     to missing them altogether.  */
+  ipcp_transformation *ipcp_ts = ipcp_get_transformation_summary (node);
+  if (ipcp_ts)
+    {
+    for (auto &v : ipcp_ts->m_agg_values)
+      {
+	if (!v.by_ref)
+	  continue;
+	if (r)
+	  for (const modref_access_node &kill : r->kills)
+	    if (ipcp_argagg_and_kill_overlap_p (v, kill))
+	      {
+		v.killed = true;
+		break;
+	      }
+	if (!v.killed && r_lto)
+	  for (const modref_access_node &kill : r_lto->kills)
+	    if (ipcp_argagg_and_kill_overlap_p (v, kill))
+	      {
+		v.killed = true;
+		break;
+	      }
+      }
+    }
+
+  clone_info *info = clone_info::get (node);
+  if (!info || !info->param_adjustments)
+    return;
+
   if (dump_file)
     {
       fprintf (dump_file, "Updating summary for %s from:\n",
@@ -4182,12 +4238,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass *clone () { return new pass_ipa_modref (m_ctxt); }
-  virtual bool gate (function *)
+  opt_pass *clone () final override { return new pass_ipa_modref (m_ctxt); }
+  bool gate (function *) final override
   {
     return true;
   }
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 };
 

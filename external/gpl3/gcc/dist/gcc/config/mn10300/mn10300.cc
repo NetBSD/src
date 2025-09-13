@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.cc for Matsushita MN10300 series
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
    This file is part of GCC.
@@ -285,12 +285,12 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 		REAL_VALUE_TO_TARGET_DOUBLE
 		  (*CONST_DOUBLE_REAL_VALUE (x), val);
 		fprintf (file, "0x%lx", val[0]);
-		break;;
+		break;
 	      case E_SFmode:
 		REAL_VALUE_TO_TARGET_SINGLE
 		  (*CONST_DOUBLE_REAL_VALUE (x), val[0]);
 		fprintf (file, "0x%lx", val[0]);
-		break;;
+		break;
 	      case E_VOIDmode:
 	      case E_DImode:
 		mn10300_print_operand_address (file,
@@ -344,7 +344,7 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 		REAL_VALUE_TO_TARGET_DOUBLE
 		  (*CONST_DOUBLE_REAL_VALUE (x), val);
 		fprintf (file, "0x%lx", val[1]);
-		break;;
+		break;
 	      case E_SFmode:
 		gcc_unreachable ();
 	      case E_VOIDmode:
@@ -1932,7 +1932,8 @@ mn10300_legitimate_pic_operand_p (rtx x)
    function record_unscaled_index_insn_codes.  */
 
 static bool
-mn10300_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+mn10300_legitimate_address_p (machine_mode mode, rtx x, bool strict,
+			      code_helper = ERROR_MARK)
 {
   rtx base, index;
 
@@ -2849,7 +2850,8 @@ mn10300_conditional_register_usage (void)
 static rtx_insn *
 mn10300_md_asm_adjust (vec<rtx> & /*outputs*/, vec<rtx> & /*inputs*/,
 		       vec<machine_mode> & /*input_modes*/,
-		       vec<const char *> & /*constraints*/, vec<rtx> &clobbers,
+		       vec<const char *> & /*constraints*/,
+		       vec<rtx> &/*uses*/, vec<rtx> &clobbers,
 		       HARD_REG_SET &clobbered_regs, location_t /*loc*/)
 {
   clobbers.safe_push (gen_rtx_REG (CCmode, CC_REG));

@@ -1,22 +1,142 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2023-05-08  Release Manager
+2024-05-07  Release Manager
 
-	* GCC 12.3.0 released.
+	* GCC 14.1.0 released.
 
-2022-08-19  Release Manager
+2024-04-16  Thomas Schwinge  <tschwinge@baylibre.com>
 
-	* GCC 12.2.0 released.
+	* acx.m4 (ACX_PROG_CARGO): Use 'AC_CHECK_PROGS'.
 
-2022-05-06  Release Manager
+2024-04-15  Pierre-Emmanuel Patry  <pierre-emmanuel.patry@embecosm.com>
 
-	* GCC 12.1.0 released.
+	* acx.m4: Add a macro to check for rust
+	components.
+
+2024-04-02  Jakub Jelinek  <jakub@redhat.com>
+
+	* lcmessage.m4: Fix duplicated words; can can -> can,
+	package package -> package.
+
+2024-01-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (CYG_AC_PATH_LIBERTY): Delete.
+
+2023-11-30  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* hwcaps.m4 (GCC_CHECK_ASSEMBLER_HWCAP): Require
+	AC_CANONICAL_TARGET.
+
+2023-11-13  Arsen Arsenović  <arsen@aarsen.me>
+
+	* intlmacosx.m4: Import from gettext-0.22 (serial 8).
+	* gettext.m4: Sync with gettext-0.22 (serial 77).
+	* gettext-sister.m4 (ZW_GNU_GETTEXT_SISTER_DIR): Load gettext's
+	uninstalled-config.sh, or call AM_GNU_GETTEXT if missing.
+	* iconv.m4: Sync with gettext-0.22 (serial 26).
+
+2023-09-15  Yang Yujie  <yangyujie@loongson.cn>
+
+	* mt-loongarch-mlib: New file.  Pass -fmultiflags when building
+	target libraries (FLAGS_FOR_TARGET).
+	* mt-loongarch-elf: New file.
+	* mt-loongarch-gnu: New file.
+
+2023-08-11  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc-plugin.m4 (GCC_ENABLE_PLUGINS): Use
+	export_sym_check="$ac_cv_prog_OBJDUMP -T" also when host is not
+	build or target.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* pkg.m4 (PKG_CHECK_MODULES): Use AC_TRY_LINK only if
+	$pkg_failed = no.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* pkg.m4 (PKG_CHECK_MODULES): Add AC_TRY_LINK to check if
+	$pkg_cv_[]$1[]_LIBS works.
+
+2023-08-07  John Ericson  <git@JohnEricson.me>
+
+	* picflag.m4: Simplify SHmedia NetBSD match by presuming ELF.
+
+2023-08-07  Alan Modra  <amodra@gmail.com>
+
+	* override.m4: Correct comment grammar.
+
+2023-08-07  Alan Modra  <amodra@gmail.com>
+
+	* lib-ld.m4 (AC_LIB_PROG_LD_GNU): Require AC_PROG_EGREP and
+	invoke $EGREP.
+	(AC_LIB_PROG_LD): Likewise.
+
+2023-08-07  Christophe Lyon  <christophe.lyon@arm.com>
+
+	* zstd.m4: Add minimum version requirement of 1.4.0.
+
+2023-08-07  Fangrui Song  <maskray@google.com>
+
+	* zstd.m4: New file.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* gcc-plugin.m4 (GCC_PLUGIN_OPTION): Check if AR works with
+	--plugin and rc before enabling --plugin.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* gcc-plugin.m4 (GCC_PLUGIN_OPTION): New.
+
+2023-07-21  Sergei Trofimovich  <siarheit@google.com>
+
+	* mh-mingw: Drop assignment of unused BOOT_CXXFLAGS variable.
+
+2022-11-14  Martin Liska  <mliska@suse.cz>
+
+	Revert:
+	2022-11-09  Martin Liska  <mliska@suse.cz>
+
+	* acx.m4: Do not wrap REPORT_BUGS_TO.
+
+2022-11-09  Martin Liska  <mliska@suse.cz>
+
+	* acx.m4: Do not wrap REPORT_BUGS_TO.
+
+2022-10-19  LIU Hao  <lh_mouse@126.com>
+
+	* gthr.m4 (GCC_AC_THREAD_HEADER): Add new case for `mcf` thread
+	model
+
+2022-08-31  Martin Liska  <mliska@suse.cz>
+
+	* mh-pa-hpux10: Removed.
+
+2022-08-01  Roger Sayle  <roger@nextmovesoftware.com>
+	    Arnaud Charlet  <charlet@adacore.com>
+
+	* acx.m4 (AC_PROG_GNAT): Update conftest.adb to include
+	features required of the host gnat compiler.
+
+2022-06-01  David Seifert  <soap@gentoo.org>
+
+	PR plugins/95648
+	* gcc-plugin.m4: Use libtool's $ac_cv_prog_OBJDUMP.
+
+2022-05-20  Christophe Lyon  <christophe.lyon@arm.com>
+
+	* dfp.m4: Add aarch64 support.
+
+2022-05-03  Christophe Lyon  <christophe.lyon@arm.com>
+
+	* dfp.m4: Add license header.
 
 2022-03-29  Chenghua Xu  <xuchenghua@loongson.cn>
 	    Lulu Cheng  <chenglulu@loongson.cn>

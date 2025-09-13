@@ -1,5 +1,5 @@
 /* Handle #pragma, system V.4 style.  Supports #pragma weak and #pragma pack.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -764,137 +764,280 @@ handle_pragma_visibility (cpp_reader *)
     warning (OPT_Wpragmas, "junk at end of %<#pragma GCC visibility%>");
 }
 
-static void
-handle_pragma_diagnostic(cpp_reader *)
+/* Helper routines for parsing #pragma GCC diagnostic.  */
+class pragma_diagnostic_data
 {
-  tree x;
-  location_t loc;
-  enum cpp_ttype token = pragma_lex (&x, &loc);
-  if (token != CPP_NAME)
+  pragma_diagnostic_data (const pragma_diagnostic_data &) = delete;
+  pragma_diagnostic_data& operator= (const pragma_diagnostic_data &) = delete;
+
+public:
+  bool valid;
+  location_t loc_kind, loc_option;
+  enum pd_kind_t
     {
-      warning_at (loc, OPT_Wpragmas,
-		  "missing %<error%>, %<warning%>, %<ignored%>, %<push%>, "
-		  "%<pop%>, or %<ignored_attributes%> after "
-		  "%<#pragma GCC diagnostic%>");
+      PK_INVALID,
+      PK_PUSH,
+      PK_POP,
+      PK_IGNORED_ATTRIBUTES,
+      PK_DIAGNOSTIC,
+    } pd_kind;
+  diagnostic_t diagnostic_kind;
+  const char *kind_str;
+  const char *option_str;
+  bool own_option_str;
+
+  pragma_diagnostic_data () { clear (); }
+  void clear ()
+  {
+    valid = false;
+    loc_kind = loc_option = UNKNOWN_LOCATION;
+    pd_kind = PK_INVALID;
+    diagnostic_kind = DK_UNSPECIFIED;
+    kind_str = option_str = nullptr;
+    own_option_str = false;
+  }
+
+  ~pragma_diagnostic_data ()
+  {
+    if (own_option_str && option_str)
+      XDELETEVEC (const_cast<char *> (option_str));
+  }
+
+  void set_kind (const char *kind_string)
+  {
+    kind_str = kind_string;
+
+    pd_kind = PK_INVALID;
+    diagnostic_kind = DK_UNSPECIFIED;
+    if (strcmp (kind_str, "push") == 0)
+      pd_kind = PK_PUSH;
+    else if (strcmp (kind_str, "pop") == 0)
+      pd_kind = PK_POP;
+    else if (strcmp (kind_str, "ignored_attributes") == 0)
+      pd_kind = PK_IGNORED_ATTRIBUTES;
+    else if (strcmp (kind_str, "error") == 0)
+      {
+	pd_kind = PK_DIAGNOSTIC;
+	diagnostic_kind = DK_ERROR;
+      }
+    else if (strcmp (kind_str, "warning") == 0)
+      {
+	pd_kind = PK_DIAGNOSTIC;
+	diagnostic_kind = DK_WARNING;
+      }
+    else if (strcmp (kind_str, "ignored") == 0)
+      {
+	pd_kind = PK_DIAGNOSTIC;
+	diagnostic_kind = DK_IGNORED;
+      }
+  }
+
+  bool needs_option () const
+  {
+    return pd_kind == PK_IGNORED_ATTRIBUTES
+      || pd_kind == PK_DIAGNOSTIC;
+  }
+
+};
+
+/* This will call into either the C or C++ frontends as appropriate to get
+   tokens from libcpp for the pragma.  */
+
+static void
+pragma_diagnostic_lex (pragma_diagnostic_data *result)
+{
+  result->clear ();
+  tree x;
+  auto ttype = pragma_lex (&x, &result->loc_kind);
+  if (ttype != CPP_NAME)
+    return;
+  result->set_kind (IDENTIFIER_POINTER (x));
+  if (result->pd_kind == pragma_diagnostic_data::PK_INVALID)
+    return;
+
+  if (result->needs_option ())
+    {
+      ttype = pragma_lex (&x, &result->loc_option);
+      if (ttype != CPP_STRING)
+	return;
+      result->option_str = TREE_STRING_POINTER (x);
+    }
+
+  result->valid = true;
+}
+
+/* Handle #pragma GCC diagnostic.  Early mode is used by frontends (such as C++)
+   that do not process the deferred pragma while they are consuming tokens; they
+   can use early mode to make sure diagnostics affecting the preprocessor itself
+   are correctly modified by the #pragma.  */
+template<bool early, bool is_pp> static void
+handle_pragma_diagnostic_impl ()
+{
+  static const bool want_diagnostics = (is_pp || !early);
+
+  pragma_diagnostic_data data;
+  pragma_diagnostic_lex (&data);
+
+  if (!data.kind_str)
+    {
+      if (want_diagnostics)
+	warning_at (data.loc_kind, OPT_Wpragmas,
+		    "missing %<error%>, %<warning%>, %<ignored%>, %<push%>, "
+		    "%<pop%>, or %<ignored_attributes%> after "
+		    "%<#pragma GCC diagnostic%>");
       return;
     }
 
-  diagnostic_t kind;
-  const char *kind_string = IDENTIFIER_POINTER (x);
-  if (strcmp (kind_string, "error") == 0)
-    kind = DK_ERROR;
-  else if (strcmp (kind_string, "warning") == 0)
-    kind = DK_WARNING;
-  else if (strcmp (kind_string, "ignored") == 0)
-    kind = DK_IGNORED;
-  else if (strcmp (kind_string, "push") == 0)
+  switch (data.pd_kind)
     {
+
+    case pragma_diagnostic_data::PK_PUSH:
       diagnostic_push_diagnostics (global_dc, input_location);
       return;
-    }
-  else if (strcmp (kind_string, "pop") == 0)
-    {
+
+    case pragma_diagnostic_data::PK_POP:
       diagnostic_pop_diagnostics (global_dc, input_location);
       return;
-    }
-  else if (strcmp (kind_string, "ignored_attributes") == 0)
-    {
-      token = pragma_lex (&x, &loc);
-      if (token != CPP_STRING)
+
+    case pragma_diagnostic_data::PK_IGNORED_ATTRIBUTES:
+      {
+	if (early)
+	  return;
+	if (!data.option_str)
+	  {
+	    warning_at (data.loc_option, OPT_Wpragmas,
+		       "missing attribute name after %<#pragma GCC diagnostic "
+			"ignored_attributes%>");
+	    return;
+	  }
+	char *args = xstrdup (data.option_str);
+	const size_t l = strlen (args);
+	if (l == 0)
+	  {
+	    warning_at (data.loc_option, OPT_Wpragmas,
+			"missing argument to %<#pragma GCC "
+			"diagnostic ignored_attributes%>");
+	    free (args);
+	    return;
+	  }
+	else if (args[l - 1] == ',')
+	  {
+	    warning_at (data.loc_option, OPT_Wpragmas,
+			"trailing %<,%> in arguments for "
+			"%<#pragma GCC diagnostic ignored_attributes%>");
+	    free (args);
+	    return;
+	  }
+	auto_vec<char *> v;
+	for (char *p = strtok (args, ","); p; p = strtok (NULL, ","))
+	  v.safe_push (p);
+	handle_ignored_attributes_option (&v);
+	free (args);
+	return;
+      }
+
+    case pragma_diagnostic_data::PK_DIAGNOSTIC:
+      if (!data.option_str)
 	{
-	  warning_at (loc, OPT_Wpragmas,
-		      "missing attribute name after %<#pragma GCC diagnostic "
-		      "ignored_attributes%>");
+	  if (want_diagnostics)
+	    warning_at (data.loc_option, OPT_Wpragmas,
+			"missing option after %<#pragma GCC diagnostic%> kind");
 	  return;
 	}
-      char *args = xstrdup (TREE_STRING_POINTER (x));
-      const size_t l = strlen (args);
-      if (l == 0)
-	{
-	  warning_at (loc, OPT_Wpragmas, "missing argument to %<#pragma GCC "
-		      "diagnostic ignored_attributes%>");
-	  free (args);
-	  return;
-	}
-      else if (args[l - 1] == ',')
-	{
-	  warning_at (loc, OPT_Wpragmas, "trailing %<,%> in arguments for "
-		      "%<#pragma GCC diagnostic ignored_attributes%>");
-	  free (args);
-	  return;
-	}
-      auto_vec<char *> v;
-      for (char *p = strtok (args, ","); p; p = strtok (NULL, ","))
-	v.safe_push (p);
-      handle_ignored_attributes_option (&v);
-      free (args);
+      break;
+
+    default:
+      if (want_diagnostics)
+	warning_at (data.loc_kind, OPT_Wpragmas,
+		    "expected %<error%>, %<warning%>, %<ignored%>, %<push%>, "
+		    "%<pop%>, %<ignored_attributes%> after "
+		    "%<#pragma GCC diagnostic%>");
       return;
-    }
-  else
-    {
-      warning_at (loc, OPT_Wpragmas,
-		  "expected %<error%>, %<warning%>, %<ignored%>, %<push%>, "
-		  "%<pop%>, %<ignored_attributes%> after "
-		  "%<#pragma GCC diagnostic%>");
-      return;
+
     }
 
-  token = pragma_lex (&x, &loc);
-  if (token != CPP_STRING)
-    {
-      warning_at (loc, OPT_Wpragmas,
-		  "missing option after %<#pragma GCC diagnostic%> kind");
-      return;
-    }
+  gcc_assert (data.pd_kind == pragma_diagnostic_data::PK_DIAGNOSTIC);
+  gcc_assert (data.valid);
 
-  const char *option_string = TREE_STRING_POINTER (x);
   unsigned int lang_mask = c_common_option_lang_mask () | CL_COMMON;
   /* option_string + 1 to skip the initial '-' */
-  unsigned int option_index = find_opt (option_string + 1, lang_mask);
+  unsigned int option_index = find_opt (data.option_str + 1, lang_mask);
+
+  if (early && !(c_option_is_from_cpp_diagnostics (option_index)
+		 || option_index == OPT_Wunknown_pragmas))
+    return;
+
   if (option_index == OPT_SPECIAL_unknown)
     {
-      auto_diagnostic_group d;
-      if (warning_at (loc, OPT_Wpragmas,
-		      "unknown option after %<#pragma GCC diagnostic%> kind"))
+      if (want_diagnostics)
 	{
-	  option_proposer op;
-	  const char *hint = op.suggest_option (option_string + 1);
-	  if (hint)
-	    inform (loc, "did you mean %<-%s%>?", hint);
+	  auto_diagnostic_group d;
+	  if (warning_at (data.loc_option, OPT_Wpragmas,
+			"unknown option after %<#pragma GCC diagnostic%> kind"))
+	    {
+	      option_proposer op;
+	      const char *hint = op.suggest_option (data.option_str + 1);
+	      if (hint)
+		inform (data.loc_option, "did you mean %<-%s%>?", hint);
+	    }
 	}
       return;
     }
   else if (!(cl_options[option_index].flags & CL_WARNING))
     {
-      warning_at (loc, OPT_Wpragmas,
-		  "%qs is not an option that controls warnings", option_string);
+      if (want_diagnostics)
+	warning_at (data.loc_option, OPT_Wpragmas,
+		    "%qs is not an option that controls warnings",
+		    data.option_str);
       return;
     }
   else if (!(cl_options[option_index].flags & lang_mask))
     {
-      char *ok_langs = write_langs (cl_options[option_index].flags);
-      char *bad_lang = write_langs (c_common_option_lang_mask ());
-      warning_at (loc, OPT_Wpragmas,
-		  "option %qs is valid for %s but not for %s",
-		  option_string, ok_langs, bad_lang);
-      free (ok_langs);
-      free (bad_lang);
+      if (want_diagnostics)
+	{
+	  char *ok_langs = write_langs (cl_options[option_index].flags);
+	  char *bad_lang = write_langs (c_common_option_lang_mask ());
+	  warning_at (data.loc_option, OPT_Wpragmas,
+		      "option %qs is valid for %s but not for %s",
+		      data.option_str, ok_langs, bad_lang);
+	  free (ok_langs);
+	  free (bad_lang);
+	}
       return;
     }
 
-  struct cl_option_handlers handlers;
-  set_default_handlers (&handlers, NULL);
   const char *arg = NULL;
   if (cl_options[option_index].flags & CL_JOINED)
-    arg = option_string + 1 + cl_options[option_index].opt_len;
+    arg = data.option_str + 1 + cl_options[option_index].opt_len;
+
+  struct cl_option_handlers handlers;
+  set_default_handlers (&handlers, NULL);
   /* FIXME: input_location isn't the best location here, but it is
      what we used to do here before and changing it breaks e.g.
      PR69543 and PR69558.  */
-  control_warning_option (option_index, (int) kind,
-			  arg, kind != DK_IGNORED,
+  control_warning_option (option_index, (int) data.diagnostic_kind,
+			  arg, data.diagnostic_kind != DK_IGNORED,
 			  input_location, lang_mask, &handlers,
 			  &global_options, &global_options_set,
 			  global_dc);
+}
+
+static void
+handle_pragma_diagnostic (cpp_reader *)
+{
+  handle_pragma_diagnostic_impl<false, false> ();
+}
+
+static void
+handle_pragma_diagnostic_early (cpp_reader *)
+{
+  handle_pragma_diagnostic_impl<true, false> ();
+}
+
+static void
+handle_pragma_diagnostic_early_pp (cpp_reader *)
+{
+  handle_pragma_diagnostic_impl<true, true> ();
 }
 
 /*  Parse #pragma GCC target (xxx) to set target specific options.  */
@@ -1065,7 +1208,7 @@ handle_pragma_push_options (cpp_reader *)
   token = pragma_lex (&x);
   if (token != CPP_EOF)
     {
-      warning (OPT_Wpragmas, "junk at end of %<#pragma push_options%>");
+      warning (OPT_Wpragmas, "junk at end of %<#pragma GCC push_options%>");
       return;
     }
 
@@ -1102,7 +1245,7 @@ handle_pragma_pop_options (cpp_reader *)
   token = pragma_lex (&x);
   if (token != CPP_EOF)
     {
-      warning (OPT_Wpragmas, "junk at end of %<#pragma pop_options%>");
+      warning (OPT_Wpragmas, "junk at end of %<#pragma GCC pop_options%>");
       return;
     }
 
@@ -1146,24 +1289,16 @@ handle_pragma_pop_options (cpp_reader *)
   current_optimize_pragma = p->optimize_strings;
 }
 
-/* Handle #pragma GCC reset_options to restore the current target and
-   optimization options to the original options used on the command line.  */
+/* This is mostly a helper for handle_pragma_reset_options () to do the actual
+   work, but the C++ frontend, for example, needs an external interface to
+   perform this operation, since it processes target pragmas twice.  (Once for
+   preprocessing purposes, and then again during compilation.)  */
 
-static void
-handle_pragma_reset_options (cpp_reader *)
+void
+c_reset_target_pragmas ()
 {
-  enum cpp_ttype token;
-  tree x = 0;
   tree new_optimize = optimization_default_node;
   tree new_target = target_option_default_node;
-
-  token = pragma_lex (&x);
-  if (token != CPP_EOF)
-    {
-      warning (OPT_Wpragmas, "junk at end of %<#pragma reset_options%>");
-      return;
-    }
-
   if (new_target != target_option_current_node)
     {
       (void) targetm.target_option.pragma_parse (NULL_TREE, new_target);
@@ -1181,6 +1316,19 @@ handle_pragma_reset_options (cpp_reader *)
 
   current_target_pragma = NULL_TREE;
   current_optimize_pragma = NULL_TREE;
+}
+
+/* Handle #pragma GCC reset_options to restore the current target and
+   optimization options to the original options used on the command line.  */
+
+static void
+handle_pragma_reset_options (cpp_reader *)
+{
+  tree x;
+  if (pragma_lex (&x) != CPP_EOF)
+    warning (OPT_Wpragmas, "junk at end of %<#pragma reset_options%>");
+  else
+    c_reset_target_pragmas ();
 }
 
 /* Print a plain user-specified message.  */
@@ -1205,6 +1353,9 @@ handle_pragma_message (cpp_reader *)
     }
   else if (token == CPP_STRING)
     message = x;
+  else if (token == CPP_STRING_USERDEF)
+    GCC_BAD ("string literal with user-defined suffix is invalid in this "
+	     "context");
   else
     GCC_BAD ("expected a string after %<#pragma message%>");
 
@@ -1216,6 +1367,12 @@ handle_pragma_message (cpp_reader *)
   if (TREE_STRING_LENGTH (message) > 1)
     inform (input_location, "%<#pragma message: %s%>",
 	    TREE_STRING_POINTER (message));
+}
+
+/* Ignore a no-op pragma that GCC recognizes, but which has no effect.  */
+static void
+handle_pragma_ignore (cpp_reader *)
+{
 }
 
 /* Mark whether the current location is valid for a STDC pragma.  */
@@ -1332,14 +1489,15 @@ handle_pragma_float_const_decimal64 (cpp_reader *)
 
 static vec<internal_pragma_handler> registered_pragmas;
 
-struct pragma_ns_name
+struct pragma_pp_data
 {
   const char *space;
   const char *name;
+  pragma_handler_1arg early_handler;
 };
 
 
-static vec<pragma_ns_name> registered_pp_pragmas;
+static vec<pragma_pp_data> registered_pp_pragmas;
 
 struct omp_pragma_def { const char *name; unsigned int id; };
 static const struct omp_pragma_def oacc_pragmas[] = {
@@ -1360,14 +1518,16 @@ static const struct omp_pragma_def oacc_pragmas[] = {
 };
 static const struct omp_pragma_def omp_pragmas[] = {
   { "allocate", PRAGMA_OMP_ALLOCATE },
+  { "assumes", PRAGMA_OMP_ASSUMES },
   { "atomic", PRAGMA_OMP_ATOMIC },
   { "barrier", PRAGMA_OMP_BARRIER },
+  { "begin", PRAGMA_OMP_BEGIN },
   { "cancel", PRAGMA_OMP_CANCEL },
   { "cancellation", PRAGMA_OMP_CANCELLATION_POINT },
   { "critical", PRAGMA_OMP_CRITICAL },
   { "depobj", PRAGMA_OMP_DEPOBJ },
   { "error", PRAGMA_OMP_ERROR },
-  { "end", PRAGMA_OMP_END_DECLARE_TARGET },
+  { "end", PRAGMA_OMP_END },
   { "flush", PRAGMA_OMP_FLUSH },
   { "nothing", PRAGMA_OMP_NOTHING },
   { "requires", PRAGMA_OMP_REQUIRES },
@@ -1382,6 +1542,7 @@ static const struct omp_pragma_def omp_pragmas[] = {
   { "threadprivate", PRAGMA_OMP_THREADPRIVATE }
 };
 static const struct omp_pragma_def omp_pragmas_simd[] = {
+  { "assume", PRAGMA_OMP_ASSUME },
   { "declare", PRAGMA_OMP_DECLARE },
   { "distribute", PRAGMA_OMP_DISTRIBUTE },
   { "for", PRAGMA_OMP_FOR },
@@ -1400,8 +1561,8 @@ static const struct omp_pragma_def omp_pragmas_simd[] = {
 void
 c_pp_lookup_pragma (unsigned int id, const char **space, const char **name)
 {
-  const int n_oacc_pragmas = sizeof (oacc_pragmas) / sizeof (*oacc_pragmas);
-  const int n_omp_pragmas = sizeof (omp_pragmas) / sizeof (*omp_pragmas);
+  const int n_oacc_pragmas = ARRAY_SIZE (oacc_pragmas);
+  const int n_omp_pragmas = ARRAY_SIZE (omp_pragmas);
   const int n_omp_pragmas_simd = sizeof (omp_pragmas_simd)
 				 / sizeof (*omp_pragmas);
   int i;
@@ -1452,14 +1613,15 @@ c_register_pragma_1 (const char *space, const char *name,
 
   if (flag_preprocess_only)
     {
-      pragma_ns_name ns_name;
-
-      if (!allow_expansion)
+      if (cpp_get_options (parse_in)->directives_only
+	  || !(allow_expansion || ihandler.early_handler.handler_1arg))
 	return;
 
-      ns_name.space = space;
-      ns_name.name = name;
-      registered_pp_pragmas.safe_push (ns_name);
+      pragma_pp_data pp_data;
+      pp_data.space = space;
+      pp_data.name = name;
+      pp_data.early_handler = ihandler.early_handler.handler_1arg;
+      registered_pp_pragmas.safe_push (pp_data);
       id = registered_pp_pragmas.length ();
       id += PRAGMA_FIRST_EXTERNAL - 1;
     }
@@ -1485,9 +1647,16 @@ void
 c_register_pragma (const char *space, const char *name,
                    pragma_handler_1arg handler)
 {
+  c_register_pragma_with_early_handler (space, name, handler, nullptr);
+}
+void c_register_pragma_with_early_handler (const char *space, const char *name,
+					   pragma_handler_1arg handler,
+					   pragma_handler_1arg early_handler)
+{
   internal_pragma_handler ihandler;
 
   ihandler.handler.handler_1arg = handler;
+  ihandler.early_handler.handler_1arg = early_handler;
   ihandler.extra_data = false;
   ihandler.data = NULL;
   c_register_pragma_1 (space, name, ihandler, false);
@@ -1504,6 +1673,7 @@ c_register_pragma_with_data (const char *space, const char *name,
   internal_pragma_handler ihandler;
 
   ihandler.handler.handler_2arg = handler;
+  ihandler.early_handler.handler_2arg = nullptr;
   ihandler.extra_data = true;
   ihandler.data = data;
   c_register_pragma_1 (space, name, ihandler, false);
@@ -1523,6 +1693,7 @@ c_register_pragma_with_expansion (const char *space, const char *name,
   internal_pragma_handler ihandler;
 
   ihandler.handler.handler_1arg = handler;
+  ihandler.early_handler.handler_1arg = nullptr;
   ihandler.extra_data = false;
   ihandler.data = NULL;
   c_register_pragma_1 (space, name, ihandler, true);
@@ -1544,6 +1715,7 @@ c_register_pragma_with_expansion_and_data (const char *space, const char *name,
   internal_pragma_handler ihandler;
 
   ihandler.handler.handler_2arg = handler;
+  ihandler.early_handler.handler_2arg = nullptr;
   ihandler.extra_data = true;
   ihandler.data = data;
   c_register_pragma_1 (space, name, ihandler, true);
@@ -1570,39 +1742,78 @@ c_invoke_pragma_handler (unsigned int id)
     }
 }
 
+/* In contrast to the normal handler, the early handler is optional.  */
+void
+c_invoke_early_pragma_handler (unsigned int id)
+{
+  internal_pragma_handler *ihandler;
+  pragma_handler_1arg handler_1arg;
+  pragma_handler_2arg handler_2arg;
+
+  id -= PRAGMA_FIRST_EXTERNAL;
+  ihandler = &registered_pragmas[id];
+  if (ihandler->extra_data)
+    {
+      handler_2arg = ihandler->early_handler.handler_2arg;
+      if (handler_2arg)
+	handler_2arg (parse_in, ihandler->data);
+    }
+  else
+    {
+      handler_1arg = ihandler->early_handler.handler_1arg;
+      if (handler_1arg)
+	handler_1arg (parse_in);
+    }
+}
+
+void
+c_pp_invoke_early_pragma_handler (unsigned int id)
+{
+  const auto data = &registered_pp_pragmas[id - PRAGMA_FIRST_EXTERNAL];
+  if (data->early_handler)
+    {
+      data->early_handler (parse_in);
+      pragma_lex_discard_to_eol ();
+    }
+}
+
 /* Set up front-end pragmas.  */
 void
 init_pragma (void)
 {
-  if (flag_openacc)
+
+  if (!cpp_get_options (parse_in)->directives_only)
     {
-      const int n_oacc_pragmas
-	= sizeof (oacc_pragmas) / sizeof (*oacc_pragmas);
-      int i;
+      if (flag_openacc)
+	{
+	  const int n_oacc_pragmas = ARRAY_SIZE (oacc_pragmas);
+	  int i;
 
-      for (i = 0; i < n_oacc_pragmas; ++i)
-	cpp_register_deferred_pragma (parse_in, "acc", oacc_pragmas[i].name,
-				      oacc_pragmas[i].id, true, true);
-    }
+	  for (i = 0; i < n_oacc_pragmas; ++i)
+	    cpp_register_deferred_pragma (parse_in, "acc", oacc_pragmas[i].name,
+					  oacc_pragmas[i].id, true, true);
+	}
 
-  if (flag_openmp)
-    {
-      const int n_omp_pragmas = sizeof (omp_pragmas) / sizeof (*omp_pragmas);
-      int i;
+      if (flag_openmp)
+	{
+	  const int n_omp_pragmas = ARRAY_SIZE (omp_pragmas);
+	  int i;
 
-      for (i = 0; i < n_omp_pragmas; ++i)
-	cpp_register_deferred_pragma (parse_in, "omp", omp_pragmas[i].name,
-				      omp_pragmas[i].id, true, true);
-    }
-  if (flag_openmp || flag_openmp_simd)
-    {
-      const int n_omp_pragmas_simd = sizeof (omp_pragmas_simd)
-				     / sizeof (*omp_pragmas);
-      int i;
+	  for (i = 0; i < n_omp_pragmas; ++i)
+	    cpp_register_deferred_pragma (parse_in, "omp", omp_pragmas[i].name,
+					  omp_pragmas[i].id, true, true);
+	}
+      if (flag_openmp || flag_openmp_simd)
+	{
+	  const int n_omp_pragmas_simd
+	    = sizeof (omp_pragmas_simd) / sizeof (*omp_pragmas);
+	  int i;
 
-      for (i = 0; i < n_omp_pragmas_simd; ++i)
-	cpp_register_deferred_pragma (parse_in, "omp", omp_pragmas_simd[i].name,
-				      omp_pragmas_simd[i].id, true, true);
+	  for (i = 0; i < n_omp_pragmas_simd; ++i)
+	    cpp_register_deferred_pragma (parse_in, "omp",
+					  omp_pragmas_simd[i].name,
+					  omp_pragmas_simd[i].id, true, true);
+	}
     }
 
   if (!flag_preprocess_only)
@@ -1617,6 +1828,10 @@ init_pragma (void)
     cpp_register_deferred_pragma (parse_in, "GCC", "unroll", PRAGMA_UNROLL,
 				  false, false);
 
+  if (!flag_preprocess_only)
+    cpp_register_deferred_pragma (parse_in, "GCC", "novector", PRAGMA_NOVECTOR,
+				  false, false);
+
 #ifdef HANDLE_PRAGMA_PACK_WITH_EXPANSION
   c_register_pragma_with_expansion (0, "pack", handle_pragma_pack);
 #else
@@ -1626,12 +1841,30 @@ init_pragma (void)
 
   c_register_pragma ("GCC", "visibility", handle_pragma_visibility);
 
-  c_register_pragma ("GCC", "diagnostic", handle_pragma_diagnostic);
-  c_register_pragma ("GCC", "target", handle_pragma_target);
+  if (flag_preprocess_only)
+    c_register_pragma_with_early_handler ("GCC", "diagnostic",
+					  nullptr,
+					  handle_pragma_diagnostic_early_pp);
+  else
+    c_register_pragma_with_early_handler ("GCC", "diagnostic",
+					  handle_pragma_diagnostic,
+					  handle_pragma_diagnostic_early);
+  c_register_pragma_with_early_handler ("GCC", "target",
+					handle_pragma_target,
+					handle_pragma_target);
   c_register_pragma ("GCC", "optimize", handle_pragma_optimize);
-  c_register_pragma ("GCC", "push_options", handle_pragma_push_options);
-  c_register_pragma ("GCC", "pop_options", handle_pragma_pop_options);
-  c_register_pragma ("GCC", "reset_options", handle_pragma_reset_options);
+  c_register_pragma_with_early_handler ("GCC", "push_options",
+					handle_pragma_push_options,
+					handle_pragma_push_options);
+  c_register_pragma_with_early_handler ("GCC", "pop_options",
+					handle_pragma_pop_options,
+					handle_pragma_pop_options);
+  c_register_pragma_with_early_handler ("GCC", "reset_options",
+					handle_pragma_reset_options,
+					handle_pragma_reset_options);
+
+  c_register_pragma (0, "region", handle_pragma_ignore);
+  c_register_pragma (0, "endregion", handle_pragma_ignore);
 
   c_register_pragma ("STDC", "FLOAT_CONST_DECIMAL64",
 		     handle_pragma_float_const_decimal64);

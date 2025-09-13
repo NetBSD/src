@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2022 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2024 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -27,9 +27,9 @@ distributions such as that of GNU Binutils.  It also contains several
 subdirectories that contain parts of GCC and its runtime libraries:
 
 @table @file
-@item boehm-gc
-The Boehm conservative garbage collector, optionally used as part of
-the ObjC runtime library when configured with @option{--enable-objc-gc}.
+@item c++tools
+Contains the sources for the g++-mapper-server, a tool used with
+C++ modules.
 
 @item config
 Autoconf macros and Makefile fragments used throughout the tree.
@@ -55,6 +55,9 @@ language front ends, and testsuites.  @xref{gcc Directory, , The
 @item gnattools
 Support tools for GNAT.
 
+@item gotools
+Support tools for Go.
+
 @item include
 Headers for the @code{libiberty} library.
 
@@ -68,6 +71,16 @@ The Ada runtime library.
 @item libatomic
 The runtime support library for atomic operations (e.g.@: for @code{__sync}
 and @code{__atomic}).
+
+@item libbacktrace
+A library that allows GCC to produce backtraces when it crashes.
+
+@item libcc1
+A library that allows GDB to make use of the compiler.
+
+@item libcody
+A compiler dynamism library to allow communication between compilers and
+build systems, for purposes such as C++ modules.
 
 @item libcpp
 The C preprocessor library.
@@ -83,6 +96,9 @@ The GCC runtime library.
 
 @item libgfortran
 The Fortran runtime library.
+
+@item libgm2
+The Modula-2 runtime library.
 
 @item libgo
 The Go runtime library.  The bulk of this library is mirrored from the
@@ -103,18 +119,26 @@ The runtime support library for transactional memory.
 @item libobjc
 The Objective-C and Objective-C++ runtime library.
 
-@item libquadmath
-The runtime support library for quad-precision math operations.
-
 @item libphobos
 The D standard and runtime library.  The bulk of this library is mirrored
 from the @uref{https://github.com/@/dlang, master D repositories}.
+
+@item libquadmath
+The runtime support library for quad-precision math operations.
+
+@item libsanitizer
+Libraries for various sanitizers.  The bulk of this directory is mirrored
+from the @uref{https://github.com/google/sanitizers, Google sanitizers
+repositories}.
 
 @item libssp
 The Stack protector runtime library.
 
 @item libstdc++-v3
 The C++ runtime library.
+
+@item libvtv
+The vtable verification library.
 
 @item lto-plugin
 Plugin used by the linker if link-time optimizations are enabled.
@@ -130,8 +154,7 @@ uncompressing GCC's intermediate language in LTO object files.
 The build system in the top level directory, including how recursion
 into subdirectories works and how building runtime libraries for
 multilibs is handled, is documented in a separate manual, included
-with GNU Binutils.  @xref{Top, , GNU configure and build system,
-configure, The GNU configure and build system}, for details.
+with GNU Binutils.
 
 @node gcc Directory
 @section The @file{gcc} Subdirectory
@@ -163,7 +186,8 @@ The @file{gcc} directory contains the following subdirectories:
 @item @var{language}
 Subdirectories for various languages.  Directories containing a file
 @file{config-lang.in} are language subdirectories.  The contents of
-the subdirectories @file{c} (for C), @file{cp} (for C++),
+the subdirectories @file{c} (for C), @file{cp} (for C++), @file{m2}
+(for Modula-2),
 @file{objc} (for Objective-C), @file{objcp} (for Objective-C++),
 and @file{lto} (for LTO) are documented in this
 manual (@pxref{Passes, , Passes and Files of the Compiler});
@@ -441,10 +465,6 @@ that of @samp{@@option} but for man page output a different effect is
 wanted.
 @item @@gccoptlist
 Use for summary lists of options in manuals.
-@item @@gol
-Use at the end of each line inside @samp{@@gccoptlist}.  This is
-necessary to avoid problems with differences in how the
-@samp{@@gccoptlist} macro is handled by different Texinfo formatters.
 @end table
 
 FIXME: describe the @file{texi2pod.pl} input language and magic
@@ -564,6 +584,11 @@ The front end's manuals should be mentioned in
 @file{maintainer-scripts/update_web_docs_git} (@pxref{Texinfo Manuals})
 and the online manuals should be linked to from
 @file{onlinedocs/index.html}.
+@item
+If the front end has its own manual with its own index of options, the
+generated @file{Option-Index.html} should be added to
+@code{PER_LANGUAGE_OPTION_INDEXES} in @file{gcc/regenerate-opt-urls.py}
+and to @code{OPT_URLS_HTML_DEPS} in @file{gcc/Makefile.in}.
 @item
 Any old releases or CVS repositories of the front end, before its
 inclusion in GCC, should be made available on the GCC web site at
@@ -792,6 +817,10 @@ Documentation in @file{gcc/doc/invoke.texi} for any command-line
 options supported by this target (@pxref{Run-time Target, , Run-time
 Target Specification}).  This means both entries in the summary table
 of options and details of the individual options.
+@item
+An entry in @file{gcc/regenerate-opt-urls.py}'s TARGET_SPECIFIC_PAGES
+dictionary mapping from target-specific HTML documentation pages
+to the target specific source directory.
 @item
 Documentation in @file{gcc/doc/extend.texi} for any target-specific
 attributes supported (@pxref{Target Attributes, , Defining
@@ -1616,6 +1645,14 @@ Target supports hardware vectors of @code{float} when
 @option{-funsafe-math-optimizations} is not in effect.
 This implies @code{vect_float}.
 
+@item vect_early_break
+Target supports vectorization codegen of loops with early breaks.
+This requires an implementation of the cbranch optab for vectors.
+
+@item vect_early_break_hw
+Target supports hardware vectorization and running of loops with early breaks.
+This requires an implementation of the cbranch optab for vectors.
+
 @item vect_int
 Target supports hardware vectors of @code{int}.
 
@@ -1937,6 +1974,9 @@ test system can execute decimal floating point tests.
 
 @item hard_dfp
 Target generates decimal floating point instructions with current options.
+
+@item dfp_bid
+Target uses the BID format for decimal floating point.
 @end table
 
 @subsubsection ARM-specific attributes
@@ -2163,9 +2203,19 @@ the Custom Datapath Extension (CDE) and floating-point (VFP).
 Some multilibs may be incompatible with these options.
 
 @item arm_v8_1m_main_cde_mve
-ARM target supports options to generate instructions from ARMv8.1-M with
+Arm target supports options to generate instructions from Armv8.1-M with
 the Custom Datapath Extension (CDE) and M-Profile Vector Extension (MVE).
 Some multilibs may be incompatible with these options.
+
+@item arm_v8_1m_main_cde_mve_fp
+Arm target supports options to generate instructions from Armv8.1-M
+with the Custom Datapath Extension (CDE) and M-Profile Vector
+Extension (MVE) with floating-point support.  Some multilibs may be
+incompatible with these options.
+
+@item arm_pacbti_hw
+Test system supports executing Pointer Authentication and Branch Target
+Identification instructions.
 
 @item arm_prefer_ldrd_strd
 ARM target prefers @code{LDRD} and @code{STRD} instructions over
@@ -2256,6 +2306,12 @@ ARM target generates Thumb-2 code for @code{-mthumb} but does not
 support executing the Armv8.1-M Mainline Low Overhead Loop
 instructions @code{DLS} and @code{LE}.
 
+@item mbranch_protection_ok
+ARM target supporting @code{-mbranch-protection=standard}.
+
+@item arm_pacbti_hw
+Test system supports for executing non nop pacbti instructions.
+
 @end table
 
 @subsubsection AArch64-specific attributes
@@ -2277,6 +2333,10 @@ AArch64 target which generates instruction sequences for big endian.
 @item aarch64_small_fpic
 Binutils installed on test system supports relocation types required by -fpic
 for AArch64 small memory model.
+@item aarch64_sme
+AArch64 target that generates instructions for SME.
+@item aarch64_sme2
+AArch64 target that generates instructions for SME2.
 @item aarch64_sve_hw
 AArch64 target that is able to generate and execute SVE code (regardless of
 whether it does so by default).
@@ -2290,6 +2350,26 @@ Like @code{aarch64_sve_hw}, but also test for an exact hardware vector length.
 @item aarch64_fjcvtzs_hw
 AArch64 target that is able to generate and execute armv8.3-a FJCVTZS
 instruction.
+@end table
+
+@subsubsection LoongArch specific attributes
+
+@table @code
+@item loongarch_sx
+LoongArch target that generates instructions for SX.
+
+@item loongarch_asx
+LoongArch target that generates instructions for ASX.
+
+@item loongarch_sx_hw
+LoongArch target that is able to generate and execute SX code.
+
+@item loongarch_asx_hw
+LoongArch target that is able to generate and execute ASX code.
+
+@item loongarch_call36_support
+LoongArch binutils supports call36 relocation.
+
 @end table
 
 @subsubsection MIPS-specific attributes
@@ -2363,9 +2443,6 @@ PowerPC target supports hardware double-precision floating-point.
 @item powerpc_htm_ok
 PowerPC target supports @code{-mhtm}
 
-@item powerpc_p8vector_ok
-PowerPC target supports @code{-mpower8-vector}
-
 @item powerpc_popcntb_ok
 PowerPC target supports the @code{popcntb} instruction, indicating
 that this target supports @code{-mcpu=power5}.
@@ -2420,7 +2497,7 @@ PowerPC target pre-defines macro _ARCH_PWR9 which means the @code{-mcpu}
 setting is Power9 or later.
 @end table
 
-@subsection RISC-V specific attributes
+@subsubsection RISC-V specific attributes
 
 @table @code
 
@@ -2429,6 +2506,27 @@ Test system has an integer register width of 32 bits.
 
 @item rv64
 Test system has an integer register width of 64 bits.
+
+@item cv_bi
+Test system has support for the CORE-V BI extension.
+
+@end table
+
+@subsubsection CORE-V specific attributes
+
+@table @code
+
+@item cv_mac
+Test system has support for the CORE-V MAC extension.
+
+@item cv_alu
+Test system has support for the CORE-V ALU extension.
+
+@item cv_elw
+Test system has support for the CORE-V ELW extension.
+
+@item cv_simd
+Test system has support for the CORE-V SIMD extension.
 
 @end table
 
@@ -2444,6 +2542,15 @@ Target supports compiling @code{avx} instructions.
 
 @item avx_runtime
 Target supports the execution of @code{avx} instructions.
+
+@item avx10.1-256
+Target supports the execution of @code{avx10.1-256} instructions.
+
+@item avx10.1-512
+Target supports the execution of @code{avx10.1-512} instructions.
+
+@item avx10.1
+Target supports the execution of @code{avx10.1} instructions.
 
 @item avx2
 Target supports compiling @code{avx2} instructions.
@@ -2463,6 +2570,18 @@ Target supports the execution of @code{avx512f} instructions.
 @item avx512vp2intersect
 Target supports the execution of @code{avx512vp2intersect} instructions.
 
+@item avxifma
+Target supports the execution of @code{avxifma} instructions.
+
+@item avxneconvert
+Target supports the execution of @code{avxneconvert} instructions.
+
+@item avxvnniint8
+Target supports the execution of @code{avxvnniint8} instructions.
+
+@item avxvnniint16
+Target supports the execution of @code{avxvnniint16} instructions.
+
 @item amx_tile
 Target supports the execution of @code{amx-tile} instructions.
 
@@ -2472,8 +2591,35 @@ Target supports the execution of @code{amx-int8} instructions.
 @item amx_bf16
 Target supports the execution of @code{amx-bf16} instructions.
 
+@item amx_complex
+Target supports the execution of @code{amx-complex} instructions.
+
+@item amx_fp16
+Target supports the execution of @code{amx-fp16} instructions.
+
 @item cell_hw
 Test system can execute AltiVec and Cell PPU instructions.
+
+@item clz
+Target supports a clz optab on int.
+
+@item clzl
+Target supports a clz optab on long.
+
+@item clzll
+Target supports a clz optab on long long.
+
+@item ctz
+Target supports a ctz optab on int.
+
+@item ctzl
+Target supports a ctz optab on long.
+
+@item ctzll
+Target supports a ctz optab on long long.
+
+@item cmpccxadd
+Target supports the execution of @code{cmpccxadd} instructions.
 
 @item coldfire_fpu
 Target uses a ColdFire FPU.
@@ -2490,11 +2636,38 @@ Target supports FPU instructions.
 @item non_strict_align
 Target does not require strict alignment.
 
+@item opt_mstrict_align
+Target supports @option{-mstrict-align} and @option{-mno-strict-align}.
+
 @item pie_copyreloc
 The x86-64 target linker supports PIE with copy reloc.
 
+@item popcount
+Target supports a popcount optab on int.
+
+@item popcountl
+Target supports a popcount optab on long.
+
+@item popcountll
+Target supports a popcount optab on long long.
+
+@item prefetchi
+Target supports the execution of @code{prefetchi} instructions.
+
+@item raoint
+Target supports the execution of @code{raoint} instructions.
+
 @item rdrand
 Target supports x86 @code{rdrand} instruction.
+
+@item sha512
+Target supports the execution of @code{sha512} instructions.
+
+@item sm3
+Target supports the execution of @code{sm3} instructions.
+
+@item sm4
+Target supports the execution of @code{sm4} instructions.
 
 @item sqrt_insn
 Target has a square root instruction that the compiler can generate.
@@ -2522,11 +2695,18 @@ Test environment appears to run executables on a simulator that
 accepts only @code{EM_SPARC} executables and chokes on @code{EM_SPARC32PLUS}
 or @code{EM_SPARCV9} executables.
 
+@item user_msr
+Target supports the execution of @code{user_msr} instructions.
+
 @item vect_cmdline_needed
 Target requires a command line argument to enable a SIMD instruction set.
 
 @item xorsign
 Target supports the xorsign optab expansion.
+
+@item ifn_copysign
+Target supports the copysign optab expansion of float and double for
+both scalar and vector modes.
 
 @end table
 
@@ -2541,6 +2721,9 @@ The language for the compiler under test is C++.
 
 @item c99_runtime
 Target provides a full C99 runtime.
+
+@item cfi
+Target supports DWARF CFI directives.
 
 @item correct_iso_cpp_string_wchar_protos
 Target @code{string.h} and @code{wchar.h} headers provide C++ required
@@ -2612,6 +2795,9 @@ Target supports Newlib.
 GCC was configured with @code{--enable-newlib-nano-formatted-io}, which reduces
 the code size of Newlib formatted I/O functions.
 
+@item posix_memalign
+Target supports @code{posix_memalign}.
+
 @item pow10
 Target provides @code{pow10} function.
 
@@ -2620,6 +2806,9 @@ Target can compile using @code{pthread.h} with no errors or warnings.
 
 @item pthread_h
 Target has @code{pthread.h}.
+
+@item sockets
+Target can compile using @code{sys/socket.h} with no errors or warnings.
 
 @item run_expensive_tests
 Expensive testcases (usually those that consume excessive amounts of CPU
@@ -2648,11 +2837,17 @@ can be included without error when @option{-mbig-endian} is passed.
 @item stpcpy
 Target provides @code{stpcpy} function.
 
+@item strndup
+Target provides @code{strndup} function.
+
 @item sysconf
 Target supports @code{sysconf}.
 
 @item trampolines
 Target supports trampolines.
+
+@item two_plus_gigs
+Target supports linking programs with 2+GiB of data.
 
 @item uclibc
 Target supports uClibc.
@@ -2668,6 +2863,9 @@ Target is a VxWorks RTP.
 
 @item wchar
 Target supports wide characters.
+
+@item weak_undefined
+Target supports weak undefined symbols
 @end table
 
 @subsubsection Other attributes
@@ -2676,16 +2874,23 @@ Target supports wide characters.
 @item R_flag_in_section
 Target supports the 'R' flag in .section directive in assembly inputs.
 
+@item asm_goto_with_outputs
+Target supports 'asm goto' with outputs.
+
 @item automatic_stack_alignment
 Target supports automatic stack alignment.
 
 @item branch_cost
 Target supports @option{-branch-cost=N}.
 
+@item const_volatile_readonly_section
+Target places const volatile variables in readonly sections.
+
 @item cxa_atexit
 Target uses @code{__cxa_atexit}.
 
 @item default_packed
+@anchor{default_packed}
 Target has packed layout of structure members by default.
 
 @item exceptions
@@ -2700,6 +2905,18 @@ Target supports Graphite optimizations.
 
 @item fixed_point
 Target supports fixed-point extension to C.
+
+@item bitint
+Target supports _BitInt(N).
+
+@item bitint128
+Target supports _BitInt(128).
+
+@item bitint575
+Target supports _BitInt(575).
+
+@item bitint65535
+Target supports _BitInt(65535).
 
 @item fopenacc
 Target supports OpenACC via @option{-fopenacc}.
@@ -2734,6 +2951,9 @@ Target is using an LLVM assembler and/or linker, instead of GNU Binutils.
 
 @item lra
 Target supports local register allocator (LRA).
+This must not be called (results in @code{ERROR}) for targets that
+don't do register allocation, and therefore neither use nor don't use
+LRA.
 
 @item lto
 Compiler has been configured to support link-time optimization (LTO).
@@ -2741,6 +2961,10 @@ Compiler has been configured to support link-time optimization (LTO).
 @item lto_incremental
 Compiler and linker support link-time optimization relocatable linking
 with @option{-r} and @option{-flto} options.
+
+@item thread_fence
+Target implements @code{__atomic_thread_fence} without relying on
+non-implemented @code{__sync_synchronize()}.
 
 @item naked_functions
 Target supports the @code{naked} function attribute.
@@ -2752,9 +2976,20 @@ Target supports named sections.
 Target uses natural alignment (aligned to type size) for types of
 32 bits or less.
 
+@item tail_call
+Target supports tail-call optimizations.
+
 @item target_natural_alignment_64
 Target uses natural alignment (aligned to type size) for types of
 64 bits or less.
+
+@item no_alignment_constraints
+Target defines __BIGGEST_ALIGNMENT__=1.  Hence target imposes
+no alignment constraints.  This is similar, but not necessarily
+the same as @ref{default_packed}.  Although @code{BIGGEST_FIELD_ALIGNMENT}
+defaults to @code{BIGGEST_ALIGNMENT} for most targets, it is possible
+for a target to set those two with different values and have different
+alignment constraints for aggregate and non-aggregate types.
 
 @item noinit
 Target supports the @code{noinit} variable attribute.
@@ -2783,6 +3018,9 @@ Target supports @option{-mpe-aligned-commons}.
 @item pie
 Target supports @option{-pie}, @option{-fpie} and @option{-fPIE}.
 
+@item linker_plugin
+Target supports the linker plugin.
+
 @item rdynamic
 Target supports @option{-rdynamic}.
 
@@ -2803,6 +3041,10 @@ Target has limited stack size.  The stack size limit can be obtained using the
 STACK_SIZE macro defined by @ref{stack_size_ao,,@code{dg-add-options} feature
 @code{stack_size}}.
 
+Note that for certain targets, stack size limits are relevant for
+execution only, and therefore considered only if @code{dg-do run} is
+in effect, otherwise unlimited.
+
 @item static
 Target supports @option{-static}.
 
@@ -2811,6 +3053,9 @@ Target supports statically linking @samp{libgfortran}.
 
 @item string_merging
 Target supports merging string constants at link time.
+
+@item strub
+Target supports attribute @code{strub} for stack scrubbing.
 
 @item ucn
 Target supports compiling and assembling UCN.
@@ -2828,6 +3073,9 @@ Vector alignment is reachable for types of 32 bits or less.
 
 @item vector_alignment_reachable_for_64bit
 Vector alignment is reachable for types of 64 bits or less.
+
+@item vma_equals_lma
+Target generates executable with VMA equal to LMA for .data section.
 
 @item wchar_t_char16_t_compatible
 Target supports @code{wchar_t} that is compatible with @code{char16_t}.
@@ -3024,6 +3272,14 @@ instructions, if any.
 
 @item tls
 Add the target-specific flags needed to use thread-local storage.
+
+@item vect_early_break
+Add the target-specific flags needed to enable early break vectorization for
+a target, if any.  This requires the target to have an implementation of the
+@code{cbranch} optab.
+
+@item weak_undefined
+Add the flags needed to enable support for weak undefined symbols.
 @end table
 
 @node Require Support
@@ -3093,6 +3349,10 @@ system.  Some tests are incompatible with DejaGnu's handling of remote
 hosts, which involves copying the source file to the host and compiling
 it with a relative path and "@code{-o a.out}".
 
+@item dg-require-linker-plugin ""
+Skip the test is the target does not support the linker plugin.
+This is equivalent to @code{dg-require-effective-target linker_plugin}.
+
 @item dg-require-mkfifo ""
 Skip the test if the target does not support @code{mkfifo}.
 
@@ -3125,27 +3385,44 @@ Passes if @var{regexp} matches in Fortran module @var{module}.
 @item dg-check-dot @var{filename}
 Passes if @var{filename} is a valid @file{.dot} file (by running
 @code{dot -Tpng} on it, and verifying the exit code is 0).
+@item scan-sarif-file @var{regexp} [@{ target/xfail @var{selector} @}]
+Passes if @var{regexp} matches text in the file generated by
+@option{-fdiagnostics-format=sarif-file}.
+@item scan-sarif-file-not @var{regexp} [@{ target/xfail @var{selector} @}]
+Passes if @var{regexp} does not match text in the file generated by
+@option{-fdiagnostics-format=sarif-file}.
 @end table
 
 @subsubsection Scan the assembly output
 
 @table @code
 @item scan-assembler @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} matches text in the test's assembler output.
+Passes if @var{regex} matches text in the test's assembler output,
+excluding LTO sections.
+
+@item scan-raw-assembler @var{regex} [@{ target/xfail @var{selector} @}]
+Passes if @var{regex} matches text in the test's assembler output,
+including LTO sections.
 
 @item scan-assembler-not @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} does not match text in the test's assembler output.
+Passes if @var{regex} does not match text in the test's assembler output,
+excluding LTO sections.
 
 @item scan-assembler-times @var{regex} @var{num} [@{ target/xfail @var{selector} @}]
 Passes if @var{regex} is matched exactly @var{num} times in the test's
-assembler output.
+assembler output, excluding LTO sections.
+
+@item scan-assembler-bound @var{regex} @var{cmp} @var{num} [@{ target/xfail @var{selector} @}]
+Passes if @var{regex} is matched @var{cmp} @var{num} times in the test's
+assembler output, excluding LTO sections. @var{cmp} is a comparitor.
 
 @item scan-assembler-dem @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} matches text in the test's demangled assembler output.
+Passes if @var{regex} matches text in the test's demangled assembler output,
+excluding LTO sections.
 
 @item scan-assembler-dem-not @var{regex} [@{ target/xfail @var{selector} @}]
 Passes if @var{regex} does not match text in the test's demangled assembler
-output.
+output, excluding LTO sections.
 
 @item scan-assembler-symbol-section @var{functions} @var{section} [@{ target/xfail @var{selector} @}]
 Passes if @var{functions} are all in @var{section}.  The caller needs to
@@ -3163,7 +3440,7 @@ assembly output.
 Passes if @var{symbol} is not defined as a hidden symbol in the test's
 assembly output.
 
-@item check-function-bodies @var{prefix} @var{terminator} [@var{options} [@{ target/xfail @var{selector} @}]]
+@item check-function-bodies @var{prefix} @var{terminator} [@var{options} [@{ target/xfail @var{selector} @} [@var{matched}]]]
 Looks through the source file for comments that give the expected assembly
 output for selected functions.  Each line of expected output starts with the
 prefix string @var{prefix} and the expected output for a function as a whole
@@ -3186,9 +3463,15 @@ The first line of the expected output for a function @var{fn} has the form:
 Subsequent lines of the expected output also start with @var{prefix}.
 In both cases, whitespace after @var{prefix} is not significant.
 
-The test discards assembly directives such as @code{.cfi_startproc}
-and local label definitions such as @code{.LFB0} from the compiler's
-assembly output.  It then matches the result against the expected
+Depending on the configuration (see
+@code{configure_check-function-bodies} in
+@file{gcc/testsuite/lib/scanasm.exp}), the test may discard from the
+compiler's assembly output directives such as @code{.cfi_startproc},
+local label definitions such as @code{.LFB0}, and more.  This behavior
+can be overridden using the optional @var{matched} argument, which
+specifies a regexp for lines that should not be discarded in this way.
+
+The test then matches the result against the expected
 output for a function as a single regular expression.  This means that
 later lines can use backslashes to refer back to @samp{(@dots{})}
 captures on earlier lines.  For example:
@@ -3254,8 +3537,8 @@ stands for zero or more unmatched lines; the whitespace after
 @subsubsection Scan optimization dump files
 
 These commands are available for @var{kind} of @code{tree}, @code{ltrans-tree},
-@code{offload-tree}, @code{rtl}, @code{offload-rtl}, @code{ipa}, and
-@code{wpa-ipa}.
+@code{offload-tree}, @code{rtl}, @code{offload-rtl}, @code{ipa},
+@code{offload-ipa}, and @code{wpa-ipa}.
 
 @table @code
 @item scan-@var{kind}-dump @var{regex} @var{suffix} [@{ target/xfail @var{selector} @}]
@@ -3289,6 +3572,39 @@ occurrences of the string ``code has been optimized'', use:
 /* @{ dg-options "-fdump-tree-mypass" @} */
 /* @{ dg-final @{ scan-tree-dump "code has been optimized" "mypass\[1-3\]" @} @} */
 @end smallexample
+
+The @code{offload-@dots{}} ones by default separately scan the dump
+file of each enabled offload target.
+You may use the @code{only_for_offload_target} wrapper to restrict the
+scanning to one specific offload target:
+
+@smallexample
+/* @{ dg-do link @{ target offload_target_amdgcn @} @} */
+/* @{ dg-additional-options -foffload-options=-fdump-ipa-simdclone-details @} */
+/* @{ dg-final @{ only_for_offload_target amdgcn-amdhsa scan-offload-ipa-dump @var{regex_amdgcn} simdclone @} @} */
+@end smallexample
+
+This test case is active if GCN offload compilation is enabled (but
+potentially also additional offload targets).
+The @code{simdclone} IPA dump file is (potentially) produced for all
+offload targets, but only the GCN offload one is scanned.
+
+If a test case doesn't have a @samp{@{ target @var{selector} @}}, and
+you need to scan, for example, for different @var{regex}es for each of
+host and potentially several offload targets, use a pattern like this:
+
+@smallexample
+/* @{ dg-final @{ scan-tree-dump @var{regex_host} optimized @} @}
+   @{ dg-final @{ only_for_offload_target amdgcn-amdhsa scan-offload-tree-dump @var{regex_amdgcn} optimized @{ target offload_target_amdgcn @} @} @}
+   @{ dg-final @{ only_for_offload_target nvptx-none scan-offload-tree-dump @var{regex_nvptx} optimized @{ target offload_target_nvptx @} @} @} */
+@end smallexample
+
+Here, unconditionally @var{regex_host} is scanned for in the host dump
+file.
+If GCN offloading compilation is actually enabled, @var{regex_amdgcn}
+is scanned for in the GCN offload compilation dump file.
+If nvptx offloading compilation is actually enabled, @var{regex_nvptx}
+is scanned for in the nvptx offload compilation dump file.
 
 
 @subsubsection Check for output files

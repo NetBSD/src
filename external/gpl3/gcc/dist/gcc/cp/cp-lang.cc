@@ -1,5 +1,5 @@
 /* Language-dependent hooks for C++.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -36,6 +36,7 @@ static tree get_template_argument_pack_elems_folded (const_tree);
 static tree cxx_enum_underlying_base_type (const_tree);
 static tree *cxx_omp_get_decl_init (tree);
 static void cxx_omp_finish_decl_inits (void);
+static const char *cp_get_sarif_source_language (const char *);
 
 /* Lang hooks common to C++ and ObjC++ are declared in cp/cp-objcp-common.h;
    consequently, there should be very few hooks below.  */
@@ -100,6 +101,9 @@ static void cxx_omp_finish_decl_inits (void);
 #undef LANG_HOOKS_OMP_FINISH_DECL_INITS
 #define LANG_HOOKS_OMP_FINISH_DECL_INITS cxx_omp_finish_decl_inits
 
+#undef LANG_HOOKS_GET_SARIF_SOURCE_LANGUAGE
+#define LANG_HOOKS_GET_SARIF_SOURCE_LANGUAGE cp_get_sarif_source_language
+
 /* Each front end provides its own lang hook initializer.  */
 struct lang_hooks lang_hooks = LANG_HOOKS_INITIALIZER;
 
@@ -109,13 +113,19 @@ struct lang_hooks lang_hooks = LANG_HOOKS_INITIALIZER;
 /* The following function does something real, but only in Objective-C++.  */
 
 tree
-objcp_tsubst_copy_and_build (tree /*t*/,
-			     tree /*args*/,
-			     tsubst_flags_t /*complain*/,
-			     tree /*in_decl*/,
-			     bool /*function_p*/)
+objcp_tsubst_expr (tree /*t*/, tree /*args*/, tsubst_flags_t /*complain*/,
+		   tree /*in_decl*/)
 {
   return NULL_TREE;
+}
+
+/* Implement c-family hook to add language-specific features
+   for __has_{feature,extension}.  */
+
+void
+c_family_register_lang_features ()
+{
+  cp_register_features ();
 }
 
 static const char *
@@ -263,6 +273,15 @@ static void
 cxx_omp_finish_decl_inits (void)
 {
   dynamic_initializers = NULL;
+}
+
+/* Get a value for the SARIF v2.1.0 "artifact.sourceLanguage" property,
+   based on the list in SARIF v2.1.0 Appendix J.  */
+
+static const char *
+cp_get_sarif_source_language (const char *)
+{
+  return "cplusplus";
 }
 
 #if CHECKING_P

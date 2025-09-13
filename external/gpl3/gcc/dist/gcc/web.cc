@@ -1,6 +1,6 @@
 /* Web construction code for GNU compiler.
    Contributed by Jan Hubicka.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -323,8 +323,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return (optimize > 0 && flag_web); }
-  virtual unsigned int execute (function *);
+  bool gate (function *) final override { return (optimize > 0 && flag_web); }
+  unsigned int execute (function *) final override;
 
 }; // class pass_web
 

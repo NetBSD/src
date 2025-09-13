@@ -1,5 +1,5 @@
 /* Matching subroutines in all sizes, shapes and colors.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
 
 This file is part of GCC.
@@ -193,7 +193,7 @@ gfc_match_member_sep(gfc_symbol *sym)
   if (gfc_match_name (name) != MATCH_YES)
     {
       gfc_error ("Expected structure component or operator name "
-                 "after '.' at %C");
+		 "after %<.%> at %C");
       goto error;
     }
 
@@ -454,10 +454,11 @@ gfc_match_eos (void)
 /* Match a literal integer on the input, setting the value on
    MATCH_YES.  Literal ints occur in kind-parameters as well as
    old-style character length specifications.  If cnt is non-NULL it
-   will be set to the number of digits.  */
+   will be set to the number of digits.
+   When gobble_ws is false, do not skip over leading blanks.  */
 
 match
-gfc_match_small_literal_int (int *value, int *cnt)
+gfc_match_small_literal_int (int *value, int *cnt, bool gobble_ws)
 {
   locus old_loc;
   char c;
@@ -466,7 +467,8 @@ gfc_match_small_literal_int (int *value, int *cnt)
   old_loc = gfc_current_locus;
 
   *value = -1;
-  gfc_gobble_whitespace ();
+  if (gobble_ws)
+    gfc_gobble_whitespace ();
   c = gfc_next_ascii_char ();
   if (cnt)
     *cnt = 0;
@@ -608,17 +610,19 @@ gfc_match_label (void)
 /* See if the current input looks like a name of some sort.  Modifies
    the passed buffer which must be GFC_MAX_SYMBOL_LEN+1 bytes long.
    Note that options.cc restricts max_identifier_length to not more
-   than GFC_MAX_SYMBOL_LEN.  */
+   than GFC_MAX_SYMBOL_LEN.
+   When gobble_ws is false, do not skip over leading blanks.  */
 
 match
-gfc_match_name (char *buffer)
+gfc_match_name (char *buffer, bool gobble_ws)
 {
   locus old_loc;
   int i;
   char c;
 
   old_loc = gfc_current_locus;
-  gfc_gobble_whitespace ();
+  if (gobble_ws)
+    gfc_gobble_whitespace ();
 
   c = gfc_next_ascii_char ();
   if (!(ISALPHA (c) || (c == '_' && flag_allow_leading_underscore)))
@@ -1053,15 +1057,17 @@ cleanup:
 
 
 /* Tries to match the next non-whitespace character on the input.
-   This subroutine does not return MATCH_ERROR.  */
+   This subroutine does not return MATCH_ERROR.
+   When gobble_ws is false, do not skip over leading blanks.  */
 
 match
-gfc_match_char (char c)
+gfc_match_char (char c, bool gobble_ws)
 {
   locus where;
 
   where = gfc_current_locus;
-  gfc_gobble_whitespace ();
+  if (gobble_ws)
+    gfc_gobble_whitespace ();
 
   if (gfc_next_ascii_char () == c)
     return MATCH_YES;
@@ -1078,7 +1084,8 @@ gfc_match_char (char c)
 
    %%  Literal percent sign
    %e  Expression, pointer to a pointer is set
-   %s  Symbol, pointer to the symbol is set
+   %s  Symbol, pointer to the symbol is set (host_assoc = 0)
+   %S  Symbol, pointer to the symbol is set (host_assoc = 1)
    %n  Name, character buffer is set to name
    %t  Matches end of statement.
    %o  Matches an intrinsic operator, returned as an INTRINSIC enum.
@@ -1145,8 +1152,9 @@ loop:
 	  goto loop;
 
 	case 's':
+	case 'S':
 	  vp = va_arg (argp, void **);
-	  n = gfc_match_symbol ((gfc_symbol **) vp, 0);
+	  n = gfc_match_symbol ((gfc_symbol **) vp, c == 'S');
 	  if (n != MATCH_YES)
 	    {
 	      m = n;
@@ -1606,21 +1614,21 @@ gfc_match_if (gfc_statement *if_type)
   match ("assign", gfc_match_assign, ST_LABEL_ASSIGNMENT)
   match ("backspace", gfc_match_backspace, ST_BACKSPACE)
   match ("call", gfc_match_call, ST_CALL)
-  match ("change team", gfc_match_change_team, ST_CHANGE_TEAM)
+  match ("change% team", gfc_match_change_team, ST_CHANGE_TEAM)
   match ("close", gfc_match_close, ST_CLOSE)
   match ("continue", gfc_match_continue, ST_CONTINUE)
   match ("cycle", gfc_match_cycle, ST_CYCLE)
   match ("deallocate", gfc_match_deallocate, ST_DEALLOCATE)
   match ("end file", gfc_match_endfile, ST_END_FILE)
   match ("end team", gfc_match_end_team, ST_END_TEAM)
-  match ("error stop", gfc_match_error_stop, ST_ERROR_STOP)
-  match ("event post", gfc_match_event_post, ST_EVENT_POST)
-  match ("event wait", gfc_match_event_wait, ST_EVENT_WAIT)
+  match ("error% stop", gfc_match_error_stop, ST_ERROR_STOP)
+  match ("event% post", gfc_match_event_post, ST_EVENT_POST)
+  match ("event% wait", gfc_match_event_wait, ST_EVENT_WAIT)
   match ("exit", gfc_match_exit, ST_EXIT)
-  match ("fail image", gfc_match_fail_image, ST_FAIL_IMAGE)
+  match ("fail% image", gfc_match_fail_image, ST_FAIL_IMAGE)
   match ("flush", gfc_match_flush, ST_FLUSH)
   match ("forall", match_simple_forall, ST_FORALL)
-  match ("form team", gfc_match_form_team, ST_FORM_TEAM)
+  match ("form% team", gfc_match_form_team, ST_FORM_TEAM)
   match ("go to", gfc_match_goto, ST_GOTO)
   match ("if", match_arithmetic_if, ST_ARITHMETIC_IF)
   match ("inquire", gfc_match_inquire, ST_INQUIRE)
@@ -1634,10 +1642,10 @@ gfc_match_if (gfc_statement *if_type)
   match ("rewind", gfc_match_rewind, ST_REWIND)
   match ("stop", gfc_match_stop, ST_STOP)
   match ("wait", gfc_match_wait, ST_WAIT)
-  match ("sync all", gfc_match_sync_all, ST_SYNC_CALL);
-  match ("sync images", gfc_match_sync_images, ST_SYNC_IMAGES);
-  match ("sync memory", gfc_match_sync_memory, ST_SYNC_MEMORY);
-  match ("sync team", gfc_match_sync_team, ST_SYNC_TEAM)
+  match ("sync% all", gfc_match_sync_all, ST_SYNC_CALL);
+  match ("sync% images", gfc_match_sync_images, ST_SYNC_IMAGES);
+  match ("sync% memory", gfc_match_sync_memory, ST_SYNC_MEMORY);
+  match ("sync% team", gfc_match_sync_team, ST_SYNC_TEAM)
   match ("unlock", gfc_match_unlock, ST_UNLOCK)
   match ("where", match_simple_where, ST_WHERE)
   match ("write", gfc_match_write, ST_WRITE)
@@ -5056,6 +5064,7 @@ gfc_match_call (void)
      right association is made.  They are thrown out in resolution.)
      ...  */
   if (!sym->attr.generic
+	&& !sym->attr.proc_pointer
 	&& !sym->attr.subroutine
 	&& !sym->attr.function)
     {
@@ -5528,15 +5537,32 @@ gfc_free_namelist (gfc_namelist *name)
 /* Free an OpenMP namelist structure.  */
 
 void
-gfc_free_omp_namelist (gfc_omp_namelist *name, bool free_ns)
+gfc_free_omp_namelist (gfc_omp_namelist *name, bool free_ns,
+		       bool free_align_allocator,
+		       bool free_mem_traits_space)
 {
   gfc_omp_namelist *n;
+  gfc_expr *last_allocator = NULL;
 
   for (; name; name = n)
     {
       gfc_free_expr (name->expr);
+      if (free_align_allocator)
+	gfc_free_expr (name->u.align);
+      else if (free_mem_traits_space)
+	{ }  /* name->u.memspace_sym: shall not call gfc_free_symbol here. */
       if (free_ns)
 	gfc_free_namespace (name->u2.ns);
+      else if (free_align_allocator)
+	{
+	  if (last_allocator != name->u2.allocator)
+	    {
+	      last_allocator = name->u2.allocator;
+	      gfc_free_expr (name->u2.allocator);
+	    }
+	}
+      else if (free_mem_traits_space)
+	{ }  /* name->u2.traits_sym: shall not call gfc_free_symbol here. */
       else if (name->u2.udr)
 	{
 	  if (name->u2.udr->combiner)
@@ -5609,10 +5635,31 @@ gfc_match_namelist (void)
 		  gfc_error_check ();
 		}
 	      else
-		/* If the type is not set already, we set it here to the
-		   implicit default type.  It is not allowed to set it
-		   later to any other type.  */
-		gfc_set_default_type (sym, 0, gfc_current_ns);
+		{
+		  /* Before the symbol is given an implicit type, check to
+		     see if the symbol is already available in the namespace,
+		     possibly through host association.  Importantly, the
+		     symbol may be a user defined type.  */
+
+		  gfc_symbol *tmp;
+
+		  gfc_find_symbol (sym->name, NULL, 1, &tmp);
+		  if (tmp && tmp->attr.generic
+		      && (tmp = gfc_find_dt_in_generic (tmp)))
+		    {
+		      if (tmp->attr.flavor == FL_DERIVED)
+			{
+			  gfc_error ("Derived type %qs at %L conflicts with "
+				     "namelist object %qs at %C",
+				     tmp->name, &tmp->declared_at, sym->name);
+			  goto error;
+			}
+		    }
+
+		  /* Set type of the symbol to its implicit default type.  It is
+		     not allowed to set it later to any other type.  */
+		  gfc_set_default_type (sym, 0, gfc_current_ns);
+		}
 	    }
 	  if (sym->attr.in_namelist == 0
 	      && !gfc_add_in_namelist (&sym->attr, sym->name, NULL))
@@ -5728,7 +5775,7 @@ gfc_match_equivalence (void)
 
   /* EQUIVALENCE has been matched.  After gobbling any possible whitespace,
      the next character needs to be '('.  Check that here, and return
-     MATCH_NO for a variable of the form equivalencej.  */
+     MATCH_NO for a variable of the form equivalence.  */
   gfc_gobble_whitespace ();
   c = gfc_peek_ascii_char ();
   if (c != '(')
@@ -5749,7 +5796,7 @@ gfc_match_equivalence (void)
 	goto syntax;
 
       set = eq;
-      common_flag = FALSE;
+      common_flag = false;
       cnt = 0;
 
       for (;;)
@@ -5790,7 +5837,7 @@ gfc_match_equivalence (void)
 
 	  if (sym->attr.in_common)
 	    {
-	      common_flag = TRUE;
+	      common_flag = true;
 	      common_head = sym->common_head;
 	    }
 
@@ -5917,6 +5964,30 @@ recursive_stmt_fcn (gfc_expr *e, gfc_symbol *sym)
 }
 
 
+/* Check for invalid uses of statement function dummy arguments in body.  */
+
+static bool
+chk_stmt_fcn_body (gfc_expr *e, gfc_symbol *sym, int *f ATTRIBUTE_UNUSED)
+{
+  gfc_formal_arglist *formal;
+
+  if (e == NULL || e->symtree == NULL || e->expr_type != EXPR_FUNCTION)
+    return false;
+
+  for (formal = sym->formal; formal; formal = formal->next)
+    {
+      if (formal->sym == e->symtree->n.sym)
+	{
+	  gfc_error ("Invalid use of statement function argument at %L",
+		     &e->where);
+	  return true;
+	}
+    }
+
+  return false;
+}
+
+
 /* Match a statement function declaration.  It is so easy to match
    non-statement function statements with a MATCH_ERROR as opposed to
    MATCH_NO that we suppress error message in most cases.  */
@@ -5984,6 +6055,9 @@ gfc_match_st_function (void)
 		 sym->name, &expr->where);
       return MATCH_ERROR;
     }
+
+  if (gfc_traverse_expr (expr, sym, chk_stmt_fcn_body, 0))
+    return MATCH_ERROR;
 
   sym->value = expr;
 
@@ -6248,7 +6322,8 @@ gfc_match_select (void)
 /* Transfer the selector typespec to the associate name.  */
 
 static void
-copy_ts_from_selector_to_associate (gfc_expr *associate, gfc_expr *selector)
+copy_ts_from_selector_to_associate (gfc_expr *associate, gfc_expr *selector,
+				    bool select_type = false)
 {
   gfc_ref *ref;
   gfc_symbol *assoc_sym;
@@ -6275,12 +6350,13 @@ copy_ts_from_selector_to_associate (gfc_expr *associate, gfc_expr *selector)
   else if (selector->ts.type == BT_CLASS
 	   && CLASS_DATA (selector)
 	   && CLASS_DATA (selector)->as
-	   && ref && ref->type == REF_ARRAY)
+	   && ((ref && ref->type == REF_ARRAY)
+	       || selector->expr_type == EXPR_OP))
     {
       /* Ensure that the array reference type is set.  We cannot use
 	 gfc_resolve_expr at this point, so the usable parts of
 	 resolve.cc(resolve_array_ref) are employed to do it.  */
-      if (ref->u.ar.type == AR_UNKNOWN)
+      if (ref && ref->u.ar.type == AR_UNKNOWN)
 	{
 	  ref->u.ar.type = AR_ELEMENT;
 	  for (int i = 0; i < ref->u.ar.dimen + ref->u.ar.codimen; i++)
@@ -6294,7 +6370,7 @@ copy_ts_from_selector_to_associate (gfc_expr *associate, gfc_expr *selector)
 	      }
 	}
 
-      if (ref->u.ar.type == AR_FULL)
+      if (!ref || ref->u.ar.type == AR_FULL)
 	selector->rank = CLASS_DATA (selector)->as->rank;
       else if (ref->u.ar.type == AR_SECTION)
 	selector->rank = ref->u.ar.dimen;
@@ -6306,12 +6382,15 @@ copy_ts_from_selector_to_associate (gfc_expr *associate, gfc_expr *selector)
 
   if (rank)
     {
-      for (int i = 0; i < ref->u.ar.dimen + ref->u.ar.codimen; i++)
-	if (ref->u.ar.dimen_type[i] == DIMEN_ELEMENT
-	    || (ref->u.ar.dimen_type[i] == DIMEN_UNKNOWN
-		&& ref->u.ar.end[i] == NULL
-		&& ref->u.ar.stride[i] == NULL))
-	  rank--;
+      if (ref)
+	{
+	  for (int i = 0; i < ref->u.ar.dimen + ref->u.ar.codimen; i++)
+	    if (ref->u.ar.dimen_type[i] == DIMEN_ELEMENT
+	      || (ref->u.ar.dimen_type[i] == DIMEN_UNKNOWN
+		  && ref->u.ar.end[i] == NULL
+		  && ref->u.ar.stride[i] == NULL))
+	      rank--;
+	}
 
       if (rank)
 	{
@@ -6327,15 +6406,66 @@ copy_ts_from_selector_to_associate (gfc_expr *associate, gfc_expr *selector)
     assoc_sym->as = NULL;
 
 build_class_sym:
-  if (selector->ts.type == BT_CLASS)
+  /* Deal with the very specific case of a SELECT_TYPE selector being an
+     associate_name whose type has been identified by component references.
+     It must be assumed that it will be identified as a CLASS expression,
+     so convert it now.  */
+  if (select_type
+      && IS_INFERRED_TYPE (selector)
+      && selector->ts.type == BT_DERIVED)
+    {
+      gfc_find_derived_vtab (selector->ts.u.derived);
+      /* The correct class container has to be available.  */
+      assoc_sym->ts.u.derived = selector->ts.u.derived;
+      assoc_sym->ts.type = BT_CLASS;
+      assoc_sym->attr.pointer = 1;
+      if (!selector->ts.u.derived->attr.is_class)
+	gfc_build_class_symbol (&assoc_sym->ts, &assoc_sym->attr, &assoc_sym->as);
+      associate->ts = assoc_sym->ts;
+    }
+  else if (selector->ts.type == BT_CLASS)
     {
       /* The correct class container has to be available.  */
       assoc_sym->ts.type = BT_CLASS;
       assoc_sym->ts.u.derived = CLASS_DATA (selector)
-	? CLASS_DATA (selector)->ts.u.derived : selector->ts.u.derived;
+				? CLASS_DATA (selector)->ts.u.derived
+				: selector->ts.u.derived;
       assoc_sym->attr.pointer = 1;
       gfc_build_class_symbol (&assoc_sym->ts, &assoc_sym->attr, &assoc_sym->as);
     }
+}
+
+
+/* Build the associate name  */
+static int
+build_associate_name (const char *name, gfc_expr **e1, gfc_expr **e2)
+{
+  gfc_expr *expr1 = *e1;
+  gfc_expr *expr2 = *e2;
+  gfc_symbol *sym;
+
+  /* For the case where the associate name is already an associate name.  */
+  if (!expr2)
+    expr2 = expr1;
+  expr1 = gfc_get_expr ();
+  expr1->expr_type = EXPR_VARIABLE;
+  expr1->where = expr2->where;
+  if (gfc_get_sym_tree (name, NULL, &expr1->symtree, false))
+    return 1;
+
+  sym = expr1->symtree->n.sym;
+  if (expr2->ts.type == BT_UNKNOWN)
+    sym->attr.untyped = 1;
+  else
+    copy_ts_from_selector_to_associate (expr1, expr2, true);
+
+  sym->attr.flavor = FL_VARIABLE;
+  sym->attr.referenced = 1;
+  sym->attr.class_ok = 1;
+
+  *e1 = expr1;
+  *e2 = expr2;
+  return 0;
 }
 
 
@@ -6416,6 +6546,7 @@ select_type_set_tmp (gfc_typespec *ts)
   gfc_symtree *tmp = NULL;
   gfc_symbol *selector = select_type_stack->selector;
   gfc_symbol *sym;
+  gfc_expr *expr2;
 
   if (!ts)
     {
@@ -6439,7 +6570,20 @@ select_type_set_tmp (gfc_typespec *ts)
       sym = tmp->n.sym;
       gfc_add_type (sym, ts, NULL);
 
-      if (selector->ts.type == BT_CLASS && selector->attr.class_ok
+      /* If the SELECT TYPE selector is a function we might be able to obtain
+	 a typespec from the result. Since the function might not have been
+	 parsed yet we have to check that there is indeed a result symbol.  */
+      if (selector->ts.type == BT_UNKNOWN
+	  && gfc_state_stack->construct
+
+	  && (expr2 = gfc_state_stack->construct->expr2)
+	  && expr2->expr_type == EXPR_FUNCTION
+	  && expr2->symtree
+	  && expr2->symtree->n.sym && expr2->symtree->n.sym->result)
+	selector->ts = expr2->symtree->n.sym->result->ts;
+
+      if (selector->ts.type == BT_CLASS
+	  && selector->attr.class_ok
 	  && selector->ts.u.derived && CLASS_DATA (selector))
 	{
 	  sym->attr.pointer
@@ -6494,7 +6638,6 @@ gfc_match_select_type (void)
   match m;
   char name[GFC_MAX_SYMBOL_LEN + 1];
   bool class_array;
-  gfc_symbol *sym;
   gfc_namespace *ns = gfc_current_ns;
 
   m = gfc_match_label ();
@@ -6516,24 +6659,11 @@ gfc_match_select_type (void)
   m = gfc_match (" %n => %e", name, &expr2);
   if (m == MATCH_YES)
     {
-      expr1 = gfc_get_expr ();
-      expr1->expr_type = EXPR_VARIABLE;
-      expr1->where = expr2->where;
-      if (gfc_get_sym_tree (name, NULL, &expr1->symtree, false))
+      if (build_associate_name (name, &expr1, &expr2))
 	{
 	  m = MATCH_ERROR;
 	  goto cleanup;
 	}
-
-      sym = expr1->symtree->n.sym;
-      if (expr2->ts.type == BT_UNKNOWN)
-	sym->attr.untyped = 1;
-      else
-	copy_ts_from_selector_to_associate (expr1, expr2);
-
-      sym->attr.flavor = FL_VARIABLE;
-      sym->attr.referenced = 1;
-      sym->attr.class_ok = 1;
     }
   else
     {
@@ -6578,6 +6708,38 @@ gfc_match_select_type (void)
 		 "use associate-name=>");
       m = MATCH_ERROR;
       goto cleanup;
+    }
+
+  /* Prevent an existing associate name from reuse here by pushing expr1 to
+     expr2 and building a new associate name.  */
+  if (!expr2 && expr1->symtree->n.sym->assoc
+      && !expr1->symtree->n.sym->attr.select_type_temporary
+      && !expr1->symtree->n.sym->attr.select_rank_temporary
+      && build_associate_name (expr1->symtree->n.sym->name, &expr1, &expr2))
+    {
+      m = MATCH_ERROR;
+      goto cleanup;
+    }
+
+  /* Select type namespaces are not filled until resolution. Therefore, the
+     namespace must be marked as having an inferred type associate name if
+     either expr1 is an inferred type variable or expr2 is. In the latter
+     case, as well as the symbol being marked as inferred type, it might be
+     that it has not been detected to be so. In this case the target has
+     unknown type. Once the namespace is marked, the fixups in resolution can
+     be triggered.  */
+  if (!expr2
+      && expr1->symtree->n.sym->assoc
+      && expr1->symtree->n.sym->assoc->inferred_type)
+    gfc_current_ns->assoc_name_inferred = 1;
+  else if (expr2 && expr2->expr_type == EXPR_VARIABLE
+	   && expr2->symtree->n.sym->assoc)
+    {
+      if (expr2->symtree->n.sym->assoc->inferred_type)
+	gfc_current_ns->assoc_name_inferred = 1;
+      else if (expr2->symtree->n.sym->assoc->target
+	       && expr2->symtree->n.sym->assoc->target->ts.type == BT_UNKNOWN)
+	gfc_current_ns->assoc_name_inferred = 1;
     }
 
   new_st.op = EXEC_SELECT_TYPE;
@@ -6726,7 +6888,7 @@ gfc_match_select_rank (void)
   if (m == MATCH_ERROR)
     return m;
 
-  m = gfc_match (" select rank ( ");
+  m = gfc_match (" select% rank ( ");
   if (m != MATCH_YES)
     return m;
 
@@ -6735,8 +6897,20 @@ gfc_match_select_rank (void)
 
   gfc_current_ns = gfc_build_block_ns (ns);
   m = gfc_match (" %n => %e", name, &expr2);
+
   if (m == MATCH_YES)
     {
+      /* If expr2 corresponds to an implicitly typed variable, then the
+	 actual type of the variable may not have been set.  Set it here.  */
+      if (!gfc_current_ns->seen_implicit_none
+	  && expr2->expr_type == EXPR_VARIABLE
+	  && expr2->ts.type == BT_UNKNOWN
+	  && expr2->symtree && expr2->symtree->n.sym)
+	{
+	  gfc_set_default_type (expr2->symtree->n.sym, 0, gfc_current_ns);
+	  expr2->ts.type = expr2->symtree->n.sym->ts.type;
+	}
+
       expr1 = gfc_get_expr ();
       expr1->expr_type = EXPR_VARIABLE;
       expr1->where = expr2->where;

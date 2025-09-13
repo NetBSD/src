@@ -161,6 +161,11 @@ which always works correctly.
   <code>GLIBCXX_DEBUG_MESSAGE_LENGTH</code> can be used to request a
   different length.</para>
 
+<para>Note that libstdc++ is able to produce backtraces on error.
+  To enable these, compile with <code>-D_GLIBCXX_DEBUG_BACKTRACE</code>
+  and then link with <option>-lstdc++exp</option>.
+  These backtraces are not supported on all platforms.
+</para>
 </section>
 
 <section xml:id="debug_mode.using.specific" xreflabel="Using Specific"><info><title>Using a Specific Debug Container</title></info>

@@ -1,5 +1,5 @@
 ;; Constraint definitions for Synopsys DesignWare ARC.
-;; Copyright (C) 2007-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -112,12 +112,6 @@
   (and (match_code "const_int")
        (match_test "UNSIGNED_INT6 (~ival)")))
 
-(define_constraint "CmL"
-  "@internal
-   Two's complement of a 6-bit unsigned integer constant"
-  (and (match_code "const_int")
-       (match_test "UNSIGNED_INT6 (-ival)")))
-
 (define_constraint "C16"
   "@internal
    A 16-bit signed integer constant"
@@ -160,42 +154,17 @@
   (and (match_code "const_int")
        (match_test "ival <= 0")))
 
-(define_constraint "Cca"
-  "@internal
-   Conditional or three-address add / sub constant"
-  (and (match_code "const_int")
-       (match_test "ival == (HOST_WIDE_INT)(HOST_WIDE_INT_M1U << 31)
-		    || (ival >= -0x1f8 && ival <= 0x1f8
-			&& ((ival >= 0 ? ival : -ival)
-			    <= 0x3f * (ival & -ival)))")))
-
-; intersection of "O" and "Cca".
-(define_constraint "CL2"
-  "@internal
-   A 6-bit unsigned integer constant times 2"
-  (and (match_code "const_int")
-       (match_test "!(ival & ~126)")))
-
 (define_constraint "CM4"
   "@internal
-   A 5-bit unsigned integer constant times 4"
+   A valid 5-bit unsigned stack offset for a short add"
   (and (match_code "const_int")
        (match_test "!(ival & ~124)")))
 
-(define_constraint "Csp"
+(define_constraint "CP4"
   "@internal
-   A valid stack pointer offset for a short add"
+   A valid 5-bit unsigned stack offset for a short sub"
   (and (match_code "const_int")
-       (match_test "!(ival & ~124) || !(-ival & ~124)")))
-
-(define_constraint "C2a"
-  "@internal
-   Unconditional two-address add / sub constant"
-  (and (match_code "const_int")
-       (match_test "ival == (HOST_WIDE_INT) (HOST_WIDE_INT_M1U << 31)
-		    || (ival >= -0x4000 && ival <= 0x4000
-			&& ((ival >= 0 ? ival : -ival)
-			    <= 0x7ff * (ival & -ival)))")))
+       (match_test "!(-ival & ~124)")))
 
 (define_constraint "C0p"
  "@internal
@@ -432,50 +401,6 @@
 	       && !arc_legitimate_pic_addr_p (op)
 	       && !(satisfies_constraint_I (op) && optimize_size)"))
 
-; Note that the 'cryptic' register constraints will not make reload use the
-; associated class to reload into, but this will not penalize reloading of any
-; other operands, or using an alternate part of the same alternative.
-
-; Rcq is different in three important ways from a register class constraint:
-; - It does not imply a register class, hence reload will not use it to drive
-;   reloads.
-; - It matches even when there is no register class to describe its accepted
-;   set; not having such a set again lessens the impact on register allocation.
-; - It won't match when the instruction is conditionalized by the ccfsm.
-(define_constraint "Rcq"
-  "@internal
-   Cryptic q - for short insn generation while not affecting register allocation
-   Registers usable in ARCompact 16-bit instructions: @code{r0}-@code{r3},
-   @code{r12}-@code{r15}"
-  (and (match_code "reg")
-       (match_test "TARGET_Rcq
-		    && !arc_ccfsm_cond_exec_p ()
-		    && IN_RANGE (REGNO (op) ^ 4, 4, 11)")))
-
-; If we need a reload, we generally want to steer reload to use three-address
-; alternatives in preference of two-address alternatives, unless the
-; three-address alternative introduces a LIMM that is unnecessary for the
-; two-address alternative.
-(define_constraint "Rcw"
-  "@internal
-   Cryptic w - for use in early alternatives with matching constraint"
-  (and (match_code "reg")
-       (match_test
-	"TARGET_Rcw
-	 && REGNO (op) < FIRST_PSEUDO_REGISTER
-	 && TEST_HARD_REG_BIT (reg_class_contents[GENERAL_REGS],
-			       REGNO (op))")))
-
-(define_constraint "Rcr"
-  "@internal
-   Cryptic r - for use in early alternatives with matching constraint"
-  (and (match_code "reg")
-       (match_test
-	"TARGET_Rcw
-	 && REGNO (op) < FIRST_PSEUDO_REGISTER
-	 && TEST_HARD_REG_BIT (reg_class_contents[GENERAL_REGS],
-			       REGNO (op))")))
-
 (define_constraint "Rcb"
   "@internal
    Stack Pointer register @code{r28} - do not reload into its class"
@@ -576,3 +501,35 @@
   "TARGET_CODE_DENSITY ? R0_REGS : NO_REGS"
   "@internal
    @code{r0} register for code density instructions.")
+
+(define_constraint "C6u" "@internal
+  A 6-bit unsigned integer constant shifted by x-bit(s)"
+  (and (match_code "const_int")
+       (ior (match_test "UNSIGNED_INT9_SHIFTED (ival,3)")
+	    (match_test "UNSIGNED_INT8_SHIFTED (ival,2)")
+	    (match_test "UNSIGNED_INT7_SHIFTED (ival,1)")
+	    (match_test "UNSIGNED_INT6 (ival)"))))
+
+(define_constraint "C6n" "@internal
+  A negative 6-bit integer constant shifted by x-bit(s) used by add."
+  (and (match_code "const_int")
+       (match_test "ival < 0")
+       (match_test "SIGNED_INT10(ival)")
+       (ior (match_test "UNSIGNED_INT9_SHIFTED (-ival,3)")
+	    (match_test "UNSIGNED_INT8_SHIFTED (-ival,2)")
+	    (match_test "UNSIGNED_INT7_SHIFTED (-ival,1)")
+	    (match_test "UNSIGNED_INT6 (-ival)"))))
+
+(define_constraint "CIs" "@internal
+  A 12-bit signed integer constant shifted by x-bit(s)"
+  (and (match_code "const_int")
+       (ior (match_test "SIGNED_INT15_SHIFTED (ival,3)")
+	    (match_test "SIGNED_INT14_SHIFTED (ival,2)")
+	    (match_test "SIGNED_INT13_SHIFTED (ival,1)")
+	    (match_test "SIGNED_INT12 (ival)"))))
+
+(define_constraint "C4p"
+ "@internal
+  Matches 0x8000_0000"
+  (and (match_code "const_int")
+       (match_test "ival == (HOST_WIDE_INT) (HOST_WIDE_INT_M1U << 31)")))

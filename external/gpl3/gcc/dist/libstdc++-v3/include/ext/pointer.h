@@ -1,6 +1,6 @@
 // Custom pointer adapter and sample storage policies
 
-// Copyright (C) 2008-2022 Free Software Foundation, Inc.
+// Copyright (C) 2008-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -38,7 +38,10 @@
 
 #pragma GCC system_header
 
-#include <iosfwd>
+#if _GLIBCXX_HOSTED
+#  include <iosfwd>
+#endif
+
 #include <bits/stl_iterator_base_types.h>
 #include <ext/cast.h>
 #include <ext/type_traits.h>
@@ -433,8 +436,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _CXX_POINTER_ARITH_OPERATOR_SET(long);
       _CXX_POINTER_ARITH_OPERATOR_SET(unsigned long);
 #ifdef _GLIBCXX_USE_LONG_LONG
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlong-long"
       _CXX_POINTER_ARITH_OPERATOR_SET(long long);
       _CXX_POINTER_ARITH_OPERATOR_SET(unsigned long long);
+#pragma GCC diagnostic pop
 #endif
 
       // Mathematical Manipulators
@@ -559,11 +565,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
                const _Pointer_adapter<_Tp>& __rhs)
     { return !(__lhs._Tp::operator<(__rhs)); }
 
+#if _GLIBCXX_HOSTED
   template<typename _CharT, typename _Traits, typename _StoreT>
     inline std::basic_ostream<_CharT, _Traits>&
     operator<<(std::basic_ostream<_CharT, _Traits>& __os, 
                const _Pointer_adapter<_StoreT>& __p)
     { return (__os << __p.get()); }
+#endif // HOSTED
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

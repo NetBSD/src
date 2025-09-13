@@ -1,5 +1,5 @@
 /* real.cc - software floating point emulation.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Contributed by Stephen L. Moshier (moshier@world.std.com).
    Re-written by Richard Henderson <rth@redhat.com>
 
@@ -111,6 +111,16 @@ static const REAL_VALUE_TYPE * real_digit (int);
 static void times_pten (REAL_VALUE_TYPE *, int);
 
 static void round_for_format (const struct real_format *, REAL_VALUE_TYPE *);
+
+/* Determine whether a floating-point value X is a denormal.  R is
+   expected to be in denormal form, so this function is only
+   meaningful after a call to round_for_format.  */
+
+static inline bool
+real_isdenormal (const REAL_VALUE_TYPE *r)
+{
+  return r->cl == rvc_normal && (r->sig[SIGSZ-1] & SIG_MSB) == 0;
+}
 
 /* Initialize R with a positive zero.  */
 
@@ -1234,6 +1244,14 @@ real_isinf (const REAL_VALUE_TYPE *r)
   return (r->cl == rvc_inf);
 }
 
+/* Determine whether a floating-point value X is infinite with SIGN.  */
+
+bool
+real_isinf (const REAL_VALUE_TYPE *r, bool sign)
+{
+  return real_isinf (r) && r->sign == sign;
+}
+
 /* Determine whether a floating-point value X is a NaN.  */
 
 bool
@@ -1262,6 +1280,22 @@ bool
 real_isneg (const REAL_VALUE_TYPE *r)
 {
   return r->sign;
+}
+
+/* Determine whether a floating-point value X is plus or minus zero.  */
+
+bool
+real_iszero (const REAL_VALUE_TYPE *r)
+{
+  return r->cl == rvc_zero;
+}
+
+/* Determine whether a floating-point value X is zero with SIGN.  */
+
+bool
+real_iszero (const REAL_VALUE_TYPE *r, bool sign)
+{
+  return real_iszero (r) && r->sign == sign;
 }
 
 /* Determine whether a floating-point value X is minus zero.  */
@@ -1443,7 +1477,7 @@ real_to_integer (const REAL_VALUE_TYPE *r)
 wide_int
 real_to_integer (const REAL_VALUE_TYPE *r, bool *fail, int precision)
 {
-  HOST_WIDE_INT val[2 * WIDE_INT_MAX_ELTS];
+  HOST_WIDE_INT valb[WIDE_INT_MAX_INL_ELTS], *val;
   int exp;
   int words, w;
   wide_int result;
@@ -1482,7 +1516,11 @@ real_to_integer (const REAL_VALUE_TYPE *r, bool *fail, int precision)
 	 is the smallest HWI-multiple that has at least PRECISION bits.
 	 This ensures that the top bit of the significand is in the
 	 top bit of the wide_int.  */
-      words = (precision + HOST_BITS_PER_WIDE_INT - 1) / HOST_BITS_PER_WIDE_INT;
+      words = ((precision + HOST_BITS_PER_WIDE_INT - 1)
+	       / HOST_BITS_PER_WIDE_INT);
+      val = valb;
+      if (UNLIKELY (words > WIDE_INT_MAX_INL_ELTS))
+	val = XALLOCAVEC (HOST_WIDE_INT, words);
       w = words * HOST_BITS_PER_WIDE_INT;
 
 #if (HOST_BITS_PER_WIDE_INT == HOST_BITS_PER_LONG)
@@ -1876,6 +1914,14 @@ real_to_decimal (char *str, const REAL_VALUE_TYPE *r_orig, size_t buf_size,
 			    digits, crop_trailing_zeros, VOIDmode);
 }
 
+DEBUG_FUNCTION void
+debug (const REAL_VALUE_TYPE &r)
+{
+  char s[60];
+  real_to_hexadecimal (s, &r, sizeof (s), 0, 1);
+  fprintf (stderr, "%s\n", s);
+}
+
 /* Render R as a hexadecimal floating point constant.  Emit DIGITS
    significant digits in the result, bounded by BUF_SIZE.  If DIGITS is 0,
    choose the maximum for the representation.  If CROP_TRAILING_ZEROS,
@@ -2089,7 +2135,6 @@ real_from_string (REAL_VALUE_TYPE *r, const char *str)
     {
       /* Decimal floating point.  */
       const char *cstr = str;
-      mpfr_t m;
       bool inexact;
 
       while (*cstr == '0')
@@ -2106,21 +2151,15 @@ real_from_string (REAL_VALUE_TYPE *r, const char *str)
 	goto is_a_zero;
 
       /* Nonzero value, possibly overflowing or underflowing.  */
-      mpfr_init2 (m, SIGNIFICAND_BITS);
+      auto_mpfr m (SIGNIFICAND_BITS);
       inexact = mpfr_strtofr (m, str, NULL, 10, MPFR_RNDZ);
       /* The result should never be a NaN, and because the rounding is
 	 toward zero should never be an infinity.  */
       gcc_assert (!mpfr_nan_p (m) && !mpfr_inf_p (m));
       if (mpfr_zero_p (m) || mpfr_get_exp (m) < -MAX_EXP + 4)
-	{
-	  mpfr_clear (m);
-	  goto underflow;
-	}
+	goto underflow;
       else if (mpfr_get_exp (m) > MAX_EXP - 4)
-	{
-	  mpfr_clear (m);
-	  goto overflow;
-	}
+	goto overflow;
       else
 	{
 	  real_from_mpfr (r, m, NULL_TREE, MPFR_RNDZ);
@@ -2131,7 +2170,6 @@ real_from_string (REAL_VALUE_TYPE *r, const char *str)
 	  gcc_assert (r->cl == rvc_normal);
 	  /* Set a sticky bit if mpfr_strtofr was inexact.  */
 	  r->sig[0] |= inexact;
-	  mpfr_clear (m);
 	}
     }
 
@@ -2432,12 +2470,30 @@ dconst_e_ptr (void)
      These constants need to be given to at least 160 bits precision.  */
   if (value.cl == rvc_zero)
     {
-      mpfr_t m;
-      mpfr_init2 (m, SIGNIFICAND_BITS);
+      auto_mpfr m (SIGNIFICAND_BITS);
       mpfr_set_ui (m, 1, MPFR_RNDN);
       mpfr_exp (m, m, MPFR_RNDN);
       real_from_mpfr (&value, m, NULL_TREE, MPFR_RNDN);
-      mpfr_clear (m);
+
+    }
+  return &value;
+}
+
+/* Returns the special REAL_VALUE_TYPE corresponding to 'pi'.  */
+
+const REAL_VALUE_TYPE *
+dconst_pi_ptr (void)
+{
+  static REAL_VALUE_TYPE value;
+
+  /* Initialize mathematical constants for constant folding builtins.
+     These constants need to be given to at least 160 bits precision.  */
+  if (value.cl == rvc_zero)
+    {
+      auto_mpfr m (SIGNIFICAND_BITS);
+      mpfr_set_si (m, -1, MPFR_RNDN);
+      mpfr_acos (m, m, MPFR_RNDN);
+      real_from_mpfr (&value, m, NULL_TREE, MPFR_RNDN);
 
     }
   return &value;
@@ -2475,21 +2531,19 @@ dconst_sqrt2_ptr (void)
      These constants need to be given to at least 160 bits precision.  */
   if (value.cl == rvc_zero)
     {
-      mpfr_t m;
-      mpfr_init2 (m, SIGNIFICAND_BITS);
+      auto_mpfr m (SIGNIFICAND_BITS);
       mpfr_sqrt_ui (m, 2, MPFR_RNDN);
       real_from_mpfr (&value, m, NULL_TREE, MPFR_RNDN);
-      mpfr_clear (m);
     }
   return &value;
 }
 
-/* Fills R with +Inf.  */
+/* Fills R with Inf with SIGN.  */
 
 void
-real_inf (REAL_VALUE_TYPE *r)
+real_inf (REAL_VALUE_TYPE *r, bool sign)
 {
-  get_inf (r, 0);
+  get_inf (r, sign);
 }
 
 /* Fills R with a NaN whose significand is described by STR.  If QUIET,
@@ -2930,7 +2984,6 @@ encode_ieee_single (const struct real_format *fmt, long *buf,
 {
   unsigned long image, sig, exp;
   unsigned long sign = r->sign;
-  bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
 
   image = sign << 31;
   sig = (r->sig[SIGSZ-1] >> (HOST_BITS_PER_LONG - 24)) & 0x7fffff;
@@ -2970,7 +3023,7 @@ encode_ieee_single (const struct real_format *fmt, long *buf,
       /* Recall that IEEE numbers are interpreted as 1.F x 2**exp,
 	 whereas the intermediate representation is 0.F x 2**exp.
 	 Which means we're off by one.  */
-      if (denormal)
+      if (real_isdenormal (r))
 	exp = 0;
       else
       exp = REAL_EXP (r) + 127 - 1;
@@ -3151,7 +3204,6 @@ encode_ieee_double (const struct real_format *fmt, long *buf,
 {
   unsigned long image_lo, image_hi, sig_lo, sig_hi, exp;
   unsigned long sign = r->sign;
-  bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
 
   image_hi = sign << 31;
   image_lo = 0;
@@ -3223,7 +3275,7 @@ encode_ieee_double (const struct real_format *fmt, long *buf,
       /* Recall that IEEE numbers are interpreted as 1.F x 2**exp,
 	 whereas the intermediate representation is 0.F x 2**exp.
 	 Which means we're off by one.  */
-      if (denormal)
+      if (real_isdenormal (r))
 	exp = 0;
       else
 	exp = REAL_EXP (r) + 1023 - 1;
@@ -3409,7 +3461,6 @@ encode_ieee_extended (const struct real_format *fmt, long *buf,
 		      const REAL_VALUE_TYPE *r)
 {
   unsigned long image_hi, sig_hi, sig_lo;
-  bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
 
   image_hi = r->sign << 15;
   sig_hi = sig_lo = 0;
@@ -3491,7 +3542,7 @@ encode_ieee_extended (const struct real_format *fmt, long *buf,
 	   this discrepancy has been taken care of by the difference
 	   in fmt->emin in round_for_format.  */
 
-	if (denormal)
+	if (real_isdenormal (r))
 	  exp = 0;
 	else
 	  {
@@ -3940,7 +3991,6 @@ encode_ieee_quad (const struct real_format *fmt, long *buf,
 {
   unsigned long image3, image2, image1, image0, exp;
   unsigned long sign = r->sign;
-  bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
   REAL_VALUE_TYPE u;
 
   image3 = sign << 31;
@@ -4016,7 +4066,7 @@ encode_ieee_quad (const struct real_format *fmt, long *buf,
       /* Recall that IEEE numbers are interpreted as 1.F x 2**exp,
 	 whereas the intermediate representation is 0.F x 2**exp.
 	 Which means we're off by one.  */
-      if (denormal)
+      if (real_isdenormal (r))
 	exp = 0;
       else
 	exp = REAL_EXP (r) + 16383 - 1;
@@ -4697,7 +4747,6 @@ encode_ieee_half (const struct real_format *fmt, long *buf,
 {
   unsigned long image, sig, exp;
   unsigned long sign = r->sign;
-  bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
 
   image = sign << 15;
   sig = (r->sig[SIGSZ-1] >> (HOST_BITS_PER_LONG - 11)) & 0x3ff;
@@ -4737,7 +4786,7 @@ encode_ieee_half (const struct real_format *fmt, long *buf,
       /* Recall that IEEE numbers are interpreted as 1.F x 2**exp,
 	 whereas the intermediate representation is 0.F x 2**exp.
 	 Which means we're off by one.  */
-      if (denormal)
+      if (real_isdenormal (r))
 	exp = 0;
       else
 	exp = REAL_EXP (r) + 15 - 1;
@@ -4811,7 +4860,6 @@ encode_arm_bfloat_half (const struct real_format *fmt, long *buf,
 {
   unsigned long image, sig, exp;
   unsigned long sign = r->sign;
-  bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
 
   image = sign << 15;
   sig = (r->sig[SIGSZ-1] >> (HOST_BITS_PER_LONG - 8)) & 0x7f;
@@ -4848,7 +4896,7 @@ encode_arm_bfloat_half (const struct real_format *fmt, long *buf,
       break;
 
     case rvc_normal:
-      if (denormal)
+      if (real_isdenormal (r))
 	exp = 0;
       else
       exp = REAL_EXP (r) + 127 - 1;

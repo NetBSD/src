@@ -1,7 +1,7 @@
 \input texinfo  @c -*-texinfo-*-
 @c %**start of header
 @setfilename gfortran.info
-@set copyrights-gfortran 1999-2022
+@set copyrights-gfortran 1999-2024
 
 @include gcc-common.texi
 
@@ -246,7 +246,7 @@ including OpenMP and OpenACC support for parallel programming.
 The GNU Fortran compiler passes the
 @uref{http://www.fortran-2000.com/ArnaudRecipes/fcvs21_f95.html,
 NIST Fortran 77 Test Suite}, and produces acceptable results on the
-@uref{https://www.netlib.org/lapack/faq.html#1.21, LAPACK Test Suite}.
+@uref{https://www.netlib.org/lapack/faq.html, LAPACK Test Suite}.
 It also provides respectable performance on
 the @uref{https://polyhedron.com/?page_id=175,
 Polyhedron Fortran compiler benchmarks} and the
@@ -441,7 +441,7 @@ found in the following sections of the documentation.
 
 Additionally, the GNU Fortran compilers supports the OpenMP specification
 (version 4.5 and partial support of the features of the 5.0 version,
-@url{https://openmp.org/@/openmp-specifications/}).
+@url{https://openmp.org/@/specifications/}).
 There also is support for the OpenACC specification (targeting
 version 2.6, @uref{https://www.openacc.org/}).  See
 @uref{https://gcc.gnu.org/wiki/OpenACC} for more information.
@@ -455,9 +455,8 @@ version 2.6, @uref{https://www.openacc.org/}).  See
 The Fortran 95 standard specifies in Part 2 (ISO/IEC 1539-2:2000)
 varying length character strings.  While GNU Fortran currently does not
 support such strings directly, there exist two Fortran implementations
-for them, which work with GNU Fortran.  They can be found at
-@uref{https://www.fortran.com/@/iso_varying_string.f95} and at
-@uref{ftp://ftp.nag.co.uk/@/sc22wg5/@/ISO_VARYING_STRING/}.
+for them, which work with GNU Fortran. One can be found at
+@uref{http://user.astro.wisc.edu/~townsend/static.php?ref=iso-varying-string}.
 
 Deferred-length character strings of Fortran 2003 supports part of
 the features of @code{ISO_VARYING_STRING} and should be considered as
@@ -821,6 +820,7 @@ might in some way or another become visible to the programmer.
 * File operations on symbolic links::
 * File format of unformatted sequential files::
 * Asynchronous I/O::
+* Behavior on integer overflow::
 @end menu
 
 
@@ -978,7 +978,7 @@ low level file descriptor corresponding to an open Fortran unit. Then,
 using e.g. the @code{ISO_C_BINDING} feature, one can call the
 underlying system call to flush dirty data to stable storage, such as
 @code{fsync} on POSIX, @code{_commit} on MingW, or @code{fcntl(fd,
-F_FULLSYNC, 0)} on Mac OS X. The following example shows how to call
+F_FULLSYNC, 0)} on macOS. The following example shows how to call
 fsync:
 
 @smallexample
@@ -1161,6 +1161,23 @@ sytems, such as Linux, it is necessary to specify @option{-pthread},
 @c Maybe this chapter should be merged with the 'Standards' section,
 @c whenever that is written :-)
 
+@node Behavior on integer overflow
+@section Behavior on integer overflow
+@cindex integer overflow
+@cindex overflow handling
+
+Integer overflow is prohibited by the Fortran standard.  The behavior
+of gfortran on integer overflow is undefined by default.  Traditional
+code, like linear congruential pseudo-random number generators in old
+programs that rely on specific, non-standard behavior may generate
+unexpected results.  The @option{-fsanitize=undefined} option can be
+used to detect such code at runtime.
+
+It is recommended to use the intrinsic subroutine @code{RANDOM_NUMBER}
+for random number generators or, if the old behavior is desired, to
+use the @option{-fwrapv} option.  Note that this option can impact
+performance.
+
 @node Extensions
 @chapter Extensions
 @cindex extensions
@@ -1222,7 +1239,6 @@ additional compatibility extensions along with those enabled by
 * UNION and MAP::
 * Type variants for integer intrinsics::
 * AUTOMATIC and STATIC attributes::
-* Extended math intrinsics::
 * Form feed as whitespace::
 * TYPE as an alias for PRINT::
 * %LOC as an rvalue::
@@ -1390,7 +1406,7 @@ When omitted, the count is implicitly assumed to be one.
 To support legacy codes, GNU Fortran allows the comma separator
 to be omitted immediately before and after character string edit
 descriptors in @code{FORMAT} statements.  A comma with no following format
-decriptor is permited if the @option{-fdec-blank-format-item} is given on
+descriptor is permitted if the @option{-fdec-blank-format-item} is given on
 the command line. This is considered non-conforming code and is
 discouraged.
 
@@ -1806,7 +1822,7 @@ It consists of a set of compiler directives, library routines,
 and environment variables that influence run-time behavior.
 
 GNU Fortran strives to be compatible to the
-@uref{https://openmp.org/wp/openmp-specifications/,
+@uref{https://openmp.org/specifications/,
 OpenMP Application Program Interface v4.5}.
 
 To enable the processing of the OpenMP directive @code{!$omp} in
@@ -2299,42 +2315,6 @@ subroutine f
   ! a is automatic; b, c, and d are static
 endsubroutine
 @end example
-
-@node Extended math intrinsics
-@subsection Extended math intrinsics
-@cindex intrinsics, math
-@cindex intrinsics, trigonometric functions
-
-GNU Fortran supports an extended list of mathematical intrinsics with the
-compile flag @option{-fdec-math} for compatability with legacy code.
-These intrinsics are described fully in @ref{Intrinsic Procedures} where it is
-noted that they are extensions and should be avoided whenever possible.
-
-Specifically, @option{-fdec-math} enables the @ref{COTAN} intrinsic, and
-trigonometric intrinsics which accept or produce values in degrees instead of
-radians.  Here is a summary of the new intrinsics:
-
-@multitable @columnfractions .5 .5
-@headitem Radians @tab Degrees
-@item @code{@ref{ACOS}}   @tab @code{@ref{ACOSD}}*
-@item @code{@ref{ASIN}}   @tab @code{@ref{ASIND}}*
-@item @code{@ref{ATAN}}   @tab @code{@ref{ATAND}}*
-@item @code{@ref{ATAN2}}  @tab @code{@ref{ATAN2D}}*
-@item @code{@ref{COS}}    @tab @code{@ref{COSD}}*
-@item @code{@ref{COTAN}}* @tab @code{@ref{COTAND}}*
-@item @code{@ref{SIN}}    @tab @code{@ref{SIND}}*
-@item @code{@ref{TAN}}    @tab @code{@ref{TAND}}*
-@end multitable
-
-* Enabled with @option{-fdec-math}.
-
-For advanced users, it may be important to know the implementation of these
-functions. They are simply wrappers around the standard radian functions, which
-have more accurate builtin versions. These functions convert their arguments
-(or results) to degrees (or radians) by taking the value modulus 360 (or 2*pi)
-and then multiplying it by a constant radian-to-degree (or degree-to-radian)
-factor, as appropriate. The factor is computed at compile-time as 180/pi (or
-pi/180).
 
 @node Form feed as whitespace
 @subsection Form feed as whitespace
@@ -3247,6 +3227,13 @@ requires an explicit interface.
 @item @code{DEPRECATED} -- print a warning when using a such-tagged
 deprecated procedure, variable or parameter; the warning can be suppressed
 with @option{-Wno-deprecated-declarations}.
+@item @code{NOINLINE} -- prevent inlining given function.
+@item @code{NORETURN} -- add a hint that a given function cannot return.
+@item @code{WEAK} -- emit the declaration of an external symbol as a weak
+symbol rather than a global.  This is primarily useful in defining library
+functions that can be overridden in user code, though it can also be used with
+non-function declarations.  The overriding symbol must have the same type as
+the weak symbol.
 @end itemize
 
 
@@ -3274,6 +3261,9 @@ You can use this directive to control how many times a loop should be unrolled.
 It must be placed immediately before a @code{DO} loop and applies only to the
 loop that follows.  N is an integer constant specifying the unrolling factor.
 The values of 0 and 1 block any unrolling of the loop.
+
+For @code{DO CONCURRENT} constructs the unrolling specification applies
+only to the first loop control variable.
 
 
 @node BUILTIN directive
@@ -3313,6 +3303,9 @@ whether a particular loop is vectorizable due to potential
 dependencies between iterations.  The purpose of the directive is to
 tell the compiler that vectorization is safe.
 
+For @code{DO CONCURRENT} constructs this annotation is implicit to all
+loop control variables.
+
 This directive is intended for annotation of existing code.  For new
 code it is recommended to consider OpenMP SIMD directives as potential
 alternative.
@@ -3329,6 +3322,9 @@ This directive tells the compiler to vectorize the following loop.  It
 must be placed immediately before a @code{DO} loop and applies only to
 the loop that follows.
 
+For @code{DO CONCURRENT} constructs this annotation applies to all loops
+specified in the concurrent header.
+
 
 @node NOVECTOR directive
 @subsection NOVECTOR directive
@@ -3340,6 +3336,9 @@ The syntax of the directive is
 This directive tells the compiler to not vectorize the following loop.
 It must be placed immediately before a @code{DO} loop and applies only
 to the loop that follows.
+
+For @code{DO CONCURRENT} constructs this annotation applies to all loops
+specified in the concurrent header.
 
 
 @node Non-Fortran Main Program
@@ -3452,12 +3451,13 @@ standard.  Possible values are (bitwise or-ed) @code{GFC_STD_F77} (1),
 @code{GFC_STD_F95_OBS} (2), @code{GFC_STD_F95_DEL} (4),
 @code{GFC_STD_F95} (8), @code{GFC_STD_F2003} (16), @code{GFC_STD_GNU}
 (32), @code{GFC_STD_LEGACY} (64), @code{GFC_STD_F2008} (128),
-@code{GFC_STD_F2008_OBS} (256), @code{GFC_STD_F2008_TS} (512),
-@code{GFC_STD_F2018} (1024), @code{GFC_STD_F2018_OBS} (2048), and
-@code{GFC_STD=F2018_DEL} (4096). Default: @code{GFC_STD_F95_OBS |
-GFC_STD_F95_DEL | GFC_STD_F95 | GFC_STD_F2003 | GFC_STD_F2008 |
-GFC_STD_F2008_TS | GFC_STD_F2008_OBS | GFC_STD_F77 | GFC_STD_F2018 |
-GFC_STD_F2018_OBS | GFC_STD_F2018_DEL | GFC_STD_GNU | GFC_STD_LEGACY}.
+@code{GFC_STD_F2008_OBS} (256), @code{GFC_STD_F2018} (512),
+@code{GFC_STD_F2018_OBS} (1024), @code{GFC_STD_F2018_DEL} (2048),
+@code{GFC_STD_F2023} (4096), and @code{GFC_STD_F2023_DEL} (8192).
+Default: @code{GFC_STD_F95_OBS | GFC_STD_F95_DEL | GFC_STD_F95 |
+GFC_STD_F2003 | GFC_STD_F2008 | GFC_STD_F2008_OBS
+| GFC_STD_F77 | GFC_STD_F2018 | GFC_STD_F2018_OBS | GFC_STD_F2018_DEL
+| GFC_STD_F2023 | GFC_STD_F2023_DEL | GFC_STD_GNU | GFC_STD_LEGACY}.
 @item @var{option}[1] @tab Standard-warning flag; prints a warning to
 standard error.  Default: @code{GFC_STD_F95_DEL | GFC_STD_LEGACY}.
 @item @var{option}[2] @tab If non zero, enable pedantic checking.
@@ -3726,7 +3726,8 @@ front ends of GCC, e.g. to GCC's C99 compiler for @code{_Bool}
 or GCC's Ada compiler for @code{Boolean}.)
 
 For arguments of @code{CHARACTER} type, the character length is passed
-as a hidden argument at the end of the argument list.  For
+as a hidden argument at the end of the argument list, except when the
+corresponding dummy argument is declared as @code{TYPE(*)}.  For
 deferred-length strings, the value is passed by reference, otherwise
 by value.  The character length has the C type @code{size_t} (or
 @code{INTEGER(kind=C_SIZE_T)} in Fortran).  Note that this is
@@ -3764,9 +3765,9 @@ is used for dummy arguments; with @code{VALUE}, those variables are
 passed by value.
 
 For @code{OPTIONAL} dummy arguments, an absent argument is denoted
-by a NULL pointer, except for scalar dummy arguments of type
-@code{INTEGER}, @code{LOGICAL}, @code{REAL} and @code{COMPLEX}
-which have the @code{VALUE} attribute.  For those, a hidden Boolean
+by a NULL pointer, except for scalar dummy arguments of intrinsic type
+or derived type (but not @code{CLASS}) and
+that have the @code{VALUE} attribute.  For those, a hidden Boolean
 argument (@code{logical(kind=C_bool),value}) is used to indicate
 whether the argument is present.
 
@@ -3788,7 +3789,7 @@ The arguments are passed in the following order
 @code{CHARACTER} and no C binding is used
 @item The arguments in the order in which they appear in the Fortran
 declaration
-@item The the present status for optional arguments with value attribute,
+@item The present status for optional arguments with value attribute,
 which are internally passed by value
 @item The character length and/or coarray token and offset for the first
 argument which is a @code{CHARACTER} or a nonallocatable coarray dummy
@@ -3870,7 +3871,7 @@ typedef enum caf_deregister_t {
 caf_deregister_t;
 @end verbatim
 
-Allows to specifiy the type of deregistration of a coarray object.  The
+Allows to specify the type of deregistration of a coarray object.  The
 @code{CAF_DEREGTYPE_COARRAY_DEALLOCATE_ONLY} flag is only allowed for
 allocatable components in derived type coarrays.
 
@@ -4835,7 +4836,7 @@ an error message; may be NULL.
 @item @emph{NOTES}
 This acts like an atomic add of one to the remote image's event variable.
 The statement is an image-control statement but does not imply sync memory.
-Still, all preceeding push communications of this image to the specified
+Still, all preceding push communications of this image to the specified
 remote image have to be completed before @code{event_wait} on the remote
 image returns.
 @end table
@@ -4880,7 +4881,7 @@ cores) followed by another waiting strategy such as a sleeping wait (possibly
 with an increasing number of sleep time) or, if possible, a futex wait.
 
 The statement is an image-control statement but does not imply sync memory.
-Still, all preceeding push communications of this image to the specified
+Still, all preceding push communications of this image to the specified
 remote image have to be completed before @code{event_wait} on the remote
 image returns.
 @end table

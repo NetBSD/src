@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded.
 
@@ -108,8 +108,6 @@ GOACC_parallel_keyed (int flags_m, void (*fn) (void *),
   va_list ap;
   struct goacc_thread *thr;
   struct gomp_device_descr *acc_dev;
-  struct target_mem_desc *tgt;
-  void **devaddrs;
   unsigned int i;
   struct splay_tree_key_s k;
   splay_tree_key tgt_fn_key;
@@ -186,7 +184,10 @@ GOACC_parallel_keyed (int flags_m, void (*fn) (void *),
 
   /* Host fallback if "if" clause is false or if the current device is set to
      the host.  */
-  if (flags & GOACC_FLAG_HOST_FALLBACK)
+  if ((flags & GOACC_FLAG_HOST_FALLBACK)
+      /* TODO: a proper pthreads based "multi-core CPU" local device
+	 implementation. Currently, this is still the same as host-fallback.  */
+      || (flags & GOACC_FLAG_LOCAL_DEVICE))
     {
       prof_info.device_type = acc_device_host;
       api_info.device_type = prof_info.device_type;
@@ -290,8 +291,10 @@ GOACC_parallel_keyed (int flags_m, void (*fn) (void *),
 
   goacc_aq aq = get_goacc_asyncqueue (async);
 
-  tgt = goacc_map_vars (acc_dev, aq, mapnum, hostaddrs, NULL, sizes, kinds,
-			true, 0);
+  struct target_mem_desc *tgt
+    = goacc_map_vars (acc_dev, aq, mapnum, hostaddrs, NULL, sizes, kinds, true,
+		      GOMP_MAP_VARS_TARGET);
+
   if (profiling_p)
     {
       prof_info.event_type = acc_ev_enter_data_end;
@@ -301,10 +304,7 @@ GOACC_parallel_keyed (int flags_m, void (*fn) (void *),
 				&api_info);
     }
 
-  devaddrs = gomp_alloca (sizeof (void *) * mapnum);
-  for (i = 0; i < mapnum; i++)
-    devaddrs[i] = (void *) gomp_map_val (tgt, hostaddrs, i);
-
+  void **devaddrs = (void **) tgt->tgt_start;
   if (aq == NULL)
     acc_dev->openacc.exec_func (tgt_fn, mapnum, hostaddrs, devaddrs, dims,
 				tgt);
@@ -449,7 +449,8 @@ GOACC_data_start (int flags_m, size_t mapnum,
 
   /* Host fallback or 'do nothing'.  */
   if ((acc_dev->capabilities & GOMP_OFFLOAD_CAP_SHARED_MEM)
-      || (flags & GOACC_FLAG_HOST_FALLBACK))
+      || (flags & GOACC_FLAG_HOST_FALLBACK)
+      || (flags & GOACC_FLAG_LOCAL_DEVICE))
     {
       prof_info.device_type = acc_device_host;
       api_info.device_type = prof_info.device_type;

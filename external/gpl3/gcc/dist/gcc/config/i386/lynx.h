@@ -1,5 +1,5 @@
 /* Definitions for LynxOS on i386.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -37,9 +37,9 @@ along with GCC; see the file COPYING3.  If not see
 
 /* LynxOS's GDB counts the floating point registers from 16.  */
 
-#undef DBX_REGISTER_NUMBER
-#define DBX_REGISTER_NUMBER(n)						\
-  (TARGET_64BIT ? dbx64_register_map[n]					\
+#undef DEBUGGER_REGNO
+#define DEBUGGER_REGNO(n)						\
+  (TARGET_64BIT ? debugger64_register_map[n]					\
    : (n) == 0 ? 0							\
    : (n) == 1 ? 2							\
    : (n) == 2 ? 1							\

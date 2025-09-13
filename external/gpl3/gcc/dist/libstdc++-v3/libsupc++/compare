@@ -1,6 +1,6 @@
 // -*- C++ -*- operator<=> three-way comparison support.
 
-// Copyright (C) 2019-2022 Free Software Foundation, Inc.
+// Copyright (C) 2019-2024 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -32,17 +32,14 @@
 
 #pragma GCC system_header
 
-#if __cplusplus > 201703L && __cpp_impl_three_way_comparison >= 201907L
+#define __glibcxx_want_three_way_comparison
+#include <bits/version.h>
 
-#pragma GCC visibility push(default)
+#if __cplusplus > 201703L && __cpp_impl_three_way_comparison >= 201907L
 
 #include <concepts>
 
-#if __cpp_lib_concepts
-# define __cpp_lib_three_way_comparison 201907L
-#endif
-
-namespace std
+namespace std _GLIBCXX_VISIBILITY(default)
 {
   // [cmp.categories], comparison category types
 
@@ -56,7 +53,7 @@ namespace std
 
     struct __unspec
     {
-      constexpr __unspec(__unspec*) noexcept { }
+      consteval __unspec(__unspec*) noexcept { }
     };
   }
 
@@ -450,7 +447,8 @@ namespace std
     using common_comparison_category_t
       = typename common_comparison_category<_Ts...>::type;
 
-#if __cpp_lib_concepts
+#if __cpp_lib_three_way_comparison >= 201907L
+  // C++ >= 20 && impl_3way_comparison >= 201907 && lib_concepts
   namespace __detail
   {
     template<typename _Tp, typename _Cat>
@@ -568,7 +566,9 @@ namespace std
     using is_transparent = void;
   };
 
-  namespace __cmp_cust
+  /// @cond undocumented
+  // Namespace for helpers for the <compare> customization points.
+  namespace __compare
   {
     template<floating_point _Tp>
       constexpr weak_ordering
@@ -612,6 +612,8 @@ namespace std
 	  }
       }
 
+    void strong_order() = delete;
+
     template<typename _Tp, typename _Up>
       concept __adl_strong = requires(_Tp&& __t, _Up&& __u)
 	{
@@ -619,12 +621,16 @@ namespace std
 				       static_cast<_Up&&>(__u)));
 	};
 
+    void weak_order() = delete;
+
     template<typename _Tp, typename _Up>
       concept __adl_weak = requires(_Tp&& __t, _Up&& __u)
 	{
 	  weak_ordering(weak_order(static_cast<_Tp&&>(__t),
 				   static_cast<_Up&&>(__u)));
 	};
+
+    void partial_order() = delete;
 
     template<typename _Tp, typename _Up>
       concept __adl_partial = requires(_Tp&& __t, _Up&& __u)
@@ -674,7 +680,7 @@ namespace std
 	_X86_80bit,  // x86 80-bit extended precision
 	_M68k_80bit, // m68k 80-bit extended precision
 	_Dbldbl, // IBM 128-bit double-double
-	// TODO: _Bfloat16,
+	_Bfloat16,   // std::bfloat16_t
       };
 
 #ifndef __cpp_using_enum
@@ -686,6 +692,7 @@ namespace std
       static constexpr _Fp_fmt _X86_80bit = _Fp_fmt::_X86_80bit;
       static constexpr _Fp_fmt _M68k_80bit = _Fp_fmt::_M68k_80bit;
       static constexpr _Fp_fmt _Dbldbl = _Fp_fmt::_Dbldbl;
+      static constexpr _Fp_fmt _Bfloat16 = _Fp_fmt::_Bfloat16;
 #endif
 
       // Identify the format used by a floating-point type.
@@ -715,6 +722,10 @@ namespace std
 #ifdef __SIZEOF_FLOAT80__
 	  if constexpr (__is_same(_Tp, __float80))
 	    return _X86_80bit;
+#endif
+#ifdef __STDCPP_BFLOAT16_T__
+	  if constexpr (__is_same(_Tp, decltype(0.0bf16)))
+	    return _Bfloat16;
 #endif
 
 	  constexpr int __width = sizeof(_Tp) * __CHAR_BIT__;
@@ -997,7 +1008,7 @@ namespace std
 	noexcept(_S_noexcept<_Tp, _Up>())
 	{
 	  if constexpr (floating_point<decay_t<_Tp>>)
-	    return __cmp_cust::__fp_weak_ordering(__e, __f);
+	    return __compare::__fp_weak_ordering(__e, __f);
 	  else if constexpr (__adl_weak<_Tp, _Up>)
 	    return weak_ordering(weak_order(static_cast<_Tp&&>(__e),
 					    static_cast<_Up&&>(__f)));
@@ -1169,27 +1180,29 @@ namespace std
 	      : partial_ordering::unordered;
 	}
     };
-  } // namespace __cmp_cust
+  } // namespace @endcond
 
   // [cmp.alg], comparison algorithms
-  inline namespace __cmp_alg
+
+  inline namespace _Cpo
   {
-    inline constexpr __cmp_cust::_Strong_order strong_order{};
+    inline constexpr __compare::_Strong_order strong_order{};
 
-    inline constexpr __cmp_cust::_Weak_order weak_order{};
+    inline constexpr __compare::_Weak_order weak_order{};
 
-    inline constexpr __cmp_cust::_Partial_order partial_order{};
+    inline constexpr __compare::_Partial_order partial_order{};
 
-    inline constexpr __cmp_cust::_Strong_fallback
-    compare_strong_order_fallback{};
+    inline constexpr __compare::_Strong_fallback
+      compare_strong_order_fallback{};
 
-    inline constexpr __cmp_cust::_Weak_fallback
-    compare_weak_order_fallback{};
+    inline constexpr __compare::_Weak_fallback
+      compare_weak_order_fallback{};
 
-    inline constexpr __cmp_cust::_Partial_fallback
-    compare_partial_order_fallback{};
+    inline constexpr __compare::_Partial_fallback
+      compare_partial_order_fallback{};
   }
 
+  /// @cond undocumented
   namespace __detail
   {
     // [expos.only.func] synth-three-way
@@ -1236,10 +1249,9 @@ namespace std
 	= decltype(__detail::__synth3way(std::declval<_Tp&>(),
 					 std::declval<_Up&>()));
   } // namespace __detail
-#endif // concepts
+  /// @endcond
+#endif // __cpp_lib_three_way_comparison >= 201907L
 } // namespace std
-
-#pragma GCC visibility pop
 
 #endif // C++20
 

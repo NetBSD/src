@@ -1,6 +1,6 @@
 // Vector implementation -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -64,7 +64,9 @@
 #endif
 #if __cplusplus >= 202002L
 # include <compare>
-#define __cpp_lib_constexpr_vector 201907L
+#endif
+#if __glibcxx_concepts // C++ >= C++20
+# include <bits/ranges_base.h>          // ranges::distance
 #endif
 
 #include <debug/assertions.h>
@@ -391,6 +393,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       }
 
     protected:
+
       _GLIBCXX20_CONSTEXPR
       void
       _M_create_storage(size_t __n)
@@ -679,8 +682,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	     const allocator_type& __a = allocator_type())
       : _Base(__a)
       {
-	_M_range_initialize(__l.begin(), __l.end(),
-			    random_access_iterator_tag());
+	_M_range_initialize_n(__l.begin(), __l.end(), __l.size());
       }
 #endif
 
@@ -708,6 +710,17 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       const allocator_type& __a = allocator_type())
 	: _Base(__a)
 	{
+#if __glibcxx_concepts // C++ >= C++20
+	  if constexpr (sized_sentinel_for<_InputIterator, _InputIterator>
+			  || forward_iterator<_InputIterator>)
+	    {
+	      const auto __n
+		= static_cast<size_type>(ranges::distance(__first, __last));
+	      _M_range_initialize_n(__first, __last, __n);
+	      return;
+	    }
+	  else
+#endif
 	  _M_range_initialize(__first, __last,
 			      std::__iterator_category(__first));
 	}
@@ -826,7 +839,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	_GLIBCXX20_CONSTEXPR
 	void
 	assign(_InputIterator __first, _InputIterator __last)
-	{ _M_assign_dispatch(__first, __last, __false_type()); }
+	{ _M_assign_aux(__first, __last, std::__iterator_category(__first)); }
 #else
       template<typename _InputIterator>
 	void
@@ -1076,8 +1089,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
       size_type
       capacity() const _GLIBCXX_NOEXCEPT
-      { return size_type(this->_M_impl._M_end_of_storage
-			 - this->_M_impl._M_start); }
+      {
+	return size_type(this->_M_impl._M_end_of_storage
+			   - this->_M_impl._M_start);
+      }
 
       /**
        *  Returns true if the %vector is empty.  (Thus begin() would
@@ -1173,7 +1188,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  is first checked that it is in the range of the vector.  The
        *  function throws out_of_range if the check fails.
        */
-      _GLIBCXX20_CONSTEXPR
+      _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
       reference
       at(size_type __n)
       {
@@ -1192,7 +1207,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  is first checked that it is in the range of the vector.  The
        *  function throws out_of_range if the check fails.
        */
-      _GLIBCXX20_CONSTEXPR
+      _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
       const_reference
       at(size_type __n) const
       {
@@ -1289,7 +1304,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
 	  }
 	else
-	  _M_realloc_insert(end(), __x);
+	  _M_realloc_append(__x);
       }
 
 #if __cplusplus >= 201103L
@@ -1483,8 +1498,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       _InputIterator __last)
 	{
 	  difference_type __offset = __position - cbegin();
-	  _M_insert_dispatch(begin() + __offset,
-			     __first, __last, __false_type());
+	  _M_range_insert(begin() + __offset, __first, __last,
+			  std::__iterator_category(__first));
 	  return begin() + __offset;
 	}
 #else
@@ -1687,14 +1702,22 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	_M_range_initialize(_ForwardIterator __first, _ForwardIterator __last,
 			    std::forward_iterator_tag)
 	{
-	  const size_type __n = std::distance(__first, __last);
-	  this->_M_impl._M_start
-	    = this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
-	  this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
-	  this->_M_impl._M_finish =
-	    std::__uninitialized_copy_a(__first, __last,
-					this->_M_impl._M_start,
-					_M_get_Tp_allocator());
+	  _M_range_initialize_n(__first, __last,
+				std::distance(__first, __last));
+	}
+
+      template<typename _Iterator>
+	_GLIBCXX20_CONSTEXPR
+	void
+	_M_range_initialize_n(_Iterator __first, _Iterator __last,
+			      size_type __n)
+	{
+	  pointer __start = this->_M_impl._M_start =
+	    this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
+	  this->_M_impl._M_end_of_storage = __start + __n;
+	  this->_M_impl._M_finish
+	      = std::__uninitialized_copy_a(_GLIBCXX_MOVE(__first), __last,
+					    __start, _M_get_Tp_allocator());
 	}
 
       // Called by the first initialize_dispatch above and by the
@@ -1823,6 +1846,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       void
       _M_realloc_insert(iterator __position, const value_type& __x);
+
+      void
+      _M_realloc_append(const value_type& __x);
 #else
       // A value_type object constructed with _Alloc_traits::construct()
       // and destroyed with _Alloc_traits::destroy().
@@ -1871,6 +1897,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	_GLIBCXX20_CONSTEXPR
 	void
 	_M_realloc_insert(iterator __position, _Args&&... __args);
+
+      template<typename... _Args>
+	_GLIBCXX20_CONSTEXPR
+	void
+	_M_realloc_append(_Args&&... __args);
 
       // Either move-construct at the end, or forward to _M_insert_aux.
       _GLIBCXX20_CONSTEXPR
@@ -2035,13 +2066,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  and if corresponding elements compare equal.
   */
   template<typename _Tp, typename _Alloc>
-    _GLIBCXX20_CONSTEXPR
+    _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
     inline bool
     operator==(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return (__x.size() == __y.size()
 	      && std::equal(__x.begin(), __x.end(), __y.begin())); }
 
-#if __cpp_lib_three_way_comparison
+#if __cpp_lib_three_way_comparison // >= C++20
   /**
    *  @brief  Vector ordering relation.
    *  @param  __x  A `vector`.
@@ -2054,8 +2085,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  `<` and `>=` etc.
   */
   template<typename _Tp, typename _Alloc>
-    _GLIBCXX20_CONSTEXPR
-    inline __detail::__synth3way_t<_Tp>
+    [[nodiscard]]
+    constexpr __detail::__synth3way_t<_Tp>
     operator<=>(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     {
       return std::lexicographical_compare_three_way(__x.begin(), __x.end(),
@@ -2075,32 +2106,32 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  See std::lexicographical_compare() for how the determination is made.
   */
   template<typename _Tp, typename _Alloc>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return std::lexicographical_compare(__x.begin(), __x.end(),
 					  __y.begin(), __y.end()); }
 
   /// Based on operator==
   template<typename _Tp, typename _Alloc>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator!=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return !(__x == __y); }
 
   /// Based on operator<
   template<typename _Tp, typename _Alloc>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return __y < __x; }
 
   /// Based on operator<
   template<typename _Tp, typename _Alloc>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator<=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return !(__y < __x); }
 
   /// Based on operator<
   template<typename _Tp, typename _Alloc>
-    inline bool
+    _GLIBCXX_NODISCARD inline bool
     operator>=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return !(__x < __y); }
 #endif // three-way comparison

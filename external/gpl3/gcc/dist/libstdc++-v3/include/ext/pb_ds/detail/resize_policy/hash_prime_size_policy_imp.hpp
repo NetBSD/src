@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005-2022 Free Software Foundation, Inc.
+// Copyright (C) 2005-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -60,6 +60,8 @@ namespace detail
 #endif
     };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlong-long"
   // Originally taken from the SGI implementation; acknowledged in the docs.
   // Further modified (for 64 bits) from tr1's hashtable.
   static const std::size_t g_a_sizes[num_distinct_sizes] =
@@ -131,6 +133,7 @@ namespace detail
 #endif
 #endif
     };
+#pragma GCC diagnostic pop
 
 } // namespace detail
 

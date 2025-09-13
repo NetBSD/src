@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the Renesas M32R cpu.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -66,7 +66,8 @@ static void  m32r_option_override (void);
 static void  init_reg_tables (void);
 static void  block_move_call (rtx, rtx, rtx);
 static int   m32r_is_insn (rtx);
-static bool  m32r_legitimate_address_p (machine_mode, rtx, bool);
+static bool  m32r_legitimate_address_p (machine_mode, rtx, bool,
+					code_helper = ERROR_MARK);
 static rtx   m32r_legitimize_address (rtx, rtx, machine_mode);
 static bool  m32r_mode_dependent_address_p (const_rtx, addr_space_t);
 static tree  m32r_handle_model_attribute (tree *, tree, tree, int, bool *);
@@ -111,24 +112,20 @@ static HOST_WIDE_INT m32r_starting_frame_offset (void);
 
 /* M32R specific attributes.  */
 
-static const struct attribute_spec m32r_attribute_table[] =
+TARGET_GNU_ATTRIBUTES (m32r_attribute_table,
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
   { "interrupt", 0, 0, true,  false, false, false, NULL, NULL },
   { "model",     1, 1, true,  false, false, false, m32r_handle_model_attribute,
-    NULL },
-  { NULL,        0, 0, false, false, false, false, NULL, NULL }
-};
+    NULL }
+});
 
 /* Initialize the GCC target structure.  */
 #undef  TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE m32r_attribute_table
 #undef  TARGET_ATTRIBUTE_TAKES_IDENTIFIER_P
 #define TARGET_ATTRIBUTE_TAKES_IDENTIFIER_P m32r_attribute_identifier
-
-#undef TARGET_LRA_P
-#define TARGET_LRA_P hook_bool_void_false
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P m32r_legitimate_address_p
@@ -1287,11 +1284,16 @@ m32r_setup_incoming_varargs (cumulative_args_t cum,
     return;
 
   /* All BLKmode values are passed by reference.  */
-  gcc_assert (arg.mode != BLKmode);
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl)))
+    gcc_assert (arg.mode != BLKmode);
 
-  first_anon_arg = (ROUND_ADVANCE_CUM (*get_cumulative_args (cum),
-				       arg.mode, arg.type)
-		    + ROUND_ADVANCE_ARG (arg.mode, arg.type));
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl))
+      || arg.type != NULL_TREE)
+    first_anon_arg = (ROUND_ADVANCE_CUM (*get_cumulative_args (cum),
+					 arg.mode, arg.type)
+		      + ROUND_ADVANCE_ARG (arg.mode, arg.type));
+  else
+    first_anon_arg = *get_cumulative_args (cum);
 
   if (first_anon_arg < M32R_MAX_PARM_REGS)
     {
@@ -2912,7 +2914,7 @@ m32r_store_preinc_predec_p (machine_mode mode, const_rtx x, bool strict)
 /* Implement  TARGET_LEGITIMATE_ADDRESS_P.  */
 
 static bool
-m32r_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+m32r_legitimate_address_p (machine_mode mode, rtx x, bool strict, code_helper)
 {
   if (m32r_rtx_ok_for_base_p (x, strict)
       || m32r_legitimate_offset_addres_p (mode, x, strict)

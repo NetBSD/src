@@ -1,5 +1,5 @@
 /* Scheduler hooks for IA-32 which implement CPU specific logic.
-   Copyright (C) 1988-2022 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -58,6 +58,7 @@ ix86_issue_rate (void)
     case PROCESSOR_K8:
     case PROCESSOR_AMDFAM10:
     case PROCESSOR_BTVER1:
+    case PROCESSOR_LUJIAZUI:
       return 3;
 
     case PROCESSOR_BDVER1:
@@ -68,15 +69,36 @@ ix86_issue_rate (void)
     case PROCESSOR_ZNVER2:
     case PROCESSOR_ZNVER3:
     case PROCESSOR_ZNVER4:
-    case PROCESSOR_ZNVER5:
     case PROCESSOR_CORE2:
     case PROCESSOR_NEHALEM:
     case PROCESSOR_SANDYBRIDGE:
     case PROCESSOR_HASWELL:
     case PROCESSOR_TREMONT:
+    case PROCESSOR_SKYLAKE:
+    case PROCESSOR_SKYLAKE_AVX512:
+    case PROCESSOR_CASCADELAKE:
+    case PROCESSOR_CANNONLAKE:
     case PROCESSOR_ALDERLAKE:
+    case PROCESSOR_YONGFENG:
     case PROCESSOR_GENERIC:
       return 4;
+
+    case PROCESSOR_ICELAKE_CLIENT:
+    case PROCESSOR_ICELAKE_SERVER:
+    case PROCESSOR_TIGERLAKE:
+    case PROCESSOR_COOPERLAKE:
+    case PROCESSOR_ROCKETLAKE:
+      return 5;
+
+    case PROCESSOR_SAPPHIRERAPIDS:
+    /* For znver5 decoder can handle 4 or 8 instructions per cycle,
+       op cache 12 instruction/cycle, dispatch 8 instructions
+       integer rename 8 instructions and Fp 6 instructions.
+
+       The scheduler, without understanding out of order nature of the CPU
+       is unlikely going to be able to fill all of these.  */
+    case PROCESSOR_ZNVER5:
+      return 6;
 
     default:
       return 1;
@@ -433,6 +455,31 @@ ix86_adjust_cost (rtx_insn *insn, int dep_type, rtx_insn *dep_insn, int cost,
 	}
       break;
 
+    case PROCESSOR_YONGFENG:
+      /* Stack engine allows to execute push&pop instructions in parallel.  */
+      if ((insn_type == TYPE_PUSH || insn_type == TYPE_POP)
+	  && (dep_insn_type == TYPE_PUSH || dep_insn_type == TYPE_POP))
+	return 0;
+      /* FALLTHRU */
+
+    case PROCESSOR_LUJIAZUI:
+      memory = get_attr_memory (insn);
+
+      /* Show ability of reorder buffer to hide latency of load by executing
+	  in parallel with previous instruction in case
+	  previous instruction is not needed to compute the address.  */
+      if ((memory == MEMORY_LOAD || memory == MEMORY_BOTH)
+	  && !ix86_agi_dependent (dep_insn, insn))
+	  {
+	    int loadcost = 4;
+
+	    if (cost >= loadcost)
+	      cost -= loadcost;
+	    else
+	      cost = 0;
+	  }
+       break;
+
     case PROCESSOR_CORE2:
     case PROCESSOR_NEHALEM:
     case PROCESSOR_SANDYBRIDGE:
@@ -568,7 +615,7 @@ ix86_fuse_mov_alu_p (rtx_insn *mov, rtx_insn *alu)
   /* One of operands should be register.  */
   if (op1 && (!REG_P (op0) || REGNO (op0) != REGNO (reg)))
     std::swap (op0, op1);
-  if (!REG_P (op0) || REGNO (op1) != REGNO (reg))
+  if (!REG_P (op0) || REGNO (op0) != REGNO (reg))
     return false;
   if (op1
       && !REG_P (op1)

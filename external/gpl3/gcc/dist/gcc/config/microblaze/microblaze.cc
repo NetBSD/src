@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Xilinx MicroBlaze.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -56,7 +56,7 @@
 /* This file should be included last.  */
 #include "target-def.h"
 
-#define MICROBLAZE_VERSION_COMPARE(VA,VB) strcasecmp (VA, VB)
+#define MICROBLAZE_VERSION_COMPARE(VA,VB) strverscmp (VA, VB)
 
 /* Classifies an address.
 
@@ -193,7 +193,7 @@ struct microblaze_frame_info zero_frame_info;
 char microblaze_print_operand_punct[256];
 
 /* Map GCC register number to debugger register number.  */
-int microblaze_dbx_regno[FIRST_PSEUDO_REGISTER];
+int microblaze_debugger_regno[FIRST_PSEUDO_REGISTER];
 
 /* Map hard register number to register class.  */
 enum reg_class microblaze_regno_to_class[] =
@@ -218,15 +218,14 @@ int break_handler;
 int fast_interrupt;
 int save_volatiles;
 
-const struct attribute_spec microblaze_attribute_table[] = {
+TARGET_GNU_ATTRIBUTES (microblaze_attribute_table, {
   /* name         min_len, max_len, decl_req, type_req, fn_type_req,
      affects_type_identity, handler, exclude */
   {"interrupt_handler",	0,       0,    true, false, false, false, NULL, NULL },
   {"break_handler",	0,       0,    true, false, false, false, NULL, NULL },
   {"fast_interrupt",	0,       0,    true, false, false, false, NULL, NULL },
-  {"save_volatiles",	0,       0,    true, false, false, false, NULL, NULL },
-  { NULL,        	0,       0,   false, false, false, false, NULL, NULL }
-};
+  {"save_volatiles",	0,       0,    true, false, false, false, NULL, NULL }
+});
 
 static int microblaze_interrupt_function_p (tree);
 
@@ -919,7 +918,8 @@ microblaze_classify_address (struct microblaze_address_info *info, rtx x,
    is called during reload.  */
 
 bool
-microblaze_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+microblaze_legitimate_address_p (machine_mode mode, rtx x, bool strict,
+				 code_helper)
 {
   struct microblaze_address_info addr;
 
@@ -1103,7 +1103,7 @@ microblaze_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
 
   if (GET_CODE (xinsn) == SYMBOL_REF)
     {
-      rtx reg;
+      rtx reg = NULL;
       if (microblaze_tls_symbol_p(xinsn))
         {
           reg = microblaze_legitimize_tls_address (xinsn, NULL_RTX);
@@ -1132,6 +1132,11 @@ microblaze_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
 	      pic_ref = gen_rtx_PLUS (Pmode, pic_offset_table_rtx, pic_ref);
 	      reg = pic_ref;
 	    }
+	}
+      else
+	{
+	  /* This should never happen.  */
+	  gcc_unreachable ();
 	}
       return reg;
     }
@@ -1474,7 +1479,7 @@ microblaze_address_insns (rtx x, machine_mode mode)
 	      case TLS_DTPREL:
 		return 1;
 	      default :
-		abort();
+		gcc_unreachable ();
 	    }
 	default:
 	  break;
@@ -1881,11 +1886,11 @@ microblaze_option_override (void)
      Ignore the special purpose register numbers.  */
 
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-    microblaze_dbx_regno[i] = -1;
+    microblaze_debugger_regno[i] = -1;
 
-  start = GP_DBX_FIRST - GP_REG_FIRST;
+  start = GP_DEBUGGER_FIRST - GP_REG_FIRST;
   for (i = GP_REG_FIRST; i <= GP_REG_LAST; i++)
-    microblaze_dbx_regno[i] = i + start;
+    microblaze_debugger_regno[i] = i + start;
 
   /* Set up array giving whether a given register can hold a given mode.   */
 
@@ -2624,7 +2629,7 @@ print_operand_address (FILE * file, rtx addr)
 		fputs ("@TLSDTPREL", file);
 		break;
 	      default :
-		abort();
+		gcc_unreachable ();
 		break;
 	    }
 	}
@@ -2787,8 +2792,7 @@ microblaze_function_prologue (FILE * file)
 	ASM_OUTPUT_TYPE_DIRECTIVE (file, fnname, "function");
     }
 
-  assemble_name (file, fnname);
-  fputs (":\n", file);
+  ASM_OUTPUT_FUNCTION_LABEL (file, fnname, current_function_decl);
 
   if (interrupt_handler && strcmp (INTERRUPT_HANDLER_NAME, fnname))
     fputs ("_interrupt_handler:\n", file);
@@ -3227,7 +3231,7 @@ microblaze_elf_in_small_data_p (const_tree decl)
   if (TREE_CODE (decl) == FUNCTION_DECL)
     return false;
 
-  if (TREE_CODE (decl) == VAR_DECL && DECL_SECTION_NAME (decl))
+  if (VAR_P (decl) && DECL_SECTION_NAME (decl))
     {
       const char *section = DECL_SECTION_NAME (decl);
       if (strcmp (section, ".sdata") == 0
@@ -3413,7 +3417,7 @@ microblaze_expand_move (machine_mode mode, rtx operands[])
     }
   if (GET_CODE (op1) == PLUS && GET_CODE (XEXP (op1,1)) == CONST)
     {
-      rtx p0, p1, result, temp;
+      rtx p0, p1 = NULL, result, temp;
 
       p0 = XEXP (XEXP (op1,1), 0);
 
@@ -3422,6 +3426,10 @@ microblaze_expand_move (machine_mode mode, rtx operands[])
 	  p1 = XEXP (p0, 1);
 	  p0 = XEXP (p0, 0);
 	}
+
+      /* This should never happen.  */
+      if (p1 == NULL)
+	gcc_unreachable ();
 
       if (GET_CODE (p0) == UNSPEC && GET_CODE (p1) == CONST_INT
 	  && flag_pic && TARGET_PIC_DATA_TEXT_REL)
@@ -3799,7 +3807,7 @@ get_branch_target (rtx branch)
       if (GET_CODE (call) == SET)
         call = SET_SRC (call);
       if (GET_CODE (call) != CALL)
-        abort ();
+	gcc_unreachable ();
       return XEXP (XEXP (call, 0), 0);
     }
 
@@ -4007,9 +4015,6 @@ microblaze_starting_frame_offset (void)
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P 	microblaze_legitimate_address_p 
-
-#undef TARGET_LRA_P
-#define TARGET_LRA_P hook_bool_void_false
 
 #undef TARGET_FRAME_POINTER_REQUIRED
 #define TARGET_FRAME_POINTER_REQUIRED	microblaze_frame_pointer_required

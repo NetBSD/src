@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler for IA-64.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -83,7 +83,7 @@ extern int ia64_epilogue_uses (int);
 extern int ia64_eh_uses (int);
 extern void emit_safe_across_calls (void);
 extern void ia64_init_builtins (void);
-extern int ia64_dbx_register_number (int);
+extern int ia64_debugger_regno (int);
 
 extern rtx ia64_return_addr_rtx (HOST_WIDE_INT, rtx);
 extern void ia64_split_return_addr_rtx (rtx);

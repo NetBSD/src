@@ -1,5 +1,5 @@
 /* Array things
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
 
 This file is part of GCC.
@@ -489,7 +489,20 @@ match_array_element_spec (gfc_array_spec *as)
     }
 
   if (gfc_match_char (':') == MATCH_YES)
-    return AS_DEFERRED;
+    {
+      locus old_loc = gfc_current_locus;
+      if (gfc_match_char ('*') == MATCH_YES)
+	{
+	  /* F2018:R821: "assumed-implied-spec  is  [ lower-bound : ] *".  */
+	  gfc_error ("A lower bound must precede colon in "
+		     "assumed-size array specification at %L", &old_loc);
+	  return AS_UNKNOWN;
+	}
+      else
+	{
+	  return AS_DEFERRED;
+	}
+    }
 
   m = gfc_match_expr (upper);
   if (m == MATCH_NO)
@@ -587,6 +600,8 @@ gfc_match_array_spec (gfc_array_spec **asp, bool match_dim, bool match_codim)
     {
       as->rank++;
       current_type = match_array_element_spec (as);
+      if (current_type == AS_UNKNOWN)
+	goto cleanup;
 
       /* Note that current_type == AS_ASSUMED_SIZE for both assumed-size
 	 and implied-shape specifications.  If the rank is at least 2, we can
@@ -596,8 +611,6 @@ gfc_match_array_spec (gfc_array_spec **asp, bool match_dim, bool match_codim)
 
       if (as->rank == 1)
 	{
-	  if (current_type == AS_UNKNOWN)
-	    goto cleanup;
 	  as->type = current_type;
 	}
       else
@@ -954,7 +967,7 @@ gfc_copy_array_spec (gfc_array_spec *src)
 
 
 /* Returns nonzero if the two expressions are equal.
-   We should not need to support more than constant values, as that’s what is
+   We should not need to support more than constant values, as that's what is
    allowed in derived type component array spec.  However, we may create types
    with non-constant array spec for dummy variable class container types, for
    which the _data component holds the array spec of the variable declaration.
@@ -966,7 +979,7 @@ compare_bounds (gfc_expr *bound1, gfc_expr *bound2)
   if (bound1 == NULL || bound2 == NULL
       || bound1->ts.type != BT_INTEGER
       || bound2->ts.type != BT_INTEGER)
-    gfc_internal_error ("gfc_compare_array_spec(): Array spec clobbered");
+    return false;
 
   /* What qualifies as identical bounds?  We could probably just check that the
      expressions are exact clones.  We avoid rewriting a specific comparison
@@ -981,7 +994,7 @@ compare_bounds (gfc_expr *bound1, gfc_expr *bound2)
 /* Compares two array specifications.  They must be constant or deferred
    shape.  */
 
-int
+bool
 gfc_compare_array_spec (gfc_array_spec *as1, gfc_array_spec *as2)
 {
   int i;
@@ -1026,7 +1039,7 @@ gfc_compare_array_spec (gfc_array_spec *as1, gfc_array_spec *as2)
    use the symbol as an implied-DO iterator.  Returns nonzero if a
    duplicate was found.  */
 
-static int
+static bool
 check_duplicate_iterator (gfc_constructor_base base, gfc_symbol *master)
 {
   gfc_constructor *c;
@@ -1969,7 +1982,7 @@ is_constant_element (gfc_expr *e)
    i=1,100000000) /) will take a while as* opposed to a more clever
    function that traverses the expression tree. FIXME.  */
 
-int
+bool
 gfc_constant_ac (gfc_expr *e)
 {
   expand_info expand_save;
@@ -1992,7 +2005,7 @@ gfc_constant_ac (gfc_expr *e)
 /* Returns nonzero if an array constructor has been completely
    expanded (no iterators) and zero if iterators are present.  */
 
-int
+bool
 gfc_expanded_ac (gfc_expr *e)
 {
   gfc_constructor *c;
@@ -2199,9 +2212,9 @@ got_charlen:
 	    found_length = current_length;
 	  else if (found_length != current_length)
 	    {
-	      gfc_error ("Different CHARACTER lengths (%ld/%ld) in array"
-			 " constructor at %L", (long) found_length,
-			 (long) current_length, &p->expr->where);
+	      gfc_error ("Different CHARACTER lengths (%wd/%wd) in array"
+			 " constructor at %L", found_length,
+			 current_length, &p->expr->where);
 	      return false;
 	    }
 
@@ -2295,10 +2308,7 @@ gfc_copy_iterator (gfc_iterator *src)
   dest->start = gfc_copy_expr (src->start);
   dest->end = gfc_copy_expr (src->end);
   dest->step = gfc_copy_expr (src->step);
-  dest->unroll = src->unroll;
-  dest->ivdep = src->ivdep;
-  dest->vector = src->vector;
-  dest->novector = src->novector;
+  dest->annot = src->annot;
 
   return dest;
 }
@@ -2587,6 +2597,13 @@ gfc_array_dimen_size (gfc_expr *array, int dimen, mpz_t *result)
     case EXPR_FUNCTION:
       for (ref = array->ref; ref; ref = ref->next)
 	{
+	  /* Ultimate component is a procedure pointer.  */
+	  if (ref->type == REF_COMPONENT
+	      && !ref->next
+	      && ref->u.c.component->attr.function
+	      && IS_PROC_POINTER (ref->u.c.component))
+	    return false;
+
 	  if (ref->type != REF_ARRAY)
 	    continue;
 

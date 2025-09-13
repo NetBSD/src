@@ -1,22 +1,75 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2023-05-08  Release Manager
+2024-05-07  Release Manager
 
-	* GCC 12.3.0 released.
+	* GCC 14.1.0 released.
 
-2022-08-19  Release Manager
+2024-04-02  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 12.2.0 released.
+	* init.c (duplicate_classes): Fix duplicated words in comment; in in
+	-> in.
+	* sendmsg.c (__objc_prepare_dtable_for_class): Fix duplicated words
+	in comment; the the -> the.
+	* encoding.c (objc_layout_structure): Likewise.
 
-2022-05-06  Release Manager
+2023-10-22  Iain Sandoe  <iain@sandoe.co.uk>
 
-	* GCC 12.1.0 released.
+	* configure: Regenerate.
+	* configure.ac: Handle Darwin rpaths.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Alexander von Gluck IV  <kallisti5@unixzen.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-05-22  Iain Sandoe  <iain@sandoe.co.uk>
+	    Andrew Pinski  <apinski@marvell.com>
+
+	PR libobjc/109913
+	* encoding.c (RECORD_OR_UNION_TYPE_P, VECTOR_TYPE_P): New.
+
+2022-10-20  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* configure.ac (AC_CONFIG_MACRO_DIRS): Instantiate.
+	* configure: Regenerate.
+
+2022-10-12  Martin Liska  <mliska@suse.cz>
+
+	* configure: Regenerate.
+
+2022-10-11  Olivier Hainque  <hainque@adacore.com>
+	    Olivier Hainque  <hainque@adacore.com>
+
+	* configure: Regenerate.
+
+2022-08-25  Martin Liska  <mliska@suse.cz>
+
+	* configure: Regenerate.
 
 2021-01-05  Samuel Thibault  <samuel.thibault@ens-lyon.org>
 
@@ -3238,9 +3291,9 @@ Mon Dec 17 17:02:12 2001  Nicola Pero  <nicola@brainstorm.co.uk>
 
 2001-11-07  Aldy Hernandez  <aldyh@redhat.com>
 
-	 * objc/objc-api.h (_C_VECTOR): New.
+	* objc/objc-api.h (_C_VECTOR): New.
 
-	 * encoding.c (VECTOR_TYPE): New.
+	* encoding.c (VECTOR_TYPE): New.
 
 Mon Oct 29 21:29:21 2001  Nicola Pero  <n.pero@mi.flashnet.it>
 
@@ -3626,7 +3679,7 @@ Mon Sep 21 23:27:10 1998  Ovidiu Predescu <ovidiu@slip.net>
 
 	* New directory.  Moved files from ../gcc/objc.
 
-Copyright (C) 1998-2022 Free Software Foundation, Inc.
+Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,5 +1,5 @@
 /* Lower TLS operations to emulation functions.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,6 +35,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks.h"
 #include "tree-iterator.h"
 #include "gimplify.h"
+#include "diagnostic-core.h" /* for seen_error */
 
 /* Whenever a target does not support thread-local storage (TLS) natively,
    we can emulate it with some run-time support in libgcc.  This will in
@@ -439,7 +440,7 @@ static tree
 lower_emutls_2 (tree *ptr, int *walk_subtrees, void *)
 {
   tree t = *ptr;
-  if (TREE_CODE (t) == VAR_DECL)
+  if (VAR_P (t))
     return DECL_THREAD_LOCAL_P (t) ? t : NULL_TREE;
   else if (!EXPR_P (t))
     *walk_subtrees = 0;
@@ -838,13 +839,16 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       /* If the target supports TLS natively, we need do nothing here.  */
-      return !targetm.have_tls;
+      return !targetm.have_tls && !seen_error ();
     }
 
-  virtual unsigned int execute (function *) { return ipa_lower_emutls (); }
+  unsigned int execute (function *) final override
+  {
+    return ipa_lower_emutls ();
+  }
 
 }; // class pass_ipa_lower_emutls
 

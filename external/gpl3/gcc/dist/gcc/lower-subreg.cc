@@ -1,5 +1,5 @@
 /* Decompose multiword subregs.
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
 		  Ian Lance Taylor <iant@google.com>
 
@@ -37,6 +37,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgbuild.h"
 #include "dce.h"
 #include "expr.h"
+#include "explow.h"
 #include "tree-pass.h"
 #include "lower-subreg.h"
 #include "rtl-iter.h"
@@ -926,6 +927,21 @@ resolve_simple_move (rtx set, rtx_insn *insn)
 	     SRC's operator.  */
 	  dest = resolve_operand_for_swap_move_operator (dest);
 	  src = src_op;
+	  if (resolve_reg_p (src))
+	    {
+	      gcc_assert (GET_CODE (src) == CONCATN);
+	      if (reg_overlap_mentioned_p (XVECEXP (dest, 0, 0),
+					   XVECEXP (src, 0, 1)))
+		{
+		  /* If there is overlap between the first half of the
+		     destination and what will be stored to the second one,
+		     use a temporary pseudo.  See PR114211.  */
+		  rtx tem = gen_reg_rtx (GET_MODE (XVECEXP (src, 0, 1)));
+		  emit_move_insn (tem, XVECEXP (src, 0, 1));
+		  src = copy_rtx (src);
+		  XVECEXP (src, 0, 1) = tem;
+		}
+	    }
 	}
       else if (resolve_reg_p (src_op))
 	{
@@ -1084,9 +1100,6 @@ resolve_simple_move (rtx set, rtx_insn *insn)
   else
     {
       unsigned int i;
-
-      if (REG_P (dest) && !HARD_REGISTER_NUM_P (REGNO (dest)))
-	emit_clobber (dest);
 
       for (i = 0; i < words; ++i)
 	{
@@ -1299,11 +1312,12 @@ find_decomposable_shift_zext (rtx_insn *insn, bool speed_p)
 
 /* Decompose a more than word wide shift (in INSN) of a multiword
    pseudo or a multiword zero-extend of a wordmode pseudo into a move
-   and 'set to zero' insn.  Return a pointer to the new insn when a
-   replacement was done.  */
+   and 'set to zero' insn.  SPEED_P says whether we are optimizing
+   for speed or size, when checking if a ZERO_EXTEND is preferable.
+   Return a pointer to the new insn when a replacement was done.  */
 
 static rtx_insn *
-resolve_shift_zext (rtx_insn *insn)
+resolve_shift_zext (rtx_insn *insn, bool speed_p)
 {
   rtx set;
   rtx op;
@@ -1378,14 +1392,29 @@ resolve_shift_zext (rtx_insn *insn)
 				dest_reg, GET_CODE (op) != ASHIFTRT);
     }
 
-  if (dest_reg != src_reg)
-    emit_move_insn (dest_reg, src_reg);
-  if (GET_CODE (op) != ASHIFTRT)
-    emit_move_insn (dest_upper, CONST0_RTX (word_mode));
-  else if (INTVAL (XEXP (op, 1)) == 2 * BITS_PER_WORD - 1)
-    emit_move_insn (dest_upper, copy_rtx (src_reg));
+  /* Consider using ZERO_EXTEND instead of setting DEST_UPPER to zero
+     if this is considered reasonable.  */
+  if (GET_CODE (op) == LSHIFTRT
+      && GET_MODE (op) == twice_word_mode
+      && REG_P (SET_DEST (set))
+      && !choices[speed_p].splitting_zext)
+    {
+      rtx tmp = force_reg (word_mode, copy_rtx (src_reg));
+      tmp = simplify_gen_unary (ZERO_EXTEND, twice_word_mode, tmp, word_mode);
+      emit_move_insn (SET_DEST (set), tmp);
+    }
   else
-    emit_move_insn (dest_upper, upper_src);
+    {
+      if (dest_reg != src_reg)
+	emit_move_insn (dest_reg, src_reg);
+      if (GET_CODE (op) != ASHIFTRT)
+	emit_move_insn (dest_upper, CONST0_RTX (word_mode));
+      else if (INTVAL (XEXP (op, 1)) == 2 * BITS_PER_WORD - 1)
+	emit_move_insn (dest_upper, copy_rtx (src_reg));
+      else
+	emit_move_insn (dest_upper, upper_src);
+    }
+
   insns = get_insns ();
 
   end_sequence ();
@@ -1670,7 +1699,7 @@ decompose_multiword_subregs (bool decompose_copies)
 		    {
 		      rtx_insn *decomposed_shift;
 
-		      decomposed_shift = resolve_shift_zext (insn);
+		      decomposed_shift = resolve_shift_zext (insn, speed_p);
 		      if (decomposed_shift != NULL_RTX)
 			{
 			  insn = decomposed_shift;
@@ -1769,8 +1798,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_split_wide_types != 0; }
-  virtual unsigned int execute (function *)
+  bool gate (function *) final override { return flag_split_wide_types != 0; }
+  unsigned int execute (function *) final override
     {
       decompose_multiword_subregs (false);
       return 0;
@@ -1811,9 +1840,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_split_wide_types
-					  && flag_split_wide_types_early; }
-  virtual unsigned int execute (function *)
+  bool gate (function *) final override
+  {
+    return flag_split_wide_types && flag_split_wide_types_early;
+  }
+  unsigned int execute (function *) final override
     {
       decompose_multiword_subregs (true);
       return 0;
@@ -1854,8 +1885,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_split_wide_types; }
-  virtual unsigned int execute (function *)
+  bool gate (function *) final override { return flag_split_wide_types; }
+  unsigned int execute (function *) final override
     {
       decompose_multiword_subregs (true);
       return 0;

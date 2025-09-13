@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# Copyright (C) 2018-2024 Free Software Foundation, Inc.
 #
 # Script to analyze warnings produced by clang.
 #
@@ -16,7 +18,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with GCC; see the file COPYING3.  If not see
-# <http://www.gnu.org/licenses/>.  */
+# <http://www.gnu.org/licenses/>.
 #
 #
 #
@@ -39,7 +41,7 @@ def skip_warning(filename, message):
                  '-Wignored-attributes', '-Wgnu-zero-variadic-macro-arguments',
                  '-Wformat-security', '-Wundefined-internal',
                  '-Wunknown-warning-option', '-Wc++20-extensions',
-                 '-Wbitwise-instead-of-logical'],
+                 '-Wbitwise-instead-of-logical', 'egrep is obsolescent'],
             'insn-modes.cc': ['-Wshift-count-overflow'],
             'insn-emit.cc': ['-Wtautological-compare'],
             'insn-attrtab.cc': ['-Wparentheses-equality'],
@@ -57,8 +59,8 @@ def skip_warning(filename, message):
             'lex.cc': ['-Wc++20-attribute-extensions'],
     }
 
-    for name, ignores in ignores.items():
-        for i in ignores:
+    for name, ignore in ignores.items():
+        for i in ignore:
             if name in filename and i in message:
                 return True
     return False
@@ -69,18 +71,19 @@ parser.add_argument('log', help='Log file with clang warnings')
 args = parser.parse_args()
 
 lines = [line.strip() for line in open(args.log)]
-total = 0
-messages = []
+messages = set()
 for line in lines:
     token = ': warning: '
     i = line.find(token)
     if i != -1:
         location = line[:i]
         message = line[i + len(token):]
+        if '/libffi/' in location or location.startswith('Makefile'):
+            continue
         if not skip_warning(location, message):
-            total += 1
-            messages.append(line)
+            messages.add(line)
 
 for line in sorted(messages):
     print(line)
-print('\nTotal warnings: %d' % total)
+
+print('\nTotal warnings: %d' % len(messages))

@@ -1,5 +1,5 @@
 /* LoongArch-specific code for C family languages.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
 This file is part of GCC.
@@ -31,29 +31,6 @@ along with GCC; see the file COPYING3.  If not see
 #define builtin_define(TXT) cpp_define (pfile, TXT)
 #define builtin_assert(TXT) cpp_assert (pfile, TXT)
 
-/* Define preprocessor macros for the -march and -mtune options.
-   PREFIX is either _LOONGARCH_ARCH or _LOONGARCH_TUNE, INFO is
-   the selected processor.  If INFO's canonical name is "foo",
-   define PREFIX to be "foo", and define an additional macro
-   PREFIX_FOO.  */
-#define LARCH_CPP_SET_PROCESSOR(PREFIX, CPU_TYPE)			\
-  do									\
-    {									\
-      char *macro, *p;							\
-      int cpu_type = (CPU_TYPE);					\
-									\
-      macro = concat ((PREFIX), "_",					\
-		      loongarch_cpu_strings[cpu_type], NULL);		\
-      for (p = macro; *p != 0; p++)					\
-	*p = TOUPPER (*p);						\
-									\
-      builtin_define (macro);						\
-      builtin_define_with_value ((PREFIX),				\
-				 loongarch_cpu_strings[cpu_type], 1);	\
-      free (macro);							\
-    }									\
-  while (0)
-
 void
 loongarch_cpu_cpp_builtins (cpp_reader *pfile)
 {
@@ -61,8 +38,17 @@ loongarch_cpu_cpp_builtins (cpp_reader *pfile)
   builtin_assert ("cpu=loongarch");
   builtin_define ("__loongarch__");
 
-  LARCH_CPP_SET_PROCESSOR ("_LOONGARCH_ARCH", LARCH_ACTUAL_ARCH);
-  LARCH_CPP_SET_PROCESSOR ("_LOONGARCH_TUNE", LARCH_ACTUAL_TUNE);
+  builtin_define_with_value ("__loongarch_arch",
+			     loongarch_arch_strings[la_target.cpu_arch], 1);
+
+  builtin_define_with_value ("__loongarch_tune",
+			     loongarch_tune_strings[la_target.cpu_tune], 1);
+
+  builtin_define_with_value ("_LOONGARCH_ARCH",
+			     loongarch_arch_strings[la_target.cpu_arch], 1);
+
+  builtin_define_with_value ("_LOONGARCH_TUNE",
+			     loongarch_tune_strings[la_target.cpu_tune], 1);
 
   /* Base architecture / ABI.  */
   if (TARGET_64BIT)
@@ -98,6 +84,57 @@ loongarch_cpu_cpp_builtins (cpp_reader *pfile)
     builtin_define ("__loongarch_frlen=32");
   else
     builtin_define ("__loongarch_frlen=0");
+
+  if (ISA_HAS_LSX)
+    {
+      builtin_define ("__loongarch_simd");
+      builtin_define ("__loongarch_sx");
+
+      if (!ISA_HAS_LASX)
+	builtin_define ("__loongarch_simd_width=128");
+    }
+
+  if (ISA_HAS_LASX)
+    {
+      builtin_define ("__loongarch_asx");
+      builtin_define ("__loongarch_simd_width=256");
+    }
+
+  /* ISA evolution features */
+  int max_v_major = 1, max_v_minor = 0;
+
+  for (int i = 0; i < N_EVO_FEATURES; i++)
+    if (la_target.isa.evolution & la_evo_feature_masks[i]
+	&& (la_evo_feature_masks[i] != OPTION_MASK_ISA_FRECIPE
+	    || TARGET_HARD_FLOAT))
+      {
+	builtin_define (la_evo_macro_name[i]);
+
+	int major = la_evo_version_major[i],
+	    minor = la_evo_version_minor[i];
+
+	max_v_major = major > max_v_major ? major : max_v_major;
+	max_v_minor = major == max_v_major
+	  ? (minor > max_v_minor ? minor : max_v_minor): max_v_minor;
+      }
+
+  /* Find the minimum ISA version required to run the target program.  */
+  if (!(max_v_major == 1 && max_v_minor <= 1 && ISA_HAS_LASX))
+    {
+      builtin_define_with_int_value ("__loongarch_version_major", max_v_major);
+      builtin_define_with_int_value ("__loongarch_version_minor", max_v_minor);
+    }
+
+  /* Add support for FLOAT128_TYPE on the LoongArch architecture.  */
+  builtin_define ("__FLOAT128_TYPE__");
+
+  /* Map the old _Float128 'q' builtins into the new 'f128' builtins.  */
+  builtin_define ("__builtin_fabsq=__builtin_fabsf128");
+  builtin_define ("__builtin_copysignq=__builtin_copysignf128");
+  builtin_define ("__builtin_nanq=__builtin_nanf128");
+  builtin_define ("__builtin_nansq=__builtin_nansf128");
+  builtin_define ("__builtin_infq=__builtin_inff128");
+  builtin_define ("__builtin_huge_valq=__builtin_huge_valf128");
 
   /* Native Data Sizes.  */
   builtin_define_with_int_value ("_LOONGARCH_SZINT", INT_TYPE_SIZE);

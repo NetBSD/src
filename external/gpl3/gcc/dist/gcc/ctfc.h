@@ -1,5 +1,5 @@
 /* ctfc.h - Declarations and definitions related to the CTF container.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -133,7 +133,7 @@ typedef struct GTY ((chain_next ("%h.dmd_next"))) ctf_dmdef
   ctf_id_t dmd_type;		/* Type of this member (for sou).  */
   uint32_t dmd_name_offset;	/* Offset of the name in str table.  */
   uint64_t dmd_offset;		/* Offset of this member in bits (for sou).  */
-  int dmd_value;		/* Value of this member (for enum).  */
+  HOST_WIDE_INT dmd_value;	/* Value of this member (for enum).  */
   struct ctf_dmdef * dmd_next;	/* A list node.  */
 } ctf_dmdef_t;
 
@@ -161,6 +161,8 @@ struct GTY ((for_user)) ctf_dtdef
   ctf_itype_t dtd_data;	      /* Type node.  */
   bool from_global_func; /* Whether this type was added from a global
 			    function.  */
+  uint32_t linkage;           /* Used in function types.  0=local, 1=global.  */
+  bool dtd_enum_unsigned;     /* Enum signedness.  */
   union GTY ((desc ("ctf_dtu_d_union_selector (&%1)")))
   {
     /* struct, union, or enum.  */
@@ -405,7 +407,7 @@ extern const char * ctf_add_string (ctf_container_ref, const char *,
 extern ctf_id_t ctf_add_reftype (ctf_container_ref, uint32_t, ctf_id_t,
 				 uint32_t, dw_die_ref);
 extern ctf_id_t ctf_add_enum (ctf_container_ref, uint32_t, const char *,
-			      HOST_WIDE_INT, dw_die_ref);
+			      HOST_WIDE_INT, bool, dw_die_ref);
 extern ctf_id_t ctf_add_slice (ctf_container_ref, uint32_t, ctf_id_t,
 			       uint32_t, uint32_t, dw_die_ref);
 extern ctf_id_t ctf_add_float (ctf_container_ref, uint32_t, const char *,
@@ -423,7 +425,7 @@ extern ctf_id_t ctf_add_forward (ctf_container_ref, uint32_t, const char *,
 extern ctf_id_t ctf_add_typedef (ctf_container_ref, uint32_t, const char *,
 				 ctf_id_t, dw_die_ref);
 extern ctf_id_t ctf_add_function (ctf_container_ref, uint32_t, const char *,
-				  const ctf_funcinfo_t *, dw_die_ref, bool);
+				  const ctf_funcinfo_t *, dw_die_ref, bool, int);
 extern ctf_id_t ctf_add_sou (ctf_container_ref, uint32_t, const char *,
 			     uint32_t, size_t, dw_die_ref);
 
@@ -438,6 +440,9 @@ extern int ctf_add_variable (ctf_container_ref, const char *, ctf_id_t,
 
 extern ctf_id_t ctf_lookup_tree_type (ctf_container_ref, const tree);
 extern ctf_id_t get_btf_id (ctf_id_t);
+
+typedef bool (*funcs_traverse_callback) (ctf_dtdef_ref, void *);
+bool traverse_btf_func_types (funcs_traverse_callback, void *);
 
 /* CTF section does not emit location information; at this time, location
    information is needed for BTF CO-RE use-cases.  */

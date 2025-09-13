@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    Namelist output contributed by Paul Thomas
    F2003 I/O support contributed by Jerry DeLisle
@@ -177,7 +177,9 @@ write_utf8_char4 (st_parameter_dt *dtp, gfc_char4_t *source,
       break;
     }
 
-  /* Now process the remaining characters, one at a time.  */
+  /* Now process the remaining characters, one at a time. We need to
+     adjust the src_len if the user has specified a field width.  */
+  src_len = w_len > 0 ? w_len : src_len;
   for (j = k; j < src_len; j++)
     {
       c = source[j];
@@ -1179,6 +1181,15 @@ xtoa_big (const char *s, char *buffer, int len, GFC_UINTEGER_LARGEST *n)
   uint8_t h, l;
   int i;
 
+  /* write_z, which calls xtoa_big, is called from transfer.c,
+     formatted_transfer_scalar_write.  There it is passed the kind as
+     'len' argument, which means a maximum of 16.  The buffer is large
+     enough, but the compiler does not know that, so shut up the
+     warning here.  */
+
+  if (len > 16)
+    __builtin_unreachable ();
+
   q = buffer;
 
   if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
@@ -1212,15 +1223,7 @@ xtoa_big (const char *s, char *buffer, int len, GFC_UINTEGER_LARGEST *n)
 	}
     }
 
-  /* write_z, which calls xtoa_big, is called from transfer.c,
-     formatted_transfer_scalar_write.  There it is passed the kind as
-     argument, which means a maximum of 16.  The buffer is large
-     enough, but the compiler does not know that, so shut up the
-     warning here.  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
   *q = '\0';
-#pragma GCC diagnostic pop
 
   if (*n == 0)
     return "0";
@@ -1259,6 +1262,10 @@ write_b (st_parameter_dt *dtp, const fnode *f, const char *source, int len)
     {
       n = extract_uint (source, len);
       p = btoa (n, itoa_buf, sizeof (itoa_buf));
+
+      /* Test for zero. Needed by write_boz.  */
+      if (n != 0)
+	n = 1;
       write_boz (dtp, f, p, n, len);
     }
 }
@@ -1573,7 +1580,7 @@ select_buffer (st_parameter_dt *dtp, const fnode *f, int precision,
 	       char *buf, size_t *size, int kind)
 {
   char *result;
-  
+
   /* The buffer needs at least one more byte to allow room for
      normalizing and 1 to hold null terminator.  */
   *size = size_from_kind (dtp, f, kind) + precision + 1 + 1;
@@ -1756,7 +1763,7 @@ write_real (st_parameter_dt *dtp, const char *source, int kind)
 
   /* Scratch buffer to hold final result.  */
   buffer = select_buffer (dtp, &f, precision, buf_stack, &buf_size, kind);
-  
+
   get_float_string (dtp, &f, source , kind, 1, buffer,
                            precision, buf_size, result, &flt_str_len);
   write_float_string (dtp, result, flt_str_len);
@@ -1784,8 +1791,6 @@ write_real_w0 (st_parameter_dt *dtp, const char *source, int kind,
 
   set_fnode_default (dtp, &ff, kind);
 
-  if (f->u.real.d > 0)
-    ff.u.real.d = f->u.real.d;
   ff.format = f->format;
 
   /* For FMT_G, Compensate for extra digits when using scale factor, d
@@ -1793,11 +1798,17 @@ write_real_w0 (st_parameter_dt *dtp, const char *source, int kind,
      is used.  */
   if (f->format == FMT_G)
     {
+      if (f->u.real.d > 0)
+	ff.u.real.d = f->u.real.d;
       if (dtp->u.p.scale_factor > 0 && f->u.real.d == 0)
 	comp_d = 1;
       else
 	comp_d = 0;
     }
+  else
+    if (f->u.real.d >= 0)
+      ff.u.real.d = f->u.real.d;
+
 
   if (f->u.real.e >= 0)
     ff.u.real.e = f->u.real.e;
@@ -1951,14 +1962,14 @@ list_formatted_write_scalar (st_parameter_dt *dtp, bt type, void *p, int kind,
       break;
     case BT_CLASS:
       {
-	  int unit = dtp->u.p.current_unit->unit_number;
+	  GFC_INTEGER_4 unit = dtp->u.p.current_unit->unit_number;
 	  char iotype[] = "LISTDIRECTED";
 	  gfc_charlen_type iotype_len = 12;
 	  char tmp_iomsg[IOMSG_LEN] = "";
 	  char *child_iomsg;
 	  gfc_charlen_type child_iomsg_len;
-	  int noiostat;
-	  int *child_iostat = NULL;
+	  GFC_INTEGER_4 noiostat;
+	  GFC_INTEGER_4 *child_iostat = NULL;
 	  gfc_full_array_i4 vlist;
 
 	  GFC_DESCRIPTOR_DATA(&vlist) = NULL;
@@ -1966,8 +1977,8 @@ list_formatted_write_scalar (st_parameter_dt *dtp, bt type, void *p, int kind,
 
 	  /* Set iostat, intent(out).  */
 	  noiostat = 0;
-	  child_iostat = (dtp->common.flags & IOPARM_HAS_IOSTAT) ?
-			  dtp->common.iostat : &noiostat;
+	  child_iostat = ((dtp->common.flags & IOPARM_HAS_IOSTAT)
+			  ? dtp->common.iostat : &noiostat);
 
 	  /* Set iomsge, intent(inout).  */
 	  if (dtp->common.flags & IOPARM_HAS_IOMSG)
@@ -1986,7 +1997,20 @@ list_formatted_write_scalar (st_parameter_dt *dtp, bt type, void *p, int kind,
 	  dtp->u.p.fdtio_ptr (p, &unit, iotype, &vlist,
 			      child_iostat, child_iomsg,
 			      iotype_len, child_iomsg_len);
+	  dtp->u.p.child_saved_iostat = *child_iostat;
 	  dtp->u.p.current_unit->child_dtio--;
+
+	  if ((dtp->u.p.child_saved_iostat != 0) &&
+	      !(dtp->common.flags & IOPARM_HAS_IOMSG) &&
+	      !(dtp->common.flags & IOPARM_HAS_IOSTAT))
+	    {
+	      char message[IOMSG_LEN + 1];
+	      child_iomsg_len = string_len_trim (IOMSG_LEN, child_iomsg);
+	      fstrcpy (message, child_iomsg_len, child_iomsg, child_iomsg_len);
+	      message[child_iomsg_len] = '\0';
+	      generate_error (&dtp->common, dtp->u.p.child_saved_iostat,
+			      message);
+	    }
       }
       break;
     default:
@@ -2276,14 +2300,14 @@ nml_write_obj (st_parameter_dt *dtp, namelist_info *obj, index_type offset,
 	      /* First ext_name => get length of all possible components  */
 	      if (obj->dtio_sub != NULL)
 		{
-		  int unit = dtp->u.p.current_unit->unit_number;
+		  GFC_INTEGER_4 unit = dtp->u.p.current_unit->unit_number;
 		  char iotype[] = "NAMELIST";
 		  gfc_charlen_type iotype_len = 8;
 		  char tmp_iomsg[IOMSG_LEN] = "";
 		  char *child_iomsg;
 		  gfc_charlen_type child_iomsg_len;
-		  int noiostat;
-		  int *child_iostat = NULL;
+		  GFC_INTEGER_4 noiostat;
+		  GFC_INTEGER_4 *child_iostat = NULL;
 		  gfc_full_array_i4 vlist;
 		  formatted_dtio dtio_ptr = (formatted_dtio)obj->dtio_sub;
 
@@ -2291,8 +2315,8 @@ nml_write_obj (st_parameter_dt *dtp, namelist_info *obj, index_type offset,
 
 		  /* Set iostat, intent(out).  */
 		  noiostat = 0;
-		  child_iostat = (dtp->common.flags & IOPARM_HAS_IOSTAT) ?
-				  dtp->common.iostat : &noiostat;
+		  child_iostat = ((dtp->common.flags & IOPARM_HAS_IOSTAT)
+				  ? dtp->common.iostat : &noiostat);
 
 		  /* Set iomsg, intent(inout).  */
 		  if (dtp->common.flags & IOPARM_HAS_IOMSG)
@@ -2325,7 +2349,22 @@ nml_write_obj (st_parameter_dt *dtp, namelist_info *obj, index_type offset,
 				child_iostat, child_iomsg,
 				iotype_len, child_iomsg_len);
 		    }
+		  dtp->u.p.child_saved_iostat = *child_iostat;
 		  dtp->u.p.current_unit->child_dtio--;
+
+		  if ((dtp->u.p.child_saved_iostat != 0) &&
+		      !(dtp->common.flags & IOPARM_HAS_IOMSG) &&
+		      !(dtp->common.flags & IOPARM_HAS_IOSTAT))
+		    {
+		      char message[IOMSG_LEN + 1];
+
+		      /* Trim trailing spaces from the message.  */
+		      child_iomsg_len = string_len_trim (IOMSG_LEN, child_iomsg);
+		      fstrcpy (message, child_iomsg_len, child_iomsg, child_iomsg_len);
+		      message[child_iomsg_len] = '\0';
+		      generate_error (&dtp->common, dtp->u.p.child_saved_iostat,
+				      message);
+		    }
 
 		  goto obj_loop;
 		}
@@ -2465,6 +2504,8 @@ namelist_write (st_parameter_dt *dtp)
 	dtp->u.p.nml_delim = '\0';
     }
 
+  if (is_internal_unit (dtp))
+    write_character (dtp, " ", 1, 1, NODELIM);
   write_character (dtp, "&", 1, 1, NODELIM);
 
   /* Write namelist name in upper case - f95 std.  */

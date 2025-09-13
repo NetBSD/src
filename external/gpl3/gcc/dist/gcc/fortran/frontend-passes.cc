@@ -1,5 +1,5 @@
 /* Pass manager for Fortran front end.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Thomas König.
 
 This file is part of GCC.
@@ -424,9 +424,9 @@ copy_walk_reduction_arg (gfc_constructor *c, gfc_expr *fn)
   return fcn;
 }
 
-/* Callback function for optimzation of reductions to scalars.  Transform ANY
+/* Callback function for optimization of reductions to scalars.  Transform ANY
    ([f1,f2,f3, ...]) to f1 .or. f2 .or. f3 .or. ..., with ANY, SUM and PRODUCT
-   correspondingly.  Handly only the simple cases without MASK and DIM.  */
+   correspondingly.  Handle only the simple cases without MASK and DIM.  */
 
 static int
 callback_reduction (gfc_expr **e, int *walk_subtrees ATTRIBUTE_UNUSED,
@@ -1455,7 +1455,7 @@ simplify_io_impl_do (gfc_code **code, int *walk_subtrees,
 }
 
 /* Optimize a namespace, including all contained namespaces.
-  flag_frontend_optimize and flag_fronend_loop_interchange are
+  flag_frontend_optimize and flag_frontend_loop_interchange are
   handled separately.  */
 
 static void
@@ -2883,7 +2883,10 @@ do_subscript (gfc_expr **e)
 		have_do_end = false;
 
 	      if (!have_do_start && !have_do_end)
-		return 0;
+		{
+		  mpz_clear (do_step);
+		  return 0;
+		}
 
 	      /* No warning inside a zero-trip loop.  */
 	      if (have_do_start && have_do_end)
@@ -2892,7 +2895,12 @@ do_subscript (gfc_expr **e)
 
 		  cmp = mpz_cmp (do_end, do_start);
 		  if ((sgn > 0 && cmp < 0) || (sgn < 0 && cmp > 0))
-		    break;
+		    {
+		      mpz_clear (do_start);
+		      mpz_clear (do_end);
+		      mpz_clear (do_step);
+		      break;
+		    }
 		}
 
 	      /* May have to correct the end value if the step does not equal
@@ -2965,6 +2973,12 @@ do_subscript (gfc_expr **e)
 		      mpz_clear (val);
 		    }
 		}
+
+	      if (have_do_start)
+		mpz_clear (do_start);
+	      if (have_do_end)
+		mpz_clear (do_end);
+	      mpz_clear (do_step);
 	    }
 	}
     }
@@ -3038,7 +3052,8 @@ do_intent (gfc_expr **e)
 	  do_sym = dl->ext.iterator->var->symtree->n.sym;
 
 	  if (a->expr && a->expr->symtree
-	      && a->expr->symtree->n.sym == do_sym)
+	      && a->expr->symtree->n.sym == do_sym
+	      && f->sym)
 	    {
 	      if (f->sym->attr.intent == INTENT_OUT)
 		gfc_error_now ("Variable %qs at %L set to undefined value "
@@ -5637,6 +5652,8 @@ gfc_code_walker (gfc_code **c, walk_code_fn_t codefn, walk_expr_fn_t exprfn,
 			OMP_LIST_MAP, OMP_LIST_TO, OMP_LIST_FROM };
 		  size_t idx;
 		  WALK_SUBEXPR (co->ext.omp_clauses->if_expr);
+		  for (idx = 0; idx < OMP_IF_LAST; idx++)
+		    WALK_SUBEXPR (co->ext.omp_clauses->if_exprs[idx]);
 		  WALK_SUBEXPR (co->ext.omp_clauses->final_expr);
 		  WALK_SUBEXPR (co->ext.omp_clauses->num_threads);
 		  WALK_SUBEXPR (co->ext.omp_clauses->chunk_size);
@@ -5652,11 +5669,7 @@ gfc_code_walker (gfc_code **c, walk_code_fn_t codefn, walk_expr_fn_t exprfn,
 		  WALK_SUBEXPR (co->ext.omp_clauses->num_tasks);
 		  WALK_SUBEXPR (co->ext.omp_clauses->priority);
 		  WALK_SUBEXPR (co->ext.omp_clauses->detach);
-		  for (idx = 0; idx < OMP_IF_LAST; idx++)
-		    WALK_SUBEXPR (co->ext.omp_clauses->if_exprs[idx]);
-		  for (idx = 0;
-		       idx < sizeof (list_types) / sizeof (list_types[0]);
-		       idx++)
+		  for (idx = 0; idx < ARRAY_SIZE (list_types); idx++)
 		    for (n = co->ext.omp_clauses->lists[list_types[idx]];
 			 n; n = n->next)
 		      WALK_SUBEXPR (n->expr);
@@ -5727,6 +5740,9 @@ check_externals_procedure (gfc_symbol *sym, locus *loc,
 
   if (gsym->ns)
     gfc_find_symbol (sym->name, gsym->ns, 0, &def_sym);
+
+  if (gsym->bind_c && def_sym && def_sym->binding_label == NULL)
+    return 0;
 
   if (def_sym)
     {
@@ -5824,6 +5840,10 @@ check_against_globals (gfc_symbol *sym)
 
   if (sym->binding_label)
     sym_name = sym->binding_label;
+  else if (sym->attr.use_rename
+	   && sym->ns->use_stmts->rename
+	   && sym->ns->use_stmts->rename->local_name[0] != '\0')
+    sym_name = sym->ns->use_stmts->rename->local_name;
   else
     sym_name = sym->name;
 

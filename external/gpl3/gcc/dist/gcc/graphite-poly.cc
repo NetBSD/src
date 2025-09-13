@@ -1,5 +1,5 @@
 /* Graphite polyhedral representation.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@amd.com> and
    Tobias Grosser <grosser@fim.uni-passau.de>.
 
@@ -341,20 +341,10 @@ dump_gbb_conditions (FILE *file, gimple_poly_bb_p gbb)
 void
 print_pdrs (FILE *file, poly_bb_p pbb)
 {
-  int nb_reads = 0;
-  int nb_writes = 0;
-
   if (PBB_DRS (pbb).is_empty ())
     return;
 
   fprintf (file, "Data references (\n");
-
-  for (poly_dr_p pdr : PBB_DRS (pbb))
-    if (PDR_TYPE (pdr) == PDR_READ)
-      nb_reads++;
-    else
-      nb_writes++;
-
   fprintf (file, "Read data references (\n");
 
   for (poly_dr_p pdr : PBB_DRS (pbb))

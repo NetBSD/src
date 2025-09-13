@@ -1,4 +1,4 @@
-.. Copyright (C) 2014-2022 Free Software Foundation, Inc.
+.. Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -43,12 +43,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
-
-.. Some notes:
-
-   The Sphinx C domain appears to lack explicit support for enum values,
-   so I've been using :c:macro: for them.
-
-   See https://sphinx-doc.org/domains.html#the-c-domain

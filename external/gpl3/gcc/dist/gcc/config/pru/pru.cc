@@ -1,5 +1,5 @@
 /* Target machine subroutines for TI PRU.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Dimitar Dimitrov <dimitar@dinux.eu>
 
    This file is part of GCC.
@@ -766,7 +766,11 @@ pru_rtx_costs (rtx x, machine_mode mode,
       }
     case ZERO_EXTEND:
       {
-	*total = COSTS_N_INSNS (0);
+	/* 64-bit zero extensions actually have a cost because they
+	   require setting a register to zero.
+	   32-bit and smaller are free.  */
+	int factor = (GET_MODE_SIZE (mode) <= GET_MODE_SIZE (SImode)) ? 0 : 1;
+	*total = factor * COSTS_N_INSNS (1);
 	return false;
       }
 
@@ -778,6 +782,39 @@ pru_rtx_costs (rtx x, machine_mode mode,
 	return false;
       }
     }
+}
+
+/* Insn costs on PRU are straightforward because:
+     - Insns emit 0, 1 or more instructions.
+     - All instructions are 32-bit length.
+     - All instructions execute in 1 cycle (sans memory access delays).
+   The "length" attribute maps nicely to the insn cost.  */
+
+static int
+pru_insn_cost (rtx_insn *insn, bool speed)
+{
+  /* Use generic cost calculation for unrecognized insns.  */
+  if (recog_memoized (insn) < 0)
+    return pattern_cost (insn, speed);
+
+  unsigned int len = get_attr_length (insn);
+
+  gcc_assert ((len % 4) == 0);
+
+  int cost = COSTS_N_INSNS (len / 4);
+  /* Some insns have zero length (e.g. blockage, pruloop_end).
+     In such cases give the minimum cost, because a return of
+     0 would incorrectly indicate that the insn cost is unknown.  */
+  if (cost == 0)
+    cost = 1;
+
+  /* Writes are usually posted, so they take 1 cycle.  Reads
+     from DMEM usually take 3 cycles.
+     See TI document SPRACE8A, Device-Specific PRU Read Latency Values.  */
+  if (speed && get_attr_type (insn) == TYPE_LD)
+    cost += COSTS_N_INSNS (2);
+
+  return cost;
 }
 
 static GTY(()) rtx eqdf_libfunc;
@@ -891,6 +928,27 @@ pru_init_libfuncs (void)
   set_optab_libfunc (udivmod_optab, DImode, "__pruabi_divremull");
 }
 
+/* Given a comparison CODE, return a similar comparison but without
+   the "equals" condition.  In other words, it strips GE/GEU/LE/LEU
+   and instead returns GT/GTU/LT/LTU.  */
+
+enum rtx_code
+pru_noteq_condition (enum rtx_code code)
+{
+  switch (code)
+    {
+    case GT: return GT;
+    case GTU: return GTU;
+    case GE: return GT;
+    case GEU: return GTU;
+    case LT: return LT;
+    case LTU: return LTU;
+    case LE: return LT;
+    case LEU: return LTU;
+    default:
+      gcc_unreachable ();
+    }
+}
 
 /* Emit comparison instruction if necessary, returning the expression
    that holds the compare result in the proper mode.  Return the comparison
@@ -970,39 +1028,55 @@ sign_bit_position (const rtx op)
   return sz * 8 - 1;
 }
 
-/* Output asm code for sign_extend operation.  */
-const char *
-pru_output_sign_extend (rtx *operands)
-{
-  static char buf[512];
-  int bufi;
-  const int dst_sz = GET_MODE_SIZE (GET_MODE (operands[0]));
-  const int src_sz = GET_MODE_SIZE (GET_MODE (operands[1]));
-  char ext_start;
+/* Parse the given CVAL integer value, and extract the "filling" byte
+   range of consecutive 0xff byte values.  Rest of bytes must be 0x00.
+   There must be only one range in the given value.  This range would
+   typically be used to calculate the parameters of
+   PRU instructions ZERO and FILL.
 
-  switch (src_sz)
+   The parameter MODE determines the maximum byte range to consider
+   in the given input constant.
+
+   Example input:
+     cval = 0xffffffffffffff00 = -256
+     mode = SImode
+   Return value:
+     start = 1
+     nbytes = 3
+
+   On error, return a range with -1 for START and NBYTES.  */
+pru_byterange
+pru_calc_byterange (HOST_WIDE_INT cval, machine_mode mode)
+{
+  const pru_byterange invalid_range = { -1, -1 };
+  pru_byterange r = invalid_range;
+  enum { ST_FFS, ST_INRANGE, ST_TRAILING_ZEROS } st = ST_FFS;
+  int i;
+
+  for (i = 0; i < GET_MODE_SIZE (mode); i++)
     {
-    case 1: ext_start = 'y'; break;
-    case 2: ext_start = 'z'; break;
-    default: gcc_unreachable ();
+      const int b = cval & ((1U << BITS_PER_UNIT) - 1);
+      cval >>= BITS_PER_UNIT;
+
+      if (b == 0x00 && (st == ST_FFS || st == ST_TRAILING_ZEROS))
+	/* No action.  */;
+      else if (b == 0x00 && st == ST_INRANGE)
+	st = ST_TRAILING_ZEROS;
+      else if (b == 0xff && st == ST_FFS)
+	{
+	  st = ST_INRANGE;
+	  r.start = i;
+	  r.nbytes = 1;
+	}
+      else if (b == 0xff && st == ST_INRANGE)
+	r.nbytes++;
+      else
+	return invalid_range;
     }
 
-  gcc_assert (dst_sz > src_sz);
-
-  /* Note that src and dst can be different parts of the same
-     register, e.g. "r7, r7.w1".  */
-  bufi = snprintf (buf, sizeof (buf),
-	  "mov\t%%0, %%1\n\t"		      /* Copy AND make positive.  */
-	  "qbbc\t.+8, %%0, %d\n\t"	      /* Check sign bit.  */
-	  "fill\t%%%c0, %d",		      /* Make negative.  */
-	  sign_bit_position (operands[1]),
-	  ext_start,
-	  dst_sz - src_sz);
-
-  gcc_assert (bufi > 0);
-  gcc_assert ((unsigned int) bufi < sizeof (buf));
-
-  return buf;
+  if (st != ST_TRAILING_ZEROS && st != ST_INRANGE)
+    return invalid_range;
+  return r;
 }
 
 /* Branches and compares.  */
@@ -1425,7 +1499,8 @@ int pru_symref2ioregno (rtx op)
 /* Implement TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P.  */
 static bool
 pru_addr_space_legitimate_address_p (machine_mode mode, rtx operand,
-				     bool strict_p, addr_space_t as)
+				     bool strict_p, addr_space_t as,
+				     code_helper = ERROR_MARK)
 {
   if (as == ADDR_SPACE_REGIO)
     {
@@ -1619,8 +1694,6 @@ pru_asm_regname (rtx op)
      V: print exact_log2 () of negated const_int operands.
      w: Lower 32-bits of a const_int operand.
      W: Upper 32-bits of a const_int operand.
-     y: print the next 8-bit register (regardless of op size).
-     z: print the second next 8-bit register (regardless of op size).
 */
 static void
 pru_print_operand (FILE *file, rtx op, int letter)
@@ -1691,26 +1764,6 @@ pru_print_operand (FILE *file, rtx op, int letter)
 	      return;
 	    }
 	  fprintf (file, "r%d", REGNO (op) / 4 + (letter == 'N' ? 1 : 0));
-	  return;
-	}
-      else if (letter == 'y')
-	{
-	  if (REGNO (op) > LAST_NONIO_GP_REGNUM - 1)
-	    {
-	      output_operand_lossage ("invalid operand for '%%%c'", letter);
-	      return;
-	    }
-	  fprintf (file, "%s", reg_names[REGNO (op) + 1]);
-	  return;
-	}
-      else if (letter == 'z')
-	{
-	  if (REGNO (op) > LAST_NONIO_GP_REGNUM - 2)
-	    {
-	      output_operand_lossage ("invalid operand for '%%%c'", letter);
-	      return;
-	    }
-	  fprintf (file, "%s", reg_names[REGNO (op) + 2]);
 	  return;
 	}
       break;
@@ -3154,6 +3207,9 @@ pru_unwind_word_mode (void)
 
 #undef TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS pru_rtx_costs
+
+#undef TARGET_INSN_COST
+#define TARGET_INSN_COST pru_insn_cost
 
 #undef TARGET_PRINT_OPERAND
 #define TARGET_PRINT_OPERAND pru_print_operand

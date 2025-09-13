@@ -1,5 +1,5 @@
 /* UndefinedBehaviorSanitizer, undefined behavior detector.
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
    Contributed by Marek Polacek <polacek@redhat.com>
 
 This file is part of GCC.
@@ -39,7 +39,8 @@ enum ubsan_null_ckind {
 enum ubsan_print_style {
   UBSAN_PRINT_NORMAL,
   UBSAN_PRINT_POINTER,
-  UBSAN_PRINT_ARRAY
+  UBSAN_PRINT_ARRAY,
+  UBSAN_PRINT_FORCE_INT
 };
 
 /* This controls ubsan_encode_value behavior.  */
@@ -65,5 +66,6 @@ extern tree ubsan_build_overflow_builtin (tree_code, location_t, tree, tree,
 					  tree, tree *);
 extern tree ubsan_instrument_float_cast (location_t, tree, tree);
 extern tree ubsan_get_source_location_type (void);
+extern tree sanitize_unreachable_fn (tree *data, location_t loc);
 
 #endif  /* GCC_UBSAN_H  */

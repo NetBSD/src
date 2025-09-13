@@ -1,5 +1,5 @@
 /* Code for GIMPLE range related routines.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
    and Aldy Hernandez <aldyh@redhat.com>.
 
@@ -29,6 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "ssa.h"
 #include "gimple-pretty-print.h"
 #include "optabs-tree.h"
+#include "gimple-iterator.h"
 #include "gimple-fold.h"
 #include "wide-int.h"
 #include "fold-const.h"
@@ -41,25 +42,30 @@ along with GCC; see the file COPYING3.  If not see
 #include "vr-values.h"
 #include "range.h"
 #include "value-query.h"
-#include "range-op.h"
+#include "gimple-range-op.h"
 #include "gimple-range.h"
+#include "cgraph.h"
+#include "alloc-pool.h"
+#include "symbol-summary.h"
+#include "ipa-utils.h"
+#include "sreal.h"
+#include "ipa-cp.h"
+#include "ipa-prop.h"
 // Construct a fur_source, and set the m_query field.
 
 fur_source::fur_source (range_query *q)
 {
   if (q)
     m_query = q;
-  else if (cfun)
-    m_query = get_range_query (cfun);
   else
-    m_query = get_global_range_query ();
+    m_query = get_range_query (cfun);
   m_gori = NULL;
 }
 
 // Invoke range_of_expr on EXPR.
 
 bool
-fur_source::get_operand (irange &r, tree expr)
+fur_source::get_operand (vrange &r, tree expr)
 {
   return m_query->range_of_expr (r, expr);
 }
@@ -68,7 +74,7 @@ fur_source::get_operand (irange &r, tree expr)
 // range_query to get the range on the edge.
 
 bool
-fur_source::get_phi_operand (irange &r, tree expr, edge e)
+fur_source::get_phi_operand (vrange &r, tree expr, edge e)
 {
   return m_query->range_on_edge (r, e, expr);
 }
@@ -79,7 +85,7 @@ relation_kind
 fur_source::query_relation (tree op1 ATTRIBUTE_UNUSED,
 			    tree op2 ATTRIBUTE_UNUSED)
 {
-  return VREL_NONE;
+  return VREL_VARYING;
 }
 
 // Default registers nothing.
@@ -102,30 +108,10 @@ fur_source::register_relation (edge e ATTRIBUTE_UNUSED,
 {
 }
 
-// This version of fur_source will pick a range up off an edge.
-
-class fur_edge : public fur_source
-{
-public:
-  fur_edge (edge e, range_query *q = NULL);
-  virtual bool get_operand (irange &r, tree expr) OVERRIDE;
-  virtual bool get_phi_operand (irange &r, tree expr, edge e) OVERRIDE;
-private:
-  edge m_edge;
-};
-
-// Instantiate an edge based fur_source.
-
-inline
-fur_edge::fur_edge (edge e, range_query *q) : fur_source (q)
-{
-  m_edge = e;
-}
-
 // Get the value of EXPR on edge m_edge.
 
 bool
-fur_edge::get_operand (irange &r, tree expr)
+fur_edge::get_operand (vrange &r, tree expr)
 {
   return m_query->range_on_edge (r, m_edge, expr);
 }
@@ -134,9 +120,9 @@ fur_edge::get_operand (irange &r, tree expr)
 // range_query to get the range on the edge.
 
 bool
-fur_edge::get_phi_operand (irange &r, tree expr, edge e)
+fur_edge::get_phi_operand (vrange &r, tree expr, edge e)
 {
-  // Edge to edge recalculations not supoprted yet, until we sort it out.
+  // Edge to edge recalculations not supported yet, until we sort it out.
   gcc_checking_assert (e == m_edge);
   return m_query->range_on_edge (r, e, expr);
 }
@@ -148,10 +134,10 @@ fur_stmt::fur_stmt (gimple *s, range_query *q) : fur_source (q)
   m_stmt = s;
 }
 
-// Retreive range of EXPR as it occurs as a use on stmt M_STMT.
+// Retrieve range of EXPR as it occurs as a use on stmt M_STMT.
 
 bool
-fur_stmt::get_operand (irange &r, tree expr)
+fur_stmt::get_operand (vrange &r, tree expr)
 {
   return m_query->range_of_expr (r, expr, m_stmt);
 }
@@ -160,7 +146,7 @@ fur_stmt::get_operand (irange &r, tree expr)
 // range_query to get the range on the edge.
 
 bool
-fur_stmt::get_phi_operand (irange &r, tree expr, edge e)
+fur_stmt::get_phi_operand (vrange &r, tree expr, edge e)
 {
   // Pick up the range of expr from edge E.
   fur_edge e_src (e, m_query);
@@ -213,42 +199,43 @@ fur_depend::register_relation (edge e, relation_kind k, tree op1, tree op2)
 class fur_list : public fur_source
 {
 public:
-  fur_list (irange &r1);
-  fur_list (irange &r1, irange &r2);
-  fur_list (unsigned num, irange *list);
-  virtual bool get_operand (irange &r, tree expr) OVERRIDE;
-  virtual bool get_phi_operand (irange &r, tree expr, edge e) OVERRIDE;
+  fur_list (vrange &r1, range_query *q = NULL);
+  fur_list (vrange &r1, vrange &r2, range_query *q = NULL);
+  fur_list (unsigned num, vrange **list, range_query *q = NULL);
+  virtual bool get_operand (vrange &r, tree expr) override;
+  virtual bool get_phi_operand (vrange &r, tree expr, edge e) override;
 private:
-  int_range_max m_local[2];
-  irange *m_list;
+  vrange *m_local[2];
+  vrange **m_list;
   unsigned m_index;
   unsigned m_limit;
 };
 
 // One range supplied for unary operations.
 
-fur_list::fur_list (irange &r1) : fur_source (NULL)
+fur_list::fur_list (vrange &r1, range_query *q) : fur_source (q)
 {
   m_list = m_local;
   m_index = 0;
   m_limit = 1;
-  m_local[0] = r1;
+  m_local[0] = &r1;
 }
 
 // Two ranges supplied for binary operations.
 
-fur_list::fur_list (irange &r1, irange &r2) : fur_source (NULL)
+fur_list::fur_list (vrange &r1, vrange &r2, range_query *q) : fur_source (q)
 {
   m_list = m_local;
   m_index = 0;
   m_limit = 2;
-  m_local[0] = r1;
-  m_local[1] = r2;
+  m_local[0] = &r1;
+  m_local[1] = &r2;
 }
 
 // Arbitrary number of ranges in a vector.
 
-fur_list::fur_list (unsigned num, irange *list) : fur_source (NULL)
+fur_list::fur_list (unsigned num, vrange **list, range_query *q)
+  : fur_source (q)
 {
   m_list = list;
   m_index = 0;
@@ -258,18 +245,19 @@ fur_list::fur_list (unsigned num, irange *list) : fur_source (NULL)
 // Get the next operand from the vector, ensure types are compatible.
 
 bool
-fur_list::get_operand (irange &r, tree expr)
+fur_list::get_operand (vrange &r, tree expr)
 {
-  if (m_index >= m_limit)
+  // Do not use the vector for non-ssa-names, or if it has been emptied.
+  if (TREE_CODE (expr) != SSA_NAME || m_index >= m_limit)
     return m_query->range_of_expr (r, expr);
-  r = m_list[m_index++];
+  r = *m_list[m_index++];
   gcc_checking_assert (range_compatible_p (TREE_TYPE (expr), r.type ()));
   return true;
 }
 
 // This will simply pick the next operand from the vector.
 bool
-fur_list::get_phi_operand (irange &r, tree expr, edge e ATTRIBUTE_UNUSED)
+fur_list::get_phi_operand (vrange &r, tree expr, edge e ATTRIBUTE_UNUSED)
 {
   return get_operand (r, expr);
 }
@@ -277,20 +265,20 @@ fur_list::get_phi_operand (irange &r, tree expr, edge e ATTRIBUTE_UNUSED)
 // Fold stmt S into range R using R1 as the first operand.
 
 bool
-fold_range (irange &r, gimple *s, irange &r1)
+fold_range (vrange &r, gimple *s, vrange &r1, range_query *q)
 {
   fold_using_range f;
-  fur_list src (r1);
+  fur_list src (r1, q);
   return f.fold_stmt (r, s, src);
 }
 
 // Fold stmt S into range R using R1  and R2 as the first two operands.
 
 bool
-fold_range (irange &r, gimple *s, irange &r1, irange &r2)
+fold_range (vrange &r, gimple *s, vrange &r1, vrange &r2, range_query *q)
 {
   fold_using_range f;
-  fur_list src (r1, r2);
+  fur_list src (r1, r2, q);
   return f.fold_stmt (r, s, src);
 }
 
@@ -298,17 +286,18 @@ fold_range (irange &r, gimple *s, irange &r1, irange &r2)
 // operands encountered.
 
 bool
-fold_range (irange &r, gimple *s, unsigned num_elements, irange *vector)
+fold_range (vrange &r, gimple *s, unsigned num_elements, vrange **vector,
+	    range_query *q)
 {
   fold_using_range f;
-  fur_list src (num_elements, vector);
+  fur_list src (num_elements, vector, q);
   return f.fold_stmt (r, s, src);
 }
 
 // Fold stmt S into range R using range query Q.
 
 bool
-fold_range (irange &r, gimple *s, range_query *q)
+fold_range (vrange &r, gimple *s, range_query *q)
 {
   fold_using_range f;
   fur_stmt src (s, q);
@@ -318,11 +307,113 @@ fold_range (irange &r, gimple *s, range_query *q)
 // Recalculate stmt S into R using range query Q as if it were on edge ON_EDGE.
 
 bool
-fold_range (irange &r, gimple *s, edge on_edge, range_query *q)
+fold_range (vrange &r, gimple *s, edge on_edge, range_query *q)
 {
   fold_using_range f;
   fur_edge src (on_edge, q);
   return f.fold_stmt (r, s, src);
+}
+
+// Provide a fur_source which can be used to determine any relations on
+// a statement.  It manages the callback from fold_using_ranges to determine
+// a relation_trio for a statement.
+
+class fur_relation : public fur_stmt
+{
+public:
+  fur_relation (gimple *s, range_query *q = NULL);
+  virtual void register_relation (gimple *stmt, relation_kind k, tree op1,
+				  tree op2);
+  virtual void register_relation (edge e, relation_kind k, tree op1,
+				  tree op2);
+  relation_trio trio() const;
+private:
+  relation_kind def_op1, def_op2, op1_op2;
+};
+
+fur_relation::fur_relation (gimple *s, range_query *q) : fur_stmt (s, q)
+{
+  def_op1 = def_op2 = op1_op2 = VREL_VARYING;
+}
+
+// Construct a trio from what is known.
+
+relation_trio
+fur_relation::trio () const
+{
+  return relation_trio (def_op1, def_op2, op1_op2);
+}
+
+// Don't support edges, but avoid a compiler warning by providing the routine.
+
+void
+fur_relation::register_relation (edge, relation_kind, tree, tree)
+{
+}
+
+// Register relation K between OP1 and OP2 on STMT.
+
+void
+fur_relation::register_relation (gimple *stmt, relation_kind k, tree op1,
+				 tree op2)
+{
+  tree lhs = gimple_get_lhs (stmt);
+  tree a1 = NULL_TREE;
+  tree a2 = NULL_TREE;
+  switch (gimple_code (stmt))
+    {
+      case GIMPLE_COND:
+	a1 = gimple_cond_lhs (stmt);
+	a2 = gimple_cond_rhs (stmt);
+	break;
+      case GIMPLE_ASSIGN:
+	a1 = gimple_assign_rhs1 (stmt);
+	if (gimple_num_ops (stmt) >= 3)
+	  a2 = gimple_assign_rhs2 (stmt);
+	break;
+      default:
+	break;
+    }
+  // STMT is of the form LHS = A1 op A2, now map the relation to these
+  // operands, if possible.
+  if (op1 == lhs)
+    {
+      if (op2 == a1)
+	def_op1 = k;
+      else if (op2 == a2)
+	def_op2 = k;
+    }
+  else if (op2 == lhs)
+    {
+      if (op1 == a1)
+	def_op1 = relation_swap (k);
+      else if (op1 == a2)
+	def_op2 = relation_swap (k);
+    }
+  else
+    {
+      if (op1 == a1 && op2 == a2)
+	op1_op2 = k;
+      else if (op2 == a1 && op1 == a2)
+	op1_op2 = relation_swap (k);
+    }
+}
+
+// Return the relation trio for stmt S using query Q.
+
+relation_trio
+fold_relations (gimple *s, range_query *q)
+{
+  fold_using_range f;
+  fur_relation src (s, q);
+  tree lhs = gimple_range_ssa_p (gimple_get_lhs (s));
+  if (lhs)
+    {
+      Value_Range vr(TREE_TYPE (lhs));
+      if (f.fold_stmt (vr, s, src))
+	return src.trio ();
+    }
+  return TRIO_VARYING;
 }
 
 // -------------------------------------------------------------------------
@@ -359,17 +450,17 @@ adjust_pointer_diff_expr (irange &res, const gimple *diff_stmt)
       && vrp_operand_equal_p (op1, gimple_call_arg (call, 0))
       && integer_zerop (gimple_call_arg (call, 1)))
     {
-      tree max = vrp_val_max (ptrdiff_type_node);
-      unsigned prec = TYPE_PRECISION (TREE_TYPE (max));
-      wide_int wmaxm1 = wi::to_wide (max, prec) - 1;
-      res.intersect (wi::zero (prec), wmaxm1);
+      wide_int maxm1 = irange_val_max (ptrdiff_type_node) - 1;
+      res.intersect (int_range<2> (ptrdiff_type_node,
+				   wi::zero (TYPE_PRECISION (ptrdiff_type_node)),
+				   maxm1));
     }
 }
 
 // Adjust the range for an IMAGPART_EXPR.
 
 static void
-adjust_imagpart_expr (irange &res, const gimple *stmt)
+adjust_imagpart_expr (vrange &res, const gimple *stmt)
 {
   tree name = TREE_OPERAND (gimple_assign_rhs1 (stmt), 0);
 
@@ -384,6 +475,8 @@ adjust_imagpart_expr (irange &res, const gimple *stmt)
 	case IFN_ADD_OVERFLOW:
 	case IFN_SUB_OVERFLOW:
 	case IFN_MUL_OVERFLOW:
+	case IFN_UADDC:
+	case IFN_USUBC:
 	case IFN_ATOMIC_COMPARE_EXCHANGE:
 	  {
 	    int_range<2> r;
@@ -401,10 +494,12 @@ adjust_imagpart_expr (irange &res, const gimple *stmt)
       && gimple_assign_rhs_code (def_stmt) == COMPLEX_CST)
     {
       tree cst = gimple_assign_rhs1 (def_stmt);
-      if (TREE_CODE (cst) == COMPLEX_CST)
+      if (TREE_CODE (cst) == COMPLEX_CST
+	  && TREE_CODE (TREE_TYPE (TREE_TYPE (cst))) == INTEGER_TYPE)
 	{
-	  wide_int imag = wi::to_wide (TREE_IMAGPART (cst));
-	  res.intersect (imag, imag);
+	  wide_int w = wi::to_wide (TREE_IMAGPART (cst));
+	  int_range<1> imag (TREE_TYPE (TREE_IMAGPART (cst)), w, w);
+	  res.intersect (imag);
 	}
     }
 }
@@ -412,7 +507,7 @@ adjust_imagpart_expr (irange &res, const gimple *stmt)
 // Adjust the range for a REALPART_EXPR.
 
 static void
-adjust_realpart_expr (irange &res, const gimple *stmt)
+adjust_realpart_expr (vrange &res, const gimple *stmt)
 {
   tree name = TREE_OPERAND (gimple_assign_rhs1 (stmt), 0);
 
@@ -427,26 +522,27 @@ adjust_realpart_expr (irange &res, const gimple *stmt)
       && gimple_assign_rhs_code (def_stmt) == COMPLEX_CST)
     {
       tree cst = gimple_assign_rhs1 (def_stmt);
-      if (TREE_CODE (cst) == COMPLEX_CST)
+      if (TREE_CODE (cst) == COMPLEX_CST
+	  && TREE_CODE (TREE_TYPE (TREE_TYPE (cst))) == INTEGER_TYPE)
 	{
-	  tree imag = TREE_REALPART (cst);
-	  int_range<2> tmp (imag, imag);
+	  wide_int imag = wi::to_wide (TREE_REALPART (cst));
+	  int_range<2> tmp (TREE_TYPE (TREE_REALPART (cst)), imag, imag);
 	  res.intersect (tmp);
 	}
     }
 }
 
 // This function looks for situations when walking the use/def chains
-// may provide additonal contextual range information not exposed on
+// may provide additional contextual range information not exposed on
 // this statement.
 
 static void
-gimple_range_adjustment (irange &res, const gimple *stmt)
+gimple_range_adjustment (vrange &res, const gimple *stmt)
 {
   switch (gimple_expr_code (stmt))
     {
     case POINTER_DIFF_EXPR:
-      adjust_pointer_diff_expr (res, stmt);
+      adjust_pointer_diff_expr (as_a <irange> (res), stmt);
       return;
 
     case IMAGPART_EXPR:
@@ -462,80 +558,13 @@ gimple_range_adjustment (irange &res, const gimple *stmt)
     }
 }
 
-// Return the base of the RHS of an assignment.
-
-static tree
-gimple_range_base_of_assignment (const gimple *stmt)
-{
-  gcc_checking_assert (gimple_code (stmt) == GIMPLE_ASSIGN);
-  tree op1 = gimple_assign_rhs1 (stmt);
-  if (gimple_assign_rhs_code (stmt) == ADDR_EXPR)
-    return get_base_address (TREE_OPERAND (op1, 0));
-  return op1;
-}
-
-// Return the first operand of this statement if it is a valid operand
-// supported by ranges, otherwise return NULL_TREE.  Special case is
-// &(SSA_NAME expr), return the SSA_NAME instead of the ADDR expr.
-
-tree
-gimple_range_operand1 (const gimple *stmt)
-{
-  gcc_checking_assert (gimple_range_handler (stmt));
-
-  switch (gimple_code (stmt))
-    {
-      case GIMPLE_COND:
-	return gimple_cond_lhs (stmt);
-      case GIMPLE_ASSIGN:
-	{
-	  tree base = gimple_range_base_of_assignment (stmt);
-	  if (base && TREE_CODE (base) == MEM_REF)
-	    {
-	      // If the base address is an SSA_NAME, we return it
-	      // here.  This allows processing of the range of that
-	      // name, while the rest of the expression is simply
-	      // ignored.  The code in range_ops will see the
-	      // ADDR_EXPR and do the right thing.
-	      tree ssa = TREE_OPERAND (base, 0);
-	      if (TREE_CODE (ssa) == SSA_NAME)
-		return ssa;
-	    }
-	  return base;
-	}
-      default:
-	break;
-    }
-  return NULL;
-}
-
-// Return the second operand of statement STMT, otherwise return NULL_TREE.
-
-tree
-gimple_range_operand2 (const gimple *stmt)
-{
-  gcc_checking_assert (gimple_range_handler (stmt));
-
-  switch (gimple_code (stmt))
-    {
-    case GIMPLE_COND:
-      return gimple_cond_rhs (stmt);
-    case GIMPLE_ASSIGN:
-      if (gimple_num_ops (stmt) >= 3)
-	return gimple_assign_rhs2 (stmt);
-    default:
-      break;
-    }
-  return NULL_TREE;
-}
-
 // Calculate a range for statement S and return it in R. If NAME is provided it
 // represents the SSA_NAME on the LHS of the statement. It is only required
 // if there is more than one lhs/output.  If a range cannot
 // be calculated, return false.
 
 bool
-fold_using_range::fold_stmt (irange &r, gimple *s, fur_source &src, tree name)
+fold_using_range::fold_stmt (vrange &r, gimple *s, fur_source &src, tree name)
 {
   bool res = false;
   // If name and S are specified, make sure it is an LHS of S.
@@ -548,10 +577,11 @@ fold_using_range::fold_stmt (irange &r, gimple *s, fur_source &src, tree name)
   // Process addresses.
   if (gimple_code (s) == GIMPLE_ASSIGN
       && gimple_assign_rhs_code (s) == ADDR_EXPR)
-    return range_of_address (r, s, src);
+    return range_of_address (as_a <irange> (r), s, src);
 
-  if (gimple_range_handler (s))
-    res = range_of_range_op (r, s, src);
+  gimple_range_op_handler handler (s);
+  if (handler)
+    res = range_of_range_op (r, handler, src);
   else if (is_a<gphi *>(s))
     res = range_of_phi (r, as_a<gphi *> (s), src);
   else if (is_a<gcall *>(s))
@@ -559,13 +589,21 @@ fold_using_range::fold_stmt (irange &r, gimple *s, fur_source &src, tree name)
   else if (is_a<gassign *> (s) && gimple_assign_rhs_code (s) == COND_EXPR)
     res = range_of_cond_expr (r, as_a<gassign *> (s), src);
 
+  // If the result is varying, check for basic nonnegativeness.
+  // Specifically this helps for now with strict enum in cases like
+  // g++.dg/warn/pr33738.C.
+  bool so_p;
+  if (res && r.varying_p () && INTEGRAL_TYPE_P (r.type ())
+      && gimple_stmt_nonnegative_warnv_p (s, &so_p))
+    r.set_nonnegative (r.type ());
+
   if (!res)
     {
       // If no name specified or range is unsupported, bail.
       if (!name || !gimple_range_ssa_p (name))
 	return false;
       // We don't understand the stmt, so return the global range.
-      r = gimple_range_global (name);
+      gimple_range_global (r, name);
       return true;
     }
 
@@ -586,40 +624,55 @@ fold_using_range::fold_stmt (irange &r, gimple *s, fur_source &src, tree name)
 // If a range cannot be calculated, return false.
 
 bool
-fold_using_range::range_of_range_op (irange &r, gimple *s, fur_source &src)
+fold_using_range::range_of_range_op (vrange &r,
+				     gimple_range_op_handler &handler,
+				     fur_source &src)
 {
-  int_range_max range1, range2;
+  gcc_checking_assert (handler);
+  gimple *s = handler.stmt ();
   tree type = gimple_range_type (s);
   if (!type)
     return false;
-  range_operator *handler = gimple_range_handler (s);
-  gcc_checking_assert (handler);
 
-  tree lhs = gimple_get_lhs (s);
-  tree op1 = gimple_range_operand1 (s);
-  tree op2 = gimple_range_operand2 (s);
+  tree lhs = handler.lhs ();
+  tree op1 = handler.operand1 ();
+  tree op2 = handler.operand2 ();
+
+  // Certain types of builtin functions may have no arguments.
+  if (!op1)
+    {
+      Value_Range r1 (type);
+      if (!handler.fold_range (r, type, r1, r1))
+	r.set_varying (type);
+      return true;
+    }
+
+  Value_Range range1 (TREE_TYPE (op1));
+  Value_Range range2 (op2 ? TREE_TYPE (op2) : TREE_TYPE (op1));
 
   if (src.get_operand (range1, op1))
     {
       if (!op2)
 	{
 	  // Fold range, and register any dependency if available.
-	  int_range<2> r2 (type);
-	  handler->fold_range (r, type, range1, r2);
+	  Value_Range r2 (type);
+	  r2.set_varying (type);
+	  if (!handler.fold_range (r, type, range1, r2))
+	    r.set_varying (type);
 	  if (lhs && gimple_range_ssa_p (op1))
 	    {
 	      if (src.gori ())
 		src.gori ()->register_dependency (lhs, op1);
 	      relation_kind rel;
-	      rel = handler->lhs_op1_relation (r, range1, range1);
-	      if (rel != VREL_NONE)
+	      rel = handler.lhs_op1_relation (r, range1, range1);
+	      if (rel != VREL_VARYING)
 		src.register_relation (s, rel, lhs, op1);
 	    }
 	}
       else if (src.get_operand (range2, op2))
 	{
 	  relation_kind rel = src.query_relation (op1, op2);
-	  if (dump_file && (dump_flags & TDF_DETAILS) && rel != VREL_NONE)
+	  if (dump_file && (dump_flags & TDF_DETAILS) && rel != VREL_VARYING)
 	    {
 	      fprintf (dump_file, " folding with relation ");
 	      print_generic_expr (dump_file, op1, TDF_SLIM);
@@ -628,8 +681,11 @@ fold_using_range::range_of_range_op (irange &r, gimple *s, fur_source &src)
 	      fputc ('\n', dump_file);
 	    }
 	  // Fold range, and register any dependency if available.
-	  handler->fold_range (r, type, range1, range2, rel);
-	  relation_fold_and_or (r, s, src);
+	  if (!handler.fold_range (r, type, range1, range2,
+				   relation_trio::op1_op2 (rel)))
+	    r.set_varying (type);
+	  if (irange::supports_p (type))
+	    relation_fold_and_or (as_a <irange> (r), s, src, range1, range2);
 	  if (lhs)
 	    {
 	      if (src.gori ())
@@ -639,14 +695,14 @@ fold_using_range::range_of_range_op (irange &r, gimple *s, fur_source &src)
 		}
 	      if (gimple_range_ssa_p (op1))
 		{
-		  rel = handler->lhs_op1_relation (r, range1, range2);
-		  if (rel != VREL_NONE)
+		  rel = handler.lhs_op1_relation (r, range1, range2, rel);
+		  if (rel != VREL_VARYING)
 		    src.register_relation (s, rel, lhs, op1);
 		}
 	      if (gimple_range_ssa_p (op2))
 		{
-		  rel= handler->lhs_op2_relation (r, range1, range2);
-		  if (rel != VREL_NONE)
+		  rel = handler.lhs_op2_relation (r, range1, range2, rel);
+		  if (rel != VREL_VARYING)
 		    src.register_relation (s, rel, lhs, op2);
 		}
 	    }
@@ -662,7 +718,8 @@ fold_using_range::range_of_range_op (irange &r, gimple *s, fur_source &src)
 		e0 = NULL;
 	      if (!single_pred_p (e1->dest))
 		e1 = NULL;
-	      src.register_outgoing_edges (as_a<gcond *> (s), r, e0, e1);
+	      src.register_outgoing_edges (as_a<gcond *> (s),
+					   as_a <irange> (r), e0, e1);
 	    }
 	}
       else
@@ -704,7 +761,6 @@ fold_using_range::range_of_address (irange &r, gimple *stmt, fur_source &src)
       tree lhs = gimple_get_lhs (stmt);
       if (lhs && gimple_range_ssa_p (ssa) && src.gori ())
 	src.gori ()->register_dependency (lhs, ssa);
-      gcc_checking_assert (irange::supports_type_p (TREE_TYPE (ssa)));
       src.get_operand (r, ssa);
       range_cast (r, TREE_TYPE (gimple_assign_rhs1 (stmt)));
 
@@ -728,12 +784,13 @@ fold_using_range::range_of_address (irange &r, gimple *stmt, fur_source &src)
 	{
 	  /* For -fdelete-null-pointer-checks -fno-wrapv-pointer we don't
 	     allow going from non-NULL pointer to NULL.  */
-	  if (!range_includes_zero_p (&r))
+	  if (r.undefined_p ()
+	      || !r.contains_p (wi::zero (TYPE_PRECISION (TREE_TYPE (expr)))))
 	    {
 	      /* We could here instead adjust r by off >> LOG2_BITS_PER_UNIT
 		 using POINTER_PLUS_EXPR if off_cst and just fall back to
 		 this.  */
-	      r = range_nonzero (TREE_TYPE (gimple_assign_rhs1 (stmt)));
+	      r.set_nonzero (TREE_TYPE (gimple_assign_rhs1 (stmt)));
 	      return true;
 	    }
 	}
@@ -745,22 +802,22 @@ fold_using_range::range_of_address (irange &r, gimple *stmt, fur_source &src)
 	  && known_ne (off, 0)
 	  && (flag_delete_null_pointer_checks || known_gt (off, 0)))
 	{
-	  r = range_nonzero (TREE_TYPE (gimple_assign_rhs1 (stmt)));
+	  r.set_nonzero (TREE_TYPE (gimple_assign_rhs1 (stmt)));
 	  return true;
 	}
-      r = int_range<2> (TREE_TYPE (gimple_assign_rhs1 (stmt)));
+      r.set_varying (TREE_TYPE (gimple_assign_rhs1 (stmt)));
       return true;
     }
 
   // Handle "= &a".
   if (tree_single_nonzero_warnv_p (expr, &strict_overflow_p))
     {
-      r = range_nonzero (TREE_TYPE (gimple_assign_rhs1 (stmt)));
+      r.set_nonzero (TREE_TYPE (gimple_assign_rhs1 (stmt)));
       return true;
     }
 
   // Otherwise return varying.
-  r = int_range<2> (TREE_TYPE (gimple_assign_rhs1 (stmt)));
+  r.set_varying (TREE_TYPE (gimple_assign_rhs1 (stmt)));
   return true;
 }
 
@@ -768,12 +825,12 @@ fold_using_range::range_of_address (irange &r, gimple *stmt, fur_source &src)
 // If a range cannot be calculated, return false.
 
 bool
-fold_using_range::range_of_phi (irange &r, gphi *phi, fur_source &src)
+fold_using_range::range_of_phi (vrange &r, gphi *phi, fur_source &src)
 {
   tree phi_def = gimple_phi_result (phi);
   tree type = gimple_range_type (phi);
-  int_range_max arg_range;
-  int_range_max equiv_range;
+  Value_Range arg_range (type);
+  Value_Range equiv_range (type);
   unsigned x;
 
   if (!type)
@@ -803,64 +860,110 @@ fold_using_range::range_of_phi (irange &r, gphi *phi, fur_source &src)
 	  // Likewise, if the incoming PHI argument is equivalent to this
 	  // PHI definition, it provides no new info.  Accumulate these ranges
 	  // in case all arguments are equivalences.
-	  if (src.query ()->query_relation (e, arg, phi_def, false) == EQ_EXPR)
+	  if (src.query ()->query_relation (e, arg, phi_def, false) == VREL_EQ)
 	    equiv_range.union_(arg_range);
 	  else
 	    r.union_ (arg_range);
 
 	  if (gimple_range_ssa_p (arg) && src.gori ())
 	    src.gori ()->register_dependency (phi_def, arg);
-
-	  // Track if all arguments are the same.
-	  if (!seen_arg)
-	    {
-	      seen_arg = true;
-	      single_arg = arg;
-	    }
-	  else if (single_arg != arg)
-	    single_arg = NULL_TREE;
 	}
+
+      // Track if all arguments are the same.
+      if (!seen_arg)
+	{
+	  seen_arg = true;
+	  single_arg = arg;
+	}
+      else if (single_arg != arg)
+	single_arg = NULL_TREE;
 
       // Once the value reaches varying, stop looking.
       if (r.varying_p () && single_arg == NULL_TREE)
 	break;
     }
 
-    // If all arguments were equivalences, use the equivalence ranges as no
-    // arguments were processed.
-    if (r.undefined_p () && !equiv_range.undefined_p ())
-      r = equiv_range;
+  // If all arguments were equivalences, use the equivalence ranges as no
+  // arguments were processed.
+  if (r.undefined_p () && !equiv_range.undefined_p ())
+    r = equiv_range;
 
-    // If the PHI boils down to a single effective argument, look at it.
-    if (single_arg)
-      {
-	// Symbolic arguments are equivalences.
-	if (gimple_range_ssa_p (single_arg))
-	  src.register_relation (phi, EQ_EXPR, phi_def, single_arg);
-	else if (src.get_operand (arg_range, single_arg)
-		 && arg_range.singleton_p ())
-	  {
-	    // Numerical arguments that are a constant can be returned as
-	    // the constant. This can help fold later cases where even this
-	    // constant might have been UNDEFINED via an unreachable edge.
-	    r = arg_range;
-	    return true;
-	  }
-      }
-
-  // If SCEV is available, query if this PHI has any knonwn values.
-  if (scev_initialized_p () && !POINTER_TYPE_P (TREE_TYPE (phi_def)))
+  // If the PHI boils down to a single effective argument, look at it.
+  if (single_arg)
     {
-      value_range loop_range;
+      // Symbolic arguments can be equivalences.
+      if (gimple_range_ssa_p (single_arg))
+	{
+	  // Only allow the equivalence if the PHI definition does not
+	  // dominate any incoming edge for SINGLE_ARG.
+	  // See PR 108139 and 109462.
+	  basic_block bb = gimple_bb (phi);
+	  if (!dom_info_available_p (CDI_DOMINATORS))
+	    single_arg = NULL;
+	  else
+	    for (x = 0; x < gimple_phi_num_args (phi); x++)
+	      if (gimple_phi_arg_def (phi, x) == single_arg
+		  && dominated_by_p (CDI_DOMINATORS,
+				      gimple_phi_arg_edge (phi, x)->src,
+				      bb))
+		{
+		  single_arg = NULL;
+		  break;
+		}
+	  if (single_arg)
+	    src.register_relation (phi, VREL_EQ, phi_def, single_arg);
+	}
+      else if (src.get_operand (arg_range, single_arg)
+	       && arg_range.singleton_p ())
+	{
+	  // Numerical arguments that are a constant can be returned as
+	  // the constant. This can help fold later cases where even this
+	  // constant might have been UNDEFINED via an unreachable edge.
+	  r = arg_range;
+	  return true;
+	}
+    }
+
+  // If PHI analysis is available, see if there is an iniital range.
+  if (phi_analysis_available_p ()
+      && irange::supports_p (TREE_TYPE (phi_def)))
+    {
+      phi_group *g = (phi_analysis())[phi_def];
+      if (g && !(g->range ().varying_p ()))
+	{
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    {
+	      fprintf (dump_file, "PHI GROUP query for ");
+	      print_generic_expr (dump_file, phi_def, TDF_SLIM);
+	      fprintf (dump_file, " found : ");
+	      g->range ().dump (dump_file);
+	      fprintf (dump_file, " and adjusted original range from :");
+	      r.dump (dump_file);
+	    }
+	  r.intersect (g->range ());
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    {
+	      fprintf (dump_file, " to :");
+	      r.dump (dump_file);
+	      fprintf (dump_file, "\n");
+	    }
+	}
+    }
+
+  // If SCEV is available, query if this PHI has any known values.
+  if (scev_initialized_p ()
+      && !POINTER_TYPE_P (TREE_TYPE (phi_def)))
+    {
       class loop *l = loop_containing_stmt (phi);
       if (l && loop_outer (l))
 	{
+	  Value_Range loop_range (type);
 	  range_of_ssa_name_with_loop_info (loop_range, phi_def, l, phi, src);
 	  if (!loop_range.varying_p ())
 	    {
 	      if (dump_file && (dump_flags & TDF_DETAILS))
 		{
-		  fprintf (dump_file, "   Loops range found for ");
+		  fprintf (dump_file, "Loops range found for ");
 		  print_generic_expr (dump_file, phi_def, TDF_SLIM);
 		  fprintf (dump_file, ": ");
 		  loop_range.dump (dump_file);
@@ -880,7 +983,7 @@ fold_using_range::range_of_phi (irange &r, gphi *phi, fur_source &src)
 // If a range cannot be calculated, return false.
 
 bool
-fold_using_range::range_of_call (irange &r, gcall *call, fur_source &src)
+fold_using_range::range_of_call (vrange &r, gcall *call, fur_source &)
 {
   tree type = gimple_range_type (call);
   if (!type)
@@ -889,375 +992,49 @@ fold_using_range::range_of_call (irange &r, gcall *call, fur_source &src)
   tree lhs = gimple_call_lhs (call);
   bool strict_overflow_p;
 
-  if (range_of_builtin_call (r, call, src))
-    ;
-  else if (gimple_stmt_nonnegative_warnv_p (call, &strict_overflow_p))
-    r.set (build_int_cst (type, 0), TYPE_MAX_VALUE (type));
+  if (gimple_stmt_nonnegative_warnv_p (call, &strict_overflow_p))
+    r.set_nonnegative (type);
   else if (gimple_call_nonnull_result_p (call)
 	   || gimple_call_nonnull_arg (call))
-    r = range_nonzero (type);
+    r.set_nonzero (type);
   else
     r.set_varying (type);
+
+  tree callee = gimple_call_fndecl (call);
+  if (callee
+      && useless_type_conversion_p (TREE_TYPE (TREE_TYPE (callee)), type))
+    {
+      Value_Range val;
+      if (ipa_return_value_range (val, callee))
+	{
+	  r.intersect (val);
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    {
+	      fprintf (dump_file, "Using return value range of ");
+	      print_generic_expr (dump_file, callee, TDF_SLIM);
+	      fprintf (dump_file, ": ");
+	      val.dump (dump_file);
+	      fprintf (dump_file, "\n");
+	    }
+	}
+    }
 
   // If there is an LHS, intersect that with what is known.
   if (lhs)
     {
-      value_range def;
-      def = gimple_range_global (lhs);
+      Value_Range def (TREE_TYPE (lhs));
+      gimple_range_global (def, lhs);
       r.intersect (def);
     }
   return true;
 }
 
-// Return the range of a __builtin_ubsan* in CALL and set it in R.
-// CODE is the type of ubsan call (PLUS_EXPR, MINUS_EXPR or
-// MULT_EXPR).
-
-void
-fold_using_range::range_of_builtin_ubsan_call (irange &r, gcall *call,
-					       tree_code code, fur_source &src)
-{
-  gcc_checking_assert (code == PLUS_EXPR || code == MINUS_EXPR
-		       || code == MULT_EXPR);
-  tree type = gimple_range_type (call);
-  range_operator *op = range_op_handler (code, type);
-  gcc_checking_assert (op);
-  int_range_max ir0, ir1;
-  tree arg0 = gimple_call_arg (call, 0);
-  tree arg1 = gimple_call_arg (call, 1);
-  src.get_operand (ir0, arg0);
-  src.get_operand (ir1, arg1);
-  // Check for any relation between arg0 and arg1.
-  relation_kind relation = src.query_relation (arg0, arg1);
-
-  bool saved_flag_wrapv = flag_wrapv;
-  // Pretend the arithmetic is wrapping.  If there is any overflow,
-  // we'll complain, but will actually do wrapping operation.
-  flag_wrapv = 1;
-  op->fold_range (r, type, ir0, ir1, relation);
-  flag_wrapv = saved_flag_wrapv;
-
-  // If for both arguments vrp_valueize returned non-NULL, this should
-  // have been already folded and if not, it wasn't folded because of
-  // overflow.  Avoid removing the UBSAN_CHECK_* calls in that case.
-  if (r.singleton_p ())
-    r.set_varying (type);
-}
-
-// Return TRUE if we recognize the target character set and return the
-// range for lower case and upper case letters.
-
-static bool
-get_letter_range (tree type, irange &lowers, irange &uppers)
-{
-  // ASCII
-  int a = lang_hooks.to_target_charset ('a');
-  int z = lang_hooks.to_target_charset ('z');
-  int A = lang_hooks.to_target_charset ('A');
-  int Z = lang_hooks.to_target_charset ('Z');
-
-  if ((z - a == 25) && (Z - A == 25))
-    {
-      lowers = int_range<2> (build_int_cst (type, a), build_int_cst (type, z));
-      uppers = int_range<2> (build_int_cst (type, A), build_int_cst (type, Z));
-      return true;
-    }
-  // Unknown character set.
-  return false;
-}
-
-// For a builtin in CALL, return a range in R if known and return
-// TRUE.  Otherwise return FALSE.
-
-bool
-fold_using_range::range_of_builtin_call (irange &r, gcall *call,
-					 fur_source &src)
-{
-  combined_fn func = gimple_call_combined_fn (call);
-  if (func == CFN_LAST)
-    return false;
-
-  tree type = gimple_range_type (call);
-  tree arg;
-  int mini, maxi, zerov = 0, prec;
-  scalar_int_mode mode;
-
-  switch (func)
-    {
-    case CFN_BUILT_IN_CONSTANT_P:
-      arg = gimple_call_arg (call, 0);
-      if (src.get_operand (r, arg) && r.singleton_p ())
-	{
-	  r.set (build_one_cst (type), build_one_cst (type));
-	  return true;
-	}
-      if (cfun->after_inlining)
-	{
-	  r.set_zero (type);
-	  // r.equiv_clear ();
-	  return true;
-	}
-      break;
-
-    case CFN_BUILT_IN_TOUPPER:
-      {
-	arg = gimple_call_arg (call, 0);
-	// If the argument isn't compatible with the LHS, do nothing.
-	if (!range_compatible_p (type, TREE_TYPE (arg)))
-	  return false;
-	if (!src.get_operand (r, arg))
-	  return false;
-
-	int_range<3> lowers;
-	int_range<3> uppers;
-	if (!get_letter_range (type, lowers, uppers))
-	  return false;
-
-	// Return the range passed in without any lower case characters,
-	// but including all the upper case ones.
-	lowers.invert ();
-	r.intersect (lowers);
-	r.union_ (uppers);
-	return true;
-      }
-
-     case CFN_BUILT_IN_TOLOWER:
-      {
-	arg = gimple_call_arg (call, 0);
-	// If the argument isn't compatible with the LHS, do nothing.
-	if (!range_compatible_p (type, TREE_TYPE (arg)))
-	  return false;
-	if (!src.get_operand (r, arg))
-	  return false;
-
-	int_range<3> lowers;
-	int_range<3> uppers;
-	if (!get_letter_range (type, lowers, uppers))
-	  return false;
-
-	// Return the range passed in without any upper case characters,
-	// but including all the lower case ones.
-	uppers.invert ();
-	r.intersect (uppers);
-	r.union_ (lowers);
-	return true;
-      }
-
-    CASE_CFN_FFS:
-    CASE_CFN_POPCOUNT:
-      // __builtin_ffs* and __builtin_popcount* return [0, prec].
-      arg = gimple_call_arg (call, 0);
-      prec = TYPE_PRECISION (TREE_TYPE (arg));
-      mini = 0;
-      maxi = prec;
-      src.get_operand (r, arg);
-      // If arg is non-zero, then ffs or popcount are non-zero.
-      if (!range_includes_zero_p (&r))
-	mini = 1;
-      // If some high bits are known to be zero, decrease the maximum.
-      if (!r.undefined_p ())
-	{
-	  if (TYPE_SIGN (r.type ()) == SIGNED)
-	    range_cast (r, unsigned_type_for (r.type ()));
-	  wide_int max = r.upper_bound ();
-	  maxi = wi::floor_log2 (max) + 1;
-	}
-      r.set (build_int_cst (type, mini), build_int_cst (type, maxi));
-      return true;
-
-    CASE_CFN_PARITY:
-      r.set (build_zero_cst (type), build_one_cst (type));
-      return true;
-
-    CASE_CFN_CLZ:
-      // __builtin_c[lt]z* return [0, prec-1], except when the
-      // argument is 0, but that is undefined behavior.
-      //
-      // For __builtin_c[lt]z* consider argument of 0 always undefined
-      // behavior, for internal fns depending on C?Z_DEFINED_VALUE_AT_ZERO.
-      arg = gimple_call_arg (call, 0);
-      prec = TYPE_PRECISION (TREE_TYPE (arg));
-      mini = 0;
-      maxi = prec - 1;
-      mode = SCALAR_INT_TYPE_MODE (TREE_TYPE (arg));
-      if (gimple_call_internal_p (call))
-	{
-	  if (optab_handler (clz_optab, mode) != CODE_FOR_nothing
-	      && CLZ_DEFINED_VALUE_AT_ZERO (mode, zerov) == 2)
-	    {
-	      // Only handle the single common value.
-	      if (zerov == prec)
-		maxi = prec;
-	      else
-		// Magic value to give up, unless we can prove arg is non-zero.
-		mini = -2;
-	    }
-	}
-
-      src.get_operand (r, arg);
-      // From clz of minimum we can compute result maximum.
-      if (!r.undefined_p ())
-	{
-	  // From clz of minimum we can compute result maximum.
-	  if (wi::gt_p (r.lower_bound (), 0, TYPE_SIGN (r.type ())))
-	    {
-	      maxi = prec - 1 - wi::floor_log2 (r.lower_bound ());
-	      if (mini == -2)
-		mini = 0;
-	    }
-	  else if (!range_includes_zero_p (&r))
-	    {
-	      mini = 0;
-	      maxi = prec - 1;
-	    }
-	  if (mini == -2)
-	    break;
-	  // From clz of maximum we can compute result minimum.
-	  wide_int max = r.upper_bound ();
-	  int newmini = prec - 1 - wi::floor_log2 (max);
-	  if (max == 0)
-	    {
-	      // If CLZ_DEFINED_VALUE_AT_ZERO is 2 with VALUE of prec,
-	      // return [prec, prec], otherwise ignore the range.
-	      if (maxi == prec)
-		mini = prec;
-	    }
-	  else
-	    mini = newmini;
-	}
-      if (mini == -2)
-	break;
-      r.set (build_int_cst (type, mini), build_int_cst (type, maxi));
-      return true;
-
-    CASE_CFN_CTZ:
-      // __builtin_ctz* return [0, prec-1], except for when the
-      // argument is 0, but that is undefined behavior.
-      //
-      // For __builtin_ctz* consider argument of 0 always undefined
-      // behavior, for internal fns depending on CTZ_DEFINED_VALUE_AT_ZERO.
-      arg = gimple_call_arg (call, 0);
-      prec = TYPE_PRECISION (TREE_TYPE (arg));
-      mini = 0;
-      maxi = prec - 1;
-      mode = SCALAR_INT_TYPE_MODE (TREE_TYPE (arg));
-      if (gimple_call_internal_p (call))
-	{
-	  if (optab_handler (ctz_optab, mode) != CODE_FOR_nothing
-	      && CTZ_DEFINED_VALUE_AT_ZERO (mode, zerov) == 2)
-	    {
-	      // Handle only the two common values.
-	      if (zerov == -1)
-		mini = -1;
-	      else if (zerov == prec)
-		maxi = prec;
-	      else
-		// Magic value to give up, unless we can prove arg is non-zero.
-		mini = -2;
-	    }
-	}
-      src.get_operand (r, arg);
-      if (!r.undefined_p ())
-	{
-	  // If arg is non-zero, then use [0, prec - 1].
-	  if (!range_includes_zero_p (&r))
-	    {
-	      mini = 0;
-	      maxi = prec - 1;
-	    }
-	  // If some high bits are known to be zero, we can decrease
-	  // the maximum.
-	  wide_int max = r.upper_bound ();
-	  if (max == 0)
-	    {
-	      // Argument is [0, 0].  If CTZ_DEFINED_VALUE_AT_ZERO
-	      // is 2 with value -1 or prec, return [-1, -1] or [prec, prec].
-	      // Otherwise ignore the range.
-	      if (mini == -1)
-		maxi = -1;
-	      else if (maxi == prec)
-		mini = prec;
-	    }
-	  // If value at zero is prec and 0 is in the range, we can't lower
-	  // the upper bound.  We could create two separate ranges though,
-	  // [0,floor_log2(max)][prec,prec] though.
-	  else if (maxi != prec)
-	    maxi = wi::floor_log2 (max);
-	}
-      if (mini == -2)
-	break;
-      r.set (build_int_cst (type, mini), build_int_cst (type, maxi));
-      return true;
-
-    CASE_CFN_CLRSB:
-      arg = gimple_call_arg (call, 0);
-      prec = TYPE_PRECISION (TREE_TYPE (arg));
-      r.set (build_int_cst (type, 0), build_int_cst (type, prec - 1));
-      return true;
-    case CFN_UBSAN_CHECK_ADD:
-      range_of_builtin_ubsan_call (r, call, PLUS_EXPR, src);
-      return true;
-    case CFN_UBSAN_CHECK_SUB:
-      range_of_builtin_ubsan_call (r, call, MINUS_EXPR, src);
-      return true;
-    case CFN_UBSAN_CHECK_MUL:
-      range_of_builtin_ubsan_call (r, call, MULT_EXPR, src);
-      return true;
-
-    case CFN_GOACC_DIM_SIZE:
-    case CFN_GOACC_DIM_POS:
-      // Optimizing these two internal functions helps the loop
-      // optimizer eliminate outer comparisons.  Size is [1,N]
-      // and pos is [0,N-1].
-      {
-	bool is_pos = func == CFN_GOACC_DIM_POS;
-	int axis = oacc_get_ifn_dim_arg (call);
-	int size = oacc_get_fn_dim_size (current_function_decl, axis);
-	if (!size)
-	  // If it's dynamic, the backend might know a hardware limitation.
-	  size = targetm.goacc.dim_limit (axis);
-
-	r.set (build_int_cst (type, is_pos ? 0 : 1),
-	       size
-	       ? build_int_cst (type, size - is_pos) : vrp_val_max (type));
-	return true;
-      }
-
-    case CFN_BUILT_IN_STRLEN:
-      if (tree lhs = gimple_call_lhs (call))
-	if (ptrdiff_type_node
-	    && (TYPE_PRECISION (ptrdiff_type_node)
-		== TYPE_PRECISION (TREE_TYPE (lhs))))
-	  {
-	    tree type = TREE_TYPE (lhs);
-	    tree max = vrp_val_max (ptrdiff_type_node);
-	    wide_int wmax
-	      = wi::to_wide (max, TYPE_PRECISION (TREE_TYPE (max)));
-	    tree range_min = build_zero_cst (type);
-	    // To account for the terminating NULL, the maximum length
-	    // is one less than the maximum array size, which in turn
-	    // is one less than PTRDIFF_MAX (or SIZE_MAX where it's
-	    // smaller than the former type).
-	    // FIXME: Use max_object_size() - 1 here.
-	    tree range_max = wide_int_to_tree (type, wmax - 2);
-	    r.set (range_min, range_max);
-	    return true;
-	  }
-      break;
-    default:
-      break;
-    }
-  return false;
-}
-
-
 // Calculate a range for COND_EXPR statement S and return it in R.
 // If a range cannot be calculated, return false.
 
 bool
-fold_using_range::range_of_cond_expr  (irange &r, gassign *s, fur_source &src)
+fold_using_range::range_of_cond_expr  (vrange &r, gassign *s, fur_source &src)
 {
-  int_range_max cond_range, range1, range2;
   tree cond = gimple_assign_rhs1 (s);
   tree op1 = gimple_assign_rhs2 (s);
   tree op2 = gimple_assign_rhs3 (s);
@@ -1266,6 +1043,9 @@ fold_using_range::range_of_cond_expr  (irange &r, gassign *s, fur_source &src)
   if (!type)
     return false;
 
+  Value_Range range1 (TREE_TYPE (op1));
+  Value_Range range2 (TREE_TYPE (op2));
+  Value_Range cond_range (TREE_TYPE (cond));
   gcc_checking_assert (gimple_assign_rhs_code (s) == COND_EXPR);
   gcc_checking_assert (range_compatible_p (TREE_TYPE (op1), TREE_TYPE (op2)));
   src.get_operand (cond_range, cond);
@@ -1306,32 +1086,13 @@ fold_using_range::range_of_cond_expr  (irange &r, gassign *s, fur_source &src)
 // If SCEV has any information about phi node NAME, return it as a range in R.
 
 void
-fold_using_range::range_of_ssa_name_with_loop_info (irange &r, tree name,
+fold_using_range::range_of_ssa_name_with_loop_info (vrange &r, tree name,
 						    class loop *l, gphi *phi,
 						    fur_source &src)
 {
   gcc_checking_assert (TREE_CODE (name) == SSA_NAME);
-  tree min, max, type = TREE_TYPE (name);
-  if (bounds_of_var_in_loop (&min, &max, src.query (), l, phi, name))
-    {
-      if (TREE_CODE (min) != INTEGER_CST)
-	{
-	  if (src.query ()->range_of_expr (r, min, phi) && !r.undefined_p ())
-	    min = wide_int_to_tree (type, r.lower_bound ());
-	  else
-	    min = vrp_val_min (type);
-	}
-      if (TREE_CODE (max) != INTEGER_CST)
-	{
-	  if (src.query ()->range_of_expr (r, max, phi) && !r.undefined_p ())
-	    max = wide_int_to_tree (type, r.upper_bound ());
-	  else
-	    max = vrp_val_max (type);
-	}
-      r.set (min, max);
-    }
-  else
-    r.set_varying (type);
+  if (!range_of_var_in_loop (r, name, l, phi, src.query ()))
+    r.set_varying (TREE_TYPE (name));
 }
 
 // -----------------------------------------------------------------------
@@ -1345,7 +1106,8 @@ fold_using_range::range_of_ssa_name_with_loop_info (irange &r, tree name,
 
 void
 fold_using_range::relation_fold_and_or (irange& lhs_range, gimple *s,
-					fur_source &src)
+					fur_source &src, vrange &op1,
+					vrange &op2)
 {
   // No queries or already folded.
   if (!src.gori () || !src.query ()->oracle () || lhs_range.singleton_p ())
@@ -1359,9 +1121,10 @@ fold_using_range::relation_fold_and_or (irange& lhs_range, gimple *s,
   else if (code != BIT_IOR_EXPR && code != TRUTH_OR_EXPR)
     return;
 
-  tree lhs = gimple_get_lhs (s);
-  tree ssa1 = gimple_range_ssa_p (gimple_range_operand1 (s));
-  tree ssa2 = gimple_range_ssa_p (gimple_range_operand2 (s));
+  gimple_range_op_handler handler (s);
+  tree lhs = handler.lhs ();
+  tree ssa1 = gimple_range_ssa_p (handler.operand1 ());
+  tree ssa2 = gimple_range_ssa_p (handler.operand2 ());
 
   // Deal with || and && only when there is a full set of symbolics.
   if (!lhs || !ssa1 || !ssa2
@@ -1377,20 +1140,23 @@ fold_using_range::relation_fold_and_or (irange& lhs_range, gimple *s,
   gimple *ssa1_stmt = SSA_NAME_DEF_STMT (ssa1);
   gimple *ssa2_stmt = SSA_NAME_DEF_STMT (ssa2);
 
-  range_operator *handler1 = gimple_range_handler (SSA_NAME_DEF_STMT (ssa1));
-  range_operator *handler2 = gimple_range_handler (SSA_NAME_DEF_STMT (ssa2));
+  gimple_range_op_handler handler1 (ssa1_stmt);
+  gimple_range_op_handler handler2 (ssa2_stmt);
 
   // If either handler is not present, no relation can be found.
   if (!handler1 || !handler2)
     return;
 
   // Both stmts will need to have 2 ssa names in the stmt.
-  tree ssa1_dep1 = gimple_range_ssa_p (gimple_range_operand1 (ssa1_stmt));
-  tree ssa1_dep2 = gimple_range_ssa_p (gimple_range_operand2 (ssa1_stmt));
-  tree ssa2_dep1 = gimple_range_ssa_p (gimple_range_operand1 (ssa2_stmt));
-  tree ssa2_dep2 = gimple_range_ssa_p (gimple_range_operand2 (ssa2_stmt));
+  tree ssa1_dep1 = gimple_range_ssa_p (handler1.operand1 ());
+  tree ssa1_dep2 = gimple_range_ssa_p (handler1.operand2 ());
+  tree ssa2_dep1 = gimple_range_ssa_p (handler2.operand1 ());
+  tree ssa2_dep2 = gimple_range_ssa_p (handler2.operand2 ());
 
   if (!ssa1_dep1 || !ssa1_dep2 || !ssa2_dep1 || !ssa2_dep2)
+    return;
+
+  if (HONOR_NANS (TREE_TYPE (ssa1_dep1)))
     return;
 
   // Make sure they are the same dependencies, and detect the order of the
@@ -1401,22 +1167,21 @@ fold_using_range::relation_fold_and_or (irange& lhs_range, gimple *s,
   else if (ssa1_dep1 != ssa2_dep2 || ssa1_dep2 != ssa2_dep1)
     return;
 
-  int_range<2> bool_one (boolean_true_node, boolean_true_node);
-
-  relation_kind relation1 = handler1->op1_op2_relation (bool_one);
-  relation_kind relation2 = handler2->op1_op2_relation (bool_one);
-  if (relation1 == VREL_NONE || relation2 == VREL_NONE)
+  int_range<2> bool_one = range_true ();
+  relation_kind relation1 = handler1.op1_op2_relation (bool_one, op1, op2);
+  relation_kind relation2 = handler2.op1_op2_relation (bool_one, op1, op2);
+  if (relation1 == VREL_VARYING || relation2 == VREL_VARYING)
     return;
 
   if (reverse_op2)
     relation2 = relation_negate (relation2);
 
   // x && y is false if the relation intersection of the true cases is NULL.
-  if (is_and && relation_intersect (relation1, relation2) == VREL_EMPTY)
-    lhs_range = int_range<2> (boolean_false_node, boolean_false_node);
+  if (is_and && relation_intersect (relation1, relation2) == VREL_UNDEFINED)
+    lhs_range = range_false (boolean_type_node);
   // x || y is true if the union of the true cases is NO-RELATION..
-  // ie, one or the other being true covers the full range of possibilties.
-  else if (!is_and && relation_union (relation1, relation2) == VREL_NONE)
+  // ie, one or the other being true covers the full range of possibilities.
+  else if (!is_and && relation_union (relation1, relation2) == VREL_VARYING)
     lhs_range = bool_one;
   else
     return;
@@ -1439,13 +1204,16 @@ fold_using_range::relation_fold_and_or (irange& lhs_range, gimple *s,
 // Register any outgoing edge relations from a conditional branch.
 
 void
-fur_source::register_outgoing_edges (gcond *s, irange &lhs_range, edge e0, edge e1)
+fur_source::register_outgoing_edges (gcond *s, irange &lhs_range,
+				     edge e0, edge e1)
 {
-  int_range_max r;
   int_range<2> e0_range, e1_range;
   tree name;
-  range_operator *handler;
   basic_block bb = gimple_bb (s);
+
+  gimple_range_op_handler handler (s);
+  if (!handler)
+    return;
 
   if (e0)
     {
@@ -1455,7 +1223,6 @@ fur_source::register_outgoing_edges (gcond *s, irange &lhs_range, edge e0, edge 
       if (e0_range.undefined_p ())
 	e0 = NULL;
     }
-
 
   if (e1)
     {
@@ -1471,22 +1238,23 @@ fur_source::register_outgoing_edges (gcond *s, irange &lhs_range, edge e0, edge 
 
   // First, register the gcond itself.  This will catch statements like
   // if (a_2 < b_5)
-  tree ssa1 = gimple_range_ssa_p (gimple_range_operand1 (s));
-  tree ssa2 = gimple_range_ssa_p (gimple_range_operand2 (s));
+  tree ssa1 = gimple_range_ssa_p (handler.operand1 ());
+  tree ssa2 = gimple_range_ssa_p (handler.operand2 ());
+  Value_Range r1,r2;
   if (ssa1 && ssa2)
     {
-      handler = gimple_range_handler (s);
-      gcc_checking_assert (handler);
+      r1.set_varying (TREE_TYPE (ssa1));
+      r2.set_varying (TREE_TYPE (ssa2));
       if (e0)
 	{
-	  relation_kind relation = handler->op1_op2_relation (e0_range);
-	  if (relation != VREL_NONE)
+	  relation_kind relation = handler.op1_op2_relation (e0_range, r1, r2);
+	  if (relation != VREL_VARYING)
 	    register_relation (e0, relation, ssa1, ssa2);
 	}
       if (e1)
 	{
-	  relation_kind relation = handler->op1_op2_relation (e1_range);
-	  if (relation != VREL_NONE)
+	  relation_kind relation = handler.op1_op2_relation (e1_range, r1, r2);
+	  if (relation != VREL_VARYING)
 	    register_relation (e1, relation, ssa1, ssa2);
 	}
     }
@@ -1504,25 +1272,28 @@ fur_source::register_outgoing_edges (gcond *s, irange &lhs_range, edge e0, edge 
       if (TREE_CODE (TREE_TYPE (name)) != BOOLEAN_TYPE)
 	continue;
       gimple *stmt = SSA_NAME_DEF_STMT (name);
-      handler = gimple_range_handler (stmt);
+      gimple_range_op_handler handler (stmt);
       if (!handler)
 	continue;
-      tree ssa1 = gimple_range_ssa_p (gimple_range_operand1 (stmt));
-      tree ssa2 = gimple_range_ssa_p (gimple_range_operand2 (stmt));
+      tree ssa1 = gimple_range_ssa_p (handler.operand1 ());
+      tree ssa2 = gimple_range_ssa_p (handler.operand2 ());
+      Value_Range r (TREE_TYPE (name));
       if (ssa1 && ssa2)
 	{
+	  r1.set_varying (TREE_TYPE (ssa1));
+	  r2.set_varying (TREE_TYPE (ssa2));
 	  if (e0 && gori ()->outgoing_edge_range_p (r, e0, name, *m_query)
 	      && r.singleton_p ())
 	    {
-	      relation_kind relation = handler->op1_op2_relation (r);
-	      if (relation != VREL_NONE)
+	      relation_kind relation = handler.op1_op2_relation (r, r1, r2);
+	      if (relation != VREL_VARYING)
 		register_relation (e0, relation, ssa1, ssa2);
 	    }
 	  if (e1 && gori ()->outgoing_edge_range_p (r, e1, name, *m_query)
 	      && r.singleton_p ())
 	    {
-	      relation_kind relation = handler->op1_op2_relation (r);
-	      if (relation != VREL_NONE)
+	      relation_kind relation = handler.op1_op2_relation (r, r1, r2);
+	      if (relation != VREL_VARYING)
 		register_relation (e1, relation, ssa1, ssa2);
 	    }
 	}

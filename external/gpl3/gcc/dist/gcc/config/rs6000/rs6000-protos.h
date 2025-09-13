@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -32,9 +32,13 @@ extern void init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, int, int, int,
 
 extern int easy_altivec_constant (rtx, machine_mode);
 extern bool xxspltib_constant_p (rtx, machine_mode, int *, int *);
+extern bool vspltisw_vupkhsw_constant_p (rtx, machine_mode, int * = nullptr);
 extern int vspltis_shifted (rtx);
 extern HOST_WIDE_INT const_vector_elt_as_int (rtx, unsigned int);
 extern bool macho_lo_sum_memory_operand (rtx, machine_mode);
+extern bool can_be_rotated_to_lowbits (unsigned HOST_WIDE_INT, int, int *);
+extern bool can_be_rotated_to_positive_16bits (HOST_WIDE_INT);
+extern bool can_be_rotated_to_negative_15bits (HOST_WIDE_INT);
 extern int num_insns_constant (rtx, machine_mode);
 extern int small_data_operand (rtx, machine_mode);
 extern bool mem_operand_gpr (rtx, machine_mode);
@@ -291,7 +295,7 @@ extern int rs6000_trampoline_size (void);
 extern alias_set_type get_TOC_alias_set (void);
 extern void rs6000_emit_prologue (void);
 extern void rs6000_emit_load_toc_table (int);
-extern unsigned int rs6000_dbx_register_number (unsigned int, unsigned int);
+extern unsigned int rs6000_debugger_regno (unsigned int, unsigned int);
 extern void rs6000_emit_epilogue (enum epilogue_type);
 extern void rs6000_expand_split_stack_prologue (void);
 extern void rs6000_split_stack_space_check (rtx, rtx);
@@ -320,9 +324,8 @@ extern void rs6000_cpu_cpp_builtins (struct cpp_reader *);
 extern bool rs6000_pragma_target_parse (tree, tree);
 #endif
 extern void rs6000_activate_target_options (tree new_tree);
-extern void rs6000_target_modify_macros (bool, HOST_WIDE_INT, HOST_WIDE_INT);
-extern void (*rs6000_target_modify_macros_ptr) (bool, HOST_WIDE_INT,
-						HOST_WIDE_INT);
+extern void rs6000_target_modify_macros (bool, HOST_WIDE_INT);
+extern void (*rs6000_target_modify_macros_ptr) (bool, HOST_WIDE_INT);
 
 #ifdef NO_DOLLAR_IN_LABEL
 const char * rs6000_xcoff_strip_dollar (const char *);
@@ -332,6 +335,8 @@ extern unsigned char rs6000_class_max_nregs[][LIM_REG_CLASSES];
 extern unsigned char rs6000_hard_regno_nregs[][FIRST_PSEUDO_REGISTER];
 
 extern bool rs6000_linux_float_exceptions_rounding_supported_p (void);
+extern unsigned rs6000_linux_libm_function_max_error (unsigned, machine_mode,
+						      bool);
 
 /* Pass management.  */
 namespace gcc { class context; }

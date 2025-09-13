@@ -1,6 +1,6 @@
 // Predefined symbols and macros -*- C++ -*-
 
-// Copyright (C) 1997-2022 Free Software Foundation, Inc.
+// Copyright (C) 1997-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -29,6 +29,8 @@
 
 #ifndef _GLIBCXX_CXX_CONFIG_H
 #define _GLIBCXX_CXX_CONFIG_H 1
+
+#pragma GCC system_header
 
 // The major release number for the GCC release the C++ library belongs to.
 #define _GLIBCXX_RELEASE
@@ -84,8 +86,10 @@
 //   _GLIBCXX14_DEPRECATED_SUGGEST( string-literal )
 //   _GLIBCXX17_DEPRECATED
 //   _GLIBCXX17_DEPRECATED_SUGGEST( string-literal )
-//   _GLIBCXX20_DEPRECATED( string-literal )
+//   _GLIBCXX20_DEPRECATED
 //   _GLIBCXX20_DEPRECATED_SUGGEST( string-literal )
+//   _GLIBCXX23_DEPRECATED
+//   _GLIBCXX23_DEPRECATED_SUGGEST( string-literal )
 #ifndef _GLIBCXX_USE_DEPRECATED
 # define _GLIBCXX_USE_DEPRECATED 1
 #endif
@@ -124,11 +128,19 @@
 #endif
 
 #if defined(__DEPRECATED) && (__cplusplus >= 202002L)
-# define _GLIBCXX20_DEPRECATED(MSG) [[deprecated(MSG)]]
+# define _GLIBCXX20_DEPRECATED [[__deprecated__]]
 # define _GLIBCXX20_DEPRECATED_SUGGEST(ALT) _GLIBCXX_DEPRECATED_SUGGEST(ALT)
 #else
-# define _GLIBCXX20_DEPRECATED(MSG)
+# define _GLIBCXX20_DEPRECATED
 # define _GLIBCXX20_DEPRECATED_SUGGEST(ALT)
+#endif
+
+#if defined(__DEPRECATED) && (__cplusplus >= 202100L)
+# define _GLIBCXX23_DEPRECATED [[__deprecated__]]
+# define _GLIBCXX23_DEPRECATED_SUGGEST(ALT) _GLIBCXX_DEPRECATED_SUGGEST(ALT)
+#else
+# define _GLIBCXX23_DEPRECATED
+# define _GLIBCXX23_DEPRECATED_SUGGEST(ALT)
 #endif
 
 // Macros for ABI tag attributes.
@@ -308,7 +320,7 @@ namespace std
   extern "C++" __attribute__ ((__noreturn__, __always_inline__))
   inline void __terminate() _GLIBCXX_USE_NOEXCEPT
   {
-    void terminate() _GLIBCXX_USE_NOEXCEPT __attribute__ ((__noreturn__));
+    void terminate() _GLIBCXX_USE_NOEXCEPT __attribute__ ((__noreturn__,__cold__));
     terminate();
   }
 #pragma GCC visibility pop
@@ -385,6 +397,13 @@ _GLIBCXX_END_NAMESPACE_VERSION
 // Used to version individual components, e.g. std::_V2::error_category.
 # define _GLIBCXX_BEGIN_INLINE_ABI_NAMESPACE(X) inline namespace X {
 # define _GLIBCXX_END_INLINE_ABI_NAMESPACE(X)   } // inline namespace X
+#endif
+
+// In the case that we don't have a hosted environment, we can't provide the
+// debugging mode.  Instead, we do our best and downgrade to assertions.
+#if defined(_GLIBCXX_DEBUG) && !__STDC_HOSTED__
+#undef _GLIBCXX_DEBUG
+#define _GLIBCXX_ASSERTIONS 1
 #endif
 
 // Inline namespaces for special modes: debug, parallel.
@@ -519,6 +538,7 @@ namespace std
   // This can be used without checking if the compiler supports the feature.
   // The macro _GLIBCXX_HAVE_IS_CONSTANT_EVALUATED can be used to check if
   // the compiler support is present to make this function work as expected.
+  __attribute__((__always_inline__))
   _GLIBCXX_CONSTEXPR inline bool
   __is_constant_evaluated() _GLIBCXX_NOEXCEPT
   {
@@ -546,56 +566,57 @@ namespace std
 # define _GLIBCXX_EXTERN_TEMPLATE -1
 #endif
 
-
-#if _GLIBCXX_HAVE_IS_CONSTANT_EVALUATED
-# define __glibcxx_constexpr_assert(cond) \
-  if (std::__is_constant_evaluated() && !bool(cond))	\
-    __builtin_unreachable() /* precondition violation detected! */
-#else
-# define __glibcxx_constexpr_assert(unevaluated)
-#endif
-
 #undef _GLIBCXX_VERBOSE_ASSERT
 
 // Assert.
-#if defined(_GLIBCXX_ASSERTIONS) \
-  || defined(_GLIBCXX_PARALLEL) || defined(_GLIBCXX_PARALLEL_ASSERTIONS)
-# ifdef _GLIBCXX_VERBOSE_ASSERT
+#ifdef _GLIBCXX_VERBOSE_ASSERT
 namespace std
 {
 #pragma GCC visibility push(default)
-  // Avoid the use of assert, because we're trying to keep the <cassert>
-  // include out of the mix.
+  // Don't use <cassert> because this should be unaffected by NDEBUG.
   extern "C++" _GLIBCXX_NORETURN
   void
-  __glibcxx_assert_fail(const char* __file, int __line,
-			const char* __function, const char* __condition)
+  __glibcxx_assert_fail /* Called when a precondition violation is detected. */
+    (const char* __file, int __line, const char* __function,
+     const char* __condition)
   _GLIBCXX_NOEXCEPT;
 #pragma GCC visibility pop
 }
-#define __glibcxx_assert_impl(_Condition)				\
-  if (__builtin_expect(!bool(_Condition), false))			\
-  {									\
-    __glibcxx_constexpr_assert(false);					\
-    std::__glibcxx_assert_fail(__FILE__, __LINE__, __PRETTY_FUNCTION__,	\
-			       #_Condition);				\
-  }
-# else // ! VERBOSE_ASSERT
-# define __glibcxx_assert_impl(_Condition)		\
-  if (__builtin_expect(!bool(_Condition), false))	\
-  {							\
-    __glibcxx_constexpr_assert(false);			\
-    __builtin_abort();					\
-  }
-# endif
+# define _GLIBCXX_ASSERT_FAIL(_Condition)				\
+  std::__glibcxx_assert_fail(__FILE__, __LINE__, __PRETTY_FUNCTION__,	\
+			     #_Condition)
+#else // ! VERBOSE_ASSERT
+# define _GLIBCXX_ASSERT_FAIL(_Condition) __builtin_abort()
 #endif
 
 #if defined(_GLIBCXX_ASSERTIONS)
-# define __glibcxx_assert(cond) \
-  do { __glibcxx_assert_impl(cond); } while (false)
+// When _GLIBCXX_ASSERTIONS is defined we enable runtime assertion checks.
+// These checks will also be done during constant evaluation.
+# define __glibcxx_assert(cond)						\
+  do {									\
+    if (__builtin_expect(!bool(cond), false))				\
+      _GLIBCXX_ASSERT_FAIL(cond);					\
+  } while (false)
+#elif _GLIBCXX_HAVE_IS_CONSTANT_EVALUATED
+// _GLIBCXX_ASSERTIONS is not defined, so assertions checks are only enabled
+// during constant evaluation. This ensures we diagnose undefined behaviour
+// in constant expressions.
+namespace std
+{
+  __attribute__((__always_inline__,__visibility__("default")))
+  inline void
+  __glibcxx_assert_fail()
+  { }
+}
+# define __glibcxx_assert(cond)						\
+  do {									\
+    if (std::__is_constant_evaluated() && !bool(cond))			\
+      std::__glibcxx_assert_fail();					\
+  } while (false)
 #else
-# define __glibcxx_assert(cond) \
-  do { __glibcxx_constexpr_assert(cond); } while (false)
+// _GLIBCXX_ASSERTIONS is not defined and __is_constant_evaluated() doesn't
+// work so don't check any assertions.
+# define __glibcxx_assert(cond)
 #endif
 
 // Macro indicating that TSAN is in use.
@@ -796,6 +817,20 @@ namespace std
 # define _GLIBCXX_DOUBLE_IS_IEEE_BINARY64 1
 #endif
 
+// Define if long double has the IEEE binary128 format.
+#if __LDBL_MANT_DIG__ == 113 \
+  && __LDBL_MIN_EXP__ == -16381 \
+  && __LDBL_MAX_EXP__ == 16384
+# define _GLIBCXX_LDOUBLE_IS_IEEE_BINARY128 1
+#endif
+
+#if defined __cplusplus && defined __BFLT16_DIG__
+namespace __gnu_cxx
+{
+  typedef __decltype(0.0bf16) __bfloat16_t;
+}
+#endif
+
 #ifdef __has_builtin
 # ifdef __is_identifier
 // Intel and older Clang require !__is_identifier for some built-ins:
@@ -813,15 +848,19 @@ namespace std
 # define _GLIBCXX_HAVE_BUILTIN_IS_AGGREGATE 1
 #endif
 
-#if _GLIBCXX_HAS_BUILTIN(__is_same)
-#  define _GLIBCXX_HAVE_BUILTIN_IS_SAME 1
-#endif
-
 #if _GLIBCXX_HAS_BUILTIN(__builtin_launder)
 # define _GLIBCXX_HAVE_BUILTIN_LAUNDER 1
 #endif
 
-#undef _GLIBCXX_HAS_BUILTIN
+// Returns 1 if _GLIBCXX_DO_NOT_USE_BUILTIN_TRAITS is not defined and the
+// compiler has a corresponding built-in type trait, 0 otherwise.
+// _GLIBCXX_DO_NOT_USE_BUILTIN_TRAITS can be defined to disable the use of
+// built-in traits.
+#ifndef _GLIBCXX_DO_NOT_USE_BUILTIN_TRAITS
+# define _GLIBCXX_USE_BUILTIN_TRAIT(BT) _GLIBCXX_HAS_BUILTIN(BT)
+#else
+# define _GLIBCXX_USE_BUILTIN_TRAIT(BT) 0
+#endif
 
 // Mark code that should be ignored by the compiler, but seen by Doxygen.
 #define _GLIBCXX_DOXYGEN_ONLY(X)

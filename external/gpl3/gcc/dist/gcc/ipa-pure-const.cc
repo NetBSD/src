@@ -1,5 +1,5 @@
 /* Callgraph based analysis of static variables.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -59,6 +59,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "ssa.h"
 #include "alloc-pool.h"
 #include "symbol-summary.h"
+#include "sreal.h"
+#include "ipa-cp.h"
 #include "ipa-prop.h"
 #include "ipa-fnsummary.h"
 #include "symtab-thunks.h"
@@ -137,10 +139,10 @@ public:
   funct_state_summary_t (symbol_table *symtab):
     fast_function_summary <funct_state_d *, va_heap> (symtab) {}
 
-  virtual void insert (cgraph_node *, funct_state_d *state);
-  virtual void duplicate (cgraph_node *src_node, cgraph_node *dst_node,
-			  funct_state_d *src_data,
-			  funct_state_d *dst_data);
+  void insert (cgraph_node *, funct_state_d *state) final override;
+  void duplicate (cgraph_node *src_node, cgraph_node *dst_node,
+		  funct_state_d *src_data,
+		  funct_state_d *dst_data) final override;
 };
 
 static funct_state_summary_t *funct_state_summaries = NULL;
@@ -168,8 +170,8 @@ public:
   pass_ipa_pure_const(gcc::context *ctxt);
 
   /* opt_pass methods: */
-  bool gate (function *) { return gate_pure_const (); }
-  unsigned int execute (function *fun);
+  bool gate (function *) final override { return gate_pure_const (); }
+  unsigned int execute (function *fun) final override;
 
   void register_hooks (void);
 
@@ -290,6 +292,15 @@ warn_function_cold (tree decl)
   warned_about
     = suggest_attribute (OPT_Wsuggest_attribute_cold, original_decl,
 			 true, warned_about, "cold");
+}
+
+void
+warn_function_returns_nonnull (tree decl)
+{
+  static hash_set<tree> *warned_about;
+  warned_about
+    = suggest_attribute (OPT_Wsuggest_attribute_returns_nonnull, decl,
+			 true, warned_about, "returns_nonnull");
 }
 
 /* Check to see if the use (or definition when CHECKING_WRITE is true)
@@ -2155,9 +2166,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_local_pure_const (m_ctxt); }
-  virtual bool gate (function *) { return gate_pure_const (); }
-  virtual unsigned int execute (function *);
+  opt_pass * clone () final override
+  {
+    return new pass_local_pure_const (m_ctxt);
+  }
+  bool gate (function *) final override { return gate_pure_const (); }
+  unsigned int execute (function *) final override;
 
 }; // class pass_local_pure_const
 
@@ -2271,8 +2285,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return warn_suggest_attribute_noreturn; }
-  virtual unsigned int execute (function *fun)
+  bool gate (function *) final override
+  {
+    return warn_suggest_attribute_noreturn;
+  }
+  unsigned int execute (function *fun) final override
     {
       if (!TREE_THIS_VOLATILE (current_function_decl)
 	  && EDGE_COUNT (EXIT_BLOCK_PTR_FOR_FN (fun)->preds) == 0)
@@ -2317,9 +2334,9 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_nothrow (m_ctxt); }
-  virtual bool gate (function *) { return optimize; }
-  virtual unsigned int execute (function *);
+  opt_pass * clone () final override { return new pass_nothrow (m_ctxt); }
+  bool gate (function *) final override { return optimize; }
+  unsigned int execute (function *) final override;
 
 }; // class pass_nothrow
 
@@ -2373,16 +2390,15 @@ pass_nothrow::execute (function *)
   bool cfg_changed = false;
   if (self_recursive_p (node))
     FOR_EACH_BB_FN (this_block, cfun)
-      if (gimple *g = last_stmt (this_block))
-	if (is_gimple_call (g))
-	  {
-	    tree callee_t = gimple_call_fndecl (g);
-	    if (callee_t
-		&& recursive_call_p (current_function_decl, callee_t)
-		&& maybe_clean_eh_stmt (g)
-		&& gimple_purge_dead_eh_edges (this_block))
-	      cfg_changed = true;
-	  }
+      if (gcall *g = safe_dyn_cast <gcall *> (*gsi_last_bb (this_block)))
+	{
+	  tree callee_t = gimple_call_fndecl (g);
+	  if (callee_t
+	      && recursive_call_p (current_function_decl, callee_t)
+	      && maybe_clean_eh_stmt (g)
+	      && gimple_purge_dead_eh_edges (this_block))
+	    cfg_changed = true;
+	}
 
   if (dump_file)
     fprintf (dump_file, "Function found to be nothrow: %s\n",

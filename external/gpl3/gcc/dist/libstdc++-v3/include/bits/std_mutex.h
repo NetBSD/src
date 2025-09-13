@@ -1,6 +1,6 @@
 // std::mutex implementation -*- C++ -*-
 
-// Copyright (C) 2003-2022 Free Software Foundation, Inc.
+// Copyright (C) 2003-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -36,7 +36,7 @@
 # include <bits/c++0x_warning.h>
 #else
 
-#include <system_error>
+#include <errno.h> // EBUSY
 #include <bits/functexcept.h>
 #include <bits/gthr.h>
 
@@ -117,6 +117,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__throw_system_error(__e);
     }
 
+    _GLIBCXX_NODISCARD
     bool
     try_lock() noexcept
     {
@@ -244,9 +245,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     public:
       typedef _Mutex mutex_type;
 
+      [[__nodiscard__]]
       explicit lock_guard(mutex_type& __m) : _M_device(__m)
       { _M_device.lock(); }
 
+      [[__nodiscard__]]
       lock_guard(mutex_type& __m, adopt_lock_t) noexcept : _M_device(__m)
       { } // calling thread owns mutex
 

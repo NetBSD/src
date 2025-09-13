@@ -1,5 +1,5 @@
 /* Dump a gcov file, for debugging use.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
 Gcov is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@ along with Gcov; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_VECTOR
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
@@ -28,6 +29,8 @@ along with Gcov; see the file COPYING3.  If not see
 #include "gcov-io.h"
 #include "gcov-io.cc"
 
+using namespace std;
+
 static void dump_gcov_file (const char *);
 static void print_prefix (const char *, unsigned, gcov_position_t);
 static void print_usage (void);
@@ -35,6 +38,7 @@ static void print_version (void);
 static void tag_function (const char *, unsigned, int, unsigned);
 static void tag_blocks (const char *, unsigned, int, unsigned);
 static void tag_arcs (const char *, unsigned, int, unsigned);
+static void tag_conditions (const char *, unsigned, int, unsigned);
 static void tag_lines (const char *, unsigned, int, unsigned);
 static void tag_counters (const char *, unsigned, int, unsigned);
 static void tag_summary (const char *, unsigned, int, unsigned);
@@ -50,6 +54,7 @@ typedef struct tag_format
 static int flag_dump_contents = 0;
 static int flag_dump_positions = 0;
 static int flag_dump_raw = 0;
+static int flag_dump_stable = 0;
 
 static const struct option options[] =
 {
@@ -57,7 +62,9 @@ static const struct option options[] =
   { "version",              no_argument,       NULL, 'v' },
   { "long",                 no_argument,       NULL, 'l' },
   { "positions",	    no_argument,       NULL, 'o' },
-  { 0, 0, 0, 0 }
+  { "raw",		    no_argument,       NULL, 'r' },
+  { "stable",		    no_argument,       NULL, 's' },
+  {}
 };
 
 #define VALUE_PADDING_PREFIX "              "
@@ -71,6 +78,7 @@ static const tag_format_t tag_table[] =
   {GCOV_TAG_FUNCTION, "FUNCTION", tag_function},
   {GCOV_TAG_BLOCKS, "BLOCKS", tag_blocks},
   {GCOV_TAG_ARCS, "ARCS", tag_arcs},
+  {GCOV_TAG_CONDS, "CONDITIONS", tag_conditions},
   {GCOV_TAG_LINES, "LINES", tag_lines},
   {GCOV_TAG_OBJECT_SUMMARY, "OBJECT_SUMMARY", tag_summary},
   {0, NULL, NULL}
@@ -96,7 +104,7 @@ main (int argc ATTRIBUTE_UNUSED, char **argv)
 
   diagnostic_initialize (global_dc, 0);
 
-  while ((opt = getopt_long (argc, argv, "hlprvw", options, NULL)) != -1)
+  while ((opt = getopt_long (argc, argv, "hlprsvw", options, NULL)) != -1)
     {
       switch (opt)
 	{
@@ -114,6 +122,9 @@ main (int argc ATTRIBUTE_UNUSED, char **argv)
 	  break;
 	case 'r':
 	  flag_dump_raw = 1;
+	  break;
+	case 's':
+	  flag_dump_stable = 1;
 	  break;
 	default:
 	  fprintf (stderr, "unknown flag `%c'\n", opt);
@@ -134,6 +145,8 @@ print_usage (void)
   printf ("  -l, --long           Dump record contents too\n");
   printf ("  -p, --positions      Dump record positions\n");
   printf ("  -r, --raw            Print content records in raw format\n");
+  printf ("  -s, --stable         Print content in stable "
+	  "format usable for comparison\n");
   printf ("  -v, --version        Print version number\n");
   printf ("\nFor bug reporting instructions, please see:\n%s.\n",
 	   bug_report_url);
@@ -143,7 +156,7 @@ static void
 print_version (void)
 {
   printf ("gcov-dump %s%s\n", pkgversion_string, version_string);
-  printf ("Copyright (C) 2022 Free Software Foundation, Inc.\n");
+  printf ("Copyright (C) 2024 Free Software Foundation, Inc.\n");
   printf ("This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n");
 }
@@ -207,11 +220,11 @@ dump_gcov_file (const char *filename)
 
   /* stamp */
   unsigned stamp = gcov_read_unsigned ();
-  printf ("%s:stamp %lu\n", filename, (unsigned long)stamp);
+  printf ("%s:stamp %u\n", filename, stamp);
 
   /* Checksum */
   unsigned checksum = gcov_read_unsigned ();
-  printf ("%s:checksum %lu\n", filename, (unsigned long)checksum);
+  printf ("%s:checksum %u\n", filename, checksum);
 
   if (!is_data_type)
     {
@@ -381,6 +394,28 @@ tag_arcs (const char *filename ATTRIBUTE_UNUSED,
     }
 }
 
+/* Print number of conditions (not outcomes, i.e. if (x && y) is 2, not 4).  */
+static void
+tag_conditions (const char *filename, unsigned /* tag */, int length,
+		unsigned depth)
+{
+  unsigned n_conditions = GCOV_TAG_CONDS_NUM (length);
+
+  printf (" %u conditions", n_conditions);
+  if (flag_dump_contents)
+    {
+      for (unsigned ix = 0; ix != n_conditions; ix++)
+	{
+	  const unsigned blockno = gcov_read_unsigned ();
+	  const unsigned nterms = gcov_read_unsigned ();
+
+	  printf ("\n");
+	  print_prefix (filename, depth, gcov_position ());
+	  printf (VALUE_PADDING_PREFIX "block %u:", blockno);
+	  printf (" %u", nterms);
+	}
+    }
+}
 static void
 tag_lines (const char *filename ATTRIBUTE_UNUSED,
 	   unsigned tag ATTRIBUTE_UNUSED, int length ATTRIBUTE_UNUSED,
@@ -439,16 +474,52 @@ tag_counters (const char *filename ATTRIBUTE_UNUSED,
   int n_counts = GCOV_TAG_COUNTER_NUM (length);
   bool has_zeros = n_counts < 0;
   n_counts = abs (n_counts);
+  unsigned counter_idx = GCOV_COUNTER_FOR_TAG (tag);
 
   printf (" %s %u counts%s",
-	  counter_names[GCOV_COUNTER_FOR_TAG (tag)], n_counts,
+	  counter_names[counter_idx], n_counts,
 	  has_zeros ? " (all zero)" : "");
   if (flag_dump_contents)
     {
+      vector<gcov_type> counters;
       for (int ix = 0; ix != n_counts; ix++)
-	{
-	  gcov_type count;
+	counters.push_back (has_zeros ? 0 : gcov_read_counter ());
 
+      /* Make stable sort for TOP N counters.  */
+      if (flag_dump_stable)
+	if (counter_idx == GCOV_COUNTER_V_INDIR
+	    || counter_idx == GCOV_COUNTER_V_TOPN)
+	  {
+	    unsigned start = 0;
+	    while (start < counters.size ())
+	      {
+		unsigned n = counters[start + 1];
+
+		/* Use bubble sort.  */
+		for (unsigned i = 1; i <= n; ++i)
+		  for (unsigned j = i; j <= n; ++j)
+		    {
+		      gcov_type key1 = counters[start + 2 * i];
+		      gcov_type value1 = counters[start + 2 * i + 1];
+		      gcov_type key2 = counters[start + 2 * j];
+		      gcov_type value2 = counters[start + 2 * j + 1];
+
+		      if (value1 < value2 || (value1 == value2 && key1 < key2))
+			{
+			  std::swap (counters[start + 2 * i],
+				     counters[start + 2 * j]);
+			  std::swap (counters[start + 2 * i + 1],
+				     counters[start + 2 * j + 1]);
+			}
+		    }
+		start += 2 * (n + 1);
+	      }
+	    if (start != counters.size ())
+	      abort ();
+	  }
+
+      for (unsigned ix = 0; ix < counters.size (); ++ix)
+	{
 	  if (flag_dump_raw)
 	    {
 	      if (ix == 0)
@@ -461,8 +532,7 @@ tag_counters (const char *filename ATTRIBUTE_UNUSED,
 	      printf (VALUE_PADDING_PREFIX VALUE_PREFIX, ix);
 	    }
 
-	  count = has_zeros ? 0 : gcov_read_counter ();
-	  printf ("%" PRId64 " ", count);
+	  printf ("%" PRId64 " ", counters[ix]);
 	}
     }
 }

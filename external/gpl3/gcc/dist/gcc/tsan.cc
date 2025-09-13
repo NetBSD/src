@@ -1,5 +1,5 @@
 /* GCC instrumentation plugin for ThreadSanitizer.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
    Contributed by Dmitry Vyukov <dvyukov@google.com>
 
 This file is part of GCC.
@@ -623,15 +623,16 @@ instrument_builtin_call (gimple_stmt_iterator *gsi)
 	    maybe_clean_or_replace_eh_stmt (stmt, gsi_stmt (*gsi));
 	    if (tsan_atomic_table[i].action == val_cas && lhs)
 	      {
-		tree cond;
 		stmt = gsi_stmt (*gsi);
-		g = gimple_build_assign (make_ssa_name (TREE_TYPE (t)), t);
+		tree t2 = make_ssa_name (TREE_TYPE (t));
+		g = gimple_build_assign (t2, t);
 		gsi_insert_after (gsi, g, GSI_NEW_STMT);
 		t = make_ssa_name (TREE_TYPE (TREE_TYPE (decl)), stmt);
-		cond = build2 (NE_EXPR, boolean_type_node, t,
-			       build_int_cst (TREE_TYPE (t), 0));
-		g = gimple_build_assign (lhs, COND_EXPR, cond, args[1],
-					 gimple_assign_lhs (g));
+		tree cond = make_ssa_name (boolean_type_node);
+		g = gimple_build_assign (cond, NE_EXPR,
+					 t, build_zero_cst (TREE_TYPE (t)));
+		gsi_insert_after (gsi, g, GSI_NEW_STMT);
+		g = gimple_build_assign (lhs, COND_EXPR, cond, args[1], t2);
 		gimple_call_set_lhs (stmt, t);
 		update_stmt (stmt);
 		gsi_insert_after (gsi, g, GSI_NEW_STMT);
@@ -912,13 +913,13 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_tsan (m_ctxt); }
-  virtual bool gate (function *)
+  opt_pass * clone () final override { return new pass_tsan (m_ctxt); }
+  bool gate (function *) final override
 {
   return sanitize_flags_p (SANITIZE_THREAD);
 }
 
-  virtual unsigned int execute (function *) { return tsan_pass (); }
+  unsigned int execute (function *) final override { return tsan_pass (); }
 
 }; // class pass_tsan
 
@@ -953,12 +954,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       return (sanitize_flags_p (SANITIZE_THREAD) && !optimize);
     }
 
-  virtual unsigned int execute (function *) { return tsan_pass (); }
+  unsigned int execute (function *) final override { return tsan_pass (); }
 
 }; // class pass_tsan_O0
 

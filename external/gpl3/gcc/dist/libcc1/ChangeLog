@@ -1,40 +1,131 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2024-06-11  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+2024-05-07  Release Manager
 
-	Backported from master:
-	2024-03-16  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+	* GCC 14.1.0 released.
+
+2024-03-16  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
 
 	PR middle-end/111632
 	* libcc1plugin.cc: Fix include.
 	* libcp1plugin.cc: Fix include.
 
-2023-05-08  Release Manager
+2024-02-29  Tom Tromey  <tom@tromey.com>
 
-	* GCC 12.3.0 released.
+	PR libcc1/113977
+	* libcc1plugin.cc (plugin_finish_record_or_union): New function.
+	(plugin_finish_record_or_union): Rewrite.
+	(plugin_init): Use GCC_C_FE_VERSION_2.
+	* libcc1.cc (c_vtable): Use GCC_C_FE_VERSION_2.
+	(gcc_c_fe_context): Check for GCC_C_FE_VERSION_2.
 
-2022-08-19  Release Manager
+2024-02-29  Tom Tromey  <tom@tromey.com>
 
-	* GCC 12.2.0 released.
+	* libcp1.cc (libcp1::libcp1): Use FE version number from context.
+	* libcc1.cc (libcc1::libcc1): Use FE version number from context.
+	(c_vtable): Use GCC_C_FE_VERSION_1.
 
-2022-07-02  Sergei Trofimovich  <siarheit@google.com>
+2024-02-29  Tom Tromey  <tom@tromey.com>
 
-	Backported from master:
-	2022-06-27  Sergei Trofimovich  <siarheit@google.com>
+	* libcc1plugin.cc (safe_lookup_builtin_type): Handle ERROR_MARK.
+	(plugin_int_type): Fall back to plugin_int_type_v0.
+	(plugin_float_type): Fall back to plugin_float_type_v0.
+
+2024-02-09  Marek Polacek  <polacek@redhat.com>
+
+	PR c++/98388
+	* libcp1plugin.cc (plugin_build_unary_expr): Pass tf_error to
+	build_throw.
+
+2024-01-09  waffl3x  <waffl3x@protonmail.com>
+	    Jason Merrill  <jason@redhat.com>
+
+	PR c++/102609
+	* libcp1plugin.cc (plugin_pragma_push_user_expression): Don't use
+	DECL_NONSTATIC_MEMBER_FUNCTION_P.
+
+2023-12-06  David Malcolm  <dmalcolm@redhat.com>
+
+	* context.cc (plugin_print_error_function): Make diagnostic_info
+	param const.
+
+2023-11-16  Tom Tromey  <tom@tromey.com>
+
+	* libcc1plugin.cc (plugin_build_enum_type): Set
+	ENUM_UNDERLYING_TYPE.
+
+2023-10-22  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* configure: Regenerate.
+
+2023-08-11  Joseph Myers  <joseph@codesourcery.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Alexander von Gluck IV  <kallisti5@unixzen.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-05-18  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* libcc1plugin.cc (plugin_float_type): Ditto.
+	* libcp1plugin.cc (plugin_reactivate_decl): Ditto.
+	(plugin_get_float_type): Ditto.
+
+2022-11-01  Nathan Sidwell  <nathan@acm.org>
+
+	* libcp1plugin.cc (plugin_start_lambda_closure_class_type):
+	Initialize the per-scope, per-signature discriminator.
+
+2022-11-01  Nathan Sidwell  <nathan@acm.org>
+
+	* libcp1plugin.cc (plugin_start_closure): Adjust.
+
+2022-10-12  Martin Liska  <mliska@suse.cz>
+
+	* configure: Regenerate.
+
+2022-10-11  Olivier Hainque  <hainque@adacore.com>
+	    Olivier Hainque  <hainque@adacore.com>
+
+	* configure: Regenerate.
+
+2022-06-27  Sergei Trofimovich  <siarheit@google.com>
 
 	PR c++/106102
 	* libcc1plugin.cc: Include <memory> via "system.h".
 	* libcp1plugin.cc: Ditto.
 
-2022-05-06  Release Manager
+2022-06-01  David Seifert  <soap@gentoo.org>
 
-	* GCC 12.1.0 released.
+	PR plugins/95648
+	* configure: Regenerate.
 
 2021-12-16  Patrick Palka  <ppalka@redhat.com>
 

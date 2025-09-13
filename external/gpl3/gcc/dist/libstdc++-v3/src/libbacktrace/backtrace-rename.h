@@ -4,6 +4,7 @@
 #define backtrace_create_state __glibcxx_backtrace_create_state
 #define backtrace_dwarf_add __glibcxx_backtrace_dwarf_add
 #define backtrace_free __glibcxx_backtrace_free
+#define backtrace_full __glibcxx_backtrace_full
 #define backtrace_get_view __glibcxx_backtrace_get_view
 #define backtrace_initialize __glibcxx_backtrace_initialize
 #define backtrace_open __glibcxx_backtrace_open
@@ -15,6 +16,7 @@
 #define backtrace_syminfo __glibcxx_backtrace_syminfo
 #define backtrace_uncompress_lzma __glibcxx_backtrace_uncompress_lzma
 #define backtrace_uncompress_zdebug __glibcxx_backtrace_uncompress_zdebug
+#define backtrace_uncompress_zstd __glibcxx_backtrace_uncompress_zstd
 #define backtrace_vector_finish __glibcxx_backtrace_vector_finish
 #define backtrace_vector_grow __glibcxx_backtrace_vector_grow
 #define backtrace_vector_release __glibcxx_backtrace_vector_release

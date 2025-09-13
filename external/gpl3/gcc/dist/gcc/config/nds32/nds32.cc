@@ -1,5 +1,5 @@
 /* Subroutines used for code generation of Andes NDS32 cpu for GNU compiler
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GCC.
@@ -288,7 +288,7 @@ static const int nds32_reg_alloc_order_for_speed[] =
 };
 
 /* Defining target-specific uses of __attribute__.  */
-static const struct attribute_spec nds32_attribute_table[] =
+TARGET_GNU_ATTRIBUTES (nds32_attribute_table,
 {
   /* Syntax: { name, min_len, max_len, decl_required, type_required,
 	       function_type_required, affects_type_identity, handler,
@@ -326,11 +326,8 @@ static const struct attribute_spec nds32_attribute_table[] =
 
   /* FOR BACKWARD COMPATIBILITY,
      this attribute also tells no prologue/epilogue.  */
-  { "no_prologue",  0,  0, false, false, false, false, NULL, NULL },
-
-  /* The last attribute spec is set to be NULL.  */
-  { NULL,           0,  0, false, false, false, false, NULL, NULL }
-};
+  { "no_prologue",  0,  0, false, false, false, false, NULL, NULL }
+});
 
 
 /* ------------------------------------------------------------------------ */
@@ -2377,9 +2374,13 @@ nds32_setup_incoming_varargs (cumulative_args_t ca,
      for varargs.  */
   total_args_regs
     = NDS32_MAX_GPR_REGS_FOR_ARGS + NDS32_GPR_ARG_FIRST_REGNUM;
-  num_of_used_regs
-    = NDS32_AVAILABLE_REGNUM_FOR_GPR_ARG (cum->gpr_offset, arg.mode, arg.type)
-      + NDS32_NEED_N_REGS_FOR_ARG (arg.mode, arg.type);
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl))
+      || arg.type != NULL_TREE)
+    num_of_used_regs
+      = NDS32_AVAILABLE_REGNUM_FOR_GPR_ARG (cum->gpr_offset, arg.mode, arg.type)
+        + NDS32_NEED_N_REGS_FOR_ARG (arg.mode, arg.type);
+  else
+    num_of_used_regs = cum->gpr_offset + NDS32_GPR_ARG_FIRST_REGNUM;
 
   remaining_reg_count = total_args_regs - num_of_used_regs;
   *pretend_args_size = remaining_reg_count * UNITS_PER_WORD;
@@ -2562,7 +2563,8 @@ nds32_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
 /* Addressing Modes.  */
 
 static bool
-nds32_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+nds32_legitimate_address_p (machine_mode mode, rtx x, bool strict,
+			    code_helper = ERROR_MARK)
 {
   if (TARGET_FPU_SINGLE || TARGET_FPU_DOUBLE)
     {
@@ -3889,7 +3891,7 @@ nds32_dwarf_register_span (rtx reg)
 /* Map internal gcc register numbers to DWARF2 register numbers.  */
 
 unsigned int
-nds32_dbx_register_number (unsigned int regno)
+nds32_debugger_regno (unsigned int regno)
 {
   /* The nds32 port in GDB maintains a mapping between dwarf register
      number and displayed register name.  For backward compatibility to
@@ -4199,8 +4201,8 @@ nds32_md_asm_adjust (vec<rtx> &outputs ATTRIBUTE_UNUSED,
 		     vec<rtx> &inputs ATTRIBUTE_UNUSED,
 		     vec<machine_mode> &input_modes ATTRIBUTE_UNUSED,
 		     vec<const char *> &constraints ATTRIBUTE_UNUSED,
-		     vec<rtx> &clobbers, HARD_REG_SET &clobbered_regs,
-		     location_t /*loc*/)
+		     vec<rtx> &/*uses*/, vec<rtx> &clobbers,
+		     HARD_REG_SET &clobbered_regs, location_t /*loc*/)
 {
   if (!flag_inline_asm_r15)
     {
@@ -5808,12 +5810,6 @@ nds32_use_blocks_for_constant_p (machine_mode mode,
 /* Controlling Debugging Information Format.  */
 
 /* -- Macros Affecting All Debugging Formats.  */
-
-/* -- Specific Options for DBX Output.  */
-
-/* -- Open-Ended Hooks for DBX Format.  */
-
-/* -- File Names in DBX Format.  */
 
 /* -- Macros for DWARF Output.  */
 

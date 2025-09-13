@@ -1,6 +1,6 @@
 // unordered_map implementation -*- C++ -*-
 
-// Copyright (C) 2010-2022 Free Software Foundation, Inc.
+// Copyright (C) 2010-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -29,6 +29,11 @@
 
 #ifndef _UNORDERED_MAP_H
 #define _UNORDERED_MAP_H
+
+#include <bits/hashtable.h>
+#include <bits/allocator.h>
+#include <bits/functional_hash.h> // hash
+#include <bits/stl_function.h>    // equal_to
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -132,7 +137,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef typename _Hashtable::difference_type	difference_type;
       ///@}
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
       using node_type = typename _Hashtable::node_type;
       using insert_return_type = typename _Hashtable::insert_return_type;
 #endif
@@ -421,7 +426,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	emplace_hint(const_iterator __pos, _Args&&... __args)
 	{ return _M_h.emplace_hint(__pos, std::forward<_Args>(__args)...); }
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
       /// Extract a node.
       node_type
       extract(const_iterator __pos)
@@ -444,8 +449,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       iterator
       insert(const_iterator, node_type&& __nh)
       { return _M_h._M_reinsert_node(std::move(__nh)).position; }
+#endif // node_extract
 
-#define __cpp_lib_unordered_map_try_emplace 201411L
+#ifdef __glibcxx_unordered_map_try_emplace // C++ >= 17 && HOSTED
       /**
        *  @brief Attempts to build and insert a std::pair into the
        *  %unordered_map.
@@ -529,7 +535,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	  return _M_h.try_emplace(__hint, std::move(__k),
 				  std::forward<_Args>(__args)...).first;
 	}
-#endif // C++17
+#endif // __glibcxx_unordered_map_try_emplace
 
       ///@{
       /**
@@ -630,7 +636,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       { _M_h.insert(__l); }
 
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_unordered_map_try_emplace // >= C++17 && HOSTED
       /**
        *  @brief Attempts to insert a std::pair into the %unordered_map.
        *  @param __k    Key to use for finding a possibly existing pair in
@@ -722,7 +728,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    __ret.first->second = std::forward<_Obj>(__obj);
 	  return __ret.first;
 	}
-#endif
+#endif // unordered_map_try_emplace
 
       ///@{
       /**
@@ -807,7 +813,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       noexcept( noexcept(_M_h.swap(__x._M_h)) )
       { _M_h.swap(__x._M_h); }
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
       template<typename, typename, typename>
 	friend class std::_Hash_merge_helper;
 
@@ -836,7 +842,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	void
 	merge(unordered_multimap<_Key, _Tp, _H2, _P2, _Alloc>&& __source)
 	{ merge(__source); }
-#endif // C++17
+#endif // node_extract
 
       // observers.
 
@@ -1277,7 +1283,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef typename _Hashtable::difference_type	difference_type;
       ///@}
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
       using node_type = typename _Hashtable::node_type;
 #endif
 
@@ -1642,7 +1648,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       insert(initializer_list<value_type> __l)
       { _M_h.insert(__l); }
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
       /// Extract a node.
       node_type
       extract(const_iterator __pos)
@@ -1665,7 +1671,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       iterator
       insert(const_iterator __hint, node_type&& __nh)
       { return _M_h._M_reinsert_node_multi(__hint, std::move(__nh)); }
-#endif // C++17
+#endif // node_extract
 
       ///@{
       /**
@@ -1750,7 +1756,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       noexcept( noexcept(_M_h.swap(__x._M_h)) )
       { _M_h.swap(__x._M_h); }
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
       template<typename, typename, typename>
 	friend class std::_Hash_merge_helper;
 
@@ -1781,7 +1787,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	void
 	merge(unordered_map<_Key, _Tp, _H2, _P2, _Alloc>&& __source)
 	{ merge(__source); }
-#endif // C++17
+#endif // node_extract
 
       // observers.
 
@@ -2163,7 +2169,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
 _GLIBCXX_END_NAMESPACE_CONTAINER
 
-#if __cplusplus > 201402L
+#ifdef __glibcxx_node_extract // >= C++17 && HOSTED
   // Allow std::unordered_map access to internals of compatible maps.
   template<typename _Key, typename _Val, typename _Hash1, typename _Eq1,
 	   typename _Alloc, typename _Hash2, typename _Eq2>
@@ -2211,7 +2217,7 @@ _GLIBCXX_END_NAMESPACE_CONTAINER
       _S_get_table(unordered_multimap<_Key, _Val, _Hash2, _Eq2, _Alloc>& __map)
       { return __map._M_h; }
     };
-#endif // C++17
+#endif // node_extract
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std

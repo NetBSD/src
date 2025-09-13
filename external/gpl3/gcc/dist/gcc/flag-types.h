@@ -1,5 +1,5 @@
 /* Compilation switch flag type definitions for GCC.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,24 +24,18 @@ along with GCC; see the file COPYING3.  If not see
 
 enum debug_info_type
 {
-  DINFO_TYPE_NONE = 0,		  /* No debug info.  */
-  DINFO_TYPE_DBX = 1,		  /* BSD .stabs for DBX.  */
-  DINFO_TYPE_DWARF2 = 2,	  /* Dwarf v2 debug info.  */
-  DINFO_TYPE_XCOFF = 3,		  /* IBM/Xcoff debug info.  */
-  DINFO_TYPE_VMS = 4,		  /* VMS debug info.  */
-  DINFO_TYPE_CTF = 5,		  /* CTF debug info.  */
-  DINFO_TYPE_BTF = 6,		  /* BTF debug info.  */
-  DINFO_TYPE_BTF_WITH_CORE = 7,	  /* BTF debug info with CO-RE relocations.  */
+  DINFO_TYPE_NONE,		  /* No debug info.  */
+  DINFO_TYPE_DWARF2,		  /* Dwarf v2 debug info.  */
+  DINFO_TYPE_VMS,		  /* VMS debug info.  */
+  DINFO_TYPE_CTF,		  /* CTF debug info.  */
+  DINFO_TYPE_BTF,		  /* BTF debug info.  */
+  DINFO_TYPE_BTF_WITH_CORE,	  /* BTF debug info with CO-RE relocations.  */
   DINFO_TYPE_MAX = DINFO_TYPE_BTF_WITH_CORE /* Marker only.  */
 };
 
 #define NO_DEBUG      (0U)
-/* Write DBX debug info (using dbxout.cc).  */
-#define DBX_DEBUG     (1U << DINFO_TYPE_DBX)
 /* Write DWARF2 debug info (using dwarf2out.cc).  */
 #define DWARF2_DEBUG  (1U << DINFO_TYPE_DWARF2)
-/* Write IBM/XCOFF debug info (using dbxout.cc).  */
-#define XCOFF_DEBUG   (1U << DINFO_TYPE_XCOFF)
 /* Write VMS debug info (using vmsdbgout.cc).  */
 #define VMS_DEBUG     (1U << DINFO_TYPE_VMS)
 /* Write CTF debug info (using ctfout.cc).  */
@@ -161,6 +155,16 @@ enum stack_reuse_level
   SR_NONE,
   SR_NAMED_VARS,
   SR_ALL
+};
+
+/* Control Flow Redundancy hardening options for noreturn calls.  */
+enum hardcfr_noret
+{
+  HCFRNR_NEVER,
+  HCFRNR_NOTHROW,
+  HCFRNR_NO_XTHROW,
+  HCFRNR_UNSPECIFIED,
+  HCFRNR_ALWAYS,
 };
 
 /* The live patching level.  */
@@ -344,6 +348,7 @@ namespace zero_regs_flags {
   const unsigned int ONLY_GPR = 1UL << 2;
   const unsigned int ONLY_ARG = 1UL << 3;
   const unsigned int ENABLED = 1UL << 4;
+  const unsigned int LEAFY_MODE = 1UL << 5;
   const unsigned int USED_GPR_ARG = ENABLED | ONLY_USED | ONLY_GPR | ONLY_ARG;
   const unsigned int USED_GPR = ENABLED | ONLY_USED | ONLY_GPR;
   const unsigned int USED_ARG = ENABLED | ONLY_USED | ONLY_ARG;
@@ -352,6 +357,10 @@ namespace zero_regs_flags {
   const unsigned int ALL_GPR = ENABLED | ONLY_GPR;
   const unsigned int ALL_ARG = ENABLED | ONLY_ARG;
   const unsigned int ALL = ENABLED;
+  const unsigned int LEAFY_GPR_ARG = ENABLED | LEAFY_MODE | ONLY_GPR | ONLY_ARG;
+  const unsigned int LEAFY_GPR = ENABLED | LEAFY_MODE | ONLY_GPR;
+  const unsigned int LEAFY_ARG = ENABLED | LEAFY_MODE | ONLY_ARG;
+  const unsigned int LEAFY = ENABLED | LEAFY_MODE;
 }
 
 /* Settings of flag_incremental_link.  */
@@ -438,6 +447,17 @@ enum gfc_convert
 };
 
 
+/* Inline String Operations functions.  */
+enum ilsop_fn
+{
+  ILSOP_NONE = 0,
+  ILSOP_MEMSET = 1 << 0,
+  ILSOP_MEMCPY = 1 << 1,
+  ILSOP_MEMMOVE = 1 << 2,
+  ILSOP_MEMCMP = 1 << 3,
+  ILSOP_ALL = -1
+};
+
 /* Control-Flow Protection values.  */
 enum cf_protection_level
 {
@@ -479,22 +499,6 @@ enum threader_debug
   THREADER_DEBUG_ALL = 1
 };
 
-/* EVRP mode.  */
-enum evrp_mode
-{
-  EVRP_MODE_RVRP_ONLY,
-  EVRP_MODE_EVRP_ONLY,
-  EVRP_MODE_EVRP_FIRST,
-  EVRP_MODE_RVRP_FIRST
-};
-
-/* VRP modes.  */
-enum vrp_mode
-{
-  VRP_MODE_VRP,
-  VRP_MODE_RANGER
-};
-
 /* Modes of OpenACC 'kernels' constructs handling.  */
 enum openacc_kernels
 {
@@ -507,6 +511,15 @@ enum openacc_privatization
 {
   OPENACC_PRIVATIZATION_QUIET,
   OPENACC_PRIVATIZATION_NOISY
+};
+
+/* Targets for -fopenmp-target-simd-clone.  */
+enum omp_target_simd_clone_device_kind
+{
+  OMP_TARGET_SIMD_CLONE_NONE = 0,
+  OMP_TARGET_SIMD_CLONE_HOST = 1,
+  OMP_TARGET_SIMD_CLONE_NOHOST = 2,
+  OMP_TARGET_SIMD_CLONE_ANY = 3
 };
 
 #endif

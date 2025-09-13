@@ -1,5 +1,5 @@
 /* jit-builtins.cc -- Handling of builtin functions during JIT-compilation.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -109,9 +109,7 @@ find_builtin_by_name (const char *in_name,
 
      We start at index 1 to skip the initial entry (BUILT_IN_NONE), which
      has a NULL name.  */
-  for (unsigned int i = 1;
-       i < sizeof (builtin_data) / sizeof (builtin_data[0]);
-       i++)
+  for (unsigned int i = 1; i < ARRAY_SIZE (builtin_data); i++)
     {
       const struct builtin_data& bd = builtin_data[i];
       if (matches_builtin (in_name, bd))
@@ -320,7 +318,7 @@ static const char * const type_names[] = {
 static const char *
 get_string_for_type_id (enum jit_builtin_type type_id)
 {
-  gcc_assert (type_id < sizeof (type_names)/sizeof(type_names[0]));
+  gcc_assert (type_id < ARRAY_SIZE (type_names));
   return type_names[type_id];
 }
 
@@ -611,6 +609,9 @@ builtins_manager::ensure_optimization_builtins_exist ()
      We can't loop through all of the builtin_data array, we don't
      support all types yet.  */
   (void)get_builtin_function_by_id (BUILT_IN_TRAP);
+  (void)get_builtin_function_by_id (BUILT_IN_POPCOUNT);
+  (void)get_builtin_function_by_id (BUILT_IN_POPCOUNTL);
+  (void)get_builtin_function_by_id (BUILT_IN_POPCOUNTLL);
 }
 
 /* Playback support.  */

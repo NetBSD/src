@@ -1,5 +1,5 @@
 /* Discovery of auto-inc and auto-dec instructions.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -1692,7 +1692,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       if (!AUTO_INC_DEC)
 	return false;
@@ -1701,7 +1701,7 @@ public:
     }
 
 
-  unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_inc_dec
 

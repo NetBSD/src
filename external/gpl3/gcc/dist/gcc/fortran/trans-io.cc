@@ -1,5 +1,5 @@
 /* IO Code translation/library interface
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Paul Brook
 
 This file is part of GCC.
@@ -791,7 +791,7 @@ gfc_convert_array_to_string (gfc_se * se, gfc_expr * e)
 	}
       else
 	{
-	  gcc_assert (TREE_CODE (se->expr) == INDIRECT_REF);
+	  gcc_assert (INDIRECT_REF_P (se->expr));
 	  tree ptr = TREE_OPERAND (se->expr, 0);
 
 	  gcc_assert (TREE_CODE (ptr) == POINTER_PLUS_EXPR);
@@ -1692,8 +1692,11 @@ transfer_namelist_element (stmtblock_t * block, const char * var_name,
   gcc_assert (sym || c);
 
   /* Build the namelist object name.  */
-
-  string = gfc_build_cstring_const (var_name);
+  if (sym && !sym->attr.use_only && sym->attr.use_rename
+      && sym->ns->use_stmts->rename)
+    string = gfc_build_cstring_const (sym->ns->use_stmts->rename->local_name);
+  else
+    string = gfc_build_cstring_const (var_name);
   string = gfc_build_addr_expr (pchar_type_node, string);
 
   /* Build ts, as and data address using symbol or component.  */
@@ -2620,11 +2623,37 @@ gfc_trans_transfer (gfc_code * code)
 	  gcc_assert (ref && ref->type == REF_ARRAY);
 	}
 
+      /* These expressions don't always have the dtype element length set
+	 correctly, rendering them useless for array transfer.  */
       if (expr->ts.type != BT_CLASS
 	 && expr->expr_type == EXPR_VARIABLE
-	 && gfc_expr_attr (expr).pointer)
+	 && ((expr->symtree->n.sym->ts.type == BT_DERIVED && expr->ts.deferred)
+	     || (expr->symtree->n.sym->assoc
+		 && expr->symtree->n.sym->assoc->variable)
+	     || gfc_expr_attr (expr).pointer))
 	goto scalarize;
 
+      /* With array-bounds checking enabled, force scalarization in some
+	 situations, e.g., when an array index depends on a function
+	 evaluation or an expression and possibly has side-effects.  */
+      if ((gfc_option.rtcheck & GFC_RTCHECK_BOUNDS)
+	  && ref
+	  && ref->u.ar.type == AR_SECTION)
+	{
+	  for (n = 0; n < ref->u.ar.dimen; n++)
+	    if (ref->u.ar.dimen_type[n] == DIMEN_ELEMENT
+		&& ref->u.ar.start[n])
+	      {
+		switch (ref->u.ar.start[n]->expr_type)
+		  {
+		  case EXPR_FUNCTION:
+		  case EXPR_OP:
+		    goto scalarize;
+		  default:
+		    break;
+		  }
+	      }
+	}
 
       if (!(gfc_bt_struct (expr->ts.type)
 	      || expr->ts.type == BT_CLASS)
@@ -2690,6 +2719,7 @@ scalarize:
 
   gfc_add_block_to_block (&body, &se.pre);
   gfc_add_block_to_block (&body, &se.post);
+  gfc_add_block_to_block (&body, &se.finalblock);
 
   if (se.ss == NULL)
     tmp = gfc_finish_block (&body);

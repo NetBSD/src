@@ -1,5 +1,5 @@
 /* "Supergraph" classes that combine CFGs and callgraph into one digraph.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,6 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
@@ -29,13 +30,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "ggc.h"
 #include "basic-block.h"
 #include "function.h"
+#include "gimple.h"
+#include "gimple-iterator.h"
 #include "gimple-fold.h"
 #include "tree-eh.h"
 #include "gimple-expr.h"
 #include "is-a.h"
 #include "timevar.h"
-#include "gimple.h"
-#include "gimple-iterator.h"
 #include "gimple-pretty-print.h"
 #include "tree-pretty-print.h"
 #include "graphviz.h"
@@ -44,7 +45,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "bitmap.h"
 #include "cfganal.h"
 #include "function.h"
-#include "json.h"
 #include "analyzer/analyzer.h"
 #include "ordered-hash-map.h"
 #include "options.h"
@@ -62,7 +62,7 @@ namespace ana {
 /* Get the function of the ultimate alias target being called at EDGE,
    if any.  */
 
-static function *
+function *
 get_ultimate_function_for_cgraph_edge (cgraph_edge *edge)
 {
   cgraph_node *ultimate_node = edge->callee->ultimate_alias_target ();
@@ -74,12 +74,13 @@ get_ultimate_function_for_cgraph_edge (cgraph_edge *edge)
 /* Get the cgraph_edge, but only if there's an underlying function body.  */
 
 cgraph_edge *
-supergraph_call_edge (function *fun, gimple *stmt)
+supergraph_call_edge (function *fun, const gimple *stmt)
 {
-  gcall *call = dyn_cast<gcall *> (stmt);
+  const gcall *call = dyn_cast<const gcall *> (stmt);
   if (!call)
     return NULL;
-  cgraph_edge *edge = cgraph_node::get (fun->decl)->get_edge (stmt);
+  cgraph_edge *edge
+    = cgraph_node::get (fun->decl)->get_edge (const_cast <gimple *> (stmt));
   if (!edge)
     return NULL;
   if (!edge->callee)
@@ -181,6 +182,10 @@ supergraph::supergraph (logger *logger)
 	  for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	    {
 	      gimple *stmt = gsi_stmt (gsi);
+	      /* Discard debug stmts here, so we don't have to check for
+		 them anywhere within the analyzer.  */
+	      if (is_gimple_debug (stmt))
+		continue;
 	      node_for_stmts->m_stmts.safe_push (stmt);
 	      m_stmt_to_node_t.put (stmt, node_for_stmts);
 	      m_stmt_uids.make_uid_unique (stmt);
@@ -359,6 +364,7 @@ supergraph::dump_dot_to_pp (pretty_printer *pp,
     FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (node)
     {
       function *fun = node->get_fun ();
+      gcc_assert (fun);
       const char *funcname = function_name (fun);
       gv.println ("subgraph \"cluster_%s\" {",
 		  funcname);
@@ -404,9 +410,9 @@ supergraph::dump_dot_to_pp (pretty_printer *pp,
 
       /* Add an invisible edge from ENTRY to EXIT, to improve the graph layout.  */
       pp_string (pp, "\t");
-      get_node_for_function_entry (fun)->dump_dot_id (pp);
+      get_node_for_function_entry (*fun)->dump_dot_id (pp);
       pp_string (pp, ":s -> ");
-      get_node_for_function_exit (fun)->dump_dot_id (pp);
+      get_node_for_function_exit (*fun)->dump_dot_id (pp);
       pp_string (pp, ":n [style=\"invis\",constraint=true];\n");
 
       /* Terminate per-function "subgraph" */
@@ -789,6 +795,13 @@ supernode::get_start_location () const
   if (return_p ())
     return m_fun->function_end_locus;
 
+  /* We have no locations for stmts.  If we have a single out-edge that's
+     a CFG edge, the goto_locus of that edge is a better location for this
+     than UNKNOWN_LOCATION.  */
+  if (m_succs.length () == 1)
+    if (const cfg_superedge *cfg_sedge = m_succs[0]->dyn_cast_cfg_superedge ())
+      return cfg_sedge->get_goto_locus ();
+
   return UNKNOWN_LOCATION;
 }
 
@@ -812,6 +825,12 @@ supernode::get_end_location () const
   if (return_p ())
     return m_fun->function_end_locus;
 
+  /* If we have a single out-edge that's a CFG edge, use the goto_locus of
+     that edge.  */
+  if (m_succs.length () == 1)
+    if (const cfg_superedge *cfg_sedge = m_succs[0]->dyn_cast_cfg_superedge ())
+      return cfg_sedge->get_goto_locus ();
+
   return UNKNOWN_LOCATION;
 }
 
@@ -826,6 +845,19 @@ supernode::get_stmt_index (const gimple *stmt) const
     if (iter_stmt == stmt)
       return i;
   gcc_unreachable ();
+}
+
+/* Get any label_decl for this supernode, or NULL_TREE if there isn't one.  */
+
+tree
+supernode::get_label () const
+{
+  if (m_stmts.length () == 0)
+    return NULL_TREE;
+  const glabel *label_stmt = dyn_cast<const glabel *> (m_stmts[0]);
+  if (!label_stmt)
+    return NULL_TREE;
+  return gimple_label_label (label_stmt);
 }
 
 /* Get a string for PK.  */
@@ -854,13 +886,12 @@ void
 superedge::dump (pretty_printer *pp) const
 {
   pp_printf (pp, "edge: SN: %i -> SN: %i", m_src->m_index, m_dest->m_index);
-  char *desc = get_description (false);
-  if (strlen (desc) > 0)
+  label_text desc (get_description (false));
+  if (strlen (desc.get ()) > 0)
     {
       pp_space (pp);
-      pp_string (pp, desc);
+      pp_string (pp, desc.get ());
     }
-  free (desc);
 }
 
 /* Dump this superedge to stderr.  */
@@ -998,17 +1029,15 @@ superedge::get_any_callgraph_edge () const
 /* Build a description of this superedge (e.g. "true" for the true
    edge of a conditional, or "case 42:" for a switch case).
 
-   The caller is responsible for freeing the result.
-
    If USER_FACING is false, the result also contains any underlying
    CFG edge flags. e.g. " (flags FALLTHRU | DFS_BACK)".  */
 
-char *
+label_text
 superedge::get_description (bool user_facing) const
 {
   pretty_printer pp;
   dump_label_to_pp (&pp, user_facing);
-  return xstrdup (pp_formatted_text (&pp));
+  return label_text::take (xstrdup (pp_formatted_text (&pp)));
 }
 
 /* Implementation of superedge::dump_label_to_pp for non-switch CFG
@@ -1051,6 +1080,9 @@ cfg_superedge::dump_label_to_pp (pretty_printer *pp,
 #undef DEF_EDGE_FLAG
       pp_string (pp, ")");
     }
+
+  if (m_cfg_edge->goto_locus > BUILTINS_LOCATION)
+    pp_string (pp, " (has goto_locus)");
 
   /* Otherwise, no label.  */
 }
@@ -1155,7 +1187,29 @@ switch_cfg_superedge::dump_label_to_pp (pretty_printer *pp,
 	    pp_printf (pp, "default");
 	}
       pp_character (pp, '}');
+      if (implicitly_created_default_p ())
+	{
+	  pp_string (pp, " IMPLICITLY CREATED");
+	}
     }
+}
+
+/* Return true iff this edge is purely for an implicitly-created "default".  */
+
+bool
+switch_cfg_superedge::implicitly_created_default_p () const
+{
+  if (m_case_labels.length () != 1)
+    return false;
+
+  tree case_label = m_case_labels[0];
+  gcc_assert (TREE_CODE (case_label) == CASE_LABEL_EXPR);
+  if (CASE_LOW (case_label))
+    return false;
+
+  /* We have a single "default" case.
+     Assume that it was implicitly created if it has UNKNOWN_LOCATION.  */
+  return EXPR_LOCATION (case_label) == UNKNOWN_LOCATION;
 }
 
 /* Implementation of superedge::dump_label_to_pp for interprocedural

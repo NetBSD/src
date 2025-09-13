@@ -1,6 +1,6 @@
 // <experimental/source_location> -*- C++ -*-
 
-// Copyright (C) 2015-2022 Free Software Foundation, Inc.
+// Copyright (C) 2015-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -30,6 +30,8 @@
 #ifndef _GLIBCXX_EXPERIMENTAL_SRCLOC
 #define _GLIBCXX_EXPERIMENTAL_SRCLOC 1
 
+#include <bits/requires_hosted.h> // experimental is currently omitted
+
 #if __cplusplus >= 201402L
 #include <cstdint>
 
@@ -42,12 +44,6 @@ inline namespace fundamentals_v2 {
 
   struct source_location
   {
-#ifndef _GLIBCXX_USE_C99_STDINT_TR1
-  private:
-    using uint_least32_t = unsigned;
-  public:
-#endif
-
     // 14.1.2, source_location creation
     static constexpr source_location
     current(const char* __file = __builtin_FILE(),

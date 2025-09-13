@@ -56,11 +56,14 @@ __hwasan_personality_wrapper(int version, _Unwind_Action actions,
     uptr fp = get_gr(context, 6); // rbp
 #elif defined(__aarch64__)
     uptr fp = get_gr(context, 29); // x29
+#elif SANITIZER_RISCV64
+    uptr fp = get_gr(context, 8);  // x8
 #else
 #error Unsupported architecture
 #endif
     uptr sp = get_cfa(context);
-    TagMemory(sp, fp - sp, 0);
+    TagMemory(UntagAddr(sp), UntagAddr(fp) - UntagAddr(sp),
+              GetTagFromPointer(sp));
   }
 
   return rc;

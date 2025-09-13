@@ -1,5 +1,5 @@
 /* Target Definitions for NVPTX.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Contributed by Bernd Schmidt <bernds@codesourcery.com>
 
    This file is part of GCC.
@@ -26,6 +26,14 @@
 #endif
 
 /* Run-time Target.  */
+
+/* Use '--with-arch' for default '-misa'.  */
+#define OPTION_DEFAULT_SPECS \
+  { "arch", "%{!misa=*:-misa=%(VALUE)}" }, \
+
+/* Assembler supports '-v' option; handle similar to
+   '../../gcc.cc:asm_options', 'HAVE_GNU_AS'.  */
+#define ASM_SPEC "%{v}"
 
 #define STARTFILE_SPEC "%{mmainkernel:crt0.o%s}"
 
@@ -201,8 +209,8 @@ struct GTY(()) machine_function
 {
   rtx_expr_list *call_args;  /* Arg list for the current call.  */
   bool doing_call; /* Within a CALL_ARGS ... CALL_ARGS_END sequence.  */
-  bool is_varadic;  /* This call is varadic  */
-  bool has_varadic;  /* Current function has a varadic call.  */
+  bool is_variadic;  /* This call is variadic  */
+  bool has_variadic;  /* Current function has a variadic call.  */
   bool has_chain; /* Current function has outgoing static chain.  */
   bool has_softstack; /* Current function has a soft stack frame.  */
   bool has_simtreg; /* Current function has an OpenMP SIMD region.  */
@@ -253,7 +261,7 @@ struct GTY(()) machine_function
 #undef ASM_APP_OFF
 #define ASM_APP_OFF "\t// #NO_APP \n"
 
-#define DBX_REGISTER_NUMBER(N) N
+#define DEBUGGER_REGNO(N) N
 
 #define TEXT_SECTION_ASM_OP ""
 #define DATA_SECTION_ASM_OP ""
@@ -311,6 +319,9 @@ struct GTY(()) machine_function
 
 #define SUPPORTS_WEAK 1
 
+#define MAKE_DECL_ONE_ONLY(DECL) \
+  (DECL_WEAK (DECL) = 1)
+
 /* The documentation states that ASM_OUTPUT_DEF_FROM_DECLS is used in
    preference to ASM_OUTPUT_DEF if the tree nodes are available.  However, we
    need the tree nodes to emit the prototype, so at this point it's not clear
@@ -321,11 +332,19 @@ struct GTY(()) machine_function
 #define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)	\
   do						\
     {						\
+      (void) (FILE);				\
+      (void) (LABEL1);				\
+      (void) (LABEL2);				\
       gcc_unreachable ();			\
     }						\
   while (0)
 #define ASM_OUTPUT_DEF_FROM_DECLS(STREAM, NAME, VALUE)	\
   nvptx_asm_output_def_from_decls (STREAM, NAME, VALUE)
+
+/* ..., but also override other macros to avoid 'gcc/defaults.h'-initialization
+   due to that dummy 'ASM_OUTPUT_DEF'.  */
+#define TARGET_USE_LOCAL_THUNK_ALIAS_P(DECL) TARGET_SUPPORTS_ALIASES
+#define TARGET_SUPPORTS_ALIASES (nvptx_alias != 0)
 
 #define NO_DOT_IN_LABEL
 #define ASM_COMMENT_START "//"

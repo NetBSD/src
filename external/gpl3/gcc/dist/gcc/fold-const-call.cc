@@ -1,5 +1,5 @@
 /* Constant folding for calls to built-in and internal functions.
-   Copyright (C) 1988-2022 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -27,7 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "fold-const.h"
 #include "fold-const-call.h"
 #include "case-cfn-macros.h"
-#include "tm.h" /* For C[LT]Z_DEFINED_AT_ZERO.  */
+#include "tm.h" /* For C[LT]Z_DEFINED_VALUE_AT_ZERO.  */
 #include "builtins.h"
 #include "gimple-expr.h"
 #include "tree-vector-builder.h"
@@ -101,7 +101,7 @@ do_mpfr_ckconv (real_value *result, mpfr_srcptr m, bool inexact,
   real_from_mpfr (&tmp, m, format, MPFR_RNDN);
 
   /* Proceed iff GCC's REAL_VALUE_TYPE can hold the MPFR values.
-     If the REAL_VALUE_TYPE is zero but the mpft_t is not, then we
+     If the REAL_VALUE_TYPE is zero but the mpfr_t is not, then we
      underflowed in the conversion.  */
   if (!real_isfinite (&tmp)
       || ((tmp.cl == rvc_zero) != (mpfr_zero_p (m) != 0)))
@@ -130,14 +130,12 @@ do_mpfr_arg1 (real_value *result,
 
   int prec = format->p;
   mpfr_rnd_t rnd = format->round_towards_zero ? MPFR_RNDZ : MPFR_RNDN;
-  mpfr_t m;
 
-  mpfr_init2 (m, prec);
+  auto_mpfr m (prec);
   mpfr_from_real (m, arg, MPFR_RNDN);
   mpfr_clear_flags ();
   bool inexact = func (m, m, rnd);
   bool ok = do_mpfr_ckconv (result, m, inexact, format);
-  mpfr_clear (m);
 
   return ok;
 }
@@ -224,14 +222,12 @@ do_mpfr_arg2 (real_value *result,
 
   int prec = format->p;
   mpfr_rnd_t rnd = format->round_towards_zero ? MPFR_RNDZ : MPFR_RNDN;
-  mpfr_t m;
 
-  mpfr_init2 (m, prec);
+  auto_mpfr m (prec);
   mpfr_from_real (m, arg1, MPFR_RNDN);
   mpfr_clear_flags ();
   bool inexact = func (m, arg0.to_shwi (), m, rnd);
   bool ok = do_mpfr_ckconv (result, m, inexact, format);
-  mpfr_clear (m);
 
   return ok;
 }
@@ -299,7 +295,7 @@ do_mpc_ckconv (real_value *result_real, real_value *result_imag,
   real_from_mpfr (&tmp_imag, mpc_imagref (m), format, MPFR_RNDN);
 
   /* Proceed iff GCC's REAL_VALUE_TYPE can hold the MPFR values.
-     If the REAL_VALUE_TYPE is zero but the mpft_t is not, then we
+     If the REAL_VALUE_TYPE is zero but the mpfr_t is not, then we
      underflowed in the conversion.  */
   if (!real_isfinite (&tmp_real)
       || !real_isfinite (&tmp_imag)
@@ -734,64 +730,82 @@ fold_const_call_ss (real_value *result, combined_fn fn,
 	      && do_mpfr_arg1 (result, mpfr_sqrt, arg, format));
 
     CASE_CFN_CBRT:
+    CASE_CFN_CBRT_FN:
       return do_mpfr_arg1 (result, mpfr_cbrt, arg, format);
 
     CASE_CFN_ASIN:
+    CASE_CFN_ASIN_FN:
       return (real_compare (GE_EXPR, arg, &dconstm1)
 	      && real_compare (LE_EXPR, arg, &dconst1)
 	      && do_mpfr_arg1 (result, mpfr_asin, arg, format));
 
     CASE_CFN_ACOS:
+    CASE_CFN_ACOS_FN:
       return (real_compare (GE_EXPR, arg, &dconstm1)
 	      && real_compare (LE_EXPR, arg, &dconst1)
 	      && do_mpfr_arg1 (result, mpfr_acos, arg, format));
 
     CASE_CFN_ATAN:
+    CASE_CFN_ATAN_FN:
       return do_mpfr_arg1 (result, mpfr_atan, arg, format);
 
     CASE_CFN_ASINH:
+    CASE_CFN_ASINH_FN:
       return do_mpfr_arg1 (result, mpfr_asinh, arg, format);
 
     CASE_CFN_ACOSH:
+    CASE_CFN_ACOSH_FN:
       return (real_compare (GE_EXPR, arg, &dconst1)
 	      && do_mpfr_arg1 (result, mpfr_acosh, arg, format));
 
     CASE_CFN_ATANH:
+    CASE_CFN_ATANH_FN:
       return (real_compare (GE_EXPR, arg, &dconstm1)
 	      && real_compare (LE_EXPR, arg, &dconst1)
 	      && do_mpfr_arg1 (result, mpfr_atanh, arg, format));
 
     CASE_CFN_SIN:
+    CASE_CFN_SIN_FN:
       return do_mpfr_arg1 (result, mpfr_sin, arg, format);
 
     CASE_CFN_COS:
+    CASE_CFN_COS_FN:
       return do_mpfr_arg1 (result, mpfr_cos, arg, format);
 
     CASE_CFN_TAN:
+    CASE_CFN_TAN_FN:
       return do_mpfr_arg1 (result, mpfr_tan, arg, format);
 
     CASE_CFN_SINH:
+    CASE_CFN_SINH_FN:
       return do_mpfr_arg1 (result, mpfr_sinh, arg, format);
 
     CASE_CFN_COSH:
+    CASE_CFN_COSH_FN:
       return do_mpfr_arg1 (result, mpfr_cosh, arg, format);
 
     CASE_CFN_TANH:
+    CASE_CFN_TANH_FN:
       return do_mpfr_arg1 (result, mpfr_tanh, arg, format);
 
     CASE_CFN_ERF:
+    CASE_CFN_ERF_FN:
       return do_mpfr_arg1 (result, mpfr_erf, arg, format);
 
     CASE_CFN_ERFC:
+    CASE_CFN_ERFC_FN:
       return do_mpfr_arg1 (result, mpfr_erfc, arg, format);
 
     CASE_CFN_TGAMMA:
+    CASE_CFN_TGAMMA_FN:
       return do_mpfr_arg1 (result, mpfr_gamma, arg, format);
 
     CASE_CFN_EXP:
+    CASE_CFN_EXP_FN:
       return do_mpfr_arg1 (result, mpfr_exp, arg, format);
 
     CASE_CFN_EXP2:
+    CASE_CFN_EXP2_FN:
       return do_mpfr_arg1 (result, mpfr_exp2, arg, format);
 
     CASE_CFN_EXP10:
@@ -799,21 +813,26 @@ fold_const_call_ss (real_value *result, combined_fn fn,
       return do_mpfr_arg1 (result, mpfr_exp10, arg, format);
 
     CASE_CFN_EXPM1:
+    CASE_CFN_EXPM1_FN:
       return do_mpfr_arg1 (result, mpfr_expm1, arg, format);
 
     CASE_CFN_LOG:
+    CASE_CFN_LOG_FN:
       return (real_compare (GT_EXPR, arg, &dconst0)
 	      && do_mpfr_arg1 (result, mpfr_log, arg, format));
 
     CASE_CFN_LOG2:
+    CASE_CFN_LOG2_FN:
       return (real_compare (GT_EXPR, arg, &dconst0)
 	      && do_mpfr_arg1 (result, mpfr_log2, arg, format));
 
     CASE_CFN_LOG10:
+    CASE_CFN_LOG10_FN:
       return (real_compare (GT_EXPR, arg, &dconst0)
 	      && do_mpfr_arg1 (result, mpfr_log10, arg, format));
 
     CASE_CFN_LOG1P:
+    CASE_CFN_LOG1P_FN:
       return (real_compare (GT_EXPR, arg, &dconstm1)
 	      && do_mpfr_arg1 (result, mpfr_log1p, arg, format));
 
@@ -877,6 +896,7 @@ fold_const_call_ss (real_value *result, combined_fn fn,
       return false;
 
     CASE_CFN_LOGB:
+    CASE_CFN_LOGB_FN:
       return fold_const_logb (result, arg, format);
 
     CASE_CFN_SIGNIFICAND:
@@ -909,6 +929,7 @@ fold_const_call_ss (wide_int *result, combined_fn fn,
       return true;
 
     CASE_CFN_ILOGB:
+    CASE_CFN_ILOGB_FN:
       /* For ilogb we don't know FP_ILOGB0, so only handle normal values.
 	 Proceed iff radix == 2.  In GCC, normalized significands are in
 	 the range [0.5, 1.0).  We want the exponent as if they were
@@ -934,13 +955,17 @@ fold_const_call_ss (wide_int *result, combined_fn fn,
 
     CASE_CFN_IROUND:
     CASE_CFN_LROUND:
+    CASE_CFN_LROUND_FN:
     CASE_CFN_LLROUND:
+    CASE_CFN_LLROUND_FN:
       return fold_const_conversion (result, real_round, arg,
 				    precision, format);
 
     CASE_CFN_IRINT:
     CASE_CFN_LRINT:
+    CASE_CFN_LRINT_FN:
     CASE_CFN_LLRINT:
+    CASE_CFN_LLRINT_FN:
       /* Not yet folded to a constant.  */
       return false;
 
@@ -950,6 +975,10 @@ fold_const_call_ss (wide_int *result, combined_fn fn,
     case CFN_BUILT_IN_FINITED128:
     case CFN_BUILT_IN_ISFINITE:
       *result = wi::shwi (real_isfinite (arg) ? 1 : 0, precision);
+      return true;
+
+    case CFN_BUILT_IN_ISSIGNALING:
+      *result = wi::shwi (real_issignaling_nan (arg) ? 1 : 0, precision);
       return true;
 
     CASE_CFN_ISINF:
@@ -988,14 +1017,18 @@ fold_const_call_ss (wide_int *result, combined_fn fn, const wide_int_ref &arg,
   switch (fn)
     {
     CASE_CFN_FFS:
+    case CFN_BUILT_IN_FFSG:
       *result = wi::shwi (wi::ffs (arg), precision);
       return true;
 
     CASE_CFN_CLZ:
+    case CFN_BUILT_IN_CLZG:
       {
 	int tmp;
 	if (wi::ne_p (arg, 0))
 	  tmp = wi::clz (arg);
+	else if (TREE_CODE (arg_type) == BITINT_TYPE)
+	  tmp = TYPE_PRECISION (arg_type);
 	else if (!CLZ_DEFINED_VALUE_AT_ZERO (SCALAR_INT_TYPE_MODE (arg_type),
 					     tmp))
 	  tmp = TYPE_PRECISION (arg_type);
@@ -1004,10 +1037,13 @@ fold_const_call_ss (wide_int *result, combined_fn fn, const wide_int_ref &arg,
       }
 
     CASE_CFN_CTZ:
+    case CFN_BUILT_IN_CTZG:
       {
 	int tmp;
 	if (wi::ne_p (arg, 0))
 	  tmp = wi::ctz (arg);
+	else if (TREE_CODE (arg_type) == BITINT_TYPE)
+	  tmp = TYPE_PRECISION (arg_type);
 	else if (!CTZ_DEFINED_VALUE_AT_ZERO (SCALAR_INT_TYPE_MODE (arg_type),
 					     tmp))
 	  tmp = TYPE_PRECISION (arg_type);
@@ -1016,14 +1052,17 @@ fold_const_call_ss (wide_int *result, combined_fn fn, const wide_int_ref &arg,
       }
 
     CASE_CFN_CLRSB:
+    case CFN_BUILT_IN_CLRSBG:
       *result = wi::shwi (wi::clrsb (arg), precision);
       return true;
 
     CASE_CFN_POPCOUNT:
+    case CFN_BUILT_IN_POPCOUNTG:
       *result = wi::shwi (wi::popcount (arg), precision);
       return true;
 
     CASE_CFN_PARITY:
+    case CFN_BUILT_IN_PARITYG:
       *result = wi::shwi (wi::parity (arg), precision);
       return true;
 
@@ -1031,7 +1070,8 @@ fold_const_call_ss (wide_int *result, combined_fn fn, const wide_int_ref &arg,
     case CFN_BUILT_IN_BSWAP32:
     case CFN_BUILT_IN_BSWAP64:
     case CFN_BUILT_IN_BSWAP128:
-      *result = wide_int::from (arg, precision, TYPE_SIGN (arg_type)).bswap ();
+      *result = wi::bswap (wide_int::from (arg, precision,
+					   TYPE_SIGN (arg_type)));
       return true;
 
     default:
@@ -1079,6 +1119,7 @@ fold_const_call_sc (real_value *result, combined_fn fn,
   switch (fn)
     {
     CASE_CFN_CABS:
+    CASE_CFN_CABS_FN:
       return do_mpfr_arg2 (result, mpfr_hypot, arg_real, arg_imag, format);
 
     default:
@@ -1102,17 +1143,20 @@ fold_const_call_cc (real_value *result_real, real_value *result_imag,
   switch (fn)
     {
     CASE_CFN_CCOS:
+    CASE_CFN_CCOS_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_cos,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CCOSH:
+    CASE_CFN_CCOSH_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_cosh,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CPROJ:
+    CASE_CFN_CPROJ_FN:
       if (real_isinf (arg_real) || real_isinf (arg_imag))
 	{
-	  real_inf (result_real);
+	  *result_real = dconstinf;
 	  *result_imag = dconst0;
 	  result_imag->sign = arg_imag->sign;
 	}
@@ -1124,54 +1168,67 @@ fold_const_call_cc (real_value *result_real, real_value *result_imag,
       return true;
 
     CASE_CFN_CSIN:
+    CASE_CFN_CSIN_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_sin,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CSINH:
+    CASE_CFN_CSINH_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_sinh,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CTAN:
+    CASE_CFN_CTAN_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_tan,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CTANH:
+    CASE_CFN_CTANH_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_tanh,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CLOG:
+    CASE_CFN_CLOG_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_log,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CSQRT:
+    CASE_CFN_CSQRT_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_sqrt,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CASIN:
+    CASE_CFN_CASIN_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_asin,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CACOS:
+    CASE_CFN_CACOS_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_acos,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CATAN:
+    CASE_CFN_CATAN_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_atan,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CASINH:
+    CASE_CFN_CASINH_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_asinh,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CACOSH:
+    CASE_CFN_CACOSH_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_acosh,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CATANH:
+    CASE_CFN_CATANH_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_atanh,
 			  arg_real, arg_imag, format);
 
     CASE_CFN_CEXP:
+    CASE_CFN_CEXP_FN:
       return do_mpc_arg1 (result_real, result_imag, mpc_exp,
 			  arg_real, arg_imag, format);
 
@@ -1297,6 +1354,7 @@ fold_const_call (combined_fn fn, tree type, tree arg)
 
     CASE_CFN_NANS:
     CASE_FLT_FN_FLOATN_NX (CFN_BUILT_IN_NANS):
+    case CFN_BUILT_IN_NANSF16B:
     case CFN_BUILT_IN_NANSD32:
     case CFN_BUILT_IN_NANSD64:
     case CFN_BUILT_IN_NANSD128:
@@ -1365,18 +1423,23 @@ fold_const_call_sss (real_value *result, combined_fn fn,
     {
     CASE_CFN_DREM:
     CASE_CFN_REMAINDER:
+    CASE_CFN_REMAINDER_FN:
       return do_mpfr_arg2 (result, mpfr_remainder, arg0, arg1, format);
 
     CASE_CFN_ATAN2:
+    CASE_CFN_ATAN2_FN:
       return do_mpfr_arg2 (result, mpfr_atan2, arg0, arg1, format);
 
     CASE_CFN_FDIM:
+    CASE_CFN_FDIM_FN:
       return do_mpfr_arg2 (result, mpfr_dim, arg0, arg1, format);
 
     CASE_CFN_FMOD:
+    CASE_CFN_FMOD_FN:
       return do_mpfr_arg2 (result, mpfr_fmod, arg0, arg1, format);
 
     CASE_CFN_HYPOT:
+    CASE_CFN_HYPOT_FN:
       return do_mpfr_arg2 (result, mpfr_hypot, arg0, arg1, format);
 
     CASE_CFN_COPYSIGN:
@@ -1394,9 +1457,12 @@ fold_const_call_sss (real_value *result, combined_fn fn,
       return do_mpfr_arg2 (result, mpfr_max, arg0, arg1, format);
 
     CASE_CFN_POW:
+    CASE_CFN_POW_FN:
       return fold_const_pow (result, arg0, arg1, format);
 
     CASE_CFN_NEXTAFTER:
+    CASE_CFN_NEXTAFTER_FN:
+    case CFN_BUILT_IN_NEXTAFTERF16B:
     CASE_CFN_NEXTTOWARD:
       return fold_const_nextafter (result, arg0, arg1, format);
 
@@ -1420,10 +1486,13 @@ fold_const_call_sss (real_value *result, combined_fn fn,
   switch (fn)
     {
     CASE_CFN_LDEXP:
+    CASE_CFN_LDEXP_FN:
       return fold_const_builtin_load_exponent (result, arg0, arg1, format);
 
     CASE_CFN_SCALBN:
+    CASE_CFN_SCALBN_FN:
     CASE_CFN_SCALBLN:
+    CASE_CFN_SCALBLN_FN:
       return (format->b == 2
 	      && fold_const_builtin_load_exponent (result, arg0, arg1,
 						   format));
@@ -1472,6 +1541,49 @@ fold_const_call_sss (real_value *result, combined_fn fn,
 
 /* Try to evaluate:
 
+      *RESULT = FN (ARG0, ARG1)
+
+   where ARG_TYPE is the type of ARG0 and PRECISION is the number of bits in
+   the result.  Return true on success.  */
+
+static bool
+fold_const_call_sss (wide_int *result, combined_fn fn,
+		     const wide_int_ref &arg0, const wide_int_ref &arg1,
+		     unsigned int precision, tree arg_type ATTRIBUTE_UNUSED)
+{
+  switch (fn)
+    {
+    case CFN_CLZ:
+    case CFN_BUILT_IN_CLZG:
+      {
+	int tmp;
+	if (wi::ne_p (arg0, 0))
+	  tmp = wi::clz (arg0);
+	else
+	  tmp = arg1.to_shwi ();
+	*result = wi::shwi (tmp, precision);
+	return true;
+      }
+
+    case CFN_CTZ:
+    case CFN_BUILT_IN_CTZG:
+      {
+	int tmp;
+	if (wi::ne_p (arg0, 0))
+	  tmp = wi::ctz (arg0);
+	else
+	  tmp = arg1.to_shwi ();
+	*result = wi::shwi (tmp, precision);
+	return true;
+      }
+
+    default:
+      return false;
+    }
+}
+
+/* Try to evaluate:
+
       RESULT = fn (ARG0, ARG1)
 
    where FORMAT is the format of the real and imaginary parts of RESULT
@@ -1487,6 +1599,7 @@ fold_const_call_ccc (real_value *result_real, real_value *result_imag,
   switch (fn)
     {
     CASE_CFN_CPOW:
+    CASE_CFN_CPOW_FN:
       return do_mpc_arg2 (result_real, result_imag, mpc_pow,
 			  arg0_real, arg0_imag, arg1_real, arg1_imag, format);
 
@@ -1504,6 +1617,19 @@ fold_const_call_1 (combined_fn fn, tree type, tree arg0, tree arg1)
   machine_mode mode = TYPE_MODE (type);
   machine_mode arg0_mode = TYPE_MODE (TREE_TYPE (arg0));
   machine_mode arg1_mode = TYPE_MODE (TREE_TYPE (arg1));
+
+  if (integer_cst_p (arg0) && integer_cst_p (arg1))
+    {
+      if (SCALAR_INT_MODE_P (mode))
+	{
+	  wide_int result;
+	  if (fold_const_call_sss (&result, fn, wi::to_wide (arg0),
+				   wi::to_wide (arg1), TYPE_PRECISION (type),
+				   TREE_TYPE (arg0)))
+	    return wide_int_to_tree (type, result);
+	}
+      return NULL_TREE;
+    }
 
   if (mode == arg0_mode
       && real_cst_p (arg0)
@@ -1609,6 +1735,7 @@ fold_const_call (combined_fn fn, tree type, tree arg0, tree arg1)
 {
   const char *p0, *p1;
   char c;
+  tree_code subcode;
   switch (fn)
     {
     case CFN_BUILT_IN_STRSPN:
@@ -1677,6 +1804,46 @@ fold_const_call (combined_fn fn, tree type, tree arg0, tree arg1)
 
     case CFN_FOLD_LEFT_PLUS:
       return fold_const_fold_left (type, arg0, arg1, PLUS_EXPR);
+
+    case CFN_UBSAN_CHECK_ADD:
+    case CFN_ADD_OVERFLOW:
+      subcode = PLUS_EXPR;
+      goto arith_overflow;
+
+    case CFN_UBSAN_CHECK_SUB:
+    case CFN_SUB_OVERFLOW:
+      subcode = MINUS_EXPR;
+      goto arith_overflow;
+
+    case CFN_UBSAN_CHECK_MUL:
+    case CFN_MUL_OVERFLOW:
+      subcode = MULT_EXPR;
+      goto arith_overflow;
+
+    arith_overflow:
+      if (integer_cst_p (arg0) && integer_cst_p (arg1))
+	{
+	  tree itype
+	    = TREE_CODE (type) == COMPLEX_TYPE ? TREE_TYPE (type) : type;
+	  bool ovf = false;
+	  tree r = int_const_binop (subcode, fold_convert (itype, arg0),
+				    fold_convert (itype, arg1));
+	  if (!r || TREE_CODE (r) != INTEGER_CST)
+	    return NULL_TREE;
+	  if (arith_overflowed_p (subcode, itype, arg0, arg1))
+	    ovf = true;
+	  if (TREE_OVERFLOW (r))
+	    r = drop_tree_overflow (r);
+	  if (itype == type)
+	    {
+	      if (ovf)
+		return NULL_TREE;
+	      return r;
+	    }
+	  else
+	    return build_complex (type, r, build_int_cst (itype, ovf));
+	}
+      return NULL_TREE;
 
     default:
       return fold_const_call_1 (fn, type, arg0, arg1);
@@ -1835,6 +2002,30 @@ fold_const_call (combined_fn fn, tree type, tree arg0, tree arg1, tree arg2)
 	  return fold_while_ult (type, parg0, parg1);
 	return NULL_TREE;
       }
+
+    case CFN_UADDC:
+    case CFN_USUBC:
+      if (integer_cst_p (arg0) && integer_cst_p (arg1) && integer_cst_p (arg2))
+	{
+	  tree itype = TREE_TYPE (type);
+	  bool ovf = false;
+	  tree_code subcode = fn == CFN_UADDC ? PLUS_EXPR : MINUS_EXPR;
+	  tree r = int_const_binop (subcode, fold_convert (itype, arg0),
+				    fold_convert (itype, arg1));
+	  if (!r)
+	    return NULL_TREE;
+	  if (arith_overflowed_p (subcode, itype, arg0, arg1))
+	    ovf = true;
+	  tree r2 = int_const_binop (subcode, r, fold_convert (itype, arg2));
+	  if (!r2 || TREE_CODE (r2) != INTEGER_CST)
+	    return NULL_TREE;
+	  if (arith_overflowed_p (subcode, itype, r, arg2))
+	    ovf = true;
+	  if (TREE_OVERFLOW (r2))
+	    r2 = drop_tree_overflow (r2);
+	  return build_complex (type, r2, build_int_cst (itype, ovf));
+	}
+      return NULL_TREE;
 
     default:
       return fold_const_call_1 (fn, type, arg0, arg1, arg2);

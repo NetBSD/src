@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by James E. Wilson <wilson@cygnus.com> and
 		  David Mosberger <davidm@hpl.hp.com>.
 
@@ -313,7 +313,8 @@ static tree ia64_gimplify_va_arg (tree, tree, gimple_seq *, gimple_seq *);
 static bool ia64_scalar_mode_supported_p (scalar_mode mode);
 static bool ia64_vector_mode_supported_p (machine_mode mode);
 static bool ia64_legitimate_constant_p (machine_mode, rtx);
-static bool ia64_legitimate_address_p (machine_mode, rtx, bool);
+static bool ia64_legitimate_address_p (machine_mode, rtx, bool,
+				       code_helper = ERROR_MARK);
 static bool ia64_cannot_force_const_mem (machine_mode, rtx);
 static const char *ia64_mangle_type (const_tree);
 static const char *ia64_invalid_conversion (const_tree, const_tree);
@@ -332,8 +333,8 @@ static fixed_size_mode ia64_get_reg_raw_mode (int regno);
 static section * ia64_hpux_function_section (tree, enum node_frequency,
 					     bool, bool);
 
-static bool ia64_vectorize_vec_perm_const (machine_mode, rtx, rtx, rtx,
-					   const vec_perm_indices &);
+static bool ia64_vectorize_vec_perm_const (machine_mode, machine_mode, rtx,
+					   rtx, rtx, const vec_perm_indices &);
 
 static unsigned int ia64_hard_regno_nregs (unsigned int, machine_mode);
 static bool ia64_hard_regno_mode_ok (unsigned int, machine_mode);
@@ -357,7 +358,7 @@ static bool ia64_expand_vec_perm_const_1 (struct expand_vec_perm_d *d);
 
 
 /* Table of valid machine attributes.  */
-static const struct attribute_spec ia64_attribute_table[] =
+static const attribute_spec ia64_gnu_attributes[] =
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
@@ -369,8 +370,17 @@ static const struct attribute_spec ia64_attribute_table[] =
     ia64_vms_common_object_attribute, NULL },
 #endif
   { "version_id",      1, 1, true, false, false, false,
-    ia64_handle_version_id_attribute, NULL },
-  { NULL,	       0, 0, false, false, false, false, NULL, NULL }
+    ia64_handle_version_id_attribute, NULL }
+};
+
+static const scoped_attribute_specs ia64_gnu_attribute_table =
+{
+  "gnu", { ia64_gnu_attributes }
+};
+
+static const scoped_attribute_specs *const ia64_attribute_table[] =
+{
+  &ia64_gnu_attribute_table
 };
 
 /* Initialize the GCC target structure.  */
@@ -873,7 +883,7 @@ ia64_encode_section_info (tree decl, rtx rtl, int first)
   default_encode_section_info (decl, rtl, first);
 
   /* Careful not to prod global register variables.  */
-  if (TREE_CODE (decl) == VAR_DECL
+  if (VAR_P (decl)
       && GET_CODE (DECL_RTL (decl)) == MEM
       && GET_CODE (XEXP (DECL_RTL (decl), 0)) == SYMBOL_REF
       && (TREE_STATIC (decl) || DECL_EXTERNAL (decl)))
@@ -1024,8 +1034,8 @@ ia64_legitimate_address_disp (const_rtx reg, const_rtx disp, bool strict)
 /* Implement TARGET_LEGITIMATE_ADDRESS_P.  */
 
 static bool
-ia64_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
-			   rtx x, bool strict)
+ia64_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x,
+			   bool strict, code_helper)
 {
   if (ia64_legitimate_address_reg (x, strict))
     return true;
@@ -3886,7 +3896,7 @@ ia64_start_function (FILE *file, const char *fnname,
   fputs ("\t.proc ", file);
   assemble_name (file, fnname);
   fputc ('\n', file);
-  ASM_OUTPUT_LABEL (file, fnname);
+  ASM_OUTPUT_FUNCTION_LABEL (file, fnname, decl);
 }
 
 /* Called after register allocation to add any instructions needed for the
@@ -4421,7 +4431,7 @@ ia64_output_function_prologue (FILE *file)
 
   if (mask && TARGET_GNU_AS)
     fprintf (file, "\t.prologue %d, %d\n", mask,
-	     ia64_dbx_register_number (grsave));
+	     ia64_debugger_regno (grsave));
   else
     fputs ("\t.prologue\n", file);
 
@@ -4473,7 +4483,7 @@ ia64_output_function_epilogue (FILE *)
 }
 
 int
-ia64_dbx_register_number (int regno)
+ia64_debugger_regno (int regno)
 {
   /* In ia64_expand_prologue we quite literally renamed the frame pointer
      from its home at loc79 to something inside the register frame.  We
@@ -4596,8 +4606,9 @@ ia64_setup_incoming_varargs (cumulative_args_t cum,
 {
   CUMULATIVE_ARGS next_cum = *get_cumulative_args (cum);
 
-  /* Skip the current argument.  */
-  ia64_function_arg_advance (pack_cumulative_args (&next_cum), arg);
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl)))
+    /* Skip the current argument.  */
+    ia64_function_arg_advance (pack_cumulative_args (&next_cum), arg);
 
   if (next_cum.words < MAX_ARGUMENT_SLOTS)
     {
@@ -5155,7 +5166,7 @@ ia64_gimplify_va_arg (tree valist, tree type, gimple_seq *pre_p,
      the next even boundary.  Integer and floating point arguments
      do so if they are larger than 8 bytes, whether or not they are
      also aligned larger than 8 bytes.  */
-  if ((TREE_CODE (type) == REAL_TYPE || TREE_CODE (type) == INTEGER_TYPE)
+  if ((SCALAR_FLOAT_TYPE_P (type) || TREE_CODE (type) == INTEGER_TYPE)
       ? int_size_in_bytes (type) > 8 : TYPE_ALIGN (type) > 8 * BITS_PER_UNIT)
     {
       tree t = fold_build_pointer_plus_hwi (valist, 2 * UNITS_PER_WORD - 1);
@@ -10002,7 +10013,7 @@ ia64_in_small_data_p (const_tree exp)
   if (TREE_CODE (exp) == FUNCTION_DECL)
     return false;
 
-  if (TREE_CODE (exp) == VAR_DECL && DECL_SECTION_NAME (exp))
+  if (VAR_P (exp) && DECL_SECTION_NAME (exp))
     {
       const char *section = DECL_SECTION_NAME (exp);
 
@@ -10104,7 +10115,7 @@ process_cfa_adjust_cfa (FILE *out_file, rtx pat, rtx insn,
 
       if (unwind)
 	fprintf (out_file, "\t.vframe r%d\n",
-		 ia64_dbx_register_number (REGNO (dest)));
+		 ia64_debugger_regno (REGNO (dest)));
     }
   else
     gcc_unreachable ();
@@ -10125,7 +10136,7 @@ process_cfa_register (FILE *out_file, rtx pat, bool unwind)
       /* Saving return address pointer.  */
       if (unwind)
 	fprintf (out_file, "\t.save rp, r%d\n",
-		 ia64_dbx_register_number (dest_regno));
+		 ia64_debugger_regno (dest_regno));
       return;
     }
 
@@ -10137,21 +10148,21 @@ process_cfa_register (FILE *out_file, rtx pat, bool unwind)
       gcc_assert (dest_regno == current_frame_info.r[reg_save_pr]);
       if (unwind)
 	fprintf (out_file, "\t.save pr, r%d\n",
-		 ia64_dbx_register_number (dest_regno));
+		 ia64_debugger_regno (dest_regno));
       break;
 
     case AR_UNAT_REGNUM:
       gcc_assert (dest_regno == current_frame_info.r[reg_save_ar_unat]);
       if (unwind)
 	fprintf (out_file, "\t.save ar.unat, r%d\n",
-		 ia64_dbx_register_number (dest_regno));
+		 ia64_debugger_regno (dest_regno));
       break;
 
     case AR_LC_REGNUM:
       gcc_assert (dest_regno == current_frame_info.r[reg_save_ar_lc]);
       if (unwind)
 	fprintf (out_file, "\t.save ar.lc, r%d\n",
-		 ia64_dbx_register_number (dest_regno));
+		 ia64_debugger_regno (dest_regno));
       break;
 
     default:
@@ -10326,7 +10337,7 @@ ia64_asm_unwind_emit (FILE *out_file, rtx_insn *insn)
 	{
 	  if (unwind)
 	    fprintf (out_file, "\t.save ar.pfs, r%d\n",
-		     ia64_dbx_register_number (dest_regno));
+		     ia64_debugger_regno (dest_regno));
 	}
       else
 	{
@@ -10466,11 +10477,19 @@ ia64_init_builtins (void)
 	= build_pointer_type (build_qualified_type
 			      (char_type_node, TYPE_QUAL_CONST));
 
-      (*lang_hooks.types.register_builtin_type) (float128_type_node,
+      if (float128t_type_node == NULL_TREE)
+	{
+	  float128t_type_node = make_node (REAL_TYPE);
+	  TYPE_PRECISION (float128t_type_node)
+	    = TYPE_PRECISION (float128_type_node);
+	  layout_type (float128t_type_node);
+	  SET_TYPE_MODE (float128t_type_node, TYPE_MODE (float128_type_node));
+	}
+      (*lang_hooks.types.register_builtin_type) (float128t_type_node,
 						 "__float128");
 
       /* TFmode support builtins.  */
-      ftype = build_function_type_list (float128_type_node, NULL_TREE);
+      ftype = build_function_type_list (float128t_type_node, NULL_TREE);
       decl = add_builtin_function ("__builtin_infq", ftype,
 				   IA64_BUILTIN_INFQ, BUILT_IN_MD,
 				   NULL, NULL_TREE);
@@ -10481,7 +10500,7 @@ ia64_init_builtins (void)
 				   NULL, NULL_TREE);
       ia64_builtins[IA64_BUILTIN_HUGE_VALQ] = decl;
 
-      ftype = build_function_type_list (float128_type_node,
+      ftype = build_function_type_list (float128t_type_node,
 					const_string_type,
 					NULL_TREE);
       decl = add_builtin_function ("__builtin_nanq", ftype,
@@ -10496,8 +10515,8 @@ ia64_init_builtins (void)
       TREE_READONLY (decl) = 1;
       ia64_builtins[IA64_BUILTIN_NANSQ] = decl;
 
-      ftype = build_function_type_list (float128_type_node,
-					float128_type_node,
+      ftype = build_function_type_list (float128t_type_node,
+					float128t_type_node,
 					NULL_TREE);
       decl = add_builtin_function ("__builtin_fabsq", ftype,
 				   IA64_BUILTIN_FABSQ, BUILT_IN_MD,
@@ -10505,9 +10524,9 @@ ia64_init_builtins (void)
       TREE_READONLY (decl) = 1;
       ia64_builtins[IA64_BUILTIN_FABSQ] = decl;
 
-      ftype = build_function_type_list (float128_type_node,
-					float128_type_node,
-					float128_type_node,
+      ftype = build_function_type_list (float128t_type_node,
+					float128t_type_node,
+					float128t_type_node,
 					NULL_TREE);
       decl = add_builtin_function ("__builtin_copysignq", ftype,
 				   IA64_BUILTIN_COPYSIGNQ, BUILT_IN_MD,
@@ -11217,6 +11236,9 @@ ia64_mangle_type (const_tree type)
       && TREE_CODE (type) != INTEGER_TYPE && TREE_CODE (type) != REAL_TYPE)
     return NULL;
 
+  if (type == float128_type_node || type == float64x_type_node)
+    return NULL;
+
   /* On HP-UX, "long double" is mangled as "e" so __float128 is
      mangled as "e".  */
   if (!TARGET_HPUX && TYPE_MODE (type) == TFmode)
@@ -11751,9 +11773,13 @@ ia64_expand_vec_perm_const_1 (struct expand_vec_perm_d *d)
 /* Implement TARGET_VECTORIZE_VEC_PERM_CONST.  */
 
 static bool
-ia64_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
-			       rtx op1, const vec_perm_indices &sel)
+ia64_vectorize_vec_perm_const (machine_mode vmode, machine_mode op_mode,
+			       rtx target, rtx op0, rtx op1,
+			       const vec_perm_indices &sel)
 {
+  if (vmode != op_mode)
+    return false;
+
   struct expand_vec_perm_d d;
   unsigned char perm[MAX_VECT_LEN];
   unsigned int i, nelt, which;

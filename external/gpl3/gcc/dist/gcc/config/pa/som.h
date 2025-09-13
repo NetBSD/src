@@ -1,5 +1,5 @@
 /* Definitions for SOM assembler support.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,21 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 /* So we can conditionalize small amounts of code in pa.cc or pa.md.  */
 #undef TARGET_SOM
 #define TARGET_SOM 1
-
-/* With SOM we can only do STABS.  */
-#undef PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-
-/* We do not use BINCL stabs in SOM.
-   ??? If it does not hurt, we probably should to avoid useless divergence
-   from other embedded stabs implementations.  */
-#undef DBX_USE_BINCL
-
-#define DBX_LINES_FUNCTION_RELATIVE 1
-
-/* gdb needs a null N_SO at the end of each file for scattered loading.  */
-
-#define DBX_OUTPUT_NULL_N_SO_AT_MAIN_SOURCE_FILE_END
 
 /* HPUX has a program 'chatr' to list the dependencies of dynamically
    linked executables and shared libraries.  */
@@ -302,7 +287,7 @@ do {						\
    initialized variables and functions.  */
 #define MAKE_DECL_ONE_ONLY(DECL) \
   do {									\
-    if (TREE_CODE (DECL) == VAR_DECL					\
+    if (VAR_P (DECL)					\
         && (DECL_INITIAL (DECL) == 0					\
             || DECL_INITIAL (DECL) == error_mark_node))			\
       DECL_COMMON (DECL) = 1;						\
