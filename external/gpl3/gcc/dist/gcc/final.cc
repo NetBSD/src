@@ -1,5 +1,5 @@
 /* Convert RTL to assembler code and output it, for GNU compiler.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -82,16 +82,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "print-rtl.h"
 #include "function-abi.h"
 #include "common/common-target.h"
-
-#ifdef XCOFF_DEBUGGING_INFO
-#include "xcoffout.h"		/* Needed for external data declarations.  */
-#endif
+#include "diagnostic.h"
 
 #include "dwarf2out.h"
-
-#ifdef DBX_DEBUGGING_INFO
-#include "dbxout.h"
-#endif
 
 /* Most ports don't need to define CC_STATUS_INIT.
    So define a null default for it to save conditionalization later.  */
@@ -126,17 +119,9 @@ static int last_columnnum;
 /* Discriminator written to assembly.  */
 static int last_discriminator;
 
-/* Discriminator to be written to assembly for current instruction.
+/* Compute discriminator to be written to assembly for current instruction.
    Note: actual usage depends on loc_discriminator_kind setting.  */
-static int discriminator;
 static inline int compute_discriminator (location_t loc);
-
-/* Discriminator identifying current basic block among others sharing
-   the same locus.  */
-static int bb_discriminator;
-
-/* Basic block discriminator for previous instruction.  */
-static int last_bb_discriminator;
 
 /* Highest line number in current block.  */
 static int high_block_linenum;
@@ -179,9 +164,9 @@ static int insn_counter = 0;
 
 static int block_depth;
 
-/* Nonzero if have enabled APP processing of our assembler output.  */
+/* True if have enabled APP processing of our assembler output.  */
 
-static int app_on;
+static bool app_on;
 
 /* If we are outputting an insn sequence, this contains the sequence rtx.
    Zero otherwise.  */
@@ -623,7 +608,7 @@ insn_current_reference_address (rtx_insn *branch)
 
 /* Compute branch alignments based on CFG profile.  */
 
-unsigned int
+void
 compute_alignments (void)
 {
   basic_block bb;
@@ -637,7 +622,7 @@ compute_alignments (void)
 
   /* If not optimizing or optimizing for size, don't assign any alignments.  */
   if (! optimize || optimize_function_for_size_p (cfun))
-    return 0;
+    return;
 
   if (dump_file)
     {
@@ -646,8 +631,7 @@ compute_alignments (void)
       flow_loops_dump (dump_file, NULL, 1);
     }
   loop_optimizer_init (AVOID_CFG_MODIFICATIONS);
-  profile_count count_threshold = cfun->cfg->count_max.apply_scale
-		 (1, param_align_threshold);
+  profile_count count_threshold = cfun->cfg->count_max / param_align_threshold;
 
   if (dump_file)
     {
@@ -714,10 +698,9 @@ compute_alignments (void)
 
       if (!has_fallthru
 	  && (branch_count > count_threshold
-	      || (bb->count > bb->prev_bb->count.apply_scale (10, 1)
+	      || (bb->count > bb->prev_bb->count * 10
 		  && (bb->prev_bb->count
-		      <= ENTRY_BLOCK_PTR_FOR_FN (cfun)
-			   ->count.apply_scale (1, 2)))))
+		      <= ENTRY_BLOCK_PTR_FOR_FN (cfun)->count / 2))))
 	{
 	  align_flags alignment = JUMP_ALIGN (label);
 	  if (dump_file)
@@ -731,9 +714,7 @@ compute_alignments (void)
 	       && single_succ (bb) == EXIT_BLOCK_PTR_FOR_FN (cfun))
 	  && optimize_bb_for_speed_p (bb)
 	  && branch_count + fallthru_count > count_threshold
-	  && (branch_count
-	      > fallthru_count.apply_scale
-		    (param_align_loop_iterations, 1)))
+	  && (branch_count > fallthru_count * param_align_loop_iterations))
 	{
 	  align_flags alignment = LOOP_ALIGN (label);
 	  if (dump_file)
@@ -745,7 +726,6 @@ compute_alignments (void)
 
   loop_optimizer_finalize ();
   free_dominance_info (CDI_DOMINATORS);
-  return 0;
 }
 
 /* Grow the LABEL_ALIGN array after new labels are created.  */
@@ -812,7 +792,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *) { return compute_alignments (); }
+  unsigned int execute (function *) final override
+  {
+    compute_alignments ();
+    return 0;
+  }
 
 }; // class pass_compute_alignments
 
@@ -843,7 +827,7 @@ shorten_branches (rtx_insn *first)
   int max_uid;
   int i;
   rtx_insn *seq;
-  int something_changed = 1;
+  bool something_changed = true;
   char *varying_length;
   rtx body;
   int uid;
@@ -1124,7 +1108,7 @@ shorten_branches (rtx_insn *first)
 
   while (something_changed)
     {
-      something_changed = 0;
+      something_changed = false;
       insn_current_align = MAX_CODE_ALIGN - 1;
       for (insn_current_address = 0, insn = first;
 	   insn != 0;
@@ -1157,7 +1141,7 @@ shorten_branches (rtx_insn *first)
 			{
 			  log = newlog;
 			  LABEL_TO_ALIGNMENT (insn) = log;
-			  something_changed = 1;
+			  something_changed = true;
 			}
 		    }
 		}
@@ -1295,7 +1279,7 @@ shorten_branches (rtx_insn *first)
 		       * GET_MODE_SIZE (table->get_data_mode ()));
 		  insn_current_address += insn_lengths[uid];
 		  if (insn_lengths[uid] != old_length)
-		    something_changed = 1;
+		    something_changed = true;
 		}
 
 	      continue;
@@ -1353,7 +1337,7 @@ shorten_branches (rtx_insn *first)
 		      if (!increasing || inner_length > insn_lengths[inner_uid])
 			{
 			  insn_lengths[inner_uid] = inner_length;
-			  something_changed = 1;
+			  something_changed = true;
 			}
 		      else
 			inner_length = insn_lengths[inner_uid];
@@ -1379,7 +1363,7 @@ shorten_branches (rtx_insn *first)
 	      && (!increasing || new_length > insn_lengths[uid]))
 	    {
 	      insn_lengths[uid] = new_length;
-	      something_changed = 1;
+	      something_changed = true;
 	    }
 	  else
 	    insn_current_address += insn_lengths[uid] - new_length;
@@ -1701,14 +1685,10 @@ final_start_function_1 (rtx_insn **firstp, FILE *file, int *seen,
   last_filename = LOCATION_FILE (prologue_location);
   last_linenum = LOCATION_LINE (prologue_location);
   last_columnnum = LOCATION_COLUMN (prologue_location);
-  last_discriminator = discriminator = 0;
-  last_bb_discriminator = bb_discriminator = 0;
+  last_discriminator = 0;
   force_source_line = false;
 
   high_block_linenum = high_function_linenum = last_linenum;
-
-  if (flag_sanitize & SANITIZE_ADDRESS)
-    asan_function_start ();
 
   rtx_insn *first = *firstp;
   if (in_initial_view_p (first))
@@ -2125,7 +2105,8 @@ asm_show_source (const char *filename, int linenum)
   if (!filename)
     return;
 
-  char_span line = location_get_source_line (filename, linenum);
+  char_span line
+    = global_dc->get_file_cache ().get_source_line (filename, linenum);
   if (!line)
     return;
 
@@ -2247,7 +2228,6 @@ final_scan_insn_1 (rtx_insn *insn, FILE *file, int optimize_p ATTRIBUTE_UNUSED,
 	  if (targetm.asm_out.unwind_emit)
 	    targetm.asm_out.unwind_emit (asm_out_file, insn);
 
-	  bb_discriminator = NOTE_BASIC_BLOCK (insn)->discriminator;
 	  break;
 
 	case NOTE_INSN_EH_REGION_BEG:
@@ -2329,19 +2309,6 @@ final_scan_insn_1 (rtx_insn *insn, FILE *file, int optimize_p ATTRIBUTE_UNUSED,
 	      TREE_ASM_WRITTEN (NOTE_BLOCK (insn)) = 1;
 	      BLOCK_IN_COLD_SECTION_P (NOTE_BLOCK (insn)) = in_cold_section_p;
 	    }
-	  if (write_symbols == DBX_DEBUG)
-	    {
-	      location_t *locus_ptr
-		= block_nonartificial_location (NOTE_BLOCK (insn));
-
-	      if (locus_ptr != NULL)
-		{
-		  override_filename = LOCATION_FILE (*locus_ptr);
-		  override_linenum = LOCATION_LINE (*locus_ptr);
-		  override_columnnum = LOCATION_COLUMN (*locus_ptr);
-		  override_discriminator = compute_discriminator (*locus_ptr);
-		}
-	    }
 	  break;
 
 	case NOTE_INSN_BLOCK_END:
@@ -2363,27 +2330,6 @@ final_scan_insn_1 (rtx_insn *insn, FILE *file, int optimize_p ATTRIBUTE_UNUSED,
 		debug_hooks->end_block (high_block_linenum, n);
 	      gcc_assert (BLOCK_IN_COLD_SECTION_P (NOTE_BLOCK (insn))
 			  == in_cold_section_p);
-	    }
-	  if (write_symbols == DBX_DEBUG)
-	    {
-	      tree outer_block = BLOCK_SUPERCONTEXT (NOTE_BLOCK (insn));
-	      location_t *locus_ptr
-		= block_nonartificial_location (outer_block);
-
-	      if (locus_ptr != NULL)
-		{
-		  override_filename = LOCATION_FILE (*locus_ptr);
-		  override_linenum = LOCATION_LINE (*locus_ptr);
-		  override_columnnum = LOCATION_COLUMN (*locus_ptr);
-		  override_discriminator = compute_discriminator (*locus_ptr);
-		}
-	      else
-		{
-		  override_filename = NULL;
-		  override_linenum = 0;
-		  override_columnnum = 0;
-		  override_discriminator = 0;
-		}
 	    }
 	  break;
 
@@ -2986,7 +2932,7 @@ compute_discriminator (location_t loc)
   int discriminator;
 
   if (!decl_to_instance_map)
-    discriminator = bb_discriminator;
+    discriminator = get_discriminator_from_loc (loc);
   else
     {
       tree block = LOCATION_BLOCK (loc);
@@ -3010,6 +2956,13 @@ compute_discriminator (location_t loc)
   return discriminator;
 }
 
+/* Return discriminator of the statement that produced this insn.  */
+int
+insn_discriminator (const rtx_insn *insn)
+{
+  return compute_discriminator (INSN_LOCATION (insn));
+}
+
 /* Return whether a source line note needs to be emitted before INSN.
    Sets IS_STMT to TRUE if the line should be marked as a possible
    breakpoint location.  */
@@ -3019,6 +2972,7 @@ notice_source_line (rtx_insn *insn, bool *is_stmt)
 {
   const char *filename;
   int linenum, columnnum;
+  int discriminator;
 
   if (NOTE_MARKER_P (insn))
     {
@@ -3048,7 +3002,7 @@ notice_source_line (rtx_insn *insn, bool *is_stmt)
       filename = xloc.file;
       linenum = xloc.line;
       columnnum = xloc.column;
-      discriminator = compute_discriminator (INSN_LOCATION (insn));
+      discriminator = insn_discriminator (insn);
     }
   else
     {
@@ -4092,9 +4046,9 @@ asm_fprintf (FILE *file, const char *p, ...)
   va_end (argptr);
 }
 
-/* Return nonzero if this function has no function calls.  */
+/* Return true if this function has no function calls.  */
 
-int
+bool
 leaf_function_p (void)
 {
   rtx_insn *insn;
@@ -4105,29 +4059,29 @@ leaf_function_p (void)
   /* Some back-ends (e.g. s390) want leaf functions to stay leaf
      functions even if they call mcount.  */
   if (crtl->profile && !targetm.keep_leaf_when_profiled ())
-    return 0;
+    return false;
 
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     {
       if (CALL_P (insn)
 	  && ! SIBLING_CALL_P (insn)
 	  && ! FAKE_CALL_P (insn))
-	return 0;
+	return false;
       if (NONJUMP_INSN_P (insn)
 	  && GET_CODE (PATTERN (insn)) == SEQUENCE
 	  && CALL_P (XVECEXP (PATTERN (insn), 0, 0))
 	  && ! SIBLING_CALL_P (XVECEXP (PATTERN (insn), 0, 0)))
-	return 0;
+	return false;
     }
 
-  return 1;
+  return true;
 }
 
-/* Return 1 if branch is a forward branch.
+/* Return true if branch is a forward branch.
    Uses insn_shuid array, so it works only in the final pass.  May be used by
    output templates to customary add branch prediction hints.
  */
-int
+bool
 final_forward_branch_p (rtx_insn *insn)
 {
   int insn_id, label_id;
@@ -4151,10 +4105,10 @@ final_forward_branch_p (rtx_insn *insn)
 
 #ifdef LEAF_REGISTERS
 
-/* Return 1 if this function uses only the registers that can be
+/* Return bool if this function uses only the registers that can be
    safely renumbered.  */
 
-int
+bool
 only_leaf_regs_used (void)
 {
   int i;
@@ -4163,15 +4117,15 @@ only_leaf_regs_used (void)
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
     if ((df_regs_ever_live_p (i) || global_regs[i])
 	&& ! permitted_reg_in_leaf_functions[i])
-      return 0;
+      return false;
 
   if (crtl->uses_pic_offset_table
       && pic_offset_table_rtx != 0
       && REG_P (pic_offset_table_rtx)
       && ! permitted_reg_in_leaf_functions[REGNO (pic_offset_table_rtx)])
-    return 0;
+    return false;
 
-  return 1;
+  return true;
 }
 
 /* Scan all instructions and renumber all registers into those
@@ -4309,8 +4263,6 @@ rest_of_handle_final (void)
   if (! quiet_flag)
     fflush (asm_out_file);
 
-  /* Write DBX symbols if requested.  */
-
   /* Note that for those inline functions where we don't initially
      know for certain that we will be generating an out-of-line copy,
      the first invocation of this routine (rest_of_compilation) will
@@ -4364,7 +4316,10 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *) { return rest_of_handle_final (); }
+  unsigned int execute (function *) final override
+  {
+    return rest_of_handle_final ();
+  }
 
 }; // class pass_final
 
@@ -4408,7 +4363,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *)
+  unsigned int execute (function *) final override
     {
       return rest_of_handle_shorten_branches ();
     }
@@ -4583,7 +4538,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *)
+  unsigned int execute (function *) final override
     {
       return rest_of_clean_state ();
     }

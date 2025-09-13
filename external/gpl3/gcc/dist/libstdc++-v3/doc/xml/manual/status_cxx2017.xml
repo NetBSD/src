@@ -23,7 +23,8 @@ since that release.
 </para>
 
 <para>
-This section describes the C++17 and library TS support in the GCC 12 release series.
+This section describes the C++17 and library TS support in
+the GCC 14 release series.
 </para>
 
 <para>
@@ -61,7 +62,7 @@ Feature-testing recommendations for C++</link>.
 	<code>constexpr std::hardware_{constructive,destructive}_interference_size</code>
       </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0154r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0154r1.html">
 	P0154R1
 	</link>
       </entry>
@@ -72,7 +73,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Core Issue 1776: Replacement of class objects containing reference members</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0137r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0137r1.html">
 	P0137R1
 	</link>
       </entry>
@@ -83,7 +84,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Wording for <code>std::uncaught_exceptions</code></entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/JTC1/sc22/WG21/docs/papers/2014/n4259.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/JTC1/sc22/WG21/docs/papers/2014/n4259.pdf">
 	  N4259
 	</link>
       </entry>
@@ -94,7 +95,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> C++17 should refer to C11 instead of C99 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0063r3.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0063r3.html">
 	P0063R3
 	</link>
       </entry>
@@ -105,7 +106,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Variant: a type-safe union for C++17 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0088r3.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0088r3.html">
 	P0088R3
 	</link>
       </entry>
@@ -119,7 +120,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: <code>optional</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -133,7 +134,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: <code>any</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -147,7 +148,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: <code>string_view</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -161,7 +162,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: <code>memory_resource</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -174,7 +175,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: <code>apply</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -185,7 +186,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: <code>shared_ptr&lt;T[]&gt;</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -196,7 +197,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: Searchers </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -207,7 +208,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Library Fundamentals V1 TS Components: Sampling </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html">
 	P0220R1
 	</link>
       </entry>
@@ -229,7 +230,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Improving pair and tuple </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4387">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4387">
 	N4387
 	</link>
       </entry>
@@ -240,7 +241,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> <code>make_from_tuple</code>: apply for construction </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0209r2.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0209r2.pdf">
 	P0209R2
 	</link>
       </entry>
@@ -255,7 +256,7 @@ Feature-testing recommendations for C++</link>.
         And Old <code>&lt;functional&gt;</code> Stuff
       </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4190.htm">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4190.htm">
 	  N4190
 	</link>
       </entry>
@@ -266,7 +267,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Deprecating Vestigial Library Parts in C++17 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0174r2.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0174r2.html">
 	P0174R2
 	</link>
       </entry>
@@ -277,7 +278,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Making <code>std::owner_less</code> more flexible </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0074r0.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0074r0.html">
 	P0074R0
 	</link>
       </entry>
@@ -288,7 +289,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> <code>std::addressof</code> should be constexpr </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0304r0.html#2296">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0304r0.html#2296">
 	LWG2296
 	</link>
       </entry>
@@ -299,7 +300,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Safe conversions in <code>unique_ptr&lt;T[]&gt;</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4089.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4089.pdf">
 	N4089
 	</link>
       </entry>
@@ -310,7 +311,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> LWG 2228: Missing SFINAE rule in unique_ptr templated assignment </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4366.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4366.html">
 	  N4366
 	</link>
       </entry>
@@ -321,7 +322,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Re-enabling <code>shared_from_this</code></entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0033r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0033r1.html">
 	P0033R1
 	</link>
       </entry>
@@ -332,7 +333,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> A proposal to add <code>invoke</code> function template </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4169.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4169.html">
 	N4169
 	</link>
       </entry>
@@ -343,7 +344,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>TriviallyCopyable <code>reference_wrapper</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4277.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4277.html">
 	  N4277
 	</link>
       </entry>
@@ -354,7 +355,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Adopt <code>not_fn</code> from Library Fundamentals 2 for C++17 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0005r4.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0005r4.html">
 	P0005R4
 	</link>
       </entry>
@@ -365,7 +366,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Fixes for <code>not_fn</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0358r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0358r1.html">
 	P0358R1
 	</link>
       </entry>
@@ -376,7 +377,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Fixing a design mistake in the searchers interface in Library Fundamentals </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0253r1.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0253r1.pdf">
 	P0253R1
 	</link>
       </entry>
@@ -387,7 +388,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Extending memory management tools </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0040r3.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0040r3.html">
 	P0040R3
 	</link>
       </entry>
@@ -398,7 +399,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> <code>shared_ptr::weak_type</code></entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0163r0.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0163r0.html">
 	P0163R0
 	</link>
       </entry>
@@ -409,7 +410,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Transformation Trait Alias <code>void_t</code></entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/JTC1/sc22/WG21/docs/papers/2014/n3911.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/JTC1/sc22/WG21/docs/papers/2014/n3911.pdf">
 	  N3911
 	</link>
       </entry>
@@ -420,7 +421,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Wording for <code>bool_constant</code>, revision 1 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4389.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4389.html">
 	  N4389
 	</link>
       </entry>
@@ -431,7 +432,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Adopt Type Traits Variable Templates from Library Fundamentals TS for C++17</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0006r0.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0006r0.html">
 	P0006R0
 	</link>
       </entry>
@@ -442,7 +443,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Logical Operator Type Traits</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0013r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0013r1.html">
 	P0013R1
 	</link>
       </entry>
@@ -453,7 +454,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Adding [nothrow-]swappable traits </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0185r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0185r1.html">
 	P0185R1
 	</link>
       </entry>
@@ -464,7 +465,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> <code>is_callable</code>, the missing INVOKE related trait</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0077r2.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0077r2.html">
 	P0077R2
 	</link>
       </entry>
@@ -475,7 +476,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> has_unique_object_representations </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0258r2.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0258r2.html">
 	P0258R2
 	</link>
       </entry>
@@ -486,7 +487,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Polishing <code>&lt;chrono&gt;</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0092r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0092r1.html">
 	P0092R1
 	</link>
       </entry>
@@ -497,7 +498,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Adding more constexpr to <code>&lt;chrono&gt;</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0505r0.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0505r0.html">
 	P0505R0
 	</link>
       </entry>
@@ -510,7 +511,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Constexpr for <code>std::char_traits</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0426r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0426r1.html">
 	P0426R1
 	</link>
       </entry>
@@ -521,7 +522,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Integrating <code>std::string_view</code> and <code>std::string</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0254r2.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0254r2.pdf">
 	P0254R2
 	</link>
       </entry>
@@ -532,7 +533,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Give 'std::string' a non-const '.data()' member function </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0272r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0272r1.html">
 	P0272R1
 	</link>
       </entry>
@@ -543,7 +544,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Cleaning-up noexcept in the Library</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4258.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4258.pdf">
 	  N4258
 	</link>
       </entry>
@@ -554,7 +555,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Contiguous Iterators </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4284.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4284.html">
 	  N4284
 	</link>
       </entry>
@@ -565,7 +566,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Minimal incomplete type support for standard containers </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4510.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4510.html">
 	N4510
 	</link>
       </entry>
@@ -578,7 +579,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Emplace return type </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0084r2.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0084r2.pdf">
 	P0084R2
 	</link>
       </entry>
@@ -589,7 +590,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Improved insertion interface for unique-key maps</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4279.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4279.html">
 	  N4279
 	</link>
       </entry>
@@ -602,7 +603,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Splicing Maps and Sets </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0083r3.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0083r3.pdf">
 	P0083R3
 	</link>
       </entry>
@@ -613,7 +614,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Non-member <code>size()</code> and more</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4280.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4280.pdf">
 	  N4280
 	</link>
       </entry>
@@ -624,7 +625,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> A Proposal to Add Constexpr Modifiers to <code>reverse_iterator</code>, <code>move_iterator</code>, <code>array</code> and Range Access </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0031r0.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0031r0.html">
 	P0031R0
 	</link>
       </entry>
@@ -636,7 +637,7 @@ Feature-testing recommendations for C++</link>.
       <?dbhtml bgcolor="#B0B0B0" ?>
       <entry> The Parallelism TS Should be Standardized	 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html">
 	P0024R2
 	</link>
       </entry>
@@ -651,7 +652,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> An algorithm to "clamp" a value between a pair of boundary values </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0025r0.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0025r0.html">
 	P0025R0
 	</link>
       </entry>
@@ -662,7 +663,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Adopt Selected Library Fundamentals V2 Components for C++17 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0295r0.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0295r0.pdf">
 	P0295R0
 	</link>
       </entry>
@@ -673,7 +674,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Proposal to Introduce a 3-Argument Overload to <code>std::hypot</code> </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0030r1.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0030r1.pdf">
 	P0030R1
 	</link>
       </entry>
@@ -684,7 +685,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Mathematical Special Functions for C++17 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0226r1.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0226r1.pdf">
 	P0226R1
 	</link>
       </entry>
@@ -697,7 +698,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>Adopt the File System TS for C++17	 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0218r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0218r1.html">
 	P0218R1
 	</link>
       </entry>
@@ -711,7 +712,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Relative Paths for Filesystem</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0219r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0219r1.html">
 	P0219R1
 	</link>
       </entry>
@@ -722,7 +723,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Adapting string_view by filesystem paths </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0392r0.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0392r0.pdf">
 	P0392R0
 	</link>
       </entry>
@@ -733,7 +734,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Directory Entry Caching for Filesystem </entry>
       <entry>
-       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0317r1.html">
+       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0317r1.html">
        P0317R1
        </link>
       </entry>
@@ -744,7 +745,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> constexpr <code>atomic&lt;T&gt;::is_always_lock_free</code>	 </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0152r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0152r1.html">
 	P0152R1
 	</link>
       </entry>
@@ -755,7 +756,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry>A proposal to add <code>shared_mutex</code> (untimed) (Revision 4)</entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4508.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4508.html">
 	  N4508
 	</link>
       </entry>
@@ -766,7 +767,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Variadic <code>lock_guard</code> (Rev. 5) </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0156r2.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0156r2.html">
 	P0156R2
 	</link>
       </entry>
@@ -777,7 +778,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> A byte type definition </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0298r3.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0298r3.pdf">
 	P0298R3
 	</link>
       </entry>
@@ -789,7 +790,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Elementary string conversions </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0067r5.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0067r5.html">
 	P0067R5
 	</link>
       </entry>
@@ -801,7 +802,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Homogeneous interface for variant, any and optional </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0032r3.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0032r3.pdf">
 	P0032R3
 	</link>
       </entry>
@@ -816,7 +817,7 @@ Feature-testing recommendations for C++</link>.
     <row>
       <entry> Making Optional Greater Equal Again </entry>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0307r2.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0307r2.pdf">
 	P0307R2
 	</link>
       </entry>
@@ -2730,7 +2731,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2014/n4076.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/JTC1/SC22/WG21/docs/papers/2014/n4076.html">
 	  N4076
 	</link>
       </entry>
@@ -2741,7 +2742,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/JTC1/SC22/WG21/docs/papers/2014/n4273.htm">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/JTC1/SC22/WG21/docs/papers/2014/n4273.htm">
 	  N4273
 	</link>
       </entry>
@@ -2752,7 +2753,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4061.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4061.pdf">
 	  N4061
 	</link>
       </entry>
@@ -2763,7 +2764,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4066.htm">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4066.htm">
 	  N4066
 	</link>
       </entry>
@@ -2774,7 +2775,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4282.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4282.pdf">
 	  N4282
 	</link>
       </entry>
@@ -2786,7 +2787,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4388.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4388.html">
 	  N4388
 	</link>
       </entry>
@@ -2797,7 +2798,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4391.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4391.html">
 	  N4391
 	</link>
       </entry>
@@ -2808,7 +2809,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4502.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4502.pdf">
 	  N4502
 	</link>
       </entry>
@@ -2819,7 +2820,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4519.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4519.pdf">
 	  N4519
 	</link>
       </entry>
@@ -2831,7 +2832,7 @@ since C++14 and the implementation is complete.
     <row>
       <?dbhtml bgcolor="#C8B0B0" ?>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4521.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4521.html">
 	  N4521
 	</link>
       </entry>
@@ -2845,7 +2846,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://open-std.org/JTC1/SC22/WG21/docs/papers/2015/p0013r1.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/JTC1/SC22/WG21/docs/papers/2015/p0013r1.html">
 	  P0013R1
 	</link>
       </entry>
@@ -2856,7 +2857,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4531.html">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4531.html">
 	  N4531
 	</link>
       </entry>
@@ -2867,7 +2868,7 @@ since C++14 and the implementation is complete.
 
     <row>
       <entry>
-	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0214r9.pdf">
+	<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0214r9.pdf">
 	  P0214R9
 	</link>
       </entry>

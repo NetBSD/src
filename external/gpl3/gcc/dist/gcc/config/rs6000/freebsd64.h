@@ -1,5 +1,5 @@
 /* Definitions for 64-bit PowerPC running FreeBSD using the ELF format
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -112,6 +112,7 @@ extern int dot_symbols;
 
 #define LINK_OS_FREEBSD_SPEC_DEF "\
   %{p:%nconsider using `-pg' instead of `-p' with gprof(1)} \
+  " FBSD_LINK_PG_NOTE " \
   %{v:-V} \
   %{assert*} %{R*} %{rpath*} %{defsym*} \
   %{shared:-Bshareable %{h*} %{soname*}} \
@@ -140,9 +141,7 @@ extern int dot_symbols;
 #undef  ROUND_TYPE_ALIGN
 #define ROUND_TYPE_ALIGN(STRUCT, COMPUTED, SPECIFIED)			\
   ((TARGET_64BIT							\
-    && (TREE_CODE (STRUCT) == RECORD_TYPE				\
-	|| TREE_CODE (STRUCT) == UNION_TYPE				\
-	|| TREE_CODE (STRUCT) == QUAL_UNION_TYPE)			\
+    && RECORD_OR_UNION_TYPE_P (STRUCT)			\
     && TARGET_ALIGN_NATURAL == 0)					\
    ? rs6000_special_round_type_align (STRUCT, COMPUTED, SPECIFIED)	\
    : MAX ((COMPUTED), (SPECIFIED)))

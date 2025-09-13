@@ -1,5 +1,5 @@
 /* Tree switch conversion for GNU compiler.
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -102,6 +102,10 @@ public:
   /* Probability of reaching subtree rooted at this node.  */
   profile_probability m_subtree_prob;
 
+  /* Probability of default case when reaching the node.
+     It is used by bit-test right now.  */
+  profile_probability m_default_prob;
+
 protected:
   /* Default constructor.  */
   cluster () {}
@@ -110,7 +114,8 @@ protected:
 cluster::cluster (tree case_label_expr, basic_block case_bb,
 		  profile_probability prob, profile_probability subtree_prob):
   m_case_label_expr (case_label_expr), m_case_bb (case_bb), m_prob (prob),
-  m_subtree_prob (subtree_prob)
+  m_subtree_prob (subtree_prob),
+  m_default_prob (profile_probability::uninitialized ())
 {
 }
 
@@ -130,19 +135,19 @@ public:
   {}
 
   cluster_type
-  get_type ()
+  get_type () final override
   {
     return SIMPLE_CASE;
   }
 
   tree
-  get_low ()
+  get_low () final override
   {
     return m_low;
   }
 
   tree
-  get_high ()
+  get_high () final override
   {
     return m_high;
   }
@@ -153,13 +158,13 @@ public:
   }
 
   void
-  debug ()
+  debug () final override
   {
     dump (stderr);
   }
 
   void
-  dump (FILE *f, bool details ATTRIBUTE_UNUSED = false)
+  dump (FILE *f, bool details ATTRIBUTE_UNUSED = false) final override
   {
     PRINT_CASE (f, get_low ());
     if (get_low () != get_high ())
@@ -170,12 +175,12 @@ public:
     fprintf (f, " ");
   }
 
-  void emit (tree, tree, tree, basic_block, location_t)
+  void emit (tree, tree, tree, basic_block, location_t) final override
   {
     gcc_unreachable ();
   }
 
-  bool is_single_value_p ()
+  bool is_single_value_p () final override
   {
     return tree_int_cst_equal (get_low (), get_high ());
   }
@@ -224,24 +229,24 @@ public:
   ~group_cluster ();
 
   tree
-  get_low ()
+  get_low () final override
   {
     return m_cases[0]->get_low ();
   }
 
   tree
-  get_high ()
+  get_high () final override
   {
     return m_cases[m_cases.length () - 1]->get_high ();
   }
 
   void
-  debug ()
+  debug () final override
   {
     dump (stderr);
   }
 
-  void dump (FILE *f, bool details = false);
+  void dump (FILE *f, bool details = false) final override;
 
   /* List of simple clusters handled by the group.  */
   vec<simple_cluster *> m_cases;
@@ -249,7 +254,7 @@ public:
 
 /* Concrete subclass of group_cluster representing a collection
    of cases to be implemented as a jump table.
-   The "emit" vfunc gernerates a nested switch statement which
+   The "emit" vfunc generates a nested switch statement which
    is later lowered to a jump table.  */
 
 class jump_table_cluster: public group_cluster
@@ -261,13 +266,14 @@ public:
   {}
 
   cluster_type
-  get_type ()
+  get_type () final override
   {
     return JUMP_TABLE;
   }
 
   void emit (tree index_expr, tree index_type,
-	     tree default_label_expr, basic_block default_bb, location_t loc);
+	     tree default_label_expr, basic_block default_bb, location_t loc)
+    final override;
 
   /* Find jump tables of given CLUSTERS, where all members of the vector
      are of type simple_cluster.  New clusters are returned.  */
@@ -297,7 +303,7 @@ public:
 /* A GIMPLE switch statement can be expanded to a short sequence of bit-wise
 comparisons.  "switch(x)" is converted into "if ((1 << (x-MINVAL)) & CST)"
 where CST and MINVAL are integer constants.  This is better than a series
-of compare-and-banch insns in some cases,  e.g. we can implement:
+of compare-and-branch insns in some cases,  e.g. we can implement:
 
 	if ((x==4) || (x==6) || (x==9) || (x==11))
 
@@ -366,7 +372,7 @@ public:
   {}
 
   cluster_type
-  get_type ()
+  get_type () final override
   {
     return BIT_TEST;
   }
@@ -388,7 +394,8 @@ public:
     There *MUST* be max_case_bit_tests or less unique case
     node targets.  */
   void emit (tree index_expr, tree index_type,
-	     tree default_label_expr, basic_block default_bb, location_t loc);
+	     tree default_label_expr, basic_block default_bb, location_t loc)
+     final override;
 
   /* Find bit tests of given CLUSTERS, where all members of the vector
      are of type simple_cluster.  New clusters are returned.  */
@@ -543,6 +550,7 @@ public:
   basic_block target_bb;
   tree label;
   int bits;
+  profile_probability prob;
 
   /* Comparison function for qsort to order bit tests by decreasing
      probability of execution.  */
@@ -906,7 +914,7 @@ switch_decision_tree::reset_out_edges_aux (gswitch *swtch)
 
 /* Release CLUSTERS vector and destruct all dynamically allocated items.  */
 
-static inline void
+inline void
 release_clusters (vec<cluster *> &clusters)
 {
   for (unsigned i = 0; i < clusters.length (); i++)

@@ -1,5 +1,5 @@
 /* Driver of optimization process
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -179,9 +179,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "output.h"
 #include "cfgcleanup.h"
+#include "gimple-iterator.h"
 #include "gimple-fold.h"
 #include "gimplify.h"
-#include "gimple-iterator.h"
 #include "gimplify-me.h"
 #include "tree-cfg.h"
 #include "tree-into-ssa.h"
@@ -191,6 +191,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "debug.h"
 #include "symbol-summary.h"
 #include "tree-vrp.h"
+#include "sreal.h"
+#include "ipa-cp.h"
 #include "ipa-prop.h"
 #include "gimple-pretty-print.h"
 #include "plugin.h"
@@ -378,21 +380,15 @@ symbol_table::process_new_functions (void)
    inlined in others.
 
    ??? It may make more sense to use one body for inlining and other
-   body for expanding the function but this is difficult to do.  */
+   body for expanding the function but this is difficult to do.
+
+   This is also used to cancel C++ mangling aliases, which can be for
+   functions or variables.  */
 
 void
-cgraph_node::reset (void)
+symtab_node::reset (bool preserve_comdat_group)
 {
-  /* If process is set, then we have already begun whole-unit analysis.
-     This is *not* testing for whether we've already emitted the function.
-     That case can be sort-of legitimately seen with real function redefinition
-     errors.  I would argue that the front end should never present us with
-     such a case, but don't enforce that for now.  */
-  gcc_assert (!process);
-
   /* Reset our data structures so we can analyze the function again.  */
-  inlined_to = NULL;
-  memset (&rtl, 0, sizeof (rtl));
   analyzed = false;
   definition = false;
   alias = false;
@@ -400,8 +396,23 @@ cgraph_node::reset (void)
   weakref = false;
   cpp_implicit_alias = false;
 
-  remove_callees ();
   remove_all_references ();
+  if (!preserve_comdat_group)
+    remove_from_same_comdat_group ();
+
+  if (cgraph_node *cn = dyn_cast <cgraph_node *> (this))
+    {
+      /* If process is set, then we have already begun whole-unit analysis.
+	 This is *not* testing for whether we've already emitted the function.
+	 That case can be sort-of legitimately seen with real function
+	 redefinition errors.  I would argue that the front end should never
+	 present us with such a case, but don't enforce that for now.  */
+      gcc_assert (!cn->process);
+
+      memset (&cn->rtl, 0, sizeof (cn->rtl));
+      cn->inlined_to = NULL;
+      cn->remove_callees ();
+    }
 }
 
 /* Return true when there are references to the node.  INCLUDE_SELF is
@@ -909,7 +920,8 @@ process_function_and_variable_attributes (cgraph_node *first,
 	  /* redefining extern inline function makes it DECL_UNINLINABLE.  */
 	  && !DECL_UNINLINABLE (decl))
 	warning_at (DECL_SOURCE_LOCATION (decl), OPT_Wattributes,
-		    "%<always_inline%> function might not be inlinable");
+		    "%<always_inline%> function might not be inlinable"
+		    " unless also declared %<inline%>");
 
       process_common_attributes (node, decl);
     }
@@ -1000,7 +1012,7 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
     = possible_polymorphic_call_targets
 	(edge, &final, &cache_token);
 
-  if (!reachable_call_targets->add (cache_token))
+  if (cache_token != NULL && !reachable_call_targets->add (cache_token))
     {
       if (symtab->dump_file)
 	dump_possible_polymorphic_call_targets 
@@ -1033,8 +1045,7 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 	  if (targets.length () == 1)
 	    target = targets[0];
 	  else
-	    target = cgraph_node::create
-			(builtin_decl_implicit (BUILT_IN_UNREACHABLE));
+	    target = cgraph_node::create (builtin_decl_unreachable ());
 
 	  if (symtab->dump_file)
 	    {
@@ -1088,8 +1099,6 @@ check_global_declaration (symtab_node *snode)
       else
 	warning (OPT_Wunused_function, "%q+F declared %<static%> but never "
 				       "defined", decl);
-      /* This symbol is effectively an "extern" declaration now.  */
-      TREE_PUBLIC (decl) = 1;
     }
 
   /* Warn about static fns or vars defined but not used.  */
@@ -1884,6 +1893,16 @@ cgraph_node::expand (void)
   ggc_collect ();
   timevar_pop (TV_REST_OF_COMPILATION);
 
+  if (DECL_STRUCT_FUNCTION (decl)
+      && DECL_STRUCT_FUNCTION (decl)->assume_function)
+    {
+      /* Assume functions aren't expanded into RTL, on the other side
+	 we don't want to release their body.  */
+      if (cfun)
+	pop_cfun ();
+      return;
+    }
+
   /* Make sure that BE didn't give up on compiling.  */
   gcc_assert (TREE_ASM_WRITTEN (decl));
   if (cfun)
@@ -1988,18 +2007,51 @@ expand_all_functions (void)
 
   /* Output functions in RPO so callees get optimized before callers.  This
      makes ipa-ra and other propagators to work.
-     FIXME: This is far from optimal code layout.  */
-  for (i = new_order_pos - 1; i >= 0; i--)
-    {
-      node = order[i];
+     FIXME: This is far from optimal code layout.
+     Make multiple passes over the list to defer processing of gc
+     candidates until all potential uses are seen.  */
+  int gc_candidates = 0;
+  int prev_gc_candidates = 0;
 
-      if (node->process)
+  while (1)
+    {
+      for (i = new_order_pos - 1; i >= 0; i--)
 	{
-	  expanded_func_count++;
-	  node->process = 0;
-	  node->expand ();
+	  node = order[i];
+
+	  if (node->gc_candidate)
+	    gc_candidates++;
+	  else if (node->process)
+	    {
+	      expanded_func_count++;
+	      node->process = 0;
+	      node->expand ();
+	    }
 	}
+      if (!gc_candidates || gc_candidates == prev_gc_candidates)
+	break;
+      prev_gc_candidates = gc_candidates;
+      gc_candidates = 0;
     }
+
+  /* Free any unused gc_candidate functions.  */
+  if (gc_candidates)
+    for (i = new_order_pos - 1; i >= 0; i--)
+      {
+	node = order[i];
+	if (node->gc_candidate)
+	  {
+	    struct function *fn = DECL_STRUCT_FUNCTION (node->decl);
+	    if (symtab->dump_file)
+	      fprintf (symtab->dump_file,
+		       "Deleting unused function %s\n",
+		       IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (node->decl)));
+	    node->process = false;
+	    free_dominance_info (fn, CDI_DOMINATORS);
+	    free_dominance_info (fn, CDI_POST_DOMINATORS);
+	    node->release_body (false);
+	  }
+      }
 
   if (dump_file)
     fprintf (dump_file, "Expanded functions with time profile (%s):%u/%u\n",
@@ -2377,6 +2429,10 @@ symbol_table::compile (void)
 	if (node->inlined_to
 	    || gimple_has_body_p (node->decl))
 	  {
+	    if (DECL_STRUCT_FUNCTION (node->decl)
+		&& (DECL_STRUCT_FUNCTION (node->decl)->curr_properties
+		    & PROP_assumptions_done) != 0)
+	      continue;
 	    error_found = true;
 	    node->debug ();
 	  }

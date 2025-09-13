@@ -1,5 +1,5 @@
 /* JSON trees
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -29,6 +29,9 @@ along with GCC; see the file COPYING3.  If not see
 
    Supports creating a DOM-like tree of json::value *, and then dumping
    json::value * to text.  */
+
+/* TODO: `libcpp/mkdeps.cc` wants JSON writing support for p1689r5 output;
+   extract this code and move to libiberty.  */
 
 namespace json
 {
@@ -77,29 +80,42 @@ class value
  public:
   virtual ~value () {}
   virtual enum kind get_kind () const = 0;
-  virtual void print (pretty_printer *pp) const = 0;
+  virtual void print (pretty_printer *pp, bool formatted) const = 0;
 
-  void dump (FILE *) const;
+  void dump (FILE *, bool formatted) const;
 };
 
-/* Subclass of value for objects: an unordered collection of
-   key/value pairs.  */
+/* Subclass of value for objects: a collection of key/value pairs
+   preserving the ordering in which keys were inserted.
+
+   Preserving the order eliminates non-determinism in the output,
+   making it easier for the user to compare repeated invocations.  */
 
 class object : public value
 {
  public:
   ~object ();
 
-  enum kind get_kind () const FINAL OVERRIDE { return JSON_OBJECT; }
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  enum kind get_kind () const final override { return JSON_OBJECT; }
+  void print (pretty_printer *pp, bool formatted) const final override;
 
   void set (const char *key, value *v);
   value *get (const char *key) const;
+
+  void set_string (const char *key, const char *utf8_value);
+  void set_integer (const char *key, long v);
+  void set_float (const char *key, double v);
+
+  /* Set to literal true/false.  */
+  void set_bool (const char *key, bool v);
 
  private:
   typedef hash_map <char *, value *,
     simple_hashmap_traits<nofree_string_hash, value *> > map_t;
   map_t m_map;
+
+  /* Keep track of order in which keys were inserted.  */
+  auto_vec <const char *> m_keys;
 };
 
 /* Subclass of value for arrays.  */
@@ -109,8 +125,8 @@ class array : public value
  public:
   ~array ();
 
-  enum kind get_kind () const FINAL OVERRIDE { return JSON_ARRAY; }
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  enum kind get_kind () const final override { return JSON_ARRAY; }
+  void print (pretty_printer *pp, bool formatted) const final override;
 
   void append (value *v);
 
@@ -125,8 +141,8 @@ class float_number : public value
  public:
   float_number (double value) : m_value (value) {}
 
-  enum kind get_kind () const FINAL OVERRIDE { return JSON_FLOAT; }
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  enum kind get_kind () const final override { return JSON_FLOAT; }
+  void print (pretty_printer *pp, bool formatted) const final override;
 
   double get () const { return m_value; }
 
@@ -141,8 +157,8 @@ class integer_number : public value
  public:
   integer_number (long value) : m_value (value) {}
 
-  enum kind get_kind () const FINAL OVERRIDE { return JSON_INTEGER; }
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  enum kind get_kind () const final override { return JSON_INTEGER; }
+  void print (pretty_printer *pp, bool formatted) const final override;
 
   long get () const { return m_value; }
 
@@ -156,16 +172,19 @@ class integer_number : public value
 class string : public value
 {
  public:
-  string (const char *utf8);
+  explicit string (const char *utf8);
+  string (const char *utf8, size_t len);
   ~string () { free (m_utf8); }
 
-  enum kind get_kind () const FINAL OVERRIDE { return JSON_STRING; }
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  enum kind get_kind () const final override { return JSON_STRING; }
+  void print (pretty_printer *pp, bool formatted) const final override;
 
   const char *get_string () const { return m_utf8; }
+  size_t get_length () const { return m_len; }
 
  private:
   char *m_utf8;
+  size_t m_len;
 };
 
 /* Subclass of value for the three JSON literals "true", "false",
@@ -179,8 +198,8 @@ class literal : public value
   /* Construct literal for a boolean value.  */
   literal (bool value): m_kind (value ? JSON_TRUE : JSON_FALSE) {}
 
-  enum kind get_kind () const FINAL OVERRIDE { return m_kind; }
-  void print (pretty_printer *pp) const FINAL OVERRIDE;
+  enum kind get_kind () const final override { return m_kind; }
+  void print (pretty_printer *pp, bool formatted) const final override;
 
  private:
   enum kind m_kind;

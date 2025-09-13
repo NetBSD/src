@@ -16,6 +16,7 @@
 #if SANITIZER_POSIX
 #include "lsan.h"
 #include "lsan_allocator.h"
+#include "lsan_thread.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_tls_get_addr.h"
 
@@ -34,6 +35,7 @@ struct OnStartedArgs {
 };
 
 void ThreadContext::OnStarted(void *arg) {
+  ThreadContextLsanBase::OnStarted(arg);
   auto args = reinterpret_cast<const OnStartedArgs *>(arg);
   stack_begin_ = args->stack_begin;
   stack_end_ = args->stack_end;
@@ -61,7 +63,7 @@ bool GetThreadRangesLocked(tid_t os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
                            uptr *cache_end, DTLS **dtls) {
   ThreadContext *context = static_cast<ThreadContext *>(
-      GetThreadRegistryLocked()->FindThreadContextByOsIDLocked(os_id));
+      GetLsanThreadRegistryLocked()->FindThreadContextByOsIDLocked(os_id));
   if (!context)
     return false;
   *stack_begin = context->stack_begin();
@@ -75,7 +77,7 @@ bool GetThreadRangesLocked(tid_t os_id, uptr *stack_begin, uptr *stack_end,
 }
 
 void InitializeMainThread() {
-  u32 tid = ThreadCreate(kMainTid, 0, true);
+  u32 tid = ThreadCreate(kMainTid, true);
   CHECK_EQ(tid, kMainTid);
   ThreadStart(tid, GetTid());
 }
@@ -87,8 +89,13 @@ static void OnStackUnwind(const SignalContext &sig, const void *,
 }
 
 void LsanOnDeadlySignal(int signo, void *siginfo, void *context) {
-  HandleDeadlySignal(siginfo, context, GetCurrentThread(), &OnStackUnwind,
+  HandleDeadlySignal(siginfo, context, GetCurrentThreadId(), &OnStackUnwind,
                      nullptr);
+}
+
+void InstallAtExitCheckLeaks() {
+  if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit)
+    Atexit(DoLeakCheck);
 }
 
 }  // namespace __lsan

@@ -1,6 +1,6 @@
 // Allocator that wraps operator new -*- C++ -*-
 
-// Copyright (C) 2001-2022 Free Software Foundation, Inc.
+// Copyright (C) 2001-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -83,13 +83,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef std::true_type propagate_on_container_move_assignment;
 #endif
 
+      __attribute__((__always_inline__))
       _GLIBCXX20_CONSTEXPR
       __new_allocator() _GLIBCXX_USE_NOEXCEPT { }
 
+      __attribute__((__always_inline__))
       _GLIBCXX20_CONSTEXPR
       __new_allocator(const __new_allocator&) _GLIBCXX_USE_NOEXCEPT { }
 
       template<typename _Tp1>
+	__attribute__((__always_inline__))
 	_GLIBCXX20_CONSTEXPR
 	__new_allocator(const __new_allocator<_Tp1>&) _GLIBCXX_USE_NOEXCEPT { }
 
@@ -137,7 +140,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    std::__throw_bad_alloc();
 	  }
 
-#if __cpp_aligned_new
+#if __cpp_aligned_new && __cplusplus >= 201103L
 	if (alignof(_Tp) > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
 	  {
 	    std::align_val_t __al = std::align_val_t(alignof(_Tp));
@@ -158,7 +161,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 # define _GLIBCXX_SIZED_DEALLOC(p, n) (p)
 #endif
 
-#if __cpp_aligned_new
+#if __cpp_aligned_new && __cplusplus >= 201103L
 	if (alignof(_Tp) > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
 	  {
 	    _GLIBCXX_OPERATOR_DELETE(_GLIBCXX_SIZED_DEALLOC(__p, __n),
@@ -174,18 +177,21 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #undef _GLIBCXX_OPERATOR_NEW
 
 #if __cplusplus <= 201703L
+      __attribute__((__always_inline__))
       size_type
       max_size() const _GLIBCXX_USE_NOEXCEPT
       { return _M_max_size(); }
 
 #if __cplusplus >= 201103L
       template<typename _Up, typename... _Args>
+	__attribute__((__always_inline__))
 	void
 	construct(_Up* __p, _Args&&... __args)
-	noexcept(std::is_nothrow_constructible<_Up, _Args...>::value)
+	noexcept(__is_nothrow_new_constructible<_Up, _Args...>)
 	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
 
       template<typename _Up>
+	__attribute__((__always_inline__))
 	void
 	destroy(_Up* __p)
 	noexcept(std::is_nothrow_destructible<_Up>::value)
@@ -193,30 +199,33 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #else
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 402. wrong new expression in [some_] allocator::construct
+      __attribute__((__always_inline__))
       void
       construct(pointer __p, const _Tp& __val)
       { ::new((void *)__p) _Tp(__val); }
 
+      __attribute__((__always_inline__))
       void
       destroy(pointer __p) { __p->~_Tp(); }
 #endif
 #endif // ! C++20
 
       template<typename _Up>
-	friend _GLIBCXX20_CONSTEXPR bool
+	friend __attribute__((__always_inline__)) _GLIBCXX20_CONSTEXPR bool
 	operator==(const __new_allocator&, const __new_allocator<_Up>&)
 	_GLIBCXX_NOTHROW
 	{ return true; }
 
 #if __cpp_impl_three_way_comparison < 201907L
       template<typename _Up>
-	friend _GLIBCXX20_CONSTEXPR bool
+	friend __attribute__((__always_inline__)) _GLIBCXX20_CONSTEXPR bool
 	operator!=(const __new_allocator&, const __new_allocator<_Up>&)
 	_GLIBCXX_NOTHROW
 	{ return false; }
 #endif
 
     private:
+      __attribute__((__always_inline__))
       _GLIBCXX_CONSTEXPR size_type
       _M_max_size() const _GLIBCXX_USE_NOEXCEPT
       {

@@ -1,7 +1,7 @@
 /* Dependency checks for instruction scheduling, shared between ARM and
    AARCH64.
 
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -36,6 +36,8 @@
 #include "expr.h"
 #include "function.h"
 #include "emit-rtl.h"
+#include "aarch-common.h"
+#include "aarch-common-protos.h"
 
 /* Return TRUE if X is either an arithmetic shift left, or
    is a multiplication by a power of two.  */
@@ -533,7 +535,8 @@ arm_mac_accumulator_is_mul_result (rtx producer, rtx consumer)
 rtx_insn *
 arm_md_asm_adjust (vec<rtx> &outputs, vec<rtx> & /*inputs*/,
 		   vec<machine_mode> & /*input_modes*/,
-		   vec<const char *> &constraints, vec<rtx> & /*clobbers*/,
+		   vec<const char *> &constraints,
+		   vec<rtx> & /*uses*/, vec<rtx> & /*clobbers*/,
 		   HARD_REG_SET & /*clobbered_regs*/, location_t loc)
 {
   bool saw_asm_flag = false;
@@ -656,4 +659,96 @@ arm_md_asm_adjust (vec<rtx> &outputs, vec<rtx> & /*inputs*/,
   end_sequence ();
 
   return saw_asm_flag ? seq : NULL;
+}
+
+/* In-place split *str at delim, return *str and set *str to the tail
+   of the string or NULL if the end is reached.  */
+
+static char *
+next_tok (char **str, int delim)
+{
+  char *tok = *str;
+  for (char *p = tok; p && *p != '\0'; p++)
+    {
+      if (*p == delim)
+	{
+	  *p = '\0';
+	  *str = p + 1;
+	  return tok;
+	}
+    }
+  *str = NULL;
+  return tok;
+}
+
+/* Parses CONST_STR according to branch protection features specified in
+   TYPES.  The first type resets the settings, the last type is marked with
+   name == NULL.  On failure an error message is printed referencing OPT as
+   the source of the options.  Returns true on success.  */
+
+bool
+aarch_validate_mbranch_protection (
+  const struct aarch_branch_protect_type *types, const char *const_str,
+  const char *opt)
+{
+  char *str_root = xstrdup (const_str);
+  char *next_str = str_root;
+  char *str = next_tok (&next_str, '+');
+  char *alone_str = NULL;
+  bool reject_alone = false;
+  bool res = true;
+
+  /* First entry is "none" and it is used to reset the state.  */
+  types->handler ();
+
+  while (str)
+    {
+      const aarch_branch_protect_type *type = types;
+      for (; type->name; type++)
+	if (strcmp (str, type->name) == 0)
+	  break;
+      if (type->name == NULL)
+	{
+	  res = false;
+	  if (strcmp (str, "") == 0)
+	    error ("missing feature or flag for %<%s%>", opt);
+	  else
+	    error ("invalid argument %<%s%> for %<%s%>", str, opt);
+	  break;
+	}
+
+      if (type->alone && alone_str == NULL)
+	alone_str = str;
+      else
+	reject_alone = true;
+      if (reject_alone && alone_str != NULL)
+	{
+	  res = false;
+	  error ("argument %<%s%> can only appear alone in %<%s%>",
+		 alone_str, opt);
+	  break;
+	}
+
+      type->handler ();
+      str = next_tok (&next_str, '+');
+      if (type->subtypes == NULL)
+	continue;
+
+      /* Loop through tokens until we find one that isn't a subtype.  */
+      while (str)
+	{
+	  const aarch_branch_protect_type *subtype = type->subtypes;
+	  for (; subtype->name; subtype++)
+	    if (strcmp (str, subtype->name) == 0)
+	      break;
+	  if (subtype->name == NULL)
+	    break;
+
+	  subtype->handler ();
+	  str = next_tok (&next_str, '+');
+	}
+    }
+
+  free (str_root);
+  return res;
 }

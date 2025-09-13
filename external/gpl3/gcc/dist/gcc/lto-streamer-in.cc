@@ -1,6 +1,6 @@
 /* Read the GIMPLE representation from a file stream.
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
    Re-implemented by Diego Novillo <dnovillo@google.com>
 
@@ -409,6 +409,8 @@ lto_location_cache::cmp_loc (const void *pa, const void *pb)
     return a->line - b->line;
   if (a->col != b->col)
     return a->col - b->col;
+  if (a->discr != b->discr)
+    return a->discr - b->discr;
   if ((a->block == NULL_TREE) != (b->block == NULL_TREE))
     return a->block ? 1 : -1;
   if (a->block)
@@ -460,6 +462,8 @@ lto_location_cache::apply_location_cache ()
 	  current_loc = linemap_position_for_column (line_table, loc.col);
 	  if (loc.block)
 	    current_loc = set_block (current_loc, loc.block);
+	  if (loc.discr)
+	    current_loc = location_with_discriminator (current_loc, loc.discr);
 	}
       else if (current_block != loc.block)
 	{
@@ -467,12 +471,17 @@ lto_location_cache::apply_location_cache ()
 	    current_loc = set_block (current_loc, loc.block);
 	  else
 	    current_loc = LOCATION_LOCUS (current_loc);
+	  if (loc.discr)
+	    current_loc = location_with_discriminator (current_loc, loc.discr);
 	}
+      else if (current_discr != loc.discr)
+	current_loc = location_with_discriminator (current_loc, loc.discr);
       *loc.loc = current_loc;
       current_line = loc.line;
       prev_file = current_file = loc.file;
       current_col = loc.col;
       current_block = loc.block;
+      current_discr = loc.discr;
     }
   loc_cache.truncate (0);
   accepted_length = 0;
@@ -512,6 +521,7 @@ lto_location_cache::input_location_and_block (location_t *loc,
   static int stream_col;
   static bool stream_sysp;
   static tree stream_block;
+  static unsigned stream_discr;
   static const char *stream_relative_path_prefix;
 
   gcc_assert (current_cache == this);
@@ -538,6 +548,7 @@ lto_location_cache::input_location_and_block (location_t *loc,
   *loc = RESERVED_LOCATION_COUNT;
   bool line_change = bp_unpack_value (bp, 1);
   bool column_change = bp_unpack_value (bp, 1);
+  bool discr_change = bp_unpack_value (bp, 1);
 
   if (file_change)
     {
@@ -563,6 +574,9 @@ lto_location_cache::input_location_and_block (location_t *loc,
   if (column_change)
     stream_col = bp_unpack_var_len_unsigned (bp);
 
+  if (discr_change)
+    stream_discr = bp_unpack_var_len_unsigned (bp);
+
   tree block = NULL_TREE;
   if (ib)
     {
@@ -578,7 +592,8 @@ lto_location_cache::input_location_and_block (location_t *loc,
   if (current_file == stream_file
       && current_line == stream_line
       && current_col == stream_col
-      && current_sysp == stream_sysp)
+      && current_sysp == stream_sysp
+      && current_discr == stream_discr)
     {
       if (current_block == block)
 	*loc = current_loc;
@@ -590,7 +605,7 @@ lto_location_cache::input_location_and_block (location_t *loc,
     }
 
   struct cached_location entry
-    = {stream_file, loc, stream_line, stream_col, stream_sysp, block};
+    = {stream_file, loc, stream_line, stream_col, stream_sysp, block, stream_discr};
   loc_cache.safe_push (entry);
 }
 
@@ -656,7 +671,7 @@ lto_input_var_decl_ref (lto_input_block *ib, lto_file_decl_data *file_data)
   unsigned int ix_u = streamer_read_uhwi (ib);
   tree result = (*file_data->current_decl_state
 		 ->streams[LTO_DECL_STREAM])[ix_u];
-  gcc_assert (TREE_CODE (result) == VAR_DECL);
+  gcc_assert (VAR_P (result));
   return result;
 }
 
@@ -1015,6 +1030,7 @@ input_cfg (class lto_input_block *ib, class data_in *data_in,
   basic_block p_bb;
   unsigned int i;
   int index;
+  bool full_profile = false;
 
   init_empty_tree_cfg_for_function (fn);
 
@@ -1056,6 +1072,8 @@ input_cfg (class lto_input_block *ib, class data_in *data_in,
 	  data_in->location_cache.input_location_and_block (&e->goto_locus,
 							    &bp, ib, data_in);
 	  e->probability = profile_probability::stream_in (ib);
+	  if (!e->probability.initialized_p ())
+	    full_profile = false;
 
 	}
 
@@ -1104,13 +1122,16 @@ input_cfg (class lto_input_block *ib, class data_in *data_in,
       loop->estimate_state = streamer_read_enum (ib, loop_estimation, EST_LAST);
       loop->any_upper_bound = streamer_read_hwi (ib);
       if (loop->any_upper_bound)
-	loop->nb_iterations_upper_bound = streamer_read_widest_int (ib);
+	loop->nb_iterations_upper_bound
+	  = bound_wide_int::from (streamer_read_widest_int (ib), SIGNED);
       loop->any_likely_upper_bound = streamer_read_hwi (ib);
       if (loop->any_likely_upper_bound)
-	loop->nb_iterations_likely_upper_bound = streamer_read_widest_int (ib);
+	loop->nb_iterations_likely_upper_bound
+	  = bound_wide_int::from (streamer_read_widest_int (ib), SIGNED);
       loop->any_estimate = streamer_read_hwi (ib);
       if (loop->any_estimate)
-	loop->nb_iterations_estimate = streamer_read_widest_int (ib);
+	loop->nb_iterations_estimate
+	  = bound_wide_int::from (streamer_read_widest_int (ib), SIGNED);
 
       /* Read OMP SIMD related info.  */
       loop->safelen = streamer_read_hwi (ib);
@@ -1130,6 +1151,7 @@ input_cfg (class lto_input_block *ib, class data_in *data_in,
 
   /* Rebuild the loop tree.  */
   flow_loops_find (loops);
+  cfun->cfg->full_profile = full_profile;
 }
 
 
@@ -1303,6 +1325,7 @@ input_struct_function_base (struct function *fn, class data_in *data_in,
   fn->calls_eh_return = bp_unpack_value (&bp, 1);
   fn->has_force_vectorize_loops = bp_unpack_value (&bp, 1);
   fn->has_simduid_loops = bp_unpack_value (&bp, 1);
+  fn->assume_function = bp_unpack_value (&bp, 1);
   fn->va_list_fpr_size = bp_unpack_value (&bp, 8);
   fn->va_list_gpr_size = bp_unpack_value (&bp, 8);
   fn->last_clique = bp_unpack_value (&bp, sizeof (short) * 8);
@@ -1613,11 +1636,11 @@ lto_read_body_or_constructor (struct lto_file_decl_data *file_data, struct symta
       /* Set up the struct function.  */
       from = data_in->reader_cache->nodes.length ();
       lto_input_block ib_main (data + main_offset, header->main_size,
-			       file_data->mode_table);
+			       file_data);
       if (TREE_CODE (node->decl) == FUNCTION_DECL)
 	{
 	  lto_input_block ib_cfg (data + cfg_offset, header->cfg_size,
-				  file_data->mode_table);
+				  file_data);
 	  input_function (fn_decl, data_in, &ib_main, &ib_cfg,
 			  dyn_cast <cgraph_node *>(node));
 	}
@@ -1637,7 +1660,7 @@ lto_read_body_or_constructor (struct lto_file_decl_data *file_data, struct symta
 
 	      if (TYPE_P (t))
 		{
-		  gcc_assert (TYPE_CANONICAL (t) == NULL_TREE);
+		  gcc_assert (TYPE_STRUCTURAL_EQUALITY_P (t));
 		  if (type_with_alias_set_p (t)
 		      && canonical_type_used_p (t))
 		    TYPE_CANONICAL (t) = TYPE_MAIN_VARIANT (t);
@@ -1723,6 +1746,11 @@ lto_read_tree_1 (class lto_input_block *ib, class data_in *data_in, tree expr)
 	  dref_entry e = { expr, str, off };
 	  dref_queue.safe_push (e);
 	}
+      /* When there's no early DIE to refer to but dwarf2out set up
+	 things in a way to expect that fixup.  This tends to happen
+	 with -g1, see for example PR113488.  */
+      else if (DECL_P (expr) && DECL_ABSTRACT_ORIGIN (expr) == expr)
+	DECL_ABSTRACT_ORIGIN (expr) = NULL_TREE;
     }
 }
 
@@ -1868,13 +1896,17 @@ lto_input_tree_1 (class lto_input_block *ib, class data_in *data_in,
       tree type = stream_read_tree_ref (ib, data_in);
       unsigned HOST_WIDE_INT len = streamer_read_uhwi (ib);
       unsigned HOST_WIDE_INT i;
-      HOST_WIDE_INT a[WIDE_INT_MAX_ELTS];
+      HOST_WIDE_INT abuf[WIDE_INT_MAX_INL_ELTS], *a = abuf;
 
+      if (UNLIKELY (len > WIDE_INT_MAX_INL_ELTS))
+	a = XALLOCAVEC (HOST_WIDE_INT, len);
       for (i = 0; i < len; i++)
 	a[i] = streamer_read_hwi (ib);
-      gcc_assert (TYPE_PRECISION (type) <= MAX_BITSIZE_MODE_ANY_INT);
-      result = wide_int_to_tree (type, wide_int::from_array
-				 (a, len, TYPE_PRECISION (type)));
+      gcc_assert (TYPE_PRECISION (type) <= WIDE_INT_MAX_PRECISION);
+      result
+	= wide_int_to_tree (type,
+			    wide_int::from_array (a, len,
+						  TYPE_PRECISION (type)));
       streamer_tree_cache_append (data_in->reader_cache, result, hash);
     }
   else if (tag == LTO_tree_scc || tag == LTO_trees)
@@ -1938,7 +1970,7 @@ lto_input_toplevel_asms (struct lto_file_decl_data *file_data, int order_base)
   string_offset = sizeof (*header) + header->main_size;
 
   lto_input_block ib (data + sizeof (*header), header->main_size,
-		      file_data->mode_table);
+		      file_data);
 
   data_in = lto_data_in_create (file_data, data + string_offset,
 			      header->string_size, vNULL);
@@ -1969,8 +2001,6 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
     internal_error ("cannot read LTO mode table from %s",
 		    file_data->file_name);
 
-  unsigned char *table = ggc_cleared_vec_alloc<unsigned char> (1 << 8);
-  file_data->mode_table = table;
   const struct lto_simple_header_with_strings *header
     = (const struct lto_simple_header_with_strings *) data;
   int string_offset;
@@ -1982,16 +2012,22 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
 				header->string_size, vNULL);
   bitpack_d bp = streamer_read_bitpack (&ib);
 
+  unsigned mode_bits = bp_unpack_value (&bp, 5);
+  unsigned char *table = ggc_cleared_vec_alloc<unsigned char> (1 << mode_bits);
+
+  file_data->mode_table = table;
+  file_data->mode_bits = mode_bits;
+
   table[VOIDmode] = VOIDmode;
   table[BLKmode] = BLKmode;
   unsigned int m;
-  while ((m = bp_unpack_value (&bp, 8)) != VOIDmode)
+  while ((m = bp_unpack_value (&bp, mode_bits)) != VOIDmode)
     {
       enum mode_class mclass
 	= bp_unpack_enum (&bp, mode_class, MAX_MODE_CLASS);
       poly_uint16 size = bp_unpack_poly_value (&bp, 16);
       poly_uint16 prec = bp_unpack_poly_value (&bp, 16);
-      machine_mode inner = (machine_mode) bp_unpack_value (&bp, 8);
+      machine_mode inner = (machine_mode) bp_unpack_value (&bp, mode_bits);
       poly_uint16 nunits = bp_unpack_poly_value (&bp, 16);
       unsigned int ibit = 0, fbit = 0;
       unsigned int real_fmt_len = 0;

@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2022 Free Software Foundation, Inc.
+# Copyright (C) 2004-2024 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -28,6 +28,11 @@ sol2-cxx.o: $(srcdir)/config/sol2-cxx.cc
 
 # Solaris-specific D support.
 sol2-d.o: $(srcdir)/config/sol2-d.cc
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+
+# Solaris-specific Rust support.
+sol2-rust.o: $(srcdir)/config/sol2-rust.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 

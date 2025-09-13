@@ -1,5 +1,5 @@
 /* Output Go language descriptions of types.
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
 This file is part of GCC.
@@ -760,6 +760,25 @@ go_format_type (class godump_container *container, tree type,
       }
       break;
 
+    case BITINT_TYPE:
+      {
+	const char *s;
+	char buf[100];
+
+	s = go_get_uinttype_for_precision (TYPE_PRECISION (type),
+					   TYPE_UNSIGNED (type));
+	if (s == NULL)
+	  {
+	    snprintf (buf, sizeof buf, "INVALID-bitint-%u%s",
+		      TYPE_PRECISION (type),
+		      TYPE_UNSIGNED (type) ? "u" : "");
+	    s = buf;
+	    ret = false;
+	  }
+	obstack_grow (ob, s, strlen(s));
+      }
+      break;
+
     case REAL_TYPE:
       {
 	const char *s;
@@ -1114,6 +1133,7 @@ go_output_typedef (class godump_container *container, tree decl)
 	  struct macro_hash_value *mhval;
 	  void **slot;
 	  char buf[WIDE_INT_PRINT_BUFFER_SIZE];
+	  tree value = DECL_INITIAL (TREE_VALUE (element));
 
 	  name = IDENTIFIER_POINTER (TREE_PURPOSE (element));
 
@@ -1127,14 +1147,18 @@ go_output_typedef (class godump_container *container, tree decl)
 	  if (*slot != NULL)
 	    macro_hash_del (*slot);
 
-	  if (tree_fits_shwi_p (TREE_VALUE (element)))
+	  if (tree_fits_shwi_p (value))
 	    snprintf (buf, sizeof buf, HOST_WIDE_INT_PRINT_DEC,
-		     tree_to_shwi (TREE_VALUE (element)));
-	  else if (tree_fits_uhwi_p (TREE_VALUE (element)))
+		     tree_to_shwi (value));
+	  else if (tree_fits_uhwi_p (value))
 	    snprintf (buf, sizeof buf, HOST_WIDE_INT_PRINT_UNSIGNED,
-		      tree_to_uhwi (TREE_VALUE (element)));
+		      tree_to_uhwi (value));
 	  else
-	    print_hex (wi::to_wide (element), buf);
+	    {
+	      wide_int w = wi::to_wide (element);
+	      gcc_assert (w.get_len () <= WIDE_INT_MAX_INL_ELTS);
+	      print_hex (w, buf);
+	    }
 
 	  mhval->value = xstrdup (buf);
 	  *slot = mhval;
@@ -1326,7 +1350,7 @@ static void
 keyword_hash_init (class godump_container *container)
 {
   size_t i;
-  size_t count = sizeof (keywords) / sizeof (keywords[0]);
+  size_t count = ARRAY_SIZE (keywords);
   void **slot;
 
   for (i = 0; i < count; i++)

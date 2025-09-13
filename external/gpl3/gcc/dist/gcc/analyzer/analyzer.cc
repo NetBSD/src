@@ -1,5 +1,5 @@
 /* Utility functions for the analyzer.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,6 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
@@ -27,8 +28,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple.h"
 #include "diagnostic.h"
 #include "intl.h"
-#include "function.h"
 #include "analyzer/analyzer.h"
+#include "tree-pretty-print.h"
+#include "diagnostic-event-id.h"
+#include "tree-dfa.h"
 
 #if ENABLE_ANALYZER
 
@@ -41,6 +44,8 @@ namespace ana {
 location_t
 get_stmt_location (const gimple *stmt, function *fun)
 {
+  if (!stmt)
+    return UNKNOWN_LOCATION;
   if (get_pure_location (stmt->location) == UNKNOWN_LOCATION)
     {
       /* Workaround for missing location information for clobber
@@ -214,6 +219,71 @@ get_diagnostic_tree_for_gassign (const gassign *assign_stmt)
   return get_diagnostic_tree_for_gassign_1 (assign_stmt, &visited);
 }
 
+/* Generate a JSON value for NODE, which can be NULL_TREE.
+   This is intended for debugging the analyzer rather than serialization and
+   thus is a string (or null, for NULL_TREE).  */
+
+json::value *
+tree_to_json (tree node)
+{
+  if (!node)
+    return new json::literal (json::JSON_NULL);
+
+  pretty_printer pp;
+  dump_generic_node (&pp, node, 0, TDF_VOPS|TDF_MEMSYMS, false);
+  return new json::string (pp_formatted_text (&pp));
+}
+
+/* Generate a JSON value for EVENT_ID.
+   This is intended for debugging the analyzer rather than serialization and
+   thus is a string matching those seen in event messags (or null,
+   for unknown).  */
+
+json::value *
+diagnostic_event_id_to_json (const diagnostic_event_id_t &event_id)
+{
+  if (event_id.known_p ())
+    {
+      pretty_printer pp;
+      pp_printf (&pp, "%@", &event_id);
+      return new json::string (pp_formatted_text (&pp));
+    }
+  else
+    return new json::literal (json::JSON_NULL);
+}
+
+/* Generate a JSON value for OFFSET.
+   This is intended for debugging the analyzer rather than serialization and
+   thus is a string.  */
+
+json::value *
+bit_offset_to_json (const bit_offset_t &offset)
+{
+  pretty_printer pp;
+  pp_wide_int_large (&pp, offset, SIGNED);
+  return new json::string (pp_formatted_text (&pp));
+}
+
+/* Generate a JSON value for OFFSET.
+   This is intended for debugging the analyzer rather than serialization and
+   thus is a string.  */
+
+json::value *
+byte_offset_to_json (const byte_offset_t &offset)
+{
+  pretty_printer pp;
+  pp_wide_int_large (&pp, offset, SIGNED);
+  return new json::string (pp_formatted_text (&pp));
+}
+
+/* Workaround for lack of const-correctness of ssa_default_def.  */
+
+tree
+get_ssa_default_def (const function &fun, tree var)
+{
+  return ssa_default_def (const_cast <function *> (&fun), var);
+}
+
 } // namespace ana
 
 /* Helper function for checkers.  Is the CALL to the given function name,
@@ -223,11 +293,13 @@ get_diagnostic_tree_for_gassign (const gassign *assign_stmt)
    is_named_call_p should be used instead, using a fndecl from
    get_fndecl_for_call; this function should only be used for special cases
    where it's not practical to get at the region model, or for special
-   analyzer functions such as __analyzer_dump.  */
+   analyzer functions such as __analyzer_dump.
+
+   If LOOK_IN_STD is true, then also look for within std:: for the name.  */
 
 bool
 is_special_named_call_p (const gcall *call, const char *funcname,
-			 unsigned int num_args)
+			 unsigned int num_args, bool look_in_std)
 {
   gcc_assert (funcname);
 
@@ -235,7 +307,12 @@ is_special_named_call_p (const gcall *call, const char *funcname,
   if (!fndecl)
     return false;
 
-  return is_named_call_p (fndecl, funcname, call, num_args);
+  if (is_named_call_p (fndecl, funcname, call, num_args))
+    return true;
+  if (look_in_std)
+    if (is_std_named_call_p (fndecl, funcname, call, num_args))
+      return true;
+  return false;
 }
 
 /* Helper function for checkers.  Is FNDECL an extern fndecl at file scope
@@ -274,7 +351,7 @@ is_named_call_p (const_tree fndecl, const char *funcname)
    Compare with cp/typeck.cc: decl_in_std_namespace_p, but this doesn't
    rely on being the C++ FE (or handle inline namespaces inside of std).  */
 
-static inline bool
+bool
 is_std_function_p (const_tree fndecl)
 {
   tree name_decl = DECL_NAME (fndecl);
@@ -423,18 +500,45 @@ make_label_text (bool can_colorize, const char *fmt, ...)
   if (!can_colorize)
     pp_show_color (pp) = false;
 
-  text_info ti;
   rich_location rich_loc (line_table, UNKNOWN_LOCATION);
 
   va_list ap;
 
   va_start (ap, fmt);
 
-  ti.format_spec = _(fmt);
-  ti.args_ptr = &ap;
-  ti.err_no = 0;
-  ti.x_data = NULL;
-  ti.m_richloc = &rich_loc;
+  text_info ti (_(fmt), &ap, 0, NULL, &rich_loc);
+  pp_format (pp, &ti);
+  pp_output_formatted_text (pp);
+
+  va_end (ap);
+
+  label_text result = label_text::take (xstrdup (pp_formatted_text (pp)));
+  delete pp;
+  return result;
+}
+
+/* As above, but with singular vs plural.  */
+
+label_text
+make_label_text_n (bool can_colorize, unsigned HOST_WIDE_INT n,
+		   const char *singular_fmt,
+		   const char *plural_fmt, ...)
+{
+  pretty_printer *pp = global_dc->printer->clone ();
+  pp_clear_output_area (pp);
+
+  if (!can_colorize)
+    pp_show_color (pp) = false;
+
+  rich_location rich_loc (line_table, UNKNOWN_LOCATION);
+
+  va_list ap;
+
+  va_start (ap, plural_fmt);
+
+  const char *fmt = ngettext (singular_fmt, plural_fmt, n);
+
+  text_info ti (fmt, &ap, 0, NULL, &rich_loc);
 
   pp_format (pp, &ti);
   pp_output_formatted_text (pp);

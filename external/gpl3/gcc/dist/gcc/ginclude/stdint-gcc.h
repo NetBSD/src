@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -262,7 +262,7 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 
 #if (defined __STDC_WANT_IEC_60559_BFP_EXT__ \
      || (defined (__STDC_VERSION__) && __STDC_VERSION__ > 201710L))
-/* TS 18661-1 / C2X widths of integer types.  */
+/* TS 18661-1 / C23 widths of integer types.  */
 
 #ifdef __INT8_TYPE__
 # undef INT8_WIDTH
@@ -360,6 +360,10 @@ typedef __UINTMAX_TYPE__ uintmax_t;
 #undef WINT_WIDTH
 #define WINT_WIDTH __WINT_WIDTH__
 
+#endif
+
+#if defined __STDC_VERSION__ && __STDC_VERSION__ > 201710L
+#define __STDC_VERSION_STDINT_H__	202311L
 #endif
 
 #endif /* _GCC_STDINT_H */

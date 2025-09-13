@@ -1,5 +1,5 @@
 /* Swing Modulo Scheduling implementation.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -1439,10 +1439,10 @@ sms_schedule (void)
 
       /* Perform SMS only on loops that their average count is above threshold.  */
 
-      if ( latch_edge->count () > profile_count::zero ()
-          && (latch_edge->count()
-	      < single_exit (loop)->count ().apply_scale
-				 (param_sms_loop_average_count_threshold, 1)))
+      if (latch_edge->count () > profile_count::zero ()
+	  && (latch_edge->count ()
+	      < (single_exit (loop)->count ()
+		 * param_sms_loop_average_count_threshold)))
 	{
 	  if (dump_file)
 	    {
@@ -1464,12 +1464,12 @@ sms_schedule (void)
         }
 
       /* Make sure this is a doloop.  */
-      if ( !(count_reg = doloop_register_get (head, tail)))
-      {
-        if (dump_file)
-          fprintf (dump_file, "SMS doloop_register_get failed\n");
-	continue;
-      }
+      if (!(count_reg = doloop_register_get (head, tail)))
+	{
+	  if (dump_file)
+	    fprintf (dump_file, "SMS doloop_register_get failed\n");
+	  continue;
+	}
 
       /* Don't handle BBs with calls or barriers
 	 or !single_set with the exception of do-loop control part insns.
@@ -2119,7 +2119,7 @@ try_scheduling_node_in_cycle (partial_schedule_ptr ps,
 			      sbitmap must_follow)
 {
   ps_insn_ptr psi;
-  bool success = 0;
+  bool success = false;
 
   verify_partial_schedule (ps, sched_nodes);
   psi = ps_add_node_check_conflicts (ps, u, cycle, must_precede, must_follow);
@@ -2127,7 +2127,7 @@ try_scheduling_node_in_cycle (partial_schedule_ptr ps,
     {
       SCHED_TIME (u) = cycle;
       bitmap_set_bit (sched_nodes, u);
-      success = 1;
+      success = true;
       *num_splits = 0;
       if (dump_file)
 	fprintf (dump_file, "Scheduled w/o split in %d\n", cycle);
@@ -3067,7 +3067,7 @@ ps_insn_find_column (partial_schedule_ptr ps, ps_insn_ptr ps_i,
    in failure and true in success.  Bit N is set in MUST_FOLLOW if
    the node with cuid N must be come after the node pointed to by
    PS_I when scheduled in the same cycle.  */
-static int
+static bool
 ps_insn_advance_column (partial_schedule_ptr ps, ps_insn_ptr ps_i,
 			sbitmap must_follow)
 {
@@ -3158,7 +3158,7 @@ advance_one_cycle (void)
 /* Checks if PS has resource conflicts according to DFA, starting from
    FROM cycle to TO cycle; returns true if there are conflicts and false
    if there are no conflicts.  Assumes DFA is being used.  */
-static int
+static bool
 ps_has_conflicts (partial_schedule_ptr ps, int from, int to)
 {
   int cycle;
@@ -3214,7 +3214,8 @@ ps_add_node_check_conflicts (partial_schedule_ptr ps, int n,
    			     int c, sbitmap must_precede,
 			     sbitmap must_follow)
 {
-  int i, first, amount, has_conflicts = 0;
+  int i, first, amount;
+  bool has_conflicts = false;
   ps_insn_ptr ps_i;
 
   /* First add the node to the PS, if this succeeds check for
@@ -3338,12 +3339,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
 {
   return (optimize > 0 && flag_modulo_sched);
 }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_sms
 

@@ -1,5 +1,5 @@
 /* CPP Library - charsets
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Broken out of c-lex.cc Apr 2003, adding valid C99 UCN ranges.
 
@@ -446,6 +446,73 @@ one_utf16_to_utf8 (iconv_t bigend, const uchar **inbufp, size_t *inbytesleftp,
   return 0;
 }
 
+
+/* Special routine which just counts number of characters in the
+   string, what exactly is stored into the output doesn't matter
+   as long as it is one uchar per character.  */
+
+static inline int
+one_count_chars (iconv_t, const uchar **inbufp, size_t *inbytesleftp,
+		 uchar **outbufp, size_t *outbytesleftp)
+{
+  cppchar_t s = 0;
+  int rval;
+
+  /* Check for space first, since we know exactly how much we need.  */
+  if (*outbytesleftp < 1)
+    return E2BIG;
+
+#if HOST_CHARSET == HOST_CHARSET_ASCII
+  rval = one_utf8_to_cppchar (inbufp, inbytesleftp, &s);
+  if (rval)
+    return rval;
+#else
+  if (*inbytesleftp < 1)
+    return EINVAL;
+  static const uchar utf_ebcdic_map[256] = {
+    /* See table 4 in http://unicode.org/reports/tr16/tr16-7.2.html  */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 1, 1,
+    1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 1, 1, 1,
+    1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 1, 1, 1, 1, 1,
+    9, 9, 9, 9, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1,
+    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
+    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2,
+    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 1, 3, 3,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 4, 4, 4, 4,
+    1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 5, 5, 5,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 6, 6, 7, 7, 0
+  };
+  rval = utf_ebcdic_map[**inbufp];
+  if (rval == 9)
+    return EILSEQ;
+  if (rval == 0)
+    rval = 1;
+  if (rval >= 2)
+    {
+      if (*inbytesleftp < rval)
+	return EINVAL;
+      for (int i = 1; i < rval; ++i)
+	if (utf_ebcdic_map[(*inbufp)[i]] != 9)
+	  return EILSEQ;
+    }
+  *inbytesleftp -= rval;
+  *inbufp += rval;
+#endif
+
+  **outbufp = ' ';
+
+  *outbufp += 1;
+  *outbytesleftp -= 1;
+  return 0;
+}
+
+
 /* Helper routine for the next few functions.  The 'const' on
    one_conversion means that we promise not to modify what function is
    pointed to, which lets the inliner see through it.  */
@@ -527,6 +594,15 @@ convert_utf32_utf8 (iconv_t cd, const uchar *from, size_t flen,
 		    struct _cpp_strbuf *to)
 {
   return conversion_loop (one_utf32_to_utf8, cd, from, flen, to);
+}
+
+/* Magic conversion which just counts characters from input, so
+   only to->len is significant.  */
+static bool
+convert_count_chars (iconv_t cd, const uchar *from,
+		     size_t flen, struct _cpp_strbuf *to)
+{
+  return conversion_loop (one_count_chars, cd, from, flen, to);
 }
 
 /* Identity conversion, used when we have no alternative.  */
@@ -921,6 +997,378 @@ struct ucnrange {
 /* ISO 10646 defines the UCS codespace as the range 0-0x10FFFF inclusive.  */
 #define UCS_LIMIT 0x10FFFF
 
+#include "uname2c.h"
+
+static const char hangul_syllables[][4] = {
+  /* L */
+  "G", "GG", "N", "D", "DD", "R", "M", "B", "BB", "S", "SS", "",
+  "J", "JJ", "C", "K", "T", "P", "H",
+  /* V */
+  "A", "AE", "YA", "YAE", "EO", "E", "YEO", "YE", "O", "WA", "WAE",
+  "OE", "YO", "U", "WEO", "WE", "WI", "YU", "EU", "YI", "I",
+  /* T */
+  "", "G", "GG", "GS", "N", "NJ", "NH", "D", "L", "LG", "LM", "LB",
+  "LS", "LT", "LP", "LH", "M", "B", "BS", "S", "SS", "NG", "J", "C",
+  "K", "T", "P", "H"
+};
+
+static const short hangul_count[6] = { 19, 21, 28 };
+
+/* Used for Unicode loose matching rule UAX44-LM2 matching.  */
+
+struct uname2c_data
+{
+  char *canon_name;
+  char prev_char;
+};
+
+/* Map NAME, a Unicode character name or correction/control/alternate
+   alias, to a Unicode codepoint, or return (cppchar_t) -1 if
+   not found.  This uses a space optimized radix tree precomputed
+   by the makeuname2c utility, with binary format documented in its
+   source makeuname2c.cc.  */
+
+static cppchar_t
+_cpp_uname2c (const char *name, size_t len, const unsigned char *n,
+	      struct uname2c_data *data)
+{
+  do
+    {
+      char k;
+      const char *key;
+      size_t key_len, len_adj;
+      bool has_value = *n & 0x40;
+      bool has_children, no_sibling = false;
+      cppchar_t codepoint = -1;
+      const unsigned char *child = NULL;
+      int ret;
+
+      if (*n & 0x80)
+	{
+	  k = ' ' + (*n++ & 0x3f);
+	  key = &k;
+	  key_len = 1;
+	}
+      else
+	{
+	  key_len = *n++ & 0x3f;
+	  key = &uname2c_dict[*n++];
+	  key += (*n++ << 8);
+	}
+      if (has_value)
+	{
+	  codepoint = *n + (n[1] << 8) + ((n[2] & 0x1f) << 16);
+	  has_children = n[2] & 0x80;
+	  no_sibling = n[2] & 0x40;
+	  n += 3;
+	}
+      else
+	has_children = true;
+      if (has_children)
+	{
+	  unsigned int shift = 0;
+	  size_t child_off = 0;
+
+	  do
+	    {
+	      child_off |= (*n & 0x7f) << shift;
+	      shift += 7;
+	    }
+	  while ((*n++ & 0x80) != 0);
+	  child = n + child_off;
+	}
+      if (__builtin_expect (data == NULL, 1))
+	{
+	  ret = memcmp (name, key, len > key_len ? key_len : len);
+	  len_adj = key_len;
+	}
+      else
+	{
+	  const char *p = name, *q = key;
+
+	  while (1)
+	    {
+	      if ((size_t) (p - name) == len || (size_t) (q - key) == key_len)
+		break;
+	      if (*q == ' ')
+		{
+		  ++q;
+		  continue;
+		}
+	      if (*q == '-')
+		{
+		  /* This is the hard case.  Only medial hyphens
+		     should be removed, where medial means preceded
+		     and followed by alnum.  */
+		  if (ISALNUM (q == key ? data->prev_char : q[-1]))
+		    {
+		      if (q + 1 == key + key_len)
+			{
+			  /* We don't know what the next letter will be.
+			     It could be ISALNUM, then we are supposed
+			     to omit it, or it could be a space and then
+			     we should not omit it and need to compare it.
+			     Fortunately the only 3 names with hyphen
+			     followed by non-letter are
+			     U+0F0A TIBETAN MARK BKA- SHOG YIG MGO
+			     U+0FD0 TIBETAN MARK BKA- SHOG GI MGO RGYAN
+			     U+0FD0 TIBETAN MARK BSKA- SHOG GI MGO RGYAN
+			     Furthermore, prefixes of NR2 generated
+			     ranges all end with a hyphen, but the generated
+			     part is then followed by alpha-numeric.
+			     So, let's just assume that - at the end of
+			     key is always followed by alphanumeric and
+			     so should be omitted.
+			     makeuname2c.cc verifies that this is true.  */
+			  ++q;
+			  continue;
+			}
+		      else if (ISALNUM (q[1]))
+			{
+			  ++q;
+			  continue;
+			}
+		    }
+		}
+	      if (*p != *q)
+		break;
+	      ++p;
+	      ++q;
+	    }
+	  len_adj = p - name;
+	  /* If we don't consume the whole key, signal a mismatch,
+	     but always with ret = 1, so that we keep looking through
+	     siblings.  */
+	  ret = q < key + key_len;
+	}
+      if (ret < 0)
+	return -1;
+      else if (ret == 0)
+	{
+	  if (len < len_adj)
+	    return -1;
+	  else if (codepoint >= 0xd800
+		   && codepoint < 0xd800 + ARRAY_SIZE (uname2c_generated))
+	    {
+	      name += len_adj;
+	      len -= len_adj;
+	      if (codepoint == 0xd800)
+		{
+		  /* NR1 - Hangul syllables.  */
+		  size_t start = 0, end, i, j;
+		  int this_len, max_len;
+		  char winner[3];
+
+		  for (i = 0; i < 3; ++i)
+		    {
+		      end = start + hangul_count[i];
+		      max_len = -1;
+		      winner[i] = -1;
+		      for (j = start; j < end; j++)
+			{
+			  this_len = strlen (hangul_syllables[j]);
+			  if (len >= (size_t) this_len
+			      && this_len > max_len
+			      && memcmp (name, hangul_syllables[j],
+					 this_len) == 0)
+			    {
+			      max_len = this_len;
+			      winner[i] = j - start;
+			    }
+			}
+		      if (max_len == -1)
+			return -1;
+		      name += max_len;
+		      len -= max_len;
+		      start = end;
+		    }
+		  if (__builtin_expect (data != NULL, 0))
+		    {
+		      memcpy (data->canon_name, key, key_len);
+		      data->canon_name[key_len] = '\0';
+		      for (i = 0, start = 0; i < 3; ++i)
+			{
+			  strcat (data->canon_name,
+				  hangul_syllables[start + winner[i]]);
+			  start += hangul_count[i];
+			}
+		    }
+		  return (0xac00 + 21 * 28 * winner[0]
+			  + 28 * winner[1] + winner[2]);
+		}
+	      else
+		{
+		  /* NR2 - prefix followed by hexadecimal codepoint.  */
+		  const cppchar_t *p;
+		  size_t i;
+
+		  if (len < 4 || len > 5)
+		    return -1;
+		  p = uname2c_pairs + uname2c_generated[codepoint - 0xd800];
+		  codepoint = 0;
+		  for (i = 0; i < len; ++i)
+		    {
+		      codepoint <<= 4;
+		      if (!ISXDIGIT (name[i]))
+			return -1;
+		      codepoint += hex_value (name[i]);
+		    }
+		  for (; *p; p += 2)
+		    if (codepoint < *p)
+		      return -1;
+		    else if (codepoint <= p[1])
+		      {
+			if (__builtin_expect (data != NULL, 0))
+			  {
+			    memcpy (data->canon_name, key, key_len);
+			    memcpy (data->canon_name + key_len, name, len);
+			    data->canon_name[key_len + len] = '\0';
+			  }
+			return codepoint;
+		      }
+		  return -1;
+		}
+	    }
+	  else if (__builtin_expect (data != NULL, 0))
+	    {
+	      if (len == len_adj)
+		{
+		  memcpy (data->canon_name, key, key_len);
+		  data->canon_name[key_len] = '\0';
+		  return codepoint;
+		}
+	      if (has_children)
+		{
+		  struct uname2c_data save = *data;
+		  memcpy (data->canon_name, key, key_len);
+		  data->canon_name += key_len;
+		  data->prev_char = key[key_len - 1];
+		  codepoint = _cpp_uname2c (name + len_adj, len - len_adj,
+					    child, data);
+		  if (codepoint != (cppchar_t) -1)
+		    return codepoint;
+		  *data = save;
+		}
+	    }
+	  else if (len == len_adj)
+	    return codepoint;
+	  else if (!has_children)
+	    return -1;
+	  else
+	    {
+	      name += len_adj;
+	      len -= len_adj;
+	      n = child;
+	      continue;
+	    }
+	}
+      if (no_sibling || (!has_value && *n == 0xff))
+	break;
+    }
+  while (1);
+  return -1;
+}
+
+/* Try to do a loose name lookup according to Unicode loose matching rule
+   UAX44-LM2.  First ignore medial hyphens, whitespace, underscore
+   characters and convert to upper case.  */
+
+static cppchar_t
+_cpp_uname2c_uax44_lm2 (const char *name, size_t len, char *canon_name)
+{
+  char name_after_uax44_lm2[uname2c_max_name_len];
+  char *q = name_after_uax44_lm2;
+  const char *p;
+
+  for (p = name; p < name + len; p++)
+    if (*p == '_' || *p == ' ')
+      continue;
+    else if (*p == '-' && p != name && ISALNUM (p[-1]) && ISALNUM (p[1]))
+      continue;
+    else if (q == name_after_uax44_lm2 + uname2c_max_name_len)
+      return -1;
+    else if (ISLOWER (*p))
+      *q++ = TOUPPER (*p);
+    else
+      *q++ = *p;
+
+  struct uname2c_data data;
+  data.canon_name = canon_name;
+  data.prev_char = ' ';
+  /* Hangul Jungseong O- E after UAX44-LM2 should be HANGULJUNGSEONGO-E
+     and so should match U+1180.  */
+  if (q - name_after_uax44_lm2 == sizeof ("HANGULJUNGSEONGO-E") - 1
+      && memcmp (name_after_uax44_lm2, "HANGULJUNGSEONGO-E",
+		 sizeof ("HANGULJUNGSEONGO-E") - 1) == 0)
+    {
+      name_after_uax44_lm2[sizeof ("HANGULJUNGSEONGO") - 1] = 'E';
+      --q;
+    }
+  cppchar_t result
+    = _cpp_uname2c (name_after_uax44_lm2, q - name_after_uax44_lm2,
+		    uname2c_tree, &data);
+
+  /* Unicode UAX44-LM2 exception:
+     U+116C HANGUL JUNGSEONG OE
+     U+1180 HANGUL JUNGSEONG O-E
+     We remove all medial hyphens when we shouldn't remote the U+1180 one.
+     The U+1180 entry sorts before U+116C lexicographilly, so we get U+1180
+     in both cases.  Thus, if result is U+1180, check if user's name doesn't
+     have a hyphen there and adjust.  */
+  if (result == 0x1180)
+    {
+      while (p[-1] == ' ' || p[-1] == '_')
+	--p;
+      gcc_assert (TOUPPER (p[-1]) == 'E');
+      --p;
+      while (p[-1] == ' ' || p[-1] == '_')
+	--p;
+      if (p[-1] != '-')
+	{
+	  result = 0x116c;
+	  memcpy (canon_name + sizeof ("HANGUL JUNGSEONG O") - 1, "E", 2);
+	}
+    }
+  return result;
+}
+
+/* Returns flags representing the XID properties of the given codepoint.  */
+unsigned int
+cpp_check_xid_property (cppchar_t c)
+{
+  // fast path for ASCII
+  if (c < 0x80)
+    {
+      if (('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z'))
+	return CPP_XID_START | CPP_XID_CONTINUE;
+      if (('0' <= c && c <= '9') || c == '_')
+	return CPP_XID_CONTINUE;
+    }
+
+  if (c > UCS_LIMIT)
+    return 0;
+
+  int mn, mx, md;
+  mn = 0;
+  mx = ARRAY_SIZE (ucnranges) - 1;
+  while (mx != mn)
+    {
+      md = (mn + mx) / 2;
+      if (c <= ucnranges[md].end)
+	mx = md;
+      else
+	mn = md + 1;
+    }
+
+  unsigned short flags = ucnranges[mn].flags;
+
+  if (flags & CXX23)
+    return CPP_XID_START | CPP_XID_CONTINUE;
+  if (flags & NXX23)
+    return CPP_XID_CONTINUE;
+  return 0;
+}
+
 /* Returns 1 if C is valid in an identifier, 2 if C is valid except at
    the start of an identifier, and 0 if C is not valid in an
    identifier.  We assume C has already gone through the checks of
@@ -955,7 +1403,7 @@ ucn_valid_in_identifier (cpp_reader *pfile, cppchar_t c,
   valid_flags = C99 | CXX | C11 | CXX23;
   if (CPP_PEDANTIC (pfile))
     {
-      if (CPP_OPTION (pfile, cplusplus))
+      if (CPP_OPTION (pfile, xid_identifiers))
 	valid_flags = CXX23;
       else if (CPP_OPTION (pfile, c11_identifiers))
 	valid_flags = C11;
@@ -1019,7 +1467,7 @@ ucn_valid_in_identifier (cpp_reader *pfile, cppchar_t c,
       return 2;
     }
 
-  if (CPP_OPTION (pfile, cplusplus))
+  if (CPP_OPTION (pfile, xid_identifiers))
     invalid_start_flags = NXX23;
   else if (CPP_OPTION (pfile, c11_identifiers))
     invalid_start_flags = N11;
@@ -1034,6 +1482,19 @@ ucn_valid_in_identifier (cpp_reader *pfile, cppchar_t c,
     return 2;
 
   return 1;
+}
+
+/* Increment char_range->m_finish by a single character.  */
+
+static void
+extend_char_range (source_range *char_range,
+		   cpp_string_location_reader *loc_reader)
+{
+  if (loc_reader)
+    {
+      gcc_assert (char_range);
+      char_range->m_finish = loc_reader->get_next ().m_finish;
+    }
 }
 
 /* [lex.charset]: The character designated by the universal character
@@ -1081,6 +1542,7 @@ _cpp_valid_ucn (cpp_reader *pfile, const uchar **pstr,
   unsigned int length;
   const uchar *str = *pstr;
   const uchar *base = str - 2;
+  bool delimited = false, named = false;
 
   if (!CPP_OPTION (pfile, cplusplus) && !CPP_OPTION (pfile, c99))
     cpp_error (pfile, CPP_DL_WARNING,
@@ -1094,37 +1556,225 @@ _cpp_valid_ucn (cpp_reader *pfile, const uchar **pstr,
 	         "the meaning of '\\%c' is different in traditional C",
 	         (int) str[-1]);
 
+  result = 0;
   if (str[-1] == 'u')
-    length = 4;
+    {
+      length = 4;
+      if (str < limit
+	  && *str == '{'
+	  && (!identifier_pos
+	      || CPP_OPTION (pfile, delimited_escape_seqs)
+	      || !CPP_OPTION (pfile, std)))
+	{
+	  str++;
+	  /* Magic value to indicate no digits seen.  */
+	  length = 32;
+	  delimited = true;
+	  extend_char_range (char_range, loc_reader);
+	}
+    }
   else if (str[-1] == 'U')
     length = 8;
+  else if (str[-1] == 'N')
+    {
+      length = 4;
+      if (identifier_pos
+	  && !CPP_OPTION (pfile, delimited_escape_seqs)
+	  && CPP_OPTION (pfile, std))
+	{
+	  *cp = 0;
+	  return false;
+	}
+      if (str == limit || *str != '{')
+	{
+	  if (identifier_pos)
+	    {
+	      *cp = 0;
+	      return false;
+	    }
+	  cpp_error (pfile, CPP_DL_ERROR, "'\\N' not followed by '{'");
+	}
+      else
+	{
+	  str++;
+	  named = true;
+	  extend_char_range (char_range, loc_reader);
+	  length = 0;
+	  const uchar *name = str;
+	  bool strict = true;
+
+	  do
+	    {
+	      if (str == limit)
+		break;
+	      c = *str;
+	      if (!ISIDNUM (c) && c != ' ' && c != '-')
+		break;
+	      if (ISLOWER (c) || c == '_')
+		strict = false;
+	      str++;
+	      extend_char_range (char_range, loc_reader);
+	    }
+	  while (1);
+
+	  if (str < limit && *str == '}')
+	    {
+	      if (identifier_pos && name == str)
+		{
+		  cpp_warning (pfile, CPP_W_UNICODE,
+			       "empty named universal character escape "
+			       "sequence; treating it as separate tokens");
+		  *cp = 0;
+		  return false;
+		}
+	      if (name == str)
+		cpp_error (pfile, CPP_DL_ERROR,
+			   "empty named universal character escape sequence");
+	      else if ((!identifier_pos || strict)
+		       && !CPP_OPTION (pfile, delimited_escape_seqs)
+		       && CPP_OPTION (pfile, cpp_pedantic))
+		cpp_error (pfile, CPP_DL_PEDWARN,
+			   "named universal character escapes are only valid "
+			   "in C++23");
+	      if (name == str)
+		result = 0x40;
+	      else
+		{
+		  /* If the name is longer than maximum length of a Unicode
+		     name, it can't be strictly valid.  */
+		  if ((size_t) (str - name) > uname2c_max_name_len || !strict)
+		    result = -1;
+		  else
+		    result = _cpp_uname2c ((const char *) name, str - name,
+					   uname2c_tree, NULL);
+		  if (result == (cppchar_t) -1)
+		    {
+		      bool ret = true;
+		      if (identifier_pos
+			  && (!CPP_OPTION (pfile, delimited_escape_seqs)
+			      || !strict))
+			ret = cpp_warning (pfile, CPP_W_UNICODE,
+					   "\\N{%.*s} is not a valid "
+					   "universal character; treating it "
+					   "as separate tokens",
+					   (int) (str - name), name);
+		      else
+			cpp_error (pfile, CPP_DL_ERROR,
+				   "\\N{%.*s} is not a valid universal "
+				   "character", (int) (str - name), name);
+
+		      /* Try to do a loose name lookup according to
+			 Unicode loose matching rule UAX44-LM2.  */
+		      char canon_name[uname2c_max_name_len + 1];
+		      result = _cpp_uname2c_uax44_lm2 ((const char *) name,
+						       str - name, canon_name);
+		      if (result != (cppchar_t) -1 && ret)
+			cpp_error (pfile, CPP_DL_NOTE,
+				   "did you mean \\N{%s}?", canon_name);
+		      else
+			result = 0xC0;
+		      if (identifier_pos
+			  && (!CPP_OPTION (pfile, delimited_escape_seqs)
+			      || !strict))
+			{
+			  *cp = 0;
+			  return false;
+			}
+		    }
+		}
+	      str++;
+	      extend_char_range (char_range, loc_reader);
+	    }
+	  else if (identifier_pos)
+	    {
+	      cpp_warning (pfile, CPP_W_UNICODE,
+			   "'\\N{' not terminated with '}' after %.*s; "
+			   "treating it as separate tokens",
+			   (int) (str - base), base);
+	      *cp = 0;
+	      return false;
+	    }
+	  else
+	    {
+	      cpp_error (pfile, CPP_DL_ERROR,
+			 "'\\N{' not terminated with '}' after %.*s",
+			 (int) (str - base), base);
+	      result = 1;
+	    }
+	}
+    }
   else
     {
       cpp_error (pfile, CPP_DL_ICE, "In _cpp_valid_ucn but not a UCN");
       length = 4;
     }
 
-  result = 0;
-  do
+  if (!named)
+    do
+      {
+	if (str == limit)
+	  break;
+	c = *str;
+	if (!ISXDIGIT (c))
+	  break;
+	str++;
+	extend_char_range (char_range, loc_reader);
+	if (delimited)
+	  {
+	    if (!result)
+	      /* Accept arbitrary number of leading zeros.
+		 16 is another magic value, smaller than 32 above
+		 and bigger than 8, so that upon encountering first
+		 non-zero digit we can count 8 digits and after that
+		 or in overflow bit and ensure length doesn't decrease
+		 to 0, as delimited escape sequence doesn't have upper
+		 bound on the number of hex digits.  */
+	      length = 16;
+	    else if (length == 16 - 8)
+	      {
+		/* Make sure we detect overflows.  */
+		result |= 0x8000000;
+		++length;
+	      }
+	  }
+
+	result = (result << 4) + hex_value (c);
+      }
+    while (--length);
+
+  if (delimited && str < limit && *str == '}')
     {
-      c = *str;
-      if (!ISXDIGIT (c))
-	break;
-      str++;
-      if (loc_reader)
+      if (length == 32 && identifier_pos)
 	{
-	  gcc_assert (char_range);
-	  char_range->m_finish = loc_reader->get_next ().m_finish;
+	  cpp_warning (pfile, CPP_W_UNICODE,
+		       "empty delimited escape sequence; "
+		       "treating it as separate tokens");
+	  *cp = 0;
+	  return false;
 	}
-      result = (result << 4) + hex_value (c);
+      else if (length == 32)
+	cpp_error (pfile, CPP_DL_ERROR,
+		   "empty delimited escape sequence");
+      else if (!CPP_OPTION (pfile, delimited_escape_seqs)
+	       && CPP_OPTION (pfile, cpp_pedantic))
+	cpp_error (pfile, CPP_DL_PEDWARN,
+		   "delimited escape sequences are only valid in C++23");
+      str++;
+      length = 0;
+      delimited = false;
+      extend_char_range (char_range, loc_reader);
     }
-  while (--length && str < limit);
 
   /* Partial UCNs are not valid in strings, but decompose into
      multiple tokens in identifiers, so we can't give a helpful
      error message in that case.  */
   if (length && identifier_pos)
     {
+      if (delimited)
+	cpp_warning (pfile, CPP_W_UNICODE,
+		     "'\\u{' not terminated with '}' after %.*s; "
+		     "treating it as separate tokens",
+		     (int) (str - base), base);
       *cp = 0;
       return false;
     }
@@ -1132,9 +1782,14 @@ _cpp_valid_ucn (cpp_reader *pfile, const uchar **pstr,
   *pstr = str;
   if (length)
     {
-      cpp_error (pfile, CPP_DL_ERROR,
-		 "incomplete universal character name %.*s",
-		 (int) (str - base), base);
+      if (!delimited)
+	cpp_error (pfile, CPP_DL_ERROR,
+		   "incomplete universal character name %.*s",
+		   (int) (str - base), base);
+      else
+	cpp_error (pfile, CPP_DL_ERROR,
+		   "'\\u{' not terminated with '}' after %.*s",
+		   (int) (str - base), base);
       result = 1;
     }
   /* The C99 standard permits $, @ and ` to be specified as UCNs.  We use
@@ -1210,11 +1865,10 @@ convert_ucn (cpp_reader *pfile, const uchar *from, const uchar *limit,
   /* loc_reader and ranges must either be both NULL, or both be non-NULL.  */
   gcc_assert ((loc_reader != NULL) == (ranges != NULL));
 
-  from++;  /* Skip u/U.  */
+  from++;  /* Skip u/U/N.  */
 
-  if (loc_reader)
-    /* The u/U is part of the spelling of this character.  */
-    char_range.m_finish = loc_reader->get_next ().m_finish;
+  /* The u/U is part of the spelling of this character.  */
+  extend_char_range (&char_range, loc_reader);
 
   _cpp_valid_ucn (pfile, &from, limit, 0, &nst,
 		  &ucn, &char_range, loc_reader);
@@ -1256,9 +1910,9 @@ convert_ucn (cpp_reader *pfile, const uchar *from, const uchar *limit,
     case, no diagnostic is emitted, and the return value of FALSE should cause
     a new token to be formed.
 
-    Unlike _cpp_valid_ucn, this will never be called when lexing a string; only
-    a potential identifier, or a CPP_OTHER token.  NST is unused in the latter
-    case.
+    _cpp_valid_utf8 can be called when lexing a potential identifier, or a
+    CPP_OTHER token or for the purposes of -Winvalid-utf8 warning in string or
+    character literals.  NST is unused when not in a potential identifier.
 
     As in _cpp_valid_ucn, IDENTIFIER_POS is 0 when not in an identifier, 1 for
     the start of an identifier, or 2 otherwise.  */
@@ -1319,6 +1973,40 @@ _cpp_valid_utf8 (cpp_reader *pfile,
 	}
     }
 
+  return true;
+}
+
+/* Return true iff BUFFER of size NUM_BYTES is validly-encoded UTF-8.  */
+
+extern bool
+cpp_valid_utf8_p (const char *buffer, size_t num_bytes)
+{
+  const uchar *iter = (const uchar *)buffer;
+  size_t bytesleft = num_bytes;
+  while (bytesleft > 0)
+    {
+      /* one_utf8_to_cppchar implements 5-byte and 6 byte sequences as per
+	 RFC 2279, but this has been superceded by RFC 3629, which
+	 restricts UTF-8 to 1-byte through 4-byte sequences, and
+	 states "the octet values C0, C1, F5 to FF never appear".
+
+	 Reject such values.  */
+      if (*iter >= 0xf4)
+	return false;
+
+      cppchar_t cp;
+      int err = one_utf8_to_cppchar (&iter, &bytesleft, &cp);
+      if (err)
+	return false;
+
+      /* Additionally, Unicode declares that all codepoints above 0010FFFF are
+	 invalid because they cannot be represented in UTF-16.
+
+	 Reject such values.*/
+      if (cp > UCS_LIMIT)
+	return false;
+    }
+  /* No problems encountered.  */
   return true;
 }
 
@@ -1392,6 +2080,8 @@ convert_hex (cpp_reader *pfile, const uchar *from, const uchar *limit,
   int digits_found = 0;
   size_t width = cvt.width;
   size_t mask = width_to_mask (width);
+  bool delimited = false;
+  const uchar *base = from - 1;
 
   /* loc_reader and ranges must either be both NULL, or both be non-NULL.  */
   gcc_assert ((loc_reader != NULL) == (ranges != NULL));
@@ -1404,8 +2094,14 @@ convert_hex (cpp_reader *pfile, const uchar *from, const uchar *limit,
   from++;
 
   /* The 'x' is part of the spelling of this character.  */
-  if (loc_reader)
-    char_range.m_finish = loc_reader->get_next ().m_finish;
+  extend_char_range (&char_range, loc_reader);
+
+  if (from < limit && *from == '{')
+    {
+      delimited = true;
+      from++;
+      extend_char_range (&char_range, loc_reader);
+    }
 
   while (from < limit)
     {
@@ -1413,17 +2109,40 @@ convert_hex (cpp_reader *pfile, const uchar *from, const uchar *limit,
       if (! hex_p (c))
 	break;
       from++;
-      if (loc_reader)
-	char_range.m_finish = loc_reader->get_next ().m_finish;
+      extend_char_range (&char_range, loc_reader);
       overflow |= n ^ (n << 4 >> 4);
       n = (n << 4) + hex_value (c);
       digits_found = 1;
+    }
+
+  if (delimited && from < limit && *from == '}')
+    {
+      from++;
+      if (!digits_found)
+	{
+	  cpp_error (pfile, CPP_DL_ERROR,
+		     "empty delimited escape sequence");
+	  return from;
+	}
+     else if (!CPP_OPTION (pfile, delimited_escape_seqs)
+	      && CPP_OPTION (pfile, cpp_pedantic))
+	cpp_error (pfile, CPP_DL_PEDWARN,
+		   "delimited escape sequences are only valid in C++23");
+      delimited = false;
+      extend_char_range (&char_range, loc_reader);
     }
 
   if (!digits_found)
     {
       cpp_error (pfile, CPP_DL_ERROR,
 		 "\\x used with no following hex digits");
+      return from;
+    }
+  else if (delimited)
+    {
+      cpp_error (pfile, CPP_DL_ERROR,
+		 "'\\x{' not terminated with '}' after %.*s",
+		 (int) (from - base), base);
       return from;
     }
 
@@ -1459,12 +2178,28 @@ convert_oct (cpp_reader *pfile, const uchar *from, const uchar *limit,
 	     cpp_substring_ranges *ranges)
 {
   size_t count = 0;
-  cppchar_t c, n = 0;
+  cppchar_t c, n = 0, overflow = 0;
   size_t width = cvt.width;
   size_t mask = width_to_mask (width);
+  bool delimited = false;
+  const uchar *base = from - 1;
 
   /* loc_reader and ranges must either be both NULL, or both be non-NULL.  */
   gcc_assert ((loc_reader != NULL) == (ranges != NULL));
+
+  if (from < limit && *from == 'o')
+    {
+      from++;
+      extend_char_range (&char_range, loc_reader);
+      if (from == limit || *from != '{')
+	cpp_error (pfile, CPP_DL_ERROR, "'\\o' not followed by '{'");
+      else
+	{
+	  from++;
+	  extend_char_range (&char_range, loc_reader);
+	  delimited = true;
+	}
+    }
 
   while (from < limit && count++ < 3)
     {
@@ -1472,12 +2207,42 @@ convert_oct (cpp_reader *pfile, const uchar *from, const uchar *limit,
       if (c < '0' || c > '7')
 	break;
       from++;
-      if (loc_reader)
-	char_range.m_finish = loc_reader->get_next ().m_finish;
+      extend_char_range (&char_range, loc_reader);
+      if (delimited)
+	{
+	  count = 2;
+	  overflow |= n ^ (n << 3 >> 3);
+	}
       n = (n << 3) + c - '0';
     }
 
-  if (n != (n & mask))
+  if (delimited)
+    {
+      if (from < limit && *from == '}')
+	{
+	  from++;
+	  if (count == 1)
+	    {
+	      cpp_error (pfile, CPP_DL_ERROR,
+			 "empty delimited escape sequence");
+	      return from;
+	    }
+	  else if (!CPP_OPTION (pfile, delimited_escape_seqs)
+		   && CPP_OPTION (pfile, cpp_pedantic))
+	    cpp_error (pfile, CPP_DL_PEDWARN,
+		       "delimited escape sequences are only valid in C++23");
+	  extend_char_range (&char_range, loc_reader);
+	}
+      else
+	{
+	  cpp_error (pfile, CPP_DL_ERROR,
+		     "'\\o{' not terminated with '}' after %.*s",
+		     (int) (from - base), base);
+	  return from;
+	}
+    }
+
+  if (overflow | (n != (n & mask)))
     {
       cpp_error (pfile, CPP_DL_PEDWARN,
 		 "octal escape sequence out of range");
@@ -1503,7 +2268,7 @@ static const uchar *
 convert_escape (cpp_reader *pfile, const uchar *from, const uchar *limit,
 		struct _cpp_strbuf *tbuf, struct cset_converter cvt,
 		cpp_string_location_reader *loc_reader,
-		cpp_substring_ranges *ranges)
+		cpp_substring_ranges *ranges, bool uneval)
 {
   /* Values of \a \b \e \f \n \r \t \v respectively.  */
 #if HOST_CHARSET == HOST_CHARSET_ASCII
@@ -1525,16 +2290,25 @@ convert_escape (cpp_reader *pfile, const uchar *from, const uchar *limit,
   switch (c)
     {
       /* UCNs, hex escapes, and octal escapes are processed separately.  */
-    case 'u': case 'U':
+    case 'u': case 'U': case 'N':
       return convert_ucn (pfile, from, limit, tbuf, cvt,
 			  char_range, loc_reader, ranges);
 
     case 'x':
+      if (uneval && CPP_PEDANTIC (pfile))
+	cpp_error (pfile, CPP_DL_PEDWARN,
+		   "numeric escape sequence in unevaluated string: "
+		   "'\\%c'", (int) c);
       return convert_hex (pfile, from, limit, tbuf, cvt,
 			  char_range, loc_reader, ranges);
 
     case '0':  case '1':  case '2':  case '3':
     case '4':  case '5':  case '6':  case '7':
+    case 'o':
+      if (uneval && CPP_PEDANTIC (pfile))
+	cpp_error (pfile, CPP_DL_PEDWARN,
+		   "numeric escape sequence in unevaluated string: "
+		   "'\\%c'", (int) c);
       return convert_oct (pfile, from, limit, tbuf, cvt,
 			  char_range, loc_reader, ranges);
 
@@ -1642,7 +2416,7 @@ converter_for_type (cpp_reader *pfile, enum cpp_ttype type)
 
 static bool
 cpp_interpret_string_1 (cpp_reader *pfile, const cpp_string *from, size_t count,
-			cpp_string *to,  enum cpp_ttype type,
+			cpp_string *to, enum cpp_ttype type,
 			cpp_string_location_reader *loc_readers,
 			cpp_substring_ranges *out)
 {
@@ -1773,7 +2547,7 @@ cpp_interpret_string_1 (cpp_reader *pfile, const cpp_string *from, size_t count,
 
 	  struct _cpp_strbuf *tbuf_ptr = to ? &tbuf : NULL;
 	  p = convert_escape (pfile, p + 1, limit, tbuf_ptr, cvt,
-			      loc_reader, out);
+			      loc_reader, out, type == CPP_UNEVAL_STRING);
 	}
     }
 
@@ -1811,7 +2585,7 @@ cpp_interpret_string_1 (cpp_reader *pfile, const cpp_string *from, size_t count,
    false for failure.  */
 bool
 cpp_interpret_string (cpp_reader *pfile, const cpp_string *from, size_t count,
-		      cpp_string *to,  enum cpp_ttype type)
+		      cpp_string *to, enum cpp_ttype type)
 {
   return cpp_interpret_string_1 (pfile, from, count, to, type, NULL, NULL);
 }
@@ -1894,7 +2668,7 @@ cpp_interpret_string_ranges (cpp_reader *pfile, const cpp_string *from,
 bool
 cpp_interpret_string_notranslate (cpp_reader *pfile, const cpp_string *from,
 				  size_t count,	cpp_string *to,
-				  enum cpp_ttype type ATTRIBUTE_UNUSED)
+				  enum cpp_ttype type)
 {
   struct cset_converter save_narrow_cset_desc = pfile->narrow_cset_desc;
   bool retval;
@@ -1903,28 +2677,58 @@ cpp_interpret_string_notranslate (cpp_reader *pfile, const cpp_string *from,
   pfile->narrow_cset_desc.cd = (iconv_t) -1;
   pfile->narrow_cset_desc.width = CPP_OPTION (pfile, char_precision);
 
-  retval = cpp_interpret_string (pfile, from, count, to, CPP_STRING);
+  retval = cpp_interpret_string (pfile, from, count, to,
+				 type == CPP_UNEVAL_STRING
+				 ? CPP_UNEVAL_STRING : CPP_STRING);
 
   pfile->narrow_cset_desc = save_narrow_cset_desc;
   return retval;
 }
 
 
+/* Return number of source characters in STR.  */
+static unsigned
+count_source_chars (cpp_reader *pfile, cpp_string str, cpp_ttype type)
+{
+  cpp_string str2 = { 0, 0 };
+  bool (*saved_diagnostic_handler) (cpp_reader *, enum cpp_diagnostic_level,
+				    enum cpp_warning_reason, rich_location *,
+				    const char *, va_list *)
+    ATTRIBUTE_FPTR_PRINTF(5,0);
+  saved_diagnostic_handler = pfile->cb.diagnostic;
+  pfile->cb.diagnostic = noop_diagnostic_cb;
+  convert_f save_func = pfile->narrow_cset_desc.func;
+  pfile->narrow_cset_desc.func = convert_count_chars;
+  bool ret = cpp_interpret_string (pfile, &str, 1, &str2, type);
+  pfile->narrow_cset_desc.func = save_func;
+  pfile->cb.diagnostic = saved_diagnostic_handler;
+  if (ret)
+    {
+      if (str2.text != str.text)
+	free ((void *)str2.text);
+      return str2.len;
+    }
+  else
+    return 0;
+}
+
 /* Subroutine of cpp_interpret_charconst which performs the conversion
    to a number, for narrow strings.  STR is the string structure returned
    by cpp_interpret_string.  PCHARS_SEEN and UNSIGNEDP are as for
-   cpp_interpret_charconst.  TYPE is the token type.  */
+   cpp_interpret_charconst.  TOKEN is the token.  */
 static cppchar_t
 narrow_str_to_charconst (cpp_reader *pfile, cpp_string str,
 			 unsigned int *pchars_seen, int *unsignedp,
-			 enum cpp_ttype type)
+			 const cpp_token *token)
 {
+  enum cpp_ttype type = token->type;
   size_t width = CPP_OPTION (pfile, char_precision);
   size_t max_chars = CPP_OPTION (pfile, int_precision) / width;
   size_t mask = width_to_mask (width);
   size_t i;
   cppchar_t result, c;
   bool unsigned_p;
+  bool diagnosed = false;
 
   /* The value of a multi-character character constant, or a
      single-character character constant whose representation in the
@@ -1948,11 +2752,55 @@ narrow_str_to_charconst (cpp_reader *pfile, cpp_string str,
 
   if (type == CPP_UTF8CHAR)
     max_chars = 1;
-  if (i > max_chars)
+  else if (i > 1 && CPP_OPTION (pfile, cplusplus) && CPP_PEDANTIC (pfile))
     {
+      /* C++ as a DR since
+	 P1854R4 - Making non-encodable string literals ill-formed
+	 makes multi-character narrow character literals if any of the
+	 characters in the literal isn't encodable in char/unsigned char
+	 ill-formed.  We need to count the number of c-chars and compare
+	 that to str.len.  */
+      unsigned src_chars = count_source_chars (pfile, token->val.str, type);
+
+      if (src_chars)
+	{
+	  if (str.len > src_chars)
+	    {
+	      if (src_chars <= 2)
+		diagnosed
+		  = cpp_error (pfile, CPP_DL_PEDWARN,
+			       "character not encodable in a single execution "
+			       "character code unit");
+	      else
+		diagnosed
+		  = cpp_error (pfile, CPP_DL_PEDWARN,
+			       "at least one character in a multi-character "
+			       "literal not encodable in a single execution "
+			       "character code unit");
+	      if (diagnosed && i > max_chars)
+		i = max_chars;
+	    }
+	}
+    }
+  if (diagnosed)
+    /* Already diagnosed above.  */;
+  else if (i > max_chars)
+    {
+      unsigned src_chars
+	= count_source_chars (pfile, token->val.str,
+			      type == CPP_UTF8CHAR ? CPP_CHAR : type);
+
+      if (type != CPP_UTF8CHAR)
+	cpp_error (pfile, CPP_DL_WARNING,
+		   "multi-character literal with %ld characters exceeds "
+		   "'int' size of %ld bytes", (long) i, (long) max_chars);
+      else if (src_chars > 2)
+	cpp_error (pfile, CPP_DL_ERROR,
+		   "multi-character literal cannot have an encoding prefix");
+      else
+	cpp_error (pfile, CPP_DL_ERROR,
+		   "character not encodable in a single code unit");
       i = max_chars;
-      cpp_error (pfile, type == CPP_UTF8CHAR ? CPP_DL_ERROR : CPP_DL_WARNING,
-		 "character constant too long for its type");
     }
   else if (i > 1 && CPP_OPTION (pfile, warn_multichar))
     cpp_warning (pfile, CPP_W_MULTICHAR, "multi-character character constant");
@@ -1960,8 +2808,8 @@ narrow_str_to_charconst (cpp_reader *pfile, cpp_string str,
   /* Multichar constants are of type int and therefore signed.  */
   if (i > 1)
     unsigned_p = 0;
-  else if (type == CPP_UTF8CHAR && !CPP_OPTION (pfile, cplusplus))
-    unsigned_p = 1;
+  else if (type == CPP_UTF8CHAR)
+    unsigned_p = CPP_OPTION (pfile, unsigned_utf8char);
   else
     unsigned_p = CPP_OPTION (pfile, unsigned_char);
 
@@ -1987,12 +2835,13 @@ narrow_str_to_charconst (cpp_reader *pfile, cpp_string str,
 /* Subroutine of cpp_interpret_charconst which performs the conversion
    to a number, for wide strings.  STR is the string structure returned
    by cpp_interpret_string.  PCHARS_SEEN and UNSIGNEDP are as for
-   cpp_interpret_charconst.  TYPE is the token type.  */
+   cpp_interpret_charconst.  TOKEN is the token.  */
 static cppchar_t
 wide_str_to_charconst (cpp_reader *pfile, cpp_string str,
 		       unsigned int *pchars_seen, int *unsignedp,
-		       enum cpp_ttype type)
+		       const cpp_token *token)
 {
+  enum cpp_ttype type = token->type;
   bool bigend = CPP_OPTION (pfile, bytes_big_endian);
   size_t width = converter_for_type (pfile, type).width;
   size_t cwidth = CPP_OPTION (pfile, char_precision);
@@ -2028,10 +2877,25 @@ wide_str_to_charconst (cpp_reader *pfile, cpp_string str,
      character exactly fills a wchar_t, so a multi-character wide
      character constant is guaranteed to overflow.  */
   if (str.len > nbwc * 2)
-    cpp_error (pfile, (CPP_OPTION (pfile, cplusplus)
-		       && (type == CPP_CHAR16 || type == CPP_CHAR32))
-		      ? CPP_DL_ERROR : CPP_DL_WARNING,
-	       "character constant too long for its type");
+    {
+      cpp_diagnostic_level level = CPP_DL_WARNING;
+      unsigned src_chars
+	= count_source_chars (pfile, token->val.str, CPP_CHAR);
+
+      if (CPP_OPTION (pfile, cplusplus)
+	  && (type == CPP_CHAR16
+	      || type == CPP_CHAR32
+	      /* In C++23 this is error even for L'ab'.  */
+	      || (type == CPP_WCHAR
+		  && CPP_OPTION (pfile, size_t_literals))))
+	level = CPP_DL_ERROR;
+      if (src_chars > 2)
+	cpp_error (pfile, level,
+		   "multi-character literal cannot have an encoding prefix");
+      else
+	cpp_error (pfile, level,
+		   "character not encodable in a single code unit");
+    }
 
   /* Truncate the constant to its natural width, and simultaneously
      sign- or zero-extend to the full width of cppchar_t.  */
@@ -2086,10 +2950,10 @@ cpp_interpret_charconst (cpp_reader *pfile, const cpp_token *token,
 
   if (wide)
     result = wide_str_to_charconst (pfile, str, pchars_seen, unsignedp,
-				    token->type);
+				    token);
   else
     result = narrow_str_to_charconst (pfile, str, pchars_seen, unsignedp,
-				      token->type);
+				      token);
 
   if (str.text != token->val.str.text)
     free ((void *)str.text);
@@ -2115,19 +2979,47 @@ _cpp_interpret_identifier (cpp_reader *pfile, const uchar *id, size_t len)
       *bufp++ = id[idp];
     else
       {
-	unsigned length = id[idp+1] == 'u' ? 4 : 8;
+	unsigned length = id[idp + 1] == 'u' ? 4 : 8;
 	cppchar_t value = 0;
 	size_t bufleft = len - (bufp - buf);
 	int rval;
+	bool delimited = false;
 
 	idp += 2;
-	while (length && idp < len && ISXDIGIT (id[idp]))
+	if (id[idp - 1] == 'N' && id[idp] == '{')
 	  {
-	    value = (value << 4) + hex_value (id[idp]);
 	    idp++;
-	    length--;
+	    const uchar *name = &id[idp];
+	    while (idp < len
+		   && (ISIDNUM (id[idp]) || id[idp] == ' ' || id[idp] == '-'))
+	      idp++;
+	    if (id[idp] == '}')
+	      {
+		value = _cpp_uname2c ((const char *) name, &id[idp] - name,
+				      uname2c_tree, NULL);
+		if (value == (cppchar_t) -1)
+		  value = 1;
+	      }
+	    else
+	      idp--;
 	  }
-	idp--;
+	else
+	  {
+	    if (length == 4 && id[idp] == '{')
+	      {
+		delimited = true;
+		idp++;
+	      }
+	    while (length && idp < len && ISXDIGIT (id[idp]))
+	      {
+		value = (value << 4) + hex_value (id[idp]);
+		idp++;
+		if (!delimited)
+		  length--;
+	      }
+	    if (!delimited || id[idp] != '}')
+	      idp--;
+	  }
 
 	/* Special case for EBCDIC: if the identifier contains
 	   a '$' specified using a UCN, translate it to EBCDIC.  */
@@ -2468,6 +3360,40 @@ cpp_display_column_to_byte_column (const char *data, int data_length,
   return dw.bytes_processed () + MAX (0, display_col - avail_display);
 }
 
+template <typename PropertyType>
+PropertyType
+get_cppchar_property (cppchar_t c,
+		      const cppchar_t *range_ends,
+		      const PropertyType *range_values,
+		      size_t num_ranges,
+		      PropertyType default_value)
+{
+  if (__builtin_expect (c <= range_ends[0], true))
+    return range_values[0];
+
+  /* Binary search the tables.  */
+  int begin = 1;
+  static const int end = num_ranges;
+  int len = end - begin;
+  do
+    {
+      int half = len/2;
+      int middle = begin + half;
+      if (c > range_ends[middle])
+	{
+	  begin = middle + 1;
+	  len -= half + 1;
+	}
+      else
+	len = half;
+    } while (len);
+
+  if (__builtin_expect (begin != end, true))
+    return range_values[begin];
+
+  return default_value;
+}
+
 /* Our own version of wcwidth().  We don't use the actual wcwidth() in glibc,
    because that will inspect the user's locale, and in particular in an ASCII
    locale, it will not return anything useful for extended characters.  But GCC
@@ -2481,30 +3407,43 @@ cpp_display_column_to_byte_column (const char *data, int data_length,
    diagnostics, they are sufficient.  */
 
 #include "generated_cpp_wcwidth.h"
-int cpp_wcwidth (cppchar_t c)
+
+int
+cpp_wcwidth (cppchar_t c)
 {
-  if (__builtin_expect (c <= wcwidth_range_ends[0], true))
-    return wcwidth_widths[0];
+  const size_t num_ranges
+    = sizeof wcwidth_range_ends / sizeof (*wcwidth_range_ends);
+  return get_cppchar_property<unsigned char > (c,
+					       &wcwidth_range_ends[0],
+					       &wcwidth_widths[0],
+					       num_ranges,
+					       1);
+}
 
-  /* Binary search the tables.  */
-  int begin = 1;
-  static const int end
-      = sizeof wcwidth_range_ends / sizeof (*wcwidth_range_ends);
-  int len = end - begin;
-  do
-    {
-      int half = len/2;
-      int middle = begin + half;
-      if (c > wcwidth_range_ends[middle])
-	{
-	  begin = middle + 1;
-	  len -= half + 1;
-	}
-      else
-	len = half;
-    } while (len);
+#include "combining-chars.inc"
 
-  if (__builtin_expect (begin != end, true))
-    return wcwidth_widths[begin];
-  return 1;
+bool
+cpp_is_combining_char (cppchar_t c)
+{
+  const size_t num_ranges
+    = sizeof combining_range_ends / sizeof (*combining_range_ends);
+  return get_cppchar_property<bool> (c,
+				     &combining_range_ends[0],
+				     &is_combining[0],
+				     num_ranges,
+				     false);
+}
+
+#include "printable-chars.inc"
+
+bool
+cpp_is_printable_char (cppchar_t c)
+{
+  const size_t num_ranges
+    = sizeof printable_range_ends / sizeof (*printable_range_ends);
+  return get_cppchar_property<bool> (c,
+				     &printable_range_ends[0],
+				     &is_printable[0],
+				     num_ranges,
+				     false);
 }

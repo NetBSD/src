@@ -1,22 +1,46 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2023-05-08  Release Manager
+2024-05-07  Release Manager
 
-	* GCC 12.3.0 released.
+	* GCC 14.1.0 released.
 
-2022-08-19  Release Manager
+2023-06-15  Marek Polacek  <polacek@redhat.com>
 
-	* GCC 12.2.0 released.
+	* Makefile.in: Pass LD_PICFLAG to LDFLAGS.
+	* configure.ac (--enable-host-shared): Don't set PICFLAG here.
+	(--enable-host-pie): New check.  Set PICFLAG and LD_PICFLAG after this
+	check.
+	* configure: Regenerate.
 
-2022-05-06  Release Manager
+2022-11-23  Marek Polacek  <polacek@redhat.com>
 
-	* GCC 12.1.0 released.
+	Revert:
+	2022-11-23  Marek Polacek  <polacek@redhat.com>
+
+	* Makefile.in: Pass LD_PICFLAG to LDFLAGS.
+	* configure.ac (--enable-host-shared): Don't set PICFLAG here.
+	(--enable-host-pie): New check.  Set PICFLAG and LD_PICFLAG after this
+	check.
+	* configure: Regenerate.
+
+2022-11-23  Marek Polacek  <polacek@redhat.com>
+
+	* Makefile.in: Pass LD_PICFLAG to LDFLAGS.
+	* configure.ac (--enable-host-shared): Don't set PICFLAG here.
+	(--enable-host-pie): New check.  Set PICFLAG and LD_PICFLAG after this
+	check.
+	* configure: Regenerate.
+
+2022-06-03  Alexandre Oliva  <oliva@adacore.com>
+
+	* Makefile.in (revision.stamp): Replace $() and += with more
+	portable shell constructs.
 
 2022-03-18  Iain Sandoe  <iain@sandoe.co.uk>
 
@@ -202,7 +226,7 @@
 	* tests/jouster: New.
 
 
-Copyright (C) 2020-2022 Free Software Foundation, Inc.
+Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -1,22 +1,169 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-09-04  H.J. Lu  <hjl.tools@gmail.com>
 
-	* GCC 12.4.0 released.
+	Backported from master:
+	2024-08-23  H.J. Lu  <hjl.tools@gmail.com>
 
-2023-05-08  Release Manager
+	PR lto/116361
+	* lto-plugin.c (claim_file_handler_v2): Don't check obj.found
+	for the offload section.
 
-	* GCC 12.3.0 released.
+2024-09-04  H.J. Lu  <hjl.tools@gmail.com>
 
-2022-08-19  Release Manager
+	Backported from master:
+	2024-08-22  H.J. Lu  <hjl.tools@gmail.com>
 
-	* GCC 12.2.0 released.
+	PR lto/116361
+	* lto-plugin.c (claim_file_handler_v2): Rename claimed to
+	can_be_claimed.  Include the LTO object only if it is known to
+	be included in link output.
 
-2022-05-06  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.1.0 released.
+	* GCC 14.2.0 released.
+
+2024-05-07  Release Manager
+
+	* GCC 14.1.0 released.
+
+2023-10-22  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* configure: Regenerate.
+	* configure.ac: Handle Darwin rpaths.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Alexander von Gluck IV  <kallisti5@unixzen.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-06-30  Martin Jambor  <mjambor@suse.cz>
+
+	* Makefile.in: Regenerate.
+
+2023-06-22  Marek Polacek  <polacek@redhat.com>
+
+	* configure.ac (--enable-host-bind-now): New check.  Link with
+	-z,now.
+	* configure: Regenerate.
+
+2023-05-11  Joseph Myers  <joseph@codesourcery.com>
+
+	PR middle-end/109128
+	* lto-plugin.c (register_claim_file_v2): New.
+	(claim_file_handler_v2): New.
+	(claim_file_handler): Wrap claim_file_handler_v2.
+	(onload): Handle LDPT_REGISTER_CLAIM_FILE_HOOK_V2.
+
+2022-11-23  Marek Polacek  <polacek@redhat.com>
+
+	Revert:
+	2022-11-23  Marek Polacek  <polacek@redhat.com>
+
+	* configure.ac (--enable-host-bind-now): New check.  Link with
+	-z,now.
+	* configure: Regenerate.
+
+2022-11-23  Marek Polacek  <polacek@redhat.com>
+
+	* configure.ac (--enable-host-bind-now): New check.  Link with
+	-z,now.
+	* configure: Regenerate.
+
+2022-10-12  Martin Liska  <mliska@suse.cz>
+
+	* configure: Regenerate.
+
+2022-10-11  Olivier Hainque  <hainque@adacore.com>
+	    Olivier Hainque  <hainque@adacore.com>
+
+	* configure: Regenerate.
+
+2022-08-01  Martin Liska  <mliska@suse.cz>
+
+	PR lto/106170
+	* configure.ac: Replace $target with $host.
+	* configure: Regenerate.
+
+2022-07-14  Martin Liska  <mliska@suse.cz>
+
+	PR bootstrap/106156
+	* Makefile.am: Use ac_lto_plugin_extra_ldflags for AM_LDFLAGS.
+	* configure.ac: Use AC_SUBST(ac_lto_plugin_extra_ldflags).
+	* Makefile.in: Regenerate.
+	* configure: Regenerate.
+
+2022-07-12  Martin Liska  <mliska@suse.cz>
+
+	* lto-plugin.c (negotiate_api_version): New.
+	(onload): Negotiate API version.
+	* Makefile.am: Add -DBASE_VERSION.
+	* Makefile.in: Regenerate.
+
+2022-07-07  Martin Liska  <mliska@suse.cz>
+
+	PR lto/106170
+	* configure.ac: Configure HAVE_PTHREAD_LOCKING.
+	* lto-plugin.c (LOCK_SECTION): New.
+	(UNLOCK_SECTION): New.
+	(claim_file_handler): Use the newly added macros.
+	(onload): Likewise.
+	* config.h.in: Regenerate.
+	* configure: Regenerate.
+
+2022-07-01  Pekka Seppänen  <pexu@gcc.mail.kapsi.fi>
+
+	PR lto/106118
+	* configure.ac: Move -pthread from here...
+	* Makefile.am: ...to here.
+	* configure: Regenerate.
+	* Makefile.in: Likewise.
+
+2022-06-27  Martin Liska  <mliska@suse.cz>
+
+	* lto-plugin.c (plugin_lock): New lock.
+	(claim_file_handler): Use mutex for critical section.
+	(onload): Initialize mutex.
+	* configure.ac: Check for pthread.h.
+	* configure: Regenerate.
+	* config.h.in: Regenerate.
+
+2022-06-20  Martin Liska  <mliska@suse.cz>
+
+	* lto-plugin.c (struct plugin_file_info): Add skip_file flag.
+	(write_resolution): Write resolution only if get_symbols != LDPS_NO_SYMS.
+	(all_symbols_read_handler): Ignore file if skip_file is true.
+	(onload): Handle LDPT_GET_SYMBOLS_V3.
+
+2022-05-04  Martin Liska  <mliska@suse.cz>
+
+	* lto-plugin.c (struct plugin_objfile): Use bool for offset
+	field.
+	(exec_lto_wrapper): Assign true/false to bool variables.
+	(process_offload_section): Likewise.
+	(claim_file_handler): Likewise.
+	(onload): Likewise.
 
 2022-03-22  Jakub Jelinek  <jakub@redhat.com>
 

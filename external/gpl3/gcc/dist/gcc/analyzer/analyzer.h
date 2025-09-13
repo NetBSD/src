@@ -1,5 +1,5 @@
 /* Utility functions for the analyzer.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -20,6 +20,11 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_ANALYZER_ANALYZER_H
 #define GCC_ANALYZER_ANALYZER_H
+
+#include "rich-location.h"
+#include "function.h"
+#include "json.h"
+#include "tristate.h"
 
 class graphviz_out;
 
@@ -69,6 +74,7 @@ class region;
   class field_region;
   class string_region;
   class bit_range_region;
+  class var_arg_region;
 class region_model_manager;
 class conjured_purge;
 struct model_merger;
@@ -85,9 +91,14 @@ class reachable_regions;
 class bounded_ranges;
 class bounded_ranges_manager;
 
+struct pending_location;
 class pending_diagnostic;
 class pending_note;
-class state_change_event;
+class saved_diagnostic;
+struct event_loc_info;
+class checker_event;
+  class state_change_event;
+  class warning_event;
 class checker_path;
 class extrinsic_state;
 class sm_state_map;
@@ -112,12 +123,24 @@ class engine;
 class state_machine;
 class logger;
 class visitor;
+class known_function_manager;
+class call_summary;
+class call_summary_replay;
+struct per_function_data;
+struct interesting_t;
+
+class feasible_node;
+
+class known_function;
+  class builtin_known_function;
+  class internal_known_function;
 
 /* Forward decls of functions.  */
 
 extern void dump_tree (pretty_printer *pp, tree t);
 extern void dump_quoted_tree (pretty_printer *pp, tree t);
 extern void print_quoted_type (pretty_printer *pp, tree t);
+extern void print_expr_for_user (pretty_printer *pp, tree t);
 extern int readability_comparator (const void *p1, const void *p2);
 extern int tree_cmp (const void *p1, const void *p2);
 extern tree fixup_tree_for_diagnostic (tree);
@@ -168,19 +191,28 @@ extern tree get_field_at_bit_offset (tree record_type, bit_offset_t bit_offset);
 class region_offset
 {
 public:
+  region_offset ()
+  : m_base_region (NULL), m_offset (0), m_sym_offset (NULL)
+  {
+  }
+
   static region_offset make_concrete (const region *base_region,
 				      bit_offset_t offset)
   {
-    return region_offset (base_region, offset, false);
+    return region_offset (base_region, offset, NULL);
   }
-  static region_offset make_symbolic (const region *base_region)
+  static region_offset make_symbolic (const region *base_region,
+				      const svalue *sym_offset)
   {
-    return region_offset (base_region, 0, true);
+    return region_offset (base_region, 0, sym_offset);
   }
+  static region_offset make_byte_offset (const region *base_region,
+					 const svalue *num_bytes_sval);
 
   const region *get_base_region () const { return m_base_region; }
 
-  bool symbolic_p () const { return m_is_symbolic; }
+  bool concrete_p () const { return m_sym_offset == NULL; }
+  bool symbolic_p () const { return m_sym_offset != NULL; }
 
   bit_offset_t get_bit_offset () const
   {
@@ -188,34 +220,131 @@ public:
     return m_offset;
   }
 
+  bool get_concrete_byte_offset (byte_offset_t *out) const
+  {
+    gcc_assert (!symbolic_p ());
+    if (m_offset % BITS_PER_UNIT == 0)
+      {
+	*out = m_offset / BITS_PER_UNIT;
+	return true;
+      }
+    return false;
+  }
+
+  const svalue *get_symbolic_byte_offset () const
+  {
+    gcc_assert (symbolic_p ());
+    return m_sym_offset;
+  }
+
+  const svalue &calc_symbolic_bit_offset (region_model_manager *mgr) const;
+  const svalue *calc_symbolic_byte_offset (region_model_manager *mgr) const;
+
   bool operator== (const region_offset &other) const
   {
     return (m_base_region == other.m_base_region
 	    && m_offset == other.m_offset
-	    && m_is_symbolic == other.m_is_symbolic);
+	    && m_sym_offset == other.m_sym_offset);
   }
+
+  void dump_to_pp (pretty_printer *pp, bool) const;
+  void dump (bool) const;
 
 private:
   region_offset (const region *base_region, bit_offset_t offset,
-		 bool is_symbolic)
-  : m_base_region (base_region), m_offset (offset), m_is_symbolic (is_symbolic)
+		 const svalue *sym_offset)
+  : m_base_region (base_region), m_offset (offset), m_sym_offset (sym_offset)
   {}
 
   const region *m_base_region;
   bit_offset_t m_offset;
-  bool m_is_symbolic;
+  const svalue *m_sym_offset;
 };
+
+extern bool operator< (const region_offset &, const region_offset &);
+extern bool operator<= (const region_offset &, const region_offset &);
+extern bool operator> (const region_offset &, const region_offset &);
+extern bool operator>= (const region_offset &, const region_offset &);
 
 extern location_t get_stmt_location (const gimple *stmt, function *fun);
 
 extern bool compat_types_p (tree src_type, tree dst_type);
+
+/* Abstract base class for simulating the behavior of known functions,
+   supplied by the core of the analyzer, or by plugins.
+   The former are typically implemented in the various kf*.cc  */
+
+class known_function
+{
+public:
+  virtual ~known_function () {}
+  virtual bool matches_call_types_p (const call_details &cd) const = 0;
+  virtual void impl_call_pre (const call_details &) const
+  {
+    return;
+  }
+  virtual void impl_call_post (const call_details &) const
+  {
+    return;
+  }
+
+  virtual const builtin_known_function *
+  dyn_cast_builtin_kf () const { return NULL; }
+};
+
+/* Subclass of known_function for builtin functions.  */
+
+class builtin_known_function : public known_function
+{
+public:
+  virtual enum built_in_function builtin_code () const = 0;
+  tree builtin_decl () const {
+    gcc_assert (builtin_code () < END_BUILTINS);
+    return builtin_info[builtin_code ()].decl;
+  }
+
+  const builtin_known_function *
+  dyn_cast_builtin_kf () const final override { return this; }
+};
+
+/* Subclass of known_function for IFN_* functions.  */
+
+class internal_known_function : public known_function
+{
+public:
+  bool matches_call_types_p (const call_details &) const final override
+  {
+    /* Types are assumed to be correct.  */
+    return true;
+  }
+};
+
+/* Abstract subclass of known_function that merely sets the return
+   value of the function (based on function attributes), and assumes
+   it has no side-effects.  */
+
+class pure_known_function_with_default_return : public known_function
+{
+public:
+  void impl_call_pre (const call_details &cd) const override;
+};
+
+extern void register_known_functions (known_function_manager &kfm,
+				      region_model_manager &rmm);
+extern void register_known_analyzer_functions (known_function_manager &kfm);
+extern void register_known_fd_functions (known_function_manager &kfm);
+extern void register_known_file_functions (known_function_manager &kfm);
+extern void register_known_functions_lang_cp (known_function_manager &kfm);
+extern void register_varargs_builtins (known_function_manager &kfm);
 
 /* Passed by pointer to PLUGIN_ANALYZER_INIT callbacks.  */
 
 class plugin_analyzer_init_iface
 {
 public:
-  virtual void register_state_machine (state_machine *) = 0;
+  virtual void register_state_machine (std::unique_ptr<state_machine>) = 0;
+  virtual void register_known_function (const char *name,
+					std::unique_ptr<known_function>) = 0;
   virtual logger *get_logger () const = 0;
 };
 
@@ -242,6 +371,11 @@ public:
   /* Hook for making .dot label more readable.  */
   virtual void print (pretty_printer *pp) const = 0;
 
+  /* Hook for updating STATE when handling bifurcation.  */
+  virtual bool update_state (program_state *state,
+			     const exploded_edge *eedge,
+			     region_model_context *ctxt) const;
+
   /* Hook for updating MODEL within exploded_path::feasible_p
      and when handling bifurcation.  */
   virtual bool update_model (region_model *model,
@@ -266,9 +400,8 @@ class path_context
 public:
   virtual ~path_context () {}
 
-  /* Hook for clients to split state with a non-standard path.
-     Take ownership of INFO.  */
-  virtual void bifurcate (custom_edge_info *info) = 0;
+  /* Hook for clients to split state with a non-standard path.  */
+  virtual void bifurcate (std::unique_ptr<custom_edge_info> info) = 0;
 
   /* Hook for clients to terminate the standard path.  */
   virtual void terminate_path () = 0;
@@ -278,24 +411,65 @@ public:
   virtual bool terminate_path_p () const = 0;
 };
 
+extern tree get_stashed_constant_by_name (const char *name);
+extern void log_stashed_constants (logger *logger);
+
+extern FILE *get_or_create_any_logfile ();
+
+extern json::value *
+tree_to_json (tree node);
+
+extern json::value *
+diagnostic_event_id_to_json (const diagnostic_event_id_t &);
+
+extern json::value *
+bit_offset_to_json (const bit_offset_t &offset);
+
+extern json::value *
+byte_offset_to_json (const byte_offset_t &offset);
+
+extern tristate
+compare_constants (tree lhs_const, enum tree_code op, tree rhs_const);
+
+extern tree
+get_string_cst_size (const_tree string_cst);
+
+extern tree
+get_ssa_default_def (const function &fun, tree var);
+
+extern const svalue *
+strip_types (const svalue *sval, region_model_manager &mgr);
+
+extern region_offset
+strip_types (const region_offset &offset, region_model_manager &mgr);
+
+extern tree remove_ssa_names (tree expr);
+
 } // namespace ana
 
 extern bool is_special_named_call_p (const gcall *call, const char *funcname,
-				     unsigned int num_args);
+				     unsigned int num_args,
+				     bool look_in_std = false);
 extern bool is_named_call_p (const_tree fndecl, const char *funcname);
 extern bool is_named_call_p (const_tree fndecl, const char *funcname,
 			     const gcall *call, unsigned int num_args);
+extern bool is_std_function_p (const_tree fndecl);
 extern bool is_std_named_call_p (const_tree fndecl, const char *funcname);
 extern bool is_std_named_call_p (const_tree fndecl, const char *funcname,
 				 const gcall *call, unsigned int num_args);
 extern bool is_setjmp_call_p (const gcall *call);
 extern bool is_longjmp_call_p (const gcall *call);
+extern bool is_placement_new_p (const gcall *call);
 
 extern const char *get_user_facing_name (const gcall *call);
 
 extern void register_analyzer_pass ();
 
 extern label_text make_label_text (bool can_colorize, const char *fmt, ...);
+extern label_text make_label_text_n (bool can_colorize,
+				     unsigned HOST_WIDE_INT n,
+				     const char *singular_fmt,
+				     const char *plural_fmt, ...);
 
 extern bool fndecl_has_gimple_body_p (tree fndecl);
 

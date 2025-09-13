@@ -15,27 +15,18 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_errno.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
+#include "tsan_interface.h"
 #include "tsan_mman.h"
 #include "tsan_rtl.h"
 #include "tsan_report.h"
 #include "tsan_flags.h"
 
-// May be overriden by front-end.
-SANITIZER_WEAK_DEFAULT_IMPL
-void __sanitizer_malloc_hook(void *ptr, uptr size) {
-  (void)ptr;
-  (void)size;
-}
-
-SANITIZER_WEAK_DEFAULT_IMPL
-void __sanitizer_free_hook(void *ptr) {
-  (void)ptr;
-}
-
 namespace __tsan {
 
 struct MapUnmapCallback {
   void OnMap(uptr p, uptr size) const { }
+  void OnMapSecondary(uptr p, uptr size, uptr user_begin,
+                      uptr user_size) const {};
   void OnUnmap(uptr p, uptr size) const {
     // We are about to unmap a chunk of user memory.
     // Mark the corresponding shadow memory as not needed.
@@ -69,13 +60,27 @@ Allocator *allocator() {
 struct GlobalProc {
   Mutex mtx;
   Processor *proc;
+  // This mutex represents the internal allocator combined for
+  // the purposes of deadlock detection. The internal allocator
+  // uses multiple mutexes, moreover they are locked only occasionally
+  // and they are spin mutexes which don't support deadlock detection.
+  // So we use this fake mutex to serve as a substitute for these mutexes.
+  CheckedMutex internal_alloc_mtx;
 
-  GlobalProc() : mtx(MutexTypeGlobalProc), proc(ProcCreate()) {}
+  GlobalProc()
+      : mtx(MutexTypeGlobalProc),
+        proc(ProcCreate()),
+        internal_alloc_mtx(MutexTypeInternalAlloc) {}
 };
 
 static char global_proc_placeholder[sizeof(GlobalProc)] ALIGNED(64);
 GlobalProc *global_proc() {
   return reinterpret_cast<GlobalProc*>(&global_proc_placeholder);
+}
+
+static void InternalAllocAccess() {
+  global_proc()->internal_alloc_mtx.Lock();
+  global_proc()->internal_alloc_mtx.Unlock();
 }
 
 ScopedGlobalProcessor::ScopedGlobalProcessor() {
@@ -108,6 +113,24 @@ ScopedGlobalProcessor::~ScopedGlobalProcessor() {
     return;
   ProcUnwire(gp->proc, thr);
   gp->mtx.Unlock();
+}
+
+void AllocatorLock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+  global_proc()->internal_alloc_mtx.Lock();
+  InternalAllocatorLock();
+}
+
+void AllocatorUnlock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+  InternalAllocatorUnlock();
+  global_proc()->internal_alloc_mtx.Unlock();
+}
+
+void GlobalProcessorLock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+  global_proc()->mtx.Lock();
+}
+
+void GlobalProcessorUnlock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+  global_proc()->mtx.Unlock();
 }
 
 static constexpr uptr kMaxAllowedMallocSize = 1ull << 40;
@@ -166,6 +189,12 @@ void *user_alloc_internal(ThreadState *thr, uptr pc, uptr sz, uptr align,
     GET_STACK_TRACE_FATAL(thr, pc);
     ReportAllocationSizeTooBig(sz, malloc_limit, &stack);
   }
+  if (UNLIKELY(IsRssLimitExceeded())) {
+    if (AllocatorMayReturnNull())
+      return nullptr;
+    GET_STACK_TRACE_FATAL(thr, pc);
+    ReportRssLimitExceeded(&stack);
+  }
   void *p = allocator()->Allocate(&thr->proc()->alloc_cache, sz, align);
   if (UNLIKELY(!p)) {
     SetAllocatorOutOfMemory();
@@ -219,8 +248,17 @@ void *user_reallocarray(ThreadState *thr, uptr pc, void *p, uptr size, uptr n) {
 
 void OnUserAlloc(ThreadState *thr, uptr pc, uptr p, uptr sz, bool write) {
   DPrintf("#%d: alloc(%zu) = 0x%zx\n", thr->tid, sz, p);
+  // Note: this can run before thread initialization/after finalization.
+  // As a result this is not necessarily synchronized with DoReset,
+  // which iterates over and resets all sync objects,
+  // but it is fine to create new MBlocks in this context.
   ctx->metamap.AllocBlock(thr, pc, p, sz);
-  if (write && thr->ignore_reads_and_writes == 0)
+  // If this runs before thread initialization/after finalization
+  // and we don't have trace initialized, we can't imitate writes.
+  // In such case just reset the shadow range, it is fine since
+  // it affects only a small fraction of special objects.
+  if (write && thr->ignore_reads_and_writes == 0 &&
+      atomic_load_relaxed(&thr->trace_pos))
     MemoryRangeImitateWrite(thr, pc, (uptr)p, sz);
   else
     MemoryResetRange(thr, pc, (uptr)p, sz);
@@ -228,7 +266,14 @@ void OnUserAlloc(ThreadState *thr, uptr pc, uptr p, uptr sz, bool write) {
 
 void OnUserFree(ThreadState *thr, uptr pc, uptr p, bool write) {
   CHECK_NE(p, (void*)0);
-  uptr sz = ctx->metamap.FreeBlock(thr->proc(), p);
+  if (!thr->slot) {
+    // Very early/late in thread lifetime, or during fork.
+    UNUSED uptr sz = ctx->metamap.FreeBlock(thr->proc(), p, false);
+    DPrintf("#%d: free(0x%zx, %zu) (no slot)\n", thr->tid, p, sz);
+    return;
+  }
+  SlotLocker locker(thr);
+  uptr sz = ctx->metamap.FreeBlock(thr->proc(), p, true);
   DPrintf("#%d: free(0x%zx, %zu)\n", thr->tid, p, sz);
   if (write && thr->ignore_reads_and_writes == 0)
     MemoryRangeFreed(thr, pc, (uptr)p, sz);
@@ -309,10 +354,35 @@ void *user_pvalloc(ThreadState *thr, uptr pc, uptr sz) {
   return SetErrnoOnNull(user_alloc_internal(thr, pc, sz, PageSize));
 }
 
+static const void *user_alloc_begin(const void *p) {
+  if (p == nullptr || !IsAppMem((uptr)p))
+    return nullptr;
+  void *beg = allocator()->GetBlockBegin(p);
+  if (!beg)
+    return nullptr;
+
+  MBlock *b = ctx->metamap.GetBlock((uptr)beg);
+  if (!b)
+    return nullptr;  // Not a valid pointer.
+
+  return (const void *)beg;
+}
+
 uptr user_alloc_usable_size(const void *p) {
-  if (p == 0)
+  if (p == 0 || !IsAppMem((uptr)p))
     return 0;
   MBlock *b = ctx->metamap.GetBlock((uptr)p);
+  if (!b)
+    return 0;  // Not a valid pointer.
+  if (b->siz == 0)
+    return 1;  // Zero-sized allocations are actually 1 byte.
+  return b->siz;
+}
+
+uptr user_alloc_usable_size_fast(const void *p) {
+  MBlock *b = ctx->metamap.GetBlock((uptr)p);
+  // Static objects may have malloc'd before tsan completes
+  // initialization, and may believe returned ptrs to be valid.
   if (!b)
     return 0;  // Not a valid pointer.
   if (b->siz == 0)
@@ -324,7 +394,6 @@ void invoke_malloc_hook(void *ptr, uptr size) {
   ThreadState *thr = cur_thread();
   if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
-  __sanitizer_malloc_hook(ptr, size);
   RunMallocHooks(ptr, size);
 }
 
@@ -332,7 +401,6 @@ void invoke_free_hook(void *ptr) {
   ThreadState *thr = cur_thread();
   if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
-  __sanitizer_free_hook(ptr);
   RunFreeHooks(ptr);
 }
 
@@ -342,6 +410,7 @@ void *Alloc(uptr sz) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
     CHECK(0);
   }
+  InternalAllocAccess();
   return InternalAlloc(sz, &thr->proc()->internal_alloc_cache);
 }
 
@@ -351,6 +420,7 @@ void FreeImpl(void *p) {
     thr->nomalloc = 0;  // CHECK calls internal_malloc().
     CHECK(0);
   }
+  InternalAllocAccess();
   InternalFree(p, &thr->proc()->internal_alloc_cache);
 }
 
@@ -387,14 +457,27 @@ int __sanitizer_get_ownership(const void *p) {
   return allocator()->GetBlockBegin(p) != 0;
 }
 
+const void *__sanitizer_get_allocated_begin(const void *p) {
+  return user_alloc_begin(p);
+}
+
 uptr __sanitizer_get_allocated_size(const void *p) {
   return user_alloc_usable_size(p);
 }
 
+uptr __sanitizer_get_allocated_size_fast(const void *p) {
+  DCHECK_EQ(p, __sanitizer_get_allocated_begin(p));
+  uptr ret = user_alloc_usable_size_fast(p);
+  DCHECK_EQ(ret, __sanitizer_get_allocated_size(p));
+  return ret;
+}
+
+void __sanitizer_purge_allocator() {
+  allocator()->ForceReleaseToOS();
+}
+
 void __tsan_on_thread_idle() {
   ThreadState *thr = cur_thread();
-  thr->clock.ResetCached(&thr->proc()->clock_cache);
-  thr->last_sleep_clock.ResetCached(&thr->proc()->clock_cache);
   allocator()->SwallowCache(&thr->proc()->alloc_cache);
   internal_allocator()->SwallowCache(&thr->proc()->internal_alloc_cache);
   ctx->metamap.OnProcIdle(thr->proc());

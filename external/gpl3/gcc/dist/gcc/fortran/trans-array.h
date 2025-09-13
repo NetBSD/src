@@ -1,5 +1,5 @@
 /* Header for array handling functions
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Paul Brook
 
 This file is part of GCC.
@@ -21,7 +21,8 @@ along with GCC; see the file COPYING3.  If not see
 /* Generate code to initialize and allocate an array.  Statements are added to
    se, which should contain an expression for the array descriptor.  */
 bool gfc_array_allocate (gfc_se *, gfc_expr *, tree, tree, tree, tree,
-			 tree, tree *, gfc_expr *, tree, bool);
+			 tree, tree *, gfc_expr *, tree, bool,
+			 gfc_omp_namelist *);
 
 /* Allow the bounds of a loop to be set from a callee's array spec.  */
 void gfc_set_loop_bounds_from_array_spec (gfc_interface_mapping *,
@@ -56,10 +57,13 @@ tree gfc_nullify_alloc_comp (gfc_symbol *, tree, int, int cm = 0);
 tree gfc_deallocate_alloc_comp (gfc_symbol *, tree, int, int cm = 0);
 tree gfc_bcast_alloc_comp (gfc_symbol *, gfc_expr *, int, tree,
 			   tree, tree, tree);
-tree gfc_deallocate_alloc_comp_no_caf (gfc_symbol *, tree, int);
+tree gfc_deallocate_alloc_comp_no_caf (gfc_symbol *, tree, int,
+				       bool no_finalization = false);
 tree gfc_reassign_alloc_comp_caf (gfc_symbol *, tree, tree);
 
 tree gfc_copy_alloc_comp (gfc_symbol *, tree, tree, int, int);
+
+tree gfc_copy_alloc_comp_no_fini (gfc_symbol *, tree, tree, int, int);
 
 tree gfc_copy_only_alloc_comp (gfc_symbol *, tree, tree, int);
 
@@ -174,6 +178,7 @@ tree gfc_conv_descriptor_span_get (tree);
 tree gfc_conv_descriptor_dtype (tree);
 tree gfc_conv_descriptor_rank (tree);
 tree gfc_conv_descriptor_elem_len (tree);
+tree gfc_conv_descriptor_version (tree);
 tree gfc_conv_descriptor_attribute (tree);
 tree gfc_conv_descriptor_type (tree);
 tree gfc_get_descriptor_dimension (tree);

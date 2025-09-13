@@ -1,6 +1,6 @@
 This is gccgo.info, produced by makeinfo version 6.5 from gccgo.texi.
 
-Copyright (C) 2010-2022 Free Software Foundation, Inc.
+Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -24,7 +24,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -74,7 +74,7 @@ GNU General Public License
 
                         Version 3, 29 June 2007
 
-     Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+     Copyright (C) 2007 Free Software Foundation, Inc. <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies of this
      license document, but changing it is not allowed.
@@ -791,7 +791,7 @@ GNU Free Documentation License
                      Version 1.3, 3 November 2008
 
      Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
-     <https://fsf.org/>
+     <https://www.fsf.org>
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -1390,6 +1390,13 @@ will generally cause it to misbehave or fail.
      to the file.  This option is intended for use by the 'go' command
      to implement '//go:embed'.
 
+'-fgo-importcfg=FILE'
+     Identify a file that provides mappings for import package paths
+     found in the Go source files.  The file can contain two commands:
+     'importpath' to rename import paths for vendoring and 'packagefile'
+     to map from package path to files containing export data.  This
+     option is intended for use by the 'go' command.
+
 '-g'
      This is the standard 'gcc' option (*note Debugging Options:
      (gcc)Debugging Options.).  It is mentioned here because by default
@@ -1621,26 +1628,27 @@ Index
  [index ]
 * Menu:
 
-* -fgo-c-header:                         Invoking gccgo.      (line 110)
-* -fgo-check-divide-overflow:            Invoking gccgo.      (line  83)
-* -fgo-check-divide-zero:                Invoking gccgo.      (line  72)
-* -fgo-compiling-runtime:                Invoking gccgo.      (line 114)
-* -fgo-debug-escape:                     Invoking gccgo.      (line  97)
-* -fgo-debug-escape-hash:                Invoking gccgo.      (line 101)
-* -fgo-debug-optimization:               Invoking gccgo.      (line 107)
-* -fgo-embedcfg:                         Invoking gccgo.      (line 119)
-* -fgo-pkgpath:                          Invoking gccgo.      (line  37)
-* -fgo-prefix:                           Invoking gccgo.      (line  45)
-* -fgo-relative-import-path:             Invoking gccgo.      (line  61)
-* -fno-go-check-divide-overflow:         Invoking gccgo.      (line  83)
-* -fno-go-check-divide-zero:             Invoking gccgo.      (line  72)
-* -fno-go-debug-optimization:            Invoking gccgo.      (line 107)
-* -fno-go-optimize-allocs:               Invoking gccgo.      (line  93)
-* -fno-require-return-statement:         Invoking gccgo.      (line  67)
-* -frequire-return-statement:            Invoking gccgo.      (line  67)
-* -g for gccgo:                          Invoking gccgo.      (line 127)
-* -I:                                    Invoking gccgo.      (line  30)
-* -L:                                    Invoking gccgo.      (line  34)
+* -fgo-c-header:                         Invoking gccgo.      (line 109)
+* -fgo-check-divide-overflow:            Invoking gccgo.      (line  82)
+* -fgo-check-divide-zero:                Invoking gccgo.      (line  71)
+* -fgo-compiling-runtime:                Invoking gccgo.      (line 113)
+* -fgo-debug-escape:                     Invoking gccgo.      (line  96)
+* -fgo-debug-escape-hash:                Invoking gccgo.      (line 100)
+* -fgo-debug-optimization:               Invoking gccgo.      (line 106)
+* -fgo-embedcfg:                         Invoking gccgo.      (line 118)
+* -fgo-importcfg:                        Invoking gccgo.      (line 126)
+* -fgo-pkgpath:                          Invoking gccgo.      (line  36)
+* -fgo-prefix:                           Invoking gccgo.      (line  44)
+* -fgo-relative-import-path:             Invoking gccgo.      (line  60)
+* -fno-go-check-divide-overflow:         Invoking gccgo.      (line  82)
+* -fno-go-check-divide-zero:             Invoking gccgo.      (line  71)
+* -fno-go-debug-optimization:            Invoking gccgo.      (line 106)
+* -fno-go-optimize-allocs:               Invoking gccgo.      (line  92)
+* -fno-require-return-statement:         Invoking gccgo.      (line  65)
+* -frequire-return-statement:            Invoking gccgo.      (line  65)
+* -g for gccgo:                          Invoking gccgo.      (line 133)
+* -I:                                    Invoking gccgo.      (line  29)
+* -L:                                    Invoking gccgo.      (line  33)
 * .gox:                                  Import and Export.   (line  10)
 * extern:                                Function Names.      (line   6)
 * external names:                        Function Names.      (line   6)
@@ -1656,13 +1664,13 @@ Index
 Tag Table:
 Node: Top1688
 Node: Copying2548
-Node: GNU Free Documentation License40084
-Node: Invoking gccgo65214
-Node: Import and Export71394
-Node: Compiler Directives72990
-Node: C Interoperability74974
-Node: C Type Interoperability75561
-Node: Function Names78120
-Node: Index80124
+Node: GNU Free Documentation License40087
+Node: Invoking gccgo65220
+Node: Import and Export71758
+Node: Compiler Directives73354
+Node: C Interoperability75338
+Node: C Type Interoperability75925
+Node: Function Names78484
+Node: Index80488
 
 End Tag Table

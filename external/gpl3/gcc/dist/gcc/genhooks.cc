@@ -1,6 +1,6 @@
 /* Process target.def to create initialization macros definition in
    target-hooks-def.h and documentation in target-hooks.texi.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,6 +35,7 @@ static struct hook_desc hook_array[] = {
 #include "c-family/c-target.def"
 #include "common/common-target.def"
 #include "d/d-target.def"
+#include "rust/rust-target.def"
 #undef DEFHOOK
 };
 
@@ -128,7 +129,7 @@ emit_documentation (const char *in_fname)
     }
   fclose (f);
   /* For each hook in hook_array, if it is a start hook, store its position.  */
-  for (i = 0; i < (int) (sizeof hook_array / sizeof hook_array[0]); i++)
+  for (i = 0; i < (int) (ARRAY_SIZE (hook_array)); i++)
     {
       struct s_hook sh, *shp;
       void *p;
@@ -223,7 +224,7 @@ emit_documentation (const char *in_fname)
 	      /* POD-valued hooks sometimes come in groups with common
 		 documentation.*/
 	      for (j = i + 1;
-		   j < (int) (sizeof hook_array / sizeof hook_array[0])
+		   j < (int) (ARRAY_SIZE (hook_array))
 		   && hook_array[j].doc == 0 && hook_array[j].type; j++)
 		{
 		  char *namex = upstrdup (hook_array[j].name);
@@ -246,8 +247,7 @@ emit_documentation (const char *in_fname)
 		  printf ("\n@end %s", deftype);
 		}
 	    }
-	  if (++i >= (int) (sizeof hook_array / sizeof hook_array[0])
-	      || !hook_array[i].doc)
+	  if (++i >= (int) (ARRAY_SIZE (hook_array)) || !hook_array[i].doc)
 	    break;
 	  free (name);
 	  sh.name = name = upstrdup (hook_array[i].name);
@@ -270,7 +270,7 @@ emit_init_macros (const char *docname)
 
   for (print_nest = 0; print_nest <= MAX_NEST; print_nest++)
     {
-      for (i = 0; i < (int) (sizeof hook_array / sizeof hook_array[0]); i++)
+      for (i = 0; i < (int) (ARRAY_SIZE (hook_array)); i++)
 	{
 	  char *name = upstrdup (hook_array[i].name);
 
@@ -304,7 +304,12 @@ emit_init_macros (const char *docname)
 		      name, name, hook_array[i].init);
 	    }
 	  if (nest == print_nest)
-	    printf ("    %s, \\\n", name);
+	    {
+	      if (strcmp (name, "TARGET_ATTRIBUTE_TABLE") == 0)
+		printf ("    { %s }, \\\n", name);
+	      else
+		printf ("    %s, \\\n", name);
+	    }
 	}
     }
 }

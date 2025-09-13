@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -85,6 +85,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <p>Now that GCC has been built (and optionally tested), you can install it with
 </p><div class="smallexample">
 <pre class="smallexample">cd <var>objdir</var> &amp;&amp; make install
@@ -143,50 +146,30 @@ using the <code>DESTDIR</code> feature.
 <pre class="smallexample">make install-strip
 </pre></div>
 
-<p>If you are bootstrapping a released version of GCC then please
-quickly review the build status page for your release, available from
-<a href="https://gcc.gnu.org/buildstat.html">https://gcc.gnu.org/buildstat.html</a>.
-If your system is not listed for the version of GCC that you built,
-send a note to
-<a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a> indicating
-that you successfully built and installed GCC.
-Include the following information:
+<p>By default, only the man pages and info-format GCC documentation
+are built and installed.  If you want to generate the GCC manuals in
+other formats, use commands like
 </p>
-<ul>
-<li> Output from running <samp><var>srcdir</var>/config.guess</samp>.  Do not send
-that file itself, just the one-line output from running it.
+<div class="smallexample">
+<pre class="smallexample">make dvi
+make pdf
+make html
+</pre></div>
 
-</li><li> The output of &lsquo;<samp>gcc -v</samp>&rsquo; for your newly installed <code>gcc</code>.
-This tells us which version of GCC you built and the options you passed to
-configure.
-
-</li><li> Whether you enabled all languages or a subset of them.  If you used a
-full distribution then this information is part of the configure
-options in the output of &lsquo;<samp>gcc -v</samp>&rsquo;, but if you downloaded the
-&ldquo;core&rdquo; compiler plus additional front ends then it isn&rsquo;t apparent
-which ones you built unless you tell us about it.
-
-</li><li> If the build was for GNU/Linux, also include:
-<ul>
-<li> The distribution name and version (e.g., Red Hat 7.1 or Debian 2.2.3);
-this information should be available from <samp>/etc/issue</samp>.
-
-</li><li> The version of the Linux kernel, available from &lsquo;<samp>uname --version</samp>&rsquo;
-or &lsquo;<samp>uname -a</samp>&rsquo;.
-
-</li><li> The version of glibc you used; for RPM-based systems like Red Hat,
-Mandrake, and SuSE type &lsquo;<samp>rpm -q glibc</samp>&rsquo; to get the glibc version,
-and on systems like Debian and Progeny use &lsquo;<samp>dpkg -l libc6</samp>&rsquo;.
-</li></ul>
-<p>For other systems, you can include similar information if you think it is
-relevant.
+<p>to build the manuals in the corresponding formats, and
 </p>
-</li><li> Any other information that you think would be useful to people building
-GCC on the same configuration.  The new entry in the build status list
-will include a link to the archived copy of your message.
-</li></ul>
+<div class="smallexample">
+<pre class="smallexample">make install-dvi
+make install-pdf
+make install-html
+</pre></div>
 
-<p>We&rsquo;d also like to know if the
+<p>to install them.
+Alternatively, there are prebuilt online versions of the manuals for
+released versions of GCC on
+<a href="https://gcc.gnu.org/onlinedocs/">the GCC web site</a>.
+</p>
+<p>If you built GCC yourself we would like to know if the
 <a href="specific.html">host/target specific installation notes</a>
 didn&rsquo;t include your host/target information or if that information is
 incomplete or out of date.  Send a note to
@@ -194,22 +177,6 @@ incomplete or out of date.  Send a note to
 </p>
 <p>If you find a bug, please report it following the
 <a href="../bugs/">bug reporting guidelines</a>.
-</p>
-<p>If you want to print the GCC manuals, do &lsquo;<samp>cd <var>objdir</var>; make
-dvi</samp>&rsquo;.  You will need to have <code>texi2dvi</code> (version at least 4.7)
-and TeX installed.  This creates a number of <samp>.dvi</samp> files in
-subdirectories of <samp><var>objdir</var></samp>; these may be converted for
-printing with programs such as <code>dvips</code>.  Alternately, by using
-&lsquo;<samp>make pdf</samp>&rsquo; in place of &lsquo;<samp>make dvi</samp>&rsquo;, you can create documentation
-in the form of <samp>.pdf</samp> files; this requires <code>texi2pdf</code>, which
-is included with Texinfo version 4.8 and later.  You can also
-<a href="https://shop.fsf.org/">buy printed manuals from the
-Free Software Foundation</a>, though such manuals may not be for the most
-recent version of GCC.
-</p>
-<p>If you would like to generate online HTML documentation, do &lsquo;<samp>cd
-<var>objdir</var>; make html</samp>&rsquo; and HTML will be generated for the gcc manuals in
-<samp><var>objdir</var>/gcc/HTML</samp>.
 </p>
 <hr />
 <p>

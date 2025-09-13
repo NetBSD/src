@@ -1,5 +1,5 @@
 /* Target machine subroutines for Altera Nios II.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Jonah Graham (jgraham@altera.com), 
    Will Reece (wreece@altera.com), and Jeff DaSilva (jdasilva@altera.com).
    Contributed by Mentor Graphics, Inc.
@@ -2141,8 +2141,9 @@ nios2_valid_addr_expr_p (rtx base, rtx offset, bool strict_p)
 
 /* Implement TARGET_LEGITIMATE_ADDRESS_P.  */
 static bool
-nios2_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
-			    rtx operand, bool strict_p)
+nios2_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED, rtx operand,
+			    bool strict_p,
+			    code_helper = ERROR_MARK)
 {
   switch (GET_CODE (operand))
     {
@@ -2552,7 +2553,10 @@ nios2_load_pic_address (rtx sym, int unspec, rtx tmp)
       return nios2_large_got_address (offset, tmp);
     }
 
-  return gen_const_mem (Pmode, nios2_got_address (sym, unspec));
+  if (unspec == UNSPEC_PIC_CALL_SYM)
+    return gen_rtx_MEM (Pmode, nios2_got_address (sym, unspec));
+  else
+    return gen_const_mem (Pmode, nios2_got_address (sym, unspec));
 }
 
 /* Nonzero if the constant value X is a legitimate general operand
@@ -3521,7 +3525,9 @@ nios2_setup_incoming_varargs (cumulative_args_t cum_v,
 
   cfun->machine->uses_anonymous_args = 1;
   local_cum = *cum;
-  nios2_function_arg_advance (local_cum_v, arg);
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl))
+      || arg.type != NULL_TREE)
+    nios2_function_arg_advance (local_cum_v, arg);
 
   regs_to_push = NUM_ARG_REGS - local_cum.regs_used;
 

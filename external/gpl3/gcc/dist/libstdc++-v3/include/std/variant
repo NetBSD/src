@@ -1,6 +1,6 @@
 // <variant> -*- C++ -*-
 
-// Copyright (C) 2016-2022 Free Software Foundation, Inc.
+// Copyright (C) 2016-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -31,16 +31,18 @@
 
 #pragma GCC system_header
 
-#if __cplusplus >= 201703L
+#define __glibcxx_want_freestanding_variant
+#define __glibcxx_want_variant
+#include <bits/version.h>
 
+#ifdef __cpp_lib_variant // C++ >= 17
 #include <initializer_list>
 #include <type_traits>
 #include <bits/enable_special_members.h>
 #include <bits/exception_defines.h>
 #include <bits/functional_hash.h>
 #include <bits/invoke.h>
-#include <bits/parse_numbers.h>
-#include <bits/stl_iterator_base_types.h>
+#include <bits/parse_numbers.h> // _Select_int
 #include <bits/stl_iterator_base_funcs.h>
 #include <bits/stl_construct.h>
 #include <bits/utility.h> // in_place_index_t
@@ -48,13 +50,11 @@
 # include <compare>
 #endif
 
-#if __cpp_concepts >= 202002L && __cpp_constexpr >= 201811L
-// P2231R1 constexpr needs constexpr unions and constrained destructors.
-# define __cpp_lib_variant 202106L
-#else
+// C++ < 20 || __cpp_concepts < 202002L || __cpp_constexpr < 201811L
+#if __cpp_lib_variant < 202106L
 # include <ext/aligned_buffer.h> // Use __aligned_membuf instead of union.
-# define __cpp_lib_variant 202102L
 #endif
+
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -108,15 +108,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<size_t _Np, typename _Variant>
     struct variant_alternative<_Np, const _Variant>
-    { using type = add_const_t<variant_alternative_t<_Np, _Variant>>; };
+    { using type = const variant_alternative_t<_Np, _Variant>; };
 
   template<size_t _Np, typename _Variant>
     struct variant_alternative<_Np, volatile _Variant>
-    { using type = add_volatile_t<variant_alternative_t<_Np, _Variant>>; };
+    { using type = volatile variant_alternative_t<_Np, _Variant>; };
 
   template<size_t _Np, typename _Variant>
     struct variant_alternative<_Np, const volatile _Variant>
-    { using type = add_cv_t<variant_alternative_t<_Np, _Variant>>; };
+    { using type = const volatile variant_alternative_t<_Np, _Variant>; };
 
   inline constexpr size_t variant_npos = -1;
 
@@ -392,7 +392,7 @@ namespace __variant
     };
 
   // Defines members and ctors.
-  template<typename... _Types>
+  template<bool __trivially_destructible, typename... _Types>
     union _Variadic_union
     {
       _Variadic_union() = default;
@@ -401,8 +401,8 @@ namespace __variant
 	_Variadic_union(in_place_index_t<_Np>, _Args&&...) = delete;
     };
 
-  template<typename _First, typename... _Rest>
-    union _Variadic_union<_First, _Rest...>
+  template<bool __trivially_destructible, typename _First, typename... _Rest>
+    union _Variadic_union<__trivially_destructible, _First, _Rest...>
     {
       constexpr _Variadic_union() : _M_rest() { }
 
@@ -427,13 +427,12 @@ namespace __variant
       ~_Variadic_union() = default;
 
       constexpr ~_Variadic_union()
-	requires (!__has_trivial_destructor(_First))
-	      || (!__has_trivial_destructor(_Variadic_union<_Rest...>))
+	requires (!__trivially_destructible)
       { }
 #endif
 
       _Uninitialized<_First> _M_first;
-      _Variadic_union<_Rest...> _M_rest;
+      _Variadic_union<__trivially_destructible, _Rest...> _M_rest;
     };
 
   // _Never_valueless_alt is true for variant alternatives that can
@@ -514,7 +513,7 @@ namespace __variant
 	return this->_M_index != __index_type(variant_npos);
       }
 
-      _Variadic_union<_Types...> _M_u;
+      _Variadic_union<false, _Types...> _M_u;
       using __index_type = __select_index<_Types...>;
       __index_type _M_index;
     };
@@ -552,7 +551,7 @@ namespace __variant
 	return this->_M_index != static_cast<__index_type>(variant_npos);
       }
 
-      _Variadic_union<_Types...> _M_u;
+      _Variadic_union<true, _Types...> _M_u;
       using __index_type = __select_index<_Types...>;
       __index_type _M_index;
     };
@@ -793,7 +792,7 @@ namespace __variant
     {
       // This function means 'using _Build_FUN<I, T, Ti>::_S_fun;' is valid,
       // but only static functions will be considered in the call below.
-      void _S_fun();
+      void _S_fun() = delete;
     };
 
   // "... for which Ti x[] = {std::forward<T>(t)}; is well-formed."
@@ -824,29 +823,28 @@ namespace __variant
 
   // The index selected for FUN(std::forward<T>(t)), or variant_npos if none.
   template<typename _Tp, typename _Variant, typename = void>
-    struct __accepted_index
-    : integral_constant<size_t, variant_npos>
-    { };
+    inline constexpr size_t
+    __accepted_index = variant_npos;
 
   template<typename _Tp, typename _Variant>
-    struct __accepted_index<_Tp, _Variant, void_t<_FUN_type<_Tp, _Variant>>>
-    : _FUN_type<_Tp, _Variant>
-    { };
+    inline constexpr size_t
+    __accepted_index<_Tp, _Variant, void_t<_FUN_type<_Tp, _Variant>>>
+      = _FUN_type<_Tp, _Variant>::value;
 
-  template <typename _Maybe_variant_cookie, typename _Variant>
-    struct _Extra_visit_slot_needed
-    {
-      template <typename> struct _Variant_never_valueless;
+  template<typename _Maybe_variant_cookie, typename _Variant,
+	   typename = __remove_cvref_t<_Variant>>
+    inline constexpr bool
+    __extra_visit_slot_needed = false;
 
-      template <typename... _Types>
-	struct _Variant_never_valueless<variant<_Types...>>
-	: bool_constant<__variant::__never_valueless<_Types...>()> {};
+  template<typename _Var, typename... _Types>
+    inline constexpr bool
+    __extra_visit_slot_needed<__variant_cookie, _Var, variant<_Types...>>
+      = !__variant::__never_valueless<_Types...>();
 
-      static constexpr bool value =
-	(is_same_v<_Maybe_variant_cookie, __variant_cookie>
-	 || is_same_v<_Maybe_variant_cookie, __variant_idx_cookie>)
-	&& !_Variant_never_valueless<__remove_cvref_t<_Variant>>::value;
-    };
+  template<typename _Var, typename... _Types>
+    inline constexpr bool
+    __extra_visit_slot_needed<__variant_idx_cookie, _Var, variant<_Types...>>
+      = !__variant::__never_valueless<_Types...>();
 
   // Used for storing a multi-dimensional vtable.
   template<typename _Tp, size_t... _Dimensions>
@@ -861,10 +859,13 @@ namespace __variant
 	: false_type
 	{ using element_type = _Tp; };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
       template <typename... _Args>
 	struct __untag_result<const void(*)(_Args...)>
 	: false_type
 	{ using element_type = void(*)(_Args...); };
+#pragma GCC diagnostic pop
 
       template <typename... _Args>
 	struct __untag_result<__variant_cookie(*)(_Args...)>
@@ -903,7 +904,7 @@ namespace __variant
       using _Variant = typename _Nth_type<__index, _Variants...>::type;
 
       static constexpr int __do_cookie =
-	_Extra_visit_slot_needed<_Ret, _Variant>::value ? 1 : 0;
+	__extra_visit_slot_needed<_Ret, _Variant> ? 1 : 0;
 
       using _Tp = _Ret(*)(_Visitor, _Variants...);
 
@@ -982,7 +983,7 @@ namespace __variant
 	_S_apply_all_alts(_Array_type& __vtable,
 			  std::index_sequence<__var_indices...>)
 	{
-	  if constexpr (_Extra_visit_slot_needed<_Result_type, _Next>::value)
+	  if constexpr (__extra_visit_slot_needed<_Result_type, _Next>)
 	    (_S_apply_single_alt<true, __var_indices>(
 	      __vtable._M_arr[__var_indices + 1],
 	      &(__vtable._M_arr[0])), ...);
@@ -1359,9 +1360,6 @@ namespace __variant
   template<typename... _Types>
     class variant
     : private __detail::__variant::_Variant_base<_Types...>,
-      private _Enable_default_constructor<
-	__detail::__variant::_Traits<_Types...>::_S_default_ctor,
-	  variant<_Types...>>,
       private _Enable_copy_move<
 	__detail::__variant::_Traits<_Types...>::_S_copy_ctor,
 	__detail::__variant::_Traits<_Types...>::_S_copy_assign,
@@ -1376,16 +1374,15 @@ namespace __variant
 
       static_assert(sizeof...(_Types) > 0,
 		    "variant must have at least one alternative");
-      static_assert(!(std::is_reference_v<_Types> || ...),
-		    "variant must have no reference alternative");
-      static_assert(!(std::is_void_v<_Types> || ...),
-		    "variant must have no void alternative");
+#ifdef __STRICT_ANSI__
+      static_assert(((std::is_object_v<_Types> && !is_array_v<_Types>) && ...),
+		    "variant alternatives must be non-array object types");
+#else
+      static_assert((std::is_object_v<_Types> && ...),
+		    "variant alternatives must be object types");
+#endif
 
       using _Base = __detail::__variant::_Variant_base<_Types...>;
-      using _Default_ctor_enabler =
-	_Enable_default_constructor<
-	  __detail::__variant::_Traits<_Types...>::_S_default_ctor,
-	    variant<_Types...>>;
 
       template<typename _Tp>
 	static constexpr bool __not_self
@@ -1397,7 +1394,7 @@ namespace __variant
 
       template<typename _Tp>
 	static constexpr size_t __accepted_index
-	  = __detail::__variant::__accepted_index<_Tp, variant>::value;
+	  = __detail::__variant::__accepted_index<_Tp, variant>;
 
       template<size_t _Np, typename = enable_if_t<(_Np < sizeof...(_Types))>>
 	using __to_type = typename _Nth_type<_Np, _Types...>::type;
@@ -1420,10 +1417,20 @@ namespace __variant
 
       template<typename _Tp>
 	static constexpr bool __not_in_place_tag
-	  = !__is_in_place_tag<__remove_cvref_t<_Tp>>::value;
+	  = !__is_in_place_type_v<__remove_cvref_t<_Tp>>
+	      && !__is_in_place_index_v<__remove_cvref_t<_Tp>>;
 
     public:
-      variant() = default;
+#if __cpp_concepts
+      variant() requires is_default_constructible_v<__to_type<0>> = default;
+#else
+      template<typename _Tp0 = __to_type<0>,
+	       typename = enable_if_t<is_default_constructible_v<_Tp0>>>
+	constexpr
+	variant() noexcept(is_nothrow_default_constructible_v<__to_type<0>>)
+	{ }
+#endif
+
       variant(const variant& __rhs) = default;
       variant(variant&&) = default;
       variant& operator=(const variant&) = default;
@@ -1468,8 +1475,7 @@ namespace __variant
 	       typename = enable_if_t<is_constructible_v<_Tp, _Args...>>>
 	constexpr explicit
 	variant(in_place_index_t<_Np>, _Args&&... __args)
-	: _Base(in_place_index<_Np>, std::forward<_Args>(__args)...),
-	_Default_ctor_enabler(_Enable_default_constructor_tag{})
+	: _Base(in_place_index<_Np>, std::forward<_Args>(__args)...)
 	{ }
 
       template<size_t _Np, typename _Up, typename... _Args,
@@ -1480,8 +1486,7 @@ namespace __variant
 	constexpr explicit
 	variant(in_place_index_t<_Np>, initializer_list<_Up> __il,
 		_Args&&... __args)
-	: _Base(in_place_index<_Np>, __il, std::forward<_Args>(__args)...),
-	_Default_ctor_enabler(_Enable_default_constructor_tag{})
+	: _Base(in_place_index<_Np>, __il, std::forward<_Args>(__args)...)
 	{ }
 
       template<typename _Tp>
@@ -1964,6 +1969,5 @@ namespace __variant
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace std
 
-#endif // C++17
-
+#endif // __cpp_lib_variant
 #endif // _GLIBCXX_VARIANT

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+# Copyright (C) 2020-2024 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -14,7 +16,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with GCC; see the file COPYING3.  If not see
-# <http://www.gnu.org/licenses/>.  */
+# <http://www.gnu.org/licenses/>.
 
 import argparse
 
@@ -40,7 +42,13 @@ for git_commit in parse_git_revisions(args.git_path, args.revisions):
     if git_commit.success:
         if args.print_changelog:
             git_commit.print_output()
+        if args.verbose and git_commit.warnings:
+            for warning in git_commit.warnings:
+                print('WARN: %s' % warning)
     else:
+        if args.verbose and git_commit.warnings:
+            for warning in git_commit.warnings:
+                print('WARN: %s' % warning)
         for error in git_commit.errors:
             print('ERR: %s' % error)
             if args.verbose and error.details:

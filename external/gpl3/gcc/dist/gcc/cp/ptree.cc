@@ -1,5 +1,5 @@
 /* Prints out trees in human readable form.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -38,10 +38,6 @@ cxx_print_decl (FILE *file, tree node, int indent)
       return;
     }
 
-  if (!CODE_CONTAINS_STRUCT (TREE_CODE (node), TS_DECL_COMMON)
-      || !DECL_LANG_SPECIFIC (node))
-    return;
-
   if (TREE_CODE (node) == FUNCTION_DECL)
     {
       int flags = TFF_DECL_SPECIFIERS|TFF_RETURN_TYPE
@@ -79,12 +75,22 @@ cxx_print_decl (FILE *file, tree node, int indent)
 	  need_indent = false;
 	}
 
-      if (DECL_LANG_SPECIFIC (ntnode) && DECL_MODULE_PURVIEW_P (ntnode))
+      if (DECL_LANG_SPECIFIC (ntnode))
 	{
-	  if (need_indent)
-	    indent_to (file, indent + 3);
-	  fprintf (file, " purview");
-	  need_indent = false;
+	  if (DECL_MODULE_PURVIEW_P (ntnode))
+	    {
+	      if (need_indent)
+		indent_to (file, indent + 3);
+	      fprintf (file, " purview");
+	      need_indent = false;
+	    }
+	  if (DECL_MODULE_ATTACH_P (ntnode))
+	    {
+	      if (need_indent)
+		indent_to (file, indent + 3);
+	      fprintf (file, " attached");
+	      need_indent = false;
+	    }
 	}
     }
 
@@ -95,6 +101,10 @@ cxx_print_decl (FILE *file, tree node, int indent)
       fprintf (file, " exported");
       need_indent = false;
     }
+
+  if (!CODE_CONTAINS_STRUCT (TREE_CODE (node), TS_DECL_COMMON)
+      || !DECL_LANG_SPECIFIC (node))
+    return;
 
   if (DECL_EXTERNAL (node) && DECL_NOT_REALLY_EXTERN (node))
     {
@@ -114,27 +124,32 @@ cxx_print_decl (FILE *file, tree node, int indent)
       need_indent = false;
     }
   
-  if (VAR_OR_FUNCTION_DECL_P (node)
+  if ((VAR_OR_FUNCTION_DECL_P (node)
+       || TREE_CODE (node) == FIELD_DECL
+       || TREE_CODE (node) == TYPE_DECL
+       || TREE_CODE (node) == CONCEPT_DECL
+       || TREE_CODE (node) == TEMPLATE_DECL)
       && DECL_TEMPLATE_INFO (node))
-    print_node (file, "template-info", DECL_TEMPLATE_INFO (node),
-		indent + 4);
+    {
+      print_node (file, "template-info", DECL_TEMPLATE_INFO (node),
+		  indent + 4);
+      indent_to (file, indent + 3);
+      fprintf (file, " use_template=%d", DECL_USE_TEMPLATE (node));
+    }
 }
 
 void
 cxx_print_type (FILE *file, tree node, int indent)
 {
+  if (tree ti = TYPE_TEMPLATE_INFO (node))
+    print_node (file, "template-info", ti, indent + 4);
+
   switch (TREE_CODE (node))
     {
     case BOUND_TEMPLATE_TEMPLATE_PARM:
-      print_node (file, "args", TYPE_TI_ARGS (node), indent + 4);
-      gcc_fallthrough ();
-
     case TEMPLATE_TYPE_PARM:
     case TEMPLATE_TEMPLATE_PARM:
-      indent_to (file, indent + 3);
-      fprintf (file, "index %d level %d orig_level %d",
-	       TEMPLATE_TYPE_IDX (node), TEMPLATE_TYPE_LEVEL (node),
-	       TEMPLATE_TYPE_ORIG_LEVEL (node));
+      print_node (file, "tpi", TEMPLATE_TYPE_PARM_INDEX (node), indent + 4);
       return;
 
     case FUNCTION_TYPE:
@@ -250,8 +265,6 @@ cxx_print_identifier (FILE *file, tree node, int indent)
 void
 cxx_print_lambda_node (FILE *file, tree node, int indent)
 {
-  if (LAMBDA_EXPR_MUTABLE_P (node))
-    fprintf (file, " /mutable");
   fprintf (file, " default_capture_mode=[");
   switch (LAMBDA_EXPR_DEFAULT_CAPTURE_MODE (node))
     {
@@ -336,6 +349,9 @@ cxx_print_xnode (FILE *file, tree node, int indent)
     case TEMPLATE_INFO:
       print_node (file, "template", TI_TEMPLATE (node), indent+4);
       print_node (file, "args", TI_ARGS (node), indent+4);
+      if (TI_TEMPLATE (node)
+	  && PRIMARY_TEMPLATE_P (TI_TEMPLATE (node)))
+	print_node (file, "partial", TI_PARTIAL_INFO (node), indent+4);
       if (TI_PENDING_TEMPLATE_FLAG (node))
 	{
 	  indent_to (file, indent + 3);

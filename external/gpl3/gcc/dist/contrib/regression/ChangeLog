@@ -1,22 +1,31 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2023-05-08  Release Manager
+2024-05-07  Release Manager
 
-	* GCC 12.3.0 released.
+	* GCC 14.1.0 released.
 
-2022-08-19  Release Manager
+2023-11-23  Hans-Peter Nilsson  <hp@axis.com>
 
-	* GCC 12.2.0 released.
+	* btest-gcc.sh (--handle-xpass-as-fail): New option.
 
-2022-05-06  Release Manager
+2023-11-23  Hans-Peter Nilsson  <hp@axis.com>
 
-	* GCC 12.1.0 released.
+	* btest-gcc.sh (Option handling): Break out shifts from each
+	option alternative.
+
+2023-11-23  Hans-Peter Nilsson  <hp@axis.com>
+
+	* btest-gcc.sh (Option handling): Handle multiple options.
+
+2023-02-16  Hans-Peter Nilsson  <hp@axis.com>
+
+	* objs-gcc.sh: Only bootstrap if source-directory contains gcc.
 
 2012-08-26  Hans-Peter Nilsson  <hp@axis.com>
 

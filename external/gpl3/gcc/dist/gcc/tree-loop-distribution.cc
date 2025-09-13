@@ -1,5 +1,5 @@
 /* Loop distribution.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
    Contributed by Georges-Andre Silber <Georges-Andre.Silber@ensmp.fr>
    and Sebastian Pop <sebastian.pop@amd.com>.
 
@@ -120,6 +120,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "memmodel.h"
 #include "optabs.h"
+#include "tree-ssa-loop-niter.h"
 
 
 #define MAX_DATAREFS_NUM \
@@ -453,7 +454,7 @@ create_edge_for_control_dependence (struct graph *rdg, basic_block bb,
 			    0, edge_n, bi)
     {
       basic_block cond_bb = cd->get_edge_src (edge_n);
-      gimple *stmt = last_stmt (cond_bb);
+      gimple *stmt = *gsi_last_bb (cond_bb);
       if (stmt && is_ctrl_stmt (stmt))
 	{
 	  struct graph_edge *e;
@@ -777,7 +778,7 @@ loop_distribution::stmts_from_loop (class loop *loop, vec<gimple *> *stmts)
 /* Free the reduced dependence graph RDG.  */
 
 static void
-free_rdg (struct graph *rdg)
+free_rdg (struct graph *rdg, loop_p loop)
 {
   int i;
 
@@ -791,13 +792,25 @@ free_rdg (struct graph *rdg)
 
       if (v->data)
 	{
-	  gimple_set_uid (RDGV_STMT (v), -1);
 	  (RDGV_DATAREFS (v)).release ();
 	  free (v->data);
 	}
     }
 
   free_graph (rdg);
+
+  /* Reset UIDs of stmts still in the loop.  */
+  basic_block *bbs = get_loop_body (loop);
+  for (unsigned i = 0; i < loop->num_nodes; ++i)
+    {
+      basic_block bb = bbs[i];
+      gimple_stmt_iterator gsi;
+      for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
+	gimple_set_uid (gsi_stmt (gsi), -1);
+      for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
+	gimple_set_uid (gsi_stmt (gsi), -1);
+    }
+  free (bbs);
 }
 
 struct graph *
@@ -811,7 +824,7 @@ loop_distribution::build_rdg (class loop *loop, control_dependences *cd)
   rdg = new_graph (stmts.length ());
   if (!create_rdg_vertices (rdg, stmts, loop))
     {
-      free_rdg (rdg);
+      free_rdg (rdg, loop);
       return NULL;
     }
   stmts.release ();
@@ -942,14 +955,39 @@ stmt_has_scalar_dependences_outside_loop (loop_p loop, gimple *stmt)
 /* Return a copy of LOOP placed before LOOP.  */
 
 static class loop *
-copy_loop_before (class loop *loop)
+copy_loop_before (class loop *loop, bool redirect_lc_phi_defs)
 {
   class loop *res;
   edge preheader = loop_preheader_edge (loop);
 
   initialize_original_copy_tables ();
-  res = slpeel_tree_duplicate_loop_to_edge_cfg (loop, NULL, preheader);
+  res = slpeel_tree_duplicate_loop_to_edge_cfg (loop, single_exit (loop), NULL,
+						NULL, preheader, NULL, false);
   gcc_assert (res != NULL);
+
+  /* When a not last partition is supposed to keep the LC PHIs computed
+     adjust their definitions.  */
+  if (redirect_lc_phi_defs)
+    {
+      edge exit = single_exit (loop);
+      for (gphi_iterator si = gsi_start_phis (exit->dest); !gsi_end_p (si);
+	   gsi_next (&si))
+	{
+	  gphi *phi = si.phi ();
+	  if (virtual_operand_p (gimple_phi_result (phi)))
+	    continue;
+	  use_operand_p use_p = PHI_ARG_DEF_PTR_FROM_EDGE (phi, exit);
+	  if (TREE_CODE (USE_FROM_PTR (use_p)) == SSA_NAME)
+	    {
+	      tree new_def = get_current_def (USE_FROM_PTR (use_p));
+	      if (!new_def)
+		/* Something defined outside of the loop.  */
+		continue;
+	      SET_USE (use_p, new_def);
+	    }
+	}
+    }
+
   free_original_copy_tables ();
   delete_update_ssa ();
 
@@ -977,7 +1015,7 @@ create_bb_after_loop (class loop *loop)
 
 static void
 generate_loops_for_partition (class loop *loop, partition *partition,
-			      bool copy_p)
+			      bool copy_p, bool keep_lc_phis_p)
 {
   unsigned i;
   basic_block *bbs;
@@ -985,7 +1023,7 @@ generate_loops_for_partition (class loop *loop, partition *partition,
   if (copy_p)
     {
       int orig_loop_num = loop->orig_loop_num;
-      loop = copy_loop_before (loop);
+      loop = copy_loop_before (loop, keep_lc_phis_p);
       gcc_assert (loop != NULL);
       loop->orig_loop_num = orig_loop_num;
       create_preheader (loop, CP_SIMPLE_PREHEADERS);
@@ -1336,7 +1374,8 @@ destroy_loop (class loop *loop)
 
 static bool 
 generate_code_for_partition (class loop *loop,
-			     partition *partition, bool copy_p)
+			     partition *partition, bool copy_p,
+			     bool keep_lc_phis_p)
 {
   switch (partition->kind)
     {
@@ -1345,7 +1384,8 @@ generate_code_for_partition (class loop *loop,
       /* Reductions all have to be in the last partition.  */
       gcc_assert (!partition_reduction_p (partition)
 		  || !copy_p);
-      generate_loops_for_partition (loop, partition, copy_p);
+      generate_loops_for_partition (loop, partition, copy_p,
+				    keep_lc_phis_p);
       return false;
 
     case PKIND_MEMSET:
@@ -1418,7 +1458,7 @@ loop_distribution::data_dep_in_cycle_p (struct graph *rdg,
   else if (DDR_NUM_DIST_VECTS (ddr) > 1)
     return true;
   else if (DDR_REVERSED_P (ddr)
-	   || lambda_vector_zerop (DDR_DIST_VECT (ddr, 0), 1))
+	   || lambda_vector_zerop (DDR_DIST_VECT (ddr, 0), DDR_NB_LOOPS (ddr)))
     return false;
 
   return true;
@@ -1553,6 +1593,7 @@ find_single_drs (class loop *loop, struct graph *rdg, const bitmap &partition_st
 
   basic_block bb_ld = NULL;
   basic_block bb_st = NULL;
+  edge exit = single_exit (loop);
 
   if (single_ld)
     {
@@ -1568,6 +1609,14 @@ find_single_drs (class loop *loop, struct graph *rdg, const bitmap &partition_st
       bb_ld = gimple_bb (DR_STMT (single_ld));
       if (!dominated_by_p (CDI_DOMINATORS, loop->latch, bb_ld))
 	return false;
+
+      /* The data reference must also be executed before possibly exiting
+	 the loop as otherwise we'd for example unconditionally execute
+	 memset (ptr, 0, n) which even with n == 0 implies ptr is non-NULL.  */
+      if (bb_ld != loop->header
+	  && (!exit
+	      || !dominated_by_p (CDI_DOMINATORS, exit->src, bb_ld)))
+	return false;
     }
 
   if (single_st)
@@ -1582,6 +1631,12 @@ find_single_drs (class loop *loop, struct graph *rdg, const bitmap &partition_st
 	 loop.  */
       bb_st = gimple_bb (DR_STMT (single_st));
       if (!dominated_by_p (CDI_DOMINATORS, loop->latch, bb_st))
+	return false;
+
+      /* And before exiting the loop.  */
+      if (bb_st != loop->header
+	  && (!exit
+	      || !dominated_by_p (CDI_DOMINATORS, exit->src, bb_st)))
 	return false;
     }
 
@@ -1736,11 +1791,12 @@ classify_builtin_st (loop_p loop, partition *partition, data_reference_p dr)
       return;
     }
 
-  poly_uint64 base_offset;
-  unsigned HOST_WIDE_INT const_base_offset;
-  tree base_base = strip_offset (base, &base_offset);
-  if (!base_offset.is_constant (&const_base_offset))
+  tree base_offset;
+  tree base_base;
+  split_constant_offset (base, &base_base, &base_offset);
+  if (!cst_and_fits_in_hwi (base_offset))
     return;
+  unsigned HOST_WIDE_INT const_base_offset = int_cst_value (base_offset);
 
   struct builtin_info *builtin;
   builtin = alloc_builtin (dr, NULL, base, NULL_TREE, size);
@@ -2795,7 +2851,7 @@ version_loop_by_alias_check (vec<struct partition *> *partitions,
       gimple_stmt_iterator cond_gsi = gsi_last_bb (cond_bb);
       gsi_insert_seq_before (&cond_gsi, cond_stmts, GSI_SAME_STMT);
     }
-  update_ssa (TODO_update_ssa);
+  update_ssa (TODO_update_ssa_no_phi);
 }
 
 /* Return true if loop versioning is needed to distrubute PARTITIONS.
@@ -3031,7 +3087,7 @@ loop_distribution::distribute_loop (class loop *loop,
 		 "Loop %d not distributed: too many memory references.\n",
 		 loop->num);
 
-      free_rdg (rdg);
+      free_rdg (rdg, loop);
       loop_nest.release ();
       free_data_refs (datarefs_vec);
       delete ddrs_table;
@@ -3057,6 +3113,7 @@ loop_distribution::distribute_loop (class loop *loop,
 
   bool any_builtin = false;
   bool reduction_in_all = false;
+  int reduction_partition_num = -1;
   FOR_EACH_VEC_ELT (partitions, i, partition)
     {
       reduction_in_all
@@ -3113,10 +3170,7 @@ loop_distribution::distribute_loop (class loop *loop,
   for (i = 0; partitions.iterate (i, &into); ++i)
     {
       bool changed = false;
-      if (partition_builtin_p (into) || into->kind == PKIND_PARTIAL_MEMSET)
-	continue;
-      for (int j = i + 1;
-	   partitions.iterate (j, &partition); ++j)
+      for (int j = i + 1; partitions.iterate (j, &partition); ++j)
 	{
 	  if (share_memory_accesses (rdg, into, partition))
 	    {
@@ -3136,10 +3190,13 @@ loop_distribution::distribute_loop (class loop *loop,
     }
 
   /* Put a non-builtin partition last if we need to preserve a reduction.
-     ???  This is a workaround that makes sort_partitions_by_post_order do
-     the correct thing while in reality it should sort each component
-     separately and then put the component with a reduction or a non-builtin
-     last.  */
+     In most cases this helps to keep a normal partition last avoiding to
+     spill a reduction result across builtin calls.
+     ???  The proper way would be to use dependences to see whether we
+     can move builtin partitions earlier during merge_dep_scc_partitions
+     and its sort_partitions_by_post_order.  Especially when the
+     dependence graph is composed of multiple independent subgraphs the
+     heuristic does not work reliably.  */
   if (reduction_in_all
       && partition_builtin_p (partitions.last()))
     FOR_EACH_VEC_ELT (partitions, i, partition)
@@ -3170,19 +3227,20 @@ loop_distribution::distribute_loop (class loop *loop,
 
   finalize_partitions (loop, &partitions, &alias_ddrs);
 
-  /* If there is a reduction in all partitions make sure the last one
-     is not classified for builtin code generation.  */
+  /* If there is a reduction in all partitions make sure the last
+     non-builtin partition provides the LC PHI defs.  */
   if (reduction_in_all)
     {
-      partition = partitions.last ();
-      if (only_patterns_p
-	  && partition_builtin_p (partition)
-	  && !partition_builtin_p (partitions[0]))
+      FOR_EACH_VEC_ELT (partitions, i, partition)
+	if (!partition_builtin_p (partition))
+	  reduction_partition_num = i;
+      if (reduction_partition_num == -1)
 	{
-	  nbp = 0;
-	  goto ldist_done;
+	  /* If all partitions are builtin, force the last one to
+	     be code generated as normal partition.  */
+	  partition = partitions.last ();
+	  partition->kind = PKIND_NORMAL;
 	}
-      partition->kind = PKIND_NORMAL;
     }
 
   nbp = partitions.length ();
@@ -3208,7 +3266,8 @@ loop_distribution::distribute_loop (class loop *loop,
     {
       if (partition_builtin_p (partition))
 	(*nb_calls)++;
-      *destroy_p |= generate_code_for_partition (loop, partition, i < nbp - 1);
+      *destroy_p |= generate_code_for_partition (loop, partition, i < nbp - 1,
+						 i == reduction_partition_num);
     }
 
  ldist_done:
@@ -3225,7 +3284,7 @@ loop_distribution::distribute_loop (class loop *loop,
   FOR_EACH_VEC_ELT (partitions, i, partition)
     partition_free (partition);
 
-  free_rdg (rdg);
+  free_rdg (rdg, loop);
   return nbp - *nb_calls;
 }
 
@@ -3581,7 +3640,7 @@ loop_distribution::transform_reduction_loop (loop_p loop)
   data_reference_p load_dr = NULL, store_dr = NULL;
 
   edge e = single_exit (loop);
-  gcond *cond = safe_dyn_cast <gcond *> (last_stmt (e->src));
+  gcond *cond = safe_dyn_cast <gcond *> (*gsi_last_bb (e->src));
   if (!cond)
     return false;
   /* Ensure loop condition is an (in)equality test and loop is exited either if
@@ -3631,7 +3690,7 @@ loop_distribution::transform_reduction_loop (loop_p loop)
   auto_bitmap partition_stmts;
   bitmap_set_range (partition_stmts, 0, rdg->n_vertices);
   find_single_drs (loop, rdg, partition_stmts, &store_dr, &load_dr);
-  free_rdg (rdg);
+  free_rdg (rdg, loop);
 
   /* Bail out if there is no single load.  */
   if (load_dr == NULL)
@@ -3850,7 +3909,7 @@ loop_distribution::execute (function *fun)
 	{
 	  auto_vec<gimple *> work_list;
 	  if (!find_seed_stmts_for_distribution (loop, &work_list))
-	    break;
+	    continue;
 
 	  const char *str = loop->inner ? " nest" : "";
 	  dump_user_location_t loc = find_loop_location (loop);
@@ -3864,10 +3923,20 @@ loop_distribution::execute (function *fun)
 
 	  bool destroy_p;
 	  int nb_generated_loops, nb_generated_calls;
+	  bool only_patterns = !optimize_loop_for_speed_p (loop)
+			       || !flag_tree_loop_distribution;
+	  /* do not try to distribute loops that are not expected to iterate.  */
+	  if (!only_patterns)
+	    {
+	      HOST_WIDE_INT iterations = estimated_loop_iterations_int (loop);
+	      if (iterations < 0)
+		iterations = likely_max_loop_iterations_int (loop);
+	      if (!iterations)
+		only_patterns = true;
+	    }
 	  nb_generated_loops
 	    = distribute_loop (loop, work_list, cd, &nb_generated_calls,
-			       &destroy_p, (!optimize_loop_for_speed_p (loop)
-					    || !flag_tree_loop_distribution));
+			       &destroy_p, only_patterns);
 	  if (destroy_p)
 	    loops_to_be_destroyed.safe_push (loop);
 
@@ -3941,13 +4010,13 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       return flag_tree_loop_distribution
 	|| flag_tree_loop_distribute_patterns;
     }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_loop_distribution
 

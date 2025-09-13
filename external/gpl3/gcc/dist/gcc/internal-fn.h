@@ -1,5 +1,5 @@
 /* Internal functions.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,6 +19,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_INTERNAL_FN_H
 #define GCC_INTERNAL_FN_H
+
+#include "insn-codes.h"
+#include "insn-opinit.h"
+
 
 /* INTEGER_CST values for IFN_UNIQUE function arg-0.
 
@@ -105,19 +109,23 @@ extern void init_internal_fns ();
 
 extern const char *const internal_fn_name_array[];
 
-static inline const char *
+inline const char *
 internal_fn_name (enum internal_fn fn)
 {
   return internal_fn_name_array[(int) fn];
 }
 
 extern internal_fn lookup_internal_fn (const char *);
+extern void lookup_hilo_internal_fn (internal_fn, internal_fn *, internal_fn *);
+extern void lookup_evenodd_internal_fn (internal_fn, internal_fn *,
+					internal_fn *);
+extern optab direct_internal_fn_optab (internal_fn, tree_pair);
 
 /* Return the ECF_* flags for function FN.  */
 
 extern const int internal_fn_flags_array[];
 
-static inline int
+inline int
 internal_fn_flags (enum internal_fn fn)
 {
   return internal_fn_flags_array[(int) fn];
@@ -127,7 +135,7 @@ internal_fn_flags (enum internal_fn fn)
 
 extern GTY(()) const_tree internal_fn_fnspec_array[IFN_LAST + 1];
 
-static inline const_tree
+inline const_tree
 internal_fn_fnspec (enum internal_fn fn)
 {
   return internal_fn_fnspec_array[(int) fn];
@@ -210,21 +218,26 @@ extern bool commutative_binary_fn_p (internal_fn);
 extern bool commutative_ternary_fn_p (internal_fn);
 extern int first_commutative_argument (internal_fn);
 extern bool associative_binary_fn_p (internal_fn);
+extern bool widening_fn_p (code_helper);
 
 extern bool set_edom_supported_p (void);
 
 extern internal_fn get_conditional_internal_fn (tree_code);
 extern internal_fn get_conditional_internal_fn (internal_fn);
+extern internal_fn get_len_internal_fn (internal_fn);
+extern internal_fn get_conditional_len_internal_fn (tree_code);
 extern tree_code conditional_internal_fn_code (internal_fn);
 extern internal_fn get_unconditional_internal_fn (internal_fn);
 extern bool can_interpret_as_conditional_op_p (gimple *, tree *,
 					       tree_code *, tree (&)[3],
-					       tree *);
+					       tree *, tree *, tree *);
 
 extern bool internal_load_fn_p (internal_fn);
 extern bool internal_store_fn_p (internal_fn);
 extern bool internal_gather_scatter_fn_p (internal_fn);
 extern int internal_fn_mask_index (internal_fn);
+extern int internal_fn_len_index (internal_fn);
+extern int internal_fn_else_index (internal_fn);
 extern int internal_fn_stored_value_index (internal_fn);
 extern bool internal_gather_scatter_fn_supported_p (internal_fn, tree,
 						    tree, tree, int);
@@ -242,6 +255,19 @@ extern void expand_internal_call (internal_fn, gcall *);
 extern void expand_PHI (internal_fn, gcall *);
 extern void expand_SHUFFLEVECTOR (internal_fn, gcall *);
 extern void expand_SPACESHIP (internal_fn, gcall *);
+extern void expand_TRAP (internal_fn, gcall *);
+extern void expand_ASSUME (internal_fn, gcall *);
+extern void expand_MASK_CALL (internal_fn, gcall *);
+extern void expand_MULBITINT (internal_fn, gcall *);
+extern void expand_DIVMODBITINT (internal_fn, gcall *);
+extern void expand_FLOATTOBITINT (internal_fn, gcall *);
+extern void expand_BITINTTOFLOAT (internal_fn, gcall *);
+extern void expand_CLRSB (internal_fn, gcall *);
+extern void expand_CLZ (internal_fn, gcall *);
+extern void expand_CTZ (internal_fn, gcall *);
+extern void expand_FFS (internal_fn, gcall *);
+extern void expand_PARITY (internal_fn, gcall *);
+extern void expand_POPCOUNT (internal_fn, gcall *);
 
 extern bool vectorized_internal_fn_supported_p (internal_fn, tree);
 

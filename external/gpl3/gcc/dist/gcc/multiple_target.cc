@@ -2,7 +2,7 @@
 
    Contributed by Evgeny Stupachenko <evstupac@gmail.com>
 
-   Copyright (C) 2015-2022 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -65,10 +65,6 @@ static void
 create_dispatcher_calls (struct cgraph_node *node)
 {
   ipa_ref *ref;
-
-  if (!DECL_FUNCTION_VERSIONED (node->decl)
-      || !is_function_default_version (node->decl))
-    return;
 
   if (!targetm.has_ifunc_p ())
     {
@@ -159,7 +155,11 @@ create_dispatcher_calls (struct cgraph_node *node)
 	      symtab_node *source = ref->referring;
 	      source->create_reference (inode, IPA_REF_ALIAS);
 	      if (inode->get_comdat_group ())
-		source->add_to_same_comdat_group (inode);
+		{
+		  if (source->same_comdat_group)
+		    source->remove_from_same_comdat_group ();
+		  source->add_to_same_comdat_group (inode);
+		}
 	    }
 	  else
 	    gcc_unreachable ();
@@ -178,7 +178,6 @@ create_dispatcher_calls (struct cgraph_node *node)
       node->set_comdat_group (NULL);
       node->externally_visible = false;
       node->forced_by_abi = false;
-      node->set_section (NULL);
 
       DECL_ARTIFICIAL (node->decl) = 1;
       node->force_output = true;
@@ -378,6 +377,8 @@ expand_target_clones (struct cgraph_node *node, bool definition)
       return false;
     }
 
+  const char *new_attr_name = (TARGET_HAS_FMV_TARGET_ATTRIBUTE
+			       ? "target" : "target_version");
   cgraph_function_version_info *decl1_v = NULL;
   cgraph_function_version_info *decl2_v = NULL;
   cgraph_function_version_info *before = NULL;
@@ -391,19 +392,23 @@ expand_target_clones (struct cgraph_node *node, bool definition)
   for (i = 0; i < attrnum; i++)
     {
       char *attr = attrs[i];
-      char *suffix = XNEWVEC (char, strlen (attr) + 1);
 
-      create_new_asm_name (attr, suffix);
       /* Create new target clone.  */
-      tree attributes = make_attribute ("target", attr,
+      tree attributes = make_attribute (new_attr_name, attr,
 					DECL_ATTRIBUTES (node->decl));
 
+      char *suffix = XNEWVEC (char, strlen (attr) + 1);
+      create_new_asm_name (attr, suffix);
       cgraph_node *new_node = create_target_clone (node, definition, suffix,
 						   attributes);
-      if (new_node == NULL)
-	return false;
-      new_node->local = false;
       XDELETEVEC (suffix);
+      if (new_node == NULL)
+	{
+	  XDELETEVEC (attrs);
+	  XDELETEVEC (attr_str);
+	  return false;
+	}
+      new_node->local = false;
 
       decl2_v = new_node->function_version ();
       if (decl2_v != NULL)
@@ -427,7 +432,7 @@ expand_target_clones (struct cgraph_node *node, bool definition)
   XDELETEVEC (attr_str);
 
   /* Setting new attribute to initial function.  */
-  tree attributes = make_attribute ("target", "default",
+  tree attributes = make_attribute (new_attr_name, "default",
 				    DECL_ATTRIBUTES (node->decl));
   DECL_ATTRIBUTES (node->decl) = attributes;
   node->local = false;
@@ -436,7 +441,15 @@ expand_target_clones (struct cgraph_node *node, bool definition)
 
 /* When NODE is a target clone, consider all callees and redirect
    to a clone with equal target attributes.  That prevents multiple
-   multi-versioning dispatches and a call-chain can be optimized.  */
+   multi-versioning dispatches and a call-chain can be optimized.
+
+   This optimisation might pick the wrong version in some cases, since knowing
+   that we meet the target requirements for a matching callee version does not
+   tell us that we won't also meet the target requirements for a higher
+   priority callee version at runtime.  Since this is longstanding behavior
+   for x86 and powerpc, we preserve it for those targets, but skip the
+   optimisation for targets that use the "target_version" attribute for
+   multi-versioning.  */
 
 static void
 redirect_to_specific_clone (cgraph_node *node)
@@ -445,6 +458,7 @@ redirect_to_specific_clone (cgraph_node *node)
   if (fv == NULL)
     return;
 
+  gcc_assert (TARGET_HAS_FMV_TARGET_ATTRIBUTE);
   tree attr_target = lookup_attribute ("target", DECL_ATTRIBUTES (node->decl));
   if (attr_target == NULL_TREE)
     return;
@@ -497,8 +511,9 @@ ipa_target_clone (void)
   for (unsigned i = 0; i < to_dispatch.length (); i++)
     create_dispatcher_calls (to_dispatch[i]);
 
-  FOR_EACH_FUNCTION (node)
-    redirect_to_specific_clone (node);
+  if (TARGET_HAS_FMV_TARGET_ATTRIBUTE)
+    FOR_EACH_FUNCTION (node)
+      redirect_to_specific_clone (node);
 
   return 0;
 }
@@ -526,14 +541,18 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *);
-  virtual unsigned int execute (function *) { return ipa_target_clone (); }
+  bool gate (function *) final override;
+  unsigned int execute (function *) final override
+  {
+    return ipa_target_clone ();
+  }
 };
 
 bool
 pass_target_clone::gate (function *)
 {
-  return true;
+  /* If there were any errors avoid pass property verification errors.  */
+  return !seen_error ();
 }
 
 } // anon namespace

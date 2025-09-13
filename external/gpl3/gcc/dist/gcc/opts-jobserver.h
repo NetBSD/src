@@ -1,5 +1,5 @@
 /* GNU make's jobserver related functionality.
-   Copyright (C) 2022 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -29,6 +29,18 @@ struct jobserver_info
   /* Default constructor.  */
   jobserver_info ();
 
+  /* Connect to the server.  */
+  void connect ();
+
+  /* Disconnect from the server.  */
+  void disconnect ();
+
+  /* Get token from the server.  */
+  bool get_token ();
+
+  /* Return token to the server.  */
+  void return_token ();
+
   /* Error message if there is a problem.  */
   string error_msg = "";
   /* Skipped MAKEFLAGS where --jobserver-auth is skipped.  */
@@ -39,8 +51,12 @@ struct jobserver_info
   int wfd = -1;
   /* Named pipe path.  */
   string pipe_path = "";
+  /* Pipe file descriptor.  */
+  int pipefd = -1;
   /* Return true if jobserver is active.  */
   bool is_active = false;
+  /* Return true if communication with jobserver is working.  */
+  bool is_connected = false;
 };
 
 #endif /* GCC_JOBSERVER_H */

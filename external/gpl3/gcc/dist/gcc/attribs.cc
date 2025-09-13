@@ -1,5 +1,5 @@
 /* Functions dealing with attribute handling, used by most front ends.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "diagnostic-core.h"
 #include "attribs.h"
 #include "fold-const.h"
+#include "ipa-strub.h"
 #include "stor-layout.h"
 #include "langhooks.h"
 #include "plugin.h"
@@ -39,7 +40,7 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Table of the tables of attributes (common, language, format, machine)
    searched.  */
-static const struct attribute_spec *attribute_tables[4];
+static array_slice<const scoped_attribute_specs *const> attribute_tables[2];
 
 /* Substring representation.  */
 
@@ -102,28 +103,32 @@ static const struct attribute_spec *lookup_scoped_attribute_spec (const_tree,
 
 static bool attributes_initialized = false;
 
-/* Default empty table of attributes.  */
+/* Do not use directly; go through get_gnu_namespace instead.  */
+static GTY(()) tree gnu_namespace_cache;
 
-static const struct attribute_spec empty_attribute_table[] =
+/* Return the IDENTIFIER_NODE for the gnu namespace.  */
+
+static tree
+get_gnu_namespace ()
 {
-  { NULL, 0, 0, false, false, false, false, NULL, NULL }
-};
+  if (!gnu_namespace_cache)
+    gnu_namespace_cache = get_identifier ("gnu");
+  return gnu_namespace_cache;
+}
 
-/* Insert an array of attributes ATTRIBUTES into a namespace.  This
-   array must be NULL terminated.  NS is the name of attribute
-   namespace.  IGNORED_P is true iff all unknown attributes in this
-   namespace should be ignored for the purposes of -Wattributes.  The
-   function returns the namespace into which the attributes have been
-   registered.  */
+/* Insert SPECS into its namespace.  IGNORED_P is true iff all unknown
+   attributes in this namespace should be ignored for the purposes of
+   -Wattributes.  The function returns the namespace into which the
+   attributes have been registered.  */
 
 scoped_attributes *
-register_scoped_attributes (const struct attribute_spec *attributes,
-			    const char *ns, bool ignored_p /*=false*/)
+register_scoped_attributes (const scoped_attribute_specs &specs,
+			    bool ignored_p /*=false*/)
 {
   scoped_attributes *result = NULL;
 
   /* See if we already have attributes in the namespace NS.  */
-  result = find_attribute_namespace (ns);
+  result = find_attribute_namespace (specs.ns);
 
   if (result == NULL)
     {
@@ -134,7 +139,7 @@ register_scoped_attributes (const struct attribute_spec *attributes,
 	attributes_table.create (64);
 
       memset (&sa, 0, sizeof (sa));
-      sa.ns = ns;
+      sa.ns = specs.ns;
       sa.attributes.create (64);
       sa.ignored_p = ignored_p;
       result = attributes_table.safe_push (sa);
@@ -144,10 +149,10 @@ register_scoped_attributes (const struct attribute_spec *attributes,
     result->ignored_p |= ignored_p;
 
   /* Really add the attributes to their namespace now.  */
-  for (unsigned i = 0; attributes[i].name != NULL; ++i)
+  for (const attribute_spec &attribute : specs.attributes)
     {
-      result->attributes.safe_push (attributes[i]);
-      register_scoped_attribute (&attributes[i], result);
+      result->attributes.safe_push (attribute);
+      register_scoped_attribute (&attribute, result);
     }
 
   gcc_assert (result != NULL);
@@ -174,49 +179,40 @@ find_attribute_namespace (const char* ns)
 static void
 check_attribute_tables (void)
 {
-  for (size_t i = 0; i < ARRAY_SIZE (attribute_tables); i++)
-    for (size_t j = 0; attribute_tables[i][j].name != NULL; j++)
-      {
-	/* The name must not begin and end with __.  */
-	const char *name = attribute_tables[i][j].name;
-	int len = strlen (name);
+  hash_set<pair_hash<nofree_string_hash, nofree_string_hash>> names;
 
-	gcc_assert (!(name[0] == '_' && name[1] == '_'
-		      && name[len - 1] == '_' && name[len - 2] == '_'));
+  for (auto scoped_array : attribute_tables)
+    for (auto scoped_attributes : scoped_array)
+      for (const attribute_spec &attribute : scoped_attributes->attributes)
+	{
+	  /* The name must not begin and end with __.  */
+	  const char *name = attribute.name;
+	  int len = strlen (name);
 
-	/* The minimum and maximum lengths must be consistent.  */
-	gcc_assert (attribute_tables[i][j].min_length >= 0);
+	  gcc_assert (!(name[0] == '_' && name[1] == '_'
+			&& name[len - 1] == '_' && name[len - 2] == '_'));
 
-	gcc_assert (attribute_tables[i][j].max_length == -1
-		    || (attribute_tables[i][j].max_length
-			>= attribute_tables[i][j].min_length));
+	  /* The minimum and maximum lengths must be consistent.  */
+	  gcc_assert (attribute.min_length >= 0);
 
-	/* An attribute cannot require both a DECL and a TYPE.  */
-	gcc_assert (!attribute_tables[i][j].decl_required
-		    || !attribute_tables[i][j].type_required);
+	  gcc_assert (attribute.max_length == -1
+		      || attribute.max_length >= attribute.min_length);
+
+	  /* An attribute cannot require both a DECL and a TYPE.  */
+	  gcc_assert (!attribute.decl_required
+		      || !attribute.type_required);
 
 	  /* If an attribute requires a function type, in particular
 	     it requires a type.  */
-	gcc_assert (!attribute_tables[i][j].function_type_required
-		    || attribute_tables[i][j].type_required);
-      }
+	  gcc_assert (!attribute.function_type_required
+		      || attribute.type_required);
 
-  /* Check that each name occurs just once in each table.  */
-  for (size_t i = 0; i < ARRAY_SIZE (attribute_tables); i++)
-    for (size_t j = 0; attribute_tables[i][j].name != NULL; j++)
-      for (size_t k = j + 1; attribute_tables[i][k].name != NULL; k++)
-	gcc_assert (strcmp (attribute_tables[i][j].name,
-			    attribute_tables[i][k].name));
-
-  /* Check that no name occurs in more than one table.  Names that
-     begin with '*' are exempt, and may be overridden.  */
-  for (size_t i = 0; i < ARRAY_SIZE (attribute_tables); i++)
-    for (size_t j = i + 1; j < ARRAY_SIZE (attribute_tables); j++)
-      for (size_t k = 0; attribute_tables[i][k].name != NULL; k++)
-	for (size_t l = 0; attribute_tables[j][l].name != NULL; l++)
-	  gcc_assert (attribute_tables[i][k].name[0] == '*'
-		      || strcmp (attribute_tables[i][k].name,
-				 attribute_tables[j][l].name));
+	  /* Check that no name occurs more than once.  Names that
+	     begin with '*' are exempt, and may be overridden.  */
+	  const char *ns = scoped_attributes->ns;
+	  if (name[0] != '*' && names.add ({ ns ? ns : "", name }))
+	    gcc_unreachable ();
+	}
 }
 
 /* Used to stash pointers to allocated memory so that we can free them at
@@ -242,6 +238,7 @@ handle_ignored_attributes_option (vec<char *> *v)
       /* We don't accept '::attr'.  */
       if (cln == nullptr || cln == opt)
 	{
+	  auto_diagnostic_group d;
 	  error ("wrong argument to ignored attributes");
 	  inform (input_location, "valid format is %<ns::attr%> or %<ns::%>");
 	  continue;
@@ -271,7 +268,7 @@ handle_ignored_attributes_option (vec<char *> *v)
       canonicalize_attr_name (vendor_start, vendor_len);
       /* We perform all this hijinks so that we don't have to copy OPT.  */
       tree vendor_id = get_identifier_with_length (vendor_start, vendor_len);
-      const char *attr;
+      array_slice<const attribute_spec> attrs;
       /* In the "vendor::" case, we should ignore *any* attribute coming
 	 from this attribute namespace.  */
       if (attr_len > 0)
@@ -283,22 +280,23 @@ handle_ignored_attributes_option (vec<char *> *v)
 	    }
 	  canonicalize_attr_name (attr_start, attr_len);
 	  tree attr_id = get_identifier_with_length (attr_start, attr_len);
-	  attr = IDENTIFIER_POINTER (attr_id);
+	  const char *attr = IDENTIFIER_POINTER (attr_id);
 	  /* If we've already seen this vendor::attr, ignore it.  Attempting to
 	     register it twice would lead to a crash.  */
 	  if (lookup_scoped_attribute_spec (vendor_id, attr_id))
 	    continue;
+	  /* Create a table with extra attributes which we will register.
+	     We can't free it here, so squirrel away the pointers.  */
+	  attribute_spec *table = new attribute_spec {
+	    attr, 0, -2, false, false, false, false, nullptr, nullptr
+	  };
+	  ignored_attributes_table.safe_push (table);
+	  attrs = { table, 1 };
 	}
-      else
-	attr = nullptr;
-      /* Create a table with extra attributes which we will register.
-	 We can't free it here, so squirrel away the pointers.  */
-      attribute_spec *table = new attribute_spec[2];
-      ignored_attributes_table.safe_push (table);
-      table[0] = { attr, 0, -2, false, false, false, false, nullptr, nullptr };
-      table[1] = { nullptr, 0, 0, false, false, false, false, nullptr,
-		   nullptr };
-      register_scoped_attributes (table, IDENTIFIER_POINTER (vendor_id), !attr);
+      const scoped_attribute_specs scoped_specs = {
+	IDENTIFIER_POINTER (vendor_id), { attrs }
+      };
+      register_scoped_attributes (scoped_specs, attrs.empty ());
     }
 }
 
@@ -308,7 +306,7 @@ void
 free_attr_data ()
 {
   for (auto x : ignored_attributes_table)
-    delete[] x;
+    delete x;
   ignored_attributes_table.release ();
 }
 
@@ -318,27 +316,18 @@ free_attr_data ()
 void
 init_attributes (void)
 {
-  size_t i;
-
   if (attributes_initialized)
     return;
 
-  attribute_tables[0] = lang_hooks.common_attribute_table;
-  attribute_tables[1] = lang_hooks.attribute_table;
-  attribute_tables[2] = lang_hooks.format_attribute_table;
-  attribute_tables[3] = targetm.attribute_table;
-
-  /* Translate NULL pointers to pointers to the empty table.  */
-  for (i = 0; i < ARRAY_SIZE (attribute_tables); i++)
-    if (attribute_tables[i] == NULL)
-      attribute_tables[i] = empty_attribute_table;
+  attribute_tables[0] = lang_hooks.attribute_table;
+  attribute_tables[1] = targetm.attribute_table;
 
   if (flag_checking)
     check_attribute_tables ();
 
-  for (i = 0; i < ARRAY_SIZE (attribute_tables); ++i)
-    /* Put all the GNU attributes into the "gnu" namespace.  */
-    register_scoped_attributes (attribute_tables[i], "gnu");
+  for (auto scoped_array : attribute_tables)
+    for (auto scoped_attributes : scoped_array)
+      register_scoped_attributes (*scoped_attributes);
 
   vec<char *> *ignored = (vec<char *> *) flag_ignored_attributes;
   handle_ignored_attributes_option (ignored);
@@ -418,7 +407,7 @@ lookup_attribute_spec (const_tree name)
       name = TREE_VALUE (name);
     }
   else
-    ns = get_identifier ("gnu");
+    ns = get_gnu_namespace ();
   return lookup_scoped_attribute_spec (ns, name);
 }
 
@@ -435,7 +424,7 @@ get_attribute_namespace (const_tree attr)
 {
   if (cxx11_attribute_p (attr))
     return TREE_PURPOSE (TREE_PURPOSE (attr));
-  return get_identifier ("gnu");
+  return get_gnu_namespace ();
 }
 
 /* Check LAST_DECL and NODE of the same symbol for attributes that are
@@ -494,7 +483,7 @@ diag_attr_exclusions (tree last_decl, tree node, tree attrname,
 
   /* Iterate over the mutually exclusive attribute names and verify
      that the symbol doesn't contain it.  */
-  for (unsigned i = 0; i != sizeof attrs / sizeof *attrs; ++i)
+  for (unsigned i = 0; i != ARRAY_SIZE (attrs); ++i)
     {
       if (!attrs[i])
 	continue;
@@ -520,7 +509,7 @@ diag_attr_exclusions (tree last_decl, tree node, tree attrname,
 	    continue;
 
 	  if ((TREE_CODE (node) == FIELD_DECL
-	       || TREE_CODE (node) == VAR_DECL)
+	       || VAR_P (node))
 	      && !excl->variable)
 	    continue;
 
@@ -590,6 +579,36 @@ attribute_ignored_p (const attribute_spec *const as)
   return as->max_length == -2;
 }
 
+/* Return true if the ATTRS chain contains at least one attribute which
+   is not ignored.  */
+
+bool
+any_nonignored_attribute_p (tree attrs)
+{
+  for (tree attr = attrs; attr; attr = TREE_CHAIN (attr))
+    if (!attribute_ignored_p (attr))
+      return true;
+
+  return false;
+}
+
+/* See whether LIST contains at least one instance of attribute ATTR
+   (possibly with different arguments).  Return the first such attribute
+   if so, otherwise return null.  */
+
+static tree
+find_same_attribute (const_tree attr, tree list)
+{
+  if (list == NULL_TREE)
+    return NULL_TREE;
+  tree ns = get_attribute_namespace (attr);
+  tree name = get_attribute_name (attr);
+  return private_lookup_attribute (ns ? IDENTIFIER_POINTER (ns) : nullptr,
+				   IDENTIFIER_POINTER (name),
+				   ns ? IDENTIFIER_LENGTH (ns) : 0,
+				   IDENTIFIER_LENGTH (name), list);
+}
+
 /* Process the attributes listed in ATTRIBUTES and install them in *NODE,
    which is either a DECL (including a TYPE_DECL) or a TYPE.  If a DECL,
    it should be modified in place; if a TYPE, a copy should be created
@@ -651,7 +670,8 @@ decl_attributes (tree *node, tree attributes, int flags,
      options to the attribute((target(...))) list.  */
   if (TREE_CODE (*node) == FUNCTION_DECL
       && current_target_pragma
-      && targetm.target_option.valid_attribute_p (*node, NULL_TREE,
+      && targetm.target_option.valid_attribute_p (*node,
+						  get_identifier ("target"),
 						  current_target_pragma, 0))
     {
       tree cur_attr = lookup_attribute ("target", attributes);
@@ -713,6 +733,12 @@ decl_attributes (tree *node, tree attributes, int flags,
 	      if (ns == NULL_TREE || !cxx11_attr_p)
 		warning (OPT_Wattributes, "%qE attribute directive ignored",
 			 name);
+	      else if ((flag_openmp || flag_openmp_simd)
+		       && is_attribute_p ("omp", ns)
+		       && is_attribute_p ("directive", name)
+		       && (VAR_P (*node)
+			   || TREE_CODE (*node) == FUNCTION_DECL))
+		continue;
 	      else
 		warning (OPT_Wattributes,
 			 "%<%E::%E%> scoped attribute directive ignored",
@@ -727,10 +753,14 @@ decl_attributes (tree *node, tree attributes, int flags,
 	      || (spec->max_length >= 0
 		  && nargs > spec->max_length))
 	    {
+	      auto_diagnostic_group d;
 	      error ("wrong number of arguments specified for %qE attribute",
 		     name);
 	      if (spec->max_length < 0)
 		inform (input_location, "expected %i or more, found %i",
+			spec->min_length, nargs);
+	      else if (spec->min_length == spec->max_length)
+		inform (input_location, "expected %i, found %i",
 			spec->min_length, nargs);
 	      else
 		inform (input_location, "expected between %i and %i, found %i",
@@ -769,12 +799,11 @@ decl_attributes (tree *node, tree attributes, int flags,
 	  flags &= ~(int) ATTR_FLAG_TYPE_IN_PLACE;
 	}
 
-      if (spec->function_type_required && TREE_CODE (*anode) != FUNCTION_TYPE
-	  && TREE_CODE (*anode) != METHOD_TYPE)
+      if (spec->function_type_required
+	  && !FUNC_OR_METHOD_TYPE_P (*anode))
 	{
 	  if (TREE_CODE (*anode) == POINTER_TYPE
-	      && (TREE_CODE (TREE_TYPE (*anode)) == FUNCTION_TYPE
-		  || TREE_CODE (TREE_TYPE (*anode)) == METHOD_TYPE))
+	      && FUNC_OR_METHOD_TYPE_P (TREE_TYPE (*anode)))
 	    {
 	      /* OK, this is a bit convoluted.  We can't just make a copy
 		 of the pointer type and modify its TREE_TYPE, because if
@@ -810,7 +839,7 @@ decl_attributes (tree *node, tree attributes, int flags,
 
       if (TYPE_P (*anode)
 	  && (flags & (int) ATTR_FLAG_TYPE_IN_PLACE)
-	  && TYPE_SIZE (*anode) != NULL_TREE)
+	  && COMPLETE_TYPE_P (*anode))
 	{
 	  warning (OPT_Wattributes, "type attributes ignored after type is already defined");
 	  continue;
@@ -836,6 +865,7 @@ decl_attributes (tree *node, tree attributes, int flags,
 	      || !DECL_P (*anode)
 	      || DECL_BUILT_IN_CLASS (*anode) != BUILT_IN_NORMAL
 	      || (DECL_FUNCTION_CODE (*anode) != BUILT_IN_UNREACHABLE
+		  && DECL_FUNCTION_CODE (*anode) != BUILT_IN_UNREACHABLE_TRAP
 		  && (DECL_FUNCTION_CODE (*anode)
 		      != BUILT_IN_UBSAN_HANDLE_BUILTIN_UNREACHABLE)))
 	    {
@@ -870,7 +900,39 @@ decl_attributes (tree *node, tree attributes, int flags,
 	  tree ret = (spec->handler) (cur_and_last_decl, name, args,
 				      flags|cxx11_flag, &no_add_attrs);
 
-	  *anode = cur_and_last_decl[0];
+	  /* Fix up typedefs clobbered by attribute handlers.  */
+	  if (TREE_CODE (*node) == TYPE_DECL
+	      && anode == &TREE_TYPE (*node)
+	      && DECL_ORIGINAL_TYPE (*node)
+	      && TYPE_NAME (*anode) == *node
+	      && TYPE_NAME (cur_and_last_decl[0]) != *node)
+	    {
+	      tree t = cur_and_last_decl[0];
+	      DECL_ORIGINAL_TYPE (*node) = t;
+	      tree tt = build_variant_type_copy (t);
+	      cur_and_last_decl[0] = tt;
+	      TREE_TYPE (*node) = tt;
+	      TYPE_NAME (tt) = *node;
+	    }
+
+	  if (*anode != cur_and_last_decl[0])
+	    {
+	      /* Even if !spec->function_type_required, allow the attribute
+		 handler to request the attribute to be applied to the function
+		 type, rather than to the function pointer type, by setting
+		 cur_and_last_decl[0] to the function type.  */
+	      if (!fn_ptr_tmp
+		  && POINTER_TYPE_P (*anode)
+		  && TREE_TYPE (*anode) == cur_and_last_decl[0]
+		  && FUNC_OR_METHOD_TYPE_P (TREE_TYPE (*anode)))
+		{
+		  fn_ptr_tmp = TREE_TYPE (*anode);
+		  fn_ptr_quals = TYPE_QUALS (*anode);
+		  anode = &fn_ptr_tmp;
+		}
+	      *anode = cur_and_last_decl[0];
+	    }
+
 	  if (ret == error_mark_node)
 	    {
 	      warning (OPT_Wattributes, "%qE attribute ignored", name);
@@ -897,9 +959,9 @@ decl_attributes (tree *node, tree attributes, int flags,
 	  else
 	    old_attrs = TYPE_ATTRIBUTES (*anode);
 
-	  for (a = lookup_attribute (spec->name, old_attrs);
+	  for (a = find_same_attribute (attr, old_attrs);
 	       a != NULL_TREE;
-	       a = lookup_attribute (spec->name, TREE_CHAIN (a)))
+	       a = find_same_attribute (attr, TREE_CHAIN (a)))
 	    {
 	      if (simple_cst_equal (TREE_VALUE (a), args) == 1)
 		break;
@@ -930,8 +992,8 @@ decl_attributes (tree *node, tree attributes, int flags,
 			  if (TYPE_ATTRIBUTES (variant) == old_attrs)
 			    TYPE_ATTRIBUTES (variant)
 			      = TYPE_ATTRIBUTES (*anode);
-			  else if (!lookup_attribute
-				   (spec->name, TYPE_ATTRIBUTES (variant)))
+			  else if (!find_same_attribute
+				   (attr, TYPE_ATTRIBUTES (variant)))
 			    TYPE_ATTRIBUTES (variant) = tree_cons
 			      (name, args, TYPE_ATTRIBUTES (variant));
 			}
@@ -1147,6 +1209,7 @@ common_function_versions (tree fn1, tree fn2)
 	      std::swap (fn1, fn2);
 	      attr1 = attr2;
 	    }
+	  auto_diagnostic_group d;
 	  error_at (DECL_SOURCE_LOCATION (fn2),
 		    "missing %<target%> attribute for multi-versioned %qD",
 		    fn2);
@@ -1209,8 +1272,9 @@ make_dispatcher_decl (const tree decl)
   return func_decl;  
 }
 
-/* Returns true if decl is multi-versioned and DECL is the default function,
-   that is it is not tagged with target specific optimization.  */
+/* Returns true if DECL is multi-versioned using the target attribute, and this
+   is the default version.  This function can only be used for targets that do
+   not support the "target_version" attribute.  */
 
 bool
 is_function_default_version (const tree decl)
@@ -1254,9 +1318,7 @@ build_type_attribute_qual_variant (tree otype, tree attribute, int quals)
 	 build_duplicate_type is another solution (as used in
 	 handle_transparent_union_attribute), but that doesn't play well
 	 with the stronger C++ type identity model.  */
-      if (TREE_CODE (ttype) == RECORD_TYPE
-	  || TREE_CODE (ttype) == UNION_TYPE
-	  || TREE_CODE (ttype) == QUAL_UNION_TYPE
+      if (RECORD_OR_UNION_TYPE_P (ttype)
 	  || TREE_CODE (ttype) == ENUMERAL_TYPE)
 	{
 	  warning (OPT_Wattributes,
@@ -1274,6 +1336,16 @@ build_type_attribute_qual_variant (tree otype, tree attribute, int quals)
       tree dtype = ntype = build_distinct_type_copy (ttype);
 
       TYPE_ATTRIBUTES (ntype) = attribute;
+      /* If the target-dependent attributes make NTYPE different from
+	 its canonical type, we will need to use structural equality
+	 checks for this type.
+
+	 We shouldn't get here for stripping attributes from a type;
+	 the no-attribute type might not need structural comparison.  But
+	 we can if was discarded from type_hash_table.  */
+      if (TYPE_STRUCTURAL_EQUALITY_P (ttype)
+	  || !comp_type_attributes (ntype, ttype))
+	SET_TYPE_STRUCTURAL_EQUALITY (ntype);
 
       hashval_t hash = type_hash_canon_hash (ntype);
       ntype = type_hash_canon (hash, ntype);
@@ -1281,16 +1353,6 @@ build_type_attribute_qual_variant (tree otype, tree attribute, int quals)
       if (ntype != dtype)
 	/* This variant was already in the hash table, don't mess with
 	   TYPE_CANONICAL.  */;
-      else if (TYPE_STRUCTURAL_EQUALITY_P (ttype)
-	       || !comp_type_attributes (ntype, ttype))
-	/* If the target-dependent attributes make NTYPE different from
-	   its canonical type, we will need to use structural equality
-	   checks for this type.
-
-	   We shouldn't get here for stripping attributes from a type;
-	   the no-attribute type might not need structural comparison.  But
-	   we can if was discarded from type_hash_table.  */
-	SET_TYPE_STRUCTURAL_EQUALITY (ntype);
       else if (TYPE_CANONICAL (ntype) == ntype)
 	TYPE_CANONICAL (ntype) = TYPE_CANONICAL (ttype);
 
@@ -1441,11 +1503,11 @@ comp_type_attributes (const_tree type1, const_tree type2)
       const struct attribute_spec *as;
       const_tree attr;
 
-      as = lookup_attribute_spec (get_attribute_name (a));
+      as = lookup_attribute_spec (TREE_PURPOSE (a));
       if (!as || as->affects_type_identity == false)
 	continue;
 
-      attr = lookup_attribute (as->name, CONST_CAST_TREE (a2));
+      attr = find_same_attribute (a, CONST_CAST_TREE (a2));
       if (!attr || !attribute_value_equal (a, attr))
 	break;
     }
@@ -1455,11 +1517,11 @@ comp_type_attributes (const_tree type1, const_tree type2)
 	{
 	  const struct attribute_spec *as;
 
-	  as = lookup_attribute_spec (get_attribute_name (a));
+	  as = lookup_attribute_spec (TREE_PURPOSE (a));
 	  if (!as || as->affects_type_identity == false)
 	    continue;
 
-	  if (!lookup_attribute (as->name, CONST_CAST_TREE (a1)))
+	  if (!find_same_attribute (a, CONST_CAST_TREE (a1)))
 	    break;
 	  /* We don't need to compare trees again, as we did this
 	     already in first loop.  */
@@ -1474,9 +1536,20 @@ comp_type_attributes (const_tree type1, const_tree type2)
   if ((lookup_attribute ("nocf_check", TYPE_ATTRIBUTES (type1)) != NULL)
       ^ (lookup_attribute ("nocf_check", TYPE_ATTRIBUTES (type2)) != NULL))
     return 0;
+  int strub_ret = strub_comptypes (CONST_CAST_TREE (type1),
+				   CONST_CAST_TREE (type2));
+  if (strub_ret == 0)
+    return strub_ret;
   /* As some type combinations - like default calling-convention - might
      be compatible, we have to call the target hook to get the final result.  */
-  return targetm.comp_type_attributes (type1, type2);
+  int target_ret = targetm.comp_type_attributes (type1, type2);
+  if (target_ret == 0)
+    return target_ret;
+  if (strub_ret == 2 || target_ret == 2)
+    return 2;
+  if (strub_ret == 1 && target_ret == 1)
+    return 1;
+  gcc_unreachable ();
 }
 
 /* PREDICATE acts as a function of type:
@@ -1497,8 +1570,7 @@ remove_attributes_matching (tree attrs, Predicate predicate)
   const_tree start = attrs;
   for (const_tree attr = attrs; attr; attr = TREE_CHAIN (attr))
     {
-      tree name = get_attribute_name (attr);
-      const attribute_spec *as = lookup_attribute_spec (name);
+      const attribute_spec *as = lookup_attribute_spec (TREE_PURPOSE (attr));
       const_tree end;
       if (!predicate (attr, as))
 	end = attr;
@@ -1617,6 +1689,33 @@ remove_attribute (const char *attr_name, tree list)
 	*p = TREE_CHAIN (l);
       else
 	p = &TREE_CHAIN (l);
+    }
+
+  return list;
+}
+
+/* Similarly but also match namespace on the removed attributes.
+   ATTR_NS "" stands for NULL or "gnu" namespace.  */
+
+tree
+remove_attribute (const char *attr_ns, const char *attr_name, tree list)
+{
+  tree *p;
+  gcc_checking_assert (attr_name[0] != '_');
+  gcc_checking_assert (attr_ns == NULL || attr_ns[0] != '_');
+
+  for (p = &list; *p;)
+    {
+      tree l = *p;
+
+      tree attr = get_attribute_name (l);
+      if (is_attribute_p (attr_name, attr)
+	  && is_attribute_namespace_p (attr_ns, l))
+	{
+	  *p = TREE_CHAIN (l);
+	  continue;
+	}
+      p = &TREE_CHAIN (l);
     }
 
   return list;
@@ -2019,6 +2118,45 @@ private_lookup_attribute (const char *attr_name, size_t attr_len, tree list)
   return list;
 }
 
+/* Similarly but with also attribute namespace.  */
+
+tree
+private_lookup_attribute (const char *attr_ns, const char *attr_name,
+			  size_t attr_ns_len, size_t attr_len, tree list)
+{
+  while (list)
+    {
+      tree attr = get_attribute_name (list);
+      size_t ident_len = IDENTIFIER_LENGTH (attr);
+      if (cmp_attribs (attr_name, attr_len, IDENTIFIER_POINTER (attr),
+		       ident_len))
+	{
+	  tree ns = get_attribute_namespace (list);
+	  if (ns == NULL_TREE)
+	    {
+	      if (attr_ns_len == 0)
+		break;
+	    }
+	  else if (attr_ns)
+	    {
+	      ident_len = IDENTIFIER_LENGTH (ns);
+	      if (attr_ns_len == 0)
+		{
+		  if (cmp_attribs ("gnu", strlen ("gnu"),
+				   IDENTIFIER_POINTER (ns), ident_len))
+		    break;
+		}
+	      else if (cmp_attribs (attr_ns, attr_ns_len,
+				    IDENTIFIER_POINTER (ns), ident_len))
+		break;
+	    }
+	}
+      list = TREE_CHAIN (list);
+    }
+
+  return list;
+}
+
 /* Return true if the function decl or type NODE has been declared
    with attribute ANAME among attributes ATTRS.  */
 
@@ -2104,7 +2242,7 @@ decls_mismatched_attributes (tree tmpl, tree decl, tree attrlist,
   };
 
   for (unsigned i = 0; i != 2; ++i)
-    for (unsigned j = 0; j != sizeof whitelist / sizeof *whitelist; ++j)
+    for (unsigned j = 0; j != ARRAY_SIZE (whitelist); ++j)
       if (lookup_attribute (whitelist[j], tmpl_attrs[i])
 	  || lookup_attribute (whitelist[j], decl_attrs[i]))
 	return 0;
@@ -2549,51 +2687,6 @@ attr_access::array_as_string (tree type) const
 namespace selftest
 {
 
-/* Helper types to verify the consistency attribute exclusions.  */
-
-typedef std::pair<const char *, const char *> excl_pair;
-
-struct excl_hash_traits: typed_noop_remove<excl_pair>
-{
-  typedef excl_pair  value_type;
-  typedef value_type compare_type;
-
-  static hashval_t hash (const value_type &x)
-  {
-    hashval_t h1 = htab_hash_string (x.first);
-    hashval_t h2 = htab_hash_string (x.second);
-    return h1 ^ h2;
-  }
-
-  static bool equal (const value_type &x, const value_type &y)
-  {
-    return !strcmp (x.first, y.first) && !strcmp (x.second, y.second);
-  }
-
-  static void mark_deleted (value_type &x)
-  {
-    x = value_type (NULL, NULL);
-  }
-
-  static const bool empty_zero_p = false;
-
-  static void mark_empty (value_type &x)
-  {
-    x = value_type ("", "");
-  }
-
-  static bool is_deleted (const value_type &x)
-  {
-    return !x.first && !x.second;
-  }
-
-  static bool is_empty (const value_type &x)
-  {
-    return !*x.first && !*x.second;
-  }
-};
-
-
 /* Self-test to verify that each attribute exclusion is symmetric,
    meaning that if attribute A is encoded as incompatible with
    attribute B then the opposite relationship is also encoded.
@@ -2603,58 +2696,59 @@ struct excl_hash_traits: typed_noop_remove<excl_pair>
 static void
 test_attribute_exclusions ()
 {
+  using excl_hash_traits = pair_hash<nofree_string_hash, nofree_string_hash>;
+
   /* Iterate over the array of attribute tables first (with TI0 as
      the index) and over the array of attribute_spec in each table
      (with SI0 as the index).  */
-  const size_t ntables = ARRAY_SIZE (attribute_tables);
+  hash_set<excl_hash_traits> excl_set;
 
-  /* Set of pairs of mutually exclusive attributes.  */
-  typedef hash_set<excl_pair, false, excl_hash_traits> exclusion_set;
-  exclusion_set excl_set;
+  for (auto scoped_array : attribute_tables)
+    for (auto scoped_attributes : scoped_array)
+      for (const attribute_spec &attribute : scoped_attributes->attributes)
+	{
+	  const attribute_spec::exclusions *excl = attribute.exclude;
 
-  for (size_t ti0 = 0; ti0 != ntables; ++ti0)
-    for (size_t s0 = 0; attribute_tables[ti0][s0].name; ++s0)
-      {
-	const attribute_spec::exclusions *excl
-	  = attribute_tables[ti0][s0].exclude;
+	  /* Skip each attribute that doesn't define exclusions.  */
+	  if (!excl)
+	    continue;
 
-	/* Skip each attribute that doesn't define exclusions.  */
-	if (!excl)
-	  continue;
+	  /* Skip standard (non-GNU) attributes, since currently the
+	     exclusions are implicitly for GNU attributes only.
+	     Also, C++ likely and unlikely get rewritten to gnu::hot
+	     and gnu::cold, so symmetry isn't necessary there.  */
+	  if (!scoped_attributes->ns)
+	    continue;
 
-	const char *attr_name = attribute_tables[ti0][s0].name;
+	  const char *attr_name = attribute.name;
 
-	/* Iterate over the set of exclusions for every attribute
-	   (with EI0 as the index) adding the exclusions defined
-	   for each to the set.  */
-	for (size_t ei0 = 0; excl[ei0].name; ++ei0)
-	  {
-	    const char *excl_name = excl[ei0].name;
+	  /* Iterate over the set of exclusions for every attribute
+	     (with EI0 as the index) adding the exclusions defined
+	     for each to the set.  */
+	  for (size_t ei0 = 0; excl[ei0].name; ++ei0)
+	    {
+	      const char *excl_name = excl[ei0].name;
 
-	    if (!strcmp (attr_name, excl_name))
-	      continue;
+	      if (!strcmp (attr_name, excl_name))
+		continue;
 
-	    excl_set.add (excl_pair (attr_name, excl_name));
-	  }
-      }
+	      excl_set.add ({ attr_name, excl_name });
+	    }
+	}
 
   /* Traverse the set of mutually exclusive pairs of attributes
      and verify that they are symmetric.  */
-  for (exclusion_set::iterator it = excl_set.begin ();
-       it != excl_set.end ();
-       ++it)
-    {
-      if (!excl_set.contains (excl_pair ((*it).second, (*it).first)))
-	{
-	  /* An exclusion for an attribute has been found that
-	     doesn't have a corresponding exclusion in the opposite
-	     direction.  */
-	  char desc[120];
-	  sprintf (desc, "'%s' attribute exclusion '%s' must be symmetric",
-		   (*it).first, (*it).second);
-	  fail (SELFTEST_LOCATION, desc);
-	}
-    }
+  for (auto excl_pair : excl_set)
+    if (!excl_set.contains ({ excl_pair.second, excl_pair.first }))
+      {
+	/* An exclusion for an attribute has been found that
+	   doesn't have a corresponding exclusion in the opposite
+	   direction.  */
+	char desc[120];
+	sprintf (desc, "'%s' attribute exclusion '%s' must be symmetric",
+		 excl_pair.first, excl_pair.second);
+	fail (SELFTEST_LOCATION, desc);
+      }
 }
 
 void
@@ -2666,3 +2760,5 @@ attribs_cc_tests ()
 } /* namespace selftest */
 
 #endif /* CHECKING_P */
+
+#include "gt-attribs.h"

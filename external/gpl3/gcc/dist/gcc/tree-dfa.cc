@@ -1,5 +1,5 @@
 /* Data flow functions for trees.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -59,6 +59,25 @@ static void collect_dfa_stats (struct dfa_stats_d *);
 			Dataflow analysis (DFA) routines
 ---------------------------------------------------------------------------*/
 
+/* Renumber the gimple stmt uids in one block.  The caller is responsible
+   of calling set_gimple_stmt_max_uid (fun, 0) at some point.  */
+
+void
+renumber_gimple_stmt_uids_in_block (struct function *fun, basic_block bb)
+{
+  gimple_stmt_iterator bsi;
+  for (bsi = gsi_start_phis (bb); !gsi_end_p (bsi); gsi_next (&bsi))
+    {
+      gimple *stmt = gsi_stmt (bsi);
+      gimple_set_uid (stmt, inc_gimple_stmt_max_uid (fun));
+    }
+  for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
+    {
+      gimple *stmt = gsi_stmt (bsi);
+      gimple_set_uid (stmt, inc_gimple_stmt_max_uid (fun));
+    }
+}
+
 /* Renumber all of the gimple stmt uids.  */
 
 void
@@ -68,19 +87,7 @@ renumber_gimple_stmt_uids (struct function *fun)
 
   set_gimple_stmt_max_uid (fun, 0);
   FOR_ALL_BB_FN (bb, fun)
-    {
-      gimple_stmt_iterator bsi;
-      for (bsi = gsi_start_phis (bb); !gsi_end_p (bsi); gsi_next (&bsi))
-	{
-	  gimple *stmt = gsi_stmt (bsi);
-	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (fun));
-	}
-      for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
-	{
-	  gimple *stmt = gsi_stmt (bsi);
-	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (fun));
-	}
-    }
+    renumber_gimple_stmt_uids_in_block (fun, bb);
 }
 
 /* Like renumber_gimple_stmt_uids, but only do work on the basic blocks
@@ -93,20 +100,7 @@ renumber_gimple_stmt_uids_in_blocks (basic_block *blocks, int n_blocks)
 
   set_gimple_stmt_max_uid (cfun, 0);
   for (i = 0; i < n_blocks; i++)
-    {
-      basic_block bb = blocks[i];
-      gimple_stmt_iterator bsi;
-      for (bsi = gsi_start_phis (bb); !gsi_end_p (bsi); gsi_next (&bsi))
-	{
-	  gimple *stmt = gsi_stmt (bsi);
-	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (cfun));
-	}
-      for (bsi = gsi_start_bb (bb); !gsi_end_p (bsi); gsi_next (&bsi))
-	{
-	  gimple *stmt = gsi_stmt (bsi);
-	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (cfun));
-	}
-    }
+    renumber_gimple_stmt_uids_in_block (cfun, blocks[i]);
 }
 
 
@@ -236,9 +230,10 @@ dump_dfa_stats (FILE *file)
   fprintf (file, "\n");
 
   if (dfa_stats.num_phis)
-    fprintf (file, "Average number of arguments per PHI node: %.1f (max: %ld)\n",
+    fprintf (file, "Average number of arguments per PHI node: %.1f (max: "
+	     HOST_SIZE_T_PRINT_DEC ")\n",
 	     (float) dfa_stats.num_phi_args / (float) dfa_stats.num_phis,
-	     (long) dfa_stats.max_num_phi_args);
+	     (fmt_size_t) dfa_stats.max_num_phi_args);
 
   fprintf (file, "\n");
 }
@@ -378,9 +373,9 @@ get_or_create_ssa_default_def (struct function *fn, tree var)
    true, the storage order of the reference is reversed.  */
 
 tree
-get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
-			 poly_int64_pod *psize,
-			 poly_int64_pod *pmax_size,
+get_ref_base_and_extent (tree exp, poly_int64 *poffset,
+			 poly_int64 *psize,
+			 poly_int64 *pmax_size,
 			 bool *preverse)
 {
   poly_offset_int bitsize = -1;
@@ -453,8 +448,8 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 		    if (!next
 			|| TREE_CODE (stype) != RECORD_TYPE)
 		      {
-			tree fsize = DECL_SIZE_UNIT (field);
-			tree ssize = TYPE_SIZE_UNIT (stype);
+			tree fsize = DECL_SIZE (field);
+			tree ssize = TYPE_SIZE (stype);
 			if (fsize == NULL
 			    || !poly_int_tree_p (fsize)
 			    || ssize == NULL
@@ -465,7 +460,6 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 			    poly_offset_int tem
 			      = (wi::to_poly_offset (ssize)
 				 - wi::to_poly_offset (fsize));
-			    tem <<= LOG2_BITS_PER_UNIT;
 			    tem -= woffset;
 			    maxsize += tem;
 			  }
@@ -538,10 +532,7 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 
 		value_range vr;
 		range_query *query;
-		if (cfun)
-		  query = get_range_query (cfun);
-		else
-		  query = get_global_range_query ();
+		query = get_range_query (cfun);
 
 		if (TREE_CODE (index) == SSA_NAME
 		    && (low_bound = array_ref_low_bound (exp),
@@ -549,7 +540,8 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 		    && (unit_size = array_ref_element_size (exp),
 			TREE_CODE (unit_size) == INTEGER_CST)
 		    && query->range_of_expr (vr, index)
-		    && vr.kind () == VR_RANGE)
+		    && !vr.varying_p ()
+		    && !vr.undefined_p ())
 		  {
 		    wide_int min = vr.lower_bound ();
 		    wide_int max = vr.upper_bound ();
@@ -557,7 +549,8 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 		    /* Try to constrain maxsize with range information.  */
 		    offset_int omax
 		      = offset_int::from (max, TYPE_SIGN (TREE_TYPE (index)));
-		    if (known_lt (lbound, omax))
+		    if (wi::get_precision (max) <= ADDR_MAX_BITSIZE
+			&& known_lt (lbound, omax))
 		      {
 			poly_offset_int rmaxsize;
 			rmaxsize = (omax - lbound + 1)
@@ -575,7 +568,8 @@ get_ref_base_and_extent (tree exp, poly_int64_pod *poffset,
 		    /* Try to adjust bit_offset with range information.  */
 		    offset_int omin
 		      = offset_int::from (min, TYPE_SIGN (TREE_TYPE (index)));
-		    if (known_le (lbound, omin))
+		    if (wi::get_precision (min) <= ADDR_MAX_BITSIZE
+			&& known_le (lbound, omin))
 		      {
 			poly_offset_int woffset
 			  = wi::sext (omin - lbound,
@@ -771,7 +765,7 @@ get_ref_base_and_extent_hwi (tree exp, HOST_WIDE_INT *poffset,
    its argument or a constant if the argument is known to be constant.  */
 
 tree
-get_addr_base_and_unit_offset_1 (tree exp, poly_int64_pod *poffset,
+get_addr_base_and_unit_offset_1 (tree exp, poly_int64 *poffset,
 				 tree (*valueize) (tree))
 {
   poly_int64 byte_offset = 0;
@@ -913,7 +907,7 @@ done:
    is not BITS_PER_UNIT-aligned.  */
 
 tree
-get_addr_base_and_unit_offset (tree exp, poly_int64_pod *poffset)
+get_addr_base_and_unit_offset (tree exp, poly_int64 *poffset)
 {
   return get_addr_base_and_unit_offset_1 (exp, poffset, NULL);
 }

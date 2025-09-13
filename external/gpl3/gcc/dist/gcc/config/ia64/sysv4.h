@@ -1,6 +1,6 @@
 /* Override definitions in elfos.h to be correct for IA64.
 
-Copyright (C) 2000-2022 Free Software Foundation, Inc.
+Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -29,9 +29,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* We want DWARF2 as specified by the IA64 ABI.  */
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-
-/* Stabs does not work properly for 64-bit targets.  */
-#undef DBX_DEBUGGING_INFO
 
 /* Various pseudo-ops for which the Intel assembler uses non-standard
    definitions.  */
@@ -103,8 +100,8 @@ do {						\
 #undef FINI_SECTION_ASM_OP
 #define FINI_SECTION_ASM_OP	"\t.section\t.fini,\"ax\",\"progbits\""
 
-#define DBX_REGISTER_NUMBER(REGNO) \
-  ia64_dbx_register_number(REGNO)
+#define DEBUGGER_REGNO(REGNO) \
+  ia64_debugger_regno(REGNO)
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"

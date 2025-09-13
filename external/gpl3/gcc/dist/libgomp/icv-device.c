@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2024 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -27,12 +27,13 @@
    expected to replace.  */
 
 #include "libgomp.h"
+#include <limits.h>
 
 void
 omp_set_default_device (int device_num)
 {
   struct gomp_task_icv *icv = gomp_icv (true);
-  icv->default_device_var = device_num >= 0 ? device_num : 0;
+  icv->default_device_var = device_num;
 }
 
 ialias (omp_set_default_device)
@@ -41,6 +42,9 @@ int
 omp_get_default_device (void)
 {
   struct gomp_task_icv *icv = gomp_icv (false);
+  if (icv->default_device_var == INT_MIN)
+    /* This implies OMP_TARGET_OFFLOAD=mandatory.  */
+    gomp_init_targets_once ();
   return icv->default_device_var;
 }
 
@@ -80,3 +84,37 @@ omp_get_device_num (void)
 }
 
 ialias (omp_get_device_num)
+
+int
+omp_get_max_teams (void)
+{
+  return gomp_nteams_var;
+}
+
+ialias (omp_get_max_teams)
+
+void
+omp_set_num_teams (int num_teams)
+{
+  if (num_teams >= 0)
+    gomp_nteams_var = num_teams;
+}
+
+ialias (omp_set_num_teams)
+
+int
+omp_get_teams_thread_limit (void)
+{
+  return gomp_teams_thread_limit_var;
+}
+
+ialias (omp_get_teams_thread_limit)
+
+void
+omp_set_teams_thread_limit (int thread_limit)
+{
+  if (thread_limit >= 0)
+    gomp_teams_thread_limit_var = thread_limit;
+}
+
+ialias (omp_set_teams_thread_limit)

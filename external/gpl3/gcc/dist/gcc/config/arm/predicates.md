@@ -1,5 +1,5 @@
 ;; Predicate definitions for ARM and Thumb
-;; Copyright (C) 2004-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2024 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -849,6 +849,10 @@
   (and (match_operand 0 "memory_operand")
        (match_code "reg" "0")))
 
+;; True if the operand is memory reference suitable for a ldrd/strd.
+(define_predicate "arm_ldrd_memory_operand"
+  (match_test "arm_ldrd_legitimate_address (op)"))
+
 ;; Predicates for parallel expanders based on mode.
 (define_special_predicate "vect_par_constant_high" 
   (match_code "parallel")
@@ -903,3 +907,12 @@
 (define_special_predicate "aligned_operand"
   (ior (not (match_code "mem"))
        (match_test "MEM_ALIGN (op) >= GET_MODE_ALIGNMENT (mode)")))
+
+;; A special predicate that doesn't match a particular mode.
+(define_special_predicate "arm_any_register_operand"
+  (match_code "reg"))
+
+;; General memory operand that disallows Thumb-1 POST_INC.
+(define_predicate "mem_and_no_t1_wback_op"
+  (and (match_operand 0 "memory_operand")
+       (match_test "!(TARGET_THUMB1 && GET_CODE (XEXP (op, 0)) == POST_INC)")))

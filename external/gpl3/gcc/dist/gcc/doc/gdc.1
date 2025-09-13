@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GDC 1"
-.TH GDC 1 "2025-07-11" "gcc-12.5.0" "GNU"
+.TH GDC 1 "2025-05-23" "gcc-14.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -255,10 +255,6 @@ The \fB\-fdebug\fR option itself sets the debug level to \f(CW1\fR,
 while \fB\-fdebug=\fR enables \f(CW\*(C`debug\*(C'\fR code that are identified
 by any of the following values:
 .RS 4
-.IP "\fBlevel\fR" 4
-.IX Item "level"
-Sets the debug level to \fIlevel\fR, any \f(CW\*(C`debug\*(C'\fR code <= \fIlevel\fR
-is compiled into the program.
 .IP "\fBident\fR" 4
 .IX Item "ident"
 Turns on compilation of any \f(CW\*(C`debug\*(C'\fR code identified by \fIident\fR.
@@ -339,6 +335,9 @@ values are supported:
 .IP "\fBall\fR" 4
 .IX Item "all"
 Turns on all upcoming D language features.
+.IP "\fBbitfields\fR" 4
+.IX Item "bitfields"
+Implements bit-fields in D.
 .IP "\fBdip1000\fR" 4
 .IX Item "dip1000"
 Implements <\fBhttps://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1000.md\fR>
@@ -365,6 +364,10 @@ Turns on generation of struct equality to use field-wise comparisons.
 .IX Item "fixaliasthis"
 Implements new lookup rules that check the current scope for \f(CW\*(C`alias this\*(C'\fR
 before searching in upper scopes.
+.IP "\fBfiximmutableconv\fR" 4
+.IX Item "fiximmutableconv"
+Disallows unsound immutable conversions that were formerly incorrectly
+permitted.
 .IP "\fBin\fR" 4
 .IX Item "in"
 Implements \f(CW\*(C`in\*(C'\fR parameters to mean \f(CW\*(C`scope const [ref]\*(C'\fR and accepts
@@ -373,20 +376,15 @@ rvalues.
 .IX Item "inclusiveincontracts"
 Implements \f(CW\*(C`in\*(C'\fR contracts of overridden methods to be a superset of parent
 contract.
-.IP "\fBintpromote\fR" 4
-.IX Item "intpromote"
-Implements C\-style integral promotion for unary \f(CW\*(C`+\*(C'\fR, \f(CW\*(C`\-\*(C'\fR and \f(CW\*(C`~\*(C'\fR
-expressions.
 .IP "\fBnosharedaccess\fR" 4
 .IX Item "nosharedaccess"
 Turns off and disallows all access to shared memory objects.
 .IP "\fBrvaluerefparam\fR" 4
 .IX Item "rvaluerefparam"
 Implements rvalue arguments to \f(CW\*(C`ref\*(C'\fR parameters.
-.IP "\fBshortenedmethods\fR" 4
-.IX Item "shortenedmethods"
-Implements use of \f(CW\*(C`=>\*(C'\fR for methods and top-level functions in addition to
-lambdas.
+.IP "\fBsystemvariables\fR" 4
+.IX Item "systemvariables"
+Disables access to variables marked \f(CW@system\fR from \f(CW@safe\fR code.
 .RE
 .RS 4
 .RE
@@ -411,6 +409,10 @@ are supported:
 .IP "\fBall\fR" 4
 .IX Item "all"
 Turns off all revertable D language features.
+.IP "\fBdip1000\fR" 4
+.IX Item "dip1000"
+Reverts <\fBhttps://github.com/dlang/DIPs/blob/master/DIPs/other/DIP1000.md\fR>
+(Scoped pointers).
 .IP "\fBdip25\fR" 4
 .IX Item "dip25"
 Reverts <\fBhttps://github.com/dlang/DIPs/blob/master/DIPs/archive/DIP25.md\fR>
@@ -418,9 +420,10 @@ Reverts <\fBhttps://github.com/dlang/DIPs/blob/master/DIPs/archive/DIP25.md\fR>
 .IP "\fBdtorfields\fR" 4
 .IX Item "dtorfields"
 Turns off generation for destructing fields of partially constructed objects.
-.IP "\fBmarkdown\fR" 4
-.IX Item "markdown"
-Turns off Markdown replacements in Ddoc comments.
+.IP "\fBintpromote\fR" 4
+.IX Item "intpromote"
+Turns off C\-style integral promotion for unary \f(CW\*(C`+\*(C'\fR, \f(CW\*(C`\-\*(C'\fR and \f(CW\*(C`~\*(C'\fR
+expressions.
 .RE
 .RS 4
 .RE
@@ -444,10 +447,6 @@ Turns on compilation of \f(CW\*(C`unittest\*(C'\fR code, and turns on the
 Turns on compilation of conditional \f(CW\*(C`version\*(C'\fR code into the program
 identified by any of the following values:
 .RS 4
-.IP "\fBlevel\fR" 4
-.IX Item "level"
-Sets the version level to \fIlevel\fR, any \f(CW\*(C`version\*(C'\fR code >= \fIlevel\fR
-is compiled into the program.
 .IP "\fBident\fR" 4
 .IX Item "ident"
 Turns on compilation of \f(CW\*(C`version\*(C'\fR code identified by \fIident\fR.
@@ -642,6 +641,9 @@ whose bound can be larger than \fIn\fR bytes.
 \&\fB\-Wno\-alloca\-larger\-than\fR disables
 \&\fB\-Walloca\-larger\-than\fR warning and is equivalent to
 \&\fB\-Walloca\-larger\-than=\fR\fI\s-1SIZE_MAX\s0\fR or larger.
+.IP "\fB\-Wno\-builtin\-declaration\-mismatch\fR" 4
+.IX Item "-Wno-builtin-declaration-mismatch"
+Warn if a built-in function is declared with an incompatible signature.
 .IP "\fB\-Wcast\-result\fR" 4
 .IX Item "-Wcast-result"
 Warn about casts that will produce a null or zero result.  Currently
@@ -654,16 +656,25 @@ Do not warn about usage of deprecated features and symbols with
 .IP "\fB\-Werror\fR" 4
 .IX Item "-Werror"
 Turns all warnings into errors.
+.IP "\fB\-Wextra\fR" 4
+.IX Item "-Wextra"
+This enables some extra warning flags that are not enabled by
+\&\fB\-Wall\fR.
+.Sp
+\&\fB\-Waddress
+\&\-Wcast\-result
+\&\-Wmismatched\-special\-enum
+\&\-Wunknown\-pragmas\fR
+.IP "\fB\-Wmismatched\-special\-enum\fR" 4
+.IX Item "-Wmismatched-special-enum"
+Warn when an enum the compiler recognizes as special is declared with a
+different size to the built-in type it is representing.
 .IP "\fB\-Wspeculative\fR" 4
 .IX Item "-Wspeculative"
 List all error messages from speculative compiles, such as
 \&\f(CW\*(C`_\|_traits(compiles, ...)\*(C'\fR.  This option does not report
 messages as warnings, and these messages therefore never become
 errors when the \fB\-Werror\fR option is also used.
-.IP "\fB\-Wtemplates\fR" 4
-.IX Item "-Wtemplates"
-Warn when a template instantiation is encountered.  Some coding
-rules disallow templates, and this may be used to enforce that rule.
 .IP "\fB\-Wunknown\-pragmas\fR" 4
 .IX Item "-Wunknown-pragmas"
 Warn when a \f(CW\*(C`pragma()\*(C'\fR is encountered that is not understood by
@@ -674,9 +685,11 @@ the compiler, won't get reported.
 .IX Item "-Wno-varargs"
 Do not warn upon questionable usage of the macros used to handle variable
 arguments like \f(CW\*(C`va_start\*(C'\fR.
-.IP "\fB\-fignore\-unknown\-pragmas\fR" 4
-.IX Item "-fignore-unknown-pragmas"
-Turns off errors for unsupported pragmas.
+.IP "\fB\-fno\-ignore\-unknown\-pragmas\fR" 4
+.IX Item "-fno-ignore-unknown-pragmas"
+Do not recognize unsupported pragmas.  Any \f(CW\*(C`pragma()\*(C'\fR encountered that is
+not part of the D language will result in an error.  This option is now
+deprecated and will be removed in a future release.
 .IP "\fB\-fmax\-errors=\fR\fIn\fR" 4
 .IX Item "-fmax-errors=n"
 Limits the maximum number of error messages to \fIn\fR, at which point
@@ -715,9 +728,6 @@ List statistics on template instantiations.
 .IP "\fBtls\fR" 4
 .IX Item "tls"
 List all variables going into thread local storage.
-.IP "\fBvmarkdown\fR" 4
-.IX Item "vmarkdown"
-List instances of Markdown replacements in Ddoc.
 .RE
 .RS 4
 .RE
@@ -776,7 +786,7 @@ and all \f(CW\*(C`function\*(C'\fR bodies that are being compiled.
 and the Info entries for \fIgdc\fR and \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2006\-2022 Free Software Foundation, Inc.
+Copyright (c) 2006\-2024 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

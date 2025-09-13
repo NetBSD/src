@@ -1,6 +1,6 @@
 // std::thread declarations -*- C++ -*-
 
-// Copyright (C) 2008-2022 Free Software Foundation, Inc.
+// Copyright (C) 2008-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -53,6 +53,10 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
+#if __glibcxx_formatters
+  template<typename, typename> class formatter;
+#endif
+
   /** @addtogroup threads
    *  @{
    */
@@ -79,15 +83,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   {
   public:
 #ifdef _GLIBCXX_HAS_GTHREADS
-    // Abstract base class for types that wrap arbitrary functors to be
-    // invoked in the new thread of execution.
-    struct _State
-    {
-      virtual ~_State();
-      virtual void _M_run() = 0;
-    };
-    using _State_ptr = unique_ptr<_State>;
-
     using native_handle_type = __gthread_t;
 #else
     using native_handle_type = int;
@@ -126,13 +121,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       template<class _CharT, class _Traits>
 	friend basic_ostream<_CharT, _Traits>&
 	operator<<(basic_ostream<_CharT, _Traits>& __out, id __id);
+
+#if __glibcxx_formatters
+      friend formatter<id, char>;
+      friend formatter<id, wchar_t>;
+#endif
     };
 
   private:
     id				_M_id;
 
     // _GLIBCXX_RESOLVE_LIB_DEFECTS
-    // 2097.  packaged_task constructors should be constrained
+    // 2097. packaged_task constructors should be constrained
     // 3039. Unnecessary decay in thread and packaged_task
     template<typename _Tp>
       using __not_same = __not_<is_same<__remove_cvref_t<_Tp>, thread>>;
@@ -141,6 +141,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     thread() noexcept = default;
 
 #ifdef _GLIBCXX_HAS_GTHREADS
+  private:
+    // This adds to user code that creates std:thread objects (because
+    // it is called by the template ctor below) strong references to
+    // pthread_create and pthread_join, which ensures they are both
+    // linked in even during static linking.  We can't depend on
+    // gthread calls to bring them in, because those may use weak
+    // references.
+    static void
+    _M_thread_deps_never_run() {
+#ifdef GTHR_ACTIVE_PROXY
+      reinterpret_cast<void (*)(void)>(&pthread_create)();
+      reinterpret_cast<void (*)(void)>(&pthread_join)();
+#endif
+    }
+
+  public:
     template<typename _Callable, typename... _Args,
 	     typename = _Require<__not_same<_Callable>>>
       explicit
@@ -151,18 +167,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  "std::thread arguments must be invocable after conversion to rvalues"
 	  );
 
-#ifdef GTHR_ACTIVE_PROXY
-	// Create a reference to pthread_create, not just the gthr weak symbol.
-	auto __depend = reinterpret_cast<void(*)()>(&pthread_create);
-#else
-	auto __depend = nullptr;
-#endif
 	using _Wrapper = _Call_wrapper<_Callable, _Args...>;
 	// Create a call wrapper with DECAY_COPY(__f) as its target object
 	// and DECAY_COPY(__args)... as its bound argument entities.
 	_M_start_thread(_State_ptr(new _State_impl<_Wrapper>(
 	      std::forward<_Callable>(__f), std::forward<_Args>(__args)...)),
-	    __depend);
+	    _M_thread_deps_never_run);
       }
 #endif // _GLIBCXX_HAS_GTHREADS
 
@@ -216,6 +226,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     hardware_concurrency() noexcept;
 
 #ifdef _GLIBCXX_HAS_GTHREADS
+#ifndef _GLIBCXX_THREAD_IMPL
+  private:
+#endif
+    // Abstract base class for types that wrap arbitrary functors to be
+    // invoked in the new thread of execution.
+    struct _State
+    {
+      virtual ~_State();
+      virtual void _M_run() = 0;
+    };
+    using _State_ptr = unique_ptr<_State>;
+
   private:
     template<typename _Callable>
       struct _State_impl : public _State

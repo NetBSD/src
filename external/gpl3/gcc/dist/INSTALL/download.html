@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -80,6 +80,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <a name="index-Downloading-GCC"></a>
 <a name="index-Downloading-the-Source"></a>
 
@@ -89,9 +92,9 @@ HTTPS as tarballs compressed with <code>gzip</code> or <code>bzip2</code>.
 <p>Please refer to the <a href="https://gcc.gnu.org/releases.html">releases web page</a>
 for information on how to obtain GCC.
 </p>
-<p>The source distribution includes the C, C++, Objective-C, Fortran,
-and Ada (in the case of GCC 3.1 and later) compilers, as well as
-runtime libraries for C++, Objective-C, and Fortran.
+<p>The source distribution includes the Ada, C, C++, Objective-C, D (GCC 9
+and later), Fortran, Go, and Modula-2 (GCC 13 and later) compilers, as
+well as runtime libraries for C++, Objective-C, and Fortran.
 For previous versions these were downloadable as separate components such
 as the core GCC distribution, which included the C language front end and
 shared components, and language-specific distributions including the
@@ -105,14 +108,14 @@ components of the binutils you intend to build alongside the compiler
 (<samp>bfd</samp>, <samp>binutils</samp>, <samp>gas</samp>, <samp>gprof</samp>, <samp>ld</samp>,
 <samp>opcodes</samp>, &hellip;) to the directory containing the GCC sources.
 </p>
-<p>Likewise the GMP, MPFR and MPC libraries can be automatically built
-together with GCC.  You may simply run the
+<p>Likewise the GMP, MPFR, MPC and Gettext libraries can be automatically
+built together with GCC.  You may simply run the
 <code>contrib/download_prerequisites</code> script in the GCC source directory
 to set up everything.
-Otherwise unpack the GMP, MPFR and/or MPC source
+Otherwise unpack the GMP, MPFR, MPC and/or Gettext source
 distributions in the directory containing the GCC sources and rename
-their directories to <samp>gmp</samp>, <samp>mpfr</samp> and <samp>mpc</samp>,
-respectively (or use symbolic links with the same name).
+their directories to <samp>gmp</samp>, <samp>mpfr</samp>, <samp>mpc</samp> and
+<samp>gettext</samp>, respectively (or use symbolic links with the same name).
 </p>
 <hr />
 <p>

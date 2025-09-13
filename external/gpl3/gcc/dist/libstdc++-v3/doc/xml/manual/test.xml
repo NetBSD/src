@@ -266,10 +266,8 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
 
      <para>
        Archives of test results for various versions and platforms are
-       available on the GCC website in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/gcc-4.3/buildstat.html">build
-       status</link> section of each individual release, and are also
        archived on a daily basis on the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/ml/gcc-testresults/current">gcc-testresults</link>
-       mailing list. Please check either of these places for a similar
+       mailing list. Please check there for a similar
        combination of source version, operating system, and host CPU.
      </para>
   </section>
@@ -351,6 +349,20 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
     </para>
 
     <para>
+      If you wish to run the testsuite in a freestanding configuration, you can
+      pass the <code>-ffreestanding</code> flag.  Doing so will run the tests
+      that do not require hosted features, and emit a
+      <literal>UNSUPPORTED</literal> for those that do.  To run tests in the
+      freestanding configuration, you still need to build for a target you can
+      run programs on, e.g. <code>x86_64-pc-linux-gnu</code>, as a few tests
+      still execute the code they build.  Here's an example of how to run the
+      testsuite with libstdc++ in freestanding mode:
+      <programlisting>
+    make check-target-libstdc++-v3 RUNTESTFLAGS='--target_board=unix/-ffreestanding'
+      </programlisting>
+    </para>
+
+    <para>
       You can run the tests with a compiler and library that have
       already been installed.  Make sure that the compiler (e.g.,
       <command>g++</command>) is in your <envar>PATH</envar>.  If you are
@@ -369,7 +381,7 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
 
     <para>
       The testsuite will create a number of files in the directory in
-      which you run this command,.  Some of those files might use the
+      which you run this command.  Some of those files might use the
       same name as files created by other testsuites (like the ones
       for GCC and G++), so you should not try to run all the
       testsuites in parallel from the same directory.
@@ -577,11 +589,23 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
       tests multiple times in different variations. For example, to run the
       entire testsuite three times using <option>-O3</option> but with
       different <option>-std</option> options:
-<programlisting>    make check 'RUNTESTFLAGS=--target_board=unix/-O3\"{-std=gnu++98,-std=gnu++11,-std=gnu++14}\"'</programlisting>
+<programlisting>    make check 'RUNTESTFLAGS=--target_board=unix/-O3\"{-std=gnu++98,-std=gnu++11,-std=gnu++17}\"'</programlisting>
       N.B. that set of variations could also be written as
       <literal>unix/-O3\"{-std=gnu++98,-std=gnu++11,}\"</literal> so that
       the third variation would use the default for <option>-std</option>
-      (which is <option>-std=gnu++14</option> as of GCC 6).
+      (which is <option>-std=gnu++17</option> as of GCC 11).
+    </para>
+
+    <para>
+      Since GCC 14, the libstdc++ testsuite has built-in support for running
+      tests with more than one <option>-std</option>, similar to the G++ tests.
+      Adding <code>set v3_std_list { 11 17 23 }</code> to
+      <filename>~/.dejagnurc</filename> or a file named by the
+      <envar>DEJAGNU</envar> environment variable will cause every test to
+      be run three times, using a different <option>-std</option> each time.
+      Alternatively, a list of standard versions to test with can be specified
+      as a comma-separated list in the <envar>GLIBCXX_TESTSUITE_STDS</envar>
+      environment variable.
     </para>
 
     <para>
@@ -630,8 +654,12 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
    </para>
 
    <para>
-    All files are copyright the FSF, and GPL'd: this is very
-    important.  The first copyright year should correspond to the date
+    Historically all test files were copyright the FSF, and GPL licensed.
+    We no longer require that, because most tests are uninteresting
+    and contain no "original authorship", and so would not be protected
+    by copyright anyway.
+    If you do want to add the FSF copyright notice and GPL licence text,
+    then the first copyright year should correspond to the date
     the file was checked in to version control. If a test is copied from
     an existing file it should retain the copyright years from the
     original file.
@@ -748,11 +776,12 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
     It is possible to indicate that a test should <emphasis>only</emphasis>
     be run for a specific standard (and not later standards) using an
     effective target like <literal>c++11_only</literal>. However, this means
-    the test will be skipped by default (because the default mode is
-    <literal>gnu++17</literal>), and so will only run when
-    <option>-std=gnu++11</option> or <option>-std=c++11</option> is used
-    explicitly. For tests that require a specific standard it is better to
-    use a <literal>dg-options</literal> directive:
+    the test will be skipped by default unless <option>-std=gnu++11</option>
+    or <option>-std=c++11</option> is explicitly specified, either via a
+    target board, the <varname>v3_std_list</varname> dejagnu variable,
+    or the <envar>GLIBCXX_TESTSUITE_STDS</envar> environment variable.
+    For tests that require a specific standard it is useful to also add a
+    <literal>dg-options</literal> directive:
 <programlisting>    // { dg-options "-std=gnu++11" }</programlisting>
     This means the test will not get skipped by default, and will always use
     the specific standard dialect that the test requires. This isn't needed
@@ -762,16 +791,25 @@ cat 27_io/objects/char/3_xin.in | a.out</programlisting>
   </para>
 
   <para>
-    Similarly, tests which depend on a newer standard than the default
-    must use <literal>dg-options</literal> instead of (or in addition to)
-    an effective target, so that they are not skipped by default.
-    For example, tests for C++20 features should use
-<programlisting>    // { dg-options "-std=gnu++20" }</programlisting>
-    before any <literal>dg-do</literal> such as:
-<programlisting>    // { dg-do run { target c++20 } }</programlisting>
-    The <literal>dg-options</literal> directive must come first, so that
-    the <literal>-std</literal> flag has already been added to the options
-    before checking the <literal>c++20</literal> effective target.
+    N.B. when a <literal>dg-options</literal> directive is used, it must come
+    first so dejagnu will include those options when checking against any
+    effective targets in <literal>dg-do</literal> and
+    <literal>dg-require-effective-target</literal> directives.
+  </para>
+
+  <para>
+    Since GCC 14, tests which depend on a newer standard than the default
+    do not need to specify that standard in a <literal>dg-options</literal>
+    directive. The testsuite will detect when a test requires a newer standard
+    and will automatically add a suitable <option>-std</option> flag.
+  </para>
+
+  <para>
+    If a testcase requires the use of a strict language dialect, e.g.
+    <option>-std=c++11</option> rather than <option>-std=gnu++11</option>,
+    the following directive will cause that to be used when the testsuite
+    decides which <option>-std</option> options to use for the test:
+<programlisting>    // { dg-add-options strict_std }</programlisting>
   </para>
 
 <section xml:id="tests.dg.examples"><info><title>Examples of Test Directives</title></info>

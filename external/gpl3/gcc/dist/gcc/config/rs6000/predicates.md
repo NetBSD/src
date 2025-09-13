@@ -1,5 +1,5 @@
 ;; Predicate definitions for POWER and PowerPC.
-;; Copyright (C) 2005-2022 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2024 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -694,6 +694,12 @@
   return num_insns > 1;
 })
 
+;; Return true if the operand is a constant that can be loaded with a vspltisw
+;; instruction and then a vupkhsw instruction.
+
+(define_predicate "vspltisw_vupkhsw_constant_split"
+  (and (match_code "const_vector")
+       (match_test "vspltisw_vupkhsw_constant_p (op, mode)")))
 
 ;; Return 1 if the operand is constant that can loaded directly with a XXSPLTIB
 ;; instruction.
@@ -742,6 +748,11 @@
           && xxspltib_constant_p (op, mode, &num_insns, &value))
 	return true;
 
+      /* V2DI constant within RANGE (-16, 15) can be synthesized with a
+	 vspltisw and a vupkhsw.  */
+      if (vspltisw_vupkhsw_constant_p (op, mode, &value))
+	return true;
+
       return easy_altivec_constant (op, mode);
     }
 
@@ -760,7 +771,7 @@
     return 0;
   elt = BYTES_BIG_ENDIAN ? GET_MODE_NUNITS (mode) - 1 : 0;
   val = const_vector_elt_as_int (op, elt);
-  val = ((val & 0xff) ^ 0x80) - 0x80;
+  val = sext_hwi (val, 8);
   return EASY_VECTOR_15_ADD_SELF (val);
 })
 
@@ -901,7 +912,7 @@
   if (!TARGET_QUAD_MEMORY && !TARGET_SYNC_TI)
     return false;
 
-  if (GET_MODE_SIZE (mode) != 16 || !MEM_P (op) || MEM_ALIGN (op) < 128)
+  if (GET_MODE_SIZE (mode) != 16 || MEM_ALIGN (op) < 128)
     return false;
 
   return quad_address_p (XEXP (op, 0), mode, false);
@@ -2087,3 +2098,8 @@
   else
     return false;
 })
+
+(define_predicate "lowpart_subreg_operator"
+  (and (match_code "subreg")
+       (match_test "subreg_lowpart_offset (mode, GET_MODE (SUBREG_REG (op)))
+		    == SUBREG_BYTE (op)")))

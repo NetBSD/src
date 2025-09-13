@@ -1,5 +1,5 @@
 /* GNU Runtime ABI version 8
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
    Contributed by Iain Sandoe (split from objc-act.cc)
 
 This file is part of GCC.
@@ -699,6 +699,9 @@ build_objc_method_call (location_t loc, int super_flag, tree method_prototype,
   sender_cast = build_pointer_type (ftype);
 
   lookup_object = build_c_cast (loc, rcv_p, lookup_object);
+
+  if (error_operand_p (lookup_object))
+    return error_mark_node;
 
   /* Use SAVE_EXPR to avoid evaluating the receiver twice.  */
   lookup_object = save_expr (lookup_object);
@@ -1852,7 +1855,7 @@ generate_static_references (void)
   tree class_name, klass, decl;
   tree cl_chain, in_chain, type
     = build_array_type (build_pointer_type (void_type_node), NULL_TREE);
-  int num_inst, num_class;
+  int num_class;
   char buf[BUFSIZE];
   vec<constructor_elt, va_gc> *decls = NULL;
 
@@ -1861,8 +1864,8 @@ generate_static_references (void)
     {
       vec<constructor_elt, va_gc> *v = NULL;
 
-      for (num_inst = 0, in_chain = TREE_PURPOSE (cl_chain);
-	   in_chain; num_inst++, in_chain = TREE_CHAIN (in_chain));
+      for (in_chain = TREE_PURPOSE (cl_chain);
+	   in_chain; in_chain = TREE_CHAIN (in_chain));
 
       snprintf (buf, BUFSIZE, "_OBJC_STATIC_INSTANCES_%d", num_class);
       decl = start_var_decl (type, buf);

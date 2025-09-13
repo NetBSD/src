@@ -1,5 +1,5 @@
 /* Header file to the Fortran front-end and runtime library
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,9 +19,12 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Flags to specify which standard/extension contains a feature.
-   Note that no features were obsoleted nor deleted in F2003.
+   Note that no features were obsoleted nor deleted in F2003 nor in F2023.
+   Nevertheless, some features available in F2018 are prohibited in F2023.
    Please remember to keep those definitions in sync with
    gfortran.texi.  */
+#define GFC_STD_F2023_DEL	(1<<13)	/* Prohibited in F2023.  */
+#define GFC_STD_F2023		(1<<12)	/* New in F2023.  */
 #define GFC_STD_F2018_DEL	(1<<11)	/* Deleted in F2018.  */
 #define GFC_STD_F2018_OBS	(1<<10)	/* Obsolescent in F2018.  */
 #define GFC_STD_F2018		(1<<9)	/* New in F2018.  */
@@ -40,11 +43,13 @@ along with GCC; see the file COPYING3.  If not see
  * are allowed with a certain -std option.  */
 #define GFC_STD_OPT_F95		(GFC_STD_F77 | GFC_STD_F95 | GFC_STD_F95_OBS  \
 				| GFC_STD_F2008_OBS | GFC_STD_F2018_OBS \
-				| GFC_STD_F2018_DEL)
+				| GFC_STD_F2018_DEL | GFC_STD_F2023_DEL)
 #define GFC_STD_OPT_F03		(GFC_STD_OPT_F95 | GFC_STD_F2003)
 #define GFC_STD_OPT_F08		(GFC_STD_OPT_F03 | GFC_STD_F2008)
 #define GFC_STD_OPT_F18		((GFC_STD_OPT_F08 | GFC_STD_F2018) \
 				& (~GFC_STD_F2018_DEL))
+#define GFC_STD_OPT_F23		((GFC_STD_OPT_F18 | GFC_STD_F2023) \
+				& (~GFC_STD_F2023_DEL))
 
 /* Bitmasks for the various FPE that can be enabled.  These need to be straight integers
    e.g., 8 instead of (1<<3), because they will be included in Fortran source.  */
@@ -60,6 +65,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GFC_FPE_TONEAREST  2
 #define GFC_FPE_TOWARDZERO 3
 #define GFC_FPE_UPWARD     4
+#define GFC_FPE_AWAY       5
 
 /* Size of the buffer required to store FPU state for any target.
    In particular, this has to be larger than fenv_t on all glibc targets.
@@ -133,6 +139,7 @@ typedef enum
   LIBERROR_CORRUPT_FILE,
   LIBERROR_INQUIRE_INTERNAL_UNIT, /* Must be different from STAT_STOPPED_IMAGE.  */
   LIBERROR_BAD_WAIT_ID,
+  LIBERROR_NO_MEMORY,
   LIBERROR_LAST			/* Not a real error, the last error # + 1.  */
 }
 libgfortran_error_codes;

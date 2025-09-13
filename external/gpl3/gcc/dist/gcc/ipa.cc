@@ -1,5 +1,5 @@
 /* Basic IPA optimizations and utilities.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,6 +33,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-utils.h"
 #include "symbol-summary.h"
 #include "tree-vrp.h"
+#include "sreal.h"
+#include "ipa-cp.h"
 #include "ipa-prop.h"
 #include "ipa-fnsummary.h"
 #include "dbgcnt.h"
@@ -182,7 +184,7 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
     = possible_polymorphic_call_targets
 	(edge, &final, &cache_token);
 
-  if (!reachable_call_targets->add (cache_token))
+  if (cache_token != NULL && !reachable_call_targets->add (cache_token))
     {
       for (i = 0; i < targets.length (); i++)
 	{
@@ -232,8 +234,7 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 	  if (targets.length () == 1)
 	    target = targets[0];
 	  else
-	    target = cgraph_node::get_create
-		       (builtin_decl_implicit (BUILT_IN_UNREACHABLE));
+	    target = cgraph_node::get_create (builtin_decl_unreachable ());
 
 	  if (dump_enabled_p ())
 	    {
@@ -1343,8 +1344,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *);
-  virtual unsigned int execute (function *) { return ipa_cdtor_merge (); }
+  bool gate (function *) final override;
+  unsigned int execute (function *) final override
+  {
+    return ipa_cdtor_merge ();
+  }
 
 }; // class pass_ipa_cdtor_merge
 
@@ -1566,7 +1570,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *) { return ipa_single_use (); }
+  unsigned int execute (function *) final override { return ipa_single_use (); }
 
 }; // class pass_ipa_single_use
 

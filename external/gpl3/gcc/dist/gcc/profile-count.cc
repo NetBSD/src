@@ -1,5 +1,5 @@
 /* Profile counter container type.
-   Copyright (C) 2017-2022 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -84,26 +84,22 @@ const char *profile_quality_display_names[] =
   "precise"
 };
 
-/* Dump THIS to BUFFER.  */
-
-void
-profile_count::dump (char *buffer) const
-{
-  if (!initialized_p ())
-    sprintf (buffer, "uninitialized");
-  else
-    sprintf (buffer, "%" PRId64 " (%s)", m_val,
-	     profile_quality_display_names[m_quality]);
-}
-
 /* Dump THIS to F.  */
 
 void
-profile_count::dump (FILE *f) const
+profile_count::dump (FILE *f, struct function *fun) const
 {
-  char buffer[64];
-  dump (buffer);
-  fputs (buffer, f);
+  if (!initialized_p ())
+    fprintf (f, "uninitialized");
+  else if (fun && initialized_p ()
+	   && fun->cfg
+	   && ENTRY_BLOCK_PTR_FOR_FN (fun)->count.initialized_p ())
+    fprintf (f, "%" PRId64 " (%s, freq %.4f)", m_val,
+	     profile_quality_display_names[m_quality],
+	     to_sreal_scale (ENTRY_BLOCK_PTR_FOR_FN (fun)->count).to_double ());
+  else
+    fprintf (f, "%" PRId64 " (%s)", m_val,
+	     profile_quality_display_names[m_quality]);
 }
 
 /* Dump THIS to stderr.  */
@@ -111,7 +107,7 @@ profile_count::dump (FILE *f) const
 void
 profile_count::debug () const
 {
-  dump (stderr);
+  dump (stderr, cfun);
   fprintf (stderr, "\n");
 }
 
@@ -122,13 +118,14 @@ profile_count::differs_from_p (profile_count other) const
 {
   gcc_checking_assert (compatible_p (other));
   if (!initialized_p () || !other.initialized_p ())
-    return false;
+    return initialized_p () != other.initialized_p ();
   if ((uint64_t)m_val - (uint64_t)other.m_val < 100
       || (uint64_t)other.m_val - (uint64_t)m_val < 100)
     return false;
   if (!other.m_val)
     return true;
-  int64_t ratio = (int64_t)m_val * 100 / other.m_val;
+  uint64_t ratio;
+  safe_scale_64bit (m_val, 100, other.m_val, &ratio);
   return ratio < 99 || ratio > 101;
 }
 
@@ -325,6 +322,13 @@ profile_count::to_cgraph_frequency (profile_count entry_bb_count) const
 sreal
 profile_count::to_sreal_scale (profile_count in, bool *known) const
 {
+  if (*this == zero ()
+      && !(in == zero ()))
+  {
+    if (known)
+      *known = true;
+    return 0;
+  }
   if (!initialized_p () || !in.initialized_p ())
     {
       if (known)
@@ -332,33 +336,14 @@ profile_count::to_sreal_scale (profile_count in, bool *known) const
       return 1;
     }
   if (known)
-    *known = true;
-  /* Watch for cases where one count is IPA and other is not.  */
-  if (in.ipa ().initialized_p ())
-    {
-      gcc_checking_assert (ipa ().initialized_p ());
-      /* If current count is inter-procedurally 0 and IN is inter-procedurally
-	 non-zero, return 0.  */
-      if (in.ipa ().nonzero_p ()
-	  && !ipa().nonzero_p ())
-	return 0;
-    }
-  else 
-    /* We can handle correctly 0 IPA count within locally estimated
-       profile, but otherwise we are lost and this should not happen.   */
-    gcc_checking_assert (!ipa ().initialized_p () || !ipa ().nonzero_p ());
-  if (*this == zero ())
-    return 0;
-  if (m_val == in.m_val)
+    *known = in.m_val != 0;
+  if (*this == in)
     return 1;
   gcc_checking_assert (compatible_p (in));
-
+  if (m_val == in.m_val)
+    return 1;
   if (!in.m_val)
-    {
-      if (!m_val)
-	return 1;
-      return m_val * 4;
-    }
+    return m_val * 4;
   return (sreal)m_val / (sreal)in.m_val;
 }
 
@@ -476,4 +461,61 @@ profile_probability::to_sreal () const
 {
   gcc_checking_assert (initialized_p ());
   return ((sreal)m_val) >> (n_bits - 2);
+}
+
+/* Compute square root.  */
+
+profile_probability
+profile_probability::sqrt () const
+{
+  if (!initialized_p () || *this == never () || *this == always ())
+    return *this;
+  profile_probability ret = *this;
+  ret.m_quality = MIN (ret.m_quality, ADJUSTED);
+  uint32_t min_range = m_val;
+  uint32_t max_range = max_probability;
+  if (!m_val)
+    max_range = 0;
+  if (m_val == max_probability)
+    min_range = max_probability;
+  while (min_range != max_range)
+    {
+      uint32_t val = (min_range + max_range) / 2;
+      uint32_t val2 = RDIV ((uint64_t)val * val, max_probability);
+      if (val2 == m_val)
+	min_range = max_range = m_val;
+      else if (val2 > m_val)
+	max_range = val - 1;
+      else if (val2 < m_val)
+	min_range = val + 1;
+    }
+  ret.m_val = min_range;
+  return ret;
+}
+
+/* Compute n-th power of THIS.  */
+
+profile_probability
+profile_probability::pow (int n) const
+{
+  if (n == 1 || !initialized_p ())
+    return *this;
+  if (!n)
+    return profile_probability::always ();
+  if (!nonzero_p ()
+      || !(profile_probability::always () - *this).nonzero_p ())
+    return *this;
+  profile_probability ret = profile_probability::always ();
+  profile_probability v = *this;
+  int p = 1;
+  while (true)
+    {
+      if (n & p)
+	ret = ret * v;
+      p <<= 1;
+      if (p > n)
+	break;
+      v = v * v;
+    }
+  return ret;
 }

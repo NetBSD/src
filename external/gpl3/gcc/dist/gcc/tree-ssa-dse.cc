@@ -1,5 +1,5 @@
 /* Dead and redundant store elimination
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,6 +18,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "backend.h"
@@ -45,6 +46,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-modref.h"
 #include "target.h"
 #include "tree-ssa-loop-niter.h"
+#include "cfgloop.h"
+#include "tree-data-ref.h"
+#include "internal-fn.h"
 #include "tree-ssa.h"
 
 /* This file implements dead store elimination.
@@ -149,7 +153,47 @@ initialize_ao_ref_for_dse (gimple *stmt, ao_ref *write, bool may_def_ok = false)
 	  break;
 	}
     }
-  else if (tree lhs = gimple_get_lhs (stmt))
+  else if (is_gimple_call (stmt)
+	   && gimple_call_internal_p (stmt))
+    {
+      switch (gimple_call_internal_fn (stmt))
+	{
+	case IFN_LEN_STORE:
+	case IFN_MASK_STORE:
+	case IFN_MASK_LEN_STORE:
+	  {
+	    internal_fn ifn = gimple_call_internal_fn (stmt);
+	    int stored_value_index = internal_fn_stored_value_index (ifn);
+	    int len_index = internal_fn_len_index (ifn);
+	    if (ifn == IFN_LEN_STORE)
+	      {
+		tree len = gimple_call_arg (stmt, len_index);
+		tree bias = gimple_call_arg (stmt, len_index + 1);
+		if (tree_fits_uhwi_p (len))
+		  {
+		    ao_ref_init_from_ptr_and_size (write,
+						   gimple_call_arg (stmt, 0),
+						   int_const_binop (MINUS_EXPR,
+								    len, bias));
+		    return true;
+		  }
+	      }
+	    /* We cannot initialize a must-def ao_ref (in all cases) but we
+	       can provide a may-def variant.  */
+	    if (may_def_ok)
+	      {
+		ao_ref_init_from_ptr_and_size (
+		  write, gimple_call_arg (stmt, 0),
+		  TYPE_SIZE_UNIT (
+		    TREE_TYPE (gimple_call_arg (stmt, stored_value_index))));
+		return true;
+	      }
+	    break;
+	  }
+	default:;
+	}
+    }
+  if (tree lhs = gimple_get_lhs (stmt))
     {
       if (TREE_CODE (lhs) != SSA_NAME
 	  && (may_def_ok || !stmt_could_throw_p (cfun, stmt)))
@@ -906,6 +950,21 @@ dse_optimize_redundant_stores (gimple *stmt)
     }
 }
 
+/* Return whether PHI contains ARG as an argument.  */
+
+static bool
+contains_phi_arg (gphi *phi, tree arg)
+{
+  for (unsigned i = 0; i < gimple_phi_num_args (phi); ++i)
+    if (gimple_phi_arg_def (phi, i) == arg)
+      return true;
+  return false;
+}
+
+/* Hash map of the memory use in a GIMPLE assignment to its
+   data reference.  If NULL data-ref analysis isn't used.  */
+static hash_map<gimple *, data_reference_p> *dse_stmt_to_dr_map;
+
 /* A helper of dse_optimize_stmt.
    Given a GIMPLE_ASSIGN in STMT that writes to REF, classify it
    according to downstream uses and defs.  Sets *BY_CLOBBER_P to true
@@ -920,6 +979,8 @@ dse_classify_store (ao_ref *ref, gimple *stmt,
   gimple *temp;
   int cnt = 0;
   auto_bitmap visited;
+  std::unique_ptr<data_reference, void(*)(data_reference_p)>
+    dra (nullptr, free_data_ref);
 
   if (by_clobber_p)
     *by_clobber_p = true;
@@ -944,86 +1005,123 @@ dse_classify_store (ao_ref *ref, gimple *stmt,
       else
 	defvar = gimple_vdef (temp);
 
-      /* If we're instructed to stop walking at region boundary, do so.  */
-      if (defvar == stop_at_vuse)
-	return DSE_STORE_LIVE;
-
       auto_vec<gimple *, 10> defs;
-      gimple *first_phi_def = NULL;
-      gimple *last_phi_def = NULL;
-      FOR_EACH_IMM_USE_STMT (use_stmt, ui, defvar)
+      gphi *first_phi_def = NULL;
+      gphi *last_phi_def = NULL;
+
+      auto_vec<tree, 10> worklist;
+      worklist.quick_push (defvar);
+
+      do
 	{
-	  /* Limit stmt walking.  */
-	  if (++cnt > param_dse_max_alias_queries_per_store)
-	    {
-	      fail = true;
-	      break;
-	    }
+	  defvar = worklist.pop ();
+	  /* If we're instructed to stop walking at region boundary, do so.  */
+	  if (defvar == stop_at_vuse)
+	    return DSE_STORE_LIVE;
 
-	  /* In simple cases we can look through PHI nodes, but we
-	     have to be careful with loops and with memory references
-	     containing operands that are also operands of PHI nodes.
-	     See gcc.c-torture/execute/20051110-*.c.  */
-	  if (gimple_code (use_stmt) == GIMPLE_PHI)
+	  FOR_EACH_IMM_USE_STMT (use_stmt, ui, defvar)
 	    {
-	      /* If we already visited this PHI ignore it for further
-		 processing.  */
-	      if (!bitmap_bit_p (visited,
-				 SSA_NAME_VERSION (PHI_RESULT (use_stmt))))
+	      /* Limit stmt walking.  */
+	      if (++cnt > param_dse_max_alias_queries_per_store)
 		{
-		  /* If we visit this PHI by following a backedge then we have
-		     to make sure ref->ref only refers to SSA names that are
-		     invariant with respect to the loop represented by this
-		     PHI node.  */
-		  if (dominated_by_p (CDI_DOMINATORS, gimple_bb (stmt),
-				      gimple_bb (use_stmt))
-		      && !for_each_index (ref->ref ? &ref->ref : &ref->base,
-					  check_name, gimple_bb (use_stmt)))
-		    return DSE_STORE_LIVE;
-		  defs.safe_push (use_stmt);
-		  if (!first_phi_def)
-		    first_phi_def = use_stmt;
-		  last_phi_def = use_stmt;
+		  fail = true;
+		  break;
 		}
-	    }
-	  /* If the statement is a use the store is not dead.  */
-	  else if (ref_maybe_used_by_stmt_p (use_stmt, ref))
-	    {
-	      /* Handle common cases where we can easily build an ao_ref
-		 structure for USE_STMT and in doing so we find that the
-		 references hit non-live bytes and thus can be ignored.
 
-		 TODO: We can also use modref summary to handle calls.  */
-	      if (byte_tracking_enabled
-		  && is_gimple_assign (use_stmt))
+	      /* In simple cases we can look through PHI nodes, but we
+		 have to be careful with loops and with memory references
+		 containing operands that are also operands of PHI nodes.
+		 See gcc.c-torture/execute/20051110-*.c.  */
+	      if (gimple_code (use_stmt) == GIMPLE_PHI)
 		{
-		  ao_ref use_ref;
-		  ao_ref_init (&use_ref, gimple_assign_rhs1 (use_stmt));
-		  if (valid_ao_ref_for_dse (&use_ref)
-		      && operand_equal_p (use_ref.base, ref->base,
-					  OEP_ADDRESS_OF)
-		      && !live_bytes_read (&use_ref, ref, live_bytes))
+		  /* Look through single-argument PHIs.  */
+		  if (gimple_phi_num_args (use_stmt) == 1)
+		    worklist.safe_push (gimple_phi_result (use_stmt));
+
+		  /* If we already visited this PHI ignore it for further
+		     processing.  */
+		  else if (!bitmap_bit_p (visited,
+					  SSA_NAME_VERSION
+					    (PHI_RESULT (use_stmt))))
 		    {
-		      /* If this is a store, remember it as we possibly
-			 need to walk the defs uses.  */
-		      if (gimple_vdef (use_stmt))
-			defs.safe_push (use_stmt);
-		      continue;
+		      /* If we visit this PHI by following a backedge then we
+			 have to make sure ref->ref only refers to SSA names
+			 that are invariant with respect to the loop
+			 represented by this PHI node.  */
+		      if (dominated_by_p (CDI_DOMINATORS, gimple_bb (stmt),
+					  gimple_bb (use_stmt))
+			  && !for_each_index (ref->ref ? &ref->ref : &ref->base,
+					      check_name, gimple_bb (use_stmt)))
+			return DSE_STORE_LIVE;
+		      defs.safe_push (use_stmt);
+		      if (!first_phi_def)
+			first_phi_def = as_a <gphi *> (use_stmt);
+		      last_phi_def = as_a <gphi *> (use_stmt);
 		    }
 		}
+	      /* If the statement is a use the store is not dead.  */
+	      else if (ref_maybe_used_by_stmt_p (use_stmt, ref))
+		{
+		  if (dse_stmt_to_dr_map
+		      && ref->ref
+		      && is_gimple_assign (use_stmt))
+		    {
+		      if (!dra)
+			dra.reset (create_data_ref (NULL, NULL, ref->ref, stmt,
+						    false, false));
+		      bool existed_p;
+		      data_reference_p &drb
+			= dse_stmt_to_dr_map->get_or_insert (use_stmt,
+							     &existed_p);
+		      if (!existed_p)
+			drb = create_data_ref (NULL, NULL,
+					       gimple_assign_rhs1 (use_stmt),
+					       use_stmt, false, false);
+		      if (!dr_may_alias_p (dra.get (), drb, NULL))
+			{
+			  if (gimple_vdef (use_stmt))
+			    defs.safe_push (use_stmt);
+			  continue;
+			}
+		    }
 
-	      fail = true;
-	      break;
+		  /* Handle common cases where we can easily build an ao_ref
+		     structure for USE_STMT and in doing so we find that the
+		     references hit non-live bytes and thus can be ignored.
+
+		     TODO: We can also use modref summary to handle calls.  */
+		  if (byte_tracking_enabled
+		      && is_gimple_assign (use_stmt))
+		    {
+		      ao_ref use_ref;
+		      ao_ref_init (&use_ref, gimple_assign_rhs1 (use_stmt));
+		      if (valid_ao_ref_for_dse (&use_ref)
+			  && operand_equal_p (use_ref.base, ref->base,
+					      OEP_ADDRESS_OF)
+			  && !live_bytes_read (&use_ref, ref, live_bytes))
+			{
+			  /* If this is a store, remember it as we possibly
+			     need to walk the defs uses.  */
+			  if (gimple_vdef (use_stmt))
+			    defs.safe_push (use_stmt);
+			  continue;
+			}
+		    }
+
+		  fail = true;
+		  break;
+		}
+	      /* We have visited ourselves already so ignore STMT for the
+		 purpose of chaining.  */
+	      else if (use_stmt == stmt)
+		;
+	      /* If this is a store, remember it as we possibly need to walk the
+		 defs uses.  */
+	      else if (gimple_vdef (use_stmt))
+		defs.safe_push (use_stmt);
 	    }
-	  /* We have visited ourselves already so ignore STMT for the
-	     purpose of chaining.  */
-	  else if (use_stmt == stmt)
-	    ;
-	  /* If this is a store, remember it as we possibly need to walk the
-	     defs uses.  */
-	  else if (gimple_vdef (use_stmt))
-	    defs.safe_push (use_stmt);
 	}
+      while (!fail && !worklist.is_empty ());
 
       if (fail)
 	{
@@ -1040,7 +1138,26 @@ dse_classify_store (ao_ref *ref, gimple *stmt,
       if (defs.is_empty ())
 	{
 	  if (ref_may_alias_global_p (ref, false))
-	    return DSE_STORE_LIVE;
+	    {
+	      basic_block def_bb = gimple_bb (SSA_NAME_DEF_STMT (defvar));
+	      /* Assume that BUILT_IN_UNREACHABLE and BUILT_IN_UNREACHABLE_TRAP
+		 do not need to keep (global) memory side-effects live.
+		 We do not have virtual operands on BUILT_IN_UNREACHABLE
+		 but we can do poor mans reachability when the last
+		 definition we want to elide is in the block that ends
+		 in such a call.  */
+	      if (EDGE_COUNT (def_bb->succs) == 0)
+		if (gcall *last = dyn_cast <gcall *> (*gsi_last_bb (def_bb)))
+		  if (gimple_call_builtin_p (last, BUILT_IN_UNREACHABLE)
+		      || gimple_call_builtin_p (last,
+						BUILT_IN_UNREACHABLE_TRAP))
+		    {
+		      if (by_clobber_p)
+			*by_clobber_p = false;
+		      return DSE_STORE_DEAD;
+		    }
+	      return DSE_STORE_LIVE;
+	    }
 
 	  if (by_clobber_p)
 	    *by_clobber_p = false;
@@ -1055,6 +1172,7 @@ dse_classify_store (ao_ref *ref, gimple *stmt,
 	  use_operand_p use_p;
 	  tree vdef = (gimple_code (def) == GIMPLE_PHI
 		       ? gimple_phi_result (def) : gimple_vdef (def));
+	  gphi *phi_def;
 	  /* If the path to check starts with a kill we do not need to
 	     process it further.
 	     ???  With byte tracking we need only kill the bytes currently
@@ -1088,7 +1206,31 @@ dse_classify_store (ao_ref *ref, gimple *stmt,
 			   && bitmap_bit_p (visited,
 					    SSA_NAME_VERSION
 					      (PHI_RESULT (use_stmt))))))
-	    defs.unordered_remove (i);
+	    {
+	      defs.unordered_remove (i);
+	      if (def == first_phi_def)
+		first_phi_def = NULL;
+	      else if (def == last_phi_def)
+		last_phi_def = NULL;
+	    }
+	  /* If def is a PHI and one of its arguments is another PHI node still
+	     in consideration we can defer processing it.  */
+	  else if ((phi_def = dyn_cast <gphi *> (def))
+		   && ((last_phi_def
+			&& phi_def != last_phi_def
+			&& contains_phi_arg (phi_def,
+					     gimple_phi_result (last_phi_def)))
+		       || (first_phi_def
+			   && phi_def != first_phi_def
+			   && contains_phi_arg
+				(phi_def, gimple_phi_result (first_phi_def)))))
+	    {
+	      defs.unordered_remove (i);
+	      if (phi_def == first_phi_def)
+		first_phi_def = NULL;
+	      else if (phi_def == last_phi_def)
+		last_phi_def = NULL;
+	    }
 	  else
 	    ++i;
 	}
@@ -1373,6 +1515,24 @@ dse_optimize_stmt (function *fun, gimple_stmt_iterator *gsi, sbitmap live_bytes)
 	  return;
 	}
     }
+  else if (is_gimple_call (stmt)
+	   && gimple_call_internal_p (stmt))
+    {
+      switch (gimple_call_internal_fn (stmt))
+	{
+	case IFN_LEN_STORE:
+	case IFN_MASK_STORE:
+	case IFN_MASK_LEN_STORE:
+	  {
+	    enum dse_store_status store_status;
+	    store_status = dse_classify_store (&ref, stmt, false, live_bytes);
+	    if (store_status == DSE_STORE_DEAD)
+	      delete_dead_or_redundant_call (gsi, "dead");
+	    return;
+	  }
+	default:;
+	}
+    }
 
   bool by_clobber_p = false;
 
@@ -1438,7 +1598,8 @@ dse_optimize_stmt (function *fun, gimple_stmt_iterator *gsi, sbitmap live_bytes)
       gimple_call_set_lhs (stmt, NULL_TREE);
       update_stmt (stmt);
     }
-  else
+  else if (!stmt_could_throw_p (fun, stmt)
+	   || fun->can_delete_dead_exceptions)
     delete_dead_or_redundant_assignment (gsi, "dead", need_eh_cleanup,
 					 need_ab_cleanup);
 }
@@ -1462,14 +1623,21 @@ class pass_dse : public gimple_opt_pass
 {
 public:
   pass_dse (gcc::context *ctxt)
-    : gimple_opt_pass (pass_data_dse, ctxt)
+    : gimple_opt_pass (pass_data_dse, ctxt), use_dr_analysis_p (false)
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_dse (m_ctxt); }
-  virtual bool gate (function *) { return flag_tree_dse != 0; }
-  virtual unsigned int execute (function *);
+  opt_pass * clone () final override { return new pass_dse (m_ctxt); }
+  void set_pass_param (unsigned n, bool param) final override
+    {
+      gcc_assert (n == 0);
+      use_dr_analysis_p = param;
+    }
+  bool gate (function *) final override { return flag_tree_dse != 0; }
+  unsigned int execute (function *) final override;
 
+private:
+  bool use_dr_analysis_p;
 }; // class pass_dse
 
 unsigned int
@@ -1481,6 +1649,8 @@ pass_dse::execute (function *fun)
   need_eh_cleanup = BITMAP_ALLOC (NULL);
   need_ab_cleanup = BITMAP_ALLOC (NULL);
   auto_sbitmap live_bytes (param_dse_max_object_size);
+  if (flag_expensive_optimizations && use_dr_analysis_p)
+    dse_stmt_to_dr_map = new hash_map<gimple *, data_reference_p>;
 
   renumber_gimple_stmt_uids (fun);
 
@@ -1570,6 +1740,15 @@ pass_dse::execute (function *fun)
 
   if (released_def)
     free_numbers_of_iterations_estimates (fun);
+
+  if (flag_expensive_optimizations && use_dr_analysis_p)
+    {
+      for (auto i = dse_stmt_to_dr_map->begin ();
+	   i != dse_stmt_to_dr_map->end (); ++i)
+	free_data_ref ((*i).second);
+      delete dse_stmt_to_dr_map;
+      dse_stmt_to_dr_map = NULL;
+    }
 
   return todo;
 }

@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2007-2022 Free Software Foundation, Inc.
+// Copyright (C) 2007-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1648,7 +1648,7 @@ _GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11
       const size_t __maxlen = 128;
       char_type __res[__maxlen];
 
-      // NB: In IEE 1003.1-200x, and perhaps other locale models, it
+      // NB: In IEEE 1003.1-200x, and perhaps other locale models, it
       // is possible that the format character will be longer than one
       // character. Possibilities include 'E' or 'O' followed by a
       // format character: if __mod is not the default argument, assume
@@ -1677,6 +1677,9 @@ _GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.
 #if _GLIBCXX_EXTERN_TEMPLATE
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++11-extensions" // extern template
+#pragma GCC diagnostic ignored "-Wlong-long"
   extern template class moneypunct<char, false>;
   extern template class moneypunct<char, true>;
   extern template class moneypunct_byname<char, false>;
@@ -1690,6 +1693,38 @@ _GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11
   extern template class time_get_byname<char>;
   extern template class messages<char>;
   extern template class messages_byname<char>;
+
+  extern template
+    const moneypunct<char, true>*
+    __try_use_facet<moneypunct<char, true> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const moneypunct<char, false>*
+    __try_use_facet<moneypunct<char, false> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const money_put<char>*
+    __try_use_facet<money_put<char> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const money_get<char>*
+    __try_use_facet<money_get<char> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const __timepunct<char>*
+    __try_use_facet<__timepunct<char> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const time_put<char>*
+    __try_use_facet<time_put<char> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const time_get<char>*
+    __try_use_facet<time_get<char> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const messages<char>*
+    __try_use_facet<messages<char> >(const locale&) _GLIBCXX_NOTHROW;
 
   extern template
     const moneypunct<char, true>&
@@ -1767,6 +1802,38 @@ _GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11
   extern template class messages_byname<wchar_t>;
 
   extern template
+    const moneypunct<wchar_t, true>*
+    __try_use_facet<moneypunct<wchar_t, true> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const moneypunct<wchar_t, false>*
+    __try_use_facet<moneypunct<wchar_t, false> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const money_put<wchar_t>*
+    __try_use_facet<money_put<wchar_t> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const money_get<wchar_t>*
+    __try_use_facet<money_get<wchar_t> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const __timepunct<wchar_t>*
+    __try_use_facet<__timepunct<wchar_t> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const time_put<wchar_t>*
+    __try_use_facet<time_put<wchar_t> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const time_get<wchar_t>*
+    __try_use_facet<time_get<wchar_t> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
+    const messages<wchar_t>*
+    __try_use_facet<messages<wchar_t> >(const locale&) _GLIBCXX_NOTHROW;
+
+  extern template
     const moneypunct<wchar_t, true>&
     use_facet<moneypunct<wchar_t, true> >(const locale&);
 
@@ -1826,6 +1893,7 @@ _GLIBCXX_END_NAMESPACE_LDBL_OR_CXX11
     bool
     has_facet<messages<wchar_t> >(const locale&);
 #endif
+#pragma GCC diagnostic pop
 #endif
 
 _GLIBCXX_END_NAMESPACE_VERSION

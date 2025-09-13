@@ -1,6 +1,6 @@
 /* Definitions of the pointer_query and related classes.
 
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -33,6 +33,7 @@
 #include "langhooks.h"
 #include "stringpool.h"
 #include "attribs.h"
+#include "gimple-iterator.h"
 #include "gimple-fold.h"
 #include "gimple-ssa.h"
 #include "intl.h"
@@ -316,14 +317,15 @@ get_size_range (range_query *query, tree exp, gimple *stmt, tree range[2],
   if (integral)
     {
       value_range vr;
+      tree tmin, tmax;
 
       query->range_of_expr (vr, exp, stmt);
 
       if (vr.undefined_p ())
 	vr.set_varying (TREE_TYPE (exp));
-      range_type = vr.kind ();
-      min = wi::to_wide (vr.min ());
-      max = wi::to_wide (vr.max ());
+      range_type = get_legacy_range (vr, tmin, tmax);
+      min = wi::to_wide (tmin);
+      max = wi::to_wide (tmax);
     }
   else
     range_type = VR_VARYING;
@@ -599,8 +601,8 @@ gimple_parm_array_size (tree ptr, wide_int rng[2],
 /* Initialize the object.  */
 
 access_ref::access_ref ()
-  : ref (), eval ([](tree x){ return x; }), deref (), trail1special (true),
-    base0 (true), parmarray ()
+  : ref (), eval ([](tree x){ return x; }), deref (), ref_nullptr_p (false),
+    trail1special (true), base0 (true), parmarray ()
 {
   /* Set to valid.  */
   offrng[0] = offrng[1] = 0;
@@ -1192,7 +1194,16 @@ access_ref::inform_access (access_mode mode, int ostype /* = 1 */) const
     loc = EXPR_LOCATION (ref);
   else if (TREE_CODE (ref) != IDENTIFIER_NODE
 	   && TREE_CODE (ref) != SSA_NAME)
-    return;
+    {
+      if (TREE_CODE (ref) == INTEGER_CST && ref_nullptr_p)
+	{
+	  if (mode == access_read_write || mode == access_write_only)
+	    inform (loc, "destination object is likely at address zero");
+	  else
+	    inform (loc, "source object is likely at address zero");
+	}
+      return;
+    }
 
   if (mode == access_read_write || mode == access_write_only)
     {
@@ -1795,14 +1806,19 @@ handle_array_ref (tree aref, gimple *stmt, bool addr, int ostype,
       orng[0] = -orng[1] - 1;
     }
 
-  /* Convert the array index range determined above to a byte
-     offset.  */
+  /* Convert the array index range determined above to a byte offset.  */
   tree lowbnd = array_ref_low_bound (aref);
-  if (!integer_zerop (lowbnd) && tree_fits_uhwi_p (lowbnd))
+  if (TREE_CODE (lowbnd) == INTEGER_CST && !integer_zerop (lowbnd))
     {
-      /* Adjust the index by the low bound of the array domain
-	 (normally zero but 1 in Fortran).  */
-      unsigned HOST_WIDE_INT lb = tree_to_uhwi (lowbnd);
+      /* Adjust the index by the low bound of the array domain (0 in C/C++,
+	 1 in Fortran and anything in Ada) by applying the same processing
+	 as in get_offset_range.  */
+      const wide_int wlb = wi::to_wide (lowbnd);
+      signop sgn = SIGNED;
+      if (TYPE_UNSIGNED (TREE_TYPE (lowbnd))
+	  && wlb.get_precision () < TYPE_PRECISION (sizetype))
+	sgn = UNSIGNED;
+      const offset_int lb = offset_int::from (wlb, sgn);
       orng[0] -= lb;
       orng[1] -= lb;
     }
@@ -2138,12 +2154,6 @@ handle_ssa_name (tree ptr, bool addr, int ostype,
 
   tree rhs = gimple_assign_rhs1 (stmt);
 
-  if (code == ASSERT_EXPR)
-    {
-      rhs = TREE_OPERAND (rhs, 0);
-      return compute_objsize_r (rhs, stmt, addr, ostype, pref, snlim, qry);
-    }
-
   if (code == POINTER_PLUS_EXPR
       && TREE_CODE (TREE_TYPE (rhs)) == POINTER_TYPE)
     {
@@ -2280,7 +2290,10 @@ compute_objsize_r (tree ptr, gimple *stmt, bool addr, int ostype,
 	  if (targetm.addr_space.zero_address_valid (as))
 	    pref->set_max_size_range ();
 	  else
-	    pref->sizrng[0] = pref->sizrng[1] = 0;
+	    {
+	      pref->sizrng[0] = pref->sizrng[1] = 0;
+	      pref->ref_nullptr_p = true;
+	    }
 	}
       else
 	pref->sizrng[0] = pref->sizrng[1] = 0;

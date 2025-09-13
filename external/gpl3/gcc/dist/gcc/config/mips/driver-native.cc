@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2008-2022 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,6 +23,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#ifdef HAVE_SYS_AUXV_H
+#include <sys/auxv.h>
+#endif
 
 /* This will be called by the spec parser in gcc.cc when it sees
    a %:local_cpu_detect(args) construct.  Currently it will be called
@@ -41,6 +44,9 @@ const char *
 host_detect_local_cpu (int argc, const char **argv)
 {
   const char *cpu = NULL;
+  /* Don't assigne any static string to ret.  If you need to do so,
+     use concat.  */
+  char *ret = NULL;
   char buf[128];
   FILE *f;
   bool arch;
@@ -54,7 +60,7 @@ host_detect_local_cpu (int argc, const char **argv)
 
   f = fopen ("/proc/cpuinfo", "r");
   if (f == NULL)
-    return NULL;
+    goto fallback_cpu;
 
   while (fgets (buf, sizeof (buf), f) != NULL)
     if (startswith (buf, "cpu model"))
@@ -84,8 +90,25 @@ host_detect_local_cpu (int argc, const char **argv)
 
   fclose (f);
 
-  if (cpu == NULL)
-    return NULL;
+fallback_cpu:
+#if defined (__mips_nan2008)
+  /* Put the ret to the end of list, since it may be NULL.  */
+  if (arch)
+    ret = reconcat (ret, " -mnan=2008 ", ret, NULL);
+#endif
 
-  return concat ("-m", argv[0], "=", cpu, NULL);
+#ifdef HAVE_GETAUXVAL
+  if (cpu == NULL)
+    cpu = (const char *) getauxval (AT_BASE_PLATFORM);
+#endif
+
+#if defined (_MIPS_ARCH)
+  if (cpu == NULL)
+    cpu = _MIPS_ARCH;
+#endif
+
+  if (cpu)
+    ret = reconcat (ret, " -m", argv[0], "=", cpu, ret, NULL);
+
+  return ret;
 }

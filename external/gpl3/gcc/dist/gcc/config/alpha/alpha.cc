@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the DEC Alpha.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GCC.
@@ -784,10 +784,10 @@ alpha_in_small_data_p (const_tree exp)
     return false;
 
   /* COMMON symbols are never small data.  */
-  if (TREE_CODE (exp) == VAR_DECL && DECL_COMMON (exp))
+  if (VAR_P (exp) && DECL_COMMON (exp))
     return false;
 
-  if (TREE_CODE (exp) == VAR_DECL && DECL_SECTION_NAME (exp))
+  if (VAR_P (exp) && DECL_SECTION_NAME (exp))
     {
       const char *section = DECL_SECTION_NAME (exp);
       if (strcmp (section, ".sdata") == 0
@@ -844,7 +844,8 @@ alpha_linkage_symbol_p (const char *symname)
    low-order three bits; this is an "unaligned" access.  */
 
 static bool
-alpha_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+alpha_legitimate_address_p (machine_mode mode, rtx x, bool strict,
+			    code_helper = ERROR_MARK)
 {
   /* If this is an ldq_u type address, discard the outer AND.  */
   if (mode == DImode
@@ -3819,6 +3820,12 @@ alpha_expand_block_move (rtx operands[])
           else if (a >= 16 && c % 2 == 0)
 	    src_align = 16;
 	}
+
+      if (MEM_P (orig_src) && MEM_ALIGN (orig_src) < src_align)
+	{
+	  orig_src = shallow_copy_rtx (orig_src);
+	  set_mem_align (orig_src, src_align);
+	}
     }
 
   tmp = XEXP (orig_dst, 0);
@@ -3839,6 +3846,12 @@ alpha_expand_block_move (rtx operands[])
 	    dst_align = 32;
           else if (a >= 16 && c % 2 == 0)
 	    dst_align = 16;
+	}
+
+      if (MEM_P (orig_dst) && MEM_ALIGN (orig_dst) < dst_align)
+	{
+	  orig_dst = shallow_copy_rtx (orig_dst);
+	  set_mem_align (orig_dst, dst_align);
 	}
     }
 
@@ -6089,8 +6102,10 @@ alpha_setup_incoming_varargs (cumulative_args_t pcum,
 {
   CUMULATIVE_ARGS cum = *get_cumulative_args (pcum);
 
-  /* Skip the current argument.  */
-  targetm.calls.function_arg_advance (pack_cumulative_args (&cum), arg);
+  if (!TYPE_NO_NAMED_ARGS_STDARG_P (TREE_TYPE (current_function_decl))
+      || arg.type != NULL_TREE)
+    /* Skip the current argument.  */
+    targetm.calls.function_arg_advance (pack_cumulative_args (&cum), arg);
 
 #if TARGET_ABI_OPEN_VMS
   /* For VMS, we allocate space for all 6 arg registers plus a count.
@@ -6257,7 +6272,7 @@ alpha_gimplify_va_arg_1 (tree type, tree base, tree offset,
 
       return build2 (COMPLEX_EXPR, type, real_temp, imag_part);
     }
-  else if (TREE_CODE (type) == REAL_TYPE)
+  else if (SCALAR_FLOAT_TYPE_P (type))
     {
       tree fpaddend, cond, fourtyeight;
 
@@ -7480,14 +7495,13 @@ common_object_handler (tree *node, tree name ATTRIBUTE_UNUSED,
   return NULL_TREE;
 }
 
-static const struct attribute_spec vms_attribute_table[] =
+TARGET_GNU_ATTRIBUTES (vms_attribute_table,
 {
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req,
        affects_type_identity, handler, exclude } */
   { COMMON_OBJECT,   0, 1, true,  false, false, false, common_object_handler,
-    NULL },
-  { NULL,            0, 0, false, false, false, false, NULL, NULL }
-};
+    NULL }
+});
 
 void
 vms_output_aligned_decl_common(FILE *file, tree decl, const char *name,
@@ -7985,8 +7999,7 @@ int num_source_filenames = 0;
 /* Output the textual info surrounding the prologue.  */
 
 void
-alpha_start_function (FILE *file, const char *fnname,
-		      tree decl ATTRIBUTE_UNUSED)
+alpha_start_function (FILE *file, const char *fnname, tree decl)
 {
   unsigned long imask, fmask;
   /* Complete stack size needed.  */
@@ -8051,7 +8064,7 @@ alpha_start_function (FILE *file, const char *fnname,
   if (TARGET_ABI_OPEN_VMS)
     strcat (entry_label, "..en");
 
-  ASM_OUTPUT_LABEL (file, entry_label);
+  ASM_OUTPUT_FUNCTION_LABEL (file, entry_label, decl);
   inside_function = TRUE;
 
   if (TARGET_ABI_OPEN_VMS)
@@ -8463,10 +8476,6 @@ alpha_output_mi_thunk_osf (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 }
 #endif /* TARGET_ABI_OSF */
 
-/* Debugging support.  */
-
-#include "gstab.h"
-
 /* Name of the file containing the current function.  */
 
 static const char *current_function_file = "";

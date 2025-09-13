@@ -1,5 +1,5 @@
 /* Vectorizer
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Dorit Naishlos <dorit@il.ibm.com>
 
 This file is part of GCC.
@@ -82,6 +82,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "opt-problem.h"
 #include "internal-fn.h"
 #include "tree-ssa-sccvn.h"
+#include "tree-into-ssa.h"
 
 /* Loop or bb location, with hotness information.  */
 dump_user_location_t vect_location;
@@ -851,7 +852,7 @@ vect_loop_vectorized_call (class loop *loop, gcond **cond)
   gimple *g;
   do
     {
-      g = last_stmt (bb);
+      g = *gsi_last_bb (bb);
       if ((g && gimple_code (g) == GIMPLE_COND)
 	  || !single_succ_p (bb))
 	break;
@@ -887,8 +888,6 @@ vect_loop_dist_alias_call (class loop *loop, function *fun)
   basic_block bb;
   basic_block entry;
   class loop *outer, *orig;
-  gimple_stmt_iterator gsi;
-  gimple *g;
 
   if (loop->orig_loop_num == 0)
     return NULL;
@@ -913,16 +912,15 @@ vect_loop_dist_alias_call (class loop *loop, function *fun)
   for (; bb != entry && flow_bb_inside_loop_p (outer, bb);
        bb = get_immediate_dominator (CDI_DOMINATORS, bb))
     {
-      g = last_stmt (bb);
-      if (g == NULL || gimple_code (g) != GIMPLE_COND)
+      gimple_stmt_iterator gsi = gsi_last_bb (bb);
+      if (!safe_is_a <gcond *> (*gsi))
 	continue;
 
-      gsi = gsi_for_stmt (g);
       gsi_prev (&gsi);
       if (gsi_end_p (gsi))
 	continue;
 
-      g = gsi_stmt (gsi);
+      gimple *g = gsi_stmt (gsi);
       /* The guarding internal function call must have the same distribution
 	 alias id.  */
       if (gimple_call_internal_p (g, IFN_LOOP_DIST_ALIAS)
@@ -945,6 +943,8 @@ set_uid_loop_bbs (loop_vec_info loop_vinfo, gimple *loop_vectorized_call,
   class loop *scalar_loop = get_loop (fun, tree_to_shwi (arg));
 
   LOOP_VINFO_SCALAR_LOOP (loop_vinfo) = scalar_loop;
+  LOOP_VINFO_SCALAR_IV_EXIT (loop_vinfo)
+    = vec_init_loop_exit_info (scalar_loop);
   gcc_checking_assert (vect_loop_vectorized_call (scalar_loop)
 		       == loop_vectorized_call);
   /* If we are going to vectorize outer loop, prevent vectorization
@@ -982,7 +982,7 @@ set_uid_loop_bbs (loop_vec_info loop_vinfo, gimple *loop_vectorized_call,
 
 /* Generate vectorized code for LOOP and its epilogues.  */
 
-static void
+static unsigned
 vect_transform_loops (hash_table<simduid_to_vf> *&simduid_to_vf_htab,
 		      loop_p loop, gimple *loop_vectorized_call,
 		      function *fun)
@@ -1020,9 +1020,25 @@ vect_transform_loops (hash_table<simduid_to_vf> *&simduid_to_vf_htab,
 	  = simduid_to_vf_data;
     }
 
+  /* We should not have to update virtual SSA form here but some
+     transforms involve creating new virtual definitions which makes
+     updating difficult.
+     We delay the actual update to the end of the pass but avoid
+     confusing ourselves by forcing need_ssa_update_p () to false.  */
+  unsigned todo = 0;
+  if (need_ssa_update_p (cfun))
+    {
+      gcc_assert (loop_vinfo->any_known_not_updated_vssa);
+      fun->gimple_df->ssa_renaming_needed = false;
+      todo |= TODO_update_ssa_only_virtuals;
+    }
+  gcc_assert (!need_ssa_update_p (cfun));
+
   /* Epilogue of vectorized loop must be vectorized too.  */
   if (new_loop)
-    vect_transform_loops (simduid_to_vf_htab, new_loop, NULL, fun);
+    todo |= vect_transform_loops (simduid_to_vf_htab, new_loop, NULL, fun);
+
+  return todo;
 }
 
 /* Try to vectorize LOOP.  */
@@ -1047,7 +1063,8 @@ try_vectorize_loop_1 (hash_table<simduid_to_vf> *&simduid_to_vf_htab,
 		 LOCATION_LINE (vect_location.get_location_t ()));
 
   /* Try to analyze the loop, retaining an opt_problem if dump_enabled_p.  */
-  opt_loop_vec_info loop_vinfo = vect_analyze_loop (loop, &shared);
+  opt_loop_vec_info loop_vinfo = vect_analyze_loop (loop, loop_vectorized_call,
+						    &shared);
   loop->aux = loop_vinfo;
 
   if (!loop_vinfo)
@@ -1086,7 +1103,9 @@ try_vectorize_loop_1 (hash_table<simduid_to_vf> *&simduid_to_vf_htab,
 	      if (call && gimple_call_internal_p (call))
 		{
 		  internal_fn ifn = gimple_call_internal_fn (call);
-		  if (ifn == IFN_MASK_LOAD || ifn == IFN_MASK_STORE
+		  if (ifn == IFN_MASK_LOAD
+		      || ifn == IFN_MASK_STORE
+		      || ifn == IFN_MASK_CALL
 		      /* Don't keep the if-converted parts when the ifn with
 			 specifc type is not supported by the backend.  */
 		      || (direct_internal_fn_p (ifn)
@@ -1133,7 +1152,8 @@ try_vectorize_loop_1 (hash_table<simduid_to_vf> *&simduid_to_vf_htab,
 
   (*num_vectorized_loops)++;
   /* Transform LOOP and its epilogues.  */
-  vect_transform_loops (simduid_to_vf_htab, loop, loop_vectorized_call, fun);
+  ret |= vect_transform_loops (simduid_to_vf_htab, loop,
+			       loop_vectorized_call, fun);
 
   if (loop_vectorized_call)
     {
@@ -1193,12 +1213,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *fun)
+  bool gate (function *fun) final override
     {
       return flag_tree_loop_vectorize || fun->has_force_vectorize_loops;
     }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_vectorize
 
@@ -1332,6 +1352,11 @@ pass_vectorize::execute (function *fun)
 
   if (num_vectorized_loops > 0)
     {
+      /* We are collecting some corner cases where we need to update
+	 virtual SSA form via the TODO but delete the queued update-SSA
+	 state.  Force renaming if we think that might be necessary.  */
+      if (ret & TODO_update_ssa_only_virtuals)
+	mark_virtual_operands_for_renaming (cfun);
       /* If we vectorized any loop only virtual SSA form needs to be updated.
 	 ???  Also while we try hard to update loop-closed SSA form we fail
 	 to properly do this in some corner-cases (see PR56286).  */
@@ -1359,7 +1384,9 @@ pass_vectorize::execute (function *fun)
 	 predicates that need to be shared for optimal predicate usage.
 	 However reassoc will re-order them and prevent CSE from working
 	 as it should.  CSE only the loop body, not the entry.  */
-      bitmap_set_bit (exit_bbs, single_exit (loop)->dest->index);
+      auto_vec<edge> exits = get_loop_exit_edges (loop);
+      for (edge exit : exits)
+	bitmap_set_bit (exit_bbs, exit->dest->index);
 
       edge entry = EDGE_PRED (loop_preheader_edge (loop)->src, 0);
       do_rpo_vn (fun, entry, exit_bbs);
@@ -1405,9 +1432,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_simduid_cleanup (m_ctxt); }
-  virtual bool gate (function *fun) { return fun->has_simduid_loops; }
-  virtual unsigned int execute (function *);
+  opt_pass * clone () final override
+  {
+    return new pass_simduid_cleanup (m_ctxt);
+  }
+  bool gate (function *fun) final override { return fun->has_simduid_loops; }
+  unsigned int execute (function *) final override;
 
 }; // class pass_simduid_cleanup
 
@@ -1463,9 +1493,9 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_slp_vectorize (m_ctxt); }
-  virtual bool gate (function *) { return flag_tree_slp_vectorize != 0; }
-  virtual unsigned int execute (function *);
+  opt_pass * clone () final override { return new pass_slp_vectorize (m_ctxt); }
+  bool gate (function *) final override { return flag_tree_slp_vectorize != 0; }
+  unsigned int execute (function *) final override;
 
 }; // class pass_slp_vectorize
 
@@ -1696,12 +1726,15 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *)
+  bool gate (function *) final override
     {
       return flag_section_anchors && flag_tree_loop_vectorize;
     }
 
-  virtual unsigned int execute (function *) { return increase_alignment (); }
+  unsigned int execute (function *) final override
+  {
+    return increase_alignment ();
+  }
 
 }; // class pass_ipa_increase_alignment
 
@@ -1944,9 +1977,11 @@ vector_costs::compare_inside_loop_cost (const vector_costs *other) const
   HOST_WIDE_INT estimated_max_niter = likely_max_stmt_executions_int (loop);
   if (estimated_max_niter != -1)
     {
-      if (known_le (estimated_max_niter, this_vf))
+      if (estimated_poly_value (this_vf, POLY_VALUE_MIN)
+	  >= estimated_max_niter)
 	this_vf = estimated_max_niter;
-      if (known_le (estimated_max_niter, other_vf))
+      if (estimated_poly_value (other_vf, POLY_VALUE_MIN)
+	  >= estimated_max_niter)
 	other_vf = estimated_max_niter;
     }
 

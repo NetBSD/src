@@ -1,5 +1,5 @@
 /* Language-level data type conversion for GNU C++.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GCC.
@@ -339,7 +339,7 @@ build_up_reference (tree type, tree arg, int flags, tree decl,
 		      LOOKUP_ONLYCONVERTING|DIRECT_BIND);
     }
   else if (!(flags & DIRECT_BIND) && ! obvalue_p (arg))
-    return get_target_expr_sfinae (arg, complain);
+    return get_target_expr (arg, complain);
 
   /* If we had a way to wrap this up, and say, if we ever needed its
      address, transform all occurrences of the register, into a memory
@@ -574,6 +574,19 @@ force_rvalue (tree expr, tsubst_flags_t complain)
   return expr;
 }
 
+/* Force EXPR to be an lvalue, if it isn't already.  */
+
+tree
+force_lvalue (tree expr, tsubst_flags_t complain)
+{
+  if (!lvalue_p (expr))
+    {
+      expr = cp_build_addr_expr (expr, complain);
+      expr = cp_build_indirect_ref (input_location, expr, RO_ARROW, complain);
+    }
+  return expr;
+}
+
 
 /* If EXPR and ORIG are INTEGER_CSTs, return a version of EXPR that has
    TREE_OVERFLOW set only if it is set in ORIG.  Otherwise, return EXPR
@@ -652,8 +665,10 @@ cp_convert (tree type, tree expr, tsubst_flags_t complain)
 tree
 cp_convert_and_check (tree type, tree expr, tsubst_flags_t complain)
 {
-  tree result;
+  tree result, expr_for_warning = expr;
 
+  if (TREE_CODE (expr) == EXCESS_PRECISION_EXPR)
+    expr = TREE_OPERAND (expr, 0);
   if (TREE_TYPE (expr) == type)
     return expr;
   if (expr == error_mark_node)
@@ -663,7 +678,7 @@ cp_convert_and_check (tree type, tree expr, tsubst_flags_t complain)
   if ((complain & tf_warning)
       && c_inhibit_evaluation_warnings == 0)
     {
-      tree folded = cp_fully_fold (expr);
+      tree folded = cp_fully_fold (expr_for_warning);
       tree folded_result;
       if (folded == expr)
 	folded_result = result;
@@ -709,8 +724,10 @@ ocp_convert (tree type, tree expr, int convtype, int flags,
 	return error_mark_node;
       if (e == TREE_OPERAND (expr, 1))
 	return expr;
-      return build2_loc (EXPR_LOCATION (expr), COMPOUND_EXPR, TREE_TYPE (e),
-			 TREE_OPERAND (expr, 0), e);
+      e = build2_loc (EXPR_LOCATION (expr), COMPOUND_EXPR, TREE_TYPE (e),
+		      TREE_OPERAND (expr, 0), e);
+      copy_warning (e, expr);
+      return e;
     }
 
   complete_type (type);
@@ -806,7 +823,7 @@ ocp_convert (tree type, tree expr, int convtype, int flags,
 	  /* enum = enum, enum = int, enum = float, (enum)pointer are all
 	     errors.  */
 	  if (((INTEGRAL_OR_ENUMERATION_TYPE_P (intype)
-		|| TREE_CODE (intype) == REAL_TYPE)
+		|| SCALAR_FLOAT_TYPE_P (intype))
 	       && ! (convtype & CONV_STATIC))
 	      || TYPE_PTR_P (intype))
 	    {
@@ -939,7 +956,7 @@ ocp_convert (tree type, tree expr, int convtype, int flags,
 
       ctor = e;
 
-      if (abstract_virtuals_error_sfinae (NULL_TREE, type, complain))
+      if (abstract_virtuals_error (NULL_TREE, type, complain))
 	return error_mark_node;
 
       if (BRACE_ENCLOSED_INITIALIZER_P (ctor))
@@ -997,8 +1014,22 @@ cp_get_fndecl_from_callee (tree fn, bool fold /* = true */)
 {
   if (fn == NULL_TREE)
     return fn;
+
+  /* We evaluate constexpr functions on the original, pre-genericization
+     bodies.  So block-scope extern declarations have not been mapped to
+     declarations in outer scopes.  Use the namespace-scope declaration,
+     if any, so that retrieve_constexpr_fundef can find it (PR111132).  */
+  auto fn_or_local_alias = [] (tree f)
+    {
+      if (DECL_LOCAL_DECL_P (f))
+	if (tree alias = DECL_LOCAL_DECL_ALIAS (f))
+	  if (alias != error_mark_node)
+	    return alias;
+      return f;
+    };
+
   if (TREE_CODE (fn) == FUNCTION_DECL)
-    return fn;
+    return fn_or_local_alias (fn);
   tree type = TREE_TYPE (fn);
   if (type == NULL_TREE || !INDIRECT_TYPE_P (type))
     return NULL_TREE;
@@ -1009,7 +1040,7 @@ cp_get_fndecl_from_callee (tree fn, bool fold /* = true */)
       || TREE_CODE (fn) == FDESC_EXPR)
     fn = TREE_OPERAND (fn, 0);
   if (TREE_CODE (fn) == FUNCTION_DECL)
-    return fn;
+    return fn_or_local_alias (fn);
   return NULL_TREE;
 }
 
@@ -1044,7 +1075,7 @@ maybe_warn_nodiscard (tree expr, impl_conv_void implicit)
     call = TARGET_EXPR_INITIAL (expr);
   location_t loc = cp_expr_loc_or_input_loc (call);
   tree callee = cp_get_callee (call);
-  if (!callee)
+  if (!callee || !TREE_TYPE (callee))
     return;
 
   tree type = TREE_TYPE (callee);
@@ -1052,6 +1083,8 @@ maybe_warn_nodiscard (tree expr, impl_conv_void implicit)
     type = TYPE_PTRMEMFUNC_FN_TYPE (type);
   if (INDIRECT_TYPE_P (type))
     type = TREE_TYPE (type);
+  if (!FUNC_OR_METHOD_TYPE_P (type))
+    return;
 
   tree rettype = TREE_TYPE (type);
   tree fn = cp_get_fndecl_from_callee (callee);
@@ -1248,10 +1281,64 @@ convert_to_void (tree expr, impl_conv_void implicit, tsubst_flags_t complain)
 	tree type = TREE_TYPE (expr);
 	int is_reference = TYPE_REF_P (TREE_TYPE (TREE_OPERAND (expr, 0)));
 	int is_volatile = TYPE_VOLATILE (type);
-	int is_complete = COMPLETE_TYPE_P (complete_type (type));
+	if (is_volatile)
+	  complete_type (type);
+	int is_complete = COMPLETE_TYPE_P (type);
 
+	/* Don't load the value if this is an implicit dereference, or if
+	   the type needs to be handled by ctors/dtors.  */
+	if (is_reference)
+          {
+            if (is_volatile && (complain & tf_warning)
+		/* A co_await expression, in its await_resume expression, also
+		   contains an implicit dereference.  As a result, we don't
+		   need to warn about them here.  */
+		&& TREE_CODE (TREE_OPERAND (expr, 0)) != CO_AWAIT_EXPR)
+	      switch (implicit)
+		{
+	      	  case ICV_CAST:
+		    warning_at (loc, 0, "conversion to void will not access "
+				"object of type %qT", type);
+		    break;
+		  case ICV_SECOND_OF_COND:
+		    warning_at (loc, 0, "implicit dereference will not access "
+				"object of type %qT in second operand of "
+				"conditional expression", type);
+		    break;
+		  case ICV_THIRD_OF_COND:
+		    warning_at (loc, 0, "implicit dereference will not access "
+				"object of type %qT in third operand of "
+				"conditional expression", type);
+		    break;
+		  case ICV_RIGHT_OF_COMMA:
+		    warning_at (loc, 0, "implicit dereference will not access "
+				"object of type %qT in right operand of "
+				"comma operator", type);
+		    break;
+		  case ICV_LEFT_OF_COMMA:
+		    warning_at (loc, 0, "implicit dereference will not access "
+				"object of type %qT in left operand of comma "
+				"operator", type);
+		    break;
+		  case ICV_STATEMENT:
+		    warning_at (loc, 0, "implicit dereference will not access "
+				"object of type %qT in statement",  type);
+		     break;
+		  case ICV_THIRD_IN_FOR:
+		    warning_at (loc, 0, "implicit dereference will not access "
+				"object of type %qT in for increment expression",
+				type);
+		    break;
+		  default:
+		    gcc_unreachable ();
+		}
+
+	    /* Since this was an implicit dereference, we should also act as if
+	       it was never there.  */
+	    return convert_to_void (TREE_OPERAND (expr, 0), implicit, complain);
+          }
 	/* Can't load the value if we don't know the type.  */
-	if (is_volatile && !is_complete)
+	else if (is_volatile && !is_complete)
           {
             if (complain & tf_warning)
 	      switch (implicit)
@@ -1288,50 +1375,6 @@ convert_to_void (tree expr, impl_conv_void implicit, tsubst_flags_t complain)
 		    warning_at (loc, 0, "indirection will not access object of "
 				"incomplete type %qT in for increment "
 				"expression", type);
-		    break;
-		  default:
-		    gcc_unreachable ();
-		}
-          }
-	/* Don't load the value if this is an implicit dereference, or if
-	   the type needs to be handled by ctors/dtors.  */
-	else if (is_volatile && is_reference)
-          {
-            if (complain & tf_warning)
-	      switch (implicit)
-		{
-	      	  case ICV_CAST:
-		    warning_at (loc, 0, "conversion to void will not access "
-				"object of type %qT", type);
-		    break;
-		  case ICV_SECOND_OF_COND:
-		    warning_at (loc, 0, "implicit dereference will not access "
-				"object of type %qT in second operand of "
-				"conditional expression", type);
-		    break;
-		  case ICV_THIRD_OF_COND:
-		    warning_at (loc, 0, "implicit dereference will not access "
-				"object of type %qT in third operand of "
-				"conditional expression", type);
-		    break;
-		  case ICV_RIGHT_OF_COMMA:
-		    warning_at (loc, 0, "implicit dereference will not access "
-				"object of type %qT in right operand of "
-				"comma operator", type);
-		    break;
-		  case ICV_LEFT_OF_COMMA:
-		    warning_at (loc, 0, "implicit dereference will not access "
-				"object of type %qT in left operand of comma "
-				"operator", type);
-		    break;
-		  case ICV_STATEMENT:
-		    warning_at (loc, 0, "implicit dereference will not access "
-				"object of type %qT in statement",  type);
-		     break;
-		  case ICV_THIRD_IN_FOR:
-		    warning_at (loc, 0, "implicit dereference will not access "
-				"object of type %qT in for increment expression",
-				type);
 		    break;
 		  default:
 		    gcc_unreachable ();
@@ -1381,7 +1424,7 @@ convert_to_void (tree expr, impl_conv_void implicit, tsubst_flags_t complain)
 		    gcc_unreachable ();
 		}
 	  }
-	if (is_reference || !is_volatile || !is_complete || TREE_ADDRESSABLE (type))
+	if (!is_volatile || !is_complete || TREE_ADDRESSABLE (type))
           {
             /* Emit a warning (if enabled) when the "effect-less" INDIRECT_REF
                operation is stripped off. Note that we don't warn about
@@ -1396,9 +1439,6 @@ convert_to_void (tree expr, impl_conv_void implicit, tsubst_flags_t complain)
                 && !is_reference)
               warning_at (loc, OPT_Wunused_value, "value computed is not used");
             expr = TREE_OPERAND (expr, 0);
-	    if (TREE_CODE (expr) == CALL_EXPR
-		&& (complain & tf_warning))
-	      maybe_warn_nodiscard (expr, implicit);
           }
 
 	break;
@@ -1408,9 +1448,10 @@ convert_to_void (tree expr, impl_conv_void implicit, tsubst_flags_t complain)
       {
 	/* External variables might be incomplete.  */
 	tree type = TREE_TYPE (expr);
-	int is_complete = COMPLETE_TYPE_P (complete_type (type));
 
-	if (TYPE_VOLATILE (type) && !is_complete && (complain & tf_warning))
+	if (TYPE_VOLATILE (type)
+	    && !COMPLETE_TYPE_P (complete_type (type))
+	    && (complain & tf_warning))
 	  switch (implicit)
 	    {
 	      case ICV_CAST:
@@ -1477,6 +1518,11 @@ convert_to_void (tree expr, impl_conv_void implicit, tsubst_flags_t complain)
 	}
       if (complain & tf_warning)
 	maybe_warn_nodiscard (expr, implicit);
+      break;
+
+    case CO_AWAIT_EXPR:
+      if (auto awr = co_await_get_resume_call (expr))
+	convert_to_void (awr, implicit, complain);
       break;
 
     default:;

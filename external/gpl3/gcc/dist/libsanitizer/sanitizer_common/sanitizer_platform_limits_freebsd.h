@@ -57,7 +57,7 @@ extern unsigned struct_sched_param_sz;
 extern unsigned struct_statfs64_sz;
 extern unsigned struct_statfs_sz;
 extern unsigned struct_sockaddr_sz;
-extern unsigned ucontext_t_sz;
+unsigned ucontext_t_sz(void *ctx);
 extern unsigned struct_rlimit_sz;
 extern unsigned struct_utimbuf_sz;
 extern unsigned struct_timespec_sz;
@@ -249,8 +249,14 @@ struct __sanitizer_dirent {
   unsigned int d_fileno;
 #  endif
   unsigned short d_reclen;
-  // more fields that we don't care about
+  u8 d_type;
+  u8 d_pad0;
+  u16 d_namlen;
+  u16 d_pad1;
+  char d_name[256];
 };
+
+u16 __sanitizer_dirsiz(const __sanitizer_dirent *dp);
 
 // 'clock_t' is 32 bits wide on x64 FreeBSD
 typedef int __sanitizer_clock_t;
@@ -424,6 +430,38 @@ struct __sanitizer__ttyent {
   char *ty_group;
 };
 
+// procctl reaper data for PROCCTL_REAPER flags
+struct __sanitizer_procctl_reaper_status {
+  unsigned int rs_flags;
+  unsigned int rs_children;
+  unsigned int rs_descendants;
+  pid_t rs_reaper;
+  pid_t rs_pid;
+  unsigned int rs_pad0[15];
+};
+
+struct __sanitizer_procctl_reaper_pidinfo {
+  pid_t pi_pid;
+  pid_t pi_subtree;
+  unsigned int pi_flags;
+  unsigned int pi_pad0[15];
+};
+
+struct __sanitizer_procctl_reaper_pids {
+  unsigned int rp_count;
+  unsigned int rp_pad0[15];
+  struct __sanitize_procctl_reapper_pidinfo *rp_pids;
+};
+
+struct __sanitizer_procctl_reaper_kill {
+  int rk_sig;
+  unsigned int rk_flags;
+  pid_t rk_subtree;
+  unsigned int rk_killed;
+  pid_t rk_fpid;
+  unsigned int rk_pad[15];
+};
+
 #  define IOC_NRBITS 8
 #  define IOC_TYPEBITS 8
 #  if defined(__powerpc__) || defined(__powerpc64__) || defined(__mips__)
@@ -479,6 +517,11 @@ extern unsigned struct_audio_buf_info_sz;
 extern unsigned struct_ppp_stats_sz;
 extern unsigned struct_sioc_sg_req_sz;
 extern unsigned struct_sioc_vif_req_sz;
+
+extern unsigned struct_procctl_reaper_status_sz;
+extern unsigned struct_procctl_reaper_pidinfo_sz;
+extern unsigned struct_procctl_reaper_pids_sz;
+extern unsigned struct_procctl_reaper_kill_sz;
 
 // ioctl request identifiers
 
@@ -672,6 +715,17 @@ extern unsigned struct_cap_rights_sz;
 
 extern unsigned struct_fstab_sz;
 extern unsigned struct_StringList_sz;
+
+struct __sanitizer_cpuset {
+#if __FreeBSD_version >= 1400090
+  long __bits[(1024 + (sizeof(long) * 8) - 1) / (sizeof(long) * 8)];
+#else
+  long __bits[(256 + (sizeof(long) * 8) - 1) / (sizeof(long) * 8)];
+#endif
+};
+
+typedef struct __sanitizer_cpuset __sanitizer_cpuset_t;
+extern unsigned struct_cpuset_sz;
 }  // namespace __sanitizer
 
 #  define CHECK_TYPE_SIZE(TYPE) \

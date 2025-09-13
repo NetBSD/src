@@ -1,5 +1,5 @@
 /* Dwarf2 Call Frame Information helper routines.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -112,8 +112,8 @@ struct dw_trace_info
      while scanning insns.  However, the args_size value is irrelevant at
      any point except can_throw_internal_p insns.  Therefore the "delay"
      sizes the values that must actually be emitted for this trace.  */
-  poly_int64_pod beg_true_args_size, end_true_args_size;
-  poly_int64_pod beg_delay_args_size, end_delay_args_size;
+  poly_int64 beg_true_args_size, end_true_args_size;
+  poly_int64 beg_delay_args_size, end_delay_args_size;
 
   /* The first EH insn in the trace, where beg_delay_args_size must be set.  */
   rtx_insn *eh_head;
@@ -219,7 +219,7 @@ static dw_cfa_location *cur_cfa;
 struct queued_reg_save {
   rtx reg;
   rtx saved_reg;
-  poly_int64_pod cfa_offset;
+  poly_int64 cfa_offset;
 };
 
 
@@ -1496,10 +1496,12 @@ dwarf2out_frame_debug_cfa_val_expression (rtx set)
   update_row_reg_save (cur_row, dwf_regno (dest), cfi);
 }
 
-/* A subroutine of dwarf2out_frame_debug, process a REG_CFA_RESTORE note.  */
+/* A subroutine of dwarf2out_frame_debug, process a REG_CFA_RESTORE
+   note. When called with EMIT_CFI set to false emitting a CFI
+   statement is suppressed.  */
 
 static void
-dwarf2out_frame_debug_cfa_restore (rtx reg)
+dwarf2out_frame_debug_cfa_restore (rtx reg, bool emit_cfi)
 {
   gcc_assert (REG_P (reg));
 
@@ -1507,7 +1509,8 @@ dwarf2out_frame_debug_cfa_restore (rtx reg)
   if (!span)
     {
       unsigned int regno = dwf_regno (reg);
-      add_cfi_restore (regno);
+      if (emit_cfi)
+	add_cfi_restore (regno);
       update_row_reg_save (cur_row, regno, NULL);
     }
   else
@@ -1522,7 +1525,8 @@ dwarf2out_frame_debug_cfa_restore (rtx reg)
 	  reg = XVECEXP (span, 0, par_index);
 	  gcc_assert (REG_P (reg));
 	  unsigned int regno = dwf_regno (reg);
-	  add_cfi_restore (regno);
+	  if (emit_cfi)
+	    add_cfi_restore (regno);
 	  update_row_reg_save (cur_row, regno, NULL);
 	}
     }
@@ -2309,6 +2313,7 @@ dwarf2out_frame_debug (rtx_insn *insn)
 	break;
 
       case REG_CFA_RESTORE:
+      case REG_CFA_NO_RESTORE:
 	n = XEXP (note, 0);
 	if (n == NULL)
 	  {
@@ -2317,7 +2322,7 @@ dwarf2out_frame_debug (rtx_insn *insn)
 	      n = XVECEXP (n, 0, 0);
 	    n = XEXP (n, 0);
 	  }
-	dwarf2out_frame_debug_cfa_restore (n);
+	dwarf2out_frame_debug_cfa_restore (n, REG_NOTE_KIND (note) == REG_CFA_RESTORE);
 	handled_one = true;
 	break;
 
@@ -3286,7 +3291,7 @@ create_cie_data (void)
    state at each location within the function.  These notes will be
    emitted during pass_final.  */
 
-static unsigned int
+static void
 execute_dwarf2_frame (void)
 {
   /* Different HARD_FRAME_POINTER_REGNUM might coexist in the same file.  */
@@ -3317,8 +3322,6 @@ execute_dwarf2_frame (void)
 
   delete trace_index;
   trace_index = NULL;
-
-  return 0;
 }
 
 /* Convert a DWARF call frame info. operation to its string name */
@@ -3788,8 +3791,12 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *);
-  virtual unsigned int execute (function *) { return execute_dwarf2_frame (); }
+  bool gate (function *) final override;
+  unsigned int execute (function *) final override
+  {
+    execute_dwarf2_frame ();
+    return 0;
+  }
 
 }; // class pass_dwarf2_frame
 
@@ -3813,6 +3820,15 @@ rtl_opt_pass *
 make_pass_dwarf2_frame (gcc::context *ctxt)
 {
   return new pass_dwarf2_frame (ctxt);
+}
+
+void dwarf2cfi_cc_finalize ()
+{
+  add_cfi_insn = NULL;
+  add_cfi_vec = NULL;
+  cur_trace = NULL;
+  cur_row = NULL;
+  cur_cfa = NULL;
 }
 
 #include "gt-dwarf2cfi.h"

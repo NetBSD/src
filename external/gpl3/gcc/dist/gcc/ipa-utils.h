@@ -1,5 +1,5 @@
 /* Utilities for ipa analysis.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
 
 This file is part of GCC.
@@ -30,7 +30,7 @@ struct ipa_dfs_info {
   bool new_node;
   bool on_stack;
   struct cgraph_node* next_cycle;
-  PTR aux;
+  void *aux;
 };
 
 
@@ -46,6 +46,8 @@ tree get_base_var (tree);
 void ipa_merge_profiles (struct cgraph_node *dst,
 			 struct cgraph_node *src, bool preserve_body = false);
 bool recursive_call_p (tree, tree);
+bool stmt_may_terminate_function_p (function *fun, gimple *stmt, bool assume_return_or_eh);
+bitmap find_always_executed_bbs (function *fun, bool assume_return_or_eh);
 
 /* In ipa-pure-const.cc  */
 bool finite_function_p ();
@@ -55,6 +57,13 @@ bool ipa_make_function_pure (cgraph_node *, bool, bool);
 
 /* In ipa-profile.cc  */
 bool ipa_propagate_frequency (struct cgraph_node *node);
+void ipa_profile_cc_finalize (void);
+
+/* In ipa-icf.cc  */
+void ipa_icf_cc_finalize (void);
+
+/* In ipa-sra.cc  */
+void ipa_sra_cc_finalize (void);
 
 /* In ipa-devirt.cc  */
 
@@ -103,6 +112,7 @@ tree prevailing_odr_type (tree type);
 void enable_odr_based_tbaa (tree type);
 bool odr_based_tbaa_p (const_tree type);
 void set_type_canonical_for_odr_type (tree type, tree canonical);
+void warn_function_returns_nonnull (tree);
 
 void register_odr_enum (tree type);
 

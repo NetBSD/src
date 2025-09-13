@@ -1,12 +1,12 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2024-05-09  Iain Sandoe  <iain@sandoe.co.uk>
+2024-05-08  Iain Sandoe  <iain@sandoe.co.uk>
 
 	Backported from master:
 	2024-05-02  Iain Sandoe  <iain@sandoe.co.uk>
@@ -16,18 +16,20 @@
 	to determine this ABI change.
 	(build_v2_protocol_list_address_table): Likewise.
 
-2024-04-20  Iain Sandoe  <iain@sandoe.co.uk>
+2024-05-07  Release Manager
 
-	Backported from master:
-	2024-01-18  Iain Sandoe  <iain@sandoe.co.uk>
+	* GCC 14.1.0 released.
 
-	* objc-act.cc (objc_init): Initialize interface and class
-	name hash maps before the preprocessor uses them.
+2024-03-20  Jakub Jelinek  <jakub@redhat.com>
 
-2024-04-19  Iain Sandoe  <iain@sandoe.co.uk>
+	* objc-next-runtime-abi-02.cc (build_v2_class_ro_t_initializer): Use
+	integer_zero_node instead of build_int_cst (integer_type_node, 0).
 
-	Backported from master:
-	2024-01-28  Iain Sandoe  <iain@sandoe.co.uk>
+2024-02-24  Jakub Jelinek  <jakub@redhat.com>
+
+	* objc-encoding.cc (encode_array): Use HOST_WIDE_INT_0 macros.
+
+2024-01-28  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.cc (build_v2_address_table): Prevent
 	over-alignment of Objective-C metadata by setting DECL_USER_ALIGN
@@ -43,36 +45,99 @@
 	(build_ehtype): Likewise.
 	* objc-runtime-shared-support.cc (generate_strings): Likewise.
 
-2024-04-19  Iain Sandoe  <iain@sandoe.co.uk>
+2024-01-18  Iain Sandoe  <iain@sandoe.co.uk>
 
-	Backported from master:
-	2024-01-12  Iain Sandoe  <iain@sandoe.co.uk>
+	* objc-act.cc (objc_init): Initialize interface and class
+	name hash maps before the preprocessor uses them.
+
+2024-01-12  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.cc
 	(build_v2_objc_method_fixup_call): Early exit for cases
 	where the sender or receiver are known to be in error.
 
-2024-04-12  Iain Sandoe  <iain@sandoe.co.uk>
+2023-11-27  Alex Coplan  <alex.coplan@arm.com>
+	    Iain Sandoe  <iain@sandoe.co.uk>
 
-	Backported from master:
-	2022-05-03  Iain Sandoe  <iain@sandoe.co.uk>
+	PR c++/60512
+	* objc-act.cc (struct objc_feature_info): New.
+	(objc_nonfragile_abi_p): New.
+	(objc_common_register_features): New.
+	* objc-act.h (objc_common_register_features): New.
+	* objc-lang.cc (c_family_register_lang_features): New.
+
+2023-11-04  Jakub Jelinek  <jakub@redhat.com>
+
+	* objc-act.h (objc_common_tree_size): Remove.
+	* objc-act.cc (objc_common_tree_size): Remove.
+	* objc-lang.cc (LANG_HOOKS_TREE_SIZE): Remove.
+
+2023-10-23  Andrew Pinski  <pinskia@gmail.com>
+
+	* objc-gnu-runtime-abi-01.cc (build_objc_method_call): Allow
+	for error_operand after call to build_c_cast.
+	* objc-next-runtime-abi-01.cc (build_objc_method_call): Likewise.
+	* objc-next-runtime-abi-02.cc (build_v2_build_objc_method_call): Likewise.
+
+2023-08-31  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	* objc-act.cc: Change spelling to macOS.
+
+2023-05-18  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* objc-act.cc (objc_volatilize_decl): Use _P() defines from tree.h.
+	(objc_is_global_reference_p): Ditto.
+	(objc_generate_write_barrier): Ditto.
+	(objc_gimplify_property_ref): Ditto.
+	* objc-next-runtime-abi-01.cc (next_runtime_abi_01_receiver_is_class_object): Ditto.
+	* objc-next-runtime-abi-02.cc (next_runtime_abi_02_receiver_is_class_object): Ditto.
+	(next_runtime_abi_02_build_objc_method_call): Ditto.
+
+2023-02-16  Patrick Palka  <ppalka@redhat.com>
+
+	* objc-act.h: Mechanically drop static from static inline
+	functions via s/^static inline/inline/g.
+	* objc-map.h: Likewise.
+	* objc-act.cc: Remove the redundant redeclarations of is_ivar
+	and lookup_category.
+
+2022-10-28  Joseph Myers  <joseph@codesourcery.com>
+
+	* objc-next-runtime-abi-01.cc (build_next_objc_exception_stuff):
+	Use build_function_type to build type of objc_setjmp_decl.
+
+2022-10-07  Martin Liska  <mliska@suse.cz>
+
+	* objc-gnu-runtime-abi-01.cc (generate_static_references):
+	Remove unused variable.
+
+2022-06-02  David Malcolm  <dmalcolm@redhat.com>
+
+	* objc-act.h (objc_get_sarif_source_language): New decl.
+	* objc-lang.cc (LANG_HOOKS_GET_SARIF_SOURCE_LANGUAGE): Redefine.
+	(objc_get_sarif_source_language): New.
+
+2022-05-31  Jason Merrill  <jason@redhat.com>
+
+	* Make-lang.in (objc.tags): Look at *.cc.
+
+2022-05-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/91134
+	* objc-act.cc (objc_build_component_ref): Adjust build_component_ref
+	caller.
+
+2022-05-11  Martin Liska  <mliska@suse.cz>
+
+	PR target/105355
+	* lang-specs.h: Use Separate syntax.
+
+2022-05-03  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* objc-next-runtime-abi-02.cc (next_runtime_abi_02_protocol_decl): Do
 	not dead-strip the runtime meta-data symbols.
 	(build_v2_classrefs_table): Likewise.
 	(build_v2_protocol_list_address_table): Likewise.
-
-2023-05-08  Release Manager
-
-	* GCC 12.3.0 released.
-
-2022-08-19  Release Manager
-
-	* GCC 12.2.0 released.
-
-2022-05-06  Release Manager
-
-	* GCC 12.1.0 released.
 
 2022-01-17  Martin Liska  <mliska@suse.cz>
 
@@ -4294,7 +4359,7 @@
 	Move to c-objc-common.h.
 
 
-Copyright (C) 2004-2022 Free Software Foundation, Inc.
+Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCCGO 1"
-.TH GCCGO 1 "2025-07-11" "gcc-12.5.0" "GNU"
+.TH GCCGO 1 "2025-05-23" "gcc-14.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -275,6 +275,13 @@ Identify a \s-1JSON\s0 file used to map patterns used with special
 pattern to a list of file names, and \f(CW\*(C`Files\*(C'\fR maps each file name
 to a full path to the file.  This option is intended for use by the
 \&\fBgo\fR command to implement \f(CW\*(C`//go:embed\*(C'\fR.
+.IP "\fB\-fgo\-importcfg=\fR\fIfile\fR" 4
+.IX Item "-fgo-importcfg=file"
+Identify a file that provides mappings for import package paths found
+in the Go source files.  The file can contain two commands:
+\&\f(CW\*(C`importpath\*(C'\fR to rename import paths for vendoring and
+\&\f(CW\*(C`packagefile\*(C'\fR to map from package path to files containing export
+data.  This option is intended for use by the \fBgo\fR command.
 .IP "\fB\-g\fR" 4
 .IX Item "-g"
 This is the standard \fBgcc\fR option.  It
@@ -291,7 +298,7 @@ functions, such as \f(CW\*(C`runtime.Callers\*(C'\fR, will not operate correctly
 and the Info entries for \fIgccgo\fR and \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2010\-2022 Free Software Foundation, Inc.
+Copyright (c) 2010\-2024 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

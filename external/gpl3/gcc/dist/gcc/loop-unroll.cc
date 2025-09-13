@@ -1,5 +1,5 @@
 /* Loop unrolling.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -487,6 +487,8 @@ unroll_loop_constant_iterations (class loop *loop)
   bool exit_at_end = loop_exit_at_end_p (loop);
   struct opt_info *opt_info = NULL;
   bool ok;
+  bool flat = maybe_flat_loop_profile (loop);
+  profile_count orig_exit_count = desc->out_edge->count ();
 
   niter = desc->niter;
 
@@ -603,8 +605,14 @@ unroll_loop_constant_iterations (class loop *loop)
   ok = duplicate_loop_body_to_header_edge (
     loop, loop_latch_edge (loop), max_unroll, wont_exit, desc->out_edge,
     &remove_edges,
-    DLTHE_FLAG_UPDATE_FREQ | (opt_info ? DLTHE_RECORD_COPY_NUMBER : 0));
+    DLTHE_FLAG_UPDATE_FREQ | (opt_info ? DLTHE_RECORD_COPY_NUMBER : 0)
+    | (flat ? DLTHE_FLAG_FLAT_PROFILE : 0));
   gcc_assert (ok);
+
+  edge exit = update_loop_exit_probability_scale_dom_bbs
+	  (loop, desc->out_edge, orig_exit_count);
+  if (exit)
+    update_br_prob_note (exit->src);
 
   if (opt_info)
     {
@@ -978,7 +986,7 @@ unroll_loop_runtime_iterations (class loop *loop)
   /* Compute count increments for each switch block and initialize
      innermost switch block.  Switch blocks and peeled loop copies are built
      from innermost outward.  */
-  iter_count = new_count = swtch->count.apply_scale (1, max_unroll + 1);
+  iter_count = new_count = swtch->count / (max_unroll + 1);
   swtch->count = new_count;
 
   for (i = 0; i < n_peel; i++)
@@ -995,7 +1003,7 @@ unroll_loop_runtime_iterations (class loop *loop)
 
       /* Create item for switch.  */
       unsigned j = n_peel - i - (extra_zero_check ? 0 : 1);
-      p = profile_probability::always ().apply_scale (1, i + 2);
+      p = profile_probability::always () / (i + 2);
 
       preheader = split_edge (loop_preheader_edge (loop));
       /* Add in count of edge from switch block.  */
@@ -1021,12 +1029,12 @@ unroll_loop_runtime_iterations (class loop *loop)
   if (extra_zero_check)
     {
       /* Add branch for zero iterations.  */
-      p = profile_probability::always ().apply_scale (1, max_unroll + 1);
+      p = profile_probability::always () / (max_unroll + 1);
       swtch = ezc_swtch;
       preheader = split_edge (loop_preheader_edge (loop));
       /* Recompute count adjustments since initial peel copy may
 	 have exited and reduced those values that were computed above.  */
-      iter_count = swtch->count.apply_scale (1, max_unroll + 1);
+      iter_count = swtch->count / (max_unroll + 1);
       /* Add in count of edge from switch block.  */
       preheader->count += iter_count;
       branch_code = compare_and_jump_seq (copy_rtx (niter), const0_rtx, EQ,
@@ -1847,7 +1855,7 @@ insert_var_expansion_initialization (struct var_to_expand *ve,
   rtx var, zero_init;
   unsigned i;
   machine_mode mode = GET_MODE (ve->reg);
-  bool honor_signed_zero_p = HONOR_SIGNED_ZEROS (mode);
+  bool has_signed_zero_p = MODE_HAS_SIGNED_ZEROS (mode);
 
   if (ve->var_expansions.length () == 0)
     return;
@@ -1861,7 +1869,7 @@ insert_var_expansion_initialization (struct var_to_expand *ve,
     case MINUS:
       FOR_EACH_VEC_ELT (ve->var_expansions, i, var)
         {
-	  if (honor_signed_zero_p)
+	  if (has_signed_zero_p)
 	    zero_init = simplify_gen_unary (NEG, mode, CONST0_RTX (mode), mode);
 	  else
 	    zero_init = CONST0_RTX (mode);

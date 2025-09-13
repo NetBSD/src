@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -451,6 +451,7 @@ static const struct asm_name asm_names[] = {
   { "power8",	"-mpwr8" },
   { "power9",	"-mpwr9" },
   { "power10",	"-mpwr10" },
+  { "power11",	"-mpwr11" },
   { "powerpc",	"-mppc" },
   { "rs64",	"-mppc" },
   { "603",	"-m603" },
@@ -476,13 +477,14 @@ static const struct asm_name asm_names[] = {
   { "power6",	"-mpower6 %{!mvsx:%{!maltivec:-maltivec}}" },
   { "power6x",	"-mpower6 %{!mvsx:%{!maltivec:-maltivec}}" },
   { "power7",	"-mpower7" },
-  { "power8",	"%{mpower9-vector:-mpower9;:-mpower8}" },
+  { "power8",	"-mpower8" },
   { "power9",	"-mpower9" },
   { "power10",	"-mpower10" },
+  { "power11",	"-mpower11" },
   { "a2",	"-ma2" },
   { "powerpc",	"-mppc" },
   { "powerpc64", "-mppc64" },
-  { "powerpc64le", "%{mpower9-vector:-mpower9;:-mpower8}" },
+  { "powerpc64le", "-mpower8" },
   { "rs64",	"-mppc64" },
   { "401",	"-mppc" },
   { "403",	"-m403" },
@@ -526,8 +528,7 @@ static const struct asm_name asm_names[] = {
   { "e6500",	"-me6500" },
   { "titan",	"-mtitan" },
   { NULL,	"\
-%{mpower9-vector: -mpower9; \
-  mpower8-vector|mcrypto|mdirect-move|mhtm: -mpower8; \
+%{mcrypto|mdirect-move|mhtm: -mpower8; \
   mvsx: -mpower7; \
   mpowerpc64: -mppc64; \
   : %(asm_default)}" },
@@ -599,7 +600,7 @@ host_detect_local_cpu (int argc, const char **argv)
 
   if (assembler)
     {
-      for (i = 0; i < sizeof (asm_names) / sizeof (asm_names[0]); i++)
+      for (i = 0; i < ARRAY_SIZE (asm_names); i++)
 	{
 	  if (!asm_names[i].cpu || !strcmp (asm_names[i].cpu, cpu))
 	    return asm_names[i].asm_sw;

@@ -1,6 +1,6 @@
 /* Internal to rs6000 type, variable, and function declarations and
    definitons shared between the various rs6000 source files.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -82,7 +82,6 @@ extern const char *rs6000_machine;
    from rs6000-logue.cc  */
 
 extern int uses_TOC (void);
-extern bool rs6000_global_entry_point_needed_p (void);
 extern void rs6000_output_function_prologue (FILE *file);
 extern void rs6000_output_function_epilogue (FILE *file);
 extern bool rs6000_function_ok_for_sibcall (tree decl, tree exp);
@@ -182,6 +181,10 @@ extern tree rs6000_fold_builtin (tree fndecl ATTRIBUTE_UNUSED,
 			         int n_args ATTRIBUTE_UNUSED,
 			         tree *args ATTRIBUTE_UNUSED,
 			         bool ignore ATTRIBUTE_UNUSED);
+
+extern void rs6000_print_patchable_function_entry (FILE *,
+						   unsigned HOST_WIDE_INT,
+						   bool);
 
 extern bool rs6000_passes_float;
 extern bool rs6000_passes_long_double;

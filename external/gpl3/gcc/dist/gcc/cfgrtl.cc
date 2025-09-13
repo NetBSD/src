@@ -1,5 +1,5 @@
 /* Control flow graph manipulation code for GNU compiler.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -83,11 +83,11 @@ static void fixup_reorder_chain (void);
 
 void verify_insn_chain (void);
 static void fixup_fallthru_exit_predecessor (void);
-static int can_delete_note_p (const rtx_note *);
-static int can_delete_label_p (const rtx_code_label *);
+static bool can_delete_note_p (const rtx_note *);
+static bool can_delete_label_p (const rtx_code_label *);
 static basic_block rtl_split_edge (edge);
 static bool rtl_move_block_after (basic_block, basic_block);
-static int rtl_verify_flow_info (void);
+static bool rtl_verify_flow_info (void);
 static basic_block cfg_layout_split_block (basic_block, void *);
 static edge cfg_layout_redirect_edge_and_branch (edge, basic_block);
 static basic_block cfg_layout_redirect_edge_and_branch_force (edge, basic_block);
@@ -97,14 +97,14 @@ static basic_block rtl_redirect_edge_and_branch_force (edge, basic_block);
 static edge rtl_redirect_edge_and_branch (edge, basic_block);
 static basic_block rtl_split_block (basic_block, void *);
 static void rtl_dump_bb (FILE *, basic_block, int, dump_flags_t);
-static int rtl_verify_flow_info_1 (void);
+static bool rtl_verify_flow_info_1 (void);
 static void rtl_make_forwarder_block (edge);
 static bool rtl_bb_info_initialized_p (basic_block bb);
 
 /* Return true if NOTE is not one of the ones that must be kept paired,
    so that we may simply delete it.  */
 
-static int
+static bool
 can_delete_note_p (const rtx_note *note)
 {
   switch (NOTE_KIND (note))
@@ -121,7 +121,7 @@ can_delete_note_p (const rtx_note *note)
 
 /* True if a given label can be deleted.  */
 
-static int
+static bool
 can_delete_label_p (const rtx_code_label *label)
 {
   return (!LABEL_PRESERVE_P (label)
@@ -450,14 +450,13 @@ compute_bb_for_insn (void)
 
 /* Release the basic_block_for_insn array.  */
 
-unsigned int
+void
 free_bb_for_insn (void)
 {
   rtx_insn *insn;
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     if (!BARRIER_P (insn))
       BLOCK_FOR_INSN (insn) = NULL;
-  return 0;
 }
 
 namespace {
@@ -483,7 +482,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_free_cfg
 
@@ -865,7 +864,7 @@ rtl_merge_blocks (basic_block a, basic_block b)
   rtx_insn *b_head = BB_HEAD (b), *b_end = BB_END (b), *a_end = BB_END (a);
   rtx_insn *del_first = NULL, *del_last = NULL;
   rtx_insn *b_debug_start = b_end, *b_debug_end = b_end;
-  int b_empty = 0;
+  bool b_empty = false;
 
   if (dump_file)
     fprintf (dump_file, "Merging block %d into block %d...\n", b->index,
@@ -880,7 +879,7 @@ rtl_merge_blocks (basic_block a, basic_block b)
       /* Detect basic blocks with nothing but a label.  This can happen
 	 in particular at the end of a function.  */
       if (b_head == b_end)
-	b_empty = 1;
+	b_empty = true;
 
       del_first = del_last = b_head;
       b_head = NEXT_INSN (b_head);
@@ -891,7 +890,7 @@ rtl_merge_blocks (basic_block a, basic_block b)
   if (NOTE_INSN_BASIC_BLOCK_P (b_head))
     {
       if (b_head == b_end)
-	b_empty = 1;
+	b_empty = true;
       if (! del_last)
 	del_first = b_head;
 
@@ -1056,7 +1055,7 @@ try_redirect_by_replacing_jump (edge e, basic_block target, bool in_cfglayout)
   basic_block src = e->src;
   rtx_insn *insn = BB_END (src);
   rtx set;
-  int fallthru = 0;
+  bool fallthru = false;
 
   /* If we are partitioning hot/cold basic blocks, we don't want to
      mess up unconditional or indirect jumps that cross between hot
@@ -1096,7 +1095,7 @@ try_redirect_by_replacing_jump (edge e, basic_block target, bool in_cfglayout)
     {
       if (dump_file)
 	fprintf (dump_file, "Removing jump %i.\n", INSN_UID (insn));
-      fallthru = 1;
+      fallthru = true;
 
       /* Selectively unlink whole insn chain.  */
       if (in_cfglayout)
@@ -1686,8 +1685,8 @@ force_nonfallthru_and_redirect (edge e, basic_block target, rtx jump_label)
 	 add also edge from asm goto bb to target.  */
       if (asm_goto_edge)
 	{
-	  new_edge->probability = new_edge->probability.apply_scale (1, 2);
-	  jump_block->count = jump_block->count.apply_scale (1, 2);
+	  new_edge->probability /= 2;
+	  jump_block->count /= 2;
 	  edge new_edge2 = make_edge (new_edge->src, target,
 				      e->flags & ~EDGE_FALLTHRU);
 	  new_edge2->probability = probability - new_edge->probability;
@@ -2019,6 +2018,21 @@ commit_one_edge_insertion (edge e)
   insns = e->insns.r;
   e->insns.r = NULL;
 
+  /* Allow the sequence to contain internal jumps, such as a memcpy loop
+     or an allocation loop.  If such a sequence is emitted during RTL
+     expansion, we'll create the appropriate basic blocks later,
+     at the end of the pass.  But if such a sequence is emitted after
+     initial expansion, we'll need to find the subblocks ourselves.  */
+  bool contains_jump = false;
+  if (!currently_expanding_to_rtl)
+    for (rtx_insn *insn = insns; insn; insn = NEXT_INSN (insn))
+      if (JUMP_P (insn))
+	{
+	  rebuild_jump_labels_chain (insns);
+	  contains_jump = true;
+	  break;
+	}
+
   /* Figure out where to put these insns.  If the destination has
      one predecessor, insert there.  Except for the exit block.  */
   if (single_pred_p (e->dest) && e->dest != EXIT_BLOCK_PTR_FOR_FN (cfun))
@@ -2113,7 +2127,13 @@ commit_one_edge_insertion (edge e)
 	delete_insn (before);
     }
   else
-    gcc_assert (!JUMP_P (last));
+    /* Sequences inserted after RTL expansion are expected to be SESE,
+       with only internal branches allowed.  If the sequence jumps outside
+       itself then we do not know how to add the associated edges here.  */
+    gcc_assert (!JUMP_P (last) || currently_expanding_to_rtl);
+
+  if (contains_jump)
+    find_sub_basic_blocks (bb);
 }
 
 /* Update the CFG for all queued instructions.  */
@@ -2516,11 +2536,11 @@ fixup_partitions (void)
    between hot/cold partitions. This condition will not be true until
    after reorder_basic_blocks is called.  */
 
-static int
+static bool
 verify_hot_cold_block_grouping (void)
 {
   basic_block bb;
-  int err = 0;
+  bool err = false;
   bool switched_sections = false;
   int current_partition = BB_UNPARTITIONED;
 
@@ -2540,7 +2560,7 @@ verify_hot_cold_block_grouping (void)
 	    {
 	      error ("multiple hot/cold transitions found (bb %i)",
 		     bb->index);
-	      err = 1;
+	      err = true;
 	    }
 	  else
             switched_sections = true;
@@ -2561,10 +2581,10 @@ verify_hot_cold_block_grouping (void)
    successor edges.  Also verify that the dominance relationship
    between hot/cold blocks is sane.  */
 
-static int
+static bool
 rtl_verify_edges (void)
 {
-  int err = 0;
+  bool err = false;
   basic_block bb;
 
   FOR_EACH_BB_REVERSE_FN (bb, cfun)
@@ -2587,7 +2607,7 @@ rtl_verify_edges (void)
 		{
 		  error ("verify_flow_info: "
 			 "REG_BR_PROB is set but cfg probability is not");
-		  err = 1;
+		  err = true;
 		}
 	    }
 	  else if (XINT (note, 0)
@@ -2597,7 +2617,7 @@ rtl_verify_edges (void)
 	      error ("verify_flow_info: REG_BR_PROB does not match cfg %i %i",
 		     XINT (note, 0),
 		     BRANCH_EDGE (bb)->probability.to_reg_br_prob_note ());
-	      err = 1;
+	      err = true;
 	    }
 	}
 
@@ -2617,31 +2637,31 @@ rtl_verify_edges (void)
 	      if (!is_crossing)
 		{
 		  error ("EDGE_CROSSING incorrectly set across same section");
-		  err = 1;
+		  err = true;
 		}
 	      if (e->flags & EDGE_FALLTHRU)
 		{
 		  error ("fallthru edge crosses section boundary in bb %i",
 			 e->src->index);
-		  err = 1;
+		  err = true;
 		}
 	      if (e->flags & EDGE_EH)
 		{
 		  error ("EH edge crosses section boundary in bb %i",
 			 e->src->index);
-		  err = 1;
+		  err = true;
 		}
               if (JUMP_P (BB_END (bb)) && !CROSSING_JUMP_P (BB_END (bb)))
 		{
 		  error ("No region crossing jump at section boundary in bb %i",
 			 bb->index);
-		  err = 1;
+		  err = true;
 		}
 	    }
 	  else if (is_crossing)
 	    {
 	      error ("EDGE_CROSSING missing across section boundary");
-	      err = 1;
+	      err = true;
 	    }
 
 	  if ((e->flags & ~(EDGE_DFS_BACK
@@ -2672,18 +2692,18 @@ rtl_verify_edges (void)
 	  print_rtl_with_bb (stderr, get_insns (), TDF_BLOCKS | TDF_DETAILS);
 	  error ("Region crossing jump across same section in bb %i",
 		 bb->index);
-	  err = 1;
+	  err = true;
 	}
 
       if (n_eh && !find_reg_note (BB_END (bb), REG_EH_REGION, NULL_RTX))
 	{
 	  error ("missing REG_EH_REGION note at the end of bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_eh > 1)
 	{
 	  error ("too many exception handling edges in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_branch
 	  && (!JUMP_P (BB_END (bb))
@@ -2691,35 +2711,35 @@ rtl_verify_edges (void)
 				   || any_condjump_p (BB_END (bb))))))
 	{
 	  error ("too many outgoing branch edges from bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_fallthru && any_uncondjump_p (BB_END (bb)))
 	{
 	  error ("fallthru edge after unconditional jump in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_branch != 1 && any_uncondjump_p (BB_END (bb)))
 	{
 	  error ("wrong number of branch edges after unconditional jump"
 		 " in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_branch != 1 && any_condjump_p (BB_END (bb))
 	  && JUMP_LABEL (BB_END (bb)) != BB_HEAD (fallthru->dest))
 	{
 	  error ("wrong amount of branch edges after conditional jump"
 		 " in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_abnormal_call && !CALL_P (BB_END (bb)))
 	{
 	  error ("abnormal call edges for non-call insn in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_sibcall && !CALL_P (BB_END (bb)))
 	{
 	  error ("sibcall edges for non-call insn in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
       if (n_abnormal > n_eh
 	  && !(CALL_P (BB_END (bb))
@@ -2729,7 +2749,7 @@ rtl_verify_edges (void)
 	      || any_uncondjump_p (BB_END (bb))))
 	{
 	  error ("abnormal edges for no purpose in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	}
 
       int has_eh = -1;
@@ -2741,7 +2761,7 @@ rtl_verify_edges (void)
 	    continue;
 	  error ("EH incoming edge mixed with non-EH incoming edges "
 		 "in bb %i", bb->index);
-	  err = 1;
+	  err = true;
 	  break;
 	}
     }
@@ -2763,11 +2783,11 @@ rtl_verify_edges (void)
    block starts with a basic block note, and that basic block notes and
    control flow jumps are not found in the middle of the block.  */
 
-static int
+static bool
 rtl_verify_bb_insns (void)
 {
   rtx_insn *x;
-  int err = 0;
+  bool err = false;
   basic_block bb;
 
   FOR_EACH_BB_REVERSE_FN (bb, cfun)
@@ -2782,7 +2802,7 @@ rtl_verify_bb_insns (void)
 	    {
 	      error ("NOTE_INSN_BASIC_BLOCK is missing for block %d",
 		     bb->index);
-	      err = 1;
+	      err = true;
 	    }
 
 	  x = NEXT_INSN (x);
@@ -2792,7 +2812,7 @@ rtl_verify_bb_insns (void)
 	{
 	  error ("NOTE_INSN_BASIC_BLOCK is missing for block %d",
 		 bb->index);
-	  err = 1;
+	  err = true;
 	}
 
       if (BB_END (bb) == x)
@@ -2805,7 +2825,7 @@ rtl_verify_bb_insns (void)
 	      {
 		error ("NOTE_INSN_BASIC_BLOCK %d in middle of basic block %d",
 		       INSN_UID (x), bb->index);
-		err = 1;
+		err = true;
 	      }
 
 	    if (x == BB_END (bb))
@@ -2826,10 +2846,10 @@ rtl_verify_bb_insns (void)
 /* Verify that block pointers for instructions in basic blocks, headers and
    footers are set appropriately.  */
 
-static int
+static bool
 rtl_verify_bb_pointers (void)
 {
-  int err = 0;
+  bool err = false;
   basic_block bb;
 
   /* Check the general integrity of the basic blocks.  */
@@ -2840,7 +2860,7 @@ rtl_verify_bb_pointers (void)
       if (!(bb->flags & BB_RTL))
 	{
 	  error ("BB_RTL flag not set for block %d", bb->index);
-	  err = 1;
+	  err = true;
 	}
 
       FOR_BB_INSNS (bb, insn)
@@ -2850,7 +2870,7 @@ rtl_verify_bb_pointers (void)
 		   INSN_UID (insn),
 		   BLOCK_FOR_INSN (insn) ? BLOCK_FOR_INSN (insn)->index : 0,
 		   bb->index);
-	    err = 1;
+	    err = true;
 	  }
 
       for (insn = BB_HEADER (bb); insn; insn = NEXT_INSN (insn))
@@ -2859,7 +2879,7 @@ rtl_verify_bb_pointers (void)
 	  {
 	    error ("insn %d in header of bb %d has non-NULL basic block",
 		   INSN_UID (insn), bb->index);
-	    err = 1;
+	    err = true;
 	  }
       for (insn = BB_FOOTER (bb); insn; insn = NEXT_INSN (insn))
 	if (!BARRIER_P (insn)
@@ -2867,7 +2887,7 @@ rtl_verify_bb_pointers (void)
 	  {
 	    error ("insn %d in footer of bb %d has non-NULL basic block",
 		   INSN_UID (insn), bb->index);
-	    err = 1;
+	    err = true;
 	  }
     }
 
@@ -2893,16 +2913,19 @@ rtl_verify_bb_pointers (void)
    In future it can be extended check a lot of other stuff as well
    (reachability of basic blocks, life information, etc. etc.).  */
 
-static int
+static bool
 rtl_verify_flow_info_1 (void)
 {
-  int err = 0;
+  bool err = false;
 
-  err |= rtl_verify_bb_pointers ();
+  if (rtl_verify_bb_pointers ())
+    err = true;
 
-  err |= rtl_verify_bb_insns ();
+  if (rtl_verify_bb_insns ())
+    err = true;
 
-  err |= rtl_verify_edges ();
+  if (rtl_verify_edges ())
+    err = true;
 
   return err;
 }
@@ -2911,11 +2934,11 @@ rtl_verify_flow_info_1 (void)
   are correct, and that instructions are in exactly one bb and have
   correct block pointers.  */
 
-static int
+static bool
 rtl_verify_bb_insn_chain (void)
 {
   basic_block bb;
-  int err = 0;
+  bool err = false;
   rtx_insn *x;
   rtx_insn *last_head = get_last_insn ();
   basic_block *bb_info;
@@ -2940,7 +2963,7 @@ rtl_verify_bb_insn_chain (void)
             {
               error ("insn %d outside of basic blocks has non-NULL bb field",
                      INSN_UID (x));
-              err = 1;
+	      err = true;
             }
 	}
 
@@ -2948,7 +2971,7 @@ rtl_verify_bb_insn_chain (void)
 	{
 	  error ("end insn %d for block %d not found in the insn stream",
 		 INSN_UID (end), bb->index);
-	  err = 1;
+	  err = true;
 	}
 
       /* Work backwards from the end to the head of the basic block
@@ -2961,7 +2984,7 @@ rtl_verify_bb_insn_chain (void)
 	    {
 	      error ("insn %d is in multiple basic blocks (%d and %d)",
 		     INSN_UID (x), bb->index, bb_info[INSN_UID (x)]->index);
-	      err = 1;
+	      err = true;
 	    }
 
 	  bb_info[INSN_UID (x)] = bb;
@@ -2973,7 +2996,7 @@ rtl_verify_bb_insn_chain (void)
 	{
 	  error ("head insn %d for block %d not found in the insn stream",
 		 INSN_UID (head), bb->index);
-	  err = 1;
+	  err = true;
 	}
 
       last_head = PREV_INSN (x);
@@ -2988,7 +3011,7 @@ rtl_verify_bb_insn_chain (void)
 	{
 	  error ("insn %d outside of basic blocks has non-NULL bb field",
 		 INSN_UID (x));
-	  err = 1;
+	  err = true;
 	}
     }
   free (bb_info);
@@ -2999,11 +3022,11 @@ rtl_verify_bb_insn_chain (void)
 /* Verify that fallthru edges point to adjacent blocks in layout order and
    that barriers exist after non-fallthru blocks.  */
 
-static int
+static bool
 rtl_verify_fallthru (void)
 {
   basic_block bb;
-  int err = 0;
+  bool err = false;
 
   FOR_EACH_BB_REVERSE_FN (bb, cfun)
     {
@@ -3020,7 +3043,7 @@ rtl_verify_fallthru (void)
 	      if (!insn || NOTE_INSN_BASIC_BLOCK_P (insn))
 		{
 		  error ("missing barrier after block %i", bb->index);
-		  err = 1;
+		  err = true;
 		  break;
 		}
 	      if (BARRIER_P (insn))
@@ -3037,7 +3060,7 @@ rtl_verify_fallthru (void)
 	      error
 		("verify_flow_info: Incorrect blocks for fallthru %i->%i",
 		 e->src->index, e->dest->index);
-	      err = 1;
+	      err = true;
 	    }
 	  else
 	    for (insn = NEXT_INSN (BB_END (e->src)); insn != BB_HEAD (e->dest);
@@ -3048,7 +3071,7 @@ rtl_verify_fallthru (void)
 			 e->src->index, e->dest->index);
 		  error ("wrong insn in the fallthru edge");
 		  debug_rtx (insn);
-		  err = 1;
+		  err = true;
 		}
 	}
     }
@@ -3060,11 +3083,11 @@ rtl_verify_fallthru (void)
    instructions, verify that all expected instructions are inside the basic
    blocks, and that all returns are followed by barriers.  */
 
-static int
+static bool
 rtl_verify_bb_layout (void)
 {
   basic_block bb;
-  int err = 0;
+  bool err = false;
   rtx_insn *x, *y;
   int num_bb_notes;
   rtx_insn * const rtx_first = get_insns ();
@@ -3138,20 +3161,25 @@ rtl_verify_bb_layout (void)
    - check that all fallthru edge points to the adjacent blocks
    - verify that there is a single hot/cold partition boundary after bbro  */
 
-static int
+static bool
 rtl_verify_flow_info (void)
 {
-  int err = 0;
+  bool err = false;
 
-  err |= rtl_verify_flow_info_1 ();
+  if (rtl_verify_flow_info_1 ())
+    err = true;
 
-  err |= rtl_verify_bb_insn_chain ();
+  if (rtl_verify_bb_insn_chain ())
+    err = true;
 
-  err |= rtl_verify_fallthru ();
+  if (rtl_verify_fallthru ())
+    err = true;
 
-  err |= rtl_verify_bb_layout ();
+  if (rtl_verify_bb_layout ())
+    err = true;
 
-  err |= verify_hot_cold_block_grouping ();
+  if (verify_hot_cold_block_grouping ())
+    err = true;
 
   return err;
 }
@@ -3330,7 +3358,7 @@ purge_dead_edges (basic_block bb)
       gcc_assert (single_succ_edge (bb)->flags
 		  == (EDGE_SIBCALL | EDGE_ABNORMAL));
 
-      return 0;
+      return false;
     }
 
   /* If we don't see a jump insn, we don't know exactly why the block would
@@ -3380,15 +3408,12 @@ purge_dead_edges (basic_block bb)
 bool
 purge_all_dead_edges (void)
 {
-  int purged = false;
+  bool purged = false;
   basic_block bb;
 
   FOR_EACH_BB_FN (bb, cfun)
-    {
-      bool purged_here = purge_dead_edges (bb);
-
-      purged |= purged_here;
-    }
+    if (purge_dead_edges (bb))
+      purged = true;
 
   return purged;
 }
@@ -3718,7 +3743,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *)
+  unsigned int execute (function *) final override
     {
       cfg_layout_initialize (0);
       return 0;
@@ -3757,7 +3782,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_outof_cfg_layout_mode
 
@@ -3921,6 +3946,7 @@ fixup_reorder_chain (void)
   /* Now add jumps and labels as needed to match the blocks new
      outgoing edges.  */
 
+  bool remove_unreachable_blocks = false;
   for (bb = ENTRY_BLOCK_PTR_FOR_FN (cfun)->next_bb; bb ; bb = (basic_block)
        bb->aux)
     {
@@ -3929,6 +3955,7 @@ fixup_reorder_chain (void)
       rtx ret_label = NULL_RTX;
       basic_block nb;
       edge_iterator ei;
+      bool asm_goto = false;
 
       if (EDGE_COUNT (bb->succs) == 0)
 	continue;
@@ -4035,7 +4062,9 @@ fixup_reorder_chain (void)
 		  || e_fall->dest == EXIT_BLOCK_PTR_FOR_FN (cfun))
 		continue;
 
-	      /* Otherwise we'll have to use the fallthru fixup below.  */
+	      /* Otherwise we'll have to use the fallthru fixup below.
+		 But avoid redirecting asm goto to EXIT.  */
+	      asm_goto = true;
 	    }
 	  else
 	    {
@@ -4063,10 +4092,33 @@ fixup_reorder_chain (void)
 	    continue;
 	}
 
+      /* If E_FALL->dest is just a return block, then we can emit a
+	 return rather than a jump to the return block.  */
+      rtx_insn *ret, *use;
+      basic_block dest;
+      if (!asm_goto
+	  && bb_is_just_return (e_fall->dest, &ret, &use)
+	  && ((PATTERN (ret) == simple_return_rtx && targetm.have_simple_return ())
+	      || (PATTERN (ret) == ret_rtx && targetm.have_return ())))
+	{
+	  ret_label = PATTERN (ret);
+	  dest = EXIT_BLOCK_PTR_FOR_FN (cfun);
+
+	  e_fall->flags &= ~EDGE_CROSSING;
+	  /* E_FALL->dest might become unreachable as a result of
+	     replacing the jump with a return.  So arrange to remove
+	     unreachable blocks.  */
+	  remove_unreachable_blocks = true;
+	}
+      else
+	{
+	  dest = e_fall->dest;
+	}
+
       /* We got here if we need to add a new jump insn. 
 	 Note force_nonfallthru can delete E_FALL and thus we have to
 	 save E_FALL->src prior to the call to force_nonfallthru.  */
-      nb = force_nonfallthru_and_redirect (e_fall, e_fall->dest, ret_label);
+      nb = force_nonfallthru_and_redirect (e_fall, dest, ret_label);
       if (nb)
 	{
 	  nb->aux = bb->aux;
@@ -4154,6 +4206,12 @@ fixup_reorder_chain (void)
 		  ei_next (&ei2);
 	    }
       }
+
+  /* Replacing a jump with a return may have exposed an unreachable
+     block.  Conditionally remove them if such transformations were
+     made.  */
+  if (remove_unreachable_blocks)
+    delete_unreachable_blocks ();
 }
 
 /* Perform sanity checks on the insn chain.
@@ -4368,7 +4426,7 @@ duplicate_insn_chain (rtx_insn *from, rtx_insn *to,
 			  {
 			    gcc_assert
 			      (MR_DEPENDENCE_CLIQUE (op) <= cfun->last_clique);
-			    newc = ++cfun->last_clique;
+			    newc = get_new_clique (cfun);
 			  }
 			/* We cannot adjust MR_DEPENDENCE_CLIQUE in-place
 			   since MEM_EXPR is shared so make a copy and
@@ -5006,8 +5064,8 @@ rtl_split_block_before_cond_jump (basic_block bb)
     return NULL;
 }
 
-/* Return 1 if BB ends with a call, possibly followed by some
-   instructions that must stay with the call, 0 otherwise.  */
+/* Return true if BB ends with a call, possibly followed by some
+   instructions that must stay with the call, false otherwise.  */
 
 static bool
 rtl_block_ends_with_call_p (basic_block bb)
@@ -5023,7 +5081,7 @@ rtl_block_ends_with_call_p (basic_block bb)
   return (CALL_P (insn));
 }
 
-/* Return 1 if BB ends with a conditional branch, 0 otherwise.  */
+/* Return true if BB ends with a conditional branch, false otherwise.  */
 
 static bool
 rtl_block_ends_with_condjump_p (const_basic_block bb)
@@ -5393,7 +5451,7 @@ struct cfg_hooks cfg_layout_rtl_cfg_hooks = {
   rtl_flow_call_edges_add,
   NULL, /* execute_on_growing_pred */
   NULL, /* execute_on_shrinking_pred */
-  duplicate_loop_body_to_header_edge, /* duplicate loop for trees */
+  duplicate_loop_body_to_header_edge, /* duplicate loop for rtl */
   rtl_lv_add_condition_to_bb, /* lv_add_condition_to_bb */
   NULL, /* lv_adjust_loop_header_phi*/
   rtl_extract_cond_bb_edges, /* extract_cond_bb_edges */

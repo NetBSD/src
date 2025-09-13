@@ -1,6 +1,6 @@
 // Class filesystem::path -*- C++ -*-
 
-// Copyright (C) 2014-2022 Free Software Foundation, Inc.
+// Copyright (C) 2014-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -733,14 +733,7 @@ namespace __detail
   /// @{
   /// @relates std::filesystem::path
 
-#if __cpp_concepts >= 201907L
-  // Workaround for PR libstdc++/106201
-  inline void
-  swap(same_as<path> auto& __lhs, same_as<path> auto& __rhs) noexcept
-  { __lhs.swap(__rhs); }
-#else
   inline void swap(path& __lhs, path& __rhs) noexcept { __lhs.swap(__rhs); }
-#endif
 
   size_t hash_value(const path& __p) noexcept;
 
@@ -820,6 +813,7 @@ namespace __detail
 	   typename _Require = __detail::_Path2<_InputIterator>,
 	   typename _CharT
 	     = __detail::__value_type_is_char_or_char8_t<_InputIterator>>
+    _GLIBCXX20_DEPRECATED_SUGGEST("path(u8string(first, last))")
     inline path
     u8path(_InputIterator __first, _InputIterator __last)
     {
@@ -844,6 +838,7 @@ namespace __detail
   template<typename _Source,
 	   typename _Require = __detail::_Path<_Source>,
 	   typename _CharT = __detail::__value_type_is_char_or_char8_t<_Source>>
+    _GLIBCXX20_DEPRECATED_SUGGEST("path((const char8_t*)&*source)")
     inline path
     u8path(const _Source& __source)
     {

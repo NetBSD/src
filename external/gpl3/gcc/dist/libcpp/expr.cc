@@ -1,5 +1,5 @@
 /* Parse C expressions for cpplib.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994.
 
 This program is free software; you can redistribute it and/or modify it
@@ -91,13 +91,13 @@ interpret_float_suffix (cpp_reader *pfile, const uchar *s, size_t len)
   size_t orig_len = len;
   const uchar *orig_s = s;
   size_t flags;
-  size_t f, d, l, w, q, i, fn, fnx, fn_bits;
+  size_t f, d, l, w, q, i, fn, fnx, fn_bits, bf16;
 
   flags = 0;
-  f = d = l = w = q = i = fn = fnx = fn_bits = 0;
+  f = d = l = w = q = i = fn = fnx = fn_bits = bf16 = 0;
 
   /* The following decimal float suffixes, from TR 24732:2009, TS
-     18661-2:2015 and C2X, are supported:
+     18661-2:2015 and C23, are supported:
 
      df, DF - _Decimal32.
      dd, DD - _Decimal64.
@@ -131,7 +131,8 @@ interpret_float_suffix (cpp_reader *pfile, const uchar *s, size_t len)
      w, W - machine-specific type such as __float80 (GNU extension).
      q, Q - machine-specific type such as __float128 (GNU extension).
      fN, FN - _FloatN (TS 18661-3:2015).
-     fNx, FNx - _FloatNx (TS 18661-3:2015).  */
+     fNx, FNx - _FloatNx (TS 18661-3:2015).
+     bf16, BF16 - std::bfloat16_t (ISO C++23).  */
 
   /* Process decimal float suffixes, which are two letters starting
      with d or D.  Order and case are significant.  */
@@ -215,7 +216,6 @@ interpret_float_suffix (cpp_reader *pfile, const uchar *s, size_t len)
 	case 'f': case 'F':
 	  f++;
 	  if (len > 0
-	      && !CPP_OPTION (pfile, cplusplus)
 	      && s[1] >= '1'
 	      && s[1] <= '9'
 	      && fn_bits == 0)
@@ -240,6 +240,19 @@ interpret_float_suffix (cpp_reader *pfile, const uchar *s, size_t len)
 		fn++;
 	    }
 	  break;
+	case 'b': case 'B':
+	  if (len > 2
+	      /* Except for bf16 / BF16 where case is significant.  */
+	      && s[1] == (s[0] == 'b' ? 'f' : 'F')
+	      && s[2] == '1'
+	      && s[3] == '6')
+	    {
+	      bf16++;
+	      len -= 3;
+	      s += 3;
+	      break;
+	    }
+	  return 0;
 	case 'd': case 'D': d++; break;
 	case 'l': case 'L': l++; break;
 	case 'w': case 'W': w++; break;
@@ -258,7 +271,7 @@ interpret_float_suffix (cpp_reader *pfile, const uchar *s, size_t len)
      of N larger than can be represented in the return value.  The
      caller is responsible for rejecting _FloatN suffixes where
      _FloatN is not supported on the chosen target.  */
-  if (f + d + l + w + q + fn + fnx > 1 || i > 1)
+  if (f + d + l + w + q + fn + fnx + bf16 > 1 || i > 1)
     return 0;
   if (fn_bits > CPP_FLOATN_MAX)
     return 0;
@@ -296,6 +309,7 @@ interpret_float_suffix (cpp_reader *pfile, const uchar *s, size_t len)
 	     q ? CPP_N_MD_Q :
 	     fn ? CPP_N_FLOATN | (fn_bits << CPP_FLOATN_SHIFT) :
 	     fnx ? CPP_N_FLOATNX | (fn_bits << CPP_FLOATN_SHIFT) :
+	     bf16 ? CPP_N_BFLOAT16 :
 	     CPP_N_DEFAULT));
 }
 
@@ -313,9 +327,9 @@ static unsigned int
 interpret_int_suffix (cpp_reader *pfile, const uchar *s, size_t len)
 {
   size_t orig_len = len;
-  size_t u, l, i, z;
+  size_t u, l, i, z, wb;
 
-  u = l = i = z = 0;
+  u = l = i = z = wb = 0;
 
   while (len--)
     switch (s[len])
@@ -329,11 +343,23 @@ interpret_int_suffix (cpp_reader *pfile, const uchar *s, size_t len)
 	if (l == 2 && s[len] != s[len + 1])
 	  return 0;
 	break;
+      case 'b':
+	if (len == 0 || s[len - 1] != 'w')
+	  return 0;
+	wb++;
+	len--;
+	break;
+      case 'B':
+	if (len == 0 || s[len - 1] != 'W')
+	  return 0;
+	wb++;
+	len--;
+	break;
       default:
 	return 0;
       }
 
-  if (l > 2 || u > 1 || i > 1 || z > 1)
+  if (l > 2 || u > 1 || i > 1 || z > 1 || wb > 1)
     return 0;
 
   if (z)
@@ -341,6 +367,14 @@ interpret_int_suffix (cpp_reader *pfile, const uchar *s, size_t len)
       if (l > 0 || i > 0)
 	return 0;
       if (!CPP_OPTION (pfile, cplusplus))
+	return 0;
+    }
+
+  if (wb)
+    {
+      if (CPP_OPTION (pfile, cplusplus))
+	return 0;
+      if (l > 0 || i > 0 || z > 0)
 	return 0;
     }
 
@@ -362,7 +396,8 @@ interpret_int_suffix (cpp_reader *pfile, const uchar *s, size_t len)
 	  | (u ? CPP_N_UNSIGNED : 0)
 	  | ((l == 0) ? CPP_N_SMALL
 	     : (l == 1) ? CPP_N_MEDIUM : CPP_N_LARGE)
-	  | (z ? CPP_N_SIZE_T : 0));
+	  | (z ? CPP_N_SIZE_T : 0)
+	  | (wb ? CPP_N_BITINT : 0));
 }
 
 /* Return the classification flags for an int suffix.  */
@@ -752,11 +787,11 @@ cpp_classify_number (cpp_reader *pfile, const cpp_token *token,
 	{
 	  if (CPP_PEDANTIC (pfile) && !CPP_OPTION (pfile, dfp_constants))
 	    cpp_error_with_line (pfile, CPP_DL_PEDWARN, virtual_location, 0,
-				 "decimal float constants are a C2X feature");
-	  else if (CPP_OPTION (pfile, cpp_warn_c11_c2x_compat) > 0)
-	    cpp_warning_with_line (pfile, CPP_W_C11_C2X_COMPAT,
+				 "decimal float constants are a C23 feature");
+	  else if (CPP_OPTION (pfile, cpp_warn_c11_c23_compat) > 0)
+	    cpp_warning_with_line (pfile, CPP_W_C11_C23_COMPAT,
 				   virtual_location, 0,
-				   "decimal float constants are a C2X feature");
+				   "decimal float constants are a C23 feature");
 	}
 
       result |= CPP_N_FLOATING;
@@ -821,6 +856,29 @@ cpp_classify_number (cpp_reader *pfile, const cpp_token *token,
 				 virtual_location, 0, message);
        }
 
+      if ((result & CPP_N_BITINT) != 0
+	  && CPP_OPTION (pfile, cpp_warn_c11_c23_compat) != 0)
+	{
+	  if (CPP_OPTION (pfile, cpp_warn_c11_c23_compat) > 0)
+	    {
+	      const char *message = N_("ISO C does not support literal "
+				       "%<wb%> suffixes before C23");
+	      if (CPP_PEDANTIC (pfile) && !CPP_OPTION (pfile, true_false))
+		cpp_pedwarning_with_line (pfile, CPP_W_C11_C23_COMPAT,
+					  virtual_location, 0, message);
+	      else
+		cpp_warning_with_line (pfile, CPP_W_C11_C23_COMPAT,
+				       virtual_location, 0, message);
+	    }
+	  else if (CPP_PEDANTIC (pfile) && !CPP_OPTION (pfile, true_false))
+	    {
+	      const char *message = N_("ISO C does not support literal "
+				       "%<wb%> suffixes before C23");
+	      cpp_error_with_line (pfile, CPP_DL_PEDWARN, virtual_location, 0,
+				   message);
+	    }
+	}
+
       result |= CPP_N_INTEGER;
     }
 
@@ -836,12 +894,12 @@ cpp_classify_number (cpp_reader *pfile, const cpp_token *token,
 			     CPP_OPTION (pfile, cplusplus)
 			     ? N_("binary constants are a C++14 feature "
 				  "or GCC extension")
-			     : N_("binary constants are a C2X feature "
+			     : N_("binary constants are a C23 feature "
 				  "or GCC extension"));
-      else if (CPP_OPTION (pfile, cpp_warn_c11_c2x_compat) > 0)
-	cpp_warning_with_line (pfile, CPP_W_C11_C2X_COMPAT,
+      else if (CPP_OPTION (pfile, cpp_warn_c11_c23_compat) > 0)
+	cpp_warning_with_line (pfile, CPP_W_C11_C23_COMPAT,
 			       virtual_location, 0,
-			       "binary constants are a C2X feature");
+			       "binary constants are a C23 feature");
     }
 
   if (radix == 10)
@@ -1183,7 +1241,7 @@ eval_token (cpp_reader *pfile, const cpp_token *token,
     case CPP_NAME:
       if (token->val.node.node == pfile->spec_nodes.n_defined)
 	return parse_defined (pfile);
-      else if (CPP_OPTION (pfile, cplusplus)
+      else if (CPP_OPTION (pfile, true_false)
 	       && (token->val.node.node == pfile->spec_nodes.n_true
 		   || token->val.node.node == pfile->spec_nodes.n_false))
 	{
@@ -2158,6 +2216,7 @@ num_div_op (cpp_reader *pfile, cpp_num lhs, cpp_num rhs, enum cpp_ttype op,
       if (!pfile->state.skip_eval)
 	cpp_error_with_line (pfile, CPP_DL_ERROR, location, 0,
 			     "division by zero in #if");
+      lhs.unsignedp = unsignedp;
       return lhs;
     }
 

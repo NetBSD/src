@@ -1,6 +1,6 @@
 /* A simple stack-based virtual machine to demonstrate
    JIT-compilation.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -764,6 +764,7 @@ toyvm_function_compile (toyvm_function *fn)
   toyvm_result->cf_code =
     (toyvm_compiled_code)gcc_jit_result_get_code (jit_result,
 						  funcname);
+  /* (this leaks "jit_result" and "funcname") */
 
   free (funcname);
 

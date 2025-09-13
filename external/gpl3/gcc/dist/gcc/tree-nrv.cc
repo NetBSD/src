@@ -1,5 +1,5 @@
 /* Language independent return value optimizations
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -125,9 +125,9 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return optimize > 0; }
+  bool gate (function *) final override { return optimize > 0; }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_nrv
 
@@ -264,7 +264,17 @@ pass_nrv::execute (function *fun)
 	      data.modified = 0;
 	      walk_gimple_op (stmt, finalize_nrv_r, &wi);
 	      if (data.modified)
-		update_stmt (stmt);
+		{
+		  /* If this is a CLOBBER of VAR, remove it.  */
+		  if (gimple_clobber_p (stmt))
+		    {
+		      unlink_stmt_vdef (stmt);
+		      gsi_remove (&gsi, true);
+		      release_defs (stmt);
+		      continue;
+		    }
+		  update_stmt (stmt);
+		}
 	      gsi_next (&gsi);
 	    }
 	}
@@ -344,7 +354,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_return_slot
 

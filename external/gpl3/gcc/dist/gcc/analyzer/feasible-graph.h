@@ -1,5 +1,5 @@
 /* A graph for exploring trees of feasible paths through the egraph.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -20,6 +20,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_ANALYZER_FEASIBLE_GRAPH_H
 #define GCC_ANALYZER_FEASIBLE_GRAPH_H
+
+#include "analyzer/exploded-graph.h"
 
 namespace ana {
 
@@ -91,7 +93,7 @@ public:
   }
 
   void dump_dot (graphviz_out *gv,
-		 const dump_args_t &args) const FINAL OVERRIDE;
+		 const dump_args_t &args) const final override;
 
   const feasibility_state &get_state () const { return m_state; }
   const region_model &get_model () const { return m_state.get_model (); }
@@ -101,6 +103,9 @@ public:
   }
 
   unsigned get_path_length () const { return m_path_length; }
+
+  bool get_state_at_stmt (const gimple *target_stmt,
+			  region_model *out) const;
 
 private:
   feasibility_state m_state;
@@ -115,18 +120,17 @@ class infeasible_node : public base_feasible_node
 {
 public:
   infeasible_node (const exploded_node *inner_node, unsigned index,
-		   rejected_constraint *rc)
+		   std::unique_ptr<rejected_constraint> rc)
   : base_feasible_node (inner_node, index),
-    m_rc (rc)
+    m_rc (std::move (rc))
   {
   }
-  ~infeasible_node () { delete m_rc; }
 
   void dump_dot (graphviz_out *gv,
-		 const dump_args_t &args) const FINAL OVERRIDE;
+		 const dump_args_t &args) const final override;
 
 private:
-  rejected_constraint *m_rc;
+  std::unique_ptr<rejected_constraint> m_rc;
 };
 
 /* Base class of edge within a feasible_graph.  */
@@ -135,7 +139,7 @@ class base_feasible_edge : public dedge<fg_traits>
 {
  public:
   void dump_dot (graphviz_out *gv,
-		 const dump_args_t &args) const FINAL OVERRIDE;
+		 const dump_args_t &args) const final override;
 
   const exploded_edge *get_inner_edge () const { return m_inner_edge; }
 
@@ -193,9 +197,9 @@ class feasible_graph : public digraph <fg_traits>
 
   void add_feasibility_problem (feasible_node *src_fnode,
 				const exploded_edge *eedge,
-				rejected_constraint *rc);
+				std::unique_ptr<rejected_constraint> rc);
 
-  exploded_path *make_epath (feasible_node *fnode) const;
+  std::unique_ptr<exploded_path> make_epath (feasible_node *fnode) const;
 
   void dump_feasible_path (const feasible_node &dst_fnode,
 			   const char *filename) const;

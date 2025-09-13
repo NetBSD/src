@@ -5,33 +5,27 @@ that led to GCC 3. For information on GCC 2.8.1 and older releases of GCC 2,
 see ONEWS.
 
 ======================================================================
-http://gcc.gnu.org/gcc-12/index.html
+http://gcc.gnu.org/gcc-14/index.html
 
-                             GCC 12 Release Series
+                             GCC 14 Release Series
 
-   July 11, 2025
+   May 23, 2025
 
-   The GCC developers are pleased to announce the release of GCC 12.5.
+   The GCC developers are pleased to announce the release of GCC 14.3.
 
    This release is a bug-fix release, containing fixes for regressions in
-   GCC 12.4 relative to previous releases of GCC.
+   GCC 14.2 relative to previous releases of GCC.
 
 Release History
 
-   GCC 12.5
-          July 11, 2025 ([1]changes, [2]documentation)
+   GCC 14.3
+          May 23, 2025 ([1]changes, [2]documentation)
 
-   GCC 12.4
-          Jun 20, 2024 ([3]changes, [4]documentation)
+   GCC 14.2
+          Aug 1, 2024 ([3]changes, [4]documentation)
 
-   GCC 12.3
-          May 8, 2023 ([5]changes, [6]documentation)
-
-   GCC 12.2
-          Aug 19, 2022 ([7]changes, [8]documentation)
-
-   GCC 12.1
-          May 6, 2022 ([9]changes, [10]documentation)
+   GCC 14.1
+          May 7, 2024 ([5]changes, [6]documentation)
 
 References and Acknowledgements
 
@@ -41,53 +35,2203 @@ References and Acknowledgements
 
    The GCC developers would like to thank the numerous people that have
    contributed new features, improvements, bug fixes, and other changes as
-   well as test results to GCC. This [11]amazing group of volunteers is
+   well as test results to GCC. This [7]amazing group of volunteers is
    what makes GCC successful.
 
-   For additional information about GCC please refer to the [12]GCC
-   project web site or contact the [13]GCC development mailing list.
+   For additional information about GCC please refer to the [8]GCC project
+   web site or contact the [9]GCC development mailing list.
 
-   To obtain GCC please use [14]our mirror sites or [15]our version
+   To obtain GCC please use [10]our mirror sites or [11]our version
    control system.
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [16]GCC manuals. If that fails, the
-    [17]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [12]GCC manuals. If that fails, the
+    [13]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [18]gcc@gcc.gnu.org. All of [19]our lists have public
+    list at [14]gcc@gcc.gnu.org. All of [15]our lists have public
     archives.
 
-   Copyright (C) [20]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [16]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [21]maintained by the GCC team. Last modified
-   2025-07-11.
+   These pages are [17]maintained by the GCC team. Last modified
+   2025-05-23.
+
+References
+
+   1. https://gcc.gnu.org/gcc-14/changes.html
+   2. https://gcc.gnu.org/onlinedocs/14.3.0/
+   3. https://gcc.gnu.org/gcc-14/changes.html
+   4. https://gcc.gnu.org/onlinedocs/14.2.0/
+   5. https://gcc.gnu.org/gcc-14/changes.html
+   6. https://gcc.gnu.org/onlinedocs/14.1.0/
+   7. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Contributors.html
+   8. https://gcc.gnu.org/index.html
+   9. mailto:gcc@gcc.gnu.org
+  10. https://gcc.gnu.org/mirrors.html
+  11. https://gcc.gnu.org/git.html
+  12. https://gcc.gnu.org/onlinedocs/
+  13. mailto:gcc-help@gcc.gnu.org
+  14. mailto:gcc@gcc.gnu.org
+  15. https://gcc.gnu.org/lists.html
+  16. https://www.fsf.org/
+  17. https://gcc.gnu.org/about.html
+======================================================================
+http://gcc.gnu.org/gcc-14/changes.html
+
+                             GCC 14 Release Series
+                        Changes, New Features, and Fixes
+
+   This page is a "brief" summary of some of the huge number of
+   improvements in GCC 14. You may also want to check out our [1]Porting
+   to GCC 14 page and the [2]full GCC documentation.
+
+Caveats
+
+     * C: Support for the GCC extension, a structure containing a C99
+       flexible array member, or a union containing such a structure, is
+       not the last field of another structure, is deprecated. Refer to
+       [3]Zero Length Arrays. Any code relying on this extension should be
+       modified to ensure that C99 flexible array members only end up at
+       the ends of structures. Please use the warning option
+       [4]-Wflex-array-member-not-at-end to identify all such cases in the
+       source code and modify them.
+     * C: Certain warnings about are now errors, see [5]Porting to GCC 14
+       for details.
+     * [6]-fcf-protection=[full|branch|return|none|check] has been
+       refactored. To override -fcf-protection with a more specific
+       setting, add -fcf-protection=none followed by a specific
+       -fcf-protection=xxx.
+     * Support for the ia64*-*- target ports which have been unmaintained
+       for quite a while has been declared obsolete in GCC 14. The next
+       release of GCC will have their sources permanently removed.
+     * Support for the nios2*-*- target ports has also been declared
+       obsolete in GCC 14, and the sources will also be removed in the
+       next release of GCC.
+     * [7]-fanalyzer is still only suitable for analyzing C code. In
+       particular, using it on C++ is unlikely to give meaningful output.
+
+[8]General Improvements
+
+     * For offload-device code generated via OpenMP and OpenACC, the math
+       and the Fortran runtime libraries will now automatically be linked,
+       when the user or compiler links them on the host side. Thus, it is
+       no longer required to explicitly pass -lm and/or -lgfortran to the
+       offload-device linker using the [9]-foffload-options= flag.
+     * New configure options: --enable-host-pie, to build the compiler
+       executables as PIE; and --enable-host-bind-now, to link the
+       compiler executables with -Wl,-z,now in order to enable additional
+       hardening.
+     * New option [10]-fhardened, an umbrella option that enables a set of
+       hardening flags. The options it enables can be displayed using the
+       --help=hardened option.
+     * New option [11]-fharden-control-flow-redundancy, to verify, at the
+       end of functions, that the visited basic blocks correspond to a
+       legitimate execution path, so as to detect and prevent attacks that
+       transfer control into the middle of functions.
+     * New type attribute [12]hardbool, for C and Ada. Hardened booleans
+       take user-specified representations for true and false, presumably
+       with higher hamming distance than standard booleans, and get
+       verified at every use, detecting memory corruption and some
+       malicious attacks.
+     * New type attribute [13]strub to control stack scrubbing properties
+       of functions and variables. The stack frame used by functions
+       marked with the attribute gets zeroed-out upon returning or
+       exception escaping. Scalar variables marked with the attribute
+       cause functions containing or accessing them to get stack scrubbing
+       enabled implicitly.
+     * New option [14]-finline-stringops, to force inline expansion of
+       memcmp, memcpy, memmove and memset, even when that is not an
+       optimization, to avoid relying on library implementations.
+     * New option [15]-ftrampoline-impl=, to choose the placement of
+       generated trampolines. The default remains the stack for almost all
+       targets. To override the default, -ftrampoline-impl=heap can be
+       passed on supported ABIs (x86_64 Darwin, x86_64 and aarch64 Linux).
+     * New function attribute [16]null_terminated_string_arg(PARAM_IDX)
+       for indicating parameters that are expected to be null-terminated
+       strings.
+     * The vectorizer now supports vectorizing loops which contain any
+       number of early breaks. This means loops such as:
+            int z[100], y[100], x[100];
+            int foo (int n)
+            {
+              int res = 0;
+              for (int i = 0; i < n; i++)
+                {
+                   y[i] = x[i] * 2;
+                   res += x[i] + y[i];
+
+                   if (x[i] > 5)
+                     break;
+
+                   if (z[i] > 5)
+                     break;
+
+                }
+              return res;
+            }
+
+       can now be vectorized on a number of targets. In this first version
+       any input data sources must either have a statically known size at
+       compile time or the vectorizer must be able to determine based on
+       auxiliary information that the accesses are aligned.
+
+[17]New Languages and Language specific improvements
+
+     * [18]OpenMP
+          + The [19]GNU Offloading and Multi Processing Runtime Library
+            Manual has been updated and extended, improving especially the
+            description of ICVs, memory allocation, environment variables
+            and OpenMP routines.
+          + The requires directive's unified_address requirement is now
+            fulfilled by both AMD GCN and nvptx devices. AMD GCN and nvptx
+            devices now support low-latency allocators as [20]detailed in
+            the manual. Initial support for pinned-memory allocators has
+            been added and, on Linux, [21]libnuma is now used for
+            allocators requesting the nearest-partition trait (both is
+            described in the [22]memory allocation section of the manual).
+          + OpenMP 5.0: The allocate directive is now supported for stack
+            variables in C and Fortran, including the OpenMP 5.1 align
+            modifier. In C and C++ the map clause now accepts lvalue
+            expressions. For Fortran, OpenMP allocators can now be used
+            for allocatables and pointers using the allocate directive and
+            its OpenMP 5.2 replacement, the allocators directive; files
+            using this allocator and all files that might directly or
+            indirectly (intrinsic assignment, intent(out), ...) de- or
+            reallocate such-allocated variables must be compiled with the
+            [23]-fopenmp-allocators option.
+          + OpenMP 5.1: Support was added for collapsing imperfectly
+            nested loops and using present as map-type modifier and in
+            defaultmap. The indirect clause is now supported. The
+            performance of copying strided data from or to nvptx and AMD
+            GPU devices using the OpenMP 5.1 routine
+            omp_target_memcpy_rect has been improved.
+          + OpenMP 5.2: The OMP_TARGET_OFFLOAD=mandatory handling has been
+            updated for the clarifications and changes of the 5.2
+            specification. For Fortran, the list of directives permitted
+            in Fortran pure procedures was extended. Additionally, the
+            spec change has been implemented for default implicit mapping
+            of C/C++ pointers pointing to unmapped storage. The destroy
+            clause now optionally accepts the depend object as argument.
+          + OpenMP 6.0 preview (TR11/TR12): The decl attribute is now
+            supported in C++ 11 and the directive, sequence and decl
+            attributes are now supported in C 23.
+     * [24]OpenACC
+          + OpenACC 2.7: The self clause was added to be used on compute
+            constructs and the default clause for data constructs.
+            Additionally, the readonly modifier is now handled in the
+            copyin clause and cache directive.
+          + OpenACC 3.2: The following API routines are now available in
+            Fortran using the openacc module or the openacc_lib.h header
+            file: acc_malloc, acc_free, acc_map_data, acc_unmap_data,
+            acc_deviceptr, acc_hostptr, acc_memcpy_to_device,
+            acc_memcpy_to_device_async, acc_memcpy_from_device, and
+            acc_memcpy_from_device_async.
+
+  [25]Ada
+
+     * New implementation-defined aspects and pragmas:
+          + [26]Local_Restrictions, which specifies that a particular
+            subprogram does not violate one or more local restrictions,
+            nor can it call a subprogram that is not subject to the same
+            requirements.
+          + [27]User_Aspect_Definition and [28]User_Aspect, which provide
+            a mechanism for avoiding textual duplication if some set of
+            aspect specifications is needed in multiple places.
+     * New implementation-defined aspects and pragmas for verification of
+       the SPARK 2014 subset of Ada:
+          + [29]Always_Terminates, which provides a condition for a
+            subprogram to necessarily complete (either return normally or
+            raise an exception).
+          + [30]Ghost_Predicate, which introduces a subtype predicate that
+            can reference Ghost entities.
+          + [31]Exceptional_Cases, which lists exceptions that might be
+            propagated by the subprogram with side effects in the context
+            of its precondition and associates them with a specific
+            postcondition.
+          + [32]Side_Effects, which indicates that a function should be
+            handled like a procedure with respect to parameter modes,
+            Global contract, exceptional contract and termination: it may
+            have output parameters, write global variables, raise
+            exceptions and not terminate.
+     * The new attributes and contracts have been applied to the relevant
+       parts of the Ada runtime library, which has been subsequently
+       proven to be correct with SPARK 2014.
+     * Support for the LoongArch architecture.
+     * Support for vxWorks 7 Cert RTP has been removed.
+     * Additional hardening improvements. For more information related to
+       hardening options, refer to the [33]GCC Instrumentation Options and
+       the [34]GNAT Reference Manual, Security and Hardening Features.
+     * Improve style checking for redundant parentheses with [35]-gnatyz
+     * New switch [36]-gnateH to force reverse Bit_Order threshold to 64.
+     * Experimental features:
+          + [37]Storage Model: this feature proposes to redesign the
+            concepts of Storage Pools into a more efficient model allowing
+            higher performance and easier integration with low footprint
+            embedded runtimes.
+          + [38]String Interpolation: allows for easier string formatting.
+     * Further clean up and improvements to the GNAT code.
+
+  [39]C family
+
+     * The Clang language extensions __has_feature and __has_extension
+       have been implemented in GCC. These are available from C, C++, and
+       Objective-C(++). This is primarily intended to aid the portability
+       of code written against Clang.
+
+  [40]C
+
+     * Some more C23 features have been implemented:
+          + Bit-precise integer types (_BitInt (N) and unsigned _BitInt
+            (N)): integer types with a specified number of bits. These are
+            only supported on IA-32, x86-64 and AArch64 (little-endian) at
+            present.
+          + Structure, union and enumeration types may be defined more
+            than once in the same scope with the same contents and the
+            same tag; if such types are defined with the same contents and
+            the same tag in different scopes, the types are compatible.
+          + The <stdckdint.h> header for checked integer arithmetic.
+     * In addition to those C23 features, there are new command-line
+       options -std=c23, -std=gnu23 and -Wc11-c23-compat. These are
+       equivalent to the previous options -std=c2x, -std=gnu2x and
+       -Wc11-c2x-compat, which are deprecated but remain supported.
+     * GCC supports a new pragma #pragma GCC novector to indicate to the
+       vectorizer not to vectorize the loop annotated with the pragma.
+
+  [41]C++
+
+     * Several C++26 features have been implemented:
+          + [42]P1854R4, Making non-encodable string literals ill-formed
+            ([43]PR110341)
+          + [44]P2752R3, Static storage for braced initializers
+            ([45]PR110346)
+          + [46]P2361R6, Unevaluated strings ([47]PR110342)
+          + [48]P2738R1, constexpr cast from void* ([49]PR110344)
+          + [50]P2741R3, User-generated static_assert messages
+            ([51]PR110348)
+          + [52]P2169R4, Placeholder variables with no name ([53]PR110349)
+          + [54]P2864R2, Removing deprecated arithmetic conversion on
+            enumerations
+          + [55]P2748R5, Disallow binding a returned reference to a
+            temporary ([56]PR114455)
+          + [57]P2809R3, Trivial infinite loops are not undefined behavior
+            ([58]PR114462)
+     * Several C++23 features have been implemented:
+          + [59]P0847R7, Deducing this ([60]PR102609)
+          + [61]P2280R4, Using unknown references in constant expressions
+            ([62]PR106650)
+          + [63]P2564R3, consteval needs to propagate up ([64]PR107687)
+          + [65]P2582R1, Class template argument deduction from inherited
+            constructors ([66]PR106653)
+     * Several C++ Defect Reports have been resolved, e.g.:
+          + [67]DR 532, Member/nonmember operator template partial
+            ordering
+          + [68]DR 976, Deduction for const T& conversion operators
+          + [69]DR 2262, Attributes for asm-definition
+          + [70]DR 2359, Unintended copy initialization with designated
+            initializers
+          + [71]DR 2386, tuple_size requirements for structured binding
+          + [72]DR 2406, [[fallthrough]] attribute and iteration
+            statements
+          + [73]DR 2543, constinit and optimized dynamic initialization
+          + [74]DR 2586, Explicit object parameter for assignment and
+            comparison
+          + [75]DR 2735, List-initialization and conversions in overload
+            resolution
+          + [76]DR 2799, Inheriting default constructors
+     * When a diagnostic occurs involving a C++ template, GCC will now
+       quote the source code of the context at which the template is
+       instantiated ("required from here"), rather than just print
+       filename and line/column numbers.
+     * New built-in __type_pack_element to speed up traits such as
+       std::tuple_element ([77]PR100157)
+     * goto can cross the initialization of a trivially initialized object
+       with a non-trivial destructor ([78]DR 2256)
+     * -Wdangling-reference false positives have been reduced. The warning
+       does not warn about std::span-like classes; there is also a new
+       attribute gnu::no_dangling to suppress the warning. See [79]the
+       manual for more info.
+     * noexcept(expr) is now mangled as per the Itanium ABI
+     * the named return value optimization can now be performed even for
+       variables declared in an inner block of a function, see the
+       [80]test
+     * New -Wnrvo warning, to warn if the named return value optimization
+       is not performed although it is allowed by [class.copy.elision].
+       See [81]the manual for more info.
+     * The backing array for std::initializer_list has been made static,
+       allowing combining multiple equivalent initializer-lists ([82]git)
+     * New -Welaborated-enum-base warning, to warn if an additional
+       enum-base is used in an elaborated-type-specifier
+     * Better #include hints for missing headers ([83]PR110164)
+     * The arguments of a variable template-id are coerced earlier than
+       before, so various problems are detected earlier ([84]PR89442)
+     * -Wmissing-field-initializers is no longer emitted for empty classes
+       ([85]PR110064)
+     * The constexpr code now tracks lifetimes in constant evaluation;
+       this change helps to detect bugs such as accessing a variable whose
+       lifetime has ended ([86]PR70331, [87]PR96630, [88]PR98675)
+     * Array destruction can now be devirtualized
+     * In-class member variable template partial specializations are now
+       accepted ([89]PR71954)
+     * Improved diagnostic for explicit conversion functions: when a
+       conversion doesn't work out only because the conversion function
+       necessary to do the conversion couldn't be used because it was
+       marked explicit, explain that to the user ([90]git)
+     * Corrected mangling of static/thread_local structured bindings at
+       function/block scope ([91]PR111069)
+     * [basic.scope.block]/2 violations are detected even in compound-stmt
+       of function-try-block and for block-scope external variables
+       ([92]PR52953)
+     * Improved "not a constant expression" diagnostic when taking the
+       address of a non-static constexpr variable ([93]PR91483)
+     * Non-dependent simple assignments are checked even in templates
+       ([94]PR18474)
+     * Attributes hot and cold can be applied to classes as well. See
+       [95]the manual for more info.
+     * Function template constraints, as well as CTAD placeholders, are
+       now mangled
+     * Various decltype fixes: [96]PR79620, [97]PR79378, [98]PR83167,
+       [99]PR96917
+     * New option -fdiagnostics-all-candidates to note all candidates
+       during overload resolution failure
+     * -Walloc-size and -Wcalloc-transposed-args warnings are enabled for
+       C++ as well
+     * The DR 2237 code no longer gives an error, it emits a
+       -Wtemplate-id-cdtor warning instead
+     * GCC supports a new pragma #pragma GCC novector to indicate to the
+       vectorizer not to vectorize the loop annotated with the pragma.
+     * C++ module scanning for named modules is now available, based on
+       the format described in [100]P1689R5, Format for describing
+       dependencies of source files. The -fdeps-format=, -fdeps-file=, and
+       -fdeps-target= flags may be used to generate dependency
+       information. In GCC 14 p1689r5 is the only valid argument for
+       -fdeps-format=.
+
+    [101]Runtime Library (libstdc++)
+
+     * The libstdc++exp.a library now includes all the Filesystem TS
+       symbols from the libstdc++fs.a library. The experimental symbols
+       for the C++23 std::stacktrace class are also in libstdc++exp.a,
+       replacing the libstdc++_libbacktrace.a library that GCC 13
+       provides. This means that -lstdc++exp is the only library needed
+       for all experimental libstdc++ features.
+     * Improved experimental support for C++20, including:
+          + std::chrono::parse.
+          + Unicode-aware string handling in std::format.
+     * Improved experimental support for C++23, including:
+          + The std::ranges::to function for converting ranges to
+            containers.
+          + The std::generator view for getting results from coroutines.
+          + The <stacktrace> header is supported by default.
+          + std::print and std::println (requires linking with -lstdc++exp
+            on Windows).
+          + Formatters for std::thread::id and std::stacktrace.
+          + Smart pointer adaptors, std::out_ptr and std::inout_ptr.
+          + Some range adaptors now support move-only types.
+     * Experimental support for C++26, including:
+          + Native handles for filebuf, fstream, etc.
+          + Functions for saturation arithmetic on integers.
+          + std::to_string now uses std::format.
+          + Enhanced formatting of pointers with std::format.
+          + The std::runtime_format function to allow using non-literal
+            format strings with std::format.
+          + Testable result types for <charconv> functions.
+          + The std::text_encoding class for identifying character sets
+            (requires linking with -lstdc++exp for some member functions).
+     * Faster numeric conversions using std::to_string and
+       std::to_wstring.
+     * Updated parallel algorithms that are compatible with oneTBB.
+     * std::numeric_limits<_Float32> and std::numeric_limits<_Float64> are
+       now defined for all standard modes, not only for C++23.
+     * Added missing functions for float and long double to <cmath>.
+     * Using the std::setfill manipulator with std::istream is deprecated.
+
+  [102]D
+
+     * Support for the D programming language has been updated to version
+       2.108.1 of the language and run-time library. Full changelog for
+       this release and previous releases can be found on the
+       [103]dlang.org website.
+
+  [104]Fortran
+
+     * The compiler now accepts the -std=f2023 option, which has been
+       added in preparation of support of Fortran 2023. This option
+       increases the line-length limit for source in free-form to 10000,
+       and statements may have up to 1 million characters.
+     * With the -save-temps option, preprocessed files with the .fii
+       extension will be generated from free-form source files such as
+       .F90 and .fi from fixed-form files such as .F.
+
+  [105]Modula-2
+
+     * The automatic dependency generation options: -M, -MD, -MF, -MMD,
+       -MP, -MQ and -MT have been implemented in the compiler.
+     * The -Wcase-enum and -Wuninit-variable-checking= options have been
+       implemented to provide compile-time warnings against missing case
+       clauses and uninitialized variables respectively.
+
+  [106]Rust
+
+     * Experimental support for the Rust programming language has been
+       added. The compiler is incomplete, but already supports a subset of
+       the Rust programming language. The frontend does not support
+       compiling the Rust standard library, so it cannot be used for most
+       real-world Rust code yet. However, you can experiment with the
+       compiler to run Rust code on #[no_core] targets.
+
+[107]libgccjit
+
+     * The libgccjit API gained 6 new entry points:
+          + [108]gcc_jit_type_get_restrict for adding restrict to types
+            ([109]LIBGCCJIT_ABI_25).
+          + 4 functions for setting attributes on functions and variables
+            ([110]LIBGCCJIT_ABI_26):
+               o gcc_jit_function_add_attribute
+               o gcc_jit_function_add_string_attribute
+               o gcc_jit_function_add_integer_array_attribute
+               o gcc_jit_lvalue_add_string_attribute
+          + [111]gcc_jit_context_new_sizeof for accessing the size of a
+            type ([112]LIBGCCJIT_ABI_27).
+
+[113]New Targets and Target Specific Improvements
+
+  [114]AArch64
+
+     * A number of new CPUs are supported through the -mcpu and -mtune
+       options (GCC identifiers in parentheses).
+          + Ampere-1B (ampere1b).
+          + Arm Cortex-A520 (cortex-a520).
+          + Arm Cortex-A720 (cortex-a720).
+          + Arm Cortex-X4 (cortex-x4).
+          + Microsoft Cobalt-100 (cobalt-100).
+     * Additionally, the identifiers generic, generic-armv8-a and
+       generic-armv9-a can be used to optimize code generation for a good
+       blend of CPUs of a particular architecture version. These tunings
+       are also used as the default optimization targets when compiling
+       with the -march=armv8-a or -march=armv9-a options and their point
+       releases e.g. -march=armv8.2-a or -march=armv9.3-a.
+     * New features in the Arm architecture are supported in a number of
+       ways:
+          + Support is added for the Arm Streaming Matrix Extensions SME
+            and SME2 through the +sme and +sme2 extensions to -march=. In
+            particular, this includes support for the Beta state of the
+            [115]SME ACLE in the form of a new intrinsics arm_sme.h
+            intrinsics header and a number of new keyword attributes to
+            manage use of the new Streaming SVE state. For more
+            information please refer to the ACLE documentation.
+          + Libatomic is updated to implement 128-bit atomic operations
+            locklessly on systems with FEAT_LSE2.
+          + Support for FEAT_LRCPC3 is added through ACLE intrinsics in
+            arm_neon.h header and enabled through the +rcpc3 extension to
+            -march=.
+     * As well as numerous AArch64 code generation improvements, the
+       following optimization enhancements are noteworthy:
+          + A new AArch64-specific register allocation pass is added. It
+            runs in addition to standard register allocation. The pass's
+            main purpose is to make use of strided vector register
+            operands in SME instructions. However, it can also remove
+            redundant moves in normal Advanced SIMD and SVE code. The pass
+            is controlled by the new option -mearly-ra= that takes the
+            arguments all, strided, none. -mearly-ra=all is enabled by
+            default at optimization levels -O2 and above.
+          + A new optimization pass to fuse loads and stores to adjacent
+            memory locations into load and store-pair AArch64
+            instructions. The pass is enabled by default when compiling
+            with optimization and runs twice in the optimization pipeline:
+            before and after register allocation. This can be controlled
+            with the options -mearly-ldp-fusion and -mlate-ldp-fusion.
+     * Conformance with the ACLE specification is improved and a number of
+       features aimed at helping developers deploy Arm architecture
+       features are added:
+          + Support for the Beta version of the [116]Function
+            Multiversioning Specification. This feature provides
+            facilities to annotate functions with attributes that allow
+            the compiler to generate multiple versions of the function,
+            selected at runtime based on the architecture features
+            available in the system. Please refer to the ACLE
+            specification for more details.
+          + Support for more ACLE intrinsics in the arm_acle.h header,
+            including the [117]Memory prefetch intrinsics and the
+            [118]Special register intrinsics. This also includes
+            intrinsics for the extension to 128-bit system registers,
+            enabled through the +d128 extension to -march=.
+          + Intrinsics enabled by the +dotprod, +fp16, +fp16fml, +i8mm,
+            +sha3 and +sm4 extensions to -march= no longer require
+            -march=armv8.2-a or higher to be specified. Likewise, the
+            intrinsics enabled by +memtag no longer require
+            -march=armv8.5-a.
+          + Support for the [119]NEON-SVE Bridge intrinsics. These are
+            intrinsics that allow conversions between NEON and SVE
+            vectors, enabled through the inclusion of the
+            arm_neon_sve_bridge.h header.
+     * The option -mtp= is now supported for changing the TPIDR register
+       used for TLS accesses. For more details please refer to the
+       [120]documentation.
+
+  [121]AMD Radeon (GCN)
+
+     * Initial support for the AMD Radeon gfx90c (GCN5), gfx1030, gfx1036
+       (RDNA2), gfx1100 and gfx1103 (RDNA3) devices has been added. LLVM
+       15+ (assembler and linker) is [122]required to support GFX11.
+     * Improved register usage and performance on CDNA Instinct MI100 and
+       MI200 series devices.
+     * The default device architecture is now gfx900 (Vega).
+     * Fiji (gfx803) device support is now deprecated and will be removed
+       from a future release. The default compiler configuration no longer
+       uses Fiji as the default device, and no longer includes the Fiji
+       libraries. Both can be restored by configuring with
+       [123]--with-arch=fiji .
+
+  [124]arm
+
+     * The Cortex-M52 CPU is now supported through the cortex-m52 argument
+       to the -mcpu and -mtune options.
+
+  [125]AVR
+
+     * On AVR64* and AVR128* devices, read-only data is now located in
+       program memory per default and no longer in RAM.
+          + Only a 32 KiB block of program memory can be used to store and
+            access .rodata in that way. Which block is used can be
+            selected by defining the symbol __flmap. As an alternative,
+            the byte address of the block can be specified by the symbol
+            __RODATA_FLASH_START__ which takes precedence over __flmap.
+            For example, linking with
+            -Wl,--defsym,__RODATA_FLASH_START__=32k chooses the second
+            32 KiB block.
+          + The default uses the last 32 KiB block, which is also the
+            hardware default for bit-field NVMCTRL_CTRLB.FLMAP.
+          + When a non-default block is used, then NVMCTRL_CTRLB.FLMAP
+            must be initialized accordingly by hand, or AVR-LibC v2.2 that
+            implements [126]#931 can be used. The latter initializes
+            NVMCTRL_CTRLB.FLMAP in the startup code and according to the
+            value of __flmap or __RODATA_FLASH_START__.
+          + When AVR-LibC with #931 is used, then defining the symbol
+            __flmap_lock to a non-zero value will set bit
+            NVMCTRL_CTRLB.FLMAPLOCK. This will protect NVMCTRL_CTRLB.FLMAP
+            from any further changes -- which would be Undefined Behaviour
+            in C/C++. If you prefer to define the symbol in a C/C++ file,
+            an asm statement can be used:
+__asm (".global __flmap_lock"  "\n\t"
+       "__flmap_lock = 1");
+          + When you do not want the code from #931, then define a global
+            symbol __do_flmap_init and the linker will not pull in that
+            code from libmcu.a any more.
+          + In order to return to the old placement of read-only data in
+            RAM, the new compiler option -mrodata-in-ram can be used. This
+            is required on devices where the hardware revision is affected
+            by a silicon bug concerning the FLMAP functionality.
+          + Read-only data is located in output section .rodata, whereas
+            it is part of .text when located in RAM.
+          + The feature is only available when the compiler is configured
+            with a version of Binutils that implements [127]PR31124, which
+            is the case for Binutils v2.42 and up.
+          + The implementation consists of two parts:
+              1. Binutils supports new emulations avrxmega2_flmap and
+                 avrxmega4_flmap. The sole purpose of these emulations is
+                 to provide adjusted default linker description files.
+                 Apart from that, these emulations behave exactly the same
+                 like avrxmega2 resp. avrxmega4.
+              2. The compiler uses a [128]device-specs file which links
+                 the program with -mavrxmega2_flmap or -mavrxmega2
+                 depending on -m[no-]rodata-in-ram; and similar for
+                 -mavrxmega4[_flmap].
+            This means the feature can be used with older compiler or
+            Binutils versions; all what's needed is an adjusted linker
+            script and a custom device-specs file.
+     * A new compiler option -m[no-]rodata-in-ram has been added. The
+       default is to locate read-only data in program memory for devices
+       that support it, e.g. for AVR64* and AVR128* devices as explained
+       above, and for devices from the [129]avrxmega3 and [130]avrtiny
+       families.
+     * The new built-in macro __AVR_RODATA_IN_RAM__ is supported on all
+       devices. It's defined to 0 or 1.
+     * A new optimization tries to improve code generation for indirect
+       memory accesses on [131]Reduced Tiny devices. It can be controlled
+       by the new compiler option -mfuse-add=level where level may be 0, 1
+       or 2.
+     * On the Reduced Tiny devices, the meaning of register constraint "w"
+       has been changed. It now constrains the registers R24...R31 as is
+       the case for all the other devices.
+     * Support for the following devices has been added in v14.3:
+          + AVR32SD20, AVR32SD28, AVR32SD32, AVR64SD28, AVR64SD32,
+            AVR64SD48.
+
+  [132]IA-32/x86-64
+
+     * New compiler option -m[no-]evex512 was added. The compiler switch
+       enables/disables 512-bit vector. It will be default on if AVX512F
+       is enabled.
+     * Part of new feature support for Intel APX was added, including
+       EGPR, NDD, PPX and PUSH2POP2. APX support is available via the
+       -mapxf compiler switch.
+     * For inline asm support with APX, by default the EGPR feature was
+       disabled to prevent potential illegal instruction with EGPR occurs.
+       To invoke egpr usage in inline asm, use new compiler option
+       -mapx-inline-asm-use-gpr32 and user should ensure the instruction
+       supports EGPR.
+     * New ISA extension support for Intel AVX10.1 was added. AVX10.1
+       intrinsics are available via the -mavx10.1-256 compiler switch with
+       256-bit vector support. 512-bit vector support for AVX10.1
+       intrinsics are available via the -mavx10.1-512 compiler switch.
+       -mavx10.1 enables AVX10.1 intrinsics with 256-bit vector support in
+       GCC 14.1 and GCC 14.2. Since GCC 14.3, it enables AVX10.1
+       intrinsics with 512-bit vector support (and emits a warning due to
+       this behavior change).
+     * New ISA extension support for Intel AVX-VNNI-INT16 was added.
+       AVX-VNNI-INT16 intrinsics are available via the -mavxvnniint16
+       compiler switch.
+     * New ISA extension support for Intel SHA512 was added. SHA512
+       intrinsics are available via the -msha512 compiler switch.
+     * New ISA extension support for Intel SM3 was added. SM3 intrinsics
+       are available via the -msm3 compiler switch.
+     * New ISA extension support for Intel SM4 was added. SM4 intrinsics
+       are available via the -msm4 compiler switch.
+     * New ISA extension support for Intel USER_MSR was added. USER_MSR
+       intrinsics are available via the -muser_msr compiler switch.
+     * GCC now supports the Intel CPU named Clearwater Forest through
+       -march=clearwaterforest. Based on Sierra Forest, the switch further
+       enables the AVX-VNNI-INT16, PREFETCHI, SHA512, SM3, SM4 and
+       USER_MSR ISA extensions.
+     * GCC now supports the Intel CPU named Gracemont through
+       -march=gracemont. Gracemont is based on Alder Lake.
+     * GCC now supports the Intel CPU named Arrow Lake through
+       -march=arrowlake. Based on Alder Lake, the switch further enables
+       the AVX-IFMA, AVX-NE-CONVERT, AVX-VNNI-INT8 and CMPccXADD ISA
+       extensions.
+     * GCC now supports the Intel CPU named Arrow Lake S through
+       -march=arrowlake-s. Based on Arrow Lake, the switch further enables
+       the AVX-VNNI-INT16, SHA512, SM3 and SM4 ISA extensions.
+     * GCC now supports the Intel CPU named Lunar Lake through
+       -march=lunarlake. Lunar Lake is based on Arrow Lake S.
+     * GCC now supports the Intel CPU named Panther Lake through
+       -march=pantherlake. Based on Arrow Lake S, the switch further
+       enables the PREFETCHI ISA extensions.
+     * Xeon Phi CPUs support (a.k.a. Knight Landing and Knight Mill) are
+       marked as deprecated. GCC will emit a warning when using the
+       -mavx5124fmaps, -mavx5124vnniw, -mavx512er, -mavx512pf,
+       -mprefetchwt1, -march=knl, -march=knm, -mtune=knl or -mtune=knm
+       compiler switches. Support will be removed in GCC 15.
+     * [133]Hardware-assisted AddressSanitizer now works for the x86-64
+       target with LAM_U57. -fsanitize=hwaddress will enable -mlam=u57 by
+       default.
+     * GCC now supports AMD CPUs based on the znver5 core via
+       -march=znver5. In addition to the ISA extensions enabled on a
+       znver4 core, this switch further enables the AVX512VP2INTERSECT,
+       AVXVNNI, MOVDIR64B, MOVDIRI, and PREFETCHI ISA extensions.
+     * The _Float16 and __bf16 type are supported independent of SSE2. W/o
+       SSE2, these types are storage-only, compiler will issue an error
+       when they're used in conversion, unary operation, binary operation,
+       parameter passing or value return. Please use __SSE2__ to detect
+       arithmetic support of these types instead of __FLT16_MAX__(or other
+       similar Macros).
+
+  [134]MCore
+
+     * Bitfields are now signed by default per GCC policy. If you need
+       bitfields to be unsigned, use -funsigned-bitfields.
+
+  [135]LoongArch
+
+     * Support for the following [136]-march parameters has been added:
+          + la64v1.0
+          + la64v1.1
+          + la664
+       It is now recommended to use -march=la64v1.0 as the only compiler
+       option to describe the target ISA when building binaries for
+       distribution. For more information on LoongArch ISA versions, see
+       [137]Toolchain Conventions of the LoongArch(TM) Architecture.
+     * Support for the following [138]-mtune parameters has been added:
+          + generic
+          + la664
+     * New ISA Extension
+          + LSX (Loongson SIMD Extension): Support 128-bit vector
+            instructions and the intrinsics.
+          + LASX (Loongson Advanced SIMD Extension): Support 256-bit
+            vector instructions and the intrinsics.
+          + FRECIPE: Support frecipe.{s/d} and frsqrte.{s/d} instructions
+            and the intrinsics.
+          + DIV32: Support div.w[u] and mod.w[u] instructions with inputs
+            not sign-extended.
+          + LAM_BH: Support am{swap/add}[_db].{b/h} instructions.
+          + LAMCAS: Support amcas[_db].{b/h/w/d} instructions.
+     * New Built-in Macros
+          + __loongarch_arch: Target ISA preset as specified by -march=.
+            For example, compiling with -march=la64v1.0, the value of
+            __loongarch_arch is "la64v1.0".
+          + __loongarch_tune: Processor model as specified by -mtune or
+            its default value.
+          + __loongarch_{simd,sx,asx}: These macros are not defined, or
+            defined as 1.
+          + __loongarch_simd_width: The maximum SIMD bit-width enabled by
+            the compiler. (128 for lsx, and 256 for lasx).
+          + __loongarch_frecipe: It's defined to 1 or undefined.
+          + __loongarch_div32: It's defined to 1 or undefined.
+          + __loongarch_lam_bh: It's defined to 1 or undefined.
+          + __loongarch_lamcas: It's defined to 1 or undefined.
+          + __loongarch_ld_seq_sa: It's defined to 1 or undefined.
+          + __loongarch_version_major: The minimally required LoongArch
+            ISA version (major) to run the compiled program, defined to 1
+            or undefined (iff no such version is known to the compiler).
+          + __loongarch_version_minor: The minimally required LoongArch
+            ISA version (minor) to run the compiled program, defined to 0
+            1 or undefined (iff __loongarch_version_major is undefined).
+          + __FLOAT128_TYPE: It's defined to 1.
+     * New Intrinsics
+          + [139]__builtin_thread_pointer
+          + [140]__lsx_*
+          + [141]__lasx_*
+          + [142]__frecipe_{s/d} and __frsqrte_{s/d}
+     * New Compiler Option
+          + [143]-m[no-]lsx
+          + [144]-m[no-]lasx
+          + [145]-m[no-]frecipe
+          + [146]-m[no-]div32
+          + [147]-m[no-]lam-bh
+          + [148]-m[no-]lamcas
+          + [149]-m[no-]ld-seq-sa
+          + [150]-mrecip=
+          + [151]-m[no-]recip
+          + [152]-mexplicit-relocs={none,always,auto}
+          + [153]-m[no-]relax
+          + [154]-m[no-]pass-mrelax-to-as
+          + [155]-mtls-dialect={trad,desc}
+     * Support for Ada and D.
+     * Support for libffi.
+     * Enable -free by default at -O2 or higher.
+     * Enable -fsched-pressure by default at -O1 or higher.
+     * Support the extreme code model using macro instructions (under
+       -mno-explicit-relocs).
+     * Support call36.
+     * Optimizing built-in functions for memory-model-aware atomic
+       operations using hierarchical dbar instructions.
+     * TLS descriptors support. It is not enabled by default, and can be
+       enabled with [156]-mtls-dialect=desc. The default behavior can be
+       configured with --with-tls=[trad|desc].
+
+  [157]RISC-V
+
+     * The SLP and loop vectorizer are now enabled for RISC-V when the
+       vector extension is enabled, thanks to Ju-Zhe Zhong from
+       [158]RiVAI, Pan Li from [159]Intel, and Robin Dapp from
+       [160]Ventana Micro for contributing most of the implementation!
+     * The -mrvv-max-lmul= option has been introduced for performance
+       tuning of the loop vectorizer. The default value is
+       -mrvv-max-lmul=m1, which limits the maximum LMUL to 1. The
+       -mrvv-max-lmul=dynamic setting can dynamically select the maximum
+       LMUL value based on register pressure.
+     * Atomic code generation has been improved and is now in conformance
+       with the latest psABI specification, thanks to Patrick O'Neill from
+       [161]Rivos.
+     * Support for the vector intrinsics as specified in [162]version 1.0
+       of the RISC-V vector intrinsic specification.
+     * Support for the experimental vector crypto intrinsics as specified
+       in [163]RISC-V vector intrinsic specification, thanks to Feng Wang
+       et al. from [164]ESWIN Computing
+     * Support for the T-head vector intrinsics.
+     * Support for the scalar bitmanip and scalar crypto intrinsics,
+       thanks to Liao Shihua from [165]PLCT.
+     * Support for the large code model via option -mcmodel=large, thanks
+       to Kuan-Lin Chen from [166]Andes Technology.
+     * Support for the standard vector calling convention variant, thanks
+       to Lehua Ding from [167]RiVAI.
+     * Supports the target attribute, which allows users to compile a
+       function with specific extensions.
+     * -march= option no longer requires the architecture string to be in
+       canonical order, with only a few constraints remaining: the
+       architecture string must start with rv[32|64][i|g|e], and must use
+       an underscore as the separator after a multi-letter extension.
+     * -march=help option has been introduced to dump all supported
+       extensions.
+     * Added experimental support for the -mrvv-vector-bits=zvl option and
+       the riscv_rvv_vector_bits attribute, which specify a fixed length
+       for scalable vector types. This option is optimized for specific
+       vector core implementations; however, the code generated with this
+       option is NOT portable between the core with different VLEN, thanks
+       to Pan Li from [168]Intel.
+     * Support for TLS descriptors has been introduced, which can be
+       enabled by the -mtls-dialect=desc option. The default behavior can
+       be configured with --with-tls=[trad|desc].
+     * Support for the TLS descriptors, this can be enabled by
+       -mtls-dialect=desc and the default behavior can be configure by
+       --with-tls=[trad|desc], and this feature require glibc 2.40, thanks
+       to Tatsuyuki Ishi from [169]Blue Whale Systems.
+     * Support for the following standard extensions has been added:
+          + Vector crypto extensions:
+               o Zvbb
+               o Zvkb
+               o Zvbc
+               o Zvkg
+               o Zvkned
+               o Zvkhna
+               o Zvkhnb
+               o Zvksed
+               o Zvksh
+               o Zvkn
+               o Zvknc
+               o Zvkng
+               o Zvks
+               o Zvksc
+               o Zvksg
+               o Zvkt
+          + Code size reduction extensions:
+               o Zca
+               o Zcb
+               o Zce
+               o Zcf
+               o Zcd
+               o Zcmp
+               o Zcmt
+          + Zicond
+          + Zfa
+          + Ztso
+          + Zvfbfmin
+          + Zvfhmin
+          + Zvfh
+          + Za64rs
+          + Za128rs
+          + Ziccif
+          + Ziccrse
+          + Ziccamoa
+          + Zicclsm
+          + Zic64b
+          + Smaia
+          + Smepmp
+          + Smstateen
+          + Ssaia
+          + Sscofpmf
+          + Ssstateen
+          + Sstc
+          + Svinval
+          + Svnapot
+          + Svpbmt
+     * Support for the following vendor extensions has been added:
+          + T-Head:
+               o XTheadVector
+          + CORE-V:
+               o XCVmac
+               o XCValu
+               o XCVelw
+               o XCVsimd
+               o XCVbi
+          + Ventana Micro:
+               o XVentanaCondops
+     * The following new CPUs are supported through the -mcpu option (GCC
+       identifiers in parentheses).
+          + SiFive's X280 (sifive-x280).
+          + SiFive's P450 (sifive-p450).
+          + SiFive's P670 (sifive-p670).
+     * The following new CPUs are supported through the -mtune option (GCC
+       identifiers in parentheses).
+          + Generic out-of-order core (generic-ooo).
+          + SiFive's P400 series (sifive-p400-series).
+          + SiFive's P600 series (sifive-p600-series).
+          + XiangShan's Nanhu microarchitecture (xiangshan-nanhu).
+
+  [170]SPARC
+
+     * The implementation of calling conventions for small structures
+       containing arrays of floating-point components has been changed in
+       64-bit mode for the Solaris port to match the implementation of the
+       vendor compiler (and the ABI). As a result, the code generated will
+       not be binary compatible with earlier releases in these cases.
+
+Documentation improvements
+
+     * GCC's ability to provide clickable hyperlinks to the documentation
+       has been extended, so that whenever GCC refers to a command-line
+       option in quotes in a diagnostic message, the option is a clickable
+       hyperlink (assuming a suitably capable terminal).
+
+[171]Improvements to Static Analyzer
+
+     * New warnings:
+          + [172]-Wanalyzer-infinite-loop warns about paths through the
+            code which appear to lead to an infinite loop.
+          + [173]-Wanalyzer-overlapping-buffers warns for paths through
+            the code in which overlapping buffers are passed to an API for
+            which the behavior on such buffers is undefined.
+          + [174]-Wanalyzer-undefined-behavior-strtok warns for paths
+            through the code in which a call is made to strtok with
+            undefined behavior.
+     * Previously, the analyzer's "taint" tracking to be explicitly
+       enabled via [175]-fanalyzer-checker=taint (along with
+       [176]-fanalyzer). This is now enabled by default when
+       [177]-fanalyzer is selected, thus also enabling the 6 taint-based
+       warnings:
+          + [178]-Wanalyzer-tainted-allocation-size
+          + [179]-Wanalyzer-tainted-array-index
+          + [180]-Wanalyzer-tainted-assertion
+          + [181]-Wanalyzer-tainted-divisor
+          + [182]-Wanalyzer-tainted-offset
+          + [183]-Wanalyzer-tainted-size
+     * The analyzer will now simulate API calls that expect
+       null-terminated string arguments, and will warn about code paths in
+       which such a call is made with a buffer that isn't properly
+       terminated, either due to a read of an uninitialized byte or an
+       out-of-range accesses seen before any zero byte is seen. This
+       applies to functions that use the new
+       [184]null_terminated_string_arg(PARAM_IDX) attribute, functions
+       that use the [185]format attribute, and to the library functions
+       error (parameter 3), error_at_line (parameter 5), putenv, strchr
+       (parameter 1), and strcpy (parameter 2).
+     * The analyzer now makes use of the function attribute
+       [186]alloc_size allowing [187]-fanalyzer to emit
+       [188]-Wanalyzer-allocation-size, [189]-Wanalyzer-out-of-bounds, and
+       [190]-Wanalyzer-tainted-allocation-size on execution paths
+       involving allocations using such functions.
+     * The analyzer's knowledge about the behavior of the standard library
+       has been extended to cover fopen, strcat, strncpy, and strstr. The
+       analyzer will also more precisely model the behavior of memcpy,
+       memmove, strcpy, strdup, strlen, and of various atomic built-in
+       functions.
+     * The warning [191]-Wanalyzer-out-of-bounds has been extended so
+       that, where possible, it will emit a text-based diagram visualizing
+       the spatial relationship between
+         1. the memory region that the analyzer predicts would be
+            accessed, versus
+         2. the range of memory that is valid to access
+       whether they overlap, are touching, are close or far apart; which
+       one is before or after in memory, the relative sizes involved, the
+       direction of the access (read vs write), and, in some cases, the
+       values of data involved.
+       Such "text art" diagrams can be controlled (or suppressed) via a
+       new [192]-fdiagnostics-text-art-charset= option.
+       For example, given the out-of-bounds write in strcat in:
+void test (void)
+{
+   char buf[10];
+   strcpy (buf, "hello");
+   strcat (buf, " world!");
+}
+
+       it emits:
+                                 +----+----+----+----+----++-----+-----+-----+
+                                 |[0] |[1] |[2] |[3] |[4] || [5] | [6] | [7] |
+                                 +----+----+----+----+----++-----+-----+-----+
+                                 |' ' |'w' |'o' |'r' |'l' || 'd' | '!' | NUL |
+                                 +----+----+----+----+----++-----+-----+-----+
+                                 |     string literal (type: 'char[8]')      |
+                                 +-------------------------------------------+
+                                   |    |    |    |    |      |     |     |
+                                   |    |    |    |    |      |     |     |
+                                   v    v    v    v    v      v     v     v
+      +-----+--------------------+----+--------------+----++-----------------+
+      | [0] |        ...         |[5] |     ...      |[9] ||                 |
+      +-----+----+----+----+----++----+--------------+----+|                 |
+      | 'h' |'e' |'l' |'l' |'o' ||NUL |                    |after valid range|
+      +-----+----+----+----+----++----+-------------------+|                 |
+      |             'buf' (type: 'char[10]')              ||                 |
+      +---------------------------------------------------++-----------------+
+      +-------------------------+-------------------------++--------+--------+
+                                |                                   |
+                      ­---------+--------®                ­---------+---------®
+                      |capacity: 10 bytes|                |overflow of 3 bytes|
+                      °------------------¯                °-------------------¯
+
+       showing that the overflow occurs partway through the second string
+       fragment.
+     * The analyzer will now attempt to track execution paths involving
+       computed gotos, whereas previously it gave up on such paths.
+
+[193]Improvements to SARIF support
+
+     * The SARIF output from [194]-fdiagnostics-format= now adds
+       indentation and newlines to reflect the logical JSON structure of
+       the data. The previous compact behavior can be restored via the new
+       option [195]-fno-diagnostics-json-formatting. This also applies to
+       the older output format named "json".
+     * If profiling information about the compiler itself is requested via
+       [196]-ftime-report, and a SARIF output format is requested via
+       [197]-fdiagnostics-format=, then the timing and memory usage data
+       is now written in JSON form into the SARIF output, rather than as
+       plain text to stderr.
+
+[198]Improvements for plugin authors
+
+     * GCC diagnostics have been able to have execution paths associated
+       with them since GCC 10, but previously these were required to be
+       single-threaded. As of GCC 14, these execution paths can have
+       multiple named threads associated with them, with each event being
+       associated with one of the threads. No existing GCC diagnostics
+       take advantage of this, but GCC plugins may find this useful for
+       their own diagnostics; an [199]example is provided in the
+       testsuite.
+     * GCC's diagnostics can now optionally add per-diagnostic property
+       bags to the SARIF output, allowing plugins to capture custom data
+       as needed with their diagnostics.
+
+[200]GCC 14.1
+
+   This is the [201]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 14.1 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
+[202]GCC 14.2
+
+   This is the [203]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 14.2 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
+[204]GCC 14.3
+
+   This is the [205]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 14.3 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
+
+    For questions related to the use of GCC, please consult these web
+    pages and the [206]GCC manuals. If that fails, the
+    [207]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    web pages and the development of GCC are welcome on our developer
+    list at [208]gcc@gcc.gnu.org. All of [209]our lists have public
+    archives.
+
+   Copyright (C) [210]Free Software Foundation, Inc. Verbatim copying and
+   distribution of this entire article is permitted in any medium,
+   provided this notice is preserved.
+
+   These pages are [211]maintained by the GCC team. Last modified
+   2025-05-23.
+
+References
+
+   1. https://gcc.gnu.org/gcc-14/porting_to.html
+   2. https://gcc.gnu.org/onlinedocs/index.html#current
+   3. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Zero-Length.html
+   4. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Warning-Options.html#index-Wflex-array-member-not-at-end
+   5. https://gcc.gnu.org/gcc-14/porting_to.html#warnings-as-errors
+   6. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Instrumentation-Options.html
+   7. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html
+   8. https://gcc.gnu.org/gcc-14/changes.html#general
+   9. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/C-Dialect-Options.html#index-foffload-options
+  10. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Instrumentation-Options.html#index-fhardened
+  11. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Instrumentation-Options.html#index-fharden-control-flow-redundancy
+  12. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Type-Attributes.html#index-hardbool-type-attribute
+  13. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Type-Attributes.html#index-strub-type-attribute
+  14. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Optimize-Options.html#index-finline-stringops
+  15. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Code-Gen-Options.html#index-ftrampoline-impl
+  16. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Function-Attributes.html#index-null_005fterminated_005fstring_005farg-function-attribute
+  17. https://gcc.gnu.org/gcc-14/changes.html#languages
+  18. https://gcc.gnu.org/projects/gomp/
+  19. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/libgomp/
+  20. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/libgomp/Offload-Target-Specifics.html
+  21. https://github.com/numactl/numactl
+  22. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/libgomp/Memory-allocation.html
+  23. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gfortran/Fortran-Dialect-Options.html#index-fopenmp-allocators
+  24. https://gcc.gnu.org/wiki/OpenACC
+  25. https://gcc.gnu.org/gcc-14/changes.html#ada
+  26. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Aspect-Local_005fRestrictions.html
+  27. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Pragma-User_005fAspect_005fDefinition.html
+  28. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Aspect-User_005fAspect.html
+  29. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Aspect-Always_005fTerminates.html
+  30. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Aspect-Ghost_005fPredicate.html
+  31. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Aspect-Exceptional_005fCases.html
+  32. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Aspect-Side_005fEffects.html
+  33. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Instrumentation-Options.html#index-fharden-compares
+  34. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Security-Hardening-Features.html
+  35. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_ugn/Style-Checking.html#index--gnatyz-_0028gcc_0029
+  36. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_ugn/Alphabetical-List-of-All-Switches.html#index--gnateH-_0028gcc_0029
+  37. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/Pragma-Storage_005fModel.html
+  38. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gnat_rm/String-interpolation.html
+  39. https://gcc.gnu.org/gcc-14/changes.html#c-family
+  40. https://gcc.gnu.org/gcc-14/changes.html#c
+  41. https://gcc.gnu.org/gcc-14/changes.html#cxx
+  42. https://wg21.link/P1854R4
+  43. https://gcc.gnu.org/PR110341
+  44. https://wg21.link/P2752R3
+  45. https://gcc.gnu.org/PR110346
+  46. https://wg21.link/P2361R6
+  47. https://gcc.gnu.org/PR110342
+  48. https://wg21.link/P2738R1
+  49. https://gcc.gnu.org/PR110344
+  50. https://wg21.link/P2741R3
+  51. https://gcc.gnu.org/PR110348
+  52. https://wg21.link/P2169R4
+  53. https://gcc.gnu.org/PR110349
+  54. https://wg21.link/P2864R2
+  55. https://wg21.link/P2748R5
+  56. https://gcc.gnu.org/PR114455
+  57. https://wg21.link/P2809R3
+  58. https://gcc.gnu.org/PR114462
+  59. https://wg21.link/P0847R7
+  60. https://gcc.gnu.org/PR102609
+  61. https://wg21.link/P2280R4
+  62. https://gcc.gnu.org/PR106650
+  63. https://wg21.link/P2564R3
+  64. https://gcc.gnu.org/PR107687
+  65. https://wg21.link/P2582R1
+  66. https://gcc.gnu.org/PR106653
+  67. https://wg21.link/cwg532
+  68. https://wg21.link/cwg976
+  69. https://wg21.link/cwg2262
+  70. https://wg21.link/cwg2359
+  71. https://wg21.link/cwg2386
+  72. https://wg21.link/cwg2406
+  73. https://wg21.link/cwg2543
+  74. https://wg21.link/cwg2586
+  75. https://wg21.link/cwg2735
+  76. https://wg21.link/cwg2799
+  77. https://gcc.gnu.org/PR100157
+  78. https://cplusplus.github.io/CWG/issues/2256.html
+  79. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/C_002b_002b-Dialect-Options.html#index-Wdangling-reference
+  80. https://gcc.gnu.org/git/?p=gcc.git;a=blob;f=gcc/testsuite/g%2B%2B.dg/opt/nrv23.C;h=9e1253cd830a84ad4de5ff3076a07c543afe344f;hb=7e0b65b239c3a0d68ce94896b236b03de666ffd6
+  81. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Warning-Options.html#index-Wnrvo
+  82. https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=4d935f52b0d5c00fcc154461b87415ebd8791a94
+  83. https://gcc.gnu.org/PR110164
+  84. https://gcc.gnu.org/PR89442
+  85. https://gcc.gnu.org/PR110064
+  86. https://gcc.gnu.org/PR70331
+  87. https://gcc.gnu.org/PR96630
+  88. https://gcc.gnu.org/PR98675
+  89. https://gcc.gnu.org/PR71954
+  90. https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=85ad41a494e31311f8a6b2dbe930a128c5e85840
+  91. https://gcc.gnu.org/PR111069
+  92. https://gcc.gnu.org/PR52953
+  93. https://gcc.gnu.org/PR91483
+  94. https://gcc.gnu.org/PR18474
+  95. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/C_002b_002b-Attributes.html#index-cold-type-attribute
+  96. https://gcc.gnu.org/PR79620
+  97. https://gcc.gnu.org/PR79378
+  98. https://gcc.gnu.org/PR83167
+  99. https://gcc.gnu.org/PR96917
+ 100. https://wg21.link/P1689R5
+ 101. https://gcc.gnu.org/gcc-14/changes.html#libstdcxx
+ 102. https://gcc.gnu.org/gcc-14/changes.html#d
+ 103. https://dlang.org/changelog/2.108.1.html
+ 104. https://gcc.gnu.org/gcc-14/changes.html#fortran
+ 105. https://gcc.gnu.org/gcc-14/changes.html#modula2
+ 106. https://gcc.gnu.org/gcc-14/changes.html#rust
+ 107. https://gcc.gnu.org/gcc-14/changes.html#jit
+ 108. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/jit/topics/types.html#c.gcc_jit_type_get_restrict
+ 109. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/jit/topics/compatibility.html#libgccjit-abi-25
+ 110. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/jit/topics/compatibility.html#libgccjit-abi-26
+ 111. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/jit/topics/expressions.html#c.gcc_jit_context_new_sizeof
+ 112. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/jit/topics/compatibility.html#libgccjit-abi-27
+ 113. https://gcc.gnu.org/gcc-14/changes.html#targets
+ 114. https://gcc.gnu.org/gcc-14/changes.html#aarch64
+ 115. https://github.com/ARM-software/acle/blob/main/main/acle.md#sme-language-extensions-and-intrinsics
+ 116. https://github.com/ARM-software/acle/blob/main/main/acle.md#function-multi-versioning
+ 117. https://github.com/ARM-software/acle/blob/main/main/acle.md#memory-prefetch-intrinsics
+ 118. https://github.com/ARM-software/acle/blob/main/main/acle.md#special-register-intrinsics
+ 119. https://github.com/ARM-software/acle/blob/main/main/acle.md#neon-sve-bridge
+ 120. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/AArch64-Options.html
+ 121. https://gcc.gnu.org/gcc-14/changes.html#amdgcn
+ 122. https://gcc.gnu.org/install/specific.html#amdgcn-x-amdhsa
+ 123. https://gcc.gnu.org/install/specific.html#amdgcn-x-amdhsa
+ 124. https://gcc.gnu.org/gcc-14/changes.html#arm
+ 125. https://gcc.gnu.org/gcc-14/changes.html#avr
+ 126. https://github.com/avrdudes/avr-libc/issues/931
+ 127. https://sourceware.org/PR31124
+ 128. https://gcc.gnu.org/wiki/avr-gcc#spec-files
+ 129. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/AVR-Options.html#avrxmega3
+ 130. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/AVR-Options.html#avrtiny
+ 131. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/AVR-Options.html#avrtiny
+ 132. https://gcc.gnu.org/gcc-14/changes.html#x86
+ 133. https://gcc.gnu.org/gcc-11/changes.html
+ 134. https://gcc.gnu.org/gcc-14/changes.html#mcore
+ 135. https://gcc.gnu.org/gcc-14/changes.html#loongarch
+ 136. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-march-7
+ 137. https://github.com/loongson/la-toolchain-conventions/
+ 138. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mtune-8
+ 139. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Base-Built-in-Functions.html
+ 140. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-SX-Vector-Intrinsics.html
+ 141. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-ASX-Vector-Intrinsics.html
+ 142. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Base-Built-in-Functions.html
+ 143. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-ml_005ba_005dsx
+ 144. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-ml_005ba_005dsx
+ 145. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mfrecipe
+ 146. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mdiv32
+ 147. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mlam-bh
+ 148. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mlamcas
+ 149. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mld-seq-sa
+ 150. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mrecip_003dopt
+ 151. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mrecip
+ 152. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mexplicit-relocs-1
+ 153. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mrelax-2
+ 154. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mpass-mrelax-to-as
+ 155. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mtls-dialect-1
+ 156. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/LoongArch-Options.html#index-mtls-dialect-1
+ 157. https://gcc.gnu.org/gcc-14/changes.html#riscv
+ 158. https://rivai-ic.com.cn/
+ 159. https://www.intel.com/
+ 160. https://www.ventanamicro.com/
+ 161. https://www.rivosinc.com/
+ 162. https://github.com/riscv-non-isa/rvv-intrinsic-doc/tree/v1.0.x
+ 163. https://github.com/riscv-non-isa/rvv-intrinsic-doc/pull/234
+ 164. https://eswincomputing.com/
+ 165. https://plctlab.org/
+ 166. https://www.andestech.com/
+ 167. https://rivai-ic.com.cn/
+ 168. https://www.intel.com/
+ 169. https://bluewhale.systems/
+ 170. https://gcc.gnu.org/gcc-14/changes.html#sparc
+ 171. https://gcc.gnu.org/gcc-14/changes.html#analyzer
+ 172. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-loop
+ 173. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-overlapping-buffers
+ 174. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-undefined-behavior-strtok
+ 175. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-fanalyzer-checker
+ 176. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-fanalyzer
+ 177. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-fanalyzer
+ 178. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-allocation-size
+ 179. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-array-index
+ 180. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-assertion
+ 181. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-divisor
+ 182. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-offset
+ 183. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-size
+ 184. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Function-Attributes.html#index-null_005fterminated_005fstring_005farg-function-attribute
+ 185. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Function-Attributes.html#index-format-function-attribute
+ 186. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Common-Function-Attributes.html#index-alloc_005fsize-function-attribute
+ 187. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-fanalyzer
+ 188. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-allocation-size
+ 189. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds
+ 190. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-allocation-size
+ 191. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds
+ 192. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Diagnostic-Message-Formatting-Options.html#index-fdiagnostics-text-art-charset
+ 193. https://gcc.gnu.org/gcc-14/changes.html#sarif
+ 194. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Diagnostic-Message-Formatting-Options.html#index-fdiagnostics-format
+ 195. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Diagnostic-Message-Formatting-Options.html#index-fno-diagnostics-json-formatting
+ 196. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Developer-Options.html#index-ftime-report
+ 197. https://gcc.gnu.org/onlinedocs/gcc-14.1.0/gcc/Diagnostic-Message-Formatting-Options.html#index-fdiagnostics-format
+ 198. https://gcc.gnu.org/gcc-14/changes.html#plugins
+ 199. https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=3a1e9f3ed7aa49adad02190ace0614e0b37fc089
+ 200. https://gcc.gnu.org/gcc-14/changes.html#14.1
+ 201. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=14.0
+ 202. https://gcc.gnu.org/gcc-14/changes.html#14.2
+ 203. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=14.2
+ 204. https://gcc.gnu.org/gcc-14/changes.html#14.3
+ 205. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=14.3
+ 206. https://gcc.gnu.org/onlinedocs/
+ 207. mailto:gcc-help@gcc.gnu.org
+ 208. mailto:gcc@gcc.gnu.org
+ 209. https://gcc.gnu.org/lists.html
+ 210. https://www.fsf.org/
+ 211. https://gcc.gnu.org/about.html
+======================================================================
+http://gcc.gnu.org/gcc-13/index.html
+
+                             GCC 13 Release Series
+
+   May 21, 2024
+
+   The GCC developers are pleased to announce the release of GCC 13.3.
+
+   This release is a bug-fix release, containing fixes for regressions in
+   GCC 13.2 relative to previous releases of GCC.
+
+Release History
+
+   GCC 13.3
+          May 21, 2024 ([1]changes, [2]documentation)
+
+   GCC 13.2
+          July 27, 2023 ([3]changes, [4]documentation)
+
+   GCC 13.1
+          April 26, 2023 ([5]changes, [6]documentation)
+
+References and Acknowledgements
+
+   GCC used to stand for the GNU C Compiler, but since the compiler
+   supports several other languages aside from C, it now stands for the
+   GNU Compiler Collection.
+
+   The GCC developers would like to thank the numerous people that have
+   contributed new features, improvements, bug fixes, and other changes as
+   well as test results to GCC. This [7]amazing group of volunteers is
+   what makes GCC successful.
+
+   For additional information about GCC please refer to the [8]GCC project
+   web site or contact the [9]GCC development mailing list.
+
+   To obtain GCC please use [10]our mirror sites or [11]our version
+   control system.
+
+
+    For questions related to the use of GCC, please consult these web
+    pages and the [12]GCC manuals. If that fails, the
+    [13]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    web pages and the development of GCC are welcome on our developer
+    list at [14]gcc@gcc.gnu.org. All of [15]our lists have public
+    archives.
+
+   Copyright (C) [16]Free Software Foundation, Inc. Verbatim copying and
+   distribution of this entire article is permitted in any medium,
+   provided this notice is preserved.
+
+   These pages are [17]maintained by the GCC team. Last modified
+   2024-05-30.
+
+References
+
+   1. https://gcc.gnu.org/gcc-13/changes.html
+   2. https://gcc.gnu.org/onlinedocs/13.3.0/
+   3. https://gcc.gnu.org/gcc-13/changes.html
+   4. https://gcc.gnu.org/onlinedocs/13.2.0/
+   5. https://gcc.gnu.org/gcc-13/changes.html
+   6. https://gcc.gnu.org/onlinedocs/13.1.0/
+   7. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Contributors.html
+   8. https://gcc.gnu.org/index.html
+   9. mailto:gcc@gcc.gnu.org
+  10. https://gcc.gnu.org/mirrors.html
+  11. https://gcc.gnu.org/git.html
+  12. https://gcc.gnu.org/onlinedocs/
+  13. mailto:gcc-help@gcc.gnu.org
+  14. mailto:gcc@gcc.gnu.org
+  15. https://gcc.gnu.org/lists.html
+  16. https://www.fsf.org/
+  17. https://gcc.gnu.org/about.html
+======================================================================
+http://gcc.gnu.org/gcc-13/changes.html
+
+                             GCC 13 Release Series
+                        Changes, New Features, and Fixes
+
+   This page is a "brief" summary of some of the huge number of
+   improvements in GCC 13. You may also want to check out our [1]Porting
+   to GCC 13 page and the [2]full GCC documentation.
+
+Caveats
+
+     * OpenMP offloading to Intel MIC has been removed.
+     * The support for the cr16-elf, tilegx*-linux, tilepro*-linux,
+       hppa[12]*-*-hpux10*, hppa[12]*-*-hpux11* and m32c-rtems
+       configurations has been removed.
+     * Support for Solaris 11.3 (*-*-solaris2.11.3) has been declared
+       obsolete. The next release of GCC will have corresponding code
+       permanently removed. Details can be found in the [3]announcement.
+     * Support for emitting the STABS debugging format (including the
+       -gstabs and -gxcoff options) has been removed. (This means the dbx
+       debugger is no longer supported, either.)
+     * Legacy debug info compression option -gz=zlib-gnu was removed and
+       the option is ignored right now.
+     * [4]-Warray-bounds=2 will no longer issue warnings for out of bounds
+       accesses to trailing struct members of one-element array type
+       anymore. Instead it diagnoses accesses to trailing arrays according
+       to [5]-fstrict-flex-arrays.
+     * [6]-fanalyzer is still only suitable for analyzing C code. In
+       particular, using it on C++ is unlikely to give meaningful output.
+     * In the arm port, support for the iWMMXt extensions, enabled through
+       -mcpu=iwmmxt, has been deprecated and will be removed in a future
+       release. This includes support for the [7]iWMMXt built-in
+       functions.
+     * For C++, construction of the global iostream objects std::cout,
+       std::cin, etc. is now done inside the standard library, instead of
+       in every source file that includes the <iostream> header. This
+       change improves the start-up performance of C++ programs, but it
+       means that code compiled with GCC 13.1 will crash if the correct
+       version of libstdc++.so is not used at run time. See the
+       [8]documentation about using the right libstdc++.so at run time.
+       Future GCC releases will mitigate the problem so that the program
+       cannot be run at all with an older libstdc++.so.
+
+[9]General Improvements
+
+     * [10]OpenMP
+          + Reverse offload is now supported with AMD GCN and nvptx
+            devices. Additionally, the requires handling has been improved
+            and all clauses are now accepted. If a requirement cannot be
+            fulfilled for an accessible device, this device is excluded
+            from the list of available devices. This may imply that the
+            only device left is the host (the initial device). In
+            particular, unified_address and unified_shared_memory are
+            unsupported by all non-host devices.
+          + OpenMP 5.0: Fortran now supports some non-rectangular loop
+            nests; for C/C++, the support was added in GCC 11.
+          + The following OpenMP 5.1 features have been added: the
+            omp_all_memory reserved locator, the inoutset modifier to the
+            depend clause, the nowait clause for the taskwait directive
+            and the omp_target_is_accessible, omp_target_memcpy_async,
+            omp_target_memcpy_rect_async and omp_get_mapped_ptr API
+            routines. The assume and assumes directives, the begin/end
+            declare target syntax in C/C++ and device-specific ICV
+            settings with environment variables are now supported.
+          + Initial support for OpenMP 5.2 features has been added:
+            firstprivate and allocate clauses on the scope construct; the
+            OpenMP 5.2 syntax of the linear clause; new enum/constants
+            omp_initial_device and omp_invalid_device; and optionally
+            omitting the map-type in target enter/exit data. The enter
+            clause (as alias for to) has been added to the declare target
+            directive. Also added have been the omp_in_explicit_task
+            routine and the doacross clause as alias for depend with
+            source/sink modifier.
+          + The _ALL suffix to the device-scope environment variables
+            added in Technical Report (TR11) is already handled.
+          + For user defined allocators requesting high bandwidth or large
+            capacity memspaces or interleaved partitioning, the
+            [11]memkind library is used, if available at run time.
+     * AddressSanitizer defaults to detect_stack_use_after_return=1 on
+       GNU/Linux targets. For compatibility, it can be disabled with env
+       ASAN_OPTIONS=detect_stack_use_after_return=0.
+     * New debug info compression option value -gz=zstd has been added.
+     * Link-time optimization improvements:
+          + LTO supports the newly added jobserver of GNU make jobserver
+            that uses named pipes (--jobserver-style=fifo) by default.
+          + If make's jobserver is active, parallel LTO WPA streaming
+            communicates with it and thus avoids system overcommitting.
+     * -Ofast, -ffast-math and -funsafe-math-optimizations will no longer
+       add startup code to alter the floating-point environment when
+       producing a shared object with -shared.
+     * GCC can now emit its diagnostics using [12]SARIF. This is a
+       JSON-based format suited for capturing the results of static
+       analysis tools (like GCC's [13]-fanalyzer), but it can also be used
+       to capture other GCC warnings and errors in a machine-readable
+       format. Specifically, the [14]-fdiagnostics-format= option has been
+       extended to support these new values:
+          + -fdiagnostics-format=sarif-stderr
+          + -fdiagnostics-format=sarif-file
+          + -fdiagnostics-format=json-stderr, a synonym for the existing
+            -fdiagnostics-format=json
+          + -fdiagnostics-format=json-file
+       where the json-prefixed variants refer to GCC's own JSON diagnostic
+       format.
+     * Support for profiling and test coverage in freestanding
+       environments has been added, see also [15]Profiling and Test
+       Coverage in Freestanding Environments.
+     * New options -fharden-compares and -fharden-conditional-branches to
+       verify compares and conditional branches, to detect some
+       power-deprivation hardware attacks, using reversed conditions.
+
+[16]New Languages and Language specific improvements
+
+  [17]Ada
+
+     * Traceback support added in RTEMS for the PPC ELF and ARM
+       architectures.
+     * Support for versions older than VxWorks 7 has been removed.
+     * General improvements to the contracts in the standard libraries.
+     * Addition of GNAT.Binary_Search.
+     * Further additions and fixes for the Ada 2022 specification.
+     * The Pragma SPARK_Mode=>Auto is now accepted. Contract analysis has
+       been further improved.
+     * Documentation improvements.
+
+  [18]C family
+
+     * New warnings:
+          + [19]-Wxor-used-as-pow warns about uses of ^, the exclusive or
+            operator, where it appears the user meant exponentiation
+            ([20]PR90885)
+     * Three new function attributes for documenting int arguments that
+       are file descriptors:
+          + [21]__attribute__((fd_arg(N)))
+          + [22]__attribute__((fd_arg_read(N)))
+          + [23]__attribute__((fd_arg_write(N)))
+       These are used by [24]-fanalyzer to detect misuses of file
+       descriptors.
+     * A new statement attribute for C++23 [25]P1774R8 Portable
+       assumptions support also in C or older C++:
+       [26]__attribute__((assume(EXPR)));
+     * GCC can now control when to treat the trailing array of a structure
+       as a flexible array member for the purpose of accessing the
+       elements of such an array. By default, all trailing arrays in
+       aggregates are treated as flexible array members. Use the new
+       command-line option [27]-fstrict-flex-arrays to control which array
+       members are treated as flexible arrays.
+
+  [28]C
+
+     * Several C23 features have been implemented:
+          + [29]N3042, Introduce the nullptr constant
+          + [30]N2963, Enhanced Enumerations (fixed underlying types)
+          + [31]N2975, Relax requirements for variadic parameter lists
+          + [32]N3007, Type inference for object definitions (auto)
+          + [33]N3018, The constexpr specifier for object definitions
+          + [34]N3038, Introduce storage-class specifiers for compound
+            literals
+          + typeof (previously supported as an extension) and
+            typeof_unqual
+          + New keywords alignas, alignof, bool, false, static_assert,
+            thread_local, true
+          + [35]N2764, The noreturn attribute
+          + Support for empty initializer braces
+          + __STDC_VERSION_*_H__ header version macros
+          + Removal of ATOMIC_VAR_INIT
+          + unreachable macro in <stddef.h>
+          + Removal of trigraphs
+          + Removal of unprototyped functions
+          + printf and scanf format checking with [36]-Wformat for %wN and
+            %wfN format length modifiers
+          + [37]N2836, Identifier Syntax using Unicode Standard Annex 31
+     * In addition to those C23 features, existing features adopted in C23
+       have been adjusted to follow C23 requirements and are not diagnosed
+       with -std=c2x -Wpedantic.
+     * New warnings:
+          + [38]-Wenum-int-mismatch warns about mismatches between an
+            enumerated type and an integer type ([39]PR105131)
+
+  [40]C++
+
+     * Excess precision support (which has been available in C since GCC
+       4.5) has been implemented for C++ as well. It is enabled by default
+       in strict standard modes like -std=c++17, where it defaults to
+       -fexcess-precision=standard, while in GNU standard modes like
+       -std=gnu++20 it defaults to -fexcess-precision=fast. The option
+       mainly affects IA-32/x86-64 using x87 math and in some cases on
+       Motorola 68000, where float and double expressions are evaluated in
+       long double precision and S/390, System z, IBM z Systems where
+       float expressions are evaluated in double precision. Also, on
+       several architectures where std::float16_t or std::bfloat16_t types
+       are supported those are evaluated in float precision.
+       -fexcess-precision=fast restores previous behavior.
+     * Several C++23 features have been implemented:
+          + [41]P2324R1, Labels at the end of compound statements
+            ([42]PR103539)
+          + [43]P2255R2, A type trait to detect reference binding to
+            temporary ([44]PR104477)
+          + [45]P2327R1, De-deprecating volatile compound operations
+          + [46]P2437R1, Support for #warning ([47]PR106646)
+          + [48]P2290R3, Delimited escape sequences ([49]PR106645)
+          + [50]P2071R2, Named universal character escapes ([51]PR106648)
+          + [52]P2513R3, char8_t Compatibility and Portability Fix
+            ([53]PR106656)
+          + [54]P1169R4, static operator() ([55]PR106651)
+          + [56]P2266R3, Simpler implicit move ([57]PR101165)
+          + [58]P2468R2, The Equality Operator You Are Looking For
+            ([59]PR106644)
+          + [60]P2362R3, Remove non-encodable
+            wide character literals and multicharacter wide character lite
+            rals ([61]PR106647)
+          + [62]P2448R2, Relaxing some constexpr restrictions
+            ([63]PR106649)
+          + [64]P1467R9, Extended floating-point types and standard names
+            ([65]PR106652)
+          + [66]P1774R8, Portable assumptions ([67]PR106654)
+          + [68]P2295R6, Support for
+            UTF-8 as a portable source file encoding ([69]PR106655)
+          + [70]P2589R1, static operator[] ([71]PR107684)
+     * New warnings:
+          + [72]-Wself-move warns when a value is moved to itself with
+            std::move ([73]PR81159)
+          + [74]-Wdangling-reference warns when a reference is bound to a
+            temporary whose lifetime has ended ([75]PR106393)
+     * The [76]-Wpessimizing-move and [77]-Wredundant-move warnings have
+       been extended to warn in more contexts.
+     * The [78]-nostdlib++ option has been added, to enable linking with
+       g++ without implicitly linking in the C++ standard library.
+
+    [79]Runtime Library (libstdc++)
+
+     * Improved experimental support for C++20, including:
+          + <format> header and std::format.
+          + std::chrono::utc_clock and other clocks, time zones, and
+            std::format support in the <chrono> header.
+     * Improved experimental support for C++23, including:
+          + Additions to the <ranges> header: views::zip,
+            views::zip_transform, views::adjacent,
+            views::adjacent_transform views::pairwise, views::slide,
+            views::chunk, views::chunk_by, views::repeat, views::chunk_by,
+            views::cartesian_product, views::as_rvalue, views::enumerate,
+            views::as_const.
+          + Additions to the <algorithm> header: ranges::contains,
+            ranges::contains_subrange, ranges::iota, ranges::find_last,
+            ranges::find_last_if, ranges::find_last_if_not,
+            ranges::fold_left, ranges::fold_left_first,
+            ranges::fold_right, ranges::fold_right_last,
+            ranges::fold_left_with_iter,
+            ranges::fold_left_first_with_iter.
+          + Monadic operations for std::expected.
+          + Constexpr std::bitset, std::to_chars and std::from_chars.
+          + Library support for extended floating-point types.
+     * Support for the <experimental/scope> header from v3 of the Library
+       Fundamentals Technical Specification.
+     * Support for the <experimental/synchronized_value> header from v2 of
+       the Concurrency Technical Specification.
+     * Support for many previously unavailable features in freestanding
+       mode, thanks to Arsen Arsenovic. For example, std::tuple is now
+       available for freestanding compilation. The freestanding subset
+       contains all the components made freestanding by [80]P1642, and
+       libstdc++ adds more components such as std::array and
+       std::string_view. Additionally, libstdc++ now respects the
+       -ffreestanding compiler option and so it is not necessary to build
+       a separate freestanding installation of libstdc++. Compiling with
+       -ffreestanding restricts the available features to the freestanding
+       subset, even if libstdc++ was built as a full, hosted
+       implementation.
+
+  [81]D
+
+     * Support for the D programming language has been updated to version
+       2.103.1 of the language and run-time library. Full changelog for
+       this release and previous releases can be found on the
+       [82]dlang.org website.
+     * The following GCC attributes are now recognized and available from
+       the gcc.attributes module with short-hand aliases for convenience:
+          + @attribute("no_sanitize", arguments) or
+            @no_sanitize(arguments).
+          + @attribute("register") or @register.
+          + @attribute("simd") or @simd.
+          + @attribute("simd_clones", mask) or @simd_clones(mask).
+          + @attribute("visibility", arguments) or @visibility(arguments).
+     * New aliases have been added to gcc.attributes for compatibility
+       with ldc.attributes.
+          + The @hidden attribute is an alias for @attribute("visibility",
+            "hidden").
+          + The @noSanitize attribute is an alias for
+            @attribute("no_sanitize").
+     * Vector operation intrinsics prefetch, loadUnaligned,
+       storeUnaligned, shuffle, shufflevector, extractelement,
+       insertelement, convertvector, and blendvector have been added to
+       the gcc.simd module.
+     * New warnings:
+          + [83]-Wbuiltin-declaration-mismatch= warns when a built-in
+            function is declared with the wrong signature.
+          + [84]-Wmismatched-special-enum warns when a special enum is
+            declared with the wrong base type.
+     * New version identifier D_Optimized is now predefined when the -O
+       option, or any higher optimization level is used.
+     * The predefinition of version D_Exceptions can now by controlled by
+       the option -fexception.
+     * The predefinition of version D_TypeInfo can now by controlled by
+       the option -frtti.
+     * The -fdebug= and -fversion= compiler switches no longer accept an
+       integer argument.
+
+  [85]Fortran
+
+     * Finalization is now fully supported.
+
+  [86]Go
+
+     * GCC 13, like GCC 12, provides a complete implementation of the Go
+       1.18 user packages.
+     * Although Go 1.18 includes support for generic programming, that
+       support is not yet available in GCC.
+
+  [87]Modula-2
+
+     * Support for the language Modula-2 has been added. This includes
+       support for the ISO/IEC 10514-1, PIM2, PIM3, PIM4 dialects together
+       with a complete set of ISO/IEC 10514-1 and PIM libraries.
+     * The <* noreturn *> attribute is supported with the -Wreturn-type
+       [88]option.
+
+[89]New Targets and Target Specific Improvements
+
+  [90]AArch64
+
+     * The AArch64 target now supports Decimal Floating-point in the BID
+       format through the libbid library.
+     * A number of new CPUs are supported through the -mcpu and -mtune
+       options (GCC identifiers in parentheses).
+          + Ampere-1A (ampere1a).
+          + Arm Cortex-A715 (cortex-a715).
+          + Arm Cortex-X1C (cortex-x1c).
+          + Arm Cortex-X3 (cortex-x3).
+          + Arm Neoverse V2 (neoverse-v2).
+     * Support has been added for the armv9.1-a, armv9.2-a and armv9.3-a
+       arguments to the -march= option.
+     * The FEAT_LRCPC feature is now supported by generating the LDAPR
+       instructions for C and C++ atomic loads with an acquire memory
+       model. This is enabled when compiling with the +rcpc extension to
+       -march or a CPU target that supports this feature.
+     * The FEAT_CSSC feature from the 2022 Arm Architecture extensions is
+       supported through the +cssc extension option. When enabled, scalar
+       operations like integer minimum, maximum, absolute value, count
+       trailing zeroes (__builtin_ctz), population count
+       (__builtin_popcount) can be implemented in a single instruction.
+     * The FEAT_LSE2 feature is now supported through libatomic and
+       provides lockless 16-byte atomics on systems that implement it.
+
+  [91]AMD Radeon (GCN)
+
+     * Support for the Instinct MI200 series devices ([92] gfx90a) has
+       been added.
+     * SIMD vectorization support has been improved; this and
+       stack-handling changes [93]require newlib 4.3.0 (or newer).
+
+  [94]arm
+
+     * A number of new CPUs are supported through the -mcpu and -mtune
+       options (GCC identifiers in parentheses).
+          + STAR-MC1 (star-mc1).
+          + Arm Cortex-X1C (cortex-x1c).
+          + Arm Cortex-M85 (cortex-m85).
+     * Support has been added for the M-profile PACBTI extension that can
+       help harden the generated code against return-oriented and
+       jump-oriented attacks. It can be enabled through the
+       -mbranch-protection= option.
+
+  [95]AVR
+
+     * Support for the following devices has been added in v13.3:
+          + ATtiny102, ATtiny104, ATtiny424, ATtiny426, ATtiny427,
+            ATtiny824, ATtiny826, ATtiny827, ATtiny1624, ATtiny1626,
+            ATtiny1627, ATtiny3224, ATtiny3226, ATtiny3227, AVR32DD14,
+            AVR32DD20, AVR32DD28, AVR32DD32, AVR32DU14, AVR32DU20,
+            AVR32DU28, AVR32DU32, AVR32EA28, AVR32EA32, AVR32EA48,
+            AVR64DD14, AVR64DD20, AVR64DD28, AVR64DD32, AVR64DU28,
+            AVR64DU32, AVR64EA28, AVR64EA32, AVR64EA48, ATA5787, ATA5835,
+            ATA5700M322.
+     * Support for the following devices has been added in v13.4:
+          + AVR32SD20, AVR32SD28, AVR32SD32, AVR64SD28, AVR64SD32,
+            AVR64SD48.
+
+  [96]IA-32/x86-64
+
+     * For both C and C++ the __bf16 type is supported on x86 systems with
+       SSE2 and above enabled.
+     * Use this __bf16 type for AVX512BF16 intrinsics instead of
+       __bfloat16 which is typedef for short. __bf16 is now part of the
+       x86 psABI. Users need to adjust their AVX512BF16-related source
+       code when upgrading to GCC 13.
+     * New ISA extension support for Intel AMX-COMPLEX was added.
+       AMX-COMPLEX intrinsics are available via the -mamx-complex compiler
+       switch.
+     * New ISA extension support for Intel AMX-FP16 was added. AMX-FP16
+       intrinsics are available via the -mamx-fp16 compiler switch.
+     * New ISA extension support for Intel AVX-IFMA was added. AVX-IFMA
+       intrinsics are available via the -mavxifma compiler switch.
+     * New ISA extension support for Intel AVX-NE-CONVERT was added.
+       AVX-NE-CONVERT intrinsics are available via the -mavxneconvert
+       compiler switch.
+     * New ISA extension support for Intel AVX-VNNI-INT8 was added.
+       AVX-VNNI-INT8 intrinsics are available via the -mavxvnniint8
+       compiler switch.
+     * New ISA extension support for Intel CMPccXADD was added. CMPccXADD
+       intrinsics are available via the -mcmpccxadd compiler switch.
+     * New ISA extension support for Intel PREFETCHI was added. PREFETCHI
+       intrinsics are available via the -mprefetchi compiler switch.
+     * New ISA extension support for Intel RAO-INT was added. RAO-INT
+       intrinsics are available via the -mraoint compiler switch.
+     * GCC now supports the Intel CPU named Raptor Lake through
+       -march=raptorlake. Raptor Lake is based on Alder Lake.
+     * GCC now supports the Intel CPU named Meteor Lake through
+       -march=meteorlake. Meteor Lake is based on Alder Lake.
+     * GCC now supports the Intel CPU named Sierra Forest through
+       -march=sierraforest. Based on ISA extensions enabled on Alder Lake,
+       the switch further enables the AVX-IFMA, AVX-NE-CONVERT,
+       AVX-VNNI-INT8, CMPccXADD, ENQCMD and UINTR ISA extensions.
+     * GCC now supports the Intel CPU named Grand Ridge through
+       -march=grandridge. Grand Ridge is based on Sierra Forest.
+     * GCC now supports the Intel CPU named Emerald Rapids through
+       -march=emeraldrapids. Emerald Rapids is based on Sapphire Rapids.
+     * GCC now supports the Intel CPU named Granite Rapids through
+       -march=graniterapids. Based on Sapphire Rapids, the switch further
+       enables the AMX-FP16 and PREFETCHI ISA extensions.
+     * GCC now supports the Intel CPU named Granite Rapids D through
+       -march=graniterapids-d. Based on Granite Rapids, the switch further
+       enables the AMX-COMPLEX ISA extensions.
+     * GCC now supports AMD CPUs based on the znver4 core via
+       -march=znver4. The switch makes GCC consider using 512-bit vectors
+       when auto-vectorizing.
+
+  [97]LoongArch
+
+     * New features
+          + The new command-line option -mexplicit-relocs decides whether
+            to use the assembler relocation operator when dealing with
+            symbolic addresses. It is enabled by default if a compatible
+            assembler (binutils 2.40 or later) is present at GCC build
+            time.
+          + The new command-line option -mdirect-extern-access can be used
+            to prevent accessing external symbols through GOT.
+          + The new variable attribute [98]model has been added.
+     * Built-in functions
+          + The rint and copysign mathematical builtins (and their float
+            variants) are now implemented as inline LoongArch intrinsics.
+          + The lrint, logb, scalbln, scalbn and ldexp mathematical
+            builtins (and their float variants) are now implemented as
+            inline LoongArch intrinsics when using -fno-math-errno.
+          + The lceil and lfloor mathematical builtins (and their float
+            variants) are now implemented as inline LoongArch intrinsics
+            when using -ffp-int-builtin-inexact.
+     * Subprojects Support
+          + libvtv now supports LoongArch.
+          + libitm now supports LoongArch.
+          + Address sanitizers other than HWASan and TSan are now
+            supported on LoongArch.
+
+  [99]NVPTX
+
+     * The default value for the [100]-march option can be now changed
+       when [101]building GCC using the [102]--with-arch= configure
+       option. GCC's target libraries are then build both with sm_30 and
+       the specified target architecture. If not specified, GCC defaults
+       to sm_30.
+
+  [103]RISC-V
+
+     * Support for vector intrinsics as specified in [104]version 0.11 of
+       the RISC-V vector intrinsic specification, thanks Ju-Zhe Zhong from
+       [105]RiVAI for contributing most of implementation.
+     * Support for the following standard extensions has been added:
+          + Zawrs
+          + Zbkb
+          + Zbkc
+          + Zbkx
+          + Zdinx
+          + Zfinx
+          + Zfh
+          + Zfhmin
+          + Zhinx
+          + Zhinxmin
+          + Zicbom
+          + Zicbop
+          + Zicboz
+          + Zknd
+          + Zkne
+          + Zksed
+          + Zksh
+          + Zmmul
+     * Support for the following vendor extensions has been added:
+          + XTheadBa
+          + XTheadBb
+          + XTheadBs
+          + XTheadCmo
+          + XTheadCondMov
+          + XTheadFMemIdx
+          + XTheadFmv
+          + XTheadInt
+          + XTheadMac
+          + XTheadMemIdx
+          + XTheadMemPair
+          + XTheadSync
+     * The following new CPUs are supported through the -mcpu option (GCC
+       identifiers in parentheses).
+          + T-Head's XuanTie C906 (thead-c906).
+     * Improves the multi-lib selection mechanism for the bare-metal
+       toolchain (riscv*-elf*). GCC will now automatically select the
+       best-fit multi-lib candidate instead of requiring all possible
+       reuse rules to be listed at build time.
+
+[106]Operating Systems
+
+  [107]Windows
+
+     * The GNU threads library used by the win32 thread model has been
+       reimplemented using direct Win32 API calls, except for the
+       Objective-C specific subset. It requires Windows XP/Server 2003 or
+       later. The new implementation also adds the support needed for the
+       C++11 threads, using again direct Win32 API calls; this additional
+       layer requires Windows Vista/Server 2008 or later. It is
+       recommended to use a recent version of MinGW-W64 in conjunction
+       with the win32 thread model.
+
+[108]Improvements to Static Analyzer
+
+     * The analyzer has gained 20 new warnings:
+          + [109]-Wanalyzer-allocation-size
+          + [110]-Wanalyzer-deref-before-check
+          + [111]-Wanalyzer-exposure-through-uninit-copy
+          + Seven new warnings relating to misuse of file descriptors:
+               o [112]-Wanalyzer-fd-access-mode-mismatch
+               o [113]-Wanalyzer-fd-double-close
+               o [114]-Wanalyzer-fd-leak
+               o [115]-Wanalyzer-fd-phase-mismatch (e.g. calling accept on
+                 a socket before calling listen on it)
+               o [116]-Wanalyzer-fd-type-mismatch (e.g. using a stream
+                 socket operation on a datagram socket)
+               o [117]-Wanalyzer-fd-use-after-close
+               o [118]-Wanalyzer-fd-use-without-check
+            along with special-casing handling of the behavior of open,
+            close, creat, dup, dup2, dup3, pipe, pipe2, read, and write.
+          + [119]-Wanalyzer-imprecise-fp-arithmetic
+          + [120]-Wanalyzer-infinite-recursion
+          + [121]-Wanalyzer-jump-through-null
+          + [122]-Wanalyzer-out-of-bounds
+          + [123]-Wanalyzer-putenv-of-auto-var
+          + [124]-Wanalyzer-tainted-assertion
+          + Four new warnings for misuses of <stdarg.h>:
+               o [125]-Wanalyzer-va-list-leak for complaining about
+                 missing va_end after a va_start or va_copy
+               o [126]-Wanalyzer-va-list-use-after-va-end for complaining
+                 about va_arg or va_copy used on a va_list that's had
+                 va_end called on it
+               o [127]-Wanalyzer-va-arg-type-mismatch for type-checking of
+                 va_arg usage in interprocedural execution paths against
+                 the types of the parameters that were actually passed to
+                 the variadic call
+               o [128]-Wanalyzer-va-list-exhausted for complaining in
+                 interprocedural execution paths if va_arg is used too
+                 many times on a va_list
+       along with numerous other improvements.
+
+[129]Improvements for plugin authors
+
+     * GCC diagnostics can now be [130]associated with rules such as from
+       coding standards documents, or specifications. Such rules have a
+       code name and can have a URL, which GCC can print in text form or
+       capture in its [131]SARIF output when emitting diagnostics.
+
+Other significant improvements
+
+[132]GCC 13.1
+
+   This is the [133]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 13.1 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
+[134]GCC 13.2
+
+   This is the [135]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 13.2 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
+[136]GCC 13.3
+
+   This is the [137]list of problem reports (PRs) from GCC's bug tracking
+   system that are known to be fixed in the 13.3 release. This list might
+   not be complete (that is, it is possible that some PRs that have been
+   fixed are not listed here).
+
+  Language Specific Changes
+
+  C++
+
+     * The libstdc++exp.a library now includes all the Filesystem TS
+       symbols from the libstdc++fs.a library, and the experimental
+       symbols for the C++23 std::stacktrace class from the
+       libstdc++_libbacktrace.a library. This means that -lstdc++exp is
+       the only library needed for all experimental libstdc++ features.
+
+
+    For questions related to the use of GCC, please consult these web
+    pages and the [138]GCC manuals. If that fails, the
+    [139]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    web pages and the development of GCC are welcome on our developer
+    list at [140]gcc@gcc.gnu.org. All of [141]our lists have public
+    archives.
+
+   Copyright (C) [142]Free Software Foundation, Inc. Verbatim copying and
+   distribution of this entire article is permitted in any medium,
+   provided this notice is preserved.
+
+   These pages are [143]maintained by the GCC team. Last modified
+   2025-04-16.
+
+References
+
+   1. https://gcc.gnu.org/gcc-13/porting_to.html
+   2. https://gcc.gnu.org/onlinedocs/index.html#current
+   3. https://gcc.gnu.org/pipermail/gcc/2022-December/240322.html
+   4. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Warning-Options.html#index-Warray-bounds
+   5. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/C-Dialect-Options.html#index-fstrict-flex-arrays
+   6. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html
+   7. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/ARM-iWMMXt-Built-in-Functions.html
+   8. https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dynamic_or_shared.html#manual.intro.using.linkage.dynamic
+   9. https://gcc.gnu.org/gcc-13/changes.html#general
+  10. https://gcc.gnu.org/projects/gomp/
+  11. http://memkind.github.io/memkind/
+  12. https://sarifweb.azurewebsites.net/
+  13. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html
+  14. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Diagnostic-Message-Formatting-Options.html#index-fdiagnostics-format
+  15. https://gcc.gnu.org/onlinedocs/gcc/Freestanding-Environments.html
+  16. https://gcc.gnu.org/gcc-13/changes.html#languages
+  17. https://gcc.gnu.org/gcc-13/changes.html#ada
+  18. https://gcc.gnu.org/gcc-13/changes.html#c-family
+  19. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Warning-Options.html#index-Wxor-used-as-pow
+  20. https://gcc.gnu.org/PR90885
+  21. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Common-Function-Attributes.html#index-fd_005farg-function-attribute
+  22. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Common-Function-Attributes.html#index-fd_005farg_005fread-function-attribute
+  23. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Common-Function-Attributes.html#index-fd_005farg_005fwrite-function-attribute
+  24. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html
+  25. https://wg21.link/p1774r8
+  26. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Statement-Attributes.html#index-assume-statement-attribute
+  27. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/C-Dialect-Options.html#index-fstrict-flex-arrays
+  28. https://gcc.gnu.org/gcc-13/changes.html#c
+  29. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3042.htm
+  30. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2963.htm
+  31. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2975.pdf
+  32. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3007.htm
+  33. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3018.htm
+  34. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3038.htm
+  35. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2764.pdf
+  36. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Warning-Options.html#index-Wformat
+  37. https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2836.pdf
+  38. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Warning-Options.html#index-Wenum-int-mismatch
+  39. https://gcc.gnu.org/PR105131
+  40. https://gcc.gnu.org/gcc-13/changes.html#cxx
+  41. https://wg21.link/p2324
+  42. https://gcc.gnu.org/PR103539
+  43. https://wg21.link/p2255
+  44. https://gcc.gnu.org/PR104477
+  45. https://wg21.link/p2327
+  46. https://wg21.link/p2437
+  47. https://gcc.gnu.org/PR106646
+  48. https://wg21.link/p2290
+  49. https://gcc.gnu.org/PR106645
+  50. https://wg21.link/p2071
+  51. https://gcc.gnu.org/PR106648
+  52. https://wg21.link/p2513
+  53. https://gcc.gnu.org/PR106656
+  54. https://wg21.link/p1169r4
+  55. https://gcc.gnu.org/PR106651
+  56. https://wg21.link/p2266r3
+  57. https://gcc.gnu.org/PR101165
+  58. https://wg21.link/p2468r2
+  59. https://gcc.gnu.org/PR106644
+  60. https://wg21.link/p2362r3
+  61. https://gcc.gnu.org/PR106647
+  62. https://wg21.link/p2448r2
+  63. https://gcc.gnu.org/PR106649
+  64. https://wg21.link/p1467r9
+  65. https://gcc.gnu.org/PR106652
+  66. https://wg21.link/p1774r8
+  67. https://gcc.gnu.org/PR106654
+  68. https://wg21.link/p2295r6
+  69. https://gcc.gnu.org/PR106655
+  70. https://wg21.link/p2589r1
+  71. https://gcc.gnu.org/PR107684
+  72. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Warning-Options.html#index-Wself-move
+  73. https://gcc.gnu.org/PR81159
+  74. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/C_002b_002b-Dialect-Options.html#index-Wdangling-reference
+  75. https://gcc.gnu.org/PR106393
+  76. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/C_002b_002b-Dialect-Options.html#index-Wpessimizing-move
+  77. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/C_002b_002b-Dialect-Options.html#index-Wredundant-move
+  78. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Link-Options.html#index-nostdlib_002b_002b
+  79. https://gcc.gnu.org/gcc-13/changes.html#libstdcxx
+  80. https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1642r11.html
+  81. https://gcc.gnu.org/gcc-13/changes.html#d
+  82. https://dlang.org/changelog/2.103.1.html
+  83. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gdc/Warnings.html#index-Wno-builtin-declaration-mismatch
+  84. https://gcc.gnu.org/onlinedocs/gcc-13.2.0/gdc/Warnings.html#index-Wmismatched-special-enum
+  85. https://gcc.gnu.org/gcc-13/changes.html#fortran
+  86. https://gcc.gnu.org/gcc-13/changes.html#go
+  87. https://gcc.gnu.org/gcc-13/changes.html#modula2
+  88. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gm2/Compiler-options.html
+  89. https://gcc.gnu.org/gcc-13/changes.html#targets
+  90. https://gcc.gnu.org/gcc-13/changes.html#aarch64
+  91. https://gcc.gnu.org/gcc-13/changes.html#amdgcn
+  92. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/AMD-GCN-Options.html
+  93. https://gcc.gnu.org/install/specific.html#amdgcn-x-amdhsa
+  94. https://gcc.gnu.org/gcc-13/changes.html#arm
+  95. https://gcc.gnu.org/gcc-13/changes.html#avr
+  96. https://gcc.gnu.org/gcc-13/changes.html#x86
+  97. https://gcc.gnu.org/gcc-13/changes.html#loongarch
+  98. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/LoongArch-Variable-Attributes.html#LoongArch-Variable-Attributes
+  99. https://gcc.gnu.org/gcc-13/changes.html#nvptx
+ 100. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Nvidia-PTX-Options.html
+ 101. https://gcc.gnu.org/install/
+ 102. https://gcc.gnu.org/install/specific.html#nvptx-x-none
+ 103. https://gcc.gnu.org/gcc-13/changes.html#riscv
+ 104. https://github.com/riscv-non-isa/rvv-intrinsic-doc/tree/v0.11.x
+ 105. https://rivai-ic.com.cn/
+ 106. https://gcc.gnu.org/gcc-13/changes.html#os
+ 107. https://gcc.gnu.org/gcc-13/changes.html#windows
+ 108. https://gcc.gnu.org/gcc-13/changes.html#analyzer
+ 109. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-allocation-size
+ 110. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-deref-before-check
+ 111. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-exposure-through-uninit-copy
+ 112. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-access-mode-mismatch
+ 113. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-double-close
+ 114. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-leak
+ 115. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-phase-mismatch
+ 116. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-type-mismatch
+ 117. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-after-close
+ 118. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-fd-use-without-check
+ 119. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-imprecise-fp-arithmetic
+ 120. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-infinite-recursion
+ 121. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-jump-through-null
+ 122. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-out-of-bounds
+ 123. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-putenv-of-auto-var
+ 124. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-tainted-assertion
+ 125. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-leak
+ 126. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-use-after-va-end
+ 127. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-arg-type-mismatch
+ 128. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Static-Analyzer-Options.html#index-Wanalyzer-va-list-exhausted
+ 129. https://gcc.gnu.org/gcc-13/changes.html#plugins
+ 130. https://gcc.gnu.org/git/?p=gcc.git;a=commitdiff;h=0b14f590e3e9d95b8211b77d992589d5ab4c25f0
+ 131. https://gcc.gnu.org/onlinedocs/gcc-13.1.0/gcc/Diagnostic-Message-Formatting-Options.html#index-fdiagnostics-format
+ 132. https://gcc.gnu.org/gcc-13/changes.html#13.1
+ 133. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=13.0
+ 134. https://gcc.gnu.org/gcc-13/changes.html#13.2
+ 135. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=13.2
+ 136. https://gcc.gnu.org/gcc-13/changes.html#13.3
+ 137. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=13.3
+ 138. https://gcc.gnu.org/onlinedocs/
+ 139. mailto:gcc-help@gcc.gnu.org
+ 140. mailto:gcc@gcc.gnu.org
+ 141. https://gcc.gnu.org/lists.html
+ 142. https://www.fsf.org/
+ 143. https://gcc.gnu.org/about.html
+======================================================================
+http://gcc.gnu.org/gcc-12/index.html
+
+                             GCC 12 Release Series
+
+   Jun 20, 2024
+
+   The GCC developers are pleased to announce the release of GCC 12.4.
+
+   This release is a bug-fix release, containing fixes for regressions in
+   GCC 12.3 relative to previous releases of GCC.
+
+Release History
+
+   GCC 12.4
+          Jun 20, 2024 ([1]changes, [2]documentation)
+
+   GCC 12.3
+          May 8, 2023 ([3]changes, [4]documentation)
+
+   GCC 12.2
+          Aug 19, 2022 ([5]changes, [6]documentation)
+
+   GCC 12.1
+          May 6, 2022 ([7]changes, [8]documentation)
+
+References and Acknowledgements
+
+   GCC used to stand for the GNU C Compiler, but since the compiler
+   supports several other languages aside from C, it now stands for the
+   GNU Compiler Collection.
+
+   The GCC developers would like to thank the numerous people that have
+   contributed new features, improvements, bug fixes, and other changes as
+   well as test results to GCC. This [9]amazing group of volunteers is
+   what makes GCC successful.
+
+   For additional information about GCC please refer to the [10]GCC
+   project web site or contact the [11]GCC development mailing list.
+
+   To obtain GCC please use [12]our mirror sites or [13]our version
+   control system.
+
+
+    For questions related to the use of GCC, please consult these web
+    pages and the [14]GCC manuals. If that fails, the
+    [15]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    web pages and the development of GCC are welcome on our developer
+    list at [16]gcc@gcc.gnu.org. All of [17]our lists have public
+    archives.
+
+   Copyright (C) [18]Free Software Foundation, Inc. Verbatim copying and
+   distribution of this entire article is permitted in any medium,
+   provided this notice is preserved.
+
+   These pages are [19]maintained by the GCC team. Last modified
+   2024-06-20.
 
 References
 
    1. https://gcc.gnu.org/gcc-12/changes.html
-   2. https://gcc.gnu.org/onlinedocs/12.5.0/
+   2. https://gcc.gnu.org/onlinedocs/12.4.0/
    3. https://gcc.gnu.org/gcc-12/changes.html
-   4. https://gcc.gnu.org/onlinedocs/12.4.0/
+   4. https://gcc.gnu.org/onlinedocs/12.3.0/
    5. https://gcc.gnu.org/gcc-12/changes.html
-   6. https://gcc.gnu.org/onlinedocs/12.3.0/
+   6. https://gcc.gnu.org/onlinedocs/12.2.0/
    7. https://gcc.gnu.org/gcc-12/changes.html
-   8. https://gcc.gnu.org/onlinedocs/12.2.0/
-   9. https://gcc.gnu.org/gcc-12/changes.html
-  10. https://gcc.gnu.org/onlinedocs/12.1.0/
-  11. https://gcc.gnu.org/onlinedocs/gcc-12.1.0/gcc/Contributors.html
-  12. https://gcc.gnu.org/index.html
-  13. mailto:gcc@gcc.gnu.org
-  14. https://gcc.gnu.org/mirrors.html
-  15. https://gcc.gnu.org/git.html
-  16. https://gcc.gnu.org/onlinedocs/
-  17. mailto:gcc-help@gcc.gnu.org
-  18. mailto:gcc@gcc.gnu.org
-  19. https://gcc.gnu.org/lists.html
-  20. https://www.fsf.org/
-  21. https://gcc.gnu.org/about.html
+   8. https://gcc.gnu.org/onlinedocs/12.1.0/
+   9. https://gcc.gnu.org/onlinedocs/gcc-12.1.0/gcc/Contributors.html
+  10. https://gcc.gnu.org/index.html
+  11. mailto:gcc@gcc.gnu.org
+  12. https://gcc.gnu.org/mirrors.html
+  13. https://gcc.gnu.org/git.html
+  14. https://gcc.gnu.org/onlinedocs/
+  15. mailto:gcc-help@gcc.gnu.org
+  16. mailto:gcc@gcc.gnu.org
+  17. https://gcc.gnu.org/lists.html
+  18. https://www.fsf.org/
+  19. https://gcc.gnu.org/about.html
 ======================================================================
 http://gcc.gnu.org/gcc-12/changes.html
 
@@ -845,27 +2989,20 @@ Other significant improvements
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-[175]GCC 12.5
-
-   This is the [176]list of problem reports (PRs) from GCC's bug tracking
-   system that are known to be fixed in the 12.5 release. This list might
-   not be complete (that is, it is possible that some PRs that have been
-   fixed are not listed here).
-
 
     For questions related to the use of GCC, please consult these web
-    pages and the [177]GCC manuals. If that fails, the
-    [178]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [175]GCC manuals. If that fails, the
+    [176]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [179]gcc@gcc.gnu.org. All of [180]our lists have public
+    list at [177]gcc@gcc.gnu.org. All of [178]our lists have public
     archives.
 
-   Copyright (C) [181]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [179]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [182]maintained by the GCC team. Last modified
-   2025-07-11.
+   These pages are [180]maintained by the GCC team. Last modified
+   2025-01-31.
 
 References
 
@@ -1043,14 +3180,12 @@ References
  172. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=12.3
  173. https://gcc.gnu.org/gcc-12/changes.html#12.4
  174. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=12.4
- 175. https://gcc.gnu.org/gcc-12/changes.html#12.5
- 176. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=12.5
- 177. https://gcc.gnu.org/onlinedocs/
- 178. mailto:gcc-help@gcc.gnu.org
- 179. mailto:gcc@gcc.gnu.org
- 180. https://gcc.gnu.org/lists.html
- 181. https://www.fsf.org/
- 182. https://gcc.gnu.org/about.html
+ 175. https://gcc.gnu.org/onlinedocs/
+ 176. mailto:gcc-help@gcc.gnu.org
+ 177. mailto:gcc@gcc.gnu.org
+ 178. https://gcc.gnu.org/lists.html
+ 179. https://www.fsf.org/
+ 180. https://gcc.gnu.org/about.html
 ======================================================================
 http://gcc.gnu.org/gcc-11/index.html
 
@@ -8601,7 +10736,7 @@ late struct X<1000>;
        implementation follows ABI version 1.2; all features but _Cilk_for
        have been implemented.
 
-  [11]C
+  C
 
      * ISO C11 atomics (the _Atomic type specifier and qualifier and the
        <stdatomic.h> header) are now supported.
@@ -8618,10 +10753,10 @@ late struct X<1000>;
      * A new C extension __auto_type provides a subset of the
        functionality of C++11 auto in GNU C.
 
-  [12]C++
+  [11]C++
 
-     * The G++ implementation of [13]C++1y return type deduction for
-       normal functions has been updated to conform to [14]N3638, the
+     * The G++ implementation of [12]C++1y return type deduction for
+       normal functions has been updated to conform to [13]N3638, the
        proposal accepted into the working paper. Most notably, it adds
        decltype(auto) for getting decltype semantics rather than the
        template argument deduction semantics of plain auto:
@@ -8630,14 +10765,14 @@ int& f();
          auto  i1 = f(); // int
 decltype(auto) i2 = f(); // int&
 
-     * G++ supports [15]C++1y lambda capture initializers:
+     * G++ supports [14]C++1y lambda capture initializers:
 
 [x = 42]{ ... };
 
        Actually, they have been accepted since GCC 4.5, but now the
        compiler doesn't warn about them with -std=c++1y, and supports
        parenthesized and brace-enclosed initializers as well.
-     * G++ supports [16]C++1y variable length arrays. G++ has supported
+     * G++ supports [15]C++1y variable length arrays. G++ has supported
        GNU/C99-style VLAs for a long time, but now additionally supports
        initializers and lambda capture by reference. In C++1y mode G++
        will complain about VLA uses that are not permitted by the draft
@@ -8652,7 +10787,7 @@ void f(int n) {
   &a; // error, taking address of VLA
 }
 
-     * G++ supports the [17]C++1y [[deprecated]] attribute modulo bugs in
+     * G++ supports the [16]C++1y [[deprecated]] attribute modulo bugs in
        the underlying [[gnu::deprecated]] attribute. Classes and functions
        can be marked deprecated and a diagnostic message added:
 
@@ -8670,7 +10805,7 @@ A aa; // warning: 'A' is deprecated : A is deprecated in C++14; Use B instead
 int j = bar(2); // warning: 'int bar(int)' is deprecated : bar is unsafe; use fo
 o() instead
 
-     * G++ supports [18]C++1y digit separators. Long numeric literals can
+     * G++ supports [17]C++1y digit separators. Long numeric literals can
        be subdivided with a single quote ' to enhance readability:
 
 int i = 1048576;
@@ -8682,7 +10817,7 @@ int n = 0b0001'0000'0000'0000'0000'0000;
 double x = 1.602'176'565e-19;
 double y = 1.602'176'565e-1'9;
 
-     * G++ supports [19]C++1y generic (polymorphic) lambdas.
+     * G++ supports [18]C++1y generic (polymorphic) lambdas.
 
 // a functional object that will increment any type
 auto incr = [](auto x) { return x++; };
@@ -8695,7 +10830,7 @@ auto incr = [](auto x) { return x++; };
 auto add = [] <typename T> (T a, T b) { return a + b; };
 
      * G++ supports unconstrained generic functions as specified by §4.1.2
-       and §5.1.1 of [20]N3889: Concepts Lite Specification. Briefly, auto
+       and §5.1.1 of [19]N3889: Concepts Lite Specification. Briefly, auto
        may be used as a type-specifier in a parameter declaration of any
        function declarator in order to introduce an implicit function
        template parameter, akin to generic lambdas.
@@ -8707,13 +10842,13 @@ auto incr(T x) { return x++; }
 
     Runtime Library (libstdc++)
 
-     * [21]Improved support for C++11, including:
+     * [20]Improved support for C++11, including:
           + support for <regex>;
           + The associative containers in <map> and <set> and the
             unordered associative containers in <unordered_map> and
             <unordered_set> meet the allocator-aware container
             requirements;
-     * [22]Improved experimental support for the upcoming ISO C++
+     * [21]Improved experimental support for the upcoming ISO C++
        standard, C++14, including:
           + fixing constexpr member functions without const;
           + implementation of the std::exchange() utility function;
@@ -8739,7 +10874,7 @@ auto incr(T x) { return x++; }
        and will be removed in a future version. std::make_exception_ptr
        should be used instead.
 
-  [23]Fortran
+  [22]Fortran
 
      * Compatibility notice:
           + Module files: The version of the module files (.mod) has been
@@ -8752,7 +10887,7 @@ auto incr(T x) { return x++; }
             object files and libraries are fully compatible with older
             versions (except as stated below).
           + ABI changes:
-               o The [24]argument passing ABI has changed for scalar dummy
+               o The [23]argument passing ABI has changed for scalar dummy
                  arguments of type INTEGER, REAL, COMPLEX and LOGICAL,
                  which have both the VALUE and the OPTIONAL attributes.
                o To support finalization the virtual table associated with
@@ -8780,7 +10915,7 @@ auto incr(T x) { return x++; }
      * The compiler no longer unconditionally warns about DO loops with
        zero iterations. This warning is now controlled by the -Wzerotrip
        option, which is implied by -Wall.
-     * The new NO_ARG_CHECK attribute of the [25]!GCC$ directive can be
+     * The new NO_ARG_CHECK attribute of the [24]!GCC$ directive can be
        used to disable the type-kind-rank (TKR) argument check for a dummy
        argument. The feature is similar to ISO/IEC TS 29133:2012's
        TYPE(*), except that it additionally also disables the rank check.
@@ -8796,18 +10931,18 @@ auto incr(T x) { return x++; }
        contrary to NO_ARG_CHECK assumed-rank arguments pass an array
        descriptor which contains the array shape and stride of the
        argument.
-     * [26]Fortran 2003:
+     * [25]Fortran 2003:
           + Finalization is now supported. It is currently only done for a
             subset of those situations in which it should occur.
           + Experimental support for scalar character components with
             deferred length (i.e. allocatable string length) in derived
             types has been added. (Deferred-length character variables are
             supported since GCC 4.6.)
-     * [27]Fortran 2008:
+     * [26]Fortran 2008:
           + When STOP or ERROR STOP are used to terminate the execution
             and any exception (but inexact) is signaling, a warning is
             printed to ERROR_UNIT, indicating which exceptions are
-            signaling. The [28]-ffpe-summary= command-line option can be
+            signaling. The [27]-ffpe-summary= command-line option can be
             used to fine-tune for which exceptions the warning should be
             shown.
           + Rounding on input (READ) is now handled on systems where
@@ -8817,13 +10952,13 @@ auto incr(T x) { return x++; }
             least significant [cf. IEC 60559:1989] for a tie, while
             compatible rounds away from zero in that case).
 
-  [29]Go
+  [28]Go
 
      * GCC 4.9 provides a complete implementation of the Go 1.2.1 release.
 
-[30]New Targets and Target Specific Improvements
+[29]New Targets and Target Specific Improvements
 
-  [31]AArch64
+  [30]AArch64
 
      * The ARMv8-A crypto and CRC instructions are now supported through
        intrinsics. These are enabled when the architecture supports these
@@ -8851,12 +10986,12 @@ auto incr(T x) { return x++; }
        default by configuring GCC with the --enable-fix-cortex-a53-835769
        option.
 
-  [32]ARC
+  [31]ARC
 
      * A port for Synopsys Designware ARC has been contributed by Embecosm
        and Synopsys Inc.
 
-  [33]ARM
+  [32]ARM
 
      * Use of Advanced SIMD (Neon) for 64-bit scalar computations has been
        disabled by default. This was found to generate better code in only
@@ -8899,13 +11034,13 @@ auto incr(T x) { return x++; }
      * A number of code generation improvements for Thumb2 to reduce code
        size when compiling for the M-profile processors.
 
-  [34]AVR
+  [33]AVR
 
      * A new command-line option -mfract-convert-truncate has been added.
        It allows compiler to use truncation instead of rounding towards
        zero for fractional fixed-point types.
 
-  [35]IA-32/x86-64
+  [34]IA-32/x86-64
 
      * -mfpmath=sse is now implied by -ffast-math on all targets where
        SSE2 is supported.
@@ -8921,7 +11056,7 @@ auto incr(T x) { return x++; }
        a file that are tagged with the corresponding target attribute
        without having to compile the entire file with the -mxxx option.
        This improves the usability of x86 intrinsics and is particularly
-       useful when doing [36]Function Multiversioning.
+       useful when doing [35]Function Multiversioning.
      * GCC now supports the new Intel microarchitecture named Silvermont
        through -march=silvermont.
      * GCC now supports the new Intel microarchitecture named Broadwell
@@ -8945,7 +11080,7 @@ auto incr(T x) { return x++; }
      * Support for new AMD family 15h processors (Excavator core) is now
        available through the -march=bdver4 and -mtune=bdver4 options.
 
-  [37]MSP430
+  [36]MSP430
 
      * A new command-line option -mcpu= has been added to the MSP430 back
        end. This option is used to specify the ISA to be used. Accepted
@@ -8956,19 +11091,19 @@ auto incr(T x) { return x++; }
        preprocessor symbol that will be recognised by the msp430.h header
        file.
 
-  [38]NDS32
+  [37]NDS32
 
      * A new nds32 port supports the 32-bit architecture from Andes
        Technology Corporation.
      * The port provides initial support for the V2, V3, V3m instruction
        set architectures.
 
-  [39]Nios II
+  [38]Nios II
 
      * A port for the Altera Nios II has been contributed by Mentor
        Graphics.
 
-  [40]PowerPC / PowerPC64 / RS6000
+  [39]PowerPC / PowerPC64 / RS6000
 
      * GCC now supports Power ISA 2.07, which includes support for
        Hardware Transactional Memory (HTM), Quadword atomics and several
@@ -9004,13 +11139,13 @@ auto incr(T x) { return x++; }
        certain leaf function with -march=z10 or higher.
      * The LRA rtl pass replaces reload by default on S/390.
 
-  [41]RX
+  [40]RX
 
      * The port now allows to specify the RX100, RX200, and RX600
        processors with the command-line options -mcpu=rx100, -mcpu=rx200
        and -mcpu=rx600.
 
-  [42]SH
+  [41]SH
 
      * Minor improvements to code generated for integer arithmetic and
        code that involves the T bit.
@@ -9027,9 +11162,9 @@ auto incr(T x) { return x++; }
      * The option -mcmpeqdi has been deprecated. Specifying it will result
        in a warning and will not influence code generation.
 
-[43]GCC 4.9.1
+[42]GCC 4.9.1
 
-   This is the [44]list of problem reports (PRs) from GCC's bug tracking
+   This is the [43]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.9.1 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
@@ -9037,41 +11172,41 @@ auto incr(T x) { return x++; }
    Version 4.0 of the OpenMP specification is supported even in Fortran,
    not just C and C++.
 
-[45]GCC 4.9.2
+[44]GCC 4.9.2
 
-   This is the [46]list of problem reports (PRs) from GCC's bug tracking
+   This is the [45]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.9.2 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-[47]GCC 4.9.3
+[46]GCC 4.9.3
 
-   This is the [48]list of problem reports (PRs) from GCC's bug tracking
+   This is the [47]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.9.3 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-[49]GCC 4.9.4
+[48]GCC 4.9.4
 
-   This is the [50]list of problem reports (PRs) from GCC's bug tracking
+   This is the [49]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.9.4 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [51]GCC manuals. If that fails, the
-    [52]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [50]GCC manuals. If that fails, the
+    [51]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [53]gcc@gcc.gnu.org. All of [54]our lists have public
+    list at [52]gcc@gcc.gnu.org. All of [53]our lists have public
     archives.
 
-   Copyright (C) [55]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [54]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [56]maintained by the GCC team. Last modified
-   2025-06-10.
+   These pages are [55]maintained by the GCC team. Last modified
+   2025-01-31.
 
 References
 
@@ -9085,52 +11220,51 @@ References
    8. https://gcc.gnu.org/gcc-4.9/changes.html#c-family
    9. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gcc/Language-Independent-Options.html#index-fdiagnostics-color-252
   10. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gcc/Loop-Specific-Pragmas.html
-  11. https://gcc.gnu.org/gcc-4.9/changes.html#c
-  12. https://gcc.gnu.org/gcc-4.9/changes.html#cxx
-  13. https://gcc.gnu.org/projects/cxx1y.html
-  14. https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3638.html
+  11. https://gcc.gnu.org/gcc-4.9/changes.html#cxx
+  12. https://gcc.gnu.org/projects/cxx1y.html
+  13. https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3638.html
+  14. https://gcc.gnu.org/projects/cxx1y.html
   15. https://gcc.gnu.org/projects/cxx1y.html
   16. https://gcc.gnu.org/projects/cxx1y.html
   17. https://gcc.gnu.org/projects/cxx1y.html
   18. https://gcc.gnu.org/projects/cxx1y.html
-  19. https://gcc.gnu.org/projects/cxx1y.html
-  20. https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3889.pdf
-  21. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/libstdc++/manual/manual/status.html#status.iso.2011
-  22. https://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.2014
-  23. https://gcc.gnu.org/gcc-4.9/changes.html#fortran
-  24. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gfortran/Argument-passing-conventions.html
-  25. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gfortran/GNU-Fortran-Compiler-Directives.html
-  26. https://gcc.gnu.org/wiki/Fortran2003Status
-  27. https://gcc.gnu.org/wiki/Fortran2008Status
-  28. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gfortran/Debugging-Options.html
-  29. https://gcc.gnu.org/gcc-4.9/changes.html#go
-  30. https://gcc.gnu.org/gcc-4.9/changes.html#targets
-  31. https://gcc.gnu.org/gcc-4.9/changes.html#aarch64
-  32. https://gcc.gnu.org/gcc-4.9/changes.html#arc
-  33. https://gcc.gnu.org/gcc-4.9/changes.html#arm
-  34. https://gcc.gnu.org/gcc-4.9/changes.html#avr
-  35. https://gcc.gnu.org/gcc-4.9/changes.html#x86
-  36. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gcc/Function-Multiversioning.html
-  37. https://gcc.gnu.org/gcc-4.9/changes.html#msp430
-  38. https://gcc.gnu.org/gcc-4.9/changes.html#nds32
-  39. https://gcc.gnu.org/gcc-4.9/changes.html#nios2
-  40. https://gcc.gnu.org/gcc-4.9/changes.html#powerpc
-  41. https://gcc.gnu.org/gcc-4.9/changes.html#rx
-  42. https://gcc.gnu.org/gcc-4.9/changes.html#sh
-  43. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.1
-  44. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.1
-  45. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.2
-  46. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.2
-  47. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.3
-  48. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.3
-  49. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.4
-  50. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.4
-  51. https://gcc.gnu.org/onlinedocs/
-  52. mailto:gcc-help@gcc.gnu.org
-  53. mailto:gcc@gcc.gnu.org
-  54. https://gcc.gnu.org/lists.html
-  55. https://www.fsf.org/
-  56. https://gcc.gnu.org/about.html
+  19. https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3889.pdf
+  20. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/libstdc++/manual/manual/status.html#status.iso.2011
+  21. https://gcc.gnu.org/onlinedocs/libstdc++/manual/status.html#status.iso.2014
+  22. https://gcc.gnu.org/gcc-4.9/changes.html#fortran
+  23. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gfortran/Argument-passing-conventions.html
+  24. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gfortran/GNU-Fortran-Compiler-Directives.html
+  25. https://gcc.gnu.org/wiki/Fortran2003Status
+  26. https://gcc.gnu.org/wiki/Fortran2008Status
+  27. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gfortran/Debugging-Options.html
+  28. https://gcc.gnu.org/gcc-4.9/changes.html#go
+  29. https://gcc.gnu.org/gcc-4.9/changes.html#targets
+  30. https://gcc.gnu.org/gcc-4.9/changes.html#aarch64
+  31. https://gcc.gnu.org/gcc-4.9/changes.html#arc
+  32. https://gcc.gnu.org/gcc-4.9/changes.html#arm
+  33. https://gcc.gnu.org/gcc-4.9/changes.html#avr
+  34. https://gcc.gnu.org/gcc-4.9/changes.html#x86
+  35. https://gcc.gnu.org/onlinedocs/gcc-4.9.2/gcc/Function-Multiversioning.html
+  36. https://gcc.gnu.org/gcc-4.9/changes.html#msp430
+  37. https://gcc.gnu.org/gcc-4.9/changes.html#nds32
+  38. https://gcc.gnu.org/gcc-4.9/changes.html#nios2
+  39. https://gcc.gnu.org/gcc-4.9/changes.html#powerpc
+  40. https://gcc.gnu.org/gcc-4.9/changes.html#rx
+  41. https://gcc.gnu.org/gcc-4.9/changes.html#sh
+  42. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.1
+  43. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.1
+  44. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.2
+  45. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.2
+  46. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.3
+  47. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.3
+  48. https://gcc.gnu.org/gcc-4.9/changes.html#GCC4.9.4
+  49. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.9.4
+  50. https://gcc.gnu.org/onlinedocs/
+  51. mailto:gcc-help@gcc.gnu.org
+  52. mailto:gcc@gcc.gnu.org
+  53. https://gcc.gnu.org/lists.html
+  54. https://www.fsf.org/
+  55. https://gcc.gnu.org/about.html
 ======================================================================
 http://gcc.gnu.org/gcc-4.8/index.html
 
@@ -10362,7 +12496,7 @@ int x;
 res = 2 + a;  /* means {2,2,2,2} + a  */
 res = a - x;  /* means a - {x,x,x,x}  */
 
-  [5]C
+  C
 
      * There is support for some more features from the C11 revision of
        the ISO C standard. GCC now accepts the options -std=c11 and
@@ -10376,12 +12510,12 @@ res = a - x;  /* means a - {x,x,x,x}  */
           + A built-in function __builtin_complex is provided to support C
             library implementation of the CMPLX family of macros.
 
-  [6]C++
+  [5]C++
 
      * G++ now accepts the -std=c++11, -std=gnu++11, and -Wc++11-compat
        options, which are equivalent to -std=c++0x, -std=gnu++0x, and
        -Wc++0x-compat, respectively.
-     * G++ now implements [7]C++11 extended friend syntax:
+     * G++ now implements [6]C++11 extended friend syntax:
 
 template<class W>
 class Q
@@ -10396,7 +12530,7 @@ struct B
   int ar[Q<B>::I];
 };
 
-     * Thanks to Ville Voutilainen, G++ now implements [8]C++11 explicit
+     * Thanks to Ville Voutilainen, G++ now implements [7]C++11 explicit
        override control.
 
 struct B {
@@ -10413,26 +12547,26 @@ struct D : B {
 struct E final { };
 struct F: E { }; // error: deriving from final class
 
-     * G++ now implements [9]C++11 non-static data member initializers.
+     * G++ now implements [8]C++11 non-static data member initializers.
 
 struct A {
   int i = 42;
 } a; // initializes a.i to 42
 
-     * Thanks to Ed Smith-Rowland, G++ now implements [10]C++11
+     * Thanks to Ed Smith-Rowland, G++ now implements [9]C++11
        user-defined literals.
 
 // Not actually a good approximation.  :)
 constexpr long double operator"" _degrees (long double d) { return d * 0.0175; }
 long double pi = 180.0_degrees;
 
-     * G++ now implements [11]C++11 alias-declarations.
+     * G++ now implements [10]C++11 alias-declarations.
 
 template <class T> using Ptr = T*;
 Ptr<int> ip;  // decltype(ip) is int*
 
      * Thanks to Ville Voutilainen and Pedro Lamarão, G++ now implements
-       [12]C++11 delegating constructors.
+       [11]C++11 delegating constructors.
 
 struct A {
   A(int);
@@ -10511,14 +12645,14 @@ const int &y = f(2);
        Using-declarations are to be used instead. Furthermore, some
        efforts have been made to improve the support of class scope
        using-declarations. In particular, using-declarations referring to
-       a dependent type now work as expected ([13]bug c++/14258).
+       a dependent type now work as expected ([12]bug c++/14258).
      * The ELF symbol visibility of a template instantiation is now
        properly constrained by the visibility of its template arguments
-       ([14]bug c++/35688).
+       ([13]bug c++/35688).
 
     Runtime Library (libstdc++)
 
-     * [15]Improved experimental support for the new ISO C++ standard,
+     * [14]Improved experimental support for the new ISO C++ standard,
        C++11, including:
           + using noexcept in most of the library;
           + implementations of pointer_traits, allocator_traits and
@@ -10532,29 +12666,29 @@ const int &y = f(2);
      * Debug Mode iterators for unordered associative containers.
      * Avoid polluting the global namespace and do not include <unistd.h>.
 
-  [16]Fortran
+  [15]Fortran
 
-     * The compile flag [17]-fstack-arrays has been added, which causes
+     * The compile flag [16]-fstack-arrays has been added, which causes
        all local arrays to be put on stack memory. For some programs this
        will improve the performance significantly. If your program uses
        very large local arrays, it is possible that you will have to
        extend your runtime limits for stack memory.
-     * The [18]-Ofast flag now also implies [19]-fno-protect-parens and
-       [20]-fstack-arrays.
+     * The [17]-Ofast flag now also implies [18]-fno-protect-parens and
+       [19]-fstack-arrays.
      * Front-end optimizations can now be selected by the
-       [21]-ffrontend-optimize option and deselected by the
+       [20]-ffrontend-optimize option and deselected by the
        -fno-frontend-optimize option.
      * When front-end optimization removes a function call,
-       [22]-Wfunction-elimination warns about that.
+       [21]-Wfunction-elimination warns about that.
      * When performing front-end-optimization, the
-       [23]-faggressive-function-elimination option allows the removal of
+       [22]-faggressive-function-elimination option allows the removal of
        duplicate function calls even for impure functions.
-     * The flag [24]-Wreal-q-constant has been added, which warns if
+     * The flag [23]-Wreal-q-constant has been added, which warns if
        floating-point literals have been specified using q (such as
        1.0q0); the q marker is now supported as a vendor extension to
        denote quad precision (REAL(16) or, if not available, REAL(10)).
        Consider using a kind parameter (such as in 1.0_qp) instead, which
-       can be obtained via [25]SELECTED_REAL_KIND.
+       can be obtained via [24]SELECTED_REAL_KIND.
      * The GFORTRAN_USE_STDERR environment variable has been removed. GNU
        Fortran now always prints error messages to standard error. If you
        wish to redirect standard error, please consult the manual for your
@@ -10564,32 +12698,32 @@ const int &y = f(2);
        gfortran will now always abort the program. Whether a core dump is
        generated depends on the user environment settings; see the ulimit
        -c setting for POSIX shells, limit coredumpsize for C shells, and
-       the [26]WER user-mode dumps settings on Windows.
-     * The [27]-fbacktrace option is now enabled by default. When
+       the [25]WER user-mode dumps settings on Windows.
+     * The [26]-fbacktrace option is now enabled by default. When
        encountering a fatal error, gfortran will attempt to print a
        backtrace to standard error before aborting. It can be disabled
        with -fno-backtrace. Note: On POSIX targets with the addr2line
        utility from GNU binutils, GNU Fortran can print a backtrace with
        function name, file name, line number information in addition to
        the addresses; otherwise only the addresses are printed.
-     * [28]Fortran 2003:
+     * [27]Fortran 2003:
           + Generic interface names which have the same name as derived
             types are now supported, which allows to write constructor
             functions. Note that Fortran does not support static
             constructor functions; only default initialization or an
             explicit structure-constructor initialization are available.
-          + [29]Polymorphic (class) arrays are now supported.
-     * [30]Fortran 2008:
+          + [28]Polymorphic (class) arrays are now supported.
+     * [29]Fortran 2008:
           + Support for the DO CONCURRENT construct has been added, which
             allows the user to specify that individual loop iterations
             have no interdependencies.
-          + [31]Coarrays: Full single-image support except for polymorphic
+          + [30]Coarrays: Full single-image support except for polymorphic
             coarrays. Additionally, preliminary support for multiple
-            images via an MPI-based [32]coarray communication library has
+            images via an MPI-based [31]coarray communication library has
             been added. Note: The library version is not yet usable as
             remote coarray access is not yet possible.
-     * [33]TS 29113:
-          + New flag [34]-std=f2008ts permits programs that are expected
+     * [32]TS 29113:
+          + New flag [33]-std=f2008ts permits programs that are expected
             to conform to the Fortran 2008 standard and the draft
             Technical Specification (TS) 29113 on Further Interoperability
             of Fortran with C.
@@ -10600,18 +12734,18 @@ const int &y = f(2);
             compatible with the candidate draft of TS 29113 (since GCC
             4.6).
 
-  [35]Go
+  [34]Go
 
-     * GCC 4.7 implements the [36]Go 1 language standard. The library
+     * GCC 4.7 implements the [35]Go 1 language standard. The library
        support in 4.7.0 is not quite complete, due to release timing.
        Release 4.7.1 includes complete support for Go 1. The Go library is
        from the Go 1.0.1 release.
      * Go has been tested on GNU/Linux and Solaris platforms. It may work
        on other platforms as well.
 
-[37]New Targets and Target Specific Improvements
+[36]New Targets and Target Specific Improvements
 
-  [38]ARM
+  [37]ARM
 
      * GCC now supports the Cortex-A7 processor implementing the v7-a
        version of the architecture using the option -mcpu=cortex-a7.
@@ -10621,27 +12755,27 @@ const int &y = f(2);
      * A new option -mvectorize-with-neon-double was added to allow users
        to change the vector size to 64 bits.
 
-  [39]AVR
+  [38]AVR
 
      * The AVR port's libgcc has been improved and its multilib structure
        has been enhanced. As a result, all objects contributing to an
        application must either be compiled with GCC versions up to 4.6.x
        or with GCC versions 4.7.1 or later. If the compiler is used with
        AVR-LibC, you need a version that supports the new layout, i.e.
-       implements [40]#35407.
+       implements [39]#35407.
      * The -mshort-calls command-line option has been deprecated. It will
        be removed in the GCC 4.8 release. See -mrelax for a replacement.
      * The compiled code only references startup code that clears .bss and
        the common section resp. initializes the .data and .rodata section
        provided respective sections (or subsections thereof) are not
-       empty, see [41]PR18145. Applications that put all static storage
+       empty, see [40]PR18145. Applications that put all static storage
        objects into non-standard sections and / or define all static
        storage objects in assembler modules, must reference __do_clear_bss
        resp. __do_copy_data by hand or undefine the symbol(s) by means of
        -Wl,-u,__do_clear_bss resp. -Wl,-u,__do_copy_data.
      * GCC now supports the XMEGA architecture. This requires GNU Binutils
        2.22 or later.
-     * Support for the [42]named address spaces __flash, __flash1, ...,
+     * Support for the [41]named address spaces __flash, __flash1, ...,
        __flash5 and __memx has been added. These address spaces locate
        read-only data in flash memory and allow reading from flash memory
        by means of ordinary C code, i.e. without the need of (inline)
@@ -10656,12 +12790,12 @@ int add_values (const __flash int *p, int i)
 
      * Support has been added for the AVR-specific configure option
        --with-avrlibc=yes in order to arrange for better integration of
-       [43]AVR-Libc. This configure option is supported in avr-gcc v4.7.2
+       [42]AVR-Libc. This configure option is supported in avr-gcc v4.7.2
        and newer and will only take effect in non-RTEMS configurations. If
        avr-gcc is configured for RTEMS, the option will be ignored which
-       is the same as specifying --with-avrlibc=no. See [44]PR54461 for
+       is the same as specifying --with-avrlibc=no. See [43]PR54461 for
        more technical details.
-     * Support for AVR-specific [45]built-in functions has been added.
+     * Support for AVR-specific [44]built-in functions has been added.
      * Support has been added for the signed and unsigned 24-bit scalar
        integer types __int24 and __uint24.
      * New command-line options -maccumulate-args, -mbranch-cost=cost and
@@ -10743,7 +12877,7 @@ void set_portb (uint8_t value)
        FMA, BMI, BMI2, LZCNT is available through -march=core-avx2.
      * Support for new AMD family 15h processors (Piledriver core) is now
        available through -march=bdver2 and -mtune=bdver2 options.
-     * Support for [46]the x32 psABI is now available through the -mx32
+     * Support for [45]the x32 psABI is now available through the -mx32
        option.
      * Windows mingw targets are using the -mms-bitfields option by
        default.
@@ -10752,7 +12886,7 @@ void set_portb (uint8_t value)
      * Support for the configure option --with-threads=posix for Windows
        mingw targets.
 
-  [47]MIPS
+  [46]MIPS
 
      * GCC now supports thread-local storage (TLS) for MIPS16. This
        requires GNU binutils 2.22 or later.
@@ -10858,57 +12992,57 @@ Other significant improvements
        the DW_AT_producer attribute string in the DWARF debugging
        information.
      * GCC now supports various new GNU extensions to the DWARF debugging
-       information format, like [48]entry value and [49]call site
-       information, [50]typed DWARF stack or [51]a more compact macro
+       information format, like [47]entry value and [48]call site
+       information, [49]typed DWARF stack or [50]a more compact macro
        representation. Support for these extensions has been added to GDB
        7.4. They can be disabled through the -gstrict-dwarf command-line
        option.
 
-[52]GCC 4.7.1
+[51]GCC 4.7.1
 
-   This is the [53]list of problem reports (PRs) from GCC's bug tracking
+   This is the [52]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.1 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-   The Go front end in the 4.7.1 release fully supports the [54]Go 1
+   The Go front end in the 4.7.1 release fully supports the [53]Go 1
    language standard.
 
-[55]GCC 4.7.2
+[54]GCC 4.7.2
 
-   This is the [56]list of problem reports (PRs) from GCC's bug tracking
+   This is the [55]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.2 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-[57]GCC 4.7.3
+[56]GCC 4.7.3
 
-   This is the [58]list of problem reports (PRs) from GCC's bug tracking
+   This is the [57]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.3 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
-[59]GCC 4.7.4
+[58]GCC 4.7.4
 
-   This is the [60]list of problem reports (PRs) from GCC's bug tracking
+   This is the [59]list of problem reports (PRs) from GCC's bug tracking
    system that are known to be fixed in the 4.7.4 release. This list might
    not be complete (that is, it is possible that some PRs that have been
    fixed are not listed here).
 
 
     For questions related to the use of GCC, please consult these web
-    pages and the [61]GCC manuals. If that fails, the
-    [62]gcc-help@gcc.gnu.org mailing list might help. Comments on these
+    pages and the [60]GCC manuals. If that fails, the
+    [61]gcc-help@gcc.gnu.org mailing list might help. Comments on these
     web pages and the development of GCC are welcome on our developer
-    list at [63]gcc@gcc.gnu.org. All of [64]our lists have public
+    list at [62]gcc@gcc.gnu.org. All of [63]our lists have public
     archives.
 
-   Copyright (C) [65]Free Software Foundation, Inc. Verbatim copying and
+   Copyright (C) [64]Free Software Foundation, Inc. Verbatim copying and
    distribution of this entire article is permitted in any medium,
    provided this notice is preserved.
 
-   These pages are [66]maintained by the GCC team. Last modified
-   2025-06-10.
+   These pages are [65]maintained by the GCC team. Last modified
+   2025-02-28.
 
 References
 
@@ -10916,68 +13050,67 @@ References
    2. https://gcc.gnu.org/gcc-4.7/porting_to.html
    3. https://gcc.gnu.org/wiki/TransactionalMemory
    4. https://gcc.gnu.org/wiki/Atomic/GCCMM
-   5. https://gcc.gnu.org/gcc-4.7/changes.html#c
-   6. https://gcc.gnu.org/gcc-4.7/changes.html#cxx
+   5. https://gcc.gnu.org/gcc-4.7/changes.html#cxx
+   6. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
    7. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
    8. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
    9. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
   10. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
   11. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
-  12. https://gcc.gnu.org/gcc-4.7/cxx0x_status.html
-  13. https://gcc.gnu.org/PR14258
-  14. https://gcc.gnu.org/PR35688
-  15. https://gcc.gnu.org/onlinedocs/gcc-4.7.4/libstdc++/manual/manual/status.html#status.iso.2011
-  16. https://gcc.gnu.org/gcc-4.7/changes.html#fortran
-  17. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
-  18. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Optimize-Options.html#index-Ofast-689
-  19. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfno-protect-parens_007d-270
-  20. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
-  21. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfrontend-optimize_007d-275
-  22. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWfunction-elimination_007d-170
-  23. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfaggressive-function-elimination_007d-270
-  24. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWreal-q-constant_007d-149
-  25. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/SELECTED_005fREAL_005fKIND.html
-  26. https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps
-  27. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Debugging-Options.html#index-g_t_0040code_007bfno-backtrace_007d-183
-  28. https://gcc.gnu.org/wiki/Fortran2003Status
-  29. https://gcc.gnu.org/wiki/OOP
-  30. https://gcc.gnu.org/wiki/Fortran2008Status
-  31. https://gcc.gnu.org/wiki/Coarray
-  32. https://gcc.gnu.org/wiki/CoarrayLib
-  33. https://gcc.gnu.org/wiki/TS29113Status
-  34. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Fortran-Dialect-Options.html#index-g_t_0040code_007bstd_003d_007d_0040var_007bstd_007d-option-53
-  35. https://gcc.gnu.org/gcc-4.7/changes.html#go
-  36. https://go.dev/doc/go1
-  37. https://gcc.gnu.org/gcc-4.7/changes.html#targets
-  38. https://gcc.gnu.org/gcc-4.7/changes.html#arm
-  39. https://gcc.gnu.org/gcc-4.7/changes.html#avr
-  40. http://savannah.nongnu.org/bugs/?35407
-  41. https://gcc.gnu.org/PR18145
-  42. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Named-Address-Spaces.html
-  43. http://www.nongnu.org/avr-libc/
-  44. https://gcc.gnu.org/PR54461
-  45. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/AVR-Built%5f002din-Functions.html
-  46. https://sites.google.com/site/x32abi/
-  47. https://gcc.gnu.org/gcc-4.7/changes.html#mips
-  48. https://dwarfstd.org/issues/100909.1.html
-  49. https://dwarfstd.org/issues/100909.2.html
-  50. https://dwarfstd.org/issues/140425.1.html
-  51. https://dwarfstd.org/issues/110722.1.html
-  52. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.1
-  53. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.1
-  54. https://go.dev/doc/go1
-  55. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.2
-  56. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.2
-  57. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.3
-  58. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.3
-  59. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.4
-  60. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.4
-  61. https://gcc.gnu.org/onlinedocs/
-  62. mailto:gcc-help@gcc.gnu.org
-  63. mailto:gcc@gcc.gnu.org
-  64. https://gcc.gnu.org/lists.html
-  65. https://www.fsf.org/
-  66. https://gcc.gnu.org/about.html
+  12. https://gcc.gnu.org/PR14258
+  13. https://gcc.gnu.org/PR35688
+  14. https://gcc.gnu.org/onlinedocs/gcc-4.7.4/libstdc++/manual/manual/status.html#status.iso.2011
+  15. https://gcc.gnu.org/gcc-4.7/changes.html#fortran
+  16. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
+  17. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Optimize-Options.html#index-Ofast-689
+  18. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfno-protect-parens_007d-270
+  19. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfstack-arrays_007d-254
+  20. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfrontend-optimize_007d-275
+  21. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWfunction-elimination_007d-170
+  22. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Code-Gen-Options.html#index-g_t_0040code_007bfaggressive-function-elimination_007d-270
+  23. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Error-and-Warning-Options.html#index-g_t_0040code_007bWreal-q-constant_007d-149
+  24. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/SELECTED_005fREAL_005fKIND.html
+  25. https://learn.microsoft.com/en-us/windows/win32/wer/collecting-user-mode-dumps
+  26. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Debugging-Options.html#index-g_t_0040code_007bfno-backtrace_007d-183
+  27. https://gcc.gnu.org/wiki/Fortran2003Status
+  28. https://gcc.gnu.org/wiki/OOP
+  29. https://gcc.gnu.org/wiki/Fortran2008Status
+  30. https://gcc.gnu.org/wiki/Coarray
+  31. https://gcc.gnu.org/wiki/CoarrayLib
+  32. https://gcc.gnu.org/wiki/TS29113Status
+  33. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gfortran/Fortran-Dialect-Options.html#index-g_t_0040code_007bstd_003d_007d_0040var_007bstd_007d-option-53
+  34. https://gcc.gnu.org/gcc-4.7/changes.html#go
+  35. https://go.dev/doc/go1
+  36. https://gcc.gnu.org/gcc-4.7/changes.html#targets
+  37. https://gcc.gnu.org/gcc-4.7/changes.html#arm
+  38. https://gcc.gnu.org/gcc-4.7/changes.html#avr
+  39. http://savannah.nongnu.org/bugs/?35407
+  40. https://gcc.gnu.org/PR18145
+  41. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/Named-Address-Spaces.html
+  42. http://www.nongnu.org/avr-libc/
+  43. https://gcc.gnu.org/PR54461
+  44. https://gcc.gnu.org/onlinedocs/gcc-4.7.1/gcc/AVR-Built%5f002din-Functions.html
+  45. https://sites.google.com/site/x32abi/
+  46. https://gcc.gnu.org/gcc-4.7/changes.html#mips
+  47. https://dwarfstd.org/issues/100909.1.html
+  48. https://dwarfstd.org/issues/100909.2.html
+  49. https://dwarfstd.org/issues/140425.1.html
+  50. https://dwarfstd.org/issues/110722.1.html
+  51. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.1
+  52. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.1
+  53. https://go.dev/doc/go1
+  54. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.2
+  55. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.2
+  56. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.3
+  57. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.3
+  58. https://gcc.gnu.org/gcc-4.7/changes.html#GCC4.7.4
+  59. https://gcc.gnu.org/bugzilla/buglist.cgi?bug_status=RESOLVED&resolution=FIXED&target_milestone=4.7.4
+  60. https://gcc.gnu.org/onlinedocs/
+  61. mailto:gcc-help@gcc.gnu.org
+  62. mailto:gcc@gcc.gnu.org
+  63. https://gcc.gnu.org/lists.html
+  64. https://www.fsf.org/
+  65. https://gcc.gnu.org/about.html
 ======================================================================
 http://gcc.gnu.org/gcc-4.6/index.html
 
@@ -19877,7 +22010,7 @@ GCC 3.3
    provided this notice is preserved.
 
    These pages are [563]maintained by the GCC team. Last modified
-   2025-06-05.
+   2025-01-31.
 
 References
 
@@ -19886,7 +22019,7 @@ References
    3. https://gcc.gnu.org/gcc-3.3/changes.html#obsolete_systems
    4. https://gcc.gnu.org/gcc-3.3/changes.html#nonnull_attribute
    5. https://gcc.gnu.org/news/dfa.html
-   6. https://gcc.gnu.org/projects/c-status.html
+   6. https://gcc.gnu.org/c99status.html
    7. https://gcc.gnu.org/onlinedocs/gcc-3.3.6/g77/News.html
    8. https://gcc.gnu.org/gcc-3.3/changes.html#obsolete_systems
    9. https://gcc.gnu.org/PR10140
@@ -21799,14 +23932,14 @@ Documentation improvements
    provided this notice is preserved.
 
    These pages are [14]maintained by the GCC team. Last modified
-   2025-06-05.
+   2025-01-31.
 
 References
 
    1. https://gcc.gnu.org/ml/gcc/2002-07/msg01208.html
    2. https://gcc.gnu.org/news/profiledriven.html
    3. https://gcc.gnu.org/benchmarks/
-   4. https://gcc.gnu.org/projects/c-status.html
+   4. https://gcc.gnu.org/c99status.html
    5. https://gcc.gnu.org/onlinedocs/libstdc++/faq.html
    6. https://gcc.gnu.org/onlinedocs/gcc-3.1.1/g77/News.html
    7. https://www.adacore.com/
@@ -22065,7 +24198,7 @@ Other significant improvements
    provided this notice is preserved.
 
    These pages are [18]maintained by the GCC team. Last modified
-   2025-06-05.
+   2022-10-26.
 
 References
 
@@ -22077,7 +24210,7 @@ References
    6. https://gcc.gnu.org/gcc-3.0/c++features.html
    7. https://gcc.gnu.org/news/inlining.html
    8. https://gcc.gnu.org/news/dependencies.html
-   9. https://gcc.gnu.org/projects/c-status.html
+   9. https://gcc.gnu.org/c99status.html
   10. https://gcc.gnu.org/onlinedocs/gcc-3.4.6/g77/News.html
   11. https://gcc.gnu.org/gcc-3.0/libgcc.html
   12. https://gcc.gnu.org/gcc-2.95/features.html
@@ -22483,7 +24616,7 @@ Additional Changes in GCC 2.95.3
    provided this notice is preserved.
 
    These pages are [22]maintained by the GCC team. Last modified
-   2025-06-05.
+   2023-09-02.
 
 References
 
@@ -22498,7 +24631,7 @@ References
    9. https://gcc.gnu.org/onlinedocs/gcc-3.4.6/g77/News.html
   10. https://gcc.gnu.org/news/gcj-announce.txt
   11. https://gcc.gnu.org/news/javaannounce.html
-  12. https://gcc.gnu.org/projects/c-status.html
+  12. https://gcc.gnu.org/c99status.html
   13. https://gcc.gnu.org/news/chill.html
   14. https://gcc.gnu.org/news/sparc.html
   15. https://gcc.gnu.org/news/egcs-vcg.html

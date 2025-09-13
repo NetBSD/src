@@ -1,6 +1,6 @@
 /* Instruction scheduling pass.  This file computes dependencies between
    instructions.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) Enhanced by,
    and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -472,7 +472,7 @@ static int cache_size;
 /* True if we should mark added dependencies as a non-register deps.  */
 static bool mark_as_hard;
 
-static int deps_may_trap_p (const_rtx);
+static bool deps_may_trap_p (const_rtx);
 static void add_dependence_1 (rtx_insn *, rtx_insn *, enum reg_note);
 static void add_dependence_list (rtx_insn *, rtx_insn_list *, int,
 				 enum reg_note, bool);
@@ -488,7 +488,7 @@ static void sched_analyze_2 (class deps_desc *, rtx, rtx_insn *);
 static void sched_analyze_insn (class deps_desc *, rtx, rtx_insn *);
 
 static bool sched_has_condition_p (const rtx_insn *);
-static int conditions_mutex_p (const_rtx, const_rtx, bool, bool);
+static bool conditions_mutex_p (const_rtx, const_rtx, bool, bool);
 
 static enum DEPS_ADJUST_RESULT maybe_add_or_update_dep_1 (dep_t, bool,
 							  rtx, rtx);
@@ -497,9 +497,9 @@ static enum DEPS_ADJUST_RESULT add_or_update_dep_1 (dep_t, bool, rtx, rtx);
 static void check_dep (dep_t, bool);
 
 
-/* Return nonzero if a load of the memory reference MEM can cause a trap.  */
+/* Return true if a load of the memory reference MEM can cause a trap.  */
 
-static int
+static bool
 deps_may_trap_p (const_rtx mem)
 {
   const_rtx addr = XEXP (mem, 0);
@@ -617,8 +617,8 @@ sched_has_condition_p (const rtx_insn *insn)
 
 
 
-/* Return nonzero if conditions COND1 and COND2 can never be both true.  */
-static int
+/* Return true if conditions COND1 and COND2 can never be both true.  */
+static bool
 conditions_mutex_p (const_rtx cond1, const_rtx cond2, bool rev1, bool rev2)
 {
   if (COMPARISON_P (cond1)
@@ -629,8 +629,8 @@ conditions_mutex_p (const_rtx cond1, const_rtx cond2, bool rev1, bool rev2)
 	  : GET_CODE (cond2))
       && rtx_equal_p (XEXP (cond1, 0), XEXP (cond2, 0))
       && XEXP (cond1, 1) == XEXP (cond2, 1))
-    return 1;
-  return 0;
+    return true;
+  return false;
 }
 
 /* Return true if insn1 and insn2 can never depend on one another because
@@ -1735,7 +1735,7 @@ add_insn_mem_dependence (class deps_desc *deps, bool read_p,
   insn_node = alloc_INSN_LIST (insn, *insn_list);
   *insn_list = insn_node;
 
-  if (sched_deps_info->use_cselib)
+  if (sched_deps_info->use_cselib && MEM_P (mem))
     {
       mem = shallow_copy_rtx (mem);
       XEXP (mem, 0) = cselib_subst_to_values_from_insn (XEXP (mem, 0),
@@ -2458,6 +2458,25 @@ sched_analyze_1 (class deps_desc *deps, rtx x, rtx_insn *insn)
 			       FIRST_STACK_REG);
 	}
 #endif
+      if (!deps->readonly && regno == STACK_POINTER_REGNUM)
+	{
+	  /* Please see PR114115.  We have insn modifying memory on the stack
+	     and not addressed by stack pointer and we have insn reserving the
+	     stack space.  If we move the insn modifying memory before insn
+	     reserving the stack space, we can change memory out of the red
+	     zone.  Even worse, some optimizations (e.g. peephole) can add
+	     insns using temporary stack slots before insn reserving the stack
+	     space but after the insn modifying memory.  This will corrupt the
+	     modified memory.  Therefore we treat insn changing the stack as
+	     reading unknown memory.  This will create anti-dependence.  We
+	     don't need to treat the insn as writing memory because GCC by
+	     itself does not generate code reading undefined stack memory.  */
+	  if ((deps->pending_read_list_length + deps->pending_write_list_length)
+	      >= param_max_pending_list_length
+	      && !DEBUG_INSN_P (insn))
+	    flush_pending_lists (deps, insn, true, true);
+	  add_insn_mem_dependence (deps, true, insn, dest);
+	}
     }
   else if (MEM_P (dest))
     {
@@ -2498,10 +2517,11 @@ sched_analyze_1 (class deps_desc *deps, rtx x, rtx_insn *insn)
 	  pending_mem = deps->pending_read_mems;
 	  while (pending)
 	    {
-	      if (anti_dependence (pending_mem->element (), t)
-		  && ! sched_insns_conditions_mutex_p (insn, pending->insn ()))
-		note_mem_dep (t, pending_mem->element (), pending->insn (),
-			      DEP_ANTI);
+	      rtx mem = pending_mem->element ();
+	      if (REG_P (mem)
+		  || (anti_dependence (mem, t)
+		      && ! sched_insns_conditions_mutex_p (insn, pending->insn ())))
+		note_mem_dep (t, mem, pending->insn (), DEP_ANTI);
 
 	      pending = pending->next ();
 	      pending_mem = pending_mem->next ();
@@ -2605,37 +2625,42 @@ sched_analyze_2 (class deps_desc *deps, rtx x, rtx_insn *insn)
 
     case MEM:
       {
-	/* Reading memory.  */
-	rtx_insn_list *u;
-	rtx_insn_list *pending;
-	rtx_expr_list *pending_mem;
-	rtx t = x;
-
-	if (sched_deps_info->use_cselib)
+	if (DEBUG_INSN_P (insn) && sched_deps_info->use_cselib)
 	  {
-	    machine_mode address_mode = get_address_mode (t);
+	    machine_mode address_mode = get_address_mode (x);
 
-	    t = shallow_copy_rtx (t);
-	    cselib_lookup_from_insn (XEXP (t, 0), address_mode, 1,
-				     GET_MODE (t), insn);
-	    XEXP (t, 0)
-	      = cselib_subst_to_values_from_insn (XEXP (t, 0), GET_MODE (t),
-						  insn);
+	    cselib_lookup_from_insn (XEXP (x, 0), address_mode, 1,
+				     GET_MODE (x), insn);
 	  }
-
-	if (!DEBUG_INSN_P (insn))
+	else if (!DEBUG_INSN_P (insn))
 	  {
+	    /* Reading memory.  */
+	    rtx_insn_list *u;
+	    rtx_insn_list *pending;
+	    rtx_expr_list *pending_mem;
+	    rtx t = x;
+
+	    if (sched_deps_info->use_cselib)
+	      {
+		machine_mode address_mode = get_address_mode (t);
+
+		t = shallow_copy_rtx (t);
+		cselib_lookup_from_insn (XEXP (t, 0), address_mode, 1,
+					 GET_MODE (t), insn);
+		XEXP (t, 0)
+		  = cselib_subst_to_values_from_insn (XEXP (t, 0), GET_MODE (t),
+						      insn);
+	      }
+
 	    t = canon_rtx (t);
 	    pending = deps->pending_read_insns;
 	    pending_mem = deps->pending_read_mems;
 	    while (pending)
 	      {
-		if (read_dependence (pending_mem->element (), t)
-		    && ! sched_insns_conditions_mutex_p (insn,
-							 pending->insn ()))
-		  note_mem_dep (t, pending_mem->element (),
-				pending->insn (),
-				DEP_ANTI);
+		rtx mem = pending_mem->element ();
+		if (MEM_P (mem) && read_dependence (mem, t)
+		    && ! sched_insns_conditions_mutex_p (insn, pending->insn ()))
+		  note_mem_dep (t, mem, pending->insn (), DEP_ANTI);
 
 		pending = pending->next ();
 		pending_mem = pending_mem->next ();
@@ -2826,7 +2851,7 @@ sched_macro_fuse_insns (rtx_insn *insn)
      compile time complexity.  */
   if (DEBUG_INSN_P (insn))
     return;
-  prev = prev_nonnote_nondebug_insn (insn);
+  prev = prev_nonnote_nondebug_insn_bb (insn);
   if (!prev)
     return;
 
@@ -3019,8 +3044,7 @@ sched_analyze_insn (class deps_desc *deps, rtx x, rtx_insn *insn)
 	  while (pending)
 	    {
 	      if (! sched_insns_conditions_mutex_p (insn, pending->insn ()))
-		add_dependence (insn, pending->insn (),
-				REG_DEP_OUTPUT);
+		add_dependence (insn, pending->insn (),	REG_DEP_OUTPUT);
 	      pending = pending->next ();
 	      pending_mem = pending_mem->next ();
 	    }
@@ -3029,10 +3053,10 @@ sched_analyze_insn (class deps_desc *deps, rtx x, rtx_insn *insn)
 	  pending_mem = deps->pending_read_mems;
 	  while (pending)
 	    {
-	      if (MEM_VOLATILE_P (pending_mem->element ())
+	      rtx mem = pending_mem->element ();
+	      if (MEM_P (mem) && MEM_VOLATILE_P (mem)
 		  && ! sched_insns_conditions_mutex_p (insn, pending->insn ()))
-		add_dependence (insn, pending->insn (),
-				REG_DEP_OUTPUT);
+		add_dependence (insn, pending->insn (),	REG_DEP_OUTPUT);
 	      pending = pending->next ();
 	      pending_mem = pending_mem->next ();
 	    }
@@ -3688,7 +3712,14 @@ deps_analyze_insn (class deps_desc *deps, rtx_insn *insn)
 
       CANT_MOVE (insn) = 1;
 
-      if (find_reg_note (insn, REG_SETJMP, NULL))
+      if (!reload_completed)
+	{
+	  /* Scheduling across calls may increase register pressure by extending
+	     live ranges of pseudos over the call.  Worse, in presence of setjmp
+	     it may incorrectly move up an assignment over a longjmp.  */
+	  reg_pending_barrier = MOVE_BARRIER;
+	}
+      else if (find_reg_note (insn, REG_SETJMP, NULL))
         {
           /* This is setjmp.  Assume that all registers, not just
              hard registers, may be clobbered by this call.  */
@@ -4765,24 +4796,59 @@ parse_add_or_inc (struct mem_inc_info *mii, rtx_insn *insn, bool before_mem)
 /* Once a suitable mem reference has been found and the corresponding data
    in MII has been filled in, this function is called to find a suitable
    add or inc insn involving the register we found in the memory
-   reference.  */
+   reference.
+   If successful, this function will create additional dependencies between
+   - mii->inc_insn's producers and mii->mem_insn as a consumer (if backwards)
+   - mii->inc_insn's consumers and mii->mem_insn as a producer (if !backwards).
+*/
 
 static bool
 find_inc (struct mem_inc_info *mii, bool backwards)
 {
   sd_iterator_def sd_it;
   dep_t dep;
+  sd_list_types_def mem_deps = backwards ? SD_LIST_HARD_BACK : SD_LIST_FORW;
+  int n_mem_deps = dep_list_size (mii->mem_insn, mem_deps);
 
-  sd_it = sd_iterator_start (mii->mem_insn,
-			     backwards ? SD_LIST_HARD_BACK : SD_LIST_FORW);
+  sd_it = sd_iterator_start (mii->mem_insn, mem_deps);
   while (sd_iterator_cond (&sd_it, &dep))
     {
       dep_node_t node = DEP_LINK_NODE (*sd_it.linkp);
       rtx_insn *pro = DEP_PRO (dep);
       rtx_insn *con = DEP_CON (dep);
-      rtx_insn *inc_cand = backwards ? pro : con;
+      rtx_insn *inc_cand;
+      int n_inc_deps;
+
       if (DEP_NONREG (dep) || DEP_MULTIPLE (dep))
 	goto next;
+
+      if (backwards)
+	{
+	  inc_cand = pro;
+	  n_inc_deps = dep_list_size (inc_cand, SD_LIST_BACK);
+	}
+      else
+	{
+	  inc_cand = con;
+	  n_inc_deps = dep_list_size (inc_cand, SD_LIST_FORW);
+	}
+
+      /* In the FOR_EACH_DEP loop below we will create additional n_inc_deps
+	 for mem_insn.  This by itself is not a problem, since each mem_insn
+	 will have only a few inc_insns associated with it.  However, if
+	 we consider that a single inc_insn may have a lot of mem_insns, AND,
+	 on top of that, a few other inc_insns associated with it --
+	 those _other inc_insns_ will get (n_mem_deps * number of MEM insns)
+	 dependencies created for them.  This may cause an exponential
+	 growth of memory usage and scheduling time.
+	 See PR96388 for details.
+	 We [heuristically] use n_inc_deps as a proxy for the number of MEM
+	 insns, and drop opportunities for breaking modifiable_mem dependencies
+	 when dependency lists grow beyond reasonable size.  */
+      if (n_mem_deps * n_inc_deps
+	  >= param_max_pending_list_length * param_max_pending_list_length)
+	goto next;
+
       if (parse_add_or_inc (mii, inc_cand, backwards))
 	{
 	  struct dep_replacement *desc;
@@ -4824,6 +4890,11 @@ find_inc (struct mem_inc_info *mii, bool backwards)
 	  desc->insn = mii->mem_insn;
 	  move_dep_link (DEP_NODE_BACK (node), INSN_HARD_BACK_DEPS (con),
 			 INSN_SPEC_BACK_DEPS (con));
+
+	  /* Make sure that n_inc_deps above is consistent with dependencies
+	     we create.  */
+	  gcc_assert (mii->inc_insn == inc_cand);
+
 	  if (backwards)
 	    {
 	      FOR_EACH_DEP (mii->inc_insn, SD_LIST_BACK, sd_it, dep)

@@ -1,5 +1,5 @@
 /* Routines for liveness in SSA trees.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod  <amacleod@redhat.com>
 
 This file is part of GCC.
@@ -70,6 +70,10 @@ typedef struct _var_map
   /* Vector of basic block in the region.  */
   vec<basic_block> vec_bbs;
 
+  /* If non-NULL, only coalesce SSA_NAMEs from this bitmap, and try harder
+     for those (for bitint lowering pass).  */
+  bitmap bitint;
+
   /* True if this map is for out-of-ssa, otherwise for live range
      computation.  When for out-of-ssa, it also means the var map is computed
      for whole current function.  */
@@ -80,7 +84,7 @@ typedef struct _var_map
 /* Value used to represent no partition number.  */
 #define NO_PARTITION		-1
 
-extern var_map init_var_map (int, class loop* = NULL);
+extern var_map init_var_map (int, class loop * = NULL, bitmap = NULL);
 extern void delete_var_map (var_map);
 extern int var_union (var_map, tree, tree);
 extern void partition_view_normal (var_map);
@@ -100,7 +104,7 @@ inline bool
 region_contains_p (var_map map, basic_block bb)
 {
   /* It's possible that the function is called with ENTRY_BLOCK/EXIT_BLOCK.  */
-  if (map->outofssa_p)
+  if (map->outofssa_p || map->bitint)
     return (bb->index != ENTRY_BLOCK && bb->index != EXIT_BLOCK);
 
   return bitmap_bit_p (map->bmp_bbs, bb->index);
@@ -109,7 +113,7 @@ region_contains_p (var_map map, basic_block bb)
 
 /* Return number of partitions in MAP.  */
 
-static inline unsigned
+inline unsigned
 num_var_partitions (var_map map)
 {
   return map->num_partitions;
@@ -119,7 +123,7 @@ num_var_partitions (var_map map)
 /* Given partition index I from MAP, return the variable which represents that
    partition.  */
 
-static inline tree
+inline tree
 partition_to_var (var_map map, int i)
 {
   tree name;
@@ -134,7 +138,7 @@ partition_to_var (var_map map, int i)
 /* Given ssa_name VERSION, if it has a partition in MAP,  return the var it
    is associated with.  Otherwise return NULL.  */
 
-static inline tree
+inline tree
 version_to_var (var_map map, int version)
 {
   int part;
@@ -151,7 +155,7 @@ version_to_var (var_map map, int version)
 /* Given VAR, return the partition number in MAP which contains it.
    NO_PARTITION is returned if it's not in any partition.  */
 
-static inline int
+inline int
 var_to_partition (var_map map, tree var)
 {
   int part;
@@ -166,7 +170,7 @@ var_to_partition (var_map map, tree var)
 /* Given VAR, return the variable which represents the entire partition
    it is a member of in MAP.  NULL is returned if it is not in a partition.  */
 
-static inline tree
+inline tree
 var_to_partition_to_var (var_map map, tree var)
 {
   int part;
@@ -180,7 +184,7 @@ var_to_partition_to_var (var_map map, tree var)
 
 /* Return the index into the basevar table for PARTITION's base in MAP.  */
 
-static inline int
+inline int
 basevar_index (var_map map, int partition)
 {
   gcc_checking_assert (partition >= 0
@@ -191,7 +195,7 @@ basevar_index (var_map map, int partition)
 
 /* Return the number of different base variables in MAP.  */
 
-static inline int
+inline int
 num_basevars (var_map map)
 {
   return map->num_basevars;
@@ -274,7 +278,7 @@ extern void destroy_live_vars (vec<bitmap_head> &);
 
 /*  Return TRUE if P is marked as a global in LIVE.  */
 
-static inline int
+inline int
 partition_is_global (tree_live_info_p live, int p)
 {
   gcc_checking_assert (live->global);
@@ -285,7 +289,7 @@ partition_is_global (tree_live_info_p live, int p)
 /* Return the bitmap from LIVE representing the live on entry blocks for
    partition P.  */
 
-static inline bitmap
+inline bitmap
 live_on_entry (tree_live_info_p live, basic_block bb)
 {
   gcc_checking_assert (live->livein
@@ -299,7 +303,7 @@ live_on_entry (tree_live_info_p live, basic_block bb)
 /* Return the bitmap from LIVE representing the live on exit partitions from
    block BB.  */
 
-static inline bitmap
+inline bitmap
 live_on_exit (tree_live_info_p live, basic_block bb)
 {
   gcc_checking_assert (live->liveout
@@ -312,7 +316,7 @@ live_on_exit (tree_live_info_p live, basic_block bb)
 
 /* Return the partition map which the information in LIVE utilizes.  */
 
-static inline var_map
+inline var_map
 live_var_map (tree_live_info_p live)
 {
   return live->map;
@@ -321,11 +325,39 @@ live_var_map (tree_live_info_p live)
 
 /* Mark partition P as live on entry to basic block BB in LIVE.  */
 
-static inline void
+inline void
 make_live_on_entry (tree_live_info_p live, basic_block bb , int p)
 {
   bitmap_set_bit (&live->livein[bb->index], p);
   bitmap_set_bit (live->global, p);
 }
+
+
+/* On-demand virtual operand global live analysis.  There is at most
+   a single virtual operand live at a time, the following computes and
+   caches the virtual operand live at the exit of a basic block
+   supporting related live-in and live-on-edge queries.  It requires
+   up-to-date marked backedges.  */
+
+class virtual_operand_live
+{
+public:
+  virtual_operand_live() : liveout (nullptr) {}
+  ~virtual_operand_live()
+  {
+    if (liveout)
+      free (liveout);
+  }
+
+  tree get_live_in (basic_block bb);
+  tree get_live_out (basic_block bb);
+  tree get_live_on_edge (edge e) { return get_live_out (e->src); }
+
+private:
+  void init ();
+
+  tree *liveout;
+};
+
 
 #endif /* _TREE_SSA_LIVE_H  */

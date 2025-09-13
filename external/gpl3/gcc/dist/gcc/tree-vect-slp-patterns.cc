@@ -1,5 +1,5 @@
 /* SLP - Pattern matcher on SLP trees
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -492,7 +492,7 @@ class complex_pattern : public vect_pattern
     }
 
   public:
-    void build (vec_info *);
+    void build (vec_info *) override;
 
     static internal_fn
     matches (complex_operation_t op, slp_tree_to_load_perm_map_t *, slp_tree *,
@@ -595,7 +595,7 @@ class complex_add_pattern : public complex_pattern
     }
 
   public:
-    void build (vec_info *);
+    void build (vec_info *) final override;
     static internal_fn
     matches (complex_operation_t op, slp_tree_to_load_perm_map_t *,
 	     slp_compat_nodes_map_t *, slp_tree *, vec<slp_tree> *);
@@ -977,7 +977,7 @@ class complex_mul_pattern : public complex_pattern
     }
 
   public:
-    void build (vec_info *);
+    void build (vec_info *) final override;
     static internal_fn
     matches (complex_operation_t op, slp_tree_to_load_perm_map_t *,
 	     slp_compat_nodes_map_t *, slp_tree *, vec<slp_tree> *);
@@ -1069,7 +1069,15 @@ complex_mul_pattern::matches (complex_operation_t op,
   enum _conj_status status;
   if (!vect_validate_multiplication (perm_cache, compat_cache, left_op,
 				     right_op, false, &status))
-    return IFN_LAST;
+    {
+      /* Try swapping the order and re-trying since multiplication is
+	 commutative.  */
+      std::swap (left_op[0], left_op[1]);
+      std::swap (right_op[0], right_op[1]);
+      if (!vect_validate_multiplication (perm_cache, compat_cache, left_op,
+					 right_op, false, &status))
+	return IFN_LAST;
+    }
 
   if (status == CONJ_NONE)
     {
@@ -1207,7 +1215,7 @@ class complex_fms_pattern : public complex_pattern
     }
 
   public:
-    void build (vec_info *);
+    void build (vec_info *) final override;
     static internal_fn
     matches (complex_operation_t op, slp_tree_to_load_perm_map_t *,
 	     slp_compat_nodes_map_t *, slp_tree *, vec<slp_tree> *);
@@ -1286,7 +1294,15 @@ complex_fms_pattern::matches (complex_operation_t op,
   enum _conj_status status;
   if (!vect_validate_multiplication (perm_cache, compat_cache, right_op,
 				     left_op, true, &status))
-    return IFN_LAST;
+    {
+      /* Try swapping the order and re-trying since multiplication is
+	 commutative.  */
+      std::swap (left_op[0], left_op[1]);
+      std::swap (right_op[0], right_op[1]);
+      if (!vect_validate_multiplication (perm_cache, compat_cache, right_op,
+					 left_op, true, &status))
+	return IFN_LAST;
+    }
 
   if (status == CONJ_NONE)
     ifn = IFN_COMPLEX_FMS;
@@ -1383,7 +1399,7 @@ class complex_operations_pattern : public complex_pattern
     }
 
   public:
-    void build (vec_info *);
+    void build (vec_info *) final override;
     static internal_fn
     matches (complex_operation_t op, slp_tree_to_load_perm_map_t *,
 	     slp_compat_nodes_map_t *, slp_tree *, vec<slp_tree> *);
@@ -1449,7 +1465,7 @@ class addsub_pattern : public vect_pattern
     addsub_pattern (slp_tree *node, internal_fn ifn)
 	: vect_pattern (node, NULL, ifn) {};
 
-    void build (vec_info *);
+    void build (vec_info *) final override;
 
     static vect_pattern*
     recognize (slp_tree_to_load_perm_map_t *, slp_compat_nodes_map_t *,
@@ -1644,4 +1660,4 @@ vect_pattern_decl_t slp_patterns[]
 #undef SLP_PATTERN
 
 /* Set the number of SLP pattern matchers available.  */
-size_t num__slp_patterns = sizeof(slp_patterns)/sizeof(vect_pattern_decl_t);
+size_t num__slp_patterns = ARRAY_SIZE (slp_patterns);

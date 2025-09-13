@@ -139,10 +139,8 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
        output, and the executable output (if any) for each test.
      </p><p>
        Archives of test results for various versions and platforms are
-       available on the GCC website in the <a class="link" href="http://gcc.gnu.org/gcc-4.3/buildstat.html" target="_top">build
-       status</a> section of each individual release, and are also
        archived on a daily basis on the <a class="link" href="http://gcc.gnu.org/ml/gcc-testresults/current" target="_top">gcc-testresults</a>
-       mailing list. Please check either of these places for a similar
+       mailing list. Please check there for a similar
        combination of source version, operating system, and host CPU.
      </p></div><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="test.run.variations"></a>Variations</h4></div></div></div><p>
       There are several options for running tests, including testing
@@ -204,6 +202,18 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
     make check-target-libstdc++-v3 RUNTESTFLAGS='--target_board \"unix{-mabi=32,,-mabi=64}\"'
 </pre><p>
     </p><p>
+      If you wish to run the testsuite in a freestanding configuration, you can
+      pass the <code class="code">-ffreestanding</code> flag.  Doing so will run the tests
+      that do not require hosted features, and emit a
+      <code class="literal">UNSUPPORTED</code> for those that do.  To run tests in the
+      freestanding configuration, you still need to build for a target you can
+      run programs on, e.g. <code class="code">x86_64-pc-linux-gnu</code>, as a few tests
+      still execute the code they build.  Here's an example of how to run the
+      testsuite with libstdc++ in freestanding mode:
+      </p><pre class="programlisting">
+    make check-target-libstdc++-v3 RUNTESTFLAGS='--target_board=unix/-ffreestanding'
+      </pre><p>
+    </p><p>
       You can run the tests with a compiler and library that have
       already been installed.  Make sure that the compiler (e.g.,
       <span class="command"><strong>g++</strong></span>) is in your <code class="envar">PATH</code>.  If you are
@@ -220,7 +230,7 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
 </pre><p>
     </p><p>
       The testsuite will create a number of files in the directory in
-      which you run this command,.  Some of those files might use the
+      which you run this command.  Some of those files might use the
       same name as files created by other testsuites (like the ones
       for GCC and G++), so you should not try to run all the
       testsuites in parallel from the same directory.
@@ -333,11 +343,21 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
       tests multiple times in different variations. For example, to run the
       entire testsuite three times using <code class="option">-O3</code> but with
       different <code class="option">-std</code> options:
-</p><pre class="programlisting">    make check 'RUNTESTFLAGS=--target_board=unix/-O3\"{-std=gnu++98,-std=gnu++11,-std=gnu++14}\"'</pre><p>
+</p><pre class="programlisting">    make check 'RUNTESTFLAGS=--target_board=unix/-O3\"{-std=gnu++98,-std=gnu++11,-std=gnu++17}\"'</pre><p>
       N.B. that set of variations could also be written as
       <code class="literal">unix/-O3\"{-std=gnu++98,-std=gnu++11,}\"</code> so that
       the third variation would use the default for <code class="option">-std</code>
-      (which is <code class="option">-std=gnu++14</code> as of GCC 6).
+      (which is <code class="option">-std=gnu++17</code> as of GCC 11).
+    </p><p>
+      Since GCC 14, the libstdc++ testsuite has built-in support for running
+      tests with more than one <code class="option">-std</code>, similar to the G++ tests.
+      Adding <code class="code">set v3_std_list { 11 17 23 }</code> to
+      <code class="filename">~/.dejagnurc</code> or a file named by the
+      <code class="envar">DEJAGNU</code> environment variable will cause every test to
+      be run three times, using a different <code class="option">-std</code> each time.
+      Alternatively, a list of standard versions to test with can be specified
+      as a comma-separated list in the <code class="envar">GLIBCXX_TESTSUITE_STDS</code>
+      environment variable.
     </p><p>
       To run the libstdc++ test suite under the
       <a class="link" href="debug_mode.html" title="Chapter 17. Debug Mode">debug mode</a>, use
@@ -371,8 +391,12 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
     directory and file name, given the organization as previously
     described.
    </p><p>
-    All files are copyright the FSF, and GPL'd: this is very
-    important.  The first copyright year should correspond to the date
+    Historically all test files were copyright the FSF, and GPL licensed.
+    We no longer require that, because most tests are uninteresting
+    and contain no "original authorship", and so would not be protected
+    by copyright anyway.
+    If you do want to add the FSF copyright notice and GPL licence text,
+    then the first copyright year should correspond to the date
     the file was checked in to version control. If a test is copied from
     an existing file it should retain the copyright years from the
     original file.
@@ -451,11 +475,12 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
     It is possible to indicate that a test should <span class="emphasis"><em>only</em></span>
     be run for a specific standard (and not later standards) using an
     effective target like <code class="literal">c++11_only</code>. However, this means
-    the test will be skipped by default (because the default mode is
-    <code class="literal">gnu++17</code>), and so will only run when
-    <code class="option">-std=gnu++11</code> or <code class="option">-std=c++11</code> is used
-    explicitly. For tests that require a specific standard it is better to
-    use a <code class="literal">dg-options</code> directive:
+    the test will be skipped by default unless <code class="option">-std=gnu++11</code>
+    or <code class="option">-std=c++11</code> is explicitly specified, either via a
+    target board, the <code class="varname">v3_std_list</code> dejagnu variable,
+    or the <code class="envar">GLIBCXX_TESTSUITE_STDS</code> environment variable.
+    For tests that require a specific standard it is useful to also add a
+    <code class="literal">dg-options</code> directive:
 </p><pre class="programlisting">    // { dg-options "-std=gnu++11" }</pre><p>
     This means the test will not get skipped by default, and will always use
     the specific standard dialect that the test requires. This isn't needed
@@ -463,16 +488,21 @@ cat 27_io/objects/char/3_xin.in | a.out</pre></dd><dt><span class="term"><code c
     minimum standard instead, to allow them to be tested for all
     possible variations.
   </p><p>
-    Similarly, tests which depend on a newer standard than the default
-    must use <code class="literal">dg-options</code> instead of (or in addition to)
-    an effective target, so that they are not skipped by default.
-    For example, tests for C++20 features should use
-</p><pre class="programlisting">    // { dg-options "-std=gnu++20" }</pre><p>
-    before any <code class="literal">dg-do</code> such as:
-</p><pre class="programlisting">    // { dg-do run { target c++20 } }</pre><p>
-    The <code class="literal">dg-options</code> directive must come first, so that
-    the <code class="literal">-std</code> flag has already been added to the options
-    before checking the <code class="literal">c++20</code> effective target.
+    N.B. when a <code class="literal">dg-options</code> directive is used, it must come
+    first so dejagnu will include those options when checking against any
+    effective targets in <code class="literal">dg-do</code> and
+    <code class="literal">dg-require-effective-target</code> directives.
+  </p><p>
+    Since GCC 14, tests which depend on a newer standard than the default
+    do not need to specify that standard in a <code class="literal">dg-options</code>
+    directive. The testsuite will detect when a test requires a newer standard
+    and will automatically add a suitable <code class="option">-std</code> flag.
+  </p><p>
+    If a testcase requires the use of a strict language dialect, e.g.
+    <code class="option">-std=c++11</code> rather than <code class="option">-std=gnu++11</code>,
+    the following directive will cause that to be used when the testsuite
+    decides which <code class="option">-std</code> options to use for the test:
+</p><pre class="programlisting">    // { dg-add-options strict_std }</pre><p>
   </p><div class="section"><div class="titlepage"><div><div><h4 class="title"><a id="tests.dg.examples"></a>Examples of Test Directives</h4></div></div></div><p>
 Example 1: Testing compilation only:
 </p><pre class="programlisting">

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    F2003 I/O support contributed by Jerry DeLisle
 
@@ -186,7 +186,11 @@ convert_real (st_parameter_dt *dtp, void *dest, const char *buffer, int length)
 #if defined(HAVE_GFC_REAL_16)
 # if defined(GFC_REAL_16_IS_FLOAT128)
     case 16:
+#  if defined(GFC_REAL_16_USE_IEC_60559)
+      *((GFC_REAL_16*) dest) = strtof128 (buffer, &endptr);
+#  else
       *((GFC_REAL_16*) dest) = __qmath_(strtoflt128) (buffer, &endptr);
+#  endif
       break;
 # elif defined(HAVE_STRTOLD)
     case 16:
@@ -199,6 +203,8 @@ convert_real (st_parameter_dt *dtp, void *dest, const char *buffer, int length)
     case 17:
 # if defined(POWER_IEEE128)
       *((GFC_REAL_17*) dest) = __strtoieee128 (buffer, &endptr);
+# elif defined(GFC_REAL_17_USE_IEC_60559)
+      *((GFC_REAL_17*) dest) = strtof128 (buffer, &endptr);
 # else
       *((GFC_REAL_17*) dest) = __qmath_(strtoflt128) (buffer, &endptr);
 # endif
@@ -272,7 +278,14 @@ convert_infnan (st_parameter_dt *dtp, void *dest, const char *buffer,
 #if defined(HAVE_GFC_REAL_16)
 # if defined(GFC_REAL_16_IS_FLOAT128)
     case 16:
+#  if defined(GFC_REAL_16_USE_IEC_60559)
+      if (is_inf)
+	*((GFC_REAL_16*) dest) = plus ? __builtin_inff128 () : -__builtin_inff128 ();
+      else
+	*((GFC_REAL_16*) dest) = plus ? __builtin_nanf128 ("") : -__builtin_nanf128 ("");
+#  else
       *((GFC_REAL_16*) dest) = __qmath_(strtoflt128) (buffer, NULL);
+#  endif
       break;
 # else
     case 16:
@@ -662,11 +675,11 @@ read_decimal (st_parameter_dt *dtp, const fnode *f, char *dest, int length)
 {
   GFC_UINTEGER_LARGEST value, maxv, maxv_10;
   GFC_INTEGER_LARGEST v;
-  size_t w;
+  size_t w, padding;
   int negative;
   char c, *p;
 
-  w = f->u.w;
+  w = padding = f->u.w;
 
   /* This is a legacy extension, and the frontend will only allow such cases
    * through when -fdec-format-defaults is passed.
@@ -678,6 +691,10 @@ read_decimal (st_parameter_dt *dtp, const fnode *f, char *dest, int length)
 
   if (p == NULL)
     return;
+
+  /* If the read was not the full width we may need to pad with blanks or zeros
+   * depending on the PAD mode.  Save the number of pad characters needed.  */
+  padding -= w;
 
   p = eat_leading_spaces (&w, p);
   if (w == 0)
@@ -716,8 +733,14 @@ read_decimal (st_parameter_dt *dtp, const fnode *f, char *dest, int length)
     {
       c = next_char (dtp, &p, &w);
       if (c == '\0')
-	break;
-	
+	{
+	  if (dtp->u.p.blank_status == BLANK_ZERO)
+	    {
+	      for (size_t n = 0; n < padding; n++)
+		value = 10 * value;
+	    }
+	  break;
+	}
       if (c == ' ')
         {
 	  if (dtp->u.p.blank_status == BLANK_NULL)
@@ -765,7 +788,6 @@ read_decimal (st_parameter_dt *dtp, const fnode *f, char *dest, int length)
 
 }
 
-
 /* read_radix()-- This function reads values for non-decimal radixes.
    The difference here is that we treat the values here as unsigned
    values for the purposes of overflow.  If minus sign is present and
@@ -777,16 +799,20 @@ read_radix (st_parameter_dt *dtp, const fnode *f, char *dest, int length,
 {
   GFC_UINTEGER_LARGEST value, maxv, maxv_r;
   GFC_INTEGER_LARGEST v;
-  size_t w;
+  size_t w, padding;
   int negative;
   char c, *p;
 
-  w = f->u.w;
+  w = padding = f->u.w;
 
   p = read_block_form (dtp, &w);
 
   if (p == NULL)
     return;
+
+  /* If the read was not the full width we may need to pad with blanks or zeros
+   * depending on the PAD mode.  Save the number of pad characters needed.  */
+  padding -= w;
 
   p = eat_leading_spaces (&w, p);
   if (w == 0)
@@ -825,7 +851,14 @@ read_radix (st_parameter_dt *dtp, const fnode *f, char *dest, int length,
     {
       c = next_char (dtp, &p, &w);
       if (c == '\0')
-	break;
+	{
+	  if (dtp->u.p.blank_status == BLANK_ZERO)
+	    {
+	      for (size_t n = 0; n < padding; n++)
+		value = radix * value;
+	    }
+	  break;
+	}
       if (c == ' ')
         {
 	  if (dtp->u.p.blank_status == BLANK_NULL) continue;
@@ -1049,8 +1082,17 @@ read_f (st_parameter_dt *dtp, const fnode *f, char *dest, int length)
 	case ',':
 	  if (dtp->u.p.current_unit->decimal_status != DECIMAL_COMMA)
 	    goto bad_float;
-	  /* Fall through.  */
+	  if (seen_dp)
+	    goto bad_float;
+	  if (!seen_int_digit)
+	    *(out++) = '0';
+	  *(out++) = '.';
+	  seen_dp = 1;
+	  break;
+
 	case '.':
+	  if (dtp->u.p.current_unit->decimal_status != DECIMAL_POINT)
+	    goto bad_float;
 	  if (seen_dp)
 	    goto bad_float;
 	  if (!seen_int_digit)
@@ -1294,6 +1336,23 @@ read_x (st_parameter_dt *dtp, size_t n)
     
   if (n == 0)
     return;
+    
+  if (dtp->u.p.current_unit->flags.encoding == ENCODING_UTF8)
+    {
+      gfc_char4_t c;
+      size_t nbytes, j;
+    
+      /* Proceed with decoding one character at a time.  */
+      for (j = 0; j < n; j++)
+	{
+	  c = read_utf8 (dtp, &nbytes);
+    
+	  /* Check for a short read and if so, break out.  */
+	  if (nbytes == 0 || c == (gfc_char4_t)0)
+	    break;
+	}
+      return;
+    }
 
   length = n;
 

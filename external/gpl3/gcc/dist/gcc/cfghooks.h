@@ -1,5 +1,5 @@
 /* Hooks for cfg representation specific functions.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <s.pop@laposte.net>
 
 This file is part of GCC.
@@ -78,7 +78,7 @@ struct cfg_hooks
   const char *name;
 
   /* Debugging.  */
-  int (*verify_flow_info) (void);
+  bool (*verify_flow_info) (void);
   void (*dump_bb) (FILE *, basic_block, int, dump_flags_t);
   void (*dump_bb_for_graph) (pretty_printer *, basic_block);
 
@@ -206,7 +206,7 @@ extern void verify_flow_info (void);
 /* Check control flow invariants, if internal consistency checks are
    enabled.  */
 
-static inline void
+inline void
 checking_verify_flow_info (void)
 {
   /* TODO: Add a separate option for -fchecking=cfg.  */

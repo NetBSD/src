@@ -12,8 +12,8 @@
   })
 
 (define_insn_and_split "*zero_extendqihi2"
-  [(set (match_operand:HI 0 "register_operand" "=r,r")
-	(zero_extend:HI (match_operand:QI 1 "general_operand_src" "0,g>")))]
+  [(set (match_operand:HI 0 "register_operand" "=r,r,r")
+	(zero_extend:HI (match_operand:QI 1 "general_operand_src" "0,r,g>")))]
   ""
   "#"
   "&& reload_completed"
@@ -21,14 +21,15 @@
 	      (clobber (reg:CC CC_REG))])])
 
 (define_insn "*zero_extendqihi2<cczn>"
-  [(set (match_operand:HI 0 "register_operand" "=r,r")
-	(zero_extend:HI (match_operand:QI 1 "general_operand_src" "0,g>")))
+  [(set (match_operand:HI 0 "register_operand" "=r,r,r")
+	(zero_extend:HI (match_operand:QI 1 "general_operand_src" "0,r,g>")))
    (clobber (reg:CC CC_REG))]
   ""
   "@
   extu.w	%T0
+  mov.b\t%X1,%R0\;extu.w\t%T0
   #"
-  [(set_attr "length" "2,10")])
+  [(set_attr "length" "2,4,10")])
 
 ;; Split the zero extension of a general operand (actually a memory
 ;; operand) into a load of the operand and the actual zero extension
@@ -43,6 +44,24 @@
   [(set (match_dup 2) (match_dup 1))
    (parallel [(set (match_dup 0) (zero_extend:HI (match_dup 2)))
 	      (clobber (reg:CC CC_REG))])]
+  {
+    operands[2] = gen_rtx_REG (QImode, REGNO (operands[0]));
+  })
+
+;; Similarly, but setting cczn.
+(define_split
+  [(set (reg:CCZN CC_REG)
+	(compare:CCZN
+	  (zero_extend:HI (match_operand:QI 1 "general_operand_src" ""))
+	  (const_int 0)))
+   (set (match_operand:HI 0 "register_operand" "")
+        (zero_extend:HI (match_dup 1)))]
+  "!REG_P (operands[1]) && reload_completed"
+  [(parallel [(set (match_dup 2) (match_dup 1))
+	      (clobber (reg:CC CC_REG))])
+   (parallel [(set (reg:CCZN CC_REG)
+		   (compare:CCZN (zero_extend:HI (match_dup 2)) (const_int 0)))
+	      (set (match_dup 0) (zero_extend:HI (match_dup 2)))])]
   {
     operands[2] = gen_rtx_REG (QImode, REGNO (operands[0]));
   })

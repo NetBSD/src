@@ -93,16 +93,12 @@ static const char *ReportTypeString(ReportType typ, uptr tag) {
       return "signal handler spoils errno";
     case ReportTypeDeadlock:
       return "lock-order-inversion (potential deadlock)";
-    // No default case so compiler warns us if we miss one
+    case ReportTypeMutexHeldWrongContext:
+      return "mutex held in the wrong context";
+      // No default case so compiler warns us if we miss one
   }
   UNREACHABLE("missing case");
 }
-
-#if SANITIZER_MAC
-static const char *const kInterposedFunctionPrefix = "wrap_";
-#else
-static const char *const kInterposedFunctionPrefix = "__interceptor_";
-#endif
 
 void PrintStack(const ReportStack *ent) {
   if (ent == 0 || ent->frames == 0) {
@@ -112,10 +108,10 @@ void PrintStack(const ReportStack *ent) {
   SymbolizedStack *frame = ent->frames;
   for (int i = 0; frame && frame->info.address; frame = frame->next, i++) {
     InternalScopedString res;
-    RenderFrame(&res, common_flags()->stack_trace_format, i,
-                frame->info.address, &frame->info,
-                common_flags()->symbolize_vs_style,
-                common_flags()->strip_path_prefix, kInterposedFunctionPrefix);
+    StackTracePrinter::GetOrInit()->RenderFrame(
+        &res, common_flags()->stack_trace_format, i, frame->info.address,
+        &frame->info, common_flags()->symbolize_vs_style,
+        common_flags()->strip_path_prefix);
     Printf("%s\n", res.data());
   }
   Printf("\n");
@@ -126,7 +122,7 @@ static void PrintMutexSet(Vector<ReportMopMutex> const& mset) {
     if (i == 0)
       Printf(" (mutexes:");
     const ReportMopMutex m = mset[i];
-    Printf(" %s M%llu", m.write ? "write" : "read", m.id);
+    Printf(" %s M%u", m.write ? "write" : "read", m.id);
     Printf(i == mset.Size() - 1 ? ")" : ",");
   }
 }
@@ -200,8 +196,9 @@ static void PrintLocation(const ReportLocation *loc) {
   } else if (loc->type == ReportLocationTLS) {
     Printf("  Location is TLS of %s.\n\n", thread_name(thrbuf, loc->tid));
   } else if (loc->type == ReportLocationFD) {
-    Printf("  Location is file descriptor %d created by %s at:\n",
-        loc->fd, thread_name(thrbuf, loc->tid));
+    Printf("  Location is file descriptor %d %s by %s at:\n", loc->fd,
+           loc->fd_closed ? "destroyed" : "created",
+           thread_name(thrbuf, loc->tid));
     print_stack = true;
   }
   Printf("%s", d.Default());
@@ -211,29 +208,23 @@ static void PrintLocation(const ReportLocation *loc) {
 
 static void PrintMutexShort(const ReportMutex *rm, const char *after) {
   Decorator d;
-  Printf("%sM%lld%s%s", d.Mutex(), rm->id, d.Default(), after);
+  Printf("%sM%d%s%s", d.Mutex(), rm->id, d.Default(), after);
 }
 
 static void PrintMutexShortWithAddress(const ReportMutex *rm,
                                        const char *after) {
   Decorator d;
-  Printf("%sM%lld (%p)%s%s", d.Mutex(), rm->id,
+  Printf("%sM%d (%p)%s%s", d.Mutex(), rm->id,
          reinterpret_cast<void *>(rm->addr), d.Default(), after);
 }
 
 static void PrintMutex(const ReportMutex *rm) {
   Decorator d;
-  if (rm->destroyed) {
-    Printf("%s", d.Mutex());
-    Printf("  Mutex M%llu is already destroyed.\n\n", rm->id);
-    Printf("%s", d.Default());
-  } else {
-    Printf("%s", d.Mutex());
-    Printf("  Mutex M%llu (%p) created at:\n", rm->id,
-           reinterpret_cast<void *>(rm->addr));
-    Printf("%s", d.Default());
-    PrintStack(rm->stack);
-  }
+  Printf("%s", d.Mutex());
+  Printf("  Mutex M%u (%p) created at:\n", rm->id,
+         reinterpret_cast<void *>(rm->addr));
+  Printf("%s", d.Default());
+  PrintStack(rm->stack);
 }
 
 static void PrintThread(const ReportThread *rt) {
@@ -289,6 +280,7 @@ static bool FrameIsInternal(const SymbolizedStack *frame) {
   const char *module = frame->info.module;
   if (file != 0 &&
       (internal_strstr(file, "tsan_interceptors_posix.cpp") ||
+       internal_strstr(file, "tsan_interceptors_memintrinsics.cpp") ||
        internal_strstr(file, "sanitizer_common_interceptors.inc") ||
        internal_strstr(file, "tsan_interface_")))
     return true;
@@ -311,6 +303,9 @@ void PrintReport(const ReportDesc *rep) {
   Printf("WARNING: ThreadSanitizer: %s (pid=%d)\n", rep_typ_str,
          (int)internal_getpid());
   Printf("%s", d.Default());
+
+  if (rep->typ == ReportTypeErrnoInSignal)
+    Printf("  Signal %u handler invoked at:\n", rep->signum);
 
   if (rep->typ == ReportTypeDeadlock) {
     char thrbuf[kThreadBufSize];
@@ -460,12 +455,12 @@ void PrintReport(const ReportDesc *rep) {
   } else if (rep->typ == ReportTypeDeadlock) {
     Printf("WARNING: DEADLOCK\n");
     for (uptr i = 0; i < rep->mutexes.Size(); i++) {
-      Printf("Goroutine %d lock mutex %llu while holding mutex %llu:\n", 999,
+      Printf("Goroutine %d lock mutex %u while holding mutex %u:\n", 999,
              rep->mutexes[i]->id,
              rep->mutexes[(i + 1) % rep->mutexes.Size()]->id);
       PrintStack(rep->stacks[2*i]);
       Printf("\n");
-      Printf("Mutex %llu was previously locked here:\n",
+      Printf("Mutex %u was previously locked here:\n",
              rep->mutexes[(i + 1) % rep->mutexes.Size()]->id);
       PrintStack(rep->stacks[2*i + 1]);
       Printf("\n");

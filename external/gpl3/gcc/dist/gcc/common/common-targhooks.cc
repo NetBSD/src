@@ -1,5 +1,5 @@
 /* Default common target hook functions.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -90,3 +90,18 @@ const struct default_options empty_optimization_table[] =
   {
     { OPT_LEVELS_NONE, 0, NULL, 0 }
   };
+
+/* Default version of TARGET_COMPUTE_MULTILIB.  */
+const char *
+default_compute_multilib(
+  const struct switchstr *,
+  int,
+  const char *multilib,
+  const char *,
+  const char *,
+  const char *,
+  const char *,
+  const char *)
+{
+  return multilib;
+}

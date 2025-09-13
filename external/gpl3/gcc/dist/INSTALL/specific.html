@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -86,6 +86,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <a name="index-Specific"></a>
 <a name="index-Specific-installation-notes"></a>
 <a name="index-Target-specific-installation"></a>
@@ -102,7 +105,6 @@ information have to.
 </p>
 <ul>
 <li> <a href="#aarch64-x-x">aarch64*-*-*</a>
-</li><li> <a href="#alpha-x-x">alpha*-*-*</a>
 </li><li> <a href="#amdgcn-x-amdhsa">amdgcn-*-amdhsa</a>
 </li><li> <a href="#amd64-x-solaris2">amd64-*-solaris2*</a>
 </li><li> <a href="#arc-x-elf32">arc-*-elf32</a>
@@ -117,7 +119,6 @@ information have to.
 </li><li> <a href="#x-x-freebsd">*-*-freebsd*</a>
 </li><li> <a href="#h8300-hms">h8300-hms</a>
 </li><li> <a href="#hppa-hp-hpux">hppa*-hp-hpux*</a>
-</li><li> <a href="#hppa-hp-hpux10">hppa*-hp-hpux10</a>
 </li><li> <a href="#hppa-hp-hpux11">hppa*-hp-hpux11</a>
 </li><li> <a href="#x-x-linux-gnu">*-*-linux-gnu</a>
 </li><li> <a href="#ix86-x-linux">i?86-*-linux*</a>
@@ -168,9 +169,6 @@ information have to.
 </li><li> <a href="#sparc64-x-solaris2">sparc64-*-solaris2*</a>
 </li><li> <a href="#sparcv9-x-solaris2">sparcv9-*-solaris2*</a>
 </li><li> <a href="#c6x-x-x">c6x-*-*</a>
-</li><li> <a href="#tilegx-x-linux">tilegx-*-linux*</a>
-</li><li> <a href="#tilegxbe-x-linux">tilegxbe-*-linux*</a>
-</li><li> <a href="#tilepro-x-linux">tilepro-*-linux*</a>
 </li><li> <a href="#visium-x-elf">visium-*-elf</a>
 </li><li> <a href="#x-x-vxworks">*-*-vxworks*</a>
 </li><li> <a href="#x86-64-x-x">x86_64-*-*, amd64-*-*</a>
@@ -185,7 +183,7 @@ information have to.
 </li></ul>
 
 <ul>
-<li> <a href="#elf">all ELF targets</a> (SVR4, Solaris 2, etc.)
+<li> <a href="#elf">all ELF targets</a> (SVR4, Solaris, etc.)
 </li></ul>
 
 
@@ -229,13 +227,6 @@ protections by default.  This mechanism is turned off by default if neither
 of the options are given at configure time.
 </p>
 <hr />
-<a name="alpha-x-x"></a><a name="alpha*-*-*"></a>
-<h3 class="heading">alpha*-*-*</h3>
-<p>This section contains general configuration information for all
-Alpha-based platforms using ELF.  In addition to reading this
-section, please read all other sections that match your target.
-</p>
-<hr />
 <a name="amd64-x-solaris2"></a><a name="amd64-*-solaris2*"></a>
 <h3 class="heading">amd64-*-solaris2*</h3>
 <p>This is a synonym for &lsquo;<samp>x86_64-*-solaris2*</samp>&rsquo;.
@@ -245,19 +236,29 @@ section, please read all other sections that match your target.
 <h3 class="heading">amdgcn-*-amdhsa</h3>
 <p>AMD GCN GPU target.
 </p>
-<p>Instead of GNU Binutils, you will need to install LLVM 13.0.1, or later, and copy
+<p>Instead of GNU Binutils, you will need to install LLVM 15, or later, and copy
 <samp>bin/llvm-mc</samp> to <samp>amdgcn-amdhsa/bin/as</samp>,
 <samp>bin/lld</samp> to <samp>amdgcn-amdhsa/bin/ld</samp>,
 <samp>bin/llvm-nm</samp> to <samp>amdgcn-amdhsa/bin/nm</samp>, and
 <samp>bin/llvm-ar</samp> to both <samp>bin/amdgcn-amdhsa-ar</samp> and
-<samp>bin/amdgcn-amdhsa-ranlib</samp>.
+<samp>bin/amdgcn-amdhsa-ranlib</samp>.  Note that LLVM 13.0.1 or LLVM 14 can be used
+by specifying a <code>--with-multilib-list=</code> that does not list <code>gfx1100</code>
+and <code>gfx1103</code>.
 </p>
-<p>Use Newlib (3.2.0, or newer).
+<p>Use Newlib (4.3.0 or newer; 4.4.0 contains some improvements and git commit
+7dd4eb1db (2025-03-25, post-4.4.0) fixes device console output for GFX10 and
+GFX11 devices).
 </p>
 <p>To run the binaries, install the HSA Runtime from the
-<a href="https://rocm.github.io">ROCm Platform</a>, and use
+<a href="https://rocm.docs.amd.com/">ROCm Platform</a>, and use
 <samp>libexec/gcc/amdhsa-amdhsa/<var>version</var>/gcn-run</samp> to launch them
 on the GPU.
+</p>
+<p>To enable support for GCN3 Fiji devices (gfx803), GCC has to be configured with
+<samp>--with-arch=<code>fiji</code></samp> or
+<samp>--with-multilib-list=<code>fiji</code>,...</samp>.  Note that support for Fiji
+devices has been removed in ROCm 4.0 and support in LLVM was deprecated and has
+been removed in LLVM 18.
 </p>
 <hr />
 <a name="arc-x-elf32"></a><a name="arc-*-elf32"></a>
@@ -317,21 +318,6 @@ See &ldquo;Blackfin Options&rdquo; in the main manual
 are available at <a href="https://sourceforge.net/projects/adi-toolchain/">https://sourceforge.net/projects/adi-toolchain/</a>.
 </p>
 <hr />
-<a name="cr16"></a><a name="CR16"></a>
-<h3 class="heading">CR16</h3>
-<p>The CR16 CompactRISC architecture is a 16-bit architecture. This
-architecture is used in embedded applications.
-</p>
-
-<p>See &ldquo;CR16 Options&rdquo; in the main manual for a list of CR16-specific options.
-</p>
-<p>Use &lsquo;<samp>configure --target=cr16-elf --enable-languages=c,c++</samp>&rsquo; to configure
-GCC&nbsp;for building a CR16 elf cross-compiler.
-</p>
-<p>Use &lsquo;<samp>configure --target=cr16-uclinux --enable-languages=c,c++</samp>&rsquo; to
-configure GCC&nbsp;for building a CR16 uclinux cross-compiler.
-</p>
-<hr />
 <a name="cris"></a><a name="CRIS"></a>
 <h3 class="heading">CRIS</h3>
 <p>CRIS is a CPU architecture in Axis Communications systems-on-a-chip, for
@@ -361,34 +347,22 @@ This configuration is intended for embedded systems.
 <hr />
 <a name="x-x-freebsd"></a><a name="g_t*-*-freebsd*"></a>
 <h3 class="heading">*-*-freebsd*</h3>
-<p>In order to better utilize FreeBSD base system functionality and match
-the configuration of the system compiler, GCC 4.5 and above as well as
-GCC 4.4 past 2010-06-20 leverage SSP support in libc (which is present
-on FreeBSD 7 or later) and the use of <code>__cxa_atexit</code> by default
-(on FreeBSD 6 or later).  The use of <code>dl_iterate_phdr</code> inside
-<samp>libgcc_s.so.1</samp> and boehm-gc (on FreeBSD 7 or later) is enabled
-by GCC 4.5 and above.
-</p>
 <p>We support FreeBSD using the ELF file format with DWARF 2 debugging
-for all CPU architectures.  You may use <samp>-gstabs</samp> instead of
-<samp>-g</samp>, if you really want the old debugging format.  There are
+for all CPU architectures.  There are
 no known issues with mixing object files and libraries with different
-debugging formats.  Otherwise, this release of GCC should now match
-more of the configuration used in the stock FreeBSD configuration of
-GCC.  In particular, <samp>--enable-threads</samp> is now configured by
-default.  However, as a general user, do not attempt to replace the
-system compiler with this release.  Known to bootstrap and check with
-good results on FreeBSD 7.2-STABLE.  In the past, known to bootstrap
-and check with good results on FreeBSD 3.0, 3.4, 4.0, 4.2, 4.3, 4.4,
-4.5, 4.8, 4.9 and 5-CURRENT.
+debugging formats.
 </p>
-<p>The version of binutils installed in <samp>/usr/bin</samp> probably works
-with this release of GCC.  Bootstrapping against the latest GNU
-binutils and/or the version found in <samp>/usr/ports/devel/binutils</samp> has
-been known to enable additional features and improve overall testsuite
-results.  However, it is currently known that boehm-gc may not configure
-properly on FreeBSD prior to the FreeBSD 7.0 release with GNU binutils
-after 2.16.1.
+<p>We recommend bootstrapping against the latest GNU binutils or the
+version found in the <samp>devel/binutils</samp> port. This also has been
+known to enable additional features and improve overall testsuite
+results.
+</p>
+<p>Ada and D (or rather their respective libraries) are broken on
+FreeBSD/i386. This also affects building 32-bit libraries on
+FreeBSD/amd64, so configure with <samp>--disable-multilib</samp>
+there in case you are building one of these front ends.
+</p>
+<p>Go (or rather libgo) is generally broken on FreeBSD.
 </p>
 <hr />
 <a name="ft32-x-elf"></a><a name="ft32-*-elf"></a>
@@ -411,29 +385,12 @@ longer a multiple of 2 bytes.
 <hr />
 <a name="hppa-hp-hpux"></a><a name="hppa*-hp-hpux*"></a>
 <h3 class="heading">hppa*-hp-hpux*</h3>
-<p>Support for HP-UX version 9 and older was discontinued in GCC 3.4.
-</p>
-<p>We require using gas/binutils on all hppa platforms.  Version 2.19 or
+<p>We require using gas on all hppa platforms.  Version 2.19 or
 later is recommended.
 </p>
 <p>It may be helpful to configure GCC with the
 <a href="./configure.html#with-gnu-as"><samp>--with-gnu-as</samp></a> and
 <samp>--with-as=&hellip;</samp> options to ensure that GCC can find GAS.
-</p>
-<p>The HP assembler should not be used with GCC.  It is rarely tested and may
-not work.  It shouldn&rsquo;t be used with any languages other than C due to its
-many limitations.
-</p>
-<p>Specifically, <samp>-g</samp> does not work (HP-UX uses a peculiar debugging
-format which GCC does not know about).  It also inserts timestamps
-into each object file it creates, causing the 3-stage comparison test to
-fail during a bootstrap.  You should be able to continue by saying
-&lsquo;<samp>make all-host all-target</samp>&rsquo; after getting the failure from &lsquo;<samp>make</samp>&rsquo;.
-</p>
-<p>Various GCC features are not supported.  For example, it does not support weak
-symbols or alias definitions.  As a result, explicit template instantiations
-are required when using C++.  This makes it difficult if not impossible to
-build many C++ applications.
 </p>
 <p>There are two default scheduling models for instructions.  These are
 PROCESSOR_7100LC and PROCESSOR_8000.  They are selected from the pa-risc
@@ -460,24 +417,8 @@ a list of the predefines used with each standard.
 <p>More specific information to &lsquo;<samp>hppa*-hp-hpux*</samp>&rsquo; targets follows.
 </p>
 <hr />
-<a name="hppa-hp-hpux10"></a><a name="hppa*-hp-hpux10"></a>
-<h3 class="heading">hppa*-hp-hpux10</h3>
-<p>For hpux10.20, we <em>highly</em> recommend you pick up the latest sed patch
-<code>PHCO_19798</code> from HP.
-</p>
-<p>The C++ ABI has changed incompatibly in GCC 4.0.  COMDAT subspaces are
-used for one-only code and data.  This resolves many of the previous
-problems in using C++ on this target.  However, the ABI is not compatible
-with the one implemented under HP-UX 11 using secondary definitions.
-</p>
-<hr />
 <a name="hppa-hp-hpux11"></a><a name="hppa*-hp-hpux11"></a>
 <h3 class="heading">hppa*-hp-hpux11</h3>
-<p>GCC 3.0 and up support HP-UX 11.  GCC 2.95.x is not supported and cannot
-be used to compile GCC 3.0 and up.
-</p>
-<p>The libffi library haven&rsquo;t been ported to 64-bit HP-UX&nbsp;and doesn&rsquo;t build.
-</p>
 <p>Refer to <a href="binaries.html">binaries</a> for information about obtaining
 precompiled GCC binaries for HP-UX.  Precompiled binaries must be obtained
 to build the Ada language as it cannot be bootstrapped using C.  Ada is
@@ -555,9 +496,7 @@ options, including program core dumps.  Binutils 2.14 corrects a
 problem on the 64-bit port resulting from HP&rsquo;s non-standard use of
 the .init and .fini sections for array initializers and finalizers.
 </p>
-<p>Although the HP and GNU linkers are both supported for the
-&lsquo;<samp>hppa64-hp-hpux11*</samp>&rsquo; target, it is strongly recommended that the
-HP linker be used for link editing on this target.
+<p>Only the HP linker is supported for the &lsquo;<samp>hppa64-hp-hpux11*</samp>&rsquo; target.
 </p>
 <p>At this time, the GNU linker does not support the creation of long
 branch stubs.  As a result, it cannot successfully link binaries
@@ -602,23 +541,6 @@ with GCC 4.7, there is also a 64-bit &lsquo;<samp>amd64-*-solaris2*</samp>&rsquo
 &lsquo;<samp>x86_64-*-solaris2*</samp>&rsquo; configuration that corresponds to
 &lsquo;<samp>sparcv9-sun-solaris2*</samp>&rsquo;.
 </p>
-<p>It is recommended that you configure GCC to use the GNU assembler.  The
-versions included in Solaris 11.3, from GNU binutils 2.23.1 or
-newer (available as <samp>/usr/bin/gas</samp> and
-<samp>/usr/gnu/bin/as</samp>), work fine.  The current version, from GNU
-binutils 2.34, is known to work.  Recent versions of the Solaris assembler in
-<samp>/usr/bin/as</samp> work almost as well, though.
-</p>
-<p>For linking, the Solaris linker is preferred.  If you want to use the GNU
-linker instead, the version in Solaris 11.3, from GNU binutils 2.23.1 or
-newer (in <samp>/usr/gnu/bin/ld</samp> and <samp>/usr/bin/gld</samp>), works,
-as does the latest version, from GNU binutils 2.34.
-</p>
-<p>To use GNU <code>as</code>, configure with the options
-<samp>--with-gnu-as --with-as=/usr/gnu/bin/as</samp>.  It may be necessary
-to configure with <samp>--without-gnu-ld --with-ld=/usr/ccs/bin/ld</samp> to
-guarantee use of Solaris <code>ld</code>.
-</p>
 <hr />
 <a name="ia64-x-linux"></a><a name="ia64-*-linux"></a>
 <h3 class="heading">ia64-*-linux</h3>
@@ -635,12 +557,6 @@ later.
 <p>Building GCC on this target requires the GNU Assembler.  The bundled HP
 assembler will not work.  To prevent GCC from using the wrong assembler,
 the option <samp>--with-gnu-as</samp> may be necessary.
-</p>
-<p>The GCC libunwind library has not been ported to HPUX.  This means that for
-GCC versions 3.2.3 and earlier, <samp>--enable-libunwind-exceptions</samp>
-is required to build GCC.  For GCC 3.3 and later, this is the default.
-For gcc 3.4.3 and later, <samp>--enable-libunwind-exceptions</samp> is
-removed and the system libunwind library will always be used.
 </p>
 <hr />
 <!-- rs6000-ibm-aix*, powerpc-ibm-aix* -->
@@ -849,8 +765,7 @@ with a small set of possible suffixes to identify their default ABI type:
 
 </dd>
 <dt><code>loongarch64-linux-gnu</code></dt>
-<dd><p>Same as <code>loongarch64-linux-gnuf64</code>, but may be used with
-<samp>--with-abi=*</samp> to configure the default ABI type.
+<dd><p>Same as <code>loongarch64-linux-gnuf64</code> for legacy support.
 </p></dd>
 </dl>
 
@@ -992,17 +907,26 @@ in a minimal run-time environment by default.
 <p>Nvidia PTX target.
 </p>
 <p>Instead of GNU binutils, you will need to install
-<a href="https://github.com/MentorEmbedded/nvptx-tools/">nvptx-tools</a>.
+<a href="https://github.com/SourceryTools/nvptx-tools">nvptx-tools</a>.
 Tell GCC where to find it:
 <samp>--with-build-time-tools=[install-nvptx-tools]/nvptx-none/bin</samp>.
 </p>
-<p>You will need newlib 3.1.0 or later.  It can be
+<p>You will need newlib 4.3.0 or later.  It can be
 automatically built together with GCC.  For this, add a symbolic link
 to nvptx-newlib&rsquo;s <samp>newlib</samp> directory to the directory containing
 the GCC sources.
 </p>
 <p>Use the <samp>--disable-sjlj-exceptions</samp> and
 <samp>--enable-newlib-io-long-long</samp> options when configuring.
+</p>
+<p>The <samp>--with-arch</samp> option may be specified to override the
+default value for the <samp>-march</samp> option, and to also build
+corresponding target libraries.
+The default is <samp>--with-arch=sm_30</samp>.
+</p>
+<p>For example, if <samp>--with-arch=sm_70</samp> is specified,
+<samp>-march=sm_30</samp> and <samp>-march=sm_70</samp> target libraries are
+built, and code generation defaults to <samp>-march=sm_70</samp>.
 </p>
 <hr />
 <a name="or1k-x-elf"></a><a name="or1k-*-elf"></a>
@@ -1136,63 +1060,68 @@ supported as cross-compilation target only.
 <hr />
 <a name="x-x-solaris2"></a><a name="g_t*-*-solaris2*"></a>
 <h3 class="heading">*-*-solaris2*</h3>
-<p>Support for Solaris 10 has been removed in GCC 10.  Support for Solaris
+<p>Support for Solaris 11.3 and earlier has been obsoleted in GCC 13, but
+can still be enabled by configuring with <samp>--enable-obsolete</samp>.
+Support for Solaris 10 has been removed in GCC 10.  Support for Solaris
 9 has been removed in GCC 5.  Support for Solaris 8 has been removed in
 GCC 4.8.  Support for Solaris 7 has been removed in GCC 4.6.
 </p>
 <p>Solaris 11.3 provides GCC 4.5.2, 4.7.3, and 4.8.2 as
-<code>/usr/gcc/4.5/bin/gcc</code> or similar.  Newer Solaris versions
-provide one or more of GCC 5, 7, and 9.  Alternatively,
-you can install a pre-built GCC to bootstrap and install GCC.  See the
-<a href="binaries.html">binaries page</a> for details.
+<code>/usr/gcc/4.5/bin/gcc</code> or similar.  Solaris 11.4
+provides one or more of GCC 5, 7, 9, 10, 11, and 12.
 </p>
-<p>The Solaris 2 <code>/bin/sh</code> will often fail to configure
-&lsquo;<samp>libstdc++-v3</samp>&rsquo;.  We therefore recommend using the
-following initial sequence of commands
+<p>You need to install the <code>system/header</code>, <code>system/linker</code>, and
+<code>developer/assembler</code> packages.
 </p>
-<div class="smallexample">
-<pre class="smallexample">% CONFIG_SHELL=/bin/ksh
-% export CONFIG_SHELL
-</pre></div>
-
-<p>and proceed as described in <a href="configure.html">the configure instructions</a>.
-In addition we strongly recommend specifying an absolute path to invoke
-<code><var>srcdir</var>/configure</code>.
+<p>Trying to use the compatibility tools in <samp>/usr/ucb</samp>, from the
+<code>compatibility/ucb</code> package, to install GCC has been observed to
+cause trouble.  The fix is to remove <samp>/usr/ucb</samp> from your
+<code>PATH</code>.
 </p>
-<p>In Solaris 11, you need to check for <code>system/header</code>,
-<code>system/linker</code>, and <code>developer/assembler</code> packages.
-</p>
-<p>Trying to use the linker and other tools in
-<samp>/usr/ucb</samp> to install GCC has been observed to cause trouble.
-For example, the linker may hang indefinitely.  The fix is to remove
-<samp>/usr/ucb</samp> from your <code>PATH</code>.
-</p>
-<p>The build process works more smoothly with the legacy Solaris tools so, if you
-have <samp>/usr/xpg4/bin</samp> in your <code>PATH</code>, we recommend that you place
-<samp>/usr/bin</samp> before <samp>/usr/xpg4/bin</samp> for the duration of the build.
+<p>The build process works more smoothly with the legacy Solaris tools so,
+if you have <samp>/usr/xpg4/bin</samp> in your <code>PATH</code>, we recommend that
+you place <samp>/usr/bin</samp> before <samp>/usr/xpg4/bin</samp> for the duration
+of the build.
 </p>
 <p>We recommend the use of the Solaris assembler or the GNU assembler, in
-conjunction with the Solaris linker.  The GNU <code>as</code>
-versions included in Solaris 11.3,
-from GNU binutils 2.23.1 or newer (in <samp>/usr/bin/gas</samp> and
-<samp>/usr/gnu/bin/as</samp>), are known to work.
-The current version, from GNU binutils 2.34,
-is known to work as well.  Note that your mileage may vary
-if you use a combination of the GNU tools and the Solaris tools: while the
-combination GNU <code>as</code> + Solaris <code>ld</code> should reasonably work,
-the reverse combination Solaris <code>as</code> + GNU <code>ld</code> may fail to
-build or cause memory corruption at runtime in some cases for C++ programs.
-GNU <code>ld</code> usually works as well.  Again, the current
-version (2.34) is known to work, but generally lacks platform specific
-features, so better stay with Solaris <code>ld</code>.  To use the LTO linker
-plugin (<samp>-fuse-linker-plugin</samp>) with GNU <code>ld</code>, GNU
-binutils <em>must</em> be configured with <samp>--enable-largefile</samp>.
+conjunction with the Solaris linker.
 </p>
-<p>To enable symbol versioning in &lsquo;<samp>libstdc++</samp>&rsquo; with the Solaris linker,
-you need to have any version of GNU <code>c++filt</code>, which is part of
-GNU binutils.  &lsquo;<samp>libstdc++</samp>&rsquo; symbol versioning will be disabled if no
-appropriate version is found.  Solaris <code>c++filt</code> from the Solaris
-Studio compilers does <em>not</em> work.
+<p>The GNU <code>as</code> versions included in Solaris 11.3, from GNU
+binutils 2.23.1 or newer (in <samp>/usr/bin/gas</samp> and
+<samp>/usr/gnu/bin/as</samp>), are known to work.  The version from GNU
+binutils 2.40 is known to work as well.  Recent versions of the Solaris
+assembler in <samp>/usr/bin/as</samp> work almost as well, though.  To use GNU
+<code>as</code>, configure with the options <samp>--with-gnu-as
+--with-as=/usr/gnu/bin/as</samp>.
+</p>
+<p>For linking, the Solaris linker is preferred.  If you want to use the
+GNU linker instead, the version in Solaris 11.3, from GNU binutils
+2.23.1 or newer (in <samp>/usr/gnu/bin/ld</samp> and <samp>/usr/bin/gld</samp>),
+works, as does the version from GNU binutils 2.40.  However, it
+generally lacks platform specific features, so better stay with Solaris
+<code>ld</code>.  To use the LTO linker plugin
+(<samp>-fuse-linker-plugin</samp>) with GNU <code>ld</code>, GNU binutils
+<em>must</em> be configured with <samp>--enable-largefile</samp>.  To use
+Solaris <code>ld</code>, we recommend to configure with
+<samp>--without-gnu-ld --with-ld=/usr/bin/ld</samp> to guarantee the
+right linker is found irrespective of the user&rsquo;s <code>PATH</code>.
+</p>
+<p>Note that your mileage may vary if you use a combination of the GNU
+tools and the Solaris tools: while the combination GNU <code>as</code> and
+Solaris <code>ld</code> works well, the reverse combination Solaris
+<code>as</code> with GNU <code>ld</code> may fail to build or cause memory
+corruption at runtime in some cases for C++ programs.
+</p>
+<p>To enable symbol versioning in &lsquo;<samp>libstdc++</samp>&rsquo; and other runtime
+libraries with the Solaris linker, you need to have any version of GNU
+<code>c++filt</code>, which is part of GNU binutils.  Symbol versioning
+will be disabled if no appropriate version is found.  Solaris
+<code>c++filt</code> from the Solaris Studio compilers does <em>not</em>
+work.
+</p>
+<p>In order to build the GNU Ada compiler, GNAT, a working GNAT is needed.
+Since Solaris 11.4 SRU 39, GNAT 11 or 12 is bundled in the
+<code>developer/gcc/gcc-gnat</code> package.
 </p>
 <p>In order to build the GNU D compiler, GDC, a working &lsquo;<samp>libphobos</samp>&rsquo; is
 needed.  That library wasn&rsquo;t built by default in GCC 9&ndash;11 on SPARC, or
@@ -1238,19 +1167,16 @@ information.
 <p>Starting with Solaris 7, the operating system is capable of executing
 64-bit SPARC V9 binaries.  GCC 3.1 and later properly supports
 this; the <samp>-m64</samp> option enables 64-bit code generation.
-However, if all you want is code tuned for the UltraSPARC CPU, you
-should try the <samp>-mtune=ultrasparc</samp> option instead, which produces
-code that, unlike full 64-bit code, can still run on non-UltraSPARC
-machines.
 </p>
 <p>When configuring the GNU Multiple Precision Library (GMP), the MPFR
-library or the MPC library on a Solaris 7 or later system, the canonical
-target triplet must be specified as the <code>build</code> parameter on the
-configure line.  This target triplet can be obtained by invoking <code>./config.guess</code> in the toplevel source directory of GCC (and
-not that of GMP or MPFR or MPC).  For example on a Solaris 11 system:
+library or the MPC library on Solaris, the canonical target triplet must
+be specified as the <code>build</code> parameter on the <code>configure</code>
+line.  This target triplet can be obtained by invoking
+<code>./config.guess</code> in the toplevel source directory of GCC (and
+not that of GMP or MPFR or MPC).  For example:
 </p>
 <div class="smallexample">
-<pre class="smallexample">% ./configure --build=sparc-sun-solaris2.11 --prefix=xxx
+<pre class="smallexample">% <var>srcdir</var>/configure --build=sparc-sun-solaris2.11 --prefix=<var>dirname</var>
 </pre></div>
 
 <hr />
@@ -1260,49 +1186,31 @@ not that of GMP or MPFR or MPC).  For example on a Solaris 11 system:
 <hr />
 <a name="sparc64-x-solaris2"></a><a name="sparc64-*-solaris2*"></a>
 <h3 class="heading">sparc64-*-solaris2*</h3>
+<p>This is a synonym for &lsquo;<samp>sparcv9-*-solaris2*</samp>&rsquo;.
+</p>
+<hr />
+<a name="sparcv9-x-solaris2"></a><a name="sparcv9-*-solaris2*"></a>
+<h3 class="heading">sparcv9-*-solaris2*</h3>
+
 <p>When configuring a 64-bit-default GCC on Solaris/SPARC, you must use a
 build compiler that generates 64-bit code, either by default or by
-specifying &lsquo;<samp>CC='gcc -m64' CXX='gcc-m64'</samp>&rsquo; to <code>configure</code>.
-Additionally, you <em>must</em> pass <samp>--build=sparc64-sun-solaris2.11</samp>
-or <samp>--build=sparcv9-sun-solaris2.11</samp> because <samp>config.guess</samp>
+specifying &lsquo;<samp>CC='gcc -m64' CXX='g++ -m64' GDC='gdc -m64'</samp>&rsquo; to <code>configure</code>.
+Additionally, you <em>must</em> pass <samp>--build=sparcv9-sun-solaris2.11</samp>
+or <samp>--build=sparc64-sun-solaris2.11</samp> because <samp>config.guess</samp>
 misdetects this situation, which can cause build failures.
 </p>
 <p>When configuring the GNU Multiple Precision Library (GMP), the MPFR
 library or the MPC library, the canonical target triplet must be specified
-as the <code>build</code> parameter on the configure line.  For example
-on a Solaris 11 system:
+as the <code>build</code> parameter on the <code>configure</code> line.  For example:
 </p>
 <div class="smallexample">
-<pre class="smallexample">% ./configure --build=sparc64-sun-solaris2.11 --prefix=xxx
+<pre class="smallexample">% <var>srcdir</var>/configure --build=sparcv9-sun-solaris2.11 --prefix=<var>dirname</var>
 </pre></div>
 
-<hr />
-<a name="sparcv9-x-solaris2"></a><a name="sparcv9-*-solaris2*"></a>
-<h3 class="heading">sparcv9-*-solaris2*</h3>
-<p>This is a synonym for &lsquo;<samp>sparc64-*-solaris2*</samp>&rsquo;.
-</p>
 <hr />
 <a name="c6x-x-x"></a><a name="c6x-*-*"></a>
 <h3 class="heading">c6x-*-*</h3>
 <p>The C6X family of processors. This port requires binutils-2.22 or newer.
-</p>
-<hr />
-<a name="tilegx-*-linux"></a><a name="tilegx-*-linux*"></a>
-<h3 class="heading">tilegx-*-linux*</h3>
-<p>The TILE-Gx processor in little endian mode, running GNU/Linux.  This
-port requires binutils-2.22 or newer.
-</p>
-<hr />
-<a name="tilegxbe-*-linux"></a><a name="tilegxbe-*-linux*"></a>
-<h3 class="heading">tilegxbe-*-linux*</h3>
-<p>The TILE-Gx processor in big endian mode, running GNU/Linux.  This
-port requires binutils-2.23 or newer.
-</p>
-<hr />
-<a name="tilepro-*-linux"></a><a name="tilepro-*-linux*"></a>
-<h3 class="heading">tilepro-*-linux*</h3>
-<p>The TILEPro processor running GNU/Linux.  This port requires
-binutils-2.22 or newer.
 </p>
 <hr />
 <a name="visium-x-elf"></a><a name="visium-*-elf"></a>
@@ -1356,8 +1264,8 @@ both 64-bit x86-64 and 32-bit x86 code (via the <samp>-m32</samp> switch).
 <a name="x86-64-x-solaris2"></a><a name="x86_005f64-*-solaris2*"></a>
 <h3 class="heading">x86_64-*-solaris2*</h3>
 <p>GCC also supports the x86-64 architecture implemented by the AMD64
-processor (&lsquo;<samp>amd64-*-*</samp>&rsquo; is an alias for &lsquo;<samp>x86_64-*-*</samp>&rsquo;) on
-Solaris 10 or later.  Unlike other systems, without special options a
+processor (&lsquo;<samp>amd64-*-*</samp>&rsquo; is an alias for &lsquo;<samp>x86_64-*-*</samp>&rsquo;).
+Unlike other systems, without special options a
 bi-arch compiler is built which generates 32-bit code by default, but
 can generate 64-bit x86-64 code with the <samp>-m64</samp> switch.  Since
 GCC 4.7, there is also a configuration that defaults to 64-bit code, but
@@ -1440,9 +1348,6 @@ support the Interix subsystem.  See above.
 </p>
 <p>Old target names including *-*-winnt and *-*-windowsnt are no longer used.
 </p>
-<p>PW32 (i386-pc-pw32) support was never completed, and the project seems to
-be inactive.  See <a href="http://pw32.sourceforge.net/">http://pw32.sourceforge.net/</a> for more information.
-</p>
 <p>UWIN support has been removed due to a lack of maintenance.
 </p>
 <hr />
@@ -1516,8 +1421,8 @@ about GCC on such systems (which may no longer be applicable to
 current GCC) is to be found in the GCC texinfo manual.
 </p>
 <hr />
-<a name="elf"></a><a name="all-ELF-targets-_0028SVR4_002c-Solaris-2_002c-etc_002e_0029"></a>
-<h3 class="heading">all ELF targets (SVR4, Solaris 2, etc.)</h3>
+<a name="elf"></a><a name="all-ELF-targets-_0028SVR4_002c-Solaris_002c-etc_002e_0029"></a>
+<h3 class="heading">all ELF targets (SVR4, Solaris, etc.)</h3>
 <p>C++ support is significantly better on ELF targets if you use the
 <a href="./configure.html#with-gnu-ld">GNU linker</a>; duplicate copies of
 inlines, vtables and template instantiations will be discarded

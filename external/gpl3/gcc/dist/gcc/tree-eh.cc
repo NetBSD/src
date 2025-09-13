@@ -1,5 +1,5 @@
 /* Exception handling semantics and decomposition for trees.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -951,7 +951,7 @@ static inline geh_else *
 get_eh_else (gimple_seq finally)
 {
   gimple *x = gimple_seq_first_stmt (finally);
-  if (gimple_code (x) == GIMPLE_EH_ELSE)
+  if (x && gimple_code (x) == GIMPLE_EH_ELSE)
     {
       gcc_assert (gimple_seq_singleton_p (finally));
       return as_a <geh_else *> (x);
@@ -1025,8 +1025,9 @@ honor_protect_cleanup_actions (struct leh_state *outer_state,
 	 terminate before we get to it, so strip it away before adding the
 	 MUST_NOT_THROW filter.  */
       gimple_stmt_iterator gsi = gsi_start (finally);
-      gimple *x = gsi_stmt (gsi);
-      if (gimple_code (x) == GIMPLE_TRY
+      gimple *x = !gsi_end_p (gsi) ? gsi_stmt (gsi) : NULL;
+      if (x
+	  && gimple_code (x) == GIMPLE_TRY
 	  && gimple_try_kind (x) == GIMPLE_TRY_CATCH
 	  && gimple_try_catch_is_cleanup (x))
 	{
@@ -2177,7 +2178,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_lower_eh
 
@@ -2275,8 +2276,8 @@ make_eh_dispatch_edges (geh_dispatch *stmt)
 /* Create the single EH edge from STMT to its nearest landing pad,
    if there is such a landing pad within the current function.  */
 
-void
-make_eh_edges (gimple *stmt)
+edge
+make_eh_edge (gimple *stmt)
 {
   basic_block src, dst;
   eh_landing_pad lp;
@@ -2284,14 +2285,14 @@ make_eh_edges (gimple *stmt)
 
   lp_nr = lookup_stmt_eh_lp (stmt);
   if (lp_nr <= 0)
-    return;
+    return NULL;
 
   lp = get_eh_landing_pad_from_number (lp_nr);
   gcc_assert (lp != NULL);
 
   src = gimple_bb (stmt);
   dst = label_to_block (cfun, lp->post_landing_pad);
-  make_edge (src, dst, EDGE_EH);
+  return make_edge (src, dst, EDGE_EH);
 }
 
 /* Do the work in redirecting EDGE_IN to NEW_BB within the EH region tree;
@@ -2320,7 +2321,7 @@ redirect_eh_edge_1 (edge edge_in, basic_block new_bb, bool change_region)
   gcc_assert (old_lp_nr > 0);
   old_lp = get_eh_landing_pad_from_number (old_lp_nr);
 
-  throw_stmt = last_stmt (edge_in->src);
+  throw_stmt = *gsi_last_bb (edge_in->src);
   gcc_checking_assert (lookup_stmt_eh_lp (throw_stmt) == old_lp_nr);
 
   new_label = gimple_block_label (new_bb);
@@ -2491,6 +2492,9 @@ operation_could_trap_helper_p (enum tree_code op,
     case GT_EXPR:
     case GE_EXPR:
     case LTGT_EXPR:
+    /* MIN/MAX similar as LT/LE/GT/GE. */
+    case MIN_EXPR:
+    case MAX_EXPR:
       /* Some floating point comparisons may trap.  */
       return honor_nans;
 
@@ -3301,8 +3305,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_exceptions != 0; }
-  virtual unsigned int execute (function *)
+  bool gate (function *) final override { return flag_exceptions != 0; }
+  unsigned int execute (function *) final override
     {
       refactor_eh_r (gimple_body (current_function_decl));
       return 0;
@@ -3327,7 +3331,7 @@ lower_resx (basic_block bb, gresx *stmt,
   int lp_nr;
   eh_region src_r, dst_r;
   gimple_stmt_iterator gsi;
-  gimple *x;
+  gcall *x;
   tree fn, src_nr;
   bool ret = false;
 
@@ -3352,6 +3356,7 @@ lower_resx (basic_block bb, gresx *stmt,
 
       fn = builtin_decl_implicit (BUILT_IN_TRAP);
       x = gimple_build_call (fn, 0);
+      gimple_call_set_ctrl_altering (x, true);
       gsi_insert_before (&gsi, x, GSI_SAME_STMT);
 
       while (EDGE_COUNT (bb->succs) > 0)
@@ -3384,8 +3389,22 @@ lower_resx (basic_block bb, gresx *stmt,
 	      lab = gimple_block_label (new_bb);
 	      gsi2 = gsi_start_bb (new_bb);
 
+	      /* Handle failure fns that expect either no arguments or the
+		 exception pointer.  */
 	      fn = dst_r->u.must_not_throw.failure_decl;
-	      x = gimple_build_call (fn, 0);
+	      if (TYPE_ARG_TYPES (TREE_TYPE (fn)) != void_list_node)
+		{
+		  tree epfn = builtin_decl_implicit (BUILT_IN_EH_POINTER);
+		  src_nr = build_int_cst (integer_type_node, src_r->index);
+		  x = gimple_build_call (epfn, 1, src_nr);
+		  tree var = create_tmp_var (ptr_type_node);
+		  var = make_ssa_name (var, x);
+		  gimple_call_set_lhs (x, var);
+		  gsi_insert_after (&gsi2, x, GSI_CONTINUE_LINKING);
+		  x = gimple_build_call (fn, 1, var);
+		}
+	      else
+		x = gimple_build_call (fn, 0);
 	      gimple_set_location (x, dst_r->u.must_not_throw.failure_loc);
 	      gsi_insert_after (&gsi2, x, GSI_CONTINUE_LINKING);
 
@@ -3469,6 +3488,7 @@ lower_resx (basic_block bb, gresx *stmt,
 
 	  fn = builtin_decl_implicit (BUILT_IN_UNWIND_RESUME);
 	  x = gimple_build_call (fn, 1, var);
+	  gimple_call_set_ctrl_altering (x, true);
 	  gsi_insert_before (&gsi, x, GSI_SAME_STMT);
 	}
 
@@ -3503,8 +3523,8 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_exceptions != 0; }
-  virtual unsigned int execute (function *);
+  bool gate (function *) final override { return flag_exceptions != 0; }
+  unsigned int execute (function *) final override;
 
 }; // class pass_lower_resx
 
@@ -3519,11 +3539,9 @@ pass_lower_resx::execute (function *fun)
 
   FOR_EACH_BB_FN (bb, fun)
     {
-      gimple *last = last_stmt (bb);
-      if (last && is_gimple_resx (last))
+      if (gresx *last = safe_dyn_cast <gresx *> (*gsi_last_bb (bb)))
 	{
-	  dominance_invalidated |=
-	    lower_resx (bb, as_a <gresx *> (last), &mnt_map);
+	  dominance_invalidated |= lower_resx (bb, last, &mnt_map);
 	  any_rewritten = true;
 	}
     }
@@ -3928,8 +3946,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *fun) { return fun->eh->region_tree != NULL; }
-  virtual unsigned int execute (function *);
+  bool gate (function *fun) final override
+  {
+    return fun->eh->region_tree != NULL;
+  }
+  unsigned int execute (function *) final override;
 
 }; // class pass_lower_eh_dispatch
 
@@ -3945,7 +3966,7 @@ pass_lower_eh_dispatch::execute (function *fun)
 
   FOR_EACH_BB_FN (bb, fun)
     {
-      gimple *last = last_stmt (bb);
+      gimple *last = *gsi_last_bb (bb);
       if (last == NULL)
 	continue;
       if (gimple_code (last) == GIMPLE_EH_DISPATCH)
@@ -3980,7 +4001,7 @@ pass_lower_eh_dispatch::execute (function *fun)
       for (int i = 0; i < rpo_n; ++i)
 	{
 	  bb = BASIC_BLOCK_FOR_FN (fun, rpo[i]);
-	  gimple *last = last_stmt (bb);
+	  gimple *last = *gsi_last_bb (bb);
 	  if (last
 	      && gimple_code (last) == GIMPLE_RESX
 	      && !stmt_can_throw_external (fun, last))
@@ -4706,7 +4727,7 @@ cleanup_empty_eh (eh_landing_pad lp)
       for (ei = ei_start (bb->preds); (e = ei_safe_edge (ei)); )
 	if (e->flags & EDGE_EH)
 	  {
-	    gimple *stmt = last_stmt (e->src);
+	    gimple *stmt = *gsi_last_bb (e->src);
 	    remove_stmt_from_eh_lp (stmt);
 	    remove_edge (e);
 	  }
@@ -4722,7 +4743,7 @@ cleanup_empty_eh (eh_landing_pad lp)
       for (ei = ei_start (bb->preds); (e = ei_safe_edge (ei)); )
 	if (e->flags & EDGE_EH)
 	  {
-	    gimple *stmt = last_stmt (e->src);
+	    gimple *stmt = *gsi_last_bb (e->src);
 	    remove_stmt_from_eh_lp (stmt);
 	    add_stmt_to_eh_lp (stmt, new_lp_nr);
 	    remove_edge (e);
@@ -4865,13 +4886,13 @@ public:
   {}
 
   /* opt_pass methods: */
-  opt_pass * clone () { return new pass_cleanup_eh (m_ctxt); }
-  virtual bool gate (function *fun)
+  opt_pass * clone () final override { return new pass_cleanup_eh (m_ctxt); }
+  bool gate (function *fun) final override
     {
       return fun->eh != NULL && fun->eh->region_tree != NULL;
     }
 
-  virtual unsigned int execute (function *);
+  unsigned int execute (function *) final override;
 
 }; // class pass_cleanup_eh
 
@@ -4907,7 +4928,7 @@ make_pass_cleanup_eh (gcc::context *ctxt)
 #endif
 
 /* Verify that BB containing STMT as the last statement, has precisely the
-   edge that make_eh_edges would create.  */
+   edge that make_eh_edge would create.  */
 
 DEBUG_FUNCTION bool
 verify_eh_edges (gimple *stmt)

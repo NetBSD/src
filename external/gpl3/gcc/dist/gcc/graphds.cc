@@ -1,5 +1,5 @@
 /* Graph representation and manipulation functions.
-   Copyright (C) 2007-2022 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -276,12 +276,19 @@ graphds_dfs (struct graph *g, int *qs, int nq, vec<int> *qt,
 }
 
 /* Determines the strongly connected components of G, using the algorithm of
-   Tarjan -- first determine the postorder dfs numbering in reversed graph,
+   Kosaraju -- first determine the postorder dfs numbering in reversed graph,
    then run the dfs on the original graph in the order given by decreasing
    numbers assigned by the previous pass.  If SUBGRAPH is not NULL, it
    specifies the subgraph of G whose strongly connected components we want
    to determine.  If SKIP_EDGE_P is not NULL, it points to a callback function.
-   Edge E will be skipped if callback function returns true.
+   Edge E will be skipped if callback function returns true.  If SCC_GROUPING
+   is not null, the nodes will be added to it in the following order:
+
+   - If SCC A is a direct or indirect predecessor of SCC B in the SCC dag,
+     A's nodes come before B's nodes.
+
+   - All of an SCC's nodes are listed consecutively, although the order
+     of the nodes within an SCC is not really meaningful.
 
    After running this function, v->component is the number of the strongly
    connected component for each vertex of G.  Returns the number of the
@@ -289,7 +296,7 @@ graphds_dfs (struct graph *g, int *qs, int nq, vec<int> *qt,
 
 int
 graphds_scc (struct graph *g, bitmap subgraph,
-	     skip_edge_callback skip_edge_p)
+	     skip_edge_callback skip_edge_p, vec<int> *scc_grouping)
 {
   int *queue = XNEWVEC (int, g->n_vertices);
   vec<int> postorder = vNULL;
@@ -317,7 +324,7 @@ graphds_scc (struct graph *g, bitmap subgraph,
 
   for (i = 0; i < nq; i++)
     queue[i] = postorder[nq - i - 1];
-  comp = graphds_dfs (g, queue, nq, NULL, true, subgraph, skip_edge_p);
+  comp = graphds_dfs (g, queue, nq, scc_grouping, true, subgraph, skip_edge_p);
 
   free (queue);
   postorder.release ();

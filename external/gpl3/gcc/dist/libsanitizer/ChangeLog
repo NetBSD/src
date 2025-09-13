@@ -1,39 +1,286 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
-
-	* GCC 12.4.0 released.
-
-2023-05-21  Iain Sandoe  <iain@sandoe.co.uk>
+2024-09-05  Jakub Jelinek  <jakub@redhat.com>
 
 	Backported from master:
-	2023-04-18  Iain Sandoe  <iain@sandoe.co.uk>
+	2024-09-05  Jakub Jelinek  <jakub@redhat.com>
+
+	* sanitizer_common/sanitizer_asm.h: Cherry-pick llvm-project revision
+	1c792d24e0a228ad49cc004a1c26bbd7cd87f030.
+	* interception/interception.h: Likewise.
+
+2024-08-01  Release Manager
+
+	* GCC 14.2.0 released.
+
+2024-05-07  Release Manager
+
+	* GCC 14.1.0 released.
+
+2024-02-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR sanitizer/113785
+	* asan/asan_interceptors.cpp: Cherry-pick llvm-project revision
+	8c2033719a843a1880427a5e8caa5563248bce78.
+
+2024-02-06  chenguoqi  <chenguoqi@loongson.cn>
+
+	* configure.tgt: Enable tsan and lsan for loongarch64.
+	* tsan/Makefile.am (EXTRA_libtsan_la_SOURCES): Add
+	tsan_rtl_loongarch64.S.
+	* tsan/Makefile.in: Regenerate.
+
+2024-01-19  Daniel Cederman  <cederman@gaisler.com>
+
+	* sanitizer_common/Makefile.am (DEFS): Add @AS_SYM_ASSIGN_DEFS@.
+	* sanitizer_common/Makefile.in: Regenerate.
+
+2024-01-17  YunQiang Su  <yunqiang.su@cipunited.com>
+
+	* interception/interception.h (substitution_##func_name):
+	Use macro C_ASM_TAIL_CALL.
+	* sanitizer_common/sanitizer_asm.h: Define C_ASM_TAIL_CALL
+	for MIPS with help of t9.
+
+2024-01-02  Andreas Schwab  <schwab@suse.de>
+
+	* configure.tgt (riscv64-*-linux*): Enable LSan and TSan.
+
+2023-11-28  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* LOCAL_PATCHES: Update.
+
+2023-11-28  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR sanitizer/112563
+	* sanitizer_common/sanitizer_redefine_builtins.h: Check
+	HAVE_AS_SYM_ASSIGN.
+
+2023-11-28  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR sanitizer/112563
+	* configure.ac (libsanitizer_cv_as_sym_assign): Check for
+	assembler symbol assignment support.
+	* configure: Regenerate.
+	* asan/Makefile.am (DEFS): Add @AS_SYM_ASSIGN_DEFS@.
+	* Makefile.in, asan/Makefile.in, hwasan/Makefile.in,
+	interception/Makefile.in, libbacktrace/Makefile.in,
+	lsan/Makefile.in, sanitizer_common/Makefile.in, tsan/Makefile.in,
+	ubsan/Makefile.in: Regenerate.
+
+2023-11-21  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/112562
+	* sanitizer_common/sanitizer_asm.h: Cherry-pick llvm-project revision
+	a855a16a02e76a0f4192c038bb64f3773947a2f7.
+	* interception/interception.h: Likewise.
+
+2023-11-18  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	* asan/asan_mac.cpp: Protect Apple blocks behind the
+	MISSING_BLOCKS_SUPPORT macro.
+
+2023-11-15  Jakub Jelinek  <jakub@redhat.com>
+
+	* LOCAL_PATCHES: Update revisions.
+
+2023-11-15  Jakub Jelinek  <jakub@redhat.com>
+
+	* ubsan/ubsan_handlers_cxx.h (FunctionTypeMismatchData): Forward
+	declare.
+	(__ubsan_handle_function_type_mismatch_v1,
+	__ubsan_handle_function_type_mismatch_v1_abort): Declare.
+	* ubsan/ubsan_handlers_cxx.cpp (handleFunctionTypeMismatch,
+	__ubsan_handle_function_type_mismatch_v1,
+	__ubsan_handle_function_type_mismatch_v1_abort): New functions readded
+	for backwards compatibility from older ubsan.
+	* ubsan/ubsan_interface.inc (__ubsan_handle_function_type_mismatch_v1,
+	__ubsan_handle_function_type_mismatch_v1_abort): Readd.
+
+2023-10-22  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* asan/Makefile.am: Handle Darwin rpaths.
+	* asan/Makefile.in: Regenerate.
+	* configure: Regenerate.
+	* hwasan/Makefile.am: Handle Darwin rpaths.
+	* hwasan/Makefile.in: Regenerate.
+	* lsan/Makefile.am: Handle Darwin rpaths.
+	* lsan/Makefile.in: Regenerate.
+	* tsan/Makefile.am: Handle Darwin rpaths.
+	* tsan/Makefile.in: Regenerate.
+	* ubsan/Makefile.am: Handle Darwin rpaths.
+	* ubsan/Makefile.in: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Alexander von Gluck IV  <kallisti5@unixzen.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Nick Alcock  <nick.alcock@oracle.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-08-07  H.J. Lu  <hjl.tools@gmail.com>
+
+	* configure: Regenerate.
+
+2023-08-07  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* sanitizer_common/sanitizer_stacktrace_sparc.cpp,
+	sanitizer_common/sanitizer_unwind_linux_libcdep.cpp: Cherry-pick
+	llvm-project revision 679c076ae446af81eba81ce9b94203a273d4b88a.
+
+2023-04-30  Martin Liska  <mliska@suse.cz>
+
+	PR sanitizer/109674
+	* hwasan/Makefile.am: Depend on liblsan.
+	* hwasan/Makefile.in: Re-generate.
+
+2023-04-30  Martin Liska  <mliska@suse.cz>
+
+	* LOCAL_PATCHES: Update revision.
+
+2023-04-26  Martin Liska  <mliska@suse.cz>
+
+	* LOCAL_PATCHES: Change revision.
+
+2023-04-18  Iain Sandoe  <iain@sandoe.co.uk>
 
 	* configure.tgt: Unsupport Darwin22+ until a mechanism can be found
 	to locate dyld in the shared cache.
 
-2023-05-08  Release Manager
+2023-01-31  H.J. Lu  <hjl.tools@gmail.com>
 
-	* GCC 12.3.0 released.
+	PR sanitizer/108106
+	* hwasan/hwasan_setjmp_x86_64.S (__interceptor_setjmp): Jump
+	to .Linterceptor_sigsetjmp instead of __interceptor_sigsetjmp.
+	(__interceptor_sigsetjmp): Add a local alias,
+	.Linterceptor_sigsetjmp.
 
-2023-01-04  Florian Weimer  <fweimer@redhat.com>
+2023-01-31  Martin Liska  <mliska@suse.cz>
 
-	Backported from master:
-	2022-10-18  Florian Weimer  <fweimer@redhat.com>
+	* configure: Regenerate.
+
+2023-01-31  YunQiang Su  <yunqiang.su@cipunited.com>
+
+	* configure.ac: set -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+	always for mips*.
+	* configure: Regenerate.
+
+2023-01-17  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* sanitizer_common/sanitizer_platform_interceptors.h: Cherry-pick
+	llvm-project revision 951cf656b2faaf6fc0baa867293c0cb0ab131951.
+
+2022-12-19  Jakub Jelinek  <jakub@redhat.com>
+
+	* hwasan/Makefile.am (nodist_toolexeclib_HEADERS): Set to
+	libhwasan_preinit.o.
+	(hwasan_files): Remove hwasan_preinit.cpp.
+	(libhwasan_preinit.o): Copy from hwasan_preinit.o.
+	* hwasan/Makefile.in: Regenerated.
+
+2022-12-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/108072
+	* libbacktrace/backtrace-rename.h (backtrace_uncompress_zstd): Define.
+
+2022-12-09  liuhongt  <hongtao.liu@intel.com>
+
+	* configure.tgt: Enable hwasan for x86-64.
+
+2022-12-04  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* configure.tgt: Restrict build to Darwin 16 or newer.
+
+2022-11-15  Martin Liska  <mliska@suse.cz>
+
+	* LOCAL_PATCHES: Update local patches.
+
+2022-11-15  Martin Liska  <mliska@suse.cz>
+
+	* merge.sh: Use git clone --depth 1.
+
+2022-10-19  Martin Liska  <mliska@suse.cz>
+
+	* configure: Regenerate.
+
+2022-10-18  Florian Weimer  <fweimer@redhat.com>
 
 	* configure.ac (sanitizer_supported): Include <unistd.h> for
 	syscall prototype.
 	* configure: Regenerate.
 
-2022-08-19  Release Manager
+2022-10-12  Martin Liska  <mliska@suse.cz>
 
-	* GCC 12.2.0 released.
+	* configure: Regenerate.
 
-2022-05-06  Release Manager
+2022-10-11  Olivier Hainque  <hainque@adacore.com>
+	    Olivier Hainque  <hainque@adacore.com>
 
-	* GCC 12.1.0 released.
+	* configure: Regenerate.
+
+2022-10-03  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR sanitizer/105531
+	* sanitizer_common/sanitizer_procmaps_solaris.cpp: Cherry-pick
+	llvm-project revision 1cd4d63fb9ab0f04c7151911dde0d58b673823de.
+
+2022-09-04  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* LOCAL_PATCHES: Update.
+
+2022-08-31  Xi Ruoyao  <xry111@xry111.site>
+
+	* configure.tgt: Allow loongarch64-*-linux*.
+
+2022-08-30  Martin Liska  <mliska@suse.cz>
+
+	* LOCAL_PATCHES: Update.
+
+2022-08-30  Martin Liska  <mliska@suse.cz>
+
+	* sanitizer_common/Makefile.am: Remove sanitizer_openbsd.
+	* sanitizer_common/Makefile.in: Regenerate.
+
+2022-07-22  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR sanitizer/105531
+	* sanitizer_common/sanitizer_linux_libcdep.cpp,
+	sanitizer_common/sanitizer_solaris.h:: Cherry-pick
+	llvm-project revision 3776db9a4fd2080d23d6a5f52e405eea44558761.
+
+2022-05-05  Martin Liska  <mliska@suse.cz>
+
+	* LOCAL_PATCHES: Update.
+
+2022-05-04  Martin Liska  <mliska@suse.cz>
+
+	* tsan/Makefile.am: Update Makefile.am files.
+	* hwasan/Makefile.am: Likewise.
+	* sanitizer_common/Makefile.am: Likewise.
+	* Makefile.in: Re-generate.
+	* asan/Makefile.in: Likewise.
+	* hwasan/Makefile.in: Likewise.
+	* interception/Makefile.in: Likewise.
+	* libbacktrace/Makefile.in: Likewise.
+	* lsan/Makefile.in: Likewise.
+	* sanitizer_common/Makefile.in: Likewise.
+	* tsan/Makefile.in: Likewise.
+	* ubsan/Makefile.in: Likewise.
 
 2022-03-14  Xi Ruoyao  <xry111@mengyan1223.wang>
 
@@ -1590,7 +1837,7 @@
 	* tsan/Makefile.am (tsan_files): Added new files.
 	* tsan/Makefile.in: Regenerate.
 	* sanitizer_common/Makefile.am (sanitizer_common_files): Added new
-	  files.
+	files.
 	* sanitizer_common/Makefile.in: Regenerate.
 	* asan/libtool-version: Bump the libasan SONAME.
 

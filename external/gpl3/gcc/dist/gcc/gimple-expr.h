@@ -1,5 +1,5 @@
 /* Header file for gimple decl, type and expressions.
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -40,7 +40,6 @@ extern void extract_ops_from_tree (tree, enum tree_code *, tree *, tree *,
 extern void gimple_cond_get_ops_from_tree (tree, enum tree_code *, tree *,
 					   tree *);
 extern bool is_gimple_lvalue (tree);
-extern bool is_gimple_condexpr (tree);
 extern bool is_gimple_condexpr_for_cond (tree);
 extern bool is_gimple_address (const_tree);
 extern bool is_gimple_invariant_address (const_tree);
@@ -56,11 +55,12 @@ extern bool is_gimple_mem_ref_addr (tree);
 extern void flush_mark_addressable_queue (void);
 extern void mark_addressable (tree);
 extern bool is_gimple_reg_rhs (tree);
+extern tree canonicalize_cond_expr_cond (tree);
 
 /* Return true if a conversion from either type of TYPE1 and TYPE2
    to the other is not required.  Otherwise return false.  */
 
-static inline bool
+inline bool
 types_compatible_p (tree type1, tree type2)
 {
   return (type1 == type2
@@ -70,7 +70,7 @@ types_compatible_p (tree type1, tree type2)
 
 /* Return true if TYPE is a suitable type for a scalar register variable.  */
 
-static inline bool
+inline bool
 is_gimple_reg_type (tree type)
 {
   return !AGGREGATE_TYPE_P (type);
@@ -78,10 +78,10 @@ is_gimple_reg_type (tree type)
 
 /* Return true if T is a variable.  */
 
-static inline bool
+inline bool
 is_gimple_variable (tree t)
 {
-  return (TREE_CODE (t) == VAR_DECL
+  return (VAR_P (t)
 	  || TREE_CODE (t) == PARM_DECL
 	  || TREE_CODE (t) == RESULT_DECL
 	  || TREE_CODE (t) == SSA_NAME);
@@ -89,7 +89,7 @@ is_gimple_variable (tree t)
 
 /*  Return true if T is a GIMPLE identifier (something with an address).  */
 
-static inline bool
+inline bool
 is_gimple_id (tree t)
 {
   return (is_gimple_variable (t)
@@ -102,13 +102,13 @@ is_gimple_id (tree t)
 
 /* Return true if OP, an SSA name or a DECL is a virtual operand.  */
 
-static inline bool
+inline bool
 virtual_operand_p (tree op)
 {
   if (TREE_CODE (op) == SSA_NAME)
     return SSA_NAME_IS_VIRTUAL_OPERAND (op);
 
-  if (TREE_CODE (op) == VAR_DECL)
+  if (VAR_P (op))
     return VAR_DECL_IS_VIRTUAL_OPERAND (op);
 
   return false;
@@ -116,7 +116,7 @@ virtual_operand_p (tree op)
 
 /*  Return true if T is something whose address can be taken.  */
 
-static inline bool
+inline bool
 is_gimple_addressable (tree t)
 {
   return (is_gimple_id (t) || handled_component_p (t)
@@ -126,7 +126,7 @@ is_gimple_addressable (tree t)
 
 /* Return true if T is a valid gimple constant.  */
 
-static inline bool
+inline bool
 is_gimple_constant (const_tree t)
 {
   switch (TREE_CODE (t))
@@ -148,7 +148,7 @@ is_gimple_constant (const_tree t)
 /* A wrapper around extract_ops_from_tree with 3 ops, for callers which
    expect to see only a maximum of two operands.  */
 
-static inline void
+inline void
 extract_ops_from_tree (tree expr, enum tree_code *code, tree *op0,
 		       tree *op1)
 {
@@ -160,7 +160,7 @@ extract_ops_from_tree (tree expr, enum tree_code *code, tree *op0,
 /* Given a valid GIMPLE_CALL function address return the FUNCTION_DECL
    associated with the callee if known.  Otherwise return NULL_TREE.  */
 
-static inline tree
+inline tree
 gimple_call_addr_fndecl (const_tree fn)
 {
   if (fn && TREE_CODE (fn) == ADDR_EXPR)

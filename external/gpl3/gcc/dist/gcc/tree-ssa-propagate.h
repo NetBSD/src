@@ -1,6 +1,6 @@
 /* Data structures and function declarations for the SSA value propagation
    engine.
-   Copyright (C) 2004-2022 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -26,7 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 
 /* If SIM_P is true, statement S will be simulated again.  */
 
-static inline void
+inline void
 prop_set_simulate_again (gimple *s, bool visit_p)
 {
   gimple_set_visited (s, visit_p);
@@ -34,7 +34,7 @@ prop_set_simulate_again (gimple *s, bool visit_p)
 
 /* Return true if statement T should be simulated again.  */
 
-static inline bool
+inline bool
 prop_simulate_again_p (gimple *s)
 {
   return gimple_visited_p (s);
@@ -96,11 +96,17 @@ class ssa_propagation_engine
   void simulate_block (basic_block);
 };
 
-class substitute_and_fold_engine : public value_query
+class substitute_and_fold_engine : public range_query
 {
  public:
   substitute_and_fold_engine (bool fold_all_stmts = false)
     : fold_all_stmts (fold_all_stmts) { }
+
+  virtual tree value_of_expr (tree expr, gimple * = NULL) = 0;
+  virtual tree value_on_edge (edge, tree expr) override;
+  virtual tree value_of_stmt (gimple *, tree name = NULL) override;
+  virtual bool range_of_expr (vrange &r, tree expr, gimple * = NULL);
+
   virtual ~substitute_and_fold_engine (void) { }
   virtual bool fold_stmt (gimple_stmt_iterator *) { return false; }
 

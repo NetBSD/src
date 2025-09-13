@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -81,6 +81,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <a name="index-Configuration"></a>
 <a name="index-Installing-GCC_003a-Configuration"></a>
 
@@ -107,9 +110,8 @@ phases.
 <p>First, we <strong>highly</strong> recommend that GCC be built into a
 separate directory from the sources which does <strong>not</strong> reside
 within the source tree.  This is how we generally build GCC; building
-where <var>srcdir</var> == <var>objdir</var> should still work, but doesn&rsquo;t
-get extensive testing; building where <var>objdir</var> is a subdirectory
-of <var>srcdir</var> is unsupported.
+where <var>objdir</var> is a subdirectory of <var>srcdir</var> should work as well;
+building where <var>objdir</var> == <var>srcdir</var> is unsupported.
 </p>
 <p>If you have previously built GCC in the same directory for a
 different target machine, do &lsquo;<samp>make distclean</samp>&rsquo; to delete all files
@@ -163,7 +165,9 @@ if you determine that they are not bugs in your modifications.
 <dd><p>Specify the URL root that contains GCC option documentation.  The <var>url</var>
 should end with a <code>/</code> character.
 </p>
-<p>The default value is <a href="https://gcc.gnu.org/onlinedocs/">https://gcc.gnu.org/onlinedocs/</a>.
+<p>The default value is <a href="https://gcc.gnu.org/onlinedocs/">https://gcc.gnu.org/onlinedocs/</a>
+on the GCC main development trunk.  On release branches, the default
+is <code>https://gcc.gnu.org/onlinedocs/gcc-<var>major</var>.<var>minor</var>.0/</code>.
 </p>
 </dd>
 <dt><code>--with-changes-root-url=<var>url</var></code></dt>
@@ -215,14 +219,14 @@ It looks like this: &lsquo;<samp><var>cpu</var>-<var>company</var>-<var>system</
 </p>
 <blockquote>
 <p>aarch64, aarch64_be, alpha, alpha64, amdgcn, arc, arceb, arm, armeb, avr, bfin,
-bpf, cr16, cris, csky, epiphany, fido, fr30, frv, ft32, h8300, hppa, hppa2.0,
+bpf, cris, csky, epiphany, fido, fr30, frv, ft32, h8300, hppa, hppa2.0,
 hppa64, i486, i686, ia64, iq2000, lm32, loongarch64, m32c, m32r, m32rle, m68k,
 mcore, microblaze, microblazeel, mips, mips64, mips64el, mips64octeon,
 mips64orion, mips64vr, mipsel, mipsisa32, mipsisa32r2, mipsisa64, mipsisa64r2,
 mipsisa64r2el, mipsisa64sb1, mipsisa64sr71k, mipstx39, mmix, mn10300, moxie,
 msp430, nds32be, nds32le, nios2, nvptx, or1k, pdp11, powerpc, powerpc64,
 powerpc64le, powerpcle, pru, riscv32, riscv32be, riscv64, riscv64be, rl78, rx,
-s390, s390x, sh, shle, sparc, sparc64, tic6x, tilegx, tilegxbe, tilepro, v850,
+s390, s390x, sh, shle, sparc, sparc64, tic6x, v850,
 v850e, v850e1, vax, visium, x86_64, xstormy16, xtensa
 </p></blockquote>
 
@@ -507,13 +511,33 @@ code.
 </dd>
 <dt><code>--enable-host-shared</code></dt>
 <dd><p>Specify that the <em>host</em> code should be built into position-independent
-machine code (with -fPIC), allowing it to be used within shared libraries,
-but yielding a slightly slower compiler.
+machine code (with <samp>-fPIC</samp>), allowing it to be used within shared
+libraries, but yielding a slightly slower compiler.
 </p>
 <p>This option is required when building the libgccjit.so library.
 </p>
 <p>Contrast with <samp>--enable-shared</samp>, which affects <em>target</em>
 libraries.
+</p>
+</dd>
+<dt><code>--enable-host-pie</code></dt>
+<dd><p>Specify that the <em>host</em> executables should be built into
+position-independent executables (with <samp>-fPIE</samp> and <samp>-pie</samp>),
+yielding a slightly slower compiler (but faster than
+<samp>--enable-host-shared</samp>).  Position-independent executables are loaded
+at random addresses each time they are executed, therefore provide additional
+protection against Return Oriented Programming (ROP) attacks.
+</p>
+<p><samp>--enable-host-pie</samp> may be used with <samp>--enable-host-shared</samp>,
+in which case <samp>-fPIC</samp> is used when compiling, and <samp>-pie</samp> when
+linking.
+</p>
+</dd>
+<dt><code>--enable-host-bind-now</code></dt>
+<dd><p>Specify that the <em>host</em> executables should be linked with the option
+<samp>-Wl,-z,now</samp>, which means that the dynamic linker will resolve all
+symbols when the executables are started, and that in turn allows RELRO to
+mark the GOT read-only, resulting in better security.
 </p>
 </dd>
 <dt><code><a name="with-gnu-as"></a>--with-gnu-as</code></dt>
@@ -534,8 +558,7 @@ whether you use the GNU assembler.  On any other system,
 <ul>
 <li> &lsquo;<samp>hppa1.0-<var>any</var>-<var>any</var></samp>&rsquo;
 </li><li> &lsquo;<samp>hppa1.1-<var>any</var>-<var>any</var></samp>&rsquo;
-</li><li> &lsquo;<samp>sparc-sun-solaris2.<var>any</var></samp>&rsquo;
-</li><li> &lsquo;<samp>sparc64-<var>any</var>-solaris2.<var>any</var></samp>&rsquo;
+</li><li> &lsquo;<samp>*-*-solaris2.11</samp>&rsquo;
 </li></ul>
 
 </dd>
@@ -550,12 +573,11 @@ an assembler, which are:
 <var>exec-prefix</var> defaults to <var>prefix</var>, which
 defaults to <samp>/usr/local</samp> unless overridden by the
 <samp>--prefix=<var>pathname</var></samp> switch described above.  <var>target</var>
-is the target system triple, such as &lsquo;<samp>sparc-sun-solaris2.7</samp>&rsquo;, and
+is the target system triple, such as &lsquo;<samp>sparc-sun-solaris2.11</samp>&rsquo;, and
 <var>version</var> denotes the GCC version, such as 3.0.
 
 </li><li> If the target system is the same that you are building on, check
-operating system specific directories (e.g. <samp>/usr/ccs/bin</samp> on
-Solaris 2).
+operating system specific directories.
 
 </li><li> Check in the <code>PATH</code> for a tool whose name is prefixed by the
 target system triple.
@@ -591,6 +613,9 @@ but for the debug linker (only used on Darwin platforms so far).
 <dd><p>Specify the default TLS dialect, for systems were there is a choice.
 For ARM targets, possible values for <var>dialect</var> are <code>gnu</code> or
 <code>gnu2</code>, which select between the original GNU dialect and the GNU TLS
+descriptor-based dialect.
+For RISC-V targets, possible values for <var>dialect</var> are <code>trad</code> or
+<code>desc</code>, which select between the traditional GNU dialect and the GNU TLS
 descriptor-based dialect.
 </p>
 </dd>
@@ -665,8 +690,8 @@ sysv, aix.
 <dt><code>--without-multilib-list</code></dt>
 <dd><p>Specify what multilibs to build.  <var>list</var> is a comma separated list of
 values, possibly consisting of a single value.  Currently only implemented
-for aarch64*-*-*, arm*-*-*, loongarch64-*-*, riscv*-*-*, sh*-*-* and
-x86-64-*-linux*.  The accepted values and meaning for each target is given
+for aarch64*-*-*, amdgcn*-*-*, arm*-*-*, loongarch*-*-*, riscv*-*-*, sh*-*-*
+and x86-64-*-linux*.  The accepted values and meaning for each target is given
 below.
 </p>
 <dl compact="compact">
@@ -678,6 +703,17 @@ default run-time library will be built.  If <var>list</var> is
 <code>default</code> or &ndash;with-multilib-list= is not specified, then the
 default set of libraries is selected based on the value of
 <samp>--target</samp>.
+</p>
+</dd>
+<dt><code>amdgcn*-*-*</code></dt>
+<dd><p><var>list</var> is a comma separated list of ISA names (allowed values: <code>fiji</code>,
+<code>gfx900</code>, <code>gfx906</code>, <code>gfx908</code>, <code>gfx90a</code>, <code>gfx90c</code>, 
+<code>gfx1030</code>, <code>gfx1036</code>, <code>gfx1100</code>, <code>gfx1103</code>).
+It ought not include the name of the default
+ISA, specified via <samp>--with-arch</samp>.  If <var>list</var> is empty, then there
+will be no multilibs and only the default run-time library will be built.  If
+<var>list</var> is <code>default</code> or <samp>--with-multilib-list=</samp> is not
+specified, then the default set of libraries is selected.
 </p>
 </dd>
 <dt><code>arm*-*-*</code></dt>
@@ -743,12 +779,33 @@ profile.  The union of these options is considered when specifying both
 
 </dd>
 <dt><code>loongarch*-*-*</code></dt>
-<dd><p><var>list</var> is a comma-separated list of the following ABI identifiers:
-<code>lp64d[/base]</code> <code>lp64f[/base]</code> <code>lp64d[/base]</code>, where the
-<code>/base</code> suffix may be omitted, to enable their respective run-time
-libraries.  If <var>list</var> is empty or <code>default</code>,
-or if <samp>--with-multilib-list</samp> is not specified, then the default ABI
-as specified by <samp>--with-abi</samp> or implied by <samp>--target</samp> is selected.
+<dd><p><var>list</var> is a comma-separated list, with each of the element starting with
+the following ABI identifiers: <code>lp64d[/base]</code> <code>lp64f[/base]</code>
+<code>lp64d[/base]</code> (the <code>/base</code> suffix may be omitted)
+to enable their respective run-time libraries.
+</p>
+<p>A suffix <code>[/<var>arch</var>][/<var>option</var>/&hellip;]</code> may follow immediately
+after the ABI identifier to customize the compiler options for building the
+given set of libraries.  <var>arch</var> denotes the architecture name recognized
+by the <samp>-march=<var>arch</var></samp> compiler option, which acts as a basic target
+ISA configuration that can be adjusted using the subsequent <var>option</var>
+suffixes, where each <var>option</var> is a compiler option without a leading dash
+(&rsquo;-&rsquo;).
+</p>
+<p>If no such suffix is present for a given multilib variant, the
+configured value of <samp>--with-multilib-default</samp> is appended as a default
+suffix.  If <samp>--with-multilib-default</samp> is not given, the default build
+option <samp>-march=abi-default</samp> is applied when building the variants
+without a suffix.
+</p>
+<p>As a special case, <code>fixed</code> may be used in the position of <var>arch</var>,
+which means using the architecture configured with
+<samp>--with-arch=<var>arch</var></samp>, or its default value (e.g. <code>loongarch64</code>
+for <code>loongarch64-*</code> targets).
+</p>
+<p>If <var>list</var> is empty or <code>default</code>, or if <samp>--with-multilib-list</samp>
+is not specified, then only the default variant of the libraries are built,
+where the default ABI is implied by the configured target triplet.
 </p>
 </dd>
 <dt><code>riscv*-*-*</code></dt>
@@ -803,6 +860,25 @@ and only the default run-time library will be enabled.
 </p></dd>
 </dl>
 
+</dd>
+<dt><code>--with-multilib-default</code></dt>
+<dd><p>On LoongArch targets, set the default build options for enabled multilibs
+without build options appended to their corresponding
+<samp>--with-multilib-list</samp> items.  The format of this value is
+<code>[/<var>arch</var>][/<var>option</var>/&hellip;]</code>, where <var>arch</var> is an
+architecture name recognized by <samp>-march=<var>arch</var></samp> compiler option,
+and subsequent <var>option</var> suffixes are compiler options minus a leading
+dash (&rsquo;-&rsquo;).
+</p>
+<p>Multiple <var>option</var>s may appear consecutively while <var>arch</var> may only
+appear in the beginning or be omitted (which means <samp>-march=abi-default</samp>
+is applied when building the libraries).
+</p>
+</dd>
+<dt><code>--with-strict-align-lib</code></dt>
+<dd><p>On LoongArch targets, build all enabled multilibs with <samp>-mstrict-align</samp>
+(Not enabled by default).
+</p>
 </dd>
 <dt><code>--with-multilib-generator=<var>config</var></code></dt>
 <dd><p>Specify what multilibs to build.  <var>config</var> is a semicolon separated list of
@@ -977,6 +1053,7 @@ x86-64, PowerPC, and SPARC.
 <dt><code>--with-abi=<var>abi</var></code></dt>
 <dt><code>--with-fpu=<var>type</var></code></dt>
 <dt><code>--with-float=<var>type</var></code></dt>
+<dt><code>--with-simd=<var>type</var></code></dt>
 <dd><p>These configure options provide default values for the <samp>-mschedule=</samp>,
 <samp>-march=</samp>, <samp>-mtune=</samp>, <samp>-mabi=</samp>, and <samp>-mfpu=</samp>
 options and for <samp>-mhard-float</samp> or <samp>-msoft-float</samp>.  As with
@@ -1069,6 +1146,29 @@ systems that support conditional traps).
 </p></dd>
 </dl>
 
+</dd>
+<dt><code>--with-compact-branches=<var>policy</var></code></dt>
+<dd><p>Specify how the compiler should generate branch instructions.
+This option is only supported on the MIPS target.
+The possibilities for <var>type</var> are:
+</p><dl compact="compact">
+<dt><code>optimal</code></dt>
+<dd><p>Cause a delay slot branch to be used if one is available in the
+current ISA and the delay slot is successfully filled. If the delay slot
+is not filled, a compact branch will be chosen if one is available.
+</p></dd>
+<dt><code>never</code></dt>
+<dd><p>Ensures that compact branch instructions will never be generated.
+</p></dd>
+<dt><code>always</code></dt>
+<dd><p>Ensures that a compact branch instruction will be generated if available.
+If a compact branch instruction is not available,
+a delay slot form of the branch will be used instead.
+This option is supported from MIPS Release 6 onwards.
+For pre-R6/microMIPS/MIPS16, this option is just same as never/optimal.
+</p></dd>
+</dl>
+
 
 </dd>
 <dt><code>--with-llsc</code></dt>
@@ -1128,6 +1228,16 @@ that implement these as fused operations instead of unfused (where
 unfused is normally expected).  Disabling these instructions is the
 only way to ensure compatible code is generated; this will incur
 a performance penalty.
+</p>
+</dd>
+<dt><code>--with-msa</code></dt>
+<dd><p>On MIPS targets, make <samp>-mmsa</samp> the default when no
+<samp>-mno-msa</samp> option is passed.
+</p>
+</dd>
+<dt><code>--without-msa</code></dt>
+<dd><p>On MIPS targets, make <samp>-mno-msa</samp> the default when no
+<samp>-mmsa</samp> option is passed. This is the default.
 </p>
 </dd>
 <dt><code>--with-mips-plt</code></dt>
@@ -1268,6 +1378,13 @@ parallel.  The default is &lsquo;<samp>yes</samp>&rsquo; for &lsquo;<samp>libada
 the remaining libraries.
 </p>
 </dd>
+<dt><code>--with-darwin-extra-rpath</code></dt>
+<dd><p>This is provided to allow distributions to add a single additional
+runpath on Darwin / macOS systems. This allows for cases where the
+installed GCC library directories are then symlinked to a common
+directory outside of the GCC installation.
+</p>
+</dd>
 <dt><code><a name="WithAixSoname"></a>--with-aix-soname=&lsquo;<samp>aix</samp>&rsquo;, &lsquo;<samp>svr4</samp>&rsquo; or &lsquo;<samp>both</samp>&rsquo;</code></dt>
 <dd><p>Traditional AIX shared library versioning (versioned <code>Shared Object</code>
 files as members of unversioned <code>Archive Library</code> files named
@@ -1384,11 +1501,13 @@ their runtime libraries should be built.  For a list of valid values for
 </pre></div>
 <p>Currently, you can use any of the following:
 <code>all</code>, <code>default</code>, <code>ada</code>, <code>c</code>, <code>c++</code>, <code>d</code>,
-<code>fortran</code>, <code>go</code>, <code>jit</code>, <code>lto</code>, <code>objc</code>, <code>obj-c++</code>.
+<code>fortran</code>, <code>go</code>, <code>jit</code>, <code>lto</code>, <code>m2</code>,
+<code>objc</code>, <code>obj-c++</code>.
 Building the Ada compiler has special requirements, see below.
 If you do not pass this flag, or specify the option <code>default</code>, then the
 default languages available in the <samp>gcc</samp> sub-tree will be configured.
-Ada, D, Go, Jit, and Objective-C++ are not default languages.  LTO is not a
+Ada, D, Go, Jit, Objective-C++ and Modula-2 are not default languages.
+LTO is not a
 default language, but is built by default because <samp>--enable-lto</samp> is
 enabled by default.  The other languages are default languages.  If
 <code>all</code> is specified, then all available languages are built.  An
@@ -1417,6 +1536,11 @@ for the specified languages using <code>make stage1-start check-gcc</code>.
 be built.  This can be useful for debugging, or for compatibility with
 previous Ada build procedures, when it was required to explicitly
 do a &lsquo;<samp>make -C gcc gnatlib_and_tools</samp>&rsquo;.
+</p>
+</dd>
+<dt><code>--disable-libgm2</code></dt>
+<dd><p>Specify that the run-time libraries and tools used by Modula-2 should not
+be built.  This can be useful for debugging.
 </p>
 </dd>
 <dt><code>--disable-libsanitizer</code></dt>
@@ -1454,7 +1578,8 @@ should not be built.
 </dd>
 <dt><code>--with-dwarf2</code></dt>
 <dd><p>Specify that the compiler should
-use DWARF 2 debugging information as the default.
+use DWARF debugging information as the default; the exact
+DWARF version that is the default is target-specific.
 </p>
 </dd>
 <dt><code>--with-advance-toolchain=<var>at</var></code></dt>
@@ -1629,11 +1754,52 @@ which lets GCC output diagnostics in languages other than American
 English.  Native Language Support is enabled by default if not doing a
 canadian cross build.  The <samp>--disable-nls</samp> option disables NLS.
 </p>
-</dd>
-<dt><code>--with-included-gettext</code></dt>
-<dd><p>If NLS is enabled, the <samp>--with-included-gettext</samp> option causes the build
-procedure to prefer its copy of GNU <code>gettext</code>.
+<p>Note that this functionality requires either libintl (provided by GNU
+gettext) or C standard library that contains support for gettext (such
+as the GNU C Library).
+See <a href="#with-included-gettext">&ndash;with-included-gettext</a> for more
+information on the conditions required to get gettext support.
 </p>
+</dd>
+<dt><code>--with-libintl-prefix=<var>dir</var></code></dt>
+<dt><code>--without-libintl-prefix</code></dt>
+<dd><p>Searches for libintl in <samp><var>dir</var>/include</samp> and
+<samp><var>dir</var>/lib</samp>, or disables manual searching for it, letting the
+linker handle it.
+</p>
+</dd>
+<dt><code>--with-libintl-type=<var>type</var></code></dt>
+<dd><p>Specifies the type of library to search for when looking for libintl.
+<var>type</var> can be one of <code>auto</code>, <code>static</code> or <code>shared</code>.
+</p>
+<a name="with-included-gettext"></a></dd>
+<dt><code>--with-included-gettext</code></dt>
+<dd><p>Only available if <samp>gettext</samp> is present in the source tree.
+</p>
+<p>Forces the gettext tree to be configured to build and use a new static
+libintl, overriding the system libintl.  Results in GCC being built
+against the newly built libintl rather than the system libintl.
+</p>
+<p>The build system makes a somewhat complicated choice when picking where
+to get gettext routines from.  The following table is a summary of the
+possible options:
+</p>
+<table>
+<thead><tr><th width="12%">GNU gettext present in sources</th><th width="12%">libintl installed on the system</th><th width="12%"><code>gettext</code> present in libc</th><th width="20%"><code>--with-included-gettext</code></th><th width="44%">Effects on localization</th></tr></thead>
+<tr><td width="12%">No</td><td width="12%">No</td><td width="12%">No</td><td width="20%">(ignored)</td><td width="44%">No localization</td></tr>
+<tr><td width="12%">No</td><td width="12%">No</td><td width="12%">Yes</td><td width="20%">(ignored)</td><td width="44%">Localized, libc gettext</td></tr>
+<tr><td width="12%">No</td><td width="12%">Yes</td><td width="12%">No</td><td width="20%">(ignored)</td><td width="44%">Localized, libintl</td></tr>
+<tr><td width="12%">No</td><td width="12%">Yes</td><td width="12%">Yes</td><td width="20%">(ignored)</td><td width="44%">Localized, libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">No</td><td width="12%">No</td><td width="20%">No</td><td width="44%">Localized, new, static libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">No</td><td width="12%">No</td><td width="20%">Yes</td><td width="44%">Localized, new, static libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">No</td><td width="12%">Yes</td><td width="20%">No</td><td width="44%">Localized, libc gettext</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">No</td><td width="12%">Yes</td><td width="20%">Yes</td><td width="44%">Localized, new, static libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">Yes</td><td width="12%">No</td><td width="20%">No</td><td width="44%">Localized, libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">Yes</td><td width="12%">No</td><td width="20%">Yes</td><td width="44%">Localized, new, static libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">Yes</td><td width="12%">Yes</td><td width="20%">No</td><td width="44%">Localized, libintl</td></tr>
+<tr><td width="12%">Yes</td><td width="12%">Yes</td><td width="12%">Yes</td><td width="20%">Yes</td><td width="44%">Localized, new, static libintl</td></tr>
+</table>
+
 </dd>
 <dt><code>--with-catgets</code></dt>
 <dd><p>If NLS is enabled, and if the host lacks <code>gettext</code> but has the
@@ -1666,13 +1832,14 @@ forward to maintain the port.
 <dt><code>--enable-decimal-float=dpd</code></dt>
 <dt><code>--disable-decimal-float</code></dt>
 <dd><p>Enable (or disable) support for the C decimal floating point extension
-that is in the IEEE 754-2008 standard.  This is enabled by default only
-on PowerPC, i386, and x86_64 GNU/Linux systems.  Other systems may also
-support it, but require the user to specifically enable it.  You can
-optionally control which decimal floating point format is used (either
-&lsquo;<samp>bid</samp>&rsquo; or &lsquo;<samp>dpd</samp>&rsquo;).  The &lsquo;<samp>bid</samp>&rsquo; (binary integer decimal)
-format is default on i386 and x86_64 systems, and the &lsquo;<samp>dpd</samp>&rsquo;
-(densely packed decimal) format is default on PowerPC systems.
+that is in the IEEE 754-2008 standard.  This is enabled by default
+only on AArch64, PowerPC, i386, and x86_64 GNU/Linux systems.  Other
+systems may also support it, but require the user to specifically
+enable it.  You can optionally control which decimal floating point
+format is used (either &lsquo;<samp>bid</samp>&rsquo; or &lsquo;<samp>dpd</samp>&rsquo;).  The &lsquo;<samp>bid</samp>&rsquo;
+(binary integer decimal) format is default on AArch64, i386 and x86_64
+systems, and the &lsquo;<samp>dpd</samp>&rsquo; (densely packed decimal) format is default
+on PowerPC systems.
 </p>
 </dd>
 <dt><code>--enable-fixed-point</code></dt>
@@ -1909,7 +2076,7 @@ specifying paths <var>path1</var>, &hellip;, <var>pathN</var>.
 </p>
 <div class="smallexample">
 <pre class="smallexample">% <var>srcdir</var>/configure \
-    --enable-offload-targets=x86_64-intelmicemul-linux-gnu=/path/to/x86_64/compiler,nvptx-none
+    --enable-offload-targets=amdgcn-amdhsa,nvptx-none
 </pre></div>
 
 </dd>
@@ -1920,19 +2087,6 @@ plugins are silently ignored.  Useful for distribution compilers where
 those are in separate optional packages and where the presence or absence
 of those optional packages should determine the actual supported offloading
 target set rather than the GCC configure-time selection.
-</p>
-</dd>
-<dt><code>--with-hsa-runtime=<var>pathname</var></code></dt>
-<dt><code>--with-hsa-runtime-include=<var>pathname</var></code></dt>
-<dt><code>--with-hsa-runtime-lib=<var>pathname</var></code></dt>
-<dd>
-<p>If you configure GCC with offloading which uses an HSA run-time such as
-AMDGCN but do not have the HSA run-time library installed in a standard
-location then you can explicitly specify the directory where they are
-installed.  The <samp>--with-hsa-runtime=<var>hsainstalldir</var></samp> option
-is a shorthand for
-<samp>--with-hsa-runtime-lib=<var>hsainstalldir</var>/lib</samp> and
-<samp>--with-hsa-runtime-include=<var>hsainstalldir</var>/include</samp>.
 </p>
 </dd>
 <dt><code>--enable-cet</code></dt>
@@ -2173,21 +2327,23 @@ system or work around a bug in a test.  The toplevel <code>configure</code>
 script provides three variables for this:
 </p>
 <dl compact="compact">
+<dd>
+<a name="index-build_005fconfigargs"></a>
+</dd>
 <dt><code>build_configargs</code></dt>
-<dd><a name="index-build_005fconfigargs"></a>
-<p>The contents of this variable is passed to all build <code>configure</code>
+<dd><p>The contents of this variable is passed to all build <code>configure</code>
 scripts.
 </p>
+<a name="index-host_005fconfigargs"></a>
 </dd>
 <dt><code>host_configargs</code></dt>
-<dd><a name="index-host_005fconfigargs"></a>
-<p>The contents of this variable is passed to all host <code>configure</code>
+<dd><p>The contents of this variable is passed to all host <code>configure</code>
 scripts.
 </p>
+<a name="index-target_005fconfigargs"></a>
 </dd>
 <dt><code>target_configargs</code></dt>
-<dd><a name="index-target_005fconfigargs"></a>
-<p>The contents of this variable is passed to all target <code>configure</code>
+<dd><p>The contents of this variable is passed to all target <code>configure</code>
 scripts.
 </p>
 </dd>

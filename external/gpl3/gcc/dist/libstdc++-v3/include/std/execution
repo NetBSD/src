@@ -1,6 +1,6 @@
 // <execution> -*- C++ -*-
 
-// Copyright (C) 2018-2022 Free Software Foundation, Inc.
+// Copyright (C) 2018-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -27,7 +27,14 @@
 
 #pragma GCC system_header
 
-#if __cplusplus >= 201703L
+#include <bits/requires_hosted.h> // execution policies are hosted only
+
+#define __glibcxx_want_parallel_algorithm
+#define __glibcxx_want_execution
+#include <bits/version.h>
+
+// C++ >= 17 && HOSTED
+#if defined(__cpp_lib_parallel_algorithm) || defined(__cpp_lib_execution)
 # include <bits/c++config.h>
 # include <pstl/glue_execution_defs.h>
 
@@ -47,10 +54,6 @@
 # if _PSTL_NUMERIC_FORWARD_DECLARED
 #  include <pstl/glue_memory_impl.h>
 # endif
-
-// Feature test macro for parallel algorithms
-# define __cpp_lib_parallel_algorithm 201603L
-# define __cpp_lib_execution 201902L
 
 #endif // C++17
 

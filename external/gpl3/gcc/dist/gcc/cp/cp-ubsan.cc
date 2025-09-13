@@ -1,5 +1,5 @@
 /* UndefinedBehaviorSanitizer, undefined behavior detector.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>
 
 This file is part of GCC.
@@ -32,7 +32,7 @@ along with GCC; see the file COPYING3.  If not see
 static bool
 cp_ubsan_instrument_vptr_p (tree type)
 {
-  if (!flag_rtti || flag_sanitize_undefined_trap_on_error)
+  if (!flag_rtti || (flag_sanitize_trap & SANITIZE_VPTR))
     return false;
 
   if (!sanitize_flags_p (SANITIZE_VPTR))

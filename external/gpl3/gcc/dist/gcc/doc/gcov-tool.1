@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCOV-TOOL 1"
-.TH GCOV-TOOL 1 "2025-07-11" "gcc-12.5.0" "GNU"
+.TH GCOV-TOOL 1 "2025-05-23" "gcc-14.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,6 +142,10 @@ gcov-tool [\fB\-v\fR|\fB\-\-version\fR] [\fB\-h\fR|\fB\-\-help\fR]
 .PP
 gcov-tool merge [merge\-options] \fIdirectory1\fR \fIdirectory2\fR
      [\fB\-o\fR|\fB\-\-output\fR \fIdirectory\fR]
+     [\fB\-v\fR|\fB\-\-verbose\fR]
+     [\fB\-w\fR|\fB\-\-weight\fR \fIw1,w2\fR]
+.PP
+gcov-tool merge-stream [merge\-stream\-options] [\fIfile\fR]
      [\fB\-v\fR|\fB\-\-verbose\fR]
      [\fB\-w\fR|\fB\-\-weight\fR \fIw1,w2\fR]
 .PP
@@ -166,6 +170,9 @@ Current gcov-tool supports the following functionalities:
 .IP "*" 4
 merge two sets of profiles with weights.
 .IP "*" 4
+read a stream of profiles with associated filenames and merge it with a set of
+profiles with weights.
+.IP "*" 4
 read one set of profile and rewrite profile contents. One can scale or
 normalize the count values.
 .PP
@@ -174,6 +181,11 @@ Examples of the use cases for this tool are:
 Collect the profiles for different set of inputs, and use this tool to merge
 them. One can specify the weight to factor in the relative importance of
 each input.
+.IP "*" 4
+Collect profiles from target systems without a filesystem (freestanding
+environments).  Merge the collected profiles with associated profiles
+present on the host system.  One can specify the weight to factor in the
+relative importance of each input.
 .IP "*" 4
 Rewrite the profile after removing a subset of the gcda files, while maintaining
 the consistency of the summary and the histogram.
@@ -244,6 +256,36 @@ Set the verbose mode.
 .PD
 Set the merge weights of the \fIdirectory1\fR and \fIdirectory2\fR,
 respectively. The default weights are 1 for both.
+.RE
+.RS 4
+.RE
+.IP "\fBmerge-stream\fR" 4
+.IX Item "merge-stream"
+Collect profiles with associated filenames from a \fIgcfn\fR and \fIgcda\fR
+data stream.  Read the stream from the file specified by \fIfile\fR or from
+\&\fIstdin\fR.  Merge the profiles with associated profiles in the host
+filesystem.  Apply the optional weights while merging profiles.
+.Sp
+For the generation of a \fIgcfn\fR and \fIgcda\fR data stream on the target
+system, please have a look at the \f(CW\*(C`_\|_gcov_filename_to_gcfn()\*(C'\fR and
+\&\f(CW\*(C`_\|_gcov_info_to_gcda()\*(C'\fR functions declared in \f(CW\*(C`#include <gcov.h>\*(C'\fR.
+.RS 4
+.IP "\fB\-v\fR" 4
+.IX Item "-v"
+.PD 0
+.IP "\fB\-\-verbose\fR" 4
+.IX Item "--verbose"
+.PD
+Set the verbose mode.
+.IP "\fB\-w\fR \fIw1\fR\fB,\fR\fIw2\fR" 4
+.IX Item "-w w1,w2"
+.PD 0
+.IP "\fB\-\-weight\fR \fIw1\fR\fB,\fR\fIw2\fR" 4
+.IX Item "--weight w1,w2"
+.PD
+Set the merge weights of the profiles from the \fIgcfn\fR and \fIgcda\fR data
+stream and the associated profiles in the host filesystem, respectively.  The
+default weights are 1 for both.
 .RE
 .RS 4
 .RE
@@ -344,7 +386,7 @@ Set the verbose mode.
 \&\fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2014\-2022 Free Software Foundation, Inc.
+Copyright (c) 2014\-2024 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

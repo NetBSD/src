@@ -1,5 +1,5 @@
 /* Classes for representing locations within the program.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,13 +19,12 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
+#define INCLUDE_MEMORY
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
 #include "gimple-pretty-print.h"
 #include "gcc-rich-location.h"
-#include "json.h"
-#include "analyzer/call-string.h"
 #include "ordered-hash-map.h"
 #include "options.h"
 #include "cgraph.h"
@@ -37,24 +36,23 @@ along with GCC; see the file COPYING3.  If not see
 #include "digraph.h"
 #include "analyzer/analyzer.h"
 #include "analyzer/analyzer-logging.h"
+#include "analyzer/call-string.h"
 #include "analyzer/supergraph.h"
 #include "analyzer/program-point.h"
 #include "sbitmap.h"
 #include "bitmap.h"
-#include "tristate.h"
 #include "selftest.h"
 #include "analyzer/store.h"
 #include "analyzer/region-model.h"
 #include "analyzer/sm.h"
 #include "analyzer/program-state.h"
-#include "alloc-pool.h"
-#include "fibonacci_heap.h"
 #include "diagnostic-event-id.h"
 #include "analyzer/pending-diagnostic.h"
 #include "analyzer/diagnostic-manager.h"
 #include "shortest-paths.h"
 #include "analyzer/exploded-graph.h"
 #include "analyzer/analysis-plan.h"
+#include "analyzer/inlining-iterator.h"
 
 #if ENABLE_ANALYZER
 
@@ -232,7 +230,7 @@ function_point::final_stmt_p () const
 /* Create a function_point representing the entrypoint of function FUN.  */
 
 function_point
-function_point::from_function_entry (const supergraph &sg, function *fun)
+function_point::from_function_entry (const supergraph &sg, const function &fun)
 {
   return before_supernode (sg.get_node_for_function_entry (fun), NULL);
 }
@@ -258,8 +256,8 @@ public:
   debug_diagnostic_context ()
   {
     diagnostic_initialize (this, 0);
-    show_line_numbers_p = true;
-    show_caret = true;
+    m_source_printing.show_line_numbers_p = true;
+    m_source_printing.enabled = true;
   }
   ~debug_diagnostic_context ()
   {
@@ -290,7 +288,7 @@ void
 program_point::print (pretty_printer *pp, const format &f) const
 {
   pp_string (pp, "callstring: ");
-  m_call_string.print (pp);
+  m_call_string->print (pp);
   f.spacer (pp);
 
   m_function_point.print (pp, f);
@@ -340,7 +338,7 @@ program_point::to_json () const
       break;
     }
 
-  point_obj->set ("call_string", m_call_string.to_json ());
+  point_obj->set ("call_string", m_call_string->to_json ());
 
   return point_obj;
 }
@@ -353,14 +351,15 @@ void
 program_point::push_to_call_stack (const supernode *caller,
 				   const supernode *callee)
 {
-  m_call_string.push_call (callee, caller);
+  m_call_string = m_call_string->push_call (callee, caller);
 }
 
 /* Pop the topmost call from the current callstack.  */
 void
 program_point::pop_from_call_stack ()
 {
-  m_call_string.pop ();
+  m_call_string = m_call_string->get_parent ();
+  gcc_assert (m_call_string);
 }
 
 /* Generate a hash value for this program_point.  */
@@ -370,7 +369,7 @@ program_point::hash () const
 {
   inchash::hash hstate;
   hstate.merge_hash (m_function_point.hash ());
-  hstate.merge_hash (m_call_string.hash ());
+  hstate.add_ptr (m_call_string);
   return hstate.end ();
 }
 
@@ -379,11 +378,11 @@ program_point::hash () const
 function *
 program_point::get_function_at_depth (unsigned depth) const
 {
-  gcc_assert (depth <= m_call_string.length ());
-  if (depth == m_call_string.length ())
+  gcc_assert (depth <= m_call_string->length ());
+  if (depth == m_call_string->length ())
     return m_function_point.get_function ();
   else
-    return m_call_string[depth].get_caller_function ();
+    return get_call_string ()[depth].get_caller_function ();
 }
 
 /* Assert that this object is sane.  */
@@ -396,12 +395,13 @@ program_point::validate () const
   return;
 #endif
 
-  m_call_string.validate ();
+  m_call_string->validate ();
   /* The "callee" of the final entry in the callstring should be the
      function of the m_function_point.  */
-  if (m_call_string.length () > 0)
-    gcc_assert (m_call_string[m_call_string.length () - 1].get_callee_function ()
-		== get_function ());
+  if (m_call_string->length () > 0)
+    gcc_assert
+      ((*m_call_string)[m_call_string->length () - 1].get_callee_function ()
+       == get_function ());
 }
 
 /* Check to see if SUCC is a valid edge to take (ensuring that we have
@@ -426,9 +426,22 @@ program_point::on_edge (exploded_graph &eg,
       {
 	const cfg_superedge *cfg_sedge = as_a <const cfg_superedge *> (succ);
 
-	/* Reject abnormal edges; we special-case setjmp/longjmp.  */
 	if (cfg_sedge->get_flags () & EDGE_ABNORMAL)
-	  return false;
+	  {
+	    const supernode *src_snode = cfg_sedge->m_src;
+	    if (gimple *last_stmt = src_snode->get_last_stmt ())
+	      if (last_stmt->code == GIMPLE_GOTO)
+		{
+		  /* For the program_point aspect here, consider all
+		     out-edges from goto stmts to be valid; we'll
+		     consider state separately.  */
+		  return true;
+		}
+
+	    /* Reject other kinds of abnormal edges;
+	       we special-case setjmp/longjmp.  */
+	    return false;
+	  }
       }
       break;
 
@@ -444,14 +457,15 @@ program_point::on_edge (exploded_graph &eg,
 	  }
 
 	/* Add the callsite to the call string.  */
-	m_call_string.push_call (eg.get_supergraph (), call_sedge);
+	m_call_string = m_call_string->push_call (eg.get_supergraph (),
+						  call_sedge);
 
 	/* Impose a maximum recursion depth and don't analyze paths
 	   that exceed it further.
 	   This is something of a blunt workaround, but it only
 	   applies to recursion (and mutual recursion), not to
 	   general call stacks.  */
-	if (m_call_string.calc_recursion_depth ()
+	if (m_call_string->calc_recursion_depth ()
 	    > param_analyzer_max_recursion_depth)
 	  {
 	    if (logger)
@@ -465,13 +479,15 @@ program_point::on_edge (exploded_graph &eg,
     case SUPEREDGE_RETURN:
       {
 	/* Require that we return to the call site in the call string.  */
-	if (m_call_string.empty_p ())
+	if (m_call_string->empty_p ())
 	  {
 	    if (logger)
 	      logger->log ("rejecting return edge: empty call string");
 	    return false;
 	  }
-	const call_string::element_t top_of_stack = m_call_string.pop ();
+	const call_string::element_t &top_of_stack
+	  = m_call_string->get_top_of_stack ();
+	m_call_string = m_call_string->get_parent ();
 	call_string::element_t current_call_string_element (succ->m_dest,
 							    succ->m_src);
 	if (top_of_stack != current_call_string_element)
@@ -669,6 +685,25 @@ function_point::get_next () const
     }
 }
 
+/* class program_point.  */
+
+program_point
+program_point::origin (const region_model_manager &mgr)
+{
+  return program_point (function_point (NULL, NULL,
+					0, PK_ORIGIN),
+			mgr.get_empty_call_string ());
+}
+
+program_point
+program_point::from_function_entry (const region_model_manager &mgr,
+				    const supergraph &sg,
+				    const function &fun)
+{
+  return program_point (function_point::from_function_entry (sg, fun),
+			mgr.get_empty_call_string ());
+}
+
 /* For those program points for which there is a uniquely-defined
    successor, return it.  */
 
@@ -698,6 +733,47 @@ program_point::get_next () const
     }
 }
 
+/* Return true iff POINT_A and POINT_B share the same function and
+   call_string, both directly, and when attempting to undo inlining
+   information.  */
+
+bool
+program_point::effectively_intraprocedural_p (const program_point &point_a,
+					      const program_point &point_b)
+{
+  /* First, compare without considering inlining info.  */
+  if (point_a.get_function ()
+      != point_b.get_function ())
+    return false;
+  if (&point_a.get_call_string ()
+      != &point_b.get_call_string ())
+    return false;
+
+  /* Consider inlining info; they must have originally come from
+     the same function and have been inlined in the same way.  */
+  location_t loc_a = point_a.get_location ();
+  location_t loc_b = point_b.get_location ();
+  inlining_iterator iter_a (loc_a);
+  inlining_iterator iter_b (loc_b);
+  while (!(iter_a.done_p () || iter_b.done_p ()))
+    {
+      if (iter_a.done_p () || iter_b.done_p ())
+	return false;
+
+      if (iter_a.get_fndecl () != iter_b.get_fndecl ())
+	return false;
+      if (iter_a.get_callsite () != iter_b.get_callsite ())
+	return false;
+      if (iter_a.get_block () != iter_b.get_block ())
+	return false;
+
+      iter_a.next ();
+      iter_b.next ();
+    }
+
+  return true;
+}
+
 #if CHECKING_P
 
 namespace selftest {
@@ -721,7 +797,6 @@ static void
 test_function_point_ordering ()
 {
   const supernode *snode = NULL;
-  const call_string call_string;
 
   /* Populate an array with various points within the same
      snode, in order.  */
@@ -756,9 +831,11 @@ test_function_point_ordering ()
 static void
 test_program_point_equality ()
 {
+  region_model_manager mgr;
+
   const supernode *snode = NULL;
 
-  const call_string cs;
+  const call_string &cs = mgr.get_empty_call_string ();
 
   program_point a = program_point::before_supernode (snode, NULL,
 						     cs);

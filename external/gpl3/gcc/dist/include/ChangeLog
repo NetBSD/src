@@ -1,22 +1,324 @@
-2025-07-11  Release Manager
+2025-05-23  Release Manager
 
-	* GCC 12.5.0 released.
+	* GCC 14.3.0 released.
 
-2024-06-20  Release Manager
+2024-08-01  Release Manager
 
-	* GCC 12.4.0 released.
+	* GCC 14.2.0 released.
 
-2023-05-08  Release Manager
+2024-05-07  Release Manager
 
-	* GCC 12.3.0 released.
+	* GCC 14.1.0 released.
 
-2022-08-19  Release Manager
+2024-04-08  Thomas Schwinge  <tschwinge@baylibre.com>
 
-	* GCC 12.2.0 released.
+	* cuda/cuda.h (CUresult): Add 'CUDA_ERROR_NO_DEVICE'.
 
-2022-05-06  Release Manager
+2024-02-29  Tom Tromey  <tom@tromey.com>
 
-	* GCC 12.1.0 released.
+	* gcc-cp-interface.h (gcc_cp_fe_context_function): Update
+	comment.
+	* gcc-c-interface.h (enum gcc_c_api_version) <GCC_C_FE_VERSION_2>:
+	New constant.
+	(gcc_c_fe_context_function): Update comment.
+	* gcc-c-fe.def (finish_record_with_alignment): New method.
+	Update documentation.
+
+2024-01-13  Jakub Jelinek  <jakub@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_XOBJ_MEMBER_FUNCTION.
+
+2024-01-09  Jeff Law  <jlaw@ventanamicro.com>
+
+	* longlong.h (__stormy16_count_leading_zeros): Add prototype for
+	__clzhi2.
+
+2023-12-15  Julian Brown  <julian@codesourcery.com>
+
+	* gomp-constants.h (gomp_map_kind): Add GOMP_MAP_STRUCT_UNORD.
+
+2023-12-10  Tom Tromey  <tom@tromey.com>
+
+	* dwarf2.def (DW_IDX_GNU_internal, DW_IDX_GNU_external): Comment.
+	(DW_IDX_GNU_main, DW_IDX_GNU_language, DW_IDX_GNU_linkage_name):
+	New constants.
+
+2023-12-01  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_CONSTRAINTS.
+
+2023-11-28  Jakub Jelinek  <jakub@redhat.com>
+
+	* sha1.h (sha1_process_bytes_fn): New typedef.
+	(sha1_choose_process_bytes): Declare.
+
+2023-11-07  Kwok Cheung Yeung  <kcy@codesourcery.com>
+
+	* gomp-constants.h (GOMP_VERSION): Increment to 3.
+	(GOMP_VERSION_SUPPORTS_INDIRECT_FUNCS): New.
+
+2023-10-25  Chung-Lin Tang  <cltang@codesourcery.com>
+
+	* gomp-constants.h (GOACC_FLAG_LOCAL_DEVICE): New flag bit value.
+
+2023-10-12  Zhang, Jun  <jun.zhang@intel.com>
+
+	PR target/109812
+	* spincount.h: New file.
+
+2023-08-22  Jason Merrill  <jason@redhat.com>
+
+	PR c++/109751
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_FRIEND.
+
+2023-08-07  Vladimir Mezentsev  <vladimir.mezentsev@oracle.com>
+
+	* collectorAPI.h: New file.
+	* libcollector.h: New file.
+	* libfcollector.h: New file.
+
+2023-08-07  Alan Modra  <amodra@gmail.com>
+
+	* xtensa-dynconfig.h (xtensa_isa_internal): Delete unnecessary
+	forward declaration.
+
+2023-08-07  Alan Modra  <amodra@gmail.com>
+
+	* plugin-api.h: When handling non-gcc or gcc < 4.6.0 include
+	necessary header files before testing macros.  Make more use
+	of #elif.  Test _LITTLE_ENDIAN and _BIG_ENDIAN in final tests.
+
+2023-07-29  Tobias Burnus  <tobias@codesourcery.com>
+
+	* cuda/cuda.h (CUDA_MEMCPY2D, CUDA_MEMCPY3D, CUDA_MEMCPY3D_PEER):
+	Remove bogus 'const' from 'const void *dst' and fix reserved-name
+	name in those structs.
+	(cuMemcpyPeer, cuMemcpyPeerAsync): Add.
+
+2023-07-26  Tobias Burnus  <tobias@codesourcery.com>
+
+	* cuda/cuda.h (CUlimit): Add CUDA_ERROR_NOT_INITIALIZED,
+	CUDA_ERROR_DEINITIALIZED, CUDA_ERROR_INVALID_HANDLE.
+	(CUarray, CUmemorytype, CUDA_MEMCPY2D, CUDA_MEMCPY3D,
+	CUDA_MEMCPY3D_PEER): New typdefs.
+	(cuMemcpy2D, cuMemcpy2DAsync, cuMemcpy2DUnaligned,
+	cuMemcpy3D, cuMemcpy3DAsync, cuMemcpy3DPeer,
+	cuMemcpy3DPeerAsync): New prototypes.
+
+2023-06-12  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gomp-constants.h (enum gomp_map_kind): Change the enum values
+	GOMP_MAP_PRESENT_{TO,TOFROM,FROM,ALLOC} to be compiler only.
+	(GOMP_MAP_PRESENT_P): Update to include also GOMP_MAP_FORCE_PRESENT.
+
+2023-06-06  Kwok Cheung Yeung  <kcy@codesourcery.com>
+	    Tobias Burnus  <tobias@codesourcery.com>
+
+	* gomp-constants.h (GOMP_MAP_FLAG_SPECIAL_5): New.
+	(GOMP_MAP_FLAG_FORCE): Redefine.
+	(GOMP_MAP_FLAG_PRESENT, GOMP_MAP_FLAG_ALWAYS_PRESENT): New.
+	(enum gomp_map_kind): Add map kinds with 'present' modifiers.
+	(GOMP_MAP_COPY_TO_P, GOMP_MAP_COPY_FROM_P): Evaluate to true for
+	map variants with 'present'
+	(GOMP_MAP_ALWAYS_TO_P, GOMP_MAP_ALWAYS_FROM_P): Evaluate to true
+	for map variants with 'always, present' modifiers.
+	(GOMP_MAP_ALWAYS): Redefine.
+	(GOMP_MAP_FORCE_P, GOMP_MAP_PRESENT_P): New.
+
+2023-05-11  Joseph Myers  <joseph@codesourcery.com>
+
+	PR middle-end/109128
+	* plugin-api.h (ld_plugin_claim_file_handler_v2)
+	(ld_plugin_register_claim_file_v2)
+	(LDPT_REGISTER_CLAIM_FILE_HOOK_V2): New.
+	(struct ld_plugin_tv): Add tv_register_claim_file_v2.
+
+2023-04-28  Roger Sayle  <roger@nextmovesoftware.com>
+
+	* ctf.h: Import latest version from binutils/libctf.
+
+2023-04-19  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* xtensa-dynconfig.h (xtensa_config_v4): New struct.
+	(XCHAL_DATA_WIDTH, XCHAL_UNALIGNED_LOAD_EXCEPTION)
+	(XCHAL_UNALIGNED_STORE_EXCEPTION, XCHAL_UNALIGNED_LOAD_HW)
+	(XCHAL_UNALIGNED_STORE_HW, XTENSA_CONFIG_V4_ENTRY_LIST): New
+	definitions.
+	(XTENSA_CONFIG_INSTANCE_LIST): Add xtensa_config_v4 instance.
+	(XTENSA_CONFIG_ENTRY_LIST): Add XTENSA_CONFIG_V4_ENTRY_LIST.
+
+2023-02-27  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* xtensa-dynconfig.h (xtensa_config_v3): New struct.
+	(xtensa_get_config_v3): New declaration.
+	(XCHAL_HAVE_CLAMPS, XCHAL_HAVE_DEPBITS, XCHAL_HAVE_EXCLUSIVE)
+	(XCHAL_HAVE_XEA3, XTENSA_CONFIG_V3_ENTRY_LIST): New definitions.
+	(XTENSA_CONFIG_INSTANCE_LIST): Add xtensa_config_v3 instance.
+	(XTENSA_CONFIG_ENTRY_LIST): Add XTENSA_CONFIG_V3_ENTRY_LIST.
+
+2023-02-02  Andrew Stubbs  <ams@codesourcery.com>
+
+	* gomp-constants.h (GOMP_VERSION_GCN): Bump.
+
+2022-12-21  Jason Merrill  <jason@redhat.com>
+
+	PR c++/84471
+	PR c++/107504
+	* ansidecl.h (ATTRIBUTE_WARN_UNUSED_RESULT): Add __.
+
+2022-12-14  David Faust  <david.faust@oracle.com>
+
+	PR target/106773
+	* btf.h (enum btf_func_linkage): New.
+	(struct btf_var_secinfo): Update comments with notes about extern
+	functions.
+
+2022-12-14  David Faust  <david.faust@oracle.com>
+
+	PR target/106773
+	* btf.h (enum btf_var_linkage): New.
+	(struct btf_var): Update comment to note 'extern' linkage.
+
+2022-12-07  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* xtensa-dynconfig.h: New file.
+
+2022-11-15  Nathan Sidwell  <nathan@acm.org>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_TEMPLATE_HEAD,
+	DEMANGLE_COMPONENT_TEMPLATE_TYPE_PARM,
+	DEMANGLE_COMPONENT_TEMPLATE_NON_TYPE_PARM,
+	DEMANGLE_COMPONENT_TEMPLATE_TEMPLATE_PARM,
+	DEMANGLE_COMPONENT_TEMPLATE_PACK_PARM.
+
+2022-11-04  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* gomp-constants.h (GOMP_DEVICE_INTEL_MIC): Comment out.
+	(GOMP_VERSION_INTEL_MIC): Remove.
+
+2022-10-31  Guillermo E. Martinez  <guillermo.e.martinez@oracle.com>
+
+	* btf.h (btf_enum64): Add new definition and new symbolic
+	constant to BTF_KIND_ENUM64 and BTF_KF_ENUM_{UN,}SIGNED.
+
+2022-10-31  Lulu Cheng  <chenglulu@loongson.cn>
+	    qijingwen  <qijingwen@loongson.cn>
+
+	* vtv-change-permission.h (defined): Determines whether the macro
+	__loongarch_lp64 is defined
+	(VTV_PAGE_SIZE): Set VTV_PAGE_SIZE to 16KiB for loongarch64.
+
+2022-10-24  Tobias Burnus  <tobias@codesourcery.com>
+
+	* cuda/cuda.h (enum CUdevice_attribute): Add
+	CU_DEVICE_ATTRIBUTE_UNIFIED_ADDRESSING.
+	(CU_MEMHOSTALLOC_DEVICEMAP): Define.
+	(cuMemHostAlloc): Add prototype.
+
+2022-10-20  Tobias Burnus  <tobias@codesourcery.com>
+
+	* gomp-constants.h (GOMP_DEVICE_HSA): Comment out unused define.
+
+2022-10-13  Xi Ruoyao  <xry111@xry111.site>
+
+	* longlong.h [__loongarch__] (count_leading_zeros): Define.
+	[__loongarch__] (count_trailing_zeros): Likewise.
+	[__loongarch__] (COUNT_LEADING_ZEROS_0): Likewise.
+
+2022-09-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/106652
+	PR c++/85518
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_EXTENDED_BUILTIN_TYPE.
+	(struct demangle_component): Add u.s_extended_builtin member.
+
+2022-09-27  Meghan Denny  <hello@nektro.net>
+
+	* dwarf2.h: Update with additional languages from dwarf
+	standard.
+
+2022-07-12  Martin Liska  <mliska@suse.cz>
+
+	* plugin-api.h (enum linker_api_version): New enum.
+	(ld_plugin_get_api_version): New.
+	(enum ld_plugin_tag): Add LDPT_GET_API_VERSION.
+	(struct ld_plugin_tv): Add tv_get_api_version.
+
+2022-07-06  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* gomp-constants.h (OMP_REQUIRES_[...]): Update comment.
+
+2022-07-04  Tobias Burnus  <tobias@codesourcery.com>
+	    Chung-Lin Tang  <cltang@codesourcery.com>
+	    Thomas Schwinge  <thomas@codesourcery.com>
+
+	* gomp-constants.h (GOMP_VERSION): Bump to 2.
+	(GOMP_REQUIRES_UNIFIED_ADDRESS, GOMP_REQUIRES_UNIFIED_SHARED_MEMORY,
+	GOMP_REQUIRES_REVERSE_OFFLOAD, GOMP_REQUIRES_TARGET_USED):
+	New defines.
+
+2022-06-13  Jakub Jelinek  <jakub@redhat.com>
+
+	* gomp-constants.h (GOMP_DEVICE_INVALID): Define.
+
+2022-05-31  Alan Modra  <amodra@gmail.com>
+
+	* dwarf2.def: Correct spelling of DW_AT_namelist_item.
+
+2022-05-24  David Malcolm  <dmalcolm@redhat.com>
+
+	* ansidecl.h: Drop macros OVERRIDE and FINAL.
+
+2022-05-23  Nathan Sidwell  <nathan@acm.org>
+
+	* demangle.h (enum demangle_component_type): Add module components.
+
+2022-05-18  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* cuda/cuda.h (enum CUjit_option): Add
+	'CU_JIT_GENERATE_DEBUG_INFO', 'CU_JIT_GENERATE_LINE_INFO'.
+	(enum CUlimit): Add 'CU_LIMIT_STACK_SIZE',
+	'CU_LIMIT_MALLOC_HEAP_SIZE'.
+	(cuCtxSetLimit, cuGetErrorName): Add.
+
+2022-05-18  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* cuda/cuda.h: For C++, wrap in 'extern "C"'.
+
+2022-05-17  Nathan Sidwell  <nathan@acm.org>
+
+	* demangle.h (enum demangle_component_type): Add
+	DEMANGLE_COMPONENT_STRUCTURED_BINDING.
+
+2022-05-17  Jakub Jelinek  <jakub@redhat.com>
+
+	* gomp-constants.h (GOMP_DEPEND_INOUTSET): Define.
+
+2022-05-10  Martin Liska  <mliska@suse.cz>
+
+	* ansidecl.h (PTR): Remove.
+	(const): Likewise.
+	(volatile): Likewise.
+	(signed): Likewise.
+
+2022-05-10  Martin Liska  <mliska@suse.cz>
+
+	* hashtab.h (HTAB_EMPTY_ENTRY): Use void * instead PTR.
+	(HTAB_DELETED_ENTRY): Likewise.
+
+2022-05-09  Martin Liska  <mliska@suse.cz>
+
+	* ansidecl.h (PTR): Remove Not ANCI C part.
+
+2022-05-04  Martin Liska  <mliska@suse.cz>
+
+	* plugin-api.h (enum ld_plugin_tag): Do not set implicit enum
+	values.
 
 2022-04-06  Thomas Schwinge  <thomas@codesourcery.com>
 

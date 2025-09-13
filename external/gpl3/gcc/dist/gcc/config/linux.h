@@ -2,7 +2,7 @@
    MMU, using ELF at the compiler level but possibly FLT for final
    linked executables and shared libraries in some no-MMU cases, and
    possibly with a choice of libc implementations.
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
    Contributed by Eric Youngdale.
    Modified for stabs-in-ELF by H.J. Lu (hjl@lucon.org).
 
@@ -56,19 +56,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 	builtin_assert ("system=linux");			\
 	builtin_assert ("system=unix");				\
 	builtin_assert ("system=posix");			\
-    } while (0)
-
-#define GNU_USER_TARGET_D_OS_VERSIONS()				\
-    do {							\
-	builtin_version ("linux");				\
-	if (OPTION_GLIBC)					\
-	  builtin_version ("CRuntime_Glibc");			\
-	else if (OPTION_UCLIBC)					\
-	  builtin_version ("CRuntime_UClibc");			\
-	else if (OPTION_BIONIC)					\
-	  builtin_version ("CRuntime_Bionic");			\
-	else if (OPTION_MUSL)					\
-	  builtin_version ("CRuntime_Musl");			\
     } while (0)
 
 /* Determine which dynamic linker to use depending on whether GLIBC or
@@ -224,5 +211,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    this includes full c99 runtime and sincos.  */
 # undef TARGET_LIBC_HAS_FUNCTION
 # define TARGET_LIBC_HAS_FUNCTION linux_libc_has_function
+
+# undef TARGET_LIBM_FUNCTION_MAX_ERROR
+# define TARGET_LIBM_FUNCTION_MAX_ERROR linux_libm_function_max_error
+
+#undef TARGET_FORTIFY_SOURCE_DEFAULT_LEVEL
+#define TARGET_FORTIFY_SOURCE_DEFAULT_LEVEL linux_fortify_source_default_level
 
 #endif
