@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280var.h,v 1.2 2025/09/13 15:55:45 thorpej Exp $	*/
+/*	$NetBSD: bmx280var.h,v 1.3 2025/09/13 16:16:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -95,6 +95,9 @@ struct bmx280_irr_list {
 	uint8_t		mask;
 };
 
+extern const struct device_compatible_entry bmx280_compat_data[];
+
 void	bmx280_attach(struct bmx280_sc *);
+int	bmx280_detach(struct bmx280_sc *, int);
 
 #endif

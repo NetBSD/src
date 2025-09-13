@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.3 2025/09/13 15:55:45 thorpej Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.3 2025/09/13 15:55:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $");
 
 /*
  * Common driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -35,11 +35,24 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.3 2025/09/13 15:55:45 thorpej Exp $");
 #include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
-#include <dev/spi/spivar.h>
-#include <dev/i2c/i2cvar.h>
+
 #include <dev/ic/bmx280reg.h>
 #include <dev/ic/bmx280var.h>
 
+const struct device_compatible_entry bmx280_compat_data[] = {
+	{ .compat = "bosch,bmp280" },
+	{ .compat = "bosch,bme280" },
+#if 0
+	/*
+	 * XXX Should also add support for:
+	 *	bosch,bmp085
+	 *	bosch,bmp180
+	 *	bosch,bmp380
+	 *	bosch,bmp580
+	 */
+#endif
+	DEVICE_COMPAT_EOL
+};
 
 static void	bmx280_store_raw_blob_tp(struct bmx280_sc *, uint8_t *);
 static void	bmx280_store_raw_blob_h(struct bmx280_sc *, uint8_t *);
@@ -399,6 +412,15 @@ bmx280_attach(struct bmx280_sc *sc)
 
 	aprint_normal("\n");
 
+	/*
+	 * XXX Should get and use the following properties from
+	 * the device tree:
+	 *
+	 *	vddd-supply	(a regulator)
+	 *	vdda-supply	(a regulator)
+	 *	reset-gpios	(a gpio, active-low reset)
+	 */
+
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_numsensors = __arraycount(bmx280_sensors);
 
@@ -544,6 +566,28 @@ bmx280_attach(struct bmx280_sc *sc)
 out:
 	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
+}
+
+int
+bmx280_detach(struct bmx280_sc *sc, int flags __unused)
+{
+	mutex_enter(&sc->sc_mutex);
+
+	/* Remove the sensors */
+	if (sc->sc_sme != NULL) {
+		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
+
+	mutex_exit(&sc->sc_mutex);
+
+	/* Remove the sysctl tree */
+	sysctl_teardown(&sc->sc_bmx280log);
+
+	/* Remove the mutex */
+	mutex_destroy(&sc->sc_mutex);
+
+	return 0;
 }
 
 /* The conversion algorithms are taken from the BMP280 datasheet.  The

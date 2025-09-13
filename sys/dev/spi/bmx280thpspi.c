@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpspi.c,v 1.6 2025/09/13 15:55:45 thorpej Exp $	*/
+/*	$NetBSD: bmx280thpspi.c,v 1.7 2025/09/13 16:16:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.6 2025/09/13 15:55:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.7 2025/09/13 16:16:40 thorpej Exp $");
 
 /*
  * SPI driver for the Bosch BMP280 / BME280 sensor.
@@ -50,35 +50,9 @@ struct bmx280_spi_softc {
 #define	BMX280_TO_SPI(sc)	\
 	container_of((sc), struct bmx280_spi_softc, sc_bmx280)
 
-static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "bosch,bmp280" },
-	{ .compat = "bosch,bme280" },
-#if 0
-	/*
-	 * XXX Should also add support for:
-	 *	bosch,bmp085
-	 *	bosch,bmp180
-	 *	bosch,bmp380
-	 *	bosch,bmp580
-	 */
-#endif
-	DEVICE_COMPAT_EOL
-};
-
 static int 	bmx280thpspi_match(device_t, cfdata_t, void *);
 static void 	bmx280thpspi_attach(device_t, device_t, void *);
 static int 	bmx280thpspi_detach(device_t, int);
-
-#define BMX280_DEBUG
-#ifdef BMX280_DEBUG
-#define DPRINTF(s, l, x) \
-    do { \
-	if (l <= s->sc_bmx280debug) \
-	    printf x; \
-    } while (/*CONSTCOND*/0)
-#else
-#define DPRINTF(s, l, x)
-#endif
 
 CFATTACH_DECL_NEW(bmx280thpspi, sizeof(struct bmx280_spi_softc),
     bmx280thpspi_match, bmx280thpspi_attach, bmx280thpspi_detach, NULL);
@@ -181,7 +155,7 @@ bmx280thpspi_match(device_t parent, cfdata_t match, void *aux)
 	struct spi_attach_args *sa = aux;
 	int match_result;
 
-	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+	if (spi_use_direct_match(sa, bmx280_compat_data, &match_result)) {
 		return match_result;
 	}
 
@@ -201,8 +175,6 @@ bmx280thpspi_attach(device_t parent, device_t self, void *aux)
 
 	ssc->sc_sh = sa->sa_handle;
 
-	sc->sc_bmx280debug = 0;
-
 	/* Configure for 1MHz and SPI mode 0 according to the data sheet.
 	 * The chip will actually handle a number of different modes and
 	 * can go a lot faster, just use this for now...
@@ -212,31 +184,16 @@ bmx280thpspi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/*
-	 * XXX Need to get this data from the device tree:
-	 *
-	 *	vddd-supply	(a regulator)
-	 *	vdda-supply	(a regulator)
-	 *	reset-gpios	(a gpio, active-low reset)
-	 */
-
 	/* Please note that if the pins are not set up for SPI, the attachment
 	 * will probably not work out.
 	 */
 	bmx280_attach(sc);
 }
 
-/* These really do not do a whole lot, as SPI devices do not seem to work
- * as modules.
- */
 static int
 bmx280thpspi_detach(device_t self, int flags)
 {
-	struct bmx280_sc *sc;
+	struct bmx280_spi_softc *ssc = device_private(self);
 
-	sc = device_private(self);
-
-	mutex_destroy(&sc->sc_mutex);
-
-	return 0;
+	return bmx280_detach(&ssc->sc_bmx280, flags);
 }

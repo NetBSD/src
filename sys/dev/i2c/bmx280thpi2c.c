@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpi2c.c,v 1.3 2025/09/13 15:55:45 thorpej Exp $	*/
+/*	$NetBSD: bmx280thpi2c.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.3 2025/09/13 15:55:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $");
 
 /*
  * I2C driver for the Bosch BMP280 / BME280 sensor.
@@ -51,36 +51,10 @@ struct bmx280_i2c_softc {
 #define	BMX280_TO_I2C(sc)	\
 	container_of((sc), struct bmx280_i2c_softc, sc_bmx280)
 
-static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "bosch,bmp280" },
-	{ .compat = "bosch,bme280" },
-#if 0
-	/*
-	 * XXX Should also add support for:
-	 *	bosch,bmp085
-	 *	bosch,bmp180
-	 *	bosch,bmp380
-	 *	bosch,bmp580
-	 */
-#endif
-	DEVICE_COMPAT_EOL
-};
-
 static int 	bmx280thpi2c_poke(i2c_tag_t, i2c_addr_t, bool);
 static int 	bmx280thpi2c_match(device_t, cfdata_t, void *);
 static void 	bmx280thpi2c_attach(device_t, device_t, void *);
 static int 	bmx280thpi2c_detach(device_t, int);
-
-#define BMX280_DEBUG
-#ifdef BMX280_DEBUG
-#define DPRINTF(s, l, x) \
-    do { \
-	if (l <= s->sc_bmx280debug) \
-	    printf x; \
-    } while (/*CONSTCOND*/0)
-#else
-#define DPRINTF(s, l, x)
-#endif
 
 CFATTACH_DECL_NEW(bmx280thpi2c, sizeof(struct bmx280_sc),
     bmx280thpi2c_match, bmx280thpi2c_attach, bmx280thpi2c_detach, NULL);
@@ -188,7 +162,7 @@ bmx280thpi2c_match(device_t parent, cfdata_t cf, void *aux)
 	int error, match_result;
 	const bool matchdebug = false;
 
-	if (iic_use_direct_match(ia, cf, compat_data, &match_result)) {
+	if (iic_use_direct_match(ia, cf, bmx280_compat_data, &match_result)) {
 		return match_result;
 	}
 
@@ -226,46 +200,15 @@ bmx280thpi2c_attach(device_t parent, device_t self, void *aux)
 	isc->sc_tag = ia->ia_tag;
 	isc->sc_addr = ia->ia_addr;
 
-	sc->sc_bmx280debug = 0;
-
-	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
-
-	/*
-	 * XXX Need to get this data from the device tree:
-	 *
-	 *	vddd-supply	(a regulator)
-	 *	vdda-supply	(a regulator)
-	 *	reset-gpios	(a gpio, active-low reset)
-	 */
-
 	bmx280_attach(sc);
-
-	return;
 }
 
 static int
 bmx280thpi2c_detach(device_t self, int flags)
 {
-	struct bmx280_sc *sc;
+	struct bmx280_i2c_softc *isc = device_private(self);
 
-	sc = device_private(self);
-
-	mutex_enter(&sc->sc_mutex);
-
-	/* Remove the sensors */
-	if (sc->sc_sme != NULL) {
-		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
-	}
-	mutex_exit(&sc->sc_mutex);
-
-	/* Remove the sysctl tree */
-	sysctl_teardown(&sc->sc_bmx280log);
-
-	/* Remove the mutex */
-	mutex_destroy(&sc->sc_mutex);
-
-	return 0;
+	return bmx280_detach(&isc->sc_bmx280, flags);
 }
 
 MODULE(MODULE_CLASS_DRIVER, bmx280thpi2c, "iic,bmx280thp");
