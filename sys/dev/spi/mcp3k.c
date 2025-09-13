@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp3k.c,v 1.8 2025/09/11 14:32:49 thorpej Exp $ */
+/*	$NetBSD: mcp3k.c,v 1.9 2025/09/13 13:25:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -221,19 +221,16 @@ static const int mcp3k_nmodels = __arraycount(compat_data) - 1;
 static const struct mcp3kadc_model *
 mcp3kadc_lookup(const struct spi_attach_args *sa, const cfdata_t cf)
 {
-	if (sa->sa_ncompat > 0) {
-		const struct device_compatible_entry *dce =
-		    spi_compatible_lookup(sa, compat_data);
-		if (dce == NULL) {
-			return NULL;
-		}
-		return dce->data;
-	} else {
-		if (cf->cf_flags < 0 || cf->cf_flags >= mcp3k_nmodels) {
-			return NULL;
-		}
-		return compat_data[cf->cf_flags].data;
+	const struct mcp3kadc_model *model = NULL;
+	const struct device_compatible_entry *dce =
+	    spi_compatible_lookup(sa, compat_data);
+
+	if (dce != NULL) {
+		model = dce->data;
+	} else if (cf->cf_flags >= 0 && cf->cf_flags < mcp3k_nmodels) {
+		model = compat_data[cf->cf_flags].data;
 	}
+	return model;
 }
 
 static int
@@ -250,7 +247,7 @@ mcp3kadc_match(device_t parent, cfdata_t cf, void *aux)
 	 * If we're doing indirect config, the user must
 	 * have specified a valid model.
 	 */
-	if (sa->sa_ncompat == 0 && mcp3kadc_lookup(sa, cf) == NULL) {
+	if (mcp3kadc_lookup(sa, cf) == NULL) {
 		return 0;
 	}
 
@@ -304,7 +301,7 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 {
 	const struct sysctlnode *rnode, *node;
 	struct spi_attach_args *sa = aux;
-	struct mcp3kadc_softc *sc = device_private(self);;
+	struct mcp3kadc_softc *sc = device_private(self);
 	devhandle_t devhandle = device_handle(self);
 	const struct mcp3kadc_model *model;
 	int error, ch, i;
@@ -326,8 +323,6 @@ mcp3kadc_attach(device_t parent, device_t self, void *aux)
 	/* configure for 1MHz */
 	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
-		aprint_error_dev(self, "spi_configure failed (error = %d)\n",
-		    error);
 		return;
 	}
 
