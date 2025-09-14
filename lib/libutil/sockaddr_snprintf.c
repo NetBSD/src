@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.15 2025/09/14 17:26:20 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.16 2025/09/14 22:03:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2016 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.15 2025/09/14 17:26:20 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.16 2025/09/14 22:03:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -355,7 +355,8 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			ADDS(nbuf);
 			break;
 		case 'N':
-			f = p == -1 ? "%A" : "%A:%P";
+			f = p == -1 ? "%A" : (sa->sa_family == AF_INET6
+			    ? "[%A]:%P" : "%A:%P");
 			sockaddr_snprintf(nbuf, sizeof(nbuf), f, sa);
 			ADDS(nbuf);
 			break;
