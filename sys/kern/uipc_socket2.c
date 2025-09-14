@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.147 2024/12/07 02:31:14 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.148 2025/09/14 14:24:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.147 2024/12/07 02:31:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.148 2025/09/14 14:24:12 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -297,7 +297,7 @@ sonewconn(struct socket *head, bool soready)
 				break;
 			}
 
-			/* If nothing was nudged out of the acept filter, bail
+			/* If nothing was nudged out of the accept filter, bail
 			 * out; otherwise proceed allocating the socket. */
 			if (so2 == NULL) {
 				return NULL;

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.53 2023/01/15 05:08:33 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.54 2025/09/14 14:24:12 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.53 2023/01/15 05:08:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.54 2025/09/14 14:24:12 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "siotty.h"
@@ -634,7 +634,7 @@ sioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return error;
 
-	/* the last resort for TIOC ioctl tranversing */
+	/* the last resort for TIOC ioctl traversing */
 	switch (cmd) {
 	case TIOCSBRK: /* Set the hardware into BREAK condition */
 		siomctl(sc, TIOCM_BREAK, DMBIS);

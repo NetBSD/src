@@ -1,4 +1,4 @@
-/*	$NetBSD: dove.c,v 1.3 2021/09/30 10:19:52 skrll Exp $	*/
+/*	$NetBSD: dove.c,v 1.4 2025/09/14 14:24:12 andvar Exp $	*/
 /*
  * Copyright (c) 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.3 2021/09/30 10:19:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.4 2025/09/14 14:24:12 andvar Exp $");
 
 #define _INTR_PRIVATE
 
@@ -437,7 +437,7 @@ printf("dove pmu intr: cause 0x%x, mask 0x%x\n", cause, mask);
 	cause &= mask;
 
 	if (cause & DOVE_PMU_PMUI_BATTFAULT) {
-printf("  Battery Falut\n");
+printf("  Battery Fault\n");
 	}
 	if (cause & DOVE_PMU_PMUI_RTCALARM) {
 printf("  RTC Alarm\n");

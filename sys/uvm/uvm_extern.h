@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.234 2025/04/27 17:40:55 riastradh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.235 2025/09/14 14:24:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -408,7 +408,7 @@ struct uvmexp {
 	int pdreact;	/* number of pages daemon reactivated since boot */
 	int pdbusy;	/* number of times daemon found a busy page */
 	int pdpageouts;	/* number of times daemon started a pageout */
-	int pdpending;	/* number of times daemon got a pending pagout */
+	int pdpending;	/* number of times daemon got a pending pageout */
 	int pddeact;	/* number of pages daemon deactivates */
 	int pdreanon;	/* anon pages reactivated due to thresholds */
 	int pdrefile;	/* file pages reactivated due to thresholds */

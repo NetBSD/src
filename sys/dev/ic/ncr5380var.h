@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.34 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.35 2025/09/14 14:24:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -98,7 +98,7 @@
 struct sci_req {
 	struct		scsipi_xfer *sr_xs;	/* Pointer to xfer struct, NULL=unused */
 	int		sr_target, sr_lun;	/* For fast access */
-	void		*sr_dma_hand;		/* Current DMA hnadle */
+	void		*sr_dma_hand;		/* Current DMA handle */
 	uint8_t		*sr_dataptr;		/* Saved data pointer */
 	int		sr_datalen;
 	int		sr_flags;		/* Internal error code */

@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.298 2025/04/21 13:45:03 nia Exp $
+#	$NetBSD: shlib_version,v 1.299 2025/09/14 14:24:12 andvar Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -43,7 +43,7 @@
 # - redo stdin/stdout/stderr to not require copy relocations
 # - move gethostbyname to a compat library
 # - remove badly hidden gethostbyname_r
-# - decide whether soft-float should support fenv.h, including thread-local contett
+# - decide whether soft-float should support fenv.h, including thread-local context
 # - stop all math functions from setting errno
 # - boot obsolete signal functions to libcompat
 # - remove exect(3) API - tracing functionality has been moved to the kernel
