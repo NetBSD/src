@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.66 2024/02/09 22:08:38 andvar Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.67 2025/09/14 19:09:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.66 2024/02/09 22:08:38 andvar Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.67 2025/09/14 19:09:11 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ static int	dump_ipage_segusage(struct lfs *, int, char *, int);
 static void	dump_segment(int, int, daddr_t, struct lfs *, int);
 static int	dump_sum(int, struct lfs *, SEGSUM *, int, daddr_t);
 static void	dump_super(struct lfs *);
+static void	dump_inoblk(int, struct lfs *, daddr_t, ino_t);
 static void	usage(void);
 
 extern uint32_t	cksum(void *, size_t);
@@ -182,16 +183,21 @@ int
 main(int argc, char **argv)
 {
 	struct lfs lfs_sb1, lfs_sb2, *lfs_master;
-	daddr_t seg_addr, idaddr, sbdaddr;
+	daddr_t seg_addr, idaddr, sbdaddr, inoaddr;
 	int ch, do_allsb, do_ientries, do_segentries, fd, segnum;
 	void *sbuf;
+	char *narg, *s;
+	ino_t dumpino;
 
 	do_allsb = 0;
 	do_ientries = 0;
 	do_segentries = 0;
+	dumpino = 0;
 	idaddr = 0x0;
 	sbdaddr = 0x0;
-	while ((ch = getopt(argc, argv, "ab:diI:Ss:")) != -1)
+	inoaddr = 0x0;
+	narg = NULL;
+	while ((ch = getopt(argc, argv, "ab:diI:n:Ss:")) != -1)
 		switch(ch) {
 		case 'a':		/* Dump all superblocks */
 			do_allsb = 1;
@@ -207,6 +213,9 @@ main(int argc, char **argv)
 			break;
 		case 'I':		/* Use this ifile inode */
 			idaddr = strtol(optarg, NULL, 0);
+			break;
+		case 'n':
+			narg = optarg;
 			break;
 		case 'S':
 			do_segentries = !do_segentries;
@@ -276,6 +285,26 @@ main(int argc, char **argv)
 	}
 
 	free(sbuf);
+
+	/*
+	 * If asked to dump an inode block, do that and exit.
+	 */
+	if (narg != NULL) {
+		s = strchr(narg, '@');
+		if (s != NULL) {
+			*s = 0;
+			dumpino = strtol(narg, NULL, 0);
+			if (dumpino <= 0)
+				usage();
+			narg = s + 1;
+		}
+		inoaddr = strtol(narg, NULL, 0);
+		if (inoaddr <= 0)
+			usage();
+
+		dump_inoblk(fd, lfs_master, inoaddr, dumpino);
+		exit(0);
+	}
 
 	/* Compatibility */
 	if (lfs_sb_getversion(lfs_master) == 1) {
@@ -534,8 +563,9 @@ dump_dinode(struct lfs *fs, union lfs_dinode *dip)
 	(void)printf("    %s%s", "atime ", ctime(&at));
 	(void)printf("    %s%s", "mtime ", ctime(&mt));
 	(void)printf("    %s%s", "ctime ", ctime(&ct));
-	(void)printf("    inum  %ju\n",
-		(uintmax_t)lfs_dino_getinumber(fs, dip));
+	(void)printf("    inum  %ju\tnblocks  %ju\n",
+		     (uintmax_t)lfs_dino_getinumber(fs, dip),
+		     (uintmax_t)lfs_dino_getblocks(fs, dip));
 	(void)printf("    Direct Addresses\n");
 	for (i = 0; i < ULFS_NDADDR; i++) {
 		(void)printf("\t0x%jx", (intmax_t)lfs_dino_getdb(fs, dip, i));
@@ -612,7 +642,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	/* Dump out inode disk addresses */
 	iip = SEGSUM_IINFOSTART(lfsp, sp);
 	diblock = emalloc(lfs_sb_getbsize(lfsp));
-	printf("    Inode addresses:");
+	printf("    Inode addresses:\n");
 	numbytes = 0;
 	numblocks = 0;
 	for (i = 0; i < lfs_ss_getninos(lfsp, sp); iip = NEXTLOWER_IINFO(lfsp, iip)) {
@@ -627,13 +657,9 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			(void)printf("%juv%d", lfs_dino_getinumber(lfsp, dip),
 				     lfs_dino_getgen(lfsp, dip));
 		}
-		(void)printf("}");
-		if (((i/LFS_INOPB(lfsp)) % 4) == 3)
-			(void)printf("\n");
+		(void)printf("}\n");
 	}
 	free(diblock);
-
-	printf("\n");
 
 	fp = SEGSUM_FINFOBASE(lfsp, sp);
 	for (i = 0; i < lfs_ss_getnfinfo(lfsp, sp); i++) {
@@ -915,6 +941,30 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 		     (intmax_t)lfs_ci_getbfree(lfsp, cip),
 		     (intmax_t)lfs_ci_getavail(lfsp, cip));
 }
+
+static void
+dump_inoblk(int fd, struct lfs *lfsp, daddr_t daddr, ino_t ino)
+{
+	char *buf;
+	union lfs_dinode *dip;
+	ino_t dino;
+	int i;
+
+	buf = emalloc(lfs_sb_getfsize(lfsp));
+	get(fd, lfs_fsbtob(lfsp, daddr), buf, lfs_sb_getfsize(lfsp));
+	for (i = 0; i < LFS_INOPB(lfsp); ++i) {
+		dip = DINO_IN_BLOCK(lfsp, buf, i);
+		dino = lfs_dino_getinumber(lfsp, dip);
+		if (dino == 0)
+			continue;
+		else if (ino == 0 || ino == dino) {
+			(void)printf("Addr 0x%jx entry %d inode %jd:\n",
+				     (intmax_t)daddr, i, (intmax_t)dino);
+			dump_dinode(lfsp, dip);
+		}
+	}
+}
+
 
 static void
 usage(void)
