@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.690 2025/09/14 11:14:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.691 2025/09/14 12:05:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.690 2025/09/14 11:14:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.691 2025/09/14 12:05:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3539,13 +3539,6 @@ promote(op_t op, bool farg, tnode_t *tn)
 	ntp->t_is_enum = otp->t_is_enum;
 	if (ntp->t_is_enum)
 		ntp->u.enumer = otp->u.enumer;
-	ntp->t_bitfield = otp->t_bitfield;
-	if (ntp->t_bitfield) {
-		ntp->t_bit_field_width = otp->t_bit_field_width;
-		ntp->t_bit_field_offset = otp->t_bit_field_offset;
-	}
-	if (ntp->t_bitfield && is_uinteger(ot) && !is_uinteger(nt))
-		ntp->t_bit_field_width++;
 	return convert(op, 0, ntp, tn);
 }
 
