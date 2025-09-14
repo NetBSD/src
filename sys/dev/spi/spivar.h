@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.23 2025/09/13 17:51:08 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.24 2025/09/14 00:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -85,18 +85,17 @@ struct spi_controller {
 
 int	spibus_print(void *, const char *);
 
-/* one per chip select */
 struct spibus_attach_args {
 	const struct spi_controller *sba_controller;
 };
 
 struct spi_attach_args {
-	spi_handle_t		sa_handle;
+	spi_handle_t	sa_handle;
 
 	/* only set if using direct config */
-	int		sa_ncompat;	/* number of pointers in the
-					   sa_compat array */
-	const char **	sa_compat;	/* chip names */
+	const char	*sa_name;	/* name of the device */
+	const char	*sa_clist;	/* compatible strlist */
+	size_t		sa_clist_size;	/* size of compatible strlist */
 	devhandle_t	sa_devhandle;	/* device handle for the device */
 };
 
@@ -173,7 +172,7 @@ spibus_attach(device_t dev, const struct spi_controller *sct)
 
 bool	spi_use_direct_match(const struct spi_attach_args *,
 	    const struct device_compatible_entry *, int *);
-int	spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
+int	spi_compatible_match(const struct spi_attach_args *,
 	    const struct device_compatible_entry *);
 const struct device_compatible_entry *
 	spi_compatible_lookup(const struct spi_attach_args *,

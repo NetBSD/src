@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.34 2025/09/13 17:51:08 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.35 2025/09/14 00:28:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.34 2025/09/13 17:51:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.35 2025/09/14 00:28:44 thorpej Exp $");
 
 #include "locators.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.34 2025/09/13 17:51:08 thorpej Exp $");
 
 #include <dev/spi/spivar.h>
 #include <dev/spi/spi_io.h>
+#include <dev/spi/spi_calls.h>
 
 #ifdef FDT
 #include <dev/fdt/fdt_spi.h>	/* XXX */
@@ -143,14 +144,32 @@ spi_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static int
+spi_print_direct(void *aux, const char *pnp)
+{
+	struct spi_attach_args *sa = aux;
+
+	if (pnp != NULL) {
+		aprint_normal("%s%s%s%s at %s slave %d",
+		    sa->sa_name ? sa->sa_name : "(unknown)",
+		    sa->sa_clist ? " (" : "",
+		    sa->sa_clist ? sa->sa_clist : "",
+		    sa->sa_clist ? ")" : "",
+		    pnp, sa->sa_handle->sh_slave);
+	} else {
+		aprint_normal(" slave %d", sa->sa_handle->sh_slave);
+	}
+
+	return UNCONF;
+}
+
+static int
 spi_print(void *aux, const char *pnp)
 {
 	struct spi_attach_args *sa = aux;
 
-	if (sa->sa_handle->sh_slave != -1)
-		aprint_normal(" slave %d", sa->sa_handle->sh_slave);
+	aprint_normal(" slave %d", sa->sa_handle->sh_slave);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 static void
@@ -186,7 +205,7 @@ spi_attach_child(struct spi_softc *sc, struct spi_attach_args *sa,
 	sa->sa_handle = sh;
 
 	if (is_direct) {
-		newdev = config_found(sc->sc_dev, sa, spi_print,
+		newdev = config_found(sc->sc_dev, sa, spi_print_direct,
 		    CFARGS(.submatch = config_stdsubmatch,
 			   .locators = locs,
 			   .devhandle = sa->sa_devhandle));
@@ -229,146 +248,31 @@ spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	return 0;
 }
 
-/*
- * XXX this is the same as i2c_fill_compat. It could be refactored into a
- * common fill_compat function with pointers to compat & ncompat instead
- * of attach_args as the first parameter.
- */
-static void
-spi_fill_compat(struct spi_attach_args *sa, const char *compat, size_t len,
-	char **buffer)
+static bool
+spi_enumerate_devices_callback(device_t self,
+    struct spi_enumerate_devices_args *args)
 {
-	int count, i;
-	const char *c, *start, **ptr;
+	struct spi_softc *sc = device_private(self);
 
-	*buffer = NULL;
-	for (i = count = 0, c = compat; i < len; i++, c++)
-		if (*c == 0)
-			count++;
-	count += 2;
-	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
-	if (!ptr)
-		return;
+	spi_attach_child(sc, args->sa, args->chip_select, NULL);
 
-	for (i = count = 0, start = c = compat; i < len; i++, c++) {
-		if (*c == 0) {
-			ptr[count++] = start;
-			start = c + 1;
-		}
-	}
-	if (start < compat + len) {
-		/* last string not 0 terminated */
-		size_t l = c - start;
-		*buffer = malloc(l + 1, M_TEMP, M_WAITOK);
-		memcpy(*buffer, start, l);
-		(*buffer)[l] = 0;
-		ptr[count++] = *buffer;
-	}
-	ptr[count] = NULL;
-
-	sa->sa_compat = ptr;
-	sa->sa_ncompat = count;
-}
-
-static void
-spi_direct_attach_child_devices(struct spi_softc *sc)
-{
-	unsigned int count;
-	prop_dictionary_t child;
-	prop_array_t child_devices;
-	prop_data_t cdata;
-	devhandle_t parent_handle = device_handle(sc->sc_dev);
-	devhandle_t child_handle;
-	uint32_t chip_select;
-	uint64_t cookie;
-	struct spi_attach_args sa;
-	int loc[SPICF_NLOCS];
-	char *buf;
-	int i;
-
-	/* XXX A better way is coming, I promise... */
-	switch (devhandle_type(parent_handle)) {
-#ifdef FDT
-	case DEVHANDLE_TYPE_OF:
-		child_devices = of_copy_spi_devs(sc->sc_dev);
-		break;
-#endif
-	default:
-		child_devices = NULL;
-		break;
-	}
-
-	if (child_devices == NULL) {
-		return;
-	}
-
-	memset(loc, 0, sizeof loc);
-	count = prop_array_count(child_devices);
-	for (i = 0; i < count; i++) {
-		child = prop_array_get(child_devices, i);
-		if (!child)
-			continue;
-		if (!prop_dictionary_get_uint32(child, "slave", &chip_select))
-			continue;
-		if (!prop_dictionary_get_uint64(child, "cookie", &cookie))
-			continue;
-		if (!(cdata = prop_dictionary_get(child, "compatible")))
-			continue;
-		loc[SPICF_SLAVE] = chip_select;
-
-		memset(&sa, 0, sizeof sa);
-		sa.sa_handle = &sc->sc_slaves[chip_select];
-
-		/* XXX Really, I promise, it'll get better... */
-		switch (devhandle_type(parent_handle)) {
-#ifdef FDT
-		case DEVHANDLE_TYPE_OF:
-			child_handle = devhandle_from_of(parent_handle,
-							 (int)cookie);
-			break;
-#endif
-		default:
-			child_handle = devhandle_invalid();
-		}
-		sa.sa_devhandle = child_handle;
-
-		buf = NULL;
-		spi_fill_compat(&sa,
-				prop_data_value(cdata),
-				prop_data_size(cdata), &buf);
-
-		spi_attach_child(sc, &sa, chip_select, NULL);
-
-		if (sa.sa_compat)
-			free(sa.sa_compat, M_TEMP);
-		if (buf)
-			free(buf, M_TEMP);
-	}
-	prop_object_release(child_devices);
+	return true;				/* keep enumerating */
 }
 
 int
 spi_compatible_match(const struct spi_attach_args *sa,
-		     const cfdata_t cf __unused,
 		     const struct device_compatible_entry *compats)
 {
-	int match_result;
-
-	match_result = device_compatible_match(sa->sa_compat, sa->sa_ncompat,
-					       compats);
-	if (match_result) {
-		match_result = SPI_MATCH_DIRECT_COMPATIBLE + match_result - 1;
-	}
-
-	return match_result ? match_result : SPI_MATCH_DEFAULT /* XXX */;
+	return device_compatible_match_strlist(sa->sa_clist,
+	    sa->sa_clist_size, compats);
 }
 
 const struct device_compatible_entry *
 spi_compatible_lookup(const struct spi_attach_args *sa,
 		      const struct device_compatible_entry *compats)
 {
-	return device_compatible_lookup(sa->sa_compat, sa->sa_ncompat,
-					compats);
+	return device_compatible_lookup_strlist(sa->sa_clist,
+	    sa->sa_clist_size, compats);
 }
 
 bool
@@ -378,8 +282,8 @@ spi_use_direct_match(const struct spi_attach_args *sa,
 {
 	KASSERT(match_resultp != NULL);
 
-	if (sa->sa_ncompat > 0 && sa->sa_compat != NULL) {
-		*match_resultp = spi_compatible_match(sa, NULL, compats);
+	if (sa->sa_clist != NULL && sa->sa_clist_size != 0) {
+		*match_resultp = spi_compatible_match(sa, compats);
 		return true;
 	}
 
@@ -438,8 +342,16 @@ spi_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	/* First attach devices known to be present via the device tree. */
-	spi_direct_attach_child_devices(sc);
+	/*
+	 * Attempt to enumerate the devices on the bus using the
+	 * platform device tree.
+	 */
+	struct spi_attach_args sa = { 0 };
+	struct spi_enumerate_devices_args enumargs = {
+		.sa = &sa,
+		.callback = spi_enumerate_devices_callback,
+	};
+	device_call(self, SPI_ENUMERATE_DEVICES(&enumargs));
 
 	/* Then do any other devices the user may have manually wired */
 	config_search(self, NULL,

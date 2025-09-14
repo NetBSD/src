@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofw,v 1.17 2021/05/12 23:22:33 thorpej Exp $
+#	$NetBSD: files.ofw,v 1.18 2025/09/14 00:28:43 thorpej Exp $
 #
 # First cut on Openfirmware interface
 #
@@ -15,7 +15,6 @@ file	dev/ofw/ofw_subr.c		ofbus | openfirm | ofw_subr
 
 file	dev/ofw/ofw_i2c_subr.c		ofbus | openfirm | ofw_subr
 file	dev/ofw/ofw_network_subr.c	of_network_dev
-file	dev/ofw/ofw_spi_subr.c		ofbus | openfirm | ofw_subr
 
 # Let individual ports pull this in, as necessary.
 #file	dev/ofw/ofw_pci_subr.c		ofbus | openfirm | ofw_subr
