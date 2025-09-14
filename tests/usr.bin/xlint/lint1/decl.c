@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.35 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.36 2025/09/14 12:27:42 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -335,3 +335,9 @@ void
 prototype_definition(void)
 {
 }
+
+/* These integer overflows in '<<' expressions are detected by KUBSAN. */
+/* expect+1: warning: constant -0x8000000000000000 too large for 'int' [56] */
+typedef int shl_overflow_positive[1LL << 32 << 31];
+/* expect+1: warning: constant -0x8000000000000000 too large for 'int' [56] */
+typedef int shl_overflow_negative[-1LL << 32 << 31];

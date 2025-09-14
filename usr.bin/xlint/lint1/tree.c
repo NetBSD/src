@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.691 2025/09/14 12:05:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.692 2025/09/14 12:27:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.691 2025/09/14 12:05:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.692 2025/09/14 12:27:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1201,7 +1201,7 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 	case SHL:
 		/* TODO: warn about out-of-bounds 'r'. */
 		/* TODO: warn about overflow. */
-		return l << (r & 63);
+		return (int64_t)((uint64_t)l << (r & 63));
 	case SHR:
 		/* TODO: warn about out-of-bounds 'r'. */
 		return s64_shr(l, r & 63);
