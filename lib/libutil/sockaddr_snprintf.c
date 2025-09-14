@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.14 2016/12/29 18:30:55 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.15 2025/09/14 17:26:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2016 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.14 2016/12/29 18:30:55 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.15 2025/09/14 17:26:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	char abuf[1024], nbuf[1024], *addr = NULL;
 	char Abuf[1024], pbuf[32], *name = NULL, *port = NULL;
 	char *ebuf = &sbuf[len - 1], *buf = sbuf;
-	const char *ptr, *s;
+	const char *ptr, *s, *f;
 	size_t salen;
 	int p = -1;
 #ifdef HAVE_NETATALK_AT_H
@@ -322,6 +322,42 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			{
 				ADDNA();
 			}
+			break;
+		case 'm':
+			switch (sa->sa_family) {
+#ifdef HAVE_NETATALK_AT_H
+			case AF_APPLETALK:
+				ADDS("appletalk");
+				break;
+#endif
+			case AF_LOCAL:
+				ADDS("unix");
+				break;
+			case AF_INET:
+				ADDS("inet");
+				break;
+			case AF_INET6:
+				ADDS("inet6");
+				break;
+#ifdef HAVE_NET_IF_DL_H
+			case AF_LINK:
+				ADDS("link");
+				break;
+#endif
+			default:
+				abort();
+			}
+			break;
+		case 'n':
+			f = p == -1 ? "%a" : (sa->sa_family == AF_INET6
+			    ? "[%a]:%p" : "%a:%p");
+			sockaddr_snprintf(nbuf, sizeof(nbuf), f, sa);
+			ADDS(nbuf);
+			break;
+		case 'N':
+			f = p == -1 ? "%A" : "%A:%P";
+			sockaddr_snprintf(nbuf, sizeof(nbuf), f, sa);
+			ADDS(nbuf);
 			break;
 		case 'D':
 			switch (sa->sa_family) {
