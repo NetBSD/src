@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.24 2025/09/14 00:28:44 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.25 2025/09/14 16:00:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -75,6 +75,11 @@ typedef struct spi_handle *spi_handle_t;
 /* SPI transfer speed helper macros -- converts to Hz for spi_configure(). */
 #define	SPI_FREQ_kHz(x)	((x) * 1000)
 #define	SPI_FREQ_MHz(x)	((x) * 1000000)
+
+/* Additional transfer mode flags. */
+#define	SPI_F_3WIRE	__BIT(0)	/* requires 3-wire mode */
+#define	SPI_F_CS_HIGH	__BIT(1)	/* chip select is active-high */
+#define	SPI_F_LSB	__BIT(2)	/* transfer LSB first */
 
 struct spi_controller {
 	void	*sct_cookie;	/* controller private data */

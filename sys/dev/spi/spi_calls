@@ -1,4 +1,4 @@
-$NetBSD: spi_calls,v 1.1 2025/09/14 00:28:44 thorpej Exp $
+$NetBSD: spi_calls,v 1.2 2025/09/14 16:00:04 thorpej Exp $
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -59,4 +59,32 @@ spi-enumerate-devices {
 	struct spi_attach_args *sa;	/* IN */
 	bool (*callback)(device_t, struct spi_enumerate_devices_args *);
 	int chip_select;		/* OUT */
+};
+
+/*
+ * spi-get-transfer-mode
+ *
+ * Gets the transfer mode associated with the specified device handle
+ * from the device tree.
+ *
+ * Call returns 0 if successful, or an error code upon failure:
+ *
+ * ENOTSUP	The device handle implementation for the
+ *		SPI bus does not support this device call.
+ *
+ * EINVAL	The transfer mode information associated with the
+ *		device handle is invalid.
+ */
+spi-get-transfer-mode {
+	unsigned int mode;		/* OUT */
+	unsigned int max_frequency;	/* OUT */
+	unsigned int flags;		/* OUT */
+	unsigned int cs_setup_delay_ns;	/* OUT */
+	unsigned int cs_hold_delay_ns;	/* OUT */
+	unsigned int cs_inact_delay_ns;	/* OUT */
+	unsigned int rx_bus_width;	/* OUT */
+	unsigned int rx_delay_us;	/* OUT */
+	unsigned int rx_sample_delay_ns;/* OUT */
+	unsigned int tx_bus_width;	/* OUT */
+	unsigned int tx_delay_us;	/* OUT */
 };

@@ -1,7 +1,7 @@
-/* $NetBSD: fdt_spi.c,v 1.12 2025/09/14 00:28:43 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.13 2025/09/14 16:00:04 thorpej Exp $ */
 
 /*
- * Copyright (c) 2021, 2022 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.12 2025/09/14 00:28:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.13 2025/09/14 16:00:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,3 +169,103 @@ fdtbus_spi_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 }
 OF_DEVICE_CALL_REGISTER(SPI_ENUMERATE_DEVICES_STR,
 			fdtbus_spi_enumerate_devices);
+
+static bool
+fdtbus_spi_bus_width_valid_p(uint32_t val)
+{
+	switch (val) {
+	case 0:
+	case 1:
+	case 2:
+	case 4:
+	case 8:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
+static int
+fdtbus_spi_get_transfer_mode(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct spi_get_transfer_mode_args *args = v;
+	uint32_t val32;
+	int node;
+
+	node = devhandle_to_of(call_handle);
+
+	args->mode = SPI_MODE_0;
+	if (of_hasprop(node, "spi-cpha")) {
+		args->mode |= SPI_MODE_CPHA;
+	}
+	if (of_hasprop(node, "spi-cpol")) {
+		args->mode |= SPI_MODE_CPOL;
+	}
+
+	if (of_getprop_uint32(node, "spi-max-frequency", &val32) == 0) {
+		args->max_frequency = val32;
+	}
+
+	if (of_hasprop(node, "spi-3wire")) {
+		args->flags |= SPI_F_3WIRE;
+	}
+	if (of_hasprop(node, "spi-cs-high")) {
+		args->flags |= SPI_F_CS_HIGH;
+	}
+	if (of_hasprop(node, "spi-lsb-first")) {
+		args->flags |= SPI_F_LSB;
+	}
+
+	if (of_getprop_uint32(node, "spi-cs-setup-delay-ns", &val32) == 0) {
+		args->cs_setup_delay_ns = val32;
+	}
+	if (of_getprop_uint32(node, "spi-cs-hold-delay-ns", &val32) == 0) {
+		args->cs_hold_delay_ns = val32;
+	}
+	if (of_getprop_uint32(node, "spi-cs-inactive-delay-ns", &val32) == 0) {
+		args->cs_inact_delay_ns = val32;
+	}
+
+	args->rx_bus_width = 1;
+	if (of_getprop_uint32(node, "spi-rx-bus-width", &val32) == 0) {
+		if (!fdtbus_spi_bus_width_valid_p(val32)) {
+			aprint_error_dev(dev,
+			    "device tree error: \"spi-rx-bus-width\" "
+			    "value (%u) invalid\n", val32);
+			return EINVAL;
+		}
+		args->rx_bus_width = val32;
+	}
+
+	if (of_getprop_uint32(node, "spi-rx-delay-us", &val32) == 0) {
+		args->rx_delay_us = val32;
+	}
+
+	/*
+	 * XXX Yes, the Device Tree bindings for SPI peripherals really
+	 * leave off the spi- prefix for this particular property.
+	 */
+	if (of_getprop_uint32(node, "rx-sample-delay-ns", &val32) == 0) {
+		args->rx_sample_delay_ns = val32;
+	}
+
+	args->tx_bus_width = 1;
+	if (of_getprop_uint32(node, "spi-tx-bus-width", &val32) == 0) {
+		if (!fdtbus_spi_bus_width_valid_p(val32)) {
+			aprint_error_dev(dev,
+			    "device tree error: \"spi-tx-bus-width\" "
+			    "value (%u) invalid\n", val32);
+			return EINVAL;
+		}
+		args->tx_bus_width = val32;
+	}
+
+	if (of_getprop_uint32(node, "spi-tx-delay-us", &val32) == 0) {
+		args->tx_delay_us = val32;
+	}
+
+	return 0;
+}
+OF_DEVICE_CALL_REGISTER(SPI_GET_TRANSFER_MODE_STR,
+			fdtbus_spi_get_transfer_mode);

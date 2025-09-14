@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.35 2025/09/14 00:28:44 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.36 2025/09/14 16:00:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.35 2025/09/14 00:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.36 2025/09/14 16:00:04 thorpej Exp $");
 
 #include "locators.h"
 
@@ -468,13 +468,53 @@ CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
  * returned.
  */
 int
-spi_configure(device_t dev __unused, spi_handle_t sh, int mode, int speed)
+spi_configure(device_t dev, spi_handle_t sh, int mode, int speed)
 {
+	struct spi_get_transfer_mode_args args = { 0 };
+	int error;
+
+	/*
+	 * Get transfer mode information from the platform device tree, if
+	 * it exists.
+	 */
+	error = device_call(dev, SPI_GET_TRANSFER_MODE(&args));
+	if (error) {
+		if (error != ENOTSUP) {
+			/*
+			 * This error is fatal.  Error message has already
+			 * been displayed.
+			 */
+			return error;
+		}
+	} else {
+		/*
+		 * If the device tree specifies clock phase shift or
+		 * polarity inversion, override whatever the caller
+		 * specified.
+		 */
+		if (args.mode != 0) {
+			aprint_debug_dev(dev,
+			    "using SPI mode %u from device tree\n",
+			    args.mode);
+			mode = args.mode;
+		}
+
+		/*
+		 * If the device tree specifies the max clock frequency,
+		 * override whatever the caller specified.
+		 */
+		if (args.max_frequency != 0) {
+			aprint_debug_dev(dev,
+			    "using max-frequency %u Hz from device tree\n",
+			    args.max_frequency);
+			speed = args.max_frequency;
+		}
+
+		/* XXX Handle the other transfer properties. */
+	}
 
 	sh->sh_mode = mode;
 	sh->sh_speed = speed;
-
-	/* No need to report errors; no failures. */
 
 	return 0;
 }
