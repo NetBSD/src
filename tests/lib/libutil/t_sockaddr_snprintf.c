@@ -1,4 +1,4 @@
-/* $NetBSD: t_sockaddr_snprintf.c,v 1.4 2022/11/07 08:34:30 msaitoh Exp $ */
+/* $NetBSD: t_sockaddr_snprintf.c,v 1.5 2025/09/14 17:20:32 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,8 +31,9 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.4 2022/11/07 08:34:30 msaitoh Exp $");
+__RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.5 2025/09/14 17:20:32 christos Exp $");
 
+#include <stdio.h>
 #include <sys/socket.h>		/* AF_ */
 #include <sys/un.h>			/* sun */
 
@@ -40,10 +41,66 @@ __RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.4 2022/11/07 08:34:30 msaitoh Exp $"
 #include <netatalk/at.h>	/* sat */
 #include <netinet/in.h>		/* sin/sin6 */
 
+#include <netdb.h>
 #include <string.h>
 #include <util.h>
 
 #include <atf-c.h>
+
+static void
+make_dl(struct sockaddr_dl *sdl)
+{
+	memset(sdl, 0, sizeof(*sdl));
+	sdl->sdl_len = sizeof(*sdl);
+	sdl->sdl_family = AF_LINK;
+	sdl->sdl_index = 0;
+	sdl->sdl_type = 0;
+	sdl->sdl_nlen = 0;
+	sdl->sdl_alen = 6;
+	sdl->sdl_slen = 0;
+	memcpy(sdl->sdl_data, "\01\02\03\04\05\06", 6);
+}
+
+static void
+make_in4(struct sockaddr_in *sin4)
+{
+	memset(sin4, 0, sizeof(*sin4));
+	sin4->sin_len = sizeof(*sin4);
+	sin4->sin_family = AF_INET;
+	sin4->sin_port = ntohs(80);
+	sin4->sin_addr.s_addr = ntohl(INADDR_LOOPBACK);
+}
+
+#ifdef INET6
+static void
+make_in6(struct sockaddr_in6 *sin6)
+{
+	memset(sin6, 0, sizeof(*sin6));
+	sin6->sin6_len = sizeof(*sin6);
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_port = ntohs(80);
+	sin6->sin6_addr = in6addr_nodelocal_allnodes;
+}
+#endif
+
+static void
+make_at(struct sockaddr_at *sat)
+{
+	memset(sat, 0, sizeof(*sat));
+	sat->sat_len = sizeof(*sat);
+	sat->sat_family = AF_APPLETALK;
+	sat->sat_addr.s_net = ntohs(101);
+	sat->sat_addr.s_node = 3;
+}
+
+static void
+make_un(struct sockaddr_un *sun)
+{
+	memset(sun, 0, sizeof(*sun));
+	sun->sun_len = sizeof(*sun);
+	sun->sun_family = AF_UNIX;
+	strncpy(sun->sun_path, "/tmp/sock", sizeof(sun->sun_path));
+}
 
 ATF_TC(sockaddr_snprintf_in);
 ATF_TC_HEAD(sockaddr_snprintf_in, tc)
@@ -57,11 +114,8 @@ ATF_TC_BODY(sockaddr_snprintf_in, tc)
 	struct sockaddr_in sin4;
 	int i;
 
-	memset(&sin4, 0, sizeof(sin4));
-	sin4.sin_len = sizeof(sin4);
-	sin4.sin_family = AF_INET;
-	sin4.sin_port = ntohs(80);
-	sin4.sin_addr.s_addr = ntohl(INADDR_LOOPBACK);
+	make_in4(&sin4);
+
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %p %a",
 		(struct sockaddr *)&sin4);
 
@@ -82,11 +136,8 @@ ATF_TC_BODY(sockaddr_snprintf_in6, tc)
 	struct sockaddr_in6 sin6;
 	int i;
 
-	memset(&sin6, 0, sizeof(sin6));
-	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_port = ntohs(80);
-	sin6.sin6_addr = in6addr_nodelocal_allnodes;
+	make_in6(&sin6);
+
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %p %a",
 		(struct sockaddr *)&sin6);
 
@@ -109,10 +160,8 @@ ATF_TC_BODY(sockaddr_snprintf_un, tc)
 	struct sockaddr_un sun;
 	int i;
 
-	memset(&sun, 0, sizeof(sun));
-	sun.sun_len = sizeof(sun);
-	sun.sun_family = AF_UNIX;
-	strncpy(sun.sun_path, "/tmp/sock", sizeof(sun.sun_path));
+	make_un(&sun);
+
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %a",
 		(struct sockaddr *)&sun);
 
@@ -132,11 +181,8 @@ ATF_TC_BODY(sockaddr_snprintf_at, tc)
 	struct sockaddr_at sat;
 	int i;
 
-	memset(&sat, 0, sizeof(sat));
-	sat.sat_len = sizeof(sat);
-	sat.sat_family = AF_APPLETALK;
-	sat.sat_addr.s_net = ntohs(101);
-	sat.sat_addr.s_node = 3;
+	make_at(&sat);
+
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %a",
 		(struct sockaddr *)&sat);
 
@@ -156,20 +202,74 @@ ATF_TC_BODY(sockaddr_snprintf_dl, tc)
 	struct sockaddr_dl sdl;
 	int i;
 
-	memset(&sdl, 0, sizeof(sdl));
-	sdl.sdl_len = sizeof(sdl);
-	sdl.sdl_family = AF_LINK;
-	sdl.sdl_index = 0;
-	sdl.sdl_type = 0;
-	sdl.sdl_nlen = 0;
-	sdl.sdl_alen = 6;
-	sdl.sdl_slen = 0;
-	memcpy(sdl.sdl_data, "\01\02\03\04\05\06", 6);
+	make_dl(&sdl);
+
 	i = sockaddr_snprintf(buf, sizeof(buf), "%f %l %a",
 		(struct sockaddr *)&sdl);
 
 	ATF_REQUIRE_EQ_MSG(i, 17, "bad length for sdl");
 	ATF_REQUIRE_STREQ(buf, "18 32 1.2.3.4.5.6");
+}
+
+
+ATF_TC(sockaddr_snprintf_generic);
+ATF_TC_HEAD(sockaddr_snprintf_generic, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"Checks sockaddr_snprintf(3) with generic args");
+}
+ATF_TC_BODY(sockaddr_snprintf_generic, tc)
+{
+	char buf[1024];
+	struct sockaddr_at sat;
+	struct sockaddr_dl sdl;
+	struct sockaddr_un sun;
+	struct sockaddr_in sin4;
+	struct sockaddr_in6 sin6;
+	struct addrinfo *res;
+	int i;
+
+
+#define CHECK(a, b) \
+	ATF_REQUIRE_EQ_MSG(i, (a), "bad length"); \
+	ATF_REQUIRE_STREQ(buf, (b))
+
+	make_dl(&sdl);
+	i = sockaddr_snprintf(buf, sizeof(buf), "%n",
+		(struct sockaddr *)&sdl);
+	CHECK(11, "1.2.3.4.5.6");
+
+	make_in6(&sin6);
+	i = sockaddr_snprintf(buf, sizeof(buf), "%n",
+		(struct sockaddr *)&sin6);
+	CHECK(12, "[ff01::1]:80");
+
+	make_in4(&sin4);
+	i = sockaddr_snprintf(buf, sizeof(buf), "%n",
+		(struct sockaddr *)&sin4);
+	CHECK(12, "127.0.0.1:80");
+
+	make_at(&sat);
+	i = sockaddr_snprintf(buf, sizeof(buf), "%n",
+		(struct sockaddr *)&sat);
+	CHECK(7, "101.3:0");
+
+	make_un(&sun);
+	i = sockaddr_snprintf(buf, sizeof(buf), "%n",
+		(struct sockaddr *)&sun);
+	CHECK(9, "/tmp/sock");
+
+	if (getaddrinfo("morden.netbsd.org", "https", NULL, &res) == 0) {
+		for (struct addrinfo *ai = res; ai; ai = ai->ai_next) {
+			i = sockaddr_snprintf(buf, sizeof(buf), "%N",
+			    ai->ai_addr);
+			if (strcmp(buf, "morden.netbsd.org:https") == 0 ||
+			    strcmp(buf, "ftp.NetBSD.org:https") == 0)
+				continue;
+			fprintf(stderr, "Unexpected %s\n", buf);
+		}
+		freeaddrinfo(res);
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -180,6 +280,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sockaddr_snprintf_un);
 	ATF_TP_ADD_TC(tp, sockaddr_snprintf_at);
 	ATF_TP_ADD_TC(tp, sockaddr_snprintf_dl);
+	ATF_TP_ADD_TC(tp, sockaddr_snprintf_generic);
 
 	return atf_no_error();
 }
