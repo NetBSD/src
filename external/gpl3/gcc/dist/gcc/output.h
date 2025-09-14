@@ -1,6 +1,6 @@
 /* Declarations for insn-output.cc and other code to write to asm_out_file.
    These functions are defined in final.cc, and varasm.cc.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -128,17 +128,17 @@ extern int sprint_ul (char *, unsigned long);
 extern void asm_fprintf (FILE *file, const char *p, ...)
      ATTRIBUTE_ASM_FPRINTF(2, 3);
 
-/* Return nonzero if this function has no function calls.  */
-extern int leaf_function_p (void);
+/* Return true if this function has no function calls.  */
+extern bool leaf_function_p (void);
 
-/* Return 1 if branch is a forward branch.
+/* Return true if branch is a forward branch.
    Uses insn_shuid array, so it works only in the final pass.  May be used by
    output templates to add branch prediction hints, for example.  */
-extern int final_forward_branch_p (rtx_insn *);
+extern bool final_forward_branch_p (rtx_insn *);
 
-/* Return 1 if this function uses only the registers that can be
+/* Return true if this function uses only the registers that can be
    safely renumbered.  */
-extern int only_leaf_regs_used (void);
+extern bool only_leaf_regs_used (void);
 
 /* Scan IN_RTX and its subexpressions, and renumber all regs into those
    available in leaf functions.  */
@@ -178,6 +178,14 @@ extern void assemble_asm (tree);
 /* Get the function's name from a decl, as described by its RTL.  */
 extern const char *get_fnname_from_decl (tree);
 
+/* Output function label, possibly with accompanying metadata.  No additional
+   code or data is output after the label.  */
+extern void assemble_function_label_raw (FILE *, const char *);
+
+/* Finish outputting function label.  Needs to be called when outputting
+   function label without using assemble_function_label_raw ().  */
+extern void assemble_function_label_final (void);
+
 /* Output assembler code for the constant pool of a function and associated
    with defining the name of the function.  DECL describes the function.
    NAME is the function's name.  For the constant pool, we use the current
@@ -198,10 +206,6 @@ extern void assemble_end_function (tree, const char *);
    DONT_OUTPUT_DATA if nonzero means don't actually output the
    initial value (that will be done by the caller).  */
 extern void assemble_variable (tree, int, int, int);
-
-/* Put the vtable verification constructor initialization function
-   into the preinit array.  */
-extern void assemble_vtv_preinit_initializer (tree);
 
 /* Assemble everything that is needed for a variable declaration that has
    no definition in the current translation unit.  */
@@ -625,7 +629,7 @@ extern void default_elf_internal_label (FILE *, const char *, unsigned long);
 
 extern void default_elf_init_array_asm_out_constructor (rtx, int);
 extern void default_elf_fini_array_asm_out_destructor (rtx, int);
-extern int maybe_assemble_visibility (tree);
+extern bool maybe_assemble_visibility (tree);
 
 extern int default_address_cost (rtx, machine_mode, addr_space_t, bool);
 

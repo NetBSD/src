@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if !SANITIZER_MAC
+#if !SANITIZER_APPLE
 #error "This file should only be compiled on Darwin."
 #endif
 
@@ -123,7 +123,7 @@ INTERCEPTOR(void, malloc_set_zone_name, malloc_zone_t *zone, const char *name) {
   COMMON_MALLOC_ENTER();
   InternalScopedString new_name;
   if (name && zone->introspect == sanitizer_zone.introspect) {
-    new_name.append(COMMON_MALLOC_ZONE_NAME "-%s", name);
+    new_name.AppendF(COMMON_MALLOC_ZONE_NAME "-%s", name);
     name = new_name.data();
   }
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -83,6 +83,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <a name="index-Testing"></a>
 <a name="index-Installing-GCC_003a-Testing"></a>
 <a name="index-Testsuite"></a>
@@ -91,17 +94,12 @@ ul.no-bullet {list-style: none}
 compare your results with results from a similar configuration that have
 been submitted to the
 <a href="https://gcc.gnu.org/ml/gcc-testresults/">gcc-testresults mailing list</a>.
-Some of these archived results are linked from the build status lists
-at <a href="https://gcc.gnu.org/buildstat.html">https://gcc.gnu.org/buildstat.html</a>, although not everyone who
-reports a successful build runs the testsuites and submits the results.
 This step is optional and may require you to download additional software,
 but it can give you confidence in your new GCC installation or point out
 problems before you install and start using your new GCC.
 </p>
 <p>First, you must have <a href="download.html">downloaded the testsuites</a>.
-These are part of the full distribution, but if you downloaded the
-&ldquo;core&rdquo; compiler plus any front ends, you must download the testsuites
-separately.
+These are included in the source tarball.
 </p>
 <p>Second, you must have the testing tools installed.  This includes
 <a href="https://www.gnu.org/software/dejagnu/">DejaGnu</a>, Tcl, and Expect;
@@ -143,10 +141,10 @@ on a simulator as described at <a href="https://gcc.gnu.org/simtest-howto.html">
 <p>In order to run sets of tests selectively, there are targets
 &lsquo;<samp>make check-gcc</samp>&rsquo; and language specific &lsquo;<samp>make check-c</samp>&rsquo;,
 &lsquo;<samp>make check-c++</samp>&rsquo;, &lsquo;<samp>make check-d</samp>&rsquo; &lsquo;<samp>make check-fortran</samp>&rsquo;,
-&lsquo;<samp>make check-ada</samp>&rsquo;, &lsquo;<samp>make check-objc</samp>&rsquo;, &lsquo;<samp>make check-obj-c++</samp>&rsquo;,
-&lsquo;<samp>make check-lto</samp>&rsquo;
-in the <samp>gcc</samp> subdirectory of the object directory.  You can also
-just run &lsquo;<samp>make check</samp>&rsquo; in a subdirectory of the object directory.
+&lsquo;<samp>make check-ada</samp>&rsquo;, &lsquo;<samp>make check-m2</samp>&rsquo;, &lsquo;<samp>make check-objc</samp>&rsquo;,
+&lsquo;<samp>make check-obj-c++</samp>&rsquo;, &lsquo;<samp>make check-lto</samp>&rsquo; in the <samp>gcc</samp>
+subdirectory of the object directory.  You can also just run
+&lsquo;<samp>make check</samp>&rsquo; in a subdirectory of the object directory.
 </p>
 
 <p>A more selective way to just run all <code>gcc</code> execute tests in the

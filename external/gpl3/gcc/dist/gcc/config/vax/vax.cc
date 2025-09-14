@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.cc for VAX.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -47,7 +47,8 @@ along with GCC; see the file COPYING3.  If not see
 
 static void vax_option_override (void);
 static void vax_init_builtins (void);
-static bool vax_legitimate_address_p (machine_mode, rtx, bool);
+static bool vax_legitimate_address_p (machine_mode, rtx, bool,
+				      code_helper = ERROR_MARK);
 static void vax_file_start (void);
 static void vax_init_libfuncs (void);
 static void vax_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
@@ -58,7 +59,8 @@ static bool vax_rtx_costs (rtx, machine_mode, int, int, int *, bool);
 static machine_mode vax_cc_modes_compatible (machine_mode, machine_mode);
 static rtx_insn *vax_md_asm_adjust (vec<rtx> &, vec<rtx> &,
 				    vec<machine_mode> &, vec<const char *> &,
-				    vec<rtx> &, HARD_REG_SET &, location_t);
+				    vec<rtx> &, vec<rtx> &, HARD_REG_SET &,
+				    location_t);
 static rtx vax_function_arg (cumulative_args_t, const function_arg_info &);
 static void vax_function_arg_advance (cumulative_args_t,
 				      const function_arg_info &);
@@ -277,9 +279,6 @@ static void
 vax_file_start (void)
 {
   default_file_start ();
-
-  if (write_symbols == DBX_DEBUG)
-    fprintf (asm_out_file, "___vax_%c_doubles:\n", ASM_DOUBLE_CHAR);
 }
 
 /* We can use the BSD C library routines for the libgcc calls that are
@@ -1212,6 +1211,7 @@ vax_md_asm_adjust (vec<rtx> &outputs ATTRIBUTE_UNUSED,
 		   vec<rtx> &inputs ATTRIBUTE_UNUSED,
 		   vec<machine_mode> &input_modes ATTRIBUTE_UNUSED,
 		   vec<const char *> &constraints ATTRIBUTE_UNUSED,
+		   vec<rtx> &/*uses*/,
 		   vec<rtx> &clobbers, HARD_REG_SET &clobbered_regs,
 		   location_t /*loc*/)
 {
@@ -1997,7 +1997,7 @@ indexable_address_p (rtx xfoo0, rtx xfoo1, machine_mode mode, bool strict)
    The MODE argument is the machine mode for the MEM expression
    that wants to use this address.  */
 bool
-vax_legitimate_address_p (machine_mode mode, rtx x, bool strict)
+vax_legitimate_address_p (machine_mode mode, rtx x, bool strict, code_helper)
 {
   rtx xfoo0, xfoo1;
 

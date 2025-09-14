@@ -354,13 +354,13 @@ class SizeClassAllocator64 {
 
   // ForceLock() and ForceUnlock() are needed to implement Darwin malloc zone
   // introspection API.
-  void ForceLock() NO_THREAD_SAFETY_ANALYSIS {
+  void ForceLock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
     for (uptr i = 0; i < kNumClasses; i++) {
       GetRegionInfo(i)->mutex.Lock();
     }
   }
 
-  void ForceUnlock() NO_THREAD_SAFETY_ANALYSIS {
+  void ForceUnlock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
     for (int i = (int)kNumClasses - 1; i >= 0; i--) {
       GetRegionInfo(i)->mutex.Unlock();
     }
@@ -635,8 +635,9 @@ class SizeClassAllocator64 {
     return kUsingConstantSpaceBeg ? kSpaceBeg : NonConstSpaceBeg;
   }
   uptr SpaceEnd() const { return  SpaceBeg() + kSpaceSize; }
-  // kRegionSize must be >= 2^32.
-  COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
+  // kRegionSize should be able to satisfy the largest size class.
+  static_assert(kRegionSize >= SizeClassMap::kMaxSize,
+                "Region size exceed largest size");
   // kRegionSize must be <= 2^36, see CompactPtrT.
   COMPILER_CHECK((kRegionSize) <= (1ULL << (SANITIZER_WORDSIZE / 2 + 4)));
   // Call mmap for user memory with at least this size.

@@ -1,5 +1,5 @@
 /* Part of CPP library.  File handling.
-   Copyright (C) 1986-2022 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
    Written by Per Bothner, 1994.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -109,6 +109,10 @@ struct _cpp_file
   /* If this file is implicitly preincluded.  */
   bool implicit_preinclude : 1;
 
+  /* Set if a header wasn't found with __has_include or __has_include_next
+     and error should be emitted if it is included normally.  */
+  bool deferred_error : 1;
+
   /* > 0: Known C++ Module header unit, <0: known not.  ==0, unknown  */
   int header_unit : 2;
 };
@@ -177,7 +181,8 @@ static bool read_file_guts (cpp_reader *pfile, _cpp_file *file,
 static bool read_file (cpp_reader *pfile, _cpp_file *file,
 		       location_t loc);
 static struct cpp_dir *search_path_head (cpp_reader *, const char *fname,
-				 int angle_brackets, enum include_type);
+					 int angle_brackets, enum include_type,
+					 bool suppress_diagnostic = false);
 static const char *dir_name_of_file (_cpp_file *file);
 static void open_file_failed (cpp_reader *pfile, _cpp_file *file, int,
 			      location_t);
@@ -535,14 +540,23 @@ _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
   cpp_file_hash_entry *entry
     = search_cache ((struct cpp_file_hash_entry *) *hash_slot, start_dir);
   if (entry)
-    return entry->u.file;
+    {
+      if (entry->u.file->deferred_error && kind == _cpp_FFK_NORMAL)
+	{
+	  open_file_failed (pfile, entry->u.file, angle_brackets, loc);
+	  entry->u.file->deferred_error = false;
+	}
+      return entry->u.file;
+    }
 
   _cpp_file *file = make_cpp_file (start_dir, fname);
   file->implicit_preinclude
     = (kind == _cpp_FFK_PRE_INCLUDE
        || (pfile->buffer && pfile->buffer->file->implicit_preinclude));
 
-  if (kind != _cpp_FFK_FAKE)
+  if (kind == _cpp_FFK_FAKE)
+    file->dont_read = true;
+  else
     /* Try each path in the include chain.  */
     for (;;)
       {
@@ -601,6 +615,8 @@ _cpp_find_file (cpp_reader *pfile, const char *fname, cpp_dir *start_dir,
 
 	    if (kind != _cpp_FFK_HAS_INCLUDE)
 	      open_file_failed (pfile, file, angle_brackets, loc);
+	    else
+	      file->deferred_error = true;
 	    break;
 	  }
 
@@ -1001,6 +1017,7 @@ _cpp_stack_file (cpp_reader *pfile, _cpp_file *file, include_type type,
 		    && type < IT_DIRECTIVE_HWM
 		    && (pfile->line_table->highest_location
 			!= LINE_MAP_MAX_LOCATION - 1));
+
   if (decrement)
     pfile->line_table->highest_location--;
 
@@ -1038,7 +1055,7 @@ _cpp_mark_file_once_only (cpp_reader *pfile, _cpp_file *file)
    nothing left in the path, returns NULL.  */
 static struct cpp_dir *
 search_path_head (cpp_reader *pfile, const char *fname, int angle_brackets,
-		  enum include_type type)
+		  enum include_type type, bool suppress_diagnostic)
 {
   cpp_dir *dir;
   _cpp_file *file;
@@ -1067,7 +1084,7 @@ search_path_head (cpp_reader *pfile, const char *fname, int angle_brackets,
     return make_cpp_dir (pfile, dir_name_of_file (file),
 			 pfile->buffer ? pfile->buffer->sysp : 0);
 
-  if (dir == NULL)
+  if (dir == NULL && !suppress_diagnostic)
     cpp_error (pfile, CPP_DL_ERROR,
 	       "no include path in which to search for %s", fname);
 
@@ -1489,7 +1506,12 @@ cpp_clear_file_cache (cpp_reader *pfile)
 void
 _cpp_fake_include (cpp_reader *pfile, const char *fname)
 {
-  _cpp_find_file (pfile, fname, pfile->buffer->file->dir, 0, _cpp_FFK_FAKE, 0);
+  /* It does not matter what are the contents of fake_source_dir, it will never
+     be inspected; we just use its address to uniquely signify that this file
+     was added as a fake include, so a later call to _cpp_find_file (to include
+     the file for real) won't find the fake one in the hash table.  */
+  static cpp_dir fake_source_dir;
+  _cpp_find_file (pfile, fname, &fake_source_dir, 0, _cpp_FFK_FAKE, 0);
 }
 
 /* Not everyone who wants to set system-header-ness on a buffer can
@@ -1845,7 +1867,7 @@ remap_filename (cpp_reader *pfile, _cpp_file *file)
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
       {
 	const char *p2 = strchr (fname, '\\');
-	if (!p || (p > p2))
+	if (!p || (p2 && p > p2))
 	  p = p2;
       }
 #endif
@@ -2156,7 +2178,10 @@ bool
 _cpp_has_header (cpp_reader *pfile, const char *fname, int angle_brackets,
 		 enum include_type type)
 {
-  cpp_dir *start_dir = search_path_head (pfile, fname, angle_brackets, type);
+  cpp_dir *start_dir = search_path_head (pfile, fname, angle_brackets, type,
+					 /* suppress_diagnostic = */ true);
+  if (!start_dir)
+    return false;
   _cpp_file *file = _cpp_find_file (pfile, fname, start_dir, angle_brackets,
 				    _cpp_FFK_HAS_INCLUDE, 0);
   return file->err_no != ENOENT;

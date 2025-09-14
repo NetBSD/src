@@ -35,7 +35,9 @@ static const char *ReportTypeDescription(ReportType typ) {
     case ReportTypeSignalUnsafe: return "signal-unsafe-call";
     case ReportTypeErrnoInSignal: return "errno-in-signal-handler";
     case ReportTypeDeadlock: return "lock-order-inversion";
-    // No default case so compiler warns us if we miss one
+    case ReportTypeMutexHeldWrongContext:
+      return "mutex-held-in-wrong-context";
+      // No default case so compiler warns us if we miss one
   }
   UNREACHABLE("missing case");
 }
@@ -157,7 +159,7 @@ int __tsan_get_report_mutex(void *report, uptr idx, uptr *mutex_id, void **addr,
   ReportMutex *mutex = rep->mutexes[idx];
   *mutex_id = mutex->id;
   *addr = (void *)mutex->addr;
-  *destroyed = mutex->destroyed;
+  *destroyed = false;
   if (mutex->stack) CopyTrace(mutex->stack->frames, trace, trace_size);
   return 1;
 }

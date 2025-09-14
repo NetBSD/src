@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for ARM.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
    and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rearnsha@arm.com)
@@ -152,8 +152,8 @@ emission of floating point pcs attributes.  */
 #define TARGET_AAPCS_BASED \
     (arm_abi != ARM_ABI_APCS && arm_abi != ARM_ABI_ATPCS)
 
-#define TARGET_HARD_TP			(target_thread_pointer == TP_CP15)
 #define TARGET_SOFT_TP			(target_thread_pointer == TP_SOFT)
+#define TARGET_HARD_TP			!TARGET_SOFT_TP
 #define TARGET_GNU2_TLS			(target_tls_dialect == TLS_GNU2)
 
 /* Only 16-bit thumb code.  */
@@ -331,6 +331,12 @@ emission of floating point pcs attributes.  */
 						isa_bit_mve_float) \
 			       && !TARGET_GENERAL_REGS_ONLY)
 
+/* Non-zero if this target supports Armv8.1-M Mainline pointer-signing
+   extension.  */
+#define TARGET_HAVE_PACBTI (arm_arch8_1m_main \
+			    && bitmap_bit_p (arm_active_target.isa, \
+					     isa_bit_pacbti))
+
 /* MVE have few common instructions as VFP, like VLDM alias VPOP, VLDR, VSTM
    alia VPUSH, VSTR and VMOV, VMSR and VMRS.  In the same manner it updates few
    registers such as FPCAR, FPCCR, FPDSCR, FPSCR, MVFR0, MVFR1 and MVFR2.  All
@@ -499,6 +505,10 @@ extern int arm_arch8_3;
 
 /* Nonzero if this chip supports the ARM Architecture 8.4 extensions.  */
 extern int arm_arch8_4;
+
+/* Nonzero if this chip supports the ARM Architecture 8-M Mainline
+   extensions.  */
+extern int arm_arch8m_main;
 
 /* Nonzero if this chip supports the ARM Architecture 8.1-M Mainline
    extensions.  */
@@ -806,7 +816,8 @@ extern const int arm_arch_cde_coproc_bits[];
 	s16-s31	      S	VFP variable (aka d8-d15).
 	vfpcc		Not a real register.  Represents the VFP condition
 			code flags.
-	vpr		Used to represent MVE VPR predication.  */
+	vpr		Used to represent MVE VPR predication.
+	ra_auth_code	Pseudo register to save PAC.  */
 
 /* The stack backtrace structure is as follows:
   fp points to here:  |  save code pointer  |      [fp]
@@ -847,7 +858,7 @@ extern const int arm_arch_cde_coproc_bits[];
   1,1,1,1,1,1,1,1,		\
   1,1,1,1,			\
   /* Specials.  */		\
-  1,1,1,1,1,1,1			\
+  1,1,1,1,1,1,1,1		\
 }
 
 /* 1 for registers not available across function calls.
@@ -877,7 +888,7 @@ extern const int arm_arch_cde_coproc_bits[];
   1,1,1,1,1,1,1,1,		\
   1,1,1,1,			\
   /* Specials.  */		\
-  1,1,1,1,1,1,1			\
+  1,1,1,1,1,1,1,1		\
 }
 
 #ifndef SUBTARGET_CONDITIONAL_REGISTER_USAGE
@@ -1066,12 +1077,14 @@ extern const int arm_arch_cde_coproc_bits[];
    && (LAST_VFP_REGNUM - (REGNUM) >= 2 * (N) - 1))
 
 /* The number of hard registers is 16 ARM + 1 CC + 1 SFP + 1 AFP
-   + 1 APSRQ + 1 APSRGE + 1 VPR.  */
+   + 1 APSRQ + 1 APSRGE + 1 VPR + 1 Pseudo register to save PAC.  */
 /* Intel Wireless MMX Technology registers add 16 + 4 more.  */
 /* VFP (VFP3) adds 32 (64) + 1 VFPCC.  */
-#define FIRST_PSEUDO_REGISTER   107
+#define FIRST_PSEUDO_REGISTER   108
 
-#define DBX_REGISTER_NUMBER(REGNO) arm_dbx_register_number (REGNO)
+#define DWARF_PAC_REGNUM 143
+
+#define DEBUGGER_REGNO(REGNO) arm_debugger_regno (REGNO)
 
 /* Value should be nonzero if functions must have frame pointers.
    Zero means the frame pointer need not be set up (and parms may be accessed
@@ -1103,6 +1116,11 @@ extern const int arm_arch_cde_coproc_bits[];
   ((MODE) == V2DImode ||(MODE) == V4SImode || (MODE) == V8HImode \
    || (MODE) == V16QImode || (MODE) == V8HFmode || (MODE) == V4SFmode \
    || (MODE) == V2DFmode)
+
+#define VALID_MVE_PRED_MODE(MODE) \
+  ((MODE) == HImode							\
+   || (MODE) == V16BImode || (MODE) == V8BImode || (MODE) == V4BImode	\
+   || (MODE) == V2QImode)
 
 #define VALID_MVE_SI_MODE(MODE) \
   ((MODE) == V2DImode ||(MODE) == V4SImode || (MODE) == V8HImode \
@@ -1256,11 +1274,14 @@ extern int arm_regs_in_sequence[];
   CC_REGNUM, VFPCC_REGNUM,			\
   FRAME_POINTER_REGNUM, ARG_POINTER_REGNUM,	\
   SP_REGNUM, PC_REGNUM, APSRQ_REGNUM,		\
-  APSRGE_REGNUM, VPR_REGNUM			\
+  APSRGE_REGNUM, VPR_REGNUM, RA_AUTH_CODE	\
 }
 
 #define IS_VPR_REGNUM(REGNUM) \
   ((REGNUM) == VPR_REGNUM)
+
+#define IS_PAC_REGNUM(REGNUM) \
+  ((REGNUM) == RA_AUTH_CODE)
 
 /* Use different register alloc ordering for Thumb.  */
 #define ADJUST_REG_ALLOC_ORDER arm_order_regs_for_local_alloc ()
@@ -1300,6 +1321,7 @@ enum reg_class
   SFP_REG,
   AFP_REG,
   VPR_REG,
+  PAC_REG,
   GENERAL_AND_VPR_REGS,
   ALL_REGS,
   LIM_REG_CLASSES
@@ -1330,6 +1352,7 @@ enum reg_class
   "SFP_REG",		\
   "AFP_REG",		\
   "VPR_REG",		\
+  "PAC_REG",		\
   "GENERAL_AND_VPR_REGS", \
   "ALL_REGS"		\
 }
@@ -1359,6 +1382,7 @@ enum reg_class
   { 0x00000000, 0x00000000, 0x00000000, 0x00000040 }, /* SFP_REG */	\
   { 0x00000000, 0x00000000, 0x00000000, 0x00000080 }, /* AFP_REG */	\
   { 0x00000000, 0x00000000, 0x00000000, 0x00000400 }, /* VPR_REG.  */	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000800 }, /* PAC_REG.  */	\
   { 0x00005FFF, 0x00000000, 0x00000000, 0x00000400 }, /* GENERAL_AND_VPR_REGS.  */ \
   { 0xFFFF7FFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x0000040F }  /* ALL_REGS.  */	\
 }
@@ -1624,6 +1648,9 @@ typedef struct GTY(()) machine_function
   /* The number of bytes used to store the static chain register on the
      stack, above the stack frame.  */
   int static_chain_stack_bytes;
+  /* Set to 1 when pointer authentication operation uses value of SP other
+     than the incoming stack pointer value.  */
+  int pacspval_needed;
 }
 machine_function;
 #endif
@@ -2078,10 +2105,11 @@ enum arm_auto_incmodes
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE Pmode
 
-#define CASE_VECTOR_PC_RELATIVE ((TARGET_THUMB2				\
-				  || (TARGET_THUMB1			\
-				      && (optimize_size || flag_pic)))	\
-				 && (!target_pure_code))
+#define CASE_VECTOR_PC_RELATIVE						\
+   (TARGET_ARM								\
+    || (!target_pure_code						\
+	&& (TARGET_THUMB2						\
+	    || (TARGET_THUMB1 && (optimize_size || flag_pic)))))
 
 
 #define CASE_VECTOR_SHORTEN_MODE(min, max, body)			\
@@ -2095,9 +2123,19 @@ enum arm_auto_incmodes
       : min >= -4096 && max < 4096					\
       ? (ADDR_DIFF_VEC_FLAGS (body).offset_unsigned = 0, HImode)	\
       : SImode)								\
-   : ((min < 0 || max >= 0x20000 || !TARGET_THUMB2) ? SImode		\
-      : (max >= 0x200) ? HImode						\
-      : QImode))
+   : (TARGET_THUMB2							\
+      ? ((min >= 0 && max < 0x200) ? QImode				\
+      : (min >= 0 && max < 0x20000) ? HImode				\
+      : SImode)								\
+   : ((min >= 0 && max < 1024)						\
+      ? (ADDR_DIFF_VEC_FLAGS (body).offset_unsigned = 1, QImode)	\
+      : (min >= -512 && max <= 508)					\
+      ? (ADDR_DIFF_VEC_FLAGS (body).offset_unsigned = 0, QImode)	\
+      :(min >= 0 && max < 262144)					\
+      ? (ADDR_DIFF_VEC_FLAGS (body).offset_unsigned = 1, HImode)	\
+      : (min >= -131072 && max <=131068)				\
+      ? (ADDR_DIFF_VEC_FLAGS (body).offset_unsigned = 0, HImode)	\
+      : SImode)))
 
 /* signed 'char' is most compatible, but RISC OS wants it unsigned.
    unsigned is probably best, but may break some code.  */
@@ -2277,8 +2315,14 @@ extern int making_const_table;
 	asm_fprintf (STREAM, "\tpop {%r}\n", REGNO);	\
     } while (0)
 
-#define ADDR_VEC_ALIGN(JUMPTABLE)	\
-  ((TARGET_THUMB && GET_MODE (PATTERN (JUMPTABLE)) == SImode) ? 2 : 0)
+/* If the switch table is in the code segment, additional alignment is
+   needed for Thumb SImode tables.  Otherwise, tables in RO data have
+   natural alignment.  */
+#define ADDR_VEC_ALIGN(TABLE)						\
+  (JUMP_TABLES_IN_TEXT_SECTION						\
+   ? ((TARGET_THUMB && GET_MODE (PATTERN (TABLE)) == SImode) ? 2 : 0)	\
+   : (exact_log2 (GET_MODE_ALIGNMENT (GET_MODE (PATTERN (TABLE)))	\
+		  / BITS_PER_UNIT)))
 
 /* Alignment for case labels comes from ADDR_VEC_ALIGN; avoid the
    default alignment from elfos.h.  */
@@ -2287,7 +2331,7 @@ extern int making_const_table;
 
 #define LABEL_ALIGN_AFTER_BARRIER(LABEL)                \
    (GET_CODE (PATTERN (prev_active_insn (LABEL))) == ADDR_DIFF_VEC \
-   ? 1 : 0)
+   ? (TARGET_ARM ? 2 : 1) : 0)
 
 #define ARM_DECLARE_FUNCTION_NAME(STREAM, NAME, DECL) 	\
   arm_declare_function_name ((STREAM), (NAME), (DECL));
@@ -2343,6 +2387,21 @@ extern int making_const_table;
     thumb2_final_prescan_insn (INSN);			\
   else if (TARGET_THUMB1)				\
     thumb1_final_prescan_insn (INSN)
+
+/* These defines are useful to refer to the value of the mve_unpredicated_insn
+   insn attribute.  Note that, because these use the get_attr_* function, these
+   will change recog_data if (INSN) isn't current_insn.  */
+#define MVE_VPT_PREDICABLE_INSN_P(INSN)					\
+  (recog_memoized (INSN) >= 0						\
+   && get_attr_mve_unpredicated_insn (INSN) != CODE_FOR_nothing)
+
+#define MVE_VPT_PREDICATED_INSN_P(INSN)					\
+  (MVE_VPT_PREDICABLE_INSN_P (INSN)					\
+   && recog_memoized (INSN) != get_attr_mve_unpredicated_insn (INSN))
+
+#define MVE_VPT_UNPREDICATED_INSN_P(INSN)				\
+  (MVE_VPT_PREDICABLE_INSN_P (INSN)					\
+   && recog_memoized (INSN) == get_attr_mve_unpredicated_insn (INSN))
 
 #define ARM_SIGN_EXTEND(x)  ((HOST_WIDE_INT)			\
   (HOST_BITS_PER_WIDE_INT <= 32 ? (unsigned HOST_WIDE_INT) (x)	\

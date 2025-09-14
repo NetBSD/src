@@ -1,5 +1,5 @@
 /* Target Definitions for OpenRISC.
-   Copyright (C) 2018-2022 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
    Contributed by Stafford Horne.
 
    This file is part of GCC.
@@ -146,7 +146,7 @@
    : (X) < 24 ? ((X) - 16) * 2 + 17	\
    : ((X) - 24) * 2 + 16)
 
-#define DBX_REGISTER_NUMBER(X)  GCC_TO_HW_REGNO(X)
+#define DEBUGGER_REGNO(X)  GCC_TO_HW_REGNO(X)
 
 #define REGISTER_NAMES { \
   "r0",   "r1",   "r2",   "r3",   "r4",   "r5",   "r6",   "r7",   \

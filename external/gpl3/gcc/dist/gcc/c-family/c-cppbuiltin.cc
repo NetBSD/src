@@ -1,5 +1,5 @@
 /* Define builtin-in macros for the C family front ends.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -279,7 +279,7 @@ builtin_define_float_constants (const char *name_prefix,
   /* The difference between 1 and the least value greater than 1 that is
      representable in the given floating point type, b**(1-p).  */
   sprintf (name, "__%s_EPSILON__", name_prefix);
-  if (fmt->pnan < fmt->p)
+  if (fmt->pnan < fmt->p && (c_dialect_cxx () || !flag_isoc23))
     /* This is an IBM extended double format, so 1.0 + any double is
        representable precisely.  */
       sprintf (buf, "0x1p%d", fmt->emin - fmt->p);
@@ -318,15 +318,11 @@ builtin_define_float_constants (const char *name_prefix,
       builtin_define_with_int_value (name, 1);
     }
 
-  /* For C2x *_IS_IEC_60559.  0 means the type does not match an IEC
-     60559 format, 1 that it matches a format but not operations and 2
-     that it matches a format and operations (but may not conform to
-     Annex F; we take this as meaning exceptions and rounding modes
-     need not be supported).  */
+  /* For C23 *_IS_IEC_60559.  0 means the type does not match an IEC
+     60559 format, 1 that it matches a format but not necessarily
+     operations.  */
   sprintf (name, "__%s_IS_IEC_60559__", name_prefix);
-  builtin_define_with_int_value (name,
-				 (fmt->ieee_bits == 0
-				  ? 0 : (fmt->round_towards_zero ? 1 : 2)));
+  builtin_define_with_int_value (name, fmt->ieee_bits != 0);
 }
 
 /* Define __DECx__ constants for TYPE using NAME_PREFIX and SUFFIX. */
@@ -1032,7 +1028,8 @@ c_cpp_builtins (cpp_reader *pfile)
 	{
 	  /* Set feature test macros for C++17.  */
 	  cpp_define (pfile, "__cpp_unicode_characters=201411L");
-	  cpp_define (pfile, "__cpp_static_assert=201411L");
+	  if (cxx_dialect <= cxx23)
+	    cpp_define (pfile, "__cpp_static_assert=201411L");
 	  cpp_define (pfile, "__cpp_namespace_attributes=201411L");
 	  cpp_define (pfile, "__cpp_enumerator_attributes=201411L");
 	  cpp_define (pfile, "__cpp_nested_namespace_definitions=201411L");
@@ -1067,7 +1064,7 @@ c_cpp_builtins (cpp_reader *pfile)
 	    cpp_define (pfile, "__cpp_constexpr=202002L");
 	  cpp_define (pfile, "__cpp_constexpr_in_decltype=201711L");
 	  cpp_define (pfile, "__cpp_conditional_explicit=201806L");
-	  cpp_define (pfile, "__cpp_consteval=201811L");
+	  cpp_define (pfile, "__cpp_consteval=202211L");
 	  cpp_define (pfile, "__cpp_constinit=201907L");
 	  cpp_define (pfile, "__cpp_deduction_guides=201907L");
 	  cpp_define (pfile, "__cpp_nontype_template_args=201911L");
@@ -1083,17 +1080,35 @@ c_cpp_builtins (cpp_reader *pfile)
 	  /* Set feature test macros for C++23.  */
 	  cpp_define (pfile, "__cpp_size_t_suffix=202011L");
 	  cpp_define (pfile, "__cpp_if_consteval=202106L");
-	  cpp_define (pfile, "__cpp_constexpr=202110L");
-	  cpp_define (pfile, "__cpp_multidimensional_subscript=202110L");
 	  cpp_define (pfile, "__cpp_auto_cast=202110L");
+	  if (cxx_dialect <= cxx23)
+	    cpp_define (pfile, "__cpp_constexpr=202211L");
+	  cpp_define (pfile, "__cpp_multidimensional_subscript=202211L");
+	  cpp_define (pfile, "__cpp_named_character_escapes=202207L");
+	  cpp_define (pfile, "__cpp_static_call_operator=202207L");
+	  cpp_define (pfile, "__cpp_implicit_move=202207L");
+	  cpp_define (pfile, "__cpp_explicit_this_parameter=202110L");
+	}
+      if (cxx_dialect > cxx23)
+	{
+	  /* Set feature test macros for C++26.  */
+	  cpp_define (pfile, "__cpp_constexpr=202306L");
+	  cpp_define (pfile, "__cpp_static_assert=202306L");
+	  cpp_define (pfile, "__cpp_placeholder_variables=202306L");
 	}
       if (flag_concepts)
         {
-	  if (cxx_dialect >= cxx20)
-	    cpp_define (pfile, "__cpp_concepts=202002L");
-          else
+	  if (flag_concepts_ts && cxx_dialect < cxx20)
             cpp_define (pfile, "__cpp_concepts=201507L");
+	  else if (cxx_dialect > cxx14)
+	    cpp_define (pfile, "__cpp_concepts=202002L");
         }
+      if (flag_contracts)
+	{
+	  cpp_define (pfile, "__cpp_contracts=201906L");
+	  cpp_define (pfile, "__cpp_contracts_literal_semantics=201906L");
+	  cpp_define (pfile, "__cpp_contracts_roles=201906L");
+	}
       if (flag_modules)
 	/* The std-defined value is 201907L, but I don't think we can
 	   claim victory yet.  201810 is the p1103 date. */
@@ -1117,7 +1132,7 @@ c_cpp_builtins (cpp_reader *pfile)
       if (flag_threadsafe_statics)
 	cpp_define (pfile, "__cpp_threadsafe_static_init=200806L");
       if (flag_char8_t)
-        cpp_define (pfile, "__cpp_char8_t=201811L");
+	cpp_define (pfile, "__cpp_char8_t=202207L");
 #ifndef THREAD_MODEL_SPEC
       /* Targets that define THREAD_MODEL_SPEC need to define
 	 __STDCPP_THREADS__ in their config/XXX/XXX-c.c themselves.  */
@@ -1183,6 +1198,29 @@ c_cpp_builtins (cpp_reader *pfile)
   builtin_define_type_width ("__WINT_WIDTH__", wint_type_node, NULL_TREE);
   builtin_define_type_width ("__PTRDIFF_WIDTH__", ptrdiff_type_node, NULL_TREE);
   builtin_define_type_width ("__SIZE_WIDTH__", size_type_node, NULL_TREE);
+
+  if (!c_dialect_cxx ())
+    {
+      struct bitint_info info;
+      /* For now, restrict __BITINT_MAXWIDTH__ to what can be represented in
+	 wide_int and widest_int.  */
+      if (targetm.c.bitint_type_info (WIDE_INT_MAX_PRECISION - 1, &info))
+	{
+	  cpp_define_formatted (pfile, "__BITINT_MAXWIDTH__=%d",
+				(int) WIDE_INT_MAX_PRECISION - 1);
+	  if (flag_building_libgcc)
+	    {
+	      scalar_int_mode limb_mode
+		= as_a <scalar_int_mode> (info.limb_mode);
+	      cpp_define_formatted (pfile, "__LIBGCC_BITINT_LIMB_WIDTH__=%d",
+				    (int) GET_MODE_PRECISION (limb_mode));
+	      cpp_define_formatted (pfile, "__LIBGCC_BITINT_ORDER__=%s",
+				    info.big_endian
+				    ? "__ORDER_BIG_ENDIAN__"
+				    : "__ORDER_LITTLE_ENDIAN__");
+	    }
+	}
+    }
 
   if (c_dialect_cxx ())
     for (i = 0; i < NUM_INT_N_ENTS; i ++)
@@ -1251,6 +1289,14 @@ c_cpp_builtins (cpp_reader *pfile)
     {
       if (FLOATN_NX_TYPE_NODE (i) == NULL_TREE)
 	continue;
+      if (c_dialect_cxx ()
+	  && cxx_dialect > cxx20
+	  && !floatn_nx_types[i].extended)
+	{
+	  char name[sizeof ("__STDCPP_FLOAT128_T__=1")];
+	  sprintf (name, "__STDCPP_FLOAT%d_T__=1", floatn_nx_types[i].n);
+	  cpp_define (pfile, name);
+	}
       char prefix[20], csuffix[20];
       sprintf (prefix, "FLT%d%s", floatn_nx_types[i].n,
 	       floatn_nx_types[i].extended ? "X" : "");
@@ -1258,6 +1304,13 @@ c_cpp_builtins (cpp_reader *pfile)
 	       floatn_nx_types[i].extended ? "x" : "");
       builtin_define_float_constants (prefix, ggc_strdup (csuffix), "%s",
 				      csuffix, FLOATN_NX_TYPE_NODE (i));
+    }
+  if (bfloat16_type_node)
+    {
+      if (c_dialect_cxx () && cxx_dialect > cxx20)
+	cpp_define (pfile, "__STDCPP_BFLOAT16_T__=1");
+      builtin_define_float_constants ("BFLT16", "BF16", "%s",
+				      "BF16", bfloat16_type_node);
     }
 
   /* For float.h.  */
@@ -1369,6 +1422,12 @@ c_cpp_builtins (cpp_reader *pfile)
 	      suffix[0] = 'l';
 	      memcpy (float_h_prefix, "LDBL", 5);
 	    }
+	  else if (bfloat16_type_node
+		   && mode == TYPE_MODE (bfloat16_type_node))
+	    {
+	      memcpy (suffix, "bf16", 5);
+	      memcpy (float_h_prefix, "BFLT16", 7);
+	    }
 	  else
 	    {
 	      bool found_suffix = false;
@@ -1395,22 +1454,28 @@ c_cpp_builtins (cpp_reader *pfile)
 	  machine_mode float16_type_mode = (float16_type_node
 					    ? TYPE_MODE (float16_type_node)
 					    : VOIDmode);
+	  machine_mode bfloat16_type_mode = (bfloat16_type_node
+					     ? TYPE_MODE (bfloat16_type_node)
+					     : VOIDmode);
 	  switch (targetm.c.excess_precision
 		    (EXCESS_PRECISION_TYPE_IMPLICIT))
 	    {
 	    case FLT_EVAL_METHOD_UNPREDICTABLE:
 	    case FLT_EVAL_METHOD_PROMOTE_TO_LONG_DOUBLE:
 	      excess_precision = (mode == float16_type_mode
+				  || mode == bfloat16_type_mode
 				  || mode == TYPE_MODE (float_type_node)
 				  || mode == TYPE_MODE (double_type_node));
 	      break;
 
 	    case FLT_EVAL_METHOD_PROMOTE_TO_DOUBLE:
 	      excess_precision = (mode == float16_type_mode
+				  || mode == bfloat16_type_mode
 				  || mode == TYPE_MODE (float_type_node));
 	      break;
 	    case FLT_EVAL_METHOD_PROMOTE_TO_FLOAT:
-	      excess_precision = mode == float16_type_mode;
+	      excess_precision = (mode == float16_type_mode
+				  || mode == bfloat16_type_mode);
 	      break;
 	    case FLT_EVAL_METHOD_PROMOTE_TO_FLOAT16:
 	      excess_precision = false;
@@ -1495,6 +1560,9 @@ c_cpp_builtins (cpp_reader *pfile)
 #endif
       builtin_define_with_int_value ("__LIBGCC_DWARF_FRAME_REGISTERS__",
 				     DWARF_FRAME_REGISTERS);
+      builtin_define_with_int_value ("__LIBGCC_DWARF_CIE_DATA_ALIGNMENT__",
+				     DWARF_CIE_DATA_ALIGNMENT);
+
 #ifdef EH_RETURN_STACKADJ_RTX
       cpp_define (pfile, "__LIBGCC_EH_RETURN_STACKADJ_RTX__");
 #endif
@@ -1508,8 +1576,8 @@ c_cpp_builtins (cpp_reader *pfile)
       /* For libgcov.  */
       builtin_define_with_int_value ("__LIBGCC_VTABLE_USES_DESCRIPTORS__",
 				     TARGET_VTABLE_USES_DESCRIPTORS);
-      builtin_define_with_int_value ("__LIBGCC_GCOV_TYPE_SIZE",
-				     targetm.gcov_type_size());
+      builtin_define_with_int_value ("__LIBGCC_HAVE_LIBATOMIC",
+				     targetm.have_libatomic);
     }
 
   /* For use in assembly language.  */
@@ -1874,6 +1942,8 @@ type_suffix (tree type)
 	      systems use it anyway.  */
 	   || type == char_type_node)
     is_long = 0;
+  else if (type == wchar_type_node)
+    return type_suffix (underlying_wchar_type_node);
   else
     gcc_unreachable ();
 

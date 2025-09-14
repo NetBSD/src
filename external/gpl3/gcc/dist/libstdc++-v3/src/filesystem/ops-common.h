@@ -1,6 +1,6 @@
 // Filesystem operation utilities -*- C++ -*-
 
-// Copyright (C) 2014-2022 Free Software Foundation, Inc.
+// Copyright (C) 2014-2024 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -49,8 +49,12 @@
 #ifdef NEED_DO_COPY_FILE
 # include <filesystem>
 # include <ext/stdio_filebuf.h>
+# ifdef _GLIBCXX_USE_COPY_FILE_RANGE
+#  include <unistd.h> // copy_file_range
+# endif
 # ifdef _GLIBCXX_USE_SENDFILE
 #  include <sys/sendfile.h> // sendfile
+#  include <unistd.h> // lseek
 # endif
 #endif
 
@@ -114,7 +118,7 @@ namespace __gnu_posix
   inline int close(int fd)
   { return ::_close(fd); }
 
-  typedef struct ::__stat64 stat_type;
+  using stat_type = struct ::__stat64;
 
   inline int stat(const wchar_t* path, stat_type* buffer)
   { return ::_wstat64(path, buffer); }
@@ -180,7 +184,7 @@ namespace __gnu_posix
   using ::open;
   using ::close;
 # ifdef _GLIBCXX_HAVE_SYS_STAT_H
-  typedef struct ::stat stat_type;
+  using stat_type = struct ::stat;
   using ::stat;
 #  ifdef _GLIBCXX_USE_LSTAT
   using ::lstat;
@@ -299,7 +303,6 @@ namespace __gnu_posix
   {
     bool skip, update, overwrite;
   };
-
 #endif // _GLIBCXX_HAVE_SYS_STAT_H
 
 } // namespace filesystem
@@ -322,6 +325,12 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
 	   uintmax_t& capacity, uintmax_t& free, uintmax_t& available,
 	   std::error_code&);
 
+
+  // Test whether two files are the same file.
+  bool
+  equiv_files(const char_type*, const stat_type&,
+	      const char_type*, const stat_type&,
+	      error_code&);
 
   inline file_type
   make_file_type(const stat_type& st) noexcept
@@ -370,6 +379,62 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
   }
 
 #ifdef NEED_DO_COPY_FILE
+#ifdef _GLIBCXX_USE_COPY_FILE_RANGE
+  bool
+  copy_file_copy_file_range(int fd_in, int fd_out, size_t length) noexcept
+  {
+    // a zero-length file is either empty, or not copyable by this syscall
+    // return early to avoid the syscall cost
+    if (length == 0)
+      {
+	errno = EINVAL;
+	return false;
+      }
+    size_t bytes_left = length;
+    loff_t off_in = 0, off_out = 0;
+    ssize_t bytes_copied;
+    do
+      {
+	bytes_copied = ::copy_file_range(fd_in, &off_in, fd_out, &off_out,
+					 bytes_left, 0);
+	bytes_left -= bytes_copied;
+      }
+    while (bytes_left > 0 && bytes_copied > 0);
+    if (bytes_copied < 0)
+      return false;
+    return true;
+  }
+#endif
+
+#if defined _GLIBCXX_USE_SENDFILE && ! defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
+  bool
+  copy_file_sendfile(int fd_in, int fd_out, size_t length) noexcept
+  {
+    // a zero-length file is either empty, or not copyable by this syscall
+    // return early to avoid the syscall cost
+    if (length == 0)
+      {
+	errno = EINVAL;
+	return false;
+      }
+    size_t bytes_left = length;
+    off_t offset = 0;
+    ssize_t bytes_copied;
+    do
+      {
+	bytes_copied = ::sendfile(fd_out, fd_in, &offset, bytes_left);
+	bytes_left -= bytes_copied;
+      }
+    while (bytes_left > 0 && bytes_copied > 0);
+    if (bytes_copied < 0)
+      {
+	::lseek(fd_out, 0, SEEK_SET);
+	return false;
+      }
+    return true;
+  }
+#endif
+
   bool
   do_copy_file(const char_type* from, const char_type* to,
 	       std::filesystem::copy_options_existing_file options,
@@ -431,8 +496,7 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
 	    return false;
 	  }
 
-	if (to_st->st_dev == from_st->st_dev
-	    && to_st->st_ino == from_st->st_ino)
+	if (equiv_files(from, *from_st, to, *to_st, ec))
 	  {
 	    ec = std::make_error_code(std::errc::file_exists);
 	    return false;
@@ -513,32 +577,58 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
 	return false;
       }
 
-#if defined _GLIBCXX_USE_SENDFILE && ! defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
-    size_t count = from_st->st_size;
-    ssize_t n = 0;
-    if (count != 0)
+    bool has_copied = false;
+
+#ifdef _GLIBCXX_USE_COPY_FILE_RANGE
+    if (!has_copied)
+      has_copied = copy_file_copy_file_range(in.fd, out.fd, from_st->st_size);
+    if (!has_copied)
       {
-	off_t offset = 0;
-	n = ::sendfile(out.fd, in.fd, &offset, count);
-	if (n < 0 && errno != ENOSYS && errno != EINVAL)
+	// EINVAL: src and dst are the same file (this is not cheaply
+	// detectable from userspace)
+	// EINVAL: copy_file_range is unsupported for this file type by the
+	// underlying filesystem
+	// ENOTSUP: undocumented, can arise with old kernels and NFS
+	// EOPNOTSUPP: filesystem does not implement copy_file_range
+	// ETXTBSY: src or dst is an active swapfile (nonsensical, but allowed
+	// with normal copying)
+	// EXDEV: src and dst are on different filesystems that do not support
+	// cross-fs copy_file_range
+	// ENOENT: undocumented, can arise with CIFS
+	// ENOSYS: unsupported by kernel or blocked by seccomp
+	if (errno != EINVAL && errno != ENOTSUP && errno != EOPNOTSUPP
+	      && errno != ETXTBSY && errno != EXDEV && errno != ENOENT
+	      && errno != ENOSYS)
 	  {
 	    ec.assign(errno, std::generic_category());
 	    return false;
 	  }
-	if ((size_t)n == count)
-	  {
-	    if (!out.close() || !in.close())
-	      {
-		ec.assign(errno, std::generic_category());
-		return false;
-	      }
-	    ec.clear();
-	    return true;
-	  }
-	else if (n > 0)
-	  count -= n;
       }
-#endif // _GLIBCXX_USE_SENDFILE
+#endif
+
+#if defined _GLIBCXX_USE_SENDFILE && ! defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
+    if (!has_copied)
+      has_copied = copy_file_sendfile(in.fd, out.fd, from_st->st_size);
+    if (!has_copied)
+      {
+	if (errno != ENOSYS && errno != EINVAL)
+	  {
+	    ec.assign(errno, std::generic_category());
+	    return false;
+	  }
+      }
+#endif
+
+    if (has_copied)
+      {
+	if (!out.close() || !in.close())
+	  {
+	    ec.assign(errno, std::generic_category());
+	    return false;
+	  }
+	ec.clear();
+	return true;
+      }
 
     using std::ios;
     __gnu_cxx::stdio_filebuf<char> sbin(in.fd, ios::in|ios::binary);
@@ -548,24 +638,6 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
       in.fd = -1;
     if (sbout.is_open())
       out.fd = -1;
-
-#ifdef _GLIBCXX_USE_SENDFILE
-    if (n != 0)
-      {
-	if (n < 0)
-	  n = 0;
-
-	const auto p1 = sbin.pubseekoff(n, ios::beg, ios::in);
-	const auto p2 = sbout.pubseekoff(n, ios::beg, ios::out);
-
-	const std::streampos errpos(std::streamoff(-1));
-	if (p1 == errpos || p2 == errpos)
-	  {
-	    ec = std::make_error_code(std::errc::io_error);
-	    return false;
-	  }
-      }
-#endif
 
     // ostream::operator<<(streambuf*) fails if it extracts no characters,
     // so don't try to use it for empty files. But from_st->st_size == 0 for
@@ -648,8 +720,10 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
     std::wstring buf;
     do
       {
-	buf.resize(len);
-	len = GetTempPathW(buf.size(), buf.data());
+	buf.__resize_and_overwrite(len, [&len](wchar_t* p, unsigned n) {
+	  len = GetTempPathW(n, p);
+	  return len > n ? 0 : len;
+	});
       }
     while (len > buf.size());
 
@@ -658,7 +732,6 @@ _GLIBCXX_BEGIN_NAMESPACE_FILESYSTEM
     else
       ec.clear();
 
-    buf.resize(len);
     return buf;
   }
 #else

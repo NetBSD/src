@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Copyright (C) 1988-2022 Free Software Foundation, Inc.
+<!-- Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -79,6 +79,9 @@ ul.no-bullet {list-style: none}
 
 
 
+
+
+
 <a name="index-Prerequisites"></a>
 
 <p>GCC requires that various tools and packages be available for use in the
@@ -119,6 +122,12 @@ name of the package depends on your distro) or you must build GCC as a
 64-bit only compiler by configuring with the option
 <samp>--disable-multilib</samp>.  Otherwise, you may encounter an error such as
 &lsquo;<samp>fatal error: gnu/stubs-32.h: No such file</samp>&rsquo;
+</p>
+</dd>
+<dt>Python</dt>
+<dd><p>If you configure a RISC-V compiler with the option <samp>--with-arch</samp> and
+the specified architecture string is non-canonical, then you will need
+<code>python</code> installed on the build system.
 </p>
 </dd>
 <dt><a name="GNAT-prerequisite"></a>GNAT</dt>
@@ -176,6 +185,14 @@ and works if <samp>--enable-libphobos</samp> is used.  Specifics are
 documented for affected targets.
 </p>
 </dd>
+<dt><a name="GM2-prerequisite"></a>GM2</dt>
+<dd>
+<p>Python3 is required if you want to build the complete Modula-2
+documentation including the target <code>SYSTEM</code> definition module.
+If Python3 is unavailable Modula-2 documentation will include a target
+independent version of the SYSTEM modules.
+</p>
+</dd>
 <dt>A &ldquo;working&rdquo; POSIX compatible shell, or GNU bash</dt>
 <dd>
 <p>Necessary when running <code>configure</code> because some
@@ -193,6 +210,11 @@ environment to your &ldquo;good&rdquo; shell prior to running
 </p>
 <p><code>zsh</code> is not a fully compliant POSIX shell and will not
 work when configuring GCC.
+</p>
+</dd>
+<dt>GNU flex</dt>
+<dd>
+<p>Necessary to build the lexical analysis module.
 </p>
 </dd>
 <dt>A POSIX or SVR4 awk</dt>
@@ -231,11 +253,11 @@ systems&rsquo; <code>tar</code> programs will also work, only try GNU
 <code>tar</code> if you have problems.
 </p>
 </dd>
-<dt>Perl version between 5.6.1 and 5.6.24</dt>
+<dt>Perl version 5.6.1 (or later)</dt>
 <dd>
 <p>Necessary when targeting Darwin, building &lsquo;<samp>libstdc++</samp>&rsquo;,
 and not using <samp>--disable-symvers</samp>.
-Necessary when targeting Solaris 2 with Solaris <code>ld</code> and not using
+Necessary when targeting Solaris with Solaris <code>ld</code> and not using
 <samp>--disable-symvers</samp>.
 </p>
 <p>Necessary when regenerating <samp>Makefile</samp> dependencies in libiberty.
@@ -265,7 +287,8 @@ install the libraries.
 <dl compact="compact">
 <dt>GNU Multiple Precision Library (GMP) version 4.3.2 (or later)</dt>
 <dd>
-<p>Necessary to build GCC.  If a GMP source distribution is found in a
+<p>Necessary to build GCC.  It can be downloaded from
+<a href="https://gmplib.org/">https://gmplib.org/</a>.  If a GMP source distribution is found in a
 subdirectory of your GCC sources named <samp>gmp</samp>, it will be built
 together with GCC.  Alternatively, if GMP is already installed but it
 is not in your library search path, you will have to configure with the
@@ -317,6 +340,60 @@ search path.
 <p>Necessary to build GCC with zstd compression used for LTO bytecode.
 The library is searched in your default library patch search.
 Alternatively, the <samp>--with-zstd</samp> configure option should be used.
+</p>
+</dd>
+<dt>Python3 modules</dt>
+<dd>
+<p>The complete list of Python3 modules broken down by GCC subcomponent
+is shown below:
+</p>
+<dl compact="compact">
+<dt>internal debugging in gdbhooks</dt>
+<dd><p><code>gdb</code>, <code>gdb.printing</code>, <code>gdb.types</code>,
+<code>os.path</code>, <code>re</code>, <code>sys</code> and <code>tempfile</code>,
+</p>
+</dd>
+<dt>g++ testsuite</dt>
+<dd><p><code>gcov</code>, <code>gzip</code>, <code>json</code>, <code>os</code> and <code>pytest</code>.
+</p>
+</dd>
+<dt>SARIF testsuite</dt>
+<dd><p>Tests of SARIF output will use the <code>check-jsonschema</code> program from
+the <code>check-jsonschema</code> module (if available) to validate generated
+.sarif files.  If this tool is not found, the validation parts of those
+tests are skipped.
+</p>
+</dd>
+<dt>c++ cxx api generation</dt>
+<dd><p><code>csv</code>, <code>os</code>, <code>sys</code> and <code>time</code>.
+</p>
+</dd>
+<dt>modula-2 documentation</dt>
+<dd><p><code>argparse</code>, <code>os</code>, <code>pathlib</code>, <code>shutil</code> and
+<code>sys</code>.
+</p>
+</dd>
+<dt>git developer tools</dt>
+<dd><p><code>os</code> and <code>sys</code>.
+</p>
+</dd>
+<dt>ada documentation</dt>
+<dd><p><code>latex_elements</code>, <code>os</code>, <code>pygments</code>, <code>re</code>,
+<code>sys</code> and <code>time</code>.
+</p></dd>
+</dl>
+
+</dd>
+<dt>GNU gettext</dt>
+<dd>
+<p>Necessary to build GCC with internationalization support via
+<samp>--enable-nls</samp>.  It can be downloaded from
+<a href="https://www.gnu.org/software/gettext/">https://www.gnu.org/software/gettext/</a>. If a GNU gettext distribution
+is found in a subdirectory of your GCC sources named <samp>gettext</samp>, it
+will be built together with GCC, unless present in the system (either in
+libc or as a stand-alone library).
+</p>
+<p>The in-tree configuration requires GNU gettext version 0.22 or later.
 </p>
 </dd>
 </dl>
@@ -378,6 +455,8 @@ details.
 <p>Necessary to regenerate the top level <samp>Makefile.in</samp> file from
 <samp>Makefile.tpl</samp> and <samp>Makefile.def</samp>.
 </p>
+<p>Necessary to regenerate the <samp>bits/version.h</samp> header for libstdc++.
+</p>
 </dd>
 <dt>Flex version 2.5.4 (or later)</dt>
 <dd>
@@ -393,13 +472,21 @@ They are included in releases.
 <p>Necessary for running <code>makeinfo</code> when modifying <samp>*.texi</samp>
 files to test your changes.
 </p>
-<p>Necessary for running <code>make dvi</code> or <code>make pdf</code> to
-create printable documentation in DVI or PDF format.  Texinfo version
+<p>Necessary for running <code>make dvi</code>, <code>make pdf</code>,
+or <code>make html</code> to create formatted documentation.  Texinfo version
 4.8 or later is required for <code>make pdf</code>.
 </p>
-<p>Necessary to build GCC documentation during development because the
-generated output files are not included in the repository.  They are
-included in releases.
+<p>Necessary to build GCC documentation in info format during development
+because the generated output files are not included in the repository.
+(They are included in release tarballs.)
+</p>
+<p>Note that the minimum requirement is for a very old version of
+Texinfo, but recent versions of Texinfo produce better-quality output,
+especially for HTML format.  The version of Texinfo packaged with any
+current operating system distribution is likely to be adequate for
+building the documentation without error, but you may still want to
+install a newer release to get the best appearance and usability of
+the generated manuals.
 </p>
 </dd>
 <dt>TeX (any working version)</dt>

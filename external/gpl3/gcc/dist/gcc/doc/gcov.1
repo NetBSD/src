@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCOV 1"
-.TH GCOV 1 "2025-07-11" "gcc-12.5.0" "GNU"
+.TH GCOV 1 "2025-05-23" "gcc-14.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,6 +142,7 @@ gcov [\fB\-v\fR|\fB\-\-version\fR] [\fB\-h\fR|\fB\-\-help\fR]
      [\fB\-a\fR|\fB\-\-all\-blocks\fR]
      [\fB\-b\fR|\fB\-\-branch\-probabilities\fR]
      [\fB\-c\fR|\fB\-\-branch\-counts\fR]
+     [\fB\-g\fR|\fB\-\-conditions\fR]
      [\fB\-d\fR|\fB\-\-display\-progress\fR]
      [\fB\-f\fR|\fB\-\-function\-summaries\fR]
      [\fB\-j\fR|\fB\-\-json\-format\fR]
@@ -243,6 +244,17 @@ be shown, unless the \fB\-u\fR option is given.
 .PD
 Write branch frequencies as the number of branches taken, rather than
 the percentage of branches taken.
+.IP "\fB\-g\fR" 4
+.IX Item "-g"
+.PD 0
+.IP "\fB\-\-conditions\fR" 4
+.IX Item "--conditions"
+.PD
+Write condition coverage to the output file, and write condition summary info
+to the standard output.  This option allows you to see if the conditions in
+your program at least once had an independent effect on the outcome of the
+boolean expression (modified condition/decision coverage).  This requires you
+to compile the source with \fB\-fcondition\-coverage\fR.
 .IP "\fB\-d\fR" 4
 .IX Item "-d"
 .PD 0
@@ -282,7 +294,7 @@ Structure of the \s-1JSON\s0 is following:
 \&        {
 \&          "current_working_directory": "foo/bar",
 \&          "data_file": "a.out",
-\&          "format_version": "1",
+\&          "format_version": "2",
 \&          "gcc_version": "11.1.1 20210510"
 \&          "files": ["$file"]
 \&        }
@@ -297,6 +309,14 @@ a compilation unit was compiled
 \&\fIdata_file\fR: name of the data file (\s-1GCDA\s0)
 .IP "*" 4
 \&\fIformat_version\fR: semantic version of the format
+.Sp
+Changes in version \fI2\fR:
+.RS 4
+.IP "*" 4
+\&\fIcalls\fR: information about function calls is added
+.RE
+.RS 4
+.RE
 .IP "*" 4
 \&\fIgcc_version\fR: version of the \s-1GCC\s0 compiler
 .RE
@@ -363,18 +383,23 @@ this is likely to be fixed in the future.
 .Sp
 Each \fIline\fR has the following form:
 .Sp
-.Vb 7
+.Vb 10
 \&        {
+\&          "block_ids": ["$block_id"],
 \&          "branches": ["$branch"],
+\&          "calls": ["$call"],
 \&          "count": 2,
+\&          "conditions": ["$condition"],
 \&          "line_number": 15,
 \&          "unexecuted_block": false,
 \&          "function_name": "foo",
 \&        }
 .Ve
 .Sp
-Branches are present only with \fI\-b\fR option.
+Branches and calls are present only with \fI\-b\fR option.
 Fields of the \fIline\fR element have following semantics:
+.IP "*" 4
+\&\fIblock_ids\fR: IDs of basic blocks that belong to the line
 .IP "*" 4
 \&\fIcount\fR: number of executions of the line
 .IP "*" 4
@@ -390,10 +415,12 @@ Fields of the \fIline\fR element have following semantics:
 .Sp
 Each \fIbranch\fR has the following form:
 .Sp
-.Vb 5
+.Vb 7
 \&        {
 \&          "count": 11,
+\&          "destination_block_id": 17,
 \&          "fallthrough": true,
+\&          "source_block_id": 13,
 \&          "throw": false
 \&        }
 .Ve
@@ -405,6 +432,54 @@ Fields of the \fIbranch\fR element have following semantics:
 \&\fIfallthrough\fR: true when the branch is a fall through branch
 .IP "*" 4
 \&\fIthrow\fR: true when the branch is an exceptional branch
+.IP "*" 4
+\&\fIisource_block_id\fR: \s-1ID\s0 of the basic block where this branch happens
+.IP "*" 4
+\&\fIdestination_block_id\fR: \s-1ID\s0 of the basic block this branch jumps to
+.RE
+.RS 4
+.Sp
+Each \fIcall\fR has the following form:
+.Sp
+.Vb 5
+\&        {
+\&          "destination_block_id": 1,
+\&          "returned": 11,
+\&          "source_block_id": 13
+\&        }
+.Ve
+.Sp
+Fields of the \fIcall\fR element have following semantics:
+.IP "*" 4
+\&\fIreturned\fR: number of times a function call returned (call count is equal
+to \fIline::count\fR)
+.IP "*" 4
+\&\fIisource_block_id\fR: \s-1ID\s0 of the basic block where this call happens
+.IP "*" 4
+\&\fIdestination_block_id\fR: \s-1ID\s0 of the basic block this calls continues after return
+.RE
+.RS 4
+.Sp
+Each \fIcondition\fR has the following form:
+.Sp
+.Vb 6
+\&        {
+\&          "count": 4,
+\&          "covered": 2,
+\&          "not_covered_false": [],
+\&          "not_covered_true": [0, 1],
+\&        }
+.Ve
+.Sp
+Fields of the \fIcondition\fR element have following semantics:
+.IP "*" 4
+\&\fIcount\fR: number of condition outcomes in this expression
+.IP "*" 4
+\&\fIcovered\fR: number of covered condition outcomes in this expression
+.IP "*" 4
+\&\fInot_covered_true\fR: terms, by index, not seen as true in this expression
+.IP "*" 4
+\&\fInot_covered_false\fR: terms, by index, not seen as false in this expression
 .RE
 .RS 4
 .RE
@@ -1016,7 +1091,7 @@ to a misleading profile.
 \&\fIgpl\fR\|(7), \fIgfdl\fR\|(7), \fIfsf\-funding\fR\|(7), \fIgcc\fR\|(1) and the Info entry for \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1996\-2022 Free Software Foundation, Inc.
+Copyright (c) 1996\-2024 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

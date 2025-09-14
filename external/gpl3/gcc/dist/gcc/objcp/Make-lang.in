@@ -1,5 +1,5 @@
 # Top level -*- makefile -*- fragment for GNU Objective-C++
-#   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2005-2024 Free Software Foundation, Inc.
 #   Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 #This file is part of GCC.
@@ -136,7 +136,7 @@ obj-c++.man:
 obj-c++.install-plugin:
 
 obj-c++.tags: force
-	cd $(srcdir)/objcp; $(ETAGS) -o TAGS.sub *.c *.h; \
+	cd $(srcdir)/objcp; $(ETAGS) -o TAGS.sub *.cc *.h; \
 	$(ETAGS) --include TAGS.sub --include ../TAGS.sub
 
 lang_checks += check-obj-c++

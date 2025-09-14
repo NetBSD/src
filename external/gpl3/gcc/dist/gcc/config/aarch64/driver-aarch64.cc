@@ -1,5 +1,5 @@
 /* Native CPU detection for aarch64.
-   Copyright (C) 2015-2022 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -26,18 +26,18 @@
 #include "coretypes.h"
 #include "tm.h"
 #include "aarch64-protos.h"
+#include "aarch64-feature-deps.h"
 #include "diagnostic-core.h"
 
 struct aarch64_arch_extension
 {
   const char *ext;
-  uint64_t flag;
+  aarch64_feature_flags flag;
   const char *feat_string;
 };
 
-#define AARCH64_OPT_EXTENSION(EXT_NAME, FLAG_CANONICAL, FLAGS_ON, FLAGS_OFF, \
-			      SYNTHETIC, FEATURE_STRING) \
-  { EXT_NAME, FLAG_CANONICAL, FEATURE_STRING },
+#define AARCH64_OPT_EXTENSION(EXT_NAME, IDENT, C, D, E, FEATURE_STRING) \
+  { EXT_NAME, AARCH64_FL_##IDENT, FEATURE_STRING },
 static struct aarch64_arch_extension aarch64_extensions[] =
 {
 #include "aarch64-option-extensions.def"
@@ -51,7 +51,7 @@ struct aarch64_core_data
   unsigned char implementer_id; /* Exactly 8 bits */
   unsigned int part_no; /* 12 bits + 12 bits */
   unsigned variant;
-  const uint64_t flags;
+  aarch64_feature_flags flags;
 };
 
 #define AARCH64_BIG_LITTLE(BIG, LITTLE) \
@@ -61,11 +61,12 @@ struct aarch64_core_data
 #define ALL_VARIANTS ((unsigned)-1)
 /* Default architecture to use if -mcpu=native did not detect a known CPU.  */
 #define DEFAULT_ARCH "8A"
+#define DEFAULT_CPU "generic-armv8-a"
 
 #define AARCH64_CORE(CORE_NAME, CORE_IDENT, SCHED, ARCH, FLAGS, COSTS, IMP, PART, VARIANT) \
-  { CORE_NAME, #ARCH, IMP, PART, VARIANT, FLAGS },
+  { CORE_NAME, #ARCH, IMP, PART, VARIANT, feature_deps::cpu_##CORE_IDENT },
 
-static struct aarch64_core_data aarch64_cpu_data[] =
+static CONSTEXPR const aarch64_core_data aarch64_cpu_data[] =
 {
 #include "aarch64-cores.def"
   { NULL, NULL, INVALID_IMP, INVALID_CORE, ALL_VARIANTS, 0 }
@@ -76,13 +77,14 @@ struct aarch64_arch_driver_info
 {
   const char* id;
   const char* name;
-  const uint64_t flags;
+  aarch64_feature_flags flags;
 };
 
+/* Skip the leading "V" in the architecture name.  */
 #define AARCH64_ARCH(NAME, CORE, ARCH_IDENT, ARCH_REV, FLAGS) \
-  { #ARCH_IDENT, NAME, FLAGS },
+  { #ARCH_IDENT + 1, NAME, feature_deps::ARCH_IDENT ().enable },
 
-static struct aarch64_arch_driver_info aarch64_arches[] =
+static CONSTEXPR const aarch64_arch_driver_info aarch64_arches[] =
 {
 #include "aarch64-arches.def"
   {NULL, NULL, 0}
@@ -92,7 +94,7 @@ static struct aarch64_arch_driver_info aarch64_arches[] =
 /* Return an aarch64_arch_driver_info for the architecture described
    by ID, or NULL if ID describes something we don't know about.  */
 
-static struct aarch64_arch_driver_info*
+static const aarch64_arch_driver_info *
 get_arch_from_id (const char* id)
 {
   unsigned int i = 0;
@@ -102,6 +104,19 @@ get_arch_from_id (const char* id)
       if (strcmp (id, aarch64_arches[i].id) == 0)
 	return &aarch64_arches[i];
     }
+
+  return NULL;
+}
+
+/* Return an aarch64_core_data for the cpu described
+   by ID, or NULL if ID describes something we don't know about.  */
+
+static const aarch64_core_data *
+get_cpu_from_id (const char* name)
+{
+  for (unsigned i = 0; aarch64_cpu_data[i].name != NULL; i++)
+    if (strcmp (name, aarch64_cpu_data[i].name) == 0)
+      return &aarch64_cpu_data[i];
 
   return NULL;
 }
@@ -269,8 +284,9 @@ host_detect_local_cpu (int argc, const char **argv)
   unsigned int variants[2] = { ALL_VARIANTS, ALL_VARIANTS };
   unsigned int n_variants = 0;
   bool processed_exts = false;
-  uint64_t extension_flags = 0;
-  uint64_t default_flags = 0;
+  aarch64_feature_flags extension_flags = 0;
+  aarch64_feature_flags unchecked_extension_flags = 0;
+  aarch64_feature_flags default_flags = 0;
   std::string buf;
   size_t sep_pos = -1;
   char *fcpu_info;
@@ -357,7 +373,10 @@ host_detect_local_cpu (int argc, const char **argv)
 	      /* If the feature contains no HWCAPS string then ignore it for the
 		 auto detection.  */
 	      if (val.empty ())
-		continue;
+		{
+		  unchecked_extension_flags |= aarch64_extensions[i].flag;
+		  continue;
+		}
 
 	      bool enabled = true;
 
@@ -528,7 +547,8 @@ host_detect_local_cpu (int argc, const char **argv)
   if (n_cores == 0
       || n_cores > 2
       || (n_cores == 1 && n_variants != 1)
-      || imp == INVALID_IMP)
+      || imp == INVALID_IMP
+      || !processed_exts)
     goto not_found;
 
   /* Simple case, one core type or just looking for the arch. */
@@ -542,20 +562,12 @@ host_detect_local_cpu (int argc, const char **argv)
                 || variants[0] == aarch64_cpu_data[i].variant))
 	  break;
 
-      if (aarch64_cpu_data[i].name == NULL)
+      if (arch)
 	{
-	  aarch64_arch_driver_info* arch_info
-	    = get_arch_from_id (DEFAULT_ARCH);
-
-	  gcc_assert (arch_info);
-
-	  res = concat ("-march=", arch_info->name, NULL);
-	  default_flags = arch_info->flags;
-	}
-      else if (arch)
-	{
-	  const char *arch_id = aarch64_cpu_data[i].arch;
-	  aarch64_arch_driver_info* arch_info = get_arch_from_id (arch_id);
+	  const char *arch_id = (aarch64_cpu_data[i].name
+				 ? aarch64_cpu_data[i].arch
+				 : DEFAULT_ARCH);
+	  auto arch_info = get_arch_from_id (arch_id);
 
 	  /* We got some arch indentifier that's not in aarch64-arches.def?  */
 	  if (!arch_info)
@@ -564,12 +576,15 @@ host_detect_local_cpu (int argc, const char **argv)
 	  res = concat ("-march=", arch_info->name, NULL);
 	  default_flags = arch_info->flags;
 	}
-      else
+      else if (cpu || aarch64_cpu_data[i].name)
 	{
-	  default_flags = aarch64_cpu_data[i].flags;
+	  auto cpu_info = (aarch64_cpu_data[i].name
+			   ? &aarch64_cpu_data[i]
+			   : get_cpu_from_id (DEFAULT_CPU));
+	  default_flags = cpu_info->flags;
 	  res = concat ("-m",
 			cpu ? "cpu" : "tune", "=",
-			aarch64_cpu_data[i].name,
+			cpu_info->name,
 			NULL);
 	}
     }
@@ -589,12 +604,30 @@ host_detect_local_cpu (int argc, const char **argv)
 	      break;
 	    }
 	}
+
+      /* On big.LITTLE if we find any unknown CPUs we can still pick arch
+	 features as the cores should have the same features.  So just pick
+	 the feature flags from any of the cpus.  */
+      if (cpu && aarch64_cpu_data[i].name == NULL)
+	{
+	  auto cpu_info = get_cpu_from_id (DEFAULT_CPU);
+
+	  gcc_assert (cpu_info);
+
+	  res = concat ("-mcpu=", cpu_info->name, NULL);
+	  default_flags = cpu_info->flags;
+	}
+
       if (!res)
 	goto not_found;
     }
 
   if (tune)
     return res;
+
+  /* Add any features that should be present, but can't be verified using
+     the /proc/cpuinfo "Features" list.  */
+  extension_flags |= unchecked_extension_flags & default_flags;
 
   {
     std::string extension

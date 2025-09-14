@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "CPP 1"
-.TH CPP 1 "2025-07-11" "gcc-12.5.0" "GNU"
+.TH CPP 1 "2025-05-23" "gcc-14.3.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -493,7 +493,7 @@ to change an absolute path to a relative path by using \fI.\fR for
 \&\fInew\fR which can result in more reproducible builds that are
 location independent.  This option also affects
 \&\f(CW\*(C`_\|_builtin_FILE()\*(C'\fR during compilation.  See also
-\&\fB\-ffile\-prefix\-map\fR.
+\&\fB\-ffile\-prefix\-map\fR and \fB\-fcanon\-prefix\-map\fR.
 .IP "\fB\-fexec\-charset=\fR\fIcharset\fR" 4
 .IX Item "-fexec-charset=charset"
 Set the execution character set, used for string and character
@@ -629,8 +629,7 @@ Assuming you have no file \fIfoo.h\fR, the command
 shows all the predefined macros.
 .IP "\fB\-dD\fR" 4
 .IX Item "-dD"
-Like \fB\-dM\fR except in two respects: it does \fInot\fR include the
-predefined macros, and it outputs \fIboth\fR the \fB#define\fR
+Like \fB\-dM\fR except that it outputs \fIboth\fR the \fB#define\fR
 directives and the result of preprocessing.  Both kinds of output go to
 the standard output file.
 .IP "\fB\-dN\fR" 4
@@ -942,7 +941,7 @@ process.
 \&\fIgcc\fR\|(1), and the Info entries for \fIcpp\fR and \fIgcc\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1987\-2022 Free Software Foundation, Inc.
+Copyright (c) 1987\-2024 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or
