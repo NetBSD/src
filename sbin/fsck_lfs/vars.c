@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.19 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: vars.c,v 1.20 2025/09/14 19:14:30 perseant Exp $	 */
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,6 +48,7 @@ long numdirs, listmax, inplast;
 
 char nflag;			/* assume a no response */
 char yflag;			/* assume a yes response */
+int aflag;			/* ignore discrepancies in avail */
 int bflag;			/* location of alternate super block */
 int debug;			/* output debugging info */
 int exitonfail;

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.42 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: utilities.c,v 1.43 2025/09/14 19:14:30 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,6 +58,7 @@
 #include "exitvalues.h"
 
 long diskreads, totalreads;	/* Disk cache statistics */
+int asked_question = 0;
 
 int
 ftypeok(union lfs_dinode * dp)
@@ -86,6 +87,8 @@ reply(const char *question)
 	int persevere;
 	char c;
 
+	asked_question = 1;
+	
 	if (preen)
 		err(EXIT_FAILURE, "INTERNAL ERROR: GOT TO reply()");
 	persevere = !strcmp(question, "CONTINUE");
