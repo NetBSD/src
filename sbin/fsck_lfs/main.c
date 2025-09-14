@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.57 2025/09/14 21:22:43 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.58 2025/09/14 21:29:31 wiz Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -362,7 +362,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "Usage: %s [-adfpqU] [-b block] [-m mode] [-y | -n] filesystem ...\n",
+	    "Usage: %s [-adfpqU] [-b block] [-i idaddr] [-m mode] [-y | -n] filesystem ...\n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
 }
