@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.55 2025/09/14 11:14:00 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.56 2025/09/14 14:42:52 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -435,6 +435,7 @@ test_ic_shl(void)
 	u16 = u8 << 8;
 	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	u16 = u8 << 9;
+	/* expect+1: warning: bitwise '<<' on signed 'int promoted from unsigned short' possibly nonportable [117] */
 	u32 = u16 << 16;
 	// XXX: missing warning as UINT has the same rank as INT, see portable_rank_cmp.
 	u32 = u16 << 17;

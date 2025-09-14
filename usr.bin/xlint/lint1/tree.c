@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.692 2025/09/14 12:27:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.693 2025/09/14 14:42:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.692 2025/09/14 12:27:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.693 2025/09/14 14:42:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -107,6 +107,27 @@ u64_fill_right(uint64_t x)
 	x |= x >> 16;
 	x |= x >> 32;
 	return x;
+}
+
+static unsigned
+u64_width(uint64_t x)
+{
+	unsigned m = 0;
+	if (x >> 32 != 0)
+		x >>= 32, m += 32;
+	if (x >> 16 != 0)
+		x >>= 16, m += 16;
+	if (x >> 8 != 0)
+		x >>= 8, m += 8;
+	if (x >> 4 != 0)
+		x >>= 4, m += 4;
+	if (x >> 2 != 0)
+		x >>= 2, m += 2;
+	if (x >> 1 != 0)
+		x >>= 1, m++;
+	if (x > 0)
+		m++;
+	return m;
 }
 
 static int
@@ -2601,7 +2622,25 @@ typeok_shr(const tnode_t *ln, tspec_t lt,
 }
 
 static void
-typeok_shl(tspec_t lt, tspec_t rt)
+typeok_shl_signed_to_msb(const tnode_t *ln, const tnode_t *rn)
+{
+	integer_constraints lc = ic_expr(ln);
+	int64_t n;
+	unsigned lw = width_in_bits(ln->tn_type);
+	if (!is_uinteger(ln->tn_type->t_tspec)
+	    && ln->tn_op != CON
+	    && ((lc.smin == 0 && lc.smax != 0
+		    && lc.smax != INT64_MAX && (lc.smax & (lc.smax + 1)) == 0)
+		|| (lc.smin != INT64_MAX && lc.smin + 1 == -lc.smax))
+	    && rn->tn_op == CON
+	    && (n = rn->u.value.u.integer, 1 <= n && n <= lw)
+	    && u64_width((uint64_t)lc.smax - (uint64_t)lc.smin) + n == lw)
+		/* bitwise '%s' on signed '%s' possibly nonportable */
+		warning(117, "<<", expr_type_name(ln));
+}
+
+static void
+typeok_shl(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	/*
 	 * Traditional C performs the usual arithmetic conversions on the
@@ -2610,6 +2649,8 @@ typeok_shl(tspec_t lt, tspec_t rt)
 	if (hflag && allow_trad && allow_c90 && portable_rank_cmp(lt, rt) < 0)
 		/* '%s' %s '%s' differs between traditional C and C90 */
 		warning(118, tspec_name(lt), "<<", tspec_name(rt));
+
+	typeok_shl_signed_to_msb(ln, rn);
 }
 
 static void
@@ -3265,7 +3306,7 @@ typeok_op(op_t op, const function_call *call, int arg,
 	case MINUS:
 		return typeok_minus(op, ltp, lt, rtp, rt);
 	case SHL:
-		typeok_shl(lt, rt);
+		typeok_shl(ln, lt, rn, rt);
 		goto shift;
 	case SHR:
 		typeok_shr(ln, lt, rn, rt);

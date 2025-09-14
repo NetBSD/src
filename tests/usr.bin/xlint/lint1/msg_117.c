@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_117.c,v 1.15 2025/09/14 11:14:00 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.16 2025/09/14 14:42:52 rillig Exp $	*/
 # 3 "msg_117.c"
 
 // Test for message: bitwise '%s' on signed '%s' possibly nonportable [117]
@@ -21,6 +21,7 @@ shl(void)
 {
 	s32 = s8 << 0;
 	s32 = s8 << 23;
+	/* expect+1: warning: bitwise '<<' on signed 'int promoted from signed char' possibly nonportable [117] */
 	s32 = s8 << 24;
 	s32 = s8 << 31;
 	/* expect+1: warning: shift amount 32 equals bit-size of 'int promoted from signed char' [267] */
@@ -35,6 +36,7 @@ shl(void)
 	 */
 	u32 = u8 << 0;
 	u32 = u8 << 23;
+	/* expect+1: warning: bitwise '<<' on signed 'int promoted from unsigned char' possibly nonportable [117] */
 	u32 = u8 << 24;
 	u32 = u8 << 31;
 	/* expect+1: warning: shift amount 32 equals bit-size of 'int promoted from unsigned char' [267] */
