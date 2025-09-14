@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.693 2025/09/14 14:42:52 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.694 2025/09/14 14:53:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.693 2025/09/14 14:42:52 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.694 2025/09/14 14:53:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2621,6 +2621,10 @@ typeok_shr(const tnode_t *ln, tspec_t lt,
 		warning(118, tspec_name(lt), ">>", tspec_name(rt));
 }
 
+// C90 does not mention signed shift-left. Later standards mention that case
+// but leave open whether 'uint8_t << 24' is supposed to have an unsigned or a
+// signed result type. It depends on whether E1 is interpreted to be the left
+// operand's type before or after integral promotions.
 static void
 typeok_shl_signed_to_msb(const tnode_t *ln, const tnode_t *rn)
 {
@@ -2629,9 +2633,10 @@ typeok_shl_signed_to_msb(const tnode_t *ln, const tnode_t *rn)
 	unsigned lw = width_in_bits(ln->tn_type);
 	if (!is_uinteger(ln->tn_type->t_tspec)
 	    && ln->tn_op != CON
-	    && ((lc.smin == 0 && lc.smax != 0
-		    && lc.smax != INT64_MAX && (lc.smax & (lc.smax + 1)) == 0)
-		|| (lc.smin != INT64_MAX && lc.smin + 1 == -lc.smax))
+	    && ((lc.smin == 0 && lc.smax != 0 && lc.smax != INT64_MAX
+		    && (lc.smax & (lc.smax + 1)) == 0)
+		|| (lc.smin != INT64_MAX && lc.smax != INT64_MIN
+		    && lc.smin + 1 == -lc.smax))
 	    && rn->tn_op == CON
 	    && (n = rn->u.value.u.integer, 1 <= n && n <= lw)
 	    && u64_width((uint64_t)lc.smax - (uint64_t)lc.smin) + n == lw)
