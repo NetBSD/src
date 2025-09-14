@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.241 2025/05/14 21:35:24 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.242 2025/09/14 11:14:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,6 +32,9 @@
  */
 
 #include <signal.h>
+
+/* tyname.c */
+const char *expr_type_name(const tnode_t *);
 
 /*
  * main1.c

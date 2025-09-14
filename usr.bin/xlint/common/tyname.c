@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.66 2025/05/24 07:38:59 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.67 2025/09/14 11:14:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.66 2025/05/24 07:38:59 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.67 2025/09/14 11:14:00 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -307,3 +307,22 @@ type_name(const type_t *tp)
 	buf_done(&buf);
 	return name;
 }
+
+#if IS_LINT1
+const char *
+expr_type_name(const tnode_t *tn)
+{
+	const char *tp_name = type_name(tn->tn_type);
+	const char *otp_name = type_name(before_conversion(tn)->tn_type);
+	if (tp_name == otp_name)
+		return tp_name;
+	buffer buf;
+	buf_init(&buf);
+	buf_add(&buf, tp_name);
+	buf_add(&buf, " promoted from ");
+	buf_add(&buf, otp_name);
+	const char *name = intern(buf.data);
+	buf_done(&buf);
+	return name;
+}
+#endif

@@ -1,14 +1,70 @@
-/*	$NetBSD: msg_117.c,v 1.14 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.15 2025/09/14 11:14:00 rillig Exp $	*/
 # 3 "msg_117.c"
 
-// Test for message: bitwise '%s' on signed value possibly nonportable [117]
+// Test for message: bitwise '%s' on signed '%s' possibly nonportable [117]
 
 /* lint1-extra-flags: -p -X 351 */
+
+signed char s8;
+unsigned char u8;
+short s16;
+unsigned short u16;
+int s32;
+unsigned u32;
+long long s64;
+unsigned long long u64;
+
+// Shifting a signed integer left invokes undefined behavior if a 1 is shifted
+// to the sign bit or beyond. At runtime, KUBSAN performs this check.
+void
+shl(void)
+{
+	s32 = s8 << 0;
+	s32 = s8 << 23;
+	s32 = s8 << 24;
+	s32 = s8 << 31;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'int promoted from signed char' [267] */
+	s32 = s8 << 32;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'int promoted from signed char' [267] */
+	s64 = s8 << 32;
+
+	/*
+	 * When shifting 'uint8_t', it first gets promoted to 'int', which is
+	 * then subject to the overflow check. To prevent this, first cast the
+	 * 'uint8_t' to a suitable larger unsigned integer type.
+	 */
+	u32 = u8 << 0;
+	u32 = u8 << 23;
+	u32 = u8 << 24;
+	u32 = u8 << 31;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'int promoted from unsigned char' [267] */
+	u32 = u8 << 32;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'int promoted from unsigned char' [267] */
+	u64 = u8 << 32;
+
+	u32 = s32 << 0;
+	u32 = s32 << 23;
+	u32 = s32 << 24;
+	u32 = s32 << 31;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'int' [267] */
+	u32 = s32 << 32;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'int' [267] */
+	u64 = s32 << 32;
+
+	u32 = u32 << 0;
+	u32 = u32 << 23;
+	u32 = u32 << 24;
+	u32 = u32 << 31;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'unsigned int' [267] */
+	u32 = u32 << 32;
+	/* expect+1: warning: shift amount 32 equals bit-size of 'unsigned int' [267] */
+	u64 = u32 << 32;
+}
 
 int
 shr(int a, int b)
 {
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	return a >> b;
 }
 
@@ -21,14 +77,14 @@ shr_lhs_constant_positive(int a)
 int
 shr_lhs_constant_negative(int a)
 {
-	/* expect+1: warning: bitwise '>>' on signed value nonportable [120] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' nonportable [120] */
 	return -0x1234 >> a;
 }
 
 int
 shr_rhs_constant_positive(int a)
 {
-	/* expect+2: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+2: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	/* expect+1: warning: shift amount 4660 is greater than bit-size 32 of 'int' [122] */
 	return a >> 0x1234;
 }
@@ -36,7 +92,7 @@ shr_rhs_constant_positive(int a)
 int
 shr_rhs_constant_negative(int a)
 {
-	/* expect+2: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+2: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	/* expect+1: warning: negative shift [121] */
 	return a >> -0x1234;
 }
@@ -59,7 +115,7 @@ shr_unsigned_char_promoted_signed(unsigned char bit)
 	 * The possible values for 'bit' range from 0 to 255.  Subtracting 1
 	 * from 0 results in a negative expression value.
 	 */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	return (unsigned char)((bit - 1) >> 5);
 }
 
@@ -102,7 +158,7 @@ shr_signed_ignoring_high_bits(int x)
 	 * All sane platforms should define that 'x >> 0 == x', even if x is
 	 * negative.
 	 */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	if (x >> 0 != 0)
 		return;
 
@@ -110,7 +166,7 @@ shr_signed_ignoring_high_bits(int x)
 	 * If x is negative, x >> 1 is nonzero, no matter whether the shift
 	 * is arithmetic or logical.
 	 */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	if (x >> 1 != 0)
 		return;
 
@@ -119,7 +175,7 @@ shr_signed_ignoring_high_bits(int x)
 	 * on all sane platforms, making it irrelevant whether the actual
 	 * shift operation is arithmetic or logical.
 	 */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	if (((x >> 1) & 1) != 0)
 		return;
 
@@ -127,7 +183,7 @@ shr_signed_ignoring_high_bits(int x)
 	 * The result of this expression is the same with arithmetic and
 	 * logical shifts since the filled bits are masked out.
 	 */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	if (((x >> 31) & 1) != 0)
 		return;
 
@@ -135,7 +191,7 @@ shr_signed_ignoring_high_bits(int x)
 	 * In this case, arithmetic shift results in 2 while logical shift
 	 * results in 0.  This difference is what this warning is about.
 	 */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/* expect+1: warning: bitwise '>>' on signed 'int' possibly nonportable [117] */
 	if (((x >> 31) & 2) != 0)
 		return;
 

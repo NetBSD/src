@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.35 2025/04/12 15:49:50 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.36 2025/09/14 11:14:00 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -103,10 +103,10 @@ Q3(int i, unsigned u)
 	i = u;
 
 	/* expect+2: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
-	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int promoted from unsigned char' to 'unsigned short' [Q3] */
 	u16 += u8;
 	/* expect+2: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
-	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int promoted from unsigned short' to 'unsigned int' [Q3] */
 	u32 += u16;
 }
 
@@ -132,8 +132,8 @@ Q4(signed char *ptr, int i, unsigned long long ull, size_t sz)
 	u32 &= s32;
 
 	/* expect+3: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
-	/* expect+2: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
-	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+2: usual arithmetic conversion for '&' from 'int promoted from unsigned char' to 'unsigned int' [Q4] */
+	/* expect+1: implicit conversion changes sign from 'int promoted from unsigned char' to 'unsigned int' [Q3] */
 	u32 = u32 & u8;
 
 	s8 = ptr[sz];
@@ -422,9 +422,9 @@ Q12(void)
 		return;
 
 	/* expect+5: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
-	/* expect+4: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	/* expect+4: implicit conversion changes sign from 'int promoted from unsigned char' to 'unsigned short' [Q3] */
 	/* expect+3: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
-	/* expect+2: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+2: implicit conversion changes sign from 'int promoted from unsigned short' to 'unsigned int' [Q3] */
 	/* expect+1: comma operator with types 'unsigned short' and 'unsigned int' [Q12] */
 	u16 += u8, u32 += u16;
 }

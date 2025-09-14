@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.54 2025/07/08 17:43:54 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.55 2025/09/14 11:14:00 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -438,12 +438,12 @@ test_ic_shl(void)
 	u32 = u16 << 16;
 	// XXX: missing warning as UINT has the same rank as INT, see portable_rank_cmp.
 	u32 = u16 << 17;
-	/* expect+1: warning: shift amount 56 is greater than bit-size 32 of 'int' [122] */
+	/* expect+1: warning: shift amount 56 is greater than bit-size 32 of 'int promoted from unsigned char' [122] */
 	u64 = u8 << 56;
 	u64 = (u64_t)u8 << 56;
 	// XXX: missing warning, as the operand types of '=' are the same, thus no conversion.
 	u64 = (u64_t)u8 << 57;
-	/* expect+1: warning: shift amount 48 is greater than bit-size 32 of 'int' [122] */
+	/* expect+1: warning: shift amount 48 is greater than bit-size 32 of 'int promoted from unsigned short' [122] */
 	u64 = u16 << 48;
 	u64 = (u64_t)u16 << 48;
 	// XXX: missing warning, as the operand types of '=' are the same, thus no conversion.
