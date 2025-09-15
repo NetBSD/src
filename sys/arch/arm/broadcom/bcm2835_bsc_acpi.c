@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_bsc_acpi.c,v 1.5 2025/09/15 15:18:42 thorpej Exp $ */
+/* $NetBSD: bcm2835_bsc_acpi.c,v 1.6 2025/09/15 15:31:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.5 2025/09/15 15:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.6 2025/09/15 15:31:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.5 2025/09/15 15:18:42 thorpej
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_mbox.h>

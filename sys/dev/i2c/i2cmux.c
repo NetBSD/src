@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.8 2025/09/15 15:18:42 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.9 2025/09/15 15:31:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.8 2025/09/15 15:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.9 2025/09/15 15:31:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.8 2025/09/15 15:18:42 thorpej Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_i2c.h>
 #endif
 
 /*

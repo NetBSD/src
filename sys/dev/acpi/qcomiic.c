@@ -1,4 +1,4 @@
-/* $NetBSD: qcomiic.c,v 1.5 2025/09/15 15:28:48 thorpej Exp $ */
+/* $NetBSD: qcomiic.c,v 1.6 2025/09/15 15:31:45 thorpej Exp $ */
 
 /*	$OpenBSD: qciic.c,v 1.7 2024/10/02 21:21:32 kettenis Exp $	*/
 /*
@@ -25,7 +25,6 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <dev/i2c/i2cvar.h>
 
