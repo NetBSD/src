@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.149 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.150 2025/09/15 03:55:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.149 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.150 2025/09/15 03:55:24 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ int	locked_queue_waiters = 0;	/* Number of processes waiting on lq */
 kcondvar_t	locked_queue_cv;
 kcondvar_t	lfs_writing_cv;
 kmutex_t	lfs_lock;
+extern kcondvar_t lfs_writerd_cv;
 
 extern int lfs_dostats;
 
@@ -164,11 +165,13 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 	while (!cantwait && n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
-		lfs_flush(fs, 0, 0);
+		DLOG((DLOG_FLUSH, "lfs_reservebuf: flush filesystem %p with checkpoint\n", fs));
+		lfs_flush(fs, SEGM_CKP, 0);
 
 		DLOG((DLOG_AVAIL, "lfs_reservebuf: waiting: count=%d, bytes=%ld\n",
 		      locked_queue_count, locked_queue_bytes));
 		++locked_queue_waiters;
+		cv_broadcast(&lfs_writerd_cv);
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
 		--locked_queue_waiters;
@@ -533,11 +536,11 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	KASSERT(mutex_owned(&lfs_lock));
 	KDASSERT(fs == NULL || !LFS_SEGLOCK_HELD(fs));
+	KASSERT(!(fs == NULL && only_onefs));
 
 	if (lfs_dostats)
 		++lfs_stats.write_exceeded;
-	/* XXX should we include SEGM_CKP here? */
-	if (lfs_writing && !(flags & SEGM_SYNC)) {
+	if (lfs_writing && !(flags & (SEGM_SYNC|SEGM_CKP))) {
 		DLOG((DLOG_FLUSH, "lfs_flush: not flushing because another flush is active\n"));
 		return;
 	}
@@ -547,21 +550,25 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	mutex_exit(&lfs_lock);
 
-	if (only_onefs) {
-		KASSERT(fs != NULL);
-		if (vfs_busy(fs->lfs_ivnode->v_mount))
+	if (fs != NULL) {
+		if (!(fs->lfs_flags & LFS_NOTYET)
+			&& vfs_busy(fs->lfs_ivnode->v_mount))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount);
-	} else {
+		if (!(fs->lfs_flags & LFS_NOTYET))
+			vfs_unbusy(fs->lfs_ivnode->v_mount);
+	}
+	if (!only_onefs) {
 		locked_fakequeue_count = 0;
 		mountlist_iterator_init(&iter);
 		while ((mp = mountlist_iterator_next(iter)) != NULL) {
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				tfs = VFSTOULFS(mp)->um_lfs;
+				if (tfs == fs)
+					continue;
 				mutex_enter(&lfs_lock);
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
@@ -614,9 +621,9 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	 */
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_dirops > 0 &&
-	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-		locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
-		lfs_subsys_pages > LFS_MAX_PAGES ||
+	       (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
+		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
+		lfs_subsys_pages > LFS_WAIT_PAGES ||
 		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 		lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
 	{
@@ -687,6 +694,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		DLOG((DLOG_AVAIL, "lfs_check: waiting: count=%d, bytes=%ld\n",
 		      locked_queue_count, locked_queue_bytes));
 		++locked_queue_waiters;
+		cv_broadcast(&lfs_writerd_cv);
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
 		--locked_queue_waiters;
