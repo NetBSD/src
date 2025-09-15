@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.51 2022/04/24 20:32:44 rillig Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.52 2025/09/15 04:14:59 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -996,6 +996,8 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 	if (lfs_sb_getversion(FS) > 1) {				\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		lfs_ci_setfree_head(FS, CIP, VAL);			\
+		if ((VAL) == LFS_UNUSED_INUM)				\
+			lfs_ci_setfree_tail(FS, CIP, VAL);		\
 		LFS_BWRITE_LOG(BP);					\
 		mutex_enter(&lfs_lock);					\
 		(FS)->lfs_flags |= LFS_IFDIRTY;				\
@@ -1012,6 +1014,8 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 #define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	lfs_ci_setfree_tail(FS, CIP, VAL);				\
+	if ((VAL) == LFS_UNUSED_INUM)					\
+		lfs_ci_setfree_head(FS, CIP, VAL);			\
 	LFS_BWRITE_LOG(BP);						\
 	mutex_enter(&lfs_lock);						\
 	(FS)->lfs_flags |= LFS_IFDIRTY;					\

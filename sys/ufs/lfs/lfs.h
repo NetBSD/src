@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.208 2020/03/28 01:08:42 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.209 2025/09/15 04:14:59 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -622,6 +622,7 @@ __CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo32));
 
 /* magic value for daddrs */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
+# define DADDR_IS_BAD(daddr) ((daddr) == LFS_UNUSED_DADDR)
 /* magic value for if_nextfree -- indicate orphaned file */
 #define LFS_ORPHAN_NEXTFREE(fs) \
 	((fs)->lfs_is64 ? ~(uint64_t)0 : ~(uint32_t)0)

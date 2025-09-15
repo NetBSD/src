@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.141 2020/02/23 08:49:46 riastradh Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.142 2025/09/15 04:14:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.141 2020/02/23 08:49:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.142 2025/09/15 04:14:59 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -121,7 +121,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 	struct buf *bp, *cbp;
 	int error;
 	daddr_t i, blkno, xmax;
-	ino_t oldlast, maxino;
+	ino_t oldhead, maxino, tail;
 	CLEANERINFO *cip;
 
 	ASSERT_SEGLOCK(fs);
@@ -160,20 +160,26 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 	i = (blkno - lfs_sb_getsegtabsz(fs) - lfs_sb_getcleansz(fs)) *
 		lfs_sb_getifpb(fs);
 
+	/* inode number to stop at (XXX: why *x*max?) */
+	xmax = i + lfs_sb_getifpb(fs);
+
 	/*
 	 * We insert the new inodes at the head of the free list.
 	 * Under normal circumstances, the free list is empty here,
 	 * so we are also incidentally placing them at the end (which
 	 * we must do if we are to keep them in order).
 	 */
-	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
+	LFS_GET_HEADFREE(fs, cip, cbp, &oldhead);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
+	LFS_GET_TAILFREE(fs, cip, cbp, &tail);
+	if (tail == LFS_UNUSED_INUM) {
+		tail = xmax - 1;
+		LFS_PUT_TAILFREE(fs, cip, cbp, tail);
+	}
 	KASSERTMSG((lfs_sb_getfreehd(fs) != LFS_UNUSED_INUM),
 	    "inode 0 allocated [2]");
 
-	/* inode number to stop at (XXX: why *x*max?) */
-	xmax = i + lfs_sb_getifpb(fs);
-
+	
 	/*
 	 * Initialize the ifile block.
 	 *
@@ -189,7 +195,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 			ifp64->if_nextfree = ++i;
 		}
 		ifp64--;
-		ifp64->if_nextfree = oldlast;
+		ifp64->if_nextfree = oldhead;
 	} else if (lfs_sb_getversion(fs) > 1) {
 		for (ifp32 = (IFILE32 *)bp->b_data; i < xmax; ++ifp32) {
 			SET_BITMAP_FREE(fs, i);
@@ -198,7 +204,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 			ifp32->if_nextfree = ++i;
 		}
 		ifp32--;
-		ifp32->if_nextfree = oldlast;
+		ifp32->if_nextfree = oldhead;
 	} else {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < xmax; ++ifp_v1) {
 			SET_BITMAP_FREE(fs, i);
@@ -207,9 +213,8 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 			ifp_v1->if_nextfree = ++i;
 		}
 		ifp_v1--;
-		ifp_v1->if_nextfree = oldlast;
+		ifp_v1->if_nextfree = oldhead;
 	}
-	LFS_PUT_TAILFREE(fs, cip, cbp, xmax - 1);
 
 	/*
 	 * Write out the new block.
@@ -244,7 +249,8 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (fs->lfs_ronly)
 		return EROFS;
 
-	ASSERT_NO_SEGLOCK(fs);
+	if (!(fs->lfs_flags & LFS_NOTYET))
+		ASSERT_NO_SEGLOCK(fs);
 
 	lfs_seglock(fs, SEGM_PROT);
 
@@ -280,7 +286,9 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	*gen = lfs_if_getversion(fs, ifp);
 
 	/* Done with ifile entry */
-	brelse(bp, 0);
+	lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
+	lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
+	LFS_BWRITE_LOG(bp);
 
 	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM) {
 		/*
@@ -324,13 +332,16 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 {
 	IFILE *ifp;
 	struct buf *bp, *cbp;
-	ino_t headino, thisino, oldnext;
+	ino_t headino, thisino, oldnext, tailino;
 	CLEANERINFO *cip;
+	int extended = 0;
 
 	if (fs->lfs_ronly)
 		return EROFS;
 
-	ASSERT_NO_SEGLOCK(fs);
+	if (!(fs->lfs_flags & LFS_NOTYET))
+		ASSERT_NO_SEGLOCK(fs);
+
 
 	lfs_seglock(fs, SEGM_PROT);
 
@@ -343,30 +354,38 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
 		lfs_sb_getifpb(fs) + lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs))
 		<< lfs_sb_getbshift(fs)) {
+		DLOG((DLOG_ALLOC, "extend ifile to accommodate ino %jd\n",
+		      (intmax_t)ino));
 		lfs_extend_ifile(fs, NOCRED);
+		extended = 1;
 	}
 
 	/*
-	 * fetch the ifile entry; get the inode freelist next pointer,
-	 * and set the version as directed.
+	 * Get the inode freelist next pointer.
 	 */
 	LFS_IENTRY(ifp, fs, ino, bp);
 	oldnext = lfs_if_getnextfree(fs, ifp);
-	lfs_if_setversion(fs, ifp, vers);
 	brelse(bp, 0);
 
+	/* Get fail of inode freelist */
+	LFS_GET_TAILFREE(fs, cip, cbp, &tailino);
+	
 	/* Get head of inode freelist */
 	LFS_GET_HEADFREE(fs, cip, cbp, &headino);
 	if (headino == ino) {
 		/* Easy case: the inode we wanted was at the head */
 		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
 	} else {
-		ino_t nextfree;
+		ino_t nextfree, maxino, count;
 
 		/* Have to find the desired inode in the freelist... */
+		maxino = ((VTOI(fs->lfs_ivnode)->i_size >> lfs_sb_getbshift(fs))
+			  - lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs))
+			* lfs_sb_getifpb(fs);
+		count = 0;
 
 		thisino = headino;
-		while (1) {
+		while (thisino != LFS_UNUSED_INUM) {
 			/* read this ifile entry */
 			LFS_IENTRY(ifp, fs, thisino, bp);
 			nextfree = lfs_if_getnextfree(fs, ifp);
@@ -377,18 +396,55 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 			/* nope, keep going... */
 			thisino = nextfree;
 			brelse(bp, 0);
+			if (++count > maxino)
+				break;
+		}
+		if (count > maxino) {
+			panic("loop in free list");
+			lfs_segunlock(fs);
+			return ENOENT;
 		}
 		if (nextfree == LFS_UNUSED_INUM) {
 			/* hit the end -- this inode is not available */
 			brelse(bp, 0);
 			lfs_segunlock(fs);
+			if (extended)
+				panic("extended ifile to accommodate but inode not found");
 			return ENOENT;
 		}
 		/* found it; update the next pointer */
 		lfs_if_setnextfree(fs, ifp, oldnext);
 		/* write the ifile block */
 		LFS_BWRITE_LOG(bp);
+
+		/* If our inode was the tail, thisino is now the tail */
+		if (tailino == ino)
+			LFS_PUT_TAILFREE(fs, cip, cbp, thisino);
 	}
+
+	/* Clear nextfree, note daddr, and set generation number */
+	LFS_IENTRY(ifp, fs, ino, bp);
+	lfs_if_setversion(fs, ifp, vers);
+	lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
+	LFS_BWRITE_LOG(bp);
+
+	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM) {
+		int error;
+		/*
+		 * No more inodes; extend the ifile so that the next
+		 * lfs_valloc will succeed.
+		 */
+		if ((error = lfs_extend_ifile(fs, NOCRED)) != 0) {
+			/* restore the freelist */
+			LFS_PUT_HEADFREE(fs, cip, cbp, ino);
+			
+			/* unlock and return */
+			lfs_segunlock(fs);
+			return error;
+		}
+	}
+	KASSERTMSG((lfs_sb_getfreehd(fs) != LFS_UNUSED_INUM),
+	    "inode 0 allocated [4]");
 
 	/* done */
 	lfs_segunlock(fs);
@@ -670,7 +726,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	 * Update the segment summary for the segment where the on-disk
 	 * copy used to be.
 	 */
-	if (old_iaddr != LFS_UNUSED_DADDR) {
+	if (!DADDR_IS_BAD(old_iaddr)) {
 		/* load it */
 		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp);
 		/* the number of bytes in the segment should not become < 0 */
@@ -777,7 +833,7 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 			orphan[norphan++] = ino;
 		}
 
-		if (lfs_if_getdaddr(fs, ifp) == LFS_UNUSED_DADDR) {
+		if (DADDR_IS_BAD(lfs_if_getdaddr(fs, ifp))) {
 
 			/*
 			 * This inode is free. Put it on the free list.
@@ -882,6 +938,7 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 
 		/* Get the segment the inode is in on disk.  */
 		LFS_IENTRY(ifp, fs, ino, bp);
+		KASSERT(!DADDR_IS_BAD(lfs_if_getdaddr(fs, ifp)));
 		segno = lfs_dtosn(fs, lfs_if_getdaddr(fs, ifp));
 		brelse(bp, 0);
 
