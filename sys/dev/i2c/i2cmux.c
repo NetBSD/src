@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.7 2021/11/10 15:39:03 msaitoh Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.8 2025/09/15 15:18:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.7 2021/11/10 15:39:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.8 2025/09/15 15:18:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -195,13 +195,9 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 		break;
 #if NACPICA > 0
 	case I2C_COOKIE_ACPI: {
-		struct acpi_devnode *ad = acpi_match_node((ACPI_HANDLE)handle);
-		KASSERT(ad != NULL);
-		struct i2cbus_attach_args iba = {
-			.iba_tag = &bus->controller,
-			.iba_child_devices = acpi_enter_i2c_devs(NULL, ad)
-		};
-		config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+		iicbus_attach_with_devhandle(sc->sc_dev, &bus->controller,
+		    devhandle_from_acpi(device_handle(sc->sc_dev),
+				        (ACPI_HANDLE)handle));
 	}	break;
 #endif
 	default:

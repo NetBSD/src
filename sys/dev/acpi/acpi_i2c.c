@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.19 2025/01/11 11:40:43 jmcneill Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.20 2025/09/15 15:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.19 2025/01/11 11:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.20 2025/09/15 15:18:42 thorpej Exp $");
 
 #include <sys/device.h>
 
@@ -197,11 +197,19 @@ acpi_enter_i2chid_devs(device_t dev, struct acpi_devnode *devnode,
 }
 
 prop_array_t
-acpi_enter_i2c_devs(device_t dev, struct acpi_devnode *devnode)
+acpi_copy_i2c_devs(device_t dev)
 {
 	struct acpi_devnode *ad;
-	prop_array_t array = prop_array_create();
+	ACPI_HANDLE *hdl = devhandle_to_acpi(device_handle(dev));
+	struct acpi_devnode *devnode = acpi_match_node(hdl);
 
+	if (devnode == NULL) {
+		aprint_error_dev(dev, "%s: no devnode matching handle\n",
+		    __func__);
+		return NULL;
+	}
+
+	prop_array_t array = prop_array_create();
 	if (array == NULL)
 		return NULL;
 

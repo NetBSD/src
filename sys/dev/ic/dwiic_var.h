@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_var.h,v 1.3 2022/10/19 22:34:10 riastradh Exp $ */
+/* $NetBSD: dwiic_var.h,v 1.4 2025/09/15 15:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -46,9 +46,6 @@ struct dwiic_softc {
 	enum dwiic_type		sc_type;
 
 	bool			(*sc_power)(struct dwiic_softc *, bool);
-
-	struct i2cbus_attach_args sc_iba;
-	device_t		sc_iic;
 
 	int			sc_poll;
 	kmutex_t		sc_int_lock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.92 2025/01/27 17:01:53 riastradh Exp $	*/
+/*	$NetBSD: i2c.c,v 1.93 2025/09/15 15:18:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.92 2025/01/27 17:01:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.93 2025/09/15 15:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.92 2025/01/27 17:01:53 riastradh Exp $");
 
 #ifdef I2C_USE_ACPI
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_i2c.h>
 #endif /* I2C_USE_ACPI */
 
 #ifdef I2C_USE_FDT
@@ -420,8 +421,9 @@ static void
 iic_attach(device_t parent, device_t self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
+	devhandle_t devhandle = device_handle(self);
 	struct i2cbus_attach_args *iba = aux;
-	prop_array_t child_devices;
+	prop_array_t child_devices = NULL;
 	prop_dictionary_t props;
 	char *buf;
 	i2c_tag_t ic;
@@ -437,14 +439,29 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (iba->iba_child_devices) {
-		child_devices = iba->iba_child_devices;
-		no_indirect_config = true;
-	} else {
-		props = device_properties(parent);
-		prop_dictionary_get_bool(props, "i2c-no-indirect-config",
-		    &no_indirect_config);
-		child_devices = prop_dictionary_get(props, "i2c-child-devices");
+	switch (devhandle_type(devhandle)) {
+#ifdef I2C_USE_ACPI
+	case DEVHANDLE_TYPE_ACPI:
+		child_devices = acpi_copy_i2c_devs(self);
+		no_indirect_config = (child_devices != NULL);
+		break;
+#endif
+	default:
+		if (iba->iba_child_devices) {
+			child_devices = iba->iba_child_devices;
+			no_indirect_config = true;
+		} else {
+			props = device_properties(parent);
+			prop_dictionary_get_bool(props,
+			    "i2c-no-indirect-config",
+			    &no_indirect_config);
+			child_devices = prop_dictionary_get(props,
+			    "i2c-child-devices");
+		}
+		if (child_devices) {
+			prop_object_retain(child_devices);
+		}
+		break;
 	}
 
 	if (child_devices) {
@@ -456,7 +473,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		uint32_t cookietype;
 		const char *name;
 		struct i2c_attach_args ia;
-		devhandle_t devhandle;
+		devhandle_t child_devhandle;
 		int loc[IICCF_NLOCS];
 
 		memset(loc, 0, sizeof loc);
@@ -486,16 +503,17 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_cookietype = cookietype;
 			ia.ia_prop = dev;
 
-			devhandle = devhandle_invalid();
+			child_devhandle = devhandle_invalid();
 #ifdef I2C_USE_FDT
 			if (cookietype == I2C_COOKIE_OF) {
-				devhandle = devhandle_from_of(devhandle,
-							      (int)cookie);
+				child_devhandle =
+				    devhandle_from_of(devhandle,
+						      (int)cookie);
 			}
 #endif /* I2C_USE_FDT */
 #ifdef I2C_USE_ACPI
 			if (cookietype == I2C_COOKIE_ACPI) {
-				devhandle =
+				child_devhandle =
 				    devhandle_from_acpi(devhandle,
 							(ACPI_HANDLE)cookie);
 			}
@@ -522,7 +540,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 					    config_found(self, &ia,
 					    iic_print_direct,
 					    CFARGS(.locators = loc,
-						   .devhandle = devhandle));
+						   .devhandle = child_devhandle));
 				}
 			}
 
@@ -531,6 +549,8 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (buf)
 				free(buf, M_TEMP);
 		}
+		prop_object_release(child_devices);
+		child_devices = NULL;
 	} else if (!no_indirect_config) {
 		/*
 		 * Attach all i2c devices described in the kernel

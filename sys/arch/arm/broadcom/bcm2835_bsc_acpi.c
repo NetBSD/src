@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_bsc_acpi.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: bcm2835_bsc_acpi.c,v 1.5 2025/09/15 15:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.4 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc_acpi.c,v 1.5 2025/09/15 15:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,7 +97,6 @@ bsciic_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct bsciic_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	struct i2cbus_attach_args iba;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
@@ -158,10 +157,7 @@ bsciic_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_release_bus = bsciic_release_bus;
 	sc->sc_i2c.ic_exec = bsciic_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	iba.iba_child_devices = acpi_enter_i2c_devs(self, aa->aa_node);
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_i2c);
 
 done:
 	acpi_resource_cleanup(&res);

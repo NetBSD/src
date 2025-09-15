@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.27 2025/09/15 13:23:03 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.28 2025/09/15 15:18:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -171,14 +171,20 @@ void	iic_tag_init(i2c_tag_t);
 void	iic_tag_fini(i2c_tag_t);
 
 static inline device_t
-iicbus_attach(device_t dev, i2c_tag_t tag)
+iicbus_attach_with_devhandle(device_t dev, i2c_tag_t tag, devhandle_t devhandle)
 {
 	struct i2cbus_attach_args iba = {
 		.iba_tag = tag,
 	};
 	return config_found(dev, &iba, iicbus_print,
 	    CFARGS(.iattr = "i2cbus",
-		   .devhandle = device_handle(dev)));
+		   .devhandle = devhandle));
+}
+
+static inline device_t
+iicbus_attach(device_t dev, i2c_tag_t tag)
+{
+	return iicbus_attach_with_devhandle(dev, tag, device_handle(dev));
 }
 
 /*

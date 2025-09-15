@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.14 2025/09/15 13:23:03 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.15 2025/09/15 15:18:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.14 2025/09/15 13:23:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.15 2025/09/15 15:18:42 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -92,8 +92,6 @@ void
 motoi2c_attach(struct motoi2c_softc *sc,
     const struct motoi2c_settings *settings)
 {
-	struct i2cbus_attach_args iba;
-
 	if (settings == NULL) {
 		sc->sc_settings = motoi2c_default_settings;
 	} else {
@@ -109,9 +107,6 @@ motoi2c_attach(struct motoi2c_softc *sc,
 	sc->sc_i2c.ic_acquire_bus = motoi2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = motoi2c_release_bus;
 	sc->sc_i2c.ic_exec = motoi2c_exec;
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	iba.iba_child_devices = sc->sc_child_devices;
 
 	if ((sc->sc_flags & MOTOI2C_F_ENABLE_INV) != 0) {
 		sc->sc_enable_mask = 0;

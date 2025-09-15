@@ -1,4 +1,4 @@
-/* $NetBSD: qcomiic.c,v 1.3 2024/12/18 21:23:27 jmcneill Exp $ */
+/* $NetBSD: qcomiic.c,v 1.4 2025/09/15 15:18:42 thorpej Exp $ */
 
 /*	$OpenBSD: qciic.c,v 1.7 2024/10/02 21:21:32 kettenis Exp $	*/
 /*
@@ -90,7 +90,6 @@ qciic_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct qciic_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	struct i2cbus_attach_args iba;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
@@ -132,11 +131,7 @@ qciic_acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpi_i2c_register(aa->aa_node, self, &sc->sc_ic);
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_ic;
-	iba.iba_child_devices = acpi_enter_i2c_devs(self, sc->sc_acpi);
-
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_ic);
 
 done:
 	acpi_resource_cleanup(&res);

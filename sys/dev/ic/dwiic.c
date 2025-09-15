@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.10 2024/02/09 16:56:23 skrll Exp $ */
+/* $NetBSD: dwiic.c,v 1.11 2025/09/15 15:18:42 thorpej Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.10 2024/02/09 16:56:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.11 2025/09/15 15:18:42 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -194,9 +194,7 @@ dwiic_attach(struct dwiic_softc *sc)
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_exec = dwiic_i2c_exec;
 
-	sc->sc_iba.iba_tag = &sc->sc_i2c_tag;
-
-	/* config_found_ia for "i2cbus" is done in the bus-attachment glue */
+	/* config_found for "i2cbus" is done in the bus-attachment glue */
 
 	atomic_store_release(&sc->sc_attached, true);
 
