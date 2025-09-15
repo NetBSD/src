@@ -1,4 +1,4 @@
-.\"     $NetBSD: sockaddr_snprintf.3,v 1.11 2025/09/14 22:03:16 christos Exp $
+.\"     $NetBSD: sockaddr_snprintf.3,v 1.12 2025/09/15 12:56:32 christos Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 14, 2025
+.Dd September 15, 2025
 .Dt SOCKADDR_SNPRINTF 3
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ Otherwise %a is printed.
 .It N
 The address is printed symbolically. If the address supports a port,
 then %A:%P is printed except for inet6 where [%A]:%P is printed (because
-name resolution can fail, and also to differentiate from ipv3).
+name resolution can fail, and also to differentiate from ipv4).
 Otherwise %A is printed.
 .It p
 For
