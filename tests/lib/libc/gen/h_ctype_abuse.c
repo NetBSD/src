@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ctype_abuse.c,v 1.1 2025/09/15 00:11:54 riastradh Exp $	*/
+/*	$NetBSD: h_ctype_abuse.c,v 1.2 2025/09/15 17:32:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_ctype_abuse.c,v 1.1 2025/09/15 00:11:54 riastradh Exp $");
+__RCSID("$NetBSD: h_ctype_abuse.c,v 1.2 2025/09/15 17:32:01 riastradh Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -112,10 +112,10 @@ main(int argc, char **argv)
 	/*
 	 * Make sure we cover EOF as well.
 	 */
-	__CTASSERT(CHAR_MIN <= EOF);
+	__CTASSERT(CHAR_MIN == 0 || CHAR_MIN <= EOF);
 	__CTASSERT(EOF <= UCHAR_MAX);
 
-	for (ch = CHAR_MIN; ch <= UCHAR_MAX; ch++) {
+	for (ch = (CHAR_MIN == 0 ? EOF : CHAR_MIN); ch <= UCHAR_MAX; ch++) {
 		switch (fn) {
 #define	M(upper, lower)							      \
 		case upper:						      \
