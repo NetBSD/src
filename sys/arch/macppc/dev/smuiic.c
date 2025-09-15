@@ -1,4 +1,4 @@
-/*	$NetBSD: smuiic.c,v 1.11 2023/12/20 15:29:04 thorpej Exp $ */
+/*	$NetBSD: smuiic.c,v 1.12 2025/09/15 13:23:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -72,7 +72,6 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 {
 	struct smu_iicbus_confargs *ca = aux;
 	struct smuiic_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
 	int devs, devc;
 	uint32_t addr;
@@ -127,8 +126,5 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 		devs = OF_peer(devs);
 	}
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = sc->sc_i2c;
-
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, sc->sc_i2c);
 }

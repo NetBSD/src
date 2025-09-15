@@ -1,4 +1,4 @@
-/*	$NetBSD: nbpiic.c,v 1.6 2022/06/18 22:11:00 andvar Exp $ */
+/*	$NetBSD: nbpiic.c,v 1.7 2025/09/15 13:23:01 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.6 2022/06/18 22:11:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.7 2025/09/15 13:23:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,6 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 {
 	struct nbpiic_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
-	struct i2cbus_attach_args iba;
 	void *ih;
 
 	aprint_normal("\n");
@@ -126,10 +125,9 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = nbpiic_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+
+	iicbus_attach(self, &sc->sc_i2c);
 
 	sc->sc_pcon = device_find_by_xname("nbppcon0");
 

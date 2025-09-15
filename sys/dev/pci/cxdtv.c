@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.22 2024/02/09 17:39:33 andvar Exp $ */
+/* $NetBSD: cxdtv.c,v 1.23 2025/09/15 13:23:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.22 2024/02/09 17:39:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.23 2025/09/15 13:23:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,7 +184,6 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	const char *intrstr;
-	struct i2cbus_attach_args iba;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
@@ -251,10 +250,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	cxdtv_mpeg_attach(sc);
 
 	/* attach other devices to iic(4) */
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	iicbus_attach(self, &sc->sc_i2c);
 
 	if (!pmf_device_register(self, NULL, cxdtv_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.19 2021/08/07 16:18:55 thorpej Exp $ */
+/* $NetBSD: viapcib.c,v 1.20 2025/09/15 13:23:01 thorpej Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.19 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.20 2025/09/15 13:23:01 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,6 @@ core_pcib:
 	pcibattach(parent, self, opaque);
 
 	if (addr != 0) {
-		struct i2cbus_attach_args iba;
 		uint8_t b;
 
 		printf("%s: SMBus found at 0x%x (revision 0x%x)\n",
@@ -208,14 +207,11 @@ core_pcib:
 		b = viapcib_smbus_read(sc, SMBSLVCNT);
 		viapcib_smbus_write(sc, SMBSLVCNT, b & ~1);
 
-		memset(&iba, 0, sizeof(iba));
-		iba.iba_tag = &sc->sc_i2c;
 		iic_tag_init(&sc->sc_i2c);
-		iba.iba_tag->ic_cookie = (void *)sc;
-		iba.iba_tag->ic_exec = viapcib_exec;
+		sc->sc_i2c.ic_cookie = (void *)sc;
+		sc->sc_i2c.ic_exec = viapcib_exec;
 
-		config_found(self, &iba, iicbus_print,
-		    CFARGS(.iattr = "i2cbus"));
+		iicbus_attach(self, &sc->sc_i2c);
 	}
 }
 

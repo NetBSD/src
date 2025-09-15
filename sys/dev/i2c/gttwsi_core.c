@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.18 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.19 2025/09/15 13:23:03 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.18 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.19 2025/09/15 13:23:03 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -158,13 +158,8 @@ void
 gttwsi_config_children(device_t self)
 {
 	struct gttwsi_softc * const sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-
-	config_found(sc->sc_dev, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 int

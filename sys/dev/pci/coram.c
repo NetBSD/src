@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: coram.c,v 1.21 2025/09/15 13:23:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.21 2025/09/15 13:23:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,9 +165,6 @@ coram_attach(device_t parent, device_t self, void *aux)
 	struct coram_iic_softc *cic;
 	uint32_t value;
 	int i;
-#ifdef CORAM_ATTACH_I2C
-	struct i2cbus_attach_args iba;
-#endif
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
@@ -223,10 +220,7 @@ coram_attach(device_t parent, device_t self, void *aux)
 
 #ifdef CORAM_ATTACH_I2C
 		/* attach iic(4) */
-		memset(&iba, 0, sizeof(iba));
-		iba.iba_tag = &cic->cic_i2c;
-		cic->cic_i2cdev = config_found(self, &iba, iicbus_print,
-		    CFARGS(.iattr = "i2cbus"));
+		cic->cic_i2cdev = iicbus_attach(self, &cic->cic_i2c);
 #endif
 	}
 

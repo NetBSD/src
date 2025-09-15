@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.43 2025/09/07 21:45:14 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.44 2025/09/15 13:23:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.43 2025/09/07 21:45:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.44 2025/09/15 13:23:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,6 @@ pmu_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct pmu_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 	uint32_t regs[16];
 	int irq = ca->ca_intr[0];
 	int node, extint_node, root_node;
@@ -404,13 +403,10 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			skip:
 				devs = OF_peer(devs);
 			}
-			memset(&iba, 0, sizeof(iba));
-			iba.iba_tag = &sc->sc_i2c;
 			iic_tag_init(&sc->sc_i2c);
 			sc->sc_i2c.ic_cookie = sc;
 			sc->sc_i2c.ic_exec = pmu_i2c_exec;
-			config_found(sc->sc_dev, &iba, iicbus_print,
-			    CFARGS(.iattr = "i2cbus"));
+			iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 			goto next;
 		}
 		if (strncmp(name, "adb", 4) == 0) {

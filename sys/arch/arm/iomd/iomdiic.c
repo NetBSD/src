@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.12 2022/03/28 12:38:57 riastradh Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.13 2025/09/15 13:23:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -127,7 +127,6 @@ static void
 iomdiic_attach(device_t parent, device_t self, void *aux)
 {
 	struct iomdiic_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
 	aprint_normal("\n");
 
@@ -141,9 +140,7 @@ iomdiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_read_byte = iomdiic_read_byte;
 	sc->sc_i2c.ic_write_byte = iomdiic_write_byte;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 CFATTACH_DECL_NEW(iomdiic, sizeof(struct iomdiic_softc),

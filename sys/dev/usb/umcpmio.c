@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.c,v 1.6 2025/04/02 01:22:20 riastradh Exp $	*/
+/*	$NetBSD: umcpmio.c,v 1.7 2025/09/15 13:23:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.6 2025/04/02 01:22:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.7 2025/09/15 13:23:03 thorpej Exp $");
 
 /*
  * Driver for the Microchip MCP2221 / MCP2221A USB multi-io chip
@@ -2100,7 +2100,6 @@ umcpmio_attach(device_t parent, device_t self, void *aux)
 	struct umcpmio_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
 	struct gpiobus_attach_args gba;
-	struct i2cbus_attach_args iba;
 	struct mcp2221_status_res status_res;
 	int err;
 
@@ -2277,10 +2276,7 @@ umcpmio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = umcpmio_release_bus;
 	sc->sc_i2c_tag.ic_exec = umcpmio_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_i2c_dev = config_found(self, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	sc->sc_i2c_dev = iicbus_attach(self, &sc->sc_i2c_tag);
 }
 
 static int

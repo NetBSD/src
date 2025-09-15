@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.39 2025/08/20 07:55:19 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.40 2025/09/15 13:23:01 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -89,7 +89,6 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	int node = ca->ca_node, root;
 	uint32_t addr, channel, reg, intr[2];
 	int rate, child, /*namelen,*/ i2cbus[2] = {0, 0};
-	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t cfg;
 	int devs, devc, intrparent;;
@@ -292,10 +291,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = ki2c_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
-		
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 uint8_t

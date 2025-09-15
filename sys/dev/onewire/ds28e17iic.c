@@ -1,4 +1,4 @@
-/*	$NetBSD: ds28e17iic.c,v 1.1 2025/01/23 19:02:42 brad Exp $	*/
+/*	$NetBSD: ds28e17iic.c,v 1.2 2025/09/15 13:23:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -22,7 +22,7 @@
 /* https://www.analog.com/en/products/DS28E17.html */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds28e17iic.c,v 1.1 2025/01/23 19:02:42 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds28e17iic.c,v 1.2 2025/09/15 13:23:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,6 @@ ds28e17iic_attach(device_t parent, device_t self, void *aux)
 {
 	struct ds28e17iic_softc *sc = device_private(self);
 	struct onewire_attach_args *oa = aux;
-	struct i2cbus_attach_args iba;
 	uint8_t hardware_rev;
 	uint8_t i2c_speed[2];
 	int err = 0;
@@ -662,9 +661,7 @@ ds28e17iic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = ds28e17iic_release_bus;
 	sc->sc_i2c_tag.ic_exec = ds28e17iic_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_i2c_dev = config_found(self, &iba, iicbus_print, CFARGS(.iattr = "i2cbus"));
+	sc->sc_i2c_dev = iicbus_attach(self, &sc->sc_i2c_tag);
 }
 
 static int

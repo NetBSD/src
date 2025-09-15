@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.12 2022/06/18 22:11:00 andvar Exp $ */
+/*	$NetBSD: gxiic.c,v 1.13 2025/09/15 13:23:01 thorpej Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.12 2022/06/18 22:11:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.13 2025/09/15 13:23:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,6 @@ gxiicattach(device_t parent, device_t self, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 	struct gxiic_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -102,10 +101,8 @@ gxiicattach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_release_bus = gxiic_release_bus;
 	sc->sc_i2c.ic_exec = gxiic_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
 	pxa2x0_i2c_open(&sc->sc_pxa_i2c);
-	config_found(sc->sc_pxa_i2c.sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_pxa_i2c.sc_dev, &sc->sc_i2c);
 	pxa2x0_i2c_close(&sc->sc_pxa_i2c);
 }
 

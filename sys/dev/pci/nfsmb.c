@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.28 2021/09/03 21:55:00 andvar Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.29 2025/09/15 13:23:03 thorpej Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.28 2021/09/03 21:55:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.29 2025/09/15 13:23:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -215,7 +215,6 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 {
 	struct nfsmb_softc *sc = device_private(self);
 	struct nfsmbc_attach_args *nfsmbcap = aux;
-	struct i2cbus_attach_args iba;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -236,9 +235,7 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 
 	/* This driver is similar to an ISA bridge that doesn't
 	 * need any special handling. So registering NULL handlers

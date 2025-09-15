@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.21 2025/08/31 18:13:59 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.22 2025/09/15 13:23:03 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -73,8 +73,6 @@ void
 pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
     int swapregs)
 {
-	struct i2cbus_attach_args		iba;
-
 	if (swapregs) {
 		sc->sc_regmap[PCF8584_S1] = PCF8584_S0;
 		sc->sc_regmap[PCF8584_S0] = PCF8584_S1;
@@ -94,9 +92,7 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = pcfiic_i2c_exec;
 
-	bzero(&iba, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 int

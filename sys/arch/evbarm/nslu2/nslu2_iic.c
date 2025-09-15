@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.12 2021/08/07 16:18:50 thorpej Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.13 2025/09/15 13:23:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -174,7 +174,6 @@ static void
 slugiic_deferred_attach(device_t self)
 {
 	struct slugiic_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 	uint32_t reg;
 
 	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
@@ -186,9 +185,7 @@ slugiic_deferred_attach(device_t self)
 	reg |= GPIO_I2C_SDA_BIT;
 	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_ic;
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_ic);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.12 2021/08/07 16:19:03 thorpej Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.13 2025/09/15 13:23:02 thorpej Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.
@@ -92,7 +92,6 @@ gpiic_attach(device_t parent, device_t self, void *args)
 {
 	struct gpiic_softc * const sc = device_private(self);
 	struct opb_attach_args * const oaa = args;
-	struct i2cbus_attach_args iba;
 
 	aprint_naive(": IIC controller\n");
 	aprint_normal(": On-Chip IIC controller\n");
@@ -130,9 +129,7 @@ gpiic_attach(device_t parent, device_t self, void *args)
 	bus_space_write_1(sc->sc_bust, sc->sc_bush, IIC_DIRECTCNTL,
 	    IIC_DIRECTCNTL_SCC | IIC_DIRECTCNTL_SDAC);
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 static int

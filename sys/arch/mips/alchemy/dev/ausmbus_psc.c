@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.16 2022/06/18 22:11:00 andvar Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.17 2025/09/15 13:23:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.16 2022/06/18 22:11:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.17 2025/09/15 13:23:02 thorpej Exp $");
 
 #include "locators.h"
 
@@ -116,7 +116,6 @@ ausmbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ausmbus_softc *sc = device_private(self);
 	struct aupsc_attach_args *aa = (struct aupsc_attach_args *)aux;
-	struct i2cbus_attach_args iba;
 
 	aprint_normal(": Alchemy PSC SMBus protocol\n");
 
@@ -133,9 +132,7 @@ ausmbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_exec = ausmbus_exec;
 	sc->sc_smbus_timeout = 10;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 static int

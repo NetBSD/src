@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.8 2025/09/15 13:23:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.8 2025/09/15 13:23:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,7 +133,6 @@ jbusi2c_attach(device_t parent, device_t self, void *aux)
 static void
 jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 {
-	struct i2cbus_attach_args iba;
 	prop_array_t cfg;
 	prop_dictionary_t dev;
 	prop_dictionary_t dict = device_properties(sc->sc_dev);
@@ -176,9 +175,7 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	skip:
 		devs = OF_peer(devs);
 	}
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 static inline void

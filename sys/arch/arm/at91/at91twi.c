@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$Id: at91twi.c,v 1.11 2025/09/15 13:23:00 thorpej Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.11 2025/09/15 13:23:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.11 2025/09/15 13:23:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,7 +78,6 @@ at91twi_attach(device_t parent, device_t self, void *aux)
 {
 	struct at91twi_softc *sc = device_private(self);
 	struct at91bus_attach_args *sa = aux;
-	struct i2cbus_attach_args iba;
 	unsigned ckdiv, cxdiv;
 
 	// gather attach data:
@@ -125,9 +124,7 @@ found_ckdiv:
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = at91twi_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 u_int

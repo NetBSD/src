@@ -1,4 +1,4 @@
-/*	$NetBSD: jziic.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $ */
+/*	$NetBSD: jziic.c,v 1.10 2025/09/15 13:23:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.9 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.10 2025/09/15 13:23:02 thorpej Exp $");
 
 /*
  * a preliminary driver for JZ4780's on-chip SMBus controllers
@@ -117,7 +117,6 @@ jziic_attach(device_t parent, device_t self, void *aux)
 {
 	struct jziic_softc *sc = device_private(self);
 	struct apbus_attach_args *aa = aux;
-	struct i2cbus_attach_args iba;
 	int error;
 	void *ih;
 #ifdef JZIIC_DEBUG
@@ -176,10 +175,7 @@ jziic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = jziic_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
-
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 
 	return;
 

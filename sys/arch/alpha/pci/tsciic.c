@@ -1,4 +1,4 @@
-/*	$NetBSD: tsciic.c,v 1.4 2021/08/07 16:18:41 thorpej Exp $	*/
+/*	$NetBSD: tsciic.c,v 1.5 2025/09/15 13:23:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.4 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsciic.c,v 1.5 2025/09/15 13:23:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,6 @@ void
 tsciic_init(device_t self)
 {
 	struct tsciic_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
@@ -84,10 +83,7 @@ tsciic_init(device_t self)
 	sc->sc_i2c.ic_read_byte = tsciic_read_byte;
 	sc->sc_i2c.ic_write_byte = tsciic_write_byte;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 /* I2C bitbanging */

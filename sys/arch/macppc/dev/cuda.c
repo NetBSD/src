@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.31 2025/09/07 21:45:14 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.32 2025/09/15 13:23:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.31 2025/09/07 21:45:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.32 2025/09/15 13:23:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,6 @@ cuda_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct cuda_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 	static struct cuda_attach_args caa;
 	prop_dictionary_t dict = device_properties(self);
 	prop_dictionary_t dev;
@@ -279,13 +278,11 @@ cuda_attach(device_t parent, device_t self, void *aux)
 		prop_object_release(dev);
 	}
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = cuda_i2c_exec;
-	config_found(self, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+
+	iicbus_attach(self, &sc->sc_i2c);
 
 	if (cuda0 == NULL)
 		cuda0 = &caa;

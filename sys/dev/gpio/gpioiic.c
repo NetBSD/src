@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.12 2023/05/10 00:08:30 riastradh Exp $ */
+/* $NetBSD: gpioiic.c,v 1.13 2025/09/15 13:23:03 thorpej Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.12 2023/05/10 00:08:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.13 2025/09/15 13:23:03 thorpej Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -111,7 +111,6 @@ gpioiic_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpioiic_softc *sc = device_private(self);
 	struct gpio_attach_args *ga = aux;
-	struct i2cbus_attach_args iba;
 	int caps;
 
 	/* Map pins */
@@ -190,9 +189,7 @@ gpioiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c_tag.ic_read_byte = gpioiic_i2c_read_byte;
 	sc->sc_i2c_tag.ic_write_byte = gpioiic_i2c_write_byte;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->sc_i2c_dev = config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	sc->sc_i2c_dev = iicbus_attach(self, &sc->sc_i2c_tag);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error("%s: could not establish power handler\n",

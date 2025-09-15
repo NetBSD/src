@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.14 2025/09/15 13:23:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.14 2025/09/15 13:23:03 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -134,8 +134,7 @@ motoi2c_attach(struct motoi2c_softc *sc,
 		    iicbus_print);
 	} else
 #endif
-	config_found(sc->sc_dev, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 static int

@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.11 2023/08/07 06:24:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.12 2025/09/15 13:23:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,7 +789,6 @@ static int
 ismt_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct ismt_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
 	if (sc->smbdev != NULL)
 		return 0;
@@ -799,9 +798,7 @@ ismt_rescan(device_t self, const char *ifattr, const int *locators)
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_exec = ismt_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c_tag;
-	sc->smbdev = config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	sc->smbdev = iicbus_attach(self, &sc->sc_i2c_tag);
 
 	return 0;
 }

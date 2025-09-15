@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2c.c,v 1.11 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: iopi2c.c,v 1.12 2025/09/15 13:23:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.11 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopi2c.c,v 1.12 2025/09/15 13:23:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -65,7 +65,6 @@ static int iopiic_write_byte(void *, uint8_t, int);
 void
 iopiic_attach(struct iopiic_softc *sc)
 {
-	struct i2cbus_attach_args iba;
 
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
@@ -75,9 +74,7 @@ iopiic_attach(struct iopiic_softc *sc)
 	sc->sc_i2c.ic_read_byte = iopiic_read_byte;
 	sc->sc_i2c.ic_write_byte = iopiic_write_byte;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 #define	IOPIIC_TIMEOUT		100	/* protocol timeout, in uSecs */

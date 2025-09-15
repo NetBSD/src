@@ -1,4 +1,4 @@
-/*	$NetBSD: ziic.c,v 1.6 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: ziic.c,v 1.7 2025/09/15 13:23:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.6 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.7 2025/09/15 13:23:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	struct pxaiic_softc *sc = device_private(self);
 	struct pxa2x0_i2c_softc *psc = &sc->sc_pxa_i2c;
 	struct pxaip_attach_args *pxa = aux;
-	struct i2cbus_attach_args iba;
 
 	aprint_normal(": I2C controller\n");
 	aprint_naive("\n");
@@ -127,9 +126,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_read_byte = pxaiic_read_byte;
 	sc->sc_i2c.ic_write_byte = pxaiic_write_byte;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(psc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(psc->sc_dev, &sc->sc_i2c);
 }
 
 static int
