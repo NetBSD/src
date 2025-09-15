@@ -1,4 +1,4 @@
-/*	$NetBSD: lightbar.c,v 1.1 2025/09/08 08:08:15 macallan Exp $	*/
+/*	$NetBSD: lightbar.c,v 1.2 2025/09/15 06:42:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.1 2025/09/08 08:08:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.2 2025/09/15 06:42:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.1 2025/09/08 08:08:15 macallan Exp $"
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
@@ -61,7 +62,9 @@ struct lightbar_softc {
 	uint32_t sc_baseaddr;
 	uint32_t *sc_dmabuf;
 	lwp_t *sc_thread;
+	int sc_sys, sc_user;
 	struct cpu_info *sc_cpu[2];
+	struct sysctlnode *sc_sysctl_me;
 };
 
 static int lightbar_match(device_t, struct cfdata *, void *);
@@ -104,6 +107,7 @@ lightbar_attach(device_t parent, device_t self, void *aux)
 	struct lightbar_softc *sc;
 	struct confargs *ca;
 	struct dbdma_command *cmd;
+	struct sysctlnode *node;
 	uint32_t reg[6], x;
 	int i, timo;
 
@@ -117,6 +121,13 @@ lightbar_attach(device_t parent, device_t self, void *aux)
 	sc->sc_odmacmd = dbdma_alloc(4 * sizeof(struct dbdma_command), NULL);
 
 	sc->sc_baseaddr = ca->ca_baseaddr;
+
+	/*
+	 * default brightnesss for system and user time bar
+	 * can be changed via sysctl later on
+	 */
+	sc->sc_sys = 2;
+	sc->sc_user = 8;
 
 	OF_getprop(sc->sc_node, "reg", reg, sizeof(reg));
 	reg[0] += ca->ca_baseaddr;
@@ -195,6 +206,26 @@ done:
 		aprint_error_dev(self, "unable to create kthread\n");
 	}
 
+	/* setup sysctl nodes */
+	sysctl_createv(NULL, 0, NULL, (void *) &sc->sc_sysctl_me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, (void *) &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "sys", "system time",
+	    NULL, 0, (void *)&sc->sc_sys, 0,
+	    CTL_HW,
+	    sc->sc_sysctl_me->sysctl_num,
+	    CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, (void *) &node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_INT, "user", "user time",
+	    NULL, 0, (void *)&sc->sc_user, 0,
+	    CTL_HW,
+	    sc->sc_sysctl_me->sysctl_num,
+	    CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -203,7 +234,8 @@ done:
  * prev[CPUSTATES] stores old counter values, old[2] old bar lengths
  */
 static int
-lightbar_update(uint64_t *cp_time, uint64_t *prev, int *old, uint32_t *out)
+lightbar_update(struct lightbar_softc *sc, uint64_t *cp_time, uint64_t *prev,
+		 int *old, uint32_t *out)
 {
 	uint64_t total = 0;
 	int all, sys, idle, syst, i;
@@ -217,8 +249,8 @@ lightbar_update(uint64_t *cp_time, uint64_t *prev, int *old, uint32_t *out)
 	for (i = 0; i < CPUSTATES; i++)
 		prev[i] = cp_time[i];
 	if ((all != old[0]) || (sys != old[1])) {
-		for (i = 0; i < sys; i++) out[i] = 2;
-		for (; i < all; i++) out[i] = 8;
+		for (i = 0; i < sys; i++) out[i] = sc->sc_sys;
+		for (; i < all; i++) out[i] = sc->sc_user;
 		for (; i < 8; i++) out[i] = 0;
 		old[0] = all;
 		old[1] = sys;
@@ -243,14 +275,15 @@ lightbar_thread(void *cookie)
 	while (1) {
 		int update;
 		/* draw CPU0's usage into the upper bar */
-		update = lightbar_update(sc->sc_cpu[0]->ci_schedstate.spc_cp_time,
+		update = lightbar_update(sc,
+				sc->sc_cpu[0]->ci_schedstate.spc_cp_time,
 				prev, old, &intensity[8]);
 		if (sc->sc_cpu[1] != NULL) {
 			/*
 			 * if we have a 2nd CPU draw its usage into the lower
 			 * bar
 			 */
-			update |= lightbar_update(
+			update |= lightbar_update(sc,
 				sc->sc_cpu[1]->ci_schedstate.spc_cp_time,
 				&prev[CPUSTATES], &old[2], intensity);
 		} else {
