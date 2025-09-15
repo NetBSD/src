@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.23 2025/03/30 00:07:51 riastradh Exp $	*/
+/*	$NetBSD: ctype_.c,v 1.24 2025/09/15 00:11:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
 #else
-__RCSID("$NetBSD: ctype_.c,v 1.23 2025/03/30 00:07:51 riastradh Exp $");
+__RCSID("$NetBSD: ctype_.c,v 1.24 2025/09/15 00:11:54 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: ctype_.c,v 1.23 2025/03/30 00:07:51 riastradh Exp $");
 #include <sys/mman.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "ctype_guard.h"
 #include "ctype_local.h"
@@ -69,6 +70,7 @@ __ctype_table
 static
 const unsigned char _C_compat_bsdctype_guarded[_C_COMPAT_BSDCTYPE_GUARD +
     1 + _CTYPE_NUM_CHARS] = {
+	_CTYPE_GUARD_INIT(_C_COMPAT_BSDCTYPE_GUARD, -1)
 	[_C_COMPAT_BSDCTYPE_GUARD] = 0,
 	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
 	_C,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C,	_C,
@@ -121,6 +123,7 @@ const unsigned char *_ctype_ = &_C_compat_bsdctype[0];
 __ctype_table
 static const unsigned short _C_ctype_tab_guarded_[_C_CTYPE_TAB_GUARD +
     1 + _CTYPE_NUM_CHARS] = {
+	_CTYPE_GUARD_INIT(_C_CTYPE_TAB_GUARD, -1)
 	[_C_CTYPE_TAB_GUARD] = 0,
 	_C,		_C,		_C,		_C,
 	_C,		_C,		_C,		_C,
@@ -172,12 +175,99 @@ __ctype_table_guarded(_C_ctype_tab_, _C_ctype_tab_guarded_,
 
 const unsigned short *_ctype_tab_ = &_C_ctype_tab_[0];
 
+/*
+ * _allow_ctype_abuse()
+ *
+ *	Internal subroutine to interpret environ and return true if
+ *	LIBC_ALLOWCTYPEABUSE is defined, false if not.
+ *
+ *	We use environ and strcmp directly to make sure this works
+ *	inside constructors and to avoid pulling in all the
+ *	stdlib/_env.c machinery if unnecessary.  We cache it so we only
+ *	add one traversal of environ to each process startup for the
+ *	ctype, toupper, and tolower tables (not ideal -- rtld already
+ *	does another traversal -- but better than adding multiple
+ *	traversals).
+ *
+ *	This query is also used by the out-of-line ctype logic in
+ *	isctype.c outside a constructor, where it could use getenv, and
+ *	perhaps support finer-grained distinctions -- like
+ *	LIBC_ALLOWCTYPEABUSE=silent vs LIBC_ALLOWCTYPEABUSE=noisy.  But
+ *	until we feel the need to implement such finer distinctions,
+ *	let's keep the logic of interpreting LIBC_ALLOWCTYPEABUSE
+ *	together in one place.
+ */
+#ifndef RTLD_LOADER
+#include "extern.h"		/* environ */
+static bool
+_allow_ctype_abuse(void)
+{
+	const char vareq[] = "LIBC_ALLOWCTYPEABUSE=";
+	char *const *envp;
+
+	for (envp = environ; *envp != NULL; envp++) {
+		if (strncmp(*envp, vareq, strlen(vareq)) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+#endif
+
 #if _CTYPE_GUARD_PAGE
+
+static enum {
+	ABUSE_UNDETERMINED = 0,
+	ABUSE_ALLOWED,
+	ABUSE_TRAPPED,
+} allow_ctype_abuse_cache;
+
+/*
+ * allow_ctype_abuse()
+ *
+ *	True if LIBC_ALLOWCTYPEABUSE is defined in the environment,
+ *	false if not.  May reflect the environment any time between
+ *	process startup and now.
+ */
+__dso_hidden
+bool
+allow_ctype_abuse(void)
+{
+
+	if (allow_ctype_abuse_cache != ABUSE_UNDETERMINED)
+		return allow_ctype_abuse_cache == ABUSE_ALLOWED;
+	return _allow_ctype_abuse();
+}
+
+/*
+ * constructor_allow_ctype_abuse()
+ *
+ *	True if LIBC_ALLOWCTYPEABUSE is defined in the environment,
+ *	false if not.  May be used only in an ELF constructor.
+ */
+__dso_hidden
+bool
+constructor_allow_ctype_abuse(void)
+{
+
+	if (allow_ctype_abuse_cache != ABUSE_UNDETERMINED)
+		return allow_ctype_abuse_cache == ABUSE_ALLOWED;
+	if (_allow_ctype_abuse()) {
+		allow_ctype_abuse_cache = ABUSE_ALLOWED;
+		return true;
+	} else {
+		allow_ctype_abuse_cache = ABUSE_TRAPPED;
+		return false;
+	}
+}
+
 __attribute__((constructor))
 static void
 _C_ctype_tab_guard_init(void)
 {
 
+	if (constructor_allow_ctype_abuse())
+		return;
 #ifdef __BUILD_LEGACY
 	(void)mprotect(__UNCONST(_C_compat_bsdctype_guarded),
 	    _CTYPE_GUARD_SIZE, PROT_NONE);
@@ -185,4 +275,17 @@ _C_ctype_tab_guard_init(void)
 	(void)mprotect(__UNCONST(_C_ctype_tab_guarded_),
 	    _CTYPE_GUARD_SIZE, PROT_NONE);
 }
+
+#else
+
+#ifndef RTLD_LOADER
+__dso_hidden
+bool
+allow_ctype_abuse(void)
+{
+
+	return _allow_ctype_abuse();
+}
+#endif
+
 #endif	/* _CTYPE_GUARD_PAGE */

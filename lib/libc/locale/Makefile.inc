@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.68 2024/09/09 11:30:05 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.69 2025/09/15 00:11:54 riastradh Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -26,6 +26,7 @@ CPPFLAGS+=	-DWITH_RUNE -I${.CURDIR}
 SRCS+=	_wctrans.c _wctype.c rune.c runetable.c \
 	multibyte_c90.c multibyte_amd1.c iswctype_mb.c
 CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS.rune.c+=		-I${LIBCDIR}/gen	# ctype_guard.h
 CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
