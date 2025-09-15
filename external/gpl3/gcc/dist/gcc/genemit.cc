@@ -186,10 +186,10 @@ gen_exp (rtx x, enum rtx_code subroutine_type, char *used, md_rtx_info *info,
 	fprintf (file, "const_true_rtx");
       else
 	{
-	  fprintf file, ("GEN_INT (");
-	  fprintf file, ("HOST_WIDE_INT_C (");
-	  fprintf file, (HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
-	  fprintf file, (")");
+	  fprintf (file, "GEN_INT (");
+	  fprintf (file, "HOST_WIDE_INT_C (");
+	  fprintf (file, HOST_WIDE_INT_PRINT_DEC, INTVAL (x));
+	  fprintf (file, ")");
 	  fprintf (file, ")");
 	}
       return;
