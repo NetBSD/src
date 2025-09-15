@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.142 2025/09/15 04:14:59 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.143 2025/09/15 18:49:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.142 2025/09/15 04:14:59 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.143 2025/09/15 18:49:16 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -376,7 +376,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 		/* Easy case: the inode we wanted was at the head */
 		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
 	} else {
-		ino_t nextfree, maxino, count;
+		ino_t nextfree = 0, maxino, count; /* XXX: gcc */
 
 		/* Have to find the desired inode in the freelist... */
 		maxino = ((VTOI(fs->lfs_ivnode)->i_size >> lfs_sb_getbshift(fs))
