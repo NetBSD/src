@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.20 2025/09/15 15:18:42 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.21 2025/09/15 15:28:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.20 2025/09/15 15:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.21 2025/09/15 15:28:48 thorpej Exp $");
 
 #include <sys/device.h>
 
@@ -391,17 +391,18 @@ acpi_i2c_gsb_handler(UINT32 function, ACPI_PHYSICAL_ADDRESS address,
 }
 #endif
 
-ACPI_STATUS
-acpi_i2c_register(struct acpi_devnode *devnode, device_t dev, i2c_tag_t tag)
+void
+acpi_i2c_register(device_t dev, i2c_tag_t tag)
 {
 #if NIIC > 0
+	ACPI_HANDLE hdl = devhandle_to_acpi(device_handle(dev));
 	struct acpi_i2c_address_space_context *context;
 	ACPI_STATUS rv;
 
 	context = kmem_zalloc(sizeof(*context), KM_SLEEP);
 	context->tag = tag;
 
-	rv = AcpiInstallAddressSpaceHandler(devnode->ad_handle,
+	rv = AcpiInstallAddressSpaceHandler(hdl,
 	    ACPI_ADR_SPACE_GSBUS, acpi_i2c_gsb_handler, acpi_i2c_gsb_init,
 	    context);
 	if (ACPI_FAILURE(rv)) {
@@ -409,9 +410,5 @@ acpi_i2c_register(struct acpi_devnode *devnode, device_t dev, i2c_tag_t tag)
 		    "couldn't install address space handler: %s",
 		    AcpiFormatException(rv));
 	}
-
-	return rv;
-#else
-	return AE_NOT_CONFIGURED;
 #endif
 }

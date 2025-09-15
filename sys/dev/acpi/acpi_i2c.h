@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.h,v 1.6 2025/09/15 15:18:42 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.h,v 1.7 2025/09/15 15:28:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <prop/proplib.h>
 #include <dev/i2c/i2cvar.h>
 
-prop_array_t acpi_copy_i2c_devs(device_t);
-ACPI_STATUS acpi_i2c_register(struct acpi_devnode *, device_t, i2c_tag_t);
+prop_array_t	acpi_copy_i2c_devs(device_t);
+void		acpi_i2c_register(device_t, i2c_tag_t);
 
 #endif /*  _SYS_DEV_ACPI_ACPI_I2C_H */

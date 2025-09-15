@@ -1,4 +1,4 @@
-/* $NetBSD: qcomiic.c,v 1.4 2025/09/15 15:18:42 thorpej Exp $ */
+/* $NetBSD: qcomiic.c,v 1.5 2025/09/15 15:28:48 thorpej Exp $ */
 
 /*	$OpenBSD: qciic.c,v 1.7 2024/10/02 21:21:32 kettenis Exp $	*/
 /*
@@ -128,8 +128,6 @@ qciic_acpi_attach(device_t parent, device_t self, void *aux)
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = qciic_exec;
-
-	acpi_i2c_register(aa->aa_node, self, &sc->sc_ic);
 
 	iicbus_attach(self, &sc->sc_ic);
 

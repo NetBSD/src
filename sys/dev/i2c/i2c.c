@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.93 2025/09/15 15:18:42 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.94 2025/09/15 15:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.93 2025/09/15 15:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.94 2025/09/15 15:28:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,6 +442,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 	switch (devhandle_type(devhandle)) {
 #ifdef I2C_USE_ACPI
 	case DEVHANDLE_TYPE_ACPI:
+		acpi_i2c_register(self, sc->sc_tag);
 		child_devices = acpi_copy_i2c_devs(self);
 		no_indirect_config = (child_devices != NULL);
 		break;
