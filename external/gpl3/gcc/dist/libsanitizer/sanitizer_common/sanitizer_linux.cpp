@@ -49,7 +49,6 @@
 #include <asm/stat.h>
 #undef stat
 #endif
-#endif
 
 #if SANITIZER_NETBSD
 #include <lwp.h>
