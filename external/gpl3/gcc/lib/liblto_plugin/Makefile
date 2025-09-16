@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2024/04/04 23:54:17 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2025/09/16 22:25:02 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -55,6 +55,12 @@ config.h: Makefile
 			--target=${MACHINE_GNU_PLATFORM} && \
 		mv ${.TARGET} ../${.TARGET}) && \
 	rm -rf .ab
+
+# Fetch ${G_version}
+GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${MACHINE_ARCH}
+.include "${GCCARCH}/defs.mk"
+
+CPPFLAGS+=	-DBASE_VERSION=\"${G_version}\"
 
 .include <bsd.lib.mk>
 
