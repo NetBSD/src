@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.118 2024/02/21 08:24:46 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.119 2025/09/16 03:04:17 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
 #
-# This version is for GCC 10.3
+# This version is for GCC 14.3
 
 # initialise
 
@@ -222,7 +222,7 @@ get_libstdcxx_v3 () {
 
 	mkdir -p $_OUTDIR/lib/$_subdir/arch/$_MACHINE_ARCH
 
-	_build_headers="c++config.h cxxabi_tweaks.h"
+	_build_headers="c++config.h"
 	_headers1="backward_headers c_base_headers_extra"
 	_headers1="$_headers1 c_base_headers_extra_install"
 	_headers1="$_headers1 tr1_headers tr2_headers"
@@ -242,8 +242,6 @@ get_libstdcxx_v3 () {
 			<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/$_PLATFORM/bits/$h
 	done
 
-	write_c $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/gstdint.h \
-		<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/gstdint.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/symver-config.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
 

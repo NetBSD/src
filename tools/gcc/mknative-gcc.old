@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc.old,v 1.11 2023/07/28 08:05:29 mrg Exp $
+#	$NetBSD: mknative-gcc.old,v 1.12 2025/09/16 03:04:17 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
 #
-# This version is for GCC 10.3
+# This version is for GCC 12.5
 
 # initialise
 
@@ -132,9 +132,6 @@ get_libgcov () {
 			LIBGCOV_DRIVER
 	} | write_mk $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$_MACHINE_ARCH/defs.mk
 
-	write_c $_OUTDIRBASE/lib/lib$_subdir/libgcov/arch/$_MACHINE_ARCH/gcov-iov.h \
-	   <$_TMPDIR/gcc/gcov-iov.h
-
 }
 
 ##### lib/libiberty #####
@@ -254,8 +251,9 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/Makefile \
 			port_specific_symbol_files
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
-			cxx17_sources \
 			cxx11_sources \
+			cxx17_sources \
+			cxx20_sources \
 			cxx98_sources
 
 		# libsupc++
@@ -274,6 +272,9 @@ get_libstdcxx_v3 () {
 		getvars $_PLATFORM/libstdc++-v3/src/c++17/Makefile \
 			libc__17convenience_la_SOURCES | \
 			sed -e 's/^G_libc__17convenience_la_SOURCES=/G_CPP17_SOURCES=/'
+		getvars $_PLATFORM/libstdc++-v3/src/c++20/Makefile \
+			libc__20convenience_la_SOURCES | \
+			sed -e 's/^G_libc__20convenience_la_SOURCES=/G_CPP20_SOURCES=/'
 		getvars $_PLATFORM/libstdc++-v3/src/c++11/Makefile \
 			libc__11convenience_la_SOURCES | \
 			sed -e 's/^G_libc__11convenience_la_SOURCES=/G_CPP11_SOURCES=/'
