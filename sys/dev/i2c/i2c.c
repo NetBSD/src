@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.96 2025/09/16 11:55:17 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.97 2025/09/16 14:28:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.96 2025/09/16 11:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.97 2025/09/16 14:28:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,26 +418,14 @@ iic_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void
-iic_attach(device_t parent, device_t self, void *aux)
+static bool
+iic_attach_children_direct(struct iic_softc *sc)
 {
-	struct iic_softc *sc = device_private(self);
-	devhandle_t devhandle = device_handle(self);
-	struct i2cbus_attach_args *iba = aux;
+	device_t parent = device_parent(sc->sc_dev);
+	devhandle_t devhandle = device_handle(sc->sc_dev);
 	prop_array_t child_devices;
-	char *buf;
-	i2c_tag_t ic;
+	i2c_tag_t ic = sc->sc_tag;
 	bool no_indirect_config;
-
-	aprint_naive("\n");
-	aprint_normal(": I2C bus\n");
-
-	sc->sc_dev = self;
-	sc->sc_tag = iba->iba_tag;
-	ic = sc->sc_tag;
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	child_devices = prop_dictionary_get(device_properties(parent),
 					    "i2c-child-devices");
@@ -447,27 +435,25 @@ iic_attach(device_t parent, device_t self, void *aux)
 		no_indirect_config = false;
 	}
 
-	if (child_devices != NULL) {
-		prop_object_retain(child_devices);
-	} else {
+	if (child_devices == NULL) {
 		switch (devhandle_type(devhandle)) {
 #ifdef I2C_USE_ACPI
 		case DEVHANDLE_TYPE_ACPI:
-			acpi_i2c_register(self, sc->sc_tag);
-			child_devices = acpi_copy_i2c_devs(self);
+			child_devices = acpi_copy_i2c_devs(sc->sc_dev);
 			no_indirect_config = true;
 			break;
 #endif
 #ifdef I2C_USE_FDT
 		case DEVHANDLE_TYPE_OF:
-			fdtbus_register_i2c_controller(self, sc->sc_tag);
-			child_devices = fdtbus_copy_i2c_devs(self);
+			child_devices = fdtbus_copy_i2c_devs(sc->sc_dev);
 			no_indirect_config = true;
 			break;
 #endif
 		default:
 			break;
 		}
+	} else {
+		prop_object_retain(child_devices);
 	}
 
 	if (child_devices) {
@@ -478,6 +464,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		uint64_t cookie;
 		uint32_t cookietype;
 		const char *name;
+		char *buf;
 		struct i2c_attach_args ia;
 		devhandle_t child_devhandle;
 		int loc[IICCF_NLOCS];
@@ -533,17 +520,17 @@ iic_attach(device_t parent, device_t self, void *aux)
 				    prop_data_size(cdata), &buf);
 
 			if (name == NULL && cdata == NULL) {
-				aprint_error_dev(self,
+				aprint_error_dev(sc->sc_dev,
 				    "WARNING: ignoring bad child device entry "
 				    "for address 0x%02x\n", addr);
 			} else {
 				if (addr > I2C_MAX_ADDR) {
-					aprint_error_dev(self,
+					aprint_error_dev(sc->sc_dev,
 					    "WARNING: ignoring bad device "
 					    "address @ 0x%02x\n", addr);
 				} else if (sc->sc_devices[addr] == NULL) {
 					sc->sc_devices[addr] =
-					    config_found(self, &ia,
+					    config_found(sc->sc_dev, &ia,
 					    iic_print_direct,
 					    CFARGS(.locators = loc,
 						   .devhandle = child_devhandle));
@@ -557,7 +544,48 @@ iic_attach(device_t parent, device_t self, void *aux)
 		}
 		prop_object_release(child_devices);
 		child_devices = NULL;
-	} else if (!no_indirect_config) {
+	}
+
+	/*
+	 * We return "true" if we want to let indirect configuration
+	 * proceed.
+	 */
+	return !no_indirect_config;
+}
+
+static void
+iic_attach(device_t parent, device_t self, void *aux)
+{
+	struct iic_softc *sc = device_private(self);
+	devhandle_t devhandle = device_handle(self);
+	struct i2cbus_attach_args *iba = aux;
+
+	aprint_naive("\n");
+	aprint_normal(": I2C bus\n");
+
+	sc->sc_dev = self;
+	sc->sc_tag = iba->iba_tag;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	/* XXX There ought to be a generic way to do this. */
+	switch (devhandle_type(devhandle)) {
+#ifdef I2C_USE_ACPI
+	case DEVHANDLE_TYPE_ACPI:
+		acpi_i2c_register(self, sc->sc_tag);
+		break;
+#endif
+#ifdef I2C_USE_FDT
+	case DEVHANDLE_TYPE_OF:
+		fdtbus_register_i2c_controller(self, sc->sc_tag);
+		break;
+#endif
+	default:
+		break;
+	}
+
+	if (iic_attach_children_direct(sc)) {
 		/*
 		 * Attach all i2c devices described in the kernel
 		 * configuration file.
