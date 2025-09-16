@@ -1836,7 +1836,7 @@ aarch64_init_prefetch_builtin (void)
 }
 
 /* Initialize the memory tagging extension (MTE) builtins.  */
-static GTY(()) struct aarch64_mte GTY(())
+static GTY(()) struct aarch64_mte
 {
   tree ftype;
   enum insn_code icode;
