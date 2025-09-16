@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.419 2025/04/13 17:23:06 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.420 2025/09/16 02:18:06 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -177,8 +177,13 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS}
 .endif
+
+# Building all static libraries with sanitizer flags allows them to be
+# successfully linked into instrumented dynamic binaries, as well as
+# private libraries linked directly into executables.
+CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
 MKSHLIBOBJS= yes
@@ -190,8 +195,9 @@ MKSHLIBOBJS= no
 .if (${MKDEBUG:Uno} != "no" && !defined(NODEBUG)) && \
     (!defined(CFLAGS) || empty(CFLAGS:M-g*)) && \
     (!defined(CXXFLAGS) || empty(CXXFLAGS:M-g*))
-# We only add -g to the shared library objects
-# because we don't currently split .a archives.
+# Only add -g to the shared library objects because as there's no facility
+# to separate the debuginfo like shared libraries, except for private the
+# libraries that are linked into executables only.
 CSHLIBFLAGS+=	-g
 .if ${LIBISPRIVATE} != "no"
 CFLAGS+=	-g
