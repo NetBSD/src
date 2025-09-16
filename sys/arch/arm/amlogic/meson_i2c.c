@@ -1,4 +1,4 @@
-/* $NetBSD: meson_i2c.c,v 1.3 2025/08/18 20:59:56 andvar Exp $ */
+/* $NetBSD: meson_i2c.c,v 1.4 2025/09/16 11:41:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.3 2025/08/18 20:59:56 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.4 2025/09/16 11:41:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -519,5 +519,5 @@ mesoni2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_exec = mesoni2c_exec;
 	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
+	iicbus_attach(self, &sc->sc_ic);
 }

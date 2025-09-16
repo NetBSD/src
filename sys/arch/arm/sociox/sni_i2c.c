@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_i2c.c,v 1.15 2022/03/24 08:08:05 andvar Exp $	*/
+/*	$NetBSD: sni_i2c.c,v 1.16 2025/09/16 11:41:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.15 2022/03/24 08:08:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_i2c.c,v 1.16 2025/09/16 11:41:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -197,7 +197,7 @@ sniiic_fdt_attach(device_t parent, device_t self, void *aux)
 
 	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 #if 0
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
+	iicbus_attach(self, &sc->sc_ic);
 #endif
 	return;
  fail:

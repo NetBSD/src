@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.9 2025/09/15 15:31:45 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.10 2025/09/16 11:41:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.9 2025/09/15 15:31:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.10 2025/09/16 11:41:26 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -146,6 +146,7 @@ iicmux_count_children(struct iicmux_softc * const sc)
 	return count;
 }
 
+#if 0
 /* XXX iicbus_print() should be able to do this. */
 static int
 iicmux_print(void * const aux, const char * const pnp)
@@ -159,6 +160,7 @@ iicmux_print(void * const aux, const char * const pnp)
 
 	return rv;
 }
+#endif
 
 static void
 iicmux_attach_bus(struct iicmux_softc * const sc,
@@ -189,8 +191,9 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 		fdtbus_register_i2c_controller(&bus->controller,
 		    (int)bus->handle);
 
-		fdtbus_attach_i2cbus(sc->sc_dev, (int)bus->handle,
-		    &bus->controller, iicmux_print);
+		iicbus_attach_with_devhandle(sc->sc_dev, &bus->controller,
+		    devhandle_from_of(device_handle(sc->sc_dev),
+				      (int)bus->handle));
 		break;
 #if NACPICA > 0
 	case I2C_COOKIE_ACPI: {
