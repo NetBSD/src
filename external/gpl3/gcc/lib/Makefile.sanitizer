@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.19 2024/07/02 02:36:22 rin Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.20 2025/09/16 22:27:20 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -20,6 +20,7 @@ SANITIZER_SRCS+= \
 	sanitizer_coverage_libcdep_new.cpp \
 	sanitizer_deadlock_detector1.cpp \
 	sanitizer_deadlock_detector2.cpp \
+	sanitizer_dl.cpp \
 	sanitizer_errno.cpp \
 	sanitizer_file.cpp \
 	sanitizer_flags.cpp \
@@ -33,7 +34,6 @@ SANITIZER_SRCS+= \
 	sanitizer_mac_libcdep.cpp \
 	sanitizer_mutex.cpp \
 	sanitizer_netbsd.cpp \
-	sanitizer_openbsd.cpp \
 	sanitizer_platform_limits_freebsd.cpp \
 	sanitizer_platform_limits_linux.cpp \
 	sanitizer_platform_limits_netbsd.cpp \
@@ -48,7 +48,9 @@ SANITIZER_SRCS+= \
 	sanitizer_procmaps_linux.cpp \
 	sanitizer_procmaps_mac.cpp \
 	sanitizer_procmaps_solaris.cpp \
+	sanitizer_range.cpp \
 	sanitizer_solaris.cpp \
+	sanitizer_stack_store.cpp \
 	sanitizer_stackdepot.cpp \
 	sanitizer_stacktrace.cpp \
 	sanitizer_stacktrace_libcdep.cpp \
@@ -66,6 +68,7 @@ SANITIZER_SRCS+= \
 	sanitizer_symbolizer_posix_libcdep.cpp \
 	sanitizer_symbolizer_win.cpp \
 	sanitizer_termination.cpp \
+	sanitizer_thread_arg_retval.cpp \
 	sanitizer_thread_registry.cpp \
 	sanitizer_tls_get_addr.cpp \
 	sanitizer_unwind_linux_libcdep.cpp \
@@ -84,7 +87,7 @@ CPPFLAGS+=-D__STDC_LIMIT_MACROS
 CPPFLAGS+=-DASAN_NEEDS_SEGV=1
 CPPFLAGS+=-DASAN_HAS_CXA_RETHROW_PRIMARY_EXCEPTION=0
 #CPPFLAGS+=-DCAN_SANITIZE_UB=0
-
+CPPFLAGS+=-DHAVE_AS_SYM_ASSIGN=1
 
 LIBDPLIBS+=    pthread ${.CURDIR}/../../../../../lib/libpthread
 COPTS+=-fPIC -fno-builtin -fno-exceptions -fno-rtti
