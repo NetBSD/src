@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gcc2netbsd,v 1.9 2024/09/08 10:01:59 rillig Exp $
+#	$NetBSD: gcc2netbsd,v 1.10 2025/09/16 02:15:11 mrg Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,9 +47,12 @@ cleantags "$DIR"
 RM="
 boehm-gc
 gcc/ada
+gcc/d
 gcc/go
 gcc/java
+gcc/m2
 gcc/po
+gcc/rust
 gcc/testsuite
 gnattools
 gotools
@@ -58,14 +61,17 @@ libatomic
 libcilkrts
 libcpp/po
 libffi
+libgm2
 libgo
 libgomp/testsuite
+libgrust
 libiberty/testsuite
 libitm
 libjava
 libmpx
-liboffloadmic
 libmudflap/testsuite
+liboffloadmic
+libphobos
 libstdc++-v3/po
 libstdc++-v3/testsuite
 libvtv
