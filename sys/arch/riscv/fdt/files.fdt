@@ -1,7 +1,8 @@
-# $NetBSD: files.fdt,v 1.4 2025/01/01 17:53:07 skrll Exp $
+# $NetBSD: files.fdt,v 1.4.2.1 2025/09/16 04:03:33 snj Exp $
 
 include	"dev/pckbport/files.pckbport"
 
+file	dev/fdt/fdt_platform.c
 file	arch/riscv/fdt/cpus_fdt.c
 file	arch/riscv/fdt/fdt_dma_machdep.c
 file	arch/riscv/fdt/riscv_platform.c

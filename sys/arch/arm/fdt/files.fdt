@@ -1,9 +1,10 @@
-# $NetBSD: files.fdt,v 1.35 2023/06/12 12:58:17 skrll Exp $
+# $NetBSD: files.fdt,v 1.35.8.1 2025/09/16 04:03:33 snj Exp $
 
 include	"dev/pckbport/files.pckbport"
 
 device	armfdt: bus_space_generic, fdt
 attach	armfdt at root with arm_fdt
+file	dev/fdt/fdt_platform.c			arm_fdt
 file	arch/arm/fdt/arm_fdt.c			arm_fdt
 file	arch/arm/fdt/arm_platform.c		arm_fdt & gtmr_fdt & psci_fdt
 file	arch/arm/fdt/arm_simplefb.c		arm_fdt & wsdisplay & genfb

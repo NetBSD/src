@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.73 2024/05/09 12:09:59 pho Exp $
+# $NetBSD: files.fdt,v 1.73.4.1 2025/09/16 04:03:33 snj Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -69,7 +69,6 @@ file	dev/fdt/i2cmux_fdt.c			iicmux_fdt
 file	dev/fdt/fdt_boot.c			fdtbase
 file	dev/fdt/fdt_memory.c			fdtbase
 file	dev/fdt/fdt_openfirm.c			fdtbase
-file	dev/fdt/fdt_platform.c			fdtbase
 file	dev/fdt/fdt_subr.c			fdtbase
 
 file	dev/fdt/fdt_clock.c			fdt
