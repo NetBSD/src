@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2024/06/30 16:15:02 christos Exp $
+#	$NetBSD: Makefile,v 1.57 2025/09/16 22:26:32 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -217,6 +217,14 @@ COPTS.floating_to_chars.cc+=	-Wno-error=unused-function
 COPTS.cp-demangle.c+=	-Wno-error=stack-protector
 COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
 
+# GCC 14 special cases
+tzdata.zi.h: ${DIST}/libstdc++-v3/src/c++20/tzdata.zi
+	echo 'static const char tzdata_chars[] = R"__libstdcxx__(' > ${.TARGET}.tmp && \
+	cat $^ >> ${.TARGET}.tmp && \
+	echo ')__libstdcxx__";' >> ${.TARGET}.tmp && mv ${.TARGET}.tmp $@
+
+tzdb.cc: tzdata.zi.h
+
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
 .include <bsd.info.mk>
@@ -225,6 +233,9 @@ COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
 	${DIST}/libstdc++-v3/src/c++98 \
 	${DIST}/libstdc++-v3/src/c++11 \
 	${DIST}/libstdc++-v3/src/c++17 \
+	${DIST}/libstdc++-v3/src/c++20 \
+	${DIST}/libstdc++-v3/src/c++23 \
+	${DIST}/libstdc++-v3/src/c++26 \
 	${DIST}/libstdc++-v3/src/filesystem \
 	${DIST}/libstdc++-v3/libsupc++ \
 	${DIST}/libstdc++-v3/config/os/bsd/netbsd \

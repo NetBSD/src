@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.21 2024/02/21 09:06:56 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.22 2025/09/16 22:26:32 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -35,7 +35,9 @@ LIBSTDCXXSRCS=	${G_SRC_SOURCES} \
 		${BUILD_CPP98_SOURCES} \
 		${BUILD_CPP11_SOURCES} \
 		${BUILD_CPP17_SOURCES} \
-		${BUILD_CPP20_SOURCES}
+		${BUILD_CPP20_SOURCES} \
+		${G_CPP23_SOURCES} \
+		${G_CPP26_SOURCES}
 # XXX XXX dir.o doesn't have <deque> stuff properly, leave it out for now
 #LIBSTDCXXSRCS+=	${G_FILESYSTEM_SOURCES}
 
@@ -100,6 +102,14 @@ COPTS.${_f}+=	-std=gnu++17 -fimplicit-templates
 
 .for _f in ${BUILD_CPP20_SOURCES}
 COPTS.${_f}+=	-std=gnu++20 -fimplicit-templates
+.endfor
+
+.for _f in ${G_CPP23_SOURCES}
+COPTS.${_f}+=	-std=gnu++23 -fimplicit-templates
+.endfor
+
+.for _f in ${G_CPP26_SOURCES}
+COPTS.${_f}+=	-std=gnu++26 -fimplicit-templates
 .endfor
 
 .for _f in dir ops fs_dir fs_ops cow-fs_dir cow-fs_ops
