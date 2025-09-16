@@ -713,7 +713,7 @@ static void ReportUnsuspendedThreads(
     uptr i = InternalLowerBound(threads, os_id);
     if (i >= threads.size() || threads[i] != os_id)
       Report(
-          "Running thread %zu was not suspended. False leaks are possible.\n",
+          "Running thread %llu was not suspended. False leaks are possible.\n",
           os_id);
   }
 }
