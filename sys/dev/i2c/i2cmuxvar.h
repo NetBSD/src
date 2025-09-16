@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmuxvar.h,v 1.3 2021/01/25 12:18:18 jmcneill Exp $	*/
+/*	$NetBSD: i2cmuxvar.h,v 1.4 2025/09/16 13:09:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _DEV_I2C_I2CMUXVAR_H_
 #define	_DEV_I2C_I2CMUXVAR_H_
 
+#include <sys/device.h>
 #include <dev/i2c/i2cvar.h>
 
 struct iicmux_softc;
@@ -48,17 +49,14 @@ struct iicmux_config {
 struct iicmux_bus {
 	struct i2c_controller controller;
 	struct iicmux_softc *mux;
-	uintptr_t handle;
-	enum i2c_cookie_type handletype;
+	devhandle_t devhandle;
 	int busidx;
 	void *bus_data;
 };
 
 struct iicmux_softc {
 	device_t			sc_dev;
-	enum i2c_cookie_type		sc_handletype;
-	uintptr_t			sc_handle;
-	int				sc_i2c_mux_phandle;
+	devhandle_t			sc_i2c_mux_devhandle;
 	const struct iicmux_config *	sc_config;
 	i2c_tag_t			sc_i2c_parent;
 	struct iicmux_bus *		sc_busses;
