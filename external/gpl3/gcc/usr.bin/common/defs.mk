@@ -2,4 +2,4 @@
 # Generated from: NetBSD: mknative-gcc,v 1.118 2024/02/21 08:24:46 mrg Exp 
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
-G_OBJS-libcommon=diagnostic-spec.o diagnostic.o diagnostic-color.o diagnostic-show-locus.o diagnostic-format-json.o json.o edit-context.o pretty-print.o intl.o sbitmap.o vec.o input.o hash-table.o ggc-none.o memory-block.o selftest.o selftest-diagnostic.o sort.o
+G_OBJS-libcommon=diagnostic-spec.o diagnostic.o diagnostic-color.o diagnostic-format-json.o diagnostic-format-sarif.o diagnostic-show-locus.o edit-context.o pretty-print.o intl.o json.o sbitmap.o vec.o input.o hash-table.o ggc-none.o memory-block.o selftest.o selftest-diagnostic.o sort.o text-art/box-drawing.o text-art/canvas.o text-art/ruler.o text-art/selftests.o text-art/style.o text-art/styled-string.o text-art/table.o text-art/theme.o text-art/widget.o
