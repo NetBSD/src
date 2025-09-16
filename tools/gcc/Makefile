@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.116 2025/05/27 18:40:32 palle Exp $
+#	$NetBSD: Makefile,v 1.117 2025/09/16 02:08:01 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,9 +8,7 @@ MODULE=		${EXTERNAL_GCC_SUBDIR}
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 10
-MKNATIVE=		${.CURDIR}/mknative-gcc.old
-.endif
+MKNATIVE=		${.CURDIR}/mknative-${EXTERNAL_GCC_SUBDIR}
 
 # Defaults
 CC_FOR_BUILD=		${HOST_CXX:Q}
@@ -59,12 +57,8 @@ COMMON_CONFIGURE_ARGS+=	--enable-fix-cortex-a53-835769 \
 			--enable-fix-cortex-a53-843419
 .endif
 
-.if ${HAVE_GCC} >= 7
 COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
-.endif
 
-# We enabled isl support for GCC 12.  Move into normal segment when
-# removing GCC 10.
 .if ${HAVE_GCC} < 12 || defined(NOGCCISL)
 COMMON_CONFIGURE_ARGS+=	--without-isl
 .else
@@ -120,19 +114,13 @@ MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libbacktrace \
 	configure-target-libobjc
 
-.if ${HAVE_GCC} >= 9
 # XXX needs to build libstdc++ fully, which fails
 .if 0
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libsanitizer
 .endif
-.endif
 
-.if ${HAVE_GCC} <= 10
-EXTRA_FILES=	gcov-iov.h
-.else
 EXTRA_FILES=	bversion.h gtyp-input.list
-.endif
 
 BINENV=		/usr/bin/env -i
 
