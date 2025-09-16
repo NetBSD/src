@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_fdt.c,v 1.8 2025/09/16 11:41:26 thorpej Exp $ */
+/* $NetBSD: dwiic_fdt.c,v 1.9 2025/09/16 11:55:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.8 2025/09/16 11:41:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_fdt.c,v 1.9 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,6 @@ dwiic_fdt_attach(device_t parent, device_t self, void *aux)
 		goto failed_attach;
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
-
-	fdtbus_register_i2c_controller(&sc->sc_dwiic.sc_i2c_tag, phandle);
 
 	iicbus_attach(self, &sc->sc_dwiic.sc_i2c_tag);
 

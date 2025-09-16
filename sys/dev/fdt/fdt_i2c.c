@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.14 2025/09/16 11:41:26 thorpej Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.15 2025/09/16 11:55:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.14 2025/09/16 11:41:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.15 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,9 +47,10 @@ struct fdtbus_i2c_controller {
 static LIST_HEAD(, fdtbus_i2c_controller) fdtbus_i2c_controllers =
     LIST_HEAD_INITIALIZER(fdtbus_i2c_controllers);
 
-int
-fdtbus_register_i2c_controller(i2c_tag_t tag, int phandle)
+void
+fdtbus_register_i2c_controller(device_t dev, i2c_tag_t tag)
 {
+	int phandle = devhandle_to_of(device_handle(dev));
 	struct fdtbus_i2c_controller *i2c;
 
 	i2c = kmem_alloc(sizeof(*i2c), KM_SLEEP);
@@ -57,8 +58,6 @@ fdtbus_register_i2c_controller(i2c_tag_t tag, int phandle)
 	i2c->i2c_phandle = phandle;
 
 	LIST_INSERT_HEAD(&fdtbus_i2c_controllers, i2c, i2c_next);
-
-	return 0;
 }
 
 static struct fdtbus_i2c_controller *

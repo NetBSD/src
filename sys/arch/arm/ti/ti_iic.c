@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.14 2025/09/16 11:41:26 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.15 2025/09/16 11:55:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.14 2025/09/16 11:41:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.15 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,8 +295,6 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 
 	ti_iic_reset(sc);
 	ti_iic_flush(sc);
-
-	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	iicbus_attach(self, &sc->sc_ic);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.95 2025/09/16 11:37:17 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.96 2025/09/16 11:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.95 2025/09/16 11:37:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.96 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,6 +460,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 #endif
 #ifdef I2C_USE_FDT
 		case DEVHANDLE_TYPE_OF:
+			fdtbus_register_i2c_controller(self, sc->sc_tag);
 			child_devices = fdtbus_copy_i2c_devs(self);
 			no_indirect_config = true;
 			break;

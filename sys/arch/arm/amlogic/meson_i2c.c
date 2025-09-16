@@ -1,4 +1,4 @@
-/* $NetBSD: meson_i2c.c,v 1.4 2025/09/16 11:41:25 thorpej Exp $ */
+/* $NetBSD: meson_i2c.c,v 1.5 2025/09/16 11:55:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.4 2025/09/16 11:41:25 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.5 2025/09/16 11:55:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -517,7 +517,6 @@ mesoni2c_attach(device_t parent, device_t self, void *aux)
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = mesoni2c_exec;
-	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	iicbus_attach(self, &sc->sc_ic);
 }

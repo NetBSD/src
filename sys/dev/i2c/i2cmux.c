@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.10 2025/09/16 11:41:26 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.11 2025/09/16 11:55:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.10 2025/09/16 11:41:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.11 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -188,9 +188,6 @@ iicmux_attach_bus(struct iicmux_softc * const sc,
 
 	switch (handletype) {
 	case I2C_COOKIE_OF:
-		fdtbus_register_i2c_controller(&bus->controller,
-		    (int)bus->handle);
-
 		iicbus_attach_with_devhandle(sc->sc_dev, &bus->controller,
 		    devhandle_from_of(device_handle(sc->sc_dev),
 				      (int)bus->handle));

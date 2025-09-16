@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.16 2025/09/16 11:41:26 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.17 2025/09/16 11:55:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.16 2025/09/16 11:41:26 thorpej Exp $");
-
-#if defined(__arm__) || defined(__aarch64__)
-#include "opt_fdt.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.17 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.16 2025/09/16 11:41:26 thorpej Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/motoi2creg.h>
 #include <dev/i2c/motoi2cvar.h>
-
-#ifdef FDT
-#include <dev/fdt/fdtvar.h>
-#endif
 
 #ifdef DEBUG
 int motoi2c_debug = 0;
@@ -122,11 +114,6 @@ motoi2c_attach(struct motoi2c_softc *sc,
 	I2C_WRITE(I2CADR, sc->sc_settings.i2c_adr);	/* our slave address */
 	motoi2c_clear_status(sc, I2C_READ(I2CSR));
 
-#ifdef FDT
-	if (sc->sc_phandle != 0) {
-		fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
-	}
-#endif
 	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 

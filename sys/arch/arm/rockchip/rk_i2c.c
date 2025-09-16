@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.13 2025/09/16 11:41:25 thorpej Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.14 2025/09/16 11:55:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.13 2025/09/16 11:41:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.14 2025/09/16 11:55:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -424,8 +424,6 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = rk_i2c_exec;
-
-	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	iicbus_attach(self, &sc->sc_ic);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_i2c.c,v 1.3 2022/07/22 23:43:24 thorpej Exp $	*/
+/*	$NetBSD: imx_i2c.c,v 1.4 2025/09/16 11:55:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.3 2022/07/22 23:43:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_i2c.c,v 1.4 2025/09/16 11:55:16 thorpej Exp $");
 
 #include <sys/bus.h>
 
@@ -81,7 +81,6 @@ imxi2c_attach(device_t parent __unused, device_t self, void *aux)
 	if (error)
 		freq = 100000;
 
-	imxsc->sc_motoi2c.sc_phandle = phandle;
 	imxi2c_attach_common(self, bst, addr, size,
 	    clk_get_rate(imxsc->sc_clk), freq);
 }

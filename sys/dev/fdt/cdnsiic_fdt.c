@@ -1,4 +1,4 @@
-/* $NetBSD: cdnsiic_fdt.c,v 1.2 2025/09/16 11:41:26 thorpej Exp $ */
+/* $NetBSD: cdnsiic_fdt.c,v 1.3 2025/09/16 11:55:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cdnsiic_fdt.c,v 1.2 2025/09/16 11:41:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cdnsiic_fdt.c,v 1.3 2025/09/16 11:55:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,8 +93,6 @@ cdnsiic_fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "init failed, error = %d\n", error);
 		return;
 	}
-
-	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
 	iicbus_attach(self, &sc->sc_ic);
 }

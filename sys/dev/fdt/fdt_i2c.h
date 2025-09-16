@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_i2c.h,v 1.3 2025/09/16 11:41:26 thorpej Exp $	*/
+/*	$NetBSD: fdt_i2c.h,v 1.4 2025/09/16 11:55:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 
 #include <dev/i2c/i2cvar.h>
 
-int		fdtbus_register_i2c_controller(i2c_tag_t, int);
+void		fdtbus_register_i2c_controller(device_t, i2c_tag_t);
 
 i2c_tag_t	fdtbus_i2c_get_tag(int);
 i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
