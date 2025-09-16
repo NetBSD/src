@@ -38,8 +38,10 @@ It DecodeSLEB128(It begin, It end, T* v) {
   unsigned shift = 0;
   u8 byte;
   do {
-    if (UNLIKELY(begin == end))
+    if (UNLIKELY(begin == end)) {
+      *v = 0;
       return begin;
+    }
     byte = *(begin++);
     T slice = byte & 0x7f;
     value |= slice << shift;
