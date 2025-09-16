@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.2 2025/09/16 11:37:17 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.2 2025/09/16 11:37:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,9 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp
  * device properties.
  * This is used by the i2c bus attach code to do direct configuration.
  */
-void
-of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
-    int addr_shift)
+prop_array_t
+of_copy_i2c_devs(int ofnode, size_t cell_size, int addr_shift)
 {
 	int node, len;
 	char name[32];
@@ -102,8 +101,5 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 		prop_object_release(dev);
 	}
 
-	if (array != NULL) {
-		prop_dictionary_set(props, "i2c-child-devices", array);
-		prop_object_release(array);
-	}
+	return array;
 }

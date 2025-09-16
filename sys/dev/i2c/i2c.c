@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.94 2025/09/15 15:28:49 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.95 2025/09/16 11:37:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.94 2025/09/15 15:28:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.95 2025/09/16 11:37:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.94 2025/09/15 15:28:49 thorpej Exp $");
 
 #ifdef I2C_USE_FDT
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_i2c.h>
 #endif /* I2C_USE_FDT */
 
 #include <dev/i2c/i2cvar.h>
@@ -423,11 +424,10 @@ iic_attach(device_t parent, device_t self, void *aux)
 	struct iic_softc *sc = device_private(self);
 	devhandle_t devhandle = device_handle(self);
 	struct i2cbus_attach_args *iba = aux;
-	prop_array_t child_devices = NULL;
-	prop_dictionary_t props;
+	prop_array_t child_devices;
 	char *buf;
 	i2c_tag_t ic;
-	bool no_indirect_config = false;
+	bool no_indirect_config;
 
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
@@ -439,30 +439,34 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	switch (devhandle_type(devhandle)) {
+	child_devices = prop_dictionary_get(device_properties(parent),
+					    "i2c-child-devices");
+	if (!prop_dictionary_get_bool(device_properties(parent),
+				      "i2c-no-indirect-config",
+				      &no_indirect_config)) {
+		no_indirect_config = false;
+	}
+
+	if (child_devices != NULL) {
+		prop_object_retain(child_devices);
+	} else {
+		switch (devhandle_type(devhandle)) {
 #ifdef I2C_USE_ACPI
-	case DEVHANDLE_TYPE_ACPI:
-		acpi_i2c_register(self, sc->sc_tag);
-		child_devices = acpi_copy_i2c_devs(self);
-		no_indirect_config = (child_devices != NULL);
-		break;
-#endif
-	default:
-		if (iba->iba_child_devices) {
-			child_devices = iba->iba_child_devices;
+		case DEVHANDLE_TYPE_ACPI:
+			acpi_i2c_register(self, sc->sc_tag);
+			child_devices = acpi_copy_i2c_devs(self);
 			no_indirect_config = true;
-		} else {
-			props = device_properties(parent);
-			prop_dictionary_get_bool(props,
-			    "i2c-no-indirect-config",
-			    &no_indirect_config);
-			child_devices = prop_dictionary_get(props,
-			    "i2c-child-devices");
+			break;
+#endif
+#ifdef I2C_USE_FDT
+		case DEVHANDLE_TYPE_OF:
+			child_devices = fdtbus_copy_i2c_devs(self);
+			no_indirect_config = true;
+			break;
+#endif
+		default:
+			break;
 		}
-		if (child_devices) {
-			prop_object_retain(child_devices);
-		}
-		break;
 	}
 
 	if (child_devices) {

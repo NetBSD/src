@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.243 2024/11/19 20:38:24 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.244 2025/09/16 11:37:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.243 2024/11/19 20:38:24 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.244 2025/09/16 11:37:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1358,8 +1358,13 @@ noether:
 					}
 				}
 
-				of_enter_i2c_devs(props, busnode,
+				cfg = of_copy_i2c_devs(busnode,
 				    sizeof(cell_t), 1);
+				if (cfg != NULL) {
+					prop_dictionary_set(props,
+					    "i2c-child-devices", cfg);
+					prop_object_relesae(cfg);
+				}
 			}
 		}
 

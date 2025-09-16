@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_i2c.h,v 1.1 2025/09/06 20:11:30 thorpej Exp $	*/
+/*	$NetBSD: fdt_i2c.h,v 1.2 2025/09/16 11:37:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,5 +39,6 @@ i2c_tag_t	fdtbus_i2c_get_tag(int);
 i2c_tag_t	fdtbus_i2c_acquire(int, const char *);
 
 device_t	fdtbus_attach_i2cbus(device_t, int, i2c_tag_t, cfprint_t);
+prop_array_t	fdtbus_copy_i2c_devs(device_t dev);
 
 #endif /* _DEV_FDT_FDT_I2C_H_ */
