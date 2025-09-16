@@ -970,7 +970,9 @@ TARGET_DEF = target.def target-hooks-macros.h target-insns.def
 C_TARGET_DEF = c-family/c-target.def target-hooks-macros.h
 COMMON_TARGET_DEF = common/common-target.def target-hooks-macros.h
 D_TARGET_DEF = d/d-target.def target-hooks-macros.h
+D_TARGET_DEF = target-hooks-macros.h
 RUST_TARGET_DEF = rust/rust-target.def target-hooks-macros.h
+RUST_TARGET_DEF = target-hooks-macros.h
 TARGET_H = $(TM_H) target.h $(TARGET_DEF) insn-modes.h insn-codes.h
 C_TARGET_H = c-family/c-target.h $(C_TARGET_DEF)
 COMMON_TARGET_H = common/common-target.h $(INPUT_H) $(COMMON_TARGET_DEF)
@@ -2763,6 +2765,8 @@ s-tm-texi: $(srcdir)/doc/../doc/tm.texi
 # \r is not portable to Solaris tr, therefore we have a special
 # case for ASCII.  We use \r for other encodings like EBCDIC.
 s-tm-texi: build/genhooks$(build_exeext) $(srcdir)/doc/tm.texi.in
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_s-tm-texi:
 	$(RUN_GEN) build/genhooks$(build_exeext) -d \
 			$(srcdir)/doc/tm.texi.in > tmp-tm.texi
 	case `echo X|tr X '\101'` in \
@@ -2956,8 +2960,8 @@ generated_files = config.h tm.h $(TM_P_H) $(TM_D_H) $(TM_H) multilib.h \
        common/common-target-hooks-def.h pass-instances.def \
        $(GIMPLE_MATCH_PD_SEQ_SRC) $(GENERIC_MATCH_PD_SEQ_SRC) \
        gimple-match-auto.h generic-match-auto.h \
-       c-family/c-target-hooks-def.h d/d-target-hooks-def.h \
-       $(TM_RUST_H) rust/rust-target-hooks-def.h \
+       c-family/c-target-hooks-def.h \
+       $(TM_RUST_H) \
        case-cfn-macros.h \
        cfn-operators.pd omp-device-properties.h
 

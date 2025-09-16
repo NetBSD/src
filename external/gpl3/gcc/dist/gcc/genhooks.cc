@@ -34,8 +34,10 @@ static struct hook_desc hook_array[] = {
 #include "target.def"
 #include "c-family/c-target.def"
 #include "common/common-target.def"
+#if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
 #include "d/d-target.def"
 #include "rust/rust-target.def"
+#endif
 #undef DEFHOOK
 };
 
