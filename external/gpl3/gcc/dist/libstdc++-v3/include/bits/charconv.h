@@ -46,7 +46,7 @@ namespace __detail
   // This accepts 128-bit integers even in strict mode.
   template<typename _Tp>
     constexpr bool __integer_to_chars_is_unsigned
-      = ! __gnu_cxx::__int_traits<_Tp>::__is_signed;
+      = ! __gnu_cxx::__int_traits<_Tp>::__is_signed_val;
 #endif
 
   // Generic implementation for arbitrary bases.
