@@ -229,3 +229,6 @@ along with GCC; see the file COPYING3.  If not see
   LD_STATIC_OPTION " --whole-archive -llsan --no-whole-archive " \
   LD_DYNAMIC_OPTION "}}%{!static-liblsan:-llsan}"
 #endif
+
+/* NetBSD CTF doesn't handle DWARF 5 yet.  */
+#define DWARF_VERSION_DEFAULT 4
