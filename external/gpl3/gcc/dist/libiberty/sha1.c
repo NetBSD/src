@@ -459,8 +459,10 @@ sha1_hw_process_bytes (const void *buffer, size_t len, struct sha1_ctx *ctx)
   if (len >= 64)
     {
 #if !_STRING_ARCH_unaligned
+#if 0 /* XXXMRG defined above */
 # define alignof(type) offsetof (struct { char c; type x; }, x)
 # define UNALIGNED_P(p) (((size_t) p) % alignof (sha1_uint32) != 0)
+#endif
       if (UNALIGNED_P (buffer))
 	while (len > 64)
 	  {
