@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.17 2025/09/12 14:53:30 snj Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.18 2025/09/16 04:05:29 snj Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -191,6 +191,9 @@ sys/dev/usb/xhci.c				1.190
 	[nat, ticket #30]
 
 sys/dev/fdt/fdt_platform.c			1.3
+sys/dev/fdt/files.fdt				1.75 via patch
+sys/arch/arm/fdt/files.fdt			1.37
+sys/arch/riscv/fdt/files.fdt			1.5
 
 	Fix NULL-dereference crash during boot.
 	[rin, ticket #31]
