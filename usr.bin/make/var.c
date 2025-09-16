@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1171 2025/06/29 11:02:17 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1172 2025/09/16 15:15:47 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1171 2025/06/29 11:02:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1172 2025/09/16 15:15:47 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1850,7 +1850,7 @@ QuoteShell(const char *str, bool quoteDollar, LazyBuf *buf)
 static char *
 Hash(const char *str)
 {
-	static const char hexdigits[16] = "0123456789abcdef";
+	static const char hexdigits[] = "0123456789abcdef";
 	const unsigned char *ustr = (const unsigned char *)str;
 
 	uint32_t h = 0x971e137bU;
