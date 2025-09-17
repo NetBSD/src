@@ -1,4 +1,4 @@
-/* $NetBSD: cwfg.c,v 1.5 2021/11/07 17:14:38 jmcneill Exp $ */
+/* $NetBSD: cwfg.c,v 1.6 2025/09/17 13:42:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cwfg.c,v 1.5 2021/11/07 17:14:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cwfg.c,v 1.6 2025/09/17 13:42:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,7 @@ cwfg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
+	sc->sc_phandle = devhandle_to_of(device_handle(self));
 
 	cwfg_lock(sc);
 	error = cwfg_read(sc, VERSION_REG, &ver);

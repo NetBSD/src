@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.11 2025/06/30 10:16:01 macallan Exp $ */
+/* $NetBSD: adadc.c,v 1.12 2025/09/17 13:42:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.11 2025/06/30 10:16:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.12 2025/09/17 13:42:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	uint32_t eeprom[40];
 	char loc[256];
 	int which_cpu;
+	int phandle = devhandle_to_of(device_handle(self));
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -151,14 +152,14 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	 * should probably just expose the temperature and four ENVSYS_INTEGERs
 	 */
 	which_cpu = 0;
-	ch = OF_child(ia->ia_cookie);
+	ch = OF_child(phandle);
 	if (ch == 0) {
 		/* old style info */
 		int len, idx = 0, reg = 0;
 		uint32_t ids[16];
 		char buffer[256];
-		len = OF_getprop(ia->ia_cookie, "hwsensor-id", ids, 64);
-		OF_getprop(ia->ia_cookie, "hwsensor-location", buffer, 256);
+		len = OF_getprop(phandle, "hwsensor-id", ids, 64);
+		OF_getprop(phandle, "hwsensor-location", buffer, 256);
 		while (len > 0) {
 			strcpy(loc, &buffer[idx]);
 			s = &sc->sc_sensors[sc->sc_nsensors];

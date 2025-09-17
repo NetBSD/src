@@ -1,4 +1,4 @@
-/* $NetBSD: tda19988.c,v 1.8 2021/12/19 12:44:34 riastradh Exp $ */
+/* $NetBSD: tda19988.c,v 1.9 2025/09/17 13:42:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Oleksandr Tymoshenko <gonzo@freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.8 2021/12/19 12:44:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.9 2025/09/17 13:42:43 thorpej Exp $");
 
 /*
 * NXP TDA19988 HDMI encoder
@@ -882,7 +882,7 @@ tda19988_attach(device_t parent, device_t self, void *aux)
 {
 	struct tda19988_softc *sc = device_private(self);
 	struct i2c_attach_args * const ia = aux;
-	const int phandle = ia->ia_cookie;
+	const int phandle = devhandle_to_of(device_handle(self));
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
