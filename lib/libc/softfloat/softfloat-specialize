@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.13 2025/09/17 11:37:38 nat Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.14 2025/09/17 11:42:17 nat Exp $	*/
 
 /* This is a derivative work. */
 
@@ -455,9 +455,9 @@ static commonNaNT floatx80ToCommonNaN( floatx80 a )
     commonNaNT z;
 
     if ( floatx80_is_signaling_nan( a ) ) float_raise( float_flag_invalid );
-    z.sign = a.high>>15;
-    z.low = 0;
-    z.high = a.low<<1;
+    z.sign = a.high>>(15 + X80SHIFT);
+    z.low = a.low<<1;
+    z.high = (a.high>>X80SHIFT) & 0x7FFF;
     return z;
 
 }
@@ -472,8 +472,8 @@ static floatx80 commonNaNToFloatx80( commonNaNT a )
 {
     floatx80 z;
 
-    z.low = LIT64( 0xC000000000000000 ) | ( a.high>>1 );
-    z.high = ( ( (bits16) a.sign )<<15 ) | 0x7FFF;
+    z.low = LIT64( 0xC000000000000000 ) | ( a.low );
+    z.high = (( ( (bits16) a.sign )<<15 ) | 0x7FFF) << X80SHIFT;
     return z;
 
 }
