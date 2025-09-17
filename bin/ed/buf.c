@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.27 2014/03/23 05:06:42 dholland Exp $	*/
+/*	$NetBSD: buf.c,v 1.28 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.27 2014/03/23 05:06:42 dholland Exp $");
+__RCSID("$NetBSD: buf.c,v 1.28 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,7 +215,7 @@ open_sbuf(void)
 
 	if ((tmp = getenv("TMPDIR")) == NULL)
 		tmp = _PATH_TMP;
-	
+
 	if ((s = strlen(tmp)) == 0 || tmp[s - 1] == '/')
 		(void)asprintf(&sfn, "%sed.XXXXXX", tmp);
 	else
@@ -226,7 +226,7 @@ open_sbuf(void)
 		umask(u);
 		return ERR;
 	}
-		
+
 
 	if ((fd = mkstemp(sfn)) == -1 || (sfp = fdopen(fd, "w+")) == NULL) {
 		if (fd != -1)
@@ -263,7 +263,7 @@ close_sbuf(void)
 }
 
 
-/* quit: remove_lines scratch file and exit */
+/* quit: remove scratch file and exit */
 void
 quit(int n)
 {
@@ -288,7 +288,7 @@ init_buffers(void)
 {
 	int i = 0;
 
-	/* Read stdin one character at a time to avoid i/o contention 
+	/* Read stdin one character at a time to avoid i/o contention
 	   with shell escapes invoked by nonterminal input, e.g.,
 	   ed - <<EOF
 	   !cat

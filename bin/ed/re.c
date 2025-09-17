@@ -1,4 +1,4 @@
-/*	$NetBSD: re.c,v 1.21 2014/03/23 05:06:42 dholland Exp $	*/
+/*	$NetBSD: re.c,v 1.22 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
    the ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-__RCSID("$NetBSD: re.c,v 1.21 2014/03/23 05:06:42 dholland Exp $");
+__RCSID("$NetBSD: re.c,v 1.22 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ seterrmsg(const char *fmt, ...)
 	va_end(ap);
 }
 
-/* get_compiled_pattern: return pointer to compiled pattern from command 
+/* get_compiled_pattern: return pointer to compiled pattern from command
    buffer */
 pattern_t *
 get_compiled_pattern(void)

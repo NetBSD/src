@@ -1,4 +1,4 @@
-/*	$NetBSD: glbl.c,v 1.11 2024/04/10 17:52:41 rillig Exp $	*/
+/*	$NetBSD: glbl.c,v 1.12 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* glbl.c: This file contains the global command routines for the ed line
    editor */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-__RCSID("$NetBSD: glbl.c,v 1.11 2024/04/10 17:52:41 rillig Exp $");
+__RCSID("$NetBSD: glbl.c,v 1.12 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ set_active_node(line_t *lp)
 		int ti = active_size;
 		line_t **ts;
 		SPL1();
-		if ((ts = (line_t **) realloc(active_list, 
+		if ((ts = (line_t **) realloc(active_list,
 		    (ti += MINBUFSZ) * sizeof(line_t **))) == NULL) {
 			fprintf(stderr, "%s\n", strerror(errno));
 			seterrmsg("out of memory");

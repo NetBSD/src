@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.38 2019/01/04 19:13:58 maya Exp $	*/
+/*	$NetBSD: ed.h,v 1.39 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -81,7 +81,7 @@ typedef struct undo {
 
 /* type of undo nodes */
 #define UADD	0
-#define UDEL 	1
+#define UDEL	1
 #define UMOV	2
 #define VMOV	3
 
@@ -116,7 +116,7 @@ if (--mutex == 0) { \
 	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
 	    errno == ERANGE) { \
 		seterrmsg("number out of range"); \
-	    	i = 0; \
+		i = 0; \
 		return ERR; \
 	} \
 }
@@ -148,7 +148,7 @@ if ((i) > (n)) { \
 	REQUE((pred), elem); \
 }
 
-/* remque: remove_lines elem from circular queue */
+/* remque: remove elem from circular queue */
 #define REMQUE(elem) REQUE((elem)->q_back, (elem)->q_forw);
 
 /* NUL_TO_NEWLINE: overwrite ASCII NULs with newlines */

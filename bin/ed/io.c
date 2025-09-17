@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.11 2024/10/03 20:14:01 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.12 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-__RCSID("$NetBSD: io.c,v 1.11 2024/10/03 20:14:01 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.12 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ read_stream(FILE *fp, long n)
 	else if (newline_added && (!appended || (!isbinary && !o_isbinary)))
 		fputs("newline appended\n", stderr);
 	if (isbinary && newline_added && !appended)
-	    	size += 1;
+		size += 1;
 	if (!size)
 		newline_added = 1;
 	newline_added = appended ? newline_added : o_newline_added;
@@ -233,8 +233,8 @@ get_extended_line(int *sizep, int nonl)
 	*sizep = -1;
 	REALLOC(cvbuf, cvbufsz, l, NULL);
 	memcpy(cvbuf, ibufp, l);
-	*(cvbuf + --l - 1) = '\n'; 	/* strip trailing esc */
-	if (nonl) l--; 			/* strip newline */
+	*(cvbuf + --l - 1) = '\n';	/* strip trailing esc */
+	if (nonl) l--;			/* strip newline */
 	for (;;) {
 		if ((n = get_tty_line()) < 0)
 			return NULL;
@@ -247,8 +247,8 @@ get_extended_line(int *sizep, int nonl)
 		l += n;
 		if (n < 2 || !has_trailing_escape(cvbuf, cvbuf + l - 1))
 			break;
-		*(cvbuf + --l - 1) = '\n'; 	/* strip trailing esc */
-		if (nonl) l--; 			/* strip newline */
+		*(cvbuf + --l - 1) = '\n';	/* strip trailing esc */
+		if (nonl) l--;			/* strip newline */
 	}
 	REALLOC(cvbuf, cvbufsz, l + 1, NULL);
 	cvbuf[l] = '\0';

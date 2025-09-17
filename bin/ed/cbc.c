@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.26 2023/08/01 07:04:14 mrg Exp $	*/
+/*	$NetBSD: cbc.c,v 1.27 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -72,7 +72,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.26 2023/08/01 07:04:14 mrg Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.27 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ __RCSID("$NetBSD: cbc.c,v 1.26 2023/08/01 07:04:14 mrg Exp $");
 
 /*
  * BSD and System V systems offer special library calls that do
- * block move_liness and fills, so if possible we take advantage of them
+ * block moves and fills, so if possible we take advantage of them
  */
 #define	MEMCPY(dest,src,len)	memcpy((dest),(src),(len))
 #define	MEMZERO(dest,len)	memset((dest), 0, (len))

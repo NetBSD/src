@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2018/06/18 14:56:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2025/09/17 20:35:11 rillig Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 2018/06/18 14:56:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: main.c,v 1.30 2018/06/18 14:56:24 christos Exp $");
  * CREDITS
  *
  *	This program is based on the editor algorithm described in
- *	Brian W. Kernighan and P. J. Plauger's book "Software Tools 
+ *	Brian W. Kernighan and P. J. Plauger's book "Software Tools
  *	in Pascal," Addison-Wesley, 1981.
  *
  *	The buffering algorithm is attributed to Rodney Ruddock of
@@ -279,7 +279,7 @@ top:
 
 long first_addr, second_addr, addr_cnt;
 
-/* extract_addr_range: get line addresses from the command buffer until an 
+/* extract_addr_range: get line addresses from the command buffer until an
    illegal address is seen; return status */
 int
 extract_addr_range(void)
@@ -570,7 +570,7 @@ exec_command(void)
 			GET_COMMAND_SUFFIX();
 		isglobal++;
 		if (exec_global(n, gflag) < 0)
-			return ERR; 
+			return ERR;
 		break;
 	case 'h':
 		if (addr_cnt > 0) {
@@ -713,7 +713,7 @@ exec_command(void)
 				sflags |= SGR;
 				ibufp++;
 				break;
-			case '0': case '1': case '2': case '3': case '4': 
+			case '0': case '1': case '2': case '3': case '4':
 			case '5': case '6': case '7': case '8': case '9':
 				STRTOL(sgnum, ibufp);
 				sflags |= SGF;
@@ -739,7 +739,7 @@ exec_command(void)
 		SPL1();
 		if ((!sflags || (sflags & SGR)) &&
 		    (tpat = get_compiled_pattern()) == NULL) {
-		 	SPL0();
+			SPL0();
 			return ERR;
 		} else if (tpat != pat) {
 			if (pat) {
@@ -824,7 +824,7 @@ exec_command(void)
 			return ERR;
 		}
 #endif
-		if ((addr = write_file(*fnp ? fnp : old_filename, 
+		if ((addr = write_file(*fnp ? fnp : old_filename,
 		    (c == 'W') ? "a" : "w", first_addr, second_addr)) < 0)
 			return ERR;
 		else if (addr == addr_last)
@@ -910,7 +910,7 @@ check_addr_range(long n, long m)
 }
 
 
-/* get_matching_node_addr: return the address of the next line matching a 
+/* get_matching_node_addr: return the address of the next line matching a
    pattern in a given direction.  wrap around begin/end of editor buffer if
    necessary */
 long
@@ -1165,7 +1165,7 @@ move_lines(long addr)
 		REQUE(b2, b1->q_forw);
 		REQUE(a1->q_back, a2);
 		REQUE(b1, a1);
-		current_addr = addr + ((addr < first_addr) ? 
+		current_addr = addr + ((addr < first_addr) ?
 		    second_addr - first_addr + 1 : 0);
 	}
 	if (isglobal)

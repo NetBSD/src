@@ -1,6 +1,6 @@
-/*	$NetBSD: sub.c,v 1.7 2014/03/23 05:06:42 dholland Exp $	*/
+/*	$NetBSD: sub.c,v 1.8 2025/09/17 20:35:11 rillig Exp $	*/
 
-/* sub.c: This file contains the substitution routines for the ed 
+/* sub.c: This file contains the substitution routines for the ed
    line editor */
 /*-
  * Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-__RCSID("$NetBSD: sub.c,v 1.7 2014/03/23 05:06:42 dholland Exp $");
+__RCSID("$NetBSD: sub.c,v 1.8 2025/09/17 20:35:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,7 @@ substitute_matching_text(pattern_t *pat, line_t *lp, int gflag, int kth)
 
 	if ((txt = get_sbuf_line(lp)) == NULL)
 		return ERR;
-	if (isbinary) 
+	if (isbinary)
 		NUL_TO_NEWLINE(txt, lp->len);
 	eot = txt + lp->len;
 	if (!regexec(pat, txt, SE_MAX, rm, 0)) {
