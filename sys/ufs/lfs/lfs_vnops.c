@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.342 2025/09/06 05:02:07 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.343 2025/09/17 04:37:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.342 2025/09/06 05:02:07 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.343 2025/09/17 04:37:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1138,9 +1138,9 @@ lfs_link(void *v)
 		return EROFS;
 	}
 
-        error = vn_lock(vp, LK_EXCLUSIVE);
-        if (error)
-                return error;
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error)
+		return error;
 	error = lfs_set_dirop(dvp, vp);
 	VOP_UNLOCK(vp);
 	if (error)
@@ -1677,15 +1677,15 @@ lfs_flush_dirops(struct lfs *fs)
 		}
 
 		/*
-		 * We might need to update these inodes again,
+		 * We might need to update files' inodes again;
 		 * for example, if they have data blocks to write.
 		 * Make sure that after this flush, they are still
 		 * marked IN_MODIFIED so that we don't forget to
 		 * write them.
 		 */
-		/* XXX only for non-directories? --KS */
 		mutex_enter(&lfs_lock);
-		LFS_SET_UINO(ip, IN_MODIFIED);
+		if (vp->v_type == VREG)
+			LFS_SET_UINO(ip, IN_MODIFIED);
 		mutex_exit(&lfs_lock);
 
 		vrele(vp);

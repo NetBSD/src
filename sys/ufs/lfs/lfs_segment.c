@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.292 2025/09/17 04:01:53 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.293 2025/09/17 04:37:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.292 2025/09/17 04:01:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.293 2025/09/17 04:37:47 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -112,6 +112,8 @@ MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 static void lfs_super_aiodone(struct buf *);
 static void lfs_cluster_aiodone(struct buf *);
+static int lfs_ungather(struct lfs *, struct segment *, struct vnode *,
+		      int (*match)(struct lfs *, struct buf *));
 
 /*
  * Determine if it's OK to start a partial in this segment, or if we need
@@ -611,6 +613,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	int um_error;
 
 	fs = VFSTOULFS(mp)->um_lfs;
+	DLOG((DLOG_SEG, "lfs_segwrite(fs=%p, flags=%x)\n", fs, flags));
 	ASSERT_MAYBE_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
@@ -652,6 +655,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	 * If we're cleaning we only write cleaning and ifile blocks, and
 	 * no dirops, since otherwise we'd risk corruption in a crash.
 	 */
+	DLOG((DLOG_SEG, "  do_ckp=%d sp->seg_flags=0x%x\n", do_ckp, sp->seg_flags));
 	if (sp->seg_flags & SEGM_CLEAN)
 		lfs_writevnodes(fs, mp, sp, VN_CLEAN);
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
@@ -842,6 +846,7 @@ lfs_segwrite(struct mount *mp, int flags)
 			++lfs_stats.ncheckpoints;
 	}
 	lfs_segunlock(fs);
+	DLOG((DLOG_SEG, "  returning 0\n"));
 	return (0);
 }
 
@@ -868,7 +873,16 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 				lfs_ss_getflags(fs, ssp) | (SS_DIROP|SS_CONT));
 	}
 
-	if (sp->seg_flags & SEGM_CLEAN) {
+	if ((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid == fs->lfs_rfpid) {
+		/*
+		 * When rolling forward, we never want to write data blocks,
+		 * except for the Ifile.
+		 */
+		if (vp == fs->lfs_ivnode)
+			lfs_gather(fs, sp, vp, lfs_match_data);
+		else
+			lfs_ungather(fs, sp, vp, lfs_match_data);
+	} else if (sp->seg_flags & SEGM_CLEAN) {
 		lfs_gather(fs, sp, vp, lfs_match_fake);
 		/*
 		 * For a file being flushed, we need to write *all* blocks.
@@ -1364,6 +1378,43 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 	sp->sum_bytes_left -= sizeof(int32_t) * blksinblk;
 	sp->seg_bytes_left -= bp->b_bcount;
 	return (0);
+}
+
+/* Similar to lfs_gather, but simply throws the buffers away. */
+static int
+lfs_ungather(struct lfs *fs, struct segment *sp, struct vnode *vp,
+    int (*match)(struct lfs *, struct buf *))
+{
+	struct buf *bp, *nbp;
+	int error = 0;
+
+	ASSERT_SEGLOCK(fs);
+	if (vp->v_type == VBLK)
+		return 0;
+	KASSERT(sp->vp == NULL);
+	sp->vp = vp;
+	mutex_enter(&bufcache_lock);
+
+restart:
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		KASSERT(bp->b_vp == vp);
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (!match(fs, bp))
+			continue;
+		error = bbusy(bp, false, hz / 10 + 1, NULL);
+		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
+			mutex_exit(&bufcache_lock);
+			return (error);
+		}
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
+	}
+
+	mutex_exit(&bufcache_lock);
+	sp->vp = NULL;
+	
+	return 0;
 }
 
 int
@@ -1871,6 +1922,9 @@ lfs_initseg(struct lfs *fs, uint16_t flags)
 
 	sp->start_bpp = sp->cbpp;
 
+	if ((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid == fs->lfs_rfpid)
+		flags |= SS_RFW;
+	
 	/* Set point to SEGSUM, initialize it. */
 	ssp = sp->segsum = sbp->b_data;
 	memset(ssp, 0, lfs_sb_getsumsize(fs));

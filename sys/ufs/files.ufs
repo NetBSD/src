@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.50 2022/11/28 04:52:04 chs Exp $
+#	$NetBSD: files.ufs,v 1.51 2025/09/17 04:37:47 perseant Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -73,7 +73,7 @@ file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
 file	ufs/lfs/lfs_pages.c		lfs
 file	ufs/lfs/lfs_rename.c		lfs
-file	ufs/lfs/lfs_rfw.c		lfs & lfs_kernel_rfw
+file	ufs/lfs/lfs_rfw.c		lfs
 file	ufs/lfs/lfs_segment.c		lfs
 file	ufs/lfs/lfs_subr.c		lfs
 file	ufs/lfs/lfs_syscalls.c		lfs

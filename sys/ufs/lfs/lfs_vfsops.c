@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.386 2025/09/17 04:01:53 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.387 2025/09/17 04:37:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.386 2025/09/17 04:01:53 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.387 2025/09/17 04:37:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -139,9 +139,7 @@ struct workqueue *lfs_cluster_wq = NULL;
 struct workqueue *lfs_super_wq = NULL;
 
 int lfs_do_flush = 0;
-#ifdef LFS_KERNEL_RFW
-int lfs_do_rfw = 0;
-#endif
+int lfs_do_rfw = 1;
 
 const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 	&lfs_vnodeop_opv_desc,
@@ -295,19 +293,24 @@ SYSCTL_SETUP(lfs_sysctl_setup, "lfs sysctl")
 		       SYSCTL_DESCR("Lazy Sync is ignored entirely"),
 		       NULL, 0, &lfs_ignore_lazy_sync, 0,
 		       CTL_VFS, 5, LFS_IGNORE_LAZY_SYNC, CTL_EOL);
-#ifdef LFS_KERNEL_RFW
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rfw",
 		       SYSCTL_DESCR("Use in-kernel roll-forward on mount"),
 		       NULL, 0, &lfs_do_rfw, 0,
 		       CTL_VFS, 5, LFS_DO_RFW, CTL_EOL);
-#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "rfw_limit",
+		       SYSCTL_DESCR("Maximum number of partial segments"
+				    " to roll forward"),
+		       NULL, 0, &lfs_rfw_max_psegs, 0,
+		       CTL_VFS, 5, LFS_RFW_LIMIT, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "stats",
-		       SYSCTL_DESCR("Debugging options"),
+		       SYSCTL_DESCR("Statistics"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 5, LFS_STATS, CTL_EOL);
 	for (i = 0; i < sizeof(struct lfs_stats) / sizeof(u_int); i++) {
@@ -318,21 +321,33 @@ SYSCTL_SETUP(lfs_sysctl_setup, "lfs sysctl")
 			       NULL, 0, &(((u_int *)&lfs_stats.segsused)[i]),
 			       0, CTL_VFS, 5, LFS_STATS, i, CTL_EOL);
 	}
-
+	
 #ifdef DEBUG
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "debug",
-		       SYSCTL_DESCR("Debugging options"),
+		       SYSCTL_DESCR("Debug options"),
 		       NULL, 0, NULL, 0,
-		       CTL_VFS, 5, LFS_DEBUGLOG, CTL_EOL);
+		       CTL_VFS, 5, LFS_DEBUG, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "freelist",
+		       SYSCTL_DESCR("Track consistency of inode freelist"),
+		       NULL, 0, &lfs_do_check_freelist, 0,
+		       CTL_VFS, 5, LFS_DEBUG, LFS_DEBUG_FREELIST, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "log",
+		       SYSCTL_DESCR("Verbose logging"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 5, LFS_DEBUG, LFS_DEBUG_LOG, CTL_EOL);
 	for (i = 0; i < DLOG_MAX; i++) {
 		sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			       CTLTYPE_INT, dlog_names[i].sname,
 			       SYSCTL_DESCR(dlog_names[i].lname),
 			       NULL, 0, &(lfs_debug_log_subsys[i]), 0,
-			       CTL_VFS, 5, LFS_DEBUGLOG, i, CTL_EOL);
+			       CTL_VFS, 5, LFS_DEBUG, LFS_DEBUG_LOG, i, CTL_EOL);
 	}
 #endif
 }
@@ -421,19 +436,19 @@ lfs_writerd(void *arg)
 		/*
 		 * If global state wants a flush, flush everything.
 		 */
-		if (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS ||
-			locked_queue_bytes > LFS_MAX_BYTES ||
+		if (lfs_do_flush || locked_queue_count + locked_queue_rcount > LFS_MAX_BUFS ||
+			locked_queue_bytes + locked_queue_rbytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
 
 			if (lfs_do_flush) {
 				DLOG((DLOG_FLUSH, "lfs_writerd: lfs_do_flush\n"));
 			}
-			if (locked_queue_count > LFS_MAX_BUFS) {
-				DLOG((DLOG_FLUSH, "lfs_writerd: lqc = %d, max %d\n",
+			if (locked_queue_count + locked_queue_rcount > LFS_MAX_BUFS) {
+				DLOG((DLOG_FLUSH, "lfs_writerd: lqc+lqrc = %d, max %d\n",
 				      locked_queue_count, LFS_MAX_BUFS));
 			}
-			if (locked_queue_bytes > LFS_MAX_BYTES) {
-				DLOG((DLOG_FLUSH, "lfs_writerd: lqb = %ld, max %ld\n",
+			if (locked_queue_bytes + locked_queue_rbytes > LFS_MAX_BYTES) {
+				DLOG((DLOG_FLUSH, "lfs_writerd: lqb + lqrb = %ld, max %ld\n",
 				      locked_queue_bytes, LFS_MAX_BYTES));
 			}
 			if (lfs_subsys_pages > LFS_MAX_PAGES) {
@@ -1218,6 +1233,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Free the orphans we discovered while ordering the freelist.  */
 	lfs_free_orphans(fs, orphan, norphan);
 
+	if (!ronly) {
+		/* Roll forward */
+		lfs_roll_forward(fs, mp, l);
+		lfs_reset_avail(fs);
+	}
+	fs->lfs_rfpid = 0;
+
 	/*
 	 * XXX: if the fs has quotas, quotas should be on even if
 	 * readonly. Otherwise you can't query the quota info!
@@ -1257,10 +1279,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			goto out;
 		}
 	}
-
-#ifdef LFS_KERNEL_RFW
-	lfs_roll_forward(fs, mp, l);
-#endif
 
 	/* If writing, sb is not clean; record in case of immediate crash */
 	if (!fs->lfs_ronly) {
@@ -1329,6 +1347,64 @@ out:
 	}
 
 	return (error);
+}
+
+void
+lfs_reset_avail(struct lfs *fs)
+{
+	daddr_t avail;
+	int sn, nclean, nsb, labelcorrect, curr, mfs;
+	SEGUSE *sup;
+	struct buf *bp;
+
+	KASSERT(!fs->lfs_ronly);
+
+	avail = nclean = nsb = labelcorrect = 0;
+	for (sn = 0; sn < lfs_sb_getnseg(fs); ++sn) {
+		LFS_SEGENTRY(sup, fs, sn, bp);
+
+		/* Count all clean segments and the remainder of this one */
+		if (!(sup->su_flags & SEGUSE_DIRTY)) {
+			++nclean;
+			avail += lfs_segtod(fs, 1);
+
+			/* Correct for label and superblock, if present */
+			if (sup->su_flags & SEGUSE_SUPERBLOCK)
+				++nsb;
+			if (sn == 0 && lfs_sb_getversion(fs) > 1
+			    && lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
+				labelcorrect = lfs_btofsb(fs, LFS_LABELPAD)
+					- lfs_sb_gets0addr(fs);
+		}
+
+		brelse(bp, 0);
+	}
+
+	/* Also may be available bytes in current seg */
+	sn = lfs_dtosn(fs, lfs_sb_getoffset(fs));
+	curr = lfs_sntod(fs, sn + 1) - lfs_sb_getoffset(fs);
+	/* But do not count minfreesegs */
+	mfs = lfs_segtod(fs, (lfs_sb_getminfreeseg(fs) -
+		(lfs_sb_getminfreeseg(fs) / 2)));
+
+	avail = nclean * lfs_segtod(fs, 1);
+	avail -= nsb * lfs_btofsb(fs, LFS_SBPAD);
+	avail -= labelcorrect;
+	avail += curr;
+	avail -= mfs;
+
+	DLOG((DLOG_AVAIL, "avail := %jd*%jd-%jd*%jd-%jd+%jd-%jd=%jd\n",
+	       (intmax_t)nclean,
+	       (intmax_t)lfs_segtod(fs, 1),
+	       (intmax_t)nsb,
+	       (intmax_t)lfs_btofsb(fs, LFS_SBPAD),
+	       (intmax_t)labelcorrect,
+	       (intmax_t)curr,
+	       (intmax_t)mfs,
+	       (intmax_t)avail));
+
+	lfs_sb_setavail(fs, avail);
+	lfs_sb_setnclean(fs, nclean);
 }
 
 /*
@@ -1790,13 +1866,15 @@ lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	struct lfs *fs;
 	int error, mode, gen;
 
+	ump = VFSTOULFS(mp);
+	fs = ump->um_lfs;
+
 	KASSERT(dvp != NULL || vap->va_fileid > 0);
-	KASSERT(dvp != NULL && dvp->v_mount == mp);
+	KASSERT((fs->lfs_flags & LFS_NOTYET) ||
+		(dvp != NULL && dvp->v_mount == mp));
 	KASSERT(vap->va_type != VNON);
 
 	*key_len = sizeof(ino);
-	ump = VFSTOULFS(mp);
-	fs = ump->um_lfs;
 	mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
 	/*
@@ -2252,7 +2330,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We can't write the pages, for whatever reason.
 	 * Clean up after ourselves, and make the caller try again.
 	 */
-	mutex_enter(vp->v_interlock);
 
 	/* Tell why we're here, if we know */
 	if (failreason != NULL) {
@@ -2264,6 +2341,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
  		      pgs[0]->offset, eof, npages));
 	}
 
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 
@@ -2289,7 +2367,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		      pg->loan_count));
 	}
 	uvm_page_unbusy(pgs, npages);
-	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 	return EAGAIN;
 }
 
