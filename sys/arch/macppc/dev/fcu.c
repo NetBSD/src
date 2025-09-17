@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.6 2025/07/01 14:13:13 macallan Exp $ */
+/* $NetBSD: fcu.c,v 1.7 2025/09/17 14:15:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.6 2025/07/01 14:13:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.7 2025/09/17 14:15:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 {
 	struct fcu_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	int phandle = devhandle_to_of(device_handle(self));
 	int i;
 
 	sc->sc_dev = self;
@@ -199,7 +200,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 	int ch;
 
 	sc->sc_nsensors = 0;
-	ch = OF_child(ia->ia_cookie);
+	ch = OF_child(phandle);
 	if (ch == 0) {
 		/* old style data, no individual nodes for fans, annoying */
 		char loc[256], tp[256], descr[32], type[32];
@@ -207,9 +208,9 @@ fcu_attach(device_t parent, device_t self, void *aux)
 		uint32_t id[16];
 		int num, lidx = 0, tidx = 0;
 
-		num = OF_getprop(ia->ia_cookie, "hwctrl-id", id, 64);
-		OF_getprop(ia->ia_cookie, "hwctrl-location", loc, 1024);
-		OF_getprop(ia->ia_cookie, "hwctrl-type", tp, 1024);
+		num = OF_getprop(phandle, "hwctrl-id", id, 64);
+		OF_getprop(phandle, "hwctrl-location", loc, 1024);
+		OF_getprop(phandle, "hwctrl-type", tp, 1024);
 		while (num > 0) {
 			envsys_data_t *s = &sc->sc_sensors[sc->sc_nsensors];
 
