@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.290 2025/09/04 03:55:49 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.291 2025/09/17 03:50:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.290 2025/09/04 03:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.291 2025/09/17 03:50:38 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1003,7 +1003,7 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 	 * though it will not belong to the new segment until that segment
 	 * is actually written.
 	 */
-	if (daddr != LFS_UNUSED_DADDR) {
+	if (!DADDR_IS_BAD(daddr)) {
 		u_int32_t oldsn = lfs_dtosn(fs, daddr);
 		int ndupino __diagused =
 		    (sp->seg_number == oldsn) ? sp->ndupino : 0;
@@ -1467,6 +1467,8 @@ loop:
  *
  * called with sp == NULL by roll-forwarding code.
  */
+#define NOT_ON_DISK(daddr) ((daddr) == 0 || (daddr) == UNASSIGNED || (daddr) == UNWRITTEN)
+	
 void
 lfs_update_single(struct lfs *fs, struct segment *sp,
     struct vnode *vp, daddr_t lbn, daddr_t ndaddr, int size)
@@ -1496,7 +1498,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	    case 0:
 		    ooff = lfs_dino_getdb(fs, ip->i_din, lbn);
 		    DEBUG_OOFF(0);
-		    if (ooff == UNWRITTEN)
+		    if (NOT_ON_DISK(ooff))
 			    lfs_dino_setblocks(fs, ip->i_din,
 				lfs_dino_getblocks(fs, ip->i_din) + bb);
 		    else {
@@ -1510,7 +1512,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	    case 1:
 		    ooff = lfs_dino_getib(fs, ip->i_din, a[0].in_off);
 		    DEBUG_OOFF(1);
-		    if (ooff == UNWRITTEN)
+		    if (NOT_ON_DISK(ooff))
 			    lfs_dino_setblocks(fs, ip->i_din,
 				lfs_dino_getblocks(fs, ip->i_din) + bb);
 		    lfs_dino_setib(fs, ip->i_din, a[0].in_off, ndaddr);
@@ -1524,7 +1526,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 
 		    ooff = lfs_iblock_get(fs, bp->b_data, ap->in_off);
 		    DEBUG_OOFF(num);
-		    if (ooff == UNWRITTEN)
+		    if (NOT_ON_DISK(ooff))
 			    lfs_dino_setblocks(fs, ip->i_din,
 				lfs_dino_getblocks(fs, ip->i_din) + bb);
 		    lfs_iblock_set(fs, bp->b_data, ap->in_off, ndaddr);

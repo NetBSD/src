@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.120 2025/09/04 03:55:49 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.121 2025/09/17 03:50:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -82,8 +82,11 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_FS_PAGETRIP	 5
 #define LFS_STATS	 6
 #define LFS_DO_RFW	 7
-#define LFS_DEBUGLOG	 8
-#define LFS_IGNORE_LAZY_SYNC	9
+#define LFS_DEBUG	 8
+#define LFS_DEBUG_FREELIST	1
+#define LFS_DEBUG_LOG	 	2
+#define LFS_IGNORE_LAZY_SYNC 9
+#define LFS_RFW_LIMIT	 10
 
 /* not ours */
 struct fid;
@@ -117,12 +120,14 @@ extern struct pool lfs_lbnentry_pool;   /* memory pool for balloc accounting */
 
 extern int locked_queue_count;
 extern long locked_queue_bytes;
+extern int lfs_do_check_freelist;
 extern int lfs_subsys_pages;
 extern int lfs_dirvcount;
 extern kmutex_t lfs_lock;
 extern int lfs_debug_log_subsys[];
 extern kcondvar_t lfs_writing_cv;
 extern kcondvar_t locked_queue_cv;
+extern int lfs_rfw_max_psegs;
 
 /* lfs_alloc.c */
 int lfs_valloc(struct vnode *, int, kauth_cred_t, ino_t *, int *);
@@ -132,6 +137,16 @@ void lfs_order_freelist(struct lfs *, ino_t **, size_t *);
 int lfs_extend_ifile(struct lfs *, kauth_cred_t);
 void lfs_orphan(struct lfs *, ino_t);
 void lfs_free_orphans(struct lfs *, ino_t *, size_t);
+#ifdef DEBUG
+void lfs_check_freelist(struct lfs *, const char *, int);
+# define DEBUG_CHECK_FREELIST(fs)					\
+	do {								\
+		if (lfs_do_check_freelist)				\
+			lfs_check_freelist((fs), __func__, __LINE__);	\
+	} while (0)
+#else /* ! DEBUG */
+# define DEBUG_CHECK_FREELIST(fs)
+#endif /* DEBUG */
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, kauth_cred_t, int, struct buf **);
@@ -176,7 +191,7 @@ void lfs_finalize_fs_seguse(struct lfs *);
 int lfs_rename(void *);
 
 /* lfs_rfw.c */
-int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
+int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **, union lfs_dinode *);
 void lfs_roll_forward(struct lfs *, struct mount *, struct lwp *);
 
 /* lfs_segment.c */
@@ -228,6 +243,7 @@ int lfs_markv(struct lwp *, fsid_t *, struct block_info *, int);
 VFS_PROTOS(lfs);
 void lfs_vinit(struct mount *, struct vnode **);
 int lfs_resize_fs(struct lfs *, int);
+void lfs_reset_avail(struct lfs *);
 
 /* lfs_vnops.c */
 void lfs_mark_vnode(struct vnode *);

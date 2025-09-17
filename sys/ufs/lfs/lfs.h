@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.209 2025/09/15 04:14:59 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.210 2025/09/17 03:50:38 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -620,12 +620,23 @@ __CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo32));
  * Index file inode entries.
  */
 
-/* magic value for daddrs */
+/* magic values for daddrs */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
+#ifdef DEBUG
+# define LFS_ILLEGAL_DADDR	-1	/* out-of-band daddr */
+# define DADDR_IS_BAD(daddr) \
+	((daddr) == LFS_UNUSED_DADDR || (daddr) == LFS_ILLEGAL_DADDR)
+#else /* ! DEBUG */
+# define LFS_ILLEGAL_DADDR	LFS_UNUSED_DADDR
 # define DADDR_IS_BAD(daddr) ((daddr) == LFS_UNUSED_DADDR)
+#endif /* ! DEBUG */
+
 /* magic value for if_nextfree -- indicate orphaned file */
 #define LFS_ORPHAN_NEXTFREE(fs) \
 	((fs)->lfs_is64 ? ~(uint64_t)0 : ~(uint32_t)0)
+
+#define INUM_IS_BAD(fs, ino) \
+	(ino == LFS_UNUSED_INUM || ino == LFS_ORPHAN_NEXTFREE(fs))
 
 typedef struct ifile64 IFILE64;
 struct ifile64 {

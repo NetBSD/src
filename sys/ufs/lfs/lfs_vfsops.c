@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.384 2025/09/02 00:24:10 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.385 2025/09/17 03:50:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.384 2025/09/02 00:24:10 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.385 2025/09/17 03:50:38 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1341,6 +1341,8 @@ lfs_unmount(struct mount *mp, int mntflags)
 	if (error)
 		return error;
 
+	DEBUG_CHECK_FREELIST(fs);
+
 	/* Finish with the Ifile, now that we're done with it */
 	vgone(fs->lfs_ivnode);
 
@@ -1665,7 +1667,7 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 		}
 
 		brelse(bp, 0);
-		if (daddr == LFS_UNUSED_DADDR)
+		if (DADDR_IS_BAD(daddr))
 			return (ENOENT);
 	}
 

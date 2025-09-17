@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.143 2025/09/15 18:49:16 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.144 2025/09/17 03:50:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.143 2025/09/15 18:49:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.144 2025/09/17 03:50:38 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.143 2025/09/15 18:49:16 perseant Exp
 #include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs_kernel.h>
+
+int lfs_do_check_freelist = 0;
 
 /* Constants for inode free bitmap */
 #define BMSHIFT 5	/* 2 ** 5 = 32 */
@@ -172,6 +174,9 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldhead);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 	LFS_GET_TAILFREE(fs, cip, cbp, &tail);
+	DLOG((DLOG_ALLOC, "oldhead=%jd, i=%jd, xmax=%jd,  oldtail=%jd\n",
+	      (intmax_t)oldhead, (intmax_t)i, (intmax_t)xmax,
+	      (intmax_t)tail));
 	if (tail == LFS_UNUSED_INUM) {
 		tail = xmax - 1;
 		LFS_PUT_TAILFREE(fs, cip, cbp, tail);
@@ -215,6 +220,8 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 		ifp_v1--;
 		ifp_v1->if_nextfree = oldhead;
 	}
+	DLOG((DLOG_ALLOC, "  now head=%jd tail=%jd\n",
+	      (intmax_t)xmax - lfs_sb_getifpb(fs), (intmax_t)tail));
 
 	/*
 	 * Write out the new block.
@@ -252,6 +259,8 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (!(fs->lfs_flags & LFS_NOTYET))
 		ASSERT_NO_SEGLOCK(fs);
 
+	DEBUG_CHECK_FREELIST(fs);
+
 	lfs_seglock(fs, SEGM_PROT);
 
 	/* Get the head of the freelist. */
@@ -286,7 +295,15 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	*gen = lfs_if_getversion(fs, ifp);
 
 	/* Done with ifile entry */
-	lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
+
+	/*
+	 * Note LFS_ILLEGAL_DADDR == LFS_UNUSED_DADDR
+	 * unless DEBUG is set.  In that case we
+	 * use that address to track inodes that have been
+	 * allocated (and so not on the free list) but do not
+	 * have proper disk addresses yet.
+	 */
+	lfs_if_setdaddr(fs, ifp, LFS_ILLEGAL_DADDR);
 	lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
 	LFS_BWRITE_LOG(bp);
 
@@ -317,6 +334,8 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 
 	/* done */
 	lfs_segunlock(fs);
+
+	DEBUG_CHECK_FREELIST(fs);
 	return 0;
 }
 
@@ -342,6 +361,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	if (!(fs->lfs_flags & LFS_NOTYET))
 		ASSERT_NO_SEGLOCK(fs);
 
+	DEBUG_CHECK_FREELIST(fs);
 
 	lfs_seglock(fs, SEGM_PROT);
 
@@ -426,6 +446,8 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	LFS_IENTRY(ifp, fs, ino, bp);
 	lfs_if_setversion(fs, ifp, vers);
 	lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
+	/* See comment in lfs_valloc */
+	lfs_if_setdaddr(fs, ifp, LFS_ILLEGAL_DADDR);
 	LFS_BWRITE_LOG(bp);
 
 	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM) {
@@ -448,6 +470,9 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 
 	/* done */
 	lfs_segunlock(fs);
+	
+	DEBUG_CHECK_FREELIST(fs);
+	
 	return 0;
 }
 
@@ -538,7 +563,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	struct inode *ip;
 	struct lfs *fs;
 	daddr_t old_iaddr;
-	ino_t otail;
 
 	/* Get the inode number and file system. */
 	ip = VTOI(vp);
@@ -558,6 +582,8 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(vp->v_interlock);
 
 	lfs_seglock(fs, SEGM_PROT);
+
+	DEBUG_CHECK_FREELIST(fs);
 
 	/*
 	 * If the inode was in a dirop, it isn't now.
@@ -630,7 +656,9 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	/* bump the version */
 	lfs_if_setversion(fs, ifp, lfs_if_getversion(fs, ifp) + 1);
 
+#if 0
 	if (lfs_sb_getversion(fs) == 1) {
+#endif		
 		ino_t nextfree;
 
 		/* insert on freelist */
@@ -640,8 +668,9 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 
 		/* write the ifile block */
 		(void) LFS_BWRITE_LOG(bp); /* Ifile */
+#if 0
 	} else {
-		ino_t tino, onf;
+		ino_t tino, onf, otail;
 
 		/*
 		 * Clear the freelist next pointer and write the ifile
@@ -719,6 +748,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 			}
 		}
 	}
+#endif
 	/* XXX: shouldn't this check be further up *before* we trash the fs? */
 	KASSERTMSG((ino != LFS_UNUSED_INUM), "inode 0 freed");
 
@@ -751,6 +781,8 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 
 	lfs_segunlock(fs);
 
+	DEBUG_CHECK_FREELIST(fs);
+
 	return (0);
 }
 
@@ -773,6 +805,8 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_seglock(fs, SEGM_PROT);
+
+	DEBUG_CHECK_FREELIST(fs);
 
 	/* largest inode on fs */
 	maxino = ((fs->lfs_ivnode->v_size >> lfs_sb_getbshift(fs)) -
@@ -894,6 +928,8 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 
 	*orphanp = orphan;
 	*norphanp = norphan;
+
+	DEBUG_CHECK_FREELIST(fs);
 }
 
 /*
@@ -926,6 +962,8 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 {
 	size_t i;
 
+	DEBUG_CHECK_FREELIST(fs);
+	
 	for (i = 0; i < norphan; i++) {
 		ino_t ino = orphan[i];
 		unsigned segno;
@@ -991,4 +1029,147 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 
 	if (orphan)
 		kmem_free(orphan, sizeof(orphan[0]) * norphan);
+
+	DEBUG_CHECK_FREELIST(fs);
 }
+
+#ifdef DEBUG
+static void dump_freelist(struct lfs *);
+
+void
+lfs_check_freelist(struct lfs *fs, const char *func, int line)
+{
+	ino_t i, headino, maxino, thisino, tailino, nextfree;
+	int nfree, count;
+	struct inode *ip;
+	IFILE *ifp;
+	CLEANERINFO *cip;
+	struct buf *bp;
+
+	if (!lfs_do_check_freelist)
+		return;
+
+	lfs_seglock(fs, SEGM_PROT);
+	
+	ip = VTOI(fs->lfs_ivnode);
+	maxino = ((ip->i_size >> lfs_sb_getbshift(fs)) - lfs_sb_getcleansz(fs) -
+		  lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs);
+
+	/*
+	 * First, check every node.  Every inode that doesn't have a disk
+	 * address must have a nextfree pointer, the only exception
+	 * being the tail of the free list.
+	 */
+	LFS_GET_TAILFREE(fs, cip, bp, &tailino);
+	nfree = 0;
+	for (i = LFS_IFILE_INUM + 1; i < maxino; ++i) {
+		LFS_IENTRY(ifp, fs, i, bp);
+		if (lfs_if_getdaddr(fs, ifp) == LFS_UNUSED_DADDR) {
+			++nfree;
+			if (lfs_if_getnextfree(fs, ifp) == LFS_UNUSED_INUM
+			    && i != tailino) {
+				brelse(bp, 0);
+				dump_freelist(fs);
+				printf("At %s:%d:\n", func, line);
+				printf("tailino=%jd, but ino=%jd"
+				       " neither daddr nor nextfree\n",
+				       (intmax_t)tailino, (intmax_t)i);
+				panic("Free list leak\n");
+			}
+		}
+		if (i == tailino
+		    || (!INUM_IS_BAD(fs, lfs_if_getnextfree(fs, ifp)))) {
+			if (lfs_if_getdaddr(fs, ifp) != LFS_UNUSED_DADDR) {
+				brelse(bp, 0);
+				dump_freelist(fs);
+				printf("At %s:%d:\n", func, line);
+				printf("with tailino=%jd, ino=%jd"
+				       " daddr=0x%jx, nextfree=0x%jx\n",
+				       (intmax_t)tailino,
+				       (intmax_t)i,
+				       (intmax_t)lfs_if_getdaddr(fs, ifp),
+				       (intmax_t)lfs_if_getnextfree(fs, ifp));
+				panic("In use inode on free list\n");
+			}
+		}
+		brelse(bp, 0);
+	}
+
+	/*
+	 * Walk the free list from head to tail.  We should end up with
+	 * the same number of free inodes as we counted above.
+	 */
+	
+	/* Get head of inode freelist */
+	LFS_GET_HEADFREE(fs, cip, bp, &headino);
+	count = 0;
+	thisino = headino;
+	while (thisino != LFS_UNUSED_INUM) {
+		if (++count > maxino)
+			break;
+		/* read this ifile entry */
+		LFS_IENTRY(ifp, fs, thisino, bp);
+		nextfree = lfs_if_getnextfree(fs, ifp);
+		brelse(bp, 0);
+		if (nextfree == LFS_UNUSED_INUM)
+			break;
+		thisino = nextfree;
+	}
+	if (count > maxino) {
+		dump_freelist(fs);
+		printf("At %s:%d:\n", func, line);
+		printf("count=%jd, maxino=%jd:\n",
+		       (intmax_t)count, (intmax_t)maxino);
+		panic("loop in free list");
+	}
+	if (count != nfree) {
+		dump_freelist(fs);
+		printf("At %s:%d:\n", func, line);
+		printf("%d inodes without addresses, %d on free list\n",
+		       nfree, count);
+		panic("Bad free list count");
+	}
+	if (thisino != tailino) {
+		dump_freelist(fs);
+		printf("At %s:%d:\n", func, line);
+		printf("Last ino %jd but tail %jd\n",
+		       (intmax_t)thisino, (intmax_t)tailino);
+		panic("Bad tail");
+	}
+	lfs_segunlock(fs);
+}
+
+static void
+dump_freelist(struct lfs *fs)
+{
+	ino_t i, ni, maxino, headino, tailino;
+	struct inode *ip;
+	IFILE *ifp;
+	CLEANERINFO *cip;
+	struct buf *bp;
+	int count;
+
+	ip = VTOI(fs->lfs_ivnode);
+	maxino = ((ip->i_size >> lfs_sb_getbshift(fs)) - lfs_sb_getcleansz(fs) -
+		  lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs);
+
+	LFS_GET_HEADFREE(fs, cip, bp, &headino);
+	printf("  head: %jd\n", (intmax_t)headino);
+	LFS_GET_TAILFREE(fs, cip, bp, &tailino);
+	printf("  tail: %jd\n", (intmax_t)tailino);
+	count = 0;
+	for (i = LFS_IFILE_INUM + 1; i < maxino; ++i) {
+		LFS_IENTRY(ifp, fs, i, bp);
+		ni = lfs_if_getnextfree(fs, ifp);
+		if (ni != LFS_UNUSED_DADDR) {
+			printf("%jd -> %jd\n",
+			       (intmax_t)i, (intmax_t)ni);
+			if (++count > 30) {
+				printf("...\n");
+				i = maxino; /* terminate loop */
+			}
+		}
+		brelse(bp, 0);
+	}
+}
+#endif /* DEBUG */
