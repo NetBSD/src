@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.20 2021/08/07 16:19:11 thorpej Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.21 2025/09/17 13:49:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.20 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.21 2025/09/17 13:49:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,8 +335,13 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
 	sc->sc_tag = ia->ia_tag;
+
+#ifdef FDT
+	if (devhandle_type(device_handle(self)) == DEVHANDLE_TYPE_OF) {
+		sc->sc_phandle = devhandle_to_of(device_handle(self));
+	}
+#endif
 
 	dict = device_properties(self);
 	if (prop_dictionary_get_int32(dict, "isel", &isel)) {

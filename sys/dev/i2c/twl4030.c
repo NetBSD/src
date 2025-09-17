@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.8 2025/09/08 13:06:16 thorpej Exp $ */
+/* $NetBSD: twl4030.c,v 1.9 2025/09/17 13:49:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.8 2025/09/08 13:06:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.9 2025/09/17 13:49:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,27 +378,32 @@ twl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
 	sc->sc_npins = TWL_PIN_COUNT;
 
 	aprint_naive("\n");
 	aprint_normal(": TWL4030");
 
 #ifdef FDT
-	for (int child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
-		if (of_compatible_match(child, gpio_compat_data)) {
-			aprint_normal(", GPIO");
-			twl_gpio_attach(sc, child);
-		} else if (of_compatible_match(child, rtc_compat_data)) {
-			aprint_normal(", RTC");
-			twl_rtc_attach(sc, child);
+	if (devhandle_type(device_handle(self)) == DEVHANDLE_TYPE_OF) {
+		sc->sc_phandle = devhandle_to_of(device_handle(self));
+		for (int child = OF_child(sc->sc_phandle); child;
+		     child = OF_peer(child)) {
+			if (of_compatible_match(child, gpio_compat_data)) {
+				aprint_normal(", GPIO");
+				twl_gpio_attach(sc, child);
+			} else if (of_compatible_match(child,
+						       rtc_compat_data)) {
+				aprint_normal(", RTC");
+				twl_rtc_attach(sc, child);
+			}
 		}
-	}
-#else
-	aprint_normal("\n");
-	twl_gpio_attach(sc, -1);
-	twl_rtc_attach(sc, -1);
+	} else
 #endif
+	{
+		aprint_normal("\n");
+		twl_gpio_attach(sc, -1);
+		twl_rtc_attach(sc, -1);
+	}
 
 	I2C_LOCK(sc);
 	idcode = INT_READ(sc, IDCODE_7_0);

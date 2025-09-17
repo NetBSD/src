@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.17 2021/08/07 16:19:11 thorpej Exp $ */
+/* $NetBSD: tcakp.c,v 1.18 2025/09/17 13:49:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.17 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.18 2025/09/17 13:49:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,31 +380,33 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
 
 	aprint_naive("\n");
 	aprint_normal(": TCA8418\n");
 
 #ifdef FDT
-	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, 0,
-	    tcakp_intr, sc);
-	/*
-	 * XXX This is an edge-sensitive interrupt, but we'd like to
-	 * be able to check at run-time just to be sure.
-	 */
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
-		return;
+	if (devhandle_type(device_handle(self)) == DEVHANDLE_TYPE_OF) {
+		sc->sc_phandle = devhandle_to_of(device_handle(self));
+		sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, 0,
+		    tcakp_intr, sc);
+		/*
+		 * XXX This is an edge-sensitive interrupt, but we'd like to
+		 * be able to check at run-time just to be sure.
+		 */
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to establish interrupt\n");
+			return;
+		}
+		sc->sc_sih =
+		    softint_establish(SOFTINT_SERIAL, tcakp_softintr, sc);
+		if (sc->sc_sih == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to establish soft interrupt\n");
+			return;
+		}
+		tcakp_configure_fdt(sc);
 	}
-
-	sc->sc_sih = softint_establish(SOFTINT_SERIAL, tcakp_softintr, sc);
-	if (sc->sc_sih == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to establish soft interrupt\n");
-		return;
-	}
-
-	tcakp_configure_fdt(sc);
 #endif
 
 	if (tcakp_init(sc) != 0)

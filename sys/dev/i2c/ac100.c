@@ -1,4 +1,4 @@
-/* $NetBSD: ac100.c,v 1.10 2025/09/08 13:06:16 thorpej Exp $ */
+/* $NetBSD: ac100.c,v 1.11 2025/09/17 13:49:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.10 2025/09/08 13:06:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac100.c,v 1.11 2025/09/17 13:49:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,10 @@ ac100_attach(device_t parent, device_t self, void *aux)
 	iic_release_bus(sc->sc_i2c, 0);
 
 #ifdef FDT
-	fdt_add_bus(self, (int)ia->ia_cookie, NULL);
+	if (devhandle_type(device_handle(self)) == DEVHANDLE_TYPE_OF) {
+		int phandle = devhandle_to_of(device_handle(self));
+		fdt_add_bus(self, phandle, NULL);
+	}
 #endif
 }
 
