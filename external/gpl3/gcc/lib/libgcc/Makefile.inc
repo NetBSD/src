@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.55 2025/09/10 23:26:10 nat Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2025/09/17 19:08:49 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
@@ -243,11 +243,33 @@ G_LIB2ADD+=	${GNUHOSTDIST}/libgcc/config/aarch64/lse-init.c
 MSSE_FILES=	fixhfti.c fixunshfti.c floattihf.c floatunstihf.c
 .endif
 
-.if ${LIBGCC_MACHINE_ARCH} == "i386"
-MSSE_FILES=	extendhfsf2.c extendhfdf2.c extendhftf2.c extendhfxf2.c \
-		truncsfhf2.c truncdfhf2.c truncxfhf2.c trunctfhf2.c \
-		eqhf2.c _divhc3.c _mulhc3.c
-
+.if ${LIBGCC_MACHINE_ARCH} == "i386" # {
+MSSE_FILES= \
+	extendhfsf2.c \
+	extendhfdf2.c \
+	extendhftf2.c \
+	extendhfxf2.c \
+	extendbfsf2.c \
+	truncsfhf2.c \
+	truncdfhf2.c \
+	truncxfhf2.c \
+	trunctfhf2.c \
+	truncsfbf2.c \
+	truncdfbf2.c \
+	truncxfbf2.c \
+	trunctfbf2.c \
+	trunchfbf2.c \
+	floatbitintbf.c \
+	floatbitinthf.c \
+	eqhf2.c \
+	_divhc3.c \
+	_mulhc3.c \
+	_hf_to_sd.c\
+	_hf_to_dd.c \
+	_hf_to_td.c \
+	_sd_to_hf.c \
+	_dd_to_hf.c \
+	_td_to_hf.c 
 .endif # } i386
 
 .for _f in ${MSSE_FILES}
