@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.121 2025/09/17 03:50:38 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.122 2025/09/17 04:01:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
-#include <sys/workqueue.h>
 
 MALLOC_DECLARE(M_SEGMENT);
 #endif
@@ -99,6 +98,7 @@ struct uio;
 struct mbuf;
 struct buf;
 struct vnode;
+struct work;
 
 /* ours */
 struct inode;
@@ -214,10 +214,12 @@ int lfs_match_data(struct lfs *, struct buf *);
 int lfs_match_indir(struct lfs *, struct buf *);
 int lfs_match_dindir(struct lfs *, struct buf *);
 int lfs_match_tindir(struct lfs *, struct buf *);
-void lfs_free_aiodone(struct buf *);
 void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
 void lfs_release_finfo(struct lfs *fs);
-void lfs_cluster_wq(struct work *wk, void *arg);
+void lfs_cluster_work(struct work *wk, void *arg);
+void lfs_super_work(struct work *wk, void *arg);
+void lfs_free_work(struct work *wk, void *arg);
+void lfs_free_aiodone(struct buf *);
 
 /* lfs_subr.c */
 void lfs_setup_resblks(struct lfs *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.291 2025/09/17 03:50:38 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.292 2025/09/17 04:01:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.291 2025/09/17 03:50:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.292 2025/09/17 04:01:53 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -147,7 +147,8 @@ int	lfs_writeindir = 1;		/* whether to flush indir on non-ckp */
 int	lfs_clean_vnhead = 0;		/* Allow freeing to head of vn list */
 int	lfs_dirvcount = 0;		/* # active dirops */
 
-extern struct workqueue *lfs_wq;
+extern struct workqueue *lfs_cluster_wq;
+extern struct workqueue *lfs_super_wq;
 
 /* Statistics Counters */
 int lfs_dostats = 1;
@@ -2525,20 +2526,24 @@ void
 lfs_free_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
-
-	KERNEL_LOCK(1, curlwp);
+	
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_freebuf(fs, bp);
-	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
 lfs_super_aiodone(struct buf *bp)
 {
+	workqueue_enqueue(lfs_super_wq, (struct work *)bp, NULL);
+}
+
+void
+lfs_super_work(struct work *wk, void *arg)
+{
+	struct buf *bp = (struct buf *)wk;
 	struct lfs *fs;
 
-	KERNEL_LOCK(1, curlwp);
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
@@ -2548,17 +2553,16 @@ lfs_super_aiodone(struct buf *bp)
 	wakeup(&fs->lfs_sbactive);
 	mutex_exit(&lfs_lock);
 	lfs_freebuf(fs, bp);
-	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
 lfs_cluster_aiodone(struct buf *bp)
 {
-	workqueue_enqueue(lfs_wq, (struct work *)bp, NULL);
+	workqueue_enqueue(lfs_cluster_wq, (struct work *)bp, NULL);
 }
 
 void
-lfs_cluster_wq(struct work *wk, void *arg)
+lfs_cluster_work(struct work *wk, void *arg)
 {
 	struct buf *bp = (struct buf *)wk;
 	struct lfs_cluster *cl;
