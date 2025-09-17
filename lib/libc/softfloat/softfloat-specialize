@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.12 2025/09/10 23:07:39 nat Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.13 2025/09/17 11:37:38 nat Exp $	*/
 
 /* This is a derivative work. */
 
@@ -420,7 +420,7 @@ NaN; otherwise returns 0.
 flag floatx80_is_nan( floatx80 a )
 {
 
-    return ( ( a.high & 0x7FFF ) == 0x7FFF ) && (bits64) ( a.low<<1 );
+    return (((a.high >> X80SHIFT) & 0x7FFF) == 0x7FFF) && (bits64)(a.low<<1);
 
 }
 
@@ -436,7 +436,7 @@ flag floatx80_is_signaling_nan( floatx80 a )
 
     aLow = a.low & ~ LIT64( 0x4000000000000000 );
     return
-           ( ( a.high & 0x7FFF ) == 0x7FFF )
+           ( ( (a.high >> X80SHIFT) & 0x7FFF ) == 0x7FFF )
         && (bits64) ( aLow<<1 )
         && ( a.low == aLow );
 

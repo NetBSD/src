@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.10 2025/09/17 11:32:06 nat Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.11 2025/09/17 11:37:38 nat Exp $	*/
 
 /* This is a derivative work. */
 
@@ -56,6 +56,8 @@ Software IEC/IEEE floating-point types.
 typedef unsigned int float32;
 typedef unsigned long long float64;
 #ifdef FLOATX80
+#define X80SHIFT	16
+
 typedef struct {
     unsigned long high;
     unsigned long long low;

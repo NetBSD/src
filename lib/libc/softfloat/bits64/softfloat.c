@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.15 2024/02/27 15:14:15 christos Exp $ */
+/* $NetBSD: softfloat.c,v 1.16 2025/09/17 11:37:38 nat Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.15 2024/02/27 15:14:15 christos Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.16 2025/09/17 11:37:38 nat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -67,6 +67,9 @@ __RCSID("$NetBSD: softfloat.c,v 1.15 2024/02/27 15:14:15 christos Exp $");
 #define FLOAT64_MANGLE(a)	(a)
 #endif
 
+#ifndef X80SHIFT
+#define X80SHIFT		0
+#endif
 /*
 -------------------------------------------------------------------------------
 Floating-point rounding mode, extended double-precision rounding precision,
@@ -577,7 +580,7 @@ value `a'.
 INLINE int32 extractFloatx80Exp( floatx80 a )
 {
 
-    return a.high & 0x7FFF;
+    return (a.high>>X80SHIFT) & 0x7FFF;
 
 }
 
@@ -590,7 +593,7 @@ Returns the sign bit of the extended double-precision floating-point value
 INLINE flag extractFloatx80Sign( floatx80 a )
 {
 
-    return a.high>>15;
+    return a.high>>(15 + X80SHIFT);
 
 }
 
@@ -623,8 +626,8 @@ INLINE floatx80 packFloatx80( flag zSign, int32 zExp, bits64 zSig )
 {
     floatx80 z;
 
-    z.low = zSig;
-    z.high = ( ( (bits16) zSign )<<15 ) + zExp;
+    z.low = (bits64)zSig;
+    z.high = (bits32)( ( ( (bits32) zSign )<<15 ) + zExp )<<X80SHIFT;
     return z;
 
 }
@@ -3424,7 +3427,7 @@ int64 floatx80_to_int64_round_to_zero( floatx80 a )
     shiftCount = aExp - 0x403E;
     if ( 0 <= shiftCount ) {
         aSig &= LIT64( 0x7FFFFFFFFFFFFFFF );
-        if ( ( a.high != 0xC03E ) || aSig ) {
+        if ( ( (a.high>>X80SHIFT) != 0xC03E ) || aSig ) {
             float_raise( float_flag_invalid );
             if ( ! aSign || ( ( aExp == 0x7FFF ) && aSig ) ) {
                 return LIT64( 0x7FFFFFFFFFFFFFFF );
@@ -3603,6 +3606,7 @@ floatx80 floatx80_round_to_int( floatx80 a )
         ++z.high;
         z.low = LIT64( 0x8000000000000000 );
     }
+    z.high <<= X80SHIFT;
     if ( z.low != a.low ) set_float_exception_inexact_flag();
     return z;
 
@@ -3704,7 +3708,7 @@ static floatx80 subFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
         }
         float_raise( float_flag_invalid );
         z.low = floatx80_default_nan_low;
-        z.high = floatx80_default_nan_high;
+        z.high = floatx80_default_nan_high<<X80SHIFT;
         return z;
     }
     if ( aExp == 0 ) {
@@ -3823,7 +3827,7 @@ floatx80 floatx80_mul( floatx80 a, floatx80 b )
  invalid:
             float_raise( float_flag_invalid );
             z.low = floatx80_default_nan_low;
-            z.high = floatx80_default_nan_high;
+            z.high = floatx80_default_nan_high<<X80SHIFT;
             return z;
         }
         return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
@@ -3888,7 +3892,7 @@ floatx80 floatx80_div( floatx80 a, floatx80 b )
  invalid:
                 float_raise( float_flag_invalid );
                 z.low = floatx80_default_nan_low;
-                z.high = floatx80_default_nan_high;
+                z.high = floatx80_default_nan_high<<X80SHIFT;
                 return z;
             }
             float_raise( float_flag_divbyzero );
@@ -3966,7 +3970,7 @@ floatx80 floatx80_rem( floatx80 a, floatx80 b )
  invalid:
             float_raise( float_flag_invalid );
             z.low = floatx80_default_nan_low;
-            z.high = floatx80_default_nan_high;
+            z.high = floatx80_default_nan_high<<X80SHIFT;
             return z;
         }
         normalizeFloatx80Subnormal( bSig, &bExp, &bSig );
@@ -4055,7 +4059,7 @@ floatx80 floatx80_sqrt( floatx80 a )
  invalid:
         float_raise( float_flag_invalid );
         z.low = floatx80_default_nan_low;
-        z.high = floatx80_default_nan_high;
+        z.high = floatx80_default_nan_high<<X80SHIFT;
         return z;
     }
     if ( aExp == 0 ) {
@@ -4124,8 +4128,8 @@ flag floatx80_eq( floatx80 a, floatx80 b )
            ( a.low == b.low )
         && (    ( a.high == b.high )
              || (    ( a.low == 0 )
-                  && ( (bits16) ( ( a.high | b.high )<<1 ) == 0 ) )
-           );
+                  && ( (bits16) ( ((bits32)( a.high | b.high )>>X80SHIFT)<<1 )
+	   == 0 ) ) );
 
 }
 
@@ -4154,12 +4158,12 @@ flag floatx80_le( floatx80 a, floatx80 b )
     if ( aSign != bSign ) {
         return
                aSign
-            || (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
-                 == 0 );
+            || (    ( ( (bits16) ( ((bits32)( a.high | b.high )>>X80SHIFT)
+	         <<1 ) ) | a.low | b.low ) == 0 );
     }
     return
-          aSign ? le128( b.high, b.low, a.high, a.low )
-        : le128( a.high, a.low, b.high, b.low );
+          aSign ? le128( b.high>>X80SHIFT, b.low, a.high>>X80SHIFT, a.low )
+        : le128( a.high>>X80SHIFT, a.low, b.high>>X80SHIFT, b.low );
 
 }
 
@@ -4188,12 +4192,12 @@ flag floatx80_lt( floatx80 a, floatx80 b )
     if ( aSign != bSign ) {
         return
                aSign
-            && (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
-                 != 0 );
+            && (    ( ( (bits16) ( ((bits32)( a.high | b.high )>>X80SHIFT)
+		 <<1 ) ) | a.low | b.low ) != 0 );
     }
     return
-          aSign ? lt128( b.high, b.low, a.high, a.low )
-        : lt128( a.high, a.low, b.high, b.low );
+          aSign ? lt128( b.high>>X80SHIFT, b.low, a.high>>X80SHIFT, a.low )
+        : lt128( a.high>>X80SHIFT, a.low, b.high>>X80SHIFT, b.low );
 
 }
 
@@ -4218,10 +4222,10 @@ flag floatx80_eq_signaling( floatx80 a, floatx80 b )
     }
     return
            ( a.low == b.low )
-        && (    ( a.high == b.high )
+        && (    ( (a.high>>X80SHIFT) == (b.high>>X80SHIFT) )
              || (    ( a.low == 0 )
-                  && ( (bits16) ( ( a.high | b.high )<<1 ) == 0 ) )
-           );
+                  && ( (bits16) ( ((bits32)( a.high | b.high )>>X80SHIFT)<<1 )
+	    == 0 ) ) );
 
 }
 
@@ -4253,12 +4257,12 @@ flag floatx80_le_quiet( floatx80 a, floatx80 b )
     if ( aSign != bSign ) {
         return
                aSign
-            || (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
-                 == 0 );
+            || (    ( ( (bits16) ( ((bits32)( a.high | b.high )>>X80SHIFT)<<1
+		 ) ) | a.low | b.low ) == 0 );
     }
     return
-          aSign ? le128( b.high, b.low, a.high, a.low )
-        : le128( a.high, a.low, b.high, b.low );
+          aSign ? le128( b.high>>X80SHIFT, b.low, a.high>>X80SHIFT, a.low )
+        : le128( a.high>>X80SHIFT, a.low, b.high>>X80SHIFT, b.low );
 
 }
 
@@ -4290,12 +4294,12 @@ flag floatx80_lt_quiet( floatx80 a, floatx80 b )
     if ( aSign != bSign ) {
         return
                aSign
-            && (    ( ( (bits16) ( ( a.high | b.high )<<1 ) ) | a.low | b.low )
-                 != 0 );
+            && (    ( ( (bits16) ( ((bits32)( a.high | b.high )>>X80SHIFT)<<1 )
+		 ) | a.low | b.low ) != 0 );
     }
     return
-          aSign ? lt128( b.high, b.low, a.high, a.low )
-        : lt128( a.high, a.low, b.high, b.low );
+          aSign ? lt128( b.high>>X80SHIFT, b.low, a.high>>X80SHIFT, a.low )
+        : lt128( a.high>>X80SHIFT, a.low, b.high>>X80SHIFT, b.low );
 
 }
 
