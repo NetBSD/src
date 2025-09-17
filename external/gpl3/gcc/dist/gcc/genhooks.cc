@@ -34,7 +34,7 @@ static struct hook_desc hook_array[] = {
 #include "target.def"
 #include "c-family/c-target.def"
 #include "common/common-target.def"
-#if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
+#if 0 /* XXXMRG D and Rust portions not included in src. */
 #include "d/d-target.def"
 #include "rust/rust-target.def"
 #endif
