@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.694 2025/09/14 14:53:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.695 2025/09/17 19:25:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.694 2025/09/14 14:53:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.695 2025/09/17 19:25:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3226,11 +3226,9 @@ has_side_effect(const tnode_t *tn) /* NOLINT(misc-no-recursion) */
 	if (op == CVT && tn->tn_type->t_tspec == VOID)
 		return has_side_effect(tn->u.ops.left);
 
-	/* XXX: Why not has_side_effect(tn->u.ops.left) as well? */
 	if (op == LOGAND || op == LOGOR)
 		return has_side_effect(tn->u.ops.right);
 
-	/* XXX: Why not has_side_effect(tn->u.ops.left) as well? */
 	if (op == QUEST)
 		return has_side_effect(tn->u.ops.right);
 
