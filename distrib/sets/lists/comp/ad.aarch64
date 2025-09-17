@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.59 2025/07/19 18:29:18 christos Exp $
+# $NetBSD: ad.aarch64,v 1.60 2025/09/17 23:44:27 mrg Exp $
 #
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
@@ -187,10 +187,10 @@
 ./usr/lib/eabihf/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabihf/libarm_p.a			comp-c-proflib		compat,profile,llvm
 ./usr/lib/eabihf/libarm_pic.a			comp-c-piclib		compat,pic,picinstall,llvm
-./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds,gcc=12
-./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcccmds,gcc=12
-./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcccmds,gcc=12
-./usr/lib/libtsan_pic.a				comp-c-piclib		arch64,picinstall,cxx,gcccmds,gcc=12
+./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds
+./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcccmds
+./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcccmds
+./usr/lib/libtsan_pic.a				comp-c-piclib		arch64,picinstall,cxx,gcccmds
 ./usr/lib/oabi/libarm.a				comp-obsolete		obsolete
 ./usr/lib/oabi/libarm.so			base-obsolete		obsolete
 ./usr/lib/oabi/libarm_p.a			comp-obsolete		obsolete

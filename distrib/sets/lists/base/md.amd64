@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.303 2025/07/17 13:38:01 christos Exp $
+# $NetBSD: md.amd64,v 1.304 2025/09/17 23:44:27 mrg Exp $
 #
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
@@ -9,6 +9,8 @@
 ./usr/lib/libtsan.so.1.0			base-sys-shlib		cxx,gcccmds,gcc=10
 ./usr/lib/libtsan.so.2				base-sys-shlib		cxx,gcccmds,gcc=12
 ./usr/lib/libtsan.so.2.0			base-sys-shlib		cxx,gcccmds,gcc=12
+./usr/lib/libtsan.so.3				base-sys-shlib		cxx,gcccmds,gcc=14
+./usr/lib/libtsan.so.3.0			base-sys-shlib		cxx,gcccmds,gcc=14
 ./usr/lib/libx86_64.so				base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0			base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib		pic

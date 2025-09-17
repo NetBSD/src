@@ -1,9 +1,11 @@
-# $NetBSD: ad.aarch64,v 1.43 2025/06/24 16:23:38 christos Exp $
+# $NetBSD: ad.aarch64,v 1.44 2025/09/17 23:44:28 mrg Exp $
 #
 ./usr/lib/eabi/libc_vfp_g.a					comp-sys-debug	compat,debuglib,softfloat
 ./usr/lib/libtsan_g.a						comp-c-debuglib	debuglib,arch64,cxx,gcccmds,gcc=12
+./usr/lib/libtsan_g.a						comp-c-debuglib	debuglib,arch64,cxx,gcccmds,gcc=14
 ./usr/libdata/debug/libexec/ld.elf_so-oabi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/libtsan.so.2.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=12
+./usr/libdata/debug/usr/lib/libtsan.so.3.0.debug		comp-sys-debug	debug,cxx,gcccmds,gcc=14
 ./usr/libdata/debug/usr/libexec/ld.elf_so-oabi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/ofctl.debug			comp-util-debug		debug
 ./usr/libdata/debug/usr/sbin/tpctl.debug			comp-sysutil-debug	debug
