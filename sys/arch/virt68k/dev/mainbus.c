@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2025/09/17 15:16:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2025/09/17 15:16:50 thorpej Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE
 #define _VIRT68K_BUS_SPACE_PRIVATE
@@ -265,22 +265,16 @@ int
 mainbus_compatible_match(const struct mainbus_attach_args * const ma,
    const struct device_compatible_entry * driver_compats)
 {
-	const char *device_compats[1] = {
-		[0] = ma->ma_compatible,
-	};
-	return device_compatible_match(device_compats,
-	    __arraycount(device_compats), driver_compats);
+	return device_compatible_match_strlist(ma->ma_compatible,
+	    strlen(ma->ma_compatible) + 1, driver_compats);
 }
 
 const struct device_compatible_entry *
 mainbus_compatible_lookup(const struct mainbus_attach_args * const ma,
     const struct device_compatible_entry * driver_compats)
 {
-	const char *device_compats[1] = {
-		[0] = ma->ma_compatible,
-	};
-	return device_compatible_lookup(device_compats,
-	    __arraycount(device_compats), driver_compats);
+	return device_compatible_lookup_strlist(ma->ma_compatible,
+	    strlen(ma->ma_compatible) + 1, driver_compats);
 }
 
 CFATTACH_DECL_NEW(mainbus, 0,
