@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.10 2025/09/16 13:09:13 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.11 2025/09/17 13:56:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.10 2025/09/16 13:09:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.11 2025/09/17 13:56:40 thorpej Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -349,6 +349,7 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcaiicmux_softc * const sc = device_private(self);
 	struct i2c_attach_args * const ia = aux;
+	devhandle_t devhandle = device_handle(self);
 	int error;
 
 	sc->sc_iicmux.sc_dev = self;
@@ -363,8 +364,8 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PCA954x I2C %s\n",
 	    sc->sc_type->enable_bit ? "mux" : "switch");
 
-	if (ia->ia_cookietype == I2C_COOKIE_OF) {
-		const int phandle = (int)ia->ia_cookie;
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		const int phandle = devhandle_to_of(devhandle);
 		if (of_hasprop(phandle, "i2c-mux-idle-disconnect")) {
 			sc->sc_idle_disconnect = true;
 		}
