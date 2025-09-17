@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2024/09/29 17:14:40 kalvisd Exp $
+#	$NetBSD: Makefile,v 1.11 2025/09/17 05:55:31 mrg Exp $
 
 PROG=		gcc
 SRCS=		gccspec.cc ${G_GCC_OBJS:.o=.cc}
@@ -19,6 +19,7 @@ LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
 .include "../Makefile.frontend"
+.include "../Makefile.options"
 
 ${SRCS}: ${GCCARCH}/defs.mk
 

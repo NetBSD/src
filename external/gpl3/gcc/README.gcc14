@@ -1,20 +1,4 @@
-$NetBSD: README.gcc12,v 1.29 2024/09/23 10:28:54 rin Exp $
-
-
-new stuff:
-	libmpx
-	liboffloadmic
-	libvtv
-	libcet
-	libphobos
-	d
-	gfortran
-	libbacktrace: +dwarf5_CFLAGS = $(libbacktrace_TEST_CFLAGS) -gdwarf-5
-	c++tools
-
-todo:
-	- audit all uses of new warning-disable variables and
-	  convert some from -Wno- to -Wno-error=
+$NetBSD
 
 arch/feature list.
 
@@ -31,45 +15,46 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	y[17]	y		y	y	y
-aarch64eb	y	y	y	y	y[17]	y		y	y	y
-alpha		y	y	y	y	b	y		y	y	y
-earmv4		y	b	?	y	?	?		?	?	y
-earmv4eb	y	b	?	y	?	?		?	?	y
-earmv5		y	y	y	y	b	y		y	y	y
-earmv5eb	y	y	y	y	b	y		y	y	y
-earmv5hf	y	b	?	y	?	?		?	?	y
-earmv5hfeb	y	b	?	y	?	?		?	?	y
-earmv6		y	b	?	y	?	?		?	?	y
-earmv6eb	y	b	?	y	?	?		?	?	y
-earmv6hf	y	y	y	y	b	y		y	y	y
-earmv6hfeb	y	y	y	y	b	y		y	y	y
-earmv7		y	b	y	y	?	?		?	?	y
-earmv7eb	y	b	?	y	?	?		?	?	y
-earmv7hf	y	y	y	y	b	y		y	y	y
-earmv7hfeb	y	y	y	y	b	y		y	y	y
-hppa		y	y	y	y	?	y		y	y	y
-i386		y	y	y	y	y	y		y	y	y
-ia64		y	b	y	y	y	y		y[3]	n	y
-m68000		y	y	y	y	b	n		y[14]	?	y
-m68k		y	y	y	y	b	y		y[14]	y[14]	y
-mipseb		y	b	y	y	b	y		y	y	y
-mipsel		y	b	y	y	b	y		y	?	y
-mips64eb	y	b	y	y	b	y		y	y	y
-mips64el	y	b	y	y	b	y		y	?	y
-powerpc		y	y	y	y	y	y		y	y	y
-powerpc64	y	?	?	y	b	b		?	?	y
-sh3eb		y	?	y	y	b	y		?	?	y
-sh3el		y	y	y	y	b	y		y	y	y
-sparc		y	y	y	y	n[26]	y		y	y	y
-sparc64		y	b	y	y	n[16]	y		y	?	y
-vax		y	y	y	y	n[23]	n		n[24,25] ?	?
-x86_64		y	y	y	y	y[13]	y		y	y	y
-riscv32		y	y	y	y	b	y		n[2]	?	y
-riscv64		y	y	y	y	b	y		y	y	y
+aarch64		y	?	?	?	?	?		?	?	?
+aarch64eb	y	?	?	?	?	?		?	?	?
+alpha		y	?	?	?	?	?		?	?	?
+earmv4		y	?	?	?	?	?		?	?	?
+earmv4eb	y	?	?	?	?	?		?	?	?
+earmv5		y	?	?	?	?	?		?	?	?
+earmv5eb	y	?	?	?	?	?		?	?	?
+earmv5hf	y	?	?	?	?	?		?	?	?
+earmv5hfeb	y	?	?	?	?	?		?	?	?
+earmv6		y	?	?	?	?	?		?	?	?
+earmv6eb	y	?	?	?	?	?		?	?	?
+earmv6hf	y	?	?	?	?	?		?	?	?
+earmv6hfeb	y	?	?	?	?	?		?	?	?
+earmv7		y	?	?	?	?	?		?	?	?
+earmv7eb	y	?	?	?	?	?		?	?	?
+earmv7hf	y	?	?	?	?	?		?	?	?
+earmv7hfeb	y	?	?	?	?	?		?	?	?
+hppa		y	?	?	?	?	?		?	?	?
+i386		y	?	?	?	?	?		?	?	?
+ia64		y	?	?	?	?	?		?	?	?
+m68000		y	?	?	?	?	?		?	?	?
+m68k		y	?	?	?	?	?		?	?	?
+mipseb		y	?	?	?	?	?		?	?	?
+mipsel		y	?	?	?	?	?		?	?	?
+mips64eb	y	?	?	?	?	?		?	?	?
+mips64el	y	?	?	?	?	?		?	?	?
+powerpc		y	?	?	?	?	?		?	?	?
+powerpc64	y	?	?	?	?	?		?	?	?
+sh3eb		y	?	?	?	?	?		?	?	?
+sh3el		y	?	?	?	?	?		?	?	?
+sparc		y	?	?	?	?	?		?	?	?
+sparc64		y	?	?	?	?	?		?	?	?
+vax		y	?	?	?	?	?		?	?	?
+x86_64		y	?	?	?	?	?		?	?	?
+riscv32		y	?	?	?	?	?		?	?	?
+riscv64		y	?	?	?	?	?		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
+--- these are GCC 12 issues, but some will remain --
 [2]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
 [3]: GENERIC.SKI boots just as well as GCC 10.
 [13]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
@@ -120,33 +105,33 @@ values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted), 
 CPU		platform list
 ---		-------- ----
 		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
-earmv4:		k		k	k	k		k		k		 		k		y		 
-earm:		 		 	 	nx		nx		 		k		 		 		k
-earmhf:		 		 	 	k		k		 		 		 		 		 
-earmv6:		 		 	 	k		k
-earmv6hf:	 		 	 	nx		nx
-earmv7:		 		 	 	k		k
-earmv7hf:	 		 	 	nx		nx
+earmv4:		?		?	?	?		?		?		 		?		?		 
+earm:		 		 	 	?		?		 		?		 		 		?
+earmhf:		 		 	 	?		?		 		 		 		 		 
+earmv6:		 		 	 	?		?
+earmv6hf:	 		 	 	?		?
+earmv7:		 		 	 	?		?
+earmv7hf:	 		 	 	?		?
 
-		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		nx		k	k	k		k		nx		k		k		k		nx 	k
+		amiga		atari	cesfic	hp300		luna68?		mac68?		mvme68?		news68?		next68?		sun3	x68?
+m68k:		?		?	?	?		?		?		?		?		?		? 	?
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
-mipseb:		k		k		k		k		k		y
+mipseb:		?		?		?		?		?		?
 
 		evbmips		algor		arc		cobalt		hpcmips		pmax
-mipsel:		k		k		k		k		k		y
+mipsel:		?		?		?		?		?		?
 
 		algor		evbmips		pmax
-mips64eb:	 		y		 
-mips64el:	k		y		y
+mips64eb:	 		?		 
+mips64el:	?		?		?
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	k		k	k	k		y		k		k		k		k		k
+powerpc:	?		?	?	?		?		?		?		?		?		?
 
 		evbppc		macppc		ofppc
-powerpc64:	nk		nk		nk
+powerpc64:	?		?		?
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		 		y		 		 		k
-sh3el:		k		y		k		k
+sh3eb:		 		?		 		 		?
+sh3el:		?		?		?		?

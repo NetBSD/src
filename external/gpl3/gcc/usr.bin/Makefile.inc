@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.39 2023/08/04 17:17:06 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.40 2025/09/17 05:55:30 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -45,6 +45,8 @@ NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .if ${MKDEBUG:Uno} != "no"
 CXXFLAGS+=      -g1
 .endif
+
+CXXFLAGS+=      -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 
 GNUHOSTDIST=	${DIST}
 BUILD_PREFIX=	${C_BUILD_PREFIX}

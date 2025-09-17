@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2024/09/29 17:14:40 kalvisd Exp $
+#	$NetBSD: Makefile,v 1.79 2025/09/17 05:55:31 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -177,18 +177,12 @@ genmodes: genmodes.lo build-errors.lo
 
 CLEANFILES+=	genmodes insn-modes.cc insn-modes.h-test min-insn-modes.cc insn-modes-inline.h
 
-gimple-match.cc: genmatch cfn-operators.pd
-	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.cc.tmp
-	mv gimple-match.cc.tmp gimple-match.cc
-generic-match.cc: genmatch cfn-operators.pd
-	./genmatch --generic ${GNUHOSTDIST}/gcc/match.pd > generic-match.cc.tmp
-	mv generic-match.cc.tmp generic-match.cc
 genmatch.lo: ${HH_NORTL} ${G_GGC_H} case-cfn-macros.h
 genmatch: genmatch.lo build-errors.lo build-vec.lo build-hash-table.lo build-sort.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBCPP} ${HOSTLIBIBERTY}
 
-CLEANFILES+=	genmatch gimple-match.cc generic-match.cc
+CLEANFILES+=	genmatch
 
 .include "${.PARSEDIR}/../../Makefile.version_h"
 .include "${.PARSEDIR}/../Makefile.isl"
@@ -351,12 +345,53 @@ CLEANFILES+=	gen${f} gen${f}.lo
 
 # RTL based files
 .for f in attr.h attr-common.h codes.h config.h flags.h \
-	  automata.cc emit.cc extract.cc output.cc peep.cc recog.cc \
+	  automata.cc extract.cc output.cc peep.cc recog.cc \
 	  target-def.h
 insn-${f}: gen${f:R} ${G_md_file} insn-conditions.md
 	${_MKTARGET_CREATE}
 	./gen${f:R} ${G_md_file} insn-conditions.md >${.TARGET}
 CLEANFILES+=	insn-${f}
+.endfor
+
+#
+# Third, there are some that emit multiple files.
+#
+# - genemit creates the insn-emit-*.cc files.
+# - genmatch creates the {generic,gimple}-match-*.cc files.
+#
+# These are kind of ugly, but they suffice for correctness I think.
+
+.for file in ${G_OBJS:Minsn-emit*[0-9].o:S/.o//}
+${file}.cc: tmp-insn-emit-1.cc
+	${_MKTARGET_CREATE}
+	cp tmp-${file}.cc ${file}.cc
+EMITARGS+=	-Otmp-${file}.cc
+CLEANFILES+=	${file}.cc tmp-${file}.cc
+.endfor
+
+tmp-insn-emit-1.cc: genemit ${G_md_file} insn-conditions.md
+	${_MKTARGET_CREATE}
+	./genemit ${G_md_file} insn-conditions.md ${EMITARGS}
+
+.for f in generic gimple
+
+. for file in ${G_OBJS:M${f}-match*[0-9].o:S/.o//}
+${file}.o: ${f}-match-auto.h
+${file}.cc: tmp-${f}-match-1.cc
+	${_MKTARGET_CREATE}
+	cp tmp-${file}.cc ${file}.cc
+MATCHARGS.${f}+=	tmp-${file}.cc
+CLEANFILES+=	${file}.cc tmp-${file}.cc
+. endfor
+
+tmp-${f}-match-1.cc: genmatch ${G_md_file} insn-conditions.md cfn-operators.pd
+	${_MKTARGET_CREATE}
+	./genmatch --${f} \
+	    --header=tmp-${f}-match-auto.h --include=${f}-match-auto.h \
+	    ${GNUHOSTDIST}/gcc/match.pd ${MATCHARGS.${f}}
+${f}-match-auto.h: tmp-${f}-match-1.cc
+	${_MKTARGET_CREATE}
+	mv tmp-${f}-match-auto.h ${f}-match-auto.h
 .endfor
 
 # normal files
@@ -522,15 +557,11 @@ CFLAGS+=	-Wno-stack-protector
 
 #COPTS.dwarf2out.cc+=${CC_WNO_MAYBE_UNINITIALIZED}
 
-.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
-	${GCC_MACHINE_ARCH} == "coldfire"
-#COPTS.tree-loop-distribution.cc+=-O2
-#COPTS.generic-match.cc+=-fno-jump-tables
-#COPTS.gimple-match.cc+=-fno-jump-tables
-.endif
-
 # XXXGCC12
 COPTS.diagnostic-manager.cc+=	-Wno-format-extra-args -Wno-format
+
+# XXXGCC14
+COPTS.access-diagram.cc+=	${CC_WNO_MAYBE_UNINITIALIZED}
 
 # Don't fight with decimal128Local.h.
 # The GCC build only ignores the warning?

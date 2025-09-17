@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.options,v 1.2 2023/08/01 05:57:54 mrg Exp $
+#	$NetBSD: Makefile.options,v 1.3 2025/09/17 05:55:30 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_OPTIONS_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_OPTIONS_=1
@@ -7,7 +7,7 @@ _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_OPTIONS_=1
 
 CLEANFILES+=	options.h options.cc optionlist options-save.cc
 optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
-	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
+	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} ${G_ALL_OPT_URL_FILES} > ${.TARGET}
 
 options.cc: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opt-read.awk \
 		      ${DIST}/gcc/optc-gen.awk
@@ -22,6 +22,14 @@ options-save.cc: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opt-read.a
 	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
 		    -f ${DIST}/gcc/opt-read.awk \
 		    -f ${DIST}/gcc/optc-save-gen.awk \
+		    -v header_name="config.h system.h coretypes.h tm.h" \
+		< optionlist > ${.TARGET}
+
+options-urls.cc: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opt-read.awk \
+			   ${DIST}/gcc/options-urls-cc-gen.awk
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
+		    -f ${DIST}/gcc/opt-read.awk \
+		    -f ${DIST}/gcc/options-urls-cc-gen.awk \
 		    -v header_name="config.h system.h coretypes.h tm.h" \
 		< optionlist > ${.TARGET}
 
