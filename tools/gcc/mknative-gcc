@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.120 2025/09/16 04:18:30 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.121 2025/09/17 02:17:51 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -196,7 +196,7 @@ get_libbacktrace () {
 
 get_libobjc () {
 	_subdir="$1/arch/$_MACHINE_ARCH"
-	_options="ALL_OPT_FILES"
+	_options="ALL_OPT_FILES ALL_OPT_URL_FILES"
 
 	mkdir -p $_OUTDIR/lib/$_subdir
 
@@ -352,7 +352,7 @@ get_gcc () {
 	mkdir -p $_OUTDIR/usr.bin/common-target/arch
 	_buildname="BUILD_"
 	_libcppsubdir=""
-	_extravars="TM_H ALL_OPT_FILES"
+	_extravars="TM_H ALL_OPT_FILES ALL_OPT_URL_FILES"
 	_hconfig_h=""
 	_extravars2="tm_file_list build_xm_include_list"
 	_extravars3="tm_p_include_list"

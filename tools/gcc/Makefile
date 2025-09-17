@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.117 2025/09/16 02:08:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.118 2025/09/17 02:17:51 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -63,6 +63,10 @@ COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
 COMMON_CONFIGURE_ARGS+=	--without-isl
 .else
 COMMON_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
+.endif
+
+.if ${HAVE_GCC} >= 14 && ${MACHINE} == "ia64"
+COMMON_CONFIGURE_ARGS+=	--enable-obsolete
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
