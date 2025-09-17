@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.33 2024/12/09 22:06:31 jmcneill Exp $ */
+/* $NetBSD: ihidev.c,v 1.34 2025/09/17 13:51:47 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
 #include "acpica.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.33 2024/12/09 22:06:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.34 2025/09/17 13:51:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,8 +169,7 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	sc->sc_phandle = ia->ia_cookie;
-	if (ia->ia_cookietype != I2C_COOKIE_ACPI) {
+	if (devhandle_type(device_handle(self)) != DEVHANDLE_TYPE_ACPI) {
 		aprint_error(": unsupported device tree type\n");
 		return;
 	}
@@ -686,7 +685,7 @@ static bool
 ihidev_intr_init(struct ihidev_softc *sc)
 {
 #if NACPICA > 0
-	ACPI_HANDLE hdl = (void *)(uintptr_t)sc->sc_phandle;
+	ACPI_HANDLE hdl = devhandle_to_acpi(device_handle(sc->sc_dev));
 	struct acpi_resources res;
 	ACPI_STATUS rv;
 	char buf[100];
@@ -714,8 +713,9 @@ ihidev_intr_init(struct ihidev_softc *sc)
 
 	acpi_resource_cleanup(&res);
 
-	sc->sc_ih = acpi_intr_establish(sc->sc_dev, sc->sc_phandle, IPL_TTY,
-	    false, ihidev_intr, sc, device_xname(sc->sc_dev));
+	sc->sc_ih = acpi_intr_establish(sc->sc_dev,
+	    (uint64_t)(uintptr_t)hdl,
+	    IPL_TTY, false, ihidev_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt\n");
 		return false;
@@ -1084,7 +1084,7 @@ static bool
 ihidev_acpi_get_info(struct ihidev_softc *sc)
 {
 #if NACPICA > 0
-	ACPI_HANDLE hdl = (void *)(uintptr_t)sc->sc_phandle;
+	ACPI_HANDLE hdl = devhandle_to_acpi(device_handle(sc->sc_dev));
 	ACPI_STATUS status;
 	ACPI_INTEGER val;
 
