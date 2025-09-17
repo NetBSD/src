@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.244 2025/09/16 11:37:16 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.245 2025/09/17 14:20:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.244 2025/09/16 11:37:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245 2025/09/17 14:20:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1130,7 +1130,6 @@ device_register(device_t dev, void *aux)
 		if (ia->ia_name == NULL)	/* indirect config */
 			return;
 
-		ofnode = (int)ia->ia_cookie;
 		if (device_is_a(dev, "pcagpio")) {
 			if (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
 			    !strcmp(machine_model, "SUNW,Sun-Fire-V210")) {
@@ -1363,7 +1362,7 @@ noether:
 				if (cfg != NULL) {
 					prop_dictionary_set(props,
 					    "i2c-child-devices", cfg);
-					prop_object_relesae(cfg);
+					prop_object_release(cfg);
 				}
 			}
 		}
