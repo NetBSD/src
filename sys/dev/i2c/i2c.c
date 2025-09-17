@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.97 2025/09/16 14:28:11 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.98 2025/09/17 14:24:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.97 2025/09/16 14:28:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.98 2025/09/17 14:24:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,8 +492,8 @@ iic_attach_children_direct(struct iic_softc *sc)
 			ia.ia_addr = addr;
 			ia.ia_tag = ic;
 			ia.ia_name = name;
-			ia.ia_cookie = cookie;
-			ia.ia_cookietype = cookietype;
+			ia.__xxx_ia_cookie = cookie;
+			ia.__xxx_ia_cookietype = cookietype;
 			ia.ia_prop = dev;
 
 			child_devhandle = devhandle_invalid();

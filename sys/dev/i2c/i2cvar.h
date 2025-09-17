@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.29 2025/09/16 13:10:44 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.30 2025/09/17 14:24:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -147,6 +147,11 @@ struct i2c_attach_args {
 	const char **	ia_compat;	/* chip names */
 	prop_dictionary_t ia_prop;	/* dictionary for this device */
 	/*
+	 * XXX These fields are deprecated; all of the necessary information
+	 * XXX is available in the device's devhandle.  The remain for
+	 * XXX ABI compatbility until other changes requring an ABI version
+	 * XXX bump are performed.
+	 *
 	 * The following is of limited usefulness and should only be used
 	 * in rare cases where we really know what we are doing. Example:
 	 * a machine dependent i2c driver (located in sys/arch/$arch/dev)
@@ -158,8 +163,8 @@ struct i2c_attach_args {
 	 *
 	 * On ACPI platforms this is the ACPI_HANDLE of the device.
 	 */
-	uintptr_t	ia_cookie;	/* OF node in openfirmware machines */
-	enum i2c_cookie_type ia_cookietype; /* Value type of cookie */
+	uintptr_t	__xxx_ia_cookie;
+	enum i2c_cookie_type __xxx_ia_cookietype;
 };
 
 /*
