@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.125 2025/05/05 14:21:50 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.126 2025/09/18 20:19:26 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -448,6 +448,10 @@ int issetugid(void);
 int mkstemp(char *);
 #endif
 
+#if !HAVE_DECL_MKSTEMPS
+int mkstemps(char *, int);
+#endif
+
 #if !HAVE_DECL_MKDTEMP
 char *mkdtemp(char *);
 #endif
@@ -543,6 +547,9 @@ int		strcasecmp(const char *, const char *);
 #if !HAVE_DECL_STRNCASECMP
 int		strncasecmp(const char *, const char *, size_t);
 #endif
+#if !HAVE_DECL_STRCASESTR
+char		*strcasestr(const char *, const char *);
+#endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);
 #endif
@@ -617,6 +624,10 @@ long long strsuftollx(const char *, const char *,
 
 #if !HAVE_DECL_STRTOLL
 long long strtoll(const char *, char **, int);
+#endif
+
+#if !HAVE_DECL_STRTONUM
+long long strtonum(const char *, long long, long long, const char **);
 #endif
 
 #if !HAVE_DECL_STRTOI

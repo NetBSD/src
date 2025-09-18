@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2025/05/14 23:37:17 riastradh Exp $
+#	$NetBSD: Makefile,v 1.95 2025/09/18 20:19:26 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -10,7 +10,7 @@ SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
 		heapsort.c getsubopt.c \
 		issetugid.c lchflags.c lchmod.c lchown.c libyywrap.c \
 		md2.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c \
-		mi_vector_hash.c mkdtemp.c \
+		mi_vector_hash.c mkdtemp.c mkstemps.c \
 		mkstemp.c pread.c putc_unlocked.c pwcache.c pwrite.c \
 		pw_scan.c \
 		raise_default_signal.c rb.c reallocarr.c reallocarray.c \
@@ -22,8 +22,8 @@ SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
 		shquote.c \
 		snprintb.c snprintf.c \
 		stat_flags.c strlcat.c strlcpy.c strmode.c \
-		strcasecmp.c strncasecmp.c strndup.c strnlen.c \
-		strsep.c strsuftoll.c strtoll.c \
+		strcasecmp.c strncasecmp.c strcasestr.c strndup.c strnlen.c \
+		strsep.c strsuftoll.c strtonum.c strtoll.c \
 		strtoi.c strtou.c \
 		unvis.c vis.c err.c errx.c errc.c verr.c verrx.c verrc.c \
 		vwarn.c vwarnx.c vwarnc.c warn.c warnx.c warnc.c \
