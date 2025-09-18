@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2025/09/18 02:51:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2025/09/18 03:15:38 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,7 +13,7 @@ LIB=		iberty
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
-SRCS=		${G_REQUIRED_OFILES:Salloca.o:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
+SRCS=		${G_REQUIRED_OFILES:Nalloca.o:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c}
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${GCC_MACHINE_ARCH} \
