@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.40 2025/09/15 13:23:01 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.41 2025/09/18 02:51:03 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -205,6 +205,8 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		i2cbus[0] = node;
 
 	for (channel = 0; channel < 2; channel++) {
+		devhandle_t child_devhandle;
+
 		devs = OF_child(i2cbus[channel]);
 		while (devs != 0) {
 			if (OF_getprop(devs, "name", name, 32) <= 0)
@@ -226,7 +228,11 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 			prop_dictionary_set(dev, "compatible", data);
 			prop_object_release(data);
 			prop_dictionary_set_uint32(dev, "addr", addr);
-			prop_dictionary_set_uint64(dev, "cookie", devs);
+			child_devhandle =
+			    devhandle_from_of(devhandle_invalid(), devs);
+			prop_dictionary_set_data(dev, "devhandle",
+			    &child_devhandle, sizeof(child_devhandle));
+
 			/* look for location info for sensors */
 			devc = OF_child(devs);
 			if (devc == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.44 2025/09/15 13:23:01 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.45 2025/09/18 02:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.44 2025/09/15 13:23:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.45 2025/09/18 02:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,6 +355,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			prop_array_t cfg;
 			prop_dictionary_t dev;
 			prop_data_t data;
+			devhandle_t child_devhandle;
 
 			aprint_normal_dev(self, "initializing IIC bus\n");
 
@@ -381,7 +382,11 @@ pmu_attach(device_t parent, device_t self, void *aux)
 				prop_dictionary_set(dev, "compatible", data);
 				prop_object_release(data);
 				prop_dictionary_set_uint32(dev, "addr", addr);
-				prop_dictionary_set_uint64(dev, "cookie", devs);
+				child_devhandle =
+				  devhandle_from_of(devhandle_invalid(), devs);
+				prop_dictionary_set_data(dev, "devhandle",
+				    &child_devhandle, sizeof(child_devhandle));
+
 				if (OF_getprop(devs, "config-reg", &reg, 4) == 4) {
 					prop_dictionary_set_uint32(dev, "config-reg", reg);
 				}

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.21 2025/09/15 15:28:48 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.22 2025/09/18 02:51:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.21 2025/09/15 15:28:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.22 2025/09/18 02:51:04 thorpej Exp $");
 
 #include <sys/device.h>
 
@@ -127,6 +127,7 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 	ACPI_STATUS rv;
 	char *clist;
 	size_t clist_size;
+	devhandle_t child_devhandle;
 
 	memset(&i2cc, 0, sizeof(i2cc));
 	rv = AcpiWalkResources(ad->ad_handle, "_CRS",
@@ -151,8 +152,10 @@ acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
 	}
 	prop_dictionary_set_string(dev, "name", ad->ad_name);
 	prop_dictionary_set_uint32(dev, "addr", i2cc.i2c_addr);
-	prop_dictionary_set_uint64(dev, "cookie", (uintptr_t)ad->ad_handle);
-	prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_ACPI);
+	child_devhandle = devhandle_from_acpi(devhandle_invalid(),
+	    ad->ad_handle);
+	prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
+	    sizeof(child_devhandle));
 	prop_dictionary_set_data(dev, "compatible", clist, clist_size);
 	kmem_free(clist, clist_size);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.8 2025/09/18 02:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.8 2025/09/18 02:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -84,7 +84,7 @@ uint32_t addr, uint64_t node)
 		prop_dictionary_set_data(dev, "compatible", compat,
 		    strlen(compat) + 1);
 	prop_dictionary_set_uint32(dev, "addr", addr);
-	prop_dictionary_set_uint64(dev, "cookie", node);
+	/* No devhandle; these don't have real OFW nodes! */
 	prop_array_add(cfg, dev);
 	prop_object_release(dev);
 }

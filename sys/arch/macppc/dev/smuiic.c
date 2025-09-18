@@ -1,4 +1,4 @@
-/*	$NetBSD: smuiic.c,v 1.12 2025/09/15 13:23:01 thorpej Exp $ */
+/*	$NetBSD: smuiic.c,v 1.13 2025/09/18 02:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -93,6 +93,8 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	/* look for i2c devices */
 	devs = OF_child(sc->sc_node);
 	while (devs != 0) {
+		devhandle_t child_devhandle;
+
 		if (OF_getprop(devs, "name", name, 256) <= 0)
 			goto skip;
 		if (OF_getprop(devs, "compatible",
@@ -107,7 +109,10 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 		prop_dictionary_set(dev, "compatible", data);
 		prop_object_release(data);
 		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", devs);
+		child_devhandle = devhandle_from_of(devhandle_invalid(), devs);
+		prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
+		    sizeof(child_devhandle));
+
 		devc = OF_child(devs);
 		while (devc != 0) {
 			int reg;

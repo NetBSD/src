@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.2 2025/09/16 11:37:17 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.3 2025/09/18 02:51:04 thorpej Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.2 2025/09/16 11:37:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.3 2025/09/18 02:51:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,6 +59,7 @@ of_copy_i2c_devs(int ofnode, size_t cell_size, int addr_shift)
 	uint64_t addr;
 	prop_array_t array = NULL;
 	prop_dictionary_t dev;
+	devhandle_t child_devhandle;
 
 	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
@@ -94,8 +95,9 @@ of_copy_i2c_devs(int ofnode, size_t cell_size, int addr_shift)
 		dev = prop_dictionary_create();
 		prop_dictionary_set_string(dev, "name", name);
 		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", node);
-		prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_OF);
+		child_devhandle = devhandle_from_of(devhandle_invalid(), node);
+		prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
+		    sizeof(child_devhandle));
 		of_to_dataprop(dev, node, "compatible", "compatible");
 		prop_array_add(array, dev);
 		prop_object_release(dev);

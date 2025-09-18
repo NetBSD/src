@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.98 2025/09/17 14:24:51 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.99 2025/09/18 02:51:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.98 2025/09/17 14:24:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.99 2025/09/18 02:51:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,13 +461,13 @@ iic_attach_children_direct(struct iic_softc *sc)
 		prop_dictionary_t dev;
 		prop_data_t cdata;
 		uint32_t addr;
-		uint64_t cookie;
-		uint32_t cookietype;
 		const char *name;
 		char *buf;
 		struct i2c_attach_args ia;
 		devhandle_t child_devhandle;
 		int loc[IICCF_NLOCS];
+		const void *vptr;
+		size_t vsize;
 
 		memset(loc, 0, sizeof loc);
 		count = prop_array_count(child_devices);
@@ -481,36 +481,41 @@ iic_attach_children_direct(struct iic_softc *sc)
 			}
 			if (!prop_dictionary_get_uint32(dev, "addr", &addr))
 				continue;
-			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
-				cookie = 0;
-			if (!prop_dictionary_get_uint32(dev, "cookietype",
-			    &cookietype))
-				cookietype = I2C_COOKIE_NONE;
+			vptr = NULL;
+			if (prop_dictionary_get_data(dev, "devhandle",
+						     &vptr, &vsize)) {
+				if (vsize != sizeof(child_devhandle)) {
+					vptr = NULL;
+				}
+			}
+			if (vptr != NULL) {
+				memcpy(&child_devhandle, vptr,
+				    sizeof(child_devhandle));
+			} else {
+				child_devhandle = devhandle_invalid();
+			}
 			loc[IICCF_ADDR] = addr;
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
 			ia.ia_tag = ic;
 			ia.ia_name = name;
-			ia.__xxx_ia_cookie = cookie;
-			ia.__xxx_ia_cookietype = cookietype;
-			ia.ia_prop = dev;
 
-			child_devhandle = devhandle_invalid();
-#ifdef I2C_USE_FDT
-			if (cookietype == I2C_COOKIE_OF) {
-				child_devhandle =
-				    devhandle_from_of(devhandle,
-						      (int)cookie);
+			/* XXX Gross, but good enough until these are gone. */
+			ia.__xxx_ia_cookie =
+			    (uint64_t)child_devhandle.uintptr;
+			switch (devhandle_type(child_devhandle)) {
+			case DEVHANDLE_TYPE_ACPI:
+				ia.__xxx_ia_cookietype = I2C_COOKIE_ACPI;
+				break;
+			case DEVHANDLE_TYPE_OF:
+				ia.__xxx_ia_cookietype = I2C_COOKIE_OF;
+				break;
+			default:
+				ia.__xxx_ia_cookietype = I2C_COOKIE_NONE;
+				break;
 			}
-#endif /* I2C_USE_FDT */
-#ifdef I2C_USE_ACPI
-			if (cookietype == I2C_COOKIE_ACPI) {
-				child_devhandle =
-				    devhandle_from_acpi(devhandle,
-							(ACPI_HANDLE)cookie);
-			}
-#endif /* I2C_USE_ACPI */
+			ia.ia_prop = dev;
 
 			buf = NULL;
 			cdata = prop_dictionary_get(dev, "compatible");

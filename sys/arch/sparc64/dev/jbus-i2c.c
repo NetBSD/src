@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.8 2025/09/15 13:23:02 thorpej Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.9 2025/09/18 02:51:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.8 2025/09/15 13:23:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.9 2025/09/18 02:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -153,6 +153,8 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	prop_dictionary_set(dict, "i2c-child-devices", cfg);
 	prop_object_release(cfg);
 	while (devs != 0) {
+		devhandle_t child_devhandle;
+
 		if (OF_getprop(devs, "name", name, 256) <= 0)
 			goto skip;
 		memset(compat, 0, sizeof(compat));
@@ -169,7 +171,9 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 		prop_dictionary_set_data(dev, "compatible", compat,
 		    strlen(compat)+1);
 		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", devs);
+		child_devhandle = devhandle_from_of(devhandle_invalid(), devs);
+		prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
+		    sizeof(child_devhandle));
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
 	skip:
