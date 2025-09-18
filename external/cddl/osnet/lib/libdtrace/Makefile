@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2024/11/23 03:20:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.34 2025/09/18 03:36:00 mrg Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -150,5 +150,7 @@ beforedepend:	dt_errtags.c dt_names.c
 LIBDPLIBS=	proc	${NETBSDSRCDIR}/external/bsd/libproc/lib
 
 COPTS.dt_link.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
+# GCC 14 is wrong.
+COPTS.dt_open.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wuse-after-free :}
 
 .include <bsd.lib.mk>

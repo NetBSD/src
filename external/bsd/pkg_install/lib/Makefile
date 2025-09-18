@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2020/12/02 13:54:25 wiz Exp $
+# $NetBSD: Makefile,v 1.12 2025/09/18 03:36:00 mrg Exp $
 # Original from FreeBSD, no rcs id.
 
 LIBISPRIVATE=	yes
@@ -27,5 +27,6 @@ CPPFLAGS+=	-DNETBSD
 CPPFLAGS+=	-DPREFIX=\"/usr/pkg\"
 
 COPTS.plist.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
+COPTS.license.c+= ${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2019/04/28 14:22:13 maxv Exp $
+# $NetBSD: Makefile,v 1.7 2025/09/18 03:36:02 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,5 +11,7 @@ INCS=		nvmm.h
 INCSDIR=	/usr/include
 
 WARNS=		5
+
+COPTS.libnvmm.c+=	${CC_WNO_DANGLING_POINTER}
 
 .include <bsd.lib.mk>

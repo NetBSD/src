@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2023/06/03 09:09:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2025/09/18 03:36:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -40,6 +40,7 @@ config.h: config.h.in
 COPTS.display.c = -Wno-format-nonliteral
 
 COPTS.commands.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.m_netbsd.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 COPTS+=		-fcommon
 

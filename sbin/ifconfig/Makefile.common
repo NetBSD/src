@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.7 2021/05/17 04:07:42 yamaguchi Exp $
+#	$NetBSD: Makefile.common,v 1.8 2025/09/18 03:36:01 mrg Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
@@ -19,3 +19,5 @@ SRCS+=		ieee80211.c
 .ifndef SMALLPROG
 SRCS+=		agr.c l2tp.c lagg.c
 .endif
+
+COPTS.parse.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}

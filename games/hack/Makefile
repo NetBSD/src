@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2023/06/03 09:09:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.49 2025/09/18 03:36:00 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -57,5 +57,6 @@ clobber:
 
 COPTS.hack.objnam.c+=	${CC_WNO_STRINGOP_TRUNCATION} ${CC_WNO_STRINGOP_OVERFLOW}
 COPTS.hack.pager.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.hack.topl.c+=	${CC_WNO_STRINGOP_OVERFLOW} ${CC_WNO_ARRAY_BOUNDS} -Wno-error=restrict
 
 .include <bsd.prog.mk>

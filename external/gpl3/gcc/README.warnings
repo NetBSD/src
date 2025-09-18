@@ -1,4 +1,4 @@
-$NetBSD: README.warnings,v 1.5 2023/08/08 11:50:22 riastradh Exp $
+$NetBSD: README.warnings,v 1.6 2025/09/18 03:36:02 mrg Exp $
 
 What to do about GCC warnings and NetBSD.
 
@@ -26,7 +26,16 @@ modified for updates to warnings and new warnings.
    COPTS.foo.c += ${CC_WNO_STRINGOP_OVERREAD}
    COPTS.foo.c += ${CC_WNO_REGISTER}
    COPTS.foo.c += ${CC_WNO_ARRAY_BOUNDS}
+   COPTS.foo.c += ${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+   COPTS.foo.c += ${CC_WNO_DANGLING_POINTER}
 
+
+new GCC 14 warnings:
+
+  -Wcalloc-transposed-args
+
+      This is annoying, it wants sizeof() derived value to be the second
+      argument to calloc(). Technically correct, though both inputs are size_t.
 
 new GCC 12 warnings:
 

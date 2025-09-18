@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2025/03/12 07:57:05 wiz Exp $
+# $NetBSD: Makefile,v 1.39 2025/09/18 03:36:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -266,6 +266,7 @@ COPTS.input.c += -Wno-sign-compare -Wno-pointer-sign
 COPTS.tty.c += -Wno-pointer-sign
 COPTS.utempter.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
+COPTS.cmd-run-shell.c += -Wno-error=maybe-uninitialized
 
 # The man page needs substitutions, but the dist file usurps the
 # output file suffix.

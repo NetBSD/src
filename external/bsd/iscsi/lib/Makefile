@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2025/07/05 06:50:12 mlelstv Exp $
+# $NetBSD: Makefile,v 1.8 2025/09/18 03:35:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,10 @@ ISCSIDIST=	${.CURDIR}/../dist
 
 LIBDPLIBS+=      pthread  ${.CURDIR}/../../../../lib/libpthread
 
-COPTS.target.c+=	${CC_WNO_FORMAT_TRUNCATION}
+COPTS.conffile.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+COPTS.disk.c+=		${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+COPTS.initiator.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+COPTS.storage.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+COPTS.target.c+=	${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2016/01/23 21:22:45 christos Exp $
+# $NetBSD: Makefile,v 1.7 2025/09/18 03:35:59 mrg Exp $
 
 .sinclude "${.CURDIR}/../Makefile.inc"
 
@@ -24,5 +24,8 @@ CPPFLAGS+= -DUSE_LIBKMOD
 LDADD+= -lprop
 DPADD+= ${LIBPROP}
 .endif
+
+COPTS.iscsi-initiator.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+COPTS.virtdir.c+=		${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.prog.mk>

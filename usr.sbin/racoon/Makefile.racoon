@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.racoon,v 1.4 2025/03/08 16:40:44 christos Exp $
+# $NetBSD: Makefile.racoon,v 1.5 2025/09/18 03:36:02 mrg Exp $
 
 DIST=   ${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/racoon/missing
@@ -14,9 +14,10 @@ SRCS+=crypto_openssl.c genlist.c logger.c misc.c plog.c prsa_par.y \
 
 COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
 COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
-COPTS.rsalist.c+= -Wno-error=deprecated-declarations
-COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
+COPTS.rsalist.c+= -Wno-error=deprecated-declarations ${CC_WNO_CALLOC_TRANSPOSED_ARGS}
+COPTS.prsa_par.c+= -Wno-error=deprecated-declarations ${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 COPTS.prsa_tok.c+=-Wno-error=unused-function
+COPTS.genlist.c+=${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 LPREFIX.prsa_tok.l=prsa
 YPREFIX.prsa_par.y=prsa

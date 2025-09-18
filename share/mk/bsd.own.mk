@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1437 2025/09/10 23:07:39 nat Exp $
+#      $NetBSD: bsd.own.mk,v 1.1438 2025/09/18 03:36:01 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -748,6 +748,8 @@ CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno
 CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
 CC_WNO_STRINGOP_OVERREAD=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-stringop-overread :}
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
+CC_WNO_CALLOC_TRANSPOSED_ARGS=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-calloc-transposed-args :}
+CC_WNO_DANGLING_POINTER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-dangling-pointer :}
 
 # relative relocs are only supported in gnu ld for ppc64 and x86
 .if ${MACHINE_ARCH} == "x86_64" || \

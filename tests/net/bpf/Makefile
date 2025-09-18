@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2020/03/01 18:08:15 christos Exp $
+# $NetBSD: Makefile,v 1.7 2025/09/18 03:36:01 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,5 +12,7 @@ TESTS_C+=	t_mbuf
 LDADD+=		-lrumpnet_shmif
 LDADD+=		-lrumpdev_bpf -lrumpdev -lrumpnet_netinet -lrumpnet_net
 LDADD+=		-lrumpnet ${LIBRUMPBASE}
+
+COPTS.t_bpf.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.test.mk>
