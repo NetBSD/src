@@ -277,7 +277,7 @@ fix_small_cpu_struct(tdata_t *td, size_t ptrsize)
 	lml->ml_next = cpum;
 }
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || HAVE_NBTOOL_CONFIG_H
 
 /*
  * XXX: A crude hack to bring down the number of types for a
