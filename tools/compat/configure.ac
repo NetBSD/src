@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.110 2025/09/18 20:19:26 christos Exp $
+#	$NetBSD: configure.ac,v 1.111 2025/09/18 20:24:48 christos Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -194,7 +194,7 @@ AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln,
-	fpurge, getdelim, getline, snprintf],,, [
+	fpurge, getdelim, getline, snprintf, vsyslog],,, [
 #include <stdio.h>
 ])
 

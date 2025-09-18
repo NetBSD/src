@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.126 2025/09/18 20:19:26 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.127 2025/09/18 20:24:48 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -658,6 +658,10 @@ int vasnprintf(char **, size_t, const char *, va_list);
 
 #if !HAVE_DECL_VSNPRINTF && !defined(vsnprintf)
 int vsnprintf(char *, size_t, const char *, va_list);
+#endif
+
+#if !HAVE_DECL_VSYSLOG
+void vsyslog(int, const char *, va_list);
 #endif
 
 /*
