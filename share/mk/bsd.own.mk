@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1438 2025/09/18 03:36:01 mrg Exp $
+#      $NetBSD: bsd.own.mk,v 1.1439 2025/09/18 20:56:41 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -737,7 +737,10 @@ CC_WNO_ADDRESS_OF_PACKED_MEMBER=${${ACTIVE_CC} == "clang" :? -Wno-error=address-
 				${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-address-of-packed-member :}
 
 CC_WNO_ARRAY_BOUNDS=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-array-bounds :}
+CC_WNO_CALLOC_TRANSPOSED_ARGS=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-calloc-transposed-args :}
 CC_WNO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
+CC_WNO_DANGLING_POINTER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-dangling-pointer :}
+CC_WNO_ENUM_INT_MISMATCH=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-enum-int-mismatch :}
 CC_WNO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
 CC_WNO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
 CC_WNO_IMPLICIT_FALLTHROUGH=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}
@@ -748,8 +751,6 @@ CC_WNO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno
 CC_WNO_STRINGOP_OVERFLOW=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-stringop-overflow :}
 CC_WNO_STRINGOP_OVERREAD=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-stringop-overread :}
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
-CC_WNO_CALLOC_TRANSPOSED_ARGS=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-calloc-transposed-args :}
-CC_WNO_DANGLING_POINTER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-dangling-pointer :}
 
 # relative relocs are only supported in gnu ld for ppc64 and x86
 .if ${MACHINE_ARCH} == "x86_64" || \
