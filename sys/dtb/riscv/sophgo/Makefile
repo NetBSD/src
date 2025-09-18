@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2024/08/12 10:55:52 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2025/09/18 21:57:56 rillig Exp $
 
 DTSSUBDIR=	sophgo
 DTSMAKEVARS=	CONFIG_ARCH_SOPHGO=y
-DTSFILESCMD=	${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
+DTSFILESCMD=	${MAKE} -B -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v dtb-y
 DTS=		${DTSFILESCMD:sh}
 
 .include <bsd.dtb.mk>
