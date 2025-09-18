@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstemps.c,v 1.1 2014/06/18 17:47:58 christos Exp $	*/
+/*	$NetBSD: mkstemps.c,v 1.2 2025/09/18 21:08:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -27,6 +27,8 @@
  */
 #include "gettemp.h"
 
+#if !HAVE_NBTOOL_CONFIG_H || !HAVE_MKSTEMP
+
 int
 mkstemps(char *path, int slen)
 {
@@ -34,3 +36,5 @@ mkstemps(char *path, int slen)
 
 	return GETTEMP(path, &fd, 0, slen, 0) ? fd : -1;
 }
+
+#endif /* !HAVE_NBTOOL_CONFIG_H || !HAVE_MKSTEMP */
