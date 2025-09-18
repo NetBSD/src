@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.24 2021/11/16 20:42:47 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.25 2025/09/18 22:25:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -11,7 +11,7 @@
  *	Stan King, John Eldridge, based on algorithm suggested by
  *	Bob Morris
  * 29-Sep-82
- *      Roland Illig, 2005
+ *      Roland Illig, 2005, 2025
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,18 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
  The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
-#else
-__RCSID("$NetBSD: caesar.c,v 1.24 2021/11/16 20:42:47 rillig Exp $");
-#endif
-#endif /* not lint */
+/*	@(#)caesar.c	8.1 (Berkeley) 5/31/93 */
+__RCSID("$NetBSD: caesar.c,v 1.25 2025/09/18 22:25:04 rillig Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -81,17 +74,16 @@ static unsigned char rottbl[NCHARS];
 static void
 init_rottbl(unsigned int rot)
 {
-	size_t i;
 
 	rot %= LETTERS;		/* prevent integer overflow */
 
-	for (i = 0; i < NCHARS; i++)
+	for (size_t i = 0; i < NCHARS; i++)
 		rottbl[i] = (unsigned char)i;
 
-	for (i = 0; i < LETTERS; i++)
+	for (size_t i = 0; i < LETTERS; i++)
 		rottbl[upper[i]] = upper[(i + rot) % LETTERS];
 
-	for (i = 0; i < LETTERS; i++)
+	for (size_t i = 0; i < LETTERS; i++)
 		rottbl[lower[i]] = lower[(i + rot) % LETTERS];
 }
 
@@ -100,25 +92,18 @@ print_file(void)
 {
 	int ch;
 
-	while ((ch = getchar()) != EOF) {
-		if (putchar(rottbl[ch]) == EOF) {
+	while ((ch = getchar()) != EOF)
+		if (putchar(rottbl[ch]) == EOF)
 			err(EXIT_FAILURE, "<stdout>");
-			/* NOTREACHED */
-		}
-	}
 }
 
 static void
 print_array(const unsigned char *a, size_t len)
 {
-	size_t i;
 
-	for (i = 0; i < len; i++) {
-		if (putchar(rottbl[a[i]]) == EOF) {
+	for (size_t i = 0; i < len; i++)
+		if (putchar(rottbl[a[i]]) == EOF)
 			err(EXIT_FAILURE, "<stdout>");
-			/* NOTREACHED */
-		}
-	}
 }
 
 static unsigned int
@@ -158,7 +143,7 @@ guess_and_rotate(void)
 	for (nread = 0; nread < sizeof(inbuf); nread++) {
 		if ((ch = getchar()) == EOF)
 			break;
-		inbuf[nread] = (unsigned char) ch;
+		inbuf[nread] = (unsigned char)ch;
 	}
 
 	for (i = 0; i < nread; i++)
@@ -192,27 +177,22 @@ int
 main(int argc, char **argv)
 {
 
-	if (argc == 1) {
+	if (argc == 1)
 		guess_and_rotate();
-	} else if (argc == 2) {
+	else if (argc == 2) {
 		init_rottbl(get_rotation(argv[1]));
 		print_file();
 	} else {
 		(void)fprintf(stderr, "usage: caesar [rotation]\n");
 		exit(EXIT_FAILURE);
-		/* NOTREACHED */
 	}
 
-	if (ferror(stdin) != 0) {
+	if (ferror(stdin) != 0)
 		errx(EXIT_FAILURE, "<stdin>: read error");
-		/* NOTREACHED */
-	}
 
 	(void)fflush(stdout);
-	if (ferror(stdout) != 0) {
+	if (ferror(stdout) != 0)
 		errx(EXIT_FAILURE, "<stdout>: write error");
-		/* NOTREACHED */
-	}
 
 	return 0;
 }
