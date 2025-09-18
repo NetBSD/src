@@ -5667,6 +5667,18 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_SNPRINTF $ac_have_decl" >>confdefs.h
+ac_fn_check_decl "$LINENO" "vsyslog" "ac_cv_have_decl_vsyslog" "
+#include <stdio.h>
+
+" "$ac_c_undeclared_builtin_options" "CFLAGS"
+if test "x$ac_cv_have_decl_vsyslog" = xyes
+then :
+  ac_have_decl=1
+else case e in #(
+  e) ac_have_decl=0 ;;
+esac
+fi
+printf "%s\n" "#define HAVE_DECL_VSYSLOG $ac_have_decl" >>confdefs.h
 
 
 ac_fn_check_decl "$LINENO" "atoll" "ac_cv_have_decl_atoll" "
