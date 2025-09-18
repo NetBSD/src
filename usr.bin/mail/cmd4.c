@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.6 2009/04/11 14:22:32 christos Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.7 2025/09/18 20:33:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd4.c,v 1.6 2009/04/11 14:22:32 christos Exp $");
+__RCSID("$NetBSD: cmd4.c,v 1.7 2025/09/18 20:33:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,7 +249,7 @@ free_name(struct name *np)
 
 	for (/*EMPTY*/; np; np = next_np) {
 		next_np = np->n_flink;
-		free(next_np);
+		free(np);
 	}
 }
 
