@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.10 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.11 2025/09/18 18:22:18 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -6,7 +6,7 @@
  * functions, anonymous struct/union members, and several more.
  */
 
-/* lint1-flags: -Ac11 -w -X 192,231,236,351 */
+/* lint1-flags: -Ac11 -hw -X 192,231,236,351 */
 
 
 int
@@ -127,6 +127,8 @@ void fvla(int m, int C[m][m])
 }
 
 // C11 6.7.6.3p15
+/* expect+2: warning: function declaration is not a prototype [287] */
+/* expect+1: warning: function declaration is not a prototype [287] */
 int f(void), *fip(), (*pfi)();
 
 // C11 6.7.6.3p17
@@ -161,12 +163,19 @@ double maximum(int n, int m, double a[ ][m]);
 
 void f1(double (* restrict a)[5]);
 void f2(double a[restrict][5]);
-/* expect+1: error: syntax error '3' [249] */
+/* expect+2: error: syntax error '3' [249] */
+/* expect+1: warning: function declaration is not a prototype [287] */
 void f3(double a[restrict 3][5]);
 void f4(double a[restrict static 3][5]);
 
 
 int _Alignas(double) int_aligned_as_double;
+
+
+// C23 6.7.7.4p13 says that "()" is equivalent to "(void)".
+// In C11 6.7.6.3p14, "()" means "no information about the number of types".
+/* expect+1: warning: function declaration is not a prototype [287] */
+void function_without_parameters();
 
 
 // In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.

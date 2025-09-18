@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.17 2024/11/30 11:27:20 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.18 2025/09/18 18:22:18 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -202,3 +202,6 @@ attribute_in_switch_statement(int n)
 	}
 	return n;
 }
+
+// C23 6.7.7.4p13 says that "()" is equivalent to "(void)".
+void function_without_parameters();

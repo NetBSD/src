@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.420 2025/05/14 21:35:24 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.421 2025/09/18 18:22:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.420 2025/05/14 21:35:24 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.421 2025/09/18 18:22:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -911,7 +911,7 @@ check_type(sym_t *sym)
 		 */
 		if (t == FUNC && !tp->t_proto &&
 		    !(to == NO_TSPEC && sym->s_osdef)) {
-			if (!allow_trad && hflag)
+			if (!allow_trad && hflag && !allow_c23)
 				/* function declaration is not a prototype */
 				warning(287);
 		}
