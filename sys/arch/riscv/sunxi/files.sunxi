@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.2 2025/09/06 15:44:04 thorpej Exp $
+#	$NetBSD: files.sunxi,v 1.3 2025/09/19 22:09:04 mrg Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -48,3 +48,5 @@ file	arch/arm/sunxi/sunxi_usbphy.c		sunxi_usbphy
 defflag	opt_soc.h			SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN20I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN20I_D1: SOC_SUN20I
+
+makeoptions	sunxi_ccu	"CWARNFLAGS.sunxi_ccu_nm.c"+="${CC_WNO_MAYBE_UNINITIALIZED}"
