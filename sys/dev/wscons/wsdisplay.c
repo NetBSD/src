@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.166 2023/03/01 08:42:33 riastradh Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.167 2025/09/19 05:22:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.166 2023/03/01 08:42:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.167 2025/09/19 05:22:20 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -1541,18 +1541,22 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, void *data,
 		} else
 			d->name = "loaded"; /* ??? */
 		fontsz = d->fontheight * d->stride * d->numchars;
-		if (fontsz > WSDISPLAY_MAXFONTSZ)
+		if (fontsz > WSDISPLAY_MAXFONTSZ) {
+			d->name = NULL;
 			return EINVAL;
+		}
 
 		tbuf = malloc(fontsz, M_DEVBUF, M_WAITOK);
 		error = copyin(d->data, tbuf, fontsz);
 		if (error) {
+			d->name = NULL;
 			free(tbuf, M_DEVBUF);
 			return error;
 		}
 		d->data = tbuf;
 		error =
 		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
+		d->name = NULL;
 		free(tbuf, M_DEVBUF);
 #undef d
 		return error;
