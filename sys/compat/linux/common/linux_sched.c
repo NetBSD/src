@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.83 2024/10/03 12:56:49 hannken Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.84 2025/09/19 18:41:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.83 2024/10/03 12:56:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.84 2025/09/19 18:41:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -230,7 +230,12 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 	// XXX: clone3 has stacksize, instead implement clone as a clone3
 	// wrapper.
 	SCARG(&clone_args, flags) = flags;
+#ifdef __MACHINE_STACK_GROWS_UP
 	SCARG(&clone_args, stack) = (void *)(uintptr_t)cl_args.stack;
+#else
+	SCARG(&clone_args, stack) =
+	    (void *)((uintptr_t)cl_args.stack + cl_args.stack_size);
+#endif
 	SCARG(&clone_args, parent_tidptr) =
 	    (void *)(intptr_t)cl_args.parent_tid;
 	SCARG(&clone_args, tls) =
