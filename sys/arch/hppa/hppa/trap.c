@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.124 2025/09/19 16:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2025/09/19 16:06:06 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -929,7 +929,7 @@ do_onfault:
 			frame->tf_ipsw |= PSW_N;
 		} else if ((opcode & PROBE_MASK) == PROBE) {
 			u_int pl;
-			if ((opcode & PROBE_IMMED) == 0) {
+			if ((opcode & PROBE_IMMED) != 0) {
 				pl = __SHIFTOUT(opcode, __PABITS(14, 15));
 			} else {
 				const u_int plreg =
