@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.15 2011/09/06 18:29:19 joerg Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.16 2025/09/19 05:07:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.15 2011/09/06 18:29:19 joerg Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.16 2025/09/19 05:07:38 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 			hsp = hs + nhosts;
 		}
 
-		if ((hsp->hs_wd = malloc((size_t)WHDRSIZE)) == NULL)
+		if ((hsp->hs_wd = malloc(sizeof(*hsp->hs_wd))) == NULL)
 			err(1, "malloc");
 		memmove(hsp->hs_wd, buf, (size_t)WHDRSIZE);
 
