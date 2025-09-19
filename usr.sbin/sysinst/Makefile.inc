@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2024/12/01 11:10:34 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2025/09/19 05:18:22 mrg Exp $
 #
 # Makefile for sysinst
 
@@ -42,6 +42,7 @@ CPPFLAGS.gpt.c+=	-I${GPT_DIR}
 .if ${NO_MBR:Uyes} != "yes"
 CPPFLAGS+=	-DHAVE_MBR
 SRCS+=	mbr.c
+COPTS.mbr.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 .endif
 .if ${NO_CLONES:Uno} == "yes"
 CPPFLAGS+=	-DNO_CLONES
@@ -154,7 +155,7 @@ O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
 .endif
 CPPFLAGS+=-DDEBUG
 DBG +=-g -O0 ${O0TRACKING}
-COPTS.net.c	+= -Wno-error=maybe-uninitialized
+COPTS.net.c	+= ${CC_WNO_MAYBE_UNINITIALIZED}
 .else
 .if defined(SMALLPROG)
 COPTS += -Os

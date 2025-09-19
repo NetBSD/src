@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.32 2025/05/09 20:18:25 tnn Exp $
+#	$NetBSD: files.amdgpu,v 1.33 2025/09/19 05:18:23 mrg Exp $
 
 version	20180827
 
@@ -65,6 +65,11 @@ makeoptions	amdgpu	"CWARNFLAGS.amdgpu_rn_clk_mgr.c"+="-Wno-type-limits"
 # half the file.
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu_vega10_reg_init.c"+="-Wno-cast-qual"
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu_vega20_reg_init.c"+="-Wno-cast-qual"
+
+# GCC 14 seems to get dangling pointer wrong, but array bounds may be valid.
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu_cgs.c"+="${CC_WNO_ARRAY_BOUNDS}"
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu_dce_aux.c"+="${CC_WNO_DANGLING_POINTER}"
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu_device.c"+="${CC_WNO_DANGLING_POINTER}"
 
 ifdef amd64
 makeoptions	amdgpu	"COPTS.amdgpu_float"+="-mhard-float -msse -msse2"

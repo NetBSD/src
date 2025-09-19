@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2024/04/16 14:34:03 riastradh Exp $
+# $NetBSD: Makefile,v 1.10 2025/09/19 05:18:23 mrg Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -53,6 +53,9 @@ CWARNFLAGS+=	-Wno-override-init
 # sed -ne 's,^makeoptions	amdgpu	"\([^"]*\.c\)"+="\(.*\)",\1+=	\2,gp' <files.amdgpu | sed -e 's,\$S,${S},g'
 CWARNFLAGS.amdgpu_arct_reg_init.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_bo_list.c+=	-Wno-type-limits -Wno-tautological-constant-out-of-range-compare
+CWARNFLAGS.amdgpu_cgs.c+=	${CC_WNO_ARRAY_BOUNDS}
+CWARNFLAGS.amdgpu_dce_aux.c+=	${CC_WNO_DANGLING_POINTER}
+CWARNFLAGS.amdgpu_device.c+=	${CC_WNO_DANGLING_POINTER}
 CWARNFLAGS.amdgpu_fiji_smumgr.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_hw_ddc.c+=	-Wno-type-limits
 CWARNFLAGS.amdgpu_hw_generic.c+=	-Wno-type-limits
@@ -62,10 +65,10 @@ CWARNFLAGS.amdgpu_polaris10_smumgr.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_process_pptables_v1_0.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_rlc.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 CWARNFLAGS.amdgpu_rn_clk_mgr.c+=	-Wno-type-limits
-CWARNFLAGS.amdgpu_vega10_reg_init.c+=	-Wno-cast-qual
-CWARNFLAGS.amdgpu_vega20_reg_init.c+=	-Wno-cast-qual
 CWARNFLAGS.amdgpu_uvd.c+=	-Wno-format
 CWARNFLAGS.amdgpu_vcn.c+=	-Wno-format
+CWARNFLAGS.amdgpu_vega10_reg_init.c+=	-Wno-cast-qual
+CWARNFLAGS.amdgpu_vega20_reg_init.c+=	-Wno-cast-qual
 COPTS.amdgpu_dcn10_resource.c+=	${COPTS.amdgpu_float}
 COPTS.amdgpu_dcn20_resource.c+=	${COPTS.amdgpu_float}
 COPTS.amdgpu_dcn21_resource.c+=	${COPTS.amdgpu_float}

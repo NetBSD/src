@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.91 2023/09/05 06:08:02 mrg Exp $
+#	$NetBSD: files.i915drmkms,v 1.92 2025/09/19 05:18:22 mrg Exp $
 
 version	20180827
 
@@ -57,6 +57,7 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_dp.c"+="${CC_WNO_STRINGOP_OVERREAD}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_pm.c"+="${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sprite.c"+="${CC_WNO_MAYBE_UNINITIALIZED}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.dvo_ch7xxx.c"+="${CC_WNO_MAYBE_UNINITIALIZED}"
 
 makeoptions	intelfb		"CPPFLAGS.intelfb"+="${CPPFLAGS.i915drmkms}"
 makeoptions	intelfb		"CWARNFLAGS.intelfb"+="${CWARNFLAGS.i915drmkms}"
