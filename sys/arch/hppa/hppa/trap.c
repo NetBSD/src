@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127 2025/09/19 18:01:49 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.128 2025/09/19 18:06:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2025/09/19 18:01:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2025/09/19 18:06:37 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -480,32 +480,32 @@ out:
 #define __PABITS(x, y)		__BITS(31 - (x), 31 - (y))
 #define __PABIT(x)		__BIT(31 - (x))
 
-#define LPA_MASK				 \
-     (                      __PABITS(0, 5)     | \
-                            __PABITS(18, 25))
-#define LPA					 \
-     (__SHIFTIN(1,          __PABITS(0, 5))    | \
-      __SHIFTIN(0x4d, __PABITS(18, 25)))
+#define LPA_MASK					  \
+     (				__PABITS(0, 5)		| \
+				__PABITS(18, 25))
+#define LPA						  \
+     (__SHIFTIN(1,		__PABITS(0, 5))		| \
+      __SHIFTIN(0x4d,		__PABITS(18, 25)))
 
 
-#define PROBE_ENCS	(0x46 | 0xc6 | 0x47 | 0xc7)
-#define PROBE_PL	__PABITS(11, 15)
-#define PROBE_IMMED	__PABIT(18)
-#define PROBE_RW	__PABIT(25)
+#define PROBE_ENCS		(0x46 | 0xc6 | 0x47 | 0xc7)
+#define PROBE_PL		__PABITS(11, 15)
+#define PROBE_IMMED		__PABIT(18)
+#define PROBE_RW		__PABIT(25)
 
-#define PROBE_MASK                               \
-    ((                      __PABITS(0, 5)     | \
-                            __PABITS(18, 25)   | \
-                            __PABIT(26))       ^ \
+#define PROBE_MASK					  \
+    ((				__PABITS(0, 5)		| \
+				__PABITS(18, 25)	| \
+				__PABIT(26))		^ \
      (PROBE_IMMED | PROBE_RW))
 
-#define PROBE					 \
-    ((__SHIFTIN(1,          __PABITS(0, 5))    | \
-      __SHIFTIN(PROBE_ENCS, __PABITS(18, 25))  | \
-      __SHIFTIN(0,          __PABIT(26)))      ^ \
+#define PROBE						  \
+    ((__SHIFTIN(1,		__PABITS(0, 5))		| \
+      __SHIFTIN(PROBE_ENCS,	__PABITS(18, 25))	| \
+      __SHIFTIN(0,		__PABIT(26)))		^ \
      (PROBE_IMMED | PROBE_RW))
 
-#define PLMASK	__BITS(1, 0)
+#define PLMASK			__BITS(1, 0)
 
 
 /* for hppa64 */
@@ -939,6 +939,7 @@ do_onfault:
 				    __SHIFTOUT(opcode, PROBE_PL);
 				pl = tf_getregno(frame, plreg) & PLMASK;
 			}
+
 			bool ok = true;
 			if ((user && space == HPPA_SID_KERNEL) ||
 			    (frame->tf_iioq_head & HPPA_PC_PRIV_MASK) != pl ||
