@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126 2025/09/19 16:54:20 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.127 2025/09/19 18:01:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2025/09/19 16:54:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2025/09/19 18:01:49 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -941,7 +941,7 @@ do_onfault:
 			}
 			bool ok = true;
 			if ((user && space == HPPA_SID_KERNEL) ||
-			    (frame->tf_iioq_head & 3) != pl ||
+			    (frame->tf_iioq_head & HPPA_PC_PRIV_MASK) != pl ||
 			    (user && va >= VM_MAXUSER_ADDRESS)) {
 				ok = false;
 			} else {
