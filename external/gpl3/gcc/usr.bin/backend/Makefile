@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2025/09/19 19:30:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.81 2025/09/19 22:53:24 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -481,6 +481,8 @@ CLEANFILES+=	aarch-builtin-iterators.h
 
 riscv-vector-type-indexer.gen.def: genrvv-type-indexer ${GNUHOSTDIST}/gcc/config/riscv/riscv-vector-builtins.def
 	./genrvv-type-indexer ${.TARGET}
+
+riscv-vector-builtins-bases.cc: riscv-vector-type-indexer.gen.def
 
 .if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64" # {
 
