@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2025/09/19 16:06:06 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.125 2025/09/19 16:43:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2025/09/19 16:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2025/09/19 16:43:08 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -962,7 +962,6 @@ do_onfault:
 				tf_setregno(frame, regno, 0);
 				frame->tf_ipsw |= PSW_N;
 			}
-		} else {
 		}
 		break;
 
