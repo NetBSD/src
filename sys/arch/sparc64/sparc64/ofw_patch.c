@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.8 2025/09/18 02:51:03 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.9 2025/09/19 13:19:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.8 2025/09/18 02:51:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.9 2025/09/19 13:19:25 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -75,6 +75,7 @@ add_i2c_device(prop_array_t cfg, const char *name, const char *compat,
 uint32_t addr, uint64_t node)
 {
 	prop_dictionary_t dev;
+	devhandle_t child_devhandle;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding i2c device: %s (%s) @ 0x%x (%lx)\n",
 	    name, compat == NULL ? "NULL" : compat, addr, node & 0xffffffff));
@@ -84,7 +85,15 @@ uint32_t addr, uint64_t node)
 		prop_dictionary_set_data(dev, "compatible", compat,
 		    strlen(compat) + 1);
 	prop_dictionary_set_uint32(dev, "addr", addr);
-	/* No devhandle; these don't have real OFW nodes! */
+	if (node != 0) {
+		child_devhandle =
+		    devhandle_from_of(devhandle_invalid(), node);
+	} else {
+		child_devhandle = devhandle_invalid();
+	}
+	prop_dictionary_set_data(dev, "devhandle",
+	    &child_devhandle, sizeof(child_devhandle));
+
 	prop_array_add(cfg, dev);
 	prop_object_release(dev);
 }
