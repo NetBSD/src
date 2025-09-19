@@ -328,13 +328,13 @@ fix_kill_attr(tdata_t *td, size_t ptrsize)
 	    fix_kill_attr_tab, NULL, NULL, NULL);
 }
 
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || HAVE_NBTOOL_CONFIG_H */
 
 void
 cvt_fixups(tdata_t *td, size_t ptrsize)
 {
 	fix_small_cpu_struct(td, ptrsize);
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || HAVE_NBTOOL_CONFIG_H
 	fix_kill_attr(td, ptrsize);
 #endif
 }
