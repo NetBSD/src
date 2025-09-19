@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2025/09/17 05:55:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.59 2025/09/19 05:27:45 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,8 +17,6 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
-
-CSHLIBFLAGS+=	-D_GLIBCXX_COMPAT_
 
 DIST=		${GCCDIST}
 GNUVER=		${DIST}/libstdc++-v3/config/abi/pre/gnu.ver
@@ -64,11 +62,16 @@ SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 
+# The compatibility files are built without -D_GLIBCXX_SHARED.
+.for s in ${SRCS:Ncompatibility.cc:Ncompatibility-debug_list.cc:Ncompatibility-debug_list-2.cc:Ncompatibility-atomic-c++0x.cc:Ncompatibility-c++0x.cc:Ncompatibility-chrono.cc:Ncompatibility-condvar.cc:Ncompatibility-thread-c++0x.cc}
+CSHLIBFLAGS.${s}+=	-D_GLIBCXX_SHARED
+.endfor
+
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
-CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+CPPFLAGS+=	-DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
 .if ${G_CLOCALE_CC:M*dragonfly*} != ""
 CPPFLAGS+=	-I${CONF}/locale/dragonfly
 LOCALETYPE=	dragonfly
