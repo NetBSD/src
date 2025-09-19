@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5212_xmit.c,v 1.4 2021/04/13 03:27:13 mrg Exp $
+ * $Id: ar5212_xmit.c,v 1.5 2025/09/19 07:28:38 mrg Exp $
  */
 #include "opt_ah.h"
 
@@ -272,7 +272,7 @@ ar5212ResetTxQueue(struct ath_hal *ah, u_int q)
 	HAL_TX_QUEUE_INFO *qi;
 	uint32_t cwMin, chanCwMin, value, qmisc, dmisc;
 
-	if (q >= pCap->halTotalQueues) {
+	if (q >= pCap->halTotalQueues || q >= HAL_NUM_TX_QUEUES) {
 		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: invalid queue num %u\n",
 		    __func__, q);
 		return AH_FALSE;
