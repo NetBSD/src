@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.387 2025/09/17 04:37:47 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.388 2025/09/19 15:55:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.387 2025/09/17 04:37:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.388 2025/09/19 15:55:12 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.387 2025/09/17 04:37:47 perseant Ex
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/file.h>
+#include <sys/fstypes.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
@@ -1593,7 +1594,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	int error;
+	int error, segflags;
 	struct lfs *fs;
 
 	fs = VFSTOULFS(mp)->um_lfs;
@@ -1616,10 +1617,18 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 	lfs_writer_enter(fs, "lfs_dirops");
 
-	/* All syncs must be checkpoints until roll-forward is implemented. */
-	DLOG((DLOG_FLUSH, "lfs_sync at 0x%jx\n",
+	DLOG((DLOG_FLUSH, "lfs_sync waitfor=%x at 0x%jx\n", waitfor,
 	      (uintmax_t)lfs_sb_getoffset(fs)));
-	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
+
+	segflags = 0;
+	if (waitfor == MNT_LAZY)
+		segflags = 0;
+	else if (waitfor == MNT_NOWAIT)
+		segflags = SEGM_CKP;
+	else /* MNT_WAIT, or unknown value */
+		segflags = SEGM_SYNC | SEGM_CKP;
+
+	error = lfs_segwrite(mp, segflags);
 	lfs_writer_leave(fs);
 #ifdef LFS_QUOTA
 	lfs_qsync(mp);
