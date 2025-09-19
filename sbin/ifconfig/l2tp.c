@@ -1,4 +1,4 @@
-/*	$NetBSD: l2tp.c,v 1.1 2017/02/16 08:28:03 knakahara Exp $	*/
+/*	$NetBSD: l2tp.c,v 1.2 2025/09/19 01:20:54 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: l2tp.c,v 1.1 2017/02/16 08:28:03 knakahara Exp $");
+__RCSID("$NetBSD: l2tp.c,v 1.2 2025/09/19 01:20:54 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -239,6 +239,8 @@ l2tp_status(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	if (getl2tp(env, &l2tpr, true) == -1)
 		return;
+
+	printf("\tl2tp-state: %s\n", l2tpr.state == L2TP_STATE_UP ? "up" : "down");
 
 	if (l2tpr.my_sess_id != 0 || l2tpr.peer_sess_id != 0) {
 		printf("\tlocal-session-id: %u\n", l2tpr.my_sess_id);
