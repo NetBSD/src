@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.21 2025/09/19 07:50:40 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.22 2025/09/19 09:21:35 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -133,6 +133,7 @@ COPTS.ubsan_init.cc += -O1
 # XXX If this list gets too huge, consider removing it, or at least moving
 # into per-file issues (there are a lot of files.)
 .if ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64"
+    ${MACHINE} == "sparc64" || \
+    ${MACHINE_CPU} == "arm"
 COPTS+=	-Wno-format
 .endif
