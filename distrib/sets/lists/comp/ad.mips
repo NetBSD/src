@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.97 2024/11/30 01:04:04 christos Exp $
+# $NetBSD: ad.mips,v 1.98 2025/09/19 19:33:14 mrg Exp $
 #
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
@@ -50,8 +50,14 @@
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-12/loongson.h			comp-c-include		gcc=12
+./usr/include/gcc-12/loongson.h			comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/loongson-mmiintrin.h	comp-c-include		gcc=12
+./usr/include/gcc-12/loongson-mmiintrin.h	comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/msa.h			comp-c-include		gcc=12
+./usr/include/gcc-12/msa.h			comp-obsolete		obsolete,gcc=14
+./usr/include/gcc-14/loongson.h			comp-c-include		gcc=14
+./usr/include/gcc-14/loongson-mmiintrin.h	comp-c-include		gcc=14
+./usr/include/gcc-14/msa.h			comp-c-include		gcc=14
 ./usr/include/mips				comp-c-include
 ./usr/include/mips/ansi.h			comp-c-include
 ./usr/include/mips/aout_machdep.h		comp-obsolete		obsolete

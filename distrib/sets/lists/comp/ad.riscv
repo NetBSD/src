@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.26 2024/11/30 01:04:04 christos Exp $
+# $NetBSD: ad.riscv,v 1.27 2025/09/19 19:33:14 mrg Exp $
 #
 ./usr/include/g++/bits/riscv32			comp-c-include		arch64,compat
 ./usr/include/g++/bits/riscv32/c++config.h	comp-c-include		arch64,gcc,compat
@@ -12,6 +12,10 @@
 ./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete,gcc=12
+./usr/include/gcc-14/riscv_bitmanip.h		comp-c-include		gcc=14
+./usr/include/gcc-14/riscv_crypto.h		comp-c-include		gcc=14
+./usr/include/gcc-14/riscv_th_vector.h		comp-c-include		gcc=14
+./usr/include/gcc-14/riscv_vector.h		comp-c-include		gcc=14
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/riscv				comp-c-include
 ./usr/include/riscv/ansi.h			comp-c-include
