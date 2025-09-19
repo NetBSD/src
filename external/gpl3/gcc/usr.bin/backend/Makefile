@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2025/09/17 05:55:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.80 2025/09/19 19:30:17 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -333,6 +333,19 @@ gen${f}: gen${f}.lo
 CLEANFILES+=	gen${f} gen${f}.lo
 .endfor
 
+# RISC-V has it's own generator.
+.if ${MACHINE_CPU} == "riscv"
+
+.for f in rvv-type-indexer
+gen${f}.lo: ${HH} ${GNUHOSTDIST}/gcc/config/riscv/gen${f}.cc ${G_RTL_BASE_H}
+gen${f}: gen${f}.lo ${GENPROG_ERROR_DEPENDS}
+	${_MKTARGET_LINK}
+	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY} ${LDFLAGS.${.TARGET}}
+CLEANFILES+=	gen${f} gen${f}.lo
+.endfor
+
+.endif
+
 .include "../../Makefile.hooks"
 
 #
@@ -465,6 +478,9 @@ aarch64-builtin-iterators.h: ${DIST}/gcc/config/aarch64/geniterators.sh \
 	$(HOST_SH) ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	aarch-builtin-iterators.h
+
+riscv-vector-type-indexer.gen.def: genrvv-type-indexer ${GNUHOSTDIST}/gcc/config/riscv/riscv-vector-builtins.def
+	./genrvv-type-indexer ${.TARGET}
 
 .if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64" # {
 
