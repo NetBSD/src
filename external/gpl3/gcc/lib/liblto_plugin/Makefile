@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2025/09/16 22:25:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2025/09/19 22:53:02 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -57,7 +57,7 @@ config.h: Makefile
 	rm -rf .ab
 
 # Fetch ${G_version}
-GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${MACHINE_ARCH}
+GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${MACHINE_ARCH:S/earmv5/earm/}
 .include "${GCCARCH}/defs.mk"
 
 CPPFLAGS+=	-DBASE_VERSION=\"${G_version}\"
