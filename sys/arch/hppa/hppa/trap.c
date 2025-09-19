@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2025/09/19 16:43:08 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.126 2025/09/19 16:54:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2025/09/19 16:43:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2025/09/19 16:54:20 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -489,7 +489,7 @@ out:
 
 
 #define PROBE_ENCS	(0x46 | 0xc6 | 0x47 | 0xc7)
-#define PROBE_PL	__PABITS(14, 15)
+#define PROBE_PL	__PABITS(11, 15)
 #define PROBE_IMMED	__PABIT(18)
 #define PROBE_RW	__PABIT(25)
 
@@ -504,6 +504,9 @@ out:
       __SHIFTIN(PROBE_ENCS, __PABITS(18, 25))  | \
       __SHIFTIN(0,          __PABIT(26)))      ^ \
      (PROBE_IMMED | PROBE_RW))
+
+#define PLMASK	__BITS(1, 0)
+
 
 /* for hppa64 */
 CTASSERT(sizeof(register_t) == sizeof(u_int));
@@ -930,11 +933,11 @@ do_onfault:
 		} else if ((opcode & PROBE_MASK) == PROBE) {
 			u_int pl;
 			if ((opcode & PROBE_IMMED) != 0) {
-				pl = __SHIFTOUT(opcode, __PABITS(14, 15));
+				pl = __SHIFTOUT(opcode, PROBE_PL) & PLMASK;
 			} else {
 				const u_int plreg =
-				    __SHIFTOUT(opcode, __PABITS(11, 15));
-				pl = tf_getregno(frame, plreg);
+				    __SHIFTOUT(opcode, PROBE_PL);
+				pl = tf_getregno(frame, plreg) & PLMASK;
 			}
 			bool ok = true;
 			if ((user && space == HPPA_SID_KERNEL) ||
