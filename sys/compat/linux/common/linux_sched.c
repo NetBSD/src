@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.84 2025/09/19 18:41:58 christos Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.85 2025/09/19 19:35:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.84 2025/09/19 18:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.85 2025/09/19 19:35:15 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -234,7 +234,7 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 	SCARG(&clone_args, stack) = (void *)(uintptr_t)cl_args.stack;
 #else
 	SCARG(&clone_args, stack) =
-	    (void *)((uintptr_t)cl_args.stack + cl_args.stack_size);
+	    (void *)(uintptr_t)((uintptr_t)cl_args.stack + cl_args.stack_size);
 #endif
 	SCARG(&clone_args, parent_tidptr) =
 	    (void *)(intptr_t)cl_args.parent_tid;
