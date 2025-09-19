@@ -6,7 +6,7 @@ tools:		does build.sh tools work?
 kernels:	does a kernel run?  y (yes), b (builds/ready), p (partially), ? (not ready)
 libgcc:		does libgcc build?
 native-gcc:	does a full mknative-gcc complete?
-sani:		has sanitizer been ported to this CPU again for GCC 12?  b (build) y (works)
+sani:		has sanitizer been ported to this CPU again for GCC 14?  b (build) y (works)
 make release:	does build.sh release complete?  (before sanitizer - bs)
 runs:		does the system boot with a full world?
 atf:		does atf run / compare well
@@ -17,49 +17,64 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	?	y	y	?	n[1]		?	?	?
 aarch64eb	y	?	y	y	?	?		?	?	?
-alpha		y	?	y	y	?	?		?	?	?
-earmv4		y	y	y	y	y	y		?	?	?
+alpha		y	?	y	y	n[2]	?		?	?	?
+earmv4		y	b	y	y	y	y		?	?	?
 earmv4eb	y	?	y	y	?	?		?	?	?
 earmv5		y	?	y	y	?	?		?	?	?
 earmv5eb	y	?	y	y	?	?		?	?	?
 earmv5hf	y	?	y	y	?	?		?	?	?
 earmv5hfeb	y	?	y	y	?	?		?	?	?
-earmv6		y	?	y	y	?	?		?	?	?
-earmv6eb	y	?	y	y	?	?		?	?	?
-earmv6hf	y	?	y	y	?	?		?	?	?
+earmv6		y	b	y	y	y	y		?	?	?
+earmv6eb	y	b	y	y	y	y		?	?	?
+earmv6hf	y	?	y	y	?	y		?	?	?
 earmv6hfeb	y	?	y	y	?	?		?	?	?
-earmv7		y	?	y	y	?	?		?	?	?
+earmv7		y	b	y	y	y	y		?	?	?
 earmv7eb	y	?	y	y	?	?		?	?	?
-earmv7hf	y	?	y	y	?	?		?	?	?
-earmv7hfeb	y	?	y	y	?	?		?	?	?
-hppa		y	?	y	y	?	?		?	?	?
-i386		y	?	y	y	?	?		?	?	?
-ia64		y	?	y	y	?	?		?	?	?
-m68000		y	?	y	y	?	?		?	?	?
-m68k		y	?	y	y	?	?		?	?	?
+earmv7hf	y	b	y	y	y	y		?	?	?
+earmv7hfeb	y	b	y	y	y	y		?	?	?
+hppa		y	?	y	y	?	n[3]		?	?	?
+i386		y	b	y	y	y	y		?	?	?
+ia64		y	?	y	y	?	r		?	?	?
+m68000		y	?	y	y	n[2]	?		?	?	?
+m68k		y	?	y	y	n[2]	?		?	?	?
 mipseb		y	?	y	y	?	?		?	?	?
 mipsel		y	?	y	y	?	?		?	?	?
-mips64eb	y	?	y	y	?	?		?	?	?
-mips64el	y	?	y	y	?	?		?	?	?
-powerpc		y	?	y	y	?	?		?	?	?
-powerpc64	y	?	y	y	?	?		?	?	?
-sh3eb		y	?	y	y	?	?		?	?	?
-sh3el		y	?	y	y	?	?		?	?	?
+mips64eb	y	b	y	y	y	y		?	?	?
+mips64el	y	b	y	y	y	y		?	?	?
+powerpc		y	b	y	y	y	y		?	?	?
+powerpc64	y	?	y	y	y	r		?	?	?
+sh3eb		y	?	y	y	n[2]	?		?	?	?
+sh3el		y	?	y	y	n[2]	?		?	?	?
 sparc		y	y	y	y	y	y		y	?	?
 sparc64		y	y	y	y	y	y		y	?	?
-vax		y	?	y	y	?	?		?	?	?
+vax		y	y[4]	y	y	?	?		?	?	?
 x86_64		y	y	y	y	y	?		y	?	?
-riscv32		y	?	y	y	?	?		?	?	?
-riscv64		y	?	y	y	?	?		?	?	?
+riscv32		y	b	y	y	y	y		?	?	?
+riscv64		y	b	y	y	y	y		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
 [1]: there is a ctfconvert vs arm problem in libgcc, and probably more
+[2]: sanitizer_asm.h needs significant porting:
+     /usr/src3/external/gpl3/gcc/dist/libsanitizer/interception/interception.h:208:8: error: expected ')' before 'C_ASM_TAIL_CALL'
+       208 |        C_ASM_TAIL_CALL(SANITIZER_STRINGIFY(TRAMPOLINE(func)),                  \
+           |        ^~~~~~~~~~~~~~~
+     /usr/src3/external/gpl3/gcc/dist/libsanitizer/interception/interception.h:305:3: note: in expansion of macro 'DECLARE_WRAPPER'
+       305 |   DECLARE_WRAPPER(ret_type, func, __VA_ARGS__)  \
+           |   ^~~~~~~~~~~~~~~
+     /usr/src3/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:380:1: note: in expansion of macro 'INTERCEPTOR'
+       380 | INTERCEPTOR(SIZE_T, strlen, const char *s) {
+           | ^~~~~~~~~~~
+[3]: looks like some codegen issue in libgcc, eg:
+     {standard input}:36: Error: Unknown opcode: `stws|stw} %r21,-16(%sp)'
+     {standard input}:39: Error: Invalid operands
+[4]: my kernel has 3 or 4 files built with -O0 to avoid compiler ICE issues
+
 
 --- these are GCC 12 issues, but some will remain --
-[2]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
-[3]: GENERIC.SKI boots just as well as GCC 10.
-[13]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
+[X]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
+[X]: GENERIC.SKI boots just as well as GCC 10.
+[XX]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
       ThreadSanitizer: CHECK failed: tsan_rtl.cpp:149 "((reinterpret_cast<uptr>(this) % 64)) == ((0))" (0x10, 0x0) (tid=21499)
       ThreadSanitizer:DEADLYSIGNAL
       ==21499==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000017 (pc 0x7f7ff4e5e14e bp 0x7f7fffffdbd0 sp 0x7f7fffffdb40 T21499)
@@ -67,31 +82,31 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
       ==21499==Hint: address points to the zero page.
       ThreadSanitizer:DEADLYSIGNAL
       ThreadSanitizer: nested bug in the same thread, aborting.
-[14]: "dd count=1", "env LC_CTYPE=en_US.UTF-8 locale", and "tests/crypto/libcrypto/h_evp_test evpmd_blake.txt" abort.
+[XX]: "dd count=1", "env LC_CTYPE=en_US.UTF-8 locale", and "tests/crypto/libcrypto/h_evp_test evpmd_blake.txt" abort.
       adding -fno-stack-protector to strsuftoll.c, citrus_module.c, and blake2_prov.c, respectively, works around the problem.
       -- workarounds commited.
-[16]: sanitizers crash early:
+[XX]: sanitizers crash early:
       Program received signal SIGSEGV, Segmentation fault.
       (gdb) bt
       #0  0x000000004064265c in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2181
       #1  0xffffffffffffc704 in ?? ()
       Backtrace stopped: previous frame identical to this frame (corrupt stack?)
       -- some wip patches make this less bad
-[17]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
+[XX]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
       FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
-[23]: sanitizers fail to build:
+[XX]: sanitizers fail to build:
       sanitizer_flag_parser.h:141:72: error: format '%zx' expects argument of type 'size_t', but argument 4 has type 'unsigned int' [-Werror=format=]
-[24]: (NOT A REGRESSION) c++ exception handling is broken. mechanically applying
+[XX]: (NOT A REGRESSION) c++ exception handling is broken. mechanically applying
       http://www.execsw.org/netbsd/changeset.cgi?id=20140318T234341Z.c59ac4642e7d4b345f6dc5aa9887e9e1f9aa459a#src/gnu/dist/gcc4/gcc/config/vax/vax.c
       does not help (with adjustments for gcc 10.5.0, which is broken, too):
       (gdb) invalid-command
       [1]   Illegal instruction (core dumped) gdb
-[25]: (maybe not related to [24]) native gcc is broken:
+[XX]: (maybe not related to [24]) native gcc is broken:
       simh# cc hello.c
       during RTL pass: final
       hello.c: In function 'main':
       hello.c:9:1: internal compiler error: Segmentation fault
-[26]: divide by zero with ubsan hits CheckLocked assertion failure, and stalls at LockSlow indefinitely:
+[XX]: divide by zero with ubsan hits CheckLocked assertion failure, and stalls at LockSlow indefinitely:
       (gdb) bt
       #0 __sanitizer::StaticSpinMutex::LockSlow at sanitizer_mutex.cpp:24
       ...
@@ -110,10 +125,10 @@ CPU		platform list
 earmv4:		?		?	?	?		?		?		 		?		y		 
 earm:		 		 	 	?		?		 		?		 		 		?
 earmhf:		 		 	 	?		?		 		 		 		 		 
-earmv6:		 		 	 	?		?
-earmv6hf:	 		 	 	?		?
-earmv7:		 		 	 	?		?
-earmv7hf:	 		 	 	?		?
+earmv6:		 		 	 	y		y
+earmv6hf:	 		 	 	?		y
+earmv7:		 		 	 	y		?
+earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68?		mac68?		mvme68?		news68?		next68?		sun3	x68?
 m68k:		?		?	?	?		?		?		?		?		?		? 	?
@@ -126,10 +141,10 @@ mipsel:		?		?		?		?		?		?
 
 		algor		evbmips		pmax
 mips64eb:	 		?		 
-mips64el:	?		?		?
+mips64el:	?		y		?
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	?		?	?	?		?		?		?		?		?		?
+powerpc:	?		?	?	?		y		?		?		?		?		?
 
 		evbppc		macppc		ofppc
 powerpc64:	?		?		?
