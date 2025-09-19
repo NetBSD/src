@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.20 2025/09/16 22:27:20 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.21 2025/09/19 07:50:40 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -125,4 +125,14 @@ COPTS.sanitizer_symbolizer_libcdep.cc += -O1
 COPTS.sanitizer_symbolizer_report.cc += -O1
 COPTS.ubsan_diag.cc += -O1
 COPTS.ubsan_init.cc += -O1
+.endif
+
+# XXX GCC 14 hard codes types and printf formats causing various errors,
+# so this is the ugly method to avoid it.
+#
+# XXX If this list gets too huge, consider removing it, or at least moving
+# into per-file issues (there are a lot of files.)
+.if ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64"
+COPTS+=	-Wno-format
 .endif

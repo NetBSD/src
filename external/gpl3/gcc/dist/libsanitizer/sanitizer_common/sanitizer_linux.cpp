@@ -679,7 +679,7 @@ static void ReadNullSepFileToArray(const char *path, char ***arr,
 static char **
 load_vector(int m)
 {
-  size_t size;
+  uptr size;
   int nv;
   char **v, **ap, *bp, *buf, *endp;
   int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), 0};
