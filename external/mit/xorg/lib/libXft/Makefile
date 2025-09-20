@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2019/03/18 03:09:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2025/09/20 07:36:55 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,9 @@ LIBDPLIBS=	X11		${.CURDIR}/../libX11/dynamic \
 		Xrender		${.CURDIR}/../libXrender
 
 PKGDIST=	${LIB}
+
+# XXX
+COPTS.xftrender.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-alloc-size-larger-than :}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
