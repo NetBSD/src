@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.60 2025/09/17 23:44:27 mrg Exp $
+# $NetBSD: ad.aarch64,v 1.61 2025/09/20 08:22:19 mrg Exp $
 #
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
@@ -173,10 +173,22 @@
 ./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
 ./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete,gcc=12
 ./usr/include/gcc-12/arm_acle.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_acle.h			comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/arm_bf16.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_bf16.h			comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/arm_fp16.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_fp16.h			comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/arm_neon.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_neon.h			comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/arm_sve.h			comp-c-include		gcc=12
+./usr/include/gcc-12/arm_sve.h			comp-obsolete		obsolete,gcc=14
+./usr/include/gcc-14/arm_acle.h			comp-c-include		gcc=14
+./usr/include/gcc-14/arm_bf16.h			comp-c-include		gcc=14
+./usr/include/gcc-14/arm_fp16.h			comp-c-include		gcc=14
+./usr/include/gcc-14/arm_neon.h			comp-c-include		gcc=14
+./usr/include/gcc-14/arm_neon_sve_bridge.h	comp-c-include		gcc=14
+./usr/include/gcc-14/arm_sme.h			comp-c-include		gcc=14
+./usr/include/gcc-14/arm_sve.h			comp-c-include		gcc=14
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/eabi/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabi/libarm_p.a			comp-c-proflib		compat,profile,llvm
