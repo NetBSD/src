@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2025/07/19 12:31:45 christos Exp $
+#	$NetBSD: Makefile,v 1.42 2025/09/20 18:59:22 mrg Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -32,5 +32,9 @@ cmds.o fetch.o: version.h
 main.o:	ftp_var.h
 
 CWARNFLAGS.gcc+=	${CC_WNO_FORMAT_OVERFLOW}
+
+.if ${MACHINE} == "sun2"
+COPTS.ftp.c+=	-Wno-error=clobbered
+.endif
 
 .include <bsd.prog.mk>
