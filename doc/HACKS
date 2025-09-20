@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.257 2025/09/16 08:50:35 nat Exp $
+# $NetBSD: HACKS,v 1.258 2025/09/20 12:35:00 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1056,4 +1056,14 @@ descr
 	The problem has been reported to upstream:
 
 	https://sourceware.org/bugzilla/show_bug.cgi?id=33344
+kcah
+
+hack	libxft: gcc-14 bogus error diagnostic
+cdate	Sat Sep 20 08:33:22 EDT 2025
+who	christos
+file	xsrc/external/mit/libXft/dist/src/xftrender.c : 1.2
+descr
+	gcc-14 thinks that the needed size for malloc is 
+	0x7fffffffffffffff. Add a conditional before that to bail
+	if it is larger than UINT_MAX / 2, so teach it that it is not.
 kcah
