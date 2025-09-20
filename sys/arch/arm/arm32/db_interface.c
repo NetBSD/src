@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.65 2023/08/02 14:36:39 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.66 2025/09/20 06:27:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2023/08/02 14:36:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66 2025/09/20 06:27:30 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,8 +141,10 @@ kdb_trap(int type, db_regs_t *regs)
 			 */
 			membar_consumer();
 			while (db_onproc != ci) {
-				if (db_onproc == NULL)
+				if (db_onproc == NULL) {
+					ddb_regp = NULL;
 					return 1;
+				}
 #ifdef _ARM_ARCH_6
 				__asm __volatile("wfe");
 				membar_consumer();
@@ -193,6 +195,7 @@ kdb_trap(int type, db_regs_t *regs)
 	}
 #endif
 
+	ddb_regp = NULL;
 	return 1;
 }
 #endif
