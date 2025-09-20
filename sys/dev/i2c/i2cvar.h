@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.30 2025/09/17 14:24:51 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.31 2025/09/20 21:24:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -173,6 +173,9 @@ struct i2c_attach_args {
 int	iicbus_print(void *, const char *);
 void	iic_tag_init(i2c_tag_t);
 void	iic_tag_fini(i2c_tag_t);
+
+int	iic_acquire_bus_lock(kmutex_t *, int);
+void	iic_release_bus_lock(kmutex_t *);
 
 static inline device_t
 iicbus_attach_with_devhandle(device_t dev, i2c_tag_t tag, devhandle_t devhandle)
