@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.autobuild_h,v 1.1 2023/08/01 05:57:53 mrg Exp $
+#	$NetBSD: Makefile.autobuild_h,v 1.2 2025/09/20 00:31:29 mrg Exp $
 
 # makefile fragment to create auto-build.h
 
@@ -15,6 +15,10 @@ HOST_CXXFLAGS+= -I${.OBJDIR}
 # Set this to "true" to leave .ab around
 HOST_AB_CLEAN?=	rm -rf .ab
 
+.if ${HAVE_GCC} >= 14 && ${MACHINE} == "ia64"
+COMMON_CONFIGURE_ARGS+= --enable-obsolete
+.endif
+
 auto-build.h: gmp.h Makefile
 	${_MKTARGET_CREATE}
 	rm -rf .ab && \
@@ -29,6 +33,7 @@ auto-build.h: gmp.h Makefile
 		gcc_cv_ld=${LD:Q} \
 		gcc_cv_as=${AS:Q} \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
+			${COMMON_CONFIGURE_ARGS} \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
