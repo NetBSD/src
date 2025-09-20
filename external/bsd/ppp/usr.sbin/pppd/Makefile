@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2025/01/08 19:59:40 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2025/09/20 18:58:54 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -64,6 +64,8 @@ DPADD+=${LIBPAM} ${PAM_STATIC_DPADD}
 
 LDADD+= -lpcap -lcrypt -lssl -lcrypto -lutil -Wl,--export-dynamic
 DPADD+= ${LIBPCAP} ${LIBCRYPT} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
+LDADD+= -lpthread
+DPADD+= ${LIBPTHREAD}
 
 .for f in chap-md5 chap_ms eap
 COPTS.${f}.c+=	-Wno-pointer-sign
