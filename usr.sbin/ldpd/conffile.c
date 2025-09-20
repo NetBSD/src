@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.14 2025/09/20 15:36:29 christos Exp $ */
+/* $NetBSD: conffile.c,v 1.15 2025/09/20 15:42:01 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ conf_parsefile(const char *fname)
 		char *prev = nextline;
 		if ((nextline = conf_getlinelimit()) == NULL)
 			break;
-		while (isspace((int)*prev) != 0 && prev < nextline)
+		while (isspace((unsigned char)*prev) != 0 && prev < nextline)
 			prev++;
 		if (nextline - prev < 2)
 			continue;
@@ -236,7 +236,7 @@ fill_info(void *param, int (*func)(void *, char *))
 		nextline = conf_getlinelimit();
 		if (nextline == NULL || (size_t)(nextline - prev) > LINEMAXSIZE)
 			return -1;
-		while (isspace((int)*prev) != 0 && prev < nextline)
+		while (isspace((unsigned char)*prev) != 0 && prev < nextline)
 			prev++;
 		size_t diff = (size_t)(nextline - prev);
 		if (diff > LINEMAXSIZE)
