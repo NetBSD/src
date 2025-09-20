@@ -1,4 +1,4 @@
-/* $NetBSD: es8316ac.c,v 1.7 2025/09/17 13:42:42 thorpej Exp $ */
+/* $NetBSD: es8316ac.c,v 1.8 2025/09/20 18:55:29 mrg Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.7 2025/09/17 13:42:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.8 2025/09/20 18:55:29 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -690,9 +690,10 @@ escodec_attach(device_t parent, device_t self, void *aux)
 {
 	struct escodec_softc * const sc = device_private(self);
 	struct i2c_attach_args * const ia = aux;
-	const int phandle = devhandle_to_of(device_handle(sc->sc_dev));
 
 	sc->sc_dev = self;
+	const int phandle = devhandle_to_of(device_handle(sc->sc_dev));
+
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_phandle = phandle;
