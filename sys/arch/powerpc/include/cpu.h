@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.124 2023/07/26 06:36:20 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.125 2025/09/20 06:54:52 mrg Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -402,6 +402,7 @@ void	icache_inv(vaddr_t, vsize_t);
 void *	mapiodev(paddr_t, psize_t, bool);
 void	unmapiodev(vaddr_t, vsize_t);
 
+struct trapframe;
 int	emulate_mxmsr(struct lwp *, struct trapframe *, uint32_t);
 
 #ifdef MULTIPROCESSOR
