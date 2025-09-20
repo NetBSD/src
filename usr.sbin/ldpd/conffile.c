@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.13 2020/04/22 23:53:27 joerg Exp $ */
+/* $NetBSD: conffile.c,v 1.14 2025/09/20 15:36:29 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -225,6 +225,35 @@ checkeol(char *line)
 	return -1;
 }
 
+static int
+fill_info(void *param, int (*func)(void *, char *))
+{
+	char buf[LINEMAXSIZE];
+
+	for ( ; ; ) {
+		char *prev = nextline;
+		parseline++;
+		nextline = conf_getlinelimit();
+		if (nextline == NULL || (size_t)(nextline - prev) > LINEMAXSIZE)
+			return -1;
+		while (isspace((int)*prev) != 0 && prev < nextline)
+			prev++;
+		size_t diff = (size_t)(nextline - prev);
+		if (diff > LINEMAXSIZE)
+			return -1;
+		memcpy(buf, prev, diff);
+		if (diff <  2 || buf[0] == '#')
+			continue;
+		else if (buf[0] == '}')
+			break;
+		else
+			buf[diff] = '\0';
+		if ((*func)(param, buf) == -1)
+			return -1;
+	}
+	return 0;
+}
+
 /*
  * Sets hello time
  */
@@ -311,7 +340,6 @@ Fneighbour(char *line)
 	char *peer;
 	struct conf_neighbour *nei;
 	struct in_addr ad;
-	char buf[LINEMAXSIZE];
 
 	peer = NextCommand(line);
 	if (inet_pton(AF_INET, peer, &ad) != 1)
@@ -323,25 +351,7 @@ Fneighbour(char *line)
 	nei->address.s_addr = ad.s_addr;
 	SLIST_INSERT_HEAD(&conei_head, nei, neilist);
 
-	for ( ; ; ) {
-		char *prev = nextline;
-		parseline++;
-		nextline = conf_getlinelimit();
-		if (nextline == NULL || (size_t)(nextline - prev) > LINEMAXSIZE)
-			return -1;
-		while (isspace((int)*prev) != 0 && prev < nextline)
-			prev++;
-		memcpy(buf, prev, nextline - prev);
-		if (nextline - prev < 2 || buf[0] == '#')
-			continue;
-		else if (buf[0] == '}')
-			break;
-		else
-			buf[nextline - prev] = '\0';
-		if (Gneighbour(nei, buf) == -1)
-			return -1;
-	}
-	return -1;
+	return fill_info(nei, (int (*)(void *, char *))Gneighbour); 
 }
 
 /*
@@ -385,7 +395,6 @@ Finterface(char *line)
 {
 	char *ifname;
 	struct conf_interface *conf_if;
-	char buf[LINEMAXSIZE];
 
 	if ((ifname = NextCommand(line)) == NULL)
 		return -1;
@@ -395,25 +404,7 @@ Finterface(char *line)
 	strlcpy(conf_if->if_name, ifname, IF_NAMESIZE);
 	SLIST_INSERT_HEAD(&coifs_head, conf_if, iflist);
 
-	for ( ; ; ) {
-		char *prev = nextline;
-		parseline++;
-		nextline = conf_getlinelimit();
-		if (nextline == NULL || (size_t)(nextline - prev) > LINEMAXSIZE)
-			return -1;
-		while (isspace((int)*prev) != 0 && prev < nextline)
-			prev++;
-		memcpy(buf, prev, nextline - prev);
-		if (nextline - prev < 2 || buf[0] == '#')
-			continue;
-		else if (buf[0] == '}')
-			break;
-		else
-			buf[nextline - prev] = '\0';
-		if (Ginterface(conf_if, buf) == -1)
-			return -1;
-	}
-	return 0;
+	return fill_info(conf_if, (int (*)(void *, char *))Ginterface); 
 }
 
 int
