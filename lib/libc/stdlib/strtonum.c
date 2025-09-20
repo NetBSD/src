@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.7 2024/01/20 16:13:39 christos Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.8 2025/09/20 12:19:31 christos Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,8 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.7 2024/01/20 16:13:39 christos Exp $");
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: strtonum.c,v 1.8 2025/09/20 12:19:31 christos Exp $");
+#endif
 
 #include "namespace.h"
 
