@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.46 2025/09/21 13:56:36 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.47 2025/09/21 19:13:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.46 2025/09/21 13:56:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.47 2025/09/21 19:13:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,6 @@ pmu_attach(device_t parent, device_t self, void *aux)
 	uint8_t cmd[2] = {2, 0};
 	uint8_t resp[16];
 	char name[256], model[32];
-	prop_dictionary_t dict = device_properties(self);
 
 	extint_node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (extint_node) {
@@ -343,60 +342,18 @@ pmu_attach(device_t parent, device_t self, void *aux)
 
 	node = OF_child(sc->sc_node);
 
-	while (node != 0) {
-
-		if (OF_getprop(node, "name", name, 256) <= 0)
-			goto next;
-
+	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, 256) <= 0) {
+			continue;
+		}
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
-			int devs;
-			uint32_t addr;
-			char compat[256];
-			prop_array_t cfg;
-			prop_dictionary_t dev;
-			prop_data_t data;
-			devhandle_t child_devhandle;
-
 			aprint_normal_dev(self, "initializing IIC bus\n");
-
-			cfg = prop_array_create();
-			prop_dictionary_set(dict, "i2c-child-devices", cfg);
-			prop_object_release(cfg);
-
-			/* look for i2c devices */
-			devs = OF_child(node);
-			while (devs != 0) {
-				int clen;
-				if (OF_getprop(devs, "name", name, 256) <= 0)
-					goto skip;
-				if ((clen = OF_getprop(devs, "compatible",
-				    compat, 256)) <= 0)
-					goto skip;
-				if (OF_getprop(devs, "reg", &addr, 4) <= 0)
-					goto skip;
-				addr = (addr & 0xff) >> 1;
-				DPRINTF("-> %s@%x\n", name, addr);
-				dev = prop_dictionary_create();
-				prop_dictionary_set_string(dev, "name", name);
-				data = prop_data_create_copy(compat, clen);
-				prop_dictionary_set(dev, "compatible", data);
-				prop_object_release(data);
-				prop_dictionary_set_uint32(dev, "addr", addr);
-				child_devhandle =
-				  devhandle_from_of(devhandle_invalid(), devs);
-				prop_dictionary_set_data(dev, "devhandle",
-				    &child_devhandle, sizeof(child_devhandle));
-
-				prop_array_add(cfg, dev);
-				prop_object_release(dev);
-			skip:
-				devs = OF_peer(devs);
-			}
 			iic_tag_init(&sc->sc_i2c);
 			sc->sc_i2c.ic_cookie = sc;
 			sc->sc_i2c.ic_exec = pmu_i2c_exec;
-			iicbus_attach(sc->sc_dev, &sc->sc_i2c);
-			goto next;
+			iicbus_attach_with_devhandle(self, &sc->sc_i2c,
+			    devhandle_from_of(device_handle(self), node));
+			continue;
 		}
 		if (strncmp(name, "adb", 4) == 0) {
 			aprint_normal_dev(self, "initializing ADB\n");
@@ -409,23 +366,20 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			config_found(self, &sc->sc_adbops, nadb_print,
 			    CFARGS(.iattr = "adb_bus"));
 #endif
-			goto next;
+			continue;
 		}
 		if (strncmp(name, "rtc", 4) == 0) {
-
 			aprint_normal_dev(self, "initializing RTC\n");
 			sc->sc_todr.todr_gettime = pmu_todr_get;
 			sc->sc_todr.todr_settime = pmu_todr_set;
 			sc->sc_todr.todr_dev = self;
 			todr_attach(&sc->sc_todr);
-			goto next;
+			continue;
 		}
-		if (strncmp(name, "battery", 8) == 0)
-			goto next;
-
+		if (strncmp(name, "battery", 8) == 0) {
+			continue;
+		}
 		aprint_normal_dev(self, "%s not configured\n", name);
-next:
-		node = OF_peer(node);
 	}
 
 	if (OF_finddevice("/bandit/ohare") != -1) {
