@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.7 2025/07/05 15:16:08 macallan Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.8 2025/09/21 18:03:28 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -84,13 +84,23 @@
 #define I2C_READING	0x02
 #define I2C_ERROR	0x04
 
+#define	KI2C_MAX_CHANNELS	2
+
+struct ki2c_channel {
+	struct i2c_controller	ch_i2c;
+	struct ki2c_softc	*ch_sc;
+	int			ch_node;
+	int			ch_channel;
+};
+
 struct ki2c_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_bh;
 	int sc_regstep;
-	
-	struct i2c_controller sc_i2c;
+
+	struct ki2c_channel sc_channels[KI2C_MAX_CHANNELS];
+	kmutex_t sc_mux_lock;
 
 	kcondvar_t sc_todev;
 	kmutex_t sc_todevmtx;
