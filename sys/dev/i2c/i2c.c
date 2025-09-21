@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.100 2025/09/21 14:43:18 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.101 2025/09/21 17:54:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.100 2025/09/21 14:43:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.101 2025/09/21 17:54:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.100 2025/09/21 14:43:18 thorpej Exp $");
 #endif /* I2C_USE_FDT */
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_calls.h>
 
 #include "ioconf.h"
 #include "locators.h"
@@ -269,7 +270,6 @@ static int
 iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct iic_softc *sc = device_private(parent);
-	struct i2c_attach_args ia;
 	int (*probe_func)(struct iic_softc *,
 			  const struct i2c_attach_args *, int);
 	prop_string_t pstr;
@@ -307,11 +307,9 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/* Use the default. */
 	}
 
-	ia.ia_tag = sc->sc_tag;
-
-	ia.ia_name = NULL;
-	ia.ia_clist = NULL;
-	ia.ia_clist_size = 0;
+	struct i2c_attach_args ia = {
+		.ia_tag = sc->sc_tag,
+	};
 
 	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT) {
 		/*
@@ -415,13 +413,50 @@ iic_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
+static void
+iic_attach_child_direct(struct iic_softc *sc, struct i2c_attach_args *ia)
+{
+	device_t newdev;
+	int loc[IICCF_NLOCS] = {
+		[IICCF_ADDR] = ia->ia_addr,
+	};
+
+	if (ia->ia_addr > I2C_MAX_ADDR) {
+		aprint_error_dev(sc->sc_dev,
+		    "WARNING: ignoring bad device address @ 0x%x\n",
+		    ia->ia_addr);
+		return;
+	}
+
+	if (sc->sc_devices[ia->ia_addr] != NULL) {
+		return;
+	}
+
+	newdev = config_found(sc->sc_dev, ia, iic_print_direct,
+	    CFARGS(.submatch = config_stdsubmatch,
+		   .locators = loc,
+		   .devhandle = ia->ia_devhandle));
+
+	sc->sc_devices[ia->ia_addr] = newdev;
+}
+
+static bool
+i2c_enumerate_devices_callback(device_t self,
+    struct i2c_enumerate_devices_args *args)
+{
+	struct iic_softc *sc = device_private(self);
+
+	iic_attach_child_direct(sc, args->ia);
+
+	return true;				/* keep enumerating */
+}
+
 static bool
 iic_attach_children_direct(struct iic_softc *sc)
 {
 	device_t parent = device_parent(sc->sc_dev);
 	devhandle_t devhandle = device_handle(sc->sc_dev);
 	prop_array_t child_devices;
-	i2c_tag_t ic = sc->sc_tag;
 	bool no_indirect_config;
 
 	child_devices = prop_dictionary_get(device_properties(parent),
@@ -454,77 +489,78 @@ iic_attach_children_direct(struct iic_softc *sc)
 		no_indirect_config = true;
 	}
 
-	if (child_devices) {
-		unsigned int i, count;
-		prop_dictionary_t dev;
-		uint32_t addr;
-		const char *name;
-		struct i2c_attach_args ia;
-		devhandle_t child_devhandle;
-		int loc[IICCF_NLOCS];
+	/*
+	 * If no explicit child device array is provided, then attempt
+	 * to enumerate i2c devices using the platform device tree.
+	 */
+	struct i2c_attach_args ia = {
+		.ia_tag = sc->sc_tag,
+	};
+	if (child_devices == NULL) {
+		struct i2c_enumerate_devices_args enumargs = {
+			.ia = &ia,
+			.callback = i2c_enumerate_devices_callback,
+		};
+		if (device_call(sc->sc_dev,
+				I2C_ENUMERATE_DEVICES(&enumargs)) == 0) {
+			no_indirect_config = true;
+		}
+		goto done;
+	}
+
+	/*
+	 * We have an explicit child device array to enumerate.
+	 */
+	prop_object_iterator_t iter = prop_array_iterator(child_devices);
+	prop_dictionary_t dev;
+
+	while ((dev = prop_object_iterator_next(iter)) != NULL) {
 		const void *vptr;
 		size_t vsize;
 
-		memset(loc, 0, sizeof loc);
-		count = prop_array_count(child_devices);
-		for (i = 0; i < count; i++) {
-			dev = prop_array_get(child_devices, i);
-			if (!dev) continue;
- 			if (!prop_dictionary_get_string(
-			    dev, "name", &name)) {
-				/* "name" property is optional. */
-				name = NULL;
-			}
-			if (!prop_dictionary_get_uint32(dev, "addr", &addr)) {
-				continue;
-			}
-			if (!prop_dictionary_get_data(dev, "compatible",
-					(const void **)&ia.ia_clist,
-					&ia.ia_clist_size)) {
-				ia.ia_clist = NULL;
-				ia.ia_clist_size = 0;
-			}
-			if (!prop_dictionary_get_data(dev, "devhandle",
-						      &vptr, &vsize)) {
-				vptr = NULL;
-			} else if (vsize != sizeof(child_devhandle)) {
-				vptr = NULL;
-			}
-			if (vptr != NULL) {
-				memcpy(&child_devhandle, vptr,
-				    sizeof(child_devhandle));
-			} else {
-				child_devhandle = devhandle_invalid();
-			}
-			loc[IICCF_ADDR] = addr;
-
-			memset(&ia, 0, sizeof ia);
-			ia.ia_addr = addr;
-			ia.ia_tag = ic;
-			ia.ia_name = name;
-
-			if (ia.ia_name == NULL && ia.ia_clist == NULL) {
-				aprint_error_dev(sc->sc_dev,
-				    "WARNING: ignoring bad child device entry "
-				    "for address 0x%02x\n", addr);
-			} else {
-				if (addr > I2C_MAX_ADDR) {
-					aprint_error_dev(sc->sc_dev,
-					    "WARNING: ignoring bad device "
-					    "address @ 0x%02x\n", addr);
-				} else if (sc->sc_devices[addr] == NULL) {
-					sc->sc_devices[addr] =
-					    config_found(sc->sc_dev, &ia,
-					    iic_print_direct,
-					    CFARGS(.locators = loc,
-						   .devhandle = child_devhandle));
-				}
-			}
+		if (!prop_dictionary_get_uint16(dev, "addr", &ia.ia_addr)) {
+			continue;
 		}
-		prop_object_release(child_devices);
-		child_devices = NULL;
-	}
 
+		if (!prop_dictionary_get_string(dev, "name", &ia.ia_name)) {
+			/* "name" property is optional. */
+			ia.ia_name = NULL;
+		}
+
+		if (!prop_dictionary_get_data(dev, "compatible",
+					      (const void **)&ia.ia_clist,
+					      &ia.ia_clist_size)) {
+			ia.ia_clist = NULL;
+			ia.ia_clist_size = 0;
+		}
+
+		if (!prop_dictionary_get_data(dev, "devhandle",
+					      &vptr, &vsize)) {
+			vptr = NULL;
+		} else if (vsize != sizeof(ia.ia_devhandle)) {
+			vptr = NULL;
+		}
+		if (vptr != NULL) {
+			memcpy(&ia.ia_devhandle, vptr,
+			    sizeof(ia.ia_devhandle));
+		} else {
+			ia.ia_devhandle = devhandle_invalid();
+		}
+
+		if ((ia.ia_name == NULL && ia.ia_clist == NULL) ||
+		    ia.ia_addr > I2C_MAX_ADDR) {
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: ignoring bad child device entry "
+			    "for address 0x%x\n", ia.ia_addr);
+			continue;
+		}
+
+		iic_attach_child_direct(sc, &ia);
+	}
+	prop_object_iterator_release(iter);
+	prop_object_release(child_devices);
+
+ done:
 	/*
 	 * We return "true" if we want to let indirect configuration
 	 * proceed.
