@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_machdep.c,v 1.1 2025/09/21 17:58:56 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_machdep.c,v 1.2 2025/09/21 19:12:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_machdep.c,v 1.1 2025/09/21 17:58:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_machdep.c,v 1.2 2025/09/21 19:12:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -82,12 +82,17 @@ of_i2c_get_address(device_t dev, int i2c_node, i2c_tag_t tag, int node,
 	addr = __SHIFTOUT(reg, OFW_I2C_ADDRESS_MASK);
 	channel = __SHIFTOUT(reg, OFW_I2C_ADDRESS_CHMASK);
 
+	aprint_debug_dev(dev, "%s: addr=0x%x channel=%u\n", __func__,
+	    addr, channel);
+
 	/*
 	 * If the controller supports multiple channels and the controller
 	 * node and the i2c bus node are the same, then the devices for
 	 * multiple channels are all mixed together in the device tree.
 	 * We need to filter them by channel in this case.
 	 */
+	aprint_debug_dev(dev, "%s: ic_channel=%d i2c_node=%d ctlr_node=%d\n",
+	    __func__, tag->ic_channel, i2c_node, ctlr_node);
 	if (tag->ic_channel != I2C_CHANNEL_DEFAULT && i2c_node == ctlr_node &&
 	    tag->ic_channel != channel) {
 		return false;
