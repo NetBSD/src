@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cmux.c,v 1.12 2025/09/16 13:09:13 thorpej Exp $	*/
+/*	$NetBSD: i2cmux.c,v 1.13 2025/09/21 15:02:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.12 2025/09/16 13:09:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2cmux.c,v 1.13 2025/09/21 15:02:25 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -149,22 +149,6 @@ iicmux_count_children(struct iicmux_softc * const sc)
 	return count;
 }
 
-#if 0
-/* XXX iicbus_print() should be able to do this. */
-static int
-iicmux_print(void * const aux, const char * const pnp)
-{
-	i2c_tag_t const tag = aux;
-	struct iicmux_bus * const bus = tag->ic_cookie;
-	int rv;
-
-	rv = iicbus_print(aux, pnp);
-	aprint_normal(" bus %d", bus->busidx);
-
-	return rv;
-}
-#endif
-
 static void
 iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t bus_devhandle,
     int const busidx)
@@ -184,6 +168,7 @@ iicmux_attach_bus(struct iicmux_softc * const sc, devhandle_t bus_devhandle,
 
 	iic_tag_init(&bus->controller);
 	bus->controller.ic_cookie = bus;
+	bus->controller.ic_channel = busidx;
 	bus->controller.ic_acquire_bus = iicmux_acquire_bus;
 	bus->controller.ic_release_bus = iicmux_release_bus;
 	bus->controller.ic_exec = iicmux_exec;
