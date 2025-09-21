@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.26 2023/09/23 21:26:16 andvar Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.27 2025/09/21 13:51:50 thorpej Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.26 2023/09/23 21:26:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.27 2025/09/21 13:51:50 thorpej Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.26 2023/09/23 21:26:16 andvar Exp
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
+#include <powerpc/ofw_machdep.h>
 
 #include <machine/pci_machdep.h>
 
@@ -230,7 +231,7 @@ canonicalize_bootpath(void)
  * known OF boot device.
  */
 void
-device_register(device_t dev, void *aux)
+ofw_device_register(device_t dev, void *aux)
 {
 	static device_t parent;
 	static char *bp = bootpath + 1, *cp = cbootpath;

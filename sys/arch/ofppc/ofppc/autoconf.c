@@ -1,7 +1,7 @@
-/* $NetBSD: ofw_machdep.h,v 1.7 2025/09/21 13:51:50 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.18 2025/09/21 13:51:50 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 2021 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,43 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_OFW_MACHDEP_H_
-#define _POWERPC_OFW_MACHDEP_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2025/09/21 13:51:50 thorpej Exp $");
 
-#ifdef _KERNEL
-#include <machine/powerpc.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-/*
- * The general format of an OpenFirmware virtual translation record is:
- *
- *	cell(s)		virt
- *	cell(s)		size
- *	cell(s)		phys
- *	cell		mode
- *
- * "mode" contains PTE WIMG bits.
- *
- * We define this structure to describe these translations that's independent
- * of the number of cells each field consumes.
- */
-struct OF_translation {
-	vaddr_t		virt;
-	vsize_t		size;
-	paddr_t		phys;
-	uint32_t	mode;
-};
+#include <powerpc/ofw_machdep.h>
 
-#define	OFW_MAX_TRANSLATIONS	48
-
-extern bool ofwbootcons_suppress; /* suppress OF console I/O */
-
-extern int ofw_chosen;		/* cached handle for "/chosen" */
-extern struct OF_translation ofw_translations[OFW_MAX_TRANSLATIONS];
-
-void	ofw_bootstrap(void);
-void	ofw_device_register(device_t dev, void *aux);
-void 	ofprint(const char *, ...);
-
-#endif /* _KERNEL */
-
-#endif /* _POWERPC_OFW_MACHDEP_H_ */
+void
+device_register(device_t dev, void *aux)
+{
+	ofw_device_register(dev, aux);
+}
