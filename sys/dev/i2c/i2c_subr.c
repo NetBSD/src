@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_subr.c,v 1.3 2025/09/20 21:24:29 thorpej Exp $	*/
+/*	$NetBSD: i2c_subr.c,v 1.4 2025/09/21 15:01:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_subr.c,v 1.3 2025/09/20 21:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_subr.c,v 1.4 2025/09/21 15:01:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,9 +62,17 @@ i2c_subr_modcmd(modcmd_t cmd, void *opaque)
 int
 iicbus_print(void *aux, const char *pnp)
 {
+	struct i2cbus_attach_args *iba = aux;
+	i2c_tag_t tag = iba->iba_tag;
 
-	if (pnp != NULL)
-		aprint_normal("iic at %s", pnp);
+	if (pnp != NULL) {
+		if (tag->ic_channel != I2C_CHANNEL_DEFAULT) {
+			aprint_normal("iic at %s", pnp);
+		} else {
+			aprint_normal("iic at %s bus %d", pnp,
+			    tag->ic_channel);
+		}
+	}
 
 	return UNCONF;
 }
