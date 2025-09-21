@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.144 2025/09/17 03:50:38 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.145 2025/09/21 14:19:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.144 2025/09/17 03:50:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.145 2025/09/21 14:19:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -495,7 +495,6 @@ lfs_last_alloc_ino(struct lfs *fs)
 	}
 	return ino;
 }
-#endif
 
 /*
  * Find the previous (next lowest numbered) free inode, if any.
@@ -545,6 +544,7 @@ lfs_freelist_prev(struct lfs *fs, ino_t ino)
 
 	return tino;
 }
+#endif
 
 /*
  * Free an inode.
