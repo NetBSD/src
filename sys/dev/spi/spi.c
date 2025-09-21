@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.36 2025/09/14 16:00:04 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.37 2025/09/21 13:02:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.36 2025/09/14 16:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.37 2025/09/21 13:02:08 thorpej Exp $");
 
 #include "locators.h"
 
@@ -210,8 +210,8 @@ spi_attach_child(struct spi_softc *sc, struct spi_attach_args *sa,
 			   .locators = locs,
 			   .devhandle = sa->sa_devhandle));
 	} else {
-		if (config_probe(sc->sc_dev, cf, &sa)) {
-			newdev = config_attach(sc->sc_dev, cf, &sa, spi_print,
+		if (config_probe(sc->sc_dev, cf, sa)) {
+			newdev = config_attach(sc->sc_dev, cf, sa, spi_print,
 			    CFARGS(.locators = locs));
 		}
 	}
