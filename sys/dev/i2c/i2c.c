@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.99 2025/09/18 02:51:04 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.100 2025/09/21 14:43:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.99 2025/09/18 02:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.100 2025/09/21 14:43:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,23 +121,21 @@ const struct cdevsw iic_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-static void	iic_fill_compat(struct i2c_attach_args*, const char*,
-			size_t, char **);
-
 static int
 iic_print_direct(void *aux, const char *pnp)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (pnp != NULL)
+	if (pnp != NULL) {
 		aprint_normal("%s%s%s%s at %s addr 0x%02x",
 			      ia->ia_name ? ia->ia_name : "(unknown)",
-			      ia->ia_ncompat ? " (" : "",
-			      ia->ia_ncompat ? ia->ia_compat[0] : "",
-			      ia->ia_ncompat ? ")" : "",
+			      ia->ia_clist ? " (" : "",
+			      ia->ia_clist ? ia->ia_clist : "",
+			      ia->ia_clist ? ")" : "",
 			      pnp, ia->ia_addr);
-	else
+	} else {
 		aprint_normal(" addr 0x%02x", ia->ia_addr);
+	}
 
 	return UNCONF;
 }
@@ -148,7 +146,7 @@ iic_print(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_addr != (i2c_addr_t)IICCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%x", ia->ia_addr);
+		aprint_normal(" addr 0x%02x", ia->ia_addr);
 
 	return UNCONF;
 }
@@ -312,9 +310,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_tag = sc->sc_tag;
 
 	ia.ia_name = NULL;
-	ia.ia_ncompat = 0;
-	ia.ia_compat = NULL;
-	ia.ia_prop = NULL;
+	ia.ia_clist = NULL;
+	ia.ia_clist_size = 0;
 
 	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT) {
 		/*
@@ -454,15 +451,14 @@ iic_attach_children_direct(struct iic_softc *sc)
 		}
 	} else {
 		prop_object_retain(child_devices);
+		no_indirect_config = true;
 	}
 
 	if (child_devices) {
 		unsigned int i, count;
 		prop_dictionary_t dev;
-		prop_data_t cdata;
 		uint32_t addr;
 		const char *name;
-		char *buf;
 		struct i2c_attach_args ia;
 		devhandle_t child_devhandle;
 		int loc[IICCF_NLOCS];
@@ -479,14 +475,20 @@ iic_attach_children_direct(struct iic_softc *sc)
 				/* "name" property is optional. */
 				name = NULL;
 			}
-			if (!prop_dictionary_get_uint32(dev, "addr", &addr))
+			if (!prop_dictionary_get_uint32(dev, "addr", &addr)) {
 				continue;
-			vptr = NULL;
-			if (prop_dictionary_get_data(dev, "devhandle",
-						     &vptr, &vsize)) {
-				if (vsize != sizeof(child_devhandle)) {
-					vptr = NULL;
-				}
+			}
+			if (!prop_dictionary_get_data(dev, "compatible",
+					(const void **)&ia.ia_clist,
+					&ia.ia_clist_size)) {
+				ia.ia_clist = NULL;
+				ia.ia_clist_size = 0;
+			}
+			if (!prop_dictionary_get_data(dev, "devhandle",
+						      &vptr, &vsize)) {
+				vptr = NULL;
+			} else if (vsize != sizeof(child_devhandle)) {
+				vptr = NULL;
 			}
 			if (vptr != NULL) {
 				memcpy(&child_devhandle, vptr,
@@ -501,30 +503,7 @@ iic_attach_children_direct(struct iic_softc *sc)
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 
-			/* XXX Gross, but good enough until these are gone. */
-			ia.__xxx_ia_cookie =
-			    (uint64_t)child_devhandle.uintptr;
-			switch (devhandle_type(child_devhandle)) {
-			case DEVHANDLE_TYPE_ACPI:
-				ia.__xxx_ia_cookietype = I2C_COOKIE_ACPI;
-				break;
-			case DEVHANDLE_TYPE_OF:
-				ia.__xxx_ia_cookietype = I2C_COOKIE_OF;
-				break;
-			default:
-				ia.__xxx_ia_cookietype = I2C_COOKIE_NONE;
-				break;
-			}
-			ia.ia_prop = dev;
-
-			buf = NULL;
-			cdata = prop_dictionary_get(dev, "compatible");
-			if (cdata)
-				iic_fill_compat(&ia,
-				    prop_data_value(cdata),
-				    prop_data_size(cdata), &buf);
-
-			if (name == NULL && cdata == NULL) {
+			if (ia.ia_name == NULL && ia.ia_clist == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: ignoring bad child device entry "
 				    "for address 0x%02x\n", addr);
@@ -541,11 +520,6 @@ iic_attach_children_direct(struct iic_softc *sc)
 						   .devhandle = child_devhandle));
 				}
 			}
-
-			if (ia.ia_compat)
-				free(ia.ia_compat, M_TEMP);
-			if (buf)
-				free(buf, M_TEMP);
 		}
 		prop_object_release(child_devices);
 		child_devices = NULL;
@@ -613,41 +587,6 @@ iic_detach(device_t self, int flags)
 	return 0;
 }
 
-static void
-iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
-	char **buffer)
-{
-	int count, i;
-	const char *c, *start, **ptr;
-
-	*buffer = NULL;
-	for (i = count = 0, c = compat; i < len; i++, c++)
-		if (*c == 0)
-			count++;
-	count += 2;
-	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
-	if (!ptr) return;
-
-	for (i = count = 0, start = c = compat; i < len; i++, c++) {
-		if (*c == 0) {
-			ptr[count++] = start;
-			start = c+1;
-		}
-	}
-	if (start < compat+len) {
-		/* last string not 0 terminated */
-		size_t l = c-start;
-		*buffer = malloc(l+1, M_TEMP, M_WAITOK);
-		memcpy(*buffer, start, l);
-		(*buffer)[l] = 0;
-		ptr[count++] = *buffer;
-	}
-	ptr[count] = NULL;
-
-	ia->ia_compat = ptr;
-	ia->ia_ncompat = count;
-}
-
 /*
  * iic_compatible_match --
  *	Match a device's "compatible" property against the list
@@ -659,8 +598,8 @@ iic_compatible_match(const struct i2c_attach_args *ia,
 {
 	int match_result;
 
-	match_result = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
-					       compats);
+	match_result = device_compatible_match_strlist(ia->ia_clist,
+	    ia->ia_clist_size, compats);
 	if (match_result) {
 		match_result =
 		    MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_result - 1,
@@ -679,8 +618,8 @@ const struct device_compatible_entry *
 iic_compatible_lookup(const struct i2c_attach_args *ia,
 		      const struct device_compatible_entry *compats)
 {
-	return device_compatible_lookup(ia->ia_compat, ia->ia_ncompat,
-					compats);
+	return device_compatible_lookup_strlist(ia->ia_clist,
+	    ia->ia_clist_size, compats);
 }
 
 /*
@@ -703,7 +642,7 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 		return true;
 	}
 
-	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
+	if (ia->ia_clist != NULL && ia->ia_clist_size != 0) {
 		*match_resultp = iic_compatible_match(ia, compats);
 		return true;
 	}

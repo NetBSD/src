@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.31 2025/09/20 21:24:29 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.32 2025/09/21 14:43:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -71,12 +71,6 @@
 				"i2c-indirect-device-permitlist"
 	/* value is a prop_array of prop_strings */
 
-struct ic_intr_list {
-	LIST_ENTRY(ic_intr_list) il_next;
-	int (*il_intr)(void *);
-	void *il_intrarg;
-};
-
 /*
  * This structure provides the interface between the i2c framework
  * and the underlying i2c controller.
@@ -88,6 +82,19 @@ struct ic_intr_list {
  */
 typedef struct i2c_controller {
 	void	*ic_cookie;		/* controller private */
+
+	/*
+	 * Multi-channel i2c controllers and i2c muxes allow
+	 * for multiple busses to be driven by a single block
+	 * of controller logic.  Each of these busses is
+	 * represented by a logical controller with its own
+	 * i2c_tag_t.  By default, each i2c_tag_t is initialized
+	 * indicating a single-bus controller, but multi-channel
+	 * controllers and muxes should initialize this field to
+	 * indicate which logical bus number this i2c_tag_t is
+	 * associated with.
+	 */
+	int	ic_channel;
 
 	/*
 	 * These provide synchronization in the presence of
@@ -120,51 +127,34 @@ typedef struct i2c_controller {
 	int	(*ic_read_byte)(void *, uint8_t *, int);
 	int	(*ic_write_byte)(void *, uint8_t, int);
 
+	/* For future expansion; do not remove. */
 	struct i2c_tag_private	*ic_tag_private;
 } *i2c_tag_t;
+
+#define	I2C_CHANNEL_DEFAULT	-1
+
+static inline int
+i2c_tag_channel(i2c_tag_t tag)
+{
+	return tag->ic_channel == I2C_CHANNEL_DEFAULT ? 0
+						      : tag->ic_channel;
+}
 
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
 	i2c_tag_t iba_tag;		/* the controller */
 };
 
-/* Type of value stored in "ia_cookie" */
-enum i2c_cookie_type {
-	I2C_COOKIE_NONE,		/* Cookie is not valid */
-	I2C_COOKIE_OF,			/* Cookie is an OF node phandle */
-	I2C_COOKIE_ACPI,		/* Cookie is an ACPI handle */
-};
-
 /* Used to attach devices on the i2c bus. */
 struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
 	i2c_addr_t	ia_addr;	/* address of device */
-	int		ia_type;	/* bus type */
+
 	/* only set if using direct config */
 	const char *	ia_name;	/* name of the device */
-	int		ia_ncompat;	/* number of pointers in the
-					   ia_compat array */
-	const char **	ia_compat;	/* chip names */
-	prop_dictionary_t ia_prop;	/* dictionary for this device */
-	/*
-	 * XXX These fields are deprecated; all of the necessary information
-	 * XXX is available in the device's devhandle.  The remain for
-	 * XXX ABI compatbility until other changes requring an ABI version
-	 * XXX bump are performed.
-	 *
-	 * The following is of limited usefulness and should only be used
-	 * in rare cases where we really know what we are doing. Example:
-	 * a machine dependent i2c driver (located in sys/arch/$arch/dev)
-	 * needing to access some firmware properties.
-	 * Depending on the firmware in use, an identifier for the device
-	 * may be present. Example: on OpenFirmware machines the device
-	 * tree OF node - if available. This info is hard to transport
-	 * down to MD drivers through the MI i2c bus otherwise.
-	 *
-	 * On ACPI platforms this is the ACPI_HANDLE of the device.
-	 */
-	uintptr_t	__xxx_ia_cookie;
-	enum i2c_cookie_type __xxx_ia_cookietype;
+	const char *	ia_clist;	/* compatible strlist */
+	size_t		ia_clist_size;	/* size of compatible strlist */
+	devhandle_t	ia_devhandle;	/* device handle for the device */
 };
 
 /*

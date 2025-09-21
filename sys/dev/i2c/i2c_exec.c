@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.19 2025/09/20 21:24:29 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.20 2025/09/21 14:43:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.19 2025/09/20 21:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.20 2025/09/21 14:43:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ iic_tag_init(i2c_tag_t tag)
 
 	memset(tag, 0, sizeof(*tag));
 	mutex_init(&tag->ic_bus_lock, MUTEX_DEFAULT, IPL_NONE);
+	tag->ic_channel = I2C_CHANNEL_DEFAULT;
 }
 
 /*
