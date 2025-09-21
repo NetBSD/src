@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.48 2025/08/25 04:31:18 macallan Exp $	*/
+/*	$NetBSD: lm75.c,v 1.49 2025/09/21 13:54:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.48 2025/08/25 04:31:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.49 2025/09/21 13:54:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ struct lmtemp_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
-	prop_dictionary_t sc_prop;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
@@ -215,9 +214,6 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
-	sc->sc_prop = ia->ia_prop;
-
-	if (ia->ia_prop != NULL) prop_object_retain(sc->sc_prop);
 
 	aprint_naive(": Temperature Sensor\n");
 	if (ia->ia_name) {
@@ -295,7 +291,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	    ia->ia_name? ia->ia_name : device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
 
-	if (prop_dictionary_get_string(sc->sc_prop, "s00", &desc)) {
+	if (prop_dictionary_get_string(device_properties(self), "s00", &desc)) {
 		strncpy(name, desc, 64);
 	}
 

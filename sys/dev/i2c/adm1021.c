@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.30 2022/01/24 09:42:14 andvar Exp $ */
+/*	$NetBSD: adm1021.c,v 1.31 2025/09/21 13:54:56 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.30 2022/01/24 09:42:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.31 2025/09/21 13:54:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.30 2022/01/24 09:42:14 andvar Exp $");
 struct admtemp_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
-	prop_dictionary_t sc_prop;
 
 	int		sc_flags;
 	int		sc_noexternal, sc_noneg, sc_nolow;
@@ -338,11 +337,10 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	char name[ADMTEMP_NAMELEN];
 	char ename[64] = "external", iname[64] = "internal";
 	const char *desc;
+	prop_dictionary_t props = device_properties(self);
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_prop = ia->ia_prop;
-	prop_object_retain(sc->sc_prop);
 
 	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(self, "cannot acquire iic bus\n");
@@ -409,11 +407,11 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor[ADMTEMP_EXT].flags =
 	    ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 
-	if (prop_dictionary_get_string(sc->sc_prop, "s00", &desc)) {
+	if (prop_dictionary_get_string(props, "s00", &desc)) {
 		strncpy(iname, desc, 64);
 	}
 
-	if (prop_dictionary_get_string(sc->sc_prop, "s01", &desc)) {
+	if (prop_dictionary_get_string(props, "s01", &desc)) {
 		strncpy(ename, desc, 64);
 	}
 

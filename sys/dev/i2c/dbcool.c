@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.65 2024/05/18 00:02:04 thorpej Exp $ */
+/*	$NetBSD: dbcool.c,v 1.66 2025/09/21 13:54:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.65 2024/05/18 00:02:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.66 2025/09/21 13:54:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -774,8 +774,6 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dc.dc_readreg = dbcool_readreg;
 	sc->sc_dc.dc_writereg = dbcool_writereg;
 	sc->sc_dev = self;
-	sc->sc_prop = args->ia_prop;
-	prop_object_retain(sc->sc_prop);
 
 	if (dbcool_chip_ident(&sc->sc_dc) < 0 || sc->sc_dc.dc_chip == NULL)
 		panic("could not identify chip at addr %d", args->ia_addr);
@@ -1689,6 +1687,7 @@ dbcool_setup_sensors(struct dbcool_softc *sc)
 static int
 dbcool_attach_sensor(struct dbcool_softc *sc, int idx)
 {
+	prop_dictionary_t props = device_properties(sc->sc_dev);
 	int name_index;
 	int error = 0;
 	char name[8];
@@ -1696,7 +1695,7 @@ dbcool_attach_sensor(struct dbcool_softc *sc, int idx)
 
 	name_index = sc->sc_dc.dc_chip->table[idx].name_index;
 	snprintf(name, 7, "s%02x", sc->sc_dc.dc_chip->table[idx].reg.val_reg);
-	if (prop_dictionary_get_string(sc->sc_prop, name, &desc)) {
+	if (prop_dictionary_get_string(props, name, &desc)) {
 		 strlcpy(sc->sc_sensor[idx].desc, desc,
 			sizeof(sc->sc_sensor[idx].desc));
 	} else {

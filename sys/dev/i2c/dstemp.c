@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.14 2021/06/21 03:12:54 christos Exp $ */
+/* $NetBSD: dstemp.c,v 1.15 2025/09/21 13:54:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.14 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.15 2025/09/21 13:54:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ struct dstemp_softc {
 	device_t		sc_dev;
 	i2c_tag_t		sc_i2c;
 	i2c_addr_t		sc_addr;
-	prop_dictionary_t 	sc_prop;
 	struct sysmon_envsys 	*sc_sme;
 	envsys_data_t		sc_sensor_temp;
 };
@@ -105,12 +104,11 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	char name[64] = "temperature";
 	const char *desc;
+	prop_dictionary_t props = device_properties(self);
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_prop = ia->ia_prop;
-	prop_object_retain(sc->sc_prop);
 
 	aprint_naive("\n");
 	aprint_normal(": DS1361\n");
@@ -126,9 +124,9 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor_temp.state = ENVSYS_SINVALID;
 	sc->sc_sensor_temp.flags = ENVSYS_FHAS_ENTROPY;
 
-	if (prop_dictionary_get_string(sc->sc_prop, "s00", &desc)) {
+	if (prop_dictionary_get_string(props, "s00", &desc)) {
 		strncpy(name, desc, 64);
-	} else if (prop_dictionary_get_string(sc->sc_prop, "saa", &desc)) {
+	} else if (prop_dictionary_get_string(props, "saa", &desc)) {
 		strncpy(name, desc, 64);
 	}
 
