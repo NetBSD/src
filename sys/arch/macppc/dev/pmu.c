@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.45 2025/09/18 02:51:03 thorpej Exp $ */
+/*	$NetBSD: pmu.c,v 1.46 2025/09/21 13:56:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.45 2025/09/18 02:51:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.46 2025/09/21 13:56:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,8 +349,8 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			goto next;
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
-			int devs, sensors;
-			uint32_t addr, reg;
+			int devs;
+			uint32_t addr;
 			char compat[256];
 			prop_array_t cfg;
 			prop_dictionary_t dev;
@@ -387,22 +387,6 @@ pmu_attach(device_t parent, device_t self, void *aux)
 				prop_dictionary_set_data(dev, "devhandle",
 				    &child_devhandle, sizeof(child_devhandle));
 
-				if (OF_getprop(devs, "config-reg", &reg, 4) == 4) {
-					prop_dictionary_set_uint32(dev, "config-reg", reg);
-				}
-				sensors = OF_child(devs);
-				while (sensors != 0) {
-					char loc[64];
-					char pname[8];
-					if (OF_getprop(sensors, "reg", &reg, 4) != 4)
-						goto nope;
-					if (OF_getprop(sensors, "location", loc, 63) <= 0)
-						goto nope;
-					snprintf(pname, 7, "s%02x", reg);
-					prop_dictionary_set_string(dev, pname, loc);
-				nope:
-					sensors = OF_peer(sensors);
-				}
 				prop_array_add(cfg, dev);
 				prop_object_release(dev);
 			skip:

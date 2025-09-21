@@ -1,4 +1,4 @@
-/*	$NetBSD: smuiic.c,v 1.13 2025/09/18 02:51:03 thorpej Exp $ */
+/*	$NetBSD: smuiic.c,v 1.14 2025/09/21 13:56:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 Phileas Fogg
@@ -73,13 +73,13 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 	struct smu_iicbus_confargs *ca = aux;
 	struct smuiic_softc *sc = device_private(self);
 	prop_dictionary_t dict = device_properties(self);
-	int devs, devc;
+	int devs;
 	uint32_t addr;
 	char compat[256];
 	prop_array_t cfg;
 	prop_dictionary_t dev;
 	prop_data_t data;
-	char name[32], descr[32], num[8];
+	char name[32];
 
 	sc->sc_dev = self;
 	sc->sc_node = ca->ca_node;
@@ -113,18 +113,6 @@ smuiic_attach(device_t parent, device_t self, void *aux)
 		prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
 		    sizeof(child_devhandle));
 
-		devc = OF_child(devs);
-		while (devc != 0) {
-			int reg;
-			if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
-			if (OF_getprop(devc, "location", descr, 32) <= 0)
-				goto nope;
-			printf("found '%s' at %02x\n", descr, reg);
-			snprintf(num, 7, "s%02x", reg);
-			prop_dictionary_set_string(dev, num, descr);
-		nope:
-			devc = OF_peer(devc);
-		}
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
 	skip:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.41 2025/09/18 02:51:03 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.42 2025/09/21 13:56:36 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -87,12 +87,12 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 	int node = ca->ca_node, root;
-	uint32_t addr, channel, reg, intr[2];
+	uint32_t addr, channel, intr[2];
 	int rate, child, /*namelen,*/ i2cbus[2] = {0, 0};
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t cfg;
-	int devs, devc, intrparent;;
-	char compat[256], num[8], descr[32];
+	int devs, intrparent;
+	char compat[256];
 	prop_dictionary_t dev;
 	prop_data_t data;
 	char name[32], intr_xname[32], model[32];
@@ -233,47 +233,6 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 			prop_dictionary_set_data(dev, "devhandle",
 			    &child_devhandle, sizeof(child_devhandle));
 
-			/* look for location info for sensors */
-			devc = OF_child(devs);
-			if (devc == 0) {
-				/* old style name info */
-				uint32_t ids[4];
-				int len = OF_getprop(devs, "hwsensor-id", ids, 16);
-				int i = 0, idx = 0;
-				char buffer[256];
-				memset(buffer, 0, 256);
-				if (len <= 0) {
-					/* no info, fill in what we may know */
-					if ((strcmp(name, "temp-monitor") == 0) &&
-					    (strcmp(model, "RackMac1,2") == 0)) {
-						prop_dictionary_set_string(dev, "s00", "CASE");   	
-					}
-				} else {
-					OF_getprop(devs, "hwsensor-location", buffer, 256);
-					while (len > 0) {
-						reg = ids[i];
-						strcpy(descr, &buffer[idx]);
-						idx += strlen(descr) + 1;
-						DPRINTF("found '%s' at %02x\n", descr, reg);
-						snprintf(num, 7, "s%02x", i);
-						prop_dictionary_set_string(dev, num, descr);
-						i++;
-						len -= 4;
-					}
-				}
-			} else {
-				while (devc != 0) {
-					if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
-					if (OF_getprop(devc, "location", descr, 32) <= 0)
-						goto nope;
-					DPRINTF("found '%s' at %02x\n", descr, reg);
-					snprintf(num, 7, "s%02x", reg);
-					prop_dictionary_set_string(dev, num, descr);
-				nope:
-					devc = OF_peer(devc);
-				}
-			}
-						
 			prop_array_add(cfg, dev);
 			prop_object_release(dev);
 		skip:
