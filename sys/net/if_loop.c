@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.118 2022/09/04 23:34:51 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.119 2025/09/21 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.118 2022/09/04 23:34:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.119 2025/09/21 15:11:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -352,8 +352,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		break;
 #endif
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-		    dst->sa_family);
+		rt_unhandled(__func__, ifp, dst);
 		m_freem(m);
 		error = EAFNOSUPPORT;
 		goto out;
@@ -383,6 +382,7 @@ lostart(struct ifnet *ifp)
 	for (;;) {
 		pktqueue_t *pktq = NULL;
 		struct mbuf *m;
+		struct sockaddr sa;
 		size_t pktlen;
 		uint32_t af;
 		int s;
@@ -412,7 +412,9 @@ lostart(struct ifnet *ifp)
 			break;
 #endif
 		default:
-			printf("%s: can't handle af%d\n", ifp->if_xname, af);
+			memset(&sa, 0, sizeof(sa));
+			sa.sa_family = af;
+			rt_unhandled(__func__, ifp, &sa);
 			m_freem(m);
 			return;
 		}

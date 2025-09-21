@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.86 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.87 2025/09/21 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.86 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.87 2025/09/21 15:11:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -183,8 +183,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		case ARPOP_REVREQUEST:
 		case ARPOP_REVREPLY:
 			if (!(ifp->if_flags & IFF_LINK0)) {
-				printf("%s: can't handle af%d\n",
-				    ifp->if_xname, dst->sa_family);
+				rt_unhandled(__func__, ifp, dst);
 				senderr(EAFNOSUPPORT);
 			}
 
@@ -237,8 +236,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		break;
 
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-		    dst->sa_family);
+		rt_unhandled(__func__, ifp, dst);
 		senderr(EAFNOSUPPORT);
 	}
 

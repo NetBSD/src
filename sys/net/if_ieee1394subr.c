@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.69 2022/09/03 02:47:59 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.70 2025/09/21 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.69 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.70 2025/09/21 15:11:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,10 +176,8 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_UNSPEC:
 		/* TODO? */
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-		    dst->sa_family);
+		rt_unhandled(__func__, ifp, dst);
 		senderr(EAFNOSUPPORT);
-		break;
 	}
 
 	if (mcopy)

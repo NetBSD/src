@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.239 2025/06/12 08:27:40 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.240 2025/09/21 15:11:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.239 2025/06/12 08:27:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.240 2025/09/21 15:11:52 christos Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2416,6 +2416,17 @@ rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 	RT_UNLOCK();
 
 	return error;
+}
+
+void
+rt_unhandled(const char *func, const struct ifnet *ifp,
+    const struct sockaddr *sa)
+{
+	char buf[256];
+
+	sockaddr_format(sa, buf, sizeof(buf));
+	printf("%s: %s: can't handle af%hhd (%s)\n", func, ifp->if_xname,
+	    sa->sa_family, buf);
 }
 
 #ifdef DDB

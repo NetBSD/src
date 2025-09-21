@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.330 2025/04/23 12:17:05 joe Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.331 2025/09/21 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.330 2025/04/23 12:17:05 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.331 2025/09/21 15:11:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -375,8 +375,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		break;
 
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-		    dst->sa_family);
+		rt_unhandled(__func__, ifp, dst);
 		senderr(EAFNOSUPPORT);
 	}
 
