@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.10 2023/12/20 15:29:05 thorpej Exp $ */
+/*	$NetBSD: interrupts.c,v 1.11 2025/09/22 09:24:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.10 2023/12/20 15:29:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.11 2025/09/22 09:24:38 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,6 +65,7 @@ const char *compat[] = {
 static int 
 init_openpic(int pass_through)
 {
+	struct pic_ops *opic;
 	uint32_t reg[5];
 	uint32_t obio_base, pic_base;
 	int      pic, macio;
@@ -100,7 +101,15 @@ init_openpic(int pass_through)
 	aprint_debug("pic-base: %08x\n", pic_base);
 
 	aprint_normal("found openpic PIC at %08x\n", pic_base);
-	setup_openpic(oea_mapiodev(pic_base, 0x40000), pass_through);
+	opic = setup_openpic(oea_mapiodev(pic_base, 0x40000), pass_through);
+	/*
+	 * on G5s we have to map the openpic into our address space so its 
+	 * virtual address will be different from its physical address
+	 * so, in order to find this openpic by its physical address even on G5
+	 * we need to set its pic_cookie by hand
+	 */
+	if (opic != NULL)
+		opic->pic_cookie = (void *)pic_base;
 
 	return TRUE;
 }
@@ -121,6 +130,9 @@ init_openpic(int pass_through)
  *   models have both openpic and u3_ht, on those openpic handles IPIs and
  *   normal IRQs while the u3_ht is cascaded and can be used for MSI. On G5s
  *   that have no openpic the u3_ht handles all interrupts, IPIs and MSI
+ * - just to be annoying, on G5s that have both PICs the ki2c under /u3 has its
+ *   interrupt hooked to the HT PIC, while all other interrupts go to the normal
+ *   openpic
  */
 void
 init_interrupt(void)
