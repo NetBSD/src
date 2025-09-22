@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62 2025/09/21 13:51:50 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63 2025/09/22 12:48:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2025/09/21 13:51:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2025/09/22 12:48:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ device_register(device_t dev, void *aux)
 	 * along the sensor name properties.
 	 */
 	device_t parent = device_parent(dev);
-	if (device_is_a(parent, "iic")) {
+	if (device_is_a(parent, "iic") &&
+	    devhandle_type(device_handle(dev)) == DEVHANDLE_TYPE_OF) {
 		macppc_assign_sensor_names(device_parent(parent), dev);
 	}
 }
