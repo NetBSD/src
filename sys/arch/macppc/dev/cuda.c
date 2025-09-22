@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.32 2025/09/15 13:23:01 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.33 2025/09/22 12:50:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.32 2025/09/15 13:23:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.33 2025/09/22 12:50:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.32 2025/09/15 13:23:01 thorpej Exp $");
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <dev/clock_subr.h>
+
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_calls.h>
+#include <dev/i2c/i2c_enum.h>
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/cudavar.h>
@@ -81,6 +84,13 @@ struct cuda_softc {
 	struct i2c_controller sc_i2c;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
+
+	/*
+	 * We provide our own i2c device enumeration method, so we
+	 * need to subclass our device handle.
+	 */
+	struct devhandle_impl sc_devhandle_impl;
+
 	int sc_node;
 	int sc_state;
 	int sc_waiting;
@@ -148,6 +158,53 @@ static	int cuda_adb_set_handler(void *, void (*)(void *, int, uint8_t *), void *
 static int cuda_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
+static const struct i2c_deventry cuda_i2c_devices[] = {
+	{ .name		=	"videopll",
+	  .compat	=	"aapl,valkyrie-videopll",
+	  .addr		=	0x50,
+	  .data		=	"/valkyrie" },
+
+	{ .name		=	"sgsmix",
+	  .compat	=	"st,tda7433",
+	  .addr		=	0x8a,
+	  .data		=	"/perch" },
+
+	I2C_DEVENTRY_EOL
+};
+
+static int
+cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct i2c_enumerate_devices_args *args = v;
+	const struct i2c_deventry *entry;
+	bool cbrv;
+
+	for (entry = cuda_i2c_devices; entry->name != NULL; entry++) {
+		if (OF_finddevice((const char *)entry->data) == -1) {
+			continue;
+		}
+		cbrv = i2c_enumerate_device(dev, args, entry->name,
+		    entry->compat, 0, entry->addr, devhandle_invalid());
+		if (!cbrv) {
+			break;
+		}
+	}
+
+	return 0;
+}
+
+static device_call_t
+cuda_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	if (strcmp(name, I2C_ENUMERATE_DEVICES_STR) == 0) {
+		return cuda_i2c_enumerate_devices;
+	}
+
+	/* Defer everything else to the "super". */
+	return NULL;
+}
+
 static int
 cuda_match(device_t parent, struct cfdata *cf, void *aux)
 {
@@ -172,9 +229,6 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = aux;
 	struct cuda_softc *sc = device_private(self);
 	static struct cuda_attach_args caa;
-	prop_dictionary_t dict = device_properties(self);
-	prop_dictionary_t dev;
-	prop_array_t cfg;
 	int irq = ca->ca_intr[0];
 	int node, i, child;
 	char name[32];
@@ -254,35 +308,19 @@ cuda_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	config_found(self, &caa, cuda_print, CFARGS_NONE);
 #endif
-	cfg = prop_array_create();
-	prop_dictionary_set(dict, "i2c-child-devices", cfg);
-	prop_object_release(cfg);
 
-	/* we don't have OF nodes for i2c devices so we have to make our own */
-
-	node = OF_finddevice("/valkyrie");
-	if (node != -1) {
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", "videopll");
-		prop_dictionary_set_uint32(dev, "addr", 0x50);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
-	}
-
-	node = OF_finddevice("/perch");
-	if (node != -1) {
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", "sgsmix");
-		prop_dictionary_set_uint32(dev, "addr", 0x8a);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
-	}
-
+	/*
+	 * There are no OF nodes for our I2C devices, so we provide
+	 * our own enumeration method.
+	 */
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = cuda_i2c_exec;
 
-	iicbus_attach(self, &sc->sc_i2c);
+	iicbus_attach_with_devhandle(self, &sc->sc_i2c,
+	    devhandle_subclass(device_handle(self),
+			       &sc->sc_devhandle_impl,
+			       cuda_devhandle_lookup_device_call));
 
 	if (cuda0 == NULL)
 		cuda0 = &caa;
