@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.51 2025/09/06 09:34:11 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.52 2025/09/23 12:55:25 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1042,4 +1042,29 @@ external/gpl3/binutils/dist/gas/config/tc-vax.c	1.22
 	vax: gas: PR 59326: use GOT for pointer for global function
 	in same file, instead of PLT.
 	[rin, ticket #1157]
+
+sys/dev/usb/if_urtwn.c				1.113-1.117
+
+	urtwn(4): fix possible buffer overflow,
+	use the right packet spacing for the 8192EU,
+	fix an xfer leak in the tx error path.
+	[nat, ticket #1158]
+
+sys/dev/usb/xhci.c				1.190
+
+	xhci(4): handle special case of USBD_FORCE_SHORT_XFER.
+	[nat, ticket #1159]
+
+sys/dev/hdaudio/hdaudiodevs			1.13
+sys/dev/hdaudio/hdaudiodevs.h			(regen)
+sys/dev/hdaudio/hdaudiodevs_data.h		(regen)
+
+	hdaudio(4): add NVIDIA GK208, REALTEK ALC897
+	[nia, ticket #1160]
+
+sys/arch/hppa/hppa/trap.c			1.124-1.128
+
+	hppa: fix inverted logic around probe access vs probe access immediate
+	instructions and cleanup.
+	[skrll, ticket #1161]
 
