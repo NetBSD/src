@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.20 2025/09/23 19:50:43 js Exp $ */
+/* $NetBSD: term_private.h,v 1.21 2025/09/23 20:26:57 js Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,9 @@
  * always stored as little endian.
  */
 
-#include <sys/endian.h>
+#ifdef HAVE_SYS_ENDIAN_H
+# include <sys/endian.h>
+#endif
 #include <sys/types.h>
 #include <assert.h>
 #include <limits.h>
