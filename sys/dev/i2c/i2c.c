@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.101 2025/09/21 17:54:16 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.102 2025/09/23 00:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.101 2025/09/21 17:54:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.102 2025/09/23 00:52:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,12 +472,6 @@ iic_attach_children_direct(struct iic_softc *sc)
 #ifdef I2C_USE_ACPI
 		case DEVHANDLE_TYPE_ACPI:
 			child_devices = acpi_copy_i2c_devs(sc->sc_dev);
-			no_indirect_config = true;
-			break;
-#endif
-#ifdef I2C_USE_FDT
-		case DEVHANDLE_TYPE_OF:
-			child_devices = fdtbus_copy_i2c_devs(sc->sc_dev);
 			no_indirect_config = true;
 			break;
 #endif
