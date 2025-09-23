@@ -1,4 +1,4 @@
-/* $NetBSD: t_proplib.c,v 1.4 2020/06/24 14:28:10 thorpej Exp $ */
+/* $NetBSD: t_proplib.c,v 1.5 2025/09/23 22:35:40 rillig Exp $ */
 
 /*
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_proplib.c,v 1.4 2020/06/24 14:28:10 thorpej Exp $");
+__RCSID("$NetBSD: t_proplib.c,v 1.5 2025/09/23 22:35:40 rillig Exp $");
 
 #include <limits.h>
 #include <stdlib.h>
@@ -207,6 +207,60 @@ ATF_TC_BODY(prop_dictionary_equals, tc)
 
 	prop_object_release(c);
 	prop_object_release(d);
+}
+
+ATF_TC(prop_dictionary_internalize_base64);
+ATF_TC_HEAD(prop_dictionary_internalize_base64, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test internalizing base64-encoded data");
+}
+
+ATF_TC_BODY(prop_dictionary_internalize_base64, tc)
+{
+
+	prop_dictionary_t dict = prop_dictionary_internalize(
+"<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+"<plist version=\"1.0\">\n"
+"<dict>\n"
+"	<key>encoded</key>\n"
+"	<data>SGVsbG8sIHdvcmxkCg==</data>\n"
+"	<key>length-1</key>\n"
+"	<data>aQ==</data>\n"
+"	<key>length-2</key>\n"
+"	<data>aWk=</data>\n"
+"	<key>length-3</key>\n"
+"	<data>aWlp</data>\n"
+"</dict>\n"
+"</plist>\n");
+
+
+	ATF_REQUIRE(dict != NULL);
+
+	const void *data;
+	size_t size;
+	bool ok;
+
+	ok = prop_dictionary_get_data(dict, "encoded", &data, &size);
+	ATF_REQUIRE(ok);
+	ATF_CHECK_EQ(size, 13);
+	ATF_CHECK_EQ(memcmp(data, "Hello, world\n", 13), 0);
+
+	ok = prop_dictionary_get_data(dict, "length-1", &data, &size);
+	ATF_REQUIRE(ok);
+	ATF_CHECK_EQ(size, 1);
+	ATF_CHECK_EQ(memcmp(data, "i", 1), 0);
+
+	ok = prop_dictionary_get_data(dict, "length-2", &data, &size);
+	ATF_REQUIRE(ok);
+	ATF_CHECK_EQ(size, 2);
+	ATF_CHECK_EQ(memcmp(data, "ii", 2), 0);
+
+	ok = prop_dictionary_get_data(dict, "length-3", &data, &size);
+	ATF_REQUIRE(ok);
+	ATF_CHECK_EQ(size, 3);
+	ATF_CHECK_EQ(memcmp(data, "iii", 3), 0);
+
+	prop_object_release(dict);
 }
 
 ATF_TC(prop_data_basic);
@@ -907,6 +961,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, prop_basic);
 	ATF_TP_ADD_TC(tp, prop_dictionary_equals);
+	ATF_TP_ADD_TC(tp, prop_dictionary_internalize_base64);
 	ATF_TP_ADD_TC(tp, prop_dict_util);
 	ATF_TP_ADD_TC(tp, prop_data_basic);
 	ATF_TP_ADD_TC(tp, prop_number_basic);
