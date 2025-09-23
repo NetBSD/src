@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2018/05/27 01:14:50 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2025/09/23 20:12:05 rillig Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -41,21 +41,21 @@ FPSPMAKE= \
 	    FPSPDIR=${FPSPDIR:q} \
 	    ${FPSPMISCMAKEFLAGS}
 
-${FPSP}:		.NOTMAIN __always_make_fpsp
+${FPSP}:		.MAKE .NOTMAIN __always_make_fpsp
 	@echo making sure the 68040 FPSP is up to date...
 	@${FPSPMAKE} fpsp.o
 
-${FPSPLIB_PROF}:	.NOTMAIN __always_make_fpsp
+${FPSPLIB_PROF}:	.MAKE .NOTMAIN __always_make_fpsp
 	@echo making sure the profiled 68040 FPSP is up to date...
 	@${FPSPMAKE} fpsp.po
 
 clean:			.NOTMAIN cleanfpsp
-cleanfpsp:		.NOTMAIN __always_make_fpsp
+cleanfpsp:		.MAKE .NOTMAIN __always_make_fpsp
 	@echo cleaning the 68040 FPSP objects
 	@${FPSPMAKE} clean
 
 cleandir distclean:	.NOTMAIN cleandirfpsp
-cleandirfpsp:	.NOTMAIN __always_make_fpsp
+cleandirfpsp:		.MAKE .NOTMAIN __always_make_fpsp
 # So we don't really need a cleandir target without a depend target.
 # On the other hand, were "make cleandir" in the kernel build
 # directory to fail to remove all the floating point objects, that   

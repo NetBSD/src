@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/01/22 03:53:33 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2025/09/23 20:12:10 rillig Exp $
 
 SUBDIR=		ramdisk miniroot cdroms liveimage
 TARGETS+=	release
@@ -16,10 +16,10 @@ release: check_RELEASEDIR .WAIT \
 	    ${.CURDIR}/MakeBootTape ${.CURDIR}/MakeInstTape \
 	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/tapeimage
 
-iso_image:
+iso_image: .MAKE
 	${MAKEDIRTARGET} cdroms iso_image
 
-live_image:
+live_image: .MAKE
 	${MAKEDIRTARGET} liveimage live_image
 
 .include <bsd.subdir.mk>

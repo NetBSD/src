@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/04/01 14:06:38 martin Exp $
+#	$NetBSD: Makefile,v 1.17 2025/09/23 20:12:08 rillig Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,7 +18,7 @@ MDSETTARGETS=		RAMDISK ${MINIROOT} netbsd
 SUBDIR=		cdroms
 TARGETS+=	release
 
-iso_image:
+iso_image: .MAKE
 	${MAKEDIRTARGET} cdroms iso_image
 
 .include <bsd.subdir.mk>

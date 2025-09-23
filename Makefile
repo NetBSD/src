@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.341 2025/06/04 06:01:59 rillig Exp $
+#	$NetBSD: Makefile,v 1.342 2025/09/23 20:12:05 rillig Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -404,13 +404,13 @@ release snapshot: .PHONY .MAKE
 # Create a CD-ROM image.
 #
 
-iso-image: .PHONY
+iso-image: .PHONY .MAKE
 	${MAKEDIRTARGET} distrib iso_image
 	${MAKEDIRTARGET} etc iso-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
-iso-image-source: .PHONY
+iso-image-source: .PHONY .MAKE
 	${MAKEDIRTARGET} distrib iso_image CDSOURCE=true
 	${MAKEDIRTARGET} etc iso-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
@@ -420,7 +420,7 @@ iso-image-source: .PHONY
 # Create bootable live images.
 #
 
-live-image: .PHONY
+live-image: .PHONY .MAKE
 	${MAKEDIRTARGET} etc live-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
@@ -429,7 +429,7 @@ live-image: .PHONY
 # Create bootable installation images.
 #
 
-install-image: .PHONY
+install-image: .PHONY .MAKE
 	${MAKEDIRTARGET} etc install-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date

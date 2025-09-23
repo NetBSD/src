@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/08/05 16:18:19 scole Exp $
+#	$NetBSD: Makefile,v 1.2 2025/09/23 20:12:07 rillig Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,7 +19,7 @@ TARGETS+=	release
 #release: check_RELEASEDIR .WAIT ${EFIBOOTERS}
 #	${RELEASE_INSTALL} ${EFIBOOTERS} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
-iso_image:
+iso_image: .MAKE
 	${MAKEDIRTARGET} cdroms iso_image
 
 .include <bsd.subdir.mk>

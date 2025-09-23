@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/10/08 20:24:06 maya Exp $
+#	$NetBSD: Makefile,v 1.16 2025/09/23 20:12:05 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -17,13 +17,13 @@ SUBDIR+=	installimage
 SUBDIR+=	installimage-bios
 TARGETS+=	release 
 
-iso_image:
+iso_image: .MAKE
 	${MAKEDIRTARGET} cdroms iso_image
 
-live_image:
+live_image: .MAKE
 	${MAKEDIRTARGET} liveimage live_image
 
-install_image:
+install_image: .MAKE
 	${MAKEDIRTARGET} installimage install_image
 	${MAKEDIRTARGET} installimage-bios install_image
 
