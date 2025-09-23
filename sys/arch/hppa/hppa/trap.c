@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.123.8.1 2025/09/23 12:48:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123.8.1 2025/09/23 12:48:16 martin Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -480,30 +480,33 @@ out:
 #define __PABITS(x, y)		__BITS(31 - (x), 31 - (y))
 #define __PABIT(x)		__BIT(31 - (x))
 
-#define LPA_MASK				 \
-     (                      __PABITS(0, 5)     | \
-                            __PABITS(18, 25))
-#define LPA					 \
-     (__SHIFTIN(1,          __PABITS(0, 5))    | \
-      __SHIFTIN(0x4d, __PABITS(18, 25)))
+#define LPA_MASK					  \
+     (				__PABITS(0, 5)		| \
+				__PABITS(18, 25))
+#define LPA						  \
+     (__SHIFTIN(1,		__PABITS(0, 5))		| \
+      __SHIFTIN(0x4d,		__PABITS(18, 25)))
 
 
-#define PROBE_ENCS	(0x46 | 0xc6 | 0x47 | 0xc7)
-#define PROBE_PL	__PABITS(14, 15)
-#define PROBE_IMMED	__PABIT(18)
-#define PROBE_RW	__PABIT(25)
+#define PROBE_ENCS		(0x46 | 0xc6 | 0x47 | 0xc7)
+#define PROBE_PL		__PABITS(11, 15)
+#define PROBE_IMMED		__PABIT(18)
+#define PROBE_RW		__PABIT(25)
 
-#define PROBE_MASK                               \
-    ((                      __PABITS(0, 5)     | \
-                            __PABITS(18, 25)   | \
-                            __PABIT(26))       ^ \
+#define PROBE_MASK					  \
+    ((				__PABITS(0, 5)		| \
+				__PABITS(18, 25)	| \
+				__PABIT(26))		^ \
      (PROBE_IMMED | PROBE_RW))
 
-#define PROBE					 \
-    ((__SHIFTIN(1,          __PABITS(0, 5))    | \
-      __SHIFTIN(PROBE_ENCS, __PABITS(18, 25))  | \
-      __SHIFTIN(0,          __PABIT(26)))      ^ \
+#define PROBE						  \
+    ((__SHIFTIN(1,		__PABITS(0, 5))		| \
+      __SHIFTIN(PROBE_ENCS,	__PABITS(18, 25))	| \
+      __SHIFTIN(0,		__PABIT(26)))		^ \
      (PROBE_IMMED | PROBE_RW))
+
+#define PLMASK			__BITS(1, 0)
+
 
 /* for hppa64 */
 CTASSERT(sizeof(register_t) == sizeof(u_int));
@@ -929,16 +932,17 @@ do_onfault:
 			frame->tf_ipsw |= PSW_N;
 		} else if ((opcode & PROBE_MASK) == PROBE) {
 			u_int pl;
-			if ((opcode & PROBE_IMMED) == 0) {
-				pl = __SHIFTOUT(opcode, __PABITS(14, 15));
+			if ((opcode & PROBE_IMMED) != 0) {
+				pl = __SHIFTOUT(opcode, PROBE_PL) & PLMASK;
 			} else {
 				const u_int plreg =
-				    __SHIFTOUT(opcode, __PABITS(11, 15));
-				pl = tf_getregno(frame, plreg);
+				    __SHIFTOUT(opcode, PROBE_PL);
+				pl = tf_getregno(frame, plreg) & PLMASK;
 			}
+
 			bool ok = true;
 			if ((user && space == HPPA_SID_KERNEL) ||
-			    (frame->tf_iioq_head & 3) != pl ||
+			    (frame->tf_iioq_head & HPPA_PC_PRIV_MASK) != pl ||
 			    (user && va >= VM_MAXUSER_ADDRESS)) {
 				ok = false;
 			} else {
@@ -962,7 +966,6 @@ do_onfault:
 				tf_setregno(frame, regno, 0);
 				frame->tf_ipsw |= PSW_N;
 			}
-		} else {
 		}
 		break;
 
