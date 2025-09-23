@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2025/09/22 04:18:31 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2025/09/23 13:57:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2025/09/22 04:18:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2025/09/23 13:57:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,26 +137,24 @@ static const struct device_compatible_entry sandpoint_i2c_devices[] = {
 	DEVICE_COMPAT_EOL
 };
 
+static bool
+sandpoint_i2cdev_callback(device_t dev, devhandle_t call_handle,
+    const struct i2c_deventry *entry, devhandle_t *child_devhandlep)
+{
+	return (entry->value == 0 ||
+		(entry->value & bi_model->flags) != 0);
+}
+
 static int
 sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
 	struct i2c_enumerate_devices_args *args = v;
-	const struct i2c_deventry *entry;
-	bool cbrv;
 
 	/* Pointer to the table has been stashed in the devhandle. */
-	for (entry = call_handle.const_pointer;
-	     entry->name != NULL; entry++) {
-		if (entry->value != 0 &&
-		    (entry->value & bi_model->flags) == 0) {
-			continue;
-		}
-		cbrv = i2c_enumerate_device(dev, args, entry->name,
-		    entry->compat, 0, entry->addr, devhandle_invalid());
-		if (!cbrv) {
-			break;
-		}
-	}
+	const struct i2c_deventry *table = call_handle.const_pointer;
+
+	i2c_enumerate_deventries(dev, call_handle, args,
+	    table, sandpoint_i2cdev_callback);
 
 	return 0;
 }

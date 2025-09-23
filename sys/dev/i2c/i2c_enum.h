@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_enum.h,v 1.2 2025/09/21 17:54:16 thorpej Exp $	*/
+/*	$NetBSD: i2c_enum.h,v 1.3 2025/09/23 13:57:31 thorpej Exp $	*/
 
 /*-             
  * Copyright (c) 2021, 2025 The NetBSD Foundation, Inc.
@@ -74,20 +74,17 @@ static inline int __unused
 i2c_enumerate_deventries(device_t dev, devhandle_t call_handle,
     struct i2c_enumerate_devices_args *args,
     const struct i2c_deventry *entry,
-    devhandle_t (*get_devhandle)(device_t, devhandle_t,
-    				 const struct i2c_deventry *))
+    bool (*devcb)(device_t, devhandle_t, const struct i2c_deventry *,
+		  devhandle_t *))
 {
 	devhandle_t child_devhandle;
 	bool cbrv;
 
 	for (; entry->name != NULL; entry++) {
-		if (get_devhandle != NULL) {
-			child_devhandle =
-			    (*get_devhandle)(dev, call_handle, entry);
-		} else {
-			child_devhandle = devhandle_invalid();
+		child_devhandle = devhandle_invalid();
+		if (! (*devcb)(dev, call_handle, entry, &child_devhandle)) {
+			continue;
 		}
-
 		cbrv = i2c_enumerate_device(dev, args, entry->name,
 		    entry->compat, 0, entry->addr,
 		    child_devhandle);

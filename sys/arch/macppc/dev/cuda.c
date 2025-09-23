@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.33 2025/09/22 12:50:13 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.34 2025/09/23 13:57:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.33 2025/09/22 12:50:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.34 2025/09/23 13:57:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,23 +172,20 @@ static const struct i2c_deventry cuda_i2c_devices[] = {
 	I2C_DEVENTRY_EOL
 };
 
+static bool
+cuda_i2cdev_callback(device_t dev, devhandle_t call_handle,
+    const struct i2c_deventry *entry, devhandle_t *child_devhandlep)
+{
+	return (OF_finddevice((const char *)entry->data) != -1);
+}
+
 static int
 cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
 	struct i2c_enumerate_devices_args *args = v;
-	const struct i2c_deventry *entry;
-	bool cbrv;
 
-	for (entry = cuda_i2c_devices; entry->name != NULL; entry++) {
-		if (OF_finddevice((const char *)entry->data) == -1) {
-			continue;
-		}
-		cbrv = i2c_enumerate_device(dev, args, entry->name,
-		    entry->compat, 0, entry->addr, devhandle_invalid());
-		if (!cbrv) {
-			break;
-		}
-	}
+	i2c_enumerate_deventries(dev, call_handle, args,
+	    cuda_i2c_devices, cuda_i2cdev_callback);
 
 	return 0;
 }
