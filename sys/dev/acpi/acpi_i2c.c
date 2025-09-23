@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_i2c.c,v 1.22 2025/09/18 02:51:04 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.23 2025/09/23 06:28:19 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 2017, 2021, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 #include "iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.22 2025/09/18 02:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.23 2025/09/23 06:28:19 thorpej Exp $");
 
 #include <sys/device.h>
 
@@ -41,7 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.22 2025/09/18 02:51:04 thorpej Exp $"
 #include <dev/acpi/acpi_i2c.h>
 #include <external/bsd/acpica/dist/include/acinterp.h>
 #include <external/bsd/acpica/dist/include/amlcode.h>
+
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_calls.h>
+#include <dev/i2c/i2c_enum.h>
 
 #include <sys/kmem.h>
 
@@ -119,53 +122,49 @@ acpi_i2c_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	return_ACPI_STATUS(AE_OK);
 }
 
-static void
-acpi_enter_i2c_device(struct acpi_devnode *ad, prop_array_t array)
+static bool
+acpi_i2c_enumerate_device(device_t dev, struct acpi_devnode *ad,
+    struct i2c_enumerate_devices_args * const args)
 {
-	prop_dictionary_t dev;
 	struct acpi_i2c_context i2cc;
 	ACPI_STATUS rv;
 	char *clist;
 	size_t clist_size;
-	devhandle_t child_devhandle;
+	bool cbrv;
 
 	memset(&i2cc, 0, sizeof(i2cc));
 	rv = AcpiWalkResources(ad->ad_handle, "_CRS",
 	     acpi_i2c_resource_parse_callback, &i2cc);
 	if (ACPI_FAILURE(rv)) {
-		return;
+		aprint_error_dev(dev,
+		    "ACPI: unable to get resources for %s: %s\n",
+		    ad->ad_name, AcpiFormatException(rv));
+		return true;	/* keep enumerating */
 	}
-	if (i2cc.i2c_addr == 0)
-		return;
-	dev = prop_dictionary_create();
-	if (dev == NULL) {
-		aprint_error("ignoring device %s (no memory)\n",
-		    ad->ad_name);
-		return;
+	if (i2cc.i2c_addr == 0) {
+		return true;	/* keep enumerating */
 	}
+
 	clist = acpi_pack_compat_list(ad, &clist_size);
 	if (clist == NULL) {
-		prop_object_release(dev);
-		aprint_error("ignoring device %s (no _HID or _CID)\n",
+		aprint_error_dev(dev,
+		    "ACPI: ignoring device %s (no _HID or _CID)\n",
 		    ad->ad_name);
-		return;
+		return true;	/* keep enumerating */
 	}
-	prop_dictionary_set_string(dev, "name", ad->ad_name);
-	prop_dictionary_set_uint32(dev, "addr", i2cc.i2c_addr);
-	child_devhandle = devhandle_from_acpi(devhandle_invalid(),
-	    ad->ad_handle);
-	prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
-	    sizeof(child_devhandle));
-	prop_dictionary_set_data(dev, "compatible", clist, clist_size);
+
+	cbrv = i2c_enumerate_device(dev, args, ad->ad_name,
+	    clist, clist_size, i2cc.i2c_addr,
+	    devhandle_from_acpi(device_handle(dev), ad->ad_handle));
+
 	kmem_free(clist, clist_size);
 
-	prop_array_add(array, dev);
-	prop_object_release(dev);
+	return cbrv;		/* callback decides if we keep enumerating */
 }
 
 static void
-acpi_enter_i2chid_devs(device_t dev, struct acpi_devnode *devnode,
-    prop_array_t array)
+acpi_i2c_enumerate_hid_devs(device_t dev, struct acpi_devnode *devnode,
+    struct i2c_enumerate_devices_args * const args)
 {
 	struct acpi_devnode *ad;
 
@@ -180,7 +179,13 @@ acpi_enter_i2chid_devs(device_t dev, struct acpi_devnode *devnode,
 
 		if (!acpi_device_present(ad->ad_handle))
 			continue;
-		if (ad->ad_device != NULL)
+		/*
+		 * We don't know why the caller is enumerating, so
+		 * in addition to checking of the node hasn't been
+		 * claimed, we check to see if it's been claimed by
+		 * ourselves already and let those through as well.
+		 */
+		if (ad->ad_device != NULL && ad->ad_device != dev)
 			continue;
 		if (acpi_compatible_match(&aa, hid_compat_data) == 0)
 			continue;
@@ -194,44 +199,49 @@ acpi_enter_i2chid_devs(device_t dev, struct acpi_devnode *devnode,
 			aprint_debug_dev(dev, "claiming %s\n", ad->ad_name);
 			ad->ad_device = dev;
 			acpi_claim_childdevs(dev, ad, NULL);
-			acpi_enter_i2c_device(ad, array);
+			if (!acpi_i2c_enumerate_device(dev, ad, args))
+				break;
 		}
 	}
 }
 
-prop_array_t
-acpi_copy_i2c_devs(device_t dev)
+static int
+acpi_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
-	struct acpi_devnode *ad;
+	struct i2c_enumerate_devices_args *args = v;
 	ACPI_HANDLE *hdl = devhandle_to_acpi(device_handle(dev));
-	struct acpi_devnode *devnode = acpi_match_node(hdl);
+	struct acpi_devnode *ad, *devnode = acpi_match_node(hdl);
+
+	KASSERT(dev != NULL);
 
 	if (devnode == NULL) {
 		aprint_error_dev(dev, "%s: no devnode matching handle\n",
 		    __func__);
-		return NULL;
+		return 0;
 	}
-
-	prop_array_t array = prop_array_create();
-	if (array == NULL)
-		return NULL;
 
 	SIMPLEQ_FOREACH(ad, &devnode->ad_child_head, ad_child_list) {
 		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
 			continue;
 		if (!acpi_device_present(ad->ad_handle))
 			continue;
-		acpi_enter_i2c_device(ad, array);
+		if (!acpi_i2c_enumerate_device(dev, ad, args))
+			break;
 	}
 
-	if (dev != NULL) {
-		acpi_claim_childdevs(dev, devnode, "_CRS");
-		acpi_claim_childdevs(dev, devnode, "_ADR");
-		acpi_enter_i2chid_devs(dev, devnode, array);
-	}
+	acpi_claim_childdevs(dev, devnode, "_CRS");
+	acpi_claim_childdevs(dev, devnode, "_ADR");
 
-	return array;
+	/*
+	 * I2C HID devices might not be children of the controller in the
+	 * ACPI device tree; go look for those separately.
+	 */
+	acpi_i2c_enumerate_hid_devs(dev, devnode, args);
+
+	return 0;
 }
+ACPI_DEVICE_CALL_REGISTER(I2C_ENUMERATE_DEVICES_STR,
+			  acpi_i2c_enumerate_devices)
 
 #if NIIC > 0
 static ACPI_STATUS

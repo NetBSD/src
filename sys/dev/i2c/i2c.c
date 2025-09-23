@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.104 2025/09/23 01:34:10 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.105 2025/09/23 06:28:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.104 2025/09/23 01:34:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.105 2025/09/23 06:28:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,7 +679,6 @@ static bool
 iic_attach_children_direct(struct iic_softc *sc)
 {
 	device_t parent = device_parent(sc->sc_dev);
-	devhandle_t devhandle = device_handle(sc->sc_dev);
 	prop_array_t child_devices;
 	bool no_indirect_config;
 
@@ -691,19 +690,7 @@ iic_attach_children_direct(struct iic_softc *sc)
 		no_indirect_config = false;
 	}
 
-	if (child_devices == NULL) {
-		switch (devhandle_type(devhandle)) {
-#ifdef I2C_USE_ACPI
-		case DEVHANDLE_TYPE_ACPI:
-			child_devices = acpi_copy_i2c_devs(sc->sc_dev);
-			no_indirect_config = true;
-			break;
-#endif
-		default:
-			break;
-		}
-	} else {
-		prop_object_retain(child_devices);
+	if (child_devices != NULL) {
 		no_indirect_config = true;
 	}
 
@@ -776,7 +763,6 @@ iic_attach_children_direct(struct iic_softc *sc)
 		iic_attach_child_direct(sc, &ia);
 	}
 	prop_object_iterator_release(iter);
-	prop_object_release(child_devices);
 
  done:
 	/*
