@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.23 2025/05/14 03:25:45 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.24 2025/09/23 22:37:13 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020, 2025 The NetBSD Foundation, Inc.
@@ -477,9 +477,9 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			     const char **cpp)
 {
 	const char *src;
-	size_t tarindex;
+	size_t tarindex, pos;
 	int state, ch;
-	const char *pos;
+	const char *posptr;
 
 	state = 0;
 	tarindex = 0;
@@ -498,17 +498,17 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 		if (ch == _prop_data_pad64)
 			break;
 
-		pos = strchr(_prop_data_base64, ch);
-		if (pos == NULL)
+		posptr = strchr(_prop_data_base64, ch);
+		if (posptr == NULL)
 			return (false);
+		pos = posptr - _prop_data_base64;
 
 		switch (state) {
 		case 0:
 			if (target) {
 				if (tarindex >= targsize)
 					return (false);
-				target[tarindex] =
-				    (uint8_t)((pos - _prop_data_base64) << 2);
+				target[tarindex] = (uint8_t)(pos << 2);
 			}
 			state = 1;
 			break;
@@ -517,11 +517,8 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			if (target) {
 				if (tarindex + 1 >= targsize)
 					return (false);
-				target[tarindex] |=
-				    (uint32_t)(pos - _prop_data_base64) >> 4;
-				target[tarindex + 1] =
-				    (uint8_t)(((pos - _prop_data_base64) & 0xf)
-				        << 4);
+				target[tarindex] |= (uint8_t)(pos >> 4);
+				target[tarindex + 1] = (pos & 0xf) << 4;
 			}
 			tarindex++;
 			state = 2;
@@ -531,11 +528,8 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			if (target) {
 				if (tarindex + 1 >= targsize)
 					return (false);
-				target[tarindex] |=
-				    (uint32_t)(pos - _prop_data_base64) >> 2;
-				target[tarindex + 1] =
-				    (uint8_t)(((pos - _prop_data_base64)
-				        & 0x3) << 6);
+				target[tarindex] |= (uint8_t)(pos >> 2);
+				target[tarindex + 1] = (pos & 0x3) << 6;
 			}
 			tarindex++;
 			state = 3;
@@ -545,15 +539,14 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			if (target) {
 				if (tarindex >= targsize)
 					return (false);
-				target[tarindex] |= (uint8_t)
-				    (pos - _prop_data_base64);
+				target[tarindex] |= (uint8_t)pos;
 			}
 			tarindex++;
 			state = 0;
 			break;
 
 		default:
-			_PROP_ASSERT(/*CONSTCOND*/0);
+			_PROP_ASSERT(0);
 		}
 	}
 
