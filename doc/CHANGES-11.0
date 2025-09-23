@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.19 2025/09/23 12:56:00 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.20 2025/09/23 16:01:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -210,4 +210,9 @@ sys/arch/hppa/hppa/trap.c			1.124-1.128
 	hppa: fix inverted logic around probe access vs probe access immediate
 	instructions and cleanup.
 	[skrll, ticket #33]
+
+usr.bin/elf2ecoff/elf2ecoff.c			1.37,1.38
+
+	elf2ecoff: PR 59234: fix buffer overflow.
+	[tsutsui, ticket #34]
 
