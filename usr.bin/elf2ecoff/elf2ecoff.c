@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.33 2017/02/24 17:19:14 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.33.22.1 2025/09/23 16:34:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -74,7 +74,8 @@ struct ecoff_syms {
 	char   *stringtab;
 };
 
-static int     debug = 0;
+int debug = 0;
+
 static int     needswap;
 
 static int     phcmp(Elf32_Phdr *, Elf32_Phdr *);
@@ -82,6 +83,8 @@ static char   *saveRead(int, off_t, off_t, const char *);
 static void    safewrite(int, const void *, off_t, const char *);
 static void    copy(int, int, off_t, off_t);
 static void    combine(struct sect *, struct sect *, int);
+static size_t  compute_stringsize(const Elf32_Sym *elf_syms, int nsymbols,
+    const char *elf_stringbase);
 static void    translate_syms(struct elf_syms *, struct ecoff_syms *);
 static void    elf_symbol_table_to_ecoff(int, int, struct ecoff32_exechdr *,
     off_t, off_t, off_t, off_t);
@@ -246,7 +249,7 @@ usage:
 			nbss.len = ph[i].p_memsz - ph[i].p_filesz;
 
 			if (debug) {
-				fprintf(stderr, "  combinining PH %zu type %d "
+				fprintf(stderr, "  combining PH %zu type %d "
 				    "flags %#x with data, ndata = %d, "
 				    "nbss =%d\n", i, ph[i].p_type,
 				    ph[i].p_flags, ndata.len, nbss.len);
@@ -259,7 +262,7 @@ usage:
 			ntxt.vaddr = ph[i].p_vaddr;
 			ntxt.len = ph[i].p_filesz;
 			if (debug) {
-				fprintf(stderr, "  combinining PH %zu type %d "
+				fprintf(stderr, "  combining PH %zu type %d "
 				    "flags %#x with text, len = %d\n",
 				    i, ph[i].p_type, ph[i].p_flags, ntxt.len);
 			}
@@ -314,7 +317,7 @@ usage:
 	ep.f.f_symptr = 0;
 	ep.f.f_nsyms = sizeof(struct ecoff32_symhdr);
 	ep.f.f_opthdr = sizeof ep.a;
-	ep.f.f_flags = 0x100f;	/* Stripped, not sharable. */
+	ep.f.f_flags = 0x100f;	/* Stripped, not shareable. */
 
 	memset(esecs, 0, sizeof(esecs));
 
@@ -714,10 +717,35 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 		pad16(out, padding, "symbols: padding");
 }
 
+/*
+ * Compute the total ECOFF string table size.
+ * ELF .strtab can share or overlap substrings,
+ * but ECOFF table needs to have duplicated names.
+ */
+static size_t
+compute_stringsize(const Elf32_Sym *elf_syms, int nsyms,
+    const char *stringbase)
+{
+	size_t stringsize = 0;
+	int i;
 
+	for (i = 0; i < nsyms; i++) {
+		const Elf32_Sym *esym = &elf_syms[i];
+		const char *name;
+
+		if (ELF32_ST_BIND(esym->st_info) == STB_LOCAL)
+			continue;
+		name = stringbase + esym->st_name;
+		stringsize += strlen(name) + 1;
+	}
+	if (stringsize == 0)
+		stringsize = 1;	/* for NUL */
+
+	return stringsize;
+}
 
 /*
- * In-memory translation of ELF symbosl to ECOFF.
+ * In-memory translation of ELF symbols to ECOFF.
  */
 static void
 translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
@@ -726,7 +754,7 @@ translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 	int     i;
 	char   *oldstringbase;
 	char   *newstrings, *nsp;
-
+	size_t  stringsize;
 	int     nsyms, idx;
 
 	nsyms = elfp->nsymbols;
@@ -738,43 +766,56 @@ translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 	ecoffp->nsymbols = 0;
 	ecoffp->ecoff_syms = malloc(sizeof(struct ecoff_extsym) * nsyms);
 
-	/* we are going to be no bigger than the ELF symbol table. */
-	ecoffp->stringsize = elfp->stringsize;
-	ecoffp->stringtab = malloc(elfp->stringsize);
-
-	newstrings = (char *) ecoffp->stringtab;
-	nsp = (char *) ecoffp->stringtab;
+	/* ECOFF string table could be bigger than the ELF one. */
+	stringsize = compute_stringsize(elfp->elf_syms, nsyms, oldstringbase);
+	if (debug) {
+		fprintf(stderr,
+		    "%zu (0x%zx) bytes ELF string table\n",
+		    (size_t)elfp->stringsize, (size_t)elfp->stringsize);
+		fprintf(stderr,
+		    "%zu (0x%zx) bytes required for ECOFF string table\n",
+		    stringsize, stringsize);
+	}
+	newstrings = malloc(stringsize);
 	if (newstrings == NULL)
 		errx(1, "No memory for new string table");
-	/* Copy and translate  symbols... */
+	/* Copy and translate symbols... */
+	nsp = newstrings;
 	idx = 0;
 	for (i = 0; i < nsyms; i++) {
-		int     binding;
+		const Elf32_Sym *esym = &elfp->elf_syms[i];
+		const char *name;
+		size_t namelen;
 
-		binding = ELF32_ST_BIND((elfp->elf_syms[i].st_info));
-
-		/* skip strange symbols */
-		if (binding == 0) {
+		if (ELF32_ST_BIND(esym->st_info) == STB_LOCAL)
 			continue;
-		}
+		name = oldstringbase + esym->st_name;
+		namelen = strlen(name) + 1;
+		if (nsp + namelen > newstrings + stringsize)
+			errx(1, "ECOFF string table overflow");
 		/* Copy the symbol into the new table */
-		strcpy(nsp, oldstringbase + elfp->elf_syms[i].st_name);
+		strcpy(nsp, name);
 		ecoffp->ecoff_syms[idx].es_strindex = nsp - newstrings;
-		nsp += strlen(nsp) + 1;
+		nsp += namelen;
 
 		/* translate symbol types to ECOFF XXX */
 		ecoffp->ecoff_syms[idx].es_type = 1;
 		ecoffp->ecoff_syms[idx].es_class = 5;
 
 		/* Symbol values in executables should be compatible. */
-		ecoffp->ecoff_syms[idx].es_value = elfp->elf_syms[i].st_value;
+		ecoffp->ecoff_syms[idx].es_value = esym->st_value;
 		ecoffp->ecoff_syms[idx].es_symauxindex = 0xfffff;
 
 		idx++;
 	}
 
 	ecoffp->nsymbols = idx;
+	ecoffp->stringtab = newstrings;
 	ecoffp->stringsize = nsp - newstrings;
+	if (debug)
+		fprintf(stderr,
+		    "%zu (0x%zx) bytes used for ECOFF string table\n",
+		    (size_t)ecoffp->stringsize, (size_t)ecoffp->stringsize);
 }
 /*
  * pad to a 16-byte boundary
