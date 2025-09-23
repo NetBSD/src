@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.20 2025/09/21 14:43:19 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.21 2025/09/23 12:37:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.20 2025/09/21 14:43:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.21 2025/09/23 12:37:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,62 @@ iic_tag_fini(i2c_tag_t tag)
 {
 
 	mutex_destroy(&tag->ic_bus_lock);
+}
+
+/*
+ * iic_acquire_bus_lock --
+ *
+ *	Acquire an i2c bus lock.  Used by iic_acquire_bus() and other
+ *	places that need to acquire an i2c-related lock with the same
+ *	logic.
+ */
+int
+iic_acquire_bus_lock(kmutex_t *lock, int flags)
+{
+	if (flags & I2C_F_POLL) {
+		/*
+		 * Polling should only be used in rare and/or
+		 * extreme circumstances; most i2c clients should
+		 * be allowed to sleep.
+		 *
+		 * Really, the ONLY user of I2C_F_POLL should be
+		 * "when cold", i.e. during early autoconfiguration
+		 * when there is only proc0, and we might have to
+		 * read SEEPROMs, etc.  There should be no other
+		 * users interfering with our access of the i2c bus
+		 * in that case.
+		 */
+		if (mutex_tryenter(lock) == 0) {
+			return EBUSY;
+		}
+	} else {
+		/*
+		 * N.B. We implement this as a mutex that we hold across
+		 * across a series of requests beause we'd like to get the
+		 * priority boost if a higher-priority process wants the
+		 * i2c bus while we're asleep waiting for the controller
+		 * to perform the I/O.
+		 *
+		 * XXXJRT Disable preemption here?  We'd like to keep the
+		 * CPU while holding this resource, unless we release it
+		 * voluntarily (which should only happen while waiting for
+		 * a controller to complete I/O).
+		 */
+		mutex_enter(lock);
+	}
+
+	return 0;
+}
+
+/*
+ * iic_release_bus_lock --
+ *
+ *	Release a previously-acquired i2c-related bus lock.
+ */
+void
+iic_release_bus_lock(kmutex_t *lock)
+{
+	mutex_exit(lock);
 }
 
 /*
