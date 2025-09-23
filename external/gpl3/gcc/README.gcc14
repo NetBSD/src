@@ -32,7 +32,7 @@ earmv7		y	b	y	y	y	y		?	?	?
 earmv7eb	y	b	y	y	y	y		?	?	?
 earmv7hf	y	b	y	y	y	y		?	?	?
 earmv7hfeb	y	b	y	y	y	y		?	?	?
-hppa		y	?	y	y	?	n[3]		?	?	?
+hppa		y	b	y	y	?	y		?	?	?
 i386		y	b	y	y	y	y		?	?	?
 ia64		y	y[8]	y	y	n[2]	?		y	?	?
 m68000		y	b	y	y	y	n[9]		?	?	?
@@ -65,9 +65,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      /usr/src3/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:380:1: note: in expansion of macro 'INTERCEPTOR'
        380 | INTERCEPTOR(SIZE_T, strlen, const char *s) {
            | ^~~~~~~~~~~
-[3]: looks like some codegen issue in libgcc, eg:
-     {standard input}:36: Error: Unknown opcode: `stws|stw} %r21,-16(%sp)'
-     {standard input}:39: Error: Invalid operands
 [4]: my kernel has 3 or 4 files built with -O0 to avoid compiler ICE issues
 [5]: build fails in libstdc++:
      libstdc++-v3/include/bits/utility.h:234:31: error: missing binary operator before token "("
