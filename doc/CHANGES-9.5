@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.72 2025/08/25 16:13:02 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.73 2025/09/23 12:54:36 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -945,4 +945,10 @@ sys/netbt/hci.h					1.47
 
 	blutooth: fix definition of Sniff Subrating command.
 	[plunky, ticket #1966]
+
+sys/arch/hppa/hppa/trap.c			1.124-1.128
+
+	hppa: fix inverted logic around probe access vs probe access immediate
+	instructions and cleanup.
+	[skrll, ticket #1967]
 
