@@ -1,4 +1,30 @@
-/*	$NetBSD: i2c.c,v 1.102 2025/09/23 00:52:14 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.103 2025/09/23 01:06:54 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -53,7 +79,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.102 2025/09/23 00:52:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.103 2025/09/23 01:06:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +116,23 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.102 2025/09/23 00:52:14 thorpej Exp $");
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
 #endif
 
+/* Everything projected by iic_softc::sc_device_state_lock */
+struct i2c_device {
+	LIST_ENTRY(i2c_device)	d_link;
+	device_t		d_dev;
+	i2c_addr_t		d_addr;
+	int			d_flags;
+#define	ID_F_DIRECT		__BIT(0)
+#define	ID_F_BUSY		__BIT(1)
+#define	ID_F_WAIT_BUSY		__BIT(2)
+};
+
 struct iic_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
-	device_t sc_devices[I2C_MAX_ADDR + 1];
+	kmutex_t sc_device_state_lock;
+	kcondvar_t sc_device_state_cond;
+	LIST_HEAD(, i2c_device) sc_devices;
 };
 
 static dev_type_open(iic_open);
@@ -121,6 +160,183 @@ const struct cdevsw iic_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
+
+static void
+iic_device_wait(struct iic_softc *sc, struct i2c_device *d)
+{
+	KASSERT(mutex_owned(&sc->sc_device_state_lock));
+
+	while (d->d_flags & ID_F_BUSY) {
+		d->d_flags |= ID_F_WAIT_BUSY;
+		cv_wait(&sc->sc_device_state_cond, &sc->sc_device_state_lock);
+	}
+}
+
+static struct i2c_device *
+iic_device_lookup_addr(struct iic_softc *sc, i2c_addr_t addr, bool wait_busy)
+{
+	struct i2c_device *d;
+
+	KASSERT(mutex_owned(&sc->sc_device_state_lock));
+
+	LIST_FOREACH(d, &sc->sc_devices, d_link) {
+		if (d->d_addr == addr) {
+			if (wait_busy) {
+				iic_device_wait(sc, d);
+			}
+			return d;
+		}
+	}
+	return NULL;
+}
+
+static struct i2c_device *
+iic_device_lookup_dev(struct iic_softc *sc, device_t dev)
+{
+	struct i2c_device *d;
+
+	KASSERT(mutex_owned(&sc->sc_device_state_lock));
+
+	LIST_FOREACH(d, &sc->sc_devices, d_link) {
+		if (d->d_dev == dev) {
+			iic_device_wait(sc, d);
+			return d;
+		}
+	}
+	return NULL;
+}
+
+static struct i2c_device *
+iic_device_alloc(i2c_addr_t addr, int flags)
+{
+	struct i2c_device *d = kmem_zalloc(sizeof(*d), KM_SLEEP);
+	d->d_addr = addr;
+	d->d_flags = flags;
+
+	return d;
+}
+
+static inline void
+iic_device_free(struct i2c_device *d)
+{
+	kmem_free(d, sizeof(*d));
+}
+
+#define	ID_F_KEEPALIVE_MASK	(ID_F_DIRECT | ID_F_BUSY | ID_F_WAIT_BUSY)
+
+static void
+iic_device_release_and_unlock(struct iic_softc *sc, struct i2c_device *d)
+{
+	KASSERT(mutex_owned(&sc->sc_device_state_lock));
+
+	if (d->d_dev == NULL &&
+	    (d->d_flags & ID_F_KEEPALIVE_MASK) == 0) {
+		LIST_REMOVE(d, d_link);
+	} else {
+		if (d->d_flags & ID_F_WAIT_BUSY) {
+			d->d_flags &= ~ID_F_WAIT_BUSY;
+			cv_broadcast(&sc->sc_device_state_cond);
+		}
+		d = NULL;
+	}
+	mutex_exit(&sc->sc_device_state_lock);
+
+	if (d != NULL) {
+		iic_device_free(d);
+	}
+}
+
+/*
+ * iic_addr_reserve --
+ *	Mark an I2C address as reserved by an attach attempt.
+ *	This is a short-lived state.
+ */
+static bool
+iic_addr_reserve(struct iic_softc *sc, i2c_addr_t addr, int flags)
+{
+	struct i2c_device *d, *newd;
+	bool rv = true;
+
+	flags = (flags & ID_F_DIRECT) | ID_F_BUSY;
+	newd = iic_device_alloc(addr, flags);
+
+	mutex_enter(&sc->sc_device_state_lock);
+	d = iic_device_lookup_addr(sc, addr, true);
+	if (d == NULL) {
+		LIST_INSERT_HEAD(&sc->sc_devices, newd, d_link);
+		newd = NULL;
+		mutex_exit(&sc->sc_device_state_lock);
+	} else {
+		if (d->d_dev != NULL ||
+		    ((d->d_flags & ID_F_DIRECT) != 0 &&
+		     (     flags & ID_F_DIRECT) == 0)) {
+			rv = false;
+		} else {
+			d->d_flags |= flags;
+		}
+		iic_device_release_and_unlock(sc, d);
+	}
+
+	if (newd != NULL) {
+		kmem_free(newd, sizeof(*newd));
+	}
+	return rv;
+}
+
+/*
+ * iic_addr_claim --
+ *	Claim an I2C address for a device.  The address must already
+ *	be reserved.
+ */
+static void
+iic_addr_claim(struct iic_softc *sc, i2c_addr_t addr, device_t dev)
+{
+	struct i2c_device *d;
+
+	mutex_enter(&sc->sc_device_state_lock);
+	d = iic_device_lookup_addr(sc, addr, false);
+	KASSERT(d != NULL);
+	KASSERT(d->d_dev == NULL);
+	KASSERT(d->d_flags & ID_F_BUSY);
+	d->d_dev = dev;
+	d->d_flags &= ~ID_F_BUSY;
+	iic_device_release_and_unlock(sc, d);
+}
+
+/*
+ * iic_addr_release --
+ *	Release an I2C address.  Address must have been previously
+ *	reserved but not claimed.
+ */
+static void
+iic_addr_release(struct iic_softc *sc, i2c_addr_t addr)
+{
+	struct i2c_device *d;
+
+	mutex_enter(&sc->sc_device_state_lock);
+	d = iic_device_lookup_addr(sc, addr, false);
+	KASSERT(d != NULL);
+	KASSERT(d->d_dev == NULL);
+	KASSERT(d->d_flags & ID_F_BUSY);
+	d->d_flags &= ~ID_F_BUSY;
+	iic_device_release_and_unlock(sc, d);
+}
+
+/*
+ * iic_addr_release_device --
+ *	Release an I2C address by device.
+ */
+static void
+iic_addr_release_device(struct iic_softc *sc, device_t dev)
+{
+	struct i2c_device *d;
+
+	mutex_enter(&sc->sc_device_state_lock);
+	d = iic_device_lookup_dev(sc, dev);
+	KASSERT(d != NULL);
+	d->d_dev = NULL;
+	iic_device_release_and_unlock(sc, d);
+}
 
 static int
 iic_print_direct(void *aux, const char *pnp)
@@ -336,6 +552,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	for (ia.ia_addr = first_addr; ia.ia_addr <= last_addr; ia.ia_addr++) {
 		int error, match_result;
+		device_t newdev;
 
 		/*
 		 * Skip I2C addresses that are reserved for
@@ -345,9 +562,10 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 			continue;
 
 		/*
-		 * Skip addresses where a device is already attached.
+		 * Skip addresses where a device is already attached
+		 * or that's reserved dore direct-configuration.
 		 */
-		if (sc->sc_devices[ia.ia_addr] != NULL)
+		if (! iic_addr_reserve(sc, ia.ia_addr, 0))
 			continue;
 
 		/*
@@ -364,8 +582,10 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * is there.
 		 */
 		match_result = config_probe(parent, cf, &ia);/*XXX*/
-		if (match_result <= 0)
+		if (match_result <= 0) {
+			iic_addr_release(sc, ia.ia_addr);
 			continue;
+		}
 
 		/*
 		 * If the quality of the match by the driver was low
@@ -374,11 +594,17 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * to see if it looks like something is really there.
 		 */
 		if (match_result == I2C_MATCH_ADDRESS_ONLY &&
-		    (error = (*probe_func)(sc, &ia, 0)) != 0)
+		    (error = (*probe_func)(sc, &ia, 0)) != 0) {
+			iic_addr_release(sc, ia.ia_addr);
 			continue;
+		}
 
-		sc->sc_devices[ia.ia_addr] =
-		    config_attach(parent, cf, &ia, iic_print, CFARGS_NONE);
+		newdev = config_attach(parent, cf, &ia, iic_print, CFARGS_NONE);
+		if (newdev != NULL) {
+			iic_addr_claim(sc, ia.ia_addr, newdev);
+		} else {
+			iic_addr_release(sc, ia.ia_addr);
+		}
 	}
 
 	return 0;
@@ -388,13 +614,8 @@ static void
 iic_child_detach(device_t parent, device_t child)
 {
 	struct iic_softc *sc = device_private(parent);
-	int i;
 
-	for (i = 0; i <= I2C_MAX_ADDR; i++)
-		if (sc->sc_devices[i] == child) {
-			sc->sc_devices[i] = NULL;
-			break;
-		}
+	iic_addr_release_device(sc, child);
 }
 
 static int
@@ -428,7 +649,7 @@ iic_attach_child_direct(struct iic_softc *sc, struct i2c_attach_args *ia)
 		return;
 	}
 
-	if (sc->sc_devices[ia->ia_addr] != NULL) {
+	if (! iic_addr_reserve(sc, ia->ia_addr, ID_F_DIRECT)) {
 		return;
 	}
 
@@ -436,8 +657,11 @@ iic_attach_child_direct(struct iic_softc *sc, struct i2c_attach_args *ia)
 	    CFARGS(.submatch = config_stdsubmatch,
 		   .locators = loc,
 		   .devhandle = ia->ia_devhandle));
-
-	sc->sc_devices[ia->ia_addr] = newdev;
+	if (newdev != NULL) {
+		iic_addr_claim(sc, ia->ia_addr, newdev);
+	} else {
+		iic_addr_release(sc, ia->ia_addr);
+	}
 }
 
 static bool
@@ -574,6 +798,10 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
+
+	LIST_INIT(&sc->sc_devices);
+	cv_init(&sc->sc_device_state_cond, "i2cdevst");
+	mutex_init(&sc->sc_device_state_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -730,8 +958,7 @@ iic_ioctl_exec(struct iic_softc *sc, i2c_ioctl_exec_t *iie, int flag)
 
 #if 0
 	/* Disallow userspace access to devices that have drivers attached. */
-	if (sc->sc_devices[iie->iie_addr] != NULL)
-		return EBUSY;
+	/* XXX */
 #endif
 
 	if (iie->iie_cmd != NULL) {
