@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_data.3,v 1.9 2020/06/06 21:25:59 thorpej Exp $
+.\"	$NetBSD: prop_data.3,v 1.10 2025/09/23 21:32:38 rillig Exp $
 .\"
 .\" Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,7 +82,7 @@ on failure.
 .It Fn prop_data_create_nocopy "const void *blob" "size_t len"
 Similar to
 .Fn prop_data_create_copy ,
-but is allowed to not create aan internal copy of the opaque data, instead
+but is allowed to not create an internal copy of the opaque data, instead
 referencing the buffer passed by the caller.
 Caution must be exercised because data objects can have an indefinite
 lifespan.
