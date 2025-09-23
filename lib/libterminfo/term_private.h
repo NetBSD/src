@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.19 2020/06/21 15:05:23 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.20 2025/09/23 19:50:43 js Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
  * always stored as little endian.
  */
 
+#include <sys/endian.h>
 #include <sys/types.h>
 #include <assert.h>
 #include <limits.h>
