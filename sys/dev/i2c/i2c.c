@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.103 2025/09/23 01:06:54 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.104 2025/09/23 01:34:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.103 2025/09/23 01:06:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.104 2025/09/23 01:34:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 		/*
 		 * Skip addresses where a device is already attached
-		 * or that's reserved dore direct-configuration.
+		 * or that's reserved for direct-configuration.
 		 */
 		if (! iic_addr_reserve(sc, ia.ia_addr, 0))
 			continue;
