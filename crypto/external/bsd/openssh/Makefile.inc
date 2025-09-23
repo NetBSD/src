@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2024/06/25 16:36:54 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2025/09/23 20:18:10 rillig Exp $
 
 WARNS?=	4
 
@@ -47,3 +47,8 @@ CPPFLAGS+=-DX11BASE=\"/usr/X11R7\"
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 CPPFLAGS+=-DLIBWRAP
+
+LINTFLAGS+=	-X 117	# nonportable '>>' on signed integer type
+LINTFLAGS+=	-X 231	# parameter unused
+LINTFLAGS+=	-X 247	# pointer cast to unrelated type
+LINTFLAGS+=	-X 351	# missing header declaration
