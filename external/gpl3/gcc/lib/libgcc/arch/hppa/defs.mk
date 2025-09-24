@@ -6,7 +6,7 @@ G_INCLUDES=-I. -I. -I../.././gcc -I${GNUHOSTDIST}/libgcc -I${GNUHOSTDIST}/libgcc
 G_INTERNAL_CFLAGS=-g -O2 -O2  -DIN_GCC   -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition  -isystem ./include   -fPIC -DELF=1 -DLINUX=1 -g -DIN_LIBGCC2 -fbuilding-libgcc -fno-stack-protector   -fPIC -DELF=1 -DLINUX=1 -I. -I. -I../.././gcc -I${GNUHOSTDIST}/libgcc -I${GNUHOSTDIST}/libgcc/. -I${GNUHOSTDIST}/libgcc/../gcc -I${GNUHOSTDIST}/libgcc/../include  -DHAVE_CC_TLS 
 G_LIB2ADD=${GNUHOSTDIST}/libgcc/config/pa/fptr.c enable-execute-stack.c ${GNUHOSTDIST}/libgcc/hardcfr.c ${GNUHOSTDIST}/libgcc/strub.c
 G_LIB2ADDEH=${GNUHOSTDIST}/libgcc/unwind-dw2.c ${GNUHOSTDIST}/libgcc/unwind-dw2-fde-dip.c ${GNUHOSTDIST}/libgcc/unwind-sjlj.c ${GNUHOSTDIST}/libgcc/unwind-c.c ${GNUHOSTDIST}/libgcc/emutls.c
-G_LIB2ADD_ST=${GNUHOSTDIST}/libgcc/config/pa/sync-libfuncs.c
+G_LIB2ADD_ST=
 G_LIB1ASMFUNCS=_divI _divU _remI _remU _div_const _mulI _dyncall
 G_LIB1ASMSRC=pa/milli64.S
 G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _divmoddi4 _udivdi3 _umoddi3 _udivmoddi4 _udiv_w_sdiv _divmodbitint4
