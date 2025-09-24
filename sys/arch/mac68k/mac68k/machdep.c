@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.370 2024/09/14 21:02:46 nat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.371 2025/09/24 14:12:49 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.370 2024/09/14 21:02:46 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.371 2025/09/24 14:12:49 rin Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -2537,7 +2537,8 @@ get_mapping(void)
 				    && (phys == nbphys[nbnumranges - 1] + len))
 					nblen[nbnumranges - 1] += 32768;
 				else {
-					if (same) {
+					if (same &&
+					    nbnumranges > 0 /* XXXGCC14 */) {
 						nblen[nbnumranges - 1] = -len;
 						same = 0;
 					}
