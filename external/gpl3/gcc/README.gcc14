@@ -41,7 +41,7 @@ mipseb		y	?	y	y	?	?		?	?	?
 mipsel		y	?	y	y	?	n[6]		?	?	?
 mips64eb	y	b	y	y	y	y		?	?	?
 mips64el	y	b	y	y	y	y		?	?	?
-powerpc		y	b	y	y	y	y		?	?	?
+powerpc		y	b	y	y	y	y		n[1]	?	?
 powerpc64	y	b	y	y	y	y		?	?	?
 sh3eb		y	b	y	y	n[10]	?		?	?	?
 sh3el		y	b	y	y	n[10]	?		?	?	?
@@ -54,6 +54,8 @@ riscv64		y	b	y	y	y	y		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
+[1]: gcc 14 defines _ARCH_PPC64 with -mcpu=970, which gcc 12 did not, and it breaks some
+     assumptions we have about that being in a 64-bit environment only.
 [2]: new GCC generated files are too huge, eg:
      {standard input}: Assembler messages:
      {standard input}:60465: Warning: .word .L5289-.L5291+00000000 didn't fit
