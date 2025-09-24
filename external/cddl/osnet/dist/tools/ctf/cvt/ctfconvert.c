@@ -68,7 +68,7 @@ usage(void)
 static void
 terminate_cleanup(void)
 {
-#if !defined(__FreeBSD__) && !defined(__NetBSD__)
+#if !defined(__FreeBSD__) && !(defined(__NetBSD__) || HAVE_NBTOOL_CONFIG_H)
 	if (!outfile) {
 		fprintf(stderr, "Removing %s\n", infile);
 		unlink(infile);
