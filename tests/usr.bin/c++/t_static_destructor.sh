@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.7 2025/04/16 01:52:42 riastradh Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.8 2025/09/24 13:52:25 rin Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -207,7 +207,7 @@ struct B {
 	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
 	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
 };
-int callpic(void) {struct B b;}
+int callpic(void) {struct B b;return 0;}
 EOF
 
 	atf_check -s exit:0 -o ignore -e ignore \
@@ -249,7 +249,7 @@ struct B {
 	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
 	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
 };
-int callpic(void) {struct B b;}
+int callpic(void) {struct B b;return 0;}
 EOF
 
 	atf_check -s exit:0 -o ignore -e ignore \
@@ -285,7 +285,7 @@ struct B {
 	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
 	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
 };
-int callpic(void) {struct B b;}
+int callpic(void) {struct B b;return 0;}
 EOF
 
 	atf_check -s exit:0 -o ignore -e ignore \
@@ -333,7 +333,7 @@ struct B {
 	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
 	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
 };
-int callpic(void) {struct B b;}
+int callpic(void) {struct B b;return 0;}
 EOF
 
 	atf_check -s exit:0 -o ignore -e ignore \
