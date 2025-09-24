@@ -36,7 +36,7 @@ hppa		y	b	y	y	y	y		?	?	?
 i386		y	b	y	y	y	y		?	?	?
 ia64		y	y[8]	y	y	n[12]	?		y	?	?
 m68000		y	b	y	y	y	n[9]		?	?	?
-m68k		y	b	y	y	y	n[2]		?	?	?
+m68k		y	b	y	y	y	y[2]		y	?	?
 mipseb		y	?	y	y	?	?		?	?	?
 mipsel		y	?	y	y	?	n[6]		?	?	?
 mips64eb	y	b	y	y	y	y		?	?	?
@@ -134,7 +134,7 @@ earmv7:		 		 	 	y		y
 earmv7hf:	 		 	 	y		y
 
 		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
-m68k:		k		k	k	k		k		k		k		k		k		k 	k
+m68k:		y		k	k	k		k		k		k		k		k		k 	k
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
 mipseb:		k		k		k		k		k		k
