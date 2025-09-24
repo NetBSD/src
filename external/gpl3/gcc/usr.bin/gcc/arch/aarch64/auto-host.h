@@ -139,13 +139,13 @@
 /* Define to 1 to specify that we are using the BID decimal floating point
    format instead of DPD */
 #ifndef USED_FOR_TARGET
-#define ENABLE_DECIMAL_BID_FORMAT 1
+#define ENABLE_DECIMAL_BID_FORMAT 0
 #endif
 
 
 /* Define to 1 to enable decimal float extension to C. */
 #ifndef USED_FOR_TARGET
-#define ENABLE_DECIMAL_FLOAT 1
+#define ENABLE_DECIMAL_FLOAT 0
 #endif
 
 

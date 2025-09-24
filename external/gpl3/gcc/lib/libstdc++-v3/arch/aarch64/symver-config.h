@@ -493,7 +493,7 @@
 #define HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef HAVE_TGMATH_H */
+#define HAVE_TGMATH_H 1
 
 /* Define to 1 if you have the `timespec_get' function. */
 #define HAVE_TIMESPEC_GET 1
@@ -804,7 +804,7 @@
 
 /* Define if ISO/IEC TR 24733 decimal floating point types are supported on
    this host. */
-#define _GLIBCXX_USE_DECIMAL_FLOAT 1
+/* #undef _GLIBCXX_USE_DECIMAL_FLOAT */
 
 /* Define if /dev/random and /dev/urandom are available for
    std::random_device. */
