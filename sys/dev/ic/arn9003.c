@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.17 2024/07/05 04:31:50 rin Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.18 2025/09/24 21:39:40 andvar Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.17 2024/07/05 04:31:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.18 2025/09/24 21:39:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2925,7 +2925,7 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		y5 = (y5 * tmp) / order5x;
 		y5 = y5 / order5xrem;
 
-		/* Third oder. */
+		/* Third order. */
 		y3 = (alpha * tmp) / order3x;
 		y3 = (y3 * tmp) / order3x;
 		y3 = (y3 * tmp) / order3x;
@@ -2991,7 +2991,7 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		y5 = (y5 * tmp) / order5x;
 		y5 = y5 / order5xrem;
 
-		/* Third oder. */
+		/* Third order. */
 		if (beta > 0)	/* XXX alpha? */
 			y3 = (alpha * tmp - order3x) / order3x;
 		else
