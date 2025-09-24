@@ -456,11 +456,8 @@ PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 
 # Pass additional PGO and LTO compiler options to the PGO build.
 BUILD_CFLAGS = $(PGO_BUILD_CFLAGS) $(PGO_BUILD_LTO_CFLAGS)
-# Not supported by BSD make
-# override CFLAGS += $(BUILD_CFLAGS)
-# override CXXFLAGS += $(BUILD_CFLAGS)
-CFLAGS += $(BUILD_CFLAGS)
-CXXFLAGS += $(BUILD_CFLAGS)
+override CFLAGS += $(BUILD_CFLAGS)
+override CXXFLAGS += $(BUILD_CFLAGS)
 
 # Additional PGO and LTO compiler options to generate profiling data
 # for the PGO build.

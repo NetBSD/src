@@ -835,77 +835,75 @@ endif
 	$(AM_V_CC)$(LTCOMPILE) -c -o $@ -DDEBUGDIR=\"$(DEBUGDIR)\" $(srcdir)/dwarf2.c
 endif
 
-# change IMPSRC ($<) to ALLSRC ($>) in the following rules so they work with
-# bmake
 elf32-target.h : elfxx-target.h
-	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> > $@
+	$(AM_V_GEN)$(SED) -e s/NN/32/g < $< > $@
 
 elf64-target.h : elfxx-target.h
-	$(AM_V_GEN)$(SED) -e s/NN/64/g < $> > $@
+	$(AM_V_GEN)$(SED) -e s/NN/64/g < $< > $@
 
 elf32-aarch64.c : elfnn-aarch64.c
-	$(AM_V_at)echo "#line 1 \"elfnn-aarch64.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/32/g < $< >> $@
 
 elf64-aarch64.c : elfnn-aarch64.c
-	$(AM_V_at)echo "#line 1 \"elfnn-aarch64.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/64/g < $< >> $@
 
 elf32-ia64.c : elfnn-ia64.c
-	$(AM_V_at)echo "#line 1 \"elfnn-ia64.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/32/g < $< >> $@
 
 elf64-ia64.c : elfnn-ia64.c
-	$(AM_V_at)echo "#line 1 \"elfnn-ia64.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/64/g < $< >> $@
 
 elf32-kvx.c : elfnn-kvx.c
-	$(AM_V_at)echo "#line 1 \"$elfnn-kvx.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/32/g < $< >> $@
 
 elf64-kvx.c : elfnn-kvx.c
-	$(AM_V_at)echo "#line 1 \"$elfnn-kvx.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/64/g < $< >> $@
 
 elf32-loongarch.c : elfnn-loongarch.c
-	$(AM_V_at)echo "#line 1 \"elfnn-loongarch.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/32/g < $< >> $@
 
 elf64-loongarch.c : elfnn-loongarch.c
-	$(AM_V_at)echo "#line 1 \"elfnn-loongarch.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/64/g < $< >> $@
 
 elf32-riscv.c : elfnn-riscv.c
-	$(AM_V_at)echo "#line 1 \"elfnn-riscv.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/32/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/32/g < $< >> $@
 
 elf64-riscv.c : elfnn-riscv.c
-	$(AM_V_at)echo "#line 1 \"elfnn-riscv.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/NN/64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/NN/64/g < $< >> $@
 
 peigen.c : peXXigen.c
-	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/pe/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/XX/pe/g < $< >> $@
 
 pepigen.c : peXXigen.c
-	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/pep/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/XX/pep/g < $< >> $@
 
 pex64igen.c: peXXigen.c
-	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/pex64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/XX/pex64/g < $< >> $@
 
 pe-aarch64igen.c: peXXigen.c
-	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/peAArch64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/XX/peAArch64/g < $< >> $@
 
 pe-loongarch64igen.c: peXXigen.c
-	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/peLoongArch64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/XX/peLoongArch64/g < $< >> $@
 
 pe-riscv64igen.c: peXXigen.c
-	$(AM_V_at)echo "#line 1 \"peXXigen.c\"" > $@
-	$(AM_V_GEN)$(SED) -e s/XX/peRiscV64/g < $> >> $@
+	$(AM_V_at)echo "#line 1 \"$<\"" > $@
+	$(AM_V_GEN)$(SED) -e s/XX/peRiscV64/g < $< >> $@
 
 host-aout.lo: Makefile
 
@@ -1020,6 +1018,4 @@ coff-tic54x.lo: coff-tic54x.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $< $(NO_WERROR)
 
-# Comment out the doc snippet because it has pattern rules our make does not
-# understand
-#include doc/local.mk
+include doc/local.mk
