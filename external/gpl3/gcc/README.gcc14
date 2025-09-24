@@ -16,8 +16,8 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	?	y	y	?	n[1]		?	?	?
-aarch64eb	y	y	y	y	y	y		?	?	?
-alpha		y	b	y	y	n[2]	?		?	?	?
+aarch64eb	y	y	y	y	y	y		n[5]	?	?
+alpha		y	b	y	y	y	y[11]		?	?	?
 earmv4		y	b	y	y	y	y		?	?	?
 earmv4eb	y	b	y	y	y	y		?	?	?
 earmv5		y	b	y	y	y	y		?	?	?
@@ -32,43 +32,35 @@ earmv7		y	b	y	y	y	y		?	?	?
 earmv7eb	y	b	y	y	y	y		?	?	?
 earmv7hf	y	b	y	y	y	y		?	?	?
 earmv7hfeb	y	b	y	y	y	y		?	?	?
-hppa		y	b	y	y	?	y		?	?	?
+hppa		y	b	y	y	y	y		?	?	?
 i386		y	b	y	y	y	y		?	?	?
-ia64		y	y[8]	y	y	n[2]	?		y	?	?
+ia64		y	y[8]	y	y	n[12]	?		y	?	?
 m68000		y	b	y	y	y	n[9]		?	?	?
-m68k		y	b	y	y	n[2]	?		?	?	?
+m68k		y	b	y	y	y	n[2]		?	?	?
 mipseb		y	?	y	y	?	?		?	?	?
-mipsel		y	?	y	y	?	n[5,6]		?	?	?
+mipsel		y	?	y	y	?	n[6]		?	?	?
 mips64eb	y	b	y	y	y	y		?	?	?
 mips64el	y	b	y	y	y	y		?	?	?
 powerpc		y	b	y	y	y	y		?	?	?
 powerpc64	y	b	y	y	y	y		?	?	?
-sh3eb		y	b	y	y	n[2]	?		?	?	?
-sh3el		y	b	y	y	n[2]	?		?	?	?
+sh3eb		y	b	y	y	n[10]	?		?	?	?
+sh3el		y	b	y	y	n[10]	?		?	?	?
 sparc		y	y	y	y	y	y		y	y	?
 sparc64		y	y	y	y	y	y		y	y	?
-vax		y	y[4]	y	y	n[2]	?		?	?	?
-x86_64		y	y	y	y	y	?		y	y	?
+vax		y	y[4]	y	y	y	y		y	?	?
+x86_64		y	y	y	y	y	y		y	y	?
 riscv32		y	n[7]	y	y	y	y		?	?	?
 riscv64		y	b	y	y	y	y		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
 [1]: there is a ctfconvert vs arm problem in libgcc, and probably more
-[2]: sanitizer_asm.h needs significant porting:
-     /usr/src3/external/gpl3/gcc/dist/libsanitizer/interception/interception.h:208:8: error: expected ')' before 'C_ASM_TAIL_CALL'
-       208 |        C_ASM_TAIL_CALL(SANITIZER_STRINGIFY(TRAMPOLINE(func)),                  \
-           |        ^~~~~~~~~~~~~~~
-     /usr/src3/external/gpl3/gcc/dist/libsanitizer/interception/interception.h:305:3: note: in expansion of macro 'DECLARE_WRAPPER'
-       305 |   DECLARE_WRAPPER(ret_type, func, __VA_ARGS__)  \
-           |   ^~~~~~~~~~~~~~~
-     /usr/src3/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:380:1: note: in expansion of macro 'INTERCEPTOR'
-       380 | INTERCEPTOR(SIZE_T, strlen, const char *s) {
-           | ^~~~~~~~~~~
-[4]: my kernel has 3 or 4 files built with -O0 to avoid compiler ICE issues
-[5]: build fails in libstdc++:
-     libstdc++-v3/include/bits/utility.h:234:31: error: missing binary operator before token "("
-       234 | #if _GLIBCXX_USE_BUILTIN_TRAIT(__type_pack_element)
+[2]: new GCC generated files are too huge, eg:
+     {standard input}: Assembler messages:
+     {standard input}:60465: Warning: .word .L5289-.L5291+00000000 didn't fit
+[4]: my kernel has 2 files built with -O0 to avoid compiler ICE issues: vsbus.c and ncr53c9x.c.
+     gallium and a couple of other parts of userland trigger same problem.
+[5]: after extracting base, 'tar + gzip' combo sometimes crashes.  kernel works.
 [6]: mips o32 also has gdb vs atomic issue:
      libgdb.a(minsyms.o): in function `minimal_symbol_reader::install()':
      minsyms.c:(.text+0x4224): undefined reference to `__atomic_test_and_set'
@@ -77,6 +69,11 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [9]: Calculated size of `ramdisk.fs.tmp': 614400 bytes, 167 inodes
      ...
       32,nbmakefs: Writing inode 151 (work/./etc/protocols), bytes 0 + 118: No space left on device
+[10]: sh3 has missing symbol error in gdb.  does does 32-bit mips.
+      minsyms.c:(.text+0x2414): undefined reference to `__atomic_test_and_set'
+[11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
+[12]: libstdc++ has a weird build issue:
+      ld: /var/obj/ia64/usr/src3/destdir.ia64/usr/lib/libstdc++.so: undefined reference to `__glibcxx_backtrace_simple'
 
 
 --- these are GCC 12 issues, but some will remain --
