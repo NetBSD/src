@@ -32,7 +32,7 @@ earmv7		y	b	y	y	y	y		?	?	?
 earmv7eb	y	b	y	y	y	y		?	?	?
 earmv7hf	y	b	y	y	y	y		?	?	?
 earmv7hfeb	y	b	y	y	y	y		?	?	?
-hppa		y	b	y	y	y	y		?	?	?
+hppa		y	b	y	y	y	y		y	y	?
 i386		y	b	y	y	y	y		?	?	?
 ia64		y	y[8]	y	y	n[12]	?		y	?	?
 m68000		y	b	y	y	y	n[9]		?	?	?
