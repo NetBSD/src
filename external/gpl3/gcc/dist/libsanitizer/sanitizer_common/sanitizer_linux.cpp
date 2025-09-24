@@ -1963,7 +1963,7 @@ static bool Aarch64GetESR(ucontext_t *ucontext, u64 *esr) {
   return false;
 }
 #elif (SANITIZER_FREEBSD || SANITIZER_NETBSD) && defined(__aarch64__)
-// FreeBSD doesn't provide ESR in the ucontext.
+// FreeBSD/NetBSD don't provide ESR in the ucontext.
 static bool Aarch64GetESR(ucontext_t *ucontext, u64 *esr) {
   return false;
 }
