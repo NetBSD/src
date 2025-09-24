@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2025/09/24 04:43:01 rillig Exp $
+#	$NetBSD: Makefile,v 1.42 2025/09/24 14:23:01 rillig Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -31,7 +31,7 @@ ALL_TARGET+=	all-gprof
 INSTALL_TARGET+=install-gprof
 .endif
 
-.include "${.CURDIR}/../Makefile.gmakehost"
+.include "${.CURDIR}/../Makefile.gnuhost"
 
 CCADDFLAGS=	-I${GNUHOSTDIST}/include  -I${DESTDIR}/usr/include
 CCADDFLAGS+=	-B${DESTDIR}/usr/lib/
@@ -49,7 +49,7 @@ MKNATIVE?=	${.CURDIR}/mknative-binutils
 
 native-binutils: .native/.configure_done
 	@echo 'Extracting GNU binutils configury for a native toolchain.'
-	MAKE=${MAKE_PROGRAM:Q} ${HOST_SH} ${MKNATIVE} binutils \
+	MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} binutils \
 		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
