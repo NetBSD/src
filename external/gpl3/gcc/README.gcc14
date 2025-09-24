@@ -15,7 +15,7 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	?	y	y	?	n[1]		?	?	?
+aarch64		y	y	y	y	y	y		y	?	?
 aarch64eb	y	y	y	y	y	y		n[5]	?	?
 alpha		y	b	y	y	y	y[11]		?	?	?
 earmv4		y	b	y	y	y	y		?	?	?
@@ -54,13 +54,17 @@ riscv64		y	b	y	y	y	y		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
-[1]: there is a ctfconvert vs arm problem in libgcc, and probably more
 [2]: new GCC generated files are too huge, eg:
      {standard input}: Assembler messages:
      {standard input}:60465: Warning: .word .L5289-.L5291+00000000 didn't fit
 [4]: my kernel has 2 files built with -O0 to avoid compiler ICE issues: vsbus.c and ncr53c9x.c.
      gallium and a couple of other parts of userland trigger same problem.
-[5]: after extracting base, 'tar + gzip' combo sometimes crashes.  kernel works.
+[5]: after extracting base, 'tar + gzip' combo sometimes crashes.  kernel works.  eg:
+     pax -rzpe  -f /ns3/base.tgz
+     pax -rzpe  -f /ns3/comp.tgz
+     gzip: error writing to output: Broken pipe
+     [1]   Abort trap (core dumped) ${doit} pax -rzpe ${verbose} -f "${setfile}"
+     most things seem to work when used in a chroot.  for above it is pax (or tar) that crashes.
 [6]: mips o32 also has gdb vs atomic issue:
      libgdb.a(minsyms.o): in function `minimal_symbol_reader::install()':
      minsyms.c:(.text+0x4224): undefined reference to `__atomic_test_and_set'
