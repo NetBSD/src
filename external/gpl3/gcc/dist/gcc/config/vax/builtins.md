@@ -44,9 +44,9 @@
 
   emit_insn (gen_ctz<mode>2_ccz (operands[0], operands[1]));
   emit_jump_insn (gen_rtx_SET (pc_rtx, target));
-  emit_insn (gen_neg<mode>2 (operands[0], const1_rtx));
+  emit_insn (gen_negsi2 (operands[0], const1_rtx));
   emit_label (label);
-  emit_insn (gen_add<mode>3 (operands[0], operands[0], const1_rtx));
+  emit_insn (gen_addsi3 (operands[0], operands[0], const1_rtx));
   DONE;
 }")
 
