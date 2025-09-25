@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc_acpi.c,v 1.1 2019/12/30 18:53:34 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc_acpi.c,v 1.2 2025/09/25 01:19:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc_acpi.c,v 1.1 2019/12/30 18:53:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc_acpi.c,v 1.2 2025/09/25 01:19:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,6 +146,7 @@ bcmemmc_acpi_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	sc->sc.sc_flags = SDHC_FLAG_32BIT_ACCESS |
+			  SDHC_FLAG_NO_PWR0 |
 			  SDHC_FLAG_HOSTCAPS |
 			  SDHC_FLAG_NO_HS_BIT;
 	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP |
