@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.93 2025/07/01 17:55:05 kre Exp $
+.\"	$NetBSD: mount.8,v 1.94 2025/09/25 14:34:20 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd July 1, 2025
+.Dd September 25, 2025
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -245,6 +245,15 @@ and avoiding excess writes on flash-based file systems.
 This file system should be skipped when mount is run with the
 .Fl a
 flag.
+.It Cm nfsv4acls
+Enable NFSv4 ACLs, which can be customized via the
+.Xr setfacl 1
+and
+.Xr getfacl 1
+commands.
+This flag is mutually exclusive with
+.Cm posix1eacls
+flag.
 .It Cm nocoredump
 Do not allow programs to create crash dumps (core files) on the file system.
 This option can be used to help protect sensitive
@@ -270,6 +279,15 @@ binaries for architectures other than its own.
 Do not allow set-user-identifier or set-group-identifier bits to take effect.
 .It Cm port
 (NFS only) Use the specified NFS port.
+.It Cm posix1eacls
+Enable POSIX.1e Access Control Lists, or ACLs, which can be customized via the
+.Xr setfacl 1
+and
+.Xr getfacl 1
+commands.
+This flag is mutually exclusive with
+.Cm nfsv4acls
+flag.
 .It Cm rdonly
 The same as
 .Fl r ;
@@ -543,7 +561,11 @@ mount -t cd9660 -o nodev,nosuid /dev/cd0a /mnt
 .Ed
 .Sh SEE ALSO
 .Xr df 1 ,
+.Xr getfacl 1 ,
+.Xr setfacl 1 ,
 .Xr mount 2 ,
+.Xr acl 3 ,
+.Xr getmntinfo 3 ,
 .Xr options 4 ,
 .Xr wapbl 4 ,
 .Xr fstab 5 ,
