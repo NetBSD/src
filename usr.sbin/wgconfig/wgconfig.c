@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.7 2025/09/25 15:49:03 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.7 2025/09/25 15:49:03 christos Exp $");
 
 #include <sys/ioctl.h>
 
@@ -560,10 +560,11 @@ handle_option_endpoint(const char *_addr_port, prop_dictionary_t prop_dict)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags = AI_NUMERICHOST;
+//	hints.ai_flags = AI_NUMERICHOST;
 	error = getaddrinfo(addr, port, &hints, &res);
 	if (error)
-		errx(EXIT_FAILURE, "getaddrinfo: %s", gai_strerror(error));
+		errx(EXIT_FAILURE, "getaddrinfo: %s:%s (%s)", addr, port,
+		    gai_strerror(error));
 
 	if (!prop_dictionary_set_data(prop_dict, "endpoint",
 		res->ai_addr, res->ai_addrlen))
