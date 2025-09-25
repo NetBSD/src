@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.19 2025/09/16 11:55:17 thorpej Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.20 2025/09/25 13:44:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.19 2025/09/16 11:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.20 2025/09/25 13:44:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,8 +162,7 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 		}
 
 	conf = of_compatible_lookup(phandle, compat_data)->data;
-	prop_dictionary_set_bool(device_properties(self), "iflg-rwc",
-	    conf->iflg_rwc);
+	sc->sc_iflg_rwc = conf->iflg_rwc;
 
 	/* Attach gttwsi core */
 	gttwsi_attach_subr(self, bst, bsh, sunxi_twi_regmap);
