@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.303 2025/09/24 01:25:36 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.304 2025/09/25 05:11:25 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -108,11 +108,6 @@ CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :}
 CFLAGS+=	${DEBUG} ${COPTS}
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
-
-.if ${MACHINE} == "vax" && ${HAVE_GCC:U0} == 14
-CWARNFLAGS.vsbus.c+= -O0
-CWARNFLAGS.ncr53c9x.c+= -O0
-.endif
 
 # example usage to find largest stack users in kernel compile directory:
 #    find . -name \*.su | xargs awk '{ printf "%6d %s\n", $2, $1 }' | sort -n

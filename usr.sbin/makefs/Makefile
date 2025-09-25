@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2025/09/24 01:29:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.43 2025/09/25 05:11:26 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -37,11 +37,6 @@ COPTS.cd9660_conversion.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.udf.c+=			${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.v7fs_estimate.c+=		${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.v7fs_populate.c+=		${CC_WNO_STRINGOP_TRUNCATION} ${CC_WNO_FORMAT_TRUNCATION}
-.endif
-
-# XXX GCC 14
-.if ${MACHINE} == "vax"
-COPTS.msdosfs_vfsops.c+=	-O0
 .endif
 
 .include <bsd.prog.mk>
