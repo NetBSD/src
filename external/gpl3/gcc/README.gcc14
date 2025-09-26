@@ -47,7 +47,7 @@ sh3eb		y	b	y	y	n[10]	?		?	?	?
 sh3el		y	b	y	y	n[10]	?		?	?	?
 sparc		y	y	y	y	y	y		y	y	?
 sparc64		y	y	y	y	y	y		y	y	?
-vax		y	y[4]	y	y	y	y		y	?	?
+vax		y	y	y	y	y	y		y	y	?
 x86_64		y	y	y	y	y	y		y	y	?
 riscv32		y	n[7]	y	y	y	y		?	?	?
 riscv64		y	b	y	y	y	y		?	?	?
@@ -59,8 +59,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [2]: new GCC generated files are too huge, eg:
      {standard input}: Assembler messages:
      {standard input}:60465: Warning: .word .L5289-.L5291+00000000 didn't fit
-[4]: my kernel has 2 files built with -O0 to avoid compiler ICE issues: vsbus.c and ncr53c9x.c.
-     gallium and a couple of other parts of userland trigger same problem.
 [5]: after extracting base, 'tar + gzip' combo sometimes crashes.  kernel works.  eg:
      pax -rzpe  -f /ns3/base.tgz
      pax -rzpe  -f /ns3/comp.tgz
