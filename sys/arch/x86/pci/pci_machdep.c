@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.100 2025/05/08 13:57:26 riastradh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.101 2025/09/26 19:29:23 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.100 2025/05/08 13:57:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.101 2025/09/26 19:29:23 tnn Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1192,7 +1192,7 @@ device_pci_register(device_t dev, void *aux)
 	 *
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if (device_class(dev) == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET || device_is_a(dev, "virtio")) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return NULL;
@@ -1216,8 +1216,14 @@ device_pci_register(device_t dev, void *aux)
 			 * and compare.
 			 */
 			pci_decompose_tag(paa->pa_pc, paa->pa_tag, &b, &d, &f);
-			if (bin->addr.tag == ((b << 8) | (d << 3) | f))
+			if (bin->addr.tag == ((b << 8) | (d << 3) | f)) {
+				if (device_is_a(dev, "virtio")) {
+					prop_dictionary_t prop = device_properties(dev);
+					prop_dictionary_set_bool(prop, "is-virtio-bootdev", true);
+					return NULL;
+				}
 				return dev;
+			}
 
 #ifndef XENPV
 			/*
@@ -1232,8 +1238,14 @@ device_pci_register(device_t dev, void *aux)
 					return dev;
 			}
 #endif
+		} else if (device_is_a(dev, "vioif")) {
+			prop_dictionary_t prop = device_properties(parent);
+			bool bd;
+			if (prop_dictionary_get_bool(prop, "is-virtio-bootdev", &bd) && bd)
+				return dev;
 		}
 	}
+
 	if (parent && device_is_a(parent, "pci") &&
 	    x86_found_console == false) {
 		struct pci_attach_args *pa = aux;
