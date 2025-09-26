@@ -54,7 +54,7 @@ riscv64		y	b	y	y	y	y		?	?	?
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
-[1]: gcc 14 defines _ARCH_PPC64 with -mcpu=970, which gcc 12 did not, and it breaks some
+[1]: gcc 14 defines _ARCH_PPC64 with "-mcpu=970 -m32", which gcc 12 did not, and it breaks some
      assumptions we have about that being in a 64-bit environment only.
 [2]: new GCC generated files are too huge, eg:
      {standard input}: Assembler messages:
