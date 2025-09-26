@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.149 2025/03/08 21:00:45 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.150 2025/09/26 07:48:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.149 2025/03/08 21:00:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.150 2025/09/26 07:48:46 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1200,38 +1200,77 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		}
 	}
 
-	/* Skip cache frobbing if mapping was COHERENT */
+	/*
+	 * Provide appropriate memory barriers, and skip cache frobbing
+	 * if mapping is COHERENT.
+	 *
+	 * The case of PREREAD is as follows:
+	 *
+	 * 1. loads and stores before DMA buffer may be allocated for the purpose
+	 * 2. bus_dmamap_sync(BUS_DMASYNC_PREREAD)
+	 * 3. store to register or DMA descriptor to trigger DMA
+	 *
+	 *    The load/store-before-store ordering is ensured by dma_rw_w().
+	 *
+	 * The case of PREWRITE is as follows:
+	 *
+	 * 1. stores to DMA buffer. loads can happen later as the buffer is not changed
+	 *    by the device.
+	 * 2. bus_dmamap_sync(BUS_DMASYNC_PREWRITE)
+	 * 3. store to register or DMA descriptor to trigger DMA
+	 *
+	 *    The store-before-store ordering is ensured by dma_w_w().
+	 *
+	 * The case of POSTREAD is as follows:
+	 *
+	 * 1. load from register or DMA descriptor notifying DMA completion
+	 * 2. bus_dmamap_sync(BUS_DMASYNC_POSTREAD)
+	 * 3. loads from DMA buffer to use data, and stores to reuse buffer
+	 *
+	 *    The stores in (3) will not be speculated and, therefore, don't need
+	 *    specific handling. The load-before-load ordering is ensured by
+	 *    dma_r_r().
+	 *
+	 * The case of POSTWRITE is as follows:
+	 *
+	 * 1. load from register or DMA descriptor notifying DMA completion
+	 * 2. bus_dmamap_sync(BUS_DMASYNC_POSTWRITE)
+	 * 3. loads and stores to reuse buffer
+	 *
+	 *    The stores in (3) will not be speculated, and the load can happen at any
+	 *    time as the DMA buffer is not changed by the device so no barrier is
+	 *    required.
+	 */
+
 	if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE:
+			dma_rw_w();
 			STAT_INCR(sync_coherent_prereadwrite);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
+			dma_rw_w();
 			STAT_INCR(sync_coherent_preread);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
+			dma_w_w();
 			STAT_INCR(sync_coherent_prewrite);
 			break;
 
 		case BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE:
+			dma_r_r();
 			STAT_INCR(sync_coherent_postreadwrite);
 			break;
 
 		case BUS_DMASYNC_POSTREAD:
+			dma_r_r();
 			STAT_INCR(sync_coherent_postread);
 			break;
 
 		/* BUS_DMASYNC_POSTWRITE was aleady handled as a fastpath */
 		}
-		/*
-		 * Drain the write buffer of DMA operators.
-		 * 1) when cpu->device (prewrite)
-		 * 2) when device->cpu (postread)
-		 */
-		if ((pre_ops & BUS_DMASYNC_PREWRITE) || (post_ops & BUS_DMASYNC_POSTREAD))
-			cpu_drain_writebuf();
 
 		/*
 		 * Only thing left to do for COHERENT mapping is copy from bounce

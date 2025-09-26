@@ -75,6 +75,20 @@
 
 #endif
 
+#if defined(_ARM_ARCH_8)
+#define	dma_r_r()	dsb(oshld)	// actually r_rw
+#define	dma_w_w()	dsb(oshst)
+#define	dma_rw_w()	dsb(osh)	// actually rw_rw
+#elif defined(_ARM_ARCH_6)
+#define	dma_r_r()	dsb(osh)	// actually rw_rw
+#define	dma_w_w()	dsb(oshst)
+#define	dma_rw_w()	dsb(osh)	// actually rw_rw
+#else
+#define	dma_r_r()	__nothing
+#define	dma_w_w()	cpu_drain_writebuf()
+#define	dma_rw_w()	cpu_drain_writebuf()
+#endif
+
 #ifdef __arm__
 
 #ifdef _KERNEL
