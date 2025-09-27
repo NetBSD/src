@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.39 2025/09/27 21:00:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.39 2025/09/27 21:00:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,6 +106,11 @@ user_sysctl(const int *name, unsigned int namelen,
 	void *oldp, size_t *oldlenp,
 	const void *newp, size_t newlen)
 {
+#ifndef SMALL
+#define X(a)	a
+#else
+#define	X(a)	""
+#endif
 #define _INT(s, n, v, d) {					\
 	.sysctl_flags = CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|	\
 			CTLTYPE_INT|SYSCTL_VERSION,		\
@@ -113,7 +118,7 @@ user_sysctl(const int *name, unsigned int namelen,
 	.sysctl_name = (s),					\
 	.sysctl_num = (n),					\
 	.sysctl_un.scu_idata = (v),				\
-	.sysctl_desc = (d),					\
+	.sysctl_desc = X(d),					\
 	}
 
 	/*
