@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2025/09/19 05:08:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.36 2025/09/27 13:30:00 hgutch Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
@@ -35,6 +35,8 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBPTHREAD}
 COPTS.syslogd.c+=        ${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.tls.c+= -Wno-error=deprecated-declarations
 COPTS.sign.c+= -Wno-error=deprecated-declarations
+.if defined(HAVE_GCC) && ${ACTIVE_CC} == "gcc"
 COPTS.sign.c+= -Wno-error=use-after-free
+.fi
 
 .include <bsd.prog.mk>
