@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.23 2024/11/30 01:04:05 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.24 2025/09/28 06:06:32 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.23 2024/11/30 01:04:05 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.24 2025/09/28 06:06:32 skrll Exp $");
 
 /*
  * Thread-local storage
@@ -406,6 +406,7 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 
 	if (obj->tls_static)
 		return 0;
+
 	if (obj->tlssize == 0) {
 		obj->tlsoffset = 0;
 		obj->tls_static = 1;
