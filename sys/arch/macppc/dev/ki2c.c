@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.43 2025/09/21 18:03:28 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.44 2025/09/28 11:32:23 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -103,6 +103,23 @@ static void
 ki2c_init_channel(struct ki2c_softc *sc, int channel, int node)
 {
 	struct ki2c_channel *ch = &sc->sc_channels[channel];
+
+	/*
+	 * XXX PowerMac G5 11,2 has two channel-0 nodes for ki2c1.
+	 *
+	 * The first one has 2 audio codecs, the second one has
+	 * only 1 (which is a duplicate of the pcm3052 under the
+	 * first node).  This //appears// to be an error in the
+	 * OpenFirmware device tree.
+	 *
+	 * See port-macppc/59673.
+	 */
+	if (ch->ch_sc != NULL) {
+		aprint_debug_dev(sc->sc_dev,
+		    "skipping duplicate channel %d (device tree error?)\n",
+		    channel);
+		return;
+	}
 
 	iic_tag_init(&ch->ch_i2c);
 	ch->ch_i2c.ic_channel = channel;
