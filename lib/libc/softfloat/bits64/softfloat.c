@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.16 2025/09/17 11:37:38 nat Exp $ */
+/* $NetBSD: softfloat.c,v 1.17 2025/09/29 02:47:19 nat Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.16 2025/09/17 11:37:38 nat Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.17 2025/09/29 02:47:19 nat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -3287,6 +3287,46 @@ flag float64_lt_quiet( float64 a, float64 b )
 #endif
 
 #ifdef FLOATX80
+#ifdef X80M68K
+flag floatx80_eq( floatx80 a, floatx80 b )
+{
+    return !floatx80_eq_internal(a, b);
+}
+
+flag floatx80_le_quiet( floatx80 a, floatx80 b )
+{
+    return !floatx80_le_quiet_internal(a, b);
+}
+
+flag floatx80_lt_quiet( floatx80 a, floatx80 b )
+{
+    return floatx80_lt_quiet_internal(a, b) ? -1 : 1;
+}
+
+flag floatx80_le( floatx80 a, floatx80 b )
+{
+    return !floatx80_le_internal(a, b);
+}
+
+flag floatx80_lt( floatx80 a, floatx80 b )
+{
+    return floatx80_lt_internal(a, b) ? -1 : 1;
+}
+
+flag floatx80_eq_signaling( floatx80 a, floatx80 b )
+{
+    return !floatx80_eq_signaling_internal(a, b);
+}
+#else
+
+#define floatx80_eq_internal		floatx80_eq
+#define floatx80_le_internal		floatx80_le
+#define floatx80_lt_internal		floatx80_lt
+#define floatx80_le_quiet_internal	floatx80_le_quiet
+#define floatx80_lt_quiet_internal	floatx80_lt_quiet
+#define floatx80_eq_signaling_internal	floatx80_eq_signaling
+
+#endif
 
 /*
 -------------------------------------------------------------------------------
@@ -4110,7 +4150,7 @@ performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_eq( floatx80 a, floatx80 b )
+flag floatx80_eq_internal( floatx80 a, floatx80 b )
 {
 
     if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
@@ -4141,7 +4181,7 @@ comparison is performed according to the IEC/IEEE Standard for Binary
 Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_le( floatx80 a, floatx80 b )
+flag floatx80_le_internal( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
 
@@ -4175,7 +4215,7 @@ is performed according to the IEC/IEEE Standard for Binary Floating-Point
 Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_lt( floatx80 a, floatx80 b )
+flag floatx80_lt_internal( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
 
@@ -4209,7 +4249,7 @@ raised if either operand is a NaN.  Otherwise, the comparison is performed
 according to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_eq_signaling( floatx80 a, floatx80 b )
+flag floatx80_eq_signaling_internal( floatx80 a, floatx80 b )
 {
 
     if (    (    ( extractFloatx80Exp( a ) == 0x7FFF )
@@ -4237,7 +4277,7 @@ do not cause an exception.  Otherwise, the comparison is performed according
 to the IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_le_quiet( floatx80 a, floatx80 b )
+flag floatx80_le_quiet_internal( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
 
@@ -4274,7 +4314,7 @@ an exception.  Otherwise, the comparison is performed according to the
 IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 -------------------------------------------------------------------------------
 */
-flag floatx80_lt_quiet( floatx80 a, floatx80 b )
+flag floatx80_lt_quiet_internal( floatx80 a, floatx80 b )
 {
     flag aSign, bSign;
 

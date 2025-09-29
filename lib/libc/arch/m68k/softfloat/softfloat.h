@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.11 2025/09/17 11:37:38 nat Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.12 2025/09/29 02:47:18 nat Exp $	*/
 
 /* This is a derivative work. */
 
@@ -57,6 +57,7 @@ typedef unsigned int float32;
 typedef unsigned long long float64;
 #ifdef FLOATX80
 #define X80SHIFT	16
+#define X80M68K
 
 typedef struct {
     unsigned long high;
@@ -259,6 +260,12 @@ floatx80 floatx80_mul( floatx80, floatx80 );
 floatx80 floatx80_div( floatx80, floatx80 );
 floatx80 floatx80_rem( floatx80, floatx80 );
 floatx80 floatx80_sqrt( floatx80 );
+flag floatx80_eq_internal( floatx80, floatx80 );
+flag floatx80_le_internal( floatx80, floatx80 );
+flag floatx80_lt_internal( floatx80, floatx80 );
+flag floatx80_eq_signaling_internal( floatx80, floatx80 );
+flag floatx80_le_quiet_internal( floatx80, floatx80 );
+flag floatx80_lt_quiet_internal( floatx80, floatx80 );
 flag floatx80_eq( floatx80, floatx80 );
 flag floatx80_le( floatx80, floatx80 );
 flag floatx80_lt( floatx80, floatx80 );
