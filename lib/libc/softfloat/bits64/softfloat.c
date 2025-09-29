@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.17 2025/09/29 02:47:19 nat Exp $ */
+/* $NetBSD: softfloat.c,v 1.18 2025/09/29 02:50:20 nat Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.17 2025/09/29 02:47:19 nat Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.18 2025/09/29 02:50:20 nat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -766,7 +766,7 @@ static floatx80
                ) {
                 return packFloatx80( zSign, 0x7FFE, ~ roundMask );
             }
-            return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+            return packFloatx80( zSign, 0x7FFF, 0 );
         }
         if ( zExp <= 0 ) {
             isTiny =
@@ -1590,7 +1590,7 @@ floatx80 float32_to_floatx80( float32 a )
     aSign = extractFloat32Sign( a );
     if ( aExp == 0xFF ) {
         if ( aSig ) return commonNaNToFloatx80( float32ToCommonNaN( a ) );
-        return packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( aSign, 0x7FFF, 0 );
     }
     if ( aExp == 0 ) {
         if ( aSig == 0 ) return packFloatx80( aSign, 0, 0 );
@@ -2553,7 +2553,7 @@ floatx80 float64_to_floatx80( float64 a )
     aSign = extractFloat64Sign( a );
     if ( aExp == 0x7FF ) {
         if ( aSig ) return commonNaNToFloatx80( float64ToCommonNaN( a ) );
-        return packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( aSign, 0x7FFF, 0 );
     }
     if ( aExp == 0 ) {
         if ( aSig == 0 ) return packFloatx80( aSign, 0, 0 );
