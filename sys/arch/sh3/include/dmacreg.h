@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacreg.h,v 1.3 2007/03/29 23:09:41 uwe Exp $ */
+/*	$NetBSD: dmacreg.h,v 1.4 2025/09/29 20:08:54 rillig Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -140,16 +140,18 @@
 #define SH3_DMAC_CHCR_DE		0x00000001
 
 #define SH3_DMAC_CHCR_BITS "\177\20"					\
-	"b\24DI\0" "b\23RO\0" "b\22RL\0" "b\21AM\0" "b\20AL\0"		\
-	"f\16\2DM\0" ":\0(FIXED)\0" ":\1(INC)\0" ":\2(DEC)\0"		\
-	"f\14\2SM\0" ":\0(FIXED)\0" ":\1(INC)\0" ":\2(DEC)\0"		\
-	"f\10\4RS\0" ":\0(EXT_DUAL)\0" ":\2(EXT_OUT)\0" ":\3(EXT_IN)\0"	\
-		":\4(AUTO)\0"						\
-		":\12(IRTX)\0" ":\13(IRRX)\0" ":\14(SCTX)\0"		\
-		":\15(SCRX)\0" ":\16(ADC)\0" ":\17(CMT)\0"		\
-	"b\6DS\0" "b\5TM\0"						\
-	"f\3\2TS\0" ":\0(1)\0" ":\1(2)\0" ":\2(4)\0" ":\3(16)\0"	\
-	"b\2IE\0" "b\1TE\0" "b\0DE\0"
+	"b\24DI\0"							\
+	"b\23RO\0"	"b\22RL\0"	"b\21AM\0"	"b\20AL\0"	\
+	"f\16\2DM\0"	"=\0FIXED\0"	"=\1INC\0"	"=\2DEC\0"	\
+	"f\14\2SM\0"	"=\0FIXED\0"	"=\1INC\0"	"=\2DEC\0"	\
+	"f\10\4RS\0"	"=\0EXT_DUAL\0"	"=\2EXT_OUT\0"	"=\3EXT_IN\0"	\
+			"=\4AUTO\0"					\
+			"=\12IRTX\0"	"=\13IRRX\0"	"=\14SCTX\0"	\
+			"=\15SCRX\0"	"=\16ADC\0"	"=\17CMT\0"	\
+	"b\6DS\0"	"b\5TM\0"					\
+	"f\3\2TS\0"	"=\0001\0"	"=\0012\0"	"=\0024\0"	\
+			"=\00316\0"					\
+	"b\2IE\0"	"b\1TE\0"	"b\0DE\0"
 
 
 /**
@@ -172,8 +174,8 @@
 /* DMA master enable. */
 #define SH3_DMAC_DMAOR_DME		0x0001
 
-#define SH3_DMAC_DMAOR_BITS "\177\20"					   \
-	"f\10\2PR\0" ":\0(0123)\0" ":\1(0231)\0" ":\2(2013)\0" ":\3(RR)\0" \
+#define SH3_DMAC_DMAOR_BITS "\177\20"					\
+	"f\10\2PR\0" "=\0000123\0" "=\0010231\0" "=\0022013\0" "=\3RR\0"\
 	"b\2AE\0" "b\1NMIF\0" "b\0DME\0"
 
 
@@ -196,6 +198,6 @@
 
 #define SH3_DMAC_CMT_CMCSR_BITS "\177\20"				\
 	"b\7CMF\0"							\
-	"f\0\2CKS\0" ":\0(1/4)\0" ":\1(1/8)\0" ":\2(1/16)\0" ":\3(1/64)\0"
+	"f\0\2CKS\0" "=\0001/4\0" "=\0011/8\0" "=\0021/16\0" "=\0031/64\0"
 
 #endif /* _SH3_DMACREG_H_ */
