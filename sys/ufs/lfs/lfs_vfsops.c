@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.388 2025/09/19 15:55:12 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.389 2025/09/29 17:01:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.388 2025/09/19 15:55:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.389 2025/09/29 17:01:48 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1512,7 +1512,7 @@ lfs_flushfiles(struct mount *mp, int flags)
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
 		return (error);
-	if ((error = VFS_SYNC(mp, 1, l->l_cred)) != 0)
+	if ((error = VFS_SYNC(mp, MNT_WAIT, l->l_cred)) != 0)
 		return (error);
 	vp = fs->lfs_ivnode;
 	mutex_enter(vp->v_interlock);
