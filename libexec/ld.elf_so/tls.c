@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.24 2025/09/28 06:06:32 skrll Exp $	*/
+/*	$NetBSD: tls.c,v 1.25 2025/09/30 06:12:53 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.24 2025/09/28 06:06:32 skrll Exp $");
+__RCSID("$NetBSD: tls.c,v 1.25 2025/09/30 06:12:53 skrll Exp $");
 
 /*
  * Thread-local storage
@@ -57,6 +57,9 @@ __RCSID("$NetBSD: tls.c,v 1.24 2025/09/28 06:06:32 skrll Exp $");
 
 static struct tls_tcb *_rtld_tls_allocate_locked(void);
 static void *_rtld_tls_module_allocate(struct tls_tcb *, size_t);
+
+/* A macro to test correct alignment of a pointer. */
+#define ALIGNED_P(ptr, algnmt)	(((uintptr_t)(ptr) & ((algnmt) - 1)) == 0)
 
 /*
  * DTV offset
@@ -270,9 +273,13 @@ _rtld_tls_allocate_locked(void)
 #else
 			q = p - obj->tlsoffset;
 #endif
-			dbg(("%s: [lwp %d] tls dtv %p index %zu offset %zu",
+			dbg(("%s: [lwp %d] tls dtv %p-%p index %zu "
+			    "offset %zx alignment %zx tlsinit %p%s",
 			    obj->path, _lwp_self(),
-			    q, obj->tlsindex, obj->tlsoffset));
+			    q, q + obj->tlsinitsize, obj->tlsindex,
+			    obj->tlsoffset, obj->tlsalign, obj->tlsinit,
+			    ALIGNED_P(q, obj->tlsalign) ? "" :
+				 " BAD ALIGNMENT"));
 			if (obj->tlsinitsize)
 				memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
@@ -445,8 +452,9 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 		}
 	}
 	obj->tlsoffset = offset;
-	dbg(("%s: static tls offset 0x%zx size %zu\n",
-	    obj->path, obj->tlsoffset, obj->tlssize));
+	dbg(("%s: static tls offset 0x%zx size %zu align %zu (%zx/%zx)\n",
+	   obj->path, obj->tlsoffset, obj->tlssize, obj->tlsalign,
+	   _rtld_tls_static_offset, next_offset));
 	_rtld_tls_static_offset = next_offset;
 	obj->tls_static = 1;
 
