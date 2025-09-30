@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2137 2025/09/25 07:29:06 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2138 2025/09/30 16:02:09 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1155,11 +1155,11 @@ markus is very cooperative about it):
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.1t/3.0.16/3.5.1
-Current Vers:	1.0.2u/1.1.1w/3.0.17/3.2.5/3.3.4/3.4.2/3.5.2
+Current Vers:	1.0.2zm/1.1.1zd/3.0.18/3.2.6/3.3.5/3.4.3/3.5.4
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-09-02
+Date:		2025-09-30
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
