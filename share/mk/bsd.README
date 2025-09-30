@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.455 2025/06/27 21:36:22 andvar Exp $
+#	$NetBSD: bsd.README,v 1.456 2025/09/30 16:13:15 gutteridge Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1596,7 +1596,7 @@ after the general Makefile contents but before the include files such as
 <bsd.prog.mk> and <bsd.lib.mk>.
 
 It provides the following targets:
-	.man.1 .man.3 .man.4 .man.5 .man.7:
+	.man.1 .man.3 .man.4 .man.5 .man.7 .man.8:
 		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
 		these rules convert from X11's manual page source
 		into an mdoc.old source file.
@@ -1636,7 +1636,7 @@ X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
 
 X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
 
-X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
+X11TOOL_UNXCOMM		Command line to convert `XCOMM' comments to `#'
 
 It uses the following variables:
 
