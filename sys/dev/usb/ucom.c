@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.140 2025/04/10 20:21:44 bad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.141 2025/09/30 19:10:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.140 2025/04/10 20:21:44 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.141 2025/09/30 19:10:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -111,10 +111,10 @@ fail:
 #endif /* UCOM_DEBUG */
 #endif /* USB_DEBUG */
 
-#define DPRINTF(FMT,A,B,C,D)    USBHIST_LOGN(ucomdebug,1,FMT,A,B,C,D)
-#define DPRINTFN(N,FMT,A,B,C,D) USBHIST_LOGN(ucomdebug,N,FMT,A,B,C,D)
-#define UCOMHIST_FUNC()         USBHIST_FUNC()
-#define UCOMHIST_CALLED(name)   USBHIST_CALLED(ucomdebug)
+#define DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(ucomdebug,1,FMT,A,B,C,D)
+#define DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(ucomdebug,N,FMT,A,B,C,D)
+#define UCOMHIST_FUNC()		USBHIST_FUNC()
+#define UCOMHIST_CALLED(name)	USBHIST_CALLED(ucomdebug)
 
 #define	UCOMCALLUNIT_MASK	TTCALLUNIT_MASK
 #define	UCOMUNIT_MASK		TTUNIT_MASK
