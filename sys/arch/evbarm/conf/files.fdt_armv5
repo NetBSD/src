@@ -1,0 +1,11 @@
+# $NetBSD$
+#
+# FDT-based kernel configuration info for armv5 boards.
+#
+
+file	arch/evbarm/fdt/fdt_bus_machdep.c	fdt
+file	arch/evbarm/fdt/fdt_dma_machdep.c	fdt
+file	arch/evbarm/fdt/fdt_machdep.c		fdt
+file	dev/ofw/ofw_pci_subr.c			fdt & pci
+
+include "arch/arm/fdt/files.fdt_armv5"

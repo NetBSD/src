@@ -139,6 +139,7 @@ vmt0		at cpu0			# VMware Tools
 # Performance monitors
 armpmu* 	at fdt?
 pseudo-device	tprof
+pseudo-device	lockstat		# lock profiling
 
 # CPU frequency scaling
 cpufreqdt*	at cpu?

@@ -139,7 +139,7 @@ apbh_search_crit_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	struct apb_attach_args *aa = aux;
 
 	/* Return if not critical device. */
-	if ((strcmp(cf->cf_name, "icoll") != 0)
+	if ((strcmp(cf->cf_name, "imx23icoll") != 0)
 	    && (strcmp(cf->cf_name, "apbdma") != 0))
 		return 0;
 

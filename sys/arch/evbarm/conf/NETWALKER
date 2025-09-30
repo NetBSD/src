@@ -170,5 +170,8 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
+# Performance monitors
+pseudo-device	lockstat		# lock profiling
+
 # Pull in optional local configuration - always at end
 cinclude	"arch/evbarm/conf/NETWALKER.local"

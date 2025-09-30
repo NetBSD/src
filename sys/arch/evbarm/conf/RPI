@@ -227,6 +227,9 @@ pseudo-device	openfirm
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
+# Performance monitors
+pseudo-device	lockstat		# lock profiling
+
 # userland interface to drivers, including autoconf and properties retrieval
 
 # Bluetooth devices

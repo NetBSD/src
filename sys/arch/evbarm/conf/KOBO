@@ -130,5 +130,8 @@ rgephy*		at mii? phy ?
 rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
+# Performance monitors
+pseudo-device	lockstat		# lock profiling
+
 # Pull in optional local configuration - always at end
 cinclude	"arch/evbarm/conf/KOBO.local"

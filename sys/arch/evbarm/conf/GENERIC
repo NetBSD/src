@@ -261,6 +261,7 @@ tegrapmc* 	at fdt? pass 4		# NVIDIA Tegra PMC
 # Performance monitors
 armpmu* 	at fdt?
 pseudo-device 	tprof
+pseudo-device	lockstat		# lock profiling
 
 # Clock and Reset controller
 bcmcprman* 	at fdt? pass 1		# Broadcom BCM283x Clock Manager

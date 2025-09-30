@@ -39,6 +39,8 @@ DTS+=		sun5i-r8-pocketchip.dts
 DTS+=		sun7i-a20-olinuxino-lime2-emmc-spi.dts
 DTS+=		sun8i-h2-plus-bananapi-p2-zero.dts
 DTS+=		sun8i-h3-nanopi-r1.dts
+.elif !empty(MACHINE_ARCH:Mearmv5*)
+DTS+=		imx23-olinuxino.dts
 .endif
 
 .include <bsd.dtb.mk>
