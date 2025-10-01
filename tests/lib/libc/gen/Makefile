@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.60 2025/04/22 13:48:24 nia Exp $
+# $NetBSD: Makefile,v 1.60.2.1 2025/10/01 17:41:14 martin Exp $
 
 NOMAN=		# defined
 
@@ -46,6 +46,7 @@ TESTS_C+=	t_timespec_get
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
+PROGS+=		h_ctype_abuse
 PROGS+=		h_execsig
 
 .if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"

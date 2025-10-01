@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ctype.c,v 1.11 2025/03/30 15:38:38 riastradh Exp $	*/
+/*	$NetBSD: t_ctype.c,v 1.11.2.1 2025/10/01 17:41:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -18,7 +18,7 @@
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+o * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
@@ -26,8 +26,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Tests for the ctype(3) character classification macros.
+ *
+ * NOTE: These tests intentionally trigger undefined behaviour by
+ * passing int values to the ctype(3) functions which are neither EOF
+ * nor representable by unsigned char.  The purpose is to verify
+ * NetBSD's intentional trapping of this undefined behaviour -- or
+ * intentional allowing of this undefined behaviour, when the
+ * environment variable LIBC_ALLOWCTYPEABUSE is set.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ctype.c,v 1.11 2025/03/30 15:38:38 riastradh Exp $");
+__RCSID("$NetBSD: t_ctype.c,v 1.11.2.1 2025/10/01 17:41:14 martin Exp $");
+
+#include <sys/wait.h>
 
 #include <atf-c.h>
 #include <ctype.h>
@@ -36,6 +49,7 @@ __RCSID("$NetBSD: t_ctype.c,v 1.11 2025/03/30 15:38:38 riastradh Exp $");
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "h_macros.h"
 
@@ -782,6 +796,61 @@ test_tolower_c(int (*ctypefn)(int))
 	}
 }
 
+extern char **environ;
+
+static void
+test_abuse_override(const struct atf_tc *tc, const char *fn, const char *mode,
+    const char *locale)
+{
+	char h_ctype_abuse[PATH_MAX];
+	pid_t pid;
+	int status;
+
+	RL(snprintf(h_ctype_abuse, sizeof(h_ctype_abuse), "%s/h_ctype_abuse",
+		atf_tc_get_config_var(tc, "srcdir")));
+
+	RL(setenv("LIBC_ALLOWCTYPEABUSE", "", 1));
+
+	RL(pid = vfork());
+	if (pid == 0) {		/* child */
+		char *const argv[] = {
+			h_ctype_abuse,
+			__UNCONST(fn),
+			__UNCONST(mode),
+			__UNCONST(locale),
+			NULL,
+		};
+
+		if (execve(argv[0], argv, environ) == -1)
+			_exit(1);
+		_exit(2);
+	}
+
+	RL(waitpid(pid, &status, 0));
+	if (WIFSIGNALED(status)) {
+		atf_tc_fail_nonfatal("child exited on signal %d (%s)",
+		    WTERMSIG(status), strsignal(WTERMSIG(status)));
+	} else if (!WIFEXITED(status)) {
+		atf_tc_fail_nonfatal("child exited status=0x%x", status);
+	} else {
+		ATF_CHECK_MSG(WEXITSTATUS(status) == 0,
+		    "child exited with code %d",
+		    WEXITSTATUS(status));
+	}
+}
+
+static void
+test_abuse_override_in_locales(const struct atf_tc *tc, const char *fn,
+    const char *mode)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(locales); i++) {
+		fprintf(stderr, "# locale %s\n", locales[i]);
+		test_abuse_override(tc, fn, mode, locales[i]);
+	}
+}
+
 #define	ADD_TEST_ABUSE(TP, FN) do					      \
 {									      \
 	ATF_TP_ADD_TC(TP, abuse_##FN##_macro_c);			      \
@@ -850,6 +919,56 @@ ATF_TC_BODY(abuse_##FN##_function_locale, tc)				      \
 		    " unsigned char");					      \
 	}								      \
 	test_abuse_in_locales(#FN, &FN, /*macro*/false);		      \
+}
+
+#define	ADD_TEST_ABUSE_OVERRIDE(TP, FN) do				      \
+{									      \
+	ATF_TP_ADD_TC(TP, abuse_override_##FN##_macro_c);		      \
+	ATF_TP_ADD_TC(TP, abuse_override_##FN##_function_c);		      \
+	ATF_TP_ADD_TC(TP, abuse_override_##FN##_macro_locale);		      \
+	ATF_TP_ADD_TC(TP, abuse_override_##FN##_function_locale);	      \
+} while (0)
+
+#define	DEF_TEST_ABUSE_OVERRIDE(FN)					      \
+ATF_TC(abuse_override_##FN##_macro_c);					      \
+ATF_TC_HEAD(abuse_override_##FN##_macro_c, tc)				      \
+{									      \
+	atf_tc_set_md_var(tc, "descr",					      \
+	    "Test allowing abuse of "#FN" macro with default LC_CTYPE=C");    \
+}									      \
+ATF_TC_BODY(abuse_override_##FN##_macro_c, tc)				      \
+{									      \
+	test_abuse_override(tc, #FN, "macro", NULL);			      \
+}									      \
+ATF_TC(abuse_override_##FN##_function_c);				      \
+ATF_TC_HEAD(abuse_override_##FN##_function_c, tc)			      \
+{									      \
+	atf_tc_set_md_var(tc, "descr",					      \
+	    "Test allowing abuse "#FN" function with default LC_CTYPE=C");    \
+}									      \
+ATF_TC_BODY(abuse_override_##FN##_function_c, tc)			      \
+{									      \
+	test_abuse_override(tc, #FN, "function", NULL);			      \
+}									      \
+ATF_TC(abuse_override_##FN##_macro_locale);				      \
+ATF_TC_HEAD(abuse_override_##FN##_macro_locale, tc)			      \
+{									      \
+	atf_tc_set_md_var(tc, "descr",					      \
+	    "Test allowing abuse of "#FN" macro with locales");		      \
+}									      \
+ATF_TC_BODY(abuse_override_##FN##_macro_locale, tc)			      \
+{									      \
+	test_abuse_override_in_locales(tc, #FN, "macro");		      \
+}									      \
+ATF_TC(abuse_override_##FN##_function_locale);				      \
+ATF_TC_HEAD(abuse_override_##FN##_function_locale, tc)			      \
+{									      \
+	atf_tc_set_md_var(tc, "descr",					      \
+	    "Test allowing abuse of "#FN" function with locales");	      \
+}									      \
+ATF_TC_BODY(abuse_override_##FN##_function_locale, tc)			      \
+{									      \
+	test_abuse_override_in_locales(tc, #FN, "function");		      \
 }
 
 #define	ADD_TEST_USE(TP, FN) do						      \
@@ -922,6 +1041,21 @@ DEF_TEST_ABUSE(iscntrl)
 DEF_TEST_ABUSE(isblank)
 DEF_TEST_ABUSE(toupper)
 DEF_TEST_ABUSE(tolower)
+
+DEF_TEST_ABUSE_OVERRIDE(isalpha)
+DEF_TEST_ABUSE_OVERRIDE(isupper)
+DEF_TEST_ABUSE_OVERRIDE(islower)
+DEF_TEST_ABUSE_OVERRIDE(isdigit)
+DEF_TEST_ABUSE_OVERRIDE(isxdigit)
+DEF_TEST_ABUSE_OVERRIDE(isalnum)
+DEF_TEST_ABUSE_OVERRIDE(isspace)
+DEF_TEST_ABUSE_OVERRIDE(ispunct)
+DEF_TEST_ABUSE_OVERRIDE(isprint)
+DEF_TEST_ABUSE_OVERRIDE(isgraph)
+DEF_TEST_ABUSE_OVERRIDE(iscntrl)
+DEF_TEST_ABUSE_OVERRIDE(isblank)
+DEF_TEST_ABUSE_OVERRIDE(toupper)
+DEF_TEST_ABUSE_OVERRIDE(tolower)
 
 DEF_TEST_USE(isalpha)
 DEF_TEST_USE(isupper)
@@ -1063,6 +1197,21 @@ ATF_TP_ADD_TCS(tp)
 	ADD_TEST_ABUSE(tp, isblank);
 	ADD_TEST_ABUSE(tp, toupper);
 	ADD_TEST_ABUSE(tp, tolower);
+
+	ADD_TEST_ABUSE_OVERRIDE(tp, isalpha);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isupper);
+	ADD_TEST_ABUSE_OVERRIDE(tp, islower);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isdigit);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isxdigit);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isalnum);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isspace);
+	ADD_TEST_ABUSE_OVERRIDE(tp, ispunct);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isprint);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isgraph);
+	ADD_TEST_ABUSE_OVERRIDE(tp, iscntrl);
+	ADD_TEST_ABUSE_OVERRIDE(tp, isblank);
+	ADD_TEST_ABUSE_OVERRIDE(tp, toupper);
+	ADD_TEST_ABUSE_OVERRIDE(tp, tolower);
 
 	ADD_TEST_USE(tp, isalpha);
 	ADD_TEST_USE(tp, isupper);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_guard.h,v 1.7 2025/03/31 23:48:06 riastradh Exp $	*/
+/*	$NetBSD: ctype_guard.h,v 1.7.2.1 2025/10/01 17:41:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
 #define	_LIBC_CTYPE_GUARD_H_
 
 #include <sys/cdefs.h>
+
+#include <stdbool.h>
 
 #include "ctype_local.h"
 
@@ -116,9 +118,13 @@
 	__asm(".size " _C_LABEL_STRING(#name) ","			      \
 	    ___STRING((nelem) * (elemsize)))
 
+__dso_hidden bool allow_ctype_abuse(void);
+
 #if _CTYPE_GUARD_PAGE
 
 #  include <machine/vmparam.h>
+
+__dso_hidden bool constructor_allow_ctype_abuse(void);
 
 /*
  * _CTYPE_GUARD_SIZE must be a macro so it will work through ___STRING
@@ -129,6 +135,8 @@
 #  else
 #    define	_CTYPE_GUARD_SIZE	PAGE_SIZE
 #  endif
+
+#  define	_CTYPE_GUARD_INIT(n, x)	[0 ... (n) - 1] = (x),
 
 enum {
 	_C_CTYPE_TAB_GUARD = _CTYPE_GUARD_SIZE/sizeof(_C_ctype_tab_[0]),
@@ -151,6 +159,8 @@ enum {
 #else  /* !_CTYPE_GUARD_PAGE */
 
 #  define	_CTYPE_GUARD_SIZE	0
+
+#  define	_CTYPE_GUARD_INIT(n, x)	/* empty */
 
 enum {
 	_C_CTYPE_TAB_GUARD = 0,

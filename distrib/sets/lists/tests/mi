@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1387 2025/07/20 12:25:53 joe Exp $
+# $NetBSD: mi,v 1.1387.2.1 2025/10/01 17:41:15 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -3080,6 +3080,7 @@
 ./usr/tests/lib/libc/gen/execve/Atffile			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua
 ./usr/tests/lib/libc/gen/execve/t_execve		tests-kernel-tests	compattestfile,atf
+./usr/tests/lib/libc/gen/h_ctype_abuse			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/h_execsig			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/posix_spawn/Atffile		tests-kernel-tests	compattestfile,atf

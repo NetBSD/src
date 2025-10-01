@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.31 2019/01/15 07:01:01 wiz Exp $
+.\"	$NetBSD: ctype.3,v 1.31.14.1 2025/10/01 17:41:15 martin Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd January 15, 2019
+.Dd September 14, 2025
 .Dt CTYPE 3
 .Os
 .Sh NAME
@@ -60,6 +60,20 @@ The above functions perform character tests and conversions on the integer
 .Pp
 See the specific manual pages for information about the
 test or conversion performed by each function.
+.Sh ENVIRONMENT
+In
+.Nx 10 ,
+the
+.Nm
+functions will crash with a signal on certain invalid inputs as a
+diagnostic aid for applications; see
+.Sx CAVEATS .
+In
+.Nx 11 ,
+setting the environment variable
+.Ev LIBC_ALLOWCTYPEABUSE
+before starting a program will make the functions return nonsense
+answers instead of crashing.
 .Sh EXAMPLES
 To print an upper-case version of a string to stdout,
 the following code can be used:

@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.28 2025/03/29 21:45:08 riastradh Exp $ */
+/* $NetBSD: isctype.c,v 1.28.2.1 2025/10/01 17:41:15 martin Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.28 2025/03/29 21:45:08 riastradh Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.28.2.1 2025/10/01 17:41:15 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,13 +48,14 @@ __RCSID("$NetBSD: isctype.c,v 1.28 2025/03/29 21:45:08 riastradh Exp $");
 #error "EOF != -1"
 #endif
 
+#include "ctype_guard.h"
 #include "runetype_local.h"
 #include "setlocale_local.h"
 
 #define _RUNE_LOCALE(loc) \
     ((_RuneLocale *)((loc)->part_impl[LC_CTYPE]))
 
-static void __noinline __dead
+static int __noinline
 ctype_nasaldemon(const char *func, int c)
 {
 	char buf[128];
@@ -62,18 +63,16 @@ ctype_nasaldemon(const char *func, int c)
 	snprintf_ss(buf, sizeof(buf), "ctype(3) %s: invalid input: %d\n", func,
 	    c);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
+	if (allow_ctype_abuse())
+		return -1;
 	abort();
 }
 
-static inline void
-ctype_check(const char *func, int c)
-{
-
-	if (__predict_false((c != EOF && c < 0) || c > UCHAR_MAX))
-		ctype_nasaldemon(func, c);
-}
-
-#define	CTYPE_CHECK(c)	ctype_check(__func__, c)
+#define	CTYPE_CHECK(c) do						      \
+{									      \
+	if (__predict_false(((c) != EOF && (c) < 0) || (c) > UCHAR_MAX))      \
+		return ctype_nasaldemon(__func__, c);			      \
+} while (0)
 
 #define _ISCTYPE_FUNC(name, bit) \
 int \

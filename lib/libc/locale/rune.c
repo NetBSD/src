@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.49 2025/04/04 21:52:19 riastradh Exp $	*/
+/*	$NetBSD: rune.c,v 1.49.2.1 2025/10/01 17:41:15 martin Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -39,6 +39,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <wchar.h>
+
+#include "ctype_guard.h"
 
 #include "setlocale_local.h"
 
@@ -89,7 +91,9 @@ alloc_guarded(size_t elemsize, size_t nelem)
 	    /*fd*/-1, /*offset*/0);
 	if (p == MAP_FAILED)
 		goto fail;
-	if (mprotect(p, page_size, PROT_NONE) == -1)
+	if (allow_ctype_abuse())
+		memset(p, 0xff, page_size);
+	else if (mprotect(p, page_size, PROT_NONE) == -1)
 		goto fail;
 	q = (char *)p + page_size;
 	return q;
