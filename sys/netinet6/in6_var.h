@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.104 2020/06/16 17:12:18 maxv Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.104.20.1 2025/10/01 14:58:36 martin Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -502,11 +502,8 @@ in6_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	IFADDR_READER_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr->sa_family == AF_INET6)
-			break;
-	}
-	return (struct in6_ifaddr *)ifa;
+	ifa = if_first_addr(ifp, AF_INET6);
+	return ifatoia6(ifa);
 }
 
 static __inline struct in6_ifaddr *
@@ -623,6 +620,11 @@ struct in6_ifaddr *
 	in6ifa_ifpwithaddr_psref(const struct ifnet *, const struct in6_addr *,
 	    struct psref *);
 struct in6_ifaddr *in6ifa_ifwithaddr(const struct in6_addr *, uint32_t);
+struct ifaddr *
+	in6ifa_first_lladdr(const struct ifnet *);
+struct ifaddr *
+	in6ifa_first_lladdr_psref(const struct ifnet *, struct psref *);
+
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purge_mcast_references(struct in6_multi *);
