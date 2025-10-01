@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mkoptions.sh,v 1.5 2017/11/15 09:21:19 kre Exp $
+# $NetBSD: mkoptions.sh,v 1.5.6.1 2025/10/01 15:27:36 martin Exp $
 
 #
 # It would be more sensible to generate 2 .h files, one which
@@ -13,13 +13,25 @@
 
 set -f
 IFS=' 	'	# blank, tab (no newline)
+export LC_ALL=C	# for sort consistency
 
 IF="$1"
 OF="${3+$3/}$2"
 
-E_FILE=$(${MKTEMP:-mktemp} -t MKO.E.$$)
-O_FILE=$(${MKTEMP:-mktemp} -t MKO.O.$$)
-trap 'rm -f "${E_FILE}" "${O_FILE}"' EXIT
+case $- in
+*x*)
+	E_FILE=$(${MKTEMP:-mktemp} "${TMPDIR:-/tmp}/MKO.E.$$.XXXXXX") || exit 1
+	O_FILE=$(${MKTEMP:-mktemp} "${TMPDIR:-/tmp}/MKO.O.$$.XXXXXX") || {
+		rm -f "${E_FILE}"
+		exit 1
+	}
+	;;
+*)
+	E_FILE=$(${MKTEMP:-mktemp}) || exit 1
+	O_FILE=$(${MKTEMP:-mktemp}) || { rm -f "${E_FILE}"; exit 1; }
+	trap 'rm -f "${E_FILE}" "${O_FILE}"' EXIT
+	;;
+esac
 
 exec 5> "${E_FILE}"
 exec 6> "${O_FILE}"
@@ -40,8 +52,8 @@ ${SED:-sed} <"${IF}"			\
 	-e '/^#/d'			\
 	-e '/^[ 	]*\//d'		\
 	-e '/^[ 	]*\*/d'		\
-	-e '/^[ 	]*;/d'			|
-sort -b -k2,2f -k2,2 < "${IF}"			|
+	-e '/^[ 	]*;/d'		|
+sort -k2b,2f -k2b,2			|
 while read line
 do
 	# Look for comments in various styles, and ignore them
@@ -83,6 +95,7 @@ do
 
 	case "${chr}" in
 	-)	chr= set= dflt="$4";;
+	+)	chr= ;;
 	''|?)	;;
 	*)	printf >&2 'flag "%s": Not a character\n' "${chr}"; continue;;
 	esac
