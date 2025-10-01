@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.332 2025/04/26 07:05:56 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.332.2.1 2025/10/01 17:21:19 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.332 2025/04/26 07:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.332.2.1 2025/10/01 17:21:19 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3822,10 +3822,10 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	usb_syncmem(&setup->dma, setup->offs, sizeof(*setup->qtd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	 usb_syncmem(&status->dma, status->offs, sizeof(*status->qtd),
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
 	KASSERT(status->qtd->qtd_status & htole32(EHCI_QTD_TOGGLE_MASK));
+
+	usb_syncmem(&status->dma, status->offs, sizeof(*status->qtd),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 #ifdef EHCI_DEBUG
 	DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
