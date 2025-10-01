@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.39 2024/09/07 06:17:37 andvar Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.40 2025/10/01 06:48:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ ENTRY_NP(generic_start)
 	/* Make sure sctlr.u = 1 when cpsr.e = 1. */
 	mrc	p15, 0, R_TMP1, c1, c0, 0
 	orr	R_TMP1, R_TMP1, #CPU_CONTROL_UNAL_ENABLE
-	mcr     p15, 0, R_TMP1, c1, c0, 0
+	mcr	p15, 0, R_TMP1, c1, c0, 0
 
 	setend	be			/* force big endian */
 #endif
@@ -265,7 +265,7 @@ arm_build_translation_table:
 	bic	R_PA, R_PA, r0
 
 	// attribute to map kernel
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
+	ldr	R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
 	bl	arm_boot_l1pt_init
 
 	/*
@@ -295,7 +295,7 @@ arm_build_translation_table:
 	bic	R_PA, r2		// ...rounded down to L1_S boundary
 
 	// attribute to map kernel
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
+	ldr	R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
 	bl	arm_boot_l1pt_entry
 
 #if defined(FDTBASE)
@@ -324,7 +324,7 @@ arm_build_translation_table:
 	mov	R_PA, R_VA
 	mov	R_NSEC, #1
 
-	ldr     R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW)
+	ldr	R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW)
 	orr	R_ATTR, R_DEVATTR
 
 	ldr	R_L1TABLE, =TEMP_L1_TABLE
@@ -707,7 +707,7 @@ armv7_init:
 	VPRINTF(" sctlr:")
 	VPRINTX(R_TMP2)
 	VPRINTF("/")
-	mrc     p15, 0, r0, c1, c0, 0
+	mrc	p15, 0, r0, c1, c0, 0
 	VPRINTX(r0)
 	VPRINTF(" ")
 
@@ -991,7 +991,7 @@ ENTRY_NP(armv6_init)
 
 	mcr	p15, 0, r0, c7, c14, 0	/* Clean and Invalidate Entire Data Cache */
 
-	ldr     r2, =(CPU_CONTROL_IC_ENABLE|CPU_CONTROL_DC_ENABLE)
+	ldr	r2, =(CPU_CONTROL_IC_ENABLE|CPU_CONTROL_DC_ENABLE)
 					/* Disable I+D caches */
 	mrc	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
 	mov	R_TMP2, r1
@@ -1034,7 +1034,7 @@ armv6_mmuinit:
 	XPUTC(#'H')
 #if defined(ARM_MMU_EXTENDED)
 	XPUTC(#'1')
-	mov	r1, #TTBCR_S_N_1        /* make sure TTBCR_S_N is 1 */
+	mov	r1, #TTBCR_S_N_1	/* make sure TTBCR_S_N is 1 */
 #else
 	XPUTC(#'0')
 	mov	r1, #0			/* make sure TTBCR is 0 */
@@ -1043,12 +1043,12 @@ armv6_mmuinit:
 
 	XPUTC(#'I')
 
-	mov     r0, #0
+	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate TLBs */
 
 	XPUTC(#'K')
 	/* Set the Domain Access register.  Very important! */
-	mov     r0, #DOMAIN_DEFAULT
+	mov	r0, #DOMAIN_DEFAULT
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/*
@@ -1057,18 +1057,18 @@ armv6_mmuinit:
 
 #if defined(VERBOSE_INIT_ARM)
 	VPRINTF(" sctlr:")
-	mrc     p15, 0, r0, c1, c0, 0
+	mrc	p15, 0, r0, c1, c0, 0
 	VPRINTX(r0)
 	VPRINTF("/")
 #endif
 
-	mrc     p15, 0, r0, c1, c0, 0
+	mrc	p15, 0, r0, c1, c0, 0
 
-	ldr     r1, Lcontrol_wax
+	ldr	r1, Lcontrol_wax
 	and	r0, r0, r1
-	ldr     r1, Lcontrol_clr
+	ldr	r1, Lcontrol_clr
 	bic	r0, r0, r1
-	ldr     r1, Lcontrol_set
+	ldr	r1, Lcontrol_set
 	orr	r0, r0, r1
 
 	mov	r6, r0
