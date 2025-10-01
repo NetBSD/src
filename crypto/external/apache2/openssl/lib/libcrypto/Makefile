@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2025/07/17 14:25:24 christos Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2025/10/01 14:46:24 martin Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -192,6 +192,7 @@ store.h \
 storeerr.h \
 symhacks.h \
 tls1.h \
+thread.h \
 trace.h \
 ts.h \
 tserr.h \
