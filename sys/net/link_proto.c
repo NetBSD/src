@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.40 2021/12/31 14:25:24 riastradh Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.40.4.1 2025/10/01 14:58:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.40 2021/12/31 14:25:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.40.4.1 2025/10/01 14:58:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -182,12 +182,8 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 		case SIOCGLIFADDR:
 			ifa_release(ifa, &psref);
 			s = pserialize_read_enter();
-			if ((iflr->flags & IFLR_PREFIX) == 0) {
-				IFADDR_READER_FOREACH(ifa, ifp) {
-					if (ifa->ifa_addr->sa_family == AF_LINK)
-						break;
-				}
-			}
+			if ((iflr->flags & IFLR_PREFIX) == 0)
+				ifa = if_first_addr(ifp, AF_LINK);
 			if (ifa == NULL) {
 				pserialize_read_exit(s);
 				error = EADDRNOTAVAIL;

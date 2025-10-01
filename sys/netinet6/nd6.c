@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.279.4.3 2025/04/12 12:06:31 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.279.4.4 2025/10/01 14:58:36 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.3 2025/04/12 12:06:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.4 2025/10/01 14:58:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1163,15 +1163,9 @@ nd6_setifflags(struct ifnet *ifp, uint32_t flags)
 			bool haslinklocal = 0;
 
 			s = pserialize_read_enter();
-			IFADDR_READER_FOREACH(ifa, ifp) {
-				if (ifa->ifa_addr->sa_family !=AF_INET6)
-					continue;
-				ia = (struct in6_ifaddr *)ifa;
-				if (IN6_IS_ADDR_LINKLOCAL(IA6_IN6(ia))){
-					haslinklocal = true;
-					break;
-				}
-			}
+			ifa = in6ifa_first_lladdr(ifp);
+			if (ifa != NULL)
+				haslinklocal = true;
 			pserialize_read_exit(s);
 			if (!haslinklocal)
 				in6_ifattach(ifp, NULL);
