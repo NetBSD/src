@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.21 2025/09/24 12:39:13 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.22 2025/10/01 17:44:42 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -222,4 +222,76 @@ external/cddl/osnet/dist/tools/ctf/cvt/fixup_tdescs.c 1.8,1.9
 	ctfconvert(1): PR 59659: make the tool version behave the same
 	way as the native.
 	[ozaki-r, ticket #35]
+
+crypto/external/apache2/openssl/lib/libcrypto/Makefile 1.2
+distrib/sets/lists/comp/mi			1.2498
+
+	openssl(3): install thread.h.
+	[christos, ticket #36]
+
+bin/sh/option.list				1.12
+
+	sh(1): PR 59646: improve portability of option code generation
+	[kre, ticket #37]
+
+sys/arch/riscv/riscv/bus_dma.c			1.11
+
+	risc-v: PR 59653: adjust barriers issued in bus_dmamap_sync
+	for the coherent case.
+	[skrll, ticket #38]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.20
+
+	mdnsd(8): PR 58778: mDNS spams console with recent build,
+	default logging to off.
+	[skrll, ticket #39]
+
+sys/arch/arm/arm32/bus_dma.c			1.150
+sys/arch/arm/include/cpufunc.h			1.92
+
+	arm: PR 59654: adjust barriers issued in bus_dmamap_sync
+	for the coherent case.
+	[skrll, ticket #40]
+
+share/man/man3/intro.3				1.37,1.38
+
+	intro(3): PR 59676: remove reference to non-existent -lhesiod.
+	[uwe, ticket #41]
+
+external/gpl2/texinfo/dist/info/display.c	1.2
+
+	info(1): fix ctype(3) usage to avoid coredump.
+	[wiz, ticket #42]
+
+sys/arch/amd64/amd64/locore.S			1.231-1.233
+sys/arch/i386/i386/locore.S			1.202-1.204
+sys/arch/xen/xen/hypervisor.c			1.100
+
+	xen: fix PVH bootstrap code, don't assume the hvm_start_info structure
+	is at the end of the symbol table.
+	Fixes PVH dom0 boot under Xen 4.20.
+	[bouyer, ticket #43]
+
+sys/dev/usb/ehci.c				1.333
+
+	ehci(4): fix device-probe for some machines.
+	[rin, ticket #44]
+
+distrib/sets/lists/debug/mi			1.486
+distrib/sets/lists/tests/mi			1.1394
+lib/libc/gen/ctype.3				1.32,1.33
+lib/libc/gen/ctype_.c				1.24
+lib/libc/gen/ctype_guard.h			1.8
+lib/libc/gen/isctype.c				1.29
+lib/libc/gen/tolower_.c				1.18
+lib/libc/gen/toupper_.c				1.18
+lib/libc/locale/Makefile.inc			1.69
+lib/libc/locale/rune.c				1.50
+tests/lib/libc/gen/Makefile			1.61
+tests/lib/libc/gen/h_ctype_abuse.c		1.1
+tests/lib/libc/gen/h_ctype_abuse.c		1.2
+tests/lib/libc/gen/t_ctype.c			1.12
+
+	ctype(3): PR : environment override for abuse traps.
+	[riastradh, ticket #45]
 
