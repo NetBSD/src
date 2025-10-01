@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.1.1.1.30.1 2025/10/01 17:08:00 martin Exp $	*/
 
 /* display.c -- How to display Info windows.
    Id: display.c,v 1.7 2004/04/11 17:56:45 karl Exp 
@@ -166,7 +166,7 @@ display_update_one_window (WINDOW *win)
       char *rep = NULL, *rep_carried_over, rep_temp[2];
       int replen;
 
-      if (isprint (*nodetext))
+      if (isprint ((unsigned char)*nodetext))
         {
           rep_temp[0] = *nodetext;
           replen = 1;
