@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.14 2021/10/10 11:20:46 riastradh Exp $
+.\"	$NetBSD: pserialize.9,v 1.15 2025/10/01 12:33:10 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,8 +102,7 @@ Create a frotz and publish it, as a writer:
 	 * Publish the contents of f->f_next before we publish the
 	 * pointer to f in frobbotzim.first.
 	 */
-	membar_producer();
-	frobbotzim.first = f;
+	atomic_store_release(&frobbotzim.first, f);
 	mutex_exit(&frobbotzim.lock);
 .Ed
 .Pp
@@ -114,9 +113,10 @@ Find a frotz, as a reader:
 	int s;
 
 	s = pserialize_read_enter();
-	for (f = frobbotzim.first; f != NULL; f = f->f_next) {
-		/* Fetch f before we fetch anything f points to.  */
-		membar_datadep_consumer();
+	/* Fetch frobbotzim.first before we fetch anything it point to.  */
+	for (f = atomic_load_consume(&frobbotzim.first);
+	     f != NULL;
+	     f = f->f_next) {
 		if (f->f_... == key) {
 			/*
 			 * Grab whatever part of the frotz we need.
