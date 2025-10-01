@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.55 2025/09/24 12:41:45 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.56 2025/10/01 17:25:12 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1079,4 +1079,52 @@ external/cddl/osnet/dist/tools/ctf/cvt/fixup_tdescs.c 1.8,1.9
 	ctfconvert(1): PR 59659: make the tool version behave the same
 	way as the native.
 	[ozaki-r, ticket #1163]
+
+sys/dev/vmt/vmt_subr.c				1.11
+sys/net/if.c					1.532,1.533
+sys/net/if.h					1.307
+sys/net/if_spppsubr.c				1.270,1.271
+sys/net/link_proto.c				1.41
+sys/netinet/in_var.h				1.104
+sys/netinet/ip_icmp.c				1.180
+sys/netinet6/in6.c				1.293
+sys/netinet6/in6_var.h				1.105,1.106
+sys/netinet6/mld6.c				1.102
+sys/netinet6/nd6.c				1.284
+
+	Introduce if_first_addr(), in6ifa_first_lladdr()
+	and psref variants.
+	[ozaki-r, ticket #1164]
+
+bin/sh/mkoptions.sh				1.6-1.9
+bin/sh/option.list				1.12
+
+	sh(1): PR 59646: improve portability of option code generation
+	[kre, ticket #1165]
+
+sys/arch/arm/arm32/bus_dma.c			1.142,1.150
+sys/arch/arm/include/cpufunc.h			1.92
+
+	arm: PR 59654: adjust barriers issued in bus_dmamap_sync for
+	the coherent case.
+	[skrll, ticket #1166]
+
+share/man/man3/intro.3				1.37,1.38
+
+	intro(3): PR 59676: remove reference to non-existent -lhesiod.
+	[uwe, ticket #1167]
+
+sys/arch/amd64/amd64/locore.S			1.231-1.233 (patch)
+sys/arch/i386/i386/locore.S			1.202-1.204 (patch)
+sys/arch/xen/xen/hypervisor.c			1.100 (patch)
+
+	xen: fix PVH bootstrap code, don't assume the hvm_start_info
+	structure is at the end of the symbol table.
+	Fixes PVH dom0 boot under Xen 4.20.
+	[bouyer, ticket #1168]
+
+sys/dev/usb/ehci.c				1.333 (patch)
+
+	ehci(4): fix device-probe for some machines.
+	[rin, ticket #1169]
 
