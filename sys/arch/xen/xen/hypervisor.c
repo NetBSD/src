@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.96.4.1 2025/03/29 10:32:43 martin Exp $ */
+/* $NetBSD: hypervisor.c,v 1.96.4.2 2025/10/01 17:19:00 martin Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.96.4.1 2025/03/29 10:32:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.96.4.2 2025/10/01 17:19:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,6 @@ xen_init_hypercall_page(void)
 	wrmsr(descs[1], (uintptr_t)&hypercall_page - KERNBASE);
 }
 
-uint32_t hvm_start_paddr;
-
 void init_xen_early(void);
 void
 init_xen_early(void)
@@ -243,8 +241,6 @@ init_xen_early(void)
 	const char *cmd_line;
 	if (!vm_guest_is_pvh())
 		return;
-
-	hvm_start_info = (void *)((uintptr_t)hvm_start_paddr + KERNBASE);
 
 	if (hvm_start_info->cmdline_paddr != 0) {
 		cmd_line =
