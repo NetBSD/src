@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.4 2021/10/04 20:48:05 andvar Exp $ */
+/* $Id: imx23_digfilt.c,v 1.5 2025/10/02 06:51:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ digfilt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_dmac = device_private(sc_parent->dmac);
-	
+
 	if (aa->aa_addr == HW_DIGFILT_BASE && digfilt_attached) {
 		aprint_error_dev(sc->sc_dev, "DIGFILT already attached\n");
 		return;
@@ -272,7 +272,7 @@ digfilt_attach(device_t parent, device_t self, void *aux)
 
 	digfilt_ao_reset(sc);	/* Reset AUDIOOUT. */
 	/* Not yet: digfilt_ai_reset(sc); */
-	
+
 	v = AO_RD(sc, HW_AUDIOOUT_VERSION);
 	aprint_normal(": DIGFILT Block v%" __PRIuBIT ".%" __PRIuBIT
 		".%" __PRIuBIT "\n",
@@ -766,7 +766,7 @@ static size_t
 digfilt_round_buffersize(void *hdl, int direction, size_t bs)
 {
 	int bufsize;
-	
+
 	bufsize = bs & ~(DIGFILT_BLOCKSIZE_MAX-1);
 
 	return bufsize;
@@ -880,7 +880,7 @@ digfilt_ao_apply_mutes(struct digfilt_softc *sc)
 		    HW_AUDIOOUT_DACVOLUME_MUTE_LEFT |
 		    HW_AUDIOOUT_DACVOLUME_MUTE_RIGHT
 		);
-	
+
 	} else {
 		AO_WR(sc, HW_AUDIOOUT_DACVOLUME_CLR,
 		    HW_AUDIOOUT_DACVOLUME_MUTE_LEFT |

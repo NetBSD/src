@@ -1,4 +1,4 @@
-/* $Id: imx23_clkctrl.c,v 1.3 2019/10/18 04:09:01 msaitoh Exp $ */
+/* $Id: imx23_clkctrl.c,v 1.4 2025/10/02 06:51:15 skrll Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ clkctrl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
-	
+
 	if (clkctrl_attached) {
 		aprint_error_dev(sc->sc_dev, "already attached\n");
 		return;
@@ -123,7 +123,7 @@ clkctrl_activate(device_t self, enum devact act)
 	return EOPNOTSUPP;
 }
 
-static void    
+static void
 clkctrl_init(struct clkctrl_softc *sc)
 {
 	_sc = sc;
@@ -131,11 +131,11 @@ clkctrl_init(struct clkctrl_softc *sc)
 }
 
 /*
- * Power up 8-phase PLL outputs for USB PHY 
+ * Power up 8-phase PLL outputs for USB PHY
  *
  */
 void
-clkctrl_en_usb(void)    
+clkctrl_en_usb(void)
 {
 	struct clkctrl_softc *sc = _sc;
 
@@ -151,7 +151,7 @@ clkctrl_en_usb(void)
 }
 
 /*
- * Enable 24MHz clock for the Digital Filter. 
+ * Enable 24MHz clock for the Digital Filter.
  *
  */
 void

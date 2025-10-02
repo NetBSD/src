@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.c,v 1.4 2015/01/10 12:13:00 jmcneill Exp $ */
+/* $Id: imx23_apbdma.c,v 1.5 2025/10/02 06:51:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ apbdma_init(struct apbdma_softc *sc)
 	return;
 }
 
-/* 
+/*
  * Chain DMA commands together.
  *
  * Set src->next point to trg's physical DMA mapped address.
@@ -213,7 +213,7 @@ void
 apbdma_cmd_chain(apbdma_command_t src, apbdma_command_t trg, void *buf,
     bus_dmamap_t dmap)
 {
-	int i; 
+	int i;
 	bus_size_t daddr;
 	bus_addr_t trg_offset;
 
@@ -288,7 +288,7 @@ apbdma_chan_set_chain(struct apbdma_softc *sc, unsigned int channel,
 		reg = HW_APB_CHN_NXTCMDAR(HW_APBH_CH0_NXTCMDAR, channel);
 	else
 		reg = HW_APB_CHN_NXTCMDAR(HW_APBX_CH0_NXTCMDAR, channel);
-	
+
 	mutex_enter(&sc->sc_lock);
 	DMA_WR(sc, reg, dmap->dm_segs[0].ds_addr);
 	mutex_exit(&sc->sc_lock);
@@ -389,7 +389,7 @@ apbdma_intr_status(struct apbdma_softc *sc, unsigned int channel)
 void
 apbdma_chan_reset(struct apbdma_softc *sc, unsigned int channel)
 {
-	
+
 	mutex_enter(&sc->sc_lock);
 
 	if (sc->flags & F_APBH_DMA) {
@@ -412,7 +412,7 @@ apbdma_wait(struct apbdma_softc *sc, unsigned int channel)
 {
 
 	mutex_enter(&sc->sc_lock);
-	
+
 	if (sc->flags & F_APBH_DMA) {
 		while (DMA_RD(sc, HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, channel)) & HW_APBH_CH0_SEMA_PHORE)
 			;

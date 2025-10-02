@@ -1,4 +1,4 @@
-/* $Id: imx23_ssp.c,v 1.8 2021/10/21 13:21:54 andvar Exp $ */
+/* $Id: imx23_ssp.c,v 1.9 2025/10/02 06:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  *
  * TODO:
  *
- * - Add support for SMC_CAPS_AUTO_STOP. 
+ * - Add support for SMC_CAPS_AUTO_STOP.
  * - Uset GPIO for SD card detection.
  */
 
@@ -64,7 +64,7 @@
 typedef struct issp_softc {
 	device_t sc_dev;
 	apbdma_softc_t sc_dmac;
-	bus_dma_tag_t sc_dmat; 
+	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamp;
 	bus_size_t sc_chnsiz;
 	bus_dma_segment_t sc_ds[1];
@@ -831,7 +831,7 @@ issp_create_dma_cmd_list_multi(issp_softc_t sc, void *dma_chain,
 
 	dma_cmd[nblk].pio_words[PIO_WORD_CTRL0] |= HW_SSP_CTRL0_DATA_XFER |
 	    __SHIFTIN(sc->sc_bus_width, HW_SSP_CTRL0_BUS_WIDTH) |
-	    HW_SSP_CTRL0_WAIT_FOR_IRQ | 
+	    HW_SSP_CTRL0_WAIT_FOR_IRQ |
 	    __SHIFTIN(cmd->c_datalen, HW_SSP_CTRL0_XFER_COUNT);
 
 	if (ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
@@ -948,7 +948,7 @@ issp_create_dma_cmd_list_single(issp_softc_t sc, void *dma_chain,
 	}
 
 	dma_cmd[0].pio_words[PIO_WORD_CTRL0] |= HW_SSP_CTRL0_ENABLE;
-	
+
 	dma_cmd[0].pio_words[PIO_WORD_CMD0] =
 	    HW_SSP_CMD0_APPEND_8CYC |
 	    __SHIFTIN(cmd->c_opcode, HW_SSP_CMD0_CMD);
@@ -962,7 +962,7 @@ issp_create_dma_cmd_list_single(issp_softc_t sc, void *dma_chain,
 		dma_cmd[0].control |=
 		    __SHIFTIN(APBDMA_CMD_DMA_READ, APBDMA_CMD_COMMAND);
 	}
-	
+
 	return;
 }
 
@@ -981,7 +981,7 @@ issp_create_dma_cmd_list(issp_softc_t sc, void *dma_chain,
 	    APBDMA_CMD_HALTONTERMINATE | APBDMA_CMD_WAIT4ENDCMD |
 	    APBDMA_CMD_SEMAPHORE | APBDMA_CMD_IRQONCMPLT |
 	    __SHIFTIN(APBDMA_CMD_NO_DMA_XFER, APBDMA_CMD_COMMAND);
-	
+
 	if (!ISSET(cmd->c_flags, SCF_RSP_CRC)) {
 		dma_cmd[0].pio_words[PIO_WORD_CTRL0] |=
 		    HW_SSP_CTRL0_IGNORE_CRC;
@@ -990,7 +990,7 @@ issp_create_dma_cmd_list(issp_softc_t sc, void *dma_chain,
 	dma_cmd[0].pio_words[PIO_WORD_CTRL0] |=
 	    __SHIFTIN(sc->sc_bus_width, HW_SSP_CTRL0_BUS_WIDTH) |
 	    HW_SSP_CTRL0_WAIT_FOR_IRQ;
-	
+
 	if (ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
 		dma_cmd[0].pio_words[PIO_WORD_CTRL0] |= HW_SSP_CTRL0_GET_RESP;
 		if (ISSET(cmd->c_flags, SCF_RSP_136)) {

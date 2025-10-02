@@ -1,4 +1,4 @@
-/* $Id: imx23_digctl.c,v 1.2 2019/10/18 04:09:01 msaitoh Exp $ */
+/* $Id: imx23_digctl.c,v 1.3 2025/10/02 06:51:15 skrll Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ digctl_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
-	
+
 	if (digctl_attached) {
 		aprint_error_dev(sc->sc_dev, "already attached\n");
 		return;
@@ -151,7 +151,7 @@ digctl_reset(struct digctl_softc *sc)
         return;
 }
 
-static void    
+static void
 digctl_init(struct digctl_softc *sc)
 {
 	_sc = sc;

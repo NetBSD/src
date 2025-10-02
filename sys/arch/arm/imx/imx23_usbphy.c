@@ -1,4 +1,4 @@
-/* $Id: imx23_usbphy.c,v 1.1 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_usbphy.c,v 1.2 2025/10/02 06:51:16 skrll Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ usbphy_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
-	
+
 	if (usbphy_attached) {
 		aprint_error_dev(sc->sc_dev, "already attached\n");
 		return;
@@ -108,7 +108,7 @@ usbphy_attach(device_t parent, device_t self, void *aux)
 	usbphy_init(sc);
 
 	phy_version = PHY_RD(sc, HW_USBPHY_VERSION);
-        aprint_normal(": USB PHY v%" __PRIuBIT ".%" __PRIuBIT "\n", 
+        aprint_normal(": USB PHY v%" __PRIuBIT ".%" __PRIuBIT "\n",
             __SHIFTOUT(phy_version, HW_USBPHY_VERSION_MAJOR),
             __SHIFTOUT(phy_version, HW_USBPHY_VERSION_MINOR));
 
@@ -173,7 +173,7 @@ usbphy_reset(struct usbphy_softc *sc)
 /*
  * Enable USB PHY.
  */
-static void    
+static void
 usbphy_init(struct usbphy_softc *sc)
 {
 	/* Disable power down bits. */

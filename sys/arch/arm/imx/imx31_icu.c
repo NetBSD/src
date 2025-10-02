@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_icu.c,v 1.8 2022/02/12 03:24:34 riastradh Exp $	*/
+/*	$NetBSD: imx31_icu.c,v 1.9 2025/10/02 06:51:16 skrll Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,21 +28,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.8 2022/02/12 03:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.9 2025/10/02 06:51:16 skrll Exp $");
 
 #define _INTR_PRIVATE
- 
+
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/device.h>
 #include <sys/atomic.h>
- 
+
 #include <uvm/uvm_extern.h>
-  
+
 #include <machine/intr.h>
- 
+
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -132,7 +132,7 @@ avic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	KASSERT(is->is_ipl < 16);
 
 	priority_reg = IMX31_NIPRIORITY0 - (is->is_irq >> 3);
-	priority_shift = (is->is_irq & 7) * 4; 
+	priority_shift = (is->is_irq & 7) * 4;
 	v = INTC_READ(avic, priority_reg);
 	v &= ~(0x0f << priority_shift);
 	v |= SW_TO_HW_IPL(is->is_ipl) << priority_shift;

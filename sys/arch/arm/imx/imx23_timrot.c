@@ -1,4 +1,4 @@
-/* $Id: imx23_timrot.c,v 1.3 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_timrot.c,v 1.4 2025/10/02 06:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ CFATTACH_DECL3_NEW(timrot,
 
 #define MAX_TIMERS	4
 #define SYS_TIMER	0
-#define STAT_TIMER	1	
+#define STAT_TIMER	1
 #define SCHED_TIMER	2
 
 struct timrot_softc *timer_sc[MAX_TIMERS];
@@ -167,7 +167,7 @@ timrot_attach(device_t parent, device_t self, void *aux)
 	if (aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL0
 	    && aa->aa_size == TIMER_REGS_SIZE
 	    && timer_sc[SYS_TIMER] == NULL) {
-		if (bus_space_subregion(timrot_iot, timrot_hdl, 
+		if (bus_space_subregion(timrot_iot, timrot_hdl,
 		    HW_TIMROT_TIMCTRL0, TIMER_REGS_SIZE,
 		    &sc->sc_hdl)) {
 			aprint_error_dev(sc->sc_dev,
@@ -187,7 +187,7 @@ timrot_attach(device_t parent, device_t self, void *aux)
 	} else if (aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL1
 	    && aa->aa_size == TIMER_REGS_SIZE
 	    && timer_sc[STAT_TIMER] == NULL) {
-		if (bus_space_subregion(timrot_iot, timrot_hdl, 
+		if (bus_space_subregion(timrot_iot, timrot_hdl,
 		    HW_TIMROT_TIMCTRL1, TIMER_REGS_SIZE, &sc->sc_hdl)) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to map subregion\n");
@@ -296,7 +296,7 @@ static void
 timrot_reset(void)
 {
 	unsigned int loop;
-	
+
 	/* Prepare for soft-reset by making sure that SFTRST is not currently
 	* asserted. Also clear CLKGATE so we can wait for its assertion below.
 	*/

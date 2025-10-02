@@ -1,4 +1,4 @@
-/* $Id: imx23_icoll.c,v 1.4 2022/06/25 12:41:56 jmcneill Exp $ */
+/* $Id: imx23_icoll.c,v 1.5 2025/10/02 06:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ icoll_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 		ICOLL_SET_IRQ(sc, irq_base + b);
 		irq_mask &= ~(1<<b);
 	}
-		
+
 	return;
 }
 
@@ -290,7 +290,7 @@ icoll_attach(device_t parent, device_t self, void *aux)
 	static int icoll_attached = 0;
 	struct icoll_softc *sc = device_private(self);
 	struct apb_attach_args *aa = aux;
-	
+
 	if (icoll_attached)
 		return;
 
@@ -366,7 +366,7 @@ icoll_reset(struct icoll_softc *sc)
 	}
 
 	ICOLL_WRITE(sc, HW_ICOLL_CTRL_CLR, HW_ICOLL_CTRL_CLKGATE);
-	
+
 	/* Wait until clock is in the NON-gated state. */
 	while (ICOLL_READ(sc, HW_ICOLL_CTRL) & HW_ICOLL_CTRL_CLKGATE);
 

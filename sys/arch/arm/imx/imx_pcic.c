@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $	*/
+/*	$Id: imx_pcic.c,v 1.10 2025/10/02 06:51:16 skrll Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $	*/
+/*	$NetBSD: imx_pcic.c,v 1.10 2025/10/02 06:51:16 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $");
+__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.10 2025/10/02 06:51:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.9 2022/09/27 06:36:42 skrll Exp $");
 
 #include <sys/bus.h>
 #include <machine/intr.h>
-        
+
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
@@ -145,7 +145,7 @@ imx_pcic_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 	struct imx_pcic_socket *so = (struct imx_pcic_socket *)pch;
 	int error;
 	bus_addr_t pa;
- 
+
 printf("%s: card_addr %lx\n", __func__, card_addr);
 	pa = trunc_page(card_addr);
 	*offsetp = card_addr - pa;
@@ -159,7 +159,7 @@ printf("%s: pa %lx\n", __func__, pa);
 printf("%s: kind %x\n", __func__, kind);
 
 	switch (kind & ~PCMCIA_WIDTH_MEM_MASK) {
-	case PCMCIA_MEM_ATTR:   
+	case PCMCIA_MEM_ATTR:
 		pa += IMX_PCIC_ATTR_OFFSET;
 		break;
 	case PCMCIA_MEM_COMMON:
@@ -217,7 +217,7 @@ imx_pcic_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pih)
 
 	bus_space_unmap(so->sc->sc_iot, pih->ioh, pih->size);
 }
- 
+
 static int
 imx_pcic_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
     bus_size_t size, struct pcmcia_io_handle *pih, int *windowp)
@@ -264,7 +264,7 @@ imx_pcic_socket_enable(pcmcia_chipset_handle_t pch)
 
 	/*
 	 * Wait 300ms until power fails (Tpf).  Then, wait 100ms since
-	 * we are changing Vcc (Toff).   
+	 * we are changing Vcc (Toff).
 	 */
 	delay((300 + 100) * 1000);
 
@@ -449,7 +449,7 @@ imx_pcic_intr(void *arg)
         return 1;
 }
 
-static void   
+static void
 imx_pcic_event_thread(void *arg)
 {
 #ifdef NOTYET
@@ -503,7 +503,7 @@ imx_pcic_attach_card(struct imx_pcic_socket *h)
 {
 
 	if (h->flags & IMX_PCIC_FLAG_CARDP)
-		panic("pcic_attach_card: already attached"); 
+		panic("pcic_attach_card: already attached");
 	h->flags |= IMX_PCIC_FLAG_CARDP;
 
 

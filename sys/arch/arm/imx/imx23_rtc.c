@@ -1,4 +1,4 @@
-/* $Id: imx23_rtc.c,v 1.2 2019/10/18 04:09:01 msaitoh Exp $ */
+/* $Id: imx23_rtc.c,v 1.3 2025/10/02 06:51:16 skrll Exp $ */
 
 /*
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
-	
+
 	if (rtc_attached) {
 		aprint_error_dev(sc->sc_dev, "rtc is already attached\n");
 		return;
@@ -125,7 +125,7 @@ rtc_activate(device_t self, enum devact act)
 	return EOPNOTSUPP;
 }
 
-static void    
+static void
 rtc_init(struct rtc_softc *sc)
 {
 	_sc = sc;

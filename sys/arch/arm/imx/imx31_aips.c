@@ -1,7 +1,7 @@
-/*	$Id: imx31_aips.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$Id: imx31_aips.c,v 1.8 2025/10/02 06:51:16 skrll Exp $	*/
 
 /* derived from:	*/
-/*	$NetBSD: imx31_aips.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $ */
+/*	$NetBSD: imx31_aips.c,v 1.8 2025/10/02 06:51:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -19,7 +19,7 @@
  *    must display the following acknowledgement:
  *	This product includes software developed for the NetBSD Project by
  *	Genetec Corporation.
- * 4. The name of Genetec Corporation may not be used to endorse or 
+ * 4. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.7 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_aips.c,v 1.8 2025/10/02 06:51:16 skrll Exp $");
 
 #include "locators.h"
 

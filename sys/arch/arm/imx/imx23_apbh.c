@@ -1,4 +1,4 @@
-/* $Id: imx23_apbh.c,v 1.3 2021/08/07 16:18:44 thorpej Exp $ */
+/* $Id: imx23_apbh.c,v 1.4 2025/10/02 06:51:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -170,6 +170,6 @@ apbh_print(void *aux, const char *name __unused)
 
 	if (aa->aa_irq != APBHCF_IRQ_DEFAULT)
 		aprint_normal(" irq %d", aa->aa_irq);
-	
+
 	return UNCONF;
 }
