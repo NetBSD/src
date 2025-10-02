@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344.c,v 1.5 2014/05/29 14:41:26 skrll Exp $ */
+/* $NetBSD: ar9344.c,v 1.6 2025/10/02 13:16:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.5 2014/05/29 14:41:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.6 2025/10/02 13:16:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -256,7 +256,7 @@ ar9344_device_register(device_t dev, void *aux)
 		} else
 			return;
 
-		addprop_data(dev, "mac-addr", enaddr, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enaddr, ETHER_ADDR_LEN);
 	}
 
 #if 0
@@ -268,7 +268,7 @@ ar9344_device_register(device_t dev, void *aux)
 		else
 			return;
 
-		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enet, ETHER_ADDR_LEN);
 
 		addprop_integer(dev, "wmac-rev",
 		    GETRESET(AR9344_RESET_SREV));

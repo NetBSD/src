@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.61 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.62 2025/10/02 13:16:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.61 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.62 2025/10/02 13:16:44 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -429,7 +429,7 @@ gfe_attach(device_t parent, device_t self, void *aux)
 
 	phyaddr = gfec_enet_phy(parent, sc->sc_macno);
 
-	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-addr");
+	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-address");
 	if (ea != NULL) {
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);

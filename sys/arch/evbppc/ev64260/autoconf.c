@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2012/07/29 18:05:42 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2025/10/02 13:16:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2025/10/02 13:16:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -145,9 +145,9 @@ device_register(device_t dev, void *aux)
 
 		mac = prop_data_create_data_nocopy(enaddr, ETHER_ADDR_LEN);
 		KASSERT(mac != NULL);
-		if (prop_dictionary_set(dict, "mac-addr", mac) == false)
+		if (prop_dictionary_set(dict, "mac-address", mac) == false)
 			aprint_error(
-			    "WARNING: unable to set mac-addr property for %s\n",
+			    "WARNING: unable to set mac-address property for %s\n",
 			    device_xname(dev));
 		prop_object_release(mac);
 	}
