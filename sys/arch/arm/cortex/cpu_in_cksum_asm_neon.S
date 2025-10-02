@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum_asm_neon.S,v 1.5 2025/06/19 22:00:54 andvar Exp $	*/	
+/*	$NetBSD: cpu_in_cksum_asm_neon.S,v 1.6 2025/10/02 13:25:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.5 2025/06/19 22:00:54 andvar Exp $")
+RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.6 2025/10/02 13:25:18 riastradh Exp $")
 
 /*
  * uint32_t
