@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.18 2025/09/29 02:50:20 nat Exp $ */
+/* $NetBSD: softfloat.c,v 1.19 2025/10/02 00:46:59 nat Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.18 2025/09/29 02:50:20 nat Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.19 2025/10/02 00:46:59 nat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -3684,7 +3684,7 @@ static floatx80 addFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
     else if ( expDiff < 0 ) {
         if ( bExp == 0x7FFF ) {
             if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-            return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+            return packFloatx80( zSign, 0x7FFF, 0 );
         }
         if ( aExp == 0 ) ++expDiff;
         shift64ExtraRightJamming( aSig, 0, - expDiff, &aSig, &zSig1 );
@@ -3762,7 +3762,7 @@ static floatx80 subFloatx80Sigs( floatx80 a, floatx80 b, flag zSign )
  bExpBigger:
     if ( bExp == 0x7FFF ) {
         if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
-        return packFloatx80( zSign ^ 1, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( zSign ^ 1, 0x7FFF, 0 );
     }
     if ( aExp == 0 ) ++expDiff;
     shift128RightJamming( aSig, 0, - expDiff, &aSig, &zSig1 );
@@ -3859,7 +3859,7 @@ floatx80 floatx80_mul( floatx80 a, floatx80 b )
             return propagateFloatx80NaN( a, b );
         }
         if ( ( bExp | bSig ) == 0 ) goto invalid;
-        return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( zSign, 0x7FFF, 0 );
     }
     if ( bExp == 0x7FFF ) {
         if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
@@ -3870,7 +3870,7 @@ floatx80 floatx80_mul( floatx80 a, floatx80 b )
             z.high = floatx80_default_nan_high<<X80SHIFT;
             return z;
         }
-        return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( zSign, 0x7FFF, 0 );
     }
     if ( aExp == 0 ) {
         if ( aSig == 0 ) return packFloatx80( zSign, 0, 0 );
@@ -3920,7 +3920,7 @@ floatx80 floatx80_div( floatx80 a, floatx80 b )
             if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
             goto invalid;
         }
-        return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( zSign, 0x7FFF, 0 );
     }
     if ( bExp == 0x7FFF ) {
         if ( (bits64) ( bSig<<1 ) ) return propagateFloatx80NaN( a, b );
@@ -3936,7 +3936,7 @@ floatx80 floatx80_div( floatx80 a, floatx80 b )
                 return z;
             }
             float_raise( float_flag_divbyzero );
-            return packFloatx80( zSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+            return packFloatx80( zSign, 0x7FFF, 0 );
         }
         normalizeFloatx80Subnormal( bSig, &bExp, &bSig );
     }
@@ -4679,7 +4679,7 @@ floatx80 float128_to_floatx80( float128 a )
         if ( aSig0 | aSig1 ) {
             return commonNaNToFloatx80( float128ToCommonNaN( a ) );
         }
-        return packFloatx80( aSign, 0x7FFF, LIT64( 0x8000000000000000 ) );
+        return packFloatx80( aSign, 0x7FFF, 0 );
     }
     if ( aExp == 0 ) {
         if ( ( aSig0 | aSig1 ) == 0 ) return packFloatx80( aSign, 0, 0 );
