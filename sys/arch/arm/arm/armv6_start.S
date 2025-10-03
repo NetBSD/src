@@ -105,7 +105,7 @@ ENTRY_NP(generic_start)
 #endif
 
 	/* disable IRQs/FIQs. */
-#ifdef CPU_PRE_ARMV6
+#if defined(_ARM_ARCH_5)
 	mrs r0, cpsr
 	orr r0, r0, 0xC0
 	msr cpsr_c, r0
@@ -163,7 +163,7 @@ ENTRY_NP(generic_start)
 	VPRINTF("\n\rttb0  : ")
 	mrc	p15, 0, r0, c2, c0, 0	// TTBR0 read
 	VPRINTX(r0)
-#ifndef CPU_PRE_ARMV6
+#if defined(_ARM_ARCH_6) || defined(_ARM_ARCH_7)
 	VPRINTF("\n\rttb1  : ")
 	mrc	p15, 0, r0, c2, c0, 1	// TTBR1 read
 	VPRINTX(r0)
@@ -275,7 +275,7 @@ arm_build_translation_table:
 	bic	R_PA, R_PA, r0
 
 	// attribute to map kernel
-#ifdef CPU_PRE_ARMV6
+#if defined(_ARM_ARCH_5)
 	ldr R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW )
 #else
 	ldr R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
@@ -309,7 +309,7 @@ arm_build_translation_table:
 	bic	R_PA, r2		// ...rounded down to L1_S boundary
 
 	// attribute to map kernel
-#ifdef CPU_PRE_ARMV6
+#if defined(_ARM_ARCH_5)
 	ldr R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW )
 #else
 	ldr R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)

@@ -106,10 +106,10 @@ cpu_attach(device_t dv, cpuid_t id)
 		 * Get other sysregs for BP. APs information is grabbed in
 		 * cpu_init_secondary_processor.
 		 */
-#ifndef CPU_PRE_ARMV6
-		ci->ci_actlr = armreg_auxctl_read();
-#else
+#if defined(_ARM_ARCH_5)
 		ci->ci_actlr = 0;
+#else
+		ci->ci_actlr = armreg_auxctl_read();
 #endif
 		ci->ci_revidr = armreg_revidr_read();
 	} else {
