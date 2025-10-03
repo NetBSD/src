@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.71 2025/01/17 04:11:33 mrg Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.72 2025/10/03 16:40:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.71 2025/01/17 04:11:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.72 2025/10/03 16:40:26 thorpej Exp $");
 
 #include "opt_dtrace.h"
 
@@ -252,7 +252,7 @@ sched_enqueue(struct lwp *l)
 }
 
 /*
- * Remove and LWP from the run queue it's on.  The LWP must be in state
+ * Remove an LWP from the run queue it's on.  The LWP must be in state
  * LSRUN.
  */
 void
