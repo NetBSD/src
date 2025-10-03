@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.39 2021/05/25 10:58:41 martin Exp $
+# $NetBSD: Makefile.inc,v 1.39.8.1 2025/10/03 16:09:32 martin Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -23,7 +23,7 @@ CPPFLAGS+=	-DLIBHACK
 
 HACKOBJS+=	getcap.o getgrent.o getnet.o getnetgr.o getpwent.o jemalloc.o \
 		localeconv.o multibyte.o perror.o runetable.o setlocale.o \
-		nl_langinfo.o strcasecmp.o \
+		nl_langinfo.o strcasecmp.o sysctl.o \
 		strerror.o strsignal.o syslog.o utmp.o fmtcheck.o \
 		aligned_alloc.o regcomp.o regexec.o wrap.o
 
@@ -65,6 +65,7 @@ CPPFLAGS.runetable.c+= -I${HACKSRC}/../../../lib/libc/citrus \
 			-DALL_80_TO_FF_SW1
 
 CPPFLAGS.syslog.c+= -I${HACKSRC}/../../../lib/libc/include
+CPPFLAGS.sysctl.c+= -I${HACKSRC}/../../../lib/libc/include
 CPPFLAGS.jemalloc.c+= -I${HACKSRC}/../../../lib/libc/include
 CPPFLAGS.gethost.c+= -I${HACKSRC}/../../../lib/libc/net
 
@@ -100,6 +101,7 @@ setlocale.o:	${HACKSRC}/setlocale.c
 strerror.o:	${HACKSRC}/strerror.c
 strsignal.o:	${HACKSRC}/strsignal.c
 syslog.o:	${HACKSRC}/syslog.c
+sysctl.o:	${HACKSRC}/sysctl.c
 utmp.o:		${HACKSRC}/utmp.c
 .if (${USE_YP} != "no")
 yplib.o:	${HACKSRC}/yplib.c
