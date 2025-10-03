@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.16 2025/09/10 01:55:07 thorpej Exp $ */
+/* $NetBSD: arspi.c,v 1.17 2025/10/03 13:38:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.16 2025/09/10 01:55:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.17 2025/10/03 13:38:35 thorpej Exp $");
 
 #include "locators.h"
 
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.16 2025/09/10 01:55:07 thorpej Exp $");
 
 #include <mips/atheros/dev/arspireg.h>
 
-#include <dev/spi/spiflash.h>
 #include <dev/spi/spivar.h>
+#include <dev/spi/spiflash.h>
 
 /*
  * This device is intended only to operate with specific SPI flash
