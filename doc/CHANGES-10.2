@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.57 2025/10/02 08:58:38 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.58 2025/10/03 09:59:08 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1128,4 +1128,9 @@ sys/dev/usb/ehci.c				1.333 (patch)
 
 	ehci(4): fix device-probe for some machines.
 	[rin, ticket #1169]
+
+sys/arch/xen/xen/xen_clock.c			1.22
+
+	xen: PR 59437: use ordered rdtsc for xen clock.
+	[riastradh, ticket #1170]
 
