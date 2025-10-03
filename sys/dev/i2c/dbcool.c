@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.66 2025/09/21 13:54:56 thorpej Exp $ */
+/*	$NetBSD: dbcool.c,v 1.67 2025/10/03 14:03:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.66 2025/09/21 13:54:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.67 2025/10/03 14:03:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1687,18 +1687,14 @@ dbcool_setup_sensors(struct dbcool_softc *sc)
 static int
 dbcool_attach_sensor(struct dbcool_softc *sc, int idx)
 {
-	prop_dictionary_t props = device_properties(sc->sc_dev);
 	int name_index;
 	int error = 0;
 	char name[8];
-	const char *desc;
 
 	name_index = sc->sc_dc.dc_chip->table[idx].name_index;
 	snprintf(name, 7, "s%02x", sc->sc_dc.dc_chip->table[idx].reg.val_reg);
-	if (prop_dictionary_get_string(props, name, &desc)) {
-		 strlcpy(sc->sc_sensor[idx].desc, desc,
-			sizeof(sc->sc_sensor[idx].desc));
-	} else {
+	if (device_getprop_string(sc->sc_dev, name, sc->sc_sensor[idx].desc,
+				  sizeof(sc->sc_sensor[idx].desc)) > 0) {
 		strlcpy(sc->sc_sensor[idx].desc, dbc_sensor_names[name_index],
 			sizeof(sc->sc_sensor[idx].desc));
 	}

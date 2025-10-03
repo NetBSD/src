@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.15 2025/09/21 13:54:56 thorpej Exp $ */
+/* $NetBSD: dstemp.c,v 1.16 2025/10/03 14:03:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.15 2025/09/21 13:54:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.16 2025/10/03 14:03:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,6 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	char name[64] = "temperature";
 	const char *desc;
-	prop_dictionary_t props = device_properties(self);
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -124,10 +123,8 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor_temp.state = ENVSYS_SINVALID;
 	sc->sc_sensor_temp.flags = ENVSYS_FHAS_ENTROPY;
 
-	if (prop_dictionary_get_string(props, "s00", &desc)) {
-		strncpy(name, desc, 64);
-	} else if (prop_dictionary_get_string(props, "saa", &desc)) {
-		strncpy(name, desc, 64);
+	if (device_getprop_string(self, "s00", name, sizeof(name)) < 0) {
+		device_getprop_string(self, "saa", name, sizeof(name));
 	}
 
 	strncpy(sc->sc_sensor_temp.desc, name, sizeof(sc->sc_sensor_temp.desc));

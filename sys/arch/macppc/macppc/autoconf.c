@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2025/09/22 12:48:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2025/10/03 14:03:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2025/09/22 12:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2025/10/03 14:03:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,7 @@ sensor_prop_name(char *buf, size_t buflen, int num)
 }
 
 static void
-macppc_assign_sensor_names_old(device_t gparent, int phandle,
-    prop_dictionary_t props)
+macppc_assign_sensor_names_old(device_t dev, device_t gparent, int phandle)
 {
 	uint32_t ids[4];
 	char buf[256];
@@ -72,8 +71,7 @@ macppc_assign_sensor_names_old(device_t gparent, int phandle,
 				return;
 			}
 			if (strcmp(buf, "RackMac1,2") == 0) {
-				prop_dictionary_set_string(props,
-				    "s00", "CASE");
+				device_setprop_string(dev, "s00", "CASE");
 				return;
 			}
 		}
@@ -97,22 +95,21 @@ macppc_assign_sensor_names_old(device_t gparent, int phandle,
 		 * OpenFirmware encoding was apparently ... odd.
 		 * But macallan@ assures me this is correct.
 		 */
-		prop_dictionary_set_string(props,
-		    sensor_prop_name(num, sizeof(num), i),
-		    descr);
+		device_setprop_string(dev,
+				      sensor_prop_name(num, sizeof(num), i),
+				      descr);
 	}
 }
 
 static void
-macppc_assign_sensor_names(device_t gparent, device_t dev)
+macppc_assign_sensor_names(device_t dev, device_t gparent)
 {
 	int phandle = devhandle_to_of(device_handle(dev));
-	prop_dictionary_t props = device_properties(dev);
 	int snode;
 
 	snode = OF_child(phandle);
 	if (snode == 0) {
-		macppc_assign_sensor_names_old(gparent, phandle, props);
+		macppc_assign_sensor_names_old(dev, gparent, phandle);
 		return;
 	}
 
@@ -126,9 +123,8 @@ macppc_assign_sensor_names(device_t gparent, device_t dev)
 		if (OF_getprop(snode, "location", descr, sizeof(descr)) <= 0) {
 			continue;
 		}
-		prop_dictionary_set_string(props,
-		    sensor_prop_name(num, sizeof(num), reg),
-		    descr);
+		device_setprop_string(dev,
+		    sensor_prop_name(num, sizeof(num), reg), descr);
 	}
 }
 
@@ -144,6 +140,6 @@ device_register(device_t dev, void *aux)
 	device_t parent = device_parent(dev);
 	if (device_is_a(parent, "iic") &&
 	    devhandle_type(device_handle(dev)) == DEVHANDLE_TYPE_OF) {
-		macppc_assign_sensor_names(device_parent(parent), dev);
+		macppc_assign_sensor_names(dev, device_parent(parent));
 	}
 }

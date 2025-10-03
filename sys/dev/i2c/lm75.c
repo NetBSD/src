@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.49 2025/09/21 13:54:56 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.50 2025/10/03 14:03:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.49 2025/09/21 13:54:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.50 2025/10/03 14:03:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,6 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	const struct device_compatible_entry *dce;
 	char name[64];
-	const char *desc;
 	int i;
 	uint8_t config = LM75_CONFIG_FAULT_QUEUE_4;
 
@@ -291,9 +290,7 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	    ia->ia_name? ia->ia_name : device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
 
-	if (prop_dictionary_get_string(device_properties(self), "s00", &desc)) {
-		strncpy(name, desc, 64);
-	}
+	device_getprop_string(self, "s00", name, sizeof(name));
 
 	(void)strlcpy(sc->sc_sensor.desc, name,
 	    sizeof(sc->sc_sensor.desc));

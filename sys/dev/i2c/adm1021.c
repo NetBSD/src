@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.31 2025/09/21 13:54:56 thorpej Exp $ */
+/*	$NetBSD: adm1021.c,v 1.32 2025/10/03 14:03:10 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.31 2025/09/21 13:54:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.32 2025/10/03 14:03:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,8 +336,6 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	uint8_t cmd, data, stat, comp, rev;
 	char name[ADMTEMP_NAMELEN];
 	char ename[64] = "external", iname[64] = "internal";
-	const char *desc;
-	prop_dictionary_t props = device_properties(self);
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -407,13 +405,9 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor[ADMTEMP_EXT].flags =
 	    ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 
-	if (prop_dictionary_get_string(props, "s00", &desc)) {
-		strncpy(iname, desc, 64);
-	}
-
-	if (prop_dictionary_get_string(props, "s01", &desc)) {
-		strncpy(ename, desc, 64);
-	}
+	/* Override default sensor names if the properties have been set. */
+	device_getprop_string(self, "s00", iname, sizeof(iname));
+	device_getprop_string(self, "s01", ename, sizeof(ename));
 
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, iname,
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
