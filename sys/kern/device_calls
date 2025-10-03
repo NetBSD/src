@@ -1,4 +1,4 @@
-$NetBSD: device_calls,v 1.2 2025/09/08 00:12:21 thorpej Exp $
+$NetBSD: device_calls,v 1.3 2025/10/03 16:49:07 thorpej Exp $
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -47,6 +47,17 @@ subsystem device;
 device-enumerate-children {
 	bool	(*callback)(device_t, devhandle_t, void *);
 	void *	callback_arg;
+};
+
+/*
+ * device-register
+ *
+ * This is a hook for the platform device tree implementation to
+ * inspect or take action upon a new device before the machine-
+ * specific device_register() function is called.
+ */
+device-register {
+	void *	aux;		/* IN */
 };
 
 /*

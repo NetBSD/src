@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.35 2025/01/11 11:40:43 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.36 2025/10/03 16:49:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.35 2025/01/11 11:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.36 2025/10/03 16:49:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -171,6 +171,28 @@ acpi_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 }
 ACPI_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			  acpi_device_enumerate_children)
+
+static int
+acpi_device_register(device_t dev, devhandle_t call_handle, void *v)
+{
+	ACPI_HANDLE handle = devhandle_to_acpi(call_handle);
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+
+	rv = AcpiGetName(handle, ACPI_FULL_PATHNAME, &buf);
+
+	if (! ACPI_FAILURE(rv)) {
+		device_setprop_string(dev, "device-path", buf.Pointer);
+	}
+
+	ACPI_FREE(buf.Pointer);
+	return 0;
+}
+ACPI_DEVICE_CALL_REGISTER(DEVICE_REGISTER_STR,
+			  acpi_device_register)
 
 /*
  * Evaluate an integer object.

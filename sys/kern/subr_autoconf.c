@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.314 2023/07/18 11:57:37 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.315 2025/10/03 16:49:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.314 2023/07/18 11:57:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.315 2025/10/03 16:49:07 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.314 2023/07/18 11:57:37 riastrad
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/device_impl.h>
+#include <sys/device_calls.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
@@ -1742,6 +1743,19 @@ config_add_attrib_dict(device_t dev)
 	return;
 }
 
+static void
+config_device_register(device_t dev, void *aux)
+{
+	struct device_register_args args = {
+		.aux = aux,
+	};
+
+	/* We don't really care if this fails. */
+	device_call(dev, DEVICE_REGISTER(&args));
+
+	device_register(dev, aux);
+}
+
 /*
  * Attach a found device.
  *
@@ -1805,7 +1819,7 @@ config_attach_internal(device_t parent, cfdata_t cf, void *aux, cfprint_t print,
 			}
 		}
 	}
-	device_register(dev, aux);
+	config_device_register(dev, aux);
 
 	/* Let userland know */
 	devmon_report_device(dev, true);
@@ -1931,7 +1945,7 @@ config_attach_pseudo_acquire(cfdata_t cf, void *aux)
 	config_devlink(dev);
 
 #if 0	/* XXXJRT not yet */
-	device_register(dev, NULL);	/* like a root node */
+	config_device_register(dev, NULL);	/* like a root node */
 #endif
 
 	/* Let userland know */

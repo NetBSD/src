@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.60 2022/01/22 11:49:18 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.61 2025/10/03 16:49:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.60 2022/01/22 11:49:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.61 2025/10/03 16:49:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,6 +141,27 @@ of_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 }
 OF_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			of_device_enumerate_children)
+
+static int
+of_device_register(device_t dev, devhandle_t call_handle, void *v __unused)
+{
+	int phandle = devhandle_to_of(call_handle);
+
+	/*
+	 * The OpenFirmware on PowerMac10,1 at least is dodgy about
+	 * NUL-terminating this...
+	 */
+	char *path = kmem_zalloc(OFW_PATH_BUF_SIZE, KM_SLEEP);
+
+	if (OF_package_to_path(phandle, path, OFW_PATH_BUF_SIZE) > 0) {
+		device_setprop_string(dev, "device-path", path);
+	}
+
+	kmem_free(path, OFW_PATH_BUF_SIZE);
+	return 0;
+}
+OF_DEVICE_CALL_REGISTER(DEVICE_REGISTER_STR,
+			of_device_register)
 
 /*
  * int of_decode_int(p)
