@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.38 2020/12/20 19:30:03 jdolecek Exp $	*/
+/*	$NetBSD: aceride.c,v 1.39 2025/10/03 14:12:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.38 2020/12/20 19:30:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.39 2025/10/03 14:12:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,23 +170,16 @@ acer_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
 	cr |= (PCIIDE_CHANSTATUS_EN << PCI_INTERFACE_SHIFT);
 	
-	{
-		/*
-		 * some BIOSes (port-cats ABLE) enable native mode, but don't
-		 * setup everything correctly, so allow the forcing of
-		 * compat mode
-		 */
-		bool force_compat_mode;
-		bool property_is_set;
-		property_is_set = prop_dictionary_get_bool(
-				device_properties(sc->sc_wdcdev.sc_atac.atac_dev),
-				"ali1543-ide-force-compat-mode",
-				&force_compat_mode);
-		if (property_is_set && force_compat_mode) {
-			cr &= ~((PCIIDE_INTERFACE_PCI(0)
-				| PCIIDE_INTERFACE_PCI(1))
-				<< PCI_INTERFACE_SHIFT);
-		}
+	/*
+	 * some BIOSes (port-cats ABLE) enable native mode, but don't
+	 * setup everything correctly, so allow the forcing of
+	 * compat mode
+	 */
+	if (device_getprop_bool(sc->sc_wdcdev.sc_atac.atac_dev,
+				"ali1543-ide-force-compat-mode")) {
+		cr &= ~((PCIIDE_INTERFACE_PCI(0)
+			| PCIIDE_INTERFACE_PCI(1))
+			<< PCI_INTERFACE_SHIFT);
 	}
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG, cr);

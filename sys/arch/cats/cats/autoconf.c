@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2022/09/29 06:47:06 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2025/10/03 14:12:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2022/09/29 06:47:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2025/10/03 14:12:52 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -175,9 +175,8 @@ device_register(device_t dev, void *aux)
 		if (((pa)->pa_bus == 0
 		    && (pa)->pa_device == 16
 		    && (pa)->pa_function == 0)) {
-			if (prop_dictionary_set_bool(device_properties(dev),
-						"ali1543-ide-force-compat-mode",
-						true) == false) {
+			if (device_setprop_bool(dev,
+				  "ali1543-ide-force-compat-mode", true) < 0) {
 				printf("WARNING: unable to set "
 					"ali1543-ide-force-compat-mode "
 					"property for %s\n", device_xname(dev));
