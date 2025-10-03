@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6 2012/10/27 17:17:50 chs Exp $ */
+/* $NetBSD: autoconf.c,v 1.7 2025/10/03 13:30:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2012/10/27 17:17:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2025/10/03 13:30:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ device_register(device_t dev, void *aux)
 			printf("WARNING: unable to set initial-gpio "
 			    "property for %s\n", device_xname(dev));
 		}
-		prop_object_release(po);
 	}
 	if (device_is_a(dev, "admsw") &&
 	    (po = prop_dictionary_get(properties, "mac-address")) != NULL) {
@@ -120,6 +119,5 @@ device_register(device_t dev, void *aux)
 			printf("WARNING: unable to set mac-addr "
 			    "property for %s\n", device_xname(dev));
 		}
-		prop_object_release(po);
 	}
 }
