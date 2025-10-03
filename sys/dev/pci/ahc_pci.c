@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.76 2025/06/27 21:36:22 andvar Exp $
+ * $Id: ahc_pci.c,v 1.77 2025/10/03 14:13:45 thorpej Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.76 2025/06/27 21:36:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.77 2025/10/03 14:13:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1003,10 +1003,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allow override for the SGI O2 though, which has two onboard ahc
 	 * that fail here but are perfectly capable of ultra speeds.
 	 */
-	override_ultra = FALSE;
-	prop_dictionary_get_bool(device_properties(self),
-	    "aic7xxx-override-ultra", &override_ultra);
-
+	override_ultra = device_getprop_bool(self, "aic7xxx-override-ultra");
 	if (((ahc->features & AHC_ULTRA) != 0) && (!override_ultra)) {
 		uint32_t dvconfig;
 
@@ -1042,8 +1039,6 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		/* See if someone else set us up already */
 		if ((ahc->flags & AHC_NO_BIOS_INIT) == 0
 		 && scsiseq != 0) {
-			prop_bool_t usetd;
-
 			printf("%s: Using left over BIOS settings\n",
 				ahc_name(ahc));
 			ahc->flags &= ~AHC_USEDEFAULTS;
@@ -1054,14 +1049,9 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 			 * queuing etc.) and machine dependent device
 			 * property is set.
 			 */
-			usetd = prop_dictionary_get(
-					device_properties(ahc->sc_dev),
-					"aic7xxx-use-target-defaults");
-			if (usetd != NULL) {
-				KASSERT(prop_object_type(usetd) ==
-					PROP_TYPE_BOOL);
-				if (prop_bool_true(usetd))
-					ahc->flags |= AHC_USETARGETDEFAULTS;
+			if (device_getprop_bool(ahc->sc_dev,
+					    "aic7xxx-use-target-defaults")) {
+				ahc->flags |= AHC_USETARGETDEFAULTS;
 			}
 			ahc->flags |= AHC_BIOS_ENABLED;
 		} else {
