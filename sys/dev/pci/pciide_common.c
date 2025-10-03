@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.72 2025/04/16 17:53:04 andvar Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.73 2025/10/03 14:12:03 thorpej Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.72 2025/04/16 17:53:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.73 2025/10/03 14:12:03 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -488,11 +488,8 @@ pciide_mapreg_dma(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			    ", but unused (forced off by config file)");
 			sc->sc_dma_ok = 0;
 		} else {
-			bool disable;
-
-			if (prop_dictionary_get_bool(
-			    device_properties(sc->sc_wdcdev.sc_atac.atac_dev),
-			    "pciide-disable-dma", &disable) && disable) {
+			if (device_getprop_bool(sc->sc_wdcdev.sc_atac.atac_dev,
+						"pciide-disable-dma")) {
 				aprint_verbose(
 				    ", but unused (disabled by platform)");
 				sc->sc_dma_ok = 0;
