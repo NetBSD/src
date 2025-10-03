@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.3 2017/05/19 07:40:58 skrll Exp $ */
+/* $NetBSD: autoconf.c,v 1.4 2025/10/03 14:05:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2017/05/19 07:40:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2025/10/03 14:05:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,14 +70,7 @@ void
 device_register(device_t dev, void *aux)
 {
 	if (device_is_a(dev, "dme") && have_enaddr) {
-		prop_dictionary_t dict;
-		prop_data_t blob;
-
-		dict = device_properties(dev);
-
-		blob = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
-		prop_dictionary_set(dict, "mac-address", blob);
-		prop_object_release(blob);
+		device_setprop_data(dev, "mac-address", enaddr, ETHER_ADDR_LEN);
 	}
 #ifdef notyet
 	(*platformsw->apsw_device_register)(dev, aux);

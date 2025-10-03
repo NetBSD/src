@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.51 2025/09/06 22:53:47 thorpej Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.52 2025/10/03 14:05:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.51 2025/09/06 22:53:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.52 2025/10/03 14:05:11 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1447,9 +1447,8 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 		     (addr >> 16) & 0xff, (addr >> 24) & 0xff,
 		     (addr >> 32) & 0xff, (addr >> 40) & 0xff
 		};
-
-		prop_dictionary_set_data(dict, "mac-address", enaddr,
-		    ETHER_ADDR_LEN);
+		device_setprop_data(dev, "mac-address", enaddr,
+		    sizeof(enaddr));
 	}
 
 #if NGENFB > 0
@@ -1465,13 +1464,14 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 			return;
 		if (get_bootconf_option(boot_args, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
-			prop_dictionary_set_bool(dict, "is_console", true);
+			device_setprop_bool(dev, "is_console", true);
 #if NUKBD > 0
 			/* allow ukbd to be the console keyboard */
 			ukbd_cnattach();
 #endif
 		} else {
-			prop_dictionary_set_bool(dict, "is_console", false);
+			/* XXX Needed? */
+			device_setprop_bool(dev, "is_console", false);
 		}
 	}
 #endif

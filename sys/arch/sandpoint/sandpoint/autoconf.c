@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2025/09/23 13:57:31 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2025/10/03 14:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2025/09/23 13:57:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2025/10/03 14:05:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,16 +243,12 @@ device_register(device_t dev, void *aux)
 
 		if (bi_net != NULL && device_is_a(dev, bi_net->devname)
 		    && bi_net->cookie == tag) {
-			prop_data_t pd;
-
-			pd = prop_data_create_nocopy(bi_net->mac_address,
-			    ETHER_ADDR_LEN);
-			KASSERT(pd != NULL);
-			if (prop_dictionary_set(device_properties(dev),
-			    "mac-address", pd) == false)
+			if (! device_setprop_data(dev, "mac-address",
+						  bi_net->mac_address,
+						  ETHER_ADDR_LEN)) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", device_xname(dev));
-			prop_object_release(pd);
+			}
 			bi_net = NULL;	/* do it just once */
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_cemac.c,v 1.10 2024/10/15 00:58:15 lloyd Exp $	*/
+/*	$NetBSD: zynq_cemac.c,v 1.11 2025/10/03 14:05:11 thorpej Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.10 2024/10/15 00:58:15 lloyd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_cemac.c,v 1.11 2025/10/03 14:05:11 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -84,7 +84,6 @@ cemac_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	struct cemac_softc *sc = device_private(self);
 	const int phandle = faa->faa_phandle;
-	prop_dictionary_t prop = device_properties(self);
 	char intrstr[128];
 	const char *macaddr;
 	bus_addr_t addr;
@@ -117,7 +116,7 @@ cemac_attach(device_t parent, device_t self, void *aux)
 
 	macaddr = fdtbus_get_prop(phandle, "local-mac-address", &len);
 	if (macaddr != NULL && len == ETHER_ADDR_LEN) {
-		prop_dictionary_set_data(prop, "mac-address", macaddr, len);
+		device_setprop_data(self, "mac-address", macaddr, len);
 	}
 
 	sc->sc_dev = self;

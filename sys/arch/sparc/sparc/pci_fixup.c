@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.5 2021/11/01 21:28:02 andvar Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.6 2025/10/03 14:05:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -502,9 +502,6 @@ void
 set_pci_props(device_t dev)
 {
 	struct idprom *idp;
-	uint8_t eaddr[ETHER_ADDR_LEN];
-	prop_dictionary_t dict;
-	prop_data_t blob;
 
 	/*
 	 * We only handle network devices.
@@ -516,10 +513,12 @@ set_pci_props(device_t dev)
 	   device_is_a(dev, "be") || device_is_a(dev, "ie")))
 		return;
 
+	/*
+	 * XXX There should be some sort of passthrough capability for
+	 * XXX OpenBoot devhandles.
+	 */
+
 	idp = prom_getidprom();
-	memcpy(eaddr, idp->idp_etheraddr, 6);
-	dict = device_properties(dev);
-	blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
-	prop_dictionary_set(dict, "mac-address", blob);
-	prop_object_release(blob);
+	device_setprop_data(dev, "mac-address", idp->idp_etheraddr,
+	    sizeof(idp->idp_etheraddr));
 }

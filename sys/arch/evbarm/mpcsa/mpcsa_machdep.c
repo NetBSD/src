@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.13 2020/04/18 11:00:40 skrll Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.13 2020/04/18 11:00:40 skrll Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.14 2025/10/03 14:05:12 thorpej Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.14 2025/10/03 14:05:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.13 2020/04/18 11:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.14 2025/10/03 14:05:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -368,11 +368,9 @@ static void mpcsa_device_register(device_t dev, void *aux)
 		}
 		if (i2c && seeprom_bootstrap_read(i2c, 0x50, 0x00, 4096,
 					   eth_addr, ETHER_ADDR_LEN) == 0) {
-			prop_data_t pd = prop_data_create_data_nocopy(
-				eth_addr, ETHER_ADDR_LEN);
-			KASSERT(pd != NULL);
-			if (prop_dictionary_set(device_properties(dev),
-						"mac-address", pd) == FALSE) {
+			if (! device_setprop_data(dev, "mac-address",
+						  eth_addr,
+						  ETHER_ADDR_LEN)) {
 				printf("WARNING: unable to set mac-addr property "
 				       "for %s\n", device_xname(dev));
 			}

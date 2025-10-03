@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.20 2016/02/09 12:48:06 kiyohara Exp $ */
+/* $NetBSD: autoconf.c,v 1.21 2025/10/03 14:05:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2016/02/09 12:48:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2025/10/03 14:05:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ device_register(device_t dev, void *aux)
 	/* Fetch the MAC addresses from YAMON. */
 	if (device_is_a(dev, "aumac")) {
 		struct aubus_attach_args *aa = aux;
-		prop_data_t pd;
 		const char *cp;
 		char *cp0;
 		int i;
@@ -117,14 +116,12 @@ device_register(device_t dev, void *aux)
 				 */
 				ethaddr[4] += 0x10;
 			}
-			pd = prop_data_create_data(ethaddr, ETHER_ADDR_LEN);
-			KASSERT(pd != NULL);
-			if (prop_dictionary_set(device_properties(dev),
-						"mac-address", pd) == false) {
+			if (! device_setprop_data(dev, "mac-address",
+						  ethaddr,
+						  sizeof(ethaddr))) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", device_xname(dev));
 			}
-			prop_object_release(pd);
 		}
 	}
 	if (device_is_a(dev, "atabus")) {

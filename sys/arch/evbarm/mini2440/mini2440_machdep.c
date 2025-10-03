@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.22 2024/02/20 23:36:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.23 2025/10/03 14:05:11 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -1081,13 +1081,11 @@ mini2440_device_register(device_t dev, void *aux) {
 		}
 #endif
 		if (bi_net != NULL && device_is_a(dev, bi_net->devname)) {
-			prop_data_t pd;
-			pd = prop_data_create_data_nocopy(bi_net->mac_address, ETHER_ADDR_LEN);
-			KASSERT(pd != NULL);
-			if (prop_dictionary_set(device_properties(dev), "mac-address", pd) == false) {
+			if (! device_setprop_data(dev, "mac-address",
+						  bi_net->mac_address,
+						  ETHER_ADDR_LEN)) {
 				printf("WARNING: Unable to set mac-address property for %s\n", device_xname(dev));
 			}
-			prop_object_release(pd);
 			bi_net = NULL;
 		}
 	}

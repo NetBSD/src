@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.27 2024/02/16 16:28:49 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.28 2025/10/03 14:05:11 thorpej Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.27 2024/02/16 16:28:49 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.28 2025/10/03 14:05:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -577,12 +577,8 @@ bcm53xx_device_register(device_t self, void *aux)
 			0x00, 0x01, 0x02, 0x03, 0x04,
 			0x05 + 2 * ccbaa->ccbaa_loc.loc_port,
 		};
-		prop_data_t pd = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
-		KASSERT(pd != NULL);
-		if (prop_dictionary_set(device_properties(self), "mac-address", pd) == false) {
-			printf("WARNING: Unable to set mac-address property for %s\n", device_xname(self));
-		}
-		prop_object_release(pd);
+		device_setprop_data(self, "mac-address", enaddr,
+		    sizeof(enaddr));
 	}
 }
 

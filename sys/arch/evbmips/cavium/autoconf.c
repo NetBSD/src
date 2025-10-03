@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2022/02/12 03:24:34 riastradh Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2025/10/03 14:05:12 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2022/02/12 03:24:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2025/10/03 14:05:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,6 @@ static void
 prop_set_cnmac(device_t dev)
 {
 	prop_dictionary_t dict = device_properties(dev);
-	prop_data_t pd;
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint32_t mac_lo;
@@ -161,9 +160,7 @@ prop_set_cnmac(device_t dev)
 	enaddr[3] = (mac_lo >> 16) & 0xff;
 	enaddr[4] = (mac_lo >> 8) & 0xff;
 	enaddr[5] = mac_lo & 0xff;
-	pd = prop_data_create_copy(enaddr, ETHER_ADDR_LEN);
-	KASSERT(pd != NULL);
-	prop_dictionary_set_and_rel(dict, "mac-address", pd);
+	device_setprop_data(dev, "mac-address", enaddr, sizeof(enaddr));
 
 	/* ethernet phy address */
 	switch (octeon_btinfo.obt_board_type) {

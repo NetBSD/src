@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.41 2024/02/20 23:36:02 andvar Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.42 2025/10/03 14:05:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.41 2024/02/20 23:36:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.42 2025/10/03 14:05:11 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -290,15 +290,12 @@ armadillo9_device_register(device_t dev, void *aux)
 
 	/* MAC address for the built-in Ethernet. */
 	if (device_is_a(dev, "epe")) {
-		prop_data_t pd = prop_data_create_data_nocopy(
-		    armadillo9_ethaddr, ETHER_ADDR_LEN);
-		KASSERT(pd != NULL);
-		if (prop_dictionary_set(device_properties(dev),
-					"mac-address", pd) == false) {
+		if (! device_setprop_data(dev, "mac-address",
+					  armadillo9_ethaddr,
+					  ETHER_ADDR_LEN)) {
 			printf("WARNING: unable to set mac-addr property "
 			    "for %s\n", device_xname(dev));
 		}
-		prop_object_release(pd);
 	}
 }
 

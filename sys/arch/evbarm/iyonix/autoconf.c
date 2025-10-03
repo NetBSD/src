@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2023/12/20 13:55:18 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2025/10/03 14:05:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2023/12/20 13:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2025/10/03 14:05:11 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -112,7 +112,6 @@ device_register(device_t dev, void *aux)
 
 		if (BUILTIN_ETHERNET_P(pa)) {
 			prop_number_t cfg1, cfg2, swdpin;
-			prop_data_t mac;
 
 			/*
 			 * We set these configuration registers to 0,
@@ -126,11 +125,9 @@ device_register(device_t dev, void *aux)
 			swdpin = prop_number_create_integer(0);
 			KASSERT(swdpin != NULL);
 
-			mac = prop_data_create_data_nocopy(iyonix_macaddr,
-							   ETHER_ADDR_LEN);
-			KASSERT(mac != NULL);
+			device_setprop_data(dev, "mac-address",
+			    iyonix_macaddr, ETHER_ADDR_LEN);
 
-			SETPROP("mac-address", mac);
 			SETPROP("i82543-cfg1", cfg1);
 			SETPROP("i82543-cfg2", cfg2);
 			SETPROP("i82543-swdpin", swdpin);
@@ -170,7 +167,7 @@ device_register(device_t dev, void *aux)
 
 		fbaddr = PCI_MAPREG_MEM_ADDR(bar1);
 
-		prop_dictionary_set_bool(dict, "is_console", 1);
+		device_setprop_bool(dev, "is_console", true);
 		prop_dictionary_set_uint32(dict, "width",
 			bootconfig.width + 1);
 		prop_dictionary_set_uint32(dict, "height",
@@ -187,6 +184,7 @@ device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
 	if (device_is_a(dev, "dsrtc")) {
+		/* XXX omg this property name */
 		prop_dictionary_t dict = device_properties(dev);
 		prop_dictionary_set_bool(dict, "base_year_is_2000", 1);
 	}

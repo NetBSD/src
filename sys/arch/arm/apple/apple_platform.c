@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.8 2025/09/06 22:53:47 thorpej Exp $ */
+/* $NetBSD: apple_platform.c,v 1.9 2025/10/03 14:05:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.8 2025/09/06 22:53:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.9 2025/10/03 14:05:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -230,8 +230,8 @@ apple_platform_device_register(device_t self, void *aux)
 		len = apple_platform_get_mac_address(pa->pa_pc, pa->pa_tag,
 		    eaddr);
 		if (len == ETHER_ADDR_LEN) {
-			prop_dictionary_set_bool(prop, "without-seeprom", true);
-			prop_dictionary_set_data(prop, "mac-address", eaddr,
+			device_setprop_bool(self, "without-seeprom", true);
+			device_setprop_data(self, "mac-address", eaddr,
 			    sizeof(eaddr));
 		}
 		return;
