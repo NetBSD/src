@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.9 2012/10/27 17:18:01 chs Exp $ */
+/* $NetBSD: ar5312.c,v 1.10 2025/10/03 14:11:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -176,14 +176,10 @@ ar5312_get_freqs(struct arfreqs *freqs)
 static void
 addprop_data(device_t dev, const char *name, const uint8_t *data, int len)
 {
-	prop_data_t	pd;
-	pd = prop_data_create_data(data, len);
-	KASSERT(pd != NULL);
-	if (prop_dictionary_set(device_properties(dev), name, pd) == false) {
+	if (! device_setprop_data(dev, name, data, len)) {
 		printf("WARNING: unable to set %s property for %s\n",
 		    name, device_xname(dev));
 	}
-	prop_object_release(pd);
 }
 
 static void
