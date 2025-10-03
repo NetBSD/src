@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2023/05/09 10:49:46 macallan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27 2025/10/03 01:04:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2023/05/09 10:49:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2025/10/03 01:04:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,7 +71,18 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	u_int32_t reg[4];
 	char name[32];
 
-	printf("\n");
+	node = OF_finddevice("/");
+	if (node) {
+		if (OF_getprop(node, "model", name, sizeof(name)) > 0) {
+			aprint_normal(": %s\n", name);
+		} else {
+			node = 0;
+		}
+	}
+	if (node == 0) {
+		aprint_normal("\n");
+	}
+	aprint_naive("\n");
 
 	devhandle_t selfh = device_handle(self);
 
