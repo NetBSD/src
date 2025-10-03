@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.190 2025/03/19 20:47:49 jakllsch Exp $ */
+/* $NetBSD: device.h,v 1.191 2025/10/03 14:02:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -721,6 +721,50 @@ int		device_call_generic(device_t, devhandle_t,
 	device_call_generic((dev), device_handle(dev), &(call)->generic)
 #define	devhandle_call(handle, call)					\
 	device_call_generic(NULL, (handle), &(call)->generic)
+
+/*
+ * Device property infrastructure.
+ */
+bool		device_hasprop(device_t, const char *);
+ssize_t		device_getproplen(device_t, const char *);
+int		device_getpropencoding(device_t, const char *);
+prop_type_t	device_getproptype(device_t, const char *);
+
+ssize_t		device_getprop_data(device_t, const char *, void *, size_t);
+ssize_t		device_getprop_string(device_t, const char *, char *, size_t);
+bool		device_getprop_bool(device_t, const char *);
+
+void *		device_getprop_data_alloc(device_t, const char *, size_t *);
+char *		device_getprop_string_alloc(device_t, const char *, size_t *);
+
+bool		device_getprop_int(device_t, const char *, int *);
+bool		device_getprop_uint(device_t, const char *, unsigned int *);
+bool		device_getprop_int32(device_t, const char *, int32_t *);
+bool		device_getprop_uint32(device_t, const char *, uint32_t *);
+bool		device_getprop_int64(device_t, const char *, int64_t *);
+bool		device_getprop_uint64(device_t, const char *, uint64_t *);
+
+int		device_getprop_int_default(device_t, const char *, int);
+unsigned int	device_getprop_uint_default(device_t, const char *,
+		    unsigned int);
+int32_t		device_getprop_int32_default(device_t, const char *, int32_t);
+uint32_t	device_getprop_uint32_default(device_t, const char *, uint32_t);
+int64_t		device_getprop_int64_default(device_t, const char *, int64_t);
+uint64_t	device_getprop_uint64_default(device_t, const char *, uint64_t);
+
+bool		device_setprop_data(device_t, const char *, const void *,
+		    size_t);
+bool		device_setprop_string(device_t, const char *, const char *);
+bool		device_setprop_bool(device_t, const char *, bool);
+
+bool		device_setprop_int(device_t, const char *, int);
+bool		device_setprop_uint(device_t, const char *, unsigned int);
+bool		device_setprop_int32(device_t, const char *, int32_t);
+bool		device_setprop_uint32(device_t, const char *, uint32_t);
+bool		device_setprop_int64(device_t, const char *, int64_t);
+bool		device_setprop_uint64(device_t, const char *, uint64_t);
+
+void		device_delprop(device_t, const char *);
 
 #endif /* _KERNEL */
 
