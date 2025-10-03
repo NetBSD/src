@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.52 2022/04/15 17:53:44 jmcneill Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.53 2025/10/03 14:14:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.52 2022/04/15 17:53:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.53 2025/10/03 14:14:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,9 +369,9 @@ device_isa_register(device_t dev, void *aux)
 			    	return dev;
 		}
 	}
-	if (vm_guest == VM_GUEST_XENPVH)
-		prop_dictionary_set_bool(device_properties(dev),
-		    "no-legacy-devices", true);
+	if (vm_guest == VM_GUEST_XENPVH) {
+		device_setprop_bool(dev, "no-legacy-devices", true);
+	}
 #if NACPICA > 0
 #if notyet
 	/*
@@ -390,16 +390,14 @@ device_isa_register(device_t dev, void *aux)
 		 */
 		if (AcpiGbl_FADT.Header.Revision >= 2 &&
 		    !(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES)) {
-			prop_dictionary_set_bool(device_properties(dev),
-			    "no-legacy-devices", true);
+			device_setprop_bool(dev, "no-legacy-devices", true);
 		}
 	}
 #endif
 
 	if (vm_guest == VM_GUEST_VMWARE &&
 	    device_is_a(dev, "isa") && acpi_active) {
-		prop_dictionary_set_bool(device_properties(dev),
-		    "no-legacy-devices", true);
+		device_setprop_bool(dev, "no-legacy-devices", true);
 	}
 #endif /* NACPICA > 0 */
 	return NULL;
