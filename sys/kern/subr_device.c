@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.15 2025/10/03 14:02:10 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.16 2025/10/04 01:12:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.15 2025/10/03 14:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.16 2025/10/04 01:12:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -393,17 +393,6 @@ device_enumerate_children(device_t dev,
  * Device properties infrastructure.
  *****************************************************************************/
 
-struct device_get_property_args {
-	const char *	prop;		/* IN */
-	void *		buf;		/* IN */
-	size_t		buflen;		/* IN */
-	prop_type_t	reqtype;	/* IN */
-	int		flags;		/* IN */
-	ssize_t		propsize;	/* OUT */
-	int		encoding;	/* OUT */
-	prop_type_t	type;		/* OUT */
-};
-
 static int
 device_getprop_dict(device_t dev, struct device_get_property_args *args)
 {
@@ -535,12 +524,22 @@ device_getprop_internal(device_t dev, struct device_get_property_args *args)
 
 	args->flags = 0;
 
+	/* Check the device's property dictionary first. */
 	error = device_getprop_dict(dev, args);
 	if (error != ENOENT) {
 		KASSERT(error != 0 ||
 			args->encoding == _BYTE_ORDER);
 		goto out;
 	}
+
+	/*
+	 * Not in the device's property dictionary; check with
+	 * the platform device tree.
+	 */
+	error = device_call(dev, DEVICE_GET_PROPERTY(args));
+	KASSERT(error != 0 ||
+		(args->encoding == _BIG_ENDIAN ||
+		 args->encoding == _LITTLE_ENDIAN));
 
  out:
 	/*

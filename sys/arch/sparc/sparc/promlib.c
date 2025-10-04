@@ -1,11 +1,11 @@
-/*	$NetBSD: promlib.c,v 1.52 2022/01/22 11:49:16 thorpej Exp $ */
+/*	$NetBSD: promlib.c,v 1.53 2025/10/04 01:12:14 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg; and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.52 2022/01/22 11:49:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.53 2025/10/04 01:12:14 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.52 2022/01/22 11:49:16 thorpej Exp $")
 #include <sys/device_calls.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #endif /* _STANDALONE */
 
 #include <machine/oldmon.h>
@@ -281,6 +282,138 @@ obp_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 }
 OBP_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			 obp_device_enumerate_children)
+
+static bool
+obp_is_bool_prop(const char *prop __unused, char *propval, int propsize,
+    bool *valp)
+{
+	/*
+	 * Alas, while this is the convention (mainly in the /options
+	 * node), apparently it is not universal, so we'll be liberal
+	 * in what we accept.
+	 */
+#if 0
+	/*
+	 * Naming convention is "propname?" is a boolean property
+	 * with a "true" or "false" value.
+	 */
+	if (prop[strlen(prop) - 1] != '?') {
+		return false;
+	}
+#endif
+
+	if (propsize >= 4 && memcmp(propval, "true", 4) == 0) {
+		*valp = true;
+		return true;
+	}
+	if (propsize >= 5 && memcmp(propval, "false", 5) == 0) {
+		*valp = false;
+		return true;
+	}
+	return false;
+}
+
+static int
+obp_device_get_property(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct device_get_property_args *args = v;
+	int node = devhandle_to_obp(call_handle);
+	int propsize, error = 0;
+	char *propval = NULL;
+	bool boolval = true;
+	prop_type_t proptype = PROP_TYPE_UNKNOWN;
+
+	propsize = prom_getproplen(node, args->prop);
+	if (propsize < 0) {
+		return ENOENT;
+	}
+
+	if (propsize == 0) {
+		goto done;
+	}
+
+	/*
+	 * OpenBoot's getprop method doesn't actually have a buffer
+	 * size argument (the one provided here gets silently dropped),
+	 * so if we want to introspect the property in any way, we have
+	 * to allocate a buffer for the whole thing.
+	 */
+	propval = kmem_alloc(propsize, KM_SLEEP);
+	_prom_getprop(node, args->prop, propval, propsize);
+
+	/*
+	 * Check for the boolean property naming convention, and
+	 * cache the value while we're at it.
+	 */
+	if (obp_is_bool_prop(args->prop, propval, propsize, &boolval)) {
+		proptype = PROP_TYPE_BOOL;
+	}
+
+	if (args->buf == NULL) {
+		goto done;
+	}
+	KASSERT(args->buflen != 0);
+
+	switch (args->reqtype) {
+	case PROP_TYPE_NUMBER:
+		KASSERT(args->buflen == sizeof(uint64_t));
+		if (propsize == sizeof(uint32_t)) {
+			*(uint64_t *)args->buf = *(uint32_t *)propval;
+		} else if (propsize == sizeof(uint64_t)) {
+			*(uint64_t *)args->buf = *(uint64_t *)propval;
+		} else {
+			error = EFTYPE;
+		}
+		break;
+
+	case PROP_TYPE_STRING:
+		memset(args->buf, 0, args->buflen);
+		/* FALLTHROUGH */
+
+	case PROP_TYPE_DATA:
+		if (args->buflen < propsize) {
+			error = EFBIG;
+			goto done;
+		}
+		memcpy(args->buf, propval, propsize);
+		if (args->reqtype == PROP_TYPE_STRING) {
+			/*
+			 * Per the old code: "usually unnecessary."
+			 */
+			((char *)args->buf)[args->buflen - 1] = '\0';
+		}
+		break;
+
+	case PROP_TYPE_BOOL:
+		KASSERT(args->buflen == sizeof(bool));
+		/*
+		 * If we noticed the boolean property naming convention,
+		 * use the cached value from earlier.
+		 */
+		if (proptype == PROP_TYPE_BOOL) {
+			*(bool *)args->buf = boolval;
+		} else {
+			error = EFTYPE;
+		}
+		break;
+
+	default:
+		error = EFTYPE;
+		break;
+	}
+
+ done:
+	if (propval != NULL) {
+		KASSERT(propsize > 0);
+		kmem_free(propval, propsize);
+	}
+	args->propsize = propsize;
+	args->encoding = _BYTE_ORDER;	/* i.e. _BIG_ENDIAN */
+	args->type = proptype;
+	return error;
+}
+OBP_DEVICE_CALL_REGISTER(DEVICE_GET_PROPERTY_STR,
+			 obp_device_get_property)
 #endif /* ! _STANDALONE */
 
 /*

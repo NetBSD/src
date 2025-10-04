@@ -1,7 +1,7 @@
-/*	$NetBSD: ofw_subr.c,v 1.61 2025/10/03 16:49:07 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.62 2025/10/04 01:12:15 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021, 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.61 2025/10/03 16:49:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.62 2025/10/04 01:12:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,6 +162,143 @@ of_device_register(device_t dev, devhandle_t call_handle, void *v __unused)
 }
 OF_DEVICE_CALL_REGISTER(DEVICE_REGISTER_STR,
 			of_device_register)
+
+static bool
+of_is_bool_prop(int node, const char *prop, bool *valp)
+{
+	char propval[8] = { 0 };
+
+	/*
+	 * Alas, while this is the convention (mainly in the /options
+	 * node), apparently it is not universal, so we'll be liberal
+	 * in what we accept.
+	 */
+#if 0
+	/*
+	 * Naming convention is "propname?" is a boolean property
+	 * with a "true" or "false" value.
+	 */
+	if (prop[strlen(prop) - 1] != '?') {
+		return false;
+	}
+#endif
+
+	int propsize = OF_getprop(node, prop, propval, sizeof(propval));
+
+	if (propsize >= 4 && memcmp(propval, "true", 4) == 0) {
+		*valp = true;
+		return true;
+	}
+	if (propsize >= 5 && memcmp(propval, "false", 5) == 0) {
+		*valp = false;
+		return true;
+	}
+
+	return false;
+}
+
+static int
+of_device_get_property(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct device_get_property_args *args = v;
+	int node = devhandle_to_of(call_handle);
+	int propsize, rv, error = 0;
+	bool boolval = true;
+	prop_type_t proptype = PROP_TYPE_UNKNOWN;
+
+	propsize = OF_getproplen(node, args->prop);
+	if (propsize < 0) {
+		return ENOENT;
+	}
+
+	if (propsize == 0) {
+		goto done;
+	}
+
+	/*
+	 * Check for the boolean property naming convention, and
+	 * cache the value while we're at it.
+	 */
+	if (of_is_bool_prop(node, args->prop, &boolval)) {
+		proptype = PROP_TYPE_BOOL;
+	}
+
+	if (args->buf == NULL) {
+		goto done;
+	}
+	KASSERT(args->buflen != 0);
+
+	switch (args->reqtype) {
+	case PROP_TYPE_NUMBER:
+		KASSERT(args->buflen == sizeof(uint64_t));
+		if (propsize == sizeof(uint32_t)) {
+			uint32_t val32;
+
+			if (OF_getprop(node, args->prop, &val32,
+				       sizeof(val32)) != sizeof(val32)) {
+				error = EIO;
+				goto done;
+			}
+			val32 = be32toh(val32);
+			*(uint64_t *)args->buf = val32;
+		} else if (propsize == sizeof(uint64_t)) {
+			uint64_t val64;
+
+			if (OF_getprop(node, args->prop, &val64,
+				       sizeof(val64)) != sizeof(val64)) {
+				error = EIO;
+				goto done;
+			}
+			val64 = be64toh(val64);
+			*(uint64_t *)args->buf = val64;
+		} else {
+			error = EFTYPE;
+		}
+		break;
+
+	case PROP_TYPE_STRING:
+		memset(args->buf, 0, args->buflen);
+		/* FALLTHROUGH */
+
+	case PROP_TYPE_DATA:
+		if (args->buflen < propsize) {
+			error = EFBIG;
+			goto done;
+		}
+		rv = OF_getprop(node, args->prop, args->buf, args->buflen);
+		if (rv < 0) {
+			error = EIO;
+		} else if (args->buflen < (propsize = rv)) {
+			error = EFBIG;
+		}
+		break;
+
+	case PROP_TYPE_BOOL:
+		KASSERT(args->buflen == sizeof(bool));
+		/*
+		 * If we noticed the boolean property naming convention,
+		 * use the cached value from earlier.
+		 */
+		if (proptype == PROP_TYPE_BOOL) {
+			*(bool *)args->buf = boolval;
+		} else {
+			error = EFTYPE;
+		}
+		break;
+
+	default:
+		error = EFTYPE;
+		break;
+	}
+
+ done:
+	args->propsize = propsize;
+	args->encoding = _BIG_ENDIAN;
+	args->type = proptype;
+	return error;
+}
+OF_DEVICE_CALL_REGISTER(DEVICE_GET_PROPERTY_STR,
+			of_device_get_property)
 
 /*
  * int of_decode_int(p)
