@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.83 2024/06/23 00:53:34 riastradh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.84 2025/10/04 15:32:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.83 2024/06/23 00:53:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.84 2025/10/04 15:32:43 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.83 2024/06/23 00:53:34 riastradh E
 #include <machine/openfirm.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pci_calls.h>
 
 #include <dev/ofw/ofw_pci.h>
 
@@ -91,6 +92,27 @@ ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
 
 	return (tag);
 }
+
+static int
+sparc64_pci_bus_get_child_devhandle(device_t dev, devhandle_t call_handle,
+    void *v)
+{
+	struct pci_bus_get_child_devhandle_args *args = v;
+
+	/*
+	 * We've already gone through the trouble of encoding the
+	 * OF phandle into the pcitag_t.
+	 */
+	int node = PCITAG_NODE(args->tag);
+	if (node != -1) {
+		args->devhandle = devhandle_from_of(call_handle, node);
+		return 0;
+	}
+
+	return ENODEV;
+}
+OF_DEVICE_CALL_REGISTER(PCI_BUS_GET_CHILD_DEVHANDLE_STR,
+			sparc64_pci_bus_get_child_devhandle)
 
 /*
  * functions provided to the MI code.
