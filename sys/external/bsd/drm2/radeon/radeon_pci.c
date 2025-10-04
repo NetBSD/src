@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.24 2023/08/07 16:35:06 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.25 2025/10/04 03:46:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.24 2023/08/07 16:35:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.25 2025/10/04 03:46:44 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "genfb.h"
@@ -288,14 +288,9 @@ radeon_attach_real(device_t self)
 	 * over -- something goes wrong if we're still writing to the
 	 * firmware-provided framebuffer during initialization.
 	 */
-    {
-	bool is_console;
-	if (prop_dictionary_get_bool(device_properties(self), "is_console",
-		&is_console) &&
-	    is_console &&
-	    genfb_is_console())
+	if (device_getprop_bool(self, "is_console") && genfb_is_console()) {
 		wsdisplay_predetach();
-    }
+	}
 #endif
 
 	/* XXX errno Linux->NetBSD */
