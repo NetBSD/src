@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.27 2025/09/21 13:51:50 thorpej Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.28 2025/10/04 04:45:57 thorpej Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.27 2025/09/21 13:51:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.28 2025/10/04 04:45:57 thorpej Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -382,12 +382,6 @@ ofw_device_register(device_t dev, void *aux)
 				/* setup display properties for fb driver */
 				prop_dictionary_set_bool(dict, "is_console", 0);
 				copy_disp_props(dev, node, dict);
-			}
-			if (pci_class == PCI_CLASS_NETWORK) {
-				of_to_dataprop(dict, node, "local-mac-address",
-				    "mac-address");
-				of_to_dataprop(dict, node, "shared-pins",
-				    "shared-pins");
 			}
 		}
 #ifdef macppc
