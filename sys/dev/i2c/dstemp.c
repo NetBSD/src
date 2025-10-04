@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.16 2025/10/03 14:03:10 thorpej Exp $ */
+/* $NetBSD: dstemp.c,v 1.17 2025/10/04 13:47:06 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.16 2025/10/03 14:03:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.17 2025/10/04 13:47:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	struct dstemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	char name[64] = "temperature";
-	const char *desc;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
