@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2023/12/20 05:33:19 thorpej Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.23 2025/10/04 15:34:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2023/12/20 05:33:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2025/10/04 15:34:52 thorpej Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -71,6 +71,7 @@ int sparc_pci_debug = 0;
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pci_calls.h>
 
 #include <dev/ofw/ofw_pci.h>
 
@@ -157,6 +158,26 @@ static struct mspcic_known_model mspcic_known_models[] = {
 static struct mspcic_pci_intr_wiring *wiring_map;
 static int wiring_map_size;
 
+static int
+sparc_pci_bus_get_child_devhandle(device_t dev, devhandle_t call_handle,
+    void *v)
+{
+	struct pci_bus_get_child_devhandle_args *args = v;
+
+	/*
+	 * We've already gone through the trouble of encoding the
+	 * PROM node into the pcitag_t.
+	 */
+	int node = PCITAG_NODE(args->tag);
+	if (node != -1) {
+		args->devhandle = prom_node_to_devhandle(call_handle, node);
+		return 0;
+	}
+
+	return ENODEV;
+}
+OBP_DEVICE_CALL_REGISTER(PCI_BUS_GET_CHILD_DEVHANDLE_STR,
+			 sparc_pci_bus_get_child_devhandle)
 
 void
 pci_attach_hook(device_t parent, device_t self,
