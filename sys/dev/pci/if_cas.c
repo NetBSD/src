@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.49 2025/10/04 20:11:59 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.48 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.49 2025/10/04 20:11:59 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -399,8 +399,7 @@ cas_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct device_compatible_entry *dce;
 	struct cas_softc *sc = device_private(self);
-	prop_data_t data;
-	uint8_t enaddr[ETHER_ADDR_LEN];
+	uint8_t enaddr[ETHER_ADDR_LEN], *enaddrp;
 
 	sc->sc_dev = self;
 	pci_aprint_devinfo(pa, NULL);
@@ -425,10 +424,12 @@ cas_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
-	    "mac-address")) != NULL)
-		memcpy(enaddr, prop_data_value(data), ETHER_ADDR_LEN);
-	if (cas_pci_readvpd(sc, pa, (data == NULL) ? enaddr : 0) != 0) {
+	if (! ether_getaddr(sc->sc_dev, enaddr)) {
+		enaddrp = enaddr;
+	} else {
+		enaddrp = NULL;
+	}
+	if (cas_pci_readvpd(sc, pa, enaddrp) != 0) {
 		aprint_error_dev(sc->sc_dev, "no Ethernet address found\n");
 		memset(enaddr, 0, sizeof(enaddr));
 	}
