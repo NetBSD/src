@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.24 2024/10/30 15:56:11 riastradh Exp $	*/
+/*	$NetBSD: float.h,v 1.25 2025/10/04 21:12:36 nat Exp $	*/
 
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
@@ -28,7 +28,8 @@
  * x86/include/float.h also gets updated.
  */
 
-#if defined(__LDBL_MANT_DIG__)
+#if defined(__LDBL_MANT_DIG__) && \
+			!(defined(__m68k__) && !defined(__HAVE_68881__))
 #define LDBL_MANT_DIG	__LDBL_MANT_DIG__
 #define LDBL_EPSILON	__LDBL_EPSILON__
 #define LDBL_DIG	__LDBL_DIG__
