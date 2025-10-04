@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.117 2025/04/13 14:00:59 jakllsch Exp $	*/
+/*	$NetBSD: ld.c,v 1.118 2025/10/04 09:38:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.117 2025/04/13 14:00:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.118 2025/10/04 09:38:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -654,7 +654,7 @@ ld_set_geometry(struct ld_softc *sc)
 	    "%d bytes/sect x %"PRIu64" sectors",
 	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
-	if (sc->sc_physsecsize != sc->sc_secsize) {
+	if (sc->sc_physsecsize != 0 && sc->sc_physsecsize != sc->sc_secsize) {
 		aprint_normal(" (%d bytes/physsect", sc->sc_physsecsize);
 		if (sc->sc_alignedsec != 0)
 			aprint_normal("; first aligned sector %u",
