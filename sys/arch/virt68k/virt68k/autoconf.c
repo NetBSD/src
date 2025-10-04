@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2025/03/09 12:43:09 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2025/10/04 04:48:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2025/03/09 12:43:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2025/10/04 04:48:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,7 @@ device_register(device_t dev, void *aux)
 		struct mainbus_attach_args *ma = aux;
 
 		if (ma->ma_addr == consdev_addr) {
-			prop_dictionary_set_bool(device_properties(dev),
-						 "is-console", true);
+			device_setprop_bool(dev, "is-console", true);
 		}
 	}
 }
