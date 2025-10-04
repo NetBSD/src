@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.80 2024/11/10 11:45:25 mlelstv Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.81 2025/10/04 04:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.80 2024/11/10 11:45:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.81 2025/10/04 04:49:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,7 +574,6 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	int ntxsegs, i, rseg, error;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	prop_object_t obj;
 	bool is_vmware;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -630,9 +629,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	 * from the CSRs (assuming that boot firmware has written
 	 * it there).
 	 */
-	obj = prop_dictionary_get(device_properties(sc->sc_dev),
-				  "am79c970-no-eeprom");
-	if (prop_bool_true(obj)) {
+	if (device_getprop_bool(sc->sc_dev, "am79c970-no-eeprom")) {
 		for (i = 0; i < 3; i++) {
 			uint32_t val;
 			val = pcn_csr_read(sc, LE_CSR12 + i);
@@ -666,9 +663,8 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	 * limit the number of Tx segments.
 	 */
 	if (is_vmware) {
+		device_setprop_bool(sc->sc_dev, "am79c970-vmware-tx-bug", true);
 		ntxsegs = PCN_NTXSEGS_VMWARE;
-		prop_dictionary_set_bool(device_properties(sc->sc_dev),
-					 "am79c970-vmware-tx-bug", TRUE);
 		aprint_verbose_dev(self,
 		    "VMware Tx segment count bug detected\n");
 	} else {
