@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.19 2025/10/02 00:46:59 nat Exp $ */
+/* $NetBSD: softfloat.c,v 1.20 2025/10/04 20:59:19 nat Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.19 2025/10/02 00:46:59 nat Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.20 2025/10/04 20:59:19 nat Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -3643,10 +3643,11 @@ floatx80 floatx80_round_to_int( floatx80 a )
     }
     z.low &= ~ roundBitsMask;
     if ( z.low == 0 ) {
+	z.high >>= X80SHIFT;
         ++z.high;
+	z.high <<= X80SHIFT;
         z.low = LIT64( 0x8000000000000000 );
     }
-    z.high <<= X80SHIFT;
     if ( z.low != a.low ) set_float_exception_inexact_flag();
     return z;
 
