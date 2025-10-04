@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.11 2022/05/17 05:05:20 andvar Exp $	*/
+/*	$NetBSD: pcib.c,v 1.12 2025/10/04 04:46:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2022/05/17 05:05:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2025/10/04 04:46:56 thorpej Exp $");
 
 #include "isa.h"
 #include "isadma.h"
@@ -105,9 +105,6 @@ pcibattach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	u_int32_t v;
 	int lvlmask = 0;
-#ifdef prep
-	prop_bool_t rav;
-#endif
 
 	sc->sc_dev = self;
 
@@ -164,10 +161,7 @@ pcibattach(device_t parent, device_t self, void *aux)
 	}
 
 #ifdef prep
-	rav = prop_dictionary_get(device_properties(parent),
-	    "prep-raven-pchb");
-
-	if (rav != NULL && prop_bool_true(rav) &&
+	if (device_getprop_bool(parent, "prep-raven-pchb") &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMPHONY &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMPHONY_83C553) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2023/12/20 15:29:06 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2025/10/04 04:46:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2023/12/20 15:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2025/10/04 04:46:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ device_register(device_t dev, void *aux)
 {
 	device_t parent;
 	char devpath[256];
-	prop_string_t str1;
 	int n;
 
 	/* Certain devices will *never* be bootable.  short circuit them. */
@@ -121,25 +120,15 @@ device_register(device_t dev, void *aux)
 
 	if (device_is_a(dev, "pchb")) {
 		struct pci_attach_args *pa = aux;
-		prop_bool_t rav;
 
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MOT &&
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MOT_RAVEN) {
-			rav = prop_bool_create(true);
-			KASSERT(rav != NULL);
-			(void) prop_dictionary_set(
-			    device_properties(device_parent(dev)),
-			    "prep-raven-pchb", rav);
-			prop_object_release(rav);
+			device_setprop_bool(dev, "prep-raven-pchb", true);
 		}
 	}
 
 	if (device_is_a(dev, "mainbus")) {
-		str1 = prop_string_create_cstring("/");
-		KASSERT(str1 != NULL);
-		(void) prop_dictionary_set(device_properties(dev),
-					   "prep-fw-path-component", str1);
-		prop_object_release(str1);
+		device_setprop_string(dev, "prep-fw-path-component", "/");
 		return;
 	}
 	parent = device_parent(dev);
@@ -218,11 +207,7 @@ device_register(device_t dev, void *aux)
 		    device_unit(dev));
 	}
 
-	str1 = prop_string_create_cstring(devpath);
-	KASSERT(str1 != NULL);
-	(void)prop_dictionary_set(device_properties(dev),
-	    "prep-fw-path-component", str1);
-	prop_object_release(str1);
+	device_setprop_string(dev, "prep-fw-path-component", devpath);
 }
 
 static void
