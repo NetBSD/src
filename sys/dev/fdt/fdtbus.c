@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.47 2025/09/07 03:52:39 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.48 2025/10/04 01:38:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.47 2025/09/07 03:52:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.48 2025/10/04 01:38:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,13 +479,7 @@ fdt_pre_attach(struct fdt_node *node)
 static void
 fdt_post_attach(struct fdt_node *node)
 {
-	char buf[FDT_MAX_PATH];
-	prop_dictionary_t dict;
 	int error;
-
-	dict = device_properties(node->n_dev);
-	if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
-		prop_dictionary_set_string(dict, "fdt-path", buf);
 
 	if (node->n_pinctrl_init) {
 		aprint_debug_dev(node->n_bus, "set default config for %s\n", node->n_name);
