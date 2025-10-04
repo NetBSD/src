@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.8 2024/06/15 11:44:09 rillig Exp $	*/
+/*	$NetBSD: float.h,v 1.9 2025/10/04 21:56:08 riastradh Exp $	*/
 
 #ifndef _X86_FLOAT_H_
 #define _X86_FLOAT_H_
@@ -9,10 +9,10 @@
  * LDBL_MIN is twice the m68k LDBL_MIN, even though both are 12-byte
  * floats with the same base properties and both allegedly
  * IEEE-compliant, because both these representations materialize the
- * top (integer-part) bit of the mantissa. But on m68k if the exponent
- * is 0 and the integer bit is set, it's a regular number, whereas on
- * x86 it's called a pseudo-denormal and apparently treated as a
- * denormal, so it doesn't count as a valid value for LDBL_MIN.
+ * top (integer-part) bit of the significand.  But on m68k if the
+ * exponent is 0 and the integer bit is set, it's a regular number,
+ * whereas on x86 it's called a pseudo-denormal and apparently treated
+ * as a denormal, so it doesn't count as a valid value for LDBL_MIN.
  *
  * x86 citation: Intel 64 and IA-32 Architectures Software Developer's
  * Manual, vol. 1 (Order Number: 253665-077US, April 2022), Sec. 8.2.2
