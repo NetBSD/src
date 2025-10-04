@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.39 2025/09/06 21:02:39 thorpej Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.40 2025/10/04 04:12:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.39 2025/09/06 21:02:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.40 2025/10/04 04:12:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -325,7 +325,6 @@ static void
 acpi_platform_device_register(device_t self, void *aux)
 {
 #if NCOM > 0
-	prop_dictionary_t prop = device_properties(self);
 	ACPI_STATUS rv;
 
 	if (device_is_a(self, "com")) {
@@ -356,7 +355,7 @@ acpi_platform_device_register(device_t self, void *aux)
 
 			if (spcr->PciSegment == s && spcr->PciBus == b &&
 			    spcr->PciDevice == d && spcr->PciFunction == f) {
-				prop_dictionary_set_bool(prop,
+				device_setprop_bool(self,
 				    "force_console", true);
 			}
 		}
@@ -378,7 +377,7 @@ acpi_platform_device_register(device_t self, void *aux)
 			}
 
 			if (mem->ar_base == le64toh(spcr->SerialPort.Address)) {
-				prop_dictionary_set_bool(prop,
+				device_setprop_bool(self,
 				    "force_console", true);
 			}
 
