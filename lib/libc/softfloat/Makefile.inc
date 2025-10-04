@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2025/09/10 23:07:39 nat Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2025/10/04 21:03:16 nat Exp $
 
 SOFTFLOAT_BITS?=64
 .PATH:		${ARCHDIR}/softfloat \
@@ -26,6 +26,7 @@ SRCS.softfloat+=eqsf2.c nesf2.c gtsf2.c gesf2.c ltsf2.c lesf2.c negsf2.c \
 		unordsf2.c unorddf2.c unordtf2.c
 .endif
 
+SRCS+=		flt_rounds.c
 SRCS+=		${SRCS.softfloat}
 
 # XXX
