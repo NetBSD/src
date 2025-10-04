@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.18 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.19 2025/10/04 16:10:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.18 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuunit.c,v 1.19 2025/10/04 16:10:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -85,6 +85,7 @@ cpuunit_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpuunit_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
+	devhandle_t selfh = device_handle(self);
 	int node, error;
 	bus_space_tag_t sbt;
 
@@ -118,14 +119,15 @@ cpuunit_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach the CPU (and possibly bootbus) child nodes. */
-	for (node = firstchild(sc->sc_node); node != 0;
-	     node = nextsibling(node)) {
+	for (node = prom_firstchild(sc->sc_node); node != 0;
+	     node = prom_nextsibling(node)) {
 		struct cpuunit_attach_args cpua;
 
 		if (cpuunit_setup_attach_args(sc, sbt, node, &cpua))
 			panic("cpuunit_attach: failed to set up attach args");
 
-		(void) config_found(self, &cpua, cpuunit_print, CFARGS_NONE);
+		(void) config_found(self, &cpua, cpuunit_print,
+		    CFARGS(.devhandle = prom_node_to_devhandle(selfh, node)));
 
 		cpuunit_destroy_attach_args(&cpua);
 	}
