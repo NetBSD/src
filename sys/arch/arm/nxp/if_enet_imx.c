@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.7 2022/12/27 18:55:06 mrg Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.8 2025/10/04 04:14:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.7 2022/12/27 18:55:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.8 2025/10/04 04:14:56 thorpej Exp $");
 
 #include "opt_fdt.h"
 
@@ -75,7 +75,6 @@ enet_attach(device_t parent, device_t self, void *aux)
 	struct enet_fdt_softc * const efsc = device_private(self);
 	struct enet_softc *sc = &efsc->sc_enet;
 	struct fdt_attach_args * const faa = aux;
-	prop_dictionary_t prop = device_properties(self);
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
@@ -138,14 +137,14 @@ enet_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (strcmp(phy_mode, "rgmii-txid") == 0) {
-		prop_dictionary_set_bool(prop, "tx_internal_delay", true);
+		device_setprop_bool(self, "tx_internal_delay", true);
 		sc->sc_rgmii = 1;
 	} else if (strcmp(phy_mode, "rgmii-rxid") == 0) {
-		prop_dictionary_set_bool(prop, "rx_internal_delay", true);
+		device_setprop_bool(self, "rx_internal_delay", true);
 		sc->sc_rgmii = 1;
 	} else if (strcmp(phy_mode, "rgmii-id") == 0) {
-		prop_dictionary_set_bool(prop, "tx_internal_delay", true);
-		prop_dictionary_set_bool(prop, "rx_internal_delay", true);
+		device_setprop_bool(self, "tx_internal_delay", true);
+		device_setprop_bool(self, "rx_internal_delay", true);
 		sc->sc_rgmii = 1;
 	} else if (strcmp(phy_mode, "rgmii") == 0) {
 		sc->sc_rgmii = 1;
