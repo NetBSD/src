@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.103 2025/06/01 15:56:43 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.104 2025/10/04 04:20:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.103 2025/06/01 15:56:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.104 2025/10/04 04:20:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,18 +762,14 @@ via_mapchan(const struct pci_attach_args *pa,	struct pciide_channel *cp,
 {
 	struct ata_channel *wdc_cp;
 	struct pciide_softc *sc;
-	prop_bool_t compat_nat_enable;
 
 	wdc_cp = &cp->ata_channel;
 	sc = CHAN_TO_PCIIDE(&cp->ata_channel);
-	compat_nat_enable = prop_dictionary_get(
-	    device_properties(sc->sc_wdcdev.sc_atac.atac_dev),
-	      "use-compat-native-irq");
 
 	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->ch_channel)) {
 		/* native mode with irq 14/15 requested? */
-		if (compat_nat_enable != NULL &&
-		    prop_bool_true(compat_nat_enable))
+		if (device_getprop_bool(sc->sc_wdcdev.sc_atac.atac_dev,
+					"use-compat-native-irq"))
 			via_mapregs_compat_native(pa, cp);
 		else
 			pciide_mapregs_native(pa, cp, pci_intr);
