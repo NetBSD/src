@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.83 2022/10/31 21:22:06 andvar Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.84 2025/10/04 04:44:21 thorpej Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.83 2022/10/31 21:22:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.84 2025/10/04 04:44:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -90,7 +90,7 @@ static void	mue_dataport_write(struct usbnet *, uint32_t, uint32_t,
 static void	mue_init_ltm(struct usbnet *);
 static int	mue_chip_init(struct usbnet *);
 static void	mue_set_macaddr(struct usbnet *);
-static int	mue_get_macaddr(struct usbnet *, prop_dictionary_t);
+static int	mue_get_macaddr(struct usbnet *);
 static int	mue_prepare_tso(struct usbnet *, struct mbuf *);
 static void	mue_uno_mcast(struct ifnet *);
 static void	mue_sethwcsum_locked(struct usbnet *);
@@ -691,9 +691,8 @@ mue_set_macaddr(struct usbnet *un)
 }
 
 static int
-mue_get_macaddr(struct usbnet *un, prop_dictionary_t dict)
+mue_get_macaddr(struct usbnet *un)
 {
-	prop_data_t eaprop;
 	uint32_t low, high;
 
 	if (!(un->un_flags & LAN7500)) {
@@ -735,16 +734,11 @@ mue_get_macaddr(struct usbnet *un, prop_dictionary_t dict)
 	 * Otherwise, MAC address for internal device can be assigned to
 	 * external devices on Raspberry Pi, for example.
 	 */
-	eaprop = prop_dictionary_get(dict, "mac-address");
-	if (eaprop != NULL) {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(un->un_eaddr, prop_data_value(eaprop),
-		    ETHER_ADDR_LEN);
+	if (ether_getaddr(un->un_dev, un->un_eaddr)) {
 		if (ETHER_IS_VALID(un->un_eaddr))
 			return 0;
 		else
-			DPRINTF(un, "prop_dictionary_get: %s\n",
+			DPRINTF(un, "ether_getaddr: %s\n",
 			    ether_sprintf(un->un_eaddr));
 	}
 
@@ -768,7 +762,6 @@ mue_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);
 	struct usbnet * const un = device_private(self);
-	prop_dictionary_t dict = device_properties(self);
 	struct usb_attach_arg *uaa = aux;
 	struct usbd_device *dev = uaa->uaa_device;
 	usb_interface_descriptor_t *id;
@@ -872,7 +865,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 		(unsigned)__SHIFTOUT(id_rev, MUE_ID_REV_ID),
 		(unsigned)__SHIFTOUT(id_rev, MUE_ID_REV_REV));
 
-	if (mue_get_macaddr(un, dict)) {
+	if (mue_get_macaddr(un)) {
 		aprint_error_dev(self, "failed to read MAC address\n");
 		return;
 	}

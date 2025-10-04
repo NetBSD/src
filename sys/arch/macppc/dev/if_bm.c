@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.65 2022/09/18 10:59:22 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.66 2025/10/04 04:44:20 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.65 2022/09/18 10:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.66 2025/10/04 04:44:20 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -207,8 +207,7 @@ bmac_attach(device_t parent, device_t self, void *aux)
 
 	bmac_write_reg(sc, INTDISABLE, NoEventsMask);
 
-	if (OF_getprop(ca->ca_node, "local-mac-address", laddr, 6) == -1 &&
-	    OF_getprop(ca->ca_node, "mac-address", laddr, 6) == -1) {
+	if (! ether_getaddr(self, laddr)) {
 		aprint_error(": cannot get mac-address\n");
 		return;
 	}

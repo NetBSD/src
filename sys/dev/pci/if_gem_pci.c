@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.55 2025/02/15 09:07:14 hannken Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.56 2025/10/04 04:44:21 thorpej Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.55 2025/02/15 09:07:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.56 2025/10/04 04:44:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,6 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
-	prop_data_t data;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_space_handle_t	romh;
 	uint8_t			*buf;
@@ -231,16 +230,12 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	buf = kmem_alloc(GEM_TMP_BUFSIZE, KM_SLEEP);
+	buf = kmem_zalloc(GEM_TMP_BUFSIZE, KM_SLEEP);
 
-	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
-	    "mac-address")) != NULL) {
-		memcpy(enaddr, prop_data_value(data), ETHER_ADDR_LEN);
+	if (ether_getaddr(sc->sc_dev, enaddr)) {
 		got_addr = 1;
-		if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
-		    "shared-pins")) != NULL) {
-			memcpy(buf, prop_data_value(data),
-			    prop_data_size(data));
+		if (device_getprop_data(sc->sc_dev, "shared-pins",
+					buf, GEM_TMP_BUFSIZE) > 0) {
 			if (isserdes(buf)) {
 				sc->sc_flags |= GEM_SERDES;
 			}

@@ -1,4 +1,4 @@
-/* $NetBSD: smsh_fdt.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: smsh_fdt.c,v 1.5 2025/10/04 04:44:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.4 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsh_fdt.c,v 1.5 2025/10/04 04:44:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,11 +72,9 @@ smsh_fdt_attach(device_t parent, device_t self, void *aux)
 	struct lan9118_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	const char *enaddr;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	int len;
 	void *ih;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -101,11 +99,7 @@ smsh_fdt_attach(device_t parent, device_t self, void *aux)
 	if (of_hasprop(phandle, "smsc,irq-push-pull"))
 		sc->sc_flags |= LAN9118_FLAGS_IRQ_PP;
 
-	enaddr = fdtbus_get_prop(phandle, "local-mac-address", &len);
-	if (enaddr == NULL || len != ETHER_ADDR_LEN)
-		enaddr = fdtbus_get_prop(phandle, "mac-address", &len);
-	if (enaddr != NULL && len == ETHER_ADDR_LEN) {
-		memcpy(sc->sc_enaddr, enaddr, ETHER_ADDR_LEN);
+	if (ether_getaddr(self, sc->sc_enaddr)) {
 		sc->sc_flags |= LAN9118_FLAGS_NO_EEPROM;
 	}
 

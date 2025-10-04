@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.93 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.94 2025/10/04 04:44:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.93 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.94 2025/10/04 04:44:21 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -398,8 +398,6 @@ stge_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	bus_dma_segment_t seg;
-	prop_dictionary_t dict;
-	prop_data_t data;
 	int ioh_valid, memh_valid;
 	int i, rseg, error;
 	const struct stge_product *sp;
@@ -590,18 +588,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 		enaddr[5] = CSR_READ_2(sc, STGE_StationAddress2) >> 8;
 		sc->sc_stge1023 = 0;
 	} else {
-		data = prop_dictionary_get(device_properties(self),
-		    "mac-address");
-		if (data != NULL) {
-			/*
-			 * Try to get the station address from device
-			 * properties first, in case the EEPROM is missing.
-			 */
-			KASSERT(prop_object_type(data) == PROP_TYPE_DATA);
-			KASSERT(prop_data_size(data) == ETHER_ADDR_LEN);
-			(void)memcpy(enaddr, prop_data_value(data),
-			    ETHER_ADDR_LEN);
-		} else {
+		if (! ether_getaddr(self, enaddr)) {
 			uint16_t myaddr[ETHER_ADDR_LEN / 2];
 			for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
 				stge_read_eeprom(sc,
@@ -615,9 +602,9 @@ stge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Set need_loaddspcode before mii_attach() */
-	dict = device_properties(self);
-	prop_dictionary_set_bool(dict, "need_loaddspcode",
-	    ((sc->sc_rev >= 0x40) && (sc->sc_rev <= 0x4e)) ? true : false);
+	if (sc->sc_rev >= 0x40 && sc->sc_rev <= 0x4e) {
+		device_setprop_bool(self, "need_loaddspcode", true);
+	}
 
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(enaddr));

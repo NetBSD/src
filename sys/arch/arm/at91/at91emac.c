@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.36 2024/07/05 04:31:49 rin Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.37 2025/10/04 04:44:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.36 2024/07/05 04:31:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.37 2025/10/04 04:44:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,7 +126,6 @@ emac_attach(device_t parent, device_t self, void *aux)
 {
 	struct emac_softc		*sc = device_private(self);
 	struct at91bus_attach_args	*sa = aux;
-	prop_data_t			enaddr;
 	uint32_t			u;
 
 	printf("\n");
@@ -157,16 +156,9 @@ emac_attach(device_t parent, device_t self, void *aux)
 	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
-
-	if (enaddr != NULL) {
-		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(enaddr) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_data_nocopy(enaddr),
-		       ETHER_ADDR_LEN);
-	} else {
+	if (! ether_getaddr(self, sc->sc_enaddr)) {
 		static const uint8_t hardcoded[ETHER_ADDR_LEN] = {
-		  0x00, 0x0d, 0x10, 0x81, 0x0c, 0x94
+			0x00, 0x0d, 0x10, 0x81, 0x0c, 0x94
 		};
 		memcpy(sc->sc_enaddr, hardcoded, ETHER_ADDR_LEN);
 	}

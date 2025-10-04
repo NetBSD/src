@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.51 2024/07/05 04:31:49 rin Exp $	*/
+/*	$NetBSD: epe.c,v 1.52 2025/10/04 04:44:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.51 2024/07/05 04:31:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.52 2025/10/04 04:44:19 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,6 @@ epe_attach(device_t parent, device_t self, void *aux)
 {
 	struct epe_softc		*sc = device_private(self);
 	struct epsoc_attach_args	*sa;
-	prop_data_t			 enaddr;
 
 	aprint_normal("\n");
 	sa = aux;
@@ -134,12 +133,7 @@ epe_attach(device_t parent, device_t self, void *aux)
 		panic("%s: Cannot map registers", device_xname(self));
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
-	if (enaddr != NULL) {
-		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(enaddr) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_data_nocopy(enaddr),
-		       ETHER_ADDR_LEN);
+	if (ether_getaddr(self, sc->sc_enaddr)) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EPE_AFP, 0);
 		bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, EPE_IndAd,
 					 sc->sc_enaddr, ETHER_ADDR_LEN);

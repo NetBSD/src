@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.62 2025/10/02 13:16:44 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.63 2025/10/04 04:44:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.62 2025/10/02 13:16:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.63 2025/10/04 04:44:20 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -408,8 +408,7 @@ gfe_attach(device_t parent, device_t self, void *aux)
 	struct mii_data * const mii = &sc->sc_mii;
 	uint32_t sdcr;
 	int phyaddr, error;
-	prop_data_t ea;
-	uint8_t enaddr[6];
+	uint8_t enaddr[ETHER_ADDR_LEN] = { 0 };
 
 	aprint_naive("\n");
 	aprint_normal(": Ethernet Controller\n");
@@ -429,11 +428,9 @@ gfe_attach(device_t parent, device_t self, void *aux)
 
 	phyaddr = gfec_enet_phy(parent, sc->sc_macno);
 
-	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-address");
-	if (ea != NULL) {
-		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+	if (! ether_getaddr(sc->sc_dev, enaddr)) {
+		aprint_error_dev(self, "unable to get mac-address\n");
+		return;
 	}
 
 	sc->sc_pcr = GE_READ(sc, ETH_EPCR);

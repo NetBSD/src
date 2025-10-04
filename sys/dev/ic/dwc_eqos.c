@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.41 2024/10/06 19:30:29 skrll Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.42 2025/10/04 04:44:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.41 2024/10/06 19:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.42 2025/10/04 04:44:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1273,16 +1273,9 @@ eqos_ifflags_cb(struct ethercom *ec)
 static void
 eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
 {
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
 	uint32_t maclo, machi;
-	prop_data_t eaprop;
 
-	eaprop = prop_dictionary_get(prop, "mac-address");
-	if (eaprop != NULL) {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(eaddr, prop_data_value(eaprop),
-		    ETHER_ADDR_LEN);
+	if (ether_getaddr(sc->sc_dev, eaddr)) {
 		return;
 	}
 

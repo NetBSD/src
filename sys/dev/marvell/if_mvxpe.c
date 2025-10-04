@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.43 2025/05/19 06:16:25 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.44 2025/10/04 04:44:20 thorpej Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.43 2025/05/19 06:16:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.44 2025/10/04 04:44:20 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -290,8 +290,6 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct marvell_attach_args *mva = aux;
-	prop_dictionary_t dict;
-	prop_data_t enaddrp = NULL;
 	uint32_t phyaddr, maddrh, maddrl;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	int q;
@@ -354,11 +352,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * MAC address
 	 */
-	dict = device_properties(self);
-	if (dict)
-		enaddrp = prop_dictionary_get(dict, "mac-address");
-	if (enaddrp) {
-		memcpy(enaddr, prop_data_data_nocopy(enaddrp), ETHER_ADDR_LEN);
+	if (ether_getaddr(self, enaddr)) {
 		maddrh  = enaddr[0] << 24;
 		maddrh |= enaddr[1] << 16;
 		maddrh |= enaddr[2] << 8;
@@ -370,7 +364,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	}
 	else {
 		/*
-		 * even if enaddr is not found in dictionary,
+		 * even if enaddr is not found in device properties,
 		 * the port may be initialized by IPL program such as U-BOOT.
 		 */
 		maddrh = MVXPE_READ(sc, MVXPE_MACAH);

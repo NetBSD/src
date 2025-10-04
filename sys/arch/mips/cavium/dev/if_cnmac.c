@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnmac.c,v 1.29 2022/09/29 07:00:46 skrll Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.30 2025/10/04 04:44:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.29 2022/09/29 07:00:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.30 2025/10/04 04:44:20 thorpej Exp $");
 
 /*
  * If no free send buffer is available, free all the sent buffers and bail out.
@@ -423,14 +423,10 @@ cnmac_pko_init(struct cnmac_softc *sc)
 static void
 cnmac_board_mac_addr(uint8_t *enaddr, size_t size, struct cnmac_softc *sc)
 {
-	prop_dictionary_t dict;
-	prop_data_t ea;
+	bool rv __diagused;
 
-	dict = device_properties(sc->sc_dev);
-	KASSERT(dict != NULL);
-	ea = prop_dictionary_get(dict, "mac-address");
-	KASSERT(ea != NULL);
-	memcpy(enaddr, prop_data_value(ea), size);
+	rv = ether_getaddr(sc->sc_dev, enaddr);
+	KASSERT(rv == true);
 }
 
 /* ---- media */

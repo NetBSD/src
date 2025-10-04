@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.45 2024/12/04 21:18:34 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.46 2025/10/04 04:44:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -267,7 +267,6 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	struct bcmccb_attach_args * const ccbaa = aux;
 	const struct bcm_locators * const loc = &ccbaa->ccbaa_loc;
 	const char * const xname = device_xname(self);
-	prop_dictionary_t dict = device_properties(self);
 	int error;
 
 	sc->sc_bst = ccbaa->ccbaa_ccb_bst;
@@ -285,8 +284,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
-	if (eaprop == NULL) {
+	if (! ether_getaddr(self, sc->sc_enaddr)) {
 		uint32_t mac0 = bcmeth_read_4(sc, UNIMAC_MAC_0);
 		uint32_t mac1 = bcmeth_read_4(sc, UNIMAC_MAC_1);
 		if ((mac0 == 0 && mac1 == 0) || (mac1 & 1)) {
@@ -299,11 +297,6 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_enaddr[3] = (mac0 >> 24) & 0xff;
 		sc->sc_enaddr[4] = (mac1 >> 0) & 0xff;
 		sc->sc_enaddr[5] = (mac1 >> 8) & 0xff;
-	} else {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_data_nocopy(eaprop),
-		    ETHER_ADDR_LEN);
 	}
 	sc->sc_dev = self;
 	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);

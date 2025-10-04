@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.69 2024/12/07 07:52:19 andvar Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.70 2025/10/04 04:44:20 thorpej Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.69 2024/12/07 07:52:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.70 2025/10/04 04:44:20 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -683,13 +683,10 @@ mvgbe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 	uint32_t pbase, maddrh, maddrl;
-	prop_dictionary_t dict;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
-	dict = device_properties(parent);
-	if (dict) {
-		if (prop_dictionary_get(dict, "mac-address"))
-			return 1;
-	}
+	if (ether_getaddr(parent, enaddr))
+		return 1;
 
 	pbase = MVGBE_PORTR_BASE + mva->mva_unit * MVGBE_PORTR_SIZE;
 	maddrh =
@@ -710,8 +707,6 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	struct mvgbe_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
-	prop_dictionary_t dict;
-	prop_data_t enaddrp;
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_mii;
 	bus_dma_segment_t seg;
@@ -723,12 +718,6 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	dict = device_properties(parent);
-	if (dict)
-		enaddrp = prop_dictionary_get(dict, "mac-address");
-	else
-		enaddrp = NULL;
 
 	sc->sc_dev = self;
 	sc->sc_port = mva->mva_unit;
@@ -777,8 +766,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 		sc->sc_linkup.bit = MVGBE_PS_LINKUP;
 	}
 
-	if (enaddrp) {
-		memcpy(enaddr, prop_data_data_nocopy(enaddrp), ETHER_ADDR_LEN);
+	if (ether_getaddr(parent, enaddr)) {
 		maddrh	= enaddr[0] << 24;
 		maddrh |= enaddr[1] << 16;
 		maddrh |= enaddr[2] << 8;

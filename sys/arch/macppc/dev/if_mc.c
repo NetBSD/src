@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.28 2022/02/16 23:49:26 riastradh Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.29 2025/10/04 04:44:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.28 2022/02/16 23:49:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.29 2025/10/04 04:44:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,7 +133,7 @@ mc_attach(device_t parent, device_t self, void *aux)
 	printf(": irq %d,%d,%d",
 		ca->ca_intr[0], ca->ca_intr[1], ca->ca_intr[2]);
 
-	if (OF_getprop(sc->sc_node, "local-mac-address", myaddr, 6) != 6) {
+	if (! ether_getaddr(self, myaddr)) {
 		printf(": failed to get MAC address.\n");
 		return;
 	}

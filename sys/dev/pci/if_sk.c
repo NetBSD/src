@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.113 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.114 2025/10/04 04:44:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.113 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.114 2025/10/04 04:44:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1207,7 +1207,6 @@ sk_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
-	prop_data_t data;
 	void *kva;
 	int i, rseg;
 	int mii_flags = 0;
@@ -1235,20 +1234,11 @@ sk_attach(device_t parent, device_t self, void *aux)
 	 * are operating in failover mode. Currently we don't
 	 * use this extra address.
 	 */
-	data = prop_dictionary_get(device_properties(self), "mac-address");
-	if (data != NULL) {
-		/*
-		 * Try to get the station address from device properties
-		 * first, in case the ROM is missing.
-		 */
-		KASSERT(prop_object_type(data) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(data) == ETHER_ADDR_LEN);
-		memcpy(sc_if->sk_enaddr, prop_data_value(data),
-		    ETHER_ADDR_LEN);
-	} else
+	if (! ether_getaddr(self, sc_if->sk_enaddr)) {
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			sc_if->sk_enaddr[i] = sk_win_read_1(sc,
 			    SK_MAC0_0 + (sa->skc_port * 8) + i);
+	}
 
 	aprint_normal(": Ethernet address %s\n",
 	    ether_sprintf(sc_if->sk_enaddr));

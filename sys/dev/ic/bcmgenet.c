@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.22 2024/10/06 19:34:06 skrll Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.23 2025/10/04 04:44:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.22 2024/10/06 19:34:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.23 2025/10/04 04:44:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -958,16 +958,9 @@ genet_ifflags_cb(struct ethercom *ec)
 static void
 genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 {
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
 	uint32_t maclo, machi, val;
-	prop_data_t eaprop;
 
-	eaprop = prop_dictionary_get(prop, "mac-address");
-	if (eaprop != NULL) {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(eaddr, prop_data_value(eaprop),
-		    ETHER_ADDR_LEN);
+	if (ether_getaddr(sc->sc_dev, eaddr)) {
 		return;
 	}
 

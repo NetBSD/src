@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.59 2024/02/10 09:30:05 andvar Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.59 2024/02/10 09:30:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
@@ -344,9 +344,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 	const char * xname = device_xname(self);
 	bus_dma_segment_t seg;
 	int error, i, nseg, opb_freq, opbc, mii_phy = MII_PHY_ANY;
-	const uint8_t *enaddr;
-	prop_dictionary_t dict = device_properties(self);
-	prop_data_t ea;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	bus_space_map(oaa->opb_bt, oaa->opb_addr, EMAC_NREG, 0, &sc->sc_sh);
 
@@ -361,19 +359,16 @@ emac_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Ethernet Media Access Controller\n");
 
 	/* Fetch the Ethernet address. */
-	ea = prop_dictionary_get(dict, "mac-address");
-	if (ea == NULL) {
-		aprint_error_dev(self, "unable to get mac-address property\n");
+	if (! ether_getaddr(self, enaddr)) {
+		aprint_error_dev(self, "unable to get mac-address\n");
 		return;
 	}
-	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-	enaddr = prop_data_data_nocopy(ea);
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(enaddr));
 
 #if defined(EMAC_ZMII_PHY) || defined(EMAC_RGMII_PHY)
 	/* Fetch the MII offset. */
-	prop_dictionary_get_uint32(dict, "mii-phy", &mii_phy);
+	prop_dictionary_get_uint32(device_properties(self),
+	    "mii-phy", &mii_phy);
 
 #ifdef EMAC_ZMII_PHY
 	if (oaa->opb_flags & OPB_FLAGS_EMAC_RMII_ZMII)

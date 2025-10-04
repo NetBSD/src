@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dme.c,v 1.4 2020/04/02 13:03:03 nisimura Exp $ */
+/*	$NetBSD: ingenic_dme.c,v 1.5 2025/10/04 04:44:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.4 2020/04/02 13:03:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.5 2025/10/04 04:44:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/intr.h>
@@ -76,7 +76,6 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 {
 	struct dme_softc *sc = device_private(self);
 	struct apbus_attach_args *aa = aux;
-	prop_data_t eaddrprop;
 	void *ih;
 	static uint8_t enaddr[ETHER_ADDR_LEN];
 	int error;
@@ -133,13 +132,7 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 #if 0
-	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
-
-	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
-		memcpy(enaddr, prop_data_data_nocopy(eaddrprop),
-			    ETHER_ADDR_LEN);
-		aprint_debug_dev(self, "got MAC address!\n");
-	} else {
+	if (! ether_getaddr(self, enaddr)) {
 		/*
 		 * XXX
 		 * if we don't get the MAC address as a property we hope like
@@ -149,7 +142,6 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 		dme_read_c(sc, DM9000_PAB0, enaddr, 6);
 	}
 #else
-	(void)eaddrprop;
 	/*
 	 * dme_attach checks dictionary, then previous setting, then roll
 	 * a dice to make random MAC address

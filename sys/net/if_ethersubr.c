@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.331 2025/09/21 15:11:52 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.332 2025/10/04 04:44:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.331 2025/09/21 15:11:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.332 2025/10/04 04:44:19 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -182,8 +182,32 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
 
 static pktq_rps_hash_func_t ether_pktq_rps_hash_p;
 
-static int ether_output(struct ifnet *, struct mbuf *,
-    const struct sockaddr *, const struct rtentry *);
+/*
+ * Attempt to get the Ethernet address from device properties.
+ *
+ * We generally follow the Device Tree specification with regard
+ * to the property names, but that's OK because the property names
+ * are pretty generic.
+ */
+bool
+ether_getaddr(device_t dev, uint8_t enaddr[ETHER_ADDR_LEN])
+{
+	/*
+	 * Check first for the "mac-address" property.  The bindings
+	 * say that this would be used only if it is different then the
+	 * "local-mac-address" property.  But if it's the same, then
+	 * using it is exactly the same as using "local-mac-address". So,
+	 * we first look for "mac-address", and if that's not there, then
+	 * we look for "local-mac-address".
+	 */
+	if (device_getprop_data(dev, "mac-address", enaddr,
+				ETHER_ADDR_LEN) == ETHER_ADDR_LEN ||
+	    device_getprop_data(dev, "local-mac-address", enaddr,
+				ETHER_ADDR_LEN) == ETHER_ADDR_LEN) {
+		return true;
+	}
+	return false;
+}
 
 /*
  * Ethernet output routine.

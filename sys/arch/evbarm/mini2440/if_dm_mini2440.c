@@ -109,8 +109,7 @@ dme_ssextio_attach(device_t parent, device_t self, void *aux)
 	struct dme_softc	   *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = aux;
 	vaddr_t			    ioaddr;
-	const uint8_t		*enaddr;
-	prop_data_t		ea;
+	uint8_t			enaddr[ETHER_ADDR_LEN];
 
 #ifdef MINI2440_ETHER_ADDR_FIXED
 	static uint8_t enaddr_default[ETHER_ADDR_LEN] = {MINI2440_ETHER_ADDR_FIXED};
@@ -137,14 +136,9 @@ dme_ssextio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	ea = prop_dictionary_get(device_properties(self), "mac-address");
-	if( ea != NULL ) {
-		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		enaddr = prop_data_data_nocopy(ea);
-	} else {
+	if (! ether_getaddr(self, enaddr)) {
 #ifdef MINI2440_ETHER_ADDR_FIXED
-		enaddr = &enaddr_default;
+		memcpy(enaddr, &enaddr_default, sizeof(enaddr));
 #else
 		aprint_error_dev(self, "Unable to get mac-address property\n");
 		return;

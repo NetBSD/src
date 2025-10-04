@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.40 2022/09/24 18:12:42 thorpej Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.41 2025/10/04 04:44:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.40 2022/09/24 18:12:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.41 2025/10/04 04:44:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int type;
 	struct pci_attach_args	ebus_pa;
-	prop_data_t		eaddrprop;
 	pcireg_t		ebus_cl, ebus_id;
 	uint8_t			*enaddr;
 	bus_space_tag_t		romt;
@@ -211,11 +210,7 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	/*
 	 * Check if we got a mac-address property passed
 	 */
-	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
-
-	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
-		memcpy(&sc->sc_enaddr, prop_data_value(eaddrprop),
-			    ETHER_ADDR_LEN);
+	if (ether_getaddr(self, sc->sc_enaddr)) {
 		goto got_eaddr;
 	}
 

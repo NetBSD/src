@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.96 2025/02/16 18:54:49 jakllsch Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.97 2025/10/04 04:44:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.96 2025/02/16 18:54:49 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.97 2025/10/04 04:44:20 thorpej Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -190,22 +190,11 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	uint32_t maclo, machi, hwft;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	prop_dictionary_t dict;
 
 	mutex_init(&sc->sc_mdio_lock, MUTEX_DEFAULT, IPL_NET);
 	sc->sc_mii_clk = mii_clk & 7;
 
-	dict = device_properties(sc->sc_dev);
-	prop_data_t ea = dict ? prop_dictionary_get(dict, "mac-address") : NULL;
-	if (ea != NULL) {
-		/*
-		 * If the MAC address is overridden by a device property,
-		 * use that.
-		 */
-		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(enaddr, prop_data_value(ea), ETHER_ADDR_LEN);
-	} else {
+	if (! ether_getaddr(sc->sc_dev, enaddr)) {
 		/*
 		 * If we did not get an externally configure address,
 		 * try to read one from the current filter setup,

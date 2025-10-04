@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.59 2022/09/18 11:08:29 thorpej Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.59 2022/09/18 11:08:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -162,7 +162,11 @@ gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	OF_getprop(node, "local-mac-address", laddr, sizeof laddr);
+	if (! ether_getaddr(self, laddr)) {
+		printf(": failed to get MAC address\n");
+		return;
+	}
+
 	OF_getprop(node, "assigned-addresses", reg, sizeof reg);
 
 	memcpy(sc->sc_laddr, laddr, sizeof laddr);
