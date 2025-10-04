@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.111 2025/09/06 22:53:48 thorpej Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.112 2025/10/04 03:26:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.111 2025/09/06 22:53:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.112 2025/10/04 03:26:40 thorpej Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -511,8 +511,7 @@ fdt_device_register(device_t self, void *aux)
 
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 		    !found_pci_console) {
-			prop_dictionary_t dict = device_properties(self);
-			prop_dictionary_set_bool(dict, "is_console", true);
+			device_setprop_bool(self, "is_console", true);
 			found_pci_console = true;
 		}
 	}

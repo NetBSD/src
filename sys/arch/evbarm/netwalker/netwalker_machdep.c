@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.28 2024/06/02 12:11:36 andvar Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.29 2025/10/04 03:26:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.28 2024/06/02 12:11:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.29 2025/10/04 03:26:40 thorpej Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -680,22 +680,18 @@ consinit(void)
 static void
 netwalker_device_register(device_t self, void *aux)
 {
-	prop_dictionary_t dict = device_properties(self);
-
 #if NGENFB > 0
 	if (device_is_a(self, "genfb")) {
 		char *ptr;
 		if (get_bootconf_option(boot_args, "console",
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
-			prop_dictionary_set_bool(dict, "is_console", true);
+			device_setprop_bool(self, "is_console", true);
 #if NUKBD > 0
 			ukbd_cnattach();
 #endif
-		} else {
-			prop_dictionary_set_bool(dict, "is_console", false);
 		}
 #if NNETWALKER_BACKLIGHT > 0
-		netwalker_backlight_genfb_parameter_set(dict);
+		netwalker_backlight_genfb_parameter_set(device_properties(self));
 #endif
 	}
 #endif

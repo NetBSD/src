@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.9 2023/09/24 10:51:28 andvar Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.10 2025/10/04 03:26:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.9 2023/09/24 10:51:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.10 2025/10/04 03:26:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,9 +224,8 @@ valkyriefb_init(device_t self)
 	struct valkyriefb_softc *sc = device_private(self);
 	const struct videomode *mode;
 	struct rasops_info *ri;
-	prop_dictionary_t dict;
 	struct wsemuldisplaydev_attach_args aa;
-	bool console = FALSE;
+	bool console;
 	long defattr;
 
 	mode = pick_mode_by_ref(800, 600, 60);
@@ -239,8 +238,7 @@ valkyriefb_init(device_t self)
 	    &valkyriefb_accessops);
 	sc->vd.init_screen = valkyriefb_init_screen;
 
-	dict = device_properties(sc->sc_dev);
-	prop_dictionary_get_bool(dict, "is_console", &console);
+	console = device_getprop_bool(self, "is_console");
 
 	ri = &valkyriefb_console_screen.scr_ri;
 	vcons_init_screen(&sc->vd, &valkyriefb_console_screen, 1, &defattr);

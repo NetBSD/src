@@ -1,4 +1,4 @@
-/* $NetBSD: meson_genfb.c,v 1.3 2025/09/06 22:53:47 thorpej Exp $ */
+/* $NetBSD: meson_genfb.c,v 1.4 2025/10/04 03:26:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_genfb.c,v 1.3 2025/09/06 22:53:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_genfb.c,v 1.4 2025/10/04 03:26:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -182,7 +182,6 @@ meson_genfb_attach(device_t parent, device_t self, void *aux)
 	struct meson_genfb_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	prop_dictionary_t dict = device_properties(self);
 	static const struct genfb_ops zero_ops;
 	struct genfb_ops ops = zero_ops;
 	bus_addr_t addr[3];
@@ -230,7 +229,7 @@ meson_genfb_attach(device_t parent, device_t self, void *aux)
 	if (is_console)
 		aprint_normal_dev(self, "switching to framebuffer console\n");
 #endif
-	prop_dictionary_set_bool(dict, "is_console", is_console);
+	device_setprop_bool(self, "is_console", is_console);
 
 	memset(&ops, 0, sizeof(ops));
 	ops.genfb_ioctl = meson_genfb_ioctl;
