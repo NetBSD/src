@@ -1,4 +1,4 @@
-/*	$NetBSD: viogpu.c,v 1.1 2025/07/26 14:18:13 martin Exp $ */
+/*	$NetBSD: viogpu.c,v 1.2 2025/10/04 03:58:38 thorpej Exp $ */
 /*	$OpenBSD: viogpu.c,v 1.3 2023/05/29 08:13:35 sf Exp $ */
 
 /*
@@ -275,7 +275,6 @@ viogpu_attach_postintr(device_t self)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri;
-	prop_dictionary_t dict;
 	long defattr;
 	int nsegs;
 	int error;
@@ -361,10 +360,8 @@ viogpu_attach_postintr(device_t self)
 #ifdef WSDISPLAY_MULTICONS
 	sc->is_console = true;
 #else
-	sc->is_console = false;
+	sc->is_console = device_getprop_bool(self, "is_console");
 #endif
-	dict = device_properties(self);
-	prop_dictionary_get_bool(dict, "is_console", &sc->is_console);
 
 	sc->sc_wsd = (struct wsscreen_descr){
 		"std",

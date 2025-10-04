@@ -1,4 +1,4 @@
-/*	$NetBSD: igmafb.c,v 1.4 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: igmafb.c,v 1.5 2025/10/04 03:58:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael van Elst
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmafb.c,v 1.4 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmafb.c,v 1.5 2025/10/04 03:58:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,6 @@ igmafb_attach(device_t parent, device_t self, void *aux)
 	struct igmafb_softc *sc = device_private(self);
 	struct igma_attach_args *iaa = (struct igma_attach_args *)aux;
 	struct rasops_info *ri;
-	prop_dictionary_t dict;
 	bool is_console;
 	unsigned long defattr;
 	struct wsemuldisplaydev_attach_args waa;
@@ -127,10 +126,8 @@ igmafb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	dict = device_properties(self);
-	prop_dictionary_get_bool(dict, "is_console", &is_console);
-	if (iaa->iaa_console)
-		is_console = true;
+	is_console = iaa->iaa_console ||
+		     device_getprop_bool(self, "is_console");
 
 	sc->sc_chip = iaa->iaa_chip;
 

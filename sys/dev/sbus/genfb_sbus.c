@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.13 2020/09/06 17:22:44 riastradh Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.14 2025/10/04 03:58:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.13 2020/09/06 17:22:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.14 2025/10/04 03:58:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,12 +93,10 @@ genfb_attach_sbus(device_t parent, device_t self, void *args)
 	struct sbus_attach_args *sa = args;
 	static const struct genfb_ops zero_ops;
 	struct genfb_ops ops = zero_ops;
-	prop_dictionary_t dict;
 	bus_space_handle_t bh;
 	paddr_t fbpa;
 	vaddr_t fbva;
 	int node = sa->sa_node;
-	int isconsole;
 
 	aprint_normal("\n");
 	sc->sc_gen.sc_dev = self;
@@ -135,10 +133,8 @@ genfb_attach_sbus(device_t parent, device_t self, void *args)
 	}
 #endif
 
-	isconsole = fb_is_console(node);
-	dict = device_properties(self);
-	prop_dictionary_set_bool(dict, "is_console", isconsole);
-	
+	device_setprop_bool(self, "is_console", fb_is_console(node));
+
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
 			 sa->sa_offset + sc->sc_gen.sc_fboffset,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.21 2022/07/17 10:28:09 riastradh Exp $ */
+/*	$NetBSD: wcfb.c,v 1.22 2025/10/04 03:58:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.21 2022/07/17 10:28:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.22 2025/10/04 03:58:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,20 +159,19 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	struct wcfb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct rasops_info	*ri;
-	prop_dictionary_t	dict;
 	struct wsemuldisplaydev_attach_args aa;
 	int 			i, j;
 	uint32_t		reg;
 	unsigned long		defattr;
-	bool			is_console = 0;
+	bool			is_console;
 	uint32_t		sub;
 
 	sc->sc_dev = self;
 	sc->putchar = NULL;
 	pci_aprint_devinfo(pa, NULL);
 
-	dict = device_properties(self);
-	prop_dictionary_get_bool(dict, "is_console", &is_console);
+	is_console = device_getprop_bool(self, "is_console");
+
 #ifndef WCFB_DEBUG
 	if (!is_console) return;
 #endif
