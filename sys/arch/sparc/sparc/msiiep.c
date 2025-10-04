@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.53 2022/01/21 19:14:14 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.54 2025/10/04 16:11:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.53 2022/01/21 19:14:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.54 2025/10/04 16:11:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -227,8 +227,11 @@ msiiep_attach(device_t parent, device_t self, void *aux)
 		cur->idlespin = msiiep_cpu_sleep;
 	}
 
+	devhandle_t selfh = device_handle(self);
+
 	/* pass on real mainbus_attach_args */
 	msa.msa_ma = ma;
+	KASSERT(prom_devhandle_to_node(selfh) == ma->ma_node);
 
 	/* config timer/counter part of PCIC */
 	msa.msa_name = "timer";
@@ -236,7 +239,8 @@ msiiep_attach(device_t parent, device_t self, void *aux)
 
 	/* config PCI tree */
 	msa.msa_name = "pcic";
-	config_found(self, &msa, NULL, CFARGS_NONE);
+	config_found(self, &msa, NULL,
+	    CFARGS(.devhandle = selfh));
 }
 
 /* ARGSUSED */
@@ -270,6 +274,7 @@ static void
 mspcic_attach(device_t parent, device_t self, void *aux)
 {
 	struct mspcic_softc *sc = device_private(self);
+	devhandle_t selfh = device_handle(self);
 	struct msiiep_attach_args *msa = aux;
 	struct mainbus_attach_args *ma = msa->msa_ma;
 	int node = ma->ma_node;
@@ -278,6 +283,7 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 
 	sc->sc_node = node;
+	KASSERT(prom_devhandle_to_node(selfh) == node);
 
 	/* copy parent tags */
 	sc->sc_bustag = ma->ma_bustag;
@@ -363,7 +369,7 @@ mspcic_attach(device_t parent, device_t self, void *aux)
 	mspcic_pci_scan(sc->sc_node);
 
 	config_found(self, &pba, mspcic_print,
-	    CFARGS(.devhandle = device_handle(self)));
+	    CFARGS(.devhandle = selfh));
 }
 
 
