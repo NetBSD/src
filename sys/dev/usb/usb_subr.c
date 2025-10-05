@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.280 2025/10/05 20:04:30 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.281 2025/10/05 20:41:04 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.280 2025/10/05 20:04:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.281 2025/10/05 20:41:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -698,7 +698,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 
 	/* XXX check that all interfaces are idle */
-	if (dev->ud_config != USB_UNCONFIG_NO) { /* XXX use ud_configidx */
+	if (dev->ud_configidx != USB_UNCONFIG_INDEX) {
 		DPRINTF("free old config", 0, 0, 0, 0);
 		/* Free all configuration data structures. */
 		nifc = dev->ud_cdesc->bNumInterface;
