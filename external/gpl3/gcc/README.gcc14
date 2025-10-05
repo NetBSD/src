@@ -17,7 +17,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
 aarch64		y	y	y	y	y	y		y	n[13]	?
 aarch64eb	y	y	y	y	y	y		y	n[13]	?
-alpha		y	b	y	y	y	y[11]		?	?	?
+alpha		y	b	y	y	y	y[11]		n[14]	n[15]	?
 earmv4		y	b	y	y	y	y		?	?	?
 earmv4eb	y	b	y	y	y	y		?	?	?
 earmv5		y	y	y	y	y	y		y	y	?
@@ -75,7 +75,14 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [13]: some pic_profile variants of tests in usr.bin/c++ fails with
       ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_cas8_acq_rel'
       ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_swp8_acq_rel'
-
+[14]: cc1 crashes by jumping into rodata segment when compiling pkgsrc/pkgtools/libnbcompat:
+      In file included from glob.c:12:
+      __glob13.c: In function 'globextend':
+      __glob13.c:800:1: internal compiler error: Illegal instruction
+        800 | globextend(path, pglob, limit)
+            | ^~~~~~~~~~
+[15]: most(?) nfs-related tests timedout. ipf tests fail with incorrect results.
+      some pic_profile variants of tests in usr.bin/c++ crash.
 
 --- these are GCC 12 issues, but some will remain --
 [XX]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
