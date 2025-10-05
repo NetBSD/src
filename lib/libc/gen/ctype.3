@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.34 2025/10/05 00:29:37 riastradh Exp $
+.\"	$NetBSD: ctype.3,v 1.35 2025/10/05 00:35:47 riastradh Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -62,18 +62,18 @@ See the specific manual pages for information about the
 test or conversion performed by each function.
 .Sh ENVIRONMENT
 In
-.Nx 10 ,
+.Nx 11 ,
 the
 .Nm
-functions will crash with a signal on certain invalid inputs as a
-diagnostic aid for applications; see
+functions will always crash with a signal on certain invalid inputs as
+a diagnostic aid for applications; see
 .Sx CAVEATS .
-In
-.Nx 11 ,
-setting the environment variable
+Setting the environment variable
 .Ev LIBC_ALLOWCTYPEABUSE
-before starting a program will make the functions return nonsense
-answers instead of crashing.
+before starting a program will restore the old behavior of returning
+nonsense answers for these inputs, or sometimes but not always
+crashing, depending on factors such as address space layout
+randomization.
 .Sh EXAMPLES
 To print an upper-case version of a string to stdout,
 the following code can be used:
