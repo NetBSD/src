@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.15 2025/04/07 18:38:58 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.16 2025/10/05 20:58:09 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -99,13 +99,6 @@
 		<string>Pine64 Pinebook Pro</string>
 		<key>u-boot-pkg</key>
 		<string>pinebook-pro</string>
-	</dict>
-	<key>pine64,pinecube</key>
-	<dict>
-		<key>description</key>
-		<string>PineCube IP Camera</string>
-		<key>u-boot-pkg</key>
-		<string>pinecube</string>
 	</dict>
 	<key>asus,rk3288-tinker</key>
 	<dict>
@@ -357,6 +350,14 @@
 		<string>libretech-all-h3-cc-h5</string>
 	</dict>
 
+	<key>licheepi,licheepi-zero</key>
+	<dict>
+		<key>description</key>
+		<string>Lichee Pi Zero</string>
+		<key>u-boot-pkg</key>
+		<string>licheepi-zero</string>
+	</dict>
+
 	<key>merrii,a31-hummingbird</key>
 	<dict>
 		<key>description</key>
@@ -458,6 +459,13 @@
 		<key>u-boot-pkg</key>
 		<string>pinebook</string>
 	</dict>
+	<key>pine64,pinecube</key>
+	<dict>
+		<key>description</key>
+		<string>PineCube IP Camera</string>
+		<key>u-boot-pkg</key>
+		<string>pinecube</string>
+	</dict>
 	<key>pine64,sopine-baseboard</key>
 	<dict>
 		<key>description</key>
@@ -479,6 +487,13 @@
 		<string>Pine H64</string>
 		<key>u-boot-pkg</key>
 		<string>pine-h64</string>
+	</dict>
+	<key>pine64,pinephone</key>
+	<dict>
+		<key>description</key>
+		<string>Pinephone</string>
+		<key>u-boot-pkg</key>
+		<string>pinephone</string>
 	</dict>
 
 	<key>terasic,de0-atlas</key>
