@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $	*/
+/*	$NetBSD: subr_time_arith.c,v 1.4 2025/10/05 18:51:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.4 2025/10/05 18:51:50 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -153,6 +153,22 @@ tvtohz(const struct timeval *tv)
 		ticks = INT_MAX;
 
 	return ((int)ticks);
+}
+
+/*
+ * Compute number of ticks in the specified amount of time.
+ */
+int
+tstohz(const struct timespec *ts)
+{
+	struct timeval tv;
+
+	/*
+	 * usec has great enough resolution for hz, so convert to a
+	 * timeval and use tvtohz() above.
+	 */
+	TIMESPEC_TO_TIMEVAL(&tv, ts);
+	return tvtohz(&tv);
 }
 
 /*

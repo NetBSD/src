@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.41 2024/12/22 23:24:20 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.42 2025/10/05 18:51:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.41 2024/12/22 23:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.42 2025/10/05 18:51:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,22 +82,6 @@ tshztoup(const struct timespec *tsp)
 	getnanouptime(&now);
 	timespecsub(&ts, &now, &ts);
 	return tstohz(&ts);
-}
-
-/*
- * Compute number of ticks in the specified amount of time.
- */
-int
-tstohz(const struct timespec *ts)
-{
-	struct timeval tv;
-
-	/*
-	 * usec has great enough resolution for hz, so convert to a
-	 * timeval and use tvtohz() above.
-	 */
-	TIMESPEC_TO_TIMEVAL(&tv, ts);
-	return tvtohz(&tv);
 }
 
 int
