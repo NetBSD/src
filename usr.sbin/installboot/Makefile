@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2024/05/22 15:42:42 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.61 2025/10/05 21:18:29 thorpej Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,6 +19,7 @@ ARCH_FILES+= landisk.c
 ARCH_FILES+= macppc.c
 ARCH_FILES+= news.c next68k.c
 ARCH_FILES+= pmax.c
+ARCH_FILES+= riscv.c
 ARCH_FILES+= sparc.c sparc64.c sun68k.c
 ARCH_FILES+= vax.c
 ARCH_FILES+= x68k.c
@@ -32,11 +33,11 @@ COPTS.machines.c+=	-DSINGLE_ARCH=ib_mach_${MACHINE}
 
 SRCS+=${ARCH_FILES}
 
-.if !empty(ARCH_FILES:C/(evbarm|evbmips)/evboard/:Mevboard.c)
+.if !empty(ARCH_FILES:C/(evbarm|evbmips|riscv)/evboard/:Mevboard.c)
 SRCS+=evboards.c
 .endif
 
-.if !empty(ARCH_FILES:C/(evbarm|evbmips)/fdt/:Mfdt.c)
+.if !empty(ARCH_FILES:C/(evbarm|evbmips|riscv)/fdt/:Mfdt.c)
 FDTDIR=		${.CURDIR}/../../sys/external/bsd/libfdt/dist
 .PATH:		${FDTDIR}
 CPPFLAGS+=	-DSUPPORT_FDT -I${FDTDIR}
@@ -49,7 +50,7 @@ COPTS.fdt_strerror.c+=	-Wno-error=sign-compare
 
 
 .if !defined(HOSTPROGNAME)
-.if !empty(ARCH_FILES:C/(evbarm|evbmips)/ofw/:Mofw.c)
+.if !empty(ARCH_FILES:C/(evbarm|evbmips|riscv)/ofw/:Mofw.c)
 CPPFLAGS+=	-DSUPPORT_OPENFIRMWARE
 .endif
 .endif

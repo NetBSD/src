@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.44 2024/05/22 15:42:42 tsutsui Exp $	*/
+/*	$NetBSD: machines.c,v 1.45 2025/10/05 21:18:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: machines.c,v 1.44 2024/05/22 15:42:42 tsutsui Exp $");
+__RCSID("$NetBSD: machines.c,v 1.45 2025/10/05 21:18:29 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/types.h>
@@ -60,6 +60,7 @@ struct ib_mach * const machines[] = {
     &ib_mach_newsmips,
     &ib_mach_next68k,
     &ib_mach_pmax,
+    &ib_mach_riscv,
     &ib_mach_sparc,
     &ib_mach_sparc64,
     &ib_mach_sun2,

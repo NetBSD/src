@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.46 2024/05/22 15:42:42 tsutsui Exp $	*/
+/*	$NetBSD: installboot.h,v 1.47 2025/10/05 21:18:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ extern struct ib_mach ib_mach_news68k;
 extern struct ib_mach ib_mach_newsmips;
 extern struct ib_mach ib_mach_next68k;
 extern struct ib_mach ib_mach_pmax;
+extern struct ib_mach ib_mach_riscv;
 extern struct ib_mach ib_mach_sparc;
 extern struct ib_mach ib_mach_sparc64;
 extern struct ib_mach ib_mach_sun2;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.113 2024/12/29 16:44:22 christos Exp $
+.\"	$NetBSD: installboot.8,v 1.114 2025/10/05 21:18:29 thorpej Exp $
 .\"
 .\" Copyright (c) 2002-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" Usage: \*(UB
 .ds UB U\(hyBoot
 .
-.Dd December 29, 2024
+.Dd October 5, 2025
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -165,7 +165,9 @@ installation information in a file called
 .Pp
 The following platforms have this requirement and utilize this database
 overlay feature:
-.Sy evbarm .
+.Sy evbarm ,
+.Sy evbmips ,
+.Sy riscv .
 .Ss UEFI boot
 On platforms that boot with
 .Tn UEFI ,
@@ -286,6 +288,7 @@ The following machines are currently supported:
 .Ic amd64 ,
 .Ic amiga ,
 .Ic evbarm ,
+.Ic evbmips ,
 .Ic ews4800mips ,
 .Ic hp300 ,
 .Ic hppa ,
@@ -296,6 +299,7 @@ The following machines are currently supported:
 .Ic newsmips ,
 .Ic next68k ,
 .Ic pmax ,
+.Ic riscv ,
 .Ic sparc ,
 .Ic sparc64 ,
 .Ic sun2 ,
@@ -336,7 +340,9 @@ to the end of
 which must be a regular file in this case.
 .
 .It Ic board Ns Op Ns Li = Ns Ar type
-.Sy [ evbarm ]
+.Sy [ evbarm ,
+.Sy evbmips ,
+.Sy riscv ]
 Specify the board type used to determine the correct boot loader image
 and installation procedure.
 If omitted,
@@ -374,7 +380,9 @@ or
 .Ic auto .
 .
 .It Ic dtb Ns Li = Ns Ar dtbfile
-.Sy [ evbarm ]
+.Sy [ evbarm ,
+.Sy evbmips ,
+.Sy riscv ]
 Attempt to determine the board type from information in the device tree
 blob file at
 .Ar dtbfile .
@@ -409,7 +417,9 @@ and
 .Aq z .
 .
 .It Ic media Ns Li = Ns Ar type
-.Sy [ evbarm ]
+.Sy [ evbarm ,
+.Sy evbmips ,
+.Sy riscv ]
 Some boards require a different boot loader binary and/or installation
 procedure depending on what type of media will be used to boot the system.
 For such boards, this option is required, and omitting it will display a
@@ -1100,6 +1110,26 @@ mkisofs -o /tmp/cd-image -a -l -v iso-source-dir
 \&...
 installboot -b $((48 * 4)) /tmp/cd-image /usr/mdec/bootxx_cd9660
 .Ed
+.
+.Ss NetBSD/riscv files
+The
+.Nx Ns /riscv
+platform covers a wide variety of board types, many of which use \*(UB.
+Running
+.Nm
+with no options will display a list of known boards.
+Using the verbose option will also display information about which
+\*(UB package needs to be installed to support that board,
+and if the required \*(UB package is installed,
+the path at which it is located.
+.Bl -tag -width Pa
+.It Pa /usr/pkg/share/u-boot
+The default location scanned for
+\*(UB packages with installation overlays.
+.It Pa /usr/share/installboot/riscv/boards.plist
+Base board database, used to provide information about which
+\*(UB package is required for a given board.
+.El
 .
 .Ss NetBSD/sparc
 Install the Berkeley Fast File System primary bootstrap on to disk
