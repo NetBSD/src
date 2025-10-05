@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.190 2025/08/24 09:43:09 nat Exp $	*/
+/*	$NetBSD: xhci.c,v 1.191 2025/10/05 20:04:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.190 2025/08/24 09:43:09 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.191 2025/10/05 20:04:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2861,6 +2861,8 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	dev->ud_quirks = &usbd_no_quirk;
 	dev->ud_addr = 0;
 	dev->ud_ddesc.bMaxPacketSize = 0;
+	dev->ud_config = USB_UNCONFIG_NO;
+	dev->ud_configidx = USB_UNCONFIG_INDEX;
 	dev->ud_depth = depth;
 	dev->ud_powersrc = up;
 	dev->ud_myhub = up->up_parent;
