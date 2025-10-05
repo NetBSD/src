@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.33 2025/10/01 17:39:50 martin Exp $
+.\"	$NetBSD: ctype.3,v 1.34 2025/10/05 00:29:37 riastradh Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -173,9 +173,13 @@ main(int argc, char **argv)
 	if (argc < 2)
 		return 1;
 	setlocale(LC_ALL, "");
-	printf("%d %d\en", *argv[1], isprint(*argv[1]));
-	printf("%d %d\en", (int)(unsigned char)*argv[1],
-	    isprint((unsigned char)*argv[1]));
+
+	printf("  char=%-4d isprint? %d\en",
+	    (int)*argv[1],
+	    isprint(*argv[1]) ? 1 : 0);
+	printf("u_char=%-4d isprint? %d\en",
+	    (int)(unsigned char)*argv[1],
+	    isprint((unsigned char)*argv[1]) ? 1 : 0);
 	return 0;
 }
 .Ed
@@ -185,24 +189,28 @@ passes
 .Vt char .
 At runtime, you may get nonsense answers for some inputs without the
 cast \(em if you're lucky and it doesn't crash:
-.Bd -literal -offset indent
+.Bd -literal
 % gcc -Wall -o test test.c
+In file included from /usr/include/ctype.h:100,
+                 from test.c:1:
 test.c: In function 'main':
-test.c:12:2: warning: array subscript has type 'char'
+test.c:15:21: warning: array subscript has type 'char' [-Wchar-subscripts]
+   15 |             isprint(*argv[1]) ? 1 : 0);
+      |                     ^
 % LC_CTYPE=C ./test $(printf '\e270')
--72 5
-184 0
+  char=-72  isprint? 1
+u_char=184  isprint? 0
 % LC_CTYPE=C ./test $(printf '\e377')
--1 0
-255 0
+  char=-1   isprint? 0
+u_char=255  isprint? 0
 % LC_CTYPE=fr_FR.ISO8859-1 ./test $(printf '\e377')
--1 0
-255 2
+  char=-1   isprint? 0
+u_char=255  isprint? 1
 .Ed
 .Pp
-Some implementations of libc, such as glibc as of 2018, attempt to
-avoid the worst of the undefined behavior by defining the functions to
-work for all integer inputs representable by either
+Some implementations of libc, such as glibc as of 2018, hide the
+undefined behavior by defining the functions to work for all integer
+inputs representable by either
 .Vt unsigned char
 or
 .Vt char ,
