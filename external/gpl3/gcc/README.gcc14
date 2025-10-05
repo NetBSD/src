@@ -15,8 +15,8 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	y	y		y	?	?
-aarch64eb	y	y	y	y	y	y		n[5]	?	?
+aarch64		y	y	y	y	y	y		y	n[13]	?
+aarch64eb	y	y	y	y	y	y		y	n[13]	?
 alpha		y	b	y	y	y	y[11]		?	?	?
 earmv4		y	b	y	y	y	y		?	?	?
 earmv4eb	y	b	y	y	y	y		?	?	?
@@ -59,12 +59,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [2]: new GCC generated files are too huge, eg:
      {standard input}: Assembler messages:
      {standard input}:60465: Warning: .word .L5289-.L5291+00000000 didn't fit
-[5]: after extracting base, 'tar + gzip' combo sometimes crashes.  kernel works.  eg:
-     pax -rzpe  -f /ns3/base.tgz
-     pax -rzpe  -f /ns3/comp.tgz
-     gzip: error writing to output: Broken pipe
-     [1]   Abort trap (core dumped) ${doit} pax -rzpe ${verbose} -f "${setfile}"
-     most things seem to work when used in a chroot.  for above it is pax (or tar) that crashes.
 [6]: mips o32 also has gdb vs atomic issue:
      libgdb.a(minsyms.o): in function `minimal_symbol_reader::install()':
      minsyms.c:(.text+0x4224): undefined reference to `__atomic_test_and_set'
@@ -78,6 +72,9 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
 [12]: libstdc++ has a weird build issue:
       ld: /var/obj/ia64/usr/src3/destdir.ia64/usr/lib/libstdc++.so: undefined reference to `__glibcxx_backtrace_simple'
+[13]: some pic_profile variants of tests in usr.bin/c++ fails with
+      ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_cas8_acq_rel'
+      ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_swp8_acq_rel'
 
 
 --- these are GCC 12 issues, but some will remain --
