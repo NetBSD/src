@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1368 2025/09/17 23:44:27 mrg Exp $
+# $NetBSD: mi,v 1.1369 2025/10/05 20:59:02 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3373,6 +3373,8 @@
 ./usr/share/installboot/evbarm/boards.plist	base-sysutil-share
 ./usr/share/installboot/evbmips			base-sysutil-share
 ./usr/share/installboot/evbmips/boards.plist	base-sysutil-share
+./usr/share/installboot/riscv			base-sysutil-share
+./usr/share/installboot/riscv/boards.plist	base-sysutil-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
