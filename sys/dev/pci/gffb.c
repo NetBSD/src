@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.27 2025/08/30 09:29:14 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.28 2025/10/06 07:51:44 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.27 2025/08/30 09:29:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.28 2025/10/06 07:51:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ struct gffb_softc {
 	uint32_t sc_fboffset;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
-	int sc_locked, sc_accel, sc_mobile, sc_video;
+	int sc_locked, sc_accel, sc_mobile, sc_video, sc_bl_level;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -118,6 +118,10 @@ static void	gffb_restore_palette(struct gffb_softc *);
 static int 	gffb_putpalreg(struct gffb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 static void	gffb_setvideo(struct gffb_softc *, int);
+static int	gffb_get_backlight(struct gffb_softc *);
+static void	gffb_set_backlight(struct gffb_softc *, int);
+static void	gffb_brightness_up(device_t);
+static void	gffb_brightness_down(device_t);
 
 static void	gffb_init(struct gffb_softc *);
 
@@ -356,6 +360,13 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	gffb_init(sc);
 	gffb_setvideo(sc, 1);
 
+	if (sc->sc_mobile) {
+		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
+		    gffb_brightness_up, TRUE);
+		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+		    gffb_brightness_down, TRUE);
+	}
+
 #ifdef GFFB_DEBUG
 	printf("put: %08x\n", GFFB_READ_4(GFFB_FIFO_PUT));
 	printf("get: %08x\n", GFFB_READ_4(GFFB_FIFO_GET));
@@ -533,13 +544,13 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		if (sc->sc_mobile == 0)
 			return EPASSTHROUGH;
 		switch (param->param) {
-#if 0
+
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			param->min = 0;
 			param->max = 255;
 			param->curval = sc->sc_bl_level;
 			return 0;
-#endif
+
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			param->min = 0;
 			param->max = 1;
@@ -553,11 +564,11 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		if (sc->sc_mobile == 0)
 			return EPASSTHROUGH;
 		switch (param->param) {
-#if 0
+
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			gffb_set_backlight(sc, param->curval);
 			return 0;
-#endif
+
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			gffb_setvideo(sc, param->curval);
 			return 0;
@@ -781,18 +792,11 @@ gffb_setvideo(struct gffb_softc *sc, int on)
 	gffb_write_crtc(sc, 0, 0x1a, reg0);
 	gffb_write_crtc(sc, 1, 0x1a, reg1);
 
-	if(sc->sc_mobile) {
-		uint32_t tmp_pmc, tmp_pcrt;
-		tmp_pmc = GFFB_READ_4(GFFB_PMC + 0x10F0) & 0x7FFFFFFF;
-		tmp_pcrt = GFFB_READ_4(GFFB_CRTC0 + 0x081C) & 0xFFFFFFFC;
-		if (on) {
-			tmp_pmc |= (1 << 31);
-			tmp_pcrt |= 0x1;
-		}
-		GFFB_WRITE_4(GFFB_PMC + 0x10F0, tmp_pmc);
-		GFFB_WRITE_4(GFFB_CRTC0 + 0x081C, tmp_pcrt);
-	}
 	sc->sc_video = on;
+
+	if(sc->sc_mobile) {
+		gffb_set_backlight(sc, sc->sc_bl_level);
+	}
 }
 
 static void
@@ -909,6 +913,54 @@ crap:
 	aprint_error_dev(sc->sc_dev, "DMA lockup\n");
 }
 
+static int
+gffb_get_backlight(struct gffb_softc *sc)
+{
+	uint32_t pmc;
+	pmc = (GFFB_READ_4(GFFB_PMC + 0x10F0) & 0x7FFF0000) >> 16;
+	pmc = (pmc - GFFB_BL_MIN) * 256 / (GFFB_BL_MAX - GFFB_BL_MIN);
+	return pmc;
+}
+
+static void
+gffb_set_backlight(struct gffb_softc *sc, int level)
+{
+	uint32_t pmc = GFFB_READ_4(GFFB_PMC + 0x10F0) & 0x0000ffff;
+	uint32_t bl, pcrt;
+
+	if (level < 0) level = 0;
+	if (level > 255) level = 255;
+
+	pcrt = GFFB_READ_4(GFFB_CRTC0 + 0x081C) & 0xFFFFFFFC;
+	bl = (level * (GFFB_BL_MAX - GFFB_BL_MIN) / 256) + GFFB_BL_MIN;
+	pmc |= bl << 16;
+	if (sc->sc_video && (level > 0)) {
+		pcrt |= 0x1;
+		pmc |= 0x80000000;
+	}
+	GFFB_WRITE_4(GFFB_PMC + 0x10F0, pmc);
+	GFFB_WRITE_4(GFFB_CRTC0 + 0x081C, pcrt);
+	DPRINTF("%s: %d %08x %08x\n", __func__, level, pmc, pcrt);
+	sc->sc_bl_level = level;
+}
+
+static void
+gffb_brightness_up(device_t dev)
+{
+	struct gffb_softc *sc = device_private(dev);
+
+	sc->sc_video = 1;
+	gffb_set_backlight(sc, sc->sc_bl_level + 8);
+}
+
+static void
+gffb_brightness_down(device_t dev)
+{
+	struct gffb_softc *sc = device_private(dev);
+
+	gffb_set_backlight(sc, sc->sc_bl_level - 8);
+}
+
 void
 gffb_init(struct gffb_softc *sc)
 {
@@ -921,6 +973,10 @@ gffb_init(struct gffb_softc *sc)
 	    GFFB_READ_4(GFFB_CRTC1 + GFFB_DISPLAYSTART));
 
 	sc->sc_fboffset = 0x2000;
+
+	if (sc->sc_mobile) {
+		sc->sc_bl_level = gffb_get_backlight(sc);
+	}
 
 	/* init display start */
 	GFFB_WRITE_4(GFFB_CRTC0 + GFFB_DISPLAYSTART, sc->sc_fboffset);
