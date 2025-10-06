@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.37 2025/09/17 04:37:47 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.38 2025/10/06 20:58:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.37 2025/09/17 04:37:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.38 2025/10/06 20:58:48 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -609,6 +609,13 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			offset = -1;
 			goto err;
 		}
+#if 0
+		/*
+		 * Under normal conditions, we should never be producing
+		 * a partial segment with neither inode blocks nor data blocks.
+		 * However, these do sometimes appear and they need not
+		 * prevent us from continuing.
+		 */
 		if (lfs_ss_getnfinfo(fs, ssp) == 0 &&
 		    lfs_ss_getninos(fs, ssp) == 0) {
 			DLOG((DLOG_RF, "Empty pseg at 0x%" PRIx64 "\n",
@@ -616,6 +623,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			offset = -1;
 			goto err;
 		}
+#endif /* 0 */
 		if (lfs_sb_getversion(fs) == 1) {
 			if (lfs_ss_getcreate(fs, ssp) < lfs_sb_gettstamp(fs)) {
 				DLOG((DLOG_RF, "Old data at 0x%" PRIx64 "\n", offset));
