@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1395 2025/10/06 13:11:56 riastradh Exp $
+# $NetBSD: mi,v 1.1396 2025/10/06 13:16:43 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -144,6 +144,7 @@
 ./usr/libdata/debug/usr/tests/lib/libprop		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen	tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/weak	tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librt			tests-lib-debug		compattestfile,atf
@@ -4201,6 +4202,11 @@
 ./usr/tests/lib/libpthread/t_thread_local_dtor		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_tss			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libpthread/weak/t_pthread_weak_nothread	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/t_pthread_weak_threaded	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread_dbg				tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Atffile			tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Kyuafile			tests-obsolete		obsolete

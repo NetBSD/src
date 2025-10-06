@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2025/04/08 13:30:44 riastradh Exp $
+# $NetBSD: Makefile,v 1.20 2025/10/06 13:16:43 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -69,5 +69,6 @@ FILESDIR=	${TESTSDIR}
 FILES=		d_mach
 
 SUBDIR=		dlopen
+SUBDIR=		weak
 
 .include <bsd.test.mk>
