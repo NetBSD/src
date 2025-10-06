@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.23 2025/10/03 16:09:55 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.24 2025/10/06 16:11:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -300,4 +300,10 @@ lib/libc/gen/sysctl.c				1.39
 
 	sysctl: avoid descriptions in small install media.
 	[christos, ticket #46]
+
+tests/lib/libc/kevent_nullmnt/t_nullmnt.sh	1.9
+
+	PR 59683: fix nullfs presence test in test
+	libc/kevent/t_nullmnt.
+	[kre, ticket #47]
 
