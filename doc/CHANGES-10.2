@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.58 2025/10/03 09:59:08 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.59 2025/10/06 16:24:10 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1133,4 +1133,10 @@ sys/arch/xen/xen/xen_clock.c			1.22
 
 	xen: PR 59437: use ordered rdtsc for xen clock.
 	[riastradh, ticket #1170]
+
+tests/lib/libc/kevent_nullmnt/t_nullmnt.sh	1.7-1.9
+
+	PR 59683: fix nullfs presence test in test libc/kevent/t_nullmnt.
+	Require root privileges.
+	[kre, ticket #1171]
 
