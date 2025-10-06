@@ -1,4 +1,4 @@
-/*	$NetBSD: t_time_arith.c,v 1.6 2025/10/05 18:54:02 riastradh Exp $	*/
+/*	$NetBSD: t_time_arith.c,v 1.7 2025/10/06 12:05:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2024-2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_time_arith.c,v 1.6 2025/10/05 18:54:02 riastradh Exp $");
+__RCSID("$NetBSD: t_time_arith.c,v 1.7 2025/10/06 12:05:04 riastradh Exp $");
 
 #include <sys/timearith.h>
 
@@ -763,11 +763,11 @@ const struct tstohz_case {
 	[158] = {8191, {.tv_sec = 2148, .tv_nsec = 1}, 17594270, NULL},
 	[159] = {8191, {.tv_sec = 2148, .tv_nsec = 2}, 17594270, NULL},
 	/* .tv_sec ~ INT_MAX/hz */
-	[160] = {8191, {.tv_sec = 262176, .tv_nsec = 354071}, 2147483646,
+	[160] = {8191, {.tv_sec = 262176, .tv_nsec = 3540471}, 2147483646,
 		NULL},
-	[161] = {8191, {.tv_sec = 262176, .tv_nsec = 354072}, 2147483647,
+	[161] = {8191, {.tv_sec = 262176, .tv_nsec = 3540472}, 2147483647,
 		NULL},
-	[162] = {8191, {.tv_sec = 262176, .tv_nsec = 354073}, 2147483647,
+	[162] = {8191, {.tv_sec = 262176, .tv_nsec = 3540473}, 2147483647,
 		NULL},
 	/* saturate at INT_MAX = 2^31 - 1 ticks */
 	[163] = {8191, {.tv_sec = 262176, .tv_nsec = 3662556}, 2147483647,
