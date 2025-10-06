@@ -75,6 +75,7 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [13]: some pic_profile variants of tests in usr.bin/c++ fails with
       ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_cas8_acq_rel'
       ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_swp8_acq_rel'
+      -- this is odd, these symbols are in libc, and are undefined in libgcc_s.so, but so are eg, abort() and malloc() etc.
 [14]: cc1 crashes by jumping into rodata segment when compiling pkgsrc/pkgtools/libnbcompat:
       In file included from glob.c:12:
       __glob13.c: In function 'globextend':
