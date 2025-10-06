@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.21 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.22 2025/10/06 13:12:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.21 2022/04/10 10:38:33 riastradh Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.22 2025/10/06 13:12:29 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -47,6 +47,10 @@ __RCSID("$NetBSD: pthread_attr.c,v 1.21 2022/04/10 10:38:33 riastradh Exp $");
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+__strong_alias(__libc_thr_attr_init, pthread_attr_init)
+__strong_alias(__libc_thr_attr_setdetachstate, pthread_attr_setdetachstate)
+__strong_alias(__libc_thr_attr_destroy, pthread_attr_destroy)
 
 __weak_alias(pthread_attr_get_np, _pthread_attr_get_np)
 

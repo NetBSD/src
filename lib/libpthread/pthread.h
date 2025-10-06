@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.41 2018/02/20 05:10:51 kamil Exp $	*/
+/*	$NetBSD: pthread.h,v 1.42 2025/10/06 13:12:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -303,17 +303,21 @@ __END_DECLS
  * program. This permits code, particularly libraries that do not
  * directly use threads but want to be thread-safe in the presence of
  * threaded callers, to use pthread mutexes and the like without
- * unnecessairly including libpthread in their linkage.
+ * unnecessarily including libpthread in their linkage.
  *
- * Left out of this list are functions that can't sensibly be trivial
- * or no-op stubs in a single-threaded process (pthread_create,
- * pthread_kill, pthread_detach), functions that normally block and
- * wait for another thread to do something (pthread_join), and
- * functions that don't make sense without the previous functions
- * (pthread_attr_*). The pthread_cond_wait and pthread_cond_timedwait
- * functions are useful in implementing certain protection mechanisms,
- * though a non-buggy app shouldn't end up calling them in
- * single-threaded mode.
+ * A common mistake is to include pthread.h but not link against
+ * libpthread in applications that create threads.  Since threading
+ * adds substantial overhead to basic libc functionality like stdio, we
+ * don't want to make libpthread default, but we do want to catch this
+ * mistake.  We catch it by not defining pthread_create in libc or
+ * renaming it to a stub that is defined in libc by default.
+ *
+ * However, some libraries (like openssl libcrypto) will _optionally_
+ * create threads in threaded applications.  These libraries can
+ * request the stub by defining _PTHREAD_CREATE_WEAK, so they can be
+ * used by threaded applications -- which need to link against
+ * libpthread themselves to avoid runtime errors -- and non-threaded
+ * applications which don't link against libpthread at all.
  *
  * The rename is done as:
  * #define pthread_foo	__libc_foo
@@ -330,6 +334,38 @@ __END_DECLS
  */
 
 #ifndef __LIBPTHREAD_SOURCE__
+__BEGIN_DECLS
+int	__libc_thr_create(pthread_t * __restrict,
+	    const pthread_attr_t * __restrict, void *(*)(void *),
+	    void * __restrict);
+int	__libc_thr_detach(pthread_t);
+int	__libc_thr_join(pthread_t, void **);
+
+int	__libc_thr_attr_init(pthread_attr_t *);
+int	__libc_thr_attr_setdetachstate(pthread_attr_t *, int);
+int	__libc_thr_attr_destroy(pthread_attr_t *);
+__END_DECLS
+
+/*
+ * If _NETBSD_PTHREAD_CREATE_WEAK is defined, make pthread_create
+ * expand to a symbol which is defined as a weak alias by libc, so
+ * libraries can opt into using it for threaded applications without
+ * requiring non-threaded applications to be linked against libpthread.
+ * Otherwise, if you include pthread.h _without_ defining
+ * _NETBSD_PTHREAD_CREATE_WEAK and try to call pthread_create without
+ * linking against libpthread, the linker will detect this as an error.
+ */
+#ifdef _NETBSD_PTHREAD_CREATE_WEAK
+#define	pthread_create	__libc_thr_create
+#endif
+
+#define	pthread_detach	__libc_thr_detach
+#define	pthread_join	__libc_thr_join
+
+#define	pthread_attr_init		__libc_thr_attr_init
+#define	pthread_attr_setdetachstate	__libc_thr_attr_setdetachstate
+#define	pthread_attr_destroy		__libc_thr_attr_destroy
+
 __BEGIN_DECLS
 int	__libc_mutex_init(pthread_mutex_t * __restrict, const pthread_mutexattr_t * __restrict);
 int	__libc_mutex_lock(pthread_mutex_t *);

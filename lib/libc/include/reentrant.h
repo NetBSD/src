@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.23 2025/02/03 22:30:15 andvar Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.24 2025/10/06 13:12:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -204,8 +204,6 @@ int	__libc_thr_once(once_t *, void (*)(void));
 int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
 thr_t	__libc_thr_self(void);
 int	__libc_thr_yield(void);
-void	__libc_thr_create(thr_t *, const thrattr_t *,
-	    void *(*)(void *), void *);
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	*__libc_thr_errno(void);
 int	__libc_thr_setcancelstate(int, int *);
@@ -267,6 +265,8 @@ thr_t	__libc_thr_self_stub(void);
 int	__libc_thr_yield_stub(void);
 int	__libc_thr_create_stub(thr_t *, const thrattr_t *,
 	    void *(*)(void *), void *);
+int	__libc_thr_detach_stub(thr_t);
+int	__libc_thr_join_stub(thr_t, void **);
 void	__libc_thr_exit_stub(void *) __dead;
 int	*__libc_thr_errno_stub(void);
 int	__libc_thr_setcancelstate_stub(int, int *);
