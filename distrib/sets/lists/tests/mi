@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1394 2025/09/15 00:11:54 riastradh Exp $
+# $NetBSD: mi,v 1.1395 2025/10/06 13:11:56 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4928,6 +4928,7 @@
 ./usr/tests/usr.bin/cc/t_msan_shadow			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_stack			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_unpoison			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_pthread_abuse			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_tsan_data_race			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_tsan_heap_use_after_free	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_tsan_lock_order_inversion	tests-usr.bin-tests	compattestfile,atf
