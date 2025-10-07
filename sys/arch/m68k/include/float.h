@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.26 2025/10/04 21:56:08 riastradh Exp $	*/
+/*	$NetBSD: float.h,v 1.27 2025/10/07 02:15:36 nat Exp $	*/
 
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
@@ -13,6 +13,8 @@
  * exponent is 0 and the integer bit is set, it's a regular number,
  * whereas on x86 it's called a pseudo-denormal and apparently treated
  * as a denormal, so it doesn't count as a valid value for LDBL_MIN.
+ *
+ * If you are running a softloat userland LDBL_MIN is half that again.
  *
  * x86 citation: Intel 64 and IA-32 Architectures Software Developer's
  * Manual, vol. 1 (Order Number: 253665-077US, April 2022), Sec. 8.2.2
@@ -43,8 +45,13 @@
 #define LDBL_MANT_DIG	64
 #define LDBL_EPSILON	1.0842021724855044340E-19L
 #define LDBL_DIG	18
+#if !defined(__HAVE_68881__)
+#define LDBL_MIN_EXP	(-16382)
+#define LDBL_MIN	0.8405257857780233760E-4932L
+#else
 #define LDBL_MIN_EXP	(-16381)
 #define LDBL_MIN	1.6810515715560467531E-4932L
+#endif
 #define LDBL_MIN_10_EXP	(-4931)
 #define LDBL_MAX_EXP	16384
 #define LDBL_MAX	1.1897314953572317650E+4932L
