@@ -80,7 +80,6 @@
 #define MANTXMASK	0x7FFFFFFFL /* mask of upper part */
 
 union double_long 
-union double_long
 {
   double d;
   struct {
