@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3190 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3191 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -53,3 +53,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	dumplfs(8): Add -n flag to allow dumping of a given inode from an
 		inode block, or every inode in a block. [perseant 20250914]
 	lfs: Add working in-kernel roll forward. [perseant 20250917]
+	libm: hypotl - Accomodate infinity for softfloat. [nat 20251007]
