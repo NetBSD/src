@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2024/08/10 07:27:04 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2025/10/07 06:27:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2024/08/10 07:27:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2025/10/07 06:27:14 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -183,7 +183,7 @@ cpu_identify(device_t self, struct cpu_info *ci)
 
 	aprint_naive("\n");
 	aprint_normal(": %s %s imp. %" PRIx32 "\n", cv_name, ca_name, mimpid);
-        aprint_verbose_dev(ci->ci_dev,
+	aprint_verbose_dev(ci->ci_dev,
 	    "vendor 0x%" PRIxREGISTER " arch. %" PRIxREGISTER " imp. %" PRIx32 "\n",
 	    mvendorid, marchid, mimpid);
 }

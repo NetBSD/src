@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2024/11/25 22:04:14 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.31 2025/10/07 06:27:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.30 2024/11/25 22:04:14 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.31 2025/10/07 06:27:14 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -301,7 +301,7 @@ dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 
 static inline void
 trap_ksi_init(ksiginfo_t *ksi, int signo, int code, vaddr_t addr,
-     register_t cause)
+    register_t cause)
 {
 	KSI_INIT_TRAP(ksi);
 	ksi->ksi_signo = signo;
