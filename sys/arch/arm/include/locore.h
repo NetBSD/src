@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.39 2025/10/07 10:35:06 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.40 2025/10/07 10:38:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -68,6 +68,9 @@
 #if defined(_ARM_ARCH_6)
 #define	IRQ_DISABLE(rTMP)	cpsid	i
 #define	IRQ_ENABLE(rTMP)	cpsie	i
+
+#define	INTERRUPT_DISABLE(rTMP)	cpsid	if
+#define	INTERRUPT_ENABLE(rTMP)	cpsie	if
 #else
 #define	IRQ_DISABLE(rTMP)				\
 	mrs	rTMP, cpsr ;				\
@@ -77,6 +80,16 @@
 #define	IRQ_ENABLE(rTMP)				\
 	mrs	rTMP, cpsr ;				\
 	bic	rTMP, rTMP, #(I32_bit) ;		\
+	msr	cpsr_c, rTMP
+
+#define	INTERRUPT_DISABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	orr	rTMP, rTMP, #(I32_bit | F32_bit) ;	\
+	msr	cpsr_c, rTMP
+
+#define	INTERRUPT_ENABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	bic	rTMP, rTMP, #(I32_bit | F32_bit) ;	\
 	msr	cpsr_c, rTMP
 #endif
 
