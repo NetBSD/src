@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2025/10/07 06:27:14 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2025/10/07 06:40:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2025/10/07 06:27:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2025/10/07 06:40:33 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -234,6 +234,15 @@ cpu_attach(device_t dv, cpuid_t hartid)
 
 	ci->ci_dev = dv;
 	device_set_private(dv, ci);
+
+	const char * const xname = device_xname(dv);
+
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_loads, EVCNT_TYPE_MISC, NULL,
+	    xname, "fpu loads");
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves, EVCNT_TYPE_MISC, NULL,
+	    xname, "fpu saves");
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_reenables, EVCNT_TYPE_MISC, NULL,
+	    xname, "fpu reenables");
 
 	cpu_identify(dv, ci);
 
