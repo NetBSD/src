@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.4 2019/01/08 19:12:41 christos Exp $	*/
+/*	$NetBSD: wdc.c,v 1.5 2025/10/07 20:09:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ wdc_init(struct wd_softc *sc, u_int *unit)
 	uint32_t cmdreg, ctlreg;
 	int i;
 
-	/* XXXX: Shuld reset CF COR here? */
+	/* XXXX: Should reset CF COR here? */
 
 	switch (*unit) {
 	case 0: cmdreg = MMEYE_WDC0_IOBASE; break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.271 2025/06/05 06:31:07 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.272 2025/10/07 20:09:27 andvar Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.271 2025/06/05 06:31:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.272 2025/10/07 20:09:27 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5250,7 +5250,7 @@ sppp_pap_scr(struct sppp *sp)
 /*
  * Send a PAP or CHAP proto packet.
  *
- * Varadic function, each of the elements for the ellipsis is of type
+ * Variadic function, each of the elements for the ellipsis is of type
  * ``size_t mlen, const u_char *msg''.  Processing will stop iff
  * mlen == 0.
  * NOTE: never declare variadic functions with types subject to type

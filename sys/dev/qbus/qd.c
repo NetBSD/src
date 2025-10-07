@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.62 2023/08/01 21:26:28 andvar Exp $	*/
+/*	$NetBSD: qd.c,v 1.63 2025/10/07 20:09:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.62 2023/08/01 21:26:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.63 2025/10/07 20:09:27 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -389,7 +389,7 @@ void *qd_ubaio;
  * QDSS can be used as the console.  The console routines don't get
  * any config info.  The ROM also autodetects at this address, so
  * the console QDSS should be at this address.  Furthermore, nothing
- * else shuld be at this address instead because that would confuse the
+ * else should be at this address instead because that would confuse the
  * ROM and this driver.
  */
 #define QDSSCSR 0x1F00

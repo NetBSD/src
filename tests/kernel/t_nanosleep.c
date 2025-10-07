@@ -1,4 +1,4 @@
-/* $NetBSD: t_nanosleep.c,v 1.1 2024/10/09 13:02:53 kre Exp $ */
+/* $NetBSD: t_nanosleep.c,v 1.2 2025/10/07 20:09:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_nanosleep.c,v 1.1 2024/10/09 13:02:53 kre Exp $");
+__RCSID("$NetBSD: t_nanosleep.c,v 1.2 2025/10/07 20:09:27 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -157,7 +157,7 @@ runit(clockid_t clock, int flags)
 	 *
 	 * Now we get to proceed to the real test.
 	 *
-	 * But we want to wait a short whle to try and be sure
+	 * But we want to wait a short while to try and be sure
 	 * that m (the child still running) has a chance to
 	 * fall asleep.
 	 */

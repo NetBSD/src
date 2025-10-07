@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.10 2023/08/04 07:38:53 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.11 2025/10/07 20:09:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct krndsource {
 	LIST_ENTRY(krndsource) list;	/* the linked list */
 	char		name[16];	/* device name */
 	rnd_delta_t	time_delta;	/* time samples added while cold */
-	rnd_delta_t	value_delta;	/* value samples added whiel cold */
+	rnd_delta_t	value_delta;	/* value samples added while cold */
 	uint32_t	total;		/* number of bits added while cold */
 	uint32_t	type;		/* type, RND_TYPE_* */
 	uint32_t	flags;		/* flags, RND_FLAG_* */
