@@ -75,9 +75,10 @@ hypotl(long double x, long double y)
 	       /* Use original arg order iff result is NaN; quieten sNaNs. */
 	       w = fabsl(x+0.0L)-fabsl(y+0);
 	       GET_LDBL_MAN(manh,manl,a);
-	       if (manh == LDBL_NBIT && manl == 0) w = a;
+	       if ((manh & ~LDBL_NBIT) == 0 && manl == 0) w = a;
 	       GET_LDBL_MAN(manh,manl,b);
-	       if (hb >= ESW(MAX_EXP) && manh == LDBL_NBIT && manl == 0) w = b;
+	       if (hb >= ESW(MAX_EXP) && (manh & ~LDBL_NBIT) == 0 && manl == 0)
+		   w = b;
 	       return w;
 	   }
 	   /* scale a and b by 2**-(MAX_EXP/2+88) */
