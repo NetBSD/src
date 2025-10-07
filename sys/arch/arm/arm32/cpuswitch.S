@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.107 2023/03/01 08:17:53 riastradh Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.108 2025/10/07 10:35:06 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,36 +87,12 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.107 2023/03/01 08:17:53 riastradh Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.108 2025/10/07 10:35:06 skrll Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
 #ifdef FPU_VFP
 	.fpu vfpv2
-#endif
-
-#undef IRQdisable
-#undef IRQenable
-
-/*
- * New experimental definitions of IRQdisable and IRQenable
- * These keep FIQ's enabled since FIQ's are special.
- */
-
-#ifdef _ARM_ARCH_6
-#define	IRQdisable	cpsid	i
-#define	IRQenable	cpsie	i
-#else
-#define IRQdisable \
-	mrs	r14, cpsr ; \
-	orr	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14
-
-#define IRQenable \
-	mrs	r14, cpsr ; \
-	bic	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14
-
 #endif
 
 	.text
@@ -184,7 +160,7 @@ ENTRY(cpu_switchto)
 	/* rem: r5 = curcpu() */
 	/* rem: r6 = new lwp */
 
-	IRQdisable
+	IRQ_DISABLE(lr)
 #if defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r6, c13, c0, 4		/* set current lwp */
 #endif
@@ -224,7 +200,7 @@ ENTRY(cpu_switchto)
 	ldr	sp, [r7, #(PCB_KSP)]
 
 	/* At this point we can allow IRQ's again. */
-	IRQenable
+	IRQ_ENABLE(lr)
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = curcpu() */
@@ -406,7 +382,8 @@ ENTRY_NP(softint_switch)
 	/* this is an invariant so load before disabling intrs */
 	ldr	r2, [r5, #(L_PCB)]	/* get new lwp's pcb */
 
-	IRQdisable
+	IRQ_DISABLE(lr)
+
 	/*
 	 * We're switching to a bound LWP so its l_cpu is already correct.
 	 */
@@ -438,7 +415,7 @@ ENTRY_NP(softint_switch)
 	ldr	sp, [r5, #(L_MD_TF)]	/* get new lwp's stack ptr */
 
 	/* At this point we can allow IRQ's again. */
-	IRQenable
+	IRQ_ENABLE(lr)
 					/* r1 still has ipl */
 	mov	r0, r4			/* r0 has pinned (old) lwp */
 	bl	_C_LABEL(softint_dispatch)
@@ -452,7 +429,8 @@ ENTRY_NP(softint_switch)
 	 * never executed.  But we do need the SP from the formerly pinned lwp.
 	 */
 
-	IRQdisable
+	IRQ_DISABLE(lr)
+
 #if defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r4, c13, c0, 4	/* restore pinned lwp */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.38 2025/10/06 05:31:03 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.39 2025/10/07 10:35:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -66,22 +66,18 @@
 #ifdef _LOCORE
 
 #if defined(_ARM_ARCH_6)
-#define	IRQdisable	cpsid	i
-#define	IRQenable	cpsie	i
+#define	IRQ_DISABLE(rTMP)	cpsid	i
+#define	IRQ_ENABLE(rTMP)	cpsie	i
 #else
-#define	IRQdisable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
+#define	IRQ_DISABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	orr	rTMP, rTMP, #(I32_bit) ;		\
+	msr	cpsr_c, rTMP
 
-#define	IRQenable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
+#define	IRQ_ENABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	bic	rTMP, rTMP, #(I32_bit) ;		\
+	msr	cpsr_c, rTMP
 #endif
 
 #if defined (TPIDRPRW_IS_CURCPU)
