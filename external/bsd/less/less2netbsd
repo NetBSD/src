@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.7 2023/10/06 06:05:07 simonb Exp $
+#	$NetBSD: less2netbsd,v 1.8 2025/10/08 06:00:35 simonb Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,13 +46,16 @@
 #	   Check for any conflicts, merge, fix and commit them
 #	$ cd ../../../../../less-xyz
 #	$ ./configure
-#	   Add "/*	$NetBSD: less2netbsd,v 1.7 2023/10/06 06:05:07 simonb Exp $	*/" to new defines.h
+#	   Add "/*	$NetBSD: less2netbsd,v 1.8 2025/10/08 06:00:35 simonb Exp $	*/" to new defines.h
 #	$ cp defines.h /usr/src/external/bsd/less/include
 #	$ cd /usr/src/external/bsd/less
 #	$ cvs update
 #	$ cvs commit -m "Updated autoconf generated files for less xyz."
 #	$ cd /some/where/temporary
 #	   ... and clean up the leftovers
+
+echo address out-of-date less.1, should use less.nro
+exit 1
 
 PROGNAME=$(basename "$0")
 if [ $# -ne 2 ]; then
