@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.35 2025/05/20 12:26:02 pgoyette Exp $
+.\"	$NetBSD: boot.8,v 1.36 2025/10/09 16:10:03 manu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -414,6 +414,46 @@ Setting the
 with the
 .Li pc
 device is not possible.
+.Pp
+UEFI may support some USB and PCI based serial ports. See the 
+.Sx UEFI serial ports
+section for details. Using the
+.Ic consdev
+command without argument lists the available ports. 
+.Ar com0
+to
+.Ar com3
+are reserved for standard ISA serial ports, other ports are assigned to
+.Ar com4
+and beyond. The generic
+.Ar com{unit}[,speed]
+syntax can be used to select any port.
+.Pp
+Bootstrap can tell the kernel to use an USB-to-serial adapter for console
+using the
+.Ar ucom{unit}[,speed]
+syntax.
+No console switch happens in bootstrap, and kernel
+console initialization will be deferred after USB devices attachment.
+This means early boot will be silent, and 
+.Xr userconf 4
+interactive mode cannot be used. Default
+.Ar ucom
+speed is 115200.
+.It Ic kconsdev Ar dev\| Ns Oo Ns Ic \&, Ns Ar speed Oc
+Configure the kernel console like
+.Ic consdev
+but do not attempt to switch console in bootstrap. This is useful 
+when using USB-to-serial adapter that is known as a
+.Ar com
+device in bootstrap but as
+.Ar ucom
+device for the kernel. One may use a syntax like:
+.Bd -literal -offset indent
+consdev com4,115200
+kconsdev ucom0,115200
+.Ed
+Note that command ordering matters. 
 .It Ic dev Op Ar device
 Set the default drive and partition for subsequent file system
 operations.
@@ -870,6 +910,38 @@ device.
 So you can only boot from unit 0.
 .El
 .El
+.Sh UEFI serial ports
+Serial ports supported by an UEFI driver can be used in UEFI
+and in NetBSD bootstrap. UEFI usually supports ISA serial ports,
+and it may support PCI or USB to serial adapters, depending on
+vendor-specific implmentations.
+.Pp
+An open source UEFI driver is available form Tianocore EDK2,
+for USB-to-serial adapters using the FTDI FT232R chip. USB 
+vendor ID and product ID for that devices are
+.Ar 0x0403
+and
+.Ar 0x6001.
+.Pp
+To use it, obtain the 
+.Pa FtdiUsbSerialDxe.efi
+driver from Tianocore EDK2 and save it in the EFI bootstrap partiton,
+for instance in
+.Pa /EFI/EDK2/FtdiUsbSerialDxe.efi 
+then create a 
+.Pa /EFI/boot/startup.nsh
+script containing something like
+.Bd -literal -offset indent
+FS0:
+load \\EFI\\EDK2\\FtdiUsbSerialDxe.efi
+bootx64.efi
+.Ed
+.Pp
+Then make sure UEFI boots into UEFI shell. If it is not available in the
+built-in options, 
+.Pa Shell.efi
+can be obtained from Tianocore EDK2 and installed in 
+.Pa /EFI/boot/Shell.efi
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot

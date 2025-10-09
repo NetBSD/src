@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.15 2025/06/19 15:00:17 manu Exp $	*/
+/*	$NetBSD: eficons.c,v 1.16 2025/10/09 16:10:03 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -52,7 +52,8 @@ static CHAR16 keybuf[16];
 static int keybuf_read = 0;
 static int keybuf_write = 0;
 
-static SERIAL_IO_INTERFACE *serios[4];
+#define EISA_COM_COUNT 4
+static SERIAL_IO_INTERFACE *serios[12]; /* 4 EISA com slots, 8 others */
 static int default_comspeed =
 #if defined(CONSPEED)
     CONSPEED;
@@ -73,6 +74,7 @@ static int efi_cons_putc(int);
 static int efi_cons_iskey(int);
 static int efi_cons_waitforinputevent(uint64_t);
 
+static int efi_com_consdev2unit(int); 
 static void efi_com_probe(void);
 static bool efi_valid_com(int);
 static int efi_com_init(int, int);
@@ -89,7 +91,7 @@ static int raw_com_waitforinputevent(uint64_t);
 
 static int efi_find_gop_mode(char *);
 
-static int iodev;
+static int com_unit = -1;
 static int (*internal_getchar)(void) = efi_cons_getc;
 static int (*internal_putchar)(int) = efi_cons_putc;
 static int (*internal_iskey)(int) = efi_cons_iskey;
@@ -109,19 +111,23 @@ getcomaddr(int idx)
  * XXX only pass console parameters to kernel.
  */
 void
-efi_consinit(int dev, int ioport, int speed)
+efi_consinit(int dev, int ioport, int unit, int speed, bool switchcons)
 {
 	int i;
+	char *consname = NULL;
 
 	btinfo_console.speed = default_comspeed;
 
 	switch (dev) {
 	case CONSDEV_AUTO:
 		for (i = 0; i < __arraycount(serios); i++) {
-			iodev = CONSDEV_COM0 + i;
-			if (!efi_valid_com(iodev))
+			if (!efi_valid_com(i))
 				continue;
+			consname = "com";
 			btinfo_console.addr = getcomaddr(i);
+
+			/* switch to com for the test, regardless switchcons */
+			com_unit = i;
 
 			efi_cons_putc('0' + i);
 			efi_com_init(btinfo_console.addr, btinfo_console.speed);
@@ -135,7 +141,6 @@ efi_consinit(int dev, int ioport, int speed)
 			    awaitkey(7, 0))
 				goto ok;
 		}
-		goto nocom;
 ok:
 		break;
 
@@ -143,23 +148,33 @@ ok:
 	case CONSDEV_COM1:
 	case CONSDEV_COM2:
 	case CONSDEV_COM3:
-		iodev = dev;
+	case CONSDEV_COM:
+		consname = "com";
 		btinfo_console.addr = ioport;
 		if (btinfo_console.addr == 0)
-			btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
+			btinfo_console.addr = getcomaddr(unit);
 		if (speed != 0)
 			btinfo_console.speed = speed;
-		efi_com_init(btinfo_console.addr, btinfo_console.speed);
+
+		if (switchcons) {
+			com_unit = unit;
+			efi_com_init(btinfo_console.addr, btinfo_console.speed);
+		}
 		break;
 
 	case CONSDEV_COM0KBD:
 	case CONSDEV_COM1KBD:
 	case CONSDEV_COM2KBD:
-	case CONSDEV_COM3KBD:
-		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
-		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
+	case CONSDEV_COM3KBD: /* XXXmanu */
+		consname = "com";
+		btinfo_console.addr = getcomaddr(unit);
 
-		efi_cons_putc('0' + iodev - CONSDEV_COM0);
+		if (!switchcons) 
+			goto kbd;
+
+		com_unit = unit;
+
+		efi_cons_putc('0' + unit); /* XXX if unit>=10 ?  */
 		efi_com_init(btinfo_console.addr, btinfo_console.speed);
 		/* check for:
 		 *  1. successful output
@@ -172,11 +187,24 @@ ok:
 			goto kbd;
 		/*FALLTHROUGH*/
 	case CONSDEV_PC:
+		goto nocom;
+	case CONSDEV_UCOM:
+		consname = "ucom";
+		btinfo_console.addr = unit; /* Used for unit number */
+		if (speed != 0)
+			btinfo_console.speed = speed;
+		break;
 	default:
 nocom:
-		iodev = CONSDEV_PC;
+		consname = "pc";
+		if (!switchcons)
+			break;
 		internal_putchar = efi_cons_putc;
 kbd:
+		consname = "com";
+		if (!switchcons)
+			break;
+		com_unit = unit;
 		internal_getchar = efi_cons_getc;
 		internal_iskey = efi_cons_iskey;
 		internal_waitforinputevent = efi_cons_waitforinputevent;
@@ -185,19 +213,24 @@ kbd:
 		break;
 	}
 
-	strlcpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
+	if (consname != NULL)
+		strlcpy(btinfo_console.devname, consname, 16);
 }
 
 int
 cninit(void)
 {
-
+	int unit;
 	efi_switch_video_to_text_mode();
 	eficons_init_video();
+
+	/* console output is now possible */
+
 	efi_com_probe();
 
-	efi_consinit(boot_params.bp_consdev, boot_params.bp_consaddr,
-	    boot_params.bp_conspeed);
+	unit = efi_com_consdev2unit(boot_params.bp_consdev);
+	efi_consinit(boot_params.bp_consdev, boot_params.bp_consaddr, unit,
+	    boot_params.bp_conspeed, true);
 
 	return 0;
 }
@@ -801,6 +834,27 @@ efi_switch_video_to_text_mode(void)
 	}
 }
 
+static int
+efi_com_consdev2unit(int dev) 
+{
+	int unit = -1;
+
+	if (dev >= CONSDEV_COM0 && unit <= CONSDEV_COM3)
+		unit = dev - CONSDEV_COM0;
+
+	if (dev >= CONSDEV_COM0KBD && unit <= CONSDEV_COM3KBD)
+		unit = dev - CONSDEV_COM0KBD;
+
+	if (dev == CONSDEV_COM)
+		unit = 0;
+
+	if (dev == CONSDEV_UCOM)
+		unit = 0;
+
+	return unit;
+}
+
+
 /*
  * serial port
  */
@@ -813,7 +867,20 @@ efi_com_probe(void)
 	EFI_DEVICE_PATH	*dp, *dp0;
 	EFI_DEV_PATH_PTR dpp;
 	SERIAL_IO_INTERFACE *serio;
-	int uid = -1;
+	int unit = -1;
+	int high_unit = EISA_COM_COUNT;
+
+	/*
+	 * We could want to dynamically allocate serios[] to cope
+	 * with an aritrary count of serial ports, but we cannot yet
+	 * call alloc(), because efi_heap_init() was not yet called.
+	 * We could swap cninit() and efi_heap_init() order in 
+	 * efi_main(), but then efi_heap_init() could not display
+	 * a failure message. Let us keep static it for now for the
+	 * sake of reliability.
+	 */
+	for (i = 0; i < __arraycount(serios); i++)
+		serios[i] = NULL;
 
 	status = LibLocateHandle(ByProtocol, &SerialIoProtocol, NULL,
 	    &nhandles, &handles);
@@ -831,20 +898,24 @@ efi_com_probe(void)
 		if (EFI_ERROR(status))
 			continue;
 
-		for (uid = -1, dp = dp0;
-		     !IsDevicePathEnd(dp);
+		unit = -1;
+		for (dp = dp0; !IsDevicePathEnd(dp);
 		     dp = NextDevicePathNode(dp)) {
 
 			if (DevicePathType(dp) == ACPI_DEVICE_PATH &&
 			    DevicePathSubType(dp) == ACPI_DP) {
 				dpp = (EFI_DEV_PATH_PTR)dp;
 				if (dpp.Acpi->HID == EISA_PNP_ID(0x0501)) {
-					uid = dpp.Acpi->UID;
+					unit = dpp.Acpi->UID;
 					break;
 				}
 			}
 		}
-		if (uid < 0 || __arraycount(serios) <= uid)
+
+		if (unit == -1)
+			unit = high_unit++;
+
+		if (unit < 0 || __arraycount(serios) <= unit)
 			continue;
 
 		/* Prepare SERIAL_IO_INTERFACE */
@@ -853,7 +924,7 @@ efi_com_probe(void)
 		if (EFI_ERROR(status))
 			continue;
 
-		serios[uid] = serio;
+		serios[unit] = serio;
 	}
 
 	FreePool(handles);
@@ -861,26 +932,10 @@ efi_com_probe(void)
 }
 
 static bool
-efi_valid_com(int dev)
+efi_valid_com(int unit)
 {
-	int idx;
-
-	switch (dev) {
-	default:
-	case CONSDEV_PC:
-		return false;
-
-	case CONSDEV_COM0:
-	case CONSDEV_COM1:
-	case CONSDEV_COM2:
-	case CONSDEV_COM3:
-		idx = dev - CONSDEV_COM0;
-		break;
-	}
-
-	return idx < __arraycount(serios) &&
-	    serios[idx] != NULL &&
-	    getcomaddr(idx) != 0;
+	return (unit >= 0 &&unit < __arraycount(serios) &&
+	    serios[unit] != NULL);
 }
 
 static int
@@ -892,10 +947,10 @@ efi_com_init(int addr, int speed)
 	if (speed <= 0)
 		return 0;
 
-	if (!efi_valid_com(iodev))
+	if (!efi_valid_com(com_unit))
 		return raw_com_init(addr, speed);
 
-	serio = serios[iodev - CONSDEV_COM0];
+	serio = serios[com_unit];
 
 	if (serio->Mode->BaudRate != btinfo_console.speed) {
 		status = uefi_call_wrapper(serio->SetAttributes, 7, serio,
@@ -904,7 +959,7 @@ efi_com_init(int addr, int speed)
 		    serio->Mode->DataBits, serio->Mode->StopBits);
 		if (EFI_ERROR(status)) {
 			printf("com%d: SetAttribute() failed with status=%" PRIxMAX
-			    "\n", iodev - CONSDEV_COM0, (uintmax_t)status);
+			    "\n", com_unit, (uintmax_t)status);
 			return 0;
 		}
 	}
@@ -929,8 +984,8 @@ efi_com_getc(void)
 	UINTN sz;
 	u_char c;
 
-	if (!efi_valid_com(iodev))
-		panic("Invalid serial port: iodev=%d", iodev);
+	if (!efi_valid_com(com_unit))
+		panic("Invalid serial port: unit=%d", com_unit);
 
 	if (serbuf_read != serbuf_write) {
 		c = serbuf[serbuf_read];
@@ -938,7 +993,7 @@ efi_com_getc(void)
 		return c;
 	}
 
-	serio = serios[iodev - CONSDEV_COM0];
+	serio = serios[com_unit];
 
 	for (;;) {
 		sz = 1;
@@ -960,10 +1015,10 @@ efi_com_putc(int c)
 	UINTN sz = 1;
 	u_char buf;
 
-	if (!efi_valid_com(iodev))
+	if (!efi_valid_com(com_unit))
 		return 0;
 
-	serio = serios[iodev - CONSDEV_COM0];
+	serio = serios[com_unit];
 	buf = c;
 	status = uefi_call_wrapper(serio->Write, 3, serio, &sz, &buf);
 	if (EFI_ERROR(status) || sz < 1)
@@ -980,13 +1035,13 @@ efi_com_status(int intr)
 	UINTN sz;
 	u_char c;
 
-	if (!efi_valid_com(iodev))
-		panic("Invalid serial port: iodev=%d", iodev);
+	if (!efi_valid_com(com_unit))
+		panic("Invalid serial port: unit = %d", com_unit);
 
 	if (serbuf_read != serbuf_write)
 		return 1;
 
-	serio = serios[iodev - CONSDEV_COM0];
+	serio = serios[com_unit];
 	sz = 1;
 	status = uefi_call_wrapper(serio->Read, 3, serio, &sz, &c);
 	if (EFI_ERROR(status) || sz < 1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.55 2025/05/06 18:16:12 pgoyette Exp $	*/
+/*	$NetBSD: libi386.h,v 1.56 2025/10/09 16:10:03 manu Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -68,6 +68,8 @@ void initio(int);
 #define CONSDEV_COM1KBD 6
 #define CONSDEV_COM2KBD 7
 #define CONSDEV_COM3KBD 8
+#define CONSDEV_COM 9
+#define CONSDEV_UCOM 10
 #define CONSDEV_AUTO (-1)
 int iskey(int);
 char awaitkey(int, int);

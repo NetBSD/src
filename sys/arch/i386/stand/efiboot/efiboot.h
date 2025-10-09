@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.12 2023/04/20 00:42:24 manu Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.13 2025/10/09 16:10:03 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -70,7 +70,7 @@ int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
 
 /* eficons.c */
 int cninit(void);
-void efi_consinit(int, int, int);
+void efi_consinit(int, int, int, int, bool);
 void efi_cons_show(void);
 void command_text(char *);
 void command_gop(char *);

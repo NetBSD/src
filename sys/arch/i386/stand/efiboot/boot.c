@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.33 2025/07/31 02:59:13 pgoyette Exp $	*/
+/*	$NetBSD: boot.c,v 1.34 2025/10/09 16:10:03 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -71,7 +71,9 @@ void	command_help(char *);
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_pkboot(char *);
+void	command_consdev_subr(char *, bool);
 void	command_consdev(char *);
+void	command_kconsdev(char *);
 void	command_root(char *);
 void	command_dev(char *);
 void	command_devpath(char *);
@@ -97,6 +99,7 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "pkboot",	command_pkboot },
 	{ "consdev",	command_consdev },
+	{ "kconsdev",	command_kconsdev },
 	{ "root",	command_root },
 	{ "dev",	command_dev },
 	{ "devpath",	command_devpath },
@@ -395,9 +398,16 @@ command_help(char *arg)
 	       "     (ex. \"hd0a:netbsd.old -s\")\n"
 	       "pkboot [dev:][filename] [-12acdqsvxz]\n"
 	       "dev [dev:]\n"
-	       "consdev {pc|com[0123][,{speed}]|com,{ioport}[,{speed}]}\n"
-	       "root    {spec}\n"
-	       "     spec can be disk, e.g. wd0, sd0\n"
+	       "consdev {cons_spec}\n"
+	       "kconsdev {cons_spec}\n"
+	       "      cons_spec can be\n"
+	       "      pc for keyboard and monitor\n"
+	       "      com[0123][,{speed}\n"
+	       "      com[,{addr}[,{speed}]] for EISA serial port\n"
+	       "      com{unit}[,{speed}]] for other serial port\n"
+	       "      ucom{unit}[,{speed}] for USB-to-serial adapter\n"
+	       "root    {root_spec}\n"
+	       "     root_spec can be disk, e.g. wd0, sd0\n"
 	       "     or string like wedge:name\n"
 	       "devpath\n"
 	       "efivar\n"
@@ -539,27 +549,46 @@ static const struct cons_devs {
 	const char	*name;
 	u_int		tag;
 	int		ioport;
+	bool		parse_unit;
 } cons_devs[] = {
-	{ "pc",		CONSDEV_PC,   0 },
-	{ "com0",	CONSDEV_COM0, 0 },
-	{ "com1",	CONSDEV_COM1, 0 },
-	{ "com2",	CONSDEV_COM2, 0 },
-	{ "com3",	CONSDEV_COM3, 0 },
-	{ "com0kbd",	CONSDEV_COM0KBD, 0 },
-	{ "com1kbd",	CONSDEV_COM1KBD, 0 },
-	{ "com2kbd",	CONSDEV_COM2KBD, 0 },
-	{ "com3kbd",	CONSDEV_COM3KBD, 0 },
-	{ "com",	CONSDEV_COM0, -1 },
-	{ "auto",	CONSDEV_AUTO, 0 },
-	{ NULL,		0 }
+	{ "pc",		CONSDEV_PC,   0, false },
+	{ "com0",	CONSDEV_COM0, 0, false },
+	{ "com1",	CONSDEV_COM1, 0, false },
+	{ "com2",	CONSDEV_COM2, 0, false },
+	{ "com3",	CONSDEV_COM3, 0, false },
+	{ "com0kbd",	CONSDEV_COM0KBD, 0, false },
+	{ "com1kbd",	CONSDEV_COM1KBD, 0, false },
+	{ "com2kbd",	CONSDEV_COM2KBD, 0, false },
+	{ "com3kbd",	CONSDEV_COM3KBD, 0, false },
+	{ "ucom",	CONSDEV_UCOM, 0, true },
+	{ "com",	CONSDEV_COM0, -1, false }, /* backward compatible */
+	{ "com",	CONSDEV_COM,  0, true },  /* can match e.g.: com8 */
+	{ "auto",	CONSDEV_AUTO, 0, false },
+	{ NULL,		0, 0, false }
 };
 
 void
 command_consdev(char *arg)
 {
+	return command_consdev_subr(arg, true);
+}
+
+void
+command_kconsdev(char *arg)
+{
+	return command_consdev_subr(arg, false);
+}
+
+void
+command_consdev_subr(char *arg, bool switchcons)
+{
 	const struct cons_devs *cdp;
 	char *sep, *sep2 = NULL;
 	int ioport, speed = 0;
+	int unit;
+	size_t xname_len;
+	size_t devname_len;
+	char *cp;
 
 	if (*arg == '\0') {
 		efi_cons_show();
@@ -574,8 +603,36 @@ command_consdev(char *arg)
 			*sep2++ = '\0';
 	}
 
+
+	/*
+	 * arg is for instance com5 or com5,0x3f8,115200
+	 * we compute devname_len = strlen("com")
+	 *            unit = 5
+	 */
+	xname_len = strlen(arg);
+	devname_len = xname_len;
+	unit = -1;
+	cp = strchr(arg, (int)',');
+	if (cp == NULL)
+		cp = arg + xname_len;
+	while (--cp >= arg) {
+		if (!isdigit((int)*cp)) {
+			if (cp - arg > 1) {
+				devname_len = cp + 1 - arg;
+				unit = (int)strtoul(cp + 1, NULL, 10);
+				break;
+			}
+		}
+	}
+
 	for (cdp = cons_devs; cdp->name; cdp++) {
-		if (strcmp(arg, cdp->name) == 0) {
+		bool match;
+
+		if (cdp->parse_unit)
+			match = (strncmp(arg, cdp->name, devname_len) == 0);
+		else
+			match = (strcmp(arg, cdp->name) == 0);
+		if (match) {
 			ioport = cdp->ioport;
 			if (cdp->tag == CONSDEV_PC || cdp->tag == CONSDEV_AUTO) {
 				if (sep != NULL || sep2 != NULL)
@@ -604,9 +661,12 @@ command_consdev(char *arg)
 						goto error;
 				}
 			}
-			efi_consinit(cdp->tag, ioport, speed);
-			clearit();
-			print_bootcfg_banner(bootprog_name, bootprog_rev);
+			efi_consinit(cdp->tag, ioport, unit, speed, switchcons);
+			if (switchcons) {
+				clearit();
+				print_bootcfg_banner(bootprog_name,
+				    bootprog_rev);
+			}
 			return;
 		}
 	}
