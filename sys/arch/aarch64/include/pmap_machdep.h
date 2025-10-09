@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.9 2025/07/26 13:58:17 martin Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.10 2025/10/09 06:18:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -372,7 +372,6 @@ pte_pde_cas(pd_entry_t *pdep, pd_entry_t opde, pt_entry_t npde)
 {
 #ifdef MULTIPROCESSOR
 	opde = atomic_cas_64(pdep, opde, npde);
-	dsb(ishst);
 #else
 	*pdep = npde;
 #endif
