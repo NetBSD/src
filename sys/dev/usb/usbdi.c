@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.253 2024/04/05 18:57:10 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.254 2025/10/09 15:53:16 manu Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.253 2024/04/05 18:57:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.254 2025/10/09 15:53:16 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.253 2024/04/05 18:57:10 riastradh Exp $"
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/usb_sdt.h>
 #include <dev/usb/usbhist.h>
+
+#include <ddb/db_active.h>
 
 /* UTF-8 encoding stuff */
 #include <fs/unicode.h>
@@ -1371,34 +1373,35 @@ void
 usbd_set_polling(struct usbd_device *dev, int on)
 {
 
-	mutex_enter(dev->ud_bus->ub_lock);
+	if (!db_active)
+		mutex_enter(dev->ud_bus->ub_lock);
+
+	/*
+	 * We call softint routine on polling transitions, so
+	 * that completed/failed transfers have their callbacks
+	 * called. In-progress transfers started before transition
+	 * remain flying, and their completion after transition
+	 * must be taken into account.
+	 *
+	 * The softint routine is called after enabling polling
+	 * and before disabling it, so that holding sc->sc_lock
+	 * is not required. DDB needs this because it cannot wait
+	 * to acquire sc->sc_lock from a suspended thread.
+	 */
 	if (on) {
-		/*
-		 * Enabling polling.  If we're enabling for the first
-		 * time, call the softint routine on transition while
-		 * we hold the lock and polling is still disabled, and
-		 * then enable polling -- once polling is enabled, we
-		 * must not hold the lock when we call the softint
-		 * routine.
-		 */
 		KASSERT(dev->ud_bus->ub_usepolling < __type_max(char));
-		if (dev->ud_bus->ub_usepolling == 0)
-			dev->ud_bus->ub_methods->ubm_softint(dev->ud_bus);
 		dev->ud_bus->ub_usepolling++;
-	} else {
-		/*
-		 * Disabling polling.  If we're disabling polling for
-		 * the last time, disable polling first and then call
-		 * the softint routine while we hold the lock -- until
-		 * polling is disabled, we must not hold the lock when
-		 * we call the softint routine.
-		 */
-		KASSERT(dev->ud_bus->ub_usepolling > 0);
-		dev->ud_bus->ub_usepolling--;
-		if (dev->ud_bus->ub_usepolling == 0)
+		if (dev->ud_bus->ub_usepolling == 1)
 			dev->ud_bus->ub_methods->ubm_softint(dev->ud_bus);
+	} else {
+		KASSERT(dev->ud_bus->ub_usepolling > 0);
+		if (dev->ud_bus->ub_usepolling == 1)
+			dev->ud_bus->ub_methods->ubm_softint(dev->ud_bus);
+		dev->ud_bus->ub_usepolling--;
 	}
-	mutex_exit(dev->ud_bus->ub_lock);
+
+	if (!db_active)
+		mutex_exit(dev->ud_bus->ub_lock);
 }
 
 
