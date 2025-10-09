@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.24 2025/10/06 16:11:59 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.25 2025/10/09 09:29:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -306,4 +306,16 @@ tests/lib/libc/kevent_nullmnt/t_nullmnt.sh	1.9
 	PR 59683: fix nullfs presence test in test
 	libc/kevent/t_nullmnt.
 	[kre, ticket #47]
+
+sys/arch/riscv/riscv/cpu.c			1.8,1.9
+sys/arch/riscv/riscv/trap.c			1.31
+
+	riscv:	attach the fpu loads, save and reenable event counters.
+	[skrll, ticket #48]
+
+sys/compat/linux/common/linux_sched.c		1.84,1.85
+sys/compat/linux/common/linux_sched.h		1.12
+
+	compat_linux: PR 59608: fix stack address and ignore sysvsem flag.
+	[christos, ticket #49]
 
