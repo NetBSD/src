@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.56 2025/07/01 18:42:37 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.57 2025/10/09 15:30:18 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -925,7 +925,14 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 		const unsigned skip_to = rl->r_skip_to & SKIPTO_MASK;
 		const uint32_t attr = rl->r_attr;
 
-		if ((attr & layer) == 0) {
+		/*
+		 * PR kern/59615
+		 * we are skipping rule inspection on two cases
+		 * if layer attributes are set but we are on a different layer
+		 * or if no layer attributes set (10 userland), don't inspect at layer 2
+		 */
+		if (!(((layer == NPF_RULE_LAYER_3 && ((attr & (NPF_RULE_LAYER_2 | NPF_RULE_LAYER_3)) == 0)) ||
+		    (attr & layer)))) {
 			n = skip_to;
 			continue;
 		}

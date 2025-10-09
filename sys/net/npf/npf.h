@@ -355,11 +355,9 @@ typedef enum {
 	NPF_STAT_PASS_DEFAULT,
 	NPF_STAT_PASS_RULESET,
 	NPF_STAT_PASS_CONN,
-	NPF_ETHER_STAT_PASS,
 	/* Packets blocked. */
 	NPF_STAT_BLOCK_DEFAULT,
 	NPF_STAT_BLOCK_RULESET,
-	NPF_ETHER_STAT_BLOCK,
 	/* Connection and NAT entries. */
 	NPF_STAT_CONN_CREATE,
 	NPF_STAT_CONN_DESTROY,
@@ -382,6 +380,9 @@ typedef enum {
 	/* nbuf non-contiguous cases. */
 	NPF_STAT_NBUF_NONCONTIG,
 	NPF_STAT_NBUF_CONTIG_FAIL,
+	/* layer 2 statistics */
+	NPF_ETHER_STAT_PASS,
+	NPF_ETHER_STAT_BLOCK,
 	/* Count (last). */
 	NPF_STATS_COUNT
 } npf_stats_t;
