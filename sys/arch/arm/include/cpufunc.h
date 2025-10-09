@@ -1,4 +1,4 @@
-/*	cpufunc.h,v 1.40.22.4 2007/11/08 10:59:33 matt Exp	*/
+/*	$NetBSD: cpufunc.h,v 1.93 2025/10/09 05:05:55 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
