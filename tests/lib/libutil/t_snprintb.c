@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.38 2025/08/24 16:19:31 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.39 2025/10/09 18:51:41 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.38 2025/08/24 16:19:31 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.39 2025/10/09 18:51:41 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -902,12 +902,25 @@ ATF_TC_BODY(snprintb, tc)
 	// new style combinations, 'f' ':'
 	//
 	// The ':' conversion requires a preceding 'F' conversion, not 'f'.
+	// Otherwise, the output would be "0x1<nibble=0x1one>", missing a
+	// separator between the number and the description "one".
 	h_snprintb_val_error(
 	    "\177\20"
 	    "f\000\004nibble\0"
 		":\001one\0",
 	    0x01,
 	    "0x1<nibble=0x1#");
+
+	// new style combinations, 'f' ':' with punctuation
+	//
+	// When the description starts with punctuation, in this case round
+	// parentheses, the resulting string is easily readable.
+	h_snprintb(
+	    "\177\20"
+	    "f\000\002field\0" ":\0(zero)\0"
+	    "f\000\002field\0" "*(catch-all)\0",
+	    0x0000,
+	    "0<field=0(zero),field=0(catch-all)>");
 
 	// new style combinations, 'F' '='
 	//

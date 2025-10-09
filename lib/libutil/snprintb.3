@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.39 2024/04/08 21:28:35 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.40 2025/10/09 18:51:41 rillig Exp $
 .\"
 .\" Copyright (c) 1998, 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2024
+.Dd October 9, 2025
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -226,6 +226,13 @@ To print individual values of the field, see the
 and
 .Sq Cm \&*
 conversions below.
+The
+.Sq \&f
+conversion can be combined with the
+.Sq \&:
+conversion if the description of the
+.Sq \&:
+conversion does not start with a letter, digit or underscore.
 .
 .It Cm \&= Ar cmp Ar descr
 Compares the field value from the previous
@@ -431,6 +438,7 @@ snprintb(buf, bufsize, MAP_FMT, 0x2e000000)
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
+.Pq Only in user mode.
 The leading character
 .Po for the
 .Dq old
