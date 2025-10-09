@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_erst.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $	*/
+/*	$NetBSD: apei_erst.c,v 1.4 2025/10/09 21:21:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.4 2025/10/09 21:21:43 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -290,8 +290,8 @@ apei_erst_attach(struct apei_softc *sc)
 
 	/* XXX define this format somewhere */
 	snprintb(attrbuf, sizeof(attrbuf), "\177\020"
-	    "\001"	"NVRAM\0"
-	    "\002"	"SLOW\0"
+	    "b\001"	"NVRAM\0"
+	    "b\002"	"SLOW\0"
 	    "\0", attr);
 
 	aprint_normal_dev(sc->sc_dev, "ERST: %"PRIu64" records in error log"
