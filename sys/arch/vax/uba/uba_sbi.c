@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.30 2017/05/22 17:15:45 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.31 2025/10/09 23:50:15 rillig Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.30 2017/05/22 17:15:45 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.31 2025/10/09 23:50:15 rillig Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.30 2017/05/22 17:15:45 ragge Exp $");
  */
 #define UBACNFGR_UBIC  0x00010000      /* unibus init complete */
 #define UBACNFGR_BITS \
-"\40\40PARFLT\37WSQFLT\36URDFLT\35ISQFLT\34MXTFLT\33XMTFLT\30ADPDN\27ADPUP\23UBINIT\22UBPDN\21UBIC"
+"\20\40PARFLT\37WSQFLT\36URDFLT\35ISQFLT\34MXTFLT\33XMTFLT\30ADPDN\27ADPUP\23UBINIT\22UBPDN\21UBIC"
 
 #define UBACR_IFS      0x00000040      /* interrupt field switch */
 #define UBACR_BRIE     0x00000020      /* BR interrupt enable */
