@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2024/08/10 07:27:04 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7.2.1 2025/10/09 09:25:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2024/08/10 07:27:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7.2.1 2025/10/09 09:25:52 martin Exp $");
 
 #include <sys/param.h>
 
@@ -183,7 +183,7 @@ cpu_identify(device_t self, struct cpu_info *ci)
 
 	aprint_naive("\n");
 	aprint_normal(": %s %s imp. %" PRIx32 "\n", cv_name, ca_name, mimpid);
-        aprint_verbose_dev(ci->ci_dev,
+	aprint_verbose_dev(ci->ci_dev,
 	    "vendor 0x%" PRIxREGISTER " arch. %" PRIxREGISTER " imp. %" PRIx32 "\n",
 	    mvendorid, marchid, mimpid);
 }
@@ -234,6 +234,15 @@ cpu_attach(device_t dv, cpuid_t hartid)
 
 	ci->ci_dev = dv;
 	device_set_private(dv, ci);
+
+	const char * const xname = device_xname(dv);
+
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_loads, EVCNT_TYPE_MISC, NULL,
+	    xname, "fpu loads");
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_saves, EVCNT_TYPE_MISC, NULL,
+	    xname, "fpu saves");
+	evcnt_attach_dynamic(&ci->ci_ev_fpu_reenables, EVCNT_TYPE_MISC, NULL,
+	    xname, "fpu reenables");
 
 	cpu_identify(dv, ci);
 
