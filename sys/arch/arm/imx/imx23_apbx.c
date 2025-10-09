@@ -1,4 +1,4 @@
-/* $Id: imx23_apbx.c,v 1.4 2025/10/02 06:51:15 skrll Exp $ */
+/* $Id: imx23_apbx.c,v 1.5 2025/10/09 06:15:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ apbx_search_crit_cb(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	struct apb_attach_args *aa = aux;
 
 	/* Return if not critical device. */
-	if ((strcmp(cf->cf_name, "timrot") != 0)
+	if ((strcmp(cf->cf_name, "imx23timrot") != 0)
 	    && (strcmp(cf->cf_name, "apbdma") != 0))
 		return 0;
 

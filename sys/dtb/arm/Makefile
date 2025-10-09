@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/05/04 13:31:36 bouyer Exp $
+#	$NetBSD: Makefile,v 1.7 2025/10/09 06:15:17 skrll Exp $
 
 DTSARCH=	arm
 DTSGNUARCH=	arm
@@ -39,6 +39,8 @@ DTS+=		sun5i-r8-pocketchip.dts
 DTS+=		sun7i-a20-olinuxino-lime2-emmc-spi.dts
 DTS+=		sun8i-h2-plus-bananapi-p2-zero.dts
 DTS+=		sun8i-h3-nanopi-r1.dts
+.elif !empty(MACHINE_ARCH:Mearmv5*)
+DTS+=		imx23-olinuxino.dts
 .endif
 
 .include <bsd.dtb.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.96 2025/10/04 11:19:54 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.97 2025/10/09 06:15:16 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -115,10 +115,10 @@ endif
 define	L1_S_FRAME		L1_S_FRAME
 define	L1_S_SHIFT		L1_S_SHIFT
 define	L1_S_SIZE		L1_S_SIZE
-define	L1_S_NOCACHE		L1_S_XS_TEX(1)
+define	L1_S_NOCACHE_generic    L1_S_NOCACHE_generic
+define	L1_S_NOCACHE_armv6n     L1_S_XS_TEX(1)
 define	L1_S_B			L1_S_B
 define	L1_S_C			L1_S_C
-define	L1_S_V6_S		L1_S_V6_S
 define	L1_S_V6_XN		L1_S_V6_XN
 define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
 define	L1_S_DOM_MASK		L1_S_DOM_MASK

@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.14 2023/02/09 14:09:48 abs Exp $
+#	$NetBSD: KOBO,v 1.15 2025/10/09 06:15:17 skrll Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -129,6 +129,9 @@ midi*		at midibus?
 rgephy*		at mii? phy ?
 rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
+
+# Performance monitors
+pseudo-device	lockstat		# lock profiling
 
 # Pull in optional local configuration - always at end
 cinclude	"arch/evbarm/conf/KOBO.local"

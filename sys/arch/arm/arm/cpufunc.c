@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.185 2022/12/22 06:58:07 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.186 2025/10/09 06:15:16 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.185 2022/12/22 06:58:07 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.186 2025/10/09 06:15:16 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -3587,8 +3587,10 @@ cpu_earlydevice_va_p(void)
 
 	/* Don't access cpu_ttb unless the mmu is enabled */
 	const bool cpul1pt_p =
-	    ((armreg_ttbr_read() & -L1_TABLE_SIZE) == cpu_ttb) ||
-	    ((armreg_ttbr1_read() & -L1_TABLE_SIZE) == cpu_ttb);
+#if defined(__ARM_ARCH_6)
+	    ((armreg_ttbr1_read() & -L1_TABLE_SIZE) == cpu_ttb) ||
+#endif
+	    ((armreg_ttbr_read() & -L1_TABLE_SIZE) == cpu_ttb);
 
 	return cpul1pt_p;
 }

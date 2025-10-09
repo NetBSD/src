@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.19 2020/11/28 14:38:50 skrll Exp $
+# $Id: IMX23_OLINUXINO,v 1.20 2025/10/09 06:15:17 skrll Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -28,7 +28,7 @@ apbh0		at mainbus? base 0x80000000 size 0x40000
 apbdma0		at apbh? addr 0x80004000 size 0x2000 irq -1
 
 # Interrupt controller
-icoll0		at apbh? addr 0x80000000 size 0x2000 irq -1
+imx23icoll0		at apbh? addr 0x80000000 size 0x2000 irq -1
 
 # Synchronous serial port for SD/MMC
 ssp0		at apbh? addr 0x80010000 size 0x2000 irq 15
@@ -52,10 +52,10 @@ apbx0		at mainbus? base 0x80040000 size 0x40000
 apbdma1		at apbx? addr 0x80024000 size 0x2000 irq -1
 
 # Timers and rotary decoder
-timrot0		at apbx? addr 0x80068020 size 0x20 irq 28
-timrot1		at apbx? addr 0x80068040 size 0x20 irq 29
-#timrot2	at apbx? addr 0x80068060 size 0x20 irq 30
-#timrot3	at apbx? addr 0x80068080 size 0x20 irq 31
+imx23timrot0		at apbx? addr 0x80068020 size 0x20 irq 28
+imx23timrot1		at apbx? addr 0x80068040 size 0x20 irq 29
+#imx23timrot2	at apbx? addr 0x80068060 size 0x20 irq 30
+#imx23timrot3	at apbx? addr 0x80068080 size 0x20 irq 31
 
 # Debug UART
 plcom0		at apbx? addr 0x80070000 size 0x1000 irq 0

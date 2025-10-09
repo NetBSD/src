@@ -1,11 +1,11 @@
-/* $Id: imx23var.h,v 1.3 2025/10/09 06:15:17 skrll Exp $ */
+/* $NetBSD: imx23_icollvar.h,v 1.1 2025/10/09 06:15:16 skrll Exp $ */
 
-/*
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Petri Laakso.
+ * by Yuri Honegger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,52 +29,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_IMX_IMX23VAR_H
-#define _ARM_IMX_IMX23VAR_H
+#ifndef _ARM_IMX_IMX23_ICOLLVAR_H_
+#define _ARM_IMX_IMX23_ICOLLVAR_H_
 
-#define DRAM_BASE 0x40000000
-#define APBH_BASE 0x80000000
-#define APBH_SIZE 0x00040000	/* 256 kB */
-#define APBX_BASE 0x80040000
-#define APBX_SIZE 0x00040000
-#define AHB_BASE  0x80080000	/* USB and DRAM registers. */
-#define AHB_SIZE  0x00080000	/* 512 kB */
-
-#define IMX23_UART_CLK 24000000
-
-#ifndef _LOCORE
-#include <machine/bus_defs.h>
+#define _INTR_PRIVATE
 #include <sys/device.h>
+#include <sys/systm.h>
 
-extern struct bus_space imx23_bus_space;
-extern struct arm32_bus_dma_tag imx23_bus_dma_tag;
+#include <arm/pic/picvar.h>
 
-struct apb_attach_args {
-	bus_space_tag_t aa_iot;
-	bus_dma_tag_t aa_dmat;
-	const char *aa_name;
-	bus_addr_t aa_addr;
-	bus_size_t aa_size;
-	int8_t aa_irq;
+struct icoll_softc {
+	struct pic_softc sc_pic;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_hdl;
 };
 
-struct apb_softc {
-	device_t	sc_dev;
-	device_t	dmac; /* DMA controller device for this bus. */
-};
+/*
+ * Common initialization logic for normal and fdt variant
+ */
+void imx23icoll_init(struct icoll_softc *, device_t, bus_space_tag_t);
 
-struct ahb_attach_args {
-	bus_space_tag_t aa_iot;
-	bus_dma_tag_t aa_dmat;
-	const char *aa_name;
-	bus_addr_t aa_addr;
-	bus_size_t aa_size;
-	int8_t aa_irq;
-};
+/*
+ * ARM interrupt handler.
+ */
+void imx23_intr_dispatch(struct clockframe *);
 
-struct ahb_softc {
-	device_t	sc_dev;
-};
-
-#endif /* !_LOCORE */
-#endif /* !_ARM_IMX_IMX23VAR_H */
+#endif /* !_ARM_IMX_IMX23_ICOLLVAR_H_ */

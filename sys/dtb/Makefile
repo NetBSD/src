@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2022/09/11 12:46:41 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2025/10/09 06:15:17 skrll Exp $
 
 TARGETS+=	dtblist
 
 .include <bsd.own.mk>
 
-.if !empty(MACHINE_ARCH:Mearmv[67]*)
+.if !empty(MACHINE_ARCH:Mearmv[567]*)
 SUBDIR+=	arm
 .endif
 
@@ -21,7 +21,8 @@ SUBDIR+=	riscv
 # Regenerate MD set lists in distrib/sets/lists/dtb. Run this whenever
 # new dts files are imported.
 
-TARGET_ARCH_LIST=	earmv6 earmv6hf earmv6eb earmv6hfeb
+TARGET_ARCH_LIST=	earmv5
+TARGET_ARCH_LIST+=	earmv6 earmv6hf earmv6eb earmv6hfeb
 TARGET_ARCH_LIST+=	earmv7 earmv7hf earmv7hf earmv7hfeb
 TARGET_ARCH_LIST+=	aarch64 aarch64eb
 TARGET_ARCH_LIST+=	riscv32 riscv64

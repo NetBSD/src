@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.96 2023/02/09 14:09:48 abs Exp $
+#	$NetBSD: RPI,v 1.97 2025/10/09 06:15:17 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -226,6 +226,9 @@ pseudo-device	openfirm
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# Performance monitors
+pseudo-device	lockstat		# lock profiling
 
 # userland interface to drivers, including autoconf and properties retrieval
 

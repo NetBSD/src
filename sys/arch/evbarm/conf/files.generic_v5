@@ -1,0 +1,26 @@
+# $NetBSD: files.generic_v5,v 1.1 2025/10/09 06:15:17 skrll Exp $
+#
+# A generic armv5 kernel configuration info
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+include "arch/evbarm/conf/files.fdt"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/arm_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
+# Add other board files here
+include "arch/arm/imx/files.imx23"
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"

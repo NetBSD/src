@@ -1,0 +1,82 @@
+# $NetBSD $
+#
+# GENERIC ARMv5 kernel
+#
+
+include	"arch/evbarm/conf/std.generic_v5"
+include "arch/evbarm/conf/files.generic_v5"
+include	"arch/evbarm/conf/GENERIC.common"
+
+options 	CPU_ARM9E
+
+options 	SOC_IMX23
+
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	UVMHIST		# kernhist for uvm/pmap subsystems
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
+
+options 	MSGBUFSIZE=32768
+
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+
+# EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
+#options 	EARLYCONS=imx23, CONSADDR=0x80070000
+
+# Kernel Undefined Behavior Sanitizer (kUBSan). Use UBSAN_ALWAYS_FATAL
+# if you want panics instead of warnings.
+#options 	KUBSAN			# mandatory
+#options 	UBSAN_ALWAYS_FATAL	# optional
+
+# Kernel Address Sanitizer (kASan). The quarantine is optional and can
+# help KASAN find more use-after-frees. Use KASAN_PANIC if you want panics
+# instead of warnings.
+#makeoptions 	KASAN=1		# mandatory
+#options 	KASAN		# mandatory
+#options 	POOL_QUARANTINE	# optional
+#options 	KASAN_PANIC	# optional
+
+makeoptions 	DEBUG="-g"	# compile full symbol table
+makeoptions 	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+simplebus*	at fdt? pass 0
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at fdt? pass 0
+
+# interrupt handlers
+imx23icoll* 		at fdt? pass 1	# imx23 interrupt driver
+
+# Timers
+imx23timrot* 		at fdt? pass 2		# imx23 timer
+
+# general FDT devices
+fclock* 	at fdt? pass 1
+ffclock* 	at fdt? pass 1
+fregulator* 	at fdt? pass 5
+gregulator* 	at fdt? pass 4
+gpiokeys* 	at fdt?
+wskbd* 		at gpiokeys? console ? mux 1
+gpioleds* 	at fdt?
+
+# Performance monitors
+pseudo-device 	tprof
+
+# UART
+com* 		at fdt?	pass 4		# UART
+plcom* 		at fdt?	pass 4		# ARM PL011 UART
+
+# Audio
+audio* 		at audiobus?
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/evbarm/conf/GENERIC_V5.local"

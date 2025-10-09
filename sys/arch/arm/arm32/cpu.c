@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.154 2024/05/09 12:41:08 pho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.155 2025/10/09 06:15:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.154 2024/05/09 12:41:08 pho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.155 2025/10/09 06:15:16 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -106,7 +106,10 @@ cpu_attach(device_t dv, cpuid_t id)
 		 * Get other sysregs for BP. APs information is grabbed in
 		 * cpu_init_secondary_processor.
 		 */
+		ci->ci_actlr = 0;
+#if defined(_ARM_ARCH_6)
 		ci->ci_actlr = armreg_auxctl_read();
+#endif
 		ci->ci_revidr = armreg_revidr_read();
 	} else {
 #ifdef MULTIPROCESSOR

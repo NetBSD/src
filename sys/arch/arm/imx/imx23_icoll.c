@@ -1,4 +1,4 @@
-/* $Id: imx23_icoll.c,v 1.5 2025/10/02 06:51:16 skrll Exp $ */
+/* $Id: imx23_icoll.c,v 1.6 2025/10/09 06:15:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _INTR_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: imx23_icoll.c,v 1.6 2025/10/09 06:15:16 skrll Exp $");
+
 #include <sys/param.h>
+
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -38,10 +44,10 @@
 
 #include <arm/cpufunc.h>
 
-#define _INTR_PRIVATE
 #include <arm/pic/picvar.h>
 
 #include <arm/imx/imx23_icollreg.h>
+#include <arm/imx/imx23_icollvar.h>
 #include <arm/imx/imx23var.h>
 
 #define ICOLL_SOFT_RST_LOOP 455		/* At least 1 us ... */
@@ -85,11 +91,6 @@ static int	icoll_match(device_t, cfdata_t, void *);
 static void	icoll_attach(device_t, device_t, void *);
 static int	icoll_activate(device_t, enum devact);
 
-/*
- * ARM interrupt handler.
- */
-void imx23_intr_dispatch(struct clockframe *);
-
 const static struct pic_ops icoll_pic_ops = {
 	.pic_unblock_irqs = icoll_unblock_irqs,
 	.pic_block_irqs = icoll_block_irqs,
@@ -97,13 +98,6 @@ const static struct pic_ops icoll_pic_ops = {
 	.pic_establish_irq = icoll_establish_irq,
 	.pic_source_name = icoll_source_name,
 	.pic_set_priority = icoll_set_priority
-};
-
-struct icoll_softc {
-	device_t sc_dev;
-	struct pic_softc sc_pic;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_hdl;
 };
 
 /* For IRQ handler. */
@@ -114,7 +108,7 @@ static struct icoll_softc *icoll_sc;
  */
 static void	icoll_reset(struct icoll_softc *);
 
-CFATTACH_DECL3_NEW(icoll,
+CFATTACH_DECL3_NEW(imx23icoll,
 	sizeof(struct icoll_softc),
 	icoll_match,
 	icoll_attach,
@@ -294,28 +288,34 @@ icoll_attach(device_t parent, device_t self, void *aux)
 	if (icoll_attached)
 		return;
 
-	icoll_sc = sc;
-
-	sc->sc_dev = self;
-	sc->sc_iot = aa->aa_iot;
-
-	sc->sc_pic.pic_maxsources = IRQ_LAST + 1;
-	sc->sc_pic.pic_ops = &icoll_pic_ops;
-	strlcpy(sc->sc_pic.pic_name, device_xname(self),
-	    sizeof(sc->sc_pic.pic_name));
-
-	if (bus_space_map(sc->sc_iot,
+	if (bus_space_map(aa->aa_iot,
 	    aa->aa_addr, aa->aa_size, 0, &(sc->sc_hdl))) {
-		aprint_error_dev(sc->sc_dev, "unable to map bus space\n");
+		aprint_error_dev(self, "unable to map bus space\n");
 		return;
 	}
 
-	icoll_reset(sc);
-	pic_add(&sc->sc_pic, 0);
+	imx23icoll_init(sc, self,  aa->aa_iot);
+
 	aprint_normal("\n");
 	icoll_attached = 1;
 
 	return;
+}
+
+void
+imx23icoll_init(struct icoll_softc *sc, device_t self, bus_space_tag_t iot)
+{
+	icoll_sc = sc;
+
+	sc->sc_iot = iot;
+
+	sc->sc_pic.pic_maxsources = IRQ_LAST + 1;
+	sc->sc_pic.pic_ops = &icoll_pic_ops;
+	strlcpy(sc->sc_pic.pic_name, device_xname(self),
+					sizeof(sc->sc_pic.pic_name));
+
+	icoll_reset(sc);
+	pic_add(&sc->sc_pic, 0);
 }
 
 static int

@@ -1,4 +1,4 @@
-# $Id: files.imx23,v 1.6 2020/11/28 14:38:50 skrll Exp $
+# $Id: files.imx23,v 1.7 2025/10/09 06:15:16 skrll Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
@@ -7,7 +7,11 @@ defparam opt_imx.h			MEMSIZE
 
 defflag opt_imx.h                               IMX23
 
-file	arch/arm/arm32/irq_dispatch.S	icoll
+# SOC
+defflag	opt_soc.h				SOC_IMX23
+
+file	arch/arm/imx/imx23_platform.c	soc_imx23
+
 file	arch/arm/imx/imx23_space.c	ahb|apbh|apbx
 file	arch/arm/imx/imx23_dma.c	ahb|apbh|apbx
 
@@ -27,10 +31,12 @@ attach  ahb at mainbus
 file    arch/arm/imx/imx23_ahb.c	ahb
 
 # Interrupt controller
-include "arch/arm/pic/files.pic"
-device	icoll: pic, pic_splfuncs
-attach	icoll at apbh
-file	arch/arm/imx/imx23_icoll.c	icoll
+device	imx23icoll: pic, pic_splfuncs
+attach	imx23icoll at apbh
+file	arch/arm/imx/imx23_icoll.c	imx23icoll
+
+attach	imx23icoll at fdt with imx23icoll_fdt
+file	arch/arm/imx/imx23icoll_fdt.c	imx23icoll
 
 # Synchronous Serial Port (for SD/MMC)
 device	ssp: sdmmcbus
@@ -47,9 +53,13 @@ attach	plcom at apbx with imx23plcom
 file	arch/arm/imx/imx23_plcom.c	imx23plcom
 
 # Timers and rotary decoder
-device	timrot
-attach	timrot at apbx
-file	arch/arm/imx/imx23_timrot.c	timrot
+device	imx23timrot: apbx
+attach	imx23timrot at apbx
+file	arch/arm/imx/imx23_timrot.c	imx23timrot
+
+attach	imx23timrot at fdt with imx23timrot_fdt: fdt_clock
+file	arch/arm/imx/imx23timrot_fdt.c	imx23timrot_fdt
+
 
 # APB{H,X} DMA
 device	apbdma

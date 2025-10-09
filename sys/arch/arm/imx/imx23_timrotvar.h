@@ -1,11 +1,11 @@
-/* $Id: imx23var.h,v 1.3 2025/10/09 06:15:17 skrll Exp $ */
+/* $NetBSD: imx23_timrotvar.h,v 1.1 2025/10/09 06:15:16 skrll Exp $ */
 
-/*
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Petri Laakso.
+ * by Yuri Honegger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,52 +29,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_IMX_IMX23VAR_H
-#define _ARM_IMX_IMX23VAR_H
+#ifndef _ARM_IMX23_TIMROT_VAR_H_
+#define _ARM_IMX23_TIMROT_VAR_H_
 
-#define DRAM_BASE 0x40000000
-#define APBH_BASE 0x80000000
-#define APBH_SIZE 0x00040000	/* 256 kB */
-#define APBX_BASE 0x80040000
-#define APBX_SIZE 0x00040000
-#define AHB_BASE  0x80080000	/* USB and DRAM registers. */
-#define AHB_SIZE  0x00080000	/* 512 kB */
+#include "opt_arm_timer.h"
+#ifdef __HAVE_GENERIC_CPU_INITCLOCKS
+void	imx23timrot_cpu_initclocks(void);
+#else
+#define imx23timrot_cpu_initclocks	cpu_initclocks
+#endif
 
-#define IMX23_UART_CLK 24000000
 
-#ifndef _LOCORE
-#include <machine/bus_defs.h>
-#include <sys/device.h>
-
-extern struct bus_space imx23_bus_space;
-extern struct arm32_bus_dma_tag imx23_bus_dma_tag;
-
-struct apb_attach_args {
-	bus_space_tag_t aa_iot;
-	bus_dma_tag_t aa_dmat;
-	const char *aa_name;
-	bus_addr_t aa_addr;
-	bus_size_t aa_size;
-	int8_t aa_irq;
+/* Allocated for each timer instance. */
+struct timrot_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_hdl;
+	int8_t sc_irq;
+	int (*irq_handler)(void *);
+	int freq;
 };
 
-struct apb_softc {
-	device_t	sc_dev;
-	device_t	dmac; /* DMA controller device for this bus. */
-};
+int imx23timrot_systimer_init(struct timrot_softc*, bus_space_tag_t, int8_t);
+int imx23timrot_stattimer_init(struct timrot_softc*, bus_space_tag_t, int8_t);
+int imx23timrot_systimer_irq(void *frame);
+int imx23timrot_stattimer_irq(void *);
 
-struct ahb_attach_args {
-	bus_space_tag_t aa_iot;
-	bus_dma_tag_t aa_dmat;
-	const char *aa_name;
-	bus_addr_t aa_addr;
-	bus_size_t aa_size;
-	int8_t aa_irq;
-};
-
-struct ahb_softc {
-	device_t	sc_dev;
-};
-
-#endif /* !_LOCORE */
-#endif /* !_ARM_IMX_IMX23VAR_H */
+#endif /* _ARM_IMX23_TIMROT_VAR_H_ */

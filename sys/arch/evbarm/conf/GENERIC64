@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.228 2025/08/05 15:44:10 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.229 2025/10/09 06:15:17 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -139,6 +139,7 @@ vmt0		at cpu0			# VMware Tools
 # Performance monitors
 armpmu* 	at fdt?
 pseudo-device	tprof
+pseudo-device	lockstat		# lock profiling
 
 # CPU frequency scaling
 cpufreqdt*	at cpu?

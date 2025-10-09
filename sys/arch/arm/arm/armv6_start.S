@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.40 2025/10/01 06:48:32 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.41 2025/10/09 06:15:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
+#include <arm/locore.h>
+
 #include "assym.h"
 
 #if defined(CONSADDR) && defined(CONADDR)
@@ -66,6 +68,12 @@
 
 #if defined(FDT)
 #define MD_CPU_HATCH	arm_fdt_cpu_hatch
+#endif
+
+#if defined(_ARM_ARCH_6)
+#define	L1_S_KRW_NOCACHE 	(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE_armv6n)
+#else
+#define	L1_S_KRW_NOCACHE	(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE_generic)
 #endif
 
 /*
@@ -105,7 +113,7 @@ ENTRY_NP(generic_start)
 #endif
 
 	/* disable IRQs/FIQs. */
-	cpsid	if
+	INTERRUPT_DISABLE(r0)
 
 	adr	R_TMP1, generic_start
 	ldr	R_VTOPDIFF, =generic_start
@@ -157,12 +165,14 @@ ENTRY_NP(generic_start)
 	VPRINTF("\n\rttb0  : ")
 	mrc	p15, 0, r0, c2, c0, 0	// TTBR0 read
 	VPRINTX(r0)
+#if defined(_ARM_ARCH_6)
 	VPRINTF("\n\rttb1  : ")
 	mrc	p15, 0, r0, c2, c0, 1	// TTBR1 read
 	VPRINTX(r0)
 	VPRINTF("\n\rttcr  : ")
 	mrc	p15, 0, r0, c2, c0, 2	// TTBCR read
 	VPRINTX(r0)
+#endif
 	VPRINTF("\n\r")
 #endif
 
@@ -170,6 +180,8 @@ ENTRY_NP(generic_start)
 	b	generic_startv7
 #elif defined(_ARM_ARCH_6)
 	b	generic_startv6
+#elif defined(_ARM_ARCH_5)
+	b	generic_startv5
 #else
 #error Unsupported CPU
 #endif
@@ -265,7 +277,7 @@ arm_build_translation_table:
 	bic	R_PA, R_PA, r0
 
 	// attribute to map kernel
-	ldr	R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
+	ldr	R_ATTR, =L1_S_KRW_NOCACHE
 	bl	arm_boot_l1pt_init
 
 	/*
@@ -295,11 +307,11 @@ arm_build_translation_table:
 	bic	R_PA, r2		// ...rounded down to L1_S boundary
 
 	// attribute to map kernel
-	ldr	R_ATTR, =(L1_S_PROTO | L1_S_AP_KRW | L1_S_NOCACHE)
+	ldr	R_ATTR, =L1_S_KRW_NOCACHE
 	bl	arm_boot_l1pt_entry
 
 #if defined(FDTBASE)
-	VPRINTF("DTB")
+	VPRINTF("\n\rDTB")
 
 	/*
 	 * Add DTB identity mapping (1MB) from originally r2 (but saved in
@@ -523,6 +535,7 @@ generic_startv6:
 	bl	arm_build_translation_table
 
 	XPUTC(#'E')
+
 	/*
 	 * Turn on the MMU.  Return to new enabled address space.
 	 */
@@ -555,6 +568,47 @@ generic_vstartv6:
 	/* NOTREACHED */
 	.ltorg
 
+#elif defined(_ARM_ARCH_5)
+
+generic_startv5:
+	VPRINTF("v5    : ")
+
+	bl	armv5_init
+	bl	generic_savevars
+
+	mov	R_DEVATTR, #0
+	bl	arm_build_translation_table
+
+	XPUTC(#'E')
+
+	/*
+	 * Turn on the MMU.  Return to new enabled address space.
+	 */
+	ldr	r0, =TEMP_L1_TABLE
+	sub	r0, R_VTOPDIFF
+
+	ldr	lr, =generic_vstartv5
+	b	armv5_mmuinit
+
+generic_vstartv5:
+	// convert stack back to virtual address
+	add	sp, sp, R_VTOPDIFF
+
+	VPRINTF("virtual\n\r")
+
+#if defined(KASAN)
+	ldr	r0, =start_stacks_bottom
+	bl	_C_LABEL(kasan_early_init)
+
+	VPRINTF("kasan\n\r")
+#endif
+
+	VPRINTF("rgo\n\r")
+
+	//Jump to start in locore.S, which in turn will call initarm and main.
+	b	start
+
+	.ltorg // not reached
 #endif
 
 #if defined(_ARM_ARCH_7)
@@ -1132,6 +1186,68 @@ Lcontrol_wax:
 		(3 << 19) | \
 		(1 << 17) | \
 	        (1 << 10)
+#elif defined(_ARM_ARCH_5)
+armv5_init:
+	bx	lr
+
+	.ltorg
+
+armv5_mmu_enable_bits:
+	.word	CPU_CONTROL_MMU_ENABLE | \
+		CPU_CONTROL_WBUF_ENABLE | /* should be one */ \
+		CPU_CONTROL_32BP_ENABLE | /* should be one */ \
+		CPU_CONTROL_32BD_ENABLE | /* should be one */ \
+		CPU_CONTROL_LABT_ENABLE | /* should be one */ \
+		(1 << 16)               | /* should be one */ \
+		(1 << 18)                 /* should be one */
+
+
+armv5_mmuinit:
+	mov	r4, lr
+	mov	r5, r0  // contains the vtop-corrected translation table address
+
+	/* write translation table base register */
+	mcr	p15, 0, r5, c2, c0, 0
+	VPRINTF("\n\rTTBR : ")
+	VPRINTX(r5)
+
+	/* Invalidate TLBs */
+	mov	r1, #0
+	mcr	p15, 0, r1, c8, c7, 0
+
+	/* Set the Domain Access register.  Very important! */
+	mov	r5, #DOMAIN_DEFAULT
+	mcr	p15, 0, r5, c3, c0, 0
+	VPRINTF("\n\rDACR : ")
+	VPRINTX(r5)
+
+	/*
+	 * Enable the MMU, etc.
+	 */
+
+	VPRINTF("\n\rSCTLR: ")
+#if defined(VERBOSE_INIT_ARM)
+	mrc	p15, 0, r5, c1, c0, 0	// read status+control register
+	VPRINTX(r5)
+	VPRINTF("/")
+#endif
+
+	mrc	p15, 0, r0, c1, c0, 0	// read control register
+	mov r5, r0
+	ldr	r1, armv5_mmu_enable_bits
+	orr	r0, r0, r1		// set MMU bits
+
+	mov r6, r0
+	VPRINTX(r6)
+
+	mcr	p15, 0, r6, c1, c0, 0	// actually enable mmu
+	nop				// wait for mmu to have turned on
+	nop
+	nop
+
+	VPRINTF("\n\rMMU")
+
+	bx	r4 // return
 #endif
 
 ENTRY_NP(generic_vprint)

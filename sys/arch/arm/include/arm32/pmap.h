@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.177 2023/10/12 11:33:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.178 2025/10/09 06:15:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -780,6 +780,9 @@ extern vsize_t xscale_cache_clean_size;
 #define	L1_S_PROT_W_armv7	(L1_S_AP(AP_W))
 #define	L1_S_PROT_RO_armv7	(L1_S_AP(AP_R) | L1_S_AP(AP_RO))
 #define	L1_S_PROT_MASK_armv7	(L1_S_PROT_U|L1_S_PROT_W|L1_S_PROT_RO)
+
+#define	L1_S_NOCACHE_generic	(0)
+#define	L1_S_NOCACHE_armv6n	(L1_S_XS_TEX(1))
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XS_TEX(TEX_XSCALE_X))

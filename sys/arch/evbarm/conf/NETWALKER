@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.43 2023/02/09 14:09:48 abs Exp $
+#	$NetBSD: NETWALKER,v 1.44 2025/10/09 06:15:17 skrll Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -169,6 +169,9 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# Performance monitors
+pseudo-device	lockstat		# lock profiling
 
 # Pull in optional local configuration - always at end
 cinclude	"arch/evbarm/conf/NETWALKER.local"
