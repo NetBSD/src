@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2025/10/06 13:16:44 riastradh Exp $
+#	$NetBSD: Makefile,v 1.2 2025/10/09 18:55:09 christos Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/lib/libpthread/weak
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}/../lib
 .include <bsd.own.mk>		# PRINTOBJDIR
 
 .if !defined(H_PTHREAD_WEAK_OBJDIR)
-H_PTHREAD_WEAK_OBJDIR!=	cd ../lib && ${PRINTOBJDIR}
+H_PTHREAD_WEAK_OBJDIR!=	cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	H_PTHREAD_WEAK_OBJDIR
 .endif
 
