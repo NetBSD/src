@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.29 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.30 2025/10/10 20:54:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.29 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.30 2025/10/10 20:54:28 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -307,9 +307,9 @@ sunscpal_dma_poll(struct sunscpal_softc *sc)
 
 #ifdef	SUNSCPAL_DEBUG
 	if (sunscpal_debug & SUNSCPAL_DBG_DMA) {
-		char buffer[64];
-		snprintb(buffer, sizeof(buffer),
-		    SUNSCPAL_READ_2(sc, sunscpal_icr), SUNSCPAL_ICR_BITS);
+		char buffer[128];
+		snprintb(buffer, sizeof(buffer), SUNSCPAL_ICR_BITS,
+		    SUNSCPAL_READ_2(sc, sunscpal_icr));
 		printf("%s: done, icr=%s\n", __func__, buffer);
 	}
 #endif
@@ -354,7 +354,7 @@ sunscpal_dma_stop(struct sunscpal_softc *sc)
 
 
 	if (icr & (SUNSCPAL_ICR_BUS_ERROR)) {
-		char buffer[64];
+		char buffer[128];
 		snprintb(buffer, sizeof(buffer), SUNSCPAL_ICR_BITS, icr);
 		printf("sc: DMA error, icr=%s, reset\n", buffer);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
