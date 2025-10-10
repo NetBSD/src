@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.36 2025/10/09 16:10:03 manu Exp $
+.\"	$NetBSD: boot.8,v 1.37 2025/10/10 00:27:51 gutteridge Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 16, 2025
+.Dd October 9, 2025
 .Dt BOOT 8 x86
 .Os
 .Sh NAME
@@ -415,21 +415,24 @@ with the
 .Li pc
 device is not possible.
 .Pp
-UEFI may support some USB and PCI based serial ports. See the 
+UEFI may support some USB and PCI-based serial ports.
+See the 
 .Sx UEFI serial ports
-section for details. Using the
+section for details.
+Using the
 .Ic consdev
-command without argument lists the available ports. 
+command without arguments lists the available ports. 
 .Ar com0
 to
 .Ar com3
 are reserved for standard ISA serial ports, other ports are assigned to
 .Ar com4
-and beyond. The generic
+and beyond.
+The generic
 .Ar com{unit}[,speed]
 syntax can be used to select any port.
 .Pp
-Bootstrap can tell the kernel to use an USB-to-serial adapter for console
+Bootstrap can tell the kernel to use a USB-to-serial adapter for console
 using the
 .Ar ucom{unit}[,speed]
 syntax.
@@ -437,18 +440,20 @@ No console switch happens in bootstrap, and kernel
 console initialization will be deferred after USB devices attachment.
 This means early boot will be silent, and 
 .Xr userconf 4
-interactive mode cannot be used. Default
+interactive mode cannot be used.
+The default
 .Ar ucom
 speed is 115200.
 .It Ic kconsdev Ar dev\| Ns Oo Ns Ic \&, Ns Ar speed Oc
 Configure the kernel console like
 .Ic consdev
-but do not attempt to switch console in bootstrap. This is useful 
-when using USB-to-serial adapter that is known as a
+but do not attempt to switch console in bootstrap.
+This is useful when using a USB-to-serial adapter that is known as a
 .Ar com
-device in bootstrap but as
+device in bootstrap but as a
 .Ar ucom
-device for the kernel. One may use a syntax like:
+device for the kernel.
+One may use a syntax like:
 .Bd -literal -offset indent
 consdev com4,115200
 kconsdev ucom0,115200
@@ -911,14 +916,14 @@ So you can only boot from unit 0.
 .El
 .El
 .Sh UEFI serial ports
-Serial ports supported by an UEFI driver can be used in UEFI
-and in NetBSD bootstrap. UEFI usually supports ISA serial ports,
-and it may support PCI or USB to serial adapters, depending on
-vendor-specific implmentations.
+Serial ports supported by a UEFI driver can be used in UEFI
+and in NetBSD bootstrap.
+UEFI usually supports ISA serial ports, and it may support PCI or USB-to-
+serial adapters, depending on vendor-specific implementations.
 .Pp
 An open source UEFI driver is available form Tianocore EDK2,
-for USB-to-serial adapters using the FTDI FT232R chip. USB 
-vendor ID and product ID for that devices are
+for USB-to-serial adapters using the FTDI FT232R chip.
+USB vendor ID and product ID for those devices are
 .Ar 0x0403
 and
 .Ar 0x6001.
@@ -937,11 +942,11 @@ load \\EFI\\EDK2\\FtdiUsbSerialDxe.efi
 bootx64.efi
 .Ed
 .Pp
-Then make sure UEFI boots into UEFI shell. If it is not available in the
-built-in options, 
+Then make sure UEFI boots into the UEFI shell.
+If it is not available in the built-in options, 
 .Pa Shell.efi
 can be obtained from Tianocore EDK2 and installed in 
-.Pa /EFI/boot/Shell.efi
+.Pa /EFI/boot/Shell.efi .
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot
@@ -972,10 +977,10 @@ which should be copied to the
 directory in a
 .Tn FAT
 formatted partition of type
-.Tn EFI
-(Either
+.Tn EFI .
+(either
 .Xr x86/mbr 8
-and
+or
 .Xr gpt 8 ,
 see the
 .Sx BUGS
