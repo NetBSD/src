@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.37 2025/09/21 13:02:08 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.38 2025/10/10 18:36:17 brad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,18 +44,20 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.37 2025/09/21 13:02:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.38 2025/10/10 18:36:17 brad Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/errno.h>
+#include <sys/uio.h>
 
 #include <dev/spi/spivar.h>
 #include <dev/spi/spi_io.h>
@@ -686,6 +688,8 @@ spi_done(struct spi_transfer *st, int err)
  * done synchronously, i.e. send a command and get the response.  This is
  * not full duplex.  If you want full duplex, you can't use these convenience
  * wrappers.
+ *
+ * spi_sendv - scatter send data to the bus
  */
 int
 spi_recv(spi_handle_t sh, int cnt, uint8_t *data)
@@ -743,6 +747,41 @@ spi_send_recv(spi_handle_t sh, int scnt, const uint8_t *snd,
 	/* enqueue it and wait for it to complete */
 	spi_transfer(sh, &trans);
 	spi_wait(&trans);
+
+	if (trans.st_flags & SPI_F_ERROR)
+		return trans.st_errno;
+
+	return 0;
+}
+
+int
+spi_sendv(spi_handle_t sh, const struct iovec *iov,
+    int iovcnt)
+{
+	struct spi_transfer	trans;
+	SIMPLEQ_HEAD(,spi_chunk_q) ck_q;
+	struct spi_chunk_q	*ce;
+
+	SIMPLEQ_INIT(&ck_q);
+
+	spi_transfer_init(&trans);
+	for(int c = 0; c < iovcnt;c++) {
+		ce = kmem_alloc(sizeof(struct spi_chunk_q),KM_NOSLEEP);
+		if (ce == NULL)
+			return ENOMEM;
+		spi_chunk_init(&ce->chunk, iov[c].iov_len, iov[c].iov_base, NULL);
+		spi_transfer_add(&trans, &ce->chunk);
+		SIMPLEQ_INSERT_HEAD(&ck_q, ce, chunk_q);
+	}
+
+	/* enqueue it and wait for it to complete */
+	spi_transfer(sh, &trans);
+	spi_wait(&trans);
+
+        while ((ce = SIMPLEQ_FIRST(&ck_q)) != NULL) {
+                SIMPLEQ_REMOVE_HEAD(&ck_q, chunk_q);
+		kmem_free(ce, sizeof(struct spi_chunk_q));
+        }
 
 	if (trans.st_flags & SPI_F_ERROR)
 		return trans.st_errno;

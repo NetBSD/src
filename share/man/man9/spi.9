@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.9,v 1.2 2019/02/23 17:37:10 wiz Exp $
+.\"	$NetBSD: spi.9,v 1.3 2025/10/10 18:36:17 brad Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Nm spi_wait ,
 .Nm spi_done ,
 .Nm spi_send ,
+.Nm spi_sendv ,
 .Nm spi_recv ,
 .Nm spi_send_recv
 .Nd Serial Peripheral Interface (SPI) kernel interface
@@ -92,12 +93,18 @@
 .Fa "const uint8_t *data"
 .Fc
 .Ft int
+.Fo spi_sendv
+.Fa "struct spi_handle *sh"
+.Fa "struct iovec *iov"
+.Fa "int iovcnt"
+.Fc
+.Ft int
 .Fo spi_send_recv
 .Fa "struct spi_handle *sh"
 .Fa "int scnt"
 .Fa "const uint8_t *snd"
 .Fa "int rcnt"
-.Fa "const uint8_t *rcv"
+.Fa "uint8_t *rcv"
 .Fc
 .Sh DESCRIPTION
 SPI is a 4-wire synchronous full-duplex serial bus.
@@ -148,6 +155,8 @@ waits for it to complete.
 .It Fn spi_send "sh" "cnt" "data"
 Prepares a chunk for sending data, queues a transfer and
 waits for it to complete.
+.It Fn spi_sendv "sh" "iov" "iovcnt"
+Prepare and queue a scatter of chunks and wait for them to complete.
 .It Fn spi_send_recv "sh" "scnt" "snd" "rcnt" "rcv"
 Prepares two chunks for sending data first and then receiving
 an answer, queues a transfer and waits for it to complete.

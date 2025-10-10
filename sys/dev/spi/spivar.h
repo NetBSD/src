@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.25 2025/09/14 16:00:04 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.26 2025/10/10 18:36:17 brad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -46,6 +46,7 @@
 
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/uio.h> /* for iovec */
 
 /*
  * Serial Peripheral Interface bus.  This is a 4-wire bus common for
@@ -192,8 +193,14 @@ void	spi_wait(struct spi_transfer *);
 void	spi_done(struct spi_transfer *, int);
 
 /* convenience wrappers */
+struct spi_chunk_q {
+	struct spi_chunk chunk;
+	SIMPLEQ_ENTRY(spi_chunk_q) chunk_q;
+};
+
 int	spi_send(spi_handle_t, int, const uint8_t *);
 int	spi_recv(spi_handle_t, int, uint8_t *);
 int	spi_send_recv(spi_handle_t, int, const uint8_t *, int, uint8_t *);
+int	spi_sendv(spi_handle_t, const struct iovec *, int);
 
 #endif	/* _DEV_SPI_SPIVAR_H_ */
