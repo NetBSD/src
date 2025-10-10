@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.487 2025/10/06 13:16:43 riastradh Exp $
+# $NetBSD: mi,v 1.488 2025/10/10 15:53:54 christos Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -577,8 +577,8 @@
 ./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
-./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,gdbserver,debug
+./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/getaddrinfo.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/getconf.debug	comp-util-debug		debug
@@ -762,7 +762,6 @@
 ./usr/libdata/debug/usr/bin/quota.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/radioctl.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/ranlib.debug	comp-util-debug		binutils,debug
-./usr/libdata/debug/usr/bin/resize.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rcs.debug		comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rcsclean.debug	comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rcsdiff.debug	comp-rcs-debug		debug
@@ -772,6 +771,7 @@
 ./usr/libdata/debug/usr/bin/realpath.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/refer.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/renice.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/resize.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rev.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/revoke.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rfcomm_sppd.debug	comp-util-debug		debug
@@ -2220,6 +2220,10 @@
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_strspn.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_swab.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_access.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_aio_cancel.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_aio_lio.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_aio_rw.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_aio_suspend.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_bind.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_bitops.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_cerror.debug		tests-obsolete		obsolete,compattestfile
@@ -2397,8 +2401,8 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_thread_local_dtor.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libpthread/t_cancellation.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_call_once.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_cancellation.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cnd.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_compat_cancel.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf,compattestfile
@@ -2456,8 +2460,6 @@
 ./usr/libdata/debug/usr/tests/lib/libutil/t_strpct.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/lua/libm/h_lualibm.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread/t_sem_pth.debug	tests-lib-debug		debug,atf,rump
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_dynamic.so.1.debug	tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_static.so.1.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_df_1_noopen1.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_df_1_noopen2.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_dl_symver_v0.debug	tests-libexec-debug	debug,atf,pic,compattestfile
@@ -2467,6 +2469,8 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_locking.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_r_rel_nopack.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_r_rel_pack.debug	tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_dynamic.so.1.debug	tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_static.so.1.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-cleared.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlerror-false.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf,pic,compattestfile
@@ -2500,9 +2504,9 @@
 ./usr/libdata/debug/usr/tests/net/if_tap/rump_open_tap.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_vlan/bpfopen.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_vlan/siocXmulti.debug	tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/in_cksum/in_cksum.debug	tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/inpcb/broadcast_bind.debug	tests-net-debug		debug,atf,rump,compattestfile
 ./usr/libdata/debug/usr/tests/net/inpcb/inpcb_bind.debug	tests-net-debug		debug,atf,rump,compattestfile
-./usr/libdata/debug/usr/tests/net/in_cksum/in_cksum.debug	tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/ipsec/natt_terminator.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/mcast.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/t_mcast.debug		tests-obsolete		debug,atf,rump,obsolete
@@ -2520,8 +2524,8 @@
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/net/sys/t_rfc6056.debug			tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/sys/t_socketpair.debug		tests-obsolete		obsolete,compattestfile
-./usr/libdata/debug/usr/tests/net/tcp/tcp_shutdown.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/tcp/t_tcp_connect_port.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/tcp/tcp_shutdown.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/modautoload/t_modautoload.debug	tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_forkcli.debug			tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reboot.debug			tests-obsolete		obsolete
@@ -2602,6 +2606,7 @@
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
 ./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	comp-c-debuglib		atf,debuglib,compattestfile
+./usr/tests/lib/libpthread/weak/libh_pthread_weak_g.a			comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_abuse_static_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_def_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile

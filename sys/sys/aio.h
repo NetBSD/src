@@ -1,6 +1,7 @@
-/*	$NetBSD: aio.h,v 1.13 2016/04/09 19:55:33 riastradh Exp $	*/
+/*	$NetBSD: aio.h,v 1.14 2025/10/10 15:53:55 christos Exp $	*/
 
 /*
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
  * 
@@ -31,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/signal.h>
+#include <sys/tree.h>
 
 /* Returned by aio_cancel() */
 #define AIO_CANCELED		0x1
@@ -52,7 +54,7 @@
  */
 struct aiocb {
 	off_t aio_offset;		/* File offset */
-	volatile void *aio_buf;		/* I/O buffer in process space */
+	void *aio_buf;			/* I/O buffer in process space */
 	size_t aio_nbytes;		/* Length of transfer */
 	int aio_fildes;			/* File descriptor */
 	int aio_lio_opcode;		/* LIO opcode */
@@ -90,13 +92,97 @@ struct aiocb {
 #define JOB_WIP			0x1
 #define JOB_DONE		0x2
 
+/* Structure for tracking the status of a collection of OPS */
+struct aiowaitgroup {
+	kmutex_t mtx;		/* Protects entire structure */
+	kcondvar_t done_cv;	/* Signaled when job completes */
+	size_t completed;	/* Number of completed jobs in this wait group */
+	size_t total;		/* Total jobs being waited on */
+	bool active;		/* False after suspend returns/times out */
+	int refcnt;		/* Reference count */
+};
+
+/* */
+struct aiowaitgrouplk {
+	kmutex_t mtx;	/* Protects wgs array modifications */
+	void **wgs;	/* Dynamic array of waiting aiowaitgroups */
+	size_t s;	/* Allocated size of wgs array */
+	size_t n;	/* Current number of waitgroups */
+};
+
 /* Structure of AIO job */
+struct aiost;
+struct buf;
 struct aio_job {
-	int aio_op;		/* Operation code */
-	struct aiocb aiocbp;	/* AIO data structure */
-	void *aiocb_uptr;	/* User-space pointer for identification of job */
+	kmutex_t mtx;		/* Protects completed flag */
+	int aio_op;		/* Operation type (AIO_READ/WRITE/SYNC) */
+	struct aiocb aiocbp;	/* User-visible AIO control block */
+	void *aiocb_uptr;	/* User pointer for job identification */
+	struct proc *p;		/* Originating process */
+	bool completed;		/* Job completion status */
+	bool on_queue;		/* Whether or not this job is on sp->jobs */
+	struct file *fp;	/* File pointer associated with the job */
+	struct aiowaitgrouplk lk; /* List of waitgroups waiting on this job */
 	TAILQ_ENTRY(aio_job) list;
-	struct lio_req *lio;
+	struct lio_req *lio;	/* List I/O request (if part of lio_listio) */
+};
+
+#define AIOST_STATE_NONE	0x1
+#define AIOST_STATE_OPERATION	0x2
+#define AIOST_STATE_TERMINATE	0x4
+
+#define AIOSP_SUSPEND_ANY	0x1
+#define AIOSP_SUSPEND_ALL	0x2
+
+struct aiost;
+struct aiost_file_group {
+	RB_ENTRY(aiost_file_group) tree;
+	struct file *fp;
+	struct aiost *aiost;
+	kmutex_t mtx;
+	TAILQ_HEAD(, aio_job) queue;
+	size_t queue_size;
+};
+
+/* Structure for AIO servicing thread */
+struct aiosp;
+struct aiost {
+	TAILQ_ENTRY(aiost) list;
+	struct aiosp *aiosp;		/* Servicing pool of this thread */
+	kmutex_t mtx;			/* Protects this structure */
+	kcondvar_t service_cv;		/* Signal to activate thread */
+	struct lwp *lwp;		/* Servicing thread LWP */
+	int state;			/* The state of the thread */
+	bool freelist;			/* Whether or not aiost is on freelist */
+	struct aiost_file_group *fg;	/* File group associated with the thread */
+	struct aio_job *job;		/* Singleton job */
+};
+
+struct aiocbp {
+	TAILQ_ENTRY(aiocbp) list;
+	const void *uptr;
+	struct aio_job *job;
+};
+
+/* Structure for AIO servicing pool */
+TAILQ_HEAD(aiost_list, aiost);
+TAILQ_HEAD(aiocbp_list, aiocbp);
+struct aiost_file_tree;
+struct aiosp {
+	struct aiost_list freelist;	/* Available service threads */
+	size_t nthreads_free;		/* Length of freelist */
+	struct aiost_list active;	/* Active servicing threads */ 
+	size_t nthreads_active;		/* length of active list */
+	TAILQ_HEAD(, aio_job) jobs;	/* Queue of pending jobs */
+	size_t jobs_pending;		/* Number of pending jobs */
+	kmutex_t mtx;			/* Protects structure */
+	size_t nthreads_total;		/* Number of total servicing threads */
+	volatile u_long njobs_processing;/* Number of total jobs currently being processed*/
+	struct aiocbp_list *aio_hash;	/* Aiocbp hash root */
+	kmutex_t aio_hash_mtx;		/* Protects the hash table */
+	size_t aio_hash_size;		/* Total number of buckets */
+	u_int aio_hash_mask;		/* Hash mask */
+	struct aiost_file_tree *fg_root;/* RB tree of file groups */
 };
 
 /* LIO structure */
@@ -108,18 +194,39 @@ struct lio_req {
 /* Structure of AIO data for process */
 struct aioproc {
 	kmutex_t aio_mtx;		/* Protects the entire structure */
-	kcondvar_t aio_worker_cv;	/* Signals on a new job */
-	kcondvar_t done_cv;		/* Signals when the job is done */
-	struct aio_job *curjob;		/* Currently processing AIO job */
 	unsigned int jobs_count;	/* Count of the jobs */
-	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
-	struct lwp *aio_worker;		/* AIO worker thread */
+	struct aiosp aiosp;		/* Per-process service pool */
 };
 
 extern u_int aio_listio_max;
-/* Prototypes */
+
+/*
+ * Prototypes
+ */
+
 void	aio_print_jobs(void (*)(const char *, ...) __printflike(1, 2));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
+
+int	aiosp_initialize(struct aiosp *);
+int	aiosp_destroy(struct aiosp *, int *);
+int	aiosp_distribute_jobs(struct aiosp *);
+int	aiosp_enqueue_job(struct aiosp *, struct aio_job *);
+int	aiosp_suspend(struct aiosp *, struct aiocb **, int, struct timespec *,
+		int);
+int	aiosp_flush(struct aiosp *);
+int	aiosp_validate_conflicts(struct aiosp *, const void *);
+int	aiosp_error(struct aiosp *, const void *, register_t *); 
+int	aiosp_return(struct aiosp *, const void *, register_t *); 
+
+void	aiowaitgroup_init(struct aiowaitgroup *);
+void	aiowaitgroup_fini(struct aiowaitgroup *);
+int	aiowaitgroup_wait(struct aiowaitgroup *, int);
+void	aiowaitgroup_done(struct aiowaitgroup *);
+void	aiowaitgroup_join(struct aiowaitgroup *, struct aiowaitgrouplk *);
+void	aiowaitgrouplk_init(struct aiowaitgrouplk *);
+void	aiowaitgrouplk_fini(struct aiowaitgrouplk *);
+void	aiowaitgrouplk_flush(struct aiowaitgrouplk *);
+
 
 #endif /* _KERNEL */
 
