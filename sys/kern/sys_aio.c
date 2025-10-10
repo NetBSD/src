@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.51 2025/10/10 15:53:55 christos Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.52 2025/10/10 17:08:01 kre Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.51 2025/10/10 15:53:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.52 2025/10/10 17:08:01 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -734,7 +734,7 @@ aiost_create(struct aiosp *sp, struct aiost **ret)
 	sp->nthreads_total++;
 
 	int error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN | KTHREAD_TS,
-	    NULL, aiost_entry, st, &st->lwp, "aio_%d_%ld", p->p_pid,
+	    NULL, aiost_entry, st, &st->lwp, "aio_%d_%zu", p->p_pid,
 	    sp->nthreads_total);
 	if (error) {
 		return error;
