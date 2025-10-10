@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.143 2025/10/10 13:14:35 manu Exp $	*/
+/*	$NetBSD: ucom.c,v 1.144 2025/10/10 17:33:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.143 2025/10/10 13:14:35 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.144 2025/10/10 17:33:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ddb.h"
 #include "opt_ntp.h"
 #include "opt_usb.h"
 #endif
@@ -59,21 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.143 2025/10/10 13:14:35 manu Exp $");
 #include <sys/sysctl.h>
 #include <sys/timepps.h>
 #include <sys/rndsource.h>
-#include <sys/kthread.h>
 
-#include <dev/cons.h>
 #include <dev/usb/usb.h>
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/usbhist.h>
 
 #include <dev/usb/ucomvar.h>
-
-#include <ddb/db_active.h>
 
 #include "ucom.h"
 #include "locators.h"
@@ -192,7 +186,6 @@ struct ucom_softc {
 	}			sc_state;
 	bool			sc_closing;	/* software is closing */
 	bool			sc_dying;	/* hardware is gone */
-	struct ucom_cnstate	*sc_cn;		/* console state */
 
 	struct pps_state	sc_pps_state;	/* pps state */
 
@@ -243,7 +236,6 @@ static void	ucom_break(struct ucom_softc *, int);
 static void	tiocm_to_ucom(struct ucom_softc *, u_long, int);
 static int	ucom_to_tiocm(struct ucom_softc *);
 
-static void	ucom_cnreadcb(struct usbd_xfer *, void *, usbd_status);
 static void	ucomreadcb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_submit_write(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_write_status(struct ucom_softc *, struct ucom_buffer *,
@@ -253,60 +245,6 @@ static void	ucomwritecb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_read_complete(struct ucom_softc *);
 static int	ucomsubmitread(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_softintr(void *);
-
-
-static bool	ucom_polling(struct ucom_softc *);
-static bool	ucom_cnsetoutput(struct ucom_softc *, const char *, bool);
-static void	ucom_restartread(struct ucom_softc *);
-static void	ucom_cnlwp(void *);
-static int	ucom_cnputbuf(struct ucom_softc *);
-static int	ucom_cngetc(dev_t);
-static void	ucom_cnputc(dev_t, int);
-static void	ucom_cnpollc(dev_t, int);
-static void	ucom_cnfree(struct ucom_softc *, struct ucom_cnstate *);
-static void	ucom_cnhalt(dev_t);
-#ifdef DDB
-static void	ucom_cncheckmagic(struct ucom_cnstate *, struct ucom_buffer *);
-#endif
-
-/*    
- * Following are all routines needed for COM to act as console
- */   
-static struct consdev ucom_cnops = {
-	.cn_getc = ucom_cngetc,
-	.cn_putc = ucom_cnputc,
-	.cn_pollc = ucom_cnpollc, 
-	.cn_halt = ucom_cnhalt, 
-	.cn_dev = NODEV,
-	.cn_pri = CN_NORMAL 
-}; 
-static int ucom_cnspeed = B115200;
-
-struct ucom_cnstate {
-	dev_t			cn_dev;
-	int			cn_spl;
-	struct usbd_xfer	*cn_xfer_in;
-	u_char			*cn_buf_in;
-	u_int			cn_prod_in;
-	u_int			cn_cons_in;
-	struct usbd_xfer	*cn_xfer_out;
-	u_char			*cn_buf_out;
-	u_char			*cn_linear_buf_out;
-	u_int			cn_prod_out;
-	u_int			cn_cons_out;
-	lwp_t			*cn_lwp;
-	const char		*cn_output; 
-	kmutex_t		cn_output_lock;
-	kmutex_t		cn_putc_lock;
-	kcondvar_t		cn_lwpcv;
-	kmutex_t		cn_lwpcv_lock;
-	SIMPLEQ_HEAD(, ucom_buffer) cn_ibuff_pending;
-	struct cnm_state	cn_magic_state;
-	bool			cn_magic_req;
-	bool			cn_pollc_done;
-	bool			cn_dying;
-};
-
 
 int ucom_match(device_t, cfdata_t, void *);
 void ucom_attach(device_t, device_t, void *);
@@ -321,264 +259,10 @@ ucom_match(device_t parent, cfdata_t match, void *aux)
 	return 1;
 }
 
-/*
- * Output a chunk of data, either from ucom_cnputc() when
- * polling, or from ucom_cnlwp() when not polling.
- */
-static int
-ucom_cnputbuf(struct ucom_softc *sc)
-{
-	struct ucom_cnstate *cn = sc->sc_cn;
-	bool polling = ucom_polling(sc);
-	u_char *ub_out = usbd_get_buffer(cn->cn_xfer_out);
-	u_int cn_prod_out;
-	int flags = USBD_SHORT_XFER_OK;
-	int cnt = 0;
-	u_char *out = NULL;
-	usbd_status err;
-	int error = 0;
-
-	if (!polling)
-		mutex_enter(&cn->cn_putc_lock);
-
-	cn_prod_out = cn->cn_prod_out;
-
-	if (!polling)
-		mutex_exit(&cn->cn_putc_lock);
-
-	if (cn_prod_out > cn->cn_cons_out) {
-		cnt = cn_prod_out - cn->cn_cons_out;
-		out = cn->cn_buf_out + cn->cn_cons_out;
-	}
-
-	if (cn_prod_out < cn->cn_cons_out) {
-		u_int top_size;
-
-		/*
-		 * Copy two chunks to linear buffer:
-		 * - from cn->cn_cons_out to end of cn->cn_buf_out
-		 * - from start of cn->cn_buf_out to cn_prod_out.
-		 */
-		top_size = sc->sc_obufsize - cn->cn_cons_out;
-		memcpy(cn->cn_linear_buf_out,
-		    cn->cn_buf_out + cn->cn_cons_out, top_size);
-		memcpy(cn->cn_linear_buf_out + top_size,
-		       cn->cn_buf_out, cn_prod_out);
-
-		cnt = top_size + cn_prod_out;
-		out = cn->cn_linear_buf_out;
-	}
-
-	if (cnt == 0)
-		goto out;
-
-	if (cnt > sc->sc_obufsize)
-		cnt = sc->sc_obufsize;
-
-	if (sc->sc_methods->ucom_write != NULL)
-		sc->sc_methods->ucom_write(sc->sc_parent,
-		sc->sc_portno, ub_out, out, &cnt);
-	else
-		memcpy(ub_out, out, cnt);
-
-	/*
-	 * It must be asynchronous if polling  because usbd_transfer()
-	 * has:
-	 * while (!xfer->ux_done) {
-	 * 	if (pipe->up_dev->ud_bus->ub_usepolling)
-	 *		panic("usbd_transfer: not done");
-	 * (...)
-	 * }
-	 */
-	if (!polling)
-		flags |= USBD_SYNCHRONOUS;
-
-	usbd_setup_xfer(cn->cn_xfer_out, sc, ub_out, cnt,
-	    flags, USBD_NO_TIMEOUT, NULL);
-	err = usbd_transfer(cn->cn_xfer_out);
-
-	/* 
-	 * Poll for xfer completion. We cannot just fire and
-	 * forget, because we must make sure the xfer is done
-	 * before using it again. Otherwise, we would corrupt
-	 * the queue by queing the same xfer twice.
-	 * See the comment in ucom_cngetc() for the delay duration.
-	 */ 
-	while (polling && !cn->cn_xfer_out->ux_done) {
-		usbd_dopoll(sc->sc_iface);
-		delay(10);
-	}
-
-	KASSERT(cn->cn_xfer_out->ux_done);
-
-	usbd_get_xfer_status(cn->cn_xfer_out, NULL, NULL, NULL, &err);
-
-	switch (err) {
-	case USBD_STALLED:
-		/*
-		 * We overflown output. Wait a bit, report EAGAIN and 
-		 * do not move cn->cn_cons_out so that this output is
-		 * retried later.
-		 */
-		delay(10);
-		error = EAGAIN;
-		break;
-
-	case USBD_NORMAL_COMPLETION:
-		cn->cn_cons_out += cnt;
-		cn->cn_cons_out %= sc->sc_obufsize;
-		break;
-
-	default:
-		/*
-		 * This should not happen for a done xfer
-		 */
-		KASSERT(err != USBD_IN_PROGRESS);
-		KASSERT(err != USBD_NOT_STARTED);
-
-		/*
-		 * cn->cn_cons_out is not modified, output will be
-		 * retried later, hopefully with more success.
-		 */
-		error = EIO;
-		break;
-	}
-
-out:
-	return error;
-}
-
-static bool
-ucom_polling(struct ucom_softc *sc)
-{		      
-	return (sc->sc_udev->ud_bus->ub_usepolling != 0);
-}     
-
-static bool
-ucom_cnsetoutput(struct ucom_softc *sc, const char *caller, bool on)
-{		      
-	bool ret = false;
-	struct ucom_cnstate *cn;
-	const void *output;
-
-	/*
-	 * ucom_cnlwp() is completely blocked during DDB execution,
-	 * Do not try to wait for it, just claim success. 
-	 */
-	if (db_active)
-		return true;
-
-	cn = sc->sc_cn;
-	output = on ? caller : NULL;
-
-	mutex_enter(&cn->cn_output_lock);
-	
-	if (cn->cn_output == caller || cn->cn_output == NULL)
-		cn->cn_output = output;
-
-	ret = (cn->cn_output == output);
-
-	mutex_exit(&cn->cn_output_lock);
-
-	return ret;
-}     
-
-/*
- * Restart regular reads that were paused during polling. This
- * operation is deferred in ucom_cnlwp() because it requires to
- * lock sc->sc_lock, something we cannot do inside DDB since
- * the lock owner will not be scheduled to release the lock. 
- */
-static void
-ucom_restartread(struct ucom_softc *sc)
-{
-	struct ucom_cnstate *cn = sc->sc_cn;
-	struct ucom_buffer *ub;
-
-	mutex_enter(&sc->sc_lock);
-	while ((ub = SIMPLEQ_FIRST(&cn->cn_ibuff_pending)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&cn->cn_ibuff_pending, ub_link);
-		ucomsubmitread(sc, ub);
-	}
-	mutex_exit(&sc->sc_lock);
-}
-
-/*
- * When ucom_cnputc() is called from kprintf(), kprintf_lock is held.
- * Since this is a spin lock, we are not allowed to sleep. Starting 
- * an USB xfer means locking the pipe in usbd_transfer(). That is an
- * adaptative lock, locking involves sleeping, this is forbidden.
- * 
- * This is why in non-polling mode, ucom_cnputc() queues the output
- * so that ucom_cnlwp() consumes it asynchronously. In polling mode, 
- * ucom_cnputc() is not called from kprintf(), and ucom_cnlwp() may
- * not be allowed to run, therefore the USB xfer is done synchronously.
- *
- * ucom_cnlwp() is also used to defer some operations:
- * - entering DDB, see comment above ucom_cncheckmagic().
- * - resuming input after polling, see comment above ucom_restartread().
- */
-static void
-ucom_cnlwp(void *arg)
-{
-	struct ucom_softc * const sc = arg;
-	struct ucom_cnstate *cn = sc->sc_cn;
-			
-	if (cn_tab != NULL && cn_tab->cn_halt != NULL)
-		cn_tab->cn_halt(cn_tab->cn_dev);
-
-	cn_tab = &ucom_cnops;
-	printf("ucom%d: console\n", UCOMUNIT(ucom_cnops.cn_dev));
-	
-	cn_init_magic(&cn->cn_magic_state);
-	cn_set_magic("\047\001"); /* default magic is BREAK */
-	cn->cn_magic_req = false;
-	cn->cn_pollc_done = false;
-	cn->cn_dying = false;
-
-	mutex_enter(&cn->cn_lwpcv_lock);
-
-	do {
-		while (ucom_polling(sc) ||
-		       cn->cn_prod_out == cn->cn_cons_out ||
-		       !ucom_cnsetoutput(sc, __func__, true)) {
-			cv_timedwait(&cn->cn_lwpcv, &cn->cn_lwpcv_lock, 10);
-
-			if (cn->cn_magic_req) {
-				cn->cn_magic_req = false;
-				cn_trap();
-			}
-
-			if (cn->cn_pollc_done) {
-				cn->cn_pollc_done = false;
-				ucom_restartread(sc);
-			}
-
-			if (sc->sc_dying || cn->cn_dying)
-				goto out;
-		}
-
-		while (cn->cn_prod_out != cn->cn_cons_out) {
-			int error;
-			
-			error = ucom_cnputbuf(sc);
-			if (error != 0 && error != EAGAIN)
-				break;
-		}
-
-		bool setoutput = ucom_cnsetoutput(sc, __func__,  false);
-		KASSERT(setoutput);
-	} while (1 /* CONSTCOND */);
-out:
-	mutex_exit(&cn->cn_lwpcv_lock);
-	kthread_exit(0);
-}
-
 void
 ucom_attach(device_t parent, device_t self, void *aux)
 {
 	struct ucom_softc *sc = device_private(self);
-	struct ucom_cnstate *cn = NULL;
 	struct ucom_attach_args *ucaa = aux;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -610,7 +294,6 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_swflags = 0;
 	sc->sc_closing = false;
 	sc->sc_dying = false;
-	sc->sc_cn = NULL;
 	sc->sc_state = UCOM_DEAD;
 
 	sc->sc_si = softint_establish(SOFTINT_USB, ucom_softintr, sc);
@@ -686,106 +369,6 @@ ucom_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_state = UCOM_ATTACHED;
-
-	/*
-	 * Attach ucom console 
-	 */
-	int major = cdevsw_lookup_major(&ucom_cdevsw);
-	int unit = device_unit(self);
-	if (makedev(major, unit) == ucom_cnops.cn_dev) {
-		struct vnode *vp;
-		int flags = FREAD|FNONBLOCK;
-		struct termios t;
-
-		/*
-		 * We need to open the device to setup the
-		 * hardware.
-		 */
-		error = cdevvp(ucom_cnops.cn_dev, &vp); 
-		if (error)  {
-			aprint_error_dev(self,
-			    "cannot get vnode reference, error = %d", error);
-			goto ucom_cnfail;
-		}
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_OPEN(vp, flags, kauth_cred_get());
-		VOP_UNLOCK(vp);
-
-		if (error) {
-			aprint_error_dev(self,
-			    "cannot open device, error = %d", error);
-			goto ucom_cnfail;
-		}
-
-		/*
-		 * TIOCFLAG_SOFTCAR sets CLOCAL in ucomopen().
-		 */
-		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
-
-		memset(&t, 0, sizeof(t));
-		t.c_ispeed = ucom_cnspeed;
-		t.c_ospeed = ucom_cnspeed;
-		error = ucomparam(tp, &t);
-		if (error)
-			aprint_error_dev(self,
-			    "ucomparam fail, error = %d", error);
-
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_CLOSE(vp, flags, kauth_cred_get());
-		VOP_UNLOCK(vp);
-		vrele(vp);
-		if (error)
-			aprint_error_dev(self,
-			    "close device fail, error = %d", error);
-
-		sc->sc_cn = kmem_zalloc(sizeof(*sc->sc_cn), KM_SLEEP);
-		cn = sc->sc_cn;
-
-		cn->cn_dev = ucom_cnops.cn_dev;
-
-		SIMPLEQ_INIT(&cn->cn_ibuff_pending);
-
-		cn->cn_output = NULL;
-		mutex_init(&cn->cn_output_lock, MUTEX_DEFAULT, IPL_HIGH);
-
-		cv_init(&cn->cn_lwpcv, "ucomlwp");
-		mutex_init(&cn->cn_lwpcv_lock, MUTEX_DEFAULT, IPL_NONE);
-
-		mutex_init(&cn->cn_putc_lock, MUTEX_DEFAULT, IPL_HIGH);
-
-		cn->cn_buf_in = kmem_alloc(sc->sc_ibufsize, KM_SLEEP);
-		cn->cn_prod_in = 0;
-		cn->cn_cons_in = 0;
-		if (usbd_create_xfer(sc->sc_bulkin_pipe,
-		    sc->sc_ibufsizepad, 0, 0, &cn->cn_xfer_in) != 0) {
-			aprint_error_dev(self, "fail to create cn_xfer_in");
-			goto ucom_cnfail;
-		}
-		
-		cn->cn_buf_out = kmem_alloc(sc->sc_obufsize, KM_SLEEP);
-		cn->cn_prod_out = 0;
-		cn->cn_cons_out = 0;
-		if (usbd_create_xfer(sc->sc_bulkout_pipe,
-		    sc->sc_obufsize, 0, 0, &cn->cn_xfer_out) != 0) {
-			aprint_error_dev(self, "fail to create cn_xfer_out");
-			goto ucom_cnfail;
-		}
-
-		cn->cn_linear_buf_out = kmem_alloc(sc->sc_obufsize, KM_SLEEP);
-
-		error = kthread_create(PRI_SOFTSERIAL,
-		    KTHREAD_MPSAFE|KTHREAD_MUSTJOIN, NULL, 
-		    ucom_cnlwp, sc, &cn->cn_lwp, "ucomcn");
-		if (error) {
-			aprint_error_dev(self,
-			    "cannot start ucomcn thread, error = %d", error);
-			goto ucom_cnfail;
-		}
-	}
-ucom_cnfail:
-	if (error && cn)
-		ucom_cnfree(sc, cn);
-	
 	return;
 
 fail_2:
@@ -809,25 +392,6 @@ fail_1:
 fail_0:
 	aprint_error_dev(self, "attach failed, error=%d\n", error);
 }
-
-int
-ucom_cnattach(int unit, int speed)
-{
-       int major = cdevsw_lookup_major(&ucom_cdevsw);
-
-	/*
-	 * This is called from consinit(), but at that time the
-	 * usb devices are not yet attached, hence we must defer
-	 * ucom console attachement until ucom_attach(). We set
-	 * ucomcn.cn_dev to signal ucom_attach() which ucom 
-	 * unit should attach the console.
-	 */
-	ucom_cnops.cn_dev = makedev(major, unit);
-	ucom_cnspeed = speed;
-
-	return 0;
-}
-
 
 int
 ucom_detach(device_t self, int flags)
@@ -887,11 +451,6 @@ ucom_detach(device_t self, int flags)
 			usbd_destroy_xfer(sc->sc_obuff[i].ub_xfer);
 	}
 
-	if (sc->sc_cn) {
-		ucom_cnhalt(sc->sc_cn->cn_dev);
-		sc->sc_cn = NULL;
-	}
-		
 	if (sc->sc_bulkin_pipe != NULL) {
 		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
@@ -1053,13 +612,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 */
 		struct termios t;
 
-		if (cn_isconsole(dev)) {
-			t.c_ispeed = ucom_cnspeed;
-			t.c_ospeed = ucom_cnspeed;
-		} else {
-			t.c_ispeed = 0;
-			t.c_ospeed = TTYDEF_SPEED;
-		}
+		t.c_ispeed = 0;
+		t.c_ospeed = TTYDEF_SPEED;
 		t.c_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
 			SET(t.c_cflag, CLOCAL);
@@ -1374,14 +928,8 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
-
-		/* Force local if device is console */
-		int swflags = *(int *)data;
-		if (cn_isconsole(dev))
-			swflags |= TIOCFLAG_SOFTCAR;
-
 		mutex_enter(&sc->sc_lock);
-		sc->sc_swflags = swflags;
+		sc->sc_swflags = *(int *)data;
 		mutex_exit(&sc->sc_lock);
 		break;
 
@@ -1524,12 +1072,9 @@ ucom_rts(struct ucom_softc *sc, int onoff)
 void
 ucom_status_change(struct ucom_softc *sc)
 {
-	/* We get here from sc->sc_methods->ucom_read */
-	if (ucom_polling(sc))
-		return;
+	struct tty *tp = sc->sc_tty;
 
 	if (sc->sc_methods->ucom_get_status != NULL) {
-		struct tty *tp = sc->sc_tty;
 		u_char msr, lsr;
 
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
@@ -1805,9 +1350,6 @@ ucomwritecb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 
-	if (ucom_polling(sc))
-		return;
-
 	mutex_enter(&sc->sc_lock);
 	ucom_write_status(sc, SIMPLEQ_FIRST(&sc->sc_obuff_full), status);
 	mutex_exit(&sc->sc_lock);
@@ -1821,9 +1363,6 @@ ucom_softintr(void *arg)
 
 	struct ucom_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
-
-	if (ucom_polling(sc))
-		return;
 
 	mutex_enter(&sc->sc_lock);
 	ttylock(tp);
@@ -1862,11 +1401,6 @@ ucom_read_complete(struct ucom_softc *sc)
 
 		/* XXX ttyinput takes ttylock */
 		while (ub->ub_index < ub->ub_len && !sc->sc_rx_stopped) {
-#ifdef DDB
-			if (sc->sc_cn)
-				ucom_cncheckmagic(sc->sc_cn, ub);
-#endif
-
 			/* Give characters to tty layer. */
 			if ((*rint)(ub->ub_data[ub->ub_index], tp) == -1) {
 				/* Overflow: drop remainder */
@@ -1908,124 +1442,14 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 }
 
 static void
-ucom_cnreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
-{
-	struct ucom_softc *sc = (struct ucom_softc *)p;
-	struct ucom_cnstate *cn = sc->sc_cn;
-	uint32_t cc, cnt;
-	u_char *ocp;
-	u_char *cp;
-
-	KASSERT(status != USBD_NOT_STARTED && status != USBD_IN_PROGRESS);
-
-	struct usbd_xfer *ux;
-	SIMPLEQ_FOREACH(ux, &sc->sc_bulkin_pipe->up_queue, ux_next)
-		KASSERT(ux != xfer);
-	
-	/*
-	 * Is status == USBD_STALLED we should call
-	 * usbd_clear_endpoint_stall_async() but it
-	 * is not polling-safe. Let us carry on, and 
-	 * hope it is fine.
-	 */
-	if (status != USBD_NORMAL_COMPLETION)
-		return;
-
-	usbd_get_xfer_status(xfer, NULL, (void *)&cp, &cc, NULL);
-
-	ocp = cp;
-	if (sc->sc_methods->ucom_read != NULL)
-		sc->sc_methods->ucom_read(sc->sc_parent, sc->sc_portno,
-		    &cp, &cc);
-
-	/* cp now points to the payload. Adjust cc to strip the header */
-	cc -= cp - ocp;
-
-	if (cc == 0)
-		goto out;
-
-	if (cn->cn_cons_in > cn->cn_prod_in) {
-		if (cc > cn->cn_cons_in - cn->cn_prod_in)
-			cnt = cn->cn_cons_in - cn->cn_prod_in;
-		else
-			cnt = cc;
-
-		KASSERT(cn->cn_prod_in + cnt <= sc->sc_ibufsize);
-
-		memcpy(cn->cn_buf_in + cn->cn_prod_in, cp, cnt);
-		cn->cn_prod_in += cnt;
-		cn->cn_prod_in %= sc->sc_ibufsize;
-		cp += cnt;
-		cc -= cnt;
-	} else { /* cn->cn_cons_in <= cn->cn_prod_in */
-		/*
-		 * First chunk, from cn->cn_prod_in to end of buffer
-		 */
-		if (cc > sc->sc_ibufsize - cn->cn_prod_in)
-			cnt = sc->sc_ibufsize - cn->cn_prod_in;
-		else
-			cnt = cc;
-
-		KASSERT(cn->cn_prod_in + cnt <= sc->sc_ibufsize);
-
-		memcpy(cn->cn_buf_in + cn->cn_prod_in, cp, cnt);
-		cn->cn_prod_in += cnt;
-		cn->cn_prod_in %= sc->sc_ibufsize;
-		cp += cnt;
-		cc -= cnt;
-
-		if (cc == 0)
-			goto out;
-
-		/*
-		 * Second chunk, from start of buffer to cn->cn_cons_in
-		 */
-		if (cc > cn->cn_cons_in)
-			cnt = cn->cn_cons_in; 
-		else
-			cnt = cc;
-
-		KASSERT(cn->cn_prod_in + cnt <= sc->sc_ibufsize);
-
-		memcpy(cn->cn_buf_in + cn->cn_prod_in, cp, cnt);
-		cn->cn_prod_in += cnt;
-		cn->cn_prod_in %= sc->sc_ibufsize;
-		cp += cnt;
-		cc -= cnt;
-	}
-	
-	/* If cc > 0 we discard some input */
-out:
-	return;
-}
-
-static void
 ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct ucom_buffer *ub;
 	uint32_t cc;
 	u_char *cp;
-	bool polling = ucom_polling(sc);
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
-
-	if (polling) {
-		struct ucom_cnstate *cn = sc->sc_cn;
-
-		ucom_cnreadcb(xfer, p, status);
-
-		/*
-		 * We do not restart regular input while polling. We will 
-		 * have to call ucomsubmitread() when polling ends. This
-		 * is done in ucom_restartread().
-		 */
-		ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
-		SIMPLEQ_INSERT_TAIL(&cn->cn_ibuff_pending, ub, ub_link);
-
-		return;
-	}
 
 	mutex_enter(&sc->sc_lock);
 
@@ -2136,249 +1560,6 @@ ucom_cleanup(struct ucom_softc *sc, int flag)
 }
 
 #endif /* NUCOM > 0 */
-
-/*
- * Kernel console input, used when no user process is involved:
- * used by userconf prompt (boot -c), root device prompt (boot -a)
- * or DDB. This code path is not used in single user mode or by getty.
- *
- * ucom console specificities: userconf prompt (boot -c) cannot work
- * as USB devices are not yet attached.
- */
-static int     
-ucom_cngetc(dev_t dev)
-{
-	const int unit = UCOMUNIT(dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	struct ucom_cnstate *cn = sc->sc_cn;
-	u_char *ub_in = usbd_get_buffer(cn->cn_xfer_in);
-	int c = -1; /* If -1 we are called again in a loop at splhigh */
-
-	if (cn->cn_cons_in == cn->cn_prod_in) {
-		struct usbd_xfer *xfer;
-		usbd_status err;
-
-		/*
-		 * Start a new xfer if there is no input xfer already 
-		 * in progress, for instance regular input started in 
-		 * ucomsubmread() before we entered polling.
-		 */
-		if (SIMPLEQ_EMPTY(&sc->sc_bulkin_pipe->up_queue)) {
-			usbd_setup_xfer(cn->cn_xfer_in, sc, ub_in,
-			    sc->sc_ibufsize, USBD_SHORT_XFER_OK,
-			    USBD_NO_TIMEOUT, ucom_cnreadcb);
-			err = usbd_transfer(cn->cn_xfer_in);
-			/*
-			 * XXX Can we recover from errors here?
-			 * If DIAGNOSTIC, panic now, otherwise
-			 * try to return and hope for improvement.
-			 */
-			if (err != USBD_NORMAL_COMPLETION &&
-			    err != USBD_IN_PROGRESS) {
-				KASSERTMSG(err, "%s: err %d\n", __func__, err);
-				goto out;
-			}
-
-			xfer = cn->cn_xfer_in;
-		} else {
-			xfer = SIMPLEQ_FIRST(&sc->sc_bulkin_pipe->up_queue);
-		}
-	
-
-		/*
-		 * Poll for completion, fast enough to catch new
-		 * characters. For a 8N1 serial line, delay between
-		 * characters is 86 microseconds at 115200 bps, 
-		 * (8N1 = 1 start bit + 8 data bits + 1 stop bit = 10 bits)
-		 * delay betwwen two characters = 10 bits/bps.
-		 */
-		while (!xfer->ux_done) {
-			usbd_dopoll(sc->sc_iface);
-			delay(10);
-		}
-	}
-
-	if (cn->cn_cons_in != cn->cn_prod_in) {
-		c = cn->cn_buf_in[cn->cn_cons_in];
-		cn->cn_cons_in++;
-		cn->cn_cons_in %= sc->sc_ibufsize;
-	}
-
-#ifdef DDB
-	if (!db_active && c != -1)
-		cn_check_magic(dev, c, cn->cn_magic_state);
-#endif
-out:
-	return c;
-}
-
-/*
- * Console kernel output, used when no userland process is 
- * involved. This is the "green" output on wscons default setup.
- * This code path is not used in single user mode, during
- * userland boot sequence, or by getty.
- */
-static void
-ucom_cnputc(dev_t dev, int out)
-{
-	const int unit = UCOMUNIT(dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	struct ucom_cnstate *cn = sc->sc_cn;
-	bool polling = ucom_polling(sc);
-	int error;
-
-	if (!polling)
-		mutex_enter(&cn->cn_putc_lock);
-
-	cn->cn_buf_out[cn->cn_prod_out] = (u_char)(out & 0xff);
-
-	cn->cn_prod_out++;
-	cn->cn_prod_out %= sc->sc_obufsize;
-
-	if (!polling)
-		mutex_exit(&cn->cn_putc_lock);
-
-	if (polling) {
-		do {
-			error = ucom_cnputbuf(sc);
-		} while (error == EAGAIN);
-	} else {
-		cv_signal(&cn->cn_lwpcv);
-	}
-
-	return;
-}
-
-/*
- * Toggle USB polling, where USB interrupt handler (hard and soft)
- * are called from ucom_cngetc() through usbd_dopoll().
- * This is called by console driver before calling ucom_cngetc().
- */
-static void    
-ucom_cnpollc(dev_t dev, int on)
-{
-	const int unit = UCOMUNIT(dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	struct ucom_cnstate *cn = sc->sc_cn;
-	struct usbd_device *udev = sc->sc_udev;
-
-	if (on) {
-		/*
-		 * Wait for ucom_cnlwp to drain output, and
-		 * take over output. 
-	 	 * See the comment in ucom_cngetc() for the delay duration.
-		 */
-		while (!ucom_cnsetoutput(sc, __func__, true))
-			delay(10);
-
-		/*
-		 * Make sure usb_soft_intr() does not run
-		 * during polling.
-		 */
-		cn->cn_spl = splusb();
-	}
-	
-	usbd_set_polling(udev, on);
-
-	if (!on) {
-		/*
-		 * Relinguish output
-		 */
-		bool setoutput = ucom_cnsetoutput(sc, __func__, false);
-		KASSERT(setoutput);
-
-		/*
-		 * Let usb_soft_intr() work again
-		 */
-		splx(cn->cn_spl);
-
-		/*
-		 * Restart regular input deferred in ucom_cnwlp()
-		 */
-		cn->cn_pollc_done = true;
-	}
-
-	return;
-}
-
-static void
-ucom_cnfree(struct ucom_softc *sc, struct ucom_cnstate *cn) 
-{
-	usbd_destroy_xfer(cn->cn_xfer_in);
-	usbd_destroy_xfer(cn->cn_xfer_out);
-
-	if (cn->cn_buf_in)
-		kmem_free(cn->cn_buf_in, sc->sc_ibufsize);
-
-	if (cn->cn_buf_out)
-		kmem_free(cn->cn_buf_out, sc->sc_obufsize);
-
-	if (cn->cn_linear_buf_out)
-		kmem_free(cn->cn_linear_buf_out, sc->sc_obufsize);
-
-	mutex_destroy(&cn->cn_putc_lock);
-	mutex_destroy(&cn->cn_output_lock);
-	mutex_destroy(&cn->cn_lwpcv_lock);
-
-	cv_destroy(&cn->cn_lwpcv);
-
-	kmem_free(cn, sizeof(*cn));
-
-	return;
-}
-
-static void
-ucom_cnhalt(dev_t dev)
-{
-	const int unit = UCOMUNIT(dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
-	struct ucom_cnstate *cn = sc->sc_cn;
-
-	printf("ucom%d: console detached\n", UCOMUNIT(dev));
-
-	/* ucom_cnlwp exits if sc->sc_dying || cn->cn_dying */
-	cn->cn_dying = true;
-	cv_signal(&cn->cn_lwpcv);
-	kthread_join(cn->cn_lwp);
-
-	cn_destroy_magic(&cn->cn_magic_state);
-
-	if (cn_tab == &ucom_cnops)
-		cn_tab = NULL;
-
-	ucom_cnfree(sc, cn);
-
-	return;
-}
-
-#ifdef DDB
-/*
- * This is almost cn_check_magic() but the call to cn_trap() is
- * deferred so that it happens in ucom_cnlwp(). This avoids entering
- * DDB from ucom_read_complete() in softintr context, while xfer 
- * are still being worked on, and hence are unusable in DDB.
- */
-static void
-ucom_cncheckmagic(struct ucom_cnstate *cn, struct ucom_buffer *ub) {
-	struct cnm_state *s = &cn->cn_magic_state;
-
-	for (size_t i = ub->ub_index; i < ub->ub_len; i++) {
-		int _v = s->cnm_magic[s->cnm_state];		
-		if (ub->ub_data[i] == CNS_MAGIC_VAL(_v)) {			
-			s->cnm_state = CNS_MAGIC_NEXT(_v);	
-			if (s->cnm_state == CNS_TERM) {	
-				cn->cn_magic_req = true;
-				s->cnm_state = 0;		
-				break;
-			}					
-		} else {					
-			s->cnm_state = 0;			
-		}						
-	}
-
-	return;
-}
-#endif
 
 int
 ucomprint(void *aux, const char *pnp)
