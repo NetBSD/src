@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.22 2025/09/16 22:26:32 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.23 2025/10/10 18:26:05 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -112,7 +112,7 @@ COPTS.${_f}+=	-std=gnu++23 -fimplicit-templates
 COPTS.${_f}+=	-std=gnu++26 -fimplicit-templates
 .endfor
 
-.for _f in dir ops fs_dir fs_ops cow-fs_dir cow-fs_ops
+.for _f in dir ops fs_dir fs_ops cow-fs_dir cow-fs_ops basic_file
 ${_f}.o ${_f}.d ${_f}.pico ${_f}.po: bits/largefile-config.h
 .endfor
 
