@@ -51,6 +51,7 @@ defparam			RTC_OFFSET
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
 defflag				AIO
+defflag				AIOSP
 defflag				MQUEUE
 defflag				SEMAPHORE
 

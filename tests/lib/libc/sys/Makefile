@@ -93,8 +93,17 @@ TESTS_C+=		t_wait
 TESTS_C+=		t_wait_noproc
 TESTS_C+=		t_wait_noproc_wnohang
 TESTS_C+=		t_write
+TESTS_C+=       t_aio_cancel
+TESTS_C+=       t_aio_suspend
+TESTS_C+=       t_aio_rw
+TESTS_C+=       t_aio_lio
 
 SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
+
+LDADD.t_aio_cancel+=	-lrt -lpthread
+LDADD.t_aio_suspend+=	-lrt -lpthread
+LDADD.t_aio_rw+=	-lrt -lpthread
+LDADD.t_aio_lio+=	-lrt -lpthread
 
 LDADD.t_eventfd+=	-lpthread
 LDADD.t_getpid+=	-lpthread
