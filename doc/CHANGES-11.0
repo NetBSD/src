@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.25 2025/10/09 09:29:07 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.26 2025/10/11 10:47:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -318,4 +318,17 @@ sys/compat/linux/common/linux_sched.h		1.12
 
 	compat_linux: PR 59608: fix stack address and ignore sysvsem flag.
 	[christos, ticket #49]
+
+sys/dev/usb/xhci.c				1.192
+
+	xhci(4): PR 59678: do not generate duplicate events when sending ZLP.
+	[nat, ticket #50]
+
+distrib/sets/lists/comp/mi			1.2501 (patch)
+distrib/sets/lists/debug/ad.mips		1.86 (patch)
+distrib/sets/lists/debug/shl.mi			1.374 (patch)
+
+	set lists: mark old gcc=9 conditional entries as obsolete
+	or just remove them.
+	[nakayama, ticket #51]
 
