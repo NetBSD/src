@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.345 2025/04/13 14:01:00 jakllsch Exp $	*/
+/*	$NetBSD: sd.c,v 1.346 2025/10/11 13:58:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.345 2025/04/13 14:01:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.346 2025/10/11 13:58:08 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1422,9 +1422,7 @@ sd_read_capacity(struct sd_softc *sd, int *blksize, int flags)
 
 	sd->params.lbppbe = 0;
 	sd->params.lalba = 0;
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.cmd.opcode = READ_CAPACITY_10;
+	sd->flags &= ~SDF_LBPME;
 
 	/*
 	 * Don't allocate data buffer on stack;
@@ -1436,54 +1434,50 @@ sd_read_capacity(struct sd_softc *sd, int *blksize, int flags)
 	if (datap == NULL)
 		return 0;
 
-	if (periph->periph_version >= 5) /* SPC-3 */
-		goto rc16;
-
-	/*
-	 * If the command works, interpret the result as a 4 byte
-	 * number of blocks
-	 */
 	rv = 0;
-	memset(datap, 0, sizeof(datap->data));
-	if (scsipi_command(periph, (void *)&cmd.cmd, sizeof(cmd.cmd),
-	    (void *)datap, sizeof(datap->data), SCSIPIRETRIES, 20000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) != 0)
-		goto out;
-
-	if (_4btol(datap->data.addr) != 0xffffffff) {
-		*blksize = _4btol(datap->data.length);
-		rv = _4btol(datap->data.addr) + 1;
-		goto out;
-	}
 
 	/*
-	 * Device is larger than can be reflected by READ CAPACITY (10).
-	 * Try READ CAPACITY (16).
+	 * When device announces SPC-3 conformance,
+	 * try READ CAPACITY (16) to collect information
+	 * about physical blocks and management capabilities.
+	 *
+	 * Fall back to READ CAPACITY (10).
 	 */
 
- rc16:
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd16.opcode = READ_CAPACITY_16;
 	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
 	_lto4b(sizeof(datap->data16), cmd.cmd16.len);
 
 	memset(datap, 0, sizeof(datap->data16));
-	if (scsipi_command(periph, (void *)&cmd.cmd16, sizeof(cmd.cmd16),
-	    (void *)datap, sizeof(datap->data16), SCSIPIRETRIES, 20000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) != 0)
-		goto out;
+	if (periph->periph_version >= 5 &&
+	    scsipi_command(periph, (void *)&cmd.cmd16, sizeof(cmd.cmd16),
+	    (void *)datap, sizeof(datap->data16), SCSIPIRETRIES, 20000,
+	    NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT) == 0) {
 
-	*blksize = _4btol(datap->data16.length);
-	rv = _8btol(datap->data16.addr) + 1;
-	sd->params.lbppbe = datap->data16.byte14 & SRC16D_LBPPB_EXPONENT;
-	sd->params.lalba = _2btol(datap->data16.lowest_aligned) & SRC16D_LALBA;
-	if (_2btol(datap->data16.lowest_aligned) & SRC16D_LBPME) {
-		sd->flags |= SDF_LBPME;
+		*blksize = _4btol(datap->data16.length);
+		rv = _8btol(datap->data16.addr) + 1;
+
+		sd->params.lbppbe = datap->data16.byte14
+		    & SRC16D_LBPPB_EXPONENT;
+		sd->params.lalba = _2btol(datap->data16.lowest_aligned)
+		    & SRC16D_LALBA;
+		if (_2btol(datap->data16.lowest_aligned) & SRC16D_LBPME)
+			sd->flags |= SDF_LBPME;
 	} else {
-		sd->flags &= ~SDF_LBPME;
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.cmd.opcode = READ_CAPACITY_10;
+
+		memset(datap, 0, sizeof(datap->data));
+		if (scsipi_command(periph, (void *)&cmd.cmd, sizeof(cmd.cmd),
+		    (void *)datap, sizeof(datap->data), SCSIPIRETRIES, 20000,
+		    NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT) == 0) {
+
+			*blksize = _4btol(datap->data.length);
+			rv = _4btol(datap->data.addr) + 1;
+		}
 	}
 
- out:
 	free(datap, M_TEMP);
 	return rv;
 }
