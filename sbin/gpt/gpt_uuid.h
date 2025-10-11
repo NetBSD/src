@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.h,v 1.11 2024/08/19 17:15:38 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.h,v 1.12 2025/10/11 18:55:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ typedef enum {
 	GPT_TYPE_LINUX_SWAP,
 	GPT_TYPE_LINUX_RAID,
 	GPT_TYPE_LINUX_LVM,
+	GPT_TYPE_LINUX_XBOOTLDR,
 	GPT_TYPE_MS_BASIC_DATA,
 	GPT_TYPE_MS_RESERVED,
 	GPT_TYPE_MS_RECOVERY,
@@ -74,7 +75,8 @@ typedef enum {
 	GPT_TYPE_OPENBSD_DATA,
 	GPT_TYPE_VMWARE_VMKCORE,
 	GPT_TYPE_VMWARE_VMFS,
-	GPT_TYPE_VMWARE_RESERVED
+	GPT_TYPE_VMWARE_RESERVED,
+	GPT_TYPE_SIFIVE_BBL
 } gpt_type_t;
 
 typedef uint8_t gpt_uuid_t[16];

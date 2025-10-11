@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.25 2025/02/23 20:47:19 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.26 2025/10/11 18:55:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.25 2025/02/23 20:47:19 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.26 2025/10/11 18:55:31 thorpej Exp $");
 #endif
 
 #include <err.h>
@@ -79,6 +79,7 @@ static const struct {
 	{ GPT_ENT_TYPE_LINUX_RAID, "linux-raid", "Linux RAID" },
 	{ GPT_ENT_TYPE_LINUX_SWAP, "linux-swap", "Linux swap" },
 	{ GPT_ENT_TYPE_LINUX_LVM, "linux-lvm", "Linux LVM" },
+	{ GPT_ENT_TYPE_LINUX_XBOOTLDR, "linux-xbootldr", "Linux XBOOTLDR" },
 	{ GPT_ENT_TYPE_MS_BASIC_DATA, "windows", "Windows basic data" },
 	{ GPT_ENT_TYPE_MS_RESERVED, "windows-reserved", "Windows reserved" },
 	{ GPT_ENT_TYPE_MS_RECOVERY, "windows-recovery", "Windows recovery" },
@@ -93,6 +94,7 @@ static const struct {
 	{ GPT_ENT_TYPE_VMWARE_VMKCORE, "vmcore", "VMware VMkernel core dump" },
 	{ GPT_ENT_TYPE_VMWARE_VMFS, "vmfs", "VMware VMFS" },
 	{ GPT_ENT_TYPE_VMWARE_RESERVED, "vmresered", "VMware reserved" },
+	{ GPT_ENT_TYPE_SIFIVE_BBL, "sifive-bbl", "SiFive BBL" },
 };
 
 static void
