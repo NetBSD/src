@@ -1,4 +1,4 @@
-/* $OpenBSD: scp.c,v 1.263 2025/03/28 06:04:07 dtucker Exp $ */
+/* $OpenBSD: scp.c,v 1.268 2025/09/25 06:23:19 jsg Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -144,7 +144,7 @@ int throughlocal = 1;
 /* Non-standard port to use for the ssh connection or -1. */
 int sshport = -1;
 
-/* This is the program to execute for the secured connection. ("ssh" or -S) */
+/* This is the program to execute for the secure connection. ("ssh" or -S) */
 char *ssh_program = _PATH_SSH_PROGRAM;
 
 /* This is used to store the pid of ssh_program */
@@ -1027,6 +1027,7 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 			if (mode == MODE_SFTP) {
 				if (remin == -1 || conn == NULL) {
 					/* Connect to dest now */
+					sftp_free(conn);
 					conn = do_sftp_connect(thost, tuser,
 					    tport, sftp_direct,
 					    &remin, &remout, &do_cmd_pid);
@@ -1044,6 +1045,7 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 				 * scp -3 hosta:/foo hosta:/bar hostb:
 				 */
 				/* Connect to origin now */
+				sftp_free(conn2);
 				conn2 = do_sftp_connect(host, suser,
 				    sport, sftp_direct,
 				    &remin2, &remout2, &do_cmd_pid2);
@@ -1133,6 +1135,7 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 				}
 				if (remin == -1) {
 					/* Connect to remote now */
+					sftp_free(conn);
 					conn = do_sftp_connect(thost, tuser,
 					    tport, sftp_direct,
 					    &remin, &remout, &do_cmd_pid);
@@ -1161,14 +1164,15 @@ toremote(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 		}
 	}
 out:
-	if (mode == MODE_SFTP)
-		free(conn);
+	freeargs(&alist);
 	free(tuser);
 	free(thost);
 	free(targ);
 	free(suser);
 	free(host);
 	free(src);
+	sftp_free(conn);
+	sftp_free(conn2);
 }
 
 void
@@ -1214,6 +1218,7 @@ tolocal(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 		}
 		/* Remote to local. */
 		if (mode == MODE_SFTP) {
+			sftp_free(conn);
 			conn = do_sftp_connect(host, suser, sport,
 			    sftp_direct, &remin, &remout, &do_cmd_pid);
 			if (conn == NULL) {
@@ -1225,7 +1230,6 @@ tolocal(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 			/* The protocol */
 			sink_sftp(1, argv[argc - 1], src, conn);
 
-			free(conn);
 			(void) close(remin);
 			(void) close(remout);
 			remin = remout = -1;
@@ -1245,9 +1249,11 @@ tolocal(int argc, char **argv, enum scp_mode_e mode, char *sftp_direct)
 		(void) close(remin);
 		remin = remout = -1;
 	}
+	freeargs(&alist);
 	free(suser);
 	free(host);
 	free(src);
+	sftp_free(conn);
 }
 
 /* Prepare remote path, handling ~ by assuming cwd is the homedir */
@@ -1521,7 +1527,7 @@ sink_sftp(int argc, char *dst, const char *src, struct sftp_conn *conn)
 	}
 
 	/* Did we actually get any matches back from the glob? */
-	if (g.gl_matchc == 0 && g.gl_pathc == 1 && g.gl_pathv[0] != 0) {
+	if (g.gl_matchc == 0 && g.gl_pathc == 1 && g.gl_pathv[0] != NULL) {
 		/*
 		 * If nothing matched but a path returned, then it's probably
 		 * a GLOB_NOCHECK result. Check whether the unglobbed path
@@ -1829,7 +1835,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		/*
 		 * NB. do not use run_err() unless immediately followed by
 		 * exit() below as it may send a spurious reply that might
-		 * desyncronise us from the peer. Use note_err() instead.
+		 * desynchronise us from the peer. Use note_err() instead.
 		 */
 		statbytes = 0;
 		if (showprogress)
@@ -1954,7 +1960,7 @@ throughlocal_sftp(struct sftp_conn *from, struct sftp_conn *to,
 	}
 
 	/* Did we actually get any matches back from the glob? */
-	if (g.gl_matchc == 0 && g.gl_pathc == 1 && g.gl_pathv[0] != 0) {
+	if (g.gl_matchc == 0 && g.gl_pathc == 1 && g.gl_pathv[0] != NULL) {
 		/*
 		 * If nothing matched but a path returned, then it's probably
 		 * a GLOB_NOCHECK result. Check whether the unglobbed path
@@ -2163,7 +2169,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 
 	if (fstat(fd, &stb) == -1) {
 		run_err("fstat: %s", strerror(errno));
-		return (0);
+		return (NULL);
 	}
 	size = ROUNDUP(stb.st_blksize, blksize);
 	if (size == 0)

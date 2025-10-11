@@ -1,4 +1,4 @@
-/* $OpenBSD: krl.c,v 1.60 2025/02/18 08:02:48 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.62 2025/09/15 04:41:20 djm Exp $ */
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
  *
@@ -22,10 +22,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include "sshbuf.h"
 #include "ssherr.h"
@@ -147,6 +147,8 @@ revoked_certs_free(struct revoked_certs *rc)
 	struct revoked_serial *rs, *trs;
 	struct revoked_key_id *rki, *trki;
 
+	if (rc == NULL)
+		return;
 	RB_FOREACH_SAFE(rs, revoked_serial_tree, &rc->revoked_serials, trs) {
 		RB_REMOVE(revoked_serial_tree, &rc->revoked_serials, rs);
 		free(rs);
@@ -157,6 +159,7 @@ revoked_certs_free(struct revoked_certs *rc)
 		free(rki);
 	}
 	sshkey_free(rc->ca_key);
+	freezero(rc, sizeof(*rc));
 }
 
 void
