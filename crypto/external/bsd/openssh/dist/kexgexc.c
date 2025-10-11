@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.38 2021/12/19 22:08:06 djm Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.18 2025/10/11 15:45:06 christos Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.39 2025/10/03 00:08:02 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,11 +27,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.18 2025/10/11 15:45:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 
 #include <stdio.h>

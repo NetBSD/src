@@ -1,4 +1,6 @@
+/*	$NetBSD: misc-agent.c,v 1.2 2025/10/11 15:45:06 christos Exp $	*/
 /* $OpenBSD: misc-agent.c,v 1.6 2025/06/17 01:19:27 djm Exp $ */
+
 /*
  * Copyright (c) 2025 Damien Miller <djm@mindrot.org>
  *
@@ -14,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "includes.h"
+__RCSID("$NetBSD: misc-agent.c,v 1.2 2025/10/11 15:45:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>

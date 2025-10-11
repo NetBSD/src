@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.29 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.101 2023/07/14 07:44:21 dtucker Exp $ */
+/*	$NetBSD: auth-options.c,v 1.30 2025/10/11 15:45:06 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.102 2025/09/15 04:38:00 djm Exp $ */
 
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.29 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.30 2025/10/11 15:45:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -157,6 +157,7 @@ cert_option_list(struct sshauthopt *opts, struct sshbuf *oblob,
 				if (addr_match_cidr_list(NULL, allowed) == -1) {
 					error("Certificate source-address "
 					    "contents invalid");
+					free(allowed);
 					goto out;
 				}
 				opts->required_from_host_cert = allowed;

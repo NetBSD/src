@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.c,v 1.13 2022/04/15 14:00:06 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.37 2022/03/13 23:27:54 cheloha Exp $ */
+/*	$NetBSD: xmalloc.c,v 1.14 2025/10/11 15:45:08 christos Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.38 2025/05/23 00:40:45 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.13 2022/04/15 14:00:06 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.14 2025/10/11 15:45:08 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -27,7 +27,7 @@ __RCSID("$NetBSD: xmalloc.c,v 1.13 2022/04/15 14:00:06 christos Exp $");
 #include "log.h"
 
 #ifndef __NetBSD__
-char *malloc_options = "S";
+const char * const malloc_options = "S";
 #endif
 
 void *

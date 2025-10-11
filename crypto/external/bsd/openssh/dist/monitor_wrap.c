@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.36 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.138 2024/10/22 06:13:00 dtucker Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.37 2025/10/11 15:45:07 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.142 2025/09/25 06:31:42 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.36 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.37 2025/10/11 15:45:07 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -37,9 +37,9 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.36 2025/04/09 15:49:32 christos Exp $");
 #include <errno.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include <unistd.h>
 
 #ifdef WITH_OPENSSL
@@ -131,17 +131,17 @@ mm_reap(void)
 	}
 	if (WIFEXITED(status)) {
 		if (WEXITSTATUS(status) != 0) {
-			debug_f("preauth child exited with status %d",
+			debug_f("child exited with status %d",
 			    WEXITSTATUS(status));
 			cleanup_exit(255);
 		}
 	} else if (WIFSIGNALED(status)) {
-		error_f("preauth child terminated by signal %d",
+		error_f("child terminated by signal %d",
 		    WTERMSIG(status));
 		cleanup_exit(signal_is_crash(WTERMSIG(status)) ?
 		    EXIT_CHILD_CRASH : 255);
 	} else {
-		error_f("preauth child terminated abnormally (status=0x%x)",
+		error_f("child terminated abnormally (status=0x%x)",
 		    status);
 		cleanup_exit(EXIT_CHILD_CRASH);
 	}
@@ -155,7 +155,7 @@ mm_request_send(int sock, enum monitor_reqtype type, struct sshbuf *m)
 
 	debug3_f("entering, type %d", type);
 
-	if (mlen >= 0xffffffff)
+	if (mlen >= MONITOR_MAX_MSGLEN)
 		fatal_f("bad length %zu", mlen);
 	POKE_U32(buf, mlen + 1);
 	buf[4] = (u_char) type;		/* 1st byte of payload is mesg-type */
@@ -188,7 +188,7 @@ mm_request_receive(int sock, struct sshbuf *m)
 		fatal_f("read: %s", strerror(errno));
 	}
 	msg_len = PEEK_U32(buf);
-	if (msg_len > 256 * 1024)
+	if (msg_len > MONITOR_MAX_MSGLEN)
 		fatal_f("read: bad msg_len %d", msg_len);
 	sshbuf_reset(m);
 	if ((r = sshbuf_reserve(m, msg_len, &p)) != 0)
@@ -324,6 +324,17 @@ mm_decode_activate_server_options(struct ssh *ssh, struct sshbuf *m)
 	log_verbose_reset();
 	for (i = 0; i < options.num_log_verbose; i++)
 		log_verbose_add(options.log_verbose[i]);
+
+	/* use the macro hell to clean up too */
+#define M_CP_STROPT(x) free(newopts->x)
+#define M_CP_STRARRAYOPT(x, nx) do { \
+		for (i = 0; i < newopts->nx; i++) \
+			free(newopts->x[i]); \
+		free(newopts->x); \
+	} while (0)
+	COPY_MATCH_STRING_OPTS();
+#undef M_CP_STROPT
+#undef M_CP_STRARRAYOPT
 	free(newopts);
 }
 

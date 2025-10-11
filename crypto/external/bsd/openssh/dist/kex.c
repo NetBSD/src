@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.38 2024/10/03 08:14:13 rin Exp $	*/
-/* $OpenBSD: kex.c,v 1.187 2024/08/23 04:51:00 deraadt Exp $ */
+/*	$NetBSD: kex.c,v 1.39 2025/10/11 15:45:06 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.189 2025/09/15 04:40:34 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.38 2024/10/03 08:14:13 rin Exp $");
+__RCSID("$NetBSD: kex.c,v 1.39 2025/10/11 15:45:06 christos Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <sys/types.h>
@@ -565,8 +565,6 @@ kex_input_newkeys(int type, u_int32_t seq, struct ssh *ssh)
 	kex->flags &= ~KEX_INITIAL;
 	sshbuf_reset(kex->peer);
 	kex->flags &= ~KEX_INIT_SENT;
-	free(kex->name);
-	kex->name = NULL;
 	return 0;
 }
 
@@ -622,6 +620,8 @@ kex_input_kexinit(int type, u_int32_t seq, struct ssh *ssh)
 		error_f("no kex");
 		return SSH_ERR_INTERNAL_ERROR;
 	}
+	free(kex->name);
+	kex->name = NULL;
 	ssh_dispatch_set(ssh, SSH2_MSG_KEXINIT, &kex_protocol_error);
 	ptr = sshpkt_ptr(ssh, &dlen);
 	if ((r = sshbuf_put(kex->peer, ptr, dlen)) != 0)
@@ -742,6 +742,7 @@ kex_free(struct kex *kex)
 	free(kex->failed_choice);
 	free(kex->hostkey_alg);
 	free(kex->name);
+	free(kex->server_sig_algs);
 	free(kex);
 }
 

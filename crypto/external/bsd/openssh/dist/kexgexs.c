@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.24 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.47 2024/05/17 00:30:23 djm Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.25 2025/10/11 15:45:06 christos Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.49 2025/10/03 00:09:26 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -27,13 +27,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.24 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.25 2025/10/11 15:45:06 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 
 #include "sshkey.h"

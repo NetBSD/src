@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.40 2025/04/09 15:49:33 christos Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.369 2024/12/06 16:21:48 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.41 2025/10/11 15:45:08 christos Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.376 2025/09/25 06:23:19 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.40 2025/04/09 15:49:33 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.41 2025/10/11 15:45:08 christos Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
@@ -833,7 +833,7 @@ hostkeys_find_by_key(const char *host, const char *ip, const struct sshkey *key,
     char **system_hostfiles, u_int num_system_hostfiles,
     char ***names, u_int *nnames)
 {
-	struct find_by_key_ctx ctx = {0, 0, 0, 0, 0};
+	struct find_by_key_ctx ctx = {NULL, NULL, NULL, NULL, 0};
 	u_int i;
 
 	*names = NULL;
@@ -1181,7 +1181,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 			    options.fingerprint_hash, SSH_FP_RANDOMART);
 			if (fp == NULL || ra == NULL)
 				fatal_f("sshkey_fingerprint failed");
-			logit("Host key fingerprint is %s\n%s", fp, ra);
+			logit("Host key fingerprint is: %s\n%s", fp, ra);
 			free(ra);
 			free(fp);
 		}
@@ -1232,7 +1232,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 			    options.fingerprint_hash, SSH_FP_RANDOMART);
 			if (fp == NULL || ra == NULL)
 				fatal_f("sshkey_fingerprint failed");
-			xextendf(&msg1, "\n", "%s key fingerprint is %s.",
+			xextendf(&msg1, "\n", "%s key fingerprint is: %s",
 			    type, fp);
 			if (options.visual_host_key)
 				xextendf(&msg1, "\n", "%s", ra);
@@ -1470,6 +1470,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		options.update_hostkeys = 0;
 	}
 
+	sshkey_free(raw_key);
 	free(ip);
 	free(host);
 	if (host_hostkeys != NULL)
@@ -1616,6 +1617,14 @@ out:
 	return r;
 }
 
+static void
+warn_nonpq_kex(void)
+{
+	logit("** WARNING: connection is not using a post-quantum key exchange algorithm.");
+	logit("** This session may be vulnerable to \"store now, decrypt later\" attacks.");
+	logit("** The server may need to be upgraded. See https://openssh.com/pq.html");
+}
+
 /*
  * Starts a dialog with the server, and authenticates the current user on the
  * server.  This does not need any extra privileges.  The basic connection
@@ -1651,6 +1660,10 @@ ssh_login(struct ssh *ssh, Sensitive *sensitive, const char *orighost,
 	/* authenticate user */
 	debug("Authenticating to %s:%d as '%s'", host, port, server_user);
 	ssh_kex2(ssh, host, hostaddr, port, cinfo);
+	if (!options.kex_algorithms_set && ssh->kex != NULL &&
+	    ssh->kex->name != NULL && options.warn_weak_crypto &&
+	    !kex_is_pq_from_name(ssh->kex->name))
+		warn_nonpq_kex();
 	ssh_userauth2(ssh, local_user, server_user, host, sensitive);
 	free(local_user);
 	free(host);
@@ -1662,12 +1675,8 @@ show_other_keys(struct hostkeys *hostkeys, struct sshkey *key)
 {
 	int type[] = {
 		KEY_RSA,
-#ifdef WITH_DSA
-		KEY_DSA,
-#endif
 		KEY_ECDSA,
 		KEY_ED25519,
-		KEY_XMSS,
 		-1
 	};
 	int i, ret = 0;
@@ -1790,7 +1799,7 @@ maybe_add_key_to_agent(const char *authfile, struct sshkey *private,
 	if ((r = ssh_add_identity_constrained(auth_sock, private,
 	    comment == NULL ? authfile : comment,
 	    options.add_keys_to_agent_lifespan,
-	    (options.add_keys_to_agent == 3), 0, skprovider, NULL, 0)) == 0)
+	    (options.add_keys_to_agent == 3), skprovider, NULL, 0)) == 0)
 		debug("identity added to agent: %s", authfile);
 	else
 		debug("could not add identity to agent: %s (%d)", authfile, r);

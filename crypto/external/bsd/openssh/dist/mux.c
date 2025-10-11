@@ -1,5 +1,5 @@
-/*	$NetBSD: mux.c,v 1.38 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.103 2024/10/12 10:50:37 jsg Exp $ */
+/*	$NetBSD: mux.c,v 1.39 2025/10/11 15:45:07 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.107 2025/09/30 00:03:09 djm Exp $ */
 
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
@@ -20,7 +20,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.38 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.39 2025/10/11 15:45:07 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -451,6 +451,8 @@ mux_master_process_new_session(struct ssh *ssh, u_int rid,
 	nc = channel_new(ssh, "session", SSH_CHANNEL_OPENING,
 	    new_fd[0], new_fd[1], new_fd[2], window, packetmax,
 	    CHAN_EXTENDED_WRITE, "client-session", CHANNEL_NONBLOCK_STDIO);
+	if (cctx->want_tty)
+		channel_set_tty(ssh, nc);
 
 	nc->ctl_chan = c->self;		/* link session -> control channel */
 	c->ctl_child_id = nc->self;	/* link control -> session channel */
@@ -667,6 +669,7 @@ mux_confirm_remote_forward(struct ssh *ssh, int type, u_int32_t seq, void *ctxt)
 	if (c->mux_pause <= 0)
 		fatal_f("mux_pause %d", c->mux_pause);
 	c->mux_pause = 0; /* start processing messages again */
+	free(fctx);
 }
 
 static int
@@ -922,7 +925,7 @@ mux_master_process_close_fwd(struct ssh *ssh, u_int rid,
 	} else {	/* local and dynamic forwards */
 		/* Ditto */
 		if (channel_cancel_lport_listener(ssh, &fwd, fwd.connect_port,
-		    &options.fwd_opts) == -1)
+		    &options.fwd_opts) != 1)
 			error_reason = "port not found";
 	}
 
@@ -2189,8 +2192,10 @@ mux_client_request_stdio_fwd(int fd)
 	sshbuf_reset(m);
 	if (mux_client_read_packet(fd, m) != 0) {
 		if (errno == EPIPE ||
-		    (errno == EINTR && muxclient_terminate != 0))
+		    (errno == EINTR && muxclient_terminate != 0)) {
+			sshbuf_free(m);
 			return 0;
+		}
 		fatal_f("mux_client_read_packet: %s", strerror(errno));
 	}
 	fatal_f("master returned unexpected message %u", type);

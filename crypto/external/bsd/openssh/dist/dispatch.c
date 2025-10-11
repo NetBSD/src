@@ -1,5 +1,6 @@
-/*	$NetBSD: dispatch.c,v 1.11 2023/07/26 17:58:15 christos Exp $	*/
-/* $OpenBSD: dispatch.c,v 1.33 2023/03/05 05:34:09 dtucker Exp $ */
+/*	$NetBSD: dispatch.c,v 1.12 2025/10/11 15:45:06 christos Exp $	*/
+/* $OpenBSD: dispatch.c,v 1.34 2025/05/21 06:44:24 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dispatch.c,v 1.11 2023/07/26 17:58:15 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.12 2025/10/11 15:45:06 christos Exp $");
 #include <sys/types.h>
 
 #include <signal.h>
@@ -42,7 +43,7 @@ dispatch_protocol_error(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int r;
 
-	logit("dispatch_protocol_error: type %d seq %u", type, seq);
+	logit_f("type %d seq %u", type, seq);
 	if ((r = sshpkt_start(ssh, SSH2_MSG_UNIMPLEMENTED)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, seq)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0 ||
@@ -54,7 +55,7 @@ dispatch_protocol_error(int type, u_int32_t seq, struct ssh *ssh)
 int
 dispatch_protocol_ignore(int type, u_int32_t seq, struct ssh *ssh)
 {
-	logit("dispatch_protocol_ignore: type %d seq %u", type, seq);
+	logit_f("type %d seq %u", type, seq);
 	return 0;
 }
 

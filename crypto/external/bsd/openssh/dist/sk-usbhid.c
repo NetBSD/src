@@ -1,5 +1,5 @@
-/*	$NetBSD: sk-usbhid.c,v 1.10 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: sk-usbhid.c,v 1.47 2024/12/03 08:31:49 djm Exp $ */
+/*	$NetBSD: sk-usbhid.c,v 1.11 2025/10/11 15:45:07 christos Exp $	*/
+/* $OpenBSD: sk-usbhid.c,v 1.48 2025/05/12 05:41:20 tb Exp $ */
 
 /*
  * Copyright (c) 2019 Markus Friedl
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sk-usbhid.c,v 1.10 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: sk-usbhid.c,v 1.11 2025/10/11 15:45:07 christos Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -512,8 +512,8 @@ pack_public_key_ecdsa(const fido_cred_t *cred,
 		skdebug(__func__, "BN_bin2bn failed");
 		goto out;
 	}
-	if (EC_POINT_set_affine_coordinates_GFp(g, q, x, y, NULL) != 1) {
-		skdebug(__func__, "EC_POINT_set_affine_coordinates_GFp failed");
+	if (EC_POINT_set_affine_coordinates(g, q, x, y, NULL) != 1) {
+		skdebug(__func__, "EC_POINT_set_affine_coordinates failed");
 		goto out;
 	}
 	response->public_key_len = EC_POINT_point2oct(g, q,

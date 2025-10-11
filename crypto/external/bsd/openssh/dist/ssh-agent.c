@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.42 2025/04/10 13:27:57 martin Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.310 2025/02/18 08:02:48 djm Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.43 2025/10/11 15:45:07 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.313 2025/08/29 03:50:38 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.42 2025/04/10 13:27:57 martin Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.43 2025/10/11 15:45:07 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -638,8 +638,7 @@ process_request_identities(SocketEntry *e)
 		/* identity not visible, don't include in response */
 		if (identity_permitted(id, e, NULL, NULL, NULL) != 0)
 			continue;
-		if ((r = sshkey_puts_opts(id->key, keys,
-		    SSHKEY_SERIALIZE_INFO)) != 0 ||
+		if ((r = sshkey_puts(id->key, keys)) != 0 ||
 		    (r = sshbuf_put_cstring(keys, id->comment)) != 0) {
 			error_fr(r, "compose key/comment");
 			continue;
@@ -1286,7 +1285,7 @@ parse_key_constraints(struct sshbuf *m, struct sshkey *k, time_t *deathp,
 {
 	u_char ctype;
 	int r;
-	u_int seconds, maxsign = 0;
+	u_int seconds;
 
 	while (sshbuf_len(m)) {
 		if ((r = sshbuf_get_u8(m, &ctype)) != 0) {
@@ -1314,26 +1313,6 @@ parse_key_constraints(struct sshbuf *m, struct sshkey *k, time_t *deathp,
 				goto out;
 			}
 			*confirmp = 1;
-			break;
-		case SSH_AGENT_CONSTRAIN_MAXSIGN:
-			if (k == NULL) {
-				error_f("maxsign not valid here");
-				r = SSH_ERR_INVALID_FORMAT;
-				goto out;
-			}
-			if (maxsign != 0) {
-				error_f("maxsign already set");
-				r = SSH_ERR_INVALID_FORMAT;
-				goto out;
-			}
-			if ((r = sshbuf_get_u32(m, &maxsign)) != 0) {
-				error_fr(r, "parse maxsign constraint");
-				goto out;
-			}
-			if ((r = sshkey_enable_maxsign(k, maxsign)) != 0) {
-				error_fr(r, "enable maxsign");
-				goto out;
-			}
 			break;
 		case SSH_AGENT_CONSTRAIN_EXTENSION:
 			if ((r = parse_key_constraint_extension(m,
@@ -2202,11 +2181,12 @@ __dead static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ssh-agent [-c | -s] [-Dd] [-a bind_address] [-E fingerprint_hash]\n"
+	    "usage: ssh-agent [-c | -s] [-DdTU] [-a bind_address] [-E fingerprint_hash]\n"
 	    "                 [-O option] [-P allowed_providers] [-t life]\n"
-	    "       ssh-agent [-a bind_address] [-E fingerprint_hash] [-O option]\n"
+	    "       ssh-agent [-TU] [-a bind_address] [-E fingerprint_hash] [-O option]\n"
 	    "                 [-P allowed_providers] [-t life] command [arg ...]\n"
-	    "       ssh-agent [-c | -s] -k\n");
+	    "       ssh-agent [-c | -s] -k\n"
+	    "       ssh-agent -u\n");
 	exit(1);
 }
 
@@ -2236,9 +2216,10 @@ sh_unsetenv(const char *name)
 int
 main(int ac, char **av)
 {
-	int c_flag = 0, d_flag = 0, D_flag = 0, k_flag = 0, s_flag = 0;
-	int sock, ch, result, saved_errno;
-	char *shell, *pidstr, *agentsocket = NULL;
+	int c_flag = 0, d_flag = 0, D_flag = 0, k_flag = 0;
+	int s_flag = 0, T_flag = 0, u_flag = 0, U_flag = 0;
+	int sock = -1, ch, result, saved_errno;
+	char *homedir = NULL, *shell, *pidstr, *agentsocket = NULL;
 	const char *ccp;
 	struct rlimit rlim;
 	void (*f_setenv)(const char *, const char *);
@@ -2269,7 +2250,7 @@ main(int ac, char **av)
 	OpenSSL_add_all_algorithms();
 #endif
 
-	while ((ch = getopt(ac, av, "cDdksE:a:O:P:t:")) != -1) {
+	while ((ch = getopt(ac, av, "cDdksTuUE:a:O:P:t:")) != -1) {
 		switch (ch) {
 		case 'E':
 			fingerprint_hash = ssh_digest_alg_by_name(optarg);
@@ -2326,6 +2307,15 @@ main(int ac, char **av)
 				usage();
 			}
 			break;
+		case 'T':
+			T_flag++;
+			break;
+		case 'u':
+			u_flag++;
+			break;
+		case 'U':
+			U_flag++;
+			break;
 		default:
 			usage();
 		}
@@ -2333,8 +2323,13 @@ main(int ac, char **av)
 	ac -= optind;
 	av += optind;
 
-	if (ac > 0 && (c_flag || k_flag || s_flag || d_flag || D_flag))
+	if (ac > 0 &&
+	    (c_flag || k_flag || s_flag || d_flag || D_flag || u_flag))
 		usage();
+
+	log_init(__progname,
+	    d_flag ? SYSLOG_LEVEL_DEBUG3 : SYSLOG_LEVEL_INFO,
+	    SYSLOG_FACILITY_AUTH, 1);
 
 	if (allowed_providers == NULL)
 		allowed_providers = xstrdup(DEFAULT_ALLOWED_PROVIDERS);
@@ -2379,6 +2374,14 @@ main(int ac, char **av)
 		printf("echo Agent pid %ld killed;\n", (long)pid);
 		exit(0);
 	}
+	if (u_flag) {
+		if ((homedir = get_homedir()) == NULL)
+			fatal("Couldn't determine home directory");
+		agent_cleanup_stale(homedir, u_flag > 1);
+		printf("Deleted stale agent sockets in ~/%s\n",
+		    _PATH_SSH_AGENT_SOCKET_DIR);
+		exit(0);
+	}
 
 	/*
 	 * Minimum file descriptors:
@@ -2393,33 +2396,57 @@ main(int ac, char **av)
 
 	parent_pid = getpid();
 
-	if (agentsocket == NULL) {
-		/* Create private directory for agent socket */
-		mktemp_proto(socket_dir, sizeof(socket_dir));
-		if (mkdtemp(socket_dir) == NULL) {
-			perror("mkdtemp: private socket dir");
-			exit(1);
-		}
-		snprintf(socket_name, sizeof socket_name, "%s/agent.%ld", socket_dir,
-		    (long)parent_pid);
-	} else {
-		/* Try to use specified agent socket */
-		socket_dir[0] = '\0';
-		strlcpy(socket_name, agentsocket, sizeof socket_name);
-	}
-
 	/*
 	 * Create socket early so it will exist before command gets run from
 	 * the parent.
 	 */
-	prev_mask = umask(0177);
-	sock = unix_listener(socket_name, SSH_LISTEN_BACKLOG, 0);
-	if (sock < 0) {
-		/* XXX - unix_listener() calls error() not perror() */
-		*socket_name = '\0'; /* Don't unlink any existing file */
-		cleanup_exit(1);
+	if (agentsocket == NULL && !T_flag) {
+		/* Default case: ~/.ssh/agent/[socket] */
+		if ((homedir = get_homedir()) == NULL)
+			fatal("Couldn't determine home directory");
+		if (!U_flag)
+			agent_cleanup_stale(homedir, 0);
+		if (agent_listener(homedir, "agent", &sock, &agentsocket) != 0)
+			fatal_f("Couldn't prepare agent socket");
+		if (strlcpy(socket_name, agentsocket,
+		    sizeof(socket_name)) >= sizeof(socket_name)) {
+			fatal_f("Socket path \"%s\" too long",
+			    agentsocket);
+		}
+		free(homedir);
+		free(agentsocket);
+		agentsocket = NULL;
+	} else {
+		if (T_flag) {
+			/*
+			 * Create private directory for agent socket
+			 * in $TMPDIR.
+			 */
+			mktemp_proto(socket_dir, sizeof(socket_dir));
+			if (mkdtemp(socket_dir) == NULL) {
+				perror("mkdtemp: private socket dir");
+				exit(1);
+			}
+			snprintf(socket_name, sizeof(socket_name),
+			    "%s/agent.%ld", socket_dir, (long)parent_pid);
+		} else {
+			/* Try to use specified agent socket */
+			socket_dir[0] = '\0';
+			if (strlcpy(socket_name, agentsocket,
+			   sizeof(socket_name)) >= sizeof(socket_name)) {
+				fatal_f("Socket path \"%s\" too long",
+				    agentsocket);
+			}
+		}
+		/* Listen on socket */
+		prev_mask = umask(0177);
+		if ((sock = unix_listener(socket_name,
+		    SSH_LISTEN_BACKLOG, 0)) < 0) {
+			*socket_name = '\0'; /* Don't unlink existing file */
+			cleanup_exit(1);
+		}
+		umask(prev_mask);
 	}
-	umask(prev_mask);
 
 	/*
 	 * Fork, and have the parent execute the command, if any, or present

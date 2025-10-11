@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2025/04/09 19:43:19 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2025/10/11 15:45:10 christos Exp $
 
 NOMAN=	yes
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ SRCS=	auth-rhosts.c auth-passwd.c auth2-pubkeyfile.c \
 	auth-krb5.c auth2-chall.c groupaccess.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	monitor.c monitor_wrap.c srclimit.c \
+	misc-agent.c monitor.c monitor_wrap.c srclimit.c \
 	kexgexs.c sftp-server.c sftp-common.c \
 	sftp-realpath.c sshd-session.c pfilter.c
 

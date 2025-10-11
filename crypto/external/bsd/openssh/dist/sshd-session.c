@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd-session.c,v 1.10 2025/04/11 17:09:23 christos Exp $	*/
-/* $OpenBSD: sshd-session.c,v 1.12 2025/03/12 22:43:44 djm Exp $ */
+/*	$NetBSD: sshd-session.c,v 1.11 2025/10/11 15:45:08 christos Exp $	*/
+/* $OpenBSD: sshd-session.c,v 1.16 2025/09/25 06:45:50 djm Exp $ */
 
 /*
  * SSH2 implementation:
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.10 2025/04/11 17:09:23 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.11 2025/10/11 15:45:08 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,7 +336,7 @@ pack_hostkeys(void)
 static int
 privsep_preauth(struct ssh *ssh)
 {
-	int status, r;
+	int r;
 	pid_t pid;
 
 	/* Set up unprivileged child process to deal with network data */
@@ -357,23 +357,7 @@ privsep_preauth(struct ssh *ssh)
 			}
 		}
 		monitor_child_preauth(ssh, pmonitor);
-
-		/* Wait for the child's exit status */
-		while (waitpid(pid, &status, 0) == -1) {
-			if (errno == EINTR)
-				continue;
-			pmonitor->m_pid = -1;
-			fatal_f("waitpid: %s", strerror(errno));
-		}
 		privsep_is_preauth = 0;
-		pmonitor->m_pid = -1;
-		if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status) != 0)
-				fatal_f("preauth child exited with status %d",
-				    WEXITSTATUS(status));
-		} else if (WIFSIGNALED(status))
-			fatal_f("preauth child terminated by signal %d",
-			    WTERMSIG(status));
 		return 1;
 	} else {
 		/* child */
@@ -466,12 +450,10 @@ get_hostkey_by_type(int type, int nid, int need_private, struct ssh *ssh)
 	for (i = 0; i < options.num_host_key_files; i++) {
 		switch (type) {
 		case KEY_RSA_CERT:
-		case KEY_DSA_CERT:
 		case KEY_ECDSA_CERT:
 		case KEY_ED25519_CERT:
 		case KEY_ECDSA_SK_CERT:
 		case KEY_ED25519_SK_CERT:
-		case KEY_XMSS_CERT:
 			key = sensitive_data.host_certificates[i];
 			break;
 		default:
@@ -1159,6 +1141,8 @@ main(int ac, char **av)
 		fatal("Unable to create connection");
 	the_active_state = ssh;
 	ssh_packet_set_server(ssh);
+	ssh_packet_set_qos(ssh, options.ip_qos_interactive,
+	    options.ip_qos_bulk);
 
 	check_ip_options(ssh);
 

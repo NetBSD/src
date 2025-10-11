@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-server.c,v 1.31 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.148 2024/04/30 06:23:51 djm Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.32 2025/10/11 15:45:07 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.149 2025/09/02 09:26:21 djm Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.31 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.32 2025/10/11 15:45:07 christos Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
@@ -1593,7 +1593,7 @@ process_extended_copy_data(u_int32_t id)
 	    (r = sshbuf_get_u64(iqueue, &read_len)) != 0 ||
 	    (r = get_handle(iqueue, &write_handle)) != 0 ||
 	    (r = sshbuf_get_u64(iqueue, &write_off)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "buffer error");
 
 	debug("request %u: copy-data from \"%s\" (handle %d) off %llu len %llu "
 	    "to \"%s\" (handle %d) off %llu",
@@ -1621,14 +1621,14 @@ process_extended_copy_data(u_int32_t id)
 
 	if (lseek(read_fd, read_off, SEEK_SET) < 0) {
 		status = errno_to_portable(errno);
-		error("%s: read_seek failed", __func__);
+		error_f("read_seek failed");
 		goto out;
 	}
 
 	if ((handle_to_flags(write_handle) & O_APPEND) == 0 &&
 	    lseek(write_fd, write_off, SEEK_SET) < 0) {
 		status = errno_to_portable(errno);
-		error("%s: write_seek failed", __func__);
+		error_f("write_seek failed");
 		goto out;
 	}
 
@@ -1643,7 +1643,7 @@ process_extended_copy_data(u_int32_t id)
 			break;
 		} else if (ret == 0) {
 			status = errno_to_portable(errno);
-			error("%s: read failed: %s", __func__, strerror(errno));
+			error_f("read failed: %s", strerror(errno));
 			break;
 		}
 		len = ret;

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect2.c,v 1.51 2025/04/09 15:49:33 christos Exp $	*/
-/* $OpenBSD: sshconnect2.c,v 1.377 2025/02/18 08:02:48 djm Exp $ */
+/*	$NetBSD: sshconnect2.c,v 1.52 2025/10/11 15:45:08 christos Exp $	*/
+/* $OpenBSD: sshconnect2.c,v 1.378 2025/09/15 04:51:35 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.51 2025/04/09 15:49:33 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.52 2025/10/11 15:45:08 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -1848,7 +1848,7 @@ pubkey_prepare(struct ssh *ssh, Authctxt *authctxt)
 		TAILQ_REMOVE(preferred, id, next);
 		sshkey_free(id->key);
 		free(id->filename);
-		memset(id, 0, sizeof(*id));
+		freezero(id, sizeof(*id));
 	}
 	/* List the keys we plan on using */
 	TAILQ_FOREACH_SAFE(id, preferred, next, id2) {

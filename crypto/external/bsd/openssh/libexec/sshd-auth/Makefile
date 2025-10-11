@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2025/04/15 22:40:20 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2025/10/11 15:45:10 christos Exp $
 
 NOMAN=	yes
 .include <bsd.own.mk>
@@ -29,6 +29,7 @@ fatal.c \
 groupaccess.c \
 hostfile.c \
 kexgexs.c \
+misc-agent.c \
 monitor_wrap.c \
 pfilter.c \
 readpass.c \
