@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.373 2025/10/06 13:16:43 riastradh Exp $
+# $NetBSD: shl.mi,v 1.374 2025/10/11 07:16:01 nakayama Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -126,7 +126,6 @@
 ./usr/libdata/debug/usr/lib/libgnuctf.so.2.0.debug		comp-sys-debug	debug,compatfile,binutils=242
 ./usr/libdata/debug/usr/lib/libgnuctf.so.3.0.debug		comp-sys-debug	debug,compatfile,binutils=245
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libgomp.so.2.0.debug		comp-sys-debug	debug,compatfile,gcc=9
 ./usr/libdata/debug/usr/lib/libgomp.so.2.1.debug		comp-sys-debug	debug,compatfile,gcc=10
 ./usr/libdata/debug/usr/lib/libgomp.so.2.2.debug		comp-sys-debug	debug,compatfile,gcc=12
 ./usr/libdata/debug/usr/lib/libgomp.so.2.3.debug		comp-sys-debug	debug,compatfile,gcc=14
