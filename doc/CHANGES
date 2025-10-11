@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3192 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3193 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -56,3 +56,5 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		inode block, or every inode in a block. [perseant 20250914]
 	lfs: Add working in-kernel roll forward. [perseant 20250917]
 	libm: hypotl - Accomodate infinity for softfloat. [nat 20251007]
+	OpenSSH: Import 10.2. [christos 20251011]
+
