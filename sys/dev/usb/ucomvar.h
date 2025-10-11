@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.25 2025/10/10 18:15:11 skrll Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.26 2025/10/11 12:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ struct ucom_methods {
 	void (*ucom_close)(void *, int);
 	/*
 	 * arg2: port number
-	 * arg3: pointer to buffer pointer 
+	 * arg3: pointer to buffer pointer
 	 * arg4: pointer to buffer count
 	 *
 	 * Note: The 'ptr' (3nd arg) and 'count' (4rd arg) pointers can be
