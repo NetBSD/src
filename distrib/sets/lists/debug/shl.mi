@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.374 2025/10/11 07:16:01 nakayama Exp $
+# $NetBSD: shl.mi,v 1.375 2025/10/11 15:50:10 christos Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -305,7 +305,7 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug		comp-sys-debug	debug,compatfile,skey
 ./usr/libdata/debug/usr/lib/libsl.so.7.0.debug			comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.5.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libssh.so.49.0.debug		comp-secsh-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libssh.so.50.0.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libssl.so.14.0.debug		comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libssl.so.15.0.debug		comp-crypto-debug	debug,compatfile,openssl=30
