@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.346 2025/10/11 13:58:08 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.347 2025/10/11 13:58:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.346 2025/10/11 13:58:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.347 2025/10/11 13:58:57 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1571,7 +1571,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		error = scsipi_command(sd->sc_periph,
 		    (void *)&cmd, sizeof(cmd), (void *)&data, sizeof(data),
 		    SDRETRIES, 20000, NULL,
-		    flags | XS_CTL_DATA_IN);
+		    flags | XS_CTL_DATA_IN | XS_CTL_SILENT);
 		if (error == EFTYPE) {
 			/* Medium Format Corrupted, handle as not formatted */
 			return (SDGP_RESULT_UNFORMATTED);
