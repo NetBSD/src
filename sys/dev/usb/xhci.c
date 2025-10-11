@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.188.2.1 2025/09/12 14:48:04 snj Exp $	*/
+/*	$NetBSD: xhci.c,v 1.188.2.2 2025/10/11 10:43:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.188.2.1 2025/09/12 14:48:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.188.2.2 2025/10/11 10:43:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2559,6 +2559,20 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		}
 		if (++xx->xx_isoc_done < xfer->ux_nframes)
 			return;
+	}
+
+	/*
+	 * If next event will be from zero-length packet,
+	 * suppress notification of first event.
+	 */
+	if (xfertype == UE_BULK &&
+	    err == USBD_NORMAL_COMPLETION &&
+	    (xfer->ux_flags & USBD_FORCE_SHORT_XFER) &&
+	    XHCI_TRB_2_REM_GET(le32toh(xr->xr_trb[idx].trb_2)) != 0) {
+		DPRINTFN(100, "short xfer %#jx: suppress notification status "
+		    "%ju pipe %#jx", (uintptr_t)xfer, xfer->ux_status,
+		    (uintptr_t)xfer->ux_pipe, 0);
+		return;
 	}
 
 	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0 ||
