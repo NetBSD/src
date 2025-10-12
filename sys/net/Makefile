@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2022/09/03 02:47:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.47 2025/10/12 23:41:09 thorpej Exp $
 
 INCSDIR= /usr/include/net
 
@@ -12,6 +12,12 @@ INCS=	bpf.h bpfjit.h bpfdesc.h dlt.h ethertypes.h if.h if_arc.h if_arp.h \
 	raw_cb.h route.h slcompress.h slip.h zlib.h
 
 SUBDIR=	agr npf lagg
+
+ether_calls.h: ${.CURDIR}/ether_calls
+	echo "${TOOL_AWK} -f ${.CURDIR}/../kern/gendevcalls.awk \
+	    ${.CURDIR}/ether_calls > ${.CURDIR}/ether_calls.h"
+	${TOOL_AWK} -f ${.CURDIR}/../kern/gendevcalls.awk \
+	    ${.CURDIR}/ether_calls > ${.CURDIR}/ether_calls.h
 
 .include <bsd.kinc.mk>
 

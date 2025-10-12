@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.332 2025/10/04 04:44:19 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.333 2025/10/12 23:41:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.332 2025/10/04 04:44:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.333 2025/10/12 23:41:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.332 2025/10/04 04:44:19 thorpej E
 
 #include <net/if_ether.h>
 #include <net/if_vlanvar.h>
+#include <net/ether_calls.h>
 
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
@@ -192,6 +193,19 @@ static pktq_rps_hash_func_t ether_pktq_rps_hash_p;
 bool
 ether_getaddr(device_t dev, uint8_t enaddr[ETHER_ADDR_LEN])
 {
+	/*
+	 * First check the platform device tree; it may have specific
+	 * rules about how Ethernet addresses are assigned, separate
+	 * from properties associated with a given device.
+	 */
+	struct ether_get_mac_address_args args = {
+		.enaddr = enaddr,
+	};
+	if (device_call(dev, ETHER_GET_MAC_ADDRESS(&args)) == 0) {
+		/* Got it from the platform device tree. */
+		return true;
+	}
+
 	/*
 	 * Check first for the "mac-address" property.  The bindings
 	 * say that this would be used only if it is different then the
