@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.75 2020/04/03 19:36:33 joerg Exp $ */
+/* $NetBSD: lfs.c,v 1.76 2025/10/12 01:44:26 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -449,8 +449,12 @@ check_sb(struct lfs *fs)
 		break;
 	    default:
 		printf("Superblock magic number (0x%lx) does not match "
-		       "expected 0x%lx\n", (unsigned long) magic,
-		       (unsigned long) LFS_MAGIC);
+		       "any of the expected 0x%lx, 0x%lx, 0x%lx or 0x%lx\n",
+		       (unsigned long)magic,
+		       (unsigned long)LFS_MAGIC,
+		       (unsigned long)LFS_MAGIC_SWAPPED,
+		       (unsigned long)LFS64_MAGIC,
+		       (unsigned long)LFS64_MAGIC_SWAPPED);
 		return 1;
 	}
 
@@ -508,6 +512,27 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		bp->b_flags |= B_INVAL;
 		brelse(bp, 0);
 
+		/*
+		 * Look at the magic number before validating the rest
+		 * of the superblock.  If the magic number is bad, too,
+		 * we don't know where to look for an alternate superblock
+		 * either; so bail out now.
+		 */
+		switch (fs->lfs_dlfs_u.u_32.dlfs_magic) {
+		case LFS_MAGIC:
+		case LFS_MAGIC_SWAPPED:
+			break;
+			
+		case LFS64_MAGIC:
+		case LFS64_MAGIC_SWAPPED:
+			fs->lfs_is64 = true;
+			break;
+			
+		default:
+			return NULL;
+		}
+		
+
 		dev_bsize = lfs_sb_getfsize(fs) >> lfs_sb_getfsbtodb(fs);
 	
 		if (tryalt) {
@@ -515,7 +540,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		    	LFS_SBPAD, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
 			memcpy(&altfs->lfs_dlfs_u, bp->b_data,
-			       sizeof(struct dlfs));
+			       sizeof(altfs->lfs_dlfs_u));
 			altfs->lfs_devvp = devvp;
 			bp->b_flags |= B_INVAL;
 			brelse(bp, 0);
@@ -667,7 +692,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, daddr_t goal, int debug)
 			break;
 		}
 		if (debug)
-			pwarn("summary good: 0x%x/%d\n", (uintmax_t)daddr,
+			pwarn("summary good: 0x%jx/%d\n", (uintmax_t)daddr,
 			      (int)lfs_ss_getserial(osb, sp));
 		assert (bc > 0);
 		odaddr = daddr;
