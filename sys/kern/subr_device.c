@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.16 2025/10/04 01:12:15 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.17 2025/10/12 23:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.16 2025/10/04 01:12:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.17 2025/10/12 23:34:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,6 +122,27 @@ devhandle_compare(devhandle_t handle1, devhandle_t handle2)
 	return 0;
 }
 
+/* There has to be at last one entry per link set. */
+static const struct device_call_descriptor sysdflt_dummy_descriptor;
+_DEVICE_CALL_REGISTER(sysdflt_device_calls, sysdflt_dummy)
+
+static device_call_t
+sysdflt_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	__link_set_decl(sysdflt_device_calls, struct device_call_descriptor);
+	struct device_call_descriptor * const *desc;
+
+	__link_set_foreach(desc, sysdflt_device_calls) {
+		/* NULL check is for the dummy descriptor. */
+		if ((*desc)->name != NULL &&
+		    strcmp((*desc)->name, name) == 0) {
+			return (*desc)->call;
+		}
+	}
+	return NULL;
+}
+
 device_call_t
 devhandle_lookup_device_call(devhandle_t handle, const char *name,
     devhandle_t *call_handlep)
@@ -144,7 +165,9 @@ devhandle_lookup_device_call(devhandle_t handle, const char *name,
 			}
 		}
 	}
-	return NULL;
+
+	/* Last chance: Check to see if a system default has been registered. */
+	return sysdflt_lookup_device_call(handle, name, call_handlep);
 }
 
 void

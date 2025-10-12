@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.191 2025/10/03 14:02:10 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.192 2025/10/12 23:34:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -234,6 +234,9 @@ static const struct device_call_descriptor __CONCAT(_c_,_descriptor) = {\
 	.name = (_n_), .call = (_c_)					\
 };									\
 _DEVICE_CALL_REGISTER(_g_, _c_)
+
+#define	SYSDFLT_DEVICE_CALL_REGISTER(_n_, _c_)				\
+	DEVICE_CALL_REGISTER(sysdflt_device_calls, _n_, _c_)
 
 struct devhandle_impl {
 	devhandle_type_t		type;
