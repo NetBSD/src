@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.45 2024/10/15 00:58:15 lloyd Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.46 2025/10/12 23:30:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.45 2024/10/15 00:58:15 lloyd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.46 2025/10/12 23:30:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -185,15 +185,7 @@ cemac_attach_common(struct cemac_softc *sc)
 	CEMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR | ETH_RSR_REC | ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
-	prop_data_t enaddr = prop_dictionary_get(prop, "mac-address");
-
-	if (enaddr != NULL) {
-		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(enaddr) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_value(enaddr),
-		       ETHER_ADDR_LEN);
-	} else {
+	if (! ether_getaddr(sc->sc_dev, sc->sc_enaddr)) {
 		static const uint8_t hardcoded[ETHER_ADDR_LEN] = {
 			0x00, 0x0d, 0x10, 0x81, 0x0c, 0x94
 		};
