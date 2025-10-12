@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.15 2025/10/12 04:08:26 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.16 2025/10/12 19:44:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -216,7 +216,15 @@ pte_flag_bits(struct vm_page_md *mdpg, int flags, bool kernel_p)
 	return 0;
 }
 
+#ifdef _LP64
 pt_entry_t	pte_enter_flags_to_pbmt(int);
+#else
+static inline pt_entry_t
+pte_enter_flags_to_pbmt(int flags)
+{
+	return 0;
+};
+#endif
 
 static inline pt_entry_t
 pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,

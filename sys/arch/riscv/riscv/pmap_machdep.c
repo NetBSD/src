@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.22 2025/10/12 04:08:26 thorpej Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.23 2025/10/12 19:44:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.22 2025/10/12 04:08:26 thorpej Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.23 2025/10/12 19:44:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -57,10 +57,12 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.22 2025/10/12 04:08:26 thorpej Exp $");
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
 
+#ifdef _LP64
 static pt_entry_t pmap_pte_pbmt_mask __read_mostly;
 static pt_entry_t pmap_pte_pma __read_mostly;
 static pt_entry_t pmap_pte_nc __read_mostly;
 static pt_entry_t pmap_pte_io __read_mostly;
+#endif
 
 void
 pmap_zero_page(paddr_t pa)
@@ -91,6 +93,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 #endif
 }
 
+#ifdef _LP64
 pt_entry_t
 pte_enter_flags_to_pbmt(int flags)
 {
@@ -101,6 +104,7 @@ pte_enter_flags_to_pbmt(int flags)
 	}
 	return pmap_pte_pma;
 }
+#endif
 
 struct vm_page *
 pmap_md_alloc_poolpage(int flags)
@@ -319,6 +323,7 @@ pmap_md_grow(pmap_pdetab_t *ptb, vaddr_t va, vsize_t vshift,
 void
 pmap_probe_pbmt(void)
 {
+#ifdef _LP64
 	const register_t mvendorid = sbi_get_mvendorid().value;
 
 	switch (mvendorid) {
@@ -342,6 +347,7 @@ pmap_probe_pbmt(void)
 	 * set above are for new mappings created now that the kernel
 	 * is up and running.
 	 */
+#endif
 }
 
 void
