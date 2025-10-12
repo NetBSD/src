@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.33 2024/05/14 15:17:57 riastradh Exp $ */
+/* $NetBSD: sysreg.h,v 1.34 2025/10/12 04:08:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,12 @@
 #endif
 
 #include <riscv/reg.h>
+
+/* CPU vendors (get CSR value from SBI). */
+#define CPU_VENDOR_SIFIVE		0x489
+#define  CPU_SIFIVE_ARCH_7SERIES	0x8000000000000007
+
+#define CPU_VENDOR_THEAD		0x5b7
 
 #define	FCSR_FMASK	0	// no exception bits
 #define	FCSR_FRM	__BITS(7, 5)
@@ -332,5 +338,17 @@ csr_asid_write(uint32_t asid)
 	satp |= __SHIFTIN(asid, SATP_ASID);
 	csr_satp_write(satp);
 }
+
+/* Non-standard CSRs. */
+static inline uintptr_t
+csr_thead_sxstatus_read(void)
+{
+	uintptr_t __rv;
+	asm volatile("csrr %0, 0x5c0" : "=r"(__rv) :: "memory");
+	return __rv;
+}               
+
+#define	TX_SXSTATUS_MAEE	__BIT(21)
+#define	TH_SXSTATUS_THEADISAEE	__BIT(22)
 
 #endif /* _RISCV_SYSREG_H_ */

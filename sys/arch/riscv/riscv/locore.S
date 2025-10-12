@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.46 2025/03/02 08:14:26 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.47 2025/10/12 04:08:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -119,6 +119,45 @@ ENTRY_NP(start)
 	PTR_LA	s6, _C_LABEL(bootstk)
 
 	/*
+	 * Before we construct the initial MMU tables, we need to know
+	 * if there are any extra PTE bits that we need to include.
+	 * (Grumble, mumble, T-Head XMAE).
+	 *
+	 * We'll push space for 2 PTE prototypes, and fill them with
+	 * zeros for now.  sp[0] is for "regular memory", sp[1] is
+	 * for "devices".
+	 */
+	addi	sp, sp, -(2 * SZREG)
+	REG_S	zero, 0(sp)
+	REG_S	zero, SZREG(sp)
+
+	/* Get the CPU vendor ID, which requires an SBI call. */
+	VPRINTS("vendor:  ")
+	li	a7, SBI_EID_BASE
+	li	a6, SBI_FID_BASE_GETMVENDORID
+	ecall
+	VPRINTXNL(a1)
+
+#ifdef _LP64
+	li	a0, CPU_VENDOR_THEAD
+	bne	a0, a1, 9f		/* not T-Head, skip */
+	csrr	a1, 0x5c0		/* read T-Head TX.SXSTATUS reg */
+	li	a0, TX_SXSTATUS_MAEE	/* is MAEE bit set? */
+	and	a0, a0, a1
+	beqz	a0, .Lpdetab		/* nope, carry on */
+	VPRINTS("extsn:   T-Head XMAE\r\n")
+	li	a0, PTE_XMAE_PMA
+	REG_S	a0, 0(sp)
+	li	a0, PTE_XMAE_IO
+	REG_S	a0, SZREG(sp)
+	j	.Lpdetab		/* done. */
+9:
+#endif /* _LP64 */
+
+	/* Next vendor quirk check goes here. */
+
+.Lpdetab:
+	/*
 	 * Our load address is not fixed, but our VA is.  We need to construct
 	 * an initial PDETAB.
 	 *
@@ -218,6 +257,8 @@ ENTRY_NP(start)
 	li	s5, (VM_KERNEL_SIZE >> SEGSHIFT)		// # of megapages
 	li	s6, (NBSEG >> (PGSHIFT - PTE_PPN_SHIFT))	// load for ease
 	li	s7, PTE_KERN | PTE_HARDWIRED | PTE_R | PTE_W | PTE_X
+	REG_L	a0, 0(sp)
+	or	s7, s7, a0
 
 	//
 	// Fill in the PDEs for kernel.
@@ -243,6 +284,8 @@ ENTRY_NP(start)
 	add	s9, s2, t1
 
 	li	s7, PTE_KERN | PTE_HARDWIRED | PTE_R | PTE_W
+	REG_L	a0, 0(sp)
+	or	s7, s7, a0
 
 	//
 	// Fill in the PDE for the DTB. Only do one - if any more are required
@@ -261,6 +304,9 @@ ENTRY_NP(start)
 	REG_S	s0, 0(s9)
 
 #ifdef CONSADDR
+	li	s7, PTE_KERN | PTE_HARDWIRED | PTE_R | PTE_W
+	REG_L	a0, SZREG(sp)
+	or	s7, s7, a0
 	li	t1,  ((VM_KERNEL_IO_BASE >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
 	add	s9, s2, t1
 
@@ -278,6 +324,9 @@ ENTRY_NP(start)
 
 	REG_S	s0, 0(s9)
 #endif
+
+	/* Pop the PTE prototypes pushed way up above. */
+	addi	sp, sp, (2 * SZREG)
 
 	li	a0, 'P'
 	call	_C_LABEL(uartputc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.45 2025/09/06 22:53:48 thorpej Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.46 2025/10/12 04:08:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.45 2025/09/06 22:53:48 thorpej Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.46 2025/10/12 04:08:26 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -611,8 +611,10 @@ cpu_kernel_vm_init(paddr_t memory_start, paddr_t memory_end)
 	const size_t eidx = (eva >> vshift) & pdetab_mask;
 
 	/* Allocate gigapages covering all physical memory in the direct map. */
+	pt_entry_t pbmt_flag = pte_enter_flags_to_pbmt(0);
 	for (size_t i = sidx; i < eidx && pa < memory_end; i++, pa += inc) {
-		l2_pte[i] = PA_TO_PTE(pa) | PTE_KERN | PTE_HARDWIRED | PTE_RW;
+		l2_pte[i] = PA_TO_PTE(pa) | PTE_KERN | PTE_HARDWIRED | PTE_RW |
+		    pbmt_flag;
 		VPRINTF("dm:   %p :  %#" PRIxPADDR "\n", &l2_pte[i], l2_pte[i]);
 	}
 #endif
@@ -699,6 +701,9 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	/* set temporally to work printf()/panic() even before consinit() */
 	cn_tab = &earlycons;
+
+	/* Critical to do this before mucking around with any more mappings. */
+	pmap_probe_pbmt();
 
 	/* Load FDT */
 	const vaddr_t dtbva = VM_KERNEL_DTB_BASE + (dtb & (NBSEG - 1));

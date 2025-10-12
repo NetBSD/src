@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2025/10/12 04:08:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.2 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.3 2025/10/12 04:08:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,10 +326,8 @@ generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	else if ((flag & _RISCV_BUS_SPACE_MAP_STRONGLY_ORDERED) != 0)
 		pmapflags = PMAP_DEV_NP;
 	else
-		pmapflags = PMAP_DEV;
 #endif
-
-	pmapflags = 0;
+		pmapflags = PMAP_DEV;
 
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
