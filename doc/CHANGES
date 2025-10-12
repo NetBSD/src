@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3193 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3194 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,8 +25,6 @@
 
 Changes from NetBSD 11.0 to NetBSD 12.0:
 
-	ucom(4): Add support for console over USB-to-serial adapter
-		[manu 20251009]
 	pvscsi(4): Add a port of the FreeBSD driver for the VMware PV SCSI
 		controller found in VMware ESXi. [skrll 20250804]
 	posix_openpt(3): Support O_CLOFORK. [gutteridge 20250806]
@@ -55,6 +53,17 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	dumplfs(8): Add -n flag to allow dumping of a given inode from an
 		inode block, or every inode in a block. [perseant 20250914]
 	lfs: Add working in-kernel roll forward. [perseant 20250917]
-	libm: hypotl - Accomodate infinity for softfloat. [nat 20251007]
-	OpenSSH: Import 10.2. [christos 20251011]
-
+	kernel: Add a shared function to query the common properties used
+		for configuring an Ethernet address. [thorpej 20251004]
+	gffb(4): Add backlight control for NVIDIA GeForce FX 5200 Go.
+		[macallan 20251006]
+	hypotl(3): Accomodate infinity for softfloat. [nat 20251007]
+	ucom(4): Add support for console over USB-to-serial adapter
+		[manu 20251009]
+	libc: Merge extended worker threads for POSIX asynchronous I/O
+		(GSoC project by Ethan Miller). [christos 20251010]
+	ssh(1), sshd(8): Import OpenSSH 10.2. [christos 20251011]
+	gpt(8): Add various riscv-specific partition types. [thorpej 20251011]
+	fsck_lfs(8): Enable checking LFS64 volumes. [perseant 20251012]
+	riscv: Handle XTheadMae vs. Svpbmt, allowing boot on Allwinner
+		Nezha board. [thorpej 20251012]
