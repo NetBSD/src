@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.26 2025/10/11 10:47:35 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.27 2025/10/13 09:25:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -331,4 +331,16 @@ distrib/sets/lists/debug/shl.mi			1.374 (patch)
 	set lists: mark old gcc=9 conditional entries as obsolete
 	or just remove them.
 	[nakayama, ticket #51]
+
+sys/net/npf/npf_socket.c			1.4
+
+	npf: PR 59681: take the softnet lock when accessing a sockets
+	user/group credentials.
+	[joe, ticket #52]
+
+sys/net/npf/npf.h				1.68
+sys/net/npf/npf_ruleset.c			1.57
+
+	npf: PR 59615: add compat support for netbsd-10 userland.
+	[joe, ticket #53]
 
