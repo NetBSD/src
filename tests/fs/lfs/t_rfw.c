@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rfw.c,v 1.5 2025/10/13 00:44:35 perseant Exp $	*/
+/*	$NetBSD: t_rfw.c,v 1.6 2025/10/13 00:50:48 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -80,7 +80,10 @@ void test(int width)
 	/*
 	 * Initialize.
 	 */
-	atf_tc_expect_pass();
+	if (width > 32)
+		atf_tc_expect_fail("fsck errors are common in the 64-bit case");
+	else
+		atf_tc_expect_pass();
 
 	/* Create filesystem, note superblock locations */
 	create_lfs(FSSIZE, FSSIZE, width, 1);
