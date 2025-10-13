@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.17 2025/10/12 23:34:23 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.18 2025/10/13 14:41:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.17 2025/10/12 23:34:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.18 2025/10/13 14:41:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1024,6 +1024,7 @@ device_getprop_ ## name ## _default(device_t dev, const char *prop,	\
  */
 TEMPLATE(int32)
 __strong_alias(device_getprop_int,device_getprop_int32);
+__strong_alias(device_getprop_int_default,device_getprop_int32_default);
 
 
 /*
@@ -1032,6 +1033,7 @@ __strong_alias(device_getprop_int,device_getprop_int32);
  */
 TEMPLATE(uint32)
 __strong_alias(device_getprop_uint,device_getprop_uint32);
+__strong_alias(device_getprop_uint_default,device_getprop_uint32_default);
 
 /*
  * device_getprop_int64 --
