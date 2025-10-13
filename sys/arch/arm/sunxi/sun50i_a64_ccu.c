@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.24 2021/11/07 17:13:26 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.25 2025/10/13 14:12:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.24 2021/11/07 17:13:26 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.25 2025/10/13 14:12:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -618,8 +618,6 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_ccu_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	prop_dictionary_t prop = device_properties(self);
-	bool nomodeset;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -637,9 +635,7 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": A64 CCU\n");
 
-	nomodeset = false;
-	prop_dictionary_get_bool(prop, "nomodeset", &nomodeset);
-	if (!nomodeset) {
+	if (! device_getprop_bool(self, "nomodeset")) {
 		/* Set DE parent to PLL_DE */
 		clk_set_parent(&sc->sc_clks[A64_CLK_DE].base, &sc->sc_clks[A64_CLK_PLL_DE].base);
 		clk_set_rate(&sc->sc_clks[A64_CLK_PLL_DE].base, 420000000);

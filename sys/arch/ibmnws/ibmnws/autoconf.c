@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2012/07/29 18:05:43 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2025/10/13 14:12:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -137,9 +137,8 @@ device_register(device_t dev, void *aux)
 
 		dict = device_properties(dev);
 		if (BUILTIN_ETHERNET_P(pa)) {
-			if (! prop_dictionary_set_bool(dict,
-						       "am79c970-no-eeprom",
-						       true)) {
+			if (! device_setprop_bool(dev, "am79c970-no-eeprom",
+						  true)) {
 				aprint_normal("WARNING: unable to set "
 				       "am79c970-no-eeprom property for %s\n",
 				       device_xname(dev));
@@ -167,9 +166,9 @@ device_register(device_t dev, void *aux)
 					      "address property for %s\n",
 					      device_xname(dev));
 			}
-			if (! prop_dictionary_set_bool(dict,  "is_console", true)) {
+			if (! device_setprop_bool(dev, "is_console", true)) {
 				aprint_normal("WARNING: unable to set "
-					      "address property for %s\n",
+					      "is_console property for %s\n",
 					      device_xname(dev));
 			}
 

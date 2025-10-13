@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.14 2022/09/25 07:50:32 riastradh Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.15 2025/10/13 14:12:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.14 2022/09/25 07:50:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.15 2025/10/13 14:12:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -381,20 +381,17 @@ tilcdc_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct drm_driver * const driver = &tilcdc_driver;
-	prop_dictionary_t dict = device_properties(self);
-	bool is_disabled;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
 
-	if (prop_dictionary_get_bool(dict, "disabled", &is_disabled) && is_disabled) {
+	if (device_getprop_bool(self, "disabled")) {
 		aprint_normal(": TI LCDC (disabled)\n");
 		return;
 	}
 
 #ifdef WSDISPLAY_MULTICONS
-	const bool is_console = true;
-	prop_dictionary_set_bool(dict, "is_console", is_console);
+	device_setprop_bool(self, "is_console", true);
 #endif
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
