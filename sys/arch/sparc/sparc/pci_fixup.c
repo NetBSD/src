@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.6 2025/10/03 14:05:13 thorpej Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.7 2025/10/13 04:04:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -491,34 +491,4 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 	printf("  io used %08x to %08x\n", startio, *(io) - 1);
 	printf("  mem used %08x to %08x\n", startmem, *(mem) - 1);
 #endif
-}
-
-/* ======================================================================
- *
- *			PCI device fixup for autoconf
- */
-
-void
-set_pci_props(device_t dev)
-{
-	struct idprom *idp;
-
-	/*
-	 * We only handle network devices.
-	 * XXX: We have to set the ethernet address for HME cards here.  If
-	 * we leave this to the driver attachment, we will crash when trying
-	 * to map the 16MB Ebus device in if_hme_pci.c.
-	 */
-	if (!(device_is_a(dev, "le") || device_is_a(dev, "hme") ||
-	   device_is_a(dev, "be") || device_is_a(dev, "ie")))
-		return;
-
-	/*
-	 * XXX There should be some sort of passthrough capability for
-	 * XXX OpenBoot devhandles.
-	 */
-
-	idp = prom_getidprom();
-	device_setprop_data(dev, "mac-address", idp->idp_etheraddr,
-	    sizeof(idp->idp_etheraddr));
 }

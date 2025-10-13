@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.272 2023/12/20 05:33:19 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.273 2025/10/13 04:04:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.272 2023/12/20 05:33:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.273 2025/10/13 04:04:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.272 2023/12/20 05:33:19 thorpej Exp $
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/ether_calls.h>
 
 #include <dev/cons.h>
 
@@ -103,9 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.272 2023/12/20 05:33:19 thorpej Exp $
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <sparc/sparc/msiiepreg.h>
-#ifdef MSIIEP
-#include <sparc/sparc/pci_fixup.h>
-#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1541,7 +1539,6 @@ static int bus_class(device_t);
 static const char *bus_compatible(const char *);
 static int instance_match(device_t, void *, struct bootpath *);
 static void nail_bootdev(device_t, struct bootpath *);
-static void set_network_props(device_t, void *);
 
 static struct {
 	const char	*name;
@@ -1623,44 +1620,28 @@ bus_class(device_t dev)
 	return (class);
 }
 
-static void
-set_network_props(device_t dev, void *aux)
+static int
+sparc_ether_get_mac_address(device_t dev, devhandle_t call_handle, void *v)
 {
-	struct mainbus_attach_args *ma;
-	struct sbus_attach_args *sa;
-	struct iommu_attach_args *iom;
-	struct pci_attach_args *pa;
-	uint8_t eaddr[ETHER_ADDR_LEN];
-	prop_dictionary_t dict;
-	prop_data_t blob;
-	int ofnode;
+	struct ether_get_mac_address_args *args = v;
+	int node;
 
-	ofnode = 0;
-	switch (bus_class(device_parent(dev))) {
-	case BUSCLASS_MAINBUS:
-		ma = aux;
-		ofnode = ma->ma_node;
-		break;
-	case BUSCLASS_SBUS:
-		sa = aux;
-		ofnode = sa->sa_node;
-		break;
-	case BUSCLASS_IOMMU:
-		iom = aux;
-		ofnode = iom->iom_node;
-		break;
-	case BUSCLASS_PCI:
-		pa = aux;
-		ofnode = PCITAG_NODE(pa->pa_tag);
-		break;
+	/*
+	 * If we're called with a valid OpenBoot node, then use it.
+	 * Otherwise, assume we're using a handle-less old-world PROM
+	 * and use the global MAC address in the ID PROM.
+	 */
+	if (devhandle_type(call_handle) == DEVHANDLE_TYPE_OPENBOOT) {
+		node = prom_devhandle_to_node(call_handle);
+	} else {
+		node = 0;
 	}
 
-	prom_getether(ofnode, eaddr);
-	dict = device_properties(dev);
-	blob = prop_data_create_copy(eaddr, ETHER_ADDR_LEN);
-	prop_dictionary_set(dict, "mac-address", blob);
-	prop_object_release(blob);
+	prom_getether(node, args->enaddr);
+	return 0;
 }
+SYSDFLT_DEVICE_CALL_REGISTER(ETHER_GET_MAC_ADDRESS_STR,
+			     sparc_ether_get_mac_address)
 
 int
 instance_match(device_t dev, void *aux, struct bootpath *bp)
@@ -1793,12 +1774,6 @@ device_register(device_t dev, void *aux)
 	struct bootpath *bp = bootpath_store(0, NULL);
 	const char *bpname;
 
-#ifdef MSIIEP
-	/* Check for PCI devices */
-	if (bus_class(device_parent(dev)) == BUSCLASS_PCI)
-		set_pci_props(dev);
-#endif
-		
 	/*
 	 * If device name does not match current bootpath component
 	 * then there's nothing interesting to consider.
@@ -1845,13 +1820,7 @@ device_register(device_t dev, void *aux)
 			    device_xname(dev)));
 			return;
 		}
-	} else if (device_is_a(dev, "le") ||
-		   device_is_a(dev, "hme") ||
-		   device_is_a(dev, "be") ||
-		   device_is_a(dev, "ie")) {
-
-		set_network_props(dev, aux);
-
+	} else if (device_class(dev) == DV_IFNET) {
 		/*
 		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */

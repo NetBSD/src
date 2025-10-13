@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.h,v 1.1 2013/04/16 06:57:06 jdc Exp $	*/
+/*	$NetBSD: pci_fixup.h,v 1.2 2025/10/13 04:04:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,4 +30,3 @@
  */
 
 void mspcic_pci_scan(int);
-void set_pci_props(device_t);
