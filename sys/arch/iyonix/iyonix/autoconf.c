@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2025/10/03 14:05:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2025/10/13 14:49:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2025/10/03 14:05:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2025/10/13 14:49:16 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -184,8 +184,7 @@ device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
 	if (device_is_a(dev, "dsrtc")) {
-		/* XXX omg this prop name */
-		prop_dictionary_t dict = device_properties(dev);
-		prop_dictionary_set_bool(dict, "base_year_is_2000", 1);
+		/* RISC OS RTC epoch is 2000. */
+		device_setprop_uint(dev, "start-year", 2000);
 	}
 }

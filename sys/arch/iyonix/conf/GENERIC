@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.117 2024/01/29 18:27:13 christos Exp $
+#	$NetBSD: GENERIC,v 1.118 2025/10/13 14:49:16 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.117 $"
+#ident 		"GENERIC-$Revision: 1.118 $"
 
 maxusers	32		# estimated number of users
 
@@ -193,9 +193,8 @@ pci0            at iopxs? bus ?         # PCI/PCI-X support
 # The curious can see their RAM timings.
 spdmem* at iic1 addr 0x56
 
-# onboard RTC. RISC OS starts counting years at 2000
+# onboard RTC.
 dsrtc0 	at iic0 addr 0x68
-options 	DSRTC_YEAR_START_2K
 
 # PCI bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
