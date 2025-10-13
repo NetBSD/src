@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.245 2025/09/17 14:20:48 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.246 2025/10/13 04:06:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245 2025/09/17 14:20:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.246 2025/10/13 04:06:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245 2025/09/17 14:20:48 thorpej Exp $
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/ether_calls.h>
 
 #include <dev/cons.h>
 #include <sparc64/dev/cons.h>
@@ -1094,6 +1095,39 @@ dev_bi_unit_drive_match(device_t dev, int ctrlnode, int target,
 	    booted_partition));
 }
 
+static int
+sparc64_ether_get_mac_address(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct ether_get_mac_address_args *args = v;
+	int node = devhandle_to_of(call_handle);
+	char name[32], device_type[32];
+
+	if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
+		name[0] = '\0';
+	}
+	if (OF_getprop(node, "device_type", device_type,
+		       sizeof(device_type)) <= 0) {
+		device_type[0] = '\0';
+	}
+
+	/*
+	 * Is it a network interface with FCode?
+	 */
+	if (strcmp(name, "network") == 0 ||
+	    strcmp(device_type, "network") == 0) {
+		/* XXX without-seeprom */
+		prom_getether(node, args->enaddr);
+	} else {
+		/* No fallback to idprom in this case. */
+		if (! prom_get_node_ether(node, args->enaddr)) {
+			return ENOENT;
+		}
+	}
+	return 0;
+}
+OF_DEVICE_CALL_REGISTER(ETHER_GET_MAC_ADDRESS_STR,
+			sparc64_ether_get_mac_address)
+
 /*
  * Called back during autoconfiguration for each device found
  */
@@ -1228,14 +1262,12 @@ device_register(device_t dev, void *aux)
 		return;
 
 	if (ofnode != 0) {
-		uint8_t eaddr[ETHER_ADDR_LEN];
 		char tmpstr[32];
 		char tmpstr2[32];
 		int node;
 		uint32_t id = 0;
 		uint64_t nwwn = 0, pwwn = 0;
 		prop_dictionary_t dict;
-		prop_data_t blob;
 		prop_number_t pwwnd = NULL, nwwnd = NULL;
 		prop_number_t idd = NULL;
 
@@ -1247,39 +1279,13 @@ device_register(device_t dev, void *aux)
 			tmpstr2[0] = 0;
 
 		/*
-		 * If this is a network interface, note the
-		 * mac address.
+		 * Is it a network interface with FCode?
+		 * XXX Would like this to go away.
 		 */
-		if (strcmp(tmpstr, "network") == 0
-		   || strcmp(tmpstr, "ethernet") == 0
-		   || strcmp(tmpstr2, "network") == 0
-		   || strcmp(tmpstr2, "ethernet") == 0
-		   || OF_getprop(ofnode, "mac-address", &eaddr, sizeof(eaddr))
-		      >= ETHER_ADDR_LEN
-		   || OF_getprop(ofnode, "local-mac-address", &eaddr, sizeof(eaddr))
-		      >= ETHER_ADDR_LEN) {
-
-			dict = device_properties(dev);
-
-			/*
-			 * Is it a network interface with FCode?
-			 */
-			if (strcmp(tmpstr, "network") == 0 ||
-			    strcmp(tmpstr2, "network") == 0) {
-				prop_dictionary_set_bool(dict,
-				    "without-seeprom", true);
-				prom_getether(ofnode, eaddr);
-			} else {
-				if (!prom_get_node_ether(ofnode, eaddr))
-					goto noether;
-			}
-			blob = prop_data_create_copy(eaddr, ETHER_ADDR_LEN);
-			prop_dictionary_set(dict, "mac-address", blob);
-			prop_object_release(blob);
-			of_to_dataprop(dict, ofnode, "shared-pins",
-			    "shared-pins");
+		if (strcmp(tmpstr, "network") == 0 ||
+		    strcmp(tmpstr2, "network") == 0) {
+			device_setprop_bool(dev, "without-seeprom", true);
 		}
-noether:
 
 		/* is this a FC node? */
 		if (strcmp(tmpstr, "scsi-fcp") == 0) {
