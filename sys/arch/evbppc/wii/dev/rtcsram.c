@@ -1,4 +1,4 @@
-/* $NetBSD: rtcsram.c,v 1.3 2025/09/07 21:45:13 thorpej Exp $ */
+/* $NetBSD: rtcsram.c,v 1.4 2025/10/13 23:31:22 hgutch Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.3 2025/09/07 21:45:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.4 2025/10/13 23:31:22 hgutch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.3 2025/09/07 21:45:13 thorpej Exp $");
 
 struct rtcsram_sram {
 	uint16_t	checksum[2];
-	uint16_t	ead[2];
+	uint32_t	ead[2];
 	int32_t		counter_bias;
 	int8_t		display_offset_h;
 	uint8_t		ntd;
