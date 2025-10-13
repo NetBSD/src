@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.32 2017/11/06 14:26:03 joerg Exp $	*/
+/*	$NetBSD: atexit.c,v 1.33 2025/10/13 20:50:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.32 2017/11/06 14:26:03 joerg Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.33 2025/10/13 20:50:48 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -175,7 +175,9 @@ __cxa_atexit_internal(void (*func)(void *), void *arg, void *dso)
 int
 __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 {
+#if 0
 	_DIAGASSERT(dso != NULL);
+#endif
 	return (__cxa_atexit_internal(func, arg, dso));
 }
 
