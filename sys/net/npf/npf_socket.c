@@ -25,7 +25,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_socket.c,v 1.3 2025/06/02 13:19:27 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_socket.c,v 1.3.2.1 2025/10/13 09:22:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,6 +92,7 @@ npf_socket_lookup_rid(npf_cache_t *npc, get_rid_t get_rid, uint32_t *rid, int di
 
     KASSERT(npf_iscached(npc, NPC_IP46));
 
+    mutex_enter(softnet_lock);
     if (npf_iscached(npc, NPC_IP4)) {
         so = npf_ip_socket(npc, dir);
 #if defined(INET6)
@@ -104,6 +105,8 @@ npf_socket_lookup_rid(npf_cache_t *npc, get_rid_t get_rid, uint32_t *rid, int di
         return -1;
 
     *rid = get_rid(so->so_cred);
+    mutex_exit(softnet_lock);
+
     return 0;
 }
 
@@ -225,6 +228,7 @@ npf_ip6_socket(npf_cache_t *npc, int dir)
         if (in6p == NULL)
             return NULL;
     }
+
     so = in6p->inp_socket;
     return so;
 }
