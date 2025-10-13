@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.488 2025/10/10 15:53:54 christos Exp $
+# $NetBSD: mi,v 1.489 2025/10/13 03:57:43 kre Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1709,6 +1709,8 @@
 ./usr/libdata/debug/usr/tests/fs/fifofs/t_fifo.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/lfs/t_basic.debug			tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/lfs/t_orphan.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/lfs/t_pr.debug				tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/lfs/t_rfw.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf,rump

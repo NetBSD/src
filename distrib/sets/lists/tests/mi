@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1397 2025/10/10 15:53:54 christos Exp $
+# $NetBSD: mi,v 1.1398 2025/10/13 03:57:44 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -1693,6 +1693,8 @@
 ./usr/tests/fs/lfs					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/lfs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/lfs/Kyuafile				tests-fs-tests		atf,rump,kyua
+./usr/tests/fs/lfs/t_basic				tests-fs-tests		atf,rump
+./usr/tests/fs/lfs/t_orphan				tests-fs-tests		atf,rump
 ./usr/tests/fs/lfs/t_pr					tests-fs-tests		atf,rump
 ./usr/tests/fs/lfs/t_rfw				tests-fs-tests		atf,rump
 ./usr/tests/fs/msdosfs					tests-fs-tests		compattestfile,atf
