@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.16 2025/10/09 16:10:03 manu Exp $	*/
+/*	$NetBSD: eficons.c,v 1.17 2025/10/14 07:16:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -74,7 +74,7 @@ static int efi_cons_putc(int);
 static int efi_cons_iskey(int);
 static int efi_cons_waitforinputevent(uint64_t);
 
-static int efi_com_consdev2unit(int); 
+static int efi_com_consdev2unit(int);
 static void efi_com_probe(void);
 static bool efi_valid_com(int);
 static int efi_com_init(int, int);
@@ -169,7 +169,7 @@ ok:
 		consname = "com";
 		btinfo_console.addr = getcomaddr(unit);
 
-		if (!switchcons) 
+		if (!switchcons)
 			goto kbd;
 
 		com_unit = unit;
@@ -399,7 +399,7 @@ awaitkey(int timeout, int tell)
 			break;
 		}
 		if (timeout--) {
-			/* 
+			/*
 			 * UEFI spec 2.10 section 7.1.7
 			 * EFI_BOOT_SERVICES.SetTimer() timeout in 100ns units
 			 * but the implementation may be broken and faster:
@@ -835,7 +835,7 @@ efi_switch_video_to_text_mode(void)
 }
 
 static int
-efi_com_consdev2unit(int dev) 
+efi_com_consdev2unit(int dev)
 {
 	int unit = -1;
 
@@ -874,7 +874,7 @@ efi_com_probe(void)
 	 * We could want to dynamically allocate serios[] to cope
 	 * with an aritrary count of serial ports, but we cannot yet
 	 * call alloc(), because efi_heap_init() was not yet called.
-	 * We could swap cninit() and efi_heap_init() order in 
+	 * We could swap cninit() and efi_heap_init() order in
 	 * efi_main(), but then efi_heap_init() could not display
 	 * a failure message. Let us keep static it for now for the
 	 * sake of reliability.

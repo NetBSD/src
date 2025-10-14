@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.38 2025/10/10 00:43:09 gutteridge Exp $
+.\"	$NetBSD: boot.8,v 1.39 2025/10/14 07:15:28 skrll Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -260,7 +260,7 @@ In support of the
 .Dv KERNEL_DIR
 build option (see
 .Xr mk.conf 5 ) ,
-the boot loader will then try 
+the boot loader will then try
 .Pa netbsd/kernel ,
 .Pa netbsd/kernel.gz ,
 .Pa onetbsd/kernel ,
@@ -416,12 +416,12 @@ with the
 device is not possible.
 .Pp
 UEFI may support some USB and PCI-based serial ports.
-See the 
+See the
 .Sx UEFI serial ports
 section for details.
 Using the
 .Ic consdev
-command without arguments lists the available ports. 
+command without arguments lists the available ports.
 .Ar com0
 to
 .Ar com3
@@ -438,7 +438,7 @@ using the
 syntax.
 No console switch happens in bootstrap, and kernel
 console initialization will be deferred after USB devices attachment.
-This means early boot will be silent, and 
+This means early boot will be silent, and
 .Xr userconf 4
 interactive mode cannot be used.
 The default
@@ -458,7 +458,7 @@ One may use a syntax like:
 consdev com4,115200
 kconsdev ucom0,115200
 .Ed
-Note that command ordering matters. 
+Note that command ordering matters.
 .It Ic dev Op Ar device
 Set the default drive and partition for subsequent file system
 operations.
@@ -928,12 +928,12 @@ USB vendor ID and product ID for those devices are
 and
 .Ar 0x6001.
 .Pp
-To use it, obtain the 
+To use it, obtain the
 .Pa FtdiUsbSerialDxe.efi
 driver from Tianocore EDK2 and save it in the EFI bootstrap partiton,
 for instance in
-.Pa /EFI/EDK2/FtdiUsbSerialDxe.efi 
-then create a 
+.Pa /EFI/EDK2/FtdiUsbSerialDxe.efi
+then create a
 .Pa /EFI/boot/startup.nsh
 script containing something like
 .Bd -literal -offset indent
@@ -943,9 +943,9 @@ bootx64.efi
 .Ed
 .Pp
 Then make sure UEFI boots into the UEFI shell.
-If it is not available in the built-in options, 
+If it is not available in the built-in options,
 .Pa Shell.efi
-can be obtained from Tianocore EDK2 and installed in 
+can be obtained from Tianocore EDK2 and installed in
 .Pa /EFI/boot/Shell.efi .
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
