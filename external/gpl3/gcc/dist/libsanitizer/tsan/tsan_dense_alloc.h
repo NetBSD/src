@@ -162,7 +162,7 @@ class DenseSlabAlloc {
     u64 cmp = atomic_load(&freelist_, memory_order_acquire);
     do {
       head->next = static_cast<IndexT>(cmp);
-      xchg = head_idx | (cmp & kCounterMask) + kCounterInc;
+      xchg = head_idx | ((cmp & kCounterMask) + kCounterInc);
     } while (!atomic_compare_exchange_weak(&freelist_, &cmp, xchg,
                                            memory_order_acq_rel));
   }
