@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.43 2025/10/13 14:49:17 thorpej Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.44 2025/10/14 09:19:48 tnn Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.43 2025/10/13 14:49:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.44 2025/10/14 09:19:48 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.43 2025/10/13 14:49:17 thorpej Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #include "ioconf.h"
-#include "opt_dsrtc.h"
 
 struct dsrtc_model {
 	const i2c_addr_t *dm_valid_addrs;
