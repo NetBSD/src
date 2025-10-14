@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.413 2025/09/01 16:21:56 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.414 2025/10/14 14:48:28 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -373,6 +373,7 @@ DAO	disk at once
 DAP	Directory Access Protocol
 DAT	digital audio tape
 DAT	dynamic acceleration technology
+DAU	DNSSEC Algorithm Understood (RFC6975)
 DB	database
 DBA	database administrator
 DBA	dynamic bandwidth allocation
@@ -425,6 +426,7 @@ DGEMM	double precision general matrix multiply
 DGL	data generation language
 DH	Diffie-Hellman
 DHCP	Dynamic Host Configuration Protocol
+DHU	DS Hash Understood (RFC6975)
 DIA	dedicated Internet access
 DIB	device independent bitmap
 DIFS	distributed inter-frame space
@@ -1110,6 +1112,7 @@ MVRP	multiple VLAN registration protocol
 MWE	module width encoding
 MX	mail exchange
 MZM	Majorana zero mode
+N3U	NSEC3 Hash Understood (RFC6975)
 NACK	negative acknowledgement
 NAK	negative acknowledgement
 NAN	neighbor awareness networking
