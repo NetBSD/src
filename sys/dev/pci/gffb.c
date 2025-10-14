@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.28 2025/10/06 07:51:44 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.29 2025/10/14 05:40:35 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.28 2025/10/06 07:51:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.29 2025/10/14 05:40:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ static void	gffb_rop(struct gffb_softc *, int);
 
 static void	gffb_cursor(void *, int, int, int);
 static void	gffb_putchar(void *, int, int, u_int, long);
+static void	gffb_putchar_mono(void *, int, int, u_int, long);
 static void	gffb_copycols(void *, int, int, int, int);
 static void	gffb_erasecols(void *, int, int, int, long);
 static void	gffb_copyrows(void *, int, int, int);
@@ -279,8 +280,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * on !2MX we need to use the firmware's offset - for some reason
-	 * register writes to anything other than the DACs go wrong
+	 * we need this for the unaccelerated case, aka nv40
 	 */
 	sc->sc_fboffset = 0;
 	if (prop_dictionary_get_uint32(dict, "address", &addr)) {
@@ -654,8 +654,8 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	if (sc->sc_depth == 8)
 	ri->ri_bits = sc->sc_fbaddr + sc->sc_fboffset;
-	ri->ri_flg = RI_CENTER;
-		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_RESIZE;
@@ -667,13 +667,16 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_hw = scr;
 
 	if (sc->sc_accel) {
-		sc->sc_putchar = ri->ri_ops.putchar;
 		ri->ri_ops.copyrows = gffb_copyrows;
 		ri->ri_ops.copycols = gffb_copycols;
 		ri->ri_ops.eraserows = gffb_eraserows;
 		ri->ri_ops.erasecols = gffb_erasecols;
 		ri->ri_ops.cursor = gffb_cursor;
-		ri->ri_ops.putchar = gffb_putchar;
+		if (FONT_IS_ALPHA(ri->ri_font)) {
+			sc->sc_putchar = ri->ri_ops.putchar;
+			ri->ri_ops.putchar = gffb_putchar;
+		} else
+			ri->ri_ops.putchar = gffb_putchar_mono;
 	} else {
 		scr->scr_flags |= VCONS_DONT_READ;
 	}
@@ -1040,7 +1043,7 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2054, 0);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2058, 0);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x205c, 0);
-	/* XXX 0x0100805f if !WaitVSynvPossible */
+	/* XXX 0x0100805f if !WaitVSyncPossible */
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2060, 0x0100805f);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2064, 0);
 	GFFB_WRITE_4(GFFB_PRAMIN + 0x2068, 0x12001200);
@@ -1384,6 +1387,86 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 }
 
 static void
+gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct gffb_softc *sc = scr->scr_cookie;
+	void *data;
+	int x, y, wi, he, rv = GC_NOPE, i;
+	uint32_t bg, fg;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+
+	if (c == 0x20) {
+		gffb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	data = WSFONT_GLYPH(c, font);
+
+	mutex_enter(&sc->sc_lock);
+
+	gffb_rop(sc, 0xcc);
+
+	gffb_dmastart(sc, RECT_EXPAND_TWO_COLOR_CLIP, 7);
+	gffb_dmanext(sc, (y << 16) | (x & 0xFFFF));
+	gffb_dmanext(sc, ((y + he) << 16) | ((x + wi) & 0xFFFF));
+	gffb_dmanext(sc, bg);
+	gffb_dmanext(sc, fg);
+	gffb_dmanext(sc, (he << 16) | 32);
+	gffb_dmanext(sc, (he << 16) | 32);
+	gffb_dmanext(sc, (y << 16) | (x & 0xFFFF));
+
+	gffb_dmastart(sc, RECT_EXPAND_TWO_COLOR_DATA(0), he);
+	switch (font->stride) {
+		case 1: {
+			uint8_t *data8 = data;
+			uint32_t reg;
+			for (i = 0; i < he; i++) {
+				reg = *data8;
+				gffb_dmanext(sc, reg << 24);
+				data8++;
+			}
+			break;
+		}
+		case 2: {
+			uint16_t *data16 = data;
+			uint32_t reg;
+			for (i = 0; i < he; i++) {
+				reg = *data16;
+				gffb_dmanext(sc, reg << 16);
+				data16++;
+			}
+			break;
+		}
+	}
+
+	gffb_dma_kickoff(sc);
+	mutex_exit(&sc->sc_lock);
+
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
+	}
+}
+
+static void
 gffb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 {
 	struct rasops_info *ri = cookie;
@@ -1447,10 +1530,18 @@ gffb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if ((row == 0) && (nrows == ri->ri_emuheight)) {
+			/* fullclear */
+			x = 0;
+			y = 0;
+			width = sc->sc_width;
+			height = sc->sc_height;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		gffb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
