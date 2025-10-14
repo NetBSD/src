@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.38 2025/10/06 20:58:48 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.39 2025/10/14 00:13:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.38 2025/10/06 20:58:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.39 2025/10/14 00:13:31 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -399,7 +399,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	IFILE *ifp;
 	SEGUSE *sup;
 	unsigned i, num;
-	uint32_t gen;
+	uint32_t gen, osn, nsn;
 	char *buf;
 
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
@@ -473,27 +473,20 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 		/* Record change in location */
 		LFS_IENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
 		daddr = lfs_if_getdaddr(fs, ifp);
-		lfs_if_setdaddr(fs, ifp, LFS_DBTOFSB(fs, dbp->b_blkno));
+		lfs_if_setdaddr(fs, ifp, offset);
 		error = LFS_BWRITE_LOG(ibp); /* Ifile */
 		/* And do segment accounting */
-		if (lfs_dtosn(fs, daddr)
-		    != lfs_dtosn(fs, LFS_DBTOFSB(fs, dbp->b_blkno))) {
+		osn = lfs_dtosn(fs, daddr);
+		nsn = lfs_dtosn(fs, offset);
+		if (DADDR_IS_BAD(daddr) || osn != nsn) {
 			if (!DADDR_IS_BAD(daddr)) {
-				LFS_SEGENTRY(sup, fs,
-					     lfs_dtosn(fs, daddr), ibp);
+				LFS_SEGENTRY(sup, fs, osn, ibp);
 				sup->su_nbytes -= DINOSIZE(fs);
-				LFS_WRITESEGENTRY(sup, fs,
-						  lfs_dtosn(fs, daddr),
-						  ibp);
+				LFS_WRITESEGENTRY(sup, fs, osn, ibp);
 			}
-			LFS_SEGENTRY(sup, fs, lfs_dtosn(fs,
-				       LFS_DBTOFSB(fs, dbp->b_blkno)),
-				     ibp);
+			LFS_SEGENTRY(sup, fs, nsn, ibp);
 			sup->su_nbytes += DINOSIZE(fs);
-			LFS_WRITESEGENTRY(sup, fs,
-					  lfs_dtosn(fs, LFS_DBTOFSB(fs,
-						dbp->b_blkno)),
-					  ibp);
+			LFS_WRITESEGENTRY(sup, fs, nsn, ibp);
 		}
 		vput(vp);
 	}
