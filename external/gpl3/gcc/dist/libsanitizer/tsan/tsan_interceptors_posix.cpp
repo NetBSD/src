@@ -480,8 +480,12 @@ static int setup_at_exit_wrapper(ThreadState *thr, uptr pc, void(*f)(),
     // due to atexit_mu held on exit from the calloc interceptor.
     ScopedIgnoreInterceptors ignore;
 
+#if !SANITIZER_NETBSD
     res = REAL(__cxa_atexit)((void (*)(void *a))at_exit_callback_installed_at,
                              0, 0);
+#else
+    res = REAL(atexit)((void (*)())at_exit_callback_installed_at);
+#endif
     // Push AtExitCtx on the top of the stack of callback functions
     if (!res) {
       interceptor_ctx()->AtExitStack.PushBack(ctx);
@@ -2828,7 +2832,7 @@ static void finalize(void *arg) {
     Die();
 }
 
-#if !SANITIZER_APPLE && !SANITIZER_ANDROID
+#if !SANITIZER_APPLE && !SANITIZER_ANDROID && !SANITIZER_NETBSD
 static void unreachable() {
   Report("FATAL: ThreadSanitizer: unreachable called\n");
   Die();
@@ -2990,6 +2994,9 @@ void InitializeInterceptors() {
   TSAN_MAYBE_INTERCEPT_ON_EXIT;
   TSAN_INTERCEPT(__cxa_atexit);
   TSAN_INTERCEPT(_exit);
+#ifdef SANITIZER_NETBSD
+  TSAN_INTERCEPT(atexit);
+#endif
 
 #ifdef NEED_TLS_GET_ADDR
 #if !SANITIZER_S390
@@ -3003,13 +3010,18 @@ void InitializeInterceptors() {
   TSAN_MAYBE_INTERCEPT__LWP_EXIT;
   TSAN_MAYBE_INTERCEPT_THR_EXIT;
 
-#if !SANITIZER_APPLE && !SANITIZER_ANDROID
+#if !SANITIZER_APPLE && !SANITIZER_ANDROID && !SANITIZER_NETBSD
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.
   REAL(atexit) = (int(*)(void(*)()))unreachable;
 #endif
 
-  if (REAL(__cxa_atexit)(&finalize, 0, 0)) {
+#if !SANITIZER_NETBSD
+  if (REAL(__cxa_atexit)(&finalize, 0, 0))
+#else
+  if (REAL(atexit)((void (*)())&finalize))
+#endif
+  {
     Printf("ThreadSanitizer: failed to setup atexit callback\n");
     Die();
   }
