@@ -39,12 +39,8 @@
 # error "compatibility-thread-c++0x.cc is not needed for gnu-versioned-namespace"
 #endif
 
-#ifdef _GLIBCXX_COMPAT_
 #define _GLIBCXX_ASM_SYMVER(cur, old, version) \
    asm (".symver " #cur "," #old "@@@" #version);
-#else
-#define _GLIBCXX_ASM_SYMVER(cur, old, version)
-#endif
 
 // XXX GLIBCXX_ABI Deprecated
 // gcc-4.6.0
