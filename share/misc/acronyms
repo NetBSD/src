@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.317 2025/03/28 13:31:13 riastradh Exp $
+$NetBSD: acronyms,v 1.318 2025/10/15 15:09:33 jschauma Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -169,6 +169,7 @@ FCFS	first come, first served
 FCOL	for crying out loud
 FFS	free for shipping
 FITB	fill in the blank
+FKA	formerly known as
 FNO	for nerds only
 FNO	from now on
 FOC	free of charge
