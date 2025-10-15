@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/06/03 09:09:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2025/10/15 16:52:59 christos Exp $
 
 BINDIR=	/usr/bin
 
@@ -10,5 +10,6 @@ COPTS.ssh-keygen.c+=	-Wno-pointer-sign
 COPTS.ssh-keygen.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.ssh-keygen.c+= -Wno-error=deprecated-declarations
 COPTS.moduli.c+= -Wno-error=deprecated-declarations
+COPTS.ssh-keygen.c+= ${${ACTIVE_CC} == "clang":? -Wno-error=invalid-noreturn :}
 
 .include <bsd.prog.mk>
