@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.53 2024/06/29 12:11:11 riastradh Exp $ */
+/* $NetBSD: if_aumac.c,v 1.54 2025/10/15 01:32:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.53 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.54 2025/10/15 01:32:44 thorpej Exp $");
 
 
 
@@ -214,8 +214,6 @@ aumac_match(device_t parent, struct cfdata *cf, void *aux)
 static void
 aumac_attach(device_t parent, device_t self, void *aux)
 {
-	const uint8_t *enaddr;
-	prop_data_t ea;
 	struct aumac_softc *sc = device_private(self);
 	struct aubus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -224,6 +222,7 @@ aumac_attach(device_t parent, device_t self, void *aux)
 	paddr_t bufaddr;
 	vaddr_t vbufaddr;
 	int i;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -234,14 +233,10 @@ aumac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_st = aa->aa_st;
 
 	/* Get the MAC address. */
-	ea = prop_dictionary_get(device_properties(self), "mac-address");
-	if (ea == NULL) {
-		aprint_error_dev(self, "unable to get mac-addr property\n");
+	if (! ether_getaddr(self, enaddr)) {
+		aprint_error_dev(self, "unable to get MAC address\n");
 		return;
 	}
-	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-	enaddr = prop_data_data_nocopy(ea);
 
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(enaddr));
 

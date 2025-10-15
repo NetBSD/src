@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.31 2024/02/10 09:30:05 andvar Exp $ */
+/* $NetBSD: if_admsw.c,v 1.32 2025/10/15 01:31:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.31 2024/02/10 09:30:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.32 2025/10/15 01:31:27 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -323,13 +323,12 @@ admsw_reset(struct admsw_softc *sc)
 static void
 admsw_attach(device_t parent, device_t self, void *aux)
 {
-	uint8_t enaddr[ETHER_ADDR_LEN];
 	struct admsw_softc *sc = device_private(self);
 	struct obio_attach_args *aa = aux;
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	int error, i, rseg;
-	prop_data_t pd;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	printf(": ADM5120 Switch Engine, %d ports\n", SW_DEVS);
 
@@ -337,18 +336,14 @@ admsw_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = aa->oba_dt;
 	sc->sc_st = aa->oba_st;
 
-	pd = prop_dictionary_get(device_properties(self), "mac-address");
-
-	if (pd == NULL) {
+	if (! ether_getaddr(self, enaddr)) {
 		enaddr[0] = 0x02;
 		enaddr[1] = 0xaa;
 		enaddr[2] = 0xbb;
 		enaddr[3] = 0xcc;
 		enaddr[4] = 0xdd;
 		enaddr[5] = 0xee;
-	} else
-		memcpy(enaddr, prop_data_data_nocopy(pd), sizeof(enaddr));
-
+	}
 	memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
 
 	printf("%s: base Ethernet address %s\n", device_xname(sc->sc_dev),
