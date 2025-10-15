@@ -1,7 +1,6 @@
-#	$NetBSD: bsd.dtb.mk,v 1.3 2021/06/02 10:28:21 jmcneill Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.4 2025/10/15 06:11:59 skrll Exp $
 
 .include <bsd.init.mk>
-.include <bsd.own.mk>
 
 ##### Default values
 .if !defined(S)
