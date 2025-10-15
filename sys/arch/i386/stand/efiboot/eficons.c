@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.17 2025/10/14 07:16:18 skrll Exp $	*/
+/*	$NetBSD: eficons.c,v 1.18 2025/10/15 13:16:58 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -141,6 +141,7 @@ efi_consinit(int dev, int ioport, int unit, int speed, bool switchcons)
 			    awaitkey(7, 0))
 				goto ok;
 		}
+		goto nocom;
 ok:
 		break;
 
@@ -165,7 +166,7 @@ ok:
 	case CONSDEV_COM0KBD:
 	case CONSDEV_COM1KBD:
 	case CONSDEV_COM2KBD:
-	case CONSDEV_COM3KBD: /* XXXmanu */
+	case CONSDEV_COM3KBD:
 		consname = "com";
 		btinfo_console.addr = getcomaddr(unit);
 
@@ -201,10 +202,10 @@ nocom:
 			break;
 		internal_putchar = efi_cons_putc;
 kbd:
-		consname = "com";
 		if (!switchcons)
 			break;
-		com_unit = unit;
+		if (unit != -1)
+			com_unit = unit;
 		internal_getchar = efi_cons_getc;
 		internal_iskey = efi_cons_iskey;
 		internal_waitforinputevent = efi_cons_waitforinputevent;
