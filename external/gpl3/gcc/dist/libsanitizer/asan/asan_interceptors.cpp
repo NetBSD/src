@@ -706,6 +706,9 @@ static void AtCxaAtexit(void *unused) {
 #endif
 
 #if ASAN_INTERCEPT___CXA_ATEXIT
+#ifdef SANITIZER_NETBSD
+DECLARE_REAL(int, atexit, void (*func)());
+#endif
 INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
             void *dso_handle) {
 #if SANITIZER_APPLE
@@ -717,7 +720,11 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
   __lsan::ScopedInterceptorDisabler disabler;
 #endif
   int res = REAL(__cxa_atexit)(func, arg, dso_handle);
+#ifdef SANITIZER_NETBSD
+  REAL(atexit)((void (*)())AtCxaAtexit);
+#else
   REAL(__cxa_atexit)(AtCxaAtexit, nullptr, nullptr);
+#endif
   return res;
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
@@ -728,9 +735,14 @@ INTERCEPTOR(int, atexit, void (*func)()) {
 #if CAN_SANITIZE_LEAKS
   __lsan::ScopedInterceptorDisabler disabler;
 #endif
+#ifdef SANITIZER_NETBSD
+  int res = REAL(atexit)(func);
+  REAL(atexit)((void (*)())AtCxaAtexit);
+#else
   // Avoid calling real atexit as it is unreachable on at least on Linux.
   int res = REAL(__cxa_atexit)((void (*)(void *a))func, nullptr, nullptr);
   REAL(__cxa_atexit)(AtCxaAtexit, nullptr, nullptr);
+#endif
   return res;
 }
 #endif

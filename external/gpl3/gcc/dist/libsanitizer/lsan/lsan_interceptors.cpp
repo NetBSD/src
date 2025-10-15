@@ -378,7 +378,11 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 #if SANITIZER_INTERCEPT_ATEXIT
 INTERCEPTOR(int, atexit, void (*f)()) {
   __lsan::ScopedInterceptorDisabler disabler;
+#ifdef SANITIZER_NETBSD
+  return REAL(atexit)(f);
+#else
   return REAL(__cxa_atexit)((void (*)(void *a))f, 0, 0);
+#endif
 }
 #define LSAN_MAYBE_INTERCEPT_ATEXIT INTERCEPT_FUNCTION(atexit)
 #else
