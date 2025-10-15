@@ -1,4 +1,4 @@
-/* $NetBSD: rtcsram.c,v 1.4 2025/10/13 23:31:22 hgutch Exp $ */
+/* $NetBSD: rtcsram.c,v 1.5 2025/10/15 00:01:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.4 2025/10/13 23:31:22 hgutch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.5 2025/10/15 00:01:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,9 +110,7 @@ rtcsram_attach(device_t parent, device_t self, void *aux)
 	sc->sc_chan = eaa->eaa_chan;
 	sc->sc_device = eaa->eaa_device;
 
-	/* Read RTC counter bias from SRAM. */
 	rtcsram_read_buf(sc, SRAM_BASE, &sc->sc_sram, sizeof(sc->sc_sram));
-	aprint_debug_dev(self, "counter bias %d\n", sc->sc_sram.counter_bias);
 	hexdump(aprint_debug, device_xname(self), &sc->sc_sram,
 	    sizeof(sc->sc_sram));
 
@@ -163,7 +161,7 @@ rtcsram_gettime(todr_chip_handle_t ch, struct timeval *tv)
 	uint32_t val;
 
 	val = rtcsram_read_4(sc, RTC_BASE);
-	tv->tv_sec = (uint64_t)val + sc->sc_sram.counter_bias;
+	tv->tv_sec = (uint64_t)val;
 	tv->tv_usec = 0;
 
 	return 0;
@@ -174,7 +172,7 @@ rtcsram_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
 	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
 
-	rtcsram_write_4(sc, RTC_BASE, tv->tv_sec - sc->sc_sram.counter_bias);
+	rtcsram_write_4(sc, RTC_BASE, tv->tv_sec);
 
 	return 0;
 }
