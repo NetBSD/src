@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.98 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.99 2025/10/15 01:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.98 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.99 2025/10/15 01:36:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -278,7 +278,7 @@ beattach(device_t parent, device_t self, void *aux)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 		    beintr, sc);
 
-	prom_getether(node, sc->sc_enaddr);
+	ether_getaddr(self, sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/*

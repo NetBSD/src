@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.15 2025/10/15 01:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.15 2025/10/15 01:36:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,11 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (! ether_getaddr(self, enaddr)) {
+		aprint_error(": unable to get MAC address\n");
+		return;
+	}
+
 	/*
 	 * Map two register banks:
 	 *
@@ -122,7 +127,6 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
-	prom_getether(sa->sa_node, enaddr);
 
 	if (!strcmp("serdes", prom_getpropstring(sa->sa_node, "shared-pins")))
 		sc->sc_flags |= GEM_SERDES;

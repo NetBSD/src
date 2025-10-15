@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.80 2024/06/29 12:11:12 riastradh Exp $	*/
+/*	$NetBSD: qe.c,v 1.81 2025/10/15 01:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.80 2024/06/29 12:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.81 2025/10/15 01:36:25 thorpej Exp $");
 
 #define QEDEBUG
 
@@ -227,7 +227,7 @@ qeattach(device_t parent, device_t self, void *aux)
 
 	/* Note: no interrupt level passed */
 	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, qeintr, sc);
-	prom_getether(node, sc->sc_enaddr);
+	ether_getaddr(self, sc->sc_enaddr);
 
 	/*
 	 * Allocate descriptor ring and buffers.

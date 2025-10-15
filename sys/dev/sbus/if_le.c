@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.43 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.44 2025/10/15 01:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.43 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.44 2025/10/15 01:36:25 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -150,6 +150,11 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
 
+	if (! ether_getaddr(self, sc->sc_enaddr)) {
+		aprint_error(": unable to get MAC address\n");
+		return;
+	}
+
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
 			 sa->sa_offset,
@@ -260,8 +265,6 @@ leattach_sbus(device_t parent, device_t self, void *aux)
 		sc->sc_memsize = MEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}
-
-	prom_getether(sa->sa_node, sc->sc_enaddr);
 
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;

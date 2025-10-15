@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.38 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.39 2025/10/15 01:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.38 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.39 2025/10/15 01:36:25 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -387,7 +387,10 @@ leattach_ledma(device_t parent, device_t self, void *aux)
 	sc->sc_nsupmedia = NLEMEDIA;
 	sc->sc_defaultmedia = IFM_ETHER | IFM_AUTO;
 
-	prom_getether(sa->sa_node, sc->sc_enaddr);
+	if (! ether_getaddr(self, sc->sc_enaddr)) {
+		aprint_error(": unable to get MAC address\n");
+		goto bad_unmap;
+	}
 
 	sc->sc_copytodesc = lance_copytobuf_contig;
 	sc->sc_copyfromdesc = lance_copyfrombuf_contig;

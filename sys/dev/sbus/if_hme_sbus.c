@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.34 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.35 2025/10/15 01:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.34 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.35 2025/10/15 01:36:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,11 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (! ether_getaddr(self, sc->sc_enaddr)) {
+		aprint_error_dev(self, "unable to get MAC address\n");
+		return;
+	}
+
 	/*
 	 * Map five register banks:
 	 *
@@ -154,8 +159,6 @@ hmeattach_sbus(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "cannot map MIF registers\n");
 		return;
 	}
-
-	prom_getether(node, sc->sc_enaddr);
 
 	/*
 	 * Get transfer burst size from PROM and pass it on
