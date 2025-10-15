@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dtb.mk,v 1.4 2025/10/15 06:11:59 skrll Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.5 2025/10/15 06:13:17 skrll Exp $
 
 .include <bsd.init.mk>
 
@@ -51,7 +51,7 @@ DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 
 .PATH.dts: ${DTSDIR}
 
-DTB= 		 ${DTS:.dts=.dtb}
+DTB=		${DTS:.dts=.dtb}
 
 dtb:		${DTB}
 
