@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.42 2025/10/04 04:44:20 thorpej Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.43 2025/10/15 02:26:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.42 2025/10/04 04:44:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.43 2025/10/15 02:26:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1322,30 +1322,35 @@ eqos_get_dma_pbl(struct eqos_softc *sc)
 static void
 eqos_axi_configure(struct eqos_softc *sc)
 {
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
 	uint32_t val;
 	u_int uival;
-	bool bval;
 
 	val = RD4(sc, GMAC_DMA_SYSBUS_MODE);
-	if (prop_dictionary_get_bool(prop, "snps,mixed-burst", &bval) && bval) {
+
+	/* XXX are MB and FB mutually-exclusive? XXX */
+	if (device_getprop_bool(sc->sc_dev, "snps,mixed-burst")) {
 		val |= GMAC_DMA_SYSBUS_MODE_MB;
 	}
-	if (prop_dictionary_get_bool(prop, "snps,fixed-burst", &bval) && bval) {
+	if (device_getprop_bool(sc->sc_dev, "snps,fixed-burst")) {
 		val |= GMAC_DMA_SYSBUS_MODE_FB;
 	}
-	if (prop_dictionary_get_uint(prop, "snps,wr_osr_lmt", &uival)) {
+	if (device_getprop_uint(sc->sc_dev, "snps,wr_osr_lmt", &uival)) {
 		val &= ~GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_MASK;
-		val |= uival << GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_SHIFT;
+		val |= (uival << GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_SHIFT) &
+		    GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_MASK;
 	}
-	if (prop_dictionary_get_uint(prop, "snps,rd_osr_lmt", &uival)) {
+	if (device_getprop_uint(sc->sc_dev, "snps,rd_osr_lmt", &uival)) {
 		val &= ~GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_MASK;
-		val |= uival << GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_SHIFT;
+		val |= (uival << GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_SHIFT) &
+		    GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_MASK;
 	}
 
 	if (!EQOS_HW_FEATURE_ADDR64_32BIT(sc)) {
 		val |= GMAC_DMA_SYSBUS_MODE_EAME;
 	}
+
+	/* XXX snps,kbbe XXX */
+	/* XXX snps,blen XXX */
 
 	/* XXX */
 	val |= GMAC_DMA_SYSBUS_MODE_BLEN16;
