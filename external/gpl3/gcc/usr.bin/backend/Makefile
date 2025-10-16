@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2025/09/19 22:53:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.82 2025/10/16 22:46:53 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -498,7 +498,7 @@ gtype-desc.h: rs6000-builtins.h
 aarch64-builtins.o: aarch64-builtin-iterators.h
 tm.h: insn-constants.h
 genextract.lo: insn-config.h
-gencondmd.lo: tm_p.h tm-constrs.h
+gencondmd.lo: tm_p.h tm-constrs.h tree-check.h
 read-rtl.lo gencodes.lo genattrtab.lo genautomata.lo: tm.h gtype-desc.h
 genattr-common.lo gensupport.lo genconditions.lo gentarget-def.lo: tm.h
 genattr.lo genflags.lo genemit.lo genconfig.lo gencheck.lo: gtype-desc.h tm.h
