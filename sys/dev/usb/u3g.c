@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.45 2024/07/04 00:23:48 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.46 2025/10/16 13:26:50 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.45 2024/07/04 00:23:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.46 2025/10/16 13:26:50 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,6 +263,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157 },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157E },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM222 },
+	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM222_2 },
 };
 
 static bool

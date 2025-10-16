@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.823 2025/07/29 19:31:21 hgutch Exp $
+$NetBSD: usbdevs,v 1.824 2025/10/16 13:26:50 sborrill Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1473,7 +1473,9 @@ product DLINK DWM157_CD		0xa707	DWM-157 CD-ROM Mode
 product DLINK DWM157		0x7d02	DWM-157 LTE
 product DLINK DWM157E		0x7d0e	DWM-157 LTE
 product DLINK DWM222_CD		0xab00	DWM-222 CD-ROM Mode
+product DLINK DWM222_CD_2	0xab01	DWM-222 CD-ROM Mode
 product DLINK DWM222		0x7e35	DWM-222 LTE
+product DLINK DWM222_2		0x7e3d	DWM-222 LTE
 product DLINK DWR510_CD		0xa805	DWR-510 CD-ROM Mode
 product DLINK DWR510		0x7e12	DWR-510 LTE
 
