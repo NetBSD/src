@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.17 2022/06/27 22:41:29 andvar Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.18 2025/10/16 23:19:46 gutteridge Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -444,7 +444,7 @@ BEGIN_CRITICAL;
 	shr	SELOID, 4, SCB_SCSIID;
 	/*
 	 * If we want to send a message to the device, ensure
-	 * we are selecting with atn irregardless of our packetized
+	 * we are selecting with atn regardless of our packetized
 	 * agreement.  Since SPI4 only allows target reset or PPR
 	 * messages if this is a packetized connection, the change
 	 * to our negotiation table entry for this selection will
