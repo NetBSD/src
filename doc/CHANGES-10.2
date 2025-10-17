@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.59 2025/10/06 16:24:10 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.60 2025/10/17 08:46:51 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1139,4 +1139,18 @@ tests/lib/libc/kevent_nullmnt/t_nullmnt.sh	1.7-1.9
 	PR 59683: fix nullfs presence test in test libc/kevent/t_nullmnt.
 	Require root privileges.
 	[kre, ticket #1171]
+
+sys/arch/evbppc/wii/dev/rtcsram.c		1.4,1.5
+
+	wii: fix reading values from Wii's SRAM.
+	[hgutch, ticket #1172]
+
+usr.bin/calendar/calendars/calendar.christian	1.15
+usr.bin/calendar/calendars/calendar.holiday	1.36
+usr.bin/calendar/calendars/calendar.judaic	1.13
+usr.bin/calendar/calendars/calendar.netbsd	1.52
+usr.bin/calendar/calendars/calendar.usholiday	1.13
+
+	Calendar update for 2026.
+	[jnemeth, ticket #1173]
 
