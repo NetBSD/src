@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.204 2025/10/17 08:07:43 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.205 2025/10/17 08:08:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.204 2025/10/17 08:07:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.205 2025/10/17 08:08:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -126,7 +126,7 @@ int	dumponpanic = DUMP_ON_PANIC;
  * [e.g. to a "virtual console"].
  */
 
-void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
+void (*v_putc)(int) = cnputc;		/* start with cnputc (normal cons) */
 void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
 
 const char hexdigits[] = "0123456789abcdef";
