@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.67 2025/09/14 19:09:11 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.68 2025/10/17 02:47:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.67 2025/09/14 19:09:11 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.68 2025/10/17 02:47:33 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -773,16 +773,33 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	sb = 0;
 	did_one = 0;
 	do {
+		const char *whyfailed = NULL;
+		
 		get(fd, sum_offset, sumblock, lfs_sb_getsumsize(lfsp));
 		sump = (SEGSUM *)sumblock;
 		sumstart = lfs_ss_getsumstart(lfsp);
-		if ((lfs_sb_getversion(lfsp) > 1 &&
-		     lfs_ss_getident(lfsp, sump) != lfs_sb_getident(lfsp)) ||
-		    lfs_ss_getsumsum(lfsp, sump) !=
-		      cksum((char *)sump + sumstart,
-			    lfs_sb_getsumsize(lfsp) - sumstart)) {
+		if (whyfailed == NULL && lfs_ss_getmagic(lfsp, sump) !=
+		    SS_MAGIC) {
+		    whyfailed = "bad magic number";
+		    printf("Found magic number 0x%lx expecting 0x%lx\n",
+			   (unsigned long)lfs_ss_getmagic(lfsp, sump),
+			   (unsigned long)SS_MAGIC);
+		}
+		if (whyfailed == NULL && lfs_ss_getsumsum(lfsp, sump) !=
+		    cksum((char *)sump + sumstart,
+			  lfs_sb_getsumsize(lfsp) - sumstart))
+			whyfailed = "bad sumsum";
+		if (whyfailed == NULL && lfs_sb_getversion(lfsp) > 1 &&
+		    lfs_ss_getident(lfsp, sump) != lfs_sb_getident(lfsp))
+		    whyfailed = "bad ident";
+		if (whyfailed != NULL) {
+			uint32_t sbmagic;
+			
 			sbp = (struct lfs *)sump;
-			if ((sb = (sbp->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC))) {
+			sbmagic = sbp->lfs_dlfs_u.u_32.dlfs_magic;
+			
+			if ((sb = (!lfsp->lfs_is64 && sbmagic == LFS_MAGIC)
+			     || (lfsp->lfs_is64 && sbmagic == LFS64_MAGIC))) {
 				printf("Superblock at 0x%x\n",
 				       (unsigned)lfs_btofsb(lfsp, sum_offset));
 				if (dump_sb)  {
@@ -799,8 +816,8 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			} else if (did_one)
 				break;
 			else {
-				printf("Segment at 0x%llx empty or corrupt\n",
-                                       (long long)addr);
+				printf("Segment at 0x%llx empty or corrupt (%s)\n",
+                                       (long long)addr, whyfailed);
 				break;
 			}
 		} else {
