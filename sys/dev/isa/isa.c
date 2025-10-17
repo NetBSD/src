@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.141 2025/10/03 14:14:36 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.142 2025/10/17 16:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.141 2025/10/03 14:14:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.142 2025/10/17 16:56:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,16 +58,11 @@ int	isamatch(device_t, cfdata_t, void *);
 void	isaattach(device_t, device_t, void *);
 int	isadetach(device_t, int);
 int	isarescan(device_t, const char *, const int *);
-void	isachilddetached(device_t, device_t);
 int	isaprint(void *, const char *);
 
 CFATTACH_DECL2_NEW(isa, sizeof(struct isa_softc),
-    isamatch, isaattach, isadetach, NULL, isarescan, isachilddetached);
+    isamatch, isaattach, isadetach, NULL, isarescan, NULL);
 
-void	isa_attach_knowndevs(struct isa_softc *);
-void	isa_free_knowndevs(struct isa_softc *);
-
-int	isasubmatch(device_t, cfdata_t, const int *, void *);
 int	isasearch(device_t, cfdata_t, const int *, void *);
 
 static int	isa_slotcount = -1;	/* -1 == don't know how many */
@@ -95,16 +90,11 @@ isaattach(device_t parent, device_t self, void *aux)
 		[ISACF_DRQ2]  = ISACF_DRQ2_DEFAULT,
 	};
 
-	TAILQ_INIT(&sc->sc_knowndevs);
-	sc->sc_dynamicdevs = 0;
-
 	sc->sc_dev = self;
 
 	isa_attach_hook(parent, self, iba);
 	aprint_naive("\n");
 	aprint_normal("\n");
-
-	/* XXX Add code to fetch known-devices. */
 
 	sc->sc_iot = iba->iba_iot;
 	sc->sc_memt = iba->iba_memt;
@@ -125,16 +115,6 @@ isaattach(device_t parent, device_t self, void *aux)
 	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
 #endif
 
-	/* Attach all direct-config children. */
-	isa_attach_knowndevs(sc);
-
-	/*
-	 * If we don't support dynamic hello/goodbye of devices,
-	 * then free the knowndevs info now.
-	 */
-	if (sc->sc_dynamicdevs == 0)
-		isa_free_knowndevs(sc);
-
 	/* Attach all indirect-config children. */
 	isarescan(self, NULL, wildcard);
 
@@ -152,8 +132,6 @@ isadetach(device_t self, int flags)
 		return rc;
 
 	pmf_device_deregister(self);
-
-	isa_free_knowndevs(sc);
 
 #if NISADMA > 0
 	isa_dmadestroy(sc->sc_ic);
@@ -190,86 +168,6 @@ isarescan(device_t self, const char *ifattr, const int *locators)
 	    CFARGS(.search = isasearch,
 		   .locators = locs));
 	return (0);
-}
-
-void
-isachilddetached(device_t self, device_t child)
-{
-	struct isa_knowndev *ik;
-	struct isa_softc *sc = device_private(self);
-
-	TAILQ_FOREACH(ik, &sc->sc_knowndevs, ik_list) {
-		if (ik->ik_claimed == child)
-			ik->ik_claimed = NULL;
-	}
-}
-
-void
-isa_attach_knowndevs(struct isa_softc *sc)
-{
-	struct isa_attach_args ia;
-	struct isa_knowndev *ik;
-
-	if (TAILQ_EMPTY(&sc->sc_knowndevs))
-		return;
-
-	TAILQ_FOREACH(ik, &sc->sc_knowndevs, ik_list) {
-		if (ik->ik_claimed != NULL)
-			continue;
-
-		ia.ia_iot = sc->sc_iot;
-		ia.ia_memt = sc->sc_memt;
-		ia.ia_dmat = sc->sc_dmat;
-		ia.ia_ic = sc->sc_ic;
-
-		ia.ia_pnpname = ik->ik_pnpname;
-		ia.ia_pnpcompatnames = ik->ik_pnpcompatnames;
-
-		ia.ia_io = ik->ik_io;
-		ia.ia_nio = ik->ik_nio;
-
-		ia.ia_iomem = ik->ik_iomem;
-		ia.ia_niomem = ik->ik_niomem;
-
-		ia.ia_irq = ik->ik_irq;
-		ia.ia_nirq = ik->ik_nirq;
-
-		ia.ia_drq = ik->ik_drq;
-		ia.ia_ndrq = ik->ik_ndrq;
-
-		ia.ia_aux = NULL;
-
-		/* XXX should setup locator array */
-
-		ik->ik_claimed = config_found(sc->sc_dev, &ia, isaprint,
-		    CFARGS(.submatch = isasubmatch));
-	}
-}
-
-void
-isa_free_knowndevs(struct isa_softc *sc)
-{
-	struct isa_knowndev *ik;
-	struct isa_pnpname *ipn;
-
-#define	FREEIT(x)	if (x != NULL) free(x, M_DEVBUF)
-
-	while ((ik = TAILQ_FIRST(&sc->sc_knowndevs)) != NULL) {
-		TAILQ_REMOVE(&sc->sc_knowndevs, ik, ik_list);
-		FREEIT(ik->ik_pnpname);
-		while ((ipn = ik->ik_pnpcompatnames) != NULL) {
-			ik->ik_pnpcompatnames = ipn->ipn_next;
-			free(ipn->ipn_name, M_DEVBUF);
-			free(ipn, M_DEVBUF);
-		}
-		FREEIT(ik->ik_io);
-		FREEIT(ik->ik_iomem);
-		FREEIT(ik->ik_irq);
-		FREEIT(ik->ik_drq);
-		free(ik, M_DEVBUF);
-	}
-
-#undef FREEIT
 }
 
 static int
@@ -324,17 +222,6 @@ checkattachargs(struct isa_attach_args *ia, const int *loc)
 	}
 
 	return (1);
-}
-
-int
-isasubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
-{
-	struct isa_attach_args *ia = aux;
-
-	if (!checkattachargs(ia, cf->cf_loc))
-		return (0);
-
-	return (config_match(parent, cf, aux));
 }
 
 int
