@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.117 2022/11/19 07:57:51 yamt Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.118 2025/10/18 07:35:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.117 2022/11/19 07:57:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.118 2025/10/18 07:35:33 mlelstv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -281,8 +281,6 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 			IEEE80211_NODE_STAT(ni, rx_wepfail);
 			goto out;
 		}
-		wh = mtod(m, struct ieee80211_frame *);
-		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	} else {
 		key = NULL;
 	}
@@ -301,11 +299,15 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	/*
 	 * Next, strip any MSDU crypto bits.
 	 */
-	if (key != NULL && !ieee80211_crypto_demic(ic, key, m, 0)) {
-		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
-		    ni->ni_macaddr, "data", "%s", "demic error");
-		IEEE80211_NODE_STAT(ni, rx_demicfail);
-		goto out;
+	if (key != NULL) {
+		if (!ieee80211_crypto_demic(ic, key, m, 0)) {
+			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
+			    ni->ni_macaddr, "data", "%s", "demic error");
+			IEEE80211_NODE_STAT(ni, rx_demicfail);
+			goto out;
+		}
+		wh = mtod(m, struct ieee80211_frame *);
+		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	}
 
 	/* copy to listener after decrypt */
@@ -361,7 +363,6 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 		}
 	}
 
-	if_statinc(ifp, if_ipackets);
 	IEEE80211_NODE_STAT(ni, rx_data);
 	IEEE80211_NODE_STAT_ADD(ni, rx_bytes, m->m_pkthdr.len);
 
@@ -806,10 +807,14 @@ ieee80211_defrag(struct ieee80211_node *ni, struct mbuf *m, int hdrspace)
 
 		lwh = mtod(mfrag, struct ieee80211_frame *);
 		last_rxseq = le16toh(*(u_int16_t *)lwh->i_seq);
-		/* NB: check seq # and frag together */
+		/*
+		 * NB: check seq # and frag together. Also check that both
+		 * fragments are plaintext or that both are encrypted.
+		 */
 		if (rxseq != last_rxseq+1 ||
 		    !IEEE80211_ADDR_EQ(wh->i_addr1, lwh->i_addr1) ||
-		    !IEEE80211_ADDR_EQ(wh->i_addr2, lwh->i_addr2)) {
+		    !IEEE80211_ADDR_EQ(wh->i_addr2, lwh->i_addr2) ||
+		    ((wh->i_fc[1] ^ lwh->i_fc[1]) & IEEE80211_FC1_WEP)) {
 			/*
 			 * Unrelated fragment or no space for it,
 			 * clear current fragments.
