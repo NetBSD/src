@@ -363,6 +363,8 @@
 ./@MODULEDIR@/npf_ext_normalize/npf_ext_normalize.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/npf_ext_rndblock			modules-base-kernel	kmod
 ./@MODULEDIR@/npf_ext_rndblock/npf_ext_rndblock.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/npf_ext_route			modules-base-kernel	kmod
+./@MODULEDIR@/npf_ext_route/npf_ext_route.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/ntfs				modules-base-kernel	kmod
 ./@MODULEDIR@/ntfs/ntfs.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/null				modules-base-kernel	kmod

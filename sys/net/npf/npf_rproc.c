@@ -388,3 +388,9 @@ npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, const npf_match_info_t *mi,
 
 	return true;
 }
+
+int
+is_rproc_route(npf_rproc_t *rp)
+{
+	return !strcmp(rp->rp_name, "route");
+}
