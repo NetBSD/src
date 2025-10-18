@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2025/10/13 00:44:35 perseant Exp $	*/
+/*	$NetBSD: util.c,v 1.2 2025/10/18 22:20:02 perseant Exp $	*/
 
 #include <sys/mount.h>
 
@@ -28,8 +28,8 @@ void create_lfs(size_t imgsize, size_t fssize, int width, int do_setup)
 
 	/* Create filesystem */
 	fprintf(stderr, "* Create file system\n");
-	sprintf(cmd, "newfs_lfs -D -F -s %zd -w%d ./%s > %s",
-		fssize, width, IMGNAME, LOGFILE);
+	sprintf(cmd, "newfs_lfs -D -F -B %d -s %zd -w%d ./%s > %s",
+		SEGSIZE, fssize, width, IMGNAME, LOGFILE);
 	if (system(cmd) == -1)
 		atf_tc_fail_errno("newfs failed");
 	pipe = fopen(LOGFILE, "r");

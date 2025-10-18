@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1 2025/10/13 00:44:35 perseant Exp $	*/
+/*	$NetBSD: util.h,v 1.2 2025/10/18 22:20:02 perseant Exp $	*/
 
 /* Creat test image and filesystem, record superblock locations */
 void create_lfs(size_t, size_t, int, int);
@@ -17,6 +17,7 @@ void dumplfs(void);
 
 #define MAXLINE 132
 #define CHUNKSIZE 300
+#define SEGSIZE 32768
 
 #define IMGNAME "disk.img"
 #define FAKEBLK "/dev/blk"
