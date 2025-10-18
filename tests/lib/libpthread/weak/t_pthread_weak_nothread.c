@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pthread_weak_nothread.c,v 1.1 2025/10/06 13:16:44 riastradh Exp $	*/
+/*	$NetBSD: t_pthread_weak_nothread.c,v 1.1 2025/10/18 20:27:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pthread_weak_nothread.c,v 1.1 2025/10/06 13:16:44 riastradh Exp $");
+__RCSID("$NetBSD: t_pthread_weak_nothread.c,v 1.1 2025/10/18 20:27:23 riastradh Exp $");
 
 #include <atf-c.h>
 
