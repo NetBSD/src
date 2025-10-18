@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_pci.h,v 1.7 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: ofw_pci.h,v 1.8 2025/10/18 15:41:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,11 +91,11 @@
  * This has the 3 32bit cell values, plus 2 more to make up a 64-bit size.
  */
 struct ofw_pci_register {
-	u_int32_t	phys_hi;
-	u_int32_t	phys_mid;
-	u_int32_t	phys_lo;
-	u_int32_t	size_hi;
-	u_int32_t	size_lo;
+	uint32_t	phys_hi;
+	uint32_t	phys_mid;
+	uint32_t	phys_lo;
+	uint32_t	size_hi;
+	uint32_t	size_lo;
 };
 
 #endif /* _DEV_OFW_OFW_PCI_H_ */
