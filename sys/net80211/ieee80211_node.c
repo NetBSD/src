@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.84 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.85 2025/10/18 07:38:17 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.84 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.85 2025/10/18 07:38:17 mlelstv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -324,8 +324,8 @@ ieee80211_begin_scan(struct ieee80211com *ic, int reset)
 /*
  * Switch to the next channel marked for scanning.
  */
-int
-ieee80211_next_scan(struct ieee80211com *ic)
+static int
+ieee80211_next_scan1(struct ieee80211com *ic)
 {
 	struct ieee80211_channel *chan;
 
@@ -338,6 +338,13 @@ ieee80211_next_scan(struct ieee80211com *ic)
 	ic->ic_flags_ext &= ~IEEE80211_FEXT_PROBECHAN;
 
 	chan = ic->ic_curchan;
+
+	if (chan == NULL) {
+		/* start with first channel */
+		chan = &ic->ic_channels[IEEE80211_CHAN_MAX];
+		ic->ic_curchan = chan;
+	}
+
 	do {
 		if (++chan > &ic->ic_channels[IEEE80211_CHAN_MAX])
 			chan = &ic->ic_channels[0];
@@ -359,8 +366,19 @@ ieee80211_next_scan(struct ieee80211com *ic)
 		}
 	} while (chan != ic->ic_curchan);
 
-	ieee80211_end_scan(ic);
 	return 0;
+}
+
+int
+ieee80211_next_scan(struct ieee80211com *ic)
+{
+	int rc;
+
+	rc = ieee80211_next_scan1(ic);
+	if (rc == 0) {
+		ieee80211_end_scan(ic);
+	}
+	return rc;
 }
 
 /*
@@ -754,7 +772,10 @@ notfound:
 		 */
 		ieee80211_reset_scan(ic);
 		ic->ic_flags |= IEEE80211_F_SCAN;
-		ieee80211_next_scan(ic);
+		if (ieee80211_next_scan1(ic) == 0) {
+			ieee80211_cancel_scan(ic);
+			ieee80211_notify_scan_done(ic);
+		}
 		return;
 	}
 
