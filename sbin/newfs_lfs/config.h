@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.9 2012/02/02 03:50:32 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.10 2025/10/18 22:09:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -54,7 +54,7 @@
  * structured file system.  The block size must be a power of two and less
  * than the segment size.
  */
-#define	LFS_MINSEGSIZE		(64 * 1024)
+#define	LFS_MINSEGSIZE		(16 * 1024)
 #define	DFL_LFSSEG		(1024 * 1024)
 #define	DFL_LFSSEG_SHIFT	20
 #define	DFL_LFSSEG_MASK		0xFFFFF
