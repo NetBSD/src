@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.37 2019/01/14 14:55:37 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.37.4.1 2025/10/19 11:05:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.37 2019/01/14 14:55:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.37.4.1 2025/10/19 11:05:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.37 2019/01/14 14:55:37 yamaguchi Exp $"
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/paravirt_membar.h>
 
 #define VIRTIO_PRIVATE
 
@@ -795,7 +796,13 @@ notify:
 		membar_producer();
 		vq->vq_queued++;
 		vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
-		membar_consumer();
+
+		/*
+		 * Ensure we publish the avail idx _before_ we check whether
+		 * the host needs to notified.
+		 */
+		paravirt_membar_sync();
+
 		if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))
 			sc->sc_ops->kick(sc, vq->vq_index);
 	}
