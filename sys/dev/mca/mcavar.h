@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.12 2012/10/27 17:18:26 chs Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.13 2025/10/19 20:52:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,15 @@ struct mcabus_attach_args {
 	int		mba_bus;	/* MCA bus number */
 };
 
+int	mcabusprint(void *, const char *);
+
+static inline device_t
+mcabus_attach(device_t dev, struct mcabus_attach_args *mba)
+{
+	return config_found(dev, mba, mcabusprint,
+	    CFARGS(.iattr = "mcabus",
+		   .devhandle = device_handle(dev)));
+}
 
 struct mca_attach_args {
 	bus_space_tag_t ma_iot;		/* MCA I/O space tag */
@@ -64,8 +73,6 @@ struct mca_attach_args {
 	int ma_pos[8];			/* MCA POS register values */
 	int ma_id;			/* MCA device ID (POS1 + POS2<<8) */
 };
-
-int	mcabusprint(void *, const char *);
 
 void	mca_devinfo(int, char *, size_t);
 int	mca_match_disabled(int);

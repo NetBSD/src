@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2023/12/20 15:29:06 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2025/10/19 20:52:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.8 2023/12/20 15:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2025/10/19 20:52:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -115,8 +115,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	mba.mba_mba.mba_dmat = NULL; /*&mca_bus_dma_tag;*/
 	mba.mba_mba.mba_mc = NULL;
 	mba.mba_mba.mba_bus = 0;
-	config_found(self, &mba.mba_mba, mcabusprint,
-	    CFARGS(.iattr = "mcabus"));
+	mcabus_attach(self, &mba.mba_mba);
 }
 
 int

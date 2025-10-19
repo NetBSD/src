@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.22 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.23 2025/10/19 20:52:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.22 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.23 2025/10/19 20:52:09 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,5 +108,5 @@ pcmb_callback(device_t self)
 #endif
 	ma.mba_mc = NULL;
 	ma.mba_bus = 0;
-	config_found(self, &ma, mcabusprint, CFARGS_NONE);
+	mcabus_attach(self, &ma);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.11 2025/10/19 20:35:02 thorpej Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.12 2025/10/19 20:52:09 thorpej Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.11 2025/10/19 20:35:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.12 2025/10/19 20:52:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,6 @@ int isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 static const struct isabus_attach_args mba_iba = {
-	._iba_busname = "isa",
 	.iba_dmat = &isa_bus_dma_tag,
 	.iba_ic = &x86_isa_chipset
 };
@@ -383,9 +382,7 @@ i386_mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 			mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
 			mba.mba_mba.mba_mc = NULL;
 			mba.mba_mba.mba_bus = 0;
-			sc->sc_mca = config_found(self,
-			    &mba.mba_mba, mcabusprint,
-			    CFARGS(.iattr = "mcabus"));
+			sc->sc_mca = mcabus_attach(self, &mba.mba_mba);
 		}
 #endif
 	}
