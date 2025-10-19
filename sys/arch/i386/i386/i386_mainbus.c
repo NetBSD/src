@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.10 2025/07/08 11:06:13 imil Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.11 2025/10/19 20:35:02 thorpej Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.10 2025/07/08 11:06:13 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.11 2025/10/19 20:35:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,8 +233,7 @@ i386_mainbus_attach(device_t parent, device_t self, void *aux)
 #if NEISA > 0
 		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
-		config_found(self, &mba.mba_eba, eisabusprint,
-		    CFARGS(.iattr = "eisabus"));
+		eisabus_attach(self, &mba.mba_eba);
 	}
 
 #if NISA > 0
@@ -242,8 +241,7 @@ i386_mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_iba = mba_iba;
 		mba.mba_iba.iba_iot = x86_bus_space_io;
 		mba.mba_iba.iba_memt = x86_bus_space_mem;
-		config_found(self, &mba.mba_iba, isabusprint,
-		    CFARGS(.iattr = "isabus"));
+		isabus_attach(self, &mba.mba_iba);
 	}
 #endif
 

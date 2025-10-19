@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.57 2021/08/07 16:18:41 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.58 2025/10/19 20:35:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.57 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.58 2025/10/19 20:35:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,7 @@ sio_bridge_callback(device_t self)
 		sa.sa_eba.eba_dmat =
 		    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_EISA);
 		sa.sa_eba.eba_ec = &ec;
-		config_found(sc->sc_dev, &sa.sa_eba, eisabusprint,
-		    CFARGS(.iattr = "eisabus"));
+		eisabus_attach(sc->sc_dev, &sa.sa_eba);
 	}
 #endif /* NPCEB */
 
@@ -283,8 +282,7 @@ sio_bridge_callback(device_t self)
 	sa.sa_iba.iba_dmat =
 	    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_ISA);
 	sa.sa_iba.iba_ic = sc->sc_ic;
-	config_found(sc->sc_dev, &sa.sa_iba, isabusprint,
-	    CFARGS(.iattr = "isabus"));
+	isabus_attach(sc->sc_dev, &sa.sa_iba);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.37 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: imc.c,v 1.38 2025/10/19 20:35:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.37 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.38 2025/10/19 20:35:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,8 +230,7 @@ imc_attach(device_t parent, device_t self, void *aux)
 #if notyet
 		memset(&iaa, 0, sizeof(iaa));
 
-		config_found(self, &iaa, eisabusprint,
-		    CFARGS(.iattr = "eisabus"));
+		eisabus_attach(self, &iaa);
 #endif
 	}
 

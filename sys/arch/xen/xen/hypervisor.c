@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.100 2025/09/03 16:14:52 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.101 2025/10/19 20:35:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.100 2025/09/03 16:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.101 2025/10/19 20:35:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,8 +762,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_iba.iba_memt = x86_bus_space_mem;
 		hac.hac_iba.iba_dmat = &isa_bus_dma_tag;
 		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
-		config_found(self, &hac.hac_iba, isabusprint,
-		    CFARGS(.iattr = "isabus"));
+		isabus_attach(self, &hac.hac_iba);
 	}
 #endif /* NISA */
 #endif /* NPCI */

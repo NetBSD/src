@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.27 2023/12/20 13:55:18 thorpej Exp $	*/
+/*	$NetBSD: tspld.c,v 1.28 2025/10/19 20:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.27 2023/12/20 13:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.28 2025/10/19 20:35:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -467,8 +467,7 @@ tspld_callback(device_t self)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_iot = &isa_io_bs_tag;
 	iba.iba_memt = &isa_mem_bs_tag;
-	config_found(self, &iba, isabusprint,
-	    CFARGS(.iattr = "isabus"));
+	isabus_attach(self, &iba);
 #endif
 	/*
 	 *  Attach each devices

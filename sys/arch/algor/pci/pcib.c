@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.29 2024/02/08 20:11:55 andvar Exp $	*/
+/*	$NetBSD: pcib.c,v 1.30 2025/10/19 20:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.29 2024/02/08 20:11:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.30 2025/10/19 20:35:01 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -317,7 +317,7 @@ pcib_bridge_callback(device_t self)
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
 	iba.iba_ic->ic_detach_hook = pcib_isa_detach_hook;
 
-	config_found(sc->sc_dev, &iba, isabusprint, CFARGS_NONE);
+	isabus_attach(sc->sc_dev, &iba);
 }
 
 void

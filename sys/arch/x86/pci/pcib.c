@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.21 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.22 2025/10/19 20:35:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.21 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.22 2025/10/19 20:35:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -243,9 +243,7 @@ pcibrescan(device_t self, const char *ifattr, const int *loc)
 #if NISA > 0
 		iba.iba_dmat = &isa_bus_dma_tag;
 #endif
-		sc->sc_isabus =
-		    config_found(self, &iba, isabusprint,
-			CFARGS(.iattr = "isabus"));
+		sc->sc_isabus = isabus_attach(self, &iba);
 	}
 	return 0;
 }
