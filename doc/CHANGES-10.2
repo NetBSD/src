@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.60 2025/10/17 08:46:51 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.61 2025/10/19 11:04:24 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1153,4 +1153,51 @@ usr.bin/calendar/calendars/calendar.usholiday	1.13
 
 	Calendar update for 2026.
 	[jnemeth, ticket #1173]
+
+bin/pax/options.c				1.120
+tools/compat/Makefile				1.95 (patch)
+tools/compat/compat_defs.h			1.126,1.127 (patch)
+tools/compat/configure.ac			1.110,1.111 (patch)
+tools/compat/nbtool_config.h.in			1.59 (patch)
+
+	build: fixes for modern compilers.
+	[mrg, ticket #1174]
+
+sys/dev/usb/usb_subr.c				1.280,1.281
+sys/dev/usb/usbdivar.h				1.140
+sys/dev/usb/xhci.c				1.191
+
+	usbdi(9): PR 59185, 59624, 57447: fix state for selected config index.
+	[riastradh, ticket #1175]
+
+common/lib/libc/arch/i386/atomic/atomic.S	1.38 (patch)
+common/lib/libc/arch/sparc/atomic/membar_ops.S	1.9 (patch)
+common/lib/libc/arch/sparc64/atomic/membar_ops.S 1.10 (patch)
+common/lib/libc/arch/x86_64/atomic/atomic.S	1.32 (patch)
+distrib/sets/lists/comp/mi			1.2499 (patch)
+share/man/man9/Makefile 			1.475 (patch)
+share/man/man9/paravirt_membar_sync.9		1.1 (patch)
+sys/arch/alpha/alpha/locore.s			1.145 (patch)
+sys/arch/amd64/amd64/cpufunc.S			1.70 (patch)
+sys/arch/arm/arm/cpu_subr.c			1.6 (patch)
+sys/arch/hppa/hppa/support.S			1.9 (patch)
+sys/arch/i386/i386/cpufunc.S			1.54 (patch)
+sys/arch/mips/mips/cpu_subr.c			1.65,1.66 (patch)
+sys/arch/sparc/sparc/locore.s			1.287 (patch)
+sys/arch/sparc64/sparc64/locore.s		1.436 (patch)
+sys/sys/paravirt_membar.h			1.1 (patch)
+
+	paravirt_membar(9): PR 59618: new membar for paravirtualized
+	drivers.
+	[riastradh, ticket #1176]
+
+sys/dev/hyperv/vmbus.c				1.20
+
+	hyperv(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #1177]
+
+sys/dev/pci/virtio.c				1.84
+
+	virtio(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #1178]
 
