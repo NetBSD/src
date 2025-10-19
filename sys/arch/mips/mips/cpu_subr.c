@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.62.4.1 2025/10/19 10:34:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.62.4.1 2025/10/19 10:34:41 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp 
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/paravirt_membar.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/reboot.h>
@@ -1197,3 +1198,41 @@ cpuwatch_clr(cpu_watchpoint_t *cwp)
 }
 
 #endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
+
+#if (MIPS2 + MIPS3 + MIPS4 + MIPS5 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+void
+paravirt_membar_sync(void)
+{
+
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 *
+	 * Prior to MIPS-II, there was no SYNC instruction.[1]  CPUs
+	 * with only MIPS-I presumably don't exist in multiprocessor
+	 * configurations.  But what if we're running a _kernel_ built
+	 * for a uniprocessor MIPS-I CPU, as a virtual machine guest of
+	 * a _host_ with a newer multiprocessor CPU?  How do we enforce
+	 * store-before-load ordering for a paravirtualized device
+	 * driver, coordinating with host software `device' potentially
+	 * on another CPU?  You'll have to answer that before you can
+	 * use virtio drivers!
+	 *
+	 * [1] MIPS32 Architecture For Programmers, Volume II: The
+	 *     MIPS32 Instruction Set, Document Number: MD00086,
+	 *     Revision 0.95, March 12, 2001, MIPS Technologies, p. 215
+	 */
+	__asm volatile(
+	    ".set push"			"\n\t"
+	    ".set mips2"		"\n\t"
+	    "sync"			"\n\t"
+	    ".set pop");
+}
+#endif	/* !MIPS1 */
