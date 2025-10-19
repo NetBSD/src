@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.118.18.1 2021/04/30 14:07:02 martin Exp $	*/
+/*	$NetBSD: options.c,v 1.118.18.2 2025/10/19 09:57:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.118.18.1 2021/04/30 14:07:02 martin Exp $");
+__RCSID("$NetBSD: options.c,v 1.118.18.2 2025/10/19 09:57:16 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: options.c,v 1.118.18.1 2021/04/30 14:07:02 martin Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <paths.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.116 2019/06/19 23:33:07 kamil Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.116.2.1 2025/10/19 09:57:16 martin Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -448,6 +448,10 @@ int issetugid(void);
 int mkstemp(char *);
 #endif
 
+#if !HAVE_DECL_MKSTEMPS
+int mkstemps(char *, int);
+#endif
+
 #if !HAVE_DECL_MKDTEMP
 char *mkdtemp(char *);
 #endif
@@ -535,6 +539,9 @@ int		strcasecmp(const char *, const char *);
 #if !HAVE_DECL_STRNCASECMP
 int		strncasecmp(const char *, const char *, size_t);
 #endif
+#if !HAVE_DECL_STRCASESTR
+char		*strcasestr(const char *, const char *);
+#endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);
 #endif
@@ -607,6 +614,10 @@ long long strsuftollx(const char *, const char *,
 long long strtoll(const char *, char **, int);
 #endif
 
+#if !HAVE_DECL_STRTONUM
+long long strtonum(const char *, long long, long long, const char **);
+#endif
+
 #if !HAVE_DECL_STRTOI
 intmax_t strtoi(const char * __restrict, char ** __restrict, int,
     intmax_t, intmax_t, int *);
@@ -635,6 +646,10 @@ int vasnprintf(char **, size_t, const char *, va_list);
 
 #if !HAVE_DECL_VSNPRINTF && !defined(vsnprintf)
 int vsnprintf(char *, size_t, const char *, va_list);
+#endif
+
+#if !HAVE_DECL_VSYSLOG
+void vsyslog(int, const char *, va_list);
 #endif
 
 /*

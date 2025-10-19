@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.97 2019/06/22 13:42:53 hannken Exp $
+#	$NetBSD: configure.ac,v 1.97.2.1 2025/10/19 09:57:16 martin Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -169,12 +169,12 @@ AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln,
-	fpurge, getdelim, getline, snprintf],,, [
+	fpurge, getdelim, getline, snprintf, vsyslog],,, [
 #include <stdio.h>
 ])
 
-AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, getsubopt,
-	setenv, strtoi, strtoll, strtou, setprogname, getprogname],,, [
+AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, mkstemps, reallocarr, getsubopt,
+	setenv, strtoi, strtoll, strtonum, strtou, setprogname, getprogname],,, [
 #include <stdlib.h>
 ])
 
@@ -216,12 +216,12 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	mkstemps mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strcasecmp strncasecmp strndup strnlen strsep strsuftoll strtoi \
-	strtoll strtou \
+	strcasecmp strncasecmp strcasestr strndup strnlen strsep strsuftoll strtoi \
+	strtoll strtonum strtou \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
@@ -230,7 +230,7 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strcasecmp, strncasecmp, strlcpy, strlcat, strndup,
+AC_CHECK_DECLS([strcasecmp, strncasecmp, strcasestr, strlcpy, strlcat, strndup,
 		strnlen, strsep],,,[
 #include <string.h>
 ])
