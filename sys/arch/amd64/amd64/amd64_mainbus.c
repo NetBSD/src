@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.11 2025/10/19 20:35:01 thorpej Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.12 2025/10/19 21:31:53 thorpej Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.11 2025/10/19 20:35:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.12 2025/10/19 21:31:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.11 2025/10/19 20:35:01 thorpej E
 
 int	amd64_mainbus_match(device_t, cfdata_t, void *);
 void	amd64_mainbus_attach(device_t, device_t, void *);
-int	amd64_mainbus_print(void *, const char *);
 
 union amd64_mainbus_attach_args {
-	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
@@ -117,7 +115,6 @@ int isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 static const struct isabus_attach_args mba_iba = {
-	._iba_busname = "isa",
 	.iba_dmat = &isa_bus_dma_tag,
 	.iba_ic = &x86_isa_chipset
 };
@@ -261,14 +258,4 @@ amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-int
-amd64_mainbus_print(void *aux, const char *pnp)
-{
-	union amd64_mainbus_attach_args *mba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	return UNCONF;
 }
