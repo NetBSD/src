@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.54 2025/10/17 16:56:00 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.55 2025/10/19 20:34:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -93,6 +93,16 @@ struct isabus_attach_args {
 	isa_chipset_tag_t iba_ic;
 };
 
+int	isabusprint(void *, const char *);
+
+static inline device_t
+isabus_attach(device_t dev, struct isabus_attach_args *iba)
+{
+	return config_found(dev, &iba, isabusprint,
+	    CFARGS(.iattr = "isabus",
+		   .devhandle = device_handle(dev)));
+}
+
 /*
  * ISA bus resources.
  */
@@ -185,8 +195,6 @@ struct isa_softc {
 #define ISA_UNKNOWN_IRQ		(-1)
 #define ISA_UNKNOWN_DRQ		(-1)
 #define ISA_UNKNOWN_DRQ2	(-1)
-
-int	isabusprint(void *, const char *);
 
 /*
  * ISA interrupt handler manipulation.
