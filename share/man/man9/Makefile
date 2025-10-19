@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.437.2.4 2024/07/20 16:57:51 martin Exp $
+#       $NetBSD: Makefile,v 1.437.2.5 2025/10/19 10:44:31 martin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -39,7 +39,12 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	microseq.9 microtime.9 microuptime.9 mi_switch.9 module.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
-	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 \
+	panic.9 \
+	paravirt_membar_sync.9 \
+	pathbuf.9 \
+	pci.9 \
+	pci_configure_bus.9 \
+	pci_intr.9 \
 	pci_msi.9 pckbport.9 pcmcia.9 pcq.9 pcu.9 \
 	percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 pmf.9 pool.9 \
 	pool_cache.9 powerhook_establish.9 ppsratecheck.9 preempt.9 \

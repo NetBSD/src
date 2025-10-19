@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.128.2.1 2020/02/12 20:10:09 martin Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.128.2.2 2025/10/19 10:44:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.128.2.1 2020/02/12 20:10:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.128.2.2 2025/10/19 10:44:33 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.128.2.1 2020/02/12 20:10:09 mart
 #include <sys/atomic.h>
 #include <sys/xcall.h>
 #include <sys/ipi.h>
+#include <sys/paravirt_membar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -879,3 +880,36 @@ cpu_kernel_vm_init(paddr_t memory_start, psize_t memory_size)
 }
 #endif
 
+#if defined _ARM_ARCH_6 || defined _ARM_ARCH_7 /* see below regarding armv<6 */
+void
+paravirt_membar_sync(void)
+{
+
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 *
+	 * Prior to armv6, there was no data memory barrier
+	 * instruction.  Such CPUs presumably don't exist in
+	 * multiprocessor configurations.  But what if we're running a
+	 * _kernel_ built for a uniprocessor armv5 CPU, as a virtual
+	 * machine guest of a _host_ with a newer multiprocessor CPU?
+	 * How do we enforce store-before-load ordering for a
+	 * paravirtualized device driver, coordinating with host
+	 * software `device' potentially on another CPU?  You'll have
+	 * to answer that before you can use virtio drivers!
+	 */
+#ifdef _ARM_ARCH_7
+	__asm __volatile("dmb	ish" ::: "memory");
+#else
+	__asm __volatile("mcr	p15, 0, %0, c7, c10, 5" :: "r"(0) : "memory");
+#endif
+}
+#endif	/* defined _ARM_ARCH_6 || defined _ARM_ARCH_7 */

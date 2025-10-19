@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.123.4.1 2023/07/31 17:59:23 martin Exp $ */
+/* $NetBSD: locore.s,v 1.123.4.2 2025/10/19 10:44:31 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.123.4.1 2023/07/31 17:59:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.123.4.2 2025/10/19 10:44:31 martin Exp $");
 
 #include "assym.h"
 
@@ -1381,3 +1381,19 @@ LEAF(alpha_write_fpcr, 1); f30save = 0; fpcrtmp = 8; framesz = 16
 	lda	sp, framesz(sp)
 	RET
 END(alpha_write_fpcr)
+
+LEAF(paravirt_membar_sync, 0)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without hotpatching
+	 * away the MB instruction on uniprocessor boots -- because
+	 * under virtualization, we still have to coordinate with a
+	 * `device' backed by a hypervisor that is potentially on
+	 * another physical CPU even if we observe only one virtual CPU
+	 * as the guest.
+	 */
+	mb
+	RET
+END(paravirt_membar_sync)

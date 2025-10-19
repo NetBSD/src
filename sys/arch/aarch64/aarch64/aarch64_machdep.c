@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.28.4.4 2021/06/04 14:00:17 martin Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.28.4.5 2025/10/19 10:44:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.4 2021/06/04 14:00:17 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.5 2025/10/19 10:44:33 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.4 2021/06/04 14:00:17 mar
 #include <sys/kcore.h>
 #include <sys/module.h>
 #include <sys/msgbuf.h>
+#include <sys/paravirt_membar.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 
@@ -844,4 +845,22 @@ cpu_dumpconf(void)
 
  bad:
 	dumpsize = 0;
+}
+
+void
+paravirt_membar_sync(void)
+{
+
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 */
+	__asm __volatile("dmb	ish" ::: "memory");
 }

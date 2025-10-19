@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.34 2019/07/05 17:08:55 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.34.2.1 2025/10/19 10:44:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.34 2019/07/05 17:08:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.34.2.1 2025/10/19 10:44:33 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -64,6 +64,27 @@ ENTRY(x86_mfence)
 	addl	$0, -4(%esp)
 	ret
 END(x86_mfence)
+
+ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without hotpatching
+	 * away the LOCK prefix on uniprocessor boots -- because under
+	 * virtualization, we still have to coordinate with a `device'
+	 * backed by a hypervisor that is potentially on another
+	 * physical CPU even if we observe only one virtual CPU as the
+	 * guest.
+	 *
+	 * See common/lib/libc/arch/i386/atomic/atomic.S for
+	 * rationale and keep this in sync with the implementation
+	 * of membar_sync there.
+	 */
+	lock
+	addl	$0,-4(%esp)
+	ret
+END(paravirt_membar_sync)
 
 #ifndef XENPV
 ENTRY(lidt)

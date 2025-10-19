@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.274.2.1 2023/07/31 13:44:16 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.274.2.2 2025/10/19 10:44:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6016,6 +6016,25 @@ ENTRY_NOPROFILE(__cpu_simple_lock)
 Lpanic_spunout:
 	.asciz	"cpu%d: stuck on lock@%x"
 	_ALIGN
+
+ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without
+	 * conditionalizing away the LDSTUB instruction on uniprocessor
+	 * builds -- because under virtualization, we still have to
+	 * coordinate with a `device' backed by a hypervisor that is
+	 * potentially on another physical CPU even if we observe only
+	 * one virtual CPU as the guest.
+	 *
+	 * Sync with membar_sync in
+	 * common/lib/libc/arch/sparc/atomic/membar_ops.S.
+	 */
+	retl
+	 ldstub	[%sp - 4], %g0	/* makeshift store-before-load barrier */
+END(paravirt_membar_sync)
 
 #if defined(KGDB) || defined(DDB) || defined(DIAGNOSTIC)
 /*
