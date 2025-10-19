@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.109 2025/07/24 09:26:14 hans Exp $
+#	$NetBSD: configure.ac,v 1.109.2.1 2025/10/19 09:37:13 martin Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -194,13 +194,14 @@ AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln,
-	fpurge, getdelim, getline, snprintf],,, [
+	fpurge, getdelim, getline, snprintf, vsyslog],,, [
 #include <stdio.h>
 ])
 
-AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, reallocarray,
-	getsubopt, setenv, strtoi, strtoll, strtou, setprogname, shquote,
-	getprogname],,, [
+AC_CHECK_DECLS([atoll, getsubopt, getprogname, heapsort,
+	mkdtemp, mkstemp, mkstemps,
+	reallocarr, reallocarray,
+	setenv, strtonum, strtoi, strtoll, strtou, setprogname, shquote],,, [
 #include <stdlib.h>
 ])
 
@@ -243,12 +244,13 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	mkstemps mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb \
+	pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr reallocarray setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strcasecmp strncasecmp strndup strnlen strsep strsuftoll strtoi \
-	strtoll strtou \
+	strcasecmp strncasecmp strcasestr strndup strnlen strsep strsuftoll \
+	strtoi strtoll strtou strtonum \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
@@ -257,7 +259,7 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strcasecmp, strncasecmp, strlcpy, strlcat, strndup,
+AC_CHECK_DECLS([strcasecmp, strncasecmp, strcasestr, strlcpy, strlcat, strndup,
 		strnlen, strsep],,,[
 #include <string.h>
 ])
