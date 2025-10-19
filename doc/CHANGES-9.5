@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.76 2025/10/01 17:06:17 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.77 2025/10/19 11:07:16 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -974,4 +974,51 @@ share/man/man3/intro.3				1.37,1.38
 
 	intro(3): PR 59676: remove reference to non-existent -lhesiod.
 	[uwe, ticket #1971]
+
+bin/pax/options.c				1.120
+tools/compat/Makefile				1.95 (patch)
+tools/compat/compat_defs.h			1.126,1.127 (patch)
+tools/compat/configure.ac			1.110,1.111 (patch)
+tools/compat/configure				(patch, apply regen)
+tools/compat/nbtool_config.h.in			1.59 (patch)
+usr.bin/nbperf/nbperf.c				1.7
+
+	build: fix building with modern compilers.
+	[mrg, ticket #1973]
+
+sys/dev/usb/usb_subr.c				1.247,1.275,1.280,1.281
+sys/dev/usb/usbdivar.h				1.140
+sys/dev/usb/xhci.c				1.191
+
+	usbdi(9): PR 59185, 59624, 57447: fix state for selected config index.
+	[riastradh, ticket #1974]
+
+distrib/sets/lists/comp/mi			1.2499 (patch)
+share/man/man9/Makefile				1.475 (patch)
+share/man/man9/paravirt_membar_sync.9		1.1 (patch)
+sys/arch/alpha/alpha/locore.s			1.145 (patch)
+sys/arch/amd64/amd64/cpufunc.S			1.70 (patch)
+sys/arch/arm/arm/cpu_subr.c			1.6 (patch)
+	(applied to sys/arch/arm/arm32/arm32_machdep.c and
+	sys/arch/aarch64/aarch64/aarch64_machdep.c)
+sys/arch/hppa/hppa/support.S			1.9 (patch)
+sys/arch/i386/i386/cpufunc.S			1.54 (patch)
+sys/arch/mips/mips/cpu_subr.c			1.65,1.66 (patch)
+sys/arch/sparc/sparc/locore.s			1.287 (patch)
+sys/arch/sparc64/sparc64/locore.s		1.436 (patch)
+sys/sys/paravirt_membar.h			1.1 (patch)
+
+	paravirt_membar(9): PR 59618: new membar for paravirtualized
+	drivers.
+	[riastradh, ticket #1975]
+
+sys/dev/hyperv/vmbus.c				1.20 (patch)
+
+	hyperv(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #1976]
+
+sys/dev/pci/virtio.c				1.84 (patch)
+
+	virtio(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #1977]
 
