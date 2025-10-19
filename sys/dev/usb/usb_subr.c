@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.279 2024/05/04 12:45:13 mlelstv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.279.4.1 2025/10/19 10:08:32 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.279 2024/05/04 12:45:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.279.4.1 2025/10/19 10:08:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -153,7 +153,6 @@ usbd_get_device_strings(struct usbd_device *ud)
 	usbd_get_device_string(ud, udd->iProduct, &ud->ud_product);
 	usbd_get_device_string(ud, udd->iSerialNumber, &ud->ud_serial);
 }
-
 
 void
 usbd_devinfo_vp(struct usbd_device *dev, char *v, size_t vl, char *p,
@@ -691,8 +690,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	usbd_status err;
 	int i, ifcidx, nifc, len, selfpowered, power;
 
-
-	if (index >= dev->ud_ddesc.bNumConfigurations &&
+	if ((unsigned)index >= dev->ud_ddesc.bNumConfigurations &&
 	    index != USB_UNCONFIG_INDEX) {
 		/* panic? */
 		printf("usbd_set_config_index: illegal index\n");
@@ -700,7 +698,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 
 	/* XXX check that all interfaces are idle */
-	if (dev->ud_config != USB_UNCONFIG_NO) {
+	if (dev->ud_configidx != USB_UNCONFIG_INDEX) {
 		DPRINTF("free old config", 0, 0, 0, 0);
 		/* Free all configuration data structures. */
 		nifc = dev->ud_cdesc->bNumInterface;
@@ -719,7 +717,12 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		dev->ud_cdesc = NULL;
 		dev->ud_bdesc = NULL;
 		dev->ud_config = USB_UNCONFIG_NO;
+		dev->ud_configidx = USB_UNCONFIG_INDEX;
 	}
+	KASSERTMSG(dev->ud_config == USB_UNCONFIG_NO, "ud_config=%u",
+	    dev->ud_config);
+	KASSERTMSG(dev->ud_configidx == USB_UNCONFIG_INDEX, "ud_configidx=%d",
+	    dev->ud_configidx);
 
 	if (index == USB_UNCONFIG_INDEX) {
 		/* We are unconfiguring the device, so leave unallocated. */
@@ -882,6 +885,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	    0, 0);
 	dev->ud_cdesc = cdp;
 	dev->ud_config = cdp->bConfigurationValue;
+	dev->ud_configidx = index;
 	for (ifcidx = 0; ifcidx < nifc; ifcidx++) {
 		usbd_iface_init(dev, ifcidx);
 		usbd_iface_exlock(&dev->ud_ifaces[ifcidx]);
@@ -905,8 +909,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
 bad:
 	/* XXX Use usbd_set_config() to reset the config? */
-	/* XXX Should we forbid USB_UNCONFIG_NO from bConfigurationValue? */
 	dev->ud_config = USB_UNCONFIG_NO;
+	dev->ud_configidx = USB_UNCONFIG_INDEX;
 	KASSERT(dev->ud_ifaces == NULL);
 	kmem_free(cdp, len);
 	dev->ud_cdesc = NULL;
@@ -1194,7 +1198,6 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		DPRINTF("interface %jd %#jx", i, (uintptr_t)ifaces[i], 0, 0);
 	}
 
-
 	uiaa.uiaa_device = dev;
 	uiaa.uiaa_port = port;
 	uiaa.uiaa_vendor = UGETW(dd->idVendor);
@@ -1446,6 +1449,8 @@ usbd_new_device(device_t parent, struct usbd_bus *bus, int depth, int speed,
 	dev->ud_quirks = &usbd_no_quirk;
 	dev->ud_addr = USB_START_ADDR;
 	dev->ud_ddesc.bMaxPacketSize = 0;
+	dev->ud_config = USB_UNCONFIG_NO;
+	dev->ud_configidx = USB_UNCONFIG_INDEX;
 	dev->ud_depth = depth;
 	dev->ud_powersrc = up;
 	dev->ud_myhub = up->up_parent;

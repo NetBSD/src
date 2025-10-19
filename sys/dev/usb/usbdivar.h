@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.139 2025/03/31 14:45:14 riastradh Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.139.2.1 2025/10/19 10:08:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -230,6 +230,24 @@ struct usbd_device {
 	char		       *ud_serial;	/* serial number, can be NULL */
 	char		       *ud_vendor;	/* vendor string, can be NULL */
 	char		       *ud_product;	/* product string can be NULL */
+
+	/*
+	 * ud_config above holds a value of bConfigurationValue from
+	 * the config descriptor, or USB_UNCONFIG_NO=0 -- which may
+	 * _also_ be a value of bConfigurationValue.
+	 *
+	 * ud_configidx below holds an index in [0, bNumConfigurations)
+	 * into the list of configuration descriptors, or
+	 * USB_UNCONFIG_INDEX=-1 to denote that the interface is
+	 * unconfigured.  Note that ud_config may be USB_UNCONFIG_NO
+	 * even if ud_configidx is not USB_UNCONFIG_INDEX, if a screwy
+	 * device has a config descriptor with bConfigurationValue=0.
+	 *
+	 * This goes at the end, rather than next to ud_config where it
+	 * might properly belong, so the change preserves ABI for
+	 * pullup to release branches.
+	 */
+	int16_t			ud_configidx;
 };
 
 struct usbd_interface {
