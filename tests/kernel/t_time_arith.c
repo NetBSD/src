@@ -1,4 +1,4 @@
-/*	$NetBSD: t_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $	*/
+/*	$NetBSD: t_time_arith.c,v 1.3.2.1 2025/10/19 09:41:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024-2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_time_arith.c,v 1.3 2025/04/01 23:14:23 riastradh Exp $");
+__RCSID("$NetBSD: t_time_arith.c,v 1.3.2.1 2025/10/19 09:41:05 martin Exp $");
 
 #include <sys/timearith.h>
 
@@ -465,10 +465,759 @@ ATF_TC_BODY(itimer_transitions, tc)
 	}
 }
 
+/*
+ *                        { 0,                  if t <= 0;
+ * tstohz(t sec) @ f Hz = { ceil(t/(1/f)),      if that's below INT_MAX;
+ *                        { INT_MAX,            otherwise.
+ */
+
+#define	TSTOHZ_ROUND_XFAIL						      \
+	"PR kern/59691: tstohz(9) rounding errors"
+
+const struct tstohz_case {
+	int ts_hz;
+	struct timespec ts_ts;
+	int ts_ticks;
+	const char *ts_xfail;
+} tstohz_cases[] = {
+	/*
+	 * hz = 10
+	 */
+
+	/* negative inputs yield 0 ticks */
+	[0] = {10, {.tv_sec = -1, .tv_nsec = 0}, 0, NULL},
+	[1] = {10, {.tv_sec = -1, .tv_nsec = 999999999}, 0, NULL},
+
+	/* zero input yields 0 ticks */
+	[2] = {10, {.tv_sec = 0, .tv_nsec = 0}, 0, NULL},
+
+	/*
+	 * Nonzero input always yields >=2 ticks, because the time from
+	 * now until the next tick may be arbitrarily short, and we
+	 * need to wait one full tick, so we have to wait for two
+	 * ticks.
+	 */
+	[3] = {10, {.tv_sec = 0, .tv_nsec = 1}, 2, NULL},
+	[4] = {10, {.tv_sec = 0, .tv_nsec = 2}, 2, NULL},
+	[5] = {10, {.tv_sec = 0, .tv_nsec = 99999999}, 2, NULL},
+	[6] = {10, {.tv_sec = 0, .tv_nsec = 100000000}, 2, NULL},
+	[7] = {10, {.tv_sec = 0, .tv_nsec = 100000001}, 3, NULL},
+	[8] = {10, {.tv_sec = 0, .tv_nsec = 100000002}, 3, NULL},
+	[9] = {10, {.tv_sec = 0, .tv_nsec = 199999999}, 3, NULL},
+	[10] = {10, {.tv_sec = 0, .tv_nsec = 200000000}, 3, NULL},
+	[11] = {10, {.tv_sec = 0, .tv_nsec = 200000001}, 4, NULL},
+	[12] = {10, {.tv_sec = 0, .tv_nsec = 200000002}, 4, NULL},
+	[13] = {10, {.tv_sec = 0, .tv_nsec = 999999999}, 11, NULL},
+	[14] = {10, {.tv_sec = 1, .tv_nsec = 0}, 11, NULL},
+	[15] = {10, {.tv_sec = 1, .tv_nsec = 1}, 12, NULL},
+	[16] = {10, {.tv_sec = 1, .tv_nsec = 2}, 12, NULL},
+	/* .tv_sec ~ INT32_MAX/1000000 */
+	[17] = {10, {.tv_sec = 2147, .tv_nsec = 999999999}, 21481, NULL},
+	[18] = {10, {.tv_sec = 2148, .tv_nsec = 0}, 21481, NULL},
+	[19] = {10, {.tv_sec = 2148, .tv_nsec = 1}, 21482, NULL},
+	[20] = {10, {.tv_sec = 2148, .tv_nsec = 2}, 21482, NULL},
+	/* .tv_sec ~ INT32_MAX/hz */
+	[21] = {10, {.tv_sec = 214748364, .tv_nsec = 499999999}, 2147483646,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[22] = {10, {.tv_sec = 214748364, .tv_nsec = 500000000}, 2147483646,
+		NULL},
+	[23] = {10, {.tv_sec = 214748364, .tv_nsec = 500000001}, 2147483647,
+		NULL},
+	[24] = {10, {.tv_sec = 214748364, .tv_nsec = 500000002}, 2147483647,
+		NULL},
+	[25] = {10, {.tv_sec = 214748364, .tv_nsec = 599999999}, 2147483647,
+		NULL},
+	[26] = {10, {.tv_sec = 214748364, .tv_nsec = 600000000}, 2147483647,
+		NULL},
+	[27] = {10, {.tv_sec = 214748364, .tv_nsec = 999999999}, 2147483647,
+		NULL},
+	[28] = {10, {.tv_sec = 214748365, .tv_nsec = 0}, 2147483647,
+		NULL},
+	[29] = {10, {.tv_sec = 214748365, .tv_nsec = 1}, 2147483647,
+		NULL},
+	[30] = {10, {.tv_sec = 214748365, .tv_nsec = 2}, 2147483647,
+		NULL},
+	[31] = {10, {.tv_sec = (time_t)INT_MAX + 1, .tv_nsec = 123456789},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/1000000, overflows to INT_MAX ticks */
+	[32] = {10, {.tv_sec = 9223372036854, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[33] = {10, {.tv_sec = 9223372036855, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[34] = {10, {.tv_sec = 9223372036855, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[35] = {10, {.tv_sec = 9223372036855, .tv_nsec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[36] = {10, {.tv_sec = 922337203685477580, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[37] = {10, {.tv_sec = 922337203685477581, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[38] = {10, {.tv_sec = 922337203685477581, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[39] = {10, {.tv_sec = 922337203685477581, .tv_nsec = 2},
+		INT_MAX, NULL},
+	[40] = {10, {.tv_sec = (time_t)INT_MAX + 1, .tv_nsec = 123456789},
+		INT_MAX, NULL},
+
+	/*
+	 * hz = 100
+	 */
+
+	[41] = {100, {.tv_sec = -1, .tv_nsec = 0}, 0, NULL},
+	[42] = {100, {.tv_sec = -1, .tv_nsec = 999999999}, 0, NULL},
+	[43] = {100, {.tv_sec = 0, .tv_nsec = 0}, 0, NULL},
+	[44] = {100, {.tv_sec = 0, .tv_nsec = 1}, 2, NULL},
+	[45] = {100, {.tv_sec = 0, .tv_nsec = 2}, 2, NULL},
+	[46] = {100, {.tv_sec = 0, .tv_nsec = 9999999}, 2, NULL},
+	[47] = {100, {.tv_sec = 0, .tv_nsec = 10000000}, 2, NULL},
+	[48] = {100, {.tv_sec = 0, .tv_nsec = 10000001}, 3, NULL},
+	[49] = {100, {.tv_sec = 0, .tv_nsec = 10000002}, 3, NULL},
+	[50] = {100, {.tv_sec = 0, .tv_nsec = 19999999}, 3, NULL},
+	[51] = {100, {.tv_sec = 0, .tv_nsec = 20000000}, 3, NULL},
+	[52] = {100, {.tv_sec = 0, .tv_nsec = 20000001}, 4, NULL},
+	[53] = {100, {.tv_sec = 0, .tv_nsec = 20000002}, 4, NULL},
+	[54] = {100, {.tv_sec = 0, .tv_nsec = 99999999}, 11, NULL},
+	[55] = {100, {.tv_sec = 0, .tv_nsec = 100000000}, 11, NULL},
+	[56] = {100, {.tv_sec = 0, .tv_nsec = 100000001}, 12, NULL},
+	[57] = {100, {.tv_sec = 0, .tv_nsec = 100000002}, 12, NULL},
+	[58] = {100, {.tv_sec = 0, .tv_nsec = 999999999}, 101, NULL},
+	[59] = {100, {.tv_sec = 1, .tv_nsec = 0}, 101, NULL},
+	[60] = {100, {.tv_sec = 1, .tv_nsec = 1}, 102, NULL},
+	[61] = {100, {.tv_sec = 1, .tv_nsec = 2}, 102, NULL},
+	/* .tv_sec ~ INT32_MAX/1000000 */
+	[62] = {100, {.tv_sec = 2147, .tv_nsec = 999999999}, 214801, NULL},
+	[63] = {100, {.tv_sec = 2148, .tv_nsec = 0}, 214801, NULL},
+	[64] = {100, {.tv_sec = 2148, .tv_nsec = 1}, 214802, NULL},
+	[65] = {100, {.tv_sec = 2148, .tv_nsec = 2}, 214802, NULL},
+	/* .tv_sec ~ INT32_MAX/hz */
+	[66] = {100, {.tv_sec = 21474836, .tv_nsec = 439999999}, 2147483645,
+		NULL},
+	[67] = {100, {.tv_sec = 21474836, .tv_nsec = 440000000}, 2147483645,
+		NULL},
+	[68] = {100, {.tv_sec = 21474836, .tv_nsec = 440000001}, 2147483646,
+		NULL},
+	[69] = {100, {.tv_sec = 21474836, .tv_nsec = 440000002}, 2147483646,
+		NULL},
+	[70] = {100, {.tv_sec = 21474836, .tv_nsec = 449999999}, 2147483646,
+		NULL},
+	[71] = {100, {.tv_sec = 21474836, .tv_nsec = 450000000}, 2147483646,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[72] = {100, {.tv_sec = 21474836, .tv_nsec = 450000001}, 2147483647,
+		NULL},
+	[73] = {100, {.tv_sec = 21474836, .tv_nsec = 450000002}, 2147483647,
+		NULL},
+	[74] = {100, {.tv_sec = 21474836, .tv_nsec = 459999999}, 2147483647,
+		NULL},
+	[75] = {100, {.tv_sec = 21474836, .tv_nsec = 460000000}, 2147483647,
+		NULL},
+	[76] = {100, {.tv_sec = 21474836, .tv_nsec = 460000001}, 2147483647,
+		NULL},
+	[77] = {100, {.tv_sec = 21474836, .tv_nsec = 460000002}, 2147483647,
+		NULL},
+	[78] = {100, {.tv_sec = 21474836, .tv_nsec = 999999999}, 2147483647,
+		NULL},
+	[79] = {100, {.tv_sec = 21474837, .tv_nsec = 0}, 2147483647,
+		NULL},
+	[80] = {100, {.tv_sec = 21474837, .tv_nsec = 1}, 2147483647,
+		NULL},
+	[81] = {100, {.tv_sec = 21474837, .tv_nsec = 2}, 2147483647,
+		NULL},
+	[82] = {100, {.tv_sec = 21474837, .tv_nsec = 2}, 2147483647,
+		NULL},
+	/* .tv_sec ~ INT64_MAX/1000000 */
+	[83] = {100, {.tv_sec = 9223372036854, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[84] = {100, {.tv_sec = 9223372036855, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[85] = {100, {.tv_sec = 9223372036855, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[86] = {100, {.tv_sec = 9223372036855, .tv_nsec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[87] = {100, {.tv_sec = 92233720368547758, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[88] = {100, {.tv_sec = 92233720368547758, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[89] = {100, {.tv_sec = 92233720368547758, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[90] = {100, {.tv_sec = 92233720368547758, .tv_nsec = 2},
+		INT_MAX, NULL},
+	[91] = {100, {.tv_sec = (time_t)INT_MAX + 1, .tv_nsec = 123456789},
+		INT_MAX, NULL},
+
+	/*
+	 * hz = 1000
+	 */
+
+	[92] = {1000, {.tv_sec = -1, .tv_nsec = 0}, 0, NULL},
+	[93] = {1000, {.tv_sec = -1, .tv_nsec = 999999999}, 0, NULL},
+	[94] = {1000, {.tv_sec = 0, .tv_nsec = 0}, 0, NULL},
+	[95] = {1000, {.tv_sec = 0, .tv_nsec = 1}, 2, NULL},
+	[96] = {1000, {.tv_sec = 0, .tv_nsec = 2}, 2, NULL},
+	[97] = {1000, {.tv_sec = 0, .tv_nsec = 999999}, 2, NULL},
+	[98] = {1000, {.tv_sec = 0, .tv_nsec = 1000000}, 2, NULL},
+	[99] = {1000, {.tv_sec = 0, .tv_nsec = 1000001}, 3, NULL},
+	[100] = {1000, {.tv_sec = 0, .tv_nsec = 1000002}, 3, NULL},
+	[101] = {1000, {.tv_sec = 0, .tv_nsec = 1999999}, 3, NULL},
+	[102] = {1000, {.tv_sec = 0, .tv_nsec = 2000000}, 3, NULL},
+	[103] = {1000, {.tv_sec = 0, .tv_nsec = 2000001}, 4, NULL},
+	[104] = {1000, {.tv_sec = 0, .tv_nsec = 2000002}, 4, NULL},
+	[105] = {1000, {.tv_sec = 0, .tv_nsec = 999999999}, 1001, NULL},
+	[106] = {1000, {.tv_sec = 1, .tv_nsec = 0}, 1001, NULL},
+	[107] = {1000, {.tv_sec = 1, .tv_nsec = 1}, 1002, NULL},
+	[108] = {1000, {.tv_sec = 1, .tv_nsec = 2}, 1002, NULL},
+	/* .tv_sec ~ INT_MAX/1000000 */
+	[109] = {1000, {.tv_sec = 2147, .tv_nsec = 999999999}, 2148001, NULL},
+	[110] = {1000, {.tv_sec = 2148, .tv_nsec = 0}, 2148001, NULL},
+	[111] = {1000, {.tv_sec = 2148, .tv_nsec = 1}, 2148002, NULL},
+	[112] = {1000, {.tv_sec = 2148, .tv_nsec = 2}, 2148002, NULL},
+	/* .tv_sec ~ INT_MAX/hz */
+	[113] = {1000, {.tv_sec = 2147483, .tv_nsec = 643999999}, 2147483645,
+		NULL},
+	[114] = {1000, {.tv_sec = 2147483, .tv_nsec = 644000000}, 2147483645,
+		NULL},
+	[115] = {1000, {.tv_sec = 2147483, .tv_nsec = 644000001}, 2147483646,
+		NULL},
+	[116] = {1000, {.tv_sec = 2147483, .tv_nsec = 644000002}, 2147483646,
+		NULL},
+	[117] = {1000, {.tv_sec = 2147483, .tv_nsec = 644999999}, 2147483646,
+		NULL},
+	[118] = {1000, {.tv_sec = 2147483, .tv_nsec = 645000000}, 2147483646,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[119] = {1000, {.tv_sec = 2147483, .tv_nsec = 645000001}, 2147483647,
+		NULL},
+	[120] = {1000, {.tv_sec = 2147483, .tv_nsec = 645000002}, 2147483647,
+		NULL},
+	[121] = {1000, {.tv_sec = 2147483, .tv_nsec = 645999999}, 2147483647,
+		NULL},
+	[122] = {1000, {.tv_sec = 2147483, .tv_nsec = 646000000}, 2147483647,
+		NULL},
+	[123] = {1000, {.tv_sec = 2147483, .tv_nsec = 646000001}, 2147483647,
+		NULL},
+	[124] = {1000, {.tv_sec = 2147483, .tv_nsec = 646000002}, 2147483647,
+		NULL},
+	[125] = {1000, {.tv_sec = 2147483, .tv_nsec = 699999999}, 2147483647,
+		NULL},
+	[126] = {1000, {.tv_sec = 2147484, .tv_nsec = 0}, 2147483647,
+		NULL},
+	[127] = {1000, {.tv_sec = 2147484, .tv_nsec = 1}, 2147483647,
+		NULL},
+	[128] = {1000, {.tv_sec = 2147484, .tv_nsec = 2}, 2147483647,
+		NULL},
+	[129] = {1000, {.tv_sec = 2147484, .tv_nsec = 2}, 2147483647,
+		NULL},
+	/* .tv_sec ~ INT64_MAX/1000000, overflows to INT_MAX ticks */
+	[130] = {1000, {.tv_sec = 9223372036854, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[131] = {1000, {.tv_sec = 9223372036855, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[132] = {1000, {.tv_sec = 9223372036855, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[133] = {1000, {.tv_sec = 9223372036855, .tv_nsec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[134] = {1000, {.tv_sec = 92233720368547758, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[135] = {1000, {.tv_sec = 92233720368547758, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[136] = {1000, {.tv_sec = 92233720368547758, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[137] = {1000, {.tv_sec = 92233720368547758, .tv_nsec = 2},
+		INT_MAX, NULL},
+	[138] = {1000, {.tv_sec = (time_t)INT_MAX + 1, .tv_nsec = 123456789},
+		INT_MAX, NULL},
+
+	/*
+	 * hz = 8191, prime non-divisor of 10^k or 2^k
+	 */
+
+	[139] = {8191, {.tv_sec = -1, .tv_nsec = 0}, 0, NULL},
+	[140] = {8191, {.tv_sec = -1, .tv_nsec = 999999999}, 0, NULL},
+	[141] = {8191, {.tv_sec = 0, .tv_nsec = 0}, 0, NULL},
+	[142] = {8191, {.tv_sec = 0, .tv_nsec = 1}, 2, NULL},
+	[143] = {8191, {.tv_sec = 0, .tv_nsec = 2}, 2, NULL},
+	[144] = {8191, {.tv_sec = 0, .tv_nsec = 122084}, 2,
+		TSTOHZ_ROUND_XFAIL},
+	[145] = {8191, {.tv_sec = 0, .tv_nsec = 122085}, 2,
+		TSTOHZ_ROUND_XFAIL},
+	[146] = {8191, {.tv_sec = 0, .tv_nsec = 122086}, 3, NULL},
+	[147] = {8191, {.tv_sec = 0, .tv_nsec = 244168}, 3,
+		TSTOHZ_ROUND_XFAIL},
+	[148] = {8191, {.tv_sec = 0, .tv_nsec = 244169}, 3,
+		TSTOHZ_ROUND_XFAIL},
+	[149] = {8191, {.tv_sec = 0, .tv_nsec = 244170}, 3,
+		TSTOHZ_ROUND_XFAIL},
+	[150] = {8191, {.tv_sec = 0, .tv_nsec = 244171}, 4, NULL},
+	[151] = {8191, {.tv_sec = 0, .tv_nsec = 244172}, 4, NULL},
+	[152] = {8191, {.tv_sec = 0, .tv_nsec = 999999999}, 8192, NULL},
+	[153] = {8191, {.tv_sec = 1, .tv_nsec = 0}, 8192, NULL},
+	[154] = {8191, {.tv_sec = 1, .tv_nsec = 1}, 8193, NULL},
+	[155] = {8191, {.tv_sec = 1, .tv_nsec = 2}, 8193, NULL},
+	/* .tv_sec ~ INT_MAX/1000000 */
+	[156] = {8191, {.tv_sec = 2147, .tv_nsec = 999999999}, 17594269, NULL},
+	[157] = {8191, {.tv_sec = 2148, .tv_nsec = 0}, 17594269, NULL},
+	[158] = {8191, {.tv_sec = 2148, .tv_nsec = 1}, 17594270, NULL},
+	[159] = {8191, {.tv_sec = 2148, .tv_nsec = 2}, 17594270, NULL},
+	/* .tv_sec ~ INT_MAX/hz */
+	[160] = {8191, {.tv_sec = 262176, .tv_nsec = 3540471}, 2147483646,
+		NULL},
+	[161] = {8191, {.tv_sec = 262176, .tv_nsec = 3540472}, 2147483647,
+		NULL},
+	[162] = {8191, {.tv_sec = 262176, .tv_nsec = 3540473}, 2147483647,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[163] = {8191, {.tv_sec = 262176, .tv_nsec = 3662556}, 2147483647,
+		NULL},
+	[164] = {8191, {.tv_sec = 262176, .tv_nsec = 3662557}, 2147483647,
+		NULL},
+	[165] = {8191, {.tv_sec = 262176, .tv_nsec = 3662558}, 2147483647,
+		NULL},
+	[166] = {8191, {.tv_sec = 262176, .tv_nsec = 999999999}, 2147483647,
+		NULL},
+	/* .tv_sec ~ INT64_MAX/1000000, overflows to INT_MAX ticks */
+	[167] = {8191, {.tv_sec = 9223372036854, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[168] = {8191, {.tv_sec = 9223372036855, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[169] = {8191, {.tv_sec = 9223372036855, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[170] = {8191, {.tv_sec = 9223372036855, .tv_nsec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[171] = {8191, {.tv_sec = 92233720368547758, .tv_nsec = 999999999},
+		INT_MAX, NULL},
+	[172] = {8191, {.tv_sec = 92233720368547758, .tv_nsec = 0},
+		INT_MAX, NULL},
+	[173] = {8191, {.tv_sec = 92233720368547758, .tv_nsec = 1},
+		INT_MAX, NULL},
+	[174] = {8191, {.tv_sec = 92233720368547758, .tv_nsec = 2},
+		INT_MAX, NULL},
+	[175] = {8191, {.tv_sec = (time_t)INT_MAX + 1, .tv_nsec = 123456789},
+		INT_MAX, NULL},
+};
+
+ATF_TC(tstohz);
+ATF_TC_HEAD(tstohz, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test tstohz(9)");
+}
+ATF_TC_BODY(tstohz, tc)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(tstohz_cases); i++) {
+		const struct tstohz_case *ts = &tstohz_cases[i];
+		int ticks;
+
+		/* set system parameters */
+		hz = ts->ts_hz;
+		tick = 1000000/hz;
+
+		ticks = tstohz(&ts->ts_ts);
+		if (ts->ts_xfail)
+			atf_tc_expect_fail("%s", ts->ts_xfail);
+
+		/*
+		 * Allow some slop of one part per thousand in the
+		 * arithmetic, but ensure we round up, not down.
+		 */
+		ATF_CHECK_MSG(((unsigned)(ticks - ts->ts_ticks) <=
+			(unsigned)ts->ts_ticks/1000),
+		    "[%zu] tstohz(%lld.%09ld sec) @ %d Hz:"
+		    " expected %d, got %d",
+		    i,
+		    (long long)ts->ts_ts.tv_sec,
+		    (long)ts->ts_ts.tv_nsec,
+		    ts->ts_hz,
+		    ts->ts_ticks,
+		    ticks);
+		if (ts->ts_xfail)
+			atf_tc_expect_pass();
+	}
+}
+
+/*
+ *                        { 0,                  if t <= 0;
+ * tvtohz(t sec) @ f Hz = { ceil(t/(1/f)),      if that's below INT_MAX;
+ *                        { INT_MAX,            otherwise.
+ */
+
+const struct tvtohz_case {
+	int tv_hz;
+	struct timeval tv_tv;
+	int tv_ticks;
+	const char *tv_xfail;
+} tvtohz_cases[] = {
+	/*
+	 * hz = 10
+	 */
+
+	/* negative inputs yield 0 ticks */
+	[0] = {10, {.tv_sec = -1, .tv_usec = 0}, 0, NULL},
+	[1] = {10, {.tv_sec = -1, .tv_usec = 999999}, 0, NULL},
+
+	/* zero input yields 0 ticks */
+	[2] = {10, {.tv_sec = 0, .tv_usec = 0}, 0, NULL},
+
+	/*
+	 * Nonzero input always yields >=2 ticks, because the time from
+	 * now until the next tick may be arbitrarily short, and we
+	 * need to wait one full tick, so we have to wait for two
+	 * ticks.
+	 */
+	[3] = {10, {.tv_sec = 0, .tv_usec = 1}, 2, NULL},
+	[4] = {10, {.tv_sec = 0, .tv_usec = 2}, 2, NULL},
+	[5] = {10, {.tv_sec = 0, .tv_usec = 99999}, 2, NULL},
+	[6] = {10, {.tv_sec = 0, .tv_usec = 100000}, 2, NULL},
+	[7] = {10, {.tv_sec = 0, .tv_usec = 100001}, 3, NULL},
+	[8] = {10, {.tv_sec = 0, .tv_usec = 100002}, 3, NULL},
+	[9] = {10, {.tv_sec = 0, .tv_usec = 199999}, 3, NULL},
+	[10] = {10, {.tv_sec = 0, .tv_usec = 200000}, 3, NULL},
+	[11] = {10, {.tv_sec = 0, .tv_usec = 200001}, 4, NULL},
+	[12] = {10, {.tv_sec = 0, .tv_usec = 200002}, 4, NULL},
+	[13] = {10, {.tv_sec = 0, .tv_usec = 999999}, 11, NULL},
+	[14] = {10, {.tv_sec = 1, .tv_usec = 0}, 11, NULL},
+	[15] = {10, {.tv_sec = 1, .tv_usec = 1}, 12, NULL},
+	[16] = {10, {.tv_sec = 1, .tv_usec = 2}, 12, NULL},
+	/* .tv_sec ~ INT32_MAX/1000000 */
+	[17] = {10, {.tv_sec = 2147, .tv_usec = 999999}, 21481, NULL},
+	[18] = {10, {.tv_sec = 2148, .tv_usec = 0}, 21481, NULL},
+	[19] = {10, {.tv_sec = 2148, .tv_usec = 1}, 21482, NULL},
+	[20] = {10, {.tv_sec = 2148, .tv_usec = 2}, 21482, NULL},
+	/* .tv_sec ~ INT32_MAX/hz */
+	[21] = {10, {.tv_sec = 214748364, .tv_usec = 499999}, 2147483646,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[22] = {10, {.tv_sec = 214748364, .tv_usec = 500000}, 2147483646,
+		NULL},
+	[23] = {10, {.tv_sec = 214748364, .tv_usec = 500001}, 2147483647,
+		NULL},
+	[24] = {10, {.tv_sec = 214748364, .tv_usec = 500002}, 2147483647,
+		NULL},
+	[25] = {10, {.tv_sec = 214748364, .tv_usec = 599999}, 2147483647,
+		NULL},
+	[26] = {10, {.tv_sec = 214748364, .tv_usec = 600000}, 2147483647,
+		NULL},
+	[27] = {10, {.tv_sec = 214748364, .tv_usec = 999999}, 2147483647,
+		NULL},
+	[28] = {10, {.tv_sec = 214748365, .tv_usec = 0}, 2147483647,
+		NULL},
+	[29] = {10, {.tv_sec = 214748365, .tv_usec = 1}, 2147483647,
+		NULL},
+	[30] = {10, {.tv_sec = 214748365, .tv_usec = 2}, 2147483647,
+		NULL},
+	[31] = {10, {.tv_sec = (time_t)INT_MAX + 1, .tv_usec = 123456},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/1000000, overflows to INT_MAX ticks */
+	[32] = {10, {.tv_sec = 9223372036854, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[33] = {10, {.tv_sec = 9223372036855, .tv_usec = 0},
+		INT_MAX, NULL},
+	[34] = {10, {.tv_sec = 9223372036855, .tv_usec = 1},
+		INT_MAX, NULL},
+	[35] = {10, {.tv_sec = 9223372036855, .tv_usec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[36] = {10, {.tv_sec = 922337203685477580, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[37] = {10, {.tv_sec = 922337203685477581, .tv_usec = 0},
+		INT_MAX, NULL},
+	[38] = {10, {.tv_sec = 922337203685477581, .tv_usec = 1},
+		INT_MAX, NULL},
+	[39] = {10, {.tv_sec = 922337203685477581, .tv_usec = 2},
+		INT_MAX, NULL},
+	[40] = {10, {.tv_sec = (time_t)INT_MAX + 1, .tv_usec = 123456},
+		INT_MAX, NULL},
+
+	/*
+	 * hz = 100
+	 */
+
+	[41] = {100, {.tv_sec = -1, .tv_usec = 0}, 0, NULL},
+	[42] = {100, {.tv_sec = -1, .tv_usec = 999999}, 0, NULL},
+	[43] = {100, {.tv_sec = 0, .tv_usec = 0}, 0, NULL},
+	[44] = {100, {.tv_sec = 0, .tv_usec = 1}, 2, NULL},
+	[45] = {100, {.tv_sec = 0, .tv_usec = 2}, 2, NULL},
+	[46] = {100, {.tv_sec = 0, .tv_usec = 9999}, 2, NULL},
+	[47] = {100, {.tv_sec = 0, .tv_usec = 10000}, 2, NULL},
+	[48] = {100, {.tv_sec = 0, .tv_usec = 10001}, 3, NULL},
+	[49] = {100, {.tv_sec = 0, .tv_usec = 10002}, 3, NULL},
+	[50] = {100, {.tv_sec = 0, .tv_usec = 19999}, 3, NULL},
+	[51] = {100, {.tv_sec = 0, .tv_usec = 20000}, 3, NULL},
+	[52] = {100, {.tv_sec = 0, .tv_usec = 20001}, 4, NULL},
+	[53] = {100, {.tv_sec = 0, .tv_usec = 20002}, 4, NULL},
+	[54] = {100, {.tv_sec = 0, .tv_usec = 99999}, 11, NULL},
+	[55] = {100, {.tv_sec = 0, .tv_usec = 100000}, 11, NULL},
+	[56] = {100, {.tv_sec = 0, .tv_usec = 100001}, 12, NULL},
+	[57] = {100, {.tv_sec = 0, .tv_usec = 100002}, 12, NULL},
+	[58] = {100, {.tv_sec = 0, .tv_usec = 999999}, 101, NULL},
+	[59] = {100, {.tv_sec = 1, .tv_usec = 0}, 101, NULL},
+	[60] = {100, {.tv_sec = 1, .tv_usec = 1}, 102, NULL},
+	[61] = {100, {.tv_sec = 1, .tv_usec = 2}, 102, NULL},
+	/* .tv_sec ~ INT32_MAX/1000000 */
+	[62] = {100, {.tv_sec = 2147, .tv_usec = 999999}, 214801, NULL},
+	[63] = {100, {.tv_sec = 2148, .tv_usec = 0}, 214801, NULL},
+	[64] = {100, {.tv_sec = 2148, .tv_usec = 1}, 214802, NULL},
+	[65] = {100, {.tv_sec = 2148, .tv_usec = 2}, 214802, NULL},
+	/* .tv_sec ~ INT32_MAX/hz */
+	[66] = {100, {.tv_sec = 21474836, .tv_usec = 439999}, 2147483645,
+		NULL},
+	[67] = {100, {.tv_sec = 21474836, .tv_usec = 440000}, 2147483645,
+		NULL},
+	[68] = {100, {.tv_sec = 21474836, .tv_usec = 440001}, 2147483646,
+		NULL},
+	[69] = {100, {.tv_sec = 21474836, .tv_usec = 440002}, 2147483646,
+		NULL},
+	[70] = {100, {.tv_sec = 21474836, .tv_usec = 449999}, 2147483646,
+		NULL},
+	[71] = {100, {.tv_sec = 21474836, .tv_usec = 450000}, 2147483646,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[72] = {100, {.tv_sec = 21474836, .tv_usec = 450001}, 2147483647,
+		NULL},
+	[73] = {100, {.tv_sec = 21474836, .tv_usec = 450002}, 2147483647,
+		NULL},
+	[74] = {100, {.tv_sec = 21474836, .tv_usec = 459999}, 2147483647,
+		NULL},
+	[75] = {100, {.tv_sec = 21474836, .tv_usec = 460000}, 2147483647,
+		NULL},
+	[76] = {100, {.tv_sec = 21474836, .tv_usec = 460001}, 2147483647,
+		NULL},
+	[77] = {100, {.tv_sec = 21474836, .tv_usec = 460002}, 2147483647,
+		NULL},
+	[78] = {100, {.tv_sec = 21474836, .tv_usec = 999999}, 2147483647,
+		NULL},
+	[79] = {100, {.tv_sec = 21474837, .tv_usec = 0}, 2147483647,
+		NULL},
+	[80] = {100, {.tv_sec = 21474837, .tv_usec = 1}, 2147483647,
+		NULL},
+	[81] = {100, {.tv_sec = 21474837, .tv_usec = 2}, 2147483647,
+		NULL},
+	[82] = {100, {.tv_sec = 21474837, .tv_usec = 2}, 2147483647,
+		NULL},
+	/* .tv_sec ~ INT64_MAX/1000000 */
+	[83] = {100, {.tv_sec = 9223372036854, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[84] = {100, {.tv_sec = 9223372036855, .tv_usec = 0},
+		INT_MAX, NULL},
+	[85] = {100, {.tv_sec = 9223372036855, .tv_usec = 1},
+		INT_MAX, NULL},
+	[86] = {100, {.tv_sec = 9223372036855, .tv_usec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[87] = {100, {.tv_sec = 92233720368547758, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[88] = {100, {.tv_sec = 92233720368547758, .tv_usec = 0},
+		INT_MAX, NULL},
+	[89] = {100, {.tv_sec = 92233720368547758, .tv_usec = 1},
+		INT_MAX, NULL},
+	[90] = {100, {.tv_sec = 92233720368547758, .tv_usec = 2},
+		INT_MAX, NULL},
+	[91] = {100, {.tv_sec = (time_t)INT_MAX + 1, .tv_usec = 123456},
+		INT_MAX, NULL},
+
+	/*
+	 * hz = 1000
+	 */
+
+	[92] = {1000, {.tv_sec = -1, .tv_usec = 0}, 0, NULL},
+	[93] = {1000, {.tv_sec = -1, .tv_usec = 999999}, 0, NULL},
+	[94] = {1000, {.tv_sec = 0, .tv_usec = 0}, 0, NULL},
+	[95] = {1000, {.tv_sec = 0, .tv_usec = 1}, 2, NULL},
+	[96] = {1000, {.tv_sec = 0, .tv_usec = 2}, 2, NULL},
+	[97] = {1000, {.tv_sec = 0, .tv_usec = 999}, 2, NULL},
+	[98] = {1000, {.tv_sec = 0, .tv_usec = 1000}, 2, NULL},
+	[99] = {1000, {.tv_sec = 0, .tv_usec = 1001}, 3, NULL},
+	[100] = {1000, {.tv_sec = 0, .tv_usec = 1002}, 3, NULL},
+	[101] = {1000, {.tv_sec = 0, .tv_usec = 1999}, 3, NULL},
+	[102] = {1000, {.tv_sec = 0, .tv_usec = 2000}, 3, NULL},
+	[103] = {1000, {.tv_sec = 0, .tv_usec = 2001}, 4, NULL},
+	[104] = {1000, {.tv_sec = 0, .tv_usec = 2002}, 4, NULL},
+	[105] = {1000, {.tv_sec = 0, .tv_usec = 999999}, 1001, NULL},
+	[106] = {1000, {.tv_sec = 1, .tv_usec = 0}, 1001, NULL},
+	[107] = {1000, {.tv_sec = 1, .tv_usec = 1}, 1002, NULL},
+	[108] = {1000, {.tv_sec = 1, .tv_usec = 2}, 1002, NULL},
+	/* .tv_sec ~ INT_MAX/1000000 */
+	[109] = {1000, {.tv_sec = 2147, .tv_usec = 999999}, 2148001, NULL},
+	[110] = {1000, {.tv_sec = 2148, .tv_usec = 0}, 2148001, NULL},
+	[111] = {1000, {.tv_sec = 2148, .tv_usec = 1}, 2148002, NULL},
+	[112] = {1000, {.tv_sec = 2148, .tv_usec = 2}, 2148002, NULL},
+	/* .tv_sec ~ INT_MAX/hz */
+	[113] = {1000, {.tv_sec = 2147483, .tv_usec = 643999}, 2147483645,
+		NULL},
+	[114] = {1000, {.tv_sec = 2147483, .tv_usec = 644000}, 2147483645,
+		NULL},
+	[115] = {1000, {.tv_sec = 2147483, .tv_usec = 644001}, 2147483646,
+		NULL},
+	[116] = {1000, {.tv_sec = 2147483, .tv_usec = 644002}, 2147483646,
+		NULL},
+	[117] = {1000, {.tv_sec = 2147483, .tv_usec = 644999}, 2147483646,
+		NULL},
+	[118] = {1000, {.tv_sec = 2147483, .tv_usec = 645000}, 2147483646,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[119] = {1000, {.tv_sec = 2147483, .tv_usec = 645001}, 2147483647,
+		NULL},
+	[120] = {1000, {.tv_sec = 2147483, .tv_usec = 645002}, 2147483647,
+		NULL},
+	[121] = {1000, {.tv_sec = 2147483, .tv_usec = 645999}, 2147483647,
+		NULL},
+	[122] = {1000, {.tv_sec = 2147483, .tv_usec = 646000}, 2147483647,
+		NULL},
+	[123] = {1000, {.tv_sec = 2147483, .tv_usec = 646001}, 2147483647,
+		NULL},
+	[124] = {1000, {.tv_sec = 2147483, .tv_usec = 646002}, 2147483647,
+		NULL},
+	[125] = {1000, {.tv_sec = 2147483, .tv_usec = 699999}, 2147483647,
+		NULL},
+	[126] = {1000, {.tv_sec = 2147484, .tv_usec = 0}, 2147483647,
+		NULL},
+	[127] = {1000, {.tv_sec = 2147484, .tv_usec = 1}, 2147483647,
+		NULL},
+	[128] = {1000, {.tv_sec = 2147484, .tv_usec = 2}, 2147483647,
+		NULL},
+	[129] = {1000, {.tv_sec = 2147484, .tv_usec = 2}, 2147483647,
+		NULL},
+	/* .tv_sec ~ INT64_MAX/1000000, overflows to INT_MAX ticks */
+	[130] = {1000, {.tv_sec = 9223372036854, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[131] = {1000, {.tv_sec = 9223372036855, .tv_usec = 0},
+		INT_MAX, NULL},
+	[132] = {1000, {.tv_sec = 9223372036855, .tv_usec = 1},
+		INT_MAX, NULL},
+	[133] = {1000, {.tv_sec = 9223372036855, .tv_usec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[134] = {1000, {.tv_sec = 92233720368547758, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[135] = {1000, {.tv_sec = 92233720368547758, .tv_usec = 0},
+		INT_MAX, NULL},
+	[136] = {1000, {.tv_sec = 92233720368547758, .tv_usec = 1},
+		INT_MAX, NULL},
+	[137] = {1000, {.tv_sec = 92233720368547758, .tv_usec = 2},
+		INT_MAX, NULL},
+	[138] = {1000, {.tv_sec = (time_t)INT_MAX + 1, .tv_usec = 123456},
+		INT_MAX, NULL},
+
+	/*
+	 * hz = 8191, prime non-divisor of 10^k or 2^k
+	 */
+
+	[139] = {8191, {.tv_sec = -1, .tv_usec = 0}, 0, NULL},
+	[140] = {8191, {.tv_sec = -1, .tv_usec = 999999}, 0, NULL},
+	[141] = {8191, {.tv_sec = 0, .tv_usec = 0}, 0, NULL},
+	[142] = {8191, {.tv_sec = 0, .tv_usec = 1}, 2, NULL},
+	[143] = {8191, {.tv_sec = 0, .tv_usec = 2}, 2, NULL},
+	[144] = {8191, {.tv_sec = 0, .tv_usec = 121}, 2, NULL},
+	[145] = {8191, {.tv_sec = 0, .tv_usec = 122}, 2, NULL},
+	[146] = {8191, {.tv_sec = 0, .tv_usec = 123}, 3, NULL},
+	[147] = {8191, {.tv_sec = 0, .tv_usec = 242}, 3, NULL},
+	[148] = {8191, {.tv_sec = 0, .tv_usec = 243}, 3, NULL},
+	[149] = {8191, {.tv_sec = 0, .tv_usec = 244}, 3, NULL},
+	[150] = {8191, {.tv_sec = 0, .tv_usec = 245}, 4, NULL},
+	[151] = {8191, {.tv_sec = 0, .tv_usec = 246}, 4, NULL},
+	[152] = {8191, {.tv_sec = 0, .tv_usec = 999999}, 8192, NULL},
+	[153] = {8191, {.tv_sec = 1, .tv_usec = 0}, 8192, NULL},
+	[154] = {8191, {.tv_sec = 1, .tv_usec = 1}, 8193, NULL},
+	[155] = {8191, {.tv_sec = 1, .tv_usec = 2}, 8193, NULL},
+	/* .tv_sec ~ INT_MAX/1000000 */
+	[156] = {8191, {.tv_sec = 2147, .tv_usec = 999999}, 17594269, NULL},
+	[157] = {8191, {.tv_sec = 2148, .tv_usec = 0}, 17594269, NULL},
+	[158] = {8191, {.tv_sec = 2148, .tv_usec = 1}, 17594270, NULL},
+	[159] = {8191, {.tv_sec = 2148, .tv_usec = 2}, 17594270, NULL},
+	/* .tv_sec ~ INT_MAX/hz */
+	[160] = {8191, {.tv_sec = 262176, .tv_usec = 3540}, 2147483646,
+		NULL},
+	[161] = {8191, {.tv_sec = 262176, .tv_usec = 3541}, 2147483647,
+		NULL},
+	[162] = {8191, {.tv_sec = 262176, .tv_usec = 3542}, 2147483647,
+		NULL},
+	/* saturate at INT_MAX = 2^31 - 1 ticks */
+	[163] = {8191, {.tv_sec = 262176, .tv_usec = 3662}, 2147483647,
+		NULL},
+	[164] = {8191, {.tv_sec = 262176, .tv_usec = 3663}, 2147483647,
+		NULL},
+	[165] = {8191, {.tv_sec = 262176, .tv_usec = 3664}, 2147483647,
+		NULL},
+	[166] = {8191, {.tv_sec = 262176, .tv_usec = 999999}, 2147483647,
+		NULL},
+	/* .tv_sec ~ INT64_MAX/1000000, overflows to INT_MAX ticks */
+	[167] = {8191, {.tv_sec = 9223372036854, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[168] = {8191, {.tv_sec = 9223372036855, .tv_usec = 0},
+		INT_MAX, NULL},
+	[169] = {8191, {.tv_sec = 9223372036855, .tv_usec = 1},
+		INT_MAX, NULL},
+	[170] = {8191, {.tv_sec = 9223372036855, .tv_usec = 2},
+		INT_MAX, NULL},
+	/* .tv_sec ~ INT64_MAX/hz, overflows to INT_MAX ticks */
+	[171] = {8191, {.tv_sec = 92233720368547758, .tv_usec = 999999},
+		INT_MAX, NULL},
+	[172] = {8191, {.tv_sec = 92233720368547758, .tv_usec = 0},
+		INT_MAX, NULL},
+	[173] = {8191, {.tv_sec = 92233720368547758, .tv_usec = 1},
+		INT_MAX, NULL},
+	[174] = {8191, {.tv_sec = 92233720368547758, .tv_usec = 2},
+		INT_MAX, NULL},
+	[175] = {8191, {.tv_sec = (time_t)INT_MAX + 1, .tv_usec = 123456},
+		INT_MAX, NULL},
+};
+
+ATF_TC(tvtohz);
+ATF_TC_HEAD(tvtohz, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test tvtohz(9)");
+}
+ATF_TC_BODY(tvtohz, tc)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(tvtohz_cases); i++) {
+		const struct tvtohz_case *tv = &tvtohz_cases[i];
+		int ticks;
+
+		/* set system parameters */
+		hz = tv->tv_hz;
+		tick = 1000000/hz;
+
+		ticks = tvtohz(&tv->tv_tv);
+		if (tv->tv_xfail)
+			atf_tc_expect_fail("%s", tv->tv_xfail);
+
+		/*
+		 * Allow some slop of one part per thousand in the
+		 * arithmetic, but ensure we round up, not down.
+		 *
+		 * XXX Analytically determine error bounds on the
+		 * formulae we use and assess them.
+		 */
+		ATF_CHECK_MSG(((unsigned)(ticks - tv->tv_ticks) <=
+			(unsigned)tv->tv_ticks/1000),
+		    "[%zu] tvtohz(%lld.%06ld sec) @ %d Hz:"
+		    " expected %d, got %d",
+		    i,
+		    (long long)tv->tv_tv.tv_sec,
+		    (long)tv->tv_tv.tv_usec,
+		    tv->tv_hz,
+		    tv->tv_ticks,
+		    ticks);
+		if (tv->tv_xfail)
+			atf_tc_expect_pass();
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, itimer_transitions);
+	ATF_TP_ADD_TC(tp, tstohz);
+	ATF_TP_ADD_TC(tp, tvtohz);
 
 	return atf_no_error();
 }
