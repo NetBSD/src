@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.18.4.1 2025/04/04 15:58:03 martin Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.18.4.2 2025/10/19 10:52:32 martin Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.18.4.1 2025/04/04 15:58:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.18.4.2 2025/10/19 10:52:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.18.4.1 2025/04/04 15:58:03 martin Exp $"
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/xcall.h>
+#include <sys/paravirt_membar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -791,6 +792,7 @@ vmbus_message_proc(void *arg, struct cpu_info *ci)
 
 	msg = (struct vmbus_message *)sc->sc_percpu[cpu_index(ci)].simp +
 	    VMBUS_SINT_MESSAGE;
+	/* XXX bus_dmamap_sync(POSTREAD|POSTWRITE) on msg_type */
 	if (__predict_false(msg->msg_type != HYPERV_MSGTYPE_NONE)) {
 		if (__predict_true(!cold))
 			softint_schedule_cpu(sc->sc_msg_sih, ci);
@@ -813,8 +815,11 @@ vmbus_message_softintr(void *arg)
 	for (;;) {
 		msg = (struct vmbus_message *)sc->sc_percpu[cpu].simp +
 		    VMBUS_SINT_MESSAGE;
+		/* XXX bus_dmamap_sync(POSTREAD|POSTWRITE) on msg_type */
 		if (msg->msg_type == HYPERV_MSGTYPE_NONE)
 			break;
+
+		/* XXX bus_dmamap_sync(POSTREAD) on msg_data */
 
 		hdr = (struct vmbus_chanmsg_hdr *)msg->msg_data;
 		type = hdr->chm_type;
@@ -831,10 +836,22 @@ vmbus_message_softintr(void *arg)
 			}
 		}
 
+		/* XXX bus_dmamap_sync(PREREAD) on msg_data */
+
 		msg->msg_type = HYPERV_MSGTYPE_NONE;
-		membar_sync();
+		/* XXX bus_dmamap_sync(PREWRITE|PREREAD) on msg_type */
+
+		/*
+		 * Ensure we tell the host that this message is done
+		 * before we check whether the host told us there are
+		 * more pending.
+		 */
+		paravirt_membar_sync();
+
+		/* XXX bus_dmamap_sync(POSTREAD) on msg_flags */
 		if (msg->msg_flags & VMBUS_MSGFLAG_PENDING)
 			hyperv_send_eom();
+		/* XXX bus_dmamap_sync(PREREAD) on msg_flags */
 	}
 }
 
@@ -1655,8 +1672,10 @@ static __inline void
 vmbus_ring_avail(struct vmbus_ring_data *rd, uint32_t *towrite,
     uint32_t *toread)
 {
+	/* XXX bus_dmamap_sync(POSTREAD) on br_rindex/br_windex */
 	uint32_t ridx = rd->rd_ring->br_rindex;
 	uint32_t widx = rd->rd_ring->br_windex;
+	/* XXX bus_dmamap_sync(PREREAD) on br_rindex/br_windex */
 	uint32_t r, w;
 
 	if (widx >= ridx)
@@ -1674,7 +1693,9 @@ static bool
 vmbus_ring_is_empty(struct vmbus_ring_data *rd)
 {
 
+	/* XXX bus_dmamap_sync(POSTREAD) on br_rindex/br_windex */
 	return rd->rd_ring->br_rindex == rd->rd_ring->br_windex;
+	/* XXX bus_dmamap_sync(PREREAD) on br_rindex/br_windex */
 }
 
 static int
@@ -1698,15 +1719,27 @@ vmbus_ring_write(struct vmbus_ring_data *wrd, struct iovec *iov, int iov_cnt,
 
 	oprod = wrd->rd_prod;
 
+	/* XXX bus_dmamap_sync(POSTWRITE) on ring data */
+
 	for (i = 0; i < iov_cnt; i++)
 		vmbus_ring_put(wrd, iov[i].iov_base, iov[i].iov_len);
 
 	indices = (uint64_t)oprod << 32;
 	vmbus_ring_put(wrd, (uint8_t *)&indices, sizeof(indices));
 
-	membar_sync();
+	/* XXX bus_dmamap_sync(PREWRITE) on ring data */
+
+	membar_sync();	/* XXX bus_dmamap_sync(POSTWRITE) on br_windex */
 	wrd->rd_ring->br_windex = wrd->rd_prod;
-	membar_sync();
+	/* XXX bus_dmamap_sync(PREWRITE) on br_windex */
+
+	/*
+	 * Ensure we publish the producer index _before_ we check
+	 * whether the host needs to be notified.
+	 */
+	paravirt_membar_sync();
+
+	/* XXX bus_dmamap_sync(POSTREAD) on br_rindex */
 
 	/* Signal when the ring transitions from being empty to non-empty */
 	if (wrd->rd_ring->br_imask == 0 &&
@@ -1714,6 +1747,8 @@ vmbus_ring_write(struct vmbus_ring_data *wrd, struct iovec *iov, int iov_cnt,
 		*needsig = 1;
 	else
 		*needsig = 0;
+
+	/* XXX bus_dmamap_sync(PREREAD) on br_rindex */
 
 	return 0;
 }
@@ -1874,6 +1909,8 @@ vmbus_ring_read(struct vmbus_ring_data *rrd, void *data, uint32_t datalen,
 		return EAGAIN;
 	}
 
+	/* XXX bus_dmamap_sync(POSTREAD) on ring data */
+
 	if (offset) {
 		rrd->rd_cons += offset;
 		if (rrd->rd_cons >= rrd->rd_dsize)
@@ -1883,8 +1920,11 @@ vmbus_ring_read(struct vmbus_ring_data *rrd, void *data, uint32_t datalen,
 	vmbus_ring_get(rrd, (uint8_t *)data, datalen, 0);
 	vmbus_ring_get(rrd, (uint8_t *)&indices, sizeof(indices), 0);
 
-	membar_sync();
+	/* XXX bus_dmamap_sync(PREREAD) on ring data */
+
+	membar_sync();	/* XXX bus_dmamap_sync(POSTWRITE) on br_rindex */
 	rrd->rd_ring->br_rindex = rrd->rd_cons;
+	/* XXX bus_dmamap_sync(PREWRITE) on br_rindex */
 
 	return 0;
 }
@@ -1931,18 +1971,18 @@ static inline void
 vmbus_ring_mask(struct vmbus_ring_data *rd)
 {
 
-	membar_sync();
+	membar_sync();	/* XXX bus_dmamap_sync(POSTWRITE) on br_imask */
 	rd->rd_ring->br_imask = 1;
-	membar_sync();
+	membar_sync();	/* XXX bus_dmamap_sync(PREWRITE) on br_imask */
 }
 
 static inline void
 vmbus_ring_unmask(struct vmbus_ring_data *rd)
 {
 
-	membar_sync();
+	membar_sync();	/* XXX bus_dmamap_sync(POSTWRITE) on br_imask */
 	rd->rd_ring->br_imask = 0;
-	membar_sync();
+	membar_sync();	/* XXX bus_dmamap_sync(PREWRITE) on br_imask */
 }
 
 void
@@ -1962,6 +2002,14 @@ vmbus_channel_unpause(struct vmbus_channel *ch)
 	atomic_and_ulong(&ch->ch_sc->sc_evtmask[ch->ch_id / VMBUS_EVTFLAG_LEN],
 	    ~__BIT(ch->ch_id % VMBUS_EVTFLAG_LEN));
 	vmbus_ring_unmask(&ch->ch_rrd);
+
+	/*
+	 * Ensure we announce to the host side that we are accepting
+	 * interrupts _before_ we check whether any pending events had
+	 * come over the ring while we weren't accepting interrupts.
+	 */
+	paravirt_membar_sync();
+
 	vmbus_ring_avail(&ch->ch_rrd, NULL, &avail);
 
 	return avail;
