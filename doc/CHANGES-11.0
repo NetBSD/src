@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.28 2025/10/17 08:41:43 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.29 2025/10/19 11:14:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -357,4 +357,76 @@ usr.bin/calendar/calendars/calendar.usholiday	1.13
 
 	Calendar update for 2026.
 	[jnemeth, ticket #55]
+
+lib/libc/stdio/mkstemps.c			1.2
+tools/compat/Makefile				1.95
+tools/compat/compat_defs.h			1.126,1.127
+tools/compat/configure				1.108,1.109
+tools/compat/configure.ac			1.110,1.111
+tools/compat/nbtool_config.h.in			1.59-1.61
+
+	build: fixes to allow building with modern compilers.
+	[mrg, ticket #56]
+
+sys/kern/subr_time.c				1.42
+sys/kern/subr_time_arith.c			1.4,1.5
+tests/kernel/t_time_arith.c			1.4-1.7
+
+	tstohz(9): PR 59691: fix rounding direction for timeouts.
+	[riastradh, ticket #57]
+
+sys/dev/usb/usb_subr.c				1.280,1.281
+sys/dev/usb/usbdivar.h				1.140
+sys/dev/usb/xhci.c				1.191
+
+	usbdi(9): PR 59185, 59624, 57447: fix state for	selected config index.
+	[riastradh, ticket #58]
+
+lib/libc/gen/ctype.3				1.34,1.35
+
+	ctype(3): PR 58208: fix versions and clarify prose in man page.
+	[riastradh, ticket #59]
+
+common/lib/libc/arch/i386/atomic/atomic.S	1.38
+common/lib/libc/arch/sparc/atomic/membar_ops.S	1.9
+common/lib/libc/arch/sparc64/atomic/membar_ops.S 1.10
+common/lib/libc/arch/x86_64/atomic/atomic.S	1.32
+distrib/sets/lists/comp/mi			1.2499
+share/man/man9/Makefile				1.475
+share/man/man9/paravirt_membar_sync.9		1.1
+sys/arch/alpha/alpha/locore.s			1.145
+sys/arch/amd64/amd64/cpufunc.S			1.70
+sys/arch/arm/arm/cpu_subr.c			1.6
+sys/arch/hppa/hppa/support.S			1.9
+sys/arch/i386/i386/cpufunc.S			1.54
+sys/arch/mips/mips/cpu_subr.c			1.65,1.66
+sys/arch/riscv/riscv/cpu_subr.c			1.6
+sys/arch/sparc/sparc/locore.s			1.287
+sys/arch/sparc64/sparc64/locore.s		1.436
+sys/arch/virt68k/virt68k/locore.s		1.17
+sys/sys/paravirt_membar.h			1.1
+
+	paravirt_membar(9): PR 59618: new membar for paravirtualized
+	drivers.
+	[riastradh, ticket #60]
+
+sys/dev/hyperv/vmbus.c				1.20
+
+	hyperv(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #61]
+
+sys/dev/pci/virtio.c				1.84
+
+	virtio(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #62]
+
+sys/dev/pci/pvscsi.c				1.3
+
+	pvscsi(4): PR 59618: use paravirt_membar_sync(9) where needed.
+	[riastradh, ticket #63]
+
+sys/dev/pci/pvscsi.c				1.4,1.5
+
+	pvscsi(4): fix bus_dma syncs (related to PR 59618).
+	[riastradh, ticket #64]
 
