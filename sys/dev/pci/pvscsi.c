@@ -59,11 +59,10 @@ in the file called LICENSE.GPL.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.2.2.3 2025/10/19 11:09:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.2.2.4 2025/10/19 13:53:08 martin Exp $");
 
 #include <sys/param.h>
 
-#include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
@@ -321,6 +320,18 @@ CFATTACH_DECL3_NEW(pvscsi, sizeof(struct pvscsi_softc),
     pvscsi_probe, pvscsi_attach, pvscsi_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
+#define	PVSCSI_DMA_SYNC_STATE(sc, dma, structptr, member, ops)		      \
+	bus_dmamap_sync((sc)->sc_dmat, (dma)->map,			      \
+	    /*offset*/offsetof(__typeof__(*(structptr)), member),	      \
+	    /*length*/sizeof((structptr)->member),			      \
+	    (ops))
+
+#define	PVSCSI_DMA_SYNC_RING(sc, dma, ring, idx, ops)			      \
+	bus_dmamap_sync((sc)->sc_dmat, (dma)->map,			      \
+	    /*offset*/sizeof(*(ring)) * (idx),				      \
+	    /*length*/sizeof(*(ring)),					      \
+	    (ops))
+
 static inline uint32_t
 pvscsi_reg_read(struct pvscsi_softc *sc, uint32_t offset)
 {
@@ -372,6 +383,7 @@ pvscsi_intr_disable(struct pvscsi_softc *sc)
 static void
 pvscsi_kick_io(struct pvscsi_softc *sc, uint8_t cdb0)
 {
+	struct pvscsi_dma *s_dma;
 	struct pvscsi_rings_state *s;
 
 	DEBUG_PRINTF(2, sc->dev, "%s: cdb0 %#x\n", __func__, cdb0);
@@ -379,14 +391,18 @@ pvscsi_kick_io(struct pvscsi_softc *sc, uint8_t cdb0)
 	    cdb0 == READ_12  || cdb0 == READ_16  ||
 	    cdb0 == SCSI_WRITE_6_COMMAND || cdb0 == WRITE_10 ||
 	    cdb0 == WRITE_12 || cdb0 == WRITE_16) {
+		s_dma = &sc->rings_state_dma;
 		s = sc->rings_state;
 
 		/*
-		 * Ensure the command has been published before we test
-		 * whether we need to kick the host.
+		 * Ensure the command has been published before we read
+		 * req_cons_idx to test whether we need to kick the
+		 * host.
 		 */
 		paravirt_membar_sync();
 
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, req_cons_idx,
+		    BUS_DMASYNC_POSTREAD);
 		DEBUG_PRINTF(2, sc->dev, "%s req prod %d cons %d\n", __func__,
 		    s->req_prod_idx, s->req_cons_idx);
 		if (!sc->use_req_call_threshold ||
@@ -397,8 +413,14 @@ pvscsi_kick_io(struct pvscsi_softc *sc, uint8_t cdb0)
 		} else {
 			DEBUG_PRINTF(2, sc->dev, "wtf\n");
 		}
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, req_cons_idx,
+		    BUS_DMASYNC_PREREAD);
 	} else {
 		s = sc->rings_state;
+		/*
+		 * XXX req_cons_idx in debug log might be stale, but no
+		 * need for DMA sync otherwise in this branch
+		 */
 		DEBUG_PRINTF(1, sc->dev, "%s req prod %d cons %d not checked\n", __func__,
 		    s->req_prod_idx, s->req_cons_idx);
 
@@ -504,6 +526,15 @@ static int pvscsi_setup_req_call(struct pvscsi_softc *sc, uint32_t enable)
 		    &cmd, sizeof(cmd));
 		status = pvscsi_reg_read(sc, PVSCSI_REG_OFFSET_COMMAND_STATUS);
 
+		/*
+		 * After setup, sync req_call_threshold before use.
+		 * After this point it should be stable, so no need to
+		 * sync again during use.
+		 */
+		PVSCSI_DMA_SYNC_STATE(sc, &sc->rings_state_dma,
+		    sc->rings_state, req_call_threshold,
+		    BUS_DMASYNC_POSTREAD);
+
 		return (status != 0);
 	} else {
 		return (0);
@@ -591,6 +622,10 @@ pvscsi_dma_alloc_ppns(struct pvscsi_softc *sc, struct pvscsi_dma *dma,
 		    error);
 		return (error);
 	}
+
+	memset(dma->vaddr, 0, num_pages * PAGE_SIZE);
+	bus_dmamap_sync(sc->sc_dmat, dma->map, 0, num_pages * PAGE_SIZE,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	ppn = dma->paddr >> PAGE_SHIFT;
 	for (i = 0; i < num_pages; i++) {
@@ -688,6 +723,16 @@ static void
 pvscsi_free_rings(struct pvscsi_softc *sc)
 {
 
+	bus_dmamap_sync(sc->sc_dmat, sc->rings_state_dma.map,
+	    0, sc->rings_state_dma.size,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->req_ring_dma.map,
+	    0, sc->req_ring_dma.size,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->cmp_ring_dma.map,
+	    0, sc->cmp_ring_dma.size,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
 	pvscsi_dma_free(sc, &sc->rings_state_dma);
 	pvscsi_dma_free(sc, &sc->req_ring_dma);
 	pvscsi_dma_free(sc, &sc->cmp_ring_dma);
@@ -769,6 +814,18 @@ pvscsi_setup_rings(struct pvscsi_softc *sc)
 	}
 
 	pvscsi_write_cmd(sc, PVSCSI_CMD_SETUP_RINGS, &cmd, sizeof(cmd));
+
+	/*
+	 * After setup, sync *_num_entries_log2 before use.  After this
+	 * point they should be stable, so no need to sync again during
+	 * use.
+	 */
+	PVSCSI_DMA_SYNC_STATE(sc, &sc->rings_state_dma,
+	    sc->rings_state, req_num_entries_log2,
+	    BUS_DMASYNC_POSTREAD);
+	PVSCSI_DMA_SYNC_STATE(sc, &sc->rings_state_dma,
+	    sc->rings_state, cmp_num_entries_log2,
+	    BUS_DMASYNC_POSTREAD);
 }
 
 static int
@@ -799,6 +856,15 @@ pvscsi_setup_msg_ring(struct pvscsi_softc *sc)
 	}
 
 	pvscsi_write_cmd(sc, PVSCSI_CMD_SETUP_MSG_RING, &cmd, sizeof(cmd));
+
+	/*
+	 * After setup, sync msg_num_entries_log2 before use.  After
+	 * this point it should be stable, so no need to sync again
+	 * during use.
+	 */
+	PVSCSI_DMA_SYNC_STATE(sc, &sc->rings_state_dma,
+	    sc->rings_state, msg_num_entries_log2,
+	    BUS_DMASYNC_POSTREAD);
 }
 
 static void
@@ -1085,25 +1151,35 @@ pvscsi_process_completion(struct pvscsi_softc *sc,
 static void
 pvscsi_process_cmp_ring(struct pvscsi_softc *sc)
 {
+	struct pvscsi_dma *ring_dma;
 	struct pvscsi_ring_cmp_desc *ring;
+	struct pvscsi_dma *s_dma;
 	struct pvscsi_rings_state *s;
 	struct pvscsi_ring_cmp_desc *e;
 	uint32_t mask;
 
 	KASSERT(mutex_owned(&sc->lock));
 
+	s_dma = &sc->rings_state_dma;
 	s = sc->rings_state;
+	ring_dma = &sc->cmp_ring_dma;
 	ring = sc->cmp_ring;
 	mask = MASK(s->cmp_num_entries_log2);
 
-	while (true) {
+	for (;;) {
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, cmp_prod_idx,
+		    BUS_DMASYNC_POSTREAD);
 		size_t crpidx = s->cmp_prod_idx;
-		membar_acquire();
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, cmp_prod_idx,
+		    BUS_DMASYNC_PREREAD);
 
 		if (s->cmp_cons_idx == crpidx)
 			break;
 
 		size_t crcidx = s->cmp_cons_idx & mask;
+
+		PVSCSI_DMA_SYNC_RING(sc, ring_dma, ring, crcidx,
+		    BUS_DMASYNC_POSTREAD);
 
 		e = ring + crcidx;
 
@@ -1113,8 +1189,19 @@ pvscsi_process_cmp_ring(struct pvscsi_softc *sc)
 		 * ensure completion processing reads happen before write to
 		 * (increment of) cmp_cons_idx
 		 */
-		membar_release();
+		PVSCSI_DMA_SYNC_RING(sc, ring_dma, ring, crcidx,
+		    BUS_DMASYNC_PREREAD);
+
+		/*
+		 * XXX Not actually sure the `device' does DMA for
+		 * s->cmp_cons_idx at all -- qemu doesn't.  If not, we
+		 * can skip these DMA syncs.
+		 */
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, cmp_cons_idx,
+		    BUS_DMASYNC_POSTWRITE);
 		s->cmp_cons_idx++;
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, cmp_cons_idx,
+		    BUS_DMASYNC_PREWRITE);
 	}
 }
 
@@ -1159,25 +1246,35 @@ pvscsi_process_msg(struct pvscsi_softc *sc, struct pvscsi_ring_msg_desc *e)
 static void
 pvscsi_process_msg_ring(struct pvscsi_softc *sc)
 {
+	struct pvscsi_dma *ring_dma;
 	struct pvscsi_ring_msg_desc *ring;
+	struct pvscsi_dma *s_dma;
 	struct pvscsi_rings_state *s;
 	struct pvscsi_ring_msg_desc *e;
 	uint32_t mask;
 
 	KASSERT(mutex_owned(&sc->lock));
 
+	s_dma = &sc->rings_state_dma;
 	s = sc->rings_state;
+	ring_dma = &sc->msg_ring_dma;
 	ring = sc->msg_ring;
 	mask = MASK(s->msg_num_entries_log2);
 
-	while (true) {
+	for (;;) {
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, msg_prod_idx,
+		    BUS_DMASYNC_POSTREAD);
 		size_t mpidx = s->msg_prod_idx;	// dma read (device -> cpu)
-		membar_acquire();
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, msg_prod_idx,
+		    BUS_DMASYNC_PREREAD);
 
 		if (s->msg_cons_idx == mpidx)
 			break;
 
 		size_t mcidx = s->msg_cons_idx & mask;
+
+		PVSCSI_DMA_SYNC_RING(sc, ring_dma, ring, mcidx,
+		    BUS_DMASYNC_POSTREAD);
 
 		e = ring + mcidx;
 
@@ -1187,8 +1284,14 @@ pvscsi_process_msg_ring(struct pvscsi_softc *sc)
 		 * ensure message processing reads happen before write to
 		 * (increment of) msg_cons_idx
 		 */
-		membar_release();
+		PVSCSI_DMA_SYNC_RING(sc, ring_dma, ring, mcidx,
+		    BUS_DMASYNC_PREREAD);
+
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, msg_cons_idx,
+		    BUS_DMASYNC_POSTWRITE);
 		s->msg_cons_idx++;
+		PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, msg_cons_idx,
+		    BUS_DMASYNC_PREWRITE);
 	}
 }
 
@@ -1251,8 +1354,10 @@ pvscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 #endif
 
 	uint32_t req_num_entries_log2;
+	struct pvscsi_dma *ring_dma;
 	struct pvscsi_ring_req_desc *ring;
 	struct pvscsi_ring_req_desc *e;
+	struct pvscsi_dma *s_dma;
 	struct pvscsi_rings_state *s;
 	struct pvscsi_hcb *hcb;
 
@@ -1265,7 +1370,9 @@ pvscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 		return;
 	}
 
+	ring_dma = &sc->req_ring_dma;
 	ring = sc->req_ring;
+	s_dma = &sc->rings_state_dma;
 	s = sc->rings_state;
 
 	hcb = NULL;
@@ -1299,6 +1406,7 @@ pvscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	hcb->xs = xs;
 
 	const size_t rridx = s->req_prod_idx & MASK(req_num_entries_log2);
+	PVSCSI_DMA_SYNC_RING(sc, ring_dma, ring, rridx, BUS_DMASYNC_POSTWRITE);
 	e = ring + rridx;
 
 	memset(e, 0, sizeof(*e));
@@ -1398,7 +1506,7 @@ pvscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	 * Ensure request record writes happen before write to (increment of)
 	 * req_prod_idx.
 	 */
-	membar_producer();
+	PVSCSI_DMA_SYNC_RING(sc, ring_dma, ring, rridx, BUS_DMASYNC_PREWRITE);
 
 	uint8_t cdb0 = e->cdb[0];
 
@@ -1411,13 +1519,16 @@ pvscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 		callout_reset(&xs->xs_callout, timeout, pvscsi_timeout, hcb);
 	}
 
+	PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, req_prod_idx,
+	    BUS_DMASYNC_POSTWRITE);
 	s->req_prod_idx++;
 
 	/*
 	 * Ensure req_prod_idx write (increment) happens before
 	 * IO is kicked (via a write).
 	 */
-	membar_producer();
+	PVSCSI_DMA_SYNC_STATE(sc, s_dma, s, req_prod_idx,
+	    BUS_DMASYNC_PREWRITE);
 
 	pvscsi_kick_io(sc, cdb0);
 	mutex_exit(&sc->lock);
