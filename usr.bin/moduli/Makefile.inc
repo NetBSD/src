@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.3 2025/07/19 12:42:30 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4 2025/10/19 01:00:00 riastradh Exp $
 
 .include <bsd.own.mk>
 
-DPADD+= ${LIBCRYPTO} ${LIBPTHREAD}
-LDADD+= -lcrypto -lpthread
+DPADD+= ${LIBCRYPTO}
+LDADD+= -lcrypto
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

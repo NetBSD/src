@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2025/07/19 11:01:58 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2025/10/19 00:59:59 riastradh Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -10,8 +10,8 @@ SRCS=	factor.c pr_tbl.c
 CPPFLAGS+=-I${PRIMES}
 
 CPPFLAGS+=-DHAVE_OPENSSL
-LDADD+=	-lcrypto -lcrypt -lpthread
-DPADD+=	${LIBCRYPTO} ${LIBCRYPT} ${LIBPTHREAD}
+LDADD+=	-lcrypto -lcrypt
+DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 
 COPTS.factor.c+= -Wno-error=deprecated-declarations
 

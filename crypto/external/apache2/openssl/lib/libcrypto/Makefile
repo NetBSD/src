@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2025/09/01 18:37:43 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2025/10/19 00:59:57 riastradh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -25,7 +25,6 @@ USE_FIPS=	no
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
-CPPFLAGS+= -pthread
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
@@ -51,7 +50,6 @@ CPPFLAGS+= -I${OPENSSLSRC}/providers/implementations/include
 
 AFLAGS+=-DELF
 LIBDPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
-LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 OS_VERSION!= ${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 

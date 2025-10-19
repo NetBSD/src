@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2025/07/19 14:39:13 christos Exp $
+# $NetBSD: Makefile,v 1.8 2025/10/19 00:59:58 riastradh Exp $
 
 .include <bsd.own.mk>
 .include "${.PARSEDIR}/../../Makefile.inc"
@@ -16,9 +16,8 @@ PROG=pamu2fcfg
 SRCS=pamu2fcfg.c cmdline.c b64.c readpassphrase.c explicit_bzero.c util.c
 COPTS.util.c += -Wno-error=stack-protector
 
-LDADD+=-lpam -lfido2 -lcbor -lusbhid -lcrypto -lm -lpthread
-DPADD+=${LIBPAM} ${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBCRYPTO} ${LIBM} \
-    ${LIBPTHREAD}
+LDADD+=-lpam -lfido2 -lcbor -lusbhid -lcrypto -lm
+DPADD+=${LIBPAM} ${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBCRYPTO} ${LIBM}
 
 pamu2fcfg.1:
 	asciidoc -b docbook45 -d manpage -o pamu2fcfg.1.xml ../../dist/man/pamu2fcfg.1.txt
