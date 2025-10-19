@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.7.30.1 2025/05/09 11:41:40 martin Exp $	*/
+/*	$NetBSD: support.S,v 1.7.30.2 2025/10/19 10:34:41 martin Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -304,3 +304,18 @@ LEAF_ENTRY(longjmp)
 	ldi	1, %ret0
 EXIT(longjmp)
 
+LEAF_ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 */
+	bv	%r0(%rp)
+	 sync
+EXIT(paravirt_membar_sync)
