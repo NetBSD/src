@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.53.6.2 2024/11/17 13:32:52 martin Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.53.6.3 2025/10/19 09:48:29 martin Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -262,6 +262,10 @@
    don't. */
 #undef HAVE_DECL_MKSTEMP
 
+/* Define to 1 if you have the declaration of `mkstemps', and to 0 if you
+   don't. */
+#undef HAVE_DECL_MKSTEMPS
+
 /* Define to 1 if you have the declaration of `optind', and to 0 if you don't.
    */
 #undef HAVE_DECL_OPTIND
@@ -326,6 +330,10 @@
    don't. */
 #undef HAVE_DECL_STRCASECMP
 
+/* Define to 1 if you have the declaration of `strcasestr', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRCASESTR
+
 /* Define to 1 if you have the declaration of `strlcat', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRLCAT
@@ -366,6 +374,10 @@
    don't. */
 #undef HAVE_DECL_STRTOLL
 
+/* Define to 1 if you have the declaration of `strtonum', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRTONUM
+
 /* Define to 1 if you have the declaration of `strtou', and to 0 if you don't.
    */
 #undef HAVE_DECL_STRTOU
@@ -401,6 +413,10 @@
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_VSNPRINTF
+
+/* Define to 1 if you have the declaration of `vsyslog', and to 0 if you
+   don't. */
+#undef HAVE_DECL_VSYSLOG
 
 /* Define to 1 if you have the declaration of `vwarnc', and to 0 if you don't.
    */
@@ -570,6 +586,9 @@
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
 
+/* Define to 1 if you have the `mkstemps' function. */
+#undef HAVE_MKSTEMPS
+
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
@@ -669,6 +688,9 @@
 /* Define to 1 if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
+/* Define to 1 if you have the `strcasestr' function. */
+#undef HAVE_STRCASESTR
+
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
@@ -704,6 +726,9 @@
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
+
+/* Define to 1 if you have the `strtonum' function. */
+#undef HAVE_STRTONUM
 
 /* Define to 1 if you have the `strtou' function. */
 #undef HAVE_STRTOU
