@@ -4765,6 +4765,19 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_SNPRINTF $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "vsyslog" "ac_cv_have_decl_vsyslog" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_vsyslog" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VSYSLOG $ac_have_decl
+_ACEOF
 
 
 ac_fn_c_check_decl "$LINENO" "atoll" "ac_cv_have_decl_atoll" "
@@ -4779,6 +4792,32 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_ATOLL $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "getsubopt" "ac_cv_have_decl_getsubopt" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_getsubopt" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GETSUBOPT $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "getprogname" "ac_cv_have_decl_getprogname" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_getprogname" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GETPROGNAME $ac_have_decl
 _ACEOF
 ac_fn_c_check_decl "$LINENO" "heapsort" "ac_cv_have_decl_heapsort" "
 #include <stdlib.h>
@@ -4819,6 +4858,19 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_MKSTEMP $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "mkstemps" "ac_cv_have_decl_mkstemps" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_mkstemps" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_MKSTEMPS $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "reallocarr" "ac_cv_have_decl_reallocarr" "
 #include <stdlib.h>
 
@@ -4845,19 +4897,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_REALLOCARRAY $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "getsubopt" "ac_cv_have_decl_getsubopt" "
-#include <stdlib.h>
-
-"
-if test "x$ac_cv_have_decl_getsubopt" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_GETSUBOPT $ac_have_decl
-_ACEOF
 ac_fn_c_check_decl "$LINENO" "setenv" "ac_cv_have_decl_setenv" "
 #include <stdlib.h>
 
@@ -4870,6 +4909,19 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_SETENV $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strtonum" "ac_cv_have_decl_strtonum" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_strtonum" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTONUM $ac_have_decl
 _ACEOF
 ac_fn_c_check_decl "$LINENO" "strtoi" "ac_cv_have_decl_strtoi" "
 #include <stdlib.h>
@@ -4935,19 +4987,6 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_SHQUOTE $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "getprogname" "ac_cv_have_decl_getprogname" "
-#include <stdlib.h>
-
-"
-if test "x$ac_cv_have_decl_getprogname" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_GETPROGNAME $ac_have_decl
 _ACEOF
 
 
@@ -5166,8 +5205,6 @@ else
 # ifdef _MSC_VER
 #  include <malloc.h>
 #  define alloca _alloca
-# elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
-#   include <stdlib.h>
 # else
 #  ifdef HAVE_ALLOCA_H
 #   include <alloca.h>
@@ -5311,12 +5348,13 @@ for ac_func in atoll asprintf asnprintf basename devname dirfd dirname \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	mkstemps mkdtemp poll pread putc_unlocked pwcache_userdb \
+	pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr reallocarray setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strcasecmp strncasecmp strndup strnlen strsep strsuftoll strtoi \
-	strtoll strtou \
+	strcasecmp strncasecmp strcasestr strndup strnlen strsep strsuftoll \
+	strtoi strtoll strtou strtonum \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -5435,6 +5473,19 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRNCASECMP $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strcasestr" "ac_cv_have_decl_strcasestr" "
+#include <string.h>
+
+"
+if test "x$ac_cv_have_decl_strcasestr" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRCASESTR $ac_have_decl
 _ACEOF
 ac_fn_c_check_decl "$LINENO" "strlcpy" "ac_cv_have_decl_strlcpy" "
 #include <string.h>
