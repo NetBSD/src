@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.318 2025/10/15 15:09:33 jschauma Exp $
+$NetBSD: acronyms,v 1.319 2025/10/19 21:38:38 wiz Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -99,6 +99,7 @@ CFY	calling for you
 CG	center of gravity
 CHANOPS	channel operator status
 CIA	central intelligence agency
+CLM	career-limiting move
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
