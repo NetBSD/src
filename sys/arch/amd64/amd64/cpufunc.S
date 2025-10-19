@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.69 2025/05/23 02:48:19 riastradh Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.69.2.1 2025/10/19 10:29:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -61,17 +61,17 @@ ENTRY(x86_mfence)
 	ret
 END(x86_mfence)
 
-#ifdef XEN
-ENTRY(xen_mb)
+ENTRY(paravirt_membar_sync)
 	/*
 	 * Store-before-load ordering with respect to matching logic
 	 * on the hypervisor side.
 	 *
 	 * This is the same as membar_sync, but without hotpatching
 	 * away the LOCK prefix on uniprocessor boots -- because under
-	 * Xen, we still have to coordinate with a `device' backed by a
-	 * hypervisor that is potentially on another physical CPU even
-	 * if we observe only one virtual CPU as the guest.
+	 * virtualization, we still have to coordinate with a `device'
+	 * backed by a hypervisor that is potentially on another
+	 * physical CPU even if we observe only one virtual CPU as the
+	 * guest.
 	 *
 	 * See common/lib/libc/arch/x86_64/atomic/atomic.S for
 	 * rationale and keep this in sync with the implementation
@@ -80,7 +80,10 @@ ENTRY(xen_mb)
 	lock
 	addq	$0,-8(%rsp)
 	ret
-END(xen_mb)
+END(paravirt_membar_sync)
+
+#ifdef XEN
+STRONG_ALIAS(xen_mb,paravirt_membar_sync)
 #endif	/* XEN */
 
 #ifdef KDTRACE_HOOKS

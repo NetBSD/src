@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.31 2024/07/16 22:45:10 riastradh Exp $	*/
+/*	$NetBSD: atomic.S,v 1.31.2.1 2025/10/19 10:29:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -287,7 +287,8 @@ ENTRY(_membar_sync)
 	 * https://shipilev.net/blog/2014/on-the-fence-with-dependencies/
 	 * https://www.agner.org/optimize/instruction_tables.pdf
 	 *
-	 * Sync with xen_mb in sys/arch/amd64/amd64/cpufunc.S.
+	 * Sync with paravirt_membar_sync in
+	 * sys/arch/amd64/amd64/cpufunc.S.
 	 */
 	LOCK
 	addq	$0, -8(%rsp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.435 2025/04/29 14:53:54 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.435.2.1 2025/10/19 10:29:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7948,6 +7948,26 @@ ENTRY(sparc64_ipi_ccall)
 
 #endif
 
+ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without patching or
+	 * conditionalizing away the MEMBAR instruction on uniprocessor
+	 * builds or boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 *
+	 * See common/lib/libc/arch/sparc64/atomic/membar_ops.S for why
+	 * we avoid using the delay slot and keep this in sync with the
+	 * implementation of membar_sync there.
+	 */
+	membar	#StoreLoad
+	retl
+	 nop
+END(paravirt_membar_sync)
 
 	.data
 	_ALIGN

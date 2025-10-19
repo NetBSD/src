@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.5 2024/05/03 07:24:31 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.5.4.1 2025/10/19 10:29:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5 2024/05/03 07:24:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5.4.1 2025/10/19 10:29:19 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/paravirt_membar.h>
 #include <sys/xcall.h>
 
 #include <machine/db_machdep.h>
@@ -428,3 +429,21 @@ cpu_ipi(struct cpu_info *ci)
 }
 
 #endif
+
+void
+paravirt_membar_sync(void)
+{
+
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 */
+	__asm volatile("fence	rw,rw");
+}

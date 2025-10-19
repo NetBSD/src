@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 2025/07/08 11:46:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.16.2.1 2025/10/19 10:29:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -597,6 +597,27 @@ ENTRY(ecacheon)
 
 ENTRY(ecacheoff)
 	rts
+
+ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but guaranteed never to be
+	 * conditionalized or hotpatched away even on uniprocessor
+	 * builds and boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 *
+	 * I don't see an obvious ordering-only instruction in the m68k
+	 * instruction set, but qemu implements CAS with
+	 * store-before-load ordering, so this should work for virtio.
+	 */
+	clrl	%d0
+	casl	%d0,%d0,%sp@
+	rts
+END(paravirt_membar_sync)
 
 /*
  * Misc. global variables.
