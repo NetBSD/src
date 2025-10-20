@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.1 2025/07/17 14:25:26 christos Exp $
+#	$NetBSD: sha.inc,v 1.2 2025/10/20 14:31:36 nat Exp $
 
 .PATH.c:	${OPENSSLSRC}/crypto/sha
 
@@ -18,7 +18,7 @@ SRCS += ${SHA_SRCS}
 CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/sha ${SHACPPFLAGS}
 .endfor
 
-.if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000") && \
+.if (${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k" || ${MACHINE_ARCH} == "m68000") && \
     ${HAVE_GCC:U0} == 12
 COPTS.libc-sha2xx.c+=	-fno-stack-protector
 .endif

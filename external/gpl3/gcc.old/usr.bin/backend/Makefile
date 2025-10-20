@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2025/09/07 04:12:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2025/10/20 14:31:38 nat Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -522,7 +522,8 @@ CFLAGS+=	-Wno-stack-protector
 
 #COPTS.dwarf2out.cc+=${CC_WNO_MAYBE_UNINITIALIZED}
 
-.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
+.if ${GCC_MACHINE_ARCH} == "m68000" || \
+	${GCC_MACHINE_ARCH:S/m68ksf/m68k/} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"
 #COPTS.tree-loop-distribution.cc+=-O2
 #COPTS.generic-match.cc+=-fno-jump-tables

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.13 2025/09/07 04:12:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2025/10/20 14:31:38 nat Exp $
 
 NOOBJ=# defined
 
 .include <bsd.init.mk>
 
-GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${GCC_MACHINE_ARCH}/defs.mk)
 

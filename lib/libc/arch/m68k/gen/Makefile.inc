@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2025/10/04 21:07:18 nat Exp $
+#	$NetBSD: Makefile.inc,v 1.41 2025/10/20 14:31:39 nat Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -14,7 +14,7 @@ SRCS+=	nanf.c
 
 # 68000-based machines use a double-extended `long double' type
 # for which the generic ieee754 versions can be used
-.if	${MACHINE_ARCH} != "m68k"
+.if	${MACHINE_ARCH:S/m68ksf/m68k/} != "m68k"
 SRCS+=	infinityl_dbl_ieee754.c
 .else
 SRCS+=	infinityl.c
@@ -43,7 +43,7 @@ SRCS+=	fpfake.c
 .endif
 .endif
 
-.if ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k"
 SRCS+=	mulsi3.S umulsi3.S
 SRCS+=	muldi3.S
 .else

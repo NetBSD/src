@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.149 2023/12/29 09:17:37 wiz Exp $
+#	$NetBSD: sys.mk,v 1.150 2025/10/20 14:31:40 nat Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -29,7 +29,8 @@ CC?=		cc
 .if ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 DBG?=	-Os -freorder-blocks
-.elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
+.elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68ksf" || \
+    ${MACHINE_ARCH} == "m68000"
 # -freorder-blocks (enabled by -O2) produces much bigger code
 DBG?=	-O2 -fno-reorder-blocks
 .elif ${MACHINE_ARCH} == "coldfire"

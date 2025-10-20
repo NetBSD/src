@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.common,v 1.23 2025/10/10 18:26:05 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.24 2025/10/20 14:31:37 nat Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
-GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
 # Support src/compat builds
 .if defined(MLIBDIR) && exists(${.CURDIR}/../libstdc++-v3/arch/${MLIBDIR}/defs.mk)

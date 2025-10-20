@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2025/09/07 04:12:28 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2025/10/20 14:31:38 nat Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -9,7 +9,7 @@ NOCTF=	# defined
 
 .sinclude "../../Makefile.gcc_path"
 
-GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 .include "../../../lgpl3/gmp/Makefile.arch"
 
 TOP=		${NETBSDSRCDIR}

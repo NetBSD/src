@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2025/05/06 13:00:40 rin Exp $
+#	$NetBSD: Makefile,v 1.14 2025/10/20 14:31:39 nat Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -132,7 +132,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
 CWARNFLAGS.clang+=	-Wno-format
 COPTS.ftfuncs.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-error=overflow :}
 
-.if ${HAVE_GCC:U0} >= 12 && ${MACHINE_ARCH} == "m68k"
+.if ${HAVE_GCC:U0} >= 12 && ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k"
 COPTS.fontxlfd.c+=	-fno-stack-protector
 .endif
 

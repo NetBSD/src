@@ -1,4 +1,4 @@
-#	$NetBSD: blake2.inc,v 1.1 2025/07/17 14:25:24 christos Exp $
+#	$NetBSD: blake2.inc,v 1.2 2025/10/20 14:31:36 nat Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -20,6 +20,6 @@ SRCS += ${BLAKE2_SRCS}
 CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/blake2
 .endfor
 
-.if ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k"
 COPTS.blake2_prov.c += -fno-stack-protector
 .endif

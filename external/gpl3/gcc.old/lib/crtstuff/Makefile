@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2025/09/07 04:11:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2025/10/20 14:31:37 nat Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -12,7 +12,7 @@ UNSUPPORTED_COMPILER.clang=	# defined
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
-GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${MACHINE_ARCH}
+GCCARCH=	${.CURDIR}/../../usr.bin/gcc/arch/${MACHINE_ARCH:S/m68ksf/m68k/}
 
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 

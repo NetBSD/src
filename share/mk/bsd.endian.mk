@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.23 2020/09/02 15:17:19 jakllsch Exp $
+#	$NetBSD: bsd.endian.mk,v 1.24 2025/10/20 14:31:40 nat Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
@@ -21,6 +21,7 @@ TARGET_ENDIANNESS=	1234
       ${MACHINE_ARCH} == "hppa" || \
       ${MACHINE_ARCH} == "m68000" || \
       ${MACHINE_ARCH} == "m68k" || \
+      ${MACHINE_ARCH} == "m68ksf" || \
       ${MACHINE_ARCH} == "or1k" || \
       ${MACHINE_ARCH} == "powerpc" || \
       ${MACHINE_ARCH} == "powerpc64" || \

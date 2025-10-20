@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.399 2025/07/08 12:29:40 hgutch Exp $
+#	$NetBSD: build.sh,v 1.400 2025/10/20 14:31:35 nat Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -716,7 +716,8 @@ MACHINE=ibmnws		MACHINE_ARCH=powerpc
 MACHINE=iyonix		MACHINE_ARCH=earm	ALIAS=eiyonix DEFAULT
 MACHINE=landisk		MACHINE_ARCH=sh3el
 MACHINE=luna68k		MACHINE_ARCH=m68k
-MACHINE=mac68k		MACHINE_ARCH=m68k
+MACHINE=mac68k		MACHINE_ARCH=m68ksf	ALIAS=mac68ksf
+MACHINE=mac68k		MACHINE_ARCH=m68k	DEFAULT
 MACHINE=macppc		MACHINE_ARCH=powerpc	DEFAULT
 MACHINE=macppc		MACHINE_ARCH=powerpc64	ALIAS=macppc64
 MACHINE=mipsco		MACHINE_ARCH=mipseb
@@ -2223,7 +2224,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.399 2025/07/08 12:29:40 hgutch Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.400 2025/10/20 14:31:35 nat Exp $
 # with these arguments: ${_args}
 #
 

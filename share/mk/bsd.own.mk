@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1440 2025/10/07 06:45:32 mrg Exp $
+#      $NetBSD: bsd.own.mk,v 1.1441 2025/10/20 14:31:40 nat Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/e?arm.*/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:S/m68ksf/m68k/:C/e?arm.*/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
 
 .if (${MACHINE_ARCH} == "mips64el" || \
      ${MACHINE_ARCH} == "mips64eb" || \
@@ -23,6 +23,21 @@ MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/
 MACHINE_MIPS64= 	1
 .else
 MACHINE_MIPS64= 	0
+.endif
+
+.if ${MACHINE_ARCH} == "m68ksf"
+BFD_MACHINE_ARCH=m68k
+BINUTILS_MACHINE_ARCH=m68k
+GCC_MACHINE_ARCH=m68k
+GDB_MACHINE_ARCH=m68k
+GMP_MACHINE_ARCH=m68k
+GOMP_MACHINE_ARCH=m68k
+LIBGCC_MACHINE_ARCH=m68k
+LIBC_MACHINE_ARCH=m68k
+LIBEXEC_MACHINE_ARCH=m68k
+LIBEXECINFO_MACHINE_ARCH=m68k
+LIBKERN_ARCH=m68k
+LDELFSO_MACHINE_ARCH=m68k
 .endif
 
 #
@@ -784,6 +799,7 @@ MACHINES.hppa=		hppa
 MACHINES.m68000=	sun2
 MACHINES.m68k=		amiga atari cesfic hp300 luna68k mac68k \
 			mvme68k news68k next68k sun3 virt68k x68k
+MACHINES.m68ksf=	mac68k
 MACHINES.mips=		algor arc cobalt emips evbmips ews4800mips \
 			hpcmips mipsco newsmips pmax sbmips sgimips
 MACHINES.or1k=		or1k
@@ -1020,6 +1036,7 @@ GCC_CONFIG_ARCH.i386=i486
 GCC_CONFIG_TUNE.i386=nocona
 GCC_CONFIG_TUNE.x86_64=nocona
 GNU_ARCH.m68000=m68010
+GNU_ARCH.m68ksf=m68k
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
 GNU_ARCH.mips64eb=mips64
@@ -1174,7 +1191,8 @@ MKSOFTFLOAT?=	yes
 #
 .if (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
     ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
-    ${MACHINE} == "emips" || ${MACHINE_CPU} == "sh3"
+    ${MACHINE} == "emips" || ${MACHINE_CPU} == "sh3" || \
+    ${MACHINE_ARCH} == "m68ksf"
 MKSOFTFLOAT=	yes
 .endif
 

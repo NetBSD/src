@@ -25,7 +25,7 @@
 
 CC = cc
 CFLAGS = -g -I..
-CFLAGS+=-I${.CURDIR}/../../arch/${MACHINE_ARCH}/gdtoa
+CFLAGS+=-I${.CURDIR}/../../arch/${MACHINE_ARCH:S/m68ksf/m68k/}/gdtoa
 L = -lm
 L1 = -lm
 #use "L1=-lm" when compiled with -DHonor_FLTP_ROUNDS or -DUSE_LOCALE

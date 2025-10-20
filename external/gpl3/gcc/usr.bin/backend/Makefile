@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2025/10/16 22:46:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.83 2025/10/20 14:31:37 nat Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -25,7 +25,7 @@ DPSRCS+=	version.h
 DPSRCS+=	insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
 DPSRCS+=	${DIST}/gcc/BASE-VER
 CPPFLAGS+=	-I${DIST}/libgcc
-CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${MACHINE_ARCH:S/m68ksf/m68k/}
 
 CPPFLAGS.cppdefault.cc+=	-DPREFIX=\"/usr\" \
 				-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
@@ -160,7 +160,7 @@ insn-modes.h-test: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -h >${.TARGET}
 	# Ensure that the checked in version matches
-	if ! cmp ${.TARGET} ${.CURDIR}/../gcc/arch/${MACHINE_ARCH}/insn-modes.h; then
+	if ! cmp ${.TARGET} ${.CURDIR}/../gcc/arch/${MACHINE_ARCH:S/m68ksf/m68k/}/insn-modes.h; then
 		echo "Checked in insn-modes.h does not match; rerun mknative-gcc." 1>&2
 		false
 	fi
