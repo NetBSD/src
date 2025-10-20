@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.38.10.3 2025/02/22 13:06:51 martin Exp $	*/
+/*	$NetBSD: bwi.c,v 1.38.10.4 2025/10/20 13:59:20 martin Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38.10.3 2025/02/22 13:06:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38.10.4 2025/10/20 13:59:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -6842,18 +6842,25 @@ bwi_bbp_attach(struct bwi_softc *sc)
 	uint16_t bbp_id, rw_type;
 	uint8_t rw_rev;
 	uint32_t info;
-	int error, nregwin, i;
+	int error, nregwin, i, nretry = 0;
 
 	/*
 	 * Get 0th regwin information
 	 * NOTE: 0th regwin should exist
 	 */
+retry_com:
 	error = bwi_regwin_select(sc, 0);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't select regwin 0\n");
 		return (error);
 	}
 	bwi_regwin_info(sc, &rw_type, &rw_rev);
+
+	/* Sometimes it takes a few tries to read SDIO common regwin. */
+	if (rw_type != BWI_REGWIN_T_COM &&
+	    BWI_IS_SDIO(sc) && nretry++ < 5) {
+		goto retry_com;
+	}
 
 	/*
 	 * Find out BBP id
