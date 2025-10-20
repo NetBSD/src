@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.15 2021/09/22 17:37:32 nia Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.15.4.1 2025/10/20 14:03:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.15 2021/09/22 17:37:32 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.15.4.1 2025/10/20 14:03:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -920,6 +920,22 @@ static const keysym_t hidkbd_keydesc_cf[] = {
     KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t hidkbd_keydesc_pl[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(4),   KS_a,		KS_A,		KS_aogonek,	KS_Aogonek,
+    KC(6),   KS_c,		KS_C,		KS_aacute,	KS_Aacute,
+    KC(8),   KS_e,		KS_E,		KS_eogonek,	KS_Eogonek,
+    KC(15),  KS_l,		KS_L,		KS_lstroke,	KS_Lstroke,
+    KC(17),  KS_n,		KS_N,		KS_nacute,	KS_Nacute,
+    KC(18),  KS_o,		KS_O,		KS_oacute,	KS_Oacute,
+    KC(22),  KS_s,		KS_S,		KS_sacute,	KS_Sacute,
+    KC(24),  KS_u,		KS_U,		KS_currency,	KS_currency,
+    KC(27),  KS_x,		KS_X,		KS_zacute,	KS_Zacute,
+    KC(29),  KS_z,		KS_Z,		KS_zabovedot,	KS_Zabovedot,
+    KC(34),  KS_5,		KS_percent,	KS_currency,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -965,6 +981,8 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	hidkbd_keydesc_tr_nodead),
 	KBD_MAP(KB_LA,			KB_US,	hidkbd_keydesc_la),
 	KBD_MAP(KB_CF,			KB_US,	hidkbd_keydesc_cf),
+	KBD_MAP(KB_PL,			KB_US,	hidkbd_keydesc_pl),
+	KBD_MAP(KB_PL | KB_SWAPCTRLCAPS,KB_PL,	hidkbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_HU,			KB_US,	hidkbd_keydesc_hu),
 	{0, 0, 0, 0}
 };
