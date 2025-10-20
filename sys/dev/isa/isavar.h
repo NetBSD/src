@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.56 2025/10/20 09:49:19 martin Exp $	*/
+/*	$NetBSD: isavar.h,v 1.57 2025/10/20 15:35:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct isabus_attach_args;
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	const char *_iba_busname;		/* XXX placeholder */
+	const char *_iba_busname;	/* XXX placeholder */
 	bus_space_tag_t iba_iot;	/* isa i/o space tag */
 	bus_space_tag_t iba_memt;	/* isa mem space tag */
 	bus_dma_tag_t iba_dmat;		/* isa DMA tag */
@@ -101,7 +101,7 @@ int	isabusprint(void *, const char *);
 static inline device_t
 isabus_attach(device_t dev, struct isabus_attach_args *iba)
 {
-	return config_found(dev, &iba, isabusprint,
+	return config_found(dev, iba, isabusprint,
 	    CFARGS(.iattr = "isabus",
 		   .devhandle = device_handle(dev)));
 }

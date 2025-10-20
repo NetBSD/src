@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.26 2025/10/19 20:34:04 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.27 2025/10/20 15:35:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,9 +105,9 @@ struct eisabus_attach_args {
 int	eisabusprint(void *, const char *);
 
 static inline device_t
-eisabus_attach(device_t dev, struct eisabus_attach_args *iba)
+eisabus_attach(device_t dev, struct eisabus_attach_args *eba)
 {
-	return config_found(dev, &iba, eisabusprint,
+	return config_found(dev, eba, eisabusprint,
 	    CFARGS(.iattr = "eisabus",
 		   .devhandle = device_handle(dev)));
 }
