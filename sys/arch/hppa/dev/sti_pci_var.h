@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_pci_var.h,v 1.1 2025/10/20 09:47:05 macallan Exp $	*/
+/*	$NetBSD: sti_pci_var.h,v 1.2 2025/10/20 09:50:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat
@@ -22,6 +22,7 @@
 #define STI_PCI_VAR_H
 
 int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
-int	sti_pci_check_rom(struct sti_softc *, struct pci_attach_args *, bus_space_handle_t *);
+int	sti_pci_check_rom(struct sti_softc *, struct pci_attach_args *,
+			  bus_space_handle_t *);
 
 #endif

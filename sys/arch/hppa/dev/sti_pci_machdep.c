@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_pci_machdep.c,v 1.2 2025/10/20 09:47:05 macallan Exp $	*/
+/*	$NetBSD: sti_pci_machdep.c,v 1.3 2025/10/20 09:50:10 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci_machdep.c,v 1.2 2009/04/10 17:11:27 miod Exp $	*/
 
@@ -147,7 +147,8 @@ sti_pci_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
  * Grovel the STI ROM image.
  */
 int
-sti_pci_check_rom(struct sti_softc *sc, struct pci_attach_args *pa, bus_space_handle_t *rom_handle)
+sti_pci_check_rom(struct sti_softc *sc, struct pci_attach_args *pa,
+		  bus_space_handle_t *rom_handle)
 {
 	pcireg_t address, mask;
 	bus_space_handle_t romh;
