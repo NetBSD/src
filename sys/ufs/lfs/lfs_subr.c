@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.104 2025/09/04 03:55:49 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.105 2025/10/20 04:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.104 2025/09/04 03:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.105 2025/10/20 04:20:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,6 +318,8 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	sp->seg_flags = flags;
 	sp->vp = NULL;
 	sp->seg_iocount = 0;
+	sp->bytes_written = 0;
+	sp->gatherblock_loopcount = 0;
 	(void) lfs_initseg(fs, 0);
 
 	/*
@@ -333,6 +335,30 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	return 0;
 }
 
+/*
+ * Create a marker inode.
+ */
+struct inode *
+lfs_create_marker(void)
+{
+	struct inode *marker;
+
+	marker = pool_get(&lfs_inode_pool, PR_WAITOK);
+	memset(marker, 0, sizeof(*marker));
+	marker->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(marker->inode_ext.lfs, 0, sizeof(*marker->inode_ext.lfs));
+	marker->i_state |= IN_MARKER;
+
+	return marker;
+}
+
+void
+lfs_destroy_marker(struct inode *marker)
+{
+	pool_put(&lfs_inoext_pool, marker->inode_ext.lfs);
+	pool_put(&lfs_inode_pool, marker);
+}
+
 static void lfs_unmark_dirop(struct lfs *);
 
 static void
@@ -342,6 +368,7 @@ lfs_unmark_dirop(struct lfs *fs)
 	struct vnode *vp;
 	int doit;
 
+	KASSERT(fs != NULL);
 	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
 	doit = !(fs->lfs_flags & LFS_UNDIROP);
@@ -352,13 +379,8 @@ lfs_unmark_dirop(struct lfs *fs)
 	if (!doit)
 		return;
 
-	marker = pool_get(&lfs_inode_pool, PR_WAITOK);
-	KASSERT(fs != NULL);
-	memset(marker, 0, sizeof(*marker));
-	marker->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
-	memset(marker->inode_ext.lfs, 0, sizeof(*marker->inode_ext.lfs));
-	marker->i_state |= IN_MARKER;
-
+	marker = lfs_create_marker();
+	
 	mutex_enter(&lfs_lock);
 	TAILQ_INSERT_HEAD(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 	while ((ip = TAILQ_NEXT(marker, i_lfs_dchain)) != NULL) {
@@ -387,8 +409,7 @@ lfs_unmark_dirop(struct lfs *fs)
 	wakeup(&fs->lfs_flags);
 	mutex_exit(&lfs_lock);
 
-	pool_put(&lfs_inoext_pool, marker->inode_ext.lfs);
-	pool_put(&lfs_inode_pool, marker);
+	lfs_destroy_marker(marker);
 }
 
 static void
@@ -420,7 +441,8 @@ lfs_auto_segclean(struct lfs *fs)
 			mutex_exit(&lfs_lock);
 			waited = 1;
 
-			if ((error = lfs_do_segclean(fs, i)) != 0) {
+			if ((error = lfs_do_segclean(fs, i, curlwp->l_cred,
+						     curlwp)) != 0) {
 				DLOG((DLOG_CLEAN, "lfs_auto_segclean: lfs_do_segclean returned %d for seg %d\n", error, i));
 			}
 		}
@@ -559,6 +581,61 @@ lfs_segunlock(struct lfs *fs)
 }
 
 /*
+ * Single thread the cleaner.
+ */
+int
+lfs_cleanerlock(struct lfs *fs)
+{
+	int error;
+	
+	mutex_enter(&lfs_lock);
+	while (fs->lfs_cleanlock) {
+		printf("cleanlock=%p, waiting\n", fs->lfs_cleanlock);
+		error = cv_wait_sig(&fs->lfs_cleanercv, &lfs_lock);
+		if (error)
+			break;
+	}
+	if (error == 0)
+		fs->lfs_cleanlock = curlwp;
+	mutex_exit(&lfs_lock);
+
+	return error;
+}
+
+/*
+ * Check whether we hold the cleaner lock.
+ */
+int
+lfs_cleanerlock_held(struct lfs *fs)
+{
+	int retval = 0;
+	
+	mutex_enter(&lfs_lock);
+	retval = (fs->lfs_cleanlock == curlwp);
+	mutex_exit(&lfs_lock);
+
+	return retval;
+}
+
+/*
+ * Single thread the cleaner.
+ */
+void
+lfs_cleanerunlock(struct lfs *fs)
+{
+	struct inode *ip;
+	
+	/* Clear out the cleaning list */
+	while ((ip = TAILQ_FIRST(&fs->lfs_cleanhd)) != NULL)
+		lfs_clrclean(fs, ITOV(ip));
+
+	mutex_enter(&lfs_lock);
+	fs->lfs_cleanlock = 0x0;
+	cv_broadcast(&fs->lfs_cleanercv);
+	mutex_exit(&lfs_lock);
+}
+
+/*
  * Drain dirops and start writer.
  *
  * No simple_locks are held when we enter and none are held when we return.
@@ -677,4 +754,50 @@ lfs_wakeup_cleaner(struct lfs *fs)
 
 	cv_broadcast(&fs->lfs_nextsegsleep);
 	cv_broadcast(&lfs_allclean_wakeup);
+}
+
+/*
+ * If it wasn't already on the cleaning list,
+ * add it and take a reference.  We will clear
+ * the list before dropping the seglock.
+ */
+void
+lfs_setclean(struct lfs *fs, struct vnode *vp)
+{
+	struct inode *ip;
+
+	KASSERT(lfs_cleanerlock_held(fs));
+	
+	ip = VTOI(vp);
+	if (ip->i_state & IN_CLEANING)
+		return;
+	
+	vref(vp);
+	TAILQ_INSERT_HEAD(&fs->lfs_cleanhd, ip, i_lfs_clean);
+	LFS_SET_UINO(VTOI(vp), IN_CLEANING);
+}
+
+/*
+ * Remove a vnode from the cleaning list,
+ * clear IN_CLEANING and drop the reference.
+ * Find any invalid buffers on the vnode and
+ * toss them.
+ */
+void
+lfs_clrclean(struct lfs *fs, struct vnode *vp)
+{
+	struct inode *ip;
+
+	KASSERT(lfs_cleanerlock_held(fs));
+
+	ip = VTOI(vp);
+	if (!(ip->i_state & IN_CLEANING))
+		return;
+
+	if (vp->v_type == VREG && vp != fs->lfs_ivnode)
+		lfs_ungather(fs, NULL, vp, lfs_match_data);
+	
+	TAILQ_REMOVE(&fs->lfs_cleanhd, ip, i_lfs_clean);
+	LFS_CLR_UINO(VTOI(vp), IN_CLEANING);
+	vrele(vp);
 }

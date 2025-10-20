@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.150 2025/09/15 03:55:24 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.151 2025/10/20 04:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.150 2025/09/15 03:55:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.151 2025/10/20 04:20:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,14 +463,15 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		fsb = lfs_numfrags(fs, bp->b_bcount);
 
 		ip = VTOI(vp);
-		mutex_enter(&lfs_lock);
 		if (flags & BW_CLEAN) {
-			LFS_SET_UINO(ip, IN_CLEANING);
+			lfs_setclean(fs, vp);
 		} else {
+			mutex_enter(&lfs_lock);
 			LFS_SET_UINO(ip, IN_MODIFIED);
+			mutex_exit(&lfs_lock);
 		}
-		mutex_exit(&lfs_lock);
-		lfs_sb_subavail(fs, fsb);
+		if ((bp->b_oflags & BO_DELWRI) == 0)
+			lfs_sb_subavail(fs, fsb);
 
 		mutex_enter(&bufcache_lock);
 		mutex_enter(vp->v_interlock);
@@ -589,6 +590,52 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 #define INOBYTES(fs) (lfs_sb_getuinodes(fs) * DINOSIZE(fs))
 
 /*
+ * Determine whether this filesystem, or the global state,
+ * needs to flush.
+ */
+int
+lfs_needsflush(struct lfs *fs)
+{
+	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS)
+		return 1;
+	if (locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
+		return 1;
+	if (lfs_subsys_pages > LFS_MAX_PAGES)
+		return 1;
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs))
+		return 1;
+	if (lfs_dirvcount > LFS_MAX_DIROP)
+		return 1;
+	if (fs->lfs_diropwait > 0)
+		return 1;
+
+	return 0;
+}
+
+/*
+ * As above, but needs to *wait*.
+ */
+int
+lfs_needswait(struct lfs *fs)
+{
+	if (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS)
+		return 1;
+	if (locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES)
+		return 1;
+	if (lfs_subsys_pages > LFS_WAIT_PAGES)
+		return 1;
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs)) /* XXX */
+		return 1;
+	if (lfs_dirvcount > LFS_MAX_DIROP) /* XXX */
+		return 1;
+	if (fs->lfs_diropwait > 0)
+		return 1;
+
+	return 0;
+}
+		
+
+/*
  * make sure that we don't have too many locked buffers.
  * flush buffers if needed.
  */
@@ -620,13 +667,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	 * Note that a dirop cannot ever reach this code!
 	 */
 	mutex_enter(&lfs_lock);
-	while (fs->lfs_dirops > 0 &&
-	       (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
-		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
-		lfs_subsys_pages > LFS_WAIT_PAGES ||
-		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-		lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
-	{
+	while (fs->lfs_dirops > 0 && lfs_needswait(fs)) {
 		++fs->lfs_diropwait;
 		mtsleep(&fs->lfs_writer, PRIBIO+1, "bufdirop", 0,
 			&lfs_lock);
@@ -668,11 +709,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		if (--fs->lfs_writer == 0)
 			cv_broadcast(&fs->lfs_diropscv);
 		KASSERT(fs->lfs_dirops == 0);
-	} else if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
-	    lfs_subsys_pages > LFS_MAX_PAGES ||
-	    fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
+	} else if (lfs_needsflush(fs)) {
 		lfs_flush(fs, flags, 0);
 	} else if (lfs_fs_pagetrip && fs->lfs_pages > lfs_fs_pagetrip) {
 		/*
@@ -683,12 +720,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		cv_broadcast(&lfs_writerd_cv);
 	}
 
-	while (locked_queue_count + INOCOUNT(fs) >= LFS_WAIT_BUFS ||
-		locked_queue_bytes + INOBYTES(fs) >= LFS_WAIT_BYTES ||
-		lfs_subsys_pages > LFS_WAIT_PAGES ||
-		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-		lfs_dirvcount > LFS_MAX_DIROP) {
-
+	while (lfs_needswait(fs)) {
 		if (lfs_dostats)
 			++lfs_stats.wait_exceeded;
 		DLOG((DLOG_AVAIL, "lfs_check: waiting: count=%d, bytes=%ld\n",
@@ -705,7 +737,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * lfs_flush might not flush all the buffers, if some of the
 		 * inodes were locked or if most of them were Ifile blocks
 		 * and we weren't asked to checkpoint.	Try flushing again
-		 * to keep us from blocking indefinitely.
+		 * after waiting, to keep us from blocking indefinitely.
 		 */
 		if (locked_queue_count + INOCOUNT(fs) >= LFS_MAX_BUFS ||
 		    locked_queue_bytes + INOBYTES(fs) >= LFS_MAX_BYTES) {

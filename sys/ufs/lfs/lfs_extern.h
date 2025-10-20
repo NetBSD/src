@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.122 2025/09/17 04:01:53 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.123 2025/10/20 04:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@
 #ifndef _UFS_LFS_LFS_EXTERN_H_
 #define _UFS_LFS_LFS_EXTERN_H_
 
+#include <ufs/lfs/lfs.h>
+
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 
@@ -107,6 +109,8 @@ struct dlfs;
 struct lfs;
 struct segment;
 struct block_info;
+struct lfs_inofuncarg;
+struct lfs_finfofuncarg;
 
 __BEGIN_DECLS
 
@@ -160,6 +164,8 @@ int lfs_bwrite_ext(struct buf *, int);
 int lfs_fits(struct lfs *, int);
 void lfs_flush_fs(struct lfs *, int);
 void lfs_flush(struct lfs *, int, int);
+int lfs_needsflush(struct lfs *);
+int lfs_needswait(struct lfs *);
 int lfs_check(struct vnode *, daddr_t, int);
 void lfs_freebuf(struct lfs *, struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, daddr_t, size_t, int);
@@ -191,8 +197,19 @@ void lfs_finalize_fs_seguse(struct lfs *);
 int lfs_rename(void *);
 
 /* lfs_rfw.c */
+int lfs_parse_pseg(struct lfs *, daddr_t *, u_int64_t,
+	kauth_cred_t, int *, struct lwp *,
+	int (*)(struct lfs_inofuncarg *),
+	int (*)(struct lfs_finfofuncarg *),
+	int, void *);
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **, union lfs_dinode *);
 void lfs_roll_forward(struct lfs *, struct mount *, struct lwp *);
+int lfs_rewrite_segment(struct lfs *, int, int *, kauth_cred_t, struct lwp *);
+int lfs_rewrite_segments(struct lfs *, int *, int, int *, int *, struct lwp *);
+#if 0
+int lfs_rewrite_file(struct lfs *, ino_t, struct lwp *);
+#endif /* 0 */
+int lfs_checkempty(struct lfs *, int, kauth_cred_t, struct lwp *);
 
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
@@ -202,10 +219,12 @@ int lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
 int lfs_gatherblock(struct segment *, struct buf *, kmutex_t *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
+int lfs_ungather(struct lfs *, struct segment *, struct vnode *, int (*match)(struct lfs *, struct buf *));
 void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
     daddr_t, daddr_t, int);
 void lfs_updatemeta(struct segment *);
 int lfs_rewind(struct lfs *, int);
+int lfs_invalidate(struct lfs *, int);
 void lfs_unset_inval_all(struct lfs *);
 int lfs_initseg(struct lfs *, uint16_t);
 int lfs_writeseg(struct lfs *, struct segment *);
@@ -234,9 +253,16 @@ void lfs_writer_enter(struct lfs *, const char *);
 int lfs_writer_tryenter(struct lfs *);
 void lfs_writer_leave(struct lfs *);
 void lfs_wakeup_cleaner(struct lfs *);
+struct inode *lfs_create_marker(void);
+void lfs_destroy_marker(struct inode *);
+void lfs_setclean(struct lfs *, struct vnode *);
+void lfs_clrclean(struct lfs *, struct vnode *);
+int lfs_cleanerlock(struct lfs *);
+int lfs_cleanerlock_held(struct lfs *);
+void lfs_cleanerunlock(struct lfs *);
 
 /* lfs_syscalls.c */
-int lfs_do_segclean(struct lfs *, unsigned long);
+int lfs_do_segclean(struct lfs *, unsigned long, kauth_cred_t, struct lwp *);
 int lfs_segwait(fsid_t *, struct timeval *);
 int lfs_bmapv(struct lwp *, fsid_t *, struct block_info *, int);
 int lfs_markv(struct lwp *, fsid_t *, struct block_info *, int);

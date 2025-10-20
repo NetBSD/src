@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.389 2025/09/29 17:01:48 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.390 2025/10/20 04:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.389 2025/09/29 17:01:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.390 2025/10/20 04:20:37 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1110,6 +1110,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_dirops = 0;
 	fs->lfs_nadirop = 0;
 	fs->lfs_seglock = 0;
+	fs->lfs_cleanlock = 0;
 	fs->lfs_pdflush = 0;
 	fs->lfs_sleepers = 0;
 	fs->lfs_pages = 0;
@@ -1119,6 +1120,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	cv_init(&fs->lfs_diropscv, "lfs_dirop");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 	cv_init(&fs->lfs_nextsegsleep, "segment");
+	cv_init(&fs->lfs_cleanercv, "cleancv");
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -1173,6 +1175,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	lfs_setup_resblks(fs);
 	/* Set up vdirop tailq */
 	TAILQ_INIT(&fs->lfs_dchainhd);
+	/* and cleaning vnode tailq */
+	TAILQ_INIT(&fs->lfs_cleanhd);
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
 	/* and delayed segment accounting for truncation list */
@@ -1427,6 +1431,9 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	DEBUG_CHECK_FREELIST(fs);
 
+	/* Check for dirty blocks on ifile */
+	KASSERT(LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd) == NULL);
+	
 	/* Finish with the Ifile, now that we're done with it */
 	vgone(fs->lfs_ivnode);
 
@@ -2468,7 +2475,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	SEGUSE *sup;
 	CLEANERINFO *cip;
 	struct buf *bp, *obp;
-	daddr_t olast, nlast, ilast, noff, start, end;
+	daddr_t olast, nlast, ilast, noff, start, end, dirtysums;
 	struct vnode *ivp;
 	struct inode *ip;
 	int error, badnews, inc, oldnsegs;
@@ -2486,15 +2493,31 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* We always have to have two superblocks */
 	if (newnsegs <= lfs_dtosn(fs, lfs_sb_getsboff(fs, 1)))
-		/* XXX this error code is rather nonsense */
-		return EFBIG;
+		return EINVAL;
 
 	ivp = fs->lfs_ivnode;
 	ip = VTOI(ivp);
 	error = 0;
 
-	/* Take the segment lock so no one else calls lfs_newseg() */
-	lfs_seglock(fs, SEGM_PROT);
+	/* Take the segment lock */
+	lfs_seglock(fs, SEGM_CKP);
+
+	/* If we're shrinking, clean out the upper segments */
+	if (newnsegs < oldnsegs) {
+		lfs_rewind(fs, newnsegs);
+		for (i = newnsegs; i < oldnsegs; i++) {
+			uint32_t bytes;
+			LFS_SEGENTRY(sup, fs, i, bp);
+			bytes = sup->su_nbytes;
+			brelse(bp, 0);
+			if (bytes > 0) {
+				if ((error = lfs_rewrite_segment(fs, i, NULL, NOCRED, curlwp)) != 0)
+					goto out;
+			}
+			
+			lfs_invalidate(fs, i);
+		}
+	}
 
 	/*
 	 * Make sure the segments we're going to be losing, if any,
@@ -2502,8 +2525,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	 * cannot change underneath us.  Count the superblocks we lose,
 	 * while we're at it.
 	 */
-	sbbytes = csbbytes = 0;
-	cgain = 0;
+	sbbytes = csbbytes = cgain = dirtysums = 0;
 	for (i = newnsegs; i < oldnsegs; i++) {
 		LFS_SEGENTRY(sup, fs, i, bp);
 		badnews = sup->su_nbytes || !(sup->su_flags & SEGUSE_INVAL);
@@ -2513,7 +2535,8 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			++cgain;
 			if (sup->su_flags & SEGUSE_SUPERBLOCK)
 				csbbytes += LFS_SBPAD;
-		}
+		} else
+			dirtysums += sup->su_nsums;
 		brelse(bp, 0);
 		if (badnews) {
 			error = EBUSY;
@@ -2542,17 +2565,24 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Allocate new Ifile blocks */
 	for (i = ilast; i < ilast + noff; i++) {
-		if (lfs_balloc(ivp, i * lfs_sb_getbsize(fs), lfs_sb_getbsize(fs), NOCRED, 0,
+		if (lfs_balloc(ivp, i * lfs_sb_getbsize(fs),
+			       lfs_sb_getbsize(fs), NOCRED, 0,
 			       &bp) != 0)
 			panic("balloc extending ifile");
 		memset(bp->b_data, 0, lfs_sb_getbsize(fs));
 		VOP_BWRITE(bp->b_vp, bp);
 	}
 
-	/* Register new ifile size */
-	ip->i_size += noff * lfs_sb_getbsize(fs);
-	lfs_dino_setsize(fs, ip->i_din, ip->i_size);
-	uvm_vnp_setsize(ivp, ip->i_size);
+	/*
+	 * If we are expanding, increase the Ifile size now
+	 * so we can allocate blocks.  If we are shrinking
+	 * we need to wait until we have moved the data.
+	 */
+	if (noff > 0) {
+		ip->i_size += noff * lfs_sb_getbsize(fs);
+		lfs_dino_setsize(fs, ip->i_din, ip->i_size);
+		uvm_vnp_setsize(ivp, ip->i_size);
+	}
 
 	/* Copy the inode table to its new position */
 	if (noff != 0) {
@@ -2582,7 +2612,8 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	if (newnsegs > oldnsegs) {
 		for (i = oldnsegs; i < newnsegs; i++) {
 			if ((error = bread(ivp, i / lfs_sb_getsepb(fs) +
-					   lfs_sb_getcleansz(fs), lfs_sb_getbsize(fs),
+					   lfs_sb_getcleansz(fs),
+					   lfs_sb_getbsize(fs),
 					   B_MODIFY, &bp)) != 0)
 				panic("lfs: ifile read: %d", error);
 			while ((i + 1) % lfs_sb_getsepb(fs) && i < newnsegs) {
@@ -2616,9 +2647,15 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	lfs_sb_setnseg(fs, newnsegs);
 	lfs_sb_setsegtabsz(fs, nlast - lfs_sb_getcleansz(fs));
 	lfs_sb_addsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)));
-	lfs_sb_adddsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)) - lfs_btofsb(fs, sbbytes));
-	lfs_sb_addbfree(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)) - lfs_btofsb(fs, sbbytes)
-		       - gain * lfs_btofsb(fs, lfs_sb_getbsize(fs) / 2));
+	lfs_sb_adddsize(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs))
+			+ lfs_btofsb(fs, sbbytes));
+	lfs_sb_addbfree(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs))
+			+ lfs_btofsb(fs, sbbytes)
+#if 0 /* This doesn't match fsck_lfs */
+			- gain * lfs_btofsb(fs, lfs_sb_getbsize(fs) / 2)
+			+ dirtysums * lfs_btofsb(fs, lfs_sb_getsumsize(fs))
+#endif /* 0 */
+		);
 	if (gain > 0) {
 		lfs_sb_addnclean(fs, gain);
 		lfs_sb_addavail(fs, gain * lfs_btofsb(fs, lfs_sb_getssize(fs)));
@@ -2637,9 +2674,12 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		fs->lfs_suflags[0][i] = fs->lfs_suflags[1][i] = 0x0;
 
 	/* Truncate Ifile if necessary */
-	if (noff < 0)
+	if (noff < 0) {
+		vn_lock(ivp, LK_EXCLUSIVE);
 		lfs_truncate(ivp, ivp->v_size + (noff << lfs_sb_getbshift(fs)), 0,
 		    NOCRED);
+		VOP_UNLOCK(ivp);
+	}
 
 	/* Update cleaner info so the cleaner can die */
 	/* XXX what to do if bread fails? */

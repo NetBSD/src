@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.210 2025/09/17 03:50:38 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.211 2025/10/20 04:20:36 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -211,6 +211,9 @@
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
 #define LFS_MARKV_MAXBLKCNT	65536	/* Max block count for lfs_markv() */
+#define LFS_FILESTATS_MAXCNT	65536	/* Max entry count for LFCNFILESTATS */
+#define LFS_REWRITE_MAXCNT	65536	/* Max entry count for LFCNREWRITE* */
+#define LFS_SEGUSE_MAXCNT	65536	/* Max entry count for LFCNSEGUSE */
 
 /*
  * Directories
@@ -1061,6 +1064,7 @@ struct lfs {
 	struct lfs_res_blk *lfs_resblk;	/* Reserved memory for pageout */
 	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
 	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
+	TAILQ_HEAD(, inode) lfs_cleanhd; /* vnodes being cleaned */
 #define LFS_RESHASH_WIDTH 17
 	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH];
 	int	  lfs_pdflush;		/* pagedaemon wants us to flush */
@@ -1117,7 +1121,33 @@ struct lfs {
 	/* Hint from cleaner, only valid if curlwp == um_cleaner_thread. */
 	/* XXX change this to BLOCK_INFO after resorting this file */
 	struct block_info *lfs_cleaner_hint;
+
+	/* Cleaner lock */
+	struct lwp *lfs_cleanlock;	/* LWP of lock holder */
+	kcondvar_t lfs_cleanercv;	/* condvar for cleaner */
 #endif
+};
+
+/*
+ * Structures used to pass information between the partial-segment
+ * parser and its callback functions.
+ */
+struct lfs_inofuncarg {
+	struct lfs *fs;		/* The filesystem */
+	daddr_t offset;		/* Address of the inode block */
+	kauth_cred_t cred;	/* Credential */
+	struct lwp *l;		/* lwp */
+	char *buf;		/* Pre-allocated buffer space */
+	void *arg;		/* Opaque argument to function */
+};
+
+struct lfs_finfofuncarg {
+	struct lfs *fs;		/* The file system */
+	FINFO *finfop;		/* The FINFO structure to parse */
+	daddr_t *offsetp;	/* Address of the first block */
+	kauth_cred_t cred;	/* Credential */
+	struct lwp *l;		/* lwp */
+	void *arg;		/* Opaque argument to function */
 };
 
 /*
@@ -1195,6 +1225,8 @@ struct segment {
 	uint16_t seg_flags;		/* run-time flags for this segment */
 	uint32_t seg_iocount;		/* number of ios pending */
 	int	  ndupino;		/* number of duplicate inodes */
+	uint64_t bytes_written;		/* bytes written */
+	int	gatherblock_loopcount;	/* lfs_gatherblock loop count */
 };
 
 /* Statistics Counters */
@@ -1217,31 +1249,69 @@ struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 	u_int   segs_reclaimed;
 };
 
+struct lfs_write_stats {
+	int direct; /* Direct data written, in frags */
+	int offset; /* Offset difference, in frags */
+};
+#define LFCNRECLAIM	_FCNW_FSPRIV('L', 4, struct lfs_write_stats)
+#define LFCNREWIND	_FCNR_FSPRIV('L', 6, int)
+#define LFCNINVAL	_FCNR_FSPRIV('L', 7, int)
+#define LFCNRESIZE	_FCNR_FSPRIV('L', 8, int)
+#define LFCNWRAPSTOP	_FCNR_FSPRIV('L', 9, int)
+#define LFCNWRAPGO	_FCNR_FSPRIV('L', 10, int)
+struct lfs_fhandle {
+	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
+};
+#define LFCNIFILEFH	_FCNW_FSPRIV('L', 11, struct lfs_fhandle)
+#define LFCNWRAPPASS	_FCNR_FSPRIV('L', 12, int)
+# define LFS_WRAP_GOING	  0x0
+# define LFS_WRAP_WAITING 0x1
+#define LFCNWRAPSTATUS	_FCNW_FSPRIV('L', 13, int)
+
 /* Fcntls to take the place of the lfs syscalls */
 struct lfs_fcntl_markv {
 	BLOCK_INFO *blkiov;	/* blocks to relocate */
 	int blkcnt;		/* number of blocks (limited to 65536) */
 };
-
 #define LFCNSEGWAITALL	_FCNR_FSPRIV('L', 14, struct timeval)
 #define LFCNSEGWAIT	_FCNR_FSPRIV('L', 15, struct timeval)
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 16, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 17, struct lfs_fcntl_markv)
-#define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
 
-struct lfs_fhandle {
-	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
+/* File defragmentation */
+struct lfs_filestats {
+	ino_t ino;	/* Inode number */
+	off_t nblk;	/* Block count */
+	int dc_count;	/* Count of discontinuities (gaps) */
+	daddr_t dc_sum;	/* Sum of absolute values of gap lengths */
 };
-#define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
-#define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
-#define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
-#define LFCNWRAPSTOP	 _FCNR_FSPRIV('L', 9, int)
-#define LFCNWRAPGO	 _FCNR_FSPRIV('L', 10, int)
-#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 11, struct lfs_fhandle)
-#define LFCNWRAPPASS	 _FCNR_FSPRIV('L', 12, int)
-# define LFS_WRAP_GOING   0x0
-# define LFS_WRAP_WAITING 0x1
-#define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
+struct lfs_filestat_req {
+	ino_t ino;	/* Starting inode number */
+	int len;	/* Number of inodes to report */
+	struct lfs_filestats *fss; /* Out: file statistics */
+};
+#define LFCNFILESTATS	_FCNRW_FSPRIV('L', 18, struct lfs_filestat_req)
+struct lfs_inode_array {
+	size_t len;	/* Length of array */
+	ino_t *inodes;	/* Array of inode numbers */
+	struct lfs_write_stats stats; /* Out: frags written */
+};
+#define LFCNREWRITEFILE	_FCNRW_FSPRIV('L', 19, struct lfs_inode_array)
+#define LFCNSCRAMBLE	_FCNRW_FSPRIV('L', 20, struct lfs_inode_array)
+/* Segment rewriting */
+struct lfs_segnum_array {
+	size_t len;	/* Length of array */
+	int *segments;	/* Array of segment numbers */
+	struct lfs_write_stats stats; /* Out: frags written */
+};
+#define LFCNREWRITESEGS	_FCNRW_FSPRIV('L', 21, struct lfs_segnum_array)
+#define LFCNCLEANERINFO _FCNW_FSPRIV('L', 22, CLEANERINFO64)
+struct lfs_seguse_array {
+	int start;	/* Start segment */
+	size_t len;	/* Length of the array */
+	SEGUSE *seguse; /* Out: array of seguse */
+};
+#define LFCNSEGUSE      _FCNRW_FSPRIV('L', 23, struct lfs_seguse_array)
 
 /* Debug segment lock */
 #ifdef notyet

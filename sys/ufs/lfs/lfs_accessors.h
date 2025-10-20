@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.52 2025/09/15 04:14:59 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.53 2025/10/20 04:20:37 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -828,14 +828,7 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
  * may not be mapped!
  */
 /* Read in the block with a specific inode from the ifile. */
-#define	LFS_IENTRY(IP, F, IN, BP) do {					\
-	int _e;								\
-	SHARE_IFLOCK(F);						\
-	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
-	if ((_e = bread((F)->lfs_ivnode,				\
-	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
-	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
-		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
+#define LFS_IENTRY_INBLOCK(IP, F, IN, BP) do {				\
 	if ((F)->lfs_is64) {						\
 		(IP) = (IFILE *)((IFILE64 *)(BP)->b_data +		\
 				 (IN) % lfs_sb_getifpb(F));		\
@@ -846,6 +839,16 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
 				 (IN) % lfs_sb_getifpb(F));		\
 	}								\
+} while (0)
+#define	LFS_IENTRY(IP, F, IN, BP) do {					\
+	int _e;								\
+	SHARE_IFLOCK(F);						\
+	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
+	if ((_e = bread((F)->lfs_ivnode,				\
+	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
+	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
+		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
+	LFS_IENTRY_INBLOCK(IP, F, IN, BP);				\
 	UNSHARE_IFLOCK(F);						\
 } while (0)
 #define LFS_IENTRY_NEXT(IP, F) do { \

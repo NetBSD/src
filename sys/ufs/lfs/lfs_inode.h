@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.26 2022/03/23 13:06:06 andvar Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.27 2025/10/20 04:20:37 perseant Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -183,6 +183,7 @@ struct lfs_inode_ext {
 	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
+	TAILQ_ENTRY(inode) lfs_clean;   /* Mount point cleaning inodes list */
 #define LFSI_NO_GOP_WRITE 0x01
 #define LFSI_DELETED      0x02
 #define LFSI_WRAPBLOCK    0x04
@@ -200,6 +201,7 @@ struct lfs_inode_ext {
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
 #define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
+#define i_lfs_clean		inode_ext.lfs->lfs_clean
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
 #define i_lfs_pchain		inode_ext.lfs->lfs_pchain
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags

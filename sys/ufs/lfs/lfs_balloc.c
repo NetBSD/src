@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.96 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.97 2025/10/20 04:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.96 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.97 2025/10/20 04:20:37 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -688,14 +688,22 @@ lfs_deregister_block(struct vnode *vp, daddr_t lbn)
 	struct lbnentry *lbp;
 	struct lbnentry tmp;
 
+	KASSERT(vp != NULL);
 	ip = VTOI(vp);
+	KASSERT(ip != NULL);
+	fs = ip->i_lfs;
+	KASSERT(fs != NULL);
 
 	/* Don't count metadata */
 	if (lbn < 0 || vp->v_type != VREG || ip->i_number == LFS_IFILE_INUM)
 		return;
 
 	mutex_enter(&lfs_lock);
-	fs = ip->i_lfs;
+	if (fs->lfs_sp && (fs->lfs_sp->seg_flags & SEGM_CLEAN)) {
+		mutex_exit(&lfs_lock);
+		return;
+	}
+		
 	tmp.lbn = lbn;
 	if ((lbp = SPLAY_FIND(lfs_splay, &ip->i_lfs_lbtree, &tmp)) != NULL)
 		lfs_do_deregister(fs, ip, lbp);
