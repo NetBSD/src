@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: libelf_ar.c,v 1.6 2025/10/20 17:23:25 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
@@ -41,7 +41,7 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
-__RCSID("$NetBSD: libelf_ar.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+__RCSID("$NetBSD: libelf_ar.c,v 1.6 2025/10/20 17:23:25 jkoshy Exp $");
 ELFTC_VCSID("Id: libelf_ar.c 3977 2022-05-01 06:45:34Z jkoshy");
 
 #define	LIBELF_NALLOC_SIZE	16
@@ -171,6 +171,11 @@ _libelf_ar_gethdr(Elf *e)
 	    &n) == 0)
 		goto error;
 	eh->ar_mode = (mode_t) n;
+
+	if (_libelf_ar_get_number(arh->ar_date, sizeof(arh->ar_date), 10,
+	    &n) == 0)
+		goto error;
+	eh->ar_date = (time_t) n;
 
 	if (_libelf_ar_get_number(arh->ar_size, sizeof(arh->ar_size), 10,
 	    &n) == 0)
