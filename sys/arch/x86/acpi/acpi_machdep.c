@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.39 2025/04/30 05:15:07 imil Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.39.2.1 2025/10/20 14:09:34 martin Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.39 2025/04/30 05:15:07 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.39.2.1 2025/10/20 14:09:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,6 +592,17 @@ acpi_md_callback(struct acpi_softc *sc)
 #endif
 
 	acpimcfg_init(x86_bus_space_mem, &acpi_md_mcfg_ops);
+
+	/*
+	 * Run acpimcfg_configure_bus for each of the PCI busses we
+	 * have discovered from MPACPI.
+	 *
+	 * This must happen after discovering PCI busses from MPACPI
+	 * (which happens in mpacpi_find_interrupts) and before we
+	 * attach any PCI drivers (which happens after acpi_md_callback
+	 * returns and acpi0 finishes attaching).
+	 */
+	mpacpi_configure_busses();
 }
 
 #ifndef XENPV

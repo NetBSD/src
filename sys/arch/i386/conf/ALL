@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.522 2025/03/27 12:22:44 riastradh Exp $
+# $NetBSD: ALL,v 1.522.2.1 2025/10/20 14:09:34 martin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.522 $"
+#ident		"ALL-$Revision: 1.522.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -464,6 +464,8 @@ options 	PCIBIOS_SHARP_MM20_FIXUP # this code makes the Sharp MM 20
 					# work, but should not be enabled
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+options 	PCI_RESOURCE		# Allocate unconfigured PCI resources
 
 # PCI fixups, for both PCIBIOS and ACPI
 options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses

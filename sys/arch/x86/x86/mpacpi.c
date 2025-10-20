@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.111 2024/09/30 17:00:10 bouyer Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.111.2.1 2025/10/20 14:09:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,13 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.111 2024/09/30 17:00:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.111.2.1 2025/10/20 14:09:34 martin Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
 #include "opt_ddb.h"
 #include "opt_mpbios.h"
 #include "opt_multiprocessor.h"
+#include "opt_pci.h"
 #include "pchb.h"
 
 #include <sys/param.h>
@@ -69,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.111 2024/09/30 17:00:10 bouyer Exp $");
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
+#include <dev/acpi/acpi_mcfg.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -90,6 +92,7 @@ ACPI_MODULE_NAME       ("mpacpi")
 #if NPCI > 0
 struct mpacpi_pcibus {
 	TAILQ_ENTRY(mpacpi_pcibus) mpr_list;
+	ACPI_HANDLE mpr_handle;
 	devhandle_t mpr_devhandle;
 	ACPI_BUFFER mpr_buf;		/* preserve _PRT */
 	int mpr_seg;			/* PCI segment number */
@@ -496,6 +499,7 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 	}
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
+	mpr->mpr_handle = ad->ad_handle;
 	mpr->mpr_devhandle =
 	    devhandle_from_acpi(devhandle_invalid(), ad->ad_handle);
 	mpr->mpr_buf = buf;
@@ -1021,6 +1025,48 @@ mpacpi_pci_attach_hook(device_t parent, device_t self,
 	return 0;
 }
 #endif
+
+void
+mpacpi_configure_busses(void)
+{
+#ifdef PCI_RESOURCE
+	struct mpacpi_pcibus *mpr;
+	struct mp_bus *mpb;
+	int error;
+
+	TAILQ_FOREACH(mpr, &mpacpi_pcibusses, mpr_list) {
+		if (mp_verbose) {
+			printf("MPACPI PCI bus handle %s seg %d bus %d\n",
+			    acpi_name(mpr->mpr_handle),
+			    mpr->mpr_seg,
+			    mpr->mpr_bus);
+		}
+
+		if (mpr->mpr_bus < 0) {
+			printf("MPACPI PCI bus number %d is negative\n",
+			    mpr->mpr_bus);
+			return;
+		}
+		if (mpr->mpr_bus < 0 || mpr->mpr_bus >= mpacpi_maxpci) {
+			printf("MPACPI PCI bus number %d exceeds mpacpi_maxpci"
+			    " %d\n",
+			    mpr->mpr_bus, mpacpi_maxpci);
+			return;
+		}
+
+		mpb = &mp_busses[mpr->mpr_bus];
+		error = acpimcfg_configure_bus(mpb->mb_dev,
+		    mpb->mb_pci_chipset_tag, mpr->mpr_handle, mpr->mpr_bus,
+		    /*mapcfgspace*/true);
+		if (error) {
+			printf("MPACPI PCI bus number %d configuration failed:"
+			    " %d\n",
+			    mpr->mpr_bus, error);
+			return;
+		}
+	}
+#endif
+}
 
 int
 mpacpi_findintr_linkdev(struct mp_intr_map *mip)

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.h,v 1.5 2022/10/14 22:10:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.h,v 1.5.10.1 2025/10/20 14:09:34 martin Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,18 @@
 #ifndef	_SYS_DEV_ACPI_ACPI_MCFG_H
 #define	_SYS_DEV_ACPI_ACPI_MCFG_H
 
+#include <sys/bus.h>
+#include <sys/device_if.h>
+#include <sys/stdbool.h>
+#include <sys/stdint.h>
+
+#include <dev/acpi/acpivar.h>
+
+#include <dev/pci/pcivar.h>
+
+struct acpi_softc;
 struct acpimcfg_ops;
+
 void	acpimcfg_probe(struct acpi_softc *);
 int	acpimcfg_init(bus_space_tag_t, const struct acpimcfg_ops *);
 int	acpimcfg_map_bus(device_t, pci_chipset_tag_t, int);
