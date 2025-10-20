@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.28 2024/11/19 15:15:43 riastradh Exp $
+#	$NetBSD: files.hppa,v 1.29 2025/10/20 09:42:46 macallan Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -171,6 +171,7 @@ file	arch/hppa/dev/apic.c		elroy
 attach	sti at gedoens with sti_gedoens
 file	arch/hppa/dev/sti_sgc.c		sti_gedoens
 file	arch/hppa/dev/sti_pci_machdep.c	sti_pci
+defflag opt_sti_pci.h STI_PCI_DEBUG
 
 attach	siop at gedoens with siop_gedoens
 file	arch/hppa/dev/siop_sgc.c	siop_gedoens
@@ -283,7 +284,7 @@ attach	hyperfb at gedoens
 file	arch/hppa/dev/hyperfb.c		hyperfb
 defflag opt_hyperfb.h HYPERFB_DEBUG
 
-# Visualize FX4, aka Summit
+# Visualize FX4, aka Summit, aka warpdrive
 device	summitfb: wsemuldisplaydev, rasops8, vcons, glyphcache, sti_pci, sti
 attach	summitfb at pci
 file	arch/hppa/dev/summitfb.c	summitfb
