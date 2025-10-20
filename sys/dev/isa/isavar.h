@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.55 2025/10/19 20:34:04 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.56 2025/10/20 09:49:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  * Definitions for ISA autoconfiguration.
  */
 
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
 
