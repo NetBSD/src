@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.390 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.391 2025/10/20 19:49:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.390 2025/10/20 04:20:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.391 2025/10/20 19:49:05 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2480,7 +2480,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	struct inode *ip;
 	int error, badnews, inc, oldnsegs;
 	int sbbytes, csbbytes, gain, cgain;
-	int i;
+	int i, nexti;
 
 	/* Only support v2 and up */
 	if (lfs_sb_getversion(fs) < 2)
@@ -2609,20 +2609,19 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	}
 
 	/* If we are expanding, write the new empty SEGUSE entries */
-	if (newnsegs > oldnsegs) {
-		for (i = oldnsegs; i < newnsegs; i++) {
-			if ((error = bread(ivp, i / lfs_sb_getsepb(fs) +
-					   lfs_sb_getcleansz(fs),
-					   lfs_sb_getbsize(fs),
-					   B_MODIFY, &bp)) != 0)
-				panic("lfs: ifile read: %d", error);
-			while ((i + 1) % lfs_sb_getsepb(fs) && i < newnsegs) {
-				sup = &((SEGUSE *)bp->b_data)[i % lfs_sb_getsepb(fs)];
-				memset(sup, 0, sizeof(*sup));
-				i++;
-			}
-			VOP_BWRITE(bp->b_vp, bp);
-		}
+	for (i = oldnsegs, nexti = 0; i < newnsegs; i = nexti) {
+		nexti = roundup(i + 1, lfs_sb_getsepb(fs));
+		if (nexti > newnsegs)
+			nexti = newnsegs;
+		
+		if ((error = bread(ivp, i / lfs_sb_getsepb(fs) +
+				   lfs_sb_getcleansz(fs),
+				   lfs_sb_getbsize(fs),
+				   (i > oldnsegs ? B_MODIFY : 0), &bp)) != 0)
+			panic("lfs: ifile read: %d", error);
+		sup = &((SEGUSE *)bp->b_data)[i % lfs_sb_getsepb(fs)];
+		memset(sup, 0, (nexti - i) * sizeof(SEGUSE));
+		VOP_BWRITE(bp->b_vp, bp);
 	}
 
 	/* Zero out unused superblock offsets */
