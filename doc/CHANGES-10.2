@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.62 2025/10/19 12:49:31 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.63 2025/10/20 14:07:22 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1201,4 +1201,21 @@ sys/dev/pci/virtio.c				1.84
 
 	virtio(4): PR 59618: use paravirt_membar_sync(9) where needed.
 	[riastradh, ticket #1178]
+
+sys/dev/ic/bwi.c				1.44
+
+	bwi(4): retry SDIO common regwin probe a few times before giving up.
+	[jmcneill, ticket #1179]
+
+sys/dev/hid/hidkbdmap.c				1.16
+sys/dev/pckbport/wskbdmap_mfii.c		1.36
+
+	wskbd(4): PR 57234, 57844, 58405: define USB and PS/2 keymaps
+	for KB_PL.
+	[nia, ticket #1180]
+
+sys/arch/sparc/dev/apc.c			1.3
+
+	sparc: hack to inform QEMU about idle CPUs.
+	[jdc, ticket #1181]
 
