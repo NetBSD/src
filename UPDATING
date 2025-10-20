@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.383 2025/07/21 17:07:26 martin Exp $
+$NetBSD: UPDATING,v 1.384 2025/10/20 10:14:07 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,34 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20251019:
+	Changes to how libcrypto got linked (libpthread not required
+	any more) cause failures in update builds. To fix, run
+	(as your build user) a "make cleandir" in the following
+	subdirectories:
+
+	crypto/external/apache2/openssl
+	crypto/external/bsd/heimdal
+	crypto/external/bsd/netpgp
+	crypto/external/bsd/openssh
+	external/bsd/libfido2
+	external/bsd/nsd
+	external/bsd/ntp
+	external/bsd/pam-u2f
+	external/bsd/ppp
+	external/bsd/tcpdump
+	external/bsd/wpa
+	games/factor
+	libexec/httpd
+	tests/crypto/libcrypto
+	tests/lib/libc/hash
+	usr.bin/dc
+	usr.bin/ftp
+	usr.bin/moduli
+	usr.bin/nbsvtool
+	usr.sbin/plainrsa-gen
+	usr.sbin/syslogd
 
 20250721:
 	GCC 12.5 was imported and there may be weird build issues.
