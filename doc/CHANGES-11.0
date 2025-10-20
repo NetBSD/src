@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.29 2025/10/19 11:14:08 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.30 2025/10/20 14:11:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -429,4 +429,21 @@ sys/dev/pci/pvscsi.c				1.4,1.5
 
 	pvscsi(4): fix bus_dma syncs (related to PR 59618).
 	[riastradh, ticket #64]
+
+sys/dev/ic/bwi.c				1.44
+
+	bwi(4): retry SDIO common regwin probe a few times before giving up.
+	[jmcneill, ticket #65]
+
+sys/arch/amd64/conf/ALL				1.194
+sys/arch/amd64/conf/GENERIC			1.618
+sys/arch/i386/conf/ALL				1.524
+sys/arch/i386/conf/GENERIC			1.1261
+sys/arch/x86/acpi/acpi_machdep.c		1.40
+sys/arch/x86/include/mpacpi.h			1.12
+sys/arch/x86/x86/mpacpi.c			1.112
+sys/dev/acpi/acpi_mcfg.h			1.6
+
+	x86: PR 59118: kernel option PCI_RESOURCE.
+	[riastradh, ticket #66]
 
