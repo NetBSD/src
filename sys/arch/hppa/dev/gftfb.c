@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.29 2025/03/11 06:04:19 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.30 2025/10/20 09:47:05 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -46,7 +46,7 @@
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
-
+#include <hppa/dev/sti_pci_var.h>
 #include "opt_gftfb.h"
 
 #ifdef GFTFB_DEBUG
@@ -95,12 +95,8 @@ struct	gftfb_softc {
 CFATTACH_DECL_NEW(gftfb, sizeof(struct gftfb_softc),
     gftfb_match, gftfb_attach, NULL, NULL);
 
-int	gftfb_readbar(struct sti_softc *, struct pci_attach_args *, u_int, int);
-int	gftfb_check_rom(struct gftfb_softc *, struct pci_attach_args *);
 void	gftfb_enable_rom(struct sti_softc *);
 void	gftfb_disable_rom(struct sti_softc *);
-void	gftfb_enable_rom_internal(struct gftfb_softc *);
-void	gftfb_disable_rom_internal(struct gftfb_softc *);
 
 void 	gftfb_setup(struct gftfb_softc *);
 
@@ -114,9 +110,6 @@ int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
 int	sti_screen_setup(struct sti_screen *, int);
 void	sti_describe_screen(struct sti_softc *, struct sti_screen *);
-
-#define PCI_ROM_SIZE(mr)                                                \
-            (PCI_MAPREG_ROM_ADDR(mr) & -PCI_MAPREG_ROM_ADDR(mr))
 
 /* wsdisplay stuff */
 static int	gftfb_ioctl(void *, void *, u_long, void *, int,
@@ -235,7 +228,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	if (gftfb_check_rom(sc, paa) != 0)
+	if (sti_pci_check_rom(&sc->sc_base, paa, &sc->sc_romh) != 0)
 		return;
 
 	ret = sti_pci_is_console(paa, sc->sc_base. bases);
@@ -335,267 +328,19 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Grovel the STI ROM image.
- */
-int
-gftfb_check_rom(struct gftfb_softc *spc, struct pci_attach_args *pa)
-{
-	struct sti_softc *sc = &spc->sc_base;
-	pcireg_t address, mask;
-	bus_space_handle_t romh;
-	bus_size_t romsize, subsize, stiromsize;
-	bus_addr_t selected, offs, suboffs;
-	uint32_t tmp;
-	int i;
-	int rc;
-
-	/* sort of inline sti_pci_enable_rom(sc) */
-	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
-	    ~PCI_MAPREG_ROM_ENABLE);
-	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, address);
-	sc->sc_flags |= STI_ROM_ENABLED;
-	/*
-	 * Map the complete ROM for now.
-	 */
-
-	romsize = PCI_ROM_SIZE(mask);
-	DPRINTF(("%s: mapping rom @ %lx for %lx\n", __func__,
-	    (long)PCI_MAPREG_ROM_ADDR(address), (long)romsize));
-
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address), romsize,
-	    0, &romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map PCI ROM (%d)\n", rc);
-		goto fail2;
-	}
-
-	gftfb_disable_rom_internal(spc);
-	/*
-	 * Iterate over the ROM images, pick the best candidate.
-	 */
-
-	selected = (bus_addr_t)-1;
-	for (offs = 0; offs < romsize; offs += subsize) {
-		gftfb_enable_rom_internal(spc);
-		/*
-		 * Check for a valid ROM header.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x55aa0000) {
-			gftfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM header signature (%08x)\n",
-				     tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		/*
-		 * Check ROM type.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 4);
-		tmp = le32toh(tmp);
-		if (tmp != 0x00000001) {	/* 1 == STI ROM */
-			gftfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM type (%08x)\n", tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		subsize = (bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x0c);
-		subsize <<= 9;
-
-#ifdef GFTFB_DEBUG
-		gftfb_disable_rom_internal(spc);
-		DPRINTF(("ROM offset %08x size %08x type %08x",
-		    (u_int)offs, (u_int)subsize, tmp));
-		gftfb_enable_rom_internal(spc);
-#endif
-
-		/*
-		 * Check for a valid ROM data structure.
-		 * We do not need it except to know what architecture the ROM
-		 * code is for.
-		 */
-
-		suboffs = offs +(bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x18);
-		tmp = bus_space_read_4(pa->pa_memt, romh, suboffs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x50434952) {	/* PCIR */
-			gftfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev, "invalid PCI data"
-				    " signature (%08x)\n", tmp);
-				rc = EINVAL;
-			} else {
-				DPRINTF((" invalid PCI data signature %08x\n",
-				    tmp));
-				continue;
-			}
-		}
-
-		tmp = bus_space_read_1(pa->pa_memt, romh, suboffs + 0x14);
-		gftfb_disable_rom_internal(spc);
-		DPRINTF((" code %02x", tmp));
-
-		switch (tmp) {
-#ifdef __hppa__
-		case 0x10:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-#ifdef __i386__
-		case 0x00:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-		default:
-			DPRINTF((" (wrong architecture)"));
-			break;
-		}
-		DPRINTF(("%s\n", selected == offs ? " -> SELECTED" : ""));
-	}
-
-	if (selected == (bus_addr_t)-1) {
-		if (rc == 0) {
-			aprint_error_dev(sc->sc_dev, "found no ROM with "
-			    "correct microcode architecture\n");
-			rc = ENOEXEC;
-		}
-		goto fail;
-	}
-
-	/*
-	 * Read the STI region BAR assignments.
-	 */
-
-	gftfb_enable_rom_internal(spc);
-	offs = selected +
-	    (bus_addr_t)bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
-	for (i = 0; i < STI_REGION_MAX; i++) {
-		rc = gftfb_readbar(sc, pa, i,
-		    bus_space_read_1(pa->pa_memt, romh, offs + i));
-		if (rc != 0)
-			goto fail;
-	}
-
-	/*
-	 * Find out where the STI ROM itself lies, and its size.
-	 */
-
-	offs = selected +
-	    (bus_addr_t)bus_space_read_4(pa->pa_memt, romh, selected + 0x08);
-	stiromsize = (bus_addr_t)bus_space_read_4(pa->pa_memt, romh,
-	    offs + 0x18);
-	stiromsize = le32toh(stiromsize);
-	gftfb_disable_rom_internal(spc);
-
-	/*
-	 * Replace our mapping with a smaller mapping of only the area
-	 * we are interested in.
-	 */
-
-	DPRINTF(("remapping rom @ %lx for %lx\n",
-	    (long)(PCI_MAPREG_ROM_ADDR(address) + offs), (long)stiromsize));
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address) + offs,
-	    stiromsize, 0, &spc->sc_romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map STI ROM (%d)\n",
-		    rc);
-		goto fail2;
-	}
- 	gftfb_disable_rom_internal(spc);
-	sc->sc_flags &= ~STI_ROM_ENABLED;
-
-	return 0;
-
-fail:
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-fail2:
-	gftfb_disable_rom_internal(spc);
-
-	return rc;
-}
-
-/*
- * Decode a BAR register.
- */
-int
-gftfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
-    int bar)
-{
-	bus_addr_t addr;
-	bus_size_t size;
-	uint32_t cf;
-	int rc;
-
-	if (bar == 0) {
-		sc->bases[region] = 0;
-		return (0);
-	}
-
-#ifdef DIAGNOSTIC
-	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
-		gftfb_disable_rom(sc);
-		printf("%s: unexpected bar %02x for region %d\n",
-		    device_xname(sc->sc_dev), bar, region);
-		gftfb_enable_rom(sc);
-	}
-#endif
-
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
-
-	rc = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, PCI_MAPREG_TYPE(cf),
-	    &addr, &size, NULL);
-
-	if (rc != 0) {
-		gftfb_disable_rom(sc);
-		aprint_error_dev(sc->sc_dev, "invalid bar %02x for region %d\n",
-		    bar, region);
-		gftfb_enable_rom(sc);
-		return (rc);
-	}
-
-	sc->bases[region] = addr;
-	return (0);
-}
-
-/*
  * Enable PCI ROM.
  */
-void
-gftfb_enable_rom_internal(struct gftfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 gftfb_enable_rom(struct sti_softc *sc)
 {
 	struct gftfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		gftfb_enable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address |= PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	SET(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -603,25 +348,17 @@ gftfb_enable_rom(struct sti_softc *sc)
 /*
  * Disable PCI ROM.
  */
-void
-gftfb_disable_rom_internal(struct gftfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address &= ~PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 gftfb_disable_rom(struct sti_softc *sc)
 {
 	struct gftfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		gftfb_disable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address &= ~PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	CLR(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -732,7 +469,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	/* colour map */
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
+	    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0));
 	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 	gftfb_wait(sc);
@@ -1017,7 +754,7 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	mutex_enter(&sc->sc_hwlock);
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
+	    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0));
 	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 
@@ -1183,7 +920,6 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		gftfb_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
-
 
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv == GC_OK)
@@ -1420,7 +1156,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		mutex_enter(&sc->sc_hwlock);
 		gftfb_wait(sc);
 		gftfb_write4(sc, NGLE_REG_10,
-		    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
+		    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0));
 		gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 		gftfb_wait(sc);

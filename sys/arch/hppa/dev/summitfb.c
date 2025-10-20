@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.34 2025/04/28 04:46:58 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.35 2025/10/20 09:47:05 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.34 2025/04/28 04:46:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.35 2025/10/20 09:47:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.34 2025/04/28 04:46:58 macallan Exp $
 #include <dev/ic/stireg.h>
 #include <dev/ic/summitreg.h>
 #include <dev/ic/stivar.h>
+#include <hppa/dev/sti_pci_var.h>
 
 #include "opt_summitfb.h"
 
@@ -88,10 +89,6 @@ struct	summitfb_softc {
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
-	/* font-in-vram */
-	struct wsdisplay_font *sc_font;
-	int sc_font_start;	/* x of font area */
-	int sc_cols;		/* chars per line in font area */
 	uint32_t sc_palette[16];
 	int sc_video_on;
 	glyphcache sc_gc;
@@ -100,18 +97,12 @@ struct	summitfb_softc {
 CFATTACH_DECL_NEW(summitfb, sizeof(struct summitfb_softc),
     summitfb_match, summitfb_attach, NULL, NULL);
 
-int	summitfb_readbar(struct sti_softc *, struct pci_attach_args *, u_int,
-	    int);
-int	summitfb_check_rom(struct summitfb_softc *, struct pci_attach_args *);
 void	summitfb_enable_rom(struct sti_softc *);
 void	summitfb_disable_rom(struct sti_softc *);
-void	summitfb_enable_rom_internal(struct summitfb_softc *);
-void	summitfb_disable_rom_internal(struct summitfb_softc *);
 
 void 	summitfb_setup(struct summitfb_softc *);
 
 /* XXX these really need to go into their own header */
-int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
 int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
 int	sti_screen_setup(struct sti_screen *, int);
@@ -251,7 +242,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	if (summitfb_check_rom(sc, paa) != 0)
+	if (sti_pci_check_rom(&sc->sc_base, paa, &sc->sc_romh) != 0)
 		return;
 
 	ret = sti_pci_is_console(paa, sc->sc_base. bases);
@@ -367,266 +358,19 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Grovel the STI ROM image.
- */
-int
-summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
-{
-	struct sti_softc *sc = &spc->sc_base;
-	pcireg_t address, mask;
-	bus_space_handle_t romh;
-	bus_size_t romsize, subsize, stiromsize;
-	bus_addr_t selected, offs, suboffs;
-	uint32_t tmp;
-	int i;
-	int rc;
-
-	/* sort of inline sti_pci_enable_rom(sc) */
-	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
-	    ~PCI_MAPREG_ROM_ENABLE);
-	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, address);
-	sc->sc_flags |= STI_ROM_ENABLED;
-
-	/*
-	 * Map the complete ROM for now.
-	 */
-	romsize = PCI_ROM_SIZE(mask);
-	DPRINTF(("%s: mapping rom @ %lx for %lx\n", __func__,
-	    (long)PCI_MAPREG_ROM_ADDR(address), (long)romsize));
-
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address), romsize,
-	    0, &romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map PCI ROM (%d)\n", rc);
-		goto fail2;
-	}
-
-	summitfb_disable_rom_internal(spc);
-
-	/*
-	 * Iterate over the ROM images, pick the best candidate.
-	 */
-	selected = (bus_addr_t)-1;
-	for (offs = 0; offs < romsize; offs += subsize) {
-		summitfb_enable_rom_internal(spc);
-		/*
-		 * Check for a valid ROM header.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x55aa0000) {
-			summitfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM header signature"
-				    " (%08x)\n", tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		/*
-		 * Check ROM type.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 4);
-		tmp = le32toh(tmp);
-		if (tmp != 0x00000001) {	/* 1 == STI ROM */
-			summitfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM type (%08x)\n", tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		subsize = (bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x0c);
-		subsize <<= 9;
-
-#ifdef SUMMITFB_DEBUG
-		summitfb_disable_rom_internal(spc);
-		DPRINTF(("ROM offset %08x size %08x type %08x",
-		    (u_int)offs, (u_int)subsize, tmp));
-		summitfb_enable_rom_internal(spc);
-#endif
-
-		/*
-		 * Check for a valid ROM data structure.
-		 * We do not need it except to know what architecture the ROM
-		 * code is for.
-		 */
-
-		suboffs = offs + bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x18);
-		tmp = bus_space_read_4(pa->pa_memt, romh, suboffs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x50434952) {	/* PCIR */
-			summitfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev, "invalid PCI data"
-				    " signature (%08x)\n", tmp);
-				rc = EINVAL;
-			} else {
-				DPRINTF((" invalid PCI data signature %08x\n",
-				    tmp));
-				continue;
-			}
-		}
-
-		tmp = bus_space_read_1(pa->pa_memt, romh, suboffs + 0x14);
-		summitfb_disable_rom_internal(spc);
-		DPRINTF((" code %02x", tmp));
-
-		switch (tmp) {
-#ifdef __hppa__
-		case 0x10:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-#ifdef __i386__
-		case 0x00:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-		default:
-			DPRINTF((" (wrong architecture)"));
-			break;
-		}
-		DPRINTF(("%s\n", selected == offs ? " -> SELECTED" : ""));
-	}
-
-	if (selected == (bus_addr_t)-1) {
-		if (rc == 0) {
-			aprint_error_dev(sc->sc_dev, "found no ROM with "
-			    "correct microcode architecture\n");
-			rc = ENOEXEC;
-		}
-		goto fail;
-	}
-
-	/*
-	 * Read the STI region BAR assignments.
-	 */
-
-	summitfb_enable_rom_internal(spc);
-	offs = selected + bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
-	for (i = 0; i < STI_REGION_MAX; i++) {
-		rc = summitfb_readbar(sc, pa, i,
-		    bus_space_read_1(pa->pa_memt, romh, offs + i));
-		if (rc != 0)
-			goto fail;
-	}
-
-	/*
-	 * Find out where the STI ROM itself lies, and its size.
-	 */
-
-	offs = selected +
-	    bus_space_read_4(pa->pa_memt, romh, selected + 0x08);
-	stiromsize = bus_space_read_4(pa->pa_memt, romh, offs + 0x18);
-	stiromsize = le32toh(stiromsize);
-	summitfb_disable_rom_internal(spc);
-
-	/*
-	 * Replace our mapping with a smaller mapping of only the area
-	 * we are interested in.
-	 */
-
-	DPRINTF(("remapping rom @ %lx for %lx\n",
-	    (long)(PCI_MAPREG_ROM_ADDR(address) + offs), (long)stiromsize));
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address) + offs,
-	    stiromsize, 0, &spc->sc_romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map STI ROM (%d)\n",
-		    rc);
-		goto fail2;
-	}
- 	summitfb_disable_rom_internal(spc);
-	sc->sc_flags &= ~STI_ROM_ENABLED;
-
-	return 0;
-
-fail:
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-fail2:
-	summitfb_disable_rom_internal(spc);
-
-	return rc;
-}
-
-/*
- * Decode a BAR register.
- */
-int
-summitfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa,
-    u_int region, int bar)
-{
-	bus_addr_t addr;
-	bus_size_t size;
-	uint32_t cf;
-	int rc;
-
-	if (bar == 0) {
-		sc->bases[region] = 0;
-		return 0;
-	}
-
-#ifdef DIAGNOSTIC
-	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
-		summitfb_disable_rom(sc);
-		printf("%s: unexpected bar %02x for region %d\n",
-		    device_xname(sc->sc_dev), bar, region);
-		summitfb_enable_rom(sc);
-	}
-#endif
-
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
-
-	rc = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, PCI_MAPREG_TYPE(cf),
-	    &addr, &size, NULL);
-
-	if (rc != 0) {
-		summitfb_disable_rom(sc);
-		aprint_error_dev(sc->sc_dev, "invalid bar %02x"
-		    " for region %d\n",
-		    bar, region);
-		summitfb_enable_rom(sc);
-		return rc;
-	}
-
-	sc->bases[region] = addr;
-	return 0;
-}
-
-/*
  * Enable PCI ROM.
  */
-void
-summitfb_enable_rom_internal(struct summitfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 summitfb_enable_rom(struct sti_softc *sc)
 {
 	struct summitfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		summitfb_enable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address |= PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	SET(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -634,25 +378,17 @@ summitfb_enable_rom(struct sti_softc *sc)
 /*
  * Disable PCI ROM.
  */
-void
-summitfb_disable_rom_internal(struct summitfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address &= ~PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 summitfb_disable_rom(struct sti_softc *sc)
 {
 	struct summitfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		summitfb_disable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address &= ~PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	CLR(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -947,7 +683,6 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = summitfb_eraserows;
 	ri->ri_ops.erasecols = summitfb_erasecols;
 	ri->ri_ops.cursor = summitfb_cursor;
-	sc->sc_font = NULL;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = summitfb_putchar_aa;
 	} else
