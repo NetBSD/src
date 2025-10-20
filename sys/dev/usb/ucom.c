@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.144 2025/10/10 17:33:16 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.145 2025/10/20 07:40:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.144 2025/10/10 17:33:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.145 2025/10/20 07:40:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -166,7 +166,7 @@ struct ucom_softc {
 	void			*sc_si;
 
 	const struct ucom_methods *sc_methods;
-	void                    *sc_parent;
+	void			*sc_parent;
 	int			sc_portno;
 
 	struct tty		*sc_tty;	/* our tty */
