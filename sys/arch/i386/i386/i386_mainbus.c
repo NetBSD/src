@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_mainbus.c,v 1.12 2025/10/19 20:52:09 thorpej Exp $	*/
+/*	$NetBSD: i386_mainbus.c,v 1.13 2025/10/20 00:14:22 thorpej Exp $	*/
 /*	NetBSD: mainbus.c,v 1.104 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.12 2025/10/19 20:52:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_mainbus.c,v 1.13 2025/10/20 00:14:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,7 @@ int isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 static const struct isabus_attach_args mba_iba = {
+	._iba_busname = "isa",
 	.iba_dmat = &isa_bus_dma_tag,
 	.iba_ic = &x86_isa_chipset
 };
