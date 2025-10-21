@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.1 2025/10/21 04:25:31 perseant Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.2 2025/10/21 14:44:12 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -31,8 +31,8 @@
 
 #define UNCHANGED_CONTROL MP "/3-a-random-file"
 #define FSSIZE 10000     /* In sectors */
-#define A_FEW_BLOCKS 65000  /* In bytes; a few blocks worth */
-#define MORE_THAN_A_SEGMENT 1050000 /* More bytes than are in a segment */
+#define A_FEW_BLOCKS 6500  /* In bytes; a few blocks worth */
+#define MORE_THAN_A_SEGMENT (4 * SEGSIZE) /* In bytes; > SEGSIZE */
 
 /* Set up filesystem with a file in it */
 int setup(int, struct ufs_args *, off_t);
