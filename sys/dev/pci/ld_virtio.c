@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.45 2025/08/27 04:41:24 isaki Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.46 2025/10/21 04:27:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.45 2025/08/27 04:41:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.46 2025/10/21 04:27:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1124,6 +1124,10 @@ ld_virtio_discard(struct ld_softc *ld, struct buf *bp)
 }
 
 MODULE(MODULE_CLASS_DRIVER, ld_virtio, "ld,virtio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
 ld_virtio_modcmd(modcmd_t cmd, void *opaque)
