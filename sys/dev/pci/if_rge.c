@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.34 2025/02/04 23:55:23 jmcneill Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.35 2025/10/21 04:24:00 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.34 2025/02/04 23:55:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.35 2025/10/21 04:24:00 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.34 2025/02/04 23:55:23 jmcneill Exp $")
 #include <sys/endian.h>
 #include <sys/callout.h>
 #include <sys/workqueue.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 
@@ -2841,3 +2842,35 @@ rge_link_state(struct rge_softc *sc)
 		if_link_state_change(ifp, link);
 	}
 }
+
+/* Module interface */
+
+MODULE(MODULE_CLASS_DRIVER, if_rge, "pci");
+ 
+#ifdef _MODULE
+#include "ioconf.c" 
+#endif 
+ 
+static int
+if_rge_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_rge,
+		    cfattach_ioconf_rge, cfdata_ioconf_rge);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_rge,
+		    cfattach_ioconf_rge, cfdata_ioconf_rge);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
+}
+
