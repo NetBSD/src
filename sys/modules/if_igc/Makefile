@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2025/10/21 07:23:05 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2 2025/10/21 18:46:39 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -13,5 +13,7 @@ SRCS+=	igc_i225.c
 SRCS+=	igc_mac.c
 SRCS+=	igc_nvm.c
 SRCS+=	igc_phy.c
+
+CPPFLAGS+=	-DNVLAN=1
 
 .include <bsd.kmodule.mk>
