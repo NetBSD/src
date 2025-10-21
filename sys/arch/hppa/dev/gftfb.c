@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.30 2025/10/20 09:47:05 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.31 2025/10/21 11:41:20 skrll Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -469,7 +469,7 @@ gftfb_setup(struct gftfb_softc *sc)
 	/* colour map */
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0));
+	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
 	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 	gftfb_wait(sc);
@@ -754,7 +754,7 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	mutex_enter(&sc->sc_hwlock);
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0));
+	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
 	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 
@@ -1156,7 +1156,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		mutex_enter(&sc->sc_hwlock);
 		gftfb_wait(sc);
 		gftfb_write4(sc, NGLE_REG_10,
-		    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0));
+		    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
 		gftfb_write4(sc, NGLE_REG_14, 0x03000300);
 		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
 		gftfb_wait(sc);
