@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.21 2025/10/21 07:23:05 pgoyette Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.22 2025/10/21 07:35:30 pgoyette Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.21 2025/10/21 07:23:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.22 2025/10/21 07:35:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.21 2025/10/21 07:23:05 pgoyette Exp $")
 #include <sys/socket.h>
 #include <sys/workqueue.h>
 #include <sys/xcall.h>
+#include <sys/module.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
