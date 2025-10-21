@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2025/10/21 23:12:13 pgoyette Exp $
+# $NetBSD: Makefile,v 1.4 2025/10/21 23:22:25 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -13,8 +13,6 @@ SRCS+=	igc_i225.c
 SRCS+=	igc_mac.c
 SRCS+=	igc_nvm.c
 SRCS+=	igc_phy.c
-
-CPPFLAGS+=	-DNVLAN=1
 
 WARNS=	3	# -Wsign-compare issues
 
