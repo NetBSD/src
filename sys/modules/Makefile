@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.297 2025/10/21 04:29:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.298 2025/10/21 07:23:05 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -493,6 +493,7 @@ SUBDIR+=	cac
 #SUBDIR+=	cac_pci
 SUBDIR+=	emuxki
 SUBDIR+=	if_aq
+SUBDIR+=	if_igc
 SUBDIR+=	if_rge
 SUBDIR+=	if_vioif
 SUBDIR+=	if_vmx

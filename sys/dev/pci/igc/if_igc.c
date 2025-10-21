@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.20 2025/06/01 05:28:42 rin Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.21 2025/10/21 07:23:05 pgoyette Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.20 2025/06/01 05:28:42 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.21 2025/10/21 07:23:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -3747,4 +3747,35 @@ igc_print_devinfo(struct igc_softc *sc)
 	    "NVM image version %x.%02x, EtrackID %04hx%04hx\n",
 	    (nvm_ver & NVM_VERSION_MAJOR) >> NVM_VERSION_MAJOR_SHIFT,
 	    nvm_ver & NVM_VERSION_MINOR, etk_hi, etk_lo);
+}
+
+/* Module interface */
+
+MODULE(MODULE_CLASS_DRIVER, if_igc, "pci");
+ 
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+ 
+static int
+if_rge_modcmd(modcmd_t cmd, void *opaque) 
+{
+	int error = 0;
+ 
+	switch (cmd) { 
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_igc,
+		    cfattach_ioconf_igc, cfdata_ioconf_igc);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_igc,
+		    cfattach_ioconf_igc, cfdata_ioconf_igc);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
