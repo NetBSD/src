@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.32 2025/04/13 02:34:03 rin Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.33 2025/10/21 04:18:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.32 2025/04/13 02:34:03 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.33 2025/10/21 04:18:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,6 +373,7 @@ MODULE(MODULE_CLASS_DRIVER, ld_aac, "ld,aac");
  */
 #undef  CFDRIVER_DECL
 #define CFDRIVER_DECL(name, class, attr)
+#undef ST_NODEV
 #include "ioconf.c" 
 #endif
 

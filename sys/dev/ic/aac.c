@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.49 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.50 2025/10/21 04:18:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.49 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.50 2025/10/21 04:18:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1756,6 +1756,7 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib,
 MODULE(MODULE_CLASS_DRIVER, aac, "pci");
 
 #ifdef _MODULE
+#undef	ST_NODEV	/* avoid redefine error */
 #include "ioconf.c"
 #endif
 
