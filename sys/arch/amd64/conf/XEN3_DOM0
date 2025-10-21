@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.205 2025/05/22 09:53:26 bad Exp $
+# $NetBSD: XEN3_DOM0,v 1.206 2025/10/21 18:26:24 pgoyette Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.205 $"
+#ident		"XEN3_DOM0-$Revision: 1.206 $"
 
 maxusers	32		# estimated number of users
 
@@ -866,7 +866,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-rge*	at pci? dev ? function ?	# Realtek 8125
+rge*	at pci? dev ? function ?	# Realtek 8125/8126
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n
