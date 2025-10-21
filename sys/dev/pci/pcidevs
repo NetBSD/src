@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1529 2025/10/21 05:49:20 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1530 2025/10/21 06:13:55 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3561,6 +3561,9 @@ product MARVELL2 88SE9235	0x9235	88SE9235 SATA Controller
 product MARVELL2 88SE9445	0x9445	88SE9445 SATA Controller
 product MARVELL2 88SE9480	0x9480	88SE9480 SATA Controller
 product MARVELL2 88SE9485	0x9485	88SE9485 SATA Controller
+
+/* MediaTek */
+product MEDIATEK MT7927		0x7927	MT7927 Wi-Fi 7 Wireless LAN
 
 /* Micro-star International Co Ltd */
 product MSI RT3090		0x891a	MSI RT3090
