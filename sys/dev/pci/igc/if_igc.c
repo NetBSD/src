@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.22 2025/10/21 07:35:30 pgoyette Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.23 2025/10/21 15:20:34 pgoyette Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.22 2025/10/21 07:35:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.23 2025/10/21 15:20:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -3759,7 +3759,7 @@ MODULE(MODULE_CLASS_DRIVER, if_igc, "pci");
 #endif
  
 static int
-if_rge_modcmd(modcmd_t cmd, void *opaque) 
+if_igc_modcmd(modcmd_t cmd, void *opaque) 
 {
 	int error = 0;
  
