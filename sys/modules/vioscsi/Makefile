@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/03/25 18:15:31 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2025/10/21 04:35:30 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ IOCONF=	vioscsi.ioconf
 SRCS+=	vioscsi.c
 
 DBG+=	-DDEBUG -DDIAGNOSTIC -DLOCKDEBUG
+
+WARNS=	3	# -Wsign-compare issues
 
 .include <bsd.kmodule.mk>

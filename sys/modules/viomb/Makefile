@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2025/10/21 04:35:30 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -8,5 +8,7 @@ KMOD=	viomb
 IOCONF=	viomb.ioconf
 
 SRCS+=	viomb.c
+
+WARNS=	3	# -Wsign-compare issues
 
 .include <bsd.kmodule.mk>

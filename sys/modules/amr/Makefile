@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:06 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2025/10/21 04:35:29 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -8,5 +8,8 @@ KMOD=	amr
 IOCONF=	amr.ioconf
 
 SRCS+=	amr.c
+
+# -Wsign-compare issues
+WARNS=	3
 
 .include <bsd.kmodule.mk>
