@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1528 2025/10/17 21:49:51 andvar Exp $
+$NetBSD: pcidevs,v 1.1529 2025/10/21 05:49:20 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -578,6 +578,7 @@ vendor SYSTEMBASE	0x14a1	System Base
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics
 vendor MYRICOM		0x14c1	Myricom
+vendor MEDIATEK		0x14c3	MediaTek
 vendor TITAN		0x14d2	Titan Electronics
 vendor AVLAB		0x14db	Avlab Technology
 vendor INVERTEX		0x14e1	Invertex
