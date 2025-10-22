@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.16 2021/09/16 21:29:41 andvar Exp $	*/
+/*	$NetBSD: rbtree.c,v 1.1 2025/10/22 12:34:00 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
+#if defined(HAVE_NBTOOL_CONFIG_H) && HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
@@ -45,10 +45,10 @@
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #define	__rbt_unused	__unused
 #endif
-__RCSID("$NetBSD: rb.c,v 1.16 2021/09/16 21:29:41 andvar Exp $");
+__RCSID("$NetBSD: rbtree.c,v 1.1 2025/10/22 12:34:00 roy Exp $");
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.16 2021/09/16 21:29:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbtree.c,v 1.1 2025/10/22 12:34:00 roy Exp $");
 #ifndef DIAGNOSTIC
 #define	__rbt_unused	__unused
 #else
@@ -72,7 +72,7 @@ __weak_alias(rb_tree_depths, _rb_tree_depths)
 #include "namespace.h"
 #endif
 
-#ifdef RBTEST
+#ifdef RBLOCAL
 #include "rbtree.h"
 #else
 #include <sys/rbtree.h>
