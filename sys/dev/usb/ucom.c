@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.145 2025/10/20 07:40:09 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.146 2025/10/22 05:41:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.145 2025/10/20 07:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.146 2025/10/22 05:41:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -42,22 +42,23 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.145 2025/10/20 07:40:09 skrll Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/ioctl.h>
+
 #include <sys/conf.h>
-#include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
-#include <sys/kauth.h>
-#include <sys/sysctl.h>
-#include <sys/timepps.h>
 #include <sys/rndsource.h>
+#include <sys/select.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/timepps.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
 
 #include <dev/usb/usb.h>
 
