@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.35 2025/10/21 04:24:00 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.36 2025/10/23 17:09:37 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.35 2025/10/21 04:24:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.36 2025/10/23 17:09:37 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -292,6 +292,10 @@ rge_attach(device_t parent, device_t self, void *aux)
 	case 0x64900000:
 		sc->rge_type = MAC_CFG2_8126;
 		revstr = "A";
+		break;
+	case 0x64a00000:
+		sc->rge_type = MAC_CFG2_8126;
+		revstr = "B";
 		break;
 	default:
 		aprint_error(": unknown version 0x%08x\n", hwrev);
