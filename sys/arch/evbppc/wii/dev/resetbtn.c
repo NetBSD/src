@@ -1,4 +1,4 @@
-/* $NetBSD: resetbtn.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $ */
+/* $NetBSD: resetbtn.c,v 1.3 2025/10/24 23:25:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: resetbtn.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: resetbtn.c,v 1.3 2025/10/24 23:25:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: resetbtn.c,v 1.2 2024/01/23 21:56:07 jmcneill Exp $"
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <powerpc/pio.h>
+#include <machine/wii.h>
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
 
@@ -48,6 +49,7 @@ static void	resetbtn_attach(device_t, device_t, void *);
 
 static int	resetbtn_intr(void *);
 static void	resetbtn_task(void *);
+static void	resetbtn_critpoll(void *);
 
 CFATTACH_DECL_NEW(resetbtn, sizeof(struct sysmon_pswitch),
 	resetbtn_match, resetbtn_attach, NULL, NULL);
@@ -69,6 +71,8 @@ resetbtn_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Reset button\n");
+
+	critpollhook_establish(resetbtn_critpoll, NULL);
 
 	sysmon_task_queue_init();
 
@@ -108,5 +112,13 @@ resetbtn_task(void *arg)
 		    pressed ? PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 	} else if (!pressed) {
 		kern_reboot(0, NULL);
+	}
+}
+
+static void
+resetbtn_critpoll(void *arg)                                                  
+{
+	if ((in32(PI_INTERRUPT_CAUSE) & RESET_SWITCH_STATE) == 0) {
+		out32(HW_RESETS, in32(HW_RESETS) & ~RSTBINB);
 	}
 }
