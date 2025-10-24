@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.13 2022/12/03 01:04:42 brad Exp $
+.\"	$NetBSD: spi.4,v 1.14 2025/10/24 23:16:10 brad Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -141,12 +141,14 @@ Microchip MCP23S17 16-bit GPIO chip.
 Microchip MCP3x0x SAR analog to digital converter.
 .It Xr mcp48x1dac 4
 Microchip MCP4801/MCP4811/MCP4821 digital to analog converter.
-.It Xr tm121temp 4
-Texas Instruments TMP121 temperature sensor.
+.It Xr sc16is7xx 4
+NXP 16C450 like UART bridge
 .It Xr scmdspi 4
 SPI frontend for the Sparkfun Serial Controlled Motor Driver.
 .It Xr ssdfb 4
 OLED/PLED framebuffer modules.
+.It Xr tm121temp 4
+Texas Instruments TMP121 temperature sensor.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/spiu" -compact

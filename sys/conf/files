@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1316 2025/09/01 04:47:03 thorpej Exp $
+#	$NetBSD: files,v 1.1317 2025/10/24 23:16:11 brad Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -392,6 +392,16 @@ define	ipmibus		{ }
 define	scmi
 define	smbios
 
+# 8250/16[45]50-based "com" ports
+#
+defflag	opt_com.h		COM_DEBUG
+# XXX In a perfect world, this would be done with attributes
+defflag	opt_com.h		COM_16650 COM_16750
+				COM_HAYESP COM_PXA2X0
+defparam opt_com.h		COM_TOLERANCE
+device	com { } : tty
+file	dev/ic/com.c			com			needs-flag
+
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
 file	dev/spkr.c			spkr
@@ -445,7 +455,16 @@ file	dev/ic/scmd.c	scmd
 
 # Bosch BMP280 / BME280 sensor (attaches via I2C or SPI)
 device  bmx280thp
-file	dev/ic/bmx280.c	bmx280thp
+file	dev/ic/bmx280.c			bmx280thp
+
+# NXP SC16IS7xx UART bridge (attaches via I2C or SPI,
+# and provides an attachment for com* and gpio*)
+define	sc16is7xxbus {  }
+device	sc16is7xx: sc16is7xxbus, gpiobus
+file	dev/ic/sc16is7xx.c		sc16is7xx
+
+attach	com at sc16is7xxbus with sc16is7xx_tty
+file	dev/ic/sc16is7xx_tty.c		sc16is7xx_tty
 
 # Generic HID support (used by USB, bluetooth and i2c)
 include "dev/hid/files.hid"
@@ -937,16 +956,6 @@ file	dev/ic/tms320av110.c		tms320av110
 #
 device	ne: ether, ifnet, arp, dp8390nic, mii
 file	dev/ic/ne2000.c			ne
-
-# 8250/16[45]50-based "com" ports
-#
-defflag	opt_com.h		COM_DEBUG
-# XXX In a perfect world, this would be done with attributes
-defflag	opt_com.h		COM_16650 COM_16750
-				COM_HAYESP COM_PXA2X0
-defparam opt_com.h		COM_TOLERANCE
-device	com { } : tty
-file	dev/ic/com.c			com			needs-flag
 
 # PC-like keyboard controller
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.136 2025/10/13 14:49:17 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.137 2025/10/24 23:16:11 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -460,3 +460,7 @@ file dev/i2c/fusbtc.c				fusbtc
 device emcfan: fdt_clock, gpiobus, sysmon_envsys
 attach emcfan at iic
 file dev/i2c/emcfan.c				emcfan
+
+# NXP SC16IS7xx UART bridge
+attach sc16is7xx at iic with sc16is7xxi2c
+file dev/i2c/sc16is7xxi2c.c			sc16is7xxi2c

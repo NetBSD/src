@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.98 2022/10/08 07:27:03 riastradh Exp $	*/
+/*	$NetBSD: comvar.h,v 1.99 2025/10/24 23:16:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,6 +47,9 @@
 #include <sys/mutex.h>
 #include <sys/device.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/spi/spivar.h>
+
 #include <dev/ic/comreg.h>	/* for COM_NPORTS */
 
 struct com_regs;
@@ -72,6 +75,8 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
 #define	COM_HW_AFE	0x400
+#define	COM_HW_SOFTIRQ	0x800
+#define	COM_HW_MCRPRESCALE	0x1000
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
@@ -101,9 +106,17 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REGMAP_NENTRIES	19
 
 struct com_regs {
-	bus_space_tag_t		cr_iot;
+	bus_space_tag_t		cr_iot;	/* If this device is directly connected to the computer bus. */
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
+
+	i2c_tag_t		cr_tag; /* If this device is connected to a I2C bus. */
+	i2c_addr_t		cr_addr;
+
+	spi_handle_t		cr_sh; /* If this device is connected to a SPI bus. */
+
+	int			cr_channel;
+
 	bus_size_t		cr_nports;
 	bus_size_t		cr_map[COM_REGMAP_NENTRIES];
 	uint8_t			(*cr_read)(struct com_regs *, u_int);
@@ -201,6 +214,7 @@ struct com_softc {
 #define	COM_TYPE_16650		9
 #define	COM_TYPE_16750		10
 #define	COM_TYPE_DW_APB		11	/* DesignWare APB UART */
+#define COM_TYPE_SC16IS7XX	12	/* NXP SC16IS7XX behind I2C or SPI */
 
 	int sc_poll_ticks;
 
@@ -215,6 +229,9 @@ struct com_softc {
 	krndsource_t  rnd_source;
 #endif
 	kmutex_t		sc_lock;
+
+	struct workqueue	*sc_wq;
+	int			sc_wk;
 };
 
 int comprobe1(bus_space_tag_t, bus_space_handle_t);

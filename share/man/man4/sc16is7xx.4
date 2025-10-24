@@ -1,0 +1,246 @@
+.\" $NetBSD: sc16is7xx.4,v 1.1 2025/10/24 23:16:10 brad Exp $
+.\"
+.\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 7, 2025
+.Dt sc16is7xx 4
+.Os
+.Sh NAME
+.Nm sc16is7xx
+.Nd Driver for NXP SC16IS7xx family of UART bridges via a I2C or SPI bus
+.Sh SYNOPSIS
+.Cd "sc16is7xx* at iic? addr 0x48"
+.Cd "sc16is7xx* at iic? addr 0x49"
+.Cd "sc16is7xx* at iic? addr 0x4a"
+.Cd "sc16is7xx* at iic? addr 0x4b"
+.Cd "sc16is7xx* at iic? addr 0x4c"
+.Cd "sc16is7xx* at iic? addr 0x4d"
+.Cd "sc16is7xx* at iic? addr 0x4e"
+.Cd "sc16is7xx* at iic? addr 0x4f"
+.Cd "sc16is7xx* at iic? addr 0x50"
+.Cd "sc16is7xx* at iic? addr 0x51"
+.Cd "sc16is7xx* at iic? addr 0x52"
+.Cd "sc16is7xx* at iic? addr 0x53"
+.Cd "sc16is7xx* at iic? addr 0x54"
+.Cd "sc16is7xx* at iic? addr 0x55"
+.Cd "sc16is7xx* at iic? addr 0x56"
+.Cd "sc16is7xx* at iic? addr 0x57"
+
+.Cd "sc16is7xx* at spi? slave 0"
+.Cd "sc16is7xx* at spi? slave 1"
+
+.Cd "options SC16IS7XX_SPI_FREQUENCY=4"
+.Cd "com* at sc16is7xx?"
+.Cd "gpio* at gpiobus?"
+
+.Sh DESCRIPTION
+The
+.Nm
+driver provides one or two UART interfaces and a gpio bus over
+I2C or SPI.
+The
+.Nm
+.Ar addr
+argument selects the address at the
+.Xr iic 4
+bus and the
+.Nm
+.Ar slave
+argument selects which chip select will be used on the
+.Xr spi 4
+bus.
+The UART is mostly register compatiable with the 16C450,
+although it does have aspects of the 16C550 and 16C660.
+This driver just provides the frontend half and uses
+.Xr com 4
+for the backend half.
+The
+.Nm
+is compatiable with COM_16550 and COM_16660.  If the COM_ option is
+left out entirely a 64 byte FIFO, hardware flow control and the
+automatic use of the prescaler will be enabled.
+.Pp
+The prescaler is a additional divide by 4 factor that is mostly used
+when the baud rate clock has a very high frequency and there is an
+attempt to use a very low baud rate.  In that case, the divider will
+exceed the number of bits provided by the clock divider registers.
+The additional prescaler factor will allow for these low baud rates in
+this case.
+.Pp
+The SC16IS7XX_SPI_FREQUENCY can used to set the SPI clock frequency
+from 1 to 4 or 1 to 15 in Mhz depending on the chip varient.
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 3
+variables are provided:
+.Bl -tag -width indent
+.It Li hw.sc16is7xx0.frequency
+This sysctl can be used to set the clock frequency that is being used
+by the chip to generate the baud rate.  There is no standard frequency
+for this clock, although 14.7456 Mhz is common, but 1.8432 Mhz, 3.072
+Mhz and 12.000 Mhz are also known to exist.  This value is in Hz and
+must be set correctly for the baud rate to work as expected.  The
+SC16IS7XX_DEFAULT_FREQUENCY kernel option and the clock-frequency
+option in a FDT overlay can also be used to set this value.
+.It Li hw.sc16is7xx0.poll
+The chip supports a interrupt line to a gpio pin that can be used on
+systems that have FDT support.  If the driver can not make use of this
+interrupt line then it will use a polling kernel thread to check for
+an interrupt.  This sysctl adjusts how often this thread checks.  It
+is in ms and defaults to 50.  It is very possible to saturate a I2C
+bus if the checks are too frequent, but if they are not often enough
+there will be latency in the processing of incoming and outgoing
+characters.
+.El
+.Pp
+Unexpected behavior may result if the frequency is changed while
+something has the port open.
+.Sh FDT
+On systems that support FDT the following can be used to enable the
+driver and set parameters:
+.Pp
+.nf
+/dts-v1/;
+/plugin/;
+
+/ {
+        compatible = "brcm,bcm2835";
+
+        fragment@0 {
+                target = <&spi>;
+
+                __overlay__ {
+                        status = "okay";
+                        pinctrl-names = "default";
+                        pinctrl-0 = <&spi0_gpio7>;
+
+                        sc16is750@0 {
+                                compatible = "nxp,sc16is750";
+                                reg = <0x00>;
+                                interrupt-parent = <&gpio>;
+                                interrupts = <17 2>;
+				gpio-controller;
+                        };
+                };
+        };
+};
+.fi
+The above is for a Raspberry PI 3 for enabling the the spi bus itself
+and the
+.Nm
+device on the spi0 bus and allowing it to use gpio pin 17 with a
+negative edge interrupt.  Since "gpio-controller;" was specified a
+gpiobus will be attached.
+.Pp
+.nf
+/dts-v1/;
+/plugin/;
+
+/ {
+        compatible = "brcm,bcm2837";
+
+        fragment@0 {
+                target= <&i2c1>;
+
+                __overlay__ {
+                        sc16is740@48 {
+                                compatible = "nxp,sc16is740";
+                                reg = <0x48>;
+                                clock-frequency = <14745600>;
+                                interrupt-parent = <&gpio>;
+                                interrupts = <17 2>;
+                        };
+                };
+        };
+};
+.fi
+The above is also for a Raspberry PI 3 that configures a SC16IS740 for
+an I2C bus.  Since "gpio-controller;" was not specified, no gpiobus
+will be attached.
+.Sh GPIO
+There are a number of family members for this chip.  All of them
+except the SC16IS740 and SC16IS741 have
+.Xr gpio 4
+pins.  These pins are simple input and output pins and in many cases
+share a ALT0 function that allows them to be modem control lines.
+.Bd -filled -offset indent
+.TS
+box tab(:);
+l | l | l | l | l | l
+= | = | = | = | = | =
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l.
+Pin:SC16IS750 / SC16IS760:ALT0:SC16IS752 / SC16IS762:ALT0:Bank
+GP0:GP0:-:GP0:DSRB:B
+GP1:GP1:-:GP1:DTRB:B
+GP2:GP2:-:GP2:CDB:B
+GP3:GP3:-:GP3:RIB:B
+GP4:GP4:DSR:GP4:DSRA:A
+GP5:GP5:DTR:GP5:DTRA:A
+GP6:GP6:CD:GP6:CDA:A
+GP7:GP7:RI:GP7:RIA:A
+.TE
+.Ed
+.Pp
+If any of the pins are configured as modem control lines, the entire
+bank of 4 pins will be modem control lines.  Likewise, if any of the
+pins in a bank are configured for input or output, the entire bank of
+pins will be input or output and the modem control will be removed.
+.Pp
+It is not possible to tell the difference between a SC16IS74x varient
+from a SC16IS750 or SC16IS760, so
+.Xr gpio 4
+will be present on both variants.  If FDT can be used, a the
+"gpio-controller;" directive can be used to tell more specifically if
+the GPIO pins are present.  In the FDT case, if "gpio-controller;" is
+left out and the chip has GPIO pins, then they will be turned into
+their respective modem control pins.
+.Sh SEE ALSO
+.Xr com 4 ,
+.Xr gpio 4 ,
+.Xr iic 4 ,
+.Xr spi 4 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 12.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+The driver does not support all of the aspects of the chip family, in
+particular, the RS-485 and IrDA modes.  The driver is unlikely to work
+as a console or with KGDB.  There are assumptions built into the
+.Xr com 4
+backend that assumes that the chip is connected directly to the computer
+bus and this will not be true for the SC16IS7XX family of devices.
+.Pp
+A kernel panic will happen if an attempt is made to attach another
+driver to the gpio pins of the SC16IS7XX using gpioctl or by compiling
+a kernel with such an attachment.  The SPI or I2C bus needs to wait
+while the transfer is in progress and the other driver will attempt to
+do the attachment with a spin lock held.
+.Pp
+The bandwidth of the I2C bus is typically set to 100 kbits/sec.
+Attempting to use higher baud rates, especially without flow control,
+may result in excessive silo overlows.
+An SPI bus may perform better, but silo overflows can still happen.

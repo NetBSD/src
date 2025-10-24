@@ -1,4 +1,4 @@
-#	$NetBSD: files.spi,v 1.12 2025/09/11 14:32:49 thorpej Exp $
+#	$NetBSD: files.spi,v 1.13 2025/10/24 23:16:11 brad Exp $
 
 define	spibus { }
 
@@ -51,3 +51,8 @@ file	dev/spi/scmdspi.c		scmdspi
 # Bosch BMP280 / BME280 sensor
 attach  bmx280thp at spi with bmx280thpspi
 file	dev/spi/bmx280thpspi.c		bmx280thpspi
+
+# NXP SC16IS7xx UART bridge
+defparam opt_sc16is7xx.h		SC16IS7XX_SPI_FREQUENCY
+attach sc16is7xx at spi with sc16is7xxspi
+file dev/spi/sc16is7xxspi.c			sc16is7xxspi

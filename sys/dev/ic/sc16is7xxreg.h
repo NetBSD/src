@@ -1,0 +1,72 @@
+/*	$NetBSD: sc16is7xxreg.h,v 1.1 2025/10/24 23:16:11 brad Exp $	*/
+
+/*
+ * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef _DEV_IC_SC16IS7XXREG_H_
+#define _DEV_IC_SC16IS7XXREG_H_
+
+#define SC16IS7XX_LOW_I2C_ADDR	0x48
+#define SC16IS7XX_HIGH_I2C_ADDR	0x57
+
+/* Available generally */
+#define SC16IS7XX_REGISTER_RHR	0x00
+#define SC16IS7XX_REGISTER_THR	0x00
+#define SC16IS7XX_REGISTER_IER	0x01
+#define SC16IS7XX_REGISTER_FCR	0x02
+#define SC16IS7XX_REGISTER_IIR	0x02
+#define SC16IS7XX_REGISTER_LCR	0x03
+#define SC16IS7XX_REGISTER_MCR	0x04
+#define SC16IS7XX_REGISTER_LSR	0x05
+#define SC16IS7XX_REGISTER_MSR	0x06
+#define SC16IS7XX_REGISTER_SPR	0x07
+#define SC16IS7XX_REGISTER_TCR	0x06	/* Accessable when MCR[2] = 1 and
+					 * EFR[4] = 1 */
+#define SC16IS7XX_REGISTER_TLR	0x07	/* Accessable when MCR[2] = 1 and
+					 * EFR[4] = 1 */
+#define SC16IS7XX_REGISTER_TXLVL	0x08
+#define SC16IS7XX_REGISTER_RXLVL	0x09
+#define SC16IS7XX_REGISTER_IODIR	0x0a	/* Only on
+						 * SC16IS75[02]/SC16IS76[02] */
+#define SC16IS7XX_REGISTER_IOSTATE	0x0b	/* Only on
+						 * SC16IS75[02]/SC16IS76[02] */
+#define SC16IS7XX_REGISTER_IOENA	0x0c	/* Only on
+						 * SC16IS75[02]/SC16IS76[02] */
+#define SC16IS7XX_REGISTER_RESERVED	0x0d
+#define SC16IS7XX_REGISTER_IOCONTROL	0x0e	/* Only on
+						 * SC16IS75[02]/SC16IS76[02],
+						 * except for the SRESET bit */
+#define		SC16IS7XX_IOCONTROL_7_4		0x02
+#define		SC16IS7XX_IOCONTROL_3_0		0x04
+#define		SC16IS7XX_IOCONTROL_SRESET	0x08
+#define SC16IS7XX_REGISTER_EFCR		0x0f
+
+/* IODIR, IOSTATE, IOENA, and IOCONTROL apply to both channels
+ * on the SCIS16752 and SCIS16762
+ */
+
+/* Special register set.  Available when LCR[7] = 1 and not 0xBF */
+#define SC16IS7XX_REGISTER_DLL		0x00
+#define SC16IS7XX_REGISTER_DLH		0x01
+
+/* Enhanced register set.  Available when LCR = 0xBF */
+#define SC16IS7XX_REGISTER_EFR		0x02
+#define SC16IS7XX_REGISTER_XON1		0x04
+#define SC16IS7XX_REGISTER_XON2		0x05
+#define SC16IS7XX_REGISTER_XOFF1	0x06
+#define SC16IS7XX_REGISTER_XOFF2	0x07
+
+#endif
