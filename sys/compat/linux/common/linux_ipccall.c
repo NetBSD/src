@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.34 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD$	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,17 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 
 		return linux_sys_semctl(l, &bsa, retval);
 	    }
+	case LINUX_SYS_SEMTIMEDOP: {
+		struct linux_sys_semtimedop_args ua;
+
+		ua.semid = SCARG(uap, a1);
+		ua.sops = (struct sembuf *)SCARG(uap, a2);
+		ua.nsops = (size_t)SCARG(uap, a3);
+		ua.timeout = (struct linux_timespec *)SCARG(uap, ptr);
+
+		return linux_sys_semtimedop(l, &ua, retval);
+	}
+}
 #endif
 #ifdef SYSVMSG
 	case LINUX_SYS_MSGSND:
