@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfigInternal.h,v 1.11 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitConfigInternal.h,v 1.12 2025/10/25 09:55:17 martin Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -130,7 +130,7 @@
 #endif
 #elif defined (__aarch64__)
 #define SLJIT_CONFIG_ARM_64 1
-#elif defined(__ppc64__) || defined(__powerpc64__) || defined(_ARCH_PPC64) || (defined(_POWER) && defined(__64BIT__))
+#elif defined(__ppc64__) || defined(__powerpc64__) || (defined(_ARCH_PPC64) && (defined(__64BIT__) || defined(_LP64)))) || (defined(_POWER) && (defined(__64BIT__) || defined(_LP64)))
 #define SLJIT_CONFIG_PPC_64 1
 #elif defined(__ppc__) || defined(__powerpc__) || defined(_ARCH_PPC) || defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(_POWER)
 #define SLJIT_CONFIG_PPC_32 1
