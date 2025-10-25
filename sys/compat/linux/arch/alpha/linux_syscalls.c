@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.123 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.123 2024/09/28 19:36:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -485,7 +485,7 @@ const char *const linux_syscallnames[] = {
 	/* 420 */	"clock_gettime",
 	/* 421 */	"clock_getres",
 	/* 422 */	"clock_nanosleep",
-	/* 423 */	"#423 (unimplemented semtimedop)",
+	/* 423 */	"semtimedop",
 	/* 424 */	"tgkill",
 	/* 425 */	"stat64",
 	/* 426 */	"lstat64",
@@ -1538,7 +1538,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 420 */	NULL, /* clock_gettime */
 	/* 421 */	NULL, /* clock_getres */
 	/* 422 */	NULL, /* clock_nanosleep */
-	/* 423 */	NULL, /* unimplemented semtimedop */
+	/* 423 */	NULL, /* semtimedop */
 	/* 424 */	NULL, /* tgkill */
 	/* 425 */	NULL, /* stat64 */
 	/* 426 */	NULL, /* lstat64 */

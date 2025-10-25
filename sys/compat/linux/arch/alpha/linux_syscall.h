@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.122 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call numbers.
@@ -662,6 +662,9 @@
 
 /* syscall: "clock_nanosleep" ret: "int" args: "clockid_t" "int" "struct linux_timespec *" "struct linux_timespec *" */
 #define	LINUX_SYS_clock_nanosleep	422
+
+/* syscall: "semtimedop" ret: "int" args: "int" "struct sembuf *" "size_t" "struct linux_timespec *" */
+#define	LINUX_SYS_semtimedop	423
 
 /* syscall: "tgkill" ret: "int" args: "int" "int" "int" */
 #define	LINUX_SYS_tgkill	424

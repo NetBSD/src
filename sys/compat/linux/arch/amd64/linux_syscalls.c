@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.84 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.84 2024/09/28 19:36:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -290,7 +290,7 @@ const char *const linux_syscallnames[] = {
 	/* 217 */	"getdents64",
 	/* 218 */	"set_tid_address",
 	/* 219 */	"#219 (unimplemented restart_syscall)",
-	/* 220 */	"#220 (unimplemented semtimedop)",
+	/* 220 */	"semtimedop",
 	/* 221 */	"fadvise64",
 	/* 222 */	"timer_create",
 	/* 223 */	"timer_settime",
@@ -834,7 +834,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 217 */	NULL, /* getdents64 */
 	/* 218 */	NULL, /* set_tid_address */
 	/* 219 */	NULL, /* unimplemented restart_syscall */
-	/* 220 */	NULL, /* unimplemented semtimedop */
+	/* 220 */	NULL, /* semtimedop */
 	/* 221 */	NULL, /* fadvise64 */
 	/* 222 */	NULL, /* timer_create */
 	/* 223 */	NULL, /* timer_settime */

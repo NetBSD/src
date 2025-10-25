@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.122 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.122 2024/09/28 19:36:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1708,8 +1708,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)linux_sys_clock_nanosleep
 	},		/* 422 = clock_nanosleep */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 423 = filler */
+		ns(struct linux_sys_semtimedop_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_semtimedop
+	},		/* 423 = semtimedop */
 	{
 		ns(struct linux_sys_tgkill_args),
 		.sy_call = (sy_call_t *)linux_sys_tgkill

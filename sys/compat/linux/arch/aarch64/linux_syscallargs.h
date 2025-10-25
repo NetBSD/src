@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.13 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call argument lists.
@@ -854,6 +854,14 @@ struct linux_sys_semctl_args {
 };
 check_syscall_args(linux_sys_semctl)
 
+struct linux_sys_semtimedop_args {
+	syscallarg(int) semid;
+	syscallarg(struct sembuf *) sops;
+	syscallarg(size_t) nsops;
+	syscallarg(struct linux_timespec *) timeout;
+};
+check_syscall_args(linux_sys_semtimedop)
+
 struct sys_semop_args;
 #else
 #endif
@@ -1488,6 +1496,8 @@ int	sys_msgsnd(struct lwp *, const struct sys_msgsnd_args *, register_t *);
 int	sys_semget(struct lwp *, const struct sys_semget_args *, register_t *);
 
 int	linux_sys_semctl(struct lwp *, const struct linux_sys_semctl_args *, register_t *);
+
+int	linux_sys_semtimedop(struct lwp *, const struct linux_sys_semtimedop_args *, register_t *);
 
 int	sys_semop(struct lwp *, const struct sys_semop_args *, register_t *);
 

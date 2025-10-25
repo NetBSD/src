@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.13 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call numbers.
@@ -498,6 +498,9 @@
 
 /* syscall: "semctl" ret: "int" args: "int" "int" "int" "union linux_semun" */
 #define	LINUX_SYS_semctl	191
+
+/* syscall: "semtimedop" ret: "int" args: "int" "struct sembuf *" "size_t" "struct linux_timespec *" */
+#define	LINUX_SYS_semtimedop	192
 
 /* syscall: "semop" ret: "int" args: "int" "struct sembuf *" "size_t" */
 #define	LINUX_SYS_semop	193

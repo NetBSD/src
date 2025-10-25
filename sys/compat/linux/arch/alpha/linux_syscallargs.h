@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.121 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call argument lists.
@@ -1035,6 +1035,14 @@ struct linux_sys_clock_nanosleep_args {
 };
 check_syscall_args(linux_sys_clock_nanosleep)
 
+struct linux_sys_semtimedop_args {
+	syscallarg(int) semid;
+	syscallarg(struct sembuf *) sops;
+	syscallarg(size_t) nsops;
+	syscallarg(struct linux_timespec *) timeout;
+};
+check_syscall_args(linux_sys_semtimedop)
+
 struct linux_sys_tgkill_args {
 	syscallarg(int) tgid;
 	syscallarg(int) tid;
@@ -1868,6 +1876,8 @@ int	linux_sys_clock_gettime(struct lwp *, const struct linux_sys_clock_gettime_a
 int	linux_sys_clock_getres(struct lwp *, const struct linux_sys_clock_getres_args *, register_t *);
 
 int	linux_sys_clock_nanosleep(struct lwp *, const struct linux_sys_clock_nanosleep_args *, register_t *);
+
+int	linux_sys_semtimedop(struct lwp *, const struct linux_sys_semtimedop_args *, register_t *);
 
 int	linux_sys_tgkill(struct lwp *, const struct linux_sys_tgkill_args *, register_t *);
 

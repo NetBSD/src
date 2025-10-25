@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.13 2024/09/28 19:36:19 christos Exp $ */
+/* $NetBSD$ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.13 2024/09/28 19:36:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD$");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -242,7 +242,7 @@ const char *const linux_syscallnames[] = {
 #ifdef SYSVSEM
 	/* 190 */	"semget",
 	/* 191 */	"semctl",
-	/* 192 */	"#192 (unimplemented semtimedop)",
+	/* 192 */	"semtimedop",
 	/* 193 */	"semop",
 #else
 	/* 190 */	"#190 (unimplemented semget)",
@@ -780,7 +780,7 @@ const char *const altlinux_syscallnames[] = {
 #ifdef SYSVSEM
 	/* 190 */	NULL, /* semget */
 	/* 191 */	NULL, /* semctl */
-	/* 192 */	NULL, /* unimplemented semtimedop */
+	/* 192 */	NULL, /* semtimedop */
 	/* 193 */	NULL, /* semop */
 #else
 	/* 190 */	NULL, /* unimplemented semget */
