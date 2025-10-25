@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.9 2025/02/04 23:55:23 jmcneill Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.10 2025/10/25 05:21:48 pgoyette Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.6 2020/12/24 01:00:00 kevlo Exp $	*/
 
 /*
@@ -99,6 +99,8 @@
 #define RGE_INTRS_TIMER		\
 	(RGE_ISR_RX_ERR | RGE_ISR_TX_ERR | RGE_ISR_PCS_TIMEOUT |	\
 	RGE_ISR_SYSTEM_ERR)
+
+#define	RGE_MAX_NINTRS	1
 
 /* Flags for register RGE_TXCFG */
 #define RGE_TXCFG_HWREV		0x7cf00000
@@ -352,13 +354,14 @@ enum rge_mac_type {
 struct rge_softc {
 	device_t		sc_dev;
 	struct ethercom		sc_ec; 		/* Ethernet common data */
-	void			*sc_ih;		/* interrupt vectoring */
+	void			*sc_ihs[RGE_MAX_NINTRS]; /* interrupt vectoring */
 	bus_space_handle_t	rge_bhandle;	/* bus space handle */
 	bus_space_tag_t		rge_btag;	/* bus space tag */
 	bus_size_t		rge_bsize;
 	bus_dma_tag_t		sc_dmat;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
+	pci_intr_handle_t	*sc_intrs;
 	bus_dma_segment_t 	sc_rx_seg;
 	bus_dmamap_t		sc_rx_dmamap;
 	struct ifmedia		sc_media;	/* media info */
