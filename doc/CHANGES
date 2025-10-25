@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3194 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3195 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -67,3 +67,5 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	fsck_lfs(8): Enable checking LFS64 volumes. [perseant 20251012]
 	riscv: Handle XTheadMae vs. Svpbmt, allowing boot on Allwinner
 		Nezha board. [thorpej 20251012]
+	sc16is7xx(4): NXP SC16IX7xx family of UART chips that are behind
+		a I2C or SPI bus.  [brad 20251024]
