@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.59 2025/10/26 16:19:05 christos Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.60 2025/10/26 19:32:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.59 2025/10/26 16:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.60 2025/10/26 19:32:56 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -309,6 +309,7 @@ linux_sys_semctl(struct lwp *l, const struct linux_sys_semctl_args *uap, registe
 }
 
 
+#ifdef LINUX_SYS_semtimedop
 /* Adapted from do_semop() to accept pointer to linux_timespec */
 static int
 linux_timespec_copyin(const void *uptr, void *kptr, size_t len __unused)
@@ -335,6 +336,7 @@ linux_sys_semtimedop(struct lwp *l, const struct linux_sys_semtimedop_args *uap,
 	    SCARG(uap, nsops), SCARG(uap, timeout), retval,
 	    linux_timespec_copyin);
 }
+#endif
 #endif /* SYSVSEM */
 
 #ifdef SYSVMSG
