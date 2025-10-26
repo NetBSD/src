@@ -1,4 +1,4 @@
-/* $NetBSD: meson_usbctrl.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: meson_usbctrl.c,v 1.5.18.1 2025/10/26 13:07:16 martin Exp $ */
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.5 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.5.18.1 2025/10/26 13:07:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,14 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.5 2021/01/27 03:10:18 thorpej Ex
 #define  U2P_R1_ID_DIG					__BIT(1)
 #define  U2P_R1_PHY_READY				__BIT(0)
 
+#define MESON_G12A_GLUE_OFFSET				0x80
+
 /* glue registers */
-#define USB_R0_REG					0x80
+#define USB_R0_REG					0x00
 #define  USB_R0_U2D_ACT					__BIT(31)
 #define  USB_R0_U2D_SS_SCALEDOWN_MODE_MASK		__BITS(30,29)
 #define  USB_R0_P30_PCS_RX_LOS_MASK_VAL_MASK		__BITS(28,19)
 #define  USB_R0_P30_LANE0_EXT_PCLK_REQ			__BIT(18)
 #define  USB_R0_P30_LANE0_TX2RX_LOOPBACK		__BIT(17)
-#define USB_R1_REG					0x84
+#define USB_R1_REG					0x04
 #define  USB_R1_P30_PCS_TX_SWING_FULL_MASK		__BITS(31,25)
 #define  USB_R1_U3H_FLADJ_30MHZ_REG_MASK		__BITS(24,19)
 #define  USB_R1_U3H_HOST_MSI_ENABLE			__BIT(18)
@@ -73,20 +75,20 @@ __KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.5 2021/01/27 03:10:18 thorpej Ex
 #define  USB_R1_U3H_HUB_PORT_OVERCURRENT_MASK		__BITS(4,2)
 #define  USB_R1_U3H_PME_ENABLE				__BIT(1)
 #define  USB_R1_U3H_BIGENDIAN_GS			__BIT(0)
-#define USB_R2_REG					0x88
+#define USB_R2_REG					0x08
 #define  USB_R2_P30_PCS_TX_DEEMPH_6DB_MASK		__BITS(31,26)
 #define  USB_R2_P30_PCS_TX_DEEMPH_3P5DB_MASK		__BITS(25,20)
-#define USB_R3_REG					0x8c
+#define USB_R3_REG					0x0c
 #define  USB_R3_P30_REF_SSP_EN				__BIT(13)
 #define  USB_R3_P30_SSC_REF_CLK_SEL_MASK		__BITS(12,4)
 #define  USB_R3_P30_SSC_RANGE_MASK			__BITS(3,1)
 #define  USB_R3_P30_SSC_ENABLE				__BIT(0)
-#define USB_R4_REG					0x90
+#define USB_R4_REG					0x10
 #define  USB_R4_P21_ONLY				__BIT(4)
 #define  USB_R4_MEM_PD_MASK				__BITS(3,2)
 #define  USB_R4_P21_SLEEP_M0				__BIT(1)
 #define  USB_R4_P21_PORT_RESET_0			__BIT(0)
-#define USB_R5_REG					0x94
+#define USB_R5_REG					0x14
 #define  USB_R5_ID_DIG_CNT_MASK				__BITS(23,16)
 #define  USB_R5_ID_DIG_TH_MASK				__BITS(15,8)
 #define  USB_R5_ID_DIG_IRQ				__BIT(7)
@@ -102,16 +104,30 @@ __KERNEL_RCSID(0, "$NetBSD: meson_usbctrl.c,v 1.5 2021/01/27 03:10:18 thorpej Ex
 #define USBCTRL_WRITE_REG(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+#define USBCTRLGLUE_READ_REG(sc, reg) \
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh + (sc)->sc_conf->glue_offset, (reg))
+#define USBCTRLGLUE_WRITE_REG(sc, reg, val) \
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh + (sc)->sc_conf->glue_offset, (reg), (val))
+
 struct meson_usbctrl_config {
+	bus_addr_t glue_offset;
 	int num_phys;
 };
 
 struct meson_usbctrl_config mesong12_conf = {
-	.num_phys = 3
+	.glue_offset = MESON_G12A_GLUE_OFFSET,
+	.num_phys = 3,
 };
+
+struct meson_usbctrl_config mesongxl_conf = {
+	.num_phys = 2
+};
+
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "amlogic,meson-g12a-usb-ctrl", .data = &mesong12_conf },
+	{ .compat = "amlogic,meson-gxl-usb-ctrl", .data = &mesongxl_conf },
+
 	DEVICE_COMPAT_EOL
 };
 
@@ -122,7 +138,24 @@ struct meson_usbctrl_softc {
 	const struct meson_usbctrl_config *sc_conf;
 	struct fdtbus_regulator *sc_supply;
 	int sc_phandle;
+	u_int sc_nusb2phys;
+	u_int sc_nusb3phys;
 };
+
+static void
+meson_usbctrl_phy_count(struct meson_usbctrl_softc *sc)
+{
+
+	for (size_t i = 0; i < sc->sc_conf->num_phys; i++) {
+		const char * phyname = fdtbus_get_string_index(sc->sc_phandle,
+		    "phy-names", i);
+		if (strstr(phyname, "usb3") == NULL)
+			sc->sc_nusb2phys++;
+		else
+			sc->sc_nusb3phys++;
+	}
+}
+
 
 static void
 meson_usbctrl_usb2_init(struct meson_usbctrl_softc *sc)
@@ -156,23 +189,23 @@ meson_usbctrl_usb_glue_init(struct meson_usbctrl_softc *sc)
 {
 	uint32_t val;
 
-	val = USBCTRL_READ_REG(sc, USB_R1_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R1_REG);
 	val &= ~USB_R1_U3H_FLADJ_30MHZ_REG_MASK;
 	val |= __SHIFTIN(0x20, USB_R1_U3H_FLADJ_30MHZ_REG_MASK);
-	USBCTRL_WRITE_REG(sc, USB_R1_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R1_REG, val);
 
-	val = USBCTRL_READ_REG(sc, USB_R5_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R5_REG);
 	val |= USB_R5_ID_DIG_EN_0;
-	USBCTRL_WRITE_REG(sc, USB_R5_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R5_REG, val);
 
-	val = USBCTRL_READ_REG(sc, USB_R5_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R5_REG);
 	val |= USB_R5_ID_DIG_EN_1;
-	USBCTRL_WRITE_REG(sc, USB_R5_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R5_REG, val);
 
-	val = USBCTRL_READ_REG(sc, USB_R5_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R5_REG);
 	val &= ~USB_R5_ID_DIG_TH_MASK;
 	val |= __SHIFTIN(0xff, USB_R5_ID_DIG_TH_MASK);
-	USBCTRL_WRITE_REG(sc, USB_R5_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R5_REG, val);
 }
 
 static void
@@ -180,44 +213,44 @@ meson_usbctrl_usb3_init(struct meson_usbctrl_softc *sc)
 {
 	uint32_t val;
 
-	val = USBCTRL_READ_REG(sc, USB_R3_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R3_REG);
 	val &= ~USB_R3_P30_SSC_RANGE_MASK;
 	val &= ~USB_R3_P30_SSC_ENABLE;
 	val |= __SHIFTIN(2, USB_R3_P30_SSC_RANGE_MASK);
 	val |= USB_R3_P30_REF_SSP_EN;
-	USBCTRL_WRITE_REG(sc, USB_R3_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R3_REG, val);
 
 	delay(2);
 
-	val = USBCTRL_READ_REG(sc, USB_R2_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R2_REG);
 	val &= ~USB_R2_P30_PCS_TX_DEEMPH_3P5DB_MASK;
 	val |= __SHIFTIN(0x15, USB_R2_P30_PCS_TX_DEEMPH_3P5DB_MASK);
-	USBCTRL_WRITE_REG(sc, USB_R2_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R2_REG, val);
 
-	val = USBCTRL_READ_REG(sc, USB_R2_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R2_REG);
 	val &= ~USB_R2_P30_PCS_TX_DEEMPH_6DB_MASK;
 	val |= __SHIFTIN(0x20, USB_R2_P30_PCS_TX_DEEMPH_6DB_MASK);
-	USBCTRL_WRITE_REG(sc, USB_R2_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R2_REG, val);
 
 	delay(2);
 
-	val = USBCTRL_READ_REG(sc, USB_R1_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R1_REG);
 	val |= USB_R1_U3H_HOST_PORT_POWER_CONTROL_PRESENT;
-	USBCTRL_WRITE_REG(sc, USB_R1_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R1_REG, val);
 
-	val = USBCTRL_READ_REG(sc, USB_R1_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R1_REG);
 	val &= ~USB_R1_P30_PCS_TX_SWING_FULL_MASK;
 	val |= __SHIFTIN(127, USB_R1_P30_PCS_TX_SWING_FULL_MASK);
-	USBCTRL_WRITE_REG(sc, USB_R1_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R1_REG, val);
 
 	/* XXX: force HOST_DEVICE mode */
-	val = USBCTRL_READ_REG(sc, USB_R0_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R0_REG);
 	val &= ~USB_R0_U2D_ACT;
-	USBCTRL_WRITE_REG(sc, USB_R0_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R0_REG, val);
 
-	val = USBCTRL_READ_REG(sc, USB_R4_REG);
+	val = USBCTRLGLUE_READ_REG(sc, USB_R4_REG);
 	val &= ~USB_R4_P21_SLEEP_M0;
-	USBCTRL_WRITE_REG(sc, USB_R4_REG, val);
+	USBCTRLGLUE_WRITE_REG(sc, USB_R4_REG, val);
 }
 
 static void
@@ -285,10 +318,14 @@ meson_usbctrl_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_supply != NULL)
 		fdtbus_regulator_enable(sc->sc_supply);	/* USB HOST MODE */
 
+	meson_usbctrl_phy_count(sc);
+
 	meson_usbctrl_usb2_init(sc);
 	meson_usbctrl_usb_glue_init(sc);
-	meson_usbctrl_usb3_init(sc);
-	meson_usbctrl_enable_usb3_phys(sc);
+	if (sc->sc_nusb3phys) {
+		meson_usbctrl_usb3_init(sc);
+		meson_usbctrl_enable_usb3_phys(sc);
+	}
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
 		fdt_add_child(parent, child, faa, 0);
