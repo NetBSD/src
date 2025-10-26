@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.61 2025/01/07 17:39:45 andvar Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.62 2025/10/26 12:51:51 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.61 2025/01/07 17:39:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.62 2025/10/26 12:51:51 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1338,7 +1338,7 @@ pq3etsec_mapcache_create(
 		     BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
-			    "failed to creat dma map cache "
+			    "failed to create dma map cache "
 			    "entry %u of %zu: %d\n",
 			    i, maxmaps, error);
 			while (i-- > 0) {

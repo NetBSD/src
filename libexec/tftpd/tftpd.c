@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.45 2016/07/20 20:18:21 shm Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.46 2025/10/26 12:51:50 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.45 2016/07/20 20:18:21 shm Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.46 2025/10/26 12:51:50 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -870,7 +870,7 @@ validate_access(char **filep, int mode)
 				       } else {
 					       /* Not there */
 					       if (unrestricted_writes) {
-						       /* need to creat new file! */
+						       /* need to create new file! */
 						       create = O_CREAT;
 					       } else {
 						       /* Permission denied */

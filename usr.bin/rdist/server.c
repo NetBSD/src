@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.33 2019/02/03 03:19:29 mrg Exp $	*/
+/*	$NetBSD: server.c,v 1.34 2025/10/26 12:51:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.33 2019/02/03 03:19:29 mrg Exp $");
+__RCSID("$NetBSD: server.c,v 1.34 2025/10/26 12:51:51 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -987,7 +987,7 @@ badtarget:	error("%s:%s: %s\n", host, target, strerror(errno));
 }
 
 /*
- * Creat a hard link to existing file.
+ * Create a hard link to existing file.
  */
 static void
 hardlink(char *cmd)

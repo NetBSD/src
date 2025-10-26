@@ -1,6 +1,6 @@
-/*	$NetBSD: util.h,v 1.2 2025/10/18 22:20:02 perseant Exp $	*/
+/*	$NetBSD: util.h,v 1.3 2025/10/26 12:51:50 andvar Exp $	*/
 
-/* Creat test image and filesystem, record superblock locations */
+/* Create test image and filesystem, record superblock locations */
 void create_lfs(size_t, size_t, int, int);
 
 /* Write a well-known byte pattern into a file, appending if it exists */

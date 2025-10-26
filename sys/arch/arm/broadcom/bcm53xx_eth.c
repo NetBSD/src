@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.46 2025/10/04 04:44:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.47 2025/10/26 12:51:51 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -795,7 +795,7 @@ bcmeth_mapcache_create(
 		     BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
-			    "failed to creat dma map cache "
+			    "failed to create dma map cache "
 			    "entry %u of %zu: %d\n",
 			    i, maxmaps, error);
 			while (i-- > 0) {
