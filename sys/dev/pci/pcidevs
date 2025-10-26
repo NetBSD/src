@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1383.2.25 2025/05/08 18:22:02 martin Exp $
+$NetBSD: pcidevs,v 1.1383.2.26 2025/10/26 12:54:09 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -9900,6 +9900,7 @@ product VIATECH K8T890_0	0x0238	K8T890 Host
 product VIATECH KT880		0x0269	KT880 CPU to PCI Bridge
 product VIATECH K8HTB_0		0x0282	K8HTB Host
 product VIATECH VT8363_HB	0x0305	VT8363 (Apollo KT133) Host Bridge
+product VIATECH VT8233C		0x3109	VT8233C PCI-ISA Bridge
 product VIATECH VT3351_HB_0351	0x0351	VT3351 Host Bridge
 product VIATECH VX800_HC	0x0353	VX800/VX820 Host Controller
 product VIATECH P4M900		0x0364	CN896/P4M900 Host Bridge
