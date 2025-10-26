@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.77 2025/10/19 11:07:16 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.78 2025/10/26 12:57:50 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1021,4 +1021,13 @@ sys/dev/pci/virtio.c				1.84 (patch)
 
 	virtio(4): PR 59618: use paravirt_membar_sync(9) where needed.
 	[riastradh, ticket #1977]
+
+share/man/man4/viaide.4				1.13
+sys/dev/pci/pcidevs				1.1528
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+sys/dev/pci/viaide.c				1.105
+
+	viaide(4): add UDMA support for VT8233C IDE controller.
+	[andvar, ticket #1978]
 
