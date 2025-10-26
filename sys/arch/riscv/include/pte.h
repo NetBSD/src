@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.14.2.1 2025/10/26 12:26:27 martin Exp $ */
+/* $NetBSD: pte.h,v 1.14.2.2 2025/10/26 12:28:36 martin Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 			* indicates it has already been modified.  No need for
 			* modified emulation.
 			*/
-			pte |= PTE_A;
+			pte |= PTE_A | PTE_D;
 		} else if ((flags & VM_PROT_ALL) || VM_PAGEMD_REFERENCED_P(mdpg)) {
 			/*
 			* - The access type indicates that we don't need to do
