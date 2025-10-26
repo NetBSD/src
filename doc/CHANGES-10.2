@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.63 2025/10/20 14:07:22 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.64 2025/10/26 13:13:49 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1218,4 +1218,45 @@ sys/arch/sparc/dev/apc.c			1.3
 
 	sparc: hack to inform QEMU about idle CPUs.
 	[jdc, ticket #1181]
+
+sys/dev/ic/bwi.c				1.45
+sys/dev/ic/bwireg.h				1.6
+sys/dev/ic/bwivar.h				1.12
+
+	bwi(4): AMRR fix, PCI/cardbus interrupt fix, and other enhancements.
+	[jmcneill, ticket #1182]
+
+xsrc/external/mit/xf86-video-geode/dist/src/geode_msr.c 1.8
+
+	geode: avoid reading /dev/cpu/0/msr, which does not exist.
+	[nia, ticket #1183]
+
+share/man/man4/viaide.4				1.13
+sys/dev/pci/pcidevs				1.1528
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+sys/dev/pci/viaide.c				1.105
+
+	viaide(4): add UDMA support for VT8233C IDE controller.
+	[andvar, ticket #1184]
+
+sys/arch/evbppc/wii/dev/resetbtn.c		1.3
+
+	evbppc: wii: make the reset button work at the ddb> prompt.
+	[jmcneill, ticket #1185]
+
+sys/arch/arm/amlogic/meson_usbctrl.c		1.7
+
+	arm: support the amlogic,meson-gxl-usb-ctrl as found in the
+	Libre Computer AML-S905X-CC.
+	[skrll, ticket #1186]
+
+sys/arch/evbppc/include/wii.h			1.11
+sys/arch/evbppc/wii/dev/gxreg.h			1.1
+sys/arch/evbppc/wii/dev/viio.h			delete
+sys/arch/evbppc/wii/dev/wiifb.c			1.8
+sys/arch/evbppc/wii/machdep.c			1.11
+
+	evbppc: wii: use GX to accelerate RGB to YUY2 conversion.
+	[jmcneill, ticket #1187]
 
