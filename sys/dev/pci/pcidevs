@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1527 2025/05/03 13:56:00 rin Exp $
+$NetBSD: pcidevs,v 1.1527.2.1 2025/10/26 12:42:25 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -10147,6 +10147,7 @@ product VIATECH VT8653		0x3101	VT8653 (Apollo Pro 266T) CPU-PCI Bridge
 product VIATECH VT8237_EHCI	0x3104	VT8237 EHCI USB Controller
 product VIATECH VT6105		0x3106	VT6105 (Rhine III) 10/100 Ethernet
 product VIATECH VT3108_IG	0x3108	K8M800/K8N800(A) UniChrome Pro IGP
+product VIATECH VT8233C		0x3109	VT8233C PCI-ISA Bridge
 product VIATECH VT3118_IG	0x3118	CN400/PM8x0/PN8x0 UniChrome Pro IGP
 product VIATECH VT612X		0x3119	VT612X (Velocity) 10/100/1000 Ethernet
 product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
