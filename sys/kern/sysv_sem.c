@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.104 2025/05/23 09:47:34 hannken Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.105 2025/10/26 16:15:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.104 2025/05/23 09:47:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.105 2025/10/26 16:15:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -1073,9 +1073,10 @@ out:
 	return error;
 }
 
-static int
+int
 do_semop(struct lwp *l, int usemid, struct sembuf *usops,
-    size_t nsops, struct timespec *utimeout, register_t *retval)
+    size_t nsops, void *utimeout, register_t *retval,
+    int (*timeout_copyin)(const void *, void *, size_t))
 {
 	struct sembuf small_sops[SMALL_SOPS];
 	struct sembuf *sops;
@@ -1106,7 +1107,7 @@ do_semop(struct lwp *l, int usemid, struct sembuf *usops,
 	}
 
 	if (utimeout) {
-		error = copyin(utimeout, &timeout, sizeof(timeout));
+		error = (*timeout_copyin)(utimeout, &timeout, sizeof(timeout));
 		if (error) {
 			SEM_PRINTF(("error = %d from copyin(%p, %p, %zu)\n",
 			    error, utimeout, &timeout, sizeof(timeout)));
@@ -1138,7 +1139,7 @@ sys_semtimedop(struct lwp *l, const struct sys_semtimedop_args *uap,
 	size_t nsops = SCARG(uap, nsops);
 	struct timespec *utimeout = SCARG(uap, timeout);
 
-	return do_semop(l, semid, sops, nsops, utimeout, retval);
+	return do_semop(l, semid, sops, nsops, utimeout, retval, copyin);
 }
 
 int
@@ -1153,7 +1154,7 @@ sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 	struct sembuf *sops = SCARG(uap, sops);
 	size_t nsops = SCARG(uap, nsops);
 
-	return do_semop(l, semid, sops, nsops, NULL, retval);
+	return do_semop(l, semid, sops, nsops, NULL, retval, copyin);
 }
 
 /*
