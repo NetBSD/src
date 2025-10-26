@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.17 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.18 2025/10/26 16:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define LINUX_SYS_SEMOP		1
 #define LINUX_SYS_SEMGET	2
 #define LINUX_SYS_SEMCTL	3
+#define LINUX_SYS_SEMTIMEDOP	4
 #define LINUX_SYS_MSGSND	11
 #define LINUX_SYS_MSGRCV	12
 #define LINUX_SYS_MSGGET	13

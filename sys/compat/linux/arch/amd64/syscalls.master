@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.75 2024/09/28 19:35:55 christos Exp $
+	$NetBSD: syscalls.master,v 1.76 2025/10/26 16:19:05 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -425,7 +425,9 @@
 			    struct linux_dirent64 *dent, unsigned int count); }
 218	STD		{ int|linux_sys||set_tid_address(int *tid); }
 219	UNIMPL		restart_syscall
-220	UNIMPL		semtimedop
+220	STD		{ int|linux_sys||semtimedop(int semid, \
+			    struct sembuf *sops, size_t nsops, \
+			    struct linux_timespec *timeout); }
 221	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
 			    size_t len, int advice); }
 222	STD		{ int|linux_sys||timer_create(clockid_t clockid, \

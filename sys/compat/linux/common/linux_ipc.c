@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.58 2025/06/27 19:52:03 andvar Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.59 2025/10/26 16:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.58 2025/06/27 19:52:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.59 2025/10/26 16:19:05 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.58 2025/06/27 19:52:03 andvar Exp $"
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ipc.h>
@@ -75,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.58 2025/06/27 19:52:03 andvar Exp $"
  * Function in multiarch:
  *	linux_sys_ipc		: linux_ipccall.c
  *	linux_semop		: linux_ipccall.c
+ *	linux_semtimedop	: linux_ipccall.c
  *	linux_semget		: linux_ipccall.c
  *	linux_msgsnd		: linux_ipccall.c
  *	linux_msgrcv		: linux_ipccall.c
@@ -304,6 +306,34 @@ linux_sys_semctl(struct lwp *l, const struct linux_sys_semctl_args *uap, registe
 	}
 
 	return (error);
+}
+
+
+/* Adapted from do_semop() to accept pointer to linux_timespec */
+static int
+linux_timespec_copyin(const void *uptr, void *kptr, size_t len __unused)
+{
+	struct linux_timespec lts;
+	int error = copyin(uptr, &lts, sizeof(lts));
+	if (error)
+		return error;
+	linux_to_native_timespec(kptr, &lts);
+	return 0;
+}
+
+int
+linux_sys_semtimedop(struct lwp *l, const struct linux_sys_semtimedop_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) semid;
+		syscallarg(struct sembuf *) sops;
+		syscallarg(size_t) nsops;
+		syscallarg(struct linux_timespec) timeout;
+	} */
+	return do_semop(l, SCARG(uap, semid), SCARG(uap, sops),
+	    SCARG(uap, nsops), SCARG(uap, timeout), retval,
+	    linux_timespec_copyin);
 }
 #endif /* SYSVSEM */
 

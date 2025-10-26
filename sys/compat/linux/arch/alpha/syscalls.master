@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.109 2024/09/28 19:35:55 christos Exp $
+	$NetBSD: syscalls.master,v 1.110 2025/10/26 16:19:05 christos Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -687,7 +687,9 @@
 422	STD		{ int|linux_sys||clock_nanosleep(clockid_t which, \
 			    int flags, struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
-423	UNIMPL		semtimedop
+423	STD		{ int|linux_sys||semtimedop(int semid, \
+			    struct sembuf *sops, size_t nsops, \
+			    struct linux_timespec *timeout); }
 424	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 425	STD		{ int|linux_sys||stat64(const char *path, \
 			    struct linux_stat64 *sp); }
