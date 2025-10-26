@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2025/04/07 16:07:05 rillig Exp $
+#	$NetBSD: Makefile,v 1.101 2025/10/26 20:48:28 christos Exp $
 #
 
 NOSANITIZER=	# defined
@@ -98,6 +98,7 @@ SRCS+= pthread_md.S
 .if exists(${ARCHDIR}/Makefile.inc)
 .include "${ARCHDIR}/Makefile.inc"
 .endif
+.include "${.CURDIR}/compat/Makefile.inc"
 
 # The PTHREAD__COMPAT flag builds a libpthread that can be dropped
 # into a NetBSD 2/3/4 chroot with a NetBSD 5 or later kernel.
@@ -122,7 +123,7 @@ pthread_specific.po: pthread_specific.o
 	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
 
-COPTS.pthread.c += -Wno-stack-protector -Wno-format-nonliteral
+COPTS.pthread.c += -Wno-stack-protector
 COPTS.pthread_attr.c += -Wno-format-nonliteral
 
 LINTFLAGS+=	-Ac11		# for _Atomic

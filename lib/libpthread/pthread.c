@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.188 2025/10/06 13:12:29 riastradh Exp $	*/
+/*	$NetBSD: pthread.c,v 1.189 2025/10/26 20:48:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.188 2025/10/06 13:12:29 riastradh Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.189 2025/10/26 20:48:28 christos Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: pthread.c,v 1.188 2025/10/06 13:12:29 riastradh Exp $");
 #include <errno.h>
 #include <lwp.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -832,10 +833,11 @@ pthread_getname_np(pthread_t thread, char *name, size_t len)
 
 
 int
-pthread_setname_np(pthread_t thread, const char *name, void *arg)
+pthread_setname_np(pthread_t thread, const char *name, ...)
 {
 	char *oldname, *cp, newname[PTHREAD_MAX_NAMELEN_NP];
 	int namelen;
+	va_list ap;
 
 	pthread__error(EINVAL, "Invalid thread",
 	    thread->pt_magic == PT_MAGIC);
@@ -843,7 +845,9 @@ pthread_setname_np(pthread_t thread, const char *name, void *arg)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
-	namelen = snprintf(newname, sizeof(newname), name, arg);
+	va_start(ap, name);
+	namelen = vsnprintf(newname, sizeof(newname), name, ap);
+	va_end(ap);
 	if (namelen >= PTHREAD_MAX_NAMELEN_NP)
 		return EINVAL;
 
