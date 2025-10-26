@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.38.10.4 2025/10/20 13:59:20 martin Exp $	*/
+/*	$NetBSD: bwi.c,v 1.38.10.5 2025/10/26 12:32:09 martin Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38.10.4 2025/10/20 13:59:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.38.10.5 2025/10/26 12:32:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -719,7 +719,8 @@ bwi_softintr(void *arg)
 	struct bwi_softc *sc = arg;
 	struct bwi_mac *mac;
 	struct ifnet *ifp = &sc->sc_if;
-	uint32_t intr_status, intr_mask;
+	const uint32_t intr_mask = BWI_INIT_INTRS;
+	uint32_t intr_status;
 	uint32_t txrx_intr_status[BWI_TXRX_NRING];
 	int i, s, txrx_error, tx = 0, rx_data = -1;
 
@@ -735,12 +736,6 @@ bwi_softintr(void *arg)
 		if (intr_status == 0xffffffff)	/* Not for us */
 			goto out;
 
-		if (BWI_IS_SDIO(sc)) {
-			intr_mask = 0xffffffff;
-		} else {
-			/* XXX FIXME */
-			intr_mask = CSR_READ_4(sc, BWI_MAC_INTR_MASK);
-		}
 		DPRINTF(sc, BWI_DBG_INTR,
 		    "intr status 0x%08x mask 0x%08x -> 0x%08x\n",
 		    intr_status, intr_mask, intr_status & intr_mask);
@@ -894,14 +889,14 @@ bwi_attach(struct bwi_softc *sc)
 	if (BWI_IS_SDIO(sc)) {
 		error = workqueue_create(&sc->sc_taskq,
 		    device_xname(sc->sc_dev), bwi_task, sc, PRI_NONE,
-		    IPL_NET, 0);
+		    IPL_SOFTNET, 0);
 		if (error != 0) {
 			device_printf(sc->sc_dev,
 			    "failed to create workqueue\n");
 			goto fail;
 		}
 		sc->sc_freetask = pool_cache_init(sizeof(struct bwi_task),
-		    0, 0, 0, "bwitask", NULL, IPL_NET, NULL, NULL, NULL);
+		    0, 0, 0, "bwitask", NULL, IPL_SOFTNET, NULL, NULL, NULL);
 		pool_cache_prime(sc->sc_freetask, BWI_TASK_COUNT);
 	} else {
 		sc->sc_soft_ih = softint_establish(SOFTINT_NET, bwi_softintr,
@@ -2142,9 +2137,12 @@ bwi_mac_fw_load(struct bwi_mac *mac)
 		return (ENODEV);
 	}
 
-	aprint_normal_dev(sc->sc_dev, "firmware rev 0x%04x,"
-	    " patch level 0x%04x\n", fw_rev,
-	    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
+	if (fw_rev != sc->sc_fw_rev) {
+		aprint_normal_dev(sc->sc_dev, "firmware rev 0x%04x,"
+		    " patch level 0x%04x\n", fw_rev,
+		    MOBJ_READ_2(mac, BWI_COMM_MOBJ, BWI_COMM_MOBJ_FWPATCHLV));
+		sc->sc_fw_rev = fw_rev;
+	}
 
 	return (0);
 }
@@ -7596,7 +7594,8 @@ bwi_start(struct ifnet *ifp)
 		tbd->tbd_used++;
 		idx = (idx + 1) % BWI_TX_NDESC;
 
-		if (tbd->tbd_used + BWI_TX_NSPRDESC >= BWI_TX_NDESC) {
+		if (tbd->tbd_used + BWI_TX_NSPRDESC >=
+		    (BWI_IS_SDIO(sc) ? 32 : BWI_TX_NDESC)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -8057,7 +8056,7 @@ bwi_pio_alloc(struct bwi_softc *sc)
 		sc->sc_txeof_status = bwi_txeof_status_pio;
 	}
 
-	mutex_init(&sc->sc_pio_txlock, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&sc->sc_pio_txlock, MUTEX_DEFAULT, IPL_SOFTNET);
 	STAILQ_INIT(&sc->sc_pio_txpend);
 
 	sc->sc_pio_fifolen = 2000 - 80;
@@ -10017,7 +10016,8 @@ bwi_txeof(struct bwi_softc *sc)
 
 	for (;;) {
 		uint32_t tx_status0;
-		uint16_t tx_id, tx_info;
+		uint16_t tx_id;
+		uint8_t tx_cnt;
 
 		tx_status0 = CSR_READ_4(sc, BWI_TXSTATUS_0);
 		if ((tx_status0 & BWI_TXSTATUS_0_MORE) == 0)
@@ -10025,14 +10025,19 @@ bwi_txeof(struct bwi_softc *sc)
 		(void)CSR_READ_4(sc, BWI_TXSTATUS_1);
 
 		tx_id = __SHIFTOUT(tx_status0, BWI_TXSTATUS_0_TXID_MASK);
-		tx_info = BWI_TXSTATUS_0_INFO(tx_status0);
+		tx_cnt = __SHIFTOUT(tx_status0, BWI_TXSTATUS_0_DATA_TXCNT_MASK);
 
-		if (tx_info & 0x30) /* XXX */
+		if ((tx_status0 &
+		     (BWI_TXSTATUS_0_PENDING | BWI_TXSTATUS_0_AMPDU)) != 0) {
 			continue;
+		}
 
-		_bwi_txeof(sc, tx_id, (tx_info >> 8) & 0xf);
+		_bwi_txeof(sc, tx_id, tx_cnt != 1);
 
 		if_statinc(ifp, if_opackets);
+		if (tx_cnt == 0) {
+			if_statinc(ifp, if_oerrors);
+		}
 	}
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
