@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.24 2024/08/04 08:16:25 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.24.2.1 2025/10/26 12:26:27 martin Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
 void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
 void	pmap_md_xtab_deactivate(struct pmap *);
 
+void	pmap_probe_pbmt(void);
 void	pmap_bootstrap(vaddr_t, vaddr_t);
 
 vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);

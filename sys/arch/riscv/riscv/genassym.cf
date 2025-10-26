@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2024/04/06 10:08:54 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.16.4.1 2025/10/26 12:26:27 martin Exp $
 
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -227,6 +227,9 @@ define	PTE_V		PTE_V
 define	PTE_KERN	PTE_KERN
 define	PTE_HARDWIRED	PTE_HARDWIRED
 
+define	PTE_XMAE_PMA	PTE_XMAE_PMA
+define	PTE_XMAE_IO	PTE_XMAE_IO
+
 #define	PTE_PPN0_S	PTE_PPN0_S
 #define	PTE_PPN1_S	PTE_PPN1_S
 #define	PTE_PPN2_S	PTE_PPN2_S
@@ -237,6 +240,11 @@ define	PTE_PPN_SHIFT	PTE_PPN_SHIFT
 define	PM_PDETAB	offsetof(struct pmap, pm_pdetab)
 define	PM_MD_PPN	offsetof(struct pmap, pm_md.md_ppn)
 
+define	CPU_VENDOR_THEAD		CPU_VENDOR_THEAD
+define	TX_SXSTATUS_MAEE		TX_SXSTATUS_MAEE
+
+define	SBI_EID_BASE			SBI_EID_BASE
+define	SBI_FID_BASE_GETMVENDORID	SBI_FID_BASE_GETMVENDORID
 define	SBI_LEGACY_CONSOLE_PUTCHAR	SBI_LEGACY_CONSOLE_PUTCHAR
 
 # for bus_space_asm

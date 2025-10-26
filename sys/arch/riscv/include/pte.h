@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.14 2024/10/12 12:27:33 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.14.2.1 2025/10/26 12:26:27 martin Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -62,6 +62,36 @@ typedef uint32_t pd_entry_t;
 #define PTE_PBMT	__BITS(62, 61)	// Svpbmt
 #define PTE_reserved0	__BITS(60, 54)	//
 
+/*
+ * Svpbmt (Page Based Memory Types) extension:
+ *
+ * PMA --> adhere to physical memory attributes
+ * NC  --> non-cacheable, idempotent, weakly-ordered
+ * IO  --> non-cacheable, non-idempotent, strongly-ordered
+ */
+#define PTE_PBMT_PMA	__SHIFTIN(0, PTE_PBMT)
+#define PTE_PBMT_NC	__SHIFTIN(1, PTE_PBMT)
+#define PTE_PBMT_IO	__SHIFTIN(2, PTE_PBMT)
+
+/* XTheadMae (Memory Attribute Extensions) */
+#define PTE_XMAE	__BITS(63,59)
+#define PTE_XMAE_SO	__BIT(63)	// Strong Order
+#define PTE_XMAE_C	__BIT(62)	// Cacheable
+#define PTE_XMAE_B	__BIT(61)	// Bufferable
+#define PTE_XMAE_SH	__BIT(60)	// Shareable
+#define PTE_XMAE_T	__BIT(59)	// Trustable
+
+/*
+ * Map to the rough PBMT equivalent:
+ *
+ * PMA (i.e. no specific attribute) -->     C  B  SH
+ * NC                               -->        B  SH
+ * IO                               --> SO        SH
+ */
+#define PTE_XMAE_PMA	(              PTE_XMAE_C | PTE_XMAE_B | PTE_XMAE_SH)
+#define PTE_XMAE_NC	(                           PTE_XMAE_B | PTE_XMAE_SH)
+#define PTE_XMAE_IO	(PTE_XMAE_SO                           | PTE_XMAE_SH)
+
 /* Software PTE bits. */
 #define	PTE_RSW		__BITS(9, 8)
 #define	PTE_WIRED	__BIT(9)
@@ -87,7 +117,7 @@ typedef uint32_t pd_entry_t;
 #define	PTE_ISLEAF_P(pte) (((pte) & PTE_RWX) != 0)
 
 #define	PA_TO_PTE(pa)	(((pa) >> PGSHIFT) << PTE_PPN_SHIFT)
-#define	PTE_TO_PA(pte)	(((pte) >> PTE_PPN_SHIFT) << PGSHIFT)
+#define	PTE_TO_PA(pte)	(__SHIFTOUT((pte), PTE_PPN) << PGSHIFT)
 
 #if defined(_KERNEL)
 
@@ -186,6 +216,16 @@ pte_flag_bits(struct vm_page_md *mdpg, int flags, bool kernel_p)
 	return 0;
 }
 
+#ifdef _LP64
+pt_entry_t	pte_enter_flags_to_pbmt(int);
+#else
+static inline pt_entry_t
+pte_enter_flags_to_pbmt(int flags)
+{
+	return 0;
+};
+#endif
+
 static inline pt_entry_t
 pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
     int flags, bool kernel_p)
@@ -195,6 +235,7 @@ pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	pte |= kernel_p ? PTE_KERN : PTE_USER;
 	pte |= pte_flag_bits(mdpg, flags, kernel_p);
 	pte |= pte_prot_bits(mdpg, prot, kernel_p);
+	pte |= pte_enter_flags_to_pbmt(flags);
 
 	if (mdpg != NULL) {
 
@@ -232,6 +273,7 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	pte |= PTE_KERN | PTE_HARDWIRED | PTE_WIRED;
 	pte |= pte_flag_bits(NULL, flags, true);
 	pte |= pte_prot_bits(NULL, prot, true);
+	pte |= pte_enter_flags_to_pbmt(flags);
 
 	return pte;
 }
