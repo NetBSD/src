@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.2.5 2025/02/22 11:47:16 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.4.2.6 2025/10/26 13:12:29 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.5 2025/02/22 11:47:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.6 2025/10/26 13:12:29 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -127,7 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.5 2025/02/22 11:47:16 martin Exp $
 #endif
 
 #define IBM750CL_SPR_HID4	1011
-#define	 L2_CCFI		0x00100000	/* L2 complete castout prior
+#define  HID4_DBP		0x00400000	/* Data bus parking */
+#define	 HID4_L2_CCFI		0x00100000	/* L2 complete castout prior
 						 * to L2 flash invalidate.
 						 */
 
@@ -138,10 +139,6 @@ extern u_int l2cr_config;
 struct powerpc_bus_space wii_mem_tag = {
 	.pbs_flags = _BUS_SPACE_BIG_ENDIAN |
 		     _BUS_SPACE_MEM_TYPE,
-	.pbs_offset = 0,
-	.pbs_base = 0x0c000000,
-	.pbs_limit = 0x0dffffff,
-	.pbs_extent = NULL,
 };
 
 static char ex_storage[1][EXTENT_FIXED_STORAGE_SIZE(EXTMAP_RANGES)]
@@ -293,13 +290,18 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	boothowto = BOOTHOWTO;
 #endif
 
-	/* HID4[L2_CCFI] must be set to 1 for correct operation of L2 cache */
-	mtspr(IBM750CL_SPR_HID4, mfspr(IBM750CL_SPR_HID4) | L2_CCFI);
+	/*
+	 * HID4[L2_CCFI] must be set to 1 for correct operation of L2 cache.
+	 * HID4[DBP] must be set to 1 to support multiple bus masters.
+	 */
+	mtspr(IBM750CL_SPR_HID4,
+	    mfspr(IBM750CL_SPR_HID4) | HID4_L2_CCFI | HID4_DBP);
+	asm volatile ("isync");
 
 	/* Configure L2 cache */
 	l2cr_config = L2CR_L2E | L2CR_L2PE;
 
-	if (bus_space_init(&wii_mem_tag, "iomem",
+	if (bus_space_init(&wii_mem_tag, NULL,
 			   ex_storage[0], sizeof(ex_storage[0]))) {
 		panic("bus_space_init failed");
 	}
@@ -308,7 +310,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 * Initialize the BAT registers
 	 */
 	oea_batinit(
-	    WII_IOMEM_BASE, BAT_BL_32M,
+	    EFB_BASE, BAT_BL_128M,
 	    0);
 
 	/*
@@ -333,9 +335,9 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	pmap_bootstrap(startkernel, endkernel);
 
 	/* Now enable translation (and machine checks/recoverable interrupts) */
-	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-			  : "=r"(scratch)
-			  : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+	asm volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
+		      : "=r"(scratch)
+		      : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	/*
 	 * Setup decrementer

@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.7.2.5 2025/02/22 11:47:15 martin Exp $ */
+/* $NetBSD: wii.h,v 1.7.2.6 2025/10/26 13:12:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -117,6 +117,7 @@
 #define PI_IRQ_EXI			4
 #define PI_IRQ_AI			5
 #define PI_IRQ_DSP			6
+#define PI_IRQ_VI			8
 #define PI_IRQ_HOLLYWOOD		14
 
 /* Hollywood registers */
