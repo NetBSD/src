@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1530 2025/10/21 06:13:55 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1531 2025/10/27 07:17:35 andvar Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -10139,6 +10139,7 @@ product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT6306		0x3044	VT6306 IEEE 1394 Host Controller
 product VIATECH VT82C596B_PWR	0x3050	VT82C596B Power Management Controller
+product VIATECH VT82C596B_PWR_2	0x3051	VT82C596B Power Management Controller
 product VIATECH VT6105M		0x3053	VT6105M (Rhine III) 10/100 Ethernet
 product VIATECH VT82C686A_PWR	0x3057	VT82C686A Power Management Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
@@ -10191,6 +10192,7 @@ product VIATECH VT6315_FW	0x3403	VT6315/VT6330 FireWire Controller
 product VIATECH VX855_DRAM	0x3409	VX855 DRAM Bus Control
 product VIATECH VX900_DRAM	0x3410	VX900 DRAM Controller
 product VIATECH VL80x_XHCI	0x3432	VL80x xHCI
+product VIATECH VX11_ISA	0x345b	VX11 PCI-ISA Bridge
 product VIATECH VL805_XHCI	0x3483	VL805 xHCI
 product VIATECH CHROME_645_IGP	0x3a01	VX11 Graphics [Chrome 645/640]
 product VIATECH K8T890_PMC	0x4238	K8T890 Power Management Control
