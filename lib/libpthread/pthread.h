@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.44 2025/10/27 03:18:21 kre Exp $	*/
+/*	$NetBSD: pthread.h,v 1.45 2025/10/27 16:29:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,8 +157,7 @@ int	pthread_setcanceltype(int, int *);
 void	pthread_testcancel(void);
 
 int	pthread_getname_np(pthread_t, char *, size_t);
-int	pthread_setname_np(pthread_t, const char *, ...) 
-    __RENAME(__pthread_setname_np120) /* XXX __printflike(2, 3) */;
+int	pthread_setname_np(pthread_t, const char *, void *);
 
 int 	pthread_attr_setcreatesuspend_np(pthread_attr_t *);
 int	pthread_suspend_np(pthread_t);

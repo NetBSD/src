@@ -49,7 +49,6 @@ __msync13
 __nanosleep50
 __pollts50
 __pselect50
-__pthread_setname_np120
 __res_get_state
 __res_put_state
 __res_state
