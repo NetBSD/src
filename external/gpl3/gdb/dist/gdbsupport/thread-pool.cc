@@ -45,7 +45,7 @@
    difference.  */
 
 ATTRIBUTE_UNUSED static void
-do_set_thread_name (int (*set_name) (pthread_t, const char *, ...),
+do_set_thread_name (int (*set_name) (pthread_t, const char *, void *),
 		    const char *name)
 {
   set_name (pthread_self (), "%s", const_cast<char *> (name));
