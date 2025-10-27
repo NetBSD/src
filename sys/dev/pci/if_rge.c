@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.38 2025/10/26 17:10:46 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.39 2025/10/27 15:21:32 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.38 2025/10/26 17:10:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.39 2025/10/27 15:21:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -2391,11 +2391,6 @@ rge_phy_config_mac_cfg5(struct rge_softc *sc)
 		rge_write_ephy(sc, rtl8125_mac_cfg5_ephy[i].reg,
 		    rtl8125_mac_cfg5_ephy[i].val);
 
-	val = rge_read_ephy(sc, 0x0022) & ~0x0030;
-	rge_write_ephy(sc, 0x0022, val | 0x0020);
-	val = rge_read_ephy(sc, 0x0062) & ~0x0030;
-	rge_write_ephy(sc, 0x0062, val | 0x0020);
-
 	rge_phy_config_mcu(sc, RGE_MAC_CFG5_MCODE_VER);
 
 	RGE_PHY_SETBIT(sc, 0xa442, 0x0800);
@@ -2423,6 +2418,9 @@ rge_phy_config_mac_cfg5(struct rge_softc *sc)
 	RGE_PHY_SETBIT(sc, 0xa4ca, 0x0040);
 	val = rge_read_phy_ocp(sc, 0xbf84) & ~0xe000;
 	rge_write_phy_ocp(sc, 0xbf84, val | 0xa000);
+	rge_write_phy_ocp(sc, 0xa436, 0x8170);
+	val = rge_read_phy_ocp(sc, 0xa438) & ~0x2700;
+	rge_write_phy_ocp(sc, 0xa438, val | 0xd800);
 }
 
 void
@@ -2619,14 +2617,9 @@ rge_config_imtype(struct rge_softc *sc, int imtype)
 	switch (imtype) {
 	case RGE_IMTYPE_NONE:
 		sc->rge_intrs = RGE_INTRS;
-		sc->rge_rx_ack = RGE_ISR_RX_OK | RGE_ISR_RX_DESC_UNAVAIL |
-		    RGE_ISR_RX_FIFO_OFLOW;
-		sc->rge_tx_ack = RGE_ISR_TX_OK;
 		break;
 	case RGE_IMTYPE_SIM:
 		sc->rge_intrs = RGE_INTRS_TIMER;
-		sc->rge_rx_ack = RGE_ISR_PCS_TIMEOUT;
-		sc->rge_tx_ack = RGE_ISR_PCS_TIMEOUT;
 		break;
 	default:
 		panic("%s: unknown imtype %d", device_xname(sc->sc_dev), imtype);
