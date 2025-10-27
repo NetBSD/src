@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.36 2025/10/26 19:32:56 christos Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.37 2025/10/27 01:39:23 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.36 2025/10/26 19:32:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.37 2025/10/27 01:39:23 kre Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -122,7 +122,6 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 		return linux_sys_semtimedop(l, &ua, retval);
 	}
 #endif
-}
 #endif
 #ifdef SYSVMSG
 	case LINUX_SYS_MSGSND:
