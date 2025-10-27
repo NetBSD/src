@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.34 2025/10/06 13:12:29 riastradh Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.35 2025/10/27 14:27:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.34 2025/10/06 13:12:29 riastradh Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.35 2025/10/27 14:27:31 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -111,7 +111,7 @@ __libc_thr_detach_stub(pthread_t thread)
 	return ESRCH;
 }
 
-__weak_alias(pthread_setname_np, __libc_mutex_catchall_stub)
+__weak_alias(__pthread_setname_np120, __libc_mutex_catchall_stub)
 __weak_alias(pthread_setaffinity_np, __libc_mutex_catchall_stub)
 
 /* thread creation attributes */
