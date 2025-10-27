@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.61 2025/09/25 05:11:25 mrg Exp $
+# $NetBSD: Makefile,v 1.62 2025/10/27 10:29:41 jmcneill Exp $
 
 # Link the gallium mega driver.
 
@@ -1176,15 +1176,8 @@ LDFLAGS+=	-pthread
 LIBDPLIBS+=	X11-xcb         ${.CURDIR}/../libX11/libX11-xcb
 LIBDPLIBS+=	xcb-dri2        ${.CURDIR}/../libxcb/dri2
 LIBDPLIBS+=	xcb		${.CURDIR}/../libxcb/libxcb
-.if ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
-.if ${BUILD_I915} == 1
-LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
-.endif
-.if ${BUILD_IRIS} == 1
-LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
-.endif
-.if ${BUILD_CROCUS} == 1
+.if ${BUILD_I915} == 1 || ${BUILD_IRIS} == 1 || ${BUILD_CROCUS} == 1
 LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
 .endif
 .if ${BUILD_RADEON} == 1
@@ -1194,7 +1187,6 @@ LIBDPLIBS+= 	drm_amdgpu	${.CURDIR}/../libdrm_amdgpu
 .if ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
 .endif	# ${BUILD_NOUVEAU} == 1
-.endif	# ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi${OLD_SUFFIX}
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 LIBDPLIBS+=	terminfo	${.CURDIR}/../../../../../lib/libterminfo
