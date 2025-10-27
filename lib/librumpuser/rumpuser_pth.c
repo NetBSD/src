@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.47 2025/10/27 01:44:46 kre Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.48 2025/10/27 19:00:59 kre Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.47 2025/10/27 01:44:46 kre Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.48 2025/10/27 19:00:59 kre Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -82,7 +82,7 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 
 #if defined(HAVE_PTHREAD_SETNAME3)
 	if (rv == 0 && thrname) {
-		pthread_setname_np(*ptidp, "%s", thrname);
+		pthread_setname_np(*ptidp, thrname, NULL);
 	}
 #elif defined(HAVE_PTHREAD_SETNAME2)
 	if (rv == 0 && thrname) {
