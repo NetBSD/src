@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.36 2025/10/28 11:24:25 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.37 2025/10/28 11:54:03 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.36 2025/10/28 11:24:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.37 2025/10/28 11:54:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,29 +528,6 @@ summitfb_setup(struct summitfb_softc *sc)
 		/* turn off force attr so the above takes effect */
 		summitfb_write4(sc, VISFX_FATTR, 0);
 	} /*else*/ {
-#define UB(s) (((s) & ~0x800000) | 0x400000)
-		printf("fattr: %08x\n", summitfb_read4(sc, UB(VISFX_FATTR)));
-		for (i = 0; i < 35; i++) {
-			printf("CFS%02d: %08x\n", i, 
-			    summitfb_read4(sc, UB(VISFX_CFS(i))));
-		}
-		for (i = 0; i < 32; i++) {
-			printf("IAA%02d: %08x\n", i, 
-			    summitfb_read4(sc, UB(VISFX_IAA(i))));
-		}
-		for (i = 0; i < 8; i++) {
-			printf("IMC%02d: %08x\n", i, 
-			    summitfb_read4(sc, 0x400300 + (i << 2)));
-		}
-		for (i = 0; i < 8; i++) {
-			printf("IBS%02d: %08x\n", i, 
-			    summitfb_read4(sc, 0x400340 + (i << 2)));
-		}
-		for (i = 0; i < 8; i++) {
-			printf("ICLR%02d: %08x\n", i, 
-			    summitfb_read4(sc, 0x400360 + (i << 2)));
-		}
-		summitfb_write4(sc, VISFX_FATTR, 0);
 	}
 	summitfb_setup_fb(sc);
 }
