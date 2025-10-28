@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.16 2025/01/29 15:35:22 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.17 2025/10/28 11:27:02 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -51,6 +51,7 @@
  *   will do it if we're not careful
  */
 #define VISFX_FIFO		0x641440
+#define VISFX_FOEU		0x920400	// Fragment Operation Enable
 #define VISFX_FOE		0x920404	// Fragment Operation Enable
 	#define FOE_TEXTURE	0x00000001
 	#define FOE_SPECULAR	0x00000002
@@ -82,9 +83,17 @@
 
 #define VISFX_READ_DATA		0xa41480
 
+/*
+ * HP calls these BINC writes on NGLE
+ * basically, you set write mode, POE, IBO etc., poke your destination
+ * coordinates into VISFX_VRAM_WRITE_DEST, then write pixels into a DATA_*
+ * register, which will perform the programmed operation(s) and move the
+ * destination coordinates
+ */
 #define VISFX_VRAM_WRITE_DATA_INCRX	0xa60000
 #define VISFX_VRAM_WRITE_DATA_INCRY	0xa68000
 #define VISFX_VRAM_WRITE_DEST		0xac1000
+
 #define VISFX_TCR			0xac1024	/* throttle control */
 #define VISFX_CLIP_TL		0xac1050	/* clipping rect, top/left */
 #define VISFX_CLIP_WH		0xac1054	/* clipping rect, w/h */
