@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.3 2021/05/08 13:03:40 nia Exp $ */
+/* $NetBSD: parse.c,v 1.3.10.1 2025/10/28 14:56:58 martin Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,6 +64,14 @@ compare_control(const void *pa, const void *pb)
 		if (a->info.prev == b->info.index)
 			return 1;
 	} else {
+		/* put "master" controls first */
+		if (strstr(a->info.label.name, AudioNmaster) != NULL) {
+			if (strstr(b->info.label.name, AudioNmaster) == NULL) {
+				return -1;
+			}
+		} else if (strstr(b->info.label.name, AudioNmaster) != NULL) {
+			return 1;
+		}
 		return strcmp(a->info.label.name, b->info.label.name);
 	}
 	return 0;
