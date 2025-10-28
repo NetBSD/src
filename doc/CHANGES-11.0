@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.33 2025/10/28 13:33:31 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.34 2025/10/28 15:00:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -525,4 +525,14 @@ sys/dev/hdaudio/hdafg.c				1.33
 
 	hdaudio(4): PR 59712: do not expose non-functional volume controls.
 	[nia, ticket #76]
+
+usr.bin/aiomixer/parse.c			1.4
+
+	aiomixer(1): always put "master" controls first.
+	[nia, ticket #77]
+
+sys/dev/hdaudio/hdaudio_mixer.h			1.2
+
+	hdaudio(4): rename "record" mixer control to "imonitor".
+	[nia, ticket #78]
 
