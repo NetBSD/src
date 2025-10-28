@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.18 2025/05/30 13:42:33 tsutsui Exp $	*/
+/*	$NetBSD: stireg.h,v 1.19 2025/10/28 11:34:08 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -656,6 +656,8 @@ STI_DEP(util);
 #define	    Otc04	2	/* Pixels in each longword transfer (4) */
 #define	    Otc32	5	/* Pixels in each longword transfer (32) */
 #define	    Otc24	7	/* NGLE uses this for 24bit blits */
+				/* Should really be... */
+#define	    Otc01	7	/* one pixel per longword */
 /* S */
 #define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
 #define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
@@ -680,7 +682,7 @@ STI_DEP(util);
 	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
 	/* LSSD XXXX MMMM MMMM RRRR RRRR ???? ??BF */
 
-/* R is a standard X11 ROP, no idea if the other bits areused for anything  */
+/* R is a standard X11 ROP, no idea if the other bits are used for anything  */
 #define	    RopClr 	0x0
 #define	    RopSrc 	0x3
 #define	    RopInv 	0xc
@@ -693,8 +695,8 @@ STI_DEP(util);
       we get occasional garbage in 8bit blits without it  */
 /* D */
 #define	    DataDynamic	    0	/* Data register reloaded by direct access */
-/* L */
 #define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
+/* L */
 #define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
 /* B = 1 -> background transparency for masked fills */
 /* F probably the same for foreground */
@@ -716,8 +718,8 @@ STI_DEP(util);
 #define	NGLE_REG_9		0x000a04	/* rect fill size, start */
 #define	NGLE_REG_25		0x000b00	/* bitblt dst XY, start */
 #define	NGLE_REG_RAMDAC		0x001000
-#define	NGLE_REG_10		0x018000	/* buffer ctl */
-#define	NGLE_REG_11		0x018004	/* dest bitmap access */
+#define	NGLE_REG_10		0x018000	/* controls which buffer CPU and blitter see */
+#define	NGLE_REG_11		0x018004	/* same for drawing engine and BINC */
 #define	NGLE_REG_12		0x01800c	/* control plane register */
 #define	NGLE_REG_35		0x018010	/* fg colour */
 #define	NGLE_REG_36		0x018014	/* bg colour */
@@ -758,7 +760,9 @@ STI_DEP(util);
 #define	NGLE_REG_45		0x210034	/* no info on bits */
 #define	NGLE_REG_32		0x21003c	/* HCRX plane enable */ 
 #define	NGLE_REG_33		0x210040	/* HCRX misc video */
+	#define HCRX_BOOST_ENABLE	0x80000000 /* extra high signal level */
 	#define HCRX_VIDEO_ENABLE	0x0A000000
+	#define HCRX_OUTPUT_ENABLE	0x01000000
 #define	NGLE_REG_39		0x210120	/* HCRX 'hyperbowl' mode 2 */
 	#define HYPERBOWL_MODE2_8_24					15
 #define	NGLE_REG_40		0x210130	/* HCRX 'hyperbowl' */
