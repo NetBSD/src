@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_pci_machdep.c,v 1.3 2025/10/20 09:50:10 macallan Exp $	*/
+/*	$NetBSD: sti_pci_machdep.c,v 1.4 2025/10/28 11:15:37 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci_machdep.c,v 1.2 2009/04/10 17:11:27 miod Exp $	*/
 
@@ -148,7 +148,7 @@ sti_pci_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
  */
 int
 sti_pci_check_rom(struct sti_softc *sc, struct pci_attach_args *pa,
-		  bus_space_handle_t *rom_handle)
+		  bus_space_handle_t *rom_handle, bus_size_t *rom_size)
 {
 	pcireg_t address, mask;
 	bus_space_handle_t romh;
@@ -327,8 +327,10 @@ sti_pci_check_rom(struct sti_softc *sc, struct pci_attach_args *pa,
 		    rc);
 		goto fail2;
 	}
+	*rom_size = stiromsize;
  	sc->sc_disable_rom(sc);
 	sc->sc_flags &= ~STI_ROM_ENABLED;
+	
 
 	return 0;
 

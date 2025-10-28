@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.31 2025/10/21 11:41:20 skrll Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.32 2025/10/28 11:15:37 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -212,6 +212,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	struct sti_rom *rom;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
+	bus_size_t romsize;
 	unsigned long defattr = 0;
 	int ret, is_console = 0;
 
@@ -228,7 +229,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	if (sti_pci_check_rom(&sc->sc_base, paa, &sc->sc_romh) != 0)
+	if (sti_pci_check_rom(&sc->sc_base, paa, &sc->sc_romh, &romsize) != 0)
 		return;
 
 	ret = sti_pci_is_console(paa, sc->sc_base. bases);
@@ -252,6 +253,8 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
+
+	//bus_space_unmap(paa->pa_memt, sc->sc_romh, romsize);
 
 	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
 	    sc->sc_width, sc->sc_height);
