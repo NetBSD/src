@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_mixer.h,v 1.1 2015/03/28 14:09:59 jmcneill Exp $ */
+/* $NetBSD: hdaudio_mixer.h,v 1.1.62.1 2025/10/28 14:59:47 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -66,7 +66,7 @@
 #define	HDAUDIO_DEVICE_NAMES	{					   \
 	AudioNmaster, AudioNbass, AudioNtreble, AudioNfmsynth, AudioNdac,  \
 	"beep", AudioNline, AudioNmicrophone, AudioNcd,		   	   \
-	AudioNrecord, AudioNdac"2", "reclvl", AudioNinput, AudioNoutput,   \
+	"imonitor", AudioNdac"2", "reclvl", AudioNinput, AudioNoutput,     \
 	AudioNline"1", AudioNline"2", AudioNline"3",			   \
 	"dig1", "dig2", "dig3", "phin", "phout",			   \
 	AudioNvideo, "radio", AudioNmonitor				   \
