@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.146 2025/10/22 05:41:51 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.147 2025/10/28 06:26:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.146 2025/10/22 05:41:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.147 2025/10/28 06:26:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.146 2025/10/22 05:41:51 skrll Exp $");
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/poll.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/rndsource.h>
 #include <sys/select.h>
