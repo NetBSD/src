@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2025/10/18 22:20:02 perseant Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2025/10/29 17:34:38 perseant Exp $	*/
 
 #include <sys/mount.h>
 
@@ -59,10 +59,12 @@ void create_lfs(size_t imgsize, size_t fssize, int width, int do_setup)
 /* Write some data into a file */
 int write_file(const char *filename, off_t len, int close)
 {
-	int fd, size, i;
+	int fd;
+	unsigned i, j;
 	struct stat statbuf;
-	unsigned char b;
 	int flags = O_CREAT|O_WRONLY;
+	char buf[1024];
+	off_t size;
 
 	if (rump_sys_stat(filename, &statbuf) < 0)
 		size = 0;
@@ -73,10 +75,13 @@ int write_file(const char *filename, off_t len, int close)
 
 	fd = rump_sys_open(filename, flags);
 
-	for (i = 0; i < len; i++) {
-		b = ((unsigned)(size + i)) & 0xff;
-		rump_sys_write(fd, &b, 1);
+	srandom(0);
+	for (i = size; i < len; i+= sizeof(buf)) {
+		for (j = 0; j < sizeof(buf); j++)
+			buf[j] = ((unsigned)random()) & 0xff;
+		rump_sys_write(fd, buf, MIN(len - i, (off_t)sizeof(buf)));
 	}
+	
 	if (close) {
 		rump_sys_close(fd);
 		fd = -1;
@@ -88,9 +93,9 @@ int write_file(const char *filename, off_t len, int close)
 /* Check file's existence, size and contents */
 int check_file(const char *filename, int size)
 {
-	int fd, i;
+	int fd, i, j, res;
 	struct stat statbuf;
-	unsigned char b;
+	unsigned char b, buf[1024];
 
 	if (rump_sys_stat(filename, &statbuf) < 0) {
 		fprintf(stderr, "%s: stat failed\n", filename);
@@ -103,13 +108,21 @@ int check_file(const char *filename, int size)
 	}
 
 	fd = rump_sys_open(filename, O_RDONLY);
-	for (i = 0; i < size; i++) {
-		rump_sys_read(fd, &b, 1);
-		if (b != (((unsigned)i) & 0xff)) {
-			fprintf(stderr, "%s: byte %d: expected %x found %x\n",
-				filename, i, ((unsigned)(i)) & 0xff, b);
-			rump_sys_close(fd);
-			return 3;
+
+	srandom(0);
+	for (i = 0; i < size; i += sizeof(buf)) {
+		res = MIN(size - i, (off_t)sizeof(buf));
+		rump_sys_read(fd, buf, res);
+		for (j = 0; j < res; j++) {
+			b = (((unsigned)random()) & 0xff);
+			if (buf[j] != b) {
+				fprintf(stderr, "%s: byte %d:"
+					" expected %hhx found %hhx\n",
+					filename, i + j,
+					b, buf[j]);
+				rump_sys_close(fd);
+				return 3;
+			}
 		}
 	}
 	rump_sys_close(fd);
