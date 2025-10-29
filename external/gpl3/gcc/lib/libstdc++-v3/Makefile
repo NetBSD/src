@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2025/10/29 06:08:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.64 2025/10/29 06:19:49 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -236,6 +236,8 @@ CPPFLAGS.std_stacktrace-${f}+= \
 	-I${DIST}/libbacktrace
 . endif
 SRCS+=	std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-include ${GLIBCXX_SRCDIR}/src/libbacktrace/backtrace-rename.h
 .endfor
 
 tzdb.cc: tzdata.zi.h
