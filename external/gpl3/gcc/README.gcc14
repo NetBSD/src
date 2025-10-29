@@ -34,7 +34,7 @@ earmv7hf	y	y	y	y	y	y		y	y	y
 earmv7hfeb	y	y	y	y	y	y		y	y	y
 hppa		y	b	y	y	y	y		y	y	y
 i386		y	b	y	y	y	y		?	?	y
-ia64		y	y[8]	y	y	n[12]	?		y	?	?
+ia64		y	y[8]	y	y	y	y		y	?	y
 m68000		y	b	y	y	y	n[9]		?	?	?
 m68k		y	b	y	y	y	y[2]		y	?	?
 mipseb		y	b	y	y	?	?		?	?	?
@@ -50,7 +50,7 @@ sparc64		y	y	y	y	y	y		y	y	y
 vax		y	y	y	y	y	y		y	y	y
 x86_64		y	y	y	y	y	y		y	y	y
 riscv32		y	n[7]	y	y	y	y		?	?	y
-riscv64		y	b	y	y	y	y		?	?	?
+riscv64		y	y	y	y	y	y		y	y	y
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
@@ -70,8 +70,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [10]: sh3 has missing symbol error in gdb.  does does 32-bit mips.
       minsyms.c:(.text+0x2414): undefined reference to `__atomic_test_and_set'
 [11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
-[12]: libstdc++ has a weird build issue:
-      ld: /var/obj/ia64/usr/src3/destdir.ia64/usr/lib/libstdc++.so: undefined reference to `__glibcxx_backtrace_simple'
 [13]: some pic_profile variants of tests in usr.bin/c++ fails with
       ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_cas8_acq_rel'
       ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_swp8_acq_rel'
@@ -84,48 +82,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
             | ^~~~~~~~~~
 [15]: most(?) nfs-related tests timedout. ipf tests fail with incorrect results.
       some pic_profile variants of tests in usr.bin/c++ crash.
-
---- these are GCC 12 issues, but some will remain --
-[XX]: on amd64, with very basic test, lsan, ubsan, and asan work, but tsan crashes at start up:
-      ThreadSanitizer: CHECK failed: tsan_rtl.cpp:149 "((reinterpret_cast<uptr>(this) % 64)) == ((0))" (0x10, 0x0) (tid=21499)
-      ThreadSanitizer:DEADLYSIGNAL
-      ==21499==ERROR: ThreadSanitizer: SEGV on unknown address 0x000000000017 (pc 0x7f7ff4e5e14e bp 0x7f7fffffdbd0 sp 0x7f7fffffdb40 T21499)
-      ==21499==The signal is caused by a READ memory access.
-      ==21499==Hint: address points to the zero page.
-      ThreadSanitizer:DEADLYSIGNAL
-      ThreadSanitizer: nested bug in the same thread, aborting.
-[XX]: "dd count=1", "env LC_CTYPE=en_US.UTF-8 locale", and "tests/crypto/libcrypto/h_evp_test evpmd_blake.txt" abort.
-      adding -fno-stack-protector to strsuftoll.c, citrus_module.c, and blake2_prov.c, respectively, works around the problem.
-      -- workarounds commited.
-[XX]: sanitizers crash early:
-      Program received signal SIGSEGV, Segmentation fault.
-      (gdb) bt
-      #0  0x000000004064265c in __sanitizer::CheckASLR () at /usr/src/external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_linux.cpp:2181
-      #1  0xffffffffffffc704 in ?? ()
-      Backtrace stopped: previous frame identical to this frame (corrupt stack?)
-      -- some wip patches make this less bad
-[XX]: (NOT A REGRESSION) libtsan is newly introduced, which fails with:
-      FATAL: ThreadSanitizer: unexpected memory mapping 0x200100000-0x200101000
-[XX]: sanitizers fail to build:
-      sanitizer_flag_parser.h:141:72: error: format '%zx' expects argument of type 'size_t', but argument 4 has type 'unsigned int' [-Werror=format=]
-[XX]: (NOT A REGRESSION) c++ exception handling is broken. mechanically applying
-      http://www.execsw.org/netbsd/changeset.cgi?id=20140318T234341Z.c59ac4642e7d4b345f6dc5aa9887e9e1f9aa459a#src/gnu/dist/gcc4/gcc/config/vax/vax.c
-      does not help (with adjustments for gcc 10.5.0, which is broken, too):
-      (gdb) invalid-command
-      [1]   Illegal instruction (core dumped) gdb
-[XX]: (maybe not related to [24]) native gcc is broken:
-      simh# cc hello.c
-      during RTL pass: final
-      hello.c: In function 'main':
-      hello.c:9:1: internal compiler error: Segmentation fault
-[XX]: divide by zero with ubsan hits CheckLocked assertion failure, and stalls at LockSlow indefinitely:
-      (gdb) bt
-      #0 __sanitizer::StaticSpinMutex::LockSlow at sanitizer_mutex.cpp:24
-      ...
-      #17 __ubsan::ScopedReport::CheckLocked ubsan_diag.h:255
-      #18 __ubsan::Diag::~Diag ubsan_diag.cpp:347
-      #19 handleDivremOverflowImpl ubsan_diag.h:210
-      #20 __ubsan::__ubsan_handle_divrem_overflow ubsan_handlers.cpp:320 
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
