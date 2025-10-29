@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.13 2025/10/29 04:20:11 pgoyette Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.14 2025/10/29 04:27:16 pgoyette Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.6 2020/12/24 01:00:00 kevlo Exp $	*/
 
 /*

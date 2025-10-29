@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.41 2025/10/29 04:20:11 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.42 2025/10/29 04:27:16 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.41 2025/10/29 04:20:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.42 2025/10/29 04:27:16 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
