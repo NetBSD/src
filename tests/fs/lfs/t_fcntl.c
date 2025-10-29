@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.2 2025/10/21 14:44:12 perseant Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.3 2025/10/29 11:46:34 martin Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -49,7 +49,7 @@ ATF_TC_HEAD(coalesce32, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"LFS32 LFCNSCRAMBLE/LFCNREWRITEFILE");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	/* atf_tc_set_md_var(tc, "timeout", "20"); */
 }
 
 ATF_TC(coalesce64);
@@ -57,7 +57,7 @@ ATF_TC_HEAD(coalesce64, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"LFS64 LFCNSCRAMBLE/LFCNREWRITEFILE");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	/* atf_tc_set_md_var(tc, "timeout", "20"); */
 }
 
 ATF_TC(cleanseg32);
@@ -65,7 +65,7 @@ ATF_TC_HEAD(cleanseg32, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"LFS32 LFCNSCRAMBLE/LFCNREWRITEFILE");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	/* atf_tc_set_md_var(tc, "timeout", "20"); */
 }
 
 ATF_TC(cleanseg64);
@@ -73,7 +73,7 @@ ATF_TC_HEAD(cleanseg64, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"LFS64 LFCNSCRAMBLE/LFCNREWRITEFILE");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	/* atf_tc_set_md_var(tc, "timeout", "20"); */
 }
 
 ATF_TC_BODY(coalesce32, tc)
