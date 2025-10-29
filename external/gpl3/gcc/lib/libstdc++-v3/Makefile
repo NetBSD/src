@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2025/10/29 06:19:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.65 2025/10/29 06:25:36 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -19,7 +19,8 @@ COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
 
 DIST=		${GCCDIST}
-GNUVER=		${DIST}/libstdc++-v3/config/abi/pre/gnu.ver
+GLIBCXX_SRCDIR=	${DIST}/libstdc++-v3
+GNUVER=		${GLIBCXX_SRCDIR}/config/abi/pre/gnu.ver
 SYMBOLS=	libstdc++-symbols.ver
 .if ${MKPIC} != "no"
 ${SYMBOLS}: Makefile ${GNUVER}
@@ -67,7 +68,7 @@ GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 CSHLIBFLAGS+=	-D_GLIBCXX_SHARED
 
 CXXFLAGS+=	-fno-implicit-templates
-CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
+CPPFLAGS+=	-I${GLIBCXX_SRCDIR}/include
 CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 CPPFLAGS+=	-DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
@@ -84,7 +85,7 @@ LOCALETYPE=	generic
 COPTS.bitmap_allocator.cc+=	-ffunction-sections -fdata-sections 
 COPTS.pool_allocator.cc+=	-ffunction-sections -fdata-sections 
 
-CONF=		${DIST}/libstdc++-v3/config
+CONF=		${GLIBCXX_SRCDIR}/config
 
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
@@ -122,9 +123,9 @@ CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
 CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
-CPPFLAGS.compatibility.cc+=	-I${DIST}/libstdc++-v3/config
-CPPFLAGS.c11-cow-string-inst.cc+=	-I${DIST}/libstdc++-v3/src/c++11
-CPPFLAGS.c17-cow-string-inst.cc+=	-I${DIST}/libstdc++-v3/src/c++17
+CPPFLAGS.compatibility.cc+=	-I${GLIBCXX_SRCDIR}/config
+CPPFLAGS.c11-cow-string-inst.cc+=	-I${GLIBCXX_SRCDIR}/src/c++11
+CPPFLAGS.c17-cow-string-inst.cc+=	-I${GLIBCXX_SRCDIR}/src/c++17
 
 cp-demangle.d cp-demangle.o: cp-demangle.h
 
@@ -135,8 +136,6 @@ COPTS.cow-string-inst.cc += -Wno-error=psabi
 
 # XXX
 MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward
-
-GLIBCXX_SRCDIR=	${DIST}/libstdc++-v3
 
 BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/${G_CCODECVT_CC} codecvt_members.cc \
@@ -215,7 +214,7 @@ COPTS.cp-demangle.c+=	-Wno-error=stack-protector
 COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
 
 # GCC 14 special cases
-tzdata.zi.h: ${DIST}/libstdc++-v3/src/c++20/tzdata.zi
+tzdata.zi.h: ${GLIBCXX_SRCDIR}/src/c++20/tzdata.zi
 	echo 'static const char tzdata_chars[] = R"__libstdcxx__(' > ${.TARGET}.tmp && \
 	cat $^ >> ${.TARGET}.tmp && \
 	echo ')__libstdcxx__";' >> ${.TARGET}.tmp && mv ${.TARGET}.tmp $@
@@ -246,16 +245,16 @@ tzdb.cc: tzdata.zi.h
 .include <bsd.subdir.mk>
 .include <bsd.info.mk>
 
-.PATH:	${DIST}/libstdc++-v3/src \
-	${DIST}/libstdc++-v3/src/c++98 \
-	${DIST}/libstdc++-v3/src/c++11 \
-	${DIST}/libstdc++-v3/src/c++17 \
-	${DIST}/libstdc++-v3/src/c++20 \
-	${DIST}/libstdc++-v3/src/c++23 \
-	${DIST}/libstdc++-v3/src/c++26 \
-	${DIST}/libstdc++-v3/src/filesystem \
-	${DIST}/libstdc++-v3/libsupc++ \
-	${DIST}/libstdc++-v3/config/os/bsd/netbsd \
+.PATH:	${GLIBCXX_SRCDIR}/src \
+	${GLIBCXX_SRCDIR}/src/c++98 \
+	${GLIBCXX_SRCDIR}/src/c++11 \
+	${GLIBCXX_SRCDIR}/src/c++17 \
+	${GLIBCXX_SRCDIR}/src/c++20 \
+	${GLIBCXX_SRCDIR}/src/c++23 \
+	${GLIBCXX_SRCDIR}/src/c++26 \
+	${GLIBCXX_SRCDIR}/src/filesystem \
+	${GLIBCXX_SRCDIR}/libsupc++ \
+	${GLIBCXX_SRCDIR}/config/os/bsd/netbsd \
 	${CONF}/locale/${LOCALETYPE} \
 	${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 
