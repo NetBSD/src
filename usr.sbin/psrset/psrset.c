@@ -1,4 +1,4 @@
-/*	$NetBSD: psrset.c,v 1.3 2011/08/31 13:32:39 joerg Exp $	*/
+/*	$NetBSD: psrset.c,v 1.4 2025/10/29 00:19:33 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psrset.c,v 1.3 2011/08/31 13:32:39 joerg Exp $");
+__RCSID("$NetBSD: psrset.c,v 1.4 2025/10/29 00:19:33 gutteridge Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,13 +166,13 @@ makecpuset(char **argv)
 	}
 
 	for (; *argv != NULL; argv++) {
-		if (!isdigit((unsigned)**argv))
+		if (!isdigit((unsigned char)**argv))
 			usage();
 		i = (int)strtol(*argv, &p, 10);
 		if ((*p != '\0' && *p != '-') || p == *argv)
 			usage();
 		if (*p == '-')  {
-			if (!isdigit((unsigned)p[1]))
+			if (!isdigit((unsigned char)p[1]))
 				usage();
 			j = (int)strtol(p + 1, &q, 10);
 			if (q == p || *q != '\0')
