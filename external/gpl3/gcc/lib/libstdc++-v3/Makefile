@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2025/10/15 06:04:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.63 2025/10/29 06:08:35 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -173,11 +173,6 @@ BUILDSYMLINKS+=	\
 
 .endfor
 
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
-
 .include "../Makefile.gthr"
 
 # XXX Special rules in c++98/Makefile; may move into c++11 in future GCC.
@@ -224,6 +219,24 @@ tzdata.zi.h: ${DIST}/libstdc++-v3/src/c++20/tzdata.zi
 	echo 'static const char tzdata_chars[] = R"__libstdcxx__(' > ${.TARGET}.tmp && \
 	cat $^ >> ${.TARGET}.tmp && \
 	echo ')__libstdcxx__";' >> ${.TARGET}.tmp && mv ${.TARGET}.tmp $@
+
+# libbacktrace
+# XXX This is not new, but GCC 14 is the first to start demanding it properly.
+.for f in ${G_LIBBACKTRACE_SOURCES} ${G_LIBBACKTRACE_DEPS}
+. if ${f} == "cp-demangle.c"
+BUILDSYMLINKS+=	\
+	${DIST}/libiberty/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libiberty/arch/${LIBSTDCXX_MACHINE_ARCH}
+. else
+BUILDSYMLINKS+=	\
+	${DIST}/libbacktrace/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libbacktrace/arch/${LIBSTDCXX_MACHINE_ARCH} \
+	-I${DIST}/libbacktrace
+. endif
+SRCS+=	std_stacktrace-${f}
+.endfor
 
 tzdb.cc: tzdata.zi.h
 
