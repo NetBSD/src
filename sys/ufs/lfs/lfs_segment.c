@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.294 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.295 2025/10/29 19:04:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.294 2025/10/20 04:20:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.295 2025/10/29 19:04:23 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1013,7 +1013,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 		if (sp->idp == NULL && sp->ibp == NULL &&
 		    (sp->seg_bytes_left < lfs_sb_getibsize(fs) ||
-		     sp->sum_bytes_left < sizeof(int32_t))) {
+		     sp->sum_bytes_left < sizeof(IINFOSIZE(fs)))) {
 			(void) lfs_writeseg(fs, sp);
 			continue;
 		}
@@ -1046,7 +1046,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	    sp->ibp == NULL) {
 		/* Allocate a new segment if necessary. */
 		if (sp->seg_bytes_left < lfs_sb_getibsize(fs) ||
-		    sp->sum_bytes_left < sizeof(int32_t))
+		    sp->sum_bytes_left < sizeof(IINFOSIZE(fs)))
 			(void) lfs_writeseg(fs, sp);
 
 		/* Get next inode block. */
@@ -1070,7 +1070,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= lfs_sb_getibsize(fs);
-		sp->sum_bytes_left -= sizeof(int32_t);
+		sp->sum_bytes_left -= sizeof(IINFOSIZE(fs));
 
 		/* Store the address in the segment summary. */
 		iip = NTH_IINFO(fs, sp->segsum, sp->ninodes / LFS_INOPB(fs));
@@ -1272,7 +1272,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 	/* If full, finish this segment. */
 	fs = sp->fs;
 	blksinblk = howmany(bp->b_bcount, lfs_sb_getbsize(fs));
-	if (sp->sum_bytes_left < sizeof(int32_t) * blksinblk ||
+	if (sp->sum_bytes_left < LFS_BLKPTRSIZE(fs) * blksinblk ||
 	    sp->seg_bytes_left < bp->b_bcount) {
 		KASSERT(++sp->gatherblock_loopcount < 2);
 		if (mptr)
@@ -1312,7 +1312,7 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 		lfs_deregister_block(sp->vp, bp->b_lblkno + j);
 	}
 
-	sp->sum_bytes_left -= sizeof(int32_t) * blksinblk;
+	sp->sum_bytes_left -= LFS_BLKPTRSIZE(fs) * blksinblk;
 	sp->seg_bytes_left -= bp->b_bcount;
 	return (0);
 }
@@ -2305,7 +2305,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 
 		KASSERTMSG((bpp - sp->bpp <=
 			(lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs))
-			/ sizeof(int32_t)),
+			/ LFS_BLKPTRSIZE(fs)),
 		    "lfs_writeseg: real bpp overwrite");
 		KASSERTMSG((bpp - sp->bpp <=
 			lfs_segsize(fs) / lfs_sb_getfsize(fs)),
