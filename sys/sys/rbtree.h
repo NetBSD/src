@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.13 2025/10/22 12:34:00 roy Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.14 2025/10/29 08:08:44 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,12 @@
 #ifndef _SYS_RBTREE_H_
 #define	_SYS_RBTREE_H_
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stddef.h>
+#include <stdint.h>
+#else
 #include <sys/types.h>
+#endif
 
 #ifdef RBDEBUG
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.c,v 1.1 2025/10/22 12:34:00 roy Exp $	*/
+/*	$NetBSD: rbtree.c,v 1.2 2025/10/29 08:08:44 roy Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,25 +35,34 @@
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/types.h>
-#include <stddef.h>
-#include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#ifndef __predict_false
+#define __predict_false(exp)	(exp)
+#endif
 #ifdef RBDEBUG
+#include <assert.h>
 #define	KASSERT(s)	assert(s)
-#define	__rbt_unused
 #else
-#define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
+#define	KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
+#ifdef __unused
 #define	__rbt_unused	__unused
 #endif
-__RCSID("$NetBSD: rbtree.c,v 1.1 2025/10/22 12:34:00 roy Exp $");
+#endif
+#ifdef __RCSID
+__RCSID("$NetBSD: rbtree.c,v 1.2 2025/10/29 08:08:44 roy Exp $");
+#endif
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rbtree.c,v 1.1 2025/10/22 12:34:00 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbtree.c,v 1.2 2025/10/29 08:08:44 roy Exp $");
 #ifndef DIAGNOSTIC
 #define	__rbt_unused	__unused
-#else
-#define	__rbt_unused
 #endif
+#endif
+
+#ifndef __rbt_unused
+#define	__rbt_unused
 #endif
 
 #ifdef _LIBC
