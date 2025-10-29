@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.16 2024/06/02 13:28:46 andvar Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.17 2025/10/29 02:39:59 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.16 2024/06/02 13:28:46 andvar Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.17 2025/10/29 02:39:59 gutteridge Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -772,7 +772,7 @@ default_format(int node, const u_int8_t *buf, size_t len)
 		for (; off < end; off++) {
 			char ch = buf[off];
 			if (isascii(ch) &&
-			    (isalnum((int)ch) || ispunct((int)ch) || ch == ' '))
+			    (isalnum((unsigned char)ch) || ispunct((unsigned char)ch) || ch == ' '))
 				putchar(ch);
 			else
 				putchar('.');
@@ -982,11 +982,11 @@ isstrprint(const char *str, size_t len, int ignorenulls)
 		if (ignorenulls) {
 			if (*str == '\0')
 				continue;
-			if (isalnum(*str) || ispunct(*str) || *str == ' ')
+			if (isalnum((unsigned char)*str) || ispunct((unsigned char)*str) || *str == ' ')
 				continue;
 			return 0;
 		}
-		if (!isprint(*str))
+		if (!isprint((unsigned char)*str))
 			return 0;
 	}
 	return 1;
