@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rfw.c,v 1.7 2025/10/18 22:18:19 perseant Exp $	*/
+/*	$NetBSD: t_rfw.c,v 1.8 2025/10/30 15:30:17 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -99,9 +99,9 @@ void test(int width)
 
 	/* Payload */
 	fprintf(stderr, "* Initial payload\n");
-	write_file(UNCHANGED_CONTROL, CHUNKSIZE, 1);
-	write_file(TO_BE_DELETED, CHUNKSIZE, 1);
-	write_file(TO_BE_APPENDED, CHUNKSIZE, 1);
+	write_file(UNCHANGED_CONTROL, CHUNKSIZE, 1, 3);
+	write_file(TO_BE_DELETED, CHUNKSIZE, 1, 4);
+	write_file(TO_BE_APPENDED, CHUNKSIZE, 1, 5);
 	rump_sys_sync();
 	rump_sys_sync();
 	sleep(1); /* XXX yuck - but we need the superblocks dirty */
@@ -130,10 +130,10 @@ void test(int width)
 	fprintf(stderr, "* Update payload\n");
 
 	/* Add new file */
-	write_file(NEWLY_CREATED, CHUNKSIZE, 1);
+	write_file(NEWLY_CREATED, CHUNKSIZE, 1, 6);
 
 	/* Append to existing file */
-	write_file(TO_BE_APPENDED, CHUNKSIZE, 1);
+	write_file(TO_BE_APPENDED, CHUNKSIZE, 1, 5);
 
 	/* Delete file */
 	rump_sys_unlink(TO_BE_DELETED);
@@ -196,7 +196,7 @@ void test(int width)
 	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [4]");
 
-	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE) != 0)
+	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE, 3) != 0)
 		atf_tc_fail("Unchanged control file differs(!)");
 
 	if (rump_sys_access(TO_BE_DELETED, F_OK) == 0)
@@ -204,13 +204,13 @@ void test(int width)
 	else 
 		fprintf(stderr, "%s: no problem\n", TO_BE_DELETED);
 
-	if (check_file(TO_BE_APPENDED, 2 * CHUNKSIZE) != 0)
+	if (check_file(TO_BE_APPENDED, 2 * CHUNKSIZE, 5) != 0)
 		atf_tc_fail("Appended file differs");
 
 	if (rump_sys_access(NEWLY_CREATED, F_OK) != 0)
 		atf_tc_fail("Newly added file missing");
 
-	if (check_file(NEWLY_CREATED, CHUNKSIZE) != 0)
+	if (check_file(NEWLY_CREATED, CHUNKSIZE, 6) != 0)
 		atf_tc_fail("Newly added file differs");
 
 	/* Umount filesystem */

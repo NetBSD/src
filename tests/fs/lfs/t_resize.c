@@ -1,4 +1,4 @@
-/*	$NetBSD: t_resize.c,v 1.1 2025/10/21 04:25:31 perseant Exp $	*/
+/*	$NetBSD: t_resize.c,v 1.2 2025/10/30 15:30:17 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -88,7 +88,7 @@ void test(int width)
 
 	/* Payload */
 	fprintf(stderr, "* Initial payload\n");
-	write_file(UNCHANGED_CONTROL, CHUNKSIZE, 1);
+	write_file(UNCHANGED_CONTROL, CHUNKSIZE, 1, 0);
 
 	/* Unmount */
 	rump_sys_unmount(MP, 0);
@@ -150,7 +150,7 @@ void test(int width)
 	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [4]");
 
-	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE) != 0)
+	if (check_file(UNCHANGED_CONTROL, CHUNKSIZE, 0) != 0)
 		atf_tc_fail("Unchanged control file differs(!)");
 
 	/* Umount filesystem */

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_orphan.c,v 1.1 2025/10/13 00:44:35 perseant Exp $	*/
+/*	$NetBSD: t_orphan.c,v 1.2 2025/10/30 15:30:17 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -100,7 +100,7 @@ void orphan(int width)
 
 		/* Payload */
 		fprintf(stderr, "* Initial payload\n");
-		write_file(UNCHANGED_CONTROL, FILE_SIZE, 0);
+		write_file(UNCHANGED_CONTROL, FILE_SIZE, 0, 0);
 
 		/* Discover filehandle size and allocate space */
 		fh_size = 0;

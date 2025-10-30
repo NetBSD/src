@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.3 2025/10/29 11:46:34 martin Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.4 2025/10/30 15:30:17 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -118,9 +118,10 @@ int setup(int width, struct ufs_args *argsp, off_t filesize)
 
 	/* Payload */
 	fprintf(stderr, "* Initial payload\n");
-	write_file(UNCHANGED_CONTROL, filesize, 1);
+	write_file(UNCHANGED_CONTROL, filesize, 1, 3);
 
 	/* Make the data go to disk */
+	fprintf(stderr, "* Double sync\n");
 	rump_sys_sync();
 	rump_sys_sync();
 
@@ -155,7 +156,7 @@ void teardown(int fd, struct ufs_args *argsp, off_t filesize)
 	if (rump_sys_mount(MOUNT_LFS, MP, 0, argsp, sizeof *argsp) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed [4]");
 
-	if (check_file(UNCHANGED_CONTROL, filesize) != 0)
+	if (check_file(UNCHANGED_CONTROL, filesize, 3) != 0)
 		atf_tc_fail("Unchanged control file differs(!)");
 
 	/* Umount filesystem */
@@ -246,8 +247,8 @@ void cleanseg(int width)
 	int fd, sn;
 		
 	fd = setup(width, &args, MORE_THAN_A_SEGMENT);
-	rump_sys_sync();
 
+	fprintf(stderr, "* Get seguse\n");
 	sua.len = LFS_SEGUSE_MAXCNT;
 	sua.start = 0;
 	sua.seguse = malloc(LFS_SEGUSE_MAXCNT * sizeof(*sua.seguse));
@@ -270,12 +271,14 @@ void cleanseg(int width)
 	memset(&sna, 0, sizeof sna);
 	sna.len = 1;
 	sna.segments = &sn;
-	
 	if (rump_sys_fcntl(fd, LFCNREWRITESEGS, &sna) < 0)
 		atf_tc_fail_errno("LFCNREWRITESEGS failed");
+
+	fprintf(stderr, "* Double sync\n");
 	rump_sys_sync();
 	rump_sys_sync();
 
+	fprintf(stderr, "* Get seguse again\n");
 	sua.len = 1;
 	sua.start = sn;
 	if (rump_sys_fcntl(fd, LFCNSEGUSE, &sua) < 0)

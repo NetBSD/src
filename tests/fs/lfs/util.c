@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2025/10/29 17:34:38 perseant Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2025/10/30 15:30:17 perseant Exp $	*/
 
 #include <sys/mount.h>
 
@@ -57,7 +57,7 @@ void create_lfs(size_t imgsize, size_t fssize, int width, int do_setup)
 }
 
 /* Write some data into a file */
-int write_file(const char *filename, off_t len, int close)
+int write_file(const char *filename, off_t len, int close, unsigned int seed)
 {
 	int fd;
 	unsigned i, j;
@@ -66,17 +66,21 @@ int write_file(const char *filename, off_t len, int close)
 	char buf[1024];
 	off_t size;
 
+	srandom(seed);
 	if (rump_sys_stat(filename, &statbuf) < 0)
 		size = 0;
 	else {
 		size = statbuf.st_size;
 		flags |= O_APPEND;
+
+		/* Reset randomness */
+		for (i = 0; i < size; i++)
+			random();
 	}
 
 	fd = rump_sys_open(filename, flags);
 
-	srandom(0);
-	for (i = size; i < len; i+= sizeof(buf)) {
+	for (i = 0; i < len; i+= sizeof(buf)) {
 		for (j = 0; j < sizeof(buf); j++)
 			buf[j] = ((unsigned)random()) & 0xff;
 		rump_sys_write(fd, buf, MIN(len - i, (off_t)sizeof(buf)));
@@ -91,7 +95,7 @@ int write_file(const char *filename, off_t len, int close)
 }
 
 /* Check file's existence, size and contents */
-int check_file(const char *filename, int size)
+int check_file(const char *filename, int size, unsigned int seed)
 {
 	int fd, i, j, res;
 	struct stat statbuf;
@@ -109,7 +113,7 @@ int check_file(const char *filename, int size)
 
 	fd = rump_sys_open(filename, O_RDONLY);
 
-	srandom(0);
+	srandom(seed);
 	for (i = 0; i < size; i += sizeof(buf)) {
 		res = MIN(size - i, (off_t)sizeof(buf));
 		rump_sys_read(fd, buf, res);

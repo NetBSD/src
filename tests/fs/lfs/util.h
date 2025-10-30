@@ -1,13 +1,13 @@
-/*	$NetBSD: util.h,v 1.3 2025/10/26 12:51:50 andvar Exp $	*/
+/*	$NetBSD: util.h,v 1.4 2025/10/30 15:30:17 perseant Exp $	*/
 
 /* Create test image and filesystem, record superblock locations */
 void create_lfs(size_t, size_t, int, int);
 
 /* Write a well-known byte pattern into a file, appending if it exists */
-int write_file(const char *, off_t, int);
+int write_file(const char *, off_t, int, unsigned int);
 
 /* Check the byte pattern and size of the file */
-int check_file(const char *, int);
+int check_file(const char *, int, unsigned int);
 
 /* Check the file system for consistency */
 int fsck(void);
