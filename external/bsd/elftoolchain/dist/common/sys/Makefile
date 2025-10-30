@@ -1,4 +1,4 @@
-# Id: Makefile 3944 2021-04-10 10:19:00Z jkoshy
+# Id: Makefile 4199 2025-08-09 21:03:54Z jkoshy
 
 TOP=	../..
 
@@ -13,8 +13,7 @@ CLEANFILES=	${INCS}
 all:	${INCS}
 
 elfdefinitions.h:	elfdefinitions.m4 elfconstants.m4
-	m4 -I${.CURDIR} -D SRCDIR=${.CURDIR} ${M4FLAGS} \
-		elfdefinitions.m4 > ${.TARGET}
+	m4 -I${.CURDIR} ${M4FLAGS} elfdefinitions.m4 > ${.TARGET}
 
 depend cleandepend:
 

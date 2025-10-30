@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.9 2025/02/10 18:52:26 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.10 2025/10/30 21:19:31 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,14 +24,12 @@ dnl 	$NetBSD: elfconstants.m4,v 1.9 2025/02/10 18:52:26 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4172 2025-02-06 21:19:36Z jkoshy')
+	`Id: elfconstants.m4 4256 2025-10-30 14:14:56Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
 #
-# - The public specification of the ELF format as defined in the
-#   October 2009 draft of System V ABI.
-#   http://www.sco.com/developers/gabi/latest/ch4.intro.html
+# - The ELF object file format specification at: https://gabi.xinuos.com/.
 #
 # - The May 1998 (version 1.5) draft of "The ELF-64 object format".
 #
@@ -137,47 +135,47 @@ _(`CA_SUNW_SW_1',	2,	`software capability')')
 # Flags used with dynamic linking entries.
 #
 define(`DEFINE_DYN_FLAGS',`
-_(`DF_ORIGIN',           0x1,
+_(`DF_ORIGIN',           0x00000001U,
 	`object being loaded may refer to `$ORIGIN'')
-_(`DF_SYMBOLIC',         0x2,
+_(`DF_SYMBOLIC',         0x00000002U,
 	`search library for references before executable')
-_(`DF_TEXTREL',          0x4,
+_(`DF_TEXTREL',          0x00000004U,
 	`relocation entries may modify text segment')
-_(`DF_BIND_NOW',         0x8,
+_(`DF_BIND_NOW',         0x00000008U,
 	`process relocation entries at load time')
-_(`DF_STATIC_TLS',       0x10,
+_(`DF_STATIC_TLS',       0x00000010U,
 	`uses static thread-local storage')
-_(`DF_1_BIND_NOW',       0x1,
+_(`DF_1_BIND_NOW',       0x00000001U,
 	`process relocation entries at load time')
-_(`DF_1_GLOBAL',         0x2,
+_(`DF_1_GLOBAL',         0x00000002U,
 	`unused')
-_(`DF_1_GROUP',          0x4,
+_(`DF_1_GROUP',          0x00000004U,
 	`object is a member of a group')
-_(`DF_1_NODELETE',       0x8,
+_(`DF_1_NODELETE',       0x00000008U,
 	`object cannot be deleted from a process')
-_(`DF_1_LOADFLTR',       0x10,
+_(`DF_1_LOADFLTR',       0x00000010U,
 	`immediate load filtees')
-_(`DF_1_INITFIRST',      0x20,
+_(`DF_1_INITFIRST',      0x00000020U,
 	`initialize object first')
-_(`DF_1_NOOPEN',         0x40,
+_(`DF_1_NOOPEN',         0x00000040U,
 	`disallow dlopen()')
-_(`DF_1_ORIGIN',         0x80,
+_(`DF_1_ORIGIN',         0x00000080U,
 	`object being loaded may refer to $ORIGIN')
-_(`DF_1_DIRECT',         0x100,
+_(`DF_1_DIRECT',         0x00000100U,
 	`direct bindings enabled')
-_(`DF_1_INTERPOSE',      0x400,
+_(`DF_1_INTERPOSE',      0x00000400U,
 	`object is interposer')
-_(`DF_1_NODEFLIB',       0x800,
+_(`DF_1_NODEFLIB',       0x00000800U,
 	`ignore default library search path')
-_(`DF_1_NODUMP',         0x1000,
+_(`DF_1_NODUMP',         0x00001000U,
 	`disallow dldump()')
-_(`DF_1_CONFALT',        0x2000,
+_(`DF_1_CONFALT',        0x00002000U,
 	`object is a configuration alternative')
-_(`DF_1_ENDFILTEE',      0x4000,
+_(`DF_1_ENDFILTEE',      0x00004000U,
 	`filtee terminates filter search')
-_(`DF_1_DISPRELDNE',     0x8000,
+_(`DF_1_DISPRELDNE',     0x00008000U,
 	`displacement relocation done')
-_(`DF_1_DISPRELPND',     0x10000,
+_(`DF_1_DISPRELPND',     0x00010000U,
 	`displacement relocation pending')')
 
 #
@@ -252,7 +250,15 @@ _(`DT_PREINIT_ARRAY',    32,
 	`pointers to pre-initialization functions')
 _(`DT_PREINIT_ARRAYSZ',  33,
 	`size of pre-initialization array')
-_(`DT_MAXPOSTAGS',       34,
+_(`DT_SYMTAB_SHNDX',     34,
+	`the address of the SHT_SYMTAB_SHNDX section for the DT_SYMTAB entry')
+_(`DT_RELRSZ',           35,
+	`the total size in bytes of the DT_RELR relocation table')
+_(`DT_RELR',             36,
+	`The address of a table with relative relocation entries')
+_(`DT_RELRENT',          37,
+	`The size in bytes of a DT_RELR relocation entry')
+_(`DT_MAXPOSTAGS',       38,
 	`the number of positive tags')
 _(`DT_LOOS',             0x6000000D,
 	`start of OS-specific types')
@@ -463,7 +469,7 @@ _(`DT_DEPRECATED_SPARC_REGISTER', `DT_SPARC_REGISTER')
 #
 # Flags used in the executable header (field: e_flags).
 #
-define(`DEFINE_EHDR_FLAGS',`
+define(`DEFINE_EHDR_FLAGS_ARM',`dnl
 _(EF_ARM_RELEXEC,      0x00000001U,
 	`dynamic segment describes only how to relocate segments')
 _(EF_ARM_HASENTRY,     0x00000002U,
@@ -475,11 +481,9 @@ _(EF_ARM_DYNSYMSUSESEGIDX, 0x00000008U,
 _(EF_ARM_MAPSYMSFIRST, 0x00000010U,
 	`mapping symbols precede other local symbols in symtab')
 _(EF_ARM_BE8,          0x00800000U,
-	`file contains BE-8 code')
+	`Executable contains BE-8 code for ARMv6.')
 _(EF_ARM_LE8,          0x00400000U,
 	`file contains LE-8 code')
-_(EF_ARM_EABIMASK,     0xFF000000U,
-	`mask for ARM EABI version number (0 denotes GNU or unknown)')
 _(EF_ARM_EABI_UNKNOWN, 0x00000000U,
 	`Unknown or GNU ARM EABI version number')
 _(EF_ARM_EABI_VER1,    0x01000000U,
@@ -506,26 +510,65 @@ _(EF_ARM_NEW_ABI,      0x00000080U,
 	`GNU EABI extension')
 _(EF_ARM_OLD_ABI,      0x00000100U,
 	`GNU EABI extension')
-_(EF_ARM_SOFT_FLOAT,   0x00000200U,
-	`GNU EABI extension')
-_(EF_ARM_VFP_FLOAT,    0x00000400U,
-	`GNU EABI extension')
+_(EF_ARM_ABI_FLOAT_SOFT,   0x00000200U,
+	`Object uses the software floating point procedure call standard.')
+_(EF_ARM_ABI_FLOAT_HARD,   0x00000400U,
+	`Object uses the hardware floating point procedure call standard.')
 _(EF_ARM_MAVERICK_FLOAT, 0x00000800U,
 	`GNU EABI extension')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_ARM',`dnl
+_(EF_ARM_EABIMASK,     0xFF000000U,
+	`mask for ARM EABI version number (0 denotes GNU or unknown)')
+_(EF_ARM_GCCMASK,	0x00400FFFU,
+	`Legacy code generated by GCC may use these bits')
+')
+define(`DEFINE_EHDR_FLAG_SYNONYMS_ARM',`dnl
+_(EF_ARM_VFP_FLOAT,	0x00000400U,
+	`GNU spelling, see EF_ARM_ABI_FLOAT_HARD.')
+_(EF_ARM_SOFT_FLOAT,	0x00000200U,
+	`GNU spelling, see EF_ARM_FLOAT_SOFT.')
+')
+
+define(`DEFINE_EHDR_FLAGS_IA_64',`dnl
+_(EF_IA_64_ABI64,	0x00000010U,
+	`Object uses the LP64 programming model.')
+_(EF_IA_64_REDUCEDFP,	0x00000020U,
+	`Object has been compiled with a reduced floating-point model.')
+_(EF_IA_64_CONS_GP,	0x00000040U,
+	`The global pointer is constant except for indirect function calls.')
+_(EF_IA_64_NOFUNCDESC_CONS_GP,	0x00000080U,
+	`The global pointer is a program-wide constant.')
+_(EF_IA_64_ABSOLUTE,	0x00000100U,
+	`The program headers specify the load address.')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_IA_64',`dnl
+_(EF_IA_64_MASKOS,	0x00FF000FU,
+	`Bits reserved for OS-specific flags.')
+_(EF_IA_64_ARCH,	0xFF000000U,
+	`These bits record the minimum architecture level required.')
+')
+
+define(`DEFINE_EHDR_FLAGS_LOONGARCH',`dnl
 _(EF_LOONGARCH_ABI_SOFT_FLOAT,     0x00000001U,
 	`LoongArch software floating point emulation')
 _(EF_LOONGARCH_ABI_SINGLE_FLOAT,   0x00000002U,
 	`LoongArch 32-bit floating point registers')
 _(EF_LOONGARCH_ABI_DOUBLE_FLOAT,   0x00000003U,
 	`LoongArch 64-bit floating point registers')
-_(EF_LOONGARCH_ABI_MODIFIER_MASK,  0x00000007U,
-	`LoongArch floating point modifier mask')
 _(EF_LOONGARCH_OBJABI_V0,          0x00000000U,
 	`LoongArch object file ABI version 0')
 _(EF_LOONGARCH_OBJABI_V1,          0x00000040U,
 	`LoongArch object file ABI version 1')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_LOONGARCH',`dnl
+_(EF_LOONGARCH_ABI_MODIFIER_MASK,  0x00000007U,
+	`LoongArch floating point modifier mask')
 _(EF_LOONGARCH_OBJABI_MASK,        0x000000C0U,
 	`LoongArch object file ABI version mask')
+')
+
+define(`DEFINE_EHDR_FLAGS_MIPS',`dnl
 _(EF_MIPS_NOREORDER,   0x00000001U,
 	`at least one .noreorder directive appeared in the source')
 _(EF_MIPS_PIC,         0x00000002U,
@@ -540,16 +583,12 @@ _(EF_MIPS_ABI2,        0x00000020U,
 	`file follows MIPS III 32-bit ABI')
 _(EF_MIPS_OPTIONS_FIRST, 0x00000080U,
 	`ld(1) should process .MIPS.options section first')
-_(EF_MIPS_ARCH_ASE,    0x0F000000U,
-	`file uses application-specific architectural extensions')
 _(EF_MIPS_ARCH_ASE_MDMX, 0x08000000U,
 	`file uses MDMX multimedia extensions')
 _(EF_MIPS_ARCH_ASE_M16, 0x04000000U,
 	`file uses MIPS-16 ISA extensions')
 _(EF_MIPS_ARCH_ASE_MICROMIPS, 0x02000000U,
 	`MicroMIPS architecture')
-_(EF_MIPS_ARCH,         0xF0000000U,
-	`4-bit MIPS architecture field')
 _(EF_MIPS_ARCH_1,	0x00000000U,
 	`MIPS I instruction set')
 _(EF_MIPS_ARCH_2,	0x10000000U,
@@ -568,16 +607,26 @@ _(EF_MIPS_ARCH_32R2,	0x70000000U,
 	`Mips32 Revision 2')
 _(EF_MIPS_ARCH_64R2,	0x80000000U,
 	`Mips64 Revision 2')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_MIPS',`dnl
+_(EF_MIPS_ARCH_ASE,	0x0F000000U,
+	`file uses application-specific architectural extensions')
+_(EF_MIPS_ARCH,		0xF0000000U,
+	`4-bit MIPS architecture field')
+')
+
+define(`DEFINE_EHDR_FLAGS_PPC',`dnl
 _(EF_PPC_EMB,          0x80000000U,
 	`Embedded PowerPC flag')
 _(EF_PPC_RELOCATABLE,  0x00010000U,
 	`-mrelocatable flag')
 _(EF_PPC_RELOCATABLE_LIB, 0x00008000U,
 	`-mrelocatable-lib flag')
+')
+
+define(`DEFINE_EHDR_FLAGS_RISCV',`dnl
 _(EF_RISCV_RVC,	    0x00000001U,
-	`Compressed instruction extension')
-_(EF_RISCV_FLOAT_ABI_MASK, 0x00000006U,
-	`Floating point ABI')
+	`Binary uses the C ABI.')
 _(EF_RISCV_FLOAT_ABI_SOFT, 0x00000000U,
 	`Software emulated floating point')
 _(EF_RISCV_FLOAT_ABI_SINGLE, 0x00000002U,
@@ -587,11 +636,18 @@ _(EF_RISCV_FLOAT_ABI_DOUBLE, 0x00000004U,
 _(EF_RISCV_FLOAT_ABI_QUAD, 0x00000006U,
 	`Quad precision floating point')
 _(EF_RISCV_RVE,	    0x00000008U,
-	`Compressed instruction ABI')
+	`Binary targets the E ABI.')
 _(EF_RISCV_TSO,	    0x00000010U,
-	`RVTSO memory consistency model')
-_(EF_SPARC_EXT_MASK,   0x00FFFF00U,
-	`Vendor Extension mask')
+	`Binary requires the RVTSO memory consistency model.')
+_(EF_RISCV_RV64ILP32,	0x00000020U,
+	`Binary requires RV64ILP32 ABIs.')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_RISCV',`dnl
+_(EF_RISCV_FLOAT_ABI_MASK, 0x00000006U,
+	`Bits determining the floating point ABI.')
+')
+
+define(`DEFINE_EHDR_FLAGS_SPARC',`dnl
 _(EF_SPARC_32PLUS,     0x00000100U,
 	`Generic V8+ features')
 _(EF_SPARC_SUN_US1,    0x00000200U,
@@ -600,14 +656,38 @@ _(EF_SPARC_HAL_R1,     0x00000400U,
 	`HAL R1 Extensions')
 _(EF_SPARC_SUN_US3,    0x00000800U,
 	`Sun UltraSPARC 3 Extensions')
-_(EF_SPARCV9_MM,       0x00000003U,
-	`Mask for Memory Model')
 _(EF_SPARCV9_TSO,      0x00000000U,
 	`Total Store Ordering')
 _(EF_SPARCV9_PSO,      0x00000001U,
 	`Partial Store Ordering')
 _(EF_SPARCV9_RMO,      0x00000002U,
 	`Relaxed Memory Ordering')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_SPARC',`dnl
+_(EF_SPARC_EXT_MASK,   0x00FFFF00U,
+	`Vendor Extension mask')
+_(EF_SPARCV9_MM,       0x00000003U,
+	`Mask for Memory Model')
+')
+
+define(`DEFINE_EHDR_FLAGS',`
+DEFINE_EHDR_FLAGS_ARM()
+DEFINE_EHDR_FLAG_MASKS_ARM()
+DEFINE_EHDR_FLAGS_IA_64()
+DEFINE_EHDR_FLAG_MASKS_IA_64()
+DEFINE_EHDR_FLAGS_LOONGARCH()
+DEFINE_EHDR_FLAG_MASKS_LOONGARCH()
+DEFINE_EHDR_FLAGS_MIPS()
+DEFINE_EHDR_FLAG_MASKS_MIPS()
+DEFINE_EHDR_FLAGS_PPC()
+DEFINE_EHDR_FLAGS_RISCV()
+DEFINE_EHDR_FLAG_MASKS_RISCV()
+DEFINE_EHDR_FLAGS_SPARC()
+DEFINE_EHDR_FLAG_MASKS_SPARC()
+')
+
+define(`DEFINE_EHDR_FLAG_SYNONYMS',`
+DEFINE_EHDR_FLAG_SYNONYMS_ARM()
 ')
 
 #
@@ -763,8 +843,10 @@ _(EM_S370,             9U,
 	`IBM System/370 Processor')
 _(EM_MIPS_RS3_LE,      10U,
 	`MIPS RS3000 Little-endian')
+__(`	', `Reserved: 11-14.')
 _(EM_PARISC,           15U,
 	`Hewlett-Packard PA-RISC')
+__(`	', `Reserved: 16.')
 _(EM_VPP500,           17U,
 	`Fujitsu VPP500')
 _(EM_SPARC32PLUS,      18U,
@@ -779,6 +861,7 @@ _(EM_S390,             22U,
 	`IBM System/390 Processor')
 _(EM_SPU,              23U,
 	`IBM SPU/SPC')
+__(`	', `Reserved: 24-35.')
 _(EM_V800,             36U,
 	`NEC V800')
 _(EM_FR20,             37U,
@@ -949,6 +1032,7 @@ _(EM_CE,               119U,
 	`Freescale Communication Engine RISC core')
 _(EM_M32C,             120U,
 	`Renesas M32C series microprocessors')
+__(`	', `Reserved: 121-130.')
 _(EM_TSK3000,          131U,
 	`Altium TSK3000 core')
 _(EM_RS08,             132U,
@@ -977,6 +1061,7 @@ _(EM_TI_ARP32,         143U,
 	`Texas Instruments Application Specific RISC Processor, 32bit fetch')
 _(EM_TI_PRU,           144U,
 	`Texas Instruments Programmable Realtime Unit')
+__(`	', `Reserved: 145-159.')
 _(EM_MMDSP_PLUS,       160U,
 	`STMicroelectronics 64bit VLIW Data Signal Processor')
 _(EM_CYPRESS_M8C,      161U,
@@ -1021,8 +1106,10 @@ _(EM_L10M,             180U,
 	`Intel L10M')
 _(EM_K10M,             181U,
 	`Intel K10M')
+__(`	', `Reserved for future Intel use: 182.')
 _(EM_AARCH64,          183U,
 	`AArch64 (64-bit ARM)')
+__(`	', `Reserved for future ARM use: 184.')
 _(EM_AVR32,            185U,
 	`Atmel Corporation 32-bit microprocessor family')
 _(EM_STM8,             186U,
@@ -1103,6 +1190,7 @@ _(EM_MOXIE,            223U,
 	`Moxie processor family')
 _(EM_AMDGPU,           224U,
 	`AMD GPU architecture')
+__(`	', `Reserved for future use: 225-242.')
 _(EM_RISCV,            243U,
 	`RISC-V')
 _(EM_LANAI,            244U,
@@ -1153,9 +1241,17 @@ _(EM_BANG,             266U,
 	`Cambricon BANG')
 _(EM_LOONGGPU,         267U,
 	`Loongson LoongArch GPU')
+_(EM_SW64,             268U,
+	`Wuxi Institute of Advanced Technology SW64')
+_(EM_AIECTRLCODE,      269U,
+	`AMD/Xilinx AIEngine ctrlcode')
+__(`	', ` Historical and experimental values. ')
+_(EM_ALPHA_HISTORICAL, 0x9026U,
+	`Prior value used by GNU and NetBSD')
 ')
 
 define(`DEFINE_ELF_MACHINE_TYPE_SYNONYMS',`
+_(EM_486, EM_IAMCU)
 _(EM_AMD64, EM_X86_64)
 _(EM_ARC_A5, EM_ARC_COMPACT)
 _(EM_ECOG1, EM_ECOG1X)
@@ -1196,11 +1292,11 @@ _(EV_CURRENT, 1U)
 # Flags for section groups.
 #
 define(`DEFINE_GRP_FLAGS',`
-_(GRP_COMDAT, 	0x1,
+_(GRP_COMDAT, 	0x1U,
 	`COMDAT semantics')
-_(GRP_MASKOS,	0x0ff00000,
+_(GRP_MASKOS,	0x0FF00000U,
 	`OS-specific flags')
-_(GRP_MASKPROC, 	0xf0000000,
+_(GRP_MASKPROC, 	0xF0000000U,
 	`processor-specific flags')
 ')
 
@@ -1208,8 +1304,8 @@ _(GRP_MASKPROC, 	0xf0000000,
 # Flags / mask for .gnu.versym sections.
 #
 define(`DEFINE_VERSYMS',`
-_(VERSYM_VERSION,	0x7fff)
-_(VERSYM_HIDDEN,	0x8000)
+_(VERSYM_VERSION,	0x7FFFU)
+_(VERSYM_HIDDEN,	0x8000U)
 ')
 
 #
@@ -1222,9 +1318,9 @@ _(PF_W,                0x2,
 	`Write')
 _(PF_R,                0x4,
 	`Read')
-_(PF_MASKOS,           0x0ff00000,
+_(PF_MASKOS,           0x0FF00000,
 	`OS-specific flags')
-_(PF_MASKPROC,         0xf0000000,
+_(PF_MASKPROC,         0xF0000000,
 	`Processor-specific flags')
 _(PF_ARM_SB,           0x10000000,
 	`segment contains the location addressed by the static base')
@@ -1312,27 +1408,27 @@ _(PT_LOSUNW,	PT_SUNWBSS)
 # Section flags.
 #
 define(`DEFINE_SECTION_FLAGS',`
-_(SHF_WRITE,           0x1U,
+_(SHF_WRITE,           0x00000001U,
 	`writable during program execution')
-_(SHF_ALLOC,           0x2U,
+_(SHF_ALLOC,           0x00000002U,
 	`occupies memory during program execution')
-_(SHF_EXECINSTR,       0x4U,
+_(SHF_EXECINSTR,       0x00000004U,
 	`executable instructions')
-_(SHF_MERGE,           0x10U,
+_(SHF_MERGE,           0x00000010U,
 	`may be merged to prevent duplication')
-_(SHF_STRINGS,         0x20U,
+_(SHF_STRINGS,         0x00000020U,
 	`NUL-terminated character strings')
-_(SHF_INFO_LINK,       0x40U,
+_(SHF_INFO_LINK,       0x00000040U,
 	`the sh_info field holds a link')
-_(SHF_LINK_ORDER,      0x80U,
+_(SHF_LINK_ORDER,      0x00000080U,
 	`special ordering requirements during linking')
-_(SHF_OS_NONCONFORMING, 0x100U,
+_(SHF_OS_NONCONFORMING, 0x00000100U,
 	`requires OS-specific processing during linking')
-_(SHF_GROUP,           0x200U,
+_(SHF_GROUP,           0x00000200U,
 	`member of a section group')
-_(SHF_TLS,             0x400U,
+_(SHF_TLS,             0x00000400U,
 	`holds thread-local storage')
-_(SHF_COMPRESSED,      0x800U,
+_(SHF_COMPRESSED,      0x00000800U,
 	`holds compressed data')
 _(SHF_MASKOS,          0x0FF00000U,
 	`bits reserved for OS-specific semantics')
@@ -1442,6 +1538,8 @@ _(SHT_PREINIT_ARRAY,   16U,
 _(SHT_GROUP,           17U, `defines a section group')
 _(SHT_SYMTAB_SHNDX,    18U,
 	`used for extended section numbering')
+_(SHT_RELR,            19U,
+	`used to encode relative relocations')
 _(SHT_LOOS,            0x60000000U,
 	`start of OS-specific range')
 _(SHT_SUNW_dof,	     0x6FFFFFF4U,
@@ -1664,15 +1762,15 @@ _(STV_PROTECTED,       3,
 # Symbol flags.
 #
 define(`DEFINE_SYMBOL_FLAGS',`
-_(SYMINFO_FLG_DIRECT,	0x01,
+_(SYMINFO_FLG_DIRECT,	0x0001U,
 	`directly assocated reference')
-_(SYMINFO_FLG_COPY,	0x04,
+_(SYMINFO_FLG_COPY,	0x0004U,
 	`definition by copy-relocation')
-_(SYMINFO_FLG_LAZYLOAD,	0x08,
+_(SYMINFO_FLG_LAZYLOAD,	0x0008U,
 	`object should be lazily loaded')
-_(SYMINFO_FLG_DIRECTBIND,	0x10,
+_(SYMINFO_FLG_DIRECTBIND,	0x0010U,
 	`reference should be directly bound')
-_(SYMINFO_FLG_NOEXTDIRECT, 0x20,
+_(SYMINFO_FLG_NOEXTDIRECT, 0x0020U,
 	`external references not allowed to bind to definition')
 ')
 
@@ -1767,7 +1865,7 @@ _(R_386_GOT32X,		43)
 ')
 
 define(`DEFINE_386_RELOCATION_TYPE_SYNONYMS',`
-_(R_386_JMP_SLOT, 7)
+_(R_386_JMP_SLOT, R_386_JUMP_SLOT)
 ')
 
 define(`DEFINE_AARCH64_RELOCATION_TYPES',`

@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.11 2025/07/31 02:21:13 kre Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.12 2025/10/30 21:19:31 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.11 2025/07/31 02:21:13 kre Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 4162 2025-02-04 18:52:12Z jkoshy')
+	`Id: elfdefinitions.m4 4257 2025-10-30 14:16:15Z jkoshy')
 include(`elfconstants.m4')dnl
 
 # Compute the whitespace between a symbol and its definition.
@@ -102,6 +102,11 @@ DEFINE_DYN_TYPE_ALIASES()
  * Flags used in the executable header (field: e_flags).
  */
 DEFINE_EHDR_FLAGS()
+
+/*
+ * Alternate spellings for executable header flags.
+ */
+DEFINE_EHDR_FLAG_SYNONYMS()
 
 /*
  * Offsets in the `ei_ident[]' field of an ELF executable header.
@@ -652,6 +657,11 @@ typedef struct {
 	Elf64_Sxword	r_addend;    /* constant addend */
 } Elf64_Rela;
 
+/*
+ * Relative relocations.
+ */
+typedef Elf32_Word	Elf32_Relr;
+typedef Elf64_Xword	Elf64_Relr;
 
 #define ELF32_R_SYM(I)		((I) >> 8)
 #define ELF32_R_TYPE(I)		((unsigned char) (I))
