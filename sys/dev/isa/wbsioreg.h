@@ -1,4 +1,4 @@
-/* $NetBSD: wbsioreg.h,v 1.11 2022/12/16 00:02:28 msaitoh Exp $ */
+/* $NetBSD: wbsioreg.h,v 1.12 2025/10/30 02:30:38 isaki Exp $ */
 
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
@@ -75,7 +75,7 @@
 #define WBSIO_ID_NCT6798D	0xd428
 #define WBSIO_ID_NCT6799D	0xd800
 
-/* Make the above WBSIO_ID_* vaue from WBSIO_ID, WBSIO_REV and IDbits */
+/* Make the above WBSIO_ID_* value from WBSIO_ID, WBSIO_REV and IDbits */
 #define WBSIO_MAKEID(id, rev, bits)					\
 	(((bits) == 13) ? (((uint16_t)(id) << 8) | ((rev) & 0xf8)) :	\
 	    ((bits) == 12) ? (((uint16_t)(id) << 4) | ((rev) >> 4)) : (id))
