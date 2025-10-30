@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.30 2022/12/16 00:02:28 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.31 2025/10/30 02:29:15 isaki Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -218,7 +218,7 @@ wbsio_match(device_t parent, cfdata_t match, void *aux)
 	wbsio_conf_enable(NULL, iot, ioh);
 	id = wbsio_conf_read(iot, ioh, WBSIO_ID);
 	rev = wbsio_conf_read(iot, ioh, WBSIO_REV);
-	aprint_debug("wbsio_probe: id 0x%02x, rev 0x%02x\n", id, rev);
+	aprint_debug("%s: id 0x%02x, rev 0x%02x\n", __func__, id, rev);
 	wbsio_conf_disable(NULL, iot, ioh);
 	bus_space_unmap(iot, ioh, WBSIO_IOSIZE);
 
