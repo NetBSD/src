@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2025/10/30 21:34:11 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2025/10/30 22:22:40 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2025/10/30 21:34:11 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2025/10/30 22:22:40 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -434,7 +434,7 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 	directory = node->directory;
 	inf_len   = node->found.inf_len;
 
-	rebuild_dir = calloc(1, inf_len);
+	rebuild_dir = calloc(inf_len, 1);
 	assert(rebuild_dir);
 
 	sfpos  = 0;
@@ -495,8 +495,6 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 
 			dfpos += udf_fidsize(dfid);
 			drest -= udf_fidsize(dfid);
-
-			assert(udf_fidsize(sfid) == udf_fidsize(dfid));
 			continue;
 		}
 
@@ -520,14 +518,16 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 	}
 
 	if (sfpos != dfpos)
-		printf("%s: could save %" PRIi64 " bytes in directory\n", udf_node_path(node), sfpos - dfpos);
+		pwarn("%s: could save %" PRIi64 " bytes in directory\n", udf_node_path(node), sfpos - dfpos);
 
-	memset(directory, 0, inf_len);
-	memcpy(directory, rebuild_dir, dfpos);
-
+	*rest_lenp = sfpos;
+	if (error_in_stream) {
+		memset(directory, 0, sfpos);
+		memcpy(directory, rebuild_dir, dfpos);
+		*rest_lenp = dfpos;
+	}
 	free(rebuild_dir);
 
-	*rest_lenp = dfpos;
 	return error_in_stream;
 }
 
