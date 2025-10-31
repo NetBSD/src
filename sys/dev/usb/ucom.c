@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.147 2025/10/28 06:26:24 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.148 2025/10/31 08:23:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.147 2025/10/28 06:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.148 2025/10/31 08:23:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -361,6 +361,8 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	tp->t_oproc = ucomstart;
 	tp->t_param = ucomparam;
 	tp->t_hwiflow = ucomhwiflow;
+	tp->t_softc = sc;
+
 	sc->sc_tty = tp;
 
 	DPRINTF("tty_attach %#jx", (uintptr_t)tp, 0, 0, 0);
@@ -1110,8 +1112,7 @@ ucom_status_change(struct ucom_softc *sc)
 static int
 ucomparam(struct tty *tp, struct termios *t)
 {
-	const int unit = UCOMUNIT(tp->t_dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
+	struct ucom_softc * const sc = tp->t_softc;
 	int error = 0;
 
 	/* XXX should take tty lock around touching tp */
@@ -1183,8 +1184,7 @@ out:
 static int
 ucomhwiflow(struct tty *tp, int block)
 {
-	const int unit = UCOMUNIT(tp->t_dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
+	struct ucom_softc * const sc = tp->t_softc;
 	int old;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -1208,8 +1208,7 @@ ucomhwiflow(struct tty *tp, int block)
 static void
 ucomstart(struct tty *tp)
 {
-	const int unit = UCOMUNIT(tp->t_dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
+	struct ucom_softc * const sc = tp->t_softc;
 	struct ucom_buffer *ub;
 	u_char *data;
 	int cnt;
@@ -1269,8 +1268,7 @@ void
 ucomstop(struct tty *tp, int flag)
 {
 #if 0
-	const int unit = UCOMUNIT(tp->t_dev);
-	struct ucom_softc * const sc = device_lookup_private(&ucom_cd, unit);
+	struct ucom_softc * const sc = tp->t_softc;
 
 	mutex_enter(&sc->sc_lock);
 	ttylock(tp);
