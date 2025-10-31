@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_dirhash.c,v 1.16 2024/12/07 02:11:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_dirhash.c,v 1.17 2025/10/31 10:35:52 reinoud Exp $	*/
 
 /*
- * Copyright (c) 2008 Reinoud Zandijk
+ * Copyright (c) 2008, 2025 Reinoud Zandijk
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.16 2024/12/07 02:11:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.17 2025/10/31 10:35:52 reinoud Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -51,6 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.16 2024/12/07 02:11:42 riastradh E
 #endif
 
 /*
+ * defaults for dirhash cache sizes:
+ *  - use up to 1/64th of system memory.
+ *  - cap maximum size of the default dirhash cache at 32mb.
+ */
+#define	DIRHASH_DEFAULT_DIVIDER	64
+#define MIN_DEFAULT_DIRHASH_MEM	(1024*1024)
+#define MAX_DEFAULT_DIRHASH_MEM (32*1024*1024)
+#define DIRHASH_PURGE_BLOCK	(16*1024)
+
+/*
  * The locking protocol of the dirhash structures is fairly simple:
  *
  * The global dirhash_queue is protected by the dirhashmutex. This lock is
@@ -69,7 +79,7 @@ static struct pool dirhash_pool;
 static struct pool dirhash_entry_pool;
 
 static kmutex_t dirhashmutex;
-static uint32_t maxdirhashsize = DIRHASH_SIZE;
+static uint32_t maxdirhashsize = MIN_DEFAULT_DIRHASH_MEM;
 static uint32_t dirhashsize    = 0;
 static TAILQ_HEAD(_dirhash, dirhash) dirhash_queue;
 
@@ -79,6 +89,7 @@ dirhash_init(void)
 {
 	const struct sysctlnode *rnode, *cnode;
 	size_t sz;
+	uint64_t physmem_bytes;
 	uint32_t max_entries;
 
 	/* initialise dirhash queue */
@@ -92,6 +103,14 @@ dirhash_init(void)
 	sz = sizeof(struct dirhash_entry);
 	pool_init(&dirhash_entry_pool, sz, 0, 0, 0,
 	    "dirhepl", NULL, IPL_NONE);
+
+	/* calculate the default maximum dirhashsize */
+	physmem_bytes = ctob((uint64_t) physmem);
+	maxdirhashsize = physmem_bytes / DIRHASH_DEFAULT_DIVIDER;
+	if (maxdirhashsize < MIN_DEFAULT_DIRHASH_MEM)
+		maxdirhashsize = MIN_DEFAULT_DIRHASH_MEM;
+	if (maxdirhashsize > MAX_DEFAULT_DIRHASH_MEM)
+		maxdirhashsize = MAX_DEFAULT_DIRHASH_MEM;
 
 	mutex_init(&dirhashmutex, MUTEX_DEFAULT, IPL_NONE);
 	max_entries = maxdirhashsize / sz;
@@ -196,6 +215,9 @@ dirhash_get(struct dirhash **dirhp)
 	struct dirhash *dirh;
 	uint32_t hashline;
 
+	/* protect against concurrent VOP_LOOKUP calls */
+	mutex_enter(&dirhashmutex);
+
 	/* if no dirhash was given, allocate one */
 	dirh = *dirhp;
 	if (dirh == NULL) {
@@ -206,7 +228,6 @@ dirhash_get(struct dirhash **dirhp)
 	}
 
 	/* implement LRU on the dirhash queue */
-	mutex_enter(&dirhashmutex);
 	if (*dirhp) {
 		/* remove from queue to be requeued */
 		TAILQ_REMOVE(&dirhash_queue, dirh, next);
@@ -231,7 +252,7 @@ void
 dirhash_enter(struct dirhash *dirh,
     struct dirent *dirent, uint64_t offset, uint32_t entry_size, int new_p)
 {
-	struct dirhash *del_dirh, *prev_dirh;
+	struct dirhash *p_dirh;
 	struct dirhash_entry *dirh_e;
 	uint32_t hashvalue, hashline;
 	int entrysize;
@@ -281,17 +302,19 @@ dirhash_enter(struct dirhash *dirh,
 	if (dirhashsize + entrysize > maxdirhashsize) {
 		/* we walk the dirhash_queue, so need to lock it */
 		mutex_enter(&dirhashmutex);
-		del_dirh = TAILQ_LAST(&dirhash_queue, _dirhash);
-		KASSERT(del_dirh);
-		while (dirhashsize + entrysize > maxdirhashsize) {
-			/* no use trying to delete myself */
-			if (del_dirh == dirh)
+		TAILQ_FOREACH_REVERSE(p_dirh, &dirhash_queue, _dirhash, next) {
+			/* satisfied? */
+			if (dirhashsize + entrysize <
+					maxdirhashsize - DIRHASH_PURGE_BLOCK)
 				break;
-			prev_dirh = TAILQ_PREV(del_dirh, _dirhash, next);
-			if (del_dirh->refcnt == 0)
-				dirhash_purge_entries(del_dirh);
-			del_dirh = prev_dirh;
+			if (p_dirh->refcnt)
+				continue;
+
+			/* this can't be ourselves */
+			KASSERT(p_dirh != dirh);
+			dirhash_purge_entries(p_dirh);
 		}
+		/* if not enough is cleaned, we just give up */
 		mutex_exit(&dirhashmutex);
 	}
 

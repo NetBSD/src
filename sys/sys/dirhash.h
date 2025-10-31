@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.6 2013/07/07 19:31:26 reinoud Exp $ */
+/* $NetBSD: dirhash.h,v 1.7 2025/10/31 10:35:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -30,10 +30,6 @@
 
 #include <sys/queue.h>
 #include <sys/dirent.h>
-
-#ifndef DIRHASH_SIZE
-#define	DIRHASH_SIZE	(1024*1024)
-#endif
 
 #define	DIRHASH_HASHBITS	5
 #define	DIRHASH_HASHSIZE	(1 << DIRHASH_HASHBITS)
