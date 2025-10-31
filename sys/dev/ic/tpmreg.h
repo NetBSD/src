@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.11 2022/01/29 12:27:30 riastradh Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.12 2025/10/31 03:25:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -37,16 +37,100 @@
 #include <sys/cdefs.h>
 #include <sys/endian.h>
 
+/*
+ * For TPM 1.2:
+ *
+ * [TPM12-MAIN] Trusted Computing Group, TPM 1.2 Main Specification
+ * Level 2 Version 1.2, Revision 116, 2011-03-01
+ * https://trustedcomputinggroup.org/resource/tpm-main-specification/
+ *
+ * Part 1: Design Principles
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-1-Design-Principles_v1.2_rev116_01032011.pdf
+ * https://web.archive.org/web/20250826195140/https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-1-Design-Principles_v1.2_rev116_01032011.pdf
+ *
+ * Part 2: Structures
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf
+ * https://web.archive.org/web/20250703130940/https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf
+ *
+ * Part 3: Commands
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-3-Commands_v1.2_rev116_01032011.pdf
+ * https://web.archive.org/web/20250525060937/https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-3-Commands_v1.2_rev116_01032011.pdf
+ */
+
+/*
+ * For TPM 2.0:
+ *
+ * [TPM20-LIB] Trusted Platform Module Library Specification, Family
+ * "2.0", Level 00, Revision 01.59, 2019-11-08
+ * https://trustedcomputinggroup.org/resource/tpm-library-specification/
+ *
+ * Part 1: Architecture
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part1_Architecture_pub.pdf
+ * https://web.archive.org/web/20250907234549/https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part1_Architecture_pub.pdf
+ *
+ * Part 2: Structures
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part2_Structures_pub.pdf
+ * https://web.archive.org/web/20250828045221/https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part2_Structures_pub.pdf
+ *
+ * Part 3: Commands
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part3_Commands_pub.pdf
+ * https://web.archive.org/web/20250912171331/https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part3_Commands_pub.pdf
+ *
+ * Part 3: Commands - Code
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part3_Commands_code_pub.pdf
+ * https://web.archive.org/web/20250528214911/https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part3_Commands_code_pub.pdf
+ *
+ * Part 4: Supporting Routines
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part4_SuppRoutines_pub.pdf
+ * https://web.archive.org/web/20250528222136/https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part4_SuppRoutines_pub.pdf
+ *
+ * Part 4: Supporting Routines - Code
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part4_SuppRoutines_code_pub.pdf
+ * https://web.archive.org/web/20250528222555/https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part4_SuppRoutines_code_pub.pdf
+ */
+
+/*
+ * TPM command response header.
+ *
+ * For TPM 1.2:
+ *
+ * [TPM12-MAIN], Part 2 `Structures', Sec. 16 `Return Codes',
+ * pp. 118-119
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf#page=130
+ *
+ * For TPM 2.0:
+ *
+ * [TPM20-LIB], Part 2 `Structures', Sec. 6.6 `TPM_RC (Response
+ * Codes)', p. 35
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part2_Structures_pub.pdf#page=51
+ */
 struct tpm_header {
 	uint16_t tag;
 	uint32_t length;
 	uint32_t code;
 } __packed;
 
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
 
 /*
- * TPM Interface Specification 1.2 (TIS12).
+ * TPM register space
+ *
+ * For TPM 1.2:
+ *
+ * [TPM12-TIS] Trusted Computing Group, TCG PC Client Specific TPM
+ * Interface Specification (TIS), Version 1.2 Final, Revision 1.00, For
+ * TPM Family 1.2; Level 2, 2005-07-11, Sec. 10 `TPM Register Space',
+ * pp. 33-36.
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientTPMSpecification_1-20_1-00_FINAL.pdf#page=33
+ * https://web.archive.org/web/20250109145957/https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientTPMSpecification_1-20_1-00_FINAL.pdf
+ *
+ * For TPM 2.0:
+ *
+ * [TPM20-TIS] Trusted Computing Group, TCG PC Client Specific TPM
+ * Interface Specification (TIS), Specification Version 1.3,
+ * 2013-03-21, Sec. 5.4 `TPM Register Space', pp. 37--44.
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientTPMInterfaceSpecification_TIS__1-3_27_03212013.pdf#page=37
+ * https://web.archive.org/web/20250523052753/https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientTPMInterfaceSpecification_TIS__1-3_27_03212013.pdf
  */
 
 #define	TPM_ACCESS			0x0000	/* 8bit register */
@@ -107,12 +191,30 @@ struct tpm_header {
  */
 #define	TPM_SPACE_SIZE	0x1000
 
+/* ------------------------------------------------------------------------- */
+
+/*
+ * TPM 1.2 commands and responses
+ */
+
+/*
+ * [TPM12-MAIN], Sec. 6 `TPM_TAG (Command and Response Tags)', p. 46
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf#page=46
+ */
 #define	TPM_TAG_RQU_COMMAND		0x00c1
 #define	TPM_TAG_RSP_COMMAND		0x00c4
 
+/*
+ * [TPM12-MAIN], Sec. 17 `Ordinals', pp. 136--132
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf#page=136
+ */
 #define	TPM_ORD_GetRandom		0x00000046
 
-/* TPM_RESULT return codes */
+/*
+ * TPM_RESULT return codes, from [TPM12-MAIN], Sec. 16 `Return Codes',
+ * Table `TPM-defined fatal error codes', pp. 121--123
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf#page=133
+ */
 #define	TPM_AUTHFAIL			1
 #define	TPM_BADINDEX			2
 #define	TPM_BAD_PARAMETER		3
@@ -125,31 +227,45 @@ struct tpm_header {
 #define	TPM_BAD_ORDINAL			10
 /* ... */
 
+/*
+ * [TPM12-MAIN], Sec. 16 `Return Codes', Table `Mask Parameters',
+ * p. 120
+ * https://trustedcomputinggroup.org/wp-content/uploads/TPM-Main-Part-2-TPM-Structures_v1.2_rev116_01032011.pdf#page=132
+ */
 #define	TPM_NON_FATAL			0x800
 
-/* -------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
 
 /*
- * Trusted Platform Module Library Specification, Family "2.0",
- * Level 00, Revision 01.59 -- November 2019
+ * TPM 2.0 commands and responses
  *
- * https://trustedcomputinggroup.org/resource/tpm-library-specification/
- *
- * Where this spec names things TPM_* that don't obviously coincide
- * with the 1.2 things, we name them TPM2_*.
+ * Where the TPM 2.0 spec names things TPM_* that don't obviously
+ * coincide with the 1.2 things, we name them TPM2_*.
  */
 
-/* https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-4-Supporting-Routines-01.38-code.pdf#page=172 */
+/*
+ * [TPM20-LIB], Part 2 `Structures`, Sec. 6.9 `TPM_ST (Structure
+ * Tags)', pp. 44--46
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part2_Structures_pub.pdf#page=60
+ */
 #define	TPM2_ST_RSP_COMMAND		0x00c4
 #define	TPM2_ST_NULL			0x8000
 #define	TPM2_ST_NO_SESSIONS		0x8001
 #define	TPM2_ST_SESSIONS		0x8002
 /* ... */
 
-/* https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf#page=45 */
+/*
+ * [TPM20-LIB], Part 2 `Structures', Sec. 6.5.2 `TPM_CC Listing',
+ * pp. 31--34
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part2_Structures_pub.pdf#page=49
+ */
 #define	TPM2_CC_GetRandom		0x0000017b
 
-/* https://trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf#page=53 */
+/*
+ * [TPM20-LIB], Part 3 `Structures', Sec. 6.6.3 `TPM_RC Values',
+ * pp. 38--42
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG_TPM2_r1p59_Part2_Structures_pub.pdf#page=54
+ */
 #define	TPM2_RC_SUCCESS			0x000
 #define	TPM2_RC_BAD_TAG			0x01e
 

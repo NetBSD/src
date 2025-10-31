@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.14 2021/11/14 21:18:30 riastradh Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.15 2025/10/31 03:25:16 riastradh Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -29,8 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Trusted Computing Group, TCG ACPI Specification, Version 1.4,
+ * Revision 15, 2024-04-03
+ * https://trustedcomputinggroup.org/wp-content/uploads/TCG-ACPI-Specification-Version-1.4-Revision-15_pub.pdf
+ * https://web.archive.org/web/20240611010643/https://trustedcomputinggroup.org/wp-content/uploads/TCG-ACPI-Specification-Version-1.4-Revision-15_pub.pdf
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.14 2021/11/14 21:18:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.15 2025/10/31 03:25:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
