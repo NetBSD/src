@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.287 2025/09/06 02:53:23 riastradh Exp $	*/
+/*	$NetBSD: locore.s,v 1.288 2025/11/01 19:05:18 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2782,7 +2782,7 @@ lev14_softint:
 	 ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG0)], %l3	! prefetch 1st arg
 
 /*
- * Fast flush handlers. xcalled from other CPUs throught soft interrupt 14
+ * Fast flush handlers. xcalled from other CPUs through soft interrupt 14
  * On entry:	%l6 = CPUINFO_VA
  *		%l3 = first argument
  *
