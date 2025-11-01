@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.16 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.17 2025/11/01 04:10:47 perseant Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.54 2015/03/17 09:39:29 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.16 2020/01/17 20:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.17 2025/11/01 04:10:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -225,9 +225,11 @@ ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, int lktype,
 		*vpp = NULLVP;
 		return (error);
 	}
+
 	ip = VTOI(nvp);
 	KASSERT(ip != NULL);
-	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen) {
+	if (ip->i_mode == 0 || ip->i_gen != ufhp->ufid_gen ||
+	    (ip->i_state & IN_DEAD)) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);

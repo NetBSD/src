@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.145 2025/09/21 14:19:14 christos Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.146 2025/11/01 04:10:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.145 2025/09/21 14:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.146 2025/11/01 04:10:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -933,29 +933,70 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 }
 
 /*
- * Mark a file orphaned (unlinked but not yet reclaimed) by inode
- * number. Do this with a magic freelist next pointer.
+ * Handle files deleted from the file system namespace.
  *
- * XXX: howzabout some locking?
+ * When inodes are reclaimed, they are added back to the free list as
+ * usual; but if the system crashes before they can be reclaimed, they
+ * will need to be reclaimed at next mount.  We therefore set their
+ * nextfree field to the magic value LFS_ORPHAN_NEXTFREE so we can
+ * identify them.
+ *
+ *
+ * The caller holds a reference to vp, and the buffer cache provides
+ * exclusive access to the "nextfree" entry.
  */
 void
-lfs_orphan(struct lfs *fs, ino_t ino)
+lfs_orphan(struct lfs *fs, struct vnode *vp)
 {
 	IFILE *ifp;
 	struct buf *bp;
+	struct inode *ip;
+	ino_t nextfree;
+	int mincount;
+	
+	ip = VTOI(vp);
 
-	LFS_IENTRY(ifp, fs, ino, bp);
+	KASSERT(ip->i_nlink == 0);
+
+	/*
+	 * Check reference count.
+	 *
+	 * Even if the file is not still referenced, it holds a
+	 * reference associated with VU_DIROP.  This creates an
+	 * opportunity for fhopen() to re-open the file, which is
+	 * illegal.  Therefore we count the number of references that
+	 * would come from VDIROP and IN_CLEANING, and compare that
+	 * against the vnode ref count.  If the usecount can be
+	 * accounted for by VDIROP and IN_CLEANING, mark the node
+	 * IN_DEAD.
+	 */
+	mincount = 1; /* The caller holds one */
+	mutex_enter(&lfs_lock);
+	if (ip->i_state  & IN_CLEANING)
+		++mincount;
+	if (vp->v_uflag & VU_DIROP)
+		++mincount;
+	mutex_exit(&lfs_lock);
+	mutex_enter(vp->v_interlock);
+	if (vp->v_usecount <= mincount)
+		ip->i_state |= IN_DEAD;
+	mutex_exit(vp->v_interlock);
+
+	/* If not already done, mark this inode orphaned. */
+	LFS_IENTRY(ifp, fs, ip->i_number, bp);
+	nextfree = lfs_if_getnextfree(fs, ifp);
+	if (nextfree == LFS_ORPHAN_NEXTFREE(fs)) {
+		brelse(bp, 0);
+		return;
+	}
+	KASSERT(nextfree == LFS_UNUSED_INUM);
 	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE(fs));
 	LFS_BWRITE_LOG(bp);
 }
 
 /*
- * Free orphans discovered during mount.  This is a separate stage
- * because it requires fs->lfs_suflags to be set up, which is not done
- * by the time we run lfs_order_freelist.  It's possible that we could
- * run lfs_order_freelist later (i.e., set up fs->lfs_suflags sooner)
- * but that requires more thought than I can put into this at the
- * moment.
+ * Free orphans discovered during mount.
+ * XXX merge this with lfs_order_freelist.
  */
 void
 lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)

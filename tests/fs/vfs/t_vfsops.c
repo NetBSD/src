@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.12 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.13 2025/11/01 04:10:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -146,9 +146,6 @@ tfhremove(const atf_tc_t *tc, const char *path)
 	RL(rump_sys_getfh(FNAME, fhp, &fhsize));
 	RL(rump_sys_unlink(FNAME));
 
-	if (FSTYPE_LFS(tc))
-		atf_tc_expect_fail("fhopen() for removed file succeeds "
-		    "(PR kern/43745)");
 	ATF_REQUIRE_ERRNO(ESTALE, rump_sys_fhopen(fhp, fhsize, O_RDONLY) == -1);
 	atf_tc_expect_pass();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.345 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.346 2025/11/01 04:10:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.345 2025/10/20 04:20:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.346 2025/11/01 04:10:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1052,7 +1052,7 @@ lfs_remove(void *v)
 	}
 	error = ulfs_remove(ap);
 	if (ip->i_nlink == 0)
-		lfs_orphan(ip->i_lfs, ip->i_number);
+		lfs_orphan(ip->i_lfs, vp);
 
 	UNMARK_VNODE(dvp);
 	if (ap->a_vp) {
@@ -1095,7 +1095,7 @@ lfs_rmdir(void *v)
 	}
 	error = ulfs_rmdir(ap);
 	if (ip->i_nlink == 0)
-		lfs_orphan(ip->i_lfs, ip->i_number);
+		lfs_orphan(ip->i_lfs, vp);
 
 	UNMARK_VNODE(ap->a_dvp);
 	if (ap->a_vp) {
@@ -1291,6 +1291,10 @@ lfs_close(void *v)
 		lfs_wrapgo(fs, ip, 0);
 		mutex_exit(&lfs_lock);
 	}
+
+	/* When closing an anonymous file, maybe mark it IN_DEAD */
+	if (ip->i_nlink == 0)
+		lfs_orphan(fs, vp);
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
