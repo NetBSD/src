@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.21 2025/07/11 22:19:54 andvar Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.22 2025/11/01 19:02:51 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.21 2025/07/11 22:19:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.22 2025/11/01 19:02:51 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3422,7 +3422,7 @@ sctp_release_pr_sctp_chunk(struct sctp_tcb *stcb, struct sctp_tmit_chunk *tp1,
 		 */
 		tp1 = TAILQ_FIRST(&stcb->asoc.send_queue);
 		/*
-		 * recurse throught the send_queue too, starting at the
+		 * recurse through the send_queue too, starting at the
 		 * beginning.
 		 */
 		if (tp1) {
