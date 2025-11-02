@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.37 2025/10/28 11:54:03 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.38 2025/11/02 06:09:51 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.37 2025/10/28 11:54:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.38 2025/11/02 06:09:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,8 +368,8 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 		int i;
 		for (i = 0; i < 32; i++)
 			summitfb_rectfill(sc, i * 32, 900, 16, 100, i | (i << 8) | (i << 16) | (i << 24));
-		summitfb_write4(sc, VISFX_FOEU, 0xffffffff);
-		summitfb_write4(sc, VISFX_FOE, 0xffffffff);
+		//summitfb_write4(sc, VISFX_FOEU, 0xffffffff);
+		//summitfb_write4(sc, VISFX_FOE, 0xffffffff);
 		summitfb_bitblt(sc, 0, 900, 0, 800, 1024, 90, RopInv | 0x01000);
 		summitfb_bitblt(sc, 0, 900, 0, 700, 1024, 90, RopInv | 0x02000);	
 		summitfb_bitblt(sc, 0, 900, 0, 600, 1024, 90, RopInv | 0x04000);	
@@ -434,17 +434,38 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 
 	summitfb_wait(sc);
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		if (sc->sc_is_lego) {
+			// turn off swapping
+			summitfb_write4(sc, B2_DMA_BSCFB, SWAP_0123);
+			summitfb_write4(sc, B2_PDU_BSCFB, SWAP_0123);
+		}
 		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_read_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
 		/* make overlay opaque */
 		summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
 	} else {
-		summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
-		summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
-		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
-		/* make overlay transparent */
-		summitfb_write4(sc, VISFX_OTR, OTR_A);
+		if (sc->sc_is_lego) {
+			/* on FX5/10 we keep using the overlay */ 
+			summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+			summitfb_read_mode(sc, VISFX_WRITE_MODE_PLAIN);
+			summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
+			/* make overlay opaque */
+			summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
+			/* turn on swapping */
+			summitfb_write4(sc, B2_DMA_BSCFB, SWAP_3210);
+			summitfb_write4(sc, B2_PDU_BSCFB, SWAP_3210);
+		} else {
+			/*
+			 * on FX2/4/6 turn off the overlay and expose the
+			 * 24bit framebuffer
+			 */
+			summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
+			summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
+			summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
+			/* make overlay transparent */
+			summitfb_write4(sc, VISFX_OTR, OTR_A);
+		}
 	}
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 }
@@ -462,8 +483,23 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_wait(sc);
 #if 1
 	/* these control byte swapping */
-	summitfb_write4(sc, 0xb08044, 0x1b);	/* MFU_BSCTD */
-	summitfb_write4(sc, 0xb08048, 0x1b);	/* MFU_BSCCTL */
+	if(sc->sc_is_lego) {
+		/* disable blanket swapper */
+		summitfb_write4(sc, B2_DMA_BSCSAV, 0);
+		summitfb_write4(sc, B2_DMA_BSCBLK, 0);
+		/* no swapping for buffered access */
+		summitfb_write4(sc, B2_DMA_BSCFB, SWAP_0123);
+		summitfb_write4(sc, B2_PDU_BSCFB, SWAP_0123);
+		/* no swapping for unbuffered */
+		summitfb_write4(sc, UB_DMA_UBSCFB, SWAP_0123);
+		summitfb_write4(sc, UB_PDU_UBSCFB, SWAP_0123);
+		/* don't swap register accesses */
+		summitfb_write4(sc, B2_MFU_BSCTD, SWAP_0123);
+		summitfb_write4(sc, B2_MFU_BSCCTL, SWAP_0123);
+	} else {
+		summitfb_write4(sc, B2_MFU_BSCTD, 0x1b);
+		summitfb_write4(sc, B2_MFU_BSCCTL, 0x1b);
+	}
 
 	summitfb_write4(sc, 0x920860, 0xe4);	/* FBC_RBS */
 	summitfb_write4(sc, 0x921114, 0);	/* CPE, clip plane enable */
@@ -612,18 +648,26 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		int ret;
 
 		ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-		//fbi->fbi_fbsize = sc->sc_height * 2048;
-		fbi->fbi_stride = 8192;
-		fbi->fbi_bitsperpixel = 32;
-		fbi->fbi_pixeltype = WSFB_RGB;
-		fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
-		fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
-		fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
-		fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
+		if (sc->sc_is_lego) {
+			/* on FX5/10 we can't use 24bit yet */
+			fbi->fbi_stride = 2048;
+			/* not sure yet how much VRAM is accessible */
+			fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+		} else {
+			/* on FX2/4/6 we switch to 24bit */
+			//fbi->fbi_fbsize = sc->sc_height * 2048;
+			fbi->fbi_stride = 8192;
+			fbi->fbi_bitsperpixel = 32;
+			fbi->fbi_pixeltype = WSFB_RGB;
+			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
+			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
+		}
 		return ret;
 	}
 
