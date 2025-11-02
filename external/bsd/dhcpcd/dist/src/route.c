@@ -64,6 +64,14 @@
         (N) = (S))
 #endif
 
+/*
+ * For our purposes, RTF_CONNECTED is the same as RTF_CLONING.
+ * If we change the route, we want to flush anything dynamically created.
+ */
+#if defined(BSD) && !defined(RTF_CLONING) && defined(RTF_CONNECTED)
+#define	RTF_CLONING	RTF_CONNECTED
+#endif
+
 #ifdef RT_FREE_ROUTE_TABLE_STATS
 static size_t croutes;
 static size_t nroutes;
