@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.17 2025/10/28 11:27:02 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.18 2025/11/02 06:05:19 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -220,4 +220,16 @@
 #define CFS_LUT1	0x01	// LUT 1 etc.
 #define CFS_BYPASS	0x07	// bypass LUT
 
+/* FX5 byte swapping stuff */
+#define B2_DMA_BSCFB	0xaa0408	// byte swapping on buffered FB reads
+#define UB_DMA_UBSCFB	0x6a0c08	// byte swapping on unbuffered FB reads
+#define B2_PDU_BSCFB	0xa4303c	// byte swapping on buffered FB writes
+#define UB_PDU_UBSCFB	0x64303c	// byte swapping on unbuffered FB writes
+#define B2_MFU_BSCTD	0xb08044	// byte swapping on TD registers
+#define B2_MFU_BSCCTL	0xb08048	// byte swapping on TD pair registers
+#define B2_DMA_BSCBLK	0xaa0600	// blanket swapper
+#define B2_DMA_BSCSAV	0xaa0640	// blanket swapper with enable bits
+
+#define SWAP_0123	0x1b1b1b1b	// 0b00.01.10.11 -> 0x1b
+#define SWAP_3210	0xe4e4e4e4	// 0b11.10.01.00 -> 0xe4
 #endif	/* SUMMITREG_H */
