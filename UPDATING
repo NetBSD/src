@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.385 2025/11/03 10:03:10 martin Exp $
+$NetBSD: UPDATING,v 1.386 2025/11/03 18:09:01 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -24,6 +24,9 @@ Recent changes:
 	1.6). This may cause fallout during update builds, remove the
 	libpthread obj dir and all libpthread.so.1.7\* files in the
 	dest dir.
+	If you have build other software/packages on a -current system
+	from 20251026 or 20251027 you need to rebuild them after
+	updating your base system again.
 
 20251019:
 	Changes to how libcrypto got linked (libpthread not required
