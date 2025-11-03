@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.33 2025/10/19 17:08:55 nia Exp $ */
+/* $NetBSD: hdafg.c,v 1.34 2025/11/03 22:45:25 buhrow Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.33 2025/10/19 17:08:55 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.34 2025/11/03 22:45:25 buhrow Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3893,14 +3893,10 @@ hdafg_detach(device_t self, int flags)
 	int nid;
 
 	if (sc->sc_jack_polling) {
-		int error __diagused;
-
 		mutex_enter(&sc->sc_jack_lock);
 		sc->sc_jack_dying = true;
 		cv_broadcast(&sc->sc_jack_cv);
 		mutex_exit(&sc->sc_jack_lock);
-		error = kthread_join(sc->sc_jack_thread);
-		KASSERTMSG(error == 0, "error=%d", error);
 	}
 
 	if (sc->sc_config)
