@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.105 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.106 2025/11/03 22:21:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.105 2025/10/20 04:20:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.106 2025/11/03 22:21:12 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,14 +767,20 @@ lfs_setclean(struct lfs *fs, struct vnode *vp)
 	struct inode *ip;
 
 	KASSERT(lfs_cleanerlock_held(fs));
+
+	vref(vp);
 	
 	ip = VTOI(vp);
-	if (ip->i_state & IN_CLEANING)
+	mutex_enter(&lfs_lock);
+	if (ip->i_state & IN_CLEANING) {
+		mutex_exit(&lfs_lock);
+		vrele(vp);
 		return;
-	
-	vref(vp);
+	}
+
 	TAILQ_INSERT_HEAD(&fs->lfs_cleanhd, ip, i_lfs_clean);
 	LFS_SET_UINO(VTOI(vp), IN_CLEANING);
+	mutex_exit(&lfs_lock);
 }
 
 /*
@@ -791,13 +797,19 @@ lfs_clrclean(struct lfs *fs, struct vnode *vp)
 	KASSERT(lfs_cleanerlock_held(fs));
 
 	ip = VTOI(vp);
-	if (!(ip->i_state & IN_CLEANING))
+	mutex_enter(&lfs_lock);
+	if (!(ip->i_state & IN_CLEANING)) {
+		mutex_exit(&lfs_lock);
 		return;
+	}
+	mutex_exit(&lfs_lock);
 
 	if (vp->v_type == VREG && vp != fs->lfs_ivnode)
 		lfs_ungather(fs, NULL, vp, lfs_match_data);
 	
+	mutex_enter(&lfs_lock);
 	TAILQ_REMOVE(&fs->lfs_cleanhd, ip, i_lfs_clean);
 	LFS_CLR_UINO(VTOI(vp), IN_CLEANING);
+	mutex_exit(&lfs_lock);
 	vrele(vp);
 }

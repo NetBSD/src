@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.146 2025/11/01 04:10:47 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.147 2025/11/03 22:21:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.146 2025/11/01 04:10:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.147 2025/11/03 22:21:12 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -628,8 +628,9 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	}
 
 	/* it is no longer an unwritten inode, so update the counts */
+	KASSERT(!(ip->i_state & IN_CLEANING));
 	mutex_enter(&lfs_lock);
-	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
+	LFS_CLR_UINO(ip, IN_ACCESSED|IN_MODIFIED);
 	mutex_exit(&lfs_lock);
 
 	/* Turn off all inode modification flags */

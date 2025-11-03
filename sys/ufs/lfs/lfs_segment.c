@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.295 2025/10/29 19:04:23 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.296 2025/11/03 22:21:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.295 2025/10/29 19:04:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.296 2025/11/03 22:21:12 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -225,6 +225,8 @@ lfs_vflush(struct vnode *vp)
 	if (error != 0) {
 		fs->lfs_reclino = ip->i_number;
 	}
+
+	KASSERT(!(ip->i_state & IN_CLEANING));
 
 	/* If we're supposed to flush a freed inode, just toss it */
 	if (ip->i_lfs_iflags & LFSI_DELETED) {
@@ -722,7 +724,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		 */
 		mutex_enter(vp->v_interlock);
 		if (LIST_EMPTY(&vp->v_dirtyblkhd)) {
-			LFS_CLR_UINO(ip, IN_ALLMOD);
+			LFS_CLR_UINO(ip, (IN_ALLMOD & ~IN_CLEANING));
 		}
 #ifdef DIAGNOSTIC
 		else if (do_ckp) {

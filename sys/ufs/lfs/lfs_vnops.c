@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.346 2025/11/01 04:10:47 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.347 2025/11/03 22:21:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.346 2025/11/01 04:10:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.347 2025/11/03 22:21:12 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -469,18 +469,21 @@ lfs_inactive(void *v)
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
+	struct inode *ip;
 
+	ip = VTOI(ap->a_vp);
 	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
-
+	KASSERT(!(ip->i_state & IN_CLEANING));
+	
 	UNMARK_VNODE(ap->a_vp);
 
 	/*
 	 * The Ifile is only ever inactivated on unmount.
 	 * Streamline this process by not giving it more dirty blocks.
 	 */
-	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM) {
+	if (ip->i_number == LFS_IFILE_INUM) {
 		mutex_enter(&lfs_lock);
-		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
+		LFS_CLR_UINO(ip, IN_ALLMOD);
 		mutex_exit(&lfs_lock);
 		return 0;
 	}
@@ -491,7 +494,6 @@ lfs_inactive(void *v)
 	 * XXX If it happens at any other time, it should be a panic.
 	 */
 	if (ap->a_vp->v_uflag & VU_DIROP) {
-		struct inode *ip = VTOI(ap->a_vp);
 		printf("lfs_inactive: inactivating VU_DIROP? ino = %llu\n",
 		    (unsigned long long) ip->i_number);
 	}
@@ -1379,6 +1381,8 @@ lfs_reclaim(void *v)
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
+
+	KASSERT(!(ip->i_state & IN_CLEANING));
 
 	/*
 	 * The inode must be freed and updated before being removed
