@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx31,v 1.8 2017/09/08 05:29:12 hkenken Exp $
+#	$NetBSD: files.imx31,v 1.9 2025/11/04 21:19:53 andvar Exp $
 #
 # Configuration info for the Freescale i.MX31
 #
@@ -33,11 +33,6 @@ device	aips { [addr=-1], [size=0], [intr=-1]} : bus_space_generic
 attach	aips at ahb
 file	arch/arm/imx/imx31_aips.c		aips
 
-# iMX EMI (external memory interface)
-device	emi { [offset=-1], [size=0], [intr=-1] } : bus_space_generic
-attach	emi at ahb
-file	arch/arm/imx/imx31_emi.c		emi
-
 # iMX GPIO
 device	imxgpio: gpiobus
 attach	imxgpio at ahb
@@ -66,12 +61,3 @@ attach	imxuart at aips with imx31_uart
 file	arch/arm/imx/imxuart.c			imxuart	needs-flag
 file	arch/arm/imx/imx31_uart.c		imx31_uart
 defflag	opt_imxuart.h				IMXUARTCONSOLE
-
-attach	ehci at ahb with ehci_ahb : bus_dma_generic
-file	arch/arm/imx/echi_ahb.c			ehci_ahb
-
-attach	ohci at ahb with ohci_ahb : bus_dma_generic
-file	arch/arm/imx/ochi_ahb.c			ohci_ahb
-
-attach	wdc at ahb with wdc_ahb : bus_dma_generic
-file	arch/arm/imx/wdc_ahb.c			wdc_ahb
