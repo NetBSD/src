@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.92 2025/11/04 22:09:24 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.93 2025/11/04 23:52:00 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.92 2025/11/04 22:09:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.93 2025/11/04 23:52:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,33 +679,6 @@ pmap_init(void)
 	 * Now it is safe to enable pv_table recording.
 	 */
 	pmap_initialized = true;
-}
-
-/*
- * pmap_map:
- *
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- *
- *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
- */
-vaddr_t
-pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, int prot)
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
-
-	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += PAGE_SIZE;
-		spa += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-	return va;
 }
 
 /*

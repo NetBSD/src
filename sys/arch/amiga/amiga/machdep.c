@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.256 2025/11/04 23:51:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2025/11/04 23:51:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,14 +544,13 @@ cpu_dumpconf(void)
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP MAXPHYS	/* Must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
 vm_offset_t
 reserve_dumppages(vm_offset_t p)
 {
 	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
+	return (p + PAGE_SIZE);
 }
 
 void
@@ -622,8 +621,8 @@ dumpsys(void)
 			printf_nolog("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n = BYTES_PER_DUMP;
+		if (n > PAGE_SIZE)
+			n = PAGE_SIZE;
 
 		if (maddr == 0) {	/* XXX kvtop chokes on this */
 			maddr += PAGE_SIZE;
@@ -631,7 +630,9 @@ dumpsys(void)
 			i += PAGE_SIZE;
 			++blkno;	/* XXX skip physical page 0 */
 		}
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		pmap_enter(pmap_kernel(), dumpspace, maddr,
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update(pmap_kernel());
 		error = (*dump) (dumpdev, blkno, (void *) dumpspace, n);
 		if (error)
 			break;

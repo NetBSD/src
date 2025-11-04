@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.45 2025/11/04 22:09:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.46 2025/11/04 23:52:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -238,7 +238,6 @@ extern void		*msgbufaddr;
 extern vaddr_t		lwp0uarea;
 void *	pmap_bootstrap2(void);
 
-vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 

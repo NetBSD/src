@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.74 2024/02/05 21:46:05 andvar Exp $	*/
+/*	$NetBSD: macrom.c,v 1.75 2025/11/04 23:52:00 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.74 2024/02/05 21:46:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.75 2025/11/04 23:52:00 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -1029,8 +1029,13 @@ mrg_init(void)
 		printf("mrg: I/O map kludge for ROMs that use hardware %s",
 			"addresses directly.\n");
 #endif
-		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
-			 VM_PROT_READ|VM_PROT_WRITE);
+		paddr_t addr = 0x50f00000;
+		paddr_t end_addr = addr + 0x4000;
+		while (addr < end_addr) {
+			pmap_enter(pmap_kernel(),
+			    addr, addr, VM_PROT_READ|VM_PROT_WRITE, 0);
+		}
+		pmap_update(pmap_kernel());
 	}
 }
 
