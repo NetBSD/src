@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135 2025/11/04 22:09:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.136 2025/11/04 22:33:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -326,11 +326,10 @@ Lenab1:
 	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
 	movc	%d0,%vbr
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-/* call final pmap setup */
+/* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 /* set kernel stack, user SP */
-	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
+	lea	%a0@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 

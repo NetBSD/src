@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.185 2025/11/04 22:09:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.186 2025/11/04 22:33:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -415,11 +415,10 @@ Lloaddone:
  * Should be running mapped from this point on
  */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-/* call final pmap setup */
+/* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 /* set kernel stack, user SP, lwp0, and initial pcb */
-	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	|   set kernel stack to end of area
+	lea	%a0@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
 
