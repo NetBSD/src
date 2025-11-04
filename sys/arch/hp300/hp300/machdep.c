@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240 2024/12/21 17:53:21 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241 2025/11/04 21:17:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2024/12/21 17:53:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2025/11/04 21:17:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -181,10 +181,10 @@ hp300_init(void)
 	 */
 	switch (machineid) {
 	case HP_320:
-		pmap_aliasmask = 0x3fff;	/* 16KB */
+		pmap_init_vac(16 * 1024);
 		break;
 	case HP_350:
-		pmap_aliasmask = 0x7fff;	/* 32KB */
+		pmap_init_vac(32 * 1024);
 		break;
 	default:
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.43 2023/12/31 21:59:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.44 2025/11/04 21:17:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -229,9 +229,6 @@ extern u_int		protection_codes[];
 #if defined(M68040) || defined(M68060)
 extern u_int		protostfree;
 #endif
-#ifdef CACHE_HAVE_VAC
-extern u_int		pmap_aliasmask;
-#endif
 
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 extern void		*CADDR1, *CADDR2;
@@ -246,6 +243,7 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
 #ifdef CACHE_HAVE_VAC
+void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.90 2025/11/04 17:55:45 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.91 2025/11/04 21:17:33 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.90 2025/11/04 17:55:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.91 2025/11/04 21:17:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 #ifdef CACHE_HAVE_VAC
-u_int		pmap_aliasmask;	/* separation at which VA aliasing ok */
+static u_int	pmap_aliasmask;	/* separation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
 u_int		protostfree;	/* prototype (default) free ST map */
@@ -347,6 +347,22 @@ pmap_load_urp(paddr_t urp)
 {
 	(*pmap_load_urp_func)(urp);
 }
+
+#ifdef CACHE_HAVE_VAC
+/*
+ * pmap_init_vac:
+ *
+ *	Set up virtually-addressed cache information.  Only relevant
+ *	for the HP MMU.
+ */
+void
+pmap_init_vac(size_t vacsize)
+{
+	KASSERT(pmap_aliasmask == 0);
+	KASSERT(powerof2(vacsize));
+	pmap_aliasmask = vacsize - 1;
+}
+#endif /* CACHE_HAVE_VAC */
 
 /*
  * pmap_bootstrap_finalize:	[ INTERFACE ]
