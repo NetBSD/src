@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.147 2025/10/15 01:33:14 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.148 2025/11/04 00:07:36 buhrow Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.147 2025/10/15 01:33:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.148 2025/11/04 00:07:36 buhrow Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2506,7 +2506,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 					goto bad;
 			}
 		}
-	} else if (sc->sc_multiuser == false) {
+	} else if ((sc->sc_multiuser == false) && (!bellfile)) {
 		uid_t euid = kauth_cred_geteuid(kauth_cred_get());
 		if (euid != 0 && euid != kauth_cred_geteuid(sc->sc_cred)) {
 			error = EPERM;
