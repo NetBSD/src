@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.296 2025/11/03 22:21:12 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.297 2025/11/04 00:50:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.296 2025/11/03 22:21:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.297 2025/11/04 00:50:36 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -647,8 +647,6 @@ lfs_segwrite(struct mount *mp, int flags)
 					--fs->lfs_nactive;
 					++dirty;
 				}
-				fs->lfs_suflags[fs->lfs_activesb][sn] =
-					segusep->su_flags;
 				if (lfs_sb_getversion(fs) > 1)
 					++segusep;
 				else
@@ -1960,6 +1958,8 @@ lfs_newseg(struct lfs *fs)
 	DLOG((DLOG_SU, "lfs_newseg: seg %d := 0 in newseg\n",
 	      lfs_dtosn(fs, lfs_sb_getnextseg(fs))));
 	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
+	/* XXX these flags should not be on clean segmentss */
+	sup->su_flags &= ~(SEGUSE_EMPTY | SEGUSE_READY | SEGUSE_ERROR);
 	sup->su_nbytes = 0;
 	sup->su_nsums = 0;
 	sup->su_ninos = 0;
@@ -1984,12 +1984,7 @@ lfs_newseg(struct lfs *fs)
 		}
 		LFS_SEGENTRY(sup, fs, sn, bp);
 		isdirty = sup->su_flags & (SEGUSE_DIRTY | (skip_inval ? SEGUSE_INVAL : 0));
-		/* Check SEGUSE_EMPTY as we go along */
-		if (isdirty && sup->su_nbytes == 0 &&
-		    !(sup->su_flags & SEGUSE_EMPTY))
-			LFS_WRITESEGENTRY(sup, fs, sn, bp);
-		else
-			brelse(bp, 0);
+		brelse(bp, 0);
 
 		if (!isdirty)
 			break;

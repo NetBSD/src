@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.76 2025/10/12 01:44:26 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.77 2025/11/04 00:50:36 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -579,12 +579,6 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		lfs_sb_sets0addr(fs, lfs_sb_getsboff(fs, 0));
 		lfs_sb_settstamp(fs, lfs_sb_getotstamp(fs));
 		lfs_sb_setfsbtodb(fs, 0);
-	}
-
-	if (!dummy_read) {
-		fs->lfs_suflags = emalloc(2 * sizeof(u_int32_t *));
-		fs->lfs_suflags[0] = emalloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t));
-		fs->lfs_suflags[1] = emalloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t));
 	}
 
 	if (idaddr == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.391 2025/10/20 19:49:05 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.392 2025/11/04 00:50:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.391 2025/10/20 19:49:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.392 2025/11/04 00:50:37 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1200,13 +1200,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Set up segment usage flags for the autocleaner. */
 	fs->lfs_nactive = 0;
-	fs->lfs_suflags = malloc(2 * sizeof(u_int32_t *),
-				 M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[0] = malloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t),
-				    M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = malloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t),
-				    M_SEGMENT, M_WAITOK);
-	memset(fs->lfs_suflags[1], 0, lfs_sb_getnseg(fs) * sizeof(u_int32_t));
 	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		int changed;
 		struct buf *bp;
@@ -1214,21 +1207,21 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		LFS_SEGENTRY(sup, fs, i, bp);
 		changed = 0;
 		if (!ronly) {
-			if (sup->su_nbytes == 0 &&
-			    !(sup->su_flags & SEGUSE_EMPTY)) {
-				sup->su_flags |= SEGUSE_EMPTY;
-				++changed;
-			} else if (!(sup->su_nbytes == 0) &&
-				   (sup->su_flags & SEGUSE_EMPTY)) {
-				sup->su_flags &= ~SEGUSE_EMPTY;
-				++changed;
+			uint32_t nflags = sup->su_flags;
+			nflags &= ~(SEGUSE_ACTIVE | SEGUSE_EMPTY
+				    | SEGUSE_READY | SEGUSE_INVAL
+				    | SEGUSE_ERROR);
+			if (sup->su_nbytes == 0) {
+				if (sup->su_flags & SEGUSE_DIRTY)
+					nflags |= SEGUSE_EMPTY | SEGUSE_READY;
+			} else {
+				nflags &= ~(SEGUSE_EMPTY | SEGUSE_READY);
 			}
-			if (sup->su_flags & (SEGUSE_ACTIVE|SEGUSE_INVAL)) {
-				sup->su_flags &= ~(SEGUSE_ACTIVE|SEGUSE_INVAL);
+			if (nflags != sup->su_flags) {
+				sup->su_flags = nflags;
 				++changed;
 			}
 		}
-		fs->lfs_suflags[0][i] = sup->su_flags;
 		if (changed)
 			LFS_WRITESEGENTRY(sup, fs, i, bp);
 		else
@@ -1452,9 +1445,6 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	/* Free per-mount data structures */
 	free(fs->lfs_ino_bitmap, M_SEGMENT);
-	free(fs->lfs_suflags[0], M_SEGMENT);
-	free(fs->lfs_suflags[1], M_SEGMENT);
-	free(fs->lfs_suflags, M_SEGMENT);
 	lfs_free_resblks(fs);
 	cv_destroy(&fs->lfs_sleeperscv);
 	cv_destroy(&fs->lfs_diropscv);
@@ -2663,14 +2653,6 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		lfs_sb_subavail(fs, cgain * lfs_btofsb(fs, lfs_sb_getssize(fs)) -
 				 lfs_btofsb(fs, csbbytes));
 	}
-
-	/* Resize segment flag cache */
-	fs->lfs_suflags[0] = realloc(fs->lfs_suflags[0],
-	    lfs_sb_getnseg(fs) * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
-	fs->lfs_suflags[1] = realloc(fs->lfs_suflags[1],
-	    lfs_sb_getnseg(fs) * sizeof(u_int32_t), M_SEGMENT, M_WAITOK);
-	for (i = oldnsegs; i < newnsegs; i++)
-		fs->lfs_suflags[0][i] = fs->lfs_suflags[1][i] = 0x0;
 
 	/* Truncate Ifile if necessary */
 	if (noff < 0) {

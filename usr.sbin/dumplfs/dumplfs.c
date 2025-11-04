@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.68 2025/10/17 02:47:33 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.69 2025/11/04 00:50:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.68 2025/10/17 02:47:33 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.69 2025/11/04 00:50:37 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ static inline void
 print_suentry(int i, SEGUSE *sp, struct lfs *fs)
 {
 	time_t t;
-	char flags[4] = "   ";
+	char flags[7] = "-------";
 
 	if (sp->su_flags & SEGUSE_ACTIVE)
 		flags[0] = 'A';
@@ -105,6 +105,12 @@ print_suentry(int i, SEGUSE *sp, struct lfs *fs)
 		flags[1] = 'C';
 	if (sp->su_flags & SEGUSE_SUPERBLOCK)
 		flags[2] = 'S';
+	if (sp->su_flags & SEGUSE_EMPTY)
+		flags[3] = 'M';
+	if (sp->su_flags & SEGUSE_READY)
+		flags[4] = 'R';
+	if (sp->su_flags & SEGUSE_ERROR)
+		flags[5] = 'E';
 
 	t = (lfs_sb_getversion(fs) == 1 ? sp->su_olastmod : sp->su_lastmod);
 

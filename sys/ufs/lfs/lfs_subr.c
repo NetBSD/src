@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.106 2025/11/03 22:21:12 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.107 2025/11/04 00:50:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.106 2025/11/03 22:21:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.107 2025/11/04 00:50:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,39 +415,57 @@ lfs_unmark_dirop(struct lfs *fs)
 static void
 lfs_auto_segclean(struct lfs *fs)
 {
-	int i, error, waited;
+	int i, waited, changed;
+	SEGUSE *sup;
+	struct buf *bp;
 
 	ASSERT_SEGLOCK(fs);
 	/*
 	 * Now that we've swapped lfs_activesb, but while we still
-	 * hold the segment lock, run through the segment list marking
-	 * the empty ones clean.
+	 * hold the segment lock, run through the segment list promoting
+	 * empty segments.
 	 * XXX - do we really need to do them all at once?
 	 */
 	waited = 0;
 	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
-		if ((fs->lfs_suflags[0][i] &
-		     (SEGUSE_ACTIVE | SEGUSE_DIRTY | SEGUSE_EMPTY)) ==
-		    (SEGUSE_DIRTY | SEGUSE_EMPTY) &&
-		    (fs->lfs_suflags[1][i] &
-		     (SEGUSE_ACTIVE | SEGUSE_DIRTY | SEGUSE_EMPTY)) ==
-		    (SEGUSE_DIRTY | SEGUSE_EMPTY)) {
+		changed = 0;
+		LFS_SEGENTRY(sup, fs, i, bp);
+		if (sup->su_nbytes == 0) {
+			switch (sup->su_flags & (SEGUSE_ACTIVE
+						 | SEGUSE_DIRTY
+						 | SEGUSE_EMPTY
+						 | SEGUSE_READY)) {
+			case SEGUSE_DIRTY:
+				sup->su_flags |= SEGUSE_EMPTY;
+				++changed;
+				break;
+				
+			case SEGUSE_DIRTY | SEGUSE_EMPTY:
+				sup->su_flags |= SEGUSE_READY;
+				++changed;
+				break;
+				
+			case SEGUSE_DIRTY | SEGUSE_EMPTY | SEGUSE_READY:
+				/* Make sure the sb is written */
+				mutex_enter(&lfs_lock);
+				while (waited == 0 && fs->lfs_sbactive)
+					mtsleep(&fs->lfs_sbactive, PRIBIO+1,
+						"lfs asb", 0, &lfs_lock);
+				mutex_exit(&lfs_lock);
+				waited = 1;
 
-			/* Make sure the sb is written before we clean */
-			mutex_enter(&lfs_lock);
-			while (waited == 0 && fs->lfs_sbactive)
-				mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs asb",
-					0, &lfs_lock);
-			mutex_exit(&lfs_lock);
-			waited = 1;
-
-			if ((error = lfs_do_segclean(fs, i, curlwp->l_cred,
-						     curlwp)) != 0) {
-				DLOG((DLOG_CLEAN, "lfs_auto_segclean: lfs_do_segclean returned %d for seg %d\n", error, i));
+				lfs_markclean(fs, i, sup, NOCRED, curlwp);
+				++changed;
+				break;
+				
+			default:
+				break;
 			}
 		}
-		fs->lfs_suflags[1 - fs->lfs_activesb][i] =
-			fs->lfs_suflags[fs->lfs_activesb][i];
+		if (changed)
+			LFS_WRITESEGENTRY(sup, fs, i, bp);
+		else
+			brelse(bp, 0);
 	}
 }
 

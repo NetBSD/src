@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.211 2025/10/20 04:20:36 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.212 2025/11/04 00:50:36 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -541,6 +541,7 @@ struct segusage {
 #define SEGUSE_ERROR		0x08	/*  cleaner: do not clean segment */
 #define SEGUSE_EMPTY		0x10	/*  segment is empty */
 #define SEGUSE_INVAL		0x20	/*  segment is invalid */
+#define SEGUSE_READY		0x40	/*  segment is ready for reclaim */
 	uint32_t su_flags;		/* 12: segment flags */
 	uint64_t su_lastmod;		/* 16: last modified timestamp */
 };
@@ -1068,7 +1069,6 @@ struct lfs {
 #define LFS_RESHASH_WIDTH 17
 	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH];
 	int	  lfs_pdflush;		/* pagedaemon wants us to flush */
-	uint32_t **lfs_suflags;		/* Segment use flags */
 #ifdef _KERNEL
 	struct pool lfs_clpool;		/* Pool for struct lfs_cluster */
 	struct pool lfs_bpppool;	/* Pool for bpp */

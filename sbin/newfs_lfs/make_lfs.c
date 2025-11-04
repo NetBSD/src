@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.59 2015/10/15 06:24:33 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.60 2025/11/04 00:50:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.59 2015/10/15 06:24:33 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.60 2025/11/04 00:50:36 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -749,19 +749,6 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	lfs_dino_setsize(fs, dip, (lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs) + 1) << lfs_sb_getbshift(fs));
 	for (i = 0; i < ULFS_NDADDR && i < (lfs_dino_getsize(fs, dip) >> lfs_sb_getbshift(fs)); i++)
 		VTOI(fs->lfs_ivnode)->i_lfs_fragsize[i] = lfs_sb_getbsize(fs);
-
-	/*
-	 * Set up in-superblock segment usage cache
-	 */
- 	fs->lfs_suflags = (u_int32_t **) malloc(2 * sizeof(u_int32_t *));       
-	if (fs->lfs_suflags == NULL)
-		err(1, NULL);
-	fs->lfs_suflags[0] = (u_int32_t *) malloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t));
-	if (fs->lfs_suflags[0] == NULL)
-		err(1, NULL);
-	fs->lfs_suflags[1] = (u_int32_t *) malloc(lfs_sb_getnseg(fs) * sizeof(u_int32_t));
-	if (fs->lfs_suflags[1] == NULL)
-		err(1, NULL);
 
 	/*
 	 * Initialize the cleanerinfo block

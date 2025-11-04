@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.53 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.54 2025/11/04 00:50:36 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -693,11 +693,6 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 } while (0)
 
 #define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
-	if ((SP)->su_nbytes == 0)					\
-		(SP)->su_flags |= SEGUSE_EMPTY;				\
-	else								\
-		(SP)->su_flags &= ~SEGUSE_EMPTY;			\
-	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
 	LFS_BWRITE_LOG(BP);						\
 } while (0)
 

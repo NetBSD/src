@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.124 2025/11/01 04:10:47 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.125 2025/11/04 00:50:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -263,6 +263,8 @@ void lfs_cleanerunlock(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_do_segclean(struct lfs *, unsigned long, kauth_cred_t, struct lwp *);
+int lfs_markclean(struct lfs *, unsigned long, SEGUSE *,
+		  kauth_cred_t, struct lwp *);
 int lfs_segwait(fsid_t *, struct timeval *);
 int lfs_bmapv(struct lwp *, fsid_t *, struct block_info *, int);
 int lfs_markv(struct lwp *, fsid_t *, struct block_info *, int);
