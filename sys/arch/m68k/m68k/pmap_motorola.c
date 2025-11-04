@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.91 2025/11/04 21:17:33 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.92 2025/11/04 22:09:24 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.91 2025/11/04 21:17:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.92 2025/11/04 22:09:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,13 +365,15 @@ pmap_init_vac(size_t vacsize)
 #endif /* CACHE_HAVE_VAC */
 
 /*
- * pmap_bootstrap_finalize:	[ INTERFACE ]
+ * pmap_bootstrap2:		[ INTERFACE ]
+ *
+ *	Phase 2 of pmap bootstrap.  (Phase 1 is system-specific.)
  *
  *	Initialize lwp0 uarea, curlwp, and curpcb after MMU is turned on,
  *	using lwp0uarea variable saved during pmap_bootstrap().
  */
-void
-pmap_bootstrap_finalize(void)
+void *
+pmap_bootstrap2(void)
 {
 
 #if !defined(amiga) && !defined(atari)
@@ -416,6 +418,8 @@ pmap_bootstrap_finalize(void)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
+
+	return (void *)lwp0uarea;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.43 2024/01/18 04:07:38 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.44 2025/11/04 22:09:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.43 2024/01/18 04:07:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.44 2025/11/04 22:09:25 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 #include "opt_newsconf.h"
@@ -421,7 +421,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	/*
 	 * Remember the u-area address so it can be loaded in the lwp0
-	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
+	 * via uvm_lwp_setuarea() later in pmap_bootstrap2().
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
 

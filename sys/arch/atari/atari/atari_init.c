@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.114 2025/11/04 22:09:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.114 2025/11/04 22:09:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -658,7 +658,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	/*
 	 * Initialize the "u-area" pages etc.
 	 */
-	pmap_bootstrap_finalize();
+	pmap_bootstrap2();
 
 	/*
 	 * Get the hardware into a defined state

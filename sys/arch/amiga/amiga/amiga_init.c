@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.134 2025/05/06 09:25:19 rin Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.135 2025/11/04 22:09:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.134 2025/05/06 09:25:19 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.135 2025/11/04 22:09:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -818,7 +818,7 @@ start_c_finish(void)
 #endif
 
 	pmap_bootstrap(start_c_pstart, start_c_fphystart);
-	pmap_bootstrap_finalize();
+	pmap_bootstrap2();
 
 	/*
 	 * to make life easier in locore.s, set these addresses explicitly
