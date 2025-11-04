@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.89 2024/01/19 03:35:31 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.90 2025/11/04 17:55:45 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.89 2024/01/19 03:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.90 2025/11/04 17:55:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,11 +265,9 @@ vaddr_t		m68k_uptbase = M68K_PTBASE;
 
 struct pv_header {
 	struct pv_entry		pvh_first;	/* first PV entry */
-	uint16_t		pvh_attrs;	/* attributes:
+	uint32_t		pvh_attrs;	/* attributes:
 						   bits 0-7: PTE bits
 						   bits 8-15: flags */
-	uint16_t		pvh_cimappings;	/* # caller-specified CI
-						   mappings */
 };
 
 #define	PVH_CI		0x10	/* all entries are cache-inhibited */
