@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.437 2025/11/04 19:42:59 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.438 2025/11/04 20:51:49 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3469,13 +3469,25 @@ pcbspill:
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Fetch current nsaved from the pcb
 	sllx	%g7, 7, %g5				! 8+8 registers each 8 bytes = 128 bytes (2^7)
 	add	%g6, %g5, %g5				! Offset into pcb_rw
-	SPILL	stxa, %g5 + PCB_RW, 8, %asi		! Store the locals and ins 
-	saved
+1:	
+	SPILL	stxa, %g5 + PCB_RW, 8, %asi		! Store the locals and ins
 
-	sllx	%g7, 3, %g5
-	add	%g6, %g5, %g5
+	add	%g5, 16*8, %g5				! Next location for saved register windows
 
-	inc	%g7
+	stxa	%o6, [%g5 + PCB_RW + (14*8)] %asi	! Save %sp so we can write these all out
+	
+	saved						! Increments %cansave and decrements %canrestore
+							! or %otherwin	
+	
+	rdpr	%cwp, %g1				! shift register window forward
+	inc	%g1
+	wrpr	%g1, %cwp
+	inc	%g7					! increment number of saved register windows
+
+	rdpr	%otherwin, %g1				! Check to see if done spill'ing otherwin
+	brnz,pt	%g1, 1b
+	 nop
+
 	stba	%g7, [%g6 + PCB_NSAVED] %asi
 
 	retry
@@ -3487,7 +3499,6 @@ pcbspill_fail:
 
 
 pcbspill_other:
-	
 	set	CPUINFO_VA, %g6
 	ldx	[%g6 + CI_CPCB], %g6
 	
@@ -3533,8 +3544,9 @@ pcbspill_other:
 
 	stxa	%o6, [%g5 + PCB_RW + (14*8)] %asi	! Save %sp so we can write these all out
 	
-	saved						! Increments %cansave and decrements %otherwin
-	
+	saved						! Increments %cansave and decrements %canrestore
+							! or %otherwin	
+
 	rdpr	%cwp, %g1				! shift register window forward
 	inc	%g1
 	wrpr	%g1, %cwp
