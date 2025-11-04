@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.22 2023/08/04 07:38:53 riastradh Exp $ */
+/* 	$NetBSD: viornd.c,v 1.23 2025/11/04 08:50:07 nia Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -83,10 +83,10 @@ CFATTACH_DECL_NEW(viornd, sizeof(struct viornd_softc),
 static void
 viornd_get(size_t bytes, void *priv)
 {
-        struct viornd_softc *sc = priv;
-        struct virtio_softc *vsc = sc->sc_virtio;
-        struct virtqueue *vq = &sc->sc_vq;
-        int slot;
+	struct viornd_softc *sc = priv;
+	struct virtio_softc *vsc = sc->sc_virtio;
+	struct virtqueue *vq = &sc->sc_vq;
+	int slot;
 
 #if VIORND_DEBUG
 	aprint_normal("%s: asked for %d bytes of entropy\n", __func__,
@@ -98,16 +98,16 @@ viornd_get(size_t bytes, void *priv)
 		goto out;
 	}
 
-        bus_dmamap_sync(virtio_dmat(vsc), sc->sc_dmamap, 0, VIORND_BUFSIZE,
-            BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(virtio_dmat(vsc), sc->sc_dmamap, 0, VIORND_BUFSIZE,
+	    BUS_DMASYNC_PREREAD);
 	if (virtio_enqueue_prep(vsc, vq, &slot)) {
 		goto out;
 	}
-        if (virtio_enqueue_reserve(vsc, vq, slot, 1)) {
+	if (virtio_enqueue_reserve(vsc, vq, slot, 1)) {
 		goto out;
 	}
-        virtio_enqueue(vsc, vq, slot, sc->sc_dmamap, 0);
-        virtio_enqueue_commit(vsc, vq, slot, 1);
+	virtio_enqueue(vsc, vq, slot, sc->sc_dmamap, 0);
+	virtio_enqueue_commit(vsc, vq, slot, 1);
 	sc->sc_active = true;
 out:
 	mutex_exit(&sc->sc_mutex);
