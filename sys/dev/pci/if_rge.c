@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.42 2025/10/29 04:27:16 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.43 2025/11/04 21:26:18 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.42 2025/10/29 04:27:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.43 2025/11/04 21:26:18 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -98,8 +98,9 @@ int rge_debug = 0;
 #define DPRINTF(x)
 #endif
 
-static int		rge_match(device_t, cfdata_t, void *);
-static void		rge_attach(device_t, device_t, void *);
+static int	rge_match(device_t, cfdata_t, void *);
+static void	rge_attach(device_t, device_t, void *);
+static int	rge_detach(device_t, int);
 int		rge_intr(void *);
 int		rge_encap(struct rge_softc *, struct mbuf *, int);
 int		rge_ioctl(struct ifnet *, u_long, void *);
@@ -109,8 +110,9 @@ int		rge_init(struct ifnet *);
 void		rge_stop(struct ifnet *, int);
 int		rge_ifmedia_upd(struct ifnet *);
 void		rge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-int		rge_allocmem(struct rge_softc *);
-int		rge_newbuf(struct rge_softc *, int);
+static int	rge_allocmem(struct rge_softc *);
+static int	rge_deallocmem(struct rge_softc *);
+static int	rge_newbuf(struct rge_softc *, int);
 static int	rge_rx_list_init(struct rge_softc *);
 static void	rge_rx_list_fini(struct rge_softc *);
 static void	rge_tx_list_init(struct rge_softc *);
@@ -170,7 +172,7 @@ static const struct {
 };
 
 CFATTACH_DECL_NEW(rge, sizeof(struct rge_softc), rge_match, rge_attach,
-		NULL, NULL); /* Sevan - detach function? */
+		rge_detach, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .id = PCI_ID_CODE(PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000) },
@@ -194,7 +196,6 @@ rge_attach(device_t parent, device_t self, void *aux)
 	struct rge_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t *ihp;
 	char intrbuf[PCI_INTRSTR_LEN];
 	const char *intrstr = NULL;
 	struct ifnet *ifp;
@@ -229,20 +230,21 @@ rge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	/*
+	 * Allocate interrupt.
+	 */
 	int counts[PCI_INTR_TYPE_SIZE] = {
  		[PCI_INTR_TYPE_INTX] = 1,
  		[PCI_INTR_TYPE_MSI] = 1,
  		[PCI_INTR_TYPE_MSIX] = 1,
  	};
 	int max_type = PCI_INTR_TYPE_MSIX;
-	/*
-	 * Allocate interrupt.
-	 */
-	if (pci_intr_alloc(pa, &ihp, counts, max_type) != 0) {
+
+	if (pci_intr_alloc(pa, &sc->sc_intrs, counts, max_type) != 0) {
 		aprint_error(": couldn't map interrupt\n");
 		return;
 	}
-	switch (pci_intr_type(pc, ihp[0])) {
+	switch (pci_intr_type(pc, sc->sc_intrs[0])) {
 	case PCI_INTR_TYPE_MSIX:
 	case PCI_INTR_TYPE_MSI:
 		sc->rge_flags |= RGE_FLAG_MSI;
@@ -250,10 +252,12 @@ rge_attach(device_t parent, device_t self, void *aux)
 	default:
 		break;
 	}
-	intrstr = pci_intr_string(pc, ihp[0], intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish_xname(pc, ihp[0], IPL_NET, rge_intr,
-	    sc, device_xname(sc->sc_dev));
-	if (sc->sc_ih == NULL) {
+	intrstr = pci_intr_string(pc, sc->sc_intrs[0],
+	    intrbuf, sizeof(intrbuf));
+	sc->sc_ihs[0] = pci_intr_establish_xname(pc, sc->sc_intrs[0],
+	    IPL_NET, rge_intr, sc, device_xname(sc->sc_dev));
+
+	if (sc->sc_ihs[0] == NULL) {
 		aprint_error_dev(sc->sc_dev, ": couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s\n", intrstr);
@@ -379,6 +383,34 @@ rge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
+static int
+rge_detach(device_t self, int flags)
+{      
+	struct rge_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	pci_chipset_tag_t pc = sc->sc_pc;
+
+	rge_stop(ifp, 1);
+
+	pmf_device_deregister(self);
+
+	ether_ifdetach(ifp);
+
+	if_detach(ifp);
+
+	ifmedia_fini(&sc->sc_media);
+
+	if (sc->sc_ihs[0] != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[0]);
+		sc->sc_ihs[0] = NULL;
+	}           
+
+	pci_intr_release(pc, sc->sc_intrs, 1);
+
+	rge_deallocmem(sc);
+
+	return 0;
+}
 int
 rge_intr(void *arg)
 {
@@ -1029,7 +1061,7 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
  * XXX There is no tear-down for this if it any part fails, so everything
  * remains allocated.
  */
-int
+static int
 rge_allocmem(struct rge_softc *sc)
 {
 	int error, i;
@@ -1141,6 +1173,47 @@ rge_allocmem(struct rge_softc *sc)
 }
 
 /*
+ * release memory allocated to RX/TX rings
+ */
+static int
+rge_deallocmem(struct rge_softc *sc)
+{
+	int i;
+
+	/* Destroy DMA maps for RX buffers */
+	for (i = 0; i < RGE_RX_LIST_CNT; i++)
+		bus_dmamap_destroy(sc->sc_dmat,
+		    sc->rge_ldata.rge_rxq[i].rxq_dmamap);
+
+	/* Unload the map for the RX ring */
+	bus_dmamap_unload(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map);
+	bus_dmamem_unmap(sc->sc_dmat,
+	    sc->rge_ldata.rge_rx_list, RGE_RX_LIST_SZ);
+
+	/* Deallocate DMA'able memory for the RX ring. */
+	bus_dmamem_free(sc->sc_dmat, &sc->rge_ldata.rge_rx_listseg,
+	    sc->rge_ldata.rge_rx_listnseg);
+	bus_dmamap_destroy(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map);
+
+	/* Destroy DMA maps for TX buffers. */
+	for (i = 0; i < RGE_TX_LIST_CNT; i++)
+		bus_dmamap_destroy(sc->sc_dmat,
+		    sc->rge_ldata.rge_txq[i].txq_dmamap);
+
+	/* Unload the map for the TX ring */
+	bus_dmamap_unload(sc->sc_dmat, sc->rge_ldata.rge_tx_list_map);
+	bus_dmamem_unmap(sc->sc_dmat,
+	    sc->rge_ldata.rge_tx_list, RGE_TX_LIST_SZ);
+
+	/* Deallocate DMA'able memory for the TX ring. */
+	bus_dmamem_free(sc->sc_dmat, &sc->rge_ldata.rge_tx_listseg,
+	    sc->rge_ldata.rge_tx_listnseg);
+	bus_dmamap_destroy(sc->sc_dmat, sc->rge_ldata.rge_tx_list_map);
+
+	return 0;
+}
+
+/*
  * Set an RX descriptor and sync it.
  */
 static void
@@ -1167,7 +1240,7 @@ rge_load_rxbuf(struct rge_softc *sc, int idx)
 /*
  * Initialize the RX descriptor and attach an mbuf cluster.
  */
-int
+static int
 rge_newbuf(struct rge_softc *sc, int idx)
 {
 	struct mbuf *m;
@@ -2873,4 +2946,3 @@ if_rge_modcmd(modcmd_t cmd, void *opaque)
 		return ENOTTY;
 	}
 }
-
