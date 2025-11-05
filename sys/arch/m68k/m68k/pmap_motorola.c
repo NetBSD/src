@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.93 2025/11/04 23:52:00 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.94 2025/11/05 00:42:18 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.93 2025/11/04 23:52:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.94 2025/11/05 00:42:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,15 +376,8 @@ void *
 pmap_bootstrap2(void)
 {
 
-#if !defined(amiga) && !defined(atari)
-	/*
-	 * XXX
-	 * amiga and atari have different pmap initialization functions
-	 * and they require this earlier.
-	 */
 	uvmexp.pagesize = NBPG;
 	uvm_md_init();
-#endif
 
 	/*
 	 * Initialize protection array.
