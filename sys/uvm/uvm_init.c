@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.59 2023/09/23 18:21:12 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.60 2025/11/05 00:39:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.59 2023/09/23 18:21:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.60 2025/11/05 00:39:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,13 @@ struct krndsource uvm_fault_rndsource;
 void
 uvm_md_init(void)
 {
-	uvm_setpagesize(); /* initialize PAGE_SIZE-dependent variables */
-	uvm_physseg_init();
+	static bool uvm_md_initialized;
+
+	if (! uvm_md_initialized) {
+		uvm_setpagesize(); /* initialize PAGE_SIZE-dependent vars */
+		uvm_physseg_init();
+		uvm_md_initialized = true;
+	}
 }
 
 /*
