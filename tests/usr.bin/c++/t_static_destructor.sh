@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.10 2025/11/05 18:27:24 christos Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.11 2025/11/05 21:24:48 christos Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,61 +98,61 @@ check59301() {
 
 atf_test_case static_destructor
 static_destructor_head() {
-	atf_set "descr" "ccmain and run \"hello world\""
+	atf_set "descr" "compile and run \"hello world\""
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_profile
 static_destructor_profile_head() {
-	atf_set "descr" "ccmain and run \"hello world\" with profiling option"
+	atf_set "descr" "compile and run \"hello world\" with profiling option"
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_static
 static_destructor_static_head() {
-	atf_set "descr" "ccmain and run \"hello world\" with static option"
+	atf_set "descr" "compile and run \"hello world\" with static option"
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_pic
 static_destructor_pic_head() {
-	atf_set "descr" "ccmain and run PIC \"hello world\""
+	atf_set "descr" "compile and run PIC \"hello world\""
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_pic_32
 static_destructor_pic_32_head() {
-	atf_set "descr" "ccmain and run 32-bit PIC \"hello world\""
+	atf_set "descr" "compile and run 32-bit PIC \"hello world\""
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_pic_profile
 static_destructor_pic_profile_head() {
-	atf_set "descr" "ccmain and run PIC \"hello world\" with profiling option"
+	atf_set "descr" "compile and run PIC \"hello world\" with profiling option"
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_pic_profile_32
 static_destructor_pic_profile_32_head() {
-	atf_set "descr" "ccmain and run 32-bit PIC \"hello world\" with profiling option"
+	atf_set "descr" "compile and run 32-bit PIC \"hello world\" with profiling option"
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_profile_32
 static_destructor_profile_32_head() {
-	atf_set "descr" "ccmain and run 32-bit \"hello world\" with profiling option"
+	atf_set "descr" "compile and run 32-bit \"hello world\" with profiling option"
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor_pie
 static_destructor_pie_head() {
-	atf_set "descr" "ccmain and run position independent (PIE) \"hello world\""
+	atf_set "descr" "compile and run position independent (PIE) \"hello world\""
 	atf_set "require.progs" "c++"
 }
 
 atf_test_case static_destructor32
 static_destructor32_head() {
-	atf_set "descr" "ccmain and run \"hello world\" for/in netbsd32 emulation"
+	atf_set "descr" "compile and run \"hello world\" for/in netbsd32 emulation"
 	atf_set "require.progs" "c++ file diff cat"
 }
 
