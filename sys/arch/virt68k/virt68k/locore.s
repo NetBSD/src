@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 2025/11/04 22:33:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 2025/11/06 04:24:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,8 +75,10 @@ ASLOCAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var, ar)		\
-	lea	var,ar
+#define	IMMEDIATE		#
+#define	_RELOC(var, ar)			\
+	movl	IMMEDIATE var,ar;	\
+	addl	%a5,ar
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
 #define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)
@@ -98,7 +100,21 @@ GLOBAL(kernel_text)
  */
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
-	movl	#0,%a5			| RAM starts at 0 (a5)
+
+	/*
+	 * Determine our relocation offset.  We need this to manually
+	 * translate the virtual addresses of global references to the
+	 * physical addresses we need to use before the MMU is enabled.
+	 */
+	lea	%pc@(_ASM_LABEL(start)), %a5
+	movl	%a5,%d0			| %d0 = phys address of start
+	subl	#_ASM_LABEL(start), %d0	| %d0 -= virt address of start
+	movl	%d0, %a5		| %a5 = relocation offset
+
+	/*
+	 * NOTE: %a5 cannot be used until after the MMU is enabled; it
+	 * is used by the RELOC() macro.
+	 */
 
 	ASRELOC(tmpstk, %a0)
 	movl	%a0,%sp			| give ourselves a temporary stack
@@ -138,7 +154,7 @@ ASENTRY_NOPROFILE(start)
 	andl	#PG_FRAME,%d2		| round to a page
 	movl	%d2,%a4
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloc_offset
 	pea	%a4@			| nextpa
 	RELOC(pmap_bootstrap,%a0)
 	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
