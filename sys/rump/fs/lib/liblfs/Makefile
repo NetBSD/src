@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2023/10/07 12:15:54 rin Exp $
+#	$NetBSD: Makefile,v 1.19 2025/11/06 15:45:32 perseant Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/lfs
@@ -7,8 +7,9 @@ LIB=	rumpfs_lfs
 COMMENT=Log-structured File System
 
 SRCS=	lfs_alloc.c lfs_balloc.c lfs_bio.c lfs_cksum.c lfs_debug.c	\
-	lfs_inode.c lfs_itimes.c lfs_pages.c lfs_rename.c lfs_rfw.c	\
-	lfs_segment.c lfs_subr.c lfs_syscalls.c lfs_vfsops.c lfs_vnops.c
+	lfs_inode.c lfs_itimes.c lfs_kclean.c lfs_pages.c lfs_rename.c	\
+	lfs_rfw.c lfs_segment.c lfs_subr.c lfs_syscalls.c lfs_vfsops.c	\
+	lfs_vnops.c
 
 SRCS+=	ulfs_bmap.c ulfs_dirhash.c ulfs_extattr.c 			\
 	ulfs_inode.c ulfs_lookup.c ulfs_quota.c ulfs_quota1.c		\

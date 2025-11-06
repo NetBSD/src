@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.347 2025/11/03 22:21:12 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.348 2025/11/06 15:45:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.347 2025/11/03 22:21:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.348 2025/11/06 15:45:32 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -178,7 +178,6 @@ static int lfs_makeinode(struct vattr *vap, struct vnode *,
 		      const struct ulfs_lookup_results *,
 		      struct vnode **, struct componentname *);
 static int lfs_filestats(struct lfs *, ino_t, struct lfs_filestats *);
-static int lfs_rewrite_file(struct lfs *, ino_t *, int, bool, int *, int *);
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -1867,7 +1866,7 @@ lfs_fcntl(void *v)
 	CLEANERINFO64 ci;
 	SEGUSE *sup, *sua;
 	int blkcnt, i, error;
-	size_t fh_size;
+	size_t fh_size, size;
 	struct lfs_fcntl_markv blkvp;
 	struct lfs_fcntl_markv_70 blkvp70;
 	struct lfs_inode_array inotbl;
@@ -1876,6 +1875,7 @@ lfs_fcntl(void *v)
 	struct lfs_write_stats lws;
 	struct lfs_filestats *fss;
 	struct lfs_seguse_array suap;
+	struct lfs_autoclean_params params;
 	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
@@ -1886,7 +1886,7 @@ lfs_fcntl(void *v)
 	ino_t *inoa;
 	bool scramble;
 	ino_t maxino;
-
+	
 	/* Only respect LFS fcntls on fs root or Ifile */
 	if (VTOI(ap->a_vp)->i_number != ULFS_ROOTINO &&
 	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
@@ -2033,9 +2033,11 @@ lfs_fcntl(void *v)
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
 		fs->lfs_sp->seg_flags |= SEGM_PROT;
 		/* Copy out write stats */
-		lws.direct = 0;
-		lws.offset = lfs_btofsb(fs, fs->lfs_sp->bytes_written);
-		*(struct lfs_write_stats *)ap->a_data = lws;
+		if (ap != NULL) {
+			lws.direct = 0;
+			lws.offset = lfs_btofsb(fs, fs->lfs_sp->bytes_written);
+			*(struct lfs_write_stats *)ap->a_data = lws;
+		}
 		lfs_segunlock(fs);
 		lfs_writer_leave(fs);
 
@@ -2269,9 +2271,8 @@ lfs_fcntl(void *v)
 		ci.bfree = lfs_sb_getbfree(fs);
 		ci.avail = lfs_sb_getavail(fs) - fs->lfs_ravail
 			- fs->lfs_favail;
-		LFS_CLEANERINFO(cip, fs, bp);
-		ci.flags = lfs_ci_getflags(fs, cip);
-		brelse(bp, 0);
+		ci.flags = (fs->lfs_flags & LFS_MUSTCLEAN)
+			? LFS_CLEANER_MUST_CLEAN : 0;
 		*(CLEANERINFO64 *)ap->a_data = ci;
 
 		return 0;
@@ -2303,6 +2304,18 @@ lfs_fcntl(void *v)
 		error = copyout(sua, suap.seguse, suap.len * sizeof *sua);
 		lfs_free(fs, sua, LFS_NB_BLKIOV);
 		return error;
+
+	case LFCNAUTOCLEAN:
+		/*
+		 * Control the in-kernel cleaner.
+		 */
+		size = *(size_t *)ap->a_data;
+		if (size > sizeof(params))
+			return EINVAL;
+		memset(&params, 0, sizeof(params));
+		memcpy(&params, (struct lfs_autoclean_params *)ap->a_data,
+		       size);
+		return lfs_cleanctl(fs, &params);
 
 	default:
 		return genfs_fcntl(v);
@@ -2382,80 +2395,6 @@ lfs_filestats(struct lfs *fs, ino_t ino, struct lfs_filestats *lfp)
 	vrele(vp);
 
 	return 0;
-}
-
-/*
- * Rewrite a file in its entirety.
- *
- * Generally this would be done to coalesce a file that is scattered
- * around the disk; but if the "scramble" flag is set, instead rewrite
- * only the even-numbered blocks, which provides the opposite effect
- * for testing purposes.
- *
- * It is the caller's responsibility to check the bounds of the inode
- * numbers.
- */
-static int
-lfs_rewrite_file(struct lfs *fs, ino_t *inoa, int len, bool scramble,
-		 int *directp, int *offsetp)
-{
-	daddr_t hiblk, lbn;
-	struct vnode *vp;
-	struct inode *ip;
-	struct buf *bp;
-	int i, error, flags;
-
-	*directp = 0;
-	if ((error = lfs_cleanerlock(fs)) != 0)
-		return error;
-	flags = SEGM_PROT;
-	lfs_seglock(fs, flags);
-	for (i = 0; i < len; ++i) {
-		error = VFS_VGET(fs->lfs_ivnode->v_mount, inoa[i], LK_EXCLUSIVE, &vp);
-		if (error)
-			goto out;
-		
-		ip = VTOI(vp);
-		if ((vp->v_uflag & VU_DIROP) || (ip->i_flags & IN_ADIROP)) {
-			VOP_UNLOCK(vp);
-			vrele(vp);
-			error = EAGAIN;
-			goto out;
-		}
-		
-		/* Highest block in this inode */
-		hiblk = lfs_lblkno(fs, ip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
-
-		for (lbn = 0; lbn <= hiblk; ++lbn) {
-			if (scramble && (lbn & 0x01))
-				continue;
-
-			if (lfs_needsflush(fs)) {
-				lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
-			}
-			
-			error = bread(vp, lbn, lfs_blksize(fs, ip, lbn), 0, &bp);
-			if (error)
-				break;
-			
-			/* bp->b_cflags |= BC_INVAL; */
-			lfs_bwrite_ext(bp, (flags & SEGM_CLEAN ? BW_CLEAN : 0));
-			*directp += lfs_btofsb(fs, bp->b_bcount);
-		}
-
-		/* Done with this vnode */
-		VOP_UNLOCK(vp);
-		vrele(vp);
-		if (error)
-			break;
-	}
-out:
-	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
-	*offsetp += lfs_btofsb(fs, fs->lfs_sp->bytes_written);
-	lfs_segunlock(fs);
-	lfs_cleanerunlock(fs);
-
-	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.392 2025/11/04 00:50:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.393 2025/11/06 15:45:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.392 2025/11/04 00:50:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.393 2025/11/06 15:45:32 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1227,6 +1227,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		else
 			brelse(bp, 0);
 	}
+	/* Set lastcleaned to an invalid value */
+	fs->lfs_lastcleaned = (uint32_t)-1;
 
 	/* Free the orphans we discovered while ordering the freelist.  */
 	lfs_free_orphans(fs, orphan, norphan);
@@ -1743,11 +1745,13 @@ lfs_loadvnode(struct mount *mp, struct vnode *vp,
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
+	KASSERT(ino >= LFS_IFILE_INUM);
+	/* LFS_ASSERT_MAXINO(fs, ino); */
+
 	/* Translate the inode number to a disk address. */
 	if (ino == LFS_IFILE_INUM)
 		daddr = lfs_sb_getidaddr(fs);
 	else {
-		/* XXX bounds-check this too */
 		LFS_IENTRY(ifp, fs, ino, bp);
 		daddr = lfs_if_getdaddr(fs, ifp);
 		if (lfs_sb_getversion(fs) > 1) {

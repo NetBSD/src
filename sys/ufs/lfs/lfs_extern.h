@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.125 2025/11/04 00:50:36 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.126 2025/11/06 15:45:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -193,10 +193,19 @@ union lfs_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
 
+/* lfs_kclean.c */
+int lfs_cleanctl(struct lfs *, struct lfs_autoclean_params *);
+void lfs_cleanerd(void *);
+int lfs_rewrite_file(struct lfs *, ino_t *, int, bool, int *, int *);
+
 /* lfs_rename.c */
 int lfs_rename(void *);
 
 /* lfs_rfw.c */
+#define CKSEG_NONE  0x0000
+#define CKSEG_CKSUM 0x0001
+#define CKSEG_AVAIL 0x0002
+int lfs_skip_superblock(struct lfs *, daddr_t *);
 int lfs_parse_pseg(struct lfs *, daddr_t *, u_int64_t,
 	kauth_cred_t, int *, struct lwp *,
 	int (*)(struct lfs_inofuncarg *),
@@ -225,7 +234,6 @@ void lfs_update_single(struct lfs *, struct segment *, struct vnode *,
 void lfs_updatemeta(struct segment *);
 int lfs_rewind(struct lfs *, int);
 int lfs_invalidate(struct lfs *, int);
-void lfs_unset_inval_all(struct lfs *);
 int lfs_initseg(struct lfs *, uint16_t);
 int lfs_writeseg(struct lfs *, struct segment *);
 void lfs_writesuper(struct lfs *, daddr_t);
@@ -260,6 +268,7 @@ void lfs_clrclean(struct lfs *, struct vnode *);
 int lfs_cleanerlock(struct lfs *);
 int lfs_cleanerlock_held(struct lfs *);
 void lfs_cleanerunlock(struct lfs *);
+void lfs_seguse_clrflag_all(struct lfs *, uint32_t);
 
 /* lfs_syscalls.c */
 int lfs_do_segclean(struct lfs *, unsigned long, kauth_cred_t, struct lwp *);

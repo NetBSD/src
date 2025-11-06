@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.297 2025/11/04 00:50:36 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.298 2025/11/06 15:45:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.297 2025/11/04 00:50:36 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.298 2025/11/06 15:45:32 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1895,32 +1895,12 @@ lfs_invalidate(struct lfs *fs, int sn)
 	LFS_SEGENTRY(sup, fs, sn, bp);
 	if (sup->su_nbytes > 0) {
 		brelse(bp, 0);
-		lfs_unset_inval_all(fs);
+		lfs_seguse_clrflag_all(fs, SEGUSE_INVAL);
 		return EBUSY;
 	}
 	sup->su_flags |= SEGUSE_INVAL;
 	VOP_BWRITE(bp->b_vp, bp);
 	return 0;
-}
-
-/*
- * Remove SEGUSE_INVAL from all segments.
- */
-void
-lfs_unset_inval_all(struct lfs *fs)
-{
-	SEGUSE *sup;
-	struct buf *bp;
-	int i;
-
-	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
-		LFS_SEGENTRY(sup, fs, i, bp);
-		if (sup->su_flags & SEGUSE_INVAL) {
-			sup->su_flags &= ~SEGUSE_INVAL;
-			LFS_WRITESEGENTRY(sup, fs, i, bp);
-		} else
-			brelse(bp, 0);
-	}
 }
 
 /*
@@ -1990,7 +1970,7 @@ lfs_newseg(struct lfs *fs)
 			break;
 	}
 	if (skip_inval == 0)
-		lfs_unset_inval_all(fs);
+		lfs_seguse_clrflag_all(fs, SEGUSE_INVAL);
 
 	++fs->lfs_nactive;
 	lfs_sb_setnextseg(fs, lfs_sntod(fs, sn));

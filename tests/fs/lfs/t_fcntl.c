@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.4 2025/10/30 15:30:17 perseant Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.5 2025/11/06 15:45:33 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -40,6 +40,7 @@ int setup(int, struct ufs_args *, off_t);
 /* Actually run the test */
 void coalesce(int);
 void cleanseg(int);
+void autoclean(int);
 
 /* Unmount and check fsck */
 void teardown(int, struct ufs_args *, off_t);
@@ -64,16 +65,32 @@ ATF_TC(cleanseg32);
 ATF_TC_HEAD(cleanseg32, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"LFS32 LFCNSCRAMBLE/LFCNREWRITEFILE");
-	/* atf_tc_set_md_var(tc, "timeout", "20"); */
+		"LFS32 LFCNREWRITESEG");
+	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
 ATF_TC(cleanseg64);
 ATF_TC_HEAD(cleanseg64, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-		"LFS64 LFCNSCRAMBLE/LFCNREWRITEFILE");
-	/* atf_tc_set_md_var(tc, "timeout", "20"); */
+		"LFS64 LFCNREWRITESEG");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+
+ATF_TC(autoclean32);
+ATF_TC_HEAD(autoclean32, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"LFS32 LFCNAUTOCLEAN");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+
+ATF_TC(autoclean64);
+ATF_TC_HEAD(autoclean64, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+		"LFS64 LFCNAUTOCLEAN");
+	atf_tc_set_md_var(tc, "timeout", "20");
 }
 
 ATF_TC_BODY(coalesce32, tc)
@@ -94,6 +111,16 @@ ATF_TC_BODY(cleanseg32, tc)
 ATF_TC_BODY(cleanseg64, tc)
 {
 	cleanseg(64);
+}
+
+ATF_TC_BODY(autoclean32, tc)
+{
+	autoclean(32);
+}
+
+ATF_TC_BODY(autoclean64, tc)
+{
+	autoclean(64);
 }
 
 int setup(int width, struct ufs_args *argsp, off_t filesize)
@@ -287,7 +314,84 @@ void cleanseg(int width)
 	if (sua.seguse[0].su_nbytes > 0)
 		atf_tc_fail("Empty bytes after clean");
 
+	fprintf(stderr, "* Teardown\n");
 	teardown(fd, &args, MORE_THAN_A_SEGMENT);
+}
+
+void autoclean(int width)
+{
+	struct ufs_args args;
+	struct lfs_autoclean_params autoclean;
+	int i, fd;
+	char filename[1024];
+	struct statvfs statbuf;
+	CLEANERINFO64 ci_before, ci_after;
+	unsigned long target;
+		
+	fd = setup(width, &args, CHUNKSIZE);
+
+	rump_sys_fstatvfs1(fd, &statbuf, ST_WAIT);
+	target = 7 * statbuf.f_blocks / 8;
+
+	/* Write a number of files, deleting every other one. */
+	fprintf(stderr, "* Write numbered files\n");
+	for (i = 4; ; i++) {
+		fprintf(stderr, "* create %d\n", i);
+		sprintf(filename, "%s/%d", MP, i);
+		write_file(filename, SEGSIZE / 3, 1, 0);
+		rump_sys_fstatvfs1(fd, &statbuf, ST_WAIT);
+		if (statbuf.f_bfree < target)
+			break;
+		fprintf(stderr, "  %ld blocks vs target %ld\n",
+			(long)statbuf.f_bfree, (long)target);
+	}
+	rump_sys_sync();
+	rump_sys_sync();
+
+	/* Record cleanerinfo */
+	fprintf(stderr, "* Get cleanerinfo\n");
+	if (rump_sys_fcntl(fd, LFCNCLEANERINFO, &ci_before) < 0)
+		atf_tc_fail_errno("LFCNCLEANERINFO[1] failed");
+
+	/* Start autocleaner */
+	autoclean.size = sizeof(autoclean);
+	autoclean.mode = LFS_CLEANMODE_GREEDY;
+	autoclean.thresh = -1;
+	autoclean.target = -1;
+	if (rump_sys_fcntl(fd, LFCNAUTOCLEAN, &autoclean) < 0)
+		atf_tc_fail_errno("LFCNAUTOCLEAN[1] failed");
+
+	/* Make many segments almost empty */
+	fprintf(stderr, "* Delete most files\n");
+	for (; i > 0; i--) {
+		if (i % 3 == 0)
+			continue;
+		fprintf(stderr, "* delete %d\n", i);
+		sprintf(filename, "%s/%d", MP, i);
+		rump_sys_unlink(filename);
+	}
+	rump_sys_sync();
+	rump_sys_sync();
+
+	/* Give the cleaner a chance to run */
+	fprintf(stderr, "* Sleep\n");
+	sleep(5);
+
+	/* Auto reclaim freed segments */
+	fprintf(stderr, "* Sync\n");
+	rump_sys_sync();
+	rump_sys_sync();
+	
+	/* Record cleanerinfo again */
+	fprintf(stderr, "* Get cleanerinfo again\n");
+	if (rump_sys_fcntl(fd, LFCNCLEANERINFO, &ci_after) < 0)
+		atf_tc_fail_errno("LFCNCLEANERINFO[2] failed");
+
+	/* Compare */
+	if (ci_before.avail >= ci_after.avail)
+		atf_tc_fail("No improvement");
+	
+	teardown(fd, &args, CHUNKSIZE);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -297,5 +401,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, coalesce64);
 	ATF_TP_ADD_TC(tp, cleanseg32);
 	ATF_TP_ADD_TC(tp, cleanseg64);
+	ATF_TP_ADD_TC(tp, autoclean32);
+	ATF_TP_ADD_TC(tp, autoclean64);
 	return atf_no_error();
 }

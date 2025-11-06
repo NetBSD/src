@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.54 2025/11/04 00:50:36 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.55 2025/11/06 15:45:32 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -817,6 +817,16 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 
 #define IFILE_ENTRYSIZE(fs) \
 	((fs)->lfs_is64 ? sizeof(IFILE64) : sizeof(IFILE32))
+
+/* No valid inode number can be as high as this */
+#ifdef _KERNEL
+# define LFS_MAXINO(fs) (((fs->lfs_ivnode->v_size >> lfs_sb_getbshift(fs)) \
+			- lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) \
+	* lfs_sb_getifpb(fs))
+#define LFS_ASSERT_MAXINO(fs, ino) KASSERTMSG(ino < LFS_MAXINO(fs),	\
+	"inode %jd >= max %jd", (intmax_t)(ino), (intmax_t)LFS_MAXINO(fs));
+
+#endif
 
 /*
  * LFSv1 compatibility code is not allowed to touch if_atime, since it

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.107 2025/11/04 00:50:37 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.108 2025/11/06 15:45:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.107 2025/11/04 00:50:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.108 2025/11/06 15:45:32 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,9 +646,9 @@ lfs_cleanerunlock(struct lfs *fs)
 	/* Clear out the cleaning list */
 	while ((ip = TAILQ_FIRST(&fs->lfs_cleanhd)) != NULL)
 		lfs_clrclean(fs, ITOV(ip));
-
+	
 	mutex_enter(&lfs_lock);
-	fs->lfs_cleanlock = 0x0;
+	fs->lfs_cleanlock = NULL;
 	cv_broadcast(&fs->lfs_cleanercv);
 	mutex_exit(&lfs_lock);
 }
@@ -728,6 +728,9 @@ lfs_segunlock_relock(struct lfs *fs)
 	lfs_writeseg(fs, fs->lfs_sp);
 
 	/* Tell cleaner */
+	mutex_enter(&lfs_lock);
+	fs->lfs_flags |= LFS_MUSTCLEAN;
+	mutex_exit(&lfs_lock);
 	LFS_CLEANERINFO(cip, fs, bp);
 	lfs_ci_setflags(fs, cip,
 			lfs_ci_getflags(fs, cip) | LFS_CLEANER_MUST_CLEAN);
@@ -753,6 +756,9 @@ lfs_segunlock_relock(struct lfs *fs)
 		lfs_seglock(fs, seg_flags);
 
 	/* Cleaner can relax now */
+	mutex_enter(&lfs_lock);
+	fs->lfs_flags &= ~LFS_MUSTCLEAN;
+	mutex_exit(&lfs_lock);
 	LFS_CLEANERINFO(cip, fs, bp);
 	lfs_ci_setflags(fs, cip,
 			lfs_ci_getflags(fs, cip) & ~LFS_CLEANER_MUST_CLEAN);
@@ -831,3 +837,24 @@ lfs_clrclean(struct lfs *fs, struct vnode *vp)
 	mutex_exit(&lfs_lock);
 	vrele(vp);
 }
+
+/*
+ * Remove the specified flag from all segments.
+ */
+void
+lfs_seguse_clrflag_all(struct lfs *fs, uint32_t flag)
+{
+	SEGUSE *sup;
+	struct buf *bp;
+	int i;
+
+	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
+		LFS_SEGENTRY(sup, fs, i, bp);
+		if (sup->su_flags & flag) {
+			sup->su_flags &= ~flag;
+			LFS_WRITESEGENTRY(sup, fs, i, bp);
+		} else
+			brelse(bp, 0);
+	}
+}
+

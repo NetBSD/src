@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.51 2025/09/17 04:37:47 perseant Exp $
+#	$NetBSD: files.ufs,v 1.52 2025/11/06 15:45:32 perseant Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -9,8 +9,7 @@ deffs					CHFS
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
 					UFS_DIRHASH UFS_EXTATTR UFS_ACL
 
-defflag	opt_lfs.h			LFS_EI LFS_KERNEL_RFW
-					LFS_DIRHASH LFS_EXTATTR
+defflag	opt_lfs.h			LFS_EI LFS_DIRHASH LFS_EXTATTR
 					LFS_QUOTA LFS_QUOTA2
 
 define	ext2fs:	vfs, ffs
@@ -72,6 +71,7 @@ file	ufs/lfs/lfs_debug.c		lfs & debug
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
 file	ufs/lfs/lfs_pages.c		lfs
+file	ufs/lfs/lfs_kclean.c		lfs
 file	ufs/lfs/lfs_rename.c		lfs
 file	ufs/lfs/lfs_rfw.c		lfs
 file	ufs/lfs/lfs_segment.c		lfs
