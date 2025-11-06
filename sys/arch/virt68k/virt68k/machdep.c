@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2025/11/06 16:06:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2025/11/06 20:58:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2025/11/06 16:06:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2025/11/06 20:58:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2025/11/06 16:06:42 thorpej Exp $")
 #include <machine/bus.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
-#include <machine/pte.h>
 #include <machine/vmparam.h>
 #include <m68k/include/cacheops.h>
 #include <dev/cons.h>
