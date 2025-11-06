@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 2024/01/08 05:09:41 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6 2025/11/06 05:25:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ extern vaddr_t	bootinfo_end;
 #define	bootinfo_dataptr(bi)	((void *)&(bi)->bi_data[0])
 #define	bootinfo_get_u32(bi)	(*(uint32_t *)bootinfo_dataptr(bi))
 
-void			bootinfo_start(struct bi_record *);
+vaddr_t			bootinfo_start(struct bi_record *);
 struct bi_record *	bootinfo_find(uint32_t tag);
 void			bootinfo_enumerate(bool (*)(struct bi_record *, void *),
 					   void *);

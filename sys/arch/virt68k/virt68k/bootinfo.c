@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.9 2025/06/09 21:19:49 andvar Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.10 2025/11/06 05:25:41 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.9 2025/06/09 21:19:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.10 2025/11/06 05:25:41 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -246,9 +246,10 @@ bootinfo_gf_tty_consinit(struct bi_record *bi)
 
 /*
  * bootinfo_start --
- *	Parse the boot info during early start-up.
+ *	Parse the boot info during early start-up.  Returns the
+ *	address of the end of the boot info.
  */
-void
+vaddr_t
 bootinfo_start(struct bi_record *first)
 {
 	struct bi_record *bi;
@@ -298,6 +299,8 @@ bootinfo_start(struct bi_record *first)
 	 * available memory segments.
 	 */
 	bootinfo_reserve_initrd();
+
+	return bootinfo_end;
 }
 
 /*

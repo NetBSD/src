@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 2025/11/06 04:24:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 2025/11/06 05:25:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,21 +143,16 @@ ASENTRY_NOPROFILE(start)
 	addql	#4,%sp
 
 	/*
-	 * bootinfo_start() recorded the first PA following the
-	 * bootinfo in bootinfo_end.  That represents the end of
-	 * the loaded image.  Rounding that to a page gives us
-	 * the first free physical page.
+	 * End of boot info returned in %d0.  That represents the
+	 * end of the loaded image.  Rouding that to a page gives
+	 * us the first free physical page.
 	 */
-	RELOC(bootinfo_end,%a0)
-	movl	%a0@,%d2
-	addl	#PAGE_SIZE-1,%d2
-	andl	#PG_FRAME,%d2		| round to a page
-	movl	%d2,%a4
-	addl	%a5,%a4			| convert to PA
+	addl	#PAGE_SIZE-1,%d0
+	andl	#PG_FRAME,%d0		| round to a page
 	pea	%a5@			| reloc_offset
-	pea	%a4@			| nextpa
+	movl	%d0,%sp@-		| nextpa
 	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	jbsr	%a0@			| pmap_bootstrap(nextpa, reloc_offset)
 	addql	#8,%sp
 
 /* initialize source/destination control registers for movs */
