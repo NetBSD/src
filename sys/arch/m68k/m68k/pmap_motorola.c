@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.95 2025/11/06 15:54:48 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.96 2025/11/06 18:42:05 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.95 2025/11/06 15:54:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.96 2025/11/06 18:42:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ int pmapdebug = PDB_PARANOIA;
  * convert to an m68k protection code.
  */
 #define pte_prot(m, p)	(protection_codes[p])
-u_int	protection_codes[8];
+static u_int protection_codes[8];
 
 /*
  * Kernel page table page management.

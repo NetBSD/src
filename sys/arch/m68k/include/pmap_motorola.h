@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.47 2025/11/06 15:54:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.48 2025/11/06 18:42:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -224,7 +224,6 @@ extern pt_entry_t	*Sysmap, *Sysptmap;
 #define	SYSMAP_VA	VM_MAX_KERNEL_ADDRESS
 extern vsize_t		Sysptsize;
 extern vaddr_t		virtual_avail, virtual_end;
-extern u_int		protection_codes[];
 #if defined(M68040) || defined(M68060)
 extern u_int		protostfree;
 #endif
