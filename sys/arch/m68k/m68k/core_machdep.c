@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.8 2023/12/20 00:40:43 thorpej Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.9 2025/11/06 20:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.9 2025/11/06 20:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2023/12/20 00:40:43 thorpej Exp
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
-#include <machine/pte.h>
 #include <machine/reg.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.96 2025/11/06 18:42:05 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.97 2025/11/06 20:28:41 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.96 2025/11/06 18:42:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.97 2025/11/06 20:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.96 2025/11/06 18:42:05 thorpej E
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 
-#include <machine/pte.h>
 #include <machine/pcb.h>
 
 #include <uvm/uvm.h>
