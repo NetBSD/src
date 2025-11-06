@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/04 22:09:25 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.64 2025/11/06 01:50:27 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/04 22:09:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.64 2025/11/06 01:50:27 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -68,7 +68,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-void pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -81,7 +81,7 @@ void pmap_bootstrap(paddr_t, paddr_t);
  * XXX assumes sizeof(u_int) == sizeof(pt_entry_t)
  * XXX a PIC compiler would make this much easier.
  */
-void
+paddr_t
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
@@ -424,4 +424,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
+
+	return nextpa;
 }

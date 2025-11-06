@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.98 2025/11/04 22:09:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.99 2025/11/06 01:50:26 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.98 2025/11/04 22:09:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.99 2025/11/06 01:50:26 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -96,7 +96,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-void pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap(paddr_t, paddr_t);
 void bootstrap_mac68k(int);
 
 /*
@@ -109,7 +109,7 @@ void bootstrap_mac68k(int);
  * nextpa is the first address following the loaded kernel.  On a IIsi
  * on 12 May 1996, that was 0xf9000 beyond firstpa.
  */
-void
+paddr_t
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
@@ -536,6 +536,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		va += m68k_round_page(MSGBUFSIZE);
 		virtual_avail = va;
 	}
+
+	return nextpa;
 }
 
 void
