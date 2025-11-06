@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.20 2025/05/03 19:55:32 riastradh Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.21 2025/11/06 15:25:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.20 2025/05/03 19:55:32 riastradh Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.21 2025/11/06 15:25:18 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -53,5 +53,5 @@ ENTRY(ptrace)
 	jc	err
 	ret
 err:
-	jmp	CERROR
+	_SYSCALL_ERR
 END(ptrace)

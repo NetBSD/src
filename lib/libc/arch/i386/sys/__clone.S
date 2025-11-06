@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.7 2025/05/03 19:55:32 riastradh Exp $	*/
+/*	$NetBSD: __clone.S,v 1.8 2025/11/06 15:25:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -94,5 +94,5 @@ ENTRY(__clone)
 	addl	$12,%esp
 5:
 	popl	%ebp
-	jmp	CERROR
+	_SYSCALL_ERR
 END(__clone)
