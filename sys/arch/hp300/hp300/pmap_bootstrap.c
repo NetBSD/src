@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.62 2025/11/06 01:50:26 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/06 15:54:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.62 2025/11/06 01:50:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/06 15:54:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -455,7 +455,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	RELOC(avail_start, paddr_t) = nextpa;
 	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
 	    (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
-	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 

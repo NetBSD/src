@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.99 2025/11/06 01:50:26 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.100 2025/11/06 15:54:48 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.99 2025/11/06 01:50:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.100 2025/11/06 15:54:48 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -121,6 +121,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
+	vsize_t mem_size;
 	extern char start[];
 
 	vidlen = m68k_round_page(mac68k_video.mv_height *
@@ -517,7 +518,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 #endif
 
 	avail_end = high[numranges - 1];
-	mem_size = m68k_ptob(physmem);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*

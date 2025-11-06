@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2025/11/04 23:51:59 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 2025/11/06 15:54:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2025/11/04 23:51:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2025/11/06 15:54:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -169,6 +169,8 @@ consinit(void)
 #endif
 }
 
+vsize_t		mem_size;
+
 /*
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize CPU, and do autoconfiguration.
@@ -182,7 +184,6 @@ cpu_startup(void)
 	int opmapdebug = pmapdebug;
 #endif
 	vaddr_t minaddr, maxaddr;
-	extern vsize_t mem_size;	/* from pmap.c */
 
 #ifdef DEBUG
 	pmapdebug = 0;

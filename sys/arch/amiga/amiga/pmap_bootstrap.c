@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/06 15:54:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/06 15:54:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,6 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 		if (noncontig_enable == 1)
 			break;		/* Only two segments enabled */
 	}
-
-	mem_size = physmem << PGSHIFT;
 
 	avail_start = firstaddr;
 	avail_end   = toads;

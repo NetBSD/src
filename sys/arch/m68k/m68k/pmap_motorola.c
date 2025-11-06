@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.94 2025/11/05 00:42:18 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.95 2025/11/06 15:54:48 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.94 2025/11/05 00:42:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.95 2025/11/06 15:54:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,6 @@ vaddr_t		lwp0uarea;	/* lwp0 u-area VA, initialized in bootstrap */
 
 paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
-vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */

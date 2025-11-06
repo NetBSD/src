@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/06 15:54:48 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,6 +121,7 @@ pmap_bootstrap(vaddr_t vstart)
 	/*
 	 * Count physical memory
 	 */
+	extern vsize_t mem_size;
 	mem_size = 0;
 	for (i = 0; i < NMEM_SEGS; i++) {
 		if (boot_segs[i].start == boot_segs[i].end)
