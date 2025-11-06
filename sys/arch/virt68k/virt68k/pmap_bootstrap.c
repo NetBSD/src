@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 2025/11/06 15:54:49 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10 2025/11/06 16:06:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.9 2025/11/06 15:54:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.10 2025/11/06 16:06:42 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.9 2025/11/06 15:54:49 thorpej E
 
 extern char *kernel_text;
 extern char *etext;
-
-extern paddr_t msgbufpa;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -396,12 +394,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t reloff)
 	 * via uvm_lwp_setuarea() later in pmap_bootstrap2().
 	 */
 	RELOC(lwp0uarea, vaddr_t) = PA_TO_VA(lwp0upa);
-
-	/*
-	 * The kernel is linked at 8K so that we can leave VA==0
-	 * unmapped.  Use that space for the kernel message buffer.
-	 */
-	RELOC(msgbufpa, paddr_t) = 0;	/* XXX virt68k-specific */
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 

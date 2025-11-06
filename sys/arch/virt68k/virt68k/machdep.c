@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2025/11/06 15:27:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2025/11/06 16:06:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2025/11/06 15:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2025/11/06 16:06:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -194,8 +194,13 @@ virt68k_init(void)
 	}
 
 	/*
-	 * Initialize error message buffer (just before kernel text).
+	 * Initialize error message buffer.  The kernel is linked
+	 * at 8K so that we can leave VA==0 unmapped.  That leaves
+	 * 8K of physical memory sitting there in front of the kernel
+	 * that we can use for the message buffer.
 	 */
+	msgbufpa = 0;
+	KASSERT(MSGBUFSIZE <= 8192);
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
 			       msgbufpa + i * PAGE_SIZE,
