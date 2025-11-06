@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 2025/11/06 15:27:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 2025/11/06 18:22:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,8 +152,8 @@ ASENTRY_NOPROFILE(start)
 	andl	#PG_FRAME,%d0		| round to a page
 	pea	%a5@			| reloff
 	movl	%d0,%sp@-		| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(nextpa, reloff)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(nextpa, reloff)
 	addql	#8,%sp
 
 	/*
