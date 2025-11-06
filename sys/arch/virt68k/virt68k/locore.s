@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.21 2025/11/06 05:25:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.22 2025/11/06 15:27:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,10 +137,11 @@ ASENTRY_NOPROFILE(start)
 	 * it to get CPU/FPU/MMU information and figure out where
 	 * the end of the loaded image really is.
 	 */
-	RELOC(bootinfo_start,%a0)
+	RELOC(bootinfo_startup1,%a0)
+	pea	%a5@
 	movl	#_C_LABEL(end),%sp@-
-	jbsr	%a0@			| bootinfo_start(end)
-	addql	#4,%sp
+	jbsr	%a0@			| bootinfo_startup1(end, reloff)
+	addql	#8,%sp
 
 	/*
 	 * End of boot info returned in %d0.  That represents the
@@ -149,11 +150,20 @@ ASENTRY_NOPROFILE(start)
 	 */
 	addl	#PAGE_SIZE-1,%d0
 	andl	#PG_FRAME,%d0		| round to a page
-	pea	%a5@			| reloc_offset
+	pea	%a5@			| reloff
 	movl	%d0,%sp@-		| nextpa
 	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(nextpa, reloc_offset)
+	jbsr	%a0@			| pmap_bootstrap(nextpa, reloff)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
 
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
@@ -225,6 +235,11 @@ Lmmuenabled:
  */
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
+	/* post-MMU-enablement bootinfo parsing. */
+	pea	%a5@			| push reloff
+	movl	%d7,%sp@-		| push nextpa saved above
+	jbsr	_C_LABEL(bootinfo_startup2)
+	addql	#8,%sp
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 /* set kernel stack, user SP */
@@ -233,8 +248,8 @@ Lmmuenabled:
 	movl	%a2,%usp		| init user SP
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
-	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
-	movl	%a1,%sp@-
+	clrl	%a0@(PCB_FPCTX)		| ensure null FP context
+	movl	%a0,%sp@-
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
 	addql	#4,%sp
 Lenab2:

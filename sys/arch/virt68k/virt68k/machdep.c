@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2024/03/05 14:15:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2025/11/06 15:27:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2024/03/05 14:15:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2025/11/06 15:27:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -159,6 +159,7 @@ bootinfo_md_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),
 void
 virt68k_init(void)
 {
+	struct bootinfo_data *bid = bootinfo_data();
 	int i;
 
 	/*
@@ -169,16 +170,16 @@ virt68k_init(void)
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
-	for (i = 0; i < bootinfo_mem_nsegments_avail; i++) {
-		if (bootinfo_mem_segments_avail[i].mem_size < PAGE_SIZE) {
+	for (i = 0; i < bid->bootinfo_mem_nsegments_avail; i++) {
+		if (bid->bootinfo_mem_segments_avail[i].mem_size < PAGE_SIZE) {
 			/*
 			 * Segment has been completely gobbled up.
 			 */
 			continue;
 		}
 
-		paddr_t start = bootinfo_mem_segments_avail[i].mem_addr;
-		psize_t size  = bootinfo_mem_segments_avail[i].mem_size;
+		paddr_t start = bid->bootinfo_mem_segments_avail[i].mem_addr;
+		psize_t size  = bid->bootinfo_mem_segments_avail[i].mem_size;
 
 		printf("Memory segment %d: addr=0x%08lx size=0x%08lx\n", i,
 		    start, size);
@@ -245,6 +246,7 @@ consinit(void)
 void
 cpu_startup(void)
 {
+	struct bootinfo_data *bid = bootinfo_data();
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 #ifdef DEBUG
@@ -286,10 +288,10 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 
-	if (bootinfo_mem_segments_ignored) {
+	if (bid->bootinfo_mem_segments_ignored) {
 		printf("WARNING: ignored %zd bytes of memory in %d segments.\n",
-		    bootinfo_mem_segments_ignored_bytes,
-		    bootinfo_mem_segments_ignored);
+		    bid->bootinfo_mem_segments_ignored_bytes,
+		    bid->bootinfo_mem_segments_ignored);
 	}
 
 	/*
@@ -518,6 +520,7 @@ cpu_reboot(int howto, char *bootstr)
 void
 cpu_init_kcore_hdr(void)
 {
+	struct bootinfo_data *bid = bootinfo_data();
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int i;
@@ -570,9 +573,9 @@ cpu_init_kcore_hdr(void)
 	 */
 	m->relocend = (uint32_t)end;
 
-	for (i = 0; i < bootinfo_mem_nsegments; i++) {
-		m->ram_segs[i].start = bootinfo_mem_segments[i].mem_addr;
-		m->ram_segs[i].size  = bootinfo_mem_segments[i].mem_size;
+	for (i = 0; i < bid->bootinfo_mem_nsegments; i++) {
+		m->ram_segs[i].start = bid->bootinfo_mem_segments[i].mem_addr;
+		m->ram_segs[i].size  = bid->bootinfo_mem_segments[i].mem_size;
 	}
 }
 
@@ -597,11 +600,12 @@ cpu_dumpsize(void)
 u_long
 cpu_dump_mempagecnt(void)
 {
+	struct bootinfo_data *bid = bootinfo_data();
 	u_long i, n;
 
 	n = 0;
-	for (i = 0; i < bootinfo_mem_nsegments; i++)
-		n += atop(bootinfo_mem_segments[i].mem_size);
+	for (i = 0; i < bid->bootinfo_mem_nsegments; i++)
+		n += atop(bid->bootinfo_mem_segments[i].mem_size);
 	return n;
 }
 
@@ -681,6 +685,7 @@ cpu_dumpconf(void)
 void
 dumpsys(void)
 {
+	struct bootinfo_data *bid = bootinfo_data();
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memcl;
 	u_long maddr;
@@ -728,9 +733,9 @@ dumpsys(void)
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 
-	for (memcl = 0; memcl < bootinfo_mem_nsegments; memcl++) {
-		maddr = bootinfo_mem_segments[memcl].mem_addr;
-		bytes = bootinfo_mem_segments[memcl].mem_size;
+	for (memcl = 0; memcl < bid->bootinfo_mem_nsegments; memcl++) {
+		maddr = bid->bootinfo_mem_segments[memcl].mem_addr;
+		bytes = bid->bootinfo_mem_segments[memcl].mem_size;
 
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 
@@ -862,15 +867,16 @@ const uint16_t ipl2psl_table[NIPL] = {
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	struct bootinfo_data *bid = bootinfo_data();
 	psize_t size;
 	int i;
 
-	for (i = 0; i < bootinfo_mem_nsegments; i++) {
-		if (pa < bootinfo_mem_segments[i].mem_addr) {
+	for (i = 0; i < bid->bootinfo_mem_nsegments; i++) {
+		if (pa < bid->bootinfo_mem_segments[i].mem_addr) {
 			continue;
 		}
-		size = trunc_page(bootinfo_mem_segments[i].mem_size);
-		if (pa >= bootinfo_mem_segments[i].mem_addr + size) {
+		size = trunc_page(bid->bootinfo_mem_segments[i].mem_size);
+		if (pa >= bid->bootinfo_mem_segments[i].mem_addr + size) {
 			continue;
 		}
 		return 0;

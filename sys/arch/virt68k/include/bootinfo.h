@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.6 2025/11/06 05:25:41 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.7 2025/11/06 15:27:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -136,19 +136,31 @@ struct bi_virt_dev {
 
 #include <sys/bus.h>
 
-extern uint32_t	bootinfo_machtype;
-extern int	bootinfo_mem_segments_ignored;
-extern size_t	bootinfo_mem_segments_ignored_bytes;
-extern struct bi_mem_info bootinfo_mem_segments[];
-extern struct bi_mem_info bootinfo_mem_segments_avail[];
-extern int	bootinfo_mem_nsegments;
-extern int	bootinfo_mem_nsegments_avail;
-extern vaddr_t	bootinfo_end;
+struct bootinfo_data {
+	struct bi_record *	bootinfo;
+	vaddr_t			bootinfo_end;
+	uint32_t		bootinfo_machtype;
+	int			bootinfo_mem_segments_ignored;
+	size_t			bootinfo_mem_segments_ignored_bytes;
+	struct bi_mem_info *	bootinfo_mem_segments;
+	struct bi_mem_info *	bootinfo_mem_segments_avail;
+	int			bootinfo_mem_nsegments;
+	int			bootinfo_mem_nsegments_avail;
+	int			bootinfo_total_mem_pages;
+
+	paddr_t			bootinfo_console_addr;
+	bool			bootinfo_console_addr_valid;
+
+	uint32_t		bootinfo_initrd_start;
+	uint32_t		bootinfo_initrd_size;
+};
 
 #define	bootinfo_dataptr(bi)	((void *)&(bi)->bi_data[0])
 #define	bootinfo_get_u32(bi)	(*(uint32_t *)bootinfo_dataptr(bi))
 
-vaddr_t			bootinfo_start(struct bi_record *);
+vaddr_t			bootinfo_startup1(struct bi_record *, vaddr_t);
+void			bootinfo_startup2(paddr_t, vaddr_t);
+struct bootinfo_data *	bootinfo_data(void);
 struct bi_record *	bootinfo_find(uint32_t tag);
 void			bootinfo_enumerate(bool (*)(struct bi_record *, void *),
 					   void *);

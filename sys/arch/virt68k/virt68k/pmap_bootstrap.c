@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7 2025/11/06 06:47:09 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.8 2025/11/06 15:27:10 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7 2025/11/06 06:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.8 2025/11/06 15:27:10 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7 2025/11/06 06:47:09 thorpej E
 #include <sys/kcore.h>
 #include <uvm/uvm_extern.h>
 
-#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
@@ -52,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.7 2025/11/06 06:47:09 thorpej E
 extern char *kernel_text;
 extern char *etext;
 
-extern paddr_t avail_start, avail_end;
 extern paddr_t msgbufpa;
 
 /*
@@ -400,34 +398,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t reloff)
 	RELOC(lwp0uarea, vaddr_t) = PA_TO_VA(lwp0upa);
 
 	/*
-	 * Scoot the start of available forward to account for:
-	 *
-	 *	(1) The kernel text, data, and bss.
-	 *
-	 *	(2) The pages we stole above for pmap data
-	 *	    structures.
-	 *
-	 * XXX virt68k-specific
-	 */
-	RELOC(bootinfo_mem_segments_avail[0].mem_size, uint32_t) -=
-	    nextpa - RELOC(bootinfo_mem_segments_avail[0].mem_addr, uint32_t);
-	RELOC(bootinfo_mem_segments_avail[0].mem_addr, uint32_t) = nextpa;
-
-	/*
 	 * The kernel is linked at 8K so that we can leave VA==0
 	 * unmapped.  Use that space for the kernel message buffer.
 	 */
 	RELOC(msgbufpa, paddr_t) = 0;	/* XXX virt68k-specific */
-
-	/*
-	 * Initialize avail_start and avail_end.
-	 */
-	i = RELOC(bootinfo_mem_nsegments, int) - 1;
-	RELOC(avail_start, paddr_t) =
-	    RELOC(bootinfo_mem_segments_avail[0].mem_addr, uint32_t);
-	RELOC(avail_end, paddr_t) =
-	    RELOC(bootinfo_mem_segments_avail[i].mem_addr, uint32_t) +
-	    RELOC(bootinfo_mem_segments_avail[i].mem_size, uint32_t);
 
 	RELOC(mem_size, vsize_t) = m68k_ptob(RELOC(physmem, int));
 
