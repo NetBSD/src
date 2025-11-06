@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.31 2025/04/27 21:35:36 pgoyette Exp $
+# $NetBSD: Makefile.cdrom,v 1.32 2025/11/06 18:15:12 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -56,3 +56,6 @@ image_md_pre: ${EFIBOOTIMG}
 	${MKDIR} ${MKDIRPERM} cdrom/mnt2 cdrom/targetroot
 	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
 	${MKDIR} ${MKDIRPERM} cdrom/var
+
+__cdromclean::
+	rm -fr efiboot
