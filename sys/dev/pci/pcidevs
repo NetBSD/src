@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1531 2025/10/27 07:17:35 andvar Exp $
+$NetBSD: pcidevs,v 1.1532 2025/11/07 04:39:07 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -9433,6 +9433,7 @@ product REALTEK RT8139D		0x8039	8139D 10/100 Ethernet
 product REALTEK RT8100		0x8100	8100 10/100 Ethernet
 product REALTEK RT8125		0x8125	8125 10/100/1G/2.5G Ethernet
 product REALTEK RT8126		0x8126	8126 10/100/1G/2.5G/5G Ethernet
+product REALTEK RT8127		0x8127	8127 10/100/1G/2.5G/5G Ethernet
 product REALTEK RT8129		0x8129	8129 10/100 Ethernet
 product REALTEK RT8101E		0x8136	8100E/8101E/8102E 10/100 Ethernet
 product REALTEK RT8138		0x8138	8138 10/100 Ethernet
