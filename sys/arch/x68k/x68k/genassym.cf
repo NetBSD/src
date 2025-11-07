@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2024/01/09 04:16:27 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.41 2025/11/07 14:40:58 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -94,6 +94,7 @@ define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	PAGE_SIZE		PAGE_SIZE
 define	PGSHIFT			PGSHIFT
+define	PG_FRAME		(~PGOFSET)
 define	USRSTACK		USRSTACK
 
 # MMU configuration constants (from pmap.h)
@@ -159,21 +160,6 @@ define	DC_CLEAR		DC_CLEAR
 define	CACHE40_OFF		CACHE40_OFF
 define	IC60_CUBC		IC60_CUBC
 define	IC60_CABC		IC60_CABC
-
-
-# pte/ste bits
-define	PG_V			PG_V
-define	PG_NV			PG_NV
-define	PG_RO			PG_RO
-define	PG_RW			PG_RW
-define	PG_CI			PG_CI
-define	PG_PROT			PG_PROT
-define	PG_FRAME		PG_FRAME
-define	SG_V			SG_V
-define	SG_NV			SG_NV
-define	SG_RW			SG_RW
-define	SG_FRAME		SG_FRAME
-define	SG_ISHIFT		SG_ISHIFT
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)

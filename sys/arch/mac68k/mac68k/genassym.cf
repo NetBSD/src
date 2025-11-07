@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.45 2024/01/09 04:16:25 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.46 2025/11/07 14:40:58 thorpej Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@ define	P1PAGES 		P1PAGES
 define	PAGE_SIZE		PAGE_SIZE
 define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
+define	PG_FRAME		(~PGOFSET)
 define	USRIOSIZE		USRIOSIZE
 define	USRSTACK		USRSTACK
 
@@ -123,9 +124,6 @@ define	CACHE40_ON		CACHE40_ON
 define	CACHE40_OFF		CACHE40_OFF
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
-
-# pte/ste bits
-define	PG_FRAME		PG_FRAME
 
 # pcb fields
 define	SIZEOF_PCB		sizeof(struct pcb)
