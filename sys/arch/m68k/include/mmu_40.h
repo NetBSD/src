@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.4 2025/07/08 11:45:25 thorpej Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.5 2025/11/07 14:37:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -107,8 +107,8 @@
 					/* 00 or 01 -- Invalid */
 					/* 10 or 11 -- Resident */
 
-#define	UTE40_INVALID	__SHIFTIN(0, UTE_UDT)
-#define	UTE40_RESIDENT	__SHIFTIN(2, UTE_UDT)
+#define	UTE40_INVALID	__SHIFTIN(0, UTE40_UDT)
+#define	UTE40_RESIDENT	__SHIFTIN(2, UTE40_UDT)
 
 /*
  * The PTE format for L3 tables.
