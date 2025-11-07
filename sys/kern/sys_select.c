@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.68 2024/11/26 23:10:15 khorben Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.69 2025/11/07 21:43:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020, 2023
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.68 2024/11/26 23:10:15 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.69 2025/11/07 21:43:41 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -870,7 +870,7 @@ sel_setevents(lwp_t *l, struct selinfo *sip, const int events)
  * in order to synchronize with selclear() and pollers going to sleep
  * in sel_do_scan().
  *
- * sip->sel_cluser cannot change at this point, as it is only changed
+ * sip->sel_cluster cannot change at this point, as it is only changed
  * in selrecord(), and concurrent calls to selrecord() are locked
  * out by the caller.
  */
