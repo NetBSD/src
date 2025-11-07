@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36 2024/01/09 04:16:23 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.37 2025/11/07 14:58:30 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -110,6 +110,7 @@ define	UPAGES		UPAGES
 define	USPACE		USPACE
 define	PAGE_SIZE	PAGE_SIZE
 define	PGSHIFT		PGSHIFT
+define	PG_FRAME	(~PGOFSET)
 define	USRSTACK	USRSTACK
 
 # PSL values (should just include psl.h?)
@@ -139,15 +140,6 @@ define	CACHE60_ON	CACHE60_ON
 define	CACHE60_OFF	CACHE60_OFF
 define	IC60_CUBC	IC60_CUBC
 define	IC60_CABC	IC60_CABC
-
-# pte bits
-define	PG_V		PG_V
-define	PG_NV		PG_NV
-define	PG_RO		PG_RO
-define	PG_RW		PG_RW
-define	PG_CI		PG_CI
-define	PG_PROT		PG_PROT
-define	PG_FRAME	PG_FRAME
 
 # pcb fields
 define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)
