@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 2025/11/07 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 2025/11/07 15:34:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -314,8 +314,7 @@ Lstart1:
 	movl	%a0@,%a4
 	jne	Lstart2
 #endif
-	RELOC(end,%a0)
-	movl	%a0,%a4			| end of static kernel text/data
+	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart2:
 	addl	%a5,%a4			| convert to PA
 	pea	%a5@			| firstpa
