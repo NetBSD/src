@@ -1,4 +1,4 @@
-.\" $NetBSD: sem.4,v 1.7 2025/11/07 19:13:18 pgoyette Exp $
+.\" $NetBSD: sem.4,v 1.8 2025/11/07 19:15:48 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
@@ -26,8 +26,7 @@
 .\"
 .\" From: FreeBSD: src/share/man/man4/sem.4,v 1.2 2003/06/02 11:19:23 ru
 .\"
-.\" XXX-PRG
-.Dd May 10, 2018
+.Dd August 20, 2015
 .Dt SEM 4
 .Os
 .Sh NAME
@@ -59,12 +58,3 @@ facility appeared as a kernel option in
 .Nx 2.0
 and became non-optional in
 .Nx 7.0 .
-.\" XXX-PRG
-As of
-.Nx 10.0
-the
-.Nm
-facility once again became optional; it is, however, included in all kernels
-by default.
-It can be removed using the "no options SEMAPHORE" in the kernel
-configuration file.
