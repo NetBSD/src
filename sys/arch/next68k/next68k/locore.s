@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.87 2025/11/04 22:33:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.88 2025/11/07 14:35:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -263,15 +263,12 @@ Lstart1:
 /* configure kernel and lwp0 VA space so we can get going */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
-	movl	%a0@,%d5
+	movl	%a0@,%a4
 	jne	Lstart3
 #endif
-	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
+	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 
 Lstart3:
-	addl	#PAGE_SIZE-1,%d5
-	andl	#PG_FRAME,%d5		| round to a page
-	movl	%d5,%a4
 	addl	%a5,%a4			| convert to PA
 	pea	%a5@			| firstpa
 	pea	%a4@			| nextpa

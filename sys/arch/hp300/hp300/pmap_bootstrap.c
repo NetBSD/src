@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/06 15:54:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.64 2025/11/07 14:35:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/06 15:54:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.64 2025/11/07 14:35:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -90,6 +90,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
+
+	nextpa = m68k_round_page(nextpa);
 
 	/*
 	 * Calculate important physical addresses:

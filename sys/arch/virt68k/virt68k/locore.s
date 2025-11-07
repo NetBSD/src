@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 2025/11/06 18:22:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 2025/11/07 14:35:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,19 +137,18 @@ ASENTRY_NOPROFILE(start)
 	 * it to get CPU/FPU/MMU information and figure out where
 	 * the end of the loaded image really is.
 	 */
+	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
+	addl	%a5,%a4			| convert to PA
+	pea	%a5@			| reloff
+	pea	%a4@			| endpa
 	RELOC(bootinfo_startup1,%a0)
-	pea	%a5@
-	movl	#_C_LABEL(end),%sp@-
-	jbsr	%a0@			| bootinfo_startup1(end, reloff)
+	jbsr	%a0@			| bootinfo_startup1(endpa, reloff)
 	addql	#8,%sp
 
 	/*
 	 * End of boot info returned in %d0.  That represents the
-	 * end of the loaded image.  Rouding that to a page gives
-	 * us the first free physical page.
+	 * end of the loaded image.
 	 */
-	addl	#PAGE_SIZE-1,%d0
-	andl	#PG_FRAME,%d0		| round to a page
 	pea	%a5@			| reloff
 	movl	%d0,%sp@-		| nextpa
 	RELOC(pmap_bootstrap1,%a0)

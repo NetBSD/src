@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.50 2025/11/06 15:54:49 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.51 2025/11/07 14:35:21 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.50 2025/11/06 15:54:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.51 2025/11/07 14:35:21 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -109,6 +109,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 #endif
 	u_int fbmapsize;
+
+	nextpa = m68k_round_page(nextpa);
 
 	/*
 	 * Initialize the mem_clusters[] array for the crash dump

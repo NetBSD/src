@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 2025/11/04 22:33:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 2025/11/07 14:35:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -245,14 +245,11 @@ Lmemok:
 	.globl	_Sysseg_pa, _pmap_bootstrap, _avail_start
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
-	movl	%a0@,%d5
+	movl	%a0@,%a4
 	jne	Lstart2
 #endif
-	movl	#_C_LABEL(end),%d5	| end of static kernel text/data
+	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart2:
-	addl	#PAGE_SIZE-1,%d5
-	andl	#PG_FRAME,%d5		| round to a page
-	movl	%d5,%a4
 	addl	%a5,%a4			| convert to PA
 	subl	#KERNBASE, %a4
 	pea	%a5@			| firstpa
