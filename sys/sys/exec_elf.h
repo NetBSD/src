@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.178 2025/11/07 16:41:48 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.179 2025/11/07 21:58:21 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@
 #else
 #include <machine/elf_machdep.h>
 #endif
+
+/*
+ * Definitions that make up the ELF(3) API.
+ */
 
 typedef uint8_t		Elf_Byte;
 
@@ -635,13 +639,6 @@ typedef struct {
 #define STV_SINGLETON		5
 #define STV_ELIMINATE		6
 
-/* st_info/st_other utility macros */
-#define ELF_ST_BIND(info)		((uint32_t)(info) >> 4)
-#define ELF_ST_TYPE(info)		((uint32_t)(info) & 0xf)
-#define ELF_ST_INFO(bind,type)		((Elf_Byte)(((bind) << 4) | \
-					 ((type) & 0xf)))
-#define ELF_ST_VISIBILITY(other)	((uint32_t)(other) & 3)
-
 /*
  * Special section indexes
  */
@@ -860,6 +857,177 @@ typedef struct {
 #define	DF_1_PIE	0x08000000	/* Position Independent Executable */
 
 /*
+ * The header for GNU-style hash sections.
+ */
+typedef struct {
+	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
+	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
+	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
+	uint32_t	gh_shift2;	/* Bloom filter shift count. */
+} Elf_GNU_Hash_Header;
+
+/*
+ * Note Headers
+ */
+typedef struct {
+	Elf32_Word n_namesz;
+	Elf32_Word n_descsz;
+	Elf32_Word n_type;
+} Elf32_Nhdr;
+
+typedef struct {
+	Elf64_Word n_namesz;
+	Elf64_Word n_descsz;
+	Elf64_Word n_type;
+} Elf64_Nhdr;
+
+/* st_info/st_other utility macros */
+#define ELF_ST_BIND(info)		((uint32_t)(info) >> 4)
+#define ELF_ST_TYPE(info)		((uint32_t)(info) & 0xf)
+#define ELF_ST_INFO(bind,type)		((Elf_Byte)(((bind) << 4) | \
+					 ((type) & 0xf)))
+#define ELF_ST_VISIBILITY(other)	((uint32_t)(other) & 3)
+
+#define ELF32_ST_BIND(info)		ELF_ST_BIND(info)
+#define ELF32_ST_TYPE(info)		ELF_ST_TYPE(info)
+#define ELF32_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
+#define ELF32_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
+
+#define ELF64_ST_BIND(info)		ELF_ST_BIND(info)
+#define ELF64_ST_TYPE(info)		ELF_ST_TYPE(info)
+#define ELF64_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
+#define ELF64_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
+
+typedef struct {
+	Elf32_Half	si_boundto;	/* direct bindings - symbol bound to */
+	Elf32_Half	si_flags;	/* per symbol flags */
+} Elf32_Syminfo;
+
+typedef struct {
+	Elf64_Word	si_boundto;	/* direct bindings- symbol bound to */
+	Elf64_Word	si_flags;	/* per symbol flags */
+} Elf64_Syminfo;
+
+#define SYMINFO_FLG_DIRECT	0x0001	/* symbol ref has direct association
+					   to object containing definition */
+#define SYMINFO_FLG_PASSTHRU	0x0002	/* ignored - see SYMINFO_FLG_FILTER */
+#define SYMINFO_FLG_COPY	0x0004	/* symbol is a copy-reloc */
+#define SYMINFO_FLG_LAZYLOAD	0x0008	/* object containing defn should be
+					   lazily-loaded */
+#define SYMINFO_FLG_DIRECTBIND	0x0010	/* ref should be bound directly to
+					   object containing definition */
+#define SYMINFO_FLG_NOEXTDIRECT 0x0020	/* don't let an external reference
+					   directly bind to this symbol */
+#define SYMINFO_FLG_FILTER	0x0002	/* symbol ref is associated to a */
+#define SYMINFO_FLG_AUXILIARY	0x0040	/*	standard or auxiliary filter */
+
+#define SYMINFO_BT_SELF		0xffff	/* symbol bound to self */
+#define SYMINFO_BT_PARENT	0xfffe	/* symbol bound to parent */
+#define SYMINFO_BT_NONE		0xfffd	/* no special symbol binding */
+#define SYMINFO_BT_EXTERN	0xfffc	/* symbol defined as external */
+#define SYMINFO_BT_LOWRESERVE	0xff00	/* beginning of reserved entries */
+
+#define SYMINFO_NONE		0	/* Syminfo version */
+#define SYMINFO_CURRENT		1
+#define SYMINFO_NUM		2
+
+/*
+ * These constants are used for Elf32_Verdef struct's version number.
+ */
+#define VER_DEF_NONE		0
+#define VER_DEF_CURRENT		1
+
+/*
+ * These constants are used for Elf32_Verdef struct's vd_ndx.
+ */
+#define VER_DEF_IDX(x)		VER_NDX(x)
+
+/*
+ * These constants are used for Elf32_Verdef struct's vd_flags.
+ */
+#define VER_FLG_BASE		0x1
+#define VER_FLG_WEAK		0x2
+
+/*
+ * These are used in an Elf32_Versym field.
+ */
+#define VER_NDX_LOCAL		0
+#define VER_NDX_GLOBAL		1
+#define VER_NDX_GIVEN		2
+
+/*
+ * These constants are used for Elf32_Verneed struct's version number.
+ */
+#define VER_NEED_NONE		0
+#define VER_NEED_CURRENT	1
+
+/*
+ * These constants are used for Elf32_Vernaux struct's vna_other.
+ */
+#define VER_NEED_HIDDEN		VER_NDX_HIDDEN
+#define VER_NEED_IDX(x)		VER_NDX(x)
+
+/* index */
+#define VER_NDX_HIDDEN		0x8000
+#define VER_NDX(x)		((x) & ~VER_NDX_HIDDEN)
+
+/*
+ * GNU Extension hiding symbol
+ */
+#define VERSYM_HIDDEN		0x8000
+#define VERSYM_VERSION		0x7fff
+
+#define ELF_VER_CHR		'@'
+
+/*
+ * These are current size independent.
+ */
+
+typedef struct {
+	Elf32_Half	vd_version;	/* version number of structure */
+	Elf32_Half	vd_flags;	/* flags (VER_FLG_*) */
+	Elf32_Half	vd_ndx;		/* version index */
+	Elf32_Half	vd_cnt;		/* number of verdaux entries */
+	Elf32_Word	vd_hash;	/* hash of name */
+	Elf32_Word	vd_aux;		/* offset to verdaux entries */
+	Elf32_Word	vd_next;	/* offset to next verdef */
+} Elf32_Verdef;
+typedef Elf32_Verdef	Elf64_Verdef;
+
+typedef struct {
+	Elf32_Word	vda_name;	/* string table offset of name */
+	Elf32_Word	vda_next;	/* offset to verdaux */
+} Elf32_Verdaux;
+typedef Elf32_Verdaux	Elf64_Verdaux;
+
+typedef struct {
+	Elf32_Half	vn_version;	/* version number of structure */
+	Elf32_Half	vn_cnt;		/* number of vernaux entries */
+	Elf32_Word	vn_file;	/* string table offset of library name*/
+	Elf32_Word	vn_aux;		/* offset to vernaux entries */
+	Elf32_Word	vn_next;	/* offset to next verneed */
+} Elf32_Verneed;
+typedef Elf32_Verneed	Elf64_Verneed;
+
+typedef struct {
+	Elf32_Word	vna_hash;	/* Hash of dependency name */
+	Elf32_Half	vna_flags;	/* flags (VER_FLG_*) */
+	Elf32_Half	vna_other;	/* unused */
+	Elf32_Word	vna_name;	/* string table offset to version name*/
+	Elf32_Word	vna_next;	/* offset to next vernaux */
+} Elf32_Vernaux;
+typedef Elf32_Vernaux	Elf64_Vernaux;
+
+typedef struct {
+	Elf32_Half	vs_vers;
+} Elf32_Versym;
+typedef Elf32_Versym	Elf64_Versym;
+
+/*
+ * Symbols and types that are NetBSD-specific.
+ */
+
+/*
  * Auxiliary Vectors
  */
 typedef struct {
@@ -912,31 +1080,6 @@ typedef struct {
 #define AT_SUN_EMUL_EXECFD 2013 /* coff file descriptor */
 	/* Executable's fully resolved name */
 #define AT_SUN_EXECNAME 2014
-
-/*
- * The header for GNU-style hash sections.
- */
-typedef struct {
-	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
-	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
-	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
-	uint32_t	gh_shift2;	/* Bloom filter shift count. */
-} Elf_GNU_Hash_Header;
-
-/*
- * Note Headers
- */
-typedef struct {
-	Elf32_Word n_namesz;
-	Elf32_Word n_descsz;
-	Elf32_Word n_type;
-} Elf32_Nhdr;
-
-typedef struct {
-	Elf64_Word n_namesz;
-	Elf64_Word n_descsz;
-	Elf64_Word n_type;
-} Elf64_Nhdr;
 
 #define ELF_NOTE_GNU_NAMESZ		4
 #define ELF_NOTE_GNU_NAME		"GNU\0"
@@ -1269,140 +1412,6 @@ struct netbsd_elfcore_procinfo {
 #define Elf_Symindx	uint32_t
 #endif
 
-#define ELF32_ST_BIND(info)		ELF_ST_BIND(info)
-#define ELF32_ST_TYPE(info)		ELF_ST_TYPE(info)
-#define ELF32_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
-#define ELF32_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
-
-#define ELF64_ST_BIND(info)		ELF_ST_BIND(info)
-#define ELF64_ST_TYPE(info)		ELF_ST_TYPE(info)
-#define ELF64_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
-#define ELF64_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
-
-typedef struct {
-	Elf32_Half	si_boundto;	/* direct bindings - symbol bound to */
-	Elf32_Half	si_flags;	/* per symbol flags */
-} Elf32_Syminfo;
-
-typedef struct {
-	Elf64_Word	si_boundto;	/* direct bindings - symbol bound to */
-	Elf64_Word	si_flags;	/* per symbol flags */
-} Elf64_Syminfo;
-
-#define SYMINFO_FLG_DIRECT	0x0001	/* symbol ref has direct association
-					   to object containing definition */
-#define SYMINFO_FLG_PASSTHRU	0x0002	/* ignored - see SYMINFO_FLG_FILTER */
-#define SYMINFO_FLG_COPY	0x0004	/* symbol is a copy-reloc */
-#define SYMINFO_FLG_LAZYLOAD	0x0008	/* object containing defn should be
-					   lazily-loaded */
-#define SYMINFO_FLG_DIRECTBIND	0x0010	/* ref should be bound directly to
-					   object containing definition */
-#define SYMINFO_FLG_NOEXTDIRECT 0x0020	/* don't let an external reference
-					   directly bind to this symbol */
-#define SYMINFO_FLG_FILTER	0x0002	/* symbol ref is associated to a */
-#define SYMINFO_FLG_AUXILIARY	0x0040	/*	standard or auxiliary filter */
-
-#define SYMINFO_BT_SELF		0xffff	/* symbol bound to self */
-#define SYMINFO_BT_PARENT	0xfffe	/* symbol bound to parent */
-#define SYMINFO_BT_NONE		0xfffd	/* no special symbol binding */
-#define SYMINFO_BT_EXTERN	0xfffc	/* symbol defined as external */
-#define SYMINFO_BT_LOWRESERVE	0xff00	/* beginning of reserved entries */
-
-#define SYMINFO_NONE		0	/* Syminfo version */
-#define SYMINFO_CURRENT		1
-#define SYMINFO_NUM		2
-
-/*
- * These constants are used for Elf32_Verdef struct's version number.
- */
-#define VER_DEF_NONE		0
-#define VER_DEF_CURRENT		1
-
-/*
- * These constants are used for Elf32_Verdef struct's vd_ndx.
- */
-#define VER_DEF_IDX(x)		VER_NDX(x)
-
-/*
- * These constants are used for Elf32_Verdef struct's vd_flags.
- */
-#define VER_FLG_BASE		0x1
-#define VER_FLG_WEAK		0x2
-
-/*
- * These are used in an Elf32_Versym field.
- */
-#define VER_NDX_LOCAL		0
-#define VER_NDX_GLOBAL		1
-#define VER_NDX_GIVEN		2
-
-/*
- * These constants are used for Elf32_Verneed struct's version number.
- */
-#define VER_NEED_NONE		0
-#define VER_NEED_CURRENT	1
-
-/*
- * These constants are used for Elf32_Vernaux struct's vna_other.
- */
-#define VER_NEED_HIDDEN		VER_NDX_HIDDEN
-#define VER_NEED_IDX(x)		VER_NDX(x)
-
-/* index */
-#define VER_NDX_HIDDEN		0x8000
-#define VER_NDX(x)		((x) & ~VER_NDX_HIDDEN)
-
-/*
- * GNU Extension hiding symbol
- */
-#define VERSYM_HIDDEN		0x8000
-#define VERSYM_VERSION		0x7fff
-
-#define ELF_VER_CHR		'@'
-
-/*
- * These are current size independent.
- */
-
-typedef struct {
-	Elf32_Half	vd_version;	/* version number of structure */
-	Elf32_Half	vd_flags;	/* flags (VER_FLG_*) */
-	Elf32_Half	vd_ndx;		/* version index */
-	Elf32_Half	vd_cnt;		/* number of verdaux entries */
-	Elf32_Word	vd_hash;	/* hash of name */
-	Elf32_Word	vd_aux;		/* offset to verdaux entries */
-	Elf32_Word	vd_next;	/* offset to next verdef */
-} Elf32_Verdef;
-typedef Elf32_Verdef	Elf64_Verdef;
-
-typedef struct {
-	Elf32_Word	vda_name;	/* string table offset of name */
-	Elf32_Word	vda_next;	/* offset to verdaux */
-} Elf32_Verdaux;
-typedef Elf32_Verdaux	Elf64_Verdaux;
-
-typedef struct {
-	Elf32_Half	vn_version;	/* version number of structure */
-	Elf32_Half	vn_cnt;		/* number of vernaux entries */
-	Elf32_Word	vn_file;	/* string table offset of library name*/
-	Elf32_Word	vn_aux;		/* offset to vernaux entries */
-	Elf32_Word	vn_next;	/* offset to next verneed */
-} Elf32_Verneed;
-typedef Elf32_Verneed	Elf64_Verneed;
-
-typedef struct {
-	Elf32_Word	vna_hash;	/* Hash of dependency name */
-	Elf32_Half	vna_flags;	/* flags (VER_FLG_*) */
-	Elf32_Half	vna_other;	/* unused */
-	Elf32_Word	vna_name;	/* string table offset to version name*/
-	Elf32_Word	vna_next;	/* offset to next vernaux */
-} Elf32_Vernaux;
-typedef Elf32_Vernaux	Elf64_Vernaux;
-
-typedef struct {
-	Elf32_Half	vs_vers;
-} Elf32_Versym;
-typedef Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
