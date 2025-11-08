@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.9 2024/08/04 08:16:25 skrll Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.10 2025/11/08 16:20:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.9 2024/08/04 08:16:25 skrll Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.10 2025/11/08 16:20:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -95,6 +95,8 @@ riscv_timer_init(void)
 
 	evcnt_attach_dynamic(&ci->ci_ev_timer, EVCNT_TYPE_INTR,
 	    NULL, device_xname(ci->ci_dev), "timer");
+	evcnt_attach_dynamic(&ci->ci_ev_timer_missed, EVCNT_TYPE_MISC,
+	    NULL, device_xname(ci->ci_dev), "timer missed");
 
 	ci->ci_lastintr = csr_time_read();
 	uint64_t next = ci->ci_lastintr + timer_ticks_per_hz;
@@ -123,11 +125,14 @@ riscv_timer_intr(void *arg)
 	ci->ci_lastintr = now;
 	ci->ci_ev_timer.ev_count++;
 
-	ci->ci_lastintr_scheduled += timer_ticks_per_hz;
-	while (__predict_false(ci->ci_lastintr_scheduled < now)) {
+	do {
 		ci->ci_lastintr_scheduled += timer_ticks_per_hz;
-		/* XXX count missed timer interrupts */
-	}
+		if (__predict_true(ci->ci_lastintr_scheduled > now))
+			break;
+
+		ci->ci_ev_timer_missed.ev_count++;
+	} while (true);
+
 	sbi_set_timer(ci->ci_lastintr_scheduled);
 
 	hardclock(cf);
