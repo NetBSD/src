@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2025/11/08 08:26:08 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2025/11/08 17:33:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,7 +126,6 @@
 #define	VM_FREELIST_DEFAULT	0
 
 #ifndef __HAVE_NEW_PMAP_68K
-#error oink
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)
 
