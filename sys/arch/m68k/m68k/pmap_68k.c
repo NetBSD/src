@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.2 2025/11/08 07:37:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.3 2025/11/08 07:59:45 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.2 2025/11/08 07:37:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.3 2025/11/08 07:59:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1194,8 +1194,8 @@ pmap_table_release_slow(pmap_t pmap, struct pmap_table *pt,
 }
 
 static inline void
-pmap_table_release0(pmap_t pmap, struct pmap_table *pt,
-		   struct pmap_completion *pc, const char *reason)
+pmap_table_release(pmap_t pmap, struct pmap_table *pt,
+		   struct pmap_completion *pc)
 {
 	if (__predict_true(pt != NULL)) {
 		if (__predict_true(pt->pt_holdcnt > 1)) {
@@ -1205,9 +1205,6 @@ pmap_table_release0(pmap_t pmap, struct pmap_table *pt,
 		pmap_table_release_slow(pmap, pt, pc);
 	}
 }
-
-#define	pmap_table_release(pmap, pt, pc)		\
-	pmap_table_release0((pmap), (pt), (pc), __func__)
 
 /*
  * pmap_table_lookup:
