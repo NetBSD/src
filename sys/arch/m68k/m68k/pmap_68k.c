@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.1 2025/11/08 07:30:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.2 2025/11/08 07:37:03 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -187,11 +187,14 @@
 /*
  * XXX TODO XXX
  *
- * - Finish the unimplemented functions (pmap_growkernel()!!).
+ * - Finish the unimplemented functions (pmap_growkernel(), pmap_procwr()).
  * - Solicit real 68040 testers.
- * - Test on real 68030.
+ * - Test on real and emulated 68030.
  * - Finish HP MMU support and test on real HP MMU.
- * - Convert '851 / '030 to 3-level?
+ * - Convert '851 / '030 to 3-level.
+ * - Kcore / libkvm support.
+ * - Inline asm for the atomic ops used.
+ * - Optimize ATC / cache manipulation.
  * - ...
  * - PROFIT!
  */
@@ -199,7 +202,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.1 2025/11/08 07:30:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.2 2025/11/08 07:37:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -720,15 +723,11 @@ pte_change_prot(pt_entry_t opte, vm_prot_t prot)
 	return (opte & ~PTE_PROT_CHANGE_BITS) | pte_proto[prot];
 }
 
-#if 1
-#define	pte_load(ptep)	atomic_load_relaxed(ptep)
-#else
 static inline pt_entry_t
 pte_load(pt_entry_t *ptep)
 {
 	return atomic_load_relaxed(ptep);
 }
-#endif
 
 static inline void
 pte_store(pt_entry_t *ptep, pt_entry_t npte)
