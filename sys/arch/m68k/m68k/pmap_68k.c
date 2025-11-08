@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.4 2025/11/08 16:41:54 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.5 2025/11/08 16:57:55 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@
 /*
  * XXX TODO XXX
  *
- * - Finish the unimplemented functions (pmap_growkernel(), pmap_procwr()).
+ * - Finish the unimplemented functions (pmap_growkernel()).
  * - Solicit real 68040 testers.
  * - Test on real and emulated 68030.
  * - Finish HP MMU support and test on real HP MMU.
@@ -202,7 +202,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.4 2025/11/08 16:41:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.5 2025/11/08 16:57:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3109,6 +3109,24 @@ pmap_prefer(vaddr_t hint, vaddr_t *vap, int td)
 		}
 	}
 #endif
+}
+
+/*
+ * pmap_procwr:			[ INTERFACE ]
+ *
+ *	Perform any cache synchronization required after writing
+ *	to a process's address space.
+ */
+void
+pmap_procwr(struct proc *p, vaddr_t va, size_t len)
+{
+	/*
+	 * This is just a wrapper around the "cachectl" machdep
+	 * system call.
+	 *
+	 * XXX This is kind of gross, to be honest.
+	 */
+	(void)cachectl1(0x80000004, va, len, p);
 }
 
 /***************************** PMAP BOOTSTRAP ********************************/

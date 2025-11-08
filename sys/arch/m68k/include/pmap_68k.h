@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.1 2025/11/08 07:30:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.2 2025/11/08 16:57:55 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -360,6 +360,9 @@ bool	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
 
 #define	PMAP_GROWKERNEL			/* enable pmap_growkernel() */
 
+void	pmap_procwr(struct proc *, vaddr_t, size_t);
+#define	PMAP_NEED_PROCWR
+
 /*
  * pmap_bootstrap1() is called before the MMU is turned on.
  * pmap_bootstrap2() is called after.
@@ -367,6 +370,10 @@ bool	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
 paddr_t	pmap_bootstrap1(paddr_t/*nextpa*/, paddr_t/*firstpa*/);
 void *	pmap_bootstrap2(void);
 
+/*
+ * Variant of pmap_extract() that returns additional information about
+ * the mapping.  Used by bus_dma(9).
+ */
 bool	pmap_extract_info(pmap_t, vaddr_t, paddr_t *, int *);
 
 /*
@@ -375,7 +382,7 @@ bool	pmap_extract_info(pmap_t, vaddr_t, paddr_t *, int *);
  *
  * XXX Clean this up eventually.
  */
-pt_entry_t *	pmap_kernel_pte(vaddr_t);
+pt_entry_t *		pmap_kernel_pte(vaddr_t);
 #define	kvtopte(va)	pmap_kernel_pte(va)
 
 paddr_t		vtophys(vaddr_t);
@@ -386,6 +393,6 @@ extern void *	msgbufaddr;
 /* Support functions for HP MMU. */
 void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *, int);
-/* PMAP_PREFER() defined in <machine/pmap.h> */
+/* PMAP_PREFER() defined in <machine/pmap.h> on machines were it's needed. */
 
 #endif /* _M68K_PMAP_68K_H_ */
