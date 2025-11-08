@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.2 2025/11/08 08:26:08 thorpej Exp $	*/
 
 /*
  * This file was taken from next68k/dev/bus_dma.c, which was originally
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2025/11/08 08:26:08 thorpej Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE
 
@@ -138,6 +138,7 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg, cacheable, coherent = BUS_DMA_COHERENT;
+	bool rv __diagused;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -146,9 +147,17 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		(void) pmap_extract(vm_map_pmap(&vm->vm_map), vaddr, &curaddr);
+#if defined(__HAVE_NEW_PMAP_68K)
+		rv = pmap_extract_info(vm_map_pmap(&vm->vm_map), vaddr,
+		    &curaddr, &cacheable);
+		KASSERT(rv);
+		cacheable &= PMAP_NOCACHE;
+#else
+		rv = pmap_extract(vm_map_pmap(&vm->vm_map), vaddr, &curaddr);
+		KASSERT(rv);
 		cacheable = _pmap_page_is_cacheable(vm_map_pmap(&vm->vm_map),
 		    vaddr);
+#endif /* __HAVE_NEW_PMAP_68K */
 
 		if (cacheable)
 			coherent = 0;
@@ -669,6 +678,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int curseg;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	const int pmap_flags =
+	    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+	    ((flags & BUS_DMA_COHERENT) ? PMAP_NOCACHE : 0);
 
 	size = round_page(size);
 
@@ -687,12 +699,13 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				panic("%s: size botch", __func__);
 
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    VM_PROT_READ | VM_PROT_WRITE, pmap_flags);
 
+#if !defined(__HAVE_NEW_PMAP_68K)
 			/* Cache-inhibit the page if necessary */
 			if ((flags & BUS_DMA_COHERENT) != 0)
 				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
+#endif /* ! __HAVE_NEW_PMAP_68K */
 
 			segs[curseg]._ds_flags &= ~BUS_DMA_COHERENT;
 			segs[curseg]._ds_flags |= (flags & BUS_DMA_COHERENT);
@@ -713,9 +726,6 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 void
 _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
-	vaddr_t va;
-	size_t s;
-
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
 		panic("%s", __func__);
@@ -723,14 +733,16 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 
 	size = round_page(size);
 
+#if !defined(__HAVE_NEW_PMAP_68K)
 	/*
 	 * Re-enable cacheing on the range
 	 * XXXSCW: There should be some way to indicate that the pages
 	 * were mapped DMA_MAP_COHERENT in the first place...
 	 */
-	for (s = 0, va = (vaddr_t)kva; s < size;
+	for (size_t s = 0, vaddr_t va = (vaddr_t)kva; s < size;
 	     s += PAGE_SIZE, va += PAGE_SIZE)
 		_pmap_set_page_cacheable(pmap_kernel(), va);
+#endif /* __HAVE_NEW_PMAP_68K */
 
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());

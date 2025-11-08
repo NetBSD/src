@@ -1,10 +1,17 @@
-/*	$NetBSD: pmap.h,v 1.1 2024/01/02 07:41:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2025/11/08 08:26:08 thorpej Exp $	*/
 
 #ifndef _VIRT68K_PMAP_H_
 #define	_VIRT68K_PMAP_H_
 
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
+#error oink
 #include <m68k/pmap_motorola.h>
+#endif /* __HAVE_NEW_PMAP_68K */
+
 #include <m68k/mmu_30.h>
+#include <m68k/mmu_40.h>
 
 /*
  * Qemu places the virtual devices in the last 16MB of physical

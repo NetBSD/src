@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2025/11/06 20:58:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2025/11/08 08:26:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2025/11/06 20:58:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2025/11/08 08:26:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -539,6 +539,7 @@ cpu_init_kcore_hdr(void)
 	h->page_size = PAGE_SIZE;
 	h->kernbase = KERNBASE;
 
+#if !defined(__HAVE_NEW_PMAP_68K)	/* XXX XXX XXX */
 	/*
 	 * Fill in information about our MMU configuration.
 	 */
@@ -561,6 +562,7 @@ cpu_init_kcore_hdr(void)
 	 * Initialize pointer to kernel segment table.
 	 */
 	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
+#endif /* ! __HAVE_NEW_PMAP_68K */
 
 	/*
 	 * Initialize relocation value such that:
