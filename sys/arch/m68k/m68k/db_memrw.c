@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8 2023/09/26 12:46:30 tsutsui Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.9 2025/11/08 08:23:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8 2023/09/26 12:46:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.9 2025/11/08 08:23:44 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,8 @@ static void
 db_write_text(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst, *odst;
-	pt_entry_t *pte, oldpte, tmppte;
+	volatile pt_entry_t *pte;
+	pt_entry_t oldpte, tmppte;
 	vaddr_t pgva;
 	int limit;
 
@@ -145,16 +146,22 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 #endif
 
 		/*
+		 * N.B. we use the 68851 PTE bit names here, but in
+		 * the case of the kernel text, it all works out vis
+		 * a vis the 68040 PTE bits.
+		 */
+
+		/*
 		 * Make the page writable.  Note the mapping is
 		 * cache-inhibited to save hair.
 		 */
 		pte = kvtopte(pgva);
 		oldpte = *pte;
-		if ((oldpte & PG_V) == 0) {
+		if ((oldpte & DT51_PAGE) == 0) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
-		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
+		tmppte = (oldpte & ~PTE51_WP) | PTE51_CI;
 		*pte = tmppte;
 		TBIS((vaddr_t)odst);
 
