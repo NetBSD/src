@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.3 2025/11/08 07:59:45 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.4 2025/11/08 16:41:54 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.3 2025/11/08 07:59:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.4 2025/11/08 16:41:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3147,7 +3147,7 @@ extern char *	etext;
  *	Returns:	nextpa		Updated value after all of the
  *					allocations performed.
  */
-paddr_t
+paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 {
 	paddr_t lwp0upa, stnext_endpa, stnext_pa;
