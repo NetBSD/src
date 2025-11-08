@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3195 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3196 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -58,6 +58,10 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	gffb(4): Add backlight control for NVIDIA GeForce FX 5200 Go.
 		[macallan 20251006]
 	hypotl(3): Accomodate infinity for softfloat. [nat 20251007]
+	arm, aarch64: Switch to GCC 14. [mrg 20251007]
+	sparc, sparc64: Switch to GCC 14. [mrg 20251007]
+	hppa: Switch to GCC 14. [mrg 20251007]
+	x86: Switch to GCC 14. [mrg 20251007]
 	ucom(4): Add support for console over USB-to-serial adapter
 		[manu 20251009]
 	libc: Merge extended worker threads for POSIX asynchronous I/O
@@ -67,5 +71,17 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	fsck_lfs(8): Enable checking LFS64 volumes. [perseant 20251012]
 	riscv: Handle XTheadMae vs. Svpbmt, allowing boot on Allwinner
 		Nezha board. [thorpej 20251012]
+	viaide(4): Add UDMA support for VT8233C IDE controller.
+		[andvar 20251017]
+	m68k: New port: mac68ksf - Macintosh 68k softfloat. [nat 20251020]
 	sc16is7xx(4): NXP SC16IX7xx family of UART chips that are behind
 		a I2C or SPI bus.  [brad 20251024]
+	compat_linux(8): Add support for semtimedop(2), from Ricardo Branco.
+		[christos 20251026]
+	ftp(1): Add "connect" as a synonym for "open". [lukem 20251028]
+	wscons(4): Add support for xterm-style 256 colour escapes,
+		from Crystal Kolipe. [nia 20251102]
+	lfs: Add in-kernel cleaner. [perseant 20251106]
+	aac(4): Support Adaptec RAID 5445, 5805 and 5085. [riz 20251107]
+	m68k: Experimental new pmap module for systems with 68k MMUs
+		(plus the HP MMU). [thorpej 20251108]
