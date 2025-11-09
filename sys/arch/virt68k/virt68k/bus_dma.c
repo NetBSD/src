@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.3 2025/11/09 02:42:20 kre Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.4 2025/11/09 09:30:22 kre Exp $	*/
 
 /*
  * This file was taken from next68k/dev/bus_dma.c, which was originally
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2025/11/09 02:42:20 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2025/11/09 09:30:22 kre Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE
 
@@ -741,7 +741,9 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	 * XXXSCW: There should be some way to indicate that the pages
 	 * were mapped DMA_MAP_COHERENT in the first place...
 	 */
-	for (size_t s = 0, va = (vaddr_t)kva; s < size;
+	size_t s;
+
+	for (s = 0, va = (vaddr_t)kva; s < size;
 	     s += PAGE_SIZE, va += PAGE_SIZE)
 		_pmap_set_page_cacheable(pmap_kernel(), va);
 #endif /* __HAVE_NEW_PMAP_68K */
