@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.5 2025/11/08 16:57:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.6 2025/11/09 18:45:33 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -187,7 +187,6 @@
 /*
  * XXX TODO XXX
  *
- * - Finish the unimplemented functions (pmap_growkernel()).
  * - Solicit real 68040 testers.
  * - Test on real and emulated 68030.
  * - Finish HP MMU support and test on real HP MMU.
@@ -202,7 +201,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.5 2025/11/08 16:57:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.6 2025/11/09 18:45:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3045,7 +3044,104 @@ pmap_phys_address(paddr_t cookie)
 	return m68k_ptob(cookie);
 }
 
-static vaddr_t	kernel_lev1map;
+static pt_entry_t *kernel_lev1map;
+
+/*
+ * pmap_growkernel_alloc_page:
+ *
+ *	Helper for pmap_growkernel().
+ */
+static paddr_t
+pmap_growkernel_alloc_page(void)
+{
+	/*
+	 * XXX Needs more work if we're going to do this during
+	 * XXX early bootstrap.
+	 */
+	if (! uvm.page_init_done) {
+		panic("%s: called before UVM initialized", __func__);
+	}
+
+	struct vm_page *pg = pmap_page_alloc(true/*nowait*/);
+	if (pg == NULL) {
+		panic("%s: out of memory", __func__);
+	}
+
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	pmap_zero_page(pa);
+#if MMU_CONFIG_68040_CLASS
+	if (MMU_IS_68040_CLASS) {
+		DCFP(pa);
+	}
+#endif
+	return pa;
+}
+
+/*
+ * pmap_growkernel_link_kptpage:
+ *
+ *	Helper for pmap_growkernel().
+ */
+static void
+pmap_growkernel_link_kptpage(vaddr_t va, paddr_t ptp_pa)
+{
+	/*
+	 * This is trivial for the 2-level MMU configuration.
+	 */
+	if (MMU_USE_2L) {
+		KASSERT((kernel_lev1map[LA2L_RI(va)] & DT51_SHORT) == 0);
+		kernel_lev1map[LA2L_RI(va)] = pmap_ste_proto | ptp_pa;
+		return;
+	}
+
+	/*
+	 * N.B. pmap_zero_page() is used in this process, which
+	 * uses pmap_tmpmap_dstva.  pmap_tmpmap_srcva is available
+	 * for our use, however, so that's what we used to temporarily
+	 * map inner segment table pages.
+	 */
+	const vaddr_t stpg_va = pmap_tmpmap_srcva;
+
+	paddr_t stpa, stpg_pa, stpgoff, last_stpg_pa = (paddr_t)-1;
+	paddr_t pa = ptp_pa, end_pa = ptp_pa + PAGE_SIZE;
+	pt_entry_t *stes;
+
+	for (; pa < end_pa; va += NBSEG3L, pa += TBL40_L3_SIZE) {
+		if ((kernel_lev1map[LA40_RI(va)] & UTE40_RESIDENT) == 0) {
+			/* Level-2 table for this segment needed. */
+			if (kernel_stnext_pa == kernel_stnext_endpa) {
+				/*
+				 * No more slots left in the last page
+				 * we allocated for segment tables.  Grab
+				 * another one.
+				 */
+				kernel_stnext_pa = pmap_growkernel_alloc_page();
+				kernel_stnext_endpa =
+				    kernel_stnext_pa + PAGE_SIZE;
+			}
+			kernel_lev1map[LA40_RI(va)] =
+			    pmap_ste_proto | kernel_stnext_pa;
+			kernel_stnext_pa += TBL40_L2_SIZE;
+		}
+		stpa = kernel_lev1map[LA40_RI(va)] & UTE40_PTA;
+		stpg_pa = m68k_trunc_page(stpa);
+		if (stpg_pa != last_stpg_pa) {
+			if (last_stpg_pa != (paddr_t)-1) {
+				pmap_kremove(stpg_va, PAGE_SIZE);
+			}
+			pmap_kenter_pa(stpg_va, stpg_pa,
+			    UVM_PROT_READ | UVM_PROT_WRITE,
+			    PMAP_WIRED | PMAP_NOCACHE);
+			last_stpg_pa = stpg_pa;
+		}
+		stpgoff = stpa - stpg_pa;
+		stes = (pt_entry_t *)(stpg_va + stpgoff);
+		stes[LA40_PI(va)] = pmap_ste_proto | pa;
+	}
+	if (last_stpg_pa != (paddr_t)-1) {
+		pmap_kremove(stpg_va, PAGE_SIZE);
+	}
+}
 
 /*
  * pmap_growkernel:		[ INTERFACE ]
@@ -3056,22 +3152,47 @@ static vaddr_t	kernel_lev1map;
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	/* XXXJRT */
-	printf("%s: initial_kernel_ptpages=%zd, initial_kernel_stpages=%zd\n",
-	    __func__, initial_kernel_ptpages, initial_kernel_stpages);
-	printf("%s: requested maxkvaddr=0x%08lx\n", __func__, maxkvaddr);
+	PMAP_CRIT_ENTER();
+
+	KASSERT((kernel_virtual_end & PTPAGEVAOFS) == 0);
 
 	/*
 	 * We first calculate how many leaf tables are required
 	 * to map up to the requested max address.  Even if we're
 	 * on a 68040 or 68060, we allocate leaf tables in whole
-	 * pages to simplify the logic.
+	 * pages to simplify the logic (as was done in pmap_bootstrap1()).
 	 */
+	vaddr_t new_maxkva = pmap_round_ptpage(maxkvaddr);
+	if (new_maxkva < kernel_virtual_end) {
+		/*
+		 * Great news!  We already have what we need to map
+		 * the requested max address.  This happens one during
+		 * early bootstrap before UVM's notion of "maxkvaddr"
+		 * has been initialized.
+		 */
+		new_maxkva = kernel_virtual_end;
+		goto done;
+	}
 
-	/* XXX */
+	/*
+	 * Allocate PT pages and link them into the MMU tree as we
+	 * go.
+	 */
+	vaddr_t va, ptp_pa;
+	for (va = kernel_virtual_end; va < new_maxkva; va += PTPAGEVASZ) {
+		/* Allocate page and link it into the MMU tree. */
+		ptp_pa = pmap_growkernel_alloc_page();
+		pmap_growkernel_link_kptpage(va, ptp_pa);
 
-	printf("%s: returning=0x%08lx\n", __func__, kernel_virtual_end);
-	return kernel_virtual_end;
+		/* Map the PT page into the kernel PTE array. */
+		pmap_kenter_pa((vaddr_t)pmap_kernel_pte(va),
+		    ptp_pa, UVM_PROT_READ | UVM_PROT_WRITE,
+		    PMAP_WIRED | PMAP_NOCACHE);
+	}
+ 	kernel_virtual_end = new_maxkva;
+ done:
+	PMAP_CRIT_EXIT();
+	return new_maxkva;
 }
 
 /*
