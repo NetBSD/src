@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.18 2025/11/02 06:05:19 macallan Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.19 2025/11/09 07:15:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -173,7 +173,7 @@
 #define IBO_MIN		0x600
 #define IBO_MAX		0x700
 
-/* 
+/*
  * here are the blend functions I identified
  * apparently the upper byte in 32bit mode is not implemented on FX2/4/6, and
  * neither is any blend mode that takes the colour value from CBR
