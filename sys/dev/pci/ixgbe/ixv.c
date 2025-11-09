@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.198 2024/07/10 03:26:30 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.199 2025/11/09 08:16:00 andvar Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.198 2024/07/10 03:26:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.199 2025/11/09 08:16:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2413,7 +2413,7 @@ ixv_configure_ivars(struct ixgbe_softc *sc)
  * ixv_init_stats
  *
  *   The VF stats registers never have a truly virgin
- *   starting point, so this routine save initial vaules to
+ *   starting point, so this routine save initial values to
  *   last_<REGNAME>.
  ************************************************************************/
 static void

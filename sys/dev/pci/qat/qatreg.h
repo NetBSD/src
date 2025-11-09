@@ -1,4 +1,4 @@
-/*	$NetBSD: qatreg.h,v 1.3 2022/04/08 10:27:04 andvar Exp $	*/
+/*	$NetBSD: qatreg.h,v 1.4 2025/11/09 08:16:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -841,7 +841,7 @@ enum aereg_type {
 	AEREG_SCRATCH_IMPORTED,	/* scratch imported data */
 	AEREG_XFER_RD_ABS,	/* transfer read register under absolute mode */
 	AEREG_XFER_WR_ABS,	/* transfer write register under absolute mode */
-	AEREG_CONST_VALUE,	/* const alue */
+	AEREG_CONST_VALUE,	/* const value */
 	AEREG_ADDR_TAKEN,	/* address taken */
 	AEREG_OPTIMIZED_AWAY,	/* optimized away */
 	AEREG_SHRAM_ADDR,	/* shared ram0 address */
