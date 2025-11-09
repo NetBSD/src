@@ -1,4 +1,4 @@
-#	$NetBSD: std.virt68k,v 1.2 2024/01/02 16:48:01 thorpej Exp $
+#	$NetBSD: std.virt68k,v 1.3 2025/11/09 19:06:55 thorpej Exp $
 #
 # Options/devices that all virt68ks should have
 #
@@ -6,6 +6,9 @@
 machine virt68k m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
+
+# Experimental shiny object
+options 	__HAVE_NEW_PMAP_68K
 
 options 	EXEC_AOUT	# support for exec'ing a.out
 
