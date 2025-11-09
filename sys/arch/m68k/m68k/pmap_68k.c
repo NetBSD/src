@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.6 2025/11/09 18:45:33 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.7 2025/11/09 22:22:34 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -194,6 +194,8 @@
  * - Kcore / libkvm support.
  * - Inline asm for the atomic ops used.
  * - Optimize ATC / cache manipulation.
+ * - Add some more instrumentation.
+ * - Eventually disable instrumentation by default.
  * - ...
  * - PROFIT!
  */
@@ -201,10 +203,11 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.6 2025/11/09 18:45:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.7 2025/11/09 22:22:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/evcnt.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
@@ -233,6 +236,96 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.6 2025/11/09 18:45:33 thorpej Exp $")
 #define	PMAP_CRIT_ENTER()	__nothing
 #define	PMAP_CRIT_EXIT()	__nothing
 #define	PMAP_CRIT_ASSERT()	__nothing
+
+/***************************** INSTRUMENTATION *******************************/
+
+#define	PMAP_EVENT_COUNTERS
+
+static struct evcnt pmap_nkptpages_initial_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nkptpages", "initial");
+static struct evcnt pmap_nkptpages_current_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nkptpages", "current");
+EVCNT_ATTACH_STATIC(pmap_nkptpages_initial_ev);
+EVCNT_ATTACH_STATIC(pmap_nkptpages_current_ev);
+
+static struct evcnt pmap_nkstpages_initial_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nkstpages", "initial");
+static struct evcnt pmap_nkstpages_current_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nkstpages", "current");
+EVCNT_ATTACH_STATIC(pmap_nkstpages_initial_ev);
+EVCNT_ATTACH_STATIC(pmap_nkstpages_current_ev);
+
+static struct evcnt pmap_maxkva_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "maxkva");
+EVCNT_ATTACH_STATIC(pmap_maxkva_ev);
+
+#ifdef PMAP_EVENT_COUNTERS
+static struct evcnt pmap_pv_alloc_wait_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_alloc", "wait");
+EVCNT_ATTACH_STATIC(pmap_pv_alloc_wait_ev);
+
+static struct evcnt pmap_pv_alloc_nowait_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_alloc", "nowait");
+EVCNT_ATTACH_STATIC(pmap_pv_alloc_nowait_ev);
+
+static struct evcnt pmap_pv_enter_called_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_enter", "called");
+EVCNT_ATTACH_STATIC(pmap_pv_enter_called_ev);
+
+static struct evcnt pmap_pv_enter_usr_ci_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_enter", "usr_ci");
+EVCNT_ATTACH_STATIC(pmap_pv_enter_usr_ci_ev);
+
+#if MMU_CONFIG_HP_CLASS
+static struct evcnt pmap_pv_enter_vac_ci_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_enter", "vac_ci");
+EVCNT_ATTACH_STATIC(pmap_pv_enter_vac_ci_ev);
+#endif
+
+static struct evcnt pmap_pv_enter_ci_multi_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_enter", "ci_multi");
+EVCNT_ATTACH_STATIC(pmap_pv_enter_ci_multi_ev);
+
+static struct evcnt pmap_pv_remove_called_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_remove", "called");
+EVCNT_ATTACH_STATIC(pmap_pv_remove_called_ev);
+
+static struct evcnt pmap_pv_remove_ci_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pv_remove", "ci");
+EVCNT_ATTACH_STATIC(pmap_pv_remove_ci_ev);
+
+static struct evcnt pmap_pt_cache_hit_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pt_cache", "hit");
+EVCNT_ATTACH_STATIC(pmap_pt_cache_hit_ev);
+
+static struct evcnt pmap_pt_cache_miss_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pt_cache", "miss");
+EVCNT_ATTACH_STATIC(pmap_pt_cache_miss_ev);
+
+static struct evcnt pmap_enter_valid_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "valid");
+EVCNT_ATTACH_STATIC(pmap_enter_valid_ev);
+
+static struct evcnt pmap_enter_wire_change_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "wire change");
+EVCNT_ATTACH_STATIC(pmap_enter_wire_change_ev);
+
+static struct evcnt pmap_enter_prot_change_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "prot change");
+EVCNT_ATTACH_STATIC(pmap_enter_prot_change_ev);
+
+static struct evcnt pmap_enter_pa_change_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pa change");
+EVCNT_ATTACH_STATIC(pmap_enter_pa_change_ev);
+
+static struct evcnt pmap_enter_pv_recycle_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pv recycle");
+EVCNT_ATTACH_STATIC(pmap_enter_pv_recycle_ev);
+
+#define	pmap_evcnt(e)		pmap_ ## e ## _ev.ev_count++
+#else
+#define	pmap_evcnt(e)		__nothing
+#endif
 
 /**************************** MMU CONFIGURATION ******************************/
 
@@ -603,6 +696,14 @@ static struct pv_entry *
 pmap_pv_alloc(bool nowait)
 {
 	struct pv_entry *pv;
+
+#ifdef PMAP_EVENT_COUNTERS
+	if (nowait) {
+		pmap_evcnt(pv_alloc_nowait);
+	} else {
+		pmap_evcnt(pv_alloc_wait);
+	}
+#endif
 
 	pv = pool_get(&pmap_pv_pool, nowait ? PR_NOWAIT : 0);
 	if (__predict_true(pv != NULL)) {
@@ -1217,10 +1318,13 @@ pmap_table_lookup(pmap_t pmap, unsigned int segnum, bool segtab)
 	struct pmap_table *pt;
 
 	if ((pt = pmap->pm_pt_cache) == NULL || pt->pt_key != key) {
+		pmap_evcnt(pt_cache_miss);
 		pt = rb_tree_find_node(&pmap->pm_tables, &key);
 		if (__predict_true(!segtab)) {
 			pmap->pm_pt_cache = pt;
 		}
+	} else {
+		pmap_evcnt(pt_cache_hit);
 	}
 	if (pt != NULL) {
 		pmap_table_retain(pt);
@@ -1487,6 +1591,8 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	struct pv_entry *pv;
 	pt_entry_t opte;
 
+	pmap_evcnt(pv_enter_called);
+
 	PMAP_CRIT_ASSERT();
 	KASSERT(newpv != NULL);
 
@@ -1550,6 +1656,8 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	if (__predict_false(usr_ci)) {
 		VM_MDPAGE_SET_CI(pg);
 
+		pmap_evcnt(pv_enter_usr_ci);
+
 		/*
 		 * There shouldn't be very many of these; CI mappings
 		 * of managed pages are typically only for coherent DMA
@@ -1557,6 +1665,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 		 * extremely uncommon in that scenario.
 		 */
 		for (pv = newpv->pv_next; pv != NULL; pv = pv->pv_next) {
+			pmap_evcnt(pv_enter_ci_multi);
 			ptep = pmap_pv_pte(pv);
 			for (;;) {
 				opte = pte_load(ptep);
@@ -1618,10 +1727,14 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	pte_store(ptep, npte);
 
 	vaddr_t pv_flags = newpv->pv_vf & PV_F_CI_USR;
+	if (usr_ci) {
+		pmap_evcnt(pv_enter_usr_ci);
+	}
 
 	for (pv = newpv->pv_next; pv != NULL; pv = pv->pv_next) {
 		if (MATCHING_PMAP(pmap, pv->pv_pmap) &&
 		    CONFLICTING_ALIAS(va, PV_VA(pv))) {
+			pmap_evcnt(pv_enter_vac_ci);
 			pv_flags |= PV_F_CI_VAC;
 			break;
 		}
@@ -1635,6 +1748,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	VM_MDPAGE_SET_CI(pg);
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 		if (MATCHING_PMAP(pmap, pv->pv_pmap)) {
+			pmap_evcnt(pv_enter_ci_multi);
 			pv->pv_vf |= pv_flags;
 			pte_set(pmap_pv_pte(pv), PTE51_CI);
 			if (active_pmap(pv->pv_pmap)) {
@@ -1668,6 +1782,8 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 {
 	struct pv_entry **pvp, *pv;
 	pt_entry_t *ptep, opte, npte;
+
+	pmap_evcnt(pv_remove_called);
 
 	PMAP_CRIT_ASSERT();
 
@@ -1711,6 +1827,7 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	 * will be very short).
 	 */
 	if (__predict_false(VM_MDPAGE_CI_P(pg))) {
+		pmap_evcnt(pv_remove_ci); 
 		for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 			if (pv->pv_vf & PV_F_CI_USR) {
 				/*
@@ -1748,6 +1865,8 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	 */
 	if (__predict_false(VM_MDPAGE_CI_P(pg))) {
 		vaddr_t all_ci_flags = PV_F_CI_USR;
+
+		pmap_evcnt(pv_remove_ci); 
 
 		for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 			if (! MATCHING_PMAP(pmap, pv->pv_pmap)) {
@@ -1848,9 +1967,6 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 	*vstartp = kernel_virtual_start;
 	*vendp = VM_MAX_KERNEL_ADDRESS;
 }
-
-static size_t	initial_kernel_ptpages;
-static size_t	initial_kernel_stpages;
 
 /*
  * pmap_init:			[ INTERFACE ]
@@ -2385,6 +2501,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * It might simply be a wiring or protection change.
 	 */
 	if (pte_valid_p(opte)) {
+ 		pmap_evcnt(enter_valid);
  restart:
 		if (pte_pa(opte) == pa) {
 			/*
@@ -2418,6 +2535,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			pte_store(ptep, npte);
 
 			const pt_entry_t diff = opte ^ npte;
+
+#ifdef PMAP_EVENT_COUNTERS
+			if (diff & PTE_WIRED) {
+				pmap_evcnt(enter_wire_change);
+			}
+			if (diff & PTE_WP) {
+				pmap_evcnt(enter_prot_change);
+			}
+#endif
 
 			if (pte_wired_p(diff)) {
 				pmap_stat_update(pmap, wired_count,
@@ -2463,6 +2589,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * inherit the retain count taken when we looked up the
 		 * PTE.
 		 */
+		pmap_evcnt(enter_pa_change);
 		pmap_remove_mapping(pmap, va, ptep, pt,
 		    PRM_TFLUSH|PRM_CFLUSH, &pc);
 	}
@@ -2524,6 +2651,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 			}
 		} else {
+			pmap_evcnt(enter_pv_recycle);
 			LIST_REMOVE(newpv, pv_pmlist);
 		}
 
@@ -3118,6 +3246,7 @@ pmap_growkernel_link_kptpage(vaddr_t va, paddr_t ptp_pa)
 				kernel_stnext_pa = pmap_growkernel_alloc_page();
 				kernel_stnext_endpa =
 				    kernel_stnext_pa + PAGE_SIZE;
+				pmap_nkstpages_current_ev.ev_count++;
 			}
 			kernel_lev1map[LA40_RI(va)] =
 			    pmap_ste_proto | kernel_stnext_pa;
@@ -3183,6 +3312,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* Allocate page and link it into the MMU tree. */
 		ptp_pa = pmap_growkernel_alloc_page();
 		pmap_growkernel_link_kptpage(va, ptp_pa);
+		pmap_nkptpages_current_ev.ev_count++;
 
 		/* Map the PT page into the kernel PTE array. */
 		pmap_kenter_pa((vaddr_t)pmap_kernel_pte(va),
@@ -3191,6 +3321,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
  	kernel_virtual_end = new_maxkva;
  done:
+	pmap_maxkva_ev.ev_count32 = new_maxkva;
 	PMAP_CRIT_EXIT();
 	return new_maxkva;
 }
@@ -3470,9 +3601,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	nextpa += nptpages * PAGE_SIZE;
 	kern_ptpages_end = nextpa;
 
-	/* Instrumentation. */
-	RELOC(initial_kernel_ptpages, size_t) = nptpages;
-
 	/*
 	 * OK!  We have PTEs that will map all the stuff!  Zero them
 	 * all out before we do anything.
@@ -3565,7 +3693,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/* Instrumentation. */
-	RELOC(initial_kernel_stpages, size_t) = nstpages;
+	RELOC(pmap_nkptpages_initial_ev.ev_count32, uint32_t) =
+	    RELOC(pmap_nkptpages_current_ev.ev_count32, uint32_t) = nptpages;
+	RELOC(pmap_nkstpages_initial_ev.ev_count32, uint32_t) =
+	    RELOC(pmap_nkstpages_current_ev.ev_count32, uint32_t) = nstpages;
 
 	/*
 	 * Record the number of wired mappings we created above
