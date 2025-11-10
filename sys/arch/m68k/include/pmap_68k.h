@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.2 2025/11/08 16:57:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.3 2025/11/10 14:30:13 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -236,6 +236,13 @@ struct pmap_ptpage {
 			 __SHIFTIN(PGSHIFT, TCR51_PS) |			\
 			 __SHIFTIN(LA2L_L1_NBITS, TCR51_TIA) |		\
 			 __SHIFTIN(LA2L_L2_NBITS, TCR51_TIB))
+
+#define	MMU51_3L_TCR_BITS (TCR51_E | TCR51_SRE |			\
+			__SHIFTIN(PGSHIFT, TCR51_PS) |			\
+			__SHIFTIN(LA40_L1_NBITS, TCR51_TIA) |		\
+			__SHIFTIN(LA40_L2_NBITS, TCR51_TIB) |		\
+			__SHIFTIN(LA40_L3_NBITS, TCR51_TIC))
+
 #define	MMU40_TCR_BITS	(TCR40_E |					\
 			 __SHIFTIN(PGSHIFT - 12, TCR40_P))
 
