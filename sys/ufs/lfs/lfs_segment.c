@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.298 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.299 2025/11/10 18:15:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.298 2025/11/06 15:45:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.299 2025/11/10 18:15:01 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1036,8 +1036,12 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 			sp->idp = NULL;
 		}
 		++count;
+#ifdef DEBUG
 		if (count > 2)
 			log(LOG_NOTICE, "lfs_writeinode: looping count=%d\n", count);
+#endif /* DEBUG */
+		if (count > 10)
+			panic("lfs_writeinode: looping");
 		lfs_writefile(fs, sp, fs->lfs_ivnode);
 	}
 
