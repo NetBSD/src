@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.28 2025/10/04 04:45:57 thorpej Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.29 2025/11/10 02:20:47 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.28 2025/10/04 04:45:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.29 2025/11/10 02:20:47 macallan Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.28 2025/10/04 04:45:57 thorpej Ex
 #include <machine/pci_machdep.h>
 
 #include <prop/proplib.h>
+
+#include "wsdisplay.h"
 
 extern char bootpath[256];
 char cbootpath[256];
