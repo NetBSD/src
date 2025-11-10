@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.14 2025/10/26 16:25:15 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.15 2025/11/10 15:34:28 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1185,6 +1185,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct sys_umask_args *p = params;
 		iarg[0] = SCARG(p, newmask); /* int */
 		*n_args = 1;
+		break;
+	}
+	/* linux_sys___prctl */
+	case 167: {
+		const struct linux_sys___prctl_args *p = params;
+		iarg[0] = SCARG(p, code); /* int */
+		uarg[1] = (intptr_t) SCARG(p, args[0]); /* void * */
+		*n_args = 2;
 		break;
 	}
 	/* linux_sys_getcpu */
@@ -3892,6 +3900,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys___prctl */
+	case 167:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "void *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_getcpu */
 	case 168:
 		switch(ndx) {
@@ -5769,6 +5790,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_umask */
 	case 166:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys___prctl */
+	case 167:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

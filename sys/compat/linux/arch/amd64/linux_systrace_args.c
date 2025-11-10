@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.29 2025/10/26 16:25:16 christos Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.30 2025/11/10 15:34:28 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1228,6 +1228,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct linux_sys___sysctl_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lsp); /* struct linux___sysctl * */
 		*n_args = 1;
+		break;
+	}
+	/* linux_sys___prctl */
+	case 157: {
+		const struct linux_sys___prctl_args *p = params;
+		iarg[0] = SCARG(p, code); /* int */
+		uarg[1] = (intptr_t) SCARG(p, args[0]); /* void * */
+		*n_args = 2;
 		break;
 	}
 	/* linux_sys_arch_prctl */
@@ -4187,6 +4195,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys___prctl */
+	case 157:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "void *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_arch_prctl */
 	case 158:
 		switch(ndx) {
@@ -6611,6 +6632,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys___sysctl */
 	case 156:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys___prctl */
+	case 157:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
