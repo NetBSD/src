@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.3 2025/11/10 14:30:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.4 2025/11/10 14:32:34 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -374,7 +374,7 @@ void	pmap_procwr(struct proc *, vaddr_t, size_t);
  * pmap_bootstrap1() is called before the MMU is turned on.
  * pmap_bootstrap2() is called after.
  */
-paddr_t	pmap_bootstrap1(paddr_t/*nextpa*/, paddr_t/*firstpa*/);
+paddr_t	pmap_bootstrap1(paddr_t/*nextpa*/, paddr_t/*reloff*/);
 void *	pmap_bootstrap2(void);
 
 /*
