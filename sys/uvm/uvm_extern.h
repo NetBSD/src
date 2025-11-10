@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.235 2025/09/14 14:24:13 andvar Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.236 2025/11/10 01:22:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -298,7 +298,7 @@ struct vmtotal;
 #define	UVM_PCTPARAM_SHIFT	8
 #define	UVM_PCTPARAM_SCALE	(1 << UVM_PCTPARAM_SHIFT)
 #define	UVM_PCTPARAM_APPLY(pct, x) \
-	(((x) * (pct)->pct_scaled) >> UVM_PCTPARAM_SHIFT)
+	(((uint64_t)(x) * (pct)->pct_scaled) >> UVM_PCTPARAM_SHIFT)
 struct uvm_pctparam {
 	int pct_pct;	/* percent [0, 100] */ /* should be the first member */
 	int pct_scaled;
