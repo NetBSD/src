@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.88 2024/10/01 16:29:15 riastradh Exp $
+	$NetBSD: syscalls.master,v 1.89 2025/11/10 15:34:03 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -319,7 +319,8 @@
 			    gid_t sgid); }
 170	STD		{ int|linux_sys||getresgid(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
-171	UNIMPL		prctl
+171	INDIR		{ int|linux_sys||__prctl(int code, \
+                                  ... void * args[SYS_MAXSYSARGS]); }
 172	STD		{ int|linux_sys||rt_sigreturn( \
 			    struct linux_rt_sigframe *sfp); }
 173	STD		{ int|linux_sys||rt_sigaction(int signum, \

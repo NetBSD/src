@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 2025/10/26 16:19:05 christos Exp $
+	$NetBSD: syscalls.master,v 1.16 2025/11/10 15:34:03 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -347,7 +347,8 @@
 165	NOARGS		{ int|compat_50_sys||getrusage(int who, \
 			    struct rusage50 *rusage); }
 166	NOARGS		{ int|sys||umask(int newmask); }
-167	UNIMPL		prctl
+167	INDIR		{ int|linux_sys||__prctl(int code, \
+                                  ... void * args[SYS_MAXSYSARGS]); }
 168	STD		{ int|linux_sys||getcpu(unsigned int *cpu, \
 			    unsigned int *node, \
 			    struct linux_getcpu_cache *tcache); }

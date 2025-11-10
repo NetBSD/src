@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.85 2025/09/19 19:35:15 kre Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.86 2025/11/10 15:34:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.85 2025/09/19 19:35:15 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.86 2025/11/10 15:34:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.85 2025/09/19 19:35:15 kre Exp $")
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux/common/linux_sched.h>
+
+#include <compat/linux/common/linux_prctl.h>
 
 static int linux_clone_nptl(struct lwp *, const struct linux_sys_clone_args *,
     register_t *);
@@ -781,4 +783,36 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 	SCARG(&ssa, cpuset) = (cpuset_t *)SCARG(uap, mask);
 
 	return sys__sched_setaffinity(l, &ssa, retval);
+}
+
+int
+linux_sys___prctl(struct lwp *l, const struct linux_sys___prctl_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)    code;
+		syscallarg(void *) args[SYS_MAXSYSARGS];
+	} */
+
+	unsigned int c = SCARG(uap, code);
+
+        /* TODO: add other commonly used prctl codes */
+	switch(c) {
+	case LINUX_PR_SET_NAME: {
+		struct sys__lwp_setname_args sls;
+		SCARG(&sls, name) = (char *) SCARG(uap, args[0]);
+		return sys__lwp_setname(l, &sls, retval);
+	}
+
+	case LINUX_PR_GET_NAME: {
+		struct sys__lwp_getname_args slg;
+		SCARG(&slg, name) = (char *) SCARG(uap, args[0]);
+		SCARG(&slg, len) = MAXCOMLEN;
+		return sys__lwp_getname(l, &slg, retval);
+		}
+	default:
+		printf("Unimplemented linux prctl code: (%d)", c);
+		return ENOSYS;
+	}
+
 }
