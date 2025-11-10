@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.86 2025/11/10 15:34:04 christos Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.87 2025/11/10 15:41:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.86 2025/11/10 15:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.87 2025/11/10 15:41:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -791,7 +791,7 @@ linux_sys___prctl(struct lwp *l, const struct linux_sys___prctl_args *uap,
 {
 	/* {
 		syscallarg(int)    code;
-		syscallarg(void *) args[SYS_MAXSYSARGS];
+		syscallarg(void *) args[LINUX_SYS_MAXSYSARGS];
 	} */
 
 	unsigned int c = SCARG(uap, code);

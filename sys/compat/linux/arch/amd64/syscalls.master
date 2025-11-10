@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.77 2025/11/10 15:34:03 christos Exp $
+	$NetBSD: syscalls.master,v 1.78 2025/11/10 15:41:38 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -341,7 +341,7 @@
 155	UNIMPL		pivot_root
 156	STD		{ int|linux_sys||__sysctl(struct linux___sysctl *lsp); }
 157	INDIR		{ int|linux_sys||__prctl(int code, \
-                                  ... void * args[SYS_MAXSYSARGS]); }
+                                  ... void * args[LINUX_SYS_MAXSYSARGS]); }
 158	STD		{ int|linux_sys||arch_prctl(int code, \
 			    unsigned long addr); }
 159	UNIMPL		adjtimex

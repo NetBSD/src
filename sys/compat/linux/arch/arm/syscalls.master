@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.85 2025/11/10 15:34:03 christos Exp $
+	$NetBSD: syscalls.master,v 1.86 2025/11/10 15:41:38 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -296,7 +296,7 @@
 171	STD		{ int|linux_sys||getresgid16(linux_gid16_t *rgid, \
 			    linux_gid16_t *egid, linux_gid16_t *sgid); }
 172	INDIR		{ int|linux_sys||__prctl(int code, \
-                                  ... void * args[SYS_MAXSYSARGS]); }
+                                  ... void * args[LINUX_SYS_MAXSYSARGS]); }
 173	UNIMPL		rt_sigreturn
 ;173	STD		{ int|linux_sys||rt_sigreturn( \
 ;			    struct linux_rt_sigframe *sfp); }
