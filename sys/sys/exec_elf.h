@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.179 2025/11/07 21:58:21 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.180 2025/11/11 21:20:23 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1018,10 +1018,8 @@ typedef struct {
 } Elf32_Vernaux;
 typedef Elf32_Vernaux	Elf64_Vernaux;
 
-typedef struct {
-	Elf32_Half	vs_vers;
-} Elf32_Versym;
-typedef Elf32_Versym	Elf64_Versym;
+typedef Elf32_Half Elf32_Versym;
+typedef Elf64_Half Elf64_Versym;
 
 /*
  * Symbols and types that are NetBSD-specific.

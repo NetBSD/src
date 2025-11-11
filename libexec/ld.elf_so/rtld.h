@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.150 2025/05/02 23:04:31 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.151 2025/11/11 21:20:23 jkoshy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -474,7 +474,7 @@ _rtld_fetch_ventry(const Obj_Entry *obj, unsigned long symnum)
 	Elf_Half vernum;
 
 	if (obj->vertab) {
-		vernum = VER_NDX(obj->versyms[symnum].vs_vers);
+		vernum = VER_NDX(obj->versyms[symnum]);
 		if (vernum >= obj->vertabnum) {
 			_rtld_error("%s: symbol %s has wrong verneed value %d",
 			    obj->path, &obj->strtab[symnum], vernum);

@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.77 2025/05/02 23:04:31 riastradh Exp $	 */
+/*	$NetBSD: symbol.c,v 1.78 2025/11/11 21:20:23 jkoshy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.77 2025/05/02 23:04:31 riastradh Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.78 2025/11/11 21:20:23 jkoshy Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -208,7 +208,7 @@ _rtld_symlook_obj_matched_symbol(const char *name,
 
 	if (ventry == NULL) {
 		if (obj->versyms != NULL) {
-			verndx = VER_NDX(obj->versyms[symnum].vs_vers);
+			verndx = VER_NDX(obj->versyms[symnum]);
 			if (verndx > obj->vertabnum) {
 				_rtld_error("%s: symbol %s references "
 				    "wrong version %d", obj->path,
@@ -234,7 +234,7 @@ _rtld_symlook_obj_matched_symbol(const char *name,
 				*vsymp = symp;
 				return true;
 			} else if (verndx >= VER_NDX_GIVEN) {
-				if (!(obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN)) {
+				if (!(obj->versyms[symnum] & VER_NDX_HIDDEN)) {
 					if (*vsymp == NULL)
 						*vsymp = symp;
 					(*vcount)++;
@@ -254,7 +254,7 @@ _rtld_symlook_obj_matched_symbol(const char *name,
 				return false;
 			}
 		} else {
-			verndx = VER_NDX(obj->versyms[symnum].vs_vers);
+			verndx = VER_NDX(obj->versyms[symnum]);
 			if (verndx > obj->vertabnum) {
 				_rtld_error("%s: symbol %s references "
 				    "wrong version %d", obj->path,
@@ -274,7 +274,7 @@ _rtld_symlook_obj_matched_symbol(const char *name,
 				* dlvsym wants.
 				*/
 				if ((flags & SYMLOOK_DLSYM) ||
-				    (obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN) ||
+				    (obj->versyms[symnum] & VER_NDX_HIDDEN) ||
 				    (verndx >= VER_NDX_GIVEN))
 					return false;
 			}
