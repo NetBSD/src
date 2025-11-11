@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.11 2025/10/25 15:02:56 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.12 2025/11/11 21:34:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -135,6 +135,7 @@
 #define  IOPOH1EN			__BIT(22)
 #define  IOPOH0EN			__BIT(21)
 #define  IOPEHCEN			__BIT(20)
+#define  IOPAESEN			__BIT(18)
 #define HW_AIPPROT			(HOLLYWOOD_PRIV_BASE + 0x070)
 #define  ENAHBIOPI			__BIT(0)
 #define HW_GPIOB_OUT			(HOLLYWOOD_BASE + 0x0c0)
