@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.354 2024/07/10 03:26:30 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.355 2025/11/11 14:17:47 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.354 2024/07/10 03:26:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.355 2025/11/11 14:17:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5361,14 +5361,13 @@ ixgbe_legacy_irq(void *arg)
 static void
 ixgbe_free_pciintr_resources(struct ixgbe_softc *sc)
 {
-	struct ix_queue *que = sc->queues;
 	int		rid;
 
 	/*
 	 * Release all msix queue resources:
 	 */
-	for (int i = 0; i < sc->num_queues; i++, que++) {
-		if (que->res != NULL) {
+	for (int i = 0; i < sc->num_queues; i++) {
+		if (sc->osdep.ihs[i] != NULL) {
 			pci_intr_disestablish(sc->osdep.pc, sc->osdep.ihs[i]);
 			sc->osdep.ihs[i] = NULL;
 		}
