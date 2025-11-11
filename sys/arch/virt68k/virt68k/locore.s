@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 2025/11/07 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 2025/11/11 14:54:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -248,8 +248,8 @@ Lmmuenabled:
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a0@(PCB_FPCTX)		| ensure null FP context
-	movl	%a0,%sp@-
-	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
+	pea	%a0@(PCB_FPCTX)
+	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a0)
 	addql	#4,%sp
 Lenab2:
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
