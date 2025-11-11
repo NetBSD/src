@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3196 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3197 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -85,3 +85,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	aac(4): Support Adaptec RAID 5445, 5805 and 5085. [riz 20251107]
 	m68k: Experimental new pmap module for systems with 68k MMUs
 		(plus the HP MMU). [thorpej 20251108]
+	evbppc: Add support for the Wii AES engine. [jmcneill 20251111]
