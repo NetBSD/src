@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48 2025/11/12 18:10:49 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.49 2025/11/12 18:55:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.48 2025/11/12 18:10:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.49 2025/11/12 18:55:10 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 #include "opt_newsconf.h"
@@ -54,11 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.48 2025/11/12 18:10:49 tsutsui 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
 
 extern char *etext;
-extern char *extiobase;
-extern char *cache_ctl, *cache_clr;
 
-extern int maxmem;
-extern paddr_t avail_start, avail_end;
 extern vaddr_t kernel_reloc_offset;
 
 /*
@@ -73,7 +69,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-paddr_t pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -87,13 +83,12 @@ paddr_t pmap_bootstrap(paddr_t, paddr_t);
  * XXX a PIC compiler would make this much easier.
  */
 paddr_t
-pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
+pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
-	u_int iiomapsize, eiomapsize;
 #ifdef M68040
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 #endif
@@ -113,22 +108,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
-	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE and
-	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
-	 *   the total to a page boundary with IO maps at the end. ]
-	 *
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
 	RELOC(kernel_reloc_offset, vaddr_t) = firstpa;
-
-	/*
-	 * XXX now we are using tt0 register to map IIO.
-	 */
-	iiomapsize = m68k_btop(RELOC(intiotop_phys, u_int) -
-			       RELOC(intiobase_phys, u_int));
-	eiomapsize = m68k_btop(RELOC(extiotop_phys, u_int) -
-			       RELOC(extiobase_phys, u_int));
 
 	lwp0upa = nextpa;
 	nextpa += USPACE;
@@ -143,8 +126,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG) +
-		(iiomapsize + eiomapsize + NPTEPG - 1) / NPTEPG;
+	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG);
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
@@ -389,16 +371,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 #define	PTE2VA(pte)	m68k_ptob(pte - ((pt_entry_t *)kptpa))
 
-	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_V;
-	epte = &pte[iiomapsize];
-	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += PAGE_SIZE;
-	}
-	RELOC(extiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	pte += eiomapsize;
 	RELOC(virtual_avail, vaddr_t) = PTE2VA(pte);
 
 	/*
@@ -429,27 +401,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
 
-	/*
-	 * VM data structures are now initialized, set up data for
-	 * the pmap module.
-	 *
-	 * Note about avail_end: msgbuf is initialized just after
-	 * avail_end in machdep.c.
-	 */
-	RELOC(avail_start, paddr_t) = nextpa;
-	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
-	    m68k_round_page(MSGBUFSIZE);
-
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
-
-#ifdef news1700
-	if (RELOC(systype, int) == NEWS1700) {
-		RELOC(cache_ctl, uint8_t *) = 0xe1300000 - INTIOBASE1700 +
-					  RELOC(intiobase, uint8_t *);
-		RELOC(cache_clr, uint8_t *) = 0xe1900000 - INTIOBASE1700 +
-					  RELOC(intiobase, uint8_t *);
-	}
-#endif
 
 	/*
 	 * Allocate some fixed, special purpose kernel virtual addresses

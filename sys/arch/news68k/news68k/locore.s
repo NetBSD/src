@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 2025/11/11 15:17:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 2025/11/12 18:55:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,8 +73,9 @@ ASLOCAL(monitor)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var, ar)		\
-	lea	var,ar;		\
+#define	IMMEDIATE	#
+#define	_RELOC(var, ar)			\
+	movl	IMMEDIATE var,ar;	\
 	addl	%a5,ar
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
@@ -182,21 +183,16 @@ ASENTRY_NOPROFILE(start)
 
 	/*
 	 * Fix up the physical addresses of the news1200's onboard
-	 * I/O registers.
+	 * I/O registers (accessed via PA==VA mappings by TT0 register)
 	 */
-	RELOC(intiobase_phys, %a0);
+	RELOC(intiobase, %a0);
 	movl	#INTIOBASE1200,%a0@
-	RELOC(intiotop_phys, %a0);
+	RELOC(intiotop, %a0);
 	movl	#INTIOTOP1200,%a0@
-
-	RELOC(extiobase_phys, %a0);
-	movl	#EXTIOBASE1200,%a0@
-	RELOC(extiotop_phys, %a0);
-	movl	#EXTIOTOP1200,%a0@
 
 	RELOC(ctrl_power, %a0);
 	movl	#CTRL_POWER1200,%a0@	| CTRL_POWER port for news1200
-	RELOC(ctrl_led_phys, %a0);
+	RELOC(ctrl_led, %a0);
 	movl	#CTRL_LED1200,%a0@	| CTRL_LED port for news1200
 	jra	Lcom030
 
@@ -230,22 +226,22 @@ Lnot1200:
 2:
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
-	 * I/O registers.
+	 * I/O registers (accessed via PA==VA mappings by TT0 register)
 	 */
-	RELOC(intiobase_phys, %a0);
+	RELOC(intiobase, %a0);
 	movl	#INTIOBASE1700,%a0@
-	RELOC(intiotop_phys, %a0);
+	RELOC(intiotop, %a0);
 	movl	#INTIOTOP1700,%a0@
-
-	RELOC(extiobase_phys, %a0);
-	movl	#EXTIOBASE1700,%a0@
-	RELOC(extiotop_phys, %a0);
-	movl	#EXTIOTOP1700,%a0@
 
 	RELOC(ctrl_power, %a0);
 	movl	#CTRL_POWER1700,%a0@	| CTRL_POWER port for news1700
-	RELOC(ctrl_led_phys, %a0);
+	RELOC(ctrl_led, %a0);
 	movl	#CTRL_LED1700,%a0@	| CTRL_LED port for news1700
+
+	RELOC(cache_ctl, %a0);
+	movl	#0xe1300000,%a0@	| cache control port for news1700
+	RELOC(cache_clr, %a0);
+	movl	#0xe1900000,%a0@	| cache clear port for news1700
 Lcom030:
 
 	movl	%d4,%d1
@@ -317,11 +313,21 @@ Lstart1:
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart2:
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(firstpa, nextpa)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
+
 /*
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
@@ -411,6 +417,7 @@ Ltbia040:
 	.word	0xf518
 Lenab3:
 /* final setup for C code */
+	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(news68k_init)	| additional pre-main initialization
 
 /*
@@ -855,7 +862,7 @@ Lnocache5:
  * used as break point before printf enabled
  */
 ASENTRY_NOPROFILE(debug_led)
-	RELOC(ctrl_led_phys,%a0)	| assume %a5 still has base address
+	RELOC(ctrl_led,%a0)		| assume %a5 still has base address
 	movl	%d0,%a0@
 
 1:	nop
@@ -867,9 +874,7 @@ ASENTRY_NOPROFILE(debug_led)
  * similar to debug_led(), but used after MMU enabled
  */
 ASENTRY_NOPROFILE(debug_led2)
-	movl	_C_LABEL(ctrl_led_phys),%d1
-	subl	_C_LABEL(intiobase_phys),%d1
-	addl	_C_LABEL(intiobase),%d1
+	movl	_C_LABEL(ctrl_led),%d1
 	movl    %d1,%a0
 	movl	%d0,%a0@
 
@@ -914,37 +919,22 @@ GLOBAL(bootaddr)
 	.long	0
 
 GLOBAL(intiobase)
-	.long	0		| KVA of base of internal IO space
+	.long	0		| PA/KVA (via %tt0) of base of internal IO space
 
-GLOBAL(extiobase)
-	.long	0		| KVA of base of internal IO space
-
-GLOBAL(intiolimit)
-	.long	0		| KVA of end of internal IO space
-
-GLOBAL(intiobase_phys)
-	.long	0		| PA of board's I/O registers
-
-GLOBAL(intiotop_phys)
-	.long	0		| PA of top of board's I/O registers
-
-GLOBAL(extiobase_phys)
-	.long	0		| PA of external I/O registers
-
-GLOBAL(extiotop_phys)
-	.long	0		| PA of top of external I/O registers
+GLOBAL(intiotop)
+	.long	0		| PA/KVA (via %tt0) of end of internal IO space
 
 GLOBAL(ctrl_power)
-	.long	0		| PA of power control port
+	.long	0		| PA/KVA (via %tt0) of power control port
 
-GLOBAL(ctrl_led_phys)
-	.long	0		| PA of LED control port
+GLOBAL(ctrl_led)
+	.long	0		| PA/KVA (via %tt0) of LED control port
 
 GLOBAL(cache_ctl)
-	.long	0		| KVA of external cache control port
+	.long	0		| PA/KVA (via %tt0) of ext cache control port
 
 GLOBAL(cache_clr)
-	.long	0		| KVA of external cache clear port
+	.long	0		| PA/KVA (via %tt0) of ext cache clear port
 
 GLOBAL(romcallvec)
 	.long	0

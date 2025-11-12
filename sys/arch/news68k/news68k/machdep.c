@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2025/11/12 18:13:26 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2025/11/12 18:55:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2025/11/12 18:13:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2025/11/12 18:55:10 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -116,7 +116,6 @@ int	maxmem;			/* max memory per process */
 extern paddr_t avail_start, avail_end;
 extern int end, *esym;
 extern u_int lowram;
-extern u_int ctrl_led_phys;
 
 /* prototypes for local functions */
 static void identifycpu(void);
@@ -136,7 +135,7 @@ static void news1200_init(void);
 
 /* functions called from locore.s */
 void dumpsys(void);
-void news68k_init(void);
+void news68k_init(paddr_t);
 void straytrap(int, u_short);
 
 /*
@@ -156,7 +155,7 @@ int	delay_divisor = 82;	/* delay constant */
  * Early initialization, before main() is called.
  */
 void
-news68k_init(void)
+news68k_init(paddr_t nextpa)
 {
 	int i;
 
@@ -164,6 +163,8 @@ news68k_init(void)
 	 * Tell the VM system about available physical memory.  The
 	 * news68k only has one segment.
 	 */
+	avail_start = nextpa;
+	avail_end = m68k_ptob(maxmem) - m68k_round_page(MSGBUFSIZE);
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 
@@ -657,7 +658,6 @@ static volatile uint8_t *dip_switch, *int_status;
 
 const uint8_t *idrom_addr;
 volatile uint8_t *ctrl_ast, *ctrl_int2;
-volatile uint8_t *ctrl_led;
 uint32_t sccport0a, lance_mem_phys;
 
 #ifdef news1700
@@ -728,7 +728,6 @@ news1700_init(void)
 	idrom_addr	= (uint8_t *)(0xe1c00000);
 	ctrl_ast	= (uint8_t *)(0xe1280000);
 	ctrl_int2	= (uint8_t *)(0xe1180000);
-	ctrl_led	= (uint8_t *)(ctrl_led_phys);
 
 	sccport0a	= (0xe0d40002);
 	lance_mem_phys	= 0xe0e00000;
@@ -822,7 +821,6 @@ news1200_init(void)
 	idrom_addr	= (uint8_t *)0xe1400000;
 	ctrl_ast	= (uint8_t *)0xe1100000;
 	ctrl_int2	= (uint8_t *)0xe10c0000;
-	ctrl_led	= (uint8_t *)ctrl_led_phys;
 
 	sccport0a	= 0xe1780002;
 	lance_mem_phys	= 0xe1a00000;
@@ -964,7 +962,9 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 
 	*handled = false;
-	return ISIIOVA(ptr) ? EFAULT : 0;
+	if ((uint8_t *)ptr >= intiobase)
+		return EFAULT;
+	return 0;
 }
 
 #ifdef MODULAR

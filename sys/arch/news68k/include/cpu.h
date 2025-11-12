@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2024/01/20 00:15:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 2025/11/12 18:55:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,9 +88,7 @@ extern int systype;
 #define NEWS1200	1
 
 extern int cpuspeed;
-extern char *intiobase, *intiolimit, *extiobase;
-extern u_int intiobase_phys, intiotop_phys;
-extern u_int extiobase_phys, extiotop_phys;
+extern uint8_t *intiobase, *intiotop;
 
 extern void *romcallvec;
 
@@ -114,14 +112,12 @@ int badbaddr(void *);
 #define INTIOBASE1700	0xe0c00000
 #define INTIOTOP1700	0xe1d00000 /* XXX */
 #define EXTIOBASE1700	0xf0f00000
-#define EXTIOTOP1700	0xf1000000 /* XXX */
 #define CTRL_POWER1700	0xe1380000
 #define CTRL_LED1700	0xe0dc0000
 
 #define INTIOBASE1200	0xe1000000
 #define INTIOTOP1200	0xe1d00000 /* XXX */
 #define EXTIOBASE1200	0xe4000000
-#define EXTIOTOP1200	0xe4020000 /* XXX */
 #define CTRL_POWER1200	0xe1000000
 #define CTRL_LED1200	0xe1500001
 
@@ -130,23 +126,11 @@ int badbaddr(void *);
 /*
  * Internal IO space:
  *
- * Internal IO space is mapped in the kernel from ``intiobase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
- * conversion between physical and kernel virtual addresses is easy.
+ * Internal IO space is mapped in the kernel by TT0 register (in locore.s)
+ * and PA range is from ``intiobase'' to ``intiotop''.
  */
-#define ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
 #define ISIIOPA(pa) \
-	((u_int)(pa) >= intiobase_phys && (u_int)(pa) < intiotop_phys)
-#define IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
-#define IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
-
-/* XXX EIO space mapping should be modified like hp300 XXX */
-#define	EIOSIZE		(extiotop_phys - extiobase_phys)
-#define ISEIOVA(va) \
-	((char *)(va) >= extiobase && (char *)(va) < (char *)EIOSIZE)
-#define EIOV(pa)	(((u_int)(pa) - extiobase_phys) + (u_int)extiobase)
+	((uint8_t *)(pa) >= intiobase && (uint8_t *)(pa) < intiotop)
 
 #if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
 #define M68K_CACHEOPS_MACHDEP
