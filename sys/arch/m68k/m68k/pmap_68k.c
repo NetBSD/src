@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.8 2025/11/12 03:34:58 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.9 2025/11/12 20:11:28 tsutsui Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.8 2025/11/12 03:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.9 2025/11/12 20:11:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3096,7 +3096,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	pt_entry_t *ptep, combined_pte = 0, diff, opte, npte;
 	bool rv = false;
 
-#ifdef MMU_CONFIG_68040_CLASS
+#if MMU_CONFIG_68040_CLASS
 	/*
 	 * If we're making the page read-only or changing the caching
 	 * status of the page, we need to flush it the first time we
