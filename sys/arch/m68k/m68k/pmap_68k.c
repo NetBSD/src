@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.7 2025/11/09 22:22:34 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.8 2025/11/12 03:34:58 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.7 2025/11/09 22:22:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.8 2025/11/12 03:34:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3379,6 +3379,61 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	 * XXX This is kind of gross, to be honest.
 	 */
 	(void)cachectl1(0x80000004, va, len, p);
+}
+
+/*
+ * pmap_init_kcore_hdr:
+ *
+ *	Initialize the m68k kernel crash dump header with information
+ *	necessary to perform KVA -> phys translations.
+ *
+ *	Returns a pointer to the crash dump RAM segment entries for
+ *	machine-specific code to initialize.
+ */
+phys_ram_seg_t *
+pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
+{
+	struct gen68k_kcore_hdr *m = &h->un._gen68k;
+
+	memset(h, 0, sizeof(*h));
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, "gen68k");
+	h->page_size = PAGE_SIZE;
+	h->kernbase = VM_MIN_KERNEL_ADDRESS;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 *
+	 * We essentially pretend to be a 68851 as far as table-
+	 * walks are concerned.
+	 *
+	 * We provide the kernel's MMU_* constant so that the TT
+	 * registers can be interpreted correctly.
+	 */
+	m->mmutype = mmutype;
+	m->tcr = MMU_USE_3L ? MMU51_3L_TCR_BITS : MMU51_TCR_BITS;
+	m->srp[0] = MMU51_SRP_BITS;
+	m->srp[1] = Sysseg_pa;
+
+#if MMU_CONFIG_68040_CLASS
+	if (MMU_IS_68040_CLASS) {
+		m->itt0 = mmu_tt40[MMU_TTREG_ITT0];
+		m->itt1 = mmu_tt40[MMU_TTREG_ITT1];
+		m->tt0  = mmu_tt40[MMU_TTREG_DTT0];
+		m->tt0  = mmu_tt40[MMU_TTREG_DTT1];
+	}
+#endif
+#if defined(M68K_MMU_68030)
+	if (mmutype == MMU_68030) {
+		m->tt0  = mmu_tt30[MMU_TTREG_TT0];
+		m->tt1  = mmu_tt30[MMU_TTREG_TT1];
+	}
+#endif
+
+	return m->ram_segs;
 }
 
 /***************************** PMAP BOOTSTRAP ********************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.97 2025/11/06 20:28:41 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.98 2025/11/12 03:34:58 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.97 2025/11/06 20:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.98 2025/11/12 03:34:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2876,6 +2876,70 @@ _pmap_page_is_cacheable(pmap_t pmap, vaddr_t va)
 		return 0;
 
 	return (pmap_pte_ci(pmap_pte(pmap, va)) == 0) ? 1 : 0;
+}
+
+vaddr_t kernel_reloc_offset;
+
+/*
+ * pmap_init_kcore_hdr:
+ *
+ *	Initialize the m68k kernel crash dump header with information
+ *	necessary to perform KVA -> phys translations.
+ *
+ *	Returns a pointer to the crash dump RAM segment entries for
+ *	machine-specific code to initialize.
+ */
+phys_ram_seg_t *
+pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
+{
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	extern char end[];
+
+	memset(h, 0, sizeof(*h));
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = PAGE_SIZE;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype     = mmutype;
+	m->sg_v        = SG_V;
+	m->sg_frame    = SG_FRAME;
+	m->sg_ishift   = SG_ISHIFT;
+	m->sg_pmask    = SG_PMASK;
+	m->sg40_shift1 = SG4_SHIFT1;
+	m->sg40_mask2  = SG4_MASK2;
+	m->sg40_shift2 = SG4_SHIFT2;
+	m->sg40_mask3  = SG4_MASK3;
+	m->sg40_shift3 = SG4_SHIFT3;
+	m->sg40_addr1  = SG4_ADDR1;
+	m->sg40_addr2  = SG4_ADDR2;
+	m->pg_v        = PG_V;
+	m->pg_frame    = PG_FRAME;
+
+	/*
+	 * Initialize pointer to kernel segment table.
+	 */
+	m->sysseg_pa = Sysseg_pa;
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = kernel_reloc_offset;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (uint32_t)end;
+
+	return m->ram_segs;
 }
 
 #ifdef DEBUG

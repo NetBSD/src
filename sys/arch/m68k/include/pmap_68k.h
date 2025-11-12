@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.4 2025/11/10 14:32:34 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.5 2025/11/12 03:34:58 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
 
 #include <m68k/mmu_51.h>
 #include <m68k/mmu_40.h>
+
+#include <sys/kcore.h>
+#include <m68k/kcore.h>
 
 typedef unsigned int	pt_entry_t;
 
@@ -401,5 +404,8 @@ extern void *	msgbufaddr;
 void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *, int);
 /* PMAP_PREFER() defined in <machine/pmap.h> on machines were it's needed. */
+
+/* Kernel crash dump support. */
+phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 
 #endif /* _M68K_PMAP_68K_H_ */

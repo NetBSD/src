@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.48 2025/11/06 18:42:05 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.49 2025/11/12 03:34:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -79,6 +79,9 @@
 #ifdef _KERNEL_OPT
 #include "opt_m68k_arch.h"
 #endif
+
+#include <sys/kcore.h>
+#include <m68k/kcore.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
@@ -248,6 +251,8 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
 void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);
 int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
+
+phys_ram_seg_t *pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 
 paddr_t	vtophys(vaddr_t va);
 
