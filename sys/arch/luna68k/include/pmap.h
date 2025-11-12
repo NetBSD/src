@@ -1,9 +1,15 @@
-/*	$NetBSD: pmap.h,v 1.11 2023/12/29 02:30:35 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2025/11/12 14:40:06 thorpej Exp $	*/
 
 #ifndef _LUNA68K_PMAP_H_
 
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
 #include <m68k/pmap_motorola.h>
+#endif /* __HAVE_NEW_PMAP_68K */
+
 #include <m68k/mmu_30.h>
+#include <m68k/mmu_40.h>
 
 /*
  * Transparent translation register values for IO space 0x40000000-0xffffffff
