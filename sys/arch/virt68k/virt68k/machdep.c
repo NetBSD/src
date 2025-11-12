@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2025/11/08 08:26:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2025/11/12 03:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2025/11/08 08:26:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2025/11/12 03:36:29 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -525,63 +525,12 @@ void
 cpu_init_kcore_hdr(void)
 {
 	struct bootinfo_data *bid = bootinfo_data();
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
-	int i;
-	extern char end[];
 
-	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr)); 
+	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
 
-	/*
-	 * Initialize the `dispatcher' portion of the header.
-	 */
-	strcpy(h->name, machine);
-	h->page_size = PAGE_SIZE;
-	h->kernbase = KERNBASE;
-
-#if !defined(__HAVE_NEW_PMAP_68K)	/* XXX XXX XXX */
-	/*
-	 * Fill in information about our MMU configuration.
-	 */
-	m->mmutype	= mmutype;
-	m->sg_v		= SG_V;
-	m->sg_frame	= SG_FRAME;
-	m->sg_ishift	= SG_ISHIFT;
-	m->sg_pmask	= SG_PMASK;
-	m->sg40_shift1	= SG4_SHIFT1;
-	m->sg40_mask2	= SG4_MASK2;
-	m->sg40_shift2	= SG4_SHIFT2;
-	m->sg40_mask3	= SG4_MASK3;
-	m->sg40_shift3	= SG4_SHIFT3;
-	m->sg40_addr1	= SG4_ADDR1;
-	m->sg40_addr2	= SG4_ADDR2;
-	m->pg_v		= PG_V;
-	m->pg_frame	= PG_FRAME;
-
-	/*
-	 * Initialize pointer to kernel segment table.
-	 */
-	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
-#endif /* ! __HAVE_NEW_PMAP_68K */
-
-	/*
-	 * Initialize relocation value such that:
-	 *
-	 *	pa = (va - KERNBASE) + reloc
-	 *
-	 * Since we're linked and loaded at the same place,
-	 * and the kernel is mapped va == pa, this is 0.
-	 */
-	m->reloc = 0;
-
-	/*
-	 * Define the end of the relocatable range.
-	 */
-	m->relocend = (uint32_t)end;
-
-	for (i = 0; i < bid->bootinfo_mem_nsegments; i++) {
-		m->ram_segs[i].start = bid->bootinfo_mem_segments[i].mem_addr;
-		m->ram_segs[i].size  = bid->bootinfo_mem_segments[i].mem_size;
+	for (int i = 0; i < bid->bootinfo_mem_nsegments; i++) {
+		ram_segs[i].start = bid->bootinfo_mem_segments[i].mem_addr;
+		ram_segs[i].size  = bid->bootinfo_mem_segments[i].mem_size;
 	}
 }
 
