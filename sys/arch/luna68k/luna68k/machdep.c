@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.113 2025/11/12 02:32:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2025/11/12 02:32:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,7 +110,7 @@ int	maxmem;			/* max memory per process */
 
 extern	u_int lowram;
 
-void luna68k_init(void);
+void luna68k_init(paddr_t);
 void identifycpu(void);
 void dumpsys(void);
 
@@ -153,7 +153,7 @@ int	delay_divisor = 30;	/* for delay() loop count */
  * Early initialization, before main() is called.
  */
 void
-luna68k_init(void)
+luna68k_init(paddr_t nextpa)
 {
 	volatile uint8_t *pio0 = (void *)OBIO_PIO0_BASE;
 	int sw1, i;
@@ -172,7 +172,11 @@ luna68k_init(void)
 	/*
 	 * Tell the VM system about available physical memory.  The
 	 * luna68k only has one segment.
+	 *
+	 * Note: msgbuf is initialized just after avail_end below.
 	 */
+	avail_start = nextpa;
+	avail_end = m68k_ptob(maxmem) - m68k_round_page(MSGBUFSIZE);
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 

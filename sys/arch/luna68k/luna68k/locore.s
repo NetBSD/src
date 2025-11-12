@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.90 2025/11/12 02:17:16 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.91 2025/11/12 02:32:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,11 +76,13 @@ ASLOCAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var,ar)		\
-	lea	var,ar;		\
+#define	IMMEDIATE		#
+#define	_RELOC(var,ar)			\
+	movl	IMMEDIATE var,ar;	\
 	addl	%a5,ar
+
 #define	RELOC(var,ar)		_RELOC(_C_LABEL(var), ar)
-#define	ASRELOC(var,ar)	_RELOC(_ASM_LABEL(var), ar)
+#define	ASRELOC(var,ar)		_RELOC(_ASM_LABEL(var), ar)
 
 BSS(lowram,4)
 BSS(esym,4)
@@ -173,7 +175,7 @@ Lstart1:
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
 	movc	%d0,%dfc		|   and destination of transfers
-/* initialize memory sizes (for pmap_bootstrap) */
+/* initialize memory sizes (for pmap_bootstrap1) */
 	RELOC(memavail,%a0)
 	movl	%a0@,%d1
 	moveq	#PGSHIFT,%d2
@@ -210,11 +212,21 @@ Lstart1:
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart3:
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(nextpa, reloff)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
+
 /*
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
@@ -293,6 +305,7 @@ Lenab2:
 Lenab3:
 
 /* final setup for C code */
+	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(luna68k_init)	| additional pre-main initialization
 
 /*
@@ -797,12 +810,3 @@ ASGLOBAL(fulltflush)
 ASGLOBAL(fullcflush)
 	.long	0
 #endif
-
-GLOBAL(intiobase)
-	.long	0		| KVA of base of internal IO space
-GLOBAL(intiolimit)
-	.long	0		| KVA of end of internal IO space
-GLOBAL(intiobase_phys)
-	.long	0		| PA of board's I/O registers
-GLOBAL(intiotop_phys)
-	.long	0		| PA of top of board's I/O registers
