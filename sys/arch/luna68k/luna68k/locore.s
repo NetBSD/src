@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.89 2025/11/11 15:17:05 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.90 2025/11/12 02:17:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -273,13 +273,14 @@ Lenab1:
 	movl	%a2,%usp		| init user SP
 
 /* detect FPU type */
+	movl	%a0,%a5			| preserve uarea pointer
 	jbsr	_C_LABEL(fpu_probe)
 	movl	%d0,_C_LABEL(fputype)
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
-	clrl	%a0@(PCB_FPCTX)		| ensure null FP context
-	pea	%a0@(PCB_FPCTX)
-	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a0)
+	clrl	%a5@(PCB_FPCTX)		| ensure null FP context
+	pea	%a5@(PCB_FPCTX)
+	jbsr	_C_LABEL(m68881_restore) | restore it
 	addql	#4,%sp
 Lenab2:
 	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
