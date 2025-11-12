@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.47 2025/11/07 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.48 2025/11/12 18:10:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.47 2025/11/07 14:35:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.48 2025/11/12 18:10:49 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 #include "opt_newsconf.h"
@@ -59,6 +59,7 @@ extern char *cache_ctl, *cache_clr;
 
 extern int maxmem;
 extern paddr_t avail_start, avail_end;
+extern vaddr_t kernel_reloc_offset;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -119,6 +120,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	RELOC(kernel_reloc_offset, vaddr_t) = firstpa;
 
 	/*
 	 * XXX now we are using tt0 register to map IIO.
