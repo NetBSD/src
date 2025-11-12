@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/07 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 2025/11/12 13:32:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/07 14:35:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.13 2025/11/12 13:32:04 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/07 14:35:21 thorpej 
 
 extern char *kernel_text;
 extern char *etext;
+
+extern vaddr_t kernel_reloc_offset;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -113,6 +115,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 #define	PA_TO_VA(pa)	(VM_MIN_KERNEL_ADDRESS + ((pa) - reloff))
 #define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
 #define	RELOC(v, t)	*((t *)VA_TO_PA(&(v)))
+
+	RELOC(kernel_reloc_offset, vaddr_t) = reloff;
 
 	lwp0upa = nextpa;
 	nextpa += USPACE;

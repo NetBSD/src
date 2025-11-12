@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38 2025/11/07 14:35:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.39 2025/11/12 13:32:03 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2025/11/07 14:35:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.39 2025/11/12 13:32:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2025/11/07 14:35:20 thorpej 
 
 extern char *etext;
 extern paddr_t avail_start, avail_end;
+extern vaddr_t kernel_reloc_offset;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -109,6 +110,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	RELOC(kernel_reloc_offset, vaddr_t) = firstpa;
+
 	lwp0upa = nextpa;
 	nextpa += USPACE;
 	if (RELOC(mmutype, int) == MMU_68040)

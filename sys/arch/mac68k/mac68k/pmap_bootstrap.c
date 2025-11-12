@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.101 2025/11/07 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.102 2025/11/12 13:32:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.101 2025/11/07 14:35:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.102 2025/11/12 13:32:04 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -66,6 +66,7 @@ extern char *etext;
 extern char *extiobase;
 
 extern paddr_t avail_start, avail_end;
+extern vaddr_t kernel_reloc_offset;
 
 #if NZSC > 0
 extern	int	zsinited;
@@ -146,6 +147,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
 	 */
+	kernel_reloc_offset = firstpa;
+
 	lwp0upa = nextpa;
 	nextpa += USPACE;
 	if (mmutype == MMU_68040)

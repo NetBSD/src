@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.57 2025/11/07 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.58 2025/11/12 13:32:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.57 2025/11/07 14:35:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.58 2025/11/12 13:32:04 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -59,6 +59,7 @@ extern paddr_t avail_start, avail_end;
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 extern paddr_t msgbufpa;
+extern vaddr_t kernel_reloc_offset;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -157,6 +158,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	RELOC(kernel_reloc_offset, vaddr_t) = firstpa;
+
 	iiomappages = m68k_btop(RELOC(intiotop_phys, u_int) -
 	    RELOC(intiobase_phys, u_int));
 
