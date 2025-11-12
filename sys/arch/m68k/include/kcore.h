@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.7 2023/01/29 09:24:33 mlelstv Exp $	*/
+/*	$NetBSD: kcore.h,v 1.8 2025/11/12 03:31:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -50,6 +50,36 @@
  *
  * The total size of the cpu_kcore_hdr should be <= DEV_BSIZE!
  */
+
+/*
+ * kcore information for the new generic 68k pmap module.  This works
+ * for all pmap implementations that support the 68851, 68030, 68040,
+ * and 68060 MMUs (as well as the 68851-like HP MMU), because it relies
+ * entirely on generic hardware configuration information, and not
+ * any software-defined usage.
+ *
+ * The hardware description is in 68851 terms.  Both the 68040/68060
+ * and HP MMU can be described that way.  All of the configuration
+ * information necessary is in the Translation Control Register.
+ *
+ * Transparent Translation information is also included, as is the
+ * kernel's MMU_* value for this system.
+ */
+#define	GEN68K_NPHYS_RAM_SEGS	8	/* XXX */
+struct gen68k_kcore_hdr {
+	uint32_t	tcr;		/* Translation Control Register */
+	uint32_t	srp[2];		/* Supervisor Root Pointer */
+
+	uint32_t	tt0;		/* 68030 TT0 / 68040 DTT0 */
+	uint32_t	tt1;		/* 68030 TT1 / 68040 DTT1 */
+
+	uint32_t	itt0;		/* 68040 ITT0 */
+	uint32_t	itt1;		/* 68040 ITT1 */
+
+	int32_t		mmutype;	/* MMU_* value */
+
+	phys_ram_seg_t	ram_segs[GEN68K_NPHYS_RAM_SEGS];
+};
 
 /*
  * kcore information for Utah-derived pmaps
@@ -121,6 +151,7 @@ struct cpu_kcore_hdr {
 	uint32_t	page_size;	/* hardware page size */
 	uint32_t	kernbase;	/* start of KVA space */
 	union {
+		struct gen68k_kcore_hdr _gen68k;
 		struct m68k_kcore_hdr _m68k;
 		struct sun2_kcore_hdr _sun2;
 		struct sun3_kcore_hdr _sun3;
