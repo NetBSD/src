@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.371 2025/09/24 14:12:49 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.372 2025/11/12 13:33:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.371 2025/09/24 14:12:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.372 2025/11/12 13:33:34 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -529,61 +529,13 @@ cpu_reboot(int howto, char *bootstr)
 void
 cpu_init_kcore_hdr(void)
 {
-	extern int end;
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
+	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
 	int i;
 
-	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
-
-	/*
-	 * Initialize the `dispatcher' portion of the header.
-	 */
-	strcpy(h->name, machine);
-	h->page_size = PAGE_SIZE;
-	h->kernbase = KERNBASE;
-
-	/*
-	 * Fill in information about our MMU configuration.
-	 */
-	m->mmutype	= mmutype;
-	m->sg_v		= SG_V;
-	m->sg_frame	= SG_FRAME;
-	m->sg_ishift	= SG_ISHIFT;
-	m->sg_pmask	= SG_PMASK;
-	m->sg40_shift1	= SG4_SHIFT1;
-	m->sg40_mask2	= SG4_MASK2;
-	m->sg40_shift2	= SG4_SHIFT2;
-	m->sg40_mask3	= SG4_MASK3;
-	m->sg40_shift3	= SG4_SHIFT3;
-	m->sg40_addr1	= SG4_ADDR1;
-	m->sg40_addr2	= SG4_ADDR2;
-	m->pg_v		= PG_V;
-	m->pg_frame	= PG_FRAME;
-
-	/*
-	 * Initialize pointer to kernel segment table.
-	 */
-	m->sysseg_pa = (u_int32_t)(pmap_kernel()->pm_stpa);
-
-	/*
-	 * Initialize relocation value such that:
-	 *
-	 *	pa = (va - KERNBASE) + reloc
-	 */
-	m->reloc = load_addr;
-
-	/*
-	 * Define the end of the relocatable range.
-	 */
-	m->relocend = (u_int32_t)&end;
-
-	/*
-	 * mac68k has multiple RAM segments on some models.
-	 */
+	/* mac68k has multiple RAM segments on some models. */
 	for (i = 0; i < numranges; i++) {
-		m->ram_segs[i].start = low[i];
-		m->ram_segs[i].size  = high[i] - low[i];
+		ram_segs[i].start = low[i];
+		ram_segs[i].size  = high[i] - low[i];
 	}
 }
 
