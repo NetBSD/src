@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_51.h,v 1.4 2024/02/08 20:11:56 andvar Exp $	*/
+/*	$NetBSD: mmu_51.h,v 1.5 2025/11/12 03:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2023 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
  *
  * These occupy the lower 2 bits of each descriptor and the root pointers.
  */
+#define	DT51_TYPE	__BITS(0,1)
 #define	DT51_INVALID	0
 #define	DT51_PAGE	1	/* points to a page */
 #define	DT51_SHORT	2	/* points to a short entry table */
