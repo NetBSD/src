@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.26 2011/11/20 15:38:00 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.27 2025/11/12 18:59:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.26 2011/11/20 15:38:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.27 2025/11/12 18:59:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ struct si_softc {
 
 static int  si_match(device_t, cfdata_t, void *);
 static void si_attach(device_t, device_t, void *);
+static int  si_test(bus_addr_t);
 int  si_intr(int);
 
 static void si_dma_alloc(struct ncr5380_softc *);
@@ -112,7 +113,41 @@ si_match(device_t parent, cfdata_t cf, void *aux)
 	if (badaddr((void *)addr, 1))
 		return 0;
 
+	if (si_test(addr) == 0)
+		return 0;
+
 	ha->ha_size = SI_REGSIZE;
+
+	return 1;
+}
+
+/*
+ * Explicitly probe CXD1180 for Nono emulator.
+ * Partially taken from nca_isa.c.
+ */
+static int
+si_test(bus_addr_t addr)
+{
+	volatile uint8_t *cxd = (uint8_t *)addr;
+	uint8_t bcsr;
+
+#define SI_ODATA	0
+#define SI_ICMD		1
+#define SI_BUS_CSR	4
+	/* Reset the SCSI bus. */
+	*(cxd + SI_ICMD) = SCI_ICMD_RST;
+	*(cxd + SI_ODATA) = 0;
+
+	/* Hold reset for at least 25 microsconds. */
+	delay(500);
+	bcsr = *(cxd + SI_BUS_CSR);
+	*(cxd + SI_ICMD) = 0;
+
+	/* Check that status cleared. */
+	if (bcsr != SCI_BUS_RST) {
+		/* Assume Nono, no si(4) here (yet). */
+		return 0;
+	}
 
 	return 1;
 }
