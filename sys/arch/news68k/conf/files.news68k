@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.40 2024/01/18 04:07:37 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.41 2025/11/13 11:27:18 tsutsui Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -21,7 +21,7 @@ file	arch/news68k/news68k/clock.c
 file	arch/news68k/news68k/disksubr.c		disk
 file	arch/news68k/news68k/machdep.c
 file	arch/news68k/news68k/mainbus.c
-file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file	arch/news68k/news68k/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
 file	arch/news68k/news68k/romcalls.S
 file	arch/news68k/news68k/trap.c
 file	arch/m68k/m68k/cacheops.c
@@ -31,7 +31,8 @@ file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
+file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
+file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vectors.c

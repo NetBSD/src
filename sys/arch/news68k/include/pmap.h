@@ -1,9 +1,14 @@
-/*	$NetBSD: pmap.h,v 1.15 2023/12/27 19:26:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2025/11/13 11:27:19 tsutsui Exp $	*/
 
 #ifndef _NEWS68K_PMAP_H_
 #define	_NEWS68K_PMAP_H_
 
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
 #include <m68k/pmap_motorola.h>
+#endif /* __HAVE_NEW_PMAP_68K */
+
 #include <m68k/mmu_30.h>
 
 /*
