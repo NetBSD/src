@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.172 2024/01/19 18:18:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.173 2025/11/13 11:33:16 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -983,7 +983,6 @@ LMMUenable_end:
 	clrw	%a1@(PCB_FLAGS)		| clear flags
 #ifdef FPCOPROC
 	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
-|WRONG!	movl	%a1,%sp@-
 |	pea	%a1@(PCB_FPCTX)
 |	jbsr	_C_LABEL(m68881_restore)	| restore it (does not kill a1)
 |	addql	#4,%sp
