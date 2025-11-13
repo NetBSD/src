@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2023/08/10 20:44:37 mrg Exp $
+# $NetBSD: Makefile,v 1.10 2025/11/13 18:49:19 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,11 @@ TESTSDIR=	${TESTSBASE}/lib/libc/misc
 
 TESTS_C+=	t_ubsan
 TESTS_CXX+=	t_ubsanxx
+
+.if ${MACHINE_ARCH} == "sparc64"
+TESTS_C+=	t_vis
+COPTS.t_vis.c+=	-mvis
+.endif
 
 .PATH:		${NETBSDSRCDIR}/common/lib/libc/misc
 SRCS.t_ubsan=	t_ubsan.c

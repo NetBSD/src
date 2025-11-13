@@ -1,0 +1,3 @@
+# $NetBSD: md.sparc64,v 1.3 2025/11/13 18:49:19 nia Exp $
+#
+./usr/tests/lib/libc/misc/t_vis		tests-lib-tests	compattestfile,atf

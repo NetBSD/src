@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.149 2024/10/08 22:53:20 christos Exp $
+#	$NetBSD: Makefile,v 1.150 2025/11/13 18:49:18 nia Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -38,6 +38,10 @@ INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
 .endif
 
 INCS+=  ssp/ssp.h ssp/stdio.h ssp/string.h ssp/strings.h ssp/unistd.h
+
+.if (${MACHINE_ARCH} == "sparc64")
+INCS+=	vis_proto.h vis_types.h
+.endif
 
 .if (${MACHINE_ARCH} != "vax")
 INCS+=	ieeefp.h
