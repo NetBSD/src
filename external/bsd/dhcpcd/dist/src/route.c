@@ -597,7 +597,7 @@ rt_add(rb_tree_t *kroutes, struct rt *nrt, struct rt *ort)
 	    sa_cmp(&krt->rt_dest, &nrt->rt_dest) == 0 &&
 	    rt_cmp_netmask(krt, nrt) == 0 &&
 	    sa_cmp(&krt->rt_gateway, &nrt->rt_gateway) == 0 &&
-	    rt_cmp_mtu(krt, nrt) == 0)
+	    (nrt->rt_ifp->flags & IFF_LOOPBACK || rt_cmp_mtu(krt, nrt) == 0))
 	{
 #ifdef HAVE_ROUTE_LIFETIME
 		if (rt_cmp_lifetime(krt, nrt) == 0) {
@@ -622,6 +622,10 @@ rt_add(rb_tree_t *kroutes, struct rt *nrt, struct rt *ort)
 	if (change && krt != NULL && krt->rt_flags & RTF_CLONING)
 		change = false;
 #endif
+	/* Reject routes have a gateway, non reject routes don't.
+	 * BSD kernels at least preserve RTF_GATEWAY so we need to punt it. */
+	if (change && krt->rt_flags & RTF_REJECT && !(nrt->rt_flags & RTF_REJECT))
+		change = false;
 
 	if (change) {
 		if (if_route(RTM_CHANGE, nrt) != -1) {
