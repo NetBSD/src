@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.9 2025/11/12 20:11:28 tsutsui Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.10 2025/11/13 02:32:40 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.9 2025/11/12 20:11:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.10 2025/11/13 02:32:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3573,6 +3573,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * nextpa now represents the end of the loaded kernel image.
 	 * This includes the .data + .bss segments, the debugger symbols,
 	 * and any other ancillary data loaded after the kernel.
+	 *
+	 * N.B. This represents the start of our dynamic memory allocation,
+	 * which will be referenced below when we zero the memory we've
+	 * allocated.
 	 */
 	kernimg_endpa = nextpa;
 
@@ -3657,13 +3661,21 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	kern_ptpages_end = nextpa;
 
 	/*
-	 * OK!  We have PTEs that will map all the stuff!  Zero them
-	 * all out before we do anything.
+	 * The bulk of the dynamic memory allocation is done (there
+	 * may be more below if we have to allocate more inner segment
+	 * table pages, but we'll burn that bridge when we come to it).
+	 *
+	 * Zero out all of these freshly-allocated pages.
 	 */
-	ptes = (pt_entry_t *)kern_ptpages;
-	for (pte = ptes; (paddr_t)pte < kern_ptpages_end; pte++) {
+	pte = (pt_entry_t *)kernimg_endpa;
+	while ((paddr_t)pte < nextpa) {
 		*pte++ = 0;
 	}
+
+	/*
+	 * Ok, let's get to mapping stuff!
+	 */
+	ptes = (pt_entry_t *)kern_ptpages;
 
 	/* Kernel text - read-only. */
 	pa = VA_TO_PA(m68k_trunc_page(&kernel_text));
@@ -3730,6 +3742,14 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 					nextpa += PAGE_SIZE;
 					stnext_endpa = nextpa;
 					nstpages++;
+					/*
+					 * Zero out the new inner segment
+					 * table page.
+					 */
+					pte = (pt_entry_t *)stnext_pa;
+					while ((vaddr_t)pte < stnext_endpa) {
+						*pte++ = 0;
+					}
 				}
 				stes1[LA40_RI(va)] = proto_ste | stnext_pa;
 				stnext_pa += TBL40_L2_SIZE;
