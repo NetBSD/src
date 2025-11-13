@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2025/09/07 04:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2025/11/13 23:46:22 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,8 +17,6 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
-
-CSHLIBFLAGS+=	-D_GLIBCXX_COMPAT_
 
 DIST=		${GCCDIST}
 GNUVER=		${DIST}/libstdc++-v3/config/abi/pre/gnu.ver
@@ -64,11 +62,15 @@ SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 
+# Only the shared library is build with -D_GLIBCXX_SHARED, and the
+# static library shouldn't need to provide old symbols.
+CSHLIBFLAGS+=	-D_GLIBCXX_SHARED
+
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
-CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+CPPFLAGS+=	-DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
 .if ${G_CLOCALE_CC:M*dragonfly*} != ""
 CPPFLAGS+=	-I${CONF}/locale/dragonfly
 LOCALETYPE=	dragonfly

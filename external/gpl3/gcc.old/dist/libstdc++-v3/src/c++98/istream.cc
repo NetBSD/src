@@ -112,7 +112,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_istream<char>::
     ignore(streamsize __n, int_type __delim)
     {
-#ifdef _GLIBCXX_COMPAT_
       {
 	// If conversion to int_type changes the value then __delim does not
 	// correspond to a value of type char_type, and so will never match
@@ -124,7 +123,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	// Now we know that __delim is a valid char_type value, so it's safe
 	// for the code below to use traits_type::find to search for it.
       }
-#endif
 
       _M_gcount = 0;
       sentry __cerb(*this, true);
@@ -376,10 +374,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_istream<wchar_t>::
     ignore(streamsize __n, int_type __delim)
     {
-#ifdef _GLIBCXX_COMPAT_
       if (traits_type::eq_int_type(__delim, traits_type::eof()))
 	return ignore(__n);
-#endif
 
       _M_gcount = 0;
       sentry __cerb(*this, true);
