@@ -1,7 +1,8 @@
-# $NetBSD: md.sparc64,v 1.92 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: md.sparc64,v 1.93 2025/11/14 07:11:31 kre Exp $
 #
 ./usr/libdata/debug/sbin/edlabel.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/libexec/ld.elf_so.sparc	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_vis.debug	tests-lib-debug	debug,compattestfile,atf
