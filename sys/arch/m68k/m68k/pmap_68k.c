@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.11 2025/11/14 14:50:01 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.12 2025/11/14 15:07:41 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.11 2025/11/14 14:50:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.12 2025/11/14 15:07:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +258,10 @@ EVCNT_ATTACH_STATIC(pmap_nkstpages_current_ev);
 static struct evcnt pmap_maxkva_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "maxkva");
 EVCNT_ATTACH_STATIC(pmap_maxkva_ev);
+
+static struct evcnt pmap_kvalimit_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "kvalimit");
+EVCNT_ATTACH_STATIC(pmap_kvalimit_ev);
 
 #ifdef PMAP_EVENT_COUNTERS
 static struct evcnt pmap_pv_alloc_wait_ev =
@@ -979,8 +983,17 @@ pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
  *
  * kernel_virtual_start is fixed once pmap_bootstrap1() completes.
  * kernel_virtual_end can be extended by calling pmap_growkernel().
+ *
+ * kernel_virtual_max represents the absolute maximum.  It starts at
+ * KERNEL_MAX_ADDRESS, but may get clamped by fixed mappings that
+ * start beyond the end of kernel virtual address space.
+ *
+ * kernel_virtual_max is exported to the rest of the kernel via
+ * pmap_virtual_space() and VM_MAX_KERNEL_ADDRESS.
  */
+#define	KERNEL_MAX_ADDRESS	((vaddr_t)0 - PAGE_SIZE)
 static vaddr_t kernel_virtual_start, kernel_virtual_end;
+       vaddr_t kernel_virtual_max = KERNEL_MAX_ADDRESS;
 
 /*
  * kernel_stnext_pa and kernel_stnext_endpa together implement a
@@ -1957,7 +1970,7 @@ pmap_pinit(pmap_t pmap, paddr_t lev1pa)
  *
  *	In this implementation, the start address we return marks the
  *	end of the statically allocated special kernel virtual addresses
- *	set up in pmap_bootstrap1().  We return VM_MAX_KERNEL_ADDRESS as
+ *	set up in pmap_bootstrap1().  We return kernel_vitual_max as
  *	the end because we can grow the kernel address space using
  *	pmap_growkernel().
  */
@@ -1965,7 +1978,7 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 	*vstartp = kernel_virtual_start;
-	*vendp = VM_MAX_KERNEL_ADDRESS;
+	*vendp = kernel_virtual_max;
 }
 
 /*
@@ -3314,6 +3327,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		goto done;
 	}
 
+	if (new_maxkva > kernel_virtual_max) {
+		panic("%s: out of kernel VA space (req=0x%08lx limit=0x%08lx)",
+		    __func__, maxkvaddr, kernel_virtual_max);
+	}
+
 	/*
 	 * Allocate PT pages and link them into the MMU tree as we
 	 * go.
@@ -3333,6 +3351,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
  	kernel_virtual_end = new_maxkva;
  done:
 	pmap_maxkva_ev.ev_count32 = new_maxkva;
+	pmap_kvalimit_ev.ev_count32 = kernel_virtual_max;
 	PMAP_CRIT_EXIT();
 	return new_maxkva;
 }
@@ -3638,8 +3657,28 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	RELOC(kernel_ptes, vaddr_t) = nextva;
 	nextva += ((0xffffffff >> PGSHIFT) + 1) * sizeof(pt_entry_t);
 
+#ifdef __HAVE_MACHINE_BOOTMAP
+	/*
+	 * Allocate machine-specific VAs.
+	 */
+	extern const struct pmap_bootmap machine_bootmap[];
+	const struct pmap_bootmap *pmbm =
+	    (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_flags & PMBM_F_KEEPOUT) {
+			va = m68k_trunc_page(pmbm->pmbm_vaddr);
+			if (va < RELOC(kernel_virtual_max, vaddr_t)) {
+				RELOC(kernel_virtual_max, vaddr_t) = va;
+			}
+		} else {
+			*(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr) = nextva;
+			nextva += m68k_round_page(pmbm->pmbm_size);
+		}
+	}
+#endif /* __HAVE_MACHINE_BOOTMAP */
+
 	/* UVM-managed kernel virtual starts here. */
-	kernel_virtual_start = nextva;
+	RELOC(kernel_virtual_start, vaddr_t) = nextva;
 
 	/*
 	 * Allocate enough PT pages to map all of physical memory.
@@ -3649,10 +3688,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 */
 	nextva += RELOC(physmem, int) << PGSHIFT;
 	nextva = pmap_round_ptpage(nextva);
-	if (nextva > VM_MAX_KERNEL_ADDRESS ||
-	    nextva < kernel_virtual_start) {
+	if (nextva > RELOC(kernel_virtual_max, vaddr_t) ||
+	    nextva < RELOC(kernel_virtual_start, vaddr_t)) {
 		/* clamp it. */
-		nextva = VM_MAX_KERNEL_ADDRESS;
+		nextva = RELOC(kernel_virtual_max, vaddr_t);
 	}
 
 	/*
@@ -3660,13 +3699,13 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * until such time as pmap_growkernel() is called to expand
 	 * it.
 	 */
-	kernel_virtual_end = nextva;
+	RELOC(kernel_virtual_end, vaddr_t) = nextva;
 
 	/*
 	 * Now, compute the number of PT pages required to map up to
 	 * kernel_virtual_end and allocate them.
 	 */
-	size_t nptpages = kernel_virtual_end / PTPAGEVASZ;
+	size_t nptpages = RELOC(kernel_virtual_end, vaddr_t) / PTPAGEVASZ;
 	kern_ptpages = nextpa;
 	nextpa += nptpages * PAGE_SIZE;
 	kern_ptpages_end = nextpa;
@@ -3727,6 +3766,30 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		*pte++ = proto_rw_ci_pte | pa;
 		entry_count++;
 	}
+
+#ifdef __HAVE_MACHINE_BOOTMAP
+	/*
+	 * Now perform any machine-specific mappings at VAs
+	 * allocated earlier.
+	 */
+	pmbm = (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_flags & (PMBM_F_VAONLY | PMBM_F_KEEPOUT)) {
+			continue;
+		}
+		va = *(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr);
+		pa = pmbm->pmbm_paddr;
+		pte = &ptes[m68k_btop(va)];
+		pt_entry_t proto = (pmbm->pmbm_flags & PMBM_F_CI) ?
+		    proto_rw_ci_pte : proto_rw_pte;
+		for (vaddr_t endva = va + m68k_round_page(pmbm->pmbm_size);
+		     va < endva;
+		     va += PAGE_SIZE, pa += PAGE_SIZE) {
+			*pte++ = proto | pa;
+			entry_count++;
+		}
+	}
+#endif /* __HAVE_MACHINE_BOOTMAP */
 
 	/*
 	 * Now that all of the invidual VAs are mapped in the leaf

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.5 2025/11/12 03:34:58 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.6 2025/11/14 15:07:41 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -161,6 +161,48 @@ struct pmap_ptpage {
 	                          ptp_segtab : 1;
 	struct pmap_table         ptp_tables[];
 };
+
+/*
+ * This structure describes regions to be statically allocated / mapped by
+ * pmap_boostrap1().  This is used for the fixed regions that everyone
+ * gets (kernel text / data / bss / symbols, lwp0 u-area, msgbuf address,
+ * etc.) as well as any additional static regions (device areas, etc.) that
+ * need to be mapped (with KVA space) or reserved (because they're mapped
+ * with TT registers).
+ *
+ * Some notes:
+ *
+ * - Virtual addresses are allocated and stored in the variable pointed
+ *   to by pmbm_vaddr_ptr, **unless** the PMBM_F_KEEPOUT flag is set,
+ *   in which case the pmbm_vaddr field indicates a range that kernel
+ *   virtual space should keep out of (usually because it's mapped by
+ *   Transparent Translation registers).
+ *
+ * - If the PMBM_F_VAONLY flag is set, only VA space will be allocated,
+ *   no mapping will be entered in the space.
+ *
+ * N.B. PMBM_F_KEEPOUT VA regions are assumed to lie beyond the normal
+ * kernel virtual address space.  The maximum kernel virtual address will
+ * be clamped to ensure that it never grows into the lowest of these regions.
+ *
+ * All regions will be rounded / aligned to page boundaries.
+ *
+ * This list is terminated by placing a (vaddr_t)-1 in the pmbm_vaddr
+ * field.
+ */
+struct pmap_bootmap {
+	union {
+		vaddr_t		pmbm_vaddr;
+		vaddr_t *	pmbm_vaddr_ptr;
+	};
+	paddr_t			pmbm_paddr;
+	size_t			pmbm_size;
+	int			pmbm_flags;
+};
+
+#define	PMBM_F_VAONLY	__BIT(0)
+#define	PMBM_F_KEEPOUT	__BIT(1)
+#define	PMBM_F_CI	__BIT(2)	/* cache-inhibited mapping */
 
 /*
  * Abstract definitions for PTE bits / fields.  C code will compile-time-

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2025/11/12 18:55:10 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2025/11/14 15:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2025/11/12 18:55:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2025/11/14 15:07:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -150,6 +150,24 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
  */
 int	cpuspeed = 25;		/* relative CPU speed; XXX skewed on 68040 */
 int	delay_divisor = 82;	/* delay constant */
+
+#ifdef __HAVE_NEW_PMAP_68K
+/*
+ * Clamp the kernel virual address space to keep it out of the
+ * TT ranges we use for devices.
+ */
+const struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr = NEWS68K_IO_TT_BASE,
+	  .pmbm_size  = NEWS68K_IO_TT_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = NEWS68K_PROM_TT_BASE,
+	  .pmbm_size  = NEWS68K_PROM_TT_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = -1 },
+};
+#endif
 
 /*
  * Early initialization, before main() is called.

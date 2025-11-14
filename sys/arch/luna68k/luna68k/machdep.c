@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.114 2025/11/12 13:33:34 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.115 2025/11/14 15:07:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2025/11/12 13:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2025/11/14 15:07:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,6 +148,24 @@ extern void ws_cnattach(void);
  */
 int	cpuspeed = 25;		/* only used for printing later */
 int	delay_divisor = 30;	/* for delay() loop count */
+
+#ifdef __HAVE_NEW_PMAP_68K
+/*
+ * Clamp the kernel virual address space to keep it out of the
+ * TT ranges we use for devices.
+ */
+const struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr = LUNA68K_IO0_TT_BASE,
+	  .pmbm_size  = LUNA68K_IO0_TT_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = LUNA68K_IO1_TT_BASE,
+	  .pmbm_size  = LUNA68K_IO1_TT_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = -1 },
+};
+#endif
 
 /*
  * Early initialization, before main() is called.

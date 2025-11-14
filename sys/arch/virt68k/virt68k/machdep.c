@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2025/11/14 01:24:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2025/11/14 15:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2025/11/14 01:24:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2025/11/14 15:07:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -133,6 +133,20 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /* Machine-dependent initialization routines. */
 void	virt68k_init(paddr_t);
+
+#ifdef __HAVE_NEW_PMAP_68K
+/*
+ * Clamp the kernel virual address space to keep it out of the
+ * TT ranges we use for devices.
+ */
+const struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr = VIRT68K_IO_BASE,
+	  .pmbm_size  = VIRT68K_IO_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = -1 },
+};
+#endif
 
 /*
  * Machine-dependent bootinfo "console attach" routine.

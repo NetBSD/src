@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2025/11/12 14:35:21 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 2025/11/14 15:07:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,7 +106,8 @@
 #define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #ifdef __HAVE_NEW_PMAP_68K
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
+extern vaddr_t kernel_virtual_max;
+#define VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
 #else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0xFF000000-PAGE_SIZE*NPTEPG))
 #endif

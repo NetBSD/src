@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2025/11/12 14:40:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2025/11/14 15:07:41 thorpej Exp $	*/
 
 #ifndef _LUNA68K_PMAP_H_
 
@@ -21,22 +21,30 @@
  * XXX: they can probably just use SUPERD.
  */
 
-#define	LUNA68K_TT30_IO0	(0x40000000 |				\
+#define	__HAVE_MACHINE_BOOTMAP
+
+#define	LUNA68K_IO0_TT_BASE	0x40000000
+#define	LUNA68K_IO0_TT_SIZE	0x40000000
+
+#define	LUNA68K_IO1_TT_BASE	0x80000000
+#define	LUNA68K_IO1_TT_SIZE	0x80000000
+
+#define	LUNA68K_TT30_IO0	(LUNA68K_IO0_TT_BASE |			\
 				 __SHIFTIN(0x3f,TT30_LAM) |		\
 				 TT30_E | TT30_CI | TT30_RWM |	\
 				__SHIFTIN(4,TT30_FCBASE) |		\
 				__SHIFTIN(3,TT30_FCMASK))
-#define	LUNA68K_TT30_IO1	(0x80000000 |				\
+#define	LUNA68K_TT30_IO1	(LUNA68K_IO1_TT_BASE |			\
 				 __SHIFTIN(0x7f,TT30_LAM) |		\
 				 TT30_E | TT30_CI | TT30_RWM |	\
 				__SHIFTIN(4,TT30_FCBASE) |		\
 				__SHIFTIN(3,TT30_FCMASK))
 
-#define	LUNA68K_TT40_IO0	(0x40000000 |				\
+#define	LUNA68K_TT40_IO0	(LUNA68K_IO0_TT_BASE |			\
 				 __SHIFTIN(0x3f,TTR40_LAM) |		\
 				 TTR40_E | TTR40_SUPER |		\
 				 PTE40_CM_NC_SER)
-#define	LUNA68K_TT40_IO1	(0x80000000 |				\
+#define	LUNA68K_TT40_IO1	(LUNA68K_IO1_TT_BASE |			\
 				 __SHIFTIN(0x7f,TTR40_LAM) |		\
 				 TTR40_E | TTR40_SUPER |		\
 				 PTE40_CM_NC_SER)
