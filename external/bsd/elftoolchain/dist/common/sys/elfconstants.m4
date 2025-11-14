@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.10 2025/10/30 21:19:31 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.11 2025/11/14 19:23:48 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.10 2025/10/30 21:19:31 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4256 2025-10-30 14:14:56Z jkoshy')
+	`Id: elfconstants.m4 4270 2025-11-12 19:07:58Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -135,48 +135,79 @@ _(`CA_SUNW_SW_1',	2,	`software capability')')
 # Flags used with dynamic linking entries.
 #
 define(`DEFINE_DYN_FLAGS',`
-_(`DF_ORIGIN',           0x00000001U,
+_(DF_ORIGIN,           0x00000001U,
 	`object being loaded may refer to `$ORIGIN'')
-_(`DF_SYMBOLIC',         0x00000002U,
+_(DF_SYMBOLIC,         0x00000002U,
 	`search library for references before executable')
-_(`DF_TEXTREL',          0x00000004U,
+_(DF_TEXTREL,          0x00000004U,
 	`relocation entries may modify text segment')
-_(`DF_BIND_NOW',         0x00000008U,
+_(DF_BIND_NOW,         0x00000008U,
 	`process relocation entries at load time')
-_(`DF_STATIC_TLS',       0x00000010U,
+_(DF_STATIC_TLS,       0x00000010U,
 	`uses static thread-local storage')
-_(`DF_1_BIND_NOW',       0x00000001U,
+_(DF_1_BIND_NOW,       0x00000001U,
 	`process relocation entries at load time')
-_(`DF_1_GLOBAL',         0x00000002U,
+_(DF_1_GLOBAL,         0x00000002U,
 	`unused')
-_(`DF_1_GROUP',          0x00000004U,
+_(DF_1_GROUP,          0x00000004U,
 	`object is a member of a group')
-_(`DF_1_NODELETE',       0x00000008U,
+_(DF_1_NODELETE,       0x00000008U,
 	`object cannot be deleted from a process')
-_(`DF_1_LOADFLTR',       0x00000010U,
+_(DF_1_LOADFLTR,       0x00000010U,
 	`immediate load filtees')
-_(`DF_1_INITFIRST',      0x00000020U,
+_(DF_1_INITFIRST,      0x00000020U,
 	`initialize object first')
-_(`DF_1_NOOPEN',         0x00000040U,
+_(DF_1_NOOPEN,         0x00000040U,
 	`disallow dlopen()')
-_(`DF_1_ORIGIN',         0x00000080U,
+_(DF_1_ORIGIN,         0x00000080U,
 	`object being loaded may refer to $ORIGIN')
-_(`DF_1_DIRECT',         0x00000100U,
+_(DF_1_DIRECT,         0x00000100U,
 	`direct bindings enabled')
-_(`DF_1_INTERPOSE',      0x00000400U,
+_(DF_1_INTERPOSE,      0x00000400U,
 	`object is interposer')
-_(`DF_1_NODEFLIB',       0x00000800U,
+_(DF_1_NODEFLIB,       0x00000800U,
 	`ignore default library search path')
-_(`DF_1_NODUMP',         0x00001000U,
+_(DF_1_NODUMP,         0x00001000U,
 	`disallow dldump()')
-_(`DF_1_CONFALT',        0x00002000U,
+_(DF_1_CONFALT,        0x00002000U,
 	`object is a configuration alternative')
-_(`DF_1_ENDFILTEE',      0x00004000U,
+_(DF_1_ENDFILTEE,      0x00004000U,
 	`filtee terminates filter search')
-_(`DF_1_DISPRELDNE',     0x00008000U,
+_(DF_1_DISPRELDNE,     0x00008000U,
 	`displacement relocation done')
-_(`DF_1_DISPRELPND',     0x00010000U,
-	`displacement relocation pending')')
+_(DF_1_DISPRELPND,     0x00010000U,
+	`displacement relocation pending')
+_(DF_1_NODIRECT,       0x00020000U,
+	`object contains non-direct bindings')
+_(DF_1_IGNMULDEF,      0x00040000U,
+	`unused')
+_(DF_1_NOKSYMS,        0x00080000U,
+	`unused')
+_(DF_1_NOHDR,          0x00100000U,
+	`unused')
+_(DF_1_EDITED,         0x00200000U,
+	`object has been modified')
+_(DF_1_NORELOC,        0x00400000U,
+	`unused')
+_(DF_1_SYMINTPOSE,     0x00800000U,
+	`symbol interposers exist')
+_(DF_1_GLOBAUDIT,      0x01000000U,
+	`global auditing')
+_(DF_1_SINGLETON,      0x02000000U,
+	`contains singleton symbols')
+_(DF_1_STUB,           0x04000000U,
+	`stub object')
+_(DF_1_PIE,            0x08000000U,
+	`position-independent executable')
+_(DF_1_KMOD,           0x10000000U,
+	`kernel module')
+_(DF_1_WEAKFILTER,     0x20000000U,
+	`object is a weak filter')
+')
+
+define(`DEFINE_DYN_FLAG_ALIASES',`
+_(DF_1_NOW,	DF_1_BIND_NOW)
+')
 
 #
 # Dynamic linking entry types.
@@ -258,8 +289,8 @@ _(`DT_RELR',             36,
 	`The address of a table with relative relocation entries')
 _(`DT_RELRENT',          37,
 	`The size in bytes of a DT_RELR relocation entry')
-_(`DT_MAXPOSTAGS',       38,
-	`the number of positive tags')
+_(`DT_SYMTABSZ',	 39,
+	`The size in bytes of the DT_SYMTAB symbol table')
 _(`DT_LOOS',             0x6000000D,
 	`start of OS-specific types')
 _(`DT_SUNW_AUXILIARY',   0x6000000D,
@@ -756,8 +787,8 @@ _(ELFMAG3, 0x46U)
 
 # Additional ELFMAG related constants.
 define(`DEFINE_ELF_MAGIC_ADDITIONAL_CONSTANTS',`
-_(ELFMAG,  "\177ELF")
-_(SELFMAG, 4)
+_(ELFMAG,  "\177ELF",	`ELF magic bytes as a string.')
+_(SELFMAG, 4,		`The number of ELF magic bytes.')
 ')
 
 #
@@ -1733,18 +1764,6 @@ _(STT_NUM,             7,
 ')
 
 #
-# Symbol binding.
-#
-define(`DEFINE_SYMBOL_BINDING_KINDS',`
-_(SYMINFO_BT_SELF,	0xFFFFU,
-	`bound to self')
-_(SYMINFO_BT_PARENT,	0xFFFEU,
-	`bound to parent')
-_(SYMINFO_BT_NONE,	0xFFFDU,
-	`no special binding')
-')
-
-#
 # Symbol visibility.
 #
 define(`DEFINE_SYMBOL_VISIBILITIES',`
@@ -1758,12 +1777,12 @@ _(STV_PROTECTED,       3,
 	`local references are not preemptable')
 ')
 
-#
-# Symbol flags.
-#
-define(`DEFINE_SYMBOL_FLAGS',`
+# Syminfo flags.
+define(`DEFINE_SYMINFO_FLAGS',`
 _(SYMINFO_FLG_DIRECT,	0x0001U,
 	`directly assocated reference')
+_(SYMINFO_FLG_FILTER, 0x0002U,
+	`associated with a filter')
 _(SYMINFO_FLG_COPY,	0x0004U,
 	`definition by copy-relocation')
 _(SYMINFO_FLG_LAZYLOAD,	0x0008U,
@@ -1772,6 +1791,36 @@ _(SYMINFO_FLG_DIRECTBIND,	0x0010U,
 	`reference should be directly bound')
 _(SYMINFO_FLG_NOEXTDIRECT, 0x0020U,
 	`external references not allowed to bind to definition')
+_(SYMINFO_FLG_AUXILIARY,   0x0040U,
+	`auxiliary filter')
+_(SYMINFO_FLG_INTERPOSE,   0x0080U,
+	`interposer symbol')
+_(SYMINFO_FLG_CAP,	   0x0100U,
+	`associated with capabilities')
+_(SYMINFO_FLG_DEFERRED,	   0x0200U,
+	`deferred reference')
+_(SYMINFO_FLG_WEAKFILTER,  0x0400U,
+	`weak filter')
+')
+
+# Syminfo bindings.
+define(`DEFINE_SYMINFO_BINDINGS',`
+_(SYMINFO_BT_SELF,	0xFFFFU,
+	`bound to self')
+_(SYMINFO_BT_PARENT,	0xFFFEU,
+	`bound to parent')
+_(SYMINFO_BT_NONE,	0xFFFDU,
+	`no special binding')
+_(SYMINFO_BT_EXTERN,	0xFFFCU,
+	`defined as external')
+')
+
+# The version of the syminfo table.  Stored at index 0 of the table.
+define(`DEFINE_SYMINFO_VERSIONS',`
+_(SYMINFO_NONE,		0,
+	`no version')
+_(SYMINFO_CURRENT,	1,
+	`current version')
 ')
 
 #
@@ -1782,6 +1831,8 @@ _(VER_NDX_LOCAL,	0,
 	`local scope')
 _(VER_NDX_GLOBAL,	1,
 	`global scope')
+_(VER_NDX_GIVEN,	2,
+	`global, with user-specified versioning')
 ')
 
 #
@@ -1792,6 +1843,8 @@ _(VER_FLG_BASE,		0x1,
 	`file version')
 _(VER_FLG_WEAK,		0x2,
 	`weak version')
+_(VER_FLG_INFO,		0x4,
+	`informational-only version')
 ')
 
 #
@@ -3409,18 +3462,16 @@ _(LL_DELTA,		0x20,
 	`')
 ')
 
+# ELF Note types.
 #
-# Note tags
-#
-define(`DEFINE_NOTE_ENTRY_TYPES',`
+# These values are used in the n_type field of the Elf Note header.
+define(`DEFINE_COMMON_NOTE_TYPES',`
 _(NT_ABI_TAG,			1,
-	`Tag indicating the ABI')
-_(NT_GNU_HWCAP,			2,
-	`Hardware capabilities')
-_(NT_GNU_BUILD_ID,		3,
-	`Build id, set by ld(1)')
-_(NT_GNU_GOLD_VERSION,		4,
-	`Version number of the GNU gold linker')
+	`Tag indicating the OS ABI')
+')
+
+define(`DEFINE_CORE_FILE_NOTE_TYPES',`
+__(`Note types used in core files.')
 _(NT_PRSTATUS,			1,
 	`Process status')
 _(NT_FPREGSET,			2,
@@ -3429,8 +3480,6 @@ _(NT_PRPSINFO,			3,
 	`Process information')
 _(NT_AUXV,			6,
 	`Auxiliary vector')
-_(NT_PRXFPREG,		0x46E62B7FU,
-	`Linux user_xfpregs structure')
 _(NT_PSTATUS,			10,
 	`Linux process status')
 _(NT_FPREGS,			12,
@@ -3441,6 +3490,26 @@ _(NT_LWPSTATUS,			16,
 	`Linux lwpstatus_t type')
 _(NT_LWPSINFO,			17,
 	`Linux lwpinfo_t type')
+_(NT_PRXFPREG,		0x46E62B7FU,
+	`Linux user_xfpregs structure')
+')
+
+define(`DEFINE_GNU_NOTE_TYPES',`
+__(`GNU note types')
+_(NT_GNU_ABI_TAG,		1,
+	`GNU ABI version')
+_(NT_GNU_HWCAP,			2,
+	`Hardware capabilities')
+_(NT_GNU_BUILD_ID,		3,
+	`Build id, set by ld(1)')
+_(NT_GNU_GOLD_VERSION,		4,
+	`Version number of the GNU gold linker')
+')
+
+define(`DEFINE_FREEBSD_NOTE_TYPES',`
+__(`FreeBSD note types.')
+_(NT_FREEBSD_ABI_TAG,		1,
+	`FreeBSD ABI version')
 _(NT_FREEBSD_NOINIT_TAG,	2,
 	`FreeBSD no .init tag')
 _(NT_FREEBSD_ARCH_TAG,		3,
@@ -3449,10 +3518,15 @@ _(NT_FREEBSD_FEATURE_CTL,	4,
 	`FreeBSD feature control')
 ')
 
+define(`DEFINE_NOTE_TYPES',`dnl
+DEFINE_COMMON_NOTE_TYPES()dnl
+DEFINE_GNU_NOTE_TYPES()dnl
+DEFINE_FREEBSD_NOTE_TYPES()dnl
+DEFINE_CORE_FILE_NOTE_TYPES()dnl
+')
+
 # Aliases for the ABI tag.
-define(`DEFINE_NOTE_ENTRY_ALIASES',`
-_(NT_FREEBSD_ABI_TAG,	NT_ABI_TAG)
-_(NT_GNU_ABI_TAG,		NT_ABI_TAG)
+define(`DEFINE_NOTE_TYPE_ALIASES',`
 _(NT_NETBSD_IDENT,	NT_ABI_TAG)
 _(NT_OPENBSD_IDENT,	NT_ABI_TAG)
 ')

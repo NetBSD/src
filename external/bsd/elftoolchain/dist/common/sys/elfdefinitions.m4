@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.12 2025/10/30 21:19:31 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.13 2025/11/14 19:23:48 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.12 2025/10/30 21:19:31 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 4257 2025-10-30 14:16:15Z jkoshy')
+	`Id: elfdefinitions.m4 4271 2025-11-14 18:28:12Z jkoshy')
 include(`elfconstants.m4')dnl
 
 # Compute the whitespace between a symbol and its definition.
@@ -89,6 +89,11 @@ DEFINE_CAPABILITIES()
  * Flags used with dynamic linking entries.
  */
 DEFINE_DYN_FLAGS()
+
+/*
+ * Aliases for the DF_* symbols.
+ */
+DEFINE_DYN_FLAG_ALIASES()
 
 /*
  * Dynamic linking entry types.
@@ -209,19 +214,24 @@ DEFINE_SYMBOL_TYPES()
 DEFINE_SYMBOL_TYPES_ADDITIONAL_CONSTANTS()
 
 /*
- * Symbol binding.
- */
-DEFINE_SYMBOL_BINDING_KINDS()
-
-/*
  * Symbol visibility.
  */
 DEFINE_SYMBOL_VISIBILITIES()
 
 /*
- * Symbol flags.
+ * Syminfo flags.
  */
-DEFINE_SYMBOL_FLAGS()
+DEFINE_SYMINFO_FLAGS()
+
+/*
+ * Syminfo bindigs.
+ */
+DEFINE_SYMINFO_BINDINGS()
+
+/*
+ * Syminfo section versions.
+ */
+DEFINE_SYMINFO_VERSIONS()
 
 /*
  * Versioning dependencies.
@@ -414,11 +424,11 @@ typedef struct {
 DEFINE_LL_FLAGS()
 
 /*
- * Note tags
+ * ELF Note types.
  */
-DEFINE_NOTE_ENTRY_TYPES()
+DEFINE_NOTE_TYPES()
 /* Aliases for the ABI tag. */
-DEFINE_NOTE_ENTRY_ALIASES()
+DEFINE_NOTE_TYPE_ALIASES()
 
 /*
  * Note descriptors.
@@ -604,16 +614,22 @@ typedef struct {
 	Elf64_Xword	st_size;     /* size of associated data */
 } Elf64_Sym;
 
-#define ELF32_ST_BIND(I)	((I) >> 4)
-#define ELF32_ST_TYPE(I)	((I) & 0xFU)
-#define ELF32_ST_INFO(B,T)	(((B) << 4) + ((T) & 0xF))
+#define ELF_ST_BIND(I)		((I) >> 4)
+#define ELF_ST_TYPE(I)		((I) & 0xFU)
+#define ELF_ST_INFO(B, T)	(((B) << 4) + ((T) & 0xFU))
 
-#define ELF64_ST_BIND(I)	((I) >> 4)
-#define ELF64_ST_TYPE(I)	((I) & 0xFU)
-#define ELF64_ST_INFO(B,T)	(((B) << 4) + ((T) & 0xF))
+#define ELF32_ST_BIND(I)	ELF_ST_BIND(I)
+#define ELF32_ST_TYPE(I)	ELF_ST_TYPE(I)
+#define ELF32_ST_INFO(B,T)	ELF_ST_INFO(B,T)
 
-#define ELF32_ST_VISIBILITY(O)	((O) & 0x3)
-#define ELF64_ST_VISIBILITY(O)	((O) & 0x3)
+#define ELF64_ST_BIND(I)	ELF_ST_BIND(I)
+#define ELF64_ST_TYPE(I)	ELF_ST_TYPE(I)
+#define ELF64_ST_INFO(B,T)	ELF_ST_INFO(B,T)
+
+#define ELF_ST_VISIBILITY(O)	((O) & 0x3U)
+
+#define ELF32_ST_VISIBILITY(O)	ELF_ST_VISIBILITY(O)
+#define ELF64_ST_VISIBILITY(O)	ELF_ST_VISIBILITY(O)
 
 /*
  * Syminfo descriptors, containing additional symbol information.
@@ -676,6 +692,8 @@ typedef Elf64_Xword	Elf64_Relr;
  * Symbol versioning structures.
  */
 
+#define ELF_VER_CHR	'@'	/* Used in versioned names. */
+
 /* 32-bit structures. */
 typedef struct
 {
@@ -687,7 +705,7 @@ typedef struct
 {
 	Elf32_Word	vna_hash;    /* Hash value of dependency name. */
 	Elf32_Half	vna_flags;   /* Flags. */
-	Elf32_Half	vna_other;   /* Unused. */
+	Elf32_Half	vna_other;   /* Version index, if non-zero. */
 	Elf32_Word	vna_name;    /* Offset to dependency name. */
 	Elf32_Word	vna_next;    /* Offset to next vernaux entry. */
 } Elf32_Vernaux;
@@ -724,7 +742,7 @@ typedef struct {
 typedef struct {
 	Elf64_Word	vna_hash;    /* Hash value of dependency name. */
 	Elf64_Half	vna_flags;   /* Flags. */
-	Elf64_Half	vna_other;   /* Unused. */
+	Elf64_Half	vna_other;   /* Version index, if non-zero. */
 	Elf64_Word	vna_name;    /* Offset to dependency name. */
 	Elf64_Word	vna_next;    /* Offset to next vernaux entry. */
 } Elf64_Vernaux;
@@ -749,6 +767,13 @@ typedef struct {
 
 typedef Elf64_Half	Elf64_Versym;
 
+#define VER_NDX_HIDDEN	0x8000U	    /* Ignore symbol presence. */
+#define VER_NDX(X)	((X) & ~VER_NDX_HIDDEN)
+
+#define VER_NEED_HIDDEN	VER_NDX_HIDDEN
+#define VER_NEED_IDX(X)	VER_NDX(X)
+
+#define VER_DEF_IDX(X)	VER_NDX(X)
 
 /*
  * The header for GNU-style hash sections.
