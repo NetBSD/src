@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.91 2025/11/12 02:32:03 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.92 2025/11/14 14:24:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -307,6 +307,7 @@ Lenab3:
 /* final setup for C code */
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(luna68k_init)	| additional pre-main initialization
+	addql	#4,%sp
 
 /*
  * Create a fake exception frame that returns to user mode,
