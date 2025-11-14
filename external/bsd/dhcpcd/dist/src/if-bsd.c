@@ -761,7 +761,7 @@ if_route(unsigned char cmd, const struct rt *rt)
 			rtm->rtm_flags |= RTF_HOST;
 		/* Network routes are cloning or connected if supported.
 		 * All other routes are static. */
-		if (gateway_unspec) {
+		if (gateway_unspec && !(rtm->rtm_flags & RTF_REJECT)) {
 #ifdef RTF_CLONING
 			rtm->rtm_flags |= RTF_CLONING;
 #endif
