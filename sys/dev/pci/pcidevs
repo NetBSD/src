@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1527.2.1 2025/10/26 12:42:25 martin Exp $
+$NetBSD: pcidevs,v 1.1527.2.2 2025/11/14 13:05:41 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -899,6 +899,9 @@ product ADP2 ASR2120S		0x0286	ASR-2120S
 product ADP2 ASR2200S_SUB2M	0x0287	ASR-2200S
 product ADP2 ASR2410SA		0x0290	ASR-2410SA
 product ADP2 AAR2810SA		0x0292	AAR-2810SA
+product ADP2 5445		0x02b5	RAID 5445
+product ADP2 5805		0x02b6	RAID 5805
+product ADP2 5085		0x02b7	RAID 5085
 product ADP2 3405		0x02bb	RAID 3405
 product ADP2 3805		0x02bc	RAID 3805
 product ADP2 2405		0x02d5	RAID 2405
