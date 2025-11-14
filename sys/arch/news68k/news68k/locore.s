@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 2025/11/12 18:55:10 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 2025/11/14 14:24:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -419,7 +419,7 @@ Lenab3:
 /* final setup for C code */
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(news68k_init)	| additional pre-main initialization
-
+	addql	#4,%sp
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
