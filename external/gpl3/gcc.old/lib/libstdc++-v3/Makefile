@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2025/11/13 23:46:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2025/11/14 00:03:55 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -173,11 +173,6 @@ BUILDSYMLINKS+=	\
 
 .endfor
 
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
-
 .include "../Makefile.gthr"
 
 # XXX Special rules in c++98/Makefile; may move into c++11 in future GCC.
@@ -218,6 +213,25 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 COPTS.floating_to_chars.cc+=	-Wno-error=unused-function
 COPTS.cp-demangle.c+=	-Wno-error=stack-protector
 COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
+
+# libbacktrace
+.for f in ${G_LIBBACKTRACE_SOURCES} ${G_LIBBACKTRACE_DEPS}
+. if ${f} == "cp-demangle.c"
+BUILDSYMLINKS+=	\
+	${DIST}/libiberty/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libiberty/arch/${LIBSTDCXX_MACHINE_ARCH}
+. else
+BUILDSYMLINKS+=	\
+	${DIST}/libbacktrace/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libbacktrace/arch/${LIBSTDCXX_MACHINE_ARCH} \
+	-I${DIST}/libbacktrace
+. endif
+SRCS+=	std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-include ${GLIBCXX_SRCDIR}/src/libbacktrace/backtrace-rename.h
+.endfor
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
