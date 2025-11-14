@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.51 2025/07/25 18:19:12 martin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.51.2.1 2025/11/14 13:12:27 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ struct rasops_info {
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
 	uint32_t
-		ri_devcmap[16]; /* color -> framebuffer data */
+		ri_devcmap[256]; /* color -> framebuffer data */
 
 	/* The emulops you need to use, and the screen caps for wscons */
 	struct	wsdisplay_emulops ri_ops;
@@ -190,6 +190,7 @@ void	rasops_erasecols(void *, int, int, int, long);
 int	rasops_get_cmap(struct rasops_info *, uint8_t *, size_t);
 
 extern const uint8_t	rasops_cmap[256 * 3];
+extern uint8_t	rasops_ecmap[256 * 3];
 
 #ifdef _RASOPS_PRIVATE
 /*
@@ -203,11 +204,11 @@ void	rasops15_init(struct rasops_info *);
 void	rasops24_init(struct rasops_info *);
 void	rasops32_init(struct rasops_info *);
 
-#define	ATTR_BG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 16) & 0xf])
-#define	ATTR_FG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 24) & 0xf])
+#define	ATTR_BG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 16) & 0xff])
+#define	ATTR_FG(ri, attr) ((ri)->ri_devcmap[((uint32_t)(attr) >> 24) & 0xff])
 
-#define	ATTR_MASK_BG __BITS(16, 19)
-#define	ATTR_MASK_FG __BITS(24, 27)
+#define	ATTR_MASK_BG __BITS(16, 23)
+#define	ATTR_MASK_FG __BITS(24, 31)
 
 #define	DELTA(p, d, cast) ((p) = (cast)((uint8_t *)(p) + (d)))
 

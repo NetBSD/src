@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.128 2022/05/15 16:43:39 uwe Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.128.12.1 2025/11/14 13:12:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.128 2022/05/15 16:43:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.128.12.1 2025/11/14 13:12:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -79,6 +79,8 @@ static const uint32_t rasops_rmask32[4 + 1] = {
 	MBE(0x00000000), MBE(0xff000000), MBE(0xffff0000), MBE(0xffffff00),
 	MBE(0xffffffff),
 };
+
+uint8_t rasops_ecmap[256 * 3];
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
 const uint8_t rasops_cmap[256 * 3] = {
@@ -140,9 +142,39 @@ const uint8_t rasops_cmap[256 * 3] = {
 };
 
 /* True if color is gray */
-static const uint8_t rasops_isgray[16] = {
+static const uint8_t rasops_isgray[256] = {
 	1, 0, 0, 0, 0, 0, 0, 1,
 	1, 0, 0, 0, 0, 0, 0, 1,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1,
 };
 
 #ifdef RASOPS_APPLE_PALETTE
@@ -541,16 +573,19 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 #if (NRASOPS15 + NRASOPS16) > 0
 	case 15:
 	case 16:
+		ri->ri_caps |= WSSCREEN_256COL;
 		rasops15_init(ri);
 		break;
 #endif
 #if NRASOPS24 > 0
 	case 24:
+		ri->ri_caps |= WSSCREEN_256COL;
 		rasops24_init(ri);
 		break;
 #endif
 #if NRASOPS32 > 0
 	case 32:
+		ri->ri_caps |= WSSCREEN_256COL;
 		rasops32_init(ri);
 		break;
 #endif
@@ -619,8 +654,8 @@ rasops_allocattr_color(void *cookie, int fg0, int bg0, int flg, long *attr)
 		return EINVAL;
 
 #ifdef RASOPS_CLIPPING
-	fg &= 7;
-	bg &= 7;
+	fg &= 0xff;
+	bg &= 0xff;
 #endif
 
 	if ((flg & WSATTR_BLINK) != 0)
@@ -904,7 +939,7 @@ rasops_init_devcmap(struct rasops_info *ri)
 
 	p = rasops_cmap;
 
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < ((ri->ri_caps & WSSCREEN_256COL) ? 256 : 16); i++) {
 		if (ri->ri_rnum <= 8)
 			c = (uint32_t)(*p >> (8 - ri->ri_rnum)) << ri->ri_rpos;
 		else
@@ -922,6 +957,32 @@ rasops_init_devcmap(struct rasops_info *ri)
 		else
 			c |= (uint32_t)(*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
 		p++;
+
+#define EP_BLUE_RAW(x) (48 * ((x - 16) % 6))
+#define EP_GREEN_RAW(x) (48 * (((x - 16)/6) % 6))
+#define EP_RED_RAW(x) (48 * (((x - 16)/36) % 6))
+#define EP_BLUE(x) ((EP_BLUE_RAW(x) >> (8 - ri->ri_bnum)) << ri->ri_bpos)
+#define EP_GREEN(x) ((EP_GREEN_RAW(x) >> (8 - ri->ri_gnum)) << ri->ri_gpos)
+#define EP_RED(x) ((EP_RED_RAW(x) >> (8 - ri->ri_rnum)) << ri->ri_rpos)
+#define EP_COL(x) EP_RED(x) | EP_GREEN(x) | EP_BLUE(x)
+#define EP_GREY_BYTE(x) (1 + ((x - 232) * 11))
+#define GREYSCALE_BLUE(x) ((EP_GREY_BYTE(x) >> (8 - ri->ri_bnum)) << ri->ri_bpos)
+#define GREYSCALE_GREEN(x) ((EP_GREY_BYTE(x) >> (8 - ri->ri_gnum)) << ri->ri_gpos)
+#define GREYSCALE_RED(x) ((EP_GREY_BYTE(x) >> (8 - ri->ri_rnum)) << ri->ri_rpos)
+#define EP_GREY(x) GREYSCALE_RED(x) | GREYSCALE_GREEN(x) | GREYSCALE_BLUE(x)
+		if (i >= 16) {
+			rasops_ecmap[i * 3] =
+			    (i < 232 ? EP_RED_RAW(i) : EP_GREY_BYTE(i));
+			rasops_ecmap[i * 3 + 1] =
+			    (i < 232 ? EP_GREEN_RAW(i) : EP_GREY_BYTE(i));
+			rasops_ecmap[i * 3 + 2] =
+			    (i < 232 ? EP_BLUE_RAW(i) : EP_GREY_BYTE(i));
+			c = (i < 232 ? EP_COL(i) : EP_GREY(i));
+		} else {
+			rasops_ecmap[i * 3] = rasops_cmap[i * 3];
+			rasops_ecmap[i * 3 + 1] = rasops_cmap[i * 3 + 1];
+			rasops_ecmap[i * 3 + 2] = rasops_cmap[i * 3 + 2];
+		}
 
 		/*
 		 * Swap byte order if necessary. Then, fill the word for
@@ -975,8 +1036,8 @@ void
 rasops_unpack_attr(long attr, int *fg, int *bg, int *underline)
 {
 
-	*fg = ((uint32_t)attr >> 24) & 0xf;
-	*bg = ((uint32_t)attr >> 16) & 0xf;
+	*fg = ((uint32_t)attr >> 24) & 0xff;
+	*bg = ((uint32_t)attr >> 16) & 0xff;
 	if (underline != NULL)
 		*underline = (uint32_t)attr & WSATTR_UNDERLINE;
 }

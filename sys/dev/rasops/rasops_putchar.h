@@ -1,4 +1,4 @@
-/* $NetBSD: rasops_putchar.h,v 1.8 2019/08/10 01:24:17 rin Exp $ */
+/* $NetBSD: rasops_putchar.h,v 1.8.36.1 2025/11/14 13:12:27 martin Exp $ */
 
 /* NetBSD: rasops8.c,v 1.41 2019/07/25 03:02:44 rin Exp  */
 /*-
@@ -151,15 +151,24 @@ NAME(RASOPS_DEPTH)(void *cookie, int row, int col, u_int uc, long attr)
 		/*
 	 	 * This is independent to positions/lengths of RGB in pixel.
 	 	 */
-		off[0] = (((uint32_t)attr >> 16) & 0xf) * 3;
-		off[1] = (((uint32_t)attr >> 24) & 0xf) * 3;
+		off[0] = (((uint32_t)attr >> 16) & 0xff) * 3;
+		off[1] = (((uint32_t)attr >> 24) & 0xff) * 3;
 
-		r[0] = rasops_cmap[off[0]];
-		r[1] = rasops_cmap[off[1]];
-		g[0] = rasops_cmap[off[0] + 1];
-		g[1] = rasops_cmap[off[1] + 1];
-		b[0] = rasops_cmap[off[0] + 2];
-		b[1] = rasops_cmap[off[1] + 2];
+		if (ri->ri_caps & WSSCREEN_256COL) {
+			r[0] = rasops_ecmap[off[0]];
+			r[1] = rasops_ecmap[off[1]];
+			g[0] = rasops_ecmap[off[0] + 1];
+			g[1] = rasops_ecmap[off[1] + 1];
+			b[0] = rasops_ecmap[off[0] + 2];
+			b[1] = rasops_ecmap[off[1] + 2];
+		} else {
+			r[0] = rasops_cmap[off[0]];
+			r[1] = rasops_cmap[off[1]];
+			g[0] = rasops_cmap[off[0] + 1];
+			g[1] = rasops_cmap[off[1] + 1];
+			b[0] = rasops_cmap[off[0] + 2];
+			b[1] = rasops_cmap[off[1] + 2];
+		}
 #endif
 
 		while (height--) {

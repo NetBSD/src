@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.34 2023/08/03 22:11:41 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.34.8.1 2025/11/14 13:12:27 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.34 2023/08/03 22:11:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.34.8.1 2025/11/14 13:12:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,6 +561,26 @@ wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 				flags |= WSATTR_WSCOLORS;
 				fgcol = ARG(vd, n) - 30;
 				break;
+#define EXIST_ARG2(i) ((vd->nargs - i) >= 3)
+#define ARG2_OR_DFLT(i) (EXIST_ARG2(i) ? ARG(vd, i + 2) : 0)
+			    case 38:
+				if (vd->nargs == n + 1)
+					break;
+				if (ARG(vd, n + 1) == 5) {
+					flags |= WSATTR_WSCOLORS;
+					if (vd->scrcapabilities &
+					    WSSCREEN_256COL)
+						fgcol = ARG2_OR_DFLT(n);
+					n += (EXIST_ARG2(n) ? 2 : 1);
+					break;
+				}
+				if (ARG(vd, n + 1) == 2) {
+					n = (vd->nargs - n > 5 ? n + 4 :
+					    vd->nargs);
+					break;
+				}
+				n++;
+				break;
 			    case 39:
 				fgcol = vd->msgattrs.default_fg;
 				break;
@@ -570,8 +590,38 @@ wsemul_vt100_handle_csi(struct vt100base_data *vd, u_char c)
 				flags |= WSATTR_WSCOLORS;
 				bgcol = ARG(vd, n) - 40;
 				break;
+			    case 48:
+				if (vd->nargs == n + 1)
+					break;
+				if (ARG(vd, n + 1) == 5) {
+					flags |= WSATTR_WSCOLORS;
+					if (vd->scrcapabilities &
+					    WSSCREEN_256COL)
+						bgcol = ARG2_OR_DFLT(n);
+					n += (EXIST_ARG2(n) ? 2 : 1);
+					break;
+				}
+				if (ARG(vd, n + 1) == 2) {
+					n = (vd->nargs - n > 5 ? n + 4 :
+					    vd->nargs);
+					break;
+				}
+				n++;
+				break;
 			    case 49:
 				bgcol = vd->msgattrs.default_bg;
+				break;
+			    case 90: case 91: case 92: case 93:
+			    case 94: case 95: case 96: case 97:
+				/* bright foreground color */
+				flags |= WSATTR_WSCOLORS;
+				fgcol = ARG(vd, n) - 82;
+				break;
+			    case 100: case 101: case 102: case 103:
+			    case 104: case 105: case 106: case 107:
+				/* bright background color */
+				flags |= WSATTR_WSCOLORS;
+				bgcol = ARG(vd, n) - 92;
 				break;
 			    default:
 #ifdef VT100_PRINTUNKNOWN
