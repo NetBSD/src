@@ -15,8 +15,8 @@ switched:	has port switched?  y (yes), n (no/ready), ? (not ready)
 
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf	switched
 ------------	-----	-------	------	---------------	------------	----	---	--------
-aarch64		y	y	y	y	y	y		y	n[13]	y
-aarch64eb	y	y	y	y	y	y		y	n[13]	y
+aarch64		y	y	y	y	y	y		y	y	y
+aarch64eb	y	y	y	y	y	y		y	y	y
 alpha		y	b	y	y	y	y[11]		n[14]	n[15]	?
 earmv4		y	b	y	y	y	y		?	?	y
 earmv4eb	y	b	y	y	y	y		?	?	y
@@ -41,6 +41,8 @@ mipseb		y	b	y	y	?	?		?	?	?
 mipsel		y	b	y	y	?	n[6]		?	?	?
 mips64eb	y	y	y	y	y	y		y	?	?
 mips64el	y	b	y	y	y	y		?	?	?
+mipsn64eb	y	b	y	y	y	y		?	?	?
+mipsn64el	y	b	y	y	y	y		?	?	?
 powerpc		y	b	y	y	y	y		n[1]	?	?
 powerpc64	y	b	y	y	y	y		?	?	?
 sh3eb		y	b	y	y	n[10]	?		?	?	?
@@ -70,10 +72,6 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 [10]: sh3 has missing symbol error in gdb.  does does 32-bit mips.
       minsyms.c:(.text+0x2414): undefined reference to `__atomic_test_and_set'
 [11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
-[13]: some pic_profile variants of tests in usr.bin/c++ fails with
-      ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_cas8_acq_rel'
-      ld: /usr/lib/libgcc_s.so: undefined reference to `__aarch64_swp8_acq_rel'
-      -- this is odd, these symbols are in libc, and are undefined in libgcc_s.so, but so are eg, abort() and malloc() etc.
 [14]: cc1 crashes by jumping into rodata segment when compiling pkgsrc/pkgtools/libnbcompat:
       In file included from glob.c:12:
       __glob13.c: In function 'globextend':
@@ -110,6 +108,10 @@ mipsel:		k		k		k		k		k		k
 		algor		evbmips		pmax
 mips64eb:	 		y		 
 mips64el:	y		y		y
+
+		algor		evbmips		pmax
+mipsn64eb:	 		?		 
+mipsn64el:	?		?		?
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
 powerpc:	k		k	k	k		y		k		k		k		k		k
