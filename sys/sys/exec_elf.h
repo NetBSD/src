@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.180 2025/11/11 21:20:23 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.181 2025/11/14 21:08:10 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -598,9 +598,6 @@ typedef struct {
 	Elf64_Xword	st_size;	/* size of symbol */
 } Elf64_Sym;
 
-/* Symbol Table index of the undefined symbol */
-#define ELF_SYM_UNDEFINED	0
-
 #define STN_UNDEF		0	/* undefined index */
 
 /* st_info: Symbol Bindings */
@@ -1024,6 +1021,9 @@ typedef Elf64_Half Elf64_Versym;
 /*
  * Symbols and types that are NetBSD-specific.
  */
+
+/* Symbol Table index of the undefined symbol */
+#define ELF_SYM_UNDEFINED	0
 
 /*
  * Auxiliary Vectors
