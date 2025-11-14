@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 2025/11/14 00:44:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 2025/11/14 01:24:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -234,16 +234,13 @@ Lmmuenabled:
  */
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
-	/* post-MMU-enablement bootinfo parsing. */
-	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(bootinfo_startup2)
-	addql	#4,%sp
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 /* set kernel stack, user SP */
 	lea	%a0@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
+
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	%a0@(PCB_FPCTX)		| ensure null FP context
@@ -260,21 +257,15 @@ Lenab2:
 Ltbia040:
 	.word	0xf518
 Lenab3:
+/* final setup for C code */
+	movl	%d7,%sp@-		| push nextpa saved above
+	jbsr	_C_LABEL(virt68k_init)	| additional pre-main initialization
+	addql	#4,%sp
 /*
- * final setup for C code:
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
-	jbsr	_C_LABEL(virt68k_init)	| additional pre-main initialization
-#if 0
-	/*
-	 * XXX Don't do the spl0() here; when Qemu performs a reboot request,
-	 * XXX it seems to not clear pending interrupts, and so we blow up
-	 * XXX early when the new kernel starts up.
-	 */
-	movw	#PSL_LOWIPL,%sr		| lower SPL
-#endif
 	clrw	%sp@-			| vector offset/frame type
 	clrl	%sp@-			| PC - filled in by "execve"
 	movw	#PSL_USER,%sp@-		| in user mode

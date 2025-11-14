@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2025/11/12 03:36:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2025/11/14 01:24:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2025/11/12 03:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2025/11/14 01:24:39 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -132,7 +132,7 @@ void	straytrap(int, u_short);
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /* Machine-dependent initialization routines. */
-void	virt68k_init(void);
+void	virt68k_init(paddr_t);
 
 /*
  * Machine-dependent bootinfo "console attach" routine.
@@ -156,10 +156,15 @@ bootinfo_md_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),
  * Early initialization, right before main is called.
  */
 void
-virt68k_init(void)
+virt68k_init(paddr_t nextpa)
 {
 	struct bootinfo_data *bid = bootinfo_data();
 	int i;
+
+	/*
+	 * Pass 2 at parsing bootinfo now that the MMU is enabled.
+	 */
+	bootinfo_startup2(nextpa);
 
 	/*
 	 * Just use the default pager_map_size for now.  We may decide
