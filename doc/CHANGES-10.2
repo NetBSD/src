@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.64 2025/10/26 13:13:49 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.65 2025/11/14 13:19:33 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1259,4 +1259,13 @@ sys/arch/evbppc/wii/machdep.c			1.11
 
 	evbppc: wii: use GX to accelerate RGB to YUY2 conversion.
 	[jmcneill, ticket #1187]
+
+sys/arch/evbppc/conf/WII			1.10
+sys/arch/evbppc/conf/files.wii			1.7
+sys/arch/evbppc/include/wii.h			1.12
+sys/arch/evbppc/wii/dev/hwaes.c			1.1
+
+	evbppc: wii: add support for hardware AES engine and cgd(4)
+	to the WII kernel.
+	[jmcneill, ticket #1188]
 
