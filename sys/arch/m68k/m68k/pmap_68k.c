@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.10 2025/11/13 02:32:40 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.11 2025/11/14 14:50:01 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.10 2025/11/13 02:32:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.11 2025/11/14 14:50:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2894,6 +2894,17 @@ vtophys(vaddr_t va)
 	rv = pmap_extract_info(pmap_kernel(), va, &pa, NULL);
 	KASSERT(rv);
 	return rv ? pa : -1;
+}
+
+/*
+ * kvtop:
+ *
+ *	Sigh.
+ */
+int
+kvtop(void *v)
+{
+	return (int)vtophys((vaddr_t)v);
 }
 
 /*
