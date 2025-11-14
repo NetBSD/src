@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.4.2.7 2025/02/22 12:39:05 martin Exp $
+#	$NetBSD: WII,v 1.4.2.8 2025/11/14 13:18:32 martin Exp $
 #
 #	Nintendo Wii
 #
@@ -158,6 +158,8 @@ bwi*		at sdmmc?				# WLAN
 
 di0		at hollywood0 addr 0x0d806000 irq 18	# Drive interface
 
+hwaes0		at hollywood0 addr 0x0d020000 irq 2	# AES engine
+
 include "dev/usb/usbdevices.config"
 include "dev/bluetooth/bluetoothdevices.config"
 
@@ -188,7 +190,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
-#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	cgd			# cryptographic disk devices
 #pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
