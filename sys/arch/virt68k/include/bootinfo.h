@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.7 2025/11/06 15:27:09 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.8 2025/11/14 00:44:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -158,8 +158,8 @@ struct bootinfo_data {
 #define	bootinfo_dataptr(bi)	((void *)&(bi)->bi_data[0])
 #define	bootinfo_get_u32(bi)	(*(uint32_t *)bootinfo_dataptr(bi))
 
-vaddr_t			bootinfo_startup1(struct bi_record *, vaddr_t);
-void			bootinfo_startup2(paddr_t, vaddr_t);
+paddr_t			bootinfo_startup1(paddr_t, vaddr_t);
+void			bootinfo_startup2(paddr_t);
 struct bootinfo_data *	bootinfo_data(void);
 struct bi_record *	bootinfo_find(uint32_t tag);
 void			bootinfo_enumerate(bool (*)(struct bi_record *, void *),

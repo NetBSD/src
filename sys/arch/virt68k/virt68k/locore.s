@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 2025/11/11 14:54:34 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 2025/11/14 00:44:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -235,10 +235,9 @@ Lmmuenabled:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 	/* post-MMU-enablement bootinfo parsing. */
-	pea	%a5@			| push reloff
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(bootinfo_startup2)
-	addql	#8,%sp
+	addql	#4,%sp
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 /* set kernel stack, user SP */

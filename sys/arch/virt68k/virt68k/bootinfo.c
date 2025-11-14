@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.11 2025/11/06 15:27:10 thorpej Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.12 2025/11/14 00:44:14 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.11 2025/11/06 15:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.12 2025/11/14 00:44:14 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -254,15 +254,23 @@ bootinfo_gf_tty_consinit(struct bootinfo_data *bid, struct bi_record *bi)
  *
  *	Because the MMU is not yet enabled, we need to manually relocate
  *	global references.
+ *
+ *	N.B. nextpa is the physical address where the bootinfo structure
+ *	lives.  We return the first physical address *after* the bootinfo.
  */
-vaddr_t
-bootinfo_startup1(struct bi_record *first, vaddr_t reloff)
+paddr_t
+bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 {
 	struct bootinfo_data *bid =
 	    (struct bootinfo_data *)VA_TO_PA(&bootinfo_data_store);
 	struct bi_record *bi;
 
-	bid->bootinfo = first;
+	/*
+	 * These are physical address for the duration of this function,
+	 * and get converted to virtual addresses when we're done for
+	 * subsequent calls (after the MMU is enabled).
+	 */
+	bid->bootinfo = (struct bi_record *)nextpa;
 	bid->bootinfo_mem_segments =
 	    (struct bi_mem_info *)VA_TO_PA(bid_mem_segments);
 	bid->bootinfo_mem_segments_avail =
@@ -301,12 +309,18 @@ bootinfo_startup1(struct bi_record *first, vaddr_t reloff)
 	}
 
 	/* Set bootinfo_end to be just past the BI_LAST record. */
-	bid->bootinfo_end = (vaddr_t)bootinfo_next(bi);
+	nextpa = (paddr_t)bootinfo_next(bi);
+	bid->bootinfo_end = PA_TO_VA(nextpa);
 
 	/* Initialize the physmem variable for the memory found. */
 	RELOC(physmem, int) = bid->bootinfo_total_mem_pages;
 
-	return bid->bootinfo_end;
+	/* Re-initialize these to the virtual addresses. */
+	bid->bootinfo = (struct bi_record *)PA_TO_VA(bid->bootinfo);
+	bid->bootinfo_mem_segments = bid_mem_segments;
+	bid->bootinfo_mem_segments_avail = bid_mem_segments_avail;
+
+	return nextpa;
 }
 
 /*
@@ -318,15 +332,10 @@ bootinfo_startup1(struct bi_record *first, vaddr_t reloff)
  *	the pre-MMU bootstrap memory allocations.
  */
 void
-bootinfo_startup2(paddr_t nextpa, paddr_t reloff)
+bootinfo_startup2(paddr_t nextpa)
 {
 	struct bootinfo_data *bid = &bootinfo_data_store;
 	struct bi_record *bi;
-
-	/* Re-initialize these to the virtual addresses. */
-	bid->bootinfo = (struct bi_record *)PA_TO_VA(bid->bootinfo);
-	bid->bootinfo_mem_segments = bid_mem_segments;
-	bid->bootinfo_mem_segments_avail = bid_mem_segments_avail;
 
 	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
 	     bi = bootinfo_next(bi)) {
@@ -354,6 +363,12 @@ bootinfo_startup2(paddr_t nextpa, paddr_t reloff)
 	bid->bootinfo_mem_segments_avail[0].mem_addr = nextpa;
 
 	/*
+	 * If we have a RAM disk, we need to take it out of the
+	 * available memory segments.
+	 */
+	bootinfo_reserve_initrd(bid);
+
+	/*
 	 * Initialize avail_start and avail_end.
 	 * XXX Assumes segments sorted in ascending address order.
 	 * XXX Legacy nonsense that should go away.
@@ -363,12 +378,6 @@ bootinfo_startup2(paddr_t nextpa, paddr_t reloff)
 	avail_start = bid->bootinfo_mem_segments_avail[0].mem_addr;
 	avail_end   = bid->bootinfo_mem_segments_avail[i].mem_addr +
 		      bid->bootinfo_mem_segments_avail[i].mem_size;
-
-	/*
-	 * If we have a RAM disk, we need to take it out of the
-	 * available memory segments.
-	 */
-	bootinfo_reserve_initrd(bid);
 }
 
 /*
