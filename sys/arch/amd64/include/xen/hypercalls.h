@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.2 2020/04/25 15:26:16 bouyer Exp $ */
+/* $NetBSD: hypercalls.h,v 1.3 2025/11/14 06:44:22 martin Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -361,7 +361,7 @@ HYPERVISOR_shutdown(
 	return _hypercall2(int, sched_op, SCHEDOP_shutdown,
 	    &shutdown_reason);
 #else
--	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
+	return _hypercall2(int, sched_op, SCHEDOP_shutdown, SHUTDOWN_poweroff);
 #endif
 }
 
