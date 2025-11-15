@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.63 2025/11/14 19:30:22 mrg Exp $
+# $NetBSD: Makefile,v 1.64 2025/11/15 06:53:16 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -1451,9 +1451,11 @@ COPTS.nir_lower_int64.c+=	-O0
 COPTS.vl_bicubic_filter.c+=	-O1
 .endif
 
-.if ${MACHINE_CPU} == "m68k" && ${HAVE_GCC:U0} >= 14
+.if ${MACHINE_CPU} == "m68k" && ${HAVE_GCC:U0} >= 12
 COPTS.format_utils.c+=	-Os
 COPTS.glsl_lexer.cpp+=	-O1 -fno-jump-tables
+.endif
+.if ${MACHINE_CPU} == "m68k" && ${HAVE_GCC:U0} >= 14
 COPTS.glsl_parser.cpp+=	-Os
 .endif
 

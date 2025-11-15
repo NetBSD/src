@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2021/11/16 09:25:51 nia Exp $
+#	$NetBSD: Makefile,v 1.24 2025/11/15 06:53:16 mrg Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -55,6 +55,10 @@ COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
 	${TOOL_AWK} '/^CASE_/{printf "#define %s %d\n", $$1, n++}' < $< >$@
 DPSRCS+= Tekparse.hin VTparse.hin
 CLEANFILES+= Tekparse.hin VTparse.hin
+
+.if ${MACHINE_CPU} == "m68k" && ${HAVE_GCC:U0} == 12
+CPUFLAGS.charsets.c+=   -fno-jump-tables
+.endif
 
 .include "Makefile.inc"
 
