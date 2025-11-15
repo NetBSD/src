@@ -1,4 +1,4 @@
-/* $NetBSD: vncfb.c,v 1.14 2021/08/07 16:19:07 thorpej Exp $ */
+/* $NetBSD: vncfb.c,v 1.15 2025/11/15 19:10:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 3. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -35,7 +32,7 @@
 #include "opt_wsemul.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.14 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vncfb.c,v 1.15 2025/11/15 19:10:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
