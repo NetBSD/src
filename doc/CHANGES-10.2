@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.66 2025/11/15 08:54:52 snj Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.67 2025/11/15 10:15:26 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1273,4 +1273,9 @@ sys/arch/amd64/include/xen/hypercalls.h		1.3
 
 	amd64: fix build for kernels w/o XEN support
 	[martin, ticket #1189]
+
+sys/uvm/uvm_extern.h				1.236
+
+	uvm: avoid integer overflow when calculating inactive target.
+	[mrg, ticket #1190]
 
