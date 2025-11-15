@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.78 2025/10/26 12:57:50 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.79 2025/11/15 10:17:00 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1030,4 +1030,9 @@ sys/dev/pci/viaide.c				1.105
 
 	viaide(4): add UDMA support for VT8233C IDE controller.
 	[andvar, ticket #1978]
+
+sys/uvm/uvm_extern.h				1.236
+
+	uvm: avoid integer overflow when calculating inactive target.
+	[mrg, ticket #1979]
 
