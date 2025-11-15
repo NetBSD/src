@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.65 2024/02/18 16:55:02 rillig Exp $	*/
+/*	$NetBSD: mman.h,v 1.66 2025/11/15 19:02:26 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -218,6 +218,7 @@ typedef	__off_t		off_t;		/* file offset */
  */
 #define	MFD_CLOEXEC		0x1U
 #define	MFD_ALLOW_SEALING	0x2U
+#define	MFD_CLOFORK		0x4U
 #endif /* _NETBSD_SOURCE */
 
 #ifndef _KERNEL
