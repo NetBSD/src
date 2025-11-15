@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3198 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3199 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -87,3 +87,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		(plus the HP MMU). [thorpej 20251108]
 	evbppc: Add support for the Wii AES engine. [jmcneill 20251111]
 	memfd_create(2): Add close-on-fork support. [gutteridge 20251115]
+	evbppc: Add Wii USB Gecko support. [jmcneill 20251115]
