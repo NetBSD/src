@@ -1,4 +1,4 @@
-#	$NetBSD: files.wii,v 1.7 2025/11/11 21:34:47 jmcneill Exp $
+#	$NetBSD: files.wii,v 1.8 2025/11/15 17:59:24 jmcneill Exp $
 #
 #
 maxpartitions 16
@@ -55,6 +55,10 @@ file	arch/evbppc/wii/dev/exi.c		exi
 device	rtcsram
 attach	rtcsram at exi
 file	arch/evbppc/wii/dev/rtcsram.c		rtcsram
+
+device	gecko
+attach	gecko at exi
+file	arch/evbppc/wii/dev/gecko.c		gecko	needs-flag
 
 define	hollywood { [addr=-1], [irq=-1] }
 device	hollywood: hollywood
