@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2024/06/30 16:15:02 christos Exp $
+#	$NetBSD: Makefile,v 1.56.2.1 2025/11/15 10:11:10 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,8 +17,6 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
-
-CSHLIBFLAGS+=	-D_GLIBCXX_COMPAT_
 
 DIST=		${GCCDIST}
 GNUVER=		${DIST}/libstdc++-v3/config/abi/pre/gnu.ver
@@ -64,11 +62,15 @@ SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 
+# Only the shared library is build with -D_GLIBCXX_SHARED, and the
+# static library shouldn't need to provide old symbols.
+CSHLIBFLAGS+=	-D_GLIBCXX_SHARED
+
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
-CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+CPPFLAGS+=	-DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
 .if ${G_CLOCALE_CC:M*dragonfly*} != ""
 CPPFLAGS+=	-I${CONF}/locale/dragonfly
 LOCALETYPE=	dragonfly
@@ -171,11 +173,6 @@ BUILDSYMLINKS+=	\
 
 .endfor
 
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
-
 .include "../Makefile.gthr"
 
 # XXX Special rules in c++98/Makefile; may move into c++11 in future GCC.
@@ -216,6 +213,25 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 COPTS.floating_to_chars.cc+=	-Wno-error=unused-function
 COPTS.cp-demangle.c+=	-Wno-error=stack-protector
 COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
+
+# libbacktrace
+.for f in ${G_LIBBACKTRACE_SOURCES} ${G_LIBBACKTRACE_DEPS}
+. if ${f} == "cp-demangle.c"
+BUILDSYMLINKS+=	\
+	${DIST}/libiberty/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libiberty/arch/${LIBSTDCXX_MACHINE_ARCH}
+. else
+BUILDSYMLINKS+=	\
+	${DIST}/libbacktrace/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libbacktrace/arch/${LIBSTDCXX_MACHINE_ARCH} \
+	-I${DIST}/libbacktrace
+. endif
+SRCS+=	std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-include ${GLIBCXX_SRCDIR}/src/libbacktrace/backtrace-rename.h
+.endfor
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

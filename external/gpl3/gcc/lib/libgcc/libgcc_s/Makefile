@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2021/04/25 23:12:54 christos Exp $
+#	$NetBSD: Makefile,v 1.16.10.1 2025/11/15 10:11:11 martin Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -39,6 +39,10 @@ SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${LIB2_EHASM} \
 		${LIB2ADD_EDITED} \
 		${LIB2ADD_HACK:T:S/.asm/.S/} \
 		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS}
+
+# Find just built libgcc.a
+LIBGCCOBJDIR!=	cd ${.CURDIR}/../libgcc && ${PRINTOBJDIR}
+LDADD+=		-L${LIBGCCOBJDIR} -lgcc
 
 COPTS.unwind-dw2.c += -Wno-stack-protector
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.419 2025/04/13 17:23:06 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.419.2.1 2025/11/15 10:11:08 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -177,8 +177,13 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS}
 .endif
+
+# Building all static libraries with sanitizer flags allows them to be
+# successfully linked into instrumented dynamic binaries, as well as
+# private libraries linked directly into executables.
+CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
 MKSHLIBOBJS= yes
@@ -190,8 +195,9 @@ MKSHLIBOBJS= no
 .if (${MKDEBUG:Uno} != "no" && !defined(NODEBUG)) && \
     (!defined(CFLAGS) || empty(CFLAGS:M-g*)) && \
     (!defined(CXXFLAGS) || empty(CXXFLAGS:M-g*))
-# We only add -g to the shared library objects
-# because we don't currently split .a archives.
+# Only add -g to the shared library objects because as there's no facility
+# to separate the debuginfo like shared libraries, except for private the
+# libraries that are linked into executables only.
 CSHLIBFLAGS+=	-g
 .if ${LIBISPRIVATE} != "no"
 CFLAGS+=	-g
@@ -262,7 +268,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .c.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${CSHLIBFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPSHLIBOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -287,7 +293,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .cc.pico .cpp.pico .cxx.pico .C.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${CSHLIBFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPSHLIBOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -348,7 +354,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .m.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${CSHLIBFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${CSHLIBFLAGS} ${CSHLIBFLAGS.${.IMPSRC:T}} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPOBJCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif

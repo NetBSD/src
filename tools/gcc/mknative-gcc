@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.118 2024/02/21 08:24:46 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.118.4.1 2025/11/15 10:11:10 martin Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -269,6 +269,11 @@ get_libstdcxx_v3 () {
 		# src
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
 			libstdc___la_SOURCES | sed 's/^G_libstdc___la_SOURCES=/G_SRC_SOURCES=/'
+		getvars $_PLATFORM/libstdc++-v3/src/libbacktrace/Makefile \
+			libstdc___libbacktrace_la_OBJECTS libstdc___libbacktrace_la_DEPENDENCIES | \
+			sed -e 's/^G_libstdc___libbacktrace_la_OBJECTS=/G_LIBBACKTRACE_SOURCES=/' \
+			    -e 's/^G_libstdc___libbacktrace_la_DEPENDENCIES=/G_LIBBACKTRACE_DEPS=/' \
+			    -e 's/std_stacktrace-//g' -e 's/\.lo/.c/g'
 		getvars $_PLATFORM/libstdc++-v3/src/c++17/Makefile \
 			libc__17convenience_la_SOURCES | \
 			sed -e 's/^G_libc__17convenience_la_SOURCES=/G_CPP17_SOURCES=/'
