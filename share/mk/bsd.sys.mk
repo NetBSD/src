@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.317 2025/01/13 15:40:18 riastradh Exp $
+#	$NetBSD: bsd.sys.mk,v 1.318 2025/11/15 20:42:52 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -233,7 +233,7 @@ CFLAGS+=	-Wa,-Av8plus
 .endif
 
 .if !defined(NOGCCERROR)
-.if ${MACHINE_MIPS64}
+.if ${MACHINE_MIPS64} || ${MACHINE_CPU} == "m68k"
 CPUFLAGS+=	-Wa,--fatal-warnings
 .endif
 .endif
