@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2025/06/27 21:36:23 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116.2.1 2025/11/15 10:19:49 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2025/06/27 21:36:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2025/11/15 10:19:49 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -128,7 +128,7 @@ static void cpu_init_kcore_hdr(void);
 #ifdef news1700
 static void news1700_init(void);
 static void parityenable(void);
-static void parityerror(void);
+static int parityerror(void *);
 #endif
 #ifdef news1200
 static void news1200_init(void);
@@ -209,6 +209,8 @@ cpu_startup(void)
 
 	pmapdebug = 0;
 #endif
+ 
+	parityenable();
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
@@ -798,8 +800,6 @@ news1700_init(void)
 	ctrl_parity_clr	= (uint8_t *)(0xe1a00000);
 	parity_vector	= (uint8_t *)(0xe1c00200);
 
-	parityenable();
-
 	cpuspeed = 25;
 }
 
@@ -811,13 +811,15 @@ static void
 parityenable(void)
 {
 
+	if (systype != NEWS1700)
+		return;
+
 #define PARITY_VECT 0xc0
 #define PARITY_PRI 7
 
 	*parity_vector = PARITY_VECT;
 
-	isrlink_vectored((int (*)(void *))parityerror, NULL,
-	    PARITY_PRI, PARITY_VECT);
+	isrlink_vectored(parityerror, NULL, PARITY_PRI, PARITY_VECT);
 
 	*ctrl_parity_clr = 1;
 	*ctrl_parity = 1;
@@ -829,13 +831,13 @@ parityenable(void)
 
 static int innmihand;	/* simple mutex */
 
-static void
-parityerror(void)
+static int
+parityerror(void *arg)
 {
 
 	/* Prevent unwanted recursion. */
 	if (innmihand)
-		return;
+		return 1;
 	innmihand = 1;
 
 #if 0 /* XXX need to implement XXX */
@@ -845,6 +847,8 @@ parityerror(void)
 	*ctrl_parity_clr = 1;
 #endif
 	innmihand = 0;
+
+	return 1;
 }
 #endif /* news1700 */
 
