@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2023/09/12 22:11:08 rillig Exp $
+# $NetBSD: Makefile,v 1.20 2025/11/15 08:05:01 mrg Exp $
 
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
@@ -27,7 +27,7 @@ COPTS.sqlite3.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=restrict :}
 .include <bsd.own.mk>
 
 .if ${MACHINE_CPU} == "m68k"
-CWARNFLAGS+=	-Wa,--warn
+DBG+=	-Os
 .endif
 
 .include <bsd.lib.mk>
