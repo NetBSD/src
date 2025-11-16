@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.24 2025/10/20 14:31:37 nat Exp $
+#	$NetBSD: Makefile.common,v 1.25 2025/11/16 08:55:17 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -121,3 +121,8 @@ bits/largefile-config.h:
 	touch bits/largefile-config.h
 
 CLEANFILES+=	bits/largefile-config.h
+
+# Enable tas.b usage for __atomic_test_and_set().
+.if ${MACHINE_CPU} == "sh3"
+CFLAGS+=	-mtas
+.endif
