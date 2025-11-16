@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.141 2025/11/16 21:33:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.142 2025/11/16 22:02:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -288,15 +288,12 @@ Linit147:
 	/* initialise list of physical memory segments for pmap_bootstrap */
 	RELOC(phys_seg_list, %a0)
 	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
-	movl	%a5,%a0@(PS_AVAIL_START)
 	movl	0xfffe0774,%d1		| End + 1 of onboard memory
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
-	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/* offboard RAM */
 	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
 	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
-	clrl	%a0@(PS_AVAIL_START)
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffe0764,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -311,9 +308,7 @@ Linit147:
 	jbra	Lsavmaxmem
 Loff_ok:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
-	movl	%d0,%a0@(PS_AVAIL_START)
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
-	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -482,14 +477,11 @@ Lis1xx_common:
 	 */
 	RELOC(phys_seg_list, %a0)
 	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
-	movl	%a5,%a0@(PS_AVAIL_START)
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
-	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/* offboard RAM */
 	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
 	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
-	clrl	%a0@(PS_AVAIL_START)
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffc0000,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -505,9 +497,7 @@ Lis1xx_common:
 
 Lramsave1xx:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
-	movl	%d0,%a0@(PS_AVAIL_START)
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
-	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -549,6 +539,15 @@ Lstart2:
 	RELOC(pmap_bootstrap1,%a0)
 	jbsr	%a0@			| pmap1_bootstrap1(nextpa, reloff)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
 
 /*
  * Enable the MMU.
@@ -634,7 +633,10 @@ Lenab3:
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
+	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(mvme68k_init)	| additional pre-main initialization
+	addql	#4,%sp
+
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrw	%sp@-			| vector offset/frame type
 	clrl	%sp@-			| PC - filled in by "execve"

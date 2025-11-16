@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 2025/11/16 17:59:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168 2025/11/16 22:02:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2025/11/16 17:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2025/11/16 22:02:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -182,7 +182,7 @@ int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 512;	/* assume some reasonable value to start */
 
 /* Machine-dependent initialization routines. */
-void	mvme68k_init(void);
+void	mvme68k_init(paddr_t);
 
 #ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
@@ -198,9 +198,11 @@ void	mvme1xx_init(void);
  * Early initialization, right before main is called.
  */
 void
-mvme68k_init(void)
+mvme68k_init(paddr_t nextpa)
 {
 	int i;
+
+	extern paddr_t avail_start, avail_end;
 
 	/*
 	 * Since mvme68k boards can have anything from 4MB of onboard RAM, we
@@ -218,14 +220,61 @@ mvme68k_init(void)
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
+	avail_start = INT_MAX;
+	avail_end = 0;
 	for (i = 0; i < mem_cluster_cnt; i++) {
-		if (phys_seg_list[i].ps_avail_start ==
-		    phys_seg_list[i].ps_avail_end) {
-			/*
-			 * Segment has been completely gobbled up.
-			 */
+		phys_seg_list[i].ps_start =
+		    m68k_round_page(phys_seg_list[i].ps_start);
+		phys_seg_list[i].ps_end =
+		    m68k_trunc_page(phys_seg_list[i].ps_end);
+
+		phys_seg_list[i].ps_avail_start = phys_seg_list[i].ps_start;
+		phys_seg_list[i].ps_avail_end = phys_seg_list[i].ps_end;
+
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+			/* Empty segment. */
 			continue;
 		}
+
+		/*
+		 * Initialize the mem_clusters[] array for the crash dump
+		 * code.
+		 */
+		mem_clusters[mem_cluster_cnt].start =
+		    phys_seg_list[i].ps_start;
+		mem_clusters[mem_cluster_cnt].size =
+		    phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+		mem_cluster_cnt++;
+
+		if (i == 0) {
+			/*
+			 * Adjust on-board RAM for pages already consumed
+			 * by boot loader, kernel, and pmap data, as well
+			 * as the kernel message buffer.
+			 *
+			 * Mesage buffer is at the end of on-board RAM
+			 * because VME RAM needs to be zero'd at boot
+			 * time to initialize parity.
+			 */
+			phys_seg_list[i].ps_avail_start = nextpa;
+			phys_seg_list[i].ps_avail_end -=
+			    m68k_round_page(MSGBUFSIZE);
+			msgbufpa = phys_seg_list[i].ps_avail_end;
+		}
+
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
+			/* Segment has been completely gobbled up. */
+			continue;
+		}
+
+		if (phys_seg_list[i].ps_avail_start < avail_start) {
+			avail_start = phys_seg_list[i].ps_avail_start;
+		}
+		if (phys_seg_list[i].ps_avail_end > avail_end) {
+			avail_end = phys_seg_list[i].ps_avail_end;
+		}
+
 		/*
 		 * Note the index of the mem cluster is the free
 		 * list we want to put the memory on (0 == default,

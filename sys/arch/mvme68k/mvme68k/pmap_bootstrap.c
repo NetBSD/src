@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.61 2025/11/16 21:33:35 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.62 2025/11/16 22:02:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61 2025/11/16 21:33:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.62 2025/11/16 22:02:42 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -54,11 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61 2025/11/16 21:33:35 thorpej 
 
 extern char *etext;
 
-extern int maxmem;
-extern paddr_t avail_start, avail_end;
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
-extern paddr_t msgbufpa;
 extern vaddr_t kernel_reloc_offset;
 
 /*
@@ -93,7 +88,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
-	psize_t size;
 	u_int iiomappages;
 	int i;
 #if defined(M68040) || defined(M68060)
@@ -101,40 +95,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 #endif
 
 	nextpa = m68k_round_page(nextpa);
-
-	/*
-	 * Initialize the mem_clusters[] array for the crash dump
-	 * code.  While we're at it, compute the total amount of
-	 * physical memory in the system.
-	 */
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		if (RELOC(phys_seg_list[i].ps_start, paddr_t) ==
-		    RELOC(phys_seg_list[i].ps_end, paddr_t)) {
-			/*
-			 * No more memory.
-			 */
-			break;
-		}
-
-		/*
-		 * Make sure these are properly rounded.
-		 */
-		RELOC(phys_seg_list[i].ps_start, paddr_t) =
-		    m68k_round_page(RELOC(phys_seg_list[i].ps_start,
-					  paddr_t));
-		RELOC(phys_seg_list[i].ps_end, paddr_t) =
-		    m68k_trunc_page(RELOC(phys_seg_list[i].ps_end,
-					  paddr_t));
-
-		size = RELOC(phys_seg_list[i].ps_end, paddr_t) -
-		    RELOC(phys_seg_list[i].ps_start, paddr_t);
-
-		RELOC(mem_clusters[i].start, u_quad_t) =
-		    RELOC(phys_seg_list[i].ps_start, paddr_t);
-		RELOC(mem_clusters[i].size, u_quad_t) = size;
-
-		RELOC(mem_cluster_cnt, int) += 1;
-	}
 
 	/*
 	 * Calculate important physical addresses:
@@ -446,42 +406,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	 * via uvm_lwp_setuarea() later in pmap_bootstrap2().
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
-
-	/*
-	 * Scoot the start of available on-board RAM forward to
-	 * account for:
-	 *
-	 *	(1) The bootstrap programs in low memory (so
-	 *	    that we can jump back to them without
-	 *	    reloading).
-	 *
-	 *	(2) The kernel text, data, and bss.
-	 *
-	 *	(3) The pages we stole above for pmap data
-	 *	    structures.
-	 */
-	RELOC(phys_seg_list[0].ps_avail_start, paddr_t) = nextpa;
-
-	/*
-	 * Reserve space at the end of on-board RAM for the message
-	 * buffer.  We force it into on-board RAM because VME RAM
-	 * gets cleared very early on in locore.s (to initialise
-	 * parity on boards that need it). This would clobber the
-	 * messages from a previous running NetBSD system.
-	 */
-	RELOC(phys_seg_list[0].ps_avail_end, paddr_t) -=
-	    m68k_round_page(MSGBUFSIZE);
-	RELOC(msgbufpa, paddr_t) =
-	    RELOC(phys_seg_list[0].ps_avail_end, paddr_t);
-
-	/*
-	 * Initialize avail_start and avail_end.
-	 */
-	i = RELOC(mem_cluster_cnt, int) - 1;
-	RELOC(avail_start, paddr_t) =
-	    RELOC(phys_seg_list[0].ps_avail_start, paddr_t);
-	RELOC(avail_end, paddr_t) =
-	    RELOC(phys_seg_list[i].ps_avail_end, paddr_t);
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
