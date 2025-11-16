@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.60 2025/11/16 17:59:52 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.61 2025/11/16 21:33:35 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.60 2025/11/16 17:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61 2025/11/16 21:33:35 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -132,8 +132,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 		RELOC(mem_clusters[i].start, u_quad_t) =
 		    RELOC(phys_seg_list[i].ps_start, paddr_t);
 		RELOC(mem_clusters[i].size, u_quad_t) = size;
-
-		RELOC(physmem, int) += size >> PGSHIFT;
 
 		RELOC(mem_cluster_cnt, int) += 1;
 	}
