@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.67 2025/11/12 13:32:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.68 2025/11/16 03:11:47 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.67 2025/11/12 13:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.68 2025/11/16 03:11:47 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -52,9 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.67 2025/11/12 13:32:04 thorpej 
 
 extern char *etext;
 
-extern int maxmem;
 extern psize_t physmem;
-extern paddr_t avail_start, avail_end;
 extern vaddr_t kernel_reloc_offset;
 
 /*
@@ -69,7 +67,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-paddr_t pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -83,7 +81,7 @@ paddr_t pmap_bootstrap(paddr_t, paddr_t);
  * XXX a PIC compiler would make this much easier.
  */
 paddr_t
-pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
+pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
@@ -401,15 +399,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
 
-	/*
-	 * VM data structures are now initialized, set up data for
-	 * the pmap module.
-	 *
-	 * Note about avail_end: msgbuf is initialized at the end of
-	 * main memory region (not after avail_end) in machdep.c.
-	 */
-	RELOC(avail_start, paddr_t) = nextpa;
-	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int));
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2025/11/12 13:33:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 2025/11/16 03:11:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2025/11/12 13:33:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2025/11/16 03:11:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,7 +133,7 @@ int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void	x68k_init(void);
+void	x68k_init(paddr_t);
 void	dumpsys(void);
 void	straytrap(int, u_short);
 void	nmihand(struct frame);
@@ -170,6 +170,23 @@ static phys_seg_t phys_extmem_seg[EXTMEM_SEGS];
 int	delay_divisor = 140;	/* assume some reasonable value to start */
 static int cpuspeed;		/* MPU clock (in MHz) */
 
+
+#ifdef __HAVE_NEW_PMAP_68K
+/*
+ * machine_bootmap[] is checked in pmap_bootstrap1() of the new m68k pmap
+ * and it allocates kernel address space for intio devices.
+ */
+static vaddr_t intiova;
+#define PMBM_INTIO	0
+const struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr_ptr = &intiova,
+	  .pmbm_paddr = INTIOBASE,
+	  .pmbm_size  = ctob(IIOMAPSIZE),
+	  .pmbm_flags = PMBM_F_CI },
+	{ .pmbm_vaddr = -1 },
+};
+#endif
+
 /*
  * Machine-dependent crash dump header info.
  */
@@ -178,11 +195,17 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 static callout_t candbtimer_ch;
 
 void
-x68k_init(void)
+x68k_init(paddr_t nextpa)
 {
 	u_int i;
 	paddr_t msgbuf_pa;
 	paddr_t s, e;
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/* load the internal IO space region */
+	intiobase = (uint8_t *)intiova;
+	intiolimit = intiobase + machine_bootmap[PMBM_INTIO].pmbm_size;
+#endif
 
 	/*
 	 * Most m68k ports allocate msgbuf at the end of available memory
@@ -195,6 +218,9 @@ x68k_init(void)
 	 * Tell the VM system about available physical memory.
 	 */
 	/* load the main memory region */
+	avail_start = nextpa;
+	avail_end = m68k_ptob(maxmem);
+
 	s = avail_start;
 	e = msgbuf_pa;
 	uvm_page_physload(atop(s), atop(e), atop(s), atop(e),

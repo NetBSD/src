@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139 2025/11/12 02:17:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.140 2025/11/16 03:11:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,8 +86,9 @@ ASLOCAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var, ar)			\
-	lea	var,ar;			\
+#define	IMMEDIATE	#
+#define	_RELOC(var, ar)				\
+	movl	IMMEDIATE var,ar;		\
 	addl	%a5,ar
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
@@ -139,6 +140,10 @@ ASENTRY_NOPROFILE(start)
 #else
 	clrl	%a0@			| no symbol table, yet
 #endif
+	RELOC(boothowto, %a0)
+	movl	%d7,%a0@		| save reboot flags
+	RELOC(bootdev, %a0)
+	movl	%d6,%a0@		|   and boot device
 	RELOC(lowram, %a0)
 	movl	%a5,%a0@		| store start of physical memory
 
@@ -242,11 +247,20 @@ Lstart3:
 	RELOC(setmemrange,%a0)		| call setmemrange()
 	jbsr	%a0@			|  to probe all memory regions
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(firstpa, nextpa)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
 
 /*
  * Prepare to enable MMU.
@@ -353,9 +367,9 @@ Ltbia040:
 	.word	0xf518			| pflusha
 Lenab3:
 /* final setup for C code */
-	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
-	movl	%d6,_C_LABEL(bootdev)	|   and boot device
+	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
+	addql	#4,%sp
 
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
