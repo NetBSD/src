@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.75 2025/11/04 23:52:00 thorpej Exp $	*/
+/*	$NetBSD: macrom.c,v 1.76 2025/11/16 08:05:54 nat Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.75 2025/11/04 23:52:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.76 2025/11/16 08:05:54 nat Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -1034,6 +1034,7 @@ mrg_init(void)
 		while (addr < end_addr) {
 			pmap_enter(pmap_kernel(),
 			    addr, addr, VM_PROT_READ|VM_PROT_WRITE, 0);
+			addr += PAGE_SIZE;
 		}
 		pmap_update(pmap_kernel());
 	}
