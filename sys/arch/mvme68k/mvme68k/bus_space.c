@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12 2025/11/16 16:25:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.11 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2025/11/16 16:25:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,9 @@ _bus_space_map(void *cookie, bus_addr_t addr, bus_size_t size, int flags,
 	bus_dma_segment_t seg;
 	void *va;
 
-	if (addr >= intiobase_phys && addr < intiotop_phys) {
+	if (addr >= intiobase_phys && addr < (intiobase_phys + intiosize)) {
 #ifdef DEBUG
-		if ((addr + size) >= intiotop_phys)
+		if ((addr + size) >= (intiobase_phys + intiosize))
 			panic("%s: Invalid INTIO range!", __func__);
 #endif
 		/*
@@ -108,7 +108,7 @@ void
 _bus_space_unmap(void *cookie, bus_space_handle_t bush, bus_size_t size)
 {
 	/* Nothing to do for INTIO space */
-	if ((char *)bush >= intiobase && (char *)bush < intiolimit)
+	if ((char *)bush >= intiobase && (char *)bush < (intiobase + intiosize))
 		return;
 
 	bush = m68k_trunc_page(bush);

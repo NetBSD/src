@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135 2025/11/11 15:17:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.136 2025/11/16 16:25:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -282,8 +282,8 @@ Linit147:
 	 */
 	RELOC(intiobase_phys, %a0);
 	movl	#INTIOBASE147,%a0@
-	RELOC(intiotop_phys, %a0);
-	movl	#INTIOTOP147,%a0@
+	RELOC(intiosize, %a0);
+	movl	#INTIOSIZE147,%a0@
 
 	/* initialise list of physical memory segments for pmap_bootstrap */
 	RELOC(phys_seg_list, %a0)
@@ -475,8 +475,8 @@ Lis1xx_common:
 	 */
 	RELOC(intiobase_phys, %a0);
 	movl	#INTIOBASE1xx,%a0@
-	RELOC(intiotop_phys, %a0);
-	movl	#INTIOTOP1xx,%a0@
+	RELOC(intiosize, %a0);
+	movl	#INTIOSIZE1xx,%a0@
 
 	/*
 	 * Initialise first physical memory segment with onboard RAM details
@@ -542,10 +542,10 @@ Lstart1:
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart2:
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap1_bootstrap1(nextpa, reloff)
 	addql	#8,%sp
 
 /*
@@ -1122,12 +1122,7 @@ GLOBAL(bootaddr)
 
 GLOBAL(intiobase)
 	.long	0		| KVA of base of internal IO space
-
-GLOBAL(intiolimit)
-	.long	0		| KVA of end of internal IO space
-
 GLOBAL(intiobase_phys)
-	.long	0		| PA of board's I/O registers
-
-GLOBAL(intiotop_phys)
-	.long	0		| PA of top of board's I/O registers
+	.long	0		| PA of internal I/O space
+GLOBAL(intiosize)
+	.long	0		| size of internal I/O space

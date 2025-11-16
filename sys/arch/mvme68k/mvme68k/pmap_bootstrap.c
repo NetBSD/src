@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.58 2025/11/12 13:32:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.59 2025/11/16 16:25:30 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.58 2025/11/12 13:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.59 2025/11/16 16:25:30 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -73,7 +73,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-paddr_t pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -87,7 +87,7 @@ paddr_t pmap_bootstrap(paddr_t, paddr_t);
  * XXX a PIC compiler would make this much easier.
  */
 paddr_t
-pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
+pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
@@ -160,8 +160,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(kernel_reloc_offset, vaddr_t) = firstpa;
 
-	iiomappages = m68k_btop(RELOC(intiotop_phys, u_int) -
-	    RELOC(intiobase_phys, u_int));
+	u_int intio_endpa =
+	    RELOC(intiobase_phys, u_int) + RELOC(intiosize, u_int);
+	iiomappages = m68k_btop(intio_endpa - RELOC(intiobase_phys, u_int));
 
 	lwp0upa = nextpa;
 	nextpa += USPACE;
@@ -414,7 +415,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_U | PG_V;
 	epte = &pte[iiomappages];
 	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
