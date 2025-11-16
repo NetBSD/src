@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.26 2025/11/16 01:09:58 mrg Exp $
+$NetBSD: README.gcc14,v 1.27 2025/11/16 09:01:51 mrg Exp $
 
 arch/feature list.
 
@@ -45,8 +45,8 @@ mipsn64eb	y	b	y	y	y	y		?	?	?
 mipsn64el	y	b	y	y	y	y		?	?	?
 powerpc		y	b	y	y	y	y		n[1]	?	?
 powerpc64	y	b	y	y	y	y		?	?	?
-sh3eb		y	b	y	y	n[10]	?		?	?	?
-sh3el		y	b	y	y	n[10]	?		?	?	?
+sh3eb		y	b	y	y	y	?		?	?	?
+sh3el		y	b	y	y	y	?		?	?	?
 sparc		y	y	y	y	y	y		y	y	y
 sparc64		y	y	y	y	y	y		y	y	y
 vax		y	y	y	y	y	y		y	y	y
@@ -64,16 +64,15 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
      .../libnbcompat-20251029/db/btree/bt_conv.c: In function '__bt_pgin':
      .../libnbcompat-20251029/db/btree/bt_conv.c:60:1: internal compiler error: Segmentation fault
 	60 | __bt_pgin(void *t, pgno_t pg, void *pp)
-[6]: mips o32 also has gdb vs atomic issue:
+[6]: mips o32 atomic issue, libstdc++'s "test_and_set" calls builtin __atomic_test_and_set() when it doesn't exist
      libgdb.a(minsyms.o): in function `minimal_symbol_reader::install()':
      minsyms.c:(.text+0x4224): undefined reference to `__atomic_test_and_set'
 [7]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
 [8]: GENERIC.SKI boots just as well as GCC 10.
-[9]: Calculated size of `ramdisk.fs.tmp': 614400 bytes, 167 inodes
+[9]: ramdisk wants 4 more KB:
+     Calculated size of `ramdisk.fs.tmp': 614400 bytes, 167 inodes
      ...
       32,nbmakefs: Writing inode 151 (work/./etc/protocols), bytes 0 + 118: No space left on device
-[10]: sh3 has missing symbol error in gdb.  does does 32-bit mips.
-      minsyms.c:(.text+0x2414): undefined reference to `__atomic_test_and_set'
 [11]: alpha needs an -O0 for mopd's file.c to avoid an ICE.
 [14]: cc1 crashes by jumping into rodata segment when compiling pkgsrc/pkgtools/libnbcompat:
       In file included from glob.c:12:
@@ -114,7 +113,7 @@ mips64el:	y		y		y
 
 		algor		evbmips		pmax
 mipsn64eb:	 		k		 
-mipsn64el:	k		k		n
+mipsn64el:	k		k		k
 
 		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
 powerpc:	k		k	k	k		y		k		k		k		k		k
