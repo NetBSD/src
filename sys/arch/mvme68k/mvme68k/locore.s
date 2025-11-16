@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139 2025/11/16 17:59:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.140 2025/11/16 21:21:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -325,13 +325,7 @@ Lclearoff:
 	clrl	%a0@+			| zap a word
 	cmpl	%a0,%d1			| reached end?
 	jbne	Lclearoff
-
-Lsavmaxmem:
-	moveq	#PGSHIFT,%d2
-	lsrl	%d2,%d1			| convert to page (click) number
-	RELOC(maxmem, %a0)
-	movl	%d1,%a0@		| save as maxmem
-	jra	Lstart1
+	jra	Lsavmaxmem		| save maxmem and continue with boot
 #endif
 
 #if defined(MVME162) || defined(MVME172)
@@ -499,7 +493,7 @@ Lis1xx_common:
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffc0000,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
-	jbeq	Ldone1xx		| Jump if none defined
+	jbeq	Lsavmaxmem		| Jump if none defined
 	movl	#PAGE_SIZE,%d1		| Note: implicit '+1'
 	addl	0xfffc0004,%d1		| End of offboard segment
 	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
@@ -507,7 +501,7 @@ Lis1xx_common:
 	jbcs	Lramsave1xx		| Yup, looks good.
 	RELOC(phys_seg_list, %a0)
 	movel	%a0@(PS_END),%d1	| Just use onboard RAM otherwise
-	jbra	Ldone1xx
+	jbra	Lsavmaxmem
 
 Lramsave1xx:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
@@ -525,18 +519,14 @@ Lramclr1xx:
 	clrl	%a0@+			| zap a word
 	cmpl	%a0,%d1			| reached end?
 	jbne	Lramclr1xx
+#endif
 
-Ldone1xx:
+Lsavmaxmem:
 	moveq	#PGSHIFT,%d2
 	lsrl	%d2,%d1			| convert to page (click) number
 	RELOC(maxmem, %a0)
 	movl	%d1,%a0@		| save as maxmem
 
-	/* FALLTHROUGH to Lstart1 */
-#endif
-
-
-Lstart1:
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
 	movc	%d0,%sfc		|   as source
