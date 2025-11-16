@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.59 2025/11/16 16:25:30 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.60 2025/11/16 17:59:52 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.59 2025/11/16 16:25:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.60 2025/11/16 17:59:52 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -462,7 +462,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	 *	(3) The pages we stole above for pmap data
 	 *	    structures.
 	 */
-	RELOC(phys_seg_list[0].ps_start, paddr_t) = nextpa;
+	RELOC(phys_seg_list[0].ps_avail_start, paddr_t) = nextpa;
 
 	/*
 	 * Reserve space at the end of on-board RAM for the message
@@ -471,19 +471,19 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	 * parity on boards that need it). This would clobber the
 	 * messages from a previous running NetBSD system.
 	 */
-	RELOC(phys_seg_list[0].ps_end, paddr_t) -=
+	RELOC(phys_seg_list[0].ps_avail_end, paddr_t) -=
 	    m68k_round_page(MSGBUFSIZE);
 	RELOC(msgbufpa, paddr_t) =
-	    RELOC(phys_seg_list[0].ps_end, paddr_t);
+	    RELOC(phys_seg_list[0].ps_avail_end, paddr_t);
 
 	/*
 	 * Initialize avail_start and avail_end.
 	 */
 	i = RELOC(mem_cluster_cnt, int) - 1;
 	RELOC(avail_start, paddr_t) =
-	    RELOC(phys_seg_list[0].ps_start, paddr_t);
+	    RELOC(phys_seg_list[0].ps_avail_start, paddr_t);
 	RELOC(avail_end, paddr_t) =
-	    RELOC(phys_seg_list[i].ps_end, paddr_t);
+	    RELOC(phys_seg_list[i].ps_avail_end, paddr_t);
 
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 

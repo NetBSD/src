@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 2025/11/16 17:38:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.139 2025/11/16 17:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -288,12 +288,15 @@ Linit147:
 	/* initialise list of physical memory segments for pmap_bootstrap */
 	RELOC(phys_seg_list, %a0)
 	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
+	movl	%a5,%a0@(PS_AVAIL_START)
 	movl	0xfffe0774,%d1		| End + 1 of onboard memory
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
+	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/* offboard RAM */
 	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
 	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
+	clrl	%a0@(PS_AVAIL_START)
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffe0764,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -308,7 +311,9 @@ Linit147:
 	jbra	Lsavmaxmem
 Loff_ok:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
+	movl	%d0,%a0@(PS_AVAIL_START)
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
+	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -483,11 +488,14 @@ Lis1xx_common:
 	 */
 	RELOC(phys_seg_list, %a0)
 	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
+	movl	%a5,%a0@(PS_AVAIL_START)
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
+	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/* offboard RAM */
 	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
 	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
+	clrl	%a0@(PS_AVAIL_START)
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffc0000,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -503,7 +511,9 @@ Lis1xx_common:
 
 Lramsave1xx:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
+	movl	%d0,%a0@(PS_AVAIL_START)
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
+	movl	%d1,%a0@(PS_AVAIL_END)
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity

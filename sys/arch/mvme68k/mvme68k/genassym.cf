@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.45 2025/11/16 17:38:31 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.46 2025/11/16 17:59:52 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -123,6 +123,8 @@ define	MVMEPROM_BRDID_MODEL_OFFSET	offsetof(struct mvmeprom_brdid, model)
 define	SIZEOF_PHYSSEGLIST	sizeof(phys_seg_list_t)
 define	PS_START		offsetof(phys_seg_list_t, ps_start)
 define	PS_END			offsetof(phys_seg_list_t, ps_end)
+define	PS_AVAIL_START		offsetof(phys_seg_list_t, ps_avail_start)
+define	PS_AVAIL_END		offsetof(phys_seg_list_t, ps_avail_end)
 
 # MMU configuration constants (from pmap.h)
 export	MMU51_SRP_BITS

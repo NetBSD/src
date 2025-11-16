@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2025/11/12 13:33:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 2025/11/16 17:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2025/11/12 13:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2025/11/16 17:59:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -219,7 +219,8 @@ mvme68k_init(void)
 	 * Tell the VM system about available physical memory.
 	 */
 	for (i = 0; i < mem_cluster_cnt; i++) {
-		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
 			/*
 			 * Segment has been completely gobbled up.
 			 */
@@ -230,10 +231,10 @@ mvme68k_init(void)
 		 * list we want to put the memory on (0 == default,
 		 * 1 == VME).  There can only be two.
 		 */
-		uvm_page_physload(atop(phys_seg_list[i].ps_start),
-				 atop(phys_seg_list[i].ps_end),
-				 atop(phys_seg_list[i].ps_start),
-				 atop(phys_seg_list[i].ps_end), i);
+		uvm_page_physload(atop(phys_seg_list[i].ps_avail_start),
+				  atop(phys_seg_list[i].ps_avail_end),
+				  atop(phys_seg_list[i].ps_avail_start),
+				  atop(phys_seg_list[i].ps_avail_end), i);
 	}
 
 	switch (machineid) {
