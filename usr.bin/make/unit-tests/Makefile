@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.373 2025/11/12 22:14:08 sjg Exp $
+# $NetBSD: Makefile,v 1.374 2025/11/16 16:43:56 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -754,6 +754,12 @@ _SED_CMDS+=	-e 's,${.CURDIR},<curdir>,g'
 # which we get depending on how MAKEOBJDIR is set.
 _SED_CMDS+=	-e 's,${.OBJDIR},<curdir>,g' -e 's,${.OBJDIR:tA},<curdir>,g'
 .endif
+
+# At the end, make sure we cleanup any dregs...
+.for d in ${MAKEOBJDIRPREFIX:S,/$,,} /usr/obj
+_SED_CMDS_LAST+=	-e 's,$d,,'
+.endfor
+
 # always pretend .MAKE was called 'make'
 _SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
 _SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
@@ -765,7 +771,7 @@ _SED_CMDS+=	-e '/MAKE_VERSION/d'
 _SED_CMDS+=	-e '/EGREP=/d'
 
 .rawout.out:
-	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.PREFIX:T}} \
+	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.PREFIX:T}} ${_SED_CMDS_LAST} \
 	  < ${.IMPSRC} > ${.TARGET}.tmp
 	@${POSTPROC.${.PREFIX:T}:D \
 	    ${POSTPROC.${.PREFIX:T}} < ${.TARGET}.tmp > ${.TARGET}.post \

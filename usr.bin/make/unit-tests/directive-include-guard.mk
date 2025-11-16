@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.19 2025/04/11 17:21:31 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.20 2025/11/16 16:43:57 sjg Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -636,9 +636,9 @@ LINES.multiline= \
 _:=	${fname:H:N.:@dir@${:!mkdir -p ${dir}!}@}
 _!=	printf '%s\n' ${LINES.$i} > ${fname}
 .MAKEFLAGS: -dp
-.include "${.CURDIR}/${fname}"
+.include "${.OBJDIR}/${fname}"
 .undef ${UNDEF_BETWEEN.$i:U}
-.include "${.CURDIR}/${fname}"
+.include "${.OBJDIR}/${fname}"
 .MAKEFLAGS: -d0
 _!=	rm ${fname}
 _:=	${fname:H:N.:@dir@${:!rmdir ${dir}!}@}
