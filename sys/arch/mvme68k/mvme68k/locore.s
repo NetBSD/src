@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.136 2025/11/16 16:25:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.137 2025/11/16 17:37:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -287,13 +287,14 @@ Linit147:
 
 	/* initialise list of physical memory segments for pmap_bootstrap */
 	RELOC(phys_seg_list, %a0)
-	movl	%a5,%a0@		| phys_seg_list[0].ps_start
+	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
 	movl	0xfffe0774,%d1		| End + 1 of onboard memory
-	movl	%d1,%a0@(4)		| phys_seg_list[0].ps_end
-	clrl	%a0@(8)			| phys_seg_list[0].ps_startpage
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
+	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[0].ps_startpage
 
 	/* offboard RAM */
-	clrl	%a0@(0x0c)		| phys_seg_list[1].ps_start
+	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
+	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffe0764,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -303,12 +304,13 @@ Linit147:
 	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
 	cmpl	%d1,%d0			| Quick and dirty validity check
 	jbcs	Loff_ok			| Yup, looks good.
-	movel	%a0@(4),%d1		| Just use onboard RAM otherwise
+	RELOC(phys_seg_list, %a0)
+	movel	%a0@(PS_END),%d1	| Just use onboard RAM otherwise
 	jbra	Lsavmaxmem
 Loff_ok:
-	movl	%d0,%a0@(0x0c)		| phys_seg_list[1].ps_start
-	movl	%d1,%a0@(0x10)		| phys_seg_list[1].ps_end
-	clrl	%a0@(0x14)		| phys_seg_list[1].ps_startpage
+	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
+	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[1].ps_startpage
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -482,12 +484,13 @@ Lis1xx_common:
 	 * Initialise first physical memory segment with onboard RAM details
 	 */
 	RELOC(phys_seg_list, %a0)
-	movl	%a5,%a0@		| phys_seg_list[0].ps_start
-	movl	%d1,%a0@(4)		| phys_seg_list[0].ps_end
-	clrl	%a0@(8)			| phys_seg_list[0].ps_startpage
+	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
+	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[0].ps_startpage
 
 	/* offboard RAM */
-	clrl	%a0@(0x0c)		| phys_seg_list[1].ps_start
+	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
+	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffc0000,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -497,13 +500,14 @@ Lis1xx_common:
 	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
 	cmpl	%d1,%d0			| Quick and dirty validity check
 	jbcs	Lramsave1xx		| Yup, looks good.
-	movel	%a0@(4),%d1		| Just use onboard RAM otherwise
+	RELOC(phys_seg_list, %a0)
+	movel	%a0@(PS_END),%d1	| Just use onboard RAM otherwise
 	jbra	Ldone1xx
 
 Lramsave1xx:
-	movl	%d0,%a0@(0x0c)		| phys_seg_list[1].ps_start
-	movl	%d1,%a0@(0x10)		| phys_seg_list[1].ps_end
-	clrl	%a0@(0x14)		| phys_seg_list[1].ps_startpage
+	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
+	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[1].ps_startpage
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity

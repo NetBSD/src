@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2025/11/16 16:25:30 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.44 2025/11/16 17:37:15 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -47,6 +47,8 @@ include <machine/psl.h>
 include <machine/pcb.h>
 include <machine/prom.h>
 include <machine/pte.h>
+
+include <mvme68k/mvme68k/seglist.h>
 
 define	__XXX_BUG_FODDER	0
 
@@ -116,6 +118,12 @@ define	MVMEPROM_GETBRDID	MVMEPROM_GETBRDID
 define	MVMEPROM_OUTSTRCRLF	MVMEPROM_OUTSTRCRLF
 define	MVMEPROM_BRDID_SIZE	sizeof(struct mvmeprom_brdid)
 define	MVMEPROM_BRDID_MODEL_OFFSET	offsetof(struct mvmeprom_brdid, model)
+
+# memory segment list
+define	SIZEOF_PHYSSEGLIST	sizeof(phys_seg_list_t)
+define	PS_START		offsetof(phys_seg_list_t, ps_start)
+define	PS_END			offsetof(phys_seg_list_t, ps_end)
+define	PS_STARTPAGE		offsetof(phys_seg_list_t, ps_startpage)
 
 # MMU configuration constants (from pmap.h)
 export	MMU51_SRP_BITS
