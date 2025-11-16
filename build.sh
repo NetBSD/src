@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.400 2025/10/20 14:31:35 nat Exp $
+#	$NetBSD: build.sh,v 1.401 2025/11/16 00:44:47 mrg Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -658,6 +658,7 @@ initdefaults()
 valid_MACHINE_ARCH='
 MACHINE=acorn32		MACHINE_ARCH=earmv4	ALIAS=eacorn32 DEFAULT
 MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
+MACHINE=algor		MACHINE_ARCH=mipsn64el	ALIAS=algorn64
 MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=alpha		MACHINE_ARCH=alpha
 MACHINE=amd64		MACHINE_ARCH=x86_64
@@ -733,6 +734,7 @@ MACHINE=ofppc		MACHINE_ARCH=powerpc64	ALIAS=ofppc64
 MACHINE=or1k		MACHINE_ARCH=or1k
 MACHINE=playstation2	MACHINE_ARCH=mipsel
 MACHINE=pmax		MACHINE_ARCH=mips64el	ALIAS=pmax64
+MACHINE=pmax		MACHINE_ARCH=mipsn64el	ALIAS=pmaxn64
 MACHINE=pmax		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=prep		MACHINE_ARCH=powerpc
 MACHINE=riscv		MACHINE_ARCH=riscv64	ALIAS=riscv64 DEFAULT
@@ -2224,7 +2226,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.400 2025/10/20 14:31:35 nat Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.401 2025/11/16 00:44:47 mrg Exp $
 # with these arguments: ${_args}
 #
 
