@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.1 2025/11/16 20:11:47 jmcneill Exp $ */
+/* $NetBSD: gpio.h,v 1.2 2025/11/16 22:37:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -30,10 +30,15 @@
 #define _WII_GPIO_H
 
 #define GPIO_SHUTDOWN	1
-#define	GPIO_SLOT_LED	5
+#define GPIO_SLOT_LED	5
+#define GPIO_EJECT_BTN	6
 
 void	gpio_set(int);
 void	gpio_clear(int);
 int	gpio_get(int);
+void	gpio_enable_int(int);
+void	gpio_disable_int(int);
+int	gpio_get_int(int);
+void	gpio_ack_int(int);
 
 #endif /* !_WII_GPIO_H */

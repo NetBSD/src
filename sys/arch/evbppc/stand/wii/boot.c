@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.1 2025/11/16 20:11:47 jmcneill Exp $ */
+/* $NetBSD: boot.c,v 1.2 2025/11/16 22:37:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -32,12 +32,21 @@
 #include <powerpc/include/psl.h>
 #include <powerpc/include/spr.h>
 
+#include <machine/pio.h>
+
 #include "cache.h"
 #include "console.h"
 #include "gpio.h"
 #include "miniipc.h"
 #include "sdmmc.h"
 #include "timer.h"
+
+#define PI_INTERRUPT_CAUSE	0x0c003000
+#define  RESET_SWITCH_STATE	__BIT(16)
+
+#define HW_BASE			0x0d800000
+#define HW_RESETS		(HW_BASE + 0x194)
+#define  RSTBINB		__BIT(0)
 
 static const char * const names[] = {
 	"netbsd", "netbsd.gz",
@@ -56,6 +65,9 @@ main(void)
 
 	memset(&edata, 0, end - edata);	/* clear BSS */
 
+	gpio_enable_int(GPIO_EJECT_BTN);
+	gpio_ack_int(GPIO_EJECT_BTN);
+
 	console_init();
 
 	gpio_set(GPIO_SLOT_LED);
@@ -66,7 +78,11 @@ main(void)
 
 	sdmmc_init();
 
-	for (curname = 0; curname < NUMNAMES; curname++) {
+	curname = gpio_get_int(GPIO_EJECT_BTN) ? 2 : 0;
+	gpio_disable_int(GPIO_EJECT_BTN);
+	gpio_ack_int(GPIO_EJECT_BTN);
+
+	for (; curname < NUMNAMES; curname++) {
 		printf("booting %s ", names[curname]);
 		exec_netbsd(names[curname]);
 	}
@@ -111,7 +127,12 @@ _rtt(void)
 		} else {
 			gpio_clear(GPIO_SLOT_LED);
 		}
-		timer_udelay(1000000);
+		for (int i = 0; i < 1000; i++) {
+			if ((in32(PI_INTERRUPT_CAUSE) & RESET_SWITCH_STATE) == 0) {
+				out32(HW_RESETS, in32(HW_RESETS) & ~RSTBINB);
+			}
+			timer_udelay(1000);
+		}
 		led ^= 1;
 	}
 }
