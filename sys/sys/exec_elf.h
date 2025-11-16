@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.181 2025/11/14 21:08:10 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.182 2025/11/16 22:44:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,13 @@
  */
 
 #ifndef _SYS_EXEC_ELF_H_
-#define _SYS_EXEC_ELF_H_
+#define _SYS_EXEC_ELF_H_	2
+	/*
+	 * File version 2:  changed Elfnn_Versym (and so Elf_Versym)
+	 *   from being a struct with a vs_vers field containing the
+	 *   version info, to being an Elf_Half (ie: uint16_t) which
+	 *   contains the version directly.
+	 */
 
 /*
  * The current ELF ABI specification is available at:
