@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.137 2025/11/16 17:37:15 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.138 2025/11/16 17:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -290,7 +290,6 @@ Linit147:
 	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
 	movl	0xfffe0774,%d1		| End + 1 of onboard memory
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
-	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[0].ps_startpage
 
 	/* offboard RAM */
 	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
@@ -310,7 +309,6 @@ Linit147:
 Loff_ok:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
-	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[1].ps_startpage
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -486,7 +484,6 @@ Lis1xx_common:
 	RELOC(phys_seg_list, %a0)
 	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
-	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[0].ps_startpage
 
 	/* offboard RAM */
 	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
@@ -507,7 +504,6 @@ Lis1xx_common:
 Lramsave1xx:
 	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
 	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
-	clrl	%a0@(PS_STARTPAGE)	| phys_seg_list[1].ps_startpage
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
