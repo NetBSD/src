@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.415 2025/11/13 20:43:07 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.416 2025/11/17 00:11:46 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1886,6 +1886,7 @@ VHDCI	very high density cable interconnect
 VID	{VLAN,voltage level} identifier
 VIM	Vi IMproved
 VIPT	virtually indexed, physically tagged
+VIS	Visual Instruction Set
 VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network
 VLD	variable-length decoding
