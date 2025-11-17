@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.142 2025/11/16 22:02:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.143 2025/11/17 06:02:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1124,9 +1124,18 @@ GLOBAL(bootctrllun)
 GLOBAL(bootaddr)
 	.long	0
 
+/*
+ * machine_bootmap[] interleaved with intio*-related variables.
+ * intiobase_phys and intiosize are initialized at run-time.
+ */
 GLOBAL(intiobase)
 	.long	0		| KVA of base of internal IO space
+GLOBAL(machine_bootmap)
+	.long	_C_LABEL(intiobase) | [0].pmbm_vaddr_ptr = &intiobase
 GLOBAL(intiobase_phys)
-	.long	0		| PA of internal I/O space
+	.long	0		| [0].pmbm_paddr = PA of internal I/O space
 GLOBAL(intiosize)
-	.long	0		| size of internal I/O space
+	.long	0		| [0].pmbm_size = size of internal I/O space
+	.long	PMBM_F_CI	| [0].pmbm_flags = cache-inhibited mapping
+	.long	-1		| [1].pmbm_vaddr = end of list
+
