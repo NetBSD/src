@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.62 2025/11/16 22:02:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/17 10:10:22 martin Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.62 2025/11/16 22:02:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.63 2025/11/17 10:10:22 martin Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -89,8 +89,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
 	u_int iiomappages;
-	int i;
 #if defined(M68040) || defined(M68060)
+	int i;
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 #endif
 
