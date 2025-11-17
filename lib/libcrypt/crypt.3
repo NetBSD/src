@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.35 2023/01/17 14:27:11 uwe Exp $
+.\"	$NetBSD: crypt.3,v 1.36 2025/11/17 18:56:55 jschauma Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)crypt.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 20, 2021
+.Dd November 17, 2025
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -64,18 +64,33 @@ The password hashing scheme used by
 is dependent upon the contents of the
 .Tn NUL Ns -terminated
 string
-.Ar setting .
-If it begins
+.Fa setting :
+.Pp
+If
+.Fa setting
+begins
 with a string character
 .Pq Ql $
-and a number then a different algorithm is used depending on the number.
+then a different algorithm is used depending on the
+following characters.
 At the moment a
 .Ql $1
-chooses MD5 hashing and a
+chooses MD5 hashing,
 .Ql $2
-chooses Blowfish hashing; see below for more information.
+chooses Blowfish hashing, and
+.Ql $argon2d ,
+.Ql $argon2i ,
+or
+.Ql $argon2id
+choose Argon2 hashing.
+In either case, the additional parameters for the
+hashing algorithm are separated by further
+.Ql $
+characters;
+see below for more information.
+.Pp
 If
-.Ar setting
+.Fa setting
 begins with the
 .Ql _
 character,
@@ -83,7 +98,7 @@ character,
 password hashing with a user specified number of
 perturbations is selected.
 If
-.Ar setting
+.Fa setting
 begins with any other character,
 .Tn DES
 password hashing with a fixed
@@ -155,14 +170,14 @@ The value returned is a
 .Tn NUL Ns -terminated
 string, 20 bytes in length, consisting
 of the
-.Ar setting
+.Fa setting
 followed by the encoded 64-bit
 .Sq ciphertext .
 .Pp
 For compatibility with historical versions of
 .Fn crypt ,
 the
-.Ar setting
+.Fa setting
 may consist of 2 bytes of salt, encoded as above, in which case an
 iteration
 .Ar count
@@ -254,50 +269,53 @@ as described above.
 For the
 .Tn MD5
 password hashing scheme, the version number (in this case
-.Ql 1 ) ,
+.Ql 1 )
+and
 .Fa salt
-and the hashed password are separated
-by the
+are separated by the
 .Ql $
-character.
-An encoded password hash looks like:
-.Pp
-.Dl "$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H"
-.Pp
-The entire encoded MD5 password hash is passed as
+character and passed to
+.Nm
+via the
 .Fa setting
-for interpretation.
+argument as, e.g.,
+.Ql $1$2qGr5PPQ .
+Only the first 8 characters of the
+.Fa salt
+are used; any other characters are silently ignored.
 .Ss Argon2 password hashing
 Argon2 is a memory-hard password hashing algorithm.
 .Fn crypt
-provides all three variants: argon2i, argon2d, and argon2id.
+provides all three variants: argon2d, argon2i, and argon2id.
 It is recommended to use argon2id, which provides a hybrid combination
 using argon2i on the first pass, and argon2d on the remaining
 passes.
-We parameterize on three variables.
-First,
+We parameterize on three variables, although four
+variables separated by
+.Ql $
+are specified:
+.Pp
+The first parameter,
+.Va version ( Li v ) ,
+specifies the version of Argon to be used.
+This version is currently fixed per RFC9106 as decimal
+19.
+Next,
 .Va m_cost ( Li m ) ,
 specifies the memory usage in
-.Tn KB .
-Second,
+.Tn KB ;
 .Va t_cost ( Li t ) ,
-specifies the number of iterations.
-Third,
+specifies the number of iterations, and lastly
 .Va parallelism ( Li p )
 specifies the number of threads.
 This is currently ignored and one thread will always be used.
-An encoded Argon2 password hash looks like:
-.Bd -literal -offset indent
-$argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \e
-   yeYYrU/rh7E+LI2CAeHTSHVB3iO+OXiNIUHu6NPeTfo
-.Ed
+Following these parameters is the salt.
 .Pp
-containing five fields delimited by
-.Ql $ .
-The fields, in order, are variant name, version, parameter set,
-128-bit salt, and Argon2 hash encoded in base64.
-The entire encoded Argon2 password hash is required to be processed
-correctly.
+A complete Argon2
+.Fa setting
+string might be
+.Pp
+.Dl $argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB
 .Ss "Blowfish" bcrypt
 The
 .Tn Blowfish
@@ -323,20 +341,26 @@ with the
 .Tn Blowfish
 state 64 times.
 .Pp
-The version number, the logarithm of the number of rounds and
+The version number, the logarithm of the number of rounds, and
 the concatenation of salt and hashed password are separated by the
 .Ql $
 character.
+Currently, the only supported version number on
+.Nx
+is
+.Ql 2a .
 An encoded
-.Sq 8
-would specify 256 rounds.
-An encoded Blowfish password hash looks like:
+.Sq 12
+would specify 4096 rounds.
+Only the first 22 characters of the
+.Fa salt
+are used; any other characters are silently ignored.
 .Pp
-.Dl "$2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC"
-.Pp
-The entire encoded Blowfish password hash is passed as
+A complete Blowfish
 .Fa setting
-for interpretation.
+string might be
+.Pp
+.Dl $2a$12$eIAq8PR8sIUnJ1HaohxX2O
 .Sh RETURN VALUES
 The function
 .Fn crypt
