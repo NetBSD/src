@@ -1,4 +1,4 @@
-/* $NetBSD: sh_ipl.S,v 1.1 2025/11/17 19:09:58 uwe Exp $ */
+/* $NetBSD: sh_ipl.S,v 1.2 2025/11/17 21:53:12 uwe Exp $ */
 /*
  * Copyright (c) 2025 Valery Ushakov
  * All rights reserved.
@@ -32,7 +32,7 @@
  * LINTSTUB: Func: void sh_ipl_write(const char *buf, unsigned int len);
  */
 NENTRY(sh_ipl_write)
-	bra	.L_sh_ipl_bios_call
+	bra	sh_ipl_bios_call
 	 mov	#SH_IPL_WRITE, r0
 	SET_ENTRY_SIZE(sh_ipl_write)
 
@@ -40,7 +40,7 @@ NENTRY(sh_ipl_write)
  * LINTSTUB: Func: unsigned int sh_ipl_get_config(void);
  */
 NENTRY(sh_ipl_get_config)
-	bra	.L_sh_ipl_bios_call
+	bra	sh_ipl_bios_call
 	 mov	#SH_IPL_GET_CONFIG, r0
 	SET_ENTRY_SIZE(sh_ipl_get_config)
 
@@ -48,7 +48,7 @@ NENTRY(sh_ipl_get_config)
  * LINTSTUB: Func: int sh_ipl_get_ram_size(void);
  */
 NENTRY(sh_ipl_get_ram_size)
-	bra	.L_sh_ipl_bios_call
+	bra	sh_ipl_bios_call
 	 mov	#SH_IPL_GET_RAM_SIZE, r0
 	SET_ENTRY_SIZE(sh_ipl_write)
 
@@ -56,7 +56,7 @@ NENTRY(sh_ipl_get_ram_size)
  * LINTSTUB: Func: void sh_ipl_putc(char c);
  */
 NENTRY(sh_ipl_putc)
-	bra	.L_sh_ipl_bios_call
+	bra	sh_ipl_bios_call
 	 mov	#SH_IPL_PUTC, r0
 	SET_ENTRY_SIZE(sh_ipl_putc)
 
@@ -64,12 +64,14 @@ NENTRY(sh_ipl_putc)
  * LINTSTUB: Func: void sh_ipl_puts(const char *s);
  */
 NENTRY(sh_ipl_puts)
-	bra	.L_sh_ipl_bios_call
+	bra	sh_ipl_bios_call
 	 mov	#SH_IPL_PUTS, r0
 	SET_ENTRY_SIZE(sh_ipl_puts)
 
 
-.L_sh_ipl_bios_call:
+NENTRY(sh_ipl_bios_call)
+	.local	_C_LABEL(sh_ipl_bios_call) // XXX: override implicit .globl
 	trapa	#SH_IPL_BIOS_TRAP
 	rts
 	 nop
+	SET_ENTRY_SIZE(sh_ipl_bios_call)
