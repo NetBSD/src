@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.33 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.34 2025/11/17 11:25:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.33 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.34 2025/11/17 11:25:58 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -1406,7 +1406,8 @@ wd33c93_intr(struct wd33c93_softc *sc)
 	} while (sc->sc_state == SBIC_CONNECTED &&
 	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 
-	SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n", i, asr));
+       SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n",
+           sc->sc_state, asr));
 
 	return(1);
 }

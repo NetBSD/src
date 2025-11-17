@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.13 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.14 2025/11/17 11:25:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -251,7 +251,7 @@ struct wd33c93_softc {
 #define DEBUG_SYNC	0x800
 
 #ifdef DEBUG
-extern int wd33c93_debug_flags;
+extern int wd33c93_debug;
 #define SBIC_DEBUG(level, str)						\
 	do {								\
 		if (wd33c93_debug & __CONCAT(DEBUG_,level))		\
