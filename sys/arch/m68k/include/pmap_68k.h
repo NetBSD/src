@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.6 2025/11/14 15:07:41 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.7 2025/11/17 05:59:17 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -189,6 +189,8 @@ struct pmap_ptpage {
  *
  * This list is terminated by placing a (vaddr_t)-1 in the pmbm_vaddr
  * field.
+ *
+ * N.B. IF YOU CHANGE THIS STRUCTURE, AUDIT ALL DECLS OF machine_bootmap[].
  */
 struct pmap_bootmap {
 	union {
