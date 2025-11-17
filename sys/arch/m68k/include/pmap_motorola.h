@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.49 2025/11/12 03:34:58 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.50 2025/11/17 05:59:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -255,5 +255,10 @@ int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
 phys_ram_seg_t *pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 
 paddr_t	vtophys(vaddr_t va);
+
+/* Copy definitions from new pmap_68k.h to ease transition. */
+#define	PMBM_F_VAONLY	__BIT(0)
+#define	PMBM_F_KEEPOUT	__BIT(1)
+#define	PMBM_F_CI	__BIT(2)	/* cache-inhibited mapping */
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */
