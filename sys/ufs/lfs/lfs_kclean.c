@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kclean.c,v 1.1 2025/11/06 15:54:27 perseant Exp $	*/
+/*	$NetBSD: lfs_kclean.c,v 1.2 2025/11/17 01:49:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.1 2025/11/06 15:54:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.2 2025/11/17 01:49:00 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,9 @@ rewrite_block(struct lfs *fs, struct vnode *vp, daddr_t lbn, daddr_t offset, siz
 	
 		KASSERT(bp->b_vp == vp);
 		/* bp->b_cflags |= BC_INVAL; */ /* brelse will kill the buffer */
-		lfs_bwrite_ext(bp, BW_CLEAN);
+		error = lfs_bwrite_ext(bp, BW_CLEAN);
+		if (error)
+			return error;
 		KASSERT(bp->b_vp == vp);
 		mutex_enter(&bufcache_lock);
 		while (lfs_gatherblock(fs->lfs_sp, bp, &bufcache_lock)) {
