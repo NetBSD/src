@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.12 2025/11/14 15:07:41 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.13 2025/11/17 06:20:54 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.12 2025/11/14 15:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.13 2025/11/17 06:20:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,6 +334,10 @@ EVCNT_ATTACH_STATIC(pmap_enter_pv_recycle_ev);
 /**************************** MMU CONFIGURATION ******************************/
 
 #include "opt_m68k_arch.h"
+
+#if defined(M68K_MMU_68030)
+#include <m68k/mmu_30.h>	/* for cpu_kcore_hdr_t */
+#endif
 
 /*
  * We consider 3 different MMU classes:
