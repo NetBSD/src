@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.36 2025/11/17 18:56:55 jschauma Exp $
+.\"	$NetBSD: crypt.3,v 1.37 2025/11/17 21:28:37 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
 .Dd November 17, 2025
 .Dt CRYPT 3
 .Os
+.
 .Sh NAME
 .Nm crypt ,
 .Nm setkey ,
@@ -39,37 +40,46 @@
 .Nm des_setkey ,
 .Nm des_cipher
 .Nd password hashing
+.
 .Sh LIBRARY
 .Lb libcrypt
+.
 .Sh SYNOPSIS
+.
 .In unistd.h
+.
 .Ft "char *"
 .Fn crypt "const char *key" "const char *setting"
+.
 .Ft int
 .Fn encrypt "char *block" "int flag"
+.
 .Ft int
 .Fn des_setkey "const char *key"
+.
 .Ft int
 .Fn des_cipher "const char *in" "char *out" "long salt" "int count"
+.
 .In stdlib.h
+.
 .Ft int
 .Fn setkey "const char *key"
+.
 .Sh DESCRIPTION
+.
 The
 .Fn crypt
-function
-performs password hashing.
+function performs password hashing.
 The password hashing scheme used by
 .Fn crypt
 is dependent upon the contents of the
 .Tn NUL Ns -terminated
 string
-.Fa setting :
+.Fa setting\| :
 .Pp
 If
 .Fa setting
-begins
-with a string character
+begins with a string character
 .Pq Ql $
 then a different algorithm is used depending on the
 following characters.
@@ -103,7 +113,9 @@ begins with any other character,
 .Tn DES
 password hashing with a fixed
 number of perturbations is selected.
+.
 .Ss DES password hashing
+.
 The
 .Tn DES
 password hashing scheme is derived from the
@@ -131,13 +143,12 @@ The
 .Fa salt
 is used to induce disorder in to the
 .Tn DES
-algorithm
-in one of 16777216
-possible ways
-(specifically, if bit
+algorithm in one of 16777216 possible ways
+.Po
+specifically, if bit
 .Em i
 of the
-.Ar salt
+.Fa salt
 is set then bits
 .Em i
 and
@@ -145,12 +156,18 @@ and
 are swapped in the
 .Tn DES
 .Dq E
-box output).
+box output
+.Pc .
 The
-.Ar key
-is divided into groups of 8 characters (a short final group is null-padded)
-and the low-order 7 bits of each character (56 bits per group) are
-used to form the
+.Fa key
+is divided into groups of 8 characters
+.Po
+a short final group is
+.Tn NUL Ns -padded
+.Pc
+and the low-order 7 bits of each character
+.Pq 56 bits per group
+are used to form the
 .Tn DES
 key as follows: the first group of 56 bits becomes the initial
 .Tn DES
@@ -163,16 +180,15 @@ key.
 Then the final
 .Tn DES
 key is used to perform
-.Ar count
+.Fa count
 cumulative encryptions of a 64-bit constant yielding a
-.Sq ciphertext .
+.Dq ciphertext .
 The value returned is a
 .Tn NUL Ns -terminated
-string, 20 bytes in length, consisting
-of the
+string, 20 bytes in length, consisting of the
 .Fa setting
 followed by the encoded 64-bit
-.Sq ciphertext .
+.Dq ciphertext .
 .Pp
 For compatibility with historical versions of
 .Fn crypt ,
@@ -180,18 +196,16 @@ the
 .Fa setting
 may consist of 2 bytes of salt, encoded as above, in which case an
 iteration
-.Ar count
+.Fa count
 of 25 is used, fewer perturbations of
 .Tn DES
-are available, at most 8
-characters of
-.Ar key
+are available, at most 8 characters of
+.Fa key
 are used, and the returned value is a
 .Tn NUL Ns -terminated
 string 13 bytes in length.
 .Pp
-The
-functions
+The functions
 .Fn encrypt ,
 .Fn setkey ,
 .Fn des_setkey
@@ -201,11 +215,11 @@ allow limited access to the
 .Tn DES
 algorithm itself.
 The
-.Ar key
+.Fa key
 argument to
 .Fn setkey
-is a 64 character array of
-binary values (numeric 0 or\~1).
+is a 64 character array of binary values
+.Pq numeric 0 or\~1 .
 A 56-bit key is derived from this array by dividing the array
 into groups of 8 and ignoring the last bit in each group.
 .Pp
@@ -213,21 +227,16 @@ The
 .Fn encrypt
 argument
 .Fa block
-is also a 64 character array of
-binary values.
+is also a 64 character array of binary values.
 If the value of
 .Fa flag
 is 0,
 the argument
 .Fa block
-is encrypted, otherwise it
-is decrypted.
-The encryption or decryption is returned in the original
-array
+is encrypted, otherwise it is decrypted.
+The encryption or decryption is returned in the original array
 .Fa block
-after using the
-key specified
-by
+after using the key specified by
 .Fn setkey
 to process it.
 .Pp
@@ -248,9 +257,13 @@ significant bit in each character is ignored and the next 7 bits of each
 character are concatenated to yield a 56-bit key.
 The function
 .Fn des_cipher
-encrypts (or decrypts if
+encrypts
+.Po
+or decrypts if
 .Fa count
-is negative) the 64-bits stored in the 8 characters at
+is negative
+.Pc
+the 64-bits stored in the 8 characters at
 .Fa in
 using
 .Xr abs 3
@@ -265,11 +278,13 @@ The
 specifies perturbations to
 .Tn DES
 as described above.
+.
 .Ss MD5 password hashing
+.
 For the
 .Tn MD5
-password hashing scheme, the version number (in this case
-.Ql 1 )
+password hashing scheme, the version number
+.Pq in this case Ql 1
 and
 .Fa salt
 are separated by the
@@ -283,23 +298,23 @@ argument as, e.g.,
 Only the first 8 characters of the
 .Fa salt
 are used; any other characters are silently ignored.
+.
 .Ss Argon2 password hashing
+.
 Argon2 is a memory-hard password hashing algorithm.
 .Fn crypt
-provides all three variants: argon2d, argon2i, and argon2id.
-It is recommended to use argon2id, which provides a hybrid combination
-using argon2i on the first pass, and argon2d on the remaining
-passes.
-We parameterize on three variables, although four
-variables separated by
+provides all three variants: Argon2d, Argon2i, and Argon2id.
+It is recommended to use Argon2id, which provides a hybrid combination
+using Argon2i on the first pass, and Argon2d on the remaining passes.
+We parameterize on three variables,
+although four variables separated by
 .Ql $
 are specified:
 .Pp
 The first parameter,
 .Va version ( Li v ) ,
 specifies the version of Argon to be used.
-This version is currently fixed per RFC9106 as decimal
-19.
+This version is currently fixed per RFC9106 as decimal\~19.
 Next,
 .Va m_cost ( Li m ) ,
 specifies the memory usage in
@@ -316,17 +331,15 @@ A complete Argon2
 string might be
 .Pp
 .Dl $argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB
-.Ss "Blowfish" bcrypt
-The
-.Tn Blowfish
-version of
+.
+.Ss \(lqBlowfish\(rq bcrypt
+.
+The Blowfish version of
 .Fn crypt
 has 128 bits of
 .Fa salt
 in order to make building dictionaries of common passwords space consuming.
-The initial state of the
-.Tn Blowfish
-cipher is expanded using the
+The initial state of the Blowfish cipher is expanded using the
 .Fa salt
 and the
 .Fa password
@@ -337,9 +350,7 @@ The final Blowfish password output is created by encrypting the string
 .Pp
 .Dl OrpheanBeholderScryDoubt
 .Pp
-with the
-.Tn Blowfish
-state 64 times.
+with the Blowfish state 64 times.
 .Pp
 The version number, the logarithm of the number of rounds, and
 the concatenation of salt and hashed password are separated by the
@@ -350,7 +361,7 @@ Currently, the only supported version number on
 is
 .Ql 2a .
 An encoded
-.Sq 12
+.Ql 12
 would specify 4096 rounds.
 Only the first 22 characters of the
 .Fa salt
@@ -361,7 +372,9 @@ A complete Blowfish
 string might be
 .Pp
 .Dl $2a$12$eIAq8PR8sIUnJ1HaohxX2O
+.
 .Sh RETURN VALUES
+.
 The function
 .Fn crypt
 returns a pointer to the encoded hash on success.
@@ -369,23 +382,26 @@ returns a pointer to the encoded hash on success.
 The behavior of
 .Fn crypt
 on errors isn't well standardized.
-Some implementations simply can't fail (unless the process dies, in which
-case they obviously can't return), others return
+Some implementations simply can't fail
+.Po
+unless the process dies, in which case they obviously can't return
+.Pc ,
+others return
 .Dv NULL
 or a fixed string.
 Most implementations don't set
 .Va errno ,
 but some do.
 .St -susv2
-specifies
-only returning
+specifies only returning
 .Dv NULL
 and setting
 .Va errno
-as a valid behavior, and defines
-only one possible error
-.Er ( ENOSYS ,
-.Dq "The functionality is not supported on this implementation." )
+as a valid behavior, and defines only one possible error
+.Po
+.Er ENOSYS ,
+.Dq The functionality is not supported on this implementation.
+.Pc
 Unfortunately, most existing applications aren't prepared to handle
 .Dv NULL
 returns from
@@ -399,8 +415,8 @@ applications.
 .Fn crypt
 may only fail (and return) when passed an invalid or unsupported
 .Fa setting ,
-in which case it returns a pointer to a magic string that is shorter than 13
-characters and is guaranteed to differ from
+in which case it returns a pointer to a magic string that is shorter
+than 13 characters and is guaranteed to differ from
 .Fa setting .
 This behavior is safe for older applications which assume that
 .Fn crypt
@@ -423,9 +439,10 @@ They have been provided return values primarily to distinguish
 implementations where hardware support is provided but not
 available or where the
 .Tn DES
-encryption is not available due to the
-usual political silliness.
+encryption is not available due to the usual political silliness.
+.
 .Sh SEE ALSO
+.
 .Xr login 1 ,
 .Xr passwd 1 ,
 .Xr pwhash 1 ,
@@ -465,7 +482,9 @@ usual political silliness.
 .%P pp. 32-39
 .%D July 1979
 .Re
+.
 .Sh HISTORY
+.
 A rotor-based
 .Fn crypt
 function appeared in
@@ -474,7 +493,9 @@ The current style
 .Fn crypt
 first appeared in
 .At v7 .
+.
 .Sh BUGS
+.
 Dropping the
 .Em least
 significant bit in each character of the argument to
@@ -499,7 +520,7 @@ or
 on error.
 .Pp
 The term
-.Sq encryption
+.Dq encryption
 for password hashing does not match the terminology of modern
 cryptography, but the name of the library is entrenched.
 .Pp
