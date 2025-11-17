@@ -1,4 +1,4 @@
-#	$NetBSD: std.mvme68k,v 1.14 2010/09/19 02:09:28 tsutsui Exp $
+#	$NetBSD: std.mvme68k,v 1.15 2025/11/17 06:21:59 thorpej Exp $
 #
 # Options/devices that all mvme68ks should have
 #
@@ -6,6 +6,9 @@
 machine mvme68k m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
+
+# Experimental shiny object
+#options 	__HAVE_NEW_PMAP_68K
 
 timekeeper0 at mainbus0
 

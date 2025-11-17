@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.69 2024/01/18 05:12:29 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.70 2025/11/17 06:21:59 thorpej Exp $
 
 # config file for mvme68k
 
@@ -99,7 +99,7 @@ file arch/mvme68k/mvme68k/clock.c
 file arch/mvme68k/mvme68k/conf.c
 file arch/mvme68k/mvme68k/disksubr.c
 file arch/mvme68k/mvme68k/machdep.c
-file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file arch/mvme68k/mvme68k/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
 file arch/mvme68k/mvme68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb
@@ -108,7 +108,8 @@ file arch/m68k/m68k/m68k_intr.c
 file arch/m68k/m68k/m68k_intr_stubs.s
 file arch/m68k/m68k/m68k_trap.c
 file arch/m68k/m68k/mmu_subr.s
-file arch/m68k/m68k/pmap_motorola.c
+file arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
+file arch/m68k/m68k/pmap_68k.c			__have_new_pmap_68k
 file arch/m68k/m68k/procfs_machdep.c		procfs
 file arch/m68k/m68k/sys_machdep.c
 file arch/m68k/m68k/vectors.c
