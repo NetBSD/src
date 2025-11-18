@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.182 2025/11/16 22:44:52 kre Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.183 2025/11/18 13:02:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -59,6 +59,15 @@
 #include <machine/elf_machdep.h>
 #endif
 
+/*
+ * Skip the generic ELF-related definitions provide by this file
+ * if <sys/elfdefinitions.h> has already been seen.
+ *
+ * This is a work-around to allow code to use either or both of
+ * <sys/elfdefinitions.h> and <sys/exec_elf.h> without breaking
+ * the build.
+ */
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Definitions that make up the ELF(3) API.
  */
@@ -1023,6 +1032,8 @@ typedef Elf32_Vernaux	Elf64_Vernaux;
 
 typedef Elf32_Half Elf32_Versym;
 typedef Elf64_Half Elf64_Versym;
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
 
 /*
  * Symbols and types that are NetBSD-specific.

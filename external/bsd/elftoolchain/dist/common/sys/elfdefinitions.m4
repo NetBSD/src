@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.13 2025/11/14 19:23:48 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.14 2025/11/18 13:02:12 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -77,7 +77,15 @@ divert(0)dnl
 patsubst(defn(`COMPATIBILITY_NOTICE'), `^#', ` * ')
  */
 
-#ifndef _SYS_ELFDEFINITIONS_H_
+/*
+ * Skip the definitions provided by this file if <sys/exec_elf.h>
+ * has already been included.
+ *
+ * This is a work-around to allow code to use either or both of
+ * <sys/elfdefinitions.h> and <sys/exec_elf.h> without breaking
+ * the build.
+ */
+#if !defined(_SYS_ELFDEFINITIONS_H_) && !defined(_SYS_EXEC_ELF_H_)
 #define _SYS_ELFDEFINITIONS_H_
 
 /*
