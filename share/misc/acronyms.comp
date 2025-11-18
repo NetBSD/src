@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.416 2025/11/17 00:11:46 nia Exp $
+$NetBSD: acronyms.comp,v 1.417 2025/11/18 14:55:50 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -434,6 +434,7 @@ DIFS	distributed inter-frame space
 DIMM	dual inline memory module
 DIRT	design in real time
 DKI	driver/kernel interface
+DKIM	DomainKeys Identified Mail
 DL	diode logic
 DL	discrete logarithm
 DL	download
@@ -443,6 +444,7 @@ DLL	dynamic link library
 DLNA	digital living network alliance
 DLP	discrete logarithm problem
 DMA	direct memory access
+DMARC	Domain-based Message Authentication, Reporting and Conformance
 DMB	data memory barrier (Arm)
 DMI	desktop management interface
 DMS	document management system
@@ -1504,6 +1506,8 @@ RTP	Real-time Transport Protocol
 RTS	request to send
 RTT	round trip time
 RTTI	run-time type information
+RUA	Reporting URI for Aggregate reports (DKIM)
+RUF	Reporting URI for Forensics reports (DKIM)
 RUP	rational unified process
 RW	Rabin-Williams
 RWM	read-write memory
@@ -1658,6 +1662,7 @@ SPARQL	SPARQL Protocol and RDF Query Language
 SPD	security policy database
 SPD	serial presence detect
 SPDIF	Sony/Philips digital interface format
+SPF	Sender Policy Framework
 SPI	serial peripheral interface
 SPI	stateful packet inspection
 SPIR	standard portable intermediate representation
