@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2025/11/16 22:02:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.169 2025/11/18 21:54:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2025/11/16 22:02:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2025/11/18 21:54:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -222,7 +222,7 @@ mvme68k_init(paddr_t nextpa)
 	 */
 	avail_start = INT_MAX;
 	avail_end = 0;
-	for (i = 0; i < mem_cluster_cnt; i++) {
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
 		phys_seg_list[i].ps_start =
 		    m68k_round_page(phys_seg_list[i].ps_start);
 		phys_seg_list[i].ps_end =
