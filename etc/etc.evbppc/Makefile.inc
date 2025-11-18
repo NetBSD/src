@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2025/03/22 09:25:14 hgutch Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2025/11/18 11:23:40 jmcneill Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -66,9 +66,11 @@ __mkimage: .USE
 
 .if ${MACHINE_ARCH} == "powerpc"
 smp_wii: __mkimage
+	cd ${KERNSRCDIR}/arch/evbppc/stand/wii && ${MAKE} release
 MKI_OPTS.smp_wii=	-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=	smp_wii
 INSTALLATION_DIRS+=	binary/gzimg
+INSTALLATION_DIRS+=	installation/misc
 .endif
 
 snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
