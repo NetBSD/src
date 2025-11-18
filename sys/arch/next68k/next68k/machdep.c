@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 2025/11/18 22:39:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.125 2025/11/18 23:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2025/11/18 22:39:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2025/11/18 23:18:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2025/11/18 22:39:58 thorpej Exp $"
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
+#include <next68k/dev/intiovar.h>
 #include <next68k/next68k/isr.h>
 #include <next68k/next68k/nextrom.h>
 #include <next68k/next68k/rtc.h>
@@ -177,6 +178,17 @@ int	cpuspeed = 33;		  /* relative cpu speed; XXX skewed on 68040 */
 int	delay_divisor = 759 / 33;  /* delay constant; assume fastest 33 MHz */
 
 /****************************************************************/
+
+#ifdef __HAVE_NEW_PMAP_68K
+const struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr_ptr = &intiobase,
+	  .pmbm_paddr     = INTIOBASE,
+	  .pmbm_size      = INTIOSIZE,
+	  .pmbm_flags     = PMBM_F_CI },
+
+	{ .pmbm_vaddr = -1 },
+};
+#endif
 
 /*
  * Early initialization, before main() is called.

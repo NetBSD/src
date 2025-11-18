@@ -1,6 +1,9 @@
-# $NetBSD: std.next68k,v 1.12 2010/09/19 02:09:29 tsutsui Exp $
+# $NetBSD: std.next68k,v 1.13 2025/11/18 23:17:59 thorpej Exp $
 
 # Standard information for next68k
 machine	next68k m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
+
+# Experimental shiny object
+#options 	__HAVE_NEW_PMAP_68K

@@ -1,10 +1,15 @@
-/*	$NetBSD: pmap.h,v 1.16 2023/12/27 19:47:00 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2025/11/18 23:18:00 thorpej Exp $	*/
 
 #ifndef _NEXT68K_PMAP_H_
 #define	_NEXT68K_PMAP_H_
 
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
 #include <m68k/pmap_motorola.h>
-#include <m68k/mmu_30.h>
+#endif /* __HAVE_NEW_PMAP_68K */
+
+#define	__HAVE_MACHINE_BOOTMAP
 
 /*
  * Transparent translation register values for IO space and the

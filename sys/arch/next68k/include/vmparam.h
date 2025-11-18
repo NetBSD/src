@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2025/02/08 23:44:53 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2025/11/18 23:18:00 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
@@ -98,21 +98,27 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
 #define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#ifdef __HAVE_NEW_PMAP_68K
+extern vaddr_t kernel_virtual_max;
+#define	VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
+#else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
+#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)
-
 /*
  * Constants which control the way the VM system deals with memory segments.
  */
-#define	VM_PHYSSEG_MAX		5			/* @@@ should really come from N_SIMM */
+#define	VM_PHYSSEG_MAX		5	/* @@@ should really come from N_SIMM */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+#ifndef __HAVE_NEW_PMAP_68K
+/* # of kernel PT pages (initial only, can grow dynamically) */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)
 
 #define	__HAVE_PMAP_PHYSSEG
 
@@ -122,5 +128,6 @@
 struct pmap_physseg {
 	struct pv_header *pvheader;	/* pv table for this seg */
 };
+#endif /* __HAVE_NEW_PMAP_68K */
 
 #endif /* _NEXT68K_VMPARAM_H_ */

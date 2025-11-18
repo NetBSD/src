@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 2025/11/18 22:39:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 2025/11/18 23:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -856,10 +856,7 @@ GLOBAL(prototc)
 	.long	0		| prototype translation control
 
 GLOBAL(intiobase)
-	.long	INTIOBASE	| KVA of base of internal IO space
-
-GLOBAL(intiolimit)
-	.long	INTIOTOP	| KVA of end of internal IO space
+	.long	0		| KVA of base of internal IO space
 
 GLOBAL(fbbase)
 	.long	0		| KVA of base of framebuffer
