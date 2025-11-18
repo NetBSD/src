@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143 2025/11/17 06:02:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.144 2025/11/18 22:19:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -514,10 +514,8 @@ Lramclr1xx:
 Lsavmaxmem:
 	moveq	#PGSHIFT,%d2
 	lsrl	%d2,%d1			| convert to page (click) number
-	RELOC(maxmem, %a0)
-	movl	%d1,%a0@		| save as maxmem
 	RELOC(physmem, %a0)
-	movl	%d1,%a0@		| ...and physmem
+	movl	%d1,%a0@		| save into physmem
 
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space

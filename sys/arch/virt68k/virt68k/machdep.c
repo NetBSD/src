@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2025/11/14 15:07:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2025/11/18 22:16:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2025/11/14 15:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2025/11/18 22:16:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -109,8 +109,6 @@ struct cpu_info cpu_info_store;
 struct vm_map *phys_map = NULL;
 
 paddr_t msgbufpa;		/* PA of message buffer */
-
-// int	maxmem;			/* max memory per process */
 
 extern	short exframesize[];
 

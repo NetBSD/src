@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2025/11/18 21:54:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 2025/11/18 22:19:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2025/11/18 21:54:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2025/11/18 22:19:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -123,8 +123,6 @@ struct vm_map *phys_map = NULL;
 struct	mvmeprom_brdid  boardid;
 
 paddr_t msgbufpa;		/* PA of message buffer */
-
-int	maxmem;			/* max memory per process */
 
 /*
  * The driver for the ethernet chip appropriate to the
