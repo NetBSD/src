@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.89 2025/11/11 15:17:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.90 2025/11/18 21:45:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -270,10 +270,10 @@ Lstart1:
 
 Lstart3:
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa,nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(firstpa, reloff)
 	addql	#8,%sp
 
 /*
