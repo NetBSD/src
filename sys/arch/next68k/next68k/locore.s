@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 2025/11/18 21:45:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 2025/11/18 22:39:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -273,8 +273,17 @@ Lstart3:
 	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
 	RELOC(pmap_bootstrap1,%a0)
-	jbsr	%a0@			| pmap_bootstrap1(firstpa, reloff)
+	jbsr	%a0@			| pmap_bootstrap1(nextpa, reloff)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
 
 /*
  * Prepare to enable MMU.
@@ -368,8 +377,9 @@ Lenab2:
 Ltbia040:
 	.word	0xf518			| pflusha
 Lenab3:
-
+	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(next68k_init)
+	addql	#4,%sp
 
 /* Final setup for call to main(). */
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.7 2021/12/05 04:54:21 msaitoh Exp $ */
+/*	$NetBSD: seglist.h,v 1.8 2025/11/18 22:39:58 thorpej Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/seglist.h
@@ -46,7 +46,8 @@
 typedef struct {
 	paddr_t		ps_start;	/* Start of segment */
 	paddr_t		ps_end;		/* End of segment */
-	int		ps_startpage;	/* Page number of first page */
+	paddr_t		ps_avail_start;	/* Available start of segment */
+	paddr_t		ps_avail_end;	/* Available end of segment */
 } phys_seg_list_t;
 
 /* Instantiated in machdep.c */
