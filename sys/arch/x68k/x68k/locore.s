@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140 2025/11/16 03:11:47 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.141 2025/11/19 18:37:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -894,9 +894,6 @@ GLOBAL(fputype)
 
 GLOBAL(intiobase)
 	.long	0			| KVA of base of internal IO space
-
-GLOBAL(intiolimit)
-	.long	0			| KVA of end of internal IO space
 
 #ifdef DEBUG
 ASGLOBAL(fulltflush)

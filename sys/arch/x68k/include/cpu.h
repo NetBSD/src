@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2024/01/20 00:15:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68 2025/11/19 18:37:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,6 @@
  */
 
 extern uint8_t *intiobase;
-extern uint8_t *intiolimit;
 
 /* machdep.c functions */
 void	dumpsys(void);
@@ -71,6 +70,7 @@ int	badbaddr(volatile void*);
 /* physical memory sections */
 #define INTIOBASE	(0x00C00000)
 #define INTIOTOP	(0x01000000)
+#define INTIOSIZE	(INTIOTOP - INTIOBASE)
 
 /*
  * Internal IO space:
@@ -78,12 +78,12 @@ int	badbaddr(volatile void*);
  * Ranges from 0xC00000 to 0x1000000 (IIOMAPSIZE).
  *
  * Internal IO space is mapped in the kernel from ``IODEVbase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
+ * ``intiobase'' (defined in locore.s) + INTIOSIZE.  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
 #define	IIOV(pa)	((u_int)(pa) - INTIOBASE + (u_int)intiobase)
 #define	IIOP(va)	((u_int)(va) - (u_int)intiobase + INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
-#define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 4mb */
+#define	IIOMAPSIZE	btoc(INTIOSIZE)		/* 4mb */
 
 #endif /* _X68K_CPU_H_ */

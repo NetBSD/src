@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 2025/11/16 03:11:47 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.216 2025/11/19 18:37:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2025/11/16 03:11:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2025/11/19 18:37:19 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -181,7 +181,7 @@ static vaddr_t intiova;
 const struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr_ptr = &intiova,
 	  .pmbm_paddr = INTIOBASE,
-	  .pmbm_size  = ctob(IIOMAPSIZE),
+	  .pmbm_size  = INTIOSIZE,
 	  .pmbm_flags = PMBM_F_CI },
 	{ .pmbm_vaddr = -1 },
 };
@@ -204,7 +204,6 @@ x68k_init(paddr_t nextpa)
 #ifdef __HAVE_NEW_PMAP_68K
 	/* load the internal IO space region */
 	intiobase = (uint8_t *)intiova;
-	intiolimit = intiobase + machine_bootmap[PMBM_INTIO].pmbm_size;
 #endif
 
 	/*
