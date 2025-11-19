@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.55 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.56 2025/11/19 22:31:52 andvar Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -1429,7 +1429,7 @@ lfs_blocks_fromfinfo(STRUCT_LFS *fs, union lfs_blocks *bp, FINFO *fip)
 	firstblock = (char *)fip + FINFOSIZE(fs);
 	if (fs->lfs_is64) {
 		bp->b64 = (int64_t *)firstblock;
-	}  else {
+	} else {
 		bp->b32 = (int32_t *)firstblock;
 	}
 }

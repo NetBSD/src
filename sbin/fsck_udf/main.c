@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2025/10/30 22:22:40 reinoud Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2025/11/19 22:31:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.17 2025/10/30 22:22:40 reinoud Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2025/11/19 22:31:52 andvar Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -805,7 +805,7 @@ udf_process_ad(union dscrptr *dscrptr, int action, uint8_t **resultp,
 			stats->inf_len     = piece_len;
 			stats->obj_size    = piece_len;
 			stats->logblks_rec = 0;
-		}  else if (flags == UDF_EXT_ALLOCATED) {
+		} else if (flags == UDF_EXT_ALLOCATED) {
 			stats->inf_len     += piece_len;
 			stats->obj_size    += piece_len;
 			stats->logblks_rec += piece_sectors;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.5 2023/08/11 07:05:39 mrg Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.6 2025/11/19 22:31:52 andvar Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -678,7 +678,7 @@ rmixl_fmn_intr_establish(int txstid, int (*func)(void *, rmixl_fmn_rxmsg_t *), v
 		panic("%s: intrhand[%d] busy", __func__, txstid);
 #endif
 		ih = NULL;
-	}  else {
+	} else {
 		ih->ih_func = func;
 		ih->ih_arg = arg;
 	}
