@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.17 2016/06/11 06:28:07 dholland Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.18 2025/11/19 09:43:27 nia Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Waldi Ravens.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -66,7 +63,7 @@ bootxx(void *readsector, void *disklabel, int autoboot)
 	setheap((void *)HEAPSTART, (void *)HEAPEND);
 
 	printf("\033v\nNetBSD/atari secondary bootloader"
-						" ($Revision: 1.17 $)\n\n");
+						" ($Revision: 1.18 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return -1;
