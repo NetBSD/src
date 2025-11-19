@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.56 2024/05/12 23:00:21 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.57 2025/11/19 22:16:48 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.56 2024/05/12 23:00:21 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.57 2025/11/19 22:16:48 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -4139,7 +4139,7 @@ acpi_dump_bytes(uint8_t *p, uint32_t len, unsigned int ntabs)
 				printf("\n");
 				acpi_print_tabs(ntabs);
 				printf(" ");
-			}else if (i % 16 == 0)
+			} else if (i % 16 == 0)
 				printf(" ");
 			printf("%c", (p[i] >= ' ' && p[i] <= '~') ? p[i] : '.');
 		} else {

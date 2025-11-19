@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.21 2023/04/02 18:23:02 ryo Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.22 2025/11/19 22:16:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.21 2023/04/02 18:23:02 ryo Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.22 2025/11/19 22:16:48 andvar Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -136,7 +136,7 @@ sysctlfs_pathtransform(struct puffs_usermount *pu,
 	 */
 	if (PCNISDOTDOT(pcn)) {
 		res->po_len = SFSPATH_DOTDOT;
-	}else {
+	} else {
 		res->po_len = SFSPATH_NORMAL;
 	}
 

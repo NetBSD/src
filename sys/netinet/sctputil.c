@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.22 2025/11/01 19:02:51 gutteridge Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.23 2025/11/19 22:16:48 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.22 2025/11/01 19:02:51 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.23 2025/11/19 22:16:48 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2991,7 +2991,7 @@ sbappendaddr_nocheck(struct sockbuf *sb, const struct sockaddr *asa,
 	}
 	if (n) {
 		n->m_next = m0;		/* concatenate data to control */
-	}else {
+	} else {
 		control = m0;
 	}
 	if (m)
