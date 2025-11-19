@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.30 2025/11/18 22:39:58 thorpej Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.31 2025/11/19 11:18:25 martin Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,11 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.30 2025/11/18 22:39:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.31 2025/11/19 11:18:25 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <machine/cpu.h>
 
@@ -38,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.30 2025/11/18 22:39:58 thorpej Exp $")
 #include <next68k/dev/intiovar.h>
 
 #ifdef DDB
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #define ELFSIZE 32
