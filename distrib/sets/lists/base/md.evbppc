@@ -1,10 +1,11 @@
-# $NetBSD: md.evbppc,v 1.2 2022/05/30 15:06:54 rin Exp $
+# $NetBSD: md.evbppc,v 1.2.2.1 2025/11/20 19:17:41 martin Exp $
 ./lib/libc_aligned.so		base-sys-shlib	dynamicroot,!machine_arch=powerpc64
 ./lib/libc_aligned.so.0		base-sys-shlib	dynamicroot,!machine_arch=powerpc64
 ./lib/libc_aligned.so.0.0	base-sys-shlib	dynamicroot,!machine_arch=powerpc64
 ./usr/lib/libc_aligned.so	base-sys-shlib	pic,!machine_arch=powerpc64
 ./usr/lib/libc_aligned.so.0	base-sys-shlib	pic,!machine_arch=powerpc64
 ./usr/lib/libc_aligned.so.0.0	base-sys-shlib	pic,!machine_arch=powerpc64
+./usr/mdec/ppcboot.elf		base-sysutil-bin !machine_arch=powerpc64
 ./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
