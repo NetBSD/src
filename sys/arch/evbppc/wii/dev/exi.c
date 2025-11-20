@@ -1,4 +1,4 @@
-/* $NetBSD: exi.c,v 1.1.2.3 2025/11/20 18:26:50 martin Exp $ */
+/* $NetBSD: exi.c,v 1.1.2.4 2025/11/20 19:53:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.1.2.3 2025/11/20 18:26:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.1.2.4 2025/11/20 19:53:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,19 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.1.2.3 2025/11/20 18:26:50 martin Exp $");
 
 /* This is an arbitrary limit. The real limit is probably much higher. */
 #define	EXI_MAX_DMA		4096
-
-#define	EXI_CSR(n)		(0x00 + (n) * 0x14)
-#define	 EXI_CSR_CS		__BITS(9,7)
-#define	EXI_MAR(n)		(0x04 + (n) * 0x14)
-#define	EXI_LENGTH(n)		(0x08 + (n) * 0x14)
-#define	EXI_CR(n)		(0x0c + (n) * 0x14)
-#define	 EXI_CR_TLEN		__BITS(5,4)
-#define  EXI_CR_RW		__BITS(3,2)
-#define  EXI_CR_RW_READ		__SHIFTIN(0, EXI_CR_RW)
-#define  EXI_CR_RW_WRITE	__SHIFTIN(1, EXI_CR_RW)
-#define	 EXI_CR_DMA		__BIT(1)
-#define  EXI_CR_TSTART		__BIT(0)
-#define	EXI_DATA(n)		(0x10 + (n) * 0x14)
 
 #define	ASSERT_CHAN_VALID(chan)	KASSERT((chan) >= 0 && (chan) < EXI_NUM_CHAN)
 #define	ASSERT_DEV_VALID(dev)	KASSERT((dev) >= 0 && (dev) < EXI_NUM_DEV)
@@ -163,7 +150,7 @@ exi_rescan(device_t self, const char *ifattr, const int *locs)
 				continue;
 			}
 
-			exi_select(chan, dev);
+			exi_select(chan, dev, EXI_FREQ_8MHZ);
 			exi_send_imm(chan, dev, &command, sizeof(command));
 			exi_recv_imm(chan, dev, &id, sizeof(id));
 			exi_unselect(chan);
@@ -204,7 +191,7 @@ exi_print(void *aux, const char *pnp)
 }
 
 void
-exi_select(uint8_t chan, uint8_t dev)
+exi_select(uint8_t chan, uint8_t dev, exi_freq_t freq)
 {
 	struct exi_channel *ch;
 	uint32_t val;
@@ -218,6 +205,8 @@ exi_select(uint8_t chan, uint8_t dev)
 	val = RD4(exi_softc, EXI_CSR(chan));
 	val &= ~EXI_CSR_CS;
 	val |= __SHIFTIN(__BIT(dev), EXI_CSR_CS);
+	val &= ~EXI_CSR_CLK;
+	val |= __SHIFTIN(freq, EXI_CSR_CLK);
 	WR4(exi_softc, EXI_CSR(chan), val);
 }
 

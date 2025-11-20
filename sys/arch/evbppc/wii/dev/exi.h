@@ -1,4 +1,4 @@
-/* $NetBSD: exi.h,v 1.1.2.4 2025/11/20 19:33:03 martin Exp $ */
+/* $NetBSD: exi.h,v 1.1.2.5 2025/11/20 19:53:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@ struct exi_attach_args {
 	uint8_t		eaa_device;
 };
 
-void exi_select(uint8_t, uint8_t);
+void exi_select(uint8_t, uint8_t, exi_freq_t);
 void exi_unselect(uint8_t);
 void exi_send_imm(uint8_t, uint8_t, const void *, size_t);
 void exi_recv_imm(uint8_t, uint8_t, void *, size_t);
