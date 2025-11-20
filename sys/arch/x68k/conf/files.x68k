@@ -1,9 +1,7 @@
-#	$NetBSD: files.x68k,v 1.86 2025/11/16 03:11:47 tsutsui Exp $
+#	$NetBSD: files.x68k,v 1.87 2025/11/20 18:05:01 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
-
-defflag				M060SP
 
 defflag				JUPITER
 defflag				PANICBUTTON

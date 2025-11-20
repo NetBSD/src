@@ -1,11 +1,9 @@
-#	$NetBSD: files.virt68k,v 1.5 2025/11/08 08:26:08 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.6 2025/11/20 18:05:00 thorpej Exp $
 
 # config file for virt68k
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
-
-defflag	opt_m060sp.h		M060SP
 
 # Generic devices
 include "dev/scsipi/files.scsipi"		# SCSI
