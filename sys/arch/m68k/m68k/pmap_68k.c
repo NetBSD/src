@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.15 2025/11/20 16:33:32 tsutsui Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.16 2025/11/20 16:37:03 tsutsui Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
  * Pmap module for the Motorola 68851 / 68030 / 68040 / 68060 MMUs.
  * (...and HP 68851-like MMU.)
  *
- * This implementation support both 2-level and 3-level page table
- * layouts.  The 3-level is mandated by 68040 / 68040, and the 2-level
+ * This implementation supports both 2-level and 3-level page table
+ * layouts.  The 3-level is mandated by 68040 / 68060, and the 2-level
  * is mandated by the HP MMU.  The 68851 and 68030 can do either, and
  * for now, the 2-level arrangement is retained for those MMUs, although
  * eventually we will switch them to the 3-level configuration.
@@ -57,7 +57,7 @@
  * This illustrates the initial table layout for a simple program
  * (/usr/bin/yes) using the standard m68k address space layout (based
  * on the historical 4.3BSD-on-hp300 layout, which was itself based on
- * HP-UX in order to facilitate HP-UX binary compatiblility back when
+ * HP-UX in order to facilitate HP-UX binary compatibility back when
  * that was considered to be important).  This example uses a 4K page
  * size.
  *
@@ -65,7 +65,7 @@
  * USRSTACK is $FFF0.0000 (grows down, first used page VA is $FFEF.F000)
  *
  * (TEXTADDR is $0000.2000 because the linker uses 8K page size for
- * broader compatiblity and keeps the 0-page unmapped so that NULL
+ * broader compatibility and keeps the 0-page unmapped so that NULL
  * pointer dereferences blow up.)
  *
  * This is to say: the text / data / heap of this program are in the
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.15 2025/11/20 16:33:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.16 2025/11/20 16:37:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
