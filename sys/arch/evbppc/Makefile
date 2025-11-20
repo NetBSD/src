@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/04/04 19:46:40 dyoung Exp $
+#	$NetBSD: Makefile,v 1.3.94.1 2025/11/20 19:14:50 martin Exp $
 
 .include <../powerpc/Makefile.inc>
 
@@ -36,6 +36,6 @@ links:
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
 
-SUBDIR=	compile include
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

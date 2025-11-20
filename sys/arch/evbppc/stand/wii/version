@@ -1,0 +1,12 @@
+$NetBSD: version,v 1.2.2.2 2025/11/20 19:14:49 martin Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE WII BOOTLOADER HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.0:	Initial version.
+1.1:	When the EJECT button is pressed during boot, the default kernel
+	filenames "netbsd" and "netbsd.gz" are skipped. Backup kernels
+	starting with "onetbsd" and "onetbsd.gz" are used instead. The
+	RESET button will now reset the system when ppcboot.elf is in
+	panic state.

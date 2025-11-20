@@ -1,4 +1,4 @@
-/* $NetBSD: wii_mmuinit.S,v 1.2 2024/10/13 16:21:37 jmcneill Exp $ */
+/* $NetBSD: wii_mmuinit.S,v 1.2.2.1 2025/11/20 19:14:49 martin Exp $ */
 
 /*-
  * Copyright (C) 2012 Margarida Gouveia
@@ -137,7 +137,20 @@
 	isync
 
 	/*
-	 * We use BAT1 to be able to write I/O memory, including the
+	 * Use BAT1 to access MEM2.
+	 */
+	/* BATU(0x10000000, BAT_BL_64M, BAT_Vs) */
+	lis	%r11, 0x1000
+	ori	%r11, %r11, BAT_BL_64M|BAT_Vs
+	/* BATL(0x10000000, BAT_I|BAT_G, BAT_PP_RW) */
+	lis	%r12, 0x1000
+	ori	%r12, %r12, BAT_I|BAT_G|BAT_PP_RW
+	mtdbatu	1, %r11
+	mtdbatl	1, %r12
+	isync
+
+	/*
+	 * We use BAT2 to be able to write I/O memory, including the
 	 * framebuffer registers.
 	 */
 	/* BATU(0x0c000000, BAT_BL_32M, BAT_Vs) */
@@ -146,8 +159,8 @@
 	/* BATL(0x0c000000, BAT_I|BAT_G, BAT_PP_RW) */
 	lis	%r12, 0x0c00
 	ori	%r12, %r12, BAT_I|BAT_G|BAT_PP_RW
-	mtdbatu	1, %r11
-	mtdbatl	1, %r12
+	mtdbatu	2, %r11
+	mtdbatl	2, %r12
 	isync
 
 	MMU_VIRTUALMODE()
