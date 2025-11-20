@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_memfd.c,v 1.11 2023/08/12 23:22:49 christos Exp $	*/
+/*	$NetBSD: sys_memfd.c,v 1.11.8.1 2025/11/20 19:27:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.11 2023/08/12 23:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_memfd.c,v 1.11.8.1 2025/11/20 19:27:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +99,7 @@ sys_memfd_create(struct lwp *l, const struct sys_memfd_create_args *uap,
 	struct proc *p = l->l_proc;
 	const unsigned int flags = SCARG(uap, flags);
 
-	if (flags & ~(MFD_CLOEXEC|MFD_ALLOW_SEALING))
+	if (flags & ~(MFD_CLOEXEC|MFD_CLOFORK|MFD_ALLOW_SEALING))
 		return EINVAL;
 
 	mfd = kmem_zalloc(sizeof(*mfd), KM_SLEEP);
@@ -128,6 +128,7 @@ sys_memfd_create(struct lwp *l, const struct sys_memfd_create_args *uap,
 	fp->f_ops = &memfd_fileops;
 	fp->f_memfd = mfd;
 	fd_set_exclose(l, fd, (flags & MFD_CLOEXEC) != 0);
+	fd_set_foclose(l, fd, (flags & MFD_CLOFORK) != 0);
 	fd_affix(p, fp, fd);
 
 	*retval = fd;
