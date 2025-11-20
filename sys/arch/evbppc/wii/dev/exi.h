@@ -1,4 +1,4 @@
-/* $NetBSD: exi.h,v 1.1.2.3 2025/11/20 18:26:50 martin Exp $ */
+/* $NetBSD: exi.h,v 1.1.2.4 2025/11/20 19:33:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _WII_DEV_EXI_H_
 #define _WII_DEV_EXI_H_
+
+#include "exireg.h"
 
 struct exi_attach_args {
 	uint32_t	eaa_id;
