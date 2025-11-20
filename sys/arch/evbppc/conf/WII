@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.4.2.8 2025/11/14 13:18:32 martin Exp $
+#	$NetBSD: WII,v 1.4.2.9 2025/11/20 18:26:50 martin Exp $
 #
 #	Nintendo Wii
 #
@@ -130,10 +130,12 @@ options 	WSDISPLAY_COMPAT_USL
 #options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
 options 	WSDISPLAY_SCROLLSUPPORT
+options 	WSDISPLAY_MULTICONS
 
 hollywood0 	at mainbus0 irq 14
 exi0		at mainbus0 addr 0x0d006800 irq 4	# External interface
 rtcsram0	at exi0					# RTC/SRAM chip
+gecko0		at exi0					# USB Gecko
 bwai0		at mainbus0 addr 0x0d006c00 irq 5	# Audio interface
 bwdsp0		at mainbus0 addr 0x0c005000 irq 6	# DSP
 

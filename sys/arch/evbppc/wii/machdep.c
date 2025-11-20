@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.2.6 2025/10/26 13:12:29 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.4.2.7 2025/11/20 18:26:49 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.6 2025/10/26 13:12:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.7 2025/11/20 18:26:49 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.6 2025/10/26 13:12:29 martin Exp $
 
 #include <machine/powerpc.h>
 #include <machine/wii.h>
+#include "dev/gecko.h"
 
 #include <powerpc/bus_funcs.h>
 #include <powerpc/db_machdep.h>
@@ -121,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.6 2025/10/26 13:12:29 martin Exp $
 
 #include "ksyms.h"
 #include "ukbd.h"
+#include "gecko.h"
 
 #ifndef WII_DEFAULT_CMDLINE
 #define WII_DEFAULT_CMDLINE "root=ld0a"
@@ -379,6 +381,9 @@ cpu_startup(void)
 void
 consinit(void)
 {
+#if NGECKO > 0
+	usbgecko_consinit();
+#endif
 #if NUKBD > 0
 	ukbd_cnattach();
 #endif
