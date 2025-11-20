@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.65 2025/11/12 13:32:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.66 2025/11/20 13:48:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.65 2025/11/12 13:32:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.66 2025/11/20 13:48:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -399,7 +399,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
 	epte = &pte[IIOMAPSIZE];
 	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;

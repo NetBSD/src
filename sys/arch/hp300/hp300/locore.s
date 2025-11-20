@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.191 2025/11/12 02:17:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.192 2025/11/20 13:48:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1151,9 +1151,6 @@ GLOBAL(internalhpib)
 
 GLOBAL(intiobase)
 	.long	0			| KVA of base of internal IO space
-
-GLOBAL(intiolimit)
-	.long	0			| KVA of end of internal IO space
 
 GLOBAL(extiobase)
 	.long	0			| KVA of base of external IO space

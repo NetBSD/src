@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2024/01/20 00:15:31 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2025/11/20 13:48:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@
  * although some of it could probably be put into generic 68k headers.
  */
 
-extern	uint8_t *intiobase, *intiolimit, *extiobase;
+extern	uint8_t *intiobase, *extiobase;
 
 /* locore.s functions */
 void	doboot(void) __attribute__((__noreturn__));
@@ -84,6 +84,7 @@ int	badbaddr(void *);
 #define	ROMBASE		(0x00000000)
 #define	INTIOBASE	(0x00400000)
 #define	INTIOTOP	(0x00600000)
+#define	INTIOSIZE	(INTIOTOP - INTIOBASE)
 #define	EXTIOBASE	(0x00600000)
 #define	EXTIOTOP	(0x20000000)
 #define	MAXADDR		((paddr_t)(0 - NBPG))
@@ -94,15 +95,16 @@ int	badbaddr(void *);
  * Ranges from 0x400000 to 0x600000 (IIOMAPSIZE).
  *
  * Internal IO space is mapped in the kernel from ``intiobase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
+ * ``intiobase'' + INTIOSIZE.  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
-#define	ISIIOVA(va) \
-	((uint8_t *)(va) >= intiobase && (uint8_t *)(va) < intiolimit)
+#define	ISIIOVA(va)							\
+	((uint8_t *)(va) >= intiobase &&				\
+	    (uint8_t *)(va) < (intiobase + INTIOSIZE))
 #define	IIOV(pa)	((paddr_t)(pa)-INTIOBASE+(vaddr_t)intiobase)
 #define	IIOP(va)	((vaddr_t)(va)-(vaddr_t)intiobase+INTIOBASE)
 #define	IIOPOFF(pa)	((paddr_t)(pa)-INTIOBASE)
-#define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
+#define	IIOMAPSIZE	btoc(INTIOSIZE)		/* 2mb */
 
 /*
  * External IO space:
