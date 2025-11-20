@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.13 2025/11/17 06:20:54 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.14 2025/11/20 16:23:14 tsutsui Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.13 2025/11/17 06:20:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.14 2025/11/20 16:23:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,97 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.13 2025/11/17 06:20:54 thorpej Exp $"
 #define	PMAP_CRIT_ENTER()	__nothing
 #define	PMAP_CRIT_EXIT()	__nothing
 #define	PMAP_CRIT_ASSERT()	__nothing
+
+/**************************** MMU CONFIGURATION ******************************/
+
+#include "opt_m68k_arch.h"
+
+#if defined(M68K_MMU_68030)
+#include <m68k/mmu_30.h>	/* for cpu_kcore_hdr_t */
+#endif
+
+/*
+ * We consider 3 different MMU classes:
+ * - 68851 (includes 68030)
+ * - 68040 (includes 68060)
+ * - HP MMU for 68020 (68851-like, 2-level 4K only, external VAC)
+ */
+
+#define	MMU_CLASS_68851		0
+#define	MMU_CLASS_68040		1
+#define	MMU_CLASS_HP		3
+
+static int	pmap_mmuclass __read_mostly;
+
+#if defined(M68K_MMU_68851) || defined(M68K_MMU_68030)
+#define	MMU_CONFIG_68851_CLASS	1
+#else
+#define	MMU_CONFIG_68851_CLASS	0
+#endif
+
+#if defined(M68K_MMU_68040) || defined(M68K_MMU_68060)
+#define	MMU_CONFIG_68040_CLASS	1
+#else
+#define	MMU_CONFIG_68040_CLASS	0
+#endif
+
+#if defined(M68K_MMU_HP)
+#define	MMU_CONFIG_HP_CLASS	1
+#else
+#define	MMU_CONFIG_HP_CLASS	0
+#endif
+
+#define	MMU_CONFIG_NCLASSES	(MMU_CONFIG_68851_CLASS + \
+				 MMU_CONFIG_68040_CLASS + \
+				 MMU_CONFIG_HP_CLASS)
+
+#if MMU_CONFIG_NCLASSES == 1
+
+#if MMU_CONFIG_68851_CLASS
+#define	MMU_IS_68851_CLASS	1
+#elif MMU_CONFIG_68040_CLASS
+#define	MMU_IS_68040_CLASS	1
+#elif MMU_CONFIG_HP_CLASS
+#define	MMU_IS_HP_CLASS		1
+#else
+#error Single MMU config predicate error.
+#endif
+
+#else /* MMU_CONFIG_NCLASSES != 1 */
+
+#if MMU_CONFIG_68851_CLASS
+#define	MMU_IS_68851_CLASS	(pmap_mmuclass == MMU_CLASS_68851)
+#endif
+
+#if MMU_CONFIG_68040_CLASS
+#define	MMU_IS_68040_CLASS	(pmap_mmuclass == MMU_CLASS_68040)
+#endif
+
+#if MMU_CONFIG_HP_CLASS
+#define	MMU_IS_HP_CLASS		(pmap_mmuclass == MMU_CLASS_HP)
+#endif
+
+#endif /* MMU_CONFIG_NCLASSES == 1 */
+
+#ifndef MMU_IS_68851_CLASS
+#define	MMU_IS_68851_CLASS	0
+#endif
+
+#ifndef MMU_IS_68040_CLASS
+#define	MMU_IS_68040_CLASS	0
+#endif
+
+#ifndef MMU_IS_HP_CLASS
+#define	MMU_IS_HP_CLASS		0
+#endif
+
+/*
+ * 68040 must always use 3-level.  Eventually, we will switch the '851
+ * type over to 3-level as well, for for now, it gets 2-level.  The
+ * HP MMU is stuck there for all eternity.
+ */
+#define	MMU_USE_3L		(MMU_IS_68040_CLASS)
+#define	MMU_USE_2L		(!MMU_USE_3L)
 
 /***************************** INSTRUMENTATION *******************************/
 
@@ -330,97 +421,6 @@ EVCNT_ATTACH_STATIC(pmap_enter_pv_recycle_ev);
 #else
 #define	pmap_evcnt(e)		__nothing
 #endif
-
-/**************************** MMU CONFIGURATION ******************************/
-
-#include "opt_m68k_arch.h"
-
-#if defined(M68K_MMU_68030)
-#include <m68k/mmu_30.h>	/* for cpu_kcore_hdr_t */
-#endif
-
-/*
- * We consider 3 different MMU classes:
- * - 68851 (includes 68030)
- * - 68040 (includes 68060)
- * - HP MMU for 68020 (68851-like, 2-level 4K only, external VAC)
- */
-
-#define	MMU_CLASS_68851		0
-#define	MMU_CLASS_68040		1
-#define	MMU_CLASS_HP		3
-
-static int	pmap_mmuclass __read_mostly;
-
-#if defined(M68K_MMU_68851) || defined(M68K_MMU_68030)
-#define	MMU_CONFIG_68851_CLASS	1
-#else
-#define	MMU_CONFIG_68851_CLASS	0
-#endif
-
-#if defined(M68K_MMU_68040) || defined(M68K_MMU_68060)
-#define	MMU_CONFIG_68040_CLASS	1
-#else
-#define	MMU_CONFIG_68040_CLASS	0
-#endif
-
-#if defined(M68K_MMU_HP)
-#define	MMU_CONFIG_HP_CLASS	1
-#else
-#define	MMU_CONFIG_HP_CLASS	0
-#endif
-
-#define	MMU_CONFIG_NCLASSES	(MMU_CONFIG_68851_CLASS + \
-				 MMU_CONFIG_68040_CLASS + \
-				 MMU_CONFIG_HP_CLASS)
-
-#if MMU_CONFIG_NCLASSES == 1
-
-#if MMU_CONFIG_68851_CLASS
-#define	MMU_IS_68851_CLASS	1
-#elif MMU_CONFIG_68040_CLASS
-#define	MMU_IS_68040_CLASS	1
-#elif MMU_CONFIG_HP_CLASS
-#define	MMU_IS_HP_CLASS		1
-#else
-#error Single MMU config predicate error.
-#endif
-
-#else /* MMU_CONFIG_NCLASSES != 1 */
-
-#if MMU_CONFIG_68851_CLASS
-#define	MMU_IS_68851_CLASS	(pmap_mmuclass == MMU_CLASS_68851)
-#endif
-
-#if MMU_CONFIG_68040_CLASS
-#define	MMU_IS_68040_CLASS	(pmap_mmuclass == MMU_CLASS_68040)
-#endif
-
-#if MMU_CONFIG_HP_CLASS
-#define	MMU_IS_HP_CLASS		(pmap_mmuclass == MMU_CLASS_HP)
-#endif
-
-#endif /* MMU_CONFIG_NCLASSES == 1 */
-
-#ifndef MMU_IS_68851_CLASS
-#define	MMU_IS_68851_CLASS	0
-#endif
-
-#ifndef MMU_IS_68040_CLASS
-#define	MMU_IS_68040_CLASS	0
-#endif
-
-#ifndef MMU_IS_HP_CLASS
-#define	MMU_IS_HP_CLASS		0
-#endif
-
-/*
- * 68040 must always use 3-level.  Eventually, we will switch the '851
- * type over to 3-level as well, for for now, it gets 2-level.  The
- * HP MMU is stuck there for all eternity.
- */
-#define	MMU_USE_3L		(MMU_IS_68040_CLASS)
-#define	MMU_USE_2L		(!MMU_USE_3L)
 
 static void (*pmap_load_urp_func)(paddr_t) __read_mostly;
 
@@ -1913,12 +1913,12 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 				all_ci_flags |= pv->pv_vf;
 				continue;
 			}
-			pte_mask(pmap_pv_pte(pv), ~PTE51_CI);
+			pte_mask(pmap_pv_pte(pv), ~((uint32_t)PTE51_CI));
 			if (active_pmap(pv->pv_pmap)) {
 				TBIS(PV_VA(pv));
 			}
 		}
-		all_flags &= PV_F_CI_USR | PV_F_CI_VAC;
+		all_ci_flags &= PV_F_CI_USR | PV_F_CI_VAC;
 		if (__predict_true(all_ci_flags == 0)) {
 			VM_MDPAGE_CLR_CI(pg);
 		}
@@ -2112,7 +2112,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 		if (MMU_IS_HP_CLASS) {
 			if (pmap == pmap_kernel()) {
 				DCIS();
-			} else if (active_user_pmap(pmap))) {
+			} else if (active_user_pmap(pmap)) {
 				DCIU();
 			}
 		}
@@ -2257,7 +2257,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		 * Cacheable mappings were removed, so invalidate
 		 * the cache.
 		 */
-		if (pmap == pmap_kernel() {
+		if (pmap == pmap_kernel()) {
 			DCIS();
 		} else if (active_user_pmap(pmap)) {
 			DCIU();
