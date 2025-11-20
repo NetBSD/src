@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.16 2025/11/18 16:59:36 pgoyette Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.17 2025/11/20 18:42:52 pgoyette Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.16 2025/10/27 03:18:36 kevlo Exp $	*/
 
 /*
@@ -404,9 +404,6 @@ struct rge_softc {
 
 	struct rge_queues	*sc_queues;
 	unsigned int		sc_nqueues;
-
-	struct mbuf		*rge_head;
-	struct mbuf		*rge_tail;
 
 	callout_t		sc_timeout;	/* tick timeout */
 

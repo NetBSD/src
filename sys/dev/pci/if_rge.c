@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.44 2025/11/18 16:59:36 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.45 2025/11/20 18:42:52 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.41 2025/11/17 08:59:22 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.44 2025/11/18 16:59:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.45 2025/11/20 18:42:52 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -1494,10 +1494,10 @@ rge_rxeof(struct rge_softc *sc)
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
 			 */
-			if (sc->rge_head != NULL) {
-				m_freem(sc->rge_head);
+			if (q->q_rx.rge_head != NULL) {
+				m_freem(q->q_rx.rge_head);
 				q->q_rx.rge_head = NULL;
-				q->q_rx.rge_tail = &q->q_rx.rge_head;;
+				q->q_rx.rge_tail = &q->q_rx.rge_head;
 			}
 			rge_load_rxbuf(q, i);
 			continue;
@@ -1509,16 +1509,17 @@ rge_rxeof(struct rge_softc *sc)
 		 */
 		if (rge_newbuf(q, i) != 0) {
 			if_statinc(ifp, if_iqdrops);
-			if (sc->rge_head != NULL) {
-				m_freem(sc->rge_head);
-				sc->rge_head = sc->rge_tail = NULL;
+			if (q->q_rx.rge_head != NULL) {
+				m_freem(q->q_rx.rge_head);
+				q->q_rx.rge_head = NULL;
+				q->q_rx.rge_tail = &q->q_rx.rge_head;
 			}
 			rge_load_rxbuf(q, i);
 			continue;
 		}
 
 		m_set_rcvif(m, ifp);
-		if (sc->rge_head != NULL) {
+		if (q->q_rx.rge_head != NULL) {
 			m->m_len = total_len;
 			/*
 			 * Special case: if there's 4 bytes or less
@@ -1527,16 +1528,17 @@ rge_rxeof(struct rge_softc *sc)
 			 * care about anyway.
 			 */
 			if (m->m_len <= ETHER_CRC_LEN) {
-				sc->rge_tail->m_len -=
+				(*q->q_rx.rge_tail)->m_len -=
 				    (ETHER_CRC_LEN - m->m_len);
 				m_freem(m);
 			} else {
 				m->m_len -= ETHER_CRC_LEN;
 				m->m_flags &= ~M_PKTHDR;
-				sc->rge_tail->m_next = m;
+				(*q->q_rx.rge_tail)->m_next = m;
 			}
-			m = sc->rge_head;
-			sc->rge_head = sc->rge_tail = NULL;
+			m = q->q_rx.rge_head;
+			q->q_rx.rge_head = NULL;
+			q->q_rx.rge_tail = &q->q_rx.rge_head;
 			m->m_pkthdr.len = total_len - ETHER_CRC_LEN;
 		} else
 	#if 0
