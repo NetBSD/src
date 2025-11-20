@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.14 2025/11/20 16:23:14 tsutsui Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.15 2025/11/20 16:33:32 tsutsui Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.14 2025/11/20 16:23:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.15 2025/11/20 16:33:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3457,7 +3457,7 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
 		m->itt0 = mmu_tt40[MMU_TTREG_ITT0];
 		m->itt1 = mmu_tt40[MMU_TTREG_ITT1];
 		m->tt0  = mmu_tt40[MMU_TTREG_DTT0];
-		m->tt0  = mmu_tt40[MMU_TTREG_DTT1];
+		m->tt1  = mmu_tt40[MMU_TTREG_DTT1];
 	}
 #endif
 #if defined(M68K_MMU_68030)
