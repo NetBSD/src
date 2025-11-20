@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2025/07/19 12:31:45 christos Exp $
+#	$NetBSD: Makefile,v 1.41.2.1 2025/11/20 18:46:45 martin Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -20,8 +20,8 @@ CPPFLAGS+=-DNO_EDITCOMPLETE -DNO_ABOUT -DNO_AUTH -DNO_HELP -DNO_STATUS -DNO_DEBU
 LDADD+=	-ledit -lterminfo
 DPADD+=	${LIBEDIT} ${LIBTERMINFO}
 CPPFLAGS+= -DWITH_SSL
-LDADD+= -lssl -lcrypto -lpthread
-DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBPTHREAD}
+LDADD+= -lssl -lcrypto
+DPADD+= ${LIBSSL} ${LIBCRYPTO}
 .endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2025/07/17 14:25:20 christos Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2025/11/20 18:46:47 martin Exp $
 
 NOMAN=	# defined
 BINDIR=/usr/bin
@@ -65,7 +65,6 @@ verify.c \
 version.c \
 x509.c \
 
-CPPFLAGS+= -pthread
 CPPFLAGS+= -I${OPENSSLSRC} -I${.CURDIR}/../include
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/apps/include
 
@@ -74,8 +73,8 @@ PROGDPLIBS+=    apps ${OPENSSLSRC}/../lib/libapps
 PROGDPLIBS+=    ssl ${OPENSSLSRC}/../lib/libssl
 PROGDPLIBS+=    crypto ${OPENSSLSRC}/../lib/libcrypto
 
-LDADD+=	-lcrypt -lpthread
-DPADD+=	${LIBCRYPT} ${LIBPTHREAD}
+LDADD+=	-lcrypt
+DPADD+=	${LIBCRYPT}
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"

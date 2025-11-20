@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.16 2023/06/02 19:09:11 riastradh Exp $
+# $NetBSD: shl.mi,v 1.16.4.1 2025/11/20 18:46:42 martin Exp $
 #
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		compattestfile,atf
@@ -10,6 +10,8 @@
 ./usr/tests/lib/libc/tls/libh_tls_dynamic.so.1	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/tls/t_tls_dlopen		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/tls/t_tls_dynamic		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/libh_pthread_weak.so	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/libh_pthread_weak.so.1	tests-lib-tests		compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so	tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso.so.1	tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so	tests-libexec-tests	compattestfile,atf

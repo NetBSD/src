@@ -62,6 +62,15 @@ int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads)
     tdata = OSSL_LIB_CTX_GET_THREADS(ctx);
     if (tdata == NULL)
         return 0;
+#ifdef __NetBSD__
+    /*
+     * Applications must link against libpthread in order to enable
+     * openssl thread support.
+     */
+    extern int __isthreaded;	/* XXX */
+    if (!__isthreaded)
+        return 0;
+#endif
 
     ossl_crypto_mutex_lock(tdata->lock);
     tdata->max_threads = max_threads;

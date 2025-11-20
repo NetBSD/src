@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2025/07/19 14:32:41 christos Exp $
+# $NetBSD: Makefile,v 1.20.2.1 2025/11/20 18:46:46 martin Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -251,8 +251,8 @@ ikev2.c \
 tncs.c
 
 
-DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES} ${LIBPTHREAD}
-LDADD+= -lssl -lcrypto -ldes -lpthread
+DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
+LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
 CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.485.2.1 2025/10/01 17:41:15 martin Exp $
+# $NetBSD: mi,v 1.485.2.2 2025/11/20 18:46:45 martin Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2426,6 +2426,8 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_thrd.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_timedmutex.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_tss.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/weak/t_pthread_weak_nothread.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/weak/t_pthread_weak_threaded.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_dummy.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_threads.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse/t_refuse_opt.debug		tests-lib-debug		debug,atf,compattestfile

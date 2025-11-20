@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2025/07/19 12:21:52 christos Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2025/11/20 18:46:43 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,8 @@ PROG=	dc
 SRCS=	main.c dc.c bcode.c inout.c mem.c stack.c
 
 WARNS=6
-LDADD=	-lcrypto -lpthread
-DPADD=	${LIBCRYPTO} ${LIBPTHREAD}
+LDADD=	-lcrypto
+DPADD=	${LIBCRYPTO}
 
 SUBDIR.roff+=USD.doc
 

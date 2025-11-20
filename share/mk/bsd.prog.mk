@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.356 2025/07/19 10:26:31 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.356.2.1 2025/11/20 18:46:46 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -205,19 +205,19 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 LIBKRB5_LDADD+= -lkrb5 -lcom_err \
 	-lhx509 -lcrypto -lasn1 \
 	-lwind -lheimbase -lcom_err -lroken \
-	-lcrypt -lutil -lpthread
+	-lcrypt -lutil
 LIBKRB5_DPADD+= ${LIBKRB5} ${LIBCOM_ERR} \
 	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
 	${LIBWIND} ${LIBHEIMBASE} ${LIBCOM_ERR} ${LIBROKEN} \
-	${LIBCRYPT} ${LIBUTIL} ${LIBPTHREAD}
+	${LIBCRYPT} ${LIBUTIL}
 LIBGSSAPI_LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
 LIBGSSAPI_DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 .endif
 
 .if (${MKLDAP} != "no")
-LIBLDAP_LDADD+= -lldap -llber ${LIBGSSAPI_LDADD} -lssl -lcrypto -lpthread
+LIBLDAP_LDADD+= -lldap -llber ${LIBGSSAPI_LDADD} -lssl -lcrypto
 LIBLDAP_DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBGSSAPI_DPADD} ${LIBSSL} \
-    ${LIBCRYPTO} ${LIBPTHREAD}
+    ${LIBCRYPTO}
 .endif
 
 # PAM applications, if linked statically, need more libraries
@@ -226,10 +226,10 @@ PAM_STATIC_LDADD+= -lssh
 PAM_STATIC_DPADD+= ${LIBSSH}
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
-	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lpthread -lm
+	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lm
 PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBWIND} ${LIBASN1} \
 	${LIBROKEN} ${LIBCOM_ERR} ${LIBHEIMBASE} ${LIBCRYPTO} ${LIBSQLITE3} \
-	${LIBPTHREAD} ${LIBM}
+	${LIBM}
 .endif
 .if (${MKSKEY} != "no")
 PAM_STATIC_LDADD+= -lskey

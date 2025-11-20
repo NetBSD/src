@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.187 2025/04/02 14:23:34 riastradh Exp $	*/
+/*	$NetBSD: pthread.c,v 1.187.2.1 2025/11/20 18:46:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.187 2025/04/02 14:23:34 riastradh Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.187.2.1 2025/11/20 18:46:42 martin Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -142,6 +142,8 @@ int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
 __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
+__strong_alias(__libc_thr_detach,pthread_detach)
+__strong_alias(__libc_thr_join,pthread_join)
 __strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
 __strong_alias(__libc_thr_setcancelstate,pthread_setcancelstate)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2025/07/19 11:26:23 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.2.1 2025/11/20 18:46:45 martin Exp $
 
 EXTDIST:=        ${.PARSEDIR}/../dist
 
@@ -12,5 +12,5 @@ LIBMJDIR!=	cd ${.PARSEDIR}/../libmj && ${PRINTOBJDIR}
 LDADD+=		-L${LIBMJDIR} -lmj
 DPADD+=		${LIBMJDIR}/libmj.a
 
-LDADD+=		-lcrypto -lz -lbz2 -lpthread
-DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2} ${LIBPTHREAD}
+LDADD+=		-lcrypto -lz -lbz2
+DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}

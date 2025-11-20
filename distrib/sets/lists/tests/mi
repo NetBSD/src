@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1387.2.1 2025/10/01 17:41:15 martin Exp $
+# $NetBSD: mi,v 1.1387.2.2 2025/11/20 18:46:42 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -144,6 +144,7 @@
 ./usr/libdata/debug/usr/tests/lib/libprop		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen	tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/weak	tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librt			tests-lib-debug		compattestfile,atf
@@ -4199,6 +4200,11 @@
 ./usr/tests/lib/libpthread/t_thread_local_dtor		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_tss			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/Atffile			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libpthread/weak/t_pthread_weak_nothread	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread/weak/t_pthread_weak_threaded	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread_dbg				tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Atffile			tests-obsolete		obsolete
 ./usr/tests/lib/libpthread_dbg/Kyuafile			tests-obsolete		obsolete
@@ -4924,6 +4930,7 @@
 ./usr/tests/usr.bin/cc/t_msan_shadow			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_stack			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_unpoison			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_pthread_abuse			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_tsan_data_race			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_tsan_heap_use_after_free	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_tsan_lock_order_inversion	tests-usr.bin-tests	compattestfile,atf
