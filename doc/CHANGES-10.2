@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.67 2025/11/15 10:15:26 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.68 2025/11/20 19:19:44 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1278,4 +1278,46 @@ sys/uvm/uvm_extern.h				1.236
 
 	uvm: avoid integer overflow when calculating inactive target.
 	[mrg, ticket #1190]
+
+sys/arch/evbppc/conf/WII			1.11
+sys/arch/evbppc/conf/files.wii			1.8
+sys/arch/evbppc/wii/dev/exi.c			1.3
+sys/arch/evbppc/wii/dev/exi.h			1.3
+sys/arch/evbppc/wii/dev/exireg.h		1.1
+sys/arch/evbppc/wii/dev/gecko.c			1.1
+sys/arch/evbppc/wii/dev/gecko.h			1.1
+sys/arch/evbppc/wii/machdep.c			1.12
+sys/arch/evbppc/wii/mainbus.c			1.5
+
+	evbppc: wii: add support for using a USB Gecko as serial console.
+	[jmcneill, ticket #1191]
+
+distrib/sets/lists/base/md.evbppc		1.4
+distrib/utils/embedded/conf/wii.conf		1.6
+etc/etc.evbppc/Makefile.inc			1.20
+sys/arch/evbppc/Makefile			1.4
+sys/arch/evbppc/stand/Makefile			1.1
+sys/arch/evbppc/stand/wii/Makefile		1.1
+sys/arch/evbppc/stand/wii/boot.c		1.1,1.2
+sys/arch/evbppc/stand/wii/cache.h		1.1
+sys/arch/evbppc/stand/wii/conf.c		1.1
+sys/arch/evbppc/stand/wii/console.c		1.1
+sys/arch/evbppc/stand/wii/console.h		1.1
+sys/arch/evbppc/stand/wii/devopen.c		1.1
+sys/arch/evbppc/stand/wii/gecko.c		1.1
+sys/arch/evbppc/stand/wii/gecko.h		1.1
+sys/arch/evbppc/stand/wii/gpio.c		1.1,1.2
+sys/arch/evbppc/stand/wii/gpio.h		1.1,1.2
+sys/arch/evbppc/stand/wii/miniipc.c		1.1
+sys/arch/evbppc/stand/wii/miniipc.h		1.1
+sys/arch/evbppc/stand/wii/sdmmc.c		1.1
+sys/arch/evbppc/stand/wii/sdmmc.h		1.1
+sys/arch/evbppc/stand/wii/start.S		1.1
+sys/arch/evbppc/stand/wii/timer.c		1.1
+sys/arch/evbppc/stand/wii/timer.h		1.1
+sys/arch/evbppc/stand/wii/version		1.1,1.2
+sys/arch/evbppc/wii/wii_mmuinit.S		1.3
+
+	evbppc: wii: add standalone bootloader.
+	[jmcneill, ticket #1192]
 
