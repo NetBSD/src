@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 2024/06/18 13:35:26 rin Exp $ */
+/* $NetBSD: mainbus.c,v 1.4.4.1 2025/11/20 18:18:33 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2024/06/18 13:35:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.4.1 2025/11/20 18:18:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,14 +106,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	maa.maa_irq = MAINBUSCF_IRQ_DEFAULT;
 	config_found(self, &maa, mainbus_print, CFARGS_NONE);
 
-	maa.maa_name = "genfb";
-	maa.maa_addr = VI_BASE;
-	maa.maa_irq = MAINBUSCF_IRQ_DEFAULT;
-	config_found(self, &maa, mainbus_print, CFARGS_NONE);
-
 	maa.maa_name = "exi";
 	maa.maa_addr = EXI_BASE;
 	maa.maa_irq = PI_IRQ_EXI;
+	config_found(self, &maa, mainbus_print, CFARGS_NONE);
+
+	maa.maa_name = "genfb";
+	maa.maa_addr = VI_BASE;
+	maa.maa_irq = PI_IRQ_VI;
 	config_found(self, &maa, mainbus_print, CFARGS_NONE);
 
 	maa.maa_name = "hollywood";

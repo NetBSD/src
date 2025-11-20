@@ -1,4 +1,4 @@
-/* $NetBSD: exi.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $ */
+/* $NetBSD: exi.c,v 1.2.4.1 2025/11/20 18:18:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.2.4.1 2025/11/20 18:18:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,26 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.2 2024/02/10 11:00:15 jmcneill Exp $");
 #include "locators.h"
 #include "mainbus.h"
 #include "exi.h"
+#include "exireg.h"
 
 #define	EXI_NUM_CHAN		3
 #define	EXI_NUM_DEV		3
 
 /* This is an arbitrary limit. The real limit is probably much higher. */
 #define	EXI_MAX_DMA		4096
-
-#define	EXI_CSR(n)		(0x00 + (n) * 0x14)
-#define	 EXI_CSR_CS		__BITS(9,7)
-#define	 EXI_CSR_CLK		__BITS(6,4)
-#define	EXI_MAR(n)		(0x04 + (n) * 0x14)
-#define	EXI_LENGTH(n)		(0x08 + (n) * 0x14)
-#define	EXI_CR(n)		(0x0c + (n) * 0x14)
-#define	 EXI_CR_TLEN		__BITS(5,4)
-#define  EXI_CR_RW		__BITS(3,2)
-#define  EXI_CR_RW_READ		__SHIFTIN(0, EXI_CR_RW)
-#define  EXI_CR_RW_WRITE	__SHIFTIN(1, EXI_CR_RW)
-#define	 EXI_CR_DMA		__BIT(1)
-#define  EXI_CR_TSTART		__BIT(0)
-#define	EXI_DATA(n)		(0x10 + (n) * 0x14)
 
 #define	ASSERT_CHAN_VALID(chan)	KASSERT((chan) >= 0 && (chan) < EXI_NUM_CHAN)
 #define	ASSERT_DEV_VALID(dev)	KASSERT((dev) >= 0 && (dev) < EXI_NUM_DEV)
@@ -168,7 +155,7 @@ exi_rescan(device_t self, const char *ifattr, const int *locs)
 			exi_recv_imm(chan, dev, &id, sizeof(id));
 			exi_unselect(chan);
 
-			if (id == 0 || id == 0xffffffff) {
+			if (id == 0xffffffff) {
 				continue;
 			}
 
@@ -190,11 +177,15 @@ exi_print(void *aux, const char *pnp)
 {
 	struct exi_attach_args *eaa = aux;
 
-	if (pnp != NULL) {
-		aprint_normal("EXI device 0x%08x at %s", eaa->eaa_id, pnp);
+	if (pnp != NULL && eaa->eaa_id == 0) {
+		return QUIET;
 	}
 
-	aprint_normal(" addr %u-%u", eaa->eaa_chan, eaa->eaa_device);
+	if (pnp != NULL) {
+		aprint_normal("exi device ID 0x%08x at %s", eaa->eaa_id, pnp);
+	}
+
+	aprint_normal(" channel %u device %u", eaa->eaa_chan, eaa->eaa_device);
 
 	return UNCONF;
 }
@@ -311,6 +302,53 @@ exi_recv_imm(uint8_t chan, uint8_t dev, void *data, size_t datalen)
 		break;
 	}
 }
+
+void
+exi_sendrecv_imm(uint8_t chan, uint8_t dev, const void *dataout, void *datain,
+    size_t datalen)
+{
+	struct exi_channel *ch;
+	uint32_t val = 0;
+
+	ASSERT_CHAN_VALID(chan);
+	ASSERT_DEV_VALID(dev);
+	ASSERT_LEN_VALID(datalen);
+
+	ch = &exi_softc->sc_chan[chan];
+	KASSERT(mutex_owned(&ch->ch_lock));
+
+	switch (datalen) {
+	case 1:
+		val = *(const uint8_t *)dataout << 24;
+		break;
+	case 2:
+		val = *(const uint16_t *)dataout << 16;
+		break;
+	case 4:
+		val = *(const uint32_t *)dataout;
+		break;
+	}
+
+	WR4(exi_softc, EXI_DATA(chan), val);
+	WR4(exi_softc, EXI_CR(chan),
+	    EXI_CR_TSTART | EXI_CR_RW_READWRITE |
+	    __SHIFTIN(datalen - 1, EXI_CR_TLEN));
+	exi_wait(chan);
+	val = RD4(exi_softc, EXI_DATA(chan));
+
+	switch (datalen) {
+	case 1:
+		*(uint8_t *)datain = val >> 24;
+		break;
+	case 2:
+		*(uint16_t *)datain = val >> 16;
+		break;
+	case 4:
+		*(uint32_t *)datain = val;
+		break;
+	}
+}
+
 
 void
 exi_recv_dma(uint8_t chan, uint8_t dev, void *data, size_t datalen)
