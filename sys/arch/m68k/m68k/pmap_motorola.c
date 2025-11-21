@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.98 2025/11/12 03:34:58 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.99 2025/11/21 21:46:20 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.98 2025/11/12 03:34:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.99 2025/11/21 21:46:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1455,11 +1455,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 */
 
 	npte = pa | pte_prot(pmap, prot) | PG_V | PG_W;
+	if (flags & PMAP_NOCACHE) {
+		npte |= PG_CI;
+	}
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW)
+	if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
 #else
-	if ((npte & PG_PROT) == PG_RW)
+	if ((npte & (PG_PROT|PG_CI)) == PG_RW)
 #endif
 		npte |= PG_CCB;
 
