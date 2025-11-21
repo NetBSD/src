@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.39 2025/11/21 09:57:29 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.40 2025/11/21 19:17:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -971,4 +971,9 @@ sys/arch/x68k/conf/files.x68k			1.87
 
 	m68k: PR 59776: fix 68060 specific option handling.
 	[thorpej, ticket #95]
+
+external/gpl3/gcc/lib/libstdc++-v3/Makefile	1.66
+
+	Fix the SSP build.
+	[spz, ticket #96]
 
