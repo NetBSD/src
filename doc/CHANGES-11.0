@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.38 2025/11/20 19:28:51 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.39 2025/11/21 09:57:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -953,4 +953,22 @@ sys/sys/mman.h					1.66
 
 	memfd_create(2): add close-on-fork support.
 	[gutteridge, ticket #93]
+
+crypto/external/bsd/openssl/dist/crypto/info.c	1.2
+
+	openssl(1): "openssl version" should have useful CPUID info on sparc64.
+	[nia, ticket #94]
+
+sys/arch/amiga/conf/files.amiga			1.187
+sys/arch/atari/conf/files.atari			1.126
+sys/arch/m68k/conf/files.m68k			1.58
+sys/arch/m68k/m68k/vectors.c			1.4
+sys/arch/mvme68k/conf/files.mvme68k		1.71
+sys/arch/mvme68k/mvme68k/machdep.c		1.171
+sys/arch/virt68k/conf/files.virt68k		1.6
+sys/arch/virt68k/virt68k/machdep.c		1.18
+sys/arch/x68k/conf/files.x68k			1.87
+
+	m68k: PR 59776: fix 68060 specific option handling.
+	[thorpej, ticket #95]
 
