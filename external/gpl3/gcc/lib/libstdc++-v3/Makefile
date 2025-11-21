@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56.2.1 2025/11/15 10:11:10 martin Exp $
+#	$NetBSD: Makefile,v 1.56.2.2 2025/11/21 19:16:32 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -98,6 +98,7 @@ COPTS.functexcept.cc += -Wno-stack-protector
 COPTS.valarray-inst.cc += -Wno-stack-protector
 COPTS.wlocale-inst.cc += -Wno-stack-protector
 COPTS.snprintf_lite.cc += -Wno-stack-protector
+COPTS.std_stacktrace-cp-demangle.c += -Wno-stack-protector
 # From system headers.
 COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
 COPTS.cxx11-locale-inst.cc +=-Wno-stack-protector
