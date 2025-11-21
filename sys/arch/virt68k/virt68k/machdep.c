@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2024/03/05 14:15:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.4.1 2025/11/21 09:53:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2024/03/05 14:15:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.4.1 2025/11/21 09:53:25 martin Exp $");
 
 #include "opt_ddb.h"
-#include "opt_m060sp.h"
 #include "opt_modular.h"
 #include "opt_m68k_arch.h"
 

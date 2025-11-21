@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.125 2024/01/09 04:16:23 thorpej Exp $
+#	$NetBSD: files.atari,v 1.125.4.1 2025/11/21 09:53:25 martin Exp $
 
 maxpartitions 16
 
@@ -11,7 +11,6 @@ defflag 	opt_atariscsi.h		TT_SCSI FALCON_SCSI
 defparam	opt_atariscsi.h		TRY_SCSI_LINKED_COMMANDS
 defparam				ST_POOL_SIZE
 
-defflag		opt_m060sp.h		M060SP
 defflag					PANICBUTTON
 
 device	mainbus {}

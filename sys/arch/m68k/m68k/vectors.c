@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.3 2024/01/13 20:10:36 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.3.4.1 2025/11/21 09:53:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
+#include "opt_fpsp.h"
+#include "opt_m060sp.h"
 #endif 
 
 #include <sys/types.h>
