@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2025/11/21 12:20:50 nia Exp $
+# $NetBSD: Makefile,v 1.12 2025/11/21 18:34:12 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ TESTS_CXX+=	t_ubsanxx
 TESTS_C+=	t_vis
 .if ${ACTIVE_CC} == "gcc"
 COPTS.t_vis.c+=	-mvis
+.elif ${ACTIVE_CC} == "clang"
+COPTS.t_vis.c+=	-no-integrated-as -Xassembler -Av9a
 .endif
 .endif
 
