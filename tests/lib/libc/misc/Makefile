@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2025/11/21 18:34:12 nia Exp $
+# $NetBSD: Makefile,v 1.13 2025/11/21 20:57:22 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -29,14 +29,12 @@ SRCS.t_ubsanxx+=	ubsan.c
 UBSAN_FLAGS=		-fsanitize=undefined
 UBSAN_FLAGS+=		${${ACTIVE_CC} == "clang" :? -fsanitize=integer :}
 UBSAN_FLAGS+=		${${ACTIVE_CC} == "clang" :? -fsanitize=nullability :}
-CFLAGS+=		${UBSAN_FLAGS}
-CXXFLAGS+=		${UBSAN_FLAGS}
 CWARNFLAGS+=		-Wno-return-type -Wno-strict-aliasing
 CWARNFLAGS.clang+=	-Wno-incompatible-pointer-types-discards-qualifiers
 CWARNFLAGS.clang+=	-Wno-nullability-completeness 
 .endif
-COPTS.t_ubsan.c += -Wno-stack-protector
-COPTS.t_ubsanxx.cpp += -Wno-stack-protector
+COPTS.t_ubsan.c += -Wno-stack-protector ${UBSAN_FLAGS}
+COPTS.t_ubsanxx.cpp += -Wno-stack-protector ${UBSAN_FLAGS}
 COPTS.ubsan.c+=    ${${ACTIVE_CC} == "clang" && ${MACHINE_ARCH} == "powerpc":? -O0 :}
 
 COPTS.t_ubsan.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-int-in-bool-context :}
