@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.20 2019/10/24 18:18:00 kamil Exp $ */
+/*	$NetBSD: iconv.c,v 1.21 2025/11/21 15:20:54 christos Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.20 2019/10/24 18:18:00 kamil Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.21 2025/11/21 15:20:54 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -45,17 +45,18 @@ __RCSID("$NetBSD: iconv.c,v 1.20 2019/10/24 18:18:00 kamil Exp $");
 static void usage(void) __dead;
 static int scmp(const void *, const void *);
 static void show_codesets(void);
-static void do_conv(const char *, FILE *, const char *, const char *, int, int);
+static void do_conv(const char *, const char *, FILE *, FILE *,
+    const char *, const char *, int, int);
 
 static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage:\t%1$s [-cs] -f <from_code> -t <to_code> [file ...]\n"
-	    "\t%1$s -f <from_code> [-cs] [-t <to_code>] [file ...]\n"
-	    "\t%1$s -t <to_code> [-cs] [-f <from_code>] [file ...]\n"
+	    "Usage:\t%1$s [-cs] [-o <outfile>] -f <from_code> -t <to_code> [file ...]\n"
+	    "\t%1$s [-cs] [-o <outfile>] -f <from_code> [-t <to_code>]  [file ...]\n"
+	    "\t%1$s [-cs] [-o <outfile>] -t <to_code> [-f <from_code>]  [file ...]\n"
 	    "\t%1$s -l\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /*
@@ -91,8 +92,8 @@ show_codesets(void)
 #define OUTBUFSIZE (INBUFSIZE * 2)
 /*ARGSUSED*/
 static void
-do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
-    int hide_invalid)
+do_conv(const char *fni, const char *fno, FILE *fi, FILE *fo,
+    const char *from, const char *to, int silent, int hide_invalid)
 {
 	char inbuf[INBUFSIZE], outbuf[OUTBUFSIZE], *out;
 	const char *in;
@@ -108,7 +109,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 		err(EXIT_FAILURE, "iconv_open(%s, %s)", to, from);
 
 	invalids = 0;
-	while ((inbytes = fread(inbuf, 1, INBUFSIZE, fp)) > 0) {
+	while ((inbytes = fread(inbuf, 1, INBUFSIZE, fi)) > 0) {
 		in = inbuf;
 		while (inbytes > 0) {
 			size_t inval;
@@ -119,9 +120,12 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 			    &outbytes, flags, &inval);
 			serrno = errno;
 			invalids += inval;
-			if (outbytes < OUTBUFSIZE)
-				(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes,
-				    stdout);
+			if (outbytes < OUTBUFSIZE) {
+				if (fwrite(outbuf, 1, OUTBUFSIZE - outbytes, fo)
+				    != OUTBUFSIZE - outbytes)
+					err(EXIT_FAILURE,
+					    "failed writing to `%s'", fno);
+			}
 			errno = serrno;
 			if (ret == (size_t)-1 && errno != E2BIG) {
 				/*
@@ -135,10 +139,10 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 				/* incomplete input character */
 				(void)memmove(inbuf, in, inbytes);
 				ret = fread(inbuf + inbytes, 1,
-				    INBUFSIZE - inbytes, fp);
+				    INBUFSIZE - inbytes, fi);
 				if (ret == 0) {
-					fflush(stdout);
-					if (feof(fp))
+					fflush(fo);
+					if (feof(fi))
 						errx(EXIT_FAILURE,
 						     "unexpected end of file; "
 						     "the last character is "
@@ -157,8 +161,11 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	ret = iconv(cd, NULL, NULL, &out, &outbytes);
 	if (ret == (size_t)-1)
 		err(EXIT_FAILURE, "iconv()");
-	if (outbytes < OUTBUFSIZE)
-		(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes, stdout);
+	if (outbytes < OUTBUFSIZE) {
+		if (fwrite(outbuf, 1, OUTBUFSIZE - outbytes, fo)
+		    != OUTBUFSIZE - outbytes)
+			err(EXIT_FAILURE, "failed writing to `%s'", fno);
+	}
 
 	if (invalids > 0 && !silent)
 		warnx("warning: invalid characters: %lu",
@@ -172,13 +179,13 @@ main(int argc, char **argv)
 {
 	int ch, i;
 	int opt_l = 0, opt_s = 0, opt_c = 0;
-	char *opt_f = NULL, *opt_t = NULL;
-	FILE *fp;
+	const char *opt_f = NULL, *opt_t = NULL, *opt_o = NULL;
+	FILE *fi, *fo;
 
 	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "cslf:t:")) != EOF) {
+	while ((ch = getopt(argc, argv, "cslf:o:t:")) != EOF) {
 		switch (ch) {
 		case 'c':
 			opt_c = 1;
@@ -197,6 +204,10 @@ main(int argc, char **argv)
 		case 't':
 			/* to */
 			opt_t = estrdup(optarg);
+			break;
+		case 'o':
+			/* outfile */
+			opt_o = estrdup(optarg);
 			break;
 		default:
 			usage();
@@ -218,19 +229,31 @@ main(int argc, char **argv)
 		} else if (opt_t == NULL)
 			opt_t = nl_langinfo(CODESET);
 
+		if (opt_o == NULL) {
+			fo = stdout;
+			opt_o = "<stdout>";
+		} else {
+			fo = fopen(opt_o, "w");
+			if (fo == NULL)
+				err(EXIT_FAILURE, "Cannot open `%s'", opt_o);
+		}
+
 		if (argc == 0)
-			do_conv("<stdin>", stdin, opt_f, opt_t, opt_s, opt_c);
+			do_conv("<stdin>", opt_o, stdin, fo, opt_f, opt_t,
+			    opt_s, opt_c);
 		else {
 			for (i = 0; i < argc; i++) {
-				fp = fopen(argv[i], "r");
-				if (fp == NULL)
+				fi = fopen(argv[i], "r");
+				if (fi == NULL)
 					err(EXIT_FAILURE, "Cannot open `%s'",
 					    argv[i]);
-				do_conv(argv[i], fp, opt_f, opt_t, opt_s,
-				    opt_c);
-				(void)fclose(fp);
+				do_conv(argv[i], opt_o, fi, fo, opt_f, opt_t,
+				    opt_s, opt_c);
+				(void)fclose(fi);
 			}
 		}
+		if (fo != stdout)
+			(void)fclose(fo);
 	}
 	return EXIT_SUCCESS;
 }
