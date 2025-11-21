@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.117 2025/05/27 18:56:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.118 2025/11/21 19:02:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.117 2025/05/27 18:56:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.118 2025/11/21 19:02:35 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -1034,15 +1034,14 @@ iomap_init(void)
  * space mapping the indicated physical address range [pa - pa+size)
  */
 void *
-iomap(void *pa, int size)
+iomap(void *vpa, int size)
 {
+	paddr_t pa = (paddr_t)vpa;
 	u_long kva;
 	int error;
 
-#ifdef DEBUG
-	if (((int)pa & PGOFSET) || (size & PGOFSET))
-		panic("iomap: unaligned");
-#endif
+	KASSERT((pa & PGOFSET) == 0);
+	KASSERT((size & PGOFSET) == 0);
 
 	error = extent_alloc(extio_ex, size, PAGE_SIZE, 0,
 	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
@@ -1050,7 +1049,15 @@ iomap(void *pa, int size)
 	if (error)
 		return 0;
 
-	physaccess((void *) kva, pa, size, PG_RW|PG_CI);
+	vaddr_t va = kva;
+	vaddr_t eva = kva + size;
+	while (va < eva) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_NOCACHE);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+
 	return (void *)kva;
 }
 
@@ -1060,15 +1067,16 @@ iomap(void *pa, int size)
 void
 iounmap(void *kva, int size)
 {
+	vaddr_t va = (vaddr_t)kva;
 
-#ifdef DEBUG
-	if (((vaddr_t)kva & PGOFSET) || (size & PGOFSET))
-		panic("iounmap: unaligned");
-	if ((uint8_t *)kva < extiobase ||
-	    (uint8_t *)kva >= extiobase + ptoa(EIOMAPSIZE))
-		panic("iounmap: bad address");
-#endif
-	physunaccess(kva, size);
+	KASSERT((va & PGOFSET) == 0);
+	KASSERT((size & PGOFSET) == 0);
+
+	KASSERT((uint8_t *)kva >= extiobase);
+	KASSERT((uint8_t *)kva < extiobase + ptoa(EIOMAPSIZE));
+
+	pmap_kremove(va, size);
+
 	if (extent_free(extio_ex, (vaddr_t)kva, size,
 	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
 		printf("iounmap: kva %p size 0x%x: can't free region\n",

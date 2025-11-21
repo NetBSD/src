@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.22 2023/04/21 23:01:59 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.23 2025/11/21 19:02:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.22 2023/04/21 23:01:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.23 2025/11/21 19:02:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,15 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	if (error)
 		return error;
 
-	/*
-	 * Map the range.  The range is always cache-inhibited on the hp300.
-	 */
-	physaccess((void *)kva, (void *)bpa, size, PG_RW|PG_CI);
+	vaddr_t va = kva;
+	vaddr_t eva = kva + size;
+	bpa = m68k_trunc_page(bpa);
+	while (va < eva) {
+		pmap_kenter_pa(va, bpa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_NOCACHE);
+		va += PAGE_SIZE;
+		bpa += PAGE_SIZE;
+	}
 
 	/*
 	 * All done.
@@ -135,16 +140,13 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	offset = m68k_page_offset(bsh);
 	size = m68k_round_page(offset + size);
 
-#ifdef DIAGNOSTIC
-	if (bsh < (vaddr_t)extiobase ||
-	    bsh >= ((vaddr_t)extiobase + ptoa(EIOMAPSIZE)))
-		panic("%s: bad bus space handle", __func__);
-#endif
+	KASSERT(bsh >= (vaddr_t)extiobase);
+	KASSERT(bsh < ((vaddr_t)extiobase + ptoa(EIOMAPSIZE)));
 
 	/*
 	 * Unmap the range.
 	 */
-	physunaccess((void *)kva, size);
+	pmap_kremove(kva, size);
 
 	/*
 	 * Free it from the extio extent map.
