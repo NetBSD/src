@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.98 2025/05/01 06:11:21 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.99 2025/11/22 21:24:02 andvar Exp $
 #
 # hp300-specific configuration info
 
@@ -85,7 +85,7 @@ device	dma
 attach	dma at intio
 file	arch/hp300/dev/dma.c			dma
 
-# Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
+# Apollo Utility Chip (a.k.a. "Frodo") found on 4xx workstations
 device	frodo { offset = -1 }
 attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo

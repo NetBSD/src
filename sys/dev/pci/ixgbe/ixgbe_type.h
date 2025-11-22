@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.62 2023/11/15 03:50:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.63 2025/11/22 21:24:02 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -3119,7 +3119,7 @@ enum ixgbe_fdir_pballoc_type {
 #define IXGBE_FDIR_DROP_QUEUE			127
 
 
-/* Manageablility Host Interface defines */
+/* Manageability Host Interface defines */
 #define IXGBE_HI_MAX_BLOCK_BYTE_LENGTH	1792 /* Num of bytes in range */
 #define IXGBE_HI_MAX_BLOCK_DWORD_LENGTH	448 /* Num of dwords in range */
 #define IXGBE_HI_COMMAND_TIMEOUT	500 /* Process HI command limit */

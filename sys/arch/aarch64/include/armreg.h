@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.71 2025/08/23 06:44:34 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.72 2025/11/22 21:24:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -846,7 +846,7 @@ AARCH64REG_WRITE_INLINE(hcr_el2)
 #define	HCR_EL2_TID0		__BIT(15)	// trap ID group0 regs
 #define	HCR_EL2_TWE		__BIT(14)	// trap WFE
 #define	HCR_EL2_TWI		__BIT(13)	// trap WFI
-#define	HCR_EL2_DC		__BIT(12)	// default cacheablility
+#define	HCR_EL2_DC		__BIT(12)	// default cacheability
 #define	HCR_EL2_BSU		__BITS(11,10)	// barrier shareability upgrade
 #define	HCR_EL2_FB		__BIT(9)	// force broadcast TLBI and IC
 #define	HCR_EL2_VSE		__BIT(8)	// inject Virtual SError
