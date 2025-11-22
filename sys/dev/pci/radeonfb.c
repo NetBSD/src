@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.117 2021/08/08 12:17:37 tnn Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.118 2025/11/22 21:51:28 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.117 2021/08/08 12:17:37 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.118 2025/11/22 21:51:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,7 +627,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 #ifdef	RADEONFB_BIOS_INIT
 	if (radeonfb_bios_init(sc)) {
-		aprint_error("%s: BIOS inititialization failed\n", XNAME(sc));
+		aprint_error("%s: BIOS initialization failed\n", XNAME(sc));
 	}
 #endif
 
