@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.125 2025/10/09 06:15:17 skrll Exp $
+#	$NetBSD: GENERIC,v 1.126 2025/11/22 14:31:36 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -179,7 +179,7 @@ gpiokeys* 	at fdt?
 wskbd* 		at gpiokeys? console ? mux 1
 gpioleds* 	at fdt?
 
-# 
+#
 imxsnvs*	at fdt? pass 1		# Secure Non-Volatile Storage
 
 # ARM Motherboard Express uATX system registers

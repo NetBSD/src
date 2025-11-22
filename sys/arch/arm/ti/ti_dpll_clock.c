@@ -1,4 +1,4 @@
-/* $NetBSD: ti_dpll_clock.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_dpll_clock.c,v 1.7 2025/11/22 14:31:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_dpll_clock.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_dpll_clock.c,v 1.7 2025/11/22 14:31:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ am3_dpll_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 	WR4(sc, REG_CONTROL, control);
 
 	while (RD4(sc, REG_IDLEST) != AM3_ST_DPLL_CLK)
-		;    
+		;
 
 	return 0;
 }
@@ -322,7 +322,7 @@ omap3_dpll_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 	WR4(sc, REG_CONTROL, control);
 
 	while ((RD4(sc, REG_IDLEST) & OMAP3_ST_MPU_CLK) != 0)
-		;    
+		;
 
 	return 0;
 }
