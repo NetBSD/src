@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.11 2024/02/05 21:46:05 andvar Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.12 2025/11/22 07:58:51 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.11 2024/02/05 21:46:05 andvar Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.12 2025/11/22 07:58:51 andvar Exp $");
 #endif
 
 
@@ -799,7 +799,7 @@ int
 dst_key_to_buffer(DST_KEY *key, u_char *out_buff, int buf_len)
 {
 	int len;
-  /* this function will extrac the secret of HMAC into a buffer */
+  /* this function will extract the secret of HMAC into a buffer */
 	if (key == NULL) 
 		return (0);
 	if (key->dk_func != NULL && key->dk_func->to_dns_key != NULL) {
