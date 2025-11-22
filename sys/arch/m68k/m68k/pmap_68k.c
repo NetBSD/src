@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.17 2025/11/22 15:05:23 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.18 2025/11/22 15:28:35 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.17 2025/11/22 15:05:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.18 2025/11/22 15:28:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3492,6 +3492,24 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
  */
 __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
 
+/*
+ * The virtual kernel PTE array covers the entire 4GB kernel supervisor
+ * address space, but is sparsely populated.  The amount of VA space required
+ * for this linear array is:
+ *
+ *	(4GB / PAGE_SIZE) * sizeof(pt_entry_t)
+ * -or-
+ *	4KB: 4MB (1024 pages)
+ *	8KB: 2MB (512 pages)
+ *
+ * To avoid doing 64-bit math, we calculate it like so:
+ *
+ *	((0xffffffff >> PGSHIFT) + 1) * sizeof(pt_entry_t)
+ *
+ * The traditional name for this virtual array is "Sysmap".
+ */
+#define	SYSMAP_VA_SIZE	(((0xffffffffU >> PGSHIFT) + 1) * sizeof(pt_entry_t))
+
 static vaddr_t	lwp0uarea;
        char *	vmmap;
        void *	msgbufaddr;
@@ -3591,22 +3609,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 *
 	 *	msgbufaddr	kernel msg buf	round_page(MSGBUFSIZE) (v)
 	 *
-	 *	kernel_ptes	kernel PTEs	*see below (v, ci)
+	 *	kernel_ptes	kernel PTEs	SYSMAP_VA_SIZE (v, ci)
+	 *					(see comment above)
 	 *
 	 *	kern_ptpages	kernel leaf PTs	<calculated> (p)
-	 *
-	 * The kernel PTE array covers the entire 4GB kernel supervisor
-	 * address space, but is sparsely populated.  The amount of
-	 * VA space required for this linear array is:
-	 *
-	 *	(4GB / PAGE_SIZE) * sizeof(pt_entry_t)
-	 * -or-
-	 *	4KB: 4MB (1024 pages)
-	 *	8KB: 2MB (512 pages)
-	 *
-	 * To avoid doing 64-bit math, we calculate it like so:
-	 *
-	 *	((0xffffffff >> PGSHIFT) + 1) * sizeof(pt_entry_t)
 	 *
 	 * When we allocate the kernel lev1map, for the 2-level
 	 * configuration, there is no inner segment tables to allocate,
@@ -3677,7 +3683,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 
 	/* Kernel PTE array. */
 	RELOC(kernel_ptes, vaddr_t) = nextva;
-	nextva += ((0xffffffff >> PGSHIFT) + 1) * sizeof(pt_entry_t);
+	nextva += SYSMAP_VA_SIZE;
 
 #ifdef __HAVE_MACHINE_BOOTMAP
 	/*
