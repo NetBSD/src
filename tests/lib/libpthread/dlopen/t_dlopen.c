@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlopen.c,v 1.1 2013/03/21 16:50:21 christos Exp $ */
+/*	$NetBSD: t_dlopen.c,v 1.2 2025/11/22 20:04:01 riastradh Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,28 +32,22 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlopen.c,v 1.1 2013/03/21 16:50:21 christos Exp $");
+__RCSID("$NetBSD: t_dlopen.c,v 1.2 2025/11/22 20:04:01 riastradh Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <signal.h>
 #include <unistd.h>
-
-ATF_TC(dlopen);
-
-ATF_TC_HEAD(dlopen, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Test if dlopen can load -lpthread DSO");
-}
 
 #define DSO TESTDIR "/h_pthread_dlopen.so"
 
-ATF_TC_BODY(dlopen, tc)
+static void
+test_dlopen(int flags)
 {
 	void *handle;
 	int (*testf_dso_null)(void);
-	handle = dlopen(DSO, RTLD_NOW | RTLD_LOCAL);
+	handle = dlopen(DSO, flags);
 	ATF_REQUIRE_MSG(handle != NULL, "dlopen fails: %s", dlerror());
 
 	testf_dso_null = dlsym(handle, "testf_dso_null");
@@ -64,15 +58,30 @@ ATF_TC_BODY(dlopen, tc)
 	ATF_REQUIRE(dlclose(handle) == 0);
 }
 
-ATF_TC(dlopen_mutex);
-
-ATF_TC_HEAD(dlopen_mutex, tc)
+ATF_TC(dlopen);
+ATF_TC_HEAD(dlopen, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test if dlopen can load -lpthread DSO without breaking mutex");
+	    "Test if dlopen can load -lpthread DSO");
+}
+ATF_TC_BODY(dlopen, tc)
+{
+	test_dlopen(RTLD_NOW | RTLD_LOCAL);
 }
 
-ATF_TC_BODY(dlopen_mutex, tc)
+ATF_TC(dlopen_lazyglobal);
+ATF_TC_HEAD(dlopen_lazyglobal, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test if dlopen can load -lpthread DSO");
+}
+ATF_TC_BODY(dlopen_lazyglobal, tc)
+{
+	test_dlopen(RTLD_LAZY | RTLD_GLOBAL);
+}
+
+static void
+test_dlopen_mutex(int flags)
 {
 	pthread_mutex_t mtx;
 	void *handle;
@@ -81,7 +90,7 @@ ATF_TC_BODY(dlopen_mutex, tc)
 	ATF_REQUIRE(pthread_mutex_init(&mtx, NULL) == 0);
 	ATF_REQUIRE(pthread_mutex_lock(&mtx) == 0);
 
-	handle = dlopen(DSO, RTLD_NOW | RTLD_LOCAL);
+	handle = dlopen(DSO, flags);
 	ATF_REQUIRE_MSG(handle != NULL, "dlopen fails: %s", dlerror());
 
 	testf_dso_null = dlsym(handle, "testf_dso_null");
@@ -93,18 +102,38 @@ ATF_TC_BODY(dlopen_mutex, tc)
 
 	ATF_REQUIRE(dlclose(handle) == 0);
 
+	ATF_REQUIRE(pthread_mutex_lock(&mtx) == 0);
+	ATF_REQUIRE(pthread_mutex_unlock(&mtx) == 0);
+
 	pthread_mutex_destroy(&mtx);
 }
 
-ATF_TC(dlopen_mutex_libc);
-
-ATF_TC_HEAD(dlopen_mutex_libc, tc)
+ATF_TC(dlopen_mutex);
+ATF_TC_HEAD(dlopen_mutex, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test if dlopen can load -lpthread DSO and use libc locked mutex");
+	    "Test if dlopen can load -lpthread DSO without breaking mutex");
+}
+ATF_TC_BODY(dlopen_mutex, tc)
+{
+	test_dlopen_mutex(RTLD_NOW | RTLD_LOCAL);
 }
 
-ATF_TC_BODY(dlopen_mutex_libc, tc)
+ATF_TC(dlopen_mutex_lazyglobal);
+ATF_TC_HEAD(dlopen_mutex_lazyglobal, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test if dlopen can load -lpthread DSO without breaking mutex");
+}
+ATF_TC_BODY(dlopen_mutex_lazyglobal, tc)
+{
+	atf_tc_expect_signal(SIGSEGV, "PR lib/59784: "
+	    "dlopening and dlclosing libpthread is broken");
+	test_dlopen_mutex(RTLD_LAZY | RTLD_GLOBAL);
+}
+
+static void
+test_dlopen_mutex_libc(int flags)
 {
 	pthread_mutex_t mtx;
 	void *handle;
@@ -113,7 +142,7 @@ ATF_TC_BODY(dlopen_mutex_libc, tc)
 	ATF_REQUIRE(pthread_mutex_init(&mtx, NULL) == 0);
 	ATF_REQUIRE(pthread_mutex_lock(&mtx) == 0);
 
-	handle = dlopen(DSO, RTLD_NOW | RTLD_LOCAL);
+	handle = dlopen(DSO, flags);
 	ATF_REQUIRE_MSG(handle != NULL, "dlopen fails: %s", dlerror());
 
 	testf_dso_mutex_unlock = dlsym(handle, "testf_dso_mutex_unlock");
@@ -124,19 +153,36 @@ ATF_TC_BODY(dlopen_mutex_libc, tc)
 
 	dlclose(handle);
 
+	ATF_REQUIRE(pthread_mutex_lock(&mtx) == 0);
+	ATF_REQUIRE(pthread_mutex_unlock(&mtx) == 0);
+
 	pthread_mutex_destroy(&mtx);
 }
 
-ATF_TC(dlopen_mutex_libpthread);
-
-ATF_TC_HEAD(dlopen_mutex_libpthread, tc)
+ATF_TC(dlopen_mutex_libc);
+ATF_TC_HEAD(dlopen_mutex_libc, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Test if dlopen can load -lpthread DSO and use "
-	    "libpthread locked mutex");
+	    "Test if dlopen can load -lpthread DSO and use libc locked mutex");
+}
+ATF_TC_BODY(dlopen_mutex_libc, tc)
+{
+	test_dlopen_mutex_libc(RTLD_NOW | RTLD_LOCAL);
 }
 
-ATF_TC_BODY(dlopen_mutex_libpthread, tc)
+ATF_TC(dlopen_mutex_libc_lazyglobal);
+ATF_TC_HEAD(dlopen_mutex_libc_lazyglobal, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test if dlopen can load -lpthread DSO and use libc locked mutex");
+}
+ATF_TC_BODY(dlopen_mutex_libc_lazyglobal, tc)
+{
+	test_dlopen_mutex_libc(RTLD_LAZY | RTLD_GLOBAL);
+}
+
+static void
+test_dlopen_mutex_libpthread(int flags)
 {
 	pthread_mutex_t mtx;
 	void *handle;
@@ -144,7 +190,7 @@ ATF_TC_BODY(dlopen_mutex_libpthread, tc)
 
 	ATF_REQUIRE(pthread_mutex_init(&mtx, NULL) == 0);
 
-	handle = dlopen(DSO, RTLD_NOW | RTLD_LOCAL);
+	handle = dlopen(DSO, flags);
 	ATF_REQUIRE_MSG(handle != NULL, "dlopen fails: %s", dlerror());
 
 	testf_dso_mutex_lock = dlsym(handle, "testf_dso_mutex_lock");
@@ -157,15 +203,50 @@ ATF_TC_BODY(dlopen_mutex_libpthread, tc)
 
 	dlclose(handle);
 
+	ATF_REQUIRE(pthread_mutex_lock(&mtx) == 0);
+	ATF_REQUIRE(pthread_mutex_unlock(&mtx) == 0);
+
 	pthread_mutex_destroy(&mtx);
+}
+
+ATF_TC(dlopen_mutex_libpthread);
+ATF_TC_HEAD(dlopen_mutex_libpthread, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test if dlopen can load -lpthread DSO and use "
+	    "libpthread locked mutex");
+}
+ATF_TC_BODY(dlopen_mutex_libpthread, tc)
+{
+	test_dlopen_mutex_libpthread(RTLD_NOW | RTLD_LOCAL);
+}
+
+ATF_TC(dlopen_mutex_libpthread_lazyglobal);
+ATF_TC_HEAD(dlopen_mutex_libpthread_lazyglobal, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test if dlopen can load -lpthread DSO and use "
+	    "libpthread locked mutex");
+}
+ATF_TC_BODY(dlopen_mutex_libpthread_lazyglobal, tc)
+{
+	atf_tc_expect_signal(SIGSEGV, "PR lib/59784: "
+	    "dlopening and dlclosing libpthread is broken");
+	test_dlopen_mutex_libpthread(RTLD_LAZY | RTLD_GLOBAL);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, dlopen);
 	ATF_TP_ADD_TC(tp, dlopen_mutex);
 	ATF_TP_ADD_TC(tp, dlopen_mutex_libc);
 	ATF_TP_ADD_TC(tp, dlopen_mutex_libpthread);
+
+	ATF_TP_ADD_TC(tp, dlopen_lazyglobal);
+	ATF_TP_ADD_TC(tp, dlopen_mutex_lazyglobal);
+	ATF_TP_ADD_TC(tp, dlopen_mutex_libc_lazyglobal);
+	ATF_TP_ADD_TC(tp, dlopen_mutex_libpthread_lazyglobal);
 
 	return atf_no_error();
 }
