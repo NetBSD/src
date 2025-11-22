@@ -1,4 +1,4 @@
-/* $NetBSD: ti_mux_clock.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_mux_clock.c,v 1.3 2025/11/22 14:37:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_mux_clock.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_mux_clock.c,v 1.3 2025/11/22 14:37:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ ti_mux_clock_attach(device_t parent, device_t self, void *aux)
 
 static struct clk *
 ti_mux_clock_decode(device_t dev, int cc_phandle, const void *data,
-		     size_t len)
+		    size_t len)
 {
 	struct ti_mux_clock_softc * const sc = device_private(dev);
 
