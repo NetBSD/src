@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.41 2025/11/22 13:27:47 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.42 2025/11/22 14:17:16 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -981,4 +981,10 @@ sys/arch/evbppc/stand/wii/Makefile		1.2
 
 	evbppc: wii: fix build of the bootloader with clang
 	[jmcneill, ticket #97]
+
+sys/arch/mvme68k/mvme68k/locore.s		1.145
+
+	mvme68k: PR 59780: fix booting of GENERIC kernels on
+	non-MVME147.
+	[thorpej, ticket #98]
 
