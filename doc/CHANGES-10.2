@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.70 2025/11/22 13:28:53 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.71 2025/11/22 16:11:21 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1332,4 +1332,9 @@ sys/arch/evbppc/stand/wii/Makefile		1.2
 
 	evbppc: wii: fix build of the bootloader with clang
 	[jmcneill, ticket #1194]
+
+common/dist/zlib/zconf.h			1.6
+
+	zlib: PR 59711: ignore HAVE_UNISTD_H and HAVE_STDARG_H in zconf.h.
+	[riastradh, ticket #1195]
 
