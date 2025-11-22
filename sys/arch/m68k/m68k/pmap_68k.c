@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.19 2025/11/22 16:39:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.20 2025/11/22 21:15:50 tsutsui Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.19 2025/11/22 16:39:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.20 2025/11/22 21:15:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1627,7 +1627,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	 */
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
 		if (pmap == pv->pv_pmap && va == PV_VA(pv)) {
-			panic("%s: pmap=%p va=0x%08x already in PV table",
+			panic("%s: pmap=%p va=0x%08lx already in PV table",
 			    __func__, pmap, va);
 		}
 	}
