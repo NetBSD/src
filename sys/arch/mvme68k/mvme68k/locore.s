@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144 2025/11/18 22:19:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.145 2025/11/22 10:13:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,9 +166,21 @@ ASENTRY_NOPROFILE(start)
 
 	ASRELOC(Lbrdid2mach,%a0)
 Lbrdmatch:
+	/*
+	 * Board type entries look like:
+	 *
+	 *	.word	board-id	|  2
+	 *	.word	cpu-type	| +2
+	 *	.word	mmu-type	| +2
+	 *	.word	fpu-type	| +2
+	 *	.long	init-func	| +4 --> 12 bytes
+	 *
+	 * We advance past the board ID when we compare it, meaning that
+	 * we have 10 bytes to skip if we don't get a match.
+	 */
 	cmpw	%a0@+,%d0
 	jbeq	Lgotmatch
-	addw	#0x12,%a0		| Each entry is 20-2 bytes long
+	addw	#10,%a0	
 	tstw	%a0@
 	jbne	Lbrdmatch
 
