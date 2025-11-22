@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.69 2025/11/20 19:54:35 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.70 2025/11/22 13:28:53 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1327,4 +1327,9 @@ sys/arch/evbppc/wii/dev/rtcsram.c		1.2
 
 	evbppc: wii: explicitly set EXI frequency when selecting a device.
 	[jmcneill, ticket #1193]
+
+sys/arch/evbppc/stand/wii/Makefile		1.2
+
+	evbppc: wii: fix build of the bootloader with clang
+	[jmcneill, ticket #1194]
 
