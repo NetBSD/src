@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.20 2021/10/02 20:52:09 skrll Exp $	*/
+/*	$NetBSD: pl310.c,v 1.21 2025/11/22 14:37:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.20 2021/10/02 20:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.21 2025/11/22 14:37:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ static const struct {
 static void
 arml2cc_attach(device_t parent, device_t self, void *aux)
 {
-        struct arml2cc_softc * const sc = device_private(self);
+	struct arml2cc_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
 	const char * const xname = device_xname(self);
 	prop_dictionary_t dict = device_properties(self);

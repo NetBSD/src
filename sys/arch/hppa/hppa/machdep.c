@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2025/03/16 15:34:59 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2025/11/22 14:40:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2025/03/16 15:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/11/22 14:40:10 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -451,10 +451,10 @@ hppa_init(paddr_t start, void *bi)
 	ci = curcpu();
 
 	ci->ci_psw =
-		PSW_Q |         /* Interrupt State Collection Enable */
-		PSW_P |         /* Protection Identifier Validation Enable */
-		PSW_C |         /* Instruction Address Translation Enable */
-		PSW_D;          /* Data Address Translation Enable */
+		PSW_Q |		/* Interrupt State Collection Enable */
+		PSW_P |		/* Protection Identifier Validation Enable */
+		PSW_C |		/* Instruction Address Translation Enable */
+		PSW_D;		/* Data Address Translation Enable */
 
 	/* Copy bootinfo */
 	if (bi != NULL)
@@ -1637,14 +1637,14 @@ hppa_pim64_dump(int check_type, void *data, size_t size)
 
 		/* Print out some interesting registers. */
 		printf("\n\nIIA head 0x%lx:0x%016lx\n"
-	            "IIA tail 0x%lx:0x%016lx",
+		    "IIA tail 0x%lx:0x%016lx",
 		    (unsigned long)regs->pim_regs_cr17,
 		    (unsigned long)regs->pim_regs_cr18,
 		    (unsigned long)regs->pim_regs_iisq_tail,
 		    (unsigned long)regs->pim_regs_iioq_tail);
 		PIM_WORD("\nIPSW", regs->pim_regs_cr22, PSW_BITS);
 		printf("\nSP 0x%lx:0x%016lx\nFP 0x%lx:0x%016lx",
-       		    (unsigned long)regs->pim_regs_sr0,
+		    (unsigned long)regs->pim_regs_sr0,
 		    (unsigned long)regs->pim_regs_r30,
 		    (unsigned long)regs->pim_regs_sr0,
 		    (unsigned long)regs->pim_regs_r3);
