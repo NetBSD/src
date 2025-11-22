@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.18 2025/11/22 15:28:35 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.19 2025/11/22 16:39:14 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.18 2025/11/22 15:28:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.19 2025/11/22 16:39:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2498,14 +2498,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		flags |= PMAP_NOCACHE;
 	}
 
+	PMAP_CRIT_ENTER();
+
 	/* Get the destination table. */
 	ptep = pmap_pte_alloc(pmap, va, &pt, nowait, &pc);
 	if (__predict_false(ptep == NULL)) {
 		error = ENOMEM;
 		goto out;
 	}
-
-	PMAP_CRIT_ENTER();
 
 	/* Compute the new PTE. */
 	npte = pmap_make_pte(pa, prot, flags);
