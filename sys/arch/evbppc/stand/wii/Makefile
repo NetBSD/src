@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.4.2 2025/11/20 19:17:39 martin Exp $
+# $NetBSD: Makefile,v 1.1.4.3 2025/11/22 13:28:27 martin Exp $
 
 S=		${.CURDIR}/../../../..
 POWERPC=	${S}/arch/powerpc
@@ -39,7 +39,10 @@ ENTRY=		__start
 
 AFLAGS+=	-mcpu=750
 
-CFLAGS+=	-mcpu=750 -msdata=none -mno-strict-align -msoft-float
+CFLAGS+=	-mcpu=750
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mno-strict-align :}
+CFLAGS+=	-msoft-float
 CFLAGS+=	-ffreestanding
 CFLAGS+=	-nostdinc
 CFLAGS+=	-Wall -Wmissing-prototypes
