@@ -1,4 +1,4 @@
-/*	$NetBSD: zconf.h,v 1.4 2022/10/15 19:49:32 christos Exp $	*/
+/*	$NetBSD: zconf.h,v 1.4.2.1 2025/11/22 16:10:56 martin Exp $	*/
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2016 Jean-loup Gailly, Mark Adler
@@ -449,11 +449,33 @@ typedef uLong FAR uLongf;
    typedef unsigned long z_crc_t;
 #endif
 
-#ifdef HAVE_UNISTD_H    /* may be set to #if 1 by ./configure */
+/*
+ * PR lib/59711: "#define HAVE_UNISTD_H 1" breaks 32-bit libz
+ *
+ * Upstream uses unistd.h and stdarg.h -- and, most importantly,
+ * defines z_off_t to be off_t rather than long -- only if
+ * HAVE_UNISTD_H is defined, from autoconf.  We don't use autoconf in
+ * the NetBSD zlib build, so HAVE_UNISTD_H is never defined in the
+ * library build -- but it might be defined in users, which would then
+ * observe the wrong ABI on big-endian LP32 platforms (where long is
+ * 32-bit but off_t is 64-bit and the first four bytes don't coincide
+ * because of endianness).
+ *
+ * To avoid changing the ABI of already-compiled libz.so.1, we disable
+ * defining Z_HAVE_UNISTD_H and Z_HAVE_STDARG_H altogether,
+ * irrespective of HAVE_UNISTD_H and HAVE_STDARG_H so callers don't
+ * accidentally get it turned on.
+ *
+ * Later, we can unconditionally enable Z_HAVE_UNISTD_H and
+ * Z_HAVE_STDARG_H (since have been available on NetBSD for a long
+ * time) and bump the library major version to libz.so.2, so that LP32
+ * platforms can support 64-bit file offsets for gzread/gzseek/&c.
+ */
+#if 0	//#ifdef HAVE_UNISTD_H    /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_UNISTD_H
 #endif
 
-#ifdef HAVE_STDARG_H    /* may be set to #if 1 by ./configure */
+#if 0	//#ifdef HAVE_STDARG_H    /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_STDARG_H
 #endif
 
