@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.16 2025/11/20 16:37:03 tsutsui Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.17 2025/11/22 15:05:23 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.16 2025/11/20 16:37:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.17 2025/11/22 15:05:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3472,6 +3472,24 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
 
 /***************************** PMAP BOOTSTRAP ********************************/
 
+/*
+ * The kernel virtual address space layout that this implementation is tuned
+ * for assumes that KVA space begins at $0000.0000, that the static kernel
+ * image (text/data/bss, etc.) resides at or near the bottom of this space,
+ * and that all additional KVA that's mapped by PTEs grows upwards from there.
+ *
+ * Regions mapped by Transparent Translation registers (68030 and up)
+ * are assumed to lie beyond where the KVA space is expected to grow.  When
+ * we encounter these regions in the machine_bootmap[] (represented by a
+ * KEEPOUT entry), we clamp the maximum KVA to prevent its growth into that
+ * region.  The TT mechanism is not terribly precise, and only supports
+ * VA==PA mappings, so it's only really suitable for device regions that
+ * are in the upper reaches of the physical address space (at or beyond 1GB
+ * or so).
+ *
+ * This implementation certainly could be adjusted to work with other address
+ * space layouts, but the assumption asserted here is a bit baked-in.
+ */
 __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
 
 static vaddr_t	lwp0uarea;
