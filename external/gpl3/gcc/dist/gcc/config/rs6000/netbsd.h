@@ -19,6 +19,10 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+/* NetBSD doesn't support saving and restoring 64-bit regs in a 32-bit
+   process.  */
+#define OS_MISSING_POWERPC64 (!TARGET_64BIT)
+
 /* Undef gnu-user.h macros we don't want.  */
 #undef CPLUSPLUS_CPP_SPEC
 #undef LINK_GCC_C_SEQUENCE_SPEC
