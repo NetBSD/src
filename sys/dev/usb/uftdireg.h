@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.12 2024/01/14 12:53:41 andvar Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.13 2025/11/22 10:49:02 skrll Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -
@@ -301,14 +301,14 @@ enum {
  *   NOTE: same layout as the LSR register in a 16550
  *
  * Offset	Description
- * B0	Data Ready (DR)
- * B1	Overrun Error (OE)
- * B2	Parity Error (PE)
- * B3	Framing Error (FE)
- * B4	Break Interrupt (BI)
- * B5	Transmitter Holding Register (THRE)
- * B6	Transmitter Empty (TEMT)
- * B7	Error in RCVR FIFO
+ * B0		Data Ready (DR)
+ * B1		Overrun Error (OE)
+ * B2		Parity Error (PE)
+ * B3		Framing Error (FE)
+ * B4		Break Interrupt (BI)
+ * B5		Transmitter Holding Register (THRE)
+ * B6		Transmitter Empty (TEMT)
+ * B7		Error in RCVR FIFO
  *
  *
  * OUT Endpoint
