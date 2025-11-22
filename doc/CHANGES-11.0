@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.40 2025/11/21 19:17:27 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.41 2025/11/22 13:27:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -976,4 +976,9 @@ external/gpl3/gcc/lib/libstdc++-v3/Makefile	1.66
 
 	Fix the SSP build.
 	[spz, ticket #96]
+
+sys/arch/evbppc/stand/wii/Makefile		1.2
+
+	evbppc: wii: fix build of the bootloader with clang
+	[jmcneill, ticket #97]
 
