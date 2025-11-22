@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.10 2022/11/05 17:36:33 jmcneill Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.11 2025/11/22 22:32:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.10 2022/11/05 17:36:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.11 2025/11/22 22:32:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kernel.h>
@@ -37,12 +37,13 @@ __KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.10 2022/11/05 17:36:33 jmcneill Exp $
 #include <sys/systm.h>
 
 #include <crypto/aes/aes.h>
-#include <crypto/aes/aes_cbc.h>
 #include <crypto/aes/aes_bear.h> /* default implementation */
+#include <crypto/aes/aes_cbc.h>
 #include <crypto/aes/aes_impl.h>
+#include <crypto/aes/aes_keysched.h>
 #include <crypto/aes/aes_xts.h>
 
-static int aes_selftest_stdkeysched(void);
+static int aes_keysched_selftest(void);
 
 static const struct aes_impl	*aes_md_impl	__read_mostly;
 static const struct aes_impl	*aes_impl	__read_mostly;
@@ -101,7 +102,7 @@ aes_select(void)
 
 	KASSERT(aes_impl == NULL);
 
-	if (aes_selftest_stdkeysched())
+	if (aes_keysched_selftest())
 		panic("AES is busted");
 
 	if (aes_md_impl) {
@@ -337,10 +338,13 @@ aes_ccm_dec1(const struct aesenc *enc, const uint8_t in[static 16],
 }
 
 /*
- * Known-answer self-tests for the standard key schedule.
+ * Known-answer self-tests for the standard key schedule, used by some
+ * drivers for hardware devices that compute AES encryption and
+ * decryption in hardware but rely on software to compute the standard
+ * key schedule.
  */
 static int
-aes_selftest_stdkeysched(void)
+aes_keysched_selftest(void)
 {
 	static const uint8_t key[32] = {
 		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
@@ -451,11 +455,11 @@ aes_selftest_stdkeysched(void)
 	unsigned i;
 
 	for (i = 0; i < __arraycount(C); i++) {
-		if (br_aes_ct_keysched_stdenc(rk, key, C[i].len) != C[i].nr)
+		if (aes_keysched_enc(rk, key, C[i].len) != C[i].nr)
 			return -1;
 		if (memcmp(rk, C[i].enc, 4*(C[i].nr + 1)))
 			return -1;
-		if (br_aes_ct_keysched_stddec(rk, key, C[i].len) != C[i].nr)
+		if (aes_keysched_dec(rk, key, C[i].len) != C[i].nr)
 			return -1;
 		if (memcmp(rk, C[i].dec, 4*(C[i].nr + 1)))
 			return -1;

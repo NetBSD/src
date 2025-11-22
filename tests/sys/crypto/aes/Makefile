@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/08/08 06:27:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2025/11/22 22:32:39 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ SRCS.t_aes+=	aes_bear.c
 SRCS.t_aes+=	aes_ct.c
 SRCS.t_aes+=	aes_ct_dec.c
 SRCS.t_aes+=	aes_ct_enc.c
+SRCS.t_aes+=	aes_keysched.c
 SRCS.t_aes+=	aes_selftest.c
 
 .if !empty(MACHINE_ARCH:Mearmv7*) || !empty(MACHINE_ARCH:Maarch64*)

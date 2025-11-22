@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.9 2024/06/16 16:30:52 rillig Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.10 2025/11/22 22:32:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.9 2024/06/16 16:30:52 rillig Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.10 2025/11/22 22:32:39 riastradh Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
@@ -46,8 +46,8 @@ struct evcnt { uint64_t ev_count; };
 #endif
 
 #include <crypto/aes/aes.h>
-#include <crypto/aes/aes_bear.h>
 #include <crypto/aes/aes_impl.h>
+#include <crypto/aes/aes_keysched.h>
 
 #ifdef _KERNEL
 #include <x86/cpufunc.h>
@@ -107,6 +107,12 @@ aesvia_setenckey(struct aesenc *enc, const uint8_t *key, uint32_t nrounds)
 {
 	size_t key_len;
 
+	/*
+	 * For AES-128, VIA PadLock only needs the original key itself.
+	 *
+	 * For AES-192 and AES-256, VIA PadLock needs software to
+	 * compute the standard AES key schedule.
+	 */
 	switch (nrounds) {
 	case AES_128_NROUNDS:
 		enc->aese_aes.aes_rk[0] = le32dec(key + 4*0);
@@ -123,7 +129,7 @@ aesvia_setenckey(struct aesenc *enc, const uint8_t *key, uint32_t nrounds)
 	default:
 		panic("invalid AES nrounds: %u", nrounds);
 	}
-	br_aes_ct_keysched_stdenc(enc->aese_aes.aes_rk, key, key_len);
+	aes_keysched_enc(enc->aese_aes.aes_rk, key, key_len);
 }
 
 static void
@@ -147,7 +153,7 @@ aesvia_setdeckey(struct aesdec *dec, const uint8_t *key, uint32_t nrounds)
 	default:
 		panic("invalid AES nrounds: %u", nrounds);
 	}
-	br_aes_ct_keysched_stddec(dec->aesd_aes.aes_rk, key, key_len);
+	aes_keysched_dec(dec->aesd_aes.aes_rk, key, key_len);
 }
 
 static inline void

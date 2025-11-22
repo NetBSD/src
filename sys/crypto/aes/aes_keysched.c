@@ -1,7 +1,7 @@
-/*	$NetBSD: aes.h,v 1.5 2025/11/22 22:32:39 riastradh Exp $	*/
+/*	$NetBSD: aes_keysched.c,v 1.1 2025/11/22 22:32:39 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,45 +26,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_CRYPTO_AES_AES_H
-#define	_CRYPTO_AES_AES_H
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: aes_keysched.c,v 1.1 2025/11/22 22:32:39 riastradh Exp $");
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
+
+#include <crypto/aes/aes_bear.h>
+#include <crypto/aes/aes_keysched.h>
 
 /*
- * struct aes
+ * aes_keysched_enc(rk, key, keybytes)
  *
- *	Expanded round keys, in implementation-dependent format.  (For
- *	the standard AES key schedule, see aes_keysched.h.)
+ *	Compute the standard AES encryption key schedule, expanding a
+ *	16-, 24-, or 32-byte key into 44, 52, or 60 32-bit round keys
+ *	for encryption.  Returns the number of rounds for the key of
+ *	this length.
  */
-union aes {
-	uint32_t	aes_rk[60];
-	uint64_t	aes_rk64[30];
-} __aligned(16);
+u_int
+aes_keysched_enc(uint32_t *rk, const void *key, size_t keybytes)
+{
 
-#define	AES_128_NROUNDS	10
-#define	AES_192_NROUNDS	12
-#define	AES_256_NROUNDS	14
+	return br_aes_ct_keysched_stdenc(rk, key, keybytes);
+}
 
-struct aesenc {
-	union aes	aese_aes;
-};
+/*
+ * aes_keysched_dec(rk, key, keybytes)
+ *
+ *	Compute the standard AES decryption key schedule, expanding a
+ *	16-, 24-, or 32-byte key into 44, 52, or 60 32-bit round keys
+ *	and applying InvMixColumns for decryption.  Returns the number
+ *	of rounds for the key of this length.
+ */
+u_int
+aes_keysched_dec(uint32_t *rk, const void *key, size_t keybytes)
+{
 
-struct aesdec {
-	union aes	aesd_aes;
-};
-
-uint32_t aes_setenckey128(struct aesenc *, const uint8_t[static 16]);
-uint32_t aes_setenckey192(struct aesenc *, const uint8_t[static 24]);
-uint32_t aes_setenckey256(struct aesenc *, const uint8_t[static 32]);
-uint32_t aes_setdeckey128(struct aesdec *, const uint8_t[static 16]);
-uint32_t aes_setdeckey192(struct aesdec *, const uint8_t[static 24]);
-uint32_t aes_setdeckey256(struct aesdec *, const uint8_t[static 32]);
-
-void	aes_enc(const struct aesenc *, const uint8_t[static 16],
-	    uint8_t[static 16], uint32_t);
-void	aes_dec(const struct aesdec *, const uint8_t[static 16],
-	    uint8_t[static 16], uint32_t);
-
-#endif	/* _CRYPTO_AES_AES_H */
+	return br_aes_ct_keysched_stddec(rk, key, keybytes);
+}

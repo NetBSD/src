@@ -1,4 +1,4 @@
-#	$NetBSD: files.aes,v 1.3 2020/07/25 22:40:08 riastradh Exp $
+#	$NetBSD: files.aes,v 1.4 2025/11/22 22:32:39 riastradh Exp $
 
 define	aes
 
@@ -9,4 +9,5 @@ file	crypto/aes/aes_ct.c			aes
 file	crypto/aes/aes_ct_dec.c			aes
 file	crypto/aes/aes_ct_enc.c			aes
 file	crypto/aes/aes_impl.c			aes
+file	crypto/aes/aes_keysched.c		aes
 file	crypto/aes/aes_selftest.c		aes
