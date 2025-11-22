@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.42 2025/11/22 14:17:16 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.43 2025/11/22 16:09:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -987,4 +987,9 @@ sys/arch/mvme68k/mvme68k/locore.s		1.145
 	mvme68k: PR 59780: fix booting of GENERIC kernels on
 	non-MVME147.
 	[thorpej, ticket #98]
+
+common/dist/zlib/zconf.h			1.6
+
+	zlib: PR 59711: ignore HAVE_UNISTD_H and HAVE_STDARG_H in zconf.h.
+	[riastradh, ticket #99]
 
