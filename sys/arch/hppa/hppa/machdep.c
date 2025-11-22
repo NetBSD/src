@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2025/11/22 14:40:10 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2025/11/22 14:40:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/11/22 14:40:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2025/11/22 14:40:58 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -797,7 +797,8 @@ cpuid(void)
 	}
 
 	if (!cpu_found) {
-		panic("CPU detection failed. Please report the problem.");
+		panic("CPU detection failed. Please report the problem. "
+		    "CPU version %#x/type %#x", cpu_version, cpu_type);
 	}
 
 	hppa_cpu_info = p;
