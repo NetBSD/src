@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.192 2025/11/20 13:48:05 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.193 2025/11/23 17:32:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -397,11 +397,34 @@ Lstart1:
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart3:
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(firstpa, nextpa)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
+
+	/*
+	 * CLKbase, MMUbase: important registers in internal IO space
+	 * accessed from assembly language.
+	 */
+	ASRELOC(intiobase,%a0)
+	movl	%a0@,%d0
+	movl	%d0,%d1
+	addl	#CLKBASE,%d1
+	RELOC(CLKbase,%a0)
+	movl	%d1,%a0@
+	addl	#MMUBASE,%d0
+	RELOC(MMUbase,%a0)
+	movl	%d0,%a0@
 
 /*
  * Prepare to enable MMU.
@@ -531,7 +554,9 @@ Lenab2:
 	orl	#MMU_CEN,%a0@(MMUCMD)	| turn on external cache
 Lnocache0:
 /* Final setup for call to main(). */
+	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(hp300_init)
+	addql	#4,%sp
 
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.

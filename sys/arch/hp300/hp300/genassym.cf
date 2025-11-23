@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.52 2025/11/07 14:40:57 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.53 2025/11/23 17:32:28 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -181,6 +181,7 @@ define	SPL6			PSL_S | PSL_IPL6
 # magic
 define	FC_USERD		FC_USERD
 define	INTIOBASE		INTIOBASE
+define	CLKBASE			CLKBASE
 define	MMUBASE			MMUBASE
 define	MMUSTAT			MMUSTAT
 define	MMUCMD			MMUCMD
