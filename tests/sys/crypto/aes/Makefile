@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2025/11/23 22:44:14 riastradh Exp $
+#	$NetBSD: Makefile,v 1.10 2025/11/23 22:48:27 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -65,15 +65,15 @@ SRCS.t_aes+=	aes_ni.c
 SRCS.t_aes+=	aes_ni_64.S
 .endif
 
-SRCS.t_aes+=	aes_sse2.c
-SRCS.t_aes+=	aes_sse2_dec.c
-SRCS.t_aes+=	aes_sse2_enc.c
-SRCS.t_aes+=	aes_sse2_impl.c
-SRCS.t_aes+=	aes_sse2_subr.c
-COPTS.aes_sse2.c+=	-msse -msse2
-COPTS.aes_sse2_dec.c+=	-msse -msse2
-COPTS.aes_sse2_enc.c+=	-msse -msse2
-COPTS.aes_sse2_subr.c+=	-msse -msse2
+SRCS.t_aes+=	aes_sse2_4x32.c
+SRCS.t_aes+=	aes_sse2_4x32_dec.c
+SRCS.t_aes+=	aes_sse2_4x32_enc.c
+SRCS.t_aes+=	aes_sse2_4x32_impl.c
+SRCS.t_aes+=	aes_sse2_4x32_subr.c
+COPTS.aes_sse2_4x32.c+=		-msse -msse2
+COPTS.aes_sse2_4x32_dec.c+=	-msse -msse2
+COPTS.aes_sse2_4x32_enc.c+=	-msse -msse2
+COPTS.aes_sse2_4x32_subr.c+=	-msse -msse2
 
 SRCS.t_aes+=	aes_ssse3.c
 SRCS.t_aes+=	aes_ssse3_impl.c
@@ -95,7 +95,7 @@ COPTS.aes_bear64.c+=	${CC_WNO_STRINGOP_OVERFLOW} ${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_neon_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
 
 COPTS.aes_ni.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
-COPTS.aes_sse2_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
+COPTS.aes_sse2_4x32_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_ssse3_subr.c+=${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_via.c+=	${CC_WNO_ARRAY_BOUNDS}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: aes_sse2.h,v 1.4 2020/07/25 22:29:56 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_4x32_subr.h,v 1.1 2025/11/23 22:48:27 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,47 +26,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_CRYPTO_AES_ARCH_X86_AES_SSE2_H
-#define	_CRYPTO_AES_ARCH_X86_AES_SSE2_H
+#ifndef	_CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_SUBR_H
+#define	_CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_SUBR_H
 
-#include <sys/types.h>
-
-#include <crypto/aes/aes_impl.h>
-
-struct aesenc;
-struct aesdec;
+#include <crypto/aes/aes.h>
 
 /*
  * These functions MUST NOT use any vector registers for parameters or
  * results -- the caller is compiled with -mno-sse &c. in the kernel,
  * and dynamically turns on the vector unit just before calling them.
  * Internal subroutines that use the vector unit for parameters are
- * declared in aes_sse2_impl.h instead.
+ * declared in aes_sse2_4x32_internal.h instead.
  */
 
-void aes_sse2_setkey(uint64_t[static 30], const void *, uint32_t);
+void aes_sse2_4x32_setkey(uint32_t[static 60], const void *, uint32_t);
 
-void aes_sse2_enc(const struct aesenc *, const uint8_t in[static 16],
+void aes_sse2_4x32_enc(const struct aesenc *, const uint8_t in[static 16],
     uint8_t[static 16], uint32_t);
-void aes_sse2_dec(const struct aesdec *, const uint8_t in[static 16],
+void aes_sse2_4x32_dec(const struct aesdec *, const uint8_t in[static 16],
     uint8_t[static 16], uint32_t);
-void aes_sse2_cbc_enc(const struct aesenc *, const uint8_t[static 16],
+void aes_sse2_4x32_cbc_enc(const struct aesenc *, const uint8_t[static 16],
     uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
-void aes_sse2_cbc_dec(const struct aesdec *, const uint8_t[static 16],
+void aes_sse2_4x32_cbc_dec(const struct aesdec *, const uint8_t[static 16],
     uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
-void aes_sse2_xts_enc(const struct aesenc *, const uint8_t[static 16],
+void aes_sse2_4x32_xts_enc(const struct aesenc *, const uint8_t[static 16],
     uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
-void aes_sse2_xts_dec(const struct aesdec *, const uint8_t[static 16],
+void aes_sse2_4x32_xts_dec(const struct aesdec *, const uint8_t[static 16],
     uint8_t[static 16], size_t nbytes, uint8_t[static 16], uint32_t);
-void aes_sse2_cbcmac_update1(const struct aesenc *, const uint8_t[static 16],
-    size_t, uint8_t[static 16], uint32_t);
-void aes_sse2_ccm_enc1(const struct aesenc *, const uint8_t[static 16],
-    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
-void aes_sse2_ccm_dec1(const struct aesenc *, const uint8_t[static 16],
-    uint8_t[static 16], size_t, uint8_t[static 32], uint32_t);
+void aes_sse2_4x32_cbcmac_update1(const struct aesenc *,
+    const uint8_t[static 16], size_t, uint8_t[static 16], uint32_t);
+void aes_sse2_4x32_ccm_enc1(const struct aesenc *,
+    const uint8_t[static 16], uint8_t[static 16], size_t, uint8_t[static 32],
+    uint32_t);
+void aes_sse2_4x32_ccm_dec1(const struct aesenc *,
+    const uint8_t[static 16], uint8_t[static 16], size_t, uint8_t[static 32],
+    uint32_t);
 
-int aes_sse2_selftest(void);
+int aes_sse2_4x32_selftest(void);
 
-extern struct aes_impl aes_sse2_impl;
-
-#endif	/* _CRYPTO_AES_ARCH_X86_AES_SSE2_H */
+#endif	/* _CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_SUBR_H */

@@ -1,7 +1,7 @@
-/*	$NetBSD: aes_sse2_impl.c,v 1.5 2020/07/25 22:29:56 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_4x32_impl.c,v 1.1 2025/11/23 22:48:26 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.5 2020/07/25 22:29:56 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2_4x32_impl.c,v 1.1 2025/11/23 22:48:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_impl.h>
-#include <crypto/aes/arch/x86/aes_sse2.h>
+#include <crypto/aes/arch/x86/aes_sse2_4x32.h>
 
 #ifdef _KERNEL
 #include <x86/cpu.h>
@@ -47,18 +47,20 @@ __KERNEL_RCSID(1, "$NetBSD: aes_sse2_impl.c,v 1.5 2020/07/25 22:29:56 riastradh 
 #define	fpu_kern_leave()	((void)0)
 #endif
 
+#include "aes_sse2_4x32_subr.h"
+
 static void
-aes_sse2_setenckey_impl(struct aesenc *enc, const uint8_t *key,
+aes_sse2_4x32_setenckey_impl(struct aesenc *enc, const uint8_t *key,
     uint32_t nrounds)
 {
 
 	fpu_kern_enter();
-	aes_sse2_setkey(enc->aese_aes.aes_rk64, key, nrounds);
+	aes_sse2_4x32_setkey(enc->aese_aes.aes_rk, key, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_setdeckey_impl(struct aesdec *dec, const uint8_t *key,
+aes_sse2_4x32_setdeckey_impl(struct aesdec *dec, const uint8_t *key,
     uint32_t nrounds)
 {
 
@@ -67,117 +69,117 @@ aes_sse2_setdeckey_impl(struct aesdec *dec, const uint8_t *key,
 	 * BearSSL computes InvMixColumns on the fly -- no need for
 	 * distinct decryption round keys.
 	 */
-	aes_sse2_setkey(dec->aesd_aes.aes_rk64, key, nrounds);
+	aes_sse2_4x32_setkey(dec->aesd_aes.aes_rk, key, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
+aes_sse2_4x32_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
     uint8_t out[static 16], uint32_t nrounds)
 {
 
 	fpu_kern_enter();
-	aes_sse2_enc(enc, in, out, nrounds);
+	aes_sse2_4x32_enc(enc, in, out, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
+aes_sse2_4x32_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
     uint8_t out[static 16], uint32_t nrounds)
 {
 
 	fpu_kern_enter();
-	aes_sse2_dec(dec, in, out, nrounds);
+	aes_sse2_4x32_dec(dec, in, out, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_cbc_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t iv[static 16],
-    uint32_t nrounds)
+aes_sse2_4x32_cbc_enc_impl(const struct aesenc *enc,
+    const uint8_t in[static 16], uint8_t out[static 16],
+    size_t nbytes, uint8_t iv[static 16], uint32_t nrounds)
 {
 
 	if (nbytes == 0)
 		return;
 	fpu_kern_enter();
-	aes_sse2_cbc_enc(enc, in, out, nbytes, iv, nrounds);
+	aes_sse2_4x32_cbc_enc(enc, in, out, nbytes, iv, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_cbc_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t iv[static 16],
-    uint32_t nrounds)
+aes_sse2_4x32_cbc_dec_impl(const struct aesdec *dec,
+    const uint8_t in[static 16], uint8_t out[static 16],
+    size_t nbytes, uint8_t iv[static 16], uint32_t nrounds)
 {
 
 	if (nbytes == 0)
 		return;
 	fpu_kern_enter();
-	aes_sse2_cbc_dec(dec, in, out, nbytes, iv, nrounds);
+	aes_sse2_4x32_cbc_dec(dec, in, out, nbytes, iv, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_xts_enc_impl(const struct aesenc *enc, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t tweak[static 16],
-    uint32_t nrounds)
+aes_sse2_4x32_xts_enc_impl(const struct aesenc *enc,
+    const uint8_t in[static 16], uint8_t out[static 16],
+    size_t nbytes, uint8_t tweak[static 16], uint32_t nrounds)
 {
 
 	if (nbytes == 0)
 		return;
 	fpu_kern_enter();
-	aes_sse2_xts_enc(enc, in, out, nbytes, tweak, nrounds);
+	aes_sse2_4x32_xts_enc(enc, in, out, nbytes, tweak, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_xts_dec_impl(const struct aesdec *dec, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t tweak[static 16],
-    uint32_t nrounds)
+aes_sse2_4x32_xts_dec_impl(const struct aesdec *dec,
+    const uint8_t in[static 16], uint8_t out[static 16],
+    size_t nbytes, uint8_t tweak[static 16], uint32_t nrounds)
 {
 
 	if (nbytes == 0)
 		return;
 	fpu_kern_enter();
-	aes_sse2_xts_dec(dec, in, out, nbytes, tweak, nrounds);
+	aes_sse2_4x32_xts_dec(dec, in, out, nbytes, tweak, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_cbcmac_update1_impl(const struct aesenc *enc,
+aes_sse2_4x32_cbcmac_update1_impl(const struct aesenc *enc,
     const uint8_t in[static 16], size_t nbytes, uint8_t auth[static 16],
     uint32_t nrounds)
 {
 
 	fpu_kern_enter();
-	aes_sse2_cbcmac_update1(enc, in, nbytes, auth, nrounds);
+	aes_sse2_4x32_cbcmac_update1(enc, in, nbytes, auth, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_ccm_enc1_impl(const struct aesenc *enc, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
-    uint32_t nrounds)
+aes_sse2_4x32_ccm_enc1_impl(const struct aesenc *enc,
+    const uint8_t *in, uint8_t *out,
+    size_t nbytes, uint8_t authctr[32], uint32_t nrounds)
 {
 
 	fpu_kern_enter();
-	aes_sse2_ccm_enc1(enc, in, out, nbytes, authctr, nrounds);
+	aes_sse2_4x32_ccm_enc1(enc, in, out, nbytes, authctr, nrounds);
 	fpu_kern_leave();
 }
 
 static void
-aes_sse2_ccm_dec1_impl(const struct aesenc *enc, const uint8_t in[static 16],
-    uint8_t out[static 16], size_t nbytes, uint8_t authctr[static 32],
-    uint32_t nrounds)
+aes_sse2_4x32_ccm_dec1_impl(const struct aesenc *enc,
+    const uint8_t *in, uint8_t *out,
+    size_t nbytes, uint8_t authctr[32], uint32_t nrounds)
 {
 
 	fpu_kern_enter();
-	aes_sse2_ccm_dec1(enc, in, out, nbytes, authctr, nrounds);
+	aes_sse2_4x32_ccm_dec1(enc, in, out, nbytes, authctr, nrounds);
 	fpu_kern_leave();
 }
 
 static int
-aes_sse2_probe(void)
+aes_sse2_4x32_probe(void)
 {
 	int result = 0;
 
@@ -198,24 +200,24 @@ aes_sse2_probe(void)
 #endif
 
 	fpu_kern_enter();
-	result = aes_sse2_selftest();
+	result = aes_sse2_4x32_selftest();
 	fpu_kern_leave();
 
 	return result;
 }
 
-struct aes_impl aes_sse2_impl = {
-	.ai_name = "Intel SSE2 bitsliced",
-	.ai_probe = aes_sse2_probe,
-	.ai_setenckey = aes_sse2_setenckey_impl,
-	.ai_setdeckey = aes_sse2_setdeckey_impl,
-	.ai_enc = aes_sse2_enc_impl,
-	.ai_dec = aes_sse2_dec_impl,
-	.ai_cbc_enc = aes_sse2_cbc_enc_impl,
-	.ai_cbc_dec = aes_sse2_cbc_dec_impl,
-	.ai_xts_enc = aes_sse2_xts_enc_impl,
-	.ai_xts_dec = aes_sse2_xts_dec_impl,
-	.ai_cbcmac_update1 = aes_sse2_cbcmac_update1_impl,
-	.ai_ccm_enc1 = aes_sse2_ccm_enc1_impl,
-	.ai_ccm_dec1 = aes_sse2_ccm_dec1_impl,
+struct aes_impl aes_sse2_4x32_impl = {
+	.ai_name = "Intel SSE2 4x32 bitsliced",
+	.ai_probe = aes_sse2_4x32_probe,
+	.ai_setenckey = aes_sse2_4x32_setenckey_impl,
+	.ai_setdeckey = aes_sse2_4x32_setdeckey_impl,
+	.ai_enc = aes_sse2_4x32_enc_impl,
+	.ai_dec = aes_sse2_4x32_dec_impl,
+	.ai_cbc_enc = aes_sse2_4x32_cbc_enc_impl,
+	.ai_cbc_dec = aes_sse2_4x32_cbc_dec_impl,
+	.ai_xts_enc = aes_sse2_4x32_xts_enc_impl,
+	.ai_xts_dec = aes_sse2_4x32_xts_dec_impl,
+	.ai_cbcmac_update1 = aes_sse2_4x32_cbcmac_update1_impl,
+	.ai_ccm_enc1 = aes_sse2_4x32_ccm_enc1_impl,
+	.ai_ccm_dec1 = aes_sse2_4x32_ccm_dec1_impl,
 };

@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.13 2025/11/23 22:44:13 riastradh Exp $
+#	$NetBSD: copts.mk,v 1.14 2025/11/23 22:48:26 riastradh Exp $
 
 # MI per-file compiler options required.
 
@@ -40,7 +40,7 @@ COPTS.chacha_neon.c+=	-flax-vector-conversions
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
 COPTS.aes_ni.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
-COPTS.aes_sse2_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
+COPTS.aes_sse2_4x32_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_ssse3_subr.c+=${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_via.c+=	${CC_WNO_ARRAY_BOUNDS}
 .endif

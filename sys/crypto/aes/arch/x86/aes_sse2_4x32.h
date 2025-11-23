@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_impl.h,v 1.3 2023/08/07 01:07:36 rin Exp $	*/
+/*	$NetBSD: aes_sse2_4x32.h,v 1.1 2025/11/23 22:48:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -26,24 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_CRYPTO_AES_ARCH_X86_AES_SSE2_IMPL_H
-#define	_CRYPTO_AES_ARCH_X86_AES_SSE2_IMPL_H
-
-#include <sys/types.h>
+#ifndef	_CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_H
+#define	_CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_H
 
 #include <crypto/aes/aes.h>
-#include <crypto/aes/arch/x86/aes_sse2.h>
-#include <crypto/arch/x86/immintrin.h>
-#include <crypto/arch/x86/immintrin_ext.h>
 
-void aes_sse2_bitslice_Sbox(__m128i[static 4]);
-void aes_sse2_bitslice_invSbox(__m128i[static 4]);
-void aes_sse2_ortho(__m128i[static 4]);
-__m128i aes_sse2_interleave_in(__m128i);
-__m128i aes_sse2_interleave_out(__m128i);
-unsigned aes_sse2_keysched(uint64_t *, const void *, size_t);
-void aes_sse2_skey_expand(uint64_t *, unsigned, const uint64_t *);
-void aes_sse2_bitslice_encrypt(unsigned, const uint64_t *, __m128i[static 4]);
-void aes_sse2_bitslice_decrypt(unsigned, const uint64_t *, __m128i[static 4]);
+extern struct aes_impl aes_sse2_4x32_impl;
 
-#endif	/* _CRYPTO_AES_ARCH_X86_AES_SSE2_IMPL_H */
+#endif	/* _CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_H */

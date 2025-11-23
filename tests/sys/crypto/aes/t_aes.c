@@ -1,4 +1,4 @@
-/*	$NetBSD: t_aes.c,v 1.5 2025/11/23 22:44:14 riastradh Exp $	*/
+/*	$NetBSD: t_aes.c,v 1.6 2025/11/23 22:48:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 #include <crypto/aes/arch/x86/aes_ni.h>
-#include <crypto/aes/arch/x86/aes_sse2.h>
+#include <crypto/aes/arch/x86/aes_sse2_4x32.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>
 #include <crypto/aes/arch/x86/aes_via.h>
 #endif
@@ -125,8 +125,8 @@ AES_SELFTEST(aes_ni_selftest, &aes_ni_impl, "Intel AES-NI self-test")
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
-AES_SELFTEST(aes_sse2_selftest, &aes_sse2_impl,
-    "Intel SSE2 bitsliced self-test")
+AES_SELFTEST(aes_sse2_4x32_selftest, &aes_sse2_4x32_impl,
+    "Intel SSE2 4x32 bitsliced self-test")
 AES_SELFTEST(aes_ssse3_selftest, &aes_ssse3_impl,
     "Intel SSSE3 vpaes self-test")
 AES_SELFTEST(aes_via_selftest, &aes_via_impl, "VIA ACE AES self-test")
@@ -151,7 +151,7 @@ ATF_TP_ADD_TCS(tp)
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
-	ATF_TP_ADD_TC(tp, aes_sse2_selftest);
+	ATF_TP_ADD_TC(tp, aes_sse2_4x32_selftest);
 	ATF_TP_ADD_TC(tp, aes_ssse3_selftest);
 	ATF_TP_ADD_TC(tp, aes_via_selftest);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.138 2025/05/01 06:01:47 imil Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.139 2025/11/23 22:48:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.138 2025/05/01 06:01:47 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.139 2025/11/23 22:48:26 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.138 2025/05/01 06:01:47 imil Exp $");
 
 #include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/x86/aes_ni.h>
-#include <crypto/aes/arch/x86/aes_sse2.h>
+#include <crypto/aes/arch/x86/aes_sse2_4x32.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>
 #include <crypto/aes/arch/x86/aes_via.h>
 #include <crypto/chacha/arch/x86/chacha_sse2.h>
@@ -1011,7 +1011,7 @@ cpu_probe(struct cpu_info *ci)
 		    (cpu_feature[1] & CPUID2_SSSE3))
 			aes_md_init(&aes_ssse3_impl);
 		else if (i386_has_sse && i386_has_sse2)
-			aes_md_init(&aes_sse2_impl);
+			aes_md_init(&aes_sse2_4x32_impl);
 
 		/* ChaCha */
 		if (i386_has_sse && i386_has_sse2)

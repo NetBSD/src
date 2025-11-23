@@ -1,3 +1,5 @@
+/*	$NetBSD: aes_sse2_4x32.c,v 1.1 2025/11/23 22:48:26 riastradh Exp $	*/
+
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
  *
@@ -23,37 +25,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_sse2.c,v 1.2 2020/06/30 20:32:11 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_sse2_4x32.c,v 1.1 2025/11/23 22:48:26 riastradh Exp $");
 
 #include <sys/types.h>
 
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>
 #else
-#include <stdint.h>
 #include <string.h>
 #endif
 
-#include "aes_sse2_impl.h"
+#include "aes_sse2_4x32_impl.h"
 
-static void
-br_range_dec32le(uint32_t *p32, size_t nwords, const void *v)
-{
-	const uint8_t *p8 = v;
-
-	while (nwords --> 0) {
-		uint32_t x0 = *p8++;
-		uint32_t x1 = *p8++;
-		uint32_t x2 = *p8++;
-		uint32_t x3 = *p8++;
-
-		*p32++ = x0 | (x1 << 8) | (x2 << 16) | (x3 << 24);
-	}
-}
-
+/* see inner.h */
 void
-aes_sse2_bitslice_Sbox(__m128i q[static 4])
+aes_sse2_4x32_bitslice_Sbox(__m128i q[static 8])
 {
+	/*
+	 * This S-box implementation is a straightforward translation of
+	 * the circuit described by Boyar and Peralta in "A new
+	 * combinational logic minimization technique with applications
+	 * to cryptology" (https://eprint.iacr.org/2009/191.pdf).
+	 *
+	 * Note that variables x* (input) and s* (output) are numbered
+	 * in "reverse" order (x0 is the high bit, x7 is the low bit).
+	 */
+
 	__m128i x0, x1, x2, x3, x4, x5, x6, x7;
 	__m128i y1, y2, y3, y4, y5, y6, y7, y8, y9;
 	__m128i y10, y11, y12, y13, y14, y15, y16, y17, y18, y19;
@@ -69,10 +66,10 @@ aes_sse2_bitslice_Sbox(__m128i q[static 4])
 	__m128i t60, t61, t62, t63, t64, t65, t66, t67;
 	__m128i s0, s1, s2, s3, s4, s5, s6, s7;
 
-	x0 = _mm_shuffle_epi32(q[3], 0x0e);
-	x1 = _mm_shuffle_epi32(q[2], 0x0e);
-	x2 = _mm_shuffle_epi32(q[1], 0x0e);
-	x3 = _mm_shuffle_epi32(q[0], 0x0e);
+	x0 = q[7];
+	x1 = q[6];
+	x2 = q[5];
+	x3 = q[4];
 	x4 = q[3];
 	x5 = q[2];
 	x6 = q[1];
@@ -207,89 +204,50 @@ aes_sse2_bitslice_Sbox(__m128i q[static 4])
 	s1 = t64 ^ ~s3;
 	s2 = t55 ^ ~t67;
 
-	q[3] = _mm_unpacklo_epi64(s4, s0);
-	q[2] = _mm_unpacklo_epi64(s5, s1);
-	q[1] = _mm_unpacklo_epi64(s6, s2);
-	q[0] = _mm_unpacklo_epi64(s7, s3);
+	q[7] = s0;
+	q[6] = s1;
+	q[5] = s2;
+	q[4] = s3;
+	q[3] = s4;
+	q[2] = s5;
+	q[1] = s6;
+	q[0] = s7;
 }
 
+/* see inner.h */
 void
-aes_sse2_ortho(__m128i q[static 4])
+aes_sse2_4x32_ortho(__m128i q[static 8])
 {
 #define SWAPN(cl, ch, s, x, y)   do { \
+		__m128i cl128 = _mm_set1_epi32(cl); \
+		__m128i ch128 = _mm_set1_epi32(ch); \
 		__m128i a, b; \
-		a = (x); \
-		b = (y); \
-		(x) = (a & _mm_set1_epi64x(cl)) | \
-		    _mm_slli_epi64(b & _mm_set1_epi64x(cl), (s)); \
-		(y) = _mm_srli_epi64(a & _mm_set1_epi64x(ch), (s)) | \
-		    (b & _mm_set1_epi64x(ch)); \
+		a = _mm_load_si128(&(x)); \
+		b = _mm_load_si128(&(y)); \
+		_mm_store_si128(&(x), \
+		    (a & cl128) | _mm_slli_epi32((b & cl128), (s))); \
+		_mm_store_si128(&(y), \
+		    _mm_srli_epi32((a & ch128), (s)) | (b & ch128)); \
 	} while (0)
 
-#define SWAP2(x, y)    SWAPN(0x5555555555555555, 0xAAAAAAAAAAAAAAAA,  1, x, y)
-#define SWAP4(x, y)    SWAPN(0x3333333333333333, 0xCCCCCCCCCCCCCCCC,  2, x, y)
-#define SWAP8(x, y)    SWAPN(0x0F0F0F0F0F0F0F0F, 0xF0F0F0F0F0F0F0F0,  4, x, y)
+#define SWAP2(x, y)   SWAPN(0x55555555, 0xAAAAAAAA, 1, x, y)
+#define SWAP4(x, y)   SWAPN(0x33333333, 0xCCCCCCCC, 2, x, y)
+#define SWAP8(x, y)   SWAPN(0x0F0F0F0F, 0xF0F0F0F0, 4, x, y)
 
 	SWAP2(q[0], q[1]);
 	SWAP2(q[2], q[3]);
+	SWAP2(q[4], q[5]);
+	SWAP2(q[6], q[7]);
 
 	SWAP4(q[0], q[2]);
 	SWAP4(q[1], q[3]);
+	SWAP4(q[4], q[6]);
+	SWAP4(q[5], q[7]);
 
-	__m128i q0 = q[0];
-	__m128i q1 = q[1];
-	__m128i q2 = q[2];
-	__m128i q3 = q[3];
-	__m128i q4 = _mm_shuffle_epi32(q[0], 0x0e);
-	__m128i q5 = _mm_shuffle_epi32(q[1], 0x0e);
-	__m128i q6 = _mm_shuffle_epi32(q[2], 0x0e);
-	__m128i q7 = _mm_shuffle_epi32(q[3], 0x0e);
-	SWAP8(q0, q4);
-	SWAP8(q1, q5);
-	SWAP8(q2, q6);
-	SWAP8(q3, q7);
-	q[0] = _mm_unpacklo_epi64(q0, q4);
-	q[1] = _mm_unpacklo_epi64(q1, q5);
-	q[2] = _mm_unpacklo_epi64(q2, q6);
-	q[3] = _mm_unpacklo_epi64(q3, q7);
-}
-
-__m128i
-aes_sse2_interleave_in(__m128i w)
-{
-	__m128i lo, hi;
-
-	lo = _mm_shuffle_epi32(w, 0x10);
-	hi = _mm_shuffle_epi32(w, 0x32);
-	lo &= _mm_set1_epi64x(0x00000000FFFFFFFF);
-	hi &= _mm_set1_epi64x(0x00000000FFFFFFFF);
-	lo |= _mm_slli_epi64(lo, 16);
-	hi |= _mm_slli_epi64(hi, 16);
-	lo &= _mm_set1_epi32(0x0000FFFF);
-	hi &= _mm_set1_epi32(0x0000FFFF);
-	lo |= _mm_slli_epi64(lo, 8);
-	hi |= _mm_slli_epi64(hi, 8);
-	lo &= _mm_set1_epi16(0x00FF);
-	hi &= _mm_set1_epi16(0x00FF);
-	return lo | _mm_slli_epi64(hi, 8);
-}
-
-__m128i
-aes_sse2_interleave_out(__m128i q)
-{
-	__m128i lo, hi;
-
-	lo = q;
-	hi = _mm_srli_si128(q, 1);
-	lo &= _mm_set1_epi16(0x00FF);
-	hi &= _mm_set1_epi16(0x00FF);
-	lo |= _mm_srli_epi64(lo, 8);
-	hi |= _mm_srli_epi64(hi, 8);
-	lo &= _mm_set1_epi32(0x0000FFFF);
-	hi &= _mm_set1_epi32(0x0000FFFF);
-	lo |= _mm_srli_epi64(lo, 16);
-	hi |= _mm_srli_epi64(hi, 16);
-	return (__m128i)_mm_shuffle_ps((__m128)lo, (__m128)hi, 0x88);
+	SWAP8(q[0], q[4]);
+	SWAP8(q[1], q[5]);
+	SWAP8(q[2], q[6]);
+	SWAP8(q[3], q[7]);
 }
 
 static const unsigned char Rcon[] = {
@@ -299,25 +257,27 @@ static const unsigned char Rcon[] = {
 static uint32_t
 sub_word(uint32_t x)
 {
-	__m128i q[4];
+	__m128i q[8];
 	uint32_t y;
 
 	memset(q, 0, sizeof(q));
 	q[0] = _mm_loadu_si32(&x);
-	aes_sse2_ortho(q);
-	aes_sse2_bitslice_Sbox(q);
-	aes_sse2_ortho(q);
+	aes_sse2_4x32_ortho(q);
+	aes_sse2_4x32_bitslice_Sbox(q);
+	aes_sse2_4x32_ortho(q);
 	_mm_storeu_si32(&y, q[0]);
 	return y;
 }
 
+/* see inner.h */
 unsigned
-aes_sse2_keysched(uint64_t *comp_skey, const void *key, size_t key_len)
+aes_sse2_4x32_keysched(uint32_t comp_skey[static 60], const void *key,
+    size_t key_len)
 {
 	unsigned num_rounds;
 	int i, j, k, nk, nkf;
 	uint32_t tmp;
-	uint32_t skey[60];
+	uint32_t skey[120];
 
 	switch (key_len) {
 	case 16:
@@ -335,8 +295,12 @@ aes_sse2_keysched(uint64_t *comp_skey, const void *key, size_t key_len)
 	}
 	nk = (int)(key_len >> 2);
 	nkf = (int)((num_rounds + 1) << 2);
-	br_range_dec32le(skey, (key_len >> 2), key);
-	tmp = skey[(key_len >> 2) - 1];
+	tmp = 0;
+	for (i = 0; i < nk; i ++) {
+		tmp = br_dec32le((const unsigned char *)key + (i << 2));
+		skey[(i << 1) + 0] = tmp;
+		skey[(i << 1) + 1] = tmp;
+	}
 	for (i = nk, j = 0, k = 0; i < nkf; i ++) {
 		if (j == 0) {
 			tmp = (tmp << 24) | (tmp >> 8);
@@ -344,60 +308,45 @@ aes_sse2_keysched(uint64_t *comp_skey, const void *key, size_t key_len)
 		} else if (nk > 6 && j == 4) {
 			tmp = sub_word(tmp);
 		}
-		tmp ^= skey[i - nk];
-		skey[i] = tmp;
+		tmp ^= skey[(i - nk) << 1];
+		skey[(i << 1) + 0] = tmp;
+		skey[(i << 1) + 1] = tmp;
 		if (++ j == nk) {
 			j = 0;
 			k ++;
 		}
 	}
+	for (i = 0; i < nkf; i += 4) {
+		__m128i q[8];
 
-	for (i = 0, j = 0; i < nkf; i += 4, j += 2) {
-		__m128i q[4], q0, q1, q2, q3, q4, q5, q6, q7;
-		__m128i w;
-
-		w = _mm_loadu_epi8(skey + i);
-		q[0] = q[1] = q[2] = q[3] = aes_sse2_interleave_in(w);
-		aes_sse2_ortho(q);
-		q0 = q[0] & _mm_set1_epi64x(0x1111111111111111);
-		q1 = q[1] & _mm_set1_epi64x(0x2222222222222222);
-		q2 = q[2] & _mm_set1_epi64x(0x4444444444444444);
-		q3 = q[3] & _mm_set1_epi64x(0x8888888888888888);
-		q4 = _mm_shuffle_epi32(q0, 0x0e);
-		q5 = _mm_shuffle_epi32(q1, 0x0e);
-		q6 = _mm_shuffle_epi32(q2, 0x0e);
-		q7 = _mm_shuffle_epi32(q3, 0x0e);
-		_mm_storeu_si64(&comp_skey[j + 0], q0 | q1 | q2 | q3);
-		_mm_storeu_si64(&comp_skey[j + 1], q4 | q5 | q6 | q7);
+		for (j = 0; j < 8; j++)
+			q[j] = _mm_loadu_si32(&skey[(i << 1) + j]);
+		aes_sse2_4x32_ortho(q);
+		for (j = 0; j < 8; j++)
+			_mm_storeu_si32(&skey[(i << 1) + j], q[j]);
+	}
+	for (i = 0, j = 0; i < nkf; i ++, j += 2) {
+		comp_skey[i] = (skey[j + 0] & 0x55555555)
+			| (skey[j + 1] & 0xAAAAAAAA);
 	}
 	return num_rounds;
 }
 
+/* see inner.h */
 void
-aes_sse2_skey_expand(uint64_t *skey,
-	unsigned num_rounds, const uint64_t *comp_skey)
+aes_sse2_4x32_skey_expand(uint32_t skey[static 120],
+	unsigned num_rounds, const uint32_t comp_skey[static 60])
 {
 	unsigned u, v, n;
 
-	n = (num_rounds + 1) << 1;
-	for (u = 0, v = 0; u < n; u ++, v += 4) {
-		__m128i x0, x1, x2, x3;
+	n = (num_rounds + 1) << 2;
+	for (u = 0, v = 0; u < n; u ++, v += 2) {
+		uint32_t x, y;
 
-		x0 = x1 = x2 = x3 = _mm_loadu_si64(&comp_skey[u]);
-		x0 &= 0x1111111111111111;
-		x1 &= 0x2222222222222222;
-		x2 &= 0x4444444444444444;
-		x3 &= 0x8888888888888888;
-		x1 = _mm_srli_epi64(x1, 1);
-		x2 = _mm_srli_epi64(x2, 2);
-		x3 = _mm_srli_epi64(x3, 3);
-		x0 = _mm_sub_epi64(_mm_slli_epi64(x0, 4), x0);
-		x1 = _mm_sub_epi64(_mm_slli_epi64(x1, 4), x1);
-		x2 = _mm_sub_epi64(_mm_slli_epi64(x2, 4), x2);
-		x3 = _mm_sub_epi64(_mm_slli_epi64(x3, 4), x3);
-		_mm_storeu_si64(&skey[v + 0], x0);
-		_mm_storeu_si64(&skey[v + 1], x1);
-		_mm_storeu_si64(&skey[v + 2], x2);
-		_mm_storeu_si64(&skey[v + 3], x3);
+		x = y = comp_skey[u];
+		x &= 0x55555555;
+		skey[v + 0] = x | (x << 1);
+		y &= 0xAAAAAAAA;
+		skey[v + 1] = y | (y >> 1);
 	}
 }
