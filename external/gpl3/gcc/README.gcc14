@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.27 2025/11/16 09:01:51 mrg Exp $
+$NetBSD: README.gcc14,v 1.28 2025/11/23 21:27:30 mrg Exp $
 
 arch/feature list.
 
@@ -37,13 +37,13 @@ i386		y	b	y	y	y	y		?	?	y
 ia64		y	y[8]	y	y	y	y		y	?	y
 m68000		y	b	y	y	y	n[9]		?	?	?
 m68k		y	b	y	y	y	y		y[2]	?	?
-mipseb		y	b	y	y	?	?		?	?	?
-mipsel		y	b	y	y	?	n[6]		?	?	?
+mipseb		y	b	y	y	y	y		?	?	?
+mipsel		y	b	y	y	y	y		?	?	?
 mips64eb	y	y	y	y	y	y		y	?	?
 mips64el	y	b	y	y	y	y		?	?	?
 mipsn64eb	y	b	y	y	y	y		?	?	?
 mipsn64el	y	b	y	y	y	y		?	?	?
-powerpc		y	b	y	y	y	y		n[1]	?	?
+powerpc		y	b	y	y	y	y		y	?	?
 powerpc64	y	b	y	y	y	y		?	?	?
 sh3eb		y	b	y	y	y	?		?	?	?
 sh3el		y	b	y	y	y	?		?	?	?
@@ -56,17 +56,12 @@ riscv64		y	y	y	y	y	y		y	y	y
 ------------	-----	-------	------	---------------	------------	----	---
 architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
 
-[1]: gcc 14 defines _ARCH_PPC64 with "-mcpu=970 -m32", which gcc 12 did not, and it breaks some
-     assumptions we have about that being in a 64-bit environment only.
 [2]: GCC isn't stable building pkgsrc nbcompat:
      gcc  -D__DBINTERFACE_PRIVATE -I. -I.  -O2 -fno-reorder-blocks -DHAVE_CONFIG_H -c .../libnbcompat-20251029/db/btree/bt_conv.c
      during GIMPLE pass: slp
      .../libnbcompat-20251029/db/btree/bt_conv.c: In function '__bt_pgin':
      .../libnbcompat-20251029/db/btree/bt_conv.c:60:1: internal compiler error: Segmentation fault
 	60 | __bt_pgin(void *t, pgno_t pg, void *pp)
-[6]: mips o32 atomic issue, libstdc++'s "test_and_set" calls builtin __atomic_test_and_set() when it doesn't exist
-     libgdb.a(minsyms.o): in function `minimal_symbol_reader::install()':
-     minsyms.c:(.text+0x4224): undefined reference to `__atomic_test_and_set'
 [7]: riscv32 kernels are not really implemented yet, not GCC 12 issue.
 [8]: GENERIC.SKI boots just as well as GCC 10.
 [9]: ramdisk wants 4 more KB:
