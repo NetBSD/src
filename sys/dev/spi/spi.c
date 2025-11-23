@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.38 2025/10/10 18:36:17 brad Exp $ */
+/* $NetBSD: spi.c,v 1.39 2025/11/23 00:16:37 brad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.38 2025/10/10 18:36:17 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.39 2025/11/23 00:16:37 brad Exp $");
 
 #include "locators.h"
 
@@ -361,6 +361,18 @@ spi_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
+spi_detach(device_t self, int flags)
+{
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+static int
 spi_open(dev_t dev, int flag, int fmt, lwp_t *l)
 {
 	struct spi_softc *sc = device_lookup_private(&spi_cd, minor(dev));
@@ -458,7 +470,7 @@ spi_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 }
 
 CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
-    spi_match, spi_attach, NULL, NULL);
+    spi_match, spi_attach, spi_detach, NULL);
 
 /*
  * Configure.  This should be the first thing that the SPI driver
