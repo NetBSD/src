@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.45 2025/11/20 18:42:52 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.46 2025/11/23 18:43:31 pgoyette Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.41 2025/11/17 08:59:22 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.45 2025/11/20 18:42:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.46 2025/11/23 18:43:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -378,11 +378,9 @@ rge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = rge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RGE_TX_LIST_CNT - 1);
 
-#if notyet
 	ifp->if_capabilities = IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_IPv4_Tx |IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx|
 	    IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx;
-#endif
 
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
@@ -560,7 +558,6 @@ rge_encap(struct rge_softc *sc, struct rge_queues *q,struct mbuf *m, int idx)
 	bus_dmamap_sync(sc->sc_dmat, txmap, 0, txmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-#if notyet
 	/*
 	 * Set RGE_TDEXTSTS_IPCSUM if any checksum offloading is requested.
 	 * Otherwise, RGE_TDEXTSTS_TCPCSUM / RGE_TDEXTSTS_UDPCSUM does not
@@ -569,12 +566,11 @@ rge_encap(struct rge_softc *sc, struct rge_queues *q,struct mbuf *m, int idx)
 	if ((m->m_pkthdr.csum_flags &
 	    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
 		cflags |= RGE_TDEXTSTS_IPCSUM;
-		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4)
 			cflags |= RGE_TDEXTSTS_TCPCSUM;
-		if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4)
 			cflags |= RGE_TDEXTSTS_UDPCSUM;
 	}
-#endif
 
 	/* Set up hardware VLAN tagging. */
 	if (vlan_has_tag(m))
@@ -1551,21 +1547,19 @@ rge_rxeof(struct rge_softc *sc)
 		}
 	#endif
 
-#if notyet
 		/* Check IP header checksum. */
-		if (!(extsts & RGE_RDEXTSTS_IPCSUMERR) &&
+		if ((extsts & RGE_RDEXTSTS_IPCSUMERR) &&
 		    (extsts & RGE_RDEXTSTS_IPV4))
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 
 		/* Check TCP/UDP checksum. */
+
 		if ((extsts & (RGE_RDEXTSTS_IPV4 | RGE_RDEXTSTS_IPV6)) &&
 		    (((extsts & RGE_RDEXTSTS_TCPPKT) &&
-		    !(extsts & RGE_RDEXTSTS_TCPCSUMERR)) ||
+		    (extsts & RGE_RDEXTSTS_TCPCSUMERR)) ||
 		    ((extsts & RGE_RDEXTSTS_UDPPKT) &&
-		    !(extsts & RGE_RDEXTSTS_UDPCSUMERR))))
-			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
-			    M_UDP_CSUM_IN_OK;
-#endif
+		    (extsts & RGE_RDEXTSTS_UDPCSUMERR))))
+			m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 
 		if (extsts & RGE_RDEXTSTS_VTAG) {
 			vlan_set_tag(m,
