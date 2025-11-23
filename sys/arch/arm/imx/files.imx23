@@ -1,4 +1,4 @@
-# $Id: files.imx23,v 1.7 2025/10/09 06:15:16 skrll Exp $
+# $Id: files.imx23,v 1.8 2025/11/23 09:33:57 skrll Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
@@ -36,7 +36,7 @@ attach	imx23icoll at apbh
 file	arch/arm/imx/imx23_icoll.c	imx23icoll
 
 attach	imx23icoll at fdt with imx23icoll_fdt
-file	arch/arm/imx/imx23icoll_fdt.c	imx23icoll
+file	arch/arm/imx/imx23icoll_fdt.c	imx23icoll_fdt
 
 # Synchronous Serial Port (for SD/MMC)
 device	ssp: sdmmcbus

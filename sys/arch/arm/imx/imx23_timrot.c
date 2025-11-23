@@ -1,4 +1,4 @@
-/* $Id: imx23_timrot.c,v 1.5 2025/10/09 06:15:16 skrll Exp $ */
+/* $Id: imx23_timrot.c,v 1.6 2025/11/23 09:33:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+
+#include <arm/pic/picvar.h>
 
 #include <arm/imx/imx23_timrotreg.h>
 #include <arm/imx/imx23_timrotvar.h>
