@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2025/06/10 14:30:44 christos Exp $
+# $NetBSD: Makefile,v 1.29 2025/11/23 22:01:13 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -35,6 +35,7 @@ SUBDIR+=	helper_use_static
 
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
+TESTS_C+=	t_dlclose_thread
 TESTS_C+=	t_dlerror-cleared
 TESTS_C+=	t_dlerror-false
 TESTS_C+=	t_dlinfo
@@ -51,6 +52,10 @@ TESTS_C+=	t_tls_extern
 SRCS.t_ifunc_now=		t_ifunc.c
 SRCS.t_ifunc_norelro=		t_ifunc.c
 SRCS.t_ifunc_norelro_now=	t_ifunc.c
+
+LDADD.t_dlclose_thread+=	-lpthread
+LDADD.t_dlclose_thread+=	-Wl,-rpath,${TESTSDIR}
+LDADD.t_dlclose_thread+=	-Wl,--export-dynamic
 
 LDADD.t_ifunc+=			${${MKRELRO} != "no":?-Wl,-z,relro:}
 LDADD.t_ifunc_now+=		${${MKRELRO} != "no":?-Wl,-z,relro:} -Wl,-z,now

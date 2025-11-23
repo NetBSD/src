@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1400 2025/11/12 22:14:41 sjg Exp $
+# $NetBSD: mi,v 1.1401 2025/11/23 22:01:13 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4374,6 +4374,7 @@
 ./usr/tests/libexec/ld.elf_so/h_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_df_1_noopen		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dl_symver		tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_dlclose_thread		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlerror-cleared		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlerror-false		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlinfo			tests-libexec-tests	compattestfile,atf,pic
