@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx.c,v 1.1 2025/10/24 23:16:11 brad Exp $	*/
+/*	$NetBSD: sc16is7xx.c,v 1.2 2025/11/23 16:35:56 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -19,7 +19,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.1 2025/10/24 23:16:11 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.2 2025/11/23 16:35:56 brad Exp $");
 
 /* Common driver for the frontend to the NXP SC16IS7xx UART bridge */
 
@@ -376,7 +376,7 @@ sc16is7xx_print(void *aux, const char *pnp)
 	struct sc16is7xx_tty_attach_args *aa = aux;
 
 	if (pnp)
-		aprint_normal("PNP = %s", pnp);
+		aprint_normal("%s", pnp);
 	aprint_normal(" channel %d", aa->aa_channel);
 	return (UNCONF);
 }
