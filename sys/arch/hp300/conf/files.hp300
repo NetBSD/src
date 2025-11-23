@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.99 2025/11/22 21:24:02 andvar Exp $
+#	$NetBSD: files.hp300,v 1.100 2025/11/23 17:42:00 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -232,7 +232,7 @@ file	arch/hp300/hp300/clock.c
 file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/leds.c			useleds
-file	arch/hp300/hp300/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file	arch/hp300/hp300/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/m68k/m68k/cacheops.c
@@ -243,7 +243,8 @@ file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
+file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
+file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vectors.c
