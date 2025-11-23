@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2024/07/26 18:25:03 riastradh Exp $
+#	$NetBSD: Makefile,v 1.25 2025/11/23 08:07:55 kre Exp $
 #
 
 S=${.CURDIR}/../../../..
@@ -41,6 +41,7 @@ SRCS+=	aes_ct.c
 SRCS+=	aes_ct_dec.c
 SRCS+=	aes_ct_enc.c
 SRCS+=	aes_impl.c
+SRCS+=	aes_keysched.c
 SRCS+=	aes_selftest.c
 
 # blowfish
