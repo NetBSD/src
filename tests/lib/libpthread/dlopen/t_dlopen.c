@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dlopen.c,v 1.2 2025/11/22 20:04:01 riastradh Exp $ */
+/*	$NetBSD: t_dlopen.c,v 1.3 2025/11/23 22:11:41 riastradh Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dlopen.c,v 1.2 2025/11/22 20:04:01 riastradh Exp $");
+__RCSID("$NetBSD: t_dlopen.c,v 1.3 2025/11/23 22:11:41 riastradh Exp $");
 
 #include <atf-c.h>
 #include <dlfcn.h>
@@ -127,8 +127,6 @@ ATF_TC_HEAD(dlopen_mutex_lazyglobal, tc)
 }
 ATF_TC_BODY(dlopen_mutex_lazyglobal, tc)
 {
-	atf_tc_expect_signal(SIGSEGV, "PR lib/59784: "
-	    "dlopening and dlclosing libpthread is broken");
 	test_dlopen_mutex(RTLD_LAZY | RTLD_GLOBAL);
 }
 
@@ -230,8 +228,6 @@ ATF_TC_HEAD(dlopen_mutex_libpthread_lazyglobal, tc)
 }
 ATF_TC_BODY(dlopen_mutex_libpthread_lazyglobal, tc)
 {
-	atf_tc_expect_signal(SIGSEGV, "PR lib/59784: "
-	    "dlopening and dlclosing libpthread is broken");
 	test_dlopen_mutex_libpthread(RTLD_LAZY | RTLD_GLOBAL);
 }
 
