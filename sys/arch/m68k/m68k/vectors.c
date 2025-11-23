@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.4 2025/11/20 18:05:00 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.5 2025/11/23 13:44:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
 extern char buserr60[], addrerr4060[];
 #ifdef M060SP
 extern char FP_CALL_TOP[], I_CALL_TOP[];
-#define	LINE111_HANDLER60	&FP_CALL_TOP[128 + 0x30]
+#define	LINE1111_HANDLER60	&FP_CALL_TOP[128 + 0x30]
 #define	FP_INEX_HANDLER60	&FP_CALL_TOP[128 + 0x28]
 #define	FP_DZ_HANDLER60		&FP_CALL_TOP[128 + 0x20]
 #define	FP_UNFL_HANDLER60	&FP_CALL_TOP[128 + 0x18]
@@ -168,7 +168,7 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #define	UNIMP_EA_HANDLER60	&FP_CALL_TOP[128 + 0x40]
 #define	UNIMP_II_HANDLER60	&I_CALL_TOP[128 + 0x00]
 #else
-#define	LINE111_HANDLER60	fpfline
+#define	LINE1111_HANDLER60	fpfline
 #define	FP_INEX_HANDLER60	fpfault
 #define	FP_DZ_HANDLER60		fpfault
 #define	FP_UNFL_HANDLER60	fpfault
@@ -184,7 +184,7 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #else
 #define	BUSERR_HANDLER		buserr60
 #define	ADDRERR_HANDLER		addrerr4060
-#define	LINE111_HANDLER		LINE111_HANDLER60
+#define	LINE1111_HANDLER	LINE1111_HANDLER60
 #define	FP_INEX_HANDLER		FP_INEX_HANDLER60
 #define	FP_DZ_HANDLER		FP_DZ_HANDLER60
 #define	FP_UNFL_HANDLER		FP_UNFL_HANDLER60
@@ -561,6 +561,7 @@ vec_init(void)
 	case CPU_68060:
 		vectab[VECI_BUSERR]        = buserr60;
 		vectab[VECI_ADDRERR]       = addrerr4060;
+		vectab[VECI_LINE1111]      = LINE1111_HANDLER60;
 		vectab[VECI_FP_INEX]       = FP_INEX_HANDLER60;
 		vectab[VECI_FP_DZ]         = FP_DZ_HANDLER60;
 		vectab[VECI_FP_UNFL]       = FP_UNFL_HANDLER60;
