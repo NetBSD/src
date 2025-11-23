@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_impl.c,v 1.11 2025/11/22 22:32:39 riastradh Exp $	*/
+/*	$NetBSD: aes_impl.c,v 1.12 2025/11/23 22:44:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.11 2025/11/22 22:32:39 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.12 2025/11/23 22:44:14 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_aes.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/kernel.h>
@@ -37,11 +41,19 @@ __KERNEL_RCSID(1, "$NetBSD: aes_impl.c,v 1.11 2025/11/22 22:32:39 riastradh Exp 
 #include <sys/systm.h>
 
 #include <crypto/aes/aes.h>
-#include <crypto/aes/aes_bear.h> /* default implementation */
 #include <crypto/aes/aes_cbc.h>
 #include <crypto/aes/aes_impl.h>
 #include <crypto/aes/aes_keysched.h>
 #include <crypto/aes/aes_xts.h>
+
+/* default implementation */
+#ifdef AES_BEAR64
+#include <crypto/aes/aes_bear64.h>
+static const struct aes_impl	*const aes_default_impl = &aes_bear64_impl;
+#else
+#include <crypto/aes/aes_bear.h>
+static const struct aes_impl	*const aes_default_impl = &aes_bear_impl;
+#endif
 
 static int aes_keysched_selftest(void);
 
@@ -113,11 +125,11 @@ aes_select(void)
 			aes_impl = aes_md_impl;
 	}
 	if (aes_impl == NULL) {
-		if (aes_selftest(&aes_bear_impl))
+		if (aes_selftest(aes_default_impl))
 			aprint_error("aes: self-test failed: %s\n",
-			    aes_bear_impl.ai_name);
+			    aes_default_impl->ai_name);
 		else
-			aes_impl = &aes_bear_impl;
+			aes_impl = aes_default_impl;
 	}
 	if (aes_impl == NULL)
 		panic("AES self-tests failed");

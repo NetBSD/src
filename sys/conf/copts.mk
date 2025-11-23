@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.12 2024/07/04 01:11:34 rin Exp $
+#	$NetBSD: copts.mk,v 1.13 2025/11/23 22:44:13 riastradh Exp $
 
 # MI per-file compiler options required.
 
@@ -44,5 +44,30 @@ COPTS.aes_sse2_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_ssse3_subr.c+=${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_via.c+=	${CC_WNO_ARRAY_BOUNDS}
 .endif
+
+# Here's an example of the bogus gcc warning -- it's bogus because
+# while a parameter declarator of `const uint8_t[static 16]' means that
+# the input must have _at least_ 16 elements, it doesn't mean that the
+# input must have _at most_ 16 elements, yet gcc is interpreting it the
+# latter way on code where we have a run-time test of the buffer's
+# actual length to verify it is long enough before reading more than 16
+# bytes out of it:
+#
+# In file included from ./machine/endian.h:3,
+#                  from /home/riastradh/netbsd/current/src/sys/sys/types.h:98,
+#                  from /home/riastradh/netbsd/current/src/sys/crypto/aes/aes_bear64.c:32:
+# In function 'le32dec',
+#     inlined from 'aesbear64_cbc_dec.part.0' at /home/riastradh/netbsd/current/src/sys/crypto/aes/aes_bear64.c:315:9:
+# /home/riastradh/netbsd/current/src/sys/sys/endian.h:220:9: error: array subscript [12, 2305843009213693951] is outside array bounds of 'const uint8_t[16]' {aka 'const unsigned char[16]'} [-Werror=array-bounds=]
+#   220 |         __builtin_memcpy(&u, buf, sizeof(u)); \
+#       |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# /home/riastradh/netbsd/current/src/sys/sys/endian.h:228:1: note: in expansion of macro '__GEN_ENDIAN_DEC'
+#   228 | __GEN_ENDIAN_DEC(32, le)
+#       | ^~~~~~~~~~~~~~~~
+# /home/riastradh/netbsd/current/src/sys/crypto/aes/aes_bear64.c: In function 'aesbear64_cbc_dec.part.0':
+# /home/riastradh/netbsd/current/src/sys/crypto/aes/aes_bear64.c:229:59: note: at offset 48 into object 'in' of size [0, 16]
+#   229 | aesbear64_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
+#       |                                             ~~~~~~~~~~~~~~^~~~~~~~~~~~~
+COPTS.aes_bear64.c+=	${CC_WNO_ARRAY_BOUNDS} ${CC_WNO_STRINGOP_OVERFLOW}
 
 .endif

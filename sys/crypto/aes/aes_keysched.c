@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_keysched.c,v 1.1 2025/11/22 22:32:39 riastradh Exp $	*/
+/*	$NetBSD: aes_keysched.c,v 1.2 2025/11/23 22:44:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,12 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_keysched.c,v 1.1 2025/11/22 22:32:39 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_keysched.c,v 1.2 2025/11/23 22:44:14 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_aes.h"
+#endif
 
 #include <sys/types.h>
 
-#include <crypto/aes/aes_bear.h>
 #include <crypto/aes/aes_keysched.h>
+
+#ifdef AES_BEAR64
+#include <crypto/aes/aes_bear64.h>
+#else
+#include <crypto/aes/aes_bear.h>
+#endif
 
 /*
  * aes_keysched_enc(rk, key, keybytes)
@@ -46,7 +55,11 @@ u_int
 aes_keysched_enc(uint32_t *rk, const void *key, size_t keybytes)
 {
 
+#ifdef AES_BEAR64
+	return br_aes_ct64_keysched_stdenc(rk, key, keybytes);
+#else
 	return br_aes_ct_keysched_stdenc(rk, key, keybytes);
+#endif
 }
 
 /*
@@ -61,5 +74,9 @@ u_int
 aes_keysched_dec(uint32_t *rk, const void *key, size_t keybytes)
 {
 
+#ifdef AES_BEAR64
+	return br_aes_ct64_keysched_stddec(rk, key, keybytes);
+#else
 	return br_aes_ct_keysched_stddec(rk, key, keybytes);
+#endif
 }

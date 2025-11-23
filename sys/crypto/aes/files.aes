@@ -1,13 +1,19 @@
-#	$NetBSD: files.aes,v 1.4 2025/11/22 22:32:39 riastradh Exp $
+#	$NetBSD: files.aes,v 1.5 2025/11/23 22:44:14 riastradh Exp $
 
 define	aes
 
-file	crypto/aes/aes_bear.c			aes
+defflag	opt_aes.h		AES_BEAR64
+
+file	crypto/aes/aes_bear.c			aes & !aes_bear64
+file	crypto/aes/aes_bear64.c			aes & aes_bear64
 file	crypto/aes/aes_ccm.c			aes
 file	crypto/aes/aes_ccm_mbuf.c		aes
-file	crypto/aes/aes_ct.c			aes
-file	crypto/aes/aes_ct_dec.c			aes
-file	crypto/aes/aes_ct_enc.c			aes
+file	crypto/aes/aes_ct.c			aes & !aes_bear64
+file	crypto/aes/aes_ct64.c			aes & aes_bear64
+file	crypto/aes/aes_ct64_dec.c		aes & aes_bear64
+file	crypto/aes/aes_ct64_enc.c		aes & aes_bear64
+file	crypto/aes/aes_ct_dec.c			aes & !aes_bear64
+file	crypto/aes/aes_ct_enc.c			aes & !aes_bear64
 file	crypto/aes/aes_impl.c			aes
 file	crypto/aes/aes_keysched.c		aes
 file	crypto/aes/aes_selftest.c		aes

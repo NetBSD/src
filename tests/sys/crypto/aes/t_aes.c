@@ -1,4 +1,4 @@
-/*	$NetBSD: t_aes.c,v 1.4 2020/08/17 16:26:02 riastradh Exp $	*/
+/*	$NetBSD: t_aes.c,v 1.5 2025/11/23 22:44:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_bear.h>
+#include <crypto/aes/aes_bear64.h>
 #include <crypto/aes/aes_impl.h>
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -69,6 +70,28 @@ ATF_TC_BODY(aes_ct_selftest, tc)
 
 	if (aes_selftest(&aes_bear_impl))
 		atf_tc_fail("BearSSL aes_ct self-test failed");
+}
+
+ATF_TC(aes_ct64_selftest);
+ATF_TC_HEAD(aes_ct64_selftest, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "BearSSL aes_ct64 tests");
+}
+
+ATF_TC_BODY(aes_ct64_selftest, tc)
+{
+
+	if (aes_bear64_impl.ai_probe()) {
+		/*
+		 * aes_ct64 is the portable software fallback for LP64
+		 * platforms, so probe should never fail.
+		 */
+		atf_tc_fail("BearSSL aes_ct probe64 failed");
+	}
+
+	if (aes_selftest(&aes_bear64_impl))
+		atf_tc_fail("BearSSL aes_ct64 self-test failed");
 }
 
 #define	AES_SELFTEST(name, impl, descr)					      \
@@ -113,6 +136,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, aes_ct_selftest);
+	ATF_TP_ADD_TC(tp, aes_ct64_selftest);
 
 #ifdef __aarch64__
 	ATF_TP_ADD_TC(tp, aes_armv8_selftest);

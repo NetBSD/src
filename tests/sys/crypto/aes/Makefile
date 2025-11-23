@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2025/11/22 22:32:39 riastradh Exp $
+#	$NetBSD: Makefile,v 1.9 2025/11/23 22:44:14 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,12 @@ SRCS.t_aes+=	aes_bear.c
 SRCS.t_aes+=	aes_ct.c
 SRCS.t_aes+=	aes_ct_dec.c
 SRCS.t_aes+=	aes_ct_enc.c
+
+SRCS.t_aes+=	aes_bear64.c
+SRCS.t_aes+=	aes_ct64.c
+SRCS.t_aes+=	aes_ct64_dec.c
+SRCS.t_aes+=	aes_ct64_enc.c
+
 SRCS.t_aes+=	aes_keysched.c
 SRCS.t_aes+=	aes_selftest.c
 
@@ -85,6 +91,7 @@ WARNS=		5
 #   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110878
 COPTS.aes_armv8.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
 COPTS.aes_bear.c+=	${CC_WNO_STRINGOP_OVERFLOW} ${CC_WNO_ARRAY_BOUNDS}
+COPTS.aes_bear64.c+=	${CC_WNO_STRINGOP_OVERFLOW} ${CC_WNO_ARRAY_BOUNDS}
 COPTS.aes_neon_subr.c+=	${CC_WNO_ARRAY_BOUNDS}
 
 COPTS.aes_ni.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
