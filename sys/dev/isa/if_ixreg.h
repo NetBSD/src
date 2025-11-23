@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixreg.h,v 1.3 2001/01/22 22:28:47 bjh21 Exp $	*/
+/*	$NetBSD: if_ixreg.h,v 1.4 2025/11/23 13:29:38 nia Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995
@@ -13,10 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Rodney W. Grimes.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY RODNEY W. GRIMES ``AS IS'' AND ANY EXPRESS OR

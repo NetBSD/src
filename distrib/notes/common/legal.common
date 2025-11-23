@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.128 2025/11/22 17:49:29 nia Exp $
+.\" $NetBSD: legal.common,v 1.129 2025/11/23 13:29:38 nia Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -350,8 +350,6 @@ This product includes software developed by Ravikanth.
 This product includes software developed by RiscBSD.
 .It
 This product includes software developed by Roar Thron\(aes.
-.It
-This product includes software developed by Rodney W. Grimes.
 .It
 This product includes software developed by Roger Hardiman
 .It
