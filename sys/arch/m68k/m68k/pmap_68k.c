@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.22 2025/11/24 06:19:56 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.23 2025/11/24 06:49:44 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.22 2025/11/24 06:19:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.23 2025/11/24 06:49:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1994,14 +1994,6 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 void
 pmap_init(void)
 {
-	/* Zero out the null segment table. */
-	pmap_zero_page(null_segtab_pa);
-#if MMU_CONFIG_68040_CLASS
-	if (MMU_IS_68040_CLASS) {
-		DCFP(null_segtab_pa);
-	}
-#endif
-
 	/* Initialize the pmap / pv_entry allocators. */
 	pmap_alloc_init();
 
