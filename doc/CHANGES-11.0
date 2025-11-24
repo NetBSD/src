@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.43 2025/11/22 16:09:58 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.44 2025/11/24 17:33:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -992,4 +992,51 @@ common/dist/zlib/zconf.h			1.6
 
 	zlib: PR 59711: ignore HAVE_UNISTD_H and HAVE_STDARG_H in zconf.h.
 	[riastradh, ticket #99]
+
+distrib/sets/lists/xbase/mi			1.178
+etc/mtree/NetBSD.dist.Xorg			1.32
+external/mit/xorg/share/Makefile		1.3
+external/mit/xorg/share/examples/Makefile	1.1
+external/mit/xorg/share/examples/xorg.conf	1.1,1.2
+
+	X: add a sample xorg.conf that shows how to set the video driver.
+	[nia, ticket #100]
+
+sys/dev/wscons/wsmux.c				1.69
+
+	wsmux(4): PR 59727: fix sense of assertion in kqfilter.
+	[nia, ticket #101]
+
+share/man/man8/compat_30.8			1.10
+
+	compat_30(8): fix typo in the documentation.
+	[andvar, ticket #102]
+
+sys/arch/m68k/m68k/vectors.c			1.5
+
+	mvme68k: PR 59786: fix floating point emulation.
+	[thorpej, ticket #103]
+
+sys/dev/tc/sfb.c				1.90
+
+	sfb(4): fix mapping of the framebuffer for X.
+	[macallan, ticket #104]
+
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.18
+
+	nouveau(4): PR 59773: fix return value of fence wait.
+	[riastradh, ticket #105]
+
+sys/dev/pci/if_rge.c				1.34-1.46
+sys/dev/pci/if_rgereg.h				1.9-1.17
+share/man/man4/rge.4				1.5-1.10
+sys/dev/pci/pcidevs				1.1532
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	rge(4): PR 59724: bring mostly up-to-date with upstream (OpenBSD)
+	changes, including support for new chips and variants, and enable
+	IPv4/TCP4/UDP4 checksum offloading.  Does not include
+	support for Jumbo frames or Wake-on-LAN.
+	[pgoyette, ticket #106]
 
