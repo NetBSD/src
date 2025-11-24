@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.21 2025/11/24 05:40:36 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.22 2025/11/24 06:19:56 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.21 2025/11/24 05:40:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.22 2025/11/24 06:19:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3604,6 +3604,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	} va_ranges[NRANGES], *var;
 	int r;
 
+#define	VA_IN_RANGE(va, var)				\
+	((va) >= (var)->start_va &&			\
+	 ((va) < (var)->end_va || (var)->end_va == 0))
+
 #define	PA_TO_VA(pa)	(VM_MIN_KERNEL_ADDRESS + ((pa) - reloff))
 #define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
 #define	RELOC(v, t)	*((t *)VA_TO_PA(&(v)))
@@ -3753,7 +3757,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	const struct pmap_bootmap *pmbm =
 	    (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
-		if (pmbm->pmbm_flags & PMBM_F_KEEPOUT) {
+		if (pmbm->pmbm_flags & (PMBM_F_FIXEDVA | PMBM_F_KEEPOUT)) {
 			va = m68k_trunc_page(pmbm->pmbm_vaddr);
 			if (va < RELOC(kernel_virtual_max, vaddr_t)) {
 				RELOC(kernel_virtual_max, vaddr_t) = va;
@@ -3862,7 +3866,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	struct va_range *kpt_var = NULL;
 	for (r = 0; r < NRANGES; r++) {
 		kpt_var = &va_ranges[r];
-		if (va >= kpt_var->start_va && va < kpt_var->end_va) {
+		if (VA_IN_RANGE(va, kpt_var)) {
 			break;
 		}
 	}
@@ -3888,10 +3892,14 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		if (pmbm->pmbm_flags & (PMBM_F_VAONLY | PMBM_F_KEEPOUT)) {
 			continue;
 		}
-		va = *(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr);
+		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
+			va = pmbm->pmbm_vaddr;
+		} else {
+			va = *(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr);
+		}
 		for (r = 0; r < NRANGES; r++) {
 			var = &va_ranges[r];
-			if (va >= var->start_va && va < var->end_va) {
+			if (VA_IN_RANGE(va, var)) {
 				break;
 			}
 		}

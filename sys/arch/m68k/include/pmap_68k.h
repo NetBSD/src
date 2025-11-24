@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.7 2025/11/17 05:59:17 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.8 2025/11/24 06:19:56 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -173,10 +173,11 @@ struct pmap_ptpage {
  * Some notes:
  *
  * - Virtual addresses are allocated and stored in the variable pointed
- *   to by pmbm_vaddr_ptr, **unless** the PMBM_F_KEEPOUT flag is set,
- *   in which case the pmbm_vaddr field indicates a range that kernel
- *   virtual space should keep out of (usually because it's mapped by
- *   Transparent Translation registers).
+ *   to by pmbm_vaddr_ptr, **unless** the PMBM_F_KEEPOUT or PMBM_F_FIXEDVA
+ *   flags are set, in which case the pmbm_vaddr field indicates a range
+ *   that kernel virtual space should keep out of (PMBM_F_KEEPOUT - usually
+ *   because it's mapped by Transparent Translation registers) or that is
+ *   used for a fixed-VA special mapping (PMBM_F_FIXEDVA).
  *
  * - If the PMBM_F_VAONLY flag is set, only VA space will be allocated,
  *   no mapping will be entered in the space.
@@ -184,6 +185,10 @@ struct pmap_ptpage {
  * N.B. PMBM_F_KEEPOUT VA regions are assumed to lie beyond the normal
  * kernel virtual address space.  The maximum kernel virtual address will
  * be clamped to ensure that it never grows into the lowest of these regions.
+ *
+ * pmap_bootstrap1() makes no effort to ensure there are PTs backing any
+ * PMBM_F_FIXEDVA range.  It is assumed that any fixed VA mapping will
+ * occur within an already-provisioned VA range.
  *
  * All regions will be rounded / aligned to page boundaries.
  *
@@ -203,8 +208,9 @@ struct pmap_bootmap {
 };
 
 #define	PMBM_F_VAONLY	__BIT(0)
-#define	PMBM_F_KEEPOUT	__BIT(1)
-#define	PMBM_F_CI	__BIT(2)	/* cache-inhibited mapping */
+#define	PMBM_F_FIXEDVA	__BIT(1)
+#define	PMBM_F_KEEPOUT	__BIT(2)
+#define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
 
 /*
  * Abstract definitions for PTE bits / fields.  C code will compile-time-
