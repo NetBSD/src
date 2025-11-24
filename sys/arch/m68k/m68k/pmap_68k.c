@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.24 2025/11/24 07:00:01 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.25 2025/11/24 14:15:59 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.24 2025/11/24 07:00:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.25 2025/11/24 14:15:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2144,6 +2144,10 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
  *
  *	It is assumed that the start and end are properly rounded
  *	to the page size.
+ *
+ *	N.B. Callers of pmap_remove_internal() are expected to
+ *	provide an initialized completion context, which we
+ *	will finalize.
  */
 static void
 pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
@@ -2257,6 +2261,8 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 	}
 #endif
 	PMAP_CRIT_EXIT();
+
+	pmap_completion_fini(pc);
 }
 
 void
@@ -2265,6 +2271,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	struct pmap_completion pc;
 	pmap_completion_init(&pc);
 	pmap_remove_internal(pmap, sva, eva, &pc);
+	/* pmap_remove_internal() calls pmap_completion_fini(). */
 }
 
 /*
@@ -2390,6 +2397,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		struct pmap_completion pc;
 		pmap_completion_init(&pc);
 		pmap_remove_internal(pmap, sva, eva, &pc);
+		/* pmap_remove_internal() calls pmap_completion_fini(). */
 		return;
 	}
 
