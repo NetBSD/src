@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.25 2025/11/24 14:15:59 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.26 2025/11/24 14:24:16 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.25 2025/11/24 14:15:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.26 2025/11/24 14:24:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,6 +595,7 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 	struct pmap_ptpage *ptp;
 	struct pmap_table *pt;
 	struct vm_page *pg;
+	const int uvm_f_nowait = nowait ? UVM_KMF_NOWAIT : 0;
 	vaddr_t ptpva;
 
 	ptp = kmem_zalloc(size, nowait ? 0 : KM_SLEEP);
@@ -604,7 +605,7 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 
 	/* Allocate a VA for the PT page. */
 	ptpva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-			     UVM_KMF_VAONLY | (nowait ? UVM_KMF_NOWAIT : 0));
+			     UVM_KMF_VAONLY | uvm_f_nowait);
 	if (__predict_false(ptpva == 0)) {
 		kmem_free(ptp, size);
 		return NULL;
@@ -613,6 +614,7 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 	/* Get a page. */
 	pg = pmap_page_alloc(nowait);
 	if (__predict_false(pg == NULL)) {
+		uvm_km_free(kernel_map, ptpva, PAGE_SIZE, UVM_KMF_VAONLY);
 		kmem_free(ptp, size);
 		return NULL;
 	}
