@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2025/11/23 17:42:59 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246 2025/11/24 06:42:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2025/11/23 17:42:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2025/11/24 06:42:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -172,19 +172,29 @@ int	delay_divisor;		/* delay constant */
 #define PMBM_INTIO	0
 #define PMBM_EXTIO	1
 #define PMBM_BOOTINFO	2
+#define PMBM_MAXADDR	3
 const struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr_ptr = (vaddr_t *)&intiobase,
 	  .pmbm_paddr = INTIOBASE,
 	  .pmbm_size  = INTIOSIZE,
 	  .pmbm_flags = PMBM_F_CI },
+
 	{ .pmbm_vaddr_ptr = (vaddr_t *)&extiobase,
 	  .pmbm_paddr = 0,	/* VAONLY, so no PA mappings */
 	  .pmbm_size  = ctob(EIOMAPSIZE),
 	  .pmbm_flags = PMBM_F_VAONLY | PMBM_F_CI },
+
 	{ .pmbm_vaddr_ptr = &bootinfo_va,
 	  .pmbm_paddr = 0,	/* VAONLY, so no PA mappings */
 	  .pmbm_size  = ctob(1),
 	  .pmbm_flags = PMBM_F_VAONLY },
+
+	/* Last page of RAM is mapped VA==PA for the MMU trampoline. */
+	{ .pmbm_vaddr = MAXADDR,
+	  .pmbm_paddr = MAXADDR,
+	  .pmbm_size  = PAGE_SIZE,
+	  .pmbm_flags = PMBM_F_FIXEDVA | PMBM_F_CI },
+
 	{ .pmbm_vaddr = -1 },
 };
 #endif
