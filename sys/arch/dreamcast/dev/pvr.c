@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.39 2021/08/07 16:18:47 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.40 2025/11/24 13:28:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -13,10 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Marcus Comstedt.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 3. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -35,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.39 2021/08/07 16:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.40 2025/11/24 13:28:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
