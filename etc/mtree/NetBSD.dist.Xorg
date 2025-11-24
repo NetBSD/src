@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.30 2022/07/14 06:53:40 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.30.2.1 2025/11/24 16:48:30 martin Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -181,6 +181,7 @@
 ./usr/X11R7/share/aclocal
 ./usr/X11R7/share/examples
 ./usr/X11R7/share/examples/ssh-askpass
+./usr/X11R7/share/examples/xorg
 ./usr/X11R7/share/libdrm
 ./usr/X11R7/share/pciids
 ./usr/X11R7/share/xcb
