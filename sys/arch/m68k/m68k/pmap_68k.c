@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.26 2025/11/24 14:24:16 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.27 2025/11/24 16:31:06 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.26 2025/11/24 14:24:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.27 2025/11/24 16:31:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1456,7 +1456,8 @@ pmap_kernel_pte(vaddr_t va)
 	 * to grow.  We'll find out soon enough if a PT page doesn't back
 	 * it, because a fault will occur when the PTE is accessed.
 	 */
-	return &kernel_ptes[va >> PGSHIFT];
+	KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
+	return &kernel_ptes[m68k_btop(va - VM_MIN_KERNEL_ADDRESS)];
 }
 
 /*
@@ -3315,12 +3316,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	KASSERT((kernel_virtual_end & PTPAGEVAOFS) == 0);
 
-	/*
-	 * We first calculate how many leaf tables are required
-	 * to map up to the requested max address.  Even if we're
-	 * on a 68040 or 68060, we allocate leaf tables in whole
-	 * pages to simplify the logic (as was done in pmap_bootstrap1()).
-	 */
 	vaddr_t new_maxkva = pmap_round_ptpage(maxkvaddr);
 	if (new_maxkva < kernel_virtual_end) {
 		/*
@@ -3589,13 +3584,17 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	paddr_t lwp0upa, stnext_endpa, stnext_pa;
 	paddr_t pa, kernimg_endpa, kern_lev1pa;
 	vaddr_t va, nextva, kern_lev1va;
-	pt_entry_t *ptes, *pte, *epte;
+	pt_entry_t *pte, *epte;
 	int entry_count = 0;
 
 #ifdef SYSMAP_VA
-#define	NRANGES		2
+#define	VA_RANGE_DEFAULT	0
+#define	VA_RANGE_KPTES		1
+#define	NRANGES			2
 #else
-#define	NRANGES		1
+#define	VA_RANGE_DEFAULT	0
+#define	VA_RANGE_KPTES		0
+#define	NRANGES			1
 #endif
 
 	struct va_range {
@@ -3609,6 +3608,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 #define	VA_IN_RANGE(va, var)				\
 	((va) >= (var)->start_va &&			\
 	 ((va) < (var)->end_va || (var)->end_va == 0))
+
+#define	VA_PTE_BASE(va, var)				\
+	(&((pt_entry_t *)(var)->start_ptp)[m68k_btop((va) - (var)->start_va)])
 
 #define	PA_TO_VA(pa)	(VM_MIN_KERNEL_ADDRESS + ((pa) - reloff))
 #define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
@@ -3748,8 +3750,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		RELOC(kernel_virtual_max, vaddr_t) = (vaddr_t)SYSMAP_VA;
 	}
 	RELOC(kernel_ptes, vaddr_t) = (vaddr_t)SYSMAP_VA;
-	va_ranges[1].start_va = (vaddr_t)SYSMAP_VA;
-	va_ranges[1].end_va = 0; /* until the end of the address space */
+	va_ranges[VA_RANGE_KPTES].start_va = (vaddr_t)SYSMAP_VA;
+	va_ranges[VA_RANGE_KPTES].end_va = 0; /* end of the address space */
 #else
 	RELOC(kernel_ptes, vaddr_t) = nextva;
 	nextva += SYSMAP_VA_SIZE;
@@ -3797,8 +3799,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * until such time as pmap_growkernel() is called to expand
 	 * it.
 	 */
-	va_ranges[0].start_va = VM_MIN_KERNEL_ADDRESS;
-	va_ranges[0].end_va = nextva;
+	va_ranges[VA_RANGE_DEFAULT].start_va = VM_MIN_KERNEL_ADDRESS;
+	va_ranges[VA_RANGE_DEFAULT].end_va = nextva;
 	RELOC(kernel_virtual_end, vaddr_t) = nextva;
 
 	/*
@@ -3829,14 +3831,14 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 
 	/*
 	 * Ok, let's get to mapping stuff!  Almost everything is in
-	 * the first VA range.
+	 * the default VA range.
 	 */
-	ptes = (pt_entry_t *)va_ranges[0].start_ptp;
+	var = &va_ranges[VA_RANGE_DEFAULT];
 
 	/* Kernel text - read-only. */
 	pa = VA_TO_PA(m68k_trunc_page(&kernel_text));
-	pte = &ptes[m68k_btop(&kernel_text)];	/* btop implies trunc_page */
-	epte = &ptes[m68k_btop(&etext)];
+	pte = VA_PTE_BASE(&kernel_text, var);
+	epte = VA_PTE_BASE(&etext, var);
 	while (pte < epte) {
 		*pte++ = proto_ro_pte | pa;
 		pa += PAGE_SIZE;
@@ -3844,7 +3846,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/* Remainder of kernel image - read-write. */
-	epte = &ptes[m68k_btop(PA_TO_VA(kernimg_endpa))];
+	epte = VA_PTE_BASE(PA_TO_VA(kernimg_endpa), var);
 	while (pte < epte) {
 		*pte++ = proto_rw_pte | pa;
 		pa += PAGE_SIZE;
@@ -3853,8 +3855,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 
 	/* lwp0 u-area - read-write. */
 	pa = lwp0upa;
-	pte = &ptes[m68k_btop(RELOC(lwp0uarea, vaddr_t))];
-	epte = &ptes[m68k_btop(RELOC(lwp0uarea, vaddr_t) + USPACE)];
+	pte = VA_PTE_BASE(RELOC(lwp0uarea, vaddr_t), var);
+	epte = VA_PTE_BASE(RELOC(lwp0uarea, vaddr_t) + USPACE, var);
 	while (pte < epte) {
 		*pte++ = proto_rw_pte | pa;
 		pa += PAGE_SIZE;
@@ -3862,26 +3864,24 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/* Kernel lev1map - read-write, cache-inhibited. */
-	pte = &ptes[m68k_btop(kern_lev1va)];
+	pte = VA_PTE_BASE(kern_lev1va, var);
 	*pte = proto_rw_ci_pte | kern_lev1pa;
 	entry_count++;
 
-	/* Kernel leaf PT pages - read-write, cache-inhibited. */
+	/*
+	 * Kernel leaf PT pages - read-write, cache-inhibited.
+	 *
+	 * These will be in a different VA range if the machine
+	 * defines SYSMAP_VA.
+	 */
 	va = RELOC(kernel_ptes, vaddr_t);
 	pt_entry_t *kptes = (pt_entry_t *)va;
-	struct va_range *kpt_var = NULL;
-	for (r = 0; r < NRANGES; r++) {
-		kpt_var = &va_ranges[r];
-		if (VA_IN_RANGE(va, kpt_var)) {
-			break;
-		}
-	}
-	ptes = (pt_entry_t *)kpt_var->start_ptp;
+	struct va_range *kpte_var = &va_ranges[VA_RANGE_KPTES];
 
 	for (r = 0; r < NRANGES; r++) {
 		var = &va_ranges[r];
 		va = (vaddr_t)(&kptes[m68k_btop(var->start_va)]);
-		pte = &ptes[m68k_btop(va - kpt_var->start_va)];
+		pte = VA_PTE_BASE(va, kpte_var);
 		for (pa = var->start_ptp; pa < var->end_ptp; pa += PAGE_SIZE) {
 			*pte++ = proto_rw_ci_pte | pa;
 			entry_count++;
@@ -3909,9 +3909,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 				break;
 			}
 		}
-		ptes = (pt_entry_t *)var->start_ptp;
 		pa = pmbm->pmbm_paddr;
-		pte = &ptes[m68k_btop(va - var->start_va)];
+		pte = VA_PTE_BASE(va, var);
 		pt_entry_t proto = (pmbm->pmbm_flags & PMBM_F_CI) ?
 		    proto_rw_ci_pte : proto_rw_pte;
 		for (vsize_t size = m68k_round_page(pmbm->pmbm_size);
@@ -4004,8 +4003,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 
 	return nextpa;
 }
-
-#undef RELOC
 
 /*
  * pmap_bootstrap2:
