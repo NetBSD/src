@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.72 2025/11/24 14:49:12 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.73 2025/11/24 17:13:12 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1339,4 +1339,28 @@ external/gpl3/binutils/dist/libctf/ctf-open-bfd.c	(manually edited)
 
 	zlib: PR 59711: ignore HAVE_UNISTD_H and HAVE_STDARG_H in zconf.h.
 	[riastradh, ticket #1195]
+
+distrib/sets/lists/xbase/mi			1.178
+etc/mtree/NetBSD.dist.Xorg			1.32
+external/mit/xorg/share/Makefile		1.3
+external/mit/xorg/share/examples/Makefile	1.1
+external/mit/xorg/share/examples/xorg.conf	1.1,1.2
+
+	X: add a sample xorg.conf that shows how to set the video driver.
+	[nia, ticket #1196]
+
+share/man/man8/compat_30.8			1.10
+
+	compat_30(8): fix typo in the documentation.
+	[andvar, ticket #1197]
+
+lib/libutil/getfstypename.3			1.4
+
+	getfstypename(3): fix typo in the documentation.
+	[andvar, ticket #1198]
+
+sys/dev/tc/sfb.c				1.90
+
+	sfb(4): fix mapping of the framebuffer for X.
+	[macallan, ticket #1199]
 
