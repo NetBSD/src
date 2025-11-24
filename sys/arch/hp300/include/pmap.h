@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2025/11/24 16:36:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2025/11/24 16:48:44 thorpej Exp $	*/
 
 #ifdef __HAVE_NEW_PMAP_68K
 #include <m68k/pmap_68k.h>
@@ -30,6 +30,4 @@
 #include <m68k/pmap_motorola.h>
 #endif /* __HAVE_NEW_PMAP_68K */
 
-#include <m68k/mmu_30.h>
-#include <m68k/mmu_40.h>
 #define __HAVE_MACHINE_BOOTMAP
