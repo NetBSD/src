@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx_tty.c,v 1.1 2025/10/24 23:16:11 brad Exp $	*/
+/*	$NetBSD: sc16is7xx_tty.c,v 1.2 2025/11/24 00:14:09 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,16 +17,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx_tty.c,v 1.1 2025/10/24 23:16:11 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx_tty.c,v 1.2 2025/11/24 00:14:09 brad Exp $");
 
 /* TTY specific common driver to the NXP SC16IS7xx UART bridge */
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/tty.h>
-#ifdef __REMOVE
-#include <sys/sysctl.h>
-#endif
 #include <sys/systm.h>
 
 #include <sys/bus.h>
@@ -41,64 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: sc16is7xx_tty.c,v 1.1 2025/10/24 23:16:11 brad Exp $
 static int sc16is7xx_tty_match(device_t, cfdata_t, void *);
 static void sc16is7xx_tty_attach(device_t, device_t, void *);
 static int sc16is7xx_tty_detach(device_t, int);
-#ifdef __REMOVE
-static int sc16is7xx_tty_verify_prescale(SYSCTLFN_ARGS);
-#endif
 
 CFATTACH_DECL_NEW(sc16is7xx_tty, sizeof(struct sc16is7xx_tty_softc),
     sc16is7xx_tty_match, sc16is7xx_tty_attach, sc16is7xx_tty_detach, NULL);
-
-#ifdef __REMOVE
-int
-sc16is7xx_tty_verify_prescale(SYSCTLFN_ARGS)
-{
-	struct sc16is7xx_tty_softc *sc;
-	int error;
-	bool t = false;
-	struct sysctlnode node;
-
-	node = *rnode;
-	sc = node.sysctl_data;
-	if (ISSET(sc->sc_com.sc_mcr, MCR_PRESCALE))
-		t = true;
-	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return error;
-
-	if (t)
-		SET(sc->sc_com.sc_mcr, MCR_PRESCALE);
-	else
-		CLR(sc->sc_com.sc_mcr, MCR_PRESCALE);
-
-	return 0;
-}
-
-static int
-sc16is7xx_tty_sysctl_init(struct sc16is7xx_tty_softc *sc)
-{
-	int error;
-	const struct sysctlnode *cnode;
-	int sysctlroot_num;
-
-	if ((error = sysctl_createv(&sc->sc_sc16is7xx_tty_log, 0, NULL, &cnode,
-	    0, CTLTYPE_NODE, device_xname(sc->sc_com.sc_dev),
-	    SYSCTL_DESCR("sc16ix7xx tty controls"), NULL, 0, NULL, 0, CTL_HW,
-	    CTL_CREATE, CTL_EOL)) != 0)
-		return error;
-
-	sysctlroot_num = cnode->sysctl_num;
-
-	if ((error = sysctl_createv(&sc->sc_sc16is7xx_tty_log, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "prescale",
-	    SYSCTL_DESCR("Prescale"), sc16is7xx_tty_verify_prescale, 0,
-	    (void *)sc, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
-	    CTL_EOL)) != 0)
-		return error;
-
-	return 0;
-}
-#endif
 
 static int
 sc16is7xx_tty_match(device_t parent, cfdata_t match, void *aux)
@@ -112,18 +54,8 @@ sc16is7xx_tty_attach(device_t parent, device_t self, void *aux)
 	struct sc16is7xx_tty_attach_args *caa = aux;
 	struct sc16is7xx_tty_softc *sc = device_private(self);
 	struct sc16is7xx_sc *psc = device_private(parent);
-#ifdef __REMOVE
-	int error;
-#endif
 
 	sc->sc_com.sc_dev = self;
-
-#ifdef __REMOVE
-	if ((error = sc16is7xx_tty_sysctl_init(sc)) != 0) {
-		aprint_error_dev(sc->sc_com.sc_dev, "Can't setup sysctl tree (%d)\n", error);
-		goto out;
-	}
-#endif
 
 	/* Set and then override the callouts to read and write the registers. */
 	com_init_regs(&sc->sc_com.sc_regs, 0, 0, 0);
@@ -150,9 +82,6 @@ sc16is7xx_tty_attach(device_t parent, device_t self, void *aux)
 	SET(sc->sc_com.sc_hwflags, COM_HW_SOFTIRQ);
 
 	com_attach_subr(&sc->sc_com);
-#ifdef __REMOVE
-out:
-#endif
 
 	return;
 }
@@ -160,14 +89,7 @@ out:
 int
 sc16is7xx_tty_detach(device_t self, int flags)
 {
-#ifdef __REMOVE	
-	struct sc16is7xx_tty_softc *sc = device_private(self);
-#endif
 	int error;
-
-#ifdef __REMOVE
-	sysctl_teardown(&sc->sc_sc16is7xx_tty_log);
-#endif
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;
