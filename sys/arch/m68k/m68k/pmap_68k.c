@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.23 2025/11/24 06:49:44 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.24 2025/11/24 07:00:01 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.23 2025/11/24 06:49:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.24 2025/11/24 07:00:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3711,8 +3711,12 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	stnext_endpa = m68k_round_page(stnext_pa);
 
 	/* null segment table */
+#ifdef NULL_SEGTAB_PA
+	RELOC(null_segtab_pa, paddr_t) = (paddr_t)NULL_SEGTAB_PA;
+#else
 	RELOC(null_segtab_pa, paddr_t) = nextpa;
 	nextpa += PAGE_SIZE;
+#endif
 
 	/* pmap temporary map addresses */
 	RELOC(pmap_tmpmap_srcva, vaddr_t) = nextva;

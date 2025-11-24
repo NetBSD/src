@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2025/11/24 06:41:57 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2025/11/24 07:00:01 thorpej Exp $	*/
 
 #ifdef __HAVE_NEW_PMAP_68K
 #include <m68k/pmap_68k.h>
@@ -14,6 +14,12 @@
  * for the virtual kernel PTE array because MAXADDR is otherwise occupied.)
  */
 #define	SYSMAP_VA	(0U - PAGE_SIZE*NPTEPG*2)
+
+/*
+ * Because we're reserving the last page of RAM for the MMU trampoline,
+ * we might as well put it to good use as the NULL segment table.
+ */
+#define	NULL_SEGTAB_PA	MAXADDR
 #else
 #include <m68k/pmap_motorola.h>
 #endif /* __HAVE_NEW_PMAP_68K */

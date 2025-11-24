@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 2025/11/24 06:42:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.247 2025/11/24 07:00:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2025/11/24 06:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2025/11/24 07:00:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -222,6 +222,16 @@ hp300_init(paddr_t nextpa)
 	default:
 		break;
 	}
+#endif
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/*
+	 * We've used NULL_SEGTAB_PA in <machine/pmap.h> to use the
+	 * reserved last-page-of-RAM as the NULL segment table.  But,
+	 * we copied code into that page (the MMU trampoline) to enable
+	 * the MMU.  So, zero it out now.
+	 */
+	memset((void *)MAXADDR, 0, PAGE_SIZE);
 #endif
 
 	/*
