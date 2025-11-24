@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.89 2021/12/06 16:00:07 abs Exp $ */
+/* $NetBSD: sfb.c,v 1.89.4.1 2025/11/24 17:10:50 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.89 2021/12/06 16:00:07 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.89.4.1 2025/11/24 17:10:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,9 +485,9 @@ sfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sfb_softc *sc = v;
 
-	if (offset >= SFB_SIZE || offset < 0)
+	if (offset >= SFB_FB_SIZE || offset < 0)
 		return (-1);
-	return machine_btop(sc->sc_vaddr + offset);
+	return machine_btop(sc->sc_vaddr + SFB_FB_OFFSET + 4096 + offset);
 }
 
 static int
