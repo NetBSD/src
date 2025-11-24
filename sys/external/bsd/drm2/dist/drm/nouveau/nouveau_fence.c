@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.17 2021/12/19 10:49:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.17.12.1 2025/11/24 17:14:47 martin Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.17 2021/12/19 10:49:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.17.12.1 2025/11/24 17:14:47 martin Exp $");
 
 #include <linux/atomic.h>
 #include <linux/ktime.h>
@@ -286,8 +286,8 @@ nouveau_fence_wait_legacy(struct dma_fence *f, bool intr, long wait)
 		/* XXX what lock? */
 		/* XXX errno NetBSD->Linux */
 		ret = -kpause("nvfencel", intr, 1, NULL);
-		if (ret) {
-			if (ret == -ERESTART)
+		if (ret && ret != -EWOULDBLOCK) {
+			if (ret == -ERESTART || ret == -EINTR)
 				ret = -ERESTARTSYS;
 			return ret;
 		}
