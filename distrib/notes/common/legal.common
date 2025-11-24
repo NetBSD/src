@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.130 2025/11/24 08:04:28 nia Exp $
+.\" $NetBSD: legal.common,v 1.131 2025/11/24 15:15:27 nia Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -278,8 +278,6 @@ This product includes software developed by Lloyd Parkes.
 This product includes software developed by Lutz Vieweg.
 .It
 This product includes software developed by Marc Horowitz.
-.It
-This product includes software developed by Marcus Comstedt.
 .It
 This product includes software developed by Mark Brinicombe.
 .It
