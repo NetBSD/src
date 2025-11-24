@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.27 2025/11/24 16:31:06 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.28 2025/11/24 16:58:01 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.27 2025/11/24 16:31:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.28 2025/11/24 16:58:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3757,7 +3757,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	nextva += SYSMAP_VA_SIZE;
 #endif /* SYSMAP_VA */
 
-#ifdef __HAVE_MACHINE_BOOTMAP
 	/*
 	 * Allocate machine-specific VAs.
 	 */
@@ -3775,7 +3774,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 			nextva += m68k_round_page(pmbm->pmbm_size);
 		}
 	}
-#endif /* __HAVE_MACHINE_BOOTMAP */
 
 	/* UVM-managed kernel virtual starts here. */
 	RELOC(kernel_virtual_start, vaddr_t) = nextva;
@@ -3888,7 +3886,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		}
 	}
 
-#ifdef __HAVE_MACHINE_BOOTMAP
 	/*
 	 * Now perform any machine-specific mappings at VAs
 	 * allocated earlier.
@@ -3920,7 +3917,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 			entry_count++;
 		}
 	}
-#endif /* __HAVE_MACHINE_BOOTMAP */
 
 	/*
 	 * Now that all of the invidual VAs are mapped in the leaf

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2025/11/14 15:07:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 2025/11/24 16:58:00 thorpej Exp $	*/
 
 #ifndef _LUNA68K_PMAP_H_
 
@@ -20,8 +20,6 @@
  * On 030 both use Function Codes 4-7 (to get SUPERD and SUPERP).
  * XXX: they can probably just use SUPERD.
  */
-
-#define	__HAVE_MACHINE_BOOTMAP
 
 #define	LUNA68K_IO0_TT_BASE	0x40000000
 #define	LUNA68K_IO0_TT_SIZE	0x40000000

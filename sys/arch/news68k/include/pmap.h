@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2025/11/14 15:07:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2025/11/24 16:58:01 thorpej Exp $	*/
 
 #ifndef _NEWS68K_PMAP_H_
 #define	_NEWS68K_PMAP_H_
@@ -20,8 +20,6 @@
  * Both use Function Codes 4-7 (to get SUPERD and SUPERP).
  * XXX I/O space can probably just use SUPERD.
  */
-
-#define	__HAVE_MACHINE_BOOTMAP
 
 #define	NEWS68K_PROM_TT_BASE	0xc0000000
 #define	NEWS68K_PROM_TT_SIZE	0x20000000

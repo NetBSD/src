@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2025/11/14 15:07:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2025/11/24 16:58:01 thorpej Exp $	*/
 
 #ifndef _VIRT68K_PMAP_H_
 #define	_VIRT68K_PMAP_H_
@@ -17,8 +17,6 @@
  * address space (0xff00.0000).  We use a Transparent Translation
  * register to map these VA==PA for convenience.
  */
-
-#define	__HAVE_MACHINE_BOOTMAP
 
 #define	VIRT68K_IO_BASE		0xff000000
 #define	VIRT68K_IO_SIZE		0x01000000
