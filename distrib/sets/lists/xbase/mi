@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.177 2025/03/09 23:32:34 mrg Exp $
+# $NetBSD: mi,v 1.177.2.1 2025/11/24 16:43:54 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1752,6 +1752,8 @@
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-default.ad	xbase-ssh-askpass-share	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-green.ad	xbase-ssh-askpass-share	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-motif.ad	xbase-ssh-askpass-share	xorg
+./usr/X11R7/share/examples/xorg				base-x11-root	xorg
+./usr/X11R7/share/examples/xorg/xorg.conf		base-x11-root	xorg
 ./usr/X11R7/share/libdrm				base-x11-root	xorg
 ./usr/X11R7/share/pciids				base-x11-root	xorg
 ./usr/X11R7/share/xcb					base-x11-root	xorg
