@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.28 2025/11/24 16:58:01 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.29 2025/11/24 21:56:19 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.28 2025/11/24 16:58:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.29 2025/11/24 21:56:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3135,9 +3135,8 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	 */
 	bool cflush_040;
 	if (MMU_IS_68040_CLASS &&
-	    ((set & PTE_WP) != 0 ||
-	     (set & PTE_CMASK) != 0 ||
-	     (mask & PTE_CMASK) == 0)) {
+	    ((set  & PTE_CRIT_BITS) != 0 ||
+	     (mask & PTE_CRIT_BITS) == 0)) {
 		cflush_040 = true;
 	} else {
 		cflush_040 = false;
