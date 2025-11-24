@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.14 2020/04/04 19:46:01 is Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.15 2025/11/24 08:04:28 nia Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -21,11 +21,6 @@
  * 3. The name(s) of the authors of this software must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission.
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.16 2008/11/29 23:15:20 cube Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.17 2025/11/24 08:04:28 nia Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -20,11 +20,6 @@
  * 3. The name(s) of the authors of this software must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission.
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY

@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.129 2025/11/23 13:29:38 nia Exp $
+.\" $NetBSD: legal.common,v 1.130 2025/11/24 08:04:28 nia Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -326,11 +326,6 @@ Brandon Creighton and Job de Haas.
 This product includes software developed by Paolo Abeni.
 .It
 This product includes software developed by Paul Kranenburg.
-.It
-This product includes software developed by Paul Mackerras.
-.It
-This product includes software developed by Paul Mackerras
-<paulus@samba.org>.
 .It
 This product includes software developed by Pedro Roque Marques
 <pedro_m@yahoo.com>

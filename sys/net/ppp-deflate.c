@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.24 2024/07/05 04:31:53 rin Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.25 2025/11/24 08:04:28 nia Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -24,11 +24,6 @@
  *    endorse or promote products derived from this software without
  *    prior written permission.
  *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
- *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
@@ -39,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.24 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.25 2025/11/24 08:04:28 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
