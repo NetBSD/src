@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.11 2025/11/14 19:23:48 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.12 2025/11/24 18:56:54 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.11 2025/11/14 19:23:48 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4270 2025-11-12 19:07:58Z jkoshy')
+	`Id: elfconstants.m4 4272 2025-11-18 22:10:56Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -777,12 +777,16 @@ _(ELFDATA2MSB, 2U,
 #
 # The magic numbers used in the initial four bytes of an ELF object.
 #
-# These numbers are: 0x7F, 'E', 'L' and 'F'.
+# These numbers are: 0x7F, and the characters 'E', 'L' and 'F' encoded
+# in ASCII.
+#
+# This definition needs an expansion of `_' that replaces `@' characters
+# with single quotes.
 define(`DEFINE_ELF_MAGIC_VALUES',`
 _(ELFMAG0, 0x7FU)
-_(ELFMAG1, 0x45U)
-_(ELFMAG2, 0x4CU)
-_(ELFMAG3, 0x46U)
+_(ELFMAG1, 0x45U, @E@)
+_(ELFMAG2, 0x4CU, @L@)
+_(ELFMAG3, 0x46U, @F@)
 ')
 
 # Additional ELFMAG related constants.

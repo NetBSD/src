@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.14 2025/11/18 13:02:12 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.15 2025/11/24 18:56:54 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.14 2025/11/18 13:02:12 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 4271 2025-11-14 18:28:12Z jkoshy')
+	`Id: elfdefinitions.m4 4274 2025-11-23 21:25:40Z jkoshy')
 include(`elfconstants.m4')dnl
 
 # Compute the whitespace between a symbol and its definition.
@@ -74,19 +74,31 @@ divert(0)dnl
  */
 
 /*
-patsubst(defn(`COMPATIBILITY_NOTICE'), `^#', ` * ')
+ * Compile-time knobs controlling the inclusion of this file's
+ * contents.
  */
+#define _USE_SYS_ELFDEFINITIONS_H_	1
+#if defined(__NetBSD__) && defined(_SYS_EXEC_ELF_H_)
+/*
+ * Ignore the definitions provided by this file if <sys/exec_elf.h> has
+ * already been included.
+ *
+ * Doing so allows NetBSD code to use either (or both) of these files
+ * without breaking the build.
+ */
+#undef _USE_SYS_ELFDEFINITIONS_H_
+#endif /* defined(__NetBSD__) && defined(_SYS_EXEC_ELF_H_) */
 
 /*
- * Skip the definitions provided by this file if <sys/exec_elf.h>
- * has already been included.
- *
- * This is a work-around to allow code to use either or both of
- * <sys/elfdefinitions.h> and <sys/exec_elf.h> without breaking
- * the build.
+patsubst(defn(`COMPATIBILITY_NOTICE'), `^#', ` * ')
  */
-#if !defined(_SYS_ELFDEFINITIONS_H_) && !defined(_SYS_EXEC_ELF_H_)
+ 
+#if defined(_USE_SYS_ELFDEFINITIONS_H_)
+
+#ifndef _SYS_ELFDEFINITIONS_H_
 #define _SYS_ELFDEFINITIONS_H_
+
+#include <stdint.h>
 
 /*
  * Types of capabilities.
@@ -136,12 +148,20 @@ DEFINE_ELF_CLASSES()
  */
 DEFINE_ELF_DATA_ENDIANNESSES()
 
+changequote([,])dnl
 /*
  * The magic numbers used in the initial four bytes of an ELF object.
  *
- * These numbers are: 0x7F, 'E', 'L' and 'F'.
+ * These numbers are 0x7F, and the characters 'E', 'L' and 'F' encoded
+ * in ASCII.
  */
+pushdef([_],[[#]define $1	$2[]ifelse(eval(len($3) > 0),1,
+					   [ ]/* translit($3,@,') */,
+					   [])])dnl
 DEFINE_ELF_MAGIC_VALUES()
+popdef([_])dnl
+changequote([`],['])dnl
+
 /* Additional magic-related constants. */
 DEFINE_ELF_MAGIC_ADDITIONAL_CONSTANTS()
 
@@ -795,3 +815,6 @@ typedef struct {
 } Elf_GNU_Hash_Header;
 
 #endif	/* _SYS_ELFDEFINITIONS_H_ */
+
+#undef _USE_SYS_ELFDEFINITIONS_H_
+#endif  /* defined(_USE_SYS_ELFDEFINITIONS_H_) */
