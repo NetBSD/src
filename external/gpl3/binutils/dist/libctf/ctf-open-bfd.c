@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <elf.h>
 #include <bfd.h>
+#include <unistd.h>
 #include "swap.h"
 #include "ctf-endian.h"
 
