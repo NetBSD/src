@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.14 2025/11/23 22:48:26 riastradh Exp $
+#	$NetBSD: copts.mk,v 1.15 2025/11/24 16:27:28 nia Exp $
 
 # MI per-file compiler options required.
 
@@ -68,6 +68,6 @@ COPTS.aes_via.c+=	${CC_WNO_ARRAY_BOUNDS}
 # /home/riastradh/netbsd/current/src/sys/crypto/aes/aes_bear64.c:229:59: note: at offset 48 into object 'in' of size [0, 16]
 #   229 | aesbear64_cbc_dec(const struct aesdec *dec, const uint8_t in[static 16],
 #       |                                             ~~~~~~~~~~~~~~^~~~~~~~~~~~~
-COPTS.aes_bear64.c+=	${CC_WNO_ARRAY_BOUNDS} ${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.aes_bear64.c+=	${CC_WNO_ARRAY_BOUNDS} ${CC_WNO_STRINGOP_OVERFLOW} ${CC_WNO_STRINGOP_OVERREAD}
 
 .endif
