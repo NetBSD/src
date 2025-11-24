@@ -1,7 +1,19 @@
-/*	$NetBSD: pmap.h,v 1.36 2025/11/23 17:42:00 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 2025/11/24 06:41:57 thorpej Exp $	*/
 
 #ifdef __HAVE_NEW_PMAP_68K
 #include <m68k/pmap_68k.h>
+
+/*
+ * The Hibler/Utah pmap put the virtual kernel PTE array near the top of
+ * the address space because it needed to use the very last page of kernel
+ * virtual space to map the last page of RAM VA==PA to faciliate MMU on/off
+ * transitions, and doing so made for more efficient use of kernel PT pages.
+ * We use the SYSMAP_VA hook to do the same for the same reason.
+ *
+ * (The *2 is because we can't use the very top of the address space
+ * for the virtual kernel PTE array because MAXADDR is otherwise occupied.)
+ */
+#define	SYSMAP_VA	(0U - PAGE_SIZE*NPTEPG*2)
 #else
 #include <m68k/pmap_motorola.h>
 #endif /* __HAVE_NEW_PMAP_68K */
