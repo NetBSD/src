@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.20 2025/11/22 21:15:50 tsutsui Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.21 2025/11/24 05:40:36 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.20 2025/11/22 21:15:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.21 2025/11/24 05:40:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3510,6 +3510,45 @@ __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
  */
 #define	SYSMAP_VA_SIZE	(((0xffffffffU >> PGSHIFT) + 1) * sizeof(pt_entry_t))
 
+/*
+ * In the Hibler/Utah pmap, the kernel PTE array was placed right near
+ * the very top of the kernel virtual address space.  This was because
+ * of the hp300's unique physical memory arrangement: the last page of
+ * memory is always located at PA $FFFF.F000 and the physical address
+ * of the beginning of RAM varied based on the RAM size.  This meant that
+ * VA $FFFF.F000 is a convenient place to map the RAM VA==PA, making
+ * transition between "MMU off" and "MMU on" (and vice versa) easier.
+ * Since VA $FFFF.F000 was already going to be mapped, it made sense to
+ * put something else along side of it in order to minimize waste in
+ * PT pages.
+ *
+ * As noted above, this implementation is tuned for a growing-from-0
+ * virtual space layout.  However, we have a special case for this
+ * particular requirement: if a platform defines SYSMAP_VA, then we
+ * will assume it is as a high address, place the kernel PTE array at
+ * that KVA, and ensure sufficient page tables to map from that VA until
+ * the very end of the 4GB supervisor address space.  These tables will
+ * be allocated before the machine_bootmap[] is processed to map physical
+ * addresses, thus allowing the machine_bootmap[] use it to map physical
+ * addresses into one of these high virtual addresses if necessary.  The
+ * beginning of this region will also serve to clamp the maximum kernel
+ * virtual address, in the same way as a KEEPOUT region in machine_bootmap[].
+ *
+ * For reference, the traditional hp300 definition is:
+ *
+ *	#define	SYSMAP_VA	((vaddr_t)(0-PAGE_SIZE*NPTEPG*2))
+ *
+ * ...and because the hp300 always used a 4KB page size (restriction
+ * of HP MMU), this is: 0 - 4096*1024*2
+ *                   -> 0 - 8388608 (8MB)
+ *                   -> $FF80.0000
+ *
+ * Unfortunately (for the hp300), this means 2 PT pages for the top of
+ * the address space (in the 2-level case), but that's unavoidable anyway
+ * because of the last page being a separate mapping and the kernel PTE
+ * array needs 4MB of space on its own.
+ */
+
 static vaddr_t	lwp0uarea;
        char *	vmmap;
        void *	msgbufaddr;
@@ -3546,10 +3585,24 @@ paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 {
 	paddr_t lwp0upa, stnext_endpa, stnext_pa;
-	paddr_t pa, kernimg_endpa, kern_ptpages, kern_ptpages_end, kern_lev1pa;
+	paddr_t pa, kernimg_endpa, kern_lev1pa;
 	vaddr_t va, nextva, kern_lev1va;
 	pt_entry_t *ptes, *pte, *epte;
 	int entry_count = 0;
+
+#ifdef SYSMAP_VA
+#define	NRANGES		2
+#else
+#define	NRANGES		1
+#endif
+
+	struct va_range {
+		vaddr_t start_va;
+		vaddr_t end_va;
+		paddr_t start_ptp;
+		paddr_t end_ptp;
+	} va_ranges[NRANGES], *var;
+	int r;
 
 #define	PA_TO_VA(pa)	(VM_MIN_KERNEL_ADDRESS + ((pa) - reloff))
 #define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
@@ -3610,9 +3663,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 *	msgbufaddr	kernel msg buf	round_page(MSGBUFSIZE) (v)
 	 *
 	 *	kernel_ptes	kernel PTEs	SYSMAP_VA_SIZE (v, ci)
-	 *					(see comment above)
-	 *
-	 *	kern_ptpages	kernel leaf PTs	<calculated> (p)
+	 *					(see comments above)
 	 *
 	 * When we allocate the kernel lev1map, for the 2-level
 	 * configuration, there is no inner segment tables to allocate,
@@ -3682,8 +3733,17 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	nextva += m68k_round_page(MSGBUFSIZE);
 
 	/* Kernel PTE array. */
+#ifdef SYSMAP_VA
+	if ((vaddr_t)SYSMAP_VA < RELOC(kernel_virtual_max, vaddr_t)) {
+		RELOC(kernel_virtual_max, vaddr_t) = (vaddr_t)SYSMAP_VA;
+	}
+	RELOC(kernel_ptes, vaddr_t) = (vaddr_t)SYSMAP_VA;
+	va_ranges[1].start_va = (vaddr_t)SYSMAP_VA;
+	va_ranges[1].end_va = 0; /* until the end of the address space */
+#else
 	RELOC(kernel_ptes, vaddr_t) = nextva;
 	nextva += SYSMAP_VA_SIZE;
+#endif /* SYSMAP_VA */
 
 #ifdef __HAVE_MACHINE_BOOTMAP
 	/*
@@ -3714,7 +3774,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * from having to do any work before the VM system is set
 	 * up.
 	 */
-	nextva += RELOC(physmem, int) << PGSHIFT;
+	nextva += RELOC(physmem, u_int) << PGSHIFT;
 	nextva = pmap_round_ptpage(nextva);
 	if (nextva > RELOC(kernel_virtual_max, vaddr_t) ||
 	    nextva < RELOC(kernel_virtual_start, vaddr_t)) {
@@ -3727,16 +3787,23 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * until such time as pmap_growkernel() is called to expand
 	 * it.
 	 */
+	va_ranges[0].start_va = VM_MIN_KERNEL_ADDRESS;
+	va_ranges[0].end_va = nextva;
 	RELOC(kernel_virtual_end, vaddr_t) = nextva;
 
 	/*
-	 * Now, compute the number of PT pages required to map up to
-	 * kernel_virtual_end and allocate them.
+	 * Now, compute the number of PT pages required to map the
+	 * required VA ranges and allocate them.
 	 */
-	size_t nptpages = RELOC(kernel_virtual_end, vaddr_t) / PTPAGEVASZ;
-	kern_ptpages = nextpa;
-	nextpa += nptpages * PAGE_SIZE;
-	kern_ptpages_end = nextpa;
+	size_t nptpages, total_ptpages = 0;
+	for (r = 0; r < NRANGES; r++) {
+		var = &va_ranges[r];
+		nptpages = (var->end_va - var->start_va) / PTPAGEVASZ;
+		var->start_ptp = nextpa;
+		nextpa += nptpages * PAGE_SIZE;
+		var->end_ptp = nextpa;
+		total_ptpages += nptpages;
+	}
 
 	/*
 	 * The bulk of the dynamic memory allocation is done (there
@@ -3751,9 +3818,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/*
-	 * Ok, let's get to mapping stuff!
+	 * Ok, let's get to mapping stuff!  Almost everything is in
+	 * the first VA range.
 	 */
-	ptes = (pt_entry_t *)kern_ptpages;
+	ptes = (pt_entry_t *)va_ranges[0].start_ptp;
 
 	/* Kernel text - read-only. */
 	pa = VA_TO_PA(m68k_trunc_page(&kernel_text));
@@ -3789,10 +3857,25 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	entry_count++;
 
 	/* Kernel leaf PT pages - read-write, cache-inhibited. */
-	pte = &ptes[m68k_btop(RELOC(kernel_ptes, vaddr_t))];
-	for (pa = kern_ptpages; pa < kern_ptpages_end; pa += PAGE_SIZE) {
-		*pte++ = proto_rw_ci_pte | pa;
-		entry_count++;
+	va = RELOC(kernel_ptes, vaddr_t);
+	pt_entry_t *kptes = (pt_entry_t *)va;
+	struct va_range *kpt_var = NULL;
+	for (r = 0; r < NRANGES; r++) {
+		kpt_var = &va_ranges[r];
+		if (va >= kpt_var->start_va && va < kpt_var->end_va) {
+			break;
+		}
+	}
+	ptes = (pt_entry_t *)kpt_var->start_ptp;
+
+	for (r = 0; r < NRANGES; r++) {
+		var = &va_ranges[r];
+		va = (vaddr_t)(&kptes[m68k_btop(var->start_va)]);
+		pte = &ptes[m68k_btop(va - kpt_var->start_va)];
+		for (pa = var->start_ptp; pa < var->end_ptp; pa += PAGE_SIZE) {
+			*pte++ = proto_rw_ci_pte | pa;
+			entry_count++;
+		}
 	}
 
 #ifdef __HAVE_MACHINE_BOOTMAP
@@ -3806,13 +3889,20 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 			continue;
 		}
 		va = *(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr);
+		for (r = 0; r < NRANGES; r++) {
+			var = &va_ranges[r];
+			if (va >= var->start_va && va < var->end_va) {
+				break;
+			}
+		}
+		ptes = (pt_entry_t *)var->start_ptp;
 		pa = pmbm->pmbm_paddr;
-		pte = &ptes[m68k_btop(va)];
+		pte = &ptes[m68k_btop(va - var->start_va)];
 		pt_entry_t proto = (pmbm->pmbm_flags & PMBM_F_CI) ?
 		    proto_rw_ci_pte : proto_rw_pte;
-		for (vaddr_t endva = va + m68k_round_page(pmbm->pmbm_size);
-		     va < endva;
-		     va += PAGE_SIZE, pa += PAGE_SIZE) {
+		for (vsize_t size = m68k_round_page(pmbm->pmbm_size);
+		     size != 0;
+		     va += PAGE_SIZE, pa += PAGE_SIZE, size -= PAGE_SIZE) {
 			*pte++ = proto | pa;
 			entry_count++;
 		}
@@ -3827,53 +3917,62 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * For the 2-level case, this is trivial.  For the 3-level
 	 * case, we will have to allocate inner segment tables.
 	 */
-	if (use_3l) {
-		pt_entry_t *stes, *stes1 = (pt_entry_t *)kern_lev1pa;
-		for (va = 0, pa = kern_ptpages;
-		     pa < kern_ptpages_end;
-		     va += NBSEG3L, pa += TBL40_L3_SIZE) {
-			if ((stes1[LA40_RI(va)] & UTE40_RESIDENT) == 0) {
-				/* Level-2 table for this segment needed. */
-				if (stnext_pa == stnext_endpa) {
+	for (r = 0; r < NRANGES; r++) {
+		var = &va_ranges[r];
+		if (use_3l) {
+			pt_entry_t *stes, *stes1 = (pt_entry_t *)kern_lev1pa;
+			for (va = var->start_va, pa = var->start_ptp;
+			     pa < var->end_ptp;
+			     va += NBSEG3L, pa += TBL40_L3_SIZE) {
+				unsigned int ri = LA40_RI(va);
+				if ((stes1[ri] & UTE40_RESIDENT) == 0) {
 					/*
-					 * No more slots left in the last
-					 * page we allocated for segment
-					 * tables.  Grab another one.
+					 * Level-2 table for this segment
+					 * needed.
 					 */
-					stnext_pa = nextpa;
-					nextpa += PAGE_SIZE;
-					stnext_endpa = nextpa;
-					nstpages++;
-					/*
-					 * Zero out the new inner segment
-					 * table page.
-					 */
-					pte = (pt_entry_t *)stnext_pa;
-					while ((vaddr_t)pte < stnext_endpa) {
-						*pte++ = 0;
+					if (stnext_pa == stnext_endpa) {
+						/*
+						 * No more slots left in the
+						 * last page we allocated for
+						 * segment tables.  Grab
+						 * another one.
+						 */
+						stnext_pa = nextpa;
+						nextpa += PAGE_SIZE;
+						stnext_endpa = nextpa;
+						nstpages++;
+						/*
+						 * Zero out the new inner
+						 * segment table page.
+						 */
+						pte = (pt_entry_t *)stnext_pa;
+						while ((vaddr_t)pte <
+								stnext_endpa) {
+							*pte++ = 0;
+						}
 					}
+					stes1[ri] = proto_ste | stnext_pa;
+					stnext_pa += TBL40_L2_SIZE;
 				}
-				stes1[LA40_RI(va)] = proto_ste | stnext_pa;
-				stnext_pa += TBL40_L2_SIZE;
+				stes = (pt_entry_t *)
+				    (uintptr_t)(stes1[ri] & UTE40_PTA);
+				stes[LA40_PI(va)] = proto_ste | pa;
 			}
-			stes = (pt_entry_t *)
-			    (uintptr_t)(stes1[LA40_RI(va)] & UTE40_PTA);
-			stes[LA40_PI(va)] = proto_ste | pa;
-		}
-	} else {
-		pt_entry_t *stes = (pt_entry_t *)kern_lev1pa;
-		for (va = 0, pa = kern_ptpages;
-		     pa < kern_ptpages_end;
-		     va += NBSEG2L, pa += PAGE_SIZE) {
-			stes[LA2L_RI(va)] = proto_ste | pa;
+		} else {
+			pt_entry_t *stes = (pt_entry_t *)kern_lev1pa;
+			for (va = var->start_va, pa = var->start_ptp;
+			     pa < var->end_ptp;
+			     va += NBSEG2L, pa += PAGE_SIZE) {
+				stes[LA2L_RI(va)] = proto_ste | pa;
+			}
 		}
 	}
 
 	/* Instrumentation. */
 	RELOC(pmap_nkptpages_initial_ev.ev_count32, uint32_t) =
-	    RELOC(pmap_nkptpages_current_ev.ev_count32, uint32_t) = nptpages;
+	RELOC(pmap_nkptpages_current_ev.ev_count32, uint32_t) = total_ptpages;
 	RELOC(pmap_nkstpages_initial_ev.ev_count32, uint32_t) =
-	    RELOC(pmap_nkstpages_current_ev.ev_count32, uint32_t) = nstpages;
+	RELOC(pmap_nkstpages_current_ev.ev_count32, uint32_t) = nstpages;
 
 	/*
 	 * Record the number of wired mappings we created above
