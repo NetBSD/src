@@ -1,4 +1,4 @@
-.\"	$NetBSD: random.3,v 1.23 2022/12/04 01:29:32 uwe Exp $
+.\"	$NetBSD: random.3,v 1.24 2025/11/25 16:16:26 jschauma Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,7 +109,7 @@ more state, the better the random numbers will be.
 (Current "optimal" values for the amount of state information are
 8, 32, 64, 128, and 256 bytes; other amounts will be rounded down to
 the nearest known amount.
-Using less than 8 bytes will cause an error).
+Using fewer than 8 bytes will cause an error).
 The seed for the initialization (which specifies a starting point for
 the random number sequence, and provides for restarting at the same
 point) is also an argument.
@@ -162,7 +162,7 @@ which should be sufficient for most purposes.
 .Sh RETURN VALUES
 If
 .Fn initstate
-is called with less than 8 bytes of state information, or if
+is called with fewer than 8 bytes of state information, or if
 .Fn setstate
 detects that the state information has been garbled, error
 messages are printed on the standard error output.
