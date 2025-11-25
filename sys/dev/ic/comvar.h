@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.99 2025/10/24 23:16:11 brad Exp $	*/
+/*	$NetBSD: comvar.h,v 1.100 2025/11/25 13:23:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -116,6 +116,8 @@ struct com_regs {
 	spi_handle_t		cr_sh; /* If this device is connected to a SPI bus. */
 
 	int			cr_channel;
+
+	bool			cr_has_errored;
 
 	bus_size_t		cr_nports;
 	bus_size_t		cr_map[COM_REGMAP_NENTRIES];

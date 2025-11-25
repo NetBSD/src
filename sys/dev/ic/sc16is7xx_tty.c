@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx_tty.c,v 1.2 2025/11/24 00:14:09 brad Exp $	*/
+/*	$NetBSD: sc16is7xx_tty.c,v 1.3 2025/11/25 13:23:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx_tty.c,v 1.2 2025/11/24 00:14:09 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx_tty.c,v 1.3 2025/11/25 13:23:29 brad Exp $");
 
 /* TTY specific common driver to the NXP SC16IS7xx UART bridge */
 
@@ -89,11 +89,9 @@ sc16is7xx_tty_attach(device_t parent, device_t self, void *aux)
 int
 sc16is7xx_tty_detach(device_t self, int flags)
 {
-	int error;
+	int error = 0;
 
-	if ((error = com_detach(self, flags)) != 0)
-		return error;
+	error = com_detach(self, flags);
 
-	return 0;
-
+	return error;
 }

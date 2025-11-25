@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx.c,v 1.2 2025/11/23 16:35:56 brad Exp $	*/
+/*	$NetBSD: sc16is7xx.c,v 1.3 2025/11/25 13:23:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -19,7 +19,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.2 2025/11/23 16:35:56 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.3 2025/11/25 13:23:29 brad Exp $");
 
 /* Common driver for the frontend to the NXP SC16IS7xx UART bridge */
 
@@ -83,7 +83,7 @@ sc16is7xx_thread(void *arg)
 	while (sc->sc_thread_run) {
 		sc16is7xx_comintr(sc);
 
-		kpause(device_xname(sc->sc_dev), false, mstohz(sc->sc_poll), NULL);
+		kpause(device_xname(sc->sc_dev), true, mstohz(sc->sc_poll), NULL);
 	}
 	kthread_exit(0);
 }
@@ -107,11 +107,11 @@ static void
 sc16is7xx_wq(struct work *wk, void *arg)
 {
 	struct sc16is7xx_sc *sc = arg;
-
+	int *t = (int *)wk;
 
 	sc16is7xx_comintr(sc);
 
-	pool_cache_put(sc->sc_wk_pool, wk);
+	pool_cache_put(sc->sc_wk_pool, t);
 }
 
 static void

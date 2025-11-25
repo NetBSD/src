@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx_ttyvar.h,v 1.1 2025/10/24 23:16:11 brad Exp $	*/
+/*	$NetBSD: sc16is7xx_ttyvar.h,v 1.2 2025/11/25 13:23:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -30,10 +30,6 @@
 
 struct sc16is7xx_tty_softc {
 	struct com_softc sc_com;
-
-#ifdef __REMOVE
-	struct sysctllog *sc_sc16is7xx_tty_log;
-#endif
 };
 
 #endif

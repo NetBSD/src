@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.389 2025/10/24 23:16:11 brad Exp $ */
+/* $NetBSD: com.c,v 1.390 2025/11/25 13:23:28 brad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.389 2025/10/24 23:16:11 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.390 2025/11/25 13:23:28 brad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -153,6 +153,10 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.389 2025/10/24 23:16:11 brad Exp $");
 	bus_space_write_2((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o], v)
 #define	CSR_READ_2(r, o)	\
 	bus_space_read_2((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o])
+
+/* Out of band error */
+#define CSR_HAS_ERROR(r)	\
+	(r)->cr_has_errored
 
 static void com_enable_debugport(struct com_softc *);
 
@@ -386,6 +390,7 @@ com_init_regs(struct com_regs *regs, bus_space_tag_t st, bus_space_handle_t sh,
 {
 
 	memset(regs, 0, sizeof(*regs));
+	regs->cr_has_errored = false;
 	regs->cr_iot = st;
 	regs->cr_ioh = sh;
 	regs->cr_iobase = addr;
@@ -1042,8 +1047,12 @@ com_detach(device_t self, int flags)
 	rnd_detach_source(&sc->rnd_source);
 #endif
 	callout_destroy(&sc->sc_diag_callout);
-	/* XXX - missing callout_destroy for sc->sc_poll_callout ??? */
+	if (!ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		callout_destroy(&sc->sc_poll_callout);
 
+	com_mutex_enter(sc);
+	com_mutex_exit(sc);
+	
 	/* Destroy the lock. */
 	mutex_destroy(&sc->sc_lock);
 
@@ -2359,6 +2368,11 @@ static void
 comsoftwq(struct work *wk, void *arg)
 {
 	struct com_softc *sc = arg;
+	struct com_regs *regsp = &sc->sc_regs;
+
+	if (CSR_HAS_ERROR(regsp)) {
+		return;
+	}
 
 	comsoft(sc);
 }
@@ -2381,11 +2395,20 @@ comintr(void *arg)
 	com_mutex_enter(sc);
 	iir = CSR_READ_1(regsp, COM_REG_IIR);
 
+	if (CSR_HAS_ERROR(regsp)) {
+		com_mutex_exit(sc);
+		return (0);
+	}
+
 	/* Handle ns16750-specific busy interrupt. */
 	if (sc->sc_type == COM_TYPE_16750 &&
 	    (iir & IIR_BUSY) == IIR_BUSY) {
 		for (int timeout = 10000;
-		    (CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0; timeout--)
+		     (CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0; timeout--) {
+			if (CSR_HAS_ERROR(regsp)) {
+				com_mutex_exit(sc);
+				return (0);
+			}
 			if (timeout <= 0) {
 				aprint_error_dev(sc->sc_dev,
 				    "timeout while waiting for BUSY interrupt "
@@ -2393,6 +2416,7 @@ comintr(void *arg)
 				com_mutex_exit(sc);
 				return (0);
 			}
+		}
 
 		CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
 		iir = CSR_READ_1(regsp, COM_REG_IIR);
@@ -2414,6 +2438,10 @@ comintr(void *arg)
 			for (int timeout = 10000000;
 			    (CSR_READ_1(regsp, COM_REG_HALT) & HALT_CHCFG_UD) != 0;
 			    timeout--) {
+				if (CSR_HAS_ERROR(regsp)) {
+					com_mutex_exit(sc);
+					return (0);
+				}
 				if (timeout <= 0) {
 					aprint_error_dev(sc->sc_dev,
 					    "timeout while waiting for HALT "
@@ -2446,6 +2474,11 @@ comintr(void *arg)
 
 again:	do {
 		u_char	msr, delta;
+
+		if (CSR_HAS_ERROR(regsp)) {
+			com_mutex_exit(sc);
+			return (0);
+		}
 
 		lsr = CSR_READ_1(regsp, COM_REG_LSR);
 		if (ISSET(lsr, LSR_BI)) {
@@ -2484,6 +2517,11 @@ again:	do {
 				lsr = CSR_READ_1(regsp, COM_REG_LSR);
 				if (!ISSET(lsr, LSR_RCV_MASK))
 					break;
+
+				if (CSR_HAS_ERROR(regsp)) {
+					com_mutex_exit(sc);
+					return (0);
+				}
 			}
 
 			/*
@@ -2536,6 +2574,10 @@ again:	do {
 		}
 
 		msr = CSR_READ_1(regsp, COM_REG_MSR);
+		if (CSR_HAS_ERROR(regsp)) {
+			com_mutex_exit(sc);
+			return (0);
+		}
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
 		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
@@ -2586,6 +2628,11 @@ do_tx:
 	 */
 	lsr = CSR_READ_1(regsp, COM_REG_LSR);
 
+	if (CSR_HAS_ERROR(regsp)) {
+		com_mutex_exit(sc);
+		return (0);
+	}
+
 	/*
 	 * See if data can be transmitted as well.
 	 * Schedule tx done event if no data left
@@ -2630,6 +2677,10 @@ do_tx:
 		goto again;
 
 	com_mutex_exit(sc);
+
+	if (CSR_HAS_ERROR(regsp)) {
+		return (0);
+	}
 
 	/* Wake up the poller. */
 	if ((sc->sc_rx_ready | sc->sc_st_check | sc->sc_tx_done) != 0) {

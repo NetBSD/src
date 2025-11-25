@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xxspi.c,v 1.1 2025/10/24 23:16:11 brad Exp $	*/
+/*	$NetBSD: sc16is7xxspi.c,v 1.2 2025/11/25 13:23:29 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xxspi.c,v 1.1 2025/10/24 23:16:11 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xxspi.c,v 1.2 2025/11/25 13:23:29 brad Exp $");
 
 /*
  * SPI frontend driver for the SC16IS7xx UART bridge.
@@ -56,7 +56,7 @@ static int sc16is7xxspi_match(device_t, cfdata_t, void *);
 static void sc16is7xxspi_attach(device_t, device_t, void *);
 static int sc16is7xxspi_detach(device_t, int);
 
-CFATTACH_DECL_NEW(sc16is7xxspi, sizeof(struct sc16is7xx_sc),
+CFATTACH_DECL_NEW(sc16is7xxspi, sizeof(struct sc16is7xx_spi_softc),
     sc16is7xxspi_match, sc16is7xxspi_attach, sc16is7xxspi_detach, NULL);
 
 static int
@@ -146,11 +146,17 @@ sc16is7xx_spi_com_read_1(struct com_regs *regs, u_int reg)
 	uint8_t buf;
 	int error;
 
+	if (regs->cr_has_errored)
+		return 0;
+
 	error = sc16is7xxspi_read_register_direct(regs->cr_sh,
 	    reg, regs->cr_channel, &buf, 1);
 
 	if (!error)
 		return buf;
+
+	if (error)
+		regs->cr_has_errored = true;
 
 	return 0;
 }
@@ -158,16 +164,24 @@ sc16is7xx_spi_com_read_1(struct com_regs *regs, u_int reg)
 static void
 sc16is7xx_spi_com_write_1(struct com_regs *regs, u_int reg, uint8_t val)
 {
-	sc16is7xxspi_write_register_direct(regs->cr_sh,
-	    reg, regs->cr_channel, &val, 1);
+	if (regs->cr_has_errored)
+		return;
+
+	if (sc16is7xxspi_write_register_direct(regs->cr_sh,
+		reg, regs->cr_channel, &val, 1))
+		regs->cr_has_errored = true;
 }
 
 static void
 sc16is7xx_spi_com_write_multi_1(struct com_regs *regs, u_int reg, const uint8_t *datap,
     bus_size_t count)
 {
-	sc16is7xxspi_write_register_direct(regs->cr_sh,
-	    reg, regs->cr_channel, __UNCONST(datap), count);
+	if (regs->cr_has_errored)
+		return;
+
+	if (sc16is7xxspi_write_register_direct(regs->cr_sh,
+		reg, regs->cr_channel, __UNCONST(datap), count))
+		regs->cr_has_errored = true;
 }
 
 static const struct sc16is7xx_accessfuncs sc16is7xx_spi_com_accessfuncs = {
