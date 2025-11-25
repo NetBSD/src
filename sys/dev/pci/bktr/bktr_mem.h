@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_mem.h,v 1.2 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_mem.h,v 1.2 2003/03/12 00:14:41 wiz Exp $	*/
+/*	$NetBSD: bktr_mem.h,v 1.3 2025/11/25 12:59:14 nia Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_mem.h,v 1.1 2000/09/10 14:34:08 roger Exp$ */
 
 /*
@@ -29,10 +29,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Roger Hardiman
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
