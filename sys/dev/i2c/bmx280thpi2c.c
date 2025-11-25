@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpi2c.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $	*/
+/*	$NetBSD: bmx280thpi2c.c,v 1.5 2025/11/25 12:50:54 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.4 2025/09/13 16:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.5 2025/11/25 12:50:54 brad Exp $");
 
 /*
  * I2C driver for the Bosch BMP280 / BME280 sensor.
@@ -56,7 +56,7 @@ static int 	bmx280thpi2c_match(device_t, cfdata_t, void *);
 static void 	bmx280thpi2c_attach(device_t, device_t, void *);
 static int 	bmx280thpi2c_detach(device_t, int);
 
-CFATTACH_DECL_NEW(bmx280thpi2c, sizeof(struct bmx280_sc),
+CFATTACH_DECL_NEW(bmx280thpi2c, sizeof(struct bmx280_i2c_softc),
     bmx280thpi2c_match, bmx280thpi2c_attach, bmx280thpi2c_detach, NULL);
 
 /* For the BMX280, a read consists of writing on the I2C bus
