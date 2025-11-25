@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1534 2025/11/25 09:29:19 mlelstv Exp $
+$NetBSD: pcidevs,v 1.1535 2025/11/25 18:47:25 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3566,6 +3566,10 @@ product MARVELL2 88SE9480	0x9480	88SE9480 SATA Controller
 product MARVELL2 88SE9485	0x9485	88SE9485 SATA Controller
 
 /* MediaTek */
+product MEDIATEK MT7921K	0x0608  MT7921K Wi-Fi 6 Wireless LAN
+product MEDIATEK MT7922		0x0616  MT7922 Wi-Fi 6 Wireless LAN
+product MEDIATEK MT7921		0x7961  MT7921 Wi-Fi 6 Wireless LAN
+product MEDIATEK MT7925		0x7925  MT7925 Wi-Fi 7 Wireless LAN
 product MEDIATEK MT7927		0x7927	MT7927 Wi-Fi 7 Wireless LAN
 
 /* Micro-star International Co Ltd */
