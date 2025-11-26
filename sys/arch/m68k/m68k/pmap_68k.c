@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.30 2025/11/26 18:08:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.31 2025/11/26 18:16:40 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.30 2025/11/26 18:08:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.31 2025/11/26 18:16:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1758,6 +1758,19 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 
 	/* Set the PTE for the new mapping. */
 	pte_store(ptep, npte);
+
+	/*
+	 * Invalidate the ATC entry **after** storing the PTE so that
+	 * there is no window where another MMU table walk finds the
+	 * stale invalid entry.
+	 *
+	 * XXX I don't know that this is strictly necessary with the
+	 * XXX HP MMU, but there is basically zero documentation available
+	 * XXX for it, so we err on the side of caution.
+	 */
+	if (active_pmap(pmap)) {
+		TBIS(va);
+	}
 
 	vaddr_t pv_flags = newpv->pv_vf & PV_F_CI_USR;
 	if (usr_ci) {
