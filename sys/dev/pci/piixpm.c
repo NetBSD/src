@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.73 2025/02/24 21:31:32 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.74 2025/11/26 21:21:09 brad Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.73 2025/02/24 21:31:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.74 2025/11/26 21:21:09 brad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,6 +669,21 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		return (EINVAL);
 	}
 
+	/* Set SMBus command */
+	if (cmdlen == 0) {
+		if (len == 0)
+			ctl = PIIX_SMB_HC_CMD_QUICK;
+		else
+			ctl = PIIX_SMB_HC_CMD_BYTE;
+	} else if (len == 1)
+		ctl = PIIX_SMB_HC_CMD_BDATA;
+	else if (len == 2)
+		ctl = PIIX_SMB_HC_CMD_WDATA;
+	else {
+		mutex_exit(&sc->sc_exec_lock);
+		return (EINVAL);
+	}
+	
 	/* Setup transfer */
 	sc->sc_i2c_xfer.op = op;
 	sc->sc_i2c_xfer.buf = buf;
@@ -701,19 +716,6 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD1, b[1]);
 	}
-
-	/* Set SMBus command */
-	if (cmdlen == 0) {
-		if (len == 0)
-			ctl = PIIX_SMB_HC_CMD_QUICK;
-		else
-			ctl = PIIX_SMB_HC_CMD_BYTE;
-	} else if (len == 1)
-		ctl = PIIX_SMB_HC_CMD_BDATA;
-	else if (len == 2)
-		ctl = PIIX_SMB_HC_CMD_WDATA;
-	else
-		panic("%s: unexpected len %zu", __func__, len);
 
 	if ((flags & I2C_F_POLL) == 0)
 		ctl |= PIIX_SMB_HC_INTREN;
