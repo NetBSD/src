@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_30.h,v 1.3 2025/07/08 11:45:25 thorpej Exp $	*/
+/*	$NetBSD: mmu_30.h,v 1.4 2025/11/26 16:26:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #ifndef _M68K_MMU_30_H_
 #define	_M68K_MMU_30_H_
-
-#include <machine/fcode.h>
 
 /*
  * The built-in MMU in the 68030 is a subset of the 68851.  Section 9.6
@@ -82,13 +80,15 @@
 #define	TT30_FCBASE	__BITS(4,6)	/* Function Code base */
 #define	TT30_FCMASK	__BITS(0,2)	/* Function Code bits to ignore */
 
+#ifdef _KERNEL
+#include <machine/fcode.h>
+
 /* Convenience definitions for address space selection. */
 #define	TT30_USERD	__SHIFTIN(FC_USERD,TT30_FCBASE)
 #define	TT30_USERP	__SHIFTIN(FC_USERP,TT30_FCBASE)
 #define	TT30_SUPERD	__SHIFTIN(FC_SUPERD,TT30_FCBASE)
 #define	TT30_SUPERP	__SHIFTIN(FC_SUPERP,TT30_FCBASE)
 
-#ifdef _KERNEL
 /*
  * TT register value indices in the mmu_ttregs[] array.  Note that asm
  * code makes assumptions about these indices, to change them at your
