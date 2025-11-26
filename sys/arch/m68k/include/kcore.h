@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.8 2025/11/12 03:31:06 thorpej Exp $	*/
+/*	$NetBSD: kcore.h,v 1.9 2025/11/26 23:02:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,12 @@ struct gen68k_kcore_hdr {
 	uint32_t	itt1;		/* 68040 ITT1 */
 
 	int32_t		mmutype;	/* MMU_* value */
+	uint32_t	reloc;		/* value added to relocate a symbol
+					   before address translation is
+					   enabled */
+	uint32_t	relocend;	/* if kernbase < va < relocend, we
+					   can do simple relocation to get
+					   the physical address */
 
 	phys_ram_seg_t	ram_segs[GEN68K_NPHYS_RAM_SEGS];
 };

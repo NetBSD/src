@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.32 2025/11/26 18:51:08 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.33 2025/11/26 23:02:11 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.32 2025/11/26 18:51:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.33 2025/11/26 23:02:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3467,6 +3467,9 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
+static paddr_t kernel_reloc_offset;
+static vaddr_t kernel_reloc_end;
+
 /*
  * pmap_init_kcore_hdr:
  *
@@ -3489,6 +3492,10 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
 	strcpy(h->name, "gen68k");
 	h->page_size = PAGE_SIZE;
 	h->kernbase = VM_MIN_KERNEL_ADDRESS;
+
+	/* Fixed relocation information. */
+	m->reloc    = kernel_reloc_offset;
+	m->relocend = kernel_reloc_end;
 
 	/*
 	 * Fill in information about our MMU configuration.
@@ -3671,6 +3678,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 #define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
 #define	RELOC(v, t)	*((t *)VA_TO_PA(&(v)))
 
+	/* Record the relocation offset for kernel crash dumps. */
+	RELOC(kernel_reloc_offset, paddr_t) = reloff;
+
 	/*
 	 * First determination we have to make is our configuration:
 	 * Are we using a 2-level or 3-level table?  For the purposes
@@ -3715,6 +3725,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 *
 	 *	Sysseg_pa	kernel lev1map	PAGE_SIZE (p)
 	 *	kernel_lev1map			PAGE_SIZE (v, ci)
+	 *
+	 *	^^^^ end of simple relocation region ^^^^
 	 *
 	 *	null_segtab_pa	null segtab	PAGE_SIZE (p)
 	 *
@@ -3769,6 +3781,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	RELOC(kernel_lev1map, vaddr_t) = kern_lev1va = nextva;
 	nextva += PAGE_SIZE;
 	nstpages++;
+
+	/* This is the end of the simple relocation region. */
+	RELOC(kernel_reloc_end, vaddr_t) = nextva;
 
 	/*
 	 * For 3-level configs, we now have space to allocate
