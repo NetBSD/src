@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.195 2025/11/26 08:52:34 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.196 2025/11/26 09:19:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1165,7 +1165,6 @@ Lbootcode:
 	movl	#0,%d0
 	movc	%d0,%cacr		| caches off
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	%d2,MAXADDR+PAGE_SIZE-4	| restore old high page contents
 	DOREBOOT
 LmotommuF:
 #endif
@@ -1180,7 +1179,6 @@ LhpmmuB:
 #if defined(M68K_MMU_HP)
 	MMUADDR(%a0)
 	movl	#0xFFFF0000,%a0@(MMUCMD)	| totally disable MMU
-	movl	%d2,MAXADDR+PAGE_SIZE-4	| restore old high page contents
 	DOREBOOT
 #endif
 Lebootcode:
