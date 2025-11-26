@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 2025/11/11 15:17:04 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 2025/11/26 08:51:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -246,6 +246,7 @@ Lmemok:
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%a4
+	tstl	%a4
 	jne	Lstart2
 #endif
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data

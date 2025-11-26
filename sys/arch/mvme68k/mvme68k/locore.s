@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145 2025/11/22 10:13:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.146 2025/11/26 08:51:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -539,6 +539,7 @@ Lsavmaxmem:
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel text/data syms
 	movl	%a0@,%a4
+	tstl	%a4
 	jne	Lstart2
 #endif
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data

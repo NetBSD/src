@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 2025/11/18 23:18:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 2025/11/26 08:51:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -264,6 +264,7 @@ Lstart1:
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%a4
+	tstl	%a4
 	jne	Lstart3
 #endif
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
