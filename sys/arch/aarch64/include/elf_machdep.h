@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.5 2022/05/30 21:18:37 jkoshy Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.6 2025/11/26 14:52:59 jkoshy Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -151,8 +151,7 @@
 #define R_AARCH64_TLSLD_MOVW_DTPREL_G1		524	/* DTPREL(S+A) */
 #define R_AARCH64_TLSLD_MOVW_DTPREL_G1_NC	525	/* DTPREL(S+A) */
 #define R_AARCH64_TLSLD_MOVW_DTPREL_G0		526	/* DTPREL(S+A) */
-#define R_AARCH64_TLSLD_MOVW_DTPREL_G0_NC	528	/* DTPREL(S+A) */
-#define R_AARCH64_TLSLD_ADD_DTPREL_HI12		528	/* DTPREL(S+A) */
+#define R_AARCH64_TLSLD_MOVW_DTPREL_G0_NC	527	/* DTPREL(S+A) */
 #define R_AARCH64_TLSLD_ADD_DTPREL_HI12		528	/* DTPREL(S+A) */
 #define R_AARCH64_TLSLD_ADD_DTPREL_LO12		529	/* DTPREL(S+A) */
 #define R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC	530	/* DTPREL(S+A) */
