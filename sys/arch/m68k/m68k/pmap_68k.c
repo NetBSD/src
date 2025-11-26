@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.29 2025/11/24 21:56:19 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.30 2025/11/26 18:08:21 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.29 2025/11/24 21:56:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.30 2025/11/26 18:08:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1600,8 +1600,12 @@ pmap_pv_pte(struct pv_entry * const pv)
  *	the storage for the new PV entry.
  *
  *	We are responsible for storing the new PTE into the destination
- *	table.  We are also guaranteed that no mapping exists there, so
- *	no ATC invlidation for the new mapping is required.
+ *	table.  We are also guaranteed that no mapping exists there, but
+ *	the MMU has a negative cache in the ATC (see 68030UM Figure 9-8.
+ *	Address Translation General Flowchart, ATC hit, B==1 case, as well
+ *	as 68040UM Figure 3-21. ATC Entry and Tag Fields, R bit and the
+ *	associated descriptive text), so we still have to handle ATC entry
+ *	invalidation.
  */
 static void
 pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
@@ -1667,6 +1671,15 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 
 	/* Set the PTE for the new mapping. */
 	pte_store(ptep, npte);
+
+	/*
+	 * Invalidate the ATC entry **after** storing the PTE so that
+	 * there is no window where another MMU table walk finds the
+	 * stale invalid entry.
+	 */
+	if (active_pmap(pmap)) {
+		TBIS(va);
+	}
 
 	/*
 	 * If this is a user-requested CI mapping, we need to make
