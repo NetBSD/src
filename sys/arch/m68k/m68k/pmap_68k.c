@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.31 2025/11/26 18:16:40 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.32 2025/11/26 18:51:08 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.31 2025/11/26 18:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.32 2025/11/26 18:51:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1666,6 +1666,10 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	if (__predict_false(VM_MDPAGE_CI_P(pg))) {
 		npte = pte_set_ci(npte);
 		pte_store(ptep, npte);
+		/* See below. */
+		if (active_pmap(pmap)) {
+			TBIS(va);
+		}
 		return;
 	}
 
@@ -2634,6 +2638,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * previous mapping, but the newly-entered mapping will
 		 * inherit the retain count taken when we looked up the
 		 * PTE.
+		 *
+		 * XXX Can we elide the ATC flush here?  We're going to
+		 * XXX hit the ATC after setting the new PTE anyway.
 		 */
 		pmap_evcnt(enter_pa_change);
 		pmap_remove_mapping(pmap, va, ptep, pt,
@@ -2720,6 +2727,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * count we took while looking up the PTE.
 	 */
 	pte_store(ptep, npte);
+
+	/*
+	 * See comments in pmap_pv_enter() for why we have to hit
+	 * the ATC here.
+	 */
+	if (active_pmap(pmap)) {
+		TBIS(va);
+	}
 	goto out_crit_exit;
 
  out_release:
@@ -2754,6 +2769,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pte_store(ptep, npte);
 
 	/*
+	 * See comments in pmap_pv_enter() as for why we hit the ATC here.
+	 * This *should* be unnecessary because this is a wired kernel
+	 * mapping and no demand-page-ins should have happened at this
+	 * VA, but we're erring on the side of caution for now.
+	 */
+	TBIS(va);
+
+	/*
 	 * There should not have been anything here, previously,
 	 * so we can skip ATC invalidation in the common case.
 	 */
@@ -2768,7 +2791,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (__predict_false(! pte_wired_p(opte))) {
 			pmap_stat_update(pmap, wired_count, 1);
 		}
-		TBIS(va);
 	} else {
 		pmap_stat_update(pmap, resident_count, 1);
 		pmap_stat_update(pmap, wired_count, 1);
@@ -3033,6 +3055,8 @@ pmap_zero_page(paddr_t pa)
 	/* Set the new PTE. */
 	KASSERT(! pte_valid_p(pte_load(dst_ptep)));
 	pte_store(dst_ptep, dst_pte);
+	/* XXX Possibly being over-cautious here; see pmap_kenter_pa(). */
+	TBIS(pmap_tmpmap_dstva);
 
 	/* Zero the page. */
 	zeropage((void *)pmap_tmpmap_dstva);
@@ -3065,8 +3089,13 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	/* Set the new PTEs. */
 	KASSERT(! pte_valid_p(pte_load(src_ptep)));
 	pte_store(src_ptep, src_pte);
+	/* XXX Possibly being over-cautious here; see pmap_kenter_pa(). */
+	TBIS(pmap_tmpmap_srcva);
+
 	KASSERT(! pte_valid_p(pte_load(dst_ptep)));
 	pte_store(dst_ptep, dst_pte);
+	/* XXX Possibly being over-cautious here; see pmap_kenter_pa(). */
+	TBIS(pmap_tmpmap_dstva);
 
 	/* Copy the page. */
 	copypage((void *)pmap_tmpmap_srcva, (void *)pmap_tmpmap_dstva);
@@ -3074,6 +3103,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	/* Invalidate the PTEs. */
 	pte_store(src_ptep, 0);
 	TBIS(pmap_tmpmap_srcva);
+
 	pte_store(dst_ptep, 0);
 	TBIS(pmap_tmpmap_dstva);
 }
