@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.299 2025/11/10 18:15:01 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.300 2025/11/26 16:45:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.299 2025/11/10 18:15:01 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.300 2025/11/26 16:45:24 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2539,13 +2539,18 @@ lfs_super_work(struct work *wk, void *arg)
 
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
+	
+	mutex_enter(&bufcache_lock);
+	KASSERT(bp->b_cflags & BC_BUSY);
+	mutex_exit(&bufcache_lock);
+	lfs_freebuf(fs, bp);
+	
 	mutex_enter(&lfs_lock);
 	fs->lfs_sbactive = 0;
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 	wakeup(&fs->lfs_sbactive);
 	mutex_exit(&lfs_lock);
-	lfs_freebuf(fs, bp);
 }
 
 static void
