@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.73 2025/11/24 17:13:12 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.74 2025/11/26 19:01:42 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1363,4 +1363,23 @@ sys/dev/tc/sfb.c				1.90
 
 	sfb(4): fix mapping of the framebuffer for X.
 	[macallan, ticket #1199]
+
+sys/crypto/chacha/chacha_ref.c			1.2
+
+	chacha: use inline for small hot function.
+	[nia, ticket #1200]
+
+share/man/man4/rge.4				1.6-1.10
+sys/dev/pci/if_rge.c				1.35-1.46 (adapted via patch)
+sys/dev/pci/if_rgereg.h				1.10-1.17
+sys/dev/pci/pcidevs				1.1532
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+
+	rge(4): PR 59724, PR 59791: bring mostly up-to-date with upstream
+	(OpenBSD) changes, including support for new chips and variants,
+	and enable IPv4/TCP4/UDP4 checksum offloading.  Does not include
+	support for Jumbo frames or Wake-on-LAN.
+	[pgoyette, ticket #1201]
 
