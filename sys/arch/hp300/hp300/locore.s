@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.194 2025/11/26 08:51:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.195 2025/11/26 08:52:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -149,6 +149,21 @@ ASLOCAL(tmpstk)
 	movc	%d0,%vbr;					\
 	/* Jump to REQ_REBOOT */				\
 	jmp	0x1A4;
+
+#ifdef __HAVE_NEW_PMAP_68K
+/*
+ * The new 68k pmap utilizes the MAXADDR page as the NULL segment table
+ * to avoid the special page wasting tables, so we have to preserve PROM
+ * workarea for the next reboot.
+ */
+#define BOOTTYPE	0xfffffdc0U	/* from hp300/stand/common/srt0.S */
+#define BOOTWORKSTART	BOOTTYPE	/* assuming last few bytes are used */
+#define BOOTWORKSIZE	(0U - BOOTWORKSTART)
+
+	.bss
+ASLOCAL(bootwork)
+	.space BOOTWORKSIZE
+#endif
 
 /*
  * Initialization
@@ -387,6 +402,18 @@ Lstart1:
 	subl	%d0,%d1			| compute amount of RAM present
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| and physmem
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/* save boot workarea */
+	lea	BOOTWORKSTART,%a1	| src: PA of the last page work
+	ASRELOC(bootwork, %a2)		| dst: PA of &bootwork
+	movl	%a1,%a3
+	addl	#BOOTWORKSIZE,%a3	| end of copy region
+Lsavebootwork:
+	movw	%a1@+,%a2@+		| copy a word
+	cmpl	%a3,%a1
+	jne	Lsavebootwork		| repeat until BOOTWORKSIZE
+#endif /* __HAVE_NEW_PMAP_68K */
 
 /* configure kernel and lwp0 VA space so we can get going */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -1102,6 +1129,17 @@ ENTRY_NOPROFILE(doboot)
 	MMUADDR(%a0)
 	andl	#~MMU_CEN,%a0@(MMUCMD)	| disable external cache
 Lnocache5:
+#ifdef __HAVE_NEW_PMAP_68K
+	/* restore boot workarea */
+	lea	_ASM_LABEL(bootwork),%a1 | src: &bootwork
+	lea	BOOTWORKSTART,%a2	| dst: PA (== VA) of the last page work
+	movl	%a1,%a3
+	addl	#BOOTWORKSIZE,%a3	| end of copy region
+Lrestorebootwork:
+	movw	%a1@+,%a2@+		| copy a word
+	cmpl	%a3,%a1
+	jne	Lrestorebootwork	| repeat until BOOTWORKSIZE
+#endif /* __HAVE_NEW_PMAP_68K */
 	lea	MAXADDR,%a0		| last page of physical memory
 	movl	_C_LABEL(boothowto),%a0@+ | store howto
 	movl	_C_LABEL(bootdev),%a0@+	| and devtype
