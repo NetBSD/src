@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.37 2025/04/04 04:37:32 rin Exp $	*/
+/*	$NetBSD: endian.h,v 1.38 2025/11/26 22:25:10 nia Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -194,7 +194,7 @@ __END_DECLS
 
 #ifdef _NETBSD_SOURCE
 
-#if __GNUC_PREREQ__(2, 95)
+#if __GNUC_PREREQ__(2, 95) && !defined(__HAVE_SLOW_BSWAP_BUILTIN)
 
 #define __GEN_ENDIAN_ENC(bits, endian) \
 static __inline void __unused \
@@ -229,7 +229,7 @@ __GEN_ENDIAN_DEC(32, le)
 __GEN_ENDIAN_DEC(64, le)
 #undef __GEN_ENDIAN_DEC
 
-#else	/* !(GCC >= 2.95) */
+#else	/* !(GCC >= 2.95 && !__HAVE_SLOW_BSWAP_BUILTIN) */
 
 static __inline void __unused
 be16enc(void *buf, uint16_t u)
