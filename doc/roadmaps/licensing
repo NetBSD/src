@@ -1,0 +1,126 @@
+$NetBSD: licensing,v 1.1 2025/11/27 17:29:10 nia Exp $
+
+NetBSD Licensing
+================
+
+In an ideal world, the entire of NetBSD should be available under
+simple permissive software licenses. The 2-clause BSD license is
+recommended for new contributions.
+
+Background: GPL in base
+-----------------------
+
+In the 1990s, the BSD developers at CSRG realized their toolchain was
+falling behind alternatives. One of the reasons for this was Sun
+choosing to lock their compiler behind a paywall - as a result, Sun's
+users went out in search of freeware alternatives. They found GNU's GCC,
+and immediately formed a new community around improving it.
+Eventually, various GNU tools found their way into BSD.
+
+We would like to eliminate the use of the GNU General Public License
+in the base system. This provides a number of advantages: less worrying
+about license compatibility, easier sharing of code between NetBSD
+components, less likelihood of being sued for redistributing NetBSD
+binaries, less legalese and need for lawyers to interpret it,
+and an overall reduction in GNU info pages.
+
+As a general rule, most GPL code in NetBSD provides programs that
+are "nice to have", but not fully essential for a working system,
+so redistributors have an option to remove or replace them.
+
+For example, some NetBSD ports can be built using Clang as the
+toolchain instead of GCC (see mk.conf(5), HAVE_LLVM).
+
+GPL codes lives under the following directories to ensure clean
+separation:
+
+* src/external/gpl2
+* src/external/gpl3
+* src/sys/external/gpl2
+
+Background: Advertising clause
+------------------------------
+
+At some point, Berkeley added the following clause to their license
+for the free parts of BSD UNIX:
+
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by [copyright holder].
+
+With time, this clause came to be seen as onerous: there is already
+a requirement to credit copyright holders in the documentation of
+redistributions, and it's very difficult to enforce. At various points,
+distributing NetBSD required including hundreds of "This product
+includes software developed [...]" statements. It also makes it more
+complicated to include NetBSD code in projects under other licenses.
+
+Berkeley removed the advertising clause in 1999, and clarified their
+stance against including it in 2012. However, there are lots of
+instances where it has been copy and pasted by other people and
+organizations. Therefore, its removal from NetBSD is mostly a social
+challenge.
+
+Technical priorities
+--------------------
+
+The directory under external/gpl2 contains several programs that
+could be replaced. Most of them are quite old versions now, chosen
+to avoid GPLv3:
+
+* diffutils - Could be replaced with FreeBSD/OpenBSD diff(1).
+* grep - Could be replaced with FreeBSD grep(1). Someone needs to
+  compare the performance. Other grep implementations in C likely
+  exist. A MKBSDGREP option exists, but the copy is probably old.
+* rcs - Supposedly OpenBSD developed a compatible replacement.
+* xcvs - Priority for removal as we transition away from CVS.
+* groff - Mostly replaced by mandoc(1), although some non-manual use
+  cases (e.g. distrib/notes) continue to rely on groff. Optional -
+  a MKGROFF option exists. Such files could also be converted to
+  plain text.
+* send-pr - Part of our infrastructure, but basically optional -
+  alternatives like the gnats web interface exist.
+* gawk - Needed only by other GNU software?
+* gmake - Needed only by other GNU software.
+* texinfo - Needed only by other GNU software.
+
+The directory under sys/external/gpl2 mainly contains device tree
+sources, providing platform definition files for embedded system
+boards. Removing this would break a lot of platforms.
+
+The directory under external/gpl3 only contains toolchain-relevant
+files, and can be mostly avoided with HAVE_LLVM=yes and elftoolchain.
+
+Social and legal tasks
+----------------------
+
+A list of advertising clauses that still apply can be found in:
+
+	src/distrib/notes/common/legal.common
+
+This file should be kept in sync as copyright holders are contacted.
+
+There are several high-priority targets for the removal of the
+advertising clause:
+
+* Lawrence Berkeley Laboratory advertising clauses are very widespread.
+  It is unclear whether Berkeley granted permission to remove such
+  clauses (FreeBSD apparently think so). Berkeley should be contacted
+  for clarification.
+* Harvard University 4-clauses licenses are widespread, and it's
+  possible someone knows an insider who could accelerate the process
+  of getting permission to fix them.
+* Wasabi Systems copyrights are very widespread in NetBSD. They were
+  "the NetBSD company" of their time. It is unclear who currently owns
+  Wasabi Systems' intellectual property. Someone should figure this out,
+  or we should use Foundation funds to acquire it.
+* 4-clause BSD licenses are also found in the tree belonging to Microsoft
+  (primarily in arm code), Cisco (primarily in SCTP code), and Intel
+  (primarily in ia64 code). These are huge corporations with publicly
+  contactable legal departments. It's also possible someone knows an
+  insider who could accelerate the process.
+
+Otherwise, the social and legal tasks mostly involve trying to find
+old contributors' current email addresses, and asking them for
+permission to relicense. This strategy has been somewhat successful,
+and should be completed before doing so is no longer possible.
