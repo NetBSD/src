@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.33 2025/11/26 23:02:11 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.34 2025/11/27 21:26:04 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.33 2025/11/26 23:02:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.34 2025/11/27 21:26:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1608,7 +1608,7 @@ pmap_pv_pte(struct pv_entry * const pv)
  *	invalidation.
  */
 static void
-pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
+pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
     struct pmap_table *pt, pt_entry_t npte, struct pv_entry *newpv)
 {
 	const bool usr_ci = pte_ci_p(npte);
@@ -1647,6 +1647,28 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	newpv->pv_next = VM_MDPAGE_PVS(pg);
 	VM_MDPAGE_SETPVP(VM_MDPAGE_HEAD_PVP(pg), newpv);
 	LIST_INSERT_HEAD(&pmap->pm_pvlist, newpv, pv_pmlist);
+
+	/*
+	 * If this is an EXEC mapping, then we have to ensure that
+	 * the I$ doesn't load stale data.
+	 *
+	 * XXX Should have a soft-PTE bit for this.
+	 */
+	if (prot & UVM_PROT_EXEC) {
+#if MMU_CONFIG_68040_CLASS
+		if (MMU_IS_68040_CLASS) {
+			/*
+			 * XXX Potential future optimization: is only
+			 * XXX the DCFP() needed here to deal with
+			 * XXX write-back?  Should we track EXEC-ness
+			 * XXX in the VM_MDPAGE?
+			 */
+			const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+			DCFP(pa);
+			ICPP(pa);
+		}
+#endif
+	}
 
 #if MMU_CONFIG_HP_CLASS
 	if (MMU_IS_HP_CLASS) {
@@ -2712,7 +2734,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * Enter the mapping into the PV list.  pmap_pv_enter()
 		 * will also set the PTE in the table.
 		 */
-		pmap_pv_enter(pmap, pg, va, pt, npte, newpv);
+		pmap_pv_enter(pmap, pg, va, prot, pt, npte, newpv);
 
 		/*
 		 * The new mapping takes ownership of the PT
@@ -2763,6 +2785,24 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	/* Build the new PTE. */
 	const pt_entry_t npte = pmap_make_pte(pa, prot, flags | PMAP_WIRED);
+
+	/*
+	 * If this is an EXEC mapping, then we have to ensure that
+	 * the I$ doesn't load stale data.
+	 */
+	if (__predict_false(prot & UVM_PROT_EXEC)) {
+#if MMU_CONFIG_68040_CLASS
+		if (MMU_IS_68040_CLASS) {
+			/*
+			 * XXX Potential future optimization: is only
+			 * XXX the DCFP() needed here to deal with
+			 * XXX write-back?
+			 */
+			DCFP(pa);
+			ICPP(pa);
+		}
+#endif
+	}
 
 	/* Set the new PTE. */
 	const pt_entry_t opte = pte_load(ptep);
