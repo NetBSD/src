@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.21 2021/03/22 18:41:11 christos Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.22 2025/11/27 05:04:35 andvar Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ struct	rainfo {
 	uint16_t	hoplimit;	/* AdvCurHopLimit */
 	TAILQ_HEAD(, prefix) prefix;	/* AdvPrefixList(link head) */
 	int	pfxs;
-	uint16_t	clockskew;/* used for consisitency check of lifetimes */
+	uint16_t	clockskew; /* used for consistency check of lifetimes */
 
 	TAILQ_HEAD(, rtinfo) route;
 	TAILQ_HEAD(, rdnss) rdnss;	/* RDNSS list */

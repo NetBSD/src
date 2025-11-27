@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.25 2024/12/05 21:59:11 andvar Exp $ */
+/* $NetBSD: xhcireg.h,v 1.26 2025/11/27 05:04:35 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -338,7 +338,7 @@
 #define	 XHCI_DB_SID_GET(x)	__SHIFTOUT((x), XHCI_DB_SID_MASK)
 #define	 XHCI_DB_SID_SET(x)	__SHIFTIN((x), XHCI_DB_SID_MASK)
 
-/* 7 xHCI Extendeded capabilities */
+/* 7 xHCI Extended capabilities */
 #define	XHCI_XECP_ID_MASK	__BITS(7, 0)
 #define	XHCI_XECP_ID(x)		__SHIFTOUT((x), XHCI_XECP_ID_MASK)
 #define	XHCI_XECP_NEXT_MASK	__BITS(15, 8)

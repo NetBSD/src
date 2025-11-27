@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.34 2024/07/17 12:00:13 riastradh Exp $
+ * $NetBSD: math_private.h,v 1.35 2025/11/27 05:04:35 andvar Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -428,7 +428,7 @@ do {								\
  * any extra precision into the type of 'a' -- 'a' should have type float_t,
  * double_t or long double.  b's type should be no larger than 'a's type.
  * Callers should use these types with scopes as large as possible, to
- * reduce their own extra-precision and efficiciency problems.  In
+ * reduce their own extra-precision and efficiency problems.  In
  * particular, they shouldn't convert back and forth just to call here.
  */
 #ifdef DEBUG

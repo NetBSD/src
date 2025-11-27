@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.65 2014/03/26 17:53:36 christos Exp $	*/
+/*	$NetBSD: vr.c,v 1.66 2025/11/27 05:04:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.65 2014/03/26 17:53:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.66 2025/11/27 05:04:35 andvar Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -541,7 +541,7 @@ VR_INTR(int ppl, vaddr_t pc, uint32_t status)
 	int ipl;
 
 	while (ppl < (ipl = splintr(&ipending))) {
-		/* Deal with unneded compare interrupts occasionally so that
+		/* Deal with unneeded compare interrupts occasionally so that
 		 * we can keep spllowersoftclock. */
 		if (ipending & MIPS_INT_MASK_5) {
 			mips3_cp0_compare_write(0);

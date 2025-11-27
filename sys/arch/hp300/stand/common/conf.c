@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 2024/05/09 15:11:11 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 2025/11/27 05:04:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -151,4 +151,4 @@ struct fs_ops file_system_ufs[NFSYS_FS] = {
 struct fs_ops file_system_nfs[1] = { FS_OPS(nfs) };
 
 struct fs_ops file_system[NFSYS_FS];
-int	nfsys = 1;		/* default value; should be overrieded */
+int	nfsys = 1;		/* default value; should be overridden */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: hpib.c,v 1.46 2025/11/27 05:04:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.46 2025/11/27 05:04:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ hpibbusattach(device_t parent, device_t self, void *aux)
 	sc->sc_ba = ha->ha_ba;
 	*(ha->ha_softcpp) = sc;			/* XXX */
 
-	hpibreset(device_unit(self));		/* XXX souldn't be here */
+	hpibreset(device_unit(self));		/* XXX shouldn't be here */
 
 	/*
 	 * Initialize the DMA queue entry.

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lvmlockdir,v 1.1 2021/01/26 13:31:19 martin Exp $
+# $NetBSD: lvmlockdir,v 1.2 2025/11/27 05:04:35 andvar Exp $
 #
 
 # REQUIRE: mountcritlocal
@@ -15,7 +15,7 @@ stop_cmd=":"
 lvmlockdir_start()
 {
 	#       create LVM locking directory, it needs to be owned by operator
-	#	group and has parmissions to allow lock file creation.
+	#	group and has permissions to allow lock file creation.
 	#
 	mkdir -p /var/run/lvm
 	chown root:operator /var/run/lvm

@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_armv8_64.S,v 1.15 2020/09/08 23:58:09 riastradh Exp $	*/
+/*	$NetBSD: aes_armv8_64.S,v 1.16 2025/11/27 05:04:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: aes_armv8_64.S,v 1.15 2020/09/08 23:58:09 riastradh Exp $")
+RCSID("$NetBSD: aes_armv8_64.S,v 1.16 2025/11/27 05:04:34 andvar Exp $")
 
 	.arch_extension	aes
 
@@ -729,7 +729,7 @@ END(aesarmv8_xts_enc8)
  *     uint8_t *out@x2, size_t nbytes@x3, uint8_t tweak[16] @x4,
  *     uint32_t nrounds@x5)
  *
- *	Decrypt a contiguous sequdece of blocks with AES-XTS.
+ *	Decrypt a contiguous sequence of blocks with AES-XTS.
  *
  *	nbytes must be a positive integral multiple of 16.  This routine
  *	is not vectorized; use aesarmv8_xts_dec8 for >=8 blocks at once.
@@ -763,7 +763,7 @@ END(aesarmv8_xts_dec1)
  *     uint8_t *out@x2, size_t nbytes@x3, uint8_t tweak[16] @x4,
  *     uint32_t nrounds@x5)
  *
- *	Decrypt a contiguous sequdece of blocks with AES-XTS.
+ *	Decrypt a contiguous sequence of blocks with AES-XTS.
  *
  *	nbytes must be a positive integral multiple of 128.
  *
