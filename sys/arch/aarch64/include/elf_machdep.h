@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.6 2025/11/26 14:52:59 jkoshy Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.7 2025/11/27 14:51:27 jkoshy Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,13 +34,9 @@
 
 #ifdef __aarch64__
 
-#if defined(__AARCH64EB__)
-#define ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#else
-#define ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#endif
+/*
+ * Symbols that are part of the ELF psABI.
+ */
 
 /* Processor specific flags for the ELF header e_flags field.  */
 #define EF_ARM_RELEXEC		0x00000001
@@ -63,20 +59,6 @@
 #define	EF_ARM_EABI_VER3	0x03000000
 #define	EF_ARM_EABI_VER4	0x04000000
 #define	EF_ARM_EABI_VER5	0x05000000
-
-#define ELF32_MACHDEP_ID_CASES						\
-		case EM_ARM:						\
-			break;
-
-#define	ELF64_MACHDEP_ID_CASES						\
-		case EM_AARCH64:					\
-			break;
-
-#define	ELF64_MACHDEP_ID	EM_AARCH64
-#define ELF32_MACHDEP_ID	EM_ARM
-
-#define	KERN_ELFSIZE		64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /* Processor specific relocation types */
 
@@ -220,9 +202,6 @@
 #define R_AARCH64_TLSDESC		1031	/* TLSDESC(S+A) */
 #define R_AARCH64_IRELATIVE		1032	/* Indirect(Delta(S) + A) */
 
-#define R_TYPE(name)		R_AARCH64_ ## name
-#define R_TLS_TYPE(name)	R_AARCH64_ ## name ## 64
-
 /* Processor specific program header types */
 #define PT_AARCH64_ARCHEXT	(PT_LOPROC + 0)
 #define PT_AARCH64_UNWIND	(PT_LOPROC + 1)
@@ -232,6 +211,36 @@
 #define SHF_COMDEF		0x80000000
 
 #define SHT_AARCH64_ATTRIBUTES	(SHT_LOPROC + 3)
+
+/*
+ * Local symbols.
+ */
+
+#if defined(__AARCH64EB__)
+#define ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#else
+#define ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#endif
+
+#define ELF32_MACHDEP_ID_CASES						\
+		case EM_ARM:						\
+			break;
+
+#define	ELF64_MACHDEP_ID_CASES						\
+		case EM_AARCH64:					\
+			break;
+
+#define	ELF64_MACHDEP_ID	EM_AARCH64
+#define ELF32_MACHDEP_ID	EM_ARM
+
+#define	KERN_ELFSIZE		64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+
+
+#define R_TYPE(name)		R_AARCH64_ ## name
+#define R_TLS_TYPE(name)	R_AARCH64_ ## name ## 64
 
 #ifdef _KERNEL
 #ifdef ELFSIZE
