@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2025/09/18 03:36:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.56 2025/11/27 15:42:13 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 WARNS=	3
@@ -41,7 +41,7 @@ SRCS+=	kvm_i386pae.c # Hook PAE support in the i386 build
 
 # Additional modules needed for m68k
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_CPU} == "m68k")
-SRCS+=	kvm_m68k_cmn.c kvm_sun2.c kvm_sun3.c kvm_sun3x.c
+SRCS+=	kvm_m68k_cmn.c kvm_m68k_gen.c kvm_sun2.c kvm_sun3.c kvm_sun3x.c
 .endif
 
 MAN=	kvm.3 kvm_dump.3 kvm_geterr.3 kvm_getfiles.3 kvm_getloadavg.3 \

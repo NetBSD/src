@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.20 2022/01/10 19:51:30 christos Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.21 2025/11/27 15:42:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #include "kvm_private.h"
 #include "kvm_m68k.h"
 
-__RCSID("$NetBSD: kvm_m68k.c,v 1.20 2022/01/10 19:51:30 christos Exp $");
+__RCSID("$NetBSD: kvm_m68k.c,v 1.21 2025/11/27 15:42:13 thorpej Exp $");
 
 struct name_ops {
 	const char *name;
@@ -73,6 +73,7 @@ static struct name_ops optbl[] = {
 	{ "sun2",	&_kvm_ops_sun2 },
 	{ "sun3",	&_kvm_ops_sun3 },
 	{ "sun3x",	&_kvm_ops_sun3x },
+	{ "gen68k",	&_kvm_ops_gen68k },
 	{ NULL,		&_kvm_ops_cmn },
 };
 

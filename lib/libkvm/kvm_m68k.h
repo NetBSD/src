@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.h,v 1.6 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_m68k.h,v 1.7 2025/11/27 15:42:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@ struct vmstate {
 };
 
 extern struct kvm_ops _kvm_ops_cmn;
+extern struct kvm_ops _kvm_ops_gen68k;
 extern struct kvm_ops _kvm_ops_sun2;
 extern struct kvm_ops _kvm_ops_sun3;
 extern struct kvm_ops _kvm_ops_sun3x;
