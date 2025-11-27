@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.34 2025/11/27 21:26:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.35 2025/11/27 22:42:41 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -185,13 +185,29 @@
  */
 
 /*
+ * Current status:
+ * - Very stable multi-user on virt68k (qemu 68040; does not accurately
+ *   model cache or ATC, but suitable for exercising large memory configs).
+ *
+ * - Single-user mode on 68030 w/ no external cache (luna68k).
+ *
+ * - Single-user mode on 68040 (hp425t).
+ *
+ * - Ports that have been adapted: hp300, luna68k, mvme68k (not tested),
+ *   news68k (see below), next68k (not tested), virt68k, x68k.
+ *
  * XXX TODO XXX
  *
- * - Solicit real 68040 testers.
- * - Test on real and emulated 68030.
+ * - Adapt amiga (hard), atari (hard), cesfic (easy), mac68k (moderate).
+ * - Test on 68020.
+ * - Test on 68060.
+ * - More rigorous 68040 testing.
+ * - More rigorous 68030 testing.
+ * - Test on machines above listed as "not tested".
+ * - More rigorous testing in various emulators (Nono, UAE?)
+ * - Fix problems observed on news68k (external cache related?)
  * - Finish HP MMU support and test on real HP MMU.
  * - Convert '851 / '030 to 3-level.
- * - Kcore / libkvm support.
  * - Inline asm for the atomic ops used.
  * - Optimize ATC / cache manipulation.
  * - Add some more instrumentation.
@@ -203,7 +219,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.34 2025/11/27 21:26:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.35 2025/11/27 22:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
