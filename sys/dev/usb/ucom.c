@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.148 2025/10/31 08:23:54 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.149 2025/11/28 09:02:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.148 2025/10/31 08:23:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.149 2025/11/28 09:02:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -1459,10 +1459,11 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	 * next time the device is opened.
 	 *
 	 * USBD_CANCELLED is a reported when the device is closed
-	 * via ucomclose() -> usbd_abort_pipe() -> /usbd_xfer_abort()
+	 * via ucomclose() -> usbd_abort_pipe() -> usbd_xfer_abort()
 	 */
 	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
+	KASSERT(xfer == ub->ub_xfer);
 
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
 	    sc->sc_closing) {
