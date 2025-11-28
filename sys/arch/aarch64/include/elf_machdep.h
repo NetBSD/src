@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.7 2025/11/27 14:51:27 jkoshy Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.8 2025/11/28 19:12:58 jkoshy Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #ifdef __aarch64__
 
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Symbols that are part of the ELF psABI.
  */
@@ -211,6 +212,8 @@
 #define SHF_COMDEF		0x80000000
 
 #define SHT_AARCH64_ATTRIBUTES	(SHT_LOPROC + 3)
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
 
 /*
  * Local symbols.
