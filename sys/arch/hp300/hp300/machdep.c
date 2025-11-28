@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 2025/11/24 07:00:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.248 2025/11/28 20:32:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2025/11/24 07:00:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2025/11/28 20:32:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -197,7 +197,17 @@ const struct pmap_bootmap machine_bootmap[] = {
 
 	{ .pmbm_vaddr = -1 },
 };
-#endif
+
+/*
+ * The new 68k pmap utilizes the MAXADDR page as the NULL segment table
+ * to save a page, so we have to preserve PROM workarea for the next reboot.
+ * This preservation area is much less than a page size, so the trade-off
+ * seems worth it.
+ */
+#define	BOOTWORKSTART	0xfffffdc0U	/* from hp300/stand/common/srt0.S */
+#define	BOOTWORKSIZE	(0U - BOOTWORKSTART)
+static char bootwork_savearea[BOOTWORKSIZE];
+#endif /* __HAVE_NEW_PMAP_68K */
 
 /*
  * Early initialization, before main() is called.
@@ -228,9 +238,11 @@ hp300_init(paddr_t nextpa)
 	/*
 	 * We've used NULL_SEGTAB_PA in <machine/pmap.h> to use the
 	 * reserved last-page-of-RAM as the NULL segment table.  But,
-	 * we copied code into that page (the MMU trampoline) to enable
-	 * the MMU.  So, zero it out now.
+	 * we copied code into that page (the MMU trampoline) and it
+	 * also contains the PROM's work area.  Preserve the PROM work
+	 * area and zero it out now.
 	 */
+	memcpy(bootwork_savearea, (void *)BOOTWORKSTART, BOOTWORKSIZE);
 	memset((void *)MAXADDR, 0, PAGE_SIZE);
 #endif
 
@@ -673,6 +685,11 @@ cpu_reboot(int howto, char *bootstr)
 
 	printf("rebooting...\n");
 	DELAY(1000000);
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/* Restore the PROM work area first. */
+	memcpy((void *)BOOTWORKSTART, bootwork_savearea, BOOTWORKSIZE);
+#endif
 	doboot();
 	/* NOTREACHED */
 }
