@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.20 2025/11/28 21:56:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.19 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.20 2025/11/28 21:56:23 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>

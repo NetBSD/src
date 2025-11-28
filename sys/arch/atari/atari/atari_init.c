@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.114 2025/11/04 22:09:24 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.115 2025/11/28 21:52:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.114 2025/11/04 22:09:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.115 2025/11/28 21:52:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.114 2025/11/04 22:09:24 thorpej Exp
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>
-#include <sys/extent.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/dkbad.h>

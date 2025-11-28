@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.69 2023/12/07 16:56:09 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.70 2025/11/28 21:52:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,11 +33,10 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.69 2023/12/07 16:56:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.70 2025/11/28 21:52:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
