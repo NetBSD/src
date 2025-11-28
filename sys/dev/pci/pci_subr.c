@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.244 2024/04/19 21:24:00 andvar Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.245 2025/11/28 09:23:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.244 2024/04/19 21:24:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.245 2025/11/28 09:23:10 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3843,7 +3843,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 	printf("\n  TPH Requester Extended Capability\n");
 
 	reg = regs[o2i(extcapoff + PCI_TPH_REQ_CAP)];
-	printf("    TPH Requester Capabililty register: 0x%08x\n", reg);
+	printf("    TPH Requester Capability register: 0x%08x\n", reg);
 	onoff("No ST Mode Supported", reg, PCI_TPH_REQ_CAP_NOST);
 	onoff("Interrupt Vector Mode Supported", reg, PCI_TPH_REQ_CAP_INTVEC);
 	onoff("Device Specific Mode Supported", reg, PCI_TPH_REQ_CAP_DEVSPEC);
