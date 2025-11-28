@@ -1,4 +1,4 @@
-/* $NetBSD: mcommphy.c,v 1.3 2024/10/23 05:55:45 skrll Exp $ */
+/* $NetBSD: mcommphy.c,v 1.4 2025/11/28 08:11:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.3 2024/10/23 05:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.4 2025/11/28 08:11:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.3 2024/10/23 05:55:45 skrll Exp $");
 #define YT8521_EXT_PAD_DRIVE_STRENGTH	0xa010
 #define  YT8531_RGMII_RXC_DS_MASK	__BITS(15, 13)
 #define  YT8531_RGMII_RXD_DS_HIMASK	__BIT(12)
+#define  YT8531_RGMII_RX_DS_DEFAULT    0x3
 #define  YT8531_RGMII_RXD_DS_LOMASK	__BITS(5, 4)
 #define YT8531_RGMII_RXD_DS_MASK \
     (YT8531_RGMII_RXD_DS_HIMASK | YT8531_RGMII_RXD_DS_LOMASK)
@@ -482,15 +483,18 @@ mcomm_yt8531_init(struct mcomm_softc *msc)
 	PHY_WRITE(sc, YTPHY_EXT_REG_ADDR, YT8521_EXT_SYNCE_CFG);
 	PHY_READ(sc, YTPHY_EXT_REG_DATA, &data);
 
-	data &= ~(YT8531_EN_SYNC_E | YT8531_CLK_SRC_SEL_MASK);
-
 	switch (msc->sc_clk_out_frequency_hz) {
+	case 0:
+		data &= ~YT8531_EN_SYNC_E;
+		break;
 	case 125000000:
+		data &= ~(YT8531_EN_SYNC_E | YT8531_CLK_SRC_SEL_MASK);
 		data |= YT8531_EN_SYNC_E;
 		data |= YT8531_CLK_FRE_SEL_125M;
 		data |= __SHIFTIN(YT8531_CLK_SRC_SEL_PLL_125M, YT8531_CLK_SRC_SEL_MASK);
 		break;
 	case 25000000:
+		data &= ~(YT8531_EN_SYNC_E | YT8531_CLK_SRC_SEL_MASK);
 		data |= YT8531_EN_SYNC_E;
 		data |= __SHIFTIN(YT8531_CLK_SRC_SEL_REF_25M, YT8531_CLK_SRC_SEL_MASK);
 		break;
@@ -562,6 +566,8 @@ mcommphyattach(device_t parent, device_t self, void *aux)
 	case YT8521:
 	case YT8531:
 		/* Default values */
+		msc->sc_rx_clk_drv_microamp = YT8531_RGMII_RX_DS_DEFAULT;
+		msc->sc_rx_data_drv_microamp = YT8531_RGMII_RX_DS_DEFAULT;
 		msc->sc_rx_internal_delay_ps = YT8521_DELAY_DEFAULT;
 		msc->sc_tx_internal_delay_ps = YT8521_DELAY_DEFAULT;
 
