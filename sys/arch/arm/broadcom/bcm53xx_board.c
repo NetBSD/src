@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.28 2025/10/03 14:05:11 thorpej Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.29 2025/11/28 08:27:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.28 2025/10/03 14:05:11 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.29 2025/11/28 08:27:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -502,7 +502,7 @@ bcm53xx_bootstrap(vaddr_t iobase)
 	curcpu()->ci_data.cpu_cc_freq = clk->clk_cpu;
 
 #if NARML2CC > 0
-	arml2cc_init(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
+	arml2cc_get_cacheinfo(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
 	    ARMCORE_L2C_BASE);
 #endif
 }

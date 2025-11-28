@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.21 2025/11/22 14:37:45 skrll Exp $	*/
+/*	$NetBSD: pl310.c,v 1.22 2025/11/28 08:27:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.21 2025/11/22 14:37:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.22 2025/11/28 08:27:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -258,7 +258,7 @@ arml2cc_enable(struct arml2cc_softc *sc)
 }
 
 void
-arml2cc_init(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
+arml2cc_get_cacheinfo(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
 {
 	struct arm_cache_info * const info = &arm_scache;
 

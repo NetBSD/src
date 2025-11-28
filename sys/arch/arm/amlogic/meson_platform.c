@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.23 2025/10/03 14:05:11 thorpej Exp $ */
+/* $NetBSD: meson_platform.c,v 1.24 2025/11/28 08:27:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.23 2025/10/03 14:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.24 2025/11/28 08:27:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -298,7 +298,7 @@ meson8b_platform_bootstrap(void)
 
 #if NARML2CC > 0
 	const bus_space_handle_t pl310_bh = MESON8B_ARM_VBASE + MESON8B_ARM_PL310_BASE;
-	arml2cc_init(&arm_generic_bs_tag, pl310_bh, 0);
+	arml2cc_get_cacheinfo(&arm_generic_bs_tag, pl310_bh, 0);
 #endif
 
 	meson_platform_bootstrap();

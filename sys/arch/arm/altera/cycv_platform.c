@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.20 2025/09/06 21:02:39 thorpej Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.21 2025/11/28 08:27:08 skrll Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.20 2025/09/06 21:02:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.21 2025/11/28 08:27:08 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -72,7 +72,7 @@ cycv_platform_bootstrap(void)
 	bus_space_map(bst, CYCV_L2CACHE_BASE, CYCV_L2CACHE_SIZE, 0, &bsh_l2c);
 
 #if NARML2CC > 0
-	arml2cc_init(bst, bsh_l2c, 0);
+	arml2cc_get_cacheinfo(bst, bsh_l2c, 0);
 #endif
 
 	arm_fdt_cpu_bootstrap();

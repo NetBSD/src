@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310_var.h,v 1.1 2012/09/07 11:49:00 matt Exp $	*/
+/*	$NetBSD: pl310_var.h,v 1.2 2025/11/28 08:27:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,5 +33,5 @@
 
 #include <sys/bus.h>
 
-void	arml2cc_init(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	arml2cc_get_cacheinfo(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 #endif /* !_ARM_CORTEX_PL310_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.10 2025/09/06 21:02:40 thorpej Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.11 2025/11/28 08:27:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.10 2025/09/06 21:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.11 2025/11/28 08:27:08 skrll Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -169,7 +169,7 @@ imx_platform_bootstrap(void)
 	bus_space_handle_t bsh;
 	if (bus_space_map(bst, IMX6_ARMCORE_PBASE, IMX6_ARMCORE_SIZE, 0, &bsh))
 		panic("couldn't map armcore registers");
-	arml2cc_init(bst, bsh, ARMCORE_L2C_BASE);
+	arml2cc_get_cacheinfo(bst, bsh, ARMCORE_L2C_BASE);
 	bus_space_unmap(bst, bsh, IMX6_ARMCORE_SIZE);
 #endif
 
