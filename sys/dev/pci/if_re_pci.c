@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.53 2024/02/28 18:55:11 jakllsch Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.54 2025/11/28 11:45:26 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.53 2024/02/28 18:55:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.54 2025/11/28 11:45:26 mlelstv Exp $");
 
 #include <sys/types.h>
 
@@ -99,6 +99,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
 	    RTK_8168,
 	    "RealTek 8168/8111 PCIe Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168_2,
+	    RTK_8168,
+	    "RealTek 8161 PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_NCUBE, PCI_PRODUCT_NCUBE_TG3648,
 	    RTK_8168,
 	    "TP-Link TG-3468 v2 (RTL8168) Gigabit Ethernet" },
