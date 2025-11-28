@@ -1,8 +1,9 @@
-/*	$NetBSD: elf_machdep.h,v 1.20 2025/11/27 20:51:24 jkoshy Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.21 2025/11/28 19:11:27 jkoshy Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
 
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * ARM ELF psABI symbols and GNU extensions.
  */
@@ -128,6 +129,8 @@
 
 /* Processor specific symbol types */
 #define STT_ARM_TFUNC		STT_LOPROC
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
 
 /*
  * Local symbols.
