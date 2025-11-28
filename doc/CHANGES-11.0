@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.45 2025/11/26 16:58:26 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.46 2025/11/28 10:58:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1044,4 +1044,14 @@ sys/crypto/chacha/chacha_ref.c			1.2
 
 	chacha: use inline for small hot function.
 	[nia, ticket #107]
+
+sys/arch/sparc/include/bswap.h			1.3
+sys/arch/sparc64/include/bswap.h		1.3
+sys/sys/bswap.h					1.20
+sys/sys/endian.h				1.38
+
+	sparc and sparc64: PR 59789, PR 59774: use our own
+	inline code instead of GCC builtins for byte-swapping
+	and endian encoding.
+	[nia, ticket #108]
 
