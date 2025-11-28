@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.28 2025/11/23 21:27:30 mrg Exp $
+$NetBSD: README.gcc14,v 1.29 2025/11/28 17:02:09 martin Exp $
 
 arch/feature list.
 
@@ -46,7 +46,7 @@ mipsn64el	y	b	y	y	y	y		?	?	?
 powerpc		y	b	y	y	y	y		y	?	?
 powerpc64	y	b	y	y	y	y		?	?	?
 sh3eb		y	b	y	y	y	?		?	?	?
-sh3el		y	b	y	y	y	?		?	?	?
+sh3el		y	b	y	y	y	n[16]		?	?	?
 sparc		y	y	y	y	y	y		y	y	y
 sparc64		y	y	y	y	y	y		y	y	y
 vax		y	y	y	y	y	y		y	y	y
@@ -77,6 +77,13 @@ architecture	tools	kernels	libgcc	native-gcc/sani	make release	runs	atf
             | ^~~~~~~~~~
 [15]: most(?) nfs-related tests timedout. ipf tests fail with incorrect results.
       some pic_profile variants of tests in usr.bin/c++ crash.
+[16]: out of bounds checker error
+external/bsd/ntp/dist/sntp/libopts/libopts.c:24:
+In function 'canonicalize_pathname',
+    inlined from 'option_pathfind.constprop' at external/bsd/ntp/dist/sntp/libopts/compat/pathfind.c:90:32:
+external/bsd/ntp/dist/sntp/libopts/compat/pathfind.c:206:17: error: 'strcpy' accessing 1 byte at offsets [-1073741824, 1073741823] and [-1073741824, 1073741823] overlaps 1 byte at offset [-1073741824, 1073741823] [-Werror=restrict]
+  206 |                 strcpy( result + i, result + i + 1 );
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
