@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogavar.h,v 1.8 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: ttwogavar.h,v 1.9 2025/11/28 21:50:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,7 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/extent.h>
 #include <sys/vmem_impl.h>
 
 #include <dev/isa/isavar.h>

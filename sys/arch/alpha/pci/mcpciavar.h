@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciavar.h,v 1.7 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: mcpciavar.h,v 1.8 2025/11/28 21:50:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/extent.h>
 #include <sys/vmem_impl.h>
 
 #include <dev/pci/pcivar.h>
