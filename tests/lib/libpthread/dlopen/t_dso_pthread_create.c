@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dso_pthread_create.c,v 1.1 2013/03/21 16:50:21 christos Exp $ */
+/*	$NetBSD: t_dso_pthread_create.c,v 1.1.48.1 2025/11/29 16:08:01 martin Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,13 +32,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dso_pthread_create.c,v 1.1 2013/03/21 16:50:21 christos Exp $");
+__RCSID("$NetBSD: t_dso_pthread_create.c,v 1.1.48.1 2025/11/29 16:08:01 martin Exp $");
 
-#include <sys/resource.h>
 #include <atf-c.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <unistd.h>
+
+#include "../../../h_macros.h"
 
 #define DSO TESTDIR "/h_pthread_dlopen.so"
 
@@ -47,6 +50,17 @@ routine(void *arg)
 {
 	ATF_REQUIRE((intptr_t)arg == 0xcafe);
 	return NULL;
+}
+
+static jmp_buf abort_aborting;
+
+static void
+handle_sigabrt(int signo)
+{
+
+	ATF_REQUIRE_EQ_MSG(signo, SIGABRT, "signo=%d (%s)", signo,
+	    strsignal(signo));
+	longjmp(abort_aborting, 1);
 }
 
 ATF_TC(dso_pthread_create_dso);
@@ -64,25 +78,26 @@ ATF_TC_BODY(dso_pthread_create_dso, tc)
 	pthread_t thread;
 	void *arg = (void *)0xcafe;
 	void *handle;
-	int (*testf_dso_pthread_create)(pthread_t *, pthread_attr_t *, 
+	int (*testf_dso_pthread_create)(pthread_t *, pthread_attr_t *,
 	    void *(*)(void *), void *);
-	struct rlimit rl;
-
-	atf_tc_expect_signal(6,
-	    "calling pthread_create() requires -lpthread main");
-	
-	rl.rlim_max = rl.rlim_cur = 0;
-	ATF_REQUIRE_EQ(setrlimit(RLIMIT_CORE, &rl), 0);
+	void (*sighandler)(int);
 
 	handle = dlopen(DSO, RTLD_NOW | RTLD_LOCAL);
 	ATF_REQUIRE_MSG(handle != NULL, "dlopen fails: %s", dlerror());
 
 	testf_dso_pthread_create = dlsym(handle, "testf_dso_pthread_create");
-	ATF_REQUIRE_MSG(testf_dso_pthread_create != NULL, 
+	ATF_REQUIRE_MSG(testf_dso_pthread_create != NULL,
 	    "dlsym fails: %s", dlerror());
 
-	ret = testf_dso_pthread_create(&thread, NULL, routine, arg);
-	ATF_REQUIRE(ret == 0);
+	REQUIRE_LIBC((sighandler = signal(SIGABRT, &handle_sigabrt)), SIG_ERR);
+	if (setjmp(abort_aborting) == 0) {
+		ret = testf_dso_pthread_create(&thread, NULL, routine, arg);
+	} else {
+		ret = ENOSYS;
+	}
+	REQUIRE_LIBC(signal(SIGABRT, sighandler), SIG_ERR);
+	ATF_REQUIRE_MSG(ret != 0,
+	    "pthread_create unexpectedly succeeded");
 
 	ATF_REQUIRE(dlclose(handle) == 0);
 
