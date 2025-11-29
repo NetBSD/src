@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2025/11/14 15:07:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2025/11/29 18:16:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2025/11/14 15:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2025/11/29 18:16:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -222,7 +222,7 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(__HAVE_NEW_PMAP_68K)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 
@@ -255,7 +255,7 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(__HAVE_NEW_PMAP_68K)
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
