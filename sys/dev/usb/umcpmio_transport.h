@@ -1,7 +1,7 @@
-/*	$NetBSD: printumcpmio.h,v 1.2 2025/11/29 18:39:15 brad Exp $	*/
+/*	$NetBSD: umcpmio_transport.h,v 1.1 2025/11/29 18:39:14 brad Exp $	*/
 
 /*
- * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
+ * Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,15 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _UMCPMIO_TRANSPORT_H_
+#define _UMCPMIO_TRANSPORT_H_
 
-#ifndef _PRINTUMCPMIO_H_
-#define _PRINTUMCPMIO_H_
-
-#include <dev/usb/umcpmio_hid_reports.h>
-
-EXTERN void print_status(uint8_t *, uint8_t);
-EXTERN void print_sram(uint8_t *, int, uint8_t);
-EXTERN void print_gpio_cfg(struct mcp2221_get_gpio_cfg_res *);
-EXTERN void print_flash(uint8_t *,int, uint8_t);
+int umcpmio_send_report(struct umcpmio_softc *, uint8_t *, size_t, uint8_t *, int);
+int umcpmio_hid_open(struct umcpmio_softc *);
 
 #endif

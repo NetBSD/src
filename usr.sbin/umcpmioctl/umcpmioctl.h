@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmioctl.h,v 1.2 2024/12/21 13:48:32 brad Exp $	*/
+/*	$NetBSD: umcpmioctl.h,v 1.3 2025/11/29 18:39:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -23,14 +23,18 @@
 #define UMCPMIO_GET 1
 #define UMCPMIO_PUT 2
 #define UMCPMIO_STATUS 3
+#define UMCPMIO_SEND 4
 
 /* Second level commands */
 
 #define UMCPMIO_IOCTL_GET_SRAM 1
-#define UMCPMIO_IOCTL_GET_GP_CFG 2
+#define MCP2221_IOCTL_GET_GP_CFG 2
 #define UMCPMIO_IOCTL_GET_FLASH 3
+#define UMCPMIO_IOCTL_GET_TYPE 4
 
 #define UMCPMIO_IOCTL_PUT_FLASH 1
+
+#define MCP2210_IOCTL_SEND_CANCEL 1
 
 /* Third level commands */
 
@@ -40,8 +44,17 @@
 #define UMCPMIO_IOCTL_GET_FLASH_USBPROD 3
 #define UMCPMIO_IOCTL_GET_FLASH_USBSN 4
 #define UMCPMIO_IOCTL_GET_FLASH_CHIPSN 5
+#define UMCPMIO_IOCTL_GET_NVRAM_SPI 6
+#define UMCPMIO_IOCTL_GET_NVRAM_USBKEYPARAMS 7
 
 #define UMCPMIO_IOCTL_PUT_FLASH_GP 1
+#define MCP2210_IOCTL_PUT_NVRAM_SPI 2
+#define MCP2210_IOCTL_PUT_NVRAM_USBKEYPARAMS 3
+
+#define MCP2210_IOCTL_GET_SRAM_GPIO 0
+#define MCP2210_IOCTL_GET_SRAM_GPIO_VAL 1
+#define MCP2210_IOCTL_GET_SRAM_GPIO_DIR 2
+#define MCP2210_IOCTL_GET_SRAM_SPI 3
 
 struct umcpmioctlcmd {
 	const char	*cmd;

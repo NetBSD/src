@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.237 2025/03/28 18:41:25 riastradh Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.238 2025/11/29 18:39:15 brad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1048,6 +1048,7 @@ umcpmio[0-9]*)
         do
                 mkdev umcpmio${unit}GP$(($j + 1)) c %umcpmio_chr% $(($unit * 3 + 128 + ${j#})) 666
         done
+        mkdev umcpmio${unit}EEP c %umcpmio_chr% $(($unit + 256)) 660
         ;;
 
 wscons)

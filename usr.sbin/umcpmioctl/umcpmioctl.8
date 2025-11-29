@@ -1,6 +1,6 @@
-.\" $NetBSD: umcpmioctl.8,v 1.4 2025/03/22 06:54:13 rillig Exp $
+.\" $NetBSD: umcpmioctl.8,v 1.5 2025/11/29 18:39:15 brad Exp $
 .\"
-.\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
+.\" Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm umcpmioctl
-.Nd interact with a MCP2221 / MCP2221A multi-io chip
+.Nd interact with a MCP2210 or MCP2221 / MCP2221A multi-io chip
 .Sh SYNOPSIS
 .Nm umcpmioctl
 .Op Fl dh
@@ -28,7 +28,23 @@
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Cm get sram
+.Cm get sram (MCP2221 / MCP2221A)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm get sram gpio (MCP2210)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm get sram gpio_values (MCP2210)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm get sram gpio_direction (MCP2210)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm get sram spi (MCP2210)
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
@@ -52,37 +68,54 @@
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Cm get flash usbsn
+.Cm get flash usbsn (MCP2221 / MCP2221A)
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
-.Cm get flash chipsn
+.Cm get flash chipsn (MCP2221 / MCP2221A)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm get flash spi (MCP2210)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm get flash usbkeyparams (MCP2210)
 .Nm umcpmioctl
 .Op Fl dh
 .Ar device
 .Cm put flash gp
 .Ar GPn PIN_FUNCTION ...
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm put flash spi
+.Ar SPI_PARAMETER VALUE ... (MCP2210)
+.Nm umcpmioctl
+.Op Fl dh
+.Ar device
+.Cm put flash usbkeyparams
+.Ar USB_PARAMETER VALUE ... (MCP2210)
 .Sh DESCRIPTION
 The
 .Nm
-utility interacts with a MCP2221 / MCP2221A and can be used to pull
-the status of the chip, get the SRAM values, get the values from the
-on-board FLASH and can be used to set some of the FLASH values
-associated with the GPIO pins.
-The values from flash are copied into the SRAM when the chip
-enumerates or powers up.
+utility interacts with a MCP2210 or MCP2221 / MCP2221A and can be used
+to pull the status of the chip, get the SRAM values, get the values
+from the on-board FLASH and can be used to set some of the FLASH
+values associated with the GPIO pins and SPI.  The values from flash are
+copied into the SRAM when the chip enumerates or powers up.
 .Pp
 For the
-.Cm put flash
+.Cm put flash gp
 command,
 .Ar GPn
 is one of
-.Cm GP0 ,
-.Cm GP1 ,
-.Cm GP2
+.Cm GP0
+to
+.Cm GP3
 or
-.Cm GP3 ,
-and
+.Cm GP7
+depending on the chip and
 .Ar PIN_FUNCTION
 is one of
 .Cm GPIO_PIN_INPUT ,
@@ -96,12 +129,39 @@ or
 .Cm DEFAULT_OUTPUT_ONE .
 .Pp
 For the
+.Cm put flash spi
+command.
+.Ar SPI_PARAMETER
+is one of
+.Cm CS_TO_DATA_DELAY ,
+.Cm LAST_BYTE_TO_CS_DELAY ,
+or
+.Cm DELAY_BETWEEN_BYTES .
+The
+.Ar VALUE
+is the number of microseconds for that parameter.
+.Pp
+For the
+.Cm put flash usbkeyparams
+command,
+.Ar USB_PARAMETER
+is one of
+.Cm POWERED
+or
+.Cm MA .
+The
+.Ar VALUE
+is
+.Cm SELF
+or
+.Cm BUS
+for
+.Cm POWERED
+or a number from 1 to 511 for the amount of MA power requested.
+.Pp
+For the
 .Cm put flash
-command, the
-.Ar GPn
-and
-.Ar PIN_FUNCTION
-pairs may be repeated.
+command, the function and value pairs may be repeated.
 .Sh EXAMPLES
 .Dl "umcpmioctl /dev/umcpmio0ctl status"
 .Pp
@@ -138,8 +198,8 @@ The
 utility was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
 .Sh BUGS
-Only the gpio settings can be changed in FLASH.
+Only a limited number of setting can be changed in FLASH or NVRAM.
 .Pp
 The output is not very pleasant to use and one will probably need to
-have the data sheet for the MCP2221 / MCP2221A on hand to make sense of
-it.
+have the data sheet for the MCP2210 or MCP2221 / MCP2221A on hand to
+make sense of the output.

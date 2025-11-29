@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.183 2025/08/18 20:59:55 andvar Exp $
+#	$NetBSD: files.usb,v 1.184 2025/11/29 18:39:14 brad Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -573,8 +573,12 @@ file	dev/usb/ualea.c			ualea
 attach	bwfm at usbdevif with bwfm_usb: firmload
 file	dev/usb/if_bwfm_usb.c		bwfm_usb
 
-# Microchip USB 2.0 to I2C/UART Protocol Converter with GPIO
-device	umcpmio: hid, i2cbus, i2cexec, gpiobus
+# Microchip USB 2.0 to I2C/UART/SPI Protocol Converter with GPIO
+device	umcpmio: hid, spibus, i2cbus, i2cexec, gpiobus
 attach  umcpmio at uhidbus
 file    dev/usb/umcpmio.c		umcpmio			needs-flag
+file    dev/usb/umcpmio_transport.c	umcpmio
+file	dev/usb/umcpmio_gpio.c		umcpmio
+file	dev/usb/umcpmio_iic.c		umcpmio
+file	dev/usb/umcpmio_spi.c		umcpmio
 file	dev/usb/umcpmio_subr.c		umcpmio

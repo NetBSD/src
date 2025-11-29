@@ -1,4 +1,4 @@
-/*	$NetBSD: putflash.h,v 1.1 2024/12/16 16:37:40 brad Exp $	*/
+/*	$NetBSD: putflash.h,v 1.2 2025/11/29 18:39:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -22,6 +22,9 @@
 
 #include <dev/usb/umcpmio_hid_reports.h>
 
-EXTERN int parse_flash_gp_req(int, struct mcp2221_put_flash_req *, char **, int, int, bool);
+EXTERN int mcp2221_parse_flash_gp_req(int, struct mcp2221_put_flash_req *, char **, int, int, bool);
+EXTERN int mcp2210_parse_flash_gp_req(int, struct mcp2210_set_nvram_req *, char **, int, int, bool);
+EXTERN int mcp2210_parse_flash_spi_req(int, struct mcp2210_set_nvram_req *, char **, int, int, bool);
+EXTERN int mcp2210_parse_flash_usbkeyparams_req(int, struct mcp2210_set_nvram_req *, char **, int, int, bool);
 
 #endif

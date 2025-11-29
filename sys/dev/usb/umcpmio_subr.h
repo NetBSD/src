@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_subr.h,v 1.2 2025/03/17 18:24:08 riastradh Exp $	*/
+/*	$NetBSD: umcpmio_subr.h,v 1.3 2025/11/29 18:39:14 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -29,43 +29,25 @@ struct umcpmio_mapping_put {
 	const uint8_t	mask;
 };
 
-int umcpmio_get_status(struct umcpmio_softc *, struct mcp2221_status_res *,
-    bool);
-void umcpmio_set_i2c_speed(struct mcp2221_status_req *, int);
-int umcpmio_set_i2c_speed_one(struct umcpmio_softc *, int, bool);
-int umcpmio_put_status(struct umcpmio_softc *, struct mcp2221_status_req *,
-    struct mcp2221_status_res *, bool);
-int umcpmio_get_sram(struct umcpmio_softc *, struct mcp2221_get_sram_res *,
-    bool);
-int umcpmio_put_sram(struct umcpmio_softc *, struct mcp2221_set_sram_req *,
-    struct mcp2221_set_sram_res *, bool);
-uint32_t umcpmio_sram_gpio_to_flags(uint8_t);
-void umcpmio_set_gpio_value_sram(struct mcp2221_set_sram_req *, int, bool);
-void umcpmio_set_gpio_dir_sram(struct mcp2221_set_sram_req *, int, int);
-void umcpmio_set_gpio_designation_sram(struct mcp2221_set_sram_req *, int,
-    int);
-void umcpmio_set_gpio_irq_sram(struct mcp2221_set_sram_req *, int);
-void umcpmio_set_dac_vref(struct mcp2221_set_sram_req *, char *);
-int umcpmio_set_dac_vref_one(struct umcpmio_softc *, char *, bool);
-void umcpmio_set_dac_value(struct mcp2221_set_sram_req *, uint8_t);
-int umcpmio_set_dac_value_one(struct umcpmio_softc *, uint8_t, bool);
-void umcpmio_set_adc_vref(struct mcp2221_set_sram_req *, char *);
-int umcpmio_set_adc_vref_one(struct umcpmio_softc *, char *, bool);
-void umcpmio_set_gpioclock_dc(struct mcp2221_set_sram_req *, char *);
-int umcpmio_set_gpioclock_dc_one(struct umcpmio_softc *, char *, bool);
-void umcpmio_set_gpioclock_cd(struct mcp2221_set_sram_req *, char *);
-int umcpmio_set_gpioclock_cd_one(struct umcpmio_softc *, char *, bool);
-int umcpmio_get_gpio_cfg(struct umcpmio_softc *,
-    struct mcp2221_get_gpio_cfg_res *, bool);
-int umcpmio_put_gpio_cfg(struct umcpmio_softc *,
-    struct mcp2221_set_gpio_cfg_req *, struct mcp2221_set_gpio_cfg_res *,
-    bool);
-int umcpmio_get_gpio_value(struct umcpmio_softc *, int, bool);
-void umcpmio_set_gpio_value(struct mcp2221_set_gpio_cfg_req *, int, bool);
-int umcpmio_set_gpio_value_one(struct umcpmio_softc *, int, bool, bool);
-int umcpmio_get_flash(struct umcpmio_softc *, uint8_t,
-    struct mcp2221_get_flash_res *, bool);
-int umcpmio_put_flash(struct umcpmio_softc *, struct mcp2221_put_flash_req *,
-    struct mcp2221_put_flash_res *, bool);
+void WAITMS(int);
+void umcpmio_dump_buffer(bool, uint8_t *, u_int, const char *);
+int mcp2210_decode_errors(uint8_t, int, uint8_t);
+int mcp2210_get_status(struct umcpmio_softc *, struct mcp2210_status_res *);
+int mcp2221_get_status(struct umcpmio_softc *, struct mcp2221_status_res *);
+int mcp2221_put_status(struct umcpmio_softc *, struct mcp2221_status_req *,
+    struct mcp2221_status_res *);
+int mcp2221_get_sram(struct umcpmio_softc *, struct mcp2221_get_sram_res *);
+int mcp2221_put_sram(struct umcpmio_softc *, struct mcp2221_set_sram_req *,
+    struct mcp2221_set_sram_res *);
+int mcp2210_get_nvram(struct umcpmio_softc *, uint8_t,
+    struct mcp2210_get_nvram_res *);
+int mcp2210_set_nvram(struct umcpmio_softc *, struct mcp2210_set_nvram_req *,
+    struct mcp2210_set_nvram_res *);
+int mcp2221_get_flash(struct umcpmio_softc *, uint8_t,
+    struct mcp2221_get_flash_res *);
+int mcp2221_put_flash(struct umcpmio_softc *, struct mcp2221_put_flash_req *,
+    struct mcp2221_put_flash_res *);
+int mcp2210_read_eeprom(struct umcpmio_softc *, uint8_t, uint8_t *);
+int mcp2210_write_eeprom(struct umcpmio_softc *, uint8_t, uint8_t);
 
 #endif	/* _UMCPMIO_SUBR_H_ */
