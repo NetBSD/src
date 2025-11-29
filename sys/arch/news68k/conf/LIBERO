@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.70 2021/01/21 06:51:55 nia Exp $
+# 	$NetBSD: LIBERO,v 1.71 2025/11/29 23:48:06 tsutsui Exp $
 
 #	NEWS1750 config file;
 #
@@ -7,6 +7,10 @@
 include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
+	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
+	# backtraces in DDB.
 
 maxusers	8
 
