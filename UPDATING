@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.387 2025/11/23 22:11:41 riastradh Exp $
+$NetBSD: UPDATING,v 1.388 2025/11/29 14:39:36 riastradh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,10 +18,6 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
-
-20251122:
-	Changes to libpthread for PR 59784 require you to make clean in
-	lib/libpthread so it is rebuilt with updated ld flags.
 
 20251028:
 	libpthread had it's shared library version go back (from 1.7 to
