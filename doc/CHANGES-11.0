@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.46 2025/11/28 10:58:58 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.47 2025/11/29 16:08:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1054,4 +1054,17 @@ sys/sys/endian.h				1.38
 	inline code instead of GCC builtins for byte-swapping
 	and endian encoding.
 	[nia, ticket #108]
+
+sys/dev/usb/ucom.c				1.142,1.149
+
+	ucom(4): fix input queue corruption on open-after-close.
+	[skrll, ticket #109]
+
+lib/libpthread/Makefile				1.103
+lib/libpthread/shlib_version			1.24
+tests/lib/libpthread/dlopen/t_dlopen.c		1.2,1.3
+tests/lib/libpthread/dlopen/t_dso_pthread_create.c 1.2
+
+	libpthread: PR 59784: prevent unload with dlclose.
+	[riastradh, ticket #110]
 
