@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.70 2025/11/28 21:52:53 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.71 2025/11/29 19:34:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.70 2025/11/28 21:52:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.71 2025/11/29 19:34:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ bootm_alloc(paddr_t pa, u_long size, int flags)
 	vmem_addr_t	rva;
 	vaddr_t		va;
 
-	if (vmem_alloc(bootm_arena, size, VM_NOSLEEP, &rva) != 0) {
+	if (vmem_alloc(bootm_arena, size, VM_BESTFIT | VM_NOSLEEP, &rva) != 0) {
 		printf("bootm_alloc fails! Not enough fixed boundary tags?\n");
 		printf("Requested extent: pa=%lx, size=%lx\n",
 						(u_long)pa, size);
