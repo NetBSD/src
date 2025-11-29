@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2025/11/29 18:16:27 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2025/11/29 23:12:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2025/11/29 18:16:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2025/11/29 23:12:26 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -229,7 +229,12 @@ cpu_startup(void)
 	pmapdebug = 0;
 #endif
  
+	/* Initialize the interrupt handlers. */
+	isrinit();
+
+#ifdef news1700
 	parityenable();
+#endif
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
