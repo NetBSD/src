@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2009/01/12 06:53:39 tsutsui Exp $	*/
+/*	$NetBSD: pte.h,v 1.9 2025/11/29 22:08:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  * bits when it loads a valid PTE, and get_pte will always clear them
  * when it unloads a valid PTE.
  *
- * Bit 25, which SunOS calles the "fill on demand" bit, also needs
+ * Bit 25, which SunOS calls the "fill on demand" bit, also needs
  * to be set on all valid PTEs.  Dunno any more about this bit.
  *
  * Next, we see that bit 27 is set for all pages the user can access,

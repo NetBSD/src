@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.99 2025/11/29 22:08:06 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.99 2025/11/29 22:08:06 andvar Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -655,8 +655,8 @@ mb86960_start(struct ifnet *ifp)
 		/*
 		 * Txb_count and txb_free co-works to manage the
 		 * transmission buffer.  Txb_count keeps track of the
-		 * used potion of the buffer, while txb_free does unused
-		 * potion.  So, as long as the driver runs properly,
+		 * used portion of the buffer, while txb_free does unused
+		 * portion.  So, as long as the driver runs properly,
 		 * txb_count is zero if and only if txb_free is same
 		 * as txb_size (which represents whole buffer.)
 		 */

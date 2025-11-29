@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.41 2024/05/20 20:46:05 wiz Exp $	*/
+/*	$NetBSD: fgen.l,v 1.42 2025/11/29 22:08:06 andvar Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.41 2024/05/20 20:46:05 wiz Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.42 2025/11/29 22:08:06 andvar Exp $");
 #endif
 
 %}
@@ -1617,7 +1617,7 @@ tokenize(YY_BUFFER_STATE yinput)
 			pos = pop();	/* get position of prev link. */
 			push(outpos);	/* save position of this link. */
 			if (pos)
-				/* save potision of prev link. */
+				/* save position of prev link. */
 				offspit(pos - outpos);
 			else
 				/* This is the first statement */

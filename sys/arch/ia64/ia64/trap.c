@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.16 2023/10/05 19:41:04 ad Exp $ */
+/* $NetBSD: trap.c,v 1.17 2025/11/29 22:08:06 andvar Exp $ */
 
 /*-
  * Copyright (c) 2005 Marcel Moolenaar
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.16 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2025/11/29 22:08:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,7 @@ no_fault_in:
 		 * implemented by the processor. All we need to do is
 		 * compute the target address of the branch and make sure
 		 * that control is transferred to that address.
-		 * We should do this in the IVT table and not by entring
+		 * We should do this in the IVT table and not by entering
 		 * the kernel...
 		 */
 		tf->tf_special.iip += tf->tf_special.ifa << 4;

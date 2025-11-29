@@ -50,7 +50,7 @@ file	arch/mips/sibyte/dev/sbscn.c		sbscn	needs-flag
 
 # XXX XXX
 # need to think about SMBus more, just hack something together
-# temporariliy so we can use the RTC.
+# temporarily so we can use the RTC.
 
 # SB1250 SMBus
 device	smbus {[chan = -1], [dev = -1]}

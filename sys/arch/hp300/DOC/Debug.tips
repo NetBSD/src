@@ -1,4 +1,4 @@
-$NetBSD: Debug.tips,v 1.6 2023/09/08 19:04:28 andvar Exp $
+$NetBSD: Debug.tips,v 1.7 2025/11/29 22:08:06 andvar Exp $
 
 NOTE: this description applies to the hp300 system with the old BSD
 virtual memory system.  It has not been updated to reflect the new,
@@ -78,7 +78,7 @@ at kernel VA p_p0br.
 
 The user segment table is typically very sparse since each entry maps 4Mb.
 There are usually only two valid STEs, one at the start mapping the text/data
-potion of the page table, and one at the end mapping the stack/u-area.  For
+portion of the page table, and one at the end mapping the stack/u-area.  For
 example if the segment table was at 0xFFFFA000 there would be valid entries
 at 0xFFFFA000 and 0xFFFFAFFC.
 

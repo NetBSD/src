@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 1995/03/24 03:58:29 cgd Exp $
+$NetBSD: README,v 1.3 2025/11/29 22:08:06 andvar Exp $
 
 June 25, 1986
 
@@ -34,7 +34,7 @@ CHANGES:
     - 'setup' is smarter, although not as smart as it should be.
     - Players can change their names and passwords
 
-PORTABILTY:
+PORTABILITY:
 
     I have tried to make this as non-machine/system specific as possible.
 
