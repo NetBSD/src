@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.35 2025/11/27 22:42:41 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.36 2025/11/29 18:11:11 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -208,7 +208,6 @@
  * - Fix problems observed on news68k (external cache related?)
  * - Finish HP MMU support and test on real HP MMU.
  * - Convert '851 / '030 to 3-level.
- * - Inline asm for the atomic ops used.
  * - Optimize ATC / cache manipulation.
  * - Add some more instrumentation.
  * - Eventually disable instrumentation by default.
@@ -219,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.35 2025/11/27 22:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.36 2025/11/29 18:11:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,6 +860,14 @@ pte_store(pt_entry_t *ptep, pt_entry_t npte)
 	atomic_store_relaxed(ptep, npte);
 }
 
+/*
+ * Don't inline the CAS.L instruction; some systems have non-wroking
+ * READ-MODIFY-WRITE cycle logic.  This will ensure that we'll use
+ * restartable atomic sequence, if required.
+ *
+ * AND.L and OR.L don't use the RMC signal, so they aren't subject
+ * to the same constraints.
+ */
 static inline bool
 pte_update(pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 {
@@ -868,6 +875,9 @@ pte_update(pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 	 * Use compare-and-swap to update the PTE.  This ensures there's
 	 * no possibility of losing any hardware-maintained bits when
 	 * updating the PTE.
+	 *
+	 * XXX Should turn this into a single instruction when possible
+	 * XXX to deduce at compile time.
 	 */
 	return atomic_cas_uint(ptep, opte, npte) == opte;
 }
@@ -875,13 +885,17 @@ pte_update(pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 static inline void
 pte_set(pt_entry_t *ptep, pt_entry_t bits)
 {
-	atomic_or_uint(ptep, bits);
+	__asm volatile ("orl %1,%0"
+		: "+m" (ptep)
+		: "di" (bits));
 }
 
 static inline void
 pte_mask(pt_entry_t *ptep, pt_entry_t mask)
 {
-	atomic_and_uint(ptep, mask);
+	__asm volatile ("andl %1,%0"
+		: "+m" (ptep)
+		: "di" (mask));
 }
 
 static inline pt_entry_t
