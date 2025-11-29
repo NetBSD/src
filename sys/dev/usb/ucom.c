@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.125.2.2 2022/08/03 16:21:55 martin Exp $	*/
+/*	$NetBSD: ucom.c,v 1.125.2.3 2025/11/29 17:01:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.125.2.2 2022/08/03 16:21:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.125.2.3 2025/11/29 17:01:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -637,6 +637,13 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rx_unblock = 0;
 		sc->sc_rx_stopped = 0;
 		sc->sc_tx_stopped = 0;
+
+		/*
+		 * Either after ucom was attached, or after ucomclose(), this
+		 * list must be empty, otherwise ucomsubmitread() will corrupt
+		 * it by queueing an ucom_buffer that is already queued.
+		 */
+		KASSERT(SIMPLEQ_EMPTY(&sc->sc_ibuff_empty));
 
 		for (size_t i = 0; i < UCOM_IN_BUFFS; i++) {
 			struct ucom_buffer *ub = &sc->sc_ibuff[i];
@@ -1532,6 +1539,19 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	struct tty *tp = sc->sc_tty;
 
+	/*
+	 * Always remove the ucom_buffer from the sc_ibuff_empty list
+	 * regardless of transfer status. Leaving it on the list on
+	 * USBD_CANCELLED or USBD_IOERROR would cause corruption
+	 * next time the device is opened.
+	 *
+	 * USBD_CANCELLED is a reported when the device is closed
+	 * via ucomclose() -> usbd_abort_pipe() -> usbd_xfer_abort()
+	 */
+	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
+	KASSERT(xfer == ub->ub_xfer);
+
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
 	    sc->sc_dying) {
 
@@ -1554,9 +1574,6 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 		return;
 	}
-
-	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_STALLED) {
