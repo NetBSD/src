@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.36 2025/11/29 18:11:11 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.37 2025/11/29 22:46:08 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.36 2025/11/29 18:11:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.37 2025/11/29 22:46:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,7 +861,7 @@ pte_store(pt_entry_t *ptep, pt_entry_t npte)
 }
 
 /*
- * Don't inline the CAS.L instruction; some systems have non-wroking
+ * Don't inline the CAS.L instruction; some systems have non-working
  * READ-MODIFY-WRITE cycle logic.  This will ensure that we'll use
  * restartable atomic sequence, if required.
  *
@@ -882,21 +882,24 @@ pte_update(pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 	return atomic_cas_uint(ptep, opte, npte) == opte;
 }
 
+#if MMU_CONFIG_HP_CLASS
+/*
+ * These are only used for HP MMU VAC shenanigans.  There is no need
+ * for these to be truly atomic, and systems with an HP MMU can't do
+ * truly atomic operations anyway.
+ */
 static inline void
 pte_set(pt_entry_t *ptep, pt_entry_t bits)
 {
-	__asm volatile ("orl %1,%0"
-		: "+m" (ptep)
-		: "di" (bits));
+	*ptep |= bits;
 }
 
 static inline void
 pte_mask(pt_entry_t *ptep, pt_entry_t mask)
 {
-	__asm volatile ("andl %1,%0"
-		: "+m" (ptep)
-		: "di" (mask));
+	*ptep &= mask;
 }
+#endif /* MMU_CONFIG_HP_CLASS */
 
 static inline pt_entry_t
 pte_set_ci(pt_entry_t pte)
@@ -2019,7 +2022,7 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 static inline void
 pmap_stat_update_impl(long *valp, int val)
 {
-	atomic_add_long(valp, val);
+	*valp += val;
 }
 
 #define	pmap_stat_update(pm, stat, delta)		\
@@ -2118,8 +2121,14 @@ pmap_create(void)
 void
 pmap_destroy(pmap_t pmap)
 {
-	KASSERT(atomic_load_relaxed(&pmap->pm_refcnt) > 0);
-	if (atomic_dec_uint_nv(&pmap->pm_refcnt) > 0) {
+	unsigned int newval;
+
+	PMAP_CRIT_ENTER();
+	KASSERT(pmap->pm_refcnt > 0);
+	newval = --pmap->pm_refcnt;
+	PMAP_CRIT_EXIT();
+
+	if (newval) {
 		return;
 	}
 
@@ -2138,8 +2147,10 @@ pmap_destroy(pmap_t pmap)
 void
 pmap_reference(pmap_t pmap)
 {
-	atomic_inc_uint(&pmap->pm_refcnt);
-	KASSERT(atomic_load_relaxed(&pmap->pm_refcnt) > 0);
+	PMAP_CRIT_ENTER();
+	pmap->pm_refcnt++;
+	KASSERT(pmap->pm_refcnt > 0);
+	PMAP_CRIT_EXIT();
 }
 
 /*
@@ -2413,8 +2424,8 @@ pmap_remove_all(pmap_t pmap)
 	}
 
 	/* Step 4. */
-	atomic_store_relaxed(&pmap->pm_stats.wired_count, 0);
-	atomic_store_relaxed(&pmap->pm_stats.resident_count, 0);
+	pmap_stat_set(pmap, wired_count, 0);
+	pmap_stat_set(pmap, resident_count, 0);
 
 	PMAP_CRIT_EXIT();
 
