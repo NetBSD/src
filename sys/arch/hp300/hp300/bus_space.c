@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.23 2025/11/21 19:02:35 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.24 2025/11/29 19:32:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.23 2025/11/21 19:02:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2025/11/29 19:32:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -51,7 +51,7 @@ int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	vaddr_t kva;
+	vmem_addr_t kva;
 	vsize_t offset;
 	int error;
 
@@ -73,11 +73,10 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	offset = m68k_page_offset(bpa);
 	size = m68k_round_page(offset + size);
-	error = extent_alloc(extio_ex, size, PAGE_SIZE, 0,
-	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
-	    &kva);
-	if (error)
+	error = vmem_alloc(extio_arena, size, VM_BESTFIT | VM_NOSLEEP, &kva);
+	if (error) {
 		return error;
+	}
 
 	vaddr_t va = kva;
 	vaddr_t eva = kva + size;
@@ -149,12 +148,9 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	pmap_kremove(kva, size);
 
 	/*
-	 * Free it from the extio extent map.
+	 * Free it from the extio arena.
 	 */
-	if (extent_free(extio_ex, kva, size,
-	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
-		printf("%s: kva 0x%lx size 0x%lx: "
-		    "can't free region\n", __func__, (u_long)bsh, size);
+	vmem_free(extio_arena, kva, size);
 }
 
 int

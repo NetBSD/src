@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.13 2014/04/20 04:12:54 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.14 2025/11/29 19:32:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define _HP300_AUTOCONF_H_
 
 #ifdef _KERNEL
+#include <sys/vmem.h>
+
 extern  int conscode;			/* select code of console device */
 #define CONSCODE_INTERNAL	(-1)
 #define CONSCODE_INVALID	(-2)
@@ -44,8 +46,7 @@ void	iomap_init(void);
 void *	iomap(void *, int);
 void	iounmap(void *, int);
 
-extern struct extent *extio_ex;
-extern int extio_ex_malloc_safe;
+extern vmem_t *extio_arena;
 #endif /* _KERNEL */
 
 #endif /* !_HP300_AUTOCONF_H_ */

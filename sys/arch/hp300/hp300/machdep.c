@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.248 2025/11/28 20:32:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.249 2025/11/29 19:32:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2025/11/28 20:32:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2025/11/29 19:32:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -392,9 +392,6 @@ cpu_startup(void)
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-
-	/* Safe to use malloc for extio_ex now. */
-	extio_ex_malloc_safe = 1;
 }
 
 struct hp300_model {

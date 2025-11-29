@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.118 2025/11/21 19:02:35 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.119 2025/11/29 19:32:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.118 2025/11/21 19:02:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.119 2025/11/29 19:32:52 thorpej Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -112,11 +112,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.118 2025/11/21 19:02:35 tsutsui Exp $
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/kmem.h>
-#include <sys/extent.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/tty.h>
+#include <sys/vmem.h>
+#include <sys/vmem_impl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -181,14 +182,14 @@ static int	dio_scode_probe(int,
 u_int	bootdev;
 
 /*
- * Extent map to manage the external I/O (DIO/DIO-II) space.  We
- * allocate storate for 8 regions in the map.  extio_ex_malloc_safe
- * will indicate that it's safe to use malloc() to dynamically allocate
- * region descriptors in case we run out.
+ * Vmem arena for external I/O (DIO/DIO-II) address space (allocated
+ * in pmap_bootstrap1()).  We allocate sufficient boundary tags for
+ * 8 regions.
  */
-static long extio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
-struct extent *extio_ex;
-int extio_ex_malloc_safe;
+#define	EXTIO_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 8)
+static struct vmem extio_arena_store;
+static struct vmem_btag extio_btag_store[EXTIO_BTAG_COUNT];
+vmem_t *extio_arena;
 
 /*
  * This information is built during the autoconfig process.
@@ -1021,12 +1022,26 @@ hp300_cninit_deferred(void)
 void
 iomap_init(void)
 {
+	int error;
 
-	/* extiobase is initialized by pmap_bootstrap(). */
-	extio_ex = extent_create("extio", (u_long) extiobase,
-	    (u_long) extiobase + (ptoa(EIOMAPSIZE) - 1),
-	    (void *) extio_ex_storage, sizeof(extio_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
+	/* extiobase is initialized by pmap_bootstrap1(). */
+	extio_arena = vmem_init(&extio_arena_store,
+				"extio",		/* name */
+				0,			/* addr */
+				0,			/* size */
+				PAGE_SIZE,		/* quantum */
+				NULL,			/* importfn */
+				NULL,			/* releasefn */
+				NULL,			/* source */
+				0,			/* qcache_max */
+				VM_NOSLEEP | VM_PRIVTAGS,
+				IPL_NONE);
+	KASSERT(extio_arena != NULL);
+
+	vmem_add_bts(extio_arena, extio_btag_store, EXTIO_BTAG_COUNT);
+	error = vmem_add(extio_arena, (vmem_addr_t)extiobase,
+	    ptoa(EIOMAPSIZE), VM_NOSLEEP);
+	KASSERT(error == 0);
 }
 
 /*
@@ -1037,17 +1052,16 @@ void *
 iomap(void *vpa, int size)
 {
 	paddr_t pa = (paddr_t)vpa;
-	u_long kva;
+	vmem_addr_t kva;
 	int error;
 
 	KASSERT((pa & PGOFSET) == 0);
 	KASSERT((size & PGOFSET) == 0);
 
-	error = extent_alloc(extio_ex, size, PAGE_SIZE, 0,
-	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
-	    &kva);
-	if (error)
-		return 0;
+	error = vmem_alloc(extio_arena, size, VM_BESTFIT | VM_NOSLEEP, &kva);
+	if (error) {
+		return NULL;
+	}
 
 	vaddr_t va = kva;
 	vaddr_t eva = kva + size;
@@ -1077,8 +1091,5 @@ iounmap(void *kva, int size)
 
 	pmap_kremove(va, size);
 
-	if (extent_free(extio_ex, (vaddr_t)kva, size,
-	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
-		printf("iounmap: kva %p size 0x%x: can't free region\n",
-		    kva, size);
+	vmem_free(extio_arena, va, size);
 }
