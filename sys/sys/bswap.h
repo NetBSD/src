@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.20 2025/11/26 22:25:10 nia Exp $      */
+/*      $NetBSD: bswap.h,v 1.21 2025/11/29 15:53:02 riastradh Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -53,15 +53,21 @@ __END_DECLS
  */
 #ifdef __HAVE_SLOW_BSWAP_BUILTIN
 
-static __inline uint64_t __byte_swap_u64_inline(uint64_t x) {
+static __inline uint64_t
+__byte_swap_u64_inline(uint64_t x)
+{
 	return __byte_swap_u64_constexpr(x);
 }
 
-static __inline uint32_t __byte_swap_u32_inline(uint32_t x) {
+static __inline uint32_t
+__byte_swap_u32_inline(uint32_t x)
+{
 	return __byte_swap_u32_constexpr(x);
 }
 
-static __inline uint16_t __byte_swap_u16_inline(uint16_t x) {
+static __inline uint16_t
+__byte_swap_u16_inline(uint16_t x)
+{
 	return __byte_swap_u16_constexpr(x);
 }
 
