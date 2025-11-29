@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.98 2025/07/02 18:52:35 gutteridge Exp $
+.\"    $NetBSD: npf.conf.5,v 1.99 2025/11/29 18:39:32 joe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -255,6 +255,21 @@ set, both sets being represented as a string combination of:
 The flags that are not present in
 .Ar mask
 are ignored.
+.Pp
+For ICMP, the
+.Cd icmp
+or
+.Cd ipv6-icmp
+keyword is used based on the address family of the packet being filtered.
+its parameter should be the icmp type and or the icmp code.
+The icmp type is indicated using the
+.Cd icmp-type
+keyword followed by the name or number representing the icmp type.
+The icmp code is also indicated using the
+.Cd code
+keyword followed by the name or number of the code of the icmp type.
+.Pp
+.D1 Ic proto Cm icmp icmp-type Ar icmp_type code Ar icmp_code
 .Pp
 To notify the sender of a blocking decision, three
 .Cm return
