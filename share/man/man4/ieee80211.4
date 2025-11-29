@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211.4,v 1.5 2017/07/03 21:30:58 wiz Exp $
+.\" $NetBSD: ieee80211.4,v 1.6 2025/11/29 16:42:16 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	The Aerospace Corporation.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/ieee80211.4,v 1.9 2005/02/13 23:45:49 ru Exp $
 .\"
-.Dd February 23, 2001
+.Dd November 29, 2025
 .Dt IEEE80211 4
 .Os
 .Sh NAME
@@ -217,7 +217,7 @@ Set the desired ad-hoc channel to the value given by
 On some devices this has an impact on infrastructure mode as well.
 Valid values are 1-14, but 0 should be allowed and should return the
 device to the default value.
-May devices support this directly by
+Many devices support this directly by
 converting any invalid value to the default value.
 .It Dv IEEE80211_IOC_POWERSAVE
 Set the current powersaving mode to the value given in
