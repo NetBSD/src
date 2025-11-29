@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.74 2025/11/26 19:01:42 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.75 2025/11/29 16:02:26 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1382,4 +1382,9 @@ sys/dev/pci/pcidevs_data.h			(regen)
 	and enable IPv4/TCP4/UDP4 checksum offloading.  Does not include
 	support for Jumbo frames or Wake-on-LAN.
 	[pgoyette, ticket #1201]
+
+sys/dev/usb/ucom.c				1.142,1.149
+
+	ucom(4): fix input queue corruption on open-after-close.
+	[skrll, ticket #1202]
 
