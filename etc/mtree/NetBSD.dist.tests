@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.211 2025/10/06 13:16:43 riastradh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.212 2025/11/29 01:28:48 nia Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -450,6 +450,7 @@
 ./usr/tests/usr.bin/compress
 ./usr/tests/usr.bin/cut
 ./usr/tests/usr.bin/diff
+./usr/tests/usr.bin/diff3
 ./usr/tests/usr.bin/dirname
 ./usr/tests/usr.bin/error
 ./usr/tests/usr.bin/find

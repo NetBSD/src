@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1401 2025/11/23 22:01:13 riastradh Exp $
+# $NetBSD: mi,v 1.1402 2025/11/29 01:28:48 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -5048,7 +5048,47 @@
 ./usr/tests/usr.bin/diff/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/diff/d_mallocv1.in			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/diff/d_mallocv2.in			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/functionname.in		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/functionname_c.in		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/functionname_c.out		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/header.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/header_ns.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/input1.in			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/input2.in			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/input_c1.in			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/input_c2.in			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_b.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_e.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_i.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_n.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_p.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_u.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/simple_w.out			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/diff/t_diff				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/unified_9999.out		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff/unified_p.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/1.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/1.txt				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/1t.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/2.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/2.txt				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/3.txt				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/5.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/6.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/7.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/8.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/9.out				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/Atffile			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/diff3/long-A.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/long-ed.out			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/long-m.txt			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/long-merge.out		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/long-o.txt			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/long-y.txt			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/diff3/t_diff3			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/dirname				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/dirname/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/dirname/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua
