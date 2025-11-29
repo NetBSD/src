@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.190 2023/11/02 10:31:55 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.191 2025/11/29 16:52:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.190 2023/11/02 10:31:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.191 2025/11/29 16:52:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -600,8 +600,10 @@ db_command_loop(void)
 
 	db_cmd_loop_done = false;
 
-	/* Init default command tables add machine, base,
-	   show command tables to the list */
+	/*
+	 * Init default command tables add machine, base,
+	 * show command tables to the list.
+	 */
 	db_init_commands();
 
 	/* save context for return from ddb */
