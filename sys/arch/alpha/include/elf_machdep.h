@@ -1,29 +1,9 @@
-/* $NetBSD: elf_machdep.h,v 1.16 2025/04/18 17:56:50 riastradh Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.17 2025/11/29 22:03:17 jkoshy Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
 
-/*
- * Alpha ELF uses different (non-standard) definitions for the symbol
- * hash table section.
- */
-#define	Elf_Symindx	uint64_t
-
-#define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define	ELF32_MACHDEP_ID_CASES						\
-		/* no 32-bit ELF machine types supported */
-
-#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define	ELF64_MACHDEP_ID_CASES						\
-		case EM_OLD_ALPHA:					\
-		case EM_ALPHA:						\
-			break;
-
-#define	ELF64_MACHDEP_ID	EM_ALPHA
-
-#define	KERN_ELFSIZE		64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Alpha Relocation Types
  */
@@ -72,9 +52,36 @@
 #define	R_ALPHA_TPRELLO		40
 #define	R_ALPHA_TPREL16		41
 
-#define	R_TYPE(name)		__CONCAT(R_ALPHA_,name)
-
 /* Alpha dynamic tags */
 #define	DT_ALPHA_PLTRO		0x70000000	/* secure (read-only) PLT */
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+
+/*
+ * Alpha ELF uses different (non-standard) definitions for the symbol
+ * hash table section.
+ */
+#define	Elf_Symindx	uint64_t
+
+#define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF32_MACHDEP_ID_CASES						\
+		/* no 32-bit ELF machine types supported */
+
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define	ELF64_MACHDEP_ID_CASES						\
+		case EM_OLD_ALPHA:					\
+		case EM_ALPHA:						\
+			break;
+
+#define	ELF64_MACHDEP_ID	EM_ALPHA
+
+#define	KERN_ELFSIZE		64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+
+#define	R_TYPE(name)		__CONCAT(R_ALPHA_,name)
 
 #endif /* _ALPHA_ELF_MACHDEP_H_ */
