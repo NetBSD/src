@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.421 2025/09/19 05:27:45 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.422 2025/11/29 17:54:21 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -731,7 +731,7 @@ _EXPSYM_IGNORE+=		${_EXPSYM_IGNORE.${MACHINE_CPU}}
 realall: ${_LIB.so.full}.diffsym
 ${_LIB.so.full}.diffsym: ${LIB_EXPSYM} ${_LIB.so.full}.actsym
 	${_MKTARGET_CREATE}
-	if diff -u ${.ALLSRC} >${.TARGET}.tmp; then \
+	@if diff -u ${.ALLSRC} >${.TARGET}.tmp; then \
 		${MV} ${.TARGET}.tmp ${.TARGET}; \
 	else \
 		ret=$$?; \
