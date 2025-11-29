@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.14 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.15 2025/11/29 21:57:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,16 @@
 #include "atomic_op_asm.h"
 
 	.text
+
+/*
+ * For kernel builds on systems with __HAVE_M68K_BROKEN_RMC, then
+ * m68k/m68k/lock_stubs.s provides a restartable atomic sequence
+ * implementation of _atomic_cas_32() for the kernel's own use.
+ *
+ * The 8- and 16-bit CAS operations are not available in the kernel
+ * environment on such platforms, so force a link error for them.
+ */
+#if !defined(_KERNEL) || !defined(__HAVE_M68K_BROKEN_RMC)
 
 ENTRY(_atomic_cas_32)
 	movl	4(%sp), %a0
@@ -110,7 +120,6 @@ END(_atomic_cas_8)
 ATOMIC_OP_ALIAS(atomic_cas_8,_atomic_cas_8)
 CRT_ALIAS(__sync_val_compare_and_swap_1,_atomic_cas_8)
 
-
 ENTRY(__sync_bool_compare_and_swap_1)
 	movl	4(%sp), %a0
 	movb	8+3(%sp), %d0		/* lower byte */
@@ -124,3 +133,4 @@ ENTRY(__sync_bool_compare_and_swap_1)
 	rts
 END(__sync_bool_compare_and_swap_1)
 
+#endif /* !_KERNEL || !__HAVE_M68K_BROKEN_RMC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.11 2022/04/06 22:47:57 riastradh Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.12 2025/11/29 21:57:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,13 +38,23 @@
 	.file	"lock_stubs.s"
 	.text
 
-#if defined(__mc68010__)
+#if defined(__mc68010__) || defined(__HAVE_M68K_BROKEN_RMC)
 /*
  * int _atomic_cas_32(volatile uint32_t *val, uint32_t old, uint32_t new);
  *
- * The 68010 does not have a cas instruction, so we implement this as
- * a restartable atomic sequence.  For an example of how this is used,
- * see sun68k/sun68k/isr.c
+ * We can't use the CAS instruction on all m68k platforms:
+ *
+ * ==> 68010 doesn't have it, so obviously we can't use it there.
+ *
+ * ==> Some platforms (notably, 68020-based hp300 machines) don't
+ *     support the indivisble READ-MODIFY-WRITE used by CAS, CAS2,
+ *     and TAS (presumably they have logic to assert /BERR when
+ *     the CPU asserts /RMC).
+ *
+ * So, for these platforms, we use a restartable atomic sequence.  This
+ * is checked for upon return from interrupt (see ATOMIC_CAS_CHECK() in
+ * <m68k/frame.h>), and if the return PC falls within the atomic sequence,
+ * the PC is reset to the beginning of the sequence.
  */
 ENTRY(_atomic_cas_32)
 	movl	4(%sp),%a0
@@ -79,11 +89,11 @@ STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 STRONG_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
-#endif /* __mc68010__ */
+#endif /* __mc68010__ || __HAVE_M68K_BROKEN_RMC */
 
 #if !defined(LOCKDEBUG)
 
-#if !defined(__mc68010__)
+#if !defined(__mc68010__) && !defined(__HAVE_M68K_BROKEN_RMC)
 /*
  * void mutex_enter(kmutex_t *mtx);
  */
@@ -107,6 +117,6 @@ ENTRY(mutex_exit)
 	bnes	1f
 	rts
 1:	jra	_C_LABEL(mutex_vector_exit)
-#endif /* !__mc68010__ */
+#endif /* !__mc68010__ && !__HAVE_M68K_BROKEN_RMC */
 
 #endif	/* !LOCKDEBUG */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.53 2025/11/23 17:32:28 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.54 2025/11/29 21:57:14 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -82,6 +82,10 @@ define	M68030			1
 endif
 ifdef M68040
 define	M68040			1
+endif
+
+ifdef __HAVE_M68K_BROKEN_RMC
+define	__HAVE_M68K_BROKEN_RMC	1
 endif
 
 # values for fputype

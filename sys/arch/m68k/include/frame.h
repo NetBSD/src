@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35 2024/01/13 17:07:26 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.36 2025/11/29 21:57:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -218,9 +218,9 @@ void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 int	m68040_writeback(struct frame *, int);
 #endif
 
-#if defined(__mc68010__)
+#if defined(__mc68010__) || defined(__HAVE_M68K_BROKEN_RMC)
 /*
- * Restartable atomic sequence-cased compare-and-swap for atomic_cas ops
+ * Restartable atomic sequence-based compare-and-swap for atomic_cas ops
  * and locking primitives.  We defined this here because it manipulates a
  * "clockframe" as prepared by interrupt handlers.
  */
@@ -237,7 +237,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 #else
 #define	ATOMIC_CAS_CHECK(cfp)	/* nothing */
-#endif /* __mc68010__ */
+#endif /* __mc68010__ || __HAVE_M68K_BROKEN_RMC */
 
 static inline void **
 getvbr(void)

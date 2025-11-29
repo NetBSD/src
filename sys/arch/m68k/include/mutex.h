@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.13 2023/07/12 12:50:12 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.14 2025/11/29 21:57:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ struct kmutex {
 #define	mtx_lock		u.s.mtxs_lock
 
 #define	__HAVE_SIMPLE_MUTEXES		1
-#ifndef	__mc68010__
+#if !defined(__mc68010__) && !defined(__HAVE_M68K_BROKEN_RMC)
 #define	__HAVE_MUTEX_STUBS		1
 #endif
 
