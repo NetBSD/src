@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.150 2025/11/29 01:33:40 manu Exp $	*/
+/*	$NetBSD: ucom.c,v 1.151 2025/11/29 07:08:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.150 2025/11/29 01:33:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.151 2025/11/29 07:08:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1895,7 +1895,7 @@ ucom_cnread_complete(struct ucom_softc *sc)
 	uint32_t cc, cnt;
 	u_char *cp;
 
-	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_full);	
+	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_full);
 
 	while (ub != NULL) {
 		KASSERT(ucom_xfer_done(ub->ub_xfer));
