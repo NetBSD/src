@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.78 2025/07/15 22:15:03 andvar Exp $ */
+/* $NetBSD: kern_tc.c,v 1.79 2025/11/29 22:15:41 andvar Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.78 2025/07/15 22:15:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.79 2025/11/29 22:15:41 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -103,7 +103,7 @@ struct timehands {
 	struct timecounter	*th_counter;     /* active timecounter */
 	int64_t			th_adjustment;   /* frequency adjustment */
 						 /* (NTP/adjtime) */
-	uint64_t		th_scale;        /* scale factor (counter) */
+	uint64_t		th_scale;        /* scale factor (counter */
 						 /* tick->time) */
 	uint64_t 		th_offset_count; /* offset at last time */
 						 /* update (tc_windup()) */
