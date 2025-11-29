@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.99 2025/11/21 21:46:20 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.100 2025/11/29 22:06:03 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,14 +120,16 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.99 2025/11/21 21:46:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.100 2025/11/29 22:06:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
+#ifndef __HAVE_M68K_BROKEN_RMC
 #include <sys/atomic.h>
+#endif
 
 #include <machine/pcb.h>
 
@@ -737,7 +739,11 @@ pmap_destroy(pmap_t pmap)
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p)\n", pmap));
 
+#ifdef __HAVE_M68K_BROKEN_RMC
+	count = --pmap->pm_count;
+#else
 	count = atomic_dec_uint_nv(&pmap->pm_count);
+#endif
 	if (count == 0) {
 		pmap_release(pmap);
 		pool_put(&pmap_pmap_pool, pmap);
@@ -784,7 +790,11 @@ pmap_reference(pmap_t pmap)
 {
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
+#ifdef __HAVE_M68K_BROKEN_RMC
+	pmap->pm_count++;
+#else
 	atomic_inc_uint(&pmap->pm_count);
+#endif
 }
 
 /*
