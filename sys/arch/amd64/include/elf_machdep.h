@@ -1,23 +1,8 @@
-/*	$NetBSD: elf_machdep.h,v 1.6 2017/11/06 03:47:45 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.7 2025/11/29 21:32:29 jkoshy Exp $	*/
 
 #if !defined __i386__
 
-#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_386:						\
-			break;
-
-#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define	ELF64_MACHDEP_ID_CASES						\
-		case EM_X86_64:						\
-			break;
-
-#define	ELF32_MACHDEP_ID	EM_386
-#define	ELF64_MACHDEP_ID	EM_X86_64
-
-#define	KERN_ELFSIZE		64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /* x86-64 relocations */
 
 #define R_X86_64_NONE		0
@@ -66,6 +51,27 @@
 #define R_X86_64_PLT32_BND	40
 #define R_X86_64_GOTPCRELX	41
 #define R_X86_64_REX_GOTPCRELX	42
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_386:						\
+			break;
+
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define	ELF64_MACHDEP_ID_CASES						\
+		case EM_X86_64:						\
+			break;
+
+#define	ELF32_MACHDEP_ID	EM_386
+#define	ELF64_MACHDEP_ID	EM_X86_64
+
+#define	KERN_ELFSIZE		64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
 
 #define	R_TYPE(name)	__CONCAT(R_X86_64_,name)
 
