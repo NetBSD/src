@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.15 2025/11/24 18:56:54 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.16 2025/11/29 09:56:20 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.15 2025/11/24 18:56:54 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 4274 2025-11-23 21:25:40Z jkoshy')
+	`Id: elfdefinitions.m4 4277 2025-11-26 22:50:56Z jkoshy')
 include(`elfconstants.m4')dnl
 
 # Compute the whitespace between a symbol and its definition.
@@ -83,8 +83,8 @@ divert(0)dnl
  * Ignore the definitions provided by this file if <sys/exec_elf.h> has
  * already been included.
  *
- * Doing so allows NetBSD code to use either (or both) of these files
- * without breaking the build.
+ * Doing so allows NetBSD code to use either (or both) <sys/exec_elf.h>
+ * or this file without breaking the build.
  */
 #undef _USE_SYS_ELFDEFINITIONS_H_
 #endif /* defined(__NetBSD__) && defined(_SYS_EXEC_ELF_H_) */
@@ -209,6 +209,11 @@ DEFINE_PHDR_FLAGS()
 DEFINE_PHDR_TYPES()
 /* synonyms. */
 DEFINE_PHDR_TYPE_SYNONYMS()
+
+/*
+ * Platform-specific flags.
+ */
+DEFINE_PLATFORM_SPECIFIC_FLAGS()
 
 /*
  * Section flags.

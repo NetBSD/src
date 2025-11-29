@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.12 2025/11/24 18:56:54 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.13 2025/11/29 09:56:20 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.12 2025/11/24 18:56:54 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4272 2025-11-18 22:10:56Z jkoshy')
+	`Id: elfconstants.m4 4284 2025-11-28 22:04:34Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -52,10 +52,13 @@ define(`COMPATIBILITY_NOTICE',`dnl
 #     ELF for the Arm® Architecture
 #     https://github.com/ARM-software/abi-aa/blob/main/aaelf32/aaelf32.rst
 #
+#   alpha ::
+#     Believed to be compatible with NetBSD/Alpha and GNU binutils.
+#
 #   ia_64 ::
-#      Intel® Itanium™ Processor-specific Application Binary Interface (ABI)
-#      Document Number: 245370-003
-#      http://refspecs.linux-foundation.org/elf/IA64-SysV-psABI.pdf
+#     Intel® Itanium™ Processor-specific Application Binary Interface (ABI)
+#     Document Number: 245370-003
+#     http://refspecs.linux-foundation.org/elf/IA64-SysV-psABI.pdf
 #
 #   loongarch ::
 #     ELF for the LoongArch™ Architecture
@@ -375,6 +378,8 @@ _(`DT_VERNEEDNUM',       0x6FFFFFFF,
 	`the number of version needed entries')
 _(`DT_LOPROC',           0x70000000,
 	`start of processor-specific types')
+_(`DT_ALPHA_PLTRO',      0x70000000,
+	`secure (read-only) PLT')
 _(`DT_ARM_SYMTABSZ',     0x70000001,
 	`number of entries in the dynamic symbol table')
 _(`DT_SPARC_REGISTER',   0x70000001,
@@ -502,7 +507,7 @@ _(`DT_DEPRECATED_SPARC_REGISTER', `DT_SPARC_REGISTER')
 #
 define(`DEFINE_EHDR_FLAGS_ARM',`dnl
 _(EF_ARM_RELEXEC,      0x00000001U,
-	`dynamic segment describes only how to relocate segments')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_HASENTRY,     0x00000002U,
 	`e_entry contains a program entry point')
 _(EF_ARM_SYMSARESORTED, 0x00000004U,
@@ -528,19 +533,19 @@ _(EF_ARM_EABI_VER4,    0x04000000U,
 _(EF_ARM_EABI_VER5,    0x05000000U,
 	`ARM EABI version 5')
 _(EF_ARM_INTERWORK,    0x00000004U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_APCS_26,      0x00000008U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_APCS_FLOAT,   0x00000010U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_PIC,          0x00000020U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_ALIGN8,       0x00000040U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_NEW_ABI,      0x00000080U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_OLD_ABI,      0x00000100U,
-	`GNU EABI extension')
+	`GNU pre-EABI, deprecated')
 _(EF_ARM_ABI_FLOAT_SOFT,   0x00000200U,
 	`Object uses the software floating point procedure call standard.')
 _(EF_ARM_ABI_FLOAT_HARD,   0x00000400U,
@@ -548,6 +553,7 @@ _(EF_ARM_ABI_FLOAT_HARD,   0x00000400U,
 _(EF_ARM_MAVERICK_FLOAT, 0x00000800U,
 	`GNU EABI extension')
 ')
+
 define(`DEFINE_EHDR_FLAG_MASKS_ARM',`dnl
 _(EF_ARM_EABIMASK,     0xFF000000U,
 	`mask for ARM EABI version number (0 denotes GNU or unknown)')
@@ -1439,6 +1445,61 @@ _(PT_HISUNW,	PT_HIOS)
 _(PT_LOSUNW,	PT_SUNWBSS)
 ')
 
+define(`DEFINE_ARM_PLATFORM_FLAGS',`
+_(PT_ARM_ARCHEXT_FMTMSK,    0xFF000000U,
+	`Mask bits describing the format of subsequent data')
+_(PT_ARM_ARCHEXT_PROFMSK,   0x00FF0000U,
+	`Mask bits describing the architecture profile required')
+_(PT_ARM_ARCHEXT_ARCHMSK,   0x000000FFU,
+	`Mask bits describing the base architecture required')
+_(PT_ARM_ARCHEXT_FMT_OS,    0x00000000U,
+	`No additional words of data')
+_(PT_ARM_ARCHEXT_FMT_ABI,   0x01000000U,
+	`ABI format defines the following words of data')
+_(PT_ARM_ARCHEXT_PROF_NONE, 0x00000000U,
+	`No profile-specific constraints')
+_(PT_ARM_ARCHEXT_PROF_ARM,  0x00410000U,
+	`Executable requires the Application profile')
+_(PT_ARM_ARCHEXT_PROF_RT,   0x00520000U,
+	`Executable requires the Real-Time profile')
+_(PT_ARM_ARCHEXT_PROF_MC,   0x004D0000U,
+	`Executable requires the Microcontroller profile')
+_(PT_ARM_ARCHEXT_PROF_CLASSIC, 0x00530000U,
+	`Executable requires the A or R profile exception model')
+_(PT_ARM_ARCHEXT_ARCH_UNKNOWN, 0x00000000U,
+	`Unspecified architecture')
+_(PT_ARM_ARCHEXT_ARCHv4,    0x00000001U,
+	`Architecture v4')
+_(PT_ARM_ARCHEXT_ARCHv4T,   0x00000002U,
+	`Architecture v4T')
+_(PT_ARM_ARCHEXT_ARCHv5T,   0x00000003U,
+	`Architecture v5T')
+_(PT_ARM_ARCHEXT_ARCHv5TE,  0x00000004U,
+	`Architecture v5TE')
+_(PT_ARM_ARCHEXT_ARCHv5TEJ, 0x00000005U,
+	`Architecture v5TE')
+_(PT_ARM_ARCHEXT_ARCHv6,    0x00000006U,
+	`Architecture v6')
+_(PT_ARM_ARCHEXT_ARCHv6KZ,  0x00000007U,
+	`Architecture v6KZ')
+_(PT_ARM_ARCHEXT_ARCHv6T2,  0x00000008U,
+	`Architecture v6KT2')
+_(PT_ARM_ARCHEXT_ARCHv6K,   0x00000009U,
+	`Architecture v6K')
+_(PT_ARM_ARCHEXT_ARCHv7,    0x0000000AU,
+	`Architecture v7')
+_(PT_ARM_ARCHEXT_ARCHv6M,   0x0000000BU,
+	`Architecture v6M')
+_(PT_ARM_ARCHEXT_ARCHv6SM,  0x0000000CU,
+	`Architecture v6S-M')
+_(PT_ARM_ARCHEXT_ARCHv7EM,  0x0000000DU,
+	`Architecture v7E-M')
+')
+
+define(`DEFINE_PLATFORM_SPECIFIC_FLAGS',`dnl
+DEFINE_ARM_PLATFORM_FLAGS()
+')
+
 #
 # Section flags.
 #
@@ -1471,6 +1532,8 @@ _(SHF_AMD64_LARGE,     0x10000000U,
 	`section uses large code model')
 _(SHF_ENTRYSECT,       0x10000000U,
 	`section contains an entry point (ARM)')
+_(SHF_ARM_PURECODE,    0x20000000U,
+	`section has only code without data (ARM)')
 _(SHF_COMDEF,          0x80000000U,
 	`section may be multiply defined in input to link step (ARM)')
 _(SHF_MIPS_GPREL,      0x10000000U,
@@ -1613,6 +1676,16 @@ _(SHT_HIOS,            0x6FFFFFFFU,
 	`end of OS-specific range')
 _(SHT_LOPROC,          0x70000000U,
 	`start of processor-specific range')
+_(SHT_AARCH64_ATTRIBUTES,  0x70000003U,
+	`object file compatibility attributes')
+_(SHT_AARCH64_AUTH_RELR,   0x70000004U,
+	`compressed signed relative relocations')
+_(SHT_AARCH64_AUTH_SYM,   0x70000005U,
+	`symbol signing information')
+_(SHT_AARCH64_MEMTAG_GLOBALS_STATIC,  0x70000007U,
+	`used to tag global variables')
+_(SHT_AARCH64_MEMTAG_GLOBALS_DYNAMIC,  0x70000008U,
+	`used to tag global variables')
 _(SHT_ARM_EXIDX,       0x70000001U,
 	`exception index table')
 _(SHT_ARM_PREEMPTMAP,  0x70000002U,
@@ -2342,7 +2415,15 @@ _(R_ARM_PRIVATE_28,		173)
 _(R_ARM_PRIVATE_29,		174)
 _(R_ARM_PRIVATE_30,		175)
 _(R_ARM_PRIVATE_31,		176)
-__(`	', `Reserved: 177-255.')
+__(`	', `Reserved: 177-248.')
+__(`	', `GNU extensions')
+_(R_ARM_RXPC25,			249)
+_(R_ARM_RSBREL32,		250)
+_(R_ARM_THM_RPC22,		251)
+_(R_ARM_RREL32,			252)
+_(R_ARM_RABS32,			253)
+_(R_ARM_RPC24,			254)
+_(R_ARM_RBASE,			255)
 ')
 
 define(`DEFINE_ARM_OBSOLETE_RELOCATION_TYPES',`
@@ -2355,6 +2436,89 @@ _(R_ARM_GOTPC,			25)
 _(R_ARM_GOT32,			26)
 _(R_ARM_THM_PC11,		102)
 _(R_ARM_THM_PC9,		103)
+')
+
+define(`DEFINE_ALPHA_RELOCATION_TYPES',`
+_(R_ALPHA_NONE,			0,
+	`No relocation')
+_(R_ALPHA_REFLONG,		1,
+	`32 bit direct')
+_(R_ALPHA_REFQUAD,		2,
+	`64 bit direct')
+_(R_ALPHA_GPREL32,		3,
+	`GP-relative 32-bit')
+_(R_ALPHA_LITERAL,		4,
+	`GP-relative 16-bit')
+_(R_ALPHA_LITUSE,		5,
+	`Optimization hint for LITERAL')
+_(R_ALPHA_GPDISP,		6,
+	`Add displacement to GP')
+_(R_ALPHA_BRADDR,		7,
+	`PC+4-relative 23-bit shifted')
+_(R_ALPHA_HINT,		        8,
+	`PC+4-relative 16-bit shifted')
+_(R_ALPHA_SREL16,		9,
+	`PC-relative 16 bit')
+_(R_ALPHA_SREL32,		10,
+	`PC-relative 32 bit')
+_(R_ALPHA_SREL64,		11,
+	`PC-relative 64 bit')
+_(R_ALPHA_OP_PUSH,		12,
+	`deprecated, ECOFF OP stack push')
+_(R_ALPHA_OP_STORE,		13,
+	`deprecated, ECOFF OP pop and store')
+_(R_ALPHA_OP_PSUB,		14,
+	`deprecated, ECOFF OP stack subtract')
+_(R_ALPHA_OP_PRSHIFT,		15,
+	`deprecated, ECOFF OP stack right `shift'')
+_(R_ALPHA_GPVALUE,   	        16,
+	`deprecated, ECOFF relocation')
+_(R_ALPHA_GPRELHIGH,		17,
+	`GP-relative 32-bit high 16 bits')
+_(R_ALPHA_GPRELLOW,  	    	18,
+	`GP-relative 32-bit low 16 bits')
+_(R_ALPHA_GPREL16,   	    	19,
+	`GP-relative 16-bit')
+_(R_ALPHA_IMMED_GP_HI32,	20,
+	`deprecated ECOFF relocation')
+_(R_ALPHA_IMMED_SCN_HI32,	21,
+	`deprecated ECOFF relocation')
+_(R_ALPHA_IMMED_BR_HI32,	22,
+	`deprecated ECOFF relocation')
+_(R_ALPHA_IMMED_LO32,		23,
+	`deprecated ECOFF relocation')
+__(`	', `Relocations for shared libraries')	
+_(R_ALPHA_COPY,			24,
+	`copy symbol at runtime')
+_(R_ALPHA_GLOB_DAT,		25,
+	`create GOT entry')
+_(R_ALPHA_JMP_SLOT,		26,
+	`create PLT entry')
+_(R_ALPHA_RELATIVE,		27,
+	`adjust by program base')
+_(R_ALPHA_BRSGP,		28,
+	`PC relative with target address adjustment')
+__(`	', `TLS relocations')
+_(R_ALPHA_TLSGD,     	  	29)
+_(R_ALPHA_TLSDM,		30)
+_(R_ALPHA_DTPMOD64,		31)
+_(R_ALPHA_GOTDTPREL,		32)
+_(R_ALPHA_DTPREL64,		33)
+_(R_ALPHA_DTPRELHI,		34)
+_(R_ALPHA_DTPRELLO,		35)
+_(R_ALPHA_DTPREL16,		36)
+_(R_ALPHA_GOTTPREL,		37)
+_(R_ALPHA_TPREL64,		38)
+_(R_ALPHA_TPRELHI,		39)
+_(R_ALPHA_TPRELLO,		40)
+_(R_ALPHA_TPREL16,		41)
+')
+
+define(`DEFINE_ALPHA_RELOCATION_TYPE_SYNONYMS',`
+_(R_ALPHA_TLS_GD,		R_ALPHA_TLSGD,
+	`NetBSD spelling')
+_(R_ALPHA_IMMED_GP_16,		R_ALPHA_GPREL16,
+	`NetBSD spelling')
 ')
 
 define(`DEFINE_IA_64_RELOCATION_TYPES',`
@@ -3419,6 +3583,7 @@ define(`DEFINE_RELOCATION_TYPES',`
 DEFINE_386_RELOCATION_TYPES()
 DEFINE_AARCH64_RELOCATION_TYPES()
 DEFINE_ARM_RELOCATION_TYPES()
+DEFINE_ALPHA_RELOCATION_TYPES()
 DEFINE_IA_64_RELOCATION_TYPES()
 DEFINE_LOONGARCH_RELOCATION_TYPES()
 DEFINE_MIPS_RELOCATION_TYPES()
@@ -3444,6 +3609,7 @@ DEFINE_X86_64_OBSOLETE_RELOCATION_TYPES()
 define(`DEFINE_RELOCATION_TYPE_SYNONYMS',`
 DEFINE_386_RELOCATION_TYPE_SYNONYMS()
 DEFINE_AARCH64_RELOCATION_TYPE_SYNONYMS()
+DEFINE_ALPHA_RELOCATION_TYPE_SYNONYMS()
 DEFINE_IA_64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_MIPS_RELOCATION_TYPE_SYNONYMS()
 DEFINE_X86_64_RELOCATION_TYPE_SYNONYMS()
