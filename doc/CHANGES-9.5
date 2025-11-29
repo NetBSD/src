@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.81 2025/11/24 17:01:00 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.82 2025/11/29 17:02:35 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1050,4 +1050,9 @@ lib/libutil/getfstypename.3			1.4
 
 	getfstypename(3): fix typo in the documentation.
 	[andvar, ticket #1982]
+
+sys/dev/usb/ucom.c				1.142,1.149
+
+	ucom(4): fix ucom input queue corruption on open-after-close.
+	[skrll, ticket #1983]
 
