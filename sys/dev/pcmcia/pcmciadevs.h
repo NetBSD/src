@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.235 2021/10/17 20:33:27 andvar Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.236 2025/11/29 22:10:55 andvar Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.235 2019/04/06 04:52:44 msaitoh Exp
+ *	NetBSD: pcmciadevs,v 1.236 2021/10/17 20:33:05 andvar Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -306,7 +306,7 @@
 #define	PCMCIA_CIS_FARALLON_SKYLINE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FARALLON_SKYLINE	0x0a01
 
-/* Fujutsu Products */
+/* Fujitsu Products */
 #define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_SCSI600	0x0401
 #define	PCMCIA_CIS_FUJITSU_LA10S	{ NULL, NULL, NULL, NULL }
