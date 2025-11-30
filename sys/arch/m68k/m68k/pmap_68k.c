@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.41 2025/11/30 19:50:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.42 2025/11/30 21:42:28 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.41 2025/11/30 19:50:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.42 2025/11/30 21:42:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3978,12 +3978,17 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		total_ptpages += nptpages;
 	}
 
+#ifdef PMAP_MACHINE_CHECK_BOOTSTRAP_ALLOCATIONS
 	/*
-	 * XXX Right here, mac68k Utah pmap_bootstrap() has a check
-	 * XXX to see if the kernel + bootstrap allocations fit within
-	 * XXX one of the memory segments mapped by the loader.
-	 * XXX TODO: Provide a hook for this.
+	 * Right here, the old mac68k Utah pmap_bootstrap1() has a
+	 * check to see if the kernel + bootstrap allocations fit
+	 * within one of the memory segments mapped by the loader.
+	 * This is a hook to accommodate that requirement.
 	 */
+	void (*alloc_checkfn)(paddr_t, paddr_t) =
+	    (void *)VA_TO_PA(pmap_machine_check_bootstrap_allocations);
+	(*alloc_checkfn)(nextpa, reloff);
+#endif
 
 	/*
 	 * The bulk of the dynamic memory allocation is done (there

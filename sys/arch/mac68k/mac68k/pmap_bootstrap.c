@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.108 2025/11/30 20:53:47 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.109 2025/11/30 21:42:28 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.108 2025/11/30 20:53:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.109 2025/11/30 21:42:28 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -164,26 +164,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	nptpages += howmany(physmem, NPTEPG);
 	nptpages++;
 	nextpa += nptpages * PAGE_SIZE;
-	
-	for (i = 0; i < numranges; i++)
-		if (low[i] <= firstpa && firstpa < high[i])
-			break;
-	if (i >= numranges || nextpa > high[i]) {
-		if (mac68k_machine.do_graybars) {
-			printf("Failure in NetBSD boot; ");
-			if (i < numranges)
-				printf("nextpa=0x%lx, high[%d]=0x%lx.\n",
-				    nextpa, i, high[i]);
-			else
-				printf("can't find kernel RAM segment.\n");
-			printf("You're hosed!  Try booting with 32-bit ");
-			printf("addressing enabled in the memory control ");
-			printf("panel.\n");
-			printf("Older machines may need Mode32 to get that ");
-			printf("option.\n");
-		}
-		panic("Cannot work with the current memory mappings.");
-	}
+
+	pmap_machine_check_bootstrap_allocations(nextpa, firstpa);
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -492,6 +474,32 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	}
 
 	return nextpa;
+}
+
+void
+pmap_machine_check_bootstrap_allocations(paddr_t nextpa, paddr_t firstpa)
+{
+	int i;
+
+	for (i = 0; i < numranges; i++)
+		if (low[i] <= firstpa && firstpa < high[i])
+			break;
+	if (i >= numranges || nextpa > high[i]) {
+		if (mac68k_machine.do_graybars) {
+			printf("Failure in NetBSD boot; ");
+			if (i < numranges)
+				printf("nextpa=0x%lx, high[%d]=0x%lx.\n",
+				    nextpa, i, high[i]);
+			else
+				printf("can't find kernel RAM segment.\n");
+			printf("You're hosed!  Try booting with 32-bit ");
+			printf("addressing enabled in the memory control ");
+			printf("panel.\n");
+			printf("Older machines may need Mode32 to get that ");
+			printf("option.\n");
+		}
+		panic("Cannot work with the current memory mappings.");
+	}
 }
 
 void

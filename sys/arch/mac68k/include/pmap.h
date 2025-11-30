@@ -1,7 +1,10 @@
-/*	$NetBSD: pmap.h,v 1.39 2025/08/18 20:59:55 andvar Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2025/11/30 21:42:28 thorpej Exp $	*/
 
 #ifndef _MAC68K_PMAP_H_
 #define	_MAC68K_PMAP_H_
+
+#define	PMAP_MACHINE_CHECK_BOOTSTRAP_ALLOCATIONS
+void	pmap_machine_check_bootstrap_allocations(paddr_t, paddr_t);
 
 #include <m68k/pmap_motorola.h>
 #include <m68k/mmu_30.h>
