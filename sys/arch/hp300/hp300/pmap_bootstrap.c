@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.67 2025/11/23 17:32:28 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.68 2025/11/30 20:09:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.67 2025/11/23 17:32:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.68 2025/11/30 20:09:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -128,8 +128,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG) +
-		(IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+	nptpages = RELOC(Sysptsize, int) +
+	    howmany(RELOC(physmem, psize_t), NPTEPG) +
+	    (IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*

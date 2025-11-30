@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.40 2025/11/30 19:40:00 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.41 2025/11/30 19:50:20 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.40 2025/11/30 19:40:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.41 2025/11/30 19:50:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3947,7 +3947,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * XXX TODO: Provide a way for cpu_startup() on mac68k to assert
 	 * XXX this (export kernel_virtual_end?).
 	 */
-	nextva += RELOC(physmem, u_int) << PGSHIFT;
+	nextva += RELOC(physmem, psize_t) << PGSHIFT;
 	nextva = pmap_round_ptpage(nextva);
 	if (nextva > RELOC(kernel_virtual_max, vaddr_t) ||
 	    nextva < RELOC(kernel_virtual_start, vaddr_t)) {

@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.12 2025/11/14 00:44:14 thorpej Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.13 2025/11/30 20:09:18 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.12 2025/11/14 00:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.13 2025/11/30 20:09:18 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -313,7 +313,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 	bid->bootinfo_end = PA_TO_VA(nextpa);
 
 	/* Initialize the physmem variable for the memory found. */
-	RELOC(physmem, int) = bid->bootinfo_total_mem_pages;
+	RELOC(physmem, psize_t) = bid->bootinfo_total_mem_pages;
 
 	/* Re-initialize these to the virtual addresses. */
 	bid->bootinfo = (struct bi_record *)PA_TO_VA(bid->bootinfo);

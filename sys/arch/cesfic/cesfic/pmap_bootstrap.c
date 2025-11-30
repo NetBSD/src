@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.39 2025/11/12 13:32:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.40 2025/11/30 20:09:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.39 2025/11/12 13:32:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.40 2025/11/30 20:09:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -125,7 +125,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG);
+	nptpages = RELOC(Sysptsize, int) +
+	    howmany(RELOC(physmem, psize_t), NPTEPG);
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
@@ -423,7 +424,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(avail_start, paddr_t) = nextpa;
 	RELOC(avail_end, paddr_t) = firstpa
-	  + m68k_ptob(RELOC(physmem, int))
+	  + m68k_ptob(RELOC(physmem, psize_t))
 	  - m68k_round_page(MSGBUFSIZE)
 	  - PAGE_SIZE; /* if that start of last page??? */
 	RELOC(virtual_avail, vaddr_t) =

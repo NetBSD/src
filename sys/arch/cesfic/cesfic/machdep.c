@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2025/11/30 20:09:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2025/11/30 20:09:18 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -105,12 +105,6 @@ char machine[] = MACHINE;		/* CPU "architecture" */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-/*int	maxmem;*/			/* max memory per process */
-extern psize_t physmem;			/* max supported memory, changes to actual */
 
 extern	u_int lowram;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.31 2025/11/19 11:18:25 martin Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.32 2025/11/30 20:09:18 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.31 2025/11/19 11:18:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.32 2025/11/30 20:09:18 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -323,7 +323,7 @@ next68k_bootargs(unsigned char **args)
 				RELOC(phys_seg_list[j].ps_end, paddr_t) =
 				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
 				    msize16;
-				RELOC(physmem, int) += msize16 >> PGSHIFT;
+				RELOC(physmem, psize_t) += msize16 >> PGSHIFT;
 				j++;
 			}
 			if ((MONRELOC(char, MG_simm + ix) & SIMM_SIZE) ==
@@ -331,7 +331,7 @@ next68k_bootargs(unsigned char **args)
 				RELOC(phys_seg_list[j].ps_end, paddr_t) =
 				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
 				    msize4;
-				RELOC(physmem, int) += msize4 >> PGSHIFT;
+				RELOC(physmem, psize_t) += msize4 >> PGSHIFT;
 				j++;
 			}
 			if ((MONRELOC(char, MG_simm+ix) & SIMM_SIZE) ==
@@ -339,7 +339,7 @@ next68k_bootargs(unsigned char **args)
 				RELOC(phys_seg_list[j].ps_end, paddr_t) =
 				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
 				    msize1;
-				RELOC(physmem, int) += msize1 >> PGSHIFT;
+				RELOC(physmem, psize_t) += msize1 >> PGSHIFT;
 				j++;
 			}
 		}
@@ -351,7 +351,7 @@ next68k_bootargs(unsigned char **args)
 		RELOC(phys_seg_list[j - 1].ps_end, paddr_t) -= 0x2000;
 		RELOC(rom_image_base, paddr_t) =
 		    RELOC(phys_seg_list[j - 1].ps_end, paddr_t);
-		RELOC(physmem, int) -= 0x2000 >> PGSHIFT;
+		RELOC(physmem, psize_t) -= 0x2000 >> PGSHIFT;
 
 		/* pmap is unhappy if it is not null terminated */
 		for (; j < MAX_PHYS_SEGS; j++) {
