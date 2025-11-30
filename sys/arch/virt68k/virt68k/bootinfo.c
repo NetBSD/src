@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.13 2025/11/30 20:09:18 thorpej Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.14 2025/11/30 23:42:56 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.13 2025/11/30 20:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.14 2025/11/30 23:42:56 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -58,9 +58,7 @@ static struct bi_mem_info	bid_mem_segments_avail[VM_PHYSSEG_MAX];
 
 static struct bootinfo_data	bootinfo_data_store;
 
-#define	PA_TO_VA(pa)	(VM_MIN_KERNEL_ADDRESS + ((pa) - reloff))
-#define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
-#define	RELOC(v, t)	*((t *)VA_TO_PA(&(v)))
+#define	RELOC(v, t)	*((t *)PMAP_BOOTSTRAP_RELOC_GLOB(&(v)))
 
 #if NGFTTY > 0
 static bool
@@ -261,8 +259,9 @@ bootinfo_gf_tty_consinit(struct bootinfo_data *bid, struct bi_record *bi)
 paddr_t
 bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 {
-	struct bootinfo_data *bid =
-	    (struct bootinfo_data *)VA_TO_PA(&bootinfo_data_store);
+	const paddr_t bootinfo_pa = nextpa;
+	struct bootinfo_data *bid = (struct bootinfo_data *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(&bootinfo_data_store);
 	struct bi_record *bi;
 
 	/*
@@ -270,11 +269,12 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 	 * and get converted to virtual addresses when we're done for
 	 * subsequent calls (after the MMU is enabled).
 	 */
-	bid->bootinfo = (struct bi_record *)nextpa;
-	bid->bootinfo_mem_segments =
-	    (struct bi_mem_info *)VA_TO_PA(bid_mem_segments);
-	bid->bootinfo_mem_segments_avail =
-	    (struct bi_mem_info *)VA_TO_PA(bid_mem_segments_avail);
+	bid->bootinfo = (struct bi_record *)
+	    PMAP_BOOTSTRAP_RELOC_PA(bootinfo_pa);
+	bid->bootinfo_mem_segments = (struct bi_mem_info *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(bid_mem_segments);
+	bid->bootinfo_mem_segments_avail = (struct bi_mem_info *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(bid_mem_segments_avail);
 
 	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
 	     bi = bootinfo_next(bi)) {
@@ -310,13 +310,14 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 
 	/* Set bootinfo_end to be just past the BI_LAST record. */
 	nextpa = (paddr_t)bootinfo_next(bi);
-	bid->bootinfo_end = PA_TO_VA(nextpa);
+	bid->bootinfo_end = PMAP_BOOTSTRAP_PA_TO_VA(nextpa);
 
 	/* Initialize the physmem variable for the memory found. */
 	RELOC(physmem, psize_t) = bid->bootinfo_total_mem_pages;
 
 	/* Re-initialize these to the virtual addresses. */
-	bid->bootinfo = (struct bi_record *)PA_TO_VA(bid->bootinfo);
+	bid->bootinfo = (struct bi_record *)
+	    PMAP_BOOTSTRAP_PA_TO_VA(bootinfo_pa);
 	bid->bootinfo_mem_segments = bid_mem_segments;
 	bid->bootinfo_mem_segments_avail = bid_mem_segments_avail;
 

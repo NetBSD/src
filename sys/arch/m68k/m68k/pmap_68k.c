@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.42 2025/11/30 21:42:28 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.43 2025/11/30 23:42:56 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.42 2025/11/30 21:42:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.43 2025/11/30 23:42:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3753,11 +3753,11 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 ((va) < (var)->end_va || (var)->end_va == 0))
 
 #define	VA_PTE_BASE(va, var)				\
-	(&((pt_entry_t *)(var)->start_ptp)[m68k_btop((va) - (var)->start_va)])
+	(&((pt_entry_t *)				\
+	    PMAP_BOOTSTRAP_RELOC_PA((var)->start_ptp))[	\
+	    m68k_btop((va) - (var)->start_va)])
 
-#define	PA_TO_VA(pa)	(VM_MIN_KERNEL_ADDRESS + ((pa) - reloff))
-#define	VA_TO_PA(va)	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
-#define	RELOC(v, t)	*((t *)VA_TO_PA(&(v)))
+#define	RELOC(v, t)	*((t *)PMAP_BOOTSTRAP_RELOC_GLOB(&(v)))
 
 	/* Record the relocation offset for kernel crash dumps. */
 	RELOC(kernel_reloc_offset, paddr_t) = reloff;
@@ -3832,7 +3832,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 */
 
 	nextpa = m68k_round_page(nextpa);
-	nextva = PA_TO_VA(nextpa);
+	nextva = PMAP_BOOTSTRAP_PA_TO_VA(nextpa);
 
 	/*
 	 * nextpa now represents the end of the loaded kernel image.
@@ -3912,8 +3912,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * Allocate machine-specific VAs.
 	 */
 	extern const struct pmap_bootmap machine_bootmap[];
-	const struct pmap_bootmap *pmbm =
-	    (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
+	const struct pmap_bootmap *pmbm = (const struct pmap_bootmap *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
 		if (pmbm->pmbm_size == 0) {
 			continue;
@@ -3924,7 +3924,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 				RELOC(kernel_virtual_max, vaddr_t) = va;
 			}
 		} else {
-			*(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr) = nextva;
+			*(vaddr_t *)
+			    PMAP_BOOTSTRAP_RELOC_GLOB(pmbm->pmbm_vaddr_ptr) =
+			    nextva;
 			nextva += m68k_round_page(pmbm->pmbm_size);
 		}
 	}
@@ -3985,8 +3987,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * within one of the memory segments mapped by the loader.
 	 * This is a hook to accommodate that requirement.
 	 */
-	void (*alloc_checkfn)(paddr_t, paddr_t) =
-	    (void *)VA_TO_PA(pmap_machine_check_bootstrap_allocations);
+	void (*alloc_checkfn)(paddr_t, paddr_t) = (void *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(pmap_machine_check_bootstrap_allocations);
 	(*alloc_checkfn)(nextpa, reloff);
 #endif
 
@@ -3997,8 +3999,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 *
 	 * Zero out all of these freshly-allocated pages.
 	 */
-	pte = (pt_entry_t *)kernimg_endpa;
-	while ((paddr_t)pte < nextpa) {
+	pte = (pt_entry_t *)PMAP_BOOTSTRAP_RELOC_PA(kernimg_endpa);
+	epte = (pt_entry_t *)PMAP_BOOTSTRAP_RELOC_PA(nextpa);
+	while (pte < epte) {
 		*pte++ = 0;
 	}
 
@@ -4009,7 +4012,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	var = &va_ranges[VA_RANGE_DEFAULT];
 
 	/* Kernel text - read-only. */
-	pa = VA_TO_PA(m68k_trunc_page(&kernel_text));
+	pa = PMAP_BOOTSTRAP_VA_TO_PA(m68k_trunc_page(&kernel_text));
 	pte = VA_PTE_BASE(&kernel_text, var);
 	epte = VA_PTE_BASE(&etext, var);
 	while (pte < epte) {
@@ -4019,7 +4022,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/* Remainder of kernel image - read-write. */
-	epte = VA_PTE_BASE(PA_TO_VA(kernimg_endpa), var);
+	epte = VA_PTE_BASE(PMAP_BOOTSTRAP_PA_TO_VA(kernimg_endpa), var);
 	while (pte < epte) {
 		*pte++ = proto_rw_pte | pa;
 		pa += PAGE_SIZE;
@@ -4065,7 +4068,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * Now perform any machine-specific mappings at VAs
 	 * allocated earlier.
 	 */
-	pmbm = (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
+	pmbm = (const struct pmap_bootmap *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
 		if (pmbm->pmbm_size == 0 ||
 		    (pmbm->pmbm_flags & (PMBM_F_VAONLY | PMBM_F_KEEPOUT))) {
@@ -4074,7 +4078,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
 			va = pmbm->pmbm_vaddr;
 		} else {
-			va = *(vaddr_t *)VA_TO_PA(pmbm->pmbm_vaddr_ptr);
+			va = *(vaddr_t *)
+			    PMAP_BOOTSTRAP_RELOC_GLOB(pmbm->pmbm_vaddr_ptr);
 		}
 		for (r = 0; r < NRANGES; r++) {
 			var = &va_ranges[r];
@@ -4105,7 +4110,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	for (r = 0; r < NRANGES; r++) {
 		var = &va_ranges[r];
 		if (use_3l) {
-			pt_entry_t *stes, *stes1 = (pt_entry_t *)kern_lev1pa;
+			pt_entry_t *stes, *stes1 = (pt_entry_t *)
+			    PMAP_BOOTSTRAP_RELOC_PA(kern_lev1pa);
 			for (va = var->start_va, pa = var->start_ptp;
 			     pa < var->end_ptp;
 			     va += NBSEG3L, pa += TBL40_L3_SIZE) {
@@ -4130,9 +4136,13 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 						 * Zero out the new inner
 						 * segment table page.
 						 */
-						pte = (pt_entry_t *)stnext_pa;
-						while ((vaddr_t)pte <
-								stnext_endpa) {
+						pte = (pt_entry_t *)
+						    PMAP_BOOTSTRAP_RELOC_PA(
+						    stnext_pa);
+						epte = (pt_entry_t *)
+						    PMAP_BOOTSTRAP_RELOC_PA(
+						    stnext_endpa);
+						while (pte < epte) {
 							*pte++ = 0;
 						}
 					}
@@ -4140,11 +4150,13 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 					stnext_pa += TBL40_L2_SIZE;
 				}
 				stes = (pt_entry_t *)
-				    (uintptr_t)(stes1[ri] & UTE40_PTA);
+				    PMAP_BOOTSTRAP_RELOC_PA(
+				    stes1[ri] & UTE40_PTA);
 				stes[LA40_PI(va)] = proto_ste | pa;
 			}
 		} else {
-			pt_entry_t *stes = (pt_entry_t *)kern_lev1pa;
+			pt_entry_t *stes = (pt_entry_t *)
+			    PMAP_BOOTSTRAP_RELOC_PA(kern_lev1pa);
 			for (va = var->start_va, pa = var->start_ptp;
 			     pa < var->end_ptp;
 			     va += NBSEG2L, pa += PAGE_SIZE) {
