@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.106 2025/11/30 20:39:57 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.107 2025/11/30 20:45:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.106 2025/11/30 20:39:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.107 2025/11/30 20:45:21 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -472,34 +472,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	lwp0uarea = PA2VA(lwp0upa, vaddr_t);
 
-	/*
-	 * VM data structures are now initialized, set up data for
-	 * the pmap module.
-	 *
-	 * Note about avail_end: msgbuf is initialized just after
-	 * avail_end in machdep.c.  Since the last page is used
-	 * for rebooting the system (code is copied there and
-	 * execution continues from copied code before the MMU
-	 * is disabled), the msgbuf will get trounced between
-	 * reboots if it's placed in the last physical page.
-	 * To work around this, we move avail_end back one more
-	 * page so the msgbuf can be preserved.
-	 */
-	avail_start = m68k_round_page(nextpa);
-	last_page = high[numranges - 1] - m68k_ptob(1);
-
-#if NAUDIO > 0
-	/*
-	 * Reduce high by an extra 7 pages which are used by the EASC on some
-	 * machines.  last_page is unchanged as the last page can still be
-	 * safetly used to reboot the system.
-	 */
-	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(8));
-#else
-	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
-#endif
-
-	avail_end = high[numranges - 1];
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -580,6 +552,33 @@ bootstrap_mac68k(int tc)
 	physmem = m68k_btop(mem_size);
 
 	nextpa = pmap_bootstrap(nextpa, load_addr);
+
+	/*
+	 * VM data structures are now initialized, set up data for
+	 * the pmap module.
+	 *
+	 * Note about avail_end: msgbuf is initialized just after
+	 * avail_end in machdep.c.  Since the last page is used
+	 * for rebooting the system (code is copied there and
+	 * execution continues from copied code before the MMU
+	 * is disabled), the msgbuf will get trounced between
+	 * reboots if it's placed in the last physical page.
+	 * To work around this, we move avail_end back one more
+	 * page so the msgbuf can be preserved.
+	 */
+	avail_start = m68k_round_page(nextpa);
+	last_page = high[numranges - 1] - m68k_ptob(1);
+#if NAUDIO > 0
+	/*
+	 * Reduce high by an extra 7 pages which are used by the EASC on some
+	 * machines.  last_page is unchanged as the last page can still be
+	 * safetly used to reboot the system.
+	 */
+	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(8));
+#else
+	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
+#endif
+	avail_end = high[numranges - 1];
 
 	if (mac68k_machine.do_graybars)
 		printf("Pmap bootstrapped.\n");
