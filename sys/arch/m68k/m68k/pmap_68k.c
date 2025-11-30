@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.38 2025/11/30 17:34:19 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.39 2025/11/30 19:03:55 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.38 2025/11/30 17:34:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.39 2025/11/30 19:03:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3915,6 +3915,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	const struct pmap_bootmap *pmbm =
 	    (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_size == 0) {
+			continue;
+		}
 		if (pmbm->pmbm_flags & (PMBM_F_FIXEDVA | PMBM_F_KEEPOUT)) {
 			va = m68k_trunc_page(pmbm->pmbm_vaddr);
 			if (va < RELOC(kernel_virtual_max, vaddr_t)) {
@@ -4050,7 +4053,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 */
 	pmbm = (const struct pmap_bootmap *)VA_TO_PA(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
-		if (pmbm->pmbm_flags & (PMBM_F_VAONLY | PMBM_F_KEEPOUT)) {
+		if (pmbm->pmbm_size == 0 ||
+		    (pmbm->pmbm_flags & (PMBM_F_VAONLY | PMBM_F_KEEPOUT))) {
 			continue;
 		}
 		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
