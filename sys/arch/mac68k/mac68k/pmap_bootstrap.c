@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.102 2025/11/12 13:32:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.103 2025/11/30 16:34:24 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.102 2025/11/12 13:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.103 2025/11/30 16:34:24 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -126,8 +126,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	extern char start[];
 
 	nextpa = m68k_round_page(nextpa);
-	vidlen = m68k_round_page(mac68k_video.mv_height *
-	    mac68k_video.mv_stride + m68k_page_offset(mac68k_video.mv_phys));
 
 	/*
 	 * Calculate important physical addresses:
@@ -590,6 +588,9 @@ bootstrap_mac68k(int tc)
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping the pmap system.\n");
+
+	vidlen = m68k_round_page(mac68k_video.mv_height *
+	    mac68k_video.mv_stride + m68k_page_offset(mac68k_video.mv_phys));
 
 	pmap_bootstrap(nextpa, load_addr);
 
