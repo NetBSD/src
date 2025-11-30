@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.21 2025/11/28 19:11:27 jkoshy Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.22 2025/11/30 22:17:30 jkoshy Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -71,9 +71,9 @@
 #define R_ARM_ALU_PCREL_7_0	32
 #define R_ARM_ALU_PCREL_15_8	33
 #define R_ARM_ALU_PCREL_23_15	34
-#define R_ARM_ALU_SBREL_11_0	35
-#define R_ARM_ALU_SBREL_19_12	36
-#define R_ARM_ALU_SBREL_27_20	37	// depcreated
+#define R_ARM_LDR_SBREL_11_0_NC	35	// deprecated
+#define R_ARM_ALU_SBREL_19_12_NC	36	// deprecated
+#define R_ARM_ALU_SBREL_27_20_CK	37	// deprecated
 #define R_ARM_TARGET1		38
 #define R_ARM_SBREL31		39	// deprecated
 #define R_ARM_V4BX		40
@@ -156,6 +156,11 @@
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define R_TYPE(name)		__CONCAT(R_ARM_,name)
+
+/* Older NetBSD spellings. */
+#define R_ARM_ALU_SBREL_11_0	35
+#define R_ARM_ALU_SBREL_19_12	36
+#define R_ARM_ALU_SBREL_27_20	37	// depecrated
 
 #define PF_ARM_ENTRY		0x80000000
 
