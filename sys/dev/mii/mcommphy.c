@@ -1,4 +1,4 @@
-/* $NetBSD: mcommphy.c,v 1.5 2025/11/30 07:09:22 skrll Exp $ */
+/* $NetBSD: mcommphy.c,v 1.6 2025/11/30 07:12:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.5 2025/11/30 07:09:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.6 2025/11/30 07:12:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcommphy.c,v 1.5 2025/11/30 07:09:22 skrll Exp $");
 #define  YT8531_RGMII_RXC_DS_MASK	__BITS(15, 13)
 #define  YT8531_RGMII_RXD_DS_HIMASK	__BIT(12)
 #define  YT8531_RGMII_RXD_DS_LOMASK	__BITS(5, 4)
-#define  YT8531_RGMII_RX_DS_DEFAULT    0x3
+#define  YT8531_RGMII_RX_DS_DEFAULT	0x3
 #define YT8531_RGMII_RXD_DS_MASK \
     (YT8531_RGMII_RXD_DS_HIMASK | YT8531_RGMII_RXD_DS_LOMASK)
 
