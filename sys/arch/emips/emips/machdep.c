@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2024/03/05 14:15:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2025/11/30 01:46:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,13 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2024/03/05 14:15:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2025/11/30 01:46:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
@@ -57,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2024/03/05 14:15:29 thorpej Exp $")
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
+#include <sys/vmem.h>
+#include <sys/vmem_impl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -88,14 +89,13 @@ vsize_t iospace_size = 64 * 1024; /* BUGBUG make it an option? */
 #include "ksyms.h"
 
 /*
- * Extent map to manage I/O register space.  We allocate storage for
- * 32 regions in the map.  iomap_ex_malloc_safe will indicate that it's
- * safe to use malloc() to dynamically allocate region descriptors in
- * case we run out.
+ * Vmem arena to manage I/O register space.  We allocate storage for
+ * 32 regions in the map.
  */
-static long iomap_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
-static struct extent *iomap_ex;
-static int iomap_ex_malloc_safe;
+#define	IOMAP_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 32)
+static struct vmem iomap_arena_store;
+static struct vmem_btag iomap_btag_store[IOMAP_BTAG_COUNT];
+static vmem_t *iomap_arena;
 
 /* maps for VM objects */
 struct vm_map *phys_map = NULL;
@@ -328,14 +328,27 @@ void
 consinit(void)
 {
 	/*
-	 * Init I/O memory extent map. Must be done before cninit()
+	 * Init I/O memory vmem arena. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
 	 */
 	KASSERT(iospace != 0);
-	iomap_ex = extent_create("iomap", iospace,
-	    iospace + iospace_size - 1,
-	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
+	iomap_arena = vmem_init(&iomap_arena_store,
+				"iomap",		/* name */
+				0,			/* addr */
+				0,			/* size */
+				PAGE_SIZE,		/* quantum */
+				NULL,			/* importfn */
+				NULL,			/* releasefn */
+				NULL,			/* source */
+				0,			/* qcache_max */
+				VM_NOSLEEP | VM_PRIVTAGS,
+				IPL_NONE);
+	KASSERT(iomap_arena != NULL);
+
+	vmem_add_bts(iomap_arena, iomap_btag_store, IOMAP_BTAG_COUNT);
+	int error = vmem_add(iomap_arena, iospace, iospace_size,
+	    VM_NOSLEEP);
+	KASSERT(error == 0);
 
 	/*
 	 * Up until now we have kept the TLB disabled,
@@ -360,7 +373,7 @@ consinit(void)
 
 /*
  * Allocates a virtual range suitable for mapping in physical memory.
- * Uses resource maps when allocating space, which is allocated from 
+ * Uses a vmem arena when allocating space, which is allocated from 
  * the IOMAP submap. SIZE is a linear range (NOT vax-pages like the VAX).
  * If the page requested is bigger than a logical page, space is
  * allocated from the kernel map instead.
@@ -368,19 +381,18 @@ consinit(void)
 vaddr_t
 mips_map_physmem(paddr_t phys, vsize_t size)
 {
-	vaddr_t addr;
+	vmem_addr_t addr;
 	int error;
 	static int warned = 0;
 
 	size += phys & PAGE_MASK;
-	if (size >= PAGE_SIZE) {
+	if (size > PAGE_SIZE) {
 		addr = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 		if (addr == 0)
 			panic("mips_map_physmem: kernel map full");
 	} else {
-		error = extent_alloc(iomap_ex, size, PAGE_SIZE, 0,
-		    EX_FAST | EX_NOWAIT |
-		    (iomap_ex_malloc_safe ? EX_MALLOCOK : 0), (u_long *)&addr);
+		error = vmem_alloc(iomap_arena, mips_round_page(size),
+		    VM_BESTFIT | VM_NOSLEEP, &addr);
 		if (error) {
 			if (warned++ == 0) /* Warn only once */
 				printf("mips_map_physmem: iomap too small");
@@ -409,12 +421,10 @@ mips_unmap_physmem(vaddr_t addr, vsize_t size)
 	addr &= ~PAGE_MASK;
 
 	iounaccess(addr, size);
-	if (size >= PAGE_SIZE)
+	if (size > PAGE_SIZE)
 		uvm_km_free(kernel_map, addr, size, UVM_KMF_VAONLY);
-	else if (extent_free(iomap_ex, addr, size,
-	    EX_NOWAIT | (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))
-		printf("mips_unmap_physmem: addr 0x%llx size %llx: "
-		    "can't free region\n", (long long)addr, (long long)size);
+	else
+		vmem_free(iomap_arena, addr, mips_round_page(size));
 }
 
 /*
@@ -454,8 +464,6 @@ cpu_startup(void)
 	 * are allocated via the pool allocator, and we use KSEG to
 	 * map those pages.
 	 */
-
-	iomap_ex_malloc_safe = 1;
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
