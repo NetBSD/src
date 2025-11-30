@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.105 2025/11/30 19:17:52 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.106 2025/11/30 20:39:57 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.105 2025/11/30 19:17:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.106 2025/11/30 20:39:57 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -107,17 +107,13 @@ void bootstrap_mac68k(int);
  * that it's mapped with the same PA <=> LA mapping that we eventually
  * want.  The page sizes and the protections will be wrong, anyway.
  *
- * nextpa is the first address following the loaded kernel.  On a IIsi
- * on 12 May 1996, that was 0xf9000 beyond firstpa.
+ * nextpa is the first address following the loaded kernel.
  */
 paddr_t
 pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
-	paddr_t avail_next;
-	int avail_remaining;
-	int avail_range;
 	int i;
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
@@ -489,19 +485,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * To work around this, we move avail_end back one more
 	 * page so the msgbuf can be preserved.
 	 */
-	avail_next = avail_start = m68k_round_page(nextpa);
-	avail_remaining = 0;
-	avail_range = -1;
-	for (i = 0; i < numranges; i++) {
-		if (low[i] <= avail_next && avail_next < high[i]) {
-			avail_range = i;
-			avail_remaining = high[i] - avail_next;
-		} else if (avail_range != -1) {
-			avail_remaining += (high[i] - low[i]);
-		}
-	}
-	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
-
+	avail_start = m68k_round_page(nextpa);
 	last_page = high[numranges - 1] - m68k_ptob(1);
 
 #if NAUDIO > 0
