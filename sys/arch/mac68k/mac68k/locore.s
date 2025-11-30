@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.186 2025/11/04 22:33:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.187 2025/11/30 19:17:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1003,7 +1003,7 @@ ENTRY_NOPROFILE(doboot)
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| disable on-chip cache(s)
 Lnocache5:
-	movl	_C_LABEL(maxaddr),%a0	| last page of physical memory
+	movl	_C_LABEL(last_page),%a0	| last page of physical memory
 	lea	Lbootcode,%a1		| start of boot code
 	lea	Lebootcode,%a3		| end of boot code
 Lbootcopy:
@@ -1016,7 +1016,7 @@ Lbootcopy:
 	.word	0xf4f8			| cpusha bc
 LmotommuE:
 #endif
-	movl	_C_LABEL(maxaddr),%a0
+	movl	_C_LABEL(last_page),%a0
 	jmp	%a0@			| jump to last page
 
 Lbootcode:

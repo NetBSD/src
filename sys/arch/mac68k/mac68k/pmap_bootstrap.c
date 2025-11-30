@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.104 2025/11/30 17:07:18 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.105 2025/11/30 19:17:52 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.104 2025/11/30 17:07:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.105 2025/11/30 19:17:52 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -78,7 +78,7 @@ extern	int	zsinited;
 int	numranges;	/* = 0 == don't use the ranges */
 u_long	low[8];
 u_long	high[8];
-u_long	maxaddr;	/* PA of the last physical page */
+u_long	last_page;	/* PA of the last physical page */
 int	vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
 static vaddr_t	newvideoaddr;
@@ -502,12 +502,12 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
 
-	maxaddr = high[numranges - 1] - m68k_ptob(1);
+	last_page = high[numranges - 1] - m68k_ptob(1);
 
 #if NAUDIO > 0
 	/*
 	 * Reduce high by an extra 7 pages which are used by the EASC on some
-	 * machines.  maxaddr is unchanged as the last page can still be
+	 * machines.  last_page is unchanged as the last page can still be
 	 * safetly used to reboot the system.
 	 */
 	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(8));
@@ -595,7 +595,7 @@ bootstrap_mac68k(int tc)
 		mem_size += high[i] - low[i];
 	physmem = m68k_btop(mem_size);
 
-	pmap_bootstrap(nextpa, load_addr);
+	nextpa = pmap_bootstrap(nextpa, load_addr);
 
 	if (mac68k_machine.do_graybars)
 		printf("Pmap bootstrapped.\n");

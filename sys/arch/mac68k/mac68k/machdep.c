@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.372 2025/11/12 13:33:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.373 2025/11/30 19:17:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.372 2025/11/12 13:33:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.373 2025/11/30 19:17:52 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -446,7 +446,7 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	struct pcb *pcb = lwp_getpcb(curlwp);
-	extern u_long maxaddr;
+	extern u_long last_page;
 
 	/* take a snap shot before clobbering any registers */
 	if (pcb != NULL)
@@ -513,7 +513,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Map the last physical page VA = PA for doboot() */
-	pmap_enter(pmap_kernel(), (vaddr_t)maxaddr, (vaddr_t)maxaddr,
+	pmap_enter(pmap_kernel(), (vaddr_t)last_page, (vaddr_t)last_page,
 	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 	pmap_update(pmap_kernel());
 
@@ -2636,7 +2636,7 @@ mac68k_ring_bell(int freq, int length, int volume)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	extern u_long maxaddr;
+	extern u_long last_page;
 
-	return (pa < maxaddr) ? 0 : EFAULT;
+	return (pa < last_page) ? 0 : EFAULT;
 }
