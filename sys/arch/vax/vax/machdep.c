@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.201 2025/03/09 18:27:39 hans Exp $	 */
+/* $NetBSD: machdep.c,v 1.202 2025/11/30 01:31:35 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2025/03/09 18:27:39 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2025/11/30 01:31:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2025/03/09 18:27:39 hans Exp $");
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/ksyms.h>
 #include <sys/mount.h>
@@ -110,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2025/03/09 18:27:39 hans Exp $");
 #include <sys/kauth.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/vmem.h>
+#include <sys/vmem_impl.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -152,14 +153,13 @@ int		symtab_nsyms;
 struct cpmbx	*cpmbx;		/* Console program mailbox address */
 
 /*
- * Extent map to manage I/O register space.  We allocate storage for
- * 32 regions in the map.  iomap_ex_malloc_safe will indicate that it's
- * safe to use malloc() to dynamically allocate region descriptors in
- * case we run out.
+ * Vmem arena to manage I/O register space.  We allocate storage for
+ * 32 regions in the map.
  */
-static long iomap_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
-static struct extent *iomap_ex;
-static int iomap_ex_malloc_safe;
+#define	IOMAP_BTAG_COUNT	VMEM_EST_BTCOUNT(1, 32)
+static struct vmem iomap_arena_store;
+static struct vmem_btag iomap_btag_store[IOMAP_BTAG_COUNT];
+static vmem_t *iomap_arena;
 
 struct vm_map *phys_map = NULL;
 
@@ -213,8 +213,6 @@ cpu_startup(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
-
-	iomap_ex_malloc_safe = 1;
 }
 
 uint32_t dumpmag = 0x8fca0101;
@@ -305,17 +303,30 @@ consinit(void)
 	extern vaddr_t iospace;
 
 	/*
-	 * Init I/O memory extent map. Must be done before cninit()
+	 * Init I/O memory vmem arena. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
 	 *
 	 * NOTE: We need to reserve the first vax-page of iospace
 	 * for the console routines.
 	 */
 	KASSERT(iospace != 0);
-	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
-	    iospace + ((IOSPSZ * VAX_NBPG) - 1),
-	    (void *) iomap_ex_storage, sizeof(iomap_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
+	iomap_arena = vmem_init(&iomap_arena_store,
+				"iomap",		/* name */
+				0,			/* addr */
+				0,			/* size */
+				VAX_NBPG,		/* quantum */
+				NULL,			/* importfn */
+				NULL,			/* releasefn */
+				NULL,			/* source */
+				0,			/* qcache_max */
+				VM_NOSLEEP | VM_PRIVTAGS,
+				IPL_NONE);
+	KASSERT(iomap_arena != NULL);
+
+	vmem_add_bts(iomap_arena, iomap_btag_store, IOMAP_BTAG_COUNT);
+	int error = vmem_add(iomap_arena, iospace, IOSPSZ * VAX_NBPG,
+	    VM_NOSLEEP);
+	KASSERT(error == 0);
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
@@ -519,23 +530,19 @@ process_sstep(struct lwp *l, int sstep)
 vaddr_t
 vax_map_physmem(paddr_t phys, size_t size)
 {
-	vaddr_t addr;
+	vmem_addr_t addr;
 	int error;
 	static int warned = 0;
 
-#ifdef DEBUG
-	if (!iospace_inited)
-		panic("vax_map_physmem: called before rminit()?!?");
-#endif
+	KDASSERT(iospace_inited);
 	if (size >= LTOHPN) {
 		addr = uvm_km_alloc(kernel_map, size * VAX_NBPG, 0,
 		    UVM_KMF_VAONLY);
 		if (addr == 0)
 			panic("vax_map_physmem: kernel map full");
 	} else {
-		error = extent_alloc(iomap_ex, size * VAX_NBPG, VAX_NBPG, 0,
-		    EX_FAST | EX_NOWAIT |
-		    (iomap_ex_malloc_safe ? EX_MALLOCOK : 0), &addr);
+		error = vmem_alloc(iomap_arena, size * VAX_NBPG,
+		    VM_BESTFIT | VM_NOSLEEP, &addr);
 		if (error) {
 			if (warned++ == 0) /* Warn only once */
 				printf("vax_map_physmem: iomap too small");
@@ -564,11 +571,8 @@ vax_unmap_physmem(vaddr_t addr, size_t size)
 	iounaccess(addr, size);
 	if (size >= LTOHPN)
 		uvm_km_free(kernel_map, addr, size * VAX_NBPG, UVM_KMF_VAONLY);
-	else if (extent_free(iomap_ex, addr, size * VAX_NBPG,
-			     EX_NOWAIT |
-			     (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))
-		printf("vax_unmap_physmem: addr 0x%lx size %zu vpg: "
-		    "can't free region\n", addr, size);
+	else
+		vmem_free(iomap_arena, addr, size * VAX_NBPG);
 }
 
 #define	SOFTINT_IPLS	((IPL_SOFTCLOCK << (SOFTINT_CLOCK * 5))		\
