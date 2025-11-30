@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.107 2025/11/30 20:45:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.108 2025/11/30 20:53:47 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.107 2025/11/30 20:45:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.108 2025/11/30 20:53:47 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -97,7 +97,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-paddr_t pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 void bootstrap_mac68k(int);
 
 /*
@@ -110,7 +110,7 @@ void bootstrap_mac68k(int);
  * nextpa is the first address following the loaded kernel.
  */
 paddr_t
-pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
+pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	u_int nptpages, kstsize;
@@ -545,13 +545,13 @@ bootstrap_mac68k(int tc)
 	vidlen = m68k_round_page(mac68k_video.mv_height *
 	    mac68k_video.mv_stride + m68k_page_offset(mac68k_video.mv_phys));
 
-	/* Sum up the memory for pmap_bootstrap(). */
+	/* Sum up the memory for pmap_bootstrap1(). */
 	vsize_t mem_size = 0;
 	for (i = 0; i < numranges; i++)
 		mem_size += high[i] - low[i];
 	physmem = m68k_btop(mem_size);
 
-	nextpa = pmap_bootstrap(nextpa, load_addr);
+	nextpa = pmap_bootstrap1(nextpa, load_addr);
 
 	/*
 	 * VM data structures are now initialized, set up data for
