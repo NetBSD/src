@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.39 2025/11/30 19:03:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.40 2025/11/30 19:40:00 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.39 2025/11/30 19:03:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.40 2025/11/30 19:40:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3937,6 +3937,15 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * This should be sufficient to prevent pmap_growkernel()
 	 * from having to do any work before the VM system is set
 	 * up.
+	 *
+	 * XXX mac68k also relies on being able to map the last page
+	 * XXX of RAM VA==PA for the mmu-switchoff dance.  Unlike hp300,
+	 * XXX this is not at a fixed location.  However, RAM generally
+	 * XXX starts at $0000.0000 on Macs, so this calculation should
+	 * XXX be sufficient to ensure there is a PTE available for this
+	 * XXX purpose.
+	 * XXX TODO: Provide a way for cpu_startup() on mac68k to assert
+	 * XXX this (export kernel_virtual_end?).
 	 */
 	nextva += RELOC(physmem, u_int) << PGSHIFT;
 	nextva = pmap_round_ptpage(nextva);
