@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.103 2025/11/30 16:34:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.104 2025/11/30 17:07:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.103 2025/11/30 16:34:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.104 2025/11/30 17:07:18 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -122,7 +122,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
-	vsize_t mem_size;
 	extern char start[];
 
 	nextpa = m68k_round_page(nextpa);
@@ -166,10 +165,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * on physical memory size.  Just sum up memory and add enough PT
 	 * pages for that size.
 	 */
-	mem_size = 0;
-	for (i = 0; i < numranges; i++)
-		mem_size += high[i] - low[i];
-	nptpages += howmany(m68k_btop(mem_size), NPTEPG);
+	nptpages += howmany(physmem, NPTEPG);
 	nptpages++;
 	nextpa += nptpages * PAGE_SIZE;
 	
@@ -552,6 +548,7 @@ bootstrap_mac68k(int tc)
 	paddr_t nextpa;
 	void *oldROMBase;
 	char use_bootmem = 0;
+	int i;
 
 #ifdef DJMEMCMAX
 	if(mac68k_machine.machineid == MACH_MACC650 ||
@@ -591,6 +588,12 @@ bootstrap_mac68k(int tc)
 
 	vidlen = m68k_round_page(mac68k_video.mv_height *
 	    mac68k_video.mv_stride + m68k_page_offset(mac68k_video.mv_phys));
+
+	/* Sum up the memory for pmap_bootstrap(). */
+	vsize_t mem_size = 0;
+	for (i = 0; i < numranges; i++)
+		mem_size += high[i] - low[i];
+	physmem = m68k_btop(mem_size);
 
 	pmap_bootstrap(nextpa, load_addr);
 
