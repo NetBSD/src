@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.9 2021/08/21 11:55:24 andvar Exp $ */
+/* $NetBSD: sfasvar.h,v 1.10 2025/12/01 07:53:51 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -255,7 +255,7 @@ struct	sfas_softc {
 /* sc_config_flags */
 #define SFAS_NO_SYNCH	 0x01	/* Disable synchronous transfer */
 #define SFAS_NO_DMA	 0x02	/* Do not use DMA! EVER! */
-#define SFAS_NO_RESELECT 0x04	/* Do not allow relesection */
+#define SFAS_NO_RESELECT 0x04	/* Do not allow reselection */
 #define SFAS_SLOW_CABLE	 0x08	/* Cable is "unsafe" for fast scsi-2 */
 #define SFAS_SLOW_START	 0x10	/* There are slow starters on the bus */
 
