@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1369 2025/10/05 20:59:02 thorpej Exp $
+# $NetBSD: mi,v 1.1370 2025/12/01 14:13:40 mlelstv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -173,6 +173,7 @@
 ./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-firmware-root	firmware
 ./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root	firmware
 ./libdata/firmware/if_iwm			base-firmware-root
+./libdata/firmware/if_iwm/LICENCE.iwlwifi_firmware	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-3160-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-3168-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-7260-ucode	base-firmware-root	firmware
@@ -189,6 +190,7 @@
 ./libdata/firmware/if_iwm/iwlwifi-3160-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-3160-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-3168-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-3168-29.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7260-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7260-9.ucode	base-obsolete	obsolete
@@ -198,9 +200,12 @@
 ./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-7265D-29.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-8000C-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-8000C-36.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-8265-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-8265-36.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn			base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root	firmware
