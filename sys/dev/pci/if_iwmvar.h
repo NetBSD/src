@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.20 2020/05/22 20:27:16 thorpej Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.21 2025/12/01 16:02:42 mlelstv Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -174,7 +174,6 @@ struct iwm_fw_info {
 		} fw_sect[IWM_UCODE_SECT_MAX];
 		size_t fw_totlen;
 		int fw_count;
-		int is_dual_cpus;
 		uint32_t paging_mem_size;
 	} fw_sects[IWM_UCODE_TYPE_MAX];
 };
@@ -194,6 +193,7 @@ struct iwm_nvm_data {
 	int sku_cap_band_24GHz_enable;
 	int sku_cap_band_52GHz_enable;
 	int sku_cap_11n_enable;
+	int sku_cap_11ac_enable;
 	int sku_cap_amt_enable;
 	int sku_cap_ipan_enable;
 	int sku_cap_mimo_disable;
@@ -217,6 +217,7 @@ struct iwm_rx_packet;
 struct iwm_host_cmd {
 	const void *data[IWM_MAX_CMD_TBS_PER_TFD];
 	struct iwm_rx_packet *resp_pkt;
+	size_t resp_pkt_len;
 	unsigned long _rx_page_addr;
 	uint32_t _rx_page_order;
 	int handler_status;
@@ -253,6 +254,9 @@ struct iwm_fw_paging {
 #define IWM_TX_RING_COUNT	256
 #define IWM_TX_RING_LOMARK	192
 #define IWM_TX_RING_HIMARK	224
+
+/* For aggregation queues, index must be aligned to frame sequence number. */
+#define IWM_AGG_SSN_TO_TXQ_IDX(x)       ((x) & (IWM_TX_RING_COUNT - 1))
 
 struct iwm_tx_data {
 	bus_dmamap_t	map;
@@ -301,6 +305,12 @@ struct iwm_rx_ring {
 #define IWM_FLAG_SCANNING	__BIT(4)
 #define IWM_FLAG_ATTACHED	__BIT(5)
 #define IWM_FLAG_FW_LOADED	__BIT(6)
+#define IWM_FLAG_TE_ACTIVE	__BIT(7)
+#define IWM_FLAG_MAC_ACTIVE	__BIT(8)
+#define IWM_FLAG_BINDING_ACTIVE	__BIT(9)
+#define IWM_FLAG_STA_ACTIVE	__BIT(10)
+#define IWM_FLAG_BGSCAN		__BIT(11)
+#define IWM_FLAG_TXFLUSH	__BIT(12)
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
@@ -325,7 +335,7 @@ struct iwm_ucode_status {
 
 enum IWM_CMD_MODE {
 	IWM_CMD_ASYNC		= (1 << 0),
-	IWM_CMD_WANT_SKB	= (1 << 1),
+	IWM_CMD_WANT_RESP	= (1 << 1),
 	IWM_CMD_SEND_IN_RFKILL	= (1 << 2),
 };
 enum iwm_hcmd_dataflag {
@@ -366,6 +376,7 @@ struct iwm_softc {
 	device_t sc_dev;
 	struct ethercom sc_ec;
 	struct ieee80211com sc_ic;
+	int attached;
 
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
 
@@ -393,6 +404,7 @@ struct iwm_softc {
 	struct iwm_tx_ring txq[IWM_MAX_QUEUES];
 	struct iwm_rx_ring rxq;
 	int qfullmsk;
+	int cmdqid;
 
 	int sc_sf_state;
 
@@ -415,6 +427,8 @@ struct iwm_softc {
 
 	int sc_fw_chunk_done;
 	int sc_init_complete;
+#define IWM_INIT_COMPLETE	0x01
+#define IWM_CALIB_COMPLETE	0x02
 
 	struct iwm_ucode_status sc_uc;
 	enum iwm_ucode_type sc_uc_current;
@@ -425,7 +439,9 @@ struct iwm_softc {
 	int sc_capa_n_scan_channels;
 	uint8_t sc_ucode_api[howmany(IWM_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWM_NUM_UCODE_TLV_CAPA, NBBY)];
-	char sc_fw_mcc[3];
+#define IWM_MAX_FW_CMD_VERSIONS 64
+	struct iwm_fw_cmd_version cmd_versions[IWM_MAX_FW_CMD_VERSIONS];
+	int n_cmd_versions;
 
 	int sc_intmask;
 	int sc_flags;
@@ -465,16 +481,22 @@ struct iwm_softc {
 	int sc_staid;
 	int sc_nodecolor;
 
-	uint8_t sc_cmd_resp[IWM_CMD_RESP_MAX];
-	int sc_wantresp;
+	uint8_t *sc_cmd_resp_pkt[IWM_TX_RING_COUNT];
+	size_t sc_cmd_resp_len[IWM_TX_RING_COUNT];
+
+	kmutex_t sc_nic_mtx;
+	int sc_nic_locks;
 
 	struct workqueue *sc_nswq;
+	struct workqueue *sc_setratewq;
 
 	struct iwm_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
 
 	/* phy contexts.  we only use the first one */
 	struct iwm_phy_ctxt sc_phyctxt[IWM_NUM_PHY_CTX];
+
+	uint32_t sc_time_event_uid;
 
 	struct iwm_notif_statistics sc_stats;
 	int sc_noise;
@@ -483,6 +505,17 @@ struct iwm_softc {
 
 	/* device needs host interrupt operation mode set */
 	int host_interrupt_operation_mode;
+	int sc_ltr_enabled;
+	enum iwm_nvm_type nvm_type;
+
+#ifdef notyet
+        int sc_mqrx_supported;
+        int sc_integrated;
+        int sc_ltr_delay;
+        int sc_xtal_latency;
+        int sc_low_latency_xtal;
+#endif
+
 	/* should the MAC access REQ be asserted when a command is in flight.
 	 * This is due to a HW bug in 7260, 3160 and 7265. */
 	int apmg_wake_up_wa;
@@ -519,15 +552,21 @@ struct iwm_softc {
 struct iwm_node {
 	struct ieee80211_node in_ni;
 	struct iwm_phy_ctxt *in_phyctxt;
+	uint8_t in_macaddr[ETHER_ADDR_LEN];
 
 	uint16_t in_id;
 	uint16_t in_color;
 
 	struct iwm_lq_cmd in_lq;
 	struct ieee80211_amrr_node in_amn;
+
+	/* For use with the ADD_STA command. */
+	uint32_t tfd_queue_msk; 
+	uint16_t tid_disable_ampdu;
 };
 #define IWM_STATION_ID 0
 #define IWM_AUX_STA_ID 1
+#define IWM_MONITOR_STA_ID 2
 
 #define IWM_ICT_SIZE		4096
 #define IWM_ICT_COUNT		(IWM_ICT_SIZE / sizeof (uint32_t))
