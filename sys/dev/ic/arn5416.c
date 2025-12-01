@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5416.c,v 1.3 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: arn5416.c,v 1.4 2025/12/01 21:24:29 andvar Exp $	*/
 /*	$OpenBSD: ar5416.c,v 1.12 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5416.c,v 1.3 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5416.c,v 1.4 2025/12/01 21:24:29 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -666,7 +666,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	ar5008_write_txpower(sc, power);
 
 	/*
-	 * Write transmit power substraction for dynamic chain changing
+	 * Write transmit power subtraction for dynamic chain changing
 	 * and per-packet transmit power.
 	 */
 	AR_WRITE(sc, AR_PHY_POWER_TX_SUB,

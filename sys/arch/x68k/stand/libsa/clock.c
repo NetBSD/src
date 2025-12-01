@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.6 2024/01/07 07:58:34 isaki Exp $ */
+/* $NetBSD: clock.c,v 1.7 2025/12/01 21:24:29 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Tetsuya Isaki. All rights reserved.
@@ -89,7 +89,7 @@ delay(int us)
 	/*
 	 * assume IPLROM initializes MFP Timer-C as following:
 	 *  - free run down count
-	 *  - 1/200 presclaer (50us with 4MHz clock)
+	 *  - 1/200 prescaler (50us with 4MHz clock)
 	 *
 	 * Note we can't change MFP_TCDR reload value (200)
 	 * because awaitkey_1sec() in consio.c assumes that value.

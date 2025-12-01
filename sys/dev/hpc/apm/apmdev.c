@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.34 2021/09/26 01:16:08 thorpej Exp $ */
+/*	$NetBSD: apmdev.c,v 1.35 2025/12/01 21:24:29 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.34 2021/09/26 01:16:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.35 2025/12/01 21:24:29 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -353,7 +353,7 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 
 #if 0 /* XXX: def TIME_FREQ */
 	/*
-	 * Some system requires its clock to be initialized after hybernation.
+	 * Some system requires its clock to be initialized after hibernation.
 	 */
 	initrtclock(TIMER_FREQ);
 #endif
