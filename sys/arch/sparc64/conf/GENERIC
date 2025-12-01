@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.243 2025/03/27 12:22:44 riastradh Exp $
+# $NetBSD: GENERIC,v 1.244 2025/12/01 08:26:54 nia Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.243 $"
+#ident		"GENERIC-$Revision: 1.244 $"
 
 maxusers	64
 
@@ -439,6 +439,7 @@ pseudo-device	ccd
 ## Cryptographic disk devices.  See cgd(4).
 
 pseudo-device	cgd
+options		AES_BEAR64		# 64-bit optimized AES encryption
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
