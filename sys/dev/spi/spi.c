@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.39 2025/11/23 00:16:37 brad Exp $ */
+/* $NetBSD: spi.c,v 1.40 2025/12/01 14:05:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.39 2025/11/23 00:16:37 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.40 2025/12/01 14:05:07 thorpej Exp $");
 
 #include "locators.h"
 
@@ -337,7 +337,26 @@ spi_attach(device_t parent, device_t self, void *aux)
 	switch (devhandle_type(device_handle(sc->sc_dev))) {
 #ifdef FDT
 	case DEVHANDLE_TYPE_OF:
+#if 0
+		/*
+		 * XXX The addition of a USB SPI controller has triggered
+		 * XXX an unfortunate situation, whereby it is attaching
+		 * XXX a SPI controller on an otherwise FDT platform (RISC-V)
+		 * XXX that does not happen to currently have any platform
+		 * XXX SoC SPI controller drivers that carry the fdt_spi
+		 * XXX config attribute that would pull in the function
+		 * XXX being called here.
+		 * XXX
+		 * XXX As it happens we can fairly safely elide this call
+		 * XXX because, at the moment (1 Dec 2025), there are no
+		 * XXX consumers of the registration if performs.  However,
+		 * XXX this points to a larger problem if needed a way to
+		 * XXX resolve these situations at runtime with some sort
+		 * XXX of "platform" abstraction rather than at kernel build
+		 * XXX time.
+		 */
 		fdtbus_register_spi_controller(self, sc->sc_controller);
+#endif
 		break;
 #endif /* FDT */
 	default:
