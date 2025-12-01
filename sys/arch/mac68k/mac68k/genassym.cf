@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.46 2025/11/07 14:40:58 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.47 2025/12/01 17:38:53 thorpej Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,6 @@ define	FPU_68040		FPU_68040
 # general constants
 define	UPAGES			UPAGES
 define	USPACE			USPACE
-define	P1PAGES 		P1PAGES
 define	PAGE_SIZE		PAGE_SIZE
 define	NPTEPG			NPTEPG
 define	PGSHIFT 		PGSHIFT
