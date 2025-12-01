@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.46 2020/02/01 19:41:49 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.47 2025/12/01 03:53:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,6 @@
  */
 #define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
-#define P1PAGES		0x100000
 #define HIGHPAGES	3			/* UPAGES */
 
 /*
