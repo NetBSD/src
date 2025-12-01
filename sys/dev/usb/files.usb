@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.184 2025/11/29 18:39:14 brad Exp $
+#	$NetBSD: files.usb,v 1.185 2025/12/01 06:26:06 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -538,7 +538,7 @@ file	dev/usb/if_urndis.c		urndis
 # Realtek RTL8188CU/RTL8192CU
 device	urtwn: ether, ifnet, arp, wlan, firmload
 attach	urtwn at usbdevif
-file	dev/usb/if_urtwn.c              urtwn
+file	dev/usb/if_urtwn.c		urtwn
 
 # Realtek RTL8187/RTL8187B 802.11b/g USB wireless adapter
 device	urtw: ether, ifnet, arp, wlan
@@ -576,8 +576,8 @@ file	dev/usb/if_bwfm_usb.c		bwfm_usb
 # Microchip USB 2.0 to I2C/UART/SPI Protocol Converter with GPIO
 device	umcpmio: hid, spibus, i2cbus, i2cexec, gpiobus
 attach  umcpmio at uhidbus
-file    dev/usb/umcpmio.c		umcpmio			needs-flag
-file    dev/usb/umcpmio_transport.c	umcpmio
+file	dev/usb/umcpmio.c		umcpmio			needs-flag
+file	dev/usb/umcpmio_transport.c	umcpmio
 file	dev/usb/umcpmio_gpio.c		umcpmio
 file	dev/usb/umcpmio_iic.c		umcpmio
 file	dev/usb/umcpmio_spi.c		umcpmio
