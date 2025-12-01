@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.535 2025/06/12 10:23:43 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.536 2025/12/01 09:31:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.535 2025/06/12 10:23:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.536 2025/12/01 09:31:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -642,12 +642,8 @@ static void
 if_getindex(ifnet_t *ifp)
 {
 	bool hitlimit = false;
-	char xnamebuf[HOOKNAMSIZ];
 
 	ifp->if_index_gen = index_gen++;
-	snprintf(xnamebuf, sizeof(xnamebuf), "%s-lshk", ifp->if_xname);
-	ifp->if_linkstate_hooks = simplehook_create(IPL_NET,
-	    xnamebuf);
 
 	ifp->if_index = if_index;
 	if (ifindex2ifnet == NULL) {
@@ -719,6 +715,7 @@ skip:
 void
 if_initialize(ifnet_t *ifp)
 {
+	char xnamebuf[HOOKNAMSIZ];
 
 	KASSERT(if_indexlim > 0);
 	TAILQ_INIT(&ifp->if_addrlist);
@@ -762,6 +759,9 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ifp->if_multiaddrs);
 	if_stats_init(ifp);
+
+	snprintf(xnamebuf, sizeof(xnamebuf), "%s-lshk", ifp->if_xname);
+	ifp->if_linkstate_hooks = simplehook_create(IPL_NET, xnamebuf);
 
 	IFNET_GLOBAL_LOCK();
 	if_getindex(ifp);
