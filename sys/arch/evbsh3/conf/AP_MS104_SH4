@@ -1,4 +1,4 @@
-#	$NetBSD: AP_MS104_SH4,v 1.12 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: AP_MS104_SH4,v 1.13 2025/12/01 07:52:57 andvar Exp $
 #
 #	Alpha project AP-MS104-SH4 config file
 #
@@ -13,7 +13,7 @@ include "arch/evbsh3/conf/std.ap_ms104_sh4"
 
 maxusers	32
 
-# CPU releated options
+# CPU related options
 options 	SH4_CACHE_DISABLE_EMODE
 
 # kloader-related

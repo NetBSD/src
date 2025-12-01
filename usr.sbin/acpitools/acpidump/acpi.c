@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.57 2025/11/19 22:16:48 andvar Exp $ */
+/* $NetBSD: acpi.c,v 1.58 2025/12/01 07:52:57 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.57 2025/11/19 22:16:48 andvar Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.58 2025/12/01 07:52:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -697,7 +697,7 @@ acpi_print_hest_generic(ACPI_HEST_GENERIC *data)
 {
 	acpi_print_hest_header(&data->Header);
 	if (data->RelatedSourceId != 0xffff)
-		printf("\tReleated SourceId=%d\n", data->RelatedSourceId);
+		printf("\tRelated SourceId=%d\n", data->RelatedSourceId);
 	printf("\tEnabled={%s}\n", data->Enabled ? "YES" : "NO");
 	printf("\tNumber of Records to pre-allocate=%u\n",
 		data->RecordsToPreallocate);
