@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.43 2025/11/30 23:42:56 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.44 2025/12/01 17:47:13 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.43 2025/11/30 23:42:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.44 2025/12/01 17:47:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4011,12 +4011,26 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 */
 	var = &va_ranges[VA_RANGE_DEFAULT];
 
-	/* Kernel text - read-only. */
+	/*
+	 * Kernel text - read-only.
+	 *
+	 * ...that is, unless, a platform as some quirky requirement
+	 * (hello mac68k!).  This hook lets a platform specify an
+	 * alternate proto PTE for the kernel text (in the mac68k case,
+	 * it will be read/write write-though-cacheable).  Once the
+	 * kernel is up and running on its own mappings, machine-specific
+	 * code can perform any fixups as necessary.
+	 */
+#ifndef PMAP_BOOTSTRAP_TEXT_PROTO_PTE
+#define	PMAP_BOOTSTRAP_TEXT_PROTO_PTE	proto_ro_pte
+#else
+	__USE(proto_ro_pte);
+#endif
 	pa = PMAP_BOOTSTRAP_VA_TO_PA(m68k_trunc_page(&kernel_text));
 	pte = VA_PTE_BASE(&kernel_text, var);
 	epte = VA_PTE_BASE(&etext, var);
 	while (pte < epte) {
-		*pte++ = proto_ro_pte | pa;
+		*pte++ = PMAP_BOOTSTRAP_TEXT_PROTO_PTE | pa;
 		pa += PAGE_SIZE;
 		entry_count++;
 	}
@@ -4132,6 +4146,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 						nextpa += PAGE_SIZE;
 						stnext_endpa = nextpa;
 						nstpages++;
+#ifdef PMAP_MACHINE_CHECK_BOOTSTRAP_ALLOCATIONS
+						(*alloc_checkfn)(nextpa,
+						    reloff);
+#endif
 						/*
 						 * Zero out the new inner
 						 * segment table page.
