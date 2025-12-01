@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xxvar.h,v 1.1 2025/10/24 23:16:11 brad Exp $	*/
+/*	$NetBSD: sc16is7xxvar.h,v 1.2 2025/12/01 14:56:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -19,9 +19,9 @@
 #ifndef _DEV_IC_SC16IS7XXVAR_H_
 #define _DEV_IC_SC16IS7XXVAR_H_
 
-#include <sys/tty.h>
 #include <sys/bus.h>
-#include <sys/pool.h>
+#include <sys/kthread.h>
+#include <sys/tty.h>
 
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
@@ -54,6 +54,15 @@ struct sc16is7xx_accessfuncs {
 	void (*com_write_multi_1)(struct com_regs *, u_int, const uint8_t *, bus_size_t);
 };
 
+enum sc16is7xx_thread_state {
+	SC16IS7XX_THREAD_GPIO,
+	SC16IS7XX_THREAD_STOPPED,
+	SC16IS7XX_THREAD_PAUSED,
+	SC16IS7XX_THREAD_RUNNING,
+	SC16IS7XX_THREAD_EXIT,
+	SC16IS7XX_THREAD_STALLED
+};
+
 struct sc16is7xx_sc {
 	device_t sc_dev;
 	struct sysctllog *sc_sc16is7xx_log;
@@ -70,13 +79,15 @@ struct sc16is7xx_sc {
 
 	int sc_frequency;
 
-	bool sc_thread_run;
+	kmutex_t sc_thread_mutex;
+	kcondvar_t sc_threadvar;
+	enum sc16is7xx_thread_state sc_thread_state;
 	struct lwp *sc_thread;
 	int sc_poll;
+	int sc_de_count;
 
 	int sc_phandle;
 	struct workqueue *sc_wq;
-	pool_cache_t sc_wk_pool;
 	void *sc_ih;
 	void *sc_sih;
 };
@@ -87,6 +98,7 @@ struct sc16is7xx_tty_attach_args {
 	int aa_channel;
 };
 
+void sc16is7xx_thread(void *);
 void sc16is7xx_attach(struct sc16is7xx_sc *);
 int sc16is7xx_detach(struct sc16is7xx_sc *, int);
 

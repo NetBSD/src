@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx_ttyvar.h,v 1.2 2025/11/25 13:23:29 brad Exp $	*/
+/*	$NetBSD: sc16is7xx_ttyvar.h,v 1.3 2025/12/01 14:56:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -30,6 +30,7 @@
 
 struct sc16is7xx_tty_softc {
 	struct com_softc sc_com;
+	struct sc16is7xx_sc *psc;
 };
 
 #endif

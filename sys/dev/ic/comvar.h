@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.100 2025/11/25 13:23:28 brad Exp $	*/
+/*	$NetBSD: comvar.h,v 1.101 2025/12/01 14:56:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -110,11 +110,9 @@ struct com_regs {
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
 
-	i2c_tag_t		cr_tag; /* If this device is connected to a I2C bus. */
-	i2c_addr_t		cr_addr;
-
-	spi_handle_t		cr_sh; /* If this device is connected to a SPI bus. */
-
+	void			*cr_cookie; /* If this device uses something other than a direct
+					     * computer connection.
+					     */
 	int			cr_channel;
 
 	bool			cr_has_errored;

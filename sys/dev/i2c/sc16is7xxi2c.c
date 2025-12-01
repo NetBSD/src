@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xxi2c.c,v 1.2 2025/11/25 13:23:29 brad Exp $	*/
+/*	$NetBSD: sc16is7xxi2c.c,v 1.3 2025/12/01 14:56:02 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xxi2c.c,v 1.2 2025/11/25 13:23:29 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xxi2c.c,v 1.3 2025/12/01 14:56:02 brad Exp $");
 
 /*
  * I2C frontend driver for the SC16IS7xx UART bridge.
@@ -131,10 +131,7 @@ sc16is7xxi2c_write_register(struct sc16is7xx_sc *sc, uint8_t reg, int channel,
 static void
 sc16is7xxi2c_copy_handles(struct sc16is7xx_sc *sc, struct com_regs *regs)
 {
-	struct sc16is7xx_i2c_softc *isc = SC16IS7XX_TO_I2C(sc);
-
-	regs->cr_tag = isc->sc_tag;
-	regs->cr_addr = isc->sc_addr;
+	regs->cr_cookie = sc;
 }
 
 static const struct sc16is7xx_accessfuncs sc16is7xx_i2c_accessfuncs = {
@@ -147,20 +144,29 @@ static const struct sc16is7xx_accessfuncs sc16is7xx_i2c_accessfuncs = {
 static uint8_t
 sc16is7xx_i2c_com_read_1(struct com_regs *regs, u_int reg)
 {
+	struct sc16is7xx_sc *sc = (struct sc16is7xx_sc *)regs->cr_cookie;
+	struct sc16is7xx_i2c_softc *isc = SC16IS7XX_TO_I2C(sc);
 	uint8_t buf;
 	int error;
 
 	if (regs->cr_has_errored)
 		return 0;
 
-	error = sc16is7xxi2c_read_register_direct(regs->cr_tag, regs->cr_addr,
+	error = sc16is7xxi2c_read_register_direct(isc->sc_tag, isc->sc_addr,
 	    reg, regs->cr_channel, &buf, 1);
 
 	if (!error)
 		return buf;
 
 	if (error) {
+		device_printf(sc->sc_dev, "sc16is7xx_i2c_com_read_1: error=%d\n",error);
 		regs->cr_has_errored = true;
+		mutex_enter(&sc->sc_thread_mutex);
+		if (sc->sc_thread_state != SC16IS7XX_THREAD_GPIO) {
+			sc->sc_thread_state = SC16IS7XX_THREAD_STALLED;
+			cv_signal(&sc->sc_threadvar);
+		}
+		mutex_exit(&sc->sc_thread_mutex);
 	}
 
 	return 0;
@@ -169,24 +175,52 @@ sc16is7xx_i2c_com_read_1(struct com_regs *regs, u_int reg)
 static void
 sc16is7xx_i2c_com_write_1(struct com_regs *regs, u_int reg, uint8_t val)
 {
+	struct sc16is7xx_sc *sc = (struct sc16is7xx_sc *)regs->cr_cookie;
+	struct sc16is7xx_i2c_softc *isc = SC16IS7XX_TO_I2C(sc);
+	int error = 0;
+
 	if (regs->cr_has_errored)
 		return;
 
-	if (sc16is7xxi2c_write_register_direct(regs->cr_tag, regs->cr_addr,
-		reg, regs->cr_channel, &val, 1))
+	error = sc16is7xxi2c_write_register_direct(isc->sc_tag, isc->sc_addr,
+	    reg, regs->cr_channel, &val, 1);
+
+	if (error) {
+		device_printf(sc->sc_dev, "sc16is7xx_i2c_com_write_1: error=%d\n",error);
 		regs->cr_has_errored = true;
+		mutex_enter(&sc->sc_thread_mutex);
+		if (sc->sc_thread_state != SC16IS7XX_THREAD_GPIO) {
+			sc->sc_thread_state = SC16IS7XX_THREAD_STALLED;
+			cv_signal(&sc->sc_threadvar);
+		}
+		mutex_exit(&sc->sc_thread_mutex);
+	}
 }
 
 static void
 sc16is7xx_i2c_com_write_multi_1(struct com_regs *regs, u_int reg, const uint8_t *datap,
     bus_size_t count)
 {
+	struct sc16is7xx_sc *sc = (struct sc16is7xx_sc *)regs->cr_cookie;
+	struct sc16is7xx_i2c_softc *isc = SC16IS7XX_TO_I2C(sc);
+	int error = 0;
+
 	if (regs->cr_has_errored)
 		return;
 
-	if (sc16is7xxi2c_write_register_direct(regs->cr_tag, regs->cr_addr,
-		reg, regs->cr_channel, __UNCONST(datap), count))
+	error = sc16is7xxi2c_write_register_direct(isc->sc_tag, isc->sc_addr,
+	    reg, regs->cr_channel, __UNCONST(datap), count);
+
+	if (error) {
+		device_printf(sc->sc_dev, "sc16is7xx_i2c_com_write_multi_1: error=%d\n",error);
 		regs->cr_has_errored = true;
+		mutex_enter(&sc->sc_thread_mutex);
+		if (sc->sc_thread_state != SC16IS7XX_THREAD_GPIO) {
+			sc->sc_thread_state = SC16IS7XX_THREAD_STALLED;
+			cv_signal(&sc->sc_threadvar);
+		}
+		mutex_exit(&sc->sc_thread_mutex);
+	}
 }
 
 static const struct sc16is7xx_accessfuncs sc16is7xx_i2c_com_accessfuncs = {

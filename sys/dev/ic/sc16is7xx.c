@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx.c,v 1.3 2025/11/25 13:23:29 brad Exp $	*/
+/*	$NetBSD: sc16is7xx.c,v 1.4 2025/12/01 14:56:03 brad Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -19,7 +19,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.3 2025/11/25 13:23:29 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.4 2025/12/01 14:56:03 brad Exp $");
 
 /* Common driver for the frontend to the NXP SC16IS7xx UART bridge */
 
@@ -31,7 +31,6 @@ __KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.3 2025/11/25 13:23:29 brad Exp $");
 #include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/mutex.h>
-#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/workqueue.h>
 
@@ -80,10 +79,28 @@ sc16is7xx_thread(void *arg)
 {
 	struct sc16is7xx_sc *sc = arg;
 
-	while (sc->sc_thread_run) {
-		sc16is7xx_comintr(sc);
+	while (sc->sc_thread_state != SC16IS7XX_THREAD_EXIT) {
+		mutex_enter(&sc->sc_thread_mutex);
+		if (sc->sc_thread_state == SC16IS7XX_THREAD_PAUSED ||
+		    sc->sc_thread_state == SC16IS7XX_THREAD_STALLED ||
+		    sc->sc_thread_state == SC16IS7XX_THREAD_STOPPED)
+			cv_wait(&sc->sc_threadvar, &sc->sc_thread_mutex);
+		mutex_exit(&sc->sc_thread_mutex);
 
-		kpause(device_xname(sc->sc_dev), true, mstohz(sc->sc_poll), NULL);
+		mutex_enter(&sc->sc_thread_mutex);
+		if (sc->sc_thread_state == SC16IS7XX_THREAD_RUNNING) {
+			mutex_exit(&sc->sc_thread_mutex);
+			sc16is7xx_comintr(sc);
+		} else {
+			mutex_exit(&sc->sc_thread_mutex);
+		}
+
+		mutex_enter(&sc->sc_thread_mutex);
+		if (sc->sc_thread_state == SC16IS7XX_THREAD_RUNNING)
+			cv_timedwait(&sc->sc_threadvar, &sc->sc_thread_mutex,
+			    mstohz(sc->sc_poll));
+		mutex_exit(&sc->sc_thread_mutex);
+		
 	}
 	kthread_exit(0);
 }
@@ -107,22 +124,18 @@ static void
 sc16is7xx_wq(struct work *wk, void *arg)
 {
 	struct sc16is7xx_sc *sc = arg;
-	int *t = (int *)wk;
 
 	sc16is7xx_comintr(sc);
-
-	pool_cache_put(sc->sc_wk_pool, t);
 }
 
 static void
 sc16is7xx_softintr(void *arg)
 {
 	struct sc16is7xx_sc *sc = arg;
-	int *wk;
 
-	/* This is a little strange, but ensures that there is unique work to
-	 * be done.  See workqueue(9) about "A work must not be enqueued again
-	 * until the callback is called by the workqueue framework."
+	/* This is a little strange,  See workqueue(9) about "A work must
+	 * not be enqueued again until the callback is called by the
+	 * workqueue framework."
 	 *
 	 * If one tries to use a variable from the stack here you will panic if
 	 * there are a number of interrupts coming in quickly.  kmem_alloc()
@@ -135,11 +148,7 @@ sc16is7xx_softintr(void *arg)
 	 * It may be possble to get clever and send a couple of work items, one
 	 * for each possible channel. */
 
-	wk = pool_cache_get(sc->sc_wk_pool, PR_NOWAIT);
-
-	if (wk != NULL) {
-		workqueue_enqueue(sc->sc_wq, (struct work *)wk, NULL);
-	}
+	workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_frequency, NULL);
 }
 
 static int
@@ -345,26 +354,43 @@ sc16is7xx_sysctl_init(struct sc16is7xx_sc *sc)
 	int sysctlroot_num;
 
 	if ((error = sysctl_createv(&sc->sc_sc16is7xx_log, 0, NULL, &cnode,
-	    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
-	    SYSCTL_DESCR("sc16ix7xx controls"), NULL, 0, NULL, 0, CTL_HW,
-	    CTL_CREATE, CTL_EOL)) != 0)
+		    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
+		    SYSCTL_DESCR("sc16ix7xx controls"), NULL, 0, NULL, 0, CTL_HW,
+		    CTL_CREATE, CTL_EOL)) != 0)
 		return error;
 
 	sysctlroot_num = cnode->sysctl_num;
 
 	if ((error = sysctl_createv(&sc->sc_sc16is7xx_log, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "frequency",
-	    SYSCTL_DESCR("Frequency of the oscillator in Hz"), sc16is7xx_verify_freq_sysctl, 0,
-	    (void *)sc, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
-	    CTL_EOL)) != 0)
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "frequency",
+		    SYSCTL_DESCR("Frequency of the oscillator in Hz"), sc16is7xx_verify_freq_sysctl, 0,
+		    (void *)sc, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
+		    CTL_EOL)) != 0)
 		return error;
 
 	if ((error = sysctl_createv(&sc->sc_sc16is7xx_log, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "poll",
-	    SYSCTL_DESCR("In polling mode, how often to check the status register in ms"), sc16is7xx_verify_poll, 0,
-	    &sc->sc_poll, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
-	    CTL_EOL)) != 0)
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "poll",
+		    SYSCTL_DESCR("In polling mode, how often to check the status register in ms"), sc16is7xx_verify_poll, 0,
+		    &sc->sc_poll, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
+		    CTL_EOL)) != 0)
 		return error;
+
+#define __DEBUGGING_THE_KTHREAD 1
+#ifdef __DEBUGGING_THE_KTHREAD
+	if ((error = sysctl_createv(&sc->sc_sc16is7xx_log, 0, NULL, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "thread_state",
+		    SYSCTL_DESCR("Kernel thread state"), NULL, 0,
+		    (int *)&sc->sc_thread_state, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
+		    CTL_EOL)) != 0)
+		return error;
+
+	if ((error = sysctl_createv(&sc->sc_sc16is7xx_log, 0, NULL, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "de_count",
+		    SYSCTL_DESCR("Disable / Enable count"), NULL, 0,
+		    &sc->sc_de_count, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
+		    CTL_EOL)) != 0)
+		return error;
+#endif
 
 	return 0;
 }
@@ -397,11 +423,15 @@ sc16is7xx_attach(struct sc16is7xx_sc *sc)
 
 	sc->sc_frequency = SC16IS7XX_DEFAULT_FREQUENCY;
 	sc->sc_poll = SC16IS7XX_DEFAULT_POLL;
-	sc->sc_thread_run = false;
+	sc->sc_thread_state = SC16IS7XX_THREAD_GPIO;
 	sc->sc_thread = NULL;
 	sc->sc_wq = NULL;
 	sc->sc_ih = NULL;
 	sc->sc_sih = NULL;
+	sc->sc_de_count = 0;
+
+	mutex_init(&sc->sc_thread_mutex, MUTEX_DEFAULT, IPL_SOFTSERIAL);
+	cv_init(&sc->sc_threadvar, "sc16is_cv");
 
 	if ((error = sc16is7xx_sysctl_init(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev, "Can't setup sysctl tree (%d)\n", error);
@@ -473,8 +503,6 @@ sc16is7xx_attach(struct sc16is7xx_sc *sc)
 
 	sc->sc_ttydevchannel[0] = sc->sc_ttydevchannel[1] = NULL;
 
-	sc->sc_wk_pool = pool_cache_init(sizeof(int), 0, 0, 0, "sc16pool", NULL, IPL_SOFTSERIAL, NULL, NULL, NULL);
-
 	bool use_polling = true;
 
 #ifdef FDT
@@ -545,17 +573,9 @@ sc16is7xx_attach(struct sc16is7xx_sc *sc)
 
 	if (use_polling) {
 		aprint_normal_dev(sc->sc_dev, "polling for interrupts\n");
-
-		sc->sc_thread_run = true;
-		error = kthread_create(PRI_SOFTSERIAL, KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
-		    sc16is7xx_thread, sc, &sc->sc_thread, "%s", device_xname(sc->sc_dev));
-		if (error) {
-			aprint_error_dev(sc->sc_dev,
-			    "Could not create kernel thread for polling: %d\n",
-			    error);
-			sc->sc_thread_run = false;
-		}
+		sc->sc_thread_state = SC16IS7XX_THREAD_STOPPED;
 	}
+
 	for (int i = 0; i < num_channels; i++){
 		aa.aa_channel = i;
 
@@ -617,10 +637,17 @@ sc16is7xx_detach(struct sc16is7xx_sc *sc, int flags)
 
 	err = config_detach_children(sc->sc_dev, flags);
 
+	mutex_enter(&sc->sc_thread_mutex);
 	if (sc->sc_thread &&
-	    sc->sc_thread_run) {
-		sc->sc_thread_run = false;
+	    sc->sc_thread_state != SC16IS7XX_THREAD_GPIO &&
+	    sc->sc_thread_state != SC16IS7XX_THREAD_STOPPED &&
+	    sc->sc_thread_state != SC16IS7XX_THREAD_EXIT) {
+		sc->sc_thread_state = SC16IS7XX_THREAD_EXIT;
+		cv_signal(&sc->sc_threadvar);
+		mutex_exit(&sc->sc_thread_mutex);
 		kthread_join(sc->sc_thread);
+	} else {
+		mutex_exit(&sc->sc_thread_mutex);
 	}
 #ifdef FDT
 	if (sc->sc_ih != NULL)
@@ -630,9 +657,10 @@ sc16is7xx_detach(struct sc16is7xx_sc *sc, int flags)
 		softint_disestablish(sc->sc_sih);
 #endif
 
-	pool_cache_destroy(sc->sc_wk_pool);
-
 	sysctl_teardown(&sc->sc_sc16is7xx_log);
+
+	cv_destroy(&sc->sc_threadvar);
+	mutex_destroy(&sc->sc_thread_mutex);
 
 	return err;
 }
