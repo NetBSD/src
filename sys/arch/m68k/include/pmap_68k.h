@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.9 2025/11/30 23:42:56 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.10 2025/12/02 02:53:08 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -211,6 +211,7 @@ struct pmap_bootmap {
 #define	PMBM_F_FIXEDVA	__BIT(1)
 #define	PMBM_F_KEEPOUT	__BIT(2)
 #define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
+#define	PMBM_F_RO	__BIT(4)	/* read-only mapping */
 
 /*
  * Abstract definitions for PTE bits / fields.  C code will compile-time-

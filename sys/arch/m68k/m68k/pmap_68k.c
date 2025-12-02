@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.44 2025/12/01 17:47:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.45 2025/12/02 02:53:08 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.44 2025/12/01 17:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.45 2025/12/02 02:53:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4023,8 +4023,6 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 */
 #ifndef PMAP_BOOTSTRAP_TEXT_PROTO_PTE
 #define	PMAP_BOOTSTRAP_TEXT_PROTO_PTE	proto_ro_pte
-#else
-	__USE(proto_ro_pte);
 #endif
 	pa = PMAP_BOOTSTRAP_VA_TO_PA(m68k_trunc_page(&kernel_text));
 	pte = VA_PTE_BASE(&kernel_text, var);
@@ -4085,6 +4083,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	pmbm = (const struct pmap_bootmap *)
 	    PMAP_BOOTSTRAP_RELOC_GLOB(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		pt_entry_t proto;
+
 		if (pmbm->pmbm_size == 0 ||
 		    (pmbm->pmbm_flags & (PMBM_F_VAONLY | PMBM_F_KEEPOUT))) {
 			continue;
@@ -4103,8 +4103,20 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		}
 		pa = pmbm->pmbm_paddr;
 		pte = VA_PTE_BASE(va, var);
-		pt_entry_t proto = (pmbm->pmbm_flags & PMBM_F_CI) ?
-		    proto_rw_ci_pte : proto_rw_pte;
+		switch (pmbm->pmbm_flags & (PMBM_F_CI|PMBM_F_RO)) {
+		case PMBM_F_CI|PMBM_F_RO:
+			proto = proto_rw_ci_pte | PTE_WP;
+			break;
+		case PMBM_F_CI:
+			proto = proto_rw_ci_pte;
+			break;
+		case PMBM_F_RO:
+			proto = proto_ro_pte;
+			break;
+		default:
+			proto = proto_rw_pte;
+			break;
+		}
 		for (vsize_t size = m68k_round_page(pmbm->pmbm_size);
 		     size != 0;
 		     va += PAGE_SIZE, pa += PAGE_SIZE, size -= PAGE_SIZE) {
