@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.151 2025/11/29 07:08:53 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.152 2025/12/02 01:16:41 manu Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.151 2025/11/29 07:08:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.152 2025/12/02 01:16:41 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1679,7 +1679,6 @@ ucomstart(struct tty *tp)
 
  out:
 	DPRINTF("... done", 0, 0, 0, 0);
-	return;
 }
 
 void
