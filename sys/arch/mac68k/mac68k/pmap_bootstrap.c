@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.109 2025/11/30 21:42:28 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.110 2025/12/02 02:04:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.109 2025/11/30 21:42:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.110 2025/12/02 02:04:21 thorpej Exp $");
 
 #include "audio.h"
 #include "opt_ddb.h"
@@ -433,7 +433,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	 * Sysseg: base of kernel segment table
 	 */
 	Sysseg = PA2VA(kstpa, st_entry_t *);
-	Sysseg_pa = PA2VA(kstpa, paddr_t);
+	Sysseg_pa = kstpa;
 #if defined(M68040)
 	if (mmutype == MMU_68040)
 		protostfree = stfree;
