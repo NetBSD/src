@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.110 2025/12/02 02:04:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.111 2025/12/02 02:08:11 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,14 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.110 2025/12/02 02:04:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.111 2025/12/02 02:08:11 thorpej Exp $");
 
-#include "audio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
-
-#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,23 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.110 2025/12/02 02:04:21 thorpej
 extern char *etext;
 extern char *extiobase;
 
-extern paddr_t avail_start, avail_end;
 extern vaddr_t kernel_reloc_offset;
 
-#if NZSC > 0
-extern	int	zsinited;
-#endif
-
-/*
- * These are used to map the RAM:
- */
-int	numranges;	/* = 0 == don't use the ranges */
-u_long	low[8];
-u_long	high[8];
-u_long	last_page;	/* PA of the last physical page */
-int	vidlen;
-#define VIDMAPSIZE	btoc(vidlen)
-static vaddr_t	newvideoaddr;
+extern int vidlen;
+extern vaddr_t newvideoaddr;
 
 extern void *	ROMBase;
 
@@ -96,9 +80,6 @@ extern void *	ROMBase;
 void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
-
-paddr_t pmap_bootstrap1(paddr_t, paddr_t);
-void bootstrap_mac68k(int);
 
 /*
  * Bootstrap the VM system.
@@ -154,7 +135,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
 	nptpages = Sysptsize +
-		(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(IIOMAPSIZE + ROMMAPSIZE + btoc(vidlen) + NPTEPG - 1) / NPTEPG;
 	/*
 	 * New kmem arena is allocated prior to pmap_init(), so we need
 	 * additiona PT pages to account for that allocation, which is based
@@ -418,7 +399,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 		    PG_RW | PG_V | PG_CI;
 		newvideoaddr = PTE2VA(pte)
 		    + m68k_page_offset(mac68k_video.mv_phys);
-		epte = &pte[VIDMAPSIZE];
+		epte = &pte[btoc(vidlen)];
 		while (pte < epte) {
 			*pte++ = protopte;
 			protopte += PAGE_SIZE;
@@ -474,150 +455,4 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	}
 
 	return nextpa;
-}
-
-void
-pmap_machine_check_bootstrap_allocations(paddr_t nextpa, paddr_t firstpa)
-{
-	int i;
-
-	for (i = 0; i < numranges; i++)
-		if (low[i] <= firstpa && firstpa < high[i])
-			break;
-	if (i >= numranges || nextpa > high[i]) {
-		if (mac68k_machine.do_graybars) {
-			printf("Failure in NetBSD boot; ");
-			if (i < numranges)
-				printf("nextpa=0x%lx, high[%d]=0x%lx.\n",
-				    nextpa, i, high[i]);
-			else
-				printf("can't find kernel RAM segment.\n");
-			printf("You're hosed!  Try booting with 32-bit ");
-			printf("addressing enabled in the memory control ");
-			printf("panel.\n");
-			printf("Older machines may need Mode32 to get that ");
-			printf("option.\n");
-		}
-		panic("Cannot work with the current memory mappings.");
-	}
-}
-
-void
-bootstrap_mac68k(int tc)
-{
-#if NZSC > 0
-	extern void zs_init(void);
-#endif
-	extern int *esym;
-	paddr_t nextpa;
-	void *oldROMBase;
-	char use_bootmem = 0;
-	int i;
-
-#ifdef DJMEMCMAX
-	if(mac68k_machine.machineid == MACH_MACC650 ||
-	    mac68k_machine.machineid == MACH_MACQ650 ||
-	    mac68k_machine.machineid == MACH_MACQ610 ||
-	    mac68k_machine.machineid == MACH_MACC610 ||
-	    mac68k_machine.machineid == MACH_MACQ800) {
-		use_bootmem = 1;
-	}
-#endif
-
-	if (mac68k_machine.do_graybars)
-		printf("Bootstrapping NetBSD/mac68k.\n");
-
-	oldROMBase = ROMBase;
-	mac68k_video.mv_phys = mac68k_video.mv_kvaddr;
-
-	if ((!use_bootmem) && (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
-	    ((tc & 0x8000) && (mmutype == MMU_68040)))) {
-		if (mac68k_machine.do_graybars)
-			printf("Getting mapping from MMU.\n");
-		(void) get_mapping();
-		if (mac68k_machine.do_graybars)
-			printf("Done.\n");
-	} else {
-		/* MMU not enabled.  Fake up ranges. */
-		numranges = 1;
-		low[0] = 0;
-		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
-		if (mac68k_machine.do_graybars)
-			printf("Faked range to byte 0x%lx.\n", high[0]);
-	}
-	nextpa = load_addr + m68k_round_page(esym);
-
-	if (mac68k_machine.do_graybars)
-		printf("Bootstrapping the pmap system.\n");
-
-	vidlen = m68k_round_page(mac68k_video.mv_height *
-	    mac68k_video.mv_stride + m68k_page_offset(mac68k_video.mv_phys));
-
-	/* Sum up the memory for pmap_bootstrap1(). */
-	vsize_t mem_size = 0;
-	for (i = 0; i < numranges; i++)
-		mem_size += high[i] - low[i];
-	physmem = m68k_btop(mem_size);
-
-	nextpa = pmap_bootstrap1(nextpa, load_addr);
-
-	/*
-	 * VM data structures are now initialized, set up data for
-	 * the pmap module.
-	 *
-	 * Note about avail_end: msgbuf is initialized just after
-	 * avail_end in machdep.c.  Since the last page is used
-	 * for rebooting the system (code is copied there and
-	 * execution continues from copied code before the MMU
-	 * is disabled), the msgbuf will get trounced between
-	 * reboots if it's placed in the last physical page.
-	 * To work around this, we move avail_end back one more
-	 * page so the msgbuf can be preserved.
-	 */
-	avail_start = m68k_round_page(nextpa);
-	last_page = high[numranges - 1] - m68k_ptob(1);
-#if NAUDIO > 0
-	/*
-	 * Reduce high by an extra 7 pages which are used by the EASC on some
-	 * machines.  last_page is unchanged as the last page can still be
-	 * safetly used to reboot the system.
-	 */
-	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(8));
-#else
-	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
-#endif
-	avail_end = high[numranges - 1];
-
-	if (mac68k_machine.do_graybars)
-		printf("Pmap bootstrapped.\n");
-
-	if (!vidlen)
-		panic("Don't know how to relocate video!");
-
-	if (mac68k_machine.do_graybars)
-		printf("Moving ROMBase from %p to %p.\n", oldROMBase, ROMBase);
-
-	mrg_fixupROMBase(oldROMBase, ROMBase);
-
-	if (mac68k_machine.do_graybars)
-		printf("Video address %p -> %p.\n",
-		    (void *)mac68k_video.mv_kvaddr, (void *)newvideoaddr);
-
-	mac68k_set_io_offsets(IOBase);
-
-	/*
-	 * If the serial ports are going (for console or 'echo'), then
-	 * we need to make sure the IO change gets propagated properly.
-	 * This resets the base addresses for the 8530 (serial) driver.
-	 *
-	 * WARNING!!! No printfs() (etc) BETWEEN zs_init() and the end
-	 * of this function (where we start using the MMU, so the new
-	 * address is correct.
-	 */
-#if NZSC > 0
-	if (zsinited != 0)
-		zs_init();
-#endif
-
-	mac68k_video.mv_kvaddr = newvideoaddr;
 }
