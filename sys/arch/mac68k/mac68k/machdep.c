@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.374 2025/12/02 02:26:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.375 2025/12/02 02:32:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.374 2025/12/02 02:26:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2025/12/02 02:32:36 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -273,6 +273,19 @@ mac68k_init(void)
 			    atop(low[i]), atop(high[i]),
 			    VM_FREELIST_DEFAULT);
 	}
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/*
+	 * We mapped the kernel text read/write in pmap_bootstrap1() to
+	 * deal with the vectors and Mac ROM variable region.  Go ahead
+	 * and write-protect &start - &etext here.
+	 */
+	extern char start[], etext[];
+	pmap_protect(pmap_kernel(), m68k_round_page((vaddr_t)start),
+	    m68k_trunc_page((vaddr_t)etext),
+	    UVM_PROT_READ | UVM_PROT_EXEC);
+	pmap_update(pmap_kernel());
+#endif /* __HAVE_NEW_PMAP_68K */
 
 	/*
 	 * Initialize the I/O mem extent map.
@@ -2676,6 +2689,30 @@ pmap_machine_check_bootstrap_allocations(paddr_t nextpa, paddr_t firstpa)
 	}
 }
 
+#ifdef __HAVE_NEW_PMAP_68K
+#define	PMBM_IOBase	0
+#define	PMBM_ROMBase	1
+#define	PMBM_VIDBase	2
+struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr_ptr = (vaddr_t *)&IOBase,
+	  .pmbm_paddr = 0,		/* initialized below */
+	  .pmbm_size  = m68k_ptob(IIOMAPSIZE),
+	  .pmbm_flags = PMBM_F_CI },
+
+	{ .pmbm_vaddr_ptr = (vaddr_t *)&ROMBase,
+	  .pmbm_paddr = 0,		/* initialized below */
+	  .pmbm_size  = m68k_ptob(ROMMAPSIZE),
+	  .pmbm_flags = PMBM_F_RO },
+
+	{ .pmbm_vaddr_ptr = &newvideoaddr,
+	  .pmbm_paddr = 0,		/* initialized below */
+	  .pmbm_size  = 0,		/* initialized below */
+	  .pmbm_flags = PMBM_F_CI },
+
+	{ .pmbm_vaddr = -1 },
+};
+#endif /* __HAVE_NEW_PMAP_68K */
+
 void bootstrap_mac68k(int);
 
 void __attribute__((no_instrument_function))
@@ -2736,7 +2773,26 @@ bootstrap_mac68k(int tc)
 		mem_size += high[i] - low[i];
 	physmem = m68k_btop(mem_size);
 
+#ifdef __HAVE_NEW_PMAP_68K
+	/* Initialize machine_bootmap[] for pmap_bootstrap1(). */
+	machine_bootmap[PMBM_IOBase].pmbm_paddr = (paddr_t)IOBase;
+	machine_bootmap[PMBM_ROMBase].pmbm_paddr = (paddr_t)ROMBase;
+	machine_bootmap[PMBM_VIDBase].pmbm_paddr =
+	    m68k_trunc_page(mac68k_video.mv_phys);
+	machine_bootmap[PMBM_VIDBase].pmbm_size = vidlen;
+#endif
+
 	nextpa = pmap_bootstrap1(nextpa, load_addr);
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/*
+	 * machine_bootmap[] deals in whole pages; fixup newvideoaddr to
+	 * include the page offset.
+	 */
+	if (vidlen) {
+		newvideoaddr += m68k_page_offset(mac68k_video.mv_phys);
+	}
+#endif
 
 	/*
 	 * VM data structures are now initialized, set up data for
