@@ -12,5 +12,9 @@ options         MEMORY_DISK_SERVER=0    # no userspace memory disk support
 options         MEMORY_DISK_ROOT_SIZE=8192 # size of memory disk in blocks (4MB)
 options         MEMORY_DISK_RBFLAGS=RB_SINGLE   # boot in single-user mode
 
+no umcpmio*	at uhidev?
+no iic*		at umcpmio?
+no spi*		at umcpmio?
+
 no pseudo-device 	carp
 no pseudo-device 	veriexec
