@@ -1,4 +1,4 @@
-#	$NetBSD: RPI_INSTALL,v 1.14 2020/03/26 07:38:31 skrll Exp $
+#	$NetBSD: RPI_INSTALL,v 1.15 2025/12/02 09:09:00 brad Exp $
 #
 #	RPI_INSTALL -- RPI kernel with installation-sized
 #	ramdisk
@@ -8,7 +8,7 @@ include "arch/evbarm/conf/RPI"
 include "arch/evbarm/conf/INSTALL"
 
 no options	MEMORY_DISK_ROOT_SIZE
-options 	MEMORY_DISK_ROOT_SIZE=90000
+options 	MEMORY_DISK_ROOT_SIZE=100000
 
 makeoptions	RAMDISKNAME=sshramdisk
 no makeoptions	DEBUG
