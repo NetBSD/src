@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.348 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.349 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.348 2025/11/06 15:45:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.349 2025/12/02 01:23:09 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1298,7 +1298,7 @@ lfs_close(void *v)
 		lfs_orphan(fs, vp);
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
-	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
+	    vp->v_mount->mnt_iflag & (IMNT_UNMOUNT | IMNT_WANTRDONLY))
 		return 0;
 
 	if (vrefcnt(vp) > 1 && vp != ip->i_lfs->lfs_ivnode) {

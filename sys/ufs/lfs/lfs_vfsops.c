@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.393 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.394 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.393 2025/11/06 15:45:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.394 2025/12/02 01:23:09 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -795,6 +795,19 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			if (error)
 				return error;
 			fs->lfs_ronly = 1;
+
+			/*
+			 * Drain pending I/O now that we have declared
+			 * read-only.  We compare against 1 because
+			 * seglock increments by one.
+			 */
+			lfs_seglock(fs, SEGM_PROT);
+			mutex_enter(&lfs_lock);
+			while (fs->lfs_iocount > 1)
+				(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
+					      "lfs_roio", 0, &lfs_lock);
+			mutex_exit(&lfs_lock);
+			lfs_segunlock(fs);
 		} else if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write.
@@ -1121,6 +1134,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 	cv_init(&fs->lfs_nextsegsleep, "segment");
 	cv_init(&fs->lfs_cleanercv, "cleancv");
+	cv_init(&fs->lfs_cleanquitcv, "cleanquit");
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
@@ -1428,7 +1442,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	/* Check for dirty blocks on ifile */
 	KASSERT(LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd) == NULL);
-	
+
 	/* Finish with the Ifile, now that we're done with it */
 	vgone(fs->lfs_ivnode);
 
@@ -1516,7 +1530,7 @@ lfs_flushfiles(struct mount *mp, int flags)
 	vp = fs->lfs_ivnode;
 	mutex_enter(vp->v_interlock);
 	if (LIST_FIRST(&vp->v_dirtyblkhd))
-		panic("lfs_unmount: still dirty blocks on ifile vnode");
+		panic("lfs_flushfiles: still dirty blocks on ifile vnode");
 	mutex_exit(vp->v_interlock);
 
 	/* Explicitly write the superblock, to update serial and pflags */
@@ -2200,11 +2214,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 				      (lfs_ss_getnfinfo(fs, ssp) < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
-#if 0
-		      " with nfinfo=%d at offset 0x%jx\n",
-		      (int)lfs_ss_getnfinfo(fs, ssp),
-		      (uintmax_t)lfs_sb_getoffset(fs)));
-#endif
 		lfs_updatemeta(sp);
 		lfs_release_finfo(fs);
 		(void) lfs_writeseg(fs, sp);

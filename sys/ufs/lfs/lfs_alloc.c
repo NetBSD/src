@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.147 2025/11/03 22:21:12 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.148 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.147 2025/11/03 22:21:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.148 2025/12/02 01:23:09 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -305,7 +305,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	 */
 	lfs_if_setdaddr(fs, ifp, LFS_ILLEGAL_DADDR);
 	lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
-	LFS_BWRITE_LOG(bp);
+	LFS_WRITEIENTRY(ifp, fs, *ino, bp);
 
 	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM) {
 		/*
@@ -448,7 +448,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
 	/* See comment in lfs_valloc */
 	lfs_if_setdaddr(fs, ifp, LFS_ILLEGAL_DADDR);
-	LFS_BWRITE_LOG(bp);
+	LFS_WRITEIENTRY(ifp, fs, ino, bp);
 
 	if (lfs_sb_getfreehd(fs) == LFS_UNUSED_INUM) {
 		int error;
@@ -556,7 +556,6 @@ lfs_freelist_prev(struct lfs *fs, ino_t ino)
 int
 lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 {
-	SEGUSE *sup;
 	CLEANERINFO *cip;
 	struct buf *cbp, *bp;
 	IFILE *ifp;
@@ -569,9 +568,10 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 
-	/* XXX: assert not readonly */
-
 	ASSERT_NO_SEGLOCK(fs);
+	KASSERTMSG((ino != LFS_UNUSED_INUM), "inode 0 freed");
+	KASSERT(!fs->lfs_ronly);
+
 	DLOG((DLOG_ALLOC, "lfs_vfree: free ino %lld\n", (long long)ino));
 
 	/* Drain of pending writes */
@@ -668,7 +668,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 
 		/* write the ifile block */
-		(void) LFS_BWRITE_LOG(bp); /* Ifile */
+		LFS_WRITEIENTRY(ifp, fs, ino, bp);
 #if 0
 	} else {
 		ino_t tino, onf, otail;
@@ -679,7 +679,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		 * it seems both silly and dangerous.
 		 */
 		lfs_if_setnextfree(fs, ifp, LFS_UNUSED_INUM);
-		(void) LFS_BWRITE_LOG(bp); /* Ifile */
+		LFS_WRITEIENTRY(ifp, fs, ino, bp);
 
 		/*
 		 * Insert on freelist in order.
@@ -704,7 +704,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 			DLOG((DLOG_ALLOC, "lfs_vfree: headfree %lld -> %lld\n",
 			     (long long)nextfree, (long long)ino));
 			/* write the ifile block */
-			LFS_BWRITE_LOG(bp); /* Ifile */
+			LFS_WRITEIENTRY(ifp, fs, ino, bp);
 
 			/* If the list was empty, set tail too */
 			LFS_GET_TAILFREE(fs, cip, cbp, &otail);
@@ -730,14 +730,14 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 			onf = lfs_if_getnextfree(fs, ifp);
 			lfs_if_setnextfree(fs, ifp, ino);
 			/* write the block */
-			LFS_BWRITE_LOG(bp);	/* Ifile */
+			LFS_WRITEIENTRY(ifp, fs, tino, bp);
 
 			/* load this inode's ifile block */
 			LFS_IENTRY(ifp, fs, ino, bp);
 			/* update the list pointer */
 			lfs_if_setnextfree(fs, ifp, onf);
 			/* write the block */
-			LFS_BWRITE_LOG(bp);	/* Ifile */
+			LFS_WRITEIENTRY(ifp, fs, tino, bp);
 
 			/* If we're last, put us on the tail */
 			if (onf == LFS_UNUSED_INUM) {
@@ -750,27 +750,12 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		}
 	}
 #endif
-	/* XXX: shouldn't this check be further up *before* we trash the fs? */
-	KASSERTMSG((ino != LFS_UNUSED_INUM), "inode 0 freed");
 
 	/*
 	 * Update the segment summary for the segment where the on-disk
 	 * copy used to be.
 	 */
-	if (!DADDR_IS_BAD(old_iaddr)) {
-		/* load it */
-		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp);
-		/* the number of bytes in the segment should not become < 0 */
-		KASSERTMSG((sup->su_nbytes >= DINOSIZE(fs)),
-		    "lfs_vfree: negative byte count"
-		    " (segment %" PRIu32 " short by %d)\n",
-		    lfs_dtosn(fs, old_iaddr),
-		    (int)DINOSIZE(fs) - sup->su_nbytes);
-		/* update the number of bytes in the segment */
-		sup->su_nbytes -= DINOSIZE(fs);
-		/* write the segment entry */
-		LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, old_iaddr), bp); /* Ifile */
-	}
+	lfs_subtract_inode(fs, ip->i_number, old_iaddr);
 
 	/* Set superblock modified bit. */
 	mutex_enter(&lfs_lock);
@@ -889,7 +874,7 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 				/* set the list pointer */
 				lfs_if_setnextfree(fs, ifp, ino);
 				/* write the block */
-				LFS_BWRITE_LOG(bp);
+				LFS_WRITEIENTRY(ifp, fs, lastino, bp);
 
 				/* reload this inode's ifile entry */
 				LFS_IENTRY(ifp, fs, ino, bp);
@@ -984,15 +969,18 @@ lfs_orphan(struct lfs *fs, struct vnode *vp)
 	mutex_exit(vp->v_interlock);
 
 	/* If not already done, mark this inode orphaned. */
+	rw_enter(&fs->lfs_fraglock, RW_READER);
 	LFS_IENTRY(ifp, fs, ip->i_number, bp);
 	nextfree = lfs_if_getnextfree(fs, ifp);
 	if (nextfree == LFS_ORPHAN_NEXTFREE(fs)) {
 		brelse(bp, 0);
+		rw_exit(&fs->lfs_fraglock);
 		return;
 	}
 	KASSERT(nextfree == LFS_UNUSED_INUM);
 	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE(fs));
-	LFS_BWRITE_LOG(bp);
+	LFS_WRITEIENTRY(ifp, fs, ip->i_number, bp);
+	rw_exit(&fs->lfs_fraglock);
 }
 
 /*
@@ -1057,6 +1045,8 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 			    error);
 		vput(vp);
 
+		rw_enter(&fs->lfs_fraglock, RW_READER);
+
 		/* Update the number of bytes in the segment summary.  */
 		LFS_SEGENTRY(sup, fs, segno, bp);
 		KASSERT(sup->su_nbytes >= DINOSIZE(fs));
@@ -1066,7 +1056,9 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 		/* Drop the on-disk address.  */
 		LFS_IENTRY(ifp, fs, ino, bp);
 		lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
-		LFS_BWRITE_LOG(bp);
+		LFS_WRITEIENTRY(ifp, fs, ino, bp);
+		
+		rw_exit(&fs->lfs_fraglock);
 	}
 
 	if (orphan)

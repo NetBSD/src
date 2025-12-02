@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.20 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.21 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.20 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.21 2025/12/02 01:23:09 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.20 2017/06/10 05:29:36 maya Exp $")
 #else
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <sys/kauth.h>
 #endif
 
@@ -77,10 +78,20 @@ lfs_itimes(struct inode *ip, const struct timespec *acc,
 			struct buf *ibp;
 			IFILE *ifp;
 
+#ifdef _KERNEL
+			if (!LFS_SEGLOCK_HELD(fs))
+				rw_enter(&fs->lfs_fraglock, RW_READER);
+#endif /* _KERNEL */
 			LFS_IENTRY(ifp, fs, ip->i_number, ibp);
 			lfs_if_setatime_sec(fs, ifp, acc->tv_sec);
 			lfs_if_setatime_nsec(fs, ifp, acc->tv_nsec);
+#ifdef _KERNEL
+			LFS_WRITEIENTRY(ifp, fs, ip->i_number, ibp);
+			if (!LFS_SEGLOCK_HELD(fs))
+				rw_exit(&fs->lfs_fraglock);
+#else /* ! _KERNEL */
 			LFS_BWRITE_LOG(ibp);
+#endif /* ! _KERNEL */
 			mutex_enter(&lfs_lock);
 			fs->lfs_flags |= LFS_IFDIRTY;
 			mutex_exit(&lfs_lock);

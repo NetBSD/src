@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.108 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.109 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.108 2025/11/06 15:45:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.109 2025/12/02 01:23:09 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,8 @@ lfs_segunlock(struct lfs *fs)
 			if (sync)
 				lfs_writesuper(fs, lfs_sb_getsboff(fs, fs->lfs_activesb));
 			lfs_writesuper(fs, lfs_sb_getsboff(fs, 1 - fs->lfs_activesb));
-			if (!(fs->lfs_ivnode->v_mount->mnt_iflag & IMNT_UNMOUNT)) {
+			if (!(fs->lfs_ivnode->v_mount->mnt_iflag &
+			      (IMNT_UNMOUNT | IMNT_WANTRDONLY))) {
 				lfs_auto_segclean(fs);
 				/* If sync, we can clean the remainder too */
 				if (sync)

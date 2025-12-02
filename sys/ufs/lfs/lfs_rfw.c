@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.41 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.42 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.41 2025/11/06 15:45:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.42 2025/12/02 01:23:09 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -495,7 +495,7 @@ update_inoblk(struct lfs_inofuncarg *lifa)
 		LFS_IENTRY(ifp, fs, ino, ibp);
 		daddr = lfs_if_getdaddr(fs, ifp);
 		lfs_if_setdaddr(fs, ifp, offset);
-		error = LFS_BWRITE_LOG(ibp); /* Ifile */
+		LFS_WRITEIENTRY(ifp, fs, ino, ibp);
 		/* And do segment accounting */
 		osn = lfs_dtosn(fs, daddr);
 		nsn = lfs_dtosn(fs, offset);
@@ -555,7 +555,7 @@ update_inogen(struct lfs_inofuncarg *lifa)
 		LFS_IENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
 		if (lfs_if_getversion(fs, ifp) < lfs_dino_getgen(fs, dip))
 			lfs_if_setversion(fs, ifp, lfs_dino_getgen(fs, dip));
-		error = LFS_BWRITE_LOG(ibp); /* Ifile */
+		LFS_WRITEIENTRY(ifp, fs, lfs_dino_getinumber(fs, dip), ibp);
 		if (error)
 			break;
 	}

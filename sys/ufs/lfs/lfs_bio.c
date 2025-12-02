@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.152 2025/11/03 22:21:12 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.153 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.152 2025/11/03 22:21:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.153 2025/12/02 01:23:09 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -777,10 +777,10 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_iodone = lfs_free_aiodone;
-	bp->b_cflags |= BC_BUSY | BC_NOCACHE;
 	bp->b_private = fs;
 
 	mutex_enter(&bufcache_lock);
+	bp->b_cflags |= BC_BUSY | BC_NOCACHE;
 	mutex_enter(vp->v_interlock);
 	bgetvp(vp, bp);
 	mutex_exit(vp->v_interlock);
@@ -794,17 +794,17 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 {
 	struct vnode *vp;
 
-	if ((vp = bp->b_vp) != NULL) {
-		mutex_enter(&bufcache_lock);
-		mutex_enter(vp->v_interlock);
+	mutex_enter(&bufcache_lock);
+	vp = bp->b_vp;
+	mutex_enter(vp->v_interlock);
+	if (vp != NULL)
 		brelvp(bp);
-		mutex_exit(vp->v_interlock);
-		mutex_exit(&bufcache_lock);
-	}
+	mutex_exit(vp->v_interlock);
 	if (!(bp->b_cflags & BC_INVAL)) { /* BC_INVAL indicates a "fake" buffer */
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
+	mutex_exit(&bufcache_lock);
 	putiobuf(bp);
 }
 

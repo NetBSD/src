@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kclean.c,v 1.2 2025/11/17 01:49:00 perseant Exp $	*/
+/*	$NetBSD: lfs_kclean.c,v 1.3 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.2 2025/11/17 01:49:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.3 2025/12/02 01:23:09 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,10 @@ static int finfo_func_setclean(struct lfs_finfofuncarg *);
 static int rewrite_block(struct lfs *, struct vnode *, daddr_t, daddr_t,
 			 size_t, int *);
 
+static int ino_func_rewrite(struct lfs_inofuncarg *);
+static int ino_func_setclean(struct lfs_inofuncarg *);
+static int ino_func_checkempty(struct lfs_inofuncarg *);
+
 static int clean(struct lfs *);
 static long segselect_cb_rosenblum(struct lfs *, int, SEGUSE *, long);
 static long segselect_greedy(struct lfs *, int, SEGUSE *);
@@ -65,6 +69,7 @@ static long segselect_cb_time(struct lfs *, int, SEGUSE *);
 #if 0
 static long segselect_cb_serial(struct lfs *, int, SEGUSE *);
 #endif
+static int check_clean_list(struct lfs *, ino_t);
 
 struct lwp * lfs_cleaner_daemon = NULL;
 extern kcondvar_t	lfs_allclean_wakeup;
@@ -200,6 +205,9 @@ ino_func_rewrite(struct lfs_inofuncarg *lifa)
 		 * An inode we need to relocate.
 		 * Get it if we can.
 		 */
+		error = check_clean_list(fs, ino);
+		if (error)
+			continue;
 		error = VFS_VGET(fs->lfs_ivnode->v_mount, ino,
 				 LK_EXCLUSIVE | LK_NOWAIT, &vp);
 		if (error)
@@ -277,6 +285,23 @@ rewrite_block(struct lfs *fs, struct vnode *vp, daddr_t lbn, daddr_t offset, siz
 }
 
 static int
+check_clean_list(struct lfs *fs, ino_t ino)
+{
+	struct inode *ip;
+	
+	/*
+	 * Look for the inode on the clean list.
+	 * If it is not there, we can't lock it without risking a deadlock.
+	 */
+	TAILQ_FOREACH(ip, &fs->lfs_cleanhd, i_lfs_clean) {
+		if (ip->i_number == ino) {
+			return 0;
+		}
+	}
+	return EWOULDBLOCK;
+}
+
+static int
 finfo_func_rewrite(struct lfs_finfofuncarg *lffa)
 {
 	struct lfs *fs;
@@ -294,7 +319,7 @@ finfo_func_rewrite(struct lfs_finfofuncarg *lffa)
 	fip = lffa->finfop;
 	offsetp = lffa->offsetp;
 	fragsp = (int *)lffa->arg;
-	
+
 	/* Get the inode and check its version. */
 	ino = lfs_fi_getino(fs, fip);
 	gen = lfs_fi_getversion(fs, fip);
@@ -303,8 +328,12 @@ finfo_func_rewrite(struct lfs_finfofuncarg *lffa)
 		vp = fs->lfs_ivnode;
 	else {
 		LFS_ASSERT_MAXINO(fs, ino);
-		error = VFS_VGET(fs->lfs_ivnode->v_mount, ino,
-				 LK_EXCLUSIVE|LK_NOWAIT, &vp);
+		error = check_clean_list(fs, ino);
+		if (error)
+			vp = NULL;
+		else
+			error = VFS_VGET(fs->lfs_ivnode->v_mount, ino,
+					 LK_EXCLUSIVE|LK_NOWAIT, &vp);
 	}
 
 	/*
@@ -541,10 +570,8 @@ lfs_rewrite_segments(struct lfs *fs, int *snn, int len, int *directp, int *offse
 			break;
 
 		error = lfs_rewrite_segment(fs, snn[i], directp, cred, l);
-		if (error) {
-			printf("  rewrite_segment returned %d\n", error);
+		if (error)
 			break;
-		}
 	}
 	while (lfs_writeseg(fs, fs->lfs_sp))
 		;
@@ -680,7 +707,7 @@ finfo_func_checkempty(struct lfs_finfofuncarg *lffa)
 	/* Get the inode and check its version. */
 	ino = lfs_fi_getino(fs, fip);
 	gen = lfs_fi_getversion(fs, fip);
-	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE, &vp);
+	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE|LK_NOWAIT, &vp);
 
 	/*
 	 * If we can't, or if version is wrong, this FINFO does not refer
@@ -838,12 +865,6 @@ lfs_cleanerd(void *arg)
 	int lfsc;
 	int cleaned_something = 0;
  
-	mutex_enter(&lfs_lock);
-	KASSERTMSG(lfs_cleaner_daemon == NULL,
-		   "more than one LFS cleaner daemon");
-	lfs_cleaner_daemon = curlwp;
-	mutex_exit(&lfs_lock);
-
 	/* Take an extra reference to the LFS vfsops. */
 	vfs = vfs_getopsbyname(MOUNT_LFS);
  
@@ -871,7 +892,14 @@ lfs_cleanerd(void *arg)
  				fs = VFSTOULFS(mp)->um_lfs;
 
 				mutex_enter(&lfs_lock);
-				if (fs->lfs_clean_selector != NULL)
+				if (fs->lfs_clean_selector == NULL) {
+					/* Notify cleanctl */
+					if (fs->lfs_autoclean_status) {
+						fs->lfs_autoclean_status =
+							LFS_AUTOCLEAN_STATUS_OFF;
+						cv_broadcast(&fs->lfs_cleanquitcv);
+					}
+				} else
 					++lfsc;
 				mutex_exit(&lfs_lock);
 				cleaned_something += clean(fs);
@@ -885,7 +913,7 @@ lfs_cleanerd(void *arg)
 			break;
 		}
  		mountlist_iterator_destroy(iter);
- 
+
  		mutex_enter(&lfs_lock);
  	}
 	KASSERT(!mutex_owned(&lfs_lock));
@@ -915,10 +943,12 @@ clean(struct lfs *fs)
 	uint32_t __debugused segflags = 0;
 	daddr_t oldsn, bfree, avail;
 	int direct, offset;
-	
+
+	mutex_enter(&lfs_lock);
 	func = fs->lfs_clean_selector;
+	mutex_exit(&lfs_lock);
 	if (func == NULL)
-		return 0;
+		return 1; /* Run again so we get cleaned up immediately */
 
 	thresh = fs->lfs_autoclean.thresh;
 	if (fs->lfs_flags & LFS_MUSTCLEAN)
@@ -1032,8 +1062,8 @@ clean(struct lfs *fs)
 	 */
 	if (fs->lfs_flags & LFS_MUSTCLEAN) {
 		if (nready + nempty > 0) {
-			printf("force checkpoint with nready=%d nempty=%d nzero=%d\n",
-			       nready, nempty, nzero);
+			DLOG((DLOG_CLEAN, "force checkpoint with nready=%d nempty=%d nzero=%d\n",
+				nready, nempty, nzero));
 			lfs_segwrite(fs->lfs_ivnode->v_mount,
 				     SEGM_CKP | SEGM_FORCE_CKP | SEGM_SYNC);
 			lfs_segwrite(fs->lfs_ivnode->v_mount,
@@ -1081,7 +1111,7 @@ lfs_rewrite_file(struct lfs *fs, ino_t *inoa, int len, bool scramble,
 	flags = SEGM_PROT;
 	lfs_seglock(fs, flags);
 	for (i = 0; i < len; ++i) {
-		error = VFS_VGET(fs->lfs_ivnode->v_mount, inoa[i], LK_EXCLUSIVE, &vp);
+		error = VFS_VGET(fs->lfs_ivnode->v_mount, inoa[i], LK_EXCLUSIVE|LK_NOWAIT, &vp);
 		if (error)
 			goto out;
 		
@@ -1152,22 +1182,29 @@ lfs_cleanctl(struct lfs *fs, struct lfs_autoclean_params *params)
 	default:
 		return EINVAL;
 	}
-	
+
 	mutex_enter(&lfs_lock);
+	while (cleanfunc == NULL &&
+	       fs->lfs_autoclean_status != LFS_AUTOCLEAN_STATUS_OFF) {
+		cv_wait(&fs->lfs_cleanquitcv, &lfs_lock);
+	}
 	if (fs->lfs_clean_selector == NULL && cleanfunc != NULL)
 		if (++lfs_ncleaners == 1) {
-			printf("Starting cleaner thread\n");
 			if (lfs_cleaner_daemon == NULL &&
 			    kthread_create(PRI_BIO, 0, NULL,
-					   lfs_cleanerd, NULL, NULL,
+					   lfs_cleanerd, NULL,
+					   &lfs_cleaner_daemon,
 					   "lfs_cleaner") != 0)
 				panic("fork lfs_cleaner");
 		}
-	if (fs->lfs_clean_selector != NULL && cleanfunc == NULL)
+	if (fs->lfs_clean_selector != NULL && cleanfunc == NULL) {
 		if (--lfs_ncleaners == 0) {
-			printf("Stopping cleaner thread\n");
+#if 0
 			kthread_join(lfs_cleaner_daemon);
+			lfs_cleaner_daemon = NULL;
+#endif /* 0 */
 		}
+	}
 	fs->lfs_clean_selector = cleanfunc;
 	mutex_exit(&lfs_lock);
 

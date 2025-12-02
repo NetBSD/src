@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.213 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.214 2025/12/02 01:23:09 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1140,6 +1140,10 @@ struct lfs {
 	struct lfs_autoclean_params lfs_autoclean;
 	long (*lfs_clean_selector)(struct lfs *, int, SEGUSE *);
 	uint64_t lfs_clean_accum;
+# define LFS_AUTOCLEAN_STATUS_OFF	0
+# define LFS_AUTOCLEAN_STATUS_ON	1
+	int lfs_autoclean_status;
+	kcondvar_t lfs_cleanquitcv; /* condvar for cleaner quit */
 
 	/* Last cleaned segment */
 	uint32_t lfs_lastcleaned;
