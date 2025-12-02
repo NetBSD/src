@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.32 2013/10/19 19:08:39 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.33 2025/12/02 02:23:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.32 2013/10/19 19:08:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.33 2025/12/02 02:23:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 {
 	u_long pa, endpa;
 	vaddr_t va;
-	pt_entry_t *pte;
 
 	pa = m68k_trunc_page(bpa);
 	endpa = m68k_round_page((bpa + size) - 1);
@@ -120,15 +119,13 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	hp->bssr2 = mac68k_bssr2;
 	hp->bssr4 = mac68k_bssr4;
 
+	const int pmap_flags =
+	    (flags & BUS_SPACE_MAP_CACHEABLE) ? PMAP_WIRED
+					      : (PMAP_WIRED | PMAP_NOCACHE);
+
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
-		pte = kvtopte(va);
-		if ((flags & BUS_SPACE_MAP_CACHEABLE))
-			*pte &= ~PG_CI;
-		else
-			*pte |= PG_CI;
-		TBIS(va);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    pmap_flags);
 	}
 	pmap_update(pmap_kernel());
  
