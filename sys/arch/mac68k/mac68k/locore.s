@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.187 2025/11/30 19:17:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.188 2025/12/02 02:05:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -258,8 +258,7 @@ Lstart3:
 	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
 	movc	%d0,%vbr
 	
-	movl	_C_LABEL(Sysseg),%a1	| system segment table addr
-	addl	_C_LABEL(load_addr),%a1	| Make it physical addr
+	movl	_C_LABEL(Sysseg_pa),%a1	| system segment table PA
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
 	jne	Lenablepre040MMU	| if not 040, skip
 
