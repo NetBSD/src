@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.135 2025/04/03 01:54:46 nat Exp $
+#	$NetBSD: files.mac68k,v 1.136 2025/12/02 03:03:20 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -171,7 +171,7 @@ file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c
 file	arch/mac68k/mac68k/macromasm.s
 file	arch/mac68k/mac68k/mainbus.c
-file	arch/mac68k/mac68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
+file	arch/mac68k/mac68k/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
 file	arch/mac68k/mac68k/pram.c
 file	arch/mac68k/mac68k/pramasm.s
 file	arch/mac68k/mac68k/psc.c
@@ -184,7 +184,8 @@ file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
+file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
+file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
