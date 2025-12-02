@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2025/09/20 06:36:50 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2025/12/02 14:50:51 thorpej Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -60,7 +60,7 @@ KERNMAKE= \
 	    LIBKERN_MD_FLAGS=${LIBKERN_MD_FLAGS:q} \
 	    ${KERNMISCMAKEFLAGS}
 
-${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib
+${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib assym.h
 	@echo making sure the kern library is up to date...
 .if (${KERN_AS} == "library")
 	@${KERNMAKE} libkern.a
@@ -68,7 +68,7 @@ ${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib
 	@${KERNMAKE} libkern.o
 .endif
 
-${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib
+${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib assym.h
 	@echo making sure the profiled kern library is up to date...
 .if (${KERN_AS} == "library")
 	@${KERNMAKE} libkern_p.a
@@ -76,7 +76,7 @@ ${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib
 	@${KERNMAKE} libkern.po
 .endif
 
-${KERNLIBLN}:		.NOTMAIN .MAKE __always_make_kernlib
+${KERNLIBLN}:		.NOTMAIN .MAKE __always_make_kernlib assym.h
 	@echo making sure the kern lint library is up to date...
 	@${KERNMAKE} ${LIBKERNLNBN}
 
@@ -91,7 +91,7 @@ cleandirkernlib:	.MAKE .NOTMAIN
 	@if [ -d "${KERNDST}" ]; then ${KERNMAKE} cleandir; fi
 
 dependall depend:	.NOTMAIN dependkernlib
-dependkernlib:		.NOTMAIN .MAKE __always_make_kernlib
+dependkernlib:		.NOTMAIN .MAKE __always_make_kernlib assym.h
 	@echo depending the kern library objects
 	@${KERNMAKE} depend
 
