@@ -1,25 +1,8 @@
-/*	$NetBSD: elf_machdep.h,v 1.13 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.14 2025/12/02 22:50:15 jkoshy Exp $	*/
 
 #include <machine/endian_machdep.h>
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#else
-#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#endif
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_SH:						\
-			break;
-
-#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define	ELF64_MACHDEP_ID_CASES						\
-		/* no 64-bit ELF machine types supported */
-
-#define	ELF32_MACHDEP_ID	EM_SH
-
-#define	KERN_ELFSIZE		32
-#define	ARCH_ELFSIZE		32	/* MD native binary size */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * SuperH ELF header flags.
  */
@@ -33,10 +16,6 @@
 #define	EF_SH_SH3_DSP		0x05
 #define	EF_SH_SH3E		0x08
 #define	EF_SH_SH4		0x09
-
-#define	EF_SH_HAS_DSP(x)	((x) & EF_SH_DSP)
-#define	EF_SH_HAS_FP(x)		((x) & EF_SH_SH3E)
-
 
 #define	R_SH_NONE		0
 #define	R_SH_DIR32		1
@@ -80,5 +59,28 @@
 #define	R_SH_RELATIVE		165
 #define	R_SH_GOTOFF		166
 #define	R_SH_GOTPC		167
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#else
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#endif
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_SH:						\
+			break;
+
+#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF64_MACHDEP_ID_CASES						\
+		/* no 64-bit ELF machine types supported */
+
+#define	ELF32_MACHDEP_ID	EM_SH
+
+#define	KERN_ELFSIZE		32
+#define	ARCH_ELFSIZE		32	/* MD native binary size */
+
+#define	EF_SH_HAS_DSP(x)	((x) & EF_SH_DSP)
+#define	EF_SH_HAS_FP(x)		((x) & EF_SH_SH3E)
 
 #define	R_TYPE(name)	__CONCAT(R_SH_,name)
