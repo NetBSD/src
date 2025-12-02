@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.13 2025/11/29 09:56:20 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.14 2025/12/02 22:39:31 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.13 2025/11/29 09:56:20 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4284 2025-11-28 22:04:34Z jkoshy')
+	`Id: elfconstants.m4 4290 2025-12-02 21:34:11Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -87,6 +87,9 @@ define(`COMPATIBILITY_NOTICE',`dnl
 #   s390 ::
 #     S/390 ELF Application Binary Interface Supplement
 #     https://refspecs.linuxfoundation.org/ELF/zSeries/lzsabi0_zSeries.htm
+#
+#   sh ::
+#     Believed to be compatible with NetBSD/sh3, GNU and GDB-NG.
 #
 #   sparc ::
 #     Oracle Solaris Linkers and Libraries Guide
@@ -684,6 +687,44 @@ _(EF_RISCV_FLOAT_ABI_MASK, 0x00000006U,
 	`Bits determining the floating point ABI.')
 ')
 
+define(`DEFINE_EHDR_FLAGS_SH',`dnl
+_(EF_SH_UNKNOWN,	0x00000000U)
+_(EF_SH1,		0x00000001U)
+_(EF_SH2,		0x00000002U)
+_(EF_SH3,		0x00000003U)
+_(EF_SH_DSP,		0x00000004U)
+_(EF_SH3_DSP,		0x00000005U)
+_(EF_SH4AL_DSP,	0x00000006U)
+_(EF_SH3E,		0x00000008U)
+_(EF_SH4,		0x00000009U)
+_(EF_SH2E,		0x0000000BU)
+_(EF_SH4A,		0x0000000CU)
+_(EF_SH2A,		0x0000000DU)
+_(EF_SH4_NOFPU,	0x00000010U)
+_(EF_SH4A_NOFPU,	0x00000011U)
+_(EF_SH4_NOMMU_NOFPU,	0x00000012U)
+_(EF_SH2A_NOFPU,	0x00000013U)
+_(EF_SH3_NOMMU,	0x00000014U)
+_(EF_SH2A_SH4_NOFPU,	0x00000015U)
+_(EF_SH2A_SH3_NOFPU,	0x00000016U)
+_(EF_SH2A_SH4,		0x00000017U)
+_(EF_SH2A_SH3EU,	0x00000018U)
+_(EF_SH_PIC,		0x00000100U)
+_(EF_SH_FDPIC,		0x00008000U)
+')
+define(`DEFINE_EHDR_FLAG_MASKS_SH',`dnl
+_(EF_SH_MACH_MASK,	0x0000001FU)
+')
+define(`DEFINE_EHDR_FLAG_SYNONYMS_SH',`dnl
+__(`NetBSD spellings')
+_(EF_SH_SH1,		EF_SH1)
+_(EF_SH_SH2,		EF_SH2)
+_(EF_SH_SH3,		EF_SH3)
+_(EF_SH_SH3_DSP,	EF_SH3_DSP)
+_(EF_SH_SH3E,		EF_SH3E)
+_(EF_SH_SH4,		EF_SH4)
+')
+
 define(`DEFINE_EHDR_FLAGS_SPARC',`dnl
 _(EF_SPARC_32PLUS,     0x00000100U,
 	`Generic V8+ features')
@@ -719,12 +760,15 @@ DEFINE_EHDR_FLAG_MASKS_MIPS()
 DEFINE_EHDR_FLAGS_PPC()
 DEFINE_EHDR_FLAGS_RISCV()
 DEFINE_EHDR_FLAG_MASKS_RISCV()
+DEFINE_EHDR_FLAGS_SH()
+DEFINE_EHDR_FLAG_MASKS_SH()
 DEFINE_EHDR_FLAGS_SPARC()
 DEFINE_EHDR_FLAG_MASKS_SPARC()
 ')
 
 define(`DEFINE_EHDR_FLAG_SYNONYMS',`
 DEFINE_EHDR_FLAG_SYNONYMS_ARM()
+DEFINE_EHDR_FLAG_SYNONYMS_SH()
 ')
 
 #
@@ -2252,6 +2296,89 @@ define(`DEFINE_AARCH64_RELOCATION_TYPE_SYNONYMS',`
 _(R_AARCH64_TLS_TPREL64,			R_AARCH64_TLS_TPREL)
 ')
 
+define(`DEFINE_ALPHA_RELOCATION_TYPES',`
+_(R_ALPHA_NONE,			0,
+	`No relocation')
+_(R_ALPHA_REFLONG,		1,
+	`32 bit direct')
+_(R_ALPHA_REFQUAD,		2,
+	`64 bit direct')
+_(R_ALPHA_GPREL32,		3,
+	`GP-relative 32-bit')
+_(R_ALPHA_LITERAL,		4,
+	`GP-relative 16-bit')
+_(R_ALPHA_LITUSE,		5,
+	`Optimization hint for LITERAL')
+_(R_ALPHA_GPDISP,		6,
+	`Add displacement to GP')
+_(R_ALPHA_BRADDR,		7,
+	`PC+4-relative 23-bit shifted')
+_(R_ALPHA_HINT,		        8,
+	`PC+4-relative 16-bit shifted')
+_(R_ALPHA_SREL16,		9,
+	`PC-relative 16 bit')
+_(R_ALPHA_SREL32,		10,
+	`PC-relative 32 bit')
+_(R_ALPHA_SREL64,		11,
+	`PC-relative 64 bit')
+_(R_ALPHA_OP_PUSH,		12,
+	`deprecated, ECOFF OP stack push')
+_(R_ALPHA_OP_STORE,		13,
+	`deprecated, ECOFF OP pop and store')
+_(R_ALPHA_OP_PSUB,		14,
+	`deprecated, ECOFF OP stack subtract')
+_(R_ALPHA_OP_PRSHIFT,		15,
+	`deprecated, ECOFF OP stack right `shift'')
+_(R_ALPHA_GPVALUE,   	        16,
+	`deprecated, ECOFF relocation')
+_(R_ALPHA_GPRELHIGH,		17,
+	`GP-relative 32-bit high 16 bits')
+_(R_ALPHA_GPRELLOW,  	    	18,
+	`GP-relative 32-bit low 16 bits')
+_(R_ALPHA_GPREL16,   	    	19,
+	`GP-relative 16-bit')
+_(R_ALPHA_IMMED_GP_HI32,	20,
+	`deprecated ECOFF relocation')
+_(R_ALPHA_IMMED_SCN_HI32,	21,
+	`deprecated ECOFF relocation')
+_(R_ALPHA_IMMED_BR_HI32,	22,
+	`deprecated ECOFF relocation')
+_(R_ALPHA_IMMED_LO32,		23,
+	`deprecated ECOFF relocation')
+__(`	', `Relocations for shared libraries')	
+_(R_ALPHA_COPY,			24,
+	`copy symbol at runtime')
+_(R_ALPHA_GLOB_DAT,		25,
+	`create GOT entry')
+_(R_ALPHA_JMP_SLOT,		26,
+	`create PLT entry')
+_(R_ALPHA_RELATIVE,		27,
+	`adjust by program base')
+_(R_ALPHA_BRSGP,		28,
+	`PC relative with target address adjustment')
+__(`	', `TLS relocations')
+_(R_ALPHA_TLSGD,     	  	29)
+_(R_ALPHA_TLSDM,		30)
+_(R_ALPHA_DTPMOD64,		31)
+_(R_ALPHA_GOTDTPREL,		32)
+_(R_ALPHA_DTPREL64,		33)
+_(R_ALPHA_DTPRELHI,		34)
+_(R_ALPHA_DTPRELLO,		35)
+_(R_ALPHA_DTPREL16,		36)
+_(R_ALPHA_GOTTPREL,		37)
+_(R_ALPHA_TPREL64,		38)
+_(R_ALPHA_TPRELHI,		39)
+_(R_ALPHA_TPRELLO,		40)
+_(R_ALPHA_TPREL16,		41)
+')
+
+define(`DEFINE_ALPHA_RELOCATION_TYPE_SYNONYMS',`
+_(R_ALPHA_TLS_GD,		R_ALPHA_TLSGD,
+	`NetBSD spelling')
+_(R_ALPHA_IMMED_GP_16,		R_ALPHA_GPREL16,
+	`NetBSD spelling')
+')
+
 #
 # Relocation definitions from the ARM ELF ABI, version "ARM IHI
 # 0044E" released on 30th November 2012.
@@ -2436,89 +2563,6 @@ _(R_ARM_GOTPC,			25)
 _(R_ARM_GOT32,			26)
 _(R_ARM_THM_PC11,		102)
 _(R_ARM_THM_PC9,		103)
-')
-
-define(`DEFINE_ALPHA_RELOCATION_TYPES',`
-_(R_ALPHA_NONE,			0,
-	`No relocation')
-_(R_ALPHA_REFLONG,		1,
-	`32 bit direct')
-_(R_ALPHA_REFQUAD,		2,
-	`64 bit direct')
-_(R_ALPHA_GPREL32,		3,
-	`GP-relative 32-bit')
-_(R_ALPHA_LITERAL,		4,
-	`GP-relative 16-bit')
-_(R_ALPHA_LITUSE,		5,
-	`Optimization hint for LITERAL')
-_(R_ALPHA_GPDISP,		6,
-	`Add displacement to GP')
-_(R_ALPHA_BRADDR,		7,
-	`PC+4-relative 23-bit shifted')
-_(R_ALPHA_HINT,		        8,
-	`PC+4-relative 16-bit shifted')
-_(R_ALPHA_SREL16,		9,
-	`PC-relative 16 bit')
-_(R_ALPHA_SREL32,		10,
-	`PC-relative 32 bit')
-_(R_ALPHA_SREL64,		11,
-	`PC-relative 64 bit')
-_(R_ALPHA_OP_PUSH,		12,
-	`deprecated, ECOFF OP stack push')
-_(R_ALPHA_OP_STORE,		13,
-	`deprecated, ECOFF OP pop and store')
-_(R_ALPHA_OP_PSUB,		14,
-	`deprecated, ECOFF OP stack subtract')
-_(R_ALPHA_OP_PRSHIFT,		15,
-	`deprecated, ECOFF OP stack right `shift'')
-_(R_ALPHA_GPVALUE,   	        16,
-	`deprecated, ECOFF relocation')
-_(R_ALPHA_GPRELHIGH,		17,
-	`GP-relative 32-bit high 16 bits')
-_(R_ALPHA_GPRELLOW,  	    	18,
-	`GP-relative 32-bit low 16 bits')
-_(R_ALPHA_GPREL16,   	    	19,
-	`GP-relative 16-bit')
-_(R_ALPHA_IMMED_GP_HI32,	20,
-	`deprecated ECOFF relocation')
-_(R_ALPHA_IMMED_SCN_HI32,	21,
-	`deprecated ECOFF relocation')
-_(R_ALPHA_IMMED_BR_HI32,	22,
-	`deprecated ECOFF relocation')
-_(R_ALPHA_IMMED_LO32,		23,
-	`deprecated ECOFF relocation')
-__(`	', `Relocations for shared libraries')	
-_(R_ALPHA_COPY,			24,
-	`copy symbol at runtime')
-_(R_ALPHA_GLOB_DAT,		25,
-	`create GOT entry')
-_(R_ALPHA_JMP_SLOT,		26,
-	`create PLT entry')
-_(R_ALPHA_RELATIVE,		27,
-	`adjust by program base')
-_(R_ALPHA_BRSGP,		28,
-	`PC relative with target address adjustment')
-__(`	', `TLS relocations')
-_(R_ALPHA_TLSGD,     	  	29)
-_(R_ALPHA_TLSDM,		30)
-_(R_ALPHA_DTPMOD64,		31)
-_(R_ALPHA_GOTDTPREL,		32)
-_(R_ALPHA_DTPREL64,		33)
-_(R_ALPHA_DTPRELHI,		34)
-_(R_ALPHA_DTPRELLO,		35)
-_(R_ALPHA_DTPREL16,		36)
-_(R_ALPHA_GOTTPREL,		37)
-_(R_ALPHA_TPREL64,		38)
-_(R_ALPHA_TPRELHI,		39)
-_(R_ALPHA_TPRELLO,		40)
-_(R_ALPHA_TPREL16,		41)
-')
-
-define(`DEFINE_ALPHA_RELOCATION_TYPE_SYNONYMS',`
-_(R_ALPHA_TLS_GD,		R_ALPHA_TLSGD,
-	`NetBSD spelling')
-_(R_ALPHA_IMMED_GP_16,		R_ALPHA_GPREL16,
-	`NetBSD spelling')
 ')
 
 define(`DEFINE_IA_64_RELOCATION_TYPES',`
@@ -3088,7 +3132,8 @@ _(R_PPC_VLE_SDAREL_HI16D,	230)
 _(R_PPC_VLE_SDAREL_HA16A,	231)
 _(R_PPC_VLE_SDAREL_HA16D,	232)
 _(R_PPC_VLE_ADDR20,	233)
-__(`	', `Reserved: 234-248.')
+__(`	', `Reserved: 234-247.')
+_(R_PPC_IRELATIVE,	248, `GNU spelling')
 _(R_PPC_REL16,		249)
 _(R_PPC_REL16_LO,	250)
 _(R_PPC_REL16_HI,	251)
@@ -3271,6 +3316,10 @@ _(R_PPC64_REL14_BRNTAKEN,	13)
 _(R_PPC64_ADDR30,		37)
 ')
 
+define(`DEFINE_PPC64_RELOCATION_TYPE_SYNONYMS',`
+_(R_PPC_TOC16,			47, `Elfutils spelling')
+')
+
 define(`DEFINE_RISCV_RELOCATION_TYPES',`
 __(`EM_RISCV')
 _(R_RISCV_NONE,			0)
@@ -3377,6 +3426,127 @@ _(R_390_PC64,		23)
 _(R_390_GOT64,		24)
 _(R_390_PLT64,		25)
 _(R_390_GOTENT,		26)
+')
+
+define(`DEFINE_SH_RELOCATION_TYPES',`
+__(`SuperH')
+_(R_SH_NONE,		0)
+_(R_SH_DIR32,		1)
+_(R_SH_REL32,		2)
+_(R_SH_DIR8WPN,		3)
+_(R_SH_IND12W,		4)
+_(R_SH_DIR8WPL,		5)
+_(R_SH_DIR8WPZ,		6)
+_(R_SH_DIR8BP,		7)
+_(R_SH_DIR8W,		8)
+_(R_SH_DIR8L,		9)
+_(R_SH_LOOP_START,	10)
+_(R_SH_LOOP_END,	11)
+__(`	', `Unused: 12-21')
+_(R_SH_GNU_VTINHERIT,	22)
+_(R_SH_GNU_VTENTRY,	23)
+_(R_SH_SWITCH8,		24)
+_(R_SH_SWITCH16,	25)
+_(R_SH_SWITCH32,	26)
+_(R_SH_USES,		27)
+_(R_SH_COUNT,		28)
+_(R_SH_ALIGN,		29)
+_(R_SH_CODE,		30)
+_(R_SH_DATA,		31)
+_(R_SH_LABEL,		32)
+_(R_SH_DIR16,		33)
+_(R_SH_DIR8,		34)
+_(R_SH_DIR8UL,		35)
+_(R_SH_DIR8UW,		36)
+_(R_SH_DIR8U,		37)
+_(R_SH_DIR8SW,		38)
+_(R_SH_DIR8S,		39)
+_(R_SH_DIR4UL,		40)
+_(R_SH_DIR4UW,		41)
+_(R_SH_DIR4U,		42)
+_(R_SH_PSHA,		43)
+_(R_SH_PSHL,		44)
+_(R_SH_DIR5U,		45)
+_(R_SH_DIR6U,		46)
+_(R_SH_DIR6S,		47)
+_(R_SH_DIR10S,		48)
+_(R_SH_DIR10SW,		49)
+_(R_SH_DIR10SL,		50)
+_(R_SH_DIR10SQ,		51)
+__(`	', `Unused: 52')
+_(R_SH_DIR16S,		53)
+__(`	', `Unused: 54-143')
+__(`	', `TLS relocations')
+_(R_SH_TLS_GD_32,	144)
+_(R_SH_TLS_LD_32,	145)
+_(R_SH_TLS_LDO_32,	146)
+_(R_SH_TLS_IE_32,	147)
+_(R_SH_TLS_LE_32,	148)
+_(R_SH_TLS_DTPMOD32,	149)
+_(R_SH_TLS_DTPOFF32,	150)
+_(R_SH_TLS_TPOFF32,	151)
+__(`	', `Unused: 152-159')
+_(R_SH_GOT32,		160)
+_(R_SH_PLT32,		161)
+_(R_SH_COPY,		162)
+_(R_SH_GLOB_DAT,	163)
+_(R_SH_JMP_SLOT,	164)
+_(R_SH_RELATIVE,	165)
+_(R_SH_GOTOFF,		166)
+_(R_SH_GOTPC,		167)
+_(R_SH_GOTPLT32,	168)
+_(R_SH_GOT_LOW16,	169)
+_(R_SH_GOT_MEDLOW16,	170)
+_(R_SH_GOT_MEDHI16,	171)
+_(R_SH_GOT_HI16,	172)
+_(R_SH_GOTPLT_LOW16,	173)
+_(R_SH_GOTPLT_MEDLOW16,	174)
+_(R_SH_GOTPLT_MEDHI16,	175)
+_(R_SH_GOTPLT_HI16,	176)
+_(R_SH_PLT_LOW16,	177)
+_(R_SH_PLT_MEDLOW16,	178)
+_(R_SH_PLT_MEDHI16,	179)
+_(R_SH_PLT_HI16,	180)
+_(R_SH_GOTOFF_LOW16,	181)
+_(R_SH_GOTOFF_MEDLOW16,	182)
+_(R_SH_GOTOFF_MEDHI16,	183)
+_(R_SH_GOTOFF_HI16,	184)
+_(R_SH_GOTPC_LOW16,	185)
+_(R_SH_GOTPC_MEDLOW16,	186)
+_(R_SH_GOTPC_MEDHI16,	187)
+_(R_SH_GOTPC_HI16,	188)
+_(R_SH_GOT10BY4,	189)
+_(R_SH_GOTPLT10BY4,	190)
+_(R_SH_GOT10BY8,	191)
+_(R_SH_GOTPLT10BY8,	192)
+_(R_SH_COPY64,		193)
+_(R_SH_GLOB_DAT64,	194)
+_(R_SH_JMP_SLOT64,	195)
+_(R_SH_RELATIVE64,	196)
+__(`	', `Unused: 197-200')
+__(`	', `FDPIC ABI')
+_(R_SH_GOT20,		201)
+_(R_SH_GOTOFF20,	202)
+_(R_SH_GOTFUNCDESC,	203)
+_(R_SH_GOTFUNCDESC20,	204)
+_(R_SH_GOTOFFFUNCDESC,	205)
+_(R_SH_GOTOFFFUNCDESC20, 206)
+_(R_SH_FUNCDESC,	207)
+_(R_SH_FUNCDESC_VALUE,  208)
+_(R_SH_SHMEDIA_CODE,	242)
+_(R_SH_PT_16,		243)
+_(R_SH_IMMS16,		244)
+_(R_SH_IMMU16,		245)
+_(R_SH_IMM_LOW16,	246)
+_(R_SH_IMM_LOW16_PCREL,	247)
+_(R_SH_IMM_MEDLOW16,	248)
+_(R_SH_IMM_MEDLOW16_PCREL, 249)
+_(R_SH_IMM_MEDHI16,	250)
+_(R_SH_IMM_MEDHI16_PCREL, 251)
+_(R_SH_IMM_HI16,	252)
+_(R_SH_IMM_HI16_PCREL,	253)
+_(R_SH_64,		254)
+_(R_SH_64_PCREL,	255)
 ')
 
 define(`DEFINE_SPARC_RELOCATION_TYPES',`
@@ -3591,6 +3761,7 @@ DEFINE_PPC64_RELOCATION_TYPES()
 DEFINE_PPC_RELOCATION_TYPES()
 DEFINE_RISCV_RELOCATION_TYPES()
 DEFINE_S390_RELOCATION_TYPES()
+DEFINE_SH_RELOCATION_TYPES()
 DEFINE_SPARC_RELOCATION_TYPES()
 DEFINE_VAX_RELOCATION_TYPES()
 DEFINE_X86_64_RELOCATION_TYPES()
@@ -3612,6 +3783,7 @@ DEFINE_AARCH64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_ALPHA_RELOCATION_TYPE_SYNONYMS()
 DEFINE_IA_64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_MIPS_RELOCATION_TYPE_SYNONYMS()
+DEFINE_PPC64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_X86_64_RELOCATION_TYPE_SYNONYMS()
 ')
 
