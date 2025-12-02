@@ -1,4 +1,4 @@
-.\" $NetBSD: cpsw.4,v 1.3 2013/03/14 19:17:58 njoly Exp $
+.\" $NetBSD: cpsw.4,v 1.4 2025/12/02 02:17:06 gutteridge Exp $
 .\"
 .\" Copyright (c) 2013 Jonathan A. Kollasch
 .\" All rights reserved
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 6, 2013
+.Dd December 2, 2025
 .Dt CPSW 4
 .Os
 .Sh NAME
@@ -32,16 +32,14 @@
 .Nd Texas Instruments CPSW 3-port Ethernet Switch
 .Sh SYNOPSIS
 .Cd "cpsw* at obio?"
-.Pp
-Configuration of PHYs is necessary.
-See
-.Xr mii 4 .
 .Sh DESCRIPTION
 The
 .Nm
 driver supports the TI AM335x 3-port Ethernet Switch subsystem.
 .Sh SEE ALSO
-.Xr mii 4
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
