@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.12 2018/11/24 11:27:37 mlelstv Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.13 2025/12/03 08:12:33 mlelstv Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -137,7 +137,7 @@ static int _control_exists(const char *control, uint32_t major, uint32_t minor)
 	if (major && buf.st_rdev != MKDEV(major, minor)) {
 		log_verbose("%s: Wrong device number: (%u, %u) instead of "
 			    "(%u, %u)", control,
-			    MAJOR(buf.st_mode), MINOR(buf.st_mode),
+			    MAJOR(buf.st_rdev), MINOR(buf.st_rdev),
 			    major, minor);
 		if (!unlink(control))
 			return 0;
