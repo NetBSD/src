@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24 2025/11/29 21:57:14 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.25 2025/12/03 02:15:08 thorpej Exp $	*/
 
 #ifndef _HP300_TYPES_H_
 #define	_HP300_TYPES_H_
@@ -17,6 +17,6 @@
  * XXX Future optimization: if kernel is built without 68020 support,
  * XXX avoidance not required.
  */
-#define	__HAVE_M68K_BROKEN_RMC
+#define	__HAVE_M68K_BROKEN_RMC		1	/* XXX 1 */
 
 #endif /* !_HP300_TYPES_H_ */

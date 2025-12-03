@@ -1,4 +1,4 @@
-#	$NetBSD: std.hp300,v 1.12 2025/11/23 17:42:00 tsutsui Exp $
+#	$NetBSD: std.hp300,v 1.13 2025/12/03 02:15:08 thorpej Exp $
 #
 # Options/devices that all hp300s should have
 #
@@ -11,3 +11,6 @@ options 	EXEC_AOUT	# support for exec'ing a.out
 
 # Experimental new pmap module
 #options 	__HAVE_NEW_PMAP_68K
+
+# XXX This is needed by asm code in libkern.
+makeoptions	CPPFLAGS+="-D__HAVE_M68K_BROKEN_RMC=1"

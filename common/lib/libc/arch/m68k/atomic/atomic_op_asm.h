@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.8 2025/12/01 13:31:22 thorpej Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.9 2025/12/03 02:15:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,11 +35,6 @@
 #include <machine/asm.h>
 
 #if defined(_KERNEL)
-
-#if defined(_KERNEL_OPT)
-/* Pull in assym.h to (maybe) get __HAVE_M68K_BROKEN_RMC. */
-#include "assym.h"
-#endif
 
 #define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
 #ifdef _HARDKERNEL
