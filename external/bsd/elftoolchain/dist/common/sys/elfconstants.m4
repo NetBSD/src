@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.14 2025/12/02 22:39:31 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.15 2025/12/03 21:15:07 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.14 2025/12/02 22:39:31 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4290 2025-12-02 21:34:11Z jkoshy')
+	`Id: elfconstants.m4 4294 2025-12-03 18:58:59Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -69,6 +69,14 @@ define(`COMPATIBILITY_NOTICE',`dnl
 #     3rd Edition, 1996.
 #     https://refspecs.linuxfoundation.org/elf/mipsabi.pdf
 #     
+#   parisc ::
+#     Processor-Specific ELF Supplement for PA-RISC, Version 1.5, August 20, 1998.
+#     https://parisc.docs.kernel.org/en/latest/technical_documentation.html
+#
+#     Implementing Thread Local Storage for HP PA-RISC Linux, November 11, 2013
+#     (Archived link) https://web.archive.org/web/20240722131647/\
+#       http://www.parisc-linux.org/documentation/tls/hppa-tls-implementation.pdf
+#
 #   ppc ::
 #     Power Architecture® 32-bit Application Binary Interface
 #     Supplement 1.0 - Linux® & Embedded
@@ -655,6 +663,29 @@ _(EF_MIPS_ARCH,		0xF0000000U,
 	`4-bit MIPS architecture field')
 ')
 
+define(`DEFINE_EHDR_FLAGS_PARISC',`dnl
+_(EF_PARISC_TRAPNIL,	0x00010000U,
+	`Trap nil pointer deferences')
+_(EF_PARISC_EXT,	0x00020000U,
+	`Uses a .PARISC.archext section')
+_(EF_PARISC_LSB,	0x00040000U,
+	`LSB mode')
+_(EF_PARISC_WIDE,	0x00080000U,
+	`wide mode')
+_(EF_PARISC_NO_KABP,	0x00100000U,
+	`no kernel-assisted branch prediction')
+_(EF_PARISC_LAZYSWAP,	0x00200000U,
+	`lazy swap of dynamic segments')
+__(`	', `PARISC Architecture versions')
+_(EFA_PARISC_1_0,	0x0000020BU, `PA-RISC 1.0')
+_(EFA_PARISC_1_1,	0x00000210U, `PA-RISC 1.1')
+_(EFA_PARISC_2_0,	0x00000214U, `PA-RISC 2.0')
+')
+define(`DEFINE_EHDR_FLAG_MASKS_PARISC',`dnl
+_(EF_PARISC_ARCH,	0x0000FFFFU,
+	`architecture version')
+')
+
 define(`DEFINE_EHDR_FLAGS_PPC',`dnl
 _(EF_PPC_EMB,          0x80000000U,
 	`Embedded PowerPC flag')
@@ -757,6 +788,8 @@ DEFINE_EHDR_FLAGS_LOONGARCH()
 DEFINE_EHDR_FLAG_MASKS_LOONGARCH()
 DEFINE_EHDR_FLAGS_MIPS()
 DEFINE_EHDR_FLAG_MASKS_MIPS()
+DEFINE_EHDR_FLAGS_PARISC()
+DEFINE_EHDR_FLAG_MASKS_PARISC()
 DEFINE_EHDR_FLAGS_PPC()
 DEFINE_EHDR_FLAGS_RISCV()
 DEFINE_EHDR_FLAG_MASKS_RISCV()
@@ -1413,6 +1446,8 @@ _(PF_ARM_PI,           0x20000000,
 	`segment is position-independent')
 _(PF_ARM_ABS,          0x40000000,
 	`segment must be loaded at its base address')
+_(PF_PARRISC_SBP,      0x08000000,
+	`segment has code compiled for static branch prediction')
 ')
 
 #
@@ -1479,6 +1514,10 @@ _(PT_MIPS_RTPROC,      0x70000001U,
 	`runtime procedure table')
 _(PT_MIPS_OPTIONS,     0x70000002U,
 	`options segment')
+_(PT_PARISC_ARCHEXT,   0x70000000U,
+	`segment contains the .PARISC.archext section')
+_(PT_PARISC_UNWIND,    0x70000001U,
+	`segment contains the .unwind section')
 _(PT_HIPROC,           0x7FFFFFFFU,
 	`end of processor-specific range')
 ')
@@ -1596,6 +1635,12 @@ _(SHF_MIPS_NAMES,      0x02000000U,
 	`linker must generate implicit hidden weak names')
 _(SHF_MIPS_NODUPE,     0x01000000U,
 	`linker must retain only one copy')
+_(SHF_PARISC_SBP,      0x80000000U,
+	`code compiled for static branch prediction')
+_(SHF_PARISC_HUGE,     0x40000000U,
+	`section should be allocated far from GP')
+_(SHF_PARISC_SHORT,    0x20000000U,
+	`section should be allocated near GP')
 _(SHF_ORDERED,         0x40000000U,
 	`section is ordered with respect to other sections')
 _(SHF_EXCLUDE,         0x80000000U,
@@ -1634,6 +1679,10 @@ _(SHN_MIPS_LCOMMON, 0xFF05U,
 	`local common symbols')
 _(SHN_MIPS_LUNDEFINED, 0xFF06U,
 	`local undefined symbols')
+_(SHN_PARISC_ANSI_COMMON,	0xFF00U,
+	`symbol is tentative')
+_(SHN_PARISC_HUGE_COMMON,	0xFF01U,
+	`symbol denotes a huge-memory common block')
 _(SHN_HIPROC, 	0xFF1FU,
 	`end of processor-specific range')
 _(SHN_LOOS, 	0xFF20U,
@@ -1696,6 +1745,12 @@ _(SHT_GNU_HASH,	     0x6FFFFFF6U,
 	`GNU Hash sections')
 _(SHT_GNU_LIBLIST,     0x6FFFFFF7U,
 	`List of libraries to be prelinked')
+_(SHT_PARISC_EXT,      0x70000000U,
+	`product-specific extension bits')
+_(SHT_PARISC_UNWIND,   0x70000001U,
+	`unwind table entries')
+_(SHT_PARISC_DOC,      0x70000002U,
+	`debug information for optimized code')
 _(SHT_SUNW_ANNOTATE,   0x6FFFFFF7U,
 	`special section where unresolved references are allowed')
 _(SHT_SUNW_DEBUGSTR,   0x6FFFFFF8U,
@@ -1872,6 +1927,8 @@ _(STT_ARM_TFUNC,       13,
 	`Thumb function (GNU)')
 _(STT_ARM_16BIT,       15,
 	`Thumb label (GNU)')
+_(STT_PARISC_MILLI,    13,
+	`entry point of a millicode routine')
 _(STT_SPARC_REGISTER,  13,
 	`SPARC register information')
 _(STT_HIPROC,          15,
@@ -3001,6 +3058,168 @@ _(R_MIPS_GOT_OFST,		21, `GNU binutils, LLVM.')
 _(R_MIPS_GOT_HI16,		22, `GNU binutils, LLVM.')
 ')
 
+define(`DEFINE_PARISC_RELOCATION_TYPES',`
+_(R_PARISC_NONE,		0)
+_(R_PARISC_DIR32,		1)
+_(R_PARISC_DIR21L,		2)
+_(R_PARISC_DIR17R,		3)
+_(R_PARISC_DIR17F,		4)
+__(`	', `Unused: 5')
+_(R_PARISC_DIR14R,		6)
+_(R_PARISC_DIR14F,		7, `GNU')
+_(R_PARISC_PCREL12F,		8, `GNU')
+_(R_PARISC_PCREL32,		9)
+_(R_PARISC_PCREL21L,		10)
+_(R_PARISC_PCREL17R,		11)
+_(R_PARISC_PCREL17F,		12)
+_(R_PARISC_PCREL17C,		13)
+_(R_PARISC_PCREL14R,		14)
+_(R_PARISC_PCREL14F,		15, `GNU')
+__(`	', `Unused: 16-17')
+_(R_PARISC_DPREL21L,		18)
+_(R_PARISC_DPREL14WR,		19)
+_(R_PARISC_DPREL14DR,		20)
+__(`	', `Unused: 21')
+_(R_PARISC_DPREL14R,		22)
+_(R_PARISC_DPREL14F,		23, `GNU')
+__(`	', `Unused: 24-25')
+_(R_PARISC_DLTREL21L,		26)
+__(`	', `Unused: 27-29')
+_(R_PARISC_DLTREL14R,		30)
+_(R_PARISC_DLTREL14F,		31, `GNU')
+__(`	', `Unused: 32-33')
+_(R_PARISC_DLTIND21L,		34)
+__(`	', `Unused: 35-37')
+_(R_PARISC_DLTIND14R,		38)
+_(R_PARISC_DLTIND14F,		39)
+_(R_PARISC_SETBASE,		40)
+_(R_PARISC_SECREL32,		41)
+_(R_PARISC_BASEREL21L,		42)
+_(R_PARISC_BASEREL17R,		43)
+_(R_PARISC_BASEREL17F,		44, `GNU')
+__(`	', `Unused: 45')
+_(R_PARISC_BASEREL14R,		46)
+_(R_PARISC_BASEREL14F,		47, `GNU')
+_(R_PARISC_SEGBASE,		48)
+_(R_PARISC_SEGREL32,		49)
+_(R_PARISC_PLTOFF21L,		50)
+__(`	', `Unused: 51-53')
+_(R_PARISC_PLTOFF14R,		54)
+_(R_PARISC_PLTOFF14F,		55)
+__(`	', `Unused: 56')
+_(R_PARISC_LTOFF_FPTR32,	57)
+_(R_PARISC_LTOFF_FPTR21L,	58)
+__(`	', `Unused: 59-61')
+_(R_PARISC_LTOFF_FPTR14R,	62)
+__(`	', `Unused: 63')
+_(R_PARISC_FPTR64,		64)
+_(R_PARISC_PLABEL32,		65, `GNU')
+_(R_PARISC_PLABEL21L,		66, `GNU')
+__(`	', `Unused: 67-69')
+_(R_PARISC_PLABEL14R,		70, `GNU')
+__(`	', `Unused: 71')
+_(R_PARISC_PCREL64,		72)
+_(R_PARISC_PCREL22C,		73)
+_(R_PARISC_PCREL22F,		74)
+_(R_PARISC_PCREL14WR,		75)
+_(R_PARISC_PCREL14DR,		76)
+_(R_PARISC_PCREL16F,		77)
+_(R_PARISC_PCREL16WF,		78)
+_(R_PARISC_PCREL16DF,		79)
+_(R_PARISC_DIR64,		80)
+_(R_PARISC_DIR64WR,		81, `GNU')
+_(R_PARISC_DIR64DR,		82, `GNU')
+_(R_PARISC_DIR14WR,		83)
+_(R_PARISC_DIR14DR,		84)
+_(R_PARISC_DIR16F,		85)
+_(R_PARISC_DIR16WF,		86)
+_(R_PARISC_DIR16DF,		87)
+_(R_PARISC_GPREL64,		88)
+__(`	', `Unused: 90')
+_(R_PARISC_DLTREL14WR,		91)
+_(R_PARISC_DLTREL14DR,		92)
+_(R_PARISC_GPREL16F,		93)
+_(R_PARISC_GPREL16WF,		94)
+_(R_PARISC_GPREL16DF,		95)
+_(R_PARISC_LTOFF64,		96)
+__(`	', `Unused: 97-98')
+_(R_PARISC_DLTIND14WR,		99)
+_(R_PARISC_DLTIND14DR,		100)
+_(R_PARISC_LTOFF16F,		101)
+_(R_PARISC_LTOFF16WF,		102)
+_(R_PARISC_LTOFF16DF,		103)
+_(R_PARISC_SECREL64,		104)
+__(`	', `Unused: 105-106')
+_(R_PARISC_BASEREL14WR,		107)
+_(R_PARISC_BASEREL14DR,		108)
+__(`	', `Unused: 109-111')
+_(R_PARISC_SEGREL64,		112)
+__(`	', `Unused: 113-114')
+_(R_PARISC_PLTOFF14WR,		115)
+_(R_PARISC_PLTOFF14DR,		116)
+_(R_PARISC_PLTOFF16F,		117)
+_(R_PARISC_PLTOFF16WF,		118)
+_(R_PARISC_PLTOFF16DF,		119)
+_(R_PARISC_LTOFF_FPTR64,	120)
+__(`	', `Unused: 121-122')
+_(R_PARISC_LTOFF_FPTR14WR,	123)
+_(R_PARISC_LTOFF_FPTR14DR,	124)
+_(R_PARISC_LTOFF_FPTR16F,	125)
+_(R_PARISC_LTOFF_FPTR16WF,	126)
+_(R_PARISC_LTOFF_FPTR16DF,	127)
+_(R_PARISC_COPY,		128)
+_(R_PARISC_IPLT,		129)
+_(R_PARISC_EPLT,		130)
+__(`	', `Unused: 131-152')
+_(R_PARISC_TPREL32,		153)
+_(R_PARISC_TPREL21L,		154)
+__(`	', `Unused: 155-157')
+_(R_PARISC_TPREL14R,		158)
+__(`	', `Unused: 159-161')
+_(R_PARISC_LTOFF_TP21L,		162)
+__(`	', `Unused: 163-165')
+_(R_PARISC_LTOFF_TP14R,		166)
+_(R_PARISC_LTOFF_TP14F,		167)
+__(`	', `Unused: 168-215')
+_(R_PARISC_TPREL64,		216)
+__(`	', `Unused: 217-218')
+_(R_PARISC_TPREL14WR,		219)
+_(R_PARISC_TPREL14DR,		220)
+_(R_PARISC_TPREL16F,		221)
+_(R_PARISC_TPREL16WF,		222)
+_(R_PARISC_TPREL16DF,		223)
+_(R_PARISC_LTOFF_TP64,		224)
+__(`	', `Unused: 225-226')
+_(R_PARISC_LTOFF_TP14WR,	227)
+_(R_PARISC_LTOFF_TP14DR,	228)
+_(R_PARISC_LTOFF_TP16F,		229)
+_(R_PARISC_LTOFF_TP16WF,	230)
+_(R_PARISC_LTOFF_TP16DF,	231)
+_(R_PARISC_GNU_VTENTRY,		232, `GNU')
+_(R_PARISC_GNU_VTINHERIT,	233, `GNU')
+__(`	', `TLS relocations')
+_(R_PARISC_TLS_GD21L,		234, `GNU')
+_(R_PARISC_TLS_GD14R,		235, `GNU')
+_(R_PARISC_TLS_GDCALL,		236, `GNU')
+_(R_PARISC_TLS_LDM21L,		237, `GNU')
+_(R_PARISC_TLS_LDM14R,		238, `GNU')
+_(R_PARISC_TLS_LDMCALL,		239, `GNU')
+_(R_PARISC_TLS_LDO21L,		240, `GNU')
+_(R_PARISC_TLS_LDO14R,		241, `GNU')
+_(R_PARISC_TLS_DTPMOD32,	242, `GNU')
+_(R_PARISC_TLS_DTPMOD64,	243, `GNU')
+_(R_PARISC_TLS_DTPOFF32,	244, `GNU')
+_(R_PARISC_TLS_DTPOFF64,	245, `GNU')
+')
+define(`DEFINE_PARISC_RELOCATION_TYPE_SYNONYMS',`
+_(R_PARISC_TLS_LE21L,		R_PARISC_TPREL21L)
+_(R_PARISC_TLS_LE14R,		R_PARISC_TPREL14R)
+_(R_PARISC_TLS_IE21L,		R_PARISC_LTOFF_TP21L)
+_(R_PARISC_TLS_IE14R,		R_PARISC_LTOFF_TP14R)
+_(R_PARISC_TLS_TPREL32,		R_PARISC_TPREL32)
+_(R_PARISC_TLS_TPREL64,		R_PARISC_TPREL64)
+')
+
 define(`DEFINE_PPC_RELOCATION_TYPES',`
 __(EM_PPC)
 _(R_PPC_NONE,		0)
@@ -3533,6 +3752,7 @@ _(R_SH_GOTOFFFUNCDESC,	205)
 _(R_SH_GOTOFFFUNCDESC20, 206)
 _(R_SH_FUNCDESC,	207)
 _(R_SH_FUNCDESC_VALUE,  208)
+__(`	', `Unused: 209-241')
 _(R_SH_SHMEDIA_CODE,	242)
 _(R_SH_PT_16,		243)
 _(R_SH_IMMS16,		244)
@@ -3757,6 +3977,7 @@ DEFINE_ALPHA_RELOCATION_TYPES()
 DEFINE_IA_64_RELOCATION_TYPES()
 DEFINE_LOONGARCH_RELOCATION_TYPES()
 DEFINE_MIPS_RELOCATION_TYPES()
+DEFINE_PARISC_RELOCATION_TYPES()
 DEFINE_PPC64_RELOCATION_TYPES()
 DEFINE_PPC_RELOCATION_TYPES()
 DEFINE_RISCV_RELOCATION_TYPES()
@@ -3783,6 +4004,7 @@ DEFINE_AARCH64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_ALPHA_RELOCATION_TYPE_SYNONYMS()
 DEFINE_IA_64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_MIPS_RELOCATION_TYPE_SYNONYMS()
+DEFINE_PARISC_RELOCATION_TYPE_SYNONYMS()
 DEFINE_PPC64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_X86_64_RELOCATION_TYPE_SYNONYMS()
 ')
