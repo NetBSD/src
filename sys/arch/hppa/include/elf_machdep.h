@@ -1,19 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.4 2017/11/06 03:47:46 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.5 2025/12/03 21:17:46 jkoshy Exp $	*/
 
-#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_PARISC:						\
-			break;
-
-#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define	ELF64_MACHDEP_ID_CASES						\
-		/* no 64-bit ELF machine types supported */
-
-#define	ELF32_MACHDEP_ID	EM_PARISC
-
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /* hppa relocation types */
 #define R_PARISC_NONE	         0 /* No reloc */
 #define R_PARISC_DIR32	   	 1
@@ -147,5 +134,25 @@
 #define R_PARISC_TLS_IE14R	R_PARISC_LTOFF_TP14R
 #define R_PARISC_TLS_TPREL32	R_PARISC_TPREL32
 #define R_PARISC_TLS_TPREL64	R_PARISC_TPREL64
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local definitions.
+ */
+
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_PARISC:						\
+			break;
+
+#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF64_MACHDEP_ID_CASES						\
+		/* no 64-bit ELF machine types supported */
+
+#define	ELF32_MACHDEP_ID	EM_PARISC
+
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define	R_TYPE(name)	__CONCAT(R_PARISC_,name)
