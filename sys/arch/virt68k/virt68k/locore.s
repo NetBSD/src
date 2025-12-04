@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 2025/12/04 02:55:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 2025/12/04 06:01:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,6 +101,9 @@ GLOBAL(kernel_text)
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 
+	movl	#CACHE_OFF,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
+
 	/*
 	 * Determine our relocation offset.  We need this to manually
 	 * translate the virtual addresses of global references to the
@@ -125,11 +128,6 @@ ASENTRY_NOPROFILE(start)
 	lsrl	#2,%d0
 1:	clrl	%a0@+
 	dbra	%d0,1b
-
-	/* XXX XXX XXX */
-	movl	#CACHE_OFF,%d0
-	movc	%d0,%cacr		| clear and disable on-chip cache(s)
-	/* XXX XXX XXX */
 
 	/*
 	 * Qemu does not pass us the symbols, so leave esym alone.
@@ -173,7 +171,7 @@ ASENTRY_NOPROFILE(start)
 #if defined(M68040) || defined(M68060)
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lnot040mmu		| no, skip
+	jne	2f			| no, skip
 	.long	0x4e7b1807		| movc d1,srp
 
 	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
@@ -189,18 +187,18 @@ ASENTRY_NOPROFILE(start)
 #ifdef M68060
 	RELOC(cputype, %a0)
 	cmpl	#CPU_68060,%a0@		| 68060?
-	jne	Lnot060cache
+	jne	1f
 	movl	#1,%d0
 	.long	0x4e7b0808		| movcl d0,pcr
 	movl	#0xa0808000,%d0
 	movc	%d0,%cacr		| enable store buffer, both caches
 	jmp	Lmmuenabled
-Lnot060cache:
+1:
 #endif
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lmmuenabled
-Lnot040mmu:
+2:
 #endif /* M68040 || M68060 */
 
 #if defined(M68020) || defined(M68030)
@@ -210,13 +208,13 @@ Lnot040mmu:
 #ifdef M68030
 	RELOC(mmutype, %a0)
 	cmpl	#MMU_68030,%a0@		| 68030?
-	jne	Lno030ttr		| no, skip
+	jne	1f			| no, skip
 	RELOC(mmu_tt30, %a0)		| pointer to TT reg values
 	movl	%a0,%sp@-
 	RELOC(mmu_load_tt30,%a0)	| pass it to mmu_load_tt30()
 	jbsr	%a0@ 
 	addql	#4,%sp
-Lno030ttr:
+1:
 #endif /* M68030 */
 	pflusha
 	movl	#MMU51_TCR_BITS,%sp@	| value to load TC with
@@ -237,21 +235,21 @@ Lmmuenabled:
 	movl	%a2,%usp		| init user SP
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
-	jeq	Lenab2			| No, skip.
+	jeq	1f			| No, skip.
 	clrl	%a0@(PCB_FPCTX)		| ensure null FP context
 	pea	%a0@(PCB_FPCTX)
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a0)
 	addql	#4,%sp
-Lenab2:
+1:
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Ltbia040		| yes, cache already on
+	jeq	1f			| yes, cache already on
 	pflusha
 	movl	#CACHE_ON,%d0
 	movc	%d0,%cacr		| clear cache(s)
-	jra	Lenab3
-Ltbia040:
-	.word	0xf518
-Lenab3:
+	jra	2f
+1:
+	.word	0xf518			| pflusha
+2:
 /* final setup for C code */
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(virt68k_init)	| additional pre-main initialization
