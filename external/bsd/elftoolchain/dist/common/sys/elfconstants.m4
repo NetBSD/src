@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.15 2025/12/03 21:15:07 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.16 2025/12/04 21:47:01 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.15 2025/12/03 21:15:07 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4294 2025-12-03 18:58:59Z jkoshy')
+	`Id: elfconstants.m4 4296 2025-12-04 21:11:34Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -68,7 +68,12 @@ define(`COMPATIBILITY_NOTICE',`dnl
 #     SYSTEM V APPLICATION BINARY INTERFACE, MIPS RISC Processor Supplement,
 #     3rd Edition, 1996.
 #     https://refspecs.linuxfoundation.org/elf/mipsabi.pdf
-#     
+#
+#     64-bit ELF Object File Specification, Draft Version 2.5
+#     Document: 007-4658-001
+#     MIPS Technologies/Silicon Graphics Computer Systems
+#     https://irix7.com/techpubs/007-4658-001.pdf
+#
 #   parisc ::
 #     Processor-Specific ELF Supplement for PA-RISC, Version 1.5, August 20, 1998.
 #     https://parisc.docs.kernel.org/en/latest/technical_documentation.html
@@ -487,6 +492,8 @@ _(`DT_MIPS_RLD_OBJ_UPDATE', 0x70000033,
 	`object list update callback')
 _(`DT_MIPS_RWPLT',       0x70000034,
 	`address of a writable PLT')
+_(`DT_MIPS_RLD_MAP_REL', 0x70000035,
+	`(GNU) RLD_MAP usable in a PIE')
 _(`DT_PPC_GOT',          0x70000000,
 	`value of _GLOBAL_OFFSET_TABLE_')
 _(`DT_PPC_TLSOPT',       0x70000001,
@@ -625,10 +632,12 @@ _(EF_MIPS_CPIC,        0x00000004U,
 	`file code uses standard conventions for calling PIC')
 _(EF_MIPS_UCODE,       0x00000010U,
 	`file contains UCODE (obsolete)')
-_(EF_MIPS_ABI,	      0x00007000U,
-	`Application binary interface, see E_MIPS_* values')
 _(EF_MIPS_ABI2,        0x00000020U,
 	`file follows MIPS III 32-bit ABI')
+_(EF_MIPS_ABI_O32,     0x00001000U, `Original o32 ABI')
+_(EF_MIPS_ABI_O64,     0x00002000U, `64-bit extension of o32')
+_(EF_MIPS_ABI_EABI32,  0x00003000U, `32-bit EABI')
+_(EF_MIPS_ABI_EABI64,  0x00004000U, `64-bit EABI')
 _(EF_MIPS_OPTIONS_FIRST, 0x00000080U,
 	`ld(1) should process .MIPS.options section first')
 _(EF_MIPS_ARCH_ASE_MDMX, 0x08000000U,
@@ -657,10 +666,16 @@ _(EF_MIPS_ARCH_64R2,	0x80000000U,
 	`Mips64 Revision 2')
 ')
 define(`DEFINE_EHDR_FLAG_MASKS_MIPS',`dnl
+_(EF_MIPS_ABI,	      0x00007000U,
+	`Application binary interface, see EF_MIPS_ARCH_* values')
 _(EF_MIPS_ARCH_ASE,	0x0F000000U,
 	`file uses application-specific architectural extensions')
 _(EF_MIPS_ARCH,		0xF0000000U,
 	`4-bit MIPS architecture field')
+')
+define(`DEFINE_EHDR_FLAG_SYNONYMS_MIPS',`dnl
+_(EF_MIPS_ARCH_MDMX,	EF_MIPS_ARCH_ASE_MDMX, `Android, NetBSD')
+_(EF_MIPS_ARCH_M16,	EF_MIPS_ARCH_ASE_M16, `Android, NetBSD')
 ')
 
 define(`DEFINE_EHDR_FLAGS_PARISC',`dnl
@@ -801,6 +816,7 @@ DEFINE_EHDR_FLAG_MASKS_SPARC()
 
 define(`DEFINE_EHDR_FLAG_SYNONYMS',`
 DEFINE_EHDR_FLAG_SYNONYMS_ARM()
+DEFINE_EHDR_FLAG_SYNONYMS_MIPS()
 DEFINE_EHDR_FLAG_SYNONYMS_SH()
 ')
 
@@ -1893,6 +1909,8 @@ _(STB_HIOS,            12,
 	`end of OS-specific range')
 _(STB_LOPROC,          13,
 	`start of processor-specific range')
+_(STB_SPLIT_COMMON,    13,
+	`(MIPS64) split common symbol')
 _(STB_HIPROC,          15,
 	`end of processor-specific range')
 ')
@@ -3054,8 +3072,15 @@ _(R_MIPS_GNU_VTENTRY,		252, `GNU binutils.')
 ')
 
 define(`DEFINE_MIPS_RELOCATION_TYPE_SYNONYMS',`
-_(R_MIPS_GOT_OFST,		21, `GNU binutils, LLVM.')
-_(R_MIPS_GOT_HI16,		22, `GNU binutils, LLVM.')
+_(R_MIPS_ADD,			R_MIPS_32)
+_(R_MIPS_REL,			R_MIPS_REL32)
+_(R_MIPS_GPREL,			R_MIPS_GPREL16)
+_(R_MIPS_GOT,			R_MIPS_GOT16)
+_(R_MIPS_CALL,			R_MIPS_CALL16)
+_(R_MIPS_GOT_OFST,		21, `MIPS64 psABI, GNU binutils, LLVM.')
+_(R_MIPS_GOT_HI16,		22, `MIPS64 psABI, GNU binutils, LLVM.')
+_(R_MIPS_CALL_HI16,		R_MIPS_CALLHI16, `MIPS64 psABI, NetBSD')
+_(R_MIPS_CALL_LO16,		R_MIPS_CALLLO16, `MIPS64 psABI, NetBSD')
 ')
 
 define(`DEFINE_PARISC_RELOCATION_TYPES',`
@@ -3605,7 +3630,6 @@ __(`	', `reserved: 66-190')
 _(R_RISCV_VENDOR,		191)
 __(`	', `reserved: 192-255')
 ')
-
 define(`DEFINE_RISCV_OBSOLETE_RELOCATION_TYPES',`
 _(R_RISCV_GNU_VTINHERIT,	41)
 _(R_RISCV_GNU_VTENTRY,		42)
@@ -3614,6 +3638,9 @@ _(R_RISCV_GPREL_I,		47)
 _(R_RISCV_GPREL_S,		48)
 _(R_RISCV_TPREL_I,		49)
 _(R_RISCV_TPREL_S,		50)
+')
+define(`DEFINE_RISCV_RELOCATION_TYPE_SYNONYMS',`
+_(R_RISCV_JMP_SLOT,		R_RISCV_JUMP_SLOT, `NetBSD')
 ')
 
 define(`DEFINE_S390_RELOCATION_TYPES',`
@@ -4006,6 +4033,7 @@ DEFINE_IA_64_RELOCATION_TYPE_SYNONYMS()
 DEFINE_MIPS_RELOCATION_TYPE_SYNONYMS()
 DEFINE_PARISC_RELOCATION_TYPE_SYNONYMS()
 DEFINE_PPC64_RELOCATION_TYPE_SYNONYMS()
+DEFINE_RISCV_RELOCATION_TYPE_SYNONYMS()
 DEFINE_X86_64_RELOCATION_TYPE_SYNONYMS()
 ')
 
