@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.173 2025/11/13 11:33:16 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.174 2025/12/04 02:55:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -905,11 +905,6 @@ Lstartnot040:
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 	movl	#_C_LABEL(vectab),%a0
 	movc	%a0,%vbr
-
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 
 /* let the C function initialize everything */
 	RELOC(start_c, %a0)

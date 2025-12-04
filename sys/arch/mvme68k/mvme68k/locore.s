@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.146 2025/11/26 08:51:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.147 2025/12/04 02:55:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -529,10 +529,6 @@ Lsavmaxmem:
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| save into physmem
 
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 /*
  * configure kernel and lwp0 VA space so we can get going
  */

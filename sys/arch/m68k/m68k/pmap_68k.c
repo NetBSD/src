@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.45 2025/12/02 02:53:08 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.46 2025/12/04 02:55:24 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.45 2025/12/02 02:53:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.46 2025/12/04 02:55:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4246,6 +4246,13 @@ pmap_bootstrap2(void)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
+
+	/*
+	 * Initialize the source/destination control registers for
+	 * movs.
+	 */
+	setsfc(FC_USERD);
+	setdfc(FC_USERD);
 
 	return (void *)lwp0uarea;
 }

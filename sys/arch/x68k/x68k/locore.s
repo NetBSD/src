@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.142 2025/11/26 08:51:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.143 2025/12/04 02:55:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -220,10 +220,6 @@ Lstart1:
 #endif
 
 Lstart2:
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 /* initialize memory sizes (for pmap_bootstrap) */
 	movl	%d5,%d1			| last page
 	moveq	#PGSHIFT,%d2

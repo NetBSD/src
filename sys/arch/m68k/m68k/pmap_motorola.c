@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.100 2025/11/29 22:06:03 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.101 2025/12/04 02:55:24 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.100 2025/11/29 22:06:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.101 2025/12/04 02:55:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,13 @@ pmap_bootstrap2(void)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
+
+	/*
+	 * Initialize the source/destination control registers for
+	 * movs.
+	 */
+	setsfc(FC_USERD);
+	setdfc(FC_USERD);
 
 	return (void *)lwp0uarea;
 }

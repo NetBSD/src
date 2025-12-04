@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.197 2025/11/28 20:32:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.198 2025/12/04 02:55:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -369,10 +369,6 @@ Lis320:
 
 Lstart1:
 	movl	#0,%a1@(MMUCMD)		| clear out MMU again
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 /* save the first PA as bootinfo_pa to map it to a virtual address later. */
 	movl	%a5,%d0			| lowram value from ROM via boot
 	RELOC(bootinfo_pa, %a0)

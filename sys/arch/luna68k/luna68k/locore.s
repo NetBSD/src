@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.93 2025/11/26 08:51:24 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.94 2025/12/04 02:55:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,10 +171,6 @@ Lstart1:
 1:	movb	%a0@+,%a1@+		| copy to bootarg
 	dbra	%d0,1b			| upto 63 characters
 
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 /* initialize memory sizes (for pmap_bootstrap1) */
 	RELOC(memavail,%a0)
 	movl	%a0@,%d1

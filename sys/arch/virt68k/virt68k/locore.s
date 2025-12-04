@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 2025/11/14 01:24:39 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 2025/12/04 02:55:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,11 +163,6 @@ ASENTRY_NOPROFILE(start)
 	movl	%d0, %d7
 
 	/* NOTE: %d7 is now off-limits!! */
-
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 
 /*
  * Enable the MMU.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 2024/01/19 18:18:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.128 2025/12/04 02:55:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -955,13 +955,6 @@ Lend_cpuset:
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 	movl	#_C_LABEL(vectab),%a0	| set address of vector table
 	movc	%a0,%vbr
-
-	/*
-	 * Initialize source/destination control registers for movs
-	 */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 
 	/*
 	 * let the C function initialize everything and enable the MMU

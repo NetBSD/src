@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.51 2025/11/26 08:51:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.52 2025/12/04 02:55:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -212,11 +212,6 @@ Lis68020:
 	/* impossible */
 
 Lstart1:
-
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 
 /* initialize memory size (for pmap_bootstrap) */
 	movl	0x5c00ac00, %d0

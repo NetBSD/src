@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.188 2025/12/02 02:05:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.189 2025/12/04 02:55:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,11 +131,6 @@ ASENTRY_NOPROFILE(start)
 
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
-
-	/* Initialize source/destination control registers for movs */
-	movql	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 
 	/*
 	 * Some parameters provided by MacOS
