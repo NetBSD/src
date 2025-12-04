@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.21 2025/04/16 01:56:52 riastradh Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.22 2025/12/04 21:53:01 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -28,28 +28,7 @@
 #ifndef _MIPS_ELF_MACHDEP_H_
 #define	_MIPS_ELF_MACHDEP_H_
 
-#ifdef _LP64
-#define	KERN_ELFSIZE		64
-#define	ARCH_ELFSIZE		64	/* MD native binary size */
-#else
-#define	KERN_ELFSIZE		32
-#define	ARCH_ELFSIZE		32	/* MD native binary size */
-#endif
-
-#if ELFSIZE == 32
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_MIPS:						\
-			break;
-
-#define	ELF32_MACHDEP_ID	EM_MIPS
-#elif ELFSIZE == 64
-#define	ELF64_MACHDEP_ID_CASES						\
-		case EM_MIPS:						\
-			break;
-
-#define	ELF64_MACHDEP_ID	EM_MIPS
-#endif
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /* mips relocs. */
 
 #define	R_MIPS_NONE		0
@@ -68,11 +47,6 @@
 #define	R_MIPS_CALL16 		11	/* 16 bit call thru glbl offset tbl */
 #define	R_MIPS_CALL		R_MIPS_CALL16
 #define	R_MIPS_GPREL32		12
-
-/* 13, 14, 15 are not defined at this point. */
-#define	R_MIPS_UNUSED1		13
-#define	R_MIPS_UNUSED2		14
-#define	R_MIPS_UNUSED3		15
 
 /*
  * The remaining relocs are apparently part of the 64-bit Irix ELF ABI.
@@ -116,18 +90,12 @@
 #define	R_MIPS_TLS_TPREL_HI16	49	/* TP-relative offset, high 16 bits */
 #define	R_MIPS_TLS_TPREL_LO16	50	/* TP-relative offset, low 16 bits */
 
-#define	R_MIPS_max		51
-
-#define	R_TYPE(name)		__CONCAT(R_MIPS_,name)
-
-#define	R_MIPS16_min		100
 #define	R_MIPS16_26		100
 #define	R_MIPS16_GPREL		101
 #define	R_MIPS16_GOT16		102
 #define	R_MIPS16_CALL16		103
 #define	R_MIPS16_HI16		104
 #define	R_MIPS16_LO16		105
-#define	R_MIPS16_max		106
 
 #define	R_MIPS_COPY		126
 #define	R_MIPS_JUMP_SLOT	127
@@ -182,6 +150,33 @@
 #define	EF_MIPS_ABI_EABI32	0x00003000
 #define	EF_MIPS_ABI_EABI64	0x00004000
 
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+#ifdef _LP64
+#define	KERN_ELFSIZE		64
+#define	ARCH_ELFSIZE		64	/* MD native binary size */
+#else
+#define	KERN_ELFSIZE		32
+#define	ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
+
+#if ELFSIZE == 32
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_MIPS:						\
+			break;
+
+#define	ELF32_MACHDEP_ID	EM_MIPS
+#elif ELFSIZE == 64
+#define	ELF64_MACHDEP_ID_CASES						\
+		case EM_MIPS:						\
+			break;
+
+#define	ELF64_MACHDEP_ID	EM_MIPS
+#endif
+
 #if defined(__MIPSEB__)
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
 #define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
@@ -191,6 +186,19 @@
 #elif !defined(HAVE_NBTOOL_CONFIG_H)
 #error neither __MIPSEL__ nor __MIPSEB__ are defined.
 #endif
+
+/* Relocation types 13, 14, 15 are not defined at this point. */
+#define	R_MIPS_UNUSED1		13
+#define	R_MIPS_UNUSED2		14
+#define	R_MIPS_UNUSED3		15
+
+#define	R_MIPS_max		51
+
+#define	R_MIPS16_min		100
+#define	R_MIPS16_max		106
+
+#define	R_TYPE(name)		__CONCAT(R_MIPS_,name)
+
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
