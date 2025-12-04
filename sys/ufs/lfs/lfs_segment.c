@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.301 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.302 2025/12/04 01:47:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.301 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.302 2025/12/04 01:47:34 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1055,7 +1055,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		/* If we don't have enough space, write to make space */
 		if (sp->idp == NULL && sp->ibp == NULL &&
 		    (sp->seg_bytes_left < lfs_sb_getibsize(fs) ||
-		     sp->sum_bytes_left < sizeof(IINFOSIZE(fs)))) {
+		     sp->sum_bytes_left < IINFOSIZE(fs))) {
 			(void) lfs_writeseg(fs, sp);
 			continue;
 		}
@@ -1117,7 +1117,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	    sp->ibp == NULL) {
 		/* Allocate a new segment if necessary. */
 		if (sp->seg_bytes_left < lfs_sb_getibsize(fs) ||
-		    sp->sum_bytes_left < sizeof(IINFOSIZE(fs)))
+		    sp->sum_bytes_left < IINFOSIZE(fs))
 			(void) lfs_writeseg(fs, sp);
 
 		/* Get next inode block. */
@@ -1141,7 +1141,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= lfs_sb_getibsize(fs);
-		sp->sum_bytes_left -= sizeof(IINFOSIZE(fs));
+		sp->sum_bytes_left -= IINFOSIZE(fs);
 
 		/* Store the address in the segment summary. */
 		iip = NTH_IINFO(fs, sp->segsum, sp->ninodes / LFS_INOPB(fs));
