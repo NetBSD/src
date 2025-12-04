@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1535 2025/11/25 18:47:25 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1536 2025/12/04 10:26:47 andvar Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -10204,6 +10204,7 @@ product VIATECH VL80x_XHCI	0x3432	VL80x xHCI
 product VIATECH VX11_ISA	0x345b	VX11 PCI-ISA Bridge
 product VIATECH VL805_XHCI	0x3483	VL805 xHCI
 product VIATECH CHROME_645_IGP	0x3a01	VX11 Graphics [Chrome 645/640]
+product VIATECH VT6420_IDE	0x4149	VT6420 IDE Controller
 product VIATECH K8T890_PMC	0x4238	K8T890 Power Management Control
 product VIATECH CN400_PMC	0x4259	CN333/CN400/PM880 Power Management Control
 product VIATECH KT880_4		0x4269	KT880 CPU to PCI Bridge
