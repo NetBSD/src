@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.106 2025/12/04 15:34:22 andvar Exp $	*/
+/*	$NetBSD: viaide.c,v 1.107 2025/12/04 16:01:43 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.106 2025/12/04 15:34:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.107 2025/12/04 16:01:43 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,6 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  via_sata_chip_map_new,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
-
 	  0,
 	  "VIA Technologies VT8237 SATA Controller",
 	  via_sata_chip_map_7,
