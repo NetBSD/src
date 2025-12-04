@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.114 2025/05/05 18:55:46 gutteridge Exp $
+.\"	$NetBSD: mk.conf.5,v 1.115 2025/12/04 18:22:16 nia Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 3, 2025
+.Dd November 28, 2025
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -497,6 +497,19 @@ or
 .Xr mdsetimage 8 .
 .NOVAR TOOLCHAIN_MISSING!=no
 .DFLTy
+.
+.It Sy MKBSDDIFF
+.YorN
+Determines which implementation of
+.Xr diff 1
+will be built and installed.
+If
+.Dq yes ,
+use the BSD implementation.
+If
+.Dq no ,
+use the GNU implementation.
+.DFLTn
 .
 .It Sy MKBSDGREP
 .YorN

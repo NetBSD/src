@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1444 2025/11/28 17:04:50 martin Exp $
+#      $NetBSD: bsd.own.mk,v 1.1445 2025/12/04 18:22:16 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1485,6 +1485,7 @@ MKDEBUGTOOLS?=${MKTOOLSDEBUG:Uno}
 _MKVARS.no= \
 	MKAMDGPUFIRMWARE \
 	MKARZERO \
+	MKBSDDIFF \
 	MKBSDGREP \
 	MKCATPAGES \
 	MKCOMPATTESTS \

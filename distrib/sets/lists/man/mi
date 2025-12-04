@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1812 2025/11/03 22:24:27 nia Exp $
+# $NetBSD: mi,v 1.1813 2025/12/04 18:22:16 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -13,7 +13,7 @@
 ./usr/share/info/cvs.info			man-cvs-info		cvs,info
 ./usr/share/info/cvsclient.info			man-cvs-info		cvs,info
 ./usr/share/info/dc.info			man-obsolete		obsolete
-./usr/share/info/diff.info			man-util-info		info
+./usr/share/info/diff.info			man-util-info		info,!bsddiff
 ./usr/share/info/dir				man-info-share		info
 ./usr/share/info/flex.info			man-computil-info	info
 ./usr/share/info/g++FAQ.info			man-obsolete		obsolete

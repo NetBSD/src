@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/06/05 23:45:23 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2025/12/04 18:22:16 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,10 @@ SUBDIR+= xcvs
 .endif
 .if (${MKLVM} != "no")
 SUBDIR+= lvm2
+.endif
+
+.if ${MKBSDDIFF} == "no"
+SUBDIR+= diffutils
 .endif
 
 .if ${MKBSDGREP} == "no"
@@ -21,6 +25,6 @@ SUBDIR+=        groff
 SUBDIR+=	dtc
 .endif
 
-SUBDIR+= gettext diffutils texinfo rcs send-pr
+SUBDIR+= gettext texinfo rcs send-pr
 
 .include <bsd.subdir.mk>
