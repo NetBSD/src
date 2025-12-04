@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.10 2024/08/04 08:16:25 skrll Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.11 2025/12/04 21:51:10 jkoshy Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,28 +32,7 @@
 #ifndef _RISCV_ELF_MACHDEP_H_
 #define _RISCV_ELF_MACHDEP_H_
 
-#define	ELF32_MACHDEP_ID		EM_RISCV
-#define	ELF64_MACHDEP_ID		EM_RISCV
-
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
-
-#define ELF32_MACHDEP_ID_CASES		\
-		case EM_RISCV:		\
-			break;
-
-#define	ELF64_MACHDEP_ID_CASES		\
-		case EM_RISCV:		\
-			break;
-
-#ifdef _LP64
-#define	KERN_ELFSIZE		64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-#else
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
-#endif
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /* Processor specific flags for the ELF header e_flags field.  */
 
 /* Processor specific relocation types */
@@ -114,6 +93,33 @@
 #define R_RISCV_SET16		55
 #define R_RISCV_SET32		56
 #define R_RISCV_32_PCREL	57
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+
+#define	ELF32_MACHDEP_ID		EM_RISCV
+#define	ELF64_MACHDEP_ID		EM_RISCV
+
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
+
+#define ELF32_MACHDEP_ID_CASES		\
+		case EM_RISCV:		\
+			break;
+
+#define	ELF64_MACHDEP_ID_CASES		\
+		case EM_RISCV:		\
+			break;
+
+#ifdef _LP64
+#define	KERN_ELFSIZE		64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+#else
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
 
 /* These are aliases we can use R_TYPESZ */
 #define R_RISCV_ADDR32		R_RISCV_32
