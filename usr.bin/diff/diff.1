@@ -1,5 +1,5 @@
 .\" $OpenBSD: diff.1,v 1.47 2015/11/24 19:35:41 jmc Exp $
-.\" $NetBSD: diff.1,v 1.1 2025/12/04 18:22:16 nia Exp $
+.\" $NetBSD: diff.1,v 1.2 2025/12/04 22:04:58 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,108 +43,108 @@
 .Fl c | e | f |
 .Fl n | q | u | y
 .Oc
-.Op Fl -brief
-.Op Fl -changed-group-format Ar GFMT
-.Op Fl -ed
-.Op Fl -expand-tabs
-.Op Fl -forward-ed
-.Op Fl -ignore-all-space
-.Op Fl -ignore-case
-.Op Fl -ignore-space-change
-.Op Fl -initial-tab
-.Op Fl -minimal
-.Op Fl -no-dereference
-.Op Fl -no-ignore-file-name-case
-.Op Fl -normal
-.Op Fl -rcs
-.Op Fl -show-c-function
-.Op Fl -starting-file
-.Op Fl -speed-large-files
-.Op Fl -strip-trailing-cr
-.Op Fl -text
-.Op Fl -unified
-.Op Fl I Ar pattern | Fl -ignore-matching-lines Ar pattern
-.Op Fl F Ar pattern | Fl -show-function-line Ar pattern
-.Op Fl L Ar label | Fl -label Ar label
+.Op Fl Fl brief
+.Op Fl Fl changed-group-format Ar GFMT
+.Op Fl Fl ed
+.Op Fl Fl expand-tabs
+.Op Fl Fl forward-ed
+.Op Fl Fl ignore-all-space
+.Op Fl Fl ignore-case
+.Op Fl Fl ignore-space-change
+.Op Fl Fl initial-tab
+.Op Fl Fl minimal
+.Op Fl Fl no-dereference
+.Op Fl Fl no-ignore-file-name-case
+.Op Fl Fl normal
+.Op Fl Fl rcs
+.Op Fl Fl show-c-function
+.Op Fl Fl starting-file
+.Op Fl Fl speed-large-files
+.Op Fl Fl strip-trailing-cr
+.Op Fl Fl text
+.Op Fl Fl unified
+.Op Fl I Ar pattern | Fl Fl ignore-matching-lines Ar pattern
+.Op Fl F Ar pattern | Fl Fl show-function-line Ar pattern
+.Op Fl L Ar label | Fl Fl label Ar label
 .Ar file1 file2
 .Nm diff
 .Op Fl aBbdilpTtw
-.Op Fl I Ar pattern | Fl -ignore-matching-lines Ar pattern
-.Op Fl F Ar pattern | Fl -show-function-line Ar pattern
-.Op Fl L Ar label | Fl -label Ar label
-.Op Fl -brief
-.Op Fl -changed-group-format Ar GFMT
-.Op Fl -ed
-.Op Fl -expand-tabs
-.Op Fl -forward-ed
-.Op Fl -ignore-all-space
-.Op Fl -ignore-case
-.Op Fl -ignore-space-change
-.Op Fl -initial-tab
-.Op Fl -minimal
-.Op Fl -no-dereference
-.Op Fl -no-ignore-file-name-case
-.Op Fl -normal
-.Op Fl -paginate
-.Op Fl -rcs
-.Op Fl -show-c-function
-.Op Fl -speed-large-files
-.Op Fl -starting-file
-.Op Fl -strip-trailing-cr
-.Op Fl -text
-.Fl C Ar number | -context Ar number
+.Op Fl I Ar pattern | Fl Fl ignore-matching-lines Ar pattern
+.Op Fl F Ar pattern | Fl Fl show-function-line Ar pattern
+.Op Fl L Ar label | Fl Fl label Ar label
+.Op Fl Fl brief
+.Op Fl Fl changed-group-format Ar GFMT
+.Op Fl Fl ed
+.Op Fl Fl expand-tabs
+.Op Fl Fl forward-ed
+.Op Fl Fl ignore-all-space
+.Op Fl Fl ignore-case
+.Op Fl Fl ignore-space-change
+.Op Fl Fl initial-tab
+.Op Fl Fl minimal
+.Op Fl Fl no-dereference
+.Op Fl Fl no-ignore-file-name-case
+.Op Fl Fl normal
+.Op Fl Fl paginate
+.Op Fl Fl rcs
+.Op Fl Fl show-c-function
+.Op Fl Fl speed-large-files
+.Op Fl Fl starting-file
+.Op Fl Fl strip-trailing-cr
+.Op Fl Fl text
+.Fl C Ar number | Fl Fl context Ar number
 .Ar file1 file2
 .Nm diff
 .Op Fl aBbdiltw
-.Op Fl I Ar pattern | Fl -ignore-matching-lines Ar pattern
-.Op Fl -brief
-.Op Fl -changed-group-format Ar GFMT
-.Op Fl -ed
-.Op Fl -expand-tabs
-.Op Fl -forward-ed
-.Op Fl -ignore-all-space
-.Op Fl -ignore-case
-.Op Fl -ignore-space-change
-.Op Fl -initial-tab
-.Op Fl -minimal
-.Op Fl -no-dereference
-.Op Fl -no-ignore-file-name-case
-.Op Fl -normal
-.Op Fl -paginate
-.Op Fl -rcs
-.Op Fl -show-c-function
-.Op Fl -speed-large-files
-.Op Fl -starting-file
-.Op Fl -strip-trailing-cr
-.Op Fl -text
-.Fl D Ar string | Fl -ifdef Ar string
+.Op Fl I Ar pattern | Fl Fl ignore-matching-lines Ar pattern
+.Op Fl Fl brief
+.Op Fl Fl changed-group-format Ar GFMT
+.Op Fl Fl ed
+.Op Fl Fl expand-tabs
+.Op Fl Fl forward-ed
+.Op Fl Fl ignore-all-space
+.Op Fl Fl ignore-case
+.Op Fl Fl ignore-space-change
+.Op Fl Fl initial-tab
+.Op Fl Fl minimal
+.Op Fl Fl no-dereference
+.Op Fl Fl no-ignore-file-name-case
+.Op Fl Fl normal
+.Op Fl Fl paginate
+.Op Fl Fl rcs
+.Op Fl Fl show-c-function
+.Op Fl Fl speed-large-files
+.Op Fl Fl starting-file
+.Op Fl Fl strip-trailing-cr
+.Op Fl Fl text
+.Fl D Ar string | Fl Fl ifdef Ar string
 .Ar file1 file2
 .Nm diff
 .Op Fl aBbdilpTtw
-.Op Fl I Ar pattern | Fl -ignore-matching-lines Ar pattern
-.Op Fl F Ar pattern | Fl -show-function-line Ar pattern
-.Op Fl L Ar label | Fl -label Ar label
-.Op Fl -brief
-.Op Fl -changed-group-format Ar GFMT
-.Op Fl -ed
-.Op Fl -expand-tabs
-.Op Fl -forward-ed
-.Op Fl -ignore-all-space
-.Op Fl -ignore-case
-.Op Fl -ignore-space-change
-.Op Fl -initial-tab
-.Op Fl -minimal
-.Op Fl -no-dereference
-.Op Fl -no-ignore-file-name-case
-.Op Fl -normal
-.Op Fl -paginate
-.Op Fl -rcs
-.Op Fl -show-c-function
-.Op Fl -speed-large-files
-.Op Fl -starting-file
-.Op Fl -strip-trailing-cr
-.Op Fl -text
-.Fl U Ar number | Fl -unified Ar number
+.Op Fl I Ar pattern | Fl Fl ignore-matching-lines Ar pattern
+.Op Fl F Ar pattern | Fl Fl show-function-line Ar pattern
+.Op Fl L Ar label | Fl Fl label Ar label
+.Op Fl Fl brief
+.Op Fl Fl changed-group-format Ar GFMT
+.Op Fl Fl ed
+.Op Fl Fl expand-tabs
+.Op Fl Fl forward-ed
+.Op Fl Fl ignore-all-space
+.Op Fl Fl ignore-case
+.Op Fl Fl ignore-space-change
+.Op Fl Fl initial-tab
+.Op Fl Fl minimal
+.Op Fl Fl no-dereference
+.Op Fl Fl no-ignore-file-name-case
+.Op Fl Fl normal
+.Op Fl Fl paginate
+.Op Fl Fl rcs
+.Op Fl Fl show-c-function
+.Op Fl Fl speed-large-files
+.Op Fl Fl starting-file
+.Op Fl Fl strip-trailing-cr
+.Op Fl Fl text
+.Fl U Ar number | Fl Fl unified Ar number
 .Ar file1 file2
 .Nm diff
 .Op Fl aBbdilNPprsTtw
@@ -152,54 +152,54 @@
 .Fl c | e | f |
 .Fl n | q | u
 .Oc
-.Op Fl -brief
-.Op Fl -changed-group-format Ar GFMT
-.Op Fl -context
-.Op Fl -ed
-.Op Fl -expand-tabs
-.Op Fl -forward-ed
-.Op Fl -ignore-all-space
-.Op Fl -ignore-case
-.Op Fl -ignore-space-change
-.Op Fl -initial-tab
-.Op Fl -minimal
-.Op Fl -new-file
-.Op Fl -no-dereference
-.Op Fl -no-ignore-file-name-case
-.Op Fl -normal
-.Op Fl -paginate
-.Op Fl -rcs
-.Op Fl -recursive
-.Op Fl -report-identical-files
-.Op Fl -show-c-function
-.Op Fl -speed-large-files
-.Op Fl -strip-trailing-cr
-.Op Fl -text
-.Op Fl -unidirectional-new-file
-.Op Fl -unified
-.Op Fl I Ar pattern | Fl -ignore-matching-lines Ar pattern
-.Op Fl F Ar pattern | Fl -show-function-line Ar pattern
+.Op Fl Fl brief
+.Op Fl Fl changed-group-format Ar GFMT
+.Op Fl Fl context
+.Op Fl Fl ed
+.Op Fl Fl expand-tabs
+.Op Fl Fl forward-ed
+.Op Fl Fl ignore-all-space
+.Op Fl Fl ignore-case
+.Op Fl Fl ignore-space-change
+.Op Fl Fl initial-tab
+.Op Fl Fl minimal
+.Op Fl Fl new-file
+.Op Fl Fl no-dereference
+.Op Fl Fl no-ignore-file-name-case
+.Op Fl Fl normal
+.Op Fl Fl paginate
+.Op Fl Fl rcs
+.Op Fl Fl recursive
+.Op Fl Fl report-identical-files
+.Op Fl Fl show-c-function
+.Op Fl Fl speed-large-files
+.Op Fl Fl strip-trailing-cr
+.Op Fl Fl text
+.Op Fl Fl unidirectional-new-file
+.Op Fl Fl unified
+.Op Fl I Ar pattern | Fl Fl ignore-matching-lines Ar pattern
+.Op Fl F Ar pattern | Fl Fl show-function-line Ar pattern
 .Bk -words
-.Op Fl L Ar label | Fl -label Ar label
-.Op Fl S Ar name | Fl -starting-file Ar name
-.Op Fl X Ar file | Fl -exclude-from Ar file
-.Op Fl x Ar pattern | Fl -exclude Ar pattern
+.Op Fl L Ar label | Fl Fl label Ar label
+.Op Fl S Ar name | Fl Fl starting-file Ar name
+.Op Fl X Ar file | Fl Fl exclude-from Ar file
+.Op Fl x Ar pattern | Fl Fl exclude Ar pattern
 .Ek
 .Ar dir1 dir2
 .Nm diff
 .Op Fl aBbditwW
-.Op Fl -expand-tabs
-.Op Fl -ignore-all-space
-.Op Fl -ignore-blank-lines
-.Op Fl -ignore-case
-.Op Fl -minimal
-.Op Fl -no-dereference
-.Op Fl -no-ignore-file-name-case
-.Op Fl -strip-trailing-cr
-.Op Fl -suppress-common-lines
-.Op Fl -text
-.Op Fl -width
-.Fl y | Fl -side-by-side
+.Op Fl Fl expand-tabs
+.Op Fl Fl ignore-all-space
+.Op Fl Fl ignore-blank-lines
+.Op Fl Fl ignore-case
+.Op Fl Fl minimal
+.Op Fl Fl no-dereference
+.Op Fl Fl no-ignore-file-name-case
+.Op Fl Fl strip-trailing-cr
+.Op Fl Fl suppress-common-lines
+.Op Fl Fl text
+.Op Fl Fl width
+.Fl y | Fl Fl side-by-side
 .Ar file1 file2
 .Sh DESCRIPTION
 The
@@ -214,7 +214,7 @@ No output is produced if the files are identical.
 .Pp
 Output options (mutually exclusive):
 .Bl -tag -width Ds
-.It Fl C Ar number Fl -context Ar number
+.It Fl C Ar number Fl Fl context Ar number
 Like
 .Fl c
 but produces a diff with
@@ -242,7 +242,7 @@ both files with
 .Sq !\ \& .
 Changes which lie within 3 lines of each other are grouped together on
 output.
-.It Fl D Ar string Fl -ifdef Ar string
+.It Fl D Ar string Fl Fl ifdef Ar string
 Creates a merged version of
 .Ar file1
 and
@@ -256,7 +256,7 @@ while defining
 .Ar string
 will yield
 .Ar file2 .
-.It Fl e -ed
+.It Fl e Fl Fl ed
 Produces output in a form suitable as input for the editor utility,
 .Xr ed 1 ,
 which can then be used to convert file1 into file2.
@@ -270,7 +270,7 @@ from their state in
 .Ar dir1
 to their state in
 .Ar dir2 .
-.It Fl f -forward-ed
+.It Fl f Fl Fl forward-ed
 Identical output to that of the
 .Fl e
 flag, but in reverse order.
@@ -282,10 +282,10 @@ Produces a script similar to that of
 but in the opposite order and with a count of changed lines on each
 insert or delete command.
 This is the form used by rcsdiff.
-.It Fl q -brief
+.It Fl q Fl Fl brief
 Just print a line when the files differ.
 Does not output a list of changes.
-.It Fl U Ar number Fl -unified Ar number
+.It Fl U Ar number Fl Fl unified Ar number
 Like
 .Fl u
 but produces a diff with
@@ -302,7 +302,7 @@ However, unlike with
 .Fl c ,
 all lines to be changed (added and/or removed) are present in
 a single section.
-.It Fl y Fl -side-by-side
+.It Fl y Fl Fl side-by-side
 Output in two columns with a marker between them.
 The marker can be one
 of the following:
@@ -321,7 +321,7 @@ Files differ and only the second file contains the line.
 .Pp
 Comparison options:
 .Bl -tag -width Ds
-.It Fl a -text
+.It Fl a Fl Fl text
 Treat all files as ASCII text.
 Normally
 .Nm
@@ -331,20 +331,20 @@ if files contain binary characters.
 Use of this option forces
 .Nm
 to produce a diff.
-.It Fl B Fl -ignore-blank-lines
+.It Fl B Fl Fl ignore-blank-lines
 Causes chunks that include only blank lines to be ignored.
-.It Fl b -ignore-space-change
+.It Fl b Fl Fl ignore-space-change
 Causes trailing blanks (spaces and tabs) to be ignored, and other
 strings of blanks to compare equal.
-.It Fl d -minimal
+.It Fl d Fl Fl minimal
 Try very hard to produce a diff as small as possible.
 This may consume a lot of processing power and memory when processing
 large files with many changes.
-.It Fl F Ar pattern , Fl -show-function-line Ar pattern
+.It Fl F Ar pattern , Fl Fl show-function-line Ar pattern
 Like
 .Fl p ,
 but display the last line that matches provided pattern.
-.It Fl I Ar pattern , Fl -ignore-matching-lines Ar pattern
+.It Fl I Ar pattern , Fl Fl ignore-matching-lines Ar pattern
 Ignores changes, insertions, and deletions whose lines match the
 extended regular expression
 .Ar pattern .
@@ -356,32 +356,32 @@ ignored.
 See
 .Xr re_format 7
 for more information on regular expression patterns.
-.It Fl i -ignore-case
+.It Fl i Fl Fl ignore-case
 Ignores the case of letters.
 E.g.,
 .Dq A
 will compare equal to
 .Dq a .
-.It Fl l -paginate
+.It Fl l Fl Fl paginate
 Pass the output through
 .Xr pr 1
 to paginate it.
-.It Fl L Ar label Fl -label Ar label
+.It Fl L Ar label Fl Fl label Ar label
 Print
 .Ar label
 instead of the first (and second, if this option is specified twice)
 file name and time in the context or unified diff header.
-.It Fl p -show-c-function
+.It Fl p Fl Fl show-c-function
 With unified and context diffs, show with each change
 the first 40 characters of the last line before the context beginning
 with a letter, an underscore or a dollar sign.
 For C and Objective-C source code following standard layout conventions, this
 will show the prototype of the function the change applies to.
-.It Fl T -initial-tab
+.It Fl T Fl Fl initial-tab
 Print a tab rather than a space before the rest of the line for the
 normal, context or unified output formats.
 This makes the alignment of tabs in the line consistent.
-.It Fl t -expand-tabs
+.It Fl t Fl Fl expand-tabs
 Will expand tabs in output lines.
 Normal or
 .Fl c
@@ -389,15 +389,15 @@ output adds character(s) to the front of each line which may screw up
 the indentation of the original source lines and make the output listing
 difficult to interpret.
 This option will preserve the original source's indentation.
-.It Fl w -ignore-all-space
+.It Fl w Fl Fl ignore-all-space
 Is similar to
-.Fl b -ignore-space-change
+.Fl b Fl Fl ignore-space-change
 but causes whitespace (blanks and tabs) to be totally ignored.
 E.g.,
 .Dq if (\ \&a == b \&)
 will compare equal to
 .Dq if(a==b) .
-.It Fl W Ar number Fl -width Ar number
+.It Fl W Ar number Fl Fl width Ar number
 Output at most
 .Ar number
 columns when using side by side format.
@@ -407,10 +407,10 @@ Note that unless
 was specified,
 .Nm
 will always align the second column to a tab stop, so values of
-.Fl -width
+.Fl Fl width
 smaller than approximately five times the value of the tab size may
 yield surprising results.
-.It Fl -changed-group-format Ar GFMT
+.It Fl Fl changed-group-format Ar GFMT
 Format input groups in the provided
 .Pp
 the format is a string with special keywords:
@@ -420,54 +420,54 @@ lines from FILE1
 .It %<
 lines from FILE2
 .El
-.It Fl -ignore-file-name-case
+.It Fl Fl ignore-file-name-case
 ignore case when comparing file names
-.It Fl -no-dereference
+.It Fl Fl no-dereference
 do not follow symbolic links
-.It Fl -no-ignore-file-name-case
+.It Fl Fl no-ignore-file-name-case
 do not ignore case wen comparing file names (default)
-.It Fl -normal
+.It Fl Fl normal
 default diff output
-.It Fl -speed-large-files
+.It Fl Fl speed-large-files
 stub option for compatibility with GNU diff
-.It Fl -strip-trailing-cr
+.It Fl Fl strip-trailing-cr
 strip carriage return on input files
-.It Fl -suppress-common-lines
+.It Fl Fl suppress-common-lines
 Do not output common lines when using the side by side format
 .El
 .Pp
 Directory comparison options:
 .Bl -tag -width Ds
-.It Fl N -new-file
+.It Fl N Fl Fl new-file
 If a file is found in only one directory, act as if it was found in the
 other directory too but was of zero size.
-.It Fl P -unidirectional-new-file
+.It Fl P Fl Fl unidirectional-new-file
 If a file is found only in
 .Ar dir2 ,
 act as if it was found in
 .Ar dir1
 too but was of zero size.
-.It Fl r -recursive
+.It Fl r Fl Fl recursive
 Causes application of
 .Nm
 recursively to common subdirectories encountered.
-.It Fl S Ar name Fl -starting-file Ar name
+.It Fl S Ar name Fl Fl starting-file Ar name
 Re-starts a directory
 .Nm
 in the middle, beginning with file
 .Ar name .
-.It Fl s -report-identical-files
+.It Fl s Fl Fl report-identical-files
 Causes
 .Nm
 to report files which are the same, which are otherwise not mentioned.
-.It Fl X Ar file Fl -exclude-from Ar file
+.It Fl X Ar file Fl Fl exclude-from Ar file
 Exclude files and subdirectories from comparison whose basenames match
 lines in
 .Ar file .
 Multiple
 .Fl X
 options may be specified.
-.It Fl x Ar pattern Fl -exclude Ar pattern
+.It Fl x Ar pattern Fl Fl exclude Ar pattern
 Exclude files and subdirectories from comparison whose basenames match
 .Ar pattern .
 Patterns are matched using shell-style globbing via
@@ -514,7 +514,7 @@ The default (without
 .Fl e ,
 .Fl c ,
 or
-.Fl n -rcs
+.Fl n Fl Fl rcs
 .\" -C
 options)
 output contains lines of these forms, where
