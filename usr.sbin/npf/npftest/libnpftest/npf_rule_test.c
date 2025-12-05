@@ -51,6 +51,31 @@ static const struct test_case {
 		.ifname = IFNAME_INT,		.di = PFIL_IN,
 		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
 	},
+		/* PR bin/59511 */
+	{
+		.af = AF_INET,
+		.src = "192.168.100.5",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET,
+		.src = "192.168.100.8",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET,
+		.src = "192.168.64.3",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
+	{
+		.af = AF_INET,
+		.src = "192.168.64.9",		.dst = "10.1.1.5",
+		.ifname = IFNAME_INT,		.di = PFIL_IN,
+		.stateful_ret = RESULT_BLOCK,	.ret = RESULT_BLOCK
+	},
 
 	/*
 	 * Pass in from any of the { fe80::1, fe80:1000:0:0/95,

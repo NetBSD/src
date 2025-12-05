@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.59.2.2 2025/08/20 11:01:09 martin Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.59.2.3 2025/12/05 12:56:22 martin Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -310,16 +310,24 @@ npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
 }
 
 static void
-npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
+build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 {
-	npfctl_bpf_group_enter(ctx, (opts & MATCH_INVERT) != 0);
-	for (unsigned i = 0; i < npfvar_get_count(vars); i++) {
-		const unsigned type = npfvar_get_type(vars, i);
-		void *data = npfvar_get_data(vars, type, i);
+	size_t var_cnt = npfvar_get_count(vars);
+	for (unsigned i = 0; i < var_cnt; i++) {
+		const unsigned type = npfvar_getfilt_type(vars, i);
+		void *data = npfvar_getfilt_data(vars, type, i);
 
 		assert(data != NULL);
 
 		switch (type) {
+		case NPFVAR_VAR_ID:
+			/* allow us to go through nested variables ourselves */
+			npfvar_t *rvp = npfvar_lookup(data);
+			if (rvp == NULL)
+				yyerror("variable not found");
+
+			build_vars(ctx, family, rvp, opts);
+			break;
 		case NPFVAR_FAM: {
 			fam_addr_mask_t *fam = data;
 			npfctl_build_fam(ctx, family, fam, opts);
@@ -345,6 +353,13 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			yyerror("unexpected %s", npfvar_type(type));
 		}
 	}
+}
+
+static void
+npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
+{
+	npfctl_bpf_group_enter(ctx, (opts & MATCH_INVERT) != 0);
+	build_vars(ctx, family, vars, opts);
 	npfctl_bpf_group_exit(ctx);
 }
 
