@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.395 2025/12/05 20:30:27 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.396 2025/12/05 20:49:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.395 2025/12/05 20:30:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.396 2025/12/05 20:49:17 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1202,6 +1202,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	TAILQ_INIT(&fs->lfs_cleanhd);
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
+	/* and tailq listing inodes with IN_SUBTRACTED */
+	TAILQ_INIT(&fs->lfs_subtrhd);
 	/* and delayed segment accounting for truncation list */
 	rb_tree_init(&fs->lfs_segdhd, &lfs_rbtree_ops);
 

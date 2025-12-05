@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.215 2025/12/05 20:30:27 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.216 2025/12/05 20:49:17 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1077,6 +1077,7 @@ struct lfs {
 	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
 	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
 	TAILQ_HEAD(, inode) lfs_cleanhd; /* vnodes being cleaned */
+	TAILQ_HEAD(, inode) lfs_subtrhd; /* subtracted from segment */
 #define LFS_RESHASH_WIDTH 17
 	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH];
 	int	  lfs_pdflush;		/* pagedaemon wants us to flush */

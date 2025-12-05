@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.349 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.350 2025/12/05 20:49:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.349 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.350 2025/12/05 20:49:17 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1398,8 +1398,8 @@ lfs_reclaim(void *v)
 		return (error);
 
 	/*
-	 * Take us off the paging and/or dirop queues if we were on them.
-	 * We shouldn't be on them.
+	 * Take us off the paging, subtraction, and/or dirop queues
+	 * if we were on them.
 	 */
 	mutex_enter(&lfs_lock);
 	if (ip->i_state & IN_PAGING) {
@@ -1407,6 +1407,10 @@ lfs_reclaim(void *v)
 		    lfs_sb_getfsmnt(fs));
 		ip->i_state &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
+	}
+	if (ip->i_state & IN_SUBTRACTED) {
+		ip->i_state &= ~IN_SUBTRACTED;
+		TAILQ_REMOVE(&ip->i_lfs->lfs_subtrhd, ip, i_lfs_subtracted);
 	}
 	if (vp->v_uflag & VU_DIROP)
 		panic("reclaimed vnode is VU_DIROP");
