@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.485.2.2 2025/11/20 18:46:45 martin Exp $
+# $NetBSD: mi,v 1.485.2.3 2025/12/05 13:09:37 martin Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2602,6 +2602,7 @@
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
 ./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	comp-c-debuglib		atf,debuglib,compattestfile
+./usr/tests/lib/libpthread/weak/libh_pthread_weak_g.a			comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_abuse_static_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_def_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
