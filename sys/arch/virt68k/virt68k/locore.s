@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 2025/12/05 14:17:52 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 2025/12/05 14:43:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,68 +164,15 @@ ASENTRY_NOPROFILE(start)
 
 /*
  * Enable the MMU.
- * Since the kernel is mapped logical == physical, we just turn it on.
+ * Since the kernel is mapped logical == physical, there is no prep
+ * work to do.
  */
-	RELOC(Sysseg_pa, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-#if defined(M68040) || defined(M68060)
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040 or 68060?
-	jgt	2f			| no, skip
-	.long	0x4e7b1807		| movc %d1,%srp
-
-	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
-	movl	%a0,%sp@-
-	RELOC(mmu_load_tt40,%a0)	| pass it to mmu_load_tt40()
-	jbsr	%a0@
-	addql	#4,%sp
-
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	movl	#MMU40_TCR_BITS,%d0
-	.long	0x4e7b0003		| movc %d0,%tc
-#ifdef M68060
-	RELOC(cputype, %a0)
-	cmpl	#CPU_68060,%a0@		| 68060?
-	jne	1f
-	movl	#PCR_ESS,%d0		| enable superscalar dispatch
-	.long	0x4e7b0808		| movcl %d0,%pcr
-	movl	#CACHE60_ON,%d0
-	movc	%d0,%cacr		| enable store buffer, I/D/B caches
-	jmp	Lmmuenabled:l		| forced not be pc-relative
-1:
-#endif
-	movl	#CACHE40_ON,%d0
-	movc	%d0,%cacr		| turn on both caches
-	jmp	Lmmuenabled:l		| forced not be pc-relative
-2:
-#endif /* M68040 || M68060 */
-
-#if defined(M68020) || defined(M68030)
-	RELOC(protorp, %a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-#ifdef M68030
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68030,%a0@		| 68030?
-	jne	1f			| no, skip
-	RELOC(mmu_tt30, %a0)		| pointer to TT reg values
-	movl	%a0,%sp@-
-	RELOC(mmu_load_tt30,%a0)	| pass it to mmu_load_tt30()
-	jbsr	%a0@ 
-	addql	#4,%sp
-1:
-#endif /* M68030 */
-	pflusha
-	movl	#MMU51_TCR_BITS,%sp@	| value to load TC with
-	pmove	%sp@,%tc		| load it
-	jmp	Lmmuenabled:l		| forced not be pc-relative
-#endif /* M68020 || M68030 */
-Lmmuenabled:
+#include <m68k/m68k/mmu_enable.s>
 
 /*
  * Should be running mapped from this point on
  */
+Lmmuenabled:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
