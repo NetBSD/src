@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 2025/12/04 06:01:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 2025/12/05 14:17:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -170,9 +170,9 @@ ASENTRY_NOPROFILE(start)
 	movl	%a0@,%d1		| read value (a PA)
 #if defined(M68040) || defined(M68060)
 	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	2f			| no, skip
-	.long	0x4e7b1807		| movc d1,srp
+	cmpl	#MMU_68040,%a0@		| 68040 or 68060?
+	jgt	2f			| no, skip
+	.long	0x4e7b1807		| movc %d1,%srp
 
 	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
 	movl	%a0,%sp@-
@@ -183,21 +183,21 @@ ASENTRY_NOPROFILE(start)
 	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
 	movl	#MMU40_TCR_BITS,%d0
-	.long	0x4e7b0003		| movc d0,tc
+	.long	0x4e7b0003		| movc %d0,%tc
 #ifdef M68060
 	RELOC(cputype, %a0)
 	cmpl	#CPU_68060,%a0@		| 68060?
 	jne	1f
-	movl	#1,%d0
-	.long	0x4e7b0808		| movcl d0,pcr
-	movl	#0xa0808000,%d0
-	movc	%d0,%cacr		| enable store buffer, both caches
-	jmp	Lmmuenabled
+	movl	#PCR_ESS,%d0		| enable superscalar dispatch
+	.long	0x4e7b0808		| movcl %d0,%pcr
+	movl	#CACHE60_ON,%d0
+	movc	%d0,%cacr		| enable store buffer, I/D/B caches
+	jmp	Lmmuenabled:l		| forced not be pc-relative
 1:
 #endif
-	movl	#0x80008000,%d0
+	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
-	jmp	Lmmuenabled
+	jmp	Lmmuenabled:l		| forced not be pc-relative
 2:
 #endif /* M68040 || M68060 */
 
@@ -219,6 +219,7 @@ ASENTRY_NOPROFILE(start)
 	pflusha
 	movl	#MMU51_TCR_BITS,%sp@	| value to load TC with
 	pmove	%sp@,%tc		| load it
+	jmp	Lmmuenabled:l		| forced not be pc-relative
 #endif /* M68020 || M68030 */
 Lmmuenabled:
 
