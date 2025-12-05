@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.47 2025/11/29 16:08:28 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.48 2025/12/05 13:10:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1067,4 +1067,31 @@ tests/lib/libpthread/dlopen/t_dso_pthread_create.c 1.2
 
 	libpthread: PR 59784: prevent unload with dlclose.
 	[riastradh, ticket #110]
+
+sys/dev/mii/mcommphy.c				1.4-1.6
+
+	mcommphy(4): apply some standard defaults for YT85[23]1.
+	[skrll, ticket #111]
+
+usr.sbin/npf/npfctl/npf_build.c			1.62
+usr.sbin/npf/npfctl/npf_var.c			1.16
+usr.sbin/npf/npfctl/npf_var.h			1.14
+usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.26
+usr.sbin/npf/npftest/npftest.conf		1.18
+
+	npf(7): PR 59511: when extracting variables for filtering in NPF,
+	allow the handler to recursively extract all variables that might
+	be present in the parent variable.
+	[joe, ticket #112]
+
+sys/arch/mips/include/bswap.h			1.6
+sys/arch/powerpc/include/bswap.h		1.7
+
+	bswap(3): PR 59789: improve performance of bswap on ppc/mips.
+	[nia, ticket #113]
+
+distrib/sets/lists/debug/mi			1.488 (parts of, via patch)
+
+	fix debuglib setlists.
+	[riz, ticket #114]
 
