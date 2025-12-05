@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.91 2025/12/01 16:02:42 mlelstv Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.92 2025/12/05 20:53:51 kre Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.91 2025/12/01 16:02:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.92 2025/12/05 20:53:51 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -8393,11 +8393,13 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data)
 		break;
 #endif
 
-	case IWM_MISSED_BEACONS_NOTIFICATION:
+	case IWM_MISSED_BEACONS_NOTIFICATION: {
 		struct iwm_missed_beacons_notif *mb;
+
 		SYNC_RESP_STRUCT(mb, pkt);
 		iwm_rx_missed_beacons_notif(sc, mb);
 		break;
+	}
 
 	case IWM_MFUART_LOAD_NOTIFICATION:
 		break;
