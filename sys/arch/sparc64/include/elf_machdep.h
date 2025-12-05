@@ -1,43 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.14 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.15 2025/12/05 16:29:13 jkoshy Exp $	*/
 
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_SPARC:						\
-		case EM_SPARC32PLUS:					\
-			break;
-
-#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define	ELF64_MACHDEP_ID_CASES						\
-		case EM_SPARCV9:					\
-			break;
-
-#define	ELF32_MACHDEP_ID	EM_SPARC
-#define	ELF64_MACHDEP_ID	EM_SPARCV9
-
-#ifdef __arch64__
-#define	KERN_ELFSIZE		64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-#else
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
-#endif
-
-#ifdef __arch64__
-/*
- * we need to check .note.netbsd.mcmodel in native binaries before enabling
- * top-down VM.
- */
-struct exec_package;
-void sparc64_elf_mcmodel_check(struct exec_package*, const char *, size_t);
-#define	ELF_MD_MCMODEL_CHECK(ep, str, len)	\
-	sparc64_elf_mcmodel_check(ep,str,len)
-#endif
-
-/* The following are what is used for AT_SUN_HWCAP: */
-#define AV_SPARC_HWMUL_32x32	1	/* 32x32-bit smul/umul is efficient */
-#define	AV_SPARC_HWDIV_32x32	2	/* 32x32-bit sdiv/udiv is efficient */
-#define	AV_SPARC_HWFSMULD	4	/* fsmuld is efficient */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Here are some SPARC specific flags I can't 
  * find a better home for.  They are used for AT_FLAGS
@@ -141,5 +104,49 @@ void sparc64_elf_mcmodel_check(struct exec_package*, const char *, size_t);
 
 #define R_SPARC_JMP_IREL	248
 #define R_SPARC_IRELATIVE	249
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_SPARC:						\
+		case EM_SPARC32PLUS:					\
+			break;
+
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF64_MACHDEP_ID_CASES						\
+		case EM_SPARCV9:					\
+			break;
+
+#define	ELF32_MACHDEP_ID	EM_SPARC
+#define	ELF64_MACHDEP_ID	EM_SPARCV9
+
+#ifdef __arch64__
+#define	KERN_ELFSIZE		64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+#else
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
+
+#ifdef __arch64__
+/*
+ * we need to check .note.netbsd.mcmodel in native binaries before enabling
+ * top-down VM.
+ */
+struct exec_package;
+void sparc64_elf_mcmodel_check(struct exec_package*, const char *, size_t);
+#define	ELF_MD_MCMODEL_CHECK(ep, str, len)	\
+	sparc64_elf_mcmodel_check(ep,str,len)
+#endif
+
+/* The following are what is used for AT_SUN_HWCAP: */
+#define AV_SPARC_HWMUL_32x32	1	/* 32x32-bit smul/umul is efficient */
+#define	AV_SPARC_HWDIV_32x32	2	/* 32x32-bit sdiv/udiv is efficient */
+#define	AV_SPARC_HWFSMULD	4	/* fsmuld is efficient */
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)
