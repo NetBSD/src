@@ -1,19 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.11 2025/12/05 16:30:22 jkoshy Exp $	*/
 
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_SPARC:						\
-		case EM_SPARC32PLUS:					\
-			break;
-
-#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define	ELF64_MACHDEP_ID_CASES						\
-		/* no 64-bit ELF machine types supported */
-
-#define	ELF32_MACHDEP_ID	EM_SPARC
-
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 
 #define R_SPARC_NONE		0
 #define R_SPARC_8		1
@@ -90,5 +77,26 @@
 
 #define R_SPARC_JMP_IREL	248
 #define R_SPARC_IRELATIVE	249
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_SPARC:						\
+		case EM_SPARC32PLUS:					\
+			break;
+
+#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF64_MACHDEP_ID_CASES						\
+		/* no 64-bit ELF machine types supported */
+
+#define	ELF32_MACHDEP_ID	EM_SPARC
+
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define R_TYPE(name)		__CONCAT(R_SPARC_,name)
