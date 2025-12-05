@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2024/02/28 13:05:39 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2025/12/05 13:27:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,23 @@
 
 #include <m68k/m68k.h>
 
+/* XXX - Move this stuff into <m68k/pcr.h> maybe? */
+
+/* fields in the 68060 Processor Configuration Register */
+
+#define	PCR_ESS		__BIT(0)     /* enable superscalar dispatch */
+#define	PCR_DFP		__BIT(1)     /* disable floating point unit */
+#define	PCR_mbz		__BITS(2,6)  /* reserved - must be zero */
+#define	PCR_EDEBUG	__BIT(7)     /* enable debug features */
+#define	PCR_REVMASK	__BITS(8,15) /* revision number */
+#define	PCR_IDMASK	__BITS(16,31)/* identification */
+
+#define	PCR_REVISION(x)	__SHIFTOUT((x), PCR_REVMASK)
+#define	PCR_ID(x)	__SHIFTOUT((x), PCR_IDMASK)
+
+#define	PCR_ID_MC68060   0x0430
+#define	PCR_ID_MC68xC060 0x0431	/* MC68LC060 / MC60EC060 */
+
 /* XXX - Move this stuff into <m68k/cacr.h> maybe? */
 
 /* fields in the 68020 cache control register */
@@ -96,13 +113,13 @@
 #define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	CACHE_OFF	(DC_CLR|IC_CLR)
 #define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
+#define	IC_CLEAR	(DC_WA|DC_BE|       DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
+#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|       IC_ENABLE)
 
 #define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
 #define	CACHE40_OFF	(0x00000000)
 
-#define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
+#define	CACHE60_ON	(CACHE40_ON |IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
 #define CACHELINE_SIZE	16
