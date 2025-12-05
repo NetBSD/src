@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.180 2025/06/27 21:36:25 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.181 2025/12/05 22:48:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2025/06/27 21:36:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2025/12/05 22:48:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2025/06/27 21:36:25 andvar Exp $");
 #include <machine/vmparam.h>
 #include <m68k/cacheops.h>
 
-#include <sun3/sun3/cache.h>
 #include <sun3/sun3/control.h>
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/obmem.h>

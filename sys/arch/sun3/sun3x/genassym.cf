@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2024/01/14 22:34:54 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.19 2025/12/05 22:48:44 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,6 @@ include <machine/pte.h>
 include <machine/vmparam.h>
 
 include <sun3/sun3/buserr.h>
-include <sun3/sun3/cache.h>
 
 include <sun3/sun3x/enable.h>
 

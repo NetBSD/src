@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2025/12/05 22:48:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2025/12/05 22:48:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -128,7 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $");
 #include <machine/vmparam.h>
 #include <m68k/cacheops.h>
 
-#include <sun3/sun3/cache.h>
 #include <sun3/sun3/machdep.h>
 
 #include "pmap_pvt.h"
