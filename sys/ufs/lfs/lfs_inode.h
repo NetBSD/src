@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.28 2025/11/01 04:10:47 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.29 2025/12/05 20:30:27 perseant Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -47,6 +47,7 @@
  * This header file provides a reasonably sanitized version of the
  * structures and definitions needed for that purpose.
  */
+#include <sys/rbtree.h>
 
 #include <miscfs/genfs/genfs_node.h>
 #include <ufs/lfs/lfs.h>
@@ -194,7 +195,7 @@ struct lfs_inode_ext {
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
 	int	  lfs_nbtree;		/* Size of tree */
-	LIST_HEAD(, segdelta) lfs_segdhd;
+	rb_tree_t lfs_segdhd;		/* rbtree for truncation */
 #endif
 	int16_t	  lfs_odnlink;		/* on-disk nlink count for cleaner */
 };

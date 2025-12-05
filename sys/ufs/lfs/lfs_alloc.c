@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.148 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.149 2025/12/05 20:30:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.148 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.149 2025/12/05 20:30:27 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -562,6 +562,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	struct inode *ip;
 	struct lfs *fs;
 	daddr_t old_iaddr;
+	struct segdelta *isd, *fsd, *tmp;
 
 	/* Get the inode number and file system. */
 	ip = VTOI(vp);
@@ -608,15 +609,17 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		/*
 		 * If this inode is not going to be written any more, any
 		 * segment accounting left over from its truncation needs
-		 * to occur at the end of the next dirops flush.  Attach
-		 * them to the fs-wide list for that purpose.
+		 * to occur at the end of the next dirops flush.  Move
+		 * it to the fs-wide list for that purpose.
 		 */
-		if (LIST_FIRST(&ip->i_lfs_segdhd) != NULL) {
-			struct segdelta *sd;
-	
-			while((sd = LIST_FIRST(&ip->i_lfs_segdhd)) != NULL) {
-				LIST_REMOVE(sd, list);
-				LIST_INSERT_HEAD(&fs->lfs_segdhd, sd, list);
+		RB_TREE_FOREACH_SAFE(isd, &ip->i_lfs_segdhd, tmp) {
+			rb_tree_remove_node(&ip->i_lfs_segdhd, isd);
+			/* Insert unless node exists */
+			fsd = rb_tree_insert_node(&fs->lfs_segdhd, isd);
+			if (fsd != isd) {
+				/* Merge into existing */
+				fsd->num += isd->num;
+				free(isd, M_SEGMENT);
 			}
 		}
 	} else {

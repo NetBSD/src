@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.160 2020/04/23 21:47:09 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.161 2025/12/05 20:30:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.160 2020/04/23 21:47:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.161 2025/12/05 20:30:27 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -655,14 +655,12 @@ lfs_update_seguse(struct lfs *fs, struct inode *ip, long lastseg, size_t num)
 	if (lastseg < 0 || num == 0)
 		return 0;
 
-	LIST_FOREACH(sd, &ip->i_lfs_segdhd, list)
-		if (sd->segnum == lastseg)
-			break;
+	sd = rb_tree_find_node(&ip->i_lfs_segdhd, &lastseg);
 	if (sd == NULL) {
 		sd = malloc(sizeof(*sd), M_SEGMENT, M_WAITOK);
 		sd->segnum = lastseg;
 		sd->num = 0;
-		LIST_INSERT_HEAD(&ip->i_lfs_segdhd, sd, list);
+		rb_tree_insert_node(&ip->i_lfs_segdhd, sd);
 	}
 	sd->num += num;
 
@@ -674,12 +672,11 @@ lfs_finalize_seguse(struct lfs *fs, void *v)
 {
 	SEGUSE *sup;
 	struct buf *bp;
-	struct segdelta *sd;
-	LIST_HEAD(, segdelta) *hd = v;
+	struct segdelta *sd, *tmp;
+	rb_tree_t *rbt = v;
 
 	ASSERT_SEGLOCK(fs);
-	while((sd = LIST_FIRST(hd)) != NULL) {
-		LIST_REMOVE(sd, list);
+	RB_TREE_FOREACH_SAFE(sd, rbt, tmp) {
 		LFS_SEGENTRY(sup, fs, sd->segnum, bp);
 		if (sd->num > sup->su_nbytes) {
 			printf("lfs_finalize_seguse: segment %ld short by %ld\n",
@@ -689,6 +686,7 @@ lfs_finalize_seguse(struct lfs *fs, void *v)
 		}
 		sup->su_nbytes -= sd->num;
 		LFS_WRITESEGENTRY(sup, fs, sd->segnum, bp);
+		rb_tree_remove_node(rbt, sd);
 		free(sd, M_SEGMENT);
 	}
 }

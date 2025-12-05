@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.214 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.215 2025/12/05 20:30:27 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -158,6 +158,7 @@
 #include <sys/condvar.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
+#include <sys/rbtree.h>
 
 /*
  * Compile-time options for LFS.
@@ -1006,7 +1007,7 @@ typedef uint32_t lfs_bm_t;
 struct segdelta {
 	long segnum;
 	size_t num;
-	LIST_ENTRY(segdelta) list;
+	rb_node_t rb_entry;
 };
 
 /*
@@ -1096,7 +1097,7 @@ struct lfs {
 	int lfs_wrapstatus;		/* Wrap status */
 	int lfs_reclino;		/* Inode being reclaimed */
 	daddr_t lfs_startseg;           /* Segment we started writing at */
-	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
+	rb_tree_t lfs_segdhd;		/* List of pending trunc accounting events */
 
 #ifdef _KERNEL
 	/* The block device we're mounted on. */

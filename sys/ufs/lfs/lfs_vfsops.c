@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.394 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.395 2025/12/05 20:30:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.394 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.395 2025/12/05 20:30:27 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -125,6 +125,8 @@ MODULE(MODULE_CLASS_VFS, lfs, NULL);
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 static int lfs_flushfiles(struct mount *, int);
+static int compare_nodes_sd(void *, const void *, const void *);
+static int compare_key_sd(void *, const void *, const void *);
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
@@ -132,6 +134,13 @@ extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
 extern int locked_queue_rcount;
 extern long locked_queue_rbytes;
+
+static const rb_tree_ops_t lfs_rbtree_ops = {
+	.rbto_compare_nodes = compare_nodes_sd,
+	.rbto_compare_key = compare_key_sd,
+	.rbto_node_offset = offsetof(struct segdelta, rb_entry),
+	.rbto_context = NULL
+};
 
 struct lwp * lfs_writer_daemon = NULL;
 kcondvar_t lfs_writerd_cv;
@@ -1194,7 +1203,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
 	/* and delayed segment accounting for truncation list */
-	LIST_INIT(&fs->lfs_segdhd);
+	rb_tree_init(&fs->lfs_segdhd, &lfs_rbtree_ops);
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -1672,6 +1681,27 @@ lfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 	return 0;
 }
 
+static int
+compare_nodes_sd(void *context, const void *v1, const void *v2)
+{
+	const struct segdelta *sd1, *sd2;
+
+	sd1 = (const struct segdelta *)v1;
+	sd2 = (const struct segdelta *)v2;
+	return sd1->segnum - sd2->segnum;
+}
+
+static int
+compare_key_sd(void *context, const void *nv, const void *kv)
+{
+	const struct segdelta *sd;
+	long key;
+
+	sd = (const struct segdelta *)nv;
+	key = *(const long *)kv;
+	return sd->segnum - key;
+}
+
 /*
  * Create a new vnode/inode pair and initialize what fields we can.
  */
@@ -1701,8 +1731,8 @@ lfs_init_vnode(struct ulfsmount *ump, ino_t ino, struct vnode *vp)
 	ip->i_lfs_effnblks = 0;
 	SPLAY_INIT(&ip->i_lfs_lbtree);
 	ip->i_lfs_nbtree = 0;
-	LIST_INIT(&ip->i_lfs_segdhd);
-
+	rb_tree_init(&ip->i_lfs_segdhd, &lfs_rbtree_ops);
+	
 	vp->v_tag = VT_LFS;
 	vp->v_op = lfs_vnodeop_p;
 	vp->v_data = ip;
