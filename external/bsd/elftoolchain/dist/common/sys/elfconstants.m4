@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.16 2025/12/04 21:47:01 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.17 2025/12/05 16:27:20 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.16 2025/12/04 21:47:01 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4296 2025-12-04 21:11:34Z jkoshy')
+	`Id: elfconstants.m4 4299 2025-12-05 15:28:03Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -789,7 +789,9 @@ _(EF_SPARCV9_RMO,      0x00000002U,
 ')
 define(`DEFINE_EHDR_FLAG_MASKS_SPARC',`dnl
 _(EF_SPARC_EXT_MASK,   0x00FFFF00U,
-	`Vendor Extension mask')
+	`SPARC International vendor extension mask')
+_(EF_SPARC_32PLUS_MASK, 0x00FFFF00U,
+	`mask for V8+ cpu features')
 _(EF_SPARCV9_MM,       0x00000003U,
 	`Mask for Memory Model')
 ')
@@ -1462,6 +1464,8 @@ _(PF_ARM_PI,           0x20000000,
 	`segment is position-independent')
 _(PF_ARM_ABS,          0x40000000,
 	`segment must be loaded at its base address')
+_(PF_IA_64_NORECOV,    0x80000000,
+	`segment has speculative instructions without recovery code')
 _(PF_PARRISC_SBP,      0x08000000,
 	`segment has code compiled for static branch prediction')
 ')
@@ -1594,9 +1598,16 @@ _(PT_ARM_ARCHEXT_ARCHv6SM,  0x0000000CU,
 _(PT_ARM_ARCHEXT_ARCHv7EM,  0x0000000DU,
 	`Architecture v7E-M')
 ')
+define(`DEFINE_IA_64_PLATFORM_FLAGS',`dnl
+_(PT_IA_64_ARCHEXT,	0x70000000U,
+	`segment contains a section of type SHT_IA64_EXT')
+_(PT_IA_64_UNWIND,	0x70000001U,
+	`section contains stack unwind tables')
+')
 
 define(`DEFINE_PLATFORM_SPECIFIC_FLAGS',`dnl
 DEFINE_ARM_PLATFORM_FLAGS()
+DEFINE_IA_64_PLATFORM_FLAGS()
 ')
 
 #
@@ -1635,6 +1646,10 @@ _(SHF_ARM_PURECODE,    0x20000000U,
 	`section has only code without data (ARM)')
 _(SHF_COMDEF,          0x80000000U,
 	`section may be multiply defined in input to link step (ARM)')
+_(SHF_IA_64_SHORT,     0x10000000U,
+	`section must be placed near GP')
+_(SHF_IA_64_NORECOV,   0x20000000U,
+	`section uses speculative instructions without recovery code')
 _(SHF_MIPS_GPREL,      0x10000000U,
 	`section must be part of global data area')
 _(SHF_MIPS_MERGE,      0x20000000U,
@@ -1811,6 +1826,16 @@ _(SHT_ARM_DEBUGOVERLAY, 0x70000004U,
 	`overlay debug information')
 _(SHT_ARM_OVERLAYSECTION, 0x70000005U,
 	`overlay debug information')
+_(SHT_IA_64_EXT,       0x70000000U,
+	`section has product-specific extension bits')
+_(SHT_IA_64_UNWIND,    0x70000001U,
+	`section contains stack unwinding tables')
+_(SHT_IA_64_LOPSREG,   0x78000000U,
+	`start of range for implementation-specific section types')
+_(SHT_IA_64_HIPSREG,   0x7FFFFFFFU,
+	`end of range for implementation-specific section types')
+_(SHT_IA_64_PRIORITY_INIT, 0x79000000U,
+	`section contains priority initialization records')
 _(SHT_MIPS_LIBLIST,    0x70000000U,
 	`DSO library information used in link')
 _(SHT_MIPS_MSYM,       0x70000001U,
@@ -3887,6 +3912,8 @@ _(R_SPARC_H34,		85)
 _(R_SPARC_SIZE32,	86)
 _(R_SPARC_SIZE64,	87)
 _(R_SPARC_WDISP10,	88)
+_(R_SPARC_JMP_IREL,	248, `GNU')
+_(R_SPARC_IRELATIVE,	249, `GNU')
 ')
 
 define(`DEFINE_SPARC_OBSOLETE_RELOCATION_TYPES',`
