@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_enable.s,v 1.1 2025/12/05 14:42:07 thorpej Exp $	*/
+/*	$NetBSD: mmu_enable.s,v 1.2 2025/12/05 15:19:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@
 1:
 #endif /* M68030 */
 	pflusha
-	movl	#MMU51_TCR_BITS,%sp@	| value to load TC with
+	movl	#MMU51_TCR_BITS,%sp@-	| value to load TC with
 	pmove	%sp@,%tc		| load it
 	jmp	Lmmuenabled:l		| forced not be pc-relative
 #endif /* M68020 || M68030 */
