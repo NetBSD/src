@@ -1,4 +1,4 @@
-/*        $NetBSD: elf_machdep.h,v 1.5 2023/06/03 20:41:44 andvar Exp $	*/
+/*        $NetBSD: elf_machdep.h,v 1.6 2025/12/05 16:32:31 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1996-1997 John D. Polstra.
@@ -30,20 +30,7 @@
 #ifndef _IA64_ELF_MACHDEP_H
 #define _IA64_ELF_MACHDEP_H
 
-#define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define	ELF32_MACHDEP_ID_CASES						\
-		/* no 32-bit ELF machine types supported until 32bit emu */
-
-#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#define	ELF64_MACHDEP_ID_CASES						\
-		case EM_IA_64:						\
-			break;
-
-#define	ELF64_MACHDEP_ID	EM_IA_64	/* XXX */
-
-#define	KERN_ELFSIZE		64
-#define ARCH_ELFSIZE		64	/* MD native binary size */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Relocation types.
  */
@@ -147,6 +134,26 @@
 #define SHF_IA_64_NORECOV 0x20000000	/* section contains code that uses speculative instructions without
 					 * recovery code
 					 */
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+
+#define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF32_MACHDEP_ID_CASES						\
+		/* no 32-bit ELF machine types supported until 32bit emu */
+
+#define	ELF64_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#define	ELF64_MACHDEP_ID_CASES						\
+		case EM_IA_64:						\
+			break;
+
+#define	ELF64_MACHDEP_ID	EM_IA_64	/* XXX */
+
+#define	KERN_ELFSIZE		64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+
 /* XXX fix these for ld.elf_so */
 #define R_IA64_COPY (0)
 #define R_TYPE(name)    __CONCAT(R_IA64_,name)
