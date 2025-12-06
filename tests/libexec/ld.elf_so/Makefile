@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2025/11/23 22:01:13 riastradh Exp $
+# $NetBSD: Makefile,v 1.30 2025/12/06 10:35:20 skrll Exp $
 #
 
 NOMAN=		# defined
@@ -48,6 +48,7 @@ TESTS_C+=	t_ifunc_now
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_rtld_r_debug_nopie
 TESTS_C+=	t_tls_extern
+TESTS_C+=	t_tls_alignment
 
 SRCS.t_ifunc_now=		t_ifunc.c
 SRCS.t_ifunc_norelro=		t_ifunc.c

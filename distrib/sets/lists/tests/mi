@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1402 2025/11/29 01:28:48 nia Exp $
+# $NetBSD: mi,v 1.1403 2025/12/06 10:35:19 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4388,6 +4388,7 @@
 ./usr/tests/libexec/ld.elf_so/t_rtld_r_debug		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_rtld_r_debug_nopie	tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_thread_local_dtor	tests-libexec-tests	compattestfile,atf,pic
+./usr/tests/libexec/ld.elf_so/t_tls_alignment		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/libexec/ld.elf_so/t_tls_extern		tests-libexec-tests	compattestfile,atf,pic
 ./usr/tests/modules					tests-sys-tests		compattestfile,atf
 ./usr/tests/net						tests-net-tests		compattestfile,atf

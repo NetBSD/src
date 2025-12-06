@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.491 2025/11/23 22:01:13 riastradh Exp $
+# $NetBSD: mi,v 1.492 2025/12/06 10:35:19 skrll Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2487,6 +2487,7 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_ifunc_now.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_rtld_r_debug.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_rtld_r_debug_nopie.debug	tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_tls_alignment.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_tls_extern.debug	tests-libexec-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf,rump
