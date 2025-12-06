@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.122 2025/09/02 22:22:14 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.123 2025/12/06 16:00:23 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.122 2025/09/02 22:22:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.123 2025/12/06 16:00:23 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.122 2025/09/02 22:22:14 jmcneill Exp $");
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
 #include <dev/sdmmc/sdmmcvar.h>
+#include <dev/sdmmc/sdmmc_ioreg.h>
 
 #ifdef SDHC_DEBUG
 int sdhcdebug = 1;
@@ -1752,7 +1753,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		mode |= SDHC_BLOCK_COUNT_ENABLE;
 		if (blkcount > 1) {
 			mode |= SDHC_MULTI_BLOCK_MODE;
-			if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP)
+			if (cmd->c_opcode != SD_IO_RW_EXTENDED
+			    && !ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP)
 			    && !ISSET(cmd->c_flags, SCF_NO_STOP))
 				mode |= SDHC_AUTO_CMD12_ENABLE;
 		}
