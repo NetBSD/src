@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.150 2025/12/05 20:49:17 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.151 2025/12/06 04:55:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.150 2025/12/05 20:49:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.151 2025/12/06 04:55:04 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -758,7 +758,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	 * Update the segment summary for the segment where the on-disk
 	 * copy used to be.
 	 */
-	lfs_subtract_inode(fs, ip, old_iaddr);
+	lfs_subtract_inode(fs, ip->i_number, old_iaddr);
 
 	/* Set superblock modified bit. */
 	mutex_enter(&lfs_lock);
@@ -1005,14 +1005,12 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 		struct buf *bp;
 		IFILE *ifp;
 		SEGUSE *sup;
-		daddr_t daddr;
 		int error;
 
 		/* Get the segment the inode is in on disk.  */
 		LFS_IENTRY(ifp, fs, ino, bp);
-		daddr = lfs_if_getdaddr(fs, ifp);
-		KASSERT(!DADDR_IS_BAD(daddr));
-		segno = lfs_dtosn(fs, daddr);
+		KASSERT(!DADDR_IS_BAD(lfs_if_getdaddr(fs, ifp)));
+		segno = lfs_dtosn(fs, lfs_if_getdaddr(fs, ifp));
 		brelse(bp, 0);
 
 		/*
@@ -1053,11 +1051,6 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 		rw_enter(&fs->lfs_fraglock, RW_READER);
 
 		/* Update the number of bytes in the segment summary.  */
-		DLOG((DLOG_SU, "seg %jd -= %jd for ino %jd inode at 0x%jx\n",
-			(intmax_t)segno,
-			(intmax_t)DINOSIZE(fs),
-			(intmax_t)ino,
-			(intmax_t)daddr));
 		LFS_SEGENTRY(sup, fs, segno, bp);
 		KASSERT(sup->su_nbytes >= DINOSIZE(fs));
 		sup->su_nbytes -= DINOSIZE(fs);

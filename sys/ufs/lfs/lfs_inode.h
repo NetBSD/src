@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.30 2025/12/05 20:49:17 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.31 2025/12/06 04:55:04 perseant Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -121,7 +121,7 @@ struct inode {
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-#define IN_SUBTRACTED 	0x0400		/* LFS: subtracted from segment */
+/* 	   unused	0x0400 */	/* was FFS-only IN_SPACECOUNTED */
 #define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 #define	IN_MARKER	0x00010000	/* LFS: marker inode for iteration */
@@ -185,7 +185,6 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 	TAILQ_ENTRY(inode) lfs_clean;   /* Mount point cleaning inodes list */
-	TAILQ_ENTRY(inode) lfs_subtracted; /* List of subtracted inodes */
 #define LFSI_NO_GOP_WRITE 0x01
 #define LFSI_DELETED      0x02
 #define LFSI_WRAPBLOCK    0x04
@@ -204,7 +203,6 @@ struct lfs_inode_ext {
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
 #define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
 #define i_lfs_clean		inode_ext.lfs->lfs_clean
-#define i_lfs_subtracted	inode_ext.lfs->lfs_subtracted
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
 #define i_lfs_pchain		inode_ext.lfs->lfs_pchain
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.162 2025/12/05 20:49:17 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.163 2025/12/06 04:55:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.162 2025/12/05 20:49:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.163 2025/12/06 04:55:04 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -663,9 +663,6 @@ lfs_update_seguse(struct lfs *fs, struct inode *ip, long lastseg, size_t num)
 		rb_tree_insert_node(&ip->i_lfs_segdhd, sd);
 	}
 	sd->num += num;
-	DLOG((DLOG_SU, "seg %jd -= %jd for ino %jd (postponed)\n",
-	      (intmax_t)lastseg, (intmax_t)num,
-	      (intmax_t)ip->i_number));
 
 	return 0;
 }
@@ -681,10 +678,8 @@ lfs_finalize_seguse(struct lfs *fs, void *v)
 	ASSERT_SEGLOCK(fs);
 	RB_TREE_FOREACH_SAFE(sd, rbt, tmp) {
 		LFS_SEGENTRY(sup, fs, sd->segnum, bp);
-		DLOG((DLOG_SU, "seg %jd -= %jd when finalized\n",
-			(intmax_t)sd->segnum, (intmax_t)sd->num));
 		if (sd->num > sup->su_nbytes) {
-			printf("lfs_finalize_seguse: seg %ld short by %ld\n",
+			printf("lfs_finalize_seguse: segment %ld short by %ld\n",
 				sd->segnum, (long)(sd->num - sup->su_nbytes));
 			panic("lfs_finalize_seguse: negative bytes");
 			sup->su_nbytes = sd->num;

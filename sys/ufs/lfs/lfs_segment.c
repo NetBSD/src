@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.303 2025/12/05 20:49:17 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.304 2025/12/06 04:55:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.303 2025/12/05 20:49:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.304 2025/12/06 04:55:04 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -952,35 +952,23 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 	 * though it will not belong to the new segment until that segment
 	 * is actually written.
 	 */
-	redo_ifile += lfs_subtract_inode(fs, ip, daddr);
+	redo_ifile += lfs_subtract_inode(fs, ino, daddr);
 
 	return redo_ifile;
 }
 
 int
-lfs_subtract_inode(struct lfs *fs, struct inode *ip, daddr_t daddr)
+lfs_subtract_inode(struct lfs *fs, ino_t ino, daddr_t daddr)
 {
 	int oldsn, ndupino;
 	struct segment *sp;
 	struct buf *bp;
 	SEGUSE *sup;
 	int redo_ifile;
-	ino_t ino;
-
-	ASSERT_SEGLOCK(fs);
 	
 	if (DADDR_IS_BAD(daddr))
 		return 0;
 
-	/* Mark the node so we don't double-account it */
-	if (ip->i_state & IN_SUBTRACTED)
-		return 0;
-	ip->i_state |= IN_SUBTRACTED;
-	mutex_enter(&lfs_lock);
-	TAILQ_INSERT_HEAD(&fs->lfs_subtrhd, ip, i_lfs_subtracted);
-	mutex_exit(&lfs_lock);
-	
-	ino = ip->i_number;
 	redo_ifile = 0;
 	sp = fs->lfs_sp;
 	oldsn = lfs_dtosn(fs, daddr);
@@ -1188,7 +1176,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	bp = sp->ibp;
 	cdp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
-	DLOG((DLOG_SU, "write ino %jd to 0x%jx (seg %jd)\n",
+	DLOG((DLOG_SU, "write ino %jd to 0x%jx (sn %jd)\n",
 	      (intmax_t)ip->i_number,
 	      (intmax_t)LFS_DBTOFSB(fs, bp->b_blkno),
 	      (intmax_t)lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno))));
@@ -2122,7 +2110,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct lfs_cluster *cl;
 	u_short ninos;
 	struct vnode *devvp;
-	struct inode *ip;
 	char *p = NULL;
 	struct vnode *vp;
 	unsigned ibindex, iblimit;
@@ -2209,14 +2196,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	do_again = !(bp->b_flags & B_GATHERED);
 	LFS_WRITESEGENTRY(sup, fs, sp->seg_number, bp); /* Ifile */
 
-	/* Clear out the subtracted list now that we've written the inodes */
-	mutex_enter(&lfs_lock);
-	while ((ip = TAILQ_FIRST(&fs->lfs_subtrhd)) != NULL) {
-		ip->i_state &= ~IN_SUBTRACTED;
-		TAILQ_REMOVE(&fs->lfs_subtrhd, ip, i_lfs_subtracted);
-	}
-	mutex_exit(&lfs_lock);
-	
 	/*
 	 * Mark blocks BC_BUSY, to prevent then from being changed between
 	 * the checksum computation and the actual write.
