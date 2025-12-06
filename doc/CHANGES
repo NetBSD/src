@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3200 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3201 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -85,8 +85,35 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	aac(4): Support Adaptec RAID 5445, 5805 and 5085. [riz 20251107]
 	m68k: Experimental new pmap module for systems with 68k MMUs
 		(plus the HP MMU). [thorpej 20251108]
+	compat_linux(8): Add prctl(2) lwp_{g,s}etname, from Kevin Bloom.
+		[christos 20251110]
 	evbppc: Add support for the Wii AES engine. [jmcneill 20251111]
+	sparc64: Add implementation of Sun's VIS instruction API.
+		[nia 20251113]
 	memfd_create(2): Add close-on-fork support. [gutteridge 20251115]
+	iconv(1): Support -o outfile like gnu does and check writes for
+		failure. [christos 20251121]
 	evbppc: Add Wii USB Gecko support. [jmcneill 20251115]
+	cgd(4): Improve throughput of AES disk encryption using SSE2.
+		[riastradh 20251123]
+	powerpc: Switch to GCC 14. [martin 20251128]
+	dreamcast, atu(4), icp(4), gpsa(8): Relicense various NetBSD
+		components from 4-clause to 3-clause BSD. [nia 20251128]
 	umcpmio(4): Reorg and support for the MCP2210, USB to SPI
 		bridge. [brad 20251129]
+	ucom(4): Allow using as boot console. [manu 20251129]
+	sparc64: Use 64-bit optimized AES code for disk encryption.
+		[nia 20251201]
+	iwm(4): Update driver code, improving performance and stability.
+		[mlelstv 20251201]
+	evbmips: Enable ASLR by default in OCTEON kernel configuration.
+		[nia 20251201]
+	lfs: Various stability improvements. [perseant 20251202]
+	evbppc: Enable PaX security features in WII kernel configuration.
+		[nia 20251204]
+	viaide(4): Identify and attach VT6420 IDE (PATA) controller.
+		[andvar 20251204]
+	diff(1), diff3(1): Import BSD-licensed diff to replace GNU
+		diffutils, build with MKBSDDIFF=yes. [nia 20251204]
+	amd64: Support ramdisks when booting in GENPVH mode.
+		[khorben 20251205]
