@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3202 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3203 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -96,6 +96,9 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	evbppc: Add Wii USB Gecko support. [jmcneill 20251115]
 	cgd(4): Improve throughput of AES disk encryption using SSE2.
 		[riastradh 20251123]
+	rge(4): Sync driver with upstream (OPenBSD), adding support for
+		new chips and chip-revisions, and enabling checksum
+		offload for IPv4. [pgoyette 20251127]
 	powerpc: Switch to GCC 14. [martin 20251128]
 	dreamcast, atu(4), icp(4), gpsa(8): Relicense various NetBSD
 		components from 4-clause to 3-clause BSD. [nia 20251128]
