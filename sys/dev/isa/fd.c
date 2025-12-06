@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.117 2022/09/25 17:11:48 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.118 2025/12/06 13:05:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.117 2022/09/25 17:11:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.118 2025/12/06 13:05:05 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1601,7 +1601,7 @@ int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 {
 	int rv = 0;
-	struct fd_softc *fd = 
+	struct fd_softc *fd =
 	    device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
