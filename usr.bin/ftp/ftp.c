@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.178 2024/10/04 18:06:53 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.179 2025/12/06 06:20:23 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.178 2024/10/04 18:06:53 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.179 2025/12/06 06:20:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,9 +370,9 @@ command(const char *fmt, ...)
 	oldsigint = xsignal(SIGINT, cmdabort);
 
 	va_start(ap, fmt);
-	vfprintf(cout, fmt, ap);
+	vfprintf(cout, fmt, ap);	/* TODO: handle EINTR? */
 	va_end(ap);
-	fputs("\r\n", cout);
+	fputs("\r\n", cout);		/* TODO: handle EINTR? */
 	(void)fflush(cout);
 	cpend = 1;
 	r = getreply(!strcmp(fmt, "QUIT"));
@@ -399,6 +399,7 @@ getreply(int expecteof)
 	sigfunc oldsigint, oldsigalrm;
 	int pflag = 0;
 	char *cp, *pt = pasv;
+	int cin_errno = 0;
 
 	abrtflag = 0;
 	timeoutflag = 0;
@@ -410,20 +411,28 @@ getreply(int expecteof)
 		dig = n = code = 0;
 		cp = current_line;
 		while (alarmtimer(quit_time ? quit_time : 60),
-		       ((c = getc(cin)) != '\n')) {
+		       ((c = ftp_getc(cin, &cin_errno)) != '\n')) {
 			if (c == IAC) {     /* handle telnet commands */
-				switch (c = getc(cin)) {
+				switch (c = ftp_getc(cin, &cin_errno)) {
 				case WILL:
 				case WONT:
-					c = getc(cin);
-					fprintf(cout, "%c%c%c", IAC, DONT, c);
-					(void)fflush(cout);
+					c = ftp_getc(cin, &cin_errno);
+					if (c != EOF) {
+						fprintf(cout, "%c%c%c",
+						    IAC, DONT, c);
+						/* TODO: handle EINTR? */
+						(void)fflush(cout);
+					}
 					break;
 				case DO:
 				case DONT:
-					c = getc(cin);
-					fprintf(cout, "%c%c%c", IAC, WONT, c);
-					(void)fflush(cout);
+					c = ftp_getc(cin, &cin_errno);
+					if (c != EOF) {
+						fprintf(cout, "%c%c%c",
+						    IAC, WONT, c);
+						/* TODO: handle EINTR? */
+						(void)fflush(cout);
+					}
 					break;
 				default:
 					break;
@@ -601,7 +610,7 @@ abortxfer(int notused __unused)
  * Read data from infd & write to outfd, using buf/bufsize as the temporary
  * buffer, dealing with short reads or writes.
  * If rate_limit != 0, rate-limit the transfer.
- * If hash_interval != 0, fputc('c', ttyout) every hash_interval bytes.
+ * If hash_interval != 0, putc('c', ttyout) every hash_interval bytes.
  * Updates global variables: bytes.
  * Returns 0 if ok, 1 if there was a read error, 2 if there was a write error.
  * In the case of error, errno contains the appropriate error code.
@@ -698,7 +707,9 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	struct stat st;
 	int c;
 	FILE *volatile fin;
+	int fin_errno = 0;
 	FILE *volatile dout;
+	int dout_errno = 0;
 	int (*volatile closefunc)(FILE *);
 	sigfunc volatile oldintr;
 	sigfunc volatile oldpipe;
@@ -838,35 +849,34 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		break;
 
 	case TYPE_A:
-		while ((c = getc(fin)) != EOF) {
+		while ((c = ftp_getc(fin, &fin_errno)) != EOF) {
 			if (c == '\n') {
 				while (hash_interval && bytes >= hashbytes) {
 					(void)putc('#', ttyout);
 					(void)fflush(ttyout);
 					hashbytes += mark;
 				}
-				if (ferror(dout))
+				if (ftp_putc('\r', dout, &dout_errno) == EOF
+				    || ferror(dout))
 					break;
-				(void)putc('\r', dout);
 				bytes++;
 			}
-			(void)putc(c, dout);
+			if (ftp_putc(c, dout, &dout_errno) == EOF
+			    || ferror(dout))
+				break;
 			bytes++;
-#if 0	/* this violates RFC 959 */
-			if (c == '\r') {
-				(void)putc('\0', dout);
-				bytes++;
-			}
-#endif
 		}
 		if (hash_interval) {
 			if (bytes < hashbytes)
 				(void)putc('#', ttyout);
 			(void)putc('\n', ttyout);
 		}
-		if (ferror(fin))
+		if (ferror(fin)) {
+			errno = fin_errno;
 			warn("Reading `%s'", local);
+		}
 		if (ferror(dout)) {
+			errno = dout_errno;
 			if (errno != EPIPE)
 				warn("Writing to network");
 			bytes = -1;
@@ -929,7 +939,9 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 	    const char *lmode, int printnames, int ignorespecial)
 {
 	FILE *volatile fout;
+	int fout_errno = 0;
 	FILE *volatile din;
+	int din_errno = 0;
 	int (*volatile closefunc)(FILE *);
 	sigfunc volatile oldintr;
 	sigfunc volatile oldpipe;
@@ -1111,7 +1123,7 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 			if (fseeko(fout, (off_t)0, SEEK_SET) < 0)
 				goto done;
 			for (i = 0; i++ < restart_point;) {
-				if ((ch = getc(fout)) == EOF)
+				if ((ch = ftp_getc(fout, &fout_errno)) == EOF)
 					goto done;
 				if (ch == '\n')
 					i++;
@@ -1122,7 +1134,7 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 				goto cleanuprecv;
 			}
 		}
-		while ((c = getc(din)) != EOF) {
+		while ((c = ftp_getc(din, &din_errno)) != EOF) {
 			if (c == '\n')
 				bare_lfs++;
 			while (c == '\r') {
@@ -1132,10 +1144,12 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 					hashbytes += mark;
 				}
 				bytes++;
-				if ((c = getc(din)) != '\n' || tcrflag) {
-					if (ferror(fout))
+				if ((c = ftp_getc(din, &din_errno)) != '\n'
+				    || tcrflag) {
+					if (ftp_putc('\r', fout, &fout_errno) == EOF
+					    || ferror(fout)) {
 						goto break2;
-					(void)putc('\r', fout);
+					}
 					if (c == '\0') {
 						bytes++;
 						goto contin2;
@@ -1144,7 +1158,8 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 						goto contin2;
 				}
 			}
-			(void)putc(c, fout);
+			if (ftp_putc(c, fout, &fout_errno) == EOF)
+				break;
 			bytes++;
 	contin2:	;
 		}
@@ -1155,12 +1170,15 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 			(void)putc('\n', ttyout);
 		}
 		if (ferror(din)) {
+			errno = din_errno;
 			if (errno != EPIPE)
 				warn("Reading from network");
 			bytes = -1;
 		}
-		if (ferror(fout))
+		if (ferror(fout)) {
+			errno = fout_errno;
 			warn("Writing `%s'", local);
+		}
 		break;
 	}
 
@@ -2126,7 +2144,7 @@ abort_remote(FILE *din)
 	buf[2] = IAC;
 	if (send(fileno(cout), buf, 3, MSG_OOB) != 3)
 		warn("Can't send abort message");
-	fprintf(cout, "%cABOR\r\n", DM);
+	fprintf(cout, "%cABOR\r\n", DM);	/* TODO: handle EINTR? */
 	(void)fflush(cout);
 	if ((nfnd = empty(cin, din, 10)) <= 0) {
 		if (nfnd < 0)
