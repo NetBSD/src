@@ -1,24 +1,11 @@
-/*	$NetBSD: elf_machdep.h,v 1.9 2017/11/06 03:47:47 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10 2025/12/06 12:19:12 jkoshy Exp $	*/
 
-#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_68K:						\
-			break;
-
-#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define	ELF64_MACHDEP_ID_CASES						\
-		/* no 64-bit ELF machine types supported */
-
-#define	ELF32_MACHDEP_ID	EM_68K
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /*
  * Machine-dependent ELF flags.  These are defined by the GNU tools.
  */
 #define	EF_CPU32	0x00810000
 #define	EF_M68000	0x01000000
-
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* m68k relocation types */
 #define	R_68K_NONE	0
@@ -64,5 +51,21 @@
 #define R_68K_TLS_DTPMOD32	40
 #define R_68K_TLS_DTPREL32	41
 #define R_68K_TLS_TPREL32	42
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_68K:						\
+			break;
+
+#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF64_MACHDEP_ID_CASES						\
+		/* no 64-bit ELF machine types supported */
+
+#define	ELF32_MACHDEP_ID	EM_68K
+
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define	R_TYPE(name)	__CONCAT(R_68K_,name)
