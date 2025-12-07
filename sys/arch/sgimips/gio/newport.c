@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.24 2025/12/07 02:11:49 macallan Exp $	*/
+/*	$NetBSD: newport.c,v 1.25 2025/12/07 02:20:59 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.24 2025/12/07 02:11:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.25 2025/12/07 02:20:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,6 @@ rex3_write(struct newport_devconfig *dc, bus_size_t rexreg, uint32_t val)
 {
 	bus_space_write_4(dc->dc_st, dc->dc_sh, NEWPORT_REX3_OFFSET + rexreg,
 	    val);
-//	bus_space_barrier(dc->dc_st, dc->dc_sh, NEWPORT_REX3_OFFSET + rexreg,
-//	    4, BUS_SPACE_BARRIER_WRITE);
 }
 
 static void
@@ -264,8 +262,6 @@ rex3_write_go(struct newport_devconfig *dc, bus_size_t rexreg, uint32_t val)
 static uint32_t
 rex3_read(struct newport_devconfig *dc, bus_size_t rexreg)
 {
-//	bus_space_barrier(dc->dc_st, dc->dc_sh, NEWPORT_REX3_OFFSET + rexreg,
-//	    4, BUS_SPACE_BARRIER_READ);
 	return bus_space_read_4(dc->dc_st, dc->dc_sh, NEWPORT_REX3_OFFSET +
 	    rexreg);
 }
@@ -998,14 +994,7 @@ newport_attach_common(struct newport_devconfig *dc, struct gio_attach_args *ga)
 
 	newport_fill_rectangle(dc, 0, 0, dc->dc_xres, dc->dc_yres, 0);
 
-#ifdef NEWPORT_DEBUG
-	int i;
-	for (i = 0; i < 256; i++) 
-		newport_fill_rectangle(dc, 10, i * 3 + 10, 500, 2, i);
-	delay(10000000);
-#endif
 	dc->dc_screen = &newport_screen;
-	
 	dc->dc_mode = WSDISPLAYIO_MODE_EMUL;
 }
 
