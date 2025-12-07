@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.27 2022/03/28 12:44:37 riastradh Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.28 2025/12/07 10:05:10 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,14 @@
 #define	_DEV_USB_UHIDEV_H_
 
 #include <dev/usb/usbdi.h>
+#include <dev/hid/hidev.h>
 
 struct uhidev;
 
 struct uhidev_attach_arg {
 	struct usbif_attach_arg *uiaa;
 	struct uhidev *parent;
+	hidev_tag_t hidev;
 	int reportid;
 };
 
