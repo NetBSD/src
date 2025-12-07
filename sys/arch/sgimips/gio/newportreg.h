@@ -1,4 +1,4 @@
-/*	$NetBSD: newportreg.h,v 1.9 2019/05/16 23:42:23 macallan Exp $	*/
+/*	$NetBSD: newportreg.h,v 1.10 2025/12/07 02:11:49 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -229,7 +229,9 @@
 
 #define REX3_REG_STATUS			0x1338
 #define  REX3_STATUS_GFXBUSY		0x00000008
+#define  REX3_STATUS_BACKBUSY		0x00000010
 #define  REX3_STATUS_PIPELEVEL_MASK	0x00001f80
+#define  REX3_STATUS_BPIPELEVEL_MASK	0x0003e000
 
 /* VC2 */
 
