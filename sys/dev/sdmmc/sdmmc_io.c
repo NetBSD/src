@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.21 2020/10/17 09:36:45 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.21.28.1 2025/12/07 09:10:00 martin Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.21 2020/10/17 09:36:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.21.28.1 2025/12/07 09:10:00 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -385,11 +385,12 @@ sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
  * Useful values of `arg' to pass in are either SD_ARG_CMD53_READ or
  * SD_ARG_CMD53_WRITE.  SD_ARG_CMD53_INCREMENT may be ORed into `arg'
  * to access successive register locations instead of accessing the
- * same register many times.
+ * same register many times.  SD_ARG_CMD53_BLOCK_MODE may be ORed
+ * into `arg' to indicate that the length is a number of blocks.
  */
 static int
 sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
-    int reg, u_char *datap, int datalen, int arg)
+    int reg, u_char *datap, int len, int arg)
 {
 	struct sdmmc_command cmd;
 	int error;
@@ -407,7 +408,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	    SD_ARG_CMD53_FUNC_SHIFT;
 	arg |= (reg & SD_ARG_CMD53_REG_MASK) <<
 	    SD_ARG_CMD53_REG_SHIFT;
-	arg |= (datalen & SD_ARG_CMD53_LENGTH_MASK) <<
+	arg |= (len & SD_ARG_CMD53_LENGTH_MASK) <<
 	    SD_ARG_CMD53_LENGTH_SHIFT;
 
 	memset(&cmd, 0, sizeof cmd);
@@ -415,8 +416,13 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_arg = arg;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R5;
 	cmd.c_data = datap;
-	cmd.c_datalen = datalen;
-	cmd.c_blklen = MIN(datalen, sf->blklen);
+	if (ISSET(arg, SD_ARG_CMD53_BLOCK_MODE)) {
+		cmd.c_datalen = len * sf->blklen;
+		cmd.c_blklen = sf->blklen;
+	} else {
+		cmd.c_datalen = len;
+		cmd.c_blklen = MIN(len, sf->blklen);
+	}
 
 	if (!ISSET(arg, SD_ARG_CMD53_WRITE))
 		cmd.c_flags |= SCF_CMD_READ;
@@ -426,7 +432,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	if (error) {
 		device_printf(sc->sc_dev,
 		    "extended I/O error %d, r=%d p=%p l=%d %s\n",
-		    error, reg, datap, datalen,
+		    error, reg, datap, len,
 		    ISSET(arg, SD_ARG_CMD53_WRITE) ? "write" : "read");
 	}
 
@@ -504,21 +510,19 @@ int
 sdmmc_io_read_multi_1(struct sdmmc_function *sf, int reg, u_char *data,
     int datalen)
 {
-	int blocks, bytes, error = 0;
+	int blocks, error = 0;
 
 	/* Don't lock */
 
 	while (datalen >= sf->blklen) {
-		//blocks = imin(datalen / sf->blklen,
-		//              SD_ARG_CMD53_LENGTH_MAX);
-		blocks = 1;
-		bytes = blocks * sf->blklen;
+		blocks = imin(datalen / sf->blklen,
+		              SD_ARG_CMD53_LENGTH_MAX);
 		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
-		    bytes, SD_ARG_CMD53_READ);
+		    blocks, SD_ARG_CMD53_READ | SD_ARG_CMD53_BLOCK_MODE);
 		if (error)
 			goto error;
-		data += bytes;
-		datalen -= bytes;
+		data += blocks * sf->blklen;
+		datalen -= blocks * sf->blklen;
 	}
 
 	if (datalen)
@@ -532,21 +536,19 @@ int
 sdmmc_io_write_multi_1(struct sdmmc_function *sf, int reg, u_char *data,
     int datalen)
 {
-	int blocks, bytes, error = 0;
+	int blocks, error = 0;
 
 	/* Don't lock */
 
 	while (datalen >= sf->blklen) {
-		//blocks = imin(datalen / sf->blklen,
-		//             SD_ARG_CMD53_LENGTH_MAX);
-		blocks = 1;
-		bytes = blocks * sf->blklen;
+		blocks = imin(datalen / sf->blklen,
+		             SD_ARG_CMD53_LENGTH_MAX);
 		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
-		    bytes, SD_ARG_CMD53_WRITE);
+		    blocks, SD_ARG_CMD53_WRITE | SD_ARG_CMD53_BLOCK_MODE);
 		if (error)
 			goto error;
-		data += bytes;
-		datalen -= bytes;
+		data += blocks * sf->blklen;
+		datalen -= blocks * sf->blklen;
 	}
 
 	if (datalen)
@@ -561,22 +563,21 @@ int
 sdmmc_io_read_region_1(struct sdmmc_function *sf, int reg, u_char *data,
     int datalen)
 {
-	int blocks, bytes, error = 0;
+	int blocks, error = 0;
 
 	/* Don't lock */
 
 	while (datalen >= sf->blklen) {
-		//blocks = imin(datalen / sf->blklen,
-		//              SD_ARG_CMD53_LENGTH_MAX);
-		blocks = 1;
-		bytes = blocks * sf->blklen;
+		blocks = imin(datalen / sf->blklen,
+		              SD_ARG_CMD53_LENGTH_MAX);
 		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
-		    bytes, SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
+		    blocks, SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT |
+		    SD_ARG_CMD53_BLOCK_MODE);
 		if (error)
 			goto error;
-		reg += bytes;
-		data += bytes;
-		datalen -= bytes;
+		reg += blocks * sf->blklen;
+		data += blocks * sf->blklen;
+		datalen -= blocks * sf->blklen;
 	}
 
 	if (datalen)
@@ -590,22 +591,21 @@ int
 sdmmc_io_write_region_1(struct sdmmc_function *sf, int reg, u_char *data,
     int datalen)
 {
-	int blocks, bytes, error = 0;
+	int blocks, error = 0;
 
 	/* Don't lock */
 
 	while (datalen >= sf->blklen) {
-		//blocks = imin(datalen / sf->blklen,
-		//              SD_ARG_CMD53_LENGTH_MAX);
-		blocks = 1;
-		bytes = blocks * sf->blklen;
+		blocks = imin(datalen / sf->blklen,
+		              SD_ARG_CMD53_LENGTH_MAX);
 		error = sdmmc_io_rw_extended(sf->sc, sf, reg, data,
-		    bytes, SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT);
+		    blocks, SD_ARG_CMD53_WRITE | SD_ARG_CMD53_INCREMENT |
+		    SD_ARG_CMD53_BLOCK_MODE);
 		if (error)
 			goto error;
-		reg += bytes;
-		data += bytes;
-		datalen -= bytes;
+		reg += blocks * sf->blklen;
+		data += blocks * sf->blklen;
+		datalen -= blocks * sf->blklen;
 	}
 
 	if (datalen)
