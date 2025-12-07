@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.48 2025/12/05 13:10:56 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.49 2025/12/07 09:07:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1073,7 +1073,7 @@ sys/dev/mii/mcommphy.c				1.4-1.6
 	mcommphy(4): apply some standard defaults for YT85[23]1.
 	[skrll, ticket #111]
 
-usr.sbin/npf/npfctl/npf_build.c			1.62
+usr.sbin/npf/npfctl/npf_build.c			1.62,1.63
 usr.sbin/npf/npfctl/npf_var.c			1.16
 usr.sbin/npf/npfctl/npf_var.h			1.14
 usr.sbin/npf/npftest/libnpftest/npf_rule_test.c	1.26
