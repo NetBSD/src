@@ -1,4 +1,4 @@
-/* $NetBSD: hidev.h,v 1.1 2025/12/07 10:05:10 jmcneill Exp $ */
+/* $NetBSD: hidev.h,v 1.2 2025/12/07 19:59:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 
 #include <dev/usb/usbdi.h>
 
-typedef struct hidev_tag {
+struct hidev_tag {
 	/* Opaque cookie for use by back-end. */
 	void	*_cookie;
 
@@ -44,14 +44,14 @@ typedef struct hidev_tag {
 	usbd_status	(*_set_report)(void *, int, void *, int);
 	usbd_status	(*_get_report)(void *, int, void *, int);
 	usbd_status	(*_write)(void *, void *, int);
-} *hidev_tag_t;
+};
 
-void hidev_get_report_desc(hidev_tag_t, void **, int *);
-int hidev_open(hidev_tag_t, void (*)(void *, void *, u_int), void *);
-void hidev_stop(hidev_tag_t);
-void hidev_close(hidev_tag_t);
-usbd_status hidev_set_report(hidev_tag_t, int, void *, int);
-usbd_status hidev_get_report(hidev_tag_t, int, void *, int);
-usbd_status hidev_write(hidev_tag_t, void *, int);
+void hidev_get_report_desc(struct hidev_tag *, void **, int *);
+int hidev_open(struct hidev_tag *, void (*)(void *, void *, u_int), void *);
+void hidev_stop(struct hidev_tag *);
+void hidev_close(struct hidev_tag *);
+usbd_status hidev_set_report(struct hidev_tag *, int, void *, int);
+usbd_status hidev_get_report(struct hidev_tag *, int, void *, int);
+usbd_status hidev_write(struct hidev_tag *, void *, int);
 
 #endif /* _DEV_HID_HIDEV_H_ */

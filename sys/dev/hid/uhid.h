@@ -1,4 +1,4 @@
-/* $NetBSD: uhid.h,v 1.1 2025/12/07 10:05:10 jmcneill Exp $ */
+/* $NetBSD: uhid.h,v 1.2 2025/12/07 19:59:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 struct uhid_softc {
         device_t sc_dev;
-	hidev_tag_t sc_hidev;
+	struct hidev_tag *sc_hidev;
         uint8_t sc_report_id;
 	int (*sc_ioctl)(struct uhid_softc *, u_long, void *, int, struct lwp *);
 

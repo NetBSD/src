@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.96 2025/12/07 10:05:10 jmcneill Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.97 2025/12/07 19:59:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.96 2025/12/07 10:05:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.97 2025/12/07 19:59:51 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -421,6 +421,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		} else {
 			uha.parent = scd;
 			uha.reportid = repid;
+			uha.hidev = &scd->sc_hidev;
 			locs[UHIDBUSCF_REPORTID] = repid;
 
 			dev = config_found(self, &uha, uhidevprint,
@@ -1244,7 +1245,7 @@ uhidev_hidev_write(void *cookie, void *data, int len)
 static void
 uhidev_init_tag(struct uhidev *scd)
 {
-	hidev_tag_t t = &scd->sc_hidev;
+	struct hidev_tag *t = &scd->sc_hidev;
 
 	t->_cookie = scd;
 	t->_get_report_desc = uhidev_hidev_get_report_desc;

@@ -1,4 +1,4 @@
-/* $NetBSD: hidev.c,v 1.1 2025/12/07 10:05:10 jmcneill Exp $ */
+/* $NetBSD: hidev.c,v 1.2 2025/12/07 19:59:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -29,43 +29,43 @@
 #include <dev/hid/hidev.h>
 
 void
-hidev_get_report_desc(hidev_tag_t t, void **desc, int *size)
+hidev_get_report_desc(struct hidev_tag *t, void **desc, int *size)
 {
 	t->_get_report_desc(t->_cookie, desc, size);
 }
 
 int
-hidev_open(hidev_tag_t t, void (*intr)(void *, void *, u_int), void *cookie)
+hidev_open(struct hidev_tag *t, void (*intr)(void *, void *, u_int), void *cookie)
 {
 	return t->_open(t->_cookie, intr, cookie);
 }
 
 void
-hidev_stop(hidev_tag_t t)
+hidev_stop(struct hidev_tag *t)
 {
 	t->_stop(t->_cookie);
 }
 
 void
-hidev_close(hidev_tag_t t)
+hidev_close(struct hidev_tag *t)
 {
 	t->_close(t->_cookie);
 }
 
 usbd_status
-hidev_set_report(hidev_tag_t t, int type, void *data, int len)
+hidev_set_report(struct hidev_tag *t, int type, void *data, int len)
 {
 	return t->_set_report(t->_cookie, type, data, len);
 }
 
 usbd_status
-hidev_get_report(hidev_tag_t t, int type, void *data, int len)
+hidev_get_report(struct hidev_tag *t, int type, void *data, int len)
 {
 	return t->_get_report(t->_cookie, type, data, len);
 }
 
 usbd_status
-hidev_write(hidev_tag_t t, void *data, int len)
+hidev_write(struct hidev_tag *t, void *data, int len)
 {
 	return t->_write(t->_cookie, data, len);
 }
