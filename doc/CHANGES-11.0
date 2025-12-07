@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.49 2025/12/07 09:07:10 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.50 2025/12/07 09:10:23 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1094,4 +1094,10 @@ distrib/sets/lists/debug/mi			1.488 (parts of, via patch)
 
 	fix debuglib setlists.
 	[riz, ticket #114]
+
+sys/dev/sdmmc/sdhc.c				1.123
+sys/dev/sdmmc/sdmmc_io.c			1.22
+
+	sdmmc(4): use block mode for multi block SDIO transfers.
+	[jmcneill, ticket #115]
 
