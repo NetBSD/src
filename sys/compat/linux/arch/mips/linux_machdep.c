@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.45 2025/08/10 09:17:59 andvar Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.46 2025/12/08 22:27:51 andvar Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.45 2025/08/10 09:17:59 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.46 2025/12/08 22:27:51 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap,
 }
 
 /*
- * This system call is depecated in Linux, but
+ * This system call is deprecated in Linux, but
  * some binaries and some libraries use it.
  */
 int

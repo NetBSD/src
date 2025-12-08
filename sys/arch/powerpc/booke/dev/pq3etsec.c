@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.62 2025/10/26 12:51:51 andvar Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.63 2025/12/08 22:27:52 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.62 2025/10/26 12:51:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.63 2025/12/08 22:27:52 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -603,7 +603,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Assume firmware has aready set the mac address and fetch it
+	 * Assume firmware has already set the mac address and fetch it
 	 * before we reinit it.
 	 */
 	sc->sc_macstnaddr2 = etsec_read(sc, MACSTNADDR2);

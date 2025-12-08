@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11 2025/09/26 07:22:20 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12 2025/12/08 22:27:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2025/09/26 07:22:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2025/12/08 22:27:52 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -1235,7 +1235,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			STAT_INCR(sync_coherent_postread);
 			break;
 
-		/* BUS_DMASYNC_POSTWRITE was aleady handled as a fastpath */
+		/* BUS_DMASYNC_POSTWRITE was already handled as a fastpath */
 		}
 
 		/*

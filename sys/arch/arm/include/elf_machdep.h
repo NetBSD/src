@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.22 2025/11/30 22:17:30 jkoshy Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.23 2025/12/08 22:27:52 andvar Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -160,7 +160,7 @@
 /* Older NetBSD spellings. */
 #define R_ARM_ALU_SBREL_11_0	35
 #define R_ARM_ALU_SBREL_19_12	36
-#define R_ARM_ALU_SBREL_27_20	37	// depecrated
+#define R_ARM_ALU_SBREL_27_20	37	// deprecated
 
 #define PF_ARM_ENTRY		0x80000000
 

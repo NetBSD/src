@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.87 2025/09/21 15:11:52 christos Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.88 2025/12/08 22:27:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.87 2025/09/21 15:11:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.88 2025/12/08 22:27:52 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -334,7 +334,7 @@ bad:
 
 /*
  * Defragmenter. Returns mbuf if last packet found, else
- * NULL. frees imcoming mbuf as necessary.
+ * NULL. frees incoming mbuf as necessary.
  */
 
 static struct mbuf *
