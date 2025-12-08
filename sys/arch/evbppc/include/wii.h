@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.12 2025/11/11 21:34:47 jmcneill Exp $ */
+/* $NetBSD: wii.h,v 1.13 2025/12/08 23:00:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -69,6 +69,9 @@
 #define WGPIPE_BASE			0x0c008000
 #define WGPIPE_SIZE			0x00000004
 
+#define SI_BASE				0x0d006400
+#define SI_SIZE				0x100
+
 #define EXI_BASE			0x0d006800
 #define EXI_SIZE			0x00000080
 
@@ -114,6 +117,7 @@
 #define GX_WGPIPE			(GX_BASE + 0x00)
 
 /* Processor IRQs */
+#define PI_IRQ_SI			3
 #define PI_IRQ_EXI			4
 #define PI_IRQ_AI			5
 #define PI_IRQ_DSP			6
