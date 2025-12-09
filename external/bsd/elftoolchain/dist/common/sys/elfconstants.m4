@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.18 2025/12/06 12:14:40 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.19 2025/12/09 18:14:48 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.18 2025/12/06 12:14:40 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4303 2025-12-06 11:36:18Z jkoshy')
+	`Id: elfconstants.m4 4309 2025-12-09 18:06:46Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -502,6 +502,8 @@ _(`DT_MIPS_RWPLT',       0x70000034,
 	`address of a writable PLT')
 _(`DT_MIPS_RLD_MAP_REL', 0x70000035,
 	`(GNU) RLD_MAP usable in a PIE')
+_(`DT_MIPS_XHASH',	 0x70000036,
+	`(GNU) GNU-style hash table') 
 _(`DT_PPC_GOT',          0x70000000,
 	`value of _GLOBAL_OFFSET_TABLE_')
 _(`DT_PPC_TLSOPT',       0x70000001,
@@ -981,6 +983,7 @@ _(ELFOSABI_STANDALONE, 255U,
 # OS ABI aliases.
 define(`DEFINE_ELF_OSABI_ALIASES',`
 _(ELFOSABI_LINUX,	ELFOSABI_GNU)
+_(ELFOSABI_MONTEREY,	ELFOSABI_AIX, `Project Monterey')
 ')
 
 #
@@ -1422,6 +1425,8 @@ _(EM_AMD64, EM_X86_64)
 _(EM_ARC_A5, EM_ARC_COMPACT)
 _(EM_ECOG1, EM_ECOG1X)
 _(EM_INTELGT, EM_INTEL205)
+_(EM_OR1K,	EM_OPENRISC, `GNU spelling')
+_(EM_OLD_ALPHA,	EM_ALPHA, `GNU spelling')
 ')
 
 #
@@ -1520,6 +1525,7 @@ _(PT_PHDR,             6U,
 	`describes the program header itself')
 _(PT_TLS,              7U,
 	`thread local storage')
+_(PT_NUM,	       8U, `the number of basic PHDR types')
 _(PT_LOOS,             0x60000000U,
 	`start of OS-specific range')
 _(PT_SUNW_UNWIND,      0x6464E550U,
@@ -1564,6 +1570,8 @@ _(PT_MIPS_RTPROC,      0x70000001U,
 	`runtime procedure table')
 _(PT_MIPS_OPTIONS,     0x70000002U,
 	`options segment')
+_(PT_MIPS_ABIFLAGS,    0x70000003U,
+	`segment contains a .MIPS.abiflags section')
 _(PT_PARISC_ARCHEXT,   0x70000000U,
 	`segment contains the .PARISC.archext section')
 _(PT_PARISC_UNWIND,    0x70000001U,
@@ -1794,6 +1802,8 @@ _(SHT_RELR,            19U,
 	`used to encode relative relocations')
 _(SHT_LOOS,            0x60000000U,
 	`start of OS-specific range')
+_(SHT_GNU_INCREMENTAL_INPUTS,	0x6FFFF4700U,
+	`incremental build information')
 _(SHT_SUNW_dof,	     0x6FFFFFF4U,
 	`used by dtrace')
 _(SHT_SUNW_cap,	     0x6FFFFFF5U,
@@ -1924,6 +1934,8 @@ _(SHT_MIPS_PDR_EXCEPTION, 0x70000029U,
 	`runtime procedure descriptor table exception information')
 _(SHT_MIPS_ABIFLAGS,   0x7000002AU,
 	`ABI flags')
+_(SHT_MIPS_XHASH,      0x7000002BU,
+	`GNU-style hash table')
 _(SHT_SPARC_GOTDATA,   0x70000000U,
 	`SPARC-specific data')
 _(SHT_X86_64_UNWIND,   0x70000001U,
@@ -1944,6 +1956,10 @@ _(SHT_AMD64_UNWIND,	SHT_X86_64_UNWIND)
 _(SHT_GNU_verdef,	SHT_SUNW_verdef)
 _(SHT_GNU_verneed,	SHT_SUNW_verneed)
 _(SHT_GNU_versym,	SHT_SUNW_versym)
+')
+
+define(`DEFINE_SYMBOL_TABLE_INDICES',`dnl
+_(STN_UNDEF,		0, `undefined symbol')
 ')
 
 #
@@ -2026,44 +2042,55 @@ _(STV_HIDDEN,          2,
 	`hidden from other components')
 _(STV_PROTECTED,       3,
 	`local references are not preemptable')
+_(STV_EXPORTED,        4,
+	`symbol is always global')
+_(STV_SINGLETON,       5,
+	`all references to this symbol bind to a single instance')
+_(STV_ELIMINATE,       6,
+	`symbol is not to be added to the dynamic symbol table')
 ')
 
 # Syminfo flags.
 define(`DEFINE_SYMINFO_FLAGS',`
-_(SYMINFO_FLG_DIRECT,	0x0001U,
+_(SYMINFO_FLG_DIRECT,		0x0001U,
 	`directly assocated reference')
-_(SYMINFO_FLG_FILTER, 0x0002U,
+_(SYMINFO_FLG_FILTER,		0x0002U,
 	`associated with a filter')
-_(SYMINFO_FLG_COPY,	0x0004U,
+_(SYMINFO_FLG_COPY,		0x0004U,
 	`definition by copy-relocation')
-_(SYMINFO_FLG_LAZYLOAD,	0x0008U,
+_(SYMINFO_FLG_LAZYLOAD,		0x0008U,
 	`object should be lazily loaded')
 _(SYMINFO_FLG_DIRECTBIND,	0x0010U,
 	`reference should be directly bound')
-_(SYMINFO_FLG_NOEXTDIRECT, 0x0020U,
+_(SYMINFO_FLG_NOEXTDIRECT,	0x0020U,
 	`external references not allowed to bind to definition')
-_(SYMINFO_FLG_AUXILIARY,   0x0040U,
+_(SYMINFO_FLG_AUXILIARY,	0x0040U,
 	`auxiliary filter')
-_(SYMINFO_FLG_INTERPOSE,   0x0080U,
+_(SYMINFO_FLG_INTERPOSE,	0x0080U,
 	`interposer symbol')
-_(SYMINFO_FLG_CAP,	   0x0100U,
+_(SYMINFO_FLG_CAP,		0x0100U,
 	`associated with capabilities')
-_(SYMINFO_FLG_DEFERRED,	   0x0200U,
+_(SYMINFO_FLG_DEFERRED,		0x0200U,
 	`deferred reference')
-_(SYMINFO_FLG_WEAKFILTER,  0x0400U,
+_(SYMINFO_FLG_WEAKFILTER,	0x0400U,
 	`weak filter')
+')
+define(`DEFINE_SYMINFO_FLAG_SYNONYMS',`dnl
+_(SYMINFO_FLG_PASSTHRU,		SYMINFO_FLG_FILTER, `GNU spelling')
 ')
 
 # Syminfo bindings.
 define(`DEFINE_SYMINFO_BINDINGS',`
-_(SYMINFO_BT_SELF,	0xFFFFU,
+_(SYMINFO_BT_SELF,		0xFFFFU,
 	`bound to self')
-_(SYMINFO_BT_PARENT,	0xFFFEU,
+_(SYMINFO_BT_PARENT,		0xFFFEU,
 	`bound to parent')
-_(SYMINFO_BT_NONE,	0xFFFDU,
+_(SYMINFO_BT_NONE,		0xFFFDU,
 	`no special binding')
-_(SYMINFO_BT_EXTERN,	0xFFFCU,
+_(SYMINFO_BT_EXTERN,		0xFFFCU,
 	`defined as external')
+_(SYMINFO_BT_LOWRESERVE,	0xFF00U,
+	`start of reserved entries')
 ')
 
 # The version of the syminfo table.  Stored at index 0 of the table.
@@ -2072,6 +2099,7 @@ _(SYMINFO_NONE,		0,
 	`no version')
 _(SYMINFO_CURRENT,	1,
 	`current version')
+_(SYMINFO_NUM,		2, `(GNU)')
 ')
 
 #

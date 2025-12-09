@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.16 2025/11/29 09:56:20 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.17 2025/12/09 18:14:48 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.16 2025/11/29 09:56:20 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 4277 2025-11-26 22:50:56Z jkoshy')
+	`Id: elfdefinitions.m4 4309 2025-12-09 18:06:46Z jkoshy')
 include(`elfconstants.m4')dnl
 
 # Compute the whitespace between a symbol and its definition.
@@ -235,6 +235,11 @@ DEFINE_SECTION_TYPE_ALIASES()
 #define	PN_XNUM			0xFFFFU /* Use extended section numbering. */
 
 /*
+ * Special indices into symbol tables.
+ */
+DEFINE_SYMBOL_TABLE_INDICES()
+
+/*
  * Symbol binding information.
  */
 DEFINE_SYMBOL_BINDINGS()
@@ -255,6 +260,7 @@ DEFINE_SYMBOL_VISIBILITIES()
  * Syminfo flags.
  */
 DEFINE_SYMINFO_FLAGS()
+DEFINE_SYMINFO_FLAG_SYNONYMS()
 
 /*
  * Syminfo bindigs.
