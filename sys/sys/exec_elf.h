@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.184 2025/12/09 12:11:48 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.185 2025/12/09 18:54:21 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -111,10 +111,10 @@ typedef uint16_t	Elf64_Half;
 /*
  * ELF Header
  */
-#define ELF_NIDENT	16
+#define EI_NIDENT	16
 
 typedef struct {
-	unsigned char	e_ident[ELF_NIDENT];	/* Id bytes */
+	unsigned char	e_ident[EI_NIDENT];	/* Id bytes */
 	Elf32_Half	e_type;			/* file type */
 	Elf32_Half	e_machine;		/* machine type */
 	Elf32_Word	e_version;		/* version number */
@@ -131,7 +131,7 @@ typedef struct {
 } Elf32_Ehdr;
 
 typedef struct {
-	unsigned char	e_ident[ELF_NIDENT];	/* Id bytes */
+	unsigned char	e_ident[EI_NIDENT];	/* Id bytes */
 	Elf64_Half	e_type;			/* file type */
 	Elf64_Half	e_machine;		/* machine type */
 	Elf64_Word	e_version;		/* version number */
@@ -1047,6 +1047,8 @@ typedef Elf64_Half Elf64_Versym;
 /*
  * Symbols and types that are NetBSD-specific.
  */
+
+#define ELF_NIDENT	EI_INDENT	/* Prior spelling. */
 
 /* Symbol Table index of the undefined symbol */
 #define ELF_SYM_UNDEFINED	0
