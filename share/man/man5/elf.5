@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf.5,v 1.16 2024/05/13 00:01:53 msaitoh Exp $
+.\"	$NetBSD: elf.5,v 1.17 2025/12/09 15:03:28 jkoshy Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 18, 2006
+.Dd December 9, 2025
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ numerous map operations for each section separately.
 Each file is described by the ELF header:
 .Bd -literal -offset indent
 typedef struct {
-	unsigned char	e_ident[ELF_NIDENT];
+	unsigned char	e_ident[EI_NIDENT];
 	Elf32_Half	e_type;
 	Elf32_Half	e_machine;
 	Elf32_Word	e_version;
