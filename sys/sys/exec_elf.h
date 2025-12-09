@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.183 2025/11/18 13:02:13 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.184 2025/12/09 12:11:48 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1032,6 +1032,15 @@ typedef Elf32_Vernaux	Elf64_Vernaux;
 
 typedef Elf32_Half Elf32_Versym;
 typedef Elf64_Half Elf64_Versym;
+
+#else /* !defined(_SYS_ELFDEFINITIONS_H_) */
+/*
+ * Local overrides needed when using <sys/elfdefinitions.h>.
+ */
+
+/* NetBSD uses the pre-standardisation value for EM_ALPHA. */
+#undef EM_ALPHA
+#define EM_ALPHA	36902	/* DIGITAL Alpha */
 
 #endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
 
