@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.23 2024/11/21 07:15:00 skrll Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.24 2025/12/09 07:50:43 skrll Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.23 2024/11/21 07:15:00 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.24 2025/12/09 07:50:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,8 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 		bus_scan_delay_ms = 0;
 
 again:
-	fdtbus_gpio_write(ep_gpio, 0);
+	if (ep_gpio)
+		fdtbus_gpio_write(ep_gpio, 0);
 
 	reset_assert(phandle, "aclk");
 	reset_assert(phandle, "pclk");
@@ -333,7 +334,9 @@ again:
 	reset_deassert(phandle, "mgmt");
 	reset_deassert(phandle, "pipe");
 
-	fdtbus_gpio_write(ep_gpio, 1);
+	if (ep_gpio)
+		fdtbus_gpio_write(ep_gpio, 1);
+
 	delay(20000);	/* 20 ms according to PCI-e BS "Conventional Reset" */
 	delayed_ms += 20;
 
@@ -375,7 +378,8 @@ again:
 	delay(80000);	/* wait 100 ms before CSR access. already waited 20. */
 	delayed_ms += 80;
 
-	fdtbus_gpio_release(ep_gpio);
+	if (ep_gpio)
+		fdtbus_gpio_release(ep_gpio);
 
 	HWRITE4(sc, PCIE_RC_BASE + PCI_CLASS_REG,
 	    PCI_CLASS_BRIDGE << PCI_CLASS_SHIFT |
