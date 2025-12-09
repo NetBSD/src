@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2024/07/04 08:27:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2025/12/09 06:01:42 mrg Exp $
 
 .include <bsd.own.mk>
 .include "Makefile.common"
@@ -12,7 +12,6 @@ SRCS=	xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
 CPPFLAGS.xkbpath.c=	-DDFLT_XKB_CONFIG_ROOT=\"${XKBROOTDIR}\"
 
 CPPFLAGS+=		-I${X11SRCDIR.${PROG}}
-CPPFLAGS+=		-DHAVE_STRDUP -DHAVE_STRCASECMP
 CPPFLAGS+=		-DHAVE_ASPRINTF
 CPPFLAGS.geometry.c=	-Wno-error	# XXX
 COPTS.xkbscan.c+=	-Wno-stack-protector
