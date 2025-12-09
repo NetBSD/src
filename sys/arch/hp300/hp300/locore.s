@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.198 2025/12/04 02:55:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.199 2025/12/09 03:30:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -433,42 +433,23 @@ Lstart3:
  *
  * Is this all really necessary, or am I paranoid??
  */
-	RELOC(Sysseg_pa, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-	RELOC(mmutype, %a0)
-	tstl	%a0@			| HP MMU?
-	jeq	Lhpmmu2			| yes, skip
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
-	.long	0x4e7b1807		| movc %d1,%srp
-	jra	Lstploaddone
-Lmotommu1:
-	RELOC(protorp, %a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-	jra	Lstploaddone		| done
-Lhpmmu2:
-	moveq	#PGSHIFT,%d2
-	lsrl	%d2,%d1			| convert to page frame
-	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
-Lstploaddone:
 	lea	MAXADDR,%a2		| PA of last RAM page
 #if 0
-	ASRELOC(Lhighcode, %a1)		| addr of high code
-	ASRELOC(Lehighcode, %a3)	| end addr
+	ASRELOC(Lmmutramp_start, %a1)	| addr of high code
+	ASRELOC(Lmmutramp_end, %a3)	| end addr
 #else
 	/* don't want pc-relative addressing */
-	.word	0x43f9			| lea Lhighcode, %a1
-	.long	Lhighcode
+	.word	0x43f9			| lea Lmmutramp_start, %a1
+	.long	Lmmutramp_start
 	addl	%a5, %a1
-	.word	0x47f9			| lea Lehighcode, %a3
-	.long	Lehighcode
+	.word	0x47f9			| lea Lmmutramp_end, %a3
+	.long	Lmmutramp_end
 	addl	%a5, %a3
 #endif
-Lcodecopy:
+1:
 	movw	%a1@+,%a2@+		| copy a word
 	cmpl	%a3,%a1			| done yet?
-	jcs	Lcodecopy		| no, keep going
+	jcs	1b			| no, keep going
 	jmp	MAXADDR			| go for it!
 
 	/*
@@ -476,50 +457,40 @@ Lcodecopy:
 	 * executed in-place.  It's copied to the last page
 	 * of RAM (mapped va == pa) and executed there.
 	 */
-
-Lhighcode:
+Lmmutramp_start:
 	RELOC(mmutype, %a0)
 	tstl	%a0@			| HP MMU?
-	jeq	Lhpmmu3			| yes, skip
+	jne	1f			| no, skip
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
+	moveq	#PGSHIFT,%d2
+	lsrl	%d2,%d1			      | convert to page frame
+	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
+
+	movl	#0,INTIOBASE+MMUBASE+MMUCMD        | clear external cache
+	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD | turn on MMU
+	jmp	Lmmuenabled:l		| forced not be pc-relative
+1:
 	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu2		| no, skip
+	jne	1f			| no, skip
+	/* 68040 case: un-gate FPU and caches */
 	movw	#0,INTIOBASE+MMUBASE+MMUCMD+2
 	movw	#MMU_IEN+MMU_CEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD+2
-					| enable FPU and caches
-	moveq	#0,%d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc %d0,%itt0
-	.long	0x4e7b0005		| movc %d0,%itt1
-	.long	0x4e7b0006		| movc %d0,%dtt0
-	.long	0x4e7b0007		| movc %d0,%dtt1
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	movl	#MMU40_TCR_BITS,%d0
-	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#CACHE40_ON,%d0
-	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1:l		| forced not be pc-relative
-Lmotommu2:
+	bra	2f
+1:
+	/* 68020/68030: un-gate 68881 and i-cache */
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
-					| enable 68881 and i-cache
-	pflusha
-	RELOC(prototc, %a2)
-	movl	#MMU51_TCR_BITS,%a2@	| value to load TC with
-	pmove	%a2@,%tc		| load it
-	jmp	Lenab1:l		| forced not be pc-relative
-Lhpmmu3:
-	movl	#0,INTIOBASE+MMUBASE+MMUCMD		| clear external cache
-	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD	| turn on MMU
-	jmp	Lenab1:l		| forced not be pc-relative
-Lehighcode:
-
+2:
+#include <m68k/m68k/mmu_enable.s> 
 	/*
 	 * END MMU TRAMPOLINE.  Address register %a5 is now free.
 	 */
+Lmmutramp_end:
 
 /*
  * Should be running mapped from this point on
  */
-Lenab1:
+Lmmuenabled:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
@@ -1162,9 +1133,6 @@ GLOBAL(ectype)
 
 GLOBAL(fputype)
 	.long	FPU_68882		| default to 68882 FPU
-
-GLOBAL(prototc)
-	.long	0			| prototype translation control
 
 GLOBAL(internalhpib)
 	.long	1			| has internal HP-IB, default to yes

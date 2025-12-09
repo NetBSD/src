@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.147 2025/12/04 02:55:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148 2025/12/09 03:30:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -558,57 +558,15 @@ Lstart2:
 
 /*
  * Enable the MMU.
- * Since the kernel is mapped logical == physical, we just turn it on.
+ * Since the kernel is mapped logical == physical, there is no prep
+ * work to do.
  */
-	RELOC(Sysseg_pa, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
-	.long	0x4e7b1807		| movc d1,srp
-	jra	Lstploaddone
-Lmotommu1:
-#ifdef M68030
-	RELOC(protorp, %a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-#endif /* M68030 */
-Lstploaddone:
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu2		| no, skip
-	moveq	#0,%d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
-	.long	0x4e7b0007		| movc d0,dtt1
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	movl	#0x8000,%d0
-	.long	0x4e7b0003		| movc d0,tc
-#ifdef M68060
-	RELOC(cputype, %a0)
-	cmpl	#CPU_68060,%a0@		| 68060?
-	jne	Lnot060cache
-	movl	#1,%d0
-	.long	0x4e7b0808		| movcl d0,pcr
-	movl	#0xa0808000,%d0
-	movc	%d0,%cacr		| enable store buffer, both caches
-	jmp	Lenab1
-Lnot060cache:
-#endif
-	movl	#0x80008000,%d0
-	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1
-Lmotommu2:
-	pflusha
-	movl	#MMU51_TCR_BITS,%sp@-	| value to load TC with
-	pmove	%sp@,%tc		| load it
+#include <m68k/m68k/mmu_enable.s>
 
 /*
  * Should be running mapped from this point on
  */
-Lenab1:
+Lmmuenabled:
 /* Point the CPU VBR at our vector table */
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize vector table

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.94 2025/12/04 02:55:24 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.95 2025/12/09 03:30:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -226,52 +226,15 @@ Lstart3:
 
 /*
  * Enable the MMU.
- * Since the kernel is mapped logical == physical, we just turn it on.
+ * Since the kernel is mapped logical == physical, there is no prep
+ * work to do.
  */
-	RELOC(Sysseg_pa,%a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-#if defined(M68040)
-	RELOC(mmutype,%a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
-Lmotommu0:
-	.long	0x4e7b1807		| movc %d1,%srp
+#include <m68k/m68k/mmu_enable.s>
 
-	RELOC(mmu_tt40, %a0)		| pointer to TT reg values
-	movl	%a0,%sp@-
-	RELOC(mmu_load_tt40,%a0)	| pass it to mmu_load_tt40()
-	jbsr	%a0@
-	addql	#4,%sp
-
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	RELOC(proto040tc,%a0)
-	movl	%a0@,%d0
-	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#CACHE40_ON,%d0
-	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1
-Lmotommu1:
-#endif
-	RELOC(protorp,%a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-
-#ifdef M68030
-	RELOC(mmu_tt30, %a0)		| pointer to TT reg values
-	movl	%a0,%sp@-
-	RELOC(mmu_load_tt30,%a0)	| pass it to mmu_load_tt30()
-	jbsr	%a0@
-	addql	#4,%sp
-#endif
-
-	pflusha
-	RELOC(prototc,%a0)		| %tc: SRP,CRP,4KB or 8KB page
-	pmove	%a0@,%tc
 /*
  * Should be running mapped from this point on
  */
-Lenab1:
+Lmmuenabled:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
@@ -785,10 +748,6 @@ GLOBAL(mmutype)
 GLOBAL(fputype)
 	.long	FPU_68881	| default to 68881
 
-GLOBAL(prototc)
-	.long	MMU51_TCR_BITS	| %tc -- see pmap.h
-GLOBAL(proto040tc)
-	.long	MMU40_TCR_BITS	| %tc -- see pmap.h
 nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 
