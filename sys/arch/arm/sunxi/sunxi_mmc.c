@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.48 2021/08/07 16:18:45 thorpej Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.49 2025/12/10 22:14:13 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.48 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.49 2025/12/10 22:14:13 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1160,7 +1160,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		if (nblks == 0 || (cmd->c_datalen % cmd->c_blklen) != 0)
 			++nblks;
 
-		if (nblks > 1) {
+		if (nblks > 1 && !ISSET(cmd->c_flags, SCF_NO_STOP)) {
 			cmdval |= SUNXI_MMC_CMD_SEND_AUTO_STOP;
 			imask |= SUNXI_MMC_INT_AUTO_CMD_DONE;
 		} else {

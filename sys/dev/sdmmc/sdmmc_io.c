@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.22 2025/12/06 16:03:39 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.23 2025/12/10 22:14:13 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.22 2025/12/06 16:03:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.23 2025/12/10 22:14:13 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -414,7 +414,7 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	memset(&cmd, 0, sizeof cmd);
 	cmd.c_opcode = SD_IO_RW_EXTENDED;
 	cmd.c_arg = arg;
-	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R5;
+	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R5 | SCF_NO_STOP;
 	cmd.c_data = datap;
 	if (ISSET(arg, SD_ARG_CMD53_BLOCK_MODE)) {
 		cmd.c_datalen = len * sf->blklen;

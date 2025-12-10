@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.31 2024/02/09 17:16:42 skrll Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.32 2025/12/10 22:14:13 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.31 2024/02/09 17:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.32 2025/12/10 22:14:13 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -668,7 +668,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		if (nblks == 0 || (cmd->c_datalen % cmd->c_blklen) != 0)
 			++nblks;
 
-		if (nblks > 1 && cmd->c_opcode != SD_IO_RW_EXTENDED) {
+		if (nblks > 1 && !ISSET(cmd->c_flags, SCF_NO_STOP)) {
 			cmdval |= DWC_MMC_CMD_SEND_AUTO_STOP;
 			imask |= DWC_MMC_INT_AUTO_CMD_DONE;
 		} else {
