@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.35 2025/11/07 14:40:58 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.36 2025/12/10 02:31:03 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -113,9 +113,12 @@ export	MMU51_CRP_BITS
 export	MMU51_TCR_BITS
 export	MMU40_TCR_BITS
 
-# Transparent translation register values (from pmap.h)
-export	NEXT68K_TT40_IO
-export	NEXT68K_TT40_KERN
+# For mmu_subr.s
+# These values are used only during initial bootstrap; the TT registers
+# are subsequently disabled.
+define	MACHINE_ITT0		NEXT68K_TT40_KERN
+define	MACHINE_DTT0		NEXT68K_TT40_KERN
+define	MACHINE_DTT1		NEXT68K_TT40_IO
 
 # lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)
@@ -156,6 +159,7 @@ define	COLORTOP		COLORTOP
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
+define	CACHE40_ON		CACHE40_ON
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
 
