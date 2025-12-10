@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glamor,v 1.1.6.1 2025/11/20 19:09:05 martin Exp $
+#	$NetBSD: Makefile.glamor,v 1.1.6.2 2025/12/10 16:41:28 martin Exp $
 
 .ifndef XORG_SERVER_GLAMOR_MAKEFILE_GLAMOR
 XORG_SERVER_GLAMOR_MAKEFILE_GLAMOR=1
@@ -40,16 +40,13 @@ SRCS+= \
 	glamor_sync.c
 SRCS+= \
 	glamor_xv.c
-SRCS+= \
-	glamor_glx_provider.c
 .if ${HAVE_XORG_GLAMOR} == "no"
 SRCS+= \
 	glamor_egl_stubs.c
 .else
 SRCS+= \
 	glamor_egl.c \
-	glamor_eglmodule.c \
-	glamor_glx_provider.c
+	glamor_eglmodule.c
 .endif
 
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/xorg \

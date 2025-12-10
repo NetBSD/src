@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.6.1 2025/11/20 19:09:05 martin Exp $
+#	$NetBSD: Makefile,v 1.3.6.2 2025/12/10 16:41:28 martin Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -37,8 +37,7 @@ CPPFLAGS+=	\
 .include "../../../../../lib/mesa-which.mk"
 
 LIBDPLIBS+=	\
-	gbm	${.CURDIR}/../../../../../lib/libgbm${OLD_SUFFIX} \
-	glx	${.CURDIR}/../../../hw/xfree86/dixmods/glx
+	gbm	${.CURDIR}/../../../../../lib/libgbm${OLD_SUFFIX}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
