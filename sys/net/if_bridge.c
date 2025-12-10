@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.199 2025/04/22 05:47:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.200 2025/12/10 21:33:00 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.199 2025/04/22 05:47:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.200 2025/12/10 21:33:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2517,7 +2517,7 @@ bridge_rtdaddr(struct bridge_softc *sc, const uint8_t *addr)
 /*
  * bridge_rtdelete:
  *
- *	Delete routes to a speicifc member interface.
+ *	Delete routes to a specified member interface.
  */
 static void
 bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)

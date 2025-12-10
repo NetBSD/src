@@ -58,7 +58,7 @@
  *	h: H_floating
  *	r: Register
  *	x: first data type specified by instruction
- *	y: second data type spcified by instructin
+ *	y: second data type specified by instruction
  *	-: no-args
  *	?: unknown (variable?)
  */

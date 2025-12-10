@@ -1,4 +1,4 @@
-# $NetBSD: TODO.npf,v 1.15 2025/04/17 19:54:24 gdt Exp $
+# $NetBSD: TODO.npf,v 1.16 2025/12/10 21:33:03 andvar Exp $
 
 # Meta
 
@@ -18,7 +18,7 @@ has been merged into this file.)
 ## from https://github.com/rmind/npf/
 
 Periodically, check this repo to see if there are changes/improvements
-that are not in NetBDS and which are appopriate, and merge them.
+that are not in NetBSD and which are appropriate, and merge them.
 
 ## to https://github.com/rmind/npf/
 
@@ -328,7 +328,7 @@ Use nbuf_ensure_writable() where appropriate.
 These items are left in the list, but there's no reason to think
 anyone will address them any time soon, or that they are high enough
 priority that anyone should.  They can of course be moved (up likely
-clarified if someeone, especially someone intending to work on them,
+clarified if someone, especially someone intending to work on them,
 doesn't see it that way.  (Perhaps we should drop them, but for now
 they are parked.)
 

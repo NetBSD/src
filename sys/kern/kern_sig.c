@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.410 2025/03/13 12:48:21 riastradh Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.411 2025/12/10 21:33:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.410 2025/03/13 12:48:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.411 2025/12/10 21:33:01 andvar Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -689,7 +689,7 @@ sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
  *
  *	Return the first signal number if there are pending signals for the
  *	current LWP.  May be called unlocked provided that LW_PENDSIG is set,
- *	and that the signal has been posted to the appopriate queue before
+ *	and that the signal has been posted to the appropriate queue before
  *	LW_PENDSIG is set.
  *
  *	This should only ever be called with (l == curlwp), unless the

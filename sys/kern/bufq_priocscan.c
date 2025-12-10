@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.21 2017/05/04 11:03:27 kamil Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.22 2025/12/10 21:33:01 andvar Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.21 2017/05/04 11:03:27 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.22 2025/12/10 21:33:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ cscan_init(struct cscan_queue *q, int sortby)
 }
 
 /*
- * Per-prioritiy CSCAN.
+ * Per-priority CSCAN.
  *
  * XXX probably we should have a way to raise
  * priority of the on-queue requests.

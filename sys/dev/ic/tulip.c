@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.213 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: tulip.c,v 1.214 2025/12/10 21:33:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.213 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.214 2025/12/10 21:33:00 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -3186,7 +3186,7 @@ tlp_mediachange(struct ifnet *ifp)
 /*
  * tlp_ifmedia_fini:
  *
- *	Wrapper around ifmedia_fini(), which frees any media-speific
+ *	Wrapper around ifmedia_fini(), which frees any media-specific
  *	data we may have associated with each entry.
  */
 static void

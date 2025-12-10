@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_extern.c,v 1.2 2025/05/14 03:25:46 thorpej Exp $	*/
+/*	$NetBSD: prop_extern.c,v 1.3 2025/12/10 21:33:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2025 The NetBSD Foundation, Inc.
@@ -655,7 +655,7 @@ _prop_object_externalize_to_file(struct _prop_object *obj, const char *fname,
 
 /*
  * prop_object_externalize_to_file --
- *	Externalize an object to the specifed file in the default format.
+ *	Externalize an object to the specified file in the default format.
  */
 _PROP_EXPORT bool
 prop_object_externalize_to_file(prop_object_t po, const char *fname)
@@ -666,7 +666,7 @@ prop_object_externalize_to_file(prop_object_t po, const char *fname)
 
 /*
  * prop_object_externalize_to_file_with_format --
- *	Externalize an object to the specifed file in the specified format.
+ *	Externalize an object to the specified file in the specified format.
  */
 _PROP_EXPORT bool
 prop_object_externalize_to_file_with_format(prop_object_t po,

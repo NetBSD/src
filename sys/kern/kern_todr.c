@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.49 2025/09/08 00:12:21 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.50 2025/12/10 21:33:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.49 2025/09/08 00:12:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.50 2025/12/10 21:33:01 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -143,7 +143,7 @@ todr_lock_owned(void)
 /*
  * todr_should_skip:
  *	Evaluate if we should skip attaching the clock device
- *	specifed by the todr handle.
+ *	specified by the todr handle.
  */
 static bool
 todr_should_skip(todr_chip_handle_t todr)

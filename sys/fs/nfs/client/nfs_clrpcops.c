@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clrpcops.c,v 1.5 2025/02/27 08:39:53 andvar Exp $	*/
+/*	$NetBSD: nfs_clrpcops.c,v 1.6 2025/12/10 21:33:03 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clrpcops.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: nfs_clrpcops.c,v 1.5 2025/02/27 08:39:53 andvar Exp $");
+__RCSID("$NetBSD: nfs_clrpcops.c,v 1.6 2025/12/10 21:33:03 andvar Exp $");
 
 /*
  * Rpc op calls, generally called from the vnode op calls or through the
@@ -1832,7 +1832,7 @@ nfsmout:
 
 /*
  * nfs file create call
- * Mostly just call the approriate routine. (I separated out v4, so that
+ * Mostly just call the appropriate routine. (I separated out v4, so that
  * error recovery wouldn't be as difficult.)
  */
 APPLESTATIC int

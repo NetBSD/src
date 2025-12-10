@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.14 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: trap.h,v 1.15 2025/12/10 21:33:02 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -85,7 +85,7 @@
 #define	EXC_ITERROR	0x1300		/* Instruction TLB Error */
 #define	EXC_DTERROR	0x1400		/* Data TLB Error */
 #define	EXC_DBREAK	0x1c00		/* data breakpoint */
-#define	EXC_IBREAK	0x1d00		/* instructin breakpoint */
+#define	EXC_IBREAK	0x1d00		/* instruction breakpoint */
 
 /* The following are only present on 64 bit PPC implementations */
 #define EXC_DSEG	0x380

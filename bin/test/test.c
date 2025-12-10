@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.45 2022/08/27 21:18:39 dholland Exp $ */
+/* $NetBSD: test.c,v 1.46 2025/12/10 21:33:01 andvar Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.45 2022/08/27 21:18:39 dholland Exp $");
+__RCSID("$NetBSD: test.c,v 1.46 2025/12/10 21:33:01 andvar Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 	 * nor the closing ']' when the command was '[' (removed above)
 	 *
 	 * None of the following allow -a or -o as an operator (those
-	 * only apply in the evaluation of unspeicified expressions)
+	 * only apply in the evaluation of unspecified expressions)
 	 *
 	 * Note that the xxx_arg() functions return "shell" true/false
 	 * (0 == true, 1 == false) or -1 for "unspecified case"

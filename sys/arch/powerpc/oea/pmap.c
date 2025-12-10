@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2025/02/28 09:07:11 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123 2025/12/10 21:33:03 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2025/02/28 09:07:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2025/12/10 21:33:03 andvar Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2967,7 +2967,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	}
 
 	if (pa == 0)
-		panic("pmap_steal_memory: no approriate memory to steal!");
+		panic("pmap_steal_memory: no appropriate memory to steal!");
 
 	uvm_physseg_unplug(start, npgs);
 

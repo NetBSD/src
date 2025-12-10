@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_erst.c,v 1.4 2025/10/09 21:21:43 rillig Exp $	*/
+/*	$NetBSD: apei_erst.c,v 1.5 2025/12/10 21:33:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.4 2025/10/09 21:21:43 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.5 2025/12/10 21:33:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -121,7 +121,7 @@ static const char *apei_erst_instruction[] = {
 /*
  * apei_erst_instreg
  *
- *	Table of which isntructions use a register operand.
+ *	Table of which instructions use a register operand.
  *
  *	Must match apei_erst_instfunc.
  */

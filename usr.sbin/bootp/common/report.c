@@ -1,8 +1,8 @@
-/*	$NetBSD: report.c,v 1.7 2008/05/02 19:22:10 xtraeme Exp $	*/
+/*	$NetBSD: report.c,v 1.8 2025/12/10 21:33:03 andvar Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: report.c,v 1.7 2008/05/02 19:22:10 xtraeme Exp $");
+__RCSID("$NetBSD: report.c,v 1.8 2025/12/10 21:33:03 andvar Exp $");
 #endif
 
 /*
@@ -49,7 +49,7 @@ report_init(int nolog)
 
 /*
  * This routine reports errors and such via stderr and syslog() if
- * appopriate.  It just helps avoid a lot of "#ifdef SYSLOG" constructs
+ * appropriate.  It just helps avoid a lot of "#ifdef SYSLOG" constructs
  * from being scattered throughout the code.
  *
  * The syntax is identical to syslog(3), but %m is not considered special

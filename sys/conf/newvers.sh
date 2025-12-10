@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.64 2024/05/01 14:52:01 christos Exp $
+#	$NetBSD: newvers.sh,v 1.65 2025/12/10 21:33:01 andvar Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -175,7 +175,7 @@ while getopts "Rr:m:i:n" OPT; do
 		machine="$OPTARG"
 		;;
 	i)
-		# -i <id>: Use the secified string as the
+		# -i <id>: Use the specified string as the
 		# value of the kernel_ident variable
 		id="$OPTARG"
 		;;

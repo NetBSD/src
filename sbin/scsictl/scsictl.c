@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.42 2024/11/10 01:55:06 riastradh Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.43 2025/12/10 21:33:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.42 2024/11/10 01:55:06 riastradh Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.43 2025/12/10 21:33:01 andvar Exp $");
 #endif
 
 #include <sys/param.h>
@@ -267,7 +267,7 @@ device_defects(int argc, char *argv[])
 		break;
 	}
 
-	/* no defect list sepecified, assume both. */
+	/* no defect list specified, assume both. */
 	if ((cmd.flags & (RDD_PRIMARY|RDD_GROWN)) == 0)
 		cmd.flags |= (RDD_PRIMARY|RDD_GROWN);
 

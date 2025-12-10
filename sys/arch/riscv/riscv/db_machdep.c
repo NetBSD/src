@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14 2024/11/25 22:04:14 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.15 2025/12/10 21:33:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.14 2024/11/25 22:04:14 skrll Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.15 2025/12/10 21:33:02 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -137,7 +137,7 @@ inst_call(uint32_t insn)
 	    || (OPCODE_P(insn, JALR) && ri.type_i.i_rd == 1);
 }
 
-// return true if the instructon is an uncondition branch/jump.
+// return true if the instruction is an uncondition branch/jump.
 bool
 inst_unconditional_flow_transfer(uint32_t insn)
 {

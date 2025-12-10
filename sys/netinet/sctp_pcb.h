@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.8 2023/06/02 08:51:48 andvar Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.9 2025/12/10 21:33:03 andvar Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -220,7 +220,7 @@ struct sctp_epinfo {
 extern uint32_t sctp_pegs[SCTP_NUMBER_OF_PEGS];
 /*
  * Here we have all the relevant information for each SCTP entity created.
- * We will need to modify this as approprate. We also need to figure out
+ * We will need to modify this as appropriate. We also need to figure out
  * how to access /dev/random.
  */
 struct sctp_pcb {

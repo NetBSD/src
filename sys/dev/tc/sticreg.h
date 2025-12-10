@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticreg.h,v 1.9 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.10 2025/12/10 21:33:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ struct stic_regs {
 
 /*
  * On DMA: reading from a STIC poll register causes load & execution of
- * the packet at the correspoinding physical address.  Either STAMP_OK
+ * the packet at the corresponding physical address.  Either STAMP_OK
  * or STAMP_BUSY will be returned to indicate status.
  *
  * The STIC sees only 23-bits (8MB) of address space.  Bits 21-22 in

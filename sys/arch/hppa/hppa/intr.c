@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2022/09/29 06:39:59 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.9 2025/12/10 21:33:02 andvar Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2022/09/29 06:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2025/12/10 21:33:02 andvar Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -100,7 +100,7 @@ hppa_intr_initialise(struct cpu_info *ci)
 {
 	int i;
 
-	/* Initialize all prority level masks to mask everything. */
+	/* Initialize all priority level masks to mask everything. */
 	for (i = 0; i < NIPL; i++)
 		ci->ci_imask[i] = -1;
 

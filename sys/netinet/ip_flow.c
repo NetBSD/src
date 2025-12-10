@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.86 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.87 2025/12/10 21:33:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.86 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.87 2025/12/10 21:33:03 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -568,7 +568,7 @@ ipflow_create(struct route *ro, struct mbuf *m)
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
 
 	/*
-	 * Insert into the approriate bucket of the flow table.
+	 * Insert into the appropriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip);
 	IPFLOW_INSERT(hash, ipf);

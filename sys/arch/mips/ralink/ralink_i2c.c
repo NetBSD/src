@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.9 2025/09/15 13:23:02 thorpej Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.10 2025/12/10 21:33:03 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.9 2025/09/15 13:23:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.10 2025/12/10 21:33:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -191,7 +191,7 @@ ra_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	 *   - Read
 	 *   - Read with stop
 	 * Because the I2C block on the Ralink part generates stop markers
-	 * at approprite places, based upon the byte count, the read and write
+	 * at appropriate places, based upon the byte count, the read and write
 	 * with stop operations will rarely be needed.  They are included here
 	 * as placeholders, but haven't been implemented or tested.
 	 */

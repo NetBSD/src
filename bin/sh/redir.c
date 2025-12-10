@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.76 2024/11/11 22:57:42 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.77 2025/12/10 21:33:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.76 2024/11/11 22:57:42 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.77 2025/12/10 21:33:02 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -607,7 +607,7 @@ clearredir(int vforked)
 	 * exec a script which failed ENOEXEC.   Any redirections
 	 * that have been made are for that script, after it
 	 * is done, we exit, there is nothing  to restore, so
-	 * just make the refirectoins permanent.
+	 * just make the redirections permanent.
 	 *
 	 * free_rl() does that does that for us, unless we're
 	 * a child of a vfork() in which case that is unsafe to

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.143 2024/05/04 13:45:10 mlelstv Exp $	*/
+/*	$NetBSD: trap.c,v 1.144 2025/12/10 21:33:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2024/05/04 13:45:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2025/12/10 21:33:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,7 +394,7 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 
 		/*
 		 * The 68040 doesn't re-run instructions that cause
-		 * write page faults (unless due to a move16 isntruction).
+		 * write page faults (unless due to a move16 instruction).
 		 * So once the page is repaired, we have to write the
 		 * value of WB2D out to memory ourselves.  Because
 		 * the writeback could possibly span two pages in

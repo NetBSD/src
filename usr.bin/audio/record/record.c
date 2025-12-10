@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.59 2024/03/20 20:19:31 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.60 2025/12/10 21:33:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.59 2024/03/20 20:19:31 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.60 2025/12/10 21:33:00 andvar Exp $");
 #endif
 
 
@@ -260,7 +260,7 @@ main(int argc, char *argv[])
 		err(1, "couldn't malloc buffer of %d size", (int)bufsize);
 
 	/*
-	 * set up audio device for recording with the speified parameters
+	 * set up audio device for recording with the specified parameters
 	 */
 	AUDIO_INITINFO(&info);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.67 2023/01/01 21:27:14 gutteridge Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.68 2025/12/10 21:33:01 andvar Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.67 2023/01/01 21:27:14 gutteridge Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.68 2025/12/10 21:33:01 andvar Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1408,7 +1408,7 @@ static void
 man_parse_section(enum man_sec sec, const struct roff_node *n, mandb_rec *rec)
 {
 	/*
-	 * If the user sepecified the 'l' flag then just parse
+	 * If the user specified the 'l' flag then just parse
 	 * the NAME section, ignore the rest.
 	 */
 	if (mflags.limit)
