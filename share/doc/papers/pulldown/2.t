@@ -1,4 +1,4 @@
-.\"	$Id: 2.t,v 1.1 2001/07/04 05:29:25 itojun Exp $
+.\"	$Id: 2.t,v 1.2 2025/12/10 21:21:12 andvar Exp $
 .\"
 .\".ds RH KAME approach
 .NH 1
@@ -152,7 +152,7 @@ function solves all 3 problems in
 that were described in the previous section.
 .I m_pulldown
 does not copy mbufs when copying is not necessary.
-Since it does not modify the mbuf chain prior to the speficied offset
+Since it does not modify the mbuf chain prior to the specified offset
 .I off,
 it is not necessary for the caller to re-initialize the pointers into the mbuf data
 region.
