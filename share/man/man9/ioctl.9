@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.36 2022/07/07 20:22:03 andvar Exp $
+.\" $NetBSD: ioctl.9,v 1.37 2025/12/10 19:25:24 andvar Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -284,7 +284,7 @@ notification to the application.
 #define	FOOIOCTL	_IOWR('i', 23, int)
 
 int a = 3;
-error = ioctl(s, FOOICTL, &a);
+error = ioctl(s, FOOIOCTL, &a);
 .Ed
 .Pp
 Within the
