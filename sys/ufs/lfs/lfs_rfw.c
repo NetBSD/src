@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.42 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.43 2025/12/10 03:20:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.42 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.43 2025/12/10 03:20:59 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -300,6 +300,13 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	lfs_update_single(fs, NULL, vp, lbn, ndaddr, size);
 
 	LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, ndaddr), bp);
+	DLOG((DLOG_SU, "seg %jd += %jd for ino %jd"
+		" lbn %jd db 0x%jd (rfw)\n",
+		(intmax_t)lfs_dtosn(fs, ndaddr),
+		(intmax_t)size,
+		(intmax_t)ip->i_number,
+		(intmax_t)lbn,
+		(intmax_t)ndaddr));
 	sup->su_nbytes += size;
 	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, ndaddr), bp);
 
@@ -404,7 +411,7 @@ static int
 update_inoblk(struct lfs_inofuncarg *lifa)
 {
 	struct lfs *fs;
-	daddr_t offset, daddr;
+	daddr_t offset;
 	struct lwp *l;
 	struct vnode *devvp, *vp;
 	struct inode *ip;
@@ -412,9 +419,8 @@ update_inoblk(struct lfs_inofuncarg *lifa)
 	struct buf *dbp, *ibp;
 	int error;
 	IFILE *ifp;
-	SEGUSE *sup;
 	unsigned i, num;
-	uint32_t gen, osn, nsn;
+	uint32_t gen;
 	char *buf;
 	ino_t ino;
 
@@ -491,24 +497,9 @@ update_inoblk(struct lfs_inofuncarg *lifa)
 		ulfs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p,
 			  &vp);
 
-		/* Record change in location */
-		LFS_IENTRY(ifp, fs, ino, ibp);
-		daddr = lfs_if_getdaddr(fs, ifp);
-		lfs_if_setdaddr(fs, ifp, offset);
-		LFS_WRITEIENTRY(ifp, fs, ino, ibp);
-		/* And do segment accounting */
-		osn = lfs_dtosn(fs, daddr);
-		nsn = lfs_dtosn(fs, offset);
-		if (DADDR_IS_BAD(daddr) || osn != nsn) {
-			if (!DADDR_IS_BAD(daddr)) {
-				LFS_SEGENTRY(sup, fs, osn, ibp);
-				sup->su_nbytes -= DINOSIZE(fs);
-				LFS_WRITESEGENTRY(sup, fs, osn, ibp);
-			}
-			LFS_SEGENTRY(sup, fs, nsn, ibp);
-			sup->su_nbytes += DINOSIZE(fs);
-			LFS_WRITESEGENTRY(sup, fs, nsn, ibp);
-		}
+		/* Record change in location and do segment accounting */
+		lfs_update_iaddr(fs, ip, offset);
+		
 		vput(vp);
 	}
 	free(buf, M_SEGMENT);

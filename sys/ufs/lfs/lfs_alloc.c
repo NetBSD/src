@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.151 2025/12/06 04:55:04 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.152 2025/12/10 03:20:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.151 2025/12/06 04:55:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.152 2025/12/10 03:20:59 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -561,7 +561,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	IFILE *ifp;
 	struct inode *ip;
 	struct lfs *fs;
-	daddr_t old_iaddr;
 	struct segdelta *isd, *fsd, *tmp;
 
 	/* Get the inode number and file system. */
@@ -650,12 +649,11 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	 * and link it onto the free chain.
 	 */
 
+	/* update the on-disk address (to "nowhere") */
+	lfs_update_iaddr(fs, ip, LFS_UNUSED_DADDR);
+
 	/* fetch the ifile entry */
 	LFS_IENTRY(ifp, fs, ino, bp);
-
-	/* update the on-disk address (to "nowhere") */
-	old_iaddr = lfs_if_getdaddr(fs, ifp);
-	lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
 
 	/* bump the version */
 	lfs_if_setversion(fs, ifp, lfs_if_getversion(fs, ifp) + 1);
@@ -753,12 +751,6 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		}
 	}
 #endif
-
-	/*
-	 * Update the segment summary for the segment where the on-disk
-	 * copy used to be.
-	 */
-	lfs_subtract_inode(fs, ip->i_number, old_iaddr);
 
 	/* Set superblock modified bit. */
 	mutex_enter(&lfs_lock);
@@ -999,18 +991,17 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 	
 	for (i = 0; i < norphan; i++) {
 		ino_t ino = orphan[i];
-		unsigned segno;
 		struct vnode *vp;
 		struct inode *ip;
 		struct buf *bp;
 		IFILE *ifp;
-		SEGUSE *sup;
+		daddr_t daddr;
 		int error;
 
 		/* Get the segment the inode is in on disk.  */
 		LFS_IENTRY(ifp, fs, ino, bp);
-		KASSERT(!DADDR_IS_BAD(lfs_if_getdaddr(fs, ifp)));
-		segno = lfs_dtosn(fs, lfs_if_getdaddr(fs, ifp));
+		daddr = lfs_if_getdaddr(fs, ifp);
+		KASSERT(!DADDR_IS_BAD(daddr));
 		brelse(bp, 0);
 
 		/*
@@ -1050,16 +1041,8 @@ lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 
 		rw_enter(&fs->lfs_fraglock, RW_READER);
 
-		/* Update the number of bytes in the segment summary.  */
-		LFS_SEGENTRY(sup, fs, segno, bp);
-		KASSERT(sup->su_nbytes >= DINOSIZE(fs));
-		sup->su_nbytes -= DINOSIZE(fs);
-		LFS_WRITESEGENTRY(sup, fs, segno, bp);
-
-		/* Drop the on-disk address.  */
-		LFS_IENTRY(ifp, fs, ino, bp);
-		lfs_if_setdaddr(fs, ifp, LFS_UNUSED_DADDR);
-		LFS_WRITEIENTRY(ifp, fs, ino, bp);
+		/* Update address and do accounting. */
+		lfs_update_iaddr(fs, ip, LFS_UNUSED_DADDR);
 		
 		rw_exit(&fs->lfs_fraglock);
 	}

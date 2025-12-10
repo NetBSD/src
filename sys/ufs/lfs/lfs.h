@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.217 2025/12/06 04:55:04 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.218 2025/12/10 03:20:59 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1247,7 +1247,6 @@ struct segment {
 #define SEGM_SINGLE	0x0100		/* Opportunistic writevnodes */
 	uint16_t seg_flags;		/* run-time flags for this segment */
 	uint32_t seg_iocount;		/* number of ios pending */
-	int	  ndupino;		/* number of duplicate inodes */
 	uint64_t bytes_written;		/* bytes written */
 	int	gatherblock_loopcount;	/* lfs_gatherblock loop count */
 };

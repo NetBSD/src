@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.48 2020/05/14 08:34:17 msaitoh Exp $ */
+/* $NetBSD: segwrite.c,v 1.49 2025/12/10 03:20:59 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -685,7 +685,6 @@ lfs_initseg(struct lfs * fs)
 	sp->ibp = NULL;
 	sp->idp = NULL;
 	sp->ninodes = 0;
-	sp->ndupino = 0;
 
 	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
 	sp->cbpp = sp->bpp;

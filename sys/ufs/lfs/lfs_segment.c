@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.304 2025/12/06 04:55:04 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.305 2025/12/10 03:20:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.304 2025/12/06 04:55:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.305 2025/12/10 03:20:59 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -902,122 +902,74 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 /*
  * Update segment accounting to reflect this inode's change of address.
  */
-static int
-lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t ndaddr)
+void
+lfs_update_iaddr(struct lfs *fs, struct inode *ip, daddr_t ndaddr)
 {
 	struct buf *bp;
-	daddr_t daddr;
 	IFILE *ifp;
 	SEGUSE *sup;
 	ino_t ino;
-	int redo_ifile;
+	int oldsn, newsn;
+	daddr_t odaddr;
 
 	ASSERT_SEGLOCK(fs);
 	
-	redo_ifile = 0;
-
-	/*
-	 * If updating the ifile, update the super-block.  Update the disk
-	 * address and access times for this inode in the ifile.
-	 */
 	ino = ip->i_number;
+	newsn = (ndaddr == LFS_UNUSED_DADDR ? -1 : lfs_dtosn(fs, ndaddr));
+
+	/* Update recorded location, noting old location */
 	if (ino == LFS_IFILE_INUM) {
-		daddr = lfs_sb_getidaddr(fs);
-		lfs_sb_setidaddr(fs, LFS_DBTOFSB(fs, ndaddr));
+		odaddr = lfs_sb_getidaddr(fs);
+		oldsn = lfs_dtosn(fs, odaddr);
+		lfs_sb_setidaddr(fs, ndaddr);
 	} else {
 		LFS_IENTRY(ifp, fs, ino, bp);
-		daddr = lfs_if_getdaddr(fs, ifp);
-		lfs_if_setdaddr(fs, ifp, LFS_DBTOFSB(fs, ndaddr));
+		odaddr = lfs_if_getdaddr(fs, ifp);
+		oldsn = (odaddr == LFS_UNUSED_DADDR ? -1
+			 : lfs_dtosn(fs, odaddr));
+		lfs_if_setdaddr(fs, ifp, ndaddr);
 		LFS_WRITEIENTRY(ifp, fs, ino, bp);
 	}
 
 	/*
-	 * If this is the Ifile and lfs_offset is set to the first block
-	 * in the segment, dirty the new segment's accounting block
-	 * (XXX should already be dirty?) and tell the caller to do it again.
+	 * If moving the inode to another block in the same segment,
+	 * there is nothing more to do.
 	 */
-	if (ip->i_number == LFS_IFILE_INUM && ndaddr != 0x0) {
-		if (lfs_sntod(fs, sp->seg_number) + lfs_btofsb(fs, lfs_sb_getsumsize(fs)) ==
-		    ndaddr) {
-			LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
-			KASSERT(bp->b_oflags & BO_DELWRI);
-			LFS_WRITESEGENTRY(sup, fs, sp->seg_number, bp);
-			__USE(sup);
-			redo_ifile |= 1;
-		}
+	if (oldsn == newsn)
+		return;
+
+	/* Remove from its old segment, if any */
+	if (oldsn >= 0) {
+		LFS_SEGENTRY(sup, fs, oldsn, bp);
+		DLOG((DLOG_SU, "seg %jd -= %jd for ino %jd inode\n",
+			(intmax_t)oldsn,
+			(intmax_t)DINOSIZE(fs),
+			(intmax_t)ino));
+		KASSERTMSG(sup->su_nbytes >= DINOSIZE(fs),
+			   "lfs_writeinode: negative bytes "
+			   "(segment %jd short by %jd)",
+			   (intmax_t)oldsn,
+			   (intmax_t)DINOSIZE(fs) - sup->su_nbytes);
+		sup->su_nbytes -= DINOSIZE(fs);
+		LFS_WRITESEGENTRY(sup, fs, oldsn, bp); /* Ifile */
 	}
 
-	/*
-	 * Account the inode: it no longer belongs to its former segment,
-	 * though it will not belong to the new segment until that segment
-	 * is actually written.
-	 */
-	redo_ifile += lfs_subtract_inode(fs, ino, daddr);
-
-	return redo_ifile;
-}
-
-int
-lfs_subtract_inode(struct lfs *fs, ino_t ino, daddr_t daddr)
-{
-	int oldsn, ndupino;
-	struct segment *sp;
-	struct buf *bp;
-	SEGUSE *sup;
-	int redo_ifile;
+	/* Add to its new segment, if any */
+	if (newsn >= 0) {
+		LFS_SEGENTRY(sup, fs, newsn, bp);
+		DLOG((DLOG_SU, "seg %jd += %jd for ino %jd inode at 0x%jx\n",
+			(intmax_t)newsn,
+			(intmax_t)DINOSIZE(fs),
+			(intmax_t)ino, (intmax_t)ndaddr));
+		KASSERTMSG(sup->su_nbytes <= lfs_sb_getssize(fs),
+			   "lfs_writeinode: overfull segment "
+			   "(segment %jd over by %jd)",
+			   (intmax_t)newsn,
+			   (intmax_t)sup->su_nbytes + DINOSIZE(fs));
+		sup->su_nbytes += DINOSIZE(fs);
+		LFS_WRITESEGENTRY(sup, fs, oldsn, bp); /* Ifile */
+	}
 	
-	if (DADDR_IS_BAD(daddr))
-		return 0;
-
-	redo_ifile = 0;
-	sp = fs->lfs_sp;
-	oldsn = lfs_dtosn(fs, daddr);
-	ndupino = (sp->seg_number == oldsn) ? sp->ndupino : 0;
-		
-	/*
-	 * If the inode was previously located in this same
-	 * segment, the segment count could dip below zero
-	 * here.  Keep track of how many duplicates we have in
-	 * "dupino" so we don't panic below.
-	 */
-	if (oldsn == sp->seg_number) {
-		ndupino = ++sp->ndupino;
-		DLOG((DLOG_SEG, "lfs_writeinode: last inode addr"
-		      " in this segment (ino %jd daddr 0x%jx)"
-		      " ndupino=%d\n", (intmax_t)ino,
-		      (intmax_t)daddr, sp->ndupino));
-	}
-	LFS_SEGENTRY(sup, fs, oldsn, bp);
-	KASSERTMSG((sup->su_nbytes + DINOSIZE(fs) * ndupino)
-		   >= DINOSIZE(fs),
-		   "lfs_writeinode: negative bytes "
-		   "(segment %jd short by %d, "
-		   "oldsn=%jd, cursn=%jd,"
-		   " daddr=0x%jx, su_nbytes=%u, "
-		   "ndupino=%d (%d))\n",
-		   (intmax_t)lfs_dtosn(fs, daddr),
-		   (int)DINOSIZE(fs) * (1 - sp->ndupino) - sup->su_nbytes,
-		   (intmax_t)oldsn, (intmax_t)sp->seg_number, (intmax_t)daddr,
-		   (unsigned int)sup->su_nbytes,
-		   sp->ndupino, ndupino);
-	DLOG((DLOG_SU, "seg %jd -= %jd for ino %jd inode at 0x%jx\n",
-		(intmax_t)lfs_dtosn(fs, daddr),
-		(intmax_t)DINOSIZE(fs),
-		(intmax_t)ino,
-		(intmax_t)daddr));
-	sup->su_nbytes -= DINOSIZE(fs);
-	redo_ifile |=
-		(ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
-	if (redo_ifile) {
-		mutex_enter(&lfs_lock);
-		fs->lfs_flags |= LFS_IFDIRTY;
-		mutex_exit(&lfs_lock);
-		/* Don't double-account */
-		lfs_sb_setidaddr(fs, 0x0);
-	}
-	LFS_WRITESEGENTRY(sup, fs, oldsn, bp); /* Ifile */
-	
-	return redo_ifile;
 }
 
 int
@@ -1029,7 +981,6 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	daddr_t daddr;
 	IINFO *iip;
 	int i;
-	int redo_ifile = 0;
 	int gotblk = 0;
 	int count;
 	SEGSUM *ssp;
@@ -1078,9 +1029,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		}
 		mutex_exit(vp->v_interlock);
 
-		if (redo == 0)
-			redo = lfs_update_iaddr(fs, sp, ip, 0x0);
-		if (redo == 0)
+		if (!redo)
 			break;
 
 		if (sp->idp) {
@@ -1176,7 +1125,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 
 	bp = sp->ibp;
 	cdp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
-	DLOG((DLOG_SU, "write ino %jd to 0x%jx (sn %jd)\n",
+	DLOG((DLOG_SU, "write ino %jd to 0x%jx (seg %jd)\n",
 	      (intmax_t)ip->i_number,
 	      (intmax_t)LFS_DBTOFSB(fs, bp->b_blkno),
 	      (intmax_t)lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno))));
@@ -1318,10 +1267,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	if (++sp->ninodes % LFS_INOPB(fs) == 0)
 		sp->ibp = NULL;
 
-	redo_ifile = lfs_update_iaddr(fs, sp, ip, bp->b_blkno);
+	lfs_update_iaddr(fs, ip, LFS_DBTOFSB(fs, bp->b_blkno));
 
-	/* KASSERT(redo_ifile == 0); */
-	return redo_ifile;
+	return 0;
 }
 
 int
@@ -1628,8 +1576,6 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	 */
 	if (daddr > 0) {
 		u_int32_t oldsn = lfs_dtosn(fs, daddr);
-		int ndupino __diagused = (sp && sp->seg_number == oldsn ?
-		    sp->ndupino : 0);
 
 		KASSERT(oldsn < lfs_sb_getnseg(fs));
 		if (lbn >= 0 && lbn < ULFS_NDADDR)
@@ -1637,17 +1583,15 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 		else
 			osize = lfs_sb_getbsize(fs);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-		KASSERTMSG(((sup->su_nbytes + DINOSIZE(fs)*ndupino) >= osize),
+		KASSERTMSG(sup->su_nbytes >= osize,
 		    "lfs_updatemeta: negative bytes "
 		    "(segment %" PRIu32 " short by %" PRId64
 		    ")\n"
 		    "lfs_updatemeta: ino %llu, lbn %" PRId64
-		    ", addr = 0x%" PRIx64 "\n"
-		    "lfs_updatemeta: ndupino=%d",
+		    ", addr = 0x%" PRIx64 "\n",
 		    lfs_dtosn(fs, daddr),
-		    (int64_t)osize - (DINOSIZE(fs) * ndupino + sup->su_nbytes),
-		    (unsigned long long)ip->i_number, lbn, daddr,
-		    ndupino);
+		    (int64_t)osize - sup->su_nbytes,
+		    (unsigned long long)ip->i_number, lbn, daddr);
 		DLOG((DLOG_SU, "seg %jd -= %jd for ino %jd lbn %jd"
 		      " db 0x%jx\n",
 			(intmax_t)lfs_dtosn(fs, daddr), (intmax_t)osize,
@@ -1933,7 +1877,6 @@ lfs_initseg(struct lfs *fs, uint16_t flags)
 	sp->ibp = NULL;
 	sp->idp = NULL;
 	sp->ninodes = 0;
-	sp->ndupino = 0;
 
 	sp->cbpp = sp->bpp;
 
@@ -2157,14 +2100,15 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	/* Loop through all blocks, except the segment summary. */
 	for (bpp = sp->bpp; ++bpp < sp->cbpp; ) {
 		if ((*bpp)->b_vp != devvp) {
+			KASSERT(lfs_dtosn(fs, LFS_DBTOFSB(fs, (*bpp)->b_blkno)) == sp->seg_number);
 			sup->su_nbytes += (*bpp)->b_bcount;
-			DLOG((DLOG_SU, "seg %jd += %ld for ino %jd"
+			DLOG((DLOG_SU, "seg %jd += %jd for ino %jd"
 			      " lbn %jd db 0x%jd\n",
 				(intmax_t)sp->seg_number,
 				(intmax_t)(*bpp)->b_bcount,
 				(intmax_t)VTOI((*bpp)->b_vp)->i_number,
 				(intmax_t)(*bpp)->b_lblkno,
-				(intmax_t)(*bpp)->b_blkno));
+				(intmax_t)LFS_DBTOFSB(fs, (*bpp)->b_blkno)));
 		}
 	}
 
@@ -2179,12 +2123,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 #endif /* DEBUG */
 
 	ninos = (lfs_ss_getninos(fs, ssp) + LFS_INOPB(fs) - 1) / LFS_INOPB(fs);
-	DLOG((DLOG_SU, "seg %d += %ld for %d inodes\n",
-	      sp->seg_number,
-	      lfs_ss_getninos(fs, ssp) * DINOSIZE(fs),
-	      lfs_ss_getninos(fs, ssp)));
-	sup->su_nbytes += lfs_ss_getninos(fs, ssp) * DINOSIZE(fs);
-	/* sup->su_nbytes += lfs_sb_getsumsize(fs); */
 	if (lfs_sb_getversion(fs) == 1)
 		sup->su_olastmod = time_second;
 	else
