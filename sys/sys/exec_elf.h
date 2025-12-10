@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.185 2025/12/09 18:54:21 jkoshy Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.186 2025/12/10 14:30:33 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -75,38 +75,24 @@
 typedef uint8_t		Elf_Byte;
 
 typedef uint32_t	Elf32_Addr;
-#define ELF32_FSZ_ADDR	4
 typedef uint32_t	Elf32_Off;
 typedef int32_t		Elf32_SOff;
-#define ELF32_FSZ_OFF	4
 typedef int32_t		Elf32_Sword;
-#define ELF32_FSZ_SWORD 4
 typedef uint32_t	Elf32_Word;
-#define ELF32_FSZ_WORD	4
 typedef uint16_t	Elf32_Half;
-#define ELF32_FSZ_HALF	2
 typedef uint64_t	Elf32_Lword;
-#define ELF32_FSZ_LWORD 8
 
 typedef uint64_t	Elf64_Addr;
-#define ELF64_FSZ_ADDR	8
 typedef uint64_t	Elf64_Off;
 typedef int64_t		Elf64_SOff;
-#define ELF64_FSZ_OFF	8
 
 typedef int32_t		Elf64_Sword;
-#define ELF64_FSZ_SWORD 4
 typedef uint32_t	Elf64_Word;
-#define ELF64_FSZ_WORD	4
 
 typedef int64_t		Elf64_Sxword;
-#define ELF64_FSZ_SXWORD 8
 typedef uint64_t	Elf64_Xword;
-#define ELF64_FSZ_XWORD 8
 typedef uint64_t	Elf64_Lword;
-#define ELF64_FSZ_LWORD 8
 typedef uint16_t	Elf64_Half;
-#define ELF64_FSZ_HALF 2
 
 /*
  * ELF Header
@@ -158,7 +144,6 @@ typedef struct {
 #define EI_OSABI	7	/* Operating system/ABI identification */
 #define EI_ABIVERSION	8	/* ABI version */
 #define EI_PAD		9	/* Start of padding bytes up to EI_NIDENT*/
-#define EI_NIDENT	16	/* First non-ident header byte */
 
 /* e_ident[EI_MAG0,EI_MAG3] */
 #define ELFMAG0		0x7f
@@ -172,7 +157,6 @@ typedef struct {
 #define ELFCLASSNONE	0	/* Invalid class */
 #define ELFCLASS32	1	/* 32-bit objects */
 #define ELFCLASS64	2	/* 64-bit objects */
-#define ELFCLASSNUM	3
 
 /* e_ident[EI_DATA] */
 #define ELFDATANONE	0	/* Invalid data encoding */
@@ -182,7 +166,6 @@ typedef struct {
 /* e_ident[EI_VERSION] */
 #define EV_NONE		0	/* Invalid version */
 #define EV_CURRENT	1	/* Current version */
-#define EV_NUM		2
 
 /* e_ident[EI_OSABI] */
 #define ELFOSABI_SYSV		0	/* UNIX System V ABI */
@@ -220,7 +203,6 @@ typedef struct {
 #define ET_EXEC		2	/* Executable file */
 #define ET_DYN		3	/* Shared object file */
 #define ET_CORE		4	/* Core file */
-#define ET_NUM		5
 
 #define ET_LOOS		0xfe00	/* Operating system specific range */
 #define ET_HIOS		0xfeff
@@ -241,9 +223,8 @@ typedef struct {
 #define EM_S370		9	/* Amdahl UTS on System/370 */
 #define EM_MIPS_RS3_LE	10	/* MIPS RS3000 Little-endian */
 			/* 11-14 - Reserved */
-#define EM_RS6000	11	/* IBM RS/6000 XXX reserved */
 #define EM_PARISC	15	/* Hewlett-Packard PA-RISC */
-#define EM_NCUBE	16	/* NCube XXX reserved */
+			/* 16 - Reserved */
 #define EM_VPP500	17	/* Fujitsu VPP500 */
 #define EM_SPARC32PLUS	18	/* Enhanced instruction set SPARC */
 #define EM_960		19	/* Intel 80960 */
@@ -426,7 +407,6 @@ typedef struct {
 
 /* Unofficial machine types follow */
 #define EM_ALPHA	36902	/* DIGITAL Alpha */
-#define EM_NUM		36903
 
 /*
  * Program Header
@@ -537,11 +517,9 @@ typedef struct {
 #define SHT_GROUP	     17		/* Section group */
 #define SHT_SYMTAB_SHNDX     18		/* Section indexes (see SHN_XINDEX) */
 #define SHT_RELR	     19		/* Relative relocation information */
-#define SHT_NUM		     20
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
 #define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
-#define	SHT_LOSUNW	     0x6ffffff4
 #define	SHT_SUNW_dof	     0x6ffffff4
 #define	SHT_GNU_ATTRIBUTES   0x6ffffff5	/* GNU object attributes */
 #define	SHT_SUNW_cap	     0x6ffffff5
@@ -557,7 +535,6 @@ typedef struct {
 #define SHT_GNU_verneed	     SHT_SUNW_verneed
 #define SHT_SUNW_versym	     0x6fffffff /* Symbol versions */
 #define SHT_GNU_versym	     SHT_SUNW_versym
-#define	SHT_HISUNW	     0x6fffffff
 #define SHT_HIOS	     0x6fffffff
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
@@ -619,7 +596,6 @@ typedef struct {
 #define STB_LOCAL		0	/* local symbol */
 #define STB_GLOBAL		1	/* global symbol */
 #define STB_WEAK		2	/* weakly defined global symbol */
-#define STB_NUM			3
 
 #define STB_LOOS		10	/* Operating system specific range */
 #define STB_HIOS		12
@@ -817,7 +793,6 @@ typedef struct {
 #define DT_RELRSZ	35	/* Size, in bytes, of DT_RELR table */
 #define DT_RELR		36	/* Address of Relr relocation table */
 #define DT_RELRENT	37	/* Size, in bytes, of one DT_RELR entry */
-#define DT_NUM		38
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_GNU_HASH	0x6ffffef5	/* GNU-style hash table */
@@ -1045,10 +1020,41 @@ typedef Elf64_Half Elf64_Versym;
 #endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
 
 /*
- * Symbols and types that are NetBSD-specific.
+ * NetBSD-specific symbols and identifier spellings.
  */
-
 #define ELF_NIDENT	EI_INDENT	/* Prior spelling. */
+
+#define ELFCLASSNUM	3	/* Number of ELFCLASS* types. */
+#define EV_NUM		2	/* Number of ELF file format versions. */
+#define ET_NUM		5	/* Number of ABI-defined object types. */
+
+#define EM_RS6000	11	/* IBM RS/6000 XXX reserved */
+#define EM_NCUBE	16	/* NCube XXX reserved */
+#define EM_NUM		36903	/* EM_ALPHA(NetBSD) + 1 */
+
+#define	SHT_LOSUNW	0x6ffffff4 /* Also: SHT_SUNW_dof */
+#define	SHT_HISUNW	0x6fffffff /* Also: SHT_HIOS */
+
+#define SHT_NUM		20	/* Number of generic section types. */
+#define STB_NUM		3	/* Number of generic symbol bindings. */
+#define DT_NUM		38	/* Number of generic dynamic array tags. */
+
+/* File sizes of basic ELF types. */
+#define ELF32_FSZ_ADDR	4
+#define ELF32_FSZ_HALF	2
+#define ELF32_FSZ_LWORD 8
+#define ELF32_FSZ_OFF	4
+#define ELF32_FSZ_SWORD 4
+#define ELF32_FSZ_WORD	4
+
+#define ELF64_FSZ_ADDR	8
+#define ELF64_FSZ_HALF	2
+#define ELF64_FSZ_LWORD 8
+#define ELF64_FSZ_OFF	8
+#define ELF64_FSZ_SWORD 4
+#define ELF64_FSZ_SXWORD 8
+#define ELF64_FSZ_WORD	4
+#define ELF64_FSZ_XWORD	8
 
 /* Symbol Table index of the undefined symbol */
 #define ELF_SYM_UNDEFINED	0
