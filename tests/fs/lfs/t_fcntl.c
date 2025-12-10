@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.5 2025/11/06 15:45:33 perseant Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.6 2025/12/10 03:08:52 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -82,7 +82,7 @@ ATF_TC_HEAD(autoclean32, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"LFS32 LFCNAUTOCLEAN");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	/* atf_tc_set_md_var(tc, "timeout", "20"); */
 }
 
 ATF_TC(autoclean64);
@@ -90,7 +90,7 @@ ATF_TC_HEAD(autoclean64, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 		"LFS64 LFCNAUTOCLEAN");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	/* atf_tc_set_md_var(tc, "timeout", "20"); */
 }
 
 ATF_TC_BODY(coalesce32, tc)
