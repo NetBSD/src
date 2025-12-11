@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.36 2022/12/04 01:29:32 uwe Exp $
+.\"	$NetBSD: getopt.3,v 1.37 2025/12/11 14:07:23 uwe Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,30 +62,49 @@ if it has been specified in the string of accepted option characters,
 The option string
 .Fa optstring
 may contain the following elements: individual characters, and
-characters followed by a colon to indicate an option argument
-is to follow.
-If an individual character is followed by two colons, then the
-option argument is optional;
+characters followed by a colon
+.Pq Ql \&:
+to indicate an option argument is to follow.
+If an individual character is followed by two colons
+.Pq Ql \&:: ,
+then the option argument is optional;
 .Va optarg
 is set to the rest of the current
-.Va argv
+.Fa argv
 word, or
 .Dv NULL
 if there were no more characters in the current word.
-This is a
-.Nx
-extension.
+This is an extension not covered by POSIX.
+.Pp
 For example, an option string
-.Qq x
+.Li \*qx\*q
 recognizes an option
-.Dq Fl x ,
-and an option string
-.Qq x:
-recognizes an option and argument
-.Dq Fl x Ar argument .
+.Dq Fl x .
+.Pp
+An option string
+.Li \*qx:\*q
+recognizes an option with an argument, both
+.Dq Fl x Ns Ar arg\^ ,
+and
+.Dq Fl x Ar arg\^ .
 It does not matter to
 .Fn getopt
-if a following argument has leading whitespace.
+if the option's argument is a separate word or not.
+.Pp
+An option string
+.Li \*qx::\*q
+recognizes the option both without an argument
+.Dq Fl x ,
+and with an argument
+.Dq Fl x Ns Ar arg\^ .
+In the latter case the argument must be part of the same
+.Fa argv
+word.
+The
+.Dq Fl x
+and
+.Dq Ar arg\^
+must not be separated by a whitespace on the command line.
 .Pp
 On return from
 .Fn getopt ,
