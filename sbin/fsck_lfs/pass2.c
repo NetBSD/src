@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.35 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: pass2.c,v 1.36 2025/12/11 01:22:44 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -362,6 +362,13 @@ chk2:
 	if (lfs_dir_getino(fs, dirp) >= maxino) {
 		fileerror(idesc->id_number, lfs_dir_getino(fs, dirp), "I OUT OF RANGE");
 		n = reply("REMOVE");
+#if 0
+	/*
+	 * This would mean that we cannot have whiteouts in root.
+	 * The Ifile has not been exposed in the filesystem namespace
+	 * since 2006, too, so checking its type here is not worth
+	 * the headache.
+	 */
 	} else if (lfs_dir_getino(fs, dirp) == LFS_IFILE_INUM &&
 	    idesc->id_number == ULFS_ROOTINO) {
 		if (lfs_dir_gettype(fs, dirp) != LFS_DT_REG) {
@@ -372,6 +379,7 @@ chk2:
 				ret |= ALTERED;
 			}
 		}
+#endif /* 0 */
 	} else if (((lfs_dir_getino(fs, dirp) == ULFS_WINO && lfs_dir_gettype(fs, dirp) != LFS_DT_WHT) ||
 		(lfs_dir_getino(fs, dirp) != ULFS_WINO && lfs_dir_gettype(fs, dirp) == LFS_DT_WHT))) {
 		fileerror(idesc->id_number, lfs_dir_getino(fs, dirp), "BAD WHITEOUT ENTRY");
