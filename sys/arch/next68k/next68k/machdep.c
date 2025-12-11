@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2025/11/18 23:18:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 2025/12/11 11:02:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2025/11/18 23:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2025/12/11 11:02:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,7 +144,7 @@ int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void next68k_init(paddr_t);
+void machine_init(paddr_t);
 void straytrap(int, u_short);
 
 /*
@@ -194,7 +194,7 @@ const struct pmap_bootmap machine_bootmap[] = {
  * Early initialization, before main() is called.
  */
 void
-next68k_init(paddr_t nextpa)
+machine_init(paddr_t nextpa)
 {
 	int i;
 

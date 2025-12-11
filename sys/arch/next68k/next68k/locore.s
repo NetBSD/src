@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 2025/12/10 02:31:03 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 2025/12/11 11:02:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -360,7 +360,7 @@ Ltbia040:
 	.word	0xf518			| pflusha
 Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(next68k_init)
+	jbsr	_C_LABEL(machine_init)
 	addql	#4,%sp
 
 /* Final setup for call to main(). */
