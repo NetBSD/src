@@ -1,3 +1,4 @@
+/*	$NetBSD: opcodes.c,v 1.5 2025/12/11 05:18:03 andvar Exp $	*/
 /*	$OpenBSD: opcodes.c,v 1.1 2002/05/16 07:37:44 miod Exp $	*/
 
 /*
@@ -30,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opcodes.c,v 1.5 2025/12/11 05:18:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
