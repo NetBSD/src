@@ -1,4 +1,4 @@
-/* $NetBSD: arasan_sdhc_fdt.c,v 1.13 2022/11/02 11:04:02 jmcneill Exp $ */
+/* $NetBSD: arasan_sdhc_fdt.c,v 1.14 2025/12/11 08:29:21 mrg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.13 2022/11/02 11:04:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arasan_sdhc_fdt.c,v 1.14 2025/12/11 08:29:21 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -294,6 +294,7 @@ arasan_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.sc_flags = SDHC_FLAG_NO_CLKBASE |
 			       SDHC_FLAG_SINGLE_POWER_WRITE |
 			       SDHC_FLAG_32BIT_ACCESS |
+			       SDHC_FLAG_NO_PWR0 |
 			       SDHC_FLAG_USE_DMA |
 			       SDHC_FLAG_STOP_WITH_TC;
 	if (bus_width == 8) {
