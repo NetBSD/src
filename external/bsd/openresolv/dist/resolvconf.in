@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.16.3"
+OPENRESOLV_VERSION="3.17.1"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -336,7 +336,7 @@ dirname()
 {
 	OIFS="$IFS"
 	IFS=/
-	set -- "$@"
+	set -- $@
 	IFS="$OIFS"
 	if [ -n "$1" ]; then
 		printf %s .
@@ -569,7 +569,7 @@ list_keys() {
 	if [ "$list_cmd" = -i ] || [ "$list_cmd" = -l ]; then
 		for i in $@; do
 			if [ ! -f "$i" ]; then
-				if ! $force; then
+				if ! $force && [ "$i" != "*" ]; then
 					echo "No resolv.conf for key $i" >&2
 				fi
 				retval=2
@@ -1061,14 +1061,6 @@ if [ -z "$cmd" ]; then
 	fi
 fi
 
-# -I inits the state dir
-if [ "$cmd" = I ]; then
-	if [ -d "$VARDIR" ]; then
-		rm -rf "$VARDIR"/*
-	fi
-	exit $?
-fi
-
 # -D ensures that the listed config file base dirs exist
 if [ "$cmd" = D ]; then
 	config_mkdirs "$@"
@@ -1135,7 +1127,7 @@ a|d|C|c)
 		error_exit "Key not specified"
 	fi
 	;;
-u)	;;
+I|u)	;;
 *)
 	if [ -n "$cmd" ] && [ "$cmd" != h ]; then
 		error_exit "Unknown option $cmd"
@@ -1364,7 +1356,7 @@ a)
 
 	if $changedfile; then
 		printf "%s\n" "$resolv" >"$KEYDIR/$key" || exit $?
-	elif ! $changed; then
+	elif ! $changed && [ ! -e "$VARDIR"/error ]; then
 		exit 0
 	fi
 	unset changed changedfile oldmetric newmetric x oldexcl
@@ -1385,7 +1377,7 @@ d)
 			"$EXCLUSIVEDIR/"*" $i" || exit $?
 	done
 
-	if ! $changed; then
+	if ! $changed && [ ! -e "$VARDIR"/error ]; then
 		# Set the return code based on the forced flag
 		$force
 		exit $?
@@ -1404,7 +1396,9 @@ C)
 			echo " " >"$i" || exit $?
 		fi
 	done
-	$changed || exit 0
+	if ! $changed && [ ! -e "$VARDIR"/error ]; then
+		exit 0
+	fi
 	unset changed i
 	;;
 
@@ -1419,9 +1413,21 @@ c)
 				rm "$i" || exit $?
 			fi
 		done
-		$changed || exit 0
+		if ! $changed && [ ! -e "$VARDIR"/error ]; then
+			exit 0
+		fi
 		unset changed i
 	fi
+	;;
+I)
+	# Init the state dir, keeping our lock and key directories only
+	for i in "$VARDIR"/*; do
+		case "$i" in
+			"$LOCKDIR") ;;
+			"$KEYDIR") rm -rf "$KEYDIR"/*;;
+			*) rm -rf "$i";;
+		esac
+	done
 	;;
 esac
 
@@ -1461,5 +1467,9 @@ for script in "$LIBEXECDIR"/*; do
 		retval=$(($retval + $?))
 	fi
 done
+if [ "$retval" = 0 ]; then
+	rm -f "$VARDIR"/error
+else
+	echo "$retval" >"$VARDIR"/error
+fi
 exit $retval
-
