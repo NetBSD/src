@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.47 2025/12/11 07:25:11 andvar Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.48 2025/12/11 10:31:58 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.47 2025/12/11 07:25:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.48 2025/12/11 10:31:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,22 @@ EVCNT_ATTACH_STATIC(pmap_pt_cache_hit_ev);
 static struct evcnt pmap_pt_cache_miss_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap pt_cache", "miss");
 EVCNT_ATTACH_STATIC(pmap_pt_cache_miss_ev);
+
+static struct evcnt pmap_enter_nowait_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "nowait");
+EVCNT_ATTACH_STATIC(pmap_enter_nowait_ev);
+
+static struct evcnt pmap_enter_yeswait_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "yeswait");
+EVCNT_ATTACH_STATIC(pmap_enter_yeswait_ev);
+
+static struct evcnt pmap_enter_pte_alloc_fail_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pte alloc failed");
+EVCNT_ATTACH_STATIC(pmap_enter_pte_alloc_fail_ev);
+
+static struct evcnt pmap_enter_pv_alloc_fail_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pv alloc failed");
+EVCNT_ATTACH_STATIC(pmap_enter_pv_alloc_fail_ev);
 
 static struct evcnt pmap_enter_valid_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "valid");
@@ -2581,7 +2597,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct pv_entry *newpv;
 	struct pmap_completion pc;
 	int error = 0;
-	bool nowait = false;
+	const bool nowait = !!(flags & PMAP_CANFAIL);
 
 	pmap_completion_init(&pc);
 
@@ -2596,9 +2612,16 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	PMAP_CRIT_ENTER();
 
+	if (nowait) {
+		pmap_evcnt(enter_nowait);
+	} else {
+		pmap_evcnt(enter_yeswait);
+	}
+
 	/* Get the destination table. */
 	ptep = pmap_pte_alloc(pmap, va, &pt, nowait, &pc);
 	if (__predict_false(ptep == NULL)) {
+		pmap_evcnt(enter_pte_alloc_fail);
 		error = ENOMEM;
 		goto out;
 	}
@@ -2740,6 +2763,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			newpv = pmap_pv_alloc(true/*nowait flag*/);
 			if (__predict_false(newpv == NULL)) {
 				if (nowait) {
+					pmap_evcnt(enter_pv_alloc_fail);
 					error = ENOMEM;
 					goto out_release;
 				}
