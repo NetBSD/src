@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.288 2025/11/01 19:05:18 gutteridge Exp $	*/
+/*	$NetBSD: locore.s,v 1.289 2025/12/11 07:25:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5916,7 +5916,7 @@ _ENTRY(_C_LABEL(no_asyncflt_regs))
 _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 	/*
 	 * Flush entire on-chip instruction cache, which is
-	 * a pure vitually-indexed/virtually-tagged cache.
+	 * a pure virtually-indexed/virtually-tagged cache.
 	 */
 	retl
 	 sta	%g0, [%g0] ASI_HICACHECLR

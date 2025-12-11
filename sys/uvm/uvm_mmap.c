@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.186 2025/02/24 21:32:26 andvar Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.187 2025/12/11 07:25:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.186 2025/02/24 21:32:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.187 2025/12/11 07:25:11 andvar Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -888,7 +888,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	 * Try to see if any requested alignment can even be attemped.
 	 * Make sure we can express the alignment (asking for a >= 4GB
 	 * alignment on an ILP32 architecture make no sense) and the
-	 * alignment is at least for a page sized quanitiy.  If the
+	 * alignment is at least for a page sized quantity.  If the
 	 * request was for a fixed mapping, make sure supplied address
 	 * adheres to the request alignment.
 	 */

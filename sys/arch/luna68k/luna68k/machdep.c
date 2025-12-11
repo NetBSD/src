@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.115 2025/11/14 15:07:41 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.116 2025/12/11 07:25:11 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2025/11/14 15:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2025/12/11 07:25:11 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -151,7 +151,7 @@ int	delay_divisor = 30;	/* for delay() loop count */
 
 #ifdef __HAVE_NEW_PMAP_68K
 /*
- * Clamp the kernel virual address space to keep it out of the
+ * Clamp the kernel virtual address space to keep it out of the
  * TT ranges we use for devices.
  */
 const struct pmap_bootmap machine_bootmap[] = {

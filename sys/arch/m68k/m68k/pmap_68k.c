@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.46 2025/12/04 02:55:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.47 2025/12/11 07:25:11 andvar Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.46 2025/12/04 02:55:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.47 2025/12/11 07:25:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2062,7 +2062,7 @@ pmap_pinit(pmap_t pmap, paddr_t lev1pa)
  *
  *	In this implementation, the start address we return marks the
  *	end of the statically allocated special kernel virtual addresses
- *	set up in pmap_bootstrap1().  We return kernel_vitual_max as
+ *	set up in pmap_bootstrap1().  We return kernel_virtual_max as
  *	the end because we can grow the kernel address space using
  *	pmap_growkernel().
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gftty.c,v 1.4 2025/10/04 04:48:12 thorpej Exp $	*/
+/*	$NetBSD: gftty.c,v 1.5 2025/12/11 07:25:11 andvar Exp $	*/
 
 /*-     
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.4 2025/10/04 04:48:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.5 2025/12/11 07:25:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -139,7 +139,7 @@ gftty_reset_rxptrs(struct gftty_softc *sc)
 
 /*
  * gftty_attach --
- *	Attach a Goldfish virual TTY.
+ *	Attach a Goldfish virtual TTY.
  */
 void
 gftty_attach(struct gftty_softc *sc)
@@ -369,7 +369,7 @@ gftty_rx(struct gftty_softc *sc)
 
 /*
  * gftty_softrx --
- *	Software interrupt to comple Rx processing.
+ *	Software interrupt to complete Rx processing.
  */
 static void
 gftty_softrx(void *v)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.41 2020/03/20 19:08:54 ad Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.42 2025/12/11 07:25:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -168,7 +168,7 @@ struct vm_amap {
 
 /*
  * note that am_slots, am_bckptr, and am_anon are arrays.   this allows
- * fast lookup of pages based on their virual address at the expense of
+ * fast lookup of pages based on their virtual address at the expense of
  * some extra memory.   in the future we should be smarter about memory
  * usage and fall back to a non-array based implementation on systems
  * that are short of memory (XXXCDC).

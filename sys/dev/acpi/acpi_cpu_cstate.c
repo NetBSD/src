@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.63 2020/12/07 10:57:41 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.64 2025/12/11 07:25:12 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.63 2020/12/07 10:57:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.64 2025/12/11 07:25:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -751,7 +751,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	 * XXX This has a significant performance impact because the ACPI
 	 * timer seems very slow and with many CPUs becomes a chokepoint.
 	 * Better to use the TSC (if invariant) or APIC timer instead.
-	 * Proably even getbintime().  Disabled for now as no functional
+	 * Probably even getbintime().  Disabled for now as no functional
 	 * change - only C1 sleep is enabled.
 	 */
 	start = acpitimer_read_fast(NULL);

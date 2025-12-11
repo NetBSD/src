@@ -39,7 +39,7 @@ DONE		changes to newfs fsck for zvols.
 DONE		re-read zpool.cache and reconfigure pools.
 DONE		successful unload of the module.
 DONE		implement basic getpages/putpages.
-DONE		callbacks into arc, for reclaim of memory or kernel virual space.
+DONE		callbacks into arc, for reclaim of memory or kernel virtual space.
 DONE		prevent module loading if less than 512MB RAM.
 -		maybe changing the order of arguments for pool_cache constructors.
 DONE		check ioctl handlers for safety (for patch to allow old-style unix ioctl)

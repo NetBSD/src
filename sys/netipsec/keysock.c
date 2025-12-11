@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.72 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: keysock.c,v 1.73 2025/12/11 07:25:10 andvar Exp $	*/
 /*	$FreeBSD: keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.72 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.73 2025/12/11 07:25:10 andvar Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -241,7 +241,7 @@ _key_sendup_mbuf(struct socket *so, struct mbuf *m,
 	 * key_registered_sb_max.
 	 * Doing that check here avoids reworking every key_sendup_mbuf()
 	 * in the short term. . The rework will be done after a technical
-	 * conensus that this approach is appropriate.
+	 * consensus that this approach is appropriate.
  	 */
 	if (target == KEY_SENDUP_REGISTERED) {
 		sbprio = SB_PRIO_BESTEFFORT;

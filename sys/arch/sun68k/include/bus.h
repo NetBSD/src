@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 2019/09/23 16:17:58 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2025/12/11 07:25:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ void	bus_space_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 #define BUS_SPACE_MAP_BUS3	0x0400
 #define BUS_SPACE_MAP_BUS4	0x0800
 
-/* Internal flag: try to find and use a PROM maping for the device. */
+/* Internal flag: try to find and use a PROM mapping for the device. */
 #define	_SUN68K_BUS_MAP_USE_PROM		BUS_SPACE_MAP_BUS1
 
 /* flags for intr_establish() */

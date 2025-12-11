@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2021/01/23 19:38:08 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.24 2025/12/11 07:25:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ __NEWSMIPS_copy_region(4)
 #define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 #define	NEWSMIPS_DMAMAP_COHERENT 0x10000 /* no cache flush necessary on sync */
-#define	NEWSMIPS_DMAMAP_MAPTBL	0x20000	/* use DMA maping table */
+#define	NEWSMIPS_DMAMAP_MAPTBL	0x20000	/* use DMA mapping table */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

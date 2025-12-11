@@ -1,4 +1,4 @@
-/*	$NetBSD: bugsyscalls.h,v 1.2 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: bugsyscalls.h,v 1.3 2025/12/11 07:25:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ struct bug_ioinquiry {
 	u_int32_t	ii_devaddr;	/* Device address */
 	u_int32_t	ii_concurmode;	/* Concurrent mode */
 	u_int32_t	ii_modemid;	/* Modem ID */
-	struct bug_ioctrl *ii_ioctrl;	/* I/O control struction pointer */
+	struct bug_ioctrl *ii_ioctrl;	/* I/O control instruction pointer */
 	u_int32_t	ii_error;	/* Error code */
 	u_int32_t	ii_resvd[3];
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.8 2025/06/28 18:52:04 joe Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.9 2025/12/11 07:25:10 andvar Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1351,7 +1351,7 @@ exec_multiboot2(struct multiboot_package *mbp)
 		 * catch page allocation made for other tags.
 		 */
 		MULTIBOOT_TAG_TYPE_EFI_MMAP,
-#endif /* EFIGOOT */
+#endif /* EFIBOOT */
 		MULTIBOOT_TAG_TYPE_MMAP,
 		MULTIBOOT_TAG_TYPE_END, /* Must be last */
 	};

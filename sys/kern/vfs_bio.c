@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.306 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.307 2025/12/11 07:25:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.306 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.307 2025/12/11 07:25:12 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_biohist.h"
@@ -572,7 +572,7 @@ buf_lotsfree(void)
 		return 0;
 
 	/*
-	 * The probabily of getting a new allocation is inversely
+	 * The probability of getting a new allocation is inversely
 	 * proportional  to the current size of the cache above
 	 * the low water mark.  Divide the total first to avoid overflows
 	 * in the product.

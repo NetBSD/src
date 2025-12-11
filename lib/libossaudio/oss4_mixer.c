@@ -1,4 +1,4 @@
-/*	$NetBSD: oss4_mixer.c,v 1.1 2021/06/08 18:43:54 nia Exp $	*/
+/*	$NetBSD: oss4_mixer.c,v 1.2 2025/12/11 07:25:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2020-2021 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ _oss4_mixer_ioctl(int fd, unsigned long com, void *argp)
 		memset(cardinfo->hw_info, 0, sizeof(cardinfo->hw_info));
 		/*
 		 * OSSv4 does not document this ioctl, and claims it should
-		 * not be used by applications and is provided for "utiltiy
+		 * not be used by applications and is provided for "utility
 		 * programs included in OSS". We follow the Solaris
 		 * implementation (which is documented) and leave these fields
 		 * unset.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.428 2025/11/19 22:31:51 andvar Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.429 2025/12/11 07:25:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.428 2025/11/19 22:31:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.429 2025/12/11 07:25:10 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -5132,7 +5132,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 
 /*
  * uvm_voaddr_release: release the references held by the
- * vitual object address.
+ * virtual object address.
  */
 void
 uvm_voaddr_release(struct uvm_voaddr * const voaddr)

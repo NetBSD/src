@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbreg.h,v 1.7 2022/01/01 22:01:18 andvar Exp $ */
+/* $NetBSD: tlsbreg.h,v 1.8 2025/12/11 07:25:10 andvar Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 by Matthew Jacob
@@ -110,7 +110,7 @@
  */
 #define TLDEV		0x0000		/* CMI: Device Register */
 #define TLBER		0x0040		/* CMI: Bus Error Register */
-#define TLCNR		0x0080		/* CMI: Congfiguration Register */
+#define TLCNR		0x0080		/* CMI: Configuration Register */
 #define TLVID		0x00c0		/* CM: Virtual ID Register */
 #define TLMMR0		0x0200		/* CM: Memory Mapping Register 0 */
 #define TLMMR1		0x0240		/* CM: Memory Mapping Register 1 */
