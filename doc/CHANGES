@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3204 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3205 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -120,3 +120,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		diffutils, build with MKBSDDIFF=yes. [nia 20251204]
 	amd64: Support ramdisks when booting in GENPVH mode.
 		[khorben 20251205]
+	openresolv(8): import 3.17.1 [roy 20251211]
