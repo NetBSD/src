@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2025/11/17 06:02:51 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.49 2025/12/11 10:52:35 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -164,12 +164,16 @@ define	INTIOBASE1xx		INTIOBASE1xx
 define	INTIOSIZE1xx		INTIOSIZE1xx
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
+define	CACHE40_ON		CACHE40_ON
 define	CACHE40_OFF		CACHE40_OFF
+define	CACHE60_ON		CACHE60_ON
+define	CACHE60_OFF		CACHE60_OFF
 define	CACHE_CLR		CACHE_CLR
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
 define	IC60_CUBC		IC60_CUBC
 define	IC60_CABC		IC60_CABC
+define	PCR_ESS			PCR_ESS
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
