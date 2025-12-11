@@ -1,4 +1,4 @@
-/* $NetBSD: si.c,v 1.1 2025/12/08 23:00:22 jmcneill Exp $ */
+/* $NetBSD: si.c,v 1.2 2025/12/11 01:13:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.1 2025/12/08 23:00:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2025/12/11 01:13:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,6 +112,7 @@ struct si_channel {
 	uint8_t			ch_buf[GCPAD_REPORT_SIZE];
 	void			*ch_desc;
 	int			ch_descsize;
+	void			*ch_si;
 };
 
 struct si_softc {
@@ -131,6 +132,7 @@ static int	si_match(device_t, cfdata_t, void *);
 static void	si_attach(device_t, device_t, void *);
 
 static int	si_intr(void *);
+static void	si_softintr(void *);
 
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
@@ -184,6 +186,9 @@ si_attach(device_t parent, device_t self, void *aux)
 		ch->ch_index = chan;
 		mutex_init(&ch->ch_lock, MUTEX_DEFAULT, IPL_VM);
 		cv_init(&ch->ch_cv, "sich");
+		ch->ch_si = softint_establish(SOFTINT_SERIAL,
+		    si_softintr, ch);
+		KASSERT(ch->ch_si != NULL);
 
 		t = &ch->ch_hidev;
 		t->_cookie = &sc->sc_chan[chan];
@@ -288,6 +293,16 @@ si_make_report(struct si_softc *sc, unsigned chan, void *report, bool with_rid)
 	optr[off++] = 0;
 }
 
+static void
+si_softintr(void *priv)
+{
+	struct si_channel *ch = priv;
+
+	if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
+		ch->ch_intr(ch->ch_intrarg, ch->ch_buf, sizeof(ch->ch_buf));
+	}
+}
+
 static int
 si_intr(void *priv)
 {
@@ -312,8 +327,7 @@ si_intr(void *priv)
 				si_make_report(sc, chan, ch->ch_buf, false);
 
 				if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
-					ch->ch_intr(ch->ch_intrarg, ch->ch_buf,
-					    sizeof(ch->ch_buf));
+					softint_schedule(ch->ch_si);
 				}
 			}
 
