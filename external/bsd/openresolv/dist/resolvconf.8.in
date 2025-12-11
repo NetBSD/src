@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 30, 2025
+.Dd June 26, 2025
 .Dt RESOLVCONF 8
 .Os
 .Sh NAME
@@ -78,6 +78,14 @@ instead of the filesystem.
 then updates
 .Pa /etc/resolv.conf
 as it thinks best.
+If
+.Pa /etc/resolv.conf
+already exists and the top line does not match the expected signature,
+then
+.Nm
+will refuse to update it unless the
+.Fl u
+update command is given.
 When a local resolver other than libc is installed, such as
 .Xr dnsmasq 8
 or
@@ -111,20 +119,6 @@ outside of
 .Nm .
 .Pp
 .Nm
-assumes it has a job to do.
-In some situations
-.Nm
-needs to act as a deterrent to writing to
-.Pa /etc/resolv.conf .
-Where this file cannot be made immutable or you just need to toggle this
-behaviour,
-.Nm
-can be disabled by adding
-.Sy resolvconf Ns = Ns NO
-to
-.Xr resolvconf.conf 5 .
-.Pp
-.Nm
 can mark a
 .Pa resolv.conf
 as private and optionally non-searchable.
@@ -154,7 +148,7 @@ it should then call
 with
 .Fl d Ar key
 arguments to clean up the
-.Pa resol.conf
+.Pa resolv.conf
 it added previously.
 For systems that support the concept of persisting configuration when
 the source is suspended,
@@ -170,7 +164,7 @@ This only affects the order in which the
 .Pa resolv.conf
 entries are processed.
 .Pp
-Here are some options for the above commands:-
+Here are some options for the above commands:
 .Bl -tag -width pattern_opt
 .It Fl f
 Ignore non existent
@@ -205,7 +199,7 @@ as exclusive when adding, otherwise only use the latest exclusive key.
 .El
 .Pp
 .Nm
-has some more commands for general usage:-
+has some more commands for general usage:
 .Bl -tag -width pattern_opt
 .It Fl i Op Ar pattern
 List the keys stored, optionally matching
@@ -248,19 +242,15 @@ Echo the resolvconf version to
 .Pp
 .Nm
 also has some commands designed to be used by its subscribers and
-system startup:-
+system startup:
 .Bl -tag -width pattern_opt
 .It Fl I
 Initialise the state directory
 .Pa @VARDIR@ .
-This only needs to be called if the initial system boot sequence does not
-automatically clean it out; for example the state directory is moved
-somewhere other than
-.Pa /var/run .
-If used, it should only be called once as early in the system boot sequence
-as possible and before
-.Nm
-is used to add entries.
+This should be called after the base state directory has either been
+cleaned out or mounted as a memory backed filesystem during the
+initial boot sequence before any daemon has the chance to call
+.Nm .
 .It Fl R
 Echo the command used to restart a service.
 .It Fl r Ar service

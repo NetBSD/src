@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 29, 2025
+.Dd May 15, 2025
 .Dt RESOLVCONF.CONF 5
 .Os
 .Sh NAME
@@ -73,21 +73,22 @@ The syntax is this:
 .Va $keyword Ns / Ns Va $match Ns Op / Ns Va $keyword Ns / Ns Va $match
 .Pp
 For example given this configuration:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 exclude="search/foo*/nameserver/1.2.3.4 search/bar.org"
 .Ed
+.Pp
 Then any resolv.conf with both a search option starting with foo with a nameserver of 1.2.3.4
 OR a search option of bar.org would be excluded.
 .It Sy key_order
 These keys will always be processed first.
-If unset, defaults to the following:-
-.Bd -compact -literal -offset indent
+If unset, defaults to the following:
+.Bd -literal -compact -offset indent
 lo lo[0-9]*
 .Ed
 .It Sy dynamic_order
 These keys will be processed next, unless they have a metric.
-If unset, defaults to the following:-
-.Bd -compact -literal -offset indent
+If unset, defaults to the following:
+.Bd -literal -compact -offset indent
 tap[0-9]* tun[0-9]* vpn vpn[0-9]* wg[0-9]* ppp[0-9]* ippp[0-9]*
 .Ed
 .It Sy inclusive_keys
@@ -96,8 +97,8 @@ This is handy when 3rd party integrations force the
 .Nm resolvconf -x
 option and you want to disable it easily.
 .It Sy local_nameservers
-If unset, defaults to the following:-
-.Bd -compact -literal -offset indent
+If unset, defaults to the following:
+.Bd -literal -compact -offset indent
 127.* 0.0.0.0 255.255.255.255 ::1
 .Ed
 .It Sy search_domains
@@ -146,24 +147,27 @@ The syntax is this:
 .Va $keyword Ns / Ns Va $match Ns / Ns Va $replacement
 .Pp
 Example, given this resolv.conf:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 domain foo.org
 search foo.org dead.beef
 nameserver 1.2.3.4
 nameserver 2.3.4.5
 .Ed
+.Pp
 and this configuration:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 replace="search/foo*/bar.com"
 replace="$replace nameserver/1.2.3.4/5.6.7.8"
 replace="$replace nameserver/2.3.4.5/"
 .Ed
+.Pp
 you would get this resolv.conf instead:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 domain foo.org
 search bar.com
 nameserver 5.6.7.8
 .Ed
+.Pp
 .It Sy replace_sub
 Works the same way as
 .Sy replace
@@ -174,11 +178,12 @@ Using the same example resolv.conf and changing
 to
 .Sy replace_sub ,
 you would get this resolv.conf instead:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 domain foo.org
 search bar.com dead.beef
 nameserver 5.6.7.8
 .Ed
+.Pp
 .It Sy state_dir
 Override the default state directory of
 .Pa @VARDIR@ .
@@ -189,7 +194,7 @@ is in use unless the old directory is copied to the new one.
 .Sh LIBC OPTIONS
 The following variables affect
 .Xr resolv.conf 5
-directly:-
+directly:
 .Bl -tag -width indent
 .It Sy resolv_conf
 Defaults to
@@ -215,6 +220,14 @@ is unset unless overridden and only the information set in
 .Nm
 is written to
 .Sy resolv_conf .
+.It Sy resolv_conf_restore
+When set to YES and
+and an empty
+.Pa resolv.conf
+would be written, restore
+.Pa resolv.conf.bak
+instead if it exists.
+Defaults to YES if not set.
 .It Sy resolv_conf_sortlist
 A libc resolver sortlist, as specified in
 .Xr resolv.conf 5 .
@@ -254,7 +267,7 @@ the subscribers main configuration file.
 To disable a subscriber, simply set its name to NO.
 If the subscriber name has a dash in it, then replace it with an underscore.
 For example, to disable the libc subscriber you would set:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 libc=NO
 .Ed
 .Bl -tag -width indent
@@ -264,14 +277,14 @@ This file tells dnsmasq which name servers to use for specific domains.
 This file tells dnsmasq which name servers to use for global lookups.
 .Pp
 Example resolvconf.conf for dnsmasq:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 name_servers=127.0.0.1
 dnsmasq_conf=/etc/dnsmasq-conf.conf
 dnsmasq_resolv=/etc/dnsmasq-resolv.conf
 .Ed
 .Pp
 Example dnsmasq.conf:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 listen-address=127.0.0.1
 # If dnsmasq is compiled for DBus then we can take
 # advantage of not having to restart dnsmasq.
@@ -287,14 +300,14 @@ Include this file in the named global scope, after the options block.
 This file tells named which name servers to use for specific domains.
 .Pp
 Example resolvconf.conf for named:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 name_servers=127.0.0.1
 named_options=/etc/named-options.conf
 named_zones=/etc/named-zones.conf
 .Ed
 .Pp
 Example named.conf:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 options {
 	listen-on { 127.0.0.1; };
 	include "/etc/named-options.conf";
@@ -315,14 +328,14 @@ If this variable is not set then it's written to
 .Pa pdnsd_conf .
 .Pp
 Example resolvconf.conf for pdnsd:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 name_servers=127.0.0.1
 pdnsd_conf=/etc/pdnsd.conf
 # pdnsd_resolv=/etc/pdnsd-resolv.conf
 .Ed
 .Pp
 Example pdnsd.conf:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 global {
 	server_ip = 127.0.0.1;
 	status_ctl = on;
@@ -338,24 +351,57 @@ server {
 This file tells pdns_recursor about specific and global name servers.
 .Pp
 Example resolvconf.conf for pdns_recursor:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 name_servers=127.0.0.1
 pdns_zones=/etc/pdns/recursor-zones.conf
 .Ed
 .Pp
 Example recursor.conf:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 allow-from=127.0.0.0/8, ::1/128
 forward-zones-file=/etc/pdns/recursor-zones.conf
 .Ed
+.It Sy resolvectl
+When set to YES,
+.Xr resolvectl 1
+will be used to write per interface entries from
+.Xr resolvconf 8
+to
+.Xr systemd-resolved 8 .
+A warning is emitted for any entry that cannot be matched to an
+interface.
+.Pp
+This subscriber should only be used if your systemd-resolved does
+not support DNS delegates and you need private or non searchable
+.Xr resolvconf 8
+entries, or you're really beholden to seeing DNS setup per interface via
+.Xr resolvectl 1 .
+The systemd-resolved subscriber documented below is the better option.
+.Pp
+Example resolvconf.conf for resolvectl:
+.Bd -literal -compact -offset indent
+# Keep /etc/resolv.conf as systemd-resolved wants it
+libc=NO
+resolvectl=YES
+.Ed
+.It Sy systemd_resolved
+When set to YES, global DNS will be written to the
+.Sy systemd_resolved_conf
+configuration file and DNS delegates will be written to the
+.Sy systemd_delegate_dir
+directory.
 .It Sy systemd_resolved_conf
-This file tells systemd-resolved about global name servers.
+Defaults to
+.Pa /run/systemd/resolved.conf.d/60-resolvconf.conf .
+.It Sy systemd_delegate_dir
+Defaults to
+.Pa /run/systemd/dns-delegate.d .
 .Pp
 Example resolvconf.conf for systemd-resolved:
-.Bd -compact -literal -offset indent
-name_servers=127.0.0.53
-resolv_conf_options="edns0 trust-ad"
-systemd_resolved_conf=/run/systemd/resolved.conf.d/60-resolvconf.conf
+.Bd -literal -compact -offset indent
+# Keep /etc/resolv.conf as systemd-resolved wants it
+libc=NO
+systemd_resolved=YES
 .Ed
 .It Sy unbound_conf
 This file tells unbound about specific and global name servers.
@@ -368,13 +414,13 @@ Options appended to each forward zone.
 Each option should be separated by an embedded new line.
 .Pp
 Example resolvconf.conf for unbound:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 name_servers=127.0.0.1
 unbound_conf=/etc/unbound-resolvconf.conf
 .Ed
 .Pp
 Example unbound.conf:
-.Bd -compact -literal -offset indent
+.Bd -literal -compact -offset indent
 include: /etc/unbound-resolvconf.conf
 .Ed
 .El
@@ -427,6 +473,14 @@ Location of the unbound pidfile.
 .Sh BUGS
 Each distribution is a special snowflake and likes to name the same thing
 differently, namely the named service script.
+.Pp
+Swapping between resolvectl and systemd-resolved subscribers at runtime
+is not supported.
+Files referenced by systemd_resolved_conf and systemd_delegate_dir
+need to be removed by hand.
+A reboot is recommended so that stale data is removed.
+While you could run them both at the same time, only using one is the
+recommended approach.
 .Pp
 Please report them to
 .Lk https://roy.marples.name/projects/openresolv
