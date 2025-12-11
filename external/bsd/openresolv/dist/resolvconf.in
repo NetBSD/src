@@ -275,7 +275,7 @@ parse_resolv()
 				esac
 			done
 			if $islocal; then
-				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS $value\""
+				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS \"'$value'"
 			else
 				ns="$ns${ns:+ }$value"
 			fi
@@ -285,7 +285,7 @@ parse_resolv()
 			if [ -z "$domain" ]; then
 				domain="$search"
 				if ! $nosearch; then
-					echo "DOMAIN=\"$domain\""
+					echo "DOMAIN='$domain'"
 				fi
 			fi
 			;;
@@ -303,13 +303,13 @@ parse_resolv()
 				for d in $search; do
 					ds="$ds${ds:+ }$d:$newns"
 				done
-				echo "DOMAINS=\"\$DOMAINS $ds\""
+				echo "DOMAINS=\"\$DOMAINS \"'$ds'"
 			fi
 			if ! $nosearch; then
-				echo "SEARCH=\"\$SEARCH $search\""
+				echo "SEARCH=\"\$SEARCH \"'$search'"
 			fi
 			if ! $private; then
-				echo "NAMESERVERS=\"\$NAMESERVERS $ns\""
+				echo "NAMESERVERS=\"\$NAMESERVERS \"'$ns'"
 			fi
 			ns=
 			search=
