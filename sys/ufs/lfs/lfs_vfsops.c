@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.397 2025/12/06 04:55:04 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.398 2025/12/11 01:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.397 2025/12/06 04:55:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.398 2025/12/11 01:27:24 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1467,6 +1467,16 @@ lfs_unmount(struct mount *mp, int mntflags)
 	if (fs->lfs_pages > 0)
 		printf("lfs_unmount: still claim %d pages (%d in subsystem)\n",
 			fs->lfs_pages, lfs_subsys_pages);
+
+	/*
+	 * Make doubly sure we have no outstanding I/O before we
+	 * call lfs_free_resblks(), to avoid a busy pool panic.
+	 */
+	mutex_enter(&lfs_lock);
+	while (fs->lfs_iocount)
+		mtsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount2", 0,
+			&lfs_lock);
+	mutex_exit(&lfs_lock);
 
 	/* Free per-mount data structures */
 	free(fs->lfs_ino_bitmap, M_SEGMENT);

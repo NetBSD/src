@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.305 2025/12/10 03:20:59 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.306 2025/12/11 01:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.305 2025/12/10 03:20:59 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.306 2025/12/11 01:27:24 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2716,7 +2716,12 @@ lfs_cluster_work(struct work *wk, void *arg)
 		if (--cl->seg->seg_iocount == 0)
 			wakeup(&cl->seg->seg_iocount);
 	}
+
+	pool_put(&fs->lfs_bpppool, cl->bpp);
+	cl->bpp = NULL;
+	pool_put(&fs->lfs_clpool, cl);
 	mutex_enter(&lfs_lock);
+	
 	KASSERTMSG((fs->lfs_iocount != 0),
 	    "lfs_cluster_aiodone: zero iocount");
 	if (--fs->lfs_iocount <= 1)
@@ -2724,10 +2729,6 @@ lfs_cluster_work(struct work *wk, void *arg)
 	mutex_exit(&lfs_lock);
 
 	KERNEL_UNLOCK_ONE(curlwp);
-
-	pool_put(&fs->lfs_bpppool, cl->bpp);
-	cl->bpp = NULL;
-	pool_put(&fs->lfs_clpool, cl);
 }
 
 /*
