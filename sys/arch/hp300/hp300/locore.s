@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.199 2025/12/09 03:30:27 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.200 2025/12/11 11:00:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -523,7 +523,7 @@ Lenab2:
 Lnocache0:
 /* Final setup for call to main(). */
 	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(hp300_init)
+	jbsr	_C_LABEL(machine_init)
 	addql	#4,%sp
 
 /*

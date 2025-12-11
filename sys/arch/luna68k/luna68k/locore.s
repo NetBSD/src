@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.95 2025/12/09 03:30:27 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.96 2025/12/11 11:00:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -266,7 +266,7 @@ Lenab3:
 
 /* final setup for C code */
 	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(luna68k_init)	| additional pre-main initialization
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
 
 /*

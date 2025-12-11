@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2025/11/20 18:05:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172 2025/12/11 11:00:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2025/11/20 18:05:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2025/12/11 11:00:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -179,7 +179,7 @@ int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 512;	/* assume some reasonable value to start */
 
 /* Machine-dependent initialization routines. */
-void	mvme68k_init(paddr_t);
+void	machine_init(paddr_t);
 
 #ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
@@ -195,7 +195,7 @@ void	mvme1xx_init(void);
  * Early initialization, right before main is called.
  */
 void
-mvme68k_init(paddr_t nextpa)
+machine_init(paddr_t nextpa)
 {
 	int i;
 

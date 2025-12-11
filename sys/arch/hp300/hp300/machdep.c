@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2025/11/29 19:32:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.250 2025/12/11 11:00:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2025/11/29 19:32:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2025/12/11 11:00:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -146,7 +146,7 @@ static void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
 void    dumpsys(void);
-void	hp300_init(paddr_t);
+void	machine_init(paddr_t);
 void    straytrap(int, u_short);
 void	nmihand(struct frame);
 
@@ -213,7 +213,7 @@ static char bootwork_savearea[BOOTWORKSIZE];
  * Early initialization, before main() is called.
  */
 void
-hp300_init(paddr_t nextpa)
+machine_init(paddr_t nextpa)
 {
 	struct btinfo_magic *bt_mag;
 	int i;

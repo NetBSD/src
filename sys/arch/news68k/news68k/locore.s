@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97 2025/12/09 03:30:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.98 2025/12/11 11:00:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -374,7 +374,7 @@ Ltbia040:
 Lenab3:
 /* final setup for C code */
 	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(news68k_init)	| additional pre-main initialization
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.

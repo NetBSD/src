@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.116 2025/12/11 07:25:11 andvar Exp $ */
+/* $NetBSD: machdep.c,v 1.117 2025/12/11 11:00:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2025/12/11 07:25:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2025/12/11 11:00:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,7 +110,7 @@ int	maxmem;			/* max memory per process */
 
 extern	u_int lowram;
 
-void luna68k_init(paddr_t);
+void machine_init(paddr_t);
 void identifycpu(void);
 void dumpsys(void);
 
@@ -171,7 +171,7 @@ const struct pmap_bootmap machine_bootmap[] = {
  * Early initialization, before main() is called.
  */
 void
-luna68k_init(paddr_t nextpa)
+machine_init(paddr_t nextpa)
 {
 	volatile uint8_t *pio0 = (void *)OBIO_PIO0_BASE;
 	int sw1, i;

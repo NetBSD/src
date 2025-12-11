@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 2025/12/11 07:25:11 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 2025/12/11 11:00:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2025/12/11 07:25:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2025/12/11 11:00:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -135,7 +135,7 @@ static void news1200_init(void);
 
 /* functions called from locore.s */
 void dumpsys(void);
-void news68k_init(paddr_t);
+void machine_init(paddr_t);
 void straytrap(int, u_short);
 
 /*
@@ -173,7 +173,7 @@ const struct pmap_bootmap machine_bootmap[] = {
  * Early initialization, before main() is called.
  */
 void
-news68k_init(paddr_t nextpa)
+machine_init(paddr_t nextpa)
 {
 	int i;
 
