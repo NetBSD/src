@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio.c,v 1.8 2025/11/29 18:39:14 brad Exp $	*/
+/*	$NetBSD: umcpmio.c,v 1.9 2025/12/12 17:49:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.8 2025/11/29 18:39:14 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio.c,v 1.9 2025/12/12 17:49:35 andvar Exp $");
 
 /*
  * Driver for the Microchip MCP2221 / MCP2221A USB multi-io chip
@@ -680,7 +680,7 @@ umcpmio_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				break;
 			case MCP2210_NVRAM_SUBCODE_USBKEYPARAMS:
 				/* For this subcode, the get and set are not
-				 * really symetric, so copy the fields in one
+				 * really symmetric, so copy the fields in one
 				 * at a time. */
 				mcp2210_snvram_req.subcode = MCP2210_NVRAM_SUBCODE_USBKEYPARAMS;
 				mcp2210_snvram_req.u.usbkeyparams.lsb_usb_vid =

@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_spi.c,v 1.1 2025/11/29 18:39:14 brad Exp $	*/
+/*	$NetBSD: umcpmio_spi.c,v 1.2 2025/12/12 17:49:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio_spi.c,v 1.1 2025/11/29 18:39:14 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio_spi.c,v 1.2 2025/12/12 17:49:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -130,7 +130,7 @@ mcp2210_do_spi_transfer(struct umcpmio_softc *sc,
 	return err;
 }
 
-/* Most configuration is defered until a tranfer actually happens.  The
+/* Most configuration is deferred until a transfer actually happens.  The
  * exception is setting the pin that is to be used as a CS to ALT0.
  *
  * There is no attempt to reset the mode of the pin used for the CS,
@@ -140,7 +140,7 @@ mcp2210_do_spi_transfer(struct umcpmio_softc *sc,
  * or OUTPUT.  Of course, that will happen when the CS mode (ALT0)
  * is set, but only the first time the pin is used as a CS.
  *
- * It is adviseable to make use of the NVRAM to set up the pin mode
+ * It is advisable to make use of the NVRAM to set up the pin mode
  * upon boot up of the chip.
  *
  */
@@ -157,7 +157,7 @@ mcp2210_spi_configure(void *cookie, int slave, int mode, int speed)
 		return EINVAL;
 
 	/* The speed is in bps and the MCP2210 uses bps, but is not suppose to
-	 * be able to go below 1500 bps.  There is also a upper bound of 12Mbps,
+	 * be able to go below 1500 bps.  There is also an upper bound of 12Mbps,
 	 * but the chip will not do anything wrong if you try to go faster as it
 	 * will cap the speed.
 	 */
@@ -258,7 +258,7 @@ mcp2210_spi_set_slave_config(struct umcpmio_softc *sc,
 	set_req.bit_rate_byte_1 |= (0x000000ff & (s >> 16));
 	set_req.bit_rate_byte_0 |= (0x000000ff & (s >> 24));
 
-	/* The MCP2210 does best when the tranfer size is set to the
+	/* The MCP2210 does best when the transfer size is set to the
 	 * same max amount that a transfer incoming might have.
 	 */
 
@@ -274,7 +274,7 @@ out:
 	return err;
 }
 
-/* Fill up the outgoing tranfer buffers.  It is generally assumed that the state
+/* Fill up the outgoing transfer buffers.  It is generally assumed that the state
  * of the req buffer is set coming into this function.  It should either be
  * zero filled or a repeat buffer in a retry situation.
  */
@@ -361,7 +361,7 @@ mcp2210_spi_rx_drain(struct umcpmio_softc *sc, int slave,
 	return err;
 }
 
-/* Very simular to receiving from the chip buffer, except from this
+/* Very similar to receiving from the chip buffer, except from this
  * is from the local queue.  Requeue if needed.
  */
 
@@ -430,8 +430,8 @@ mcp2210_spi_rx_drainchip(struct umcpmio_softc *sc, int slave,
 	return err;
 }
 
-/* Service a tranfer.  We do the local queue first if there is something, then
- * send a tranfer, with an optional amount of data, and then process any
+/* Service a transfer.  We do the local queue first if there is something, then
+ * send a transfer, with an optional amount of data, and then process any
  * incoming chip data.
  */
 
@@ -496,7 +496,7 @@ retry:
 	/* This error situation of MCP2210_SPI_STATUS_DATA (0x30) and
 	 * zero received data means either the chip is stuck because
 	 * upstream didn't send enough data, or the chip is working
-	 * on receiving some data.  We only let this condution go on
+	 * on receiving some data.  We only let this condition go on
 	 * a certain number of times before passing the error up.
 	 */
 
@@ -673,7 +673,7 @@ mcp2210_spi_start(struct umcpmio_softc *sc)
 		KASSERT(st->st_slave < sc->sc_spi.sct_nslaves);
 
 		/* Figure out the maximum size for this transfer.
-		 * It doesn't matter if it is a incoming or outgoing
+		 * It doesn't matter if it is an incoming or outgoing
 		 * chunk.
 		 */
 		chunk = st->st_chunks;
@@ -688,8 +688,8 @@ mcp2210_spi_start(struct umcpmio_softc *sc)
 		KASSERT(transfer_size > 0);
 
 		/* The chip can do up to 65535 bytes in a transfer.  We subtract
-		 * 1 so the slave device can send back a end byte.  There is,
-		 * apparently some was to do larger transfers, but I could
+		 * 1 so the slave device can send back an end byte.  There is,
+		 * apparently some way to do larger transfers, but I could
 		 * not find documentation on how to do that.
 		 */
 		if (transfer_size > 65534) {
@@ -710,7 +710,7 @@ mcp2210_spi_start(struct umcpmio_softc *sc)
 
 		DPRINTF(("mcp2210_spi_start: transfer_size=%d; max_transfer_size=%d\n", transfer_size, max_transfer_size));
 
-		/* Set all of the defered setting now that we are commited to trying
+		/* Set all of the deferred setting now that we are committed to trying
 		 * to do the transfer.
 		 */
 		err = mcp2210_spi_set_slave_config(sc, max_transfer_size, st->st_slave);

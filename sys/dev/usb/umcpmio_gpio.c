@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_gpio.c,v 1.1 2025/11/29 18:39:14 brad Exp $	*/
+/*	$NetBSD: umcpmio_gpio.c,v 1.2 2025/12/12 17:49:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio_gpio.c,v 1.1 2025/11/29 18:39:14 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio_gpio.c,v 1.2 2025/12/12 17:49:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -53,7 +53,7 @@ extern int umcpmiodebug;
  * / MCP2221A.
  *
  *
- * The MCP2221 / MCP2221A does not have symetric behavior with
+ * The MCP2221 / MCP2221A does not have symmetric behavior with
  * respect to the get and puts of the SRAM.  This means that you
  * more or less can't just take the response buffer from a SRAM
  * get and use it directly as a SRAM put.  The MCP2210 is better
@@ -376,7 +376,7 @@ mcp2221_set_gpio_designation_sram(struct mcp2221_set_sram_req *req, int pin,
 	}
 }
 /*
- * It is unfortunate that the GET and PUT requests are not symertric.  That is,
+ * It is unfortunate that the GET and PUT requests are not symmetric.  That is,
  * the bits sort of line up but not quite between a GET and PUT.
  */
 
@@ -1023,7 +1023,7 @@ mcp2210_gpio_pin_ctl(void *arg, int pin, int flags)
 
 	/* On the MCP-2210, if you change the purpose of the pin you have to
 	 * write the current direction and value of the pins back to the chip.
-	 * The reason for this is tha you can not change just one pins purpose
+	 * The reason for this is that you can not change just one pins purpose
 	 * without setting the direction and values of all pins to the default. */
 
 	if (changed_sram) {
@@ -1059,7 +1059,7 @@ mcp2210_gpio_pin_ctl(void *arg, int pin, int flags)
 	} else {
 		/* In this case, the pin purpose was not changed, so all that
 		 * needs to happen is the direction needs to be updated.  This
-		 * actually won't matter unless the pin is strickly a GPIO pin.
+		 * actually won't matter unless the pin is strictly a GPIO pin.
 		 * ALT0, the CS purpose, is handled by the chip itself, ALT3 -
 		 * ALT6 is for the event / interrupt counter.  So, we really
 		 * only have to care if the pin switches from INPUT to OUTPUT,

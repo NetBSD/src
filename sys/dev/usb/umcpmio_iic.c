@@ -1,4 +1,4 @@
-/*	$NetBSD: umcpmio_iic.c,v 1.1 2025/11/29 18:39:14 brad Exp $	*/
+/*	$NetBSD: umcpmio_iic.c,v 1.2 2025/12/12 17:49:35 andvar Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcpmio_iic.c,v 1.1 2025/11/29 18:39:14 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcpmio_iic.c,v 1.2 2025/12/12 17:49:35 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -241,7 +241,7 @@ again:
 	    i2c_res.completion == MCP2221_CMD_COMPLETE_OK) {
 		/* Adafruit does a read back of the status at this point.  We
 		 * choose not to do that.  That is done later anyway, and it
-		 * seemed to be redundent. */
+		 * seemed to be redundant. */
 	} else if (i2c_res.cmd == cmd &&
 	    i2c_res.completion == MCP2221_I2C_ENGINE_BUSY) {
 		DPRINTF(("mcp2221_i2c_write:"
@@ -545,7 +545,7 @@ umcpmio_i2c_attach(struct umcpmio_softc *sc)
 
 	int err = 0;
 
-	/* The datasheet suggests that it is possble for this to fail if the
+	/* The datasheet suggests that it is possible for this to fail if the
 	 * I2C port is currently being used. However...  since you just plugged
 	 * in the chip, the I2C port should not really be in use at that
 	 * moment. In any case, try hard to set this and don't make it fatal if
