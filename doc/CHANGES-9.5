@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.82 2025/11/29 17:02:35 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.83 2025/12/12 19:39:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1055,4 +1055,11 @@ sys/dev/usb/ucom.c				1.142,1.149
 
 	ucom(4): fix ucom input queue corruption on open-after-close.
 	[skrll, ticket #1983]
+
+etc/ntp.conf					1.24
+external/bsd/ntp/bin/ntptime/ntptime.8		1.2
+share/man/man4/options.4			1.532
+
+	ntp: fix paths to documentation.
+	[andvar, ticket #1985]
 
