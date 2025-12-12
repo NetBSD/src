@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.75 2025/11/29 16:02:26 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.76 2025/12/12 19:37:02 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1387,4 +1387,16 @@ sys/dev/usb/ucom.c				1.142,1.149
 
 	ucom(4): fix input queue corruption on open-after-close.
 	[skrll, ticket #1202]
+
+sys/arch/arm/arm32/bus_dma.c			1.148
+
+	arm: bus_dma(9): mark likely/unlikely branches.
+	[msaitoh, ticket #1205]
+
+etc/ntp.conf					1.24
+external/bsd/ntp/bin/ntptime/ntptime.8		1.2
+share/man/man4/options.4			1.532
+
+	ntp: fix paths to documentation.
+	[andvar, ticket #1206]
 
