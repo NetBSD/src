@@ -233,6 +233,30 @@ exclusive_key()
 	return 1
 }
 
+# Quote input so it can be safely used for variable assignment via eval
+quote()
+{
+	if [ -z "$1" ]; then
+		R="''"
+	else
+		R=
+		for W; do
+			while [ -n "$W" ]; do
+				case "$W" in
+				\'*)  R="$R\\'"; W=${W#?};;
+				?\'*) R="$R\\${W%%\'*}"; W="${W#?}";;
+				*\'*) R="$R'${W%%\'*}'"; W="'${W#*\'}";;
+				?)    R="$R\\$W"; W=;;
+				*)    R="$R'$W'"; W=;;
+				esac
+			done
+		done
+	fi
+
+	printf '%s\n' "$R"
+	return 0
+}
+
 # Parse resolv.conf's and make variables
 # for domain name servers, search name servers and global nameservers
 parse_resolv()
@@ -246,7 +270,8 @@ parse_resolv()
 	search=
 
 	while read -r line; do
-		value="${line#* }"
+		# Ensure the value is quoted for eval
+		value="$(quote "${line#* }")"
 		case "$line" in
 		"# resolv.conf from "*)
 			if ${new}; then
@@ -275,7 +300,7 @@ parse_resolv()
 				esac
 			done
 			if $islocal; then
-				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS \"'$value'"
+				printf '%s\n' "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS \"$value"
 			else
 				ns="$ns${ns:+ }$value"
 			fi
@@ -285,7 +310,7 @@ parse_resolv()
 			if [ -z "$domain" ]; then
 				domain="$search"
 				if ! $nosearch; then
-					echo "DOMAIN='$domain'"
+					printf '%s\n' "DOMAIN=$domain"
 				fi
 			fi
 			;;
@@ -303,13 +328,13 @@ parse_resolv()
 				for d in $search; do
 					ds="$ds${ds:+ }$d:$newns"
 				done
-				echo "DOMAINS=\"\$DOMAINS \"'$ds'"
+				printf '%s\n' "DOMAINS=\"\$DOMAINS \"$ds"
 			fi
 			if ! $nosearch; then
-				echo "SEARCH=\"\$SEARCH \"'$search'"
+				printf '%s\n' "SEARCH=\"\$SEARCH \"$search"
 			fi
 			if ! $private; then
-				echo "NAMESERVERS=\"\$NAMESERVERS \"'$ns'"
+				printf '%s\n' "NAMESERVERS=\"\$NAMESERVERS \"$ns"
 			fi
 			ns=
 			search=
@@ -1004,6 +1029,7 @@ make_vars()
 			newdomains="$newdomains${newdomains:+ }$dn:$newns"
 		fi
 	done
+
 	DOMAIN="$(list_remove domain_blacklist $DOMAIN)"
 	SEARCH="$(uniqify $SEARCH)"
 	SEARCH="$(list_remove domain_blacklist $SEARCH)"
@@ -1011,11 +1037,13 @@ make_vars()
 	NAMESERVERS="$(list_remove name_server_blacklist $NAMESERVERS)"
 	LOCALNAMESERVERS="$(uniqify $LOCALNAMESERVERS)"
 	LOCALNAMESERVERS="$(list_remove name_server_blacklist $LOCALNAMESERVERS)"
-	echo "DOMAIN='$DOMAIN'"
-	echo "SEARCH='$SEARCH'"
-	echo "NAMESERVERS='$NAMESERVERS'"
-	echo "LOCALNAMESERVERS='$LOCALNAMESERVERS'"
-	echo "DOMAINS='$newdomains'"
+
+	# Ensure output is quoted for eval
+	printf '%s\n' "DOMAIN=$(quote "$DOMAIN")"
+	printf '%s\n' "SEARCH=$(quote "$SEARCH")"
+	printf '%s\n' "NAMESERVERS=$(quote "$NAMESERVERS")"
+	printf '%s\n' "LOCALNAMESERVERS=$(quote "$LOCALNAMESERVERS")"
+	printf '%s\n' "DOMAINS=$(quote "$newdomains")"
 }
 
 force=false
