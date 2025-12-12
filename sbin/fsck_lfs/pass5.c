@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.38 2025/09/14 19:14:30 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.39 2025/12/12 15:53:57 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include "extern.h"
 #include "fsutil.h"
 
+extern int Sflag;
+
 void
 pass5(void)
 {
@@ -59,6 +61,7 @@ pass5(void)
 	daddr_t bb;		/* total number of used blocks (lower bound) */
 	daddr_t ubb;		/* upper bound number of used blocks */
 	daddr_t avail;		/* blocks available for writing */
+	daddr_t bfree_observed, bfree_lb, bfree_ub; /* blocks nominally free */
 	unsigned long dmeta;	/* blocks in segsums and inodes */
 	int nclean;		/* clean segments */
 	size_t labelskew;
@@ -189,16 +192,16 @@ pass5(void)
 	if (lfs_sb_getversion(fs) > 1 &&
 	    lfs_sb_gets0addr(fs) < lfs_btofsb(fs, LFS_LABELPAD))
 		labelskew = lfs_btofsb(fs, LFS_LABELPAD);
-	if (lfs_sb_getbfree(fs) > lfs_sb_getdsize(fs) - bb - labelskew ||
-	    lfs_sb_getbfree(fs) < lfs_sb_getdsize(fs) - ubb - labelskew) {
+	bfree_ub = lfs_sb_getdsize(fs) - bb - labelskew;
+	bfree_lb = lfs_sb_getdsize(fs) - ubb - labelskew;
+	bfree_observed = (daddr_t)lfs_sb_getbfree(fs);
+	if (bfree_observed < bfree_lb || bfree_observed > bfree_ub) {
 		pwarn("BFREE GIVEN AS %jd, SHOULD BE BETWEEN %jd AND %jd\n",
-		    (intmax_t)lfs_sb_getbfree(fs),
-		    (intmax_t)(lfs_sb_getdsize(fs) - ubb - labelskew),
-		    (intmax_t)(lfs_sb_getdsize(fs) - bb - labelskew));
+		      (intmax_t)bfree_observed,
+		      (intmax_t)bfree_lb,
+		      (intmax_t)bfree_ub);
 		if (preen || reply("FIX")) {
-			lfs_sb_setbfree(fs,
-				((lfs_sb_getdsize(fs) - labelskew - ubb) +
-				 lfs_sb_getdsize(fs) - labelskew - bb) / 2);
+			lfs_sb_setbfree(fs, (bfree_lb + bfree_ub) / 2);
 			sbdirty();
 		}
 	}
