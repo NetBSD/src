@@ -1,4 +1,4 @@
-.\"	$NetBSD: Title,v 1.4 2014/10/01 01:11:39 christos Exp $
+.\"	$NetBSD: Title,v 1.5 2025/12/12 05:08:29 andvar Exp $
 .\"
 .\" Copyright (c) 1986, 1993, 1994 The Regents of the University of California.
 .\" All rights reserved.
@@ -383,7 +383,7 @@ networking subsystem.
 .tl 'The PERL Programming Language''tabbed 19'
 .QP
 The Practical Extraction and Report Language is ideal for
-writing those pesky adminitration scripts.
+writing those pesky administration scripts.
 .sp 0.8
 .IP
 .tl 'List of Documents''inside back cover'
