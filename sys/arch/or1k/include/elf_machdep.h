@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.3 2025/12/05 20:56:46 jkoshy Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.4 2025/12/12 12:13:49 jkoshy Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define R_OR1K_8_PCREL		11	// (A - P) & 0xff
 #define R_OR1K_GOTPC_HI16	12
 #define R_OR1K_GOTPC_LO16	13
-#define R_OR1K_GOT15		14
+#define R_OR1K_GOT16		14
 #define R_OR1K_PLT26		15
 #define R_OR1K_GOTOFF_HI16	16
 #define R_OR1K_GOTOFF_LO16	17
