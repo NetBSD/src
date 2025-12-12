@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.122 2022/12/01 14:42:12 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.123 2025/12/12 06:53:53 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.122 2022/12/01 14:42:12 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.123 2025/12/12 06:53:53 knakahara Exp $");
 #endif
 
 #include <stdio.h>
@@ -152,6 +152,7 @@ static char	*fill_pat;
 static int s;					/* Socket file descriptor */
 static int sloop;				/* Socket file descriptor/loopback */
 
+#define ICMP_HEADER_LEN 8			/* size of icmp header, see also man "-s" option */
 #define PHDR_LEN sizeof(struct tv32)		/* size of timestamp header */
 #define PHDR64_LEN sizeof(struct timespec)	/* size of timestamp header */
 static struct sockaddr_in whereto, send_addr;	/* Who to ping */
@@ -495,7 +496,7 @@ main(int argc, char *argv[])
 	if (len != -1)
 		datalen = len;
 	else
-		datalen = 64 - PHDR_LEN;
+		datalen = 64 - ICMP_HEADER_LEN;
 	if (!compat && datalen >= (int)PHDR64_LEN) { /* can we time them? */
 		pingflags |= F_TIMING64;
 		phdrlen = PHDR64_LEN;
@@ -948,7 +949,7 @@ pinger(void)
 	} else if (pingflags & F_TIMING64)
 		(void) memcpy(&opack_icmp.icmp_data[0], &now, sizeof(now));
 
-	cc = MAX(datalen, ICMP_MINLEN) + PHDR_LEN;
+	cc = MAX(datalen, ICMP_MINLEN) + ICMP_HEADER_LEN;
 	opack_icmp.icmp_cksum = 0;
 	opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp, cc);
 
