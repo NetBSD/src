@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.95 2024/02/04 05:43:06 mrg Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.95.4.1 2025/12/12 18:35:58 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.95 2024/02/04 05:43:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.95.4.1 2025/12/12 18:35:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.95 2024/02/04 05:43:06 mrg Exp $");
 
 #include <dev/usb/uhidev.h>
 #include <dev/hid/hid.h>
+#include <dev/hid/hidev.h>
 
 /* Report descriptor for broken Wacom Graphire */
 #include <dev/usb/ugraphire_rdesc.h>
@@ -99,6 +100,7 @@ struct uhidev_softc {
 		uint8_t		sc_state;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 #define	UHIDEV_STOPPED	0x02	/* xfers are stopped */
+		struct hidev_tag sc_hidev;
 	} *sc_subdevs;
 
 	kmutex_t sc_lock;
@@ -145,6 +147,8 @@ static int uhidev_match(device_t, cfdata_t, void *);
 static void uhidev_attach(device_t, device_t, void *);
 static void uhidev_childdet(device_t, device_t);
 static int uhidev_detach(device_t, int);
+
+static void uhidev_init_tag(struct uhidev *);
 
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, NULL, NULL, uhidev_childdet);
@@ -407,6 +411,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		scd->sc_parent = sc;
 		scd->sc_report_id = repid;
 		scd->sc_in_rep_size = repsizes[repid];
+		uhidev_init_tag(scd);
 
 		DPRINTF(("uhidev_match: try repid=%d\n", repid));
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
@@ -416,6 +421,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		} else {
 			uha.parent = scd;
 			uha.reportid = repid;
+			uha.hidev = &scd->sc_hidev;
 			locs[UHIDBUSCF_REPORTID] = repid;
 
 			dev = config_found(self, &uha, uhidevprint,
@@ -1192,4 +1198,61 @@ uhidev_write_async(struct uhidev *scd, void *data, int len, int flags,
 	}
 out:	mutex_exit(&sc->sc_lock);
 	return err;
+}
+
+static void
+uhidev_hidev_get_report_desc(void *cookie, void **desc, int *size)
+{
+	uhidev_get_report_desc(cookie, desc, size);
+}
+
+static int
+uhidev_hidev_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
+{
+	return uhidev_open(cookie, intr, arg);
+}
+
+static void
+uhidev_hidev_stop(void *cookie)
+{
+	uhidev_stop(cookie);
+}
+
+static void
+uhidev_hidev_close(void *cookie)
+{
+	uhidev_close(cookie);
+}
+
+static usbd_status
+uhidev_hidev_set_report(void *cookie, int type, void *data, int len)
+{
+	return uhidev_set_report(cookie, type, data, len);
+}
+
+static usbd_status
+uhidev_hidev_get_report(void *cookie, int type, void *data, int len)
+{
+	return uhidev_get_report(cookie, type, data, len);
+}
+
+static usbd_status
+uhidev_hidev_write(void *cookie, void *data, int len)
+{
+	return uhidev_write(cookie, data, len);
+}
+
+static void
+uhidev_init_tag(struct uhidev *scd)
+{
+	struct hidev_tag *t = &scd->sc_hidev;
+
+	t->_cookie = scd;
+	t->_get_report_desc = uhidev_hidev_get_report_desc;
+	t->_open = uhidev_hidev_open;
+	t->_stop = uhidev_hidev_stop;
+	t->_close = uhidev_hidev_close;
+	t->_set_report = uhidev_hidev_set_report;
+	t->_get_report = uhidev_hidev_get_report;
+	t->_write = uhidev_hidev_write;
 }

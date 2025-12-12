@@ -1,4 +1,4 @@
-#       $NetBSD: files.hid,v 1.3 2024/12/09 22:04:17 jmcneill Exp $
+#       $NetBSD: files.hid,v 1.3.2.1 2025/12/12 18:35:58 martin Exp $
 
 # Human Interface Devices
 # Used by USB, bluetooth and i2c
@@ -14,3 +14,11 @@ define	hidkbd
 file	dev/hid/hidkbd.c		hidkbd
 
 file	dev/hid/hidkbdmap.c		ukbd | btkbd | ikbd | linux_keymap
+
+define	hidev
+file	dev/hid/hidev.c			hidev
+
+# Generic userspace HID devices
+defflag	opt_hid.h			UHID_DEBUG
+device	uhid: hid, hidev
+file	dev/hid/uhid_common.c		uhid
