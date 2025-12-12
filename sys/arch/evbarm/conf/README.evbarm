@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.40 2024/02/24 08:56:07 andvar Exp $
+$NetBSD: README.evbarm,v 1.41 2025/12/12 07:08:57 andvar Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ KUROBOX_PRO	2010/10/02	Kuroutoshikou KURO-BOX/PRO
 KURONAS_X4	2016/07/11	Kuroutoshikou KURO-NAS/x4
 LUBBOCK		2003/06/18	Intel Lubbock DBPXA250 board
 MARVELL_NAS	2010/10/02	Generic Marvell SoC based NAS
-MINI2440	2012/01/30	FrendlyARM Mini2440 S3C2440 SoC board
+MINI2440	2012/01/30	FriendlyARM Mini2440 S3C2440 SoC board
 MIRABOX		2014/05/15	GlobalScale Technologies MiraBox
 MMNET_GENERIC	2011/11/04	Propox MMnet1002 board
 MPCSA_GENERIC	2008/07/03	MPCSA Atmel AT91RM9200 based board
