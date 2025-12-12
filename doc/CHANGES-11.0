@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.51 2025/12/10 16:43:43 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.52 2025/12/12 18:40:03 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1163,4 +1163,34 @@ share/mk/bsd.x11.mk				1.164
 
 	X: update to xorg-server 21.2.21 and xkbcomp 1.5.0.
 	[mrg, ticket #116]
+
+external/bsd/openresolv/dist/resolvconf.in	1.14,1.16
+
+	resolvconf(8): safely quote parsed values from resolv.conf.
+	[roy, ticket #117]
+
+sys/dev/hid/files.hid				1.4
+sys/dev/hid/hidev.c				1.1,1.2
+sys/dev/hid/hidev.h				1.1,1.2
+sys/dev/hid/uhid.h				1.1,1.2
+sys/dev/hid/uhid_common.c			1.1
+sys/dev/usb/files.usb				1.186
+sys/dev/usb/uhid.c				1.130
+sys/dev/usb/uhidev.c				1.96,1.97
+sys/dev/usb/uhidev.h				1.28,1.29
+
+	uhid(4): move generic HID code to sys/dev/hid.
+	[jmcneill, ticket #118]
+
+sys/arch/evbppc/conf/WII			1.13
+sys/arch/evbppc/conf/files.wii			1.9
+sys/arch/evbppc/include/wii.h			1.13
+sys/arch/evbppc/wii/dev/gcpad_rdesc.h		1.1
+sys/arch/evbppc/wii/dev/si.c			1.1,1.2
+sys/arch/evbppc/wii/dev/si.h			1.1
+sys/arch/evbppc/wii/dev/uhid_si.c		1.1
+sys/arch/evbppc/wii/mainbus.c			1.6
+
+	evbppc: wii: add support for GameCube controller sockets.
+	[jmcneill, ticket #119]
 
