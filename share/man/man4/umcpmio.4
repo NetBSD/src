@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.7 2025/11/29 18:39:14 brad Exp $
+.\" $NetBSD: umcpmio.4,v 1.8 2025/12/12 18:34:33 brad Exp $
 .\"
 .\" Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -86,13 +86,13 @@ by setting it to ALT3 to ALT6.
 GP8 is only an input pin when configured for gpio purposes.  The chip
 select, CS, function will be enabled automatically if a request to use
 the
-.Xr spi 8
+.Xr spi 4
 framework is performed that requests the use of the associated chip
 select pin.
 .Pp
 .Ss SPI
 The MCP2210 supports a basic SPI engine via the
-.Xr spi 8
+.Xr spi 4
 framework.  Various SPI delays are configured with
 .Xr umcpmioctl 8 .
 .Pp
@@ -109,7 +109,7 @@ Upon making a configuration call to the
 driver, the driver will set the pin associated with the requested
 slave address to ALT0.
 Since the
-.Xr spi 8
+.Xr spi 4
 framework does not support the notion of a session, this pin will
 never be reset by the
 .Nm
@@ -342,6 +342,7 @@ Device file that interacts with the EEPROM on the MCP2210.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr iic 4 ,
+.Xr spi 4 ,
 .Xr sysctl 8 ,
 .Xr umcpmioctl 8
 .Sh HISTORY
@@ -436,7 +437,7 @@ OUTPUT to ALTx or vise versa.
 .Pp
 The MCP2210 supports active high or active low CS signals per CS.
 However, the
-.Xr spi 8
+.Xr spi 4
 framework does not have any way to specify the direction of the CS
 signal, so the only SPI CS signal supported is the usual active low
 signal.
