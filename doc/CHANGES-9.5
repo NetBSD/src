@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.83 2025/12/12 19:39:21 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.84 2025/12/12 20:07:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1062,4 +1062,9 @@ share/man/man4/options.4			1.532
 
 	ntp: fix paths to documentation.
 	[andvar, ticket #1985]
+
+external/bsd/openresolv/dist/resolvconf.in	1.14,1.16 (via patch)
+
+	resolvconf(8): safely quote parsed values from resolv.conf.
+	[roy, ticket #1984]
 
