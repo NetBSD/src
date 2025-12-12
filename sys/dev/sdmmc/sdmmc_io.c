@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.23 2025/12/10 22:14:13 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.24 2025/12/12 12:18:48 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.23 2025/12/10 22:14:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.24 2025/12/12 12:18:48 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -393,9 +393,13 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
     int reg, u_char *datap, int len, int arg)
 {
 	struct sdmmc_command cmd;
-	int error;
+	int error, datalen;
 
 	/* Don't lock */
+
+	datalen = len;
+        if (ISSET(arg, SD_ARG_CMD53_BLOCK_MODE))
+		datalen *= sf->blklen;
 
 #if 0
 	/* Make sure the card is selected. */
@@ -416,23 +420,50 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_arg = arg;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R5 | SCF_NO_STOP;
 	cmd.c_data = datap;
-	if (ISSET(arg, SD_ARG_CMD53_BLOCK_MODE)) {
-		cmd.c_datalen = len * sf->blklen;
-		cmd.c_blklen = sf->blklen;
-	} else {
-		cmd.c_datalen = len;
-		cmd.c_blklen = MIN(len, sf->blklen);
-	}
+	cmd.c_datalen = datalen;
+	cmd.c_blklen = MIN(datalen, sf->blklen);
 
 	if (!ISSET(arg, SD_ARG_CMD53_WRITE))
 		cmd.c_flags |= SCF_CMD_READ;
 
-	error = sdmmc_mmc_command(sc, &cmd);
+	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) && datalen > 8) {
+		int lflags, preops, postops;
+
+		if (cmd.c_flags & SCF_CMD_READ) {
+			lflags = BUS_DMA_READ;
+			preops = BUS_DMASYNC_PREREAD;
+			postops = BUS_DMASYNC_POSTREAD;
+		} else {
+			lflags = BUS_DMA_WRITE;
+			preops = BUS_DMASYNC_PREWRITE;
+			postops = BUS_DMASYNC_POSTWRITE;
+		}
+
+		error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap,
+		    datap, datalen, NULL, lflags);
+		if (error == 0) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap,
+			    0, datalen, preops);
+			cmd.c_dmamap = sc->sc_dmap;
+			error = sdmmc_mmc_command(sc, &cmd);
+			if (error == 0) {
+				bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap,
+				    0, datalen, postops);
+			}
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+		} else {
+			device_printf(sc->sc_dev,"dmamap load error = %d\n",
+			    error);
+			error = sdmmc_mmc_command(sc, &cmd);
+		}
+	} else {
+		error = sdmmc_mmc_command(sc, &cmd);
+	}
 
 	if (error) {
 		device_printf(sc->sc_dev,
 		    "extended I/O error %d, r=%d p=%p l=%d %s\n",
-		    error, reg, datap, len,
+		    error, reg, datap, datalen,
 		    ISSET(arg, SD_ARG_CMD53_WRITE) ? "write" : "read");
 	}
 
