@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.52 2025/12/12 18:40:03 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.53 2025/12/12 19:34:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1193,4 +1193,11 @@ sys/arch/evbppc/wii/mainbus.c			1.6
 
 	evbppc: wii: add support for GameCube controller sockets.
 	[jmcneill, ticket #119]
+
+etc/ntp.conf					1.24
+external/bsd/ntp/bin/ntptime/ntptime.8		1.2
+share/man/man4/options.4			1.532
+
+	ntp: fix paths to documentation.
+	[andvar, ticket #120]
 
