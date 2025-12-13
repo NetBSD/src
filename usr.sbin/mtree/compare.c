@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.61 2024/12/05 17:17:43 christos Exp $	*/
+/*	$NetBSD: compare.c,v 1.62 2025/12/13 18:50:58 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.61 2024/12/05 17:17:43 christos Exp $");
+__RCSID("$NetBSD: compare.c,v 1.62 2025/12/13 18:50:58 jkoshy Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ typeerr:		LABEL;
 
 		LABEL;
 		printf(flavor == F_FREEBSD9 ?
-		    "%spermissions expcted %#lo found %#lo" :
+		    "%spermissions expected %#lo found %#lo" :
 		    "%spermissions (%#lo, %#lo",
 		    tab, (u_long)s->st_mode,
 		    (u_long)p->fts_statp->st_mode & MBITS);

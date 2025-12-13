@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.92 2024/12/05 17:17:43 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.93 2025/12/13 18:50:58 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.92 2024/12/05 17:17:43 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.93 2025/12/13 18:50:58 jkoshy Exp $");
 #endif
 #endif /* not lint */
 
@@ -803,7 +803,7 @@ addchild(NODE *pathparent, NODE *centry)
 		 *
 		 * Make centry point to the just-replaced node.	 Unlink
 		 * the just-replaced node from the list, and allow it to
-		 * be insterted in the correct position later.
+		 * be inserted in the correct position later.
 		 */
 		centry = samename;
 		if (centry->prev)
