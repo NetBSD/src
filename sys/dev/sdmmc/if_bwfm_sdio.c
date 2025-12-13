@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.32 2025/12/12 12:27:55 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.33 2025/12/13 12:25:42 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1962,7 +1962,7 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 	struct bwfm_sdio_swhdr swhdr;
 	struct bwfm_proto_bcdc_hdr *bcdc;
 	struct mbuf *m, *m0;
-	size_t flen, off, hoff;
+	size_t flen, off, hoff, slen;
 	int i;
 	const size_t hdrlen = sizeof(hwhdr) + sizeof(swhdr);
 
@@ -1982,18 +1982,19 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 		if (sc->sc_bwfm_attached)
 			MCLAIM(m, &sc->sc_sc.sc_ec.ec_rx_mowner);
 		bwfm_qput(&m0, m);
-		if (le16toh(sublen[i]) > m->m_len) {
+		slen = le16toh(sublen[i]);
+		if (roundup(slen,4) > m->m_len) {
 			m_freem(m0);
 			printf("%s: header larger than mbuf\n", DEVNAME(sc));
 			return;
 		}
 		if (bwfm_sdio_frame_read_write(sc, mtod(m, char *),
-		    le16toh(sublen[i]), 0)) {
+		    roundup(slen,4), 0)) {
 			m_freem(m0);
 			printf("%s: frame I/O error\n", DEVNAME(sc));
 			return;
 		}
-		m->m_len = m->m_pkthdr.len = le16toh(sublen[i]);
+		m->m_len = m->m_pkthdr.len = slen;
 	}
 
 	if (m0->m_len >= hdrlen) {
