@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.8 2017/07/15 18:50:42 kre Exp $
+# $NetBSD: t_arith.sh,v 1.9 2025/12/13 06:53:11 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -961,7 +961,7 @@ optional_comma_body()
 
 
 	# Note ',' should be set off from numbers by spaces, as in some
-	# locales it is a valid chacacter in a number, and we want to
+	# locales it is a valid character in a number, and we want to
 	# avoid any possibility of confusing the parser.
 
 	atf_check -s exit:0 -o inline:'2\n' -e empty ${TEST_SH} -c \
@@ -970,6 +970,17 @@ optional_comma_body()
 		'echo $(( 1 , 2 , 3 ))'
 	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
 		'echo $(( 1 , 2 , 3 , 4 ))'
+
+	# Check some expressions associated with ',' operators
+
+	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
+		'echo $(( 2*3 , 7/5 , (1 , 5) , 2 + 2 ))'
+	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
+		'echo $(( 173 , 3 ? 7 : 2 ,  2 * 2 ))'
+	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
+		'echo $(( i = 2 , i++ , i + 1 ))'
+	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
+		'echo $(( ( 0 , 3 ) ? 7 , 8 / 2 : ( 11 , 13 ) ))'
 
 	atf_check -s not-exit:0 -o empty -e not-empty ${TEST_SH} -c \
 		'echo $(( , 2 ))'
