@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.130 2025/12/07 10:05:10 jmcneill Exp $	*/
+/*	$NetBSD: uhid.c,v 1.131 2025/12/13 12:22:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.130 2025/12/07 10:05:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.131 2025/12/13 12:22:20 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -176,7 +176,9 @@ uhid_usb_ioctl(struct uhid_softc *sc, u_long cmd, void *addr, int flag,
 			return EINVAL;
 		break;
 	    }
+	default:
+		return EINVAL;
 	}
 
-	return EINVAL;
+	return 0;
 }
