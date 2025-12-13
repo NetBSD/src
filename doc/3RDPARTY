@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2144 2025/12/11 12:06:33 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.2145 2025/12/13 20:25:35 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1080,8 +1080,8 @@ Current tag:	zingiber-2025-05-31
 Notes:
 
 Package:	openresolv
-Version:	3.17.1
-Current Vers:	3.17.1
+Version:	3.17.3
+Current Vers:	3.17.1 (patched to 3.17.3)
 Maintainer:	roy
 Archive Site:	https://github.com/NetworkConfiguration/openresolv/releases
 Home Page:	http://roy.marples.name/projects/openresolv/
