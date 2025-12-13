@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.44 2022/03/28 12:38:57 riastradh Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.45 2025/12/13 05:40:16 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.44 2022/03/28 12:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.45 2025/12/13 05:40:16 andvar Exp $");
 
 #include "grfcc.h"
 #include "ite.h"
@@ -204,7 +204,7 @@ grf_cc_on(struct grf_softc *gp)
 
 	gp->g_data = (void *) 0xDeadBeaf; /* not particularly clean.. */
 
-	gi->gd_regaddr = (void *) 0xdff000;	/* depricated */
+	gi->gd_regaddr = (void *) 0xdff000;	/* deprecated */
 	gi->gd_regsize = round_page(sizeof (custom));
 	gi->gd_fbaddr  = bm.hardware_address;
 	gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.8 2024/02/02 22:39:10 andvar Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.9 2025/12/13 05:40:16 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -138,14 +138,14 @@
 				/* Transmit Queue Token-Bucket Counter */
 #define MVXPE_TQTBCONFIG_V1(q)	(0x2704 + ((q) << 4))
 				/* Transmit Queue Token-Bucket Configuration */
-#define MVXPE_PTTBC_V1		0x2740	/* Port Transmit Backet Counter */
+#define MVXPE_PTTBC_V1		0x2740	/* Port Transmit Bucket Counter */
 
 /* Tx DMA Queue Arbiter Registers (Version 3) */
 #define MVXPE_TQC1_V3		0x3e00	/* Transmit Queue Command1 */
 #define MVXPE_TQFPC_V3		0x3e04	/* Transmit Queue Fixed Priority Cfg */
 #define MVXPE_BRC_V3		0x3e08	/* Basic Refill No of Clocks */
 #define MVXPE_MTU_V3		0x3e0c	/* MTU */
-#define MVXPE_PREFILL_V3	0x3e10	/* Port Backet Refill */
+#define MVXPE_PREFILL_V3	0x3e10	/* Port Bucket Refill */
 #define MVXPE_PMTBS_V3		0x3e14	/* Port Max Token-Bucket Size */
 #define MVXPE_QREFILL_V3(q)	(0x3e20 + ((q) << 2))
 				/* Transmit Queue Refill */

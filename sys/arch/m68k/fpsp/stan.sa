@@ -1,4 +1,4 @@
-*	$NetBSD: stan.sa,v 1.4 2000/03/13 23:52:32 soren Exp $
+*	$NetBSD: stan.sa,v 1.5 2025/12/13 05:40:16 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -323,8 +323,8 @@ TANBORS:
 TANSM:
 
 	FMOVE.X		FP0,-(sp)
-	FMOVE.L		d1,fpcr		 ;restore users exceptions
-	FMOVE.X		(sp)+,FP0	;last inst - posibble exception set
+	FMOVE.L		d1,fpcr		;restore users exceptions
+	FMOVE.X		(sp)+,FP0	;last inst - possible exception set
 
 	bra		t_frcinx
 

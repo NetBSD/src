@@ -1,4 +1,4 @@
-/*	$NetBSD: sc16is7xx.c,v 1.4 2025/12/01 14:56:03 brad Exp $	*/
+/*	$NetBSD: sc16is7xx.c,v 1.5 2025/12/13 05:40:16 andvar Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -19,7 +19,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.4 2025/12/01 14:56:03 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc16is7xx.c,v 1.5 2025/12/13 05:40:16 andvar Exp $");
 
 /* Common driver for the frontend to the NXP SC16IS7xx UART bridge */
 
@@ -58,7 +58,7 @@ static int sc16is7xx_verify_poll(SYSCTLFN_ARGS);
 static int sc16is7xx_verify_freq_sysctl(SYSCTLFN_ARGS);
 void sc16is7xx_thread(void *);
 
-/* Artifical interrupts and the like */
+/* Artificial interrupts and the like */
 
 static void
 sc16is7xx_comintr(struct sc16is7xx_sc *sc)
@@ -145,7 +145,7 @@ sc16is7xx_softintr(void *arg)
 	 * There could be a lot of interrupts going on if the there is a lot to
 	 * receive or transmit.
 	 *
-	 * It may be possble to get clever and send a couple of work items, one
+	 * It may be possible to get clever and send a couple of work items, one
 	 * for each possible channel. */
 
 	workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_frequency, NULL);
@@ -467,7 +467,7 @@ sc16is7xx_attach(struct sc16is7xx_sc *sc)
 		}
 	} else {
 		aprint_error_dev(sc->sc_dev,
-		    "Error reseting chip: error=%d, reset_count=%d\n",
+		    "Error resetting chip: error=%d, reset_count=%d\n",
 		    error, reset_count);
 	}
 
@@ -478,7 +478,7 @@ sc16is7xx_attach(struct sc16is7xx_sc *sc)
 	 *
 	 * There does not appear to be a way to distinguish a SC16IS740 /
 	 * SC16IS741 from a SC16IS750 / SC16IS760.  The GPIO registers exist in
-	 * both varients and appear to behave the same.  Obviously the physical
+	 * both variants and appear to behave the same.  Obviously the physical
 	 * pins are missing from the SC16IS74x branch of the family.  A bit
 	 * more detail is available if you have a system with FDT.
 	 *
