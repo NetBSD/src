@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.9 2025/12/13 06:53:11 kre Exp $
+# $NetBSD: t_arith.sh,v 1.10 2025/12/13 08:11:18 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -978,7 +978,7 @@ optional_comma_body()
 	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
 		'echo $(( 173 , 3 ? 7 : 2 ,  2 * 2 ))'
 	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
-		'echo $(( i = 2 , i++ , i + 1 ))'
+		'echo $(( i = 2 , i += 1 , i + 1 ))'
 	atf_check -s exit:0 -o inline:'4\n' -e empty ${TEST_SH} -c \
 		'echo $(( ( 0 , 3 ) ? 7 , 8 / 2 : ( 11 , 13 ) ))'
 
