@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.27 2025/11/29 01:33:40 manu Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.28 2025/12/13 10:20:20 kre Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #define UCOM_UNK_PORTNO (-1)
 
 struct	ucom_softc;
+struct	termios;
 
 /*
  * USB detach requires ensuring that outstanding operations and
