@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2021/08/14 16:15:03 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2025/12/14 17:51:03 christos Exp $
 
 USE_FORT?=	yes
 
@@ -131,5 +131,17 @@ MLINKS+=	ldap_url.3 ldap_is_ldap_url.3 \
 
 
 MAN+=		ldap.conf.5 ldif.5
+
+EXPSYM_SRCS+=	ldap.common.expsym
+.if ${MKKERBEROS:Uno} != "no"
+EXPSYM_SRCS+=	ldap.kerberos.expsym
+.endif
+
+LIB_EXPSYM=	ldap.expsym
+ldap.expsym: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} > ${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	ldap.expsym ldap.expsym.tmp
 
 .include <bsd.lib.mk>

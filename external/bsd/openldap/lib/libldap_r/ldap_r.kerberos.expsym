@@ -1,0 +1,5 @@
+ldap_int_gssapi_close
+ldap_int_gssapi_config
+ldap_int_gssapi_get_option
+ldap_int_gssapi_mutex
+ldap_int_gssapi_set_option
