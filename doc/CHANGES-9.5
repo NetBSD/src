@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.85 2025/12/14 12:16:32 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.86 2025/12/14 14:25:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1072,4 +1072,9 @@ external/bsd/openresolv/dist/resolvconf.in	1.17 (patch)
 
 	resolvconf(8): quote on printf rather than on value.
 	[roy, ticket #1986]
+
+sys/arch/mips/include/cache_r5k.h		1.7
+
+	mips: fix R5000SC cache page macro typo that broke boot.
+	[tsutsui, ticket #1987]
 
