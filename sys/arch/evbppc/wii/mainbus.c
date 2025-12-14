@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4.4.2 2025/12/12 18:38:56 martin Exp $ */
+/* $NetBSD: mainbus.c,v 1.4.4.3 2025/12/14 10:19:37 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.4.2 2025/12/12 18:38:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4.4.3 2025/12/14 10:19:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -129,11 +129,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	maa.maa_name = "bwdsp";
 	maa.maa_addr = DSP_BASE;
 	maa.maa_irq = PI_IRQ_DSP;
-	config_found(self, &maa, mainbus_print, CFARGS_NONE);
-
-	maa.maa_name = "si";
-	maa.maa_addr = SI_BASE;
-	maa.maa_irq = PI_IRQ_SI;
 	config_found(self, &maa, mainbus_print, CFARGS_NONE);
 }
 

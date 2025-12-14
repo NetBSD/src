@@ -1,4 +1,4 @@
-#	$NetBSD: WII,v 1.9.2.3 2025/12/12 18:38:57 martin Exp $
+#	$NetBSD: WII,v 1.9.2.4 2025/12/14 10:19:36 martin Exp $
 #
 #	Nintendo Wii
 #
@@ -133,8 +133,6 @@ options 	WSDISPLAY_SCROLLSUPPORT
 options 	WSDISPLAY_MULTICONS
 
 hollywood0 	at mainbus0 irq 14
-si0		at mainbus0 addr 0x0d006400 irq 3	# Serial interface
-uhid*		at si0
 exi0		at mainbus0 addr 0x0d006800 irq 4	# External interface
 rtcsram0	at exi0					# RTC/SRAM chip
 gecko0		at exi0					# USB Gecko
