@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.h,v 1.6 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: cache_r5k.h,v 1.6.28.1 2025/12/14 14:18:17 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,5 +69,5 @@ void	r5k_sdcache_wb_range(register_t, vsize_t);
 #define	R5K_SC_PAGEMASK		(R5K_SC_PAGESIZE - 1)
 
 #define	mips_r5k_round_page(x)	(((x) + (register_t)R5K_SC_PAGEMASK) \
-				    & (register_t)R5K_SC_PAGEMASK)
-#define	mips_r5k_trunc_page(x)	((x) & (register_t)R5K_SC_PAGEMASK)
+				    & (register_t)~R5K_SC_PAGEMASK)
+#define	mips_r5k_trunc_page(x)	((x) & (register_t)~R5K_SC_PAGEMASK)
