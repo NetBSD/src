@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_clock.h,v 1.1 2015/12/05 13:32:27 jmcneill Exp $ */
+/* $NetBSD: exynos_clock.h,v 1.2 2025/12/14 19:43:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,10 +33,10 @@
 
 enum exynos_clk_type {
 	EXYNOS_CLK_FIXED,
-	EXYNOS_CLK_PLL,
+	EXYNOS_CLK_PLL35XX,
 	EXYNOS_CLK_MUX,
 	EXYNOS_CLK_DIV,
-	EXYNOS_CLK_GATE
+	EXYNOS_CLK_GATE,
 };
 
 struct exynos_fixed_clk {

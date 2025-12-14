@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_reg.h,v 1.18 2025/12/14 19:31:42 skrll Exp $ */
+/* $NetBSD: exynos_reg.h,v 1.19 2025/12/14 19:43:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -120,17 +120,17 @@
 
 #define PLL_CON0_ENABLE			__BIT(31)
 #define PLL_CON0_LOCKED			__BIT(29)	/* has the PLL locked on */
-#define PLL_CON0_M			__BITS(16,25)	/* PLL M divide value */
-#define PLL_CON0_P			__BITS( 8,13)	/* PLL P divide value */
-#define PLL_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
+#define PLL35XX_CON0_M			__BITS(16,25)	/* PLL M divide value */
+#define PLL35XX_CON0_P			__BITS( 8,13)	/* PLL P divide value */
+#define PLL35XX_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
 
 #define PLL_MPS2FREQ(F, M, P, S) \
 	((P) == 0 ? 0 : (((M) * (F)) / ((P) * (1 << (S)))))
-#define PLL_FREQ(f, v) PLL_MPS2FREQ( \
+#define PLL35XX_FREQ(f, v) PLL_MPS2FREQ( \
 	(f),\
-	__SHIFTOUT((v), PLL_CON0_M),\
-	__SHIFTOUT((v), PLL_CON0_P),\
-	__SHIFTOUT((v), PLL_CON0_S))
+	__SHIFTOUT((v), PLL35XX_CON0_M),\
+	__SHIFTOUT((v), PLL35XX_CON0_P),\
+	__SHIFTOUT((v), PLL35XX_CON0_S))
 
 
 /* Watchdog register definitions */
