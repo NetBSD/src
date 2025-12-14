@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.66 2020/02/01 06:02:00 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.66.32.1 2025/12/14 14:16:12 martin Exp $
 
 #	config for bootable floppy kernel
 #
@@ -6,7 +6,7 @@ include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os -fno-unwind-tables"	# Optimise for space. Implies -O2
 
 maxusers	4
 
