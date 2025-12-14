@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.182.2.1 2025/12/12 18:35:58 martin Exp $
+#	$NetBSD: files.usb,v 1.182.2.2 2025/12/14 11:18:30 martin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -50,6 +50,7 @@ defflag opt_usb.h	UGENSA_DEBUG: USB_DEBUG
 defflag opt_usb.h	UGEN_DEBUG: USB_DEBUG
 defparam opt_usb.h	UGEN_DEBUG_DEFAULT: UGEN_DEBUG
 defflag opt_usb.h	UHIDEV_DEBUG: USB_DEBUG
+defflag opt_usb.h	UHID_DEBUG: USB_DEBUG
 defflag opt_usb.h	UHMODEM_DEBUG: USB_DEBUG
 defflag opt_usb.h	UHSO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIPAD_DEBUG: USB_DEBUG
@@ -155,8 +156,9 @@ attach	uhidev at usbifif
 file	dev/usb/uhidev.c		uhidev
 
 # Generic HID devices
-attach	uhid at uhidbus with uhid_usb
-file	dev/usb/uhid.c			uhid_usb		needs-flag
+device	uhid: hid
+attach	uhid at uhidbus
+file	dev/usb/uhid.c			uhid			needs-flag
 
 # Keyboards
 defparam	UKBD_LAYOUT
