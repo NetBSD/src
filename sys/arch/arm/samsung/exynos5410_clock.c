@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.10 2025/12/14 20:04:25 skrll Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.11 2025/12/14 20:12:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.10 2025/12/14 20:04:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.11 2025/12/14 20:12:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,8 +60,8 @@ static struct exynos5410_clock_id {
     { 1, "fin_pll" },
     { 2, "fout_apll" },
     { 3, "fout_cpll" },
-    { 4, "fout_dpll" },
-    { 5, "fout_mpll" },
+    { 4, "fout_mpll" },
+    { 5, "fout_bpll" },
     { 6, "fout_kpll" },
     { 7, "fout_epll" },
 
