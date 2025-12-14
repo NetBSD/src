@@ -201,8 +201,7 @@ parse_resolv()
 	search=
 
 	while read -r line; do
-		# Ensure the value is quoted for eval
-		stripped_line="$(quote "$(resolv_strip ${line#* })")"
+		stripped_line="$(resolv_strip ${line#* })"
 		case "$line" in
 		"# resolv.conf from "*)
 			if ${new}; then
@@ -226,7 +225,7 @@ parse_resolv()
 				esac
 			done
 			if $islocal; then
-				printf '%s\n' "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS \"$stripped_line"
+				printf 'LOCALNAMESERVERS="$LOCALNAMESERVERS "%s\n' "$(quote "$stripped_line")"
 			else
 				ns="$ns$stripped_line "
 			fi
@@ -235,7 +234,7 @@ parse_resolv()
 			search="$stripped_line"
 			if [ -z "$domain" ]; then
 				domain="$search"
-				printf '%s\n' "DOMAIN=$domain"
+				printf 'DOMAIN=%s\n' "$(quote "$domain")"
 			fi
 			;;
 		"search "*)
@@ -252,11 +251,11 @@ parse_resolv()
 				for d in $search; do
 					ds="$ds${ds:+ }$d:$newns"
 				done
-				printf '%s\n' "DOMAINS=\"\$DOMAINS \"$ds"
+				printf 'DOMAINS="$DOMAINS "%s\n' "$(quote "$ds")"
 			fi
-			printf '%s\n' "SEARCH=\"\$SEARCH \"$search"
+			printf 'SEARCH="$SEARCH "%s\n' "$(quote "$search")"
 			if ! $private; then
-				printf '%s\n' "NAMESERVERS=\"\$NAMESERVERS \"$ns"
+				printf 'NAMESERVERS="$NAMESERVERS "%s\n' "$(quote "$ns")"
 			fi
 			ns=
 			search=
@@ -681,11 +680,11 @@ make_vars()
 	LOCALNAMESERVERS="$(list_remove name_server_blacklist $LOCALNAMESERVERS)"
 
 	# Ensure output is quoted for eval
-	printf '%s\n' "DOMAIN=$(quote "$DOMAIN")"
-	printf '%s\n' "SEARCH=$(quote "$SEARCH")"
-	printf '%s\n' "NAMESERVERS=$(quote "$NAMESERVERS")"
-	printf '%s\n' "LOCALNAMESERVERS=$(quote "$LOCALNAMESERVERS")"
-	printf '%s\n' "DOMAINS=$(quote "$newdomains")"
+	printf 'DOMAIN=%s\n' "$(quote "$DOMAIN")"
+	printf 'SEARCH=%s\n' "$(quote "$SEARCH")"
+	printf 'NAMESERVERS=%s\n' "$(quote "$NAMESERVERS")"
+	printf 'LOCALNAMESERVERS=%s\n' "$(quote "$LOCALNAMESERVERS")"
+	printf 'DOMAINS=%s\n' "$(quote "$newdomains")"
 }
 
 force=false
