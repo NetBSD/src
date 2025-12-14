@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.38 2024/05/17 02:59:08 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.39 2025/12/14 18:07:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.38 2024/05/17 02:59:08 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.39 2025/12/14 18:07:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -147,6 +147,7 @@ el_set(EditLine *el, int op, ...)
 		break;
 
 	case EL_EDITOR:		/* const wchar_t * */
+	case EL_WORDCHARS:	/* const wchar_t * */
 		ret = el_wset(el, op, ct_decode_string(va_arg(ap, char *),
 		    &el->el_lgcyconv));
 		break;
@@ -300,7 +301,8 @@ el_get(EditLine *el, int op, ...)
 		break;
 	}
 
-	case EL_EDITOR: {
+	case EL_EDITOR:
+	case EL_WORDCHARS: {
 		const char **p = va_arg(ap, const char **);
 		const wchar_t *pw;
 		ret = el_wget(el, op, &pw);

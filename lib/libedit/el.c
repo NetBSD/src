@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.102 2025/01/03 00:40:08 rillig Exp $	*/
+/*	$NetBSD: el.c,v 1.103 2025/12/14 18:07:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.102 2025/01/03 00:40:08 rillig Exp $");
+__RCSID("$NetBSD: el.c,v 1.103 2025/12/14 18:07:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -382,6 +382,9 @@ el_wset(EditLine *el, int op, ...)
 		terminal__flush(el);
 		break;
 
+	case EL_WORDCHARS:
+		rv = map_set_wordchars(el, va_arg(ap, wchar_t *));
+		break;
 	default:
 		rv = -1;
 		break;
@@ -496,6 +499,11 @@ el_wget(EditLine *el, int op, ...)
 		}
 		break;
 	}
+
+	case EL_WORDCHARS:
+		rv = map_get_wordchars(el, va_arg(ap, const wchar_t **));
+		break;
+
 	default:
 		rv = -1;
 		break;
