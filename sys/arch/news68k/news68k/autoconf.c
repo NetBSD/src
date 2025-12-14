@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2017/06/22 16:46:53 flxd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.44.1 2025/12/14 14:14:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2017/06/22 16:46:53 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.44.1 2025/12/14 14:14:11 martin Exp $");
 
 #include "scsibus.h"
 
@@ -92,9 +92,6 @@ cpu_configure(void)
 	 * Kick off autoconfiguration
 	 */
 	(void) splhigh();
-
-	/* Initialize the interrupt handlers. */
-	isrinit();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
