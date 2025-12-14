@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.9 2025/12/14 19:57:58 skrll Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.10 2025/12/14 20:04:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.9 2025/12/14 19:57:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.10 2025/12/14 20:04:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -407,7 +407,7 @@ static struct exynos_clk exynos5410_clocks[] = {
 	    __BIT(7), CLK_SET_RATE_PARENT),
 	CLK_GATE("sclk_usbphy300", "dout_usbphy300", EXYNOS5410_GATE_TOP_SCLK_FSYS,
 	    __BIT(8), CLK_SET_RATE_PARENT),
-	CLK_GATE("sclk_usbd301", "dout_usbd301", EXYNOS5410_GATE_TOP_SCLK_FSYS,
+	CLK_GATE("sclk_usbd300", "dout_usbd300", EXYNOS5410_GATE_TOP_SCLK_FSYS,
 	    __BIT(9), CLK_SET_RATE_PARENT),
 	CLK_GATE("sclk_usbd301", "dout_usbd301", EXYNOS5410_GATE_TOP_SCLK_FSYS,
 	    __BIT(10), CLK_SET_RATE_PARENT),
