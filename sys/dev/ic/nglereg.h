@@ -1,4 +1,4 @@
-/*	$NetBSD: nglereg.h,v 1.1 2025/12/14 10:01:40 macallan Exp $	*/
+/*	$NetBSD: nglereg.h,v 1.2 2025/12/14 10:19:14 macallan Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -148,6 +148,11 @@
 #define	NGLE_DODGER		0x200000	/* 'busy dodger' idle */
 	#define DODGER_IDLE	0x1000	/* or 0x10000, likely tpyo */
 #define	NGLE_BUSY		0x200000	/* busy register */
+#define	NGLE_CONTROL		0x200004	/* a guess */
+/*
+ * byte access, need to write 1 here for fb access to work properly
+ */
+#define	NGLE_CONTROL_FB		0x200005
 #define	NGLE_FIFO		0x200008	/* # of fifo slots */
 #define	NGLE_EG_CURSOR		0x200100	/* cursor coordinates on EG */
 	#define EG_ENABLE_CURSOR	0x80000000
