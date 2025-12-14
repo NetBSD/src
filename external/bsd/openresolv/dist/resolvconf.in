@@ -259,6 +259,8 @@ quote()
 
 # Parse resolv.conf's and make variables
 # for domain name servers, search name servers and global nameservers
+# Important! Each printf here should use the above quote function
+# to ensure that user input is quoted for eval.
 parse_resolv()
 {
 	domain=
@@ -270,8 +272,7 @@ parse_resolv()
 	search=
 
 	while read -r line; do
-		# Ensure the value is quoted for eval
-		value="$(quote "${line#* }")"
+		value="${line#* }"
 		case "$line" in
 		"# resolv.conf from "*)
 			if ${new}; then
@@ -300,7 +301,7 @@ parse_resolv()
 				esac
 			done
 			if $islocal; then
-				printf '%s\n' "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS \"$value"
+				printf 'LOCALNAMESERVERS="$LOCALNAMESERVERS "%s\n' "$(quote "$value")"
 			else
 				ns="$ns${ns:+ }$value"
 			fi
@@ -310,7 +311,7 @@ parse_resolv()
 			if [ -z "$domain" ]; then
 				domain="$search"
 				if ! $nosearch; then
-					printf '%s\n' "DOMAIN=$domain"
+					printf 'DOMAIN=%s\n' "$(quote "$domain")"
 				fi
 			fi
 			;;
@@ -328,13 +329,13 @@ parse_resolv()
 				for d in $search; do
 					ds="$ds${ds:+ }$d:$newns"
 				done
-				printf '%s\n' "DOMAINS=\"\$DOMAINS \"$ds"
+				printf 'DOMAINS="$DOMAINS "%s\n' "$(quote "$ds")"
 			fi
 			if ! $nosearch; then
-				printf '%s\n' "SEARCH=\"\$SEARCH \"$search"
+				printf 'SEARCH="$SEARCH "%s\n' "$(quote "$search")"
 			fi
 			if ! $private; then
-				printf '%s\n' "NAMESERVERS=\"\$NAMESERVERS \"$ns"
+				printf 'NAMESERVERS="$NAMESERVERS "%s\n' "$(quote "$ns")"
 			fi
 			ns=
 			search=
@@ -1039,11 +1040,11 @@ make_vars()
 	LOCALNAMESERVERS="$(list_remove name_server_blacklist $LOCALNAMESERVERS)"
 
 	# Ensure output is quoted for eval
-	printf '%s\n' "DOMAIN=$(quote "$DOMAIN")"
-	printf '%s\n' "SEARCH=$(quote "$SEARCH")"
-	printf '%s\n' "NAMESERVERS=$(quote "$NAMESERVERS")"
-	printf '%s\n' "LOCALNAMESERVERS=$(quote "$LOCALNAMESERVERS")"
-	printf '%s\n' "DOMAINS=$(quote "$newdomains")"
+	printf 'DOMAIN=%s\n' "$(quote "$DOMAIN")"
+	printf 'SEARCH=%s\n' "$(quote "$SEARCH")"
+	printf 'NAMESERVERS=%s\n' "$(quote "$NAMESERVERS")"
+	printf 'LOCALNAMESERVERS=%s\n' "$(quote "$LOCALNAMESERVERS")"
+	printf 'DOMAINS=%s\n' "$(quote "$newdomains")"
 }
 
 force=false
