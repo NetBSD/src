@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.378 2025/10/27 16:30:23 christos Exp $
+# $NetBSD: shl.mi,v 1.379 2025/12/14 16:28:05 kre Exp $
 #
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -35,7 +35,7 @@
 ./usr/libdata/debug/lib/librumpres.so.0.0.debug			comp-rump-debug	debug,dynamicroot,rump
 ./usr/libdata/debug/lib/libterminfo.so.2.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libumem.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
-./usr/libdata/debug/lib/libutil.so.7.24.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libutil.so.7.25.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libuutil.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libz.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -325,7 +325,8 @@
 ./usr/libdata/debug/usr/lib/libunbound.so.10.0.debug 		comp-net-debug	debug,compatfile,unbound
 ./usr/libdata/debug/usr/lib/libunbound.so.9.0.debug 		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-obsolete	obsolete
+./usr/libdata/debug/usr/lib/libutil.so.7.25.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libwind.so.1.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug		comp-net-debug	debug,compatfile

@@ -1,4 +1,4 @@
-/*	$NetBSD: strpct.c,v 1.6 2025/05/13 04:50:45 rillig Exp $	*/
+/*	$NetBSD: strpct.c,v 1.7 2025/12/14 16:28:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2025 The NetBSD Foundation, Inc.
@@ -40,13 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpct.c,v 1.6 2025/05/13 04:50:45 rillig Exp $");
+__RCSID("$NetBSD: strpct.c,v 1.7 2025/12/14 16:28:05 kre Exp $");
 
 #include <limits.h>
 #include <locale.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <util.h>
 
 static uintmax_t
@@ -56,19 +57,53 @@ imax_abs(intmax_t x)
 	return x < 0 ? -(uintmax_t)x : (uintmax_t)x;
 }
 
+static  uint32_t _round_ = STRPCT_RTZ;	/* Historic method */
+/*
+ * Set the rounding mode used by the strpct() and strspct() functions
+ */
+uint32_t
+strpct_round(uint32_t mode)
+{
+	uint32_t oldmode = _round_;
+
+	switch (mode) {
+	case STRPCT_RTN:
+	case STRPCT_RTZ:
+	case STRPCT_RAZ:
+	case STRPCT_RTI:
+	case STRPCT_RAI:
+		_round_ = mode;
+		break;
+	}
+
+	return oldmode;
+}
+
 char *
 strspct(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
     size_t digits)
 {
+	return
+	    strspct_r(buf, bufsiz, numerator, denominator, digits, _round_);
+}
+
+char *
+strspct_r(char *buf, size_t bufsiz, intmax_t numerator, intmax_t denominator,
+    size_t digits, uint32_t round)
+{
+	int sign;
 
 	if (bufsiz == 1)
 		buf[0] = '\0';
 	if (bufsiz <= 1)
 		return buf;
 
-	int sign = (numerator < 0) != (denominator < 0);
-	(void)strpct(buf + sign, bufsiz - sign, imax_abs(numerator),
-	    imax_abs(denominator), digits);
+	sign = (numerator < 0) != (denominator < 0);
+	if (sign && (round == STRPCT_RTI || round == STRPCT_RAI))
+		round ^= (STRPCT_RTI ^ STRPCT_RAI);
+
+	(void)strpct_r(buf + sign, bufsiz - sign, imax_abs(numerator),
+	    imax_abs(denominator), digits, round);
 	if (sign)
 		*buf = '-';
 	return buf;
@@ -117,6 +152,14 @@ char *
 strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
     size_t digits)
 {
+	return
+	    strpct_r(buf, bufsiz, numerator, denominator, digits, _round_);
+}
+
+char *
+strpct_r(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
+    size_t digits, uint32_t round)
+{
 	char *p = buf;
 	size_t n = bufsiz;
 
@@ -124,11 +167,48 @@ strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
 		denominator = 1;
 
 	if (numerator >= denominator) {
-		size_t nw = snprintf(p, n, "%ju", numerator / denominator);
-		if (nw >= n)
+		uintmax_t quotient = numerator / denominator;
+		uintmax_t remainder = numerator - (quotient * denominator);
+		size_t nw = snprintf(p, n, "%ju", quotient);
+
+		if (nw >= n) {
+			/*
+			 * We have only unsigned numbers here, so
+			 * rounding away from zero and towards Inf are the same
+			 * Sim rounding towards zero, and away from Inf
+			 * (away from Inf is the same thing as towards -Inf)
+			 */
+			switch (round & 3) {
+				/* round towards 0, round towards -Inf */
+			case STRPCT_RTZ:
+					/* truncate; do nothing */
+				break;
+
+				/* round to nearest (0.5 always away) */
+			case STRPCT_RTN:
+			default:
+				if (remainder * 2 < denominator)
+					break;
+				/* FALLTHROUGH */
+
+				/* round away from 0, or towards Inf */
+			case STRPCT_RAZ:
+				if (remainder == 0)
+					break;
+
+				(void)snprintf(p, n, "%ju", quotient + 1);
+				break;
+			}
 			return buf;
+		}
 		p += nw, n -= nw;
-		numerator %= denominator;
+		numerator = remainder;
+	}
+
+	if (n < 2) {
+		if (n != 0)
+			buf[0] = '\0';
+		return buf;
 	}
 
 	bignum num = { 0, numerator };
@@ -138,6 +218,49 @@ strpct(char *buf, size_t bufsiz, uintmax_t numerator, uintmax_t denominator,
 		unsigned digit = 0;
 		for (; bignum_ge_u(num, denominator); digit++)
 			num = bignum_minus_u(num, denominator);
+
+		if (i == 1 + digits || n <= 2) {
+			/*
+			 * This will be the last digit, so round it.
+			 * nb: all values here are non-negative
+			 */
+			if (!(round & 1)) {		      /* round down  */
+			    if (round != 0 ? bignum_ge_u(num, 1) :  /* up   */
+			        bignum_ge_u(bignum_plus(num, num),  /* rtn */
+							 denominator)) {
+				if (digit < 9) {
+				    digit++;
+				} else {
+				    if (n == 0)
+					break;
+				    digit = 0;
+				    if (p == buf) {
+					*p++ = '1';
+					n--;
+				    } else for (char *q = p; --q >= buf; ) {
+					if (*q < '0' || *q > '9') /* the '.' */
+						continue;
+					if (*q == '9') {
+					    *q = '0';
+					    if (q == buf) {
+						if ((size_t)(p - buf) >=
+						    bufsiz - 1)
+							p--;
+						memmove(q+1,q,(size_t)(p-buf));
+						*q = '1';
+						p++;
+						n--;
+						break;
+					    }
+					} else {
+					    (*q)++;
+					    break;
+					}
+				    }
+				}
+			    }
+			}
+		}
 
 		if (i > 0 || p > buf || digit > 0) {
 			if (n >= 2)
