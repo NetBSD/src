@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.55 2025/12/14 11:48:47 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.56 2025/12/14 14:19:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1180,4 +1180,24 @@ external/bsd/openresolv/dist/resolvconf.in	1.17
 
 	resolvconf(8): quote on printf rather than on value.
 	[roy, ticket #122]
+
+sys/arch/news68k/news68k/autoconf.c		1.25
+sys/arch/news68k/news68k/machdep.c		1.122
+
+	news68k: avoid diagnostic assertion early in boot.
+	[tsutsui, ticket #123]
+
+sys/arch/news68k/conf/GENERIC			1.142
+sys/arch/news68k/conf/GENERIC_TINY		1.94
+sys/arch/news68k/conf/INSTALL			1.67
+sys/arch/news68k/conf/LIBERO			1.71
+sys/arch/news68k/conf/NEWS1200			1.71
+
+	news68k: config changes to shrink kernel size.
+	[tsutsui, ticket #124]
+
+sys/arch/mips/include/cache_r5k.h		1.7
+
+	mips: fix R5000SC cache page macro typo that broke boot.
+	[tsutsui, ticket #125]
 
