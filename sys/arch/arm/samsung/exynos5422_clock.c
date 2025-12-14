@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.17 2025/12/14 19:43:35 skrll Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.18 2025/12/14 19:57:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.17 2025/12/14 19:43:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.18 2025/12/14 19:57:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -707,6 +707,7 @@ exynos5422_clock_print(struct exynos5422_clock_softc *sc,
 		type = "fixed";
 		break;
 	case EXYNOS_CLK_PLL35XX:
+	case EXYNOS_CLK_PLL2650X:
 		type = "pll";
 		break;
 	case EXYNOS_CLK_MUX:
