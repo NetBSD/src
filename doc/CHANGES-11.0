@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.54 2025/12/14 11:19:01 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.55 2025/12/14 11:48:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1175,4 +1175,9 @@ share/man/man4/options.4			1.532
 
 	ntp: fix paths to documentation.
 	[andvar, ticket #120]
+
+external/bsd/openresolv/dist/resolvconf.in	1.17
+
+	resolvconf(8): quote on printf rather than on value.
+	[roy, ticket #122]
 
