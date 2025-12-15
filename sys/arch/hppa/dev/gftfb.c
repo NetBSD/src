@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.32 2025/10/28 11:15:37 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.33 2025/12/15 08:46:42 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -46,6 +46,7 @@
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
+#include <dev/ic/nglereg.h>
 #include <hppa/dev/sti_pci_var.h>
 #include "opt_gftfb.h"
 
