@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.8 2009/04/30 07:01:27 skrll Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.9 2025/12/15 22:10:33 nia Exp $	*/
 
 /*	$OpenBSD: endian.h,v 1.8 2004/04/07 18:24:19 mickey Exp $	*/
 
@@ -32,7 +32,7 @@
 #define	_HPPA_BYTE_SWAP_H_
 
 #ifdef __GNUC__
-#include <sys/types.h>
+#include <sys/stdint.h>
 __BEGIN_DECLS
 
 

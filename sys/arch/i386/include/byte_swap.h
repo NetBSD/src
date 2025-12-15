@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.17 2020/08/10 10:59:33 rin Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.18 2025/12/15 22:10:33 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _I386_BYTE_SWAP_H_
 #define	_I386_BYTE_SWAP_H_
 
-#include <sys/types.h>
+#include <sys/stdint.h>
 
 #ifdef  __GNUC__
 __BEGIN_DECLS
