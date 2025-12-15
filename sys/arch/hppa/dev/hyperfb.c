@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.26 2025/12/15 11:37:06 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.27 2025/12/15 12:43:16 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.26 2025/12/15 11:37:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.27 2025/12/15 12:43:16 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -1062,7 +1062,7 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct hyperfb_softc *sc = scr->scr_cookie;
 	void *data;
 	int i, x, y, wi, he/*, rv = GC_NOPE*/;
-	uint32_t bg, fg, mask;
+	uint32_t bg, fg, mask, cmask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1095,35 +1095,40 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	hyperfb_fillmode(sc);
 
-	hyperfb_wait_fifo(sc, 3);
+	hyperfb_wait_fifo(sc, 4);
 
 	/* character colour */
 	hyperfb_write4(sc, NGLE_FG, fg);
 	hyperfb_write4(sc, NGLE_BG, bg);
-	/* dst XY */
-	hyperfb_write4(sc, NGLE_DST_XY, (x << 16) | y);
-
+	/* pixel address in 32bit since we're in AddrLong mode */
+	hyperfb_write4(sc, NGLE_BINC_DST, (x << 2) | (y << 13));
+	/* make a mask covering the character width */
+	cmask = 0xffffffff << (32 - wi);
+	hyperfb_write4(sc, NGLE_BINC_MASK, cmask);
 	/*
-	 * drawing a rectangle moves the starting coordinates down the
-	 * y-axis so we can just hammer the wi/he register to draw a full
-	 * character
+	 * ...and now we hammer pixel data into BINC, moving down.
+	 * Unlike FX, we *can* overrun the pipeline with BINC writes,
+	 * especially with colour expansion while scrolling.
+	 * HCRX seems to have a 32 entry pipeline, let's assume we won't
+	 * encounter fonts taller than that for now...
 	 */
+	if (he > 31) {
+		hyperfb_wait(sc);
+	} else
+		hyperfb_wait_fifo(sc, he);
+		
 	if (ri->ri_font->stride == 1) {
 		uint8_t *data8 = data;
 		for (i = 0; i < he; i++) {
-			hyperfb_wait_fifo(sc, 2);
 			mask = *data8;
-			hyperfb_write4(sc, NGLE_TRANSFER_DATA, mask << 24);
-			hyperfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | 1);
+			hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
 			data8++;
 		}
 	} else {
 		uint16_t *data16 = data;
 		for (i = 0; i < he; i++) {
-			hyperfb_wait_fifo(sc, 2);
 			mask = *data16;
-			hyperfb_write4(sc, NGLE_TRANSFER_DATA, mask << 16);
-			hyperfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | 1);
+			hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
 			data16++;
 		}
 	}
