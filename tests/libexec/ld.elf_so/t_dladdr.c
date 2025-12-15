@@ -1,4 +1,4 @@
-/*	$NetBSD: t_dladdr.c,v 1.1 2025/12/14 23:26:12 riastradh Exp $	*/
+/*	$NetBSD: t_dladdr.c,v 1.2 2025/12/15 02:36:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_dladdr.c,v 1.1 2025/12/14 23:26:12 riastradh Exp $");
+__RCSID("$NetBSD: t_dladdr.c,v 1.2 2025/12/15 02:36:47 riastradh Exp $");
 
 #include <sys/mman.h>
 
@@ -154,9 +154,6 @@ ATF_TC_BODY(dladdr_after__end, tc)
 	/*
 	 * Verify dladdr doesn't return anything for this page.
 	 */
-	atf_tc_expect_fail("PR lib/59567: dladdr(3) doesn't work properly"
-	    " especially when main executable is loaded at"
-	    " high memory address");
 	ATF_CHECK_MSG(dladdr(page, &info) == 0,
 	    "dladdr returned %s @ %p (symbol %s @ %p) for bogus address %p",
 	    info.dli_fname, info.dli_fbase,
