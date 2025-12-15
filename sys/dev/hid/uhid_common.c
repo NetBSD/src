@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid_common.c,v 1.1 2025/12/07 10:05:10 jmcneill Exp $	*/
+/*	$NetBSD: uhid_common.c,v 1.2 2025/12/15 08:38:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid_common.c,v 1.1 2025/12/07 10:05:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid_common.c,v 1.2 2025/12/15 08:38:21 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hid.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhid_common.c,v 1.1 2025/12/07 10:05:10 jmcneill Exp
 #ifdef UHID_DEBUG
 #define DPRINTF(x)	if (uhiddebug) printf x
 #define DPRINTFN(n,x)	if (uhiddebug>(n)) printf x
-int	uhiddebug = 0;
+extern int uhiddebug;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
