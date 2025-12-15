@@ -1,4 +1,4 @@
-/*	$NetBSD: stireg.h,v 1.19 2025/10/28 11:34:08 macallan Exp $	*/
+/*	$NetBSD: stireg.h,v 1.20 2025/12/15 08:45:32 macallan Exp $	*/
 
 /*	$OpenBSD: stireg.h,v 1.14 2015/04/05 23:25:57 miod Exp $	*/
 
@@ -640,67 +640,6 @@ typedef struct sti_utilout {
 
 STI_DEP(util);
 
-/*
- * NGLE register layout.
- * Based upon xc/programs/Xserver/hw/hp/ngle/dregs.h
- */
-
-#define BA(F,C,S,A,J,B,I)						\
-	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
-	/* FCCC CSSS AAAJ JJJJ BBBB IIII IIII IIII */
-
-/* F */
-#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
-#define	    FractDcd	1	/* Pixel data is Fractional 8-8-8 */
-/* C */
-#define	    Otc04	2	/* Pixels in each longword transfer (4) */
-#define	    Otc32	5	/* Pixels in each longword transfer (32) */
-#define	    Otc24	7	/* NGLE uses this for 24bit blits */
-				/* Should really be... */
-#define	    Otc01	7	/* one pixel per longword */
-/* S */
-#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
-#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
-/* A */
-#define	    AddrByte	3	/* byte access? Used by NGLE for direct fb */
-#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
-#define     Addr24	7	/* used for colour map access */
-/* B */
-#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
-#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
-#define	    BINovly	0x2	/* 8 bit overlay */
-#define	    BINcursor	0x6	/* cursor bitmap on EG */
-#define	    BINcmask	0x7	/* cursor mask on EG */
-#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
-#define	    BINattr	0xd	/* Attribute Bitmap */
-#define	    BINcmap	0xf	/* colour map(s) */
-/* other buffers are unknown */
-/* J - 'BA just point' - function unknown */
-/* I - 'BA index base' - function unknown */
-
-#define IBOvals(R,M,X,S,D,L,B,F)					\
-	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
-	/* LSSD XXXX MMMM MMMM RRRR RRRR ???? ??BF */
-
-/* R is a standard X11 ROP, no idea if the other bits are used for anything  */
-#define	    RopClr 	0x0
-#define	    RopSrc 	0x3
-#define	    RopInv 	0xc
-#define	    RopSet 	0xf
-/* M: 'mask addr offset' - function unknown */
-/* X */
-#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
-#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
-/* S: 'static reg' flag, NGLE sets it for blits, function is unknown but
-      we get occasional garbage in 8bit blits without it  */
-/* D */
-#define	    DataDynamic	    0	/* Data register reloaded by direct access */
-#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
-/* L */
-#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
-/* B = 1 -> background transparency for masked fills */
-/* F probably the same for foreground */
-
 #define	NGLE_REG_1		0x000118	/* Artist LUT blt ctrl */
 #define	NGLE_REG_28		0x000420	/* HCRX video bus access */
 #define	NGLE_REG_2		0x000480	/* BINC src */
@@ -718,6 +657,7 @@ STI_DEP(util);
 #define	NGLE_REG_9		0x000a04	/* rect fill size, start */
 #define	NGLE_REG_25		0x000b00	/* bitblt dst XY, start */
 #define	NGLE_REG_RAMDAC		0x001000
+
 #define	NGLE_REG_10		0x018000	/* controls which buffer CPU and blitter see */
 #define	NGLE_REG_11		0x018004	/* same for drawing engine and BINC */
 #define	NGLE_REG_12		0x01800c	/* control plane register */
@@ -726,7 +666,6 @@ STI_DEP(util);
 #define	NGLE_REG_13		0x018018	/* image planemask */
 #define	NGLE_REG_14		0x01801c	/* raster op */
 #define	NGLE_REG_15		0x200000	/* 'busy dodger' idle */
-	#define DODGER_IDLE	0x1000	/* or 0x10000, likely tpyo */
 #define	NGLE_REG_15b0		0x200000	/* busy register */
 #define	NGLE_REG_16		0x200004
 #define	NGLE_REG_16b1		0x200005	/* setup copyarea */
@@ -740,19 +679,9 @@ STI_DEP(util);
 #define	NGLE_REG_21		0x200218	/* Artist misc video */
 #define	NGLE_REG_27		0x200308	/* Artist misc ctrl */
 #define	NGLE_REG_29		0x210000	/* HCRX cursor coord & enable */
-	#define HCRX_ENABLE_CURSOR	0x80000000
 #define	NGLE_REG_30		0x210004	/* HCRX cursor address */
 #define	NGLE_REG_31		0x210008	/* HCRX cursor data */
 #define	NGLE_REG_38		0x210020	/* HCRX LUT blt ctrl */
-	/* EWRRRROO OOOOOOOO TTRRRRLL LLLLLLLL */
-	#define LBC_ENABLE	0x80000000
-	#define LBC_WAIT_BLANK	0x40000000
-	#define LBS_OFFSET_SHIFT	16
-	#define LBC_TYPE_MASK		0xc000
-	#define LBC_TYPE_CMAP		0
-	#define LBC_TYPE_CURSOR		0x8000
-	#define LBC_TYPE_OVERLAY	0xc000
-	#define LBC_LENGTH_SHIFT	0
 #define	NGLE_REG_41		0x210024
 #define	NGLE_REG_42		0x210028	/* these seem to control */
 #define	NGLE_REG_43		0x21002c	/* how the 24bit planes */
@@ -760,15 +689,8 @@ STI_DEP(util);
 #define	NGLE_REG_45		0x210034	/* no info on bits */
 #define	NGLE_REG_32		0x21003c	/* HCRX plane enable */ 
 #define	NGLE_REG_33		0x210040	/* HCRX misc video */
-	#define HCRX_BOOST_ENABLE	0x80000000 /* extra high signal level */
-	#define HCRX_VIDEO_ENABLE	0x0A000000
-	#define HCRX_OUTPUT_ENABLE	0x01000000
 #define	NGLE_REG_39		0x210120	/* HCRX 'hyperbowl' mode 2 */
-	#define HYPERBOWL_MODE2_8_24					15
 #define	NGLE_REG_40		0x210130	/* HCRX 'hyperbowl' */
-	#define HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES	4
-	#define HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE	8
-	#define HYPERBOWL_MODE01_8_24_LUT0_OPAQUE_LUT1_OPAQUE		10
 
 #define	NGLE_BUFF0_CMAP0	0x00001e02
 #define	NGLE_BUFF1_CMAP0	0x02001e02
