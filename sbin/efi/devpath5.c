@@ -1,4 +1,4 @@
-/* $NetBSD: devpath5.c,v 1.2 2025/03/02 00:23:59 riastradh Exp $ */
+/* $NetBSD: devpath5.c,v 1.3 2025/12/15 17:06:42 joe Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath5.c,v 1.2 2025/03/02 00:23:59 riastradh Exp $");
+__RCSID("$NetBSD: devpath5.c,v 1.3 2025/12/15 17:06:42 joe Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -122,7 +122,7 @@ PUBLIC void
 devpath_bios(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 {
 
-	assert(dp->Type = 5);
+	assert(dp->Type == 5);
 
 	switch (dp->SubType) {
 	case 1:   devpath_bios_BBS(dp, path, dbg);	return;

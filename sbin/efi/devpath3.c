@@ -1,4 +1,4 @@
-/* $NetBSD: devpath3.c,v 1.6 2025/03/02 01:07:11 riastradh Exp $ */
+/* $NetBSD: devpath3.c,v 1.7 2025/12/15 17:06:42 joe Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath3.c,v 1.6 2025/03/02 01:07:11 riastradh Exp $");
+__RCSID("$NetBSD: devpath3.c,v 1.7 2025/12/15 17:06:42 joe Exp $");
 #endif /* not lint */
 
 #include <arpa/inet.h>
@@ -1670,7 +1670,7 @@ PUBLIC void
 devpath_msg(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 {
 
-	assert(dp->Type = 3);
+	assert(dp->Type == 3);
 
 	switch (dp->SubType) {
 	case 1:     devpath_msg_atapi(dp, path, dbg);		return;

@@ -1,4 +1,4 @@
-/* $NetBSD: devpath1.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $ */
+/* $NetBSD: devpath1.c,v 1.5 2025/12/15 17:06:42 joe Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath1.c,v 1.4 2025/03/02 00:23:59 riastradh Exp $");
+__RCSID("$NetBSD: devpath1.c,v 1.5 2025/12/15 17:06:42 joe Exp $");
 #endif /* not lint */
 
 #include <sys/uuid.h>
@@ -311,7 +311,7 @@ PUBLIC void
 devpath_hw(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 {
 
-	assert(dp->Type = 1);
+	assert(dp->Type == 1);
 
 	switch (dp->SubType) {
 	case 1:   devpath_hw_pci(dp, path, dbg);		return;

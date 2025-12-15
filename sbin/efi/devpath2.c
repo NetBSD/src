@@ -1,4 +1,4 @@
-/* $NetBSD: devpath2.c,v 1.6 2025/03/02 14:18:04 riastradh Exp $ */
+/* $NetBSD: devpath2.c,v 1.7 2025/12/15 17:06:42 joe Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devpath2.c,v 1.6 2025/03/02 14:18:04 riastradh Exp $");
+__RCSID("$NetBSD: devpath2.c,v 1.7 2025/12/15 17:06:42 joe Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -284,7 +284,7 @@ PUBLIC void
 devpath_acpi(devpath_t *dp, devpath_elm_t *path, devpath_elm_t *dbg)
 {
 
-	assert(dp->Type = 2);
+	assert(dp->Type == 2);
 
 	switch (dp->SubType) {
 	case 1:   devpath_acpi_acpi(dp, path, dbg);	return;
