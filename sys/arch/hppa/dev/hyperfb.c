@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.25 2025/12/15 08:46:42 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.26 2025/12/15 11:37:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.25 2025/12/15 08:46:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.26 2025/12/15 11:37:06 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -187,9 +187,9 @@ hyperfb_wait(struct hyperfb_softc *sc)
 	uint8_t stat;
 
 	do {
-		stat = hyperfb_read1(sc, NGLE_REG_15b0);
+		stat = hyperfb_read1(sc, NGLE_BUSY);
 		if (stat == 0)
-			stat = hyperfb_read1(sc, NGLE_REG_15b0);
+			stat = hyperfb_read1(sc, NGLE_BUSY);
 	} while (stat != 0);
 }
 
@@ -199,7 +199,7 @@ hyperfb_wait_fifo(struct hyperfb_softc *sc, uint32_t slots)
 	uint32_t reg;
 
 	do {
-		reg = hyperfb_read4(sc, NGLE_REG_34);
+		reg = hyperfb_read4(sc, NGLE_FIFO);
 	} while (reg < slots);
 }
 
@@ -213,17 +213,18 @@ hyperfb_setup_fb(struct hyperfb_softc *sc)
 	 */
 	hyperfb_wait(sc);
 	if ((sc->sc_mode != WSDISPLAYIO_MODE_EMUL) && sc->sc_24bit) {
-		hyperfb_write4(sc, NGLE_REG_10,
-		    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
-		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		hyperfb_write4(sc, NGLE_BAboth,
+		    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 	} else {
-		hyperfb_write4(sc, NGLE_REG_10,
+		hyperfb_write4(sc, NGLE_BAboth,
 		    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINovly, 0));
-		hyperfb_write4(sc, NGLE_REG_13, 0xff);
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 	}
-	hyperfb_write4(sc, NGLE_REG_14, 0x83000300);
+	hyperfb_write4(sc, NGLE_IBO, 0x83000300);
+	//IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, 1, 0, 0);
 	hyperfb_wait(sc);
-	hyperfb_write1(sc, NGLE_REG_16b1, 1);
+	hyperfb_write1(sc, NGLE_CONTROL_FB, 1);
 	sc->sc_hwmode = HW_FB;
 }
 
@@ -232,13 +233,13 @@ hyperfb_setup_fb24(struct hyperfb_softc *sc)
 {
 
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, AddrLong, 0, BINapp0F8, 0));
-	hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
-	hyperfb_write4(sc, NGLE_REG_14, 0x83000300);
-	//IBOvals(RopSrc,0,BitmapExtent08,0,DataDynamic,MaskDynamic,0,0)
+	hyperfb_write4(sc, NGLE_BAboth,
+	    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
+	hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+	hyperfb_write4(sc, NGLE_IBO, 0x83000300);
+	//IBOvals(RopSrc,0,BitmapExtent08,0,DataDynamic,1,0,0)
 	hyperfb_wait(sc);
-	hyperfb_write1(sc, NGLE_REG_16b1, 1);
+	hyperfb_write1(sc, NGLE_CONTROL_FB, 1);
 	sc->sc_hwmode = HW_FB;
 }
 
@@ -372,7 +373,7 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	    	config = 0;
 	} else {
 		/* alright, we got the ROM. now do the idle dance. */
-		volatile uint32_t r = hyperfb_read4(sc, NGLE_REG_15);
+		volatile uint32_t r = hyperfb_read4(sc, NGLE_BUSY);
 		__USE(r);
 		hyperfb_wait(sc);
 		config = bus_space_read_4(sc->sc_iot, hrom, 0);
@@ -724,16 +725,18 @@ hyperfb_putpalreg(struct hyperfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 
 	mutex_enter(&sc->sc_hwlock);
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_10, 0xbbe0f000);
-	hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
-	hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
+	hyperfb_write4(sc, NGLE_BAboth,
+	  BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
+	hyperfb_write4(sc, NGLE_IBO,
+	  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
+	hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_3, 0x400 | (idx << 2));
-	hyperfb_write4(sc, NGLE_REG_4, (r << 16) | (g << 8) | b);
+	hyperfb_write4(sc, NGLE_BINC_DST, 0x400 | (idx << 2));
+	hyperfb_write4(sc, NGLE_BINC_DATA_R, (r << 16) | (g << 8) | b);
 
-	hyperfb_write4(sc, NGLE_REG_2, 0x400);
-	hyperfb_write4(sc, NGLE_REG_38, 0x82000100);
+	hyperfb_write4(sc, NGLE_BINC_SRC, 0x400);
+	hyperfb_write4(sc, NGLE_HCRX_LUTBLT, 0x82000100);
 	hyperfb_setup_fb(sc);
 	mutex_exit(&sc->sc_hwlock);
 	return 0;
@@ -752,25 +755,25 @@ hyperfb_setup(struct hyperfb_softc *sc)
 
 	/* first enable all planes */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_32, 0xffffffff);
+	hyperfb_write4(sc, NGLE_HCRX_PLANE_ENABLE, 0xffffffff);
 
 	/* hyperbowl */
 	if (sc->sc_24bit) {
 		/* write must happen twice because hw bug */
-		hyperfb_write4(sc, NGLE_REG_40,
+		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
 		    HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE);
-		hyperfb_write4(sc, NGLE_REG_40,
+		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
 		    HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE);
-		hyperfb_write4(sc, NGLE_REG_39, HYPERBOWL_MODE2_8_24);
+		hyperfb_write4(sc, NGLE_HCRX_HB_MODE2, HYPERBOWL_MODE2_8_24);
 		/* Set lut 0 to be the direct color */
 		hyperfb_write4(sc, NGLE_REG_42, 0x014c0148);
 		hyperfb_write4(sc, NGLE_REG_43, 0x404c4048);
 		hyperfb_write4(sc, NGLE_REG_44, 0x034c0348);
 		hyperfb_write4(sc, NGLE_REG_45, 0x444c4448);
 	} else {
-		hyperfb_write4(sc, NGLE_REG_40,
+		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
 		    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
-		hyperfb_write4(sc, NGLE_REG_40,
+		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
 		    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
 
 		hyperfb_write4(sc, NGLE_REG_42, 0);
@@ -794,24 +797,24 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	 * different values that aren't used anywhere.
 	 */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_11,
+	hyperfb_write4(sc, NGLE_DBA,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINattr, 0));
-	hyperfb_write4(sc, NGLE_REG_14,
+	hyperfb_write4(sc, NGLE_IBO,
 	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 1, 0));
-	hyperfb_write4(sc, NGLE_REG_12, 0x04000F00);
-	hyperfb_write4(sc, NGLE_REG_8, 0xffffffff);
+	hyperfb_write4(sc, NGLE_CPR, 0x04000F00);
+	hyperfb_write4(sc, NGLE_TRANSFER_DATA, 0xffffffff);
 
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_6, 0x00000000);
-	hyperfb_write4(sc, NGLE_REG_9,
+	hyperfb_write4(sc, NGLE_DST_XY, 0x00000000);
+	hyperfb_write4(sc, NGLE_RECT_SIZE_START,
 	    (sc->sc_width << 16) | sc->sc_height);
 	/*
 	 * blit into offscreen memory to force flush previous - apparently
 	 * some chips have a bug this works around
 	 */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_6, 0x05000000);
-	hyperfb_write4(sc, NGLE_REG_9, 0x00040001);
+	hyperfb_write4(sc, NGLE_DST_XY, 0x05000000);
+	hyperfb_write4(sc, NGLE_RECT_SIZE_START, 0x00040001);
 
 	/*
 	 * on 24bit-capable hardware we:
@@ -822,9 +825,9 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	if (sc->sc_24bit) {
 		/* overlay transparency */
 		hyperfb_wait_fifo(sc, 7);
-		hyperfb_write4(sc, NGLE_REG_11,
+		hyperfb_write4(sc, NGLE_DBA,
 		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-		hyperfb_write4(sc, NGLE_REG_14,
+		hyperfb_write4(sc, NGLE_IBO,
 		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
 		            0, 0)); //0x03000300
 		/*
@@ -832,48 +835,49 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		 * magical location in the overlay plane, outside visible
 		 * memory. Normal blits cut off beyond X 1280.
 		 */
-		hyperfb_write4(sc, NGLE_REG_3, 0x000017f0);	// BINC dst
-		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
-		hyperfb_write4(sc, NGLE_REG_22, 0xffffffff);
-		hyperfb_write4(sc, NGLE_REG_23, 0x0);		// BINC data
+		hyperfb_write4(sc, NGLE_BINC_DST, 0x000017f0);
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+		hyperfb_write4(sc, NGLE_BINC_MASK, 0xffffffff);
+		hyperfb_write4(sc, NGLE_BINC_DATA, 0x0);
 
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_12, 0x00000000);
+		hyperfb_write4(sc, NGLE_CPR, 0x00000000);
 
 		/* clear 24bit buffer */
 		hyperfb_wait(sc);
-		/* plane mask */
-		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
-		hyperfb_write4(sc, NGLE_REG_8, 0xffffffff); /* transfer data */
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+		hyperfb_write4(sc, NGLE_TRANSFER_DATA, 0xffffffff);
 		/* bitmap op */
-		hyperfb_write4(sc, NGLE_REG_14,
+		hyperfb_write4(sc, NGLE_IBO,
 		    IBOvals(RopSrc, 0, BitmapExtent32, 0, DataDynamic, MaskOtc,
 			0, 0));
 		/* dst bitmap access */
-		hyperfb_write4(sc, NGLE_REG_11,
+		hyperfb_write4(sc, NGLE_DBA,
 		    BA(FractDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0F8,
 			0));
 		hyperfb_wait_fifo(sc, 3);
-		hyperfb_write4(sc, NGLE_REG_35, 0x00ffffff);	/* fg colour */
-		hyperfb_write4(sc, NGLE_REG_6, 0x00000000);	/* dst xy */
-		hyperfb_write4(sc, NGLE_REG_9,
+		hyperfb_write4(sc, NGLE_FG, 0x00ffffff);
+		hyperfb_write4(sc, NGLE_DST_XY, 0x00000000);
+		hyperfb_write4(sc, NGLE_RECT_SIZE_START,
 		    (sc->sc_width << 16) | sc->sc_height);
 
 		/* write a linear ramp into CMAP0 */
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_10, 0xbbe0f000);
-		hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
-		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		hyperfb_write4(sc, NGLE_BAboth, 
+		  BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
+		hyperfb_write4(sc, NGLE_IBO, 
+		  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_3, 0);
+		hyperfb_write4(sc, NGLE_BINC_DST, 0);
 		for (i = 0; i < 256; i++) {
 			hyperfb_wait(sc);
-			hyperfb_write4(sc, NGLE_REG_4,
+			hyperfb_write4(sc, NGLE_BINC_DATA_R,
 			    (i << 16) | (i << 8) | i);
 		}
-		hyperfb_write4(sc, NGLE_REG_2, 0x0);
-		hyperfb_write4(sc, NGLE_REG_38,
+		hyperfb_write4(sc, NGLE_BINC_SRC, 0x0);
+		hyperfb_write4(sc, NGLE_HCRX_LUTBLT,
 		    LBC_ENABLE | LBC_TYPE_CMAP | 0x100);
 		hyperfb_wait(sc);
 	}
@@ -882,37 +886,39 @@ hyperfb_setup(struct hyperfb_softc *sc)
 
 	/* make sure video output is enabled */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_33,
-	    hyperfb_read4(sc, NGLE_REG_33) | 0x0a000000);
+	hyperfb_write4(sc, NGLE_HCRX_MISCVID,
+	    hyperfb_read4(sc, NGLE_HCRX_MISCVID) | 0x0a000000);
 
 	/* cursor mask */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_30, 0);
+	hyperfb_write4(sc, NGLE_HCRX_CURSOR_ADDR, 0);
 	for (i = 0; i < 64; i++) {
-		hyperfb_write4(sc, NGLE_REG_31, 0xffffffff);
-		hyperfb_write4(sc, NGLE_REG_31, 0xffffffff);
+		hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, 0xffffffff);
+		hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, 0xffffffff);
 	}
 
 	/* cursor image */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_30, 0x80);
+	hyperfb_write4(sc, NGLE_HCRX_CURSOR_ADDR, 0x80);
 	for (i = 0; i < 64; i++) {
-		hyperfb_write4(sc, NGLE_REG_31, 0xff00ff00);
-		hyperfb_write4(sc, NGLE_REG_31, 0xff00ff00);
+		hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, 0xff00ff00);
+		hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, 0xff00ff00);
 	}
 
 	/* colour map */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_10, 0xBBE0F000);
-	hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
-	hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
+	hyperfb_write4(sc, NGLE_BAboth,
+	  BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
+	hyperfb_write4(sc, NGLE_IBO,
+	  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
+	hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_3, 0);
-	hyperfb_write4(sc, NGLE_REG_4, 0x000000ff);	/* BG */
-	hyperfb_write4(sc, NGLE_REG_4, 0x00ff0000);	/* FG */
+	hyperfb_write4(sc, NGLE_BINC_DST, 0);
+	hyperfb_write4(sc, NGLE_BINC_DATA_R, 0x000000ff);	/* BG */
+	hyperfb_write4(sc, NGLE_BINC_DATA_R, 0x00ff0000);	/* FG */
 	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_REG_2, 0);
-	hyperfb_write4(sc, NGLE_REG_38, LBC_ENABLE | LBC_TYPE_CURSOR | 4);
+	hyperfb_write4(sc, NGLE_BINC_SRC, 0);
+	hyperfb_write4(sc, NGLE_HCRX_LUTBLT, LBC_ENABLE | LBC_TYPE_CURSOR | 4);
 	hyperfb_setup_fb(sc);
 
 	hyperfb_move_cursor(sc, 100, 100);
@@ -929,12 +935,12 @@ hyperfb_set_video(struct hyperfb_softc *sc, int on)
 	sc->sc_video_on = on;
 
 	hyperfb_wait(sc);
-	reg = hyperfb_read4(sc, NGLE_REG_33);
+	reg = hyperfb_read4(sc, NGLE_HCRX_MISCVID);
 
 	if (on) {
-		hyperfb_write4(sc, NGLE_REG_33, reg | HCRX_VIDEO_ENABLE);
+		hyperfb_write4(sc, NGLE_HCRX_MISCVID, reg | HCRX_VIDEO_ENABLE);
 	} else {
-		hyperfb_write4(sc, NGLE_REG_33, reg & ~HCRX_VIDEO_ENABLE);
+		hyperfb_write4(sc, NGLE_HCRX_MISCVID, reg & ~HCRX_VIDEO_ENABLE);
 	}
 }
 
@@ -944,13 +950,13 @@ hyperfb_fillmode(struct hyperfb_softc *sc)
 	if (sc->sc_hwmode != HW_FILL) {
 		hyperfb_wait_fifo(sc, 3);
 		/* plane mask */
-		hyperfb_write4(sc, NGLE_REG_13, 0xff);
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 		/* bitmap op */
-		hyperfb_write4(sc, NGLE_REG_14,
+		hyperfb_write4(sc, NGLE_IBO,
 		    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0,
 		        0, 0));
 		/* dst bitmap access */
-		hyperfb_write4(sc, NGLE_REG_11,
+		hyperfb_write4(sc, NGLE_DBA,
 		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly,
 			0));
 		sc->sc_hwmode = HW_FILL;
@@ -970,13 +976,13 @@ hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
 	 * in reality it's a bit mask applied per pixel,
 	 * foreground colour in reg 35, bg in 36
 	 */
-	hyperfb_write4(sc, NGLE_REG_8, 0xffffffff);
+	hyperfb_write4(sc, NGLE_TRANSFER_DATA, 0xffffffff);
 
-	hyperfb_write4(sc, NGLE_REG_35, bg);
+	hyperfb_write4(sc, NGLE_FG, bg);
 	/* dst XY */
-	hyperfb_write4(sc, NGLE_REG_6, (x << 16) | y);
+	hyperfb_write4(sc, NGLE_DST_XY, (x << 16) | y);
 	/* len XY start */
-	hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | he);
+	hyperfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | he);
 }
 
 static void
@@ -987,17 +993,17 @@ hyperfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 
 	if (sc->sc_hwmode != HW_BLIT) {
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_10,
+		hyperfb_write4(sc, NGLE_BAboth,
 		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-		hyperfb_write4(sc, NGLE_REG_13, 0xff);
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 		sc->sc_hwmode = HW_BLIT;
 	}
 	hyperfb_wait_fifo(sc, 4);
-	hyperfb_write4(sc, NGLE_REG_14, ((rop << 8) & 0xf00) | 0x23000000);
+	hyperfb_write4(sc, NGLE_IBO, ((rop << 8) & 0xf00) | 0x23000000);
 	/* IBOvals(rop, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0) */
-	hyperfb_write4(sc, NGLE_REG_24, (xs << 16) | ys);
-	hyperfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
-	hyperfb_write4(sc, NGLE_REG_25, (xd << 16) | yd);
+	hyperfb_write4(sc, NGLE_SRC_XY, (xs << 16) | ys);
+	hyperfb_write4(sc, NGLE_SIZE, (wi << 16) | he);
+	hyperfb_write4(sc, NGLE_BLT_DST_START, (xd << 16) | yd);
 }
 
 static void
@@ -1092,10 +1098,10 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	hyperfb_wait_fifo(sc, 3);
 
 	/* character colour */
-	hyperfb_write4(sc, NGLE_REG_35, fg);
-	hyperfb_write4(sc, NGLE_REG_36, bg);
+	hyperfb_write4(sc, NGLE_FG, fg);
+	hyperfb_write4(sc, NGLE_BG, bg);
 	/* dst XY */
-	hyperfb_write4(sc, NGLE_REG_6, (x << 16) | y);
+	hyperfb_write4(sc, NGLE_DST_XY, (x << 16) | y);
 
 	/*
 	 * drawing a rectangle moves the starting coordinates down the
@@ -1107,8 +1113,8 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < he; i++) {
 			hyperfb_wait_fifo(sc, 2);
 			mask = *data8;
-			hyperfb_write4(sc, NGLE_REG_8, mask << 24);
-			hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
+			hyperfb_write4(sc, NGLE_TRANSFER_DATA, mask << 24);
+			hyperfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | 1);
 			data8++;
 		}
 	} else {
@@ -1116,8 +1122,8 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < he; i++) {
 			hyperfb_wait_fifo(sc, 2);
 			mask = *data16;
-			hyperfb_write4(sc, NGLE_REG_8, mask << 16);
-			hyperfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
+			hyperfb_write4(sc, NGLE_TRANSFER_DATA, mask << 16);
+			hyperfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | 1);
 			data16++;
 		}
 	}
@@ -1236,8 +1242,8 @@ hyperfb_move_cursor(struct hyperfb_softc *sc, int x, int y)
 	pos = (x << 16) | y;
 	if (sc->sc_enabled) pos |= HCRX_ENABLE_CURSOR;
 	hyperfb_wait_fifo(sc, 2);
-	hyperfb_write4(sc, NGLE_REG_28, 0);
-	hyperfb_write4(sc, NGLE_REG_29, pos);
+	hyperfb_write4(sc, NGLE_HCRX_VBUS, 0);
+	hyperfb_write4(sc, NGLE_HCRX_CURSOR, pos);
 }
 
 static int
@@ -1268,17 +1274,19 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 		copyin(cur->cmap.red, r, 2);
 		mutex_enter(&sc->sc_hwlock);
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_10, 0xBBE0F000);
-		hyperfb_write4(sc, NGLE_REG_14, 0x03000300);
-		hyperfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		hyperfb_write4(sc, NGLE_BAboth,
+		  BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
+		hyperfb_write4(sc, NGLE_IBO,
+		  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
+		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_3, 0);
+		hyperfb_write4(sc, NGLE_BINC_DST, 0);
 		rgb = (r[0] << 16) | (g[0] << 8) | b[0];
-		hyperfb_write4(sc, NGLE_REG_4, rgb);	/* BG */
+		hyperfb_write4(sc, NGLE_BINC_DATA_R, rgb);	/* BG */
 		rgb = (r[1] << 16) | (g[1] << 8) | b[1];
-		hyperfb_write4(sc, NGLE_REG_4, rgb);	/* FG */
-		hyperfb_write4(sc, NGLE_REG_2, 0);
-		hyperfb_write4(sc, NGLE_REG_38,
+		hyperfb_write4(sc, NGLE_BINC_DATA_R, rgb);	/* FG */
+		hyperfb_write4(sc, NGLE_BINC_SRC, 0);
+		hyperfb_write4(sc, NGLE_HCRX_LUTBLT,
 		    LBC_ENABLE | LBC_TYPE_CURSOR | 4);
 
 		hyperfb_setup_fb(sc);
@@ -1291,7 +1299,7 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 
 		copyin(cur->mask, buffer, 512);
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_30, 0);
+		hyperfb_write4(sc, NGLE_HCRX_CURSOR_ADDR, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1310,7 +1318,7 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			hyperfb_write4(sc, NGLE_REG_31, latch);
+			hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1328,12 +1336,12 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			hyperfb_write4(sc, NGLE_REG_31, latch);
+			hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, latch);
 		}
 
 		copyin(cur->image, buffer, 512);
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_REG_30, 0x80);
+		hyperfb_write4(sc, NGLE_HCRX_CURSOR_ADDR, 0x80);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1352,7 +1360,7 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			hyperfb_write4(sc, NGLE_REG_31, latch);
+			hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1370,7 +1378,7 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			hyperfb_write4(sc, NGLE_REG_31, latch);
+			hyperfb_write4(sc, NGLE_HCRX_CURSOR_DATA, latch);
 		}
 		hyperfb_setup_fb(sc);
 	}
