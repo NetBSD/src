@@ -1,4 +1,4 @@
-/*	$NetBSD: nglereg.h,v 1.2 2025/12/14 10:19:14 macallan Exp $	*/
+/*	$NetBSD: nglereg.h,v 1.3 2025/12/15 09:46:42 macallan Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -174,7 +174,7 @@
 #define	NGLE_HCRX_CURSOR	0x210000	/* HCRX cursor coord & enable */
 	#define HCRX_ENABLE_CURSOR	0x80000000
 /* HCRX uses those to access the cursor image instead of BINcursor/BINcmask */
-#define	NGLE_HCRC_CURSOR_ADDR	0x210004	/* HCRX cursor address */
+#define	NGLE_HCRX_CURSOR_ADDR	0x210004	/* HCRX cursor address */
 #define	NGLE_HCRX_CURSOR_DATA	0x210008	/* HCRX cursor data */
 
 #define	NGLE_HCRX_LUTBLT	0x210020	/* HCRX LUT blt ctrl */
