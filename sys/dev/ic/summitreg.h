@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.19 2025/11/09 07:15:33 skrll Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.20 2025/12/16 09:49:48 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -61,11 +61,28 @@
 	#define FOE_Z_TEST	0x00000020
 	#define FOE_BLEND_ROP	0x00000040	// IBO is used
 	#define FOE_DITHER	0x00000080
+#define VISFX_RBS		0x920860	// STI writes 0xe4 into this on FX5
+						// seems to be another byte swapper
 #define VISFX_IBO		0x921110	// ROP in lowest nibble
+#define	    RopClr 	0x0
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    RopSet 	0xf
+
 #define VISFX_CBR		0x92111c	// constant colour for blending
 #define VISFX_IAA0		0x921200	// XLUT, 16 entries
 #define VISFX_IAA(n)		(0x921200 + ((n) << 2))
 #define VISFX_OTR		0x921148	// overlay transparency
+
+#define VISFX_FCDA		0x9211d8	// FX5 zeroes this, 
+/*
+ 0x00010000 - some sort of mask
+ 0x00020000 and 0x00040000 - similar patterns, different colours
+ */
+
+#define B2_MBWB			0x921194
+#define B2_MBWC			0x921198
+#define B2_MBWD			0x92119c
 
 #define VISFX_VRAM_WRITE_MODE	0xa00808
 #define VISFX_VRAM_READ_MODE	0xa0080c
@@ -80,6 +97,8 @@
 #define VISFX_RPH		0xa0085c	// read prefetch hint
 	#define VISFX_RPH_RTL	0x80000000	// right-to-left
 	#define VISFX_RPH_LTR	0x00000000	// left-to-right
+
+#define B2_BMAP_DBA		0xa008a4
 
 #define VISFX_READ_DATA		0xa41480
 
@@ -104,7 +123,7 @@
 #define VISFX_WRITE_MODE_TRANSPARENT	0x00000800	/* bg is tansparent */
 #define VISFX_WRITE_MODE_MASK		0x00000400	/* apply pixel mask */
 /* 0x00000200 - some pattern */
-/* looks like 0x000000c0 enables fb/bg colours to be applied */
+/* looks like 0x000000c0 enables fg/bg colours to be applied */
 
 #define VISFX_READ_MODE_COPY	0x02000400
 
@@ -129,6 +148,7 @@
 #define IAA_CFS0	0x00000000	/* CFS select */
 #define IAA_CFS1	0x00000100	/* CFS 1 etc. */
 
+/* overlay transparency register */
 #define OTR_T	0x00010000	/* when set 0 is transparent, otherwise 0xff */
 #define OTR_A	0x00000100	/* always transparent */
 #define OTR_L1	0x00000002	/* transparency controlled by CFS17 */
@@ -211,7 +231,10 @@
 	#define MPC_HSYNC_OFF	0x01
 #define VISFX_CFS0		0x800100	/* colour function select */
 #define VISFX_CFS(n)		(VISFX_CFS0 + ((n) << 2))
-/* 0 ... 6 for image planes, 7 or bypass, 16 and 17 for overlay */
+/* 
+ * 0 ... 6 for image planes, 7 or bypass, 16 and 17 for overlay
+ * these are selected by IAA* or FATTR registers
+ */
 #define CFS_CR		0x80	// enable color recovery
 #define CFS_332		0x00	// R3G3B2
 #define CFS_8I	 	0x40	// 8bit indexed
@@ -227,7 +250,7 @@
 #define UB_PDU_UBSCFB	0x64303c	// byte swapping on unbuffered FB writes
 #define B2_MFU_BSCTD	0xb08044	// byte swapping on TD registers
 #define B2_MFU_BSCCTL	0xb08048	// byte swapping on TD pair registers
-#define B2_DMA_BSCBLK	0xaa0600	// blanket swapper
+#define B2_DMA_BSCBLK	0xaa0600	// blanket swapper, 0x01 enables swapping
 #define B2_DMA_BSCSAV	0xaa0640	// blanket swapper with enable bits
 
 #define SWAP_0123	0x1b1b1b1b	// 0b00.01.10.11 -> 0x1b
