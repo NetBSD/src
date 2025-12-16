@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.493 2025/12/14 23:26:11 riastradh Exp $
+# $NetBSD: mi,v 1.494 2025/12/16 04:32:04 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -256,7 +256,7 @@
 ./usr/lib/libsl_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libsqlite3_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libss_g.a				comp-obsolete		obsolete,compatfile
-./usr/lib/libssh_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libssh_g.a				comp-obsolete		obsolete
 ./usr/lib/libssl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libstdc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc,libstdcxx
 ./usr/lib/libsupc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc,libstdcxx

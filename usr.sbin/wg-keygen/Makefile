@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2020/08/20 21:28:02 riastradh Exp $
+#	$NetBSD: Makefile,v 1.2 2025/12/16 04:32:04 riastradh Exp $
 
 PROG=	wg-keygen
 MAN=	wg-keygen.8
 
-DPADD+=	${LIBSSH}
-LDADD+=	-lssh
+PROGDPLIBS+=	ssh ${NETBSDSRCDIR}/crypto/external/bsd/openssh/lib
 
 .include <bsd.prog.mk>

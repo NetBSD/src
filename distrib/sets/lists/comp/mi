@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2502 2025/12/15 08:58:20 macallan Exp $
+#	$NetBSD: mi,v 1.2503 2025/12/16 04:32:03 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4488,8 +4488,8 @@
 ./usr/lib/libsqlite3_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libss.a				comp-obsolete		obsolete
 ./usr/lib/libss_p.a				comp-obsolete		obsolete
-./usr/lib/libssh.a				comp-c-lib		compatfile
-./usr/lib/libssh_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libssh.a				comp-obsolete		obsolete
+./usr/lib/libssh_p.a				comp-obsolete		obsolete
 ./usr/lib/libssl.a				comp-c-lib		compatfile
 ./usr/lib/libssl_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libssp.a				comp-obsolete		obsolete

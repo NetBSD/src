@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.358 2025/12/16 04:21:03 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.359 2025/12/16 04:32:04 riastradh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -179,7 +179,6 @@ _LIBLIST=\
 	skey \
 	sl \
 	sqlite3 \
-	ssh \
 	ssl \
 	stdc++ \
 	supc++ \
@@ -222,8 +221,13 @@ LIBLDAP_DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBGSSAPI_DPADD} ${LIBSSL} \
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
-PAM_STATIC_LDADD+= -lssh
-PAM_STATIC_DPADD+= ${LIBSSH}
+.  if !defined(LIBDO.ssh)	# XXX use PROGDPLIBS instead
+LIBDO.ssh!=	cd ${NETBSDSRCDIR:Q}/crypto/external/bsd/openssh/lib && \
+		${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDO.ssh
+.  endif
+PAM_STATIC_LDADD+= -L${LIBDO.ssh} -lssh
+PAM_STATIC_DPADD+= ${LIBDO.ssh}/libssh.a
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
 	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lm

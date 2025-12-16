@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1018 2025/12/14 16:28:05 kre Exp $
+# $NetBSD: shl.mi,v 1.1019 2025/12/16 04:32:03 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -895,9 +895,7 @@
 ./usr/lib/libsqlite3.so.1			base-sys-shlib		compatfile
 ./usr/lib/libsqlite3.so.1.5			base-sys-shlib		compatfile
 ./usr/lib/libss.so				base-obsolete		obsolete
-./usr/lib/libssh.so				base-secsh-shlib	compatfile
-./usr/lib/libssh.so.50				base-secsh-shlib	compatfile
-./usr/lib/libssh.so.50.0			base-secsh-shlib	compatfile
+./usr/lib/libssh.so				base-obsolete		obsolete
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile
 ./usr/lib/libssl.so.12				base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile,openssl=10
@@ -1003,6 +1001,8 @@
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns
+./usr/lib/private/libssh.so.50			base-secsh-shlib	
+./usr/lib/private/libssh.so.50.0		base-secsh-shlib	
 ./usr/lib/security/pam_afslog.so.4		base-sys-shlib		compatfile,kerberos,pam
 ./usr/lib/security/pam_chroot.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_deny.so.4		base-sys-shlib		compatfile,pam
