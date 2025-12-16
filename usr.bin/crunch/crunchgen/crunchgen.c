@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.96 2024/02/05 21:46:07 andvar Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.97 2025/12/16 04:18:06 riastradh Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.96 2024/02/05 21:46:07 andvar Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.97 2025/12/16 04:18:06 riastradh Exp $");
 #endif
 
 #include <stdlib.h>
@@ -103,7 +103,7 @@ static char outmkname[MAXPATHLEN], outcfname[MAXPATHLEN], execfname[MAXPATHLEN];
 static char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
 static char curdir[MAXPATHLEN];
 static char topdir[MAXPATHLEN];
-static char libdir[MAXPATHLEN] = "/usr/lib";
+static strlst_t *libdirs = NULL;
 static int linenum = -1;
 static int goterror = 0;
 
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 	case 'e':	(void)estrlcpy(execfname, optarg, sizeof(execfname)); break;
 
 	case 'D':	(void)estrlcpy(topdir, optarg, sizeof(topdir)); break;
-	case 'L':	(void)estrlcpy(libdir, optarg, sizeof(libdir)); break;
+	case 'L':	add_string(&libdirs, optarg); break;
 	case 'v':	add_string(&vars, optarg); break;
 	case 'V':	addvar(optarg); break;
 
@@ -959,6 +959,7 @@ top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
     var_t *v;
+    strlst_t *libdir;
 
     for (v = mvars; v != NULL; v = v->next) {
 	fprintf(outmk, "%s=%s\n", v->name, v->value);
@@ -977,6 +978,8 @@ top_makefile_rules(FILE *outmk)
 	fprintf(outmk, " %s.cro", p->name);
     fprintf(outmk, "\n");
     fprintf(outmk, "DPADD+= ${CRUNCHED_OBJS}\n");
+    for (libdir = libdirs; libdir != NULL; libdir = libdir->next)
+	fprintf(outmk, "LDADD+= -L%s\n", libdir->str);
     fprintf(outmk, "LDADD+= ${CRUNCHED_OBJS} ");
     output_strlst(outmk, libs);
     fprintf(outmk, "CRUNCHEDOBJSDIRS=");
