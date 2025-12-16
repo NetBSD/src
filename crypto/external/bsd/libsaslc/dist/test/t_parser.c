@@ -1,4 +1,4 @@
-/* $NetBSD: t_parser.c,v 1.4 2011/02/12 23:21:33 christos Exp $ */
+/* $NetBSD: t_parser.c,v 1.5 2025/12/16 12:03:40 nia Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *  	  This product includes software developed by the NetBSD
- *  	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 3. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -35,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parser.c,v 1.4 2011/02/12 23:21:33 christos Exp $");
+__RCSID("$NetBSD: t_parser.c,v 1.5 2025/12/16 12:03:40 nia Exp $");
 
 #include <atf-c.h>
 #include <saslc.h>
