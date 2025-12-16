@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.65 2025/12/14 18:07:40 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.66 2025/12/16 02:40:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.65 2025/12/14 18:07:40 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.66 2025/12/16 02:40:48 kre Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1015,7 +1015,7 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 			return CC_ERROR;
 	}
 
-	if ((editor = getenv("EDITOR")) == NULL)
+	if ((editor = (el->el_getenv)("EDITOR")) == NULL)
 		editor = "vi";
 	fd = mkstemp(tempfile);
 	if (fd < 0)
