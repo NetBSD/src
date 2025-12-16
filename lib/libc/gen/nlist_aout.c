@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.23 2012/03/21 15:32:26 christos Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.24 2025/12/16 12:39:02 nia Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,12 +66,13 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.23 2012/03/21 15:32:26 christos Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.24 2025/12/16 12:39:02 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>

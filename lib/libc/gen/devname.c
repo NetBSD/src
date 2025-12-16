@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.23 2019/02/18 20:27:20 christos Exp $	*/
+/*	$NetBSD: devname.c,v 1.24 2025/12/16 12:39:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: devname.c,v 1.23 2019/02/18 20:27:20 christos Exp $");
+__RCSID("$NetBSD: devname.c,v 1.24 2025/12/16 12:39:02 nia Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
 #include <sys/stat.h>
+#include <sys/endian.h>
 
 #include <cdbr.h>
 #include <errno.h>

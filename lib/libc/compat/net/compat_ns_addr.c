@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_ns_addr.c,v 1.4 2021/11/07 20:31:09 andvar Exp $	*/
+/*	$NetBSD: compat_ns_addr.c,v 1.5 2025/12/16 12:39:01 nia Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: compat_ns_addr.c,v 1.4 2021/11/07 20:31:09 andvar Exp $");
+__RCSID("$NetBSD: compat_ns_addr.c,v 1.5 2025/12/16 12:39:01 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <compat/include/ns.h>
 
 #include <assert.h>

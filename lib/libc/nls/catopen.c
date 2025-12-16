@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.33 2014/09/16 01:30:28 christos Exp $	*/
+/*	$NetBSD: catopen.c,v 1.34 2025/12/16 12:39:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: catopen.c,v 1.33 2014/09/16 01:30:28 christos Exp $");
+__RCSID("$NetBSD: catopen.c,v 1.34 2025/12/16 12:39:02 nia Exp $");
 
 #define _NLS_PRIVATE
 #define __SETLOCALE_SOURCE__
 
 #include "namespace.h"
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 

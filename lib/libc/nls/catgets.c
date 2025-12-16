@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.19 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: catgets.c,v 1.20 2025/12/16 12:39:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catgets.c,v 1.19 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: catgets.c,v 1.20 2025/12/16 12:39:02 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
 
 #include "namespace.h"
+#include <sys/endian.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>

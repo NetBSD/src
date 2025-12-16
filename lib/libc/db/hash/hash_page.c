@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.29 2016/09/24 20:08:29 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.30 2025/12/16 12:39:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.29 2016/09/24 20:08:29 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.30 2025/12/16 12:39:02 nia Exp $");
 
 /*
  * PACKAGE:  hashing
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: hash_page.c,v 1.29 2016/09/24 20:08:29 christos Exp $");
 #include "namespace.h"
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <errno.h>
 #include <fcntl.h>

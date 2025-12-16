@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.19 2013/03/11 20:19:30 tron Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.20 2025/12/16 12:39:02 nia Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.19 2013/03/11 20:19:30 tron Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.20 2025/12/16 12:39:02 nia Exp $");
 #endif
 #endif
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: xdr_stdio.c,v 1.19 2013/03/11 20:19:30 tron Exp $");
 
 #include "namespace.h"
 
+#include <sys/endian.h>
 #include <stdio.h>
 
 #include <rpc/types.h>

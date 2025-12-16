@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrtoc32.c,v 1.9 2024/08/20 17:43:24 riastradh Exp $	*/
+/*	$NetBSD: mbrtoc32.c,v 1.10 2025/12/16 12:39:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,13 +52,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbrtoc32.c,v 1.9 2024/08/20 17:43:24 riastradh Exp $");
+__RCSID("$NetBSD: mbrtoc32.c,v 1.10 2025/12/16 12:39:02 nia Exp $");
 
 #include "namespace.h"
 
 #include <sys/param.h>		/* MIN */
 #include <sys/types.h>		/* broken citrus_*.h */
 #include <sys/queue.h>		/* broken citrus_*.h */
+#include <sys/endian.h>
 
 #include <assert.h>
 #include <errno.h>

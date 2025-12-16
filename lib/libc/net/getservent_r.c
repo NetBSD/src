@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.13 2022/03/12 17:31:39 christos Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.14 2025/12/16 12:39:02 nia Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.13 2022/03/12 17:31:39 christos Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.14 2025/12/16 12:39:02 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <sys/endian.h>
 #include <cdbr.h>
 #include <errno.h>
 #include <fcntl.h>

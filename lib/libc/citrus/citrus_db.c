@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $	*/
+/*	$NetBSD: citrus_db.c,v 1.6 2025/12/16 12:39:01 nia Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $");
+__RCSID("$NetBSD: citrus_db.c,v 1.6 2025/12/16 12:39:01 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: citrus_db.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $");
 #include <errno.h>
 #include <limits.h>
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include "citrus_namespace.h"
 #include "citrus_bcs.h"
