@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.243 2022/02/23 21:54:41 andvar Exp $ */
+/*	$NetBSD: st.c,v 1.244 2025/12/16 18:24:47 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.243 2022/02/23 21:54:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.244 2025/12/16 18:24:47 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1881,7 +1881,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 	if ((st->quirks & ST_Q_NOFILEMARKS) == 0)
 		_lto3b(number, cmd.number);
 
-	/* XXX WE NEED TO BE ABLE TO GET A RESIDIUAL XXX */
+	/* XXX WE NEED TO BE ABLE TO GET A RESIDUAL XXX */
 	error = scsipi_command(st->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
 	    0, ST_IO_TIME * 4, NULL, flags);
 	if (error == 0 && st->fileno != -1)

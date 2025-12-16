@@ -1,4 +1,4 @@
-/* $NetBSD: table.h,v 1.4 2018/06/03 12:18:29 kamil Exp $ */
+/* $NetBSD: table.h,v 1.5 2025/12/16 18:24:47 andvar Exp $ */
 
 /*
  * generic hashed associative table for commands and variables.
@@ -65,7 +65,7 @@ struct tbl {			/* table item */
 #define SPEC_BI		BIT(12)	/* a POSIX special builtin */
 #define REG_BI		BIT(13)	/* a POSIX regular builtin */
 /* Attributes that can be set by the user (used to decide if an unset param
- * should be repoted by set/typeset).  Does not include ARRAY or LOCAL.
+ * should be reported by set/typeset).  Does not include ARRAY or LOCAL.
  */
 #define USERATTRIB	(EXPORT|INTEGER|RDONLY|LJUST|RJUST|ZEROFIL\
 			 |LCASEV|UCASEV_AL|INT_U|INT_L)

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.27 2021/08/13 11:40:43 skrll Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.28 2025/12/16 18:24:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.27 2021/08/13 11:40:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.28 2025/12/16 18:24:47 andvar Exp $");
 
 /* Include header files */
 
@@ -347,7 +347,7 @@ calibrate_delay(void)
 	 * normal values of HZ (100 and higher), this is unlikely to
 	 * ever happen.
 	 *
-	 * We let TIMER 3 just run free, at the freqeuncy supplied by
+	 * We let TIMER 3 just run free, at the frequency supplied by
 	 * dc21285_fclk.
 	 */
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,

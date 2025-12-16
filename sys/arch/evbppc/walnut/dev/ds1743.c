@@ -1,7 +1,7 @@
-/*	$NetBSD: ds1743.c,v 1.11 2025/09/07 21:45:13 thorpej Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.12 2025/12/16 18:24:47 andvar Exp $	*/
 
 /*
- * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
+ * Copyright (c) 2001-2002 Wasabi Systems, Inc.
  * Copyright (c) 1998 Mark Brinicombe.
  * Copyright (c) 1998 Causality Limited.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.11 2025/09/07 21:45:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.12 2025/12/16 18:24:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

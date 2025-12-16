@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.4 2016/08/04 18:07:43 scole Exp $	*/
+/*	$NetBSD: time.c,v 1.5 2025/12/16 18:24:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -154,7 +154,7 @@ EfiTimeToUnixTime(EFI_TIME *ETime)
     UTime += ETime->Second;
 
     /*
-    //  EFI time is repored in local time.  Adjust for any time zone offset to
+    //  EFI time is reported in local time.  Adjust for any time zone offset to
     //  get true UT
     */
     if ( ETime->TimeZone != EFI_UNSPECIFIED_TIMEZONE ) {

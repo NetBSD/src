@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.h,v 1.6 2022/08/10 08:37:53 christos Exp $	*/
+/*	$NetBSD: inetd.h,v 1.7 2025/12/16 18:24:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ struct	servtab {
 	size_t	se_service_max;		/* max # of instances of this service per minute */
 	size_t	se_count;		/* number of instances of this service started since se_time */
 	size_t	se_ip_max;  		/* max # of instances of this service per ip per minute */
-	SLIST_HEAD(iplist, rl_ip_node) se_rl_ip_list; /* per-address (IP) rate limting */
+	SLIST_HEAD(iplist, rl_ip_node) se_rl_ip_list; /* per-address (IP) rate limiting */
 	time_t se_time;	/* start of se_count and ip_max counts, in seconds from arbitrary point */
 	
 	/* TODO convert to using SLIST */

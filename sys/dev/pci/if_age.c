@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.74 2024/06/29 12:11:11 riastradh Exp $ */
+/*	$NetBSD: if_age.c,v 1.75 2025/12/16 18:24:47 andvar Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.74 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.75 2025/12/16 18:24:47 andvar Exp $");
 
 #include "vlan.h"
 
@@ -1738,7 +1738,7 @@ age_init(struct ifnet *ifp)
 		    device_xname(sc->sc_dev), sc->age_int_mod);
 	CSR_WRITE_2(sc, AGE_INTR_CLR_TIMER, AGE_USECS(1000));
 
-	/* Set Maximum frame size but don't let MTU be lass than ETHER_MTU. */
+	/* Set Maximum frame size but don't let MTU be less than ETHER_MTU. */
 	if (ifp->if_mtu < ETHERMTU)
 		sc->age_max_frame_size = ETHERMTU;
 	else

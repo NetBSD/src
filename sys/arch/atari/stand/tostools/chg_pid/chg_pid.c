@@ -1,4 +1,4 @@
-/*	$NetBSD: chg_pid.c,v 1.9 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: chg_pid.c,v 1.10 2025/12/16 18:24:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -90,7 +90,7 @@ int	read_block	PROTO((void *, int, int));
 int	write_block	PROTO((void *, int, int));
 void	set_csum	PROTO((char *));
 
-const char version[] = "$Revision: 1.9 $";
+const char version[] = "$Revision: 1.10 $";
 
 char	*Progname = NULL;		/* What are we called		*/
 int	t_flag    = 0;			/* Test -- don't actually do it	*/
@@ -329,7 +329,7 @@ Description of options:\r
 \t-o  Write output to both <output file> and stdout.\r
 \t-V  Print program version.\r
 \t-w  Wait for a keypress before exiting.\r
-\t-t  Test mode. It does everyting except the modifications on disk.\r
+\t-t  Test mode. It does everything except the modifications on disk.\r
 \r
 The <driveno> and <partno> arguments specify the drive and the partition\r
 this program acts on. Both are zero based.\r
