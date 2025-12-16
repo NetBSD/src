@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.15 2021/04/12 09:12:28 mrg Exp $	*/
+/*	$NetBSD: save.c,v 1.16 2025/12/16 12:37:09 nia Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.15 2021/04/12 09:12:28 mrg Exp $");
+__RCSID("$NetBSD: save.c,v 1.16 2025/12/16 12:37:09 nia Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: save.c,v 1.15 2021/04/12 09:12:28 mrg Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <endian.h>
 #include <assert.h>
 
 #include "hdr.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.24 2021/04/13 01:50:46 mrg Exp $	*/
+/*	$NetBSD: score.c,v 1.25 2025/12/16 12:37:09 nia Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.24 2021/04/13 01:50:46 mrg Exp $");
+__RCSID("$NetBSD: score.c,v 1.25 2025/12/16 12:37:09 nia Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
+#include <endian.h>
 #include <err.h>
 #include <fcntl.h>
 #include <pwd.h>
