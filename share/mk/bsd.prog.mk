@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.357 2025/10/19 00:59:59 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.358 2025/12/16 04:21:03 riastradh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -288,6 +288,15 @@ _PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
+
+# XXX Provisional -- we should get this out of PROGDPLIBS for each
+# specific dependency so we can write the directory in one place where
+# the library is defined, and not copy and paste it everywhere the
+# library is used.
+.for _subdir_ in ${PROGDPSUBDIRS:U}
+_PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR}/${_subdir_} \
+		-L=${SHLIBDIR}/${_subdir_}
+.endfor
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
