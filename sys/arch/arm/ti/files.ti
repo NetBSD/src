@@ -1,14 +1,20 @@
-#	$NetBSD: files.ti,v 1.23 2025/09/06 15:44:03 thorpej Exp $
+#	$NetBSD: files.ti,v 1.24 2025/12/16 12:20:22 skrll Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
 file	arch/arm/ti/am3_platform.c	soc_am33xx
-file	arch/arm/ti/omap3_platform.c	soc_omap3
+file	arch/arm/ti/omap3_platform.c	soc_omap3 | soc_omap4
+file	arch/arm/ti/omap_smc.S		soc_omap4
 
 # Interrupt controller
 device	omapintc: pic, pic_splfuncs
 attach  omapintc at fdt
 file	arch/arm/ti/ti_omapintc.c	omapintc
+
+# WakeupGen
+device	omapwugen
+attach	omapwugen at fdt with omapwugen
+file	arch/arm/ti/ti_omapwugen.c	omapwugen
 
 # sysc interconnect
 device	tisysc { } : fdt, ti_prcm
@@ -34,6 +40,11 @@ device	omap3prm { } : fdt
 attach	omap3prm at fdt with omap3_prm
 file	arch/arm/ti/omap3_prm.c		omap3_prm
 
+# PRCM (OMAP4)
+device	omap4prcm { } : fdt, ti_prcm
+attach	omap4prcm at fdt with omap4_prcm
+file	arch/arm/ti/omap4_prcm.c	omap4_prcm
+
 # Clocks
 device	timuxclk: fdt_clock
 attach	timuxclk at fdt with ti_mux_clock
@@ -46,6 +57,14 @@ file	arch/arm/ti/ti_div_clock.c	ti_div_clock
 device	tidpllclk: fdt_clock
 attach	tidpllclk at fdt with ti_dpll_clock
 file	arch/arm/ti/ti_dpll_clock.c	ti_dpll_clock
+
+device	tigateclk
+attach	tigateclk at fdt with ti_gate_clock
+file	arch/arm/ti/ti_gate_clock.c	ti_gate_clock
+
+device	ticompclk
+attach	ticompclk at fdt with ti_comp_clock
+file	arch/arm/ti/ti_comp_clock.c	ti_comp_clock
 
 # UART
 attach	com at fdt with ti_com: ti_prcm
@@ -102,6 +121,9 @@ file	arch/arm/ti/ti_ehci.c		ti_ehci
 attach	motg at fdt with ti_motg
 file	arch/arm/ti/ti_motg.c		ti_motg
 
+attach	motg at fdt with omapmusb
+file	arch/arm/ti/ti_omapmusb.c	omapmusb
+
 # RNG
 device	tirng
 attach	tirng at fdt with ti_rng
@@ -142,3 +164,4 @@ file	arch/arm/ti/ti_wdt.c		ti_wdt
 defflag	opt_soc.h			SOC_TI: FDT_SYSCON
 defflag	opt_soc.h			SOC_AM33XX: SOC_TI
 defflag	opt_soc.h			SOC_OMAP3: SOC_TI
+defflag	opt_soc.h			SOC_OMAP4: SOC_TI

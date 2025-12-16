@@ -1,4 +1,4 @@
-/* $NetBSD: ti_prcm.c,v 1.4 2020/06/03 14:56:09 jmcneill Exp $ */
+/* $NetBSD: ti_prcm.c,v 1.5 2025/12/16 12:20:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_prcm.c,v 1.4 2020/06/03 14:56:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_prcm.c,v 1.5 2025/12/16 12:20:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,8 +217,8 @@ ti_prcm_attach(struct ti_prcm_softc *sc)
 	for (i = 0; i < sc->sc_nclks; i++)
 		sc->sc_clks[i].base.domain = &sc->sc_clkdom;
 
-	KASSERT(prcm_softc == NULL);
-	prcm_softc = sc;
+	if (prcm_softc == NULL)
+		prcm_softc = sc;
 
 	return 0;
 }

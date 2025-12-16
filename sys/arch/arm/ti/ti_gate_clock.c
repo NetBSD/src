@@ -1,6 +1,7 @@
-/* $NetBSD: ti_mux_clock.c,v 1.4 2025/12/16 12:20:22 skrll Exp $ */
+/* $NetBSD: ti_gate_clock.c,v 1.1 2025/12/16 12:20:22 skrll Exp $ */
 
 /*-
+ * Copyright (c) 2025 Rui-Xiang Guo
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
@@ -27,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_mux_clock.c,v 1.4 2025/12/16 12:20:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gate_clock.c,v 1.1 2025/12/16 12:20:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,30 +40,30 @@ __KERNEL_RCSID(0, "$NetBSD: ti_mux_clock.c,v 1.4 2025/12/16 12:20:22 skrll Exp $
 
 #include <dev/fdt/fdtvar.h>
 
-static int	ti_mux_clock_match(device_t, cfdata_t, void *);
-static void	ti_mux_clock_attach(device_t, device_t, void *);
+static int ti_gate_clock_match(device_t, cfdata_t, void *);
+static void ti_gate_clock_attach(device_t, device_t, void *);
 
-static struct clk *ti_mux_clock_decode(device_t, int, const void *, size_t);
+static struct clk *ti_gate_clock_decode(device_t, int, const void *, size_t);
 
-static const struct fdtbus_clock_controller_func ti_mux_clock_fdt_funcs = {
-	.decode = ti_mux_clock_decode
+static const struct fdtbus_clock_controller_func ti_gate_clock_fdt_funcs = {
+	.decode = ti_gate_clock_decode
 };
 
-static struct clk *ti_mux_clock_get(void *, const char *);
-static void	ti_mux_clock_put(void *, struct clk *);
-static u_int	ti_mux_clock_get_rate(void *, struct clk *);
-static struct clk *ti_mux_clock_get_parent(void *, struct clk *);
-static int	ti_mux_clock_set_parent(void *, struct clk *, struct clk *);
+static struct clk *ti_gate_clock_get(void *, const char *);
+static void ti_gate_clock_put(void *, struct clk *);
+static int ti_gate_clock_enable(void *, struct clk *);
+static int ti_gate_clock_disable(void *, struct clk *);
+static struct clk *ti_gate_clock_get_parent(void *, struct clk *);
 
-static const struct clk_funcs ti_mux_clock_clk_funcs = {
-	.get = ti_mux_clock_get,
-	.put = ti_mux_clock_put,
-	.get_rate = ti_mux_clock_get_rate,
-	.get_parent = ti_mux_clock_get_parent,
-	.set_parent = ti_mux_clock_set_parent,
+static const struct clk_funcs ti_gate_clock_clk_funcs = {
+	.get = ti_gate_clock_get,
+	.put = ti_gate_clock_put,
+	.enable = ti_gate_clock_enable,
+	.disable = ti_gate_clock_disable,
+	.get_parent = ti_gate_clock_get_parent,
 };
 
-struct ti_mux_clock_softc {
+struct ti_gate_clock_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
 	bus_space_tag_t		sc_bst;
@@ -70,10 +71,8 @@ struct ti_mux_clock_softc {
 
 	struct clk_domain	sc_clkdom;
 	struct clk		sc_clk;
-	u_int			sc_nparent;
 
-	uint32_t		sc_mask;
-	u_int			sc_start_index;
+	uint32_t		sc_shift;
 };
 
 #define	RD4(sc, reg)			\
@@ -81,17 +80,17 @@ struct ti_mux_clock_softc {
 #define	WR4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-CFATTACH_DECL_NEW(ti_mux_clock, sizeof(struct ti_mux_clock_softc),
-    ti_mux_clock_match, ti_mux_clock_attach, NULL, NULL);
+CFATTACH_DECL_NEW(ti_gate_clock, sizeof(struct ti_gate_clock_softc),
+    ti_gate_clock_match, ti_gate_clock_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "ti,composite-mux-clock" },
-	{ .compat = "ti,mux-clock" },
+	{ .compat = "ti,composite-no-wait-gate-clock" },
+	{ .compat = "ti,gate-clock" },
 	DEVICE_COMPAT_EOL
 };
 
 static int
-ti_mux_clock_match(device_t parent, cfdata_t cf, void *aux)
+ti_gate_clock_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *faa = aux;
 
@@ -99,9 +98,9 @@ ti_mux_clock_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-ti_mux_clock_attach(device_t parent, device_t self, void *aux)
+ti_gate_clock_attach(device_t parent, device_t self, void *aux)
 {
-	struct ti_mux_clock_softc * const sc = device_private(self);
+	struct ti_gate_clock_softc * const sc = device_private(self);
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr, base_addr;
@@ -122,19 +121,13 @@ ti_mux_clock_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_nparent = fdtbus_clock_count(phandle, "clocks");
-	sc->sc_start_index = of_hasprop(phandle, "ti,index-starts-at-one") ? 1 : 0;
-	sc->sc_nparent += sc->sc_start_index;
-	while (!powerof2(sc->sc_nparent))
-		sc->sc_nparent++;
-
 	if (of_getprop_uint32(phandle, "ti,bit-shift", &shift) != 0)
 		shift = 0;
 
-	sc->sc_mask = (sc->sc_nparent - 1) << shift;
+	sc->sc_shift = shift;
 
 	sc->sc_clkdom.name = device_xname(self);
-	sc->sc_clkdom.funcs = &ti_mux_clock_clk_funcs;
+	sc->sc_clkdom.funcs = &ti_gate_clock_clk_funcs;
 	sc->sc_clkdom.priv = sc;
 
 	sc->sc_clk.domain = &sc->sc_clkdom;
@@ -142,75 +135,65 @@ ti_mux_clock_attach(device_t parent, device_t self, void *aux)
 	clk_attach(&sc->sc_clk);
 
 	aprint_naive("\n");
-	aprint_normal(": TI mux clock (%s)\n", sc->sc_clk.name);
+	aprint_normal(": TI gate clock (%s)\n", sc->sc_clk.name);
 
-	fdtbus_register_clock_controller(self, phandle, &ti_mux_clock_fdt_funcs);
+	fdtbus_register_clock_controller(self, phandle, &ti_gate_clock_fdt_funcs);
 }
 
 static struct clk *
-ti_mux_clock_decode(device_t dev, int cc_phandle, const void *data,
-		    size_t len)
+ti_gate_clock_decode(device_t dev, int cc_phandle, const void *data,
+		     size_t len)
 {
-	struct ti_mux_clock_softc * const sc = device_private(dev);
+	struct ti_gate_clock_softc * const sc = device_private(dev);
 
 	return &sc->sc_clk;
 }
 
 static struct clk *
-ti_mux_clock_get(void *priv, const char *name)
+ti_gate_clock_get(void *priv, const char *name)
 {
-	struct ti_mux_clock_softc * const sc = priv;
+	struct ti_gate_clock_softc * const sc = priv;
 
 	return &sc->sc_clk;
 }
 
 static void
-ti_mux_clock_put(void *priv, struct clk *clk)
+ti_gate_clock_put(void *priv, struct clk *clk)
 {
-}
-
-static u_int
-ti_mux_clock_get_rate(void *priv, struct clk *clk)
-{
-	struct clk *clk_parent = clk_get_parent(clk);
-
-	if (clk_parent == NULL)
-		return 0;
-
-	return clk_get_rate(clk_parent);
-}
-
-static struct clk *
-ti_mux_clock_get_parent(void *priv, struct clk *clk)
-{
-	struct ti_mux_clock_softc * const sc = priv;
-	uint32_t val;
-	u_int sel;
-
-	val = RD4(sc, 0);
-	sel = __SHIFTOUT(val, sc->sc_mask);
-
-	return fdtbus_clock_get_index(sc->sc_phandle, sel - sc->sc_start_index);
 }
 
 static int
-ti_mux_clock_set_parent(void *priv, struct clk *clk, struct clk *parent_clk)
+ti_gate_clock_enable(void *priv, struct clk *clk)
 {
-	struct ti_mux_clock_softc * const sc = priv;
+	struct ti_gate_clock_softc * const sc = priv;
+	struct clk *clk_parent = clk_get_parent(clk);
 	uint32_t val;
-	u_int sel;
-
-	for (sel = sc->sc_start_index; sel < sc->sc_nparent; sel++) {
-		if (fdtbus_clock_get_index(sc->sc_phandle, sel - sc->sc_start_index) == parent_clk)
-			break;
-	}
-	if (sel == sc->sc_nparent)
-		return EINVAL;
 
 	val = RD4(sc, 0);
-	val &= ~sc->sc_mask;
-	val |= __SHIFTIN(sel, sc->sc_mask);
+	val |= __BIT(sc->sc_shift);
 	WR4(sc, 0, val);
 
-	return 0;
+	return clk_enable(clk_parent);
+}
+
+static int
+ti_gate_clock_disable(void *priv, struct clk *clk)
+{
+	struct ti_gate_clock_softc * const sc = priv;
+	struct clk *clk_parent = clk_get_parent(clk);
+	uint32_t val;
+
+	val = RD4(sc, 0);
+	val &= ~__BIT(sc->sc_shift);
+	WR4(sc, 0, val);
+
+	return clk_disable(clk_parent);
+}
+
+static struct clk *
+ti_gate_clock_get_parent(void *priv, struct clk *clk)
+{
+	struct ti_gate_clock_softc * const sc = priv;
+
+	return fdtbus_clock_get_index(sc->sc_phandle, 0);
 }

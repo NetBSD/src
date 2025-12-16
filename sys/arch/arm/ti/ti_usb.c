@@ -1,4 +1,4 @@
-/* $NetBSD: ti_usb.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_usb.c,v 1.3 2025/12/16 12:20:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_usb.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_usb.c,v 1.3 2025/12/16 12:20:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,24 +39,35 @@ __KERNEL_RCSID(0, "$NetBSD: ti_usb.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
 
 #include <arm/ti/ti_prcm.h>
 
+#define UHH_REVISION				0x00
+#define  UHH_REVISION1		0x00000010	/* OMAP3 */
+#define  UHH_REVISION2		0x50700100	/* OMAP4 */
+
+
 #define	UHH_SYSCONFIG				0x10
-#define	 UHH_SYSCONFIG_MIDLEMODE_MASK		0x00003000
-#define   UHH_SYSCONFIG_MIDLEMODE_SMARTSTANDBY	0x00002000
-#define	 UHH_SYSCONFIG_CLOCKACTIVITY		0x00000100
-#define	 UHH_SYSCONFIG_SIDLEMODE_MASK		0x00000018
-#define   UHH_SYSCONFIG_SIDLEMODE_SMARTIDLE	0x00000008
-#define	 UHH_SYSCONFIG_ENAWAKEUP		0x00000004
-#define	 UHH_SYSCONFIG_SOFTRESET		0x00000002
-#define	 UHH_SYSCONFIG_AUTOIDLE			0x00000001
+/* OMAP4 definitions */
+#define  UHH_SYSCONFIG_IDLEMODE_MASK		__BITS(3, 2)
+#define  UHH_SYSCONFIG_IDLEMODE_NOIDLE		1
+#define  UHH_SYSCONFIG_STANDBYMODE_MASK		__BITS(5, 4)
+#define  UHH_SYSCONFIG_STANDBYMODE_NOSTDBY      1
+/* OMAP definitions */
+#define	 UHH_SYSCONFIG_MIDLEMODE_MASK		__BITS(13,12)
+#define   UHH_SYSCONFIG_MIDLEMODE_SMARTSTANDBY	__BIT(12)
+#define	 UHH_SYSCONFIG_CLOCKACTIVITY		__BIT(8)
+#define	 UHH_SYSCONFIG_SIDLEMODE_MASK		__BITS(4,3)
+#define   UHH_SYSCONFIG_SIDLEMODE_SMARTIDLE	__BIT(3)
+#define	 UHH_SYSCONFIG_ENAWAKEUP		__BIT(2)
+#define	 UHH_SYSCONFIG_SOFTRESET		__BIT(1)
+#define	 UHH_SYSCONFIG_AUTOIDLE			__BIT(0)
 
 #define	UHH_HOSTCONFIG				0x40
 #define  UHH_HOSTCONFIG_APP_START_CLK		__BIT(31)
-#define	 UHH_HOSTCONFIG_P3_MODE			__BITS(21,20)
-#define	 UHH_HOSTCONFIG_P2_MODE			__BITS(19,18)
-#define	 UHH_HOSTCONFIG_P1_MODE			__BITS(17,16)
+/* OMAP4 definitions */
+#define  UHH_HOSTCONFIG_PN_MODE_MASK(p)		__BITS(1 + 16 + 2 * (p), 16 + 2 * (p))
 #define   UHH_HOSTCONFIG_PMODE_ULPI_PHY		0
-#define   UHH_HOSTCONFIG_PMODE_UTMI		1
+#define   UHH_HOSTCONFIG_PMODE_TLL		1
 #define   UHH_HOSTCONFIG_PMODE_HSIC		3
+/* OMAP definitions */
 #define	 UHH_HOSTCONFIG_P3_ULPI_BYPASS		__BIT(12)
 #define	 UHH_HOSTCONFIG_P2_ULPI_BYPASS		__BIT(11)
 #define	 UHH_HOSTCONFIG_P3_CONNECT_STATUS	__BIT(10)
@@ -76,6 +87,7 @@ static const struct device_compatible_entry compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
+/* Maximum number of ports */
 #define	TI_USB_NPORTS	3
 
 enum {
@@ -99,17 +111,21 @@ static const uint32_t ti_usb_portbits[TI_USB_NPORTS][TI_USB_NBITS] = {
 	},
 };
 
-enum {
+enum ti_usb_portmode_type {
 	PORT_UNUSED,
 	PORT_EHCI_PHY,
 	PORT_EHCI_TLL,
 	PORT_EHCI_HSIC,
+	PORT_OHCI,
 };
 
 struct ti_usb_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+
+	uint32_t sc_usbhsrev;
+	u_int sc_nports;
 
 	u_int sc_portmode[TI_USB_NPORTS];
 };
@@ -125,30 +141,11 @@ CFATTACH_DECL_NEW(ti_usb, sizeof(struct ti_usb_softc),
 #define WR4(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-static void
-ti_usb_init(struct ti_usb_softc *sc)
+
+static uint32_t
+ti_usb_hostconfig1(struct ti_usb_softc *sc, uint32_t val)
 {
-	uint32_t val;
-	int port;
-
-	val = RD4(sc, UHH_SYSCONFIG);
-	val &= ~(UHH_SYSCONFIG_SIDLEMODE_MASK|UHH_SYSCONFIG_MIDLEMODE_MASK);
-	val |= UHH_SYSCONFIG_MIDLEMODE_SMARTSTANDBY;
-	val |= UHH_SYSCONFIG_CLOCKACTIVITY;
-	val |= UHH_SYSCONFIG_SIDLEMODE_SMARTIDLE;
-	val |= UHH_SYSCONFIG_ENAWAKEUP;
-	val &= ~UHH_SYSCONFIG_AUTOIDLE;
-	WR4(sc, UHH_SYSCONFIG, val);
-
-	val = RD4(sc, UHH_SYSCONFIG);
-
-	val = RD4(sc, UHH_HOSTCONFIG);
-	val |= UHH_HOSTCONFIG_ENA_INCR16;
-	val |= UHH_HOSTCONFIG_ENA_INCR8;
-	val |= UHH_HOSTCONFIG_ENA_INCR4;
-	val |= UHH_HOSTCONFIG_APP_START_CLK;
-	val &= ~UHH_HOSTCONFIG_ENA_INCR_ALIGN;
-	for (port = 0; port < TI_USB_NPORTS; port++) {
+	for (u_int port = 0; port < sc->sc_nports; port++) {
 		if (sc->sc_portmode[port] == PORT_UNUSED)
 			val &= ~ti_usb_portbits[port][CONNECT_STATUS];
 		if (sc->sc_portmode[port] == PORT_EHCI_PHY)
@@ -156,6 +153,69 @@ ti_usb_init(struct ti_usb_softc *sc)
 		else
 			val |= ti_usb_portbits[port][ULPI_BYPASS];
 	}
+	return val;
+}
+
+static uint32_t
+ti_usb_hostconfig2(struct ti_usb_softc *sc, uint32_t val)
+{
+	for (u_int port = 0; port < sc->sc_nports; port++) {
+		uint32_t mode = 0;
+
+		if (sc->sc_portmode[port] == PORT_UNUSED)
+			val &= ~UHH_HOSTCONFIG_PN_MODE_MASK(port);
+		if (sc->sc_portmode[port] == PORT_EHCI_TLL ||
+		    sc->sc_portmode[port] == PORT_OHCI)
+			mode = UHH_HOSTCONFIG_PMODE_TLL;
+		else if (sc->sc_portmode[port] == PORT_EHCI_HSIC)
+			mode = UHH_HOSTCONFIG_PMODE_HSIC;
+		val |= __SHIFTIN(mode, UHH_HOSTCONFIG_PN_MODE_MASK(port));
+	}
+	return val;
+}
+
+
+static void
+ti_usb_init(struct ti_usb_softc *sc)
+{
+	uint32_t val;
+
+	val = RD4(sc, UHH_SYSCONFIG);
+	switch (sc->sc_usbhsrev) {
+	case UHH_REVISION1:
+		val &= ~UHH_SYSCONFIG_SIDLEMODE_MASK;
+		val &= ~UHH_SYSCONFIG_MIDLEMODE_MASK;
+		val |=  UHH_SYSCONFIG_MIDLEMODE_SMARTSTANDBY;
+		val |=  UHH_SYSCONFIG_CLOCKACTIVITY;
+		val |=  UHH_SYSCONFIG_SIDLEMODE_SMARTIDLE;
+		val |=  UHH_SYSCONFIG_ENAWAKEUP;
+		val &= ~UHH_SYSCONFIG_AUTOIDLE;
+		break;
+	case UHH_REVISION2:
+		val &= ~UHH_SYSCONFIG_IDLEMODE_MASK;
+		val |= __SHIFTIN(UHH_SYSCONFIG_IDLEMODE_NOIDLE, UHH_SYSCONFIG_IDLEMODE_MASK);
+		val &= ~UHH_SYSCONFIG_STANDBYMODE_MASK;
+		val |= __SHIFTIN(UHH_SYSCONFIG_STANDBYMODE_NOSTDBY, UHH_SYSCONFIG_STANDBYMODE_MASK);
+		break;
+	}
+	WR4(sc, UHH_SYSCONFIG, val);
+
+	val = RD4(sc, UHH_HOSTCONFIG);
+	val |= UHH_HOSTCONFIG_ENA_INCR16;
+	val |= UHH_HOSTCONFIG_ENA_INCR8;
+	val |= UHH_HOSTCONFIG_ENA_INCR4;
+	val |= UHH_HOSTCONFIG_APP_START_CLK;
+	val &= ~UHH_HOSTCONFIG_ENA_INCR_ALIGN;
+
+	switch (sc->sc_usbhsrev) {
+	case UHH_REVISION1:
+		val = ti_usb_hostconfig1(sc, val);
+		break;
+	case UHH_REVISION2:
+	default:
+		val = ti_usb_hostconfig2(sc, val);
+	}
+
 	WR4(sc, UHH_HOSTCONFIG, val);
 }
 
@@ -166,6 +226,25 @@ ti_usb_match(device_t parent, cfdata_t match, void *aux)
 
 	return of_compatible_match(faa->faa_phandle, compat_data);
 }
+
+struct ti_usb_portmode {
+	const char *			tup_name;
+	enum ti_usb_portmode_type	tup_type;
+} ti_usb_portmodes[] = {
+	{ "ehci-phy", PORT_EHCI_PHY },
+	{ "ehci-tll", PORT_EHCI_TLL },
+	{ "ehci-hsic", PORT_EHCI_HSIC },
+	{ "ohci-phy-6pin-datse0", PORT_OHCI, },
+	{ "ohci-phy-6pin-dpdm", PORT_OHCI, },
+	{ "ohci-phy-3pin-datse0", PORT_OHCI, },
+	{ "ohci-phy-4pin-dpdm", PORT_OHCI, },
+	{ "ohci-tll-6pin-datse0", PORT_OHCI, },
+	{ "ohci-tll-6pin-dpdm", PORT_OHCI, },
+	{ "ohci-tll-3pin-datse0", PORT_OHCI, },
+	{ "ohci-tll-4pin-dpdm", PORT_OHCI, },
+	{ "ohci-tll-2pin-datse0", PORT_OHCI, },
+	{ "ohci-tll-2pin-dpdm", PORT_OHCI, },
+};
 
 static void
 ti_usb_attach(device_t parent, device_t self, void *aux)
@@ -196,24 +275,35 @@ ti_usb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	for (port = 0; port < TI_USB_NPORTS; port++) {
+	sc->sc_usbhsrev = RD4(sc, UHH_REVISION);
+	sc->sc_nports = TI_USB_NPORTS;
+	switch (sc->sc_usbhsrev) {
+	case UHH_REVISION1:
+		sc->sc_nports = 3;
+		break;
+	case UHH_REVISION2:
+		sc->sc_nports = 2;
+		break;
+	}
+
+	for (port = 0; port < sc->sc_nports; port++) {
 		snprintf(propname, sizeof(propname), "port%d-mode", port + 1);
 		portmode = fdtbus_get_string(phandle, propname);
 		if (portmode == NULL)
 			continue;
-		if (strcmp(portmode, "ehci-phy") == 0)
-			sc->sc_portmode[port] = PORT_EHCI_PHY;
-		else if (strcmp(portmode, "ehci-tll") == 0)
-			sc->sc_portmode[port] = PORT_EHCI_TLL;
-		else if (strcmp(portmode, "ehci-hsic") == 0)
-			sc->sc_portmode[port] = PORT_EHCI_HSIC;
+		for (u_int i = 0; i < __arraycount(ti_usb_portmodes); i++) {
+			if (strcmp(portmode, ti_usb_portmodes[i].tup_name) == 0)
+				sc->sc_portmode[port] =
+				    ti_usb_portmodes[i].tup_type;
+		}
 
 		if (sc->sc_portmode[port] != PORT_UNUSED)
 			tl_usbtll_enable_port(port);
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": OMAP HS USB Host\n");
+	aprint_normal(": OMAP HS USB Host (ports %u)\n", sc->sc_nports);
+	aprint_verbose_dev(sc->sc_dev, "revision %x\n", sc->sc_usbhsrev);
 
 	ti_usb_init(sc);
 

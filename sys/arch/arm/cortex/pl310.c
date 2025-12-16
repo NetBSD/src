@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.22 2025/11/28 08:27:08 skrll Exp $	*/
+/*	$NetBSD: pl310.c,v 1.23 2025/12/16 12:20:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.22 2025/11/28 08:27:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.23 2025/12/16 12:20:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,8 @@ struct arml2cc_softc {
 	struct evcnt sc_ev_wbinv;
 	bool sc_enabled;
 };
+
+void (*arml2cc_enable_func)(bool);
 
 __CTASSERT(offsetof(struct arml2cc_softc, sc_ev_inv.ev_count) % 8 == 0);
 __CTASSERT(offsetof(struct arml2cc_softc, sc_ev_wb.ev_count) % 8 == 0);
@@ -240,7 +242,11 @@ arml2cc_disable(struct arml2cc_softc *sc)
 	arml2cc_cache_way_op(sc, L2C_CLEAN_INV_WAY, sc->sc_waymask);
 	arml2cc_cache_sync(sc);
 
-	arml2cc_write_4(sc, L2C_CTL, 0);	// turn it off
+	if (arml2cc_enable_func)
+		arml2cc_enable_func(false);
+	else
+		arml2cc_write_4(sc, L2C_CTL, 0);	// turn it off
+
 	mutex_spin_exit(&sc->sc_lock);
 }
 
@@ -252,9 +258,18 @@ arml2cc_enable(struct arml2cc_softc *sc)
 	arml2cc_cache_way_op(sc, L2C_INV_WAY, sc->sc_waymask);
 	arml2cc_cache_sync(sc);
 
-	arml2cc_write_4(sc, L2C_CTL, 1);	// turn it on
+	if (arml2cc_enable_func)
+		arml2cc_enable_func(true);
+	else
+		arml2cc_write_4(sc, L2C_CTL, 1);	// turn it on
 
 	mutex_spin_exit(&sc->sc_lock);
+}
+
+void
+arml2cc_set_enable_func(void (*func)(bool))
+{
+	arml2cc_enable_func = func;
 }
 
 void

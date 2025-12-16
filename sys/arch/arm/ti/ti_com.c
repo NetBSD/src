@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $ */
+/* $NetBSD: ti_com.c,v 1.14 2025/12/16 12:20:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.13 2025/09/06 22:53:48 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.14 2025/12/16 12:20:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,7 @@ static void ti_com_attach(device_t, device_t, void *);
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,am3352-uart" },
 	{ .compat = "ti,omap3-uart" },
+	{ .compat = "ti,omap4-uart" },
 	DEVICE_COMPAT_EOL
 };
 

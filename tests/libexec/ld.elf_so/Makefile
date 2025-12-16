@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2025/12/14 23:26:12 riastradh Exp $
+# $NetBSD: Makefile,v 1.32 2025/12/16 12:20:23 skrll Exp $
 #
 
 NOMAN=		# defined
@@ -82,7 +82,7 @@ COPTS.t_rtld_r_debug.c += ${CC_WNO_MAYBE_UNINITIALIZED}
 LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
 .for t in t_ifunc t_ifunc_now t_ifunc_norelro t_ifunc_norelro_now
-LDADD.${t}+=		-Wl,-rpath,${TESTSDIR} -lutil
+LDADD.${t}+=		-Wl,-Map ${t}.map -Wl,-rpath,${TESTSDIR} -lutil
 DPADD.${t}+=		${LIBUTIL}
 .endfor
 LDADD.t_tls_extern+=	-Wl,-rpath,${TESTSDIR}

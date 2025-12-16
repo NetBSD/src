@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.12 2025/12/16 12:20:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.12 2025/12/16 12:20:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.11 2021/11/07 17:12:45 jmcneill E
 enum omaptimer_type {
 	DM_TIMER_AM335X,
 	DM_TIMER_OMAP3430,
+	DM_TIMER_OMAP4430,
 	_DM_NTIMER
 };
 
@@ -85,12 +86,20 @@ static uint8_t omaptimer_regmap[_DM_NTIMER][_TIMER_NREG] = {
 		[TIMER_TCRR]	= 0x28,
 		[TIMER_TLDR]	= 0x2c,
 	},
+	[DM_TIMER_OMAP4430] = {
+		[TIMER_TISR]	= 0x18,
+		[TIMER_TIER]	= 0x1c,
+		[TIMER_TCLR] 	= 0x38,
+		[TIMER_TCRR]	= 0x3c,
+		[TIMER_TLDR]	= 0x40,
+	},
 };
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,am335x-timer-1ms",	.value = DM_TIMER_AM335X },
 	{ .compat = "ti,am335x-timer",		.value = DM_TIMER_AM335X },
 	{ .compat = "ti,omap3430-timer",	.value = DM_TIMER_OMAP3430 },
+	{ .compat = "ti,omap4430-timer",	.value = DM_TIMER_OMAP4430 },
 	DEVICE_COMPAT_EOL
 };
 

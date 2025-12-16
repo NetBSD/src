@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.126 2025/11/22 14:31:36 skrll Exp $
+#	$NetBSD: GENERIC,v 1.127 2025/12/16 12:20:23 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -20,6 +20,7 @@ options 	SOC_IMX6SX
 options 	SOC_IMX7D
 options 	SOC_MESON8B
 options 	SOC_OMAP3
+options 	SOC_OMAP4
 options 	SOC_RK3288
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
@@ -68,6 +69,7 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=exynos, CONSADDR=0x12c20000
 
 #options 	EARLYCONS=imx, CONSADDR=0x02020000
+#options 	EARLYCONS=imx, CONSADDR=0x021e8000 # serial1
 
 # PICO-PI-IMX7
 #options	EARLYCONS=imx, CONSADDR=0x30a70000 # serial4
@@ -76,6 +78,7 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 
 #options 	EARLYCONS=omap3, CONSADDR=0x49020000
+#options 	EARLYCONS=omap4, CONSADDR=0x48020000
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 
@@ -148,6 +151,7 @@ meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
 omap3cm* 	at fdt? pass 1		# TI OMAP3 CM
 omap3prm* 	at fdt? pass 1		# TI OMAP3 PRM
+omap4prcm* 	at fdt? pass 1		# TI OMAP4 PRCM
 rkcru*		at fdt? pass 2		# Rockchip RK3288 CRU
 sun4ia10ccu* 	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu* 	at fdt? pass 2		# Allwinner A13 CCU
@@ -166,8 +170,10 @@ sun9immcclk* 	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
 sun9iusbclk* 	at fdt? pass 2		# Allwinner A80 USB HCI
 tegra124car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
+ticompclk* 	at fdt? pass 1		# TI composite clock
 tidivclk* 	at fdt? pass 1		# TI divider clock
 tidpllclk* 	at fdt? pass 2		# TI DPLL clock
+tigateclk* 	at fdt? pass 1		# TI gate clock
 timuxclk* 	at fdt? pass 1		# TI mux clock
 zynqclk*	at fdt? pass 1		# Xilinx Zynq PS clocks
 
@@ -194,7 +200,7 @@ syscon*		at fdt? pass 1		# Generic System Controller
 tisysc*		at fdt? pass 2		# TI sysc interconnect
 
 # Timer
-a9ptmr* 	at fdt? pass 2		# ARM Cortex A5/A9 Private Timer
+a9ptmr* 	at fdt? pass 3		# ARM Cortex A5/A9 Private Timer
 arma9ptmr* 	at a9ptmr?
 a9tmr* 		at fdt? pass 2		# ARM Cortex A5/A9 Timer
 arma9tmr* 	at a9tmr?
@@ -226,6 +232,7 @@ exyointr* 	at fdt? pass 1		# Samsung Exynos ICU
 imxgpc* 	at fdt? pass 2		# i.MX General Power Controller INTC
 imx7gpc* 	at fdt? pass 2		# i.MX General Power Controller v2 INTC
 omapintc* 	at fdt? pass 2		# TI OMAP INTC
+omapwugen* 	at fdt? pass 2		# TI OMAP WakeupGen
 tegralic* 	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc* 	at fdt? pass 1		# Allwinner INTC
 sunxinmi* 	at fdt? pass 2		# Allwinner NMI / R_INTC
