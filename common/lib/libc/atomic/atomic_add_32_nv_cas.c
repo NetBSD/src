@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.8 2025/12/17 01:06:15 thorpej Exp $	*/
+/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.9 2025/12/17 03:22:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,4 +69,7 @@ atomic_add_ptr_nv(volatile void *ptr, ssize_t delta)
 {
 	return (void *)_atomic_add_32_nv((volatile uint32_t *)ptr, delta);
 }
+
+#undef atomic_add_ptr_nv
+atomic_op_alias(atomic_add_ptr_nv,_atomic_add_ptr_nv)
 #endif /* _LP64 */
