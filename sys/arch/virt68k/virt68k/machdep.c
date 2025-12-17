@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2025/12/11 11:00:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2025/12/17 23:43:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2025/12/11 11:00:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2025/12/17 23:43:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -435,6 +435,11 @@ identifycpu(void)
  */
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	/*
+	 * virt68k obviously does not have a non-working /RMC, but we
+	 * provide this as a r/w node in order to faciliate testing.
+	 */
+	static bool broken_rmc;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -447,6 +452,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "broken_rmc", NULL,
+		       NULL, 0, &broken_rmc, 0,
+		       CTL_MACHDEP, CPU_BROKEN_RMC, CTL_EOL);
 }
 
 /* See: sig_machdep.c */
