@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.12 2025/08/27 04:47:17 isaki Exp $
+# $NetBSD: GENERIC,v 1.13 2025/12/17 02:09:59 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/virt68k/conf/std.virt68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -112,6 +112,9 @@ include 	"conf/compat_netbsd09.config"
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
+
+options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
