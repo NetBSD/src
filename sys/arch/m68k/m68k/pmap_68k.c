@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.48 2025/12/11 10:31:58 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.49 2025/12/17 07:05:50 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.48 2025/12/11 10:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.49 2025/12/17 07:05:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 	const int uvm_f_nowait = nowait ? UVM_KMF_NOWAIT : 0;
 	vaddr_t ptpva;
 
-	ptp = kmem_zalloc(size, nowait ? 0 : KM_SLEEP);
+	ptp = kmem_zalloc(size, nowait ? KM_NOSLEEP : KM_SLEEP);
 	if (__predict_false(ptp == NULL)) {
 		return NULL;
 	}
