@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2025/12/16 12:20:23 skrll Exp $
+# $NetBSD: Makefile,v 1.33 2025/12/17 23:43:52 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -134,6 +134,7 @@ SRCS.h_r_rel_pack=	h_r_rel.c
 SRCS.h_r_rel_nopack=	h_r_rel.c
 
 h_r_rel_pack: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+h_r_rel_pack.link: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
 LDFLAGS.h_r_rel_pack=	${LD_PACK_RELATIVE_RELOCS}
 LDFLAGS.h_r_rel_nopack=	${LD_NOPACK_RELATIVE_RELOCS}
 

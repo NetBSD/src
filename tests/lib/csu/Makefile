@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2025/12/17 20:05:43 riastradh Exp $
+# $NetBSD: Makefile,v 1.14 2025/12/17 23:43:52 riastradh Exp $
 
 NOMAN=			# defined
 
@@ -38,6 +38,7 @@ PROGS+=		h_hello_sta
 PROGS+=		${"${MKPIE}" != no:?h_hello_stapie:}
 
 h_hello_relr: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+h_hello_relr.link: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
 
 SRCS.h_hello_dyn+=		h_hello.c
 SRCS.h_hello_dynpie+=		h_hello.c
