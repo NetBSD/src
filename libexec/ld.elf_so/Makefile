@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151 2025/05/02 23:05:11 riastradh Exp $
+#	$NetBSD: Makefile,v 1.152 2025/12/17 01:32:55 riastradh Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -164,19 +164,13 @@ STRIPFLAG=
 
 .PATH: $M
 
-
-${PROG}: ${OBJS} ${DPADD}
-	${_MKMSG_LINK} ${PROG}
-	${CC} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 .if ${MKDEBUG} != "no"
-	(  ${OBJCOPY} --only-keep-debug ${.TARGET} ${.TARGET}.debug \
-	   && ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-	   --add-gnu-debuglink=${.TARGET}.debug ${.TARGET} \
-	) || (rm -f ${.TARGET}.debug; false)
-
-_PROGDEBUG.${PROG} := ${PROG}.debug
+${PROG}.link:
+.else
+${PROG}:
 .endif
-
+	${_MKTARGET_LINK}
+	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}
