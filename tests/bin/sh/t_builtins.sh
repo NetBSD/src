@@ -1,4 +1,4 @@
-# $NetBSD: t_builtins.sh,v 1.6 2021/05/18 21:37:56 kre Exp $
+# $NetBSD: t_builtins.sh,v 1.7 2025/12/17 19:10:27 andvar Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -538,7 +538,7 @@ getopts_body() {
 
 atf_test_case jobs
 jobs_head() {
-	atf_set "descr" "Tests the shell builting 'jobs' command"
+	atf_set "descr" "Tests the shell builtin 'jobs' command"
 }
 jobs_body() {
 	have_builtin jobs || return 0
