@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.14 2025/12/16 12:03:39 nia Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.15 2025/12/17 15:58:36 nia Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,11 +31,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.14 2025/12/16 12:03:39 nia Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.15 2025/12/17 15:58:36 nia Exp $");
 
 #include <sys/param.h>
 
 #include <assert.h>
+#include <endian.h>
 #include <ctype.h>
 #include <md5.h>
 #include <saslc.h>

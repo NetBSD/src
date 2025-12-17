@@ -1,4 +1,4 @@
-/* $NetBSD: mech_gssapi.c,v 1.8 2025/12/16 12:03:39 nia Exp $ */
+/* $NetBSD: mech_gssapi.c,v 1.9 2025/12/17 15:58:36 nia Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,10 +31,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_gssapi.c,v 1.8 2025/12/16 12:03:39 nia Exp $");
+__RCSID("$NetBSD: mech_gssapi.c,v 1.9 2025/12/17 15:58:36 nia Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <endian.h>
 #include <limits.h>	/* for LINE_MAX */
 #include <saslc.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: buffer.c,v 1.3 2025/12/16 12:03:39 nia Exp $ */
+/* $NetBSD: buffer.c,v 1.4 2025/12/17 15:58:36 nia Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,11 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer.c,v 1.3 2025/12/16 12:03:39 nia Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.4 2025/12/17 15:58:36 nia Exp $");
 
 #include <sys/param.h>		/* for MIN() */
 
 #include <assert.h>
+#include <endian.h>
 #include <saslc.h>
 #include <stdio.h>
 #include <stdlib.h>
