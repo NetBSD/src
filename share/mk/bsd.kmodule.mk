@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.86 2024/06/16 21:50:23 pgoyette Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.87 2025/12/17 01:33:21 riastradh Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -126,8 +126,13 @@ KMODSCRIPT=	${KMODSCRIPTSRC}
 PROG?=		${KMOD}.kmod
 .if ${MKDEBUG:Uno} != "no" && !defined(NODEBUG) && !commands(${PROG}) && \
     empty(SRCS:M*.sh)
-PROGDEBUG:=      ${PROG}.debug
-.endif  
+_PROGLINK=	${PROG}.link
+_PROGLINKBASE=	${.TARGET:C/\.link$//}
+PROGDEBUG:=	${PROG}.debug
+.else
+_PROGLINK=	${PROG}
+_PROGLINKBASE=	${.TARGET}
+.endif
 
 ##### Build rules
 realall:	${PROG} ${PROGDEBUG}
@@ -165,24 +170,24 @@ ${KMOD}_tramp.S: ${KMOD}_tmp.o ${ARCHDIR}/kmodtramp.awk ${ASM_H}
 		 > tmp.S && \
 	${MV} tmp.S ${.TARGET}
 
-${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
+${_PROGLINK}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}
 .if exists(${ARCHDIR}/kmodhide.awk)
-	${LD} -r -Map=${.TARGET}.map \
+	${LD} -r -Map=${_PROGLINKBASE}.map \
 	    -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${OBJCOPY} \
 		$$(${NM} tmp.o | ${TOOL_AWK} -f ${ARCHDIR}/kmodhide.awk) \
 		tmp.o ${.TARGET} && \
 	rm tmp.o
 .else
-	${LD} -r -Map=${.TARGET}.map \
+	${LD} -r -Map=${_PROGLINKBASE}.map \
 	    -o ${.TARGET} ${KMOD}_tmp.o ${KMOD}_tramp.o
 .endif
 .else
-${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
+${_PROGLINK}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
-		-Wl,-Map=${.TARGET}.map \
+		-Wl,-Map=${_PROGLINKBASE}.map \
 		-o ${.TARGET} ${OBJS}
 .endif
 .if defined(CTFMERGE)
@@ -190,13 +195,15 @@ ${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 .endif
 
 .if defined(PROGDEBUG)
-${PROGDEBUG}: ${PROG}
+${PROGDEBUG}: ${_PROGLINK}
 	${_MKTARGET_CREATE}
-	( ${OBJCOPY} --only-keep-debug --compress-debug-sections \
-	    ${PROG} ${PROGDEBUG} \
-	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-		--add-gnu-debuglink=${PROGDEBUG} ${PROG} \
-	) || (rm -f ${PROGDEBUG}; false)
+	${OBJCOPY} --only-keep-debug --compress-debug-sections \
+	    ${_PROGLINK} ${.TARGET}
+${PROG}: ${_PROGLINK} ${PROGDEBUG}
+	${_MKTARGET_CREATE}
+	${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	    --add-gnu-debuglink=${PROGDEBUG} \
+	    ${_PROGLINK} ${.TARGET}
 .endif
 
 ##### Install rules
