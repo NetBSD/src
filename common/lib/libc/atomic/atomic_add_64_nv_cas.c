@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.7 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.8 2025/12/17 01:06:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef __HAVE_ATOMIC64_OPS
 
-uint64_t
+uint64_t __noinline
 atomic_add_64_nv(volatile uint64_t *addr, int64_t val)
 {
 	uint64_t old, new;
@@ -57,9 +57,15 @@ crt_alias(__sync_add_and_fetch_8,_atomic_add_64_nv)
 atomic_op_alias(atomic_add_long_nv,_atomic_add_64_nv)
 __strong_alias(_atomic_add_long_nv,_atomic_add_64_nv)
 
-#undef atomic_add_ptr_nv
-atomic_op_alias(atomic_add_ptr_nv,_atomic_add_64_nv)
-__strong_alias(_atomic_add_ptr_nv,_atomic_add_64_nv)
+/*
+ * N.B. not an alias!  Pointer values may have a different return
+ * convention.
+ */
+void *
+atomic_add_ptr_nv(volatile void *ptr, ssize_t delta)
+{
+	return (void *)_atomic_add_64_nv((volatile uint64_t *)ptr, delta);
+}
 #endif /* _LP64 */
 
 #endif
