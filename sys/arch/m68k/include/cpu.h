@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2025/12/05 13:27:03 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2025/12/17 23:41:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,6 +129,7 @@
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_ROOT_DEVICE		2	/* string: root device name */
 #define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
+#define	CPU_BROKEN_RMC		4	/* bool: has non-working /RMC */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>
