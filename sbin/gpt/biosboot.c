@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.35 2025/12/17 15:56:06 nia Exp $ */
+/*	$NetBSD: biosboot.c,v 1.36 2025/12/17 16:18:11 nia Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.35 2025/12/17 15:56:06 nia Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.36 2025/12/17 16:18:11 nia Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
 #if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/endian.h>
 #endif

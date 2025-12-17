@@ -35,10 +35,9 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.92 2025/12/17 15:56:06 nia Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.93 2025/12/17 16:18:11 nia Exp $");
 #endif
 
-#include <sys/param.h>
 #include <sys/types.h>
 #if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/endian.h>
