@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.317 2024/11/13 09:25:52 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.318 2025/12/17 02:06:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.317 2024/11/13 09:25:52 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.318 2025/12/17 02:06:42 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1188,6 +1188,7 @@ reply:
 		break;
 	}
 	m->m_pkthdr.len = m->m_len;
+	m->m_pkthdr.csum_flags = 0; /* Clear any in-bound checksum flags. */
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	arps = ARP_STAT_GETREF();
