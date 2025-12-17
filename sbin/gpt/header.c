@@ -33,10 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.11 2025/02/23 20:47:19 christos Exp $");
+__RCSID("$NetBSD: header.c,v 1.12 2025/12/17 15:56:06 nia Exp $");
 #endif
 
 #include <sys/types.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 
 #include <err.h>
 #include <stddef.h>

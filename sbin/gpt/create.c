@@ -33,11 +33,14 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.24 2025/02/23 20:47:19 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.25 2025/12/17 15:56:06 nia Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #include <sys/stat.h>
 #include <sys/bootblock.h>
 
