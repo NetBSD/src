@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2025/06/10 14:30:44 christos Exp $
+# $NetBSD: Makefile,v 1.13 2025/12/17 20:05:43 riastradh Exp $
 
 NOMAN=			# defined
 
@@ -14,7 +14,7 @@ SUBDIR+=		dso
 CPPFLAGS+=		${CPPFLAGS_CHECK_STACK}
 
 BINDIR=			${TESTSDIR}
-PROG_CXX=		h_initfini1 h_initfini2 h_initfini3
+PROGS_CXX=		h_initfini1 h_initfini2 h_initfini3
 SRCS.h_initfini1=	h_initfini1.cxx h_initfini_common.cxx \
 			${SRCS_CHECK_STACK}
 SRCS.h_initfini2=	h_initfini1.cxx h_initfini_common.cxx \
