@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.250 2025/12/11 11:00:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.251 2025/12/17 23:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2025/12/11 11:00:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2025/12/17 23:45:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -612,6 +612,9 @@ identifycpu(void)
  */
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	static bool broken_rmc;
+
+	broken_rmc = (cputype == M68020);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT,
@@ -624,6 +627,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CTLTYPE_STRUCT, "console_device", NULL,
 	    sysctl_consdev, 0, NULL, sizeof(dev_t),
 	    CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_BOOL, "broken_rmc", NULL,
+	    NULL, 0, &broken_rmc, 0,
+	    CTL_MACHDEP, CPU_BROKEN_RMC, CTL_EOL);
 }
 
 int	waittime = -1;
