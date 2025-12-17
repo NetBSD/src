@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32_nv_cas.c,v 1.3 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_inc_32_nv_cas.c,v 1.4 2025/12/17 23:39:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/atomic.h>
 
-uint32_t
+uint32_t __noinline
 atomic_inc_32_nv(volatile uint32_t *addr)
 {
 	uint32_t old, new;
@@ -58,7 +58,16 @@ __strong_alias(_atomic_inc_uint_nv,_atomic_inc_32_nv)
 atomic_op_alias(atomic_inc_ulong_nv,_atomic_inc_32_nv)
 __strong_alias(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
 
+/*
+ * N.B. not an alias!  Pointer values may have a different return
+ * convention.
+ */
+void *
+atomic_inc_ptr_nv(volatile void *ptr)
+{
+	return (void *)_atomic_inc_32_nv((volatile uint32_t *)ptr);
+}
+
 #undef atomic_inc_ptr_nv
-atomic_op_alias(atomic_inc_ptr_nv,_atomic_inc_32_nv)
-__strong_alias(_atomic_inc_ptr_nv,_atomic_inc_32_nv)
+atomic_op_alias(atomic_inc_ptr_nv,_atomic_inc_ptr_nv)
 #endif /* _LP64 */
