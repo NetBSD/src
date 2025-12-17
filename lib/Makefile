@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.309 2025/12/16 15:10:14 riastradh Exp $
+#	$NetBSD: Makefile,v 1.310 2025/12/17 00:49:55 riastradh Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -261,10 +261,8 @@ SUBDIR+=	../external/lgpl2/userspace-rcu/lib
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-.if !defined(BSD_MK_COMPAT_FILE)
 SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz,
 						   # libfido2
-.endif
 SUBDIR+=	../crypto/external/bsd/netpgp/bindings/lua  # depends on netpgp/lib
 SUBDIR+=	../external/mpl/bind/lib	# depends on heimdal, libcrypto
 						# libuv, userspace-rcu

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2025/12/16 04:32:03 riastradh Exp $
+#	$NetBSD: Makefile,v 1.46 2025/12/17 00:49:54 riastradh Exp $
 
 # libssh is not meant for applications to link against -- it's a
 # private library of the ssh/sshd/&c. executables we ship.  So don't
@@ -9,7 +9,6 @@
 # Note that while NOLINKLIB suppresses _installing_ the .so symlink,
 # the .so symlink is still created in the objdir so bin/ssh can still
 # use it to link.
-NOCOMPAT=		# defined
 NOLINKLIB=		# defined
 
 .include <bsd.own.mk>

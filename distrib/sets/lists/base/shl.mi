@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1019 2025/12/16 04:32:03 riastradh Exp $
+# $NetBSD: shl.mi,v 1.1020 2025/12/17 00:49:54 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1001,8 +1001,8 @@
 ./usr/lib/nss_mdns.so.0				base-obsolete		obsolete
 ./usr/lib/nss_mdnsd.so.0			base-mdns-shlib		mdns
 ./usr/lib/nss_multicast_dns.so.0		base-mdns-shlib		mdns
-./usr/lib/private/libssh.so.50			base-secsh-shlib	
-./usr/lib/private/libssh.so.50.0		base-secsh-shlib	
+./usr/lib/private/libssh.so.50			base-secsh-shlib	compatfile
+./usr/lib/private/libssh.so.50.0		base-secsh-shlib	compatfile
 ./usr/lib/security/pam_afslog.so.4		base-sys-shlib		compatfile,kerberos,pam
 ./usr/lib/security/pam_chroot.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_deny.so.4		base-sys-shlib		compatfile,pam

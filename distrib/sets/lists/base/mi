@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1371 2025/12/16 04:21:03 riastradh Exp $
+# $NetBSD: mi,v 1.1372 2025/12/17 00:49:54 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1244,7 +1244,7 @@
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		compatfile,pic,openssl=30
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/postfix				base-postfix-usr
-./usr/lib/private				base-sys-usr
+./usr/lib/private				base-sys-usr		compatfile
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -1290,7 +1290,7 @@
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
 ./usr/libdata/debug/usr/lib/named		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
-./usr/libdata/debug/usr/lib/private		base-sys-usr
+./usr/libdata/debug/usr/lib/private		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/lib/security		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
