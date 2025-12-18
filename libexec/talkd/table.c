@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.11 2015/09/03 08:16:36 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.12 2025/12/18 08:26:59 nia Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.11 2015/09/03 08:16:36 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.12 2025/12/18 08:26:59 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: table.c,v 1.11 2015/09/03 08:16:36 dholland Exp $");
 #include <protocols/talkd.h>
 #include <inttypes.h>
 #include <syslog.h>
+#include <endian.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

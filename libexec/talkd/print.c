@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2009/03/16 01:13:38 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.11 2025/12/18 08:26:59 nia Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.10 2009/03/16 01:13:38 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.11 2025/12/18 08:26:59 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: print.c,v 1.10 2009/03/16 01:13:38 lukem Exp $");
 #include <sys/socket.h>
 #include <protocols/talkd.h>
 #include <inttypes.h>
+#include <endian.h>
 #include <syslog.h>
 #include <stdio.h>
 #include "extern.h"
