@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.70 2025/11/15 04:59:07 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.71 2025/12/18 00:47:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.70 2025/11/15 04:59:07 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.71 2025/12/18 00:47:52 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -509,9 +509,9 @@ dump_ipage_ifile(struct lfs *lfsp, int i, char *pp, int tot)
 
 	if (lfsp->lfs_is64)
 		entsize = sizeof(IFILE64);
-	if (lfs_sb_getversion(lfsp) > 1) 
+	else if (lfs_sb_getversion(lfsp) > 1)
 		entsize = sizeof(IFILE32);
-	else 
+	else
 		entsize = sizeof(IFILE_V1);
 	max = i + tot;
 
@@ -992,6 +992,6 @@ dump_inoblk(int fd, struct lfs *lfsp, daddr_t daddr, ino_t ino)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: dumplfs [-adiS] [-b blkno] [-I blkno] [-s segno] filesys|device\n");
+	(void)fprintf(stderr, "usage: dumplfs [-adiS] [-b blkno] [-I blkno] [-n blkno] [-s segno]\n\tfilesys|device\n");
 	exit(1);
 }
