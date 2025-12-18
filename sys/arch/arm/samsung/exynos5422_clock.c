@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.13.4.1 2020/03/21 20:01:01 martin Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.13.4.2 2025/12/18 17:58:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.13.4.1 2020/03/21 20:01:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.13.4.2 2025/12/18 17:58:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -277,8 +277,9 @@ static const struct clk_funcs exynos5422_clock_funcs = {
 	.u = { .fixed = { .rate = (_rate) } }			\
 }
 
-#define CLK_PLL(_name, _parent, _lock, _con0) {			\
-	.base = { .name = (_name) }, .type = EXYNOS_CLK_PLL,	\
+#define CLK_PLL35XX(_name, _parent, _lock, _con0) {		\
+	.base = { .name = (_name) },				\
+	.type = EXYNOS_CLK_PLL35XX,				\
 	.parent = (_parent),					\
 	.u = {							\
 		.pll = {					\
@@ -417,28 +418,28 @@ static const char *mout_sw_aclk200_fsys2_p[] =
 static struct exynos_clk exynos5422_clocks[] = {
 	CLK_FIXED("fin_pll", EXYNOS_F_IN_FREQ),
 
-	CLK_PLL("fout_apll", "fin_pll", EXYNOS5422_APLL_LOCK,
-					EXYNOS5422_APLL_CON0),
-	CLK_PLL("fout_cpll", "fin_pll", EXYNOS5422_CPLL_LOCK,
-					EXYNOS5422_CPLL_CON0),
-	CLK_PLL("fout_dpll", "fin_pll", EXYNOS5422_DPLL_LOCK,
-					EXYNOS5422_DPLL_CON0),
-	CLK_PLL("fout_epll", "fin_pll", EXYNOS5422_EPLL_LOCK,
-					EXYNOS5422_EPLL_CON0),
-	CLK_PLL("fout_rpll", "fin_pll", EXYNOS5422_RPLL_LOCK,
-					EXYNOS5422_RPLL_CON0),
-	CLK_PLL("fout_ipll", "fin_pll", EXYNOS5422_IPLL_LOCK,
-					EXYNOS5422_IPLL_CON0),
-	CLK_PLL("fout_spll", "fin_pll", EXYNOS5422_SPLL_LOCK,
-					EXYNOS5422_SPLL_CON0),
-	CLK_PLL("fout_vpll", "fin_pll", EXYNOS5422_VPLL_LOCK,
-					EXYNOS5422_VPLL_CON0),
-	CLK_PLL("fout_mpll", "fin_pll", EXYNOS5422_MPLL_LOCK,
-					EXYNOS5422_MPLL_CON0),
-	CLK_PLL("fout_bpll", "fin_pll", EXYNOS5422_BPLL_LOCK,
-					EXYNOS5422_BPLL_CON0),
-	CLK_PLL("fout_kpll", "fin_pll", EXYNOS5422_KPLL_LOCK,
-					EXYNOS5422_KPLL_CON0),
+	CLK_PLL35XX("fout_apll", "fin_pll", EXYNOS5422_APLL_LOCK,
+					    EXYNOS5422_APLL_CON0),
+	CLK_PLL35XX("fout_cpll", "fin_pll", EXYNOS5422_CPLL_LOCK,
+					    EXYNOS5422_CPLL_CON0),
+	CLK_PLL35XX("fout_dpll", "fin_pll", EXYNOS5422_DPLL_LOCK,
+					    EXYNOS5422_DPLL_CON0),
+	CLK_PLL35XX("fout_epll", "fin_pll", EXYNOS5422_EPLL_LOCK,
+					    EXYNOS5422_EPLL_CON0),
+	CLK_PLL35XX("fout_rpll", "fin_pll", EXYNOS5422_RPLL_LOCK,
+					    EXYNOS5422_RPLL_CON0),
+	CLK_PLL35XX("fout_ipll", "fin_pll", EXYNOS5422_IPLL_LOCK,
+					    EXYNOS5422_IPLL_CON0),
+	CLK_PLL35XX("fout_spll", "fin_pll", EXYNOS5422_SPLL_LOCK,
+					    EXYNOS5422_SPLL_CON0),
+	CLK_PLL35XX("fout_vpll", "fin_pll", EXYNOS5422_VPLL_LOCK,
+					    EXYNOS5422_VPLL_CON0),
+	CLK_PLL35XX("fout_mpll", "fin_pll", EXYNOS5422_MPLL_LOCK,
+					    EXYNOS5422_MPLL_CON0),
+	CLK_PLL35XX("fout_bpll", "fin_pll", EXYNOS5422_BPLL_LOCK,
+					    EXYNOS5422_BPLL_CON0),
+	CLK_PLL35XX("fout_kpll", "fin_pll", EXYNOS5422_KPLL_LOCK,
+					    EXYNOS5422_KPLL_CON0),
 
 	CLK_MUXA("sclk_cpll", "mout_cpll", EXYNOS5422_SRC_TOP6, __BIT(28),
 	    mout_cpll_p),
@@ -701,7 +702,8 @@ exynos5422_clock_print(struct exynos5422_clock_softc *sc,
 	case EXYNOS_CLK_FIXED:
 		type = "fixed";
 		break;
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
+	case EXYNOS_CLK_PLL2650X:
 		type = "pll";
 		break;
 	case EXYNOS_CLK_MUX:
@@ -752,7 +754,7 @@ exynos5422_clock_get_rate_pll(struct exynos5422_clock_softc *sc,
 	struct exynos_pll_clk *epll = &eclk->u.pll;
 	struct exynos_clk *clk_parent;
 
-	KASSERT(eclk->type == EXYNOS_CLK_PLL);
+	KASSERT(eclk->type == EXYNOS_CLK_PLL35XX);
 
 	clk_parent = exynos5422_clock_find(eclk->parent);
 	KASSERT(clk_parent != NULL);
@@ -761,7 +763,7 @@ exynos5422_clock_get_rate_pll(struct exynos5422_clock_softc *sc,
 
 	const uint32_t v = CLOCK_READ(sc, epll->con0_reg);
 
-	return PLL_FREQ(rate_parent, v);
+	return PLL35XX_FREQ(rate_parent, v);
 }
 
 static int
@@ -921,7 +923,7 @@ exynos5422_clock_get_rate(void *priv, struct clk *clk)
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
 		return eclk->u.fixed.rate;
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
 		return exynos5422_clock_get_rate_pll(priv, eclk);
 	case EXYNOS_CLK_MUX:
 	case EXYNOS_CLK_GATE:
@@ -944,7 +946,7 @@ exynos5422_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
 		return EIO;
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
 		return exynos5422_clock_set_rate_pll(priv, eclk, rate);
 	case EXYNOS_CLK_MUX:
 		return EIO;
@@ -965,7 +967,7 @@ exynos5422_clock_enable(void *priv, struct clk *clk)
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
 		return 0;	/* always on */
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
 		return 0;	/* XXX */
 	case EXYNOS_CLK_MUX:
 	case EXYNOS_CLK_DIV:
@@ -985,7 +987,7 @@ exynos5422_clock_disable(void *priv, struct clk *clk)
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
 		return EINVAL;	/* always on */
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
 		return EINVAL;	/* XXX */
 	case EXYNOS_CLK_MUX:
 	case EXYNOS_CLK_DIV:
@@ -1005,7 +1007,7 @@ exynos5422_clock_set_parent(void *priv, struct clk *clk, struct clk *clk_parent)
 
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
 	case EXYNOS_CLK_DIV:
 	case EXYNOS_CLK_GATE:
 		return EINVAL;
@@ -1024,7 +1026,7 @@ exynos5422_clock_get_parent(void *priv, struct clk *clk)
 
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
-	case EXYNOS_CLK_PLL:
+	case EXYNOS_CLK_PLL35XX:
 	case EXYNOS_CLK_DIV:
 	case EXYNOS_CLK_GATE:
 		if (eclk->parent != NULL) {

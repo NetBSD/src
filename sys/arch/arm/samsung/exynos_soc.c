@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.39 2018/10/31 08:41:47 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.39.4.1 2025/12/18 17:58:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.39 2018/10/31 08:41:47 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.39.4.1 2025/12/18 17:58:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -305,7 +305,7 @@ exynos_get_cpufreq(void)
 
 	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_cmu_apll_bsh,
 			PLL_CON0_OFFSET);
-	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval);
+	freq   = PLL35XX_FREQ(EXYNOS_F_IN_FREQ, regval);
 
 	return freq;
 }
@@ -323,11 +323,11 @@ exynos_set_cpufreq(const struct cpu_freq *freqreq)
 	P = freqreq->P;
 	S = freqreq->S;
 
-	regval = __SHIFTIN(M, PLL_CON0_M) |
-		 __SHIFTIN(P, PLL_CON0_P) |
-		 __SHIFTIN(S, PLL_CON0_S);
+	regval = __SHIFTIN(M, PLL35XX_CON0_M) |
+		 __SHIFTIN(P, PLL35XX_CON0_P) |
+		 __SHIFTIN(S, PLL35XX_CON0_S);
 
-	/* enable PPL and write config */
+	/* enable PLL and write config */
 	regval |= PLL_CON0_ENABLE;
 	bus_space_write_4(&armv7_generic_bs_tag, exynos_cmu_apll_bsh, PLL_CON0_OFFSET,
 		regval);
@@ -406,7 +406,7 @@ sysctl_cpufreq_current(SYSCTLFN_ARGS)
 #define DUMP_PLL(v, var) \
 	reg = EXYNOS##v##_CMU_##var + PLL_CON0_OFFSET;\
 	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_cmu_bsh, reg); \
-	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval); \
+	freq   = PLL35XX_FREQ(EXYNOS_F_IN_FREQ, regval); \
 	printf("%8s at %d Mhz\n", #var, freq/(1000*1000));
 
 
