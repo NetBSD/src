@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.16 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.17 2025/12/18 06:45:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _DDB_DB_EXTERN_H_
 
 /* db_sym.c */
-void ddb_init(int, void *, void *);
+void	ddb_init(int, void *, void *);
 
 /* db_command.c */
 extern bool db_cmd_loop_done;
@@ -46,7 +46,7 @@ void	db_print_loc_and_inst(db_addr_t);
 void	db_search_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* db_expr.c */
-int db_expression(db_expr_t *);
+int	db_expression(db_expr_t *);
 
 /* db_input.c */
 int	db_readline(char *, int);
