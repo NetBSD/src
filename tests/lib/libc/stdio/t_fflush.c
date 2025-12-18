@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fflush.c,v 1.1 2011/09/11 05:15:55 jruoho Exp $ */
+/*	$NetBSD: t_fflush.c,v 1.2 2025/12/18 17:09:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fflush.c,v 1.1 2011/09/11 05:15:55 jruoho Exp $");
+__RCSID("$NetBSD: t_fflush.c,v 1.2 2025/12/18 17:09:58 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -51,22 +51,11 @@ ATF_TC_BODY(fflush_err, tc)
 	f = fopen(path, "w");
 
 	ATF_REQUIRE(f != NULL);
-	ATF_REQUIRE(fflush(NULL) == 0);
+	ATF_REQUIRE(fflush(NULL) == 0);	/* all files */
+	ATF_REQUIRE(fflush(f) == 0); 	/* this file */
 	ATF_REQUIRE(fclose(f) == 0);
 
-	f = fopen(path, "r");
-	ATF_REQUIRE(f != NULL);
-
-	/*
-	 * In NetBSD the call should fail if the supplied
-	 * parameteris not an open stream or the stream is
-	 * not open for writing.
-	 */
-	errno = 0;
-	ATF_REQUIRE_ERRNO(EBADF, fflush(f) == EOF);
-
-	ATF_REQUIRE(fclose(f) == 0);
-
+	/* Should fail on closed fp's, but really undefined behavior */
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, fflush(f) == EOF);
 
@@ -135,6 +124,25 @@ ATF_TC_CLEANUP(fflush_seek, tc)
 	(void)unlink(path);
 }
 
+ATF_TC(fflush_ro);
+ATF_TC_HEAD(fflush_ro, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test fflush(3) with read-only file");
+}
+
+ATF_TC_BODY(fflush_ro, tc)
+{
+	FILE *f;
+	char p;
+
+	f = fopen("/dev/null", "r");
+	ATF_REQUIRE(f != NULL);
+
+	ATF_REQUIRE(fread(&p, 1, 1, f) == 0);
+	ATF_REQUIRE(fflush(f) == 0);
+	ATF_REQUIRE(fclose(f) == 0);
+}
+
 ATF_TC_WITH_CLEANUP(fpurge_err);
 ATF_TC_HEAD(fpurge_err, tc)
 {
@@ -159,12 +167,12 @@ ATF_TC_CLEANUP(fpurge_err, tc)
 {
 	(void)unlink(path);
 }
-
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, fflush_err);
 	ATF_TP_ADD_TC(tp, fflush_seek);
+	ATF_TP_ADD_TC(tp, fflush_ro);
 	ATF_TP_ADD_TC(tp, fpurge_err);
 
 	return atf_no_error();
