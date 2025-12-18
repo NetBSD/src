@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.64 2022/03/31 19:30:15 pgoyette Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.64.12.1 2025/12/18 18:31:00 martin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -492,9 +492,9 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 
 		aprint_debug("DIOCGWEDGEINFO ioctl called\n");
 
-		strlcpy(dkw->dkw_devname, dmv->name, 16);
+		strlcpy(dkw->dkw_devname, device_xname(dmv->devt), 16);
 		strlcpy(dkw->dkw_wname, dmv->name, DM_NAME_LEN);
-		strlcpy(dkw->dkw_parent, dmv->name, 16);
+		strlcpy(dkw->dkw_parent, device_xname(dmv->devt), 16);
 
 		dkw->dkw_offset = 0;
 		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, NULL);
