@@ -1,4 +1,4 @@
-.\"	$NetBSD: fflush.3,v 1.14 2025/12/18 20:57:57 christos Exp $
+.\"	$NetBSD: fflush.3,v 1.15 2025/12/18 23:09:20 nia Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,7 @@ calling
 on a readonly stream that is not at EOF and is seekable, the file offset
 of the
 .Ft FILE
-pointer shoukd be set to the file position of the underlying file descriptor
+pointer should be set to the file position of the underlying file descriptor
 and any characters that have been pushed back via
 .Xr ungetc 3
 or
