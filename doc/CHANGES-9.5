@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.86 2025/12/14 14:25:14 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.87 2025/12/18 18:45:51 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1077,4 +1077,21 @@ sys/arch/mips/include/cache_r5k.h		1.7
 
 	mips: fix R5000SC cache page macro typo that broke boot.
 	[tsutsui, ticket #1987]
+
+sys/arch/arm/samsung/exynos5410_clock.c		1.8-1.11
+sys/arch/arm/samsung/exynos5422_clock.c		1.17,1.18
+sys/arch/arm/samsung/exynos_clock.h		1.2,1.3
+sys/arch/arm/samsung/exynos_reg.h		1.17-1.20
+sys/arch/arm/samsung/exynos_soc.c		1.42
+
+	evbarm: Exynos 5410 clock driver fixes.
+	[skrll, ticket #1988]
+
+xsrc/external/mit/libX11/dist/include/X11/XKBlib.h		(patch)
+xsrc/external/mit/libX11/dist/man/xkb/XkbOpenDisplay.man	(patch)
+xsrc/external/mit/libX11/dist/src/xkb/XKB.c			(patch)
+
+	libX11: XkbOpenDisplay: add _Xconst qualifier to display name argument.
+	[mrg, ticket #1989]
+
 
