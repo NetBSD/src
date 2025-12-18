@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.111 2025/09/18 20:24:48 christos Exp $
+#	$NetBSD: configure.ac,v 1.112 2025/12/18 00:19:40 christos Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -243,7 +243,8 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	dispatch_semaphore_create \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
-	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
+	heapsort isblank issetugid lchflags lchmod lchown lutimes \
+	mempcpy mkstemp \
 	mkstemps mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb \
 	pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr reallocarray setenv \
@@ -260,7 +261,7 @@ AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
 AC_CHECK_DECLS([strcasecmp, strncasecmp, strcasestr, strlcpy, strlcat, strndup,
-		strnlen, strsep],,,[
+		strnlen, strsep, mempcpy],,,[
 #include <string.h>
 ])
 AC_CHECK_DECLS([strsuftoll, mi_vector_hash],,,[#include <stdlib.h>])
