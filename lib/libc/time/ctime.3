@@ -1,9 +1,9 @@
-.\" $NetBSD: ctime.3,v 1.72 2025/01/23 22:44:22 christos Exp $
+.\" $NetBSD: ctime.3,v 1.73 2025/12/18 17:45:29 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\"
-.Dd January 23, 2025
+.Dd December 17, 2025
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -169,7 +169,10 @@ expressed in seconds.
 .It Fn gmtime "clock"
 The
 .Fn gmtime
-function converts to Coordinated Universal Time
+functions
+convert an integer, pointed to by
+.Fa clock ,
+to Coordinated Universal Time
 .Pq UTC
 and returns a pointer to the
 .Va tm
@@ -183,6 +186,8 @@ function provides the same functionality as
 differing in that the caller must supply a buffer area
 .Fa result
 in which the result is stored.
+If the integer is out of range for conversion,
+these functions return a null pointer.
 .It Fn localtime "clock"
 Also
 .Fn localtime
@@ -632,4 +637,17 @@ restricted to years in the range 1900 through 2099.
 To avoid this portability mess, new programs should use
 .Fn strftime
 instead.
+.Pp
+The
+.Fa clock
+timestamp represents the time in seconds since 1970-01-01 00:00:00
+Coordinated Universal Time
+.Pq UTC .
+The POSIX standard says that timestamps must be nonnegative
+and must ignore leap seconds.
+Many implementations extend POSIX by allowing negative timestamps,
+and can therefore represent timestamps that predate the
+introduction of UTC and are some other flavor of Universal Time
+.Pq UT .
+Some implementations support leap seconds, in contradiction to POSIX.
 .\" 2009-05-17 by Arthur David Olson.

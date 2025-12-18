@@ -1,9 +1,9 @@
-.\" $NetBSD: zic.8,v 1.52 2025/01/23 22:44:22 christos Exp $
+.\" $NetBSD: zic.8,v 1.53 2025/12/18 17:45:30 christos Exp $
 .\" @(#)zic.8	8.6
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\" .TH zic 8
-.Dd January 21, 2025
+.Dd December 17, 2025
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -14,9 +14,11 @@
 .Op Fl Fl version
 .Op Fl Fl help
 .Op Fl b
+.Op Fl D
 .Op Fl d Ar directory
 .Op Fl L Ar leapsecondfilename
 .Op Fl l Ar localtime
+.Op Fl m Ar mode
 .Op Fl p Ar posixrules
 .Op Fl s
 .Op Fl t Ar file
@@ -49,7 +51,7 @@ is
 .Ql fat ,
 generate additional data entries that work around potential bugs or
 incompatibilities in older software, such as software that mishandles
-the 64-bit generated data.
+a TZif file's 64-bit data or proleptic TZ string.
 If
 .Ar bloat
 is
@@ -58,11 +60,18 @@ keep the output files small; this can help check for the bugs
 and incompatibilities.
 The default is
 .Ql slim ,
-as software that mishandles 64-bit data typically
-mishandles timestamps after the year 2038 anyway.
+as the
+.Ql fat
+workarounds are typically good only until the year 2038 anyway.
 Also see the
 .Fl r
 option for another way to alter output size.
+.It Fl D
+Do not create ancestor directories of output files,
+For example, for a zone named America/Los_Angeles
+the directory America should already exist.
+By default, the directory and its ancestors are created
+if they do not already exist.
 .It Fl d Ar directory
 Create time conversion information files in the named
 .Ar directory
@@ -107,6 +116,18 @@ and it should not be combined with
 if
 .Ar timezone Ap s
 transitions are at standard time or Universal Time (UT) instead of local time.
+.It Fl m Ar mode
+Change the output regular files' owner and group to those specified.
+The 
+.Ql owner
+is either a user name, or an unsigned decimal integer user ID,
+or an empty string meaning no change to the owner.
+The 
+.Ql group
+is similar for group names and IDs.
+This option does not affect directories or hard or symbolic links.
+It typically needs special privileges to change ownership,
+and is ignored on platforms that lack the notions of owners and groups.
 If
 .Ar timezone
 is
@@ -711,11 +732,14 @@ For example:
 .El
 .Pp
 Here, an incorrect reading would be there were two clock changes on 1973-04-29,
-the first from 02:00 EST (\&\-05) to 01:00 CST (\&\-06),
-and the second an hour later from 02:00 CST (\&\-06) to 03:00 CDT (\&\-05).
+the first from 02:00 EST (\-05) to 01:00 CST (\-06) according to the
+.Dq until
+value in the zone line,
+and the second an hour later from 02:00 CST (\-06) to 03:00 CDT (\-05)
+according to the values in the April rule line.
 However,
 .Nm
-interprets this more sensibly as a single transition from 02:00 CST (\&\-05) to
+interprets this more sensibly as a single transition from 02:00 EST (\&\-05) to
 02:00 CDT (\&\-05).
 .\"
 .\" Link Line

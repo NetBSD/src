@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_localtime.c,v 1.4 2024/09/11 13:50:35 christos Exp $	*/
+/*	$NetBSD: compat_localtime.c,v 1.5 2025/12/18 17:45:29 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -11,6 +11,7 @@
 #define __LIBC12_SOURCE__
 #include <time.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <compat/include/time.h>
 #include <compat/sys/time.h>
 
@@ -73,5 +74,18 @@ __warn_references(tzsetwall,
 #define timeval timeval50
 #define timespec timespec50
 #define	time_t	int32_t
+
+/*
+ * Since we include <sys/stat.h> under __LIBC12_SOURCE__ (and we cannot
+ * do otherwise, because if we include <sys/stat.h> without __LIBC12_SOURCE__
+ * it will define time_t differently and it will break the compilation),
+ * we need to expose the current stat declarations manually. This is less
+ * evil than calling the compat stat functions from localtime.c which
+ * would require patching localtime.c because #define stat __statXX does
+ * not work because the "stat" name is used for both the method name and
+ * the struct name (which are different).
+ */
+int	stat(const char *, struct stat *) __RENAME(__stat50);
+int	fstat(int, struct stat *) __RENAME(__fstat50);
 
 #include "time/localtime.c"
