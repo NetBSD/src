@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.56 2025/12/14 14:19:17 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.57 2025/12/18 18:36:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1200,4 +1200,66 @@ sys/arch/mips/include/cache_r5k.h		1.7
 
 	mips: fix R5000SC cache page macro typo that broke boot.
 	[tsutsui, ticket #125]
+
+sys/arch/arm/samsung/exynos5410_clock.c		1.8-1.11
+sys/arch/arm/samsung/exynos5422_clock.c		1.17,1.18
+sys/arch/arm/samsung/exynos_clock.h		1.2,1.3
+sys/arch/arm/samsung/exynos_reg.h		1.17-1.20
+sys/arch/arm/samsung/exynos_soc.c		1.42
+
+	evbarm: Exynos 5410 clock driver fixes.
+	[skrll, ticket #126]
+
+distrib/sets/lists/debug/mi			sort, 1.491
+distrib/sets/lists/tests/mi			1.1401
+tests/libexec/ld.elf_so/Makefile		1.29
+tests/libexec/ld.elf_so/t_dlclose_thread.c	1.1
+
+	ld.elf_so(1): PR 59751: test concurrent dlopen/dlclose.
+	[riastradh, ticket #127]
+
+distrib/sets/lists/debug/mi			1.492
+distrib/sets/lists/tests/mi			1.1403
+tests/libexec/ld.elf_so/Makefile		1.30
+tests/libexec/ld.elf_so/t_tls_alignment.c	1.1
+
+	ld.elf_so(1): PR 59652: add a testcase.
+	[riastradh, ticket #128]
+
+distrib/sets/lists/debug/mi			1.493
+distrib/sets/lists/tests/mi			1.1404
+libexec/ld.elf_so/headers.c			1.76
+tests/libexec/ld.elf_so/Makefile		1.31
+tests/libexec/ld.elf_so/t_dladdr.c		1.1,1.2
+
+	dl_addr(3): PR 59567: add some automatic tests.
+	[riastradh, ticket #129]
+
+sys/arch/arm/sunxi/sunxi_mmc.c			1.49
+sys/dev/ic/dwc_mmc.c				1.32
+sys/dev/sdmmc/sdhc.c				1.124
+sys/dev/sdmmc/sdmmc_io.c			1.23
+
+	sdio: use the SCF_NO_STOP flag to disable AUTO_CMD12_ENABLE.
+	[mlelstv, ticket #130]
+
+sys/dev/dm/device-mapper.c			1.65
+
+	LVM: PR 59674: fix creating a ffs filesystem with log.
+	[mlelstv, ticket #131]
+
+sys/arch/aarch64/include/byte_swap.h		1.5
+sys/arch/amd64/include/byte_swap.h		1.9
+sys/arch/arm/include/byte_swap.h		1.17
+sys/arch/hppa/include/byte_swap.h		1.9
+sys/arch/i386/include/byte_swap.h		1.18
+sys/arch/m68k/include/byte_swap.h		1.12
+sys/arch/or1k/include/byte_swap.h		1.3
+sys/arch/riscv/include/byte_swap.h		1.6
+sys/arch/sh3/include/byte_swap.h		1.5
+sys/arch/vax/include/byte_swap.h		1.13
+
+	PR 59839: eliminate recursive dependency on <sys/bswap.h> in
+	some architecture's <byte_swap.h>.
+	[nia, ticket #132]
 
