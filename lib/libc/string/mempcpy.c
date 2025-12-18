@@ -1,4 +1,4 @@
-/*	$NetBSD: mempcpy.c,v 1.1 2023/08/01 17:51:25 christos Exp $	*/
+/*	$NetBSD: mempcpy.c,v 1.2 2025/12/18 00:18:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -26,12 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mempcpy.c,v 1.1 2023/08/01 17:51:25 christos Exp $");
+__RCSID("$NetBSD: mempcpy.c,v 1.2 2025/12/18 00:18:55 christos Exp $");
 
 #include <string.h>
 
+#if !HAVE_MEMPCPY
 void *
 mempcpy(void *__restrict dst, const void *__restrict src, size_t len)
 {
 	return (char *)memcpy(dst, src, len) + len;
 }
+#endif
