@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_reg.h,v 1.15 2017/06/11 00:13:15 jmcneill Exp $	*/
+/* $NetBSD: exynos_reg.h,v 1.15.36.1 2025/12/18 17:56:14 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -120,17 +120,33 @@
 
 #define PLL_CON0_ENABLE			__BIT(31)
 #define PLL_CON0_LOCKED			__BIT(29)	/* has the PLL locked on */
-#define PLL_CON0_M			__BITS(16,25)	/* PLL M divide value */
-#define PLL_CON0_P			__BITS( 8,13)	/* PLL P divide value */
-#define PLL_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
+#define PLL35XX_CON0_M			__BITS(16,25)	/* PLL M divide value */
+#define PLL35XX_CON0_P			__BITS( 8,13)	/* PLL P divide value */
+#define PLL35XX_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
 
-#define PLL_PMS2FREQ(F, M, P, S) \
-	((P) == 0 ? 0 : (((M)*(F))/((P)*(1<<(S)))))
-#define PLL_FREQ(f, v) PLL_PMS2FREQ( \
+#define PLL2650X_CON0_M			__BITS(24, 16)	/* PLL M divide value */
+#define PLL2650X_CON0_P			__BITS(13,  8)	/* PLL P divide value */
+#define PLL2650X_CON0_S			__BITS( 2,  0)	/* PLL S divide value */
+#define PLL2650X_CON1_K			__BITS(15,  0)	/* PLL K divide value */
+#define PLL2650X_LOCK_FACTOR            3000		/* P * F = lock time max */
+
+#define PLL_MPS2FREQ(F, M, P, S) \
+	((P) == 0 ? 0 : (((F) * (M)) / ((P) * (1 << (S)))))
+#define PLL35XX_FREQ(f, v) PLL_MPS2FREQ( \
 	(f),\
-	__SHIFTOUT((v), PLL_CON0_M),\
-	__SHIFTOUT((v), PLL_CON0_P),\
-	__SHIFTOUT((v), PLL_CON0_S))
+	__SHIFTOUT((v), PLL35XX_CON0_M),\
+	__SHIFTOUT((v), PLL35XX_CON0_P),\
+	__SHIFTOUT((v), PLL35XX_CON0_S))
+
+#define PLL_MKPS2FREQ(F, M, K, P, S) \
+	((P) == 0 ? 0 : (((F) * (((M) << 16) + (K))) / ((P) * (1U << (S))) / (1U << 16) ))
+
+#define PLL2650X_FREQ(f, v0, v1) PLL_MKPS2FREQ( \
+	(f),\
+	__SHIFTOUT((v0), PLL2650X_CON0_M),\
+	__SHIFTOUT((v1), PLL2650X_CON1_K),\
+	__SHIFTOUT((v0), PLL2650X_CON0_P),\
+	__SHIFTOUT((v0), PLL2650X_CON0_S))
 
 
 /* Watchdog register definitions */
