@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.8 2021/04/17 20:12:55 rillig Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.8.24.1 2025/12/18 19:57:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef __x86_64__
 
 #ifdef  __GNUC__
-#include <sys/types.h>
+#include <sys/stdint.h>
 __BEGIN_DECLS
 
 #define	__BYTE_SWAP_U64_VARIABLE __byte_swap_u64_variable

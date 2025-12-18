@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.11 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.11.68.1 2025/12/18 19:57:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	M68K_BYTE_SWAP_H_
 
 #ifdef __GNUC__
-#include <sys/types.h>
+#include <sys/stdint.h>
 __BEGIN_DECLS
 
 

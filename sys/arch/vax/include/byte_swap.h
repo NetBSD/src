@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.12 2017/01/14 16:21:28 christos Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.12.54.1 2025/12/18 19:57:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -35,7 +35,7 @@
 #define _VAX_BYTE_SWAP_H_
 
 #ifdef __GNUC__
-#include <sys/types.h>
+#include <sys/stdint.h>
 __BEGIN_DECLS
 
 #define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
