@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.61 2025/09/18 20:25:12 christos Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.62 2025/12/18 00:20:22 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -243,6 +243,10 @@
 /* Define to 1 if you have the declaration of 'le64toh', and to 0 if you
    don't. */
 #undef HAVE_DECL_LE64TOH
+
+/* Define to 1 if you have the declaration of 'mempcpy', and to 0 if you
+   don't. */
+#undef HAVE_DECL_MEMPCPY
 
 /* Define to 1 if you have the declaration of 'mi_vector_hash', and to 0 if
    you don't. */
@@ -570,6 +574,9 @@
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the 'mempcpy' function. */
+#undef HAVE_MEMPCPY
 
 /* Define to 1 if you have the 'mkdtemp' function. */
 #undef HAVE_MKDTEMP

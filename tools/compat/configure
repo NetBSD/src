@@ -6346,6 +6346,12 @@ then :
   printf "%s\n" "#define HAVE_LUTIMES 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "mempcpy" "ac_cv_func_mempcpy"
+if test "x$ac_cv_func_mempcpy" = xyes
+then :
+  printf "%s\n" "#define HAVE_MEMPCPY 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "mkstemp" "ac_cv_func_mkstemp"
 if test "x$ac_cv_func_mkstemp" = xyes
 then :
@@ -6752,6 +6758,18 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_STRSEP $ac_have_decl" >>confdefs.h
+ac_fn_check_decl "$LINENO" "mempcpy" "ac_cv_have_decl_mempcpy" "
+#include <string.h>
+
+" "$ac_c_undeclared_builtin_options" "CFLAGS"
+if test "x$ac_cv_have_decl_mempcpy" = xyes
+then :
+  ac_have_decl=1
+else case e in #(
+  e) ac_have_decl=0 ;;
+esac
+fi
+printf "%s\n" "#define HAVE_DECL_MEMPCPY $ac_have_decl" >>confdefs.h
 
 ac_fn_check_decl "$LINENO" "strsuftoll" "ac_cv_have_decl_strsuftoll" "#include <stdlib.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
