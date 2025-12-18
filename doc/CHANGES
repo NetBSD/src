@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3207 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3208 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -123,3 +123,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	openresolv(8): import 3.17.1 (patched to 3.17.3) [roy 20251213]
 	libutil: added strpct() rounding options strpct_r (etc) --> .so.7.25
 		[kre 20251214]
+	tzcode: Updated to 2025c. [christos 20251218]
