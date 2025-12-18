@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.360 2025/12/17 01:32:55 riastradh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.361 2025/12/18 04:57:55 riastradh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -545,7 +545,7 @@ ${_PROGDEBUG.${_P}}: ${_P}.link
 	    ${_P}.link ${.TARGET}
 ${_P}: ${_P}.link ${_PROGDEBUG.${_P}}
 	${_MKTARGET_CREATE}
-	${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	${OBJCOPY} --strip-debug -R .gnu_debuglink \
 	    --add-gnu-debuglink=${_PROGDEBUG.${_P}} \
 	    ${_P}.link ${.TARGET}
 .endif

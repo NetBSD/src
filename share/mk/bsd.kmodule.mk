@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.87 2025/12/17 01:33:21 riastradh Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.88 2025/12/18 04:57:55 riastradh Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -201,7 +201,7 @@ ${PROGDEBUG}: ${_PROGLINK}
 	    ${_PROGLINK} ${.TARGET}
 ${PROG}: ${_PROGLINK} ${PROGDEBUG}
 	${_MKTARGET_CREATE}
-	${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	${OBJCOPY} --strip-debug -R .gnu_debuglink \
 	    --add-gnu-debuglink=${PROGDEBUG} \
 	    ${_PROGLINK} ${.TARGET}
 .endif
