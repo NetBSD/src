@@ -1,4 +1,4 @@
-.\"	$NetBSD: fflush.3,v 1.13 2019/09/07 11:53:27 sevan Exp $
+.\"	$NetBSD: fflush.3,v 1.14 2025/12/18 20:57:57 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fflush.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd September 7, 2019
+.Dd December 18, 2025
 .Dt FFLUSH 3
 .Os
 .Sh NAME
@@ -55,6 +55,8 @@ forces a write of all buffered data for the given output or update
 .Fa stream
 via the stream's underlying write function.
 The open status of the stream is unaffected.
+.Pp
+If the file is opened only for reading and not for writing, nothing is done.
 .Pp
 If the
 .Fa stream
@@ -86,9 +88,7 @@ is set to indicate the error.
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa stream
-is not an open stream, or, in the case of
-.Fn fflush ,
-not a stream open for writing.
+is not an open stream.
 .El
 .Pp
 The function
@@ -117,3 +117,18 @@ The
 .Fn fpurge
 function first appeared in
 .Bx 4.4 .
+.Sh BUGS
+According to
+.St -p1003.1-2024 ,
+calling
+.Fn fflush
+on a readonly stream that is not at EOF and is seekable, the file offset
+of the
+.Ft FILE
+pointer shoukd be set to the file position of the underlying file descriptor
+and any characters that have been pushed back via
+.Xr ungetc 3
+or
+.Xr ungetwc 3
+should be discarded.
+This is currently not implemented.
