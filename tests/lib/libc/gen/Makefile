@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.61 2025/09/15 00:11:54 riastradh Exp $
+# $NetBSD: Makefile,v 1.62 2025/12/18 11:44:41 martin Exp $
 
 NOMAN=		# defined
 
@@ -58,6 +58,7 @@ CPPFLAGS.t_ctype.c+=	\
 	${"${MKPIC}" == "no" || "${LDSTATIC:U}" == "-static":?-D_CTYPE_GUARD_PAGE=0:}
 CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
 COPTS.t_fpsetround.c+=${${ACTIVE_CC} == "gcc":? -frounding-math :}
+CPPFLAGS.t_fpclassify.c+=-D__TEST_FENV
 
 LDADD.t_siginfo+=	-lm
 DPADD.t_siginfo+=	${LIBM}
