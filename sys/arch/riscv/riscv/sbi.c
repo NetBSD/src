@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.1 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: sbi.c,v 1.2 2025/12/19 07:47:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -200,13 +200,13 @@ sbi_system_reset(uint32_t reset_type, uint32_t reset_reason)
 struct sbiret
 sbi_pmu_num_counters(void)
 {
-	return SBI_CALL0(SBI_EID_PMU, SBU_FID_PMU_GETCOUNTERS);
+	return SBI_CALL0(SBI_EID_PMU, SBI_FID_PMU_NUMCOUNTERS);
 }
 
 struct sbiret
 sbi_pmu_counter_get_info(unsigned long counter_idx)
 {
-	return SBI_CALL1(SBI_EID_PMU, SBU_FID_PMU_COUNTERDETAILS,
+	return SBI_CALL1(SBI_EID_PMU, SBI_FID_PMU_COUNTER_GET_INFO,
 	    counter_idx);
 }
 
@@ -217,11 +217,11 @@ sbi_pmu_counter_config_matching(unsigned long counter_idx_base,
     unsigned long event_idx, uint64_t event_data)
 {
 #ifdef _LP64
-	return SBI_CALL5(SBI_EID_PMU, SBU_FID_PMU_CONFIGCOUNTER,
+	return SBI_CALL5(SBI_EID_PMU, SBI_FID_PMU_CONFIG_MATCHING,
 	    counter_idx_base, counter_idx_mask, config_flags, event_idx,
 	    event_data);
 #else
-	return SBI_CALL6(SBI_EID_PMU, SBU_FID_PMU_CONFIGCOUNTER,
+	return SBI_CALL6(SBI_EID_PMU, SBI_FID_PMU_CONFIG_MATCHING,
 	    counter_idx_base, counter_idx_mask, config_flags, event_idx,
 	    event_data, event_data >> 32);
 #endif
@@ -233,11 +233,11 @@ sbi_pmu_counter_start(unsigned long counter_idx_base,
     uint64_t initial_value)
 {
 #ifdef _LP64
-	return SBI_CALL4(SBI_EID_PMU, SBU_FID_PMU_STARTCOUNTERS,
+	return SBI_CALL4(SBI_EID_PMU, SBI_FID_PMU_START,
 	    counter_idx_base, counter_idx_mask, start_flags,
 	    initial_value);
 #else
-	return SBI_CALL5(SBI_EID_PMU, SBU_FID_PMU_STARTCOUNTERS,
+	return SBI_CALL5(SBI_EID_PMU, SBI_FID_PMU_START,
 	    counter_idx_base, counter_idx_mask, start_flags,
 	    initial_value, initial_value >> 32);
 #endif
@@ -247,13 +247,13 @@ struct sbiret
 sbi_pmu_counter_stop(unsigned long counter_idx_base,
     unsigned long counter_idx_mask, unsigned long stop_flags)
 {
-	return SBI_CALL3(SBI_EID_PMU, SBU_FID_PMU_STOPCOUNTERS,
+	return SBI_CALL3(SBI_EID_PMU, SBI_FID_PMU_STOP,
 	    counter_idx_base, counter_idx_mask, stop_flags);
 }
 
 struct sbiret
 sbi_pmu_counter_fw_read(unsigned long counter_idx)
 {
-	return SBI_CALL1(SBI_EID_PMU, SBU_FID_PMU_READCOUNTER,
+	return SBI_CALL1(SBI_EID_PMU, SBI_FID_PMU_FW_READ,
 	    counter_idx);
 }

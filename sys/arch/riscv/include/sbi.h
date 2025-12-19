@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.h,v 1.1 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: sbi.h,v 1.2 2025/12/19 07:47:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -182,14 +182,12 @@ struct sbiret sbi_system_reset(uint32_t reset_type, uint32_t reset_reason);
 #define SBI_RESET_REASON_NONE		0
 #define SBI_RESET_REASON_FAILURE	1
 
-
-
-#define SBU_FID_PMU_GETCOUNTERS		0
-#define SBU_FID_PMU_COUNTERDETAILS	1
-#define SBU_FID_PMU_CONFIGCOUNTER	2
-#define SBU_FID_PMU_STARTCOUNTERS	3
-#define SBU_FID_PMU_STOPCOUNTERS	4
-#define SBU_FID_PMU_READCOUNTER		5
+#define SBI_FID_PMU_NUMCOUNTERS		0
+#define SBI_FID_PMU_COUNTER_GET_INFO	1
+#define SBI_FID_PMU_CONFIG_MATCHING	2
+#define SBI_FID_PMU_START		3
+#define SBI_FID_PMU_STOP		4
+#define SBI_FID_PMU_FW_READ		5
 
 #define	SBI_PMU_HW_NO_EVENT                 0	// Unused event because
 						// ...`event_idx` cannot be zero
