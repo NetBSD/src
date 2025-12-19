@@ -1,4 +1,4 @@
-/*	$NetBSD: t_orphan.c,v 1.2 2025/10/30 15:30:17 perseant Exp $	*/
+/*	$NetBSD: t_orphan.c,v 1.3 2025/12/19 20:15:37 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -65,14 +65,15 @@ ATF_TC_BODY(orphan64, tc)
 
 void orphan(int width)
 {
+	char s[MAXLINE];
 	struct ufs_args args;
 	struct stat statbuf;
-	int status;
+	int fd, status;
 	pid_t childpid;
-	size_t fh_size;
-	void *fhp;
 	FILE *fp;
-		
+	int thisinum, version, found;
+	ino_t inum;
+
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	/*
@@ -85,14 +86,14 @@ void orphan(int width)
 	/* Prepare to mount */
 	memset(&args, 0, sizeof args);
 	args.fspec = __UNCONST(FAKEBLK);
-		
+
 	if ((childpid = fork()) == 0) {
 		/* Set up rump */
 		rump_init();
 		if (rump_sys_mkdir(MP, 0777) == -1)
 			atf_tc_fail_errno("cannot create mountpoint");
 		rump_pub_etfs_register(FAKEBLK, IMGNAME, RUMP_ETFS_BLK);
-		
+
 		/* Mount filesystem */
 		fprintf(stderr, "* Mount fs [1]\n");
 		if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof args) == -1)
@@ -100,31 +101,23 @@ void orphan(int width)
 
 		/* Payload */
 		fprintf(stderr, "* Initial payload\n");
-		write_file(UNCHANGED_CONTROL, FILE_SIZE, 0, 0);
+		fd = write_file(UNCHANGED_CONTROL, FILE_SIZE, 0, 0);
 
-		/* Discover filehandle size and allocate space */
-		fh_size = 0;
-		if (rump_sys_getfh(UNCHANGED_CONTROL, NULL, &fh_size) != 0
-		    && errno != E2BIG)
-			atf_tc_fail_errno("getfh failed to report fh_size");
-		fprintf(stderr, "fh_size = %zd\n", fh_size);
-		fhp = malloc(fh_size);
-		/* Get a filehandle for our file */
-		if (rump_sys_getfh(UNCHANGED_CONTROL, fhp, &fh_size) != 0)
-			atf_tc_fail_errno("rump_sys_getfh failed");
-
-		/* Write the filehandle into a temporary file */
-		fp = fopen(TMPFILE, "wb");
-		fwrite(fhp, fh_size, 1, fp);
-		fclose(fp);
-		
 		/* Make the data go to disk */
 		rump_sys_sync();
 		rump_sys_sync();
 
-		/* Stat using a file handle and check */
-		if (rump_sys_fhstat(fhp, fh_size, &statbuf) != 0)
-			atf_tc_fail_errno("fhstat failed");
+		/* Write the inode number into a temporary file */
+		rump_sys_fstat(fd, &statbuf);
+		fprintf(stderr, "Inode is => %d <=\n", (int)statbuf.st_ino);
+
+		fp = fopen(TMPFILE, "wb");
+		fwrite(&statbuf.st_ino, sizeof(ino_t), 1, fp);
+		fclose(fp);
+
+		/* Delete while still open */
+		if (rump_sys_unlink(UNCHANGED_CONTROL) != 0)
+			atf_tc_fail_errno("rump_sys_unlink failed");
 
 		/* Sanity check values */
 		if (statbuf.st_size != FILE_SIZE)
@@ -133,7 +126,11 @@ void orphan(int width)
 			atf_tc_fail("file already deleted");
 		if (statbuf.st_blocks <= 0)
 			atf_tc_fail("no blocks");
-	
+
+		/* Make the data go to disk */
+		rump_sys_sync();
+		rump_sys_sync();
+
 		/* Simulate a system crash */
 		exit(0);
 	}
@@ -145,14 +142,18 @@ void orphan(int width)
 	if (WEXITSTATUS(status))
 		exit(WEXITSTATUS(status));
 
-	/* Read the file handle from temporary file */
-	stat(TMPFILE, &statbuf);
-	fh_size = statbuf.st_size;
-	fhp = malloc(fh_size);
-	fp = fopen(TMPFILE, "wb");
-	fread(fhp, fh_size, 1, fp);
+	/* Fsck */
+	fprintf(stderr, "* Fsck after crash\n");
+	if (fsck())
+		atf_tc_fail("fsck found errors after crash");
+
+	/* Read the inode number from temporary file */
+	fp = fopen(TMPFILE, "rb");
+	fread(&inum, sizeof(ino_t), 1, fp);
 	fclose(fp);
-	
+
+	fprintf(stderr, "Seeking inum => %d <=\n", (int)inum);
+
 	/* Set up rump */
 	rump_init();
 	if (rump_sys_mkdir(MP, 0777) == -1)
@@ -164,18 +165,27 @@ void orphan(int width)
 	if (rump_sys_mount(MOUNT_LFS, MP, 0, &args, sizeof args) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed[2]");
 
-	/*
-	 * At this point the orphans should be deleted.
-	 * Check that our orphaned file in fact was.
-	 */
-	
-	/* Stat using a file handle and check */
-	if (rump_sys_fhstat(fhp, fh_size, &statbuf) == 0)
-		atf_tc_fail_errno("orphaned file not deleted");
-	
+	/* At this point the orphan should be deleted. */
+
 	/* Unmount */
+	fprintf(stderr, "* Unmount\n");
 	if (rump_sys_unmount(MP, 0) != 0)
 		atf_tc_fail_errno("rump_sys_unmount failed[1]");
+
+	/* Check that it was in fact deleted. */
+	fprintf(stderr, "* Check for orphaned file\n");
+	found = 0;
+	fp = popen("dumplfs -i -s9 ./" IMGNAME, "r");
+	while (fgets(s, MAXLINE, fp) != NULL) {
+		if (sscanf(s, "%d FREE %d", &thisinum, &version) == 2
+		    && (ino_t)thisinum == inum) {
+			found = 1;
+			break;
+		}
+	}
+	fclose(fp);
+	if (!found)
+		atf_tc_fail("orphaned inode not freed on subsequent mount");
 
 	/* Fsck */
 	fprintf(stderr, "* Fsck after final unmount\n");

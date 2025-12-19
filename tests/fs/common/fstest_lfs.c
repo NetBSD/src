@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.9 2025/11/06 15:45:32 perseant Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.10 2025/12/19 20:15:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include <atf-c.h>
+#include <ctype.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -49,7 +50,7 @@
 #include "h_fsmacros.h"
 #include "mount_lfs.h"
 
-/* Use the in-kenrel cleaner rather than a separate lfs_cleanerd process */
+/* Use the in-kernel cleaner rather than a separate lfs_cleanerd process */
 #define USE_KERNEL_CLEANER
 
 struct lfstestargs {
@@ -62,6 +63,8 @@ struct lfstestargs {
 	char ta_hostpath[MAXPATHLEN];
 };
 
+static const char *image_filename;
+
 int
 lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	void *fspriv)
@@ -71,6 +74,8 @@ lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	static unsigned int num = 0;
 	struct lfstestargs *args;
 
+	image_filename = image;
+	
 	size /= 512;
 	snprintf(cmd, 1024, "newfs_lfs -D -F -s %"PRId64" ./%s >/dev/null",
 	    size, image);
@@ -212,12 +217,40 @@ lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 int
 lfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
-	int res;
+	int res, errors;
+	FILE *pipe, *err;
+	char s[MAXPATHLEN], cmd[1024];
 
 	res = rump_sys_unmount(path, flags);
 	if (res == -1) {
 		return res;
 	}
+
+	sprintf(cmd, "fsck_lfs -n -a -f %s", image_filename);
+	pipe = popen(cmd, "r");
+
+	errors = 0;
+	err = NULL;
+	while (fgets(s, MAXPATHLEN, pipe) != NULL) {
+		if (isdigit((int)s[0])) /* "5 files ... " */
+			continue;
+		if (isspace((int)s[0]) || s[0] == '*')
+			continue;
+		if (strncmp(s, "Alternate", 9) == 0)
+			continue;
+		if (strncmp(s, "ROLL ", 5) == 0)
+			continue;
+		fprintf(stderr, "FSCK: %s", s);
+		if (err == NULL)
+			err = fopen("/tmp/err.out", "w");
+		fprintf(err, "FSCK: %s", s);
+		++errors;
+	}
+	pclose(pipe);
+	if (err)
+		fclose(err);
+	if (errors)
+		return -1;
 
 	res = rump_sys_rmdir(path);
 	return res;

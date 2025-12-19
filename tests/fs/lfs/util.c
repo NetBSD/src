@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2025/10/30 15:30:17 perseant Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2025/12/19 20:15:37 perseant Exp $	*/
 
 #include <sys/mount.h>
 
@@ -19,7 +19,7 @@ void create_lfs(size_t imgsize, size_t fssize, int width, int do_setup)
 	FILE *pipe;
 	char cmd[MAXLINE];
 	char buf[MAXLINE];
-	
+
 	/* Create image file larger than filesystem */
 	sprintf(cmd, "dd if=/dev/zero of=%s bs=512 count=%zd",
 		IMGNAME, imgsize);
@@ -85,7 +85,7 @@ int write_file(const char *filename, off_t len, int close, unsigned int seed)
 			buf[j] = ((unsigned)random()) & 0xff;
 		rump_sys_write(fd, buf, MIN(len - i, (off_t)sizeof(buf)));
 	}
-	
+
 	if (close) {
 		rump_sys_close(fd);
 		fd = -1;
@@ -143,7 +143,7 @@ int fsck(void)
 	char cmd[MAXLINE];
 
 	for (i = 0; i < 2; i++) {
-		sprintf(cmd, "fsck_lfs -n -b %jd -f " IMGNAME,
+		sprintf(cmd, "fsck_lfs -n -a -b %jd -f " IMGNAME,
 			(intmax_t)sbaddr[i]);
 		pipe = popen(cmd, "r");
 		while (fgets(s, MAXLINE, pipe) != NULL) {
