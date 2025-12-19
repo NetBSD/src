@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigtimedwait.c,v 1.4 2025/12/19 04:40:43 riastradh Exp $ */
+/* $NetBSD: t_sigtimedwait.c,v 1.5 2025/12/19 04:41:02 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigtimedwait.c,v 1.4 2025/12/19 04:40:43 riastradh Exp $");
+__RCSID("$NetBSD: t_sigtimedwait.c,v 1.5 2025/12/19 04:41:02 riastradh Exp $");
 
 #include <sys/time.h>
 
@@ -195,9 +195,6 @@ ATF_TC_BODY(sigtimedwait_small_timeout_other_sig, tc)
 	 * because some signal unblocked was delivered.
 	 */
 	signo = sigtimedwait(&sig, &info, &ts);
-	atf_tc_expect_fail("PR standards/59586:"
-	    " sigwaitinfo() returns ECANCELED instead of EINTR"
-	    " - POSIX compliance violation");
 	ATF_REQUIRE_MSG(signo == -1, "signo=%d, expected -1/EINTR=%d",
 	    signo, EINTR);
 	error = errno;

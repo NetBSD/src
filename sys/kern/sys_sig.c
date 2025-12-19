@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.59 2025/12/19 04:40:43 riastradh Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.60 2025/12/19 04:41:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.59 2025/12/19 04:40:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.60 2025/12/19 04:41:02 riastradh Exp $");
 
 #include "opt_dtrace.h"
 
@@ -848,8 +848,17 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 			error = EAGAIN;
 		else {
 			/* Copy updated timeout to userland. */
-			error = (*storets)(&ts, SCARG(uap, timeout),
+			int error1 = (*storets)(&ts, SCARG(uap, timeout),
 			    sizeof(ts));
+
+			/*
+			 * Only override error (ERESTART/EINTR) if the
+			 * copyout failed (EFAULT).  Don't override it
+			 * if the copyout succeeded; we should not
+			 * return 0 in this branch.
+			 */
+			if (error1)
+				error = error1;
 		}
 	}
 out:
