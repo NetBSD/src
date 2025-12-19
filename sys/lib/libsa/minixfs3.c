@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.c,v 1.13 2022/04/29 07:42:07 rin Exp $	*/
+/*	$NetBSD: minixfs3.c,v 1.14 2025/12/19 09:31:16 nia Exp $	*/
 
 /*-
  * Copyright (c) 2012
@@ -118,6 +118,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/time.h>
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
