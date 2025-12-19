@@ -37,7 +37,7 @@
 #include "xmalloc.h"
 
 bool	 lflag, Nflag, Pflag, rflag, sflag, Tflag, cflag;
-bool	 ignore_file_case, suppress_common;
+bool	 ignore_file_case, suppress_common, brief_diff;
 int	 diff_format, diff_context, status;
 int	 width = 130;
 char	*start, *ifdefname, *diffargs, *label[2];
@@ -231,9 +231,7 @@ main(int argc, char **argv)
 			rflag = true;
 			break;
 		case 'q':
-			if (FORMAT_MISMATCHED(D_BRIEF))
-				conflicting_format();
-			diff_format = D_BRIEF;
+			brief_diff = true;
 			break;
 		case 'S':
 			start = optarg;
@@ -490,7 +488,7 @@ print_status(int val, char *path1, char *path2, const char *entry)
 		    path1, entry, path2, entry);
 		break;
 	case D_DIFFER:
-		if (diff_format == D_BRIEF)
+		if (brief_diff)
 			printf("Files %s%s and %s%s differ\n",
 			    path1, entry, path2, entry);
 		break;

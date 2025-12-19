@@ -362,7 +362,7 @@ diffreg(char *file1, char *file2, int flags)
 		goto closem;
 	}
 
-	if (diff_format == D_BRIEF && ignore_pats == NULL &&
+	if (brief_diff && ignore_pats == NULL &&
 	    (flags & (D_FOLDBLANKS|D_IGNOREBLANKS|D_IGNORECASE|
 	    D_SKIPBLANKLINES|D_STRIPCR)) == 0)
 	{
@@ -1049,7 +1049,7 @@ restart:
 		return;
 	}
 proceed:
-	if (*pflags & D_HEADER && diff_format != D_BRIEF) {
+	if (*pflags & D_HEADER && !brief_diff) {
 		printf("%s %s %s\n", diffargs, file1, file2);
 		*pflags &= ~D_HEADER;
 	}
@@ -1095,9 +1095,9 @@ proceed:
 	}
 	if (anychange == 0)
 		anychange = 1;
-	switch (diff_format) {
-	case D_BRIEF:
+	if (brief_diff)
 		return;
+	switch (diff_format) {
 	case D_NORMAL:
 	case D_EDIT:
 		range(a, b, ",");

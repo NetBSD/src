@@ -47,9 +47,8 @@
 #define	D_IFDEF		4	/* Diff with merged #ifdef's */
 #define	D_NREVERSE	5	/* Reverse ed script with numbered
 				   lines and no trailing . */
-#define	D_BRIEF		6	/* Say if the files differ */
-#define	D_GFORMAT	7	/* Diff with defined changed group format */
-#define D_SIDEBYSIDE    8	/* Side by side */
+#define	D_GFORMAT	6	/* Diff with defined changed group format */
+#define D_SIDEBYSIDE    7	/* Side by side */
 
 #define	D_UNSET		-2
 
@@ -100,7 +99,7 @@ struct excludes {
 };
 
 extern bool	lflag, Nflag, Pflag, rflag, sflag, Tflag, cflag;
-extern bool	ignore_file_case, suppress_common;
+extern bool	ignore_file_case, suppress_common, brief_diff;
 extern int	diff_format, diff_context, status;
 extern int	width;
 extern char	*start, *ifdefname, *diffargs, *label[2];
