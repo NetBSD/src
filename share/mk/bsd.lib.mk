@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.424 2025/12/18 04:57:55 riastradh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.425 2025/12/19 03:07:26 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -465,13 +465,13 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 libinstall::
 .endif
 
-.if ${MKDEBUGLIB} != "no"
+.if ${MKDEBUGLIB} != "no" && ${MAKELINKLIB} != "no"
 _LIBS+=${_LIB_g.a}
 GOBJS+=${OBJS:.o=.go}
 DEBUGFLAGS?=-DDEBUG
 .endif
 
-.if ${MKPROFILE} != "no"
+.if ${MKPROFILE} != "no" && ${MAKELINKLIB} != "no"
 _LIBS+=${_LIB_p.a}
 POBJS+=${OBJS:.o=.po}
 PROFFLAGS?=-DGPROF -DPROF
@@ -846,7 +846,7 @@ ${_DEST.LIB}/${_LIB.a}: ${_LIB.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKPROFILE} != "no"
+.if ${MKPROFILE} != "no" && ${MAKELINKLIB} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB_p.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_p.a}
 
@@ -863,7 +863,7 @@ ${_DEST.LIB}/${_LIB_p.a}: ${_LIB_p.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKDEBUGLIB} != "no"
+.if ${MKDEBUGLIB} != "no" && ${MAKELINKLIB} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB_g.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_g.a}
 

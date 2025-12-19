@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.51 2025/05/13 21:36:26 nia Exp $
+# $NetBSD: mi,v 1.52 2025/12/19 03:07:27 christos Exp $
 #
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
@@ -15,7 +15,7 @@
 ./usr/X11R7/lib/libXRes_g.a				xdebug-libXres-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXTrap_g.a				xdebug-obsolete xorg,obsolete
 ./usr/X11R7/lib/libXau_g.a				xdebug-libXau-debuglib	xorg,debuglib,compatx11file
-./usr/X11R7/lib/libXaw6_g.a				xdebug-libXaw6-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libXaw6_g.a				xdebug-obsolete	xorg,debuglib,compatx11file,obsolete
 ./usr/X11R7/lib/libXaw7_g.a				xdebug-libXaw-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXaw8_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libXcomposite_g.a			xdebug-libXcomposite-debuglib	xorg,debuglib,compatx11file

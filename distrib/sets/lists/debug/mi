@@ -1,7 +1,10 @@
-# $NetBSD: mi,v 1.494 2025/12/16 04:32:04 riastradh Exp $
+# $NetBSD: mi,v 1.495 2025/12/19 03:07:26 christos Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
+./usr/lib/libbfd_g.a				comp-obsolete		debuglib,compatfile,obsolete
+./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
+./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/i18n/libDECHanyu_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/i18n/libEUCTW_g.a			comp-c-debuglib		debuglib,compatfile
@@ -25,7 +28,7 @@
 ./usr/lib/i18n/libmapper_serial_g.a		comp-c-debuglib		debuglib,compatfile
 ./usr/lib/i18n/libmapper_std_g.a		comp-c-debuglib		debuglib,compatfile
 ./usr/lib/i18n/libmapper_zone_g.a		comp-c-debuglib		debuglib,compatfile
-./usr/lib/libamu_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libamu_g.a				comp-obsolete		debuglib,compatfile,obsolete
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcccmds,gcc
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
@@ -71,7 +74,7 @@
 ./usr/lib/libform_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcc
-./usr/lib/libgnuctf_g.a				comp-c-debuglib		debuglib,compatfile,binutils
+./usr/lib/libgnuctf_g.a				comp-obsolete		debuglib,compatfile,obsolete
 ./usr/lib/libgnumalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgssapi_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
@@ -117,7 +120,7 @@
 ./usr/lib/libnvmm_g.a				comp-c-debuglib		debuglib,nvmm
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
 ./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcc,compatfile
-./usr/lib/libopcodes_g.a			comp-c-debuglib		debuglib,compatfile,binutils
+./usr/lib/libopcodes_g.a			comp-c-obsolete		debuglib,compatfile,obsolete
 ./usr/lib/libopenpgpsdk_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libossaudio_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libp2k_g.a				comp-c-debuglib		debuglib,compatfile,rump
@@ -2614,10 +2617,17 @@
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
 ./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	comp-c-debuglib		atf,debuglib,compattestfile
 ./usr/tests/lib/libpthread/weak/libh_pthread_weak_g.a			comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
 ./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_abuse_static_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_def_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_def_static_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_dso3_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
 ./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_onlydef_g.a				tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic_g.a			tests-obsolete	obsolete,debuglib,atf,pic,compattestfile
