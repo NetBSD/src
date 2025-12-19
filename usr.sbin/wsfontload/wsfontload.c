@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.24 2022/05/12 22:08:55 uwe Exp $ */
+/* $NetBSD: wsfontload.c,v 1.25 2025/12/19 09:33:24 nia Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <err.h>
+#include <endian.h>
 
 #include <dev/wscons/wsconsio.h>
 
