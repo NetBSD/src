@@ -1,4 +1,4 @@
-/*	$NetBSD: mempcpy.c,v 1.2 2025/12/18 00:18:55 christos Exp $	*/
+/*	$NetBSD: mempcpy.c,v 1.3 2025/12/19 13:28:14 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -26,7 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mempcpy.c,v 1.2 2025/12/18 00:18:55 christos Exp $");
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: mempcpy.c,v 1.3 2025/12/19 13:28:14 jkoshy Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 
