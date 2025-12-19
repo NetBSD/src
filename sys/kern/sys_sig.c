@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.58 2024/07/14 05:10:40 kre Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.59 2025/12/19 04:40:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.58 2024/07/14 05:10:40 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.59 2025/12/19 04:40:43 riastradh Exp $");
 
 #include "opt_dtrace.h"
 
@@ -768,7 +768,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 		/*
 		 * Remember current uptime, it would be used in
-		 * ECANCELED/ERESTART case.
+		 * EINTR/ERESTART case.
 		 */
 		getnanouptime(&tsstart);
 	} else {
@@ -821,10 +821,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 	 * signal outside our wait set.
 	 */
 	if (l->l_sigwaited != NULL) {
-		if (error == EINTR) {
-			/* Wakeup via _lwp_wakeup(). */
-			error = ECANCELED;
-		} else if (!error) {
+		if (!error) {
 			/* Spurious wakeup - arrange for syscall restart. */
 			error = ERESTART;
 		}
@@ -838,7 +835,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 	 * the timeout and copyout new value back.  It would be used when
 	 * the syscall would be restarted or called again.
 	 */
-	if (timo && (error == ERESTART || error == ECANCELED)) {
+	if (timo && (error == ERESTART || error == EINTR)) {
 		getnanouptime(&tsnow);
 
 		/* Compute how much time has passed since start. */
