@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.9 2025/12/03 02:15:08 thorpej Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.10 2025/12/19 03:29:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,6 +35,16 @@
 #include <machine/asm.h>
 
 #if defined(_KERNEL)
+
+/*
+ * XXX This is normally defined by <sys/param.h>, but we can't include
+ * XXX that header file for assembly code!
+ */
+#if defined(_RUMPKERNEL)
+#define	_SOFTKERNEL
+#else
+#define	_HARDKERNEL
+#endif
 
 #define	ATOMIC_OP_ALIAS(a,s)	STRONG_ALIAS(a,s)
 #ifdef _HARDKERNEL

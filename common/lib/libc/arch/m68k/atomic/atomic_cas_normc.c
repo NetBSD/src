@@ -1,11 +1,11 @@
-/*	$NetBSD: atomic_cas_68000.S,v 1.7 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: atomic_cas_normc.c,v 1.1 2025/12/19 03:29:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Steve C. Woodford.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,50 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/ras.h>
-#include "atomic_op_asm.h"
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: atomic_cas_normc.c,v 1.1 2025/12/19 03:29:54 thorpej Exp $");
 
-	.text
+#include <sys/types.h>
 
-ENTRY(_atomic_cas_up)
-	.hidden	_C_LABEL(_atomic_cas_up)
-
-	movl	4(%sp), %a0		/* Fetch ptr */
-
-RAS_START_ASM_HIDDEN(_atomic_cas)
-	movl	(%a0), %d0		/* d0 = *ptr */
-	cmpl	8(%sp), %d0		/* Same as old? */
-	jne	1f			/* Nope */
-	movl	12(%sp), (%a0)		/* *ptr = new */
-RAS_END_ASM_HIDDEN(_atomic_cas)
-1:	rts
-END(_atomic_cas_up)
-
-ENTRY(_atomic_cas_16_up)
-	.hidden	_C_LABEL(_atomic_cas_16_up)
-
-	movl	4(%sp), %a0		/* Fetch ptr */
-
-RAS_START_ASM_HIDDEN(_atomic_cas_16)
-	movw	(%a0), %d0		/* d0 = *ptr */
-	cmpw	8(%sp), %d0		/* Same as old? */
-	jne	1f			/* Nope */
-	movw	12(%sp), (%a0)		/* *ptr = new */
-RAS_END_ASM_HIDDEN(_atomic_cas_16)
-1:	rts
-END(_atomic_cas_16_up)
-
-
-ENTRY(_atomic_cas_8_up)
-	.hidden	_C_LABEL(_atomic_cas_8_up)
-
-	movl	4(%sp), %a0		/* Fetch ptr */
-
-RAS_START_ASM_HIDDEN(_atomic_cas_8)
-	movb	(%a0), %d0		/* d0 = *ptr */
-	cmpb	8(%sp), %d0		/* Same as old? */
-	jne	1f			/* Nope */
-	movb	12(%sp), (%a0)		/* *ptr = new */
-RAS_END_ASM_HIDDEN(_atomic_cas_8)
-1:	rts
-END(_atomic_cas_8_up)
+#ifdef _KERNEL
+#if defined(__mc68010__) || defined(__HAVE_M68K_BROKEN_RMC)
+const int _atomic_cas_normc = 1;
+#include "../../../atomic/atomic_cas_by_cas32.c"
+#else
+const int _atomic_cas_normc = 0;
+#endif /* __mc68010__ || __HAVE_M68K_BROKEN_RMC */
+#endif /* _KERNEL */
