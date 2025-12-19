@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2025/12/19 20:15:37 perseant Exp $	*/
+/*	$NetBSD: util.c,v 1.6 2025/12/19 20:58:08 perseant Exp $	*/
 
 #include <sys/mount.h>
 
@@ -178,3 +178,4 @@ void dumplfs()
 		fprintf(stderr, "DUMPLFS: %s", s);
 	pclose(pipe);
 }
+

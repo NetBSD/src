@@ -1,4 +1,4 @@
-/*	$NetBSD: t_orphan.c,v 1.3 2025/12/19 20:15:37 perseant Exp $	*/
+/*	$NetBSD: t_orphan.c,v 1.4 2025/12/19 20:58:08 perseant Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -200,3 +200,4 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, orphan64);
 	return atf_no_error();
 }
+

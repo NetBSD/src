@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.10 2025/12/19 20:15:37 perseant Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.11 2025/12/19 20:58:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -255,3 +255,4 @@ lfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	res = rump_sys_rmdir(path);
 	return res;
 }
+
