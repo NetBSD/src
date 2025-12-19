@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.129 2025/12/18 00:19:40 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.130 2025/12/19 13:55:33 jkoshy Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -617,7 +617,7 @@ char *strsep(char **, const char *);
 #endif
 
 #if !HAVE_DECL_MEMPCPY
-char *mempcpy(void *, const void *, size_t);
+void *mempcpy(void *, const void *, size_t);
 #endif
 
 #if !HAVE_DECL_STRSUFTOLL
