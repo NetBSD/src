@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.152 2025/12/10 03:20:59 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.153 2025/12/19 20:18:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.152 2025/12/10 03:20:59 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.153 2025/12/19 20:18:15 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -934,9 +934,10 @@ lfs_orphan(struct lfs *fs, struct vnode *vp)
 	struct inode *ip;
 	ino_t nextfree;
 	int mincount;
-	
+
 	ip = VTOI(vp);
 
+	ASSERT_NO_SEGLOCK(fs);
 	KASSERT(ip->i_nlink == 0);
 
 	/*
@@ -979,72 +980,29 @@ lfs_orphan(struct lfs *fs, struct vnode *vp)
 }
 
 /*
- * Free orphans discovered during mount.
- * XXX merge this with lfs_order_freelist.
+ * Free orphans discovered during mount using vget/vput.
+ * Ideally this would be merged with lfs_order_freelist but
+ * the free list is not available when lfs_order_freelist is running.
  */
 void
 lfs_free_orphans(struct lfs *fs, ino_t *orphan, size_t norphan)
 {
+	struct vnode *vp;
 	size_t i;
+	int error;
 
+	ASSERT_NO_SEGLOCK(fs);
 	DEBUG_CHECK_FREELIST(fs);
-	
+
 	for (i = 0; i < norphan; i++) {
-		ino_t ino = orphan[i];
-		struct vnode *vp;
-		struct inode *ip;
-		struct buf *bp;
-		IFILE *ifp;
-		daddr_t daddr;
-		int error;
-
-		/* Get the segment the inode is in on disk.  */
-		LFS_IENTRY(ifp, fs, ino, bp);
-		daddr = lfs_if_getdaddr(fs, ifp);
-		KASSERT(!DADDR_IS_BAD(daddr));
-		brelse(bp, 0);
-
-		/*
-		 * Try to get the vnode.  If we can't, tough -- hope
-		 * you have backups!
-		 */
-		error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE,
-		    &vp);
+		error = VFS_VGET(fs->lfs_ivnode->v_mount, orphan[i],
+		    LK_EXCLUSIVE, &vp);
 		if (error) {
-			printf("orphan %jd vget error %d\n", (intmax_t)ino,
-			    error);
+			printf("lfs_free_orphan vget ino %jd error %d\n",
+			    (intmax_t)orphan[i], error);
 			continue;
 		}
-
-		/*
-		 * Sanity-check the inode.
-		 *
-		 * XXX What to do if it is still referenced?
-		 */
-		ip = VTOI(vp);
-		if (ip->i_nlink != 0)
-			printf("orphan %jd nlink %d\n", (intmax_t)ino,
-			    ip->i_nlink);
-
-		/*
-		 * Truncate the inode, to free any blocks allocated for
-		 * it, and release it, to free the inode number.
-		 *
-		 * XXX Isn't it redundant to truncate?  Won't vput do
-		 * that for us?
-		 */
-		error = lfs_truncate(vp, 0, 0, NOCRED);
-		if (error)
-			printf("orphan %jd truncate error %d", (intmax_t)ino,
-			    error);
 		vput(vp);
-
-		rw_enter(&fs->lfs_fraglock, RW_READER);
-
-		/* Update address and do accounting. */
-		lfs_update_iaddr(fs, ip, LFS_UNUSED_DADDR);
-		
-		rw_exit(&fs->lfs_fraglock);
 	}
 
 	if (orphan)
@@ -1070,7 +1028,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 		return;
 
 	lfs_seglock(fs, SEGM_PROT);
-	
+
 	ip = VTOI(fs->lfs_ivnode);
 	maxino = ((ip->i_size >> lfs_sb_getbshift(fs)) - lfs_sb_getcleansz(fs) -
 		  lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs);
@@ -1119,7 +1077,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 	 * Walk the free list from head to tail.  We should end up with
 	 * the same number of free inodes as we counted above.
 	 */
-	
+
 	/* Get head of inode freelist */
 	LFS_GET_HEADFREE(fs, cip, bp, &headino);
 	count = 0;
