@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.16 2024/02/05 21:52:38 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.17 2025/12/19 01:17:21 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -60,8 +60,8 @@ UPDATE_FROM=${WORK_PFX}/updating.from.version
 
 usage()
 {
-	printf >&2 '%s\n'						\
-		"Usage: $0 [new-version-id [old-version-id]]"		\
+	printf >&2 '%s\n' ''						\
+		"Usage: $0 [new-version-id [old-version-id]]" ''	\
 		"     where a version-id is of the form YYYYx (eg: 2018c)" \
 		"     or '' for new-version-id (to specify only the old)"  \
 		"     and where new-version-id can have =fetch-version-id" \
@@ -69,6 +69,8 @@ usage()
 		"     where the 'fetch-version-id' can be omitted if it" \
 		"     is \${new-version-id}gtz  - and simply using '=' means" \
 		"     to work out the new-version-id but then use the gtz fork"
+
+	printf >&2 '\nUsually use:\n\t\tsh %s =\n' "${0##*/}"
 
 	exit 2
 }
@@ -85,12 +87,12 @@ valid_vers()
 {
 	case "$2" in
 	# The IANA (Eggert) standard version names
-	${VERS_PATTERN} | ${VERS_PATTERN}[a-z] )
+	( ${VERS_PATTERN} | ${VERS_PATTERN}[a-z] )
 		;;
 	# The alternate (more rational) fork "global timezone" version
-	${VERS_PATTERN}gtz | ${VERS_PATTERN}[a-z]gtz )
+	( ${VERS_PATTERN}gtz | ${VERS_PATTERN}[a-z]gtz )
 		;;
-	*)	printf >&2 '%s: %s\n' \
+	(*)	printf >&2 '%s: %s\n' \
 		    "Bad form for $1 version specifier '$2'" \
 		    "should (usually) be 'YYYYx'"
 		return 1
@@ -133,7 +135,7 @@ get_curvers()
 		fail "Cannot fetch current tzdata version from ${DIST_HOST}"
 	}
 
-	printf '%s\n' "Updating from ${OLDVER} to ${NEWVER}"
+	printf 'Updating from %s to %s\n' "${OLDVER}" "${NEWVER}"
 }
 
 argparse()
@@ -147,7 +149,7 @@ argparse()
 	fi
 
 	case "$#" in
-	0|1)
+	( 0 | 1 )
 		# once we have obtained OLDVER once, never guess it again.
 		if  [ -f "${UPDATE_FROM}" ]
 		then
@@ -159,10 +161,10 @@ argparse()
 		then
 			OLDVER=$(cat dist/version)
 		fi
-		OLDVER=${OLDVER#tzdata}		# TZDATA_VERS is tzdata-nnnnX
-		OLDVER=${OLDVER#-}		# but the '-' is optional
-		OLDVERGTZ=${OLDVER}		# This would have been the cvs tag
-		OLDVER=${OLDVER%gtz}		# want the base version elsewhere
+		OLDVER=${OLDVER#tzdata}	# TZDATA_VERS is tzdata-nnnnX
+		OLDVER=${OLDVER#-}	# but the '-' is optional
+		OLDVERGTZ=${OLDVER}	# This would have been the cvs tag
+		OLDVER=${OLDVER%gtz}	# want the base version elsewhere
 
 		if [ -z "${OLDVER}" ]
 		then
@@ -177,31 +179,31 @@ argparse()
 			fail "Calculated bad OLDVER, give as 2nd arg"
 		;;
 
-	2)	valid_vers old "$2" && OLDVER="$2" || usage
+	( 2 )	valid_vers old "$2" && OLDVER="$2" || usage
 		;;
 
-	*)	usage
+	( * )	usage
 		;;
 	esac
 
 	GLOBAL=false
 	case "$#:$1" in
-	0: | 1: | 2: )
+	( 0: | 1: | 2: )
 		;;
-	1:=|2:=)
+	( 1:= | 2:= )
 		GLOBAL=true;;
-	1:=?*|2:=?*)	
+	( 1:=?* | 2:=?* )	
 		valid_vers fetch "${1#=}" && FETCHVER="${1#=}" || usage
 		;;
-	1:*=?*|2:*=?*)	
+	( 1:*=?* | 2:*=?* )	
 		set -- "{$1%=*}" "${1#*=}"
 		valid_vers fetch "$2" && FETCHVER="$2" || usage
 		valid_vers new "$1" && NEWVER="$1" || usage
 		;;
-	1:?*|2:?*)	
+	( 1:?* | 2:?* )	
 		valid_vers new "$1" && NEWVER="$1" || usage
 		;;
-	*)	usage
+	( * )	usage
 		;;
 	esac
 
@@ -209,7 +211,7 @@ argparse()
 
 	if [ -z "${FETCHVER}" ]
 	then
-		if $GLOBAL
+		if "${GLOBAL}"
 		then
 			FETCHVER=${NEWVER}gtz
 		else
@@ -218,15 +220,28 @@ argparse()
 	fi
 
 	case "${FETCHVER}" in
-	*gtz)	GLOBAL=true;;
-	*)	GLOBAL=false;;
+	( *gtz )	GLOBAL=true;;
+	( * )		GLOBAL=false;;
 	esac
 
 	if [ "${NEWVER}" = "${OLDVER}" ]
 	then
 		printf 'New and old versions both %s; nothing to do\n' \
 		     "${NEWVER}"
+		docupdate
 		exit 0
+	fi
+
+	if ! "${GLOBAL}"
+	then
+		local reply
+
+		printf 'This will not use the GTZ variant of tzdata.\n'
+		read -r -p 'Is that intended? ' reply
+		case "${reply}" in
+		([Yy]*)	;;
+		(*)   printf 'Aborting after doing nothing\n'; exit 1;;
+		esac
 	fi
 
 	printf '%s\n' "${OLDVER}" > "${UPDATE_FROM}" ||
@@ -269,8 +284,8 @@ argparse()
 		printf '%s\n' "Update would revert ${OLDVER} to ${NEWVER}"
 		read -p "Is reversion intended? " reply
 		case "${reply}" in
-		[Yy]*)	;;
-		*)	printf '%s\n' OK. Aborted.
+		([Yy]*)	;;
+		(*)	printf '%s\n' OK. Aborted.
 			rm -f "${UPDATE_FROM}"
 			exit 1
 			;;
@@ -283,8 +298,8 @@ argparse()
 setup_versions()
 {
 	# Uppercase variants of OLDVER and NEWVER
-	OLDVER_UC="$( echo "${OLDVERGTZ}" | tr '[a-z]' '[A-Z]' )"
-	NEWVER_UC="$( echo "${NEWVER}" | tr '[a-z]' '[A-Z]' )"
+	OLDVER_UC="$( printf '%s\n' "${OLDVERGTZ}" | tr 'a-z' 'A-Z' )"
+	NEWVER_UC="$( printf '%s\n' "${NEWVER}" | tr 'a-z' 'A-Z' )"
 
 	# Tags for use with version control systems
 	CVSOLDTAG="TZDATA${OLDVER_UC}"
@@ -292,13 +307,13 @@ setup_versions()
 	CVSBRANCHTAG="TZDATA"
 	GITHUBTAG="${NEWVER}"
 
-	if $GLOBAL && [ "${CVSNEWTAG%GTZ}" = "${CVSNEWTAG}" ]
+	if "${GLOBAL}" && [ "${CVSNEWTAG%GTZ}" = "${CVSNEWTAG}" ]
 	then
 		CVSNEWTAG=${CVSNEWTAG}GTZ
 	fi
 
 	# URLs for fetching distribution files, etc.
-	if $GLOBAL
+	if "${GLOBAL}"
 	then
 		DISTURL=${GTZURL}/${FETCHVER}/tzdata${FETCHVER}.tar.gz
 		unset SIGURL
@@ -326,6 +341,7 @@ setup_versions()
 	IMPORTDONEFILE="${WORKDIR}/import.done"
 	MERGSMSGFILE="${WORKDIR}/merge.msg"
 	MERGEDONEFILE="${WORKDIR}/merge.done"
+	FILECONTENTCHECKDONE="${WORKDIR}/filecheck.done"
 	COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
 
 	printf '%s\n' "${CVSOLDTAG}"  > "${WORK_PFX}/updating_from"
@@ -336,25 +352,25 @@ DOIT()
 	local really_do_it=false
 	local reply
 
-	echo "In directory $(pwd)"
-	echo "ABOUT TO DO:" "$(shell_quote "$@")"
+	printf 'In directory %s\n' "$(pwd)"
+	printf 'ABOUT TO DO: %s\n' "$(shell_quote "$@")"
 	read -p "Really do it? [yes/no/quit] " reply
 	case "${reply}" in
-	[yY]*)	really_do_it=true ;;
-	[nN]*)	really_do_it=false ;;
-	[qQ]*)
-		echo "Aborting"
+	([yY]*)	really_do_it=true ;;
+	([nN]*)	really_do_it=false ;;
+	([qQ]*)
+		printf 'Aborting\n'
 		return 1
 		;;
-	*)	echo "Huh?"
+	(*)	printf 'Huh?\n'
 		return 1
 		;;
 	esac
-	if $really_do_it; then
-		echo "REALLY DOING IT NOW..."
+	if "$really_do_it"; then
+		printf 'REALLY DOING IT NOW...\n'
 		"$@"
 	else
-		echo "NOT REALLY DOING THE ABOVE COMMAND"
+		printf 'NOT DOING THE ABOVE COMMAND\n'
 	fi
 }
 
@@ -374,10 +390,10 @@ shell_quote()
 	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
 	for arg in "$@" ; do
 		case "${arg}" in
-		'')
+		('')
 			qarg="''"
 			;;
-		*[!-./a-zA-Z0-9]*)
+		(*[!-./a-zA-Z0-9]*)
 			# Convert each embedded ' to '\'',
 			# then insert ' at the beginning of the first line,
 			# and append ' at the end of the last line.
@@ -392,7 +408,7 @@ shell_quote()
 				-e "s/'''/'/g"
 				)"
 			;;
-		*)
+		(*)
 			# Arg is not the empty string, and does not contain
 			# any unsafe characters.  Leave it unchanged for
 			# readability.
@@ -424,7 +440,7 @@ validate_pwd()
 		# allow your private branch tag to pass. Eg:
 
 		#	case "$(cat "${P}/CVS/Tag")" in
-		#	my-branch-name)	return 0;;
+		#	(my-branch-name)	return 0;;
 		#	esac
 
 		# Do not commit a version of this script modified that way,
@@ -442,9 +458,12 @@ validate_pwd()
 findcvsroot()
 {
 	[ -n "${CVSROOT}" ] && return 0
-	CVSROOT="$( cat ./CVS/Root )"
+	CVSROOT="$( cat ./CVS/Root )" || {
+		printf 'No CVS/Root in %s\n' "$(pwd)"
+		return 1
+	}
 	[ -n "${CVSROOT}" ] && return 0
-	echo >&2 "Failed to set CVSROOT value"
+	printf >&2 'Failed to set CVSROOT value\n'
 	return 1
 }
 
@@ -481,15 +500,19 @@ fetch()
 
 checksig()
 {
-	{ gpg --verify "${SIGFILE}" "${DISTFILE}"
-	  echo gpg exit status $?
-	} 2>&1 | tee "${PGPVERIFYLOG}"
+	{
+		gpg --verify "${SIGFILE}" "${DISTFILE}"
+		printf 'gpg exit status %s\n' "$?"
+	} 2>&1 |
+		tee "${PGPVERIFYLOG}"
 
 	# The output should contain lines that match all the following regexps
 	#
-	while read line; do
-		if ! grep -E -q -e "^${line}\$" "${PGPVERIFYLOG}"; then
-			echo >&2 "Failed to verify signature: ${line}"
+	while read line
+	do
+		if ! grep -E -q -e "^${line}\$" "${PGPVERIFYLOG}"
+		then
+			printf >&2 'Failed to verify signature: %s\n' "${line}"
 			return 1
 		fi
 	done <<'EOF'
@@ -546,7 +569,7 @@ zonelists()
 
 	if cmp -s "${WORKDIR}"/oldzones "${WORKDIR}"/newzones >/dev/null
 	then
-		printf "No zones added or deleted by this update"
+		printf 'No zones added or deleted by this update\n'
 		> "${WORKDIR}"/removedzones
 		> "${WORKDIR}"/addedzones
 		return 0
@@ -612,7 +635,7 @@ updatedzones()
 			'Zones created that should not have been:'
 		comm -13 "${WORKDIR}"/newzones "${WORKDIR}"/updzones |
 			sed 's/^/	/'
-		prinrf '%s\n' \
+		printf '%s\n' \
 			'-------------------------------------------------'
 
 		fail 'cvs import/merge/update/commit botch'
@@ -650,7 +673,7 @@ trimnews()
 	    ' \
 		<"${NEWSFILE}" >"${NEWSTRIMFILE}"
 
-	if $GLOBAL
+	if "${GLOBAL}"
 	then
 		printf '%s\n' "tzdata-${NEWVER}gtz"
 	else
@@ -786,7 +809,7 @@ EOF
 	printf '%s\n' ================================== \
 		'The following differences exist between the merge results' \
 		'and the imported files:' '================================='
-	diff -ur "${EXTRACTDIR}" .
+	diff -ur "${EXTRACTDIR}" . || :
 	printf '%s\n' ==================================
 }
 
@@ -802,6 +825,119 @@ EOF
 		return 1
 	fi
 }
+
+checkfilecontents()
+(
+	if [ -e "${FILECONTENTCHECKDONE}" ]
+	then
+		printf 'Repository file contents checked already\n'
+		exit 0
+	fi
+
+	set +e +f
+
+	auto=false
+
+	cd "${EXTRACTDIR}" || exit 1
+	set -- *
+
+	if test "$1" = '*'
+	then
+		if [ "$#" -eq 1 ] && ! [ -e "$1" ]
+		then
+			printf 'No files in "%s" !!\nAborting.\n' \
+			    "${EXTRACTDIR}"
+			exit 1
+		fi
+		printf	\
+		    'A file named "*" exists in "%s" !!\nDanger!!\nAborting.\n'\
+		    "${EXTRACTDIR}"
+		exit 1
+	fi
+
+	unset -v LESS MORE
+
+	exit=0
+	cd "${TZDISTDIR}" || exit 1
+
+	for file
+	do
+		if ! test -e "${file}"
+		then
+			printf 'In distribution but not in new tree: %s\n' \
+			    "${file}"
+			cp "${EXTRACTDIR}${file}" .
+			DOIT cvs -d "${CVSROOT}" add \
+			    -m "Added by ${NEWVER}" "${file}"
+			continue
+		fi
+
+		cmp -s "${EXTRACTDIR}/${file}" "${file}" && continue
+
+		if "${auto}"
+		then
+			cp -p "${EXTRACTDIR}/${file}" "${file}"
+			continue
+		fi
+
+		printf 'Differences in "%s" (- existing + updated)\n\n' \
+		    "${file}"
+		diff -u "${file}" "${EXTRACTDIR}/${file}" | more
+		read -rp "Update ${file} to new version? (y/n/all)" reply
+		case "${reply}" in
+		([Nn]*) continue;;
+		([Yy]*|[Aa]|[Aa]ll) ;;
+		([Qq]*)	exit 1;;
+		(*)	printf 'Unexpected reply, abort.\n'
+			exit 1;;
+		esac
+
+		cp -p "${EXTRACTDIR}/${file}" "${file}"
+
+		case "${reply}" in
+		([Aa]*)	auto=true;;
+		esac
+	done
+
+	set -- *
+	LIST=
+	for file	# nb: continue if there are no files, $1='*'
+	do
+		if test "${file}" = TZDATA_VERSION	||
+		   test "${file}" = CVS			||
+		   test -e "${EXTRACTDIR}/${file}"
+		then
+			continue
+		fi
+		printf 'File "%s" no longer exists in %s\n' \
+			"${file}" "${NEWVER}"
+		LIST="${LIST} '${file}'"
+	done
+
+	eval set -- ${LIST}
+	while :
+	do
+		case $# in
+		(0)	break;;
+		(1)	M='this file';;
+		(*)	M='these files';;
+		esac
+
+		read -rp "OK to remove $M from the repository? " reply
+		case "${reply}" in
+		([Yy]*)	;;
+		([Nn]*)	break;;
+		(*)	exit 1;;
+		esac
+
+		rm -f "$@"
+		DOIT cvs -d "${CVSROOT}" remove "${@}"
+	done
+
+	touch "${FILECONTENTCHECKDONE}" || exit 1
+
+	exit "${exit}"
+)
 
 cvscommitmerge()
 {
@@ -846,17 +982,17 @@ setlistupdate()
 				P=./usr/share/zoneinfo/"${file}"
 				T2='		'
 				case "$(( 48 - ${#P} ))" in
-				-*|0)	T2='	'	T='	'	 ;;
-				[12345678])		T='	'	 ;;
-				9|1[0123456])		T='		';;
-				1[789]|2[01234]) T='			';;
-				2[5-9]|3[012])
+				(-*|0)	T2='	'	T='	'	 ;;
+				([12345678])		T='	'	 ;;
+				(9|1[0123456])		T='		';;
+				(1[789]|2[01234]) T='			';;
+				(2[5-9]|3[012])
 					T='				';;
 				# the following cases can't happen,
 				# but for completeness...
-				3[3-9])
+				(3[3-9])
 				    T='					';;
-				*)  T='				'
+				(*)  T='				'
 				    T="${T}		"		;;
 				esac
 
@@ -908,15 +1044,15 @@ setlistupdate()
 
 			cd ${TZBASE}/../../../distrib/sets || exit 1
 			cd lists/base || exit 2
-			DOIT cvs -d "${CVSROOT}" -q update mi || exit 3
-			cp mi mi.unsorted || exit 4
+			cvs -d "${CVSROOT}" -q update -A mi || exit 3
+			cp -p mi mi.unsorted || exit 4
 			sh ../../sort-list mi || exit 5
 			cmp -s mi mi.unsorted ||
 				DOIT cvs -d "${CVSROOT}" -q commit \
 					-m 'Sort (NFCI)' mi || exit 6
 			rm -f mi.unsorted
 			sed -f "${WORKDIR}/sedcmds" < mi > mi.new || exit 7
-			test ! -s mi.new || cmp -s mi mi.new && {
+			! test -s mi.new || cmp -s mi mi.new && {
 				printf 'Failed to make changes to set lists'
 				exit 8
 			}
@@ -944,20 +1080,114 @@ setlistupdate()
 	fi
 }
 
+docupdate()
+{
+	cd "${TZBASE}"
+
+	MSG='CHANGES and 3RDPARTY must be updated manually'
+
+	while ! [ -f UPDATING ] || ! [ -f BUILDING ]
+	do
+		if [ "${PWD}" = / ]
+		then
+			printf '%s\n' 'Unable to find NETBSDSRCDIR' "${MSG}"
+			return 1
+		fi
+		cd ..
+	done
+	if ! [ -d doc ]
+	then
+		printf '%s\n' "No doc directory in ${PWD}" "${MSG}"
+		return 1
+	fi
+	cd doc
+	if ! [ -d CVS ]
+	then
+		printf '%s\n' "No CVS directory in ${PWD}" "${MSG}"
+		return 1
+	fi
+
+	printf 'Making sure doc/CHANGES and doc/3RDPARTY are up to date\n'
+	cvs -d "${CVSROOT}" -q update -A CHANGES 3RDPARTY
+
+	local commit=false
+
+	if grep "tzdata: Updated to ${NEWVER}" CHANGES
+	then
+		printf 'doc/CHANGES has already been updated'
+	else
+	    {
+		printf '\ttzdata: Updated to %s' "${NEWVER}"
+		"${GLOBAL}" && printf ' (using %sgtz)' "${NEWVER}"
+		date -u +" [${LOGNAME} %Y%m%d]"
+		commit=true
+	    } >> CHANGES
+	fi
+
+	if grep "^Version:	tzcode[^ 	]* / tzdata${NEWVER}" 3RDPARTY
+	then
+		printf 'doc/3RDPARTY has already been updated'
+	else
+		# These just make the sed script below manageable.
+		C=tzcode D=tzdata V=${NEWVER} T=${CVSNEWTAG}
+
+		G=$V
+		"${GLOBAL}" && G=${G}gtz
+
+		sed < 3RDPARTY > 3RDPARTY.new				\
+		    -e '1,/^Package:	tz$/{p;d;}'			\
+		    -e '/^Notes:/,${p;d;}'				\
+		    -e "/^Version:	/s, / ${D}.*, / ${D}${G},"	\
+		    -e "/^Current Vers:/s,tz.*$,${C}${V} / ${D}${V}," && {
+
+			mv 3RDPARTY.new 3RDPARTY
+			commit=true
+		}
+	fi
+
+	if "${commit}"
+	then
+		printf 'These are the changes that will be made:\n\n'
+
+		cvs -d "${CVSROOT}" diff -u CHANGES 3RDPARTY || :  # Ugh -e!
+
+		read -p $'\nAre those OK? [y/n] ' reply
+
+		MSG="Note tzdata${NEWVER} update"
+		if "${GLOBAL}"
+		then
+			MSG="${MSG} (via ${NEWVER}gtz)"
+		fi
+		case "${reply}" in
+		([Yy]*)   DOIT cvs -d "${CVSROOT}" commit -m "${MSG}" \
+				CHANGES 3RDPARTY
+			;;
+		(*)	printf '%s\n' \
+			   'OK, correct and commit those files manually' \
+			   'The changes shown above have been made to the files'
+			;;
+		esac
+	fi
+	return 0
+}
+
 extra()
 {
 	cat <<EOF
 Also do the following:
- * Edit and commit  src/doc/3RDPARTY
- * Edit and commit  src/doc/CHANGES
- * Edit and commit  src/distrib/sets/lists/base/mi
- *      if the set of installed files altered (if not done by the script).
  * Submit pullup requests for all active release branches.
  * rm -rf ${WORK_PFX}  (optional)
  * Verify that
   ${UPDATE_FROM}
  * no longer exists.
+
+And if necessary (if not already done by the script):
+ * Edit and commit  src/doc/3RDPARTY
+ * Edit and commit  src/doc/CHANGES
+ * Edit and commit  src/distrib/sets/lists/base/mi
 EOF
+
+	rm -f "${UPDATE_FROM}"	# just to try to make sure, as we're done!
 }
 
 main()
@@ -974,7 +1204,7 @@ main()
 	setup_versions
 	mkworkdir
 	fetch
-	$GLOBAL || checksig
+	"${GLOBAL}" || checksig
 	extract
 
 	zonelists
@@ -986,6 +1216,7 @@ main()
 	cvsimport
 	cvsmerge
 	resolveconflicts
+	checkfilecontents
 	cvscommitmerge
 	updatedzones
 
@@ -995,6 +1226,8 @@ main()
 	rm -fr	"${WORK_PFX}"/oldzones \
 		"${WORK_PFX}"/newzones \
 		"${WORK_PFX}"/updzones
+
+	docupdate
 	extra
 }
 
