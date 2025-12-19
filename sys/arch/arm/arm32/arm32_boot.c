@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.45 2022/12/22 06:58:08 ryo Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.46 2025/12/19 13:03:51 nia Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -104,9 +104,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -122,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.45 2022/12/22 06:58:08 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.46 2025/12/19 13:03:51 nia Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"

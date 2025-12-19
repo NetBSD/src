@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.135 2025/12/11 11:19:40 nia Exp $
+.\" $NetBSD: legal.common,v 1.136 2025/12/19 13:03:51 nia Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -295,8 +295,6 @@ This product includes software developed by Matt DeBergalis
 This product includes software developed by Matthew Fredette.
 .It
 This product includes software developed by Michael Smith.
-.It
-This product includes software developed by Microsoft
 .It
 This product includes software developed by Mika Kortelainen
 .It

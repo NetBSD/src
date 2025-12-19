@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.69 2022/04/02 11:16:07 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.70 2025/12/19 13:03:51 nia Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -104,9 +104,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -128,7 +125,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.69 2022/04/02 11:16:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.70 2025/12/19 13:03:51 nia Exp $");
 
 #include <sys/param.h>
 

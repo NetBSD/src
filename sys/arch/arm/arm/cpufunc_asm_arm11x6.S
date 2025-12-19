@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.10 2018/01/20 14:43:25 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.11 2025/12/19 13:03:51 nia Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -63,7 +60,7 @@
 #include <machine/asm.h>
 #include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.10 2018/01/20 14:43:25 christos Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.11 2025/12/19 13:03:51 nia Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \

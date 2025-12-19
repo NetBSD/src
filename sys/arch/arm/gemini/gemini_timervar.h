@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timervar.h,v 1.3 2012/10/27 17:17:38 chs Exp $	*/
+/*	$NetBSD: gemini_timervar.h,v 1.4 2025/12/19 13:03:51 nia Exp $	*/
 
 
 /*
@@ -18,9 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF

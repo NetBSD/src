@@ -1,4 +1,4 @@
-/*	$NetBSD: cortex_pmc.c,v 1.8 2020/06/20 07:10:36 skrll Exp $	*/
+/*	$NetBSD: cortex_pmc.c,v 1.9 2025/12/19 13:03:51 nia Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -11,9 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -35,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.8 2020/06/20 07:10:36 skrll Exp $"); */
+/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.9 2025/12/19 13:03:51 nia Exp $"); */
 
 #include <sys/param.h>
 #include <sys/types.h>

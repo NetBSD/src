@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.8 2019/01/08 19:41:10 jdolecek Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.9 2025/12/19 13:03:51 nia Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -36,7 +33,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.8 2019/01/08 19:41:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.9 2025/12/19 13:03:51 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>

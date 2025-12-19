@@ -1,4 +1,4 @@
-$NetBSD: licensing,v 1.1 2025/11/27 17:29:10 nia Exp $
+$NetBSD: licensing,v 1.2 2025/12/19 13:03:51 nia Exp $
 
 NetBSD Licensing
 ================
@@ -114,11 +114,11 @@ advertising clause:
   "the NetBSD company" of their time. It is unclear who currently owns
   Wasabi Systems' intellectual property. Someone should figure this out,
   or we should use Foundation funds to acquire it.
-* 4-clause BSD licenses are also found in the tree belonging to Microsoft
-  (primarily in arm code), Cisco (primarily in SCTP code), and Intel
-  (primarily in ia64 code). These are huge corporations with publicly
-  contactable legal departments. It's also possible someone knows an
-  insider who could accelerate the process.
+* 4-clause BSD licenses are also found in the tree belonging to
+  Cisco (primarily in SCTP code) and Intel (primarily in ia64 code).
+  These are huge corporations with publicly contactable legal
+  departments. It's also possible someone knows an insider who could
+  accelerate the process.
 
 Otherwise, the social and legal tasks mostly involve trying to find
 old contributors' current email addresses, and asking them for
