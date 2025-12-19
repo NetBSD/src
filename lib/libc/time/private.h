@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.72 2025/12/18 17:45:29 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.73 2025/12/19 17:24:41 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -956,7 +956,8 @@ ATTRIBUTE_PURE time_t time2posix_z(timezone_t __restrict, time_t);
 */
 
 #define TYPE_BIT(type) (CHAR_BIT * (ptrdiff_t) sizeof(type))
-#define TYPE_SIGNED(type) (/*CONSTCOND*/((type) -1) < 0)
+#define TYPE_SIGNED(type) \
+     (((type)~(type)0 >> (sizeof(type) * CHAR_BIT - 1)) == (type)-1)
 #define TWOS_COMPLEMENT(t) (/*CONSTCOND*/(t) ~ (t) 0 < 0)
 
 /* Minimum and maximum of two values.  Use lower case to avoid
