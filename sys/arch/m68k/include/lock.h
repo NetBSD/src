@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18 2025/12/19 14:57:26 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.19 2025/12/19 15:01:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,8 @@
  * For non-kernel or for __HAVE_M68K_BROKEN_RMC, we use _atomic_cas_8()
  * to implement simple locks rather than TAS.
  */
-#if defined(__HAVE_M68K_BROKEN_RMC) || !defined(_KERNEL)
+#if !defined(__mc68010__) && \
+    (defined(__HAVE_M68K_BROKEN_RMC) || !defined(_KERNEL))
 #define	__SIMPLELOCK_USE_CAS8
 extern uint8_t _atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
 #endif
