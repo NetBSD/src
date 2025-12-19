@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfconstants.m4,v 1.19 2025/12/09 18:14:48 jkoshy Exp $
+dnl 	$NetBSD: elfconstants.m4,v 1.20 2025/12/19 15:27:25 jkoshy Exp $
 # Copyright (c) 2010,2021 Joseph Koshy
 # All rights reserved.
 
@@ -24,7 +24,7 @@ dnl 	$NetBSD: elfconstants.m4,v 1.19 2025/12/09 18:14:48 jkoshy Exp $
 # SUCH DAMAGE.
 
 define(`VCSID_ELFCONSTANTS_M4',
-	`Id: elfconstants.m4 4309 2025-12-09 18:06:46Z jkoshy')
+	`Id: elfconstants.m4 4311 2025-12-17 14:53:55Z jkoshy')
 
 define(`COMPATIBILITY_NOTICE',`dnl
 # These definitions are believed to be compatible with:
@@ -3071,6 +3071,19 @@ _(R_LARCH_TLS_LE_LO12_R,		123)
 _(R_LARCH_TLS_LD_PCREL20_S2,		124)
 _(R_LARCH_TLS_GD_PCREL20_S2,		125)
 _(R_LARCH_TLS_DESC_PCREL20_S2,		126)
+_(R_LARCH_CALL30,			127)
+_(R_LARCH_PCADD_HI20,			128)
+_(R_LARCH_PCADD_LO12,			129)
+_(R_LARCH_GOT_PCADD_HI20,		130)
+_(R_LARCH_GOT_PCADD_LO12,		131)
+_(R_LARCH_TLS_IE_PCADD_HI20,		132)
+_(R_LARCH_TLS_IE_PCADD_LO12,		133)
+_(R_LARCH_TLS_LD_PCADD_HI20,		134)
+_(R_LARCH_TLS_LD_PCADD_LO12,		135)
+_(R_LARCH_TLS_GD_PCADD_HI20,		136)
+_(R_LARCH_TLS_GD_PCADD_LO12,		137)
+_(R_LARCH_TLS_DESC_PCADD_HI20,		138)
+_(R_LARCH_TLS_DESC_PCADD_LO12,		139)
 ')
 
 define(`DEFINE_MIPS_RELOCATION_TYPES',`

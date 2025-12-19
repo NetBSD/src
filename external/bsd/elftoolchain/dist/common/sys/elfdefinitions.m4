@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.17 2025/12/09 18:14:48 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.18 2025/12/19 15:27:25 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
@@ -26,7 +26,7 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.17 2025/12/09 18:14:48 jkoshy Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 4309 2025-12-09 18:06:46Z jkoshy')
+	`Id: elfdefinitions.m4 4318 2025-12-18 21:02:33Z jkoshy')
 include(`elfconstants.m4')dnl
 
 # Compute the whitespace between a symbol and its definition.
@@ -336,6 +336,7 @@ typedef uint64_t	Elf64_Lword;	/* Unsigned long integer. */
 typedef uint64_t	Elf64_Xword;	/* Unsigned long integer. */
 typedef int64_t		Elf64_Sxword;	/* Signed long integer. */
 
+typedef uint8_t		Elf_Byte;	/* Synonym used in NetBSD. */
 
 /*
  * Capability descriptors.
@@ -402,7 +403,7 @@ typedef struct {
 
 /* 32 bit EHDR. */
 typedef struct {
-	unsigned char   e_ident[EI_NIDENT]; /* ELF identification. */
+	Elf32_Byte      e_ident[EI_NIDENT]; /* ELF identification. */
 	Elf32_Half      e_type;	     /* Object file type (ET_*). */
 	Elf32_Half      e_machine;   /* Machine type (EM_*). */
 	Elf32_Word      e_version;   /* File format version (EV_*). */
@@ -421,7 +422,7 @@ typedef struct {
 
 /* 64 bit EHDR. */
 typedef struct {
-	unsigned char   e_ident[EI_NIDENT]; /* ELF identification. */
+	Elf64_Byte      e_ident[EI_NIDENT]; /* ELF identification. */
 	Elf64_Half      e_type;	     /* Object file type (ET_*). */
 	Elf64_Half      e_machine;   /* Machine type (EM_*). */
 	Elf64_Word      e_version;   /* File format version (EV_*). */
@@ -590,13 +591,17 @@ typedef struct {
 	Elf64_Half	m_stride;    /* Number of units to skip. */
 } Elf64_Move;
 
-#define ELF32_M_SYM(I)		((I) >> 8)
-#define ELF32_M_SIZE(I)		((unsigned char) (I))
-#define ELF32_M_INFO(M, S)	(((M) << 8) + (unsigned char) (S))
+#define ELF_M_SYM(I)		((I) >> 8)
+#define ELF_M_SIZE(I)		((I) & 0xFFU)
+#define ELF_M_INFO(M, S)	(((M) << 8) + ((S) & 0xFFU))
 
-#define ELF64_M_SYM(I)		((I) >> 8)
-#define ELF64_M_SIZE(I)		((unsigned char) (I))
-#define ELF64_M_INFO(M, S)	(((M) << 8) + (unsigned char) (S))
+#define ELF32_M_SYM(I)		ELF_M_SYM(I)
+#define ELF32_M_SIZE(I)		ELF_M_SIZE(I)
+#define ELF32_M_INFO(M, S)	ELF_M_INFO(M, S)
+
+#define ELF64_M_SYM(I)		ELF_M_SYM(I)
+#define ELF64_M_SIZE(I)		ELF_M_SIZE(I)
+#define ELF64_M_INFO(M, S)	ELF_M_INFO(M, S)
 
 /*
  * Section Header Table (SHDR) entries.
@@ -639,15 +644,15 @@ typedef struct {
 	Elf32_Word	st_name;     /* index of symbol's name */
 	Elf32_Addr	st_value;    /* value for the symbol */
 	Elf32_Word	st_size;     /* size of associated data */
-	unsigned char	st_info;     /* type and binding attributes */
-	unsigned char	st_other;    /* visibility */
+	Elf32_Byte	st_info;     /* type and binding attributes */
+	Elf32_Byte	st_other;    /* visibility */
 	Elf32_Half	st_shndx;    /* index of related section */
 } Elf32_Sym;
 
 typedef struct {
 	Elf64_Word	st_name;     /* index of symbol's name */
-	unsigned char	st_info;     /* type and binding attributes */
-	unsigned char	st_other;    /* visibility */
+	Elf64_Byte	st_info;     /* type and binding attributes */
+	Elf64_Byte	st_other;    /* visibility */
 	Elf64_Half	st_shndx;    /* index of related section */
 	Elf64_Addr	st_value;    /* value for the symbol */
 	Elf64_Xword	st_size;     /* size of associated data */
@@ -719,8 +724,8 @@ typedef Elf32_Word	Elf32_Relr;
 typedef Elf64_Xword	Elf64_Relr;
 
 #define ELF32_R_SYM(I)		((I) >> 8)
-#define ELF32_R_TYPE(I)		((unsigned char) (I))
-#define ELF32_R_INFO(S,T)	(((S) << 8) + (unsigned char) (T))
+#define ELF32_R_TYPE(I)		((I) & 0xFFU)
+#define ELF32_R_INFO(S,T)	(((S) << 8) + ((T) & 0xFFU))
 
 #define ELF64_R_SYM(I)		((I) >> 32)
 #define ELF64_R_TYPE(I)		((I) & 0xFFFFFFFFUL)
