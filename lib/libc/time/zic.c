@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.96 2025/12/18 17:45:30 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.97 2025/12/19 00:15:10 kre Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -22,7 +22,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.96 2025/12/18 17:45:30 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.97 2025/12/19 00:15:10 kre Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -834,8 +834,8 @@ close_file(FILE *stream, char const *dir, char const *name,
 	   char const *tempname)
 {
   char const *e = (ferror(stream) ? _("I/O error")
-		   : (fflush(stream) < 0
-		      || (tempname && chmetadata(stream) < 0)
+		   : ((tempname
+		       && (fflush(stream) < 0 || chmetadata(stream) < 0))
 		      || fclose(stream) < 0)
 		   ? strerror(errno) : NULL);
   if (e) {
