@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17 2022/02/13 13:41:44 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.18 2025/12/19 14:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,15 @@
 #ifndef _M68K_LOCK_H_
 #define	_M68K_LOCK_H_
 
+/*
+ * For non-kernel or for __HAVE_M68K_BROKEN_RMC, we use _atomic_cas_8()
+ * to implement simple locks rather than TAS.
+ */
+#if defined(__HAVE_M68K_BROKEN_RMC) || !defined(_KERNEL)
+#define	__SIMPLELOCK_USE_CAS8
+extern uint8_t _atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
+#endif
+
 static __inline int
 __SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
@@ -71,13 +80,21 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
+#ifdef __SIMPLELOCK_USE_CAS8
+	uint8_t __val;
 
+	do {
+		__val = _atomic_cas_8(alp, __SIMPLELOCK_UNLOCKED,
+		    __SIMPLELOCK_LOCKED);
+	} while (__val != __SIMPLELOCK_UNLOCKED);
+#else
 	__asm volatile(
 		"1:	tas	%0	\n"
 		"	jne	1b	\n"
 		: "=m" (*alp)
 		: /* no inputs */
 		: "cc", "memory");
+#endif
 }
 
 static __inline int
@@ -85,6 +102,10 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __rv;
 
+#ifdef __SIMPLELOCK_USE_CAS8
+	__rv = _atomic_cas_8(alp, __SIMPLELOCK_UNLOCKED, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_UNLOCKED;
+#else
 	__asm volatile(
 		"	moveq	#1, %1	\n"
 		"	tas	%0	\n"
@@ -94,6 +115,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 		: "=m" (*alp), "=d" (__rv)
 		: /* no inputs */
 		: "cc", "memory");
+#endif
 
 	return (__rv);
 }
