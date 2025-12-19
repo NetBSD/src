@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.9 2025/12/18 05:28:22 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.10 2025/12/19 23:01:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@
 	    "expected no exceptions, got 0x%x", _except);		      \
 } while (0)
 #else
-#  define	CLEAREXCEPT()	__empty
-#  define	CHECKEXCEPT()	__empty
+#  define	CLEAREXCEPT()	__nothing
+#  define	CHECKEXCEPT()	__nothing
 #endif
 
 #if __STDC_VERSION__ - 0 >= 202311L
