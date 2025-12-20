@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.73 2025/12/19 17:24:41 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.74 2025/12/20 15:27:22 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -957,7 +957,7 @@ ATTRIBUTE_PURE time_t time2posix_z(timezone_t __restrict, time_t);
 
 #define TYPE_BIT(type) (CHAR_BIT * (ptrdiff_t) sizeof(type))
 #define TYPE_SIGNED(type) \
-     (((type)~(type)0 >> (sizeof(type) * CHAR_BIT - 1)) == (type)-1)
+     (/*LINTED*/((type)~(type)0 >> (sizeof(type) * CHAR_BIT - 1)) == (type)-1)
 #define TWOS_COMPLEMENT(t) (/*CONSTCOND*/(t) ~ (t) 0 < 0)
 
 /* Minimum and maximum of two values.  Use lower case to avoid
@@ -1190,15 +1190,9 @@ enum {
 #ifdef _LIBC
 #include "reentrant.h"
 extern struct __state *__lcl_ptr;
-extern time_t __lcl_get_monotonic_time(void);
+extern int_fast64_t __lcl_get_monotonic_time(void);
 extern int __lcl_lock(void);
 extern void __lcl_unlock(bool);
-#if defined(__LIBC12_SOURCE__)
-#define tzset_unlocked __tzset_unlocked
-#else
-#define tzset_unlocked __tzset_unlocked50
-#endif
-
-void tzset_unlocked(bool, bool, time_t);
+void tzset_unlocked(bool, bool, int_fast64_t);
 
 #endif /* !defined PRIVATE_H */

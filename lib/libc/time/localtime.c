@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.148 2025/12/18 17:45:29 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.149 2025/12/20 15:27:22 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.148 2025/12/18 17:45:29 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.149 2025/12/20 15:27:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -195,7 +195,11 @@ rd2wrlock(ATTRIBUTE_MAYBE_UNUSED bool threaded)
 #endif
 
 #if THREAD_SAFE
+#ifndef __lint__ // XXX: Broken
 typedef pthread_once_t once_t;
+#else
+#define once_t pthread_once_t
+#endif
 # define ONCE_INIT PTHREAD_ONCE_INIT
 #else
 typedef bool once_t;
@@ -328,7 +332,7 @@ int __tz_change_interval = TZ_CHANGE_INTERVAL;
 
 /* The type of monotonic times.
    This is the system time_t, even if USE_TIMEX_T #defines time_t below.  */
-typedef time_t monotime_t;
+typedef __time_t monotime_t;
 
 /* On platforms where offtime or mktime might overflow,
    strftime.c defines USE_TIMEX_T to be true and includes us.
@@ -625,7 +629,9 @@ static struct state *const gmtptr = &gmtmem;
 #endif /* !defined TZ_STRLEN_MAX */
 
 #if !USE_TIMEX_T || !defined TM_GMTOFF
+#ifndef __LIBC12_SOURCE__
 static char		lcl_TZname[TZ_STRLEN_MAX + 1];
+#endif
 static int		lcl_is_set;
 #endif
 
@@ -802,6 +808,7 @@ update_tzname_etc(struct state const *sp, struct ttinfo const *ttisp)
 # endif
 }
 
+#ifndef __LIBC12_SOURCE__
 /* If STDDST_MASK indicates that SP's TYPE provides useful info,
    update tzname, timezone, and/or altzone and return STDDST_MASK,
    diminished by the provided info if it is a specified local time.
@@ -855,6 +862,7 @@ settzname(void)
 	daylight = (unsigned int)stddst_mask >> 1 ^ 1;
 # endif
 }
+#endif
 
 /* Replace bogus characters in time zone abbreviations.
    Return 0 on success, an errno value if a time zone abbreviation is
@@ -1032,6 +1040,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 	  else if (issetugid())
 	    return ENOTCAPABLE;
 	  else if (!O_REGULAR) {
+	    /*NOTREACHED*/
 	    /* Check for devices, as their mere opening could have
 	       unwanted side effects.  Though racy, there is no
 	       portable way to fix the races.  This check is needed
@@ -1061,7 +1070,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 	       O_RDONLY should be OK too, as TZDIR is invariably readable.
 	       O_DIRECTORY should be redundant but might help
 	       on old platforms that mishandle trailing '/'.  */
-	    dd = open(tzdirslash,
+	    dd = open(tzdirslash, /*NOTREACHED*/
 		      ((O_SEARCH ? O_SEARCH : O_PATH ? O_PATH : O_RDONLY)
 		       | O_BINARY | O_CLOEXEC | O_CLOFORK | O_DIRECTORY));
 	    if (dd < 0)
@@ -1987,6 +1996,8 @@ gmtload(struct state *const sp)
    i.e., if this function is known to have recently returned false.
    A call is recent if it occurred less than tz_change_interval seconds ago.
    NOW should be the current time.  */
+/*LINTED: unused*/
+#ifndef __LIBC12_SOURCE__
 static bool
 fresh_tzdata(monotime_t now)
 {
@@ -1998,6 +2009,7 @@ fresh_tzdata(monotime_t now)
   last_checked = now;
   return false;
 }
+#endif
 
 /* Initialize *SP to a value appropriate for the TZ setting NAME.
    Respect TZLOADFLAGS.
@@ -2028,6 +2040,7 @@ zoneinit(struct state *sp, char const *name, char tzloadflags)
   }
 }
 
+#ifndef __LIBC12_SOURCE__
 /* Like tzset(), but in a critical section.
    If THREADED && THREAD_RWLOCK the caller has a read lock,
    and this function might upgrade it to a write lock.
@@ -2103,11 +2116,6 @@ tzset_unlocked(bool threaded, bool wall, monotime_t now)
   lcl_is_set = (sizeof lcl_TZname > namelen) - (sizeof lcl_TZname < namelen);
 }
 
-#endif
-
-#ifndef __LIBC12_SOURCE__
-#if !defined TM_GMTOFF || !USE_TIMEX_T
-
 /* If tz_change_interval is positive,
    return the current time as a monotonically nondecreasing value.
    Otherwise the return value does not matter.  */
@@ -2117,6 +2125,7 @@ get_monotonic_time(void)
   struct timespec now;
   now.tv_sec = 0;
   if (0 < tz_change_interval)
+    /*NOTREACHED*/
     clock_gettime(CLOCK_MONOTONIC_COARSE, &now);
   return now.tv_sec;
 }
@@ -2313,7 +2322,7 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t setname,
 		register int	hi = sp->timecnt;
 
 		while (lo < hi) {
-			register int	mid = (lo + hi) >> 1;
+			register int	mid = (lo + hi) / 2;
 
 			if (t < sp->ats[mid])
 				hi = mid;
