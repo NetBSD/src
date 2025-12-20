@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2024/03/05 14:15:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2025/12/20 10:51:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2024/03/05 14:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2025/12/20 10:51:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -267,9 +267,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("resetting board...\n\n");

@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.61 2024/09/08 10:09:48 andvar Exp $ */
+/*	$NetBSD: db_interface.c,v 1.62 2025/12/20 10:51:04 skrll Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2024/09/08 10:09:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.62 2025/12/20 10:51:04 skrll Exp $");
 
 #define USERACC
 
@@ -248,9 +248,9 @@ kdb_trap(int type, void *v)
 
 #ifdef DDB
 	db_active++;
-	cnpollc(1);
+	cnpollc(true);
 	db_trap(type, 0);
-	cnpollc(0);
+	cnpollc(false);
 	db_active--;
 #endif
 #ifdef KGDB

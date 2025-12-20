@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2023/08/29 21:55:11 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 2025/12/20 10:51:01 skrll Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2023/08/29 21:55:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2025/12/20 10:51:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1133,7 +1133,7 @@ fd_mountroot_hook(device_t dev)
 	int c;
 
 	printf("Insert filesystem floppy and press return.");
-	cnpollc(1);
+	cnpollc(true);
 	for (;;) {
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
@@ -1141,5 +1141,5 @@ fd_mountroot_hook(device_t dev)
 			break;
 		}
 	}
-	cnpollc(0);
+	cnpollc(false);
 }

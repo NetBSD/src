@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2025/12/20 10:51:03 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/12/20 10:51:03 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -227,9 +227,9 @@ halt_sys:
                 aprint_normal("\n");
                 aprint_normal("The operating system has halted.\n");
                 aprint_normal("Please press any key to reboot.\n\n");
-                cnpollc(1);	/* for proper keyboard command handling */
+                cnpollc(true);	/* for proper keyboard command handling */
                 cngetc();
-                cnpollc(0);
+                cnpollc(false);
 	}
 
 	aprint_normal("rebooting...\n\n");

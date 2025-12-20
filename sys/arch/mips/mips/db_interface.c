@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.99 2023/02/19 11:19:51 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.100 2025/12/20 10:51:03 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2023/02/19 11:19:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.100 2025/12/20 10:51:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -148,9 +148,9 @@ kdb_trap(int type, struct reg *regs)
 
 	ddb_regs = *regs;
 	db_active++;
-	cnpollc(1);
+	cnpollc(true);
 	db_trap(type & ~T_USER, 0 /*code*/);
-	cnpollc(0);
+	cnpollc(false);
 	db_active--;
 	*regs = ddb_regs;
 

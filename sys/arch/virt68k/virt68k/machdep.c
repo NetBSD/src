@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2025/12/17 23:43:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2025/12/20 10:51:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2025/12/17 23:43:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2025/12/20 10:51:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -513,9 +513,9 @@ cpu_reboot(int howto, char *bootstr)
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
 		printf("hit any key to reboot...\n");
-		cnpollc(1);
+		cnpollc(true);
 		(void)cngetc();
-		cnpollc(0);
+		cnpollc(false);
 		printf("\n");
 	}
 #endif

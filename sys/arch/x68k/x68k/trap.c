@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 2024/01/20 00:15:33 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.115 2025/12/20 10:51:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2024/01/20 00:15:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.115 2025/12/20 10:51:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -304,9 +304,9 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 #ifdef DEBUG
 			/* XXX should be a machine-dependent hook */
 			printf("(press a key)\n");
-			cnpollc(1);
+			cnpollc(true);
 			(void)cngetc();
-			cnpollc(0);
+			cnpollc(false);
 #endif
 		}
 		regdump((struct trapframe *)fp, 128);

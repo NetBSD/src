@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 2024/01/20 00:15:32 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.98 2025/12/20 10:51:04 skrll Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2024/01/20 00:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2025/12/20 10:51:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -312,9 +312,9 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 #ifdef DEBUG
 			/* XXX should be a machine-dependent hook */
 			printf("(press a key)\n");
-			cnpollc(1);
+			cnpollc(true);
 			(void)cngetc();
-			cnpollc(0);
+			cnpollc(false);
 #endif
 		}
 		regdump((struct trapframe *)fp, 128);

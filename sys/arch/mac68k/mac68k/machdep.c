@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.375 2025/12/02 02:32:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376 2025/12/20 10:51:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.375 2025/12/02 02:32:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376 2025/12/20 10:51:03 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -526,9 +526,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);
+		cnpollc(true);
 		(void)cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	/* Map the last physical page VA = PA for doboot() */

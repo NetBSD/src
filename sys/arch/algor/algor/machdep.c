@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2025/07/23 19:06:02 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2025/12/20 10:51:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2025/07/23 19:06:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2025/12/20 10:51:00 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -578,9 +578,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("The operating system has halted.\n");
 		printf("Please press any key to return to the monitor.\n\n");
 		led_display('h','a','l','t');
-		cnpollc(1);
+		cnpollc(true);
 		(void) cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("Returning to the monitor...\n\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.34 2024/03/05 14:15:30 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.35 2025/12/20 10:51:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2024/03/05 14:15:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2025/12/20 10:51:01 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -365,9 +365,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("resetting board...\n\n");

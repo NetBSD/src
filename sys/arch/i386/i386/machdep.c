@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.849 2025/05/05 16:57:41 imil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.850 2025/12/20 10:51:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.849 2025/05/05 16:57:41 imil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.850 2025/12/20 10:51:03 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -818,7 +818,7 @@ haltsys:
 		}
 #endif
 
-		cnpollc(1);	/* for proper keyboard command handling */
+		cnpollc(true);	/* for proper keyboard command handling */
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			printf("No keyboard - cannot reboot after all.\n");
@@ -826,7 +826,7 @@ haltsys:
 				x86_hlt();
 			}
 		}
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n");

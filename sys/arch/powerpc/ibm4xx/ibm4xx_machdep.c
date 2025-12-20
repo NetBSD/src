@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.39 2024/03/05 14:15:34 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.40 2025/12/20 10:51:04 skrll Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.39 2024/03/05 14:15:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.40 2025/12/20 10:51:04 skrll Exp $");
 
 #include "ksyms.h"
 
@@ -189,9 +189,9 @@ cpu_reboot(int howto, char *what)
 		printf("The operating system has halted.\n"
 		    "Press any key to reboot.\n\n");
 
-		cnpollc(1);
+		cnpollc(true);
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");

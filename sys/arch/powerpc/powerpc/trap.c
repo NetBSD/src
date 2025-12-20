@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165 2023/12/15 09:31:02 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.166 2025/12/20 10:51:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2023/12/15 09:31:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2025/12/20 10:51:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -489,9 +489,9 @@ brain_damage2:
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
-		cnpollc(1);
+		cnpollc(true);
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 #endif
 		panic("trap");
 	}

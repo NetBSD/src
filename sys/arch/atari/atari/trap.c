@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2023/10/05 19:41:03 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.120 2025/12/20 10:51:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2023/10/05 19:41:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2025/12/20 10:51:01 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -278,9 +278,9 @@ kgdb_cont:
 #ifdef DEBUG
 		/* XXX Should be a machine dependent hook */
 		printf("(press a key)\n");
-		cnpollc(1);
+		cnpollc(true);
 		(void)cngetc();
-		cnpollc(0);
+		cnpollc(false);
 #endif
 	}
 

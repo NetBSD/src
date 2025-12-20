@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.58 2024/03/05 14:15:35 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.59 2025/12/20 10:51:05 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2024/03/05 14:15:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2025/12/20 10:51:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -372,9 +372,9 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");

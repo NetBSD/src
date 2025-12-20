@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.118 2025/12/06 13:05:05 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.119 2025/12/20 10:51:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.118 2025/12/06 13:05:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.119 2025/12/20 10:51:05 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1650,7 +1650,7 @@ fd_mountroot_hook(device_t dev)
 	int c;
 
 	printf("Insert filesystem floppy and press return.");
-	cnpollc(1);
+	cnpollc(true);
 	for (;;) {
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
@@ -1658,7 +1658,7 @@ fd_mountroot_hook(device_t dev)
 			break;
 		}
 	}
-	cnpollc(0);
+	cnpollc(false);
 }
 
 static void

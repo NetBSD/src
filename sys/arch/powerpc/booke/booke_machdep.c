@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.35 2024/03/05 14:15:34 thorpej Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.36 2025/12/20 10:51:04 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.35 2024/03/05 14:15:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.36 2025/12/20 10:51:04 skrll Exp $");
 
 #include "ksyms.h"
 
@@ -284,9 +284,9 @@ cpu_reboot(int howto, char *what)
 	if (howto & RB_HALT) {
 		printf("The operating system has halted.\n"
 		    "Press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting\n\n");

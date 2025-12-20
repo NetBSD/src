@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.84 2023/10/04 20:28:06 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.85 2025/12/20 10:51:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.84 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.85 2025/12/20 10:51:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -168,9 +168,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);
+		cnpollc(true);
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.383 2025/04/25 00:59:26 riastradh Exp $ */
+/* $NetBSD: machdep.c,v 1.384 2025/12/20 10:51:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.383 2025/04/25 00:59:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.384 2025/12/20 10:51:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1111,9 +1111,9 @@ haltsys:
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
-	cnpollc(1);	/* for proper keyboard command handling */
+	cnpollc(true);	/* for proper keyboard command handling */
 	cngetc();
-	cnpollc(0);
+	cnpollc(false);
 	printf("\n");
 #endif
 

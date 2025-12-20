@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.191 2025/11/29 16:52:32 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.192 2025/12/20 10:51:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.191 2025/11/29 16:52:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.192 2025/12/20 10:51:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -625,9 +625,9 @@ db_command_loop(void)
 		if (db_print_position() != 0)
 			db_printf("\n");
 		db_output_line = 0;
-		cnpollc(1);
+		cnpollc(true);
 		(void) db_read_line();
-		cnpollc(0);
+		cnpollc(false);
 		db_command(&db_last_command);
 	}
 
