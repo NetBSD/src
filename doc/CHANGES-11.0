@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.57 2025/12/18 18:36:31 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.58 2025/12/20 12:27:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1262,4 +1262,9 @@ sys/arch/vax/include/byte_swap.h		1.13
 	PR 59839: eliminate recursive dependency on <sys/bswap.h> in
 	some architecture's <byte_swap.h>.
 	[nia, ticket #132]
+
+bin/sh/arithmetic.c				1.6
+
+	sh(1): correct syntax of ?: operator in arithmetic.
+	[kre, ticket #133]
 
