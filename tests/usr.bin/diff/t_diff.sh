@@ -1,4 +1,4 @@
-# $NetBSD: t_diff.sh,v 1.4 2025/11/28 23:01:28 nia Exp $
+# $NetBSD: t_diff.sh,v 1.5 2025/12/20 00:49:43 nia Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -92,6 +92,9 @@ simple_body()
 
 	atf_check \
 		diff -q "$(atf_get_srcdir)/input1.in" "$(atf_get_srcdir)/input1.in"
+
+	atf_check \
+		diff -q -U 2 -p "$(atf_get_srcdir)/input1.in" "$(atf_get_srcdir)/input1.in"
 
 	atf_check -o file:$(atf_get_srcdir)/simple_i.out -s eq:1 \
 		diff -i "$(atf_get_srcdir)/input_c1.in" "$(atf_get_srcdir)/input_c2.in"
