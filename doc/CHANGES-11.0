@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.58 2025/12/20 12:27:37 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.59 2025/12/20 13:52:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1267,4 +1267,19 @@ bin/sh/arithmetic.c				1.6
 
 	sh(1): correct syntax of ?: operator in arithmetic.
 	[kre, ticket #133]
+
+bin/df/df.c					1.105
+distrib/sets/lists/base/shl.mi			1.1018
+distrib/sets/lists/debug/shl.mi			1.379
+include/util.h					1.71
+lib/libutil/shlib_version			1.55
+lib/libutil/strpct.3				1.8
+lib/libutil/strpct.c				1.7
+lib/libutil/util.expsym				1.2
+tests/bin/df/t_df.sh				1.4
+
+	libutil: added strpct() rounding options strpct_r (etc)
+	df(1): PR 59811: corrected to round percentages away from 0
+	as POSIX requires.
+	[kre, ticket #134]
 
