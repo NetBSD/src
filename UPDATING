@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.388 2025/11/29 14:39:36 riastradh Exp $
+$NetBSD: UPDATING,v 1.389 2025/12/20 15:33:26 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20251219:
+	Reorganization of libraries for PR 58648 requires a new enough
+	nbcrunchgen tool (this should be build automatically) and manual
+	removal of $DESTDIR/usr/lib/libssh* and $DESTDIR/usr/lib/*/libssh*.
 
 20251028:
 	libpthread had it's shared library version go back (from 1.7 to
