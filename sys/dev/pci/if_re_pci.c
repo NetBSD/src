@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.54 2025/11/28 11:45:26 mlelstv Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.55 2025/12/20 06:50:45 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.54 2025/11/28 11:45:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.55 2025/12/20 06:50:45 mlelstv Exp $");
 
 #include <sys/types.h>
 
@@ -306,6 +306,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
+	pci_intr_setattr(pc, psc->sc_ih, PCI_INTR_MPSAFE, true);
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	re_attach(sc);

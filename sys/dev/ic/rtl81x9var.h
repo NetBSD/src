@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.59 2024/08/12 18:55:01 christos Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.60 2025/12/20 06:50:45 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -113,9 +113,8 @@ struct rtk_mii_frame {
  * The 8139C+ and 8169 gigE chips support descriptor-based TX
  * and RX. In fact, they even support TCP large send. Descriptors
  * must be allocated in contiguous blocks that are aligned on a
- * 256-byte boundary. The RX rings can hold a maximum of 64 descriptors.
- * The TX rings can hold upto 64 descriptors on 8139C+, and
- * 1024 descriptors on 8169 gigE chips.
+ * 256-byte boundary. The rings can hold a maximum of 64 descriptors
+ * on 8139C+, and 1024 descriptors on 8169 gigE chips.
  */
 #define RE_RING_ALIGN		256
 
@@ -123,10 +122,10 @@ struct rtk_mii_frame {
  * Size of descriptors and TX queue.
  * These numbers must be power of two to simplify RE_NEXT_*() macro.
  */
-#define RE_RX_DESC_CNT		64
+#define RE_RX_DESC_CNT_8139	64
 #define RE_TX_DESC_CNT_8139	64
+#define RE_RX_DESC_CNT_8169	256
 #define RE_TX_DESC_CNT_8169	1024
-#define RE_TX_QLEN		64
 
 #define RE_NTXDESC_RSVD		4
 
@@ -143,7 +142,7 @@ struct re_txq {
 };
 
 struct re_list_data {
-	struct re_txq		re_txq[RE_TX_QLEN];
+	struct re_txq		re_txq[RE_TX_DESC_CNT_8169]; /* RE_TX_QLEN */
 	int			re_txq_considx;
 	int			re_txq_prodidx;
 	int			re_txq_free;
@@ -156,7 +155,8 @@ struct re_list_data {
 	bus_dma_segment_t	re_tx_listseg;
 	int			re_tx_listnseg;
 
-	struct re_rxsoft	re_rxsoft[RE_RX_DESC_CNT];
+	struct re_rxsoft	re_rxsoft[RE_RX_DESC_CNT_8169];
+	int			re_rx_desc_cnt; /* # of descriptors */
 	bus_dmamap_t		re_rx_list_map;
 	struct re_desc		*re_rx_list;
 	int			re_rx_prodidx;
@@ -229,16 +229,21 @@ struct rtk_softc {
 	void	(*sc_disable)	(struct rtk_softc *);
 
 	krndsource_t     rnd_source;
+
+	kmutex_t		sc_lock;
+	u_short			sc_if_flags;
 };
 
 #define RE_TX_DESC_CNT(sc)	((sc)->re_ldata.re_tx_desc_cnt)
 #define RE_TX_LIST_SZ(sc)	(RE_TX_DESC_CNT(sc) * sizeof(struct re_desc))
 #define RE_NEXT_TX_DESC(sc, x)	(((x) + 1) & (RE_TX_DESC_CNT(sc) - 1))
 
-#define RE_RX_LIST_SZ		(RE_RX_DESC_CNT * sizeof(struct re_desc))
-#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) & (RE_RX_DESC_CNT - 1))
+#define RE_RX_DESC_CNT(sc)	((sc)->re_ldata.re_rx_desc_cnt)
+#define RE_RX_LIST_SZ		(RE_RX_DESC_CNT(sc) * sizeof(struct re_desc))
+#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) & (RE_RX_DESC_CNT(sc) - 1))
 
-#define RE_NEXT_TXQ(sc, x)	(((x) + 1) & (RE_TX_QLEN - 1))
+#define RE_TX_QLEN(sc)		256
+#define RE_NEXT_TXQ(sc, x)	(((x) + 1) & (RE_TX_QLEN(sc) - 1))
 
 #define RE_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\

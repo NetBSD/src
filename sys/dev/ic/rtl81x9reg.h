@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.55 2024/08/12 18:55:01 christos Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.56 2025/12/20 06:50:45 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -616,7 +616,7 @@ struct re_stats {
 	uint16_t		re_rx_underruns;
 };
 
-#define RE_IFQ_MAXLEN		512
+#define RE_IFQ_MAXLEN		1024
 
 #define RE_JUMBO_FRAMELEN	ETHER_MAX_LEN_JUMBO
 #define RE_JUMBO_MTU		ETHERMTU_JUMBO
