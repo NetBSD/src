@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_m68k.c,v 1.1 2025/12/19 03:29:54 thorpej Exp $	*/
+/*	$NetBSD: atomic_init_m68k.c,v 1.2 2025/12/20 16:25:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_m68k.c,v 1.1 2025/12/19 03:29:54 thorpej Exp $");
+__RCSID("$NetBSD: atomic_init_m68k.c,v 1.2 2025/12/20 16:25:09 thorpej Exp $");
 
 #include "extern.h"
 #include "../../../atomic/atomic_op_namespace.h"
@@ -39,6 +39,9 @@ __RCSID("$NetBSD: atomic_init_m68k.c,v 1.1 2025/12/19 03:29:54 thorpej Exp $");
 #include <sys/atomic.h>
 #include <sys/ras.h>
 #include <sys/sysctl.h>
+
+ /* __sysctl syscall stub */
+#include "../../../../../../lib/libc/include/__sysctl.h"
 
 #include <machine/cpu.h>
 
@@ -171,7 +174,7 @@ __libc_atomic_init(void)
 
 	/*
 	 * Check to see if this system has a non-working /RMC.  If
-	 * the sysctl() call fails, or if it indicates that /RMC
+	 * the __sysctl() call fails, or if it indicates that /RMC
 	 * works fine, then we have no further work to do because
 	 * the stubs default to the CASx-using _atomic_cas_*()
 	 * functions.
@@ -179,7 +182,7 @@ __libc_atomic_init(void)
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_BROKEN_RMC;
 	len = sizeof(broken_rmc);
-	if (sysctl(mib, 2, &broken_rmc, &len, NULL, 0) == -1 || !broken_rmc) {
+	if (__sysctl(mib, 2, &broken_rmc, &len, NULL, 0) == -1 || !broken_rmc) {
 		return;
 	}
 #endif /* ! __mc68010__ */
