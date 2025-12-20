@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.104 2024/10/06 17:03:28 christos Exp $ */
+/*	$NetBSD: df.c,v 1.104.2.1 2025/12/20 13:51:19 martin Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.104 2024/10/06 17:03:28 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.104.2.1 2025/12/20 13:51:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,8 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
+
+	(void)strpct_round(STRPCT_RAZ);	/* POSIX: %'s round away from zero */
 
 	while ((ch = getopt(argc, argv, "abcfGgHhiklMmNnPqt:W")) != -1)
 		switch (ch) {

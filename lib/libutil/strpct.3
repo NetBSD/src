@@ -1,4 +1,4 @@
-.\" $NetBSD: strpct.3,v 1.7 2025/05/03 07:22:52 rillig Exp $
+.\" $NetBSD: strpct.3,v 1.7.2.1 2025/12/20 13:51:19 martin Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,12 +26,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 3, 2025
+.Dd December 14, 2025
 .Dt STRPCT 3
 .Os
 .Sh NAME
 .Nm strpct ,
-.Nm strspct
+.Nm strspct ,
+.Nm strpct_r ,
+.Nm strsptc_r ,
+.Nm strpct_round
 .Nd decimal percent formatters
 .Sh LIBRARY
 .Lb libutil
@@ -40,18 +43,110 @@
 .Ft char *
 .Fn strpct "char *buf" "size_t bufsiz" "uintmax_t numerator" "uintmax_t denominator" "size_t precision"
 .Ft char *
+.Fn strpct_r "char *buf" "size_t bufsiz" "uintmax_t numerator" "uintmax_t denominator" "size_t precision" "uint32_t rounding_mode"
+.Ft char *
 .Fn strspct "char *buf" "size_t bufsiz" "intmax_t numerator" "intmax_t denominator" "size_t precision"
+.Ft char *
+.Fn strspct_r "char *buf" "size_t bufsiz" "intmax_t numerator" "intmax_t denominator" "size_t precision" "uint32_t rounding_mode"
+.Ft uint32_t
+.Fn strpct_round "uint32_t mode"
 .Sh DESCRIPTION
 The
-.Fn strpct
+.Fn strpct_r
 function formats the fraction represented by
 .Fa numerator
 and
 .Fa denominator
-into a percentage representation with given number of digits of
-.Fa precision
+into a percentage representation with the number of fractional digits
+specified by
+.Fa precision ,
 without using floating point arithmetic.
+.Pp
+The result is stored in the
+.Fa buf
+in which a maximum of
+.Fa bufsiz
+\(mi 1 meaningful bytes can be stored
+and is rounded according to the
+.Fa rounding_mode .
+The current locale's radix character,
+typically period
+.Pq Sq \&.
+or comma
+.Pq Sq \&, ,
+is inserted before the fractional digits if the
+.Fa precision
+is greater than 0.
+.Pp
+The parameter
+.Fa rounding_mode
+should be one of the following:
+.Pp
+.Bl -tag -width 12n -compact
+.It Dv STRPCT_RTN
+The result returned will be rounded to the nearest correct value.
+Actual values exactly mid way between one representable value
+and the next round away from zero.
+.It Dv STRPCT_RTZ
+Rounding towards 0 (truncating rather than rounding) is used.
+.It Dv STRPCT_RAZ
+Rounding away from 0 (toward the next bigger magnitude) is used.
+.It Dv STRPCT_RTI
+Rounding towards infinity, to a mathematically greater or equal value.
+.It Dv STRPCT_RAI
+Rounding away from infinity, towards negative innfinity,
+to a mathematically smaller or equal value.
+.El
+.Pp
+Any other value causes unspecified rounding behaviour.
+.Pp
+The
+.Fn strspct_r
+function is identical to
+.Fn strpct_r
+except uses signed values for the
+.Fa numerator
+and
+.Fa denominator ,
+and so can return a result with a leading minus sign.
+.Pp
+The
+.Fn strpct
+and
+.Fn strspct
+functions are identical to
+.Fn strpct_r
+and
+.Fn strspct_r
+respectively, with the
+.Fa rounding_mode
+specified as
+.Dv STRPCT_RTZ ,
+unless modified by an earlier call to
+.Fn strpct_round .
+.Pp
+The
+.Fn strpct_round
+function sets the rounding mode used by subsequent calls of
+.Fn strpct
+and
+.Fn strspct
+to the
+.Fa mode
+specified, which must be one of those listed as a possible
+value for the
+.Fa rounding_mode
+parameter of
+.Fn strpct_r .
+Alternatively, the
+.Fa mode
+may be
+.Dv STRPCT_RQRY ,
+in which case the current rounding mode will not be altered.
+In any case, the previous rounding mode is returned.
 .Sh RETURN VALUES
+.Fn strpct_r ,
+.Fn strspct_r ,
 .Fn strpct
 and
 .Fn strspct
@@ -62,12 +157,23 @@ is
 formatted string which
 is placed in
 .Fa buf .
+.Pp
+.Fn strpct_round
+returns the rounding mode that was in use for
+.Fn strpct
+and
+.Fn strspct
+before the call.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 strpct(buf, sizeof(buf), 1, 16, 3);
 \(rA "6.250"
 strpct(buf, sizeof(buf), 1, 2, 0);
 \(rA "50"
+strpct_r(buf, sizeof(buf), 2, 3, 2, STRPCT_RTN)
+\(rA "66.67"
+strpct_r(buf, sizeof(buf), 2, 3, 2, STRPCT_RTZ)
+\(rA "66.66"
 .Ed
 .Sh HISTORY
 .Fn strpct
@@ -90,6 +196,42 @@ and
 .Fn strspct
 appeared separately in libutil for
 .Nx 6.0 .
+.Pp
+.Fn strpct_r ,
+.Fn strspct_r
+and
+.Fn strpct_round
+appeared in
+.Nx 11.0 .
 .Sh AUTHORS
 .An Erik E. Fair Aq Mt fair@NetBSD.org
 .An Roland Illig Aq Mt rillig@NetBSD.org
+.Sh BUGS
+If the supplied buffer size is insufficient for the
+result (including a terminating nul
+.Pq Sq \e0
+character),
+the result will be silently truncated with only the most
+significant digits included, the last of which will be
+rounded using the requested method.
+This is not useful.
+If the buffer space is exhausted part way through a locale's (multi-byte)
+radix character, even more bizarre behaviour is to be expected.
+Always provide a buffer bigger than can possibly be needed.
+.Pp
+Rather than causing an abnormal process termination,
+as it arguably should, a
+.Fa denominator
+specified as zero will be treated as if it were one.
+.Pp
+Using
+.Dv STRPCT_RTZ
+rather than
+.Dv STRPCT_RTN
+as the default rounding mode for
+.Fn strpct
+and
+.Fn strspct
+is for compatibility with historic practice,
+not because it is the most useful mode.
+That might be changed at some future time.
