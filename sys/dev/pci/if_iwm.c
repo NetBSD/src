@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.92 2025/12/05 20:53:51 kre Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.93 2025/12/21 16:24:39 mlelstv Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.92 2025/12/05 20:53:51 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.93 2025/12/21 16:24:39 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6575,10 +6575,11 @@ iwm_auth(struct iwm_softc *sc)
 	 * Prevent the FW from wandering off channel during association
 	 * by "protecting" the session with a time event.
 	 */
-	if (in->in_ni.ni_intval) {
-		duration = 11 * in->in_ni.ni_intval / 10;
-		iwm_protect_session(sc, in, duration, 5 * duration);
-	}
+	if (in->in_ni.ni_intval)
+		duration = in->in_ni.ni_intval * 5;
+	else
+		duration = IEEE80211_DUR_TU;
+	iwm_protect_session(sc, in, duration, in->in_ni.ni_intval / 2);
 
 	return 0;
 
