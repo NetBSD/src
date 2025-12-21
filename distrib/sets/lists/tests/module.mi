@@ -1,10 +1,10 @@
-# $NetBSD: module.mi,v 1.20 2025/04/27 16:22:26 riastradh Exp $
+# $NetBSD: module.mi,v 1.21 2025/12/21 22:31:45 thorpej Exp $
 #
 # These are only made for ports doing modules.
 #
-./usr/tests/kernel/setjmp_tester		tests-sys-tests		atf,rump
-./usr/tests/kernel/setjmp_tester/setjmp_tester.kmod	tests-sys-tests		atf,rump
-./usr/tests/kernel/t_setjmp			tests-sys-tests		atf,rump
+./usr/tests/kernel/setjmp_tester		tests-sys-tests		atf
+./usr/tests/kernel/setjmp_tester/setjmp_tester.kmod	tests-sys-tests		atf
+./usr/tests/kernel/t_setjmp			tests-sys-tests		atf
 ./usr/tests/kernel/t_threadpool			tests-obsolete		obsolete
 ./usr/tests/kernel/threadpool_tester		tests-obsolete		obsolete
 ./usr/tests/kernel/threadpool_tester/threadpool_tester.kmod tests-obsolete	obsolete
