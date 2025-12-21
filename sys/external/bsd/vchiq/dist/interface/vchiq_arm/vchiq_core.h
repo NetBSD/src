@@ -187,11 +187,11 @@ enum {
 
 #define DEBUG_INITIALISE(local) int *debug_ptr = (local)->debug;
 #define DEBUG_TRACE(d) \
-	do { debug_ptr[DEBUG_ ## d] = __LINE__; dsb(sy); } while (0)
+	do { debug_ptr[DEBUG_ ## d] = htole32(__LINE__); dsb(sy); } while (0)
 #define DEBUG_VALUE(d, v) \
-	do { debug_ptr[DEBUG_ ## d] = (v); dsb(sy); } while (0)
+	do { debug_ptr[DEBUG_ ## d] = htole32(v); dsb(sy); } while (0)
 #define DEBUG_COUNT(d) \
-	do { debug_ptr[DEBUG_ ## d]++; dsb(sy); } while (0)
+	do { uint32_t __v = le32toh(debug_ptr[DEBUG_ ## d]); __v++; debug_ptr[DEBUG_ ## d] = htole32(__v); dsb(sy); } while (0)
 
 #else /* VCHIQ_ENABLE_DEBUG */
 
@@ -268,7 +268,7 @@ typedef struct remote_event_struct {
 	int32_t armed;
 	int32_t fired;
 	uint32_t event; /* offset to VCHIQ_STATE_T */
-#define REMOTE_EVENT_SEMA(s,e) ((struct semaphore *)((char *)(s) + (e)->event))
+#define REMOTE_EVENT_SEMA(s,e) ((struct semaphore *)((char *)(s) + le32toh((e)->event)))
 } REMOTE_EVENT_T;
 
 typedef struct opaque_platform_state_t *VCHIQ_PLATFORM_STATE_T;

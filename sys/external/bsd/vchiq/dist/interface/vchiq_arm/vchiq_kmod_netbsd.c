@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.14 2024/11/07 09:51:00 rin Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.15 2025/12/21 10:31:08 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.14 2024/11/07 09:51:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.15 2025/12/21 10:31:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,11 +96,11 @@ remote_event_signal(REMOTE_EVENT_T *event)
 {
 	wmb();
 
-	event->fired = 1;
+	event->fired = htole32(1);
 
 	dsb(sy);		/* data barrier operation */
 
-	if (event->armed) {
+	if (/*le32toh*/(event->armed)) {
 		bus_space_write_4(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
 		    VCHIQ_DOORBELL2, 0);
 		bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,

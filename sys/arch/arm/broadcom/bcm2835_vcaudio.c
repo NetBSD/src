@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.20 2024/02/16 15:11:38 skrll Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.21 2025/12/21 10:31:07 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.20 2024/02/16 15:11:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.21 2025/12/21 10:31:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -324,7 +324,7 @@ vcaudio_init(struct vcaudio_softc *sc)
 	}
 
 	memset(&msg, 0, sizeof(msg));
-	msg.type = VC_AUDIO_MSG_TYPE_OPEN;
+	msg.type = htole32(VC_AUDIO_MSG_TYPE_OPEN);
 	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
@@ -333,10 +333,10 @@ vcaudio_init(struct vcaudio_softc *sc)
 	}
 
 	memset(&msg, 0, sizeof(msg));
-	msg.type = VC_AUDIO_MSG_TYPE_CONFIG;
-	msg.u.config.channels = 2;
-	msg.u.config.samplerate = 48000;
-	msg.u.config.bps = 16;
+	msg.type = htole32(VC_AUDIO_MSG_TYPE_CONFIG);
+	msg.u.config.channels = htole32(2);
+	msg.u.config.samplerate = htole32(48000);
+	msg.u.config.bps = htole32(16);
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -344,9 +344,9 @@ vcaudio_init(struct vcaudio_softc *sc)
 	}
 
 	memset(&msg, 0, sizeof(msg));
-	msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-	msg.u.control.volume = vol2vc(sc->sc_hwvol[sc->sc_dest]);
-	msg.u.control.dest = sc->sc_dest;
+	msg.type = htole32(VC_AUDIO_MSG_TYPE_CONTROL);
+	msg.u.control.volume = htole32(vol2vc(sc->sc_hwvol[sc->sc_dest]));
+	msg.u.control.dest = htole32(sc->sc_dest);
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -379,20 +379,20 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 		return;
 	}
 
-	switch (msg.type) {
+	switch (le32toh(msg.type)) {
 	case VC_AUDIO_MSG_TYPE_RESULT:
 		mutex_enter(&sc->sc_msglock);
-		sc->sc_success = msg.u.result.success;
+		sc->sc_success = le32toh(msg.u.result.success);
 		sc->sc_msgdone = true;
 		cv_broadcast(&sc->sc_msgcv);
 		mutex_exit(&sc->sc_msglock);
 		break;
 
 	case VC_AUDIO_MSG_TYPE_COMPLETE:
-		if (msg.u.complete.cookie1 == VC_AUDIO_WRITE_COOKIE1 &&
-		    msg.u.complete.cookie2 == VC_AUDIO_WRITE_COOKIE2) {
-			int count = msg.u.complete.count & 0xffff;
-			int perr = (msg.u.complete.count & __BIT(30)) != 0;
+		if (le32toh(msg.u.complete.cookie1) == VC_AUDIO_WRITE_COOKIE1 &&
+		    le32toh(msg.u.complete.cookie2) == VC_AUDIO_WRITE_COOKIE2) {
+			int count = le32toh(msg.u.complete.count) & 0xffff;
+			int perr = (le32toh(msg.u.complete.count) & __BIT(30)) != 0;
 			bool sched = false;
 
 			mutex_enter(&sc->sc_intr_lock);
@@ -454,12 +454,12 @@ vcaudio_worker(void *priv)
 		count = sc->sc_pblksize;
 
 		memset(&msg, 0, sizeof(msg));
-		msg.type = VC_AUDIO_MSG_TYPE_WRITE;
-		msg.u.write.max_packet = VCAUDIO_MSGSIZE;
-		msg.u.write.count = count;
-		msg.u.write.cookie1 = VC_AUDIO_WRITE_COOKIE1;
-		msg.u.write.cookie2 = VC_AUDIO_WRITE_COOKIE2;
-		msg.u.write.silence = 0;
+		msg.type = htole32(VC_AUDIO_MSG_TYPE_WRITE);
+		msg.u.write.max_packet = htole16(VCAUDIO_MSGSIZE);
+		msg.u.write.count = htole32(count);
+		msg.u.write.cookie1 = htole32(VC_AUDIO_WRITE_COOKIE1);
+		msg.u.write.cookie2 = htole32(VC_AUDIO_WRITE_COOKIE2);
+		msg.u.write.silence = htole16(0);
 
 		block = (uint8_t *)sc->sc_pstart + sc->sc_ppos;
 		resid = count;
@@ -475,7 +475,7 @@ vcaudio_worker(void *priv)
 		}
 
 		while (resid > 0) {
-			nb = uimin(resid, msg.u.write.max_packet);
+			nb = uimin(resid, le16toh(msg.u.write.max_packet));
 			error = vchi_msg_queue(sc->sc_service,
 			    (char *)block + off, nb,
 			    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
@@ -501,7 +501,7 @@ vcaudio_worker(void *priv)
 			if (sc->sc_pblkcnt == VCAUDIO_PREFILLCOUNT) {
 
 				memset(&msg, 0, sizeof(msg));
-				msg.type = VC_AUDIO_MSG_TYPE_START;
+				msg.type = htole32(VC_AUDIO_MSG_TYPE_START);
 				error = vchi_msg_queue(sc->sc_service, &msg,
 				    sizeof(msg), VCHI_FLAGS_BLOCK_UNTIL_QUEUED,
 				    NULL);
@@ -585,8 +585,8 @@ vcaudio_halt_output(void *priv)
 
 	vchi_service_use(sc->sc_service);
 	memset(&msg, 0, sizeof(msg));
-	msg.type = VC_AUDIO_MSG_TYPE_STOP;
-	msg.u.stop.draining = 0;
+	msg.type = htole32(VC_AUDIO_MSG_TYPE_STOP);
+	msg.u.stop.draining = htole32(0);
 	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
@@ -620,9 +620,9 @@ vcaudio_set_volume(struct vcaudio_softc *sc, enum vcaudio_dest dest,
 	vchi_service_use(sc->sc_service);
 
 	memset(&msg, 0, sizeof(msg));
-	msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
-	msg.u.control.volume = vol2vc(hwvol);
-	msg.u.control.dest = dest;
+	msg.type = htole32(VC_AUDIO_MSG_TYPE_CONTROL);
+	msg.u.control.volume = htole32(vol2vc(hwvol));
+	msg.u.control.dest = htole32(dest);
 
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
@@ -848,8 +848,10 @@ vcaudio_swvol_codec(audio_filter_arg_t *arg)
 	dst = arg->dst;
 	sample_count = arg->count * arg->srcfmt->channels;
 	for (i = 0; i < sample_count; i++) {
+		/* assume SLINEAR_NE:16 is prefered on playback */
 		aint2_t v = (aint2_t)(*src++);
 		v = v * sc->sc_swvol / 255;
-		*dst++ = (aint_t)v;
+		/* output vcaudio requires SLINEAR_LE:16 */
+		*dst++ = (int16_t)htole16((uint16_t)(aint_t)v);
 	}
 }
