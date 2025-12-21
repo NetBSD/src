@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgen.1,v 1.11 2017/07/04 07:07:23 wiz Exp $
+.\"	$NetBSD: fgen.1,v 1.12 2025/12/21 22:21:25 uwe Exp $
 .\"
 .\" Copyright (c) 1998 Eduardo Horvath, All Rights Reserved.
 .\"
@@ -26,43 +26,52 @@
 .Dd October 31, 1998
 .Dt FGEN 1
 .Os
+.
 .Sh NAME
 .Nm fgen
 .Nd IEEE 1275 Open Firmware FCode Tokenizer
+.
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar level
 .Op Fl o Ar outfile
 .Ar infile
+.
 .Sh DESCRIPTION
 Reads Forth source and generates tokenized FCode object file.
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\" .Sh ENVIRONMENT
-.\" .Sh FILES
-.\" .Sh EXAMPLES
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
-.\" .Sh DIAGNOSTICS
-.\" .Sh ERRORS
-.\" .Sh SEE ALSO
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
-.\" .Sh STANDARDS
-.\" .Sh HISTORY
+.
+.Sh SEE ALSO
+.Rs
+.%B Writing FCode 3.x Programs
+.%Q Sun Microsystems, Inc.\&
+.%D 1996
+.\"%U https://docs.oracle.com/cd/E19957-01/802-6287/802-6287.pdf
+.\"%U https://docs.oracle.com/cd/E19957-01/802-3239-10/TOC.html
+.Re
+.
+.
+.Sh STANDARDS
+.Rs
+.%B Tn IEEE Standard 1275-1994 for Boot (Initialization Configuration) Firmware: \
+    Core Requirements and Practices
+.%U doi:10.1109/IEEESTD.1994.89427
+.Re
+.
 .Sh AUTHORS
 Written by
 .An Eduardo E. Horvath Aq Mt eeh@one-o.com
+.
 .Sh BUGS
 String escape sequences are not recognized so things such as
 .Pp
-.Li \&" foo \&"\&(01 02\&) \&"n \&"
+.Dl \*q foo \*q(01 02) \*qn \*q
 .Pp
 will result in the string
 .Pp
-.Dq  foo \&"\&(01 02\&) \&"n .
+.D1 Dq Li foo \*q(01 02) \*qn
 .Pp
 Hexadecimal numbers with dots in them such as
-.Li 100.0000
+.Ql 100.0000
 are not parsed.
 .Pp
 Permissions on the output file are often incorrect.
