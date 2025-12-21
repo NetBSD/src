@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1447 2025/12/09 04:35:05 mrg Exp $
+#      $NetBSD: bsd.own.mk,v 1.1448 2025/12/21 22:30:19 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1318,6 +1318,25 @@ _MKVARS.yes= \
 	MKUNBOUND \
 	MKX11FONTS \
 	MKYP
+
+#
+# Systems with MACHINE_ARCH == m68000 are extremely limited in terms
+# of available system resources.  Trim down the base set of system
+# features accordingly.
+#
+MKBSDTAR.m68000?=	no
+MKDTC.m68000?=		no
+MKGROFF.m68000?=	no
+MKHESIOD.m68000?=	no
+MKHTML.m68000?=		no
+MKIPFILTER.m68000?=	no
+MKISCSI.m68000?=	no
+MKLDAP.m68000?=		no
+MKLVM.m68000?=		no
+MKNPF.m68000?=		no
+MKPOSTFIX.m68000?=	no
+MKRUMP.m68000?=		no
+MKUNBOUND.m68000?=	no
 
 .for var in ${_MKVARS.yes}
 ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uyes}}
