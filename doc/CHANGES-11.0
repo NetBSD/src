@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.59 2025/12/20 13:52:10 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.60 2025/12/21 16:36:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1282,4 +1282,9 @@ tests/bin/df/t_df.sh				1.4
 	df(1): PR 59811: corrected to round percentages away from 0
 	as POSIX requires.
 	[kre, ticket #134]
+
+distrib/sun2/ramdisk/welcome			1.2
+
+	sun2: fix instructions for installation from tape.
+	[thorpej, ticket #135]
 
