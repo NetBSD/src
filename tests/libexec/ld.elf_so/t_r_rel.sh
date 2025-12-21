@@ -1,4 +1,4 @@
-#	$NetBSD: t_r_rel.sh,v 1.2 2025/05/02 23:03:16 riastradh Exp $
+#	$NetBSD: t_r_rel.sh,v 1.3 2025/12/21 19:08:09 riastradh Exp $
 #
 # Copyright (c) 2025 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ cleanup_core()
 	local prog
 
 	prog=$1
-	test -f "${prog}.core" || return
+	test -f "${prog}.core" || return 0
 	readelf -rs "$(atf_get_srcdir)/${prog}"
 	gdb -batch -ex bt -ex 'info registers' -ex disas \
 	    "$(atf_get_srcdir)/${prog}" "${prog}.core"
