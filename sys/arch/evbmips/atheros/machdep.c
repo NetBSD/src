@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35 2025/12/20 10:51:01 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.36 2025/12/21 07:00:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -69,7 +69,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2025/12/20 10:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2025/12/21 07:00:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -163,7 +163,7 @@ cal_timer(void)
 	uint32_t	cntfreq;
 
 	cntfreq = curcpu()->ci_cpu_freq = atheros_get_cpu_freq();
-	
+
 	/* MIPS 4Kc CP0 counts every other clock */
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
@@ -277,7 +277,7 @@ mach_init(void)
 	/*
 	 * Turn off watchpoint that may have been enabled by the
 	 * PROM.  VxWorks bootloader seems to leave one set.
-	 */ 
+	 */
 	__asm volatile (
 		"mtc0	$0, $%0\n\t"
 		"nop\n\t"

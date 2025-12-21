@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.6 2025/12/20 10:51:02 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.7 2025/12/21 07:00:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2025/12/20 10:51:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2025/12/21 07:00:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,7 +136,7 @@ cal_timer(void)
 }
 
 /*
- * 
+ *
  */
 void
 mach_init(u_long arg0, u_long arg1, u_long arg2, u_long arg3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.138 2022/10/26 23:38:08 riastradh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.139 2025/12/21 07:00:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.138 2022/10/26 23:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.139 2025/12/21 07:00:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -266,7 +266,7 @@ ddb_restore_state(void)
 	extern void restoretstate(int, struct trapstate *);
 
 	restoretstate(DDB_REGS->db_tl, &DDB_REGS->db_ts[0]);
-	if (fplwp) {	
+	if (fplwp) {
 		*fplwp->l_md.md_fpstate = DDB_REGS->db_fpstate;
 		loadfpstate(fplwp->l_md.md_fpstate);
 	}
@@ -488,7 +488,7 @@ db_dump_pmap(struct pmap *pm)
 	/* print all valid pages in the kernel pmap */
 	unsigned long long i, j, k, data0, data1;
 	paddr_t *pdir, *ptbl;
-	
+
 	for (i = 0; i < STSZ; i++) {
 		pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED);
 		if (!pdir) {
@@ -534,7 +534,7 @@ db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	}
 	if (have_addr) {
 		/* lookup an entry for this VA */
-		
+
 		if ((data = pseg_get_real(pmap_kernel(), (vaddr_t)addr))) {
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
 				  (void *)(uintptr_t)addr, (u_long)va_to_seg(addr),
@@ -754,7 +754,7 @@ db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc, pcb->pcb_cwp,
 		  pcb->pcb_pil, pcb->pcb_nsaved, (void *)pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
-	
+
 	for (i=0; i<pcb->pcb_nsaved; i++) {
 		db_printf("win %d: at %llx local, in\n", i,
 			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
@@ -953,7 +953,7 @@ db_watch(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if (have_addr) {
 		/* turn on the watchpoint */
 		int64_t tmp = ldxa(0, ASI_MCCR);
-		
+
 		if (phys) {
 			tmp &= ~WATCH_PM;
 			tmp |= WATCH_PW | (mask << WATCH_PM_SHIFT);
@@ -1007,7 +1007,7 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 #endif
-	
+
 	if (!have_addr) {
 		cpu_debug_dump();
 		return;
@@ -1041,7 +1041,7 @@ db_sir_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("ctx",	db_ctx_cmd,	0,	
+	{ DDB_ADD_CMD("ctx",	db_ctx_cmd,	0,
 	  "Print process MMU context information", NULL,NULL) },
 #ifdef MULTIPROCESSOR
 	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2025/12/20 10:51:01 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2025/12/21 07:00:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2025/12/20 10:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2025/12/21 07:00:26 skrll Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2025/12/20 10:51:01 skrll Exp $");
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* CPU "architecture" */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -164,7 +164,7 @@ void fic_init(void)
 int
 zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
-	
+
 	if((boothowto & RB_KDB) && (dev == makedev(10, 0)))
 		return (1);
 	return (0);
@@ -560,7 +560,7 @@ nmihand(struct frame frame)
 /*
  * cpu_exec_aout_makecmds():
  *	CPU-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2025/12/20 10:51:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2025/12/21 07:00:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,10 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2025/12/20 10:51:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2025/12/21 07:00:25 skrll Exp $");
 
 #include "opt_algor_p4032.h"
-#include "opt_algor_p5064.h" 
+#include "opt_algor_p5064.h"
 #include "opt_algor_p6032.h"
 
 #include "opt_ddb.h"
@@ -133,8 +133,8 @@ int	comcnrate = TTYDEF_SPEED;
 #endif
 
 #ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032reg.h> 
-#include <algor/algor/algor_p4032var.h> 
+#include <algor/algor/algor_p4032reg.h>
+#include <algor/algor/algor_p4032var.h>
 struct p4032_config p4032_configuration;
 #endif
 
@@ -148,7 +148,7 @@ struct p5064_config p5064_configuration;
 #include <algor/algor/algor_p6032reg.h>
 #include <algor/algor/algor_p6032var.h>
 struct p6032_config p6032_configuration;
-#endif 
+#endif
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -209,7 +209,7 @@ mach_init(int argc, char *argv[], char *envp[])
 #if defined(ALGOR_P4032)
 	    {
 		struct p4032_config *acp = &p4032_configuration;
-		struct vtpbc_config *vt = &vtpbc_configuration; 
+		struct vtpbc_config *vt = &vtpbc_configuration;
 		bus_space_handle_t sh;
 
 		cpu_setmodel("Algorithmics P-4032");
@@ -283,7 +283,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		 * character time = (1000000 / (defaultrate / 10))
 		 */
 		led_display('c', 'o', 'n', 's');
-		DELAY(160000000 / comcnrate);  
+		DELAY(160000000 / comcnrate);
 		if (comcnattach(&acp->ac_iot, 0x3f8, comcnrate,
 		    COM_FREQ, COM_TYPE_NORMAL,
 		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
@@ -306,7 +306,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		cpu_setmodel("Algorithmics P-6032");
 
 		bc->bc_adbase = 11;
-		
+
 		led_display('b','n','t','o');
 		bonito_pci_init(&acp->ac_pc, bc);
 

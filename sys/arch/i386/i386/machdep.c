@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.850 2025/12/20 10:51:03 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.851 2025/12/21 07:00:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.850 2025/12/20 10:51:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.851 2025/12/21 07:00:27 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1428,7 +1428,7 @@ init386(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 		/* Reset to default. Special cases below */
 		int sel;
-#ifdef XENPV		
+#ifdef XENPV
 		sel = SEL_XEN;
 #else
 		sel = SEL_KPL;
@@ -1491,7 +1491,7 @@ init386(paddr_t first_avail)
 #endif /* XENPV */
 
 #if NMCA > 0
-	/* 
+	/*
 	 * check for MCA bus, needed to be done before ISA stuff - if
 	 * MCA is detected, ISA needs to use level triggered interrupts
 	 * by default

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2023/12/20 05:13:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2025/12/21 07:00:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2023/12/20 05:13:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2025/12/21 07:00:28 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -230,7 +230,7 @@ extern char etext[];
 /* Defined in vfs_bio.c */
 extern u_int bufpages;
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -268,7 +268,7 @@ static void initcpu(void);
  * kernel memory allocator is ready for use, but before
  * the creation of processes 1,2, and mountroot, etc.
  */
-void 
+void
 cpu_startup(void)
 {
 	void *v;
@@ -278,7 +278,7 @@ cpu_startup(void)
 	/*
 	 * Initialize message buffer (for kernel printf).
 	 * This is put in physical pages four through seven
-	 * so it will always be in the same place after a 
+	 * so it will always be in the same place after a
 	 * reboot. (physical pages 0-3 are reserved by the PROM
 	 * for its vector table and other stuff.)
 	 * Its mapping was prepared in pmap_bootstrap().
@@ -376,7 +376,7 @@ char	kernel_arch[16] = "sun2";	/* XXX needs a sysctl node */
 /*
  * Determine which Sun2 model we are running on.
  */
-void 
+void
 identifycpu(void)
 {
 	extern char *cpu_string;	/* XXX */
@@ -469,7 +469,7 @@ reboot_sync(void)
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-__dead void 
+__dead void
 cpu_reboot(int howto, char *user_boot_string)
 {
 	char *bs, *p;
@@ -561,7 +561,7 @@ long	dumplo = 0; 		/* blocks */
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
-void 
+void
 cpu_dumpconf(void)
 {
 	int devblks;	/* size of dump device in blocks */
@@ -605,7 +605,7 @@ extern paddr_t avail_start;
  *   pagemap (2*PAGE_SIZE)
  *   physical memory...
  */
-void 
+void
 dumpsys(void)
 {
 	const struct bdevsw *dsw;
@@ -738,7 +738,7 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
-static void 
+static void
 initcpu(void)
 {
 	/* XXX: Enable RAM parity/ECC checking? */
@@ -760,7 +760,7 @@ initcpu(void)
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
-int 
+int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
@@ -770,7 +770,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 /*
  * Soft interrupt support.
  */
-void 
+void
 isr_soft_request(int level)
 {
 	u_char bit;
@@ -782,7 +782,7 @@ isr_soft_request(int level)
 	enable_reg_or(bit);
 }
 
-void 
+void
 isr_soft_clear(int level)
 {
 	u_char bit;
@@ -799,7 +799,7 @@ isr_soft_clear(int level)
  * Like _bus_dmamap_load(), but for raw memory allocated with
  * bus_dmamem_alloc().
  */
-int 
+int
 _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
     int nsegs, bus_size_t size, int flags)
 {
@@ -820,7 +820,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	/* Allocate DVMA addresses */
 	sgsize = (size + pagesz - 1) & -pagesz;
 
-	/* 
+	/*
 	 * If the device can see our entire 24-bit address space,
 	 * we can use any properly aligned virtual addresses.
 	 */
@@ -829,7 +829,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 					     pagesz, 0);
 		if (dva == 0)
 			return (ENOMEM);
-	} 
+	}
 
 	/*
 	 * Otherwise, we need virtual addresses in DVMA space.
@@ -881,7 +881,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 /*
  * load DMA map with a linear buffer.
  */
-int 
+int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
@@ -992,7 +992,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 /*
  * unload a DMA map.
  */
-void 
+void
 _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dma_segment_t *segs = map->dm_segs;
@@ -1062,7 +1062,7 @@ vmebus_translate(vme_am_t mod, vme_addr_t addr, bus_type_t *btp,
 
 	switch(mod) {
 #define _DS (VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA)
-	
+
 	case (VME_AM_A16|_DS):
 		base = 0x00ff0000;
 		break;
@@ -1129,7 +1129,7 @@ find_prom_map(paddr_t pa, bus_type_t iospace, int len, vaddr_t *vap)
 				(PG_VALID | pgtype) &&
 			    PG_PFNUM(pte) == pf)
 			{
-				/* 
+				/*
 				 * Found the PROM mapping.
 				 * note: preserve page offset
 				 */

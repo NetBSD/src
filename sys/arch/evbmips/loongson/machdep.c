@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2025/12/20 10:51:02 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2025/12/21 07:00:26 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2025/12/20 10:51:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2025/12/21 07:00:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -572,7 +572,7 @@ mach_init(int32_t argc, int32_t argva, int32_t enva, int32_t callvec,
 		curcpu()->ci_cpu_freq =
 		    strtoul(env, NULL, 10);
 	}
-	
+
 	DPRINTF(("cpuclock %ld\n", curcpu()->ci_cpu_freq));
 
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)

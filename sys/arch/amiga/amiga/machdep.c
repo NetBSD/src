@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257 2025/12/20 10:51:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.258 2025/12/21 07:00:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2025/12/20 10:51:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2025/12/21 07:00:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ cpu_reboot(register int howto, char *bootstr)
 		empmdev = device_find_by_xname("empm0");
 		if (empmdev != NULL) {
 			empm_power_off(device_private(empmdev));
-		}	
+		}
 	}
 #endif /* NEMPM > 0 */
 

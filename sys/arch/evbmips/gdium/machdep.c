@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2025/12/20 10:51:01 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2025/12/21 07:00:26 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/12/20 10:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2025/12/21 07:00:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -207,7 +207,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	int i;
 	psize_t memsize;
 	char *envp[128];
-	int32_t *eptrs = (int32_t *)envp32; 
+	int32_t *eptrs = (int32_t *)envp32;
 	extern char edata[], end[];
 
 	/*

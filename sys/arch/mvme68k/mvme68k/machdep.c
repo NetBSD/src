@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2025/12/20 10:51:03 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.174 2025/12/21 07:00:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2025/12/20 10:51:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2025/12/21 07:00:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2025/12/20 10:51:03 skrll Exp $");
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -137,7 +137,7 @@ uint8_t	mvme_ea[6];
 extern	u_int lowram;
 extern	short exframesize[];
 
-/* prototypes for local functions */ 
+/* prototypes for local functions */
 void	identifycpu(void);
 void	initcpu(void);
 void	dumpsys(void);
@@ -767,7 +767,7 @@ cpu_dump_mempagecnt(void)
 int
 cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
 {
-	int buf[MDHDRSIZE / sizeof(int)]; 
+	int buf[MDHDRSIZE / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
 	kcore_seg_t *kseg;
 	int error;
@@ -1000,7 +1000,7 @@ mvme68k_abort(const char *cp)
 /*
  * cpu_exec_aout_makecmds():
  *	CPU-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */

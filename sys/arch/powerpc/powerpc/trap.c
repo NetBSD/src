@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.166 2025/12/20 10:51:04 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.167 2025/12/21 07:00:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2025/12/20 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2025/12/21 07:00:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -1169,7 +1169,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 const struct dsi_info*
 get_dsi_info(register_t dsisr)
 {
-    static const struct dsi_info dsi[] = 
+    static const struct dsi_info dsi[] =
 	{
 	    /* data cache block zero */
 	    {EXC_ALI_DCBZ, 0},
@@ -1197,9 +1197,9 @@ get_dsi_info(register_t dsisr)
 	    {EXC_ALI_LWZUX,     DSI_OP_ZERO|DSI_OP_UPDATE|DSI_OP_INDEXED},
 
 	    /* store words */
-	    {EXC_ALI_STW,   0},				  
-	    {EXC_ALI_STWU,  DSI_OP_UPDATE},		  
-	    {EXC_ALI_STWX,  DSI_OP_INDEXED},		  
+	    {EXC_ALI_STW,   0},
+	    {EXC_ALI_STWU,  DSI_OP_UPDATE},
+	    {EXC_ALI_STWX,  DSI_OP_INDEXED},
 	    {EXC_ALI_STWUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
 
 	    /* load byte-reversed */
@@ -1258,7 +1258,7 @@ get_dsi_info(register_t dsisr)
 	    {EXC_ALI_STWCX, DSI_OP_INDEXED},  /* lwarx */
 
 #ifdef PPC_OEA64
-	    /* 64 bit, load word algebriac */ 
+	    /* 64 bit, load word algebriac */
 	    {EXC_ALI_LWAX,  DSI_OP_ALGEBRAIC|DSI_OP_INDEXED},
 	    {EXC_ALI_LWAUX, DSI_OP_ALGEBRAIC|DSI_OP_UPDATE|DSI_OP_INDEXED},
 

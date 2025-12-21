@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.36 2025/12/20 10:51:04 skrll Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.37 2025/12/21 07:00:28 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.36 2025/12/20 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.37 2025/12/21 07:00:28 skrll Exp $");
 
 #include "ksyms.h"
 
@@ -641,7 +641,7 @@ sort_data(uint64_t *data, size_t count)
 			 * (module 65536) to achieve the division.
 			 *
 			 * iN = 2^16 / 1.24733... = 52540
-			 * x / N == (x * iN) / 65536 
+			 * x / N == (x * iN) / 65536
 			 */
 			gap = (gap * 52540) / 65536;
 		}

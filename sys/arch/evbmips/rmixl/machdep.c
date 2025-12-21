@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2025/12/20 10:51:02 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2025/12/21 07:00:27 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/12/20 10:51:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2025/12/21 07:00:27 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -612,7 +612,7 @@ rmixl_physaddr_init(void)
 	/*
 	 * grab regions per DRAM BARs
 	 */
-	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) { 
+	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) {
 		r = RMIXL_IOREG_READ(RMIXL_SBC_DRAM_BAR(i));
 		if ((r & RMIXL_DRAM_BAR_STATUS) == 0)
 			continue;	/* not enabled */
@@ -880,7 +880,7 @@ rmixl_get_wakeup_info(struct rmixl_config *rcp)
 	__asm__ volatile(
 		".set push"				"\n"
 		".set noreorder"			"\n"
-		".set mips64"				"\n" 
+		".set mips64"				"\n"
 		"dmfc0	%0, $22, 7"			"\n"
 		".set pop"				"\n"
 			: "=r"(scratch_7));

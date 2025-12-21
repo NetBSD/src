@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376 2025/12/20 10:51:03 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.377 2025/12/21 07:00:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376 2025/12/20 10:51:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.377 2025/12/21 07:00:27 skrll Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -219,7 +219,7 @@ static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct extent *iomem_ex;
 int iomem_malloc_safe;
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 static void	identifycpu(void);
@@ -1490,7 +1490,7 @@ static romvec_t romvecs[] =
 		(void *)0x0,		/* PB ADB interrupt */
 		(void *)0x40ab2f84,	/* ADBBase + 130 interrupt; whatzit? */
 		(void *)0x40a0a360,	/* CountADBs */
-		(void *)0x40a0a37a,	/* GetIndADB */	
+		(void *)0x40a0a37a,	/* GetIndADB */
 		(void *)0x40a0a3a6,	/* GetADBInfo */
 		(void *)0x40a0a3ac,	/* SetADBInfo */
 		(void *)0x40a0a752,	/* ADBReInit */

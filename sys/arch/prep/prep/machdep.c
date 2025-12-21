@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2025/12/20 10:51:04 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2025/12/21 07:00:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2025/12/20 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2025/12/21 07:00:28 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -397,7 +397,7 @@ setup_ivr(PPC_DEVICE *dev)
 			continue;
 		/* otherwise we have a memory packet */
 		addr = le64dec(&pa->PPCData[4]) & ~(PAGE_SIZE-1);
-		prep_intr_reg_off = le64dec(&pa->PPCData[4]) & (PAGE_SIZE-1); 
+		prep_intr_reg_off = le64dec(&pa->PPCData[4]) & (PAGE_SIZE-1);
 		prep_intr_reg = (vaddr_t)mapiodev(addr, PAGE_SIZE, false);
 		if (!prep_intr_reg)
 			panic("startup: no room for interrupt register");
@@ -406,7 +406,7 @@ setup_ivr(PPC_DEVICE *dev)
 }
 
 /*
- * There are a few things that need setting up early on in the prep 
+ * There are a few things that need setting up early on in the prep
  * architecture.  Foremost of these is the MPIC (if present) and the
  * l2 cache controller.  This is a cut-down version of pnpbus_search()
  * that looks for specific devices, and sets them up accordingly.

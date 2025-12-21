@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2025/12/20 10:51:02 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2025/12/21 07:00:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2025/12/20 10:51:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2025/12/21 07:00:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -79,7 +79,7 @@ cal_timer(void)
 	uint32_t cntfreq;
 
 	cntfreq = curcpu()->ci_cpu_freq = RA_CLOCK_RATE;
-	
+
 	/* MIPS 4Kc CP0 counts every other clock */
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;

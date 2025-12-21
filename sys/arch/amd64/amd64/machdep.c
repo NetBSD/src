@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.377 2025/12/20 10:51:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.378 2025/12/21 07:00:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.377 2025/12/20 10:51:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.378 2025/12/21 07:00:26 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1962,17 +1962,17 @@ init_x86_64(paddr_t first_avail)
 			ist = 3;
 			break;
 		case 3:
-		case 4:			
+		case 4:
 			sel = SEL_UPL;
 			break;
 		case 8:	/* double fault */
 			ist = 2;
 			break;
-#ifdef XENPV			
+#ifdef XENPV
 		case 18: /* MCA */
 			sel |= 0x4; /* Auto EOI/mask */
 			break;
-#endif /* XENPV */			
+#endif /* XENPV */
 		default:
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2025/12/20 10:51:00 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2025/12/21 07:00:26 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2025/12/20 10:51:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2025/12/21 07:00:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -207,7 +207,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		ssym = (char *)bi_syms->ssym;
 		esym = (char *)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
-#if 0	
+#if 0
 		/*
 		 * Don't clear BSS here since bi_buf[] is allocated in BSS
 		 * and it has been cleared by the bootloader in this case.

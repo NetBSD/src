@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.155 2025/12/20 10:51:03 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.156 2025/12/21 07:00:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2025/12/20 10:51:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2025/12/21 07:00:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -172,7 +172,7 @@ again:
 	 */
 	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
-		
+
 		addupc_task(l, fp->f_pc,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
@@ -330,7 +330,7 @@ copyfault:
 			ILL_PRVOPC : ILL_ILLOPC;
 		break;
 	/*
-	 * divde by zero, CHK/TRAPV inst 
+	 * divde by zero, CHK/TRAPV inst
 	 */
 	case T_ZERODIV|T_USER:		/* Integer divide by zero trap */
 		ksi.ksi_code = FPE_INTDIV;
@@ -340,7 +340,7 @@ copyfault:
 		ksi.ksi_signo = SIGFPE;
 		break;
 
-	/* 
+	/*
 	 * User coprocessor violation
 	 */
 	case T_COPERR|T_USER:
@@ -348,8 +348,8 @@ copyfault:
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_code = FPE_FLTINV;
 		break;
-	/* 
-	 * 6888x exceptions 
+	/*
+	 * 6888x exceptions
 	 */
 	case T_FPERR|T_USER:
 		/*
@@ -604,5 +604,5 @@ copyfault:
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(l, fp, sticks, v, 1); 
+	userret(l, fp, sticks, v, 1);
 }
