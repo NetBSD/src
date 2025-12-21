@@ -34,6 +34,9 @@
 #endif
 
 #include <sys/param.h>
+#if defined(HAVE_SYS_ENDIAN_H) || !defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #include <sys/stat.h>
 
 #include <assert.h>

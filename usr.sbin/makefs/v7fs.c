@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs.c,v 1.8 2013/01/29 15:52:25 christos Exp $	*/
+/*	$NetBSD: v7fs.c,v 1.9 2025/12/21 23:55:14 nia Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -35,9 +35,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: v7fs.c,v 1.8 2013/01/29 15:52:25 christos Exp $");
+__RCSID("$NetBSD: v7fs.c,v 1.9 2025/12/21 23:55:14 nia Exp $");
 #endif	/* !__lint */
 
+#if defined(HAVE_SYS_ENDIAN_H) || !defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

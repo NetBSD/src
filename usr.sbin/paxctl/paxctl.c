@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.13 2023/06/23 01:56:21 rin Exp $ */
+/* $NetBSD: paxctl.c,v 1.14 2025/12/21 23:58:07 nia Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -34,11 +34,14 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.13 2023/06/23 01:56:21 rin Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.14 2025/12/21 23:58:07 nia Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#if defined(HAVE_SYS_ENDIAN_H) || !defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include "../../sys/sys/exec_elf.h"
 #else
