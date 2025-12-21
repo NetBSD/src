@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.10 2025/12/19 23:01:33 christos Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.11 2025/12/21 19:07:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -26,16 +26,45 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <atf-c.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_fpclassify.c,v 1.11 2025/12/21 19:07:49 riastradh Exp $");
 
+#include <sys/endian.h>
+
+#include <atf-c.h>
 #include <fenv.h>
 #include <float.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+/* XXX copied from include/fenv.h -- factor me out, please! */
+#if \
+        (defined(__arm__) && defined(__SOFTFP__)) || \
+        (defined(__m68k__) && !defined(__HAVE_68881__)) || \
+        defined(__mips_soft_float) || \
+        (defined(__powerpc__) && defined(_SOFT_FLOAT)) || \
+        (defined(__sh__) && !defined(__SH_FPU_ANY__)) || \
+        0
+#define	SOFTFLOAT
+#endif
+
+/*
+ * Some ports use softfloat for long double even if they use hardfloat
+ * for other floating-point operations, often if the long double ABI is
+ * 128-bit for which essentially no hardware actually exists.
+ *
+ * XXX Not copied from anywhere -- find a place for me, please!
+ */
+#if defined SOFTFLOAT || defined __aarch64__ || defined __sparc64__
+#define	SOFTFLOAT_LONG_DOUBLE
+#endif
+
 #ifdef _FLOAT_IEEE754
+
+#include <machine/ieee.h>
 
 #  if defined __hppa__ || defined __mips__	/* just, why? */
 #    define	QNANBIT	0
@@ -51,8 +80,57 @@
 #  define	DBL_QNANBIT	(QNANBIT*__BIT(DBL_MANT_DIG - 2))
 #  define	DBL_SNANBIT	(SNANBIT*__BIT(DBL_MANT_DIG - 2))
 
-#  define	LDBL_QNANBIT	(QNANBIT*__BIT(LDBL_MANT_DIG - 2))
-#  define	LDBL_SNANBIT	(SNANBIT*__BIT(LDBL_MANT_DIG - 2))
+#  define	LDBL_QNANBITH						      \
+	(QNANBIT*__BIT(LDBL_MANT_DIG - 2 - EXT_FRACLBITS))
+#  define	LDBL_SNANBITH						      \
+	(SNANBIT*__BIT(LDBL_MANT_DIG - 2 - EXT_FRACLBITS))
+
+static const char *
+formatbitsf(float f)
+{
+	static char buf[2*sizeof(f) + 1];
+	union { float f; uint32_t i; } u = { .f = f };
+
+	__CTASSERT(sizeof(f) <= sizeof(u));
+	snprintf(buf, sizeof(buf), "%08"PRIx32, u.i);
+
+	return buf;
+}
+
+static const char *
+formatbits(double f)
+{
+	static char buf[2*sizeof(f) + 1];
+	union { double f; uint64_t i; } u = { .f = f };
+
+	__CTASSERT(sizeof(f) <= sizeof(u));
+	snprintf(buf, sizeof(buf), "%016"PRIx64, u.i);
+
+	return buf;
+}
+
+static const char *
+formatbitsl(long double f)
+{
+	static char buf[2*sizeof(f) + 1];
+	union {
+		long double f;
+		uint64_t i[sizeof(long double)/sizeof(double)];
+	} u = { .f = f };
+	size_t i, j, n = __arraycount(u.i);
+
+	__CTASSERT(sizeof(f) <= sizeof(u));
+#if _BYTE_ORDER == _BIG_ENDIAN
+	for (i = j = 0; j < n; i++, j++)
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+	for (i = 0, j = n; j --> 0; i++)
+#else
+#  error Unknown byte order
+#endif
+		snprintf(buf + 16*i, 16 + 1, "%016"PRIx64, u.i[j]);
+
+	return buf;
+}
 
 #endif
 
@@ -108,9 +186,10 @@ __issignallingd(double f)
 static bool
 __issignallingl(long double f)
 {
-	union { long double f; unsigned long long i; } u = { .f = f };
+	union ieee_ext_u u = { .extu_ld = f };
 
-	return isnan(f) && (u.i & (LDBL_SNANBIT|LDBL_QNANBIT)) == LDBL_SNANBIT;
+	return isnan(f) &&
+	    ((u.extu_frach & (LDBL_SNANBITH|LDBL_QNANBITH)) == LDBL_SNANBITH);
 }
 #    endif
 
@@ -329,7 +408,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	volatile float nan = NAN;
 
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
@@ -337,21 +416,22 @@ ATF_TC_BODY(fpclassify_float, tc)
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
+	    formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%a)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
@@ -367,29 +447,37 @@ ATF_TC_BODY(fpclassify_float, tc)
 	u.i |= 1;		/* significand all zero would be inf */
 	nan = u.f;
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issignalling(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issignalling(nan), "nan=%a [0x%s]", nan,
+	    formatbitsf(nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
+	    formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%a)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
+	CHECKEXCEPT();
+
+	/* verify quiet NaN doesn't provoke exception */
+	CLEAREXCEPT();
+	volatile float y = nan + nan;
+	(void)y;
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
@@ -399,30 +487,49 @@ ATF_TC_BODY(fpclassify_float, tc)
 	u.i |= 1;		/* significand all zero would be inf */
 	nan = u.f;
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(issignalling(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(issignalling(nan), "nan=%a [0x%s]", nan,
+	    formatbitsf(nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
+	    formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%a)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
+
+	/* verify signalling NaN does provoke exception */
+	CLEAREXCEPT();
+#if defined __clang__ && defined SOFTFLOAT
+	/*
+	 * The softfloat implementation in compiler-rt used by clang
+	 * builds has no floating-point exceptions, so any ports with
+	 * softfloat ABI will fail this test.
+	 */
+	atf_tc_expect_fail("PR lib/59853:"
+	    " compiler-rt softfloat lacks floating-point exceptions");
+#endif
+	volatile float z = nan + nan;
+	(void)z;
+	ATF_CHECK_MSG(fetestexcept(FE_INVALID),
+	    "signalling NaN %a [0x%s] failed to raise invalid operation",
+	    nan, formatbitsf(nan));
 #endif
     }
 #endif
@@ -638,7 +745,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	volatile double nan = NAN;
 
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
@@ -646,21 +753,22 @@ ATF_TC_BODY(fpclassify_double, tc)
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
+	    formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%a)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
@@ -676,29 +784,37 @@ ATF_TC_BODY(fpclassify_double, tc)
 	u.i |= 1;		/* significand all zero would be inf */
 	nan = u.f;
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issignalling(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issignalling(nan), "nan=%a [0x%s]", nan,
+	    formatbits(nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
+	    formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%a)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
+	    nan, formatbits(nan), fpclassify(nan), FP_NAN);
+	CHECKEXCEPT();
+
+	/* verify quiet NaN doesn't provoke exception */
+	CLEAREXCEPT();
+	volatile double y = nan + nan;
+	(void)y;
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
@@ -708,30 +824,49 @@ ATF_TC_BODY(fpclassify_double, tc)
 	u.i |= 1;		/* significand all zero would be inf */
 	nan = u.f;
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(issignalling(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(issignalling(nan), "nan=%a [0x%s]", nan,
+	    formatbits(nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
+	    formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%a)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
+	    nan, formatbits(nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
+
+	/* verify signalling NaN does provoke exception */
+#if defined __clang__ && defined SOFTFLOAT
+	/*
+	 * The softfloat implementation in compiler-rt used by clang
+	 * builds has no floating-point exceptions, so any ports with
+	 * softfloat ABI will fail this test.
+	 */
+	atf_tc_expect_fail("PR lib/59853:"
+	    " compiler-rt softfloat lacks floating-point exceptions");
+#endif
+	CLEAREXCEPT();
+	volatile double z = nan + nan;
+	(void)z;
+	ATF_CHECK_MSG(fetestexcept(FE_INVALID),
+	    "signalling NaN %a [0x%s] failed to raise invalid operation",
+	    nan, formatbits(nan));
 #endif
     }
 #endif
@@ -948,7 +1083,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	volatile long double nan = NAN;
 
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
@@ -956,92 +1091,117 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%La)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%La [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsl(nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
-	union {
-		long double f;
-		unsigned long long i;
-	} u;
+	union ieee_ext_u u;
 
 	/* test a quiet NaN */
-	u.f = NAN;
-	u.i &= ~LDBL_SNANBIT;
-	u.i |= LDBL_QNANBIT;
-	u.i |= 1;		/* significand all zero would be inf */
-	nan = u.f;
+	u.extu_ld = NAN;
+	u.extu_frach &= ~LDBL_SNANBITH;
+	u.extu_frach |= LDBL_QNANBITH;
+	u.extu_fracl |= 1;	/* significand all zero would be inf */
+	nan = u.extu_ld;
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issignalling(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!issignalling(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%La)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%La [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsl(nan), fpclassify(nan), FP_NAN);
+	CHECKEXCEPT();
+
+	/* verify quiet NaN doesn't provoke exception */
+	CLEAREXCEPT();
+	volatile long double y = nan + nan;
+	(void)y;
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	u.f = NAN;
-	u.i &= ~LDBL_QNANBIT;
-	u.i |= LDBL_SNANBIT;
-	u.i |= 1;		/* significand all zero would be inf */
-	nan = u.f;
+	u.extu_ld = NAN;
+	u.extu_frach &= ~LDBL_QNANBITH;
+	u.extu_frach |= LDBL_SNANBITH;
+	u.extu_fracl |= 1;	/* significand all zero would be inf */
+	nan = u.extu_ld;
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(issignalling(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(issignalling(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%La", nan);
+	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
-	    "fpclassify(%La)=%d FP_NAN=%d",
-	    nan, fpclassify(nan), FP_NAN);
+	    "fpclassify(%La [0x%s])=%d FP_NAN=%d",
+	    nan, formatbitsl(nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
+
+	/* verify signalling NaN does provoke exception */
+	CLEAREXCEPT();
+#if defined __clang__ && defined SOFTFLOAT_LONG_DOUBLE
+	/*
+	 * The softfloat implementation in compiler-rt used by clang
+	 * builds has no floating-point exceptions, so any ports with
+	 * softfloat long double ABI will fail this test.
+	 */
+	atf_tc_expect_fail("PR lib/59853:"
+	    " compiler-rt softfloat lacks floating-point exceptions");
+#endif
+	volatile long double z = nan + nan;
+	(void)z;
+	ATF_CHECK_MSG(fetestexcept(FE_INVALID),
+	    "signalling NaN %La [0x%s] failed to raise invalid operation",
+	    nan, formatbitsl(nan));
 #endif
     }
 #endif
