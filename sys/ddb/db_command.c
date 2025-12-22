@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.192 2025/12/20 10:51:05 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.193 2025/12/22 07:51:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.192 2025/12/20 10:51:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.193 2025/12/22 07:51:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -579,7 +579,7 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 }
 
 #ifndef _KERNEL
-#define	cnpollc(c)	__nothing
+#define	cnpollc(on)	__nothing
 #endif
 
 /*
