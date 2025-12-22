@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1404 2025/12/14 23:26:11 riastradh Exp $
+# $NetBSD: mi,v 1.1405 2025/12/22 23:43:44 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -3014,14 +3014,14 @@
 ./usr/tests/lib/libarchive/test_write_disk_mac_metadata.tar.gz.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libarchive/test_write_disk_no_hfs_compression.tgz.uu				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libbluetooth				tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/Atffile			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libbluetooth/t_bluetooth		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/t_sdp_data			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/t_sdp_get			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/t_sdp_match		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/t_sdp_put			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libbluetooth/t_sdp_set			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libbluetooth/Atffile			tests-lib-tests		bluetooth,compattestfile,atf
+./usr/tests/lib/libbluetooth/Kyuafile			tests-lib-tests		bluetooth,compattestfile,atf,kyua
+./usr/tests/lib/libbluetooth/t_bluetooth		tests-lib-tests		bluetooth,compattestfile,atf
+./usr/tests/lib/libbluetooth/t_sdp_data			tests-lib-tests		bluetooth,compattestfile,atf
+./usr/tests/lib/libbluetooth/t_sdp_get			tests-lib-tests		bluetooth,compattestfile,atf
+./usr/tests/lib/libbluetooth/t_sdp_match		tests-lib-tests		bluetooth,compattestfile,atf
+./usr/tests/lib/libbluetooth/t_sdp_put			tests-lib-tests		bluetooth,compattestfile,atf
+./usr/tests/lib/libbluetooth/t_sdp_set			tests-lib-tests		bluetooth,compattestfile,atf
 ./usr/tests/lib/libbpfjit				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libbpfjit/Atffile			tests-lib-tests		compattestfile,atf,sljit
 ./usr/tests/lib/libbpfjit/Kyuafile			tests-lib-tests		compattestfile,atf,sljit,kyua
