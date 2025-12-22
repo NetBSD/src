@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.496 2025/12/22 17:02:57 thorpej Exp $
+# $NetBSD: mi,v 1.497 2025/12/22 17:25:52 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1090,7 +1090,7 @@
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/chroot.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/chrtbl.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/sbin/cnwctl.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/cnwctl.debug	comp-netutil-debug	wlan,debug
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
@@ -1164,7 +1164,7 @@
 ./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/isibootd.debug	comp-bootserver-debug	debug
-./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	wlan,debug
 ./usr/libdata/debug/usr/sbin/kadmin.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/kcm.debug		comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/kdc.debug		comp-krb5-debug		kerberos,debug

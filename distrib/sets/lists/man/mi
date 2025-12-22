@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1816 2025/12/22 16:48:47 thorpej Exp $
+# $NetBSD: mi,v 1.1817 2025/12/22 17:25:52 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2768,7 +2768,7 @@
 ./usr/share/man/cat8/chrtbl.0			man-obsolete		obsolete
 ./usr/share/man/cat8/cleanup.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/clri.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/cnwctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/cnwctl.0			man-sysutil-catman	wlan,.cat
 ./usr/share/man/cat8/cobalt/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cobalt/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/cobalt/makedev.0		man-obsolete		obsolete
@@ -2995,7 +2995,7 @@
 ./usr/share/man/cat8/isibootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ispppcontrol.0		man-obsolete		obsolete
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/iwictl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/iwictl.0			man-sysutil-catman	wlan,.cat
 ./usr/share/man/cat8/kadmin.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kcm.0			man-krb5-catman		kerberos,.cat
@@ -6357,7 +6357,7 @@
 ./usr/share/man/man8/chrtbl.8			man-obsolete		obsolete
 ./usr/share/man/man8/cleanup.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/clri.8			man-sysutil-man		.man
-./usr/share/man/man8/cnwctl.8			man-sysutil-man		.man
+./usr/share/man/man8/cnwctl.8			man-sysutil-man		wlan,.man
 ./usr/share/man/man8/cobalt/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cobalt/boot.8		man-sys-man		.man
 ./usr/share/man/man8/cobalt/makedev.8		man-obsolete		obsolete
@@ -6585,7 +6585,7 @@
 ./usr/share/man/man8/isibootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ispppcontrol.8		man-obsolete		obsolete
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man		.man
-./usr/share/man/man8/iwictl.8			man-sysutil-man		.man
+./usr/share/man/man8/iwictl.8			man-sysutil-man		wlan,.man
 ./usr/share/man/man8/kadmin.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kadmind.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kcm.8			man-krb5-man		kerberos,.man

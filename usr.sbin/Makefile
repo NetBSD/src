@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.297 2025/12/22 16:48:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.298 2025/12/22 17:25:51 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	bad144 bootp catman \
-	certctl chroot cnwctl cpuctl crash \
+	certctl chroot cpuctl crash \
 	dev_mkdb diskpart dumpfs dumplfs \
 	edquota eeprom emcfanctl envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
 	i2cscan ifwatchd inetd installboot intrctl iopctl iostat ipwctl irdaattach \
-	isibootd iteconfig iwictl \
+	isibootd iteconfig \
 	kgmon \
 	lastlogin ldpd link lockstat lpr \
 	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
@@ -75,7 +75,7 @@ SUBDIR+=pf
 .endif
 
 .if (${MKWLAN} != "no")
-SUBDIR+=wiconfig wlanctl
+SUBDIR+=cnwctl iwictl wiconfig wlanctl
 .endif
 
 .include <bsd.subdir.mk>

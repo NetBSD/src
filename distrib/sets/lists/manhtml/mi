@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2025/12/22 16:48:47 thorpej Exp $
+# $NetBSD: mi,v 1.37 2025/12/22 17:25:52 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2512,7 +2512,7 @@
 ./usr/share/man/html8/chrtbl.html		man-obsolete		obsolete
 ./usr/share/man/html8/cleanup.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/clri.html			man-sysutil-htmlman	html
-./usr/share/man/html8/cnwctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/cnwctl.html		man-sysutil-htmlman	wlan,html
 ./usr/share/man/html8/cobalt/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_30.html		man-sys-htmlman		html
 ./usr/share/man/html8/compat_bsdos.html		man-sys-htmlman		html
