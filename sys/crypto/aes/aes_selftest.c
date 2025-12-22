@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.7 2021/12/05 04:48:35 msaitoh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.8 2025/12/22 16:35:34 nia Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,17 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.7 2021/12/05 04:48:35 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.8 2025/12/22 16:35:34 nia Exp $");
 
 #ifdef _KERNEL
 
 #include <sys/types.h>
+#include <sys/endian.h>
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
 
 #else  /* !_KERNEL */
 
+#include <endian.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

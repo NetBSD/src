@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_impl.h,v 1.1 2020/07/25 22:46:34 riastradh Exp $	*/
+/*	$NetBSD: chacha_impl.h,v 1.2 2025/12/22 16:35:34 nia Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -32,9 +32,11 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/endian.h>
 #else
 #include <stdint.h>
 #include <string.h>
+#include <endian.h>
 #endif
 
 #include <crypto/chacha/chacha.h>
