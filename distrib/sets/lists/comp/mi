@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2506 2025/12/22 20:26:34 thorpej Exp $
+#	$NetBSD: mi,v 1.2507 2025/12/22 22:26:14 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3486,7 +3486,7 @@
 ./usr/include/sa.h				comp-obsolete		obsolete
 ./usr/include/saslc.h				comp-c-include
 ./usr/include/sched.h				comp-c-include
-./usr/include/sdp.h				comp-c-include		bluetoot
+./usr/include/sdp.h				comp-c-include		bluetooth
 ./usr/include/search.h				comp-c-include
 ./usr/include/security/openpam.h		comp-c-include		pam
 ./usr/include/security/openpam_attr.h		comp-c-include		pam
