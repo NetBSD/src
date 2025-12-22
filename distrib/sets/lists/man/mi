@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1815 2025/12/22 14:52:27 thorpej Exp $
+# $NetBSD: mi,v 1.1816 2025/12/22 16:48:47 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2333,7 +2333,7 @@
 ./usr/share/man/cat5/group.0			man-sys-catman		.cat
 ./usr/share/man/cat5/header_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/hesiod.conf.0		man-hesiod-catman	.cat
-./usr/share/man/cat5/hostapd.conf.0		man-sysutil-catman	.cat
+./usr/share/man/cat5/hostapd.conf.0		man-sysutil-catman	wlan,.cat
 ./usr/share/man/cat5/hosts.0			man-net-catman		.cat
 ./usr/share/man/cat5/hosts.allow.0		man-net-catman		.cat
 ./usr/share/man/cat5/hosts.deny.0		man-net-catman		.cat
@@ -2483,7 +2483,7 @@
 ./usr/share/man/cat5/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/weekly.0			man-sys-catman		.cat
 ./usr/share/man/cat5/weekly.conf.0		man-sys-catman		.cat
-./usr/share/man/cat5/wpa_supplicant.conf.0	man-net-catman		.cat
+./usr/share/man/cat5/wpa_supplicant.conf.0	man-net-catman		wlan,.cat
 ./usr/share/man/cat5/wscons.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/wsmoused.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/wtmp.0			man-sys-catman		.cat
@@ -2905,8 +2905,8 @@
 ./usr/share/man/cat8/halt.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/hdaudioctl.0		man-sysutil-catman	audio,.cat
 ./usr/share/man/cat8/hlfsd.0			man-amd-catman		.cat
-./usr/share/man/cat8/hostapd.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/hostapd_cli.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/hostapd.0			man-sysutil-catman	wlan,.cat
+./usr/share/man/cat8/hostapd_cli.0		man-sysutil-catman	wlan,.cat
 ./usr/share/man/cat8/hp300/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp300/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp300/crash.0		man-obsolete		obsolete
@@ -3576,13 +3576,13 @@
 ./usr/share/man/cat8/wg-keygen.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/wg-userspace.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/wgconfig.0			man-netutil-catman	.cat
-./usr/share/man/cat8/wiconfig.0			man-netutil-catman	.cat
+./usr/share/man/cat8/wiconfig.0			man-netutil-catman	wlan,.cat
 ./usr/share/man/cat8/wire-test.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/wizd.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/wlanctl.0			man-netutil-catman	.cat
-./usr/share/man/cat8/wpa_cli.0			man-netutil-catman	.cat
-./usr/share/man/cat8/wpa_passphrase.0		man-netutil-catman	.cat
-./usr/share/man/cat8/wpa_supplicant.0		man-netutil-catman	.cat
+./usr/share/man/cat8/wlanctl.0			man-netutil-catman	wlan,.cat
+./usr/share/man/cat8/wpa_cli.0			man-netutil-catman	wlan,.cat
+./usr/share/man/cat8/wpa_passphrase.0		man-netutil-catman	wlan,.cat
+./usr/share/man/cat8/wpa_supplicant.0		man-netutil-catman	wlan,.cat
 ./usr/share/man/cat8/wsconscfg.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/wsconsctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/wsfontload.0		man-sysutil-catman	.cat
@@ -5923,7 +5923,7 @@
 ./usr/share/man/man5/group.5			man-sys-man		.man
 ./usr/share/man/man5/header_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/hesiod.conf.5		man-hesiod-man		.man
-./usr/share/man/man5/hostapd.conf.5		man-sysutil-man		.man
+./usr/share/man/man5/hostapd.conf.5		man-sysutil-man		wlan,.man
 ./usr/share/man/man5/hosts.5			man-net-man		.man
 ./usr/share/man/man5/hosts.allow.5		man-net-man		.man
 ./usr/share/man/man5/hosts.deny.5		man-net-man		.man
@@ -6073,7 +6073,7 @@
 ./usr/share/man/man5/virtual.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/weekly.5			man-sys-man		.man
 ./usr/share/man/man5/weekly.conf.5		man-sys-man		.man
-./usr/share/man/man5/wpa_supplicant.conf.5	man-net-man		.man
+./usr/share/man/man5/wpa_supplicant.conf.5	man-net-man		wlan,.man
 ./usr/share/man/man5/wscons.conf.5		man-sys-man		.man
 ./usr/share/man/man5/wsmoused.conf.5		man-sys-man		.man
 ./usr/share/man/man5/wtmp.5			man-sys-man		.man
@@ -6494,8 +6494,8 @@
 ./usr/share/man/man8/halt.8			man-sysutil-man		.man
 ./usr/share/man/man8/hdaudioctl.8		man-sysutil-man		audio,.man
 ./usr/share/man/man8/hlfsd.8			man-amd-man		.man
-./usr/share/man/man8/hostapd.8			man-sysutil-man		.man
-./usr/share/man/man8/hostapd_cli.8		man-sysutil-man		.man
+./usr/share/man/man8/hostapd.8			man-sysutil-man		wlan,.man
+./usr/share/man/man8/hostapd_cli.8		man-sysutil-man		wlan,.man
 ./usr/share/man/man8/hp300/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp300/boot.8		man-sys-man		.man
 ./usr/share/man/man8/hp300/crash.8		man-obsolete		obsolete
@@ -7163,13 +7163,13 @@
 ./usr/share/man/man8/wg-keygen.8		man-netutil-man		.man
 ./usr/share/man/man8/wg-userspace.8		man-netutil-man		.man
 ./usr/share/man/man8/wgconfig.8			man-netutil-man		.man
-./usr/share/man/man8/wiconfig.8			man-netutil-man		.man
+./usr/share/man/man8/wiconfig.8			man-netutil-man		wlan,.man
 ./usr/share/man/man8/wire-test.8		man-netutil-man		.man
 ./usr/share/man/man8/wizd.8			man-sysutil-man		.man
-./usr/share/man/man8/wlanctl.8			man-netutil-man		.man
-./usr/share/man/man8/wpa_cli.8			man-netutil-man		.man
-./usr/share/man/man8/wpa_passphrase.8		man-netutil-man		.man
-./usr/share/man/man8/wpa_supplicant.8		man-netutil-man		.man
+./usr/share/man/man8/wlanctl.8			man-netutil-man		wlan,.man
+./usr/share/man/man8/wpa_cli.8			man-netutil-man		wlan,.man
+./usr/share/man/man8/wpa_passphrase.8		man-netutil-man		wlan,.man
+./usr/share/man/man8/wpa_supplicant.8		man-netutil-man		wlan,.man
 ./usr/share/man/man8/wsconscfg.8		man-sysutil-man		.man
 ./usr/share/man/man8/wsconsctl.8		man-sysutil-man		.man
 ./usr/share/man/man8/wsfontload.8		man-sysutil-man		.man

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.78 2024/10/30 18:09:18 christos Exp $
+#	$NetBSD: Makefile,v 1.79 2025/12/22 16:48:47 thorpej Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	acpica am-utils bc byacc cron dhcpcd elftoolchain/common \
 	ekermit elftosb fetch file flex ${EXTERNAL_JEMALLOC_SUBDIR} less \
 	libarchive libevent libfido2 liblzf libpcap mdocml \
-	ntp openresolv tcpdump tmux top tre wpa zstd
+	ntp openresolv tcpdump tmux top tre zstd
 
 .if (${MKATF} != "no")
 SUBDIR+= atf
@@ -42,6 +42,9 @@ SUBDIR+= librtld_db
 .endif
 .if ${MKUNBOUND} != "no"
 SUBDIR+= unbound
+.endif
+.if ${MKWLAN} != "no"
+SUBDIR+= wpa
 .endif
 
 SUBDIR+= blocklist pdisk nvi ppp libnv tradcpp

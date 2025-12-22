@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1451 2025/12/22 14:52:28 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1452 2025/12/22 16:48:48 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1318,6 +1318,7 @@ _MKVARS.yes= \
 	MKSTATICLIB \
 	MKSTRIPSYM \
 	MKUNBOUND \
+	MKWLAN \
 	MKX11FONTS \
 	MKYP
 
@@ -1342,6 +1343,7 @@ MKPF.m68000?=		no
 MKPOSTFIX.m68000?=	no
 MKRUMP.m68000?=		no
 MKUNBOUND.m68000?=	no
+MKWLAN.m68000?=		no
 
 .for var in ${_MKVARS.yes}
 ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uyes}}

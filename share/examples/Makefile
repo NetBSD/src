@@ -1,6 +1,12 @@
-#	$NetBSD: Makefile,v 1.25 2024/03/30 06:29:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.26 2025/12/22 16:48:48 thorpej Exp $
 
-SUBDIR= amd apm asm devpubd disktab emul fstab ftpd getdate hostapd \
-        lua npf pppd racoon syslogd wpa_supplicant wsmoused
+.include <bsd.own.mk>
+
+SUBDIR= amd apm asm devpubd disktab emul fstab ftpd getdate \
+        lua npf pppd racoon syslogd wsmoused
+
+.if (${MKWLAN} != "no")
+SUBDIR+=hostapd wpa_supplicant
+.endif
 
 .include <bsd.subdir.mk>

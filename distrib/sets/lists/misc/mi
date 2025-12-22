@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.225 2023/07/05 00:26:38 gutteridge Exp $
+# $NetBSD: mi,v 1.226 2025/12/22 16:48:47 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1402,7 +1402,7 @@
 ./usr/share/examples/getdate/datemsk.template	misc-sys-examples	share
 ./usr/share/examples/getdate/posixmsk.example3	misc-sys-examples	share
 ./usr/share/examples/getdate/posixmsk.example4	misc-sys-examples	share
-./usr/share/examples/hostapd/hostapd.conf	misc-netutil-examples	share
+./usr/share/examples/hostapd/hostapd.conf	misc-netutil-examples	wlan,share
 ./usr/share/examples/ipf/BASIC.NAT		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_1.FW		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_2.FW		misc-ipf-examples	ipfilter,share

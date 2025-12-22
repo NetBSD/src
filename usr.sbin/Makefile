@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.296 2025/12/22 14:52:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.297 2025/12/22 16:48:48 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -29,7 +29,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
 	umcpmioctl unlink usbdevs user \
 	videomode vipw veriexecgen vnconfig \
-	wakeonlan wg-keygen wg-userspace wgconfig wiconfig wlanctl \
+	wakeonlan wg-keygen wg-userspace wgconfig \
 	wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
 
@@ -72,6 +72,10 @@ SUBDIR+=npf
 # PF
 .if (${MKPF} != "no")
 SUBDIR+=pf
+.endif
+
+.if (${MKWLAN} != "no")
+SUBDIR+=wiconfig wlanctl
 .endif
 
 .include <bsd.subdir.mk>

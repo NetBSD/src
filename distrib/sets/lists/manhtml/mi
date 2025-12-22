@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2025/12/22 14:52:28 thorpej Exp $
+# $NetBSD: mi,v 1.36 2025/12/22 16:48:47 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2134,7 +2134,7 @@
 ./usr/share/man/html5/group.html		man-sys-htmlman		html
 ./usr/share/man/html5/header_checks.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/hesiod.conf.html		man-hesiod-htmlman	html
-./usr/share/man/html5/hostapd.conf.html		man-sysutil-htmlman	html
+./usr/share/man/html5/hostapd.conf.html		man-sysutil-htmlman	wlan,html
 ./usr/share/man/html5/hosts.allow.html		man-net-htmlman		html
 ./usr/share/man/html5/hosts.deny.html		man-net-htmlman		html
 ./usr/share/man/html5/hosts.equiv.html		man-netutil-htmlman	html
@@ -2267,7 +2267,7 @@
 ./usr/share/man/html5/virtual.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/weekly.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/weekly.html		man-sys-htmlman		html
-./usr/share/man/html5/wpa_supplicant.conf.html	man-net-htmlman		html
+./usr/share/man/html5/wpa_supplicant.conf.html	man-net-htmlman		wlan,html
 ./usr/share/man/html5/wscons.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/wsmoused.conf.html	man-sys-htmlman		html
 ./usr/share/man/html5/wtmp.html			man-sys-htmlman		html
@@ -2624,8 +2624,8 @@
 ./usr/share/man/html8/halt.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/hdaudioctl.html		man-sysutil-htmlman	audio,html
 ./usr/share/man/html8/hlfsd.html		man-amd-htmlman		html
-./usr/share/man/html8/hostapd.html		man-sysutil-htmlman	html
-./usr/share/man/html8/hostapd_cli.html		man-sysutil-htmlman	html
+./usr/share/man/html8/hostapd.html		man-sysutil-htmlman	wlan,html
+./usr/share/man/html8/hostapd_cli.html		man-sysutil-htmlman	wlan,html
 ./usr/share/man/html8/hp300/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp300/crash.html		man-obsolete		obsolete
 ./usr/share/man/html8/hp300/format.html		man-sys-htmlman		html
@@ -3155,13 +3155,13 @@
 ./usr/share/man/html8/wg-keygen.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wg-userspace.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wgconfig.html		man-netutil-htmlman	html
-./usr/share/man/html8/wiconfig.html		man-netutil-htmlman	html
+./usr/share/man/html8/wiconfig.html		man-netutil-htmlman	wlan,html
 ./usr/share/man/html8/wire-test.html		man-netutil-htmlman	html
 ./usr/share/man/html8/wizd.html			man-sysutil-htmlman	html
-./usr/share/man/html8/wlanctl.html		man-netutil-htmlman	html
-./usr/share/man/html8/wpa_cli.html		man-netutil-htmlman	html
-./usr/share/man/html8/wpa_passphrase.html	man-netutil-htmlman	html
-./usr/share/man/html8/wpa_supplicant.html	man-netutil-htmlman	html
+./usr/share/man/html8/wlanctl.html		man-netutil-htmlman	wlan,html
+./usr/share/man/html8/wpa_cli.html		man-netutil-htmlman	wlan,html
+./usr/share/man/html8/wpa_passphrase.html	man-netutil-htmlman	wlan,html
+./usr/share/man/html8/wpa_supplicant.html	man-netutil-htmlman	wlan,html
 ./usr/share/man/html8/wsconscfg.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/wsconsctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/wsfontload.html		man-sysutil-htmlman	html

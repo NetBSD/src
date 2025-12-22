@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1374 2025/12/22 14:52:27 thorpej Exp $
+# $NetBSD: mi,v 1.1375 2025/12/22 16:48:47 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1554,8 +1554,8 @@
 ./usr/sbin/hdaudioctl				base-sysutil-bin	audio
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
-./usr/sbin/hostapd				base-sysutil-bin
-./usr/sbin/hostapd_cli				base-sysutil-bin
+./usr/sbin/hostapd				base-sysutil-bin	wlan
+./usr/sbin/hostapd_cli				base-sysutil-bin	wlan
 ./usr/sbin/hprop				base-krb5-bin		kerberos
 ./usr/sbin/htable				base-obsolete		obsolete
 ./usr/sbin/i2cscan				base-sysutil-bin
@@ -1870,12 +1870,12 @@
 ./usr/sbin/wg-keygen				base-netutil-bin
 ./usr/sbin/wg-userspace				base-netutil-bin
 ./usr/sbin/wgconfig				base-netutil-bin
-./usr/sbin/wiconfig				base-sysutil-bin
+./usr/sbin/wiconfig				base-sysutil-bin	wlan
 ./usr/sbin/wire-test				base-netutil-bin
-./usr/sbin/wlanctl				base-sysutil-bin
-./usr/sbin/wpa_cli				base-sysutil-bin
-./usr/sbin/wpa_passphrase			base-sysutil-bin
-./usr/sbin/wpa_supplicant			base-sysutil-bin
+./usr/sbin/wlanctl				base-sysutil-bin	wlan
+./usr/sbin/wpa_cli				base-sysutil-bin	wlan
+./usr/sbin/wpa_passphrase			base-sysutil-bin	wlan
+./usr/sbin/wpa_supplicant			base-sysutil-bin	wlan
 ./usr/sbin/wsconscfg				base-sysutil-bin
 ./usr/sbin/wsfontload				base-sysutil-bin
 ./usr/sbin/wsmoused				base-sysutil-bin
@@ -2586,7 +2586,7 @@
 ./usr/share/examples/verifiedexec_load/gen_md5	base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_sha1	base-obsolete		obsolete
 ./usr/share/examples/wpa_supplicant		base-netutil-examples
-./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	share
+./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	wlan,share
 ./usr/share/examples/wsmoused			base-sysutil-examples
 ./usr/share/examples/wsmoused/wsmoused.conf	base-sysutil-examples	share
 ./usr/share/games				base-games-share
