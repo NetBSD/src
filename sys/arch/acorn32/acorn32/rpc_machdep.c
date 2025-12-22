@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.101 2022/05/15 20:37:50 andvar Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.102 2025/12/22 07:45:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.101 2022/05/15 20:37:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.102 2025/12/22 07:45:46 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -231,7 +231,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-	cnpollc(1);
+	cnpollc(true);
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.35 2024/02/20 23:36:01 andvar Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.36 2025/12/22 07:45:47 skrll Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.35 2024/02/20 23:36:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.36 2025/12/22 07:45:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -275,7 +275,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
+/*	cnpollc(true);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

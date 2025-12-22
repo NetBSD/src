@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.36 2025/12/19 13:03:52 nia Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.37 2025/12/22 07:45:46 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.36 2025/12/19 13:03:52 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.37 2025/12/22 07:45:46 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -360,7 +360,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-	cnpollc(1);
+	cnpollc(true);
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

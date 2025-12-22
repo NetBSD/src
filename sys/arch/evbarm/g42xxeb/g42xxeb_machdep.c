@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.43 2024/05/13 00:08:06 msaitoh Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.44 2025/12/22 07:45:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
@@ -270,7 +270,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
+/*	cnpollc(true);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

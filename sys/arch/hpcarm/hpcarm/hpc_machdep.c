@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.106 2019/07/16 14:41:49 skrll Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.107 2025/12/22 07:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.106 2019/07/16 14:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.107 2025/12/22 07:45:47 skrll Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -146,7 +146,7 @@ cpu_reboot(int howto, char *bootstr)
 	__sleep_ctx = NULL;
 
 	/* Disable console buffering. */
-	cnpollc(1);
+	cnpollc(true);
 
 #ifdef KLOADER
 	if ((howto & RB_HALT) == 0) {

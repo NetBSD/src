@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.30 2023/04/20 08:28:04 skrll Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.31 2025/12/22 07:45:46 skrll Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.30 2023/04/20 08:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.31 2025/12/22 07:45:46 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -254,7 +254,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
+/*	cnpollc(true);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

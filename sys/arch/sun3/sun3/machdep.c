@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 2025/12/22 07:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2025/12/22 07:45:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -393,7 +393,7 @@ cpu_reboot(int howto, char *user_boot_string)
 		goto haltsys;
 
 	/* Un-blank the screen if appropriate. */
-	cnpollc(1);
+	cnpollc(true);
 
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
