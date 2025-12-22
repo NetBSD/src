@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.11 2025/12/21 19:07:49 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.12 2025/12/22 23:06:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.11 2025/12/21 19:07:49 riastradh Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.12 2025/12/22 23:06:09 thorpej Exp $");
 
 #include <sys/endian.h>
 
@@ -109,6 +109,7 @@ formatbits(double f)
 	return buf;
 }
 
+#ifdef __HAVE_LONG_DOUBLE
 static const char *
 formatbitsl(long double f)
 {
@@ -131,8 +132,9 @@ formatbitsl(long double f)
 
 	return buf;
 }
+#endif /* __HAVE_LONG_DOUBLE */
 
-#endif
+#endif /* _FLOAT_IEEE754 */
 
 #ifdef __HAVE_FENV
 #  define	CLEAREXCEPT()	feclearexcept(FE_ALL_EXCEPT)
@@ -872,6 +874,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 #endif
 }
 
+#ifdef __HAVE_LONG_DOUBLE
 ATF_TC(fpclassify_long_double);
 ATF_TC_HEAD(fpclassify_long_double, tc)
 {
@@ -1206,13 +1209,16 @@ ATF_TC_BODY(fpclassify_long_double, tc)
     }
 #endif
 }
+#endif /* __HAVE_LONG_DOUBLE */
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, fpclassify_float);
 	ATF_TP_ADD_TC(tp, fpclassify_double);
+#ifdef __HAVE_LONG_DOUBLE
 	ATF_TP_ADD_TC(tp, fpclassify_long_double);
+#endif
 
 	return atf_no_error();
 }
