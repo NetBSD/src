@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34 2025/12/22 03:11:05 thorpej Exp $
+# $NetBSD: mi,v 1.35 2025/12/22 14:52:28 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6,7 +6,7 @@
 ./usr/share/man/html1/Mail.html			man-obsolete		obsolete
 ./usr/share/man/html1/[.html			man-util-htmlman	html
 ./usr/share/man/html1/agrep.html		man-util-htmlman	html
-./usr/share/man/html1/aiomixer.html		man-audio-htmlman	html
+./usr/share/man/html1/aiomixer.html		man-audio-htmlman	audio,html
 ./usr/share/man/html1/alias.html		man-util-htmlman	html
 ./usr/share/man/html1/altqstat.html		man-router-htmlman	html
 ./usr/share/man/html1/apply.html		man-util-htmlman	html
@@ -34,10 +34,10 @@
 ./usr/share/man/html1/atf2kyua.html		man-kyua-htmlman	html,kyua
 ./usr/share/man/html1/atq.html			man-cron-htmlman	html
 ./usr/share/man/html1/atrm.html			man-cron-htmlman	html
-./usr/share/man/html1/audiocfg.html		man-audio-htmlman	html
-./usr/share/man/html1/audioctl.html		man-audio-htmlman	html
-./usr/share/man/html1/audioplay.html		man-audio-htmlman	html
-./usr/share/man/html1/audiorecord.html		man-audio-htmlman	html
+./usr/share/man/html1/audiocfg.html		man-audio-htmlman	audio,html
+./usr/share/man/html1/audioctl.html		man-audio-htmlman	audio,html
+./usr/share/man/html1/audioplay.html		man-audio-htmlman	audio,html
+./usr/share/man/html1/audiorecord.html		man-audio-htmlman	audio,html
 ./usr/share/man/html1/audit-packages.html	man-obsolete		obsolete
 ./usr/share/man/html1/awk.html			man-util-htmlman	html
 ./usr/share/man/html1/banner.html		man-util-htmlman	html
@@ -2622,7 +2622,7 @@
 ./usr/share/man/html8/groupmod.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/gspa.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/halt.html			man-sysutil-htmlman	html
-./usr/share/man/html8/hdaudioctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/hdaudioctl.html		man-sysutil-htmlman	audio,html
 ./usr/share/man/html8/hlfsd.html		man-amd-htmlman		html
 ./usr/share/man/html8/hostapd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hostapd_cli.html		man-sysutil-htmlman	html

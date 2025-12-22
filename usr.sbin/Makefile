@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.295 2025/12/22 03:11:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.296 2025/12/22 14:52:28 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,6 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	edquota eeprom emcfanctl envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
-	hdaudioctl \
 	i2cscan ifwatchd inetd installboot intrctl iopctl iostat ipwctl irdaattach \
 	isibootd iteconfig iwictl \
 	kgmon \
@@ -33,6 +32,10 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	wakeonlan wg-keygen wg-userspace wgconfig wiconfig wlanctl \
 	wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
+
+.if (${MKAUDIO} != "no")
+SUBDIR+= hdaudioctl
+.endif
 
 .if (${MKBLUETOOTH} != "no")
 SUBDIR+= bta2dpd btattach btconfig btdevctl bthcid btpand sdpd

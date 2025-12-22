@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1373 2025/12/22 03:11:04 thorpej Exp $
+# $NetBSD: mi,v 1.1374 2025/12/22 14:52:27 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -522,7 +522,7 @@
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-obsolete		obsolete
 ./usr/bin/agrep					base-util-bin
-./usr/bin/aiomixer				base-audio-bin
+./usr/bin/aiomixer				base-audio-bin		audio
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
 ./usr/bin/arpaname				base-bind-bin
@@ -540,10 +540,10 @@
 ./usr/bin/atf2kyua				base-kyua-bin		kyua
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
-./usr/bin/audiocfg				base-audio-bin
-./usr/bin/audioctl				base-audio-bin
-./usr/bin/audioplay				base-audio-bin
-./usr/bin/audiorecord				base-audio-bin
+./usr/bin/audiocfg				base-audio-bin		audio
+./usr/bin/audioctl				base-audio-bin		audio
+./usr/bin/audioplay				base-audio-bin		audio
+./usr/bin/audiorecord				base-audio-bin		audio
 ./usr/bin/awk					base-util-bin
 ./usr/bin/banner				base-util-bin
 ./usr/bin/base64				base-util-bin
@@ -1551,7 +1551,7 @@
 ./usr/sbin/groupdel				base-sysutil-bin
 ./usr/sbin/groupinfo				base-sysutil-bin
 ./usr/sbin/groupmod				base-sysutil-bin
-./usr/sbin/hdaudioctl				base-sysutil-bin
+./usr/sbin/hdaudioctl				base-sysutil-bin	audio
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
 ./usr/sbin/hostapd				base-sysutil-bin

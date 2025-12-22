@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1814 2025/12/22 03:11:05 thorpej Exp $
+# $NetBSD: mi,v 1.1815 2025/12/22 14:52:27 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -43,7 +43,7 @@
 ./usr/share/man/cat1/Mail.0			man-obsolete		obsolete
 ./usr/share/man/cat1/[.0			man-util-catman		.cat
 ./usr/share/man/cat1/agrep.0			man-util-catman		.cat
-./usr/share/man/cat1/aiomixer.0			man-audio-catman	.cat
+./usr/share/man/cat1/aiomixer.0			man-audio-catman	audio,.cat
 ./usr/share/man/cat1/alias.0			man-util-catman		.cat
 ./usr/share/man/cat1/altqstat.0			man-router-catman	.cat
 ./usr/share/man/cat1/amq.0			man-obsolete		obsolete
@@ -72,10 +72,10 @@
 ./usr/share/man/cat1/atf2kyua.0			man-kyua-catman		.cat,kyua
 ./usr/share/man/cat1/atq.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atrm.0			man-cron-catman		.cat
-./usr/share/man/cat1/audiocfg.0			man-audio-catman	.cat
-./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
-./usr/share/man/cat1/audioplay.0		man-audio-catman	.cat
-./usr/share/man/cat1/audiorecord.0		man-audio-catman	.cat
+./usr/share/man/cat1/audiocfg.0			man-audio-catman	audio,.cat
+./usr/share/man/cat1/audioctl.0			man-audio-catman	audio,.cat
+./usr/share/man/cat1/audioplay.0		man-audio-catman	audio,.cat
+./usr/share/man/cat1/audiorecord.0		man-audio-catman	audio,.cat
 ./usr/share/man/cat1/audit-packages.0		man-obsolete		obsolete
 ./usr/share/man/cat1/awk.0			man-util-catman		.cat
 ./usr/share/man/cat1/banner.0			man-util-catman		.cat
@@ -2903,7 +2903,7 @@
 ./usr/share/man/cat8/groupmod.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/gspa.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/halt.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/hdaudioctl.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/hdaudioctl.0		man-sysutil-catman	audio,.cat
 ./usr/share/man/cat8/hlfsd.0			man-amd-catman		.cat
 ./usr/share/man/cat8/hostapd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/hostapd_cli.0		man-sysutil-catman	.cat
@@ -3632,7 +3632,7 @@
 ./usr/share/man/man1/Mail.1			man-obsolete		obsolete
 ./usr/share/man/man1/[.1			man-util-man		.man
 ./usr/share/man/man1/agrep.1			man-util-man		.man
-./usr/share/man/man1/aiomixer.1			man-audio-man		.man
+./usr/share/man/man1/aiomixer.1			man-audio-man		audio,.man
 ./usr/share/man/man1/alias.1			man-util-man		.man
 ./usr/share/man/man1/altqstat.1			man-router-man		.man
 ./usr/share/man/man1/amq.1			man-obsolete		obsolete
@@ -3661,10 +3661,10 @@
 ./usr/share/man/man1/atf2kyua.1			man-kyua-man		.man,kyua
 ./usr/share/man/man1/atq.1			man-cron-man		.man
 ./usr/share/man/man1/atrm.1			man-cron-man		.man
-./usr/share/man/man1/audiocfg.1			man-audio-man		.man
-./usr/share/man/man1/audioctl.1			man-audio-man		.man
-./usr/share/man/man1/audioplay.1		man-audio-man		.man
-./usr/share/man/man1/audiorecord.1		man-audio-man		.man
+./usr/share/man/man1/audiocfg.1			man-audio-man		audio,.man
+./usr/share/man/man1/audioctl.1			man-audio-man		audio,.man
+./usr/share/man/man1/audioplay.1		man-audio-man		audio,.man
+./usr/share/man/man1/audiorecord.1		man-audio-man		audio,.man
 ./usr/share/man/man1/audit-packages.1		man-obsolete		obsolete
 ./usr/share/man/man1/awk.1			man-util-man		.man
 ./usr/share/man/man1/banner.1			man-util-man		.man
@@ -6492,7 +6492,7 @@
 ./usr/share/man/man8/groupmod.8			man-sysutil-man		.man
 ./usr/share/man/man8/gspa.8			man-sysutil-man		.man
 ./usr/share/man/man8/halt.8			man-sysutil-man		.man
-./usr/share/man/man8/hdaudioctl.8		man-sysutil-man		.man
+./usr/share/man/man8/hdaudioctl.8		man-sysutil-man		audio,.man
 ./usr/share/man/man8/hlfsd.8			man-amd-man		.man
 ./usr/share/man/man8/hostapd.8			man-sysutil-man		.man
 ./usr/share/man/man8/hostapd_cli.8		man-sysutil-man		.man

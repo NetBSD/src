@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.244 2025/12/22 03:11:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.245 2025/12/22 14:52:28 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= aiomixer apply asa at audio audiocfg \
+SUBDIR= apply asa at \
 	banner base64 basename biff \
 	bzip2 bzip2recover c11 c17 c89 c99 cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp cleantags col colcrt colrm \
@@ -37,6 +37,10 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	write xargs xinstall xlint yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
+
+.if (${MKAUDIO} != "no")
+SUBDIR+= aiomixer audio audiocfg
+.endif
 
 .if (${MKBLUETOOTH} != "no")
 SUBDIR+= bthset btkey btpin rfcomm_sppd sdpquery 

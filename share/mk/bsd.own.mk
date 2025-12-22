@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1450 2025/12/22 03:14:51 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1451 2025/12/22 14:52:28 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1271,6 +1271,7 @@ MKSTATICPIE?=	no
 _MKVARS.yes= \
 	MKARGON2 \
 	MKATF \
+	MKAUDIO \
 	MKBLUETOOTH \
 	MKBINUTILS \
 	MKBSDTAR \
@@ -1325,6 +1326,7 @@ _MKVARS.yes= \
 # of available system resources.  Trim down the base set of system
 # features accordingly.
 #
+MKAUDIO.m68000?=	no
 MKBLUETOOTH.m68000?=	no
 MKBSDTAR.m68000?=	no
 MKDTC.m68000?=		no
