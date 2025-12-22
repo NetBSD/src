@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.310 2025/12/17 00:49:55 riastradh Exp $
+#	$NetBSD: Makefile,v 1.311 2025/12/22 03:11:05 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR+=	.WAIT
 SUBDIR+=	i18n_module
 
 SUBDIR+=	libarch \
-		libbluetooth libbsdmalloc libbz2 \
+		libbsdmalloc libbz2 \
 		libcompat libcrypt \
 		libintl libipsec libkvm libm \
 		libossaudio libpci libposix libprop libpthread \
@@ -45,6 +45,9 @@ SUBDIR+=	libc_vfp
 .endif
 .if ${MACHINE_MIPS64}
 SUBDIR+=	libc_fp
+.endif
+.if (${MKBLUETOOTH} != "no")
+SUBDIR+=	libbluetooth
 .endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient

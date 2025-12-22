@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2019/04/10 00:32:15 sevan Exp $
+#	$NetBSD: Makefile,v 1.8 2025/12/22 03:11:05 thorpej Exp $
 
 .include <bsd.own.mk>
 
-CONFIGFILES=	daily.conf monthly.conf npf.boot.conf pkgpath.conf \
+CONFIGFILES=	daily.conf monthly.conf pkgpath.conf \
 		    security.conf weekly.conf
+
+.if (${MKNPF} != "no")
+CONFIGFILES+=	npf.boot.conf
+.endif
+
 FILESDIR=	/etc/defaults
 FILESMODE=	${NONBINMODE}
 

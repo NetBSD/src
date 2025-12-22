@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1813 2025/12/04 18:22:16 nia Exp $
+# $NetBSD: mi,v 1.1814 2025/12/22 03:11:05 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -87,9 +87,9 @@
 ./usr/share/man/cat1/bg.0			man-util-catman		.cat
 ./usr/share/man/cat1/biff.0			man-mail-catman		.cat
 ./usr/share/man/cat1/bpm.0			man-obsolete		.cat,obsolete
-./usr/share/man/cat1/bthset.0			man-util-catman		.cat
-./usr/share/man/cat1/btkey.0			man-util-catman		.cat
-./usr/share/man/cat1/btpin.0			man-util-catman		.cat
+./usr/share/man/cat1/bthset.0			man-util-catman		bluetooth,.cat
+./usr/share/man/cat1/btkey.0			man-util-catman		bluetooth,.cat
+./usr/share/man/cat1/btpin.0			man-util-catman		bluetooth,.cat
 ./usr/share/man/cat1/bunzip2.0			man-util-catman		.cat
 ./usr/share/man/cat1/bzcat.0			man-util-catman		.cat
 ./usr/share/man/cat1/bzip2.0			man-util-catman		.cat
@@ -575,7 +575,7 @@
 ./usr/share/man/cat1/reset.0			man-util-catman		.cat
 ./usr/share/man/cat1/resize.0			man-util-catman		.cat
 ./usr/share/man/cat1/rev.0			man-util-catman		.cat
-./usr/share/man/cat1/rfcomm_sppd.0		man-util-catman		.cat
+./usr/share/man/cat1/rfcomm_sppd.0		man-util-catman		bluetooth,.cat
 ./usr/share/man/cat1/rlog.0			man-rcs-catman		.cat
 ./usr/share/man/cat1/rlogin.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rm.0			man-util-catman		.cat
@@ -601,7 +601,7 @@
 ./usr/share/man/cat1/screenblank.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/script.0			man-util-catman		.cat
 ./usr/share/man/cat1/sdiff.0			man-util-catman		.cat
-./usr/share/man/cat1/sdpquery.0			man-util-catman		.cat
+./usr/share/man/cat1/sdpquery.0			man-util-catman		bluetooth,.cat
 ./usr/share/man/cat1/sed.0			man-util-catman		.cat
 ./usr/share/man/cat1/send-pr.0			man-gnats-catman	.cat
 ./usr/share/man/cat1/sendmail.0			man-postfix-catman	postfix,.cat
@@ -2745,13 +2745,13 @@
 ./usr/share/man/cat8/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/bozohttpd.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman	.cat
-./usr/share/man/cat8/bta2dpd.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/btattach.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/btconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/bta2dpd.0			man-sysutil-catman	bluetooth,.cat
+./usr/share/man/cat8/btattach.0			man-sysutil-catman	bluetooth,.cat
+./usr/share/man/cat8/btconfig.0			man-sysutil-catman	bluetooth,.cat
 ./usr/share/man/cat8/btcontrol.0		man-obsolete		obsolete
-./usr/share/man/cat8/btdevctl.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/bthcid.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/btpand.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/btdevctl.0			man-sysutil-catman	bluetooth,.cat
+./usr/share/man/cat8/bthcid.0			man-sysutil-catman	bluetooth,.cat
+./usr/share/man/cat8/btpand.0			man-sysutil-catman	bluetooth,cat
 ./usr/share/man/cat8/btuartd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/canconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
@@ -3385,7 +3385,7 @@
 ./usr/share/man/cat8/scan_lfs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/schedctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/sdpd.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/sdpd.0			man-sysutil-catman	bluetooth,.cat
 ./usr/share/man/cat8/security.0			man-obsolete		obsolete
 ./usr/share/man/cat8/sendmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/service.0			man-sysutil-catman	.cat
@@ -3676,9 +3676,9 @@
 ./usr/share/man/man1/bg.1			man-util-man		.man
 ./usr/share/man/man1/biff.1			man-mail-man		.man
 ./usr/share/man/man1/bpm.1			man-obsolete		.man,obsolete
-./usr/share/man/man1/bthset.1			man-util-man		.man
-./usr/share/man/man1/btkey.1			man-util-man		.man
-./usr/share/man/man1/btpin.1			man-util-man		.man
+./usr/share/man/man1/bthset.1			man-util-man		bluetooth,.man
+./usr/share/man/man1/btkey.1			man-util-man		bluetooth,.man
+./usr/share/man/man1/btpin.1			man-util-man		bluetooth,.man
 ./usr/share/man/man1/bunzip2.1			man-util-man		.man
 ./usr/share/man/man1/bzcat.1			man-util-man		.man
 ./usr/share/man/man1/bzip2.1			man-util-man		.man
@@ -4164,7 +4164,7 @@
 ./usr/share/man/man1/reset.1			man-util-man		.man
 ./usr/share/man/man1/resize.1			man-util-man		.man
 ./usr/share/man/man1/rev.1			man-util-man		.man
-./usr/share/man/man1/rfcomm_sppd.1		man-util-man		.man
+./usr/share/man/man1/rfcomm_sppd.1		man-util-man		bluetooth,.man
 ./usr/share/man/man1/rlog.1			man-rcs-man		.man
 ./usr/share/man/man1/rlogin.1			man-netutil-man		.man
 ./usr/share/man/man1/rm.1			man-util-man		.man
@@ -4190,7 +4190,7 @@
 ./usr/share/man/man1/screenblank.1		man-sysutil-man		.man
 ./usr/share/man/man1/script.1			man-util-man		.man
 ./usr/share/man/man1/sdiff.1			man-util-man		.man
-./usr/share/man/man1/sdpquery.1			man-util-man		.man
+./usr/share/man/man1/sdpquery.1			man-util-man		bluetooth,.man
 ./usr/share/man/man1/sed.1			man-util-man		.man
 ./usr/share/man/man1/send-pr.1			man-gnats-man		.man
 ./usr/share/man/man1/sendmail.1			man-postfix-man		postfix,.man
@@ -6334,13 +6334,13 @@
 ./usr/share/man/man8/bounce.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/bozohttpd.8		man-netutil-man		.man
 ./usr/share/man/man8/brconfig.8			man-netutil-man		.man
-./usr/share/man/man8/bta2dpd.8			man-sysutil-man		.man
-./usr/share/man/man8/btattach.8			man-sysutil-man		.man
-./usr/share/man/man8/btconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/bta2dpd.8			man-sysutil-man		bluetooth,.man
+./usr/share/man/man8/btattach.8			man-sysutil-man		bluetooth,.man
+./usr/share/man/man8/btconfig.8			man-sysutil-man		bluetooth,.man
 ./usr/share/man/man8/btcontrol.8		man-obsolete		obsolete
-./usr/share/man/man8/btdevctl.8			man-sysutil-man		.man
-./usr/share/man/man8/bthcid.8			man-sysutil-man		.man
-./usr/share/man/man8/btpand.8			man-sysutil-man		.man
+./usr/share/man/man8/btdevctl.8			man-sysutil-man		bluetooth,.man
+./usr/share/man/man8/bthcid.8			man-sysutil-man		bluetooth,.man
+./usr/share/man/man8/btpand.8			man-sysutil-man		bluetooth,.man
 ./usr/share/man/man8/btuartd.8			man-obsolete		obsolete
 ./usr/share/man/man8/canconfig.8		man-netutil-man		.man
 ./usr/share/man/man8/catman.8			man-man-man		.man
@@ -6975,7 +6975,7 @@
 ./usr/share/man/man8/scan_lfs.8			man-sysutil-man		.man
 ./usr/share/man/man8/schedctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
-./usr/share/man/man8/sdpd.8			man-sysutil-man		.man
+./usr/share/man/man8/sdpd.8			man-sysutil-man		bluetooth,.man
 ./usr/share/man/man8/security.8			man-obsolete		obsolete
 ./usr/share/man/man8/sendmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/service.8			man-sysutil-man		.man

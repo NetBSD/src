@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1372 2025/12/17 00:49:54 riastradh Exp $
+# $NetBSD: mi,v 1.1373 2025/12/22 03:11:04 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -552,9 +552,9 @@
 ./usr/bin/bc					base-util-bin
 ./usr/bin/bdes					base-crypto-bin
 ./usr/bin/biff					base-mail-bin
-./usr/bin/bthset				base-util-bin
-./usr/bin/btkey					base-util-bin
-./usr/bin/btpin					base-util-bin
+./usr/bin/bthset				base-util-bin		bluetooth
+./usr/bin/btkey					base-util-bin		bluetooth
+./usr/bin/btpin					base-util-bin		bluetooth
 ./usr/bin/bunzip2				base-util-bin
 ./usr/bin/bzcat					base-util-bin
 ./usr/bin/bzip2					base-util-bin
@@ -804,7 +804,7 @@
 ./usr/bin/resize				base-util-bin
 ./usr/bin/rev					base-util-bin
 ./usr/bin/revoke				base-util-bin
-./usr/bin/rfcomm_sppd				base-util-bin
+./usr/bin/rfcomm_sppd				base-util-bin		bluetooth
 ./usr/bin/rlog					base-rcs-bin
 ./usr/bin/rlogin				base-netutil-bin
 ./usr/bin/rmd160				base-util-bin
@@ -828,7 +828,7 @@
 ./usr/bin/scp					base-secsh-bin
 ./usr/bin/script				base-util-bin
 ./usr/bin/sdiff					base-util-bin
-./usr/bin/sdpquery				base-util-bin
+./usr/bin/sdpquery				base-util-bin		bluetooth
 ./usr/bin/sed					base-util-bin
 ./usr/bin/send-pr				base-gnats-bin
 ./usr/bin/seq					base-util-bin
@@ -1477,13 +1477,13 @@
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-obsolete		obsolete
-./usr/sbin/bta2dpd				base-sysutil-bin
-./usr/sbin/btattach				base-sysutil-bin
-./usr/sbin/btconfig				base-sysutil-bin
+./usr/sbin/bta2dpd				base-sysutil-bin	bluetooth
+./usr/sbin/btattach				base-sysutil-bin	bluetooth
+./usr/sbin/btconfig				base-sysutil-bin	bluetooth
 ./usr/sbin/btcontrol				base-obsolete		obsolete
-./usr/sbin/btdevctl				base-sysutil-bin
-./usr/sbin/bthcid				base-sysutil-bin
-./usr/sbin/btpand				base-sysutil-bin
+./usr/sbin/btdevctl				base-sysutil-bin	bluetooth
+./usr/sbin/bthcid				base-sysutil-bin	bluetooth
+./usr/sbin/btpand				base-sysutil-bin	bluetooth
 ./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/certctl				base-sysutil-bin
@@ -1781,7 +1781,7 @@
 ./usr/sbin/schedctl				base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin
 ./usr/sbin/scriptdump				base-obsolete		obsolete
-./usr/sbin/sdpd					base-sysutil-bin
+./usr/sbin/sdpd					base-sysutil-bin	bluetooth
 ./usr/sbin/sendmail				base-mailwrapper-bin
 ./usr/sbin/service				base-sysutil-bin
 ./usr/sbin/services_mkdb			base-sysutil-bin

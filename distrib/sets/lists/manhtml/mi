@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.33 2025/11/03 22:24:27 nia Exp $
+# $NetBSD: mi,v 1.34 2025/12/22 03:11:05 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -49,9 +49,9 @@
 ./usr/share/man/html1/bg.html			man-util-htmlman	html
 ./usr/share/man/html1/biff.html			man-mail-htmlman	html
 ./usr/share/man/html1/bpm.html			man-obsolete		html,obsolete
-./usr/share/man/html1/bthset.html		man-util-htmlman	html
-./usr/share/man/html1/btkey.html		man-util-htmlman	html
-./usr/share/man/html1/btpin.html		man-util-htmlman	html
+./usr/share/man/html1/bthset.html		man-util-htmlman	bluetooth,html
+./usr/share/man/html1/btkey.html		man-util-htmlman	bluetooth,html
+./usr/share/man/html1/btpin.html		man-util-htmlman	bluetooth,html
 ./usr/share/man/html1/bunzip2.html		man-util-htmlman	html
 ./usr/share/man/html1/bzcat.html		man-util-htmlman	html
 ./usr/share/man/html1/bzip2.html		man-util-htmlman	html
@@ -517,7 +517,7 @@
 ./usr/share/man/html1/reset.html		man-util-htmlman	html
 ./usr/share/man/html1/resize.html		man-util-htmlman	html
 ./usr/share/man/html1/rev.html			man-util-htmlman	html
-./usr/share/man/html1/rfcomm_sppd.html		man-util-htmlman	html
+./usr/share/man/html1/rfcomm_sppd.html		man-util-htmlman	bluetooth,html
 ./usr/share/man/html1/rlog.html			man-rcs-htmlman		html
 ./usr/share/man/html1/rlogin.html		man-netutil-htmlman	html
 ./usr/share/man/html1/rm.html			man-util-htmlman	html
@@ -542,7 +542,7 @@
 ./usr/share/man/html1/screenblank.html		man-sysutil-htmlman	html
 ./usr/share/man/html1/script.html		man-util-htmlman	html
 ./usr/share/man/html1/sdiff.html		man-util-htmlman	html
-./usr/share/man/html1/sdpquery.html		man-util-htmlman	html
+./usr/share/man/html1/sdpquery.html		man-util-htmlman	bluetooth,html
 ./usr/share/man/html1/sed.html			man-util-htmlman	html
 ./usr/share/man/html1/send-pr.html		man-gnats-htmlman	html
 ./usr/share/man/html1/sendmail.html		man-postfix-htmlman	postfix,html
@@ -2495,12 +2495,12 @@
 ./usr/share/man/html8/bounce.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/bozohttpd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/brconfig.html		man-netutil-htmlman	html
-./usr/share/man/html8/bta2dpd.html		man-sysutil-htmlman	html
-./usr/share/man/html8/btattach.html		man-sysutil-htmlman	html
-./usr/share/man/html8/btconfig.html		man-sysutil-htmlman	html
-./usr/share/man/html8/btdevctl.html		man-sysutil-htmlman	html
-./usr/share/man/html8/bthcid.html		man-sysutil-htmlman	html
-./usr/share/man/html8/btpand.html		man-sysutil-htmlman	html
+./usr/share/man/html8/bta2dpd.html		man-sysutil-htmlman	bluetooth,html
+./usr/share/man/html8/btattach.html		man-sysutil-htmlman	bluetooth,html
+./usr/share/man/html8/btconfig.html		man-sysutil-htmlman	bluetooth,html
+./usr/share/man/html8/btdevctl.html		man-sysutil-htmlman	bluetooth,html
+./usr/share/man/html8/bthcid.html		man-sysutil-htmlman	bluetooth,html
+./usr/share/man/html8/btpand.html		man-sysutil-htmlman	bluetooth,html
 ./usr/share/man/html8/canconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/catman.html		man-man-htmlman		html
 ./usr/share/man/html8/ccdconfig.html		man-sysutil-htmlman	html
@@ -3010,7 +3010,7 @@
 ./usr/share/man/html8/scan_lfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/schedctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/scsictl.html		man-sysutil-htmlman	html
-./usr/share/man/html8/sdpd.html			man-sysutil-htmlman	html
+./usr/share/man/html8/sdpd.html			man-sysutil-htmlman	bluetooth,html
 ./usr/share/man/html8/security.html		man-obsolete		obsolete
 ./usr/share/man/html8/service.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/services_mkdb.html	man-sysutil-htmlman	html

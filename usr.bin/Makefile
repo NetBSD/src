@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.243 2025/12/04 18:22:16 nia Exp $
+#	$NetBSD: Makefile,v 1.244 2025/12/22 03:11:06 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
 SUBDIR= aiomixer apply asa at audio audiocfg \
-	banner base64 basename biff bthset btkey btpin \
+	banner base64 basename biff \
 	bzip2 bzip2recover c11 c17 c89 c99 cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp cleantags col colcrt colrm \
 	column comm compress config crunch csplit ctags cut cvslatest \
@@ -22,9 +22,9 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	nbperf nc netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pr \
 	printenv printf progress pwait pwhash qsubst quota radioctl rdist \
-	realpath renice resize rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
+	realpath renice resize rev revoke rlogin rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho scmdctl \
-	script sdiff sdpquery sed seq shar shlock \
+	script sdiff sed seq shar shlock \
 	showmount shuffle sockstat sort sortinfo \
 	spell split stat su sys_info systat \
 	tabs tail talk tcopy tee telnet tftp tic time timeout tip touch \
@@ -37,6 +37,10 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	write xargs xinstall xlint yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
+
+.if (${MKBLUETOOTH} != "no")
+SUBDIR+= bthset btkey btpin rfcomm_sppd sdpquery 
+.endif
 
 .if (${MKGROFF} == "no")
 SUBDIR+= soelim

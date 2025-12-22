@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.294 2025/03/11 13:56:48 brad Exp $
+#	$NetBSD: Makefile,v 1.295 2025/12/22 03:11:06 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
-	bad144 bootp bta2dpd btattach btconfig btdevctl bthcid btpand catman \
+	bad144 bootp catman \
 	certctl chroot cnwctl cpuctl crash \
 	dev_mkdb diskpart dumpfs dumplfs \
 	edquota eeprom emcfanctl envstat etcupdate extattrctl \
@@ -24,7 +24,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	quot quotacheck quotaon quotarestore \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
-	sa screenblank sdpd service services_mkdb sesd schedctl \
+	sa screenblank service services_mkdb sesd schedctl \
 	sliplogin spray \
 	srtconfig sti sunlabel sysinst syslogd \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
@@ -33,6 +33,10 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	wakeonlan wg-keygen wg-userspace wgconfig wiconfig wlanctl \
 	wsconscfg wsfontload wsmoused wsmuxctl \
 	zdump zic
+
+.if (${MKBLUETOOTH} != "no")
+SUBDIR+= bta2dpd btattach btconfig btdevctl bthcid btpand sdpd
+.endif
 
 .if ${MKMAKEMANDB} != "no"
 SUBDIR+= makemandb

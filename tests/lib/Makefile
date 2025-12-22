@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.36 2024/04/28 12:49:08 riastradh Exp $
+# $NetBSD: Makefile,v 1.37 2025/12/22 03:11:05 thorpej Exp $
 
 .include <bsd.own.mk>
 
-TESTS_SUBDIRS=	csu libarchive libbluetooth libc libcrypt libcurses \
+TESTS_SUBDIRS=	csu libarchive libc libcrypt libcurses \
 		libexecinfo libi386 libm libnvmm libobjc libposix libppath \
 		libprop libpthread librefuse librt libstdc++ libtre libusbhid \
 		libutil libossaudio lua semaphore
@@ -19,6 +19,10 @@ TESTS_SUBDIRS+= libdes
 # These tests come from external/bsd/lutok/tests/lib/liblutok.  Ensure they
 # get registered in the Atffile only when installed.
 ATFFILE_EXTRA_TPS=	liblutok
+.endif
+
+.if (${MKBLUETOOTH} != "no")
+TESTS_SUBDIRS+= libbluetooth
 .endif
 
 .if (${MKSKEY} != "no")
