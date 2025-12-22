@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.495 2025/12/19 03:07:26 christos Exp $
+# $NetBSD: mi,v 1.496 2025/12/22 17:02:57 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -38,7 +38,7 @@
 ./usr/lib/libbind9_g.a				comp-obsolete		obsolete
 ./usr/lib/libblacklist_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist_g.a			comp-c-debuglib		debuglib,compatfile
-./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib,compatfile
+./usr/lib/libbluetooth_g.a			comp-c-debuglib		bluetooth,debuglib,compatfile
 ./usr/lib/libbozohttpd_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbsdmalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbz2_g.a				comp-c-debuglib		debuglib,compatfile
@@ -468,7 +468,7 @@
 ./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/agrep.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/aiomixer.debug	comp-audio-debug	debug
+./usr/libdata/debug/usr/bin/aiomixer.debug	comp-audio-debug	audio,debug
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apropos.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/ar.debug		comp-util-debug		binutils,debug
@@ -487,10 +487,10 @@
 ./usr/libdata/debug/usr/bin/atf-sh.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/atf-version.debug	comp-atf-debug		atf,!kyua,debug
 ./usr/libdata/debug/usr/bin/atf-version.debug	comp-obsolete		obsolete,kyua,debug
-./usr/libdata/debug/usr/bin/audiocfg.debug	comp-audio-debug	debug
-./usr/libdata/debug/usr/bin/audioctl.debug	comp-audio-debug	debug
-./usr/libdata/debug/usr/bin/audioplay.debug	comp-audio-debug	debug
-./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	debug
+./usr/libdata/debug/usr/bin/audiocfg.debug	comp-audio-debug	audio,debug
+./usr/libdata/debug/usr/bin/audioctl.debug	comp-audio-debug	audio,debug
+./usr/libdata/debug/usr/bin/audioplay.debug	comp-audio-debug	audio,debug
+./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	audio,debug
 ./usr/libdata/debug/usr/bin/awk.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/banner.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/base64.debug	comp-util-debug		debug
@@ -498,9 +498,9 @@
 ./usr/libdata/debug/usr/bin/bc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bdes.debug		comp-crypto-debug	debug
 ./usr/libdata/debug/usr/bin/biff.debug		comp-mail-debug		debug
-./usr/libdata/debug/usr/bin/bthset.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/btkey.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/btpin.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/bthset.debug	comp-util-debug		bluetooth,debug
+./usr/libdata/debug/usr/bin/btkey.debug		comp-util-debug		bluetooth,debug
+./usr/libdata/debug/usr/bin/btpin.debug		comp-util-debug		bluetooth,debug
 ./usr/libdata/debug/usr/bin/bzip2.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bzip2recover.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/c++filt.debug	comp-cxx-debug		binutils,debug
@@ -777,7 +777,7 @@
 ./usr/libdata/debug/usr/bin/resize.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rev.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/revoke.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/rfcomm_sppd.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rfcomm_sppd.debug	comp-util-debug		bluetooth,debug
 ./usr/libdata/debug/usr/bin/rlog.debug		comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rlogin.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rpcgen.debug	comp-c-debug		debug
@@ -799,7 +799,7 @@
 ./usr/libdata/debug/usr/bin/scp.debug		comp-secsh-debug	debug
 ./usr/libdata/debug/usr/bin/script.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sdiff.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/sdpquery.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/sdpquery.debug	comp-util-debug		bluetooth,debug
 ./usr/libdata/debug/usr/bin/sed.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/seq.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	debug
@@ -1077,13 +1077,13 @@
 ./usr/libdata/debug/usr/sbin/bootpef.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootpgw.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootptest.debug	comp-bootserver-debug	debug
-./usr/libdata/debug/usr/sbin/bta2dpd.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/btattach.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/btconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/bta2dpd.debug	comp-sysutil-debug	bluetooth,debug
+./usr/libdata/debug/usr/sbin/btattach.debug	comp-sysutil-debug	bluetooth,debug
+./usr/libdata/debug/usr/sbin/btconfig.debug	comp-sysutil-debug	bluetooth,debug
 ./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
-./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/btpand.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	bluetooth,debug
+./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	bluetooth,debug
+./usr/libdata/debug/usr/sbin/btpand.debug	comp-sysutil-debug	bluetooth,debug
 ./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
@@ -1131,10 +1131,10 @@
 ./usr/libdata/debug/usr/sbin/getencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gpioctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gspa.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/sbin/hdaudioctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/hdaudioctl.debug	comp-sysutil-debug	audio,debug
 ./usr/libdata/debug/usr/sbin/hlfsd.debug	comp-amd-debug		debug
-./usr/libdata/debug/usr/sbin/hostapd.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/hostapd_cli.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/hostapd.debug	comp-sysutil-debug	wlan,debug
+./usr/libdata/debug/usr/sbin/hostapd_cli.debug	comp-sysutil-debug	wlan,debug
 ./usr/libdata/debug/usr/sbin/hprop.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/i2cscan.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ifmcstat.debug	comp-netutil-debug	inet6,debug
@@ -1322,7 +1322,7 @@
 ./usr/libdata/debug/usr/sbin/sa.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/schedctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/screenblank.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/sdpd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/sdpd.debug		comp-sysutil-debug	bluetooth,debug
 ./usr/libdata/debug/usr/sbin/services_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sesd.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/setencstat.debug	comp-sysutil-debug	debug
@@ -1391,12 +1391,12 @@
 ./usr/libdata/debug/usr/sbin/wakeonlan.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wg-keygen.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wgconfig.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/wiconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/wiconfig.debug	comp-sysutil-debug	wlan,debug
 ./usr/libdata/debug/usr/sbin/wire-test.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/wlanctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/wpa_cli.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/wpa_passphrase.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/wpa_supplicant.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/wlanctl.debug	comp-sysutil-debug	wlan,debug
+./usr/libdata/debug/usr/sbin/wpa_cli.debug	comp-sysutil-debug	wlan,debug
+./usr/libdata/debug/usr/sbin/wpa_passphrase.debug	comp-sysutil-debug	wlan,debug
+./usr/libdata/debug/usr/sbin/wpa_supplicant.debug	comp-sysutil-debug	wlan,debug
 ./usr/libdata/debug/usr/sbin/wsconscfg.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wsfontload.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/wsmoused.debug	comp-sysutil-debug	debug
@@ -1988,12 +1988,12 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini_array.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libarchive/h_libarchive.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libbluetooth/t_bluetooth.debug	tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_data.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_get.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_match.debug	tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_bluetooth.debug	tests-lib-debug		bluetooth,debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_data.debug		tests-lib-debug		bluetooth,debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_get.debug		tests-lib-debug		bluetooth,debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_match.debug	tests-lib-debug		bluetooth,debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		bluetooth,debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		bluetooth,debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit,compattestfile
