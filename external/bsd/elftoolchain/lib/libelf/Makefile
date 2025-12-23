@@ -172,5 +172,5 @@ libelf_msize.c:		elf_types.m4 libelf_msize.m4
 # Keep the .SUFFIXES line after the include of bsd.lib.mk
 .SUFFIXES:	.m4 .c
 .m4.c:
-	${TOOL_M4} -D SRCDIR=${SRCDIR} ${M4FLAGS} ${.IMPSRC} > ${.TARGET}
-
+	${TOOL_M4} -D SRCDIR=${SRCDIR} -I${SRCDIR} ${M4FLAGS} \
+		${.IMPSRC} > ${.TARGET}
