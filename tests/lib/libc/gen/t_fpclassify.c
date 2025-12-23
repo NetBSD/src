@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.13 2025/12/23 17:11:32 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.14 2025/12/23 17:11:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.13 2025/12/23 17:11:32 riastradh Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.14 2025/12/23 17:11:42 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -77,13 +77,66 @@ __RCSID("$NetBSD: t_fpclassify.c,v 1.13 2025/12/23 17:11:32 riastradh Exp $");
 #  define	FLT_QNANBIT	(QNANBIT*__BIT(FLT_MANT_DIG - 2))
 #  define	FLT_SNANBIT	(SNANBIT*__BIT(FLT_MANT_DIG - 2))
 
+static float
+makequietsignallingf(float f, uint32_t bit)
+{
+	union { float f; uint32_t i; } u = { .f = f };
+
+	u.i &= ~(FLT_QNANBIT|FLT_SNANBIT);
+	u.i |= bit;
+	if (bit == 0)
+		u.i |= 1;	/* significand all zero would be inf */
+
+	return u.f;
+}
+
 #  define	DBL_QNANBIT	(QNANBIT*__BIT(DBL_MANT_DIG - 2))
 #  define	DBL_SNANBIT	(SNANBIT*__BIT(DBL_MANT_DIG - 2))
 
-#  define	LDBL_QNANBITH						      \
+static double
+makequietsignalling(double f, uint64_t bit)
+{
+	union { double f; uint64_t i; } u = { .f = f };
+
+	u.i &= ~(DBL_QNANBIT|DBL_SNANBIT);
+	u.i |= bit;
+	if (bit == 0)
+		u.i |= 1;	/* significand all zero would be inf */
+
+	return u.f;
+}
+
+#  ifdef __HAVE_LONG_DOUBLE
+
+/* long double is not the same as double */
+
+#    define	LDBL_QNANBITH						      \
 	(QNANBIT*__BIT(LDBL_MANT_DIG - 2 - EXT_FRACLBITS))
-#  define	LDBL_SNANBITH						      \
+#    define	LDBL_SNANBITH						      \
 	(SNANBIT*__BIT(LDBL_MANT_DIG - 2 - EXT_FRACLBITS))
+
+static long double
+makequietsignallingl(long double f, uint64_t bith)
+{
+	union ieee_ext_u u = { .extu_ld = f };
+
+	u.extu_ld = f;
+	u.extu_frach &= ~(LDBL_QNANBITH|LDBL_SNANBITH);
+	u.extu_frach |= bith;
+	if (bith == 0)
+		u.extu_fracl |= 1;	/* significand all zero would be inf */
+	return u.extu_ld;
+}
+
+#  else  /* !__HAVE_LONG_DOUBLE */
+
+/* long double is the same as double */
+
+#    define	LDBL_QNANBITH		DBL_QNANBIT
+#    define	LDBL_SNANBITH		DBL_SNANBIT
+#    define	makequietsignallingl	makequietsignalling
+
+#  endif
 
 static const char *
 formatbitsf(float f)
@@ -435,17 +488,8 @@ ATF_TC_BODY(fpclassify_float, tc)
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
-	union {
-		float f;
-		uint32_t i;
-	} u;
-
 	/* test a quiet NaN */
-	u.f = NAN;
-	u.i &= ~FLT_SNANBIT;
-	u.i |= FLT_QNANBIT;
-	u.i |= 1;		/* significand all zero would be inf */
-	nan = u.f;
+	nan = makequietsignallingf(NAN, FLT_QNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
@@ -481,11 +525,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	u.f = NAN;
-	u.i &= ~FLT_QNANBIT;
-	u.i |= FLT_SNANBIT;
-	u.i |= 1;		/* significand all zero would be inf */
-	nan = u.f;
+	nan = makequietsignallingf(NAN, FLT_SNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
@@ -772,17 +812,8 @@ ATF_TC_BODY(fpclassify_double, tc)
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
-	union {
-		double f;
-		uint64_t i;
-	} u;
-
 	/* test a quiet NaN */
-	u.f = NAN;
-	u.i &= ~DBL_SNANBIT;
-	u.i |= DBL_QNANBIT;
-	u.i |= 1;		/* significand all zero would be inf */
-	nan = u.f;
+	nan = makequietsignalling(NAN, DBL_QNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
@@ -818,11 +849,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	u.f = NAN;
-	u.i &= ~DBL_QNANBIT;
-	u.i |= DBL_SNANBIT;
-	u.i |= 1;		/* significand all zero would be inf */
-	nan = u.f;
+	nan = makequietsignalling(NAN, DBL_SNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
@@ -1110,14 +1137,10 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
-	union ieee_ext_u u;
-
+#ifdef __HAVE_LONG_DOUBLE
 	/* test a quiet NaN */
-	u.extu_ld = NAN;
-	u.extu_frach &= ~LDBL_SNANBITH;
-	u.extu_frach |= LDBL_QNANBITH;
-	u.extu_fracl |= 1;	/* significand all zero would be inf */
-	nan = u.extu_ld;
+	nan = makequietsignallingl(NAN, LDBL_QNANBITH);
+#endif
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
@@ -1153,11 +1176,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	u.extu_ld = NAN;
-	u.extu_frach &= ~LDBL_QNANBITH;
-	u.extu_frach |= LDBL_SNANBITH;
-	u.extu_fracl |= 1;	/* significand all zero would be inf */
-	nan = u.extu_ld;
+	nan = makequietsignallingl(NAN, LDBL_SNANBITH);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
