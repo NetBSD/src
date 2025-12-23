@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.60 2025/12/21 16:36:46 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.61 2025/12/23 18:48:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -292,7 +292,7 @@ tests/lib/libc/gen/h_ctype_abuse.c		1.1
 tests/lib/libc/gen/h_ctype_abuse.c		1.2
 tests/lib/libc/gen/t_ctype.c			1.12
 
-	ctype(3): PR : environment override for abuse traps.
+	ctype(3): PR 58208: environment override for abuse traps.
 	[riastradh, ticket #45]
 
 distrib/utils/libhack/Makefile.inc		1.40
