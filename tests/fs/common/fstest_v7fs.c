@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_v7fs.c,v 1.2 2020/06/17 00:16:21 kamil Exp $	*/
+/*	$NetBSD: fstest_v7fs.c,v 1.3 2025/12/23 16:38:07 nia Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <endian.h>
 
 #include <fs/v7fs/v7fs_args.h>
 
@@ -79,7 +80,7 @@ v7fs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
 	snprintf(args->ta_devpath, MAXPATHLEN, "/dev/device%d.v7fs", num);
 	snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
 	args->ta_uargs.fspec = args->ta_devpath;
-	args->ta_uargs.endian = _BYTE_ORDER;
+	args->ta_uargs.endian = BYTE_ORDER;
 
 	res = rump_pub_etfs_register(args->ta_devpath, image, RUMP_ETFS_BLK);
 	if (res != 0) {
