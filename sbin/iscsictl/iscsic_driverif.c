@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_driverif.c,v 1.6 2012/06/25 20:39:54 mlelstv Exp $	*/
+/*	$NetBSD: iscsic_driverif.c,v 1.7 2025/12/23 16:36:12 nia Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include "iscsic_globals.h"
 
 #include <ctype.h>
+#include <endian.h>
 #include <inttypes.h>
 
 typedef struct {
