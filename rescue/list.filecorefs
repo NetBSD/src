@@ -1,0 +1,3 @@
+#	$NetBSD: list.filecorefs,v 1.1 2025/12/24 15:37:29 thorpej Exp $
+
+PROG	mount_filecore

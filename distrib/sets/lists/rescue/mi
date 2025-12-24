@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.2 2020/04/04 15:39:16 jdolecek Exp $
+# $NetBSD: mi,v 1.3 2025/12/24 15:37:28 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -29,9 +29,9 @@
 ./rescue/dmesg					base-rescue-root
 ./rescue/domainname				base-rescue-root
 ./rescue/dump					base-rescue-root
-./rescue/dump_lfs				base-rescue-root
+./rescue/dump_lfs				base-rescue-root	lfs
 ./rescue/dumpfs					base-rescue-root
-./rescue/dumplfs				base-rescue-root
+./rescue/dumplfs				base-rescue-root	lfs
 ./rescue/echo					base-rescue-root
 ./rescue/ed					base-rescue-root
 ./rescue/edlabel				base-obsolete	obsolete
@@ -42,10 +42,10 @@
 ./rescue/fdisk					base-rescue-root
 ./rescue/fgrep					base-rescue-root
 ./rescue/fsck					base-rescue-root
-./rescue/fsck_ext2fs				base-rescue-root
+./rescue/fsck_ext2fs				base-rescue-root	ext2fs
 ./rescue/fsck_ffs				base-rescue-root
-./rescue/fsck_lfs				base-rescue-root
-./rescue/fsck_msdos				base-rescue-root
+./rescue/fsck_lfs				base-rescue-root	lfs
+./rescue/fsck_msdos				base-rescue-root	msdosfs
 ./rescue/fsdb					base-rescue-root
 ./rescue/fsirand				base-rescue-root
 ./rescue/ftp					base-rescue-root
@@ -69,7 +69,7 @@
 ./rescue/ldconfig				base-obsolete	obsolete
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
-./rescue/lfs_cleanerd				base-rescue-root
+./rescue/lfs_cleanerd				base-rescue-root	lfs
 ./rescue/lmcconfig				base-obsolete	obsolete
 ./rescue/lmcctl					base-obsolete	obsolete
 ./rescue/ln					base-rescue-root
@@ -82,33 +82,33 @@
 ./rescue/modunload				base-rescue-root
 ./rescue/more					base-rescue-root
 ./rescue/mount					base-rescue-root
-./rescue/mount_ados				base-rescue-root
-./rescue/mount_cd9660				base-rescue-root
-./rescue/mount_efs				base-rescue-root
-./rescue/mount_ext2fs				base-rescue-root
-./rescue/mount_fdesc				base-rescue-root
+./rescue/mount_ados				base-rescue-root	adosfs
+./rescue/mount_cd9660				base-rescue-root	cd9660fs
+./rescue/mount_efs				base-rescue-root	efs
+./rescue/mount_ext2fs				base-rescue-root	ext2fs
+./rescue/mount_fdesc				base-rescue-root	fdescfs
 ./rescue/mount_ffs				base-rescue-root
-./rescue/mount_filecore				base-rescue-root
-./rescue/mount_kernfs				base-rescue-root
-./rescue/mount_lfs				base-rescue-root
+./rescue/mount_filecore				base-rescue-root	filecorefs
+./rescue/mount_kernfs				base-rescue-root	kernfs
+./rescue/mount_lfs				base-rescue-root	lfs
 ./rescue/mount_mfs				base-rescue-root
-./rescue/mount_msdos				base-rescue-root
-./rescue/mount_nfs				base-rescue-root
-./rescue/mount_ntfs				base-rescue-root
-./rescue/mount_null				base-rescue-root
-./rescue/mount_overlay				base-rescue-root
+./rescue/mount_msdos				base-rescue-root	msdosfs
+./rescue/mount_nfs				base-rescue-root	nfs
+./rescue/mount_ntfs				base-rescue-root	ntfs
+./rescue/mount_null				base-rescue-root	nullfs
+./rescue/mount_overlay				base-rescue-root	overlayfs
 ./rescue/mount_portal				base-obsolete		obsolete
-./rescue/mount_procfs				base-rescue-root
+./rescue/mount_procfs				base-rescue-root	procfs
 ./rescue/mount_smbfs				base-obsolete		obsolete
-./rescue/mount_tmpfs				base-rescue-root
+./rescue/mount_tmpfs				base-rescue-root	tmpfs
 ./rescue/mount_ufs				base-rescue-root
-./rescue/mount_umap				base-rescue-root
-./rescue/mount_union				base-rescue-root
+./rescue/mount_umap				base-rescue-root	umapfs
+./rescue/mount_union				base-rescue-root	unionfs
 ./rescue/mt					base-rescue-root
 ./rescue/mv					base-rescue-root
 ./rescue/newfs					base-rescue-root
-./rescue/newfs_lfs				base-rescue-root
-./rescue/newfs_msdos				base-rescue-root
+./rescue/newfs_lfs				base-rescue-root	lfs
+./rescue/newfs_msdos				base-rescue-root	msdosfs
 ./rescue/pax					base-rescue-root
 ./rescue/pdisk					base-rescue-root
 ./rescue/ping					base-rescue-root
@@ -122,7 +122,7 @@
 ./rescue/rcorder				base-rescue-root
 ./rescue/rcp					base-rescue-root
 ./rescue/rdump					base-rescue-root
-./rescue/rdump_lfs				base-rescue-root
+./rescue/rdump_lfs				base-rescue-root	lfs
 ./rescue/reboot					base-rescue-root
 ./rescue/restore				base-rescue-root
 ./rescue/rm					base-rescue-root

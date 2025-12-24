@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.73 2020/07/13 09:10:35 jruoho Exp $
+#	$NetBSD: Makefile,v 1.74 2025/12/24 15:37:30 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
 
-MAN=	a.out.5 acct.5 ar.5 autofs.5 boot.cfg.5 \
+.include <bsd.own.mk>
+
+MAN=	a.out.5 acct.5 ar.5 boot.cfg.5 \
 	capfile.5 changelist.5 core.5 daily.5 disktab.5 elf.5 \
 	ethers.5 floppytab.5 forward.5 \
 	fs.5 fstab.5 genassym.cf.5 gpio.conf.5 group.5 hesiod.conf.5 \
@@ -27,6 +29,10 @@ MLINKS+=resolv.conf.5 resolver.5
 MLINKS+=utmp.5 wtmp.5 utmp.5 lastlog.5 passwd.5 master.passwd.5
 MLINKS+=utmpx.5 wtmpx.5 utmpx.5 lastlogx.5
 MLINKS+=weekly.5 weekly.conf.5
+
+.if (${MKAUTOFS} != "no")
+MAN+=	autofs.5
+.endif
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

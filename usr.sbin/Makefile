@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.298 2025/12/22 17:25:51 thorpej Exp $
+#	$NetBSD: Makefile,v 1.299 2025/12/24 15:37:30 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
+SUBDIR=	ac accton acpitools altq apm apmd arp \
 	bad144 bootp catman \
 	certctl chroot cpuctl crash \
-	dev_mkdb diskpart dumpfs dumplfs \
+	dev_mkdb diskpart dumpfs \
 	edquota eeprom emcfanctl envstat etcupdate extattrctl \
 	flashctl fssconfig fstyp fusermount fwctl \
 	gpioctl grfconfig gspa \
@@ -15,14 +15,13 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	kgmon \
 	lastlogin ldpd link lockstat lpr \
 	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
-	mopd mountd moused mrinfo mrouted mscdlabel mtrace mtree \
-	ndbootd netgroup_mkdb nfsd \
+	mopd moused mrinfo mrouted mscdlabel mtrace mtree \
+	ndbootd netgroup_mkdb \
 	ofctl \
 	paxctl pcictl perfused psrset pstat pwd_mkdb postinstall \
 	powerd puffs \
 	quot quotacheck quotaon quotarestore \
-	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
-	rpc.pcnfsd rpc.statd rpcbind rwhod \
+	rarpd rbootd rdate repquota rmt rpc.bootparamd rpcbind rwhod \
 	sa screenblank service services_mkdb sesd schedctl \
 	sliplogin spray \
 	srtconfig sti sunlabel sysinst syslogd \
@@ -35,6 +34,18 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 
 .if (${MKAUDIO} != "no")
 SUBDIR+= hdaudioctl
+.endif
+
+.if (${MKAUTOFS} != "no")
+SUBDIR+= autofs
+.endif
+
+.if (${MKLFS} != "no")
+SUBDIR+= dumplfs
+.endif
+
+.if (${MKNFS} != "no")
+SUBDIR+= mountd nfsd rpc.lockd rpc.pcnfsd rpc.statd
 .endif
 
 .if (${MKBLUETOOTH} != "no")

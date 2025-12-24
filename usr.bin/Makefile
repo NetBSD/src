@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.245 2025/12/22 14:52:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.246 2025/12/24 15:37:30 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -19,13 +19,13 @@ SUBDIR= apply asa at \
 	machine mail make man menuc mesg midiplay midirecord mixerctl \
 	mkcsmapper mkdep mkesdb mkfifo mklocale mktemp mkubootimage \
 	moduli msgc msgs \
-	nbperf nc netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
+	nbperf nc netgroup netstat newgrp newsyslog nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pr \
 	printenv printf progress pwait pwhash qsubst quota radioctl rdist \
 	realpath renice resize rev revoke rlogin rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho scmdctl \
 	script sdiff sed seq shar shlock \
-	showmount shuffle sockstat sort sortinfo \
+	shuffle sockstat sort sortinfo \
 	spell split stat su sys_info systat \
 	tabs tail talk tcopy tee telnet tftp tic time timeout tip touch \
 	tput \
@@ -52,6 +52,10 @@ SUBDIR+= soelim
 
 .if (${MKMAKEMANDB} == "no")
 SUBDIR+= apropos whatis
+.endif
+
+.if (${MKNFS} != "no")
+SUBDIR+= nfsstat showmount
 .endif
 
 .if (${MKRUMP} != "no")

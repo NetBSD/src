@@ -1,0 +1,8 @@
+#	$NetBSD: list.lfs,v 1.1 2025/12/24 15:37:29 thorpej Exp $
+
+PROG	dump_lfs	rdump_lfs
+PROG	fsck_lfs
+PROG	mount_lfs
+PROG	newfs_lfs
+PROG	dumplfs
+PROG	lfs_cleanerd

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142 2025/02/24 17:49:37 martin Exp $
+#	$NetBSD: Makefile,v 1.143 2025/12/24 15:37:29 thorpej Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -13,51 +13,130 @@ SUBDIR=	amrctl apmlabel atactl badsect bioctl blkdiscard brconfig \
 	mbrlabel mknod modload modstat modunload mount \
 	newbtconf nologin nvmectl \
 	ping pppoectl raidctl reboot rcorder rndctl route routed \
-	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \
+	savecore scsictl shutdown slattach svhlabel swapctl sysctl \
 	ttyflags umbctl umount veriexecctl wdogctl wsconsctl
 
 .if ${HAVE_EFI_RT} == "yes"
 SUBDIR+= efi
 .endif
 
-
+#
 # support for various file systems
-SUBDIR+= newfs_ext2fs fsck_ext2fs
-SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs resize_ffs
-SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs
-SUBDIR+= newfs_msdos fsck_msdos
-SUBDIR+= newfs_sysvbfs
-SUBDIR+= newfs_udf fsck_udf
-SUBDIR+= newfs_v7fs fsck_v7fs
+#
+# Always include FFS.
+#
+SUBDIR+= newfs fsck_ffs fsdb dump restore clri tunefs resize_ffs mount_ffs \
+	scan_ffs
+
+.if (${MKADOSFS} != "no")
 SUBDIR+= mount_ados
+.endif
+
+.if (${MKAUTOFS} != "no")
 SUBDIR+= mount_autofs
+.endif
+
+.if (${MKCD9660FS} != "no")
 SUBDIR+= mount_cd9660
+.endif
+
+.if (${MKCHFS} != "no")
 SUBDIR+= mount_chfs
+.endif
+
+.if (${MKEFS} != "no")
 SUBDIR+= mount_efs
-SUBDIR+= mount_ext2fs
+.endif
+
+.if (${MKEXT2FS} != "no")
+SUBDIR+= newfs_ext2fs fsck_ext2fs mount_ext2fs
+.endif
+
+.if (${MKFDESCFS} != "no")
 SUBDIR+= mount_fdesc
+.endif
+
+.if (${MKFILECOREFS} != "no")
 SUBDIR+= mount_filecore
-SUBDIR+= mount_ffs
+.endif
+
+.if (${MKHFS} != "no")
 SUBDIR+= mount_hfs
+.endif
+
+.if (${MKKERNFS} != "no")
 SUBDIR+= mount_kernfs
-SUBDIR+= mount_lfs
-SUBDIR+= mount_msdos
-SUBDIR+= mount_udf
+.endif
+
+.if (${MKLFS} != "no")
+SUBDIR+= newfs_lfs fsck_lfs dump_lfs resize_lfs mount_lfs
+.endif
+
+.if (${MKMSDOSFS} != "no")
+SUBDIR+= newfs_msdos fsck_msdos mount_msdos
+.endif
+
+.if (${MKNFS} != "no")
 SUBDIR+= mount_nfs
+.endif
+
+.if (${MKNILFS} != "no")
 SUBDIR+= mount_nilfs
+.endif
+
+.if (${MKNTFS} != "no")
 SUBDIR+= mount_ntfs
+.endif
+
+.if (${MKNULLFS} != "no")
 SUBDIR+= mount_null
+.endif
+
+.if (${MKOVERLAYFS} != "no")
 SUBDIR+= mount_overlay
+.endif
+
+# XXX De-tangle this web (puffs) later.
 SUBDIR+= mount_portal
+
+.if (${MKPROCFS} != "no")
 SUBDIR+= mount_procfs
+.endif
+
+.if (${MKPTYFS} != "no")
 SUBDIR+= mount_ptyfs
+.endif
+
+# XXX De-tangle this web (puffs) later.
 SUBDIR+= mount_puffs
+
+.if (${MKQEMUFWCFG} != "no")
 SUBDIR+= mount_qemufwcfg
-SUBDIR+= mount_sysvbfs
+.endif
+
+.if (${MKSYSVBFS} != "no")
+SUBDIR+= newfs_sysvbfs mount_sysvbfs
+.endif
+
+.if (${MKTMPFS} != "no")
 SUBDIR+= mount_tmpfs
+.endif
+
+.if (${MKUDF} != "no")
+SUBDIR+= newfs_udf fsck_udf mount_udf
+.endif
+
+.if (${MKUMAPFS} != "no")
 SUBDIR+= mount_umap
+.endif
+
+.if (${MKUNIONFS} != "no")
 SUBDIR+= mount_union
-SUBDIR+= mount_v7fs
+.endif
+
+.if (${MKV7FS} != "no")
+SUBDIR+= newfs_v7fs fsck_v7fs mount_v7fs
+.endif
 
 .if (${USE_INET6} != "no")
 SUBDIR+= ping6

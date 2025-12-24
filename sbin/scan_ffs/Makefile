@@ -1,11 +1,13 @@
-# $NetBSD: Makefile,v 1.11 2023/01/24 08:05:07 mlelstv Exp $
+# $NetBSD: Makefile,v 1.12 2025/12/24 15:37:30 thorpej Exp $
 
 .include <bsd.own.mk>
 
 PROG=	scan_ffs
 
+.if (${MKLFS} != "no")
 LINKS=	${BINDIR}/scan_ffs ${BINDIR}/scan_lfs
 MLINKS=	scan_ffs.8 scan_lfs.8
+.endif
 
 LDADD=	-lutil
 DPADD=	${LIBUTIL}

@@ -1,0 +1,4 @@
+#	$NetBSD: list.ext2fs,v 1.1 2025/12/24 15:37:29 thorpej Exp $
+
+PROG	fsck_ext2fs
+PROG	mount_ext2fs

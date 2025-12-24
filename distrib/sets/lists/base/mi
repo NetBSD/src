@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1376 2025/12/22 17:25:52 thorpej Exp $
+# $NetBSD: mi,v 1.1377 2025/12/24 15:37:28 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -332,7 +332,7 @@
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
-./libexec/lfs_cleanerd				base-sysutil-bin
+./libexec/lfs_cleanerd				base-sysutil-bin	lfs
 ./libexec/resolvconf				base-resolvconf-root
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
 ./libexec/resolvconf/libc			base-resolvconf-root
@@ -376,7 +376,7 @@
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
-./sbin/dump_lfs					base-sysutil-root
+./sbin/dump_lfs					base-sysutil-root	lfs
 ./sbin/dumpfs					base-obsolete		obsolete
 ./sbin/dumplfs					base-obsolete		obsolete
 ./sbin/efi					base-sysutil-root	efi_rt
@@ -385,12 +385,12 @@
 ./sbin/fdiscard					base-sysutil-root
 ./sbin/fdisk					base-sysutil-root
 ./sbin/fsck					base-sysutil-root
-./sbin/fsck_ext2fs				base-ext2fs-root
+./sbin/fsck_ext2fs				base-ext2fs-root	ext2fs
 ./sbin/fsck_ffs					base-sysutil-root
-./sbin/fsck_lfs					base-sysutil-root
-./sbin/fsck_msdos				base-sysutil-root
-./sbin/fsck_udf					base-sysutil-root
-./sbin/fsck_v7fs				base-sysutil-root
+./sbin/fsck_lfs					base-sysutil-root	lfs
+./sbin/fsck_msdos				base-sysutil-root	msdosfs
+./sbin/fsck_udf					base-sysutil-root	udf
+./sbin/fsck_v7fs				base-sysutil-root	v7fs
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
 ./sbin/gpt					base-sysutil-root
@@ -411,49 +411,49 @@
 ./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
-./sbin/mount_ados				base-adosfs-root
-./sbin/mount_autofs				base-sysutil-root
-./sbin/mount_cd9660				base-sysutil-root
-./sbin/mount_chfs				base-sysutil-root
-./sbin/mount_efs				base-efs-root
-./sbin/mount_ext2fs				base-ext2fs-root
-./sbin/mount_fdesc				base-miscfs-root
+./sbin/mount_ados				base-adosfs-root	adosfs
+./sbin/mount_autofs				base-sysutil-root	autofs
+./sbin/mount_cd9660				base-sysutil-root	cd9660fs
+./sbin/mount_chfs				base-sysutil-root	chfs
+./sbin/mount_efs				base-efs-root		efs
+./sbin/mount_ext2fs				base-ext2fs-root	ext2fs
+./sbin/mount_fdesc				base-miscfs-root	fdescfs
 ./sbin/mount_ffs				base-sysutil-root
-./sbin/mount_filecore				base-filecorefs-root
-./sbin/mount_hfs				base-hfs-root
+./sbin/mount_filecore				base-filecorefs-root	filecorefs
+./sbin/mount_hfs				base-hfs-root		hfs
 ./sbin/mount_hfsp				base-obsolete		obsolete
-./sbin/mount_kernfs				base-sysutil-root
-./sbin/mount_lfs				base-sysutil-root
+./sbin/mount_kernfs				base-sysutil-root	kernfs
+./sbin/mount_lfs				base-sysutil-root	lfs
 ./sbin/mount_mfs				base-sysutil-root
-./sbin/mount_msdos				base-sysutil-root
-./sbin/mount_nfs				base-nfsclient-root
-./sbin/mount_nilfs				base-sysutil-root
-./sbin/mount_ntfs				base-ntfs-root
-./sbin/mount_null				base-miscfs-root
-./sbin/mount_overlay				base-miscfs-root
+./sbin/mount_msdos				base-sysutil-root	msdosfs
+./sbin/mount_nfs				base-nfsclient-root	nfs
+./sbin/mount_nilfs				base-sysutil-root	nilfs
+./sbin/mount_ntfs				base-ntfs-root		ntfs
+./sbin/mount_null				base-miscfs-root	nullfs
+./sbin/mount_overlay				base-miscfs-root	overlayfs
 ./sbin/mount_portal				base-puffs-bin
-./sbin/mount_procfs				base-sysutil-root
-./sbin/mount_ptyfs				base-miscfs-root
+./sbin/mount_procfs				base-sysutil-root	procfs
+./sbin/mount_ptyfs				base-miscfs-root	ptyfs
 ./sbin/mount_puffs				base-sysutil-root
-./sbin/mount_qemufwcfg				base-sysutil-root
+./sbin/mount_qemufwcfg				base-sysutil-root	qemufwcfg
 ./sbin/mount_smbfs				base-obsolete		obsolete
-./sbin/mount_sysvbfs				base-sysutil-root
-./sbin/mount_tmpfs				base-miscfs-root
-./sbin/mount_udf				base-sysutil-root
+./sbin/mount_sysvbfs				base-sysutil-root	sysvbfs
+./sbin/mount_tmpfs				base-miscfs-root	tmpfs
+./sbin/mount_udf				base-sysutil-root	udf
 ./sbin/mount_ufs				base-sysutil-root
-./sbin/mount_umap				base-miscfs-root
-./sbin/mount_union				base-miscfs-root
-./sbin/mount_v7fs				base-sysutil-root
+./sbin/mount_umap				base-miscfs-root	umapfs
+./sbin/mount_union				base-miscfs-root	unionfs
+./sbin/mount_v7fs				base-sysutil-root	v7fs
 ./sbin/mount_zfs				base-zfs-root		zfs
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
-./sbin/newfs_ext2fs				base-sysutil-root
-./sbin/newfs_lfs				base-sysutil-root
-./sbin/newfs_msdos				base-sysutil-root
-./sbin/newfs_sysvbfs				base-sysutil-root
-./sbin/newfs_udf				base-sysutil-root
-./sbin/newfs_v7fs				base-sysutil-root
+./sbin/newfs_ext2fs				base-sysutil-root	ext2fs
+./sbin/newfs_lfs				base-sysutil-root	lfs
+./sbin/newfs_msdos				base-sysutil-root	msdosfs
+./sbin/newfs_sysvbfs				base-sysutil-root	sysvbfs
+./sbin/newfs_udf				base-sysutil-root	udf
+./sbin/newfs_v7fs				base-sysutil-root	v7fs
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -472,10 +472,10 @@
 ./sbin/raidctl					base-sysutil-root
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
-./sbin/rdump_lfs				base-sysutil-root
+./sbin/rdump_lfs				base-sysutil-root	lfs
 ./sbin/reboot					base-sysutil-root
 ./sbin/resize_ffs				base-sysutil-root
-./sbin/resize_lfs				base-sysutil-root
+./sbin/resize_lfs				base-sysutil-root	lfs
 ./sbin/resolvconf				base-resolvconf-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
@@ -495,7 +495,7 @@
 ./sbin/rump.sysctl				base-sysutil-root	rump
 ./sbin/savecore					base-sysutil-root
 ./sbin/scan_ffs					base-sysutil-root
-./sbin/scan_lfs					base-sysutil-root
+./sbin/scan_lfs					base-sysutil-root	lfs
 ./sbin/scsictl					base-sysutil-root
 ./sbin/setkey					base-netutil-root
 ./sbin/shutdown					base-sysutil-root
@@ -752,7 +752,7 @@
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
 ./usr/bin/nex					base-obsolete		obsolete
-./usr/bin/nfsstat				base-nfsclient-bin
+./usr/bin/nfsstat				base-nfsclient-bin	nfs
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
@@ -842,7 +842,7 @@
 ./usr/bin/shlock				base-util-bin
 ./usr/bin/shmif_dumpbus				base-util-bin		rump
 ./usr/bin/shmif_pcapin				base-util-bin		rump
-./usr/bin/showmount				base-nfsclient-bin
+./usr/bin/showmount				base-nfsclient-bin	nfs
 ./usr/bin/shuffle				base-util-bin
 ./usr/bin/skey					base-util-bin		skey
 ./usr/bin/skeyaudit				base-util-bin		skey
@@ -1391,7 +1391,7 @@
 ./usr/libexec/rexecd				base-netutil-bin
 ./usr/libexec/rlogind				base-netutil-bin
 ./usr/libexec/rmail				base-obsolete		obsolete
-./usr/libexec/rpc.rquotad			base-nfsserver-bin
+./usr/libexec/rpc.rquotad			base-nfsserver-bin	nfs
 ./usr/libexec/rpc.rstatd			base-rpcserver-bin
 ./usr/libexec/rpc.rusersd			base-rpcserver-bin
 ./usr/libexec/rpc.rwalld			base-rpcserver-bin
@@ -1469,9 +1469,9 @@
 ./usr/sbin/arp					base-netutil-bin
 ./usr/sbin/audit-packages			base-pkgutil-bin
 ./usr/sbin/authpf				base-pf-bin		pf
-./usr/sbin/automount				base-sysutil-root
-./usr/sbin/automountd				base-sysutil-root
-./usr/sbin/autounmountd				base-sysutil-root
+./usr/sbin/automount				base-sysutil-root	autofs
+./usr/sbin/automountd				base-sysutil-root	autofs
+./usr/sbin/autounmountd				base-sysutil-root	autofs
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
@@ -1520,7 +1520,7 @@
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
-./usr/sbin/dumplfs				base-sysutil-bin
+./usr/sbin/dumplfs				base-sysutil-bin	lfs
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
@@ -1635,7 +1635,7 @@
 ./usr/sbin/mount_psshfs				base-puffs-bin
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
 ./usr/sbin/mount_sysctlfs			base-puffs-bin
-./usr/sbin/mountd				base-nfsserver-bin
+./usr/sbin/mountd				base-nfsserver-bin	nfs
 ./usr/sbin/moused				base-sysutil-bin
 ./usr/sbin/mrinfo				base-router-bin
 ./usr/sbin/mrouted				base-router-bin
@@ -1657,7 +1657,7 @@
 ./usr/sbin/ndc					base-obsolete		obsolete
 ./usr/sbin/ndp					base-netutil-bin	inet6
 ./usr/sbin/netgroup_mkdb			base-nis-bin
-./usr/sbin/nfsd					base-nfsserver-bin
+./usr/sbin/nfsd					base-nfsserver-bin	nfs
 ./usr/sbin/nfsiod				base-obsolete		obsolete
 ./usr/sbin/npfctl				base-obsolete		obsolete
 ./usr/sbin/npfd					base-npf-bin		npf
@@ -1745,9 +1745,9 @@
 ./usr/sbin/rndc-confgen				base-bind-bin
 ./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
-./usr/sbin/rpc.lockd				base-nfsserver-bin
-./usr/sbin/rpc.pcnfsd				base-nfsserver-bin
-./usr/sbin/rpc.statd				base-nfsserver-bin
+./usr/sbin/rpc.lockd				base-nfsserver-bin	nfs
+./usr/sbin/rpc.pcnfsd				base-nfsserver-bin	nfs
+./usr/sbin/rpc.statd				base-nfsserver-bin	nfs
 ./usr/sbin/rpc.yppasswdd			base-nis-bin		yp
 ./usr/sbin/rpcapd				base-netutil-bin
 ./usr/sbin/rpcbind				base-rpcbind-bin
@@ -1761,21 +1761,21 @@
 ./usr/sbin/rump.powerd				base-sysutil-bin	rump
 ./usr/sbin/rump.rtadvd				base-router-bin		use_inet6,rump
 ./usr/sbin/rump.traceroute			base-netutil-bin	rump
-./usr/sbin/rump_cd9660				base-puffs-bin	rump
-./usr/sbin/rump_efs				base-puffs-bin	rump
-./usr/sbin/rump_ext2fs				base-puffs-bin	rump
+./usr/sbin/rump_cd9660				base-puffs-bin	cd9660fs,rump
+./usr/sbin/rump_efs				base-puffs-bin	efs,rump
+./usr/sbin/rump_ext2fs				base-puffs-bin	ext2fs,rump
 ./usr/sbin/rump_ffs				base-puffs-bin	rump
-./usr/sbin/rump_hfs				base-puffs-bin	rump
-./usr/sbin/rump_lfs				base-puffs-bin	rump
-./usr/sbin/rump_msdos				base-puffs-bin	rump
-./usr/sbin/rump_nfs				base-puffs-bin	rump
-./usr/sbin/rump_ntfs				base-puffs-bin	rump
+./usr/sbin/rump_hfs				base-puffs-bin	hfs,rump
+./usr/sbin/rump_lfs				base-puffs-bin	lfs,rump
+./usr/sbin/rump_msdos				base-puffs-bin	msdosfs,rump
+./usr/sbin/rump_nfs				base-puffs-bin	nfs,rump
+./usr/sbin/rump_ntfs				base-puffs-bin	ntfs,rump
 ./usr/sbin/rump_smbfs				base-obsolete		obsolete
 ./usr/sbin/rump_syspuffs			base-puffs-bin	rump
-./usr/sbin/rump_sysvbfs				base-puffs-bin	rump
-./usr/sbin/rump_tmpfs				base-puffs-bin	rump
-./usr/sbin/rump_udf				base-puffs-bin	rump
-./usr/sbin/rump_v7fs				base-puffs-bin	rump
+./usr/sbin/rump_sysvbfs				base-puffs-bin	sysvbfs,rump
+./usr/sbin/rump_tmpfs				base-puffs-bin	tmpfs,rump
+./usr/sbin/rump_udf				base-puffs-bin	udf,rump
+./usr/sbin/rump_v7fs				base-puffs-bin	v7fs,rump
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/schedctl				base-sysutil-bin

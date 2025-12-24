@@ -1,0 +1,5 @@
+#	$NetBSD: list.msdosfs,v 1.1 2025/12/24 15:37:29 thorpej Exp $
+
+PROG	fsck_msdos
+PROG	mount_msdos
+PROG	newfs_msdos

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2025/12/16 04:32:04 riastradh Exp $
+#	$NetBSD: Makefile,v 1.44 2025/12/24 15:37:29 thorpej Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -45,6 +45,15 @@ PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
 .for f in pdisk
 PROG_${f}!=	cd ${NETBSDSRCDIR}/external/bsd/${f}/bin && ${MAKE} -V PROG
 .if (${PROG_${f}} != "")
+LISTS+=		${.CURDIR}/list.${f}
+.endif
+.endfor
+
+RESCUEFSLIST=	adosfs cd9660fs efs ext2fs fdescfs filecorefs kernfs lfs \
+		msdosfs nfs ntfs nullfs overlayfs procfs tmpfs umapfs unionfs
+
+.for f in ${RESCUEFSLIST}
+.if (${MK${f:tu}} != "no")
 LISTS+=		${.CURDIR}/list.${f}
 .endif
 .endfor
