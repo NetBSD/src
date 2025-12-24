@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb6.c,v 1.8 2025/02/12 22:17:27 christos Exp $	*/
+/*	$NetBSD: mdb6.c,v 1.9 2025/12/24 18:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.8 2025/02/12 22:17:27 christos Exp $");
+__RCSID("$NetBSD: mdb6.c,v 1.9 2025/12/24 18:48:34 thorpej Exp $");
 
 
 /*!
@@ -2774,6 +2774,7 @@ report_jumbo_ranges() {
 }
 
 
+#ifdef DHCPv6
 /*
  * \brief Tests that 16-bit hardware type is less than 256
  *
@@ -2990,5 +2991,6 @@ find_hosts6(struct host_decl** host, struct packet* packet,
                 || find_hosts_by_option(host, packet, packet->options, MDL)
                 || find_hosts_by_duid_chaddr(host, client_id));
 }
+#endif
 
 /* unittest moved to server/tests/mdb6_unittest.c */
