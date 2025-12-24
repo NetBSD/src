@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.17.1"
+OPENRESOLV_VERSION="3.17.4"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -104,12 +104,12 @@ fi
 
 warn()
 {
-	echo "$@" >&2
+	echo "${RESOLVCONF##*/}: $*" >&2
 }
 
 error_exit()
 {
-	echo "$@" >&2
+	warn "$*"
 	exit 1
 }
 
@@ -233,8 +233,34 @@ exclusive_key()
 	return 1
 }
 
+# Quote input so it can be safely used for variable assignment via eval
+quote()
+{
+	if [ -z "$1" ]; then
+		R="''"
+	else
+		R=
+		for W; do
+			while [ -n "$W" ]; do
+				case "$W" in
+				\'*)  R="$R\\'"; W=${W#?};;
+				?\'*) R="$R\\${W%%\'*}"; W="${W#?}";;
+				*\'*) R="$R'${W%%\'*}'"; W="'${W#*\'}";;
+				?)    R="$R\\$W"; W=;;
+				*)    R="$R'$W'"; W=;;
+				esac
+			done
+		done
+	fi
+
+	printf '%s\n' "$R"
+	return 0
+}
+
 # Parse resolv.conf's and make variables
 # for domain name servers, search name servers and global nameservers
+# Important! Each printf here should use the above quote function
+# to ensure that user input is quoted for eval.
 parse_resolv()
 {
 	domain=
@@ -275,7 +301,7 @@ parse_resolv()
 				esac
 			done
 			if $islocal; then
-				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS \"'$value'"
+				printf 'LOCALNAMESERVERS="$LOCALNAMESERVERS "%s\n' "$(quote "$value")"
 			else
 				ns="$ns${ns:+ }$value"
 			fi
@@ -285,7 +311,7 @@ parse_resolv()
 			if [ -z "$domain" ]; then
 				domain="$search"
 				if ! $nosearch; then
-					echo "DOMAIN='$domain'"
+					printf 'DOMAIN=%s\n' "$(quote "$domain")"
 				fi
 			fi
 			;;
@@ -303,13 +329,13 @@ parse_resolv()
 				for d in $search; do
 					ds="$ds${ds:+ }$d:$newns"
 				done
-				echo "DOMAINS=\"\$DOMAINS \"'$ds'"
+				printf 'DOMAINS="$DOMAINS "%s\n' "$(quote "$ds")"
 			fi
 			if ! $nosearch; then
-				echo "SEARCH=\"\$SEARCH \"'$search'"
+				printf 'SEARCH="$SEARCH "%s\n' "$(quote "$search")"
 			fi
 			if ! $private; then
-				echo "NAMESERVERS=\"\$NAMESERVERS \"'$ns'"
+				printf 'NAMESERVERS="$NAMESERVERS "%s\n' "$(quote "$ns")"
 			fi
 			ns=
 			search=
@@ -1004,6 +1030,7 @@ make_vars()
 			newdomains="$newdomains${newdomains:+ }$dn:$newns"
 		fi
 	done
+
 	DOMAIN="$(list_remove domain_blacklist $DOMAIN)"
 	SEARCH="$(uniqify $SEARCH)"
 	SEARCH="$(list_remove domain_blacklist $SEARCH)"
@@ -1011,11 +1038,13 @@ make_vars()
 	NAMESERVERS="$(list_remove name_server_blacklist $NAMESERVERS)"
 	LOCALNAMESERVERS="$(uniqify $LOCALNAMESERVERS)"
 	LOCALNAMESERVERS="$(list_remove name_server_blacklist $LOCALNAMESERVERS)"
-	echo "DOMAIN='$DOMAIN'"
-	echo "SEARCH='$SEARCH'"
-	echo "NAMESERVERS='$NAMESERVERS'"
-	echo "LOCALNAMESERVERS='$LOCALNAMESERVERS'"
-	echo "DOMAINS='$newdomains'"
+
+	# Ensure output is quoted for eval
+	printf 'DOMAIN=%s\n' "$(quote "$DOMAIN")"
+	printf 'SEARCH=%s\n' "$(quote "$SEARCH")"
+	printf 'NAMESERVERS=%s\n' "$(quote "$NAMESERVERS")"
+	printf 'LOCALNAMESERVERS=%s\n' "$(quote "$LOCALNAMESERVERS")"
+	printf 'DOMAINS=%s\n' "$(quote "$newdomains")"
 }
 
 force=false
@@ -1054,7 +1083,7 @@ if [ -n "$key" ]; then
 fi
 
 if [ -z "$cmd" ]; then
-       	if [ "$IF_PRIVATE" = 1 ]; then
+	if [ "$IF_PRIVATE" = 1 ]; then
 		cmd=p
 	elif [ "$IF_EXCLUSIVE" = 1 ]; then
 		cmd=x
@@ -1137,14 +1166,14 @@ I|u)	;;
 esac
 
 if [ "$cmd" = a ]; then
-	for x in '/' \\ ' ' '*'; do
-		case "$iface" in
-		*[$x]*) error_exit "$x not allowed in key name";;
+	for x in '/' '\' ' ' '*'; do
+		case "$key" in
+		"$x"|"$x"*|*"$x"|*"$x"*) error_exit "$x not allowed in key name";;
 		esac
 	done
 	for x in '.' '-' '~'; do
-		case "$iface" in
-		[$x]*) error_exit \
+		case "$key" in
+		"$x"*) error_exit \
 			"$x not allowed at start of key name";;
 		esac
 	done
