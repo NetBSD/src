@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_v7fs.c,v 1.1 2011/06/27 11:52:58 uch Exp $ */
+/*	$NetBSD: mount_v7fs.c,v 1.2 2025/12/24 15:10:09 nia Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_v7fs.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
+__RCSID("$NetBSD: mount_v7fs.c,v 1.2 2025/12/24 15:10:09 nia Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: mount_v7fs.c,v 1.1 2011/06/27 11:52:58 uch Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -140,7 +141,7 @@ mount_v7fs_parseargs(int argc, char **argv, struct v7fs_args *args,
 {
 	int ch;
 	mntoptparse_t mp;
-	int endian = _BYTE_ORDER;
+	int endian = BYTE_ORDER;
 	*mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
 	while ((ch = getopt(argc, argv, "o:B:")) != -1)
@@ -154,13 +155,13 @@ mount_v7fs_parseargs(int argc, char **argv, struct v7fs_args *args,
 		case 'B':
 		  switch (optarg[0]) {
 		    case 'l':
-		      endian = _LITTLE_ENDIAN;
+		      endian = LITTLE_ENDIAN;
 		      break;
 		    case 'b':
-		      endian = _BIG_ENDIAN;
+		      endian = BIG_ENDIAN;
 		      break;
 		    case 'p':
-		      endian = _PDP_ENDIAN;
+		      endian = PDP_ENDIAN;
 		      break;
 		    }
 		  break;
