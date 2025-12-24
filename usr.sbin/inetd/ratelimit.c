@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.c,v 1.3 2025/09/19 05:07:38 mrg Exp $	*/
+/*	$NetBSD: ratelimit.c,v 1.4 2025/12/24 17:54:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ratelimit.c,v 1.3 2025/09/19 05:07:38 mrg Exp $");
+__RCSID("$NetBSD: ratelimit.c,v 1.4 2025/12/24 17:54:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -252,11 +252,13 @@ rl_add(struct servtab *sep, union addr *addr)
 		node_size = offsetof(struct rl_ip_node, ipv4_addr)
 		    + sizeof(struct in_addr);
 		break;
+#ifdef INET6
 	case AF_INET6:
 		/* ip_node to end of IPv6 address */
 		node_size = offsetof(struct rl_ip_node, ipv6_addr)
 		    + sizeof(struct in6_addr);
 		break;
+#endif
 	default:
 		/* ip_node to other_addr plus size of string + NULL */
 		bufsize = strlen(addr->other_addr) + sizeof(char);
@@ -284,11 +286,13 @@ rl_add(struct servtab *sep, union addr *addr)
 	case AF_INET:
 		node->ipv4_addr = addr->ipv4_addr;
 		break;
+#ifdef INET6
 	case AF_INET6:
 		/* Hopefully this is inlined, means the same thing as memcpy */
 		__builtin_memcpy(&node->ipv6_addr, &addr->ipv6_addr,
 		    sizeof(struct in6_addr));
 		break;
+#endif
 	default:
 		strlcpy(node->other_addr, addr->other_addr, bufsize);
 		break;

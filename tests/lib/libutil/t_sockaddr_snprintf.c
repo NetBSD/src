@@ -1,4 +1,4 @@
-/* $NetBSD: t_sockaddr_snprintf.c,v 1.5 2025/09/14 17:20:32 christos Exp $ */
+/* $NetBSD: t_sockaddr_snprintf.c,v 1.6 2025/12/24 18:05:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.5 2025/09/14 17:20:32 christos Exp $");
+__RCSID("$NetBSD: t_sockaddr_snprintf.c,v 1.6 2025/12/24 18:05:23 thorpej Exp $");
 
 #include <stdio.h>
 #include <sys/socket.h>		/* AF_ */
@@ -225,7 +225,9 @@ ATF_TC_BODY(sockaddr_snprintf_generic, tc)
 	struct sockaddr_dl sdl;
 	struct sockaddr_un sun;
 	struct sockaddr_in sin4;
+#ifdef INET6
 	struct sockaddr_in6 sin6;
+#endif
 	struct addrinfo *res;
 	int i;
 
@@ -239,10 +241,12 @@ ATF_TC_BODY(sockaddr_snprintf_generic, tc)
 		(struct sockaddr *)&sdl);
 	CHECK(11, "1.2.3.4.5.6");
 
+#ifdef INET6
 	make_in6(&sin6);
 	i = sockaddr_snprintf(buf, sizeof(buf), "%n",
 		(struct sockaddr *)&sin6);
 	CHECK(12, "[ff01::1]:80");
+#endif
 
 	make_in4(&sin4);
 	i = sockaddr_snprintf(buf, sizeof(buf), "%n",

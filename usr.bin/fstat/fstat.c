@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.120 2023/11/02 10:31:55 martin Exp $	*/
+/*	$NetBSD: fstat.c,v 1.121 2025/12/24 17:56:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.120 2023/11/02 10:31:55 martin Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.121 2025/12/24 17:56:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1063,7 +1063,9 @@ socktrans(struct file *f, struct socket *sock, int i)
 	struct protosw	proto;
 	struct domain	dom;
 	struct in4pcb	in4pcb;
+#ifdef INET6
 	struct in6pcb	in6pcb;
+#endif
 	struct unpcb	unpcb;
 	struct ddpcb	ddpcb;
 	int len;
