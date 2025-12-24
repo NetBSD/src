@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1377 2025/12/24 15:37:28 thorpej Exp $
+# $NetBSD: mi,v 1.1378 2025/12/24 20:05:58 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -497,7 +497,7 @@
 ./sbin/scan_ffs					base-sysutil-root
 ./sbin/scan_lfs					base-sysutil-root	lfs
 ./sbin/scsictl					base-sysutil-root
-./sbin/setkey					base-netutil-root
+./sbin/setkey					base-netutil-root	ipsec
 ./sbin/shutdown					base-sysutil-root
 ./sbin/slattach					base-slip-root
 ./sbin/svhlabel					base-sysutil-root
@@ -1696,7 +1696,7 @@
 ./usr/sbin/pkg_delete				base-pkgutil-bin
 ./usr/sbin/pkg_info				base-pkgutil-bin
 ./usr/sbin/pkg_view				base-obsolete		obsolete
-./usr/sbin/plainrsa-gen			base-netutil-bin
+./usr/sbin/plainrsa-gen				base-netutil-bin	ipsec
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
 ./usr/sbin/postcat				base-postfix-bin	postfix
@@ -1731,8 +1731,8 @@
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
 ./usr/sbin/quotarestore				base-sysutil-bin
-./usr/sbin/racoon				base-netutil-bin
-./usr/sbin/racoonctl				base-netutil-bin
+./usr/sbin/racoon				base-netutil-bin	ipsec
+./usr/sbin/racoonctl				base-netutil-bin	ipsec
 ./usr/sbin/rarpd				base-bootserver-bin
 ./usr/sbin/rbootd				base-bootserver-bin
 ./usr/sbin/rdate				base-netutil-bin

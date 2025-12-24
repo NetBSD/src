@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.363 2025/12/22 03:11:05 thorpej Exp $
+# $NetBSD: shl.mi,v 1.364 2025/12/24 20:05:58 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -72,7 +72,7 @@
 ./usr/lib/libheimntlm_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libhx509_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libintl_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libipsec_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libipsec_pic.a			comp-c-piclib		ipsec,compatfile,picinstall
 ./usr/lib/libirs_pic.a				comp-obsolete		obsolete
 ./usr/lib/libisc_pic.a				comp-bind-piclib	compatfile,picinstall
 ./usr/lib/libisccc_pic.a			comp-bind-piclib	compatfile,picinstall

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2025/12/24 15:37:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.45 2025/12/24 20:05:59 thorpej Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -60,6 +60,10 @@ LISTS+=		${.CURDIR}/list.${f}
 
 .if ${USE_INET6} != "no"
 LISTS+=		${.CURDIR}/list.inet6
+.endif
+
+.if ${MKIPSEC} != "no"
+LISTS+=		${.CURDIR}/list.ipsec
 .endif
 
 LISTS+=		${.CURDIR}/list.crypto

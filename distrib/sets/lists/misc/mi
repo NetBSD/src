@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.226 2025/12/22 16:48:47 thorpej Exp $
+# $NetBSD: mi,v 1.227 2025/12/24 20:05:59 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1591,23 +1591,23 @@
 ./usr/share/examples/pppd/cosmote3G.chat	misc-pppd-examples	share
 ./usr/share/examples/pppd/telus			misc-pppd-examples	share
 ./usr/share/examples/pppd/telus.chat		misc-pppd-examples	share
-./usr/share/examples/racoon/FAQ			misc-netutil-examples	share
-./usr/share/examples/racoon/README.certificate	misc-netutil-examples	share
-./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	share
-./usr/share/examples/racoon/README.plainrsa	misc-netutil-examples	share
-./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	share
-./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	share
-./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	share
-./usr/share/examples/racoon/racoon.conf.sample-inherit	misc-netutil-examples	share
-./usr/share/examples/racoon/racoon.conf.sample-natt	misc-netutil-examples	share
-./usr/share/examples/racoon/racoon.conf.sample-plainrsa	misc-netutil-examples	share
-./usr/share/examples/racoon/roadwarrior/README		misc-netutil-examples	share
-./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	share
-./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	share
-./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	share
+./usr/share/examples/racoon/FAQ			misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/README.certificate	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/README.plainrsa	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/racoon.conf.sample-inherit	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/racoon.conf.sample-natt	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/racoon.conf.sample-plainrsa	misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/roadwarrior/README		misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/roadwarrior/client/phase1-down.sh		misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/roadwarrior/client/phase1-up.sh		misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/roadwarrior/client/racoon.conf		misc-netutil-examples	ipsec,share
 ./usr/share/examples/racoon/roadwarrior/server/phase1-down.sh	misc-obsolete		obsolete
-./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	share
-./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	share
+./usr/share/examples/racoon/roadwarrior/server/racoon.conf		misc-netutil-examples	ipsec,share
+./usr/share/examples/racoon/roadwarrior/server/racoon.conf-radius	misc-netutil-examples	ipsec,share
 ./usr/share/examples/rpcapd/rpcapd.inetd.conf	misc-netutil-examples	share
 ./usr/share/examples/rpcapd/rpcapd.socket	misc-netutil-examples	share
 ./usr/share/examples/rpcapd/rpcapd@.service	misc-netutil-examples	share

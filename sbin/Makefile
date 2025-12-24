@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.143 2025/12/24 15:37:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.144 2025/12/24 20:05:59 thorpej Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -146,7 +146,8 @@ SUBDIR+= ping6
 SUBDIR+= iscsictl iscsid
 .endif
 
-# IPsec
+.if (${MKIPSEC} != "no")
 SUBDIR+= setkey
+.endif
 
 .include <bsd.subdir.mk>

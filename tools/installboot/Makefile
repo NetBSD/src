@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2020/06/21 17:17:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2025/12/24 20:06:00 thorpej Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -22,7 +22,7 @@ HOST_SHAREDIR=	${TOOLDIR}/share
 BOARDDB_SRCDIR=	${SHARE_SRCDIR}/installboot
 BOARDDB_DSTDIR=	${HOST_SHAREDIR}/installboot
 
-BOARDDBS=	evbarm evbmips
+BOARDDBS=	evbarm evbmips riscv
 
 .for _d in ${BOARDDBS}
 install: .PHONY install.${_d}.boards.plist

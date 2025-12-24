@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1021 2025/12/22 03:11:04 thorpej Exp $
+# $NetBSD: shl.mi,v 1.1022 2025/12/24 20:05:58 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -52,9 +52,9 @@
 ./lib/libgcc_s.so				base-sys-shlib		dynamicroot,gcc
 ./lib/libgcc_s.so.1				base-sys-shlib		dynamicroot,gcc
 ./lib/libgcc_s.so.1.0				base-sys-shlib		dynamicroot,gcc
-./lib/libipsec.so				base-net-shlib		dynamicroot
-./lib/libipsec.so.3				base-net-shlib		dynamicroot
-./lib/libipsec.so.3.0				base-net-shlib		dynamicroot
+./lib/libipsec.so				base-net-shlib		ipsec,dynamicroot
+./lib/libipsec.so.3				base-net-shlib		ipsec,dynamicroot
+./lib/libipsec.so.3.0				base-net-shlib		ipsec,dynamicroot
 ./lib/libisns.so				base-isns-shlib		dynamicroot
 ./lib/libisns.so.0				base-isns-shlib		dynamicroot
 ./lib/libisns.so.0.0				base-isns-shlib		dynamicroot
@@ -385,9 +385,9 @@
 ./usr/lib/libintl.so				base-sys-shlib		compatfile
 ./usr/lib/libintl.so.1				base-sys-shlib		compatfile
 ./usr/lib/libintl.so.1.1			base-sys-shlib		compatfile
-./usr/lib/libipsec.so				base-net-shlib		compatfile
-./usr/lib/libipsec.so.3				base-net-shlib		compatfile
-./usr/lib/libipsec.so.3.0			base-net-shlib		compatfile
+./usr/lib/libipsec.so				base-net-shlib		ipsec,compatfile
+./usr/lib/libipsec.so.3				base-net-shlib		ipsec,compatfile
+./usr/lib/libipsec.so.3.0			base-net-shlib		ipsec,compatfile
 ./usr/lib/libirs.so				base-obsolete		obsolete
 ./usr/lib/libirs.so.22				base-obsolete		obsolete
 ./usr/lib/libirs.so.22.0			base-obsolete		obsolete

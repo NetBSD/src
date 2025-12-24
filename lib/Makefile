@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.311 2025/12/22 03:11:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.312 2025/12/24 20:05:59 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ SUBDIR+=	i18n_module
 SUBDIR+=	libarch \
 		libbsdmalloc libbz2 \
 		libcompat libcrypt \
-		libintl libipsec libkvm libm \
+		libintl libkvm libm \
 		libossaudio libpci libposix libprop libpthread \
 		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
@@ -48,6 +48,9 @@ SUBDIR+=	libc_fp
 .endif
 .if (${MKBLUETOOTH} != "no")
 SUBDIR+=	libbluetooth
+.endif
+.if (${MKIPSEC} != "no")
+SUBDIR+=	libipsec
 .endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient

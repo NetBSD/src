@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.498 2025/12/24 15:37:28 thorpej Exp $
+# $NetBSD: mi,v 1.499 2025/12/24 20:05:58 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -449,7 +449,7 @@
 ./usr/libdata/debug/sbin/savecore.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/scan_ffs.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/scsictl.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/setkey.debug		comp-netutil-debug	debug
+./usr/libdata/debug/sbin/setkey.debug		comp-netutil-debug	ipsec,debug
 ./usr/libdata/debug/sbin/shutdown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/slattach.debug		comp-slip-debug		debug
 ./usr/libdata/debug/sbin/svhlabel.debug		comp-sysutil-debug	debug
@@ -1246,7 +1246,7 @@
 ./usr/libdata/debug/usr/sbin/pkg_create.debug	comp-pkgutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_delete.debug	comp-pkgutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_info.debug	comp-pkgutil-debug	debug
-./usr/libdata/debug/usr/sbin/plainrsa-gen.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/plainrsa-gen.debug	comp-netutil-debug	ipsec,debug
 ./usr/libdata/debug/usr/sbin/postalias.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postcat.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postconf.debug	comp-postfix-debug	postfix,debug
@@ -1274,8 +1274,8 @@
 ./usr/libdata/debug/usr/sbin/quotactl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/quotaon.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotarestore.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/racoon.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/racoonctl.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/racoon.debug	comp-netutil-debug	ipsec,debug
+./usr/libdata/debug/usr/sbin/racoonctl.debug	comp-netutil-debug	ipsec,debug
 ./usr/libdata/debug/usr/sbin/rarpd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rbootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rdate.debug	comp-netutil-debug	debug

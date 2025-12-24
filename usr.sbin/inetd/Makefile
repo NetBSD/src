@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.32 2022/08/10 08:38:43 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2025/12/24 20:06:00 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -25,9 +25,11 @@ DPADD+= ${LIBWRAP} ${LIBBLOCKLIST} ${LIBUTIL}
 CPPFLAGS+=-DINET6
 .endif
 
+.if (${MKIPSEC} != "no")
 CPPFLAGS+=-DIPSEC
 SRCS+=	ipsec.c
 LDADD+= -lipsec
 DPADD+=	${LIBIPSEC}
+.endif
 
 .include <bsd.prog.mk>

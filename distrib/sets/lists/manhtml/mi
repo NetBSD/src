@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2025/12/24 15:37:28 thorpej Exp $
+# $NetBSD: mi,v 1.39 2025/12/24 20:05:59 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2223,7 +2223,7 @@
 ./usr/share/man/html5/postfix-wrapper.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/printcap.html		man-lpr-htmlman		html
 ./usr/share/man/html5/protocols.html		man-net-htmlman		html
-./usr/share/man/html5/racoon.conf.html		man-netutil-htmlman	html
+./usr/share/man/html5/racoon.conf.html		man-netutil-htmlman	ipsec,html
 ./usr/share/man/html5/radius.conf.html		man-netutil-htmlman	html
 ./usr/share/man/html5/rc.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/rcsfile.html		man-rcs-htmlman		html
@@ -2892,7 +2892,7 @@
 ./usr/share/man/html8/ping.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ping6.html		man-netutil-htmlman	use_inet6,html
 ./usr/share/man/html8/pipe.html			man-postfix-htmlman	postfix,html
-./usr/share/man/html8/plainrsa-gen.html		man-netutil-htmlman	html
+./usr/share/man/html8/plainrsa-gen.html		man-netutil-htmlman	ipsec,html
 ./usr/share/man/html8/pmax/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/postinstall.html		man-sys-htmlman		html
 ./usr/share/man/html8/postscreen.html		man-postfix-htmlman	postfix,html
@@ -2927,8 +2927,8 @@
 ./usr/share/man/html8/quotaoff.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotaon.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/quotarestore.html		man-sysutil-htmlman	html
-./usr/share/man/html8/racoon.html		man-netutil-htmlman	html
-./usr/share/man/html8/racoonctl.html		man-netutil-htmlman	html
+./usr/share/man/html8/racoon.html		man-netutil-htmlman	ipsec,html
+./usr/share/man/html8/racoonctl.html		man-netutil-htmlman	ipsec,html
 ./usr/share/man/html8/raidctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/rarpd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/rbootd.html		man-bootserver-htmlman	html
@@ -3016,7 +3016,7 @@
 ./usr/share/man/html8/services_mkdb.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/sesd.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/setencstat.html		man-sysutil-htmlman	html
-./usr/share/man/html8/setkey.html		man-netutil-htmlman	html
+./usr/share/man/html8/setkey.html		man-netutil-htmlman	ipsec,html
 ./usr/share/man/html8/setobjstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/sftp-server.html		man-secsh-htmlman	html
 ./usr/share/man/html8/sgimips/boot.html		man-sys-htmlman		html

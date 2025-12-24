@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2507 2025/12/22 22:26:14 thorpej Exp $
+#	$NetBSD: mi,v 1.2508 2025/12/24 20:05:58 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4122,8 +4122,8 @@
 ./usr/lib/libhx509_p.a				comp-krb5-proflib	compatfile,profile,kerberos
 ./usr/lib/libintl.a				comp-c-lib		compatfile
 ./usr/lib/libintl_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libipsec.a				comp-c-lib		compatfile
-./usr/lib/libipsec_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libipsec.a				comp-c-lib		ipsec,compatfile
+./usr/lib/libipsec_p.a				comp-c-proflib		ipsec,compatfile,profile
 ./usr/lib/libirs.a				comp-obsolete		obsolete
 ./usr/lib/libirs_p.a				comp-obsolete		obsolete,profile
 ./usr/lib/libisc.a				comp-bind-lib		compatfile
@@ -8695,10 +8695,10 @@
 ./usr/share/man/cat3/intrflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/intro.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inttypes.0			comp-c-catman		.cat
-./usr/share/man/cat3/ipsec_dump_policy.0	comp-c-catman		.cat
-./usr/share/man/cat3/ipsec_get_policylen.0	comp-c-catman		.cat
-./usr/share/man/cat3/ipsec_set_policy.0		comp-c-catman		.cat
-./usr/share/man/cat3/ipsec_strerror.0		comp-c-catman		.cat
+./usr/share/man/cat3/ipsec_dump_policy.0	comp-c-catman		ipsec,.cat
+./usr/share/man/cat3/ipsec_get_policylen.0	comp-c-catman		ipsec,.cat
+./usr/share/man/cat3/ipsec_set_policy.0		comp-c-catman		ipsec,.cat
+./usr/share/man/cat3/ipsec_strerror.0		comp-c-catman		ipsec,.cat
 ./usr/share/man/cat3/iruserok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iruserok_sa.0		comp-c-catman		.cat
 ./usr/share/man/cat3/is_keypad.0		comp-c-catman		.cat
@@ -17657,10 +17657,10 @@
 ./usr/share/man/html3/intrflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/intro.html		comp-c-htmlman		html
 ./usr/share/man/html3/inttypes.html		comp-c-htmlman		html
-./usr/share/man/html3/ipsec_dump_policy.html	comp-c-htmlman		html
-./usr/share/man/html3/ipsec_get_policylen.html	comp-c-htmlman		html
-./usr/share/man/html3/ipsec_set_policy.html	comp-c-htmlman		html
-./usr/share/man/html3/ipsec_strerror.html	comp-c-htmlman		html
+./usr/share/man/html3/ipsec_dump_policy.html	comp-c-htmlman		ipsec,html
+./usr/share/man/html3/ipsec_get_policylen.html	comp-c-htmlman		ipsec,html
+./usr/share/man/html3/ipsec_set_policy.html	comp-c-htmlman		ipsec,html
+./usr/share/man/html3/ipsec_strerror.html	comp-c-htmlman		ipsec,html
 ./usr/share/man/html3/iruserok.html		comp-c-htmlman		html
 ./usr/share/man/html3/iruserok_sa.html		comp-c-htmlman		html
 ./usr/share/man/html3/is_keypad.html		comp-c-htmlman		html
@@ -26563,10 +26563,10 @@
 ./usr/share/man/man3/intrflush.3		comp-c-man		.man
 ./usr/share/man/man3/intro.3			comp-c-man		.man
 ./usr/share/man/man3/inttypes.3			comp-c-man		.man
-./usr/share/man/man3/ipsec_dump_policy.3	comp-c-man		.man
-./usr/share/man/man3/ipsec_get_policylen.3	comp-c-man		.man
-./usr/share/man/man3/ipsec_set_policy.3		comp-c-man		.man
-./usr/share/man/man3/ipsec_strerror.3		comp-c-man		.man
+./usr/share/man/man3/ipsec_dump_policy.3	comp-c-man		ipsec,.man
+./usr/share/man/man3/ipsec_get_policylen.3	comp-c-man		ipsec,.man
+./usr/share/man/man3/ipsec_set_policy.3		comp-c-man		ipsec,.man
+./usr/share/man/man3/ipsec_strerror.3		comp-c-man		ipsec,.man
 ./usr/share/man/man3/iruserok.3			comp-c-man		.man
 ./usr/share/man/man3/iruserok_sa.3		comp-c-man		.man
 ./usr/share/man/man3/is_keypad.3		comp-c-man		.man

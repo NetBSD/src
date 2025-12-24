@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299 2025/12/24 15:37:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.300 2025/12/24 20:06:00 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -71,7 +71,9 @@ SUBDIR+=faithd ifmcstat ip6addrctl ndp rip6query rtsold
 SUBDIR+=mld6query route6d rtadvd traceroute6 
 .endif
 
+.if (${MKIPSEC} != "no")
 SUBDIR+= plainrsa-gen racoon racoonctl
+.endif
 
 SUBDIR+= nvmmctl
 

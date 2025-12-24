@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.24 2023/08/08 11:53:47 riastradh Exp $
+#	$NetBSD: Makefile,v 1.25 2025/12/24 20:06:01 thorpej Exp $
+
+.include <bsd.init.mk>
 
 USE_FORT?= yes	# network client
 
@@ -10,9 +12,12 @@ CPPFLAGS+=-DHAVE_STRERROR=1 -DHAVE_SETLINEBUF=1 -DHAVE_SOCKADDR_SA_LEN=1
 CPPFLAGS+=-DHAVE_RAW_OPTIONS=1
 CPPFLAGS+=-DHAVE_ICMP_NEXTMTU=1
 
+
+.if (${MKIPSEC} != "no")
 CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
+.endif
 
 BINOWN= root
 BINMODE=4555

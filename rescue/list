@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.57 2025/12/24 15:37:29 thorpej Exp $
+#	$NetBSD: list,v 1.58 2025/12/24 20:05:59 thorpej Exp $
 
 # Touching this file for:
 #
@@ -87,7 +87,6 @@ PROG	routed
 PROG	savecore
 PROG	scan_ffs
 PROG	scsictl
-PROG	setkey
 PROG	shutdown
 PROG	slattach
 PROG	swapctl		swapon
@@ -134,4 +133,4 @@ PROG	tetris
 SRCDIRS	libexec
 
 LIBS	liboverride.o
-LIBS	-lbz2 -llzma -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop
+LIBS	-lbz2 -llzma -lcrypt -ledit -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1818 2025/12/24 15:37:28 thorpej Exp $
+# $NetBSD: mi,v 1.1819 2025/12/24 20:05:58 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -2434,7 +2434,7 @@
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
 ./usr/share/man/cat5/printcap.0			man-lpr-catman		.cat
 ./usr/share/man/cat5/protocols.0		man-net-catman		.cat
-./usr/share/man/cat5/racoon.conf.0		man-netutil-catman	.cat
+./usr/share/man/cat5/racoon.conf.0		man-netutil-catman	ipsec,.cat
 ./usr/share/man/cat5/radius.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/rc.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/rcsfile.0			man-rcs-catman		.cat
@@ -3247,7 +3247,7 @@
 ./usr/share/man/cat8/ping.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ping6.0			man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/pipe.0			man-postfix-catman	postfix,.cat
-./usr/share/man/cat8/plainrsa-gen.0		man-netutil-catman	.cat
+./usr/share/man/cat8/plainrsa-gen.0		man-netutil-catman	ipsec,.cat
 ./usr/share/man/cat8/playstation2/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/playstation2/makedev.0	man-obsolete		obsolete
 ./usr/share/man/cat8/pmax/MAKEDEV.0		man-obsolete		obsolete
@@ -3296,8 +3296,8 @@
 ./usr/share/man/cat8/quotaoff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotaon.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotarestore.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/racoon.0			man-netutil-catman	.cat
-./usr/share/man/cat8/racoonctl.0		man-netutil-catman	.cat
+./usr/share/man/cat8/racoon.0			man-netutil-catman	ipsec,.cat
+./usr/share/man/cat8/racoonctl.0		man-netutil-catman	ipsec,.cat
 ./usr/share/man/cat8/raidctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/rarpd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/rbootd.0			man-bootserver-catman	.cat
@@ -3392,7 +3392,7 @@
 ./usr/share/man/cat8/services_mkdb.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sesd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/setkey.0			man-netutil-catman	.cat
+./usr/share/man/cat8/setkey.0			man-netutil-catman	ipsec,.cat
 ./usr/share/man/cat8/setobjstat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sftp-server.0		man-secsh-catman	.cat
 ./usr/share/man/cat8/sgimips/MAKEDEV.0		man-obsolete		obsolete
@@ -6024,7 +6024,7 @@
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
 ./usr/share/man/man5/printcap.5			man-lpr-man		.man
 ./usr/share/man/man5/protocols.5		man-net-man		.man
-./usr/share/man/man5/racoon.conf.5		man-netutil-man		.man
+./usr/share/man/man5/racoon.conf.5		man-netutil-man		ipsec,.man
 ./usr/share/man/man5/radius.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/rc.conf.5			man-sys-man		.man
 ./usr/share/man/man5/rcsfile.5			man-rcs-man		.man
@@ -6837,7 +6837,7 @@
 ./usr/share/man/man8/ping.8			man-netutil-man		.man
 ./usr/share/man/man8/ping6.8			man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/pipe.8			man-postfix-man		postfix,.man
-./usr/share/man/man8/plainrsa-gen.8		man-netutil-man		.man
+./usr/share/man/man8/plainrsa-gen.8		man-netutil-man		ipsec,.man
 ./usr/share/man/man8/playstation2/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/playstation2/makedev.8	man-obsolete		obsolete
 ./usr/share/man/man8/pmax/MAKEDEV.8		man-obsolete		obsolete
@@ -6886,8 +6886,8 @@
 ./usr/share/man/man8/quotaoff.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotaon.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotarestore.8		man-sysutil-man		.man
-./usr/share/man/man8/racoon.8			man-netutil-man		.man
-./usr/share/man/man8/racoonctl.8		man-netutil-man		.man
+./usr/share/man/man8/racoon.8			man-netutil-man		ipsec,.man
+./usr/share/man/man8/racoonctl.8		man-netutil-man		ipsec,.man
 ./usr/share/man/man8/raidctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/rarpd.8			man-bootserver-man	.man
 ./usr/share/man/man8/rbootd.8			man-bootserver-man	.man
@@ -6982,7 +6982,7 @@
 ./usr/share/man/man8/services_mkdb.8		man-sysutil-man		.man
 ./usr/share/man/man8/sesd.8			man-sysutil-man		.man
 ./usr/share/man/man8/setencstat.8		man-sysutil-man		.man
-./usr/share/man/man8/setkey.8			man-netutil-man		.man
+./usr/share/man/man8/setkey.8			man-netutil-man		ipsec,.man
 ./usr/share/man/man8/setobjstat.8		man-sysutil-man		.man
 ./usr/share/man/man8/sftp-server.8		man-secsh-man		.man
 ./usr/share/man/man8/sgimips/MAKEDEV.8		man-obsolete		obsolete
