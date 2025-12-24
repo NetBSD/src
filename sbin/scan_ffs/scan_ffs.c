@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.37 2023/01/24 08:05:07 mlelstv Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.38 2025/12/24 15:48:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.37 2023/01/24 08:05:07 mlelstv Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.38 2025/12/24 15:48:27 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,9 +44,11 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.37 2023/01/24 08:05:07 mlelstv Exp $");
 #include <sys/fcntl.h>
 #include <sys/mount.h>
 
+#ifdef SUPPORT_LFS
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
+#endif /* SUPPORT_LFS */
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -77,7 +79,9 @@ static daddr_t	blk, lastblk;
 static int	eflag = 0;
 static int	fflag = 0;
 static int	flags = 0;
+#ifdef SUPPORT_LFS
 static int	sbaddr = 0; /* counter for the LFS superblocks */
+#endif
 
 static char	device[MAXPATHLEN];
 static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2" };
@@ -106,9 +110,13 @@ enum { NADA=0, VERBOSE=1, LABELS=2, BLOCKS=4 };
 static void	ffs_printpart(struct sblockinfo *, int, size_t, int);
 static void	ffs_scan(struct sblockinfo *, int);
 static int	ffs_checkver(struct sblockinfo *);
+
+#ifdef SUPPORT_LFS
 /* LFS functions */
 static void	lfs_printpart(struct sblockinfo *, int, int);
 static void	lfs_scan(struct sblockinfo *, int);
+#endif /* SUPPORT_LFS */
+
 /* common functions */
 static void	usage(void) __dead;
 static int	scan_disk(int, daddr_t, daddr_t, int);
@@ -266,6 +274,7 @@ ffs_scan(struct sblockinfo *sbi, int n)
 	}
 }
 
+#ifdef SUPPORT_LFS
 static void
 lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 {
@@ -392,6 +401,7 @@ lfs_checkmagic(struct sblockinfo *sbinfo)
 		return 0;
 	}
 }
+#endif /* SUPPORT_LFS */
 
 static void
 show_status(uintmax_t beg, uintmax_t total)
@@ -437,7 +447,6 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 	for (blk = beg; blk <= end; blk += SBPASS) {
 		if (print_info) {
 			show_status(beg, total);
-
 			print_info = 0;
 		}
 		if (pread(fd, buf, sizeof(buf), blk * 512) == -1) {
@@ -459,9 +468,11 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 					sbinfo.ffs->fs_fsmnt, MAXMNTLEN);
 				break;
 			case FSTYPE_NONE:
+#ifdef SUPPORT_LFS
 				/* maybe LFS? */
 				if (lfs_checkmagic(&sbinfo))
 					lfs_scan(&sbinfo, n);
+#endif /* SUPPORT_LFS */
 				break;
 			default:
 				break;
