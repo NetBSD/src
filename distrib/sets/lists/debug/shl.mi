@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.382 2025/12/19 03:07:26 christos Exp $
+# $NetBSD: shl.mi,v 1.383 2025/12/24 21:03:24 jkoshy Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -108,7 +108,7 @@
 ./usr/libdata/debug/usr/lib/libdtrace.so.3.0.debug		comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libdwarf.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libelf.so.2.0.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libelf.so.2.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent.so.5.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent_openssl.so.5.0.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent_pthreads.so.5.0.debug	comp-sys-debug	debug,compatfile

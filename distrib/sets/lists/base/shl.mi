@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1022 2025/12/24 20:05:58 thorpej Exp $
+# $NetBSD: shl.mi,v 1.1023 2025/12/24 21:03:24 jkoshy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -325,7 +325,7 @@
 ./usr/lib/libedit.so.3.1			base-sys-shlib		compatfile
 ./usr/lib/libelf.so				base-sys-shlib		compatfile
 ./usr/lib/libelf.so.2				base-sys-shlib		compatfile
-./usr/lib/libelf.so.2.0				base-sys-shlib		compatfile
+./usr/lib/libelf.so.2.1				base-sys-shlib		compatfile
 ./usr/lib/libevent.so				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.5				base-sys-shlib		compatfile
 ./usr/lib/libevent.so.5.0			base-sys-shlib		compatfile

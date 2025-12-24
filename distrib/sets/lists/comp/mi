@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2508 2025/12/24 20:05:58 thorpej Exp $
+#	$NetBSD: mi,v 1.2509 2025/12/24 21:03:24 jkoshy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7929,6 +7929,7 @@
 ./usr/share/man/cat3/elf_getshdrstrndx.0	comp-c-catman		.cat
 ./usr/share/man/cat3/elf_getshnum.0		comp-c-catman		.cat
 ./usr/share/man/cat3/elf_getshstrndx.0		comp-c-catman		.cat
+./usr/share/man/cat3/elf_getversion.0		comp-c-catman		.cat
 ./usr/share/man/cat3/elf_hash.0			comp-c-catman		.cat
 ./usr/share/man/cat3/elf_kind.0			comp-c-catman		.cat
 ./usr/share/man/cat3/elf_memory.0		comp-c-catman		.cat
@@ -16894,6 +16895,7 @@
 ./usr/share/man/html3/elf_getshdrstrndx.html	comp-c-htmlman	html
 ./usr/share/man/html3/elf_getshnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/elf_getshstrndx.html	comp-c-htmlman		html
+./usr/share/man/html3/elf_getversion.html	comp-c-htmlman		html
 ./usr/share/man/html3/elf_hash.html		comp-c-htmlman		html
 ./usr/share/man/html3/elf_kind.html		comp-c-htmlman		html
 ./usr/share/man/html3/elf_memory.html		comp-c-htmlman		html
@@ -25797,6 +25799,7 @@
 ./usr/share/man/man3/elf_getshdrstrndx.3	comp-c-man	.man
 ./usr/share/man/man3/elf_getshnum.3		comp-c-man		.man
 ./usr/share/man/man3/elf_getshstrndx.3		comp-c-man		.man
+./usr/share/man/man3/elf_getversion.3		comp-c-man		.man
 ./usr/share/man/man3/elf_hash.3			comp-c-man		.man
 ./usr/share/man/man3/elf_kind.3			comp-c-man		.man
 ./usr/share/man/man3/elf_memory.3		comp-c-man		.man

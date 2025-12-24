@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2025/12/24 15:34:16 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.6 2025/12/24 21:03:25 jkoshy Exp $
 
 HOSTLIB=	elf
 
@@ -17,6 +17,7 @@ SRCS=		elf.c							\
 		elf_getarsym.c						\
 		elf_getbase.c						\
 		elf_getident.c						\
+		elf_getversion.c					\
 		elf_hash.c						\
 		elf_kind.c						\
 		elf_memory.c						\
