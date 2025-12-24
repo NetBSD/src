@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.193 2025/08/17 22:04:34 mlelstv Exp $	*/
+/*	$NetBSD: ccd.c,v 1.194 2025/12/24 16:58:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.193 2025/08/17 22:04:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.194 2025/12/24 16:58:15 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1751,7 +1751,7 @@ ccd_units_sysctl(SYSCTLFN_ARGS)
 		LIST_FOREACH(sc, &ccds, sc_link) {
 			if (i >= nccd)
 				break;
-			units[i] = sc->sc_unit;
+			units[i++] = sc->sc_unit;
 		}
 		mutex_exit(&ccd_lock);
 	} else {
