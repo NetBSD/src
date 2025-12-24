@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_gen.c,v 1.1 2025/11/27 15:42:13 thorpej Exp $	*/
+/*	$NetBSD: kvm_m68k_gen.c,v 1.2 2025/12/24 20:37:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_m68k_gen.c,v 1.1 2025/11/27 15:42:13 thorpej Exp $");
+__RCSID("$NetBSD: kvm_m68k_gen.c,v 1.2 2025/12/24 20:37:04 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -72,7 +72,7 @@ struct kvm_ops _kvm_ops_gen68k = {
 };
 
 /*
- * For the table idicies, shift first, then mask.  The ti_pa_mask
+ * For the table indices, shift first, then mask.  The ti_pa_mask
  * is computed from the number of entries the table indexes, which
  * in turn defines how precise the address field in each table
  * entry.

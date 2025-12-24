@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.378 2024/02/10 09:30:06 andvar Exp $ */
+/*	$NetBSD: pmap.c,v 1.379 2025/12/24 20:37:04 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.378 2024/02/10 09:30:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.379 2025/12/24 20:37:04 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3487,7 +3487,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	for (p = KERNBASE; p < (vaddr_t)trapbase; p += NBPG)
 		setpte4(p, getpte4(p) & ~PG_NC);
 
-	/* Enable cache and write protext kernel text */
+	/* Enable cache and write protect kernel text */
 	for (p = (vaddr_t)trapbase; p < (vaddr_t)etext; p += NBPG)
 		setpte4(p, getpte4(p) & ~(PG_NC|PG_W));
 

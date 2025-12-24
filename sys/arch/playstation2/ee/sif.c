@@ -1,4 +1,4 @@
-/*	$NetBSD: sif.c,v 1.13 2023/11/05 21:54:27 andvar Exp $	*/
+/*	$NetBSD: sif.c,v 1.14 2025/12/24 20:37:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.13 2023/11/05 21:54:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.14 2025/12/24 20:37:04 andvar Exp $");
 
 #include "debug_playstation2.h"
 
@@ -101,7 +101,7 @@ int
 iopdma_allocate_buffer(struct iopdma_segment *seg, size_t size)
 {
 	/* 
-	 * To avoid cache inconsistecy as the result of DMA(to memory), 
+	 * To avoid cache inconsistency as the result of DMA(to memory), 
 	 * DMA buffer size is set to multiple of CPU cache line size (64B)
 	 * and aligned to cache line.
 	 */

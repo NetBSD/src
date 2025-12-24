@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.44 2025/07/11 22:19:54 andvar Exp $ */
+/* $NetBSD: i386.c,v 1.45 2025/12/24 20:37:03 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.44 2025/07/11 22:19:54 andvar Exp $");
+__RCSID("$NetBSD: i386.c,v 1.45 2025/12/24 20:37:03 andvar Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -183,7 +183,7 @@ write_boot_area(ib_params *params, uint8_t *buf, size_t len)
 	/* Try again with label write-enabled */
 	rv = pwrite_validate(params->fsfd, buf, len, 0);
 
-	/* Reset write-protext */
+	/* Reset write-protect */
 	i = 0;
 	ioctl(params->fsfd, DIOCWLABEL, &i);
 	if (rv == (ssize_t)len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: t___sync_compare_and_swap.c,v 1.3 2025/04/25 12:11:13 riastradh Exp $	*/
+/*	$NetBSD: t___sync_compare_and_swap.c,v 1.4 2025/12/24 20:37:03 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.3 2025/04/25 12:11:13 riastradh Exp $");
+__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.4 2025/12/24 20:37:03 andvar Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.3 2025/04/25 12:11:13 riastrad
 #if defined __arm__ && __ARM_ARCH <= 5
 #define	pr56839_xfail							      \
 	atf_tc_expect_fail("PR port-arm/56839:"				      \
-	    "GCC emits wrong codes for compare_and_swap_1 bultins"	      \
+	    "GCC emits wrong codes for compare_and_swap_1 builtins"	      \
 	    " on armv5 (el & eb)")
 #else
 #define	pr56839_xfail	__nothing
