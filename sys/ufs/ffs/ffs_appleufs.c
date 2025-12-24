@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.15 2015/02/15 11:04:43 maxv Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.16 2025/12/24 15:06:59 nia Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -26,9 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.15 2015/02/15 11:04:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.16 2025/12/24 15:06:59 nia Exp $");
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/time.h>
 #if defined(_KERNEL)
 #include <sys/kernel.h>
