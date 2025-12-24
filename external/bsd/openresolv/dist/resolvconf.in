@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.17.3"
+OPENRESOLV_VERSION="3.17.4"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -104,12 +104,12 @@ fi
 
 warn()
 {
-	echo "$@" >&2
+	echo "${RESOLVCONF##*/}: $*" >&2
 }
 
 error_exit()
 {
-	echo "$@" >&2
+	warn "$*"
 	exit 1
 }
 
@@ -1083,7 +1083,7 @@ if [ -n "$key" ]; then
 fi
 
 if [ -z "$cmd" ]; then
-       	if [ "$IF_PRIVATE" = 1 ]; then
+	if [ "$IF_PRIVATE" = 1 ]; then
 		cmd=p
 	elif [ "$IF_EXCLUSIVE" = 1 ]; then
 		cmd=x
@@ -1166,14 +1166,14 @@ I|u)	;;
 esac
 
 if [ "$cmd" = a ]; then
-	for x in '/' \\ ' ' '*'; do
-		case "$iface" in
-		*[$x]*) error_exit "$x not allowed in key name";;
+	for x in '/' '\' ' ' '*'; do
+		case "$key" in
+		"$x"|"$x"*|*"$x"|*"$x"*) error_exit "$x not allowed in key name";;
 		esac
 	done
 	for x in '.' '-' '~'; do
-		case "$iface" in
-		[$x]*) error_exit \
+		case "$key" in
+		"$x"*) error_exit \
 			"$x not allowed at start of key name";;
 		esac
 	done
