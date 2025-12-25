@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.499 2025/12/24 20:05:58 thorpej Exp $
+# $NetBSD: mi,v 1.500 2025/12/25 01:14:59 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -472,7 +472,7 @@
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apropos.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/ar.debug		comp-util-debug		binutils,debug
-./usr/libdata/debug/usr/bin/arpaname.debug	comp-bind-debug		debug
+./usr/libdata/debug/usr/bin/arpaname.debug	comp-bind-debug		bind,debug
 ./usr/libdata/debug/usr/bin/as.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/asa.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/at.debug		comp-cron-debug		debug
@@ -539,11 +539,11 @@
 ./usr/libdata/debug/usr/bin/cvslatest.debug	comp-cvs-debug		debug
 ./usr/libdata/debug/usr/bin/db.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dc.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/delv.debug		comp-bind-bin		debug
+./usr/libdata/debug/usr/bin/delv.debug		comp-bind-bin		bind,debug
 ./usr/libdata/debug/usr/bin/deroff.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/diff.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/diff3.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/dig.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/dig.debug		comp-netutil-debug	bind,debug
 ./usr/libdata/debug/usr/bin/dirname.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dns-sd.debug	comp-mdns-debug		mdns,debug
 ./usr/libdata/debug/usr/bin/dtc.debug		comp-dtc-debug		dtc,debug
@@ -606,7 +606,7 @@
 ./usr/libdata/debug/usr/bin/head.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/hesinfo.debug	comp-hesiod-debug	hesiod,debug
 ./usr/libdata/debug/usr/bin/hexdump.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/host.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/host.debug		comp-netutil-debug	bind,debug
 ./usr/libdata/debug/usr/bin/hpftodit.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/hxtool.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/iasl.debug		comp-util-debug		acpi,debug
@@ -681,7 +681,7 @@
 ./usr/libdata/debug/usr/bin/makeinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/man.debug		comp-man-debug		debug
 ./usr/libdata/debug/usr/bin/mandoc.debug	comp-mdocml-debug	debug
-./usr/libdata/debug/usr/bin/mdig.debug		comp-bind-debug		debug
+./usr/libdata/debug/usr/bin/mdig.debug		comp-bind-debug		bind,debug
 ./usr/libdata/debug/usr/bin/menuc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/merge.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mesg.debug		comp-util-debug		debug
@@ -728,8 +728,8 @@
 ./usr/libdata/debug/usr/bin/nl.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nm.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/nohup.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/nslookup.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/nsupdate.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/nslookup.debug	comp-netutil-debug	bind,debug
+./usr/libdata/debug/usr/bin/nsupdate.debug	comp-netutil-debug	bind,debug
 ./usr/libdata/debug/usr/bin/nvi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		binutils,debug
@@ -1101,15 +1101,15 @@
 ./usr/libdata/debug/usr/sbin/dhcpd.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/dhcrelay.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/diskpart.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/dnssec-cds.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-keygen.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-revoke.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dnssec-verify.debug	comp-bind-debug		debug
+./usr/libdata/debug/usr/sbin/dnssec-cds.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-dsfromkey.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-importkey.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-keyfromlabel.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-keygen.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-revoke.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		bind,debug
+./usr/libdata/debug/usr/sbin/dnssec-verify.debug	comp-bind-debug		bind,debug
 ./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
@@ -1211,11 +1211,11 @@
 ./usr/libdata/debug/usr/sbin/mscdlabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mtrace.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mtree.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		debug
-./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		debug
-./usr/libdata/debug/usr/sbin/named-journalprint.debug	comp-bind-bin		debug
-./usr/libdata/debug/usr/sbin/named-rrchecker.debug	comp-bind-bin		debug
-./usr/libdata/debug/usr/sbin/named.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/named-checkconf.debug	comp-bind-bin		bind,debug
+./usr/libdata/debug/usr/sbin/named-checkzone.debug	comp-bind-bin		bind,debug
+./usr/libdata/debug/usr/sbin/named-journalprint.debug	comp-bind-bin		bind,debug
+./usr/libdata/debug/usr/sbin/named-rrchecker.debug	comp-bind-bin		bind,debug
+./usr/libdata/debug/usr/sbin/named.debug	comp-bind-bin		bind,debug
 ./usr/libdata/debug/usr/sbin/ncdcs.debug	comp-sysutil-root	binutils,debug
 ./usr/libdata/debug/usr/sbin/ndbootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/ndp.debug		comp-netutil-debug	inet6,debug
@@ -1228,7 +1228,7 @@
 ./usr/libdata/debug/usr/sbin/nsd-checkzone.debug	comp-nsd-debug	nsd
 ./usr/libdata/debug/usr/sbin/nsd-control.debug		comp-nsd-debug	nsd
 ./usr/libdata/debug/usr/sbin/nsd.debug		comp-nsd-debug		nsd
-./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
+./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		bind,debug
 ./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		debug
@@ -1283,8 +1283,8 @@
 ./usr/libdata/debug/usr/sbin/revnetgroup.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rip6query.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rmt.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-bind-bin		debug
-./usr/libdata/debug/usr/sbin/rndc.debug		comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/rndc-confgen.debug	comp-bind-bin		bind,debug
+./usr/libdata/debug/usr/sbin/rndc.debug		comp-bind-bin		bind,debug
 ./usr/libdata/debug/usr/sbin/route6d.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rpc.bootparamd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.lockd.debug	comp-nfsserver-debug	nfs,debug
@@ -1374,7 +1374,7 @@
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete,compatfile
-./usr/libdata/debug/usr/sbin/tsig-keygen.debug	comp-bind-bin		debug
+./usr/libdata/debug/usr/sbin/tsig-keygen.debug	comp-bind-bin		bind,debug
 ./usr/libdata/debug/usr/sbin/umcpmioctl.debug	base-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/unbound-anchor.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound-checkconf.debug	base-netutil-debug	debug,unbound

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.39 2025/12/24 20:05:59 thorpej Exp $
+# $NetBSD: mi,v 1.40 2025/12/25 01:15:00 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11,7 +11,7 @@
 ./usr/share/man/html1/altqstat.html		man-router-htmlman	html
 ./usr/share/man/html1/apply.html		man-util-htmlman	html
 ./usr/share/man/html1/apropos.html		man-man-htmlman		html
-./usr/share/man/html1/arpaname.html		man-bind-htmlman	html
+./usr/share/man/html1/arpaname.html		man-bind-htmlman	bind,html
 ./usr/share/man/html1/at.html			man-cron-htmlman	html
 ./usr/share/man/html1/atari/edahdi.html		man-sysutil-htmlman	html
 ./usr/share/man/html1/atari/msconfig.html	man-sysutil-htmlman	html
@@ -100,24 +100,24 @@
 ./usr/share/man/html1/db.html			man-util-htmlman	html
 ./usr/share/man/html1/dc.html			man-util-htmlman	html
 ./usr/share/man/html1/dd.html			man-util-htmlman	html
-./usr/share/man/html1/delv.html			man-netutil-htmlman	html
+./usr/share/man/html1/delv.html			man-netutil-htmlman	bind,html
 ./usr/share/man/html1/deroff.html		man-util-htmlman	html
 ./usr/share/man/html1/df.html			man-util-htmlman	html
 ./usr/share/man/html1/diff.html			man-util-htmlman	html
 ./usr/share/man/html1/diff3.html		man-util-htmlman	html
-./usr/share/man/html1/dig.html			man-netutil-htmlman	html
+./usr/share/man/html1/dig.html			man-netutil-htmlman	bind,html
 ./usr/share/man/html1/dirname.html		man-util-htmlman	html
 ./usr/share/man/html1/dirs.html			man-util-htmlman	html
 ./usr/share/man/html1/dns-sd.html			man-mdns-htmlman	mdns,html
-./usr/share/man/html1/dnssec-cds.html		man-bind-htmlman	html
-./usr/share/man/html1/dnssec-dsfromkey.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-importkey.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-keyfromlabel.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-keygen.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-revoke.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-settime.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-signzone.html	man-bind-htmlman	html
-./usr/share/man/html1/dnssec-verify.html	man-bind-htmlman	html
+./usr/share/man/html1/dnssec-cds.html		man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-dsfromkey.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-importkey.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-keyfromlabel.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-keygen.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-revoke.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-settime.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-signzone.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/dnssec-verify.html	man-bind-htmlman	bind,html
 ./usr/share/man/html1/domainname.html		man-nis-htmlman		html
 ./usr/share/man/html1/download-vulnerability-list.html	man-obsolete		obsolete
 ./usr/share/man/html1/dtmfdecode.html		man-obsolete		obsolete
@@ -175,7 +175,7 @@
 ./usr/share/man/html1/hesinfo.html		man-hesiod-htmlman	hesiod,html
 ./usr/share/man/html1/hexdump.html		man-util-htmlman	html
 ./usr/share/man/html1/history.html		man-util-htmlman	html
-./usr/share/man/html1/host.html			man-netutil-htmlman	html
+./usr/share/man/html1/host.html			man-netutil-htmlman	bind,html
 ./usr/share/man/html1/hostname.html		man-util-htmlman	html
 ./usr/share/man/html1/hp300/grfinfo.html	man-obsolete		obsolete
 ./usr/share/man/html1/iconv.html		man-util-htmlman	html
@@ -282,7 +282,7 @@
 ./usr/share/man/html1/md2.html			man-util-htmlman	html
 ./usr/share/man/html1/md4.html			man-util-htmlman	html
 ./usr/share/man/html1/md5.html			man-util-htmlman	html
-./usr/share/man/html1/mdig.html			man-bind-htmlman	html
+./usr/share/man/html1/mdig.html			man-bind-htmlman	bind,html
 ./usr/share/man/html1/merge.html		man-util-htmlman	html
 ./usr/share/man/html1/mesg.html			man-util-htmlman	html
 ./usr/share/man/html1/midiplay.html		man-audio-htmlman	html
@@ -318,11 +318,11 @@
 ./usr/share/man/html1/msguniq.html		man-locale-htmlman	html
 ./usr/share/man/html1/mt.html			man-util-htmlman	html
 ./usr/share/man/html1/mv.html			man-util-htmlman	html
-./usr/share/man/html1/named-checkconf.html	man-bind-htmlman	html
-./usr/share/man/html1/named-checkzone.html	man-bind-htmlman	html
-./usr/share/man/html1/named-compilezone.html	man-bind-htmlman	html
-./usr/share/man/html1/named-journalprint.html	man-bind-htmlman	html
-./usr/share/man/html1/named-rrchecker.html	man-bind-htmlman	html
+./usr/share/man/html1/named-checkconf.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/named-checkzone.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/named-compilezone.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/named-journalprint.html	man-bind-htmlman	bind,html
+./usr/share/man/html1/named-rrchecker.html	man-bind-htmlman	bind,html
 ./usr/share/man/html1/nbsvtool.html		man-crypto-htmlman	html
 ./usr/share/man/html1/nc.html			man-netutil-htmlman	html
 ./usr/share/man/html1/netgroup.html		man-nis-htmlman		html
@@ -337,8 +337,8 @@
 ./usr/share/man/html1/nice.html			man-util-htmlman	html
 ./usr/share/man/html1/nl.html			man-util-htmlman	html
 ./usr/share/man/html1/nohup.html		man-util-htmlman	html
-./usr/share/man/html1/nsec3hash.html		man-bind-htmlman	html
-./usr/share/man/html1/nsupdate.html		man-netutil-htmlman	html
+./usr/share/man/html1/nsec3hash.html		man-bind-htmlman	bind,html
+./usr/share/man/html1/nsupdate.html		man-netutil-htmlman	bind,html
 ./usr/share/man/html1/nvi.html			man-obsolete		obsolete
 ./usr/share/man/html1/nview.html		man-obsolete		obsolete
 ./usr/share/man/html1/od.html			man-util-htmlman	html
@@ -2191,7 +2191,7 @@
 ./usr/share/man/html5/monthly.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/monthly.html		man-sys-htmlman		html
 ./usr/share/man/html5/motd.html			man-sys-htmlman		html
-./usr/share/man/html5/named.conf.html		man-bind-htmlman	html
+./usr/share/man/html5/named.conf.html		man-bind-htmlman	bind,html
 ./usr/share/man/html5/netconfig.html		man-net-htmlman		html
 ./usr/share/man/html5/netgroup.html		man-nis-htmlman		html
 ./usr/share/man/html5/netid.html		man-nis-htmlman		yp,html
@@ -2234,7 +2234,7 @@
 ./usr/share/man/html5/resolvconf.conf.html	man-resolvconf-htmlman		html
 ./usr/share/man/html5/resolver.html		man-net-htmlman		html
 ./usr/share/man/html5/rhosts.html		man-netutil-htmlman	html
-./usr/share/man/html5/rndc.conf.html		man-bind-htmlman	html
+./usr/share/man/html5/rndc.conf.html		man-bind-htmlman	bind,html
 ./usr/share/man/html5/route.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/rpc.html			man-net-htmlman		html
 ./usr/share/man/html5/rpcapd-config.html	man-netutil-htmlman	html
@@ -2537,7 +2537,7 @@
 ./usr/share/man/html8/creds_msdos.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/cron.html			man-cron-htmlman	html
 ./usr/share/man/html8/dbsym.html		man-sysutil-htmlman	binutils,html
-./usr/share/man/html8/ddns-confgen.html		man-bind-htmlman	html
+./usr/share/man/html8/ddns-confgen.html		man-bind-htmlman	bind,html
 ./usr/share/man/html8/defer.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/dev_mkdb.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/devpubd.html		man-sysutil-htmlman	html
@@ -2812,7 +2812,7 @@
 ./usr/share/man/html8/named-checkzone.html	man-obsolete		obsolete
 ./usr/share/man/html8/named-compilezone.html	man-obsolete		obsolete
 ./usr/share/man/html8/named-journalprint.html	man-obsolete		obsolete
-./usr/share/man/html8/named.html		man-bind-htmlman	html
+./usr/share/man/html8/named.html		man-bind-htmlman	bind,html
 ./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	binutils,html
 ./usr/share/man/html8/ndbootd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/ndiscvt.html		man-obsolete		obsolete
@@ -2840,7 +2840,7 @@
 ./usr/share/man/html8/nsd-control.html		man-nsd-htmlman		html,nsd
 ./usr/share/man/html8/nsd.html			man-nsd-htmlman		html,nsd
 ./usr/share/man/html8/nsec3hash.html		man-obsolete		obsolete
-./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
+./usr/share/man/html8/nslookup.html		man-netutil-htmlman	bind,html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
 ./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/ntp-keygen.html		man-ntp-htmlman		html
@@ -2957,8 +2957,8 @@
 ./usr/share/man/html8/rip6query.html		man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/rlogind.html		man-netutil-htmlman	html
 ./usr/share/man/html8/rmt.html			man-sysutil-htmlman	html
-./usr/share/man/html8/rndc-confgen.html		man-bind-htmlman	html
-./usr/share/man/html8/rndc.html			man-bind-htmlman	html
+./usr/share/man/html8/rndc-confgen.html		man-bind-htmlman	bind,html
+./usr/share/man/html8/rndc.html			man-bind-htmlman	bind,html
 ./usr/share/man/html8/rndctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/route.html		man-netutil-htmlman	html
 ./usr/share/man/html8/route6d.html		man-router-htmlman	use_inet6,html
@@ -3099,7 +3099,7 @@
 ./usr/share/man/html8/traceroute6.html		man-netutil-htmlman	use_inet6,html
 ./usr/share/man/html8/trivial-rewrite.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
-./usr/share/man/html8/tsig-keygen.html		man-bind-htmlman	html
+./usr/share/man/html8/tsig-keygen.html		man-bind-htmlman	bind,html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/umbctl.html		man-netutil-htmlman	html

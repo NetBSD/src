@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1819 2025/12/24 20:05:58 thorpej Exp $
+# $NetBSD: mi,v 1.1820 2025/12/25 01:14:59 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -49,7 +49,7 @@
 ./usr/share/man/cat1/amq.0			man-obsolete		obsolete
 ./usr/share/man/cat1/apply.0			man-util-catman		.cat
 ./usr/share/man/cat1/apropos.0			man-man-catman		.cat
-./usr/share/man/cat1/arpaname.0			man-bind-catman		.cat
+./usr/share/man/cat1/arpaname.0			man-bind-catman		bind,.cat
 ./usr/share/man/cat1/at.0			man-cron-catman		.cat
 ./usr/share/man/cat1/atari/edahdi.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/atari/msconfig.0		man-sysutil-catman	.cat
@@ -138,26 +138,26 @@
 ./usr/share/man/cat1/db.0			man-util-catman		.cat
 ./usr/share/man/cat1/dc.0			man-util-catman		.cat
 ./usr/share/man/cat1/dd.0			man-util-catman		.cat
-./usr/share/man/cat1/delv.0			man-netutil-catman	.cat
+./usr/share/man/cat1/delv.0			man-netutil-catman	bind,.cat
 ./usr/share/man/cat1/deroff.0			man-util-catman		.cat
 ./usr/share/man/cat1/df.0			man-util-catman		.cat
 ./usr/share/man/cat1/diff.0			man-util-catman		.cat
 ./usr/share/man/cat1/diff3.0			man-util-catman		.cat
-./usr/share/man/cat1/dig.0			man-netutil-catman	.cat
+./usr/share/man/cat1/dig.0			man-netutil-catman	bind,.cat
 ./usr/share/man/cat1/dirname.0			man-util-catman		.cat
 ./usr/share/man/cat1/dirs.0			man-util-catman		.cat
 ./usr/share/man/cat1/dns-sd.0			man-mdns-catman		mdns,.cat
 ./usr/share/man/cat1/dnskeygen.0		man-obsolete		obsolete
 ./usr/share/man/cat1/dnsquery.0			man-obsolete		obsolete
-./usr/share/man/cat1/dnssec-cds.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-dsfromkey.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-importkey.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-keyfromlabel.0	man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-keygen.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-revoke.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-settime.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-signzone.0		man-bind-catman		.cat
-./usr/share/man/cat1/dnssec-verify.0		man-bind-catman		.cat
+./usr/share/man/cat1/dnssec-cds.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-dsfromkey.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-importkey.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-keyfromlabel.0	man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-keygen.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-revoke.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-settime.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-signzone.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/dnssec-verify.0		man-bind-catman		bind,.cat
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
 ./usr/share/man/cat1/download-vulnerability-list.0	man-obsolete		obsolete
 ./usr/share/man/cat1/dtmfdecode.0		man-obsolete		obsolete
@@ -217,7 +217,7 @@
 ./usr/share/man/cat1/hesinfo.0			man-hesiod-catman	hesiod,.cat
 ./usr/share/man/cat1/hexdump.0			man-util-catman		.cat
 ./usr/share/man/cat1/history.0			man-util-catman		.cat
-./usr/share/man/cat1/host.0			man-netutil-catman	.cat
+./usr/share/man/cat1/host.0			man-netutil-catman	bind,.cat
 ./usr/share/man/cat1/hostname.0			man-util-catman		.cat
 ./usr/share/man/cat1/hp300/grfinfo.0		man-obsolete		obsolete
 ./usr/share/man/cat1/i386			man-obsolete		obsolete
@@ -335,7 +335,7 @@
 ./usr/share/man/cat1/md2.0			man-util-catman		.cat
 ./usr/share/man/cat1/md4.0			man-util-catman		.cat
 ./usr/share/man/cat1/md5.0			man-util-catman		.cat
-./usr/share/man/cat1/mdig.0			man-bind-catman		.cat
+./usr/share/man/cat1/mdig.0			man-bind-catman		bind,.cat
 ./usr/share/man/cat1/merge.0			man-util-catman		.cat
 ./usr/share/man/cat1/mesg.0			man-util-catman		.cat
 ./usr/share/man/cat1/midiplay.0			man-audio-catman	.cat
@@ -372,11 +372,11 @@
 ./usr/share/man/cat1/msguniq.0			man-locale-catman	.cat
 ./usr/share/man/cat1/mt.0			man-util-catman		.cat
 ./usr/share/man/cat1/mv.0			man-util-catman		.cat
-./usr/share/man/cat1/named-checkconf.0		man-bind-catman		.cat
-./usr/share/man/cat1/named-checkzone.0		man-bind-catman		.cat
-./usr/share/man/cat1/named-compilezone.0	man-bind-catman		.cat
-./usr/share/man/cat1/named-journalprint.0	man-bind-catman		.cat
-./usr/share/man/cat1/named-rrchecker.0		man-bind-catman		.cat
+./usr/share/man/cat1/named-checkconf.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/named-checkzone.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/named-compilezone.0	man-bind-catman		bind,.cat
+./usr/share/man/cat1/named-journalprint.0	man-bind-catman		bind,.cat
+./usr/share/man/cat1/named-rrchecker.0		man-bind-catman		bind,.cat
 ./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	.cat
 ./usr/share/man/cat1/nc.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
@@ -391,8 +391,8 @@
 ./usr/share/man/cat1/nice.0			man-util-catman		.cat
 ./usr/share/man/cat1/nl.0			man-util-catman		.cat
 ./usr/share/man/cat1/nohup.0			man-util-catman		.cat
-./usr/share/man/cat1/nsec3hash.0		man-bind-catman		.cat
-./usr/share/man/cat1/nsupdate.0			man-netutil-catman	.cat
+./usr/share/man/cat1/nsec3hash.0		man-bind-catman		bind,.cat
+./usr/share/man/cat1/nsupdate.0			man-netutil-catman	bind,.cat
 ./usr/share/man/cat1/nvi.0			man-obsolete		obsolete
 ./usr/share/man/cat1/nview.0			man-obsolete		obsolete
 ./usr/share/man/cat1/od.0			man-util-catman		.cat
@@ -2397,7 +2397,7 @@
 ./usr/share/man/cat5/monthly.0			man-sys-catman		.cat
 ./usr/share/man/cat5/monthly.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/motd.0			man-sys-catman		.cat
-./usr/share/man/cat5/named.conf.0		man-bind-catman		.cat
+./usr/share/man/cat5/named.conf.0		man-bind-catman		bind,.cat
 ./usr/share/man/cat5/netconfig.0		man-net-catman		.cat
 ./usr/share/man/cat5/netgroup.0			man-nis-catman		.cat
 ./usr/share/man/cat5/netid.0			man-nis-catman		yp,.cat
@@ -2445,7 +2445,7 @@
 ./usr/share/man/cat5/resolvconf.conf.0		man-resolvconf-catman		.cat
 ./usr/share/man/cat5/resolver.0			man-net-catman		.cat
 ./usr/share/man/cat5/rhosts.0			man-netutil-catman	.cat
-./usr/share/man/cat5/rndc.conf.0		man-bind-catman		.cat
+./usr/share/man/cat5/rndc.conf.0		man-bind-catman		bind,.cat
 ./usr/share/man/cat5/route.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/rpc.0			man-net-catman		.cat
 ./usr/share/man/cat5/rpcapd-config.0		man-netutil-catman	.cat
@@ -2796,7 +2796,7 @@
 ./usr/share/man/cat8/creds_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	binutils,.cat
-./usr/share/man/cat8/ddns-confgen.0		man-bind-catman		.cat
+./usr/share/man/cat8/ddns-confgen.0		man-bind-catman		bind,.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/devpubd.0			man-sysutil-catman	.cat
@@ -3142,7 +3142,7 @@
 ./usr/share/man/cat8/named-compilezone.0	man-obsolete		obsolete
 ./usr/share/man/cat8/named-journalprint.0	man-obsolete		obsolete
 ./usr/share/man/cat8/named-xfer.0		man-obsolete		obsolete
-./usr/share/man/cat8/named.0			man-bind-catman		.cat
+./usr/share/man/cat8/named.0			man-bind-catman		bind,.cat
 ./usr/share/man/cat8/named.reload.0		man-obsolete		obsolete
 ./usr/share/man/cat8/named.restart.0		man-obsolete		obsolete
 ./usr/share/man/cat8/ncdcs.0			man-sysutil-catman	binutils,.cat
@@ -3184,7 +3184,7 @@
 ./usr/share/man/cat8/nsd-control.0		man-nsd-catman		.cat,nsd
 ./usr/share/man/cat8/nsd.0 			man-nsd-catman		.cat,nsd
 ./usr/share/man/cat8/nsec3hash.0		man-obsolete		obsolete
-./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
+./usr/share/man/cat8/nslookup.0			man-netutil-catman	bind,.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		.cat
@@ -3328,8 +3328,8 @@
 ./usr/share/man/cat8/rlogind.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rmail.0			man-obsolete		obsolete
 ./usr/share/man/cat8/rmt.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/rndc-confgen.0		man-bind-catman		.cat
-./usr/share/man/cat8/rndc.0			man-bind-catman		.cat
+./usr/share/man/cat8/rndc-confgen.0		man-bind-catman		bind,.cat
+./usr/share/man/cat8/rndc.0			man-bind-catman		bind,.cat
 ./usr/share/man/cat8/rndctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/route.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/route6d.0			man-router-catman	use_inet6,.cat
@@ -3506,7 +3506,7 @@
 ./usr/share/man/cat8/trivial-rewrite.0	man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/trpt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
-./usr/share/man/cat8/tsig-keygen.0		man-bind-catman		.cat
+./usr/share/man/cat8/tsig-keygen.0		man-bind-catman		bind,.cat
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umbctl.0			man-netutil-catman	.cat
@@ -3638,7 +3638,7 @@
 ./usr/share/man/man1/amq.1			man-obsolete		obsolete
 ./usr/share/man/man1/apply.1			man-util-man		.man
 ./usr/share/man/man1/apropos.1			man-man-man		.man
-./usr/share/man/man1/arpaname.1			man-bind-man		.man
+./usr/share/man/man1/arpaname.1			man-bind-man		bind,.man
 ./usr/share/man/man1/at.1			man-cron-man		.man
 ./usr/share/man/man1/atari/edahdi.1		man-sysutil-man		.man
 ./usr/share/man/man1/atari/msconfig.1		man-sysutil-man		.man
@@ -3727,26 +3727,26 @@
 ./usr/share/man/man1/db.1			man-util-man		.man
 ./usr/share/man/man1/dc.1			man-util-man		.man
 ./usr/share/man/man1/dd.1			man-util-man		.man
-./usr/share/man/man1/delv.1			man-netutil-man		.man
+./usr/share/man/man1/delv.1			man-netutil-man		bind,.man
 ./usr/share/man/man1/deroff.1			man-util-man		.man
 ./usr/share/man/man1/df.1			man-util-man		.man
 ./usr/share/man/man1/diff.1			man-util-man		.man
 ./usr/share/man/man1/diff3.1			man-util-man		.man
-./usr/share/man/man1/dig.1			man-netutil-man		.man
+./usr/share/man/man1/dig.1			man-netutil-man		bind,.man
 ./usr/share/man/man1/dirname.1			man-util-man		.man
 ./usr/share/man/man1/dirs.1			man-util-man		.man
 ./usr/share/man/man1/dns-sd.1			man-mdns-man		mdns,.man
 ./usr/share/man/man1/dnskeygen.1		man-obsolete		obsolete
 ./usr/share/man/man1/dnsquery.1			man-obsolete		obsolete
-./usr/share/man/man1/dnssec-cds.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-dsfromkey.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-importkey.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-keyfromlabel.1	man-bind-man		.man
-./usr/share/man/man1/dnssec-keygen.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-revoke.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-settime.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-signzone.1		man-bind-man		.man
-./usr/share/man/man1/dnssec-verify.1		man-bind-man		.man
+./usr/share/man/man1/dnssec-cds.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-dsfromkey.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-importkey.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-keyfromlabel.1	man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-keygen.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-revoke.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-settime.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-signzone.1		man-bind-man		bind,.man
+./usr/share/man/man1/dnssec-verify.1		man-bind-man		bind,.man
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
 ./usr/share/man/man1/download-vulnerability-list.1	man-obsolete		obsolete
 ./usr/share/man/man1/dtmfdecode.1		man-obsolete		obsolete
@@ -3806,7 +3806,7 @@
 ./usr/share/man/man1/hesinfo.1			man-hesiod-man		hesiod,.man
 ./usr/share/man/man1/hexdump.1			man-util-man		.man
 ./usr/share/man/man1/history.1			man-util-man		.man
-./usr/share/man/man1/host.1			man-netutil-man		.man
+./usr/share/man/man1/host.1			man-netutil-man		bind,.man
 ./usr/share/man/man1/hostname.1			man-util-man		.man
 ./usr/share/man/man1/hp300/grfinfo.1		man-obsolete		obsolete
 ./usr/share/man/man1/i386			man-obsolete		obsolete
@@ -3924,7 +3924,7 @@
 ./usr/share/man/man1/md2.1			man-util-man		.man
 ./usr/share/man/man1/md4.1			man-util-man		.man
 ./usr/share/man/man1/md5.1			man-util-man		.man
-./usr/share/man/man1/mdig.1			man-bind-man		.man
+./usr/share/man/man1/mdig.1			man-bind-man		bind,.man
 ./usr/share/man/man1/merge.1			man-util-man		.man
 ./usr/share/man/man1/mesg.1			man-util-man		.man
 ./usr/share/man/man1/midiplay.1			man-audio-man		.man
@@ -3961,11 +3961,11 @@
 ./usr/share/man/man1/msguniq.1			man-locale-man		.man
 ./usr/share/man/man1/mt.1			man-util-man		.man
 ./usr/share/man/man1/mv.1			man-util-man		.man
-./usr/share/man/man1/named-checkconf.1		man-bind-man		.man
-./usr/share/man/man1/named-checkzone.1		man-bind-man		.man
-./usr/share/man/man1/named-compilezone.1	man-bind-man		.man
-./usr/share/man/man1/named-journalprint.1	man-bind-man		.man
-./usr/share/man/man1/named-rrchecker.1		man-bind-man		.man
+./usr/share/man/man1/named-checkconf.1		man-bind-man		bind,.man
+./usr/share/man/man1/named-checkzone.1		man-bind-man		bind,.man
+./usr/share/man/man1/named-compilezone.1	man-bind-man		bind,.man
+./usr/share/man/man1/named-journalprint.1	man-bind-man		bind,.man
+./usr/share/man/man1/named-rrchecker.1		man-bind-man		bind,.man
 ./usr/share/man/man1/nbsvtool.1			man-crypto-man		.man
 ./usr/share/man/man1/nc.1			man-netutil-man		.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man
@@ -3980,8 +3980,8 @@
 ./usr/share/man/man1/nice.1			man-util-man		.man
 ./usr/share/man/man1/nl.1			man-util-man		.man
 ./usr/share/man/man1/nohup.1			man-util-man		.man
-./usr/share/man/man1/nsec3hash.1		man-bind-man		.man
-./usr/share/man/man1/nsupdate.1			man-netutil-man		.man
+./usr/share/man/man1/nsec3hash.1		man-bind-man		bind,.man
+./usr/share/man/man1/nsupdate.1			man-netutil-man		bind,.man
 ./usr/share/man/man1/nvi.1			man-obsolete		obsolete
 ./usr/share/man/man1/nview.1			man-obsolete		obsolete
 ./usr/share/man/man1/od.1			man-util-man		.man
@@ -5987,7 +5987,7 @@
 ./usr/share/man/man5/monthly.5			man-sys-man		.man
 ./usr/share/man/man5/monthly.conf.5		man-sys-man		.man
 ./usr/share/man/man5/motd.5			man-sys-man		.man
-./usr/share/man/man5/named.conf.5		man-bind-man		.man
+./usr/share/man/man5/named.conf.5		man-bind-man		bind,.man
 ./usr/share/man/man5/netconfig.5		man-net-man		.man
 ./usr/share/man/man5/netgroup.5			man-nis-man		.man
 ./usr/share/man/man5/netid.5			man-nis-man		yp,.man
@@ -6035,7 +6035,7 @@
 ./usr/share/man/man5/resolvconf.conf.5		man-resolvconf-man	.man
 ./usr/share/man/man5/resolver.5			man-net-man		.man
 ./usr/share/man/man5/rhosts.5			man-netutil-man		.man
-./usr/share/man/man5/rndc.conf.5		man-bind-man		.man
+./usr/share/man/man5/rndc.conf.5		man-bind-man		bind,.man
 ./usr/share/man/man5/route.conf.5		man-sys-man		.man
 ./usr/share/man/man5/rpc.5			man-net-man		.man
 ./usr/share/man/man5/rpcapd-config.5		man-netutil-man		.man
@@ -6385,7 +6385,7 @@
 ./usr/share/man/man8/creds_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		binutils,.man
-./usr/share/man/man8/ddns-confgen.8		man-bind-man		.man
+./usr/share/man/man8/ddns-confgen.8		man-bind-man		bind,.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/devpubd.8			man-sysutil-man		.man
@@ -6732,7 +6732,7 @@
 ./usr/share/man/man8/named-compilezone.8	man-obsolete		obsolete
 ./usr/share/man/man8/named-journalprint.8	man-obsolete		obsolete
 ./usr/share/man/man8/named-xfer.8		man-obsolete		obsolete
-./usr/share/man/man8/named.8			man-bind-man		.man
+./usr/share/man/man8/named.8			man-bind-man		bind,.man
 ./usr/share/man/man8/named.reload.8		man-obsolete		obsolete
 ./usr/share/man/man8/named.restart.8		man-obsolete		obsolete
 ./usr/share/man/man8/ncdcs.8			man-sysutil-man		binutils,.man
@@ -6774,7 +6774,7 @@
 ./usr/share/man/man8/nsd-control.8		man-nsd-man		.man,nsd
 ./usr/share/man/man8/nsd.8 			man-nsd-man		.man,nsd
 ./usr/share/man/man8/nsec3hash.8		man-obsolete		obsolete
-./usr/share/man/man8/nslookup.8			man-netutil-man		.man
+./usr/share/man/man8/nslookup.8			man-netutil-man		bind,.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
 ./usr/share/man/man8/ntp-keygen.8		man-ntp-man		.man
@@ -6918,8 +6918,8 @@
 ./usr/share/man/man8/rlogind.8			man-netutil-man		.man
 ./usr/share/man/man8/rmail.8			man-obsolete		obsolete
 ./usr/share/man/man8/rmt.8			man-sysutil-man		.man
-./usr/share/man/man8/rndc-confgen.8		man-bind-man		.man
-./usr/share/man/man8/rndc.8			man-bind-man		.man
+./usr/share/man/man8/rndc-confgen.8		man-bind-man		bind,.man
+./usr/share/man/man8/rndc.8			man-bind-man		bind,.man
 ./usr/share/man/man8/rndctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/route.8			man-netutil-man		.man
 ./usr/share/man/man8/route6d.8			man-router-man		use_inet6,.man
@@ -7093,7 +7093,7 @@
 ./usr/share/man/man8/trivial-rewrite.8		man-postfix-man		postfix,.man
 ./usr/share/man/man8/trpt.8			man-netutil-man		.man
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
-./usr/share/man/man8/tsig-keygen.8		man-bind-man		.man
+./usr/share/man/man8/tsig-keygen.8		man-bind-man		bind,.man
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/umbctl.8			man-netutil-man		.man

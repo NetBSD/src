@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1378 2025/12/24 20:05:58 thorpej Exp $
+# $NetBSD: mi,v 1.1379 2025/12/25 01:14:59 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -525,7 +525,7 @@
 ./usr/bin/aiomixer				base-audio-bin		audio
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
-./usr/bin/arpaname				base-bind-bin
+./usr/bin/arpaname				base-bind-bin		bind
 ./usr/bin/at					base-cron-bin
 ./usr/bin/atf-check				base-obsolete		obsolete
 ./usr/bin/atf-config				base-atf-bin		atf,!kyua
@@ -590,11 +590,11 @@
 ./usr/bin/cut					base-util-bin
 ./usr/bin/db					base-util-bin
 ./usr/bin/dc					base-util-bin
-./usr/bin/delv					base-bind-bin
+./usr/bin/delv					base-bind-bin		bind
 ./usr/bin/deroff				base-util-bin
 ./usr/bin/diff					base-util-bin
 ./usr/bin/diff3					base-util-bin
-./usr/bin/dig					base-netutil-bin
+./usr/bin/dig					base-netutil-bin	bind
 ./usr/bin/dirname				base-util-bin
 ./usr/bin/dns-sd				base-mdns-bin		mdns
 ./usr/bin/dnsquery				base-obsolete	obsolete
@@ -644,7 +644,7 @@
 ./usr/bin/head					base-util-bin
 ./usr/bin/hesinfo				base-hesiod-bin		hesiod
 ./usr/bin/hexdump				base-util-bin
-./usr/bin/host					base-netutil-bin
+./usr/bin/host					base-netutil-bin	bind
 ./usr/bin/hoststat				base-mailwrapper-bin
 ./usr/bin/hxtool				base-krb5-bin		kerberos
 ./usr/bin/iasl					base-util-bin		acpi
@@ -724,7 +724,7 @@
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
-./usr/bin/mdig					base-bind-bin
+./usr/bin/mdig					base-bind-bin		 bind
 ./usr/bin/merge					base-util-bin
 ./usr/bin/mesg					base-util-bin
 ./usr/bin/midiplay				base-audio-bin
@@ -756,8 +756,8 @@
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
-./usr/bin/nslookup				base-netutil-bin
-./usr/bin/nsupdate				base-netutil-bin
+./usr/bin/nslookup				base-netutil-bin	bind
+./usr/bin/nsupdate				base-netutil-bin	bind
 ./usr/bin/nvi					base-obsolete		obsolete
 ./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
@@ -1497,24 +1497,24 @@
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-obsolete		obsolete
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
-./usr/sbin/ddns-confgen				base-bind-bin
+./usr/sbin/ddns-confgen				base-bind-bin		bind
 ./usr/sbin/dev_mkdb				base-sysutil-bin
 ./usr/sbin/dhcpd				base-dhcpd-bin
 ./usr/sbin/dhcrelay				base-dhcpd-bin
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
-./usr/sbin/dnssec-cds				base-bind-bin
-./usr/sbin/dnssec-dsfromkey			base-bind-bin
-./usr/sbin/dnssec-importkey			base-bind-bin
-./usr/sbin/dnssec-keyfromlabel			base-bind-bin
-./usr/sbin/dnssec-keygen			base-bind-bin
+./usr/sbin/dnssec-cds				base-bind-bin		bind
+./usr/sbin/dnssec-dsfromkey			base-bind-bin		bind
+./usr/sbin/dnssec-importkey			base-bind-bin		bind
+./usr/sbin/dnssec-keyfromlabel			base-bind-bin		bind
+./usr/sbin/dnssec-keygen			base-bind-bin		bind
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
-./usr/sbin/dnssec-revoke			base-bind-bin
-./usr/sbin/dnssec-settime			base-bind-bin
+./usr/sbin/dnssec-revoke			base-bind-bin		bind
+./usr/sbin/dnssec-settime			base-bind-bin		bind
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
-./usr/sbin/dnssec-signzone			base-bind-bin
-./usr/sbin/dnssec-verify			base-bind-bin
+./usr/sbin/dnssec-signzone			base-bind-bin		bind
+./usr/sbin/dnssec-verify			base-bind-bin		bind
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-obsolete		obsolete
 ./usr/sbin/dtrace				base-debug-bin		dtrace
@@ -1643,13 +1643,13 @@
 ./usr/sbin/mtrace				base-netutil-bin
 ./usr/sbin/mtrace6				base-obsolete		obsolete
 ./usr/sbin/mtree				base-sysutil-bin
-./usr/sbin/named				base-bind-bin
+./usr/sbin/named				base-bind-bin		bind
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
-./usr/sbin/named-checkconf			base-bind-bin
-./usr/sbin/named-checkzone			base-bind-bin
-./usr/sbin/named-compilezone			base-bind-bin
-./usr/sbin/named-journalprint			base-bind-bin
-./usr/sbin/named-rrchecker			base-bind-bin
+./usr/sbin/named-checkconf			base-bind-bin		bind
+./usr/sbin/named-checkzone			base-bind-bin		bind
+./usr/sbin/named-compilezone			base-bind-bin		bind
+./usr/sbin/named-journalprint			base-bind-bin		bind
+./usr/sbin/named-rrchecker			base-bind-bin		bind
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root	binutils
@@ -1667,7 +1667,7 @@
 ./usr/sbin/nsd-checkzone			base-nsd-bin		nsd
 ./usr/sbin/nsd-control				base-nsd-bin		nsd
 ./usr/sbin/nsd-control-setup			base-nsd-bin		nsd
-./usr/sbin/nsec3hash				base-bind-bin
+./usr/sbin/nsec3hash				base-bind-bin		bind
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete
@@ -1741,8 +1741,8 @@
 ./usr/sbin/revnetgroup				base-nis-bin		yp
 ./usr/sbin/rip6query				base-netutil-bin	inet6
 ./usr/sbin/rmt					base-sysutil-bin
-./usr/sbin/rndc					base-bind-bin
-./usr/sbin/rndc-confgen				base-bind-bin
+./usr/sbin/rndc					base-bind-bin		bind
+./usr/sbin/rndc-confgen				base-bind-bin		bind
 ./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
 ./usr/sbin/rpc.lockd				base-nfsserver-bin	nfs
@@ -1845,7 +1845,7 @@
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
-./usr/sbin/tsig-keygen				base-bind-bin
+./usr/sbin/tsig-keygen				base-bind-bin		bind
 ./usr/sbin/umcpmioctl				base-sysutil-bin
 ./usr/sbin/unbound				base-netutil-bin	unbound
 ./usr/sbin/unbound-anchor			base-netutil-bin	unbound

@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1455 2025/12/24 20:06:00 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1456 2025/12/25 01:15:00 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1274,6 +1274,7 @@ _MKVARS.yes= \
 	MKATF \
 	MKAUDIO \
 	MKAUTOFS \
+	MKBIND \
 	MKBLUETOOTH \
 	MKBINUTILS \
 	MKBSDTAR \
@@ -1357,6 +1358,7 @@ _MKVARS.yes= \
 MKADOSFS.m68000?=	no
 MKAUDIO.m68000?=	no
 MKAUTOFS.m68000?=	no
+MKBIND.m68000?=		no
 MKBLUETOOTH.m68000?=	no
 MKBSDTAR.m68000?=	no
 MKCHFS.m68000?=		no
