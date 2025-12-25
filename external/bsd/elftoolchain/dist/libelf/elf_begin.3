@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_begin.3,v 1.6 2024/03/03 17:37:33 christos Exp $
+.\"	$NetBSD: elf_begin.3,v 1.7 2025/12/25 11:10:48 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008-2011 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,9 +23,9 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_begin.3 3952 2022-03-12 09:09:50Z jkoshy
+.\" Id: elf_begin.3 4321 2025-12-22 20:48:10Z jkoshy
 .\"
-.Dd December 11, 2011
+.Dd December 22, 2025
 .Dt ELF_BEGIN 3
 .Os
 .Sh NAME
@@ -298,14 +298,13 @@ was empty.
 The underlying file for argument
 .Fa fd
 was of an unsupported type.
+.It Bq Er ELF_E_ARGUMENT
+An invalid file descriptor value was used for argument
+.Fa fd .
 .It Bq Er ELF_E_IO
-The file descriptor in argument
-.Fa fd
-was invalid.
-.It Bq Er ELF_E_IO
-The file descriptor in argument
-.Fa fd
-could not be read or written to.
+An IO error occurred when attempting to use the file
+descriptor value in argument
+.Fa fd .
 .It Bq Er ELF_E_RESOURCE
 An out of memory condition was encountered.
 .It Bq Er ELF_E_SEQUENCE
@@ -324,6 +323,7 @@ was of an unsupported ELF version.
 .Xr elf_errno 3 ,
 .Xr elf_memory 3 ,
 .Xr elf_next 3 ,
+.Xr elf_open 3 ,
 .Xr elf_rand 3 ,
 .Xr elf_update 3 ,
 .Xr gelf 3
