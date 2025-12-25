@@ -1,6 +1,6 @@
-.\"	$NetBSD: mk.conf.5,v 1.115 2025/12/04 18:22:16 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.116 2025/12/25 19:26:42 thorpej Exp $
 .\"
-.\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
+.\"  Copyright (c) 1999-2025 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
 .\"
 .\"  This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 28, 2025
+.Dd December 25, 2025
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -438,6 +438,28 @@ flag.
 .DFLT
 .Sy 2 .
 .
+.It Sy MKADOSFS
+.YorN
+Indicates whether support for the AmigaDOS file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKAUTOFS
+.YorN
+Indicates whether support for the automounter file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
 .It Sy MKAMDGPUFIRMWARE
 .YorN
 Indicates whether to install the
@@ -482,6 +504,37 @@ as the tests rely on ATF and cannot be built without it.
 .NOVAR MKCXX=no
 .DFLTy
 .
+.It Sy MKAUDIO
+.YorN
+Indicates whether audio-related programs
+.Po
+.Xr aiomixer 1 ,
+.Xr audiocfg 1 ,
+.Xr audioctl 1 ,
+.Xr audioplay 1 ,
+.Xr audiorecord 1 ,
+.Xr hdaudioctl 8
+.Pc
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKBIND
+.YorN
+Indicates whether the BIND Internet domain name server
+.Pq named
+and associated tools or libraries will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
 .It Sy MKBINUTILS
 .YorN
 Indicates whether any of the binutils tools or libraries
@@ -497,6 +550,17 @@ or
 .Xr mdsetimage 8 .
 .NOVAR TOOLCHAIN_MISSING!=no
 .DFLTy
+.
+.It Sy MKBLUETOOTH
+.YorN
+Indicates whether support for Bluetooth tools and libraries
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKBSDDIFF
 .YorN
@@ -541,7 +605,12 @@ If
 use the
 .Xr pax 1
 based implementations.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKCATPAGES
 .YorN
@@ -549,6 +618,23 @@ Indicates whether preformatted plaintext manual pages will be created
 and installed.
 .NOVAR MKMAN=no No or Sy MKSHARE=no
 .DFLTn
+.
+.It Sy MKCD9660FS
+.YorN
+Indicates whether support for the ISO-9660 file system
+will be build and installed.
+.DFLTy
+.
+.It Sy MKCHFS
+.YorN
+Indicates whether support for the CHFS flash file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKCLEANSRC
 .YorN
@@ -789,7 +875,12 @@ on other platforms.
 .It Sy MKDTC
 .YorN
 Indicates whether the Device Tree Compiler (dtc) will be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKDTRACE
 .YorN
@@ -828,6 +919,50 @@ statically.
 .Dq no
 on
 .Sy ia64 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKEFS
+.YorN
+Indicates whether support for the SGI EFS file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKEXT2FS
+.YorN
+Indicates whether support for the EXT2 file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKFDESCFS
+.YorN
+Indicates whether support for the file descriptor file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKFILECOREFS
+.YorN
+Indicates whether support for the Acorn FILECORE file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
 .Dq yes
 on other platforms.
 .
@@ -923,7 +1058,12 @@ will be built, installed,
 and used to format some of the PostScript and PDF
 documentation.
 .NOVAR MKCXX=no
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKGROFFHTMLDOC
 .YorN
@@ -938,6 +1078,29 @@ Does not affect the generation of HTML man pages.
 .YorN
 Indicates whether the Hesiod infrastructure
 (libraries and support programs) will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKHFS
+.YorN
+Indicates whether support for the Apple HFS+ file system
+will be build and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKKERNFS
+.YorN
+Indicates whether support for the kernel data
+.Pq /kern
+file system will be build and installed.
 .DFLTy
 .
 .It Sy MKHOSTOBJ
@@ -963,7 +1126,12 @@ architecture.
 Indicates whether the HTML manual pages are created and installed.
 .NODEF NOHTML
 .NOVAR MKMAN=no No or Sy MKSHARE=no
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKIEEEFP
 .YorN
@@ -983,7 +1151,12 @@ must not be set to
 .Dq no
 if
 .Sy MKX11!=no .
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKINFO
 .YorN
@@ -998,7 +1171,24 @@ most of the compilation tools, will be built and installed.
 Indicates whether the
 .Xr ipf 4
 programs, headers, and other components will be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKIPSEC
+.YorN
+Indicated whether support for IP Security
+.Pq IPSec
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKISCSI
 .YorN
@@ -1058,7 +1248,23 @@ until the import of Kyua is done and validated.
 Indicates whether the Lightweight Directory Access Protocol (LDAP)
 infrastructure
 (libraries and support programs) will be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKLFS
+.YorN
+Indicates whether support for the BSD log-structured file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKLIBCSANITIZER
 .YorN
@@ -1181,7 +1387,12 @@ otherwise
 If not
 .Dq no ,
 build and install the logical volume manager.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKMAKEMANDB
 .YorN
@@ -1244,6 +1455,23 @@ Indicates whether the mDNS (Multicast DNS) infrastructure
 (libraries and support programs) will be built and installed.
 .DFLTy
 .
+.It Sy MKMSDOSFS
+.YorN
+Indicates whether support for the MS-DOS FAT file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKNFS
+.YorN
+Indicates whether support for the NFS network file system
+will be built and installed.
+.DFLTy
+.
 .It Sy MKNLS
 .YorN
 Indicates whether Native Language System (NLS) locale zone files will be
@@ -1251,6 +1479,17 @@ built and installed.
 .NODEF NONLS
 .NOVAR MKSHARE=no
 .DFLTy
+.
+.It Sy MKNILFS
+.YorN
+Indicates whether support for the NILFS log-structured file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKNOUVEAUFIRMWARE
 .YorN
@@ -1272,12 +1511,39 @@ on other platforms.
 .It Sy MKNPF
 .YorN
 Indicates whether the NPF packet filter is to be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKNSD
 .YorN
 Indicates whether the Name Server Daemon (NSD) is to be built and installed.
 .DFLTn
+.
+.It Sy MKNTFS
+.YorN
+Indicates whether support for the NTFS file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKNULLFS
+.YorN
+Indicates whether support for the NULLFS loopback file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKOBJ
 .YorN
@@ -1324,6 +1590,17 @@ the
 option.
 .DFLTn
 .
+.It Sy MKOVERLAYFS
+.YorN
+Indicates whether support for the overlay file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
 .It Sy MKPAM
 .YorN
 Indicates whether the
@@ -1346,7 +1623,12 @@ will be built and installed.
 Indicates whether the
 .Xr pf 4
 programs, headers, and LKM will be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKPIC
 .YorN
@@ -1431,7 +1713,24 @@ utility is not installed as
 .It Sy MKPOSTFIX
 .YorN
 Indicates whether Postfix will be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKPROCFS
+.YorN
+Indicates whether support for the process
+.Pq /proc
+file system will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKPROFILE
 .YorN
@@ -1448,6 +1747,28 @@ on
 and
 .Sy riscv64
 (due to toolchain problems with profiled code);
+.Dq yes
+on other platforms.
+.
+.It Sy MKPTYFS
+.YorN
+Indicates whether support for the /dev/pts file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKQEMUFWCFG
+.YorN
+Indicates whether support for the QEMU fw_cfg file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
 .Dq yes
 on other platforms.
 .
@@ -1550,7 +1871,12 @@ variables that start with
 .Sy RUMPUSER_
 or
 .Sy RUMP_ .
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKSANITIZER
 .YorN
@@ -1674,6 +2000,17 @@ loading shared libraries.
 .NOVAR MKDEBUG=yes
 .DFLTy
 .
+.It Sy MKSYSVBFS
+.YorN
+Indicates whether support for the System V boot file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
 .It Sy MKTEGRAFIRMWARE
 .YorN
 Indicates whether to install the
@@ -1687,18 +2024,67 @@ on
 .Dq no
 on other platforms.
 .
+.It Sy MKTMPFS
+.YorN
+Indicates whether support for the memory-based temporary file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
 .It Sy MKTPM
 .YorN
 Indicates whether to install the Trusted Platform Module (TPM)
 infrastructure.
 .DFLTn
 .
+.It Sy MKUDF
+.YorN
+Indicates whether support for the UDF universal disk file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKUMAPFS
+.YorN
+Indicates whether support for the user and group ID remapping file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
 .It Sy MKUNBOUND
 .YorN
 Indicates whether the
 .Xr unbound 8
 DNS resolver will be built and installed.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKUNIONFS
+.YorN
+Indicates whether support for the union file system
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKUNPRIVED
 .YorN
@@ -1739,6 +2125,40 @@ the
 .Fl u
 option.
 .DFLTn
+.
+.It Sy MKV7FS
+.YorN
+Indicates whether support for the 7th Edition
+.Pq V7
+UNIX file system will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKWLAN
+.YorN
+Indicates whether support for 802.11 networking
+.Po
+.Xr hostapd 8 ,
+.Xr hostapd_cli 8 ,
+.Xr wlanctl 8 ,
+.Xr wpa_cli 8 ,
+.Xr wpa_passphrase 8 ,
+.Xr wpa_supplicant 8 ,
+.Xr wiconfig 8 ,
+and 802.11 support in
+.Xr ifconfig 8
+.Pc
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKX11
 .YorN
