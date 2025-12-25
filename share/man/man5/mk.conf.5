@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.116 2025/12/25 19:26:42 thorpej Exp $
+.\"	$NetBSD: mk.conf.5,v 1.117 2025/12/25 20:28:25 wiz Exp $
 .\"
 .\"  Copyright (c) 1999-2025 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -526,7 +526,7 @@ on other platforms.
 .It Sy MKBIND
 .YorN
 Indicates whether the BIND Internet domain name server
-.Pq named
+.Pq Xr named 8
 and associated tools or libraries will be built and installed.
 .DFLT
 .Dq no
@@ -1099,7 +1099,7 @@ on other platforms.
 .It Sy MKKERNFS
 .YorN
 Indicates whether support for the kernel data
-.Pq /kern
+.Pq Pa /kern
 file system will be build and installed.
 .DFLTy
 .
@@ -1181,7 +1181,7 @@ on other platforms.
 .It Sy MKIPSEC
 .YorN
 Indicated whether support for IP Security
-.Pq IPSec
+.Pq Xr ipsec 4
 will be built and installed.
 .DFLT
 .Dq no
@@ -1723,7 +1723,7 @@ on other platforms.
 .It Sy MKPROCFS
 .YorN
 Indicates whether support for the process
-.Pq /proc
+.Pq Pa /proc
 file system will be built and installed.
 .DFLT
 .Dq no
@@ -1752,8 +1752,9 @@ on other platforms.
 .
 .It Sy MKPTYFS
 .YorN
-Indicates whether support for the /dev/pts file system
-will be built and installed.
+Indicates whether support for the
+.Pa /dev/pts
+file system will be built and installed.
 .DFLT
 .Dq no
 on
