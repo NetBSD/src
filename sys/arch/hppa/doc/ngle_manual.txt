@@ -1,0 +1,346 @@
+$NetBSD: ngle_manual.txt,v 1.1 2025/12/25 11:41:09 macallan Exp $
+
+The Unofficial NGLE Manual
+
+Preface
+This manual covers what I've been able to figure out about HP's NGLE family of
+graphics devices commonly used in HP PA-RISC workstations, namely HCRX24 and
+PCI Visualize EG.
+Since there is no official documentation available I used the NGLE code found in
+XFree86 3.3 as a starting point, with plenty of guesswork and experimentation.
+The xf86 code is somewhat obfuscated ( register names are random numbers, and 
+few of the values written into them are explained ) and does not actually
+accelerate any graphics operations. It does however use the blitter to clear the
+framebuffer and attribute planes, show how to use a cursor sprite, colour LUTs
+and so on.
+None of this is endorsed, supported, or (likely) known to Hewlett-Packard.
+All register definitions are from
+https://cvsweb.netbsd.org/bsdweb.cgi/src/sys/dev/ic/nglereg.h
+kernel drivers for HCRX and PCI Visualize EG:
+https://cvsweb.netbsd.org/bsdweb.cgi/src/sys/arch/hppa/dev/hyperfb.c
+https://cvsweb.netbsd.org/bsdweb.cgi/src/sys/arch/hppa/dev/gftfb.c
+Xorg driver:
+https://cvsweb.netbsd.org/bsdweb.cgi/xsrc/external/mit/xf86-video-ngle/dist/src/
+
+1. Now how does this thing work
+All NGLE devices work in more or less the same way, with some differences in
+details and additional features. Every device occupies a 32MB range, half of
+which contains the STI ROM and registers, the other is for framebuffer access.
+The framebuffer aperture can map exactly one chunk video memory - things like
+front or back buffers, overlay, attribute planes, and a few unusual things, like
+colour maps and cursor sprite bitmaps. Read and write access can be controlled
+independently, and all settings apply to both the drawing engine and CPU access
+through the framebuffer aperture.
+That means there is no such thing as direct framebuffer access, everything goes
+through the graphics pipeline. If you set the engine to 32bit colour expansion
+then whatever you write into the aperture will be expanded. Also, care must be
+taken to not atempt to access video memory while updating the cursor image or
+colour maps.
+All framebuffer access applies a fixed pitch of 2048 pixels.
+The chips support the usual selection of graphics primitives - rectangle fill,
+copy, colour expansion, and indirect access. There's plenty more ( many have 3D
+features ) but these are completely unknown.
+All register addresses are relative to STI region 2, and all registers are big
+endian, even on PCI.
+
+2. Framebuffer access
+#define	NGLE_BAboth		0x018000	/* read and write mode */
+#define	NGLE_DBA		0x018004	/* Dest. Bitmap Access */
+#define	NGLE_SBA		0x018008	/* Source Bitmap Access */
+
+#define BA(F,C,S,A,J,B,I)						\
+	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
+	/* FCCC CSSS AAAJ JJJJ BBBB IIII IIII IIII */
+
+/* F */
+#define	    IndexedDcd	0	/* Pixel data is indexed (pseudo) color */
+#define	    FractDcd	1	/* Pixel data is Fractional 8-8-8 */
+/* C */
+#define	    Otc04	2	/* Pixels in each longword transfer (4) */
+#define	    Otc32	5	/* Pixels in each longword transfer (32) */
+#define	    Otc24	7	/* NGLE uses this for 24bit blits */
+				/* Should really be... */
+#define	    Otc01	7	/* one pixel per longword */
+/* S */
+#define	    Ots08	3	/* Each pixel is size (8)d transfer (1) */
+#define	    OtsIndirect	6	/* Each bit goes through FG/BG color(8) */
+/* A */
+#define	    AddrByte	3	/* byte access? Used by NGLE for direct fb */
+#define	    AddrLong	5	/* FB address is Long aligned (pixel) */
+#define     Addr24	7	/* used for colour map access */
+/* B */
+#define	    BINapp0I	0x0	/* Application Buffer 0, Indexed */
+#define	    BINapp1I	0x1	/* Application Buffer 1, Indexed */
+#define	    BINovly	0x2	/* 8 bit overlay */
+#define	    BINcursor	0x6	/* cursor bitmap on EG */
+#define	    BINcmask	0x7	/* cursor mask on EG */
+#define	    BINapp0F8	0xa	/* Application Buffer 0, Fractional 8-8-8 */
+/* next one is a guess, my HCRX24 doesn't seem to have it */
+#define	    BINapp1F8	0xb	/* Application Buffer 1, Fractional 8-8-8 */
+#define	    BINattr	0xd	/* Attribute Bitmap */
+#define	    BINcmap	0xf	/* colour map(s) */
+/* I assume one of the undefined BIN* accesses the HCRX Z-buffer add-on. No clue
+ * about bit depth or if any bits are used for stencil */
+ 
+/* other buffers are unknown */
+/* J - 'BA just point' - function unknown */
+/* I - 'BA index base' - function unknown */
+
+The BIN* values control which buffer we access, Addr* controls how memory is
+presented to the CPU. With AddrLong all pixels are at 32bit boundaries, no
+matter the actual colour depth. Otc* controls how many pixels we write with a
+single 32bit access, so for 8bit we would use Otc04, for 24bit colour Otc01,
+and Otc32 is for mono to colour expansion. OtsIndirect enables colour
+expansion, combined with Otc32 every set bit writes a foreground colour pixel,
+unset bits can be transparent or background.
+The *Dcd bit's exact function is a bit unclear - we set it for 24bit colour
+access to both framebuffer and colour maps. I suspect enabling it on an 8bit
+buffer will result in R3G3B2 output from rendering and blending operations,
+which we know nothing about.
+So, for normal access to the overlay on an HCRX we would use IndexedDcd, Otc04,
+Ots8, AddrByte, BINovly.
+Framebuffer geometry is always 2048 pixels ( with pixel size determined by
+Addr* ) by whatever your hardware allows, memory outside the visible screen may
+or may not be accessible.
+HCRX always runs in 1280x1024, there is always an overlay and at least one 8bit
+image buffer, HCRX24 has a 24bit buffer that can be used as two 8bit buffers.
+There is no usable off-screen memory, in fact there seem to be registers to the
+right of the visible area.
+On a PCI Visualize EG we get an actual 2048x2048 buffer which we can use any
+way we want.
+Finally, the xf86 code writes a one into
+#define	NGLE_CONTROL_FB		0x200005
+before framebuffer access, function is unknown but I suspect it turns off
+pipeline pacing, which is then re-enabled whenever we touch the blitter.
+
+3. Drawing engine
+Basically, you poke coordinates into registers and apply an opcode to the last
+write's address to start an operation ( and specify which ), and there are
+registers to control drawing mode, ROPs etc.
+All register writes go through a pipeline which has 32 entries on HCRX.
+
+#define	NGLE_BUSY		0x200000	/* busy register */
+the first byte will be non-zero if the drawing engine is busy
+
+#define	NGLE_FIFO		0x200008	/* # of fifo slots */
+
+X and width in the upper 16bit, Y / height in the lower.
+#define	NGLE_DST_XY		0x000800	/* destination XY */
+#define	NGLE_SIZE		0x000804	/* size WH */
+#define	NGLE_SRC_XY		0x000808	/* source XY */
+#define	NGLE_TRANSFER_DATA	0x000820	/* 'transfer data' - this is */
+						/* a pixel mask on fills */
+#define NGLE_RECT		0x000200	/* opcode to start a fill */
+#define NGLE_BLIT		0x000300	/* opcode to start a blit */
+#define NGLE_HCRX_FASTFILL	0x000140	/* opcode for HCRX fast rect */
+#define	NGLE_RECT_SIZE_START	(NGLE_SIZE | NGLE_RECT)
+#define	NGLE_BLT_DST_START	(NGLE_DST_XY | NGLE_BLIT)
+
+So, in order to draw a rectangle you write coordinates into NGLE_DST_XY, set
+NGLE_TRANSFER_DATA to all ones unless you want it stippled, then write the
+width/height into NGLE_SIZE|NGLE_RECT. Rectangle fills move the destination
+coordinates down by the rectangle's height.
+NGLE_BLIT copies a retangle from SRC_XY to DST_XY with ROP etc. applied. It is
+possible to copy data between buffers, supported combinations of source and
+destination access modes need to be investigated.
+There are likely other opcodes for things like vectors, triangles and so on.
+HCRX_FASTFILL is implied by the xf86 code, but not actually used. It seems to
+work, more or less, but with strange side effects. More invastigation is needed.
+
+#define	NGLE_CPR		0x01800c	/* control plane register */
+This is used when drawing into BINattr, on EG we use 0x00000102, on HCRX 
+0x04000F00 for 24bit. There has to be some conversion, there is no way the
+attribute plane is actually 32bit. No idea what the individual bits do, has to
+be a combination of buffer selection ( front or back), colour mode / LUT
+selection, likely chip specific. Known values are from xf86.
+
+#define	NGLE_FG			0x018010	/* fg colour */
+#define	NGLE_BG			0x018014	/* bg colour */
+#define	NGLE_PLANEMASK		0x018018	/* image planemask */
+#define	NGLE_IBO		0x01801c	/* image binary op */
+
+#define IBOvals(R,M,X,S,D,L,B,F)					\
+	(((R)<<8)|((M)<<16)|((X)<<24)|((S)<<29)|((D)<<28)|((L)<<31)|((B)<<1)|(F))
+	/* LSSD XXXX MMMM MMMM RRRR RRRR ???? ??BF */
+
+/* R is a standard X11 ROP, no idea if the other bits are used for anything  */
+#define	    RopClr 	0x0
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    RopSet 	0xf
+/* M: 'mask addr offset' - function unknown */
+/* X */
+#define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
+#define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
+/* S: 'static reg' flag, NGLE sets it for blits, function is unknown but
+      we get occasional garbage in 8bit blits without it  */
+/* D */
+#define	    DataDynamic	    0	/* Data register reloaded by direct access */
+#define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
+/* L */
+I suspect this selects how many mask bits to use in Otc* less than 32.
+#define	    MaskOtc	    0	/* Mask contains Object Count valid bits */
+/* B = 1 -> background transparency for masked fills */
+/* F probably the same for foreground */
+
+These bit definitions are from xf86, the S bit seems to control masking off
+extra bits when the number of pixels written Otc* exceeds the right border.
+Not sure what exactly the *Dynamic and MaskOtc bits do.
+For a plain rectangle fill into the overlay we would use 
+IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0, 0, 0)
+and
+BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly, 0)
+... which draws 32 pixels at a time, without the S bit we would get our width
+expanded to the next multiple of 32. Enable colour expansion so we draw in 
+whatever colour is in NGLE_FG.
+
+For a simple copy we would use
+BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0))
+... top copy four pixels at a time, Addr* doesn't seem to matter, disable colour
+expansion.
+IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0)
+... to write 8bit deep, plain copy, mask off extra pixels if our width isn't a
+multiple of 4.
+
+To do the same operations on a 24bit buffer just use Otc01, FractionalDcd and
+BitmapExtent32. No need to set the S bit on copies since all pixels are 32bit
+anyway.
+
+4. Indirect framebuffer writes
+HP calls the mechanism 'BINC', no idea what it stands for. Basically, you set a
+target address and then write data into registers which trigger operations
+programmed in DBA and IBO, with the traget address being updated according to
+which data register we write to. There is also a mechanism to copy blocks, used
+for colour map and cursor bitmaps.
+
+#define	NGLE_BINC_SRC		0x000480	/* BINC src */
+#define	NGLE_BINC_DST		0x0004a0	/* BINC dst */
+#define	NGLE_BINC_MASK		0x0005a0	/* BINC pixel mask */
+#define	NGLE_BINC_DATA		0x0005c0	/* BINC data, inc X, some sort of blending */
+#define	NGLE_BINC_DATA_R	0x000600	/* BINC data, inc X */
+#define	NGLE_BINC_DATA_D	0x000620	/* BINC data, inc Y */
+#define	NGLE_BINC_DATA_U	0x000640	/* BINC data, dec Y */
+#define	NGLE_BINC_DATA_L	0x000660	/* BINC data, dec X */
+#define	NGLE_BINC_DATA_DR	0x000680	/* BINC data, inc X, inc Y */
+#define	NGLE_BINC_DATA_DL	0x0006a0	/* BINC data, dec X, inc Y */
+#define	NGLE_BINC_DATA_UR	0x0006c0	/* BINC data, inc X, dec Y */
+#define	NGLE_BINC_DATA_UL	0x0006e0	/* BINC data, dec X, dec Y */
+
+SRC and DST are 'linear' addresses, depending on Addr* in DBA, pitch is Addr*
+times 2048.
+The BINC_DATA registers differ only in the way the destination address is
+updated, up or down a line, left or right by Otc* pixels.
+So, in order to draw a 12x20 pixel character to (100,150) we would use the same
+DBA and IBO values we used for rectangles, write 0xfff00000 into NGLE_BINC_MASK
+to make sure we only write 12 pixels per line, set FG and BG as needed, set
+BINC_DST to (100 * 4 + 150 * 8192) - we're in AddrLong - then poke our character
+bitmap into NGLE_BINC_DATA_D, one left aligned line at a time.
+BINC operations by themselves are unlikely to overrun the pipeline but they may
+if a lot of them happen while something more time consuming, like a full screen
+scroll, is in progress.
+Not sure what exactly NGLE_BINC_DATA does, the xf86 code uses it for colour map
+updates.
+
+5. Colour maps
+LUTs are held in their own buffer ( BINcmap ), size is likely chip-specific.
+HCRX has room for at least three 256 entry colour maps, EG probably has two or
+three.
+Basically, we BINC-write our colour map into BINcmap, then tell the hardware to
+update the actual colour map(s) from that buffer.
+We'd use:
+BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)
+IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)
+Not sure how 'Addr24' differs from AddrLong, but that's what the xf86 code uses.
+Then set BINC_DST to 0 ( or whichever entry we want to update - 4 for the 2nd
+entry etc. ) and poke our colour map into BINC_DATA_R, one entry at a time.
+Sending it to the DAC works like this - set BINC_SRC to 0, then write a command
+into the appropriate LUTBLT register:
+#define	NGLE_EG_LUTBLT		0x200118	/* EG LUT blt ctrl */
+	/* EWRRRROO OOOOOOOO TTRRRRLL LLLLLLLL */
+	#define LBC_ENABLE	0x80000000
+	#define LBC_WAIT_BLANK	0x40000000
+	#define LBS_OFFSET_SHIFT	16
+	#define LBC_TYPE_MASK		0xc000
+	#define LBC_TYPE_CMAP		0
+	#define LBC_TYPE_CURSOR		0x8000
+	#define LBC_TYPE_OVERLAY	0xc000
+	#define LBC_LENGTH_SHIFT	0
+In order to update the whole thing we would use 
+LBC_ENABLE | LBC_TYPE_CMAP | 0x100
+Length and offset are in 32bit words.
+
+HCRX uses a different register:
+#define	NGLE_HCRX_LUTBLT	0x210020	/* HCRX LUT blt ctrl */
+... which otherwise works exactly the same way.
+
+On HCRX we need:
+- a linear ramp in the first 256 entries, 24bit output goes through this.
+- the overlay's colour map starts at entry 512
+- hardware sprite colours are controlled by two entries using LBC_TYPE_CURSOR
+  and offset 0
+
+On EG:
+- the main colour map lives at offset 0, type LBC_TYPE_CMAP
+- four entries at offset 0 with LBC_TYPE_CURSOR, the first two do nothing, the
+  other two are cursor sprite colours
+
+6. Hardware cursor
+Again, chip-specific. Cursor position works the same on HCRX and  PCI EG, uses
+different registers though. Older chips use a different register layout.
+Bitmap access is different on HCRX, both support a 64x64 sprite.
+
+#define	NGLE_EG_CURSOR		0x200100	/* cursor coordinates on EG */
+	#define EG_ENABLE_CURSOR	0x80000000
+#define	NGLE_HCRX_CURSOR	0x210000	/* HCRX cursor coord & enable */
+	#define HCRX_ENABLE_CURSOR	0x80000000
+Coordinates are signed 12bit quantities, X in the upper halfword, Y in the
+lower, enable bit at 0x80000000. There is no hotspot register, negative
+coordinates will move the sprite partially off screen as expected.
+On HCRX we need to write zero into
+#define	NGLE_HCRX_VBUS		0x000420	/* HCRX video bus access */
+before writing NGLE_HCRX_CURSOR.
+
+Cursor bitmap access on HCRX is simple:
+#define	NGLE_HCRX_CURSOR_ADDR	0x210004	/* HCRX cursor address */
+#define	NGLE_HCRX_CURSOR_DATA	0x210008	/* HCRX cursor data */
+The mask is at offset 0, bitmap at 0x80. Subsequent writes to CURSOR_DATA update
+the address as expected.
+
+On EG we have to use BINC writes:
+BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcmask, 0)
+IBOvals(RopSrc, 0, 0, 0, DataDynamic, MaskOtc, 0, 0)
+set BINC_DST to 0, then poke the mask into NGLE_BINC_DATA_R and
+NGLE_BINC_DATA_DL - write 32bit, move right, write the rest of the line, move
+down/left to the next line etc.
+No LUTBLT analog here, for the the cursor bitmap use BINcursor.
+
+7. Miscellaneous
+#define	NGLE_HCRX_PLANE_ENABLE	0x21003c	/* HCRX plane enable */ 
+#define	NGLE_HCRX_MISCVID	0x210040	/* HCRX misc video */
+	#define HCRX_BOOST_ENABLE	0x80000000 /* extra high signal level */
+	#define HCRX_VIDEO_ENABLE	0x0A000000
+	#define HCRX_OUTPUT_ENABLE	0x01000000
+xf86 uses HCRX_VIDEO_ENABLE, the other bits were found by experiment, functions
+are guesswork. There are other bits with unknown function.
+
+This is set by xf86, other values unknown.
+#define	NGLE_HCRX_HB_MODE2	0x210120	/* HCRX 'hyperbowl' mode 2 */
+	#define HYPERBOWL_MODE2_8_24					15
+
+This seems to be the HCRX's analogue to FX's force attribute register - we can
+switch between overlay opacity and image plane display mode on the fly
+#define	NGLE_HCRX_HB_MODE	0x210130	/* HCRX 'hyperbowl' */
+	#define HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES	4
+	#define HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE	8
+	#define HYPERBOWL_MODE01_8_24_LUT0_OPAQUE_LUT1_OPAQUE		10
+
+8. Visualize EG notes
+All referenves to 'EG' and the like strictly refer to the PCI Visualize EG card
+with 4MB video memory. There is a GSC variant whch may have 2MB or 4MB, other
+differences are unknown.
+The xf86 code does not support the PCI EG at all, it seems to be somewhat
+similar to the 'Artist' variant, the cursor register is at the same address but
+works as on HCRX. I suspect the GSC variant to be more like Artist.
+It is possible to put cards with enough memory into double buffer mode using
+the firmware configuration menu - I need to figure out what exactly that does.
+Same with grey scale mode, which may just select a different default palette. 
