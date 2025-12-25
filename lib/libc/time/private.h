@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.74 2025/12/20 15:27:22 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.75 2025/12/25 19:21:15 skrll Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -847,7 +847,8 @@ extern char **environ;
 
 #ifndef HAVE_MEMPCPY
 # if (defined mempcpy \
-      || defined __FreeBSD__ || defined __NetBSD__ || defined __linux__)
+      || defined __FreeBSD__ || defined __NetBSD__ || defined __linux__ \
+      || defined HAVE_NBTOOL_CONFIG_H)
 #  define HAVE_MEMPCPY 1
 # else
 #  define HAVE_MEMPCPY 0
