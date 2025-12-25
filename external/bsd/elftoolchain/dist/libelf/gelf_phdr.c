@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_phdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: gelf_phdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -35,8 +35,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_phdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: gelf_phdr.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: gelf_phdr.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: gelf_phdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 Elf32_Phdr *
 elf32_getphdr(Elf *e)
@@ -53,7 +54,7 @@ elf64_getphdr(Elf *e)
 GElf_Phdr *
 gelf_getphdr(Elf *e, int index, GElf_Phdr *d)
 {
-	int ec;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
 	Elf32_Phdr *ep32;
@@ -127,9 +128,9 @@ gelf_newphdr(Elf *e, size_t count)
 int
 gelf_update_phdr(Elf *e, int ndx, GElf_Phdr *s)
 {
-	int ec;
-	size_t phnum;
 	void *ehdr;
+	size_t phnum;
+	unsigned int ec;
 	Elf32_Phdr *ph32;
 	Elf64_Phdr *ph64;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.4 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.5 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libelf.h 3902 2020-11-24 21:17:41Z jkoshy
+ * Id: _libelf.h 4074 2025-01-07 15:34:21Z jkoshy
  */
 
 #ifndef	__LIBELF_H_
@@ -85,7 +85,7 @@ extern struct _libelf_globals _libelf;
 struct _Elf {
 	int		e_activations;	/* activation count */
 	unsigned int	e_byteorder;	/* ELFDATA* */
-	int		e_class;	/* ELFCLASS*  */
+	unsigned int	e_class;	/* ELFCLASS*  */
 	Elf_Cmd		e_cmd;		/* ELF_C_* used at creation time */
 	int		e_fd;		/* associated file descriptor */
 	unsigned int	e_flags;	/* ELF_F_* & LIBELF_F_* flags */
@@ -210,32 +210,35 @@ Elf	*_libelf_ar_open(Elf *_e, int _reporterror);
 Elf	*_libelf_ar_open_member(int _fd, Elf_Cmd _c, Elf *_ar);
 Elf_Arsym *_libelf_ar_process_bsd_symtab(Elf *_ar, size_t *_dst);
 Elf_Arsym *_libelf_ar_process_svr4_symtab(Elf *_ar, size_t *_dst);
-long	 _libelf_checksum(Elf *_e, int _elfclass);
-void	*_libelf_ehdr(Elf *_e, int _elfclass, int _allocate);
+long	 _libelf_checksum(Elf *_e, unsigned int _elfclass);
+void	*_libelf_ehdr(Elf *_e, unsigned int _elfclass, int _allocate);
 int	_libelf_elfmachine(Elf *_e);
-unsigned int _libelf_falign(Elf_Type _t, int _elfclass);
-size_t	_libelf_fsize(Elf_Type _t, int _elfclass, unsigned int _version,
-    size_t count);
+unsigned int _libelf_falign(Elf_Type _t, unsigned int _elfclass);
+size_t	_libelf_fsize(Elf_Type _t, unsigned int _elfclass,
+    unsigned int _version, size_t count);
 _libelf_translator_function *_libelf_get_translator(Elf_Type _t,
-    int _direction, int _elfclass, int _elfmachine);
-void	*_libelf_getphdr(Elf *_e, int _elfclass);
-void	*_libelf_getshdr(Elf_Scn *_scn, int _elfclass);
+    int _direction, unsigned int _elfclass, int _elfmachine);
+void	*_libelf_getphdr(Elf *_e, unsigned int _elfclass);
+void	*_libelf_getshdr(Elf_Scn *_scn, unsigned int _elfclass);
 void	_libelf_init_elf(Elf *_e, Elf_Kind _kind);
 int	_libelf_load_section_headers(Elf *e, void *ehdr);
-unsigned int _libelf_malign(Elf_Type _t, int _elfclass);
+unsigned int _libelf_malign(Elf_Type _t, unsigned int _elfclass);
 Elf	*_libelf_memory(unsigned char *_image, size_t _sz, int _reporterror);
-size_t	_libelf_msize(Elf_Type _t, int _elfclass, unsigned int _version);
-void	*_libelf_newphdr(Elf *_e, int _elfclass, size_t _count);
+size_t	_libelf_msize(Elf_Type _t, unsigned int _elfclass, unsigned int _version);
+void	*_libelf_newphdr(Elf *_e, unsigned int _elfclass, size_t _count);
 Elf	*_libelf_open_object(int _fd, Elf_Cmd _c, int _reporterror);
 struct _Libelf_Data *_libelf_release_data(struct _Libelf_Data *_d);
 void	_libelf_release_elf(Elf *_e);
 Elf_Scn	*_libelf_release_scn(Elf_Scn *_s);
-int	_libelf_setphnum(Elf *_e, void *_eh, int _elfclass, size_t _phnum);
-int	_libelf_setshnum(Elf *_e, void *_eh, int _elfclass, size_t _shnum);
-int	_libelf_setshstrndx(Elf *_e, void *_eh, int _elfclass,
+int	_libelf_setphnum(Elf *_e, void *_eh, unsigned int _elfclass,
+    size_t _phnum);
+int	_libelf_setshnum(Elf *_e, void *_eh, unsigned int _elfclass,
+    size_t _shnum);
+int	_libelf_setshstrndx(Elf *_e, void *_eh, unsigned int _elfclass,
     size_t _shstrndx);
 Elf_Data *_libelf_xlate(Elf_Data *_d, const Elf_Data *_s,
-    unsigned int _encoding, int _elfclass, int _elfmachine, int _direction);
+    unsigned int _encoding, unsigned int _elfclass, int _elfmachine,
+    int _direction);
 int	_libelf_xlate_shtype(uint32_t _sht);
 #ifdef __cplusplus
 }

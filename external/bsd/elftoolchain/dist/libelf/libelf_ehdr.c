@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -39,15 +39,16 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_ehdr.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_ehdr.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 /*
  * Retrieve counts for sections, phdrs and the section string table index
  * from section header #0 of the ELF object.
  */
 static int
-_libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
+_libelf_load_extended(Elf *e, unsigned int ec, uint64_t shoff, uint16_t phnum,
     uint16_t strndx)
 {
 	size_t fsz;
@@ -73,11 +74,6 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 	if ((scn = _libelf_allocate_scn(e, (size_t) 0)) == NULL)
 		return (0);
 
-	if (shoff > SSIZE_MAX) {
-		LIBELF_SET_ERROR(HEADER, 0);
-		return (0);
-	}
-
 	xlator = _libelf_get_translator(ELF_T_SHDR, ELF_TOMEMORY, ec,
 	    _libelf_elfmachine(e));
 	(*xlator)((unsigned char *) &scn->s_shdr, sizeof(scn->s_shdr),
@@ -86,11 +82,6 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 
 #define	GET_SHDR_MEMBER(M) ((ec == ELFCLASS32) ? scn->s_shdr.s_shdr32.M : \
 		scn->s_shdr.s_shdr64.M)
-
-	if (GET_SHDR_MEMBER(sh_size) > UINT_MAX) {
-		LIBELF_SET_ERROR(HEADER, 0);
-		return (0);
-	}
 
 	if ((shtype = GET_SHDR_MEMBER(sh_type)) != SHT_NULL) {
 		LIBELF_SET_ERROR(SECTION, 0);
@@ -122,7 +113,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 	} while (/* CONSTCOND */ 0)
 
 void *
-_libelf_ehdr(Elf *e, int ec, int allocate)
+_libelf_ehdr(Elf *e, unsigned int ec, int allocate)
 {
 	void *ehdr;
 	size_t fsz, msz;

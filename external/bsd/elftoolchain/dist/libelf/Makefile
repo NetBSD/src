@@ -1,4 +1,4 @@
-# Id: Makefile 3925 2021-03-07 12:16:49Z jkoshy
+# Id: Makefile 4324 2025-12-24 17:07:00Z jkoshy
 
 TOP=	..
 
@@ -7,8 +7,10 @@ LIB=	elf
 SRCS=	elf.c							\
 	elf_begin.c						\
 	elf_cntl.c						\
-	elf_end.c elf_errmsg.c elf_errno.c			\
 	elf_data.c						\
+	elf_end.c						\
+	elf_errmsg.c						\
+	elf_errno.c						\
 	elf_fill.c						\
 	elf_flag.c						\
 	elf_getarhdr.c						\
@@ -21,12 +23,12 @@ SRCS=	elf.c							\
 	elf_memory.c						\
 	elf_next.c						\
 	elf_open.c						\
+	elf_phnum.c						\
 	elf_rand.c						\
 	elf_rawfile.c						\
-	elf_phnum.c						\
+	elf_scn.c						\
 	elf_shnum.c						\
 	elf_shstrndx.c						\
-	elf_scn.c						\
 	elf_strptr.c						\
 	elf_update.c						\
 	elf_version.c						\
@@ -34,12 +36,12 @@ SRCS=	elf.c							\
 	gelf_checksum.c						\
 	gelf_dyn.c						\
 	gelf_ehdr.c						\
-	gelf_getclass.c						\
 	gelf_fsize.c						\
+	gelf_getclass.c						\
 	gelf_move.c						\
 	gelf_phdr.c						\
-	gelf_rel.c						\
 	gelf_rela.c						\
+	gelf_rel.c						\
 	gelf_shdr.c						\
 	gelf_sym.c						\
 	gelf_syminfo.c						\

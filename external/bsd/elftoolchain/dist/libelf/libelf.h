@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.7 2024/04/01 18:33:22 riastradh Exp $	*/
+/*	$NetBSD: libelf.h,v 1.8 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -36,6 +36,8 @@
 #else
 # include <sys/types.h>
 #endif
+
+#include <stdint.h>
 
 #include "elfdefinitions.h"
 
@@ -213,7 +215,7 @@ int		elf_getshnum(Elf *_elf, size_t *_dst);	/* Deprecated */
 int		elf_getshdrstrndx(Elf *_elf, size_t *_dst);
 int		elf_getshstrndx(Elf *_elf, size_t *_dst); /* Deprecated */
 unsigned int	elf_getversion(Elf *_elf);
-unsigned long	elf_hash(const void *_name);
+unsigned long	elf_hash(const char *_name);
 Elf_Kind	elf_kind(Elf *_elf);
 Elf		*elf_memory(char *_image, size_t _size);
 size_t		elf_ndxscn(Elf_Scn *_scn);

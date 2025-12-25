@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_errmsg.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: elf_errmsg.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
@@ -34,8 +34,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_errmsg.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
 ELFTC_VCSID("Id: elf_errmsg.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf_errmsg.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
 
 /*
  * Retrieve a human readable translation for an error message.

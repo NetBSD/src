@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_dyn.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: gelf_dyn.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -39,15 +39,17 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_dyn.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: gelf_dyn.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: gelf_dyn.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
 
 GElf_Dyn *
 gelf_getdyn(Elf_Data *ed, int ndx, GElf_Dyn *dst)
 {
-	int ec;
 	Elf *e;
 	size_t msz;
 	Elf_Scn *scn;
+	unsigned int ec;
 	Elf32_Dyn *dyn32;
 	Elf64_Dyn *dyn64;
 	uint32_t sh_type;
@@ -104,10 +106,10 @@ gelf_getdyn(Elf_Data *ed, int ndx, GElf_Dyn *dst)
 int
 gelf_update_dyn(Elf_Data *ed, int ndx, GElf_Dyn *ds)
 {
-	int ec;
 	Elf *e;
 	size_t msz;
 	Elf_Scn *scn;
+	unsigned int ec;
 	Elf32_Dyn *dyn32;
 	Elf64_Dyn *dyn64;
 	uint32_t sh_type;

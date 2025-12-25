@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_update.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: elf_update.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
@@ -48,8 +48,9 @@
 #include <sys/mman.h>
 #endif
 
-__RCSID("$NetBSD: elf_update.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
-ELFTC_VCSID("Id: elf_update.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: elf_update.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: elf_update.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
 
 /*
  * Layout strategy:
@@ -119,8 +120,9 @@ static int
 _libelf_compute_section_extents(Elf *e, Elf_Scn *s, off_t rc)
 {
 	Elf_Data *d;
+	int  elftype;
 	size_t fsz, msz;
-	int ec, elftype;
+	unsigned int ec;
 	uint32_t sh_type;
 	uint64_t d_align;
 	Elf32_Shdr *shdr32;
@@ -456,9 +458,9 @@ _libelf_insert_extent(struct _Elf_Extent_List *extents, int type,
 static off_t
 _libelf_resync_sections(Elf *e, off_t rc, struct _Elf_Extent_List *extents)
 {
-	int ec;
 	Elf_Scn *s;
 	size_t sh_type;
+	unsigned int ec;
 
 	ec = e->e_class;
 
@@ -517,7 +519,7 @@ _libelf_resync_sections(Elf *e, off_t rc, struct _Elf_Extent_List *extents)
 static off_t
 _libelf_resync_elf(Elf *e, struct _Elf_Extent_List *extents)
 {
-	int ec, eh_class;
+	unsigned int ec, eh_class;
 	unsigned int eh_byteorder, eh_version;
 	size_t align, fsz;
 	size_t phnum, shnum;
@@ -726,10 +728,11 @@ _libelf_resync_elf(Elf *e, struct _Elf_Extent_List *extents)
 static off_t
 _libelf_write_scn(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 {
+	int em;
 	off_t rc;
-	int ec, em;
 	Elf_Scn *s;
 	int elftype;
+	unsigned int ec;
 	Elf_Data *d, dst;
 	uint32_t sh_type;
 	struct _Libelf_Data *ld;
@@ -852,8 +855,9 @@ _libelf_write_scn(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 static off_t
 _libelf_write_ehdr(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 {
-	int ec, em;
+	int em;
 	void *ehdr;
+	unsigned int ec;
 	size_t fsz, msz;
 	Elf_Data dst, src;
 
@@ -896,8 +900,9 @@ _libelf_write_ehdr(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 static off_t
 _libelf_write_phdr(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 {
-	int ec, em;
+	int em;
 	void *ehdr;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
 	Elf_Data dst, src;
@@ -958,10 +963,11 @@ _libelf_write_phdr(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 static off_t
 _libelf_write_shdr(Elf *e, unsigned char *nf, struct _Elf_Extent *ex)
 {
-	int ec, em;
+	int em;
 	void *ehdr;
 	Elf_Scn *scn;
 	uint64_t shoff;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
 	size_t fsz, msz, nscn;
@@ -1204,8 +1210,8 @@ _libelf_write_elf(Elf *e, off_t newsize, struct _Elf_Extent_List *extents)
 off_t
 elf_update(Elf *e, Elf_Cmd c)
 {
-	int ec;
 	off_t rc;
+	unsigned int ec;
 	struct _Elf_Extent_List extents;
 
 	rc = (off_t) -1;

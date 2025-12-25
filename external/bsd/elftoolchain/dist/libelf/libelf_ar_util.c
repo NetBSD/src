@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar_util.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: libelf_ar_util.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2009,2010 Joseph Koshy
@@ -40,8 +40,9 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
-__RCSID("$NetBSD: libelf_ar_util.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_ar_util.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_ar_util.c 4250 2025-10-18 18:28:04Z jkoshy");
+
+__RCSID("$NetBSD: libelf_ar_util.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 /*
  * Convert a string bounded by `start' and `start+sz' (exclusive) to a
@@ -72,7 +73,7 @@ _libelf_ar_get_number(const char *src, size_t sz, unsigned int base,
 			return (0);
 		v = c - '0';
 		if (v >= base)		/* Illegal digit. */
-			break;
+			return (0);
 		r *= base;
 		r += v;
 	}

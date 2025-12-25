@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_shdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: gelf_shdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -40,8 +40,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_shdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: gelf_shdr.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: gelf_shdr.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: gelf_shdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 Elf32_Shdr *
 elf32_getshdr(Elf_Scn *s)
@@ -58,8 +59,8 @@ elf64_getshdr(Elf_Scn *s)
 GElf_Shdr *
 gelf_getshdr(Elf_Scn *s, GElf_Shdr *d)
 {
-	int ec;
 	void *sh;
+	unsigned int ec;
 	Elf32_Shdr *sh32;
 	Elf64_Shdr *sh64;
 
@@ -98,8 +99,8 @@ gelf_getshdr(Elf_Scn *s, GElf_Shdr *d)
 int
 gelf_update_shdr(Elf_Scn *scn, GElf_Shdr *s)
 {
-	int ec;
 	Elf *e;
+	unsigned int ec;
 	Elf32_Shdr *sh32;
 
 

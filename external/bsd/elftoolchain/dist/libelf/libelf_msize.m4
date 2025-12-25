@@ -1,4 +1,4 @@
-dnl 	$NetBSD: libelf_msize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
+dnl 	$NetBSD: libelf_msize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
  * All rights reserved.
@@ -37,8 +37,9 @@ dnl 	$NetBSD: libelf_msize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_msize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_msize.m4 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_msize.m4 4197 2025-08-09 10:35:45Z jkoshy");
+
+__RCSID("$NetBSD: libelf_msize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -48,7 +49,7 @@ struct msize {
 };
 
 divert(-1)
-include(SRCDIR`/elf_types.m4')
+include(`elf_types.m4')
 
 /*
  * ELF types whose memory representations have a variable size.
@@ -104,7 +105,7 @@ MSIZES(ELF_TYPE_LIST)
  * library error code set.
  */
 size_t
-_libelf_msize(Elf_Type t, int elfclass, unsigned int version)
+_libelf_msize(Elf_Type t, unsigned int elfclass, unsigned int version)
 {
 	size_t sz;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_syminfo.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: gelf_syminfo.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -37,16 +37,17 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_syminfo.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: gelf_syminfo.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: gelf_syminfo.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: gelf_syminfo.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 GElf_Syminfo *
 gelf_getsyminfo(Elf_Data *ed, int ndx, GElf_Syminfo *dst)
 {
-	int ec;
 	Elf *e;
 	size_t msz;
 	Elf_Scn *scn;
+	unsigned int ec;
 	uint32_t sh_type;
 	struct _Libelf_Data *d;
 	Elf32_Syminfo *syminfo32;
@@ -104,10 +105,10 @@ gelf_getsyminfo(Elf_Data *ed, int ndx, GElf_Syminfo *dst)
 int
 gelf_update_syminfo(Elf_Data *ed, int ndx, GElf_Syminfo *gs)
 {
-	int ec;
 	Elf *e;
 	size_t msz;
 	Elf_Scn *scn;
+	unsigned int ec;
 	uint32_t sh_type;
 	struct _Libelf_Data *d;
 	Elf32_Syminfo *syminfo32;

@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.6 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.7 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,20 +26,15 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-# include "nbtool_config.h"
-#endif
-
-#include <sys/cdefs.h>
-
 #include <sys/types.h>
 
 #include <libelf.h>
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_align.c,v 1.6 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_align.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_align.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: libelf_align.c,v 1.7 2025/12/25 18:58:13 jkoshy Exp $");
 
 struct align {
 	unsigned int a32;
@@ -99,7 +94,7 @@ static struct align malign[ELF_T_NUM] = {
 };
 
 unsigned int
-_libelf_malign(Elf_Type t, int elfclass)
+_libelf_malign(Elf_Type t, unsigned int elfclass)
 {
 	if (t >= ELF_T_NUM || (int) t < 0)
 		return (0);
@@ -138,7 +133,7 @@ static struct align falign[ELF_T_NUM] = {
 };
 
 unsigned int
-_libelf_falign(Elf_Type t, int elfclass)
+_libelf_falign(Elf_Type t, unsigned int elfclass)
 {
 	if (t >= ELF_T_NUM || (int) t < 0)
 		return (0);

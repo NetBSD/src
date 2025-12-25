@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: gelf_ehdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -41,8 +41,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_ehdr.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: gelf_ehdr.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: gelf_ehdr.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: gelf_ehdr.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 Elf32_Ehdr *
 elf32_getehdr(Elf *e)
@@ -59,7 +60,7 @@ elf64_getehdr(Elf *e)
 GElf_Ehdr *
 gelf_getehdr(Elf *e, GElf_Ehdr *d)
 {
-	int ec;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
 
@@ -118,7 +119,7 @@ gelf_newehdr(Elf *e, int ec)
 {
 	if (e != NULL &&
 	    (ec == ELFCLASS32 || ec == ELFCLASS64))
-		return (_libelf_ehdr(e, ec, 1));
+		return (_libelf_ehdr(e, (unsigned) ec, 1));
 
 	LIBELF_SET_ERROR(ARGUMENT, 0);
 	return (NULL);
@@ -127,8 +128,8 @@ gelf_newehdr(Elf *e, int ec)
 int
 gelf_update_ehdr(Elf *e, GElf_Ehdr *s)
 {
-	int ec;
 	void *ehdr;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
 

@@ -1,4 +1,4 @@
-dnl 	$NetBSD: libelf_convert.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
+dnl 	$NetBSD: libelf_convert.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
  * All rights reserved.
@@ -37,8 +37,9 @@ dnl 	$NetBSD: libelf_convert.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_convert.m4,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_convert.m4 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_convert.m4 4197 2025-08-09 10:35:45Z jkoshy");
+
+__RCSID("$NetBSD: libelf_convert.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -49,7 +50,7 @@ divert(-1)
 #
 # These conversions use the type information defined in `elf_types.m4'.
 
-include(SRCDIR`/elf_types.m4')
+include(`elf_types.m4')
 
 # For the purposes of generating conversion code, ELF types may be
 # classified according to the following characteristics:
@@ -155,7 +156,7 @@ _libelf_cvt_$1$4_tof(unsigned char *dst, size_t dsz, unsigned char *src,
 	Elf$3_$2 t, *s = (Elf$3_$2 *) (uintptr_t) src;
 	size_t c;
 
-	(void) &dsz;
+	(void) dsz;
 
 	if (!byteswap) {
 		(void) memcpy(dst, src, count * sizeof(*s));
@@ -279,7 +280,7 @@ _libelf_cvt_$1$3_tof(unsigned char *dst, size_t dsz, unsigned char *src,
 	Elf$3_$2	t, *s;
 	size_t c;
 
-	(void) &dsz;
+	(void) dsz;
 
 	s = (Elf$3_$2 *) (uintptr_t) src;
 	for (c = 0; c < count; c++) {
@@ -645,7 +646,7 @@ divert(0)
 
 #define	READ_BYTE(P,X)	do {						\
 		const unsigned char *const _p =				\
-			(const void *) (P);				\
+			(const unsigned char *) (P);			\
 		(X)		= _p[0];				\
 		(P)		= (P) + 1;				\
 	} while (/*CONSTCOND*/0)
@@ -714,12 +715,11 @@ MAKE_VERSION_CONVERTERS(VNEED,Verneed,Vernaux,vn)
  * simple memcpy suffices for both directions of conversion.
  */
 
-/*ARGSUSED*/
 static int
 _libelf_cvt_BYTE_tox(unsigned char *dst, size_t dsz, unsigned char *src,
     size_t count, int byteswap)
 {
-	(void) &byteswap;
+	(void) byteswap;
 	if (dsz < count)
 		return (0);
 	if (dst != src)
@@ -922,7 +922,7 @@ _libelf_cvt_GNUHASH64_tof(unsigned char *dst, size_t dsz, unsigned char *src,
 }
 
 /*
- * Elf note structures comprise a fixed size header followed by variable
+ * Elf_Note structures comprise a fixed size header followed by variable
  * length strings.  The fixed size header needs to be byte swapped, but
  * not the strings.
  *
@@ -1086,7 +1086,8 @@ CONVERTER_NAMES(ELF_TYPE_LIST)
  * direction, ELF class and ELF machine.
  */
 _libelf_translator_function *
-_libelf_get_translator(Elf_Type t, int direction, int elfclass, int elfmachine)
+_libelf_get_translator(Elf_Type t, int direction, unsigned int elfclass,
+    int elfmachine)
 {
 	assert(elfclass == ELFCLASS32 || elfclass == ELFCLASS64);
 	assert(direction == ELF_TOFILE || direction == ELF_TOMEMORY);

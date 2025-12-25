@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_scn.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: elf_scn.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -43,7 +43,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_scn.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
+ELFTC_VCSID("Id: elf_scn.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: elf_scn.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
 
 /*
  * Load an ELF section table and create a list of Elf_Scn structures.
@@ -52,10 +54,11 @@ int
 _libelf_load_section_headers(Elf *e, void *ehdr)
 {
 	Elf_Scn *scn;
+	int swapbytes;
 	uint64_t shoff;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
-	int ec, swapbytes;
 	unsigned char *src;
 	size_t fsz, i, shnum;
 	_libelf_translator_function *xlator;
@@ -95,11 +98,7 @@ _libelf_load_section_headers(Elf *e, void *ehdr)
 	    _libelf_elfmachine(e));
 
 	swapbytes = e->e_byteorder != LIBELF_PRIVATE(byteorder);
-	if (shoff > SSIZE_MAX) {
-		LIBELF_SET_ERROR(HEADER, 0);
-		return (0);
-	}
-	src = e->e_rawfile + (ssize_t)shoff;
+	src = e->e_rawfile + shoff;
 
 	/*
 	 * If the file is using extended numbering then section #0
@@ -119,7 +118,7 @@ _libelf_load_section_headers(Elf *e, void *ehdr)
 		if ((scn = _libelf_allocate_scn(e, i)) == NULL)
 			return (0);
 
-		(*xlator)((void *) &scn->s_shdr, sizeof(scn->s_shdr),
+		(*xlator)((unsigned char *) &scn->s_shdr, sizeof(scn->s_shdr),
 		    src, (size_t) 1, swapbytes);
 
 		if (ec == ELFCLASS32) {
@@ -142,9 +141,9 @@ _libelf_load_section_headers(Elf *e, void *ehdr)
 Elf_Scn *
 elf_getscn(Elf *e, size_t index)
 {
-	int ec;
 	void *ehdr;
 	Elf_Scn *s;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF ||
 	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64)) {
@@ -181,9 +180,9 @@ elf_ndxscn(Elf_Scn *s)
 Elf_Scn *
 elf_newscn(Elf *e)
 {
-	int ec;
 	void *ehdr;
 	Elf_Scn *scn;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);

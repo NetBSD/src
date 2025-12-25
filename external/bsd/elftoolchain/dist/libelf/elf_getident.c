@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_getident.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: elf_getident.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -29,6 +29,7 @@
 #if HAVE_NBTOOL_CONFIG_H
 # include "nbtool_config.h"
 #endif
+
 #include <sys/cdefs.h>
 
 #include <ar.h>
@@ -37,7 +38,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_getident.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
+ELFTC_VCSID("Id: elf_getident.c 3977 2022-05-01 06:45:34Z jkoshy");
+
+__RCSID("$NetBSD: elf_getident.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
 
 char *
 elf_getident(Elf *e, size_t *sz)

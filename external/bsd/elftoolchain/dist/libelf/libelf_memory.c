@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_memory.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: libelf_memory.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2011 Joseph Koshy
@@ -39,8 +39,9 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_memory.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_memory.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_memory.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: libelf_memory.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 /*
  * Create an ELF descriptor for a memory image, optionally reporting
@@ -51,7 +52,7 @@ Elf *
 _libelf_memory(unsigned char *image, size_t sz, int reporterror)
 {
 	Elf *e;
-	int e_class;
+	unsigned int e_class;
 	enum Elf_Error error;
 	unsigned int e_byteorder, e_version;
 

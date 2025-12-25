@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_shstrndx.c,v 1.5 2024/03/03 17:37:33 christos Exp $	*/
+/*	$NetBSD: elf_shstrndx.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -33,13 +33,15 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: elf_shstrndx.c,v 1.5 2024/03/03 17:37:33 christos Exp $");
+ELFTC_VCSID("Id: elf_shstrndx.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: elf_shstrndx.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
 
 static int
 _libelf_getshdrstrndx(Elf *e, size_t *strndx)
 {
 	void *eh;
-	int ec;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF ||
 	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64)) {
@@ -71,7 +73,7 @@ int
 elf_setshstrndx(Elf *e, size_t strndx)
 {
 	void *eh;
-	int ec;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF ||
 	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64) ||

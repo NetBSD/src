@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_rel.c,v 1.5 2024/03/03 17:37:34 christos Exp $	*/
+/*	$NetBSD: gelf_rel.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -39,15 +39,17 @@
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: gelf_rel.c,v 1.5 2024/03/03 17:37:34 christos Exp $");
+ELFTC_VCSID("Id: gelf_rel.c 4074 2025-01-07 15:34:21Z jkoshy");
+
+__RCSID("$NetBSD: gelf_rel.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 GElf_Rel *
 gelf_getrel(Elf_Data *ed, int ndx, GElf_Rel *dst)
 {
-	int ec;
 	Elf *e;
 	size_t msz;
 	Elf_Scn *scn;
+	unsigned int ec;
 	uint32_t sh_type;
 	Elf32_Rel *rel32;
 	Elf64_Rel *rel64;
@@ -106,10 +108,10 @@ gelf_getrel(Elf_Data *ed, int ndx, GElf_Rel *dst)
 int
 gelf_update_rel(Elf_Data *ed, int ndx, GElf_Rel *dr)
 {
-	int ec;
 	Elf *e;
 	size_t msz;
 	Elf_Scn *scn;
+	unsigned int ec;
 	uint32_t sh_type;
 	Elf32_Rel *rel32;
 	Elf64_Rel *rel64;

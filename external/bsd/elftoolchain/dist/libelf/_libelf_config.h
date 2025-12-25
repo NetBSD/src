@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf_config.h,v 1.7 2024/04/01 18:33:22 riastradh Exp $	*/
+/*	$NetBSD: _libelf_config.h,v 1.8 2025/12/25 18:58:12 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libelf_config.h 3975 2022-04-30 20:10:58Z jkoshy
+ * Id: _libelf_config.h 4079 2025-01-09 10:43:22Z jkoshy
  */
 
 /*

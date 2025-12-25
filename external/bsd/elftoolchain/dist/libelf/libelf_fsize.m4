@@ -1,4 +1,4 @@
-dnl 	$NetBSD: libelf_fsize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
+dnl 	$NetBSD: libelf_fsize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
  * All rights reserved.
@@ -31,8 +31,9 @@ dnl 	$NetBSD: libelf_fsize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $
 
 #include "_libelf.h"
 
-__RCSID("$NetBSD: libelf_fsize.m4,v 1.5 2024/03/03 17:37:34 christos Exp $");
-ELFTC_VCSID("Id: libelf_fsize.m4 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_fsize.m4 4197 2025-08-09 10:35:45Z jkoshy");
+
+__RCSID("$NetBSD: libelf_fsize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -41,7 +42,7 @@ ELFTC_VCSID("Id: libelf_fsize.m4 3977 2022-05-01 06:45:34Z jkoshy");
  */
 
 divert(-1)
-include(SRCDIR`/elf_types.m4')
+include(`elf_types.m4')
 
 /*
  * Translations from structure definitions to the size of their file
@@ -144,7 +145,7 @@ FSIZES(ELF_TYPE_LIST)
 };
 
 size_t
-_libelf_fsize(Elf_Type t, int ec, unsigned int v, size_t c)
+_libelf_fsize(Elf_Type t, unsigned int ec, unsigned int v, size_t c)
 {
 	size_t sz;
 
