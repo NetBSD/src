@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.5 2018/04/21 23:01:29 kre Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.5.4.1 2025/12/26 12:54:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arithmetic.c,v 1.5 2018/04/21 23:01:29 kre Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.5.4.1 2025/12/26 12:54:30 martin Exp $");
 #endif /* not lint */
 
 #include <limits.h>
@@ -363,7 +363,7 @@ cond(int token, union a_token_val *val, int op, int noeval)
 
 	VTRACE(DBG_ARITH, ("Arith: ?: %jd%s\n", a, noeval ? " noeval" : ""));
 
-	b = assignment(arith_token(), noeval | !a);
+	b = comma_list(arith_token(), noeval | !a);
 
 	if (last_token != ARITH_COLON)
 		arith_err("expecting ':'");
