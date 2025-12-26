@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.75 2024/02/05 22:08:04 andvar Exp $	*/
+/*	$NetBSD: tape.c,v 1.76 2025/12/26 09:49:35 nia Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.75 2024/02/05 22:08:04 andvar Exp $");
+__RCSID("$NetBSD: tape.c,v 1.76 2025/12/26 09:49:35 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: tape.c,v 1.75 2024/02/05 22:08:04 andvar Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <paths.h>
 #include <setjmp.h>
 #include <stdio.h>
