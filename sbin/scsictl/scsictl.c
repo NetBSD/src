@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.43 2025/12/10 21:33:01 andvar Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.44 2025/12/26 09:50:08 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.43 2025/12/10 21:33:01 andvar Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.44 2025/12/26 09:50:08 nia Exp $");
 #endif
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: scsictl.c,v 1.43 2025/12/10 21:33:01 andvar Exp $");
 #include <sys/scsiio.h>
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
