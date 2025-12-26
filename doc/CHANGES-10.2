@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.80 2025/12/18 18:58:16 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.81 2025/12/26 12:53:23 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1599,4 +1599,9 @@ share/mk/bsd.x11.mk					(apply patch)
 
 	Import xorg-server 21.1.21
 	[mrg, ticket #1210]
+
+bin/sh/arithmetic.c				1.6
+
+	sh(1): correct syntax of ?: operator in arithmetic.
+	[kre, ticket #1211]
 
