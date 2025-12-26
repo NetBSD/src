@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.8 2025/12/12 18:34:33 brad Exp $
+.\" $NetBSD: umcpmio.4,v 1.9 2025/12/26 22:17:27 uwe Exp $
 .\"
 .\" Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -14,30 +14,32 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
+.ds MCP2221 MCP2221\|/\|MCP2221A
+.
 .Dd November 13, 2025
 .Dt UMCPMIO 4
 .Os
 .Sh NAME
 .Nm umcpmio
-.Nd Driver for Microchip Technologies MCP2210 and MCP2221 / MCP2221A
-multi-io bridge chips.
+.Nd Microchip Technologies MCP2210, \*[MCP2221] multi-io bridge
 .Sh SYNOPSIS
 .Cd "umcpmio* at uhidev? reportid ?"
 .Cd "gpio* at gpiobus?"
 .Cd "spi* at umcpmio?"
-.Cd "iic* at umcpmio?" or
+.Cd "iic* at umcpmio?        # or"
 .Cd "iic* at i2cbus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the MCP2210 and MCP2221 / MCP2221A
+driver provides support for the MCP2210 and \*[MCP2221]
 multi-io bridge chips.
 The MCP2210 provides 9 simple gpio pins with multiple functions
 that attach as a
 .Xr gpio 4
 device and the ability to do SPI via the
 .Xr spi 4
-framework.  The pins function as
+framework.
+The pins function as
 .Xr gpio 4
 pins or as chip select for the
 .Xr spi 4
@@ -55,9 +57,9 @@ as a normal
 device.
 The UART is presented as one USB function, while the GPIO and I2C pins
 are presented as a second HID USB function.
-.Ss GPIO ON THE MCP2210
+.Ss GPIO on the MCP2210
 There are 9 basic gpio pins available with the following functions:
-.Bd -filled -offset indent
+.Bd -filled
 .TS
 box tab(:);
 l | l | l | l | l | l | l | l | l | l
@@ -83,26 +85,28 @@ The IRQ counter on GP6 can be read with a
 .Xr sysctl 8 .
 The manor in which the GP6 IRQ counter detects the event is configured
 by setting it to ALT3 to ALT6.
-GP8 is only an input pin when configured for gpio purposes.  The chip
-select, CS, function will be enabled automatically if a request to use
-the
+GP8 is only an input pin when configured for gpio purposes.
+The chip select, CS, function will be enabled automatically if a
+request to use the
 .Xr spi 4
 framework is performed that requests the use of the associated chip
 select pin.
-.Pp
+.
 .Ss SPI
 The MCP2210 supports a basic SPI engine via the
 .Xr spi 4
-framework.  Various SPI delays are configured with
+framework.
+Various SPI delays are configured with
 .Xr umcpmioctl 8 .
 .Pp
 The SPI engine on the MCP2210 only functions in full duplex mode.
 That is, it is not possible to just send bytes without also receiving
-them.  The driver will queue up any recived bytes that might have come
-though on a transaction and present them to the upstream layer from
-the queue when asked.  This queue will be cleared out for a particular
-slave address when a configuration call is made against a particular
-slave device.
+them.
+The driver will queue up any recived bytes that might have come though
+on a transaction and present them to the upstream layer from the queue
+when asked.
+This queue will be cleared out for a particular slave address when a
+configuration call is made against a particular slave device.
 .Pp
 Upon making a configuration call to the
 .Nm
@@ -125,7 +129,7 @@ The MCP2210 has 256 bytes of EEPROM available via the
 device.
 Random reads and writes may be performed against this device, but
 there can only one one opener at a time.
-.Ss GPIO ON THE MCP2221
+.Ss GPIO on the MCP2221
 There are 4 basic gpio pins available with the following functions:
 .Bd -filled -offset indent
 .TS
@@ -185,26 +189,28 @@ To utilize GP1 as the clock output, the ALT3 function can be set with
 .Xr gpioctl 8
 command.
 .Ss I2C
-The MCP2221 / MCP2221A supports a hardware I2C port with a simple
-scripting engine.  When the driver attaches, the I2C speed is set to
-100Kb/s.  The ability to perform an I2C READ without a STOP is not
-supported by the MCP2221 / MCP2221A engine and the driver turns a READ
-without STOP into a READ with STOP.  This behavior is just an attempt
-to allow a device to function, and it may not work for any particular
-device.  In particular, it is known that the
+The \*[MCP2221] supports a hardware I2C port with a simple
+scripting engine.
+When the driver attaches, the I2C speed is set to 100Kb/s.
+The ability to perform an I2C READ without a STOP is not supported by
+the \*[MCP2221] engine and the driver turns a READ without STOP into a
+READ with STOP.
+This behavior is just an attempt to allow a device to function, and it
+may not work for any particular device.
+In particular, it is known that the
 .Xr ds2482ow 4
 device will not work as expected.
 .Pp
-The MCP2221 / MCP2221A chip will automatically detect and deal with a
+The \*[MCP2221] chip will automatically detect and deal with a
 device that uses I2C clock stretching.
 .Ss UART
-The UART on the MCP2221 / MCP2221A utilizes the
+The UART on the \*[MCP2221] utilizes the
 .Xr umodem 4
 driver.
 The UART function of the chip only supports
 .Tn 8-N-1
 communications.
-.Sh SYSCTL VARIABLES ON BOTH CHIP TYPES
+.Sh SYSCTL VARIABLES
 The following
 .Xr sysctl 3
 variables are provided:
@@ -231,21 +237,29 @@ This includes timeouts due to exceeding
 .Li response_wait .
 .
 .El
-.Sh SYSCTL VARIABLES ON THE MCP2210
+.
+.Ss MCP2210
 .Bl -tag -width Li -compact
+.
 .It Li hw.umcpmio0.spi.verbose
 Enable or disable verbose connection reset messages when there are
 errors.
+.
+.Pp
 .It Li hw.umcpmio0.spi.busy_delay
 When the MCP2210 is busy, use busy_delay number of ms to wait before
 trying the operation again.
 The default is 0 as there usually will not be any reason is wait.
+.
+.Pp
 .It Li hw.umcpmio0.spi.retry_busy_chipdrain
 .It Li hw.umcpmio0.spi.retry_busy_transfer
 The number of times to retry either a chipdrain or transfer operation.
 A chipdrain is used when the chip has sent back data, but the upstream
 is not ready for it yet.
 A transfer is a normal SPI transfer.
+.
+.Pp
 .It Li hw.umcpmio0.gpio.counter
 .It Li hw.umcpmio0.gpio.reset_counter
 When the GP6 pin is set to ALT3 to ALT6, this sysctl reads back the
@@ -260,12 +274,13 @@ or if the pin is changed to become a CS from a general I/O pin for the
 infrastructure.
 .El
 .
-.Sh SYSCTL VARIABLES ON THE MCP2221 / MCP2221A
+.Ss \*[MCP2221]
 .Bl -tag -width Li -compact
+.
 .It Li hw.umcpmio0.i2c.reportreadnostop
 Report on the console if a driver attempts to use an I2C READ without
 STOP.
-A READ without STOP is not supported by the MCP2221 / MCP2221A I2C
+A READ without STOP is not supported by the \*[MCP2221] I2C
 engine and will be turned into a READ with STOP by the driver.
 .
 .Pp
@@ -334,7 +349,7 @@ IOCTLs.
 .It Pa /dev/umcpmio0GP2
 .It Pa /dev/umcpmio0GP3
 Device files that allow access to the ADC or DAC functions of the
-associated gpio pin on the MCP2221 / MCP2221A.
+associated gpio pin on the \*[MCP2221].
 .Pp
 .It Pa /dev/umcpmio0EEP
 Device file that interacts with the EEPROM on the MCP2210.
@@ -367,9 +382,10 @@ expect to be able to use any of the gpio bit banger drivers such as
 or
 .Xr gpioow 4 .
 .Pp
-The interrupt function of the MCP2221 / MCP2221A on GP1 cannot
+The interrupt function of the \*[MCP2221] on GP1 cannot
 currently be used because it is currently not possible to attach
-through the driver.  There may be two possible problems going on:
+through the driver.
+There may be two possible problems going on:
 .Bl -bullet
 .It
 The
@@ -378,7 +394,7 @@ framework runs at
 .Dv IPL_VM
 with a spin lock and when it attempts to establish an interrupt that
 uses the gpio from
-.Xr umcpmio 4 ,
+.Nm ,
 calls are made into the USB stack that will want to wait in a way that
 is not allowed while holding a spin lock.
 .
@@ -396,7 +412,7 @@ Either or both of these may be
 going on, but the end result is that the kernel will panic while
 attempting to perform a USB transfer while another driver is
 attempting to attach through
-.Xr umcpmio 4 .
+.Nm .
 .Pp
 Likewise, a
 .Ql \|gpioctl gpio1 attach ...\|
@@ -408,10 +424,10 @@ The end result is that
 and
 .Xr gpioow 4
 will not work with the gpio from
-.Xr umcpio 4 .
+.Nm .
 .Pp
 Please note that the
-.Xr umcpmio 4
+.Nm
 driver itself can use the USB stack during attachment and there does
 not appear to be any problems using the GPIO pins or setting GPIO pin
 configurations.
@@ -426,14 +442,15 @@ does not exist, should a particular chip have password protection
 enabled.
 .Pp
 On the MCP2210, changing any pin from INPUT or OUTPUT to ALTx or vise
-versa has to rewrite some of the setting for all pins.  A consequence
-of doing this is that for a very brief time, the default direction and
-values will be set on all pins.  This has the biggest impact on OUTPUT
-pins which might generate a small pulse.  This behavior really can't
-be avoided as there is no way with the MCP2210 to write the
-configuration of just one pin at a time.  For this same reason, the
-IRQ event counter will be reset if any pin switches from INPUT or
-OUTPUT to ALTx or vise versa.
+versa has to rewrite some of the setting for all pins.
+A consequence of doing this is that for a very brief time, the default
+direction and values will be set on all pins.
+This has the biggest impact on OUTPUT pins which might generate a
+small pulse.
+This behavior really can't be avoided as there is no way with the
+MCP2210 to write the configuration of just one pin at a time.
+For this same reason, the IRQ event counter will be reset if any pin
+switches from INPUT or OUTPUT to ALTx or vise versa.
 .Pp
 The MCP2210 supports active high or active low CS signals per CS.
 However, the
