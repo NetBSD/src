@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.87 2025/12/18 18:45:51 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.88 2025/12/26 12:54:58 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1094,4 +1094,8 @@ xsrc/external/mit/libX11/dist/src/xkb/XKB.c			(patch)
 	libX11: XkbOpenDisplay: add _Xconst qualifier to display name argument.
 	[mrg, ticket #1989]
 
+bin/sh/arithmetic.c				1.6
+
+	sh(1): correct syntax of ?: operator in arithmetic.
+	[kre, ticket #1990]
 
