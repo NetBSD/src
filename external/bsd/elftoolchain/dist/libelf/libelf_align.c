@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.7 2025/12/25 18:58:13 jkoshy Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.8 2025/12/26 07:07:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -26,6 +26,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
+#include <sys/cdefs.h>
+
 #include <sys/types.h>
 
 #include <libelf.h>
@@ -34,7 +40,7 @@
 
 ELFTC_VCSID("Id: libelf_align.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_align.c,v 1.7 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: libelf_align.c,v 1.8 2025/12/26 07:07:35 mrg Exp $");
 
 struct align {
 	unsigned int a32;
