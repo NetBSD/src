@@ -657,9 +657,9 @@ process_free_queue(VCHIQ_STATE_T *state)
 		while (pos < VCHIQ_SLOT_SIZE) {
 			VCHIQ_HEADER_T *header =
 				(VCHIQ_HEADER_T *)(data + pos);
-			int msgid = le32toh(header->msgid);
+			uint32_t msgid = le32toh(header->msgid);
 			if (VCHIQ_MSG_TYPE(msgid) == VCHIQ_MSG_DATA) {
-				int port = VCHIQ_MSG_SRCPORT(msgid);
+				unsigned int port = VCHIQ_MSG_SRCPORT(msgid);
 				VCHIQ_SERVICE_QUOTA_T *service_quota =
 					&state->service_quotas[port];
 				int count;
@@ -769,13 +769,13 @@ process_free_queue(VCHIQ_STATE_T *state)
 /* Called by the slot handler and application threads */
 static VCHIQ_STATUS_T
 queue_message(VCHIQ_STATE_T *state, VCHIQ_SERVICE_T *service,
-	int msgid, const VCHIQ_ELEMENT_T *elements,
+	uint32_t msgid, const VCHIQ_ELEMENT_T *elements,
 	int count, int size, int flags)
 {
 	VCHIQ_SHARED_STATE_T *local;
 	VCHIQ_SERVICE_QUOTA_T *service_quota = NULL;
 	VCHIQ_HEADER_T *header;
-	int type = VCHIQ_MSG_TYPE(msgid);
+	uint32_t type = VCHIQ_MSG_TYPE(msgid);
 
 	unsigned int stride;
 
@@ -1008,7 +1008,7 @@ queue_message(VCHIQ_STATE_T *state, VCHIQ_SERVICE_T *service,
 /* Called by the slot handler and application threads */
 static VCHIQ_STATUS_T
 queue_message_sync(VCHIQ_STATE_T *state, VCHIQ_SERVICE_T *service,
-	int msgid, const VCHIQ_ELEMENT_T *elements,
+	uint32_t msgid, const VCHIQ_ELEMENT_T *elements,
 	int count, int size, int is_blocking)
 {
 	VCHIQ_SHARED_STATE_T *local;
@@ -1028,7 +1028,7 @@ queue_message_sync(VCHIQ_STATE_T *state, VCHIQ_SERVICE_T *service,
 		le32toh(local->slot_sync));
 
 	{
-		int oldmsgid = le32toh(header->msgid);
+		uint32_t oldmsgid = le32toh(header->msgid);
 		if (oldmsgid != VCHIQ_MSGID_PADDING)
 			vchiq_log_error(vchiq_core_log_level,
 				"%d: qms - msgid %x, not PADDING",
@@ -1127,7 +1127,7 @@ release_slot(VCHIQ_STATE_T *state, VCHIQ_SLOT_INFO_T *slot_info,
 	lmutex_lock(&state->recycle_mutex);
 
 	if (header) {
-		int msgid = le32toh(header->msgid);
+		uint32_t msgid = le32toh(header->msgid);
 		if (((msgid & VCHIQ_MSGID_CLAIMED) == 0) ||
 			(service && service->closing)) {
 			lmutex_unlock(&state->recycle_mutex);
@@ -1186,9 +1186,9 @@ notify_bulks(VCHIQ_SERVICE_T *service, VCHIQ_BULK_QUEUE_T *queue,
 		while (queue->remote_notify != queue->process) {
 			VCHIQ_BULK_T *bulk =
 				&queue->bulks[BULK_INDEX(queue->remote_notify)];
-			int msgtype = (bulk->dir == VCHIQ_BULK_TRANSMIT) ?
+			uint32_t msgtype = (bulk->dir == VCHIQ_BULK_TRANSMIT) ?
 				VCHIQ_MSG_BULK_RX_DONE : VCHIQ_MSG_BULK_TX_DONE;
-			int msgid = VCHIQ_MAKE_MSG(msgtype, service->localport,
+			uint32_t msgid = VCHIQ_MAKE_MSG(msgtype, service->localport,
 				service->remoteport);
 			uint32_t actual = htole32(bulk->actual);
 			VCHIQ_ELEMENT_T element = { &actual, 4 };
@@ -1511,12 +1511,13 @@ static int
 parse_open(VCHIQ_STATE_T *state, VCHIQ_HEADER_T *header)
 {
 	VCHIQ_SERVICE_T *service = NULL;
-	int msgid, size;
+	uint32_t msgid;
+	int size;
 	unsigned int localport, remoteport;
 
 	msgid = le32toh(header->msgid);
 	size = le32toh(header->size);
-	//int type = VCHIQ_MSG_TYPE(msgid);
+	//uint32_t type = VCHIQ_MSG_TYPE(msgid);
 	localport = VCHIQ_MSG_DSTPORT(msgid);
 	remoteport = VCHIQ_MSG_SRCPORT(msgid);
 	if (size >= sizeof(struct vchiq_open_payload)) {
@@ -1640,8 +1641,9 @@ parse_rx_slots(VCHIQ_STATE_T *state)
 
 	while (state->rx_pos != tx_pos) {
 		VCHIQ_HEADER_T *header;
-		int msgid, size;
-		int type;
+		uint32_t msgid;
+		int size;
+		uint32_t type;
 		unsigned int localport, remoteport;
 
 		DEBUG_TRACE(PARSE_LINE);
@@ -1742,7 +1744,7 @@ parse_rx_slots(VCHIQ_STATE_T *state)
 			vchiq_log_error(vchiq_core_log_level,
 				"header %p (msgid %x) - size %x too big for "
 				"slot",
-				header, (unsigned int)msgid,
+				header, msgid,
 				(unsigned int)size);
 			WARN(1, "oversized for slot\n");
 		}
@@ -2173,8 +2175,9 @@ sync_func(void *v)
 
 	while (1) {
 		VCHIQ_SERVICE_T *service;
-		int msgid, size;
-		int type;
+		uint32_t msgid;
+		int size;
+		uint32_t type;
 		unsigned int localport, remoteport;
 
 		remote_event_wait(state, &local->sync_trigger);
@@ -2790,7 +2793,7 @@ release_service_messages(VCHIQ_SERVICE_T *service)
 			while (pos < end) {
 				VCHIQ_HEADER_T *header =
 					(VCHIQ_HEADER_T *)(data + pos);
-				int msgid = le32toh(header->msgid);
+				uint32_t msgid = le32toh(header->msgid);
 				int port = VCHIQ_MSG_DSTPORT(msgid);
 				if ((port == service->localport) &&
 					(msgid & VCHIQ_MSGID_CLAIMED)) {
@@ -3529,7 +3532,7 @@ vchiq_release_message(VCHIQ_SERVICE_HANDLE_T handle, VCHIQ_HEADER_T *header)
 
 	if ((slot_index >= le32toh(remote->slot_first)) &&
 		(slot_index <= le32toh(remote->slot_last))) {
-		int msgid = le32toh(header->msgid);
+		uint32_t msgid = le32toh(header->msgid);
 		if (msgid & VCHIQ_MSGID_CLAIMED) {
 			VCHIQ_SLOT_INFO_T *slot_info =
 				SLOT_INFO_FROM_INDEX(state, slot_index);

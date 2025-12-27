@@ -116,11 +116,11 @@ vchiq_static_assert(IS_POW2(VCHIQ_MAX_SLOTS_PER_SIDE));
 #define VCHIQ_PORT_IS_VALID(port)      (port < VCHIQ_PORT_FREE)
 #define VCHIQ_MAKE_MSG(type, srcport, dstport) \
 	((type<<24) | (srcport<<12) | (dstport<<0))
-#define VCHIQ_MSG_TYPE(msgid)          ((unsigned int)msgid >> 24)
+#define VCHIQ_MSG_TYPE(msgid)          ((uint32_t)msgid >> 24)
 #define VCHIQ_MSG_SRCPORT(msgid) \
-	(unsigned short)(((unsigned int)msgid >> 12) & 0xfff)
+	(uint16_t)(((uint32_t)msgid >> 12) & 0xfff)
 #define VCHIQ_MSG_DSTPORT(msgid) \
-	((unsigned short)msgid & 0xfff)
+	((uint16_t)msgid & 0xfff)
 
 #define VCHIQ_FOURCC_AS_4CHARS(fourcc)	\
 	((fourcc) >> 24) & 0xff, \
