@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.117 2025/12/25 20:28:25 wiz Exp $
+.\"	$NetBSD: mk.conf.5,v 1.118 2025/12/27 04:24:03 thorpej Exp $
 .\"
 .\"  Copyright (c) 1999-2025 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -1607,7 +1607,12 @@ Indicates whether the
 .Xr pam 8
 framework (libraries and support files) will be built and installed.
 The pre-PAM code is not supported and may be removed in the future.
-.DFLTy
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKPCC
 .YorN

@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1456 2025/12/25 01:15:00 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1457 2025/12/27 04:24:03 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1384,6 +1384,7 @@ MKNPF.m68000?=		no
 MKNTFS.m68000?=		no
 MKNULLFS.m68000?=	no
 MKOVERLAYFS.m68000?=	no
+MKPAM.m68000?=		no
 MKPF.m68000?=		no
 MKPOSTFIX.m68000?=	no
 MKPROCFS.m68000?=	no
