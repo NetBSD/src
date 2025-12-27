@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.141 2022/08/10 08:37:53 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.142 2025/12/27 08:06:38 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.141 2022/08/10 08:37:53 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.142 2025/12/27 08:06:38 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,6 +288,12 @@ static struct kevent	*allocchange(void);
 static int	get_line(int, char *, int);
 static void	spawn(struct servtab *, int);
 
+static void	suspend_sep(struct servtab *);
+static void	resume_sep(struct servtab *);
+
+static void	add_child(struct servtab *, pid_t);
+static void	remove_child(struct servtab *, pid_t);
+
 struct biltin {
 	const char *bi_service;		/* internally provided service name */
 	int	bi_socktype;		/* type of socket supported */
@@ -405,7 +411,7 @@ main(int argc, char *argv[])
 	}
 
 	for (;;) {
-		int		ctrl;
+		int ctrl;
 		struct kevent	eventbuf[64], *ev;
 		struct servtab	*sep;
 
@@ -449,12 +455,16 @@ main(int argc, char *argv[])
 				DPRINTF(SERV_FMT ": accept, ctrl fd %d",
 				    SERV_PARAMS(sep), ctrl);
 				if (ctrl < 0) {
-					if (errno != EINTR)
+					if (errno != EINTR && errno != EBADF)
 						syslog(LOG_WARNING,
 						    SERV_FMT ": accept: %m",
 						    SERV_PARAMS(sep));
 					continue;
 				}
+				sep->se_accept_count++;
+				if (sep->se_accept_max != SERVTAB_UNSPEC_SIZE_T &&
+				    sep->se_accept_count >= sep->se_accept_max)
+					suspend_sep(sep);
 			} else
 				ctrl = sep->se_fd;
 			spawn(sep, ctrl);
@@ -481,11 +491,18 @@ spawn(struct servtab *sep, int ctrl)
 		pid = fork();
 		if (pid < 0) {
 			syslog(LOG_ERR, "fork: %m");
-			if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM)
+			if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM) {
+				sep->se_accept_count--;
+				if (sep->se_accept_max != SERVTAB_UNSPEC_SIZE_T &&
+				    sep->se_accept_count < sep->se_accept_max)
+					resume_sep(sep);
 				close(ctrl);
+			}
 			sleep(1);
 			return;
 		}
+		if (pid != 0 && sep->se_accept_children != NULL)
+			add_child(sep, pid);
 		if (pid != 0 && sep->se_wait != 0) {
 			struct kevent	*ev;
 
@@ -633,6 +650,39 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 }
 
 static void
+add_child(struct servtab *sep, pid_t pid)
+{
+	if (sep->se_accept_max != SERVTAB_UNSPEC_SIZE_T &&
+	    sep->se_accept_count <= sep->se_accept_max &&
+	    sep->se_accept_count > 0)
+		sep->se_accept_children[sep->se_accept_count-1] = pid;
+}
+
+static void
+remove_child(struct servtab *sep, pid_t pid)
+{
+	size_t i, tail;
+
+	for (i=0; i<sep->se_accept_count; ++i) {
+		if (sep->se_accept_children[i] != pid)
+			continue;
+
+		if (sep->se_accept_max != SERVTAB_UNSPEC_SIZE_T &&
+		    sep->se_accept_count <= sep->se_accept_max)
+			resume_sep(sep);
+
+		sep->se_accept_count--;
+		tail = sep->se_accept_count - i;
+
+		memmove(&sep->se_accept_children[i],
+		    &sep->se_accept_children[i+1],
+		    tail * sizeof(pid_t));
+
+		break;
+	} 
+}
+
+static void
 reapchild(void)
 {
 	int status;
@@ -644,7 +694,7 @@ reapchild(void)
 		if (pid <= 0)
 			break;
 		DPRINTF("%d reaped, status %#x", pid, status);
-		for (sep = servtab; sep != NULL; sep = sep->se_next)
+		for (sep = servtab; sep != NULL; sep = sep->se_next) {
 			if (sep->se_wait == pid) {
 				struct kevent	*ev;
 
@@ -663,6 +713,10 @@ reapchild(void)
 				DPRINTF("restored %s, fd %d",
 				    sep->se_service, sep->se_fd);
 			}
+
+			if (sep->se_accept_children != NULL)
+				remove_child(sep, pid);
+		}
 	}
 }
 
@@ -799,7 +853,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 		return;
 	}
 	if (sep->se_socktype == SOCK_STREAM)
-		listen(sep->se_fd, 10);
+		listen(sep->se_fd, 128);
 
 	/* for internal dgram, setsockopt() is required for recvfromto() */
 	if (sep->se_socktype == SOCK_DGRAM && sep->se_bi != NULL) {
@@ -818,6 +872,18 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 				    "setsockopt (IPV6_RECVPKTINFO): %m");
 			break;
 #endif
+		}
+	}
+
+	/* Allocate list of children */
+	if (sep->se_accept_max != SERVTAB_UNSPEC_SIZE_T &&
+	    sep->se_accept_max > 0) {
+		sep->se_accept_children = calloc(sep->se_accept_max,
+		    sizeof(pid_t));
+		if (sep->se_accept_children == NULL) {
+			syslog(LOG_ERR, SERV_FMT ": accept_max too large: %m",
+			    SERV_PARAMS(sep));
+			sep->se_accept_max = SERVTAB_UNSPEC_SIZE_T;
 		}
 	}
 
@@ -853,6 +919,58 @@ close_sep(struct servtab *sep)
 	sep->se_count = 0;
 	if (sep->se_ip_max != SERVTAB_UNSPEC_SIZE_T) {
 		rl_clear_ip_list(sep);
+	}
+}
+
+/*
+ * Suspend service by ignoring connect events 
+ */
+static void
+suspend_sep(struct servtab *sep)
+{
+	struct kevent	*ev;
+
+	if (sep->se_accept_count == sep->se_accept_max) {
+		ev = allocchange();
+		EV_SET(ev, sep->se_fd, EVFILT_READ, EV_DISABLE, 0, 0,
+		    (intptr_t)sep);
+	}
+
+	if (sep->se_accept_mark == 0)
+		syslog(LOG_ERR, SERV_FMT
+		    ": accept_max reached (%zu);"
+		    "service suspended",
+		    SERV_PARAMS(sep),
+		    sep->se_accept_max);
+
+	if (sep->se_accept_max > 0)
+		sep->se_accept_mark = sep->se_accept_max - 1;
+	else
+		sep->se_accept_mark = 0;
+}
+
+/*
+ * Resume service by listening to connect events
+ */
+static void
+resume_sep(struct servtab *sep)
+{
+	struct kevent	*ev;
+
+	if (sep->se_accept_count == sep->se_accept_max) {
+		ev = allocchange();
+		EV_SET(ev, sep->se_fd, EVFILT_READ, EV_ENABLE, 0, 0,
+		    (intptr_t)sep);
+	}
+
+	if (sep->se_accept_mark == 0 ||
+	    sep->se_accept_count < sep->se_accept_mark) {
+		syslog(LOG_ERR, SERV_FMT
+		    ": fell below accept_max (%zu);"
+		    "service resumed",
+		    SERV_PARAMS(sep),
+		    sep->se_accept_max);
+		sep->se_accept_mark = 0;
 	}
 }
 

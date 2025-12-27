@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.68 2024/05/24 21:55:13 andvar Exp $
+.\"	$NetBSD: inetd.8,v 1.69 2025/12/27 08:06:38 mlelstv Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,7 +133,7 @@ The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
 [listen-addr:]service-spec
-socket-type[:accept-filter]
+socket-type[,accept-max][:accept-filter]
 protocol[,sndbuf=size][,rcvbuf=size]
 wait/nowait[:max]
 user[:group]
@@ -220,16 +220,23 @@ or
 depending on whether the socket is a stream, datagram, raw,
 reliably delivered message, or sequenced packet socket.
 .Pp
-Optionally, for Internet services, an accept filter
+Optionally, for Internet services, an accept limit
+and an accept filter
 (see
 .Xr accept_filter 9 )
-can be specified by appending a colon to
+can be specified.
+The accept limit is appended with a comma followed by a decimal number,
+the accept filter is appended with a colon to
 .Em socket-type ,
 followed by the name of the desired accept filter.
 In this case
 .Nm
-will not see new connections for the specified service until the accept
-filter decides they are ready to be handled.
+will not see new connections for the specified service until the
+number of running instances is below the accept limit and the
+accept filter decides they are ready to be handled.
+The accept limit is ignored for services marked as
+.Dq wait,
+because the socket is handed over to the server program.
 .\" XXX: do accept filters work for AF_UNIX sockets? nobody probably
 .\" cares, but...
 .Pp
@@ -475,6 +482,10 @@ is specified and is
 .Li udp{4,6}
 or
 .Li tcp{4,6} .
+.It Sy accept_max
+Equivalent to
+.Em accept-max
+in positional notation.
 .It Sy acceptfilter
 An accept filter, equivalent to
 .Em accept

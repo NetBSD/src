@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.7 2024/02/08 20:51:25 andvar Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.8 2025/12/27 08:06:38 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.7 2024/02/08 20:51:25 andvar Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.8 2025/12/27 08:06:38 mlelstv Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -75,6 +75,7 @@ static hresult	filter_handler(struct servtab *, vlist);
 static hresult	group_handler(struct servtab *, vlist);
 static hresult	service_max_handler(struct servtab *, vlist);
 static hresult	ip_max_handler(struct servtab *, vlist);
+static hresult	accept_max_handler(struct servtab *, vlist);
 static hresult	protocol_handler(struct servtab *, vlist);
 static hresult	recv_buf_handler(struct servtab *, vlist);
 static hresult	send_buf_handler(struct servtab *, vlist);
@@ -124,6 +125,7 @@ static struct key_handler {
 	{ "exec", exec_handler },
 	{ "args", args_handler },
 	{ "ip_max", ip_max_handler },
+	{ "accept_max", accept_max_handler },
 #ifdef IPSEC
 	{ "ipsec", ipsec_handler }
 #endif
@@ -998,6 +1000,44 @@ ip_max_handler(struct servtab *sep, vlist values)
 	}
 
 	sep->se_ip_max = count;
+
+	return KEY_HANDLER_SUCCESS;
+}
+
+/* Set max connections to accept */
+static hresult
+accept_max_handler(struct servtab *sep, vlist values)
+{
+	char *count_str;
+	int rstatus;
+
+	if (sep->se_accept_max != SERVTAB_UNSPEC_SIZE_T) {
+		TMD("accept_max");
+		return KEY_HANDLER_FAILURE;
+	}
+
+	count_str = next_value(values);
+
+	if (count_str == NULL) {
+		TFA("accept_max");
+		return KEY_HANDLER_FAILURE;
+	}
+
+	size_t count = (size_t)strtou(count_str, NULL, 10, 0,
+	    SERVTAB_COUNT_MAX, &rstatus);
+
+	if (rstatus != 0) {
+		ERR("Invalid accept_max '%s': %s", count_str,
+		    strerror(rstatus));
+		return KEY_HANDLER_FAILURE;
+	}
+
+	if (next_value(values) != NULL) {
+		TMA("accept_max");
+		return KEY_HANDLER_FAILURE;
+	}
+
+	sep->se_accept_max = count;
 
 	return KEY_HANDLER_SUCCESS;
 }

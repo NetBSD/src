@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 2022/08/10 08:37:53 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 2025/12/27 08:06:38 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.5 2022/08/10 08:37:53 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.6 2025/12/27 08:06:38 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,6 +184,7 @@ config(void)
 			SWAP(service_type, cp->se_type, sep->se_type);
 			SWAP(size_t, cp->se_service_max, sep->se_service_max);
 			SWAP(size_t, cp->se_ip_max, sep->se_ip_max);
+			SWAP(size_t, cp->se_accept_max, sep->se_accept_max);
 #undef SWAP
 			if (isrpcservice(sep))
 				unregister_rpc(sep);
@@ -571,6 +572,9 @@ more:
 	} else {
 		/* continue parsing v1 */
 		parse_socktype(arg, sep);
+		if (sep->se_socktype == SOCK_STREAM) {
+			parse_accept_max(arg, sep);
+		}
 		if (sep->se_socktype == SOCK_STREAM) {
 			parse_accept_filter(arg, sep);
 		}
@@ -1128,6 +1132,32 @@ parse_accept_filter(char *arg, struct servtab *sep)
 }
 
 void
+parse_accept_max(char *arg, struct servtab *sep)
+{
+	char *cp1;
+	int rstatus;
+
+	if (strncmp(arg, "stream,", sizeof("stream,") - 1) != 0)
+		return;
+	cp1 = arg + (sizeof("stream,") - 1);
+
+	sep->se_accept_max = (size_t)strtou(cp1, NULL, 10, 0,
+	    SERVTAB_COUNT_MAX, &rstatus);
+	if (rstatus != 0) {
+		if (rstatus != ERANGE) {
+			/* For compatibility w/ atoi parsing */
+			sep->se_accept_max = 0;
+		}
+
+		WRN("Improper \"accept_max\" value '%s', "
+		    "using '%zu' instead: %s",
+		    cp1,
+		    sep->se_accept_max,
+		    strerror(rstatus));
+	}
+}
+
+void
 parse_socktype(char* arg, struct servtab* sep)
 {
 	/* stream socket may have an accept filter, only check first chars */
@@ -1156,6 +1186,7 @@ init_servtab(void)
 		 */
 		.se_service_max = SERVTAB_UNSPEC_SIZE_T,
 		.se_ip_max = SERVTAB_UNSPEC_SIZE_T,
+		.se_accept_max = SERVTAB_UNSPEC_SIZE_T,
 		.se_wait = SERVTAB_UNSPEC_VAL,
 		.se_socktype = SERVTAB_UNSPEC_VAL,
 		.se_rl_ip_list = SLIST_HEAD_INITIALIZER(se_ip_list_head)
