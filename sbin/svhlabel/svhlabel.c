@@ -1,4 +1,4 @@
-/*	$NetBSD: svhlabel.c,v 1.7 2013/02/07 10:44:45 apb Exp $	*/
+/*	$NetBSD: svhlabel.c,v 1.8 2025/12/27 16:51:06 nia Exp $	*/
 
 /*
  * Copyright (C) 2007 Stephen M. Rumble.
@@ -34,12 +34,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: svhlabel.c,v 1.7 2013/02/07 10:44:45 apb Exp $");
+__RCSID("$NetBSD: svhlabel.c,v 1.8 2025/12/27 16:51:06 nia Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
