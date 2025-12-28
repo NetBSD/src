@@ -116,11 +116,11 @@ vchiq_static_assert(IS_POW2(VCHIQ_MAX_SLOTS_PER_SIDE));
 #define VCHIQ_PORT_IS_VALID(port)      (port < VCHIQ_PORT_FREE)
 #define VCHIQ_MAKE_MSG(type, srcport, dstport) \
 	((type<<24) | (srcport<<12) | (dstport<<0))
-#define VCHIQ_MSG_TYPE(msgid)          ((unsigned int)msgid >> 24)
+#define VCHIQ_MSG_TYPE(msgid)          ((uint32_t)msgid >> 24)
 #define VCHIQ_MSG_SRCPORT(msgid) \
-	(unsigned short)(((unsigned int)msgid >> 12) & 0xfff)
+	(uint16_t)(((uint32_t)msgid >> 12) & 0xfff)
 #define VCHIQ_MSG_DSTPORT(msgid) \
-	((unsigned short)msgid & 0xfff)
+	((uint16_t)msgid & 0xfff)
 
 #define VCHIQ_FOURCC_AS_4CHARS(fourcc)	\
 	((fourcc) >> 24) & 0xff, \
@@ -187,11 +187,11 @@ enum {
 
 #define DEBUG_INITIALISE(local) int *debug_ptr = (local)->debug;
 #define DEBUG_TRACE(d) \
-	do { debug_ptr[DEBUG_ ## d] = __LINE__; dsb(sy); } while (0)
+	do { debug_ptr[DEBUG_ ## d] = htole32(__LINE__); dsb(sy); } while (0)
 #define DEBUG_VALUE(d, v) \
-	do { debug_ptr[DEBUG_ ## d] = (v); dsb(sy); } while (0)
+	do { debug_ptr[DEBUG_ ## d] = htole32(v); dsb(sy); } while (0)
 #define DEBUG_COUNT(d) \
-	do { debug_ptr[DEBUG_ ## d]++; dsb(sy); } while (0)
+	do { uint32_t __v = le32toh(debug_ptr[DEBUG_ ## d]); __v++; debug_ptr[DEBUG_ ## d] = htole32(__v); dsb(sy); } while (0)
 
 #else /* VCHIQ_ENABLE_DEBUG */
 
@@ -268,7 +268,7 @@ typedef struct remote_event_struct {
 	int32_t armed;
 	int32_t fired;
 	uint32_t event; /* offset to VCHIQ_STATE_T */
-#define REMOTE_EVENT_SEMA(s,e) ((struct semaphore *)((char *)(s) + (e)->event))
+#define REMOTE_EVENT_SEMA(s,e) ((struct semaphore *)((char *)(s) + le32toh((e)->event)))
 } REMOTE_EVENT_T;
 
 typedef struct opaque_platform_state_t *VCHIQ_PLATFORM_STATE_T;

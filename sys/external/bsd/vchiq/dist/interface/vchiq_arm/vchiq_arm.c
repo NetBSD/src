@@ -1585,12 +1585,12 @@ vchiq_get_state(void)
 
 	if (g_state.remote == NULL)
 		printk(KERN_ERR "%s: g_state.remote == NULL\n", __func__);
-	else if (g_state.remote->initialised != 1)
+	else if (le32toh(g_state.remote->initialised) != 1)
 		printk(KERN_NOTICE "%s: g_state.remote->initialised != 1 (%d)\n",
-			__func__, g_state.remote->initialised);
+			__func__, le32toh(g_state.remote->initialised));
 
 	return ((g_state.remote != NULL) &&
-		(g_state.remote->initialised == 1)) ? &g_state : NULL;
+		(le32toh(g_state.remote->initialised) == 1)) ? &g_state : NULL;
 }
 
 /*

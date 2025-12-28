@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_fdt.c,v 1.7 2021/08/07 16:19:18 thorpej Exp $ */
+/* $NetBSD: vchiq_netbsd_fdt.c,v 1.7.14.1 2025/12/28 16:19:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.7 2021/08/07 16:19:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_fdt.c,v 1.7.14.1 2025/12/28 16:19:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,11 +92,6 @@ vchiq_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_iot = faa->faa_bst;
 	fsc->sc_phandle = phandle;
-
-#if BYTE_ORDER == BIG_ENDIAN
-	aprint_error_dev(sc->sc_dev, "not supported yet in big-endian mode\n");
-	return;
-#endif
 
 	bus_addr_t addr;
 	bus_size_t size;

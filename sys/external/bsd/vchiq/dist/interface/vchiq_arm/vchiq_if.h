@@ -80,10 +80,10 @@ typedef enum {
 
 typedef struct vchiq_header_struct {
 	/* The message identifier - opaque to applications. */
-	int msgid;
+	uint32_t msgid;
 
 	/* Size of message data. */
-	unsigned int size;
+	uint32_t size;
 
 	char data[0];           /* message */
 } VCHIQ_HEADER_T;

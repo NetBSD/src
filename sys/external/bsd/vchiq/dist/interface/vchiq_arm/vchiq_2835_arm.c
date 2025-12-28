@@ -160,9 +160,9 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	}
 
 	vchiq_slot_zero->platform_data[VCHIQ_PLATFORM_FRAGMENTS_OFFSET_IDX] =
-		(int)slot_phys + slot_mem_size;
+		htole32((uint32_t)slot_phys + slot_mem_size);
 	vchiq_slot_zero->platform_data[VCHIQ_PLATFORM_FRAGMENTS_COUNT_IDX] =
-		MAX_FRAGMENTS;
+		htole32(MAX_FRAGMENTS);
 
 	g_fragments_base = (char *)slot_mem + slot_mem_size;
 	slot_mem_size += frag_mem_size;
@@ -187,7 +187,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 
 	bus_dmamap_sync(dma_tag, dma_map, 0, slot_mem_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-	bcm_mbox_write(BCM2835_MBOX_CHAN_VCHIQ, (unsigned int)slot_phys);
+	bcm_mbox_write(BCM2835_MBOX_CHAN_VCHIQ, (uint32_t)slot_phys);
 	bus_dmamap_sync(dma_tag, dma_map, 0, slot_mem_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -242,7 +242,7 @@ vchiq_platform_get_arm_state(VCHIQ_STATE_T *state)
    return &((VCHIQ_2835_ARM_STATE_T*)state->platform_state)->arm_state;
 }
 
-int
+VCHIQ_STATUS_T
 vchiq_copy_from_user(void *dst, const void *src, int size)
 {
 	vaddr_t va = (vaddr_t)src;
@@ -300,7 +300,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	bi->buf = buf;
 	bi->size = size;
 	bi->pagelist_size = sizeof(PAGELIST_T) +
-	    (maxsegs * sizeof(unsigned long));
+	    (maxsegs * sizeof(uint32_t));
 	bi->proc = curproc;
 
 	ret = bus_dmamem_alloc(dma_tag, bi->pagelist_size,
@@ -357,10 +357,10 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	 */
 	bulk->data = (void *)bi->pagelist_map->dm_segs[0].ds_addr;
 
-	pagelist->type = (dir == VCHIQ_BULK_RECEIVE) ?
-	    PAGELIST_READ : PAGELIST_WRITE;
-	pagelist->length = size;
-	pagelist->offset = va & VCPAGE_OFFSET;
+	pagelist->type = htole16((dir == VCHIQ_BULK_RECEIVE) ?
+	    PAGELIST_READ : PAGELIST_WRITE);
+	pagelist->length = htole32(size);
+	pagelist->offset = htole16(va & VCPAGE_OFFSET);
 
 	/*
 	 * busdma already coalesces contiguous pages for us
@@ -371,14 +371,13 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		bus_size_t off = addr & VCPAGE_OFFSET;
 		int npgs = ((off + len + VCPAGE_OFFSET) >> VCPAGE_SHIFT);
 
-		pagelist->addrs[i] = addr & ~VCPAGE_OFFSET;
-		pagelist->addrs[i] |= npgs - 1;
+		pagelist->addrs[i] = htole32((addr & ~VCPAGE_OFFSET) | (npgs - 1));
 	}
 
 	/* Partial cache lines (fragments) require special measures */
-	if ((pagelist->type == PAGELIST_READ) &&
-	    ((pagelist->offset & (g_cache_line_size - 1)) ||
-	    ((pagelist->offset + pagelist->length) & (g_cache_line_size - 1)))) {
+	if ((le16toh(pagelist->type) == PAGELIST_READ) &&
+	    ((le16toh(pagelist->offset) & (g_cache_line_size - 1)) ||
+	    ((le16toh(pagelist->offset) + le32toh(pagelist->length)) & (g_cache_line_size - 1)))) {
 		char *fragments;
 
 		if (down_interruptible(&g_free_fragments_sema) != 0) {
@@ -392,8 +391,8 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		WARN_ON(fragments == NULL);
 		g_free_fragments = *(char **) g_free_fragments;
 		up(&g_free_fragments_mutex);
-		pagelist->type = PAGELIST_READ_WITH_FRAGMENTS +
-		    (fragments - g_fragments_base) / g_fragments_size;
+		pagelist->type = htole16(PAGELIST_READ_WITH_FRAGMENTS +
+		    (fragments - g_fragments_base) / g_fragments_size);
 		bus_dmamap_sync(dma_tag, dma_map,
 		    (char *)fragments - g_fragments_base, sizeof(*fragments),
 		    BUS_DMASYNC_PREREAD);
@@ -409,7 +408,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	    bi->pagelist_size, BUS_DMASYNC_PREWRITE);
 
 	bus_dmamap_sync(dma_tag, bi->dmamap, 0, bi->size,
-	    pagelist->type == PAGELIST_WRITE ?
+	    le16toh(pagelist->type) == PAGELIST_WRITE ?
 	    BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
 
 	return VCHIQ_SUCCESS;
@@ -454,13 +453,13 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 		    bi->pagelist_size, BUS_DMASYNC_POSTWRITE);
 
 		bus_dmamap_sync(dma_tag, bi->dmamap, 0, bi->size,
-		    pagelist->type == PAGELIST_WRITE ?
+		    le16toh(pagelist->type) == PAGELIST_WRITE ?
 		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
 
 		/* Deal with any partial cache lines (fragments) */
-		if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
+		if (le16toh(pagelist->type) >= PAGELIST_READ_WITH_FRAGMENTS) {
 			char *fragments = g_fragments_base +
-			    (pagelist->type - PAGELIST_READ_WITH_FRAGMENTS) *
+			    (le16toh(pagelist->type) - PAGELIST_READ_WITH_FRAGMENTS) *
 			    g_fragments_size;
 			int head_bytes, tail_bytes;
 
@@ -468,9 +467,9 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 			    (char *)fragments - g_fragments_base, g_fragments_size,
 			    BUS_DMASYNC_POSTREAD);
 
-			head_bytes = (g_cache_line_size - pagelist->offset) &
+			head_bytes = (g_cache_line_size - le16toh(pagelist->offset)) &
 				(g_cache_line_size - 1);
-			tail_bytes = (pagelist->offset + actual) &
+			tail_bytes = (le16toh(pagelist->offset) + actual) &
 				(g_cache_line_size - 1);
 
 			if ((actual >= 0) && (head_bytes != 0)) {
