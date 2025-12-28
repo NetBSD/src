@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.365 2025/12/28 15:35:00 thorpej Exp $
+# $NetBSD: shl.mi,v 1.366 2025/12/28 16:50:21 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -290,7 +290,7 @@
 ./usr/lib/libumem_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libunbound_pic.a			comp-c-piclib		compatfile,picinstall,unbound
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
-./usr/lib/libusbhid_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libusbhid_pic.a			comp-c-piclib		usb,compatfile,picinstall
 ./usr/lib/libutil_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libuutil_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libuv_pic.a				comp-obsolete		obsolete

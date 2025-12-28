@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.501 2025/12/28 15:35:00 thorpej Exp $
+# $NetBSD: mi,v 1.502 2025/12/28 16:50:21 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -273,7 +273,7 @@
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/libumem_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,compatfile,unbound
-./usr/lib/libusbhid_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libusbhid_g.a				comp-c-debuglib		usb,debuglib,compatfile
 ./usr/lib/libutil_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libuutil_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libuv_g.a				comp-obsolete		obsolete,compatfile
@@ -869,8 +869,8 @@
 ./usr/libdata/debug/usr/bin/unprotoize.debug    comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/unvis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unzip.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/usbhidctl.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/usbhidaction.debug	comp-util-debug		usb,debug
+./usr/libdata/debug/usr/bin/usbhidctl.debug	comp-util-debug		usb,debug
 ./usr/libdata/debug/usr/bin/users.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/utoppya.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uucp.debug		comp-obsolete		obsolete
@@ -1381,7 +1381,7 @@
 ./usr/libdata/debug/usr/sbin/unbound-control.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unbound.debug	base-netutil-debug	debug,unbound
 ./usr/libdata/debug/usr/sbin/unlink.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/usbdevs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/usbdevs.debug	comp-sysutil-debug	usb,debug
 ./usr/libdata/debug/usr/sbin/user.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/uuchk.debug	comp-obsolete		obsolete,compatfile
 ./usr/libdata/debug/usr/sbin/veriexecgen.debug	comp-sysutil-debug	debug
@@ -2458,7 +2458,7 @@
 ./usr/libdata/debug/usr/tests/lib/libtre/t_exhaust.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libtre/t_regex_att.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libtre/t_regex_binary.debug		tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libusbhid/t_usbhid.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libusbhid/t_usbhid.debug		tests-lib-debug		usb,debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libutil/t_efun.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libutil/t_parsedate.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libutil/t_pidfile.debug		tests-lib-debug		debug,atf,compattestfile

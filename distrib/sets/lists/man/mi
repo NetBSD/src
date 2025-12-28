@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1821 2025/12/28 15:35:00 thorpej Exp $
+# $NetBSD: mi,v 1.1822 2025/12/28 16:50:21 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -696,8 +696,8 @@
 ./usr/share/man/cat1/unzip.0			man-util-catman		.cat
 ./usr/share/man/cat1/unzstd.0			man-util-catman		.cat
 ./usr/share/man/cat1/uptime.0			man-util-catman		.cat
-./usr/share/man/cat1/usbhidaction.0		man-util-catman		.cat
-./usr/share/man/cat1/usbhidctl.0		man-util-catman		.cat
+./usr/share/man/cat1/usbhidaction.0		man-util-catman		usb,.cat
+./usr/share/man/cat1/usbhidctl.0		man-util-catman		usb,.cat
 ./usr/share/man/cat1/users.0			man-util-catman		.cat
 ./usr/share/man/cat1/utoppya.0			man-util-catman		.cat
 ./usr/share/man/cat1/uucp.0			man-obsolete		obsolete
@@ -3519,7 +3519,7 @@
 ./usr/share/man/cat8/unlink.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/update.0			man-obsolete		obsolete
 ./usr/share/man/cat8/usbd.0			man-obsolete		obsolete
-./usr/share/man/cat8/usbdevs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/usbdevs.0			man-sysutil-catman	usb,.cat
 ./usr/share/man/cat8/user.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/useradd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/userdel.0			man-sysutil-catman	.cat
@@ -4286,8 +4286,8 @@
 ./usr/share/man/man1/unzip.1			man-util-man		.man
 ./usr/share/man/man1/unzstd.1			man-util-man		.man
 ./usr/share/man/man1/uptime.1			man-util-man		.man
-./usr/share/man/man1/usbhidaction.1		man-util-man		.man
-./usr/share/man/man1/usbhidctl.1		man-util-man		.man
+./usr/share/man/man1/usbhidaction.1		man-util-man		usb,.man
+./usr/share/man/man1/usbhidctl.1		man-util-man		usb,.man
 ./usr/share/man/man1/users.1			man-util-man		.man
 ./usr/share/man/man1/utoppya.1			man-util-man		.man
 ./usr/share/man/man1/uucp.1			man-obsolete		obsolete
@@ -7106,7 +7106,7 @@
 ./usr/share/man/man8/unlink.8			man-sysutil-man		.man
 ./usr/share/man/man8/update.8			man-obsolete		obsolete
 ./usr/share/man/man8/usbd.8			man-obsolete		obsolete
-./usr/share/man/man8/usbdevs.8			man-sysutil-man		.man
+./usr/share/man/man8/usbdevs.8			man-sysutil-man		usb,.man
 ./usr/share/man/man8/user.8			man-sysutil-man		.man
 ./usr/share/man/man8/useradd.8			man-sysutil-man		.man
 ./usr/share/man/man8/userdel.8			man-sysutil-man		.man

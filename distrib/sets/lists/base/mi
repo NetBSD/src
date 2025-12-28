@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1380 2025/12/28 15:34:59 thorpej Exp $
+# $NetBSD: mi,v 1.1381 2025/12/28 16:50:20 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -910,8 +910,8 @@
 ./usr/bin/unzip					base-util-bin
 ./usr/bin/unzstd				base-util-bin
 ./usr/bin/uptime				base-util-bin
-./usr/bin/usbhidaction				base-util-bin
-./usr/bin/usbhidctl				base-util-bin
+./usr/bin/usbhidaction				base-util-bin		usb
+./usr/bin/usbhidctl				base-util-bin		usb
 ./usr/bin/users					base-util-bin
 ./usr/bin/utoppya				base-util-bin
 ./usr/bin/uucp					base-obsolete		obsolete
@@ -1854,7 +1854,7 @@
 ./usr/sbin/unbound-control-setup		base-netutil-bin	unbound
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
-./usr/sbin/usbdevs				base-sysutil-bin
+./usr/sbin/usbdevs				base-sysutil-bin	usb
 ./usr/sbin/user					base-sysutil-bin
 ./usr/sbin/useradd				base-sysutil-bin
 ./usr/sbin/userdel				base-sysutil-bin
@@ -5113,7 +5113,7 @@
 ./usr/share/misc/terminfo.cdb			base-terminfo-share	share
 ./usr/share/misc/terminfo2.cdb			base-obsolete		obsolete
 ./usr/share/misc/units.lib			base-reference-share	share
-./usr/share/misc/usb_hid_usages			base-reference-share	share
+./usr/share/misc/usb_hid_usages			base-reference-share	usb,share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
 ./usr/share/mk/bsd.README			base-mk-share		share

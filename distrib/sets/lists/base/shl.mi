@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1024 2025/12/28 16:31:35 thorpej Exp $
+# $NetBSD: shl.mi,v 1.1025 2025/12/28 16:50:20 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -945,9 +945,9 @@
 ./usr/lib/libunbound.so				base-sys-shlib		compatfile,unbound
 ./usr/lib/libunbound.so.10			base-sys-shlib		compatfile,unbound
 ./usr/lib/libunbound.so.10.0			base-sys-shlib		compatfile,unbound
-./usr/lib/libusbhid.so				base-sys-shlib		compatfile
-./usr/lib/libusbhid.so.1			base-sys-shlib		compatfile
-./usr/lib/libusbhid.so.1.0			base-sys-shlib		compatfile
+./usr/lib/libusbhid.so				base-sys-shlib		usb,compatfile
+./usr/lib/libusbhid.so.1			base-sys-shlib		usb,compatfile
+./usr/lib/libusbhid.so.1.0			base-sys-shlib		usb,compatfile
 ./usr/lib/libutil.so				base-sys-shlib		compatfile
 ./usr/lib/libutil.so.7				base-sys-shlib		compatfile
 ./usr/lib/libutil.so.7.25			base-sys-shlib		compatfile

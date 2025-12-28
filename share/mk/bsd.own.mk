@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1458 2025/12/28 15:35:01 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1459 2025/12/28 16:50:22 thorpej Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1346,6 +1346,7 @@ _MKVARS.yes= \
 	MKUMAPFS \
 	MKUNBOUND \
 	MKUNIONFS \
+	MKUSB \
 	MKV7FS \
 	MKWLAN \
 	MKX11FONTS \
@@ -1398,6 +1399,7 @@ MKUDF.m68000?=		no
 MKUMAPFS.m68000?=	no
 MKUNBOUND.m68000?=	no
 MKUNIONFS.m68000?=	no
+MKUSB.m68000?=		no
 MKV7FS.m68000?=		no
 MKWLAN.m68000?=		no
 
@@ -1688,6 +1690,10 @@ MKINFO:=	no
 MKHTML:=	no
 MKMAN:=		no
 MKNLS:=		no
+.endif
+
+.if ${MKUSB} == "no"
+MKFIDO2:=	no
 .endif
 
 .if ${MACHINE_ARCH:Mearm*}

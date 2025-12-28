@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2510 2025/12/28 15:35:00 thorpej Exp $
+#	$NetBSD: mi,v 1.2511 2025/12/28 16:50:20 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3862,7 +3862,7 @@
 ./usr/include/unistd.h				comp-c-include
 ./usr/include/unwind.h				comp-c-include
 ./usr/include/usb.h				comp-obsolete		obsolete
-./usr/include/usbhid.h				comp-c-include
+./usr/include/usbhid.h				comp-c-include		usb
 ./usr/include/util.h				comp-c-include
 ./usr/include/utime.h				comp-c-include
 ./usr/include/utmp.h				comp-c-include
@@ -4523,8 +4523,8 @@
 ./usr/lib/libunbound_p.a			comp-c-lib		compatfile,profile,unbound
 ./usr/lib/libusb.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libusb_p.a				comp-obsolete		obsolete,compatfile
-./usr/lib/libusbhid.a				comp-c-lib		compatfile
-./usr/lib/libusbhid_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libusbhid.a				comp-c-lib		usb,compatfile
+./usr/lib/libusbhid_p.a				comp-c-proflib		usb,compatfile,profile
 ./usr/lib/libutil.a				comp-c-lib		compatfile
 ./usr/lib/libutil_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libuutil.a				comp-zfs-lib		compatfile,zfs
@@ -4689,7 +4689,7 @@
 ./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lunbound.ln		comp-c-lintlib		lint,unbound
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
-./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		usb,lint
 ./usr/libdata/lint/llib-lutil.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ly.ln			comp-c-lintlib		lint
@@ -8580,18 +8580,18 @@
 ./usr/share/man/cat3/hesiod_init.0		comp-c-catman		hesiod,.cat
 ./usr/share/man/cat3/hesiod_resolve.0		comp-c-catman		hesiod,.cat
 ./usr/share/man/cat3/hesiod_to_bind.0		comp-c-catman		hesiod,.cat
-./usr/share/man/cat3/hid_dispose_report_desc.0	comp-c-catman		.cat
-./usr/share/man/cat3/hid_end_parse.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_get_data.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_get_item.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_get_report_desc.0	comp-c-catman		.cat
-./usr/share/man/cat3/hid_init.0			comp-c-catman		.cat
-./usr/share/man/cat3/hid_locate.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_report_size.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_set_data.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_start_parse.0		comp-c-catman		.cat
-./usr/share/man/cat3/hid_usage_in_page.0	comp-c-catman		.cat
-./usr/share/man/cat3/hid_usage_page.0		comp-c-catman		.cat
+./usr/share/man/cat3/hid_dispose_report_desc.0	comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_end_parse.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_get_data.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_get_item.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_get_report_desc.0	comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_init.0			comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_locate.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_report_size.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_set_data.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_start_parse.0		comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_usage_in_page.0	comp-c-catman		usb,.cat
+./usr/share/man/cat3/hid_usage_page.0		comp-c-catman		usb,.cat
 ./usr/share/man/cat3/hide_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/history.0			comp-c-catman		.cat
 ./usr/share/man/cat3/history_end.0		comp-c-catman		.cat
@@ -9526,7 +9526,7 @@
 ./usr/share/man/cat3/librtld_db.0		comp-c-catman		dtrace,.cat
 ./usr/share/man/cat3/libsaslc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
-./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
+./usr/share/man/cat3/libusbhid.0		comp-c-catman		usb,.cat
 ./usr/share/man/cat3/libutil.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libuv.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/limits.0			comp-c-catman		.cat
@@ -11610,7 +11610,7 @@
 ./usr/share/man/cat3/updlastlogx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updwtmpx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/usb.0			comp-obsolete		obsolete
-./usr/share/man/cat3/usbhid.0			comp-c-catman		.cat
+./usr/share/man/cat3/usbhid.0			comp-c-catman		usb,.cat
 ./usr/share/man/cat3/use_default_colors.0	comp-c-catman		.cat
 ./usr/share/man/cat3/use_env.0			comp-c-catman		.cat
 ./usr/share/man/cat3/user_from_uid.0		comp-c-catman		.cat
@@ -17543,18 +17543,18 @@
 ./usr/share/man/html3/hesiod_init.html		comp-c-htmlman		hesiod,html
 ./usr/share/man/html3/hesiod_resolve.html	comp-c-htmlman		hesiod,html
 ./usr/share/man/html3/hesiod_to_bind.html	comp-c-htmlman		hesiod,html
-./usr/share/man/html3/hid_dispose_report_desc.html	comp-c-htmlman		html
-./usr/share/man/html3/hid_end_parse.html	comp-c-htmlman		html
-./usr/share/man/html3/hid_get_data.html		comp-c-htmlman		html
-./usr/share/man/html3/hid_get_item.html		comp-c-htmlman		html
-./usr/share/man/html3/hid_get_report_desc.html	comp-c-htmlman		html
-./usr/share/man/html3/hid_init.html		comp-c-htmlman		html
-./usr/share/man/html3/hid_locate.html		comp-c-htmlman		html
-./usr/share/man/html3/hid_report_size.html	comp-c-htmlman		html
-./usr/share/man/html3/hid_set_data.html		comp-c-htmlman		html
-./usr/share/man/html3/hid_start_parse.html	comp-c-htmlman		html
-./usr/share/man/html3/hid_usage_in_page.html	comp-c-htmlman		html
-./usr/share/man/html3/hid_usage_page.html	comp-c-htmlman		html
+./usr/share/man/html3/hid_dispose_report_desc.html	comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_end_parse.html	comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_get_data.html		comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_get_item.html		comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_get_report_desc.html	comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_init.html		comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_locate.html		comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_report_size.html	comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_set_data.html		comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_start_parse.html	comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_usage_in_page.html	comp-c-htmlman		usb,html
+./usr/share/man/html3/hid_usage_page.html	comp-c-htmlman		usb,html
 ./usr/share/man/html3/hide_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/history.html		comp-c-htmlman		html
 ./usr/share/man/html3/history_end.html		comp-c-htmlman		html
@@ -18469,7 +18469,7 @@
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
 ./usr/share/man/html3/librtld_db.html		comp-c-htmlman		html,dtrace
 ./usr/share/man/html3/libsaslc.html		comp-c-htmlman		html
-./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
+./usr/share/man/html3/libusbhid.html		comp-c-htmlman		usb,html
 ./usr/share/man/html3/libutil.html		comp-c-htmlman		html
 ./usr/share/man/html3/libuv.html		comp-obsolete		obsolete
 ./usr/share/man/html3/limits.html		comp-c-htmlman		html
@@ -20522,7 +20522,7 @@
 ./usr/share/man/html3/update_panels.html	comp-c-htmlman		html
 ./usr/share/man/html3/updlastlogx.html		comp-c-htmlman		html
 ./usr/share/man/html3/updwtmpx.html		comp-c-htmlman		html
-./usr/share/man/html3/usbhid.html		comp-c-htmlman		html
+./usr/share/man/html3/usbhid.html		comp-c-htmlman		usb,html
 ./usr/share/man/html3/use_default_colors.html	comp-c-htmlman		html
 ./usr/share/man/html3/use_env.html		comp-c-htmlman		html
 ./usr/share/man/html3/user_from_uid.html	comp-c-htmlman		html
@@ -26450,18 +26450,18 @@
 ./usr/share/man/man3/hesiod_init.3		comp-c-man		hesiod,.man
 ./usr/share/man/man3/hesiod_resolve.3		comp-c-man		hesiod,.man
 ./usr/share/man/man3/hesiod_to_bind.3		comp-c-man		hesiod,.man
-./usr/share/man/man3/hid_dispose_report_desc.3	comp-c-man		.man
-./usr/share/man/man3/hid_end_parse.3		comp-c-man		.man
-./usr/share/man/man3/hid_get_data.3		comp-c-man		.man
-./usr/share/man/man3/hid_get_item.3		comp-c-man		.man
-./usr/share/man/man3/hid_get_report_desc.3	comp-c-man		.man
-./usr/share/man/man3/hid_init.3			comp-c-man		.man
-./usr/share/man/man3/hid_locate.3		comp-c-man		.man
-./usr/share/man/man3/hid_report_size.3		comp-c-man		.man
-./usr/share/man/man3/hid_set_data.3		comp-c-man		.man
-./usr/share/man/man3/hid_start_parse.3		comp-c-man		.man
-./usr/share/man/man3/hid_usage_in_page.3	comp-c-man		.man
-./usr/share/man/man3/hid_usage_page.3		comp-c-man		.man
+./usr/share/man/man3/hid_dispose_report_desc.3	comp-c-man		usb,.man
+./usr/share/man/man3/hid_end_parse.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_get_data.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_get_item.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_get_report_desc.3	comp-c-man		usb,.man
+./usr/share/man/man3/hid_init.3			comp-c-man		usb,.man
+./usr/share/man/man3/hid_locate.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_report_size.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_set_data.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_start_parse.3		comp-c-man		usb,.man
+./usr/share/man/man3/hid_usage_in_page.3	comp-c-man		usb,.man
+./usr/share/man/man3/hid_usage_page.3		comp-c-man		usb,.man
 ./usr/share/man/man3/hide_panel.3		comp-c-man		.man
 ./usr/share/man/man3/history.3			comp-c-man		.man
 ./usr/share/man/man3/history_end.3		comp-c-man		.man
@@ -27397,7 +27397,7 @@
 ./usr/share/man/man3/librtld_db.3		comp-c-man		dtrace,.man
 ./usr/share/man/man3/libsaslc.3			comp-c-man		.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
-./usr/share/man/man3/libusbhid.3		comp-c-man		.man
+./usr/share/man/man3/libusbhid.3		comp-c-man		usb,.man
 ./usr/share/man/man3/libutil.3			comp-c-man		.man
 ./usr/share/man/man3/libuv.3			comp-obsolete		obsolete
 ./usr/share/man/man3/limits.3			comp-c-man		.man
@@ -29500,7 +29500,7 @@
 ./usr/share/man/man3/updlastlogx.3		comp-c-man		.man
 ./usr/share/man/man3/updwtmpx.3			comp-c-man		.man
 ./usr/share/man/man3/usb.3			comp-obsolete		obsolete
-./usr/share/man/man3/usbhid.3			comp-c-man		.man
+./usr/share/man/man3/usbhid.3			comp-c-man		usb,.man
 ./usr/share/man/man3/use_default_colors.3	comp-c-man		.man
 ./usr/share/man/man3/use_env.3			comp-c-man		.man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2025/12/28 15:35:00 thorpej Exp $
+# $NetBSD: mi,v 1.42 2025/12/28 16:50:21 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -636,8 +636,8 @@
 ./usr/share/man/html1/unzip.html		man-util-htmlman	html
 ./usr/share/man/html1/unzstd.html		man-util-htmlman	html
 ./usr/share/man/html1/uptime.html		man-util-htmlman	html
-./usr/share/man/html1/usbhidaction.html		man-util-htmlman	html
-./usr/share/man/html1/usbhidctl.html		man-util-htmlman	html
+./usr/share/man/html1/usbhidaction.html		man-util-htmlman	usb,html
+./usr/share/man/html1/usbhidctl.html		man-util-htmlman	usb,html
 ./usr/share/man/html1/users.html		man-util-htmlman	html
 ./usr/share/man/html1/utoppya.html		man-util-htmlman	html
 ./usr/share/man/html1/uudecode.html		man-util-htmlman	html
@@ -3110,7 +3110,7 @@
 ./usr/share/man/html8/unbound-control.html	man-netutil-htmlman	html,unbound
 ./usr/share/man/html8/unbound.html		man-netutil-htmlman	html,unbound
 ./usr/share/man/html8/unlink.html		man-sysutil-htmlman	html
-./usr/share/man/html8/usbdevs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/usbdevs.html		man-sysutil-htmlman	usb,html
 ./usr/share/man/html8/user.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/useradd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/userdel.html		man-sysutil-htmlman	html

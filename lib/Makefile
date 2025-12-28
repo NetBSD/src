@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.313 2025/12/28 15:35:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.314 2025/12/28 16:50:22 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ SUBDIR+=	libarch \
 		libossaudio libpci libposix libprop libpthread \
 		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
-		libusbhid libutil liby libz
+		libutil liby libz
 
 .if !defined(BSD_MK_COMPAT_FILE)
 SUBDIR+=	libkern
@@ -61,6 +61,10 @@ SUBDIR+=	libskey
 
 .if ${HAVE_NVMM:Uno} == "yes" && !defined(MLIBDIR)
 SUBDIR+=	libnvmm
+.endif
+
+.if (${MKUSB} != "no")
+SUBDIR+=	libusbhid
 .endif
 
 .if (${MKARGON2} != "no")

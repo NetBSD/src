@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.246 2025/12/24 15:37:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.247 2025/12/28 16:50:22 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -30,7 +30,7 @@ SUBDIR= apply asa at \
 	tabs tail talk tcopy tee telnet tftp tic time timeout tip touch \
 	tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
-	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
+	uniq units unvis unzip users utoppya \
 	uudecode uuencode uuidgen vacation vgrind videoctl vis \
 	vmstat vndcompress w \
 	wall wc what whereis who whois \
@@ -83,6 +83,10 @@ SUBDIR+= hesinfo
 
 .if (${MKSKEY} != "no")
 SUBDIR+= skey skeyinfo skeyinit
+.endif
+
+.if (${MKUSB} != "no")
+SUBDIR+= usbhidaction usbhidctl
 .endif
 
 .if (${MKYP} != "no")

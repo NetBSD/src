@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.119 2025/12/28 15:35:01 thorpej Exp $
+.\"	$NetBSD: mk.conf.5,v 1.120 2025/12/28 16:50:22 thorpej Exp $
 .\"
 .\"  Copyright (c) 1999-2025 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -960,6 +960,12 @@ on other platforms.
 Indicates whether support for the Fast Identity Online 2
 .Pq FIDO2
 libraries and tools will be built and installed.
+.Pp
+.Em Note :
+If
+.Dq yes ,
+requires
+.Sy MKUSB=yes .
 .DFLT
 .Dq no
 on
@@ -2143,6 +2149,18 @@ the
 .Fl u
 option.
 .DFLTn
+.
+.It Sy MKUSB
+.YorN
+Indicates whether support for Universal Serial Bus
+.Pq USB
+libraries and tools will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKV7FS
 .YorN

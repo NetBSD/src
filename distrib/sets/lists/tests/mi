@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1405 2025/12/22 23:43:44 thorpej Exp $
+# $NetBSD: mi,v 1.1406 2025/12/28 16:50:21 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4305,10 +4305,10 @@
 ./usr/tests/lib/libtre/t_regex_att			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libtre/t_regex_binary			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libusbhid				tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libusbhid/Atffile			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libusbhid/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libusbhid/t_usbhid			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libusbhid/test_usb_hid_usages		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libusbhid/Atffile			tests-lib-tests		usb,compattestfile,atf
+./usr/tests/lib/libusbhid/Kyuafile			tests-lib-tests		usb,compattestfile,atf,kyua
+./usr/tests/lib/libusbhid/t_usbhid			tests-lib-tests		usb,compattestfile,atf
+./usr/tests/lib/libusbhid/test_usb_hid_usages		tests-lib-tests		usb,compattestfile,atf
 ./usr/tests/lib/libutil					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libutil/Kyuafile			tests-lib-tests		compattestfile,atf,kyua

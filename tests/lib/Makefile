@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.37 2025/12/22 03:11:05 thorpej Exp $
+# $NetBSD: Makefile,v 1.38 2025/12/28 16:50:22 thorpej Exp $
 
 .include <bsd.own.mk>
 
 TESTS_SUBDIRS=	csu libarchive libc libcrypt libcurses \
 		libexecinfo libi386 libm libnvmm libobjc libposix libppath \
-		libprop libpthread librefuse librt libstdc++ libtre libusbhid \
+		libprop libpthread librefuse librt libstdc++ libtre \
 		libutil libossaudio lua semaphore
 
 TESTS_SUBDIR_INSTALL_ONLY=	libevent
@@ -32,6 +32,10 @@ TESTS_SUBDIRS+= libskey
 .if ${MKSLJIT} != "no"
 TESTS_SUBDIRS+=	libsljit
 TESTS_SUBDIRS+=	libbpfjit
+.endif
+
+.if (${MKUSB} != "no")
+TESTS_SUBDIRS+= libusbhid
 .endif
 
 TESTSDIR=	${TESTSBASE}/lib
