@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_dirhash.c,v 1.17 2025/10/31 10:35:52 reinoud Exp $	*/
+/*	$NetBSD: vfs_dirhash.c,v 1.18 2025/12/28 21:27:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, 2025 Reinoud Zandijk
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.17 2025/10/31 10:35:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.18 2025/12/28 21:27:55 andvar Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -500,7 +500,7 @@ dirhash_dir_isempty(struct dirhash *dirh)
 	}
 
 	if (dirh->num_files != num) {
-		printf("dirhash_dir_isempy: dirhash_counter failed: "
+		printf("dirhash_dir_isempty: dirhash_counter failed: "
 		    "dirh->num_files = %d, counted %d\n",
 		    dirh->num_files, num);
 		assert(dirh->num_files == num);

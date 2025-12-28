@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.61 2021/12/10 20:36:04 andvar Exp $ */
+/*	$NetBSD: twa.c,v 1.62 2025/12/28 21:27:55 andvar Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.61 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.62 2025/12/28 21:27:55 andvar Exp $");
 
 //#define TWA_DEBUG
 
@@ -302,7 +302,7 @@ static const struct twa_message	twa_error_table[] = {
 	{0x0129, "Cannot update status to DCB"},
 	{0x0130, "Invalid stripe handle"},
 	{0x0131, "Handle that was not locked"},
-	{0x0132, "Handle that was not empy"},
+	{0x0132, "Handle that was not empty"},
 	{0x0133, "Handle has different owner"},
 	{0x0140, "IPR has parent"},
 	{0x0150, "Illegal Pbuf address alignment"},
