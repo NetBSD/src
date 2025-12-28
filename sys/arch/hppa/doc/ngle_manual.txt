@@ -1,4 +1,4 @@
-$NetBSD: ngle_manual.txt,v 1.2 2025/12/28 07:53:20 macallan Exp $
+$NetBSD: ngle_manual.txt,v 1.3 2025/12/28 08:11:29 macallan Exp $
 
 The Unofficial NGLE Manual
 
@@ -170,7 +170,8 @@ registers to control drawing mode, ROPs etc.
 All register writes go through a pipeline which has 32 entries on HCRX.
 
 #define	NGLE_BUSY		0x200000	/* busy register */
-the first byte will be non-zero if the drawing engine is busy
+the first byte will be non-zero if the drawing engine is busy, xf86 uses 8bit
+reads here.
 
 #define	NGLE_FIFO		0x200008	/* # of fifo slots */
 
@@ -204,8 +205,8 @@ attribute plane is actually 32bit. No idea what the individual bits do, has to
 be a combination of buffer selection ( front or back), colour mode / LUT
 selection, likely chip specific. Known values are from xf86.
 
-#define	NGLE_FG			0x018010	/* fg colour */
-#define	NGLE_BG			0x018014	/* bg colour */
+#define	NGLE_FG			0x018010	/* foreground colour */
+#define	NGLE_BG			0x018014	/* background colour */
 
 For a plain rectangle fill into the overlay we would use 
 IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0, 0, 0)
@@ -372,3 +373,30 @@ works as on HCRX. I suspect the GSC variant to be more like Artist.
 It is possible to put cards with enough memory into double buffer mode using
 the firmware configuration menu - I need to figure out what exactly that does.
 Same with grey scale mode, which may just select a different default palette. 
+
+9. HCRX notes
+Xf86 always writes NGLE_HCRX_HB_MODE twice, apparently working around a hardware
+bug. It also initializes a few unexplained registers with magic numbers:
+#define	NGLE_REG_42		0x210028	/* these seem to control */
+#define	NGLE_REG_43		0x21002c	/* how the 24bit planes */
+#define	NGLE_REG_44		0x210030	/* are displayed on HCRX - */
+#define	NGLE_REG_45		0x210034	/* no info on bits */
+
+For 24bit it writes:
+NGLE_REG_42, 0x014c0148
+NGLE_REG_43, 0x404c4048
+NGLE_REG_44, 0x034c0348
+NGLE_REG_45, 0x444c4448
+
+... and for 8bit:
+NGLE_REG_42, 0
+NGLE_REG_43, 0
+NGLE_REG_44, 0
+NGLE_REG_45, 0x444c4048
+
+The ROM is in word mode, as expected of a GSC device, with every 32bit word
+containing one byte of ROM data. The first word also has configuration bits:
+#define HCRX_CONFIG_24BIT	0x100
+
+On my HCRX24Z this reads 0x700, I assume 0x200 or 0x400 indicates the Z-Buffer
+add-on's presence.
