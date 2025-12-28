@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.61 2025/12/23 18:48:38 snj Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.62 2025/12/28 11:27:42 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1287,4 +1287,11 @@ distrib/sun2/ramdisk/welcome			1.2
 
 	sun2: fix instructions for installation from tape.
 	[thorpej, ticket #135]
+
+share/man/man5/mk.conf.5			1.118
+share/mk/bsd.own.mk				1.1457 (patch)
+
+	PR 59866: disable PAM on m68000.
+	While there also switch tar to BSDTAR.
+	[thorpej, ticket #136]
 
