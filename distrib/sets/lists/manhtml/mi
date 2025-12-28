@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2025/12/28 16:50:21 thorpej Exp $
+# $NetBSD: mi,v 1.43 2025/12/28 18:43:24 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -538,7 +538,7 @@
 ./usr/share/man/html1/rwall.html		man-netutil-htmlman	html
 ./usr/share/man/html1/rwho.html			man-netutil-htmlman	html
 ./usr/share/man/html1/scmdctl.html		man-util-htmlman	html
-./usr/share/man/html1/scp.html			man-secsh-htmlman	html
+./usr/share/man/html1/scp.html			man-secsh-htmlman	ssh,html
 ./usr/share/man/html1/screenblank.html		man-sysutil-htmlman	html
 ./usr/share/man/html1/script.html		man-util-htmlman	html
 ./usr/share/man/html1/sdiff.html		man-util-htmlman	html
@@ -549,7 +549,7 @@
 ./usr/share/man/html1/seq.html			man-util-htmlman	html
 ./usr/share/man/html1/setextattr.html		man-util-htmlman	html
 ./usr/share/man/html1/setfacl.html		man-util-htmlman	html
-./usr/share/man/html1/sftp.html			man-secsh-htmlman	html
+./usr/share/man/html1/sftp.html			man-secsh-htmlman	ssh,html
 ./usr/share/man/html1/sh.html			man-util-htmlman	html
 ./usr/share/man/html1/sha1.html			man-util-htmlman	html
 ./usr/share/man/html1/sha256.html		man-util-htmlman	html
@@ -565,7 +565,7 @@
 ./usr/share/man/html1/skeyinfo.html		man-util-htmlman	skey,html
 ./usr/share/man/html1/skeyinit.html		man-util-htmlman	skey,html
 ./usr/share/man/html1/sleep.html		man-util-htmlman	html
-./usr/share/man/html1/slogin.html		man-secsh-htmlman	html
+./usr/share/man/html1/slogin.html		man-secsh-htmlman	ssh,html
 ./usr/share/man/html1/smbutil.html		man-obsolete		obsolete
 ./usr/share/man/html1/sntp.html			man-ntp-htmlman		html
 ./usr/share/man/html1/sockstat.html		man-util-htmlman	html
@@ -576,12 +576,12 @@
 ./usr/share/man/html1/split.html		man-util-htmlman	html
 ./usr/share/man/html1/sqlite3.html		man-util-htmlman	html
 ./usr/share/man/html1/srtconfig.html		man-netutil-htmlman	html
-./usr/share/man/html1/ssh-add.html		man-secsh-htmlman	html
-./usr/share/man/html1/ssh-agent.html		man-secsh-htmlman	html
-./usr/share/man/html1/ssh-copy-id.html		man-secsh-htmlman	html
-./usr/share/man/html1/ssh-keygen.html		man-secsh-htmlman	html
-./usr/share/man/html1/ssh-keyscan.html		man-secsh-htmlman	html
-./usr/share/man/html1/ssh.html			man-secsh-htmlman	html
+./usr/share/man/html1/ssh-add.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html1/ssh-agent.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html1/ssh-copy-id.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html1/ssh-keygen.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html1/ssh-keyscan.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html1/ssh.html			man-secsh-htmlman	ssh,html
 ./usr/share/man/html1/stat.html			man-util-htmlman	html
 ./usr/share/man/html1/stop.html			man-util-htmlman	html
 ./usr/share/man/html1/stty.html			man-util-htmlman	html
@@ -2187,7 +2187,7 @@
 ./usr/share/man/html5/memcache_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/mixerctl.conf.html	man-audio-htmlman	html
 ./usr/share/man/html5/modules.conf.html		man-sys-htmlman		html
-./usr/share/man/html5/moduli.html		man-secsh-htmlman	html
+./usr/share/man/html5/moduli.html		man-secsh-htmlman	ssh,html
 ./usr/share/man/html5/monthly.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/monthly.html		man-sys-htmlman		html
 ./usr/share/man/html5/motd.html			man-sys-htmlman		html
@@ -2243,8 +2243,8 @@
 ./usr/share/man/html5/services.html		man-net-htmlman		html
 ./usr/share/man/html5/shells.html		man-sys-htmlman		html
 ./usr/share/man/html5/sqlite_table.html		man-postfix-htmlman	postfix,html
-./usr/share/man/html5/ssh_config.html		man-secsh-htmlman	html
-./usr/share/man/html5/sshd_config.html		man-secsh-htmlman	html
+./usr/share/man/html5/ssh_config.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html5/sshd_config.html		man-secsh-htmlman	ssh,html
 ./usr/share/man/html5/stab.html			man-sys-htmlman		html
 ./usr/share/man/html5/sysctl.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/syslog.conf.html		man-sysutil-htmlman	html
@@ -3018,7 +3018,7 @@
 ./usr/share/man/html8/setencstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/setkey.html		man-netutil-htmlman	ipsec,html
 ./usr/share/man/html8/setobjstat.html		man-sysutil-htmlman	html
-./usr/share/man/html8/sftp-server.html		man-secsh-htmlman	html
+./usr/share/man/html8/sftp-server.html		man-secsh-htmlman	ssh,html
 ./usr/share/man/html8/sgimips/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/sgimips/sgivol.html	man-sys-htmlman		html
 ./usr/share/man/html8/showmount.html		man-nfsclient-htmlman	nfs,html
@@ -3037,10 +3037,10 @@
 ./usr/share/man/html8/spawn.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/spray.html		man-rpcutil-htmlman	html
 ./usr/share/man/html8/sprayd.html		man-rpcserver-htmlman	html
-./usr/share/man/html8/ssh-keysign.html		man-secsh-htmlman	html
-./usr/share/man/html8/ssh-pkcs11-helper.html	man-secsh-htmlman	html
-./usr/share/man/html8/ssh-sk-helper.html	man-secsh-htmlman	fido2,html
-./usr/share/man/html8/sshd.html			man-secsh-htmlman	html
+./usr/share/man/html8/ssh-keysign.html		man-secsh-htmlman	ssh,html
+./usr/share/man/html8/ssh-pkcs11-helper.html	man-secsh-htmlman	ssh,html
+./usr/share/man/html8/ssh-sk-helper.html	man-secsh-htmlman	ssh,fido2,html
+./usr/share/man/html8/sshd.html			man-secsh-htmlman	ssh,html
 ./usr/share/man/html8/statd.html		man-nfsserver-htmlman	nfs,html
 ./usr/share/man/html8/stdethers.html		man-nis-htmlman		yp,html
 ./usr/share/man/html8/stdhosts.html		man-nis-htmlman		yp,html

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1381 2025/12/28 16:50:20 thorpej Exp $
+# $NetBSD: mi,v 1.1382 2025/12/28 18:43:24 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -825,7 +825,7 @@
 ./usr/bin/rwall					base-netutil-bin
 ./usr/bin/rwho					base-netutil-bin
 ./usr/bin/scmdctl				base-util-bin
-./usr/bin/scp					base-secsh-bin
+./usr/bin/scp					base-secsh-bin		ssh
 ./usr/bin/script				base-util-bin
 ./usr/bin/sdiff					base-util-bin
 ./usr/bin/sdpquery				base-util-bin		bluetooth
@@ -833,7 +833,7 @@
 ./usr/bin/send-pr				base-gnats-bin
 ./usr/bin/seq					base-util-bin
 ./usr/bin/setextattr				base-util-bin
-./usr/bin/sftp					base-secsh-bin
+./usr/bin/sftp					base-secsh-bin		ssh
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/sha256				base-util-bin
 ./usr/bin/sha384				base-util-bin
@@ -848,19 +848,19 @@
 ./usr/bin/skeyaudit				base-util-bin		skey
 ./usr/bin/skeyinfo				base-util-bin		skey
 ./usr/bin/skeyinit				base-util-bin		skey
-./usr/bin/slogin				base-secsh-bin
+./usr/bin/slogin				base-secsh-bin		ssh
 ./usr/bin/smbutil				base-obsolete		obsolete
 ./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
 ./usr/bin/sqlite3				base-util-bin
-./usr/bin/ssh					base-secsh-bin
-./usr/bin/ssh-add				base-secsh-bin
-./usr/bin/ssh-agent				base-secsh-bin
-./usr/bin/ssh-copy-id				base-secsh-bin
-./usr/bin/ssh-keygen				base-secsh-bin
-./usr/bin/ssh-keyscan				base-secsh-bin
+./usr/bin/ssh					base-secsh-bin		ssh
+./usr/bin/ssh-add				base-secsh-bin		ssh
+./usr/bin/ssh-agent				base-secsh-bin		ssh
+./usr/bin/ssh-copy-id				base-secsh-bin		ssh
+./usr/bin/ssh-keygen				base-secsh-bin		ssh
+./usr/bin/ssh-keyscan				base-secsh-bin		ssh
 ./usr/bin/stat					base-util-bin
 ./usr/bin/string2key				base-krb5-bin		kerberos
 ./usr/bin/su					base-util-bin
@@ -1399,18 +1399,18 @@
 ./usr/libexec/rshd				base-netutil-bin
 ./usr/libexec/sendmail				base-obsolete		obsolete
 ./usr/libexec/sendmail/sendmail			base-obsolete		obsolete
-./usr/libexec/sftp-server			base-secsh-bin
+./usr/libexec/sftp-server			base-secsh-bin		ssh
 ./usr/libexec/sm.bin				base-obsolete		obsolete
 ./usr/libexec/smrsh				base-obsolete		obsolete
 ./usr/libexec/spamd				base-obsolete		obsolete
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
 ./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/spellprog				base-util-bin
-./usr/libexec/ssh-keysign			base-secsh-bin
-./usr/libexec/ssh-pkcs11-helper			base-secsh-bin
-./usr/libexec/ssh-sk-helper			base-secsh-bin		fido2
-./usr/libexec/sshd-auth				base-secsh-bin
-./usr/libexec/sshd-session			base-secsh-bin
+./usr/libexec/ssh-keysign			base-secsh-bin		ssh
+./usr/libexec/ssh-pkcs11-helper			base-secsh-bin		ssh
+./usr/libexec/ssh-sk-helper			base-secsh-bin		ssh,fido2
+./usr/libexec/sshd-auth				base-secsh-bin		ssh
+./usr/libexec/sshd-session			base-secsh-bin		ssh
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftp-proxy			base-pf-bin		pf
 ./usr/libexec/tftpd				base-netutil-bin
@@ -1797,7 +1797,7 @@
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/srtconfig				base-netutil-bin
-./usr/sbin/sshd					base-secsh-bin
+./usr/sbin/sshd					base-secsh-bin		ssh
 ./usr/sbin/statmsg				base-obsolete		obsolete
 ./usr/sbin/stdethers				base-nis-bin		yp
 ./usr/sbin/stdhosts				base-nis-bin		yp

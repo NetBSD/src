@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1822 2025/12/28 16:50:21 thorpej Exp $
+# $NetBSD: mi,v 1.1823 2025/12/28 18:43:24 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -597,7 +597,7 @@
 ./usr/share/man/cat1/rwall.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rwho.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/scmdctl.0			man-util-catman		.cat
-./usr/share/man/cat1/scp.0			man-secsh-catman	.cat
+./usr/share/man/cat1/scp.0			man-secsh-catman	ssh,.cat
 ./usr/share/man/cat1/screenblank.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/script.0			man-util-catman		.cat
 ./usr/share/man/cat1/sdiff.0			man-util-catman		.cat
@@ -608,7 +608,7 @@
 ./usr/share/man/cat1/seq.0			man-util-catman		.cat
 ./usr/share/man/cat1/setextattr.0		man-util-catman		.cat
 ./usr/share/man/cat1/setfacl.0			man-util-catman		.cat
-./usr/share/man/cat1/sftp.0			man-secsh-catman	.cat
+./usr/share/man/cat1/sftp.0			man-secsh-catman	ssh,.cat
 ./usr/share/man/cat1/sh.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha1.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha256.0			man-util-catman		.cat
@@ -623,7 +623,7 @@
 ./usr/share/man/cat1/skeyinfo.0			man-util-catman		skey,.cat
 ./usr/share/man/cat1/skeyinit.0			man-util-catman		skey,.cat
 ./usr/share/man/cat1/sleep.0			man-util-catman		.cat
-./usr/share/man/cat1/slogin.0			man-secsh-catman	.cat
+./usr/share/man/cat1/slogin.0			man-secsh-catman	ssh,.cat
 ./usr/share/man/cat1/smbutil.0			man-obsolete		obsolete
 ./usr/share/man/cat1/sntp.0			man-ntp-catman		.cat
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
@@ -634,12 +634,12 @@
 ./usr/share/man/cat1/split.0			man-util-catman		.cat
 ./usr/share/man/cat1/sqlite3.0			man-util-catman		.cat
 ./usr/share/man/cat1/srtconfig.0		man-netutil-catman	.cat
-./usr/share/man/cat1/ssh-add.0			man-secsh-catman	.cat
-./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	.cat
-./usr/share/man/cat1/ssh-copy-id.0		man-secsh-catman	.cat
-./usr/share/man/cat1/ssh-keygen.0		man-secsh-catman	.cat
-./usr/share/man/cat1/ssh-keyscan.0		man-secsh-catman	.cat
-./usr/share/man/cat1/ssh.0			man-secsh-catman	.cat
+./usr/share/man/cat1/ssh-add.0			man-secsh-catman	ssh,.cat
+./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	ssh,.cat
+./usr/share/man/cat1/ssh-copy-id.0		man-secsh-catman	ssh,.cat
+./usr/share/man/cat1/ssh-keygen.0		man-secsh-catman	ssh,.cat
+./usr/share/man/cat1/ssh-keyscan.0		man-secsh-catman	ssh,.cat
+./usr/share/man/cat1/ssh.0			man-secsh-catman	ssh,.cat
 ./usr/share/man/cat1/stat.0			man-util-catman		.cat
 ./usr/share/man/cat1/stop.0			man-util-catman		.cat
 ./usr/share/man/cat1/stty.0			man-util-catman		.cat
@@ -2393,7 +2393,7 @@
 ./usr/share/man/cat5/memcache_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/mixerctl.conf.0		man-audio-catman	.cat
 ./usr/share/man/cat5/modules.conf.0		man-sys-catman		.cat
-./usr/share/man/cat5/moduli.0			man-secsh-catman	.cat
+./usr/share/man/cat5/moduli.0			man-secsh-catman	ssh,.cat
 ./usr/share/man/cat5/monthly.0			man-sys-catman		.cat
 ./usr/share/man/cat5/monthly.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/motd.0			man-sys-catman		.cat
@@ -2457,8 +2457,8 @@
 ./usr/share/man/cat5/siginfo.0			man-obsolete		obsolete
 ./usr/share/man/cat5/spamd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/sqlite_table.0		man-postfix-catman	postfix,.cat
-./usr/share/man/cat5/ssh_config.0		man-secsh-catman	.cat
-./usr/share/man/cat5/sshd_config.0		man-secsh-catman	.cat
+./usr/share/man/cat5/ssh_config.0		man-secsh-catman	ssh,.cat
+./usr/share/man/cat5/sshd_config.0		man-secsh-catman	ssh,.cat
 ./usr/share/man/cat5/stab.0			man-sys-catman		.cat
 ./usr/share/man/cat5/sysctl.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman	.cat
@@ -3394,7 +3394,7 @@
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/setkey.0			man-netutil-catman	ipsec,.cat
 ./usr/share/man/cat8/setobjstat.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/sftp-server.0		man-secsh-catman	.cat
+./usr/share/man/cat8/sftp-server.0		man-secsh-catman	ssh,.cat
 ./usr/share/man/cat8/sgimips/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sgimips/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/sgimips/makedev.0		man-obsolete		obsolete
@@ -3429,10 +3429,10 @@
 ./usr/share/man/cat8/spawn.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/spray.0			man-rpcutil-catman	.cat
 ./usr/share/man/cat8/sprayd.0			man-rpcserver-catman	.cat
-./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman	.cat
-./usr/share/man/cat8/ssh-pkcs11-helper.0	man-secsh-catman	.cat
-./usr/share/man/cat8/ssh-sk-helper.0		man-secsh-catman	fido2,.cat
-./usr/share/man/cat8/sshd.0			man-secsh-catman	.cat
+./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman	ssh,.cat
+./usr/share/man/cat8/ssh-pkcs11-helper.0	man-secsh-catman	ssh,.cat
+./usr/share/man/cat8/ssh-sk-helper.0		man-secsh-catman	ssh,fido2,.cat
+./usr/share/man/cat8/sshd.0			man-secsh-catman	ssh,.cat
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman	nfs,.cat
 ./usr/share/man/cat8/statmsg.0			man-obsolete		obsolete
 ./usr/share/man/cat8/stdethers.0		man-nis-catman		yp,.cat
@@ -4186,7 +4186,7 @@
 ./usr/share/man/man1/rwall.1			man-netutil-man		.man
 ./usr/share/man/man1/rwho.1			man-netutil-man		.man
 ./usr/share/man/man1/scmdctl.1			man-util-man		.man
-./usr/share/man/man1/scp.1			man-secsh-man		.man
+./usr/share/man/man1/scp.1			man-secsh-man		ssh,.man
 ./usr/share/man/man1/screenblank.1		man-sysutil-man		.man
 ./usr/share/man/man1/script.1			man-util-man		.man
 ./usr/share/man/man1/sdiff.1			man-util-man		.man
@@ -4197,7 +4197,7 @@
 ./usr/share/man/man1/seq.1			man-util-man		.man
 ./usr/share/man/man1/setextattr.1		man-util-man		.man
 ./usr/share/man/man1/setfacl.1			man-util-man		.man
-./usr/share/man/man1/sftp.1			man-secsh-man		.man
+./usr/share/man/man1/sftp.1			man-secsh-man		ssh,.man
 ./usr/share/man/man1/sh.1			man-util-man		.man
 ./usr/share/man/man1/sha1.1			man-util-man		.man
 ./usr/share/man/man1/sha256.1			man-util-man		.man
@@ -4213,7 +4213,7 @@
 ./usr/share/man/man1/skeyinfo.1			man-util-man		skey,.man
 ./usr/share/man/man1/skeyinit.1			man-util-man		skey,.man
 ./usr/share/man/man1/sleep.1			man-util-man		.man
-./usr/share/man/man1/slogin.1			man-secsh-man		.man
+./usr/share/man/man1/slogin.1			man-secsh-man		ssh,.man
 ./usr/share/man/man1/smbutil.1			man-obsolete		obsolete
 ./usr/share/man/man1/sntp.1			man-ntp-man		.man
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
@@ -4224,12 +4224,12 @@
 ./usr/share/man/man1/split.1			man-util-man		.man
 ./usr/share/man/man1/sqlite3.1			man-util-man		.man
 ./usr/share/man/man1/srtconfig.1		man-netutil-man		.man
-./usr/share/man/man1/ssh-add.1			man-secsh-man		.man
-./usr/share/man/man1/ssh-agent.1		man-secsh-man		.man
-./usr/share/man/man1/ssh-copy-id.1		man-secsh-man		.man
-./usr/share/man/man1/ssh-keygen.1		man-secsh-man		.man
-./usr/share/man/man1/ssh-keyscan.1		man-secsh-man		.man
-./usr/share/man/man1/ssh.1			man-secsh-man		.man
+./usr/share/man/man1/ssh-add.1			man-secsh-man		ssh,.man
+./usr/share/man/man1/ssh-agent.1		man-secsh-man		ssh,.man
+./usr/share/man/man1/ssh-copy-id.1		man-secsh-man		ssh,.man
+./usr/share/man/man1/ssh-keygen.1		man-secsh-man		ssh,.man
+./usr/share/man/man1/ssh-keyscan.1		man-secsh-man		ssh,.man
+./usr/share/man/man1/ssh.1			man-secsh-man		ssh,.man
 ./usr/share/man/man1/stat.1			man-util-man		.man
 ./usr/share/man/man1/stop.1			man-util-man		.man
 ./usr/share/man/man1/stty.1			man-util-man		.man
@@ -5983,7 +5983,7 @@
 ./usr/share/man/man5/memcache_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/mixerctl.conf.5		man-audio-man		.man
 ./usr/share/man/man5/modules.conf.5		man-sys-man		.man
-./usr/share/man/man5/moduli.5			man-secsh-man		.man
+./usr/share/man/man5/moduli.5			man-secsh-man		ssh,.man
 ./usr/share/man/man5/monthly.5			man-sys-man		.man
 ./usr/share/man/man5/monthly.conf.5		man-sys-man		.man
 ./usr/share/man/man5/motd.5			man-sys-man		.man
@@ -6047,8 +6047,8 @@
 ./usr/share/man/man5/siginfo.5			man-obsolete		obsolete
 ./usr/share/man/man5/spamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/sqlite_table.5		man-postfix-man		postfix,.man
-./usr/share/man/man5/ssh_config.5		man-secsh-man		.man
-./usr/share/man/man5/sshd_config.5		man-secsh-man		.man
+./usr/share/man/man5/ssh_config.5		man-secsh-man		ssh,.man
+./usr/share/man/man5/sshd_config.5		man-secsh-man		ssh,.man
 ./usr/share/man/man5/stab.5			man-sys-man		.man
 ./usr/share/man/man5/sysctl.conf.5		man-sys-man		.man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man		.man
@@ -6984,7 +6984,7 @@
 ./usr/share/man/man8/setencstat.8		man-sysutil-man		.man
 ./usr/share/man/man8/setkey.8			man-netutil-man		ipsec,.man
 ./usr/share/man/man8/setobjstat.8		man-sysutil-man		.man
-./usr/share/man/man8/sftp-server.8		man-secsh-man		.man
+./usr/share/man/man8/sftp-server.8		man-secsh-man		ssh,.man
 ./usr/share/man/man8/sgimips/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sgimips/boot.8		man-sys-man		.man
 ./usr/share/man/man8/sgimips/makedev.8		man-obsolete		obsolete
@@ -7019,10 +7019,10 @@
 ./usr/share/man/man8/spawn.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/spray.8			man-rpcutil-man		.man
 ./usr/share/man/man8/sprayd.8			man-rpcserver-man	.man
-./usr/share/man/man8/ssh-keysign.8		man-secsh-man		.man
-./usr/share/man/man8/ssh-pkcs11-helper.8	man-secsh-man		.man
-./usr/share/man/man8/ssh-sk-helper.8		man-secsh-man		fido2,.man
-./usr/share/man/man8/sshd.8			man-secsh-man		.man
+./usr/share/man/man8/ssh-keysign.8		man-secsh-man		ssh,.man
+./usr/share/man/man8/ssh-pkcs11-helper.8	man-secsh-man		ssh,.man
+./usr/share/man/man8/ssh-sk-helper.8		man-secsh-man		ssh,fido2,.man
+./usr/share/man/man8/sshd.8			man-secsh-man		ssh,.man
 ./usr/share/man/man8/statd.8			man-nfsserver-man	nfs,.man
 ./usr/share/man/man8/statmsg.8			man-obsolete		obsolete
 ./usr/share/man/man8/stdethers.8		man-nis-man		yp,.man

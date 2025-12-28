@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2025/12/24 20:05:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.46 2025/12/28 18:43:25 thorpej Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -23,6 +23,7 @@ CRUNCHGEN_FLAGS+=-V LDSTATIC="-static" -V NOPIE=
 
 CRUNCHGEN_FLAGS+=-V NOLIBCSANITIZER= -V NOSANITIZER= -V NOMAN=
 
+.if (${MKSSH} != "no")
 # libssh is private, so libssh.a is not installed in DESTDIR, so we
 # have to get it out of the objdir.
 #
@@ -33,6 +34,7 @@ LIBDO.ssh!=	cd ${NETBSDSRCDIR}/crypto/external/bsd/openssh/lib && \
 .MAKEOVERRIDES+=LIBDO.ssh
 .endif
 CRUNCHGEN_FLAGS+=-L ${LIBDO.ssh}
+.endif		# MKSSH != "no"
 
 RESCUEDIR=	/rescue
 CRUNCHBIN=	rescue
@@ -66,8 +68,12 @@ LISTS+=		${.CURDIR}/list.inet6
 LISTS+=		${.CURDIR}/list.ipsec
 .endif
 
-LISTS+=		${.CURDIR}/list.crypto
+.if ${MKSSH} != "no"
+LISTS+=		${.CURDIR}/list.ssh
 CRUNCHENV+=	MKKERBEROS=no		# for ssh
+.endif
+
+LISTS+=		${.CURDIR}/list.crypto
 
 LISTS+=		${.CURDIR}/list.ldd
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}

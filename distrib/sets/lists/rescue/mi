@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2025/12/24 20:05:59 thorpej Exp $
+# $NetBSD: mi,v 1.5 2025/12/28 18:43:25 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -134,15 +134,15 @@
 ./rescue/rtsol					base-obsolete		obsolete
 ./rescue/savecore				base-rescue-root
 ./rescue/scan_ffs				base-rescue-root
-./rescue/scp					base-rescue-root
+./rescue/scp					base-rescue-root	ssh
 ./rescue/scsictl				base-rescue-root
 ./rescue/setkey					base-rescue-root	ipsec
 ./rescue/sh					base-rescue-root
 ./rescue/shutdown				base-rescue-root
 ./rescue/slattach				base-rescue-root
 ./rescue/sleep					base-rescue-root
-./rescue/slogin					base-rescue-root
-./rescue/ssh					base-rescue-root
+./rescue/slogin					base-rescue-root	ssh
+./rescue/ssh					base-rescue-root	ssh
 ./rescue/stty					base-rescue-root
 ./rescue/swapctl				base-rescue-root
 ./rescue/swapon					base-rescue-root

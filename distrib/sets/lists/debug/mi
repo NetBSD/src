@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.502 2025/12/28 16:50:21 thorpej Exp $
+# $NetBSD: mi,v 1.503 2025/12/28 18:43:24 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -796,13 +796,13 @@
 ./usr/libdata/debug/usr/bin/rwall.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rwho.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/scmdctl.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/scp.debug		comp-secsh-debug	debug
+./usr/libdata/debug/usr/bin/scp.debug		comp-secsh-debug	ssh,debug
 ./usr/libdata/debug/usr/bin/script.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sdiff.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sdpquery.debug	comp-util-debug		bluetooth,debug
 ./usr/libdata/debug/usr/bin/sed.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/seq.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	debug
+./usr/libdata/debug/usr/bin/sftp.debug		comp-secsh-debug	ssh,debug
 ./usr/libdata/debug/usr/bin/shlock.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/shmif_dumpbus.debug	comp-util-debug		debug,rump
 ./usr/libdata/debug/usr/bin/shmif_pcapin.debug	comp-util-debug		debug,rump
@@ -819,11 +819,11 @@
 ./usr/libdata/debug/usr/bin/sortinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/split.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sqlite3.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/ssh-add.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/bin/ssh-agent.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/bin/ssh-keygen.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/bin/ssh-keyscan.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/bin/ssh.debug		comp-secsh-debug	debug
+./usr/libdata/debug/usr/bin/ssh-add.debug	comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/bin/ssh-agent.debug	comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/bin/ssh-keygen.debug	comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/bin/ssh-keyscan.debug	comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/bin/ssh.debug		comp-secsh-debug	ssh,debug
 ./usr/libdata/debug/usr/bin/stat.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/string2key.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/strings.debug	comp-util-debug		binutils,debug
@@ -1045,13 +1045,13 @@
 ./usr/libdata/debug/usr/libexec/rpc.rwalld.debug	comp-rpcserver-debug	debug
 ./usr/libdata/debug/usr/libexec/rpc.sprayd.debug	comp-rpcserver-debug	debug
 ./usr/libdata/debug/usr/libexec/rshd.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/libexec/sftp-server.debug	comp-secsh-debug	debug
+./usr/libdata/debug/usr/libexec/sftp-server.debug	comp-secsh-debug	ssh,debug
 ./usr/libdata/debug/usr/libexec/spellprog.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/libexec/ssh-pkcs11-helper.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/libexec/ssh-sk-helper.debug	comp-secsh-debug	fido2,debug
-./usr/libdata/debug/usr/libexec/sshd-auth.debug		comp-secsh-debug	debug
-./usr/libdata/debug/usr/libexec/sshd-session.debug	comp-secsh-debug	debug
+./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/libexec/ssh-pkcs11-helper.debug	comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/libexec/ssh-sk-helper.debug	comp-secsh-debug	ssh,fido2,debug
+./usr/libdata/debug/usr/libexec/sshd-auth.debug		comp-secsh-debug	ssh,debug
+./usr/libdata/debug/usr/libexec/sshd-session.debug	comp-secsh-debug	ssh,debug
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/tftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/libexec/tftpd.debug	comp-netutil-debug	debug
@@ -1331,7 +1331,7 @@
 ./usr/libdata/debug/usr/sbin/sntp.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/spray.debug	comp-rpcutil-debug	debug
 ./usr/libdata/debug/usr/sbin/srtconfig.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/sshd.debug		comp-secsh-debug	debug
+./usr/libdata/debug/usr/sbin/sshd.debug		comp-secsh-debug	ssh,debug
 ./usr/libdata/debug/usr/sbin/stdethers.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/stdhosts.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/sti.debug		comp-sysutil-debug	debug

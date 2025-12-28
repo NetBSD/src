@@ -1,0 +1,8 @@
+#	$NetBSD: list.ssh,v 1.1 2025/12/28 18:43:25 thorpej Exp $
+
+PROG	scp
+PROG	ssh		slogin
+SPECIAL	scp	srcdir	crypto/external/bsd/openssh/bin/scp
+SPECIAL	ssh	srcdir	crypto/external/bsd/openssh/bin/ssh
+
+LIBS	-lssh
