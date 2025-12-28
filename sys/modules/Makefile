@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.298 2025/10/21 07:23:05 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.299 2025/12/28 20:24:56 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -483,6 +483,8 @@ SUBDIR+=	iscsi
 # For now, all of these are  built but not installed, pending resolution
 # of how to deal with attachment- and bus-specific modules (as opposed
 # to machine- or architecture-specific modules)
+#
+# See also PR kern/59716
 
 .if 0
 SUBDIR+=	aac
