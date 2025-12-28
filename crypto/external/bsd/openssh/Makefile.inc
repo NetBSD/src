@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.18 2025/12/16 04:32:03 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2025/12/28 09:39:34 nia Exp $
 
 WARNS?=	4
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client/server
+
+# Avoid increasing the binary size by not linking with libcrypto
+# on static platforms.
+.if ${MACHINE_ARCH} != "m68000"
 WITH_OPENSSL=1
+.endif
 
 SSHDIST?= ${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 
@@ -20,7 +25,12 @@ CPPFLAGS+=-DHAVE_STDLIB_H
 CPPFLAGS+=-DOPENSSL_API_COMPAT=0x10100000L
 .endif
 
-CPPFLAGS+=-DWITH_OPENSSL -DENABLE_PKCS11 -DWITH_XMSS -DWITH_ZLIB -DWITH_DSA
+.ifdef WITH_OPENSSL
+CPPFLAGS+=-DWITH_OPENSSL -DENABLE_PKCS11 -DWITH_XMSS -DWITH_DSA
+.endif
+
+CPPFLAGS+=-DWITH_ZLIB
+
 .if !defined(NOPIC)
 CPPFLAGS+=-DHAVE_DLOPEN
 .endif

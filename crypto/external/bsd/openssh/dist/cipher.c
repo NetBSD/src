@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.25 2025/10/11 15:45:06 christos Exp $	*/
+/*	$NetBSD: cipher.c,v 1.26 2025/12/28 09:39:35 nia Exp $	*/
 /* $OpenBSD: cipher.c,v 1.125 2025/09/02 11:08:34 djm Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.25 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.26 2025/12/28 09:39:35 nia Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: cipher.c,v 1.25 2025/10/11 15:45:06 christos Exp $");
 #endif
 
 // XXX: from libressl
+#ifdef WITH_OPENSSL
 #define HAVE_EVP_CIPHER_CTX_IV
 
 static int
@@ -84,6 +85,7 @@ EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
 	}
 	return 1;
 }
+#endif
 // XXX: end
 
 struct sshcipher_ctx {

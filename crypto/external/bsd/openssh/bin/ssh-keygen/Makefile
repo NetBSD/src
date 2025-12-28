@@ -1,9 +1,15 @@
-#	$NetBSD: Makefile,v 1.11 2025/10/15 16:52:59 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2025/12/28 09:39:35 nia Exp $
 
 BINDIR=	/usr/bin
 
 PROG=	ssh-keygen
-SRCS=	ssh-keygen.c moduli.c sshsig.c
+SRCS=	ssh-keygen.c sshsig.c
+
+.include "../Makefile.inc"
+
+.ifdef WITH_OPENSSL
+SRCS+=	moduli.c
+.endif
 
 COPTS.ssh-keygen.c+=	-Wno-pointer-sign
 
