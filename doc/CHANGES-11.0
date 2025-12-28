@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.62 2025/12/28 11:27:42 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.63 2025/12/28 16:19:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1294,4 +1294,19 @@ share/mk/bsd.own.mk				1.1457 (patch)
 	PR 59866: disable PAM on m68000.
 	While there also switch tar to BSDTAR.
 	[thorpej, ticket #136]
+
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.21
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_2835_arm.c 1.24,1.25
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c 1.22
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.c 1.16,1.17
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.h 1.9,1.10
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_if.h 1.4
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kmod_netbsd.c 1.15
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_netbsd_acpi.c 1.6
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_netbsd_fdt.c 1.8
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_pagelist.h 1.2
+
+	evbarm: Raspberry Pi: add support for vchiq/vcaudio in
+	big endian kernels.
+	[tsutsui, ticket #137]
 
