@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1823 2025/12/28 18:43:24 thorpej Exp $
+# $NetBSD: mi,v 1.1824 2025/12/28 18:46:49 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -3510,7 +3510,7 @@
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umbctl.0			man-netutil-catman	.cat
-./usr/share/man/cat8/umcpmioctl.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/umcpmioctl.0		man-sysutil-catman	usb,.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/unbound-anchor.0		man-netutil-catman	.cat,unbound
 ./usr/share/man/cat8/unbound-checkconf.0	man-netutil-catman	.cat,unbound
@@ -7097,7 +7097,7 @@
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/umbctl.8			man-netutil-man		.man
-./usr/share/man/man8/umcpmioctl.8		man-sysutil-man		.man
+./usr/share/man/man8/umcpmioctl.8		man-sysutil-man		usb,.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
 ./usr/share/man/man8/unbound-anchor.8		man-netutil-man		.man,unbound
 ./usr/share/man/man8/unbound-checkconf.8	man-netutil-man		.man,unbound

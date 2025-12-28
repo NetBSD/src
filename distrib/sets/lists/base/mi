@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1382 2025/12/28 18:43:24 thorpej Exp $
+# $NetBSD: mi,v 1.1383 2025/12/28 18:46:48 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1846,7 +1846,7 @@
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
 ./usr/sbin/tsig-keygen				base-bind-bin		bind
-./usr/sbin/umcpmioctl				base-sysutil-bin
+./usr/sbin/umcpmioctl				base-sysutil-bin	usb
 ./usr/sbin/unbound				base-netutil-bin	unbound
 ./usr/sbin/unbound-anchor			base-netutil-bin	unbound
 ./usr/sbin/unbound-checkconf			base-netutil-bin	unbound
