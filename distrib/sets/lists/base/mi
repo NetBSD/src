@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1379 2025/12/25 01:14:59 thorpej Exp $
+# $NetBSD: mi,v 1.1380 2025/12/28 15:34:59 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -608,9 +608,9 @@
 ./usr/bin/expand				base-util-bin
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
-./usr/bin/fido2-assert				base-util-bin
-./usr/bin/fido2-cred				base-util-bin
-./usr/bin/fido2-token				base-util-bin
+./usr/bin/fido2-assert				base-util-bin		fido2
+./usr/bin/fido2-cred				base-util-bin		fido2
+./usr/bin/fido2-token				base-util-bin		fido2
 ./usr/bin/file					base-util-bin
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
@@ -1408,7 +1408,7 @@
 ./usr/libexec/spellprog				base-util-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin
 ./usr/libexec/ssh-pkcs11-helper			base-secsh-bin
-./usr/libexec/ssh-sk-helper			base-secsh-bin
+./usr/libexec/ssh-sk-helper			base-secsh-bin		fido2
 ./usr/libexec/sshd-auth				base-secsh-bin
 ./usr/libexec/sshd-session			base-secsh-bin
 ./usr/libexec/telnetd				base-netutil-bin

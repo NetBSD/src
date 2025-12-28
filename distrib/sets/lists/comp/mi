@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2509 2025/12/24 21:03:24 jkoshy Exp $
+#	$NetBSD: mi,v 1.2510 2025/12/28 15:35:00 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -959,17 +959,17 @@
 ./usr/include/fenv.h				comp-c-include
 ./usr/include/fetch.h				comp-c-include
 ./usr/include/fido				comp-c-include
-./usr/include/fido.h				comp-c-include
-./usr/include/fido/bio.h			comp-c-include
-./usr/include/fido/config.h			comp-c-include
-./usr/include/fido/credman.h			comp-c-include
-./usr/include/fido/eddsa.h			comp-c-include
-./usr/include/fido/err.h			comp-c-include
-./usr/include/fido/es256.h			comp-c-include
-./usr/include/fido/es384.h			comp-c-include
-./usr/include/fido/param.h			comp-c-include
-./usr/include/fido/rs256.h			comp-c-include
-./usr/include/fido/types.h			comp-c-include
+./usr/include/fido.h				comp-c-include		fido2
+./usr/include/fido/bio.h			comp-c-include		fido2
+./usr/include/fido/config.h			comp-c-include		fido2
+./usr/include/fido/credman.h			comp-c-include		fido2
+./usr/include/fido/eddsa.h			comp-c-include		fido2
+./usr/include/fido/err.h			comp-c-include		fido2
+./usr/include/fido/es256.h			comp-c-include		fido2
+./usr/include/fido/es384.h			comp-c-include		fido2
+./usr/include/fido/param.h			comp-c-include		fido2
+./usr/include/fido/rs256.h			comp-c-include		fido2
+./usr/include/fido/types.h			comp-c-include		fido2
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
 ./usr/include/fmtmsg.h				comp-c-include
@@ -4088,8 +4088,8 @@
 ./usr/lib/libexpat_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libfetch.a				comp-c-lib		compatfile
 ./usr/lib/libfetch_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libfido2.a				comp-c-lib		compatfile
-./usr/lib/libfido2_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libfido2.a				comp-c-lib		fido2,compatfile
+./usr/lib/libfido2_p.a				comp-c-proflib		fido2,compatfile,profile
 ./usr/lib/libfl.a				comp-c-lib		compatfile
 ./usr/lib/libfl_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libform.a				comp-c-lib		compatfile
@@ -4557,7 +4557,7 @@
 ./usr/lib/pkgconfig/libarchive.pc		comp-c-lib		share
 ./usr/lib/pkgconfig/libcrypto.pc		comp-crypto-lib		share
 ./usr/lib/pkgconfig/libedit.pc			comp-c-lib
-./usr/lib/pkgconfig/libfido2.pc			comp-c-lib		share
+./usr/lib/pkgconfig/libfido2.pc			comp-c-lib		fido2,share
 ./usr/lib/pkgconfig/liblzma.pc			comp-c-lib		share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/libuv.pc			comp-obsolete		share,obsolete
@@ -8148,31 +8148,31 @@
 ./usr/share/man/cat3/fgetwc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetwln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetws.0			comp-c-catman		.cat
-./usr/share/man/cat3/fido_assert_allow_cred.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_assert_new.0			comp-c-catman	.cat
-./usr/share/man/cat3/fido_assert_set_authdata.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_assert_verify.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_bio_dev_get_info.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_bio_enroll_new.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_bio_info_new.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_bio_template.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_cbor_info_new.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_cred_exclude.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_cred_new.0			comp-c-catman	.cat
-./usr/share/man/cat3/fido_cred_set_authdata.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_cred_verify.0			comp-c-catman	.cat
-./usr/share/man/cat3/fido_credman_metadata_new.0	comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_enable_entattest.0	comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_get_assert.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_get_touch_begin.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_info_manifest.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_largeblob_get.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_make_cred.0		comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_open.0			comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_set_io_functions.0	comp-c-catman	.cat
-./usr/share/man/cat3/fido_dev_set_pin.0			comp-c-catman	.cat
-./usr/share/man/cat3/fido_init.0			comp-c-catman	.cat
-./usr/share/man/cat3/fido_strerr.0			comp-c-catman	.cat
+./usr/share/man/cat3/fido_assert_allow_cred.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_assert_new.0			comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_assert_set_authdata.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_assert_verify.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_bio_dev_get_info.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_bio_enroll_new.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_bio_info_new.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_bio_template.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_cbor_info_new.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_cred_exclude.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_cred_new.0			comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_cred_set_authdata.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_cred_verify.0			comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_credman_metadata_new.0	comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_enable_entattest.0	comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_get_assert.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_get_touch_begin.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_info_manifest.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_largeblob_get.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_make_cred.0		comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_open.0			comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_set_io_functions.0	comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_dev_set_pin.0			comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_init.0			comp-c-catman	fido2,.cat
+./usr/share/man/cat3/fido_strerr.0			comp-c-catman	fido2,.cat
 ./usr/share/man/cat3/field_arg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/field_back.0		comp-c-catman		.cat
 ./usr/share/man/cat3/field_buffer.0		comp-c-catman		.cat
@@ -17113,31 +17113,31 @@
 ./usr/share/man/html3/fgetwc.html		comp-c-htmlman		html
 ./usr/share/man/html3/fgetwln.html		comp-c-htmlman		html
 ./usr/share/man/html3/fgetws.html		comp-c-htmlman		html
-./usr/share/man/html3/fido_assert_allow_cred.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_assert_new.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_assert_set_authdata.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_assert_verify.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_bio_dev_get_info.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_bio_enroll_new.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_bio_info_new.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_bio_template.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_cbor_info_new.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_cred_exclude.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_cred_new.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_cred_set_authdata.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_cred_verify.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_credman_metadata_new.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_enable_entattest.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_get_assert.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_get_touch_begin.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_info_manifest.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_largeblob_get.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_make_cred.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_open.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_set_io_functions.html	comp-c-htmlman	html
-./usr/share/man/html3/fido_dev_set_pin.html		comp-c-htmlman	html
-./usr/share/man/html3/fido_init.html			comp-c-htmlman	html
-./usr/share/man/html3/fido_strerr.html			comp-c-htmlman	html
+./usr/share/man/html3/fido_assert_allow_cred.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_assert_new.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_assert_set_authdata.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_assert_verify.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_bio_dev_get_info.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_bio_enroll_new.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_bio_info_new.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_bio_template.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_cbor_info_new.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_cred_exclude.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_cred_new.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_cred_set_authdata.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_cred_verify.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_credman_metadata_new.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_enable_entattest.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_get_assert.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_get_touch_begin.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_info_manifest.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_largeblob_get.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_make_cred.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_open.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_set_io_functions.html	comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_dev_set_pin.html		comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_init.html			comp-c-htmlman	fido2,html
+./usr/share/man/html3/fido_strerr.html			comp-c-htmlman	fido2,html
 ./usr/share/man/html3/field_arg.html		comp-c-htmlman		html
 ./usr/share/man/html3/field_back.html		comp-c-htmlman		html
 ./usr/share/man/html3/field_buffer.html		comp-c-htmlman		html
@@ -26018,31 +26018,31 @@
 ./usr/share/man/man3/fgetwc.3			comp-c-man		.man
 ./usr/share/man/man3/fgetwln.3			comp-c-man		.man
 ./usr/share/man/man3/fgetws.3			comp-c-man		.man
-./usr/share/man/man3/fido_assert_allow_cred.3		comp-c-man	.man
-./usr/share/man/man3/fido_assert_new.3			comp-c-man	.man
-./usr/share/man/man3/fido_assert_set_authdata.3		comp-c-man	.man
-./usr/share/man/man3/fido_assert_verify.3		comp-c-man	.man
-./usr/share/man/man3/fido_bio_dev_get_info.3		comp-c-man	.man
-./usr/share/man/man3/fido_bio_enroll_new.3		comp-c-man	.man
-./usr/share/man/man3/fido_bio_info_new.3		comp-c-man	.man
-./usr/share/man/man3/fido_bio_template.3		comp-c-man	.man
-./usr/share/man/man3/fido_cbor_info_new.3		comp-c-man	.man
-./usr/share/man/man3/fido_cred_exclude.3		comp-c-man	.man
-./usr/share/man/man3/fido_cred_new.3			comp-c-man	.man
-./usr/share/man/man3/fido_cred_set_authdata.3		comp-c-man	.man
-./usr/share/man/man3/fido_cred_verify.3			comp-c-man	.man
-./usr/share/man/man3/fido_credman_metadata_new.3	comp-c-man	.man
-./usr/share/man/man3/fido_dev_enable_entattest.3	comp-c-man	.man
-./usr/share/man/man3/fido_dev_get_assert.3		comp-c-man	.man
-./usr/share/man/man3/fido_dev_get_touch_begin.3		comp-c-man	.man
-./usr/share/man/man3/fido_dev_info_manifest.3		comp-c-man	.man
-./usr/share/man/man3/fido_dev_largeblob_get.3		comp-c-man	.man
-./usr/share/man/man3/fido_dev_make_cred.3		comp-c-man	.man
-./usr/share/man/man3/fido_dev_open.3			comp-c-man	.man
-./usr/share/man/man3/fido_dev_set_io_functions.3	comp-c-man	.man
-./usr/share/man/man3/fido_dev_set_pin.3			comp-c-man	.man
-./usr/share/man/man3/fido_init.3			comp-c-man	.man
-./usr/share/man/man3/fido_strerr.3			comp-c-man	.man
+./usr/share/man/man3/fido_assert_allow_cred.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_assert_new.3			comp-c-man	fido2,.man
+./usr/share/man/man3/fido_assert_set_authdata.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_assert_verify.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_bio_dev_get_info.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_bio_enroll_new.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_bio_info_new.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_bio_template.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_cbor_info_new.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_cred_exclude.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_cred_new.3			comp-c-man	fido2,.man
+./usr/share/man/man3/fido_cred_set_authdata.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_cred_verify.3			comp-c-man	fido2,.man
+./usr/share/man/man3/fido_credman_metadata_new.3	comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_enable_entattest.3	comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_get_assert.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_get_touch_begin.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_info_manifest.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_largeblob_get.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_make_cred.3		comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_open.3			comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_set_io_functions.3	comp-c-man	fido2,.man
+./usr/share/man/man3/fido_dev_set_pin.3			comp-c-man	fido2,.man
+./usr/share/man/man3/fido_init.3			comp-c-man	fido2,.man
+./usr/share/man/man3/fido_strerr.3			comp-c-man	fido2,.man
 ./usr/share/man/man3/field_arg.3		comp-c-man		.man
 ./usr/share/man/man3/field_back.3		comp-c-man		.man
 ./usr/share/man/man3/field_buffer.3		comp-c-man		.man

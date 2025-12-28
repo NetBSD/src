@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.500 2025/12/25 01:14:59 thorpej Exp $
+# $NetBSD: mi,v 1.501 2025/12/28 15:35:00 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -69,7 +69,7 @@
 ./usr/lib/libexecinfo_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libexpat_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libfetch_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libfido2_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libfido2_g.a				comp-c-debuglib		fido2,debuglib,compatfile
 ./usr/lib/libfl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libform_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -557,9 +557,9 @@
 ./usr/libdata/debug/usr/bin/expand.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/f77.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/fgen.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fido2-assert.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fido2-cred.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/fido2-token.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/fido2-assert.debug	comp-util-debug		fido2,debug
+./usr/libdata/debug/usr/bin/fido2-cred.debug	comp-util-debug		fido2,debug
+./usr/libdata/debug/usr/bin/fido2-token.debug	comp-util-debug		fido2,debug
 ./usr/libdata/debug/usr/bin/file.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/fincore.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/find.debug		comp-util-debug		debug
@@ -1049,7 +1049,7 @@
 ./usr/libdata/debug/usr/libexec/spellprog.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/ssh-pkcs11-helper.debug	comp-secsh-debug	debug
-./usr/libdata/debug/usr/libexec/ssh-sk-helper.debug	comp-secsh-debug	debug
+./usr/libdata/debug/usr/libexec/ssh-sk-helper.debug	comp-secsh-debug	fido2,debug
 ./usr/libdata/debug/usr/libexec/sshd-auth.debug		comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/sshd-session.debug	comp-secsh-debug	debug
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug

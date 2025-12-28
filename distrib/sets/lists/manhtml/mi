@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2025/12/25 01:15:00 thorpej Exp $
+# $NetBSD: mi,v 1.41 2025/12/28 15:35:00 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -137,9 +137,9 @@
 ./usr/share/man/html1/fdformat.html		man-util-htmlman	html
 ./usr/share/man/html1/fg.html			man-util-htmlman	html
 ./usr/share/man/html1/fgrep.html		man-util-htmlman	html
-./usr/share/man/html1/fido2-assert.html			man-util-htmlman	html
-./usr/share/man/html1/fido2-cred.html			man-util-htmlman	html
-./usr/share/man/html1/fido2-token.html			man-util-htmlman	html
+./usr/share/man/html1/fido2-assert.html			man-util-htmlman	fido2,html
+./usr/share/man/html1/fido2-cred.html			man-util-htmlman	fido2,html
+./usr/share/man/html1/fido2-token.html			man-util-htmlman	fido2,html
 ./usr/share/man/html1/file.html			man-util-htmlman	html
 ./usr/share/man/html1/fincore.html		man-util-htmlman	html
 ./usr/share/man/html1/find.html			man-util-htmlman	html
@@ -696,12 +696,12 @@
 ./usr/share/man/html1/zstdless.html		man-util-htmlman	html
 ./usr/share/man/html1/zstdmt.html		man-util-htmlman	html
 ./usr/share/man/html1/ztest.html		man-zfs-htmlman		zfs,html
-./usr/share/man/html3/eddsa_pk_new.html			man-util-htmlman	html
-./usr/share/man/html3/es256_pk_new.html			man-util-htmlman	html
-./usr/share/man/html3/es384_pk_new.html			man-util-htmlman	html
+./usr/share/man/html3/eddsa_pk_new.html			man-util-htmlman	fido2,html
+./usr/share/man/html3/es256_pk_new.html			man-util-htmlman	fido2,html
+./usr/share/man/html3/es384_pk_new.html			man-util-htmlman	fido2,html
 ./usr/share/man/html3/libbozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,unbound
-./usr/share/man/html3/rs256_pk_new.html			man-util-htmlman	html
+./usr/share/man/html3/rs256_pk_new.html			man-util-htmlman	fido2,html
 ./usr/share/man/html3lua/bozohttpd.html		man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
@@ -3039,7 +3039,7 @@
 ./usr/share/man/html8/sprayd.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/ssh-keysign.html		man-secsh-htmlman	html
 ./usr/share/man/html8/ssh-pkcs11-helper.html	man-secsh-htmlman	html
-./usr/share/man/html8/ssh-sk-helper.html	man-secsh-htmlman	html
+./usr/share/man/html8/ssh-sk-helper.html	man-secsh-htmlman	fido2,html
 ./usr/share/man/html8/sshd.html			man-secsh-htmlman	html
 ./usr/share/man/html8/statd.html		man-nfsserver-htmlman	nfs,html
 ./usr/share/man/html8/stdethers.html		man-nis-htmlman		yp,html

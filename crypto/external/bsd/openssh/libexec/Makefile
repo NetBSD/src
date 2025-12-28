@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2025/04/09 15:49:34 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2025/12/28 15:34:59 thorpej Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ssh-sk-helper sshd-auth sshd-session
+SUBDIR=	sshd-auth sshd-session
+
+.if (${MKFIDO2} != "no")
+SUBDIR+= ssh-sk-helper
+.endif
 
 .include <bsd.subdir.mk>

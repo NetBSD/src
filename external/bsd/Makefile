@@ -1,14 +1,18 @@
-#	$NetBSD: Makefile,v 1.80 2025/12/28 13:31:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.81 2025/12/28 15:35:01 thorpej Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	acpica am-utils bc byacc cron dhcpcd elftoolchain/common \
 	ekermit elftosb fetch file flex ${EXTERNAL_JEMALLOC_SUBDIR} less \
-	libarchive libevent libfido2 liblzf libpcap mdocml \
+	libarchive libevent liblzf libpcap mdocml \
 	ntp openresolv tcpdump tmux top tre zstd
 
 .if (${MKATF} != "no")
 SUBDIR+= atf
+.endif
+
+.if (${MKFIDO2} != "no")
+SUBDIR+= libfido2
 .endif
 
 SUBDIR+= pkg_install

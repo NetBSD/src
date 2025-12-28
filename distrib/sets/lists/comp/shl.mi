@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.364 2025/12/24 20:05:58 thorpej Exp $
+# $NetBSD: shl.mi,v 1.365 2025/12/28 15:35:00 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -46,7 +46,7 @@
 ./usr/lib/libexecinfo_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libexpat_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libfetch_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libfido2_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libfido2_pic.a			comp-c-piclib		fido2,compatfile,picinstall
 ./usr/lib/libform_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete

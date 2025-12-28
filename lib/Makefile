@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.312 2025/12/24 20:05:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.313 2025/12/28 15:35:01 thorpej Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -240,7 +240,10 @@ HEIMDALLIB=	../crypto/external/bsd/heimdal/lib/
 							# libedit, libterminfo,
 .endif
 
+.if (${MKFIDO2} != "no")
 SUBDIR+=	../external/bsd/libfido2/lib	# depends on libcbor
+.endif
+
 NETPGPLIB=	../crypto/external/bsd/netpgp/lib/
 .include "${NETPGPLIB}Makefile.subdir"		# depends on libcrypto, ...
 LIBEVENTLIB=	../external/bsd/libevent/lib/
