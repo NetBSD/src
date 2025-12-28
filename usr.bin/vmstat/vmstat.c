@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.262 2025/02/16 10:56:31 skrll Exp $ */
+/* $NetBSD: vmstat.c,v 1.263 2025/12/28 22:33:28 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.262 2025/02/16 10:56:31 skrll Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.263 2025/12/28 22:33:28 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1772,7 +1772,7 @@ dopoolcache_sysctl(int verbose)
 			    6, "Spin",
 			    6, "GrpSz",
 			    5, "Full",
-			    5, "Emty",
+			    5, "Empty",
 			    10, "PoolLayer",
 			    11, "CacheLayer",
 			    6, "Hit%",
@@ -1864,7 +1864,7 @@ dopoolcache(int verbose)
 			    6, "Spin",
 			    6, "GrpSz",
 			    5, "Full",
-			    5, "Emty",
+			    5, "Empty",
 			    10, "PoolLayer",
 			    11, "CacheLayer",
 			    6, "Hit%",
