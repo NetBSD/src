@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2025/12/22 16:48:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.80 2025/12/28 13:31:19 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -10,39 +10,51 @@ SUBDIR=	acpica am-utils bc byacc cron dhcpcd elftoolchain/common \
 .if (${MKATF} != "no")
 SUBDIR+= atf
 .endif
+
 SUBDIR+= pkg_install
+
 # IP Filter
 .if (${MKIPFILTER} != "no")
 SUBDIR+=ipf
 .endif
+
 .if (${MKISCSI} != "no")
 SUBDIR+= iscsi 
 .endif
+
 .if (${MKKYUA} != "no")
 SUBDIR+= lutok kyua-testers kyua-cli kyua-atf-compat
 .endif
+
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
 .endif
+
 .if (${MKLIBCXX} != "no")
 SUBDIR+= libc++
 .endif
+
 .if (${MKNSD} != "no")
 SUBDIR+= nsd
 .endif
+
 .if ${MKPAM} != "no"
 SUBDIR+= pam-u2f
 .endif
+
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
+
 .if (${MKDTRACE} != "no")
 SUBDIR+= libproc
 SUBDIR+= librtld_db
 .endif
+
 .if ${MKUNBOUND} != "no"
 SUBDIR+= unbound
 .endif
+
 .if ${MKWLAN} != "no"
 SUBDIR+= wpa
 .endif
