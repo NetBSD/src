@@ -4,7 +4,7 @@
  * API compatible reimplementation of function from nacl
  */
 #include "includes.h"
-__RCSID("$NetBSD: hash.c,v 1.8 2025/12/28 09:39:35 nia Exp $");
+__RCSID("$NetBSD: hash.c,v 1.9 2025/12/28 09:54:06 nia Exp $");
 
 #include "crypto_api.h"
 
@@ -33,9 +33,9 @@ crypto_hash_sha512(unsigned char *out, const unsigned char *in,
 
 	SHA512_CTX ctx;
 
-	SHA512_Init(&ctx);
-	SHA512_Update(&ctx, in, inlen);
-	SHA512_Final(out, &ctx);
+	SHA512Init(&ctx);
+	SHA512Update(&ctx, in, inlen);
+	SHA512Final(out, &ctx);
 	return 0;
 }
 #endif /* WITH_OPENSSL */

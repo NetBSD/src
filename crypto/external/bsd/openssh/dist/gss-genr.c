@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-genr.c,v 1.14 2025/12/28 09:39:35 nia Exp $	*/
+/*	$NetBSD: gss-genr.c,v 1.15 2025/12/28 09:54:06 nia Exp $	*/
 /* $OpenBSD: gss-genr.c,v 1.30 2025/09/29 21:28:33 dtucker Exp $ */
 
 /*
@@ -31,7 +31,6 @@ __RCSID("$NetBSD");
 
 #include <limits.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "xmalloc.h"

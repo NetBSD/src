@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey.h,v 1.24 2025/12/28 09:39:35 nia Exp $	*/
+/*	$NetBSD: sshkey.h,v 1.25 2025/12/28 09:54:07 nia Exp $	*/
 /* $OpenBSD: sshkey.h,v 1.70 2025/08/29 03:50:38 djm Exp $ */
 
 /*
@@ -29,7 +29,6 @@
 
 #include "includes.h"
 #include <sys/types.h>
-#include <stdio.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/rsa.h>
