@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144 2025/12/24 20:05:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.145 2025/12/28 19:07:42 thorpej Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -14,7 +14,7 @@ SUBDIR=	amrctl apmlabel atactl badsect bioctl blkdiscard brconfig \
 	newbtconf nologin nvmectl \
 	ping pppoectl raidctl reboot rcorder rndctl route routed \
 	savecore scsictl shutdown slattach svhlabel swapctl sysctl \
-	ttyflags umbctl umount veriexecctl wdogctl wsconsctl
+	ttyflags umount veriexecctl wdogctl wsconsctl
 
 .if ${HAVE_EFI_RT} == "yes"
 SUBDIR+= efi
@@ -148,6 +148,10 @@ SUBDIR+= iscsictl iscsid
 
 .if (${MKIPSEC} != "no")
 SUBDIR+= setkey
+.endif
+
+.if (${MKUSB} != "no")
+SUBDIR+= umbctl
 .endif
 
 .include <bsd.subdir.mk>

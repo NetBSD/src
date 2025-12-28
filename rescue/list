@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.58 2025/12/24 20:05:59 thorpej Exp $
+#	$NetBSD: list,v 1.59 2025/12/28 19:07:42 thorpej Exp $
 
 # Touching this file for:
 #
@@ -93,7 +93,6 @@ PROG	swapctl		swapon
 PROG	sysctl
 PROG	ttyflags
 PROG	tunefs
-PROG	umbctl
 PROG	umount
 PROG	wdogctl
 PROG	veriexecctl

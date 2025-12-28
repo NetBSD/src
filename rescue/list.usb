@@ -1,0 +1,3 @@
+#	$NetBSD: list.usb,v 1.1 2025/12/28 19:07:42 thorpej Exp $
+
+PROG	umbctl

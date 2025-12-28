@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1383 2025/12/28 18:46:48 thorpej Exp $
+# $NetBSD: mi,v 1.1384 2025/12/28 19:07:42 thorpej Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -507,7 +507,7 @@
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
-./sbin/umbctl					base-netutil-root
+./sbin/umbctl					base-netutil-root	usb
 ./sbin/umount					base-sysutil-root
 ./sbin/veriexecctl				base-sysutil-root
 ./sbin/verifiedexec_load			base-obsolete		obsolete

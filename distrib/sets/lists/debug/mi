@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.504 2025/12/28 18:46:48 thorpej Exp $
+# $NetBSD: mi,v 1.505 2025/12/28 19:07:43 thorpej Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -458,7 +458,7 @@
 ./usr/libdata/debug/sbin/tbrconfig.debug	comp-router-debug	debug
 ./usr/libdata/debug/sbin/ttyflags.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tunefs.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/umbctl.debug		comp-netutil-debug	debug
+./usr/libdata/debug/sbin/umbctl.debug		comp-netutil-debug	usb,debug
 ./usr/libdata/debug/sbin/umount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/veriexecctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wdogctl.debug		comp-sysutil-debug	debug

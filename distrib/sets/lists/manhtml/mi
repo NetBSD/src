@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2025/12/28 18:46:49 thorpej Exp $
+# $NetBSD: mi,v 1.45 2025/12/28 19:07:43 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3102,7 +3102,7 @@
 ./usr/share/man/html8/tsig-keygen.html		man-bind-htmlman	bind,html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/umbctl.html		man-netutil-htmlman	html
+./usr/share/man/html8/umbctl.html		man-netutil-htmlman	usb,html
 ./usr/share/man/html8/umcpmioctl.html		man-sysutil-htmlman	usb,html
 ./usr/share/man/html8/umount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/unbound-anchor.html	man-netutil-htmlman	html,unbound

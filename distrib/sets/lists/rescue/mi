@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.5 2025/12/28 18:43:25 thorpej Exp $
+# $NetBSD: mi,v 1.6 2025/12/28 19:07:43 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -155,7 +155,7 @@
 ./rescue/tetris					base-rescue-root
 ./rescue/ttyflags				base-rescue-root
 ./rescue/tunefs					base-rescue-root
-./rescue/umbctl					base-rescue-root
+./rescue/umbctl					base-rescue-root	usb
 ./rescue/umount					base-rescue-root
 ./rescue/veriexecctl				base-rescue-root
 ./rescue/vi					base-rescue-root
