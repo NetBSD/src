@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.301 2025/12/28 16:50:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.302 2025/12/28 19:35:47 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -26,7 +26,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	sliplogin spray \
 	srtconfig sti sunlabel sysinst syslogd \
 	tadpolectl tcpdchk tcpdmatch tcpdrop timed tpctl tprof traceroute trpt \
-	umcpmioctl unlink user \
+	unlink user \
 	videomode vipw veriexecgen vnconfig \
 	wakeonlan wg-keygen wg-userspace wgconfig \
 	wsconscfg wsfontload wsmoused wsmuxctl \
@@ -57,7 +57,7 @@ SUBDIR+= makemandb
 .endif
 
 .if ${MKUSB} != "no"
-SUBDIR+= usbdevs
+SUBDIR+= umcpmioctl usbdevs
 .endif
 
 .if (${MKYP} != "no")
