@@ -1,10 +1,10 @@
-# $NetBSD: domains,v 1.10 2023/04/30 22:33:57 nikita Exp $
+# $NetBSD: domains,v 1.11 2025/12/29 13:47:54 andvar Exp $
 # ISO 3166 country codes, from https://www.iana.org/domains/root/db
-# Last update: Mon May 1 00:31:16 CEST 2023
+# Last update: Mon Dec 29 15:33:03 EET 2025
 #
 .aaa American Automobile Association, Inc.
 .aarp AARP
-.abarth Fiat Chrysler Automobiles N.V.
+.abarth Not assigned
 .abb ABB Ltd
 .abbott Abbott Laboratories, Inc.
 .abbvie AbbVie Inc.
@@ -43,7 +43,7 @@
 .airtel Bharti Airtel Limited
 .akdn Fondation Aga Khan (Aga Khan Foundation)
 .al Electronic and Postal Communications Authority - AKEP
-.alfaromeo Fiat Chrysler Automobiles N.V.
+.alfaromeo Not assigned
 .alibaba Alibaba Group Holding Limited
 .alipay Alibaba Group Holding Limited
 .allfinanz Allfinanz Deutsche Vermögensberatung Aktiengesellschaft
@@ -62,25 +62,25 @@
 .an Not assigned
 .analytics Campus IP LLC
 .android Charleston Road Registry Inc.
-.anquan QIHOO 360 TECHNOLOGY CO. LTD.
+.anquan Beijing Qihu Keji Co., Ltd.
 .anz Australia and New Zealand Banking Group Limited
 .ao Ministry of Telecommunications and Information Technologies (MTTI)
-.aol OATH Inc.
+.aol Yahoo Inc.
 .apartments Binky Moon, LLC
 .app Charleston Road Registry Inc.
 .apple Apple Inc.
 .aq Antarctica Network Information Centre Limited
 .aquarelle Aquarelle.com
-.ar Presidencia de la Nación – Secretaría Legal y Técnica
+.ar Presidencia de la Nación , Secretaría Legal y Técnica
 .arab League of Arab States
 .aramco Aramco Services Company
-.archi Afilias Limited
+.archi Identity Digital Limited
 .army Dog Beach, LLC
 .arpa Internet Architecture Board (IAB)
 .art UK Creative Ideas Limited
 .arte Association Relative à la Télévision Européenne G.E.I.E.
 .as AS Domain Registry
-.asda Wal-Mart Stores, Inc.
+.asda Asda Stores Limited
 .asia DotAsia Organisation Ltd.
 .associates Binky Moon, LLC
 .at nic.at GmbH
@@ -95,18 +95,18 @@
 .author Amazon Registry Services, Inc.
 .auto XYZ.COM LLC
 .autos XYZ.COM LLC
-.avianca Avianca Holdings S.A.
+.avianca Not assigned
 .aw SETAR
 .aws AWS Registry LLC
 .ax Ålands landskapsregering
 .axa AXA Group Operations SAS
 .az IntraNS
 .azure Microsoft Corporation
-.ba Universtiy Telinformatic Centre (UTIC)
+.ba University Tele-Informatic Center (UTIC)
 .baby XYZ.COM LLC
 .baidu Baidu, Inc.
 .banamex Citigroup Inc.
-.bananarepublic The Gap, Inc.
+.bananarepublic Not assigned
 .band Dog Beach, LLC
 .bank fTLD Registry Services, LLC
 .bar Punto 2012 Sociedad Anonima Promotora de Inversion de Capital Variable
@@ -130,12 +130,12 @@
 .beats Beats Electronics, LLC
 .beauty XYZ.COM LLC
 .beer Registry Services, LLC
-.bentley Bentley Motors Limited
+.bentley Not assigned
 .berlin dotBERLIN GmbH &amp; Co. KG
 .best BestTLD Pty Ltd
 .bestbuy BBY Solutions, Inc.
-.bet Afilias Limited
-.bf ARCE-AutoritÈ de RÈgulation des Communications Electroniques
+.bet Identity Digital Limited
+.bf Autorité de Régulation des Communications Electroniques et des Postes (ARCEP)
 .bg Register.BG
 .bh Telecommunications Regulatory Authority (TRA)
 .bharti Bharti Enterprises (Holding) Private Limited
@@ -145,17 +145,17 @@
 .bike Binky Moon, LLC
 .bing Microsoft Corporation
 .bingo Binky Moon, LLC
-.bio Afilias Limited
+.bio Identity Digital Limited
 .biz Registry Services, LLC
 .bj Autorité de Régulation des Communications Electroniques et de la Poste du Bénin (ARCEP BENIN)
 .bl Not assigned
-.black Afilias Limited
+.black Identity Digital Limited
 .blackfriday Registry Services, LLC
 .blanco Not assigned
 .blockbuster Dish DBS Corporation
 .blog Knock Knock WHOIS There, LLC
 .bloomberg Bloomberg IP Holdings LLC
-.blue Afilias Limited
+.blue Identity Digital Limited
 .bm Registry General Department, Ministry of Home Affairs
 .bms Bristol-Myers Squibb Company
 .bmw Bayerische Motoren Werke Aktiengesellschaft
@@ -223,7 +223,7 @@
 .cars XYZ.COM LLC
 .cartier Not assigned
 .casa Registry Services, LLC
-.case CNH Industrial N.V.
+.case Digity, LLC
 .caseih Not assigned
 .cash Binky Moon, LLC
 .casino Binky Moon, LLC
@@ -233,16 +233,16 @@
 .cba COMMONWEALTH BANK OF AUSTRALIA
 .cbn The Christian Broadcasting Network, Inc.
 .cbre CBRE, Inc.
-.cbs CBS Domains Inc.
-.cc eNIC Cocos (Keeling) Islands Pty.Ltd. d/b/a Island Internet Services
+.cbs Not assigned
+.cc eNIC Cocos (Keeling) Islands Pty. Ltd. d/b/a Island Internet Services
 .cd Office Congolais des Postes et Télécommunications - OCPT
 .ceb Not assigned
 .center Binky Moon, LLC
-.ceo CEOTLD Pty Ltd
+.ceo XYZ.COM LLC
 .cern European Organization for Nuclear Research ("CERN")
 .cf Societe Centrafricaine de Telecommunications (SOCATEL)
 .cfa CFA Institute
-.cfd DOTCFD REGISTRY LTD
+.cfd Shortdot SA
 .cg Interpoint Switzerland
 .ch SWITCH The Swiss Education &amp; Research Network
 .chanel Chanel International B.V.
@@ -265,7 +265,7 @@
 .citi Citigroup Inc.
 .citic CITIC Group Corporation
 .city Binky Moon, LLC
-.cityeats Lifestyle Domain Holdings, Inc.
+.cityeats Not assigned
 .ck Telecom Cook Islands Ltd.
 .cl NIC Chile (University of Chile)
 .claims Binky Moon, LLC
@@ -277,7 +277,7 @@
 .cloud ARUBA PEC S.p.A.
 .club Registry Services, LLC
 .clubmed Club Méditerranée S.A.
-.cm Cameroon Telecommunications (CAMTEL)
+.cm Agence Nationale des Technologies de l&#x27;Information et de la Communication (ANTIC)
 .cn China Internet Network Information Center (CNNIC)
 .co Ministry of Information and Communications Technologies (MinTIC)
 .coach Binky Moon, LLC
@@ -286,7 +286,7 @@
 .college XYZ.COM LLC
 .cologne dotKoeln GmbH
 .com VeriSign Global Registry Services
-.comcast Comcast IP Holdings I, LLC
+.comcast Not assigned
 .commbank COMMONWEALTH BANK OF AUSTRALIA
 .community Binky Moon, LLC
 .company Binky Moon, LLC
@@ -299,7 +299,7 @@
 .contact Dog Beach, LLC
 .contractors Binky Moon, LLC
 .cooking Registry Services, LLC
-.cookingchannel Lifestyle Domain Holdings, Inc.
+.cookingchannel Not assigned
 .cool Binky Moon, LLC
 .coop DotCooperation LLC
 .corsica Collectivité de Corse
@@ -308,7 +308,7 @@
 .coupons Binky Moon, LLC
 .courses Registry Services, LLC
 .cpa American Institute of Certified Public Accountants
-.cr National Academy of SciencesAcademia Nacional de Ciencias
+.cr National Academy of Sciences (Academia Nacional de Ciencias)
 .credit Binky Moon, LLC
 .creditcard Binky Moon, LLC
 .creditunion DotCooperation, LLC
@@ -318,7 +318,7 @@
 .cruise Viking River Cruises (Bermuda) Ltd.
 .cruises Binky Moon, LLC
 .csc Not assigned
-.cu CENIAInternetIndustria y San JoseCapitolio Nacional
+.cu CENIAInternet
 .cuisinella SCHMIDT GROUPE S.A.S.
 .cv Agência Reguladora Multissectorial da Economia (ARME)
 .cw University of Curacao
@@ -327,7 +327,7 @@
 .cymru Nominet UK
 .cyou Shortdot SA
 .cz CZ.NIC, z.s.p.o
-.dabur Dabur India Limited
+.dabur Not assigned
 .dad Charleston Road Registry Inc.
 .dance Dog Beach, LLC
 .data Dish DBS Corporation
@@ -349,7 +349,7 @@
 .democrat Dog Beach, LLC
 .dental Binky Moon, LLC
 .dentist Dog Beach, LLC
-.desi Desi Networks LLC
+.desi Emergency Back-End Registry Operator Program - ICANN
 .design Registry Services, LLC
 .dev Charleston Road Registry Inc.
 .dhl Deutsche Post AG
@@ -361,12 +361,12 @@
 .discount Binky Moon, LLC
 .discover Discover Financial Services
 .dish Dish DBS Corporation
-.diy Lifestyle Domain Holdings, Inc.
+.diy Internet Naming Co.
 .dj Djibouti Telecom S.A
 .dk Dansk Internet Forum
 .dm DotDM Corporation
 .dnp Dai Nippon Printing Co., Ltd.
-.do Pontificia Universidad Catolica Madre y MaestraRecinto Santo Tomas de Aquino
+.do Pontificia Universidad Catolica Madre y Maestra, Recinto Santo Tomas de Aquino
 .docs Charleston Road Registry Inc.
 .doctor Binky Moon, LLC
 .dodge Not assigned
@@ -380,12 +380,12 @@
 .dtv Dish DBS Corporation
 .dubai Dubai Smart Government Department
 .duck Not assigned
-.dunlop The Goodyear Tire &amp; Rubber Company
+.dunlop Not assigned
 .duns Not assigned
 .dupont DuPont Specialty Products USA, LLC
 .durban ZA Central Registry NPC trading as ZA Central Registry
 .dvag Deutsche Vermögensberatung Aktiengesellschaft DVAG
-.dvr Hughes Satellite Systems Corporation
+.dvr DISH Technologies L.L.C.
 .dz CERIST
 .earth Interlink Systems Innovation Institute K.K.
 .eat Charleston Road Registry Inc.
@@ -395,10 +395,11 @@
 .edu EDUCAUSE
 .education Binky Moon, LLC
 .ee Eesti Interneti Sihtasutus (EIS)
-.eg Egyptian Universities Network (EUN)Supreme Council of Universities
+.eg Egyptian Universities Network (EUN), Supreme Council of Universities
 .eh Not assigned
 .email Binky Moon, LLC
 .emerck Merck KGaA
+.emerson Not assigned
 .energy Binky Moon, LLC
 .engineer Dog Beach, LLC
 .engineering Binky Moon, LLC
@@ -414,8 +415,8 @@
 .estate Binky Moon, LLC
 .esurance Not assigned
 .et Ethio telecom
-.etisalat Emirates Telecommunications Corporation (trading as Etisalat)
-.eu EURid vzw/asbl
+.etisalat Not assigned
+.eu EURid vzw
 .eurovision European Broadcasting Union (EBU)
 .eus Puntueus Fundazioa
 .events Binky Moon, LLC
@@ -441,7 +442,7 @@
 .ferrari Fiat Chrysler Automobiles N.V.
 .ferrero Ferrero Trading Lux S.A.
 .fi Finnish Transport and Communications Agency Traficom
-.fiat Fiat Chrysler Automobiles N.V.
+.fiat Not assigned
 .fidelity Fidelity Brokerage Services LLC
 .fido Rogers Communications Canada Inc.
 .film Motion Picture Domain Registry Pty Ltd
@@ -467,8 +468,8 @@
 .fm FSM Telecommunications Corporation
 .fo FO Council
 .foo Charleston Road Registry Inc.
-.food Lifestyle Domain Holdings, Inc.
-.foodnetwork Lifestyle Domain Holdings, Inc.
+.food Internet Naming Co.
+.foodnetwork Not assigned
 .football Binky Moon, LLC
 .ford Ford Motor Company
 .forex Dog Beach, LLC
@@ -481,12 +482,12 @@
 .fresenius Fresenius Immobilien-Verwaltungs-GmbH
 .frl FRLregistry B.V.
 .frogans OP3FT
-.frontdoor Lifestyle Domain Holdings, Inc.
+.frontdoor Not assigned
 .frontier Frontier Communications Corporation
 .ftr Frontier Communications Corporation
 .fujitsu Fujitsu Limited
 .fujixerox Not assigned
-.fun Radix FZC
+.fun Radix Technologies Inc.
 .fund Binky Moon, LLC
 .furniture Binky Moon, LLC
 .futbol Dog Beach, LLC
@@ -500,7 +501,7 @@
 .games Dog Beach, LLC
 .gap The Gap, Inc.
 .garden Registry Services, LLC
-.gay Top Level Design, LLC
+.gay Registry Services, LLC
 .gb Reserved Domain - IANA
 .gbiz Charleston Road Registry Inc.
 .gd The National Telecommunications Regulatory Commission (NTRC)
@@ -523,7 +524,7 @@
 .glade Not assigned
 .glass Binky Moon, LLC
 .gle Charleston Road Registry Inc.
-.global Dot Global Domain Registry Limited
+.global Identity Digital Limited
 .globo Globo Comunicação e Participações S.A
 .gm GM-NIC
 .gmail Charleston Road Registry Inc.
@@ -549,14 +550,14 @@
 .grainger Grainger Registry Services, LLC
 .graphics Binky Moon, LLC
 .gratis Binky Moon, LLC
-.green Afilias Limited
+.green Identity Digital Limited
 .gripe Binky Moon, LLC
 .grocery Wal-Mart Stores, Inc.
 .group Binky Moon, LLC
 .gs Government of South Georgia and South Sandwich Islands (GSGSSI)
 .gt Universidad del Valle de Guatemala
 .gu University of Guam
-.guardian The Guardian Life Insurance Company of America
+.guardian Not assigned
 .gucci Guccio Gucci S.p.a.
 .guge Charleston Road Registry Inc.
 .guide Binky Moon, LLC
@@ -571,13 +572,13 @@
 .hbo HBO Registry Services, Inc.
 .hdfc HOUSING DEVELOPMENT FINANCE CORPORATION LIMITED
 .hdfcbank HDFC Bank Limited
-.health DotHealth, LLC
+.health Registry Services, LLC
 .healthcare Binky Moon, LLC
-.help UNR Corp.
+.help Innovation Service Ltd
 .helsinki City of Helsinki
 .here Charleston Road Registry Inc.
 .hermes Hermes International
-.hgtv Lifestyle Domain Holdings, Inc.
+.hgtv Not assigned
 .hiphop Dot Hip Hop, LLC
 .hisamitsu Hisamitsu Pharmaceutical Co.,Inc.
 .hitachi Hitachi, Ltd.
@@ -597,10 +598,10 @@
 .honeywell Not assigned
 .horse Registry Services, LLC
 .hospital Binky Moon, LLC
-.host Radix FZC
+.host Radix Technologies Inc.
 .hosting XYZ.COM LLC
 .hot Amazon Registry Services, Inc.
-.hoteles Travel Reservations SRL
+.hoteles Not assigned
 .hotels Booking.com B.V.
 .hotmail Microsoft Corporation
 .house Binky Moon, LLC
@@ -618,7 +619,7 @@
 .ice IntercontinentalExchange, Inc.
 .icu Shortdot SA
 .id Perkumpulan Pengelola Nama Domain Internet Indonesia (PANDI)
-.ie University College DublinComputing ServicesComputer Centre
+.ie University College Dublin, Computing Services, Computer Centre
 .ieee IEEE Global LLC
 .ifm ifm electronic gmbh
 .iinet Not assigned
@@ -633,9 +634,9 @@
 .inc Intercap Registry Inc.
 .industries Binky Moon, LLC
 .infiniti NISSAN MOTOR CO., LTD.
-.info Afilias Limited
+.info Identity Digital Limited
 .ing Charleston Road Registry Inc.
-.ink Top Level Design, LLC
+.ink Registry Services, LLC
 .institute Binky Moon, LLC
 .insurance fTLD Registry Services LLC
 .insure Binky Moon, LLC
@@ -649,7 +650,7 @@
 .iq Communications and Media Commission (CMC)
 .ir Institute for Research in Fundamental Sciences
 .irish Binky Moon, LLC
-.is ISNIC - Internet Iceland ltd.
+.is ISNIC - Internet á Íslandi hf.
 .iselect Not assigned
 .ismaili Fondation Aga Khan (Aga Khan Foundation)
 .ist Istanbul Metropolitan Municipality
@@ -667,7 +668,7 @@
 .jeep FCA US LLC.
 .jetzt Binky Moon, LLC
 .jewelry Binky Moon, LLC
-.jio Affinity Names, Inc.
+.jio Reliance Industries Limited
 .jlc Not assigned
 .jll Jones Lang LaSalle Incorporated
 .jm University of West Indies
@@ -681,22 +682,22 @@
 .jp Japan Registry Services Co., Ltd.
 .jpmorgan JPMorgan Chase Bank, National Association
 .jprs Japan Registry Services Co., Ltd.
-.juegos Internet Naming Company LLC
+.juegos Dog Beach, LLC
 .juniper JUNIPER NETWORKS, INC.
 .kaufen Dog Beach, LLC
 .kddi KDDI CORPORATION
 .ke Kenya Network Information Center (KeNIC)
 .kerryhotels Kerry Trading Co. Limited
-.kerrylogistics Kerry Trading Co. Limited
+.kerrylogistics Not assigned
 .kerryproperties Kerry Trading Co. Limited
 .kfh Kuwait Finance House
 .kg AsiaInfo Telecommunication Enterprise
 .kh Telecommunication Regulator of Cambodia (TRC)
-.ki Ministry of Communications, Transport, and Tourism Development
+.ki Ministry of Information, Communications and Transport (MICT)
 .kia KIA MOTORS CORPORATION
 .kids DotKids Foundation Limited
-.kim Afilias Limited
-.kinder Ferrero Trading Lux S.A.
+.kim Identity Digital Limited
+.kinder Not assigned
 .kindle Amazon Registry Services, Inc.
 .kitchen Binky Moon, LLC
 .kiwi DOT KIWI LIMITED
@@ -716,13 +717,13 @@
 .ky Utility Regulation and Competition Office (OfReg)
 .kyoto Academic Institution
 .kz Association of IT Companies of Kazakhstan
-.la Lao National Internet Center (LANIC),Ministry of Technology and Communications
-.lacaixa CAIXA D&#x27;ESTALVIS I PENSIONS DE BARCELONA
+.la Lao National Internet Center (LANIC), Ministry of Technology and Communications
+.lacaixa Fundación Bancaria Caixa d&#x27;Estalvis i Pensions de Barcelona, "la Caixa"
 .ladbrokes Not assigned
 .lamborghini Automobili Lamborghini S.p.A.
 .lamer The Estée Lauder Companies Inc.
-.lancaster LANCASTER
-.lancia Fiat Chrysler Automobiles N.V.
+.lancaster Not assigned
+.lancia Not assigned
 .lancome Not assigned
 .land Binky Moon, LLC
 .landrover Jaguar Land Rover Ltd
@@ -733,7 +734,7 @@
 .latrobe La Trobe University
 .law Registry Services, LLC
 .lawyer Dog Beach, LLC
-.lb American University of BeirutComputing and Networking Services
+.lb Internet Society Lebanon
 .lc University of Puerto Rico
 .lds IRI Domain Management, LLC
 .lease Binky Moon, LLC
@@ -742,13 +743,13 @@
 .legal Binky Moon, LLC
 .lego LEGO Juris A/S
 .lexus TOYOTA MOTOR CORPORATION
-.lgbt Afilias Limited
+.lgbt Identity Digital Limited
 .li SWITCH The Swiss Education &amp; Research Network
 .liaison Not assigned
 .lidl Schwarz Domains und Services GmbH &amp; Co. KG
 .life Binky Moon, LLC
 .lifeinsurance American Council of Life Insurers
-.lifestyle Lifestyle Domain Holdings, Inc.
+.lifestyle Internet Naming Co.
 .lighting Binky Moon, LLC
 .like Amazon Registry Services, Inc.
 .lilly Eli Lilly and Company
@@ -757,23 +758,23 @@
 .lincoln Ford Motor Company
 .linde Not assigned
 .link Nova Registry Ltd.
-.lipsy Lipsy Ltd
+.lipsy Not assigned
 .live Dog Beach, LLC
-.living Lifestyle Domain Holdings, Inc.
+.living Internet Naming Co.
 .lixil Not assigned
 .lk Council for Information TechnologyLK Domain Registrar
-.llc Afilias Limited
+.llc Identity Digital Limited
 .llp Intercap Registry Inc.
 .loan dot Loan Limited
 .loans Binky Moon, LLC
-.locker Dish DBS Corporation
+.locker Orange Domains LLC
 .locus Locus Analytics LLC
 .loft Not assigned
 .lol XYZ.COM LLC
 .london Dot London Domains Limited
 .lotte Lotte Holdings Co., Ltd.
-.lotto Afilias Limited
-.love Merchant Law Group LLP
+.lotto Identity Digital Limited
+.love Waterford Limited
 .lpl LPL Holdings, Inc.
 .lplfinancial LPL Holdings, Inc.
 .lr Data Technology Solutions, Inc.
@@ -786,15 +787,15 @@
 .lupin Not assigned
 .luxe Registry Services, LLC
 .luxury Luxury Partners LLC
-.lv University of LatviaInstitute of Mathematics and Computer ScienceDepartment of Network Solutions (DNS)
-.ly General Post and Telecommunication Company
+.lv University of Latvia, Institute of Mathematics and Computer Science, Department of Network Solutions (DNS)
+.ly General Authority of Communications and Informatics (GACI)
 .ma Agence Nationale de Réglementation des Télécommunications (ANRT)
 .macys Not assigned
 .madrid Comunidad de Madrid
 .maif Mutuelle Assurance Instituteur France (MAIF)
 .maison Binky Moon, LLC
 .makeup XYZ.COM LLC
-.man MAN SE
+.man MAN Truck &amp; Bus SE
 .management Binky Moon, LLC
 .mango PUNTO FA S.L.
 .map Charleston Road Registry Inc.
@@ -803,8 +804,8 @@
 .markets Dog Beach, LLC
 .marriott Marriott Worldwide Corporation
 .marshalls The TJX Companies, Inc.
-.maserati Fiat Chrysler Automobiles N.V.
-.mattel Mattel Sites, Inc.
+.maserati Not assigned
+.mattel Mattel IT Services, Inc.
 .mba Binky Moon, LLC
 .mc Direction des Plateformes et des Ressources Numériques
 .mcd Not assigned
@@ -841,7 +842,7 @@
 .mma MMA IARD
 .mn Datacom Co., Ltd.
 .mo Macao Post and Telecommunications Bureau (CTT)
-.mobi Afilias Limited
+.mobi Identity Digital Limited
 .mobile Dish DBS Corporation
 .mobily Not assigned
 .moda Dog Beach, LLC
@@ -873,10 +874,10 @@
 .mu Internet Direct Ltd
 .museum Museum Domain Management Association
 .music DotMusic Limited
-.mutual Northwestern Mutual MU TLD Registry, LLC
+.mutual Not assigned
 .mutuelle Not assigned
-.mv Dhiraagu Pvt. Ltd. (DHIVEHINET)
-.mw Malawi Sustainable Development Network Programme(Malawi SDNP)
+.mv Dhivehi Raajjeyge Gulhun PLC
+.mw Malawi Sustainable Development Network Programme (Malawi SDNP)
 .mx NIC-MexicoITESM - Campus Monterrey
 .my MYNIC Berhad
 .mz Centro de Informatica de Universidade Eduardo Mondlane
@@ -886,7 +887,7 @@
 .nagoya GMO Registry, Inc.
 .name VeriSign Information Services, Inc.
 .nationwide Not assigned
-.natura NATURA COSMÉTICOS S.A.
+.natura Not assigned
 .navy Dog Beach, LLC
 .nba NBA REGISTRY, LLC
 .nc Office des Postes et Telecommunications
@@ -908,7 +909,7 @@
 .ng Nigeria Internet Registration Association
 .ngo Public Interest Registry
 .nhk Japan Broadcasting Corporation (NHK)
-.ni Universidad Nacional del IngernieriaCentro de Computo
+.ni Universidad Nacional del Ingernieria. Division de Tecnologias de la Informacion.
 .nico DWANGO Co., Ltd.
 .nike NIKE, Inc.
 .nikon NIKON CORPORATION
@@ -918,41 +919,41 @@
 .nl SIDN (Stichting Internet Domeinregistratie Nederland)
 .no Norid A/S
 .nokia Nokia Corporation
-.northwesternmutual Northwestern Mutual Registry, LLC
-.norton Symantec Corporation
+.northwesternmutual Not assigned
+.norton Gen Digital Inc.
 .now Amazon Registry Services, Inc.
-.nowruz Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.nowruz Emergency Back-End Registry Operator Program - ICANN
 .nowtv Starbucks (HK) Limited
 .np Mercantile Communications Pvt. Ltd.
 .nr CENPAC NET
-.nra NRA Holdings Company, INC.
+.nra National Rifle Association of America
 .nrw Minds + Machines GmbH
 .ntt NIPPON TELEGRAPH AND TELEPHONE CORPORATION
 .nu The IUSN Foundation
 .nyc The City of New York by and through the New York City Department of Information Technology &amp; Telecommunications
 .nz InternetNZ
 .obi OBI Group Holding SE &amp; Co. KGaA
-.observer Dog Beach, LLC
+.observer Fegistry, LLC
 .off Not assigned
 .office Microsoft Corporation
 .okinawa BRregistry, Inc.
-.olayan Crescent Holding GmbH
-.olayangroup Crescent Holding GmbH
-.oldnavy The Gap, Inc.
+.olayan Competrol (Luxembourg) Sarl
+.olayangroup Competrol (Luxembourg) Sarl
+.oldnavy Not assigned
 .ollo Dish DBS Corporation
 .om Telecommunications Regulatory Authority (TRA)
 .omega The Swatch Group Ltd
 .one One.com A/S
 .ong Public Interest Registry
 .onl iRegistry GmbH
-.online Radix FZC
+.online Radix Technologies Inc. SEZC
 .onyourside Not assigned
-.ooo INFIBEAM INCORPORATION LIMITED
+.ooo INFIBEAM AVENUES LIMITED
 .open American Express Travel Related Services Company, Inc.
 .oracle Oracle Corporation
 .orange Orange Brand Services Limited
 .org Public Interest Registry (PIR)
-.organic Afilias Limited
+.organic Identity Digital Limited
 .orientexpress Not assigned
 .origins The Estée Lauder Companies Inc.
 .osaka Osaka Registry Co., Ltd.
@@ -965,18 +966,18 @@
 .panasonic Panasonic Corporation
 .panerai Not assigned
 .paris City of Paris
-.pars Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.pars Emergency Back-End Registry Operator Program - ICANN
 .partners Binky Moon, LLC
 .parts Binky Moon, LLC
 .party Blue Sky Registry Limited
-.passagens Travel Reservations SRL
+.passagens Not assigned
 .pay Amazon Registry Services, Inc.
 .pccw PCCW Enterprises Limited
 .pe Red Cientifica Peruana
-.pet Afilias Limited
+.pet Identity Digital Limited
 .pf Gouvernement de la Polynésie française
 .pfizer Pfizer Inc.
-.pg PNG DNS AdministrationVice Chancellors OfficeThe Papua New Guinea University of Technology
+.pg PNG DNS Administration, Vice Chancellors Office, The Papua New Guinea University of Technology
 .ph PH Domain Foundation
 .pharmacy National Association of Boards of Pharmacy
 .phd Charleston Road Registry Inc.
@@ -988,12 +989,12 @@
 .physio PhysBiz Pty Ltd
 .piaget Not assigned
 .pics XYZ.COM LLC
-.pictet Pictet Europe S.A.
+.pictet Banque Pictet &amp; Cie SA
 .pictures Binky Moon, LLC
 .pid Top Level Spectrum, Inc.
 .pin Amazon Registry Services, Inc.
 .ping Ping Registry Provider, Inc.
-.pink Afilias Limited
+.pink Identity Digital Limited
 .pioneer Pioneer Corporation
 .pizza Binky Moon, LLC
 .pk PKNIC
@@ -1007,27 +1008,27 @@
 .pn Pitcairn Island Administration
 .pnc PNC Domain Co., LLC
 .pohl Deutsche Vermögensberatung Aktiengesellschaft DVAG
-.poker Afilias Limited
+.poker Identity Digital Limited
 .politie Politie Nederland
 .porn ICM Registry PN LLC
 .post Universal Postal Union
 .pr Gauss Research Laboratory Inc.
-.pramerica Prudential Financial, Inc.
+.pramerica Not assigned
 .praxi Praxi S.p.A.
-.press Radix FZC
+.press Radix Technologies Inc.
 .prime Amazon Registry Services, Inc.
-.pro Afilias Limited
+.pro Identity Digital Limited
 .prod Charleston Road Registry Inc.
 .productions Binky Moon, LLC
 .prof Charleston Road Registry Inc.
 .progressive Progressive Casualty Insurance Company
-.promo Afilias Limited
+.promo Identity Digital Limited
 .properties Binky Moon, LLC
-.property Internet Naming Co.
+.property Digital Property Infrastructure Limited
 .protection XYZ.COM LLC
 .pru Prudential Financial, Inc.
 .prudential Prudential Financial, Inc.
-.ps Ministry Of Telecommunications &amp;Information Technology,Government Computer Center.
+.ps Ministry of Telecommunications &amp; Information Technology, Government Computer Center
 .pt Associação DNS.PT
 .pub Dog Beach, LLC
 .pw Micronesia Investment and Development Corporation
@@ -1045,10 +1046,10 @@
 .read Amazon Registry Services, Inc.
 .realestate dotRealEstate LLC
 .realtor Real Estate Domains LLC
-.realty Dog Beach, LLC
+.realty Internet Naming Co.
 .recipes Binky Moon, LLC
-.red Afilias Limited
-.redstone Redstone Haute Couture Co., Ltd.
+.red Identity Digital Limited
+.redstone Not assigned
 .redumbrella Travelers TLD, LLC
 .rehab Dog Beach, LLC
 .reise Binky Moon, LLC
@@ -1075,7 +1076,7 @@
 .rip Dog Beach, LLC
 .rmit Not assigned
 .ro National Institute for R&amp;D in Informatics
-.rocher Ferrero Trading Lux S.A.
+.rocher Not assigned
 .rocks Dog Beach, LLC
 .rodeo Registry Services, LLC
 .rogers Rogers Communications Canada Inc.
@@ -1089,7 +1090,7 @@
 .rw Rwanda Internet Community and Technology Alliance (RICTA) Ltd
 .rwe RWE AG
 .ryukyu BRregistry, Inc.
-.sa Communications and Information Technology Commission
+.sa Communications, Space and Technology Commission
 .saarland dotSaarland GmbH
 .safe Amazon Registry Services, Inc.
 .safety Safety Registry Services, LLC.
@@ -1109,9 +1110,9 @@
 .saxo Saxo Bank A/S
 .sb Solomon Telekom Company Limited
 .sbi STATE BANK OF INDIA
-.sbs SPECIAL BROADCASTING SERVICE CORPORATION
+.sbs Shortdot SA
 .sc VCS Pty Ltd
-.sca SVENSKA CELLULOSA AKTIEBOLAGET SCA (publ)
+.sca Not assigned
 .scb The Siam Commercial Bank Public Company Limited ("SCB")
 .schaeffler Schaeffler Technologies AG &amp; Co. KG
 .schmidt SCHMIDT GROUPE S.A.S.
@@ -1143,35 +1144,35 @@
 .sh Government of St. Helena
 .shangrila Shangri-La International Hotel Management Limited
 .sharp Sharp Corporation
-.shaw Shaw Cablesystems G.P.
+.shaw Not assigned
 .shell Shell Information Technology International Inc
-.shia Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
-.shiksha Afilias Limited
+.shia Emergency Back-End Registry Operator Program - ICANN
+.shiksha Identity Digital Limited
 .shoes Binky Moon, LLC
 .shop GMO Registry, Inc.
 .shopping Binky Moon, LLC
-.shouji QIHOO 360 TECHNOLOGY CO. LTD.
+.shouji Beijing Qihu Keji Co., Ltd.
 .show Binky Moon, LLC
-.showtime CBS Domains Inc.
+.showtime Not assigned
 .shriram Not assigned
 .si Academic and Research Network of Slovenia (ARNES)
 .silk Amazon Registry Services, Inc.
 .sina Sina Corporation
 .singles Binky Moon, LLC
-.site Radix FZC
+.site Radix Technologies Inc. SEZC
 .sj Norid A/S
 .sk SK-NIC, a.s.
-.ski Afilias Limited
+.ski Identity Digital Limited
 .skin XYZ.COM LLC
-.sky Sky International AG
+.sky Sky UK Limited
 .skype Microsoft Corporation
 .sl Sierratel
-.sling Hughes Satellite Systems Corporation
+.sling DISH Technologies L.L.C.
 .sm Telecom Italia San Marino S.p.A.
 .smart Smart Communications, Inc. (SMART)
 .smile Amazon Registry Services, Inc.
 .sn Universite Cheikh Anta Diop
-.sncf SNCF (Société Nationale des Chemins de fer Francais)
+.sncf Société Nationale SNCF
 .so Ministry of Post and Telecommunications
 .soccer Binky Moon, LLC
 .social Dog Beach, LLC
@@ -1184,9 +1185,9 @@
 .sony Sony Corporation
 .soy Charleston Road Registry Inc.
 .spa Asia Spa and Wellness Promotion Council Limited
-.space Radix FZC
+.space Radix Technologies Inc.
 .spiegel Not assigned
-.sport Global Association of International Sports Federations (GAISF)
+.sport SportAccord
 .spot Amazon Registry Services, Inc.
 .spreadbetting Not assigned
 .sr Telesur
@@ -1205,12 +1206,12 @@
 .stcgroup Saudi Telecom Company
 .stockholm Stockholms kommun
 .storage XYZ.COM LLC
-.store Radix FZC
+.store Radix Technologies Inc.
 .stream dot Stream Limited
 .studio Dog Beach, LLC
 .study Registry Services, LLC
 .style Binky Moon, LLC
-.su Russian Institute for Development of Public Networks(ROSNIIROS)
+.su Russian Institute for Development of Public Networks (ROSNIIROS)
 .sucks Vox Populi Registry Ltd.
 .supplies Binky Moon, LLC
 .supply Binky Moon, LLC
@@ -1223,7 +1224,7 @@
 .swiftcover Not assigned
 .swiss Swiss Confederation
 .sx SX Registry SA B.V.
-.sy National Agency for Network Services (NANS)
+.sy National Authority for Information Technology Services (NAITS)
 .sydney State of New South Wales, Department of Premier and Cabinet
 .symantec Not assigned
 .systems Binky Moon, LLC
@@ -1235,15 +1236,15 @@
 .target Target Domain Holdings, LLC
 .tatamotors Tata Motors Ltd
 .tatar Limited Liability Company "Coordination Center of Regional Domain of Tatarstan Republic"
-.tattoo Top Level Design, LLC
+.tattoo Registry Services, LLC
 .tax Binky Moon, LLC
 .taxi Binky Moon, LLC
 .tc Melrex TC
-.tci Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.tci Emergency Back-End Registry Operator Program - ICANN
 .td l&#x27;Agence de Développement des Technologies de l&#x27;Information et de la Communication (ADETIC)
 .tdk TDK Corporation
 .team Binky Moon, LLC
-.tech Radix FZC
+.tech Radix Technologies Inc.
 .technology Binky Moon, LLC
 .tel Telnames Ltd.
 .telecity Not assigned
@@ -1260,7 +1261,7 @@
 .tiaa Teachers Insurance and Annuity Association of America
 .tickets XYZ.COM LLC
 .tienda Binky Moon, LLC
-.tiffany Tiffany and Company
+.tiffany Not assigned
 .tips Binky Moon, LLC
 .tires Binky Moon, LLC
 .tirol punkt Tirol GmbH
@@ -1273,14 +1274,14 @@
 .tm TM Domain Registry Ltd
 .tmall Alibaba Group Holding Limited
 .tn Agence Tunisienne d&#x27;Internet
-.to Government of the Kingdom of TongaH.R.H. Crown Prince Tupouto&#x27;ac/o Consulate of Tonga
+.to Government of the Kingdom of Tonga, H.R.H. Crown Prince Tupouto&#x27;a, c/o Consulate of Tonga
 .today Binky Moon, LLC
 .tokyo GMO Registry, Inc.
 .tools Binky Moon, LLC
-.top Jiangsu Bangning Science &amp; Technology Co.,Ltd.
+.top .TOP Registry
 .toray Toray Industries, Inc.
 .toshiba TOSHIBA Corporation
-.total Total SA
+.total TotalEnergies SE
 .tours Binky Moon, LLC
 .town Binky Moon, LLC
 .toyota TOYOTA MOTOR CORPORATION
@@ -1291,17 +1292,17 @@
 .trading Dog Beach, LLC
 .training Binky Moon, LLC
 .travel Dog Beach, LLC
-.travelchannel Lifestyle Domain Holdings, Inc.
+.travelchannel Not assigned
 .travelers Travelers TLD, LLC
 .travelersinsurance Travelers TLD, LLC
 .trust Internet Naming Co.
 .trv Travelers TLD, LLC
-.tt University of the West IndiesFaculty of Engineering
+.tt University of the West Indies, Faculty of Engineering
 .tube Latin American Telecom LLC
 .tui TUI AG
 .tunes Amazon Registry Services, Inc.
 .tushu Amazon Registry Services, Inc.
-.tv Ministry of Justice, Communications and Foreign Affairs
+.tv Ministry of Transport, Energy, Communications and Innovations
 .tvs T V SUNDRAM IYENGAR &amp; SONS PRIVATE LIMITED
 .tw Taiwan Network Information Center (TWNIC)
 .tz Tanzania Communications Regulatory Authority
@@ -1314,7 +1315,7 @@
 .um Not assigned
 .unicom China United Network Communications Corporation Limited
 .university Binky Moon, LLC
-.uno Radix FZC
+.uno Radix Technologies Inc.
 .uol UBN INTERNET LTDA.
 .ups UPS Market Driver, Inc.
 .us Registry Services, LLC
@@ -1322,7 +1323,7 @@
 .uz Single Integrator for Creation and Support of State Information Systems UZINFOCOM
 .va Holy See - Vatican City State
 .vacations Binky Moon, LLC
-.vana Lifestyle Domain Holdings, Inc.
+.vana D3 Registry LLC
 .vanguard The Vanguard Group, Inc.
 .vc Ministry of Telecommunications, Science, Technology and Industry
 .ve Comisión Nacional de Telecomunicaciones (CONATEL)
@@ -1350,14 +1351,14 @@
 .vlaanderen DNS.be vzw
 .vn Viet Nam Internet Network Information Center (VNNIC)
 .vodka Registry Services, LLC
-.volkswagen Volkswagen Group of America Inc.
+.volkswagen Not assigned
 .volvo Volvo Holding Sverige Aktiebolag
 .vote Monolith Registry LLC
 .voting Valuetainment Corp.
 .voto Monolith Registry LLC
 .voyage Binky Moon, LLC
 .vu Telecommunications Radiocommunications and Broadcasting Regulator (TRBR)
-.vuelos Travel Reservations SRL
+.vuelos Not assigned
 .wales Nominet UK
 .walmart Wal-Mart Stores, Inc.
 .walter Sandvik AB
@@ -1365,12 +1366,12 @@
 .wanggou Amazon Registry Services, Inc.
 .warman Not assigned
 .watch Binky Moon, LLC
-.watches Afilias Limited
+.watches Identity Digital Limited
 .weather International Business Machines Corporation
 .weatherchannel International Business Machines Corporation
 .webcam dot Webcam Limited
 .weber Saint-Gobain Weber SA
-.website Radix FZC
+.website Radix Technologies Inc.
 .wed Emergency Back-End Registry Operator Program - ICANN
 .wedding Registry Services, LLC
 .weibo Sina Corporation
@@ -1378,7 +1379,7 @@
 .wf Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
 .whoswho Who&#x27;s Who Registry
 .wien punkt.wien GmbH
-.wiki Top Level Design, LLC
+.wiki Registry Services, LLC
 .williamhill William Hill Organization Limited
 .win First Registry Limited
 .windows Microsoft Corporation
@@ -1396,8 +1397,8 @@
 .wtf Binky Moon, LLC
 .xbox Microsoft Corporation
 .xerox Xerox DNHC LLC
-.xfinity Comcast IP Holdings I, LLC
-.xihuan QIHOO 360 TECHNOLOGY CO. LTD.
+.xfinity Not assigned
+.xihuan Beijing Qihu Keji Co., Ltd.
 .xin Elegant Leader Limited
 .测试 Not assigned
 .कॉम VeriSign Sarl
@@ -1407,7 +1408,7 @@
 .ಭಾರತ National Internet eXchange of India
 .慈善 Excellent First Limited
 .集团 Eagle Horizon Limited
-.在线 TLD REGISTRY LIMITED
+.在线 Beijing TLD Registry Technology Limited
 .한국 KISA (Korea Internet &amp; Security Agency)
 .ଭାରତ National Internet eXchange of India
 .大众汽车 Not assigned
@@ -1416,12 +1417,13 @@
 .ভাৰত National Internet eXchange of India
 .ভারত National Internet Exchange of India
 .八卦 Zodiac Gemini Ltd
+.一号店 Not assigned
 .বাংলা Posts and Telecommunications Division
 .公益 China Organizational Name Administration Center
-.公司 China Internet Network Information Center(CNNIC)
+.公司 China Internet Network Information Center (CNNIC)
 .香格里拉 Shangri-La International Hotel Management Limited
 .网站 Global Website TLD Asia Limited
-.移动 Afilias Limited
+.移动 Identity Digital Limited
 .我爱你 Tycoon Treasure Limited
 .москва Foundation for Assistance for Internet Technologies and Infrastructure Development (FAITID)
 .испытание Not assigned
@@ -1454,7 +1456,7 @@
 .新闻 Guangzhou YU Wei Information and Technology Co.,Ltd
 .工行 Not assigned
 .家電 Amazon Registry Services, Inc.
-.中文网 TLD REGISTRY LIMITED
+.中文网 Beijing TLD Registry Technology Limited
 .中信 CITIC Group Corporation
 .中国 China Internet Network Information Center (CNNIC)
 .中國 China Internet Network Information Center (CNNIC)
@@ -1475,7 +1477,7 @@
 .网店 Zodiac Taurus Ltd.
 .संगठन Public Interest Registry
 .餐厅 Internet DotTrademark Organisation Limited
-.网络 China Internet Network Information Center(CNNIC)
+.网络 China Internet Network Information Center (CNNIC)
 .ком VeriSign Sarl
 .укр Ukrainian Network Information Centre (UANIC), Inc.
 .香港 Hong Kong Internet Registration Corporation Ltd.
@@ -1497,7 +1499,7 @@
 .组织机构 Public Interest Registry
 .健康 Stable Tone Limited
 .ไทย Thai Network Information Center Foundation
-.招聘 Dot Trademark TLD Holding Company Limited
+.招聘 Jiang Yu Liang Cai Technology Company Limited
 .рус Rusnames Limited
 .рф Coordination Center for TLD RU
 .珠宝 Not assigned
@@ -1519,7 +1521,7 @@
 .vermögensberater Deutsche Vermögensberatung Aktiengesellschaft DVAG
 .vermögensberatung Deutsche Vermögensberatung Aktiengesellschaft DVAG
 .企业 Binky Moon, LLC
-.信息 Beijing Tele-info Network Technology Co., Ltd.
+.信息 Beijing Tele-info Technology Co., Ltd.
 .嘉里大酒店 Kerry Trading Co. Limited
 .嘉里 Kerry Trading Co. Limited
 .广东 Guangzhou YU Wei Information Technology Co., Ltd.
@@ -1533,9 +1535,9 @@
 .xxx ICM Registry LLC
 .xyz XYZ.COM LLC
 .yachts XYZ.COM LLC
-.yahoo OATH INC
+.yahoo Yahoo Inc.
 .yamaxun Amazon Registry Services, Inc.
-.yandex Yandex Europe B.V.
+.yandex YANDEX LLC
 .ye TeleYemen
 .yodobashi YODOBASHI CAMERA CO.,LTD.
 .yoga Registry Services, LLC
@@ -1543,7 +1545,7 @@
 .you Amazon Registry Services, Inc.
 .youtube Charleston Road Registry Inc.
 .yt Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
-.yun QIHOO 360 TECHNOLOGY CO. LTD.
+.yun Beijing Qihu Keji Co., Ltd.
 .za ZA Domain Name Authority
 .zappos Amazon Registry Services, Inc.
 .zara Industria de Diseño Textil, S.A. (INDITEX, S.A.)
