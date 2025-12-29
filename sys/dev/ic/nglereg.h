@@ -1,4 +1,4 @@
-/*	$NetBSD: nglereg.h,v 1.3 2025/12/15 09:46:42 macallan Exp $	*/
+/*	$NetBSD: nglereg.h,v 1.4 2025/12/29 06:02:51 macallan Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -75,8 +75,8 @@
  * works more or less like FX4, with completely different bit assignments
  */
 #define	NGLE_BAboth		0x018000	/* read and write mode */
-#define	NGLE_DBA		0x018004	/* write mode */
-#define	NGLE_SBA		0x018008	/* read mode */
+#define	NGLE_DBA		0x018004	/* Dest. Bitmap Access */
+#define	NGLE_SBA		0x018008	/* Source Bitmap Access */
 
 #define BA(F,C,S,A,J,B,I)						\
 	(((F)<<31)|((C)<<27)|((S)<<24)|((A)<<21)|((J)<<16)|((B)<<12)|(I))
@@ -135,8 +135,8 @@
 /* X */
 #define	    BitmapExtent08  3	/* Each write hits ( 8) bits in depth */
 #define	    BitmapExtent32  5	/* Each write hits (32) bits in depth */
-/* S: 'static reg' flag, NGLE sets it for blits, function is unknown but
-      we get occasional garbage in 8bit blits without it  */
+/* S: 'static reg' flag, this automatically masks off overhanging pixels on
+      fill and copy oprtations if the width is not a multiple of Otc* */
 /* D */
 #define	    DataDynamic	    0	/* Data register reloaded by direct access */
 #define	    MaskDynamic	    1	/* Mask register reloaded by direct access */
@@ -151,6 +151,8 @@
 #define	NGLE_CONTROL		0x200004	/* a guess */
 /*
  * byte access, need to write 1 here for fb access to work properly
+ * might be controlling FIFO pacing ( as in, turn it off for direct FB access )
+ * like on FX
  */
 #define	NGLE_CONTROL_FB		0x200005
 #define	NGLE_FIFO		0x200008	/* # of fifo slots */
@@ -169,8 +171,12 @@
 	#define LBC_LENGTH_SHIFT	0
 //#define	NGLE_REG_19		0x200200	/* artist sprite size */
 //#define	NGLE_REG_20		0x200208	/* cursor geometry */
+/* the next two control video output on EG - xf86 sets both to enable output,
+ * clears both to turn it off. Need to check which does what exactly */
 #define	NGLE_EG_MISCVID		0x200218	/* Artist misc video */
+	#define MISCVID_VIDEO_ON	0x0a000000
 #define	NGLE_EG_MISCCTL		0x200308	/* Artist misc ctrl */
+	#define MISCCTL_VIDEO_ON	0x00800000
 #define	NGLE_HCRX_CURSOR	0x210000	/* HCRX cursor coord & enable */
 	#define HCRX_ENABLE_CURSOR	0x80000000
 /* HCRX uses those to access the cursor image instead of BINcursor/BINcmask */
