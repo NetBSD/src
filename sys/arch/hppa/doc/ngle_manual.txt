@@ -1,4 +1,4 @@
-$NetBSD: ngle_manual.txt,v 1.3 2025/12/28 08:11:29 macallan Exp $
+$NetBSD: ngle_manual.txt,v 1.4 2025/12/29 06:00:45 macallan Exp $
 
 The Unofficial NGLE Manual
 
@@ -344,6 +344,13 @@ down/left to the next line etc.
 No LUTBLT analog here, for the the cursor bitmap use BINcursor.
 
 7. Miscellaneous
+#define	NGLE_EG_MISCVID		0x200218	/* Artist misc video */
+	#define MISCVID_VIDEO_ON	0x0a000000
+#define	NGLE_EG_MISCCTL		0x200308	/* Artist misc ctrl */
+	#define MISCCTL_VIDEO_ON	0x00800000
+These control video output on EG - xf86 sets both to enable output, clears both
+to turn it off. Need to check which bit does what exactly.
+
 #define	NGLE_HCRX_PLANE_ENABLE	0x21003c	/* HCRX plane enable */ 
 #define	NGLE_HCRX_MISCVID	0x210040	/* HCRX misc video */
 	#define HCRX_BOOST_ENABLE	0x80000000 /* extra high signal level */
@@ -372,7 +379,7 @@ similar to the 'Artist' variant, the cursor register is at the same address but
 works as on HCRX. I suspect the GSC variant to be more like Artist.
 It is possible to put cards with enough memory into double buffer mode using
 the firmware configuration menu - I need to figure out what exactly that does.
-Same with grey scale mode, which may just select a different default palette. 
+Same with grey scale mode, which may just select a different default palette.
 
 9. HCRX notes
 Xf86 always writes NGLE_HCRX_HB_MODE twice, apparently working around a hardware
