@@ -1,4 +1,4 @@
-/*	$NetBSD: footnote.c,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
+/*	$NetBSD: footnote.c,v 1.3 2025/12/30 10:35:21 martin Exp $	*/
 
 /* footnote.c -- footnotes for Texinfo.
    Id: footnote.c,v 1.7 2004/04/11 17:56:47 karl Exp 
@@ -73,7 +73,7 @@ set_footnote_style (char *string)
 }
 
 void
-cm_footnotestyle (int arg1, int arg2, int arg3)
+cm_footnotestyle (void)
 {
   char *arg;
 
@@ -135,7 +135,7 @@ free_pending_notes (void)
     footnote *{this is a footnote}
     where "*" is the (optional) marker character for this note. */
 void
-cm_footnote (int arg, int arg2, int arg3)
+cm_footnote (void)
 {
   char *marker;
   char *note;

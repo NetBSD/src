@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.4 2025/12/30 03:59:26 oster Exp $	*/
+/*	$NetBSD: index.c,v 1.5 2025/12/30 10:35:21 martin Exp $	*/
 
 /* index.c -- indexing for Texinfo.
    Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp 
@@ -265,7 +265,7 @@ index_add_arg (char *name)
 
 /* The function which user defined index commands call. */
 static void
-gen_index (int arg, int arg2, int arg3)
+gen_index (void)
 {
   char *name = xstrdup (command);
   if (strlen (name) >= strlen ("index"))
@@ -426,13 +426,13 @@ gen_defindex (int code)
 }
 
 void
-cm_defindex (int arg, int arg2, int arg3)
+cm_defindex (void)
 {
   gen_defindex (0);
 }
 
 void
-cm_defcodeindex (int arg, int arg2, int arg3)
+cm_defcodeindex (void)
 {
   gen_defindex (1);
 }
@@ -441,7 +441,7 @@ cm_defcodeindex (int arg, int arg2, int arg3)
    Make the first one be a synonym for the second one, i.e. make the
    first one have the same index as the second one. */
 void
-cm_synindex (int arg, int arg2, int arg3)
+cm_synindex (void)
 {
   int source, target;
   char *abbrev1, *abbrev2;
@@ -471,37 +471,37 @@ cm_synindex (int arg, int arg2, int arg3)
 }
 
 void
-cm_pindex (int arg, int arg2, int arg3)                    /* Pinhead index. */
+cm_pindex (void)                    /* Pinhead index. */
 {
   index_add_arg ("pg");
 }
 
 void
-cm_vindex (int arg, int arg2, int arg3)                    /* Variable index. */
+cm_vindex (void)                    /* Variable index. */
 {
   index_add_arg ("vr");
 }
 
 void
-cm_kindex (int arg, int arg2, int arg3)                    /* Key index. */
+cm_kindex (void)                    /* Key index. */
 {
   index_add_arg ("ky");
 }
 
 void
-cm_cindex (int arg, int arg2, int arg3)                    /* Concept index. */
+cm_cindex (void)                    /* Concept index. */
 {
   index_add_arg ("cp");
 }
 
 void
-cm_findex (int arg, int arg2, int arg3)                    /* Function index. */
+cm_findex (void)                    /* Function index. */
 {
   index_add_arg ("fn");
 }
 
 void
-cm_tindex (int arg, int arg2, int arg3)                    /* Data Type index. */
+cm_tindex (void)                    /* Data Type index. */
 {
   index_add_arg ("tp");
 }
@@ -726,7 +726,7 @@ int printing_index = 0;
 /* Takes one arg, a short name of an index to print.
    Outputs a menu of the sorted elements of the index. */
 void
-cm_printindex (int arg, int arg2, int arg3)
+cm_printindex (void)
 {
   char *index_name;
   get_rest_of_line (0, &index_name);

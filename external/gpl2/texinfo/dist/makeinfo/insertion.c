@@ -1,4 +1,4 @@
-/*	$NetBSD: insertion.c,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
+/*	$NetBSD: insertion.c,v 1.3 2025/12/30 10:35:21 martin Exp $	*/
 
 /* insertion.c -- insertions for Texinfo.
    Id: insertion.c,v 1.55 2004/11/11 18:34:28 karl Exp 
@@ -404,7 +404,7 @@ enum_html (void)
 
 /* Conditionally parse based on the current command name. */
 void
-command_name_condition (int arg, int arg2, int arg3)
+command_name_condition (void)
 {
   char *discarder = xmalloc (8 + strlen (command));
 
@@ -536,7 +536,7 @@ begin_insertion (enum insertion_type type)
 	}
 
       if (!html && !no_headers)
-        cm_insert_copying (0, 0, 0);
+        cm_insert_copying ();
 
       if (docbook)
         xml_insert_element (LEGALNOTICE, END);
@@ -1347,14 +1347,14 @@ discard_insertions (int specials_ok)
 /* Insertion (environment) commands.  */
 
 void
-cm_quotation (int arg, int arg2, int arg3)
+cm_quotation (void)
 {
   /* We start the blockquote element in the insertion.  */
   begin_insertion (quotation);
 }
 
 void
-cm_example (int arg, int arg2, int arg3)
+cm_example (void)
 {
   if (docbook && current_insertion_type () == floatenv)
     xml_begin_docbook_float (FLOATEXAMPLE);
@@ -1378,7 +1378,7 @@ cm_example (int arg, int arg2, int arg3)
 }
 
 void
-cm_smallexample (int arg, int arg2, int arg3)
+cm_smallexample (void)
 {
   if (docbook && current_insertion_type () == floatenv)
     xml_begin_docbook_float (FLOATEXAMPLE);
@@ -1397,7 +1397,7 @@ cm_smallexample (int arg, int arg2, int arg3)
 }
 
 void
-cm_lisp (int arg, int arg2, int arg3)
+cm_lisp (void)
 {
   if (docbook && current_insertion_type () == floatenv)
     xml_begin_docbook_float (FLOATEXAMPLE);
@@ -1416,7 +1416,7 @@ cm_lisp (int arg, int arg2, int arg3)
 }
 
 void
-cm_smalllisp (int arg, int arg2, int arg3)
+cm_smalllisp (void)
 {
   if (docbook && current_insertion_type () == floatenv)
     xml_begin_docbook_float (FLOATEXAMPLE);
@@ -1435,7 +1435,7 @@ cm_smalllisp (int arg, int arg2, int arg3)
 }
 
 void
-cm_cartouche (int arg, int arg2, int arg3)
+cm_cartouche (void)
 {
   if (docbook && current_insertion_type () == floatenv)
     xml_begin_docbook_float (CARTOUCHE);
@@ -1446,14 +1446,14 @@ cm_cartouche (int arg, int arg2, int arg3)
 }
 
 void
-cm_copying (int arg, int arg2, int arg3)
+cm_copying (void)
 {
   begin_insertion (copying);
 }
 
 /* Not an insertion, despite the name, but it goes with cm_copying.  */
 void
-cm_insert_copying (int arg, int arg2, int arg3)
+cm_insert_copying (void)
 {
   if (!copying_text)
     {
@@ -1473,7 +1473,7 @@ cm_insert_copying (int arg, int arg2, int arg3)
 }
 
 void
-cm_format (int arg, int arg2, int arg3)
+cm_format (void)
 {
   if (xml)
     {
@@ -1496,7 +1496,7 @@ cm_format (int arg, int arg2, int arg3)
 }
 
 void
-cm_smallformat (int arg, int arg2, int arg3)
+cm_smallformat (void)
 {
   if (xml)
     {
@@ -1512,7 +1512,7 @@ cm_smallformat (int arg, int arg2, int arg3)
 }
 
 void
-cm_display (int arg, int arg2, int arg3)
+cm_display (void)
 {
   if (xml)
     {
@@ -1528,7 +1528,7 @@ cm_display (int arg, int arg2, int arg3)
 }
 
 void
-cm_smalldisplay (int arg, int arg2, int arg3)
+cm_smalldisplay (void)
 {
   if (xml)
     {
@@ -1544,16 +1544,16 @@ cm_smalldisplay (int arg, int arg2, int arg3)
 }
 
 void
-cm_direntry (int arg, int arg2, int arg3)
+cm_direntry (void)
 {
   if (html || xml || no_headers)
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
   else
     begin_insertion (direntry);
 }
 
 void
-cm_documentdescription (int arg, int arg2, int arg3)
+cm_documentdescription (void)
 {
   if (html)
     begin_insertion (documentdescription);
@@ -1565,12 +1565,12 @@ cm_documentdescription (int arg, int arg2, int arg3)
     }
 
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 
 void
-cm_itemize (int arg, int arg2, int arg3)
+cm_itemize (void)
 {
   begin_insertion (itemize);
 }
@@ -1605,7 +1605,7 @@ do_enumeration (int type, char *default_string)
 }
 
 void
-cm_enumerate (int arg, int arg2, int arg3)
+cm_enumerate (void)
 {
   do_enumeration (enumerate, "1");
 }
@@ -1706,199 +1706,199 @@ handle_verbatim_environment (int find_end_verbatim)
 }
 
 void
-cm_verbatim (int arg, int arg2, int arg3)
+cm_verbatim (void)
 {
   handle_verbatim_environment (1);
 }
 
 void
-cm_table (int arg, int arg2, int arg3)
+cm_table (void)
 {
   begin_insertion (table);
 }
 
 void
-cm_multitable (int arg, int arg2, int arg3)
+cm_multitable (void)
 {
   begin_insertion (multitable); /* @@ */
 }
 
 void
-cm_ftable (int arg, int arg2, int arg3)
+cm_ftable (void)
 {
   begin_insertion (ftable);
 }
 
 void
-cm_vtable (int arg, int arg2, int arg3)
+cm_vtable (void)
 {
   begin_insertion (vtable);
 }
 
 void
-cm_group (int arg, int arg2, int arg3)
+cm_group (void)
 {
   begin_insertion (group);
 }
 
 /* Insert raw HTML (no escaping of `<' etc.). */
 void
-cm_html (int arg, int arg2, int arg3)
+cm_html (int arg)
 {
   if (process_html)
     begin_insertion (rawhtml);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_xml (int arg, int arg2, int arg3)
+cm_xml (int arg)
 {
   if (process_xml)
     begin_insertion (rawxml);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_docbook (int arg, int arg2, int arg3)
+cm_docbook (int arg)
 {
   if (process_docbook)
     begin_insertion (rawdocbook);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifdocbook (int arg, int arg2, int arg3)
+cm_ifdocbook (void)
 {
   if (process_docbook)
     begin_insertion (ifdocbook);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifnotdocbook (int arg, int arg2, int arg3)
+cm_ifnotdocbook (void)
 {
   if (!process_docbook)
     begin_insertion (ifnotdocbook);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifhtml (int arg, int arg2, int arg3)
+cm_ifhtml (void)
 {
   if (process_html)
     begin_insertion (ifhtml);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifnothtml (int arg, int arg2, int arg3)
+cm_ifnothtml (void)
 {
   if (!process_html)
     begin_insertion (ifnothtml);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 
 void
-cm_ifinfo (int arg, int arg2, int arg3)
+cm_ifinfo (void)
 {
   if (process_info)
     begin_insertion (ifinfo);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifnotinfo (int arg, int arg2, int arg3)
+cm_ifnotinfo (void)
 {
   if (!process_info)
     begin_insertion (ifnotinfo);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 
 void
-cm_ifplaintext (int arg, int arg2, int arg3)
+cm_ifplaintext (void)
 {
   if (process_plaintext)
     begin_insertion (ifplaintext);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifnotplaintext (int arg, int arg2, int arg3)
+cm_ifnotplaintext (void)
 {
   if (!process_plaintext)
     begin_insertion (ifnotplaintext);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 
 void
-cm_tex (int arg, int arg2, int arg3)
+cm_tex (void)
 {
   if (process_tex)
     begin_insertion (rawtex);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_iftex (int arg, int arg2, int arg3)
+cm_iftex (void)
 {
   if (process_tex)
     begin_insertion (iftex);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifnottex (int arg, int arg2, int arg3)
+cm_ifnottex (void)
 {
   if (!process_tex)
     begin_insertion (ifnottex);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifxml (int arg, int arg2, int arg3)
+cm_ifxml (void)
 {
   if (process_xml)
     begin_insertion (ifxml);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_ifnotxml (int arg, int arg2, int arg3)
+cm_ifnotxml (void)
 {
   if (!process_xml)
     begin_insertion (ifnotxml);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 
 /* Generic xrefable block with a caption.  */
 void
-cm_float (int arg, int arg2, int arg3)
+cm_float (void)
 {
   begin_insertion (floatenv);
 }
 
 void
-cm_caption (int arg, int arg2, int arg3)
+cm_caption (int arg)
 {
   char *temp;
 
@@ -1930,7 +1930,7 @@ cm_caption (int arg, int arg2, int arg3)
 
 /* Begin an insertion where the lines are not filled or indented. */
 void
-cm_flushleft (int arg, int arg2, int arg3)
+cm_flushleft (void)
 {
   begin_insertion (flushleft);
 }
@@ -1938,13 +1938,13 @@ cm_flushleft (int arg, int arg2, int arg3)
 /* Begin an insertion where the lines are not filled, and each line is
    forced to the right-hand side of the page. */
 void
-cm_flushright (int arg, int arg2, int arg3)
+cm_flushright (void)
 {
   begin_insertion (flushright);
 }
 
 void
-cm_menu (int arg, int arg2, int arg3)
+cm_menu (void)
 {
   if (current_node == NULL && !macro_expansion_output_stream)
     {
@@ -1957,7 +1957,7 @@ cm_menu (int arg, int arg2, int arg3)
 }
 
 void
-cm_detailmenu (int arg, int arg2, int arg3)
+cm_detailmenu (void)
 {
   if (current_node == NULL && !macro_expansion_output_stream)
     { /* Problems anyway, @detailmenu should always be inside @menu.  */
@@ -1970,17 +1970,17 @@ cm_detailmenu (int arg, int arg2, int arg3)
 /* Title page commands. */
 
 void
-cm_titlepage (int arg, int arg2, int arg3)
+cm_titlepage (void)
 {
   titlepage_cmd_present = 1;
   if (xml && !docbook)
     begin_insertion (titlepage);
   else
-    command_name_condition (0, 0, 0);
+    command_name_condition ();
 }
 
 void
-cm_author (int arg, int arg2, int arg3)
+cm_author (void)
 {
   char *rest;
   get_rest_of_line (1, &rest);
@@ -2024,7 +2024,7 @@ cm_author (int arg, int arg2, int arg3)
 }
 
 void
-cm_titlepage_cmds (int arg, int arg2, int arg3)
+cm_titlepage_cmds (void)
 {
   char *rest;
 
@@ -2053,7 +2053,7 @@ cm_titlepage_cmds (int arg, int arg2, int arg3)
 
 /* End existing insertion block. */
 void
-cm_end (int arg, int arg2, int arg3)
+cm_end (void)
 {
   char *temp;
   int type;
@@ -2104,7 +2104,7 @@ command_needs_braces (char *cmd)
 
 
 void
-cm_item (int arg, int arg2, int arg3)
+cm_item (void)
 {
   char *rest_of_line, *item_func;
 
@@ -2361,18 +2361,18 @@ cm_item (int arg, int arg2, int arg3)
 }
 
 void
-cm_itemx (int arg, int arg2, int arg3)
+cm_itemx (void)
 {
   itemx_flag++;
-  cm_item (0, 0, 0);
+  cm_item ();
   itemx_flag--;
 }
 
 int headitem_flag = 0;
 
 void
-cm_headitem (int arg, int arg2, int arg3)
+cm_headitem (void)
 {
   headitem_flag = 1;
-  cm_item (0, 0, 0);
+  cm_item ();
 }

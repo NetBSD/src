@@ -134,7 +134,7 @@ VMS_get_member_info (struct dsc$descriptor_s *module, unsigned long *rfa)
    Returns 0 if have scanned successfully.  */
 
 long int
-ar_scan (char *archive, long int (*function) PARAMS ((int, char *, int, long int, long int, long int, long int, int, int, int, int)), long int arg)
+ar_scan (char *archive, long int (*function) PARAMS ((void)), long int arg)
 {
   char *p;
 
@@ -301,7 +301,7 @@ struct ar_hdr
    Returns 0 if have scanned successfully.  */
 
 long int
-ar_scan (char *archive, long int (*function)(int, char *, int, long int, long int, long int, long int, int, int, int, int), long int arg)
+ar_scan (char *archive, long int (*function)(), long int arg)
 {
 #ifdef AIAMAG
   FL_HDR fl_header;

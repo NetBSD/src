@@ -2937,7 +2937,7 @@ tilde_expand (char *name)
 #ifndef VMS
   if (name[1] == '/' || name[1] == '\0')
     {
-      extern char *getenv (const char *);
+      extern char *getenv ();
       char *home_dir;
       int is_variable;
 
@@ -3015,7 +3015,7 @@ tilde_expand (char *name)
 struct nameseq *
 multi_glob (struct nameseq *chain, unsigned int size)
 {
-  extern void dir_setup_glob (glob_t *);
+  extern void dir_setup_glob ();
   register struct nameseq *new = 0;
   register struct nameseq *old;
   struct nameseq *nexto;

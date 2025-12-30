@@ -1,4 +1,4 @@
-/*	$NetBSD: sectioning.h,v 1.2 2025/12/30 03:59:27 oster Exp $	*/
+/*	$NetBSD: sectioning.h,v 1.3 2025/12/30 10:35:21 martin Exp $	*/
 
 /* sectioning.h -- all related stuff @chapter, @section... @contents
    Id: sectioning.h,v 1.5 2004/04/11 17:56:47 karl Exp 
@@ -27,35 +27,35 @@
 /* Sectioning.  */
 
 /* Level 4.  */
-extern void cm_chapter (int arg, int arg2, int arg3),
-  cm_unnumbered (int arg, int arg2, int arg3),
-  cm_appendix (int arg, int arg2, int arg3),
-  cm_top (int arg, int arg2, int arg3);
+extern void cm_chapter (void),
+  cm_unnumbered (void),
+  cm_appendix (void),
+  cm_top (void);
 
 /* Level 3.  */
-extern void cm_section (int arg, int arg2, int arg3),
-  cm_unnumberedsec (int arg, int arg2, int arg3),
-  cm_appendixsec (int arg, int arg2, int arg3);
+extern void cm_section (void),
+  cm_unnumberedsec (void),
+  cm_appendixsec (void);
 
 /* Level 2.  */
-extern void cm_subsection (int arg, int arg2, int arg3),
-  cm_unnumberedsubsec (int arg, int arg2, int arg3),
-  cm_appendixsubsec (int arg, int arg2, int arg3);
+extern void cm_subsection (void),
+  cm_unnumberedsubsec (void),
+  cm_appendixsubsec (void);
 
 /* Level 1.  */
-extern void cm_subsubsection (int arg, int arg2, int arg3),
-  cm_unnumberedsubsubsec (int arg, int arg2, int arg3),
-  cm_appendixsubsubsec (int arg, int arg2, int arg3);
+extern void cm_subsubsection (void),
+  cm_unnumberedsubsubsec (void),
+  cm_appendixsubsubsec (void);
 
 /* Headings.  */
-extern void cm_heading (int arg, int arg2, int arg3),
-  cm_chapheading (int arg, int arg2, int arg3),
-  cm_subheading (int arg, int arg2, int arg3),
-  cm_subsubheading (int arg, int arg2, int arg3),
-  cm_majorheading (int arg, int arg2, int arg3);
+extern void cm_heading (void),
+  cm_chapheading (void),
+  cm_subheading (void),
+  cm_subsubheading (void),
+  cm_majorheading (void);
 
-extern void cm_raisesections (int arg, int arg2, int arg3),
-  cm_lowersections (int arg, int arg2, int arg3),
+extern void cm_raisesections (void),
+  cm_lowersections (void),
   cm_ideprecated (int arg, int start, int end);
 
 extern void

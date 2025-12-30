@@ -1,4 +1,4 @@
-/*	$NetBSD: toc.c,v 1.2 2025/12/30 03:59:27 oster Exp $	*/
+/*	$NetBSD: toc.c,v 1.3 2025/12/30 10:35:21 martin Exp $	*/
 
 /* toc.c -- table of contents handling.
    Id: toc.c,v 1.6 2004/04/11 17:56:47 karl Exp 
@@ -354,7 +354,7 @@ shortcontents_update_info (void)
 }
 
 void
-cm_contents (int arg, int arg2, int arg3)
+cm_contents (int arg)
 {
   /* the file where we found the @contents directive */
   static char *contents_filename;

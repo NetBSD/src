@@ -1,4 +1,4 @@
-/*	$NetBSD: multi.c,v 1.3 2025/12/30 03:59:27 oster Exp $	*/
+/*	$NetBSD: multi.c,v 1.4 2025/12/30 10:35:21 martin Exp $	*/
 
 /* multi.c -- multiple-column tables (@multitable) for makeinfo.
    Id: multi.c,v 1.8 2004/04/11 17:56:47 karl Exp 
@@ -405,7 +405,7 @@ static void
 init_column (void)
 {
   /* don't indent 1st paragraph in the item */
-  cm_noindent (0, 0, 0);
+  cm_noindent ();
 
   /* throw away possible whitespace after @item or @tab command */
   skip_whitespace ();
@@ -580,7 +580,7 @@ multitable_item (void)
 
 /* select a new column in current row of multitable */
 void
-cm_tab (int arg, int arg2, int arg3)
+cm_tab (void)
 {
   if (!multitable_active)
     error (_("ignoring @tab outside of multitable"));

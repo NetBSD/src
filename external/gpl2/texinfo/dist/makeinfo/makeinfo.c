@@ -1,4 +1,4 @@
-/*	$NetBSD: makeinfo.c,v 1.3 2025/12/30 03:59:27 oster Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.4 2025/12/30 10:35:21 martin Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
    Id: makeinfo.c,v 1.74 2004/12/19 17:15:42 karl Exp 
@@ -186,7 +186,7 @@ remember_error (void)
       fprintf (stderr, _("Too many errors!  Gave up.\n"));
       flush_file_stack ();
       if (errors_printed - max_error_level < 2)
-	cm_bye (0, 0, 0);
+	cm_bye ();
       xexit (1);
     }
 }
@@ -318,7 +318,7 @@ warning (format, va_alist)
 
 /* The other side of a malformed expression. */
 static void
-misplaced_brace (int arg, int arg2, int arg3)
+misplaced_brace (void)
 {
   line_error (_("Misplaced %c"), '}');
 }
@@ -3249,7 +3249,7 @@ next_nonwhitespace_character (void)
 /* An external image is a reference, kind of.  The parsing is (not
    coincidentally) similar, anyway.  */
 void
-cm_image (int arg, int arg2, int arg3)
+cm_image (int arg)
 {
   char *name_arg, *w_arg, *h_arg, *alt_arg, *ext_arg;
 
@@ -3561,26 +3561,26 @@ set_p (char *name)
 
 /* Create a variable whose name appears as the first word on this line. */
 void
-cm_set (int arg, int arg2, int arg3)
+cm_set (void)
 {
   handle_variable (SET);
 }
 
 /* Remove a variable whose name appears as the first word on this line. */
 void
-cm_clear (int arg, int arg2, int arg3)
+cm_clear (void)
 {
   handle_variable (CLEAR);
 }
 
 void
-cm_ifset (int arg, int arg2, int arg3)
+cm_ifset (void)
 {
   handle_variable (IFSET);
 }
 
 void
-cm_ifclear (int arg, int arg2, int arg3)
+cm_ifclear (void)
 {
   handle_variable (IFCLEAR);
 }
@@ -3592,7 +3592,7 @@ cm_ifclear (int arg, int arg2, int arg3)
    if ARG1 and ARG2 caselessly string compare to the same string, otherwise,
    it produces no output. */
 void
-cm_ifeq (int arg, int arg2, int arg3)
+cm_ifeq (void)
 {
   char **arglist;
 

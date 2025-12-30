@@ -1,4 +1,4 @@
-/*	$NetBSD: lang.h,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
+/*	$NetBSD: lang.h,v 1.3 2025/12/30 10:35:21 martin Exp $	*/
 
 /* lang.h -- declarations for language codes etc.
    Id: lang.h,v 1.6 2004/04/11 17:56:47 karl Exp 
@@ -131,11 +131,11 @@ extern encoding_type encoding_table[];
 
 
 /* The commands.  */
-extern void cm_documentlanguage (int arg, int arg2, int arg3),
-     cm_documentencoding (int arg, int arg2, int arg3);
+extern void cm_documentlanguage (void),
+     cm_documentencoding (void);
 
 /* Accents, other non-English characters.  */
-void cm_accent (int arg, int arg2, int arg3), cm_special_char (int arg, int arg2, int arg3),
+void cm_accent (int arg), cm_special_char (int arg),
      cm_dotless (int arg, int start, int end);
 
 extern void cm_accent_umlaut (int arg, int start, int end),
