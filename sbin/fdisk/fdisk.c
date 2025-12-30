@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.163 2025/02/24 22:10:51 andvar Exp $ */
+/*	$NetBSD: fdisk.c,v 1.164 2025/12/30 21:33:34 nia Exp $ */
 
 /*
  * Mach Operating System
@@ -39,12 +39,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.163 2025/02/24 22:10:51 andvar Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.164 2025/12/30 21:33:34 nia Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
 #include <sys/types.h>
 #include <sys/param.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #include <sys/stat.h>
 #include <ctype.h>
 #include <err.h>
