@@ -195,7 +195,7 @@ extern int start_remote_job_p PARAMS ((int));
 extern int remote_status PARAMS ((int *exit_code_ptr, int *signal_ptr,
 		int *coredump_ptr, int block));
 
-RETSIGTYPE child_handler PARAMS ((int));
+void child_handler PARAMS ((int));
 static void free_child PARAMS ((struct child *));
 static void start_job_command PARAMS ((struct child *child));
 static int load_too_high PARAMS ((void));
@@ -413,7 +413,7 @@ child_error (char *target_name, int exit_code, int exit_sig, int coredump,
 
 static unsigned int dead_children = 0;
 
-RETSIGTYPE
+void
 child_handler (int sig UNUSED)
 {
   ++dead_children;
@@ -916,7 +916,7 @@ unblock_sigs (void)
 #endif
 
 #ifdef MAKE_JOBSERVER
-RETSIGTYPE
+static void
 job_noop (int sig UNUSED)
 {
 }
@@ -2087,7 +2087,7 @@ exec_command (char **argv, char **envp)
     case ENOEXEC:
       {
 	/* The file is not executable.  Try it as a shell script.  */
-	extern char *getenv ();
+	extern char *getenv (const char *);
 	char *shell;
 	char **new_argv;
 	int argc;

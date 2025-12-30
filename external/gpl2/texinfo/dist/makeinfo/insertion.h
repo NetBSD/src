@@ -1,4 +1,4 @@
-/*	$NetBSD: insertion.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: insertion.h,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
 
 /* insertion.h -- declarations for insertion.c.
    Id: insertion.h,v 1.10 2004/04/11 17:56:47 karl Exp 
@@ -61,13 +61,13 @@ extern int headitem_flag;
 extern int after_headitem;
 
 extern void init_insertion_stack (void);
-extern void command_name_condition (void);
-extern void cm_ifdocbook (void), cm_ifnotdocbook(void), cm_docbook (int arg);
-extern void cm_ifhtml (void), cm_ifnothtml(void), cm_html (int arg);
-extern void cm_ifinfo (void), cm_ifnotinfo (void);
-extern void cm_ifplaintext (void), cm_ifnotplaintext(void);
-extern void cm_iftex (void), cm_ifnottex (void), cm_tex (void);
-extern void cm_ifxml (void), cm_ifnotxml (void), cm_xml (int arg);
+extern void command_name_condition (int arg, int arg2, int arg3);
+extern void cm_ifdocbook (int arg, int arg2, int arg3), cm_ifnotdocbook(int arg, int arg2, int arg3), cm_docbook (int arg, int arg2, int arg3);
+extern void cm_ifhtml (int arg, int arg2, int arg3), cm_ifnothtml(int arg, int arg2, int arg3), cm_html (int arg, int arg2, int arg3);
+extern void cm_ifinfo (int arg, int arg2, int arg3), cm_ifnotinfo (int arg, int arg2, int arg3);
+extern void cm_ifplaintext (int arg, int arg2, int arg3), cm_ifnotplaintext(int arg, int arg2, int arg3);
+extern void cm_iftex (int arg, int arg2, int arg3), cm_ifnottex (int arg, int arg2, int arg3), cm_tex (int arg, int arg2, int arg3);
+extern void cm_ifxml (int arg, int arg2, int arg3), cm_ifnotxml (int arg, int arg2, int arg3), cm_xml (int arg, int arg2, int arg3);
 extern void handle_verbatim_environment (int find_end_verbatim);
 extern void begin_insertion (enum insertion_type type);
 extern void pop_insertion (void);

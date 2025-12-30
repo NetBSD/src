@@ -1,4 +1,4 @@
-/*	$NetBSD: float.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: float.c,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
 
 /* float.c -- float environment functions.
    Id: float.c,v 1.8 2004/07/05 22:23:22 karl Exp 
@@ -169,7 +169,7 @@ float_type_exists (char *check_type)
 }
 
 void
-cm_listoffloats (void)
+cm_listoffloats (int arg, int arg2, int arg3)
 {
   char *float_type;
   get_rest_of_line (1, &float_type);
@@ -197,7 +197,7 @@ cm_listoffloats (void)
       /* These are for the text following @listoffloats command.
          Handling them with delayed writes is too late.  */
       close_paragraph ();
-      cm_noindent ();
+      cm_noindent (0, 0, 0);
 
       sprintf (list_command, "@%s %s", command, float_type);
       register_delayed_write (list_command);

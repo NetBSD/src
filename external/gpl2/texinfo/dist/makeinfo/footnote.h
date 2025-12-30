@@ -1,4 +1,4 @@
-/*	$NetBSD: footnote.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: footnote.h,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
 
 /* footnote.h -- declarations for footnote.c.
    Id: footnote.h,v 1.2 2004/04/11 17:56:47 karl Exp 
@@ -30,8 +30,8 @@ extern int number_footnotes;
 extern int already_outputting_pending_notes;
 
 /* The Texinfo @commands.  */
-extern void cm_footnote (void);
-extern void cm_footnotestyle (void);
+extern void cm_footnote (int arg, int arg2, int arg3);
+extern void cm_footnotestyle (int arg, int arg2, int arg3);
 
 extern int set_footnote_style (char *string);    /* called for -s option */
 

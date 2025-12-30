@@ -1,4 +1,4 @@
-/*	$NetBSD: xref.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: xref.c,v 1.2 2025/12/30 03:59:27 oster Exp $	*/
 
 /* xref.c -- cross references for Texinfo.
    Id: xref.c,v 1.4 2004/12/21 17:28:35 karl Exp 
@@ -112,7 +112,7 @@ get_xref_token (int expand)
 
 /* Make a cross reference. */
 void
-cm_xref (int arg)
+cm_xref (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -394,12 +394,12 @@ cm_xref (int arg)
 }
 
 void
-cm_pxref (int arg)
+cm_pxref (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
       px_ref_flag++;
-      cm_xref (arg);
+      cm_xref (arg, 0, 0);
       px_ref_flag--;
     }
   /* cm_xref isn't called with arg == END, which disables the code near
@@ -409,19 +409,19 @@ cm_pxref (int arg)
 }
 
 void
-cm_ref (int arg)
+cm_ref (int arg, int arg2, int arg3)
 {
   /* See the comments in cm_pxref about the checks for punctuation.  */
   if (arg == START)
     {
       ref_flag++;
-      cm_xref (arg);
+      cm_xref (arg, 0, 0);
       ref_flag--;
     }
 }
 
 void
-cm_inforef (int arg)
+cm_inforef (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -485,7 +485,7 @@ cm_inforef (int arg)
 
 /* A URL reference.  */
 void
-cm_uref (int arg)
+cm_uref (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -567,7 +567,7 @@ cm_uref (int arg)
 
 /* An email reference.  */
 void
-cm_email (int arg)
+cm_email (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: texindex.c,v 1.3 2024/04/07 12:30:38 christos Exp $	*/
+/*	$NetBSD: texindex.c,v 1.4 2025/12/30 03:59:27 oster Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
    Id: texindex.c,v 1.11 2004/04/11 17:56:47 karl Exp 
@@ -123,7 +123,7 @@ int compare_full (const void *, const void *);
 void pfatal_with_name (const char *name);
 void fatal (const char *format, const char *arg);
 void error (const char *format, const char *arg);
-void *xmalloc (), *xrealloc ();
+void *xmalloc (size_t), *xrealloc (void *, size_t);
 static char *concat3 (const char *, const char *, const char *);
 
 int
@@ -477,7 +477,7 @@ find_field (struct keyfield *keyfield, char *str, long int *lengthptr)
 {
   char *start;
   char *end;
-  char *(*fun) ();
+  char *(*fun) (char*, int, int, int);
 
   if (keyfield->braced)
     fun = find_braced_pos;

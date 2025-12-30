@@ -6536,7 +6536,7 @@ if test "$gmp_prog_cc_works" = yes; then
 
 #if defined (__GNUC__) && ! defined (__cplusplus)
 typedef unsigned long long t1;typedef t1*t2;
-void g(){}
+void g(int a, const t1* b, t1 c, t2 d, const t1* e, int f){}
 void h(){}
 static __inline__ t1 e(t2 rp,t2 up,int n,t1 v0)
 {t1 c,x,r;int i;if(v0){c=1;for(i=1;i<n;i++){x=up[i];r=x+1;rp[i]=r;}}return c;}

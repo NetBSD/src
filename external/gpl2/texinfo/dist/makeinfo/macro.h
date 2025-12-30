@@ -1,4 +1,4 @@
-/*	$NetBSD: macro.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: macro.h,v 1.2 2025/12/30 03:59:27 oster Exp $	*/
 
 /* macro.h -- declarations for macro.c.
    Id: macro.h,v 1.2 2004/04/11 17:56:47 karl Exp 
@@ -69,8 +69,8 @@ extern int enclosure_command (char *tok);
 extern void enclosure_expand (int arg, int start, int end);
 
 /* The @commands.  */
-extern void cm_macro (void), cm_rmacro (void), cm_unmacro (void);
-extern void cm_alias (void), cm_definfoenclose (void);
+extern void cm_macro (int arg, int arg2, int arg3), cm_rmacro (int arg, int arg2, int arg3), cm_unmacro (int arg, int arg2, int arg3);
+extern void cm_alias (int arg, int arg2, int arg3), cm_definfoenclose (int arg, int arg2, int arg3);
 
 extern int array_len (char **array);
 extern void free_array (char **array);

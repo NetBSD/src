@@ -1,4 +1,4 @@
-/*	$NetBSD: defun.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: defun.c,v 1.2 2025/12/30 03:59:26 oster Exp $	*/
 
 /* defun.c -- @defun and friends.
    Id: defun.c,v 1.11 2004/04/11 17:56:46 karl Exp 
@@ -688,7 +688,7 @@ defun_internal (int type, int x_p)
    If the name of the calling command ends in `x', then this is an extra
    entry included in the body of an insertion of the same type. */
 void
-cm_defun (void)
+cm_defun (int arg, int arg2, int arg3)
 {
   int type;
   char *base_command = xstrdup (command);  /* command with any `x' removed */
