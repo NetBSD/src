@@ -1,4 +1,4 @@
-$NetBSD: ngle_manual.txt,v 1.4 2025/12/29 06:00:45 macallan Exp $
+$NetBSD: ngle_manual.txt,v 1.5 2025/12/30 08:36:59 macallan Exp $
 
 The Unofficial NGLE Manual
 
@@ -26,6 +26,22 @@ https://cvsweb.netbsd.org/bsdweb.cgi/xsrc/external/mit/xf86-video-ngle/dist/src/
 All NGLE devices work in more or less the same way, with some differences in
 details and additional features. Every device occupies a 32MB range, half of
 which contains the STI ROM and registers, the other is for framebuffer access.
+My HCRX, living at 0xf6000000, lists the following regions:
+ 000c0000 @ 0xf6000000 btlb
+ 01000000 @ 0xf7000000 btlb - fb
+ 00280000 @ 0xf6100000 btlb
+ 00040000 @ 0xf60c0000 btlb
+ 00400000 @ 0xf6c00000 btlb
+ 00001000 @ 0xf6380000 sys last
+The ones we know what to do with are:
+ 000c0000 @ 0xf6000000 - this is the STI ROM
+ 01000000 @ 0xf7000000 - framebuffer aperture
+ 00280000 @ 0xf6100000 - drawing engine registers
+Sizes vary, but these offsets are the same on my PCI EG and I assue on most if
+not all other NGLE devices. Nothing is known about the others, I would assume
+the 'sys' region at the end contains DMA engine registers we don't want to show
+to userland.
+
 The framebuffer aperture can map exactly one chunk of video memory - things like
 front or back buffers, overlay, attribute planes, and a few unusual things, like
 colour maps and cursor sprite bitmaps. Read and write access can be controlled
@@ -265,6 +281,9 @@ if a lot of them happen while something more time consuming, like a full screen
 scroll, is in progress.
 Not sure what exactly NGLE_BINC_DATA does, the xf86 code uses it for colour map
 updates.
+Indirect framebuffer writes are generally faster than writing into the aperture,
+x11perf -copypixwin500 went from 22/s when using memcpy() to 74/s using BINC on
+HCRX in 24bit.
 
 5. Colour maps
 LUTs are held in their own buffer ( BINcmap ), size is likely chip-specific.
@@ -401,9 +420,16 @@ NGLE_REG_43, 0
 NGLE_REG_44, 0
 NGLE_REG_45, 0x444c4048
 
-The ROM is in word mode, as expected of a GSC device, with every 32bit word
+The ROM is in byte mode, as expected of a GSC device, with every 32bit word
 containing one byte of ROM data. The first word also has configuration bits:
 #define HCRX_CONFIG_24BIT	0x100
 
 On my HCRX24Z this reads 0x700, I assume 0x200 or 0x400 indicates the Z-Buffer
 add-on's presence.
+
+Also, xf86 has this comment when setting things up for 24bit display:
+    /**********************************************
+     * Write overlay transparency mask so only entry 255 is transparent
+     **********************************************/
+... and then proceeds to BINC write 0 to (1532,0) in the overlay
+
