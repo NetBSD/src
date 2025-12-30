@@ -1,4 +1,4 @@
-# $NetBSD: services,v 1.106 2023/12/09 16:18:48 christos Exp $
+# $NetBSD: services,v 1.107 2025/12/30 15:10:41 christos Exp $
 # See also: services(5), https://www.iana.org/assignments/service-names-port-numbers/
 #
 #                                              Service Name and Transport Protocol Port Number Registry
@@ -24885,6 +24885,7 @@ supfilesrv	871/tcp			# SUP server
 swat		901/tcp			# Samba Web Administration Tool
 kpop		1109/tcp		# Kerberos POP server
 supfiledbg	1127/tcp		# SUP debugging
+support		1529/tcp		# GNATS
 radacct		1813/tcp
 radacct		1813/udp
 lmtp		2003/tcp		# Local Mail Transfer Protocol
