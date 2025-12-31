@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.272 2025/10/07 20:09:27 andvar Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.273 2025/12/31 14:15:20 roy Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.272 2025/10/07 20:09:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.273 2025/12/31 14:15:20 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5599,6 +5599,7 @@ sppp_set_ip_addrs(struct sppp *sp)
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 	uint32_t myaddr = 0, hisaddr = 0;
+	int bound;
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -5614,6 +5615,7 @@ sppp_set_ip_addrs(struct sppp *sp)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = dest = NULL;
+	bound = curlwp_bind();
 	ifa = if_first_addr_psref(ifp, AF_INET, &psref);
 	if (ifa != NULL) {
 		si = satosin(ifa->ifa_addr);
@@ -5658,6 +5660,7 @@ sppp_set_ip_addrs(struct sppp *sp)
 	}
 	if (ifa != NULL)
 		ifa_release(ifa, &psref);
+	curlwp_bindx(bound);
 
 	IFNET_UNLOCK(ifp);
 
@@ -5673,6 +5676,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
+	int bound;
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -5688,6 +5692,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = dest = NULL;
+	bound = curlwp_bind();
 	ifa = if_first_addr_psref(ifp, AF_INET, &psref);
 	if (ifa != NULL) {
 		si = satosin(ifa->ifa_addr);
@@ -5725,6 +5730,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	}
 	if (ifa != NULL)
 		ifa_release(ifa, &psref);
+	curlwp_bindx(bound);
 
 	IFNET_UNLOCK(ifp);
 }
@@ -5794,7 +5800,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-	int s;
+	int bound, s;
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -5809,7 +5815,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 * Pick the first link-local AF_INET6 address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-
+	bound = curlwp_bind();
 	ifa = in6ifa_first_lladdr_psref(ifp, &psref);
 	if (ifa != NULL) {
 		struct sockaddr_in6 *sin6 = satosin6(ifa->ifa_addr);
@@ -5826,6 +5832,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		}
 		ifa_release(ifa, &psref);
 	}
+	curlwp_bindx(bound);
 
 	IFNET_UNLOCK(ifp);
 }
