@@ -1,4 +1,8 @@
-#	$NetBSD: files.virtio,v 1.3 2025/07/26 14:18:13 martin Exp $
+#	$NetBSD: files.virtio,v 1.4 2025/12/31 16:06:40 riastradh Exp $
+
+# Please DO NOT add new virtio drivers here.  New virtio drivers go in
+# sys/dev/virtio/ and eventually all the drivers that are here should
+# be moved there.  Only the virtio@pci attachment should live here.
 
 # VirtIO
 device	virtio {}
