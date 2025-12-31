@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.24 2024/11/07 09:47:40 rin Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.25 2025/12/31 14:11:16 nia Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Steven M. Bellovin
- * 4. The name of the author contributors may not be used to endorse or
+ * 3. The name of the author contributors may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -33,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.24 2024/11/07 09:47:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.25 2025/12/31 14:11:16 nia Exp $");
 
 /*
  *
