@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck_v7fs.c,v 1.2 2017/01/10 20:54:10 christos Exp $ */
+/*	$NetBSD: fsck_v7fs.c,v 1.3 2025/12/31 10:03:53 nia Exp $ */
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck_v7fs.c,v 1.2 2017/01/10 20:54:10 christos Exp $");
+__RCSID("$NetBSD: fsck_v7fs.c,v 1.3 2025/12/31 10:03:53 nia Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: fsck_v7fs.c,v 1.2 2017/01/10 20:54:10 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <endian.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
@@ -68,7 +69,7 @@ main(int argc, char **argv)
 	int Fflag = 0;
 	int part;
 	int fd, ch;
-	int endian = _BYTE_ORDER;
+	int endian = BYTE_ORDER;
 	int openflags = O_RDWR;
 	size_t part_sectors;
 	int fsck_flags = 0;
@@ -115,13 +116,13 @@ main(int argc, char **argv)
 		case 'B':
 			switch (optarg[0]) {
 			case 'l':
-				endian = _LITTLE_ENDIAN;
+				endian = LITTLE_ENDIAN;
 				break;
 			case 'b':
-				endian = _BIG_ENDIAN;
+				endian = BIG_ENDIAN;
 				break;
 			case 'p':
-				endian = _PDP_ENDIAN;
+				endian = PDP_ENDIAN;
 				break;
 			}
 			break;
