@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4 2025/12/30 10:35:21 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.5 2025/12/31 22:18:50 oster Exp $	*/
 
 /* cmds.c -- Texinfo commands.
    Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp 
@@ -42,10 +42,10 @@
 #endif
 
 /* Options. */
-static void cm_exampleindent (void),
-     cm_firstparagraphindent (void),
-     cm_paragraphindent (void),
-     cm_novalidate (void);
+static void cm_exampleindent (int arg, int arg2, int arg3),
+     cm_firstparagraphindent (int arg, int arg2, int arg3),
+     cm_paragraphindent (int arg, int arg2, int arg3),
+     cm_novalidate (int arg, int arg2, int arg3);
 
 /* Internals. */
 static void cm_obsolete (int arg, int start, int end),
@@ -375,14 +375,14 @@ COMMAND command_table[] = {
 
 /* Commands which insert their own names. */
 void
-insert_self (int arg)
+insert_self (int arg, int arg2, int arg3)
 {
   if (arg == START)
     add_word (command);
 }
 
 void
-insert_space (int arg)
+insert_space (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -396,7 +396,7 @@ insert_space (int arg)
 /* Insert a comma.  Useful when a literal , would break our parsing of
    multiple arguments.  */
 void
-cm_comma (int arg)
+cm_comma (int arg, int arg2, int arg3)
 {
   if (arg == START)
     add_char (',');
@@ -405,7 +405,7 @@ cm_comma (int arg)
 
 /* Force a line break in the output. */
 void
-cm_asterisk (void)
+cm_asterisk (int arg, int arg2, int arg3)
 {
   if (html)
     add_word ("<br>");
@@ -416,13 +416,13 @@ cm_asterisk (void)
   else
     {
       close_single_paragraph ();
-      cm_noindent ();
+      cm_noindent (0, 0, 0);
     }
 }
 
 /* Insert ellipsis. */
 void
-cm_dots (int arg)
+cm_dots (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -440,7 +440,7 @@ cm_dots (int arg)
 
 /* Insert ellipsis for sentence end. */
 void
-cm_enddots (int arg)
+cm_enddots (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -460,7 +460,7 @@ cm_enddots (int arg)
 }
 
 void
-cm_bullet (int arg)
+cm_bullet (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -476,7 +476,7 @@ cm_bullet (int arg)
 }
 
 void
-cm_minus (int arg)
+cm_minus (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -491,7 +491,7 @@ cm_minus (int arg)
 
 /* Formatting a dimension unit.  */
 void
-cm_dmn (int arg)
+cm_dmn (int arg, int arg2, int arg3)
 {
   if (html)
     insert_html_tag_with_attribute (arg, "span", "class=\"dmn\"");
@@ -504,7 +504,7 @@ cm_dmn (int arg)
 
 /* Insert "TeX". */
 void
-cm_TeX (int arg)
+cm_TeX (int arg, int arg2, int arg3)
 {
   static int last_position;
 
@@ -526,7 +526,7 @@ cm_TeX (int arg)
 
 /* Insert "LaTeX".  */
 void
-cm_LaTeX (int arg)
+cm_LaTeX (int arg, int arg2, int arg3)
 {
   static int last_position;
 
@@ -548,7 +548,7 @@ cm_LaTeX (int arg)
 
 /* Copyright symbol.  */
 void
-cm_copyright (int arg)
+cm_copyright (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -565,7 +565,7 @@ cm_copyright (int arg)
 
 /* Registered symbol.  */
 void
-cm_registeredsymbol (int arg)
+cm_registeredsymbol (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
@@ -581,7 +581,7 @@ cm_registeredsymbol (int arg)
 }
 
 void
-cm_today (int arg)
+cm_today (int arg, int arg2, int arg3)
 {
   static char *months[12] =
     { N_("January"), N_("February"), N_("March"), N_("April"), N_("May"),
@@ -597,7 +597,7 @@ cm_today (int arg)
 }
 
 void
-cm_comment (void)
+cm_comment (int arg, int arg2, int arg3)
 {
   /* For HTML, do not output comments before HTML header is written,
      otherwise comments before @settitle cause an empty <title> in the
@@ -649,7 +649,7 @@ cm_comment (void)
       free (line);
     }
   else
-    cm_ignore_line ();
+    cm_ignore_line (0, 0, 0);
 }
 
 
@@ -769,19 +769,19 @@ cm_acronym_or_abbr (int arg, int is_abbr)
 }
 
 void
-cm_acronym (int arg)
+cm_acronym (int arg, int arg2, int arg3)
 {
   cm_acronym_or_abbr (arg, 0);
 }
 
 void
-cm_abbr (int arg)
+cm_abbr (int arg, int arg2, int arg3)
 {
   cm_acronym_or_abbr (arg, 1);
 }
 
 void
-cm_tt (int arg)
+cm_tt (int arg, int arg2, int arg3)
 {
   /* @t{} is a no-op in Info.  */
   if (html)
@@ -791,7 +791,7 @@ cm_tt (int arg)
 }
 
 void
-cm_code (int arg)
+cm_code (int arg, int arg2, int arg3)
 {
   if (arg == START)
     in_fixed_width_font++;
@@ -857,7 +857,7 @@ cm_code (int arg)
 }
 
 void
-cm_kbd (int arg)
+cm_kbd (int arg, int arg2, int arg3)
 {
   if (xml)
     xml_insert_element (KBD, arg);
@@ -873,7 +873,7 @@ cm_kbd (int arg)
     { /* People use @kbd in an example to get the "user input" font.
          We don't want quotes in that case.  */
       if (!in_fixed_width_font)
-        cm_code (arg);
+        cm_code (arg, 0, 0);
     }
 }
 
@@ -899,7 +899,7 @@ cm_indicate_url (int arg, int start, int end)
 }
 
 void
-cm_key (int arg)
+cm_key (int arg, int arg2, int arg3)
 {
   if (xml)
     xml_insert_element (KEY, arg);
@@ -987,7 +987,7 @@ cm_sc (int arg, int start_pos, int end_pos)
 }
 
 void
-cm_dfn (int arg, int position)
+cm_dfn (int arg, int position, int arg3)
 {
   if (xml)
     xml_insert_element (DFN, arg);
@@ -1003,7 +1003,7 @@ cm_dfn (int arg, int position)
 }
 
 void
-cm_emph (int arg)
+cm_emph (int arg, int arg2, int arg3)
 {
   if (xml)
     xml_insert_element (EMPH, arg);
@@ -1014,7 +1014,7 @@ cm_emph (int arg)
 }
 
 void
-cm_verb (int arg)
+cm_verb (int arg, int arg2, int arg3)
 {
   int character;
   int delimiter = 0; /* avoid warning */
@@ -1118,7 +1118,7 @@ cm_strong (int arg, int start_pos, int end_pos)
 }
 
 void
-cm_cite (int arg, int position)
+cm_cite (int arg, int position, int arg3)
 {
   if (xml)
     xml_insert_element (CITE, arg);        
@@ -1143,7 +1143,7 @@ cm_not_fixed_width (int arg, int start, int end)
 }
 
 void
-cm_i (int arg)
+cm_i (int arg, int arg2, int arg3)
 {
   /* Make use of <lineannotation> of Docbook, if we are
      inside an @example or similar.  */
@@ -1159,7 +1159,7 @@ cm_i (int arg)
 }
 
 void
-cm_slanted (int arg)
+cm_slanted (int arg, int arg2, int arg3)
 {
   /* Make use of <lineannotation> of Docbook, if we are
      inside an @example or similar.  */
@@ -1175,7 +1175,7 @@ cm_slanted (int arg)
 }
 
 void
-cm_b (int arg)
+cm_b (int arg, int arg2, int arg3)
 {
   /* See cm_i comments.  */
   extern int printing_index;
@@ -1192,7 +1192,7 @@ cm_b (int arg)
 }
 
 void
-cm_r (int arg)
+cm_r (int arg, int arg2, int arg3)
 {
   /* See cm_i comments.  */
   extern int printing_index;
@@ -1207,7 +1207,7 @@ cm_r (int arg)
 }
 
 void
-cm_sansserif (int arg)
+cm_sansserif (int arg, int arg2, int arg3)
 {
   /* See cm_i comments.  */
   extern int printing_index;
@@ -1222,7 +1222,7 @@ cm_sansserif (int arg)
 }
 
 void
-cm_titlefont (int arg)
+cm_titlefont (int arg, int arg2, int arg3)
 {
   if (xml)
     xml_insert_element (TITLEFONT, arg);
@@ -1244,7 +1244,7 @@ cm_titlefont (int arg)
 /* Unfortunately, we cannot interpret @math{} contents like TeX does.  We just
    pass them through.  */
 void
-cm_math (int arg)
+cm_math (int arg, int arg2, int arg3)
 {
   if (xml && !docbook)
     xml_insert_element (MATH, arg);
@@ -1252,14 +1252,14 @@ cm_math (int arg)
 
 /* Various commands are no-op's. */
 void
-cm_no_op (void)
+cm_no_op (int arg, int arg2, int arg3)
 {
 }
 
 
 /* For proofing single chapters, etc.  */
 void
-cm_novalidate (void)
+cm_novalidate (int arg, int arg2, int arg3)
 {
   validating = 0;
 }
@@ -1267,7 +1267,7 @@ cm_novalidate (void)
 
 /* Prevent the argument from being split across two lines. */
 void
-cm_w (int arg)
+cm_w (int arg, int arg2, int arg3)
 {
   if (arg == START)
     non_splitting_words++;
@@ -1287,15 +1287,15 @@ cm_w (int arg)
    for TeX (the space stretches and stretches, and does not inhibit
    hyphenation).  */
 void
-cm_tie (int arg)
+cm_tie (int arg, int arg2, int arg3)
 {
   if (arg == START)
     {
-      cm_w (START);
+      cm_w (START, 0, 0);
       add_char (' ');
     }
   else
-    cm_w (END);
+    cm_w (END, 0, 0);
 }
 
 /* Explain that this command is obsolete, thus the user shouldn't
@@ -1311,16 +1311,16 @@ cm_obsolete (int arg, int start, int end)
 /* Inhibit the indentation of the next paragraph, but not of following
    paragraphs.  */
 void
-cm_noindent (void)
+cm_noindent (int arg, int arg2, int arg3)
 {
   if (!inhibit_paragraph_indentation)
     inhibit_paragraph_indentation = -1;
 }
 
 void
-cm_noindent_cmd (void)
+cm_noindent_cmd (int arg, int arg2, int arg3)
 {
-  cm_noindent ();
+  cm_noindent (0, 0, 0);
   xml_no_indent = 1;
   skip_whitespace_and_newlines();
 
@@ -1337,7 +1337,7 @@ cm_noindent_cmd (void)
 
 /* Force indentation of the next paragraph. */
 void
-cm_indent (void)
+cm_indent (int arg, int arg2, int arg3)
 {
   inhibit_paragraph_indentation = 0;
   xml_no_indent = 0;
@@ -1358,7 +1358,7 @@ cm_indent (void)
    switch files.  Finally, complain, or at least warn.  It doesn't
    really matter, anyway, since this doesn't get executed.  */
 void
-cm_setfilename (void)
+cm_setfilename (int arg, int arg2, int arg3)
 {
   char *filename;
   get_rest_of_line (1, &filename);
@@ -1369,7 +1369,7 @@ cm_setfilename (void)
 }
 
 void
-cm_settitle (void)
+cm_settitle (int arg, int arg2, int arg3)
 {
   if (xml)
     {
@@ -1396,14 +1396,14 @@ cm_ignore_arg (int arg, int start_pos, int end_pos)
 
 /* Ignore argument on rest of line.  */
 void
-cm_ignore_line (void)
+cm_ignore_line (int arg, int arg2, int arg3)
 {
   discard_until ("\n");
 }
 
 /* Insert the number of blank lines passed as argument. */
 void
-cm_sp (void)
+cm_sp (int arg, int arg2, int arg3)
 {
   int lines;
   char *line;
@@ -1456,12 +1456,12 @@ cm_sp (void)
 
 /* @dircategory LINE outputs INFO-DIR-SECTION LINE, unless --no-headers.  */ 
 void
-cm_dircategory (void)
+cm_dircategory (int arg, int arg2, int arg3)
 {
   char *line;
 
   if (html || docbook)
-    cm_ignore_line ();
+    cm_ignore_line (0, 0, 0);
   else if (xml)
     {
       xml_insert_element (DIRCATEGORY, START);
@@ -1490,7 +1490,7 @@ cm_dircategory (void)
    Then center the line of text.
    */
 void
-cm_center (void)
+cm_center (int arg, int arg2, int arg3)
 {
   if (xml)
     {
@@ -1510,7 +1510,7 @@ cm_center (void)
       int fudge_factor = 1;
 
       filling_enabled = indented_fill = 0;
-      cm_noindent ();
+      cm_noindent (0, 0, 0);
       start = output_paragraph_offset;
 
       if (html)
@@ -1562,7 +1562,7 @@ cm_center (void)
 
 /* Show what an expression returns. */
 void
-cm_result (int arg)
+cm_result (int arg, int arg2, int arg3)
 {
   if (arg == END)
     add_word (html ? "=&gt;" : "=>");
@@ -1570,7 +1570,7 @@ cm_result (int arg)
 
 /* What an expression expands to. */
 void
-cm_expansion (int arg)
+cm_expansion (int arg, int arg2, int arg3)
 {
   if (arg == END)
     add_word (html ? "==&gt;" : "==>");
@@ -1578,7 +1578,7 @@ cm_expansion (int arg)
 
 /* Indicates two expressions are equivalent. */
 void
-cm_equiv (int arg)
+cm_equiv (int arg, int arg2, int arg3)
 {
   if (arg == END)
     add_word ("==");
@@ -1586,7 +1586,7 @@ cm_equiv (int arg)
 
 /* What an expression may print. */
 void
-cm_print (int arg)
+cm_print (int arg, int arg2, int arg3)
 {
   if (arg == END)
     add_word ("-|");
@@ -1594,7 +1594,7 @@ cm_print (int arg)
 
 /* An error signaled. */
 void
-cm_error (int arg)
+cm_error (int arg, int arg2, int arg3)
 {
   if (arg == END)
     add_word (html ? "error--&gt;" : "error-->");
@@ -1602,7 +1602,7 @@ cm_error (int arg)
 
 /* The location of point in an example of a buffer. */
 void
-cm_point (int arg)
+cm_point (int arg, int arg2, int arg3)
 {
   if (arg == END)
     add_word ("-!-");
@@ -1611,7 +1611,7 @@ cm_point (int arg)
 /* @exdent: Start a new line with just this text on it.
    The text is outdented one level if possible. */
 void
-cm_exdent (void)
+cm_exdent (int arg, int arg2, int arg3)
 {
   char *line;
   int save_indent = current_indent;
@@ -1730,7 +1730,7 @@ handle_include (int verbatim_include)
 
 /* Include file as if put in @verbatim environment */
 void
-cm_verbatiminclude (void)
+cm_verbatiminclude (int arg, int arg2, int arg3)
 {
   handle_include (1); 
 }
@@ -1738,7 +1738,7 @@ cm_verbatiminclude (void)
 
 /* Remember this file, and move onto the next. */
 void
-cm_include (void)
+cm_include (int arg, int arg2, int arg3)
 {
   handle_include (0); 
 }
@@ -1747,7 +1747,7 @@ cm_include (void)
 /* @bye: Signals end of processing.  Easy to make this happen. */
 
 void
-cm_bye (void)
+cm_bye (int arg, int arg2, int arg3)
 {
   discard_braces (); /* should not have any unclosed braces left */
   input_text_offset = input_text_length;
@@ -1756,7 +1756,7 @@ cm_bye (void)
 /* @paragraphindent */
 
 static void
-cm_paragraphindent (void)
+cm_paragraphindent (int arg1, int arg2, int arg3)
 {
   char *arg;
 
@@ -1782,7 +1782,7 @@ set_example_indentation_increment (char *string)
 }
 
 static void
-cm_exampleindent (void)
+cm_exampleindent (int arg1, int arg2, int arg3)
 {
   char *arg;
   
@@ -1812,7 +1812,7 @@ set_firstparagraphindent (char *string)
 }
 
 static void
-cm_firstparagraphindent (void)
+cm_firstparagraphindent (int arg1, int arg2, int arg3)
 {
   char *arg;
 
@@ -1828,7 +1828,7 @@ cm_firstparagraphindent (void)
   
    Do this also for ?, !, and :.  */
 void
-cm_colon (void)
+cm_colon (int arg, int arg2, int arg3)
 {
   if (xml)
     {
@@ -1861,7 +1861,7 @@ cm_colon (void)
 /* Ending sentences explicitly.  Currently, only outputs entities for XML
    output, for other formats it calls insert_self.  */
 void
-cm_punct (int arg)
+cm_punct (int arg, int arg2, int arg3)
 {
   if (xml && !docbook)
     {
@@ -1880,6 +1880,6 @@ cm_punct (int arg)
     }
   else
     {
-      insert_self (arg);
+      insert_self (arg, 0, 0);
     }
 }

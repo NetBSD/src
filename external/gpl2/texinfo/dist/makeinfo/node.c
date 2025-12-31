@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.4 2025/12/30 10:35:21 martin Exp $	*/
+/*	$NetBSD: node.c,v 1.5 2025/12/31 22:18:50 oster Exp $	*/
 
 /* node.c -- nodes for Texinfo.
    Id: node.c,v 1.27 2004/12/20 23:56:07 karl Exp 
@@ -538,7 +538,7 @@ add_html_names (char *node)
    It is an error not to do so.
    The defaults come from the menu in this node's parent. */
 void
-cm_node (void)
+cm_node (int arg, int arg2, int arg3)
 {
   static long epilogue_len = 0L;
   char *node, *prev, *next, *up;
@@ -1098,7 +1098,7 @@ cm_node (void)
 
 /* Cross-reference target at an arbitrary spot.  */
 void
-cm_anchor (int arg)
+cm_anchor (int arg, int arg2, int arg3)
 {
   char *anchor;
   char *fname_for_anchor = NULL;
