@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2511 2025/12/28 16:50:20 thorpej Exp $
+#	$NetBSD: mi,v 1.2512 2025/12/31 14:56:02 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -12551,6 +12551,8 @@
 ./usr/share/man/cat9/ctxsw.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/curcpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/curlwp.0			comp-sys-catman		.cat
+./usr/share/man/cat9/curlwp_bind.0		comp-sys-catman		.cat
+./usr/share/man/cat9/curlwp_bindx.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/curproc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_broadcast.0		comp-sys-catman		.cat
@@ -21427,6 +21429,8 @@
 ./usr/share/man/html9/ctod.html			comp-sys-htmlman	html
 ./usr/share/man/html9/curcpu.html		comp-sys-htmlman	html
 ./usr/share/man/html9/curlwp.html		comp-sys-htmlman	html
+./usr/share/man/html9/curlwp_bind.html		comp-sys-htmlman	html
+./usr/share/man/html9/curlwp_bindx.html		comp-sys-htmlman	html
 ./usr/share/man/html9/curproc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv.html			comp-sys-htmlman	html
 ./usr/share/man/html9/cv_broadcast.html		comp-sys-htmlman	html
@@ -30440,6 +30444,8 @@
 ./usr/share/man/man9/ctxsw.9			comp-obsolete		obsolete
 ./usr/share/man/man9/curcpu.9			comp-sys-man		.man
 ./usr/share/man/man9/curlwp.9			comp-sys-man		.man
+./usr/share/man/man9/curlwp_bind.9		comp-sys-man		.man
+./usr/share/man/man9/curlwp_bindx.9		comp-sys-man		.man
 ./usr/share/man/man9/curproc.9			comp-sys-man		.man
 ./usr/share/man/man9/cv.9			comp-sys-man		.man
 ./usr/share/man/man9/cv_broadcast.9		comp-sys-man		.man

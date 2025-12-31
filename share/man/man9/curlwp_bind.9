@@ -1,0 +1,98 @@
+.\"	$NetBSD: curlwp_bind.9,v 1.1 2025/12/31 14:56:02 riastradh Exp $
+.\"
+.\" Copyright (c) 2025 The NetBSD Foundation
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 31, 2025
+.Dt CURLWP_BIND 9
+.Os
+.Sh NAME
+.Nm curlwp_bind ,
+.Nm curlwp_bindx
+.Nd temporarily bind the current thread to the running CPU
+.Sh SYNOPSIS
+.In sys/lwp.h
+.Ft int
+.Fn curlwp_bind "void"
+.Ft void
+.Fn curlwp_bindx "int bound"
+.Sh DESCRIPTION
+.Fn curlwp_bind
+temporarily binds the current thread to the running CPU and returns a
+cookie
+.Fa bound
+which must be passed to
+.Fn curlwp_bindx
+when done.
+.Pp
+During this time, the thread may sleep and may be preempted, but it
+will never migrate to another CPU until
+.Fn curlwp_bindx .
+If the CPU is offlined, the thread will not run again until the CPU is
+onlined again.
+.Pp
+Calls to
+.Fn curlwp_bind
+and
+.Fn curlwp_bindx
+may be nested as long as the matching cookie is passed.
+.Sh EXAMPLES
+For temporary access to resources protected by
+.Xr psref 9
+from an arbitrary thread:
+.Bd -literal
+	struct psref psref;
+	int bound, s;
+
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		ifa_acquire(ifa, &psref);
+		pserialize_read_exit(s);
+
+		/*
+		 * ifa is now stable, even if caller is preempted
+		 * or sleeps
+		 */
+
+		s = pserialize_read_enter();
+		ifa_release(ifa, &psref);
+	}
+	pserialize_read_exit(s);
+	curlwp_bindx(bound);
+.Ed
+.Sh CODE REFERENCES
+.Pa sys/sys/lwp.h
+.Sh SEE ALSO
+.Xr psref 9 ,
+.Xr pserialize 9 ,
+.Xr localcount 9 ,
+.Xr spl 9
+.Sh HISTORY
+The
+.Nm
+function first appeared in
+.Nx 8.0
+to support
+.Xr psref 9 .

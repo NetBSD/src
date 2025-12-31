@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.475 2025/09/06 02:53:22 riastradh Exp $
+#       $NetBSD: Makefile,v 1.476 2025/12/31 14:56:02 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -15,6 +15,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_switchto.9 cpufreq.9 \
 	crashme.9 csf.9 ctod.9 \
+	curlwp_bind.9 \
 	curproc.9 \
 	ddb.9 ddc.9 \
 	delay.9 devsw_attach.9 disk.9 disklabel.9 dksubr.9 dofileread.9 \
@@ -325,6 +326,7 @@ MLINKS+=ctod.9 dtoc.9 \
 	ctod.9 btoc.9 \
 	ctod.9 dbtob.9 \
 	ctod.9 btodb.9
+MLINKS+=curlwp_bind.9 curlwp_bindx.9
 MLINKS+=curproc.9 curcpu.9 curproc.9 curlwp.9
 MLINKS+=delay.9 DELAY.9
 MLINKS+=devsw_attach.9 devsw.9 \
