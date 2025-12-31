@@ -1,4 +1,4 @@
-/*	$NetBSD: blowfish.c,v 1.4 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: blowfish.c,v 1.5 2025/12/31 13:02:21 nia Exp $	*/
 /* $OpenBSD: blowfish.c,v 1.16 2002/02/19 19:39:36 millert Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
@@ -15,10 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -46,7 +43,7 @@
  * directly by bcrypt.c, not built separately.
  */
 
-__RCSID("$NetBSD: blowfish.c,v 1.4 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: blowfish.c,v 1.5 2025/12/31 13:02:21 nia Exp $");
 
 #include <sys/types.h>
 

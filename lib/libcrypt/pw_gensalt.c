@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.14 2024/07/23 22:37:11 riastradh Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.15 2025/12/31 13:02:20 nia Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -34,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.14 2024/07/23 22:37:11 riastradh Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.15 2025/12/31 13:02:20 nia Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>

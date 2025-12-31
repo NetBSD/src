@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2021/10/12 15:25:39 nia Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2025/12/31 13:02:20 nia Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: util.c,v 1.3 2021/10/12 15:25:39 nia Exp $");
+__RCSID("$NetBSD: util.c,v 1.4 2025/12/31 13:02:20 nia Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

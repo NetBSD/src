@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.22 2021/10/16 10:53:33 nia Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.23 2025/12/31 13:02:20 nia Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -13,10 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -46,7 +43,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.22 2021/10/16 10:53:33 nia Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.23 2025/12/31 13:02:20 nia Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
