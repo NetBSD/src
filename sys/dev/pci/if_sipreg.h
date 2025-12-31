@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.22 2024/02/02 22:39:10 andvar Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.23 2025/12/31 15:33:51 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ struct sip_desc {
 #define	CFG_REQALG	0x00000080	/* PCI bus request alg. */
 #define	CFG_SB		0x00000040	/* single backoff */
 #define	CFG_POW		0x00000020	/* program out of window timer */
-#define	CFG_EXD		0x00000010	/* excessive defferal timer disable */
+#define	CFG_EXD		0x00000010	/* excessive deferral timer disable */
 #define	CFG_PESEL	0x00000008	/* parity error detection action */
 /* #ifdef DP83820 */
 #define	CFG_BROM_DIS	0x00000004	/* boot ROM disable */

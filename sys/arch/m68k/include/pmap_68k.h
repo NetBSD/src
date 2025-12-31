@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.10 2025/12/02 02:53:08 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.11 2025/12/31 15:33:50 andvar Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct pv_entry {
 /*24*/
 };
 
-/* Upper bits of pv_vf contain the virtual addess */
+/* Upper bits of pv_vf contain the virtual address */
 #define	PV_VA(pv)	((pv)->pv_vf & ~PAGE_MASK)
 
 /* Lower bits of pv_vf contain flags */
@@ -255,7 +255,7 @@ struct pmap_bootmap {
 /*
  * Our abstract definition of a "segment" is "that which points to the
  * leaf tables".  On the 2-level configuration, that's the level 1 table,
- * and on the 3-level configuraiton, that's the level 2 table.
+ * and on the 3-level configuration, that's the level 2 table.
  *
  * This is the logical address layout:
  *
@@ -466,7 +466,7 @@ phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
  * if needed.
  *
  * The first two macros are specifically for converting addresses within
- * the confines of pmap_bootstrap1().  We may be runing with the MMU off
+ * the confines of pmap_bootstrap1().  We may be running with the MMU off
  * (and either VA==PA or VA!=PA) or with the MMU on with some mappings.
  * The default ones are suitable for the "MMU off" case with the relocation
  * offset passed in the "reloff" variable.

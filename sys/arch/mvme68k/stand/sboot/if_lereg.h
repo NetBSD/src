@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.5 2021/12/05 03:04:41 msaitoh Exp $ */
+/*	$NetBSD: if_lereg.h,v 1.6 2025/12/31 15:33:51 andvar Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -147,7 +147,7 @@ struct lereg2 {
 #define	LE_T1_ERR	0x40		/* error summary */
 #define	LE_T1_MORE	0x10		/* multiple collisions */
 #define	LE_T1_ONE	0x08		/* single collision */
-#define	LE_T1_DEF	0x04		/* defferred transmit */
+#define	LE_T1_DEF	0x04		/* deferred transmit */
 #define	LE_T1_STP	0x02		/* start of packet */
 #define	LE_T1_ENP	0x01		/* end of packet */
 

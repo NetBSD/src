@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.S,v 1.5 2013/09/07 19:06:29 chs Exp $	*/
+/*	$NetBSD: memcmp.S,v 1.6 2025/12/31 15:33:50 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memcmp.S,v 1.5 2013/09/07 19:06:29 chs Exp $")
+	RCSID("$NetBSD: memcmp.S,v 1.6 2025/12/31 15:33:50 andvar Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ ENTRY(memcmp)
 	CMPMB((%a0)+,(%a1)+)		| yes, compare a byte
 	jne	.Lbcnoteq		| not equal, return non-zero
 	subql	#1,%d0			| adjust count
-	jeq	.Lbcdone		| count 0, reutrn zero
+	jeq	.Lbcdone		| count 0, return zero
 .Lbceven:
 	movl	%a1,%d1
 	btst	#0,%d1			| string 2 address odd?

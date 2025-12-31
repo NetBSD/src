@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.204 2025/09/09 11:34:25 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.205 2025/12/31 15:33:50 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.204 2025/09/09 11:34:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.205 2025/12/31 15:33:50 andvar Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1616,7 +1616,7 @@ ENTRY(cpu_switchto)
 #ifdef XENPV
 	/* if we are there, we're obviously not in user context.
 	 * reset ci_xen_clockf_* in case the splx() at the end of mi_switch()
-	 * triggers a deffered call do xen_timer_handler()
+	 * triggers a deferred call do xen_timer_handler()
 	 */
 	movb	$0, CPUVAR(XEN_CLOCKF_USERMODE)
 	movl	$_C_LABEL(cpu_switchto), CPUVAR(XEN_CLOCKF_PC)

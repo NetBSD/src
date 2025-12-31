@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.18 2025/10/16 23:19:46 gutteridge Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.19 2025/12/31 15:33:51 andvar Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -1622,7 +1622,7 @@ export seq_isr:
 		 *
 		 * First instruction in an ISR cannot be a branch on
 		 * Rev A.  Snapshot LQISTAT2 so the status is not missed
-		 * and deffer the test by one instruction.
+		 * and defer the test by one instruction.
 		 */
 		mov	REG_ISR, LQISTAT2;
 		test	REG_ISR, LQIWORKONLQ jz main_isr;

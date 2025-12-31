@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.10 2019/10/11 14:22:46 msaitoh Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.11 2025/12/31 15:33:51 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ struct leinit {
 /* Transmit message descriptor 3 (tmd3) */
 #define	LE_T2_BUFF	(1<<31)		/* buffer error */
 #define	LE_T2_UFLO	(1<<30)		/* underflow error */
-#define	LE_T2_EXDEF	(1<<29)		/* excessive defferral */
+#define	LE_T2_EXDEF	(1<<29)		/* excessive deferral */
 #define	LE_T2_LCOL	(1<<28)		/* late collision */
 #define	LE_T2_LCAR	(1<<27)		/* loss of carrier */
 #define	LE_T2_RTRY	(1<<26)		/* retry error */

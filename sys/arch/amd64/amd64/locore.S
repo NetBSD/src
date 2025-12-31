@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.234 2025/12/05 17:58:11 khorben Exp $	*/
+/*	$NetBSD: locore.S,v 1.235 2025/12/31 15:33:50 andvar Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1305,7 +1305,7 @@ ENTRY(start_pvh)
 
 .same_hvm_info:
 	/* just use the provided %ebx */
-	/* XXX assume hvm_start_info+dependant structure fits in a single page */
+	/* XXX assume hvm_start_info+dependent structure fits in a single page */
 	movl %ebx, %eax
 	movl %ebx, %edi
 	addl	$PAGE_SIZE, %edi
@@ -1458,7 +1458,7 @@ ENTRY(cpu_switchto)
 #ifdef XENPV
 	/* if we are there, we're obviously not in user context.
 	 * reset ci_xen_clockf_* in case the splx() at the end of mi_switch()
-	 * triggers a deffered call do xen_timer_handler()
+	 * triggers a deferred call do xen_timer_handler()
 	 */
 	movb    $0, CPUVAR(XEN_CLOCKF_USERMODE)
 	movq    $_C_LABEL(cpu_switchto), CPUVAR(XEN_CLOCKF_PC)
@@ -2084,7 +2084,7 @@ ENTRY(selfreloc_start)
 .Lcopy_done:
 	cld			/* LynxOS depends on it */
 
-	/* load current selfreloc_start addesss in $edi */
+	/* load current selfreloc_start address in $edi */
 	movl	%ebx, %edi	/* loadaddr was saved in ebx */
 	addl	$(selfreloc_start - kernel_text), %edi
 
