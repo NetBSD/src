@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2025/12/24 21:03:25 jkoshy Exp $
+#	$NetBSD: Makefile,v 1.7 2025/12/31 20:56:07 jkoshy Exp $
 
 HOSTLIB=	elf
 
@@ -106,5 +106,4 @@ CPPFLAGS:=	# empty
 M4OBJDIR!=	cd ${.CURDIR}/../../m4 && ${PRINTOBJDIR}
 .SUFFIXES:	.m4 .c
 .m4.c:
-	${M4OBJDIR}/m4 -D SRCDIR=${LIBELF_DIR} -I${LIBELF_DIR} \
-		${.IMPSRC} > ${.TARGET}
+	${M4OBJDIR}/m4 -I${LIBELF_DIR} ${.IMPSRC} > ${.TARGET}
