@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.180 2025/12/20 06:50:45 mlelstv Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.181 2026/01/01 21:22:43 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.180 2025/12/20 06:50:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.181 2026/01/01 21:22:43 gutteridge Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -752,7 +752,7 @@ re_attach(struct rtk_softc *sc)
 		int addr_len;
 
 		/*
-		 * Get station address from the EEPROM.
+		 * Get EEPROM command address length to fetch station address.
 		 */
 		if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
 			addr_len = RTK_EEADDR_LEN1;
