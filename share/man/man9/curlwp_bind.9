@@ -1,4 +1,4 @@
-.\"	$NetBSD: curlwp_bind.9,v 1.2 2025/12/31 15:47:42 wiz Exp $
+.\"	$NetBSD: curlwp_bind.9,v 1.3 2026/01/01 01:12:52 uwe Exp $
 .\"
 .\" Copyright (c) 2025 The NetBSD Foundation
 .\" All rights reserved.
@@ -61,26 +61,26 @@ may be nested as long as the matching cookie is passed.
 For temporary access to resources protected by
 .Xr psref 9
 from an arbitrary thread:
-.Bd -literal
-	struct psref psref;
-	int bound, s;
+.Bd -literal -offset indent
+struct psref psref;
+int bound, s;
 
-	bound = curlwp_bind();
-	s = pserialize_read_enter();
-	IFADDR_READER_FOREACH(ifa, ifp) {
-		ifa_acquire(ifa, &psref);
-		pserialize_read_exit(s);
+bound = curlwp_bind();
+s = pserialize_read_enter();
+IFADDR_READER_FOREACH(ifa, ifp) {
+        ifa_acquire(ifa, &psref);
+        pserialize_read_exit(s);
 
-		/*
-		 * ifa is now stable, even if caller is preempted
-		 * or sleeps
-		 */
+        /*
+         * ifa is now stable, even if caller is preempted
+         * or sleeps
+         */
 
-		s = pserialize_read_enter();
-		ifa_release(ifa, &psref);
-	}
-	pserialize_read_exit(s);
-	curlwp_bindx(bound);
+        s = pserialize_read_enter();
+        ifa_release(ifa, &psref);
+}
+pserialize_read_exit(s);
+curlwp_bindx(bound);
 .Ed
 .Sh CODE REFERENCES
 .Pa sys/sys/lwp.h
