@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.129 2025/11/02 22:16:24 nia Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.130 2026/01/01 02:19:01 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.129 2025/11/02 22:16:24 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.130 2026/01/01 02:19:01 tnn Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -706,8 +706,8 @@ rasops_allocattr_mono(void *cookie, int fg0, int bg0, int flg, long *attr)
 	if ((flg & (WSATTR_BLINK | WSATTR_HILIT | WSATTR_WSCOLORS)) != 0)
 		return EINVAL;
 
-	fg = 0xff;
-	bg = 0;
+	fg = WSCOL_LIGHT_WHITE;
+	bg = WSCOL_BLACK;
 
 	if ((flg & WSATTR_REVERSE) != 0) {
 		uint32_t swap = fg;
