@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_32_nv_cas.c,v 1.5 2025/12/30 23:00:17 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec_32_nv_cas.c,v 1.6 2026/01/01 01:37:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __strong_alias(_atomic_dec_ulong_nv,_atomic_dec_32_nv)
 void *
 atomic_dec_ptr_nv(volatile void *ptr)
 {
-	return (void *)atomic_dec_32_nv((volatile uint32_t *)ptr);
+	return (void *)_atomic_dec_32_nv((volatile uint32_t *)ptr);
 }
 
 #undef atomic_dec_ptr_nv
