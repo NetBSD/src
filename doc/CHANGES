@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3209 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3210 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -109,8 +109,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		[nia 20251201]
 	iwm(4): Update driver code, improving performance and stability.
 		[mlelstv 20251201]
-	evbmips: Enable ASLR by default in OCTEON kernel configuration.
-		[nia 20251201]
 	lfs: Various stability improvements. [perseant 20251202]
 	evbppc: Enable PaX security features in WII kernel configuration.
 		[nia 20251204]
@@ -120,8 +118,22 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		diffutils, build with MKBSDDIFF=yes. [nia 20251204]
 	amd64: Support ramdisks when booting in GENPVH mode.
 		[khorben 20251205]
+	evbppc: wii: Add support for GameCube controller sockets
+		as uhid(4) (now "userspace hid") devices.
+		[jmcneill 20251208]
 	openresolv(8): import 3.17.1 (patched to 3.17.3) [roy 20251213]
 	libutil: added strpct() rounding options strpct_r (etc) --> .so.7.25
 		[kre 20251214]
+	editline(3): Add a method to set custom word characters,
+		from bsiegert. [christos 20251214]
+	evbarm: Add support for TI OMAP4 PandaBoard-ES, from Rui-Xiang Guo.
+		[skrll 20251216]
 	tzcode: Updated to 2025c. [christos 20251218]
 	tzdata: Updated to 2025c (using 2025cgtz) [kre 20251219]
+	re(4): Made the code MPSAFE with a private mutex.
+		[mlelstv 20251220]
+	lm(4): Support five aux fan sensors for NCT6794D. [isaki 20251224]
+	inetd(8): Add an optional accept limit to stream/nowait services.
+		[mlelstv 20251227]
+	sun2: Add various MK build knobs and disable them on sun2 to trim
+		down the installation. [thorpej 20251228]
