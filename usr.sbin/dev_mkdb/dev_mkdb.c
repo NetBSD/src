@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.31 2023/08/08 10:35:37 riastradh Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.32 2026/01/02 16:31:00 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dev_mkdb.c,v 1.31 2023/08/08 10:35:37 riastradh Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.32 2026/01/02 16:31:00 nia Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.31 2023/08/08 10:35:37 riastradh Exp $");
 #include <db.h>
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <fts.h>
 #include <paths.h>
