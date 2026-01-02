@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.1.1.1 2016/01/13 18:41:48 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.2 2026/01/02 20:09:11 mrg Exp $	*/
 
 /* Getopt for GNU.
    NOTE: getopt is now part of the C library, so if you don't know what
@@ -34,14 +34,8 @@
 
 #include <stdio.h>
 
-/* This needs to come after some library #include
-   to get __GNU_LIBRARY__ defined.  */
-#ifdef	__GNU_LIBRARY__
-/* Don't include stdlib.h for non-GNU C libraries because some of them
-   contain conflicting prototypes for getopt.  */
-# include <stdlib.h>
-# include <unistd.h>
-#endif	/* GNU C library.  */
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <string.h>
 
@@ -119,17 +113,6 @@ int optopt = '?';
 
 static struct _getopt_data getopt_data;
 
-
-#ifndef __GNU_LIBRARY__
-
-/* Avoid depending on library functions or files
-   whose names are inconsistent.  */
-
-#ifndef getenv
-extern char *getenv ();
-#endif
-
-#endif /* not __GNU_LIBRARY__ */
 
 #ifdef _LIBC
 /* Stored original parameters.
