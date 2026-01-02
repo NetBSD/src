@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___stat30.c,v 1.4 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: compat___stat30.c,v 1.5 2026/01/02 22:22:21 nia Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project
- *      by Frank van der Linden
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -33,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___stat30.c,v 1.4 2013/10/04 21:07:37 christos Exp $");
+__RCSID("$NetBSD: compat___stat30.c,v 1.5 2026/01/02 22:22:21 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__

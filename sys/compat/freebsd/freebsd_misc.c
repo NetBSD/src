@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.34 2021/09/07 11:43:03 riastradh Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.35 2026/01/02 22:22:22 nia Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project
- *      by Frank van der Linden
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.34 2021/09/07 11:43:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.35 2026/01/02 22:22:22 nia Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"

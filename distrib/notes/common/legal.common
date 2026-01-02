@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.138 2025/12/31 14:11:16 nia Exp $
+.\" $NetBSD: legal.common,v 1.139 2026/01/02 22:22:21 nia Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,9 +173,6 @@ Mettinen, and Michael Teske.
 .It
 This product includes software developed by Ezra Story, by Kari
 Mettinen, Michael Teske and by Bernd Ernesti.
-.It
-This product includes software developed by Frank van der Linden for
-the NetBSD Project.
 .It
 This product includes software developed by Gardner Buchanan.
 .It
@@ -443,9 +440,6 @@ by Christopher G. Demetriou.
 .It
 This product includes software developed for the NetBSD Project by
 Eiji Kawauchi.
-.It
-This product includes software developed for the NetBSD Project
-by Frank van der Linden
 .It
 This product includes software developed for the NetBSD Project by
 Genetec Corporation.
