@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1173 2025/11/12 22:14:07 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1174 2026/01/02 14:20:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,7 +128,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1173 2025/11/12 22:14:07 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1174 2026/01/02 14:20:50 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3809,7 +3809,7 @@ ApplyModifier_SunShell1(const char **pp, ModChain *ch)
 		v = VarFind(cache_varname, SCOPE_GLOBAL, false);
 		if (v == NULL) {
 			char *output, *error;
-			
+
 			output = Cmd_Exec(Expr_Str(expr), &error);
 			if (error != NULL) {
 				Parse_Error(PARSE_WARNING, "%s", error);
@@ -3826,7 +3826,7 @@ ApplyModifier_SunShell1(const char **pp, ModChain *ch)
 
 	return AMR_OK;
 }
-	
+
 
 /*
  * In cases where the evaluation mode and the definedness are the "standard"
