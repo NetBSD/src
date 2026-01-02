@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.63 2025/12/28 16:19:50 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.64 2026/01/02 10:53:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1309,4 +1309,9 @@ sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_pagelist.h 1.2
 	evbarm: Raspberry Pi: add support for vchiq/vcaudio in
 	big endian kernels.
 	[tsutsui, ticket #137]
+
+sys/conf/copyright				1.24
+
+	Welcome to 2026
+	[hgutch, ticket #138]
 
