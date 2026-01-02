@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1460 2025/12/28 18:43:25 thorpej Exp $
+#      $NetBSD: bsd.own.mk,v 1.1461 2026/01/02 17:26:50 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1277,6 +1277,7 @@ _MKVARS.yes= \
 	MKBIND \
 	MKBLUETOOTH \
 	MKBINUTILS \
+	MKBSDDIFF \
 	MKBSDTAR \
 	MKCD9660FS \
 	MKCHFS \
@@ -1563,7 +1564,6 @@ MKDEBUGTOOLS?=${MKTOOLSDEBUG:Uno}
 _MKVARS.no= \
 	MKAMDGPUFIRMWARE \
 	MKARZERO \
-	MKBSDDIFF \
 	MKBSDGREP \
 	MKCATPAGES \
 	MKCOMPATTESTS \
