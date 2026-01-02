@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.35 2024/06/02 19:27:12 andvar Exp $	*/
+/*	$NetBSD: esp.c,v 1.36 2026/01/02 23:33:58 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Peter Galbavy
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -70,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.35 2024/06/02 19:27:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.36 2026/01/02 23:33:58 nia Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
