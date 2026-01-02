@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.188 2024/01/14 11:46:05 andvar Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.189 2026/01/02 04:40:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,23 +32,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.188 2024/01/14 11:46:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.189 2026/01/02 04:40:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/lock.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/lockdebug.h>
-#include <sys/cpu.h>
-#include <sys/syslog.h>
+#include <sys/types.h>
+
 #include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/kernel.h>
+#include <sys/lock.h>
+#include <sys/lockdebug.h>
 #include <sys/lwp.h>
+#include <sys/proc.h>
 #include <sys/pserialize.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 
 #if defined(DIAGNOSTIC) && !defined(LOCKDEBUG)
 #include <sys/ksyms.h>
