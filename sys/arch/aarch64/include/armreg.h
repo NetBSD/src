@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.72 2025/11/22 21:24:02 andvar Exp $ */
+/* $NetBSD: armreg.h,v 1.73 2026/01/02 23:11:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -685,7 +685,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_TME		 0x1b	// A64: TSTART instruction (FEAT_TME)
 #define	 ESR_EC_FRAC		 0x1c	// A64: Pointer auth trap (FEAT_FPAC)
 #define	 ESR_EC_SME		 0x1d	// AXX: Access to SME (FEAT_SME)
-#define	 ESR_EC_RME		 0x1e	// A64: Granule Protection  Check (FEAT_RME)
+#define	 ESR_EC_RME		 0x1e	// A64: Granule Protection Check (FEAT_RME)
 #define	 ESR_EC_INSN_ABT_EL_LOW	 0x20	// AXX: Instruction Abort from lower level
 #define	 ESR_EC_INSN_ABT_EL_CUR	 0x21	// AXX: Instruction Abort from current level
 #define	 ESR_EC_PC_ALIGNMENT	 0x22	// AXX: Misaligned PC
