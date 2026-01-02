@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.61 2024/10/04 20:32:20 christos Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.62 2026/01/02 16:32:44 nia Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.61 2024/10/04 20:32:20 christos Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.62 2026/01/02 16:32:44 nia Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -102,9 +102,8 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.61 2024/10/04 20:32:20 christos Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#ifndef HAVE_NBTOOL_CONFIG_H
-#include <machine/bswap.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
 #endif
 
 #include <db.h>
