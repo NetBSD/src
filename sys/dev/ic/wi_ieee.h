@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.24 2005/12/11 12:21:29 christos Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.25 2026/01/03 14:55:17 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -326,7 +326,7 @@ struct wi_ltv_keys {
 #define WI_RID_COMMS_QUALITY	0xFD43 /* quality of BSS connection */
 #define WI_RID_CUR_TX_RATE	0xFD44 /* current TX rate */
 #define WI_RID_CUR_BEACON_INT	0xFD45 /* current beacon interval */
-#define WI_RID_CUR_SCALE_THRESH	0xFD46 /* actual system scane thresh setting */
+#define WI_RID_CUR_SCALE_THRESH	0xFD46 /* actual system scale thresh setting */
 #define WI_RID_PROT_RESP_TIME	0xFD47 /* time to wait for resp to req msg */
 #define WI_RID_SHORT_RTR_LIM	0xFD48 /* max tx attempts for short frames */
 #define WI_RID_LONG_RTS_LIM	0xFD49 /* max tx attempts for long frames */

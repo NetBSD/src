@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gmreg.h,v 1.3 2000/06/15 19:09:15 tsubai Exp $	*/
+/*	$NetBSD: if_gmreg.h,v 1.4 2026/01/03 14:55:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -77,7 +77,7 @@ struct gmac_dma {
 #define GMAC_MAXFRAMESIZE	0x6054
 #define GMAC_PASIZE		0x6058
 #define GMAC_JAMSIZE		0x605c
-#define GMAC_ATTEMPTLIMIT	0x6060		/* atemptlimit */
+#define GMAC_ATTEMPTLIMIT	0x6060		/* attemptlimit */
 #define GMAC_MACCNTLTYPE	0x6064
 #define GMAC_MACADDRESS0	0x6080
 #define GMAC_MACADDRESS1	0x6084
