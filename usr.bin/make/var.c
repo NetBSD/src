@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1175 2026/01/03 19:57:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1176 2026/01/03 20:48:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1175 2026/01/03 19:57:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1176 2026/01/03 20:48:35 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2202,7 +2202,7 @@ ParseModifierPart(
      * For the first part of the ':S' modifier, set anchorEnd if the last
      * character of the pattern is a $.
      */
-    PatternFlags *out_pflags,
+    PatternFlags *pflags,
     /*
      * For the second part of the ':S' modifier, allow '&' to be
      * escaped and replace each unescaped '&' with subst->lhs.
@@ -2224,8 +2224,8 @@ ParseModifierPart(
 				LazyBuf_Add(part, *p);
 			p++;
 		} else if (p[1] == end2) {	/* Unescaped '$' at end */
-			if (out_pflags != NULL)
-				out_pflags->anchorEnd = true;
+			if (pflags != NULL)
+				pflags->anchorEnd = true;
 			else
 				LazyBuf_Add(part, *p);
 			p++;
