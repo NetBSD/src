@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.11 2023/07/07 12:34:26 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.12 2026/01/03 23:59:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -41,13 +41,14 @@
 #endif
 
 #include <sys/param.h>
-#include <sys/sysctl.h>
-#include <sys/systm.h>
-#include <sys/kthread.h>
-#include <sys/kmem.h>
-#include <sys/mutex.h>
+
 #include <sys/crashme.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mutex.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef DDB
 #include <ddb/ddb.h>
@@ -193,7 +194,7 @@ crashme_sysctl_forwarder(SYSCTLFN_ARGS)
 			break;
 	}
 	if (!cn) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	node = *rnode;
@@ -203,7 +204,7 @@ crashme_sysctl_forwarder(SYSCTLFN_ARGS)
 		return (error);
 
 	if (!crashme_enable)
-		return EACCES;
+		return SET_ERROR(EACCES);
 
 	DPRINTF("invoking \"%s\" (%s)", cn->cn_name, cn->cn_longname);
 	if ((*cn->cn_fn)(arg) != 0)
