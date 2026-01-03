@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.9 2025/09/15 21:26:19 christos Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.10 2026/01/03 17:09:57 nia Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -14,14 +14,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.9 2025/09/15 21:26:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.10 2026/01/03 17:09:57 nia Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: murmurhash.c,v 1.9 2025/09/15 21:26:19 christos Exp $");
+__RCSID("$NetBSD: murmurhash.c,v 1.10 2026/01/03 17:09:57 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: murmurhash.c,v 1.9 2025/09/15 21:26:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/hash.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
