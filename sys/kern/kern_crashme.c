@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.12 2026/01/03 23:59:02 riastradh Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.13 2026/01/03 23:59:12 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
