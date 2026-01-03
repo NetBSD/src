@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.39 2023/10/04 22:17:09 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.40 2026/01/03 23:09:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.39 2023/10/04 22:17:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.40 2026/01/03 23:09:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -108,7 +108,7 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 		MODULE_HOOK_UNSET(coredump_hook);
 		return 0;
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
 
@@ -145,7 +145,7 @@ coredump(struct lwp *l, const char *pattern)
 	 */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
-		error = EFBIG;		/* better error code? */
+		error = SET_ERROR(EFBIG);	/* better error code? */
 		goto release;
 	}
 
@@ -161,7 +161,7 @@ coredump(struct lwp *l, const char *pattern)
 	 */
 	if (p->p_flag & PK_SUGID) {
 		if (!security_setidcore_dump) {
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 			goto release;
 		}
 		pattern = security_setidcore_path;
@@ -188,7 +188,7 @@ coredump(struct lwp *l, const char *pattern)
 		vp = p->p_cwdi->cwdi_cdir;
 		if (vp->v_mount == NULL ||
 		    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 	}
 
 release:
@@ -207,7 +207,7 @@ release:
 		char c[2];
 
 		if (lastslash - name >= MAXPATHLEN - 2) {
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 			goto done;
 		}
 
@@ -220,7 +220,7 @@ release:
 			goto done;
 		if (vp->v_mount == NULL ||
 		    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 		vrele(vp);
 		if (error)
 			goto done;
@@ -230,7 +230,7 @@ release:
 
 	pb = pathbuf_create(name);
 	if (pb == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto done;
 	}
 	error = vn_open(NULL, pb, 0, O_CREAT | O_NOFOLLOW | FWRITE,
@@ -250,7 +250,7 @@ release:
 	if (vp->v_type != VREG ||
 	    VOP_GETATTR(vp, &vattr, cred) || vattr.va_nlink != 1 ||
 	    vattr.va_uid != kauth_cred_geteuid(cred)) {
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 		goto out;
 	}
 	vattr_null(&vattr);
@@ -322,7 +322,7 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 			d++;
 		}
 		if (d >= end)
-			return (ENAMETOOLONG);
+			return SET_ERROR(ENAMETOOLONG);
 	}
 	*d = '\0';
 	return 0;

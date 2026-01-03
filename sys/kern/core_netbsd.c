@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.24 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.25 2026/01/03 23:09:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.24 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.25 2026/01/03 23:09:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ CORENAME(real_coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)
 
 	/* First write out the core header. */
 	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &cs.core,
-	    cs.core.c_hdrsize), ENOSYS, error);
+	    cs.core.c_hdrsize), SET_ERROR(ENOSYS), error);
 	if (error)
 		return (error);
 
@@ -110,7 +110,9 @@ CORENAME(real_coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)
 
 	/* Finally, the address space dump */
 	MODULE_HOOK_CALL(uvm_coredump_walkmap_hook,
-	    (p, CORENAME(coredump_writesegs_netbsd), &cs), ENOSYS, error);
+	    (p, CORENAME(coredump_writesegs_netbsd), &cs),
+	    SET_ERROR(ENOSYS),
+	    error);
 
 	return error;
 }
@@ -140,12 +142,14 @@ CORENAME(coredump_writesegs_netbsd)(struct uvm_coredump_state *us)
 		cseg.c_size = us->end - us->start;
 
 	MODULE_HOOK_CALL(coredump_write_hook, (cs->iocookie, UIO_SYSSPACE,
-	    &cseg, cs->core.c_seghdrsize), ENOSYS, error);
+	    &cseg, cs->core.c_seghdrsize), SET_ERROR(ENOSYS), error);
 	if (error)
 		return (error);
 
 	MODULE_HOOK_CALL(coredump_write_hook, (cs->iocookie, UIO_USERSPACE,
-	    (void *)(vaddr_t)us->start, cseg.c_size), ENOSYS, error);
+		(void *)(vaddr_t)us->start, cseg.c_size),
+	    SET_ERROR(ENOSYS),
+	    error);
 
 	return error;
 }
