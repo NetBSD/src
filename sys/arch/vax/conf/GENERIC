@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.220 2024/06/29 07:12:47 rin Exp $
+# $NetBSD: GENERIC,v 1.221 2026/01/03 23:35:22 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220 $"
+#ident 		"GENERIC-$Revision: 1.221 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -187,7 +187,6 @@ asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 and 4000/10x SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
-#clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 spx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
 lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
 vsaudio0	at vsbus0 csr 0x200d0000 # VS4000/60 (or VLC) audio
@@ -276,7 +275,6 @@ wsdisplay*	at smg0
 wsdisplay*	at gpx0
 wsdisplay*	at spx0
 wsdisplay*	at lcg0
-#wsdisplay*	at clr0
 #wsdisplay*	at qd0
 #wsdisplay*	at qv0
 lkkbd0		at dz0 line 0
