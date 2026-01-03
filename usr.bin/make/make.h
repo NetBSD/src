@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.361 2025/07/06 07:11:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.362 2026/01/03 19:57:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -972,14 +972,16 @@ typedef enum VarEvalMode {
 	VARE_EVAL,
 
 	/*
-	 * Parse and evaluate the expression.  It is an error if a
-	 * subexpression evaluates to undefined.
+	 * Only for Var_Parse, not for Var_Subst or Var_Expand: Parse and
+	 * evaluate the expression.  It is an error if the expression
+	 * evaluates to undefined.  Subexpressions or indirect expressions
+	 * may evaluate to undefined, though.
 	 */
 	VARE_EVAL_DEFINED_LOUD,
 
 	/*
 	 * Parse and evaluate the expression.  It is a silent error if a
-	 * subexpression evaluates to undefined.
+	 * top-level expression evaluates to undefined.
 	 */
 	VARE_EVAL_DEFINED,
 

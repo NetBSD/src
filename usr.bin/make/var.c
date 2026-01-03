@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1174 2026/01/02 14:20:50 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1175 2026/01/03 19:57:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -93,7 +93,9 @@
  *	Var_Value	Return the unexpanded value of a variable, or NULL if
  *			the variable is undefined.
  *
- *	Var_Subst	Substitute all expressions in a string.
+ *	Var_Subst	Copy a string, expanding expressions on the way.
+ *
+ *	Var_Expand	Expand all expressions in a string, in-place.
  *
  *	Var_Parse	Parse an expression such as ${VAR:Mpattern}.
  *
@@ -128,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1174 2026/01/02 14:20:50 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1175 2026/01/03 19:57:38 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -314,21 +316,17 @@ static bool save_dollars = true;
 /*
  * A scope collects variable names and their values.
  *
- * The main scope is SCOPE_GLOBAL, which contains the variables that are set
- * in the makefiles.  SCOPE_INTERNAL acts as a fallback for SCOPE_GLOBAL and
- * contains some internal make variables.  These internal variables can thus
- * be overridden, they can also be restored by undefining the overriding
- * variable.
+ * Each target has its own scope, containing the 7 target-local variables
+ * .TARGET, .ALLSRC, etc.  Variables set on dependency lines also go in
+ * this scope.
  *
  * SCOPE_CMDLINE contains variables from the command line arguments.  These
  * override variables from SCOPE_GLOBAL.
  *
+ * SCOPE_GLOBAL contains the variables that are set in the makefiles.
+ *
  * There is no scope for environment variables, these are generated on-the-fly
  * whenever they are referenced.
- *
- * Each target has its own scope, containing the 7 target-local variables
- * .TARGET, .ALLSRC, etc.  Variables set on dependency lines also go in
- * this scope.
  */
 
 GNode *SCOPE_CMDLINE;
@@ -1267,12 +1265,8 @@ Var_Exists(GNode *scope, const char *name)
 }
 
 /*
- * See if the given variable exists, in the given scope or in other
- * fallback scopes.
- *
- * Input:
- *	scope		scope in which to start search
- *	name		name of the variable to find, is expanded once
+ * See if the given variable exists, in the given scope or in other fallback
+ * scopes.  The variable name is expanded once.
  */
 bool
 Var_ExistsExpand(GNode *scope, const char *name)
@@ -2122,12 +2116,12 @@ typedef enum ApplyModifierResult {
  * backslashes.
  */
 static bool
-IsEscapedModifierPart(const char *p, char end1, char end2,
+IsEscapedModifierPart(const char *p, char delim1, char delim2,
 		      struct ModifyWord_SubstArgs *subst)
 {
 	if (p[0] != '\\' || p[1] == '\0')
 		return false;
-	if (p[1] == end1 || p[1] == end2 || p[1] == '\\' || p[1] == '$')
+	if (p[1] == delim1 || p[1] == delim2 || p[1] == '\\' || p[1] == '$')
 		return true;
 	return p[1] == '&' && subst != NULL;
 }
@@ -2210,8 +2204,8 @@ ParseModifierPart(
      */
     PatternFlags *out_pflags,
     /*
-     * For the second part of the ':S' modifier, allow ampersands to be
-     * escaped and replace unescaped ampersands with subst->lhs.
+     * For the second part of the ':S' modifier, allow '&' to be
+     * escaped and replace each unescaped '&' with subst->lhs.
      */
     struct ModifyWord_SubstArgs *subst
 )
