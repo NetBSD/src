@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.99 2026/01/03 23:58:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.99 2026/01/03 23:58:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -68,25 +68,27 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/idle.h>
-#include <sys/sched.h>
-#include <sys/intr.h>
+#include <sys/types.h>
+
+#include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/cpuio.h>
-#include <sys/proc.h>
-#include <sys/percpu.h>
-#include <sys/kernel.h>
-#include <sys/kauth.h>
-#include <sys/xcall.h>
-#include <sys/pool.h>
-#include <sys/kmem.h>
-#include <sys/select.h>
-#include <sys/namei.h>
-#include <sys/callout.h>
-#include <sys/pcu.h>
 #include <sys/heartbeat.h>
+#include <sys/idle.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/namei.h>
+#include <sys/pcu.h>
+#include <sys/percpu.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/sched.h>
+#include <sys/select.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
