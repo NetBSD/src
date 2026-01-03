@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.100 2026/01/03 23:10:07 riastradh Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.101 2026/01/03 23:57:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,27 +71,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.100 2026/01/03 23:10:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.101 2026/01/03 23:57:20 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/syslog.h>
-#include <sys/kernel.h>
-#include <sys/kthread.h>
-#include <sys/kmem.h>
-#include <sys/namei.h>
-#include <sys/errno.h>
-#include <sys/acct.h>
-#include <sys/resourcevar.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/kauth.h>
+#include <sys/types.h>
 
+#include <sys/acct.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/syscallargs.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
 
 /*
  * The routines implemented in this file are described in:
