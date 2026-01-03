@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.41 2026/01/03 23:56:55 riastradh Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.42 2026/01/03 23:57:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.41 2026/01/03 23:56:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.42 2026/01/03 23:57:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.41 2026/01/03 23:56:55 riastradh Exp
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
 

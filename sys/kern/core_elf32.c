@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.69 2026/01/03 23:56:55 riastradh Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.70 2026/01/03 23:57:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.69 2026/01/03 23:56:55 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.70 2026/01/03 23:57:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.69 2026/01/03 23:56:55 riastradh Ex
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
