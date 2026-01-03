@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.84 2023/10/04 22:17:09 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.85 2026/01/03 23:57:53 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -27,22 +27,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.84 2023/10/04 22:17:09 ad Exp $");
-
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/queue.h>
-#include <sys/proc.h>
-#include <sys/ucred.h>
-#include <sys/pool.h>
 #define __KAUTH_PRIVATE
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.85 2026/01/03 23:57:53 riastradh Exp $");
+
+#include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
 #include <sys/rwlock.h>
-#include <sys/sysctl.h>
-#include <sys/atomic.h>
 #include <sys/specificdata.h>
+#include <sys/sysctl.h>
+#include <sys/ucred.h>
 #include <sys/vnode.h>
 
 #include <secmodel/secmodel.h>
