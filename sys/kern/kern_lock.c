@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.190 2026/01/02 04:40:26 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.191 2026/01/03 23:08:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.190 2026/01/02 04:40:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.191 2026/01/03 23:08:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.190 2026/01/02 04:40:26 riastradh Ex
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/pserialize.h>
+#include <sys/sdt.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
@@ -59,6 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.190 2026/01/02 04:40:26 riastradh Ex
 #include <machine/lock.h>
 
 #include <dev/lockstat.h>
+
+SDT_PROBE_DEFINE1(sdt, kernel, lock, entry,
+    "unsigned"/*nlocks*/);
+SDT_PROBE_DEFINE1(sdt, kernel, lock, exit,
+    "unsigned"/*nlocks*/);
 
 #define	RETURN_ADDRESS	(uintptr_t)__builtin_return_address(0)
 
@@ -272,6 +278,7 @@ _kernel_lock(int nlocks)
 	ci = curcpu();
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(kernel_lock));
+		SDT_PROBE1(sdt, kernel, lock, entry,  nlocks);
 		ci->ci_biglock_count += nlocks;
 		l->l_blcnt += nlocks;
 		splx(s);
@@ -284,6 +291,7 @@ _kernel_lock(int nlocks)
 
 	if (__predict_true(__cpu_simple_lock_try(kernel_lock))) {
 		atomic_store_relaxed(&kernel_lock_holder, curcpu());
+		SDT_PROBE1(sdt, kernel, lock, entry,  nlocks);
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
 		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
@@ -338,6 +346,7 @@ _kernel_lock(int nlocks)
 
 	atomic_store_relaxed(&kernel_lock_holder, curcpu());
 
+	SDT_PROBE1(sdt, kernel, lock, entry,  nlocks);
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
@@ -419,6 +428,8 @@ _kernel_unlock(int nlocks, int *countp)
 		l->l_blcnt -= nlocks;
 		splx(s);
 	}
+
+	SDT_PROBE1(sdt, kernel, lock, exit,  nlocks);
 
 	if (countp != NULL)
 		*countp = olocks;
