@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.56 2025/01/06 10:46:44 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.57 2026/01/03 16:28:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -452,6 +452,9 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
  *
  * (1) Insert dcbt before every stwcx. instruction
  * (2) Insert sync before every rfi/rfci instruction
+ *
+ * https://elinux.org/images/1/1d/Ppc405gp-errata.pdf
+ * https://web.archive.org/web/20240630134919/https://elinux.org/images/1/1d/Ppc405gp-errata.pdf
  */
 #define	IBM405_ERRATA77_DCBT(ra, rb)	dcbt ra,rb
 #define	IBM405_ERRATA77_SYNC		sync
