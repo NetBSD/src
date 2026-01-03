@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.63 2023/11/02 10:31:55 martin Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.64 2026/01/03 23:58:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020, 2023
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.63 2023/11/02 10:31:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.64 2026/01/03 23:58:32 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.63 2023/11/02 10:31:55 martin Exp
 #include <sys/kernel.h>
 #include <sys/lockdebug.h>
 #include <sys/lwp.h>
+#include <sys/sdt.h>
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
 #include <sys/systm.h>
@@ -350,7 +351,7 @@ cv_timedwaitbt(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 
 	/* If there's nothing left to wait, time out.  */
 	if (bt->sec == 0 && bt->frac == 0)
-		return EWOULDBLOCK;
+		return SET_ERROR(EWOULDBLOCK);
 
 	/* Convert to ticks, but clamp to be >=1.  */
 	timo = bintime2timo(bt);
@@ -415,7 +416,7 @@ cv_timedwaitbt_sig(kcondvar_t *cv, kmutex_t *mtx, struct bintime *bt,
 
 	/* If there's nothing left to wait, time out.  */
 	if (bt->sec == 0 && bt->frac == 0)
-		return EWOULDBLOCK;
+		return SET_ERROR(EWOULDBLOCK);
 
 	/* Convert to ticks, but clamp to be >=1.  */
 	timo = bintime2timo(bt);
