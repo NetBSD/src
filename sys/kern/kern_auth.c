@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.85 2026/01/03 23:57:53 riastradh Exp $ */
+/* $NetBSD: kern_auth.c,v 1.86 2026/01/03 23:58:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
 #define __KAUTH_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.85 2026/01/03 23:57:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.86 2026/01/03 23:58:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.85 2026/01/03 23:57:53 riastradh Exp
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/specificdata.h>
 #include <sys/sysctl.h>
 #include <sys/ucred.h>
@@ -458,7 +459,7 @@ kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
 	KASSERT(cred->cr_refcnt == 1);
 
 	if (len > __arraycount(cred->cr_groups))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (len) {
 		if (seg == UIO_SYSSPACE) {
@@ -516,7 +517,7 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
 	KASSERT(cred != NULL);
 
 	if (len > cred->cr_ngroups)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (seg == UIO_USERSPACE)
 		return copyout(cred->cr_groups, grbuf, sizeof(*grbuf) * len);
@@ -1017,15 +1018,15 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	    arg2, arg3);
 
 	if (r == KAUTH_RESULT_DENY)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	if (r == KAUTH_RESULT_ALLOW)
-		return (0);
+		return 0;
 
 	if (secmodel_nsecmodels() == 0)
-		return (0);
+		return 0;
 
-	return (EPERM);
+	return SET_ERROR(EPERM);
 }
 
 /*
@@ -1151,10 +1152,10 @@ kauth_authorize_vnode(kauth_cred_t cred, kauth_action_t action,
 	    action, vp, dvp, NULL, NULL);
 
 	if (error == KAUTH_RESULT_DENY)
-		return (EACCES);
+		return SET_ERROR(EACCES);
 
 	if (error == KAUTH_RESULT_ALLOW)
-		return (0);
+		return 0;
 
 	/*
 	 * If the file-system does not support decision-before-action, we can
@@ -1163,9 +1164,9 @@ kauth_authorize_vnode(kauth_cred_t cred, kauth_action_t action,
 	 * it and let the file-system have the last word.
 	 */
 	if (fs_decision == KAUTH_VNODE_REMOTEFS)
-		return (0);
+		return 0;
 
-	return (fs_decision);
+	return fs_decision;
 }
 
 static int
