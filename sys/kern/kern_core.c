@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.40 2026/01/03 23:09:52 riastradh Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.41 2026/01/03 23:56:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.40 2026/01/03 23:09:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.41 2026/01/03 23:56:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -45,19 +45,21 @@ __KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.40 2026/01/03 23:09:52 riastradh Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/vnode.h>
-#include <sys/namei.h>
+#include <sys/types.h>
+
 #include <sys/acct.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/proc.h>
+#include <sys/compat_stub.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
-#include <sys/compat_stub.h>
-#include <sys/exec_elf.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/stat.h>
+#include <sys/vnode.h>
 
 MODULE(MODULE_CLASS_MISC, coredump, NULL);
 

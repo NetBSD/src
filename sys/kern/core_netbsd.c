@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.25 2026/01/03 23:09:52 riastradh Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.26 2026/01/03 23:56:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,17 +45,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.25 2026/01/03 23:09:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.26 2026/01/03 23:56:55 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/exec.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/core.h>
-#include <sys/module.h>
+#include <sys/types.h>
+
 #include <sys/compat_stub.h>
+#include <sys/core.h>
+#include <sys/exec.h>
+#include <sys/module.h>
+#include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
