@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.77 2024/01/29 05:42:41 rin Exp $ */
+/* $NetBSD: style,v 1.78 2026/01/03 21:13:07 riastradh Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.77 2024/01/29 05:42:41 rin Exp $");
+__RCSID("$NetBSD: style,v 1.78 2026/01/03 21:13:07 riastradh Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -536,6 +536,18 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 	 * There are similar constants that should be used with the *scanf(3)
 	 * family of functions: SCN?MAX, SCN?64, etc.
 	 */
+
+	/*
+	 * In the kernel, when originating an errno(3) error code, use
+	 * the SET_ERROR macro from <sys/sdt.h>.  Don't use this for
+	 * all references to error codes, e.g. not when checking an
+	 * error code in `if (error == EAGAIN) { ... }' -- just when
+	 * originating it.
+	 *
+	 * On platforms with dtrace, this creates a probe to help trace
+	 * where particualr error codes originated.
+	 */
+	return SET_ERROR(EAGAIN);
 }
 
 /*
