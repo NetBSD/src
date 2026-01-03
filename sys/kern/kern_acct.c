@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.99 2021/12/05 04:35:38 msaitoh Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.100 2026/01/03 23:10:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.99 2021/12/05 04:35:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.100 2026/01/03 23:10:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 		}
 		if (vp->v_type != VREG) {
 			VOP_UNLOCK(vp);
-			error = EACCES;
+			error = SET_ERROR(EACCES);
 			goto bad;
 		}
 		if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0) {
