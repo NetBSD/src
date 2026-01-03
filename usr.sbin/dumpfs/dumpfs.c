@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.69 2023/11/06 12:18:59 hannken Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.70 2026/01/03 08:05:48 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.69 2023/11/06 12:18:59 hannken Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.70 2026/01/03 08:05:48 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -762,7 +762,7 @@ static int
 print_journal(const char *name, int fd)
 {
 	daddr_t off;
-	size_t count, blklen, bno, skip;
+	size_t count, blklen, bno, skip, seq;
 	off_t boff, head, tail, len;
 	uint32_t generation;
 
@@ -780,7 +780,20 @@ print_journal(const char *name, int fd)
 		count  = afs.fs_journallocs[1];
 		blklen = afs.fs_journallocs[2];
 
-		for (bno=0; bno<count; bno += skip / blklen) {
+		if (blklen == 0) {
+			warnx("%s: zero block length", name);
+			return 1;
+		}
+
+		for (seq=0; seq<count; seq += skip / blklen) {
+
+			if (seq < 2) {
+				bno = seq;
+			} else {
+				bno = tail/blklen + (seq - 2);
+				while (bno >= count)
+					bno -= (count - 2);
+			}
 
 			skip = blklen;
 
@@ -815,19 +828,17 @@ print_journal(const char *name, int fd)
 				break;
 			default:
 				len = print_journal_entries(name, blklen);
-				skip = awh.wc_len;
-				if (len != (off_t)skip)
+				if (len != (off_t)awh.wc_len) {
 					printf("  CORRUPTED RECORD\n");
+					break;
+				}
+				skip = awh.wc_len;
 				break;
 			}
-
-			if (blklen == 0)
-				break;
 
 			skip = (skip + blklen - 1) / blklen * blklen;
 			if (skip == 0)
 				break;
-
 		}
 		break;
 	}
