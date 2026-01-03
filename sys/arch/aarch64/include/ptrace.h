@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.12 2020/09/07 18:29:48 ryo Exp $ */
+/* $NetBSD: ptrace.h,v 1.13 2026/01/03 21:14:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
 #define PTRACE_REG_SP(r)	(r)->r_sp
 #define PTRACE_REG_INTRV(r)	(r)->r_reg[0]
+
+#define PTRACE_ILLEGAL_ASM	__asm __volatile ("udf #0" : : : "memory")
 
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xa0, 0x01, 0x20, 0xd4 })
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile("brk #13" ::: "memory")
