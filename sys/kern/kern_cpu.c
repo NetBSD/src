@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.99 2026/01/03 23:58:42 riastradh Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.100 2026/01/03 23:58:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.99 2026/01/03 23:58:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.100 2026/01/03 23:58:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.99 2026/01/03 23:58:42 riastradh Exp 
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
+#include <sys/sdt.h>
 #include <sys/select.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
@@ -213,7 +214,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		if (cs->cs_id >= maxcpus ||
 		    (ci = cpu_lookup(cs->cs_id)) == NULL) {
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 			break;
 		}
 		cpu_setintr(ci, cs->cs_intr);	/* XXX neglect errors */
@@ -227,7 +228,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		cs->cs_id = id;
 		if (cs->cs_id >= maxcpus ||
 		    (ci = cpu_lookup(id)) == NULL) {
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 			break;
 		}
 		if ((ci->ci_schedstate.spc_flags & SPCF_OFFLINE) != 0)
@@ -252,7 +253,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 				break;
 		}
 		if (ci == NULL)
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 		else
 			*(int *)data = cpu_index(ci);
 		break;
@@ -433,7 +434,7 @@ cpu_setstate(struct cpu_info *ci, bool online)
 			nonline++;
 		}
 		if (nonline == 1)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		func = (xcfunc_t)cpu_xc_offline;
 	}
 
@@ -445,7 +446,7 @@ cpu_setstate(struct cpu_info *ci, bool online)
 	} else {
 		if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
 			/* If was not set offline, then it is busy */
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 		ncpuonline--;
 	}
@@ -535,7 +536,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 		func = (xcfunc_t)cpu_xc_intr;
 	} else {
 		if (CPU_IS_PRIMARY(ci))	/* XXX kern/45117 */
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		if ((spc->spc_flags & SPCF_NOINTR) != 0)
 			return 0;
 		/*
@@ -551,7 +552,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 			nintr++;
 		}
 		if (nintr == 0)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		func = (xcfunc_t)cpu_xc_nointr;
 	}
 
@@ -561,7 +562,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 		KASSERT((spc->spc_flags & SPCF_NOINTR) == 0);
 	} else if ((spc->spc_flags & SPCF_NOINTR) == 0) {
 		/* If was not set offline, then it is busy */
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 
 	/* Direct interrupts away from the CPU and record the change. */
@@ -574,7 +575,7 @@ int
 cpu_setintr(struct cpu_info *ci, bool intr)
 {
 
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 u_int
@@ -608,13 +609,13 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 
 	sc->sc_blobsize = firmware_get_size(fwh);
 	if (sc->sc_blobsize == 0) {
-		error = EFTYPE;
+		error = SET_ERROR(EFTYPE);
 		firmware_close(fwh);
 		goto err0;
 	}
 	sc->sc_blob = firmware_malloc(sc->sc_blobsize);
 	if (sc->sc_blob == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		firmware_close(fwh);
 		goto err0;
 	}
