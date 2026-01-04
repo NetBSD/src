@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.11 2026/01/04 00:00:38 riastradh Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.12 2026/01/04 06:43:48 kre Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define ELFSIZE ARCH_ELFSIZE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD"$)
+__KERNEL_RCSID(0, "$NetBSD: kern_ctf.c,v 1.12 2026/01/04 06:43:48 kre Exp $");
 
 #include <sys/types.h>
 
