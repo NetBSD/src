@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.51 2026/01/04 01:41:51 riastradh Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.52 2026/01/04 01:41:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.51 2026/01/04 01:41:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.52 2026/01/04 01:41:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.51 2026/01/04 01:41:51 riastradh Exp
 #include <sys/ktrace.h>
 #include <sys/module.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/userconf.h>
@@ -231,7 +232,7 @@ sys_nosys(struct lwp *l, const void *v, register_t *retval)
 	mutex_enter(&proc_lock);
 	psignal(l->l_proc, SIGSYS);
 	mutex_exit(&proc_lock);
-	return ENOSYS;
+	return SET_ERROR(ENOSYS);
 }
 
 /*
@@ -241,7 +242,7 @@ int
 enodev(void)
 {
 
-	return (ENODEV);
+	return SET_ERROR(ENODEV);
 }
 
 /*
@@ -251,7 +252,7 @@ int
 enxio(void)
 {
 
-	return (ENXIO);
+	return SET_ERROR(ENXIO);
 }
 
 /*
@@ -261,7 +262,7 @@ int
 enoioctl(void)
 {
 
-	return (ENOTTY);
+	return SET_ERROR(ENOTTY);
 }
 
 /*
@@ -273,7 +274,7 @@ int
 enosys(void)
 {
 
-	return (ENOSYS);
+	return SET_ERROR(ENOSYS);
 }
 
 /*
@@ -284,7 +285,7 @@ int
 eopnotsupp(void)
 {
 
-	return (EOPNOTSUPP);
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 /*
