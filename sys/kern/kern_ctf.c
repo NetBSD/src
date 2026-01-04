@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.9 2025/05/08 08:30:15 hannken Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.10 2026/01/04 00:00:27 riastradh Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -27,19 +27,24 @@
  * $FreeBSD: src/sys/kern/kern_ctf.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
+#define _KSYMS_PRIVATE
 #define ELFSIZE ARCH_ELFSIZE
-#include <sys/proc.h>
-#include <sys/module.h>
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD"$)
+
+#include <sys/types.h>
+
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/kmem.h>
-#include <sys/malloc.h>
-#include <sys/kobj_impl.h>
-#include <sys/kobj.h>
 #include <sys/kern_ctf.h>
-
-#define _KSYMS_PRIVATE
+#include <sys/kmem.h>
+#include <sys/kobj.h>
+#include <sys/kobj_impl.h>
 #include <sys/ksyms.h>
+#include <sys/malloc.h>
+#include <sys/module.h>
+#include <sys/proc.h>
 
 #include <net/zlib.h>
 
