@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.26 2024/05/04 13:33:18 mlelstv Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.27 2026/01/04 03:18:38 riastradh Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,14 +68,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.26 2024/05/04 13:33:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.27 2026/01/04 03:18:38 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/iostat.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/iostat.h>
-#include <sys/sysctl.h>
 #include <sys/rwlock.h>
+#include <sys/sysctl.h>
 
 /*
  * Function prototypes for sysctl nodes
