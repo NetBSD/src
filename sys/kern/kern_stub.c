@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.50 2020/08/01 02:04:55 riastradh Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.51 2026/01/04 01:41:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.50 2020/08/01 02:04:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.51 2026/01/04 01:41:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -71,16 +71,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.50 2020/08/01 02:04:55 riastradh Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/fstypes.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/ktrace.h>
+#include <sys/module.h>
+#include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-#include <sys/ktrace.h>
-#include <sys/intr.h>
-#include <sys/cpu.h>
-#include <sys/module.h>
-#include <sys/bus.h>
 #include <sys/userconf.h>
 
 bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
