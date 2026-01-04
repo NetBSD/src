@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.h,v 1.3 2021/04/06 07:56:10 simonb Exp $	*/
+/*	$NetBSD: kern_ctf.h,v 1.4 2026/01/04 06:42:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
 #define	_SYS_CTF_H_
 
 #define	CTF_MAGIC	0xcff1	/* magic number identifying header */
+
+struct module;
 
 /*
  * Modules CTF section
