@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.186 2024/09/08 09:36:51 rillig Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.187 2026/01/04 01:35:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.186 2024/09/08 09:36:51 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.187 2026/01/04 01:35:33 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.186 2024/09/08 09:36:51 rillig Exp
 #include <sys/ktrace.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/syncobj.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
@@ -481,7 +482,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 			if (!auth || ktrcanset(curl, p))
 				ktrderef(p);
 			else
-				error = EPERM;
+				error = SET_ERROR(EPERM);
 		}
 		mutex_exit(&ktrace_lock);
 		mutex_exit(p->p_lock);
@@ -501,7 +502,7 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	void *buf;
 
 	if (ktrenter(l))
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 
 	kte = pool_cache_get(kte_cache, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
@@ -918,7 +919,7 @@ ktruser(const char *id, void *addr, size_t len, int ustr)
 		return 0;
 
 	if (len > KTR_USER_MAXLEN)
-		return ENOSPC;
+		return SET_ERROR(ENOSPC);
 
 	error = ktealloc(&kte, (void *)&ktp, l, KTR_USER, sizeof(*ktp) + len);
 	if (error != 0)
@@ -1083,7 +1084,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 	 * need something to (un)trace (XXX - why is this here?)
 	 */
 	if (!facs) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		*fpp = NULL;
 		goto done;
 	}
@@ -1101,7 +1102,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 		else
 			pg = pgrp_find(-pid);
 		if (pg == NULL)
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 		else {
 			LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 				if (descend)
@@ -1119,7 +1120,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 		 */
 		p = proc_find(pid);
 		if (p == NULL)
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 		else if (descend)
 			ret |= ktrsetchildren(curl, p, ops, facs, ktd);
 		else
@@ -1127,7 +1128,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t **fpp)
 	}
 	mutex_exit(&proc_lock);
 	if (error == 0 && !ret)
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 	*fpp = NULL;
 done:
 	if (ktd != NULL) {
@@ -1166,9 +1167,9 @@ sys_fktrace(struct lwp *l, const struct sys_fktrace_args *uap,
 
 	fd = SCARG(uap, fd);
 	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
+		return SET_ERROR(EBADF);
 	if ((fp->f_flag & FWRITE) == 0)
-		error = EBADF;
+		error = SET_ERROR(EBADF);
 	else
 		error = ktrace_common(l, SCARG(uap, ops),
 		    SCARG(uap, facs), SCARG(uap, pid), &fp);
@@ -1195,7 +1196,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 	case KTRFACv2:
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
