@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.19 2019/10/09 05:59:51 skrll Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.20 2026/01/04 01:34:21 riastradh Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.19 2019/10/09 05:59:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.20 2026/01/04 01:34:21 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -43,13 +43,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.19 2019/10/09 05:59:51 skrll Exp 
 #include "opt_biohist.h"
 #include "opt_sysctl.h"
 
-#include <sys/atomic.h>
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/cpu.h>
-#include <sys/sysctl.h>
 #include <sys/kernhist.h>
 #include <sys/kmem.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>
