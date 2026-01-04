@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.38 2023/12/28 12:49:06 hannken Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.39 2026/01/04 01:33:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,21 +28,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.38 2023/12/28 12:49:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.39 2026/01/04 01:33:31 riastradh Exp $");
 
 #include "opt_fileassoc.h"
 
 #include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/queue.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
 #include <sys/errno.h>
 #include <sys/fileassoc.h>
-#include <sys/specificdata.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
-#include <sys/once.h>
+#include <sys/mount.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
+#include <sys/queue.h>
+#include <sys/specificdata.h>
+#include <sys/vnode.h>
 #include <sys/xcall.h>
 
 #define	FILEASSOC_INITIAL_TABLESIZE	128
