@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.266 2025/07/16 19:14:13 kre Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.267 2026/01/04 01:32:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -70,32 +70,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.266 2025/07/16 19:14:13 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.267 2026/01/04 01:32:14 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/event.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/ktrace.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/pool.h>
-#include <sys/unistd.h>
-#include <sys/resourcevar.h>
-#include <sys/conf.h>
-#include <sys/event.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
 #include <sys/syscallargs.h>
-#include <sys/cpu.h>
-#include <sys/kmem.h>
-#include <sys/vnode.h>
 #include <sys/sysctl.h>
-#include <sys/ktrace.h>
+#include <sys/systm.h>
+#include <sys/unistd.h>
+#include <sys/vnode.h>
 
 /*
  * A list (head) of open files, counter, and lock protecting them.
