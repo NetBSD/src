@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.28 2026/01/04 22:58:52 uwe Exp $
+.\"	$NetBSD: strlcpy.3,v 1.29 2026/01/04 23:22:07 uwe Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -79,7 +79,9 @@ are all
 then the
 .Fn strlcat
 function returns
-.Fa size Li + Fn strlen src
+.Sm off
+.Fa size Li \~+\~ strlen( Fa src )
+.Sm on
 without writing anything to
 .Fa dst .
 .Pp
@@ -103,7 +105,9 @@ byte in
 the result.
 .Fn strlcat
 will append at most
-.Fa size Li "-" Fn strlen dst Li "- 1"
+.Sm off
+.Fa size Li \~-\~ strlen( Fa dst ) Li \~-\~ 1
+.Sm on
 .No non- Ns Tn NUL
 bytes from
 .Fa src ,
@@ -149,11 +153,15 @@ bytes of
 \(em
 .Fn strlcpy
 leaves bytes past
-.Fa dst Ns Li "[" Fn strlen src Ns Li "]"
+.Sm off
+.Fa dst Li "[" strlen( Fa src ) Li "]"
+.Sm on
 uninitialized, and
 .Fn strlcat
 leaves bytes past
-.Fa dst Ns Li "[" Fn strlen dst Li + Fn strlen src Ns Li "]"
+.Sm off
+.Fa dst Li "[" strlen( Fa dst ) Li \~+\~ strlen( Fa src ) Li "]"
+.Sm on
 uninitialized.
 This can lead to security vulnerabilities such as leaking secrets from
 uninitialized stack or heap buffers.
