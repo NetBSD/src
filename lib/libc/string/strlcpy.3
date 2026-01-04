@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.27 2026/01/04 17:16:39 rillig Exp $
+.\"	$NetBSD: strlcpy.3,v 1.28 2026/01/04 22:58:52 uwe Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@ the result.
 If the bytes
 .Fa dst Ns Li "[0]" ,
 .Fa dst Ns Li "[1]" ,
-\&...,
+\&...\^,
 .Fa dst Ns Li "[" Ns Fa size Li - 1 Ns Li "]"
 are all
 .No non- Ns Tn NUL ,
@@ -108,7 +108,7 @@ will append at most
 bytes from
 .Fa src ,
 followed by one
-.Ns NUL
+.Tn NUL
 byte.
 .Ss Relation to Xr strncpy 3 and Xr strncat 3
 Unlike
@@ -116,9 +116,12 @@ Unlike
 .Fn strlcpy
 is guaranteed to
 .Tn NUL Ns -terminate
-the result (as long as
+the result
+.Po
+as long as
 .Fa size
-is larger than 0).
+is larger than 0
+.Pc .
 Note that you should include a byte for the
 .Tn NUL
 in
@@ -256,13 +259,16 @@ and the destination string will not be
 This keeps
 .Fn strlcat
 from running off the end of a string.
-In practice this should not happen (as it means that either
+In practice this should not happen
+.Po
+as it means that either
 .Fa size
 is incorrect or that
 .Fa dst
 is not a proper
 .Dq C
-string).
+string
+.Pc .
 The check exists to prevent potential security problems in incorrect code.
 .Sh EXAMPLES
 The following code fragment illustrates the simple case:
@@ -283,9 +289,9 @@ char *dir, *file, pname[MAXPATHLEN];
 \&...
 
 if (strlcpy(pname, dir, sizeof(pname)) >= sizeof(pname))
-	goto toolong;
+        goto toolong;
 if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
-	goto toolong;
+        goto toolong;
 .Ed
 .Pp
 Since we know how many bytes we copied the first time, we can
@@ -298,9 +304,9 @@ size_t n;
 
 n = strlcpy(pname, dir, sizeof(pname));
 if (n >= sizeof(pname))
-	goto toolong;
+        goto toolong;
 if (strlcpy(pname + n, file, sizeof(pname) - n) >= sizeof(pname) - n)
-	goto toolong;
+        goto toolong;
 .Ed
 .Pp
 However, one may question the validity of such optimizations, as they
@@ -315,10 +321,10 @@ and
 .Rs
 .%A Todd C. Miller
 .%A Theo de Raadt
-.%T strlcpy and strlcat -- Consistent, Safe, String Copy and Concatenation
+.%T strlcpy and strlcat \(em Consistent, Safe, String Copy and Concatenation
 .%I USENIX Association
 .%B Proceedings of the FREENIX Track: 1999 USENIX Annual Technical Conference
-.%D June 6-11, 1999
+.%D June 6\|\(en11, 1999
 .%U http://www.usenix.org/publications/library/proceedings/usenix99/full_papers/millert/millert.pdf
 .Re
 .Sh STANDARDS
