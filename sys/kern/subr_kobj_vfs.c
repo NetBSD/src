@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.12 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.13 2026/01/04 03:19:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
  */
 
 #include <sys/kobj_impl.h>
+#include <sys/sdt.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -75,7 +76,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.12 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.13 2026/01/04 03:19:33 riastradh Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -128,7 +129,7 @@ kobj_read_vfs(kobj_t ko, void **basep, size_t size, off_t off,
 	    curlwp);
 
 	if (error == 0 && resid != 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 
 	if (allocate && error != 0) {
@@ -157,13 +158,13 @@ kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 
 	KASSERT(path != NULL);
 	if (strchr(path, '/') == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
 	pb = pathbuf_create(path);
 	if (pb == NULL) {
 	 	kmem_free(ko, sizeof(*ko));
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	error = vn_open(NULL, pb, (nochroot ? NOCHROOT : 0), FREAD, 0,
@@ -192,7 +193,7 @@ int
 kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 {
 
-	return ENOSYS;
+	return SET_ERROR(ENOSYS);
 }
 
 #endif
