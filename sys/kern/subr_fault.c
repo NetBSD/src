@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_fault.c,v 1.2 2020/06/30 16:28:17 maxv Exp $	*/
+/*	$NetBSD: subr_fault.c,v 1.3 2026/01/04 03:17:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,21 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.2 2020/06/30 16:28:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.3 2026/01/04 03:17:54 riastradh Exp $");
 
-#include <sys/module.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-
-#include <sys/conf.h>
 #include <sys/types.h>
-#include <sys/specificdata.h>
-#include <sys/kmem.h>
+
 #include <sys/atomic.h>
-#include <sys/ioccom.h>
-#include <sys/lwp.h>
+#include <sys/conf.h>
 #include <sys/fault.h>
+#include <sys/ioccom.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lwp.h>
+#include <sys/module.h>
+#include <sys/specificdata.h>
+#include <sys/systm.h>
+#include <sys/types.h>
 
 typedef struct {
 	volatile bool enabled;
