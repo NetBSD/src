@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.15 2023/10/17 11:57:20 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.16 2026/01/04 03:20:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -88,31 +88,38 @@
  */
 
 #ifdef _KERNEL
+
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/thmap.h>
+
+#include <sys/atomic.h>
+#include <sys/cprng.h>
+#include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/lock.h>
-#include <sys/atomic.h>
-#include <sys/hash.h>
-#include <sys/cprng.h>
+#include <sys/thmap.h>
+
 #define THMAP_RCSID(a) __KERNEL_RCSID(0, a)
+
 #else
-#include <stdio.h>
-#include <stdlib.h>
+
+#include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+
 #define THMAP_RCSID(a) __RCSID(a)
 
 #include "thmap.h"
 #include "utils.h"
+
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.15 2023/10/17 11:57:20 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.16 2026/01/04 03:20:55 riastradh Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
