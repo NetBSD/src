@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.34 2026/01/04 11:41:03 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.35 2026/01/04 11:43:31 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -898,8 +898,8 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	void *data;
-	int i, x, y, wi, he, rv = GC_NOPE;
-	uint32_t bg, fg, mask;
+	int i, x, y, wi, he;
+	uint32_t bg, fg, mask, cmask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -925,44 +925,48 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-	if (rv == GC_OK)
-		return;
-
 	data = WSFONT_GLYPH(c, font);
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	gftfb_fillmode(sc);
-	gftfb_wait_fifo(sc, 3);
+
+	gftfb_wait_fifo(sc, 4);
 
 	/* character colour */
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 	gftfb_write4(sc, NGLE_FG, fg);
 	gftfb_write4(sc, NGLE_BG, bg);
-	/* dst XY */
-	gftfb_write4(sc, NGLE_DST_XY, (x << 16) | y);
-
+	/* pixel address in 32bit since we're in AddrLong mode */
+	gftfb_write4(sc, NGLE_BINC_DST, (x << 2) | (y << 13));
+	/* make a mask covering the character width */
+	cmask = 0xffffffff << (32 - wi);
+	gftfb_write4(sc, NGLE_BINC_MASK, cmask);
+	/*
+	 * ...and now we hammer pixel data into BINC, moving down.
+	 * Unlike FX, we *can* overrun the pipeline with BINC writes,
+	 * especially with colour expansion while scrolling.
+	 * HCRX seems to have a 32 entry pipeline, let's assume we won't
+	 * encounter fonts taller than that for now...
+	 */
+	if (he > 31) {
+		gftfb_wait(sc);
+	} else
+		gftfb_wait_fifo(sc, he);
+		
 	if (ri->ri_font->stride == 1) {
 		uint8_t *data8 = data;
 		for (i = 0; i < he; i++) {
-			gftfb_wait_fifo(sc, 2);
 			mask = *data8;
-			gftfb_write4(sc, NGLE_TRANSFER_DATA, mask << 24);
-			gftfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | 1);
+			gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
 			data8++;
 		}
 	} else {
 		uint16_t *data16 = data;
 		for (i = 0; i < he; i++) {
-			gftfb_wait_fifo(sc, 2);
 			mask = *data16;
-			gftfb_write4(sc, NGLE_TRANSFER_DATA, mask << 16);
-			gftfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | 1);
+			gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
 			data16++;
 		}
 	}
-
-	if (rv == GC_ADD)
-		glyphcache_add(&sc->sc_gc, c, x, y);
 }
 
 static void
