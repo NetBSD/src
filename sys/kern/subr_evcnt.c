@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.17 2021/04/17 00:05:31 mrg Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.18 2026/01/04 03:17:15 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,12 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.17 2021/04/17 00:05:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.18 2026/01/04 03:17:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -244,7 +245,7 @@ sysctl_fillevcnt(const struct evcnt *ev, struct evcnt_sysctl *evs,
 
 static int
 sysctl_doevcnt(SYSCTLFN_ARGS)
-{       
+{
 	struct evcnt_sysctl *evs0 = NULL, *evs;
 	const size_t xevcnt_size = sizeof(*evs0) + sizeof(ev_strings);
 	const struct evcnt *ev;
@@ -252,12 +253,12 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 	int retries;
 	size_t needed, len;
 	char *dp;
- 
+
         if (namelen == 1 && name[0] == CTL_QUERY)
                 return (sysctl_query(SYSCTLFN_CALL(rnode)));
 
 	if (namelen != 2)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * We can filter on the type of evcnt.
@@ -267,12 +268,12 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 	    && filter != EVCNT_TYPE_MISC
 	    && filter != EVCNT_TYPE_INTR
 	    && filter != EVCNT_TYPE_TRAP)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	const u_int count = name[1];
 	if (count != KERN_EVCNT_COUNT_ANY
 	    && count != KERN_EVCNT_COUNT_NONZERO)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	sysctl_unlock();
 
@@ -336,7 +337,7 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 			 * bail out.
 			 */
 			if (--retries == 0) {
-				error = EAGAIN;
+				error = SET_ERROR(EAGAIN);
 				break;
 			}
 			mutex_exit(&evcnt_lock);
@@ -361,7 +362,7 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 	if (oldp == NULL)
 		*oldlenp += 1024;
 
-	return (error);
+	return error;
 }
 
 
