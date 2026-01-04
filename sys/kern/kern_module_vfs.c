@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.19 2025/03/20 13:26:54 pgoyette Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.20 2026/01/04 01:36:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.19 2025/03/20 13:26:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.20 2026/01/04 01:36:11 riastradh Exp $");
 
 #define _MODULE_INTERNAL
+
 #include <sys/param.h>
+
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/kobj.h>
@@ -45,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.19 2025/03/20 13:26:54 pgoyett
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
+#include <sys/sdt.h>
 #include <sys/vnode.h>
 
 #include <prop/proplib.h>
@@ -84,7 +87,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 			module_print("Loading module from %s", path);
 			error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
 		} else
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 	}
 	if (autoload || (error == ENOENT)) {
 		if (strchr(name, '/') == NULL) {
@@ -94,7 +97,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 			module_print("Loading module from %s", path);
 			error = kobj_load_vfs(&mod->mod_kobj, path, nochroot);
 		} else
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 	}
 	if (error != 0) {
 		PNBUF_PUT(path);
@@ -119,14 +122,14 @@ module_load_vfs(const char *name, int flags, bool autoload,
 				module_error("autoloading is disallowed for "
 				    "`%s'", path);
 				prop_object_release(moduledict);
-				error = EPERM;
+				error = SET_ERROR(EPERM);
 				goto fail;
 			}
 		}
 		if (error == 0) {	/* can get here if error == ENOENT */
 			if (!ISSET(flags, MODCTL_NO_PROP) && filedictp)
 				*filedictp = moduledict;
-			else 
+			else
 				prop_object_release(moduledict);
 		}
 	}
@@ -169,18 +172,18 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	} else if (pathlen < MAXPATHLEN - 6) {
 			strcat(proppath, ".plist");
 	} else {
-		error = ENOENT;
+		error = SET_ERROR(ENOENT);
 		goto out1;
 	}
 
 	/* XXX this makes an unnecessary extra copy of the path */
 	pb = pathbuf_create(proppath);
 	if (pb == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto out1;
 	}
 	module_print("Loading plist from %s", proppath);
-	
+
 	error = vn_open(NULL, pb, (nochroot ? NOCHROOT : 0), FREAD, 0,
 	    &vp, NULL, NULL);
  	if (error != 0) {
@@ -192,7 +195,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 		goto out3;
 	}
 	if (sb.st_size >= (plistsize - 1)) {	/* leave space for term \0 */
-		error = EFBIG;
+		error = SET_ERROR(EFBIG);
 		goto out3;
 	}
 
@@ -201,7 +204,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid, curlwp);
 	*((uint8_t *)base + sb.st_size) = '\0';
 	if (error == 0 && resid != 0) {
-		error = EFBIG;
+		error = SET_ERROR(EFBIG);
 	}
 	if (error != 0) {
 		kmem_free(base, plistsize);
@@ -211,7 +214,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 
 	*filedictp = prop_dictionary_internalize(base);
 	if (*filedictp == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 	kmem_free(base, plistsize);
 	base = NULL;
