@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.20 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.21 2026/01/04 03:19:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2023 The NetBSD Foundation, Inc.
@@ -41,16 +41,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.20 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.21 2026/01/04 03:19:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/intr.h>
-#include <sys/sched.h>
 #include <sys/kcpuset.h>
 #include <sys/kmem.h>
+#include <sys/sched.h>
 
 /* Number of CPUs to support. */
 #define	KC_MAXCPUS		roundup2(MAXCPUS, 32)
