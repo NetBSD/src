@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.15 2024/01/17 10:18:41 hannken Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.16 2026/01/04 01:34:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.15 2024/01/17 10:18:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.16 2026/01/04 01:34:37 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.15 2024/01/17 10:18:41 hannken Exp $
 #include <sys/once.h>
 #include <sys/rwlock.h>
 #include <sys/systm.h>
+#include <sys/sdt.h>
 
 /*
  * A generic linear hook.
@@ -501,7 +502,7 @@ simplehook_dohooks(khook_list_t *l)
 	mutex_enter(&l->hl_lock);
 	if (l->hl_state != HKLIST_IDLE) {
 		mutex_exit(&l->hl_lock);
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 
 	/* stop removing hooks */
