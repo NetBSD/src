@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.25 2020/05/11 21:37:31 riastradh Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.26 2026/01/04 03:19:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,15 +31,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.25 2020/05/11 21:37:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.26 2026/01/04 03:19:56 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/percpu.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/vmem.h>
 #include <sys/xcall.h>
 
@@ -176,7 +178,7 @@ percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	KASSERT(dummy == NULL);
 
 	if ((vmflags & VM_NOSLEEP) != 0)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	size = roundup(size, PERCPU_IMPORT_SIZE);
 	mutex_enter(&percpu_allocation.lock);
