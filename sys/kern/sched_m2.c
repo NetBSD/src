@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.40 2024/01/24 16:11:48 christos Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.41 2026/01/04 02:10:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.40 2024/01/24 16:11:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.41 2026/01/04 02:10:01 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.40 2024/01/24 16:11:48 christos Exp $
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -379,7 +380,7 @@ sysctl_sched_mints(SYSCTLFN_ARGS)
 
 	newsize = mstohz(newsize);
 	if (newsize < 1 || newsize > hz || newsize >= max_ts)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* It is safe to do this in such order */
 	for (CPU_INFO_FOREACH(cii, ci))
@@ -412,7 +413,7 @@ sysctl_sched_maxts(SYSCTLFN_ARGS)
 
 	newsize = mstohz(newsize);
 	if (newsize < 10 || newsize > hz || newsize <= min_ts)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* It is safe to do this in such order */
 	for (CPU_INFO_FOREACH(cii, ci))
