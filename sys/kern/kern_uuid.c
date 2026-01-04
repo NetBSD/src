@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.20 2014/10/05 10:00:03 riastradh Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.21 2026/01/04 02:09:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,11 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.20 2014/10/05 10:00:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.21 2026/01/04 02:09:29 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/cprng.h>
 #include <sys/endian.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/uuid.h>
@@ -76,7 +78,7 @@ sys_uuidgen(struct lwp *l, const struct sys_uuidgen_args *uap, register_t *retva
 	 * XXX needs to be tunable.
 	 */
 	if (SCARG(uap,count) < 1 || SCARG(uap,count) > 2048)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	for (store = SCARG(uap,store), count = SCARG(uap,count);
 	     count > 0;
