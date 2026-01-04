@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.173 2025/05/05 00:31:48 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.174 2026/01/04 01:35:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.173 2025/05/05 00:31:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.174 2026/01/04 01:35:54 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -44,19 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.173 2025/05/05 00:31:48 pgoyette E
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/lwp.h>
+#include <sys/types.h>
+
+#include <sys/evcnt.h>
 #include <sys/kauth.h>
-#include <sys/kobj.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/kobj.h>
+#include <sys/kthread.h>
+#include <sys/lock.h>
+#include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/module_hook.h>
-#include <sys/kthread.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <sys/lock.h>
-#include <sys/evcnt.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
