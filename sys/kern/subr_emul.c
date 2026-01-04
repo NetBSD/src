@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_emul.c,v 1.3 2026/01/04 03:17:01 riastradh Exp $	*/
+/*	$NetBSD: subr_emul.c,v 1.4 2026/01/04 03:17:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: subr_emul.c,v 1.3 2026/01/04 03:17:01 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_emul.c,v 1.4 2026/01/04 03:17:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(1, "$NetBSD: subr_emul.c,v 1.3 2026/01/04 03:17:01 riastradh Exp 
 #include <sys/exec.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/vnode.h>
 
 #include <compat/common/compat_util.h>
@@ -108,7 +109,7 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 
 	pb = pathbuf_create(itp);
 	if (pb == NULL) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	/* If we haven't found the emulation root already, do so now */
