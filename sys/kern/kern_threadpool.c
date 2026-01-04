@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.23 2021/01/23 16:33:49 riastradh Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.24 2026/01/04 01:54:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.23 2021/01/23 16:33:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.24 2026/01/04 01:54:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -310,7 +310,7 @@ sysctl_kern_threadpool_idle_ms(SYSCTLFN_ARGS)
 	if (error == 0 && newp != NULL) {
 		/* Disallow negative values and 0 (forever). */
 		if (val < 1)
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 		else
 			threadpool_idle_time_ms = val;
 	}
@@ -501,7 +501,7 @@ threadpool_get(struct threadpool **poolp, pri_t pri)
 	SDT_PROBE1(sdt, kernel, threadpool, get,  pri);
 
 	if (! threadpool_pri_is_valid(pri))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_enter(&threadpools_lock);
 	tpu = threadpool_lookup_unbound(pri);
@@ -579,7 +579,7 @@ threadpool_percpu_get(struct threadpool_percpu **pool_percpup, pri_t pri)
 	SDT_PROBE1(sdt, kernel, threadpool, percpu__get,  pri);
 
 	if (! threadpool_pri_is_valid(pri))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_enter(&threadpools_lock);
 	pool_percpu = threadpool_lookup_percpu(pri);
@@ -698,7 +698,7 @@ threadpool_percpu_create(struct threadpool_percpu **pool_percpup, pri_t pri)
 
 fail:	percpu_free(pool_percpu->tpp_percpu, sizeof(struct threadpool *));
 	kmem_free(pool_percpu, sizeof(*pool_percpu));
-	return ENOMEM;
+	return SET_ERROR(ENOMEM);
 }
 
 static void
