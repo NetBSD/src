@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.19 2023/05/22 14:07:24 riastradh Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.20 2026/01/04 02:11:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,12 +80,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.19 2023/05/22 14:07:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.20 2026/01/04 02:11:17 riastradh Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
