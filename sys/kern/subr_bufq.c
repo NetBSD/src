@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.27 2019/02/17 23:17:41 bad Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.28 2026/01/04 02:11:02 riastradh Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,16 +68,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.27 2019/02/17 23:17:41 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.28 2026/01/04 02:11:02 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
-#include <sys/sysctl.h>
 #include <sys/module.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #define	STRAT_MATCH(id, bs)	(strcmp((id), (bs)->bs_name) == 0)
 
