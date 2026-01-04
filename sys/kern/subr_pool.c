@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.296 2026/01/04 03:20:21 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.297 2026/01/04 03:20:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.296 2026/01/04 03:20:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.297 2026/01/04 03:20:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.296 2026/01/04 03:20:21 riastradh Ex
 #include <sys/msan.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -1406,7 +1407,7 @@ pool_grow(struct pool *pp, int flags)
 			do {
 				cv_wait(&pp->pr_cv, &pp->pr_lock);
 			} while (pp->pr_flags & PR_GROWING);
-			return ERESTART;
+			return SET_ERROR(ERESTART);
 		} else {
 			if (pp->pr_flags & PR_GROWINGNOWAIT) {
 				/*
@@ -1417,9 +1418,9 @@ pool_grow(struct pool *pp, int flags)
 				 */
 				mutex_exit(&pp->pr_lock);
 				mutex_enter(&pp->pr_lock);
-				return ERESTART;
+				return SET_ERROR(ERESTART);
 			}
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 		}
 	}
 	pp->pr_flags |= PR_GROWING;
@@ -1455,7 +1456,7 @@ out:
 		mutex_enter(&pp->pr_lock);
 	KASSERT(pp->pr_flags & PR_GROWING);
 	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
-	return ENOMEM;
+	return SET_ERROR(ENOMEM);
 }
 
 void
