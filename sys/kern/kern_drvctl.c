@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.51 2022/03/28 12:33:22 riastradh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.52 2026/01/04 01:32:32 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,27 +27,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.51 2022/03/28 12:33:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.52 2026/01/04 01:32:32 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
+
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/devmon.h>
+#include <sys/drvctlio.h>
 #include <sys/event.h>
-#include <sys/kmem.h>
-#include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/select.h>
-#include <sys/poll.h>
-#include <sys/drvctlio.h>
-#include <sys/devmon.h>
-#include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/poll.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
 
 #include "ioconf.h"
 
