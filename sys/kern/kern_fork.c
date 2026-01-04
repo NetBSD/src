@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.232 2025/07/16 19:14:13 kre Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.233 2026/01/04 01:33:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,33 +68,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.232 2025/07/16 19:14:13 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.233 2026/01/04 01:33:47 riastradh Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/acct.h>
+#include <sys/atomic.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/ktrace.h>
 #include <sys/mount.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/ras.h>
 #include <sys/resourcevar.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/acct.h>
-#include <sys/ktrace.h>
 #include <sys/sched.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
 #include <sys/syscallargs.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
-#include <sys/sdt.h>
-#include <sys/ptrace.h>
+#include <sys/vnode.h>
 
 /*
  * DTrace SDT provider definitions
