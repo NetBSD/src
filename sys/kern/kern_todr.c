@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.50 2025/12/10 21:33:01 andvar Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.51 2026/01/04 02:08:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,17 +70,18 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.50 2025/12/10 21:33:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.51 2026/01/04 02:08:20 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
+
 #include <sys/device.h>
 #include <sys/device_calls.h>
-#include <sys/timetc.h>
 #include <sys/intr.h>
-#include <sys/rndsource.h>
+#include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
+#include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
