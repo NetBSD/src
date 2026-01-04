@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.42 2022/08/08 22:31:45 riastradh Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.43 2026/01/04 01:37:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,16 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.42 2022/08/08 22:31:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.43 2026/01/04 01:37:15 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
-#include <sys/xcall.h>
 #include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
