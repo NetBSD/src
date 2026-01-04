@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.54 2026/01/04 03:15:50 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.55 2026/01/04 03:15:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.54 2026/01/04 03:15:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.55 2026/01/04 03:15:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -390,7 +390,7 @@ devsw_attach(const char *devname,
 	int error, i;
 
 	if (devname == NULL || cdev == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_enter(&device_lock);
 
@@ -405,17 +405,17 @@ devsw_attach(const char *devname,
 			*cmajor = conv->d_cmajor;
 
 		if (*bmajor != conv->d_bmajor || *cmajor != conv->d_cmajor) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 		if ((*bmajor >= 0 && bdev == NULL) || *cmajor < 0) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 
 		if ((*bmajor >= 0 && bdevsw[*bmajor] != NULL) ||
 		    cdevsw[*cmajor] != NULL) {
-			error = EEXIST;
+			error = SET_ERROR(EEXIST);
 			goto out;
 		}
 		break;
@@ -457,7 +457,7 @@ devsw_attach(const char *devname,
 		newptr = kmem_zalloc(new_convs * DEVSWCONV_SIZE, KM_NOSLEEP);
 		if (newptr == NULL) {
 			devsw_detach_locked(bdev, cdev);
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			goto out;
 		}
 		newptr[old_convs].d_name = NULL;
@@ -473,7 +473,7 @@ devsw_attach(const char *devname,
 	name = kmem_strdupsize(devname, NULL, KM_NOSLEEP);
 	if (name == NULL) {
 		devsw_detach_locked(bdev, cdev);
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto out;
 	}
 
@@ -517,14 +517,14 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 
 	if (*devmajor >= MAXDEVSW) {
 		printf("%s: block majors exhausted\n", __func__);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	if (bdevswref == NULL) {
 		newbdevswref = kmem_zalloc(MAXDEVSW * sizeof(newbdevswref[0]),
 		    KM_NOSLEEP);
 		if (newbdevswref == NULL)
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		atomic_store_release(&bdevswref, newbdevswref);
 	}
 
@@ -533,14 +533,14 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 		newbdevsw = kmem_zalloc(MAXDEVSW * sizeof(newbdevsw[0]),
 		    KM_NOSLEEP);
 		if (newbdevsw == NULL)
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		memcpy(newbdevsw, bdevsw, max_bdevsws * sizeof(bdevsw[0]));
 		atomic_store_release(&bdevsw, newbdevsw);
 		atomic_store_release(&max_bdevsws, MAXDEVSW);
 	}
 
 	if (bdevsw[*devmajor] != NULL)
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 
 	KASSERT(bdevswref[*devmajor].dr_lc == NULL);
 	lc = kmem_zalloc(sizeof(*lc), KM_SLEEP);
@@ -580,14 +580,14 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 
 	if (*devmajor >= MAXDEVSW) {
 		printf("%s: character majors exhausted\n", __func__);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	if (cdevswref == NULL) {
 		newcdevswref = kmem_zalloc(MAXDEVSW * sizeof(newcdevswref[0]),
 		    KM_NOSLEEP);
 		if (newcdevswref == NULL)
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		atomic_store_release(&cdevswref, newcdevswref);
 	}
 
@@ -596,14 +596,14 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 		newcdevsw = kmem_zalloc(MAXDEVSW * sizeof(newcdevsw[0]),
 		    KM_NOSLEEP);
 		if (newcdevsw == NULL)
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		memcpy(newcdevsw, cdevsw, max_cdevsws * sizeof(cdevsw[0]));
 		atomic_store_release(&cdevsw, newcdevsw);
 		atomic_store_release(&max_cdevsws, MAXDEVSW);
 	}
 
 	if (cdevsw[*devmajor] != NULL)
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 
 	KASSERT(cdevswref[*devmajor].dr_lc == NULL);
 	lc = kmem_zalloc(sizeof(*lc), KM_SLEEP);
@@ -1170,7 +1170,7 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 
 	d = bdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	if (d->d_devtounit) {
 		/*
@@ -1184,12 +1184,12 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 		 * pattern.
 		 */
 		if ((unit = (*d->d_devtounit)(dev)) == -1) {
-			rv = ENXIO;
+			rv = SET_ERROR(ENXIO);
 			goto out;
 		}
 		if ((dv = device_lookup_acquire(d->d_cfdriver, unit)) ==
 		    NULL) {
-			rv = ENXIO;
+			rv = SET_ERROR(ENXIO);
 			goto out;
 		}
 		SDT_PROBE6(sdt, bdev, open, acquire,
@@ -1220,9 +1220,9 @@ bdev_cancel(dev_t dev, int flag, int devtype, struct lwp *l)
 	int rv, mpflag;
 
 	if ((d = bdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 	if (d->d_cancel == NULL)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, bdev, cancel, entry,  d, dev, flag, devtype);
@@ -1240,7 +1240,7 @@ bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	int rv, mpflag;
 
 	if ((d = bdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, bdev, close, entry,  d, dev, flag, devtype);
@@ -1263,7 +1263,7 @@ bdev_strategy(struct buf *bp)
 	SDT_PROBE1(io, kernel, , start, bp);
 
 	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
-		bp->b_error = ENXIO;
+		bp->b_error = SET_ERROR(ENXIO);
 		bp->b_resid = bp->b_bcount;
 		biodone_vfs(bp); /* biodone() iff vfs present */
 		return;
@@ -1283,7 +1283,7 @@ bdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	int rv, mpflag;
 
 	if ((d = bdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE5(sdt, bdev, ioctl, entry,  d, dev, cmd, data, flag);
@@ -1306,7 +1306,7 @@ bdev_dump(dev_t dev, daddr_t addr, void *data, size_t sz)
 	 * potentially unstable state), we don't perform any locking.
 	 */
 	if ((d = bdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	/* DEV_LOCK(d); */
 	rv = (*d->d_dump)(dev, addr, data, sz);
@@ -1367,7 +1367,7 @@ bdev_discard(dev_t dev, off_t pos, off_t len)
 	int rv, mpflag;
 
 	if ((d = bdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, bdev, discard, entry,  d, dev, pos, len);
@@ -1406,7 +1406,7 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 
 	d = cdevsw_lookup_acquire(dev, &lc);
 	if (d == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	if (d->d_devtounit) {
 		/*
@@ -1420,12 +1420,12 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 		 * pattern.
 		 */
 		if ((unit = (*d->d_devtounit)(dev)) == -1) {
-			rv = ENXIO;
+			rv = SET_ERROR(ENXIO);
 			goto out;
 		}
 		if ((dv = device_lookup_acquire(d->d_cfdriver, unit)) ==
 		    NULL) {
-			rv = ENXIO;
+			rv = SET_ERROR(ENXIO);
 			goto out;
 		}
 		SDT_PROBE6(sdt, cdev, open, acquire,
@@ -1456,9 +1456,9 @@ cdev_cancel(dev_t dev, int flag, int devtype, struct lwp *l)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 	if (d->d_cancel == NULL)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, cdev, cancel, entry,  d, dev, flag, devtype);
@@ -1476,7 +1476,7 @@ cdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, cdev, close, entry,  d, dev, flag, devtype);
@@ -1494,7 +1494,7 @@ cdev_read(dev_t dev, struct uio *uio, int flag)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, cdev, read, entry,  d, dev, uio, flag);
@@ -1512,7 +1512,7 @@ cdev_write(dev_t dev, struct uio *uio, int flag)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, cdev, write, entry,  d, dev, uio, flag);
@@ -1530,7 +1530,7 @@ cdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE5(sdt, cdev, ioctl, entry,  d, dev, cmd, data, flag);
@@ -1616,7 +1616,7 @@ cdev_kqfilter(dev_t dev, struct knote *kn)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE3(sdt, cdev, kqfilter, entry,  d, dev, kn);
@@ -1634,7 +1634,7 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 	int rv, mpflag;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	DEV_LOCK(d);
 	SDT_PROBE4(sdt, cdev, discard, entry,  d, dev, pos, len);
