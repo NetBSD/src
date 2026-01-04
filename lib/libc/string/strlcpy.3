@@ -1,4 +1,4 @@
-.\"	$NetBSD: strlcpy.3,v 1.29 2026/01/04 23:22:07 uwe Exp $
+.\"	$NetBSD: strlcpy.3,v 1.30 2026/01/04 23:58:42 uwe Exp $
 .\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
 .\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -141,16 +141,17 @@ the result if
 is
 .Tn NUL Ns -terminated
 to begin with.
-.Pp
-.Sy WARNING :
+.
+.Bl -hang -width 0n \" indent by just the extra spacing (digit-width)
+.
+.It Sy WARNING :
 .Fn strlcpy
 and
 .Fn strlcat
 are not guaranteed to initialize all
 .Fa size
 bytes of
-.Fa dst
-\(em
+.Fa dst .
 .Fn strlcpy
 leaves bytes past
 .Sm off
@@ -176,8 +177,8 @@ by
 and
 .Fn strlcat
 without proving it is safe to leave some of the output uninitialized.
-.Pp
-.Sy WARNING :
+.
+.It Sy WARNING :
 .Fn strlcat
 does not guarantee to
 .Tn NUL Ns -terminate
@@ -192,8 +193,8 @@ on entry, then
 will leave it without a
 .Tn NUL Ns -terminator
 on return.
-.Pp
-.Sy WARNING :
+.
+.It Sy WARNING :
 The
 .Fa src
 argument
@@ -233,6 +234,9 @@ or
 .Fn strlcat
 for these cases can lead to crashes or security vulnerabilities from
 buffer overruns.
+.
+.El
+.
 .Sh RETURN VALUES
 The
 .Fn strlcpy
