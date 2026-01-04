@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_fault.c,v 1.3 2026/01/04 03:17:54 riastradh Exp $	*/
+/*	$NetBSD: subr_fault.c,v 1.4 2026/01/04 03:18:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.3 2026/01/04 03:17:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.4 2026/01/04 03:18:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_fault.c,v 1.3 2026/01/04 03:17:54 riastradh Exp
 #include <sys/kmem.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/sdt.h>
 #include <sys/specificdata.h>
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -121,16 +122,16 @@ fault_ioc_enable(struct fault_ioc_enable *args)
 	fault_t *f;
 
 	if (args->mode != FAULT_MODE_NTH_ONESHOT)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (args->nth < FAULT_NTH_MIN)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	switch (args->scope) {
 	case FAULT_SCOPE_GLOBAL:
 		mutex_enter(&fault_global_lock);
 		if (fault_global.enabled) {
 			mutex_exit(&fault_global_lock);
-			return EEXIST;
+			return SET_ERROR(EEXIST);
 		}
 		fault_global.oneshot = true;
 		atomic_store_relaxed(&fault_global.nth, args->nth);
@@ -143,7 +144,7 @@ fault_ioc_enable(struct fault_ioc_enable *args)
 		f = lwp_getspecific(fault_lwp_key);
 		if (f != NULL) {
 			if (f->enabled)
-				return EEXIST;
+				return SET_ERROR(EEXIST);
 		} else {
 			f = kmem_zalloc(sizeof(*f), KM_SLEEP);
 			lwp_setspecific(fault_lwp_key, f);
@@ -155,7 +156,7 @@ fault_ioc_enable(struct fault_ioc_enable *args)
 		atomic_store_release(&f->enabled, true);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -171,7 +172,7 @@ fault_ioc_disable(struct fault_ioc_disable *args)
 		mutex_enter(&fault_global_lock);
 		if (!fault_global.enabled) {
 			mutex_exit(&fault_global_lock);
-			return ENOENT;
+			return SET_ERROR(ENOENT);
 		}
 		atomic_store_release(&fault_global.enabled, false);
 		mutex_exit(&fault_global_lock);
@@ -179,13 +180,13 @@ fault_ioc_disable(struct fault_ioc_disable *args)
 	case FAULT_SCOPE_LWP:
 		f = lwp_getspecific(fault_lwp_key);
 		if (f == NULL)
-			return ENOENT;
+			return SET_ERROR(ENOENT);
 		if (!f->enabled)
-			return ENOENT;
+			return SET_ERROR(ENOENT);
 		atomic_store_release(&f->enabled, false);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -203,11 +204,11 @@ fault_ioc_getinfo(struct fault_ioc_getinfo *args)
 	case FAULT_SCOPE_LWP:
 		f = lwp_getspecific(fault_lwp_key);
 		if (f == NULL)
-			return ENOENT;
+			return SET_ERROR(ENOENT);
 		args->nfaults = atomic_load_relaxed(&f->nfaults);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -224,7 +225,7 @@ fault_ioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case FAULT_IOC_GETINFO:
 		return fault_ioc_getinfo(addr);
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -274,8 +275,8 @@ fault_modcmd(modcmd_t cmd, void *arg)
 		fault_init();
 		return 0;
 	case MODULE_CMD_FINI:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
