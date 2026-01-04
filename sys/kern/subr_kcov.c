@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.18 2022/10/26 23:24:21 riastradh Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.19 2026/01/04 03:18:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -31,22 +31,23 @@
 
 #include <sys/cdefs.h>
 
-#include <sys/module.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
 
-#include <sys/conf.h>
 #include <sys/condvar.h>
+#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kcov.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-#include <sys/kcov.h>
 
 #define KCOV_BUF_MAX_ENTRIES	(256 << 10)
 
