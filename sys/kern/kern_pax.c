@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.63 2022/10/26 23:22:38 riastradh Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.64 2026/01/04 01:36:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,24 +57,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.63 2022/10/26 23:22:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.64 2026/01/04 01:36:19 riastradh Exp $");
 
 #include "opt_pax.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
+#include <sys/cprng.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/pax.h>
-#include <sys/sysctl.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
+#include <sys/pax.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
-#include <sys/queue.h>
-#include <sys/bitops.h>
-#include <sys/kauth.h>
-#include <sys/cprng.h>
 
 #ifdef PAX_ASLR_DEBUG
 #define PAX_DPRINTF(_fmt, args...) \
