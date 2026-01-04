@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.64 2026/01/02 10:53:01 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.65 2026/01/04 12:10:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1314,4 +1314,11 @@ sys/conf/copyright				1.24
 
 	Welcome to 2026
 	[hgutch, ticket #138]
+
+distrib/sparc64/cdroms/Makefile.cdrom		1.2
+distrib/sparc64/cdroms/installcd/Makefile	1.35
+distrib/sparc64/cdroms/installdvd/Makefile	1.4
+
+	sparc64: make the CD image fit common CD/R media again.
+	[nia, ticket #139]
 
