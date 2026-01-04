@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.52 2026/01/04 01:32:32 riastradh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.53 2026/01/04 01:32:41 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.52 2026/01/04 01:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.53 2026/01/04 01:32:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.52 2026/01/04 01:32:32 riastradh E
 #include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/poll.h>
+#include <sys/sdt.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
@@ -200,21 +201,22 @@ pmdevbyname(u_long cmd, struct devpmargs *a)
 	KASSERT(KERNEL_LOCKED_P());
 
 	if ((d = device_find_by_xname(a->devname)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	switch (cmd) {
 	case DRVSUSPENDDEV:
-		return pmf_device_recursive_suspend(d, PMF_Q_DRVCTL) ? 0 : EBUSY;
+		return pmf_device_recursive_suspend(d, PMF_Q_DRVCTL)
+		    ? 0 : SET_ERROR(EBUSY);
 	case DRVRESUMEDEV:
 		if (a->flags & DEVPM_F_SUBTREE) {
 			return pmf_device_subtree_resume(d, PMF_Q_DRVCTL)
-			    ? 0 : EBUSY;
+			    ? 0 : SET_ERROR(EBUSY);
 		} else {
 			return pmf_device_recursive_resume(d, PMF_Q_DRVCTL)
-			    ? 0 : EBUSY;
+			    ? 0 : SET_ERROR(EBUSY);
 		}
 	default:
-		return EPASSTHROUGH;
+		return SET_ERROR(EPASSTHROUGH);
 	}
 }
 
@@ -230,9 +232,9 @@ listdevbyname(struct devlistargs *l)
 	if (*l->l_devname == '\0')
 		d = NULL;
 	else if (memchr(l->l_devname, 0, sizeof(l->l_devname)) == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	else if ((d = device_find_by_xname(l->l_devname)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	for (child = deviter_first(&di, 0); child != NULL;
 	     child = deviter_next(&di)) {
@@ -268,7 +270,7 @@ detachdevbyname(const char *devname)
 			break;
 	}
 	if (d == NULL) {
-		error = ENXIO;
+		error = SET_ERROR(ENXIO);
 		goto out;
 	}
 
@@ -281,7 +283,7 @@ detachdevbyname(const char *devname)
 	 */
 	if (device_parent(d) &&
 	    !device_cfattach(device_parent(d))->ca_childdetached) {
-		error = ENOTSUP;
+		error = SET_ERROR(ENOTSUP);
 		goto out;
 	}
 #endif
@@ -311,7 +313,7 @@ rescanbus(const char *busname, const char *ifattr,
 		locs[i] = locators[i];
 
 	if ((d = device_find_by_xname(busname)) == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	/*
 	 * must support rescan, and must have something
@@ -319,7 +321,7 @@ rescanbus(const char *busname, const char *ifattr,
 	 */
 	if (!device_cfattach(d)->ca_rescan ||
 	    !device_cfdriver(d)->cd_attrs)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 
 	/* rescan all ifattrs if none is specified */
 	if (!ifattr) {
@@ -336,7 +338,7 @@ rescanbus(const char *busname, const char *ifattr,
 			if (!strcmp((*ap)->ci_name, ifattr))
 				break;
 		if (!*ap)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		rc = (*device_cfattach(d)->ca_rescan)(d, ifattr, locs);
 	}
 
@@ -348,14 +350,14 @@ static int
 drvctl_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
-	return ENODEV;
+	return SET_ERROR(ENODEV);
 }
 
 static int
 drvctl_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
-	return ENODEV;
+	return SET_ERROR(ENODEV);
 }
 
 static int
@@ -395,7 +397,7 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 
 		if (d->numlocators) {
 			if (d->numlocators > MAXLOCATORS) {
-				res = EINVAL;
+				res = SET_ERROR(EINVAL);
 				goto out;
 			}
 			locs_sz = d->numlocators * sizeof(int);
@@ -421,7 +423,7 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 		    fp->f_flag);
 		break;
 	default:
-		res = EPASSTHROUGH;
+		res = SET_ERROR(EPASSTHROUGH);
 		break;
 	}
 out:	KERNEL_UNLOCK_ONE(NULL);
@@ -492,15 +494,15 @@ drvctl_command_get_properties(struct lwp *l,
 	prop_string_t devname_string;
 	device_t dev;
 	deviter_t di;
-	
+
 	args_dict = prop_dictionary_get(command_dict, "drvctl-arguments");
 	if (args_dict == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	devname_string = prop_dictionary_get(args_dict, "device-name");
 	if (devname_string == NULL)
-		return EINVAL;
-	
+		return SET_ERROR(EINVAL);
+
 	for (dev = deviter_first(&di, 0); dev != NULL;
 	     dev = deviter_next(&di)) {
 		if (prop_string_equals_string(devname_string,
@@ -514,7 +516,7 @@ drvctl_command_get_properties(struct lwp *l,
 	deviter_release(&di);
 
 	if (dev == NULL)
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 
 	return 0;
 }
@@ -552,12 +554,12 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	results_dict = prop_dictionary_create();
 	if (results_dict == NULL) {
 		prop_object_release(command_dict);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
-	
+
 	command_string = prop_dictionary_get(command_dict, "drvctl-command");
 	if (command_string == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -568,12 +570,12 @@ drvctl_command(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	}
 
 	if (dcd->dcd_name == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
 	if ((fflag & dcd->dcd_rw) == 0) {
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 		goto out;
 	}
 
@@ -596,13 +598,13 @@ drvctl_getevent(struct lwp *l, struct plistref *pref, u_long ioctl_cmd,
 	int ret;
 
 	if ((fflag & (FREAD|FWRITE)) != (FREAD|FWRITE))
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	mutex_enter(&drvctl_lock);
 	while ((dce = TAILQ_FIRST(&drvctl_eventq)) == NULL) {
 		if (fflag & O_NONBLOCK) {
 			mutex_exit(&drvctl_lock);
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 		}
 
 		ret = cv_wait_sig(&drvctl_cond, &drvctl_lock);
@@ -662,7 +664,7 @@ drvctl_modcmd(modcmd_t cmd, void *arg)
 		mutex_enter(&drvctl_lock);
 		if (drvctl_nopen != 0 || drvctl_eventcnt != 0 ) {
 			mutex_exit(&drvctl_lock);
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 		KASSERT(saved_insert_vec != NULL);
 		devmon_insert_vec = saved_insert_vec;
@@ -675,7 +677,7 @@ drvctl_modcmd(modcmd_t cmd, void *arg)
 
 		break;
 	default:
-		error = ENOTTY;
+		error = SET_ERROR(ENOTTY);
 		break;
 	}
 
