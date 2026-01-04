@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.14 2024/08/25 01:14:01 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.15 2026/01/04 01:34:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.14 2024/08/25 01:14:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.15 2026/01/04 01:34:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.14 2024/08/25 01:14:01 riastrad
 #include <sys/ipi.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
@@ -335,7 +336,7 @@ heartbeat_max_period_sysctl(SYSCTLFN_ARGS)
 	 * Ensure there's plenty of slop between heartbeats.
 	 */
 	if (max_period > UINT_MAX/4/hz) {
-		error = EOVERFLOW;
+		error = SET_ERROR(EOVERFLOW);
 		goto out;
 	}
 
