@@ -39,7 +39,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/kern/subr_acl_posix1e.c 341827 2018-12-11 19:32:16Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: subr_acl_posix1e.c,v 1.2 2026/01/04 02:10:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_acl_posix1e.c,v 1.3 2026/01/04 02:10:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_acl_posix1e.c,v 1.2 2026/01/04 02:10:27 riastra
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -254,7 +255,7 @@ acl_posix1e_check(struct acl *acl)
 	num_acl_user_obj = num_acl_user = num_acl_group_obj = num_acl_group =
 	    num_acl_mask = num_acl_other = 0;
 	if (acl->acl_cnt > ACL_MAX_ENTRIES)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	for (i = 0; i < acl->acl_cnt; i++) {
 		struct acl_entry *ae = &acl->acl_entry[i];
 		/*
@@ -264,54 +265,54 @@ acl_posix1e_check(struct acl *acl)
 		case ACL_USER_OBJ:
 			ae->ae_id = ACL_UNDEFINED_ID; /* XXX */
 			if (ae->ae_id != ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			num_acl_user_obj++;
 			break;
 		case ACL_GROUP_OBJ:
 			ae->ae_id = ACL_UNDEFINED_ID; /* XXX */
 			if (ae->ae_id != ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			num_acl_group_obj++;
 			break;
 		case ACL_USER:
 			if (ae->ae_id == ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			num_acl_user++;
 			break;
 		case ACL_GROUP:
 			if (ae->ae_id == ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			num_acl_group++;
 			break;
 		case ACL_OTHER:
 			ae->ae_id = ACL_UNDEFINED_ID; /* XXX */
 			if (ae->ae_id != ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			num_acl_other++;
 			break;
 		case ACL_MASK:
 			ae->ae_id = ACL_UNDEFINED_ID; /* XXX */
 			if (ae->ae_id != ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			num_acl_mask++;
 			break;
 		default:
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		}
 		/*
 		 * Check for valid perm entries.
 		 */
 		if ((acl->acl_entry[i].ae_perm | ACL_PERM_BITS) !=
 		    ACL_PERM_BITS)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 	}
 	if ((num_acl_user_obj != 1) || (num_acl_group_obj != 1) ||
 	    (num_acl_other != 1) || (num_acl_mask != 0 && num_acl_mask != 1))
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	if (((num_acl_group != 0) || (num_acl_user != 0)) &&
 	    (num_acl_mask != 1))
-		return (EINVAL);
-	return (0);
+		return SET_ERROR(EINVAL);
+	return 0;
 }
 
 /*
