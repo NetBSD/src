@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.123 2026/01/04 01:36:54 riastradh Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.124 2026/01/04 01:37:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.123 2026/01/04 01:36:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.124 2026/01/04 01:37:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.123 2026/01/04 01:36:54 riastradh Ex
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/prot.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -134,7 +135,7 @@ sys_getsid(struct lwp *l, const struct sys_getsid_args *uap, register_t *retval)
 	else if ((p = proc_find(pid)) != NULL)
 		*retval = p->p_session->s_sid;
 	else
-		error = ESRCH;
+		error = SET_ERROR(ESRCH);
 	mutex_exit(&proc_lock);
 
 	return error;
@@ -156,7 +157,7 @@ sys_getpgid(struct lwp *l, const struct sys_getpgid_args *uap, register_t *retva
 	else if ((p = proc_find(pid)) != NULL)
 		*retval = p->p_pgid;
 	else
-		error = ESRCH;
+		error = SET_ERROR(ESRCH);
 	mutex_exit(&proc_lock);
 
 	return error;
@@ -235,7 +236,7 @@ sys_getgroups(struct lwp *l, const struct sys_getgroups_args *uap, register_t *r
 	if (SCARG(uap, gidsetsize) == 0)
 		return 0;
 	if (SCARG(uap, gidsetsize) < (int)*retval)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	return kauth_cred_getgroups(l->l_cred, SCARG(uap, gidset), *retval,
 	    UIO_USERSPACE);
@@ -281,7 +282,7 @@ sys_setpgid(struct lwp *l, const struct sys_setpgid_args *uap,
 	pid_t targp, pgid;
 
 	if (SCARG(uap, pgid) < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if ((targp = SCARG(uap, pid)) == 0)
 		targp = p->p_pid;
 	if ((pgid = SCARG(uap, pgid)) == 0)
@@ -620,10 +621,10 @@ sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t 
 
 	if ((error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SETID,
 	    p, NULL, NULL, NULL)) != 0)
-		return (error);
+		return error;
 	error = copyinstr(SCARG(uap, namebuf), newname, sizeof newname, NULL);
 	if (error != 0)
-		return (error == ENAMETOOLONG ? EINVAL : error);
+		return (error == ENAMETOOLONG ? SET_ERROR(EINVAL) : error);
 
 	mutex_enter(&proc_lock);
 	sp = p->p_session;
@@ -635,5 +636,5 @@ sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t 
 	sp->s_flags |= S_LOGIN_SET;
 	strncpy(sp->s_login, newname, sizeof sp->s_login);
 	mutex_exit(&proc_lock);
-	return (0);
+	return 0;
 }
