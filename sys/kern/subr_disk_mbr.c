@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.60 2026/01/04 03:16:22 riastradh Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.61 2026/01/04 03:16:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.60 2026/01/04 03:16:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.61 2026/01/04 03:16:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbr.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.60 2026/01/04 03:16:22 riastradh
 #include <sys/dkbad.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/sdt.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -727,7 +728,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	validate_label(&a, 0);
 
 	if (a.written == 0 && a.error == 0)
-		a.error = ESRCH;
+		a.error = SET_ERROR(ESRCH);
 
 	brelse(a.bp, 0);
 	return a.error;
