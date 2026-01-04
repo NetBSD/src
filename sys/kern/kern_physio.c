@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.103 2026/01/04 01:36:35 riastradh Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.104 2026/01/04 01:36:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.103 2026/01/04 01:36:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.104 2026/01/04 01:36:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.103 2026/01/04 01:36:35 riastradh 
 #include <sys/kmem.h>
 #include <sys/once.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/workqueue.h>
 
@@ -311,7 +312,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				 * errors of finished requests.
 				 */
 				if (uio->uio_offset & (DEV_BSIZE - 1)) {
-					error = EINVAL;
+					error = SET_ERROR(EINVAL);
 					goto done;
 				}
 				/*
