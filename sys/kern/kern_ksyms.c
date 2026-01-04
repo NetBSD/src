@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.110 2026/01/04 01:34:45 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.111 2026/01/04 01:34:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #define _KSYMS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.110 2026/01/04 01:34:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.111 2026/01/04 01:34:57 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.110 2026/01/04 01:34:45 riastradh E
 #include <sys/proc.h>
 #include <sys/pserialize.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 
@@ -659,7 +660,7 @@ ksyms_getval_unlocked(const char *mod, const char *sym, Elf_Sym **symp,
 		}
 	}
 	pserialize_read_exit(s);
-	return error;
+	return error ? SET_ERROR(error) : 0;
 }
 
 int
@@ -667,7 +668,7 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 {
 
 	if (!ksyms_loaded)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	/* No locking needed -- we read the table pserialized.  */
 	return ksyms_getval_unlocked(mod, sym, NULL, val, type);
@@ -715,7 +716,7 @@ ksyms_mod_foreach(const char *mod, ksyms_callback_t callback, void *opaque)
 	int symindx;
 
 	if (!ksyms_loaded)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	mutex_enter(&ksyms_lock);
 
@@ -763,7 +764,7 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 	int type, i, sz;
 
 	if (!ksyms_loaded)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz, struct ksyms_symtab,
 	    sd_pslist) {
@@ -793,9 +794,9 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 		}
 	}
 	if (es == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	if ((f & KSYMS_EXACT) && (v != es->st_value))
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	if (mod)
 		*mod = lmod;
 	if (sym)
@@ -902,7 +903,7 @@ ksyms_sift(char *mod, char *sym, int mode)
 	int i, sz;
 
 	if (!ksyms_loaded)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
 		if (mod && strcmp(mod, st->sd_name))
@@ -940,7 +941,7 @@ ksyms_sift(char *mod, char *sym, int mode)
 				db_printf("%s ", sb + les->st_name);
 		}
 	}
-	return ENOENT;
+	return SET_ERROR(ENOENT);
 }
 #endif /* DDB */
 
@@ -1210,7 +1211,7 @@ ksymsopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	int error;
 
 	if (minor(dev) != 0 || !ksyms_loaded)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	/* Allocate a private file.  */
 	error = fd_allocfile(&fp, &fd);
@@ -1336,7 +1337,7 @@ ksymsread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 
 	/* Refuse negative offsets.  */
 	if (*offp < 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -1401,12 +1402,12 @@ ksymsmmap(struct file *fp, off_t *offp, size_t nbytes, int prot, int *flagsp,
 
 	/* Refuse negative offsets.  */
 	if (*offp < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Refuse mappings that pass the end of file.  */
 	if (nbytes > round_page(ks->ks_size) ||
 	    *offp > round_page(ks->ks_size) - nbytes)
-		return EINVAL;	/* XXX ??? */
+		return SET_ERROR(EINVAL);	/* XXX ??? */
 
 	/* Success!  */
 	uao_reference(ks->ks_uobj);
@@ -1437,13 +1438,13 @@ ksymsseek(struct file *fp, off_t delta, int whence, off_t *newoffp, int flags)
 		base = 0;
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
 	/* Check for arithmetic overflow and reject negative offsets.  */
 	if (base < 0 || delta > OFF_MAX - base || base + delta < 0) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -1527,7 +1528,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 			error = copyout(&copy, okg->kg_sym, sizeof(Elf_Sym));
 		} else {
 			pserialize_read_exit(s);
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 		}
 		kmem_free(str, len);
 		break;
@@ -1565,7 +1566,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 		if (sym != NULL) {
 			kg->kg_sym = *sym;
 		} else {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 		}
 		pserialize_read_exit(s);
 		kmem_free(str, len);
@@ -1579,7 +1580,7 @@ ksymsioctl(struct file *fp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = SET_ERROR(ENOTTY);
 		break;
 	}
 
