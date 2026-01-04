@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.13 2025/08/06 11:11:34 andvar Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.14 2026/01/04 03:18:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,15 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.13 2025/08/06 11:11:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.14 2026/01/04 03:18:08 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/bitops.h>
 #include <sys/kmem.h>
-#include <sys/systm.h>
 #include <sys/pslist.h>
 #include <sys/rwlock.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
 static int hashstat_sysctl(SYSCTLFN_PROTO);
 
