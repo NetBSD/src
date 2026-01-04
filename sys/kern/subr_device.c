@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.18 2025/10/13 14:41:40 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.19 2026/01/04 03:15:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,15 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.18 2025/10/13 14:41:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.19 2026/01/04 03:15:35 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/device.h>
+#include <sys/device_calls.h>
 #include <sys/device_impl.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
-
-#include <sys/device_calls.h>
 
 /* Root device. */
 device_t			root_device;
