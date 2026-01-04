@@ -37,29 +37,32 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/kern/subr_acl_nfs4.c 341827 2018-12-11 19:32:16Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.2 2024/01/19 19:07:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.3 2026/01/04 02:10:08 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/acl.h>
+#include <sys/errno.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
-#include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
-#include <sys/acl.h>
-#include <sys/kauth.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 static void	acl_nfs4_trivial_from_mode(struct acl *aclp, mode_t mode);
 
-
 #else
 
-#include <errno.h>
-#include <assert.h>
 #include <sys/acl.h>
 #include <sys/stat.h>
+
+#include <assert.h>
+#include <errno.h>
+
 #define KASSERT(a) assert(a)
 
 #endif /* !_KERNEL */
