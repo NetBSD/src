@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.89 2019/08/15 09:04:22 skrll Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.90 2026/01/04 03:17:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.89 2019/08/15 09:04:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.90 2026/01/04 03:17:39 riastradh Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -42,12 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.89 2019/08/15 09:04:22 skrll Exp $
 #endif
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/extent.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
-#include <sys/time.h>
-#include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/time.h>
 
 #include <uvm/uvm_extern.h>
 
