@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_interrupt.c,v 1.5 2021/12/10 20:36:04 andvar Exp $	*/
+/*	$NetBSD: subr_interrupt.c,v 1.6 2026/01/04 03:18:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,24 +27,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.5 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.6 2026/01/04 03:18:23 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/cpu.h>
-#include <sys/interrupt.h>
-#include <sys/intr.h>
-#include <sys/kcpuset.h>
-#include <sys/kmem.h>
-#include <sys/proc.h>
-#include <sys/xcall.h>
-#include <sys/sysctl.h>
+#include <sys/types.h>
 
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/errno.h>
+#include <sys/interrupt.h>
+#include <sys/intr.h>
 #include <sys/intrio.h>
 #include <sys/kauth.h>
+#include <sys/kcpuset.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <machine/limits.h>
 
