@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.315 2025/10/03 16:49:07 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.316 2026/01/04 02:10:43 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.315 2025/10/03 16:49:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.316 2026/01/04 02:10:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -85,36 +85,36 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.315 2025/10/03 16:49:07 thorpej 
 #endif
 
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/device_impl.h>
-#include <sys/device_calls.h>
-#include <sys/disklabel.h>
-#include <sys/conf.h>
-#include <sys/kauth.h>
-#include <sys/kmem.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/kthread.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
+#include <sys/callout.h>
+#include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/device_calls.h>
+#include <sys/device_impl.h>
+#include <sys/devmon.h>
 #include <sys/dirent.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/errno.h>
+#include <sys/fcntl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/localcount.h>
+#include <sys/lockf.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/unistd.h>
-#include <sys/fcntl.h>
-#include <sys/lockf.h>
-#include <sys/callout.h>
-#include <sys/devmon.h>
-#include <sys/cpu.h>
-#include <sys/sysctl.h>
-#include <sys/stdarg.h>
-#include <sys/localcount.h>
-
-#include <sys/disk.h>
-
+#include <sys/proc.h>
+#include <sys/reboot.h>
 #include <sys/rndsource.h>
+#include <sys/stdarg.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/unistd.h>
 
 #include <machine/limits.h>
 
