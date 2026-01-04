@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.87 2023/11/02 10:31:55 martin Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.88 2026/01/04 01:41:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.87 2023/11/02 10:31:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.88 2026/01/04 01:41:42 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.87 2023/11/02 10:31:55 martin Exp 
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
+#include <sys/sdt.h>
 #include <sys/sleepq.h>
 #include <sys/syncobj.h>
 #include <sys/systm.h>
@@ -363,7 +364,7 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 	if (catch_p) {
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
-			error = EINTR;
+			error = SET_ERROR(EINTR);
 			early = true;
 		} else if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0))
 			early = true;
@@ -401,7 +402,8 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 			 * co-located on the CPU with the LWP.
 			 */
 			(void)callout_halt(&l->l_timeout_ch, NULL);
-			error = (l->l_flag & LW_STIMO) ? EWOULDBLOCK : 0;
+			error = (l->l_flag & LW_STIMO) ? SET_ERROR(EWOULDBLOCK)
+			    : 0;
 		}
 	}
 
@@ -421,7 +423,7 @@ sleepq_block(int timo, bool catch_p, syncobj_t *syncobj, int nlocks)
 		if ((flag & LW_CATCHINTR) == 0 || error != 0)
 			/* nothing */;
 		else if ((flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
-			error = EINTR;
+			error = SET_ERROR(EINTR);
 		else if ((flag & LW_PENDSIG) != 0) {
 			/*
 			 * Acquiring p_lock may cause us to recurse
@@ -543,9 +545,9 @@ sleepq_sigtoerror(lwp_t *l, int sig)
 	 * If this sleep was canceled, don't let the syscall restart.
 	 */
 	if ((SIGACTION(p, sig).sa_flags & SA_RESTART) == 0)
-		error = EINTR;
+		error = SET_ERROR(EINTR);
 	else
-		error = ERESTART;
+		error = SET_ERROR(ERESTART);
 
 	return error;
 }
