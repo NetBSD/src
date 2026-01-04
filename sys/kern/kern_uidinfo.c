@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.14 2026/01/04 02:09:11 riastradh Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.15 2026/01/04 02:09:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.14 2026/01/04 02:09:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.15 2026/01/04 02:09:21 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.14 2026/01/04 02:09:11 riastradh 
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/uidinfo.h>
@@ -85,7 +86,7 @@ sysctl_kern_uidinfo_cnt(SYSCTLFN_ARGS)
 			return sysctl_lookup(SYSCTLFN_CALL(&node));
 		}
 
-	return EINVAL;
+	return SET_ERROR(EINVAL);
 }
 
 static struct sysctllog *kern_uidinfo_sysctllog;
