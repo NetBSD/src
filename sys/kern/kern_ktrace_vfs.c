@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace_vfs.c,v 1.3 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kern_ktrace_vfs.c,v 1.4 2026/01/04 01:35:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,20 +61,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.3 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.4 2026/01/04 01:35:24 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/ktrace.h>
-#include <sys/kauth.h>
-
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 /*
  * ktrace system call, the part of the ktrace framework that
