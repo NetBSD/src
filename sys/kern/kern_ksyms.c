@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.109 2024/10/03 20:19:55 andvar Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.110 2026/01/04 01:34:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,8 +72,10 @@
  *	Constify db_symtab and move it to .rodata.
  */
 
+#define _KSYMS_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.109 2024/10/03 20:19:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.110 2026/01/04 01:34:45 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -81,24 +83,24 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.109 2024/10/03 20:19:55 andvar Exp 
 #include "opt_dtrace.h"
 #endif
 
-#define _KSYMS_PRIVATE
-
 #include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/kauth.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/kmem.h>
-#include <sys/proc.h>
-#include <sys/atomic.h>
-#include <sys/ksyms.h>
-#include <sys/kernel.h>
 #include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/ksyms.h>
+#include <sys/proc.h>
 #include <sys/pserialize.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
