@@ -1,4 +1,4 @@
-/*	$NetBSD: intoa.c,v 1.3 2009/03/14 15:36:22 dsl Exp $	*/
+/*	$NetBSD: intoa.c,v 1.4 2026/01/04 10:59:21 nia Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -40,6 +40,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <lib/libkern/libkern.h>
