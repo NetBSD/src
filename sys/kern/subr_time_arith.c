@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time_arith.c,v 1.6 2025/10/20 02:20:17 riastradh Exp $	*/
+/*	$NetBSD: subr_time_arith.c,v 1.7 2026/01/04 03:21:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.6 2025/10/20 02:20:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.7 2026/01/04 03:21:19 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.6 2025/10/20 02:20:17 riastrad
 #if defined(_KERNEL)
 
 #include <sys/kernel.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 
 #include <machine/limits.h>
@@ -89,6 +90,7 @@ extern int tick;
 
 #define	KASSERT		assert
 #define	MIN(X, Y)	((X) < (Y) ? (X) : (Y))
+#define	SET_ERROR(E)	(E)
 
 #endif
 
@@ -196,9 +198,9 @@ itimerfix(struct timeval *tv)
 {
 
 	if (tv->tv_usec < 0 || tv->tv_usec >= 1000000)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (tv->tv_sec < 0)
-		return ETIMEDOUT;
+		return SET_ERROR(ETIMEDOUT);
 	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
 		tv->tv_usec = tick;
 	return 0;
@@ -209,9 +211,9 @@ itimespecfix(struct timespec *ts)
 {
 
 	if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (ts->tv_sec < 0)
-		return ETIMEDOUT;
+		return SET_ERROR(ETIMEDOUT);
 	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
 		ts->tv_nsec = tick * 1000;
 	return 0;
