@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.15 2020/02/29 14:44:44 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.16 2026/01/04 03:16:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,16 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.15 2020/02/29 14:44:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.16 2026/01/04 03:16:38 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/sdt.h>
 #include <sys/vnode.h>
+
 #include <miscfs/specfs/specdev.h>
 
 struct vnode *
@@ -110,7 +113,7 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 			secsize = DEV_BSIZE << pdk->dk_blkshift;
 			numsec  = dkw.dkw_size;
 		} else
-			error = ENODEV;
+			error = SET_ERROR(ENODEV);
 	}
 
 	if (error) {
@@ -131,7 +134,7 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 		    devsw_blk2name(major(vp->v_specnode->sn_rdev)),
 		    secsize, numsec);
 #endif
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 	if (error == 0) {
 		*secsizep = secsize;
