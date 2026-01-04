@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.122 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.123 2026/01/04 01:36:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,27 +41,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.122 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.123 2026/01/04 01:36:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/acct.h>
-#include <sys/systm.h>
-#include <sys/ucred.h>
+#include <sys/kauth.h>
+#include <sys/mount.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/prot.h>
+#include <sys/syscallargs.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
 #include <sys/timeb.h>
 #include <sys/times.h>
-#include <sys/pool.h>
-#include <sys/prot.h>
-#include <sys/syslog.h>
+#include <sys/ucred.h>
 #include <sys/uidinfo.h>
-#include <sys/kauth.h>
-
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
 
 int	sys_getpid(struct lwp *, const void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, const void *, register_t *);
