@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.53 2024/10/13 22:25:38 chs Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.54 2026/01/04 03:15:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,27 +69,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.53 2024/10/13 22:25:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.54 2026/01/04 03:15:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/kmem.h>
-#include <sys/systm.h>
-#include <sys/poll.h>
-#include <sys/tty.h>
-#include <sys/cpu.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kmem.h>
+#include <sys/localcount.h>
+#include <sys/poll.h>
+#include <sys/pserialize.h>
 #include <sys/reboot.h>
 #include <sys/sdt.h>
-#include <sys/atomic.h>
-#include <sys/localcount.h>
-#include <sys/pserialize.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
 #include <sys/xcall.h>
-#include <sys/device.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
