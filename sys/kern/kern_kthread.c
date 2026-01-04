@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.49 2023/09/23 14:40:42 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.50 2026/01/04 01:35:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009, 2019, 2023
@@ -32,17 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.49 2023/09/23 14:40:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.50 2026/01/04 01:35:07 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/cpu.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
+#include <sys/msan.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
-#include <sys/kmem.h>
-#include <sys/msan.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
