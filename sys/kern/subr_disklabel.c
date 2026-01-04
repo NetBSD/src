@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disklabel.c,v 1.3 2019/04/07 02:58:02 rin Exp $	*/
+/*	$NetBSD: subr_disklabel.c,v 1.4 2026/01/04 03:16:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,11 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disklabel.c,v 1.3 2019/04/07 02:58:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disklabel.c,v 1.4 2026/01/04 03:16:46 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/disklabel.h>
+#include <sys/systm.h>
 
 #if !defined(__HAVE_SETDISKLABEL) || defined(_RUMPKERNEL)
 
