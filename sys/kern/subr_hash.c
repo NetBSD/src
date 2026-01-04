@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.14 2026/01/04 03:18:08 riastradh Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.15 2026/01/04 03:18:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.14 2026/01/04 03:18:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.15 2026/01/04 03:18:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.14 2026/01/04 03:18:08 riastradh Exp
 #include <sys/kmem.h>
 #include <sys/pslist.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -213,7 +214,7 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 
 		if (h == NULL) {
 			/* Can't QUERY one hash without supplying the hash name. */
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		query = true;
 		error = sysctl_copyinstr(l, h->hash_name, queryname, 
@@ -246,7 +247,7 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 	sysctl_relock();
 
 	if (query && written == 0)	/* query not found? */
-		error = ENOENT;
+		error = SET_ERROR(ENOENT);
 
 	*oldlenp = written;
 	return error;
