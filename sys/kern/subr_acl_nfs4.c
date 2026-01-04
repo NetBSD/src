@@ -37,7 +37,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/kern/subr_acl_nfs4.c 341827 2018-12-11 19:32:16Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.3 2026/01/04 02:10:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.4 2026/01/04 02:10:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_acl_nfs4.c,v 1.3 2026/01/04 02:10:08 riastradh 
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -564,7 +565,7 @@ acl_nfs4_check(const struct acl *aclp, int is_directory)
 	 */
 
 	if (aclp->acl_cnt > ACL_MAX_ENTRIES || aclp->acl_cnt <= 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	for (i = 0; i < aclp->acl_cnt; i++) {
 		ae = &(aclp->acl_entry[i]);
@@ -574,46 +575,46 @@ acl_nfs4_check(const struct acl *aclp, int is_directory)
 		case ACL_GROUP_OBJ:
 		case ACL_EVERYONE:
 			if (ae->ae_id != ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			break;
 
 		case ACL_USER:
 		case ACL_GROUP:
 			if (ae->ae_id == ACL_UNDEFINED_ID)
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 			break;
 
 		default:
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		}
 
 		if ((ae->ae_perm | ACL_NFS4_PERM_BITS) != ACL_NFS4_PERM_BITS)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 
 		/*
 		 * Disallow ACL_ENTRY_TYPE_AUDIT and ACL_ENTRY_TYPE_ALARM for now.
 		 */
 		if (ae->ae_entry_type != ACL_ENTRY_TYPE_ALLOW &&
 		    ae->ae_entry_type != ACL_ENTRY_TYPE_DENY)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 
 		if ((ae->ae_flags | ACL_FLAGS_BITS) != ACL_FLAGS_BITS)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 
 		/* Disallow unimplemented flags. */
 		if (ae->ae_flags & (ACL_ENTRY_SUCCESSFUL_ACCESS |
 		    ACL_ENTRY_FAILED_ACCESS))
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 
 		/* Disallow flags not allowed for ordinary files. */
 		if (!is_directory) {
 			if (ae->ae_flags & (ACL_ENTRY_FILE_INHERIT |
 			    ACL_ENTRY_DIRECTORY_INHERIT |
 			    ACL_ENTRY_NO_PROPAGATE_INHERIT | ACL_ENTRY_INHERIT_ONLY))
-				return (EINVAL);
+				return SET_ERROR(EINVAL);
 		}
 	}
 
-	return (0);
+	return 0;
 }
 #endif
