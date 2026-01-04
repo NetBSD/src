@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.51 2026/01/04 02:08:20 riastradh Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.52 2026/01/04 02:09:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.51 2026/01/04 02:08:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.52 2026/01/04 02:09:03 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.51 2026/01/04 02:08:20 riastradh Exp
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/rndsource.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
 
@@ -481,14 +482,14 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		    dt.dt_day < 1 || dt.dt_day > 31 ||
 		    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 60) {
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 		tvp->tv_usec = 0;
-		return tvp->tv_sec < 0 ? EINVAL : 0;
+		return tvp->tv_sec < 0 ? SET_ERROR(EINVAL) : 0;
 	}
 
-	return ENXIO;
+	return SET_ERROR(ENXIO);
 }
 
 static int
@@ -517,5 +518,5 @@ todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 		return rv;
 	}
 
-	return ENXIO;
+	return SET_ERROR(ENXIO);
 }
