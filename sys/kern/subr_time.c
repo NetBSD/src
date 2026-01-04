@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.42 2025/10/05 18:51:50 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.43 2026/01/04 03:21:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.42 2025/10/05 18:51:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.43 2026/01/04 03:21:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.42 2025/10/05 18:51:50 riastradh Exp
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/timex.h>
@@ -146,7 +147,7 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 		p = pid == 0 ? curproc : proc_find(pid);
 		if (p == NULL) {
 			mutex_exit(&proc_lock);
-			return ESRCH;
+			return SET_ERROR(ESRCH);
 		}
 		mutex_enter(p->p_lock);
 		calcru(p, /*usertime*/NULL, /*systime*/NULL, /*intrtime*/NULL,
@@ -173,7 +174,7 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 		l = lid == 0 ? curlwp : lwp_find(p, lid);
 		if (l == NULL) {
 			mutex_exit(p->p_lock);
-			return ESRCH;
+			return SET_ERROR(ESRCH);
 		}
 		addrulwp(l, &tm);
 		mutex_exit(p->p_lock);
@@ -190,7 +191,7 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 		nanouptime(ts);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -207,7 +208,7 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 	struct timespec tsd;
 
 	if (ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000L)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((flags & TIMER_ABSTIME) != 0 || start != NULL) {
 		error = clock_gettime1(clock_id, &tsd);
@@ -219,7 +220,7 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 
 	if ((flags & TIMER_ABSTIME) != 0) {
 		if (!timespecsubok(ts, &tsd))
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		timespecsub(ts, &tsd, &tsd);
 		ts = &tsd;
 	}
@@ -229,7 +230,7 @@ ts2timo(clockid_t clock_id, int flags, struct timespec *ts,
 		return error;
 
 	if (ts->tv_sec == 0 && ts->tv_nsec == 0)
-		return ETIMEDOUT;
+		return SET_ERROR(ETIMEDOUT);
 
 	*timo = tstohz(ts);
 	KASSERT(*timo > 0);
