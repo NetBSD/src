@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.412 2026/01/04 01:41:03 riastradh Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.413 2026/01/04 01:41:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.412 2026/01/04 01:41:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.413 2026/01/04 01:41:34 riastradh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -634,7 +634,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 		printf("%s(%d): Signal queue is full signal=%d\n",
 		    p->p_comm, p->p_pid, ksi->ksi_signo);
 #endif
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 	ksi->ksi_flags |= KSI_QUEUED;
 	TAILQ_INSERT_TAIL(&sp->sp_info, ksi, ksi_list);
@@ -843,7 +843,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 	}
 out:
 	mutex_exit(&proc_lock);
-	return nfound ? 0 : ESRCH;
+	return nfound ? 0 : SET_ERROR(ESRCH);
 }
 
 /*
@@ -2342,7 +2342,8 @@ coredump_netbsd(struct lwp *l, struct coredump_iostate *iocookie)
 
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_netbsd_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_netbsd_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
@@ -2352,7 +2353,8 @@ coredump_netbsd32(struct lwp *l, struct coredump_iostate *iocookie)
 
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_netbsd32_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_netbsd32_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
@@ -2361,7 +2363,8 @@ coredump_elf32(struct lwp *l, struct coredump_iostate *iocookie)
 {
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_elf32_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_elf32_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
@@ -2370,7 +2373,8 @@ coredump_elf64(struct lwp *l, struct coredump_iostate *iocookie)
 {
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_elf64_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_elf64_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
