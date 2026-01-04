@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.138 2025/04/13 14:00:59 jakllsch Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.139 2026/01/04 03:16:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,17 +67,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.138 2025/04/13 14:00:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.139 2026/01/04 03:16:06 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/buf.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/buf.h>
-#include <sys/fcntl.h>
-#include <sys/syslog.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
+
 #include <lib/libkern/libkern.h>
 
 /*
