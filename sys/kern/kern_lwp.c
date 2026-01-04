@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.270 2025/04/11 16:04:43 andvar Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.271 2026/01/04 01:35:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020, 2023
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.270 2025/04/11 16:04:43 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.271 2026/01/04 01:35:44 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -325,9 +325,9 @@ sysctl_kern_maxlwp(SYSCTLFN_ARGS)
 		return error;
 
 	if (nmaxlwp < 0 || nmaxlwp >= MAXMAXLWP)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (nmaxlwp > lwp_maxlwp())
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	maxlwp = nmaxlwp;
 
 	return 0;
@@ -402,7 +402,7 @@ lwp_ctor(void *arg, void *obj, int flags)
 	    KM_SLEEP : KM_NOSLEEP);
 
 	if (l->l_ts == NULL) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	} else {
 		turnstile_ctor(l->l_ts);
 		return 0;
@@ -449,7 +449,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 	 */
 	if ((curl->l_flag & (LW_WEXIT | LW_WCORE)) != 0) {
 		lwp_unlock(t);
-		return (EDEADLK);
+		return SET_ERROR(EDEADLK);
 	}
 
 	if ((t->l_flag & LW_DBGSUSPEND) != 0) {
@@ -494,7 +494,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 
 	case LSIDL:
 	case LSZOMB:
-		error = EINTR; /* It's what Solaris does..... */
+		error = SET_ERROR(EINTR); /* It's what Solaris does..... */
 		lwp_unlock(t);
 		break;
 	}
@@ -635,12 +635,12 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		if (lid != 0) {
 			l2 = proc_find_lwp(p, lid);
 			if (l2 == NULL) {
-				error = ESRCH;
+				error = SET_ERROR(ESRCH);
 				break;
 			}
 			KASSERT(l2->l_lid == lid);
 			if ((l2->l_prflag & LPR_DETACHED) != 0) {
-				error = EINVAL;
+				error = SET_ERROR(EINVAL);
 				break;
 			}
 		} else {
@@ -659,7 +659,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 			 * can still be killed so it is not a major problem.
 			 */
 			if (l2->l_lid == lid && l2->l_waitingfor == curlid) {
-				error = EDEADLK;
+				error = SET_ERROR(EDEADLK);
 				break;
 			}
 			if (l2 == l)
@@ -711,7 +711,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		if (error != 0)
 			break;
 		if (nfound == 0) {
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 			break;
 		}
 
@@ -731,7 +731,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 * sleep is interruptable so little point checking for them.
 		 */
 		if (p->p_nlwpwait == p->p_nlwps) {
-			error = EDEADLK;
+			error = SET_ERROR(EDEADLK);
 			break;
 		}
 
@@ -800,7 +800,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 			    != 0) {
 				(void)chglwpcnt(uid, -1);
 				mutex_exit(p2->p_lock);
-				return EAGAIN;
+				return SET_ERROR(EAGAIN);
 			}
 		}
 	}
@@ -852,7 +852,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	 */
 	if (__predict_false(proc_alloc_lwpid(p2, l2) == -1)) {
 		pool_cache_put(lwp_cache, l2);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 
 	/*
@@ -1937,7 +1937,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 
 	/* don't allow a vforked process to create lwp ctls */
 	if (p->p_lflag & PL_PPWAIT)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	if (l->l_lcpage != NULL) {
 		lcp = l->l_lcpage;
@@ -1996,7 +1996,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		/* Nothing available - try to set up a free page. */
 		if (lp->lp_cur == lp->lp_max) {
 			mutex_exit(&lp->lp_lock);
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		}
 		lcp = kmem_alloc(LWPCTL_LCPAGE_SZ, KM_SLEEP);
 
