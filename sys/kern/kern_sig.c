@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.411 2025/12/10 21:33:01 andvar Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.412 2026/01/04 01:41:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,39 +70,42 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.411 2025/12/10 21:33:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.412 2026/01/04 01:41:03 riastradh Exp $");
 
-#include "opt_execfmt.h"
-#include "opt_ptrace.h"
-#include "opt_dtrace.h"
-#include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_sunos.h"
+#include "opt_dtrace.h"
+#include "opt_execfmt.h"
 #include "opt_pax.h"
+#include "opt_ptrace.h"
 
 #define	SIGPROP		/* include signal properties table */
+
 #include <sys/param.h>
-#include <sys/signalvar.h>
+#include <sys/types.h>
+
+#include <sys/acct.h>
+#include <sys/atomic.h>
+#include <sys/callout.h>
+#include <sys/compat_stub.h>
+#include <sys/cpu.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+#include <sys/ktrace.h>
+#include <sys/module.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
-#include <sys/systm.h>
-#include <sys/wait.h>
-#include <sys/ktrace.h>
-#include <sys/syslog.h>
-#include <sys/filedesc.h>
-#include <sys/file.h>
-#include <sys/pool.h>
-#include <sys/ucontext.h>
-#include <sys/exec.h>
-#include <sys/kauth.h>
-#include <sys/acct.h>
-#include <sys/callout.h>
-#include <sys/atomic.h>
-#include <sys/cpu.h>
-#include <sys/module.h>
 #include <sys/sdt.h>
-#include <sys/exec_elf.h>
-#include <sys/compat_stub.h>
+#include <sys/signalvar.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/ucontext.h>
+#include <sys/wait.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
