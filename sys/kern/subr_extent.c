@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.90 2026/01/04 03:17:39 riastradh Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.91 2026/01/04 03:17:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.90 2026/01/04 03:17:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.91 2026/01/04 03:17:47 riastradh Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.90 2026/01/04 03:17:39 riastradh E
 #include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 
@@ -98,6 +99,7 @@ panic(a ...)			printf(a)
 #define	IPL_VM				(0)
 #define	MUTEX_DEFAULT			(0)
 #define	KASSERT(exp)
+#define	SET_ERROR(error)	(error)
 #endif
 
 static struct pool expool;
@@ -505,7 +507,7 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 		    start, end);
 		panic("extent_alloc_region: region lies outside extent");
 #else
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 #endif
 	}
 
@@ -520,7 +522,7 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 		printf(
 		    "extent_alloc_region: can't allocate region descriptor\n");
 #endif
-		return (ENOMEM);
+		return SET_ERROR(ENOMEM);
 	}
 
 	if (!(ex->ex_flags & EXF_EARLY))
@@ -576,7 +578,7 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 			} else {
 				if (!(ex->ex_flags & EXF_EARLY))
 					mutex_exit(&ex->ex_lock);
-				error = EAGAIN;
+				error = SET_ERROR(EAGAIN);
 			}
 			extent_free_region_descriptor(ex, myrp);
 			return error;
@@ -679,7 +681,7 @@ extent_alloc_subregion1(struct extent *ex, u_long substart, u_long subend,
 		printf(
 		 "extent_alloc_subregion: can't allocate region descriptor\n");
 #endif
-		return (ENOMEM);
+		return SET_ERROR(ENOMEM);
 	}
 
  alloc_start:
@@ -732,7 +734,7 @@ extent_alloc_subregion1(struct extent *ex, u_long substart, u_long subend,
 #else
 		extent_free_region_descriptor(ex, myrp);
 		mutex_exit(&ex->ex_lock);
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 #endif
 	}
 
@@ -974,7 +976,7 @@ skip:
 		mutex_exit(&ex->ex_lock);
 	} else {
 		mutex_exit(&ex->ex_lock);
-		error = EAGAIN;
+		error = SET_ERROR(EAGAIN);
 	}
 
 	extent_free_region_descriptor(ex, myrp);
@@ -1061,7 +1063,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 		/* Allocate a region descriptor. */
 		nrp = extent_alloc_region_descriptor(ex, flags);
 		if (nrp == NULL)
-			return (ENOMEM);
+			return SET_ERROR(ENOMEM);
 	}
 
 	if (!(ex->ex_flags & EXF_EARLY))
