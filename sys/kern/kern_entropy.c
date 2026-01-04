@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.73 2025/03/11 14:30:28 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.74 2026/01/04 01:32:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.73 2025/03/11 14:30:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.74 2026/01/04 01:32:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.73 2025/03/11 14:30:28 riastradh 
 #include <sys/rnd.h>		/* legacy kernel API */
 #include <sys/rndio.h>		/* userland ioctl interface */
 #include <sys/rndsource.h>	/* kernel rndsource driver API */
+#include <sys/sdt.h>
 #include <sys/select.h>
 #include <sys/selinfo.h>
 #include <sys/sha1.h>		/* for boot seed checksum */
@@ -1543,7 +1544,7 @@ entropy_extract(void *buf, size_t len, int flags)
 
 		/* If not waiting, stop here.  */
 		if (!ISSET(flags, ENTROPY_WAIT)) {
-			error = EWOULDBLOCK;
+			error = SET_ERROR(EWOULDBLOCK);
 			break;
 		}
 
@@ -1762,7 +1763,7 @@ entropy_kqfilter(struct knote *kn)
 		kn->kn_fop = &seltrue_filtops;
 		return 0;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -1903,7 +1904,7 @@ rnd_lock_sources(int flags)
 	while (E->sourcelock) {
 		KASSERT(!cold);
 		if (!ISSET(flags, ENTROPY_WAIT))
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 		if (ISSET(flags, ENTROPY_SIG)) {
 			error = cv_wait_sig(&E->sourcelock_cv, &E->lock);
 			if (error)
@@ -2531,7 +2532,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 			    enosys(), error);
 #endif
 		if (error == ENOSYS)
-			error = ENOTTY;
+			error = SET_ERROR(ENOTTY);
 		break;
 	}
 	}
@@ -2586,7 +2587,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		if (stat->count == 0)
 			break;
 		if (stat->count > RND_MAXSTATCOUNT)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		/*
 		 * Under the lock, find the first one, copy out as many
@@ -2622,7 +2623,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		if (estat->count == 0)
 			break;
 		if (estat->count > RND_MAXSTATCOUNT)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		/*
 		 * Under the lock, find the first one, copy out as many
@@ -2675,7 +2676,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 			rndsource_to_user(rs, &nstat->source);
 			mutex_enter(&E->lock);
 		} else {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 		}
 		rnd_unlock_sources();
 		mutex_exit(&E->lock);
@@ -2706,7 +2707,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 			rndsource_to_user_est(rs, &enstat->source);
 			mutex_enter(&E->lock);
 		} else {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 		}
 		rnd_unlock_sources();
 		mutex_exit(&E->lock);
@@ -2777,7 +2778,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		if (!atomic_load_relaxed(&entropy_collection))
 			break;	/* thanks but no thanks */
 		if (rdata->len > MIN(sizeof(rdata->data), UINT32_MAX/NBBY))
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 
 		/*
 		 * This ioctl serves as the userland alternative a
@@ -2809,7 +2810,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 		break;
 	}
 	default:
-		error = ENOTTY;
+		error = SET_ERROR(ENOTTY);
 	}
 
 	/* Return any error that may have come up.  */
