@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.43 2026/01/04 01:37:15 riastradh Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.44 2026/01/04 01:37:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.43 2026/01/04 01:37:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.44 2026/01/04 01:37:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.43 2026/01/04 01:37:15 riastradh Exp 
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
@@ -172,13 +173,13 @@ ras_install(void *addr, size_t len)
 	proc_t *p;
 
 	if (len == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((uintptr_t)addr < VM_MIN_ADDRESS ||
 	    (uintptr_t)addr > VM_MAXUSER_ADDRESS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (len > VM_MAXUSER_ADDRESS - (uintptr_t)addr)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	endaddr = (char *)addr + len;
 
 	newrp = kmem_alloc(sizeof(*newrp), KM_SLEEP);
@@ -191,11 +192,11 @@ ras_install(void *addr, size_t len)
 	mutex_enter(&p->p_auxlock);
 	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
 		if (++nras >= ras_per_proc) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			break;
 		}
 		if (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr) {
-			error = EEXIST;
+			error = SET_ERROR(EEXIST);
 			break;
 		}
 	}
@@ -239,7 +240,7 @@ ras_purge(void *addr, size_t len)
 		return 0;
 	} else {
 		mutex_exit(&p->p_auxlock);
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 	}
 }
 
@@ -282,12 +283,12 @@ sys_rasctl(struct lwp *l, const struct sys_rasctl_args *uap, register_t *retval)
 		error = ras_purgeall();
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		break;
 	}
 
-	return (error);
+	return error;
 #else
-	return (EOPNOTSUPP);
+	return SET_ERROR(EOPNOTSUPP);
 #endif
 }
