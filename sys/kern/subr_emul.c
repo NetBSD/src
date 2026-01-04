@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_emul.c,v 1.2 2019/01/27 02:08:43 pgoyette Exp $	*/
+/*	$NetBSD: subr_emul.c,v 1.3 2026/01/04 03:17:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,17 +57,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: subr_emul.c,v 1.2 2019/01/27 02:08:43 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_emul.c,v 1.3 2026/01/04 03:17:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
+
+#include <sys/exec.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/namei.h>
-#include <sys/exec.h>
 
 #include <compat/common/compat_util.h>
 
