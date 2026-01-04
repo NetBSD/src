@@ -1,13 +1,10 @@
-# $NetBSD: Makefile.cdrom,v 1.1 2024/05/15 16:29:53 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.1.4.1 2026/01/04 12:09:39 martin Exp $
 
 .include <bsd.own.mk>
 
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd
 CD_SETS=	base etc
-.if ${MKKMOD} != "no"
-CD_SETS+=	modules
-.endif
 .if ${MKMAN} != "no"
 CD_SETS+=	man
 .endif
