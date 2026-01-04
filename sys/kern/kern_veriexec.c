@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.27 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.28 2026/01/04 02:09:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,32 +29,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.27 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.28 2026/01/04 02:09:38 riastradh Exp $");
 
 #include "opt_veriexec.h"
 
 #include <sys/param.h>
-#include <sys/mount.h>
+#include <sys/types.h>
+
+#include <sys/conf.h>
+#include <sys/fcntl.h>
+#include <sys/fileassoc.h>
+#include <sys/inttypes.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
-#include <sys/vnode.h>
+#include <sys/md5.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/once.h>
 #include <sys/proc.h>
+#include <sys/rmd160.h>
 #include <sys/rwlock.h>
-#include <sys/syslog.h>
-#include <sys/sysctl.h>
-#include <sys/inttypes.h>
-#include <sys/verified_exec.h>
 #include <sys/sha1.h>
 #include <sys/sha2.h>
-#include <sys/rmd160.h>
-#include <sys/md5.h>
-#include <sys/fileassoc.h>
-#include <sys/kauth.h>
-#include <sys/conf.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/verified_exec.h>
+#include <sys/vnode.h>
+
 #include <miscfs/specfs/specdev.h>
+
 #include <prop/proplib.h>
-#include <sys/fcntl.h>
 
 /* Readable values for veriexec_file_report(). */
 #define	REPORT_ALWAYS		0x01	/* Always print */
