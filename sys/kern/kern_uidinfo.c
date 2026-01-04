@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.13 2021/12/28 13:28:24 riastradh Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.14 2026/01/04 02:09:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,17 +35,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.13 2021/12/28 13:28:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.14 2026/01/04 02:09:11 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
-#include <sys/atomic.h>
-#include <sys/uidinfo.h>
 #include <sys/sysctl.h>
-#include <sys/kauth.h>
-#include <sys/cpu.h>
+#include <sys/systm.h>
+#include <sys/uidinfo.h>
 
 static SLIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 static u_long 		uihash;
