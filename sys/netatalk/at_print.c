@@ -1,4 +1,4 @@
-/*	$NetBSD: at_print.c,v 1.2 2021/07/21 06:35:45 skrll Exp $	*/
+/*	$NetBSD: at_print.c,v 1.3 2026/01/04 10:58:26 nia Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/endian.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: at_print.c,v 1.2 2021/07/21 06:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_print.c,v 1.3 2026/01/04 10:58:26 nia Exp $");
 #include <sys/systm.h>
 #else
-__RCSID("$NetBSD: at_print.c,v 1.2 2021/07/21 06:35:45 skrll Exp $");
+__RCSID("$NetBSD: at_print.c,v 1.3 2026/01/04 10:58:26 nia Exp $");
 #include <stdio.h>
 #endif
 #include <netatalk/at.h>
