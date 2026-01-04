@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.209 2025/02/22 09:36:29 mlelstv Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.210 2026/01/04 00:41:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.209 2025/02/22 09:36:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.210 2026/01/04 00:41:14 wiz Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1120,6 +1120,9 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 
 	mutex_enter(&uvm_swap_data_lock);
 	uvmexp.swpages -= npages;
+	KASSERTMSG(uvmexp.swpginuse >= sdp->swd_npgbad,
+		   "swpginuse %d sdp->swd_npgbad %d",
+		   uvmexp.swpginuse, sdp->swd_npgbad);
 	uvmexp.swpginuse -= sdp->swd_npgbad;
 
 	if (swaplist_find(sdp->swd_vp, true) == NULL)
@@ -1802,6 +1805,9 @@ uvm_swap_free(int startslot, int nslots)
 	KASSERT(sdp->swd_npginuse >= nslots);
 	blist_free(sdp->swd_blist, startslot - sdp->swd_drumoffset, nslots);
 	sdp->swd_npginuse -= nslots;
+	KASSERTMSG(uvmexp.swpginuse >= nslots, "swpginuse %d nslots %d",
+		   uvmexp.swpginuse, nslots);
+	KASSERT(uvmexp.swpginuse >= nslots);
 	uvmexp.swpginuse -= nslots;
 	mutex_exit(&uvm_swap_data_lock);
 }
