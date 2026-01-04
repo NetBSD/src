@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_physmap.c,v 1.5 2021/09/06 20:55:08 andvar Exp $	*/
+/*	$NetBSD: subr_physmap.c,v 1.6 2026/01/04 03:20:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.5 2021/09/06 20:55:08 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.6 2026/01/04 03:20:04 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/physmap.h>
+#include <sys/types.h>
+
 #include <sys/kmem.h>
+#include <sys/physmap.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
