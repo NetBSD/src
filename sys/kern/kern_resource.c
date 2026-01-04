@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.195 2023/10/04 20:28:06 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.196 2026/01/04 01:37:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,24 +37,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.195 2023/10/04 20:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.196 2026/01/04 01:37:35 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/file.h>
-#include <sys/resourcevar.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/sysctl.h>
-#include <sys/timevar.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
-#include <sys/mount.h>
+#include <sys/resourcevar.h>
 #include <sys/syscallargs.h>
-#include <sys/atomic.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/timevar.h>
 
 #include <uvm/uvm_extern.h>
 
