@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.19 2026/01/04 03:18:53 riastradh Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.20 2026/01/04 03:19:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -189,9 +190,9 @@ kcov_allocbuf(kcov_t *kd, uint64_t nent)
 	int error;
 
 	if (nent < 2 || nent > KCOV_BUF_MAX_ENTRIES)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (kd->buf != NULL)
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 
 	size = roundup(nent * KCOV_ENTRY_SIZE, PAGE_SIZE);
 	kd->bufnent = nent - 1;
@@ -316,7 +317,7 @@ kcov_remote_enable(kcov_t *kd, int mode)
 	kcov_lock(kd);
 	if (kd->enabled) {
 		kcov_unlock(kd);
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 	kd->mode = mode;
 	atomic_store_relaxed(&kd->enabled, true);
@@ -331,7 +332,7 @@ kcov_remote_disable(kcov_t *kd)
 	kcov_lock(kd);
 	if (!kd->enabled) {
 		kcov_unlock(kd);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	atomic_store_relaxed(&kd->enabled, false);
 	kcov_unlock(kd);
@@ -345,11 +346,11 @@ kcov_remote_attach(kcov_t *kd, struct kcov_ioc_remote_attach *args)
 	kcov_remote_t *kr;
 
 	if (kd->enabled)
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 
 	kr = kcov_remote_find(args->subsystem, args->id);
 	if (kr == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	kd->remote = &kr->kd;
 
 	return 0;
@@ -359,9 +360,9 @@ static int
 kcov_remote_detach(kcov_t *kd)
 {
 	if (kd->enabled)
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 	if (kd->remote == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	(void)kcov_remote_disable(kd->remote);
 	kd->remote = NULL;
 	return 0;
@@ -375,7 +376,7 @@ kcov_setbufsize(kcov_t *kd, uint64_t *args)
 	if (kd->remote != NULL)
 		return 0; /* buffer allocated remotely */
 	if (kd->enabled)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	return kcov_allocbuf(kd, *((uint64_t *)args));
 }
 
@@ -387,17 +388,17 @@ kcov_enable(kcov_t *kd, uint64_t *args)
 
 	mode = *((int *)args);
 	if (!kcov_mode_is_valid(mode))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (kd->remote != NULL)
 		return kcov_remote_enable(kd->remote, mode);
 
 	if (kd->enabled)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	if (l->l_kcov != NULL)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	if (kd->buf == NULL)
-		return ENOBUFS;
+		return SET_ERROR(ENOBUFS);
 
 	l->l_kcov = kd;
 	kd->mode = mode;
@@ -414,9 +415,9 @@ kcov_disable(kcov_t *kd)
 		return kcov_remote_disable(kd->remote);
 
 	if (!kd->enabled)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	if (l->l_kcov != kd)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	l->l_kcov = NULL;
 	kd->enabled = false;
@@ -490,7 +491,7 @@ kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 
 	kd = fp->f_data;
 	if (kd == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 	kcov_lock(kd);
 
 	switch (cmd) {
@@ -510,7 +511,7 @@ kcov_fops_ioctl(file_t *fp, u_long cmd, void *addr)
 		error = kcov_remote_detach(kd);
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 
 	kcov_unlock(kd);
@@ -528,17 +529,17 @@ kcov_fops_mmap(file_t *fp, off_t *offp, size_t size, int prot, int *flagsp,
 	KASSERT(size > 0);
 
 	if (prot & PROT_EXEC)
-		return EACCES;
+		return SET_ERROR(EACCES);
 	if (off < 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (size > KCOV_BUF_MAX_ENTRIES * KCOV_ENTRY_SIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (off > KCOV_BUF_MAX_ENTRIES * KCOV_ENTRY_SIZE)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	kd = fp->f_data;
 	if (kd == NULL)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 	kcov_lock(kd);
 
 	if (kd->remote != NULL)
@@ -547,7 +548,7 @@ kcov_fops_mmap(file_t *fp, off_t *offp, size_t size, int prot, int *flagsp,
 		kdbuf = kd;
 
 	if ((size + off) > kdbuf->bufsize) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto out;
 	}
 
@@ -797,8 +798,8 @@ kcov_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		return 0;
 	case MODULE_CMD_FINI:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	default:
-		return ENOTTY;
+		return SET_ERROR(ENOTTY);
 	}
 }
