@@ -1,4 +1,4 @@
-/* $NetBSD: fileassoc.h,v 1.11 2007/05/15 19:47:44 elad Exp $ */
+/* $NetBSD: fileassoc.h,v 1.12 2026/01/04 01:33:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -32,6 +32,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
+
+struct mount;
+struct vnode;
 
 typedef struct fileassoc *fileassoc_t;
 typedef void (*fileassoc_cleanup_cb_t)(void *);
