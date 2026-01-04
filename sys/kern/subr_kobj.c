@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.78 2023/04/28 07:33:57 skrll Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.79 2026/01/04 03:19:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,13 +63,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.78 2023/04/28 07:33:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.79 2026/01/04 03:19:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
 #endif
 
 #include <sys/kobj_impl.h>
+#include <sys/sdt.h>
 
 #ifdef MODULAR
 
@@ -187,7 +188,7 @@ kobj_load(kobj_t ko)
 	}
 	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0) {
 		kobj_error(ko, "not an ELF object");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 
@@ -195,12 +196,12 @@ kobj_load(kobj_t ko)
 	    hdr->e_version != EV_CURRENT) {
 		kobj_error(ko, "unsupported file version %d",
 		    hdr->e_ident[EI_VERSION]);
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	if (hdr->e_type != ET_REL) {
 		kobj_error(ko, "unsupported file type %d", hdr->e_type);
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	switch (hdr->e_machine) {
@@ -213,7 +214,7 @@ kobj_load(kobj_t ko)
 #endif
 	default:
 		kobj_error(ko, "unsupported machine %d", hdr->e_machine);
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 
@@ -228,7 +229,7 @@ kobj_load(kobj_t ko)
 	if (hdr->e_shnum == 0 || hdr->e_shnum > ELF_MAXSHNUM ||
 	    hdr->e_shoff == 0 || hdr->e_shentsize != sizeof(Elf_Shdr)) {
 		kobj_error(ko, "bad sizes");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	ko->ko_shdrsz = hdr->e_shnum * sizeof(Elf_Shdr);
@@ -272,13 +273,13 @@ kobj_load(kobj_t ko)
 	}
 	if (ko->ko_nprogtab == 0) {
 		kobj_error(ko, "file has no contents");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	if (nsym != 1) {
 		/* Only allow one symbol table for now */
 		kobj_error(ko, "file has no valid symbol table");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	KASSERT(symtabindex != -1);
@@ -287,7 +288,7 @@ kobj_load(kobj_t ko)
 	if (symstrindex == SHN_UNDEF || symstrindex >= hdr->e_shnum ||
 	    shdr[symstrindex].sh_type != SHT_STRTAB) {
 		kobj_error(ko, "file has invalid symbol strings");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 
@@ -298,7 +299,7 @@ kobj_load(kobj_t ko)
 		ko->ko_progtab = kmem_zalloc(ko->ko_nprogtab *
 		    sizeof(*ko->ko_progtab), KM_SLEEP);
 		if (ko->ko_progtab == NULL) {
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			kobj_error(ko, "out of memory");
 			goto out;
 		}
@@ -307,7 +308,7 @@ kobj_load(kobj_t ko)
 		ko->ko_reltab = kmem_zalloc(ko->ko_nrel *
 		    sizeof(*ko->ko_reltab), KM_SLEEP);
 		if (ko->ko_reltab == NULL) {
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			kobj_error(ko, "out of memory");
 			goto out;
 		}
@@ -316,7 +317,7 @@ kobj_load(kobj_t ko)
 		ko->ko_relatab = kmem_zalloc(ko->ko_nrela *
 		    sizeof(*ko->ko_relatab), KM_SLEEP);
 		if (ko->ko_relatab == NULL) {
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			kobj_error(ko, "out of memory");
 			goto out;
 		}
@@ -328,7 +329,7 @@ kobj_load(kobj_t ko)
 	ko->ko_symcnt = shdr[symtabindex].sh_size / sizeof(Elf_Sym);
 	if (ko->ko_symcnt == 0) {
 		kobj_error(ko, "no symbol table");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	error = ko->ko_read(ko, (void **)&ko->ko_symtab,
@@ -345,7 +346,7 @@ kobj_load(kobj_t ko)
 	ko->ko_strtabsz = shdr[symstrindex].sh_size;
 	if (ko->ko_strtabsz == 0) {
 		kobj_error(ko, "no symbol strings");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 		goto out;
 	}
 	error = ko->ko_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
@@ -371,7 +372,7 @@ kobj_load(kobj_t ko)
 	if (hdr->e_shstrndx != SHN_UNDEF) {
 		if (hdr->e_shstrndx >= hdr->e_shnum) {
 			kobj_error(ko, "bad shstrndx");
-			error = ENOEXEC;
+			error = SET_ERROR(ENOEXEC);
 			goto out;
 		}
 		if (shdr[hdr->e_shstrndx].sh_size != 0 &&
@@ -416,7 +417,7 @@ kobj_load(kobj_t ko)
 
 	if (map_text_size == 0) {
 		kobj_error(ko, "no text");
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
  		goto out;
  	}
 
@@ -425,7 +426,7 @@ kobj_load(kobj_t ko)
 			0, UVM_KMF_WIRED);
 		if (map_data_base == 0) {
 			kobj_error(ko, "out of memory");
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			goto out;
 		}
 		ko->ko_data_address = map_data_base;
@@ -441,7 +442,7 @@ kobj_load(kobj_t ko)
 			0, UVM_KMF_WIRED);
 		if (map_rodata_base == 0) {
 			kobj_error(ko, "out of memory");
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			goto out;
 		}
 		ko->ko_rodata_address = map_rodata_base;
@@ -456,7 +457,7 @@ kobj_load(kobj_t ko)
 	    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
 	if (map_text_base == 0) {
 		kobj_error(ko, "out of memory");
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto out;
 	}
 	ko->ko_text_address = map_text_base;
@@ -835,7 +836,7 @@ kobj_find_section(kobj_t ko, const char *name, void **addr, size_t *size)
 		}
 	}
 
-	return ENOENT;
+	return SET_ERROR(ENOENT);
 }
 
 /*
@@ -910,7 +911,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 		 */
 		kobj_error(ko, "symbol index %ju out of range",
 		    (uintmax_t)symidx);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	/* Quick answer if there is a definition included. */
@@ -925,7 +926,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 		/* Local, but undefined? huh? */
 		kobj_error(ko, "local symbol @%ju undefined",
 		    (uintmax_t)symidx);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	case STB_GLOBAL:
 		/* Relative to Data or Function name */
@@ -935,12 +936,12 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 		if (*symbol == 0) {
 			kobj_error(ko, "bad symbol @%ju name",
 			    (uintmax_t)symidx);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		if (sym->st_value == 0) {
 			kobj_error(ko, "%s @%ju: bad value", symbol,
 			    (uintmax_t)symidx);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 
 		*val = (uintptr_t)sym->st_value;
@@ -949,12 +950,12 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 	case STB_WEAK:
 		kobj_error(ko, "weak symbol @%ju not supported",
 		    (uintmax_t)symidx);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	default:
 		kobj_error(ko, "bad binding %#x for symbol @%ju",
 		    ELF_ST_BIND(sym->st_info), (uintmax_t)symidx);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -1012,7 +1013,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 			if (undefined) {
 				kobj_error(ko, "symbol `%s' not found",
 				    name);
-				error = ENOEXEC;
+				error = SET_ERROR(ENOEXEC);
 			}
 			continue;
 		}
@@ -1044,7 +1045,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		}
 		kobj_error(ko, "global symbol `%s' redefined",
 		    name);
-		error = ENOEXEC;
+		error = SET_ERROR(ENOEXEC);
 	}
 
 	return error;
@@ -1099,7 +1100,7 @@ kobj_relocate(kobj_t ko, bool local)
 				    (intmax_t)rel->r_offset,
 				    (int)ELF_R_TYPE(rel->r_info),
 				    (int)ELF_R_SYM(rel->r_info));
-				return ENOEXEC;
+				return SET_ERROR(ENOEXEC);
 			}
 		}
 	}
@@ -1136,7 +1137,7 @@ kobj_relocate(kobj_t ko, bool local)
 				    (intmax_t)rela->r_offset,
 				    (int)ELF_R_TYPE(rela->r_info),
 				    (int)ELF_R_SYM(rela->r_info));
-				return ENOEXEC;
+				return SET_ERROR(ENOEXEC);
 			}
 		}
 	}
@@ -1173,13 +1174,13 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 	if (off < 0) {
 		kobj_error(ko, "negative offset %lld",
 		    (unsigned long long)off);
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		base = NULL;
 		goto out;
 	} else if (ko->ko_memsize != -1 &&
 	    (size > ko->ko_memsize || off > ko->ko_memsize - size)) {
 		kobj_error(ko, "preloaded object short");
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		base = NULL;
 		goto out;
 	}
@@ -1238,7 +1239,7 @@ int
 kobj_load_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
 {
 
-	return ENOSYS;
+	return SET_ERROR(ENOSYS);
 }
 
 void
@@ -1252,7 +1253,7 @@ int
 kobj_stat(kobj_t ko, vaddr_t *base, size_t *size)
 {
 
-	return ENOSYS;
+	return SET_ERROR(ENOSYS);
 }
 
 int
