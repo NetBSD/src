@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.21 2020/08/31 19:51:30 christos Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.22 2026/01/04 01:42:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.21 2020/08/31 19:51:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.22 2026/01/04 01:42:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_modular.h"
-#include "opt_syscall_debug.h"
-#include "opt_ktrace.h"
-#include "opt_ptrace.h"
 #include "opt_dtrace.h"
+#include "opt_ktrace.h"
+#include "opt_modular.h"
+#include "opt_ptrace.h"
+#include "opt_syscall_debug.h"
 #endif
 
 /* XXX To get syscall prototypes. */
@@ -46,15 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.21 2020/08/31 19:51:30 christos E
 #define SYSVMSG
 
 #include <sys/param.h>
+
+#include <sys/ktrace.h>
 #include <sys/module.h>
+#include <sys/ptrace.h>
 #include <sys/sched.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
-#include <sys/ktrace.h>
-#include <sys/ptrace.h>
 
 int
 sys_nomodule(struct lwp *l, const void *v, register_t *retval)
