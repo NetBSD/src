@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.316 2026/01/04 02:10:43 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.317 2026/01/04 02:10:52 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.316 2026/01/04 02:10:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.317 2026/01/04 02:10:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.316 2026/01/04 02:10:43 riastrad
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/rndsource.h>
+#include <sys/sdt.h>
 #include <sys/stdarg.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -580,7 +581,7 @@ int
 no_devmon_insert(const char *name, prop_dictionary_t p)
 {
 
-	return ENODEV;
+	return SET_ERROR(ENODEV);
 }
 
 static void
@@ -628,7 +629,7 @@ config_cfdriver_attach(struct cfdriver *cd)
 	/* Make sure this driver isn't already in the system. */
 	LIST_FOREACH(lcd, &allcfdrivers, cd_list) {
 		if (STREQ(lcd->cd_name, cd->cd_name))
-			return EEXIST;
+			return SET_ERROR(EEXIST);
 	}
 
 	LIST_INIT(&cd->cd_attach);
@@ -650,7 +651,7 @@ config_cfdriver_detach(struct cfdriver *cd)
 	/* Make sure there are no active instances. */
 	for (i = 0; i < cd->cd_ndevs; i++) {
 		if (cd->cd_devs[i] != NULL) {
-			rc = EBUSY;
+			rc = SET_ERROR(EBUSY);
 			break;
 		}
 	}
@@ -661,7 +662,7 @@ config_cfdriver_detach(struct cfdriver *cd)
 
 	/* ...and no attachments loaded. */
 	if (LIST_EMPTY(&cd->cd_attach) == 0)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	LIST_REMOVE(cd, cd_list);
 
@@ -697,12 +698,12 @@ config_cfattach_attach(const char *driver, struct cfattach *ca)
 
 	cd = config_cfdriver_lookup(driver);
 	if (cd == NULL)
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 
 	/* Make sure this attachment isn't already on this driver. */
 	LIST_FOREACH(lca, &cd->cd_attach, ca_list) {
 		if (STREQ(lca->ca_name, ca->ca_name))
-			return EEXIST;
+			return SET_ERROR(EEXIST);
 	}
 
 	LIST_INSERT_HEAD(&cd->cd_attach, ca, ca_list);
@@ -723,7 +724,7 @@ config_cfattach_detach(const char *driver, struct cfattach *ca)
 
 	cd = config_cfdriver_lookup(driver);
 	if (cd == NULL)
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 
 	config_alldevs_enter(&af);
 	/* Make sure there are no active instances. */
@@ -731,7 +732,7 @@ config_cfattach_detach(const char *driver, struct cfattach *ca)
 		if ((dev = cd->cd_devs[i]) == NULL)
 			continue;
 		if (dev->dv_cfattach == ca) {
-			rc = EBUSY;
+			rc = SET_ERROR(EBUSY);
 			break;
 		}
 	}
@@ -1036,7 +1037,7 @@ config_cfdata_detach(cfdata_t cf)
 	}
 
 	/* not found -- shouldn't happen */
-	error = EINVAL;
+	error = SET_ERROR(EINVAL);
 
 out:	KERNEL_UNLOCK_ONE(NULL);
 	return error;
@@ -2173,7 +2174,7 @@ config_detach_release(device_t dev, int flags)
 #endif /* DIAGNOSTIC */
 		config_detach_exit(dev);
 		KERNEL_UNLOCK_ONE(NULL);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	alldevs_nwrite++;
 	mutex_exit(&alldevs_lock);
@@ -2186,11 +2187,11 @@ config_detach_release(device_t dev, int flags)
 	if (!detachall &&
 	    (flags & (DETACH_SHUTDOWN|DETACH_FORCE)) == DETACH_SHUTDOWN &&
 	    (dev->dv_flags & DVF_DETACH_SHUTDOWN) == 0) {
-		rv = EOPNOTSUPP;
+		rv = SET_ERROR(EOPNOTSUPP);
 	} else if (ca->ca_detach != NULL) {
 		rv = (*ca->ca_detach)(dev, flags);
 	} else
-		rv = EOPNOTSUPP;
+		rv = SET_ERROR(EOPNOTSUPP);
 
 	KASSERTMSG(!dev->dv_detach_done, "%s detached twice, error=%d",
 	    device_xname(dev), rv);
@@ -2681,7 +2682,7 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	/* Ensure this isn't already on the list. */
 	TAILQ_FOREACH(f, &config_finalize_list, f_list) {
 		if (f->f_func == fn && f->f_dev == dev) {
-			error = EEXIST;
+			error = SET_ERROR(EEXIST);
 			goto out;
 		}
 	}
