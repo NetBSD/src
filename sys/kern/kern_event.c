@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.150 2023/09/21 09:31:50 msaitoh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.151 2026/01/04 01:33:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,26 +63,28 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.150 2023/09/21 09:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.151 2026/01/04 01:33:02 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/wait.h>
-#include <sys/proc.h>
-#include <sys/file.h>
-#include <sys/select.h>
-#include <sys/queue.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>
-#include <sys/poll.h>
-#include <sys/kmem.h>
-#include <sys/stat.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/syscallargs.h>
 #include <sys/kauth.h>
-#include <sys/conf.h>
-#include <sys/atomic.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/wait.h>
 
 static int	kqueue_scan(file_t *, size_t, struct kevent *,
 			    const struct timespec *, register_t *,
