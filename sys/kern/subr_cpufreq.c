@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.10 2023/04/09 09:18:09 riastradh Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.11 2026/01/04 03:15:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.10 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.11 2026/01/04 03:15:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.10 2023/04/09 09:18:09 riastradh 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/sdt.h>
 #include <sys/time.h>
 #include <sys/xcall.h>
 
@@ -67,7 +68,7 @@ cpufreq_register(struct cpufreq *cf)
 	int rv;
 
 	if (cold != 0)
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 
 	KASSERT(cf != NULL);
 	KASSERT(cf_backend != NULL);
@@ -80,7 +81,7 @@ cpufreq_register(struct cpufreq *cf)
 
 	if (cf_backend->cf_init != false) {
 		mutex_exit(&cpufreq_lock);
-		return EALREADY;
+		return SET_ERROR(EALREADY);
 	}
 
 	cf_backend->cf_init = true;
@@ -131,7 +132,7 @@ cpufreq_register(struct cpufreq *cf)
 	if (cf_backend->cf_state_count == 0) {
 		mutex_exit(&cpufreq_lock);
 		cpufreq_deregister();
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	rv = cpufreq_latency();
@@ -209,7 +210,7 @@ cpufreq_latency(void)
 		 * the transition latency was too high.
 		 */
 		if (s == 0)
-			return EMSGSIZE;
+			return SET_ERROR(EMSGSIZE);
 
 		cf->cf_state[i].cfs_latency = s / n;
 	}
@@ -321,7 +322,7 @@ cpufreq_get_backend(struct cpufreq *dst)
 
 	if (cf->cf_init != true || dst == NULL) {
 		mutex_exit(&cpufreq_lock);
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 	}
 
 	memcpy(dst, cf, sizeof(*cf));
@@ -339,7 +340,7 @@ cpufreq_get_state(uint32_t freq, struct cpufreq_state *cfs)
 
 	if (cf->cf_init != true || cfs == NULL) {
 		mutex_exit(&cpufreq_lock);
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 	}
 
 	cpufreq_get_state_raw(freq, cfs);
@@ -357,12 +358,12 @@ cpufreq_get_state_index(uint32_t index, struct cpufreq_state *cfs)
 
 	if (cf->cf_init != true || cfs == NULL) {
 		mutex_exit(&cpufreq_lock);
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 	}
 
 	if (index >= cf->cf_state_count) {
 		mutex_exit(&cpufreq_lock);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	memcpy(cfs, &cf->cf_state[index], sizeof(*cfs));
