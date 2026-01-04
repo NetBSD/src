@@ -39,18 +39,20 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/kern/subr_acl_posix1e.c 341827 2018-12-11 19:32:16Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: subr_acl_posix1e.c,v 1.1 2020/05/16 18:31:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_acl_posix1e.c,v 1.2 2026/01/04 02:10:27 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/acl.h>
+#include <sys/errno.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
-#include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/kauth.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
-#include <sys/acl.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 /*
  * For the purposes of filesystems maintaining the _OBJ entries in an inode
