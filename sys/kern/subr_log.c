@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.66 2025/04/09 05:38:01 rin Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.67 2026/01/04 03:19:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,23 +65,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.66 2025/04/09 05:38:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.67 2026/01/04 03:19:40 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/ioctl.h>
-#include <sys/msgbuf.h>
-#include <sys/file.h>
-#include <sys/syslog.h>
+#include <sys/types.h>
+
 #include <sys/conf.h>
-#include <sys/select.h>
-#include <sys/poll.h> 
+#include <sys/file.h>
 #include <sys/intr.h>
-#include <sys/sysctl.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/ktrace.h>
+#include <sys/msgbuf.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/select.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 
