@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disklabel.c,v 1.4 2026/01/04 03:16:46 riastradh Exp $	*/
+/*	$NetBSD: subr_disklabel.c,v 1.5 2026/01/04 03:16:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disklabel.c,v 1.4 2026/01/04 03:16:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disklabel.c,v 1.5 2026/01/04 03:16:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/disklabel.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 
 #if !defined(__HAVE_SETDISKLABEL) || defined(_RUMPKERNEL)
@@ -64,7 +65,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 		|| (nlp->d_secsize % DEV_BSIZE) != 0) {
 		DPRINTF("%s: secpercyl/secsize %u/%u\n", __func__,
 		    nlp->d_secpercyl, nlp->d_secsize);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	/* special case to allow disklabel to be invalidated */
@@ -79,7 +80,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 		    ", bad sum=%#x\n", __func__,
 		    nlp->d_magic, nlp->d_magic2, DISKMAGIC,
 		    nlp->d_npartitions, MAXPARTITIONS, dkcksum(nlp));
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	while (openmask != 0) {
@@ -87,7 +88,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 		openmask &= ~(1 << i);
 		if (i >= nlp->d_npartitions) {
 			DPRINTF("%s: partition not found\n", __func__);
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
@@ -102,7 +103,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
 		{
 			DPRINTF("%s: mismatched offset/size", __func__);
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 	}
  	nlp->d_checksum = 0;
