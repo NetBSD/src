@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.51 2026/01/04 03:20:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.51 2026/01/04 03:20:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
@@ -40,18 +40,19 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/sysctl.h>
+#include <sys/types.h>
 
 #include <sys/cpu.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef GPROF
-#include <sys/malloc.h>
 #include <sys/gmon.h>
+#include <sys/malloc.h>
 #include <sys/xcall.h>
 
 MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
