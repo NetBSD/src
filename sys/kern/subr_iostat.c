@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.27 2026/01/04 03:18:38 riastradh Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.28 2026/01/04 03:18:46 riastradh Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.27 2026/01/04 03:18:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.28 2026/01/04 03:18:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.27 2026/01/04 03:18:38 riastradh E
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 
 /*
@@ -351,9 +352,9 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
 	int error, first;
 
 	if (newp != NULL)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	if (namelen != 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	first = 1;
 	error = 0;
@@ -395,7 +396,7 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
 	}
 	rw_exit(&iostatlist_lock);
 	*oldlenp = needed;
-	return (error);
+	return error;
 }
 
 static int
@@ -408,7 +409,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	int error;
 
 	if (newp != NULL)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	/*
 	 * The original hw.diskstats call was broken and did not require
@@ -422,7 +423,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 	if (where == NULL) {
 		*oldlenp = iostat_count * tocopy;
-		return (0);
+		return 0;
 	}
 
 	error = 0;
@@ -476,7 +477,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 		left -= tocopy;
 	}
 	rw_exit(&iostatlist_lock);
-	return (error);
+	return error;
 }
 
 static void
