@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.12 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.13 2026/01/04 03:17:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,17 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.12 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.13 2026/01/04 03:17:23 riastradh Exp $");
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/ktrace.h>
 #include <sys/mutex.h>
 #include <sys/namei.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
-#include <sys/ktrace.h>
 
 void
 fd_ktrexecfd(void)
