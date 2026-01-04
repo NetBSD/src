@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.196 2026/01/04 01:37:35 riastradh Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.197 2026/01/04 01:37:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.196 2026/01/04 01:37:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.197 2026/01/04 01:37:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.196 2026/01/04 01:37:35 riastrad
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -197,12 +198,12 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 
 	default:
 		mutex_exit(&proc_lock);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	mutex_exit(&proc_lock);
 
 	if (low == NZERO + PRIO_MAX + 1) {
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 	}
 	*retval = low - NZERO;
 	return 0;
@@ -269,11 +270,11 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 
 	default:
 		mutex_exit(&proc_lock);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	mutex_exit(&proc_lock);
 
-	return (found == 0) ? ESRCH : error;
+	return (found == 0) ? SET_ERROR(ESRCH) : error;
 }
 
 /*
@@ -291,7 +292,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	if (kauth_cred_geteuid(cred) && kauth_cred_getuid(cred) &&
 	    kauth_cred_geteuid(cred) != kauth_cred_geteuid(chgp->p_cred) &&
 	    kauth_cred_getuid(cred) != kauth_cred_geteuid(chgp->p_cred))
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	if (n > PRIO_MAX) {
 		n = PRIO_MAX;
@@ -303,7 +304,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 	if (kauth_authorize_process(cred, KAUTH_PROCESS_NICE, chgp,
 	    KAUTH_ARG(n), NULL, NULL)) {
-		return EACCES;
+		return SET_ERROR(EACCES);
 	}
 
 	sched_nice(chgp, n);
@@ -335,14 +336,14 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (limp->rlim_cur > limp->rlim_max) {
 		/*
 		 * This is programming error. According to SUSv2, we should
 		 * return error in this case.
 		 */
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	alimp = &p->p_rlimit[which];
@@ -383,7 +384,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 */
 		if (btoc(limp->rlim_cur) < p->p_vmspace->vm_ssize ||
 		    btoc(limp->rlim_max) < p->p_vmspace->vm_ssize) {
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 
 		/*
@@ -462,7 +463,7 @@ sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap,
 	struct rlimit rl;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_enter(p->p_lock);
 	memcpy(&rl, &p->p_rlimit[which], sizeof(rl));
@@ -619,7 +620,7 @@ getrusage1(struct proc *p, int who, struct rusage *ru)
 		mutex_exit(p->p_lock);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -849,10 +850,10 @@ sysctl_proc_findproc(lwp_t *l, pid_t pid, proc_t **p2)
 		p = proc_find(pid);
 		if (p == NULL) {
 			mutex_exit(&proc_lock);
-			return ESRCH;
+			return SET_ERROR(ESRCH);
 		}
 	}
-	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : EBUSY;
+	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : SET_ERROR(EBUSY);
 	if (pid != PROC_CURPROC) {
 		mutex_exit(&proc_lock);
 	}
@@ -873,7 +874,7 @@ sysctl_proc_paxflags(SYSCTLFN_ARGS)
 
 	/* First, validate the request. */
 	if (namelen != 0 || name[-1] != PROC_PID_PAXFLAGS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
 	error = sysctl_proc_findproc(l, (pid_t)name[-2], &p);
@@ -897,7 +898,7 @@ sysctl_proc_paxflags(SYSCTLFN_ARGS)
 
 	/* If attempting to write new value, it's an error */
 	if (error == 0 && newp != NULL)
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 
 	rw_exit(&p->p_reflock);
 	return error;
@@ -919,7 +920,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 
 	/* First, validate the request. */
 	if (namelen != 0 || name[-1] != PROC_PID_CORENAME)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
 	error = sysctl_proc_findproc(l, (pid_t)name[-2], &p);
@@ -971,14 +972,14 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	len = strlen(cnbuf);
 	if ((len < 4 || strcmp(cnbuf + len - 4, "core") != 0) ||
 	    (len > 4 && cnbuf[len - 5] != '/' && cnbuf[len - 5] != '.')) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto done;
 	}
 
 	/* Allocate, copy and set the new core name for plimit structure. */
 	cname = kmem_alloc(++len, KM_NOSLEEP);
 	if (cname == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto done;
 	}
 	memcpy(cname, cnbuf, len);
@@ -1000,7 +1001,7 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	if (namelen != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
 	error = sysctl_proc_findproc(l, (pid_t)name[-2], &p);
@@ -1026,7 +1027,7 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 		flag = PS_STOPEXIT;
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 	isset = (p->p_flag & flag) ? 1 : 0;
@@ -1070,19 +1071,19 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 
 	if (namelen != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	which = name[-1];
 	if (which != PROC_PID_LIMIT_TYPE_SOFT &&
 	    which != PROC_PID_LIMIT_TYPE_HARD)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	limitno = name[-2] - 1;
 	if (limitno >= RLIM_NLIMITS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (name[-3] != PROC_PID_LIMIT)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Find the process.  Hold a reference (p_reflock), if found. */
 	error = sysctl_proc_findproc(l, (pid_t)name[-4], &p);
