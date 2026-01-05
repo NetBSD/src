@@ -1,4 +1,4 @@
-#	$NetBSD: LEGACY,v 1.5 2025/02/17 19:01:04 jakllsch Exp $
+#	$NetBSD: LEGACY,v 1.6 2026/01/05 10:53:20 nia Exp $
 
 # LEGACY kernel -- includes vga@isa and pcdisplay@isa for pre-PCI
 # systems, due to significant pain making them fail to attach when
@@ -10,9 +10,6 @@ vga0		at isa?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at pcdisplay? console ?
 
-# XXX we could turn off all sorts of other modern features in this
-# configuration, but that is left for future work.
-
 no i915drmkms*		at pci?
 no intelfb*		at intelfbbus?          
 
@@ -23,3 +20,58 @@ no nouveau*		at pci?
 no nouveaufb*		at nouveaufbbus?
 
 no options		DRM_LEGACY
+
+# No AGP support
+no agp*
+
+# PCIe Ethernet adapter drivers
+no aq*			# Aquantia AQC 10 gigabit
+no bnx*			# Broadcom NetXtremeII gigabit Ethernet
+no et*			# Agere/LSI ET1310/ET1301 Gigabit
+no iavf*		# Intel Adaptive Virtual Function
+no ixl*			# Intel Ethernet 700 Series
+no rge*			# Realtek 8125
+no vmx*			# VMware VMXNET3
+
+# PCIe WLAN adapter drivers
+no athn*		# Atheros AR9k (802.11a/g/n)
+no iwm*			# Intel Wireless WiFi Link 7xxx
+no iwn*			# Intel PRO/Wireless 4965AGN
+no rtwn*		# Realtek 8188CE/8192CE 802.11b/g/n
+no wpi*			# Intel PRO/Wireless 3945ABG
+
+# Intel HD Audio
+no options 		HDAUDIOVERBOSE
+no hdaudio*		# High Definition Audio
+
+# Other PCIe drivers
+no coram*		# Conexant CX23885 PCI-E TV
+no jmide*		# JMicron PCI-e PATA/SATA controllers
+no nvme*		# NVM Express controllers and devices
+no xhci*		# USB 3.x controllers
+
+# No Xen support
+no options		XENPVHVM
+no options		XEN
+no hypervisor*		# Xen hypervisor
+no xenbus*		# Xen virtual bus
+no xencons*		# Xen virtual console
+no xennet*		# Xen virtual network interface
+no xbd*			# Xen virtual block device
+
+# No Hyper-V support
+no hyperv0
+no vmbus*
+no hvkbd*		# Hyper-V Synthetic Keyboard
+no hvn*			# Hyper-V NetVSC
+no hvs*			# Hyper-V StorVSC
+no hvheartbeat*		# Hyper-V Heartbeat Service
+no hvshutdown*		# Hyper-V Guest Shutdown Service
+no hvtimesync*		# Hyper-V Time Synchronization Service
+
+no genfb* at vmbus?
+no wskbd* at hvkbd?
+
+# No EFI runtime support
+no options		EFI_RUNTIME
+no pseudo-device	efi
