@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.25 2020/04/11 16:00:34 jdolecek Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.26 2026/01/05 11:00:01 nia Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,9 +79,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.25 2020/04/11 16:00:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.26 2026/01/05 11:00:01 nia Exp $");
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #ifdef _KERNEL
 #include <sys/systm.h>
 #endif
