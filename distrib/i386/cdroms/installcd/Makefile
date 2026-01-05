@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2024/04/25 11:56:51 nia Exp $
+#	$NetBSD: Makefile,v 1.13 2026/01/05 19:17:02 nia Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
@@ -22,13 +22,15 @@ CDRELEASE_EXCLUDE+=	-s ',./installation/floppy/.*,,gp'
 # MONOLITHIC (i386-only) was originally added to the release build
 # for upgrades from netbsd-5, and now primarily exists so the no-modules
 # build can continue to be tested.  this takes up 20MB+ space.
-.  for sufx in tgz tar.xz
-CDRELEASE_EXCLUDE+=	-s ',./binary/sets/kern-INSTALL.${sufx},,gp'
-CDRELEASE_EXCLUDE+=	-s ',./binary/sets/kern-MONOLITHIC.${sufx},,gp'
-.  endfor
-
-CDRELEASE_EXCLUDE+=	-s ',./binary/kernel/netbsd-INSTALL.gz,,gp'
-CDRELEASE_EXCLUDE+=	-s ',./binary/kernel/netbsd-MONOLITHIC.gz,,gp'
+# 
+# the INSTALL kernel is not used by the CD-ROMs, and MICROVM should be
+# booted directly by QEMU rather than via the installer ISO.
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/kern-INSTALL.*,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/kern-MONOLITHIC.*,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/kern-MICROVM.*,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/kernel/netbsd-INSTALL.*,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/kernel/netbsd-MONOLITHIC.*,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/kernel/netbsd-MICROVM.*,,gp'
 
 prepare_md_post:
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" < ${.CURDIR}/boot.cfg.in > boot.cfg
