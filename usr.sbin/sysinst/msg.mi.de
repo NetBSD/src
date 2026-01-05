@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.53 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.54 2026/01/05 20:31:54 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -732,8 +732,8 @@ gefunden und %d wegen eines Fehlers übersprungen.
 Von %d zu entpackenden Paketen sind %d erfolgreich und %d
 mit Fehler entpackt worden.
 
-Die Installation wird abgebrochen. Bitte prüfen Sie die Bezugsquellen Ihrer
-Distribution und installieren Sie gegebenfalls die Pakete erneut.}
+Bitte prüfen Sie die Bezugsquellen Ihrer Distribution und installieren
+Sie gegebenfalls die Pakete erneut.}
 
 message abort_inst {Installation abgebrochen.}
 message abort_part {Partitionierung abgebrochen.}

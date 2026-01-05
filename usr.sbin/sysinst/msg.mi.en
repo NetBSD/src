@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.54 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.55 2026/01/05 20:31:54 nia Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -702,8 +702,8 @@ You selected %d distribution sets.  %d sets couldn't be found
 and %d were skipped after an error occurred.  Of the %d
 that were attempted, %d unpacked without errors and %d with errors.
 
-Aborting installation.  Please recheck your distribution source
-and consider reinstalling sets from the main menu.}
+Please recheck your distribution source and consider reinstalling sets
+from the main menu.}
 
 message abort_inst {Install aborted.}
 message abort_part {Partitioning aborted.}
