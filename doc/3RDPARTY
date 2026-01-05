@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2150 2025/12/23 14:19:29 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2151 2026/01/05 17:09:39 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -172,11 +172,11 @@ Notes:
 
 Package:	unbound
 Version:	1.23.1
-Current Vers:	1.23.1
+Current Vers:	1.24.2
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2025-09-06
+Date:		2026-01-05
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -191,11 +191,11 @@ diff the new and previous config file and manually adjust
 
 Package:	nsd
 Version:	4.8.0
-Current Vers:	4.8.0
+Current Vers:	4.14.0
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2024-02-17
+Date:		2026-01-05
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
