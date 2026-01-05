@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18.4.1 2024/02/03 12:48:39 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.4.2 2026/01/05 14:39:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.4.1 2024/02/03 12:48:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18.4.2 2026/01/05 14:39:14 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -883,6 +883,7 @@ cpu_model_cpuid(int modelno)
 	case HPPA_BOARD_HP725_50:
 	case HPPA_BOARD_HP725_75:
 	case HPPA_BOARD_HP725_99:
+	case HPPA_BOARD_HP745I_50:
 		return hpcxt;
 	}
 	return hpc_unknown;
