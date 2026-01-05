@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.87 2025/04/29 14:33:26 tsutsui Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.87.2.1 2026/01/05 14:29:51 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,6 +43,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ppcarch.h"
+#include "opt_multiprocessor.h"
 #endif
 
 /* LINTSTUB: include <sys/param.h> */
@@ -66,6 +67,15 @@
 #else
 #define	RFI	rfi
 #endif /* PPC_OEA64 || PPC_OEA64_BRIDGE*/
+
+#ifdef MULTIPROCESSOR
+/* Clear reservation on trap exit, PR# 59386 */
+#define CLEAR_RESERVATION						\
+	IBM405_ERRATA77_DCBT(0,%r1);					\
+	stwcx.  %r1,0,%r1;
+#else
+#define CLEAR_RESERVATION
+#endif
 
 #if defined (PPC_OEA64_BRIDGE)
 #define ENABLE_64BIT_BRIDGE(t0)						\
@@ -1008,6 +1018,7 @@ trapexit:
 trapleave:
 	FRAME_RESTORE_CALLEE
 intrleave:
+	CLEAR_RESERVATION
 	FRAME_LEAVE(CI_TEMPSAVE)
 	RFI
 
@@ -1231,6 +1242,7 @@ ddbtrap:
 	or.	%r3,%r3,%r3
 	beq	trapagain
 	FRAME_RESTORE_CALLEE
+	CLEAR_RESERVATION
 	FRAME_LEAVE(CI_DDBSAVE)
 	RFI
 #endif /* DDB || KGDB */
