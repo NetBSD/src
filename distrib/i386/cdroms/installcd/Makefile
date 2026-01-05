@@ -1,10 +1,23 @@
-#	$NetBSD: Makefile,v 1.13 2026/01/05 19:17:02 nia Exp $
+#	$NetBSD: Makefile,v 1.14 2026/01/05 20:25:24 nia Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
 # Requires populated $RELEASEDIR/${MACHINE}
+# 
+# Lots of effort to make this continue to fit within 700MB.
 
 .include <bsd.own.mk>
+
+# these are large files, not much use on an installation CD,
+# and take up megabytes of precious space
+CDSETS_EXCLUDE+=	usr/bin/cpp
+CDSETS_EXCLUDE+=	usr/bin/gcpp
+CDSETS_EXCLUDE+=	usr/sbin/dhcpd
+CDSETS_EXCLUDE+=	usr/sbin/omshell
+CDSETS_EXCLUDE+=	usr/sbin/dhcrelay
+CDSETS_EXCLUDE+=	usr/sbin/hostapd
+CDSETS_EXCLUDE+=	usr/share/misc/magic.mgc
+
 .include "${.CURDIR}/../Makefile.cdrom"
 
 CDBASE=		i386cd			# gives ${CDBASE}.iso
