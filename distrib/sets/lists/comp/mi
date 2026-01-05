@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2512 2025/12/31 14:56:02 riastradh Exp $
+#	$NetBSD: mi,v 1.2513 2026/01/05 09:41:26 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -48,6 +48,9 @@
 ./usr/bin/gettext				comp-c-bin
 ./usr/bin/gettextize				comp-obsolete		obsolete
 ./usr/bin/gprof					comp-debug-bin		binutils
+./usr/bin/iasl					comp-util-bin		acpi
+./usr/bin/indent				comp-c-bin
+./usr/bin/ioctlprint				comp-debug-bin
 ./usr/bin/ld.mcld				comp-obsolete		obsolete
 ./usr/bin/lex					comp-c-bin
 ./usr/bin/lint					comp-c-bin
@@ -59,6 +62,7 @@
 ./usr/bin/lto-dump				comp-c-bin		gcccmds
 ./usr/bin/luac					comp-util-bin
 ./usr/bin/menuc					comp-c-bin
+./usr/bin/mkdep					comp-c-bin
 ./usr/bin/mkstr					comp-obsolete		obsolete
 ./usr/bin/mkubootimage				comp-util-bin
 ./usr/bin/msgattrib				comp-c-bin

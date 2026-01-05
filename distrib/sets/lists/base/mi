@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1384 2025/12/28 19:07:42 thorpej Exp $
+# $NetBSD: mi,v 1.1385 2026/01/05 09:41:26 nia Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -647,18 +647,15 @@
 ./usr/bin/host					base-netutil-bin	bind
 ./usr/bin/hoststat				base-mailwrapper-bin
 ./usr/bin/hxtool				base-krb5-bin		kerberos
-./usr/bin/iasl					base-util-bin		acpi
 ./usr/bin/iconv					base-util-bin
 ./usr/bin/id					base-util-bin
 ./usr/bin/ident					base-util-bin
-./usr/bin/indent				base-c-bin
 ./usr/bin/info					base-texinfo-bin
 ./usr/bin/infocmp				base-util-bin
 ./usr/bin/innetgr				base-nis-bin
 ./usr/bin/install				base-util-bin
 ./usr/bin/install-info				base-texinfo-bin
 ./usr/bin/install-sid				base-gnats-bin
-./usr/bin/ioctlprint				base-debug-bin
 ./usr/bin/ipcrm					base-util-bin
 ./usr/bin/ipcs					base-util-bin
 ./usr/bin/join					base-util-bin
@@ -732,7 +729,6 @@
 ./usr/bin/mixerctl				base-audio-bin
 ./usr/bin/mk_cmds				base-obsolete		obsolete
 ./usr/bin/mkcsmapper				base-util-bin
-./usr/bin/mkdep					base-c-bin
 ./usr/bin/mkesdb				base-util-bin
 ./usr/bin/mkfifo				base-util-bin
 ./usr/bin/mklocale				base-locale-bin
