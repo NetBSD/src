@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.153 2025/12/19 20:18:15 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.154 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.153 2025/12/19 20:18:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.154 2026/01/05 05:02:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -261,7 +261,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 
 	DEBUG_CHECK_FREELIST(fs);
 
-	lfs_seglock(fs, SEGM_PROT);
+	lfs_prelock(fs, 0);
 
 	/* Get the head of the freelist. */
 	LFS_GET_HEADFREE(fs, cip, cbp, ino);
@@ -317,7 +317,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 			LFS_PUT_HEADFREE(fs, cip, cbp, *ino);
 
 			/* unlock and return */
-			lfs_segunlock(fs);
+			lfs_preunlock(fs);
 			return error;
 		}
 	}
@@ -333,7 +333,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	lfs_sb_addnfiles(fs, 1);
 
 	/* done */
-	lfs_segunlock(fs);
+	lfs_preunlock(fs);
 
 	DEBUG_CHECK_FREELIST(fs);
 	return 0;
@@ -363,7 +363,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 
 	DEBUG_CHECK_FREELIST(fs);
 
-	lfs_seglock(fs, SEGM_PROT);
+	lfs_prelock(fs, 0);
 
 	/*
 	 * If the ifile is too short to contain this inum, extend it.
@@ -421,13 +421,13 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 		}
 		if (count > maxino) {
 			panic("loop in free list");
-			lfs_segunlock(fs);
+			lfs_preunlock(fs);
 			return ENOENT;
 		}
 		if (nextfree == LFS_UNUSED_INUM) {
 			/* hit the end -- this inode is not available */
 			brelse(bp, 0);
-			lfs_segunlock(fs);
+			lfs_preunlock(fs);
 			if (extended)
 				panic("extended ifile to accommodate but inode not found");
 			return ENOENT;
@@ -461,7 +461,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 			LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 			
 			/* unlock and return */
-			lfs_segunlock(fs);
+			lfs_preunlock(fs);
 			return error;
 		}
 	}
@@ -469,7 +469,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	    "inode 0 allocated [4]");
 
 	/* done */
-	lfs_segunlock(fs);
+	lfs_preunlock(fs);
 	
 	DEBUG_CHECK_FREELIST(fs);
 	
@@ -549,7 +549,7 @@ lfs_freelist_prev(struct lfs *fs, ino_t ino)
 /*
  * Free an inode.
  *
- * Takes lfs_seglock. Also (independently) takes vp->v_interlock.
+ * Takes lfs_prelock. Also (independently) takes vp->v_interlock.
  */
 /* ARGUSED */
 /* VOP_BWRITE 2i times */
@@ -581,7 +581,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	}
 	mutex_exit(vp->v_interlock);
 
-	lfs_seglock(fs, SEGM_PROT);
+	lfs_prelock(fs, 0);
 
 	DEBUG_CHECK_FREELIST(fs);
 
@@ -760,7 +760,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	/* Decrement file count. */
 	lfs_sb_subnfiles(fs, 1);
 
-	lfs_segunlock(fs);
+	lfs_preunlock(fs);
 
 	DEBUG_CHECK_FREELIST(fs);
 
@@ -785,7 +785,7 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 	size_t norphan_alloc = 0;
 
 	ASSERT_NO_SEGLOCK(fs);
-	lfs_seglock(fs, SEGM_PROT);
+	lfs_prelock(fs, 0);
 
 	DEBUG_CHECK_FREELIST(fs);
 
@@ -892,7 +892,7 @@ lfs_order_freelist(struct lfs *fs, ino_t **orphanp, size_t *norphanp)
 	LFS_PUT_TAILFREE(fs, cip, bp, lastino);
 
 	/* done */
-	lfs_segunlock(fs);
+	lfs_preunlock(fs);
 
 	/*
 	 * Shrink the array of orphans so we don't have to carry around
@@ -965,18 +965,18 @@ lfs_orphan(struct lfs *fs, struct vnode *vp)
 	mutex_exit(vp->v_interlock);
 
 	/* If not already done, mark this inode orphaned. */
-	rw_enter(&fs->lfs_fraglock, RW_READER);
+	lfs_fraglock_enter(fs, RW_READER);
 	LFS_IENTRY(ifp, fs, ip->i_number, bp);
 	nextfree = lfs_if_getnextfree(fs, ifp);
 	if (nextfree == LFS_ORPHAN_NEXTFREE(fs)) {
 		brelse(bp, 0);
-		rw_exit(&fs->lfs_fraglock);
+		lfs_fraglock_exit(fs);
 		return;
 	}
 	KASSERT(nextfree == LFS_UNUSED_INUM);
 	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE(fs));
 	LFS_WRITEIENTRY(ifp, fs, ip->i_number, bp);
-	rw_exit(&fs->lfs_fraglock);
+	lfs_fraglock_exit(fs);
 }
 
 /*
@@ -1027,7 +1027,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 	if (!lfs_do_check_freelist)
 		return;
 
-	lfs_seglock(fs, SEGM_PROT);
+	lfs_prelock(fs, 0);
 
 	ip = VTOI(fs->lfs_ivnode);
 	maxino = ((ip->i_size >> lfs_sb_getbshift(fs)) - lfs_sb_getcleansz(fs) -
@@ -1114,7 +1114,7 @@ lfs_check_freelist(struct lfs *fs, const char *func, int line)
 		       (intmax_t)thisino, (intmax_t)tailino);
 		panic("Bad tail");
 	}
-	lfs_segunlock(fs);
+	lfs_preunlock(fs);
 }
 
 static void

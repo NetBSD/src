@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.49 2025/12/10 03:20:59 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.50 2026/01/05 05:02:47 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -992,7 +992,6 @@ lfs_segunlock(struct lfs * fs)
 		lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 
 		--fs->lfs_seglock;
-		fs->lfs_lockpid = 0;
 	} else if (fs->lfs_seglock == 0) {
 		errx(EXIT_FAILURE, "Seglock not held");
 	} else {

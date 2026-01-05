@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.164 2025/12/10 03:20:59 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.165 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.164 2025/12/10 03:20:59 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.165 2026/01/05 05:02:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -349,7 +349,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	bc = 0;
 
 	if (ovp != fs->lfs_ivnode)
-		lfs_seglock(fs, SEGM_PROT);
+		lfs_prelock(fs, 0);
 	if (offset == 0) {
 		oip->i_size = length;
 		lfs_dino_setsize(fs, oip->i_din, oip->i_size);
@@ -619,7 +619,7 @@ done:
   errout:
 	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 	if (ovp != fs->lfs_ivnode)
-		lfs_segunlock(fs);
+		lfs_preunlock(fs);
 	return (allerror ? allerror : error);
 }
 

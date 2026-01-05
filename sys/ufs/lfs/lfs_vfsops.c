@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.398 2025/12/11 01:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.399 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.398 2025/12/11 01:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.399 2026/01/05 05:02:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -810,13 +810,13 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * read-only.  We compare against 1 because
 			 * seglock increments by one.
 			 */
-			lfs_seglock(fs, SEGM_PROT);
+			lfs_prelock(fs, 0);
 			mutex_enter(&lfs_lock);
 			while (fs->lfs_iocount > 1)
 				(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
 					      "lfs_roio", 0, &lfs_lock);
 			mutex_exit(&lfs_lock);
-			lfs_segunlock(fs);
+			lfs_preunlock(fs);
 		} else if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write.
@@ -1131,11 +1131,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_writer = 0;
 	fs->lfs_dirops = 0;
 	fs->lfs_nadirop = 0;
+	fs->lfs_prelock = 0;
 	fs->lfs_seglock = 0;
 	fs->lfs_cleanlock = 0;
 	fs->lfs_pdflush = 0;
 	fs->lfs_sleepers = 0;
 	fs->lfs_pages = 0;
+	fs->lfs_prelocklwp = NULL;
 	rw_init(&fs->lfs_fraglock);
 	rw_init(&fs->lfs_iflock);
 	cv_init(&fs->lfs_sleeperscv, "lfs_slp");
@@ -1143,6 +1145,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 	cv_init(&fs->lfs_nextsegsleep, "segment");
 	cv_init(&fs->lfs_cleanercv, "cleancv");
+	cv_init(&fs->lfs_prelockcv, "prelockcv");
 	cv_init(&fs->lfs_cleanquitcv, "cleanquit");
 
 	/* Set the file system readonly/modify bits. */
@@ -1647,7 +1650,7 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 	mutex_exit(&lfs_lock);
 
-	lfs_writer_enter(fs, "lfs_dirops");
+	lfs_writer_enter(fs, "lfs_wsync");
 
 	DLOG((DLOG_FLUSH, "lfs_sync waitfor=%x at 0x%jx\n", waitfor,
 	      (uintmax_t)lfs_sb_getoffset(fs)));

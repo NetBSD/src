@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.109 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.110 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.109 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.110 2026/01/05 05:02:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,6 +275,28 @@ lfs_free(struct lfs *fs, void *p, int type)
 }
 
 /*
+ * Fragment lock.  This is a reader/writer lock controlling, primarily,
+ * the expansion of file fragments.
+ */
+void
+lfs_fraglock_enter(struct lfs *fs, int enter_exit)
+{
+	lfs_prelock(fs, 0);
+}
+
+bool
+lfs_fraglock_held(struct lfs *fs, int read_write)
+{
+	return lfs_prelock_held(fs);
+}
+
+void
+lfs_fraglock_exit(struct lfs *fs)
+{
+	lfs_preunlock(fs);
+}
+
+/*
  * lfs_seglock --
  *	Single thread the segment writer.
  */
@@ -282,36 +304,22 @@ int
 lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
+	int error;
 
-	mutex_enter(&lfs_lock);
+	error = lfs_prelock(fs, flags);
+	if (error)
+		return error;
+
 	if (fs->lfs_seglock) {
-		if (fs->lfs_lockpid == curproc->p_pid &&
-		    fs->lfs_locklwp == curlwp->l_lid) {
-			++fs->lfs_seglock;
-			fs->lfs_sp->seg_flags |= flags;
-			mutex_exit(&lfs_lock);
-			return 0;
-		} else if (flags & SEGM_PAGEDAEMON) {
-			mutex_exit(&lfs_lock);
-			return EWOULDBLOCK;
-		} else {
-			while (fs->lfs_seglock) {
-				(void)mtsleep(&fs->lfs_seglock, PRIBIO + 1,
-					"lfs_seglock", 0, &lfs_lock);
-			}
-		}
+		++fs->lfs_seglock;
+		fs->lfs_sp->seg_flags |= flags;
+		return 0;
 	}
 
 	fs->lfs_seglock = 1;
-	fs->lfs_lockpid = curproc->p_pid;
-	fs->lfs_locklwp = curlwp->l_lid;
-	mutex_exit(&lfs_lock);
 	fs->lfs_cleanind = 0;
 
 	LFS_ENTER_LOG("seglock", __FILE__, __LINE__, 0, flags, curproc->p_pid);
-
-	/* Drain fragment size changes out */
-	rw_enter(&fs->lfs_fraglock, RW_WRITER);
 
 	sp = fs->lfs_sp = pool_get(&fs->lfs_segpool, PR_WAITOK);
 	sp->bpp = pool_get(&fs->lfs_bpppool, PR_WAITOK);
@@ -469,6 +477,12 @@ lfs_auto_segclean(struct lfs *fs)
 	}
 }
 
+bool
+lfs_seglock_held(struct lfs *fs)
+{
+	return lfs_prelock_held(fs) && fs->lfs_seglock != 0;
+}
+
 /*
  * lfs_segunlock --
  *	Single thread the segment writer.
@@ -483,15 +497,12 @@ lfs_segunlock(struct lfs *fs)
 
 	sp = fs->lfs_sp;
 
-	mutex_enter(&lfs_lock);
-
 	if (!LFS_SEGLOCK_HELD(fs))
 		panic("lfs seglock not held");
 
 	if (fs->lfs_seglock == 1) {
-		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0)
+		if ((sp->seg_flags & SEGM_CLEAN) == 0)
 			do_unmark_dirop = 1;
-		mutex_exit(&lfs_lock);
 		sync = sp->seg_flags & SEGM_SYNC;
 		ckp = sp->seg_flags & SEGM_CKP;
 
@@ -534,12 +545,7 @@ lfs_segunlock(struct lfs *fs)
 		if (!ckp) {
 			LFS_ENTER_LOG("segunlock_std", __FILE__, __LINE__, 0, 0, curproc->p_pid);
 
-			mutex_enter(&lfs_lock);
 			--fs->lfs_seglock;
-			fs->lfs_lockpid = 0;
-			fs->lfs_locklwp = 0;
-			mutex_exit(&lfs_lock);
-			wakeup(&fs->lfs_seglock);
 		}
 		/*
 		 * We let checkpoints happen asynchronously.  That means
@@ -581,22 +587,16 @@ lfs_segunlock(struct lfs *fs)
 
 			LFS_ENTER_LOG("segunlock_ckp", __FILE__, __LINE__, 0, 0, curproc->p_pid);
 
-			mutex_enter(&lfs_lock);
 			--fs->lfs_seglock;
-			fs->lfs_lockpid = 0;
-			fs->lfs_locklwp = 0;
-			mutex_exit(&lfs_lock);
-			wakeup(&fs->lfs_seglock);
 		}
-		/* Reenable fragment size changes */
-		rw_exit(&fs->lfs_fraglock);
 		if (do_unmark_dirop)
 			lfs_unmark_dirop(fs);
 	} else {
 		--fs->lfs_seglock;
 		KASSERT(fs->lfs_seglock != 0);
-		mutex_exit(&lfs_lock);
 	}
+
+	lfs_preunlock(fs);
 }
 
 /*
@@ -651,6 +651,75 @@ lfs_cleanerunlock(struct lfs *fs)
 	mutex_enter(&lfs_lock);
 	fs->lfs_cleanlock = NULL;
 	cv_broadcast(&fs->lfs_cleanercv);
+	mutex_exit(&lfs_lock);
+}
+
+/*
+ * Preventative / prerequisite lock.
+ * This is the "lock" part of the segment lock,
+ * though it can also be taken independently to
+ * prevent segment writing.
+ */
+int
+lfs_prelock(struct lfs *fs, unsigned long flags)
+{
+	int error;
+
+	mutex_enter(&lfs_lock);
+
+	error = 0;
+	if (fs->lfs_prelock) {
+		if (fs->lfs_prelocklwp == curlwp) {
+			/* Locked by us already */
+			++fs->lfs_prelock;
+			goto out;
+		} else if (flags & SEGM_PAGEDAEMON) {
+			/* Pagedaemon cannot wait */
+			error = EWOULDBLOCK;
+			goto out;
+		} else {
+			/* Wait for lock */
+			while (fs->lfs_prelock) {
+				cv_wait(&fs->lfs_prelockcv, &lfs_lock);
+			}
+		}
+	}
+
+	/* Acquire lock */
+	fs->lfs_prelock = 1;
+	fs->lfs_prelocklwp = curlwp;
+ out:
+	mutex_exit(&lfs_lock);
+
+	return error;
+}
+
+bool
+lfs_prelock_held(struct lfs *fs)
+{
+	bool held;
+	bool waslocked;
+
+	waslocked = mutex_owned(&lfs_lock);
+	if (!waslocked)
+		mutex_enter(&lfs_lock);
+
+	held = (fs->lfs_prelock && fs->lfs_prelocklwp == curlwp);
+
+	if (!waslocked)
+		mutex_exit(&lfs_lock);
+
+	return held;
+}
+
+void
+lfs_preunlock(struct lfs *fs)
+{
+	mutex_enter(&lfs_lock);
+	if (--fs->lfs_prelock == 0) {
+		fs->lfs_prelocklwp = NULL;
+		cv_broadcast(&fs->lfs_prelockcv);
+	}
 	mutex_exit(&lfs_lock);
 }
 
@@ -740,7 +809,6 @@ lfs_segunlock_relock(struct lfs *fs)
 	/* Save segment flags for later */
 	seg_flags = fs->lfs_sp->seg_flags;
 
-	fs->lfs_sp->seg_flags |= SEGM_PROT; /* Don't unmark dirop nodes */
 	while(fs->lfs_seglock)
 		lfs_segunlock(fs);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kernel.h,v 1.4 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_kernel.h,v 1.5 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp  */
 
@@ -68,11 +68,7 @@
 
 extern struct lfs_stats lfs_stats;
 
-/* XXX MP */
-#define	LFS_SEGLOCK_HELD(fs) \
-	((fs)->lfs_seglock != 0 &&					\
-	 (fs)->lfs_lockpid == curproc->p_pid &&				\
-	 (fs)->lfs_locklwp == curlwp->l_lid)
+#define  LFS_SEGLOCK_HELD(fs) lfs_seglock_held(fs)
 
 struct lfs_cluster {
 	size_t bufsize;	       /* Size of kept data */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.179 2025/11/04 00:50:37 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.180 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.179 2025/11/04 00:50:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.180 2026/01/05 05:02:47 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -834,9 +834,9 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 		return (error);
 
 	KERNEL_LOCK(1, NULL);
-	lfs_seglock(fs, SEGM_PROT);
+	lfs_prelock(fs, 0);
 	error = lfs_do_segclean(fs, segnum, l->l_cred, l);
-	lfs_segunlock(fs);
+	lfs_preunlock(fs);
 	KERNEL_UNLOCK_ONE(NULL);
 	vfs_unbusy(mntp);
 	return error;

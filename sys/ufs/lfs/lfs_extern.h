@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.130 2025/12/10 03:20:59 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.131 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -255,7 +255,14 @@ void lfs_pad_check(unsigned char *, int, char *, int);
 void lfs_free_resblks(struct lfs *);
 void *lfs_malloc(struct lfs *, size_t, int);
 void lfs_free(struct lfs *, void *, int);
+void lfs_fraglock_enter(struct lfs *, int);
+bool lfs_fraglock_held(struct lfs *, int);
+void lfs_fraglock_exit(struct lfs *);
+int lfs_prelock(struct lfs *, unsigned long);
+bool lfs_prelock_held(struct lfs *);
+void lfs_preunlock(struct lfs *);
 int lfs_seglock(struct lfs *, unsigned long);
+bool lfs_seglock_held(struct lfs *);
 void lfs_segunlock(struct lfs *);
 void lfs_segunlock_relock(struct lfs *);
 void lfs_writer_enter(struct lfs *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kclean.c,v 1.3 2025/12/02 01:23:09 perseant Exp $	*/
+/*	$NetBSD: lfs_kclean.c,v 1.4 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.3 2025/12/02 01:23:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_kclean.c,v 1.4 2026/01/05 05:02:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,58 +584,6 @@ lfs_rewrite_segments(struct lfs *fs, int *snn, int len, int *directp, int *offse
 	return error;
 }
 
-#if 0
-static bool
-lfs_isseq(const struct lfs *fs, long int lbn1, long int lbn2)
-{
-	return lbn2 == lbn1 + lfs_sb_getfrag(__UNCONST(fs));
-}
-
-/*
- * Rewrite the contents of a file in order to coalesce it.
- * We don't bother rewriting indirect blocks because they will have to
- * be rewritten anyway when we rewrite the direct blocks.
- */
-int
-lfs_rewrite_file(struct lfs *fs, ino_t ino, struct lwp *l)
-{
-	daddr_t lbn, hiblk, daddr;
-	int i, error, num, run;
-	struct vnode *vp;
-	struct indir indirs[ULFS_NIADDR+2];
-	size_t size;
-	
-	ASSERT_SEGLOCK(fs);
-
-	LFS_ASSERT_MAXINO(fs, ino);
-
-	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE, &vp);
-	if (error)
-		return error;
-
-	lfs_acquire_finfo(fs, ino, VTOI(vp)->i_gen);
-	for (lbn = 0, hiblk = VTOI(vp)->i_lfs_hiblk; lbn < hiblk; ++lbn) {
-		error = ulfs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, &run,
-				       lfs_isseq);
-		if (daddr == UNASSIGNED)
-			continue;
-		for (i = 0; i <= run; i++) {
-			size = lfs_blksize(fs, VTOI(vp), lbn);
-			error = rewrite_block(fs, vp, lbn++, 0x0, size, NULL);
-			if (error)
-				break;
-		}
-	}
-	lfs_release_finfo(fs);
-	while (lfs_writeseg(fs, fs->lfs_sp))
-		;
-	lfs_segunlock(fs);
-
-	return error;
-}
-#endif /* 0 */
-
-
 static int
 ino_func_checkempty(struct lfs_inofuncarg *lifa)
 {
@@ -1103,18 +1051,21 @@ lfs_rewrite_file(struct lfs *fs, ino_t *inoa, int len, bool scramble,
 	struct vnode *vp;
 	struct inode *ip;
 	struct buf *bp;
-	int i, error, flags;
+	int i, error;
+
+	KASSERT(directp != NULL);
+	KASSERT(offsetp != NULL);
 
 	*directp = 0;
 	if ((error = lfs_cleanerlock(fs)) != 0)
 		return error;
-	flags = SEGM_PROT;
-	lfs_seglock(fs, flags);
+	lfs_seglock(fs, 0);
 	for (i = 0; i < len; ++i) {
-		error = VFS_VGET(fs->lfs_ivnode->v_mount, inoa[i], LK_EXCLUSIVE|LK_NOWAIT, &vp);
+		error = VFS_VGET(fs->lfs_ivnode->v_mount, inoa[i],
+		    LK_EXCLUSIVE | LK_NOWAIT, &vp);
 		if (error)
 			goto out;
-		
+
 		ip = VTOI(vp);
 		if ((vp->v_uflag & VU_DIROP) || (ip->i_flags & IN_ADIROP)) {
 			VOP_UNLOCK(vp);
@@ -1122,7 +1073,7 @@ lfs_rewrite_file(struct lfs *fs, ino_t *inoa, int len, bool scramble,
 			error = EAGAIN;
 			goto out;
 		}
-		
+
 		/* Highest block in this inode */
 		hiblk = lfs_lblkno(fs, ip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 
@@ -1131,15 +1082,15 @@ lfs_rewrite_file(struct lfs *fs, ino_t *inoa, int len, bool scramble,
 				continue;
 
 			if (lfs_needsflush(fs)) {
-				lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
+				lfs_segwrite(fs->lfs_ivnode->v_mount, 0);
 			}
-			
+
 			error = bread(vp, lbn, lfs_blksize(fs, ip, lbn), 0, &bp);
 			if (error)
 				break;
-			
+
 			/* bp->b_cflags |= BC_INVAL; */
-			lfs_bwrite_ext(bp, (flags & SEGM_CLEAN ? BW_CLEAN : 0));
+			lfs_bwrite_ext(bp, 0);
 			*directp += lfs_btofsb(fs, bp->b_bcount);
 		}
 
@@ -1150,7 +1101,7 @@ lfs_rewrite_file(struct lfs *fs, ino_t *inoa, int len, bool scramble,
 			break;
 	}
 out:
-	lfs_segwrite(fs->lfs_ivnode->v_mount, flags);
+	lfs_segwrite(fs->lfs_ivnode->v_mount, 0);
 	*offsetp += lfs_btofsb(fs, fs->lfs_sp->bytes_written);
 	lfs_segunlock(fs);
 	lfs_cleanerunlock(fs);

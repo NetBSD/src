@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.218 2025/12/10 03:20:59 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.219 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1039,9 +1039,16 @@ struct lfs {
 
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
-	uint32_t  lfs_seglock;		/* single-thread the segment writer */
-	pid_t	  lfs_lockpid;		/* pid of lock holder */
-	lwpid_t	  lfs_locklwp;		/* lwp of lock holder */
+
+	/* Preventative lock */
+	uint32_t  lfs_prelock;		/* preventative lock counter */
+	struct lwp *lfs_prelocklwp;	/* LWP of lock holder */
+	kcondvar_t lfs_prelockcv;	/* condvar for cleaner */
+	bool lfs_prelock_unfrag;	/* whether we took fraglock */
+
+	/* Segment lock */
+	uint32_t  lfs_seglock;		/* segment lock counter */
+
 	uint32_t lfs_iocount;		/* number of ios pending */
 	uint32_t lfs_writer;		/* don't allow any dirops to start */
 	uint32_t lfs_dirops;		/* count of active directory ops */
@@ -1239,7 +1246,6 @@ struct segment {
 #define SEGM_CKP	0x0001		/* doing a checkpoint */
 #define SEGM_CLEAN	0x0002		/* cleaner call; don't sort */
 #define SEGM_SYNC	0x0004		/* wait for segment */
-#define SEGM_PROT	0x0008		/* don't inactivate at segunlock */
 #define SEGM_PAGEDAEMON	0x0010		/* pagedaemon called us */
 #define SEGM_WRITERD	0x0020		/* LFS writed called us */
 #define SEGM_FORCE_CKP	0x0040		/* Force checkpoint right away */

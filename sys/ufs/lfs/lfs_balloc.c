@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.97 2025/10/20 04:20:37 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.98 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.97 2025/10/20 04:20:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.98 2026/01/05 05:02:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -526,7 +526,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
 	 */
     top:
 	if (bpp) {
-		rw_enter(&fs->lfs_fraglock, RW_READER);
+		lfs_fraglock_enter(fs, RW_READER);
 	}
 
 	/* check if we actually have enough frags available */
@@ -565,7 +565,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 			lfs_chkdq(ip, -frags, cred, 0);
 #endif
-			rw_exit(&fs->lfs_fraglock);
+			lfs_fraglock_exit(fs);
 			lfs_availwait(fs, frags);
 			goto top;
 		}
@@ -599,7 +599,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
 
     out:
 	if (bpp) {
-		rw_exit(&fs->lfs_fraglock);
+		lfs_fraglock_exit(fs);
 	}
 	return (error);
 }

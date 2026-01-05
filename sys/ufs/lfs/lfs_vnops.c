@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.351 2025/12/06 04:55:04 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.352 2026/01/05 05:02:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.351 2025/12/06 04:55:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.352 2026/01/05 05:02:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2025,20 +2025,19 @@ lfs_fcntl(void *v)
 		 */
 		lfs_writer_enter(fs, "pndirop");
 		off = lfs_sb_getoffset(fs);
-		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
+		lfs_prelock(fs, 0);
 		lfs_flush_dirops(fs);
 		LFS_CLEANERINFO(cip, fs, bp);
 		oclean = lfs_ci_getclean(fs, cip);
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
-		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
-		fs->lfs_sp->seg_flags |= SEGM_PROT;
+		lfs_segwrite(ap->a_vp->v_mount, SEGM_CKP | SEGM_FORCE_CKP);
 		/* Copy out write stats */
 		if (ap != NULL) {
 			lws.direct = 0;
 			lws.offset = lfs_btofsb(fs, fs->lfs_sp->bytes_written);
 			*(struct lfs_write_stats *)ap->a_data = lws;
 		}
-		lfs_segunlock(fs);
+		lfs_preunlock(fs);
 		lfs_writer_leave(fs);
 
 #ifdef DEBUG
