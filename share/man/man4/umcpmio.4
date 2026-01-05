@@ -1,4 +1,4 @@
-.\" $NetBSD: umcpmio.4,v 1.9 2025/12/26 22:17:27 uwe Exp $
+.\" $NetBSD: umcpmio.4,v 1.10 2026/01/05 20:26:57 brad Exp $
 .\"
 .\" Copyright (c) 2024, 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -62,22 +62,27 @@ There are 9 basic gpio pins available with the following functions:
 .Bd -filled
 .TS
 box tab(:);
-l | l | l | l | l | l | l | l | l | l
-= | = | = | = | = | = | = | = | = | =
-l | l | l | l | l | l | l | l | l | l
-l | l | l | l | l | l | l | l | l | l
-l | l | l | l | l | l | l | l | l | l
-l | l | l | l | l | l | l | l | l | l
-l | l | l | l | l | l | l | l | l | l
-l | l | l | l | l | l | l | l | l | l
-l | l | l | l | l | l | l | l | l | l.
-Assignment:GP0:GP1:GP2:GP3:GP4:GP5:GP6:GP7:GP8
-GPIO:I/O:I/O:I/O:I/O:I/O:I/O:I/O:I/O:I
-ALT0:CS:CS:CS:CS:CS:CS:CS:CS:-
-ALT3:-:-:SSPND:SPI activity:LOWPWR:USBCFG:Falling edge:Release ACK:Release REQ
-ALT4:-:-:-:-:-:-:Rising edge:-:-
-ALT5:-:-:-:-:-:-:Low pulse:-:-
-ALT6:-:-:-:-:-:-:High pulse:-:-
+l | l | l | l | l | l | l
+= | = | = | = | = | = | =
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l
+l | l | l | l | l | l | l.
+Pin:GPIO:ALT0:ALT3:ALT4:ALT5:ALT6
+GP0:I/O:CS:-:-:-:-
+GP1:I/O:CS:-:-:-:-
+GP2:I/O:CS:SSPND:-:-:-
+GP3:I/O:CS:SPI activity:-:-:-
+GP4:I/O:CS:LOWPWR:-:-:-
+GP5:I/O:CS:USBCFG:-:-:-
+GP6:I/O:CS:Falling edge:Rising edge:Low pulse:High pulse
+GP7:I/O:CS:Release ACK:-:-:-
+GP8:I:-:Release REQ:-:-:-
 .TE
 .Ed
 .Pp
@@ -131,21 +136,21 @@ Random reads and writes may be performed against this device, but
 there can only one one opener at a time.
 .Ss GPIO on the MCP2221
 There are 4 basic gpio pins available with the following functions:
-.Bd -filled -offset indent
+.Pp
+.Bd -filled
 .TS
 box tab(:);
-l | l | l | l | l
-= | = | = | = | =
-l | l | l | l | l
-l | l | l | l | l
-l | l | l | l | l
-l | l | l | l | l.
-Assignment:GP0:GP1:GP2:GP3
-GPIO:I/O:I/O:I/O:I/O
-ALT0:UART RX:ADC1:ADC2:ADC3
-ALT1:-:UART TX:DAC1:DAC2
-ALT2:-:IRQ:-:-
-ALT3:SSPND:Clock output:USBCFG:I2C activity
+l | l | l | l | l | l
+= | = | = | = | = | =
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l.
+Pin:GPIO:ALT0:ALT1:ALT2:ALT3
+GP0:I/O:UART RX:-:-:SSPND
+GP1:I/O:ADC1:UART TX:IRQ:Clock output
+GP2:I/O:ADC2:DAC1:-:USBCFG
+GP3:I/O:ADC3:DAC2:-:I2C activity
 .TE
 .Ed
 .Pp
