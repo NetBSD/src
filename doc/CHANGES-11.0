@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.65 2026/01/04 12:10:26 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.66 2026/01/05 14:38:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1321,4 +1321,15 @@ distrib/sparc64/cdroms/installdvd/Makefile	1.4
 
 	sparc64: make the CD image fit common CD/R media again.
 	[nia, ticket #139]
+
+sys/arch/powerpc/powerpc/trap_subr.S		1.88
+tests/lib/libc/membar/t_spinlock.c		1.6
+
+	powerpc: PR 59386: clear reservations on return from trap.
+	[jmcneill, ticket #140]
+
+sys/arch/hppa/hppa/machdep.c			1.25
+
+	hppa: fix CPU model detection on HP 9000 745i/50.
+	[skrll, ticket #141]
 
