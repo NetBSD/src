@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.2 2026/01/03 20:23:19 nia Exp $
+# $NetBSD: Makefile.cdrom,v 1.3 2026/01/06 09:29:21 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,9 @@ SPEC_EXTRA:=${.PARSEDIR}/spec.in
 
 image_md_pre:
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc
+.for file in ${CDSETS_EXCLUDE}
+	${RM} -f cdrom/${file}
+.endfor
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/../installcd/etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/../installcd/etc.rc cdrom/etc/rc

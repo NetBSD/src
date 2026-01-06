@@ -1,0 +1,25 @@
+# $NetBSD: Makefile.minibase,v 1.1 2026/01/06 09:29:20 nia Exp $
+#
+# Certain CD-ROM ISO images are hitting the 700 MB limit and need a
+# smaller version of (uncompressed) base to boot the installer. They
+# can still contain the full compressed base.tgz for installation on
+# the target system.
+#
+# Focus on removing large binaries that are not necessary for
+# installation.
+#
+
+CDSETS_EXCLUDE+=	usr/bin/atf-*
+CDSETS_EXCLUDE+=	usr/bin/cpp
+CDSETS_EXCLUDE+=	usr/bin/gcpp
+CDSETS_EXCLUDE+=	usr/libexec/postfix/*
+CDSETS_EXCLUDE+=	usr/sbin/dhcpd
+CDSETS_EXCLUDE+=	usr/sbin/dhcrelay
+CDSETS_EXCLUDE+=	usr/sbin/hostapd
+CDSETS_EXCLUDE+=	usr/sbin/ipftest
+CDSETS_EXCLUDE+=	usr/sbin/named
+CDSETS_EXCLUDE+=	usr/sbin/omshell
+CDSETS_EXCLUDE+=	usr/sbin/post*
+CDSETS_EXCLUDE+=	usr/share/misc/magic.mgc
+CDSETS_EXCLUDE+=	sbin/ipf
+CDSETS_EXCLUDE+=	sbin/pfctl
