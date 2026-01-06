@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_endian.c,v 1.2 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_endian.c,v 1.3 2026/01/06 10:53:10 nia Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_endian.c,v 1.2 2011/07/18 21:51:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_endian.c,v 1.3 2026/01/06 10:53:10 nia Exp $");
+
+#include <sys/endian.h>
+
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
