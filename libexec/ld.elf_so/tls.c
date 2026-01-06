@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.26 2025/11/22 13:03:22 skrll Exp $	*/
+/*	$NetBSD: tls.c,v 1.27 2026/01/06 07:01:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.26 2025/11/22 13:03:22 skrll Exp $");
+__RCSID("$NetBSD: tls.c,v 1.27 2026/01/06 07:01:48 skrll Exp $");
 
 /*
  * Thread-local storage
@@ -452,7 +452,7 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 		}
 	}
 	obj->tlsoffset = offset;
-	dbg(("%s: static tls offset 0x%zx size %zu align %zu (%zx/%zx)\n",
+	dbg(("%s: static tls offset 0x%zx size %zu align %zu (%zx/%zx)",
 	    obj->path, obj->tlsoffset, obj->tlssize, obj->tlsalign,
 	    _rtld_tls_static_offset, next_offset));
 	_rtld_tls_static_offset = next_offset;
