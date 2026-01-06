@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $ */
+/* $NetBSD: utils.c,v 1.4 2026/01/06 10:54:41 nia Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.3 2025/03/02 00:03:41 riastradh Exp $");
+__RCSID("$NetBSD: utils.c,v 1.4 2026/01/06 10:54:41 nia Exp $");
 #endif /* not lint */
 
+#include <sys/endian.h>
 #include <sys/uuid.h>
 
 #include <assert.h>

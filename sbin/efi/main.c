@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $ */
+/* $NetBSD: main.c,v 1.6 2026/01/06 10:54:41 nia Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -25,11 +25,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2026/01/06 10:54:41 nia Exp $");
 #endif /* not lint */
 
 #include <sys/efiio.h>
 #include <sys/queue.h>
+#include <sys/endian.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -64,7 +65,7 @@ __RCSID("$NetBSD: main.c,v 1.5 2025/03/02 01:07:11 riastradh Exp $");
  * ignored in this code and we build/run only on little endian
  * machines.
  */
-__CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN);
+__CTASSERT(BYTE_ORDER == LITTLE_ENDIAN);
 
 #define _PATH_EFI	"/dev/efi"	/* XXX: should be in <paths.h> */
 
