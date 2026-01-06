@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.78 2025/03/31 14:45:35 riastradh Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.79 2026/01/06 15:21:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.78 2025/03/31 14:45:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.79 2026/01/06 15:21:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,15 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
 	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
+	pcireg_t intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	int pin = PCI_INTERRUPT_PIN(intr);
+
+	/* Enable the device. */
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	csr &= ~(pin ? PCI_COMMAND_INTERRUPT_DISABLE : 0);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
 	/* Handle quirks */
 	switch (quirk) {
 	case EHCI_PCI_QUIRK_AMD_SB600:
@@ -178,15 +187,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 			ehci_apply_amd_quirks(sc);
 		break;
 	}
-
-	pcireg_t intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	int pin = PCI_INTERRUPT_PIN(intr);
-
-	/* Enable the device. */
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_MASTER_ENABLE;
-	csr &= ~(pin ? PCI_COMMAND_INTERRUPT_DISABLE : 0);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0) != 0) {
