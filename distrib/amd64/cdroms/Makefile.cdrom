@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.32 2025/11/06 18:15:12 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.33 2026/01/06 09:51:08 nia Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -36,6 +36,9 @@ SPEC_EXTRA:=${.PARSEDIR}/spec.in
 ${EFIBOOTIMG}: ${DESTDIR}/usr/mdec/bootx64.efi ${DESTDIR}/usr/mdec/bootia32.efi
 	${RM} -f ${EFIBOOTIMG}
 	${RM} -rf efiboot/EFI/boot
+.for file in ${CDSETS_EXCLUDE}
+	${RM} -f cdrom/${file}
+.endfor
 	${MKDIR} ${MKDIRPERM} efiboot/EFI/boot
 	${INSTALL} ${COPY} -m 0444 ${.ALLSRC} efiboot/EFI/boot/
 .if defined(CDBOOTOPTIONS)
