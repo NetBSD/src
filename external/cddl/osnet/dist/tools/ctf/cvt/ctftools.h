@@ -37,6 +37,7 @@
 #include <gelf.h>
 #include <pthread.h>
 
+#include <sys/endian.h>
 #include <sys/ccompile.h>
 
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.h,v 1.5 2018/05/28 21:05:10 chs Exp $	*/
+/*	$NetBSD: byteorder.h,v 1.6 2026/01/07 08:23:36 nia Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -43,6 +43,7 @@
 
 #ifndef _OPENSOLARIS_SYS_BYTEORDER_H_
 #define	_OPENSOLARIS_SYS_BYTEORDER_H_
+#include <sys/endian.h>
 
 /*
  * Macros to reverse byte order
@@ -60,7 +61,7 @@
 /*
  * Macros to convert from a specific byte order to/from native byte order
  */
-#if _BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 #define	BE_8(x)		BMASK_8(x)
 #define	BE_16(x)	BMASK_16(x)
 #define	BE_32(x)	BMASK_32(x)
@@ -80,7 +81,7 @@
 #define	BE_64(x)	BSWAP_64(x)
 #endif
 
-#if _BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 #define	htonll(x)	BMASK_64(x)
 #define	ntohll(x)	BMASK_64(x)
 #else
