@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.149 2025/12/20 15:27:22 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.150 2026/01/07 22:44:43 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.149 2025/12/20 15:27:22 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.150 2026/01/07 22:44:43 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: localtime.c,v 1.149 2025/12/20 15:27:22 christos Exp $");
 #define HAVE_ISSETUGID 1
 
 #include "namespace.h"
-#include <assert.h>
 #define LOCALTIME_IMPLEMENTATION
 #include "private.h"
 

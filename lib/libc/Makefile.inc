@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2026/01/07 16:58:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2026/01/07 22:44:42 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -69,5 +69,3 @@ CLEANFILES+=	tags
 LLIBS=
 
 INCSDIR=	/usr/include
-
-CFLAGS+=-std=gnu2x
