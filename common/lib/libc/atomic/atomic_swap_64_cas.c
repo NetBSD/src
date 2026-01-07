@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap_64_cas.c,v 1.10 2022/05/29 08:11:15 rin Exp $	*/
+/*	$NetBSD: atomic_swap_64_cas.c,v 1.11 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,19 +44,16 @@ atomic_swap_64(volatile uint64_t *addr, uint64_t new)
 		old = *addr;
 	} while (atomic_cas_64(addr, old, new) != old);
 
-	return (old);
+	return old;
 }
 
 crt_alias(__atomic_exchange_8,_atomic_swap_64)
 
-#undef atomic_swap_64
 atomic_op_alias(atomic_swap_64,_atomic_swap_64)
 crt_alias(__sync_lock_test_and_set_8,_atomic_swap_64)
 #if defined(_LP64)
-#undef atomic_swap_ulong
 atomic_op_alias(atomic_swap_ulong,_atomic_swap_64)
 __strong_alias(_atomic_swap_ulong,_atomic_swap_64)
-#undef atomic_swap_ptr
 atomic_op_alias(atomic_swap_ptr,_atomic_swap_64)
 __strong_alias(_atomic_swap_ptr,_atomic_swap_64)
 #endif /* _LP64 */

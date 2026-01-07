@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops_nop.c,v 1.8 2022/04/09 23:32:52 riastradh Exp $	*/
+/*	$NetBSD: membar_ops_nop.c,v 1.9 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,24 +40,17 @@ membar_sync(void)
 	/* nothing */
 }
 
-#undef membar_acquire
 atomic_op_alias(membar_acquire,_membar_sync)
 __strong_alias(_membar_acquire,_membar_sync)
-#undef membar_release
 atomic_op_alias(membar_release,_membar_sync)
 __strong_alias(_membar_release,_membar_sync)
-#undef membar_enter
 atomic_op_alias(membar_enter,_membar_sync)
 __strong_alias(_membar_enter,_membar_sync)
-#undef membar_exit
 atomic_op_alias(membar_exit,_membar_sync)
 __strong_alias(_membar_exit,_membar_sync)
-#undef membar_producer
 atomic_op_alias(membar_producer,_membar_sync)
 __strong_alias(_membar_producer,_membar_sync)
-#undef membar_consumer
 atomic_op_alias(membar_consumer,_membar_sync)
 __strong_alias(_membar_consumer,_membar_sync)
-#undef membar_sync
 atomic_op_alias(membar_sync,_membar_sync)
 crt_alias(__sync_synchronize,_membar_sync)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32_nv_cas.c,v 1.6 2026/01/01 01:37:45 thorpej Exp $	*/
+/*	$NetBSD: atomic_inc_32_nv_cas.c,v 1.7 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,18 +43,15 @@ atomic_inc_32_nv(volatile uint32_t *addr)
 		new = old + 1;
 	} while (atomic_cas_32(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_inc_32_nv
 atomic_op_alias(atomic_inc_32_nv,_atomic_inc_32_nv)
 
-#undef atomic_inc_uint_nv
 atomic_op_alias(atomic_inc_uint_nv,_atomic_inc_32_nv)
 __strong_alias(_atomic_inc_uint_nv,_atomic_inc_32_nv)
 
 #if !defined(_LP64)
-#undef atomic_inc_ulong_nv
 atomic_op_alias(atomic_inc_ulong_nv,_atomic_inc_32_nv)
 __strong_alias(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
 
@@ -65,9 +62,8 @@ __strong_alias(_atomic_inc_ulong_nv,_atomic_inc_32_nv)
 void *
 atomic_inc_ptr_nv(volatile void *ptr)
 {
-	return (void *)_atomic_inc_32_nv((volatile uint32_t *)ptr);
+	return (void *)atomic_inc_32_nv((volatile uint32_t *)ptr);
 }
 
-#undef atomic_inc_ptr_nv
 atomic_op_alias(atomic_inc_ptr_nv,_atomic_inc_ptr_nv)
 #endif /* _LP64 */

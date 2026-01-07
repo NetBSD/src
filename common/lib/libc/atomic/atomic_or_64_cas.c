@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64_cas.c,v 1.10 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_or_64_cas.c,v 1.11 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,11 +58,9 @@ atomic_or_64(volatile uint64_t *addr, uint64_t val)
 
 __strong_alias(__atomic_fetch_or_8,__sync_fetch_and_or_8)
 
-#undef atomic_or_64
 atomic_op_alias(atomic_or_64,_atomic_or_64)
 
 #if defined(_LP64)
-#undef atomic_or_ulong
 atomic_op_alias(atomic_or_ulong,_atomic_or_64)
 __strong_alias(_atomic_or_ulong,_atomic_or_64)
 #endif /* _LP64 */

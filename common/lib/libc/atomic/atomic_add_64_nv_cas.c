@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.11 2026/01/01 01:37:45 thorpej Exp $	*/
+/*	$NetBSD: atomic_add_64_nv_cas.c,v 1.12 2026/01/07 18:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,15 +45,13 @@ atomic_add_64_nv(volatile uint64_t *addr, int64_t val)
 		new = old + val;
 	} while (atomic_cas_64(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_add_64_nv
 atomic_op_alias(atomic_add_64_nv,_atomic_add_64_nv)
 crt_alias(__sync_add_and_fetch_8,_atomic_add_64_nv)
 
 #if defined(_LP64)
-#undef atomic_add_long_nv
 atomic_op_alias(atomic_add_long_nv,_atomic_add_64_nv)
 __strong_alias(_atomic_add_long_nv,_atomic_add_64_nv)
 
@@ -64,10 +62,9 @@ __strong_alias(_atomic_add_long_nv,_atomic_add_64_nv)
 void *
 atomic_add_ptr_nv(volatile void *ptr, ssize_t delta)
 {
-	return (void *)_atomic_add_64_nv((volatile uint64_t *)ptr, delta);
+	return (void *)atomic_add_64_nv((volatile uint64_t *)ptr, delta);
 }
 
-#undef atomic_add_ptr_nv
 atomic_op_alias(atomic_add_ptr_nv,_atomic_add_ptr_nv)
 #endif /* _LP64 */
 

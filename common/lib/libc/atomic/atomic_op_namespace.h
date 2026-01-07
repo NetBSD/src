@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_namespace.h,v 1.9 2026/01/04 05:51:59 skrll Exp $	*/
+/*	$NetBSD: atomic_op_namespace.h,v 1.10 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -33,8 +33,6 @@
 #define	_ATOMIC_OP_NAMESPACE_H_
 
 #include <sys/cdefs.h>
-
-#if !defined(__lint__)
 
 #define	atomic_add_32		_atomic_add_32
 #define	atomic_add_int		_atomic_add_int
@@ -120,22 +118,20 @@
 #define	membar_consumer		_membar_consumer
 #define	membar_sync		_membar_sync
 
-#endif /* __lint__ */
-
 #if defined(_KERNEL)
-#define	atomic_op_alias(a,s)	__strong_alias(a,s)
+#define	atomic_op_alias		__strong_alias
 #ifdef _HARDKERNEL
-#define	crt_alias(a,s)	__strong_alias(a,s)
+#define	crt_alias		__strong_alias
 #endif
 #else
-#define	atomic_op_alias(a,s)	__weak_alias(a,s)
+#define	atomic_op_alias		__weak_alias
 #ifdef _LIBC
-#define	crt_alias(a,s)	__strong_alias(a,s)
+#define	crt_alias		__strong_alias
 #endif
 #endif /* _KERNEL */
 
 #ifndef	crt_alias
-#define	crt_alias(a,s)
+#define	crt_alias(a,b)
 #endif
 
 #endif /* _ATOMIC_OP_NAMESPACE_H_ */

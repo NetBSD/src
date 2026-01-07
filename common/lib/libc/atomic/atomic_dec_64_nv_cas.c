@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_64_nv_cas.c,v 1.6 2026/01/01 01:37:45 thorpej Exp $	*/
+/*	$NetBSD: atomic_dec_64_nv_cas.c,v 1.7 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,14 +45,12 @@ atomic_dec_64_nv(volatile uint64_t *addr)
 		new = old - 1;
 	} while (atomic_cas_64(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_dec_64_nv
 atomic_op_alias(atomic_dec_64_nv,_atomic_dec_64_nv)
 
 #if defined(_LP64)
-#undef atomic_dec_ulong_nv
 atomic_op_alias(atomic_dec_ulong_nv,_atomic_dec_64_nv)
 __strong_alias(_atomic_dec_ulong_nv,_atomic_dec_64_nv)
 
@@ -63,10 +61,9 @@ __strong_alias(_atomic_dec_ulong_nv,_atomic_dec_64_nv)
 void *
 atomic_dec_ptr_nv(volatile void *ptr)
 {
-	return (void *)_atomic_dec_64_nv((volatile uint64_t *)ptr);
+	return (void *)atomic_dec_64_nv((volatile uint64_t *)ptr);
 }
 
-#undef atomic_dec_ptr_nv
 atomic_op_alias(atomic_dec_ptr_nv,_atomic_dec_ptr_nv)
 #endif /* _LP64 */
 

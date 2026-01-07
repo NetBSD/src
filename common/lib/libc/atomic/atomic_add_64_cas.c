@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_64_cas.c,v 1.9 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_add_64_cas.c,v 1.10 2026/01/07 18:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,15 +58,12 @@ atomic_add_64(volatile uint64_t *addr, int64_t val)
 
 __strong_alias(__atomic_fetch_add_8,__sync_fetch_and_add_8)
 
-#undef atomic_add_64
 atomic_op_alias(atomic_add_64,_atomic_add_64)
 
 #if defined(_LP64)
-#undef atomic_add_long
 atomic_op_alias(atomic_add_long,_atomic_add_64)
 __strong_alias(_atomic_add_long,_atomic_add_64)
 
-#undef atomic_add_ptr
 atomic_op_alias(atomic_add_ptr,_atomic_add_64)
 __strong_alias(_atomic_add_ptr,_atomic_add_64)
 #endif /* _LP64 */

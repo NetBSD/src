@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or_64_nv_cas.c,v 1.7 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_or_64_nv_cas.c,v 1.8 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,15 +45,13 @@ atomic_or_64_nv(volatile uint64_t *addr, uint64_t val)
 		new = old | val;
 	} while (atomic_cas_64(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_or_64_nv
 atomic_op_alias(atomic_or_64_nv,_atomic_or_64_nv)
 crt_alias(__sync_or_and_fetch_8,_atomic_or_64_nv)
 
 #if defined(_LP64)
-#undef atomic_or_ulong_nv
 atomic_op_alias(atomic_or_ulong_nv,_atomic_or_64_nv)
 __strong_alias(_atomic_or_ulong_nv,_atomic_or_64_nv)
 #endif /* _LP64 */

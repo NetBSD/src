@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_cas.c,v 1.9 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_add_32_cas.c,v 1.10 2026/01/07 18:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,19 +58,15 @@ atomic_add_32(volatile uint32_t *addr, int32_t val)
 	(void) fetch_and_add_4(addr, val);
 }
 
-#undef atomic_add_32
 atomic_op_alias(atomic_add_32,_atomic_add_32)
 
-#undef atomic_add_int
 atomic_op_alias(atomic_add_int,_atomic_add_32)
 __strong_alias(_atomic_add_int,_atomic_add_32)
 
 #if !defined(_LP64)
-#undef atomic_add_long
 atomic_op_alias(atomic_add_long,_atomic_add_32)
 __strong_alias(_atomic_add_long,_atomic_add_32)
 
-#undef atomic_add_ptr
 atomic_op_alias(atomic_add_ptr,_atomic_add_32)
 __strong_alias(_atomic_add_ptr,_atomic_add_32)
 #endif /* _LP64 */

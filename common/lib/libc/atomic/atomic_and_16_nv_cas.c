@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_16_nv_cas.c,v 1.2 2014/10/13 07:31:12 martin Exp $	*/
+/*	$NetBSD: atomic_and_16_nv_cas.c,v 1.3 2026/01/07 18:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,9 +45,8 @@ atomic_and_16_nv(volatile uint16_t *addr, uint16_t val)
 		new = old & val;
 	} while (atomic_cas_16(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_and_16_nv
 atomic_op_alias(atomic_and_16_nv,_atomic_and_16_nv)
 crt_alias(__sync_and_and_fetch_2,_atomic_and_16_nv)

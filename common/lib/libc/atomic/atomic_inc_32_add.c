@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc_32_add.c,v 1.3 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_inc_32_add.c,v 1.4 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,16 +40,12 @@ atomic_inc_32(volatile uint32_t *addr)
 	atomic_add_32(addr, 1);
 }
 
-#undef atomic_inc_32
 atomic_op_alias(atomic_inc_32,_atomic_inc_32)
-#undef atomic_inc_uint
 atomic_op_alias(atomic_inc_uint,_atomic_inc_32)
 __strong_alias(_atomic_inc_uint,_atomic_inc_32)
 #if !defined(_LP64)
-#undef atomic_inc_ulong
 atomic_op_alias(atomic_inc_ulong,_atomic_inc_32)
 __strong_alias(_atomic_inc_ulong,_atomic_inc_32)
-#undef atomic_inc_ptr
 atomic_op_alias(atomic_inc_ptr,_atomic_inc_32)
 __strong_alias(_atomic_inc_ptr,_atomic_inc_32)
 #endif /* _LP64 */

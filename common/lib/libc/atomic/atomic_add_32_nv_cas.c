@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.11 2026/01/01 01:37:45 thorpej Exp $	*/
+/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.12 2026/01/07 18:24:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,20 +43,17 @@ atomic_add_32_nv(volatile uint32_t *addr, int32_t val)
 		new = old + val;
 	} while (atomic_cas_32(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_add_32_nv
 atomic_op_alias(atomic_add_32_nv,_atomic_add_32_nv)
 crt_alias(__sync_add_and_fetch_4,_atomic_add_32_nv)
 crt_alias(__atomic_add_fetch_4,_atomic_add_32_nv)
 
-#undef atomic_add_int_nv
 atomic_op_alias(atomic_add_int_nv,_atomic_add_32_nv)
 __strong_alias(_atomic_add_int_nv,_atomic_add_32_nv)
 
 #if !defined(_LP64)
-#undef atomic_add_long_nv
 atomic_op_alias(atomic_add_long_nv,_atomic_add_32_nv)
 __strong_alias(_atomic_add_long_nv,_atomic_add_32_nv)
 
@@ -67,9 +64,8 @@ __strong_alias(_atomic_add_long_nv,_atomic_add_32_nv)
 void *
 atomic_add_ptr_nv(volatile void *ptr, ssize_t delta)
 {
-	return (void *)_atomic_add_32_nv((volatile uint32_t *)ptr, delta);
+	return (void *)atomic_add_32_nv((volatile uint32_t *)ptr, (int32_t)delta);
 }
 
-#undef atomic_add_ptr_nv
 atomic_op_alias(atomic_add_ptr_nv,_atomic_add_ptr_nv)
 #endif /* _LP64 */

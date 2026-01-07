@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_8_nv_cas.c,v 1.2 2014/10/13 07:31:12 martin Exp $	*/
+/*	$NetBSD: atomic_and_8_nv_cas.c,v 1.3 2026/01/07 18:24:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,9 +45,8 @@ atomic_and_8_nv(volatile uint8_t *addr, uint8_t val)
 		new = old & val;
 	} while (atomic_cas_8(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_and_8_nv
 atomic_op_alias(atomic_and_8_nv,_atomic_and_8_nv)
 crt_alias(__sync_and_and_fetch_1,_atomic_and_8_nv)
