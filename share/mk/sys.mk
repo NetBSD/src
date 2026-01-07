@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.150 2025/10/20 14:31:40 nat Exp $
+#	$NetBSD: sys.mk,v 1.151 2026/01/07 16:56:46 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -57,7 +57,7 @@ CTFCONVERT_RUN	?= ${defined(CTFCONVERT):?${CTFCONVERT} ${CTFFLAGS} -o ${.TARGET}
 CXX?=		c++
 # Strip flags unsupported by C++ compilers
 # Remove -Wsystem-headers because C++ headers aren't clean of warnings
-CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length:N-Wsystem-headers}
+CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9x]:N-Wold-style-definition:N-Wno-format-zero-length:N-Wsystem-headers}
 
 # Use the sources, as the seed... Normalize all paths...
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
