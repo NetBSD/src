@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 2021/03/07 03:55:47 dbj Exp $
+#	$NetBSD: Makefile,v 1.10 2026/01/07 16:08:22 nia Exp $
 #
+
+CDMAKEFSEXTRAOPTS=	-m 700m
 
 # HP Proliant iLO serial console is on com1
 CDBOOTOPTIONS=	-o console=com0

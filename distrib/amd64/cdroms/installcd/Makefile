@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2026/01/06 09:51:08 nia Exp $
+#	$NetBSD: Makefile,v 1.9 2026/01/07 16:08:22 nia Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
 # Requires populated $RELEASEDIR/${MACHINE}
+
+CDMAKEFSEXTRAOPTS=	-m 700m
 
 .include <bsd.own.mk>
 
