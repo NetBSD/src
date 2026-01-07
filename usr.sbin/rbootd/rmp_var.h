@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp_var.h,v 1.11 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: rmp_var.h,v 1.12 2026/01/07 14:48:48 nia Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -41,6 +41,8 @@
  * from: Utah Hdr: rmp_var.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
+
+#include <arpa/inet.h>
 
 /*
  *  Possible values for "rmp_type" fields.
