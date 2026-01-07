@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.60 2023/12/28 12:13:55 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.61 2026/01/07 16:04:51 nia Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.60 2023/12/28 12:13:55 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.61 2026/01/07 16:04:51 nia Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -604,6 +604,9 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	startoffset = diskStructure->sectorSize*diskStructure->dataFirstSector;
 
 	totalSpace = cd9660_compute_offsets(diskStructure, real_root, startoffset);
+
+	if ((fsopts->maxsize > 0) && (totalSpace > fsopts->maxsize))
+		errx(EXIT_FAILURE, "won't fit due to set maximum disk size");
 
 	diskStructure->totalSectors = diskStructure->dataFirstSector +
 		CD9660_BLOCKS(diskStructure->sectorSize, totalSpace);
