@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.13 2026/01/07 07:19:06 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.13 2026/01/07 07:19:06 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -175,8 +175,8 @@ botch(const char *s)
 static void *
 imalloc(size_t nbytes)
 {
-  	union overhead *op;
-  	size_t bucket;
+	union overhead *op;
+	size_t bucket;
 	size_t n, m;
 	unsigned amt;
 
@@ -194,7 +194,7 @@ imalloc(size_t nbytes)
 			n += pagesz - m;
 		else
 			n -= m;
-  		if (n) {
+		if (n) {
 			pagepool_start += n;
 		}
 		bucket = 0;
@@ -234,17 +234,17 @@ imalloc(size_t nbytes)
 	 * If nothing in hash bucket right now,
 	 * request more memory from the system.
 	 */
-  	if ((op = nextf[bucket]) == NULL) {
-  		morecore(bucket);
-  		if ((op = nextf[bucket]) == NULL)
-  			return (NULL);
+	if ((op = nextf[bucket]) == NULL) {
+		morecore(bucket);
+		if ((op = nextf[bucket]) == NULL)
+			return (NULL);
 	}
 	/* remove from linked list */
-  	nextf[bucket] = op->ov_next;
+	nextf[bucket] = op->ov_next;
 	op->ov_magic = MAGIC;
 	op->ov_index = bucket;
 #ifdef MSTATS
-  	nmalloc[bucket]++;
+	nmalloc[bucket]++;
 #endif
 #ifdef RCHECK
 	/*
@@ -253,9 +253,9 @@ imalloc(size_t nbytes)
 	 */
 	op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
 	op->ov_rmagic = RMAGIC;
-  	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
+	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
-  	return ((char *)(op + 1));
+	return ((char *)(op + 1));
 }
 
 /*
@@ -264,10 +264,10 @@ imalloc(size_t nbytes)
 static void
 morecore(size_t bucket)
 {
-  	union overhead *op;
+	union overhead *op;
 	size_t sz;		/* size of desired block */
-  	size_t amt;		/* amount to allocate */
-  	size_t nblks;		/* how many blocks we get */
+	size_t amt;		/* amount to allocate */
+	size_t nblks;		/* how many blocks we get */
 
 	/*
 	 * sbrk_size <= 0 only for big, FLUFFY, requests (about
@@ -294,51 +294,51 @@ morecore(size_t bucket)
 	 * Add new memory allocated to that on
 	 * free list for this hash bucket.
 	 */
-  	nextf[bucket] = op;
-  	while (--nblks > 0) {
+	nextf[bucket] = op;
+	while (--nblks > 0) {
 		op->ov_next = (union overhead *)((caddr_t)op + sz);
 		op = (union overhead *)((caddr_t)op + sz);
-  	}
+	}
 }
 
 void
 xfree(void *cp)
 {
-  	int size;
+	int size;
 	union overhead *op;
 
-  	if (cp == NULL)
-  		return;
+	if (cp == NULL)
+		return;
 	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
 #ifdef MALLOC_DEBUG
-  	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
+	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
 #else
 	if (op->ov_magic != MAGIC)
 		return;				/* sanity */
 #endif
 #ifdef RCHECK
-  	ASSERT(op->ov_rmagic == RMAGIC);
+	ASSERT(op->ov_rmagic == RMAGIC);
 	ASSERT(*(u_short *)((caddr_t)(op + 1) + op->ov_size) == RMAGIC);
 #endif
-  	size = op->ov_index;
-  	ASSERT(size < NBUCKETS);
+	size = op->ov_index;
+	ASSERT(size < NBUCKETS);
 	op->ov_next = nextf[size];	/* also clobbers ov_magic */
-  	nextf[size] = op;
+	nextf[size] = op;
 #ifdef MSTATS
-  	nmalloc[size]--;
+	nmalloc[size]--;
 #endif
 }
 
 static void *
 irealloc(void *cp, size_t nbytes)
 {
-  	size_t onb;
+	size_t onb;
 	size_t i;
 	union overhead *op;
-  	char *res;
+	char *res;
 
-  	if (cp == NULL)
-  		return (imalloc(nbytes));
+	if (cp == NULL)
+		return (imalloc(nbytes));
 	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
 	if (op->ov_magic != MAGIC) {
 		static const char *err_str =
@@ -370,13 +370,13 @@ irealloc(void *cp, size_t nbytes)
 #endif
 		return(cp);
 	}
-  	if ((res = imalloc(nbytes)) == NULL)
-  		return (NULL);
-  	if (cp != res) {	/* common optimization if "compacting" */
+	if ((res = imalloc(nbytes)) == NULL)
+		return (NULL);
+	if (cp != res) {	/* common optimization if "compacting" */
 		memcpy(res, cp, (nbytes < onb) ? nbytes : onb);
 		xfree(cp);
 	}
-  	return (res);
+	return (res);
 }
 
 #ifdef MSTATS
@@ -390,24 +390,24 @@ irealloc(void *cp, size_t nbytes)
 void
 mstats(char *s)
 {
-  	int i, j;
-  	union overhead *p;
-  	int totfree = 0,
-  	totused = 0;
+	int i, j;
+	union overhead *p;
+	int totfree = 0,
+	totused = 0;
 
-  	xprintf("Memory allocation statistics %s\nfree:\t", s);
-  	for (i = 0; i < NBUCKETS; i++) {
-  		for (j = 0, p = nextf[i]; p; p = p->ov_next, j++)
-  			;
-  		xprintf(" %d", j);
-  		totfree += j * (1 << (i + 3));
-  	}
-  	xprintf("\nused:\t");
-  	for (i = 0; i < NBUCKETS; i++) {
-  		xprintf(" %d", nmalloc[i]);
-  		totused += nmalloc[i] * (1 << (i + 3));
-  	}
-  	xprintf("\n\tTotal in use: %d, total free: %d\n",
+	xprintf("Memory allocation statistics %s\nfree:\t", s);
+	for (i = 0; i < NBUCKETS; i++) {
+		for (j = 0, p = nextf[i]; p; p = p->ov_next, j++)
+			;
+		xprintf(" %d", j);
+		totfree += j * (1 << (i + 3));
+	}
+	xprintf("\nused:\t");
+	for (i = 0; i < NBUCKETS; i++) {
+		xprintf(" %d", nmalloc[i]);
+		totused += nmalloc[i] * (1 << (i + 3));
+	}
+	xprintf("\n\tTotal in use: %d, total free: %d\n",
 	    totused, totfree);
 }
 #endif
