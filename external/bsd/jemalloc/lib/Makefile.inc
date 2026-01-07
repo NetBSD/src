@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2025/07/07 20:05:05 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2026/01/07 18:14:17 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -96,6 +96,12 @@ jemalloc.d jemalloc.pico jemalloc.o jemalloc.ln jemalloc.po jemalloc.go: \
 .for i in ${JEMALLOC_SRCS}
 LINTFLAGS.${i} += -X 86,89,117,132,191,193,217,226,261
 .endfor
+
+.if ${MACHINE_ARCH} == "sparc"
+.for i in ${JEMALLOC_SRCS}
+LINTFLAGS.${i} += -X 298
+.endfor
+.endif
 
 LINTFLAGS.arena.c += -X 298
 LINTFLAGS.ctl.c += -X 135,298
