@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.4 2014/01/29 11:34:25 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.5 2026/01/07 10:01:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@ RAS_START_ASM_HIDDEN(_atomic_cas)
 RAS_END_ASM_HIDDEN(_atomic_cas)
 1:
 	bv,n	%r0(%rp)
-
 EXIT(_atomic_cas_up)
 
 LEAF_ENTRY_NOPROFILE(_atomic_cas_16_up)
