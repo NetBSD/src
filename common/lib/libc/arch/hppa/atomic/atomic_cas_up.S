@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.5 2026/01/07 10:01:55 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.6 2026/01/08 15:54:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2014 The NetBSD Foundation, Inc.
@@ -43,6 +43,30 @@ RAS_END_ASM_HIDDEN(_atomic_cas)
 1:
 	bv,n	%r0(%rp)
 EXIT(_atomic_cas_up)
+
+#if defined(__HAVE_ASM_ATOMIC_CAS_64_UP)
+ENTRY_NOPROFILE(_atomic_cas_64_up, HPPA_FRAME_SIZE)
+	.hidden	_C_LABEL(_atomic_cas_64_up)
+
+	ldo	HPPA_FRAME_ARG(5)(%sp), %arg1
+	flddx	0(%arg1), %fr23			// load new
+
+RAS_START_ASM_HIDDEN(_atomic_cas_64)
+	fldd	0(%arg0), %fr22			// load *ptr
+	fstd	%fr22,-16(%sp)			// store to tmp
+
+	ldw	-16(%sp),%ret0			// load to ret0
+	ldw	-12(%sp),%ret1			// ... and ret1
+
+	comb,<>,n	%arg3, %ret0, 1f
+	comb,<>,n	%arg2, %ret1, 1f
+
+	fstd	 %fr23, 0(%arg0) 		// *ptr = new
+RAS_END_ASM_HIDDEN(_atomic_cas_64)
+1:
+	bv,n	%r0(%rp)
+EXIT(_atomic_cas_64_up)
+#endif /* __HAVE_ASM_ATOMIC_64_UP */
 
 LEAF_ENTRY_NOPROFILE(_atomic_cas_16_up)
 	.hidden	_C_LABEL(_atomic_cas_16_up)
