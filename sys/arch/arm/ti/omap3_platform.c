@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.10 2025/12/16 12:20:22 skrll Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.11 2026/01/08 00:26:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.10 2025/12/16 12:20:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.11 2026/01/08 00:26:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,8 +408,6 @@ omap4_platform_mpstart(void)
 			aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
 			return EIO;
 		}
-
-		cpuindex++;
 	}
 
 	return 0;
