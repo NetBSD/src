@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.43 2021/02/19 14:51:59 christos Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.44 2026/01/08 15:39:07 nia Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -33,6 +33,9 @@
 
 #ifndef _NET_IF_ARP_H_
 #define _NET_IF_ARP_H_
+
+#include <sys/endian.h> /* ntohs(3) */
+
 /*
  * Address Resolution Protocol.
  *

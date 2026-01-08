@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.10 2011/09/27 01:01:44 christos Exp $	*/
+/*	$NetBSD: iso.h,v 1.11 2026/01/08 15:39:07 nia Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -44,6 +44,8 @@
 
 #ifndef _ISOFS_CD9660_ISO_H_
 #define _ISOFS_CD9660_ISO_H_
+
+#include <sys/endian.h>
 
 #define ISODCL(from, to) (to - from + 1)
 

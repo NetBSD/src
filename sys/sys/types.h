@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.106 2023/01/13 18:43:42 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.107 2026/01/08 15:39:08 nia Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -95,7 +95,7 @@ typedef	uint16_t	u_int16_t;
 typedef	uint32_t	u_int32_t;
 typedef	uint64_t	u_int64_t;
 
-#include <machine/endian.h>
+#include <sys/stdint.h>
 
 #if defined(_NETBSD_SOURCE)
 typedef	unsigned char	u_char;
@@ -230,6 +230,11 @@ typedef int	boolean_t;
 #define	FALSE	0
 #endif
 
+/*
+ * Deprecated <sys/endian.h> transclusion.
+ */
+#include <sys/endian.h>
+
 #endif /* _KERNEL || _STANDALONE */
 
 #if defined(_KERNEL) || defined(_LIBC) || defined(_KMEMUSER)
@@ -243,7 +248,6 @@ union __semun {
 	struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
-#include <sys/stdint.h>
 #endif /* _KERNEL || _LIBC || _KMEMUSER */
 
 /*

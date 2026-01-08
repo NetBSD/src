@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.37 2021/02/03 18:13:13 roy Exp $	*/
+/*	$NetBSD: tcp.h,v 1.38 2026/01/08 15:39:07 nia Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,7 @@
 
 #if defined(_NETBSD_SOURCE)
 #include <sys/types.h>
+#include <sys/endian.h>
 
 typedef uint32_t tcp_seq;
 /*

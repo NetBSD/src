@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.35 2025/11/27 05:04:35 andvar Exp $
+ * $NetBSD: math_private.h,v 1.36 2026/01/08 15:39:07 nia Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <sys/types.h>
+#include <sys/endian.h>
 
 /*
  * The original fdlibm code used statements like:

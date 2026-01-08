@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.38 2025/11/26 22:25:10 nia Exp $	*/
+/*	$NetBSD: endian.h,v 1.39 2026/01/08 15:39:08 nia Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -214,10 +214,10 @@ __GEN_ENDIAN_ENC(64, le)
 
 #define __GEN_ENDIAN_DEC(bits, endian) \
 static __inline uint ## bits ## _t __unused \
-endian ## bits ## dec(const void *buf) \
+endian ## bits ## dec(const void *_buf) \
 { \
 	uint ## bits ## _t u; \
-	__builtin_memcpy(&u, buf, sizeof(u)); \
+	__builtin_memcpy(&u, _buf, sizeof(u)); \
 	return endian ## bits ## toh (u); \
 }
 
@@ -232,43 +232,43 @@ __GEN_ENDIAN_DEC(64, le)
 #else	/* !(GCC >= 2.95 && !__HAVE_SLOW_BSWAP_BUILTIN) */
 
 static __inline void __unused
-be16enc(void *buf, uint16_t u)
+be16enc(void *_buf, uint16_t u)
 {
-	uint8_t *p = __CAST(uint8_t *, buf);
+	uint8_t *p = __CAST(uint8_t *, _buf);
 
 	p[0] = __CAST(uint8_t, ((__CAST(unsigned, u) >> 8) & 0xff));
 	p[1] = __CAST(uint8_t, (u & 0xff));
 }
 
 static __inline void __unused
-le16enc(void *buf, uint16_t u)
+le16enc(void *_buf, uint16_t u)
 {
-	uint8_t *p = __CAST(uint8_t *, buf);
+	uint8_t *p = __CAST(uint8_t *, _buf);
 
 	p[0] = __CAST(uint8_t, (u & 0xff));
 	p[1] = __CAST(uint8_t, ((__CAST(unsigned, u) >> 8) & 0xff));
 }
 
 static __inline uint16_t __unused
-be16dec(const void *buf)
+be16dec(const void *_buf)
 {
-	const uint8_t *p = __CAST(const uint8_t *, buf);
+	const uint8_t *p = __CAST(const uint8_t *, _buf);
 
 	return ((__CAST(uint16_t, p[0]) << 8) | p[1]);
 }
 
 static __inline uint16_t __unused
-le16dec(const void *buf)
+le16dec(const void *_buf)
 {
-	const uint8_t *p = __CAST(const uint8_t *, buf);
+	const uint8_t *p = __CAST(const uint8_t *, _buf);
 
 	return (p[0] | (__CAST(uint16_t, p[1]) << 8));
 }
 
 static __inline void __unused
-be32enc(void *buf, uint32_t u)
+be32enc(void *_buf, uint32_t u)
 {
-	uint8_t *p = __CAST(uint8_t *, buf);
+	uint8_t *p = __CAST(uint8_t *, _buf);
 
 	p[0] = __CAST(uint8_t, ((u >> 24) & 0xff));
 	p[1] = __CAST(uint8_t, ((u >> 16) & 0xff));
@@ -277,9 +277,9 @@ be32enc(void *buf, uint32_t u)
 }
 
 static __inline void __unused
-le32enc(void *buf, uint32_t u)
+le32enc(void *_buf, uint32_t u)
 {
-	uint8_t *p = __CAST(uint8_t *, buf);
+	uint8_t *p = __CAST(uint8_t *, _buf);
 
 	p[0] = __CAST(uint8_t, (u & 0xff));
 	p[1] = __CAST(uint8_t, ((u >> 8) & 0xff));
@@ -288,51 +288,51 @@ le32enc(void *buf, uint32_t u)
 }
 
 static __inline uint32_t __unused
-be32dec(const void *buf)
+be32dec(const void *_buf)
 {
-	const uint8_t *p = __CAST(const uint8_t *, buf);
+	const uint8_t *p = __CAST(const uint8_t *, _buf);
 
 	return ((__CAST(uint32_t, be16dec(p)) << 16) | be16dec(p + 2));
 }
 
 static __inline uint32_t __unused
-le32dec(const void *buf)
+le32dec(const void *_buf)
 {
-	const uint8_t *p = __CAST(const uint8_t *, buf);
+	const uint8_t *p = __CAST(const uint8_t *, _buf);
 
 	return (le16dec(p) | (__CAST(uint32_t, le16dec(p + 2)) << 16));
 }
 
 static __inline void __unused
-be64enc(void *buf, uint64_t u)
+be64enc(void *_buf, uint64_t u)
 {
-	uint8_t *p = __CAST(uint8_t *, buf);
+	uint8_t *p = __CAST(uint8_t *, _buf);
 
 	be32enc(p, __CAST(uint32_t, (u >> 32)));
 	be32enc(p + 4, __CAST(uint32_t, (u & 0xffffffffULL)));
 }
 
 static __inline void __unused
-le64enc(void *buf, uint64_t u)
+le64enc(void *_buf, uint64_t u)
 {
-	uint8_t *p = __CAST(uint8_t *, buf);
+	uint8_t *p = __CAST(uint8_t *, _buf);
 
 	le32enc(p, __CAST(uint32_t, (u & 0xffffffffULL)));
 	le32enc(p + 4, __CAST(uint32_t, (u >> 32)));
 }
 
 static __inline uint64_t __unused
-be64dec(const void *buf)
+be64dec(const void *_buf)
 {
-	const uint8_t *p = (const uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)_buf;
 
 	return ((__CAST(uint64_t, be32dec(p)) << 32) | be32dec(p + 4));
 }
 
 static __inline uint64_t __unused
-le64dec(const void *buf)
+le64dec(const void *_buf)
 {
-	const uint8_t *p = (const uint8_t *)buf;
+	const uint8_t *p = (const uint8_t *)_buf;
 
 	return (le32dec(p) | (__CAST(uint64_t, le32dec(p + 4)) << 32));
 }

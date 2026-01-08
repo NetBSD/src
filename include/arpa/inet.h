@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.24 2008/06/21 20:12:49 christos Exp $	*/
+/*	$NetBSD: inet.h,v 1.25 2026/01/08 15:39:07 nia Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -65,6 +65,7 @@
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <netinet/in.h>
 
