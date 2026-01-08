@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.20 2026/01/08 06:50:36 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.21 2026/01/08 06:54:47 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -112,13 +112,9 @@ const char *x = _Generic(
 // Ensure that the type qualifiers from the expression are discarded when
 // comparing the types.
 int
-// FIXME
-/* expect+1: warning: parameter 'str' unused in function 'pointer_dereference' [231] */
 pointer_dereference(const char *str)
 {
 	return _Generic(*str,
 		char: str[0]
-	// FIXME
-	/* expect+1: error: function 'pointer_dereference' expects to return value [214] */
 	);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.695 2025/09/17 19:25:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.696 2026/01/08 06:54:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.695 2025/09/17 19:25:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.696 2026/01/08 06:54:46 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -863,7 +863,7 @@ build_generic_selection(const tnode_t *expr,
 	for (; sel != NULL; sel = sel->ga_prev) {
 		if (expr != NULL &&
 		    types_compatible(sel->ga_arg, expr->tn_type,
-			false, false, NULL))
+			true, false, NULL))
 			return sel->ga_result;
 		if (sel->ga_arg == NULL)
 			default_result = sel->ga_result;
