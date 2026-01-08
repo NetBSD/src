@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.90 2026/01/05 14:41:09 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.91 2026/01/08 11:01:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1165,4 +1165,14 @@ sys/arch/hppa/hppa/machdep.c			1.25
 
 	hppa: fix CPU model detection on HP 9000 745i/50.
 	[skrll, ticket #1993]
+
+sys/netinet/if_arp.c				1.318
+
+	arp: clear mbuf csum_flags before sending an ARP reply packet.
+	[ozaki-r, ticket #1994]
+
+lib/libc/stdlib/strtonum.c			1.8
+
+	build: fix tools build on non-NetBSD platforms.
+	[gutteridge, ticket #1995]
 
