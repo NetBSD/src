@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.50 2025/07/25 17:28:51 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.50.2.1 2026/01/08 10:32:42 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -696,8 +696,8 @@ Wybrales %d pakietow dystrybucyjnych. %d pakiety nie zostaly znalezione
 i %d zostalo pominietych z powodu bledow. Z %d docelowych,
 %d rozpakowalo sie bez bledow i %d z bledami.
 
-Instalacja zostala przerwana. Sprawdz zrodlo swojej dystrybucji i rozwaz
-reinstalacje pakietow z glownego menu.}
+Sprawdz zrodlo swojej dystrybucji i rozwaz reinstalacje pakietow z
+glownego menu.}
 
 message abort_inst {Instalacja zostala przerwana.}
 message abort_part {Install aborted.}

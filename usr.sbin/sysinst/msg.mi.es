@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.44 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.44.2.1 2026/01/08 10:32:42 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -715,9 +715,8 @@ encontrados, y %d han sido omitidos después de que ocurriera un
 error.  De los %d que se han intentado, %d se han desempaquetado
 sin errores y %d con errores.
 
-La instalación ha sido interrumpida.  Por favor, compruebe de nuevo su
-fuente de distribución y considere el reinstalar los conjuntos desde
-el menú principal.}
+Por favor, compruebe de nuevo su fuente de distribución y considere el
+reinstalar los conjuntos desde el menú principal.}
 
 message abort_inst {Instalación interrumpida.}
 message abort_part {Partitioning aborted.}
