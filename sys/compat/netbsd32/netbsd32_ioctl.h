@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.80 2024/05/11 10:22:17 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.81 2026/01/08 00:56:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -322,22 +322,22 @@ struct netbsd32_if_data {
 	u_char	ifi_hdrlen;
 	u_char  __pack_dummy;
 	int	ifi_link_state;
-	uint64_t ifi_mtu;
-	uint64_t ifi_metric;
-	uint64_t ifi_baudrate;
-	uint64_t ifi_ipackets;
-	uint64_t ifi_ierrors;
-	uint64_t ifi_opackets;
-	uint64_t ifi_oerrors;
-	uint64_t ifi_collisions;
-	uint64_t ifi_ibytes;
-	uint64_t ifi_obytes;
-	uint64_t ifi_imcasts;
-	uint64_t ifi_omcasts;
-	uint64_t ifi_iqdrops;
-	uint64_t ifi_noproto;
+	netbsd32_uint64 ifi_mtu;
+	netbsd32_uint64 ifi_metric;
+	netbsd32_uint64 ifi_baudrate;
+	netbsd32_uint64 ifi_ipackets;
+	netbsd32_uint64 ifi_ierrors;
+	netbsd32_uint64 ifi_opackets;
+	netbsd32_uint64 ifi_oerrors;
+	netbsd32_uint64 ifi_collisions;
+	netbsd32_uint64 ifi_ibytes;
+	netbsd32_uint64 ifi_obytes;
+	netbsd32_uint64 ifi_imcasts;
+	netbsd32_uint64 ifi_omcasts;
+	netbsd32_uint64 ifi_iqdrops;
+	netbsd32_uint64 ifi_noproto;
 	struct	netbsd32_timespec ifi_lastchange;
-} __packed;
+};
 
 struct netbsd32_ifdatareq {
 	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
@@ -590,7 +590,7 @@ struct netbsd32_vnd_ioctl50 {
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
 	unsigned int	vnd_size;	/* (returned) size of disk */
-} __packed;
+};
 /* from <dev/vnd.c> */
 #define VNDIOCSET5032	_IOWR('F', 0, struct netbsd32_vnd_ioctl50)
 #define VNDIOCCLR5032	_IOW('F', 1, struct netbsd32_vnd_ioctl50)
@@ -648,7 +648,7 @@ struct netbsd32_ksyms_gsymbol {
 
 struct netbsd32_ksyms_gvalue {
 	netbsd32_charp kv_name;
-	uint64_t kv_value;
+	netbsd32_uint64 kv_value;
 };
 
 #define	KIOCGVALUE32	_IOWR('l', 4, struct netbsd32_ksyms_gvalue)
@@ -704,7 +704,7 @@ struct netbsd32_dkwedge_list {
 	netbsd32_size_t		dkwl_bufsize;	/* size	of that	buffer */
 	u_int			dkwl_nwedges;	/* total number	of wedges */
 	u_int			dkwl_ncopied;	/* number actually copied */
-} __packed;
+};
 
 #define DIOCLWEDGES32		_IOWR('d', 124, struct netbsd32_dkwedge_list)
 
@@ -712,7 +712,7 @@ struct netbsd32_disk_strategy {
 	char dks_name[DK_STRATEGYNAMELEN];	/* name of strategy */
 	netbsd32_charp dks_param;		/* notyet; should be NULL */
 	netbsd32_size_t dks_paramlen;		/* notyet; should be 0 */
-} __packed;
+};
 
 #define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
 #define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)
