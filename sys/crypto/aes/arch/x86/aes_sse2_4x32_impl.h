@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_sse2_4x32_impl.h,v 1.1 2025/11/23 22:48:26 riastradh Exp $	*/
+/*	$NetBSD: aes_sse2_4x32_impl.h,v 1.2 2026/01/08 11:25:59 nia Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #define	_CRYPTO_AES_ARCH_X86_AES_SSE2_4X32_IMPL_H
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <crypto/aes/aes.h>
 #include <crypto/arch/x86/immintrin.h>

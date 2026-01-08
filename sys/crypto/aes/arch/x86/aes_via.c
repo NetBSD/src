@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_via.c,v 1.10 2025/11/22 22:32:39 riastradh Exp $	*/
+/*	$NetBSD: aes_via.c,v 1.11 2026/01/08 11:25:59 nia Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.10 2025/11/22 22:32:39 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.11 2026/01/08 11:25:59 nia Exp $");
 
 #ifdef _KERNEL
 #include <sys/types.h>
+#include <sys/endian.h>
 #include <sys/evcnt.h>
 #include <sys/systm.h>
 #else
@@ -38,6 +39,7 @@ __KERNEL_RCSID(1, "$NetBSD: aes_via.c,v 1.10 2025/11/22 22:32:39 riastradh Exp $
 #include <err.h>
 #include <stdint.h>
 #include <string.h>
+#include <endian.h>
 #define	KASSERT			assert
 #define	panic(fmt, args...)	err(1, fmt, args)
 struct evcnt { uint64_t ev_count; };
