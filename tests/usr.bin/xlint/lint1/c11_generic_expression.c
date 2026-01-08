@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.21 2026/01/08 06:54:47 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.22 2026/01/08 22:32:07 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -109,12 +109,26 @@ const char *x = _Generic(
     int: 1
 );
 
-// Ensure that the type qualifiers from the expression are discarded when
-// comparing the types.
-int
-pointer_dereference(const char *str)
+// Introduced by C11 6.5.2.1.
+// Fixed by C23 6.5.2.1.
+void
+type_conversions(const char *str)
 {
-	return _Generic(*str,
-		char: str[0]
+	int array[4] = { 0, 1, 2, 3 };
+
+	// Type qualifiers are removed.
+	x = _Generic(*str,
+		char: str,
+		default: primary_expression
+	);
+	// Functions are converted to a function pointer.
+	x = _Generic(type_conversions,
+		void(*)(const char *): str,
+		default: primary_expression
+	);
+	// Arrays are converted to the corresponding pointer.
+	x = _Generic(array,
+		int *: str,
+		default: primary_expression
 	);
 }
