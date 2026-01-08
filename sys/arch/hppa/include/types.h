@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.33 2024/04/28 10:57:34 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.34 2026/01/08 07:15:06 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -84,9 +84,17 @@ typedef int			__register_t;
 #define	__SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1 } }
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
+#define	__HAVE_BUS_SPACE_8
+#define	__HAVE_COMMON___TLS_GET_ADDR
+#define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_MM_MD_KERNACC
+#define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_RAS
 #define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_TLS_VARIANT_I
+#define	__HAVE___LWP_GETPRIVATE_FAST
 
 /*
  * On hppa, declaring RAS labels as functions doesn't work, since the toolchain
@@ -96,14 +104,5 @@ typedef int			__register_t;
 #define	RAS_DECL(name)							\
 extern const char __CONCAT(name,_ras_start[]), __CONCAT(name,_ras_end[])
 
-#define	__HAVE_CPU_LWP_SETPRIVATE
-#define	__HAVE_COMMON___TLS_GET_ADDR
-#define	__HAVE___LWP_GETPRIVATE_FAST
-#define	__HAVE_TLS_VARIANT_I
-#define	__HAVE_NEW_STYLE_BUS_H
-#define	__HAVE_BUS_SPACE_8
-
-#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-#define	__HAVE_MM_MD_KERNACC
 
 #endif	/* _HPPA_TYPES_H_ */
