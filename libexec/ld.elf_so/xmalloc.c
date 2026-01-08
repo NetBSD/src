@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.13 2026/01/07 07:19:06 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.14 2026/01/08 12:33:31 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.13 2026/01/07 07:19:06 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.14 2026/01/08 12:33:31 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -163,8 +163,8 @@ static	u_int nmalloc[NBUCKETS];
 static void
 botch(const char *s)
 {
-    xwarnx("\r\nassertion botched: %s\r\n", s);
-    abort();
+	xwarnx("\r\nassertion botched: %s\r\n", s);
+	abort();
 }
 #else
 #define	ASSERT(p)
@@ -213,11 +213,11 @@ imalloc(size_t nbytes)
 	 */
 	if (nbytes <= (n = pagesz - sizeof (*op) - RSLOP)) {
 		if (sizeof(union overhead) & (sizeof(union overhead) - 1)) {
-		    amt = sizeof(union overhead) * 2;
-		    bucket = 1;
+			amt = sizeof(union overhead) * 2;
+			bucket = 1;
 		} else {
-		    amt = sizeof(union overhead); /* size of first bucket */
-		    bucket = 0;
+			amt = sizeof(union overhead); /* size of first bucket */
+			bucket = 0;
 		}
 		n = -(sizeof (*op) + RSLOP);
 	} else {
@@ -344,7 +344,7 @@ irealloc(void *cp, size_t nbytes)
 		static const char *err_str =
 		    "memory corruption or double free in realloc\n";
 		extern char *__progname;
-	        write(STDERR_FILENO, __progname, strlen(__progname));
+		write(STDERR_FILENO, __progname, strlen(__progname));
 		write(STDERR_FILENO, err_str, strlen(err_str));
 		abort();
 	}
