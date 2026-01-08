@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $ */
+/* $NetBSD: sha2.c,v 1.27 2026/01/08 11:31:24 nia Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.27 2026/01/08 11:31:24 nia Exp $");
 
 #include <sys/param.h>	/* XXX: to pull <machine/macros.h> for vax memset(9) */
 #include <lib/libkern/libkern.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $");
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.27 2026/01/08 11:31:24 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: sha2.c,v 1.26 2024/01/20 14:55:02 christos Exp $");
 #include <sys/types.h>
 #include <sys/sha2.h>
 
-#if HAVE_SYS_ENDIAN_H
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 # include <sys/endian.h>
 #endif
 
