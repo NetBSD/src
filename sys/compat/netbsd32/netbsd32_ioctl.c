@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.123 2026/01/08 00:36:21 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.124 2026/01/08 01:11:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.123 2026/01/08 00:36:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.124 2026/01/08 01:11:24 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -153,12 +153,13 @@ netbsd32_to_oifreq(struct netbsd32_oifreq *s32p, struct oifreq *p, u_long cmd)
 static inline void
 netbsd32_to_ifdatareq(struct netbsd32_ifdatareq *s32p, struct ifdatareq *p, u_long cmd)
 {
-	const struct netbsd32_timespec ts = s32p->ifdr_data.ifi_lastchange;
+
 	memcpy(p, s32p, sizeof *s32p);
 	switch (cmd) {
 	case SIOCGIFDATA:
 	case SIOCZIFDATA:
-		netbsd32_to_timespec(&ts, &p->ifdr_data.ifi_lastchange);
+		netbsd32_to_timespec(&s32p->ifdr_data.ifi_lastchange,
+		    &p->ifdr_data.ifi_lastchange);
 		break;
 	}
 }
