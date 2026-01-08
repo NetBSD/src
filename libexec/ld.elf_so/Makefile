@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152 2025/12/17 01:32:55 riastradh Exp $
+#	$NetBSD: Makefile,v 1.153 2026/01/08 12:58:13 skrll Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -122,6 +122,7 @@ CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
+#CPPFLAGS+=	-DMALLOC_DEBUG
 .if !empty(LDELFSO_MACHINE_ARCH:Mearm*)
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
 .endif

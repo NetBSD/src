@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.14 2026/01/08 12:33:31 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.15 2026/01/08 12:58:13 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.14 2026/01/08 12:33:31 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.15 2026/01/08 12:58:13 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -105,38 +105,22 @@ static int		morepages(int);
  * contains a pointer to the next free block, and the bottom two bits must
  * be zero.  When in use, the first byte is set to MAGIC, and the second
  * byte is the size index.  The remaining bytes are for alignment.
- * If range checking is enabled then a second word holds the size of the
- * requested block, less 1, rounded up to a multiple of sizeof(RMAGIC).
- * The order of elements is critical: ov_magic must overlay the low order
- * bits of ov_next, and ov_magic can not be a valid ov_next bit pattern.
  */
 union	overhead {
 	union	overhead *ov_next;	/* when free */
 	struct {
 		u_char	ovu_magic;	/* magic number */
 		u_char	ovu_index;	/* bucket # */
-#ifdef RCHECK
-		u_short	ovu_rmagic;	/* range magic number */
-		u_int	ovu_size;	/* actual block size */
-#endif
 	} ovu;
 #define	ov_magic	ovu.ovu_magic
 #define	ov_index	ovu.ovu_index
-#define	ov_rmagic	ovu.ovu_rmagic
-#define	ov_size		ovu.ovu_size
 };
 
 static void morecore(size_t);
 static void *imalloc(size_t);
 
 #define	MAGIC		0xef		/* magic # on accounting info */
-#define RMAGIC		0x5555		/* magic # on range info */
 
-#ifdef RCHECK
-#define	RSLOP		(sizeof (u_short))
-#else
-#define	RSLOP		0
-#endif
 
 /*
  * nextf[i] is the pointer to the next free block of size 2^(i+3).  The
@@ -158,7 +142,7 @@ static	size_t pageshift;		/* page size shift */
 static	u_int nmalloc[NBUCKETS];
 #endif
 
-#if defined(MALLOC_DEBUG) || defined(RCHECK)
+#if defined(MALLOC_DEBUG)
 #define	ASSERT(p)   if (!(p)) botch("p")
 static void
 botch(const char *s)
@@ -211,7 +195,7 @@ imalloc(size_t nbytes)
 	 * stored in hash buckets which satisfies request.
 	 * Account for space used per block for accounting.
 	 */
-	if (nbytes <= (n = pagesz - sizeof (*op) - RSLOP)) {
+	if (nbytes <= (n = pagesz - sizeof (*op))) {
 		if (sizeof(union overhead) & (sizeof(union overhead) - 1)) {
 			amt = sizeof(union overhead) * 2;
 			bucket = 1;
@@ -219,7 +203,7 @@ imalloc(size_t nbytes)
 			amt = sizeof(union overhead); /* size of first bucket */
 			bucket = 0;
 		}
-		n = -(sizeof (*op) + RSLOP);
+		n = -sizeof (*op);
 	} else {
 		amt = pagesz;
 		bucket = pagebucket;
@@ -246,15 +230,6 @@ imalloc(size_t nbytes)
 #ifdef MSTATS
 	nmalloc[bucket]++;
 #endif
-#ifdef RCHECK
-	/*
-	 * Record allocated size of block and
-	 * bound space with magic numbers.
-	 */
-	op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
-	op->ov_rmagic = RMAGIC;
-	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
-#endif
 	return ((char *)(op + 1));
 }
 
@@ -274,9 +249,7 @@ morecore(size_t bucket)
 	 * 2^30 bytes on a VAX, I think) or for a negative arg.
 	 */
 	sz = 1 << (bucket + 3);
-#ifdef MALLOC_DEBUG
 	ASSERT(sz > 0);
-#endif
 	if (sz < pagesz) {
 		amt = pagesz;
 		nblks = amt >> (bucket + 3);
@@ -310,16 +283,9 @@ xfree(void *cp)
 	if (cp == NULL)
 		return;
 	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
-#ifdef MALLOC_DEBUG
 	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
-#else
 	if (op->ov_magic != MAGIC)
 		return;				/* sanity */
-#endif
-#ifdef RCHECK
-	ASSERT(op->ov_rmagic == RMAGIC);
-	ASSERT(*(u_short *)((caddr_t)(op + 1) + op->ov_size) == RMAGIC);
-#endif
 	size = op->ov_index;
 	ASSERT(size < NBUCKETS);
 	op->ov_next = nextf[size];	/* also clobbers ov_magic */
@@ -352,22 +318,18 @@ irealloc(void *cp, size_t nbytes)
 	i = op->ov_index;
 	onb = 1 << (i + 3);
 	if (onb < pagesz)
-		onb -= sizeof (*op) + RSLOP;
+		onb -= sizeof (*op);
 	else
-		onb += pagesz - sizeof (*op) - RSLOP;
+		onb += pagesz - sizeof (*op);
 	/* avoid the copy if same size block */
 	if (i) {
 		i = 1 << (i + 2);
 		if (i < pagesz)
-			i -= sizeof (*op) + RSLOP;
+			i -= sizeof (*op);
 		else
-			i += pagesz - sizeof (*op) - RSLOP;
+			i += pagesz - sizeof (*op);
 	}
 	if (nbytes <= onb && nbytes > i) {
-#ifdef RCHECK
-		op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
-		*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
-#endif
 		return(cp);
 	}
 	if ((res = imalloc(nbytes)) == NULL)
