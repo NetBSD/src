@@ -1,4 +1,4 @@
-$NetBSD: ngle_manual.txt,v 1.5 2025/12/30 08:36:59 macallan Exp $
+$NetBSD: ngle_manual.txt,v 1.6 2026/01/08 08:30:36 macallan Exp $
 
 The Unofficial NGLE Manual
 
@@ -183,7 +183,7 @@ pipeline pacing, which is then re-enabled whenever we touch the blitter.
 Basically, you poke coordinates into registers and apply an opcode to the last
 write's address to start an operation ( and specify which ), and there are
 registers to control drawing mode, ROPs etc.
-All register writes go through a pipeline which has 32 entries on HCRX.
+All register writes go through a pipeline which has 32 entries on HCRX and EG.
 
 #define	NGLE_BUSY		0x200000	/* busy register */
 the first byte will be non-zero if the drawing engine is busy, xf86 uses 8bit
@@ -370,24 +370,12 @@ No LUTBLT analog here, for the the cursor bitmap use BINcursor.
 These control video output on EG - xf86 sets both to enable output, clears both
 to turn it off. Need to check which bit does what exactly.
 
-#define	NGLE_HCRX_PLANE_ENABLE	0x21003c	/* HCRX plane enable */ 
 #define	NGLE_HCRX_MISCVID	0x210040	/* HCRX misc video */
 	#define HCRX_BOOST_ENABLE	0x80000000 /* extra high signal level */
 	#define HCRX_VIDEO_ENABLE	0x0A000000
 	#define HCRX_OUTPUT_ENABLE	0x01000000
 xf86 uses HCRX_VIDEO_ENABLE, the other bits were found by experiment, functions
 are guesswork. There are other bits with unknown function.
-
-This is set by xf86, other values unknown.
-#define	NGLE_HCRX_HB_MODE2	0x210120	/* HCRX 'hyperbowl' mode 2 */
-	#define HYPERBOWL_MODE2_8_24					15
-
-This seems to be the HCRX's analogue to FX's force attribute register - we can
-switch between overlay opacity and image plane display mode on the fly
-#define	NGLE_HCRX_HB_MODE	0x210130	/* HCRX 'hyperbowl' */
-	#define HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES	4
-	#define HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE	8
-	#define HYPERBOWL_MODE01_8_24_LUT0_OPAQUE_LUT1_OPAQUE		10
 
 8. Visualize EG notes
 All referenves to 'EG' and the like strictly refer to the PCI Visualize EG card
@@ -401,6 +389,22 @@ the firmware configuration menu - I need to figure out what exactly that does.
 Same with grey scale mode, which may just select a different default palette.
 
 9. HCRX notes
+#define	NGLE_HCRX_PLANE_ENABLE	0x21003c	/* HCRX plane enable */ 
+Controls which bit planes are used for output. The uppper byte seems to control
+the overlay, the lower 24 are for the image plane(s). Exact bit assignment
+needs to be checked. We set it fo 0xffffffff for 24bit with 8bit overlay.
+
+This is set by xf86, other values unknown.
+#define	NGLE_HCRX_HB_MODE2	0x210120	/* HCRX 'hyperbowl' mode 2 */
+	#define HYPERBOWL_MODE2_8_24					15
+
+This seems to be the HCRX's analogue to FX's force attribute register - we can
+switch between overlay opacity and image plane display mode on the fly
+#define	NGLE_HCRX_HB_MODE	0x210130	/* HCRX 'hyperbowl' */
+	#define HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES	4
+	#define HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE	8
+	#define HYPERBOWL_MODE01_8_24_LUT0_OPAQUE_LUT1_OPAQUE		10
+
 Xf86 always writes NGLE_HCRX_HB_MODE twice, apparently working around a hardware
 bug. It also initializes a few unexplained registers with magic numbers:
 #define	NGLE_REG_42		0x210028	/* these seem to control */
@@ -420,16 +424,29 @@ NGLE_REG_43, 0
 NGLE_REG_44, 0
 NGLE_REG_45, 0x444c4048
 
+Also, xf86 has this comment when setting things up for 24bit display:
+    /**********************************************
+     * Write overlay transparency mask so only entry 255 is transparent
+     **********************************************/
+... and then proceeds to BINC write 0 to (1532,0) in the overlay.
+
+So, to setup HCRX24 my driver does:
+- program the hyperbowl registers as described above
+- blit 0x04000F00 into the attribute plane
+- make overlay colour 255 transparent as described above
+- blit the 24bit buffer all white - NetBSD uses an R3G3B2 palette for console
+  output, that way 255 will still be white
+- write a linear ramp into colour map 0 - STI leaves it at all zero which gives
+  us a black screen no matter what we write into the image buffer
+- write an R3G3B2 palette into colour map 2, aka offset 512, for the overlay
+With this we can 'switch' to 24bit display by blitting 255 all over the overlay
+and back to console output by just resuming character drawing ( and blitting the
+image buffer white again )
+
 The ROM is in byte mode, as expected of a GSC device, with every 32bit word
 containing one byte of ROM data. The first word also has configuration bits:
 #define HCRX_CONFIG_24BIT	0x100
 
 On my HCRX24Z this reads 0x700, I assume 0x200 or 0x400 indicates the Z-Buffer
 add-on's presence.
-
-Also, xf86 has this comment when setting things up for 24bit display:
-    /**********************************************
-     * Write overlay transparency mask so only entry 255 is transparent
-     **********************************************/
-... and then proceeds to BINC write 0 to (1532,0) in the overlay
 
