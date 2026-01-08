@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_xor_64_cas.c,v 1.3 2014/06/23 21:53:45 joerg Exp $	*/
+/*	$NetBSD: atomic_xor_64_cas.c,v 1.4 2026/01/08 08:55:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "atomic_op_namespace.h"
 
 #include <sys/atomic.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32_cas.c,v 1.1 2014/02/21 10:52:50 martin Exp $	*/
+/*	$NetBSD: atomic_cas_32_cas.c,v 1.2 2026/01/08 08:55:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
 #endif
+
+#include "atomic_op_namespace.h"
+
 #include <sys/atomic.h>
 
 bool bool_compare_and_swap_4(volatile uint32_t *, uint32_t, uint32_t, ...)
