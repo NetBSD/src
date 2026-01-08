@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.15 2026/01/08 12:58:13 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.16 2026/01/08 13:33:37 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.15 2026/01/08 12:58:13 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.16 2026/01/08 13:33:37 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -249,7 +249,6 @@ morecore(size_t bucket)
 	 * 2^30 bytes on a VAX, I think) or for a negative arg.
 	 */
 	sz = 1 << (bucket + 3);
-	ASSERT(sz > 0);
 	if (sz < pagesz) {
 		amt = pagesz;
 		nblks = amt >> (bucket + 3);
