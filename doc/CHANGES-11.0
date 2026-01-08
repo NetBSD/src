@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.66 2026/01/05 14:38:45 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.67 2026/01/08 10:53:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1332,4 +1332,30 @@ sys/arch/hppa/hppa/machdep.c			1.25
 
 	hppa: fix CPU model detection on HP 9000 745i/50.
 	[skrll, ticket #141]
+
+usr.sbin/sysinst/msg.mi.de			1.54
+usr.sbin/sysinst/msg.mi.en			1.55
+usr.sbin/sysinst/msg.mi.es			1.45
+usr.sbin/sysinst/msg.mi.pl			1.51
+
+	sysinst(8): PR 59889: incomplete installation of sets is not
+	actually fatal.
+	[nia, ticket #142]
+
+sys/netinet/if_arp.c				1.318
+
+	arp: clear mbuf csum_flags before sending an ARP reply packet.
+	[ozaki-r, ticket #143]
+
+sys/dev/pci/ehci_pci.c				1.79
+
+	ehci_pci: PR 57359: apply AMD SB600/SB700 quirk after enabling
+	the device.
+	[tsutsui, ticket #144]
+
+lib/libc/stdlib/strtonum.c			1.8
+
+	build: fix tools build on non-NetBSD platforms.
+	[gutteridge, ticket #145]
+
 
