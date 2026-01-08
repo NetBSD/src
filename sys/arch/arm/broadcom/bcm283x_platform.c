@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.52 2025/10/03 14:05:11 thorpej Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.53 2026/01/08 00:32:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.52 2025/10/03 14:05:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.53 2026/01/08 00:32:37 christos Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1238,10 +1238,12 @@ SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
 	    CTLTYPE_INT, "board_revision", NULL, NULL, 0,
 	    &vb.vbt_boardrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
+	uint64_t sn;
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
 	    CTLTYPE_QUAD, "serial", NULL, NULL, 0,
 	    &vb.vbt_serial.sn, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	vb.vbt_serial.sn = sn;
 }
 
 #if defined(SOC_BCM2835)
