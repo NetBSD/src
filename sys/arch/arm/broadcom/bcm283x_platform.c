@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.53 2026/01/08 00:32:37 christos Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.54 2026/01/08 00:51:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.53 2026/01/08 00:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.54 2026/01/08 00:51:20 christos Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -491,6 +491,8 @@ static struct {
 	}
 };
 
+static uint64_t vb_serial;
+
 #if NGENFB > 0
 static struct {
 	struct vcprop_buffer_hdr	vb_hdr;
@@ -778,6 +780,7 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 		curcpu()->ci_data.cpu_cc_freq =
 		    le32toh(vb.vbt_armclockrate.rate);
 
+	vb_serial = vb.vbt_serial.sn;
 #ifdef VERBOSE_INIT_ARM
 	if (vcprop_tag_success_p(&vb.vbt_memory.tag))
 		printf("%s: memory size  %zu\n", __func__,
@@ -1238,12 +1241,10 @@ SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
 	    CTLTYPE_INT, "board_revision", NULL, NULL, 0,
 	    &vb.vbt_boardrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
-	uint64_t sn;
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
 	    CTLTYPE_QUAD, "serial", NULL, NULL, 0,
-	    &vb.vbt_serial.sn, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	vb.vbt_serial.sn = sn;
+	    &vb_serial, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 #if defined(SOC_BCM2835)
