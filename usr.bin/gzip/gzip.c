@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.128 2026/01/08 02:18:23 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.129 2026/01/08 02:20:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2026 Matthew R. Green
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997-2026 Matthew R. Green. "
 	    "All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.128 2026/01/08 02:18:23 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.129 2026/01/08 02:20:24 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -176,7 +176,7 @@ static suffixes_t suffixes[] = {
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 #define SUFFIX_MAXLEN	30
 
-static	const char	gzip_version[] = "NetBSD gzip 20260103";
+static	const char	gzip_version[] = "NetBSD gzip 20260107";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
@@ -251,6 +251,7 @@ static	void	check_siginfo(void);
 #else
 #define check_siginfo() /* nothing */
 #endif
+static	void	license(void) __dead;
 static	off_t	cat_fd(unsigned char *, size_t, off_t *, int fd);
 static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *);
@@ -307,14 +308,8 @@ static const struct option longopts[] = {
 	{ "version",		no_argument,		0,	'V' },
 	{ "fast",		no_argument,		0,	'1' },
 	{ "best",		no_argument,		0,	'9' },
-#if 0
-	/*
-	 * This is what else GNU gzip implements.  --ascii isn't useful
-	 * on NetBSD, and I don't care to have a --license.
-	 */
 	{ "ascii",		no_argument,		0,	'a' },
 	{ "license",		no_argument,		0,	'L' },
-#endif
 	{ NULL,			no_argument,		0,	0 },
 };
 #endif
@@ -349,7 +344,7 @@ main(int argc, char **argv)
 #ifdef SMALL
 #define OPT_LIST "123456789cdhlVn"
 #else
-#define OPT_LIST "123456789cdfhklNnqrS:tVv"
+#define OPT_LIST "123456789acdfhkLlNnqrS:tVv"
 #endif
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
@@ -373,12 +368,19 @@ main(int argc, char **argv)
 			display_version();
 			/* NOTREACHED */
 #ifndef SMALL
+		case 'a':
+			/* --ascii is already the default. */
+			break;
 		case 'f':
 			fflag = 1;
 			break;
 		case 'k':
 			kflag = 1;
 			break;
+		case 'L':
+			license();
+			/* NOTREACHED */
+
 		case 'N':
 			nflag = 0;
 			Nflag = 1;
@@ -2259,6 +2261,26 @@ print_list_out(off_t out, off_t in, const char *outfile)
 	printf(" %s\n", outfile);
 }
 
+#ifndef SMALL
+static void
+license(void)
+{
+	fprintf(stderr, "%s\n", gzip_version);
+	fprintf(stderr, "%s\n",
+	    "Copyright (c) 1997-2026 Matthew R. Green\n"
+	    "All rights reserved.\n"
+	    "Redistribution and use in source and binary forms, with or without\n"
+	    "modification, are permitted provided that the following conditions\n"
+	    "are met:\n"
+	    "1. Redistributions of source code must retain the above copyright\n"
+	       "notice, this list of conditions and the following disclaimer.\n"
+	    "2. Redistributions in binary form must reproduce the above copyright\n"
+	       "notice, this list of conditions and the following disclaimer in the\n"
+	       "documentation and/or other materials provided with the distribution.");
+	exit(0);
+}
+#endif
+
 /* display the usage of NetBSD gzip */
 static void
 usage(void)
@@ -2271,6 +2293,7 @@ usage(void)
     " -1 --fast            fastest (worst) compression\n"
     " -2 .. -8             set compression level\n"
     " -9 --best            best (slowest) compression\n"
+    " -a --ascii           ignored on NetBSD\n"
     " -c --stdout          write to stdout, keep original files\n"
     "    --to-stdout\n"
     " -d --decompress      uncompress files\n"
@@ -2278,6 +2301,7 @@ usage(void)
     " -f --force           force overwriting & compress links\n"
     " -h --help            display this help\n"
     " -k --keep            don't delete input files during operation\n"
+    " -L --license         show the program copyright and license\n"
     " -l --list            list compressed file contents\n"
     " -N --name            save or restore original file name and time stamp\n"
     " -n --no-name         don't save original file name or time stamp\n"
