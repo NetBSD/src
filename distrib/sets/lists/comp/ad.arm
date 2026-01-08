@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.115 2025/09/19 08:55:19 mrg Exp $
+# $NetBSD: ad.arm,v 1.116 2026/01/08 14:52:03 simonb Exp $
 #
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
@@ -444,26 +444,16 @@
 ./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
 ./usr/include/gcc-9/mmintrin.h			comp-obsolete		obsolete
 ./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-10/arm_acle.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_acle.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_bf16.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_bf16.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_cde.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_cde.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_cmse.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_cmse.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_fp16.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_fp16.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_mve.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_mve.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_mve_types.h		comp-c-include		gcc=10
-./usr/include/gcc-10/arm_mve_types.h		comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/arm_neon.h			comp-c-include		gcc=10
-./usr/include/gcc-10/arm_neon.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/mmintrin.h			comp-c-include		gcc=10
-./usr/include/gcc-10/mmintrin.h			comp-obsolete		obsolete,gcc=12
-./usr/include/gcc-10/tgmath.h			comp-c-include		gcc=10
-./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete,gcc=12
+./usr/include/gcc-10/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-10/arm_bf16.h			comp-obsolete		obsolete
+./usr/include/gcc-10/arm_cde.h			comp-obsolete		obsolete
+./usr/include/gcc-10/arm_cmse.h			comp-obsolete		obsolete
+./usr/include/gcc-10/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-10/arm_mve.h			comp-obsolete		obsolete
+./usr/include/gcc-10/arm_mve_types.h		comp-obsolete		obsolete
+./usr/include/gcc-10/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-10/mmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-10/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-12/arm_acle.h			comp-c-include		gcc=12
 ./usr/include/gcc-12/arm_acle.h			comp-obsolete		obsolete,gcc=14
 ./usr/include/gcc-12/arm_bf16.h			comp-c-include		gcc=12
