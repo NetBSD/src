@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dtb.mk,v 1.5 2025/10/15 06:13:17 skrll Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.6 2026/01/08 16:45:39 skrll Exp $
 
 .include <bsd.init.mk>
 
@@ -62,6 +62,11 @@ DTBINSTDIR=	${DTBDIR}
 .endif
 
 dtbinstall:	dtb
+.if defined(DTSSUBDIR)
+.if ${DTSSUBDIR:M*/*} != ""
+	${INSTALL_DIR} ${DESTDIR}${DTBINSTDIR:H}
+.endif
+.endif
 	${INSTALL_DIR} ${DESTDIR}${DTBINSTDIR}
 .for _dtb in ${DTB}
 	${_MKSHMSG_INSTALL} ${_dtb}
@@ -82,6 +87,10 @@ dtbinstall:	dtb
 
 dtblist:
 .if defined(DTSSUBDIR)
+.if ${DTSSUBDIR:M*/*} != ""
+	@echo ".${DTBINSTDIR:H}\t\tdtb-base-boot\tdtb" | \
+	    ${TOOL_SED} 's/\\t/	/g'
+.endif
 	@echo ".${DTBINSTDIR}\t\tdtb-base-boot\tdtb" | \
 	    ${TOOL_SED} 's/\\t/	/g'
 .for _dtb in ${DTB_NOSUBDIR}
