@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.16 2026/01/08 13:33:37 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.17 2026/01/09 09:38:33 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.16 2026/01/08 13:33:37 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.17 2026/01/09 09:38:33 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -123,15 +123,15 @@ static void *imalloc(size_t);
 
 
 /*
- * nextf[i] is the pointer to the next free block of size 2^(i+3).  The
- * smallest allocatable block is 8 bytes.  The overhead information
- * precedes the data area returned to the user.
+ * nextf[i] is the pointer to the next free block of size
+ * (FIRST_BUCKET_SIZE << i).  The overhead information precedes the data
+ * area returned to the user.
  */
+#define	FIRST_BUCKET_SIZE	8
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
 
 static	size_t pagesz;			/* page size */
-static	size_t pagebucket;		/* page size bucket */
 static	size_t pageshift;		/* page size shift */
 
 #ifdef MSTATS
@@ -161,58 +161,26 @@ imalloc(size_t nbytes)
 {
 	union overhead *op;
 	size_t bucket;
-	size_t n, m;
 	unsigned amt;
 
 	/*
-	 * First time malloc is called, setup page size and
-	 * align break pointer so all data will be page aligned.
+	 * First time malloc is called, setup page size.
 	 */
-	if (pagesz == 0) {
-		pagesz = n = _rtld_pagesz;
-		if (morepages(NPOOLPAGES) == 0)
-			return NULL;
-		op = (union overhead *)(pagepool_start);
-		m = sizeof (*op) - (((char *)op - (char *)NULL) & (n - 1));
-		if (n < m)
-			n += pagesz - m;
-		else
-			n -= m;
-		if (n) {
-			pagepool_start += n;
-		}
-		bucket = 0;
-		amt = sizeof(union overhead);
-		while (pagesz > amt) {
-			amt <<= 1;
-			bucket++;
-		}
-		pagebucket = bucket;
-		pageshift = ffs(pagesz) - 1;
-	}
+	if (pagesz == 0)
+		pagesz = _rtld_pagesz;
 	/*
 	 * Convert amount of memory requested into closest block size
 	 * stored in hash buckets which satisfies request.
 	 * Account for space used per block for accounting.
 	 */
-	if (nbytes <= (n = pagesz - sizeof (*op))) {
-		if (sizeof(union overhead) & (sizeof(union overhead) - 1)) {
-			amt = sizeof(union overhead) * 2;
-			bucket = 1;
-		} else {
-			amt = sizeof(union overhead); /* size of first bucket */
-			bucket = 0;
-		}
-		n = -sizeof (*op);
-	} else {
-		amt = pagesz;
-		bucket = pagebucket;
-	}
-	while (nbytes > amt + n) {
+
+	amt = FIRST_BUCKET_SIZE;
+	bucket = 0;
+	while (nbytes > amt - sizeof(*op)) {
 		amt <<= 1;
-		if (amt == 0)
-			return (NULL);
 		bucket++;
+		if (amt == 0 || bucket >= NBUCKETS)
+			return (NULL);
 	}
 	/*
 	 * If nothing in hash bucket right now,
@@ -244,16 +212,12 @@ morecore(size_t bucket)
 	size_t amt;		/* amount to allocate */
 	size_t nblks;		/* how many blocks we get */
 
-	/*
-	 * sbrk_size <= 0 only for big, FLUFFY, requests (about
-	 * 2^30 bytes on a VAX, I think) or for a negative arg.
-	 */
-	sz = 1 << (bucket + 3);
+	sz = FIRST_BUCKET_SIZE << bucket;
 	if (sz < pagesz) {
 		amt = pagesz;
 		nblks = amt >> (bucket + 3);
 	} else {
-		amt = sz + pagesz;
+		amt = sz;
 		nblks = 1;
 	}
 	if (amt > PAGEPOOL_SIZE)
