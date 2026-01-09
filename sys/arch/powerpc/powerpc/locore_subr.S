@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.68 2023/03/01 08:18:13 riastradh Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.69 2026/01/09 22:54:34 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -304,7 +304,7 @@ ENTRY(cpu_switchto)
  */
 	ldreg	%r31,CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,CFRAME_R30(%r1)
-	IBM405_ERRATA77_DCBT(0,%r1)
+	POWERPC_STWCX_PRE(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 #if 1
 	addi	%r1,%r1,CALLFRAMELEN
@@ -344,7 +344,7 @@ _ENTRY(softint_cleanup)
 	mtmsr	%r0
 	isync
 #endif
-	IBM405_ERRATA77_DCBT(0,%r1)
+	POWERPC_STWCX_PRE(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 	addi	%r1, %r1, CALLFRAMELEN
 	ldreg	%r0, CFRAME_LR(%r1)
@@ -512,7 +512,7 @@ _ENTRY(softint_fast_dispatch)
 	ldreg	%r29,SFRAME_R29(%r1)	/* R29 */
 	ldreg	%r31,SFRAMELEN+CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,SFRAMELEN+CFRAME_R30(%r1)
-	IBM405_ERRATA77_DCBT(0,%r1)
+	POWERPC_STWCX_PRE(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 	addi	%r1,%r1,SFRAMELEN+2*CALLFRAMELEN /* remove switch & callframes */
 #endif
@@ -619,7 +619,7 @@ ENTRY(do_ucas_32)
 	lwarx	%r10,0,%r3
 	cmpw	%r10, %r4
 	bne	2f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stwcx.	%r5,0,%r3
 	bne	1b
 	mr	%r5,%r10

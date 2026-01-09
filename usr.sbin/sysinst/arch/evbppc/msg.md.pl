@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.2 2026/01/09 22:54:35 jmcneill Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -53,6 +53,6 @@ message dobootblks
 }
 
 message set_kernel_1
-{Kernel (WALNUT)}
+{Kernel (NINTENDO)}
 message set_kernel_2
-{Kernel (OPENBLOCKS266)}
+{Kernel (NINTENDO.MP)}

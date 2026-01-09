@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.125 2025/09/20 06:54:52 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.126 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -463,6 +463,7 @@ void	oea_init(void (*)(void));
 void	oea_startup(const char *);
 void	oea_dumpsys(void);
 void	oea_install_extint(void (*)(void));
+void	oea_install_extint_vec(void (*)(void), u_int);
 paddr_t	kvtop(void *);
 
 extern paddr_t msgbuf_paddr;
@@ -509,5 +510,6 @@ void	__syncicache(void *, size_t);
 #define	CPU_EXECPROT		11	/* bool: PROT_EXEC works */
 #define	CPU_FPU			12
 #define	CPU_NO_UNALIGNED	13	/* No HW support for unaligned access */
+#define	CPU_PVR			14	/* int: processor version */
 
 #endif	/* _POWERPC_CPU_H_ */

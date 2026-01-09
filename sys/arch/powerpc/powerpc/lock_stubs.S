@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.14 2022/04/06 22:47:57 riastradh Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.15 2026/01/09 22:54:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ ENTRY(_lock_cas)
 	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r4
 	bne-	2f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stptrcx. %r5,0,%r3
 	bne-	1b
 	SYNC
@@ -76,7 +76,7 @@ ENTRY(mutex_enter)
 	lptrarx	%r10,0,%r3
 	cmpptri	%r10,0
 	bne-	2f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stptrcx. %r13,0,%r3
 	bne-	1b
 	ISYNC
@@ -94,7 +94,7 @@ ENTRY(mutex_exit)
 	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r13
 	bne-	2f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	1b
 	blr
@@ -130,7 +130,7 @@ ENTRY(rw_enter)
 2:	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r9
 	bne-	3f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	2b
 	ISYNC
@@ -156,7 +156,7 @@ ENTRY(rw_tryenter)
 2:	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r9
 	bne-	3f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	2b
 
@@ -188,7 +188,7 @@ ENTRY(rw_exit)
 2:	lptrarx	%r10,0,%r3
 	cmpptr	%r10,%r9
 	bne-	3f
-	IBM405_ERRATA77_DCBT(0,%r3)
+	POWERPC_STWCX_PRE(0,%r3)
 	stptrcx. %r7,0,%r3
 	bne-	2b
 

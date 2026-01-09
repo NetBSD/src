@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.24 2025/12/12 12:18:48 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.25 2026/01/09 22:54:34 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.24 2025/12/12 12:18:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.25 2026/01/09 22:54:34 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -441,22 +441,27 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap,
 		    datap, datalen, NULL, lflags);
+		if (error != 0) {
+			DPRINTF(("%s: dmamap load error = %d\n", error));
+			goto do_pio;
+		}
+		if (!sdmmc_alignment_ok(sc, sc->sc_dmap)) {
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+			goto do_pio;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap,
+		    0, datalen, preops);
+		cmd.c_dmamap = sc->sc_dmap;
+		error = sdmmc_mmc_command(sc, &cmd);
 		if (error == 0) {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap,
-			    0, datalen, preops);
-			cmd.c_dmamap = sc->sc_dmap;
-			error = sdmmc_mmc_command(sc, &cmd);
-			if (error == 0) {
-				bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap,
-				    0, datalen, postops);
-			}
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
-		} else {
-			device_printf(sc->sc_dev,"dmamap load error = %d\n",
-			    error);
-			error = sdmmc_mmc_command(sc, &cmd);
+			    0, datalen, postops);
 		}
+
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
 	} else {
+do_pio:
 		error = sdmmc_mmc_command(sc, &cmd);
 	}
 

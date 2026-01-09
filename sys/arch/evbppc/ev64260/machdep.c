@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2024/03/05 14:15:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2026/01/09 22:54:28 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2024/03/05 14:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2026/01/09 22:54:28 jmcneill Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -177,7 +177,7 @@ const struct gt_decode_info {
 };
 
 struct powerpc_bus_dma_tag ev64260_bus_dma_tag = {
-        0,				/* _bounce_thresh */
+        0, 0,				/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

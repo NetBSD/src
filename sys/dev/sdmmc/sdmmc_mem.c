@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.77 2024/10/24 10:50:31 skrll Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.78 2026/01/09 22:54:34 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.77 2024/10/24 10:50:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.78 2026/01/09 22:54:34 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -103,9 +103,9 @@ static int sdmmc_mem_single_read_block(struct sdmmc_function *, uint32_t,
 static int sdmmc_mem_single_write_block(struct sdmmc_function *, uint32_t,
     u_char *, size_t);
 static int sdmmc_mem_single_segment_dma_read_block(struct sdmmc_function *,
-    uint32_t, u_char *, size_t);
+    uint32_t, u_char *, size_t, bool);
 static int sdmmc_mem_single_segment_dma_write_block(struct sdmmc_function *,
-    uint32_t, u_char *, size_t);
+    uint32_t, u_char *, size_t, bool);
 static int sdmmc_mem_read_block_subr(struct sdmmc_function *, bus_dmamap_t,
     uint32_t, u_char *, size_t);
 static int sdmmc_mem_write_block_subr(struct sdmmc_function *, bus_dmamap_t,
@@ -2036,14 +2036,17 @@ sdmmc_mem_single_read_block(struct sdmmc_function *sf, uint32_t blkno,
  */
 static int
 sdmmc_mem_single_segment_dma_read_block(struct sdmmc_function *sf,
-    uint32_t blkno, u_char *data, size_t datalen)
+    uint32_t blkno, u_char *data, size_t datalen, bool force_bbuf)
 {
 	struct sdmmc_softc *sc = sf->sc;
-	bool use_bbuf = false;
+	bool use_bbuf = force_bbuf;
 	int error = 0;
 	int i;
 
-	for (i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
+	if (!use_bbuf && !sdmmc_alignment_ok(sc, sc->sc_dmap)) {
+		use_bbuf = true;
+	}
+	for (i = 0; !use_bbuf && i < sc->sc_dmap->dm_nsegs; i++) {
 		size_t len = sc->sc_dmap->dm_segs[i].ds_len;
 		if ((len % SDMMC_SECTOR_SIZE) != 0) {
 			use_bbuf = true;
@@ -2197,8 +2200,12 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	/* DMA transfer */
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, data, datalen, NULL,
 	    BUS_DMA_NOWAIT|BUS_DMA_READ);
-	if (error)
+	if (error) {
+		/* Force bounce */
+		error = sdmmc_mem_single_segment_dma_read_block(sf, blkno,
+		    data, datalen, true);
 		goto out;
+	}
 
 #ifdef SDMMC_DEBUG
 	printf("data=%p, datalen=%zu\n", data, datalen);
@@ -2212,7 +2219,7 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	if (sc->sc_dmap->dm_nsegs > 1
 	    && !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
 		error = sdmmc_mem_single_segment_dma_read_block(sf, blkno,
-		    data, datalen);
+		    data, datalen, false);
 		goto unload;
 	}
 
@@ -2262,14 +2269,17 @@ sdmmc_mem_single_write_block(struct sdmmc_function *sf, uint32_t blkno,
  */
 static int
 sdmmc_mem_single_segment_dma_write_block(struct sdmmc_function *sf,
-    uint32_t blkno, u_char *data, size_t datalen)
+    uint32_t blkno, u_char *data, size_t datalen, bool force_bbuf)
 {
 	struct sdmmc_softc *sc = sf->sc;
-	bool use_bbuf = false;
+	bool use_bbuf = force_bbuf;
 	int error = 0;
 	int i;
 
-	for (i = 0; i < sc->sc_dmap->dm_nsegs; i++) {
+	if (!use_bbuf && !sdmmc_alignment_ok(sc, sc->sc_dmap)) {
+		use_bbuf = true;
+	}
+	for (i = 0; !use_bbuf && i < sc->sc_dmap->dm_nsegs; i++) {
 		size_t len = sc->sc_dmap->dm_segs[i].ds_len;
 		if ((len % SDMMC_SECTOR_SIZE) != 0) {
 			use_bbuf = true;
@@ -2442,8 +2452,12 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	/* DMA transfer */
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, data, datalen, NULL,
 	    BUS_DMA_NOWAIT|BUS_DMA_WRITE);
-	if (error)
+	if (error) {
+		/* Force bounce */
+		error = sdmmc_mem_single_segment_dma_write_block(sf, blkno,
+		    data, datalen, true);
 		goto out;
+	}
 
 #ifdef SDMMC_DEBUG
 	aprint_normal_dev(sc->sc_dev, "%s: data=%p, datalen=%zu\n",
@@ -2459,7 +2473,7 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	if (sc->sc_dmap->dm_nsegs > 1
 	    && !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
 		error = sdmmc_mem_single_segment_dma_write_block(sf, blkno,
-		    data, datalen);
+		    data, datalen, false);
 		goto unload;
 	}
 

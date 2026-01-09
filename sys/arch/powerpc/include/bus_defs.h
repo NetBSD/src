@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.5 2022/03/10 00:14:16 riastradh Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.6 2026/01/09 22:54:33 jmcneill Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -315,12 +315,13 @@ struct powerpc_bus_dma_tag {
 	/*
 	 * The `bounce threshold' is checked while we are loading
 	 * the DMA map.  If the physical address of the segment
-	 * exceeds the threshold, an error will be returned.  The
-	 * caller can then take whatever action is necessary to
+	 * exceeds the min/max threshold, an error will be returned.
+	 * The caller can then take whatever action is necessary to
 	 * bounce the transfer.  If this value is 0, it will be
 	 * ignored.
 	 */
-	bus_addr_t _bounce_thresh;
+	bus_addr_t _bounce_thresh_min;
+	bus_addr_t _bounce_thresh_max;
 
 	/*
 	 * DMA mapping methods.
@@ -376,7 +377,8 @@ struct powerpc_bus_dmamap {
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
-	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
+	bus_addr_t	_dm_bounce_thresh_min; /* bounce min threshold; see tag */
+	bus_addr_t	_dm_bounce_thresh_max; /* bounce max threshold; see tag */
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */

@@ -1,4 +1,4 @@
-/* $NetBSD: mcadma_machdep.c,v 1.4 2020/11/21 15:52:32 thorpej Exp $ */
+/* $NetBSD: mcadma_machdep.c,v 1.5 2026/01/09 22:54:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcadma_machdep.c,v 1.4 2020/11/21 15:52:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcadma_machdep.c,v 1.5 2026/01/09 22:54:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct rs6000_dma_cookie {
  */
 
 struct powerpc_bus_dma_tag mca_bus_dma_tag = {
-	0,			/* _bounce_thresh */
+	0, 0,			/* _bounce_thresh */
 	_mca_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

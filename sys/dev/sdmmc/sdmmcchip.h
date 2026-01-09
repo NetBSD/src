@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.10 2019/10/23 05:20:52 hkenken Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.11 2026/01/09 22:54:34 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -138,6 +138,7 @@ struct sdmmcbus_attach_args {
 	u_int			saa_clkmax;
 	uint32_t		saa_caps;	/* see sdmmc_softc.sc_caps */
 	uint32_t		saa_max_seg;
+	bus_addr_t		saa_dma_align_mask;
 };
 
 void	sdmmc_needs_discover(device_t);

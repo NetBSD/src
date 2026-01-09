@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.151 2025/11/11 21:20:23 jkoshy Exp $	 */
+/*	$NetBSD: rtld.h,v 1.152 2026/01/09 22:54:27 jmcneill Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -424,6 +424,9 @@ Obj_Entry *_rtld_digest_phdr(const Elf_Phdr *, int, caddr_t);
 Obj_Entry *_rtld_load_object(const char *, int);
 int _rtld_load_needed_objects(Obj_Entry *, int);
 int _rtld_preload(const char *);
+
+/* arch/<arch>/fixup.c */
+int _rtld_map_segment_fixup(Elf_Phdr *, caddr_t, size_t, int);
 
 #define	OBJ_ERR	(Obj_Entry *)(-1)
 /* path.c */

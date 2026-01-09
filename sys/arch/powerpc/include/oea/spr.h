@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.7 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: spr.h,v 1.8 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 #ifndef _POWERPC_OEA_SPR_H_
 #define	_POWERPC_OEA_SPR_H_
@@ -84,6 +84,7 @@
 #define   IBMPOWER6P5		  0x0f00
 #define   IBMSTB25		  0x5151
 #define	  IBM750FX		  0x7000
+#define   IBMESPRESSO		  0x7001
 #define   IBM750GX		  0x7002
 #define	  MPC7450		  0x8000
 #define	  MPC7455		  0x8001
@@ -132,6 +133,7 @@
 #define	SPR_DBAT6L		0x23d	/* ..6. Data BAT Reg 6 Lower */
 #define	SPR_DBAT7U		0x23e	/* ..6. Data BAT Reg 7 Upper */
 #define	SPR_DBAT7L		0x23f	/* ..6. Data BAT Reg 7 Upper */
+#define SPR_IBMESPRESSO_HID2	0x398	/* ..6. Espresso HID2 */
 #define	SPR_UMMCR2		0x3a0	/* ..6. User Monitor Mode Control Register 2 */
 #define	SPR_UMMCR0		0x3a8	/* ..6. User Monitor Mode Control Register 0 */
 #define	SPR_USIA		0x3ab	/* ..6. User Sampled Instruction Address */
@@ -139,8 +141,14 @@
 #define	SPR_MMCR2		0x3b0	/* ..6. Monitor Mode Control Register 2 */
 #define	 SPR_MMCR2_THRESHMULT_32  0x80000000 /* Multiply MMCR0 threshold by 32 */
 #define	 SPR_MMCR2_THRESHMULT_2	  0x00000000 /* Multiply MMCR0 threshold by 2 */
+#define SPR_IBMESPRESSO_HID5	0x3b0	/* ..6. Espresso HID5 */
 #define	SPR_PMC5		0x3b1	/* ..6. Performance Counter Register 5 */
 #define	SPR_PMC6		0x3b2	/* ..6. Performance Counter Register 6 */
+#define SPR_SCR			0x3b3	/* ..6. Espresso SCR */
+#define   SPR_SCR_IPI_PEND(cpunum) (1U << (20 - (cpunum)))
+#define   SPR_SCR_WAKE(cpunum)     (1U << (23 - (cpunum)))
+#define SPR_CAR			0x3b4	/* ..6. Espresso CAR */
+#define SPR_BCR			0x3b5	/* ..6. Espresso BCR */
 
 #define	SPR_MMCR0		0x3b8	/* ..6. Monitor Mode Control Register 0 */
 #define	  MMCR0_FC		  0x80000000 /* Freeze counters */
@@ -186,6 +194,7 @@
  0 */
 #define SPR_HID1		0x3f1	/* E.68 Hardware Implementation Register
  1 */
+#define SPR_IBMESPRESSO_HID4	0x3f3   /* ..6. Espresso HID4 */
 #define SPR_HID4		0x3f4   /* ..6. 970 HID4 */
 #define SPR_HID5		0x3f6   /* ..6. 970 HID5 */
 #define	SPR_DABR		0x3f5	/* ..6. Data Address Breakpoint Register */

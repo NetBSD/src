@@ -1,4 +1,4 @@
-/*	$NetBSD: elb.c,v 1.11 2021/08/07 16:18:52 thorpej Exp $	*/
+/*	$NetBSD: elb.c,v 1.12 2026/01/09 22:54:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.11 2021/08/07 16:18:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elb.c,v 1.12 2026/01/09 22:54:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -83,7 +83,7 @@ static bool elbfb_tag_init_done;
  * DMA struct, nothing special.
  */
 static struct powerpc_bus_dma_tag elb_bus_dma_tag = {
-	0,			/* _bounce_thresh */
+	0, 0,			/* _bounce_thresh */
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

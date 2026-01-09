@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.10 2022/04/06 22:47:56 riastradh Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.11 2026/01/09 22:54:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "atomic_op_asm.h"
 
-__RCSID("$NetBSD: atomic_cas.S,v 1.10 2022/04/06 22:47:56 riastradh Exp $")
+__RCSID("$NetBSD: atomic_cas.S,v 1.11 2026/01/09 22:54:25 jmcneill Exp $")
 
 	.text
 ENTRY(_atomic_cas_32)
@@ -39,7 +39,7 @@ ENTRY(_atomic_cas_32)
 1:	lwarx	%r3,0,%r10
 	cmpw	%r3,%r4
 	bnelr-
-	IBM405_ERRATA77_DCBT(0,%r10)
+	POWERPC_STWCX_PRE(0,%r10)
 	stwcx.	%r5,0,%r10
 	beqlr+
 	b	1b

@@ -1,0 +1,75 @@
+# $NetBSD: files.dev,v 1.1 2026/01/09 22:54:29 jmcneill Exp $
+#
+#
+
+attach	genfb at mainbus with wiifb
+file	arch/evbppc/nintendo/dev/wiifb.c		wiifb
+
+attach	genfb at mainbus with wiiufb
+file	arch/evbppc/nintendo/dev/wiiufb.c		wiiufb
+
+device	bwai
+attach	bwai at mainbus
+file	arch/evbppc/nintendo/dev/bwai.c			bwai
+
+device	bwdsp: audiobus
+attach	bwdsp at mainbus
+file	arch/evbppc/nintendo/dev/bwdsp.c		bwdsp
+
+define	exi { }
+device	exi: exi
+attach	exi at mainbus
+file	arch/evbppc/nintendo/dev/exi.c			exi
+
+device	rtcsram
+attach	rtcsram at exi
+file	arch/evbppc/nintendo/dev/rtcsram.c		rtcsram
+
+device	gecko
+attach	gecko at exi
+file	arch/evbppc/nintendo/dev/gecko.c		gecko	needs-flag
+
+define	si { }
+device	si: si, hid
+attach	si at mainbus
+file	arch/evbppc/nintendo/dev/si.c			si
+
+attach	uhid at si with uhid_si
+file	arch/evbppc/nintendo/dev/uhid_si.c		uhid_si
+
+define	ahb { [addr=-1], [irq=-1] }
+device	ahb: ahb
+attach	ahb at mainbus
+file	arch/evbppc/nintendo/dev/ahb.c			ahb
+
+device	resetbtn : sysmon_power, sysmon_taskq
+attach	resetbtn at ahb
+file	arch/evbppc/nintendo/dev/resetbtn.c		resetbtn
+
+device	hwgpio: gpiobus
+attach	hwgpio at ahb
+file	arch/evbppc/nintendo/dev/hwgpio.c		hwgpio
+
+attach	ehci at ahb with ehci_ahb
+file	arch/evbppc/nintendo/dev/ehci_ahb.c		ehci_ahb
+
+attach	ohci at ahb with ohci_ahb
+file	arch/evbppc/nintendo/dev/ohci_ahb.c		ohci_ahb
+
+attach	sdhc at ahb with sdhc_ahb
+file	arch/evbppc/nintendo/dev/sdhc_ahb.c		sdhc_ahb
+
+device	avenc
+attach	avenc at iic
+file	arch/evbppc/nintendo/dev/avenc.c		avenc
+
+device 	di: scsi
+attach	di at ahb
+file	arch/evbppc/nintendo/dev/di.c			di
+
+device	hwaes
+attach	hwaes at ahb
+file	arch/evbppc/nintendo/dev/hwaes.c		hwaes
+
+attach	ahcisata at ahb with ahcisata_ahb
+file	arch/evbppc/nintendo/dev/ahcisata_ahb.c 	ahcisata_ahb

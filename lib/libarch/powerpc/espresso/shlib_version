@@ -1,0 +1,5 @@
+#	$NetBSD: shlib_version,v 1.1 2026/01/09 22:54:27 jmcneill Exp $
+#	Remember to update distrib/sets/lists/base/md.evbppc when changing
+#
+major=0
+minor=0

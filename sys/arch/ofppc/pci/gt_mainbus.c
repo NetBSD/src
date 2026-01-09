@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.6 2020/11/21 17:48:26 thorpej Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.7 2026/01/09 22:54:33 jmcneill Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.6 2020/11/21 17:48:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.7 2026/01/09 22:54:33 jmcneill Exp $");
 
 #include "opt_pci.h"
 #include "opt_marvell.h"
@@ -80,7 +80,7 @@ static char ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
 
 struct powerpc_bus_dma_tag pegasosii_bus_dma_tag = {
-        0,				/* _bounce_thresh */
+        0, 0,				/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

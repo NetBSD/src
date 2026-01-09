@@ -1,0 +1,7 @@
+# 	$NetBSD: INSTALL_NINTENDO,v 1.1 2026/01/09 22:54:27 jmcneill Exp $
+
+include "arch/evbppc/conf/NINTENDO"
+
+#ident 		"INSTALL_NINTENDO-$Revision: 1.1 $"
+
+include "arch/evbppc/conf/INSTALL.inc"

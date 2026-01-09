@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.14 2022/01/22 15:10:32 skrll Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.15 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.14 2022/01/22 15:10:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.15 2026/01/09 22:54:33 jmcneill Exp $");
 
 #define ISA_DMA_STATS
 
@@ -117,7 +117,7 @@ static void	_isa_dma_free_bouncebuf(bus_dma_tag_t, bus_dmamap_t);
  * buffers, if necessary.
  */
 struct powerpc_bus_dma_tag isa_bus_dma_tag = {
-	ISA_DMA_BOUNCE_THRESHOLD,
+	0, ISA_DMA_BOUNCE_THRESHOLD,
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
 	_isa_bus_dmamap_load,
@@ -208,13 +208,13 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * the caller can't handle that many segments (e.g. the
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
-	if (avail_end <= t->_bounce_thresh ||
+	if (avail_end <= t->_bounce_thresh_max ||
 	    (flags & ISABUS_DMA_32BIT) != 0) {
 		/* Bouncing not necessary due to memory size. */
-		map->_dm_bounce_thresh = 0;
+		map->_dm_bounce_thresh_max = 0;
 	}
 	cookieflags = 0;
-	if (map->_dm_bounce_thresh != 0 ||
+	if (map->_dm_bounce_thresh_max != 0 ||
 	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) * map->_dm_segcnt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2024/01/20 21:36:00 jmcneill Exp $ */
+/*	$NetBSD: md.c,v 1.12 2026/01/09 22:54:34 jmcneill Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -45,9 +45,22 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+static bool cpu_espresso;
+
 void
 md_init(void)
 {
+	static const int mib[2] = {CTL_HW, HW_MODEL};
+	size_t len;
+	char *cpu_model;
+
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	cpu_model = malloc(len);
+	sysctl(mib, 2, cpu_model, &len, NULL, 0);
+
+	cpu_espresso = strstr(cpu_model, "Espresso") != NULL;
+
+	free(cpu_model);
 }
 
 void
@@ -62,9 +75,14 @@ md_init_set_status(int flags)
 	 * enable the installation of the corresponding kernel.
 	 */
 	uname(&instsys);
-	if (strstr(instsys.version, "(INSTALL_WII")) {
-		set_kernel_set(EVBPPC_SET_KERNEL_WII);
-		set_noextract_set(EVBPPC_SET_KERNEL_WII);
+	if (strstr(instsys.version, "(INSTALL_NINTENDO")) {
+		if (cpu_espresso) {
+			set_kernel_set(EVBPPC_SET_KERNEL_NINTENDO_MP);
+			set_noextract_set(EVBPPC_SET_KERNEL_NINTENDO_MP);
+		} else {
+			set_kernel_set(EVBPPC_SET_KERNEL_NINTENDO);
+			set_noextract_set(EVBPPC_SET_KERNEL_NINTENDO);
+		}
 	}
 }
 

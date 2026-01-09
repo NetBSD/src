@@ -1,0 +1,46 @@
+#	$NetBSD: files.nintendo,v 1.1 2026/01/09 22:54:27 jmcneill Exp $
+#
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+include "arch/powerpc/pic/files.pic"
+include "arch/powerpc/pic/files.ipi"
+
+file	arch/evbppc/nintendo/autoconf.c
+file	arch/powerpc/powerpc/clock.c
+file	arch/evbppc/nintendo/machdep.c
+file	arch/evbppc/nintendo/pic_pi.c
+file	arch/evbppc/nintendo/ipi_latte.c	multiprocessor
+
+#
+# Machine-independent drivers
+#
+include "dev/ata/files.ata"
+include "dev/bluetooth/files.bluetooth"
+include "dev/scsipi/files.scsipi"
+include "dev/sdmmc/files.sdmmc"
+include "dev/usb/files.usb"
+
+#
+# Memory Disk for install floppy
+#
+file dev/md_root.c	memory_disk_hooks
+
+#
+# System bus types
+#
+define	mainbus { [addr=-1], [irq=-1] }
+device	mainbus: mainbus
+attach	mainbus at root
+file	arch/evbppc/nintendo/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbppc/nintendo/cpu.c		cpu
+
+#
+# Platform devices
+#
+include "arch/evbppc/nintendo/dev/files.dev"

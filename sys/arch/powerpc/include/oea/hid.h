@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.15 2024/03/10 17:07:31 rillig Exp $	*/
+/*	$NetBSD: hid.h,v 1.16 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -189,5 +189,46 @@
  * x01 - 16GB
  * 000 - 256GB
  */
+
+/* IBM 750CL HID4 */
+#define HID4_H4A		  0x80000000 /* Must be written as 1 */
+#define HID4_L2FM_64B		  0x20000000 /* L2 fetch mode - 64B-fetch */
+#define HID4_BPD_4		  0x10000000 /* Bus pipeline depth - 4 */
+#define HID4_SBE		  0x02000000 /* Secondary BAT enable */
+#define HID4_ST0		  0x01000000 /* Store 0 enable */
+#define HID4_LPE		  0x00800000 /* Little endian and pair-singles exception mode */
+#define HID4_DBP		  0x00400000 /* Data bus parking */
+#define HID4_L2MUM		  0x00200000 /* L2 MUM enable */
+#define HID4_L2_CCFI		  0x00100000 /* L2 complete castout prior to L2 flash invalidate */
+
+#define IBM750CL_HID4_BITMASK					\
+	"\177\020"						\
+	"b\037" "H4A\0"						\
+	"f\035\002" "L2FM\0"					\
+	    "=\x00" "32B\0"					\
+	    "=\x01" "64B\0"					\
+	    "=\x02" "128B\0"					\
+	"f\033\002" "BPD\0"					\
+	    "=\x00" "2\0"					\
+	    "=\x01" "3\0"					\
+	    "=\x02" "4\0"					\
+	"b\032" "SBE\0"						\
+	"b\031" "ST0\0"						\
+	"b\030" "LPE\0"						\
+	"b\027" "DBP\0"						\
+	"b\026" "L2MUM\0"					\
+	"b\025" "L2CFI\0"
+
+/* IBM Espresso HID5 */
+#define HID5_H5A		  0x80000000 /* Enable HID5 */
+#define HID5_PIRE		  0x40000000 /* Enable PIR */
+
+#define IBMESPRESSO_HID5_BITMASK				\
+	"\177\020"						\
+	"b\037" "H5A\0"						\
+	"b\036" "PIRE\0"					\
+	"b\031" "UDMA\0"					\
+	"b\030" "L2CR_L2SIZ\0"					\
+	"b\027" "L2CR\0"					\
 
 #endif /* _POWERPC_OEA_HID_H_ */

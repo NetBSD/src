@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.56 2023/12/15 09:43:59 rin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.57 2026/01/09 22:54:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56 2023/12/15 09:43:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.57 2026/01/09 22:54:34 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -125,7 +125,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments, bus_size_t m
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_bounce_thresh = t->_bounce_thresh;
+	map->_dm_bounce_thresh_min = t->_bounce_thresh_min;
+	map->_dm_bounce_thresh_max = t->_bounce_thresh_max;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
@@ -182,8 +183,11 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (map->_dm_bounce_thresh != 0 &&
-		    curaddr >= map->_dm_bounce_thresh)
+		if (map->_dm_bounce_thresh_min != 0 &&
+		    curaddr < map->_dm_bounce_thresh_min)
+			return (EINVAL);
+		if (map->_dm_bounce_thresh_max != 0 &&
+		    curaddr >= map->_dm_bounce_thresh_max)
 			return (EINVAL);
 
 		/*
@@ -323,6 +327,20 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0, int fl
 			lastaddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
  have_addr:
+			/*
+			 * If we're beyond the bounce threshold, notify
+			 * the caller.
+			 */
+			if (map->_dm_bounce_thresh_min != 0 &&
+			    lastaddr < map->_dm_bounce_thresh_min) {
+				error = EINVAL;
+				continue;
+			}
+			if (map->_dm_bounce_thresh_max != 0 &&
+			    lastaddr >= map->_dm_bounce_thresh_max) {
+				error = EINVAL;
+				continue;
+			}
 			if (first == 0 && ++seg >= map->_dm_segcnt) {
 				error = EFBIG;
 				continue;
@@ -432,8 +450,11 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (map->_dm_bounce_thresh != 0 &&
-		    curaddr >= map->_dm_bounce_thresh)
+		if (map->_dm_bounce_thresh_min != 0 &&
+		    curaddr < map->_dm_bounce_thresh_min)
+			return EINVAL;
+		if (map->_dm_bounce_thresh_max != 0 &&
+		    curaddr >= map->_dm_bounce_thresh_max)
 			return EINVAL;
 
 		/*

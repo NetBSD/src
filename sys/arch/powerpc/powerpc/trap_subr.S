@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.88 2026/01/04 11:48:02 jmcneill Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.89 2026/01/09 22:54:34 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,7 +71,7 @@
 #ifdef MULTIPROCESSOR
 /* Clear reservation on trap exit, PR# 59386 */
 #define CLEAR_RESERVATION						\
-	IBM405_ERRATA77_DCBT(0,%r1);					\
+	POWERPC_STWCX_PRE(0,%r1);					\
 	stwcx.  %r1,0,%r1;
 #else
 #define CLEAR_RESERVATION

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.57 2026/01/03 16:28:26 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.58 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,10 @@
 
 #ifndef _PPC_ASM_H_
 #define _PPC_ASM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 #ifdef _LP64
 
@@ -444,7 +448,13 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 .endm
 #endif /* _LOCORE */
 
-#if defined(IBM405_ERRATA77) || \
+#if defined(PPC_IBMESPRESSO)
+/*
+ * Workaround for IBM Espresso erratum.
+ */
+#define POWERPC_STWCX_PRE(ra, rb)	dcbst ra,rb
+#define IBM405_ERRATA77_SYNC		/* nothing */
+#elif defined(IBM405_ERRATA77) || \
     ((defined(_MODULE) || !defined(_KERNEL)) && !defined(_LP64))
 /*
  * Workaround for IBM405 Errata 77 (CPU_210): interrupted stwcx. may
@@ -456,10 +466,10 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
  * https://elinux.org/images/1/1d/Ppc405gp-errata.pdf
  * https://web.archive.org/web/20240630134919/https://elinux.org/images/1/1d/Ppc405gp-errata.pdf
  */
-#define	IBM405_ERRATA77_DCBT(ra, rb)	dcbt ra,rb
+#define	POWERPC_STWCX_PRE(ra, rb)	dcbt ra,rb
 #define	IBM405_ERRATA77_SYNC		sync
 #else
-#define	IBM405_ERRATA77_DCBT(ra, rb)	/* nothing */
+#define	POWERPC_STWCX_PRE(ra, rb)	/* nothing */
 #define	IBM405_ERRATA77_SYNC		/* nothing */
 #endif
 

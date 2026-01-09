@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.44 2025/06/24 03:02:00 gutteridge Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.45 2026/01/09 22:54:34 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.44 2025/06/24 03:02:00 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.45 2026/01/09 22:54:34 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -125,6 +125,7 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi_sct = saa->saa_spi_sct;
 	sc->sc_sch = saa->saa_sch;
 	sc->sc_dmat = saa->saa_dmat;
+	sc->sc_dma_align_mask = saa->saa_dma_align_mask;
 	sc->sc_clkmin = saa->saa_clkmin;
 	sc->sc_clkmax = saa->saa_clkmax;
 	sc->sc_busclk = sc->sc_clkmax;
@@ -695,8 +696,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->blklen = sdmmc_chip_host_maxblklen(sc->sc_sct, sc->sc_sch);
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
-	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+	    ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 		bus_dma_segment_t ds;
 		int rseg, error;
 
@@ -744,8 +744,7 @@ sdmmc_function_free(struct sdmmc_function *sf)
 	struct sdmmc_softc *sc = sf->sc;
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
-	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+	    ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 		bus_dmamap_destroy(sc->sc_dmat, sf->sseg_dmap);
 		bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
 		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, MAXPHYS);

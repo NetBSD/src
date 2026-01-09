@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.6 2022/06/18 22:11:00 andvar Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.7 2026/01/09 22:54:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2022/06/18 22:11:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.7 2026/01/09 22:54:34 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2022/06/18 22:11:00 andvar Exp 
  * of these functions.
  */
 struct powerpc_bus_dma_tag eisa_bus_dma_tag = {
-	0,			/* _bounce_thresh */
+	0, 0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

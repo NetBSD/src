@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.1 2025/11/16 20:11:47 jmcneill Exp $ */
+/* $NetBSD: start.S,v 1.2 2026/01/09 22:54:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
 	.text
 	.globl	__start
 __start:
-#include "../../wii/wii_mmuinit.S"
+#include "../../nintendo/mmuinit.S"
 
 	lis	%r1, STACKADDR@ha
 	ori	%r1, %r1, STACKADDR@l

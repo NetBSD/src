@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2021/08/03 09:25:43 rin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2026/01/09 22:54:28 jmcneill Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@ extern int fake_mapiodev;
 #endif
 
 #ifdef MULTIPROCESSOR
-#define CPU_MAXNUM 2
+#define CPU_MAXNUM 3
 #else
 #define CPU_MAXNUM 1
 #endif

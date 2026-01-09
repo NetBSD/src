@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.15 2025/12/10 21:33:02 andvar Exp $	*/
+/*	$NetBSD: trap.h,v 1.16 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,6 +63,9 @@
 
 /* The following are only available on 750/7400: */
 #define	EXC_THRM	0x1700		/* Thermal Management Interrupt */
+
+/* The following are only available on IBM Espresso: */
+#define EXC_IPI		0x1700		/* Inter-processor Interrupt */
 
 /* And these are only on the 603: */
 #define	EXC_IMISS	0x1000		/* Instruction translation miss */

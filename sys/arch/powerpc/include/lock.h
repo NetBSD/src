@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17 2022/02/12 17:17:53 riastradh Exp $	*/
+/*	$NetBSD: lock.h,v 1.18 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
 
 #ifndef _POWERPC_LOCK_H_
 #define _POWERPC_LOCK_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 static __inline int
 __SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
@@ -83,6 +87,8 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 3:				\n"
 #ifdef IBM405_ERRATA77
 	"dcbt	0,%1		\n"
+#elif defined(PPC_IBMESPRESSO)
+	"dcbst	0,%1		\n"
 #endif
 	"stwcx.	%3,0,%1		\n\
 	bne-	1b		\n\
@@ -105,12 +111,16 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	bne	2f		\n"
 #ifdef IBM405_ERRATA77
 	"dcbt	0,%1		\n"
+#elif defined(PPC_IBMESPRESSO)
+	"dcbst	0,%1		\n"
 #endif
 	"stwcx.	%3,0,%1		\n\
 	bne-	1b		\n\
 2:				\n"
 #ifdef IBM405_ERRATA77
 	"dcbt	0,%4		\n"
+#elif defined(PPC_IBMESPRESSO)
+	"dcbst	0,%4		\n"
 #endif
 	"stwcx.	%3,0,%4		\n\
 	isync			\n\

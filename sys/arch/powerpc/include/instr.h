@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.12 2022/08/30 11:05:59 rin Exp $ */
+/*	$NetBSD: instr.h,v 1.13 2026/01/09 22:54:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,6 +322,7 @@ union instr {
  */
 #define	OPC31_LWZX	0x017
 #define	OPC31_LWZUX	0x037
+#define	OPC31_STWCX	0x096
 #define	OPC31_STWX	0x097
 #define	OPC31_STWUX	0x0b7
 #define	OPC31_LHZX	0x117

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2024/01/20 21:36:00 jmcneill Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2026/01/09 22:54:34 jmcneill Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,9 +52,10 @@
  *  or upgrade. The standard sets are:
  *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
  */
-#define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-WII"
-#define EVBPPC_SET_KERNEL_WII	SET_KERNEL_2
+#define SET_KERNEL_1_NAME		"kern-NINTENDO"
+#define SET_KERNEL_2_NAME		"kern-NINTENDO.MP"
+#define EVBPPC_SET_KERNEL_NINTENDO	SET_KERNEL_1
+#define EVBPPC_SET_KERNEL_NINTENDO_MP	SET_KERNEL_2
 
 /*
  * Machine-specific command to write a new label to a disk.

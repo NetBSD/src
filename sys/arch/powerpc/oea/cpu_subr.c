@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.111 2025/02/17 11:56:56 jmcneill Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.112 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.111 2025/02/17 11:56:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.112 2026/01/09 22:54:33 jmcneill Exp $");
 
 #include "sysmon_envsys.h"
 
@@ -179,6 +179,20 @@ static const struct fmttab cpu_ibm750_l2cr_formats[] = {
 	{ 0, 0, NULL }
 };
 
+static const struct fmttab cpu_espresso_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ L2SIZ_512K, 0, " 512KB" },
+	{ L2SIZ_512K, L2SIZ_512K, " 2MB" },
+	{ L2CR_L2WT, L2CR_L2WT, " WT" },
+	{ L2CR_L2WT, 0, " WB" },
+	{ L2CR_L2PE, L2CR_L2PE, " with ECC" },
+	{ 0, ~0, " L2 cache" },
+	{ 0, 0, NULL }
+};
+
 static const struct fmttab cpu_l2cr_formats[] = {
 	{ L2CR_L2E, 0, " disabled" },
 	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
@@ -211,7 +225,7 @@ static const struct fmttab cpu_l2cr_formats[] = {
 static void cpu_fmttab_print(const struct fmttab *, register_t);
 
 struct cputab {
-	const char name[8];
+	const char name[9];
 	uint16_t version;
 	uint16_t revfmt;
 };
@@ -245,6 +259,7 @@ static const struct cputab models[] = {
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
 	{ "970MP",	IBM970MP,	REVFMT_MAJMIN },
 	{ "POWER3II",   IBMPOWER3II,    REVFMT_MAJMIN },
+	{ "Espresso",	IBMESPRESSO,	REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
 
@@ -315,6 +330,9 @@ cpu_features_probe(void)
 			oeacpufeat |= OEACPU_XBSEN;
 		}
 
+	} else if (vers == IBMESPRESSO) {
+		oeacpufeat |= OEACPU_HIGHBAT;
+
 	} else if (vers == IBM750FX || vers == IBM750GX) {
 		oeacpufeat |= OEACPU_HIGHBAT;
 	}
@@ -360,7 +378,18 @@ cpu_features_enable(void)
 
 		mtspr(SPR_HID1, hid1);
 		__asm volatile("sync;isync");
+	} else if (vers == IBMESPRESSO) {
+		register_t spr;
+
+		spr = mfspr(SPR_IBMESPRESSO_HID4);
+		mtspr(SPR_IBMESPRESSO_HID4, spr | HID4_H4A | HID4_SBE);
+
+		spr = mfspr(SPR_HID0);
+		mtspr(SPR_HID0, spr | HID0_ABE);
+
+		__asm volatile("sync;isync");
 	}
+
 
 	feature_enable_done = true;
 }
@@ -429,6 +458,7 @@ cpu_probe_cache(void)
 #define	K	*1024
 	case IBM750FX:
 	case IBM750GX:
+	case IBMESPRESSO:
 	case MPC601:
 	case MPC750:
 	case MPC7400:
@@ -629,6 +659,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case MPC8240:
 	case MPC8245:
 	case MPCG2:
+	case IBMESPRESSO:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -687,6 +718,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	switch (vers) {
 	case IBM750FX:
 	case IBM750GX:
+	case IBMESPRESSO:
 	case MPC750:
 	case MPC7400:
 		/* Select NAP mode. */
@@ -702,6 +734,12 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case MPC750:
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
+		break;
+
+	case IBMESPRESSO:
+		hid0 |= HID0_DBP;
+		hid0 |= HID0_IFEM | HID0_ABE;
+		hid0 |= HID0_BTIC | HID0_BHT | HID0_NHR;
 		break;
 
 	case MPC7400:
@@ -781,6 +819,29 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		    hidbuf, powersave);
 	}
 
+
+	if (vers == IBMESPRESSO) {
+		register_t spr;
+
+		mtspr(SPR_IBMESPRESSO_HID2, 0);
+
+		spr = HID4_H4A | HID4_L2FM_64B | HID4_BPD_4 |
+		      HID4_SBE | HID4_LPE | HID4_ST0 | HID4_DBP |
+		      HID4_L2MUM | HID4_L2_CCFI;
+		mtspr(SPR_IBMESPRESSO_HID4, spr);
+
+		spr = mfspr(SPR_IBMESPRESSO_HID5);
+		mtspr(SPR_IBMESPRESSO_HID5, spr | 0x67fdc000);
+
+		spr = mfspr(SPR_IBMESPRESSO_HID4);
+		snprintb(hidbuf, sizeof hidbuf, IBM750CL_HID4_BITMASK, spr);
+		aprint_normal_dev(self, "HID4 %s\n", hidbuf);
+
+		spr = mfspr(SPR_IBMESPRESSO_HID5);
+		snprintb(hidbuf, sizeof hidbuf, IBMESPRESSO_HID5_BITMASK, spr);
+		aprint_normal_dev(self, "HID5 %s\n", hidbuf);
+	}
+
 	ci->ci_khz = 0;
 
 	/*
@@ -793,6 +854,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case MPC750:
 	case IBM750FX:
 	case IBM750GX:
+	case IBMESPRESSO:
 	case MPC7400:
 	case MPC7410:
 	case MPC7447A:
@@ -812,6 +874,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 			break;
 		case IBM750FX:
 		case IBM750GX:
+		case IBMESPRESSO:
 		case MPC750:
 		case MPC7400:
 		case MPC7410:
@@ -939,7 +1002,7 @@ cpu_identify(char *str, size_t len)
 	}
 
 	if (cp->name[0] != '\0') {
-		n = snprintf(str, len, "%s (Revision ", cp->name);
+		n = snprintf(str, len, "%s (rev ", cp->name);
 	} else {
 		n = snprintf(str, len, "Version %#x (Revision ", vers);
 	}
@@ -977,6 +1040,11 @@ cpu_enable_l2cr(register_t l2cr)
 	uint16_t vers;
 
 	vers = mfpvr() >> 16;
+
+	if (vers == IBMESPRESSO && cpu_number() == 1) {
+		/* Enable larger cache on core 1 */
+		l2cr |= L2SIZ_512K;
+	}
 
 	/* Disable interrupts and set the cache config bits. */
 	msr = mfmsr();
@@ -1093,6 +1161,9 @@ cpu_config_l2cr(int pvr)
 	case IBM750FX:
 	case IBM750GX:
 		cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
+		break;
+	case IBMESPRESSO:
+		cpu_fmttab_print(cpu_espresso_l2cr_formats, l2cr);
 		break;
 	case MPC750:
 		if ((pvr & 0xffffff00) == 0x00082200 /* IBM750CX */ ||
@@ -1509,6 +1580,7 @@ register_t
 cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
+	volatile struct cpuset_info * const csi = &cpuset_info;
 	struct cpu_info * const ci = h->hatch_ci;
 	struct pcb *pcb;
 	u_int msr;
@@ -1597,6 +1669,8 @@ cpu_hatch(void)
 
 	cpu_setup(h->hatch_self, ci);
 
+	kcpuset_atomic_set(csi->cpus_hatched, cpu_number());
+
 	h->hatch_running = 1;
 	__asm volatile ("sync; isync");
 
@@ -1605,13 +1679,15 @@ cpu_hatch(void)
 
 	__asm volatile ("sync; isync");
 
-	aprint_normal("cpu%d started\n", curcpu()->ci_index);
+	aprint_normal("cpu%d started\n", cpu_number());
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
 	md_setup_interrupts();
 
 	ci->ci_ipending = 0;
 	ci->ci_cpl = 0;
+
+	kcpuset_atomic_set(csi->cpus_running, cpu_number());
 
 	mtmsr(mfmsr() | PSL_EE);
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);

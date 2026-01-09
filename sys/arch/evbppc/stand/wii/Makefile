@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2025/11/22 11:21:46 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2026/01/09 22:54:30 jmcneill Exp $
 
 S=		${.CURDIR}/../../../..
 POWERPC=	${S}/arch/powerpc
@@ -37,9 +37,6 @@ TEXTADDR=	0x01004000
 STACKADDR=	0x01100000
 ENTRY=		__start
 
-AFLAGS+=	-mcpu=750
-
-CFLAGS+=	-mcpu=750
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mno-strict-align :}
 CFLAGS+=	-msoft-float
@@ -54,7 +51,7 @@ CPPFLAGS+=	-DLIBSA_DISKLABEL_EI
 
 CPPFLAGS+=	-DTEXTADDR=${TEXTADDR}
 CPPFLAGS+=	-DSTACKADDR=${STACKADDR}
-CPPFLAGS+=	-DPPC_OEA -DDISTANT_KERNEL -D__wii__ -Devbppc=evbppc
+CPPFLAGS+=	-DPPC_OEA -DDISTANT_KERNEL -Devbppc=evbppc
 CPPFLAGS+=	-DCACHE_LINE_SIZE=32
 CPPFLAGS+=	-DEVBPPC_HAS_MBR
 

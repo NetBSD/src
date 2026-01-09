@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.25 2023/12/20 15:29:06 thorpej Exp $ */
+/* $NetBSD: plb.c,v 1.26 2026/01/09 22:54:33 jmcneill Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.25 2023/12/20 15:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.26 2026/01/09 22:54:33 jmcneill Exp $");
 
 #include "emac.h"
 #include "locators.h"
@@ -121,7 +121,7 @@ CFATTACH_DECL_NEW(plb, 0, plb_match, plb_attach, NULL, NULL);
  * "generic" DMA struct, nothing special.
  */
 struct powerpc_bus_dma_tag ibm4xx_default_bus_dma_tag = {
-	0,			/* _bounce_thresh */
+	0, 0,			/* _bounce_thresh_min/max */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

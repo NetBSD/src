@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.85 2024/01/20 00:18:19 jmcneill Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.86 2026/01/09 22:54:33 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.85 2024/01/20 00:18:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.86 2026/01/09 22:54:33 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -873,15 +873,15 @@ oea_batinit(paddr_t pa, ...)
 #endif /* PPC_OEA || PPC_OEA64_BRIDGE */
 
 void
-oea_install_extint(void (*handler)(void))
+oea_install_extint_vec(void (*handler)(void), u_int vector)
 {
 	extern int extint[], extsize[];
 	extern int extint_call[];
 	uintptr_t offset = (uintptr_t)handler - (uintptr_t)extint_call;
 #ifdef PPC_HIGH_VEC
-	const uintptr_t exc_exi_base = EXC_HIGHVEC + EXC_EXI;
+	const uintptr_t exc_exi_base = EXC_HIGHVEC + vector;
 #else
-	const uintptr_t exc_exi_base = EXC_EXI;
+	const uintptr_t exc_exi_base = vector;
 #endif
 	int omsr, msr;
 
@@ -916,6 +916,12 @@ oea_install_extint(void (*handler)(void))
 	__syncicache((void *)exc_exi_base, (size_t)extsize);
 
 	__asm volatile ("mtmsr %0" :: "r"(omsr));
+}
+
+void
+oea_install_extint(void (*handler)(void))
+{
+	oea_install_extint_vec(handler, EXC_EXI);
 }
 
 /*

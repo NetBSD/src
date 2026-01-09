@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.124 2025/12/10 22:14:13 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.125 2026/01/09 22:54:34 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.124 2025/12/10 22:14:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.125 2026/01/09 22:54:34 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -604,6 +604,7 @@ adma_done:
 	saa.saa_sct = &sdhc_functions;
 	saa.saa_sch = hp;
 	saa.saa_dmat = hp->dmat;
+	saa.saa_dma_align_mask = hp->sc->sc_dma_align_mask;
 	saa.saa_clkmax = hp->clkbase;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_CGM))
 		saa.saa_clkmin = hp->clkbase / 256 / 2046;
@@ -1808,7 +1809,10 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 
 	/* Set DMA start address. */
-	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK) && cmd->c_data != NULL) {
+	if (ISSET(mode, SDHC_DMA_ENABLE) &&
+	    ISSET(hp->flags, SHF_USE_ADMA2_MASK) &&
+	    cmd->c_data != NULL) {
+		KASSERT(cmd->c_dmamap != NULL);
 		for (int seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 			bus_addr_t paddr =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;

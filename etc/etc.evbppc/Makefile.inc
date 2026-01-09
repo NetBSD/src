@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2025/11/18 11:23:40 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2026/01/09 22:54:26 jmcneill Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -9,8 +9,10 @@
 .if ${MACHINE_ARCH} == "powerpc"
 # oea
 KERNEL_SETS+=		EV64260
+KERNEL_SETS+=		NINTENDO NINTENDO.MP
 KERNEL_SETS+=		PMPPC
 BUILD_KERNELS+=		INSTALL_PMPPC
+BUILD_KERNELS+=		INSTALL_NINTENDO
 # ibm4xx
 KERNEL_SETS+=		DHT
 KERNEL_SETS+=		EXPLORA451
@@ -26,9 +28,6 @@ KERNEL_SETS+=		TWRP1025
 BUILD_KERNELS+=		INSTALL_P2020DS INSTALL_P2020RDB
 BUILD_KERNELS+=		INSTALL_RB850GX2
 BUILD_KERNELS+=		INSTALL_TWRP1025
-# wii
-KERNEL_SETS+=		WII
-BUILD_KERNELS+=		INSTALL_WII
 #
 KERNEL_SUFFIXES=	img bin ub
 .endif
@@ -64,13 +63,11 @@ __mkimage: .USE
             -S ${NETBSDSRCDIR} -B ${IMAGEENDIAN} ${MKI_OPTS.${.TARGET}} \
             ${IMAGE.dir}/${.TARGET:S/smp_//}.img.gz
 
-.if ${MACHINE_ARCH} == "powerpc"
-smp_wii: __mkimage
+smp_nintendo: __mkimage
 	cd ${KERNSRCDIR}/arch/evbppc/stand/wii && ${MAKE} release
-MKI_OPTS.smp_wii=	-K ${IMAGE.kern} -x
-SNAP_MD_POST_DEPS+=	smp_wii
-INSTALLATION_DIRS+=	binary/gzimg
-INSTALLATION_DIRS+=	installation/misc
-.endif
+MKI_OPTS.smp_nintendo=		-K ${IMAGE.kern} -x
+SNAP_MD_POST_DEPS+=		smp_nintendo
+INSTALLATION_DIRS+=		binary/gzimg
+INSTALLATION_DIRS+=		installation/misc
 
 snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
