@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3210 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3211 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -137,3 +137,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		[mlelstv 20251227]
 	sun2: Add various MK build knobs and disable them on sun2 to trim
 		down the installation. [thorpej 20251228]
+	evbppc: Add support for the Nintendo Wii U. [jmcneill 20260109]
