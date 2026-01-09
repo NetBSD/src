@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.h,v 1.22 2025/11/28 14:46:32 nia Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.23 2026/01/09 09:34:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -29,6 +29,8 @@
 
 #ifndef	_SYS_EXEC_ECOFF_H_
 #define	_SYS_EXEC_ECOFF_H_
+
+#include <sys/endian.h>
 
 #include <machine/ecoff_machdep.h>
 
