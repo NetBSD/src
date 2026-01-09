@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.20 2026/01/07 18:24:35 christos Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.21 2026/01/09 08:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.20 2026/01/07 18:24:35 christos Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.21 2026/01/09 08:44:57 skrll Exp $");
 
 #include "extern.h"
 #include "atomic_op_namespace.h"
@@ -342,6 +342,7 @@ __strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
 //atomic_op_alias(atomic_cas_8,_atomic_cas_8)
 //atomic_op_alias(atomic_cas_8_ni,_atomic_cas_8)
 #ifdef	__HAVE_ATOMIC_CAS_64_UP
+atomic_op_alias(atomic_cas_64,_atomic_cas_64)
 atomic_op_alias(atomic_cas_64_ni,_atomic_cas_64)
 __strong_alias(_atomic_cas_64_ni,_atomic_cas_64)
 crt_alias(__sync_val_compare_and_swap_8,_atomic_cas_64)
