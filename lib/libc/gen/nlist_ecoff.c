@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.23 2012/03/20 00:31:24 matt Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.24 2026/01/09 16:33:59 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,11 +36,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.23 2012/03/20 00:31:24 matt Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.24 2026/01/09 16:33:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>
