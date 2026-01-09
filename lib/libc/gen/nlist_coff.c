@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.12 2026/01/09 14:15:00 skrll Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.13 2026/01/09 14:15:46 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,12 +36,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_coff.c,v 1.12 2026/01/09 14:15:00 skrll Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.13 2026/01/09 14:15:46 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
