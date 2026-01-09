@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.61 2025/04/05 19:57:47 tsutsui Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.62 2026/01/09 15:43:07 nia Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@
 
 #if !defined(__ASSEMBLER__)
 #include <sys/cdefs.h>
+#include <sys/endian.h>
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/stdint.h>
 #else
