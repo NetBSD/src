@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dtb.mk,v 1.6 2026/01/08 16:45:39 skrll Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.7 2026/01/09 18:43:39 skrll Exp $
 
 .include <bsd.init.mk>
 
@@ -41,7 +41,16 @@ DTSDIR+=$S/external/gpl2/dts/dist/arch/${_arch}/boot/dts/${DTSSUBDIR}
 
 DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 
-.SUFFIXES: .dtb .dts
+.for _d in ${DTS}
+DTBSCMD_${_d}:=		${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v ${_d:S/.dtb/-dtbs/}
+DTOVERLAYS_${_d}:=	${DTBSCMD_${_d}:sh}
+DTOVERLAYS+=		${DTOVERLAYS_${_d}}
+.if empty(DTOVERLAYS_${_d})
+DTSBASE+=${_d}
+.endif
+.endfor
+
+.SUFFIXES: .dtb .dts .dtbo .dtso
 
 .dts.dtb:
 	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
@@ -49,9 +58,16 @@ DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
 	    -p ${DTSPADDING} -b 0 -@ -o ${.TARGET}
 
-.PATH.dts: ${DTSDIR}
+.dtso.dtbo:
+	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
+	    -include ${.IMPSRC} /dev/null | \
+	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
+	    -p ${DTSPADDING} -b 0 -@ -o ${.TARGET}
 
-DTB=		${DTS:.dts=.dtb}
+.PATH.dts: ${DTSDIR}
+.PATH.dtso: ${DTSDIR}
+
+DTB= 		${DTSBASE:.dts=.dtb} ${DTOVERLAYS:.dtso=.dtbo}
 
 dtb:		${DTB}
 
