@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.58 2025/12/18 17:45:29 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.59 2026/01/09 16:11:23 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,14 +35,13 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.58 2025/12/18 17:45:29 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.59 2026/01/09 16:11:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <stddef.h>
-#include <assert.h>
 #include <locale.h>
 #include "setlocale_local.h"
 
@@ -742,7 +741,6 @@ label:
 				diff /= SECSPERMIN;
 				diff = (diff / MINSPERHOUR) * 100 +
 					(diff % MINSPERHOUR);
-				_DIAGASSERT(__type_fit(int, diff));
 				pt = _conv((int)diff,
 				    fmt_padding[PAD_FMT_YEAR][PadIndex],
 				    pt, ptlim, loc);
