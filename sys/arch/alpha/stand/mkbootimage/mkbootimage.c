@@ -1,4 +1,4 @@
-/* $NetBSD: mkbootimage.c,v 1.7 2009/03/18 10:22:22 cegger Exp $ */
+/* $NetBSD: mkbootimage.c,v 1.8 2026/01/09 16:35:27 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>				/* XXX for roundup, howmany */
 #include <sys/stat.h>
+#include <sys/endian.h>
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <assert.h>
