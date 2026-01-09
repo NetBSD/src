@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_machdep.h,v 1.6 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: coff_machdep.h,v 1.7 2026/01/09 15:40:20 nia Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -33,6 +33,8 @@
 #ifndef _SH3_COFF_MACHDEP_H_
 #define	_SH3_COFF_MACHDEP_H_
 
+#include <sys/endian.h>
+
 /* f_magic flags */
 #define	COFF_MAGIC_SH3_BIG	0x500
 #define	COFF_MAGIC_SH3_LITTLE	0x550
@@ -51,14 +53,14 @@
 #define	COFF_SEGMENT_ALIGNMENT(fp, ap)					\
     (((fp)->f_flags & COFF_F_EXEC) == 0 ? 4 : 16)
 
-#ifndef _BYTE_ORDER
-#error Define _BYTE_ORDER!
+#ifndef BYTE_ORDER
+#error Define BYTE_ORDER!
 #endif
 
-#if _BYTE_ORDER == BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 #define	COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_BIG)
 #endif
-#if _BYTE_ORDER == LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 #define	COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_LITTLE)
 #endif
 
