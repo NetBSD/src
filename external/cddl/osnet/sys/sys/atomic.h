@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.4 2026/01/10 16:11:00 nia Exp $	*/
+/*	$NetBSD: atomic.h,v 1.5 2026/01/10 17:25:14 nia Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_CDDL_SYS_ATOMIC_H_
 
 #include_next <sys/atomic.h>
-#include_next <machine/endian.h>
+#include <sys/endian.h>
 
 #define casptr(_a, _b, _c)      \
 	atomic_cas_ptr((volatile uint64_t *) _a, _b, _c);
