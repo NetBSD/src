@@ -1,4 +1,4 @@
-/* $NetBSD: wiiu.h,v 1.1 2026/01/09 22:54:28 jmcneill Exp $ */
+/* $NetBSD: wiiu.h,v 1.2 2026/01/10 22:45:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -85,6 +85,16 @@
 
 /* Boot vector */
 #define WIIU_BOOT_VECTOR		0x08100100
+
+/* linux-loader command line protocol */
+#define WIIU_LOADER_DATA_ADDR		0x89200000
+#define WIIU_LOADER_MAGIC		0xcafefeca
+struct wiiu_argv {
+	uint32_t	magic;
+	char		cmdline[256];
+	uint32_t	initrd;
+	uint32_t	initrd_len;
+};
 
 /* Declared in sys/arch/evbppc/nintendo/machdep.c */
 extern bool wiiu_plat;

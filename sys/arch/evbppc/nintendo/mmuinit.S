@@ -1,4 +1,4 @@
-/* $NetBSD: mmuinit.S,v 1.1 2026/01/09 22:54:29 jmcneill Exp $ */
+/* $NetBSD: mmuinit.S,v 1.2 2026/01/10 22:45:57 jmcneill Exp $ */
 
 /*-
  * Copyright (C) 2012 Margarida Gouveia
@@ -161,6 +161,19 @@
 	ori	%r12, %r12, BAT_I|BAT_G|BAT_PP_RW
 	mtdbatu	2, %r11
 	mtdbatl	2, %r12
+	isync
+
+	/*
+	 * BAT3 is used to access loader data (kernel cmdline) on Wii U.
+	 */
+	/* BATU(0x89000000, BAT_BL_8M, BAT_Vs) */
+	lis	%r11, 0x8900
+	ori	%r11, %r11, BAT_BL_8M|BAT_Vs
+	/* BATL(0x89000000, BAT_M, BAT_PP_RW) */
+	lis	%r12, 0x8900
+	ori	%r12, %r12, BAT_M|BAT_PP_RW
+	mtdbatu	1, %r11
+	mtdbatl	1, %r12
 	isync
 
 	MMU_VIRTUALMODE()
