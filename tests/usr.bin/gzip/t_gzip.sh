@@ -1,4 +1,4 @@
-# $NetBSD: t_gzip.sh,v 1.4 2024/10/15 18:09:31 martin Exp $
+# $NetBSD: t_gzip.sh,v 1.5 2026/01/10 05:11:23 mrg Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -117,6 +117,101 @@ lzip_body()
 	done
 }
 
+atf_test_case unbzip2
+unbzip2_head()
+{
+	atf_set "descr" "Test bzip2 decompression"
+}
+
+unbzip2_body()
+{
+	cat >testbzip2.txt.bz2.uue <<EOF
+begin-base64 664 testbzip2.txt.bz2
+QlpoOTFBWSZTWRkTvvsAAARbgAAQQAAQAAQAP2bcECAAMUwmmgNMQiMg9QGmIGw9
+kDXEgtnxXXYTzQ5wplvpTEfF3JFOFCQGRO++wA==
+====
+EOF
+	uudecode -m testbzip2.txt.bz2.uue
+	atf_check gzip -d testbzip2.txt.bz2
+}
+
+atf_test_case unlz
+unlz_head()
+{
+	atf_set "descr" "Test lzip decompression"
+}
+
+unlz_body()
+{
+	cat >testlzip2.txt.lz.uue <<EOF
+begin-base64 664 testlzip.txt.lz
+TFpJUAEMACoaCSdkHIeKT8pM9PgdK8W6hMTdH5N/yGpYYx/txcwX2b2V8RX3n//0
+/3gA5C0yJCQAAAAAAAAARwAAAAAAAAA=
+====
+EOF
+	uudecode -m testlzip2.txt.lz.uue
+	atf_check gzip -d testlzip.txt.lz
+}
+
+atf_test_case unpack
+unpack_head()
+{
+	atf_set "descr" "Test pack decompression"
+}
+
+unpack_body()
+{
+	cat >testpack.txt.z.uue <<EOF
+begin-base64 664 testpack.txt.z
+Hx4AAAIlCQACAwAAAwQIBm5vIGdsCmVzaXBydCcuYWJjZGhtSVRma3V3eACFBhyG
+HIMRIw4khGFhxAw44wSQ4MEAMgIMxgUUACQQcjAYSIBi+RxIUMIAoYcYhhJCcYeB
+BJGgkgQOQcYNIhGFhxAw44YHYwKK+XIvlyL5ci+XIvlyL5ci+XIvlyFfLkXy5F8u
+RfLkXy5F8uRfLkXy5CvlyL5ci+XIvlyL5ci+XIvlyL5chXy5F8uRfLkXy5F8uRfL
+kXy5F8uQr5ci+XIvlyL5ci+XIvlyL5ci+XIV8uRfLkXy5F8uRfLkXy5F8uRfLkK+
+XIvlyL5ci+XIvlyL5ci+XIvlyFA4
+====
+EOF
+	uudecode -m testpack.txt.z.uue
+	atf_check gzip -d testpack.txt.z
+}
+
+atf_test_case unxz
+unxz_head()
+{
+	atf_set "descr" "Test xz decompression"
+}
+
+unxz_body()
+{
+	cat >testxz.txt.xz.uue <<EOF
+====
+begin-base64 664 testxz.txt.xz
+/Td6WFoAAATm1rRGAgAhARYAAAB0L+WjAQAhVGhpcyBpcyBhIHRlc3QgY29tcHJl
+c3NlZCB4eiBmaWxlCgAAAPXae+PtU7eLAAE6IrYqT9AftvN9AQAAAAAEWVo=
+====
+EOF
+	uudecode -m testxz.txt.xz.uue
+	atf_check gzip -d testxz.txt.xz
+}
+
+atf_test_case ungzip
+ungzip_head()
+{
+	atf_set "descr" "Test gzip decompression"
+}
+
+ungzip_body()
+{
+	cat >testgzip.txt.gz.uue <<EOF
+begin-base64 664 testgzip.txt.gz
+H4sICInRYWkAA3Rlc3QtZ3ppcC50eHQAC8nILFYAokSFktTiEoXk/NyCotTi4tQU
+hfSqzAKFtMycVC4AE9bS3CQAAAA=
+====
+EOF
+	uudecode -m testgzip.txt.gz.uue
+	atf_check gzip -d testgzip.txt.gz
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case concatenated
@@ -125,4 +220,9 @@ atf_init_test_cases()
 	atf_add_test_case crcerror
 	atf_add_test_case good
 	atf_add_test_case lzip
+	atf_add_test_case unbzip2
+	atf_add_test_case unlz
+	atf_add_test_case unpack
+	atf_add_test_case unxz
+	atf_add_test_case ungzip
 }

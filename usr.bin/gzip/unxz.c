@@ -1,4 +1,4 @@
-/*	$NetBSD: unxz.c,v 1.10 2026/01/09 21:31:02 mrg Exp $	*/
+/*	$NetBSD: unxz.c,v 1.11 2026/01/10 05:11:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unxz.c,v 1.10 2026/01/09 21:31:02 mrg Exp $");
+__RCSID("$NetBSD: unxz.c,v 1.11 2026/01/10 05:11:23 mrg Exp $");
 
 #include <stdarg.h>
 #include <errno.h>
@@ -46,6 +46,7 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 	lzma_action action = LZMA_RUN;
 	off_t bytes_out, bp;
 	uint8_t obuf[BUFSIZ];
+	uint8_t ibuf[BUFSIZ];
 
 	if (bytes_in == NULL)
 		bytes_in = &bp;
@@ -67,8 +68,8 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 	for (;;) {
 		check_siginfo();
 		if (strm.avail_in == 0) {
-			strm.next_in = (uint8_t *)pre;
-			strm.avail_in = read(i, pre, prelen);
+			strm.next_in = ibuf;
+			strm.avail_in = read(i, ibuf, sizeof ibuf);
 			switch (strm.avail_in) {
 			case (size_t)-1:
 				maybe_err("read failed");
@@ -103,7 +104,7 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 		if (ret != LZMA_OK) {
 			if (ret == LZMA_STREAM_END) {
 				// Check that there's no trailing garbage.
-				if (strm.avail_in != 0 || read(i, pre, 1))
+				if (strm.avail_in != 0 || read(i, ibuf, 1))
 					ret = LZMA_DATA_ERROR;
 				else {
 					lzma_end(&strm);
