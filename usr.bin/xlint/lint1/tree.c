@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.697 2026/01/08 22:32:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.698 2026/01/10 08:29:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.697 2026/01/08 22:32:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.698 2026/01/10 08:29:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -854,17 +854,23 @@ build_string(buffer *lit)
 	return n;
 }
 
+static tnode_t *
+unconst_tnode(const tnode_t *p)
+{
+	void *r;
+
+	memcpy(&r, &p, sizeof(r));
+	return r;
+}
+
 tnode_t *
 build_generic_selection(const tnode_t *expr,
 			struct generic_association *sel)
 {
 	tnode_t *default_result = NULL;
 
-	if (expr != NULL) {
-		tnode_t *tmp;
-		memcpy(&tmp, &expr, sizeof(tmp)); // unconst_cast
-		expr = cconv(tmp);	/* C23 6.5.2.1p2 */
-	}
+	if (expr != NULL)
+		expr = cconv(unconst_tnode(expr));	/* C23 6.5.2.1p2 */
 
 	for (; sel != NULL; sel = sel->ga_prev) {
 		if (expr != NULL &&
