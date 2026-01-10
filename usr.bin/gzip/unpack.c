@@ -1,5 +1,5 @@
 /*	$FreeBSD: head/usr.bin/gzip/unpack.c 194579 2009-06-21 09:39:43Z delphij $	*/
-/*	$NetBSD: unpack.c,v 1.5 2026/01/09 21:31:02 mrg Exp $	*/
+/*	$NetBSD: unpack.c,v 1.6 2026/01/10 00:48:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Xin LI <delphij@FreeBSD.org>
@@ -325,10 +325,9 @@ unpack_decode(const unpack_descriptor_t *unpackd, char *pre, size_t prelen,
 				    (bytes_out == unpackd->uncompressed_size))
 					goto finished;
 
-				if (!tflag) {
+				if (!tflag)
 					fputc((*thissymbol), unpackd->fpOut);
-					bytes_out++;
-				}
+				bytes_out++;
 
 				/* Prepare for next input */
 				thislevel = 0; thiscode = 0;
