@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.184 2025/04/12 08:12:39 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.185 2026/01/10 08:54:07 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.184 2025/04/12 08:12:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.185 2026/01/10 08:54:07 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3688,6 +3688,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as;
 	usb_device_descriptor_t *ddesc;
+	struct usbd_pipe *pipe;
 	int endpt, clkid;
 	usbd_status err;
 
@@ -3715,19 +3716,25 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	}
 
 	DPRINTF("create pipe to 0x%02x\n", endpt);
-	err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE, &ch->pipe);
+	err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE, &pipe);
 	if (err)
 		return err;
+	pipe = atomic_swap_ptr(&ch->pipe, pipe);
+	KASSERT(pipe == NULL);
 	if (as->edesc1 != NULL) {
 		endpt = as->edesc1->bEndpointAddress;
 		if (endpt != 0) {
 			DPRINTF("create sync-pipe to 0x%02x\n", endpt);
 			err = usbd_open_pipe(as->ifaceh, endpt, USBD_MPSAFE,
-			    &ch->sync_pipe);
+			    &pipe);
+			if (err)
+				return err;
+			pipe = atomic_swap_ptr(&ch->sync_pipe, pipe);
+			KASSERT(pipe == NULL);
 		}
 	}
 
-	return err;
+	return 0;
 }
 
 Static void
