@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.93 2026/01/09 22:54:34 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.94 2026/01/10 23:55:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.93 2026/01/09 22:54:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.94 2026/01/10 23:55:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,7 +644,7 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct genfb_private *scp = sc->sc_private;
 	struct rasops_info *ri = &scr->scr_ri;
 	int wantcols;
-	bool is_bgr, is_swapped, is_10bit, is_brg;
+	bool is_bgr, is_swapped, is_10bit;
 
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
@@ -676,10 +676,6 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_bgr", &is_bgr);
 
-		is_brg = false;
-		prop_dictionary_get_bool(device_properties(sc->sc_dev),
-		    "is_brg", &is_brg);
-
 		is_swapped = false;
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_swapped", &is_swapped);
@@ -696,11 +692,6 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 			ri->ri_rpos = bits * 0;
 			ri->ri_gpos = bits * 1;
 			ri->ri_bpos = bits * 2;
-		} else if (is_brg) {
-			/* oddball BRG format */
-			ri->ri_bpos = bits * 0;
-			ri->ri_rpos = bits * 1;
-			ri->ri_gpos = bits * 2;
 		} else if (is_swapped) {
 			/* byte-swapped, must be 32 bpp */
 			KASSERT(ri->ri_depth == 32);

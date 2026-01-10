@@ -1,4 +1,4 @@
-/* $NetBSD: wiiufb.c,v 1.2 2026/01/10 23:10:02 jmcneill Exp $ */
+/* $NetBSD: wiiufb.c,v 1.3 2026/01/10 23:55:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.2 2026/01/10 23:10:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.3 2026/01/10 23:55:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,9 +57,13 @@ static bool	wiiufb_drc;
 #define WIIUFB_STRIDE		((wiiufb_drc ? 896 : 1280) * WIIUFB_BPP / NBBY)
 #define WIIUFB_SIZE		(WIIUFB_STRIDE * WIIUFB_HEIGHT)
 
-#define D1CRTC_BLANK_CONTROL	0x6084
-#define D2CRTC_BLANK_CONTROL	0x6884
-#define  DCRTC_BLANK_DATA_EN	__BIT(8)
+#define D1GRPH_SWAP_CNTL		0x610c
+#define D2GRPH_SWAP_CNTL		0x690c
+#define  DGRPH_SWAP_ENDIAN_SWAP		__BITS(1, 0)
+#define  DGRPH_SWAP_ENDIAN_SWAP_8IN32	__SHIFTIN(2, DGRPH_SWAP_ENDIAN_SWAP)
+#define D1CRTC_BLANK_CONTROL		0x6084
+#define D2CRTC_BLANK_CONTROL		0x6884
+#define  DCRTC_BLANK_DATA_EN		__BIT(8)
 
 struct wiiufb_softc {
 	struct genfb_softc	sc_gen;
@@ -131,7 +135,6 @@ wiiufb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint16(dict, "linebytes", WIIUFB_STRIDE);
 	prop_dictionary_set_uint32(dict, "address", WIIUFB_BASE);
 	prop_dictionary_set_uint32(dict, "virtual_address", (uintptr_t)bits);
-	prop_dictionary_set_bool(dict, "is_brg", true);
 
 	genfb_init(&sc->sc_gen);
 
@@ -148,13 +151,6 @@ wiiufb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_blank_ctrl = wiiufb_drc ?
 	    D2CRTC_BLANK_CONTROL : D1CRTC_BLANK_CONTROL;
-
-	/* Blank the CRTC we are not using. */
-	if (wiiufb_drc) {
-		wiiufb_gpu_write(D1CRTC_BLANK_CONTROL, DCRTC_BLANK_DATA_EN);
-	} else {
-		wiiufb_gpu_write(D2CRTC_BLANK_CONTROL, DCRTC_BLANK_DATA_EN);
-	}
 }
 
 static bool
@@ -249,6 +245,17 @@ wiiufb_consinit(void)
 		cmdline += strlen(cmdline) + 1;
 	}
 
+	/* Blank the CRTC we are not using. */
+	if (wiiufb_drc) {
+		wiiufb_gpu_write(D1CRTC_BLANK_CONTROL, DCRTC_BLANK_DATA_EN);
+	} else {
+		wiiufb_gpu_write(D2CRTC_BLANK_CONTROL, DCRTC_BLANK_DATA_EN);
+	}
+
+	/* Ensure that the ARGB8888 framebuffer is in a sane state. */
+	wiiufb_gpu_write(D1GRPH_SWAP_CNTL, DGRPH_SWAP_ENDIAN_SWAP_8IN32);
+	wiiufb_gpu_write(D2GRPH_SWAP_CNTL, DGRPH_SWAP_ENDIAN_SWAP_8IN32);
+
 	/*
 	 * Need to use the BAT mapping here as pmap isn't initialized yet.
 	 *
@@ -272,10 +279,6 @@ wiiufb_consinit(void)
 	ri->ri_depth = WIIUFB_BPP;
 	ri->ri_stride = WIIUFB_STRIDE;
 	ri->ri_bits = bits;
-	ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 8;
-	ri->ri_bpos = 0;
-	ri->ri_rpos = 8;
-	ri->ri_gpos = 16;
 	ri->ri_flg = RI_NO_AUTO | RI_CLEAR | RI_FULLCLEAR | RI_CENTER;
 	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
 
