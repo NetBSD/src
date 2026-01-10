@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.120 2025/08/24 09:45:29 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.121 2026/01/10 09:50:06 mlelstv Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.120 2025/08/24 09:45:29 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.121 2026/01/10 09:50:06 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -962,21 +962,29 @@ urtwn_do_async(struct urtwn_softc *sc, void (*cb)(struct urtwn_softc *, void *),
 	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
 	urtwn_cmdq_invariants(sc);
+
+	if (sc->sc_dying) {
+		mutex_spin_exit(&sc->sc_task_mtx);
+		splx(s);
+		return;
+	}
+
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
-	ring->cur = (ring->cur + 1) % URTWN_HOST_CMD_RING_COUNT;
 
 	/*
 	 * Schedule a task to process the command if need be.
 	 */
-	if (!sc->sc_dying) {
-		if (ring->queued == URTWN_HOST_CMD_RING_COUNT)
-			device_printf(sc->sc_dev, "command queue overflow\n");
-		else if (ring->queued++ == 0)
+	if (ring->queued == URTWN_HOST_CMD_RING_COUNT)
+		device_printf(sc->sc_dev, "command queue overflow\n");
+	else {
+		ring->cur = (ring->cur + 1) % URTWN_HOST_CMD_RING_COUNT;
+		if (ring->queued++ == 0)
 			schedtask = true;
 	}
+
 	mutex_spin_exit(&sc->sc_task_mtx);
 	splx(s);
 
