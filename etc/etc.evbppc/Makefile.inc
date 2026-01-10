@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2026/01/09 22:54:26 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2026/01/10 06:56:58 mrg Exp $
 #
 #	etc.evbppc/Makefile.inc -- evbppc-specific etc Makefile targets
 #
@@ -39,6 +39,7 @@ IMAGE.dir=      ${IMAGE.rel}/binary/gzimg
 IMAGE.kern=     ${IMAGE.rel}/binary/kernel
 IMAGEENDIAN=	be
 
+.if ${MACHINE_ARCH} == "powerpc"
 __mkimage: .USE
 	TOOL_MAKE=${MAKE} \
 	TOOL_MAKEFS=${TOOL_MAKEFS} \
@@ -69,5 +70,6 @@ MKI_OPTS.smp_nintendo=		-K ${IMAGE.kern} -x
 SNAP_MD_POST_DEPS+=		smp_nintendo
 INSTALLATION_DIRS+=		binary/gzimg
 INSTALLATION_DIRS+=		installation/misc
+.endif
 
 snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
