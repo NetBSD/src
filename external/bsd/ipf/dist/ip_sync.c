@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.2 2012/07/22 14:27:35 darrenr Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.3 2026/01/10 18:20:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -535,6 +535,12 @@ ipf_sync_write(softc, uio)
 		}
 
 		if (uio->uio_resid >= sh.sm_len) {
+			if (sh.sm_len > sizeof(data)) {
+				printf("uiomove(data) size too big: %d\n",
+				       sh.sm_len);
+				IPFERROR(110008);
+				return ENOSPC;
+			}
 
 			err = UIOMOVE(data, sh.sm_len, UIO_WRITE, uio);
 
@@ -1302,7 +1308,7 @@ ipf_sync_flush_table(softs, tabsize, table)
 int
 ipf_sync_ioctl(softc, data, cmd, mode, uid, ctx)
 	ipf_main_softc_t *softc;
-	caddr_t data;
+	void *data;
 	ioctlcmd_t cmd;
 	int mode, uid;
 	void *ctx;
