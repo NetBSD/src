@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1461 2026/01/02 17:26:50 nia Exp $
+#      $NetBSD: bsd.own.mk,v 1.1462 2026/01/10 22:05:08 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1878,7 +1878,8 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
-. if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || ${MACHINE} == "evbarm"
+. if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
+     ${MACHINE} == "evbarm" || ${MACHINE} == "evbppc"
 HAVE_XORG_GLAMOR?=	yes
 . endif
 HAVE_XORG_EGL?=		yes

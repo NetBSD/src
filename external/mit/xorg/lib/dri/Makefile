@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2024/05/08 16:53:34 christos Exp $
+# $NetBSD: Makefile,v 1.44 2026/01/10 22:05:08 jmcneill Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -9,7 +9,7 @@ NOLINT=		# Lots of "Unsupported platform" due to undefined __GNUC__
 .include "../mesa-which.mk"
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE} == "evbarm"
+    ${MACHINE} == "evbarm" || ${MACHINE} == "evbppc"
 
 LIBISMODULE=	yes
 LIBISCXX=     yes
@@ -37,7 +37,7 @@ CPPFLAGS.brw_disk_cache.c+=	-march=i586
 
 #CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS
 
-# We don't actually build this on non-x86/non-evbarm at all, currently.
+# We don't actually build this on non-x86/evbarm/evbppc at all, currently.
 # The following if statements are not effective since we only
 # get here for x86 and evbarm
 .if ${MACHINE_ARCH} == "alpha"
@@ -52,6 +52,8 @@ DRIVERS=	i915 i965 r200 radeon
 DRIVERS=	r200 radeon
 .elif ${MACHINE} == "evbarm"
 DRIVERS=	r200 radeon
+.elif ${MACHINE} == "evbppc"
+DRIVERS=	# none
 .endif
 
 DRI_SUBDIRS= ${DRIVERS}
@@ -520,7 +522,7 @@ FILES=		drirc
 
 .include <bsd.x11.mk>
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE} == "evbarm"
+    ${MACHINE} == "evbarm" || ${MACHINE} == "evbppc"
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
