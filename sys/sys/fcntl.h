@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.57 2025/07/25 23:24:46 kre Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.58 2026/01/10 18:26:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -55,8 +55,8 @@
 
 /*
  * File status flags: these are used by open(2), fcntl(2).
- * They are also used (indirectly) in the kernel file structure f_flags,
- * which is a superset of the open/fcntl flags.  Open flags and f_flags
+ * They are also used (indirectly) in the kernel file structure f_flag,
+ * which is a superset of the open/fcntl flags.  Open flags and f_flag
  * are inter-convertible using OFLAGS(fflags) and FFLAGS(oflags).
  * Open/fcntl flags begin with O_; kernel-internal flags begin with F.
  */
@@ -156,7 +156,7 @@
 
 /*
  * The O_* flags used to have only F* names, which were used in the kernel
- * and by fcntl.  We retain the F* names for the kernel f_flags field
+ * and by fcntl.  We retain the F* names for the kernel f_flag field
  * and for backward compatibility for fcntl.
  */
 #if defined(_NETBSD_SOURCE)
