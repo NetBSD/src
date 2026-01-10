@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.108 2026/01/10 10:11:52 nia Exp $	*/
+/*	$NetBSD: types.h,v 1.109 2026/01/10 10:40:51 nia Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -232,7 +232,7 @@ typedef int	boolean_t;
 
 #endif /* _KERNEL || _STANDALONE */
 
-#if !defined(_KERNEL) && !defined(_RUMPKERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_RUMPKERNEL) || defined(_STANDALONE)
 
 /*
  * Deprecated <sys/endian.h> transclusion.
