@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 2026/01/09 19:46:56 nia Exp $
+#	$NetBSD: Makefile,v 1.6 2026/01/10 23:59:50 nia Exp $
 
 SUBDIR=
 SUBDIR+=	bootcd
 SUBDIR+=	bootcd-com
 SUBDIR+=	installdvd
 
-.if !defined(CDSOURCE)
+.include <bsd.own.mk>
+
+.if !defined(CDSOURCE) && ${USE_XZ_SETS:Uno:tl} != "no"
 SUBDIR+=	installcd
 .endif
 
