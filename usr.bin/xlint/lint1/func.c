@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.196 2025/09/14 11:14:00 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.197 2026/01/10 19:50:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.196 2025/09/14 11:14:00 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.197 2026/01/10 19:50:40 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -395,7 +395,8 @@ named_label(sym_t *sym)
 static void
 check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 {
-	if (switch_expr->tn_op != BITAND ||
+	if (switch_expr == NULL ||
+	    switch_expr->tn_op != BITAND ||
 	    switch_expr->u.ops.right->tn_op != CON)
 		return;
 
@@ -615,8 +616,8 @@ stmt_switch_expr(tnode_t *tn)
 	if (tn != NULL)
 		tn = promote(NOOP, false, tn);
 	if (tn != NULL && !is_integer(tn->tn_type->t_tspec)) {
-		/* switch expression must have integral type */
-		error(205);
+		/* switch expression must have integral type, not '%s' */
+		error(205, type_name(tn->tn_type));
 		tn = NULL;
 	}
 	if (tn != NULL && !allow_c90) {
