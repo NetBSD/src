@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.22 2026/01/08 22:32:07 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.23 2026/01/10 08:42:48 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -116,10 +116,14 @@ type_conversions(const char *str)
 {
 	int array[4] = { 0, 1, 2, 3 };
 
-	// Type qualifiers are removed.
+	// Type qualifiers are removed in lvalues.
 	x = _Generic(*str,
 		char: str,
 		default: primary_expression
+	);
+	// Type qualifiers are ignored in rvalues.
+	x = _Generic(((const unsigned char)str[2]),
+		unsigned char: str
 	);
 	// Functions are converted to a function pointer.
 	x = _Generic(type_conversions,
