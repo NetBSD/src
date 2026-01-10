@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: atomic.h,v 1.4 2026/01/10 16:11:00 nia Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,11 +33,14 @@
 #define	_CDDL_SYS_ATOMIC_H_
 
 #include_next <sys/atomic.h>
+#include_next <machine/endian.h>
 
 #define casptr(_a, _b, _c)      \
 	atomic_cas_ptr((volatile uint64_t *) _a, _b, _c);
 
-
+#ifndef _BYTE_ORDER
+#error _BYTE_ORDER is undefined!
+#endif
 
 static __inline void
 atomic_or_8(volatile uint8_t *ptr, uint8_t val)
