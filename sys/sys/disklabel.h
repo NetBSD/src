@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.128 2024/04/10 20:00:12 andvar Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.129 2026/01/10 16:26:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -306,18 +306,6 @@ struct olddisklabel {
 	.set	d_end_,148+(MAXPARTITIONS*16)
 #endif /* _LOCORE */
 
-/*
- * We normally use C99 initialisers (just in case the lists below are out
- * of sequence, or have gaps), but lint doesn't grok them.
- * Maybe some host compilers don't either, but many have for quite some time.
- */
-
-#ifndef lint
-#define ARRAY_INIT(element,value) [element]=value
-#else
-#define ARRAY_INIT(element,value) value
-#endif
-
 /* Use pre-processor magic to get all the parameters one one line... */
 
 /* d_type values: */
@@ -356,7 +344,7 @@ enum DKTYPE_ENUMNAME { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
 #endif
 
 #ifdef DKTYPENAMES
-#define	DKTYPE_NAMES(tag, number, name) ARRAY_INIT(number,name),
+#define	DKTYPE_NAMES(tag, number, name) [number] = name,
 static const char *const dktypenames[] = { DKTYPE_DEFN(DKTYPE_NAMES) NULL };
 #undef	DKTYPE_NAMES
 #endif
@@ -412,14 +400,14 @@ enum FSTYPE_ENUMNAME { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
 #endif
 
 #ifdef	FSTYPENAMES
-#define	FS_TYPENAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,name),
+#define	FS_TYPENAMES(tag, number, name, fsck, mount) [number] = name,
 static const char *const fstypenames[] = { FSTYPE_DEFN(FS_TYPENAMES) NULL };
 #undef	FS_TYPENAMES
 #endif
 
 #ifdef FSCKNAMES
 /* These are the names MOUNT_XXX from <sys/mount.h> */
-#define	FS_FSCKNAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,fsck),
+#define	FS_FSCKNAMES(tag, number, name, fsck, mount) [number] = fsck,
 static const char *const fscknames[] = { FSTYPE_DEFN(FS_FSCKNAMES) NULL };
 #undef	FS_FSCKNAMES
 #define	FSMAXNAMES	FSMAXTYPES
@@ -427,7 +415,7 @@ static const char *const fscknames[] = { FSTYPE_DEFN(FS_FSCKNAMES) NULL };
 
 #ifdef MOUNTNAMES
 /* These are the names MOUNT_XXX from <sys/mount.h> */
-#define	FS_MOUNTNAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,mount),
+#define	FS_MOUNTNAMES(tag, number, name, fsck, mount) [number] = mount,
 static const char *const mountnames[] = { FSTYPE_DEFN(FS_MOUNTNAMES) NULL };
 #undef	FS_MOUNTNAMES
 #define	FSMAXMOUNTNAMES	FSMAXTYPES
