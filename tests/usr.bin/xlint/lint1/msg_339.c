@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_339.c,v 1.5 2026/01/10 17:03:22 rillig Exp $	*/
+/*	$NetBSD: msg_339.c,v 1.6 2026/01/10 17:12:26 rillig Exp $	*/
 # 3 "msg_339.c"
 
 // Test for message: option '%c' should be listed in the options string [339]
@@ -56,8 +56,6 @@ main(int argc, char **argv)
 			break;
 		}
 		switch (o) {
-		/* FIXME */
-		/* expect+1: warning: option 'a' should be listed in the options string [339] */
 		case 'a':
 			break;
 		}

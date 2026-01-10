@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.28 2025/02/27 22:37:37 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.29 2026/01/10 17:12:26 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckgetopt.c,v 1.28 2025/02/27 22:37:37 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.29 2026/01/10 17:12:26 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -67,6 +67,7 @@ static struct {
 	pos_t options_pos;
 	int options_lwarn;
 	char *options;
+	char *remaining;
 
 	/*
 	 * The nesting level of switch statements, is only modified if
@@ -119,9 +120,9 @@ check_unlisted_option(char opt)
 	if (opt == ':' && ck.options[0] != ':')
 		goto warn;
 
-	char *optptr = strchr(ck.options, opt);
+	const char *optptr = strchr(ck.options, opt);
 	if (optptr != NULL)
-		*optptr = ' ';
+		ck.remaining[optptr - ck.options] = ' ';
 	else if (opt != '?')
 	warn:
 		/* option '%c' should be listed in the options string */
@@ -131,7 +132,7 @@ check_unlisted_option(char opt)
 static void
 check_unhandled_option(void)
 {
-	for (const char *opt = ck.options; *opt != '\0'; opt++) {
+	for (const char *opt = ck.remaining; *opt != '\0'; opt++) {
 		if (*opt == ' ' || *opt == ':')
 			continue;
 
@@ -152,6 +153,7 @@ check_getopt_begin_while(const tnode_t *tn)
 			return;
 		ck.options_lwarn = lwarn;
 		ck.options_pos = curr_pos;
+		ck.remaining = xstrdup(ck.options);
 	}
 	ck.while_level++;
 }
@@ -193,4 +195,6 @@ check_getopt_end_while(void)
 
 	free(ck.options);
 	ck.options = NULL;
+	free(ck.remaining);
+	ck.remaining = NULL;
 }
