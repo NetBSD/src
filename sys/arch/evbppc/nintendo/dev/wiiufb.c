@@ -1,4 +1,4 @@
-/* $NetBSD: wiiufb.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $ */
+/* $NetBSD: wiiufb.c,v 1.2 2026/01/10 23:10:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.2 2026/01/10 23:10:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -232,11 +232,22 @@ wiiufb_gpu_write(uint16_t reg, uint32_t data)
 void
 wiiufb_consinit(void)
 {
+	extern char wii_cmdline[];
 	struct rasops_info *ri = &wiiufb_console_screen.scr_ri;
 	long defattr;
 	void *bits;
+	const char *cmdline = wii_cmdline;
 
 	memset(&wiiufb_console_screen, 0, sizeof(wiiufb_console_screen));
+
+	while (*cmdline != '\0') {
+		if (strcmp(cmdline, "video=drc") == 0) {
+			/* Output to the gamepad instead of TV. */
+			wiiufb_drc = true;
+			break;
+		}
+		cmdline += strlen(cmdline) + 1;
+	}
 
 	/*
 	 * Need to use the BAT mapping here as pmap isn't initialized yet.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2026/01/10 22:45:57 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2026/01/10 23:10:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2026/01/10 22:45:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2026/01/10 23:10:01 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -315,8 +315,24 @@ wiiu_init_cmdline(void)
 	struct wiiu_argv *argv = (struct wiiu_argv *)WIIU_LOADER_DATA_ADDR;
 
 	if (argv->magic == WIIU_LOADER_MAGIC) {
+		char *p;
+
+		/*
+		 * Split the command line string into tokens to match
+		 * the format used by HBC.
+		 */
 		memcpy(wii_cmdline, argv->cmdline, sizeof(argv->cmdline));
 		wii_cmdline[sizeof(argv->cmdline) - 1] = '\0';
+		p = wii_cmdline;
+		for (;;) {
+			p = strchr(p, ' ');
+			if (*p == '\0') {
+				break;
+			}
+			*p++ = '\0';
+		}
+		p++;
+		*p = '\0';
 	} else {
 		snprintf(wii_cmdline, sizeof(wii_cmdline), WII_DEFAULT_CMDLINE);
 	}
