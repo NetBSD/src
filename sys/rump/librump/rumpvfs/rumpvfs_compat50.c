@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpvfs_compat50.c,v 1.2 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_compat50.c,v 1.3 2026/01/10 10:10:37 nia Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpvfs_compat50.c,v 1.2 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpvfs_compat50.c,v 1.3 2026/01/10 10:10:37 nia Exp $");
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/kmem.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
