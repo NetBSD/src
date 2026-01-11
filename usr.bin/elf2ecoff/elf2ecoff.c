@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.40 2026/01/11 07:55:54 tsutsui Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.41 2026/01/11 08:19:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -668,7 +668,7 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 	uint32_t nextoff, symtabsize, ecoff_strsize;
 	int     nsyms, i;
 	struct ecoff32_symhdr symhdr;
-	int     padding;
+	int     align, padding;
 
 	/* Read in the ELF symbols. */
 	elf_read_syms(&elfsymtab, in, symoff, symsize, stroff, strsize);
@@ -678,18 +678,19 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 	nsyms = ecoffsymtab.nsymbols;
 
 	/* Compute output ECOFF symbol- and string-table offsets. */
+	/* XXX ep is already swapped here */
 	ecoff_symhdr_off = needswap ? bswap32(ep->f.f_symptr) : ep->f.f_symptr;
+	align = needswap ? (bswap16(ep->a.vstamp) < 23 ? 8 : 16) :
+	    ECOFF32_SEGMENT_ALIGNMENT(ep);
 
 	nextoff = ecoff_symhdr_off + sizeof(struct ecoff_symhdr);
 	stringtaboff = nextoff;
-	ecoff_strsize = ECOFF_ROUND(ecoffsymtab.stringsize,
-	    (ECOFF32_SEGMENT_ALIGNMENT(ep)));
-
+	ecoff_strsize = ECOFF_ROUND(ecoffsymtab.stringsize, align);
 
 	nextoff = stringtaboff + ecoff_strsize;
 	symtaboff = nextoff;
 	symtabsize = nsyms * sizeof(struct ecoff_extsym);
-	symtabsize = ECOFF_ROUND(symtabsize, ECOFF32_SEGMENT_ALIGNMENT(ep));
+	symtabsize = ECOFF_ROUND(symtabsize, align);
 
 	/* Write out the symbol header ... */
 	write_ecoff_symhdr(out, ep, &symhdr, nsyms, symtaboff,
