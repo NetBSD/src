@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.6 2018/05/03 07:13:48 maxv Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.7 2026/01/11 15:47:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -99,7 +99,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.6 2018/05/03 07:13:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.7 2026/01/11 15:47:19 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:45:38 darrenr Exp";
 #endif
@@ -524,6 +524,12 @@ ipf_sync_write(ipf_main_softc_t *softc, struct uio *uio)
 		}
 
 		if (uio->uio_resid >= sh.sm_len) {
+			if (sh.sm_len > sizeof(data)) {
+				printf("uiomove(data) size too big: %d\n",
+				       sh.sm_len);
+				IPFERROR(110008);
+				return ENOSPC;
+			}
 
 			err = UIOMOVE((void *)data, sh.sm_len, UIO_WRITE, uio);
 
