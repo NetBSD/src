@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.34 2025/11/17 11:25:58 martin Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.35 2026/01/11 06:11:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.34 2025/11/17 11:25:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.35 2026/01/11 06:11:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -2299,7 +2299,7 @@ wd33c93_timeout(void *arg)
 		/* We need to service a missed IRQ */
 		wd33c93_intr(sc);
 	} else {
-		(void) wd33c93_abort(sc, sc->sc_nexus, "timeout");
+		(void) wd33c93_abort(sc, acb, "timeout");
 	}
 	splx(s);
 }
