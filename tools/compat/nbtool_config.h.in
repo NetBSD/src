@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.62 2025/12/18 00:20:22 christos Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.63 2026/01/11 19:51:18 nia Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -40,6 +40,9 @@
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
+
+/* Define to 1 if the system has the type 'daddr_t'. */
+#undef HAVE_DADDR_T
 
 /* Define to 1 if you have the declaration of 'asnprintf', and to 0 if you
    don't. */
@@ -460,6 +463,9 @@
 
 /* Define to 1 if you have the 'dprintf' function. */
 #undef HAVE_DPRINTF
+
+/* Define to 1 if you have the <endian.h> header file. */
+#undef HAVE_ENDIAN_H
 
 /* Define if you have the enum uio_rw type. */
 #undef HAVE_ENUM_UIO_RW

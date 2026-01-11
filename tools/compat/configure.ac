@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.113 2026/01/11 10:37:46 nia Exp $
+#	$NetBSD: configure.ac,v 1.114 2026/01/11 19:51:18 nia Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -83,7 +83,8 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT()
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h)
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h \
+	endian.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
 	libgen.h stdint.h util.h resolv.h arpa/nameser.h,,
@@ -109,7 +110,7 @@ AC_CHECK_HEADERS(netconfig.h,,
 
 # Typedefs.
 AC_TYPE_SIZE_T()
-AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
+AC_CHECK_TYPES([id_t, daddr_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
 AC_CHECK_TYPES([uchar_t, ushort_t, uint_t, ulong_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
 			  [Define if you have the socklen_t type.])],,

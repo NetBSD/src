@@ -4725,6 +4725,12 @@ then :
   printf "%s\n" "#define HAVE_SYS_UIO_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "endian.h" "ac_cv_header_endian_h" "$ac_includes_default"
+if test "x$ac_cv_header_endian_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_ENDIAN_H 1" >>confdefs.h
+
+fi
 
        for ac_header in sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h libgen.h stdint.h util.h resolv.h arpa/nameser.h
 do :
@@ -4800,6 +4806,14 @@ if test "x$ac_cv_type_id_t" = xyes
 then :
 
 printf "%s\n" "#define HAVE_ID_T 1" >>confdefs.h
+
+
+fi
+ac_fn_c_check_type "$LINENO" "daddr_t" "ac_cv_type_daddr_t" "$ac_includes_default"
+if test "x$ac_cv_type_daddr_t" = xyes
+then :
+
+printf "%s\n" "#define HAVE_DADDR_T 1" >>confdefs.h
 
 
 fi
