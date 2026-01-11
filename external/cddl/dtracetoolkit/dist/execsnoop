@@ -3,9 +3,9 @@
 # execsnoop - snoop process execution as it occurs.
 #             Written using DTrace (Solaris 10 3/05).
 #
-# $Id: execsnoop,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: execsnoop,v 1.2 2026/01/11 22:24:23 wiz Exp $
 #
-# USAGE:	execsnoop [-a|-A|-ehsvJ] [-c command]
+# USAGE:	execsnoop [-a|-A|-ehsv] [-c command]
 #
 #		execsnoop	# default output
 #
@@ -14,11 +14,9 @@
 #		-e		# safe output - parseable
 #		-s		# print start time, us
 #		-v		# print start time, string
-#		-J		# print jail ID
 #		-c command	# command name to snoop
 #	eg,
 #		execsnoop -v		# human readable timestamps
-#		execsnoop -J		# print jail ID
 #		execsnoop -c ls		# snoop ls commands only
 #
 # The parseable output ensures that the ARGS field doesn't contain
@@ -30,7 +28,6 @@
 #		PPID		Parent Process ID
 #		COMM		command name for the process
 #		ARGS		argument listing for the process
-#		JAIL ID		Jail ID	
 #		TIME		timestamp for the command, us
 #		STRTIME		timestamp for the command, string
 #
@@ -61,7 +58,7 @@
 # 02-Jul-2005 	   "      "	Added projid, safe printing.
 # 11-Sep-2005	   "      "	Increased switchrate.
 # 11-Sep-2005	   "      "	Last update.
-# 
+#
 
 
 ##############################
@@ -70,10 +67,10 @@
 
 ### default variables
 opt_dump=0; opt_cmd=0; opt_time=0; opt_timestr=0; filter=0; command=.
-opt_jailid=0; opt_safe=0
+opt_safe=0
 
 ### process options
-while getopts aAc:ehsvJ name
+while getopts aAc:ehsv name
 do
 	case $name in
 	a)	opt_time=1; opt_timestr=1; opt_jailid=1 ;;
@@ -82,20 +79,17 @@ do
 	e)	opt_safe=1 ;;
 	s)	opt_time=1 ;;
 	v)	opt_timestr=1 ;;
-	J)	opt_jailid=1 ;;
 	h|?)	cat <<-END >&2
-		USAGE: execsnoop [-a|-A|-ehjsvJ] [-c command]
+		USAGE: execsnoop [-A|-a|-ehsv] [-c command]
 		       execsnoop                # default output
-		                -a              # print all data
 		                -A              # dump all data, space delimited
+		                -a              # print all data
+		                -c command      # command name to snoop
 		                -e              # safe output, parseable
 		                -s              # print start time, us
 		                -v              # print start time, string
-		                -J              # print jail ID 
-		                -c command      # command name to snoop
-		  eg,
+		  e.g.,
 		        execsnoop -v            # human readable timestamps
-		        execsnoop -J		# print jail ID 
 		        execsnoop -c ls         # snoop ls commands only
 		END
 		exit 1
@@ -104,7 +98,7 @@ done
 
 ### option logic
 if [ $opt_dump -eq 1 ]; then
-	opt_time=0; opt_timestr=0; opt_jailid=0
+	opt_time=0; opt_timestr=0
 fi
 if [ $opt_cmd -eq 1 ]; then
 	filter=1
@@ -122,27 +116,25 @@ fi
  inline int OPT_cmd 	= '$opt_cmd';
  inline int OPT_time 	= '$opt_time';
  inline int OPT_timestr	= '$opt_timestr';
- inline int OPT_jailid  = '$opt_jailid';
  inline int OPT_safe 	= '$opt_safe';
  inline int FILTER 	= '$filter';
  inline string COMMAND 	= "'$command'";
- 
+
  #pragma D option quiet
  #pragma D option switchrate=10hz
- 
+
  /*
   * Print header
   */
- dtrace:::BEGIN 
+ dtrace:::BEGIN
  {
 	/* print optional headers */
  	OPT_time    ? printf("%-14s ", "TIME") : 1;
  	OPT_timestr ? printf("%-20s ", "STRTIME") : 1;
- 	OPT_jailid    ? printf("%-10s ", "JAIL ID") : 1;
 
 	/* print main headers */
-	OPT_dump    ? printf("%s %s %s %s %s %s %s\n",
-	    "TIME", "JAIL ID", "UID", "PID", "PPID", "COMM", "ARGS") :
+	OPT_dump    ? printf("%s %s %s %s %s %s\n",
+	    "TIME", "UID", "PID", "PPID", "COMM", "ARGS") :
 	    printf("%5s %6s %6s %s\n", "UID", "PID", "PPID", "ARGS");
  }
 
@@ -150,16 +142,15 @@ fi
   * Print exec event
   */
  syscall::execve:return
- /(FILTER == 0) || (OPT_cmd == 1 && COMMAND == execname)/ 
+ /(FILTER == 0) || (OPT_cmd == 1 && COMMAND == execname)/
  {
 	/* print optional fields */
  	OPT_time ? printf("%-14d ", timestamp/1000) : 1;
 	OPT_timestr ? printf("%-20Y ", walltimestamp) : 1;
-	OPT_jailid ? printf("%-10d ", curpsinfo->pr_jailid) : 1;
 
 	/* print main data */
-	OPT_dump ? printf("%d %d %d %d %d %s ", timestamp/1000,
-	    curpsinfo->pr_jailid, uid, pid, ppid, execname) :
+	OPT_dump ? printf("%d %d %d %d %s ", timestamp/1000,
+	    uid, pid, ppid, execname) :
 	    printf("%5d %6d %6d ", uid, pid, ppid);
 	OPT_safe ? printf("%S\n", curpsinfo->pr_psargs) :
 	    printf("%s\n", curpsinfo->pr_psargs);
