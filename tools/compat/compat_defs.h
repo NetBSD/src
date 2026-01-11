@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.132 2026/01/11 19:51:18 nia Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.133 2026/01/11 22:08:48 nia Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -1162,22 +1162,22 @@ int	 cgetustr(char *, const char *, char **);
 #define htole64(x)	(x)
 #endif
 #endif
-#if !HAVE_DECL_BE16TOH && !defined(htobe16)
+#if !HAVE_DECL_BE16TOH && !defined(be16toh)
 #define be16toh(x)	htobe16(x)
 #endif
-#if !HAVE_DECL_BE32TOH && !defined(htobe32)
+#if !HAVE_DECL_BE32TOH && !defined(be32toh)
 #define be32toh(x)	htobe32(x)
 #endif
-#if !HAVE_DECL_BE64TOH && !defined(htobe64)
+#if !HAVE_DECL_BE64TOH && !defined(be64toh)
 #define be64toh(x)	htobe64(x)
 #endif
-#if !HAVE_DECL_LE16TOH && !defined(htole16)
+#if !HAVE_DECL_LE16TOH && !defined(le16toh)
 #define le16toh(x)	htole16(x)
 #endif
-#if !HAVE_DECL_LE32TOH && !defined(htole32)
+#if !HAVE_DECL_LE32TOH && !defined(le32toh)
 #define le32toh(x)	htole32(x)
 #endif
-#if !HAVE_DECL_LE64TOH && !defined(htole64)
+#if !HAVE_DECL_LE64TOH && !defined(le64toh)
 #define le64toh(x)	htole64(x)
 #endif
 
