@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1176 2026/01/03 20:48:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1177 2026/01/11 18:13:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1176 2026/01/03 20:48:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1177 2026/01/11 18:13:15 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3020,9 +3020,16 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		goto done;
 
+	if (re.str[0] == '\0') {
+	    /* not all regcomp() fail on this */
+	    Parse_Error(PARSE_FATAL, "Regex compilation error: empty");
+	    goto re_err;
+	}
+
 	error = regcomp(&args.re, re.str, REG_EXTENDED);
 	if (error != 0) {
 		RegexError(error, &args.re, "Regex compilation error");
+	re_err:
 		LazyBuf_Done(&replaceBuf);
 		FStr_Done(&re);
 		return AMR_CLEANUP;
