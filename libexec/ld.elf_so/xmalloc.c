@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.21 2026/01/11 07:05:44 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.22 2026/01/11 07:15:08 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.21 2026/01/11 07:05:44 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.22 2026/01/11 07:15:08 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -108,8 +108,8 @@ static char 		*pagepool_start, *pagepool_end;
 union	overhead {
 	union	overhead *ov_next;	/* when free */
 	struct {
-		u_char	ovu_magic;	/* magic number */
-		u_char	ovu_index;	/* bucket # */
+		uint16_t	ovu_index;	/* bucket # */
+		uint8_t		ovu_magic;	/* magic number */
 	} ovu;
 #define	ov_magic	ovu.ovu_magic
 #define	ov_index	ovu.ovu_index
@@ -120,6 +120,7 @@ static int morepages(int);
 static void *imalloc(size_t);
 
 #define	MAGIC		0xef		/* magic # on accounting info */
+#define	AMAGIC		0xdf		/* magic # for aligned alloc */
 
 
 /*
@@ -156,6 +157,12 @@ botch(const char *s)
 #endif
 
 #define TRACE()	xprintf("TRACE %s:%d\n", __FILE__, __LINE__)
+
+static void *
+cp2op(void *cp)
+{
+	return (((caddr_t)cp - sizeof(union overhead)));
+}
 
 static void *
 imalloc(size_t nbytes)
@@ -204,6 +211,28 @@ imalloc(size_t nbytes)
 	return ((char *)(op + 1));
 }
 
+void *
+xmalloc_aligned(size_t size, size_t align, size_t offset)
+{
+	void *mem, *ov;
+	union overhead ov1;
+	uintptr_t x;
+
+	if (align < FIRST_BUCKET_SIZE)
+		align = FIRST_BUCKET_SIZE;
+	offset &= align - 1;
+	mem = imalloc(size + align + offset + sizeof(union overhead));
+	if (mem == NULL)
+		return (NULL);
+	x = roundup2((uintptr_t)mem + sizeof(union overhead), align);
+	x += offset;
+	ov = cp2op((void *)x);
+	ov1.ov_magic = AMAGIC;
+	ov1.ov_index = x - (uintptr_t)mem + sizeof(union overhead);
+	memcpy(ov, &ov1, sizeof(ov1));
+	return ((void *)x);
+}
+
 /*
  * Allocate more memory to the indicated bucket.
  */
@@ -243,12 +272,16 @@ morecore(size_t bucket)
 void
 xfree(void *cp)
 {
-	int size;
-	union overhead *op;
+	union overhead *op, op1;
+	void *opx;
+	size_t size;
 
 	if (cp == NULL)
 		return;
-	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
+	opx = cp2op(cp);
+	memcpy(&op1, opx, sizeof(op1));
+	op = op1.ov_magic == AMAGIC ? (void *)((caddr_t)cp - op1.ov_index) :
+	    opx;
 	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
 	if (op->ov_magic != MAGIC)
 		return;				/* sanity */
