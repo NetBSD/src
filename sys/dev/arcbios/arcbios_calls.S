@@ -1,3 +1,5 @@
+/*	$NetBSD: arcbios_calls.S,v 1.6 2026/01/11 06:41:42 tsutsui Exp $	*/
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +34,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: arcbios_calls.S,v 1.5 2026/01/11 06:39:36 tsutsui Exp $")
+RCSID("$NetBSD: arcbios_calls.S,v 1.6 2026/01/11 06:41:42 tsutsui Exp $")
 
 	.text
 	.set noreorder
