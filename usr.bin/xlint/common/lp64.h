@@ -1,4 +1,4 @@
-/*	$NetBSD: lp64.h,v 1.11 2023/07/03 07:03:19 rillig Exp $	*/
+/*	$NetBSD: lp64.h,v 1.12 2026/01/11 18:11:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -45,9 +45,6 @@
 #define	LONG_SIZE	64
 #define	LLONG_SIZE	64
 #define	PTR_SIZE	64
-#ifdef _LP64
-#define	INT128_SIZE	128
-#endif
 
 #define	TARG_SCHAR_MAX	((int8_t) (((uint8_t) -1) >> 1))
 #define	TARG_SCHAR_MIN	((-TARG_CHAR_MAX) - 1)

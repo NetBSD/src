@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.239 2025/04/12 19:42:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.240 2026/01/11 18:11:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.239 2025/04/12 19:42:35 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.240 2026/01/11 18:11:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -162,9 +162,7 @@ static const struct keyword {
 	kwdef_token(	"__imag__",	T_IMAG,			78,1,1),
 	kwdef("inline",	T_FUNCTION_SPECIFIER, .u.kw_fs = FS_INLINE, 99,0,7),
 	kwdef_type(	"int",		INT,			78),
-#ifdef INT128_SIZE
 	kwdef_type(	"__int128_t",	INT128,			99),
-#endif
 	kwdef_type(	"long",		LONG,			78),
 	kwdef("_Noreturn", T_FUNCTION_SPECIFIER, .u.kw_fs = FS_NORETURN, 11,0,1),
 	kwdef_const(	"nullptr",	NC_NULLPTR,		23,0,1),
@@ -189,9 +187,7 @@ static const struct keyword {
 	kwdef_const(	"true",		NC_TRUE,		23,0,1),
 	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
 	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
-#ifdef INT128_SIZE
 	kwdef_type(	"__uint128_t",	UINT128,		99),
-#endif
 	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
 	// XXX: void requires C90 or later.

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.533 2025/09/14 11:14:00 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.534 2026/01/11 18:11:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.533 2025/09/14 11:14:00 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.534 2026/01/11 18:11:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1520,9 +1520,7 @@ type_direct_declarator:
 			lint_assert(t == INT || t == UINT);
 			type_t *tp = block_dup_type($$->s_type);
 			tp->t_tspec =
-#ifdef INT128_SIZE
 			    $2.bit_width == 128 ? (t == INT ? INT128 : UINT128) :
-#endif
 			    t == INT ? LLONG : ULLONG;
 			$$->s_type = tp;
 		}

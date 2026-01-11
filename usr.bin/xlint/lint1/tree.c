@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.699 2026/01/10 08:42:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.700 2026/01/11 18:11:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.699 2026/01/10 08:42:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.700 2026/01/11 18:11:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -976,9 +976,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 
 static const tspec_t arith_rank[] = {
 	LDOUBLE, DOUBLE, FLOAT,
-#ifdef INT128_SIZE
 	UINT128, INT128,
-#endif
 	ULLONG, LLONG,
 	ULONG, LONG,
 	UINT, INT,
@@ -3744,9 +3742,7 @@ should_warn_about_integer_conversion(const type_t *ntp, tspec_t nt,
 	if (aflag > 0 && portable_rank_cmp(nt, ot) < 0) {
 		if (ot == LONG || ot == ULONG
 		    || ot == LLONG || ot == ULLONG
-#ifdef INT128_SIZE
 		    || ot == INT128 || ot == UINT128
-#endif
 		    || aflag > 1)
 			return !can_represent(ntp, otn);
 	}

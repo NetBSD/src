@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.421 2025/09/18 18:22:17 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.422 2026/01/11 18:11:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.421 2025/09/18 18:22:17 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.422 2026/01/11 18:11:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -232,9 +232,7 @@ merge_signedness(tspec_t t, tspec_t s)
 	    : t == INT ? UINT
 	    : t == LONG ? ULONG
 	    : t == LLONG ? ULLONG
-#ifdef INT128_SIZE
 	    : t == INT128 ? UINT128
-#endif
 	    : t;
 }
 
@@ -382,11 +380,7 @@ dcs_add_type(type_t *tp)
 		if (dcs->d_sign_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
-#ifdef INT128_SIZE
 	} else if (t == SHORT || t == LONG || t == LLONG || t == INT128) {
-#else
-	} else if (t == SHORT || t == LONG || t == LLONG) {
-#endif
 		if (dcs->d_rank_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;
@@ -517,14 +511,8 @@ dcs_add_type_attributes(type_attributes attrs)
 		dcs_set_used();
 	if (attrs.noreturn)
 		dcs->d_noreturn = true;
-	if (attrs.bit_width == 128) {
-#ifdef INT128_SIZE
+	if (attrs.bit_width == 128)
 		dcs->d_rank_mod = INT128;
-#else
-		/* Get as close as possible. */
-		dcs->d_rank_mod = LLONG;
-#endif
-	}
 	if (attrs.bit_width == 64)
 		dcs->d_rank_mod = LLONG;
 }
