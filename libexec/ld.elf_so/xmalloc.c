@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.18 2026/01/11 06:45:47 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.19 2026/01/11 06:49:19 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.18 2026/01/11 06:45:47 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.19 2026/01/11 06:49:19 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -97,7 +97,6 @@ __RCSID("$NetBSD: xmalloc.c,v 1.18 2026/01/11 06:45:47 skrll Exp $");
  */
 #define	NPOOLPAGES	(32*1024/pagesz)
 static char 		*pagepool_start, *pagepool_end;
-static int		morepages(int);
 #define PAGEPOOL_SIZE	(size_t)(pagepool_end - pagepool_start)
 
 /*
@@ -117,6 +116,7 @@ union	overhead {
 };
 
 static void morecore(size_t);
+static int morepages(int);
 static void *imalloc(size_t);
 
 #define	MAGIC		0xef		/* magic # on accounting info */
