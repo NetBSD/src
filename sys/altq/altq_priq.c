@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.29 2025/01/08 13:00:04 joe Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.30 2026/01/11 16:31:27 christos Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.29 2025/01/08 13:00:04 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.30 2026/01/11 16:31:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -581,6 +581,8 @@ priq_purgeq(struct priq_class *cl)
 static void
 get_class_stats(struct priq_classstats *sp, struct priq_class *cl)
 {
+	memset(sp, 0, sizeof(*sp));
+
 	sp->class_handle = cl->cl_handle;
 	sp->qlength = qlen(cl->cl_q);
 	sp->qlimit = qlimit(cl->cl_q);

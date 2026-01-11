@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.42 2025/01/08 13:00:04 joe Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.43 2026/01/11 16:31:27 christos Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.42 2025/01/08 13:00:04 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.43 2026/01/11 16:31:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -213,6 +213,8 @@ cbq_request(struct ifaltq *ifq, int req, void *arg)
 static void
 get_class_stats(class_stats_t *statsp, struct rm_class *cl)
 {
+	memset(statsp, 0, sizeof(*statsp));
+
 	statsp->xmit_cnt	= cl->stats_.xmit_cnt;
 	statsp->drop_cnt	= cl->stats_.drop_cnt;
 	statsp->over		= cl->stats_.over;
