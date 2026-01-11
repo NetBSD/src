@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3211 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3212 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,10 +25,6 @@
 
 Changes from NetBSD 11.0 to NetBSD 12.0:
 
-	pvscsi(4): Add a port of the FreeBSD driver for the VMware PV SCSI
-		controller found in VMware ESXi. [skrll 20250804]
-	posix_openpt(3): Support O_CLOFORK. [gutteridge 20250806]
-	sh(1): cd "" is now an error, as required by POSIX 2024. [kre 20250812]
 	macppc: Add drivebay(4), a driver to control the Xserve G4's drive bays
 		via sysctl. [macallan 20250812]
 	macppc: Added support for fan control on Xserve G4. [macallan 20250820]
@@ -69,36 +65,23 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	ssh(1), sshd(8): Import OpenSSH 10.2. [christos 20251011]
 	gpt(8): Add various riscv-specific partition types. [thorpej 20251011]
 	fsck_lfs(8): Enable checking LFS64 volumes. [perseant 20251012]
-	riscv: Handle XTheadMae vs. Svpbmt, allowing boot on Allwinner
-		Nezha board. [thorpej 20251012]
-	viaide(4): Add UDMA support for VT8233C IDE controller.
-		[andvar 20251017]
 	m68k: New port: mac68ksf - Macintosh 68k softfloat. [nat 20251020]
 	sc16is7xx(4): NXP SC16IX7xx family of UART chips that are behind
 		a I2C or SPI bus.  [brad 20251024]
 	compat_linux(8): Add support for semtimedop(2), from Ricardo Branco.
 		[christos 20251026]
 	ftp(1): Add "connect" as a synonym for "open". [lukem 20251028]
-	wscons(4): Add support for xterm-style 256 colour escapes,
-		from Crystal Kolipe. [nia 20251102]
 	lfs: Add in-kernel cleaner. [perseant 20251106]
-	aac(4): Support Adaptec RAID 5445, 5805 and 5085. [riz 20251107]
 	m68k: Experimental new pmap module for systems with 68k MMUs
 		(plus the HP MMU). [thorpej 20251108]
 	compat_linux(8): Add prctl(2) lwp_{g,s}etname, from Kevin Bloom.
 		[christos 20251110]
-	evbppc: Add support for the Wii AES engine. [jmcneill 20251111]
 	sparc64: Add implementation of Sun's VIS instruction API.
 		[nia 20251113]
-	memfd_create(2): Add close-on-fork support. [gutteridge 20251115]
 	iconv(1): Support -o outfile like gnu does and check writes for
 		failure. [christos 20251121]
-	evbppc: Add Wii USB Gecko support. [jmcneill 20251115]
 	cgd(4): Improve throughput of AES disk encryption using SSE2.
 		[riastradh 20251123]
-	rge(4): Sync driver with upstream (OpenBSD), adding support for
-		new chips and chip-revisions, and enabling checksum
-		offload for IPv4. [pgoyette 20251127]
 	powerpc: Switch to GCC 14. [martin 20251128]
 	dreamcast, atu(4), icp(4), gpsa(8): Relicense various NetBSD
 		components from 4-clause to 3-clause BSD. [nia 20251128]
@@ -122,8 +105,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		as uhid(4) (now "userspace hid") devices.
 		[jmcneill 20251208]
 	openresolv(8): import 3.17.1 (patched to 3.17.3) [roy 20251213]
-	libutil: added strpct() rounding options strpct_r (etc) --> .so.7.25
-		[kre 20251214]
 	editline(3): Add a method to set custom word characters,
 		from bsiegert. [christos 20251214]
 	evbarm: Add support for TI OMAP4 PandaBoard-ES, from Rui-Xiang Guo.

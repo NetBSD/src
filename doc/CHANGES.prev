@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.186 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.187 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -14250,4 +14250,22 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	GCC: Updated to GCC 12.5.0.  [mrg 20250721]
 	kernel (et al): Added O_CLOFORK (etc) implementation from
 		Ricardo Branco. [kre 20250725]
-
+	pvscsi(4): Add a port of the FreeBSD driver for the VMware PV SCSI
+		controller found in VMware ESXi. [skrll 20250804]
+	posix_openpt(3): Support O_CLOFORK. [gutteridge 20250806]
+	sh(1): cd "" is now an error, as required by POSIX 2024. [kre 20250812]
+	riscv: Handle XTheadMae vs. Svpbmt, allowing boot on Allwinner
+		Nezha board. [thorpej 20251012]
+	viaide(4): Add UDMA support for VT8233C IDE controller.
+		[andvar 20251017]
+	wscons(4): Add support for xterm-style 256 colour escapes,
+		from Crystal Kolipe. [nia 20251102]
+	aac(4): Support Adaptec RAID 5445, 5805 and 5085. [riz 20251107]
+	evbppc: Add support for the Wii AES engine. [jmcneill 20251111]
+	memfd_create(2): Add close-on-fork support. [gutteridge 20251115]
+	evbppc: Add Wii USB Gecko support. [jmcneill 20251115]
+	rge(4): Sync driver with upstream (OpenBSD), adding support for
+		new chips and chip-revisions, and enabling checksum
+		offload for IPv4. [pgoyette 20251127]
+	libutil: added strpct() rounding options strpct_r (etc) --> .so.7.25
+		[kre 20251214]
