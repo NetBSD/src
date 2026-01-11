@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.325 2023/12/10 18:16:08 schmonz Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.326 2026/01/11 17:23:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.325 2023/12/10 18:16:08 schmonz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.326 2026/01/11 17:23:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1333,7 +1333,7 @@ retry:
 				nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
 					+ NFSX_V3WRITEVERF);
 				rlen = fxdr_unsigned(int, *tl++);
-				if (rlen == 0) {
+				if (rlen <= 0 || rlen > len) {
 					error = NFSERR_IO;
 					m_freem(mrep);
 					break;
