@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.36 2026/01/11 06:20:09 tsutsui Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.37 2026/01/11 06:22:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.36 2026/01/11 06:20:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.37 2026/01/11 06:22:04 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -557,7 +557,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 	struct wd33c93_acb *acb;
 	int flags, s;
 
-	SBIC_DEBUG(MISC, ("wd33c93_scsi_request: req 0x%x\n", (int)req));
+	SBIC_DEBUG(SCSIREQ, ("%s: req 0x%x\n", __func__, (int)req));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -582,6 +582,9 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			scsipi_done(xs);
 			return;
 		}
+
+		SBIC_DEBUG(SCSIREQ,
+		    ("wd33c93_scsi_request: RUN_XFER: acb %p\n", acb));
 
 		acb->flags = ACB_ACTIVE;
 		acb->xs    = xs;
@@ -620,7 +623,10 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
+		SBIC_DEBUG(SCSIREQ, ("%s: GROW_RESOURCES, UNSUPPORTED\n",
+		    __func__));
 		/* XXX Not supported. */
+		/* XXX TODO: should fail the request */
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
@@ -630,6 +636,8 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 
 		ti = &sc->sc_tinfo[xm->xm_target];
 		ti->flags &= ~T_WANTSYNC;
+
+		SBIC_DEBUG(SCSIREQ, ("%s: REQ_SET_XFER_MODE\n", __func__));
 
 		if ((CFFLAGS_NOTAGS(sc->sc_cfflags, xm->xm_target) == 0) &&
 		    (xm->xm_mode & PERIPH_CAP_TQING) && !wd33c93_notags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.14 2025/11/17 11:25:58 martin Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.15 2026/01/11 06:22:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -249,6 +249,7 @@ struct wd33c93_softc {
 #define DEBUG_MSGS	0x200
 #define DEBUG_TAGS	0x400
 #define DEBUG_SYNC	0x800
+#define DEBUG_SCSIREQ	0x1000
 
 #ifdef DEBUG
 extern int wd33c93_debug;
