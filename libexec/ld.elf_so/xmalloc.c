@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.19 2026/01/11 06:49:19 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.20 2026/01/11 07:00:53 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.19 2026/01/11 06:49:19 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.20 2026/01/11 07:00:53 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -161,7 +161,7 @@ imalloc(size_t nbytes)
 {
 	union overhead *op;
 	size_t bucket;
-	unsigned amt;
+	size_t amt;
 
 	/*
 	 * First time malloc is called, setup page size.
