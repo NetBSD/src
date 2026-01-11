@@ -1,4 +1,4 @@
-.\" $NetBSD: sunlabel.8,v 1.9 2017/07/03 21:35:32 wiz Exp $
+.\" $NetBSD: sunlabel.8,v 1.10 2026/01/11 22:52:27 tsutsui Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 21, 2002
+.Dd January 11, 2026
 .Dt SUNLABEL 8
 .Os
 .Sh NAME
@@ -92,6 +92,16 @@ Change partition (see below).
 Print label, except for the partition table.
 .It Ic P
 Print the partition table.
+.Pp
+In addition, a simple textual map of the partition layout is printed.
+The map is scaled to the current terminal width;
+each character column represents a span of the disk and is labeled
+with the corresponding partition letter
+.Po Ar a
+through
+.Ar p Pc .
+Unallocated regions are shown as spaces.
+Overlapping partitions may appear on multiple map lines.
 .It Ic Q
 Quit program (error if no write since last change).
 .It Ic Q!
