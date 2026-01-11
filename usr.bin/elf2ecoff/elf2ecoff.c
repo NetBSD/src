@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.39 2026/01/11 07:46:39 tsutsui Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.40 2026/01/11 07:55:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -600,8 +600,6 @@ write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
 		    "writing symhdr for %d entries at offset %#x\n",
 		    nesyms, symptr);
 	}
-
-	ep->f.f_nsyms = sizeof(struct ecoff32_symhdr);
 
 	memset(symhdrp, 0, sizeof(*symhdrp));
 	symhdrp->esymMax = nesyms;
