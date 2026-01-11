@@ -1,9 +1,9 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.31 2023/06/27 09:58:50 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.32 2026/01/11 17:52:42 joe Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,12 +23,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.31 2023/06/27 09:58:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.32 2026/01/11 17:52:42 joe Exp $");
 #endif /* not lint */
 
 
@@ -825,7 +825,7 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 			bit = (uint64_t) 1 << eccsect;
 			error = eccline->error & bit ? EIO : 0;
 			if (eccline->present & bit) {
-				src = (uint8_t *) eccline->blob + 
+				src = (uint8_t *) eccline->blob +
 					eccsect * sector_size;
 				dst = (uint8_t *) buf->b_data + bpos;
 				if (!error)
@@ -1015,7 +1015,7 @@ udf_sync_caches_rmw(struct udf_strat_args *args)
 
 /* --------------------------------------------------------------------- */
 
-static void 
+static void
 udf_shedule_read_callback(struct buf *buf)
 {
 	struct udf_eccline *eccline = BTOE(buf);
@@ -1048,7 +1048,7 @@ udf_shedule_read_callback(struct buf *buf)
 			nestiobuf_done(eccline->bufs[i], len, error);
 			eccline->bufs[i] = NULL;
 		}
-	
+
 	}
 	KASSERT(buf->b_data == eccline->blob);
 	KASSERT(eccline->present == ((uint64_t) 1 << ump->packet_size)-1);
@@ -1426,7 +1426,7 @@ udf_discstrat_init_rmw(struct udf_strat_args *args)
 
 	/* initialise eccline blob pool */
         ecclinepool_allocator.pa_pagesz = blobsize;
-	pool_init(&priv->ecclineblob_pool, blobsize, 
+	pool_init(&priv->ecclineblob_pool, blobsize,
 		0, 0, 0, "udf_eccline_blob", &ecclinepool_allocator, IPL_NONE);
 
 	/* initialise main queues */
@@ -1474,10 +1474,10 @@ static void
 udf_discstrat_finish_rmw(struct udf_strat_args *args)
 {
 	struct udf_mount *ump = args->ump;
-	struct strat_private *priv = PRIV(ump);
-
 	if (ump == NULL)
 		return;
+
+	struct strat_private *priv = PRIV(ump);
 
 	/* stop our sheduling thread */
 	KASSERT(priv->run_thread == 1);

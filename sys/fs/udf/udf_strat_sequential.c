@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.20 2023/06/27 09:58:50 reinoud Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.21 2026/01/11 17:42:47 joe Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.20 2023/06/27 09:58:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.21 2026/01/11 17:42:47 joe Exp $");
 #endif /* not lint */
 
 
@@ -687,10 +687,10 @@ static void
 udf_discstrat_finish_seq(struct udf_strat_args *args)
 {
 	struct udf_mount *ump = args->ump;
-	struct strat_private *priv = PRIV(ump);
-
 	if (ump == NULL)
 		return;
+
+	struct strat_private *priv = PRIV(ump);
 
 	/* stop our scheduling thread */
 	KASSERT(priv->run_thread == 1);
