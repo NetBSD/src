@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.20 2026/01/11 07:00:53 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.21 2026/01/11 07:05:44 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.20 2026/01/11 07:00:53 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.21 2026/01/11 07:05:44 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -127,7 +127,8 @@ static void *imalloc(size_t);
  * (FIRST_BUCKET_SIZE << i).  The overhead information precedes the data
  * area returned to the user.
  */
-#define	FIRST_BUCKET_SIZE	8
+#define	FIRST_BUCKET_SHIFT	3
+#define	FIRST_BUCKET_SIZE	(1U << FIRST_BUCKET_SHIFT)
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
 
@@ -217,7 +218,7 @@ morecore(size_t bucket)
 	sz = FIRST_BUCKET_SIZE << bucket;
 	if (sz < pagesz) {
 		amt = pagesz;
-		nblks = amt >> (bucket + 3);
+		nblks = amt >> (bucket + FIRST_BUCKET_SHIFT);
 	} else {
 		amt = sz;
 		nblks = 1;
@@ -281,7 +282,7 @@ irealloc(void *cp, size_t nbytes)
 	}
 
 	i = op->ov_index;
-	onb = 1 << (i + 3);
+	onb = 1 << (i + FIRST_BUCKET_SHIFT);
 	if (onb < pagesz)
 		onb -= sizeof (*op);
 	else
@@ -327,12 +328,12 @@ mstats(char *s)
 		for (j = 0, p = nextf[i]; p; p = p->ov_next, j++)
 			;
 		xprintf(" %d", j);
-		totfree += j * (1 << (i + 3));
+		totfree += j * (1 << (i + FIRST_BUCKET_SHIFT));
 	}
 	xprintf("\nused:\t");
 	for (i = 0; i < NBUCKETS; i++) {
 		xprintf(" %d", nmalloc[i]);
-		totused += nmalloc[i] * (1 << (i + 3));
+		totused += nmalloc[i] * (1 << (i + FIRST_BUCKET_SHIFT));
 	}
 	xprintf("\n\tTotal in use: %d, total free: %d\n",
 	    totused, totfree);
