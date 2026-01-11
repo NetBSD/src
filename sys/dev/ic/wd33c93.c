@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.37 2026/01/11 06:22:04 tsutsui Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.38 2026/01/11 06:23:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.37 2026/01/11 06:22:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.38 2026/01/11 06:23:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -141,7 +141,8 @@ void	wd33c93_msgin (struct wd33c93_softc *, u_char *, int);
 void	wd33c93_reselect (struct wd33c93_softc *, int, int, int, int);
 void	wd33c93_sched_msgout (struct wd33c93_softc *, u_short);
 void	wd33c93_msgout (struct wd33c93_softc *);
-void	wd33c93_timeout (void *arg);
+void	wd33c93_timeout_callout (void *arg);
+int	wd33c93_timeout (struct wd33c93_acb *);
 void	wd33c93_watchdog (void *arg);
 u_char	wd33c93_stp2syn (struct wd33c93_softc *, struct wd33c93_tinfo *);
 void	wd33c93_setsync (struct wd33c93_softc *, struct wd33c93_tinfo *);
@@ -926,7 +927,7 @@ wd33c93_abort(struct wd33c93_softc *sc, struct wd33c93_acb *acb,
 	if (sc->sc_nexus == acb) {
 		/* Reschedule timeout. */
 		callout_reset(&acb->xs->xs_callout, mstohz(acb->timeout),
-		    wd33c93_timeout, acb);
+		    wd33c93_timeout_callout, acb);
 
 		while (asr & SBIC_ASR_DBR) {
 			/*
@@ -1008,7 +1009,7 @@ wd33c93_selectbus(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 
 	if ((xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&xs->xs_callout, mstohz(acb->timeout),
-		    wd33c93_timeout, acb);
+		    wd33c93_timeout_callout, acb);
 
 	/*
 	 * issue select
@@ -2285,14 +2286,33 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 }
 
 void
-wd33c93_timeout(void *arg)
+wd33c93_timeout_callout(void *arg)
 {
 	struct wd33c93_acb *acb = arg;
+	int x;
+
+	x = splbio();
+	wd33c93_timeout(acb);
+	splx(x);
+}
+
+/**
+ * @brief Handle timeout events.
+ *
+ * Note: this can be run from outside splbio(), it will acquire it as needed.
+ *
+ * Returns 1 if the transfer was aborted and the caller should
+ * reschedule or complete the acb, 0 otherwise.
+ */
+int
+wd33c93_timeout(struct wd33c93_acb *acb)
+{
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct wd33c93_softc *sc =
 	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s, asr;
+	int ret;
 
 	s = splbio();
 
@@ -2308,10 +2328,14 @@ wd33c93_timeout(void *arg)
 	if (asr & SBIC_ASR_INT) {
 		/* We need to service a missed IRQ */
 		wd33c93_intr(sc);
+		ret = 0;
 	} else {
 		(void) wd33c93_abort(sc, acb, "timeout");
+		ret = 1;
 	}
 	splx(s);
+
+	return (ret);
 }
 
 
