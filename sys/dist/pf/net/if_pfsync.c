@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.23 2024/07/05 04:31:52 rin Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.24 2026/01/11 16:41:43 christos Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.23 2024/07/05 04:31:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.24 2026/01/11 16:41:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -250,6 +250,9 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 	struct pf_state_key *sk = NULL;
 	struct pf_rule *r = NULL;
 	struct pfi_kif	*kif;
+
+	if (strnlen(sp->ifname, IFNAMSIZ) == IFNAMSIZ)
+		return (EINVAL);
 
 	if (sp->creatorid == 0 && pf_status.debug >= PF_DEBUG_MISC) {
 		printf("pfsync_insert_net_state: invalid creator id:"

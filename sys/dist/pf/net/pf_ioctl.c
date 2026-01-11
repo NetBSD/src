@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.58 2022/03/28 12:33:21 riastradh Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.59 2026/01/11 16:41:43 christos Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.58 2022/03/28 12:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.59 2026/01/11 16:41:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2647,6 +2647,17 @@ pfioctl(dev_t dev, u_long cmd, void *addr, int flags, struct lwp *l)
 			error = ENODEV;
 			break;
 		}
+		if (strnlen(io->pfrio_table.pfrt_anchor, MAXPATHLEN)
+		     == MAXPATHLEN) {
+			error = EINVAL;
+			goto fail;
+		}
+		if (strnlen(io->pfrio_table.pfrt_name, PF_TABLE_NAME_SIZE)
+		    == PF_TABLE_NAME_SIZE) {
+			error = EINVAL;
+			goto fail;
+		}
+
 		error = pfr_clr_tables(&io->pfrio_table, &io->pfrio_ndel,
 		    io->pfrio_flags | PFR_FLAG_USERIOCTL);
 		break;
