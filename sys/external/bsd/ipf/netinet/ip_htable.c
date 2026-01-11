@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.7 2016/06/09 04:43:46 pgoyette Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.8 2026/01/11 15:54:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -66,7 +66,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.7 2016/06/09 04:43:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.8 2026/01/11 15:54:52 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp";
 #endif
@@ -254,6 +254,7 @@ ipf_htable_stats_get(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 		return EINVAL;
 	}
 
+	bzero(&stats, sizeof(stats));
 	stats.iphs_tables = softh->ipf_htables[op->iplo_unit + 1];
 	stats.iphs_numtables = softh->ipf_nhtables[op->iplo_unit + 1];
 	stats.iphs_numnodes = softh->ipf_nhtnodes[op->iplo_unit + 1];
