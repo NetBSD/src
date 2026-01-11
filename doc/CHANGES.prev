@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.187 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.188 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -14269,3 +14269,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		offload for IPv4. [pgoyette 20251127]
 	libutil: added strpct() rounding options strpct_r (etc) --> .so.7.25
 		[kre 20251214]
+	evbarm: make bcm2835 vchiq and vcaudio work on big-endian kernels.
+		[tsutsui 20251221]
