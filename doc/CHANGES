@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3214 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3215 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -125,8 +125,8 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		CD-ROM installer and add checks that cause ISO image
 		creation to fail if the size is above 700 MB.
 		[nia 20260107]
-	gzip(1): Support --ascii and --license for GNU compat.
-		[mrg 20260108]
+	gzip(1): Support reading directly from block devices such as tapes, and
+		accept --ascii and --license for GNU compat.  [mrg 20260108]
 	editline(3): Implement rl_kill_full_line in the readline compat
 		layer. [christos 20260109]
 	evbppc: Add support for the Nintendo Wii U. [jmcneill 20260109]
