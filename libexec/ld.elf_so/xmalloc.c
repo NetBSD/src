@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.23 2026/01/12 15:35:27 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.24 2026/01/12 17:25:13 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.23 2026/01/12 15:35:27 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.24 2026/01/12 17:25:13 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -95,7 +95,7 @@ __RCSID("$NetBSD: xmalloc.c,v 1.23 2026/01/12 15:35:27 skrll Exp $");
 /*
  * Pre-allocate mmap'ed pages
  */
-#define	NPOOLPAGES	(32*1024/pagesz)
+#define	NPOOLPAGES	(32 * 1024 / pagesz)
 static char 		*pagepool_start, *pagepool_end;
 #define PAGEPOOL_SIZE	(size_t)(pagepool_end - pagepool_start)
 
