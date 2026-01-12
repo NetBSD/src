@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.22 2026/01/11 07:15:08 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.23 2026/01/12 15:35:27 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.22 2026/01/11 07:15:08 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.23 2026/01/12 15:35:27 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -175,15 +175,27 @@ imalloc(size_t nbytes)
 	 * First time malloc is called, setup page size.
 	 */
 	if (pagesz == 0) {
-		pagesz = _rtld_pagesz;
+		size_t n, m;
+		pagesz = n = _rtld_pagesz;
 		pageshift = ffs(pagesz) - 1;
+		if (morepages(NPOOLPAGES) == 0)
+			return NULL;
+		op = (union overhead *)(pagepool_start);
+		m = sizeof (*op) - (((char *)op - (char *)NULL) & (n - 1));
+		if (n < m)
+			n += pagesz - m;
+		else
+			n -= m;
+		if (n) {
+			pagepool_start += n;
+		}
 	}
+
 	/*
 	 * Convert amount of memory requested into closest block size
 	 * stored in hash buckets which satisfies request.
 	 * Account for space used per block for accounting.
 	 */
-
 	amt = FIRST_BUCKET_SIZE;
 	bucket = 0;
 	while (nbytes > amt - sizeof(*op)) {
