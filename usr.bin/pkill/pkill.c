@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.34 2024/10/07 06:14:05 roy Exp $	*/
+/*	$NetBSD: pkill.c,v 1.35 2026/01/12 02:58:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2022 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.34 2024/10/07 06:14:05 roy Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.35 2026/01/12 02:58:18 mrg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -168,16 +168,20 @@ main(int argc, char **argv)
 		if (argc < 2)
 			usage();
 
-		if (strcmp(argv[1], "-l") == 0) {
+		/* Eat the program name. */
+		argv++;
+		argc--;
+
+		if (strcmp(argv[0], "-l") == 0) {
 			longfmt = 1;
 			argv++;
 			argc--;
 		}
 
-		if (argc < 2)
+		if (argc < 1)
 			usage();
 
-		p = argv[1];
+		p = argv[0];
 
 		i = (int)strtol(p, &q, 10);
 		if (*q == '\0') {
