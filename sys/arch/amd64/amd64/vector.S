@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.80 2022/09/12 02:21:11 knakahara Exp $	*/
+/*	$NetBSD: vector.S,v 1.81 2026/01/12 21:48:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -661,7 +661,6 @@ IDTVEC(resume_ ## name ## sir)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (sir) * 8,%r14			;\
-1:									\
 	pushq	%r13							;\
 	movb	$level,CPUVAR(ILEVEL)					;\
 	STI(si)								;\
