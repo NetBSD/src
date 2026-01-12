@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.1 2018/10/17 23:36:58 joerg Exp $	*/
+/*	$NetBSD: compat.c,v 1.2 2026/01/12 13:54:48 nia Exp $	*/
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compat.c,v 1.1 2018/10/17 23:36:58 joerg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.2 2026/01/12 13:54:48 nia Exp $");
 
 #include "rtld.h"
 
@@ -59,6 +59,10 @@ __RCSID("$NetBSD: compat.c,v 1.1 2018/10/17 23:36:58 joerg Exp $");
 
 #define RTLD_MAGIC	0xd550b87a
 #define RTLD_VERSION	1
+
+#ifndef BYTE_ORDER
+#error BYTE_ORDER is undefined!
+#endif
 
 #ifdef RTLD_OBJ_DLOPEN_OFFSET
 const uintptr_t _rtld_compat_obj[] = {

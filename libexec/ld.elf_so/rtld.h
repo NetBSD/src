@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.152 2026/01/09 22:54:27 jmcneill Exp $	 */
+/*	$NetBSD: rtld.h,v 1.153 2026/01/12 13:54:48 nia Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,6 +39,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/exec_elf.h>
