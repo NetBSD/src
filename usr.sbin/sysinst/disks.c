@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.97 2025/07/26 14:50:32 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.98 2026/01/12 13:46:18 nia Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <endian.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
