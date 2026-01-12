@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.46 2023/03/01 08:13:44 riastradh Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.47 2026/01/12 21:42:52 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.46 2023/03/01 08:13:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.47 2026/01/12 21:42:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,41 +313,6 @@ do_hypervisor_callback(struct intrframe *regs)
 		    level, (uint64_t)ci->ci_ilevel, (uint64_t)ci->ci_ipending);
 #endif
 }
-
-#if 0
-void
-hypervisor_send_event(struct cpu_info *ci, unsigned int ev)
-{
-	KASSERT(ci != NULL);
-
-	volatile shared_info_t *s = HYPERVISOR_shared_info;
-	volatile struct vcpu_info *vci = ci->ci_vcpu;
-
-#ifdef PORT_DEBUG
-	if (ev == PORT_DEBUG)
-		printf("hypervisor_send_event %d\n", ev);
-#endif
-
-	xen_atomic_set_bit(&s->evtchn_pending[0], ev);
-
-	if (__predict_false(ci == curcpu())) {
-		xen_atomic_set_bit(&vci->evtchn_pending_sel,
-		    ev >> LONG_SHIFT);
-		xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
-	}
-
-	xen_atomic_clear_bit(&s->evtchn_mask[0], ev);
-
-	if (__predict_true(ci == curcpu())) {
-		hypervisor_force_callback();
-	} else {
-		if (__predict_false(xen_send_ipi(ci, XEN_IPI_HVCB))) {
-			panic("xen_send_ipi(cpu%d id %d, XEN_IPI_HVCB) failed\n",
-			    (int) ci->ci_cpuid, ci->ci_vcpuid);
-		}
-	}
-}
-#endif
 
 void
 hypervisor_unmask_event(unsigned int ev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.60 2024/07/16 22:44:38 riastradh Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.61 2026/01/12 21:42:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -182,7 +182,6 @@ extern int xen_version;
 	  XEN_MINOR(xen_version) >= (minor)))
 
 /* hypervisor_machdep.c */
-void hypervisor_send_event(struct cpu_info *, unsigned int);
 void hypervisor_unmask_event(unsigned int);
 void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
