@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.24 2026/01/12 17:25:13 skrll Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.25 2026/01/13 05:26:55 skrll Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.24 2026/01/12 17:25:13 skrll Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.25 2026/01/13 05:26:55 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -226,8 +226,8 @@ imalloc(size_t nbytes)
 void *
 xmalloc_aligned(size_t size, size_t align, size_t offset)
 {
-	void *mem, *ov;
-	union overhead ov1;
+	void *mem;
+	union overhead *ov;
 	uintptr_t x;
 
 	if (align < FIRST_BUCKET_SIZE)
@@ -239,9 +239,9 @@ xmalloc_aligned(size_t size, size_t align, size_t offset)
 	x = roundup2((uintptr_t)mem + sizeof(union overhead), align);
 	x += offset;
 	ov = cp2op((void *)x);
-	ov1.ov_magic = AMAGIC;
-	ov1.ov_index = x - (uintptr_t)mem + sizeof(union overhead);
-	memcpy(ov, &ov1, sizeof(ov1));
+	ov->ov_magic = AMAGIC;
+	ov->ov_index = x - (uintptr_t)mem + sizeof(union overhead);
+
 	return ((void *)x);
 }
 
@@ -284,22 +284,21 @@ morecore(size_t bucket)
 void
 xfree(void *cp)
 {
-	union overhead *op, op1;
-	void *opx;
+	union overhead *op, *opx;
 	size_t size;
 
 	if (cp == NULL)
 		return;
 	opx = cp2op(cp);
-	memcpy(&op1, opx, sizeof(op1));
-	op = op1.ov_magic == AMAGIC ? (void *)((caddr_t)cp - op1.ov_index) :
+
+	op = opx->ov_magic == AMAGIC ? (void *)((caddr_t)cp - opx->ov_index) :
 	    opx;
 	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
 	if (op->ov_magic != MAGIC)
 		return;				/* sanity */
 	size = op->ov_index;
 	ASSERT(size < NBUCKETS);
-	op->ov_next = nextf[size];	/* also clobbers ov_magic */
+	op->ov_next = nextf[size];		/* also clobbers ov_magic */
 	nextf[size] = op;
 #ifdef MSTATS
 	nmalloc[size]--;
