@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.101 2025/12/01 00:32:40 gutteridge Exp $
+.\"    $NetBSD: npf.conf.5,v 1.102 2026/01/13 18:56:06 gutteridge Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,13 +261,13 @@ For ICMP, the
 or
 .Cd ipv6-icmp
 keyword is used based on the address family of the packet being filtered.
-Its parameter should be the icmp type and or the icmp code.
-The icmp type is indicated using the
+Its parameter should be the ICMP type and or the ICMP code.
+The ICMP type is indicated using the
 .Cd icmp-type
-keyword followed by the name or number representing the icmp type.
-The icmp code is also indicated using the
+keyword followed by the name or number representing the ICMP type.
+The ICMP code is also indicated using the
 .Cd code
-keyword followed by the name or number of the code of the icmp type.
+keyword followed by the name or number of the code of the ICMP type.
 .Pp
 .D1 Ic proto Cm icmp icmp-type Ar icmp_type code Ar icmp_code
 .Pp
@@ -304,10 +304,10 @@ filter criteria.
 .Pp
 Further packet specification at present is limited to TCP and UDP
 understanding source and destination ports, and ICMP and IPv6-ICMP
-understanding icmp-type.
+understanding ICMP type.
 .Pp
 A rule can also instruct NPF to create an entry in the state table when
-passing the packet or to apply a procedure to the packet (e.g. "log").
+passing the packet or to apply a procedure to the packet (e.g., "log").
 .Pp
 A
 .Dq fully-featured
