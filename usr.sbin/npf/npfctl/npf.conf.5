@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.102 2026/01/13 18:56:06 gutteridge Exp $
+.\"    $NetBSD: npf.conf.5,v 1.103 2026/01/13 22:12:54 uwe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -389,21 +389,22 @@ that generated the traffic, or is waiting to receive traffic,
 rather than just traditional parameters like IP address, port number, and protocol.
 .Pp
 There are many situations where this is useful:
-.Bl -bullet -hang
-.It Finer-grained access control
+.Bl -tag
+.It Finer-grained access control.
 One can allow specific destinations to be accessed only by certain users
 or groups.
-.It Application level security
+.It Application level security.
 Two processes are using a specific port, but only one should be allowed to
 access packets originating from a particular host.
 .It Improves isolation in multi-tenant systems
 Prevent an untrusted user from making any network connections.
-.It Security hardening and containment
+.It Security hardening and containment.
 A user application that has been exploited can be prevented from making
 network connections to a command-and-control server.
-.It Compliance and policy enforcement
+.It Compliance and policy enforcement.
 Can restrict access to particular networks to network administrators only.
 .El
+.Pp
 This filtering process can be achieved by passing the user or group ID on the rule.
 .Pp
 .Dl pass out from all user jack group < 1000
