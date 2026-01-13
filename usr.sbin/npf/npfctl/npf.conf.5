@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.103 2026/01/13 22:12:54 uwe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.104 2026/01/13 22:16:42 uwe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ parameter settings.
 .Sh SYNTAX
 .Ss Variables
 Variables are specified using the dollar
-.Pq Li $
+.Pq Ql $
 sign, which is used for both
 definition and referencing of a variable.
 Variables are defined by assigning a value to them as follows:
@@ -88,9 +88,9 @@ Common variable definitions are for IP addresses, networks, ports,
 and interfaces.
 .Ss Tables
 Tables are specified using a name between angle brackets
-.Sq Li <
+.Ql <
 and
-.Sq Li > .
+.Ql > .
 The following is an example of table definition:
 .Pp
 .Dl table <blocklist> type ipset
@@ -453,7 +453,7 @@ In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
 .Pp
 By default, a stateful rule implies SYN-only flag check
-.Pq Dq Li flags S/SAFR
+.Pq Ql flags S/SAFR
 for the TCP packets.
 It is not advisable to change this behavior; however,
 it can be overridden with the aforementioned
@@ -641,10 +641,10 @@ See
 for the list of parameters and their details.
 .Ss Misc
 Text after a hash
-.Pq Sq #
+.Pq Ql #
 character is considered a comment.
 The backslash
-.Pq Sq \e
+.Pq Ql \e
 character at the end of a line marks a continuation line,
 i.e., the next line is considered an extension of the present line.
 Additionally, within curly braces of variable definitions, newlines are
