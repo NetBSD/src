@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.105 2026/01/13 22:27:32 uwe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.106 2026/01/13 22:37:19 uwe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -299,7 +299,12 @@ keywords are provided to filter by source or destination IP addresses.
 They can be used in conjunction with the
 .Cm port
 keyword.
-Negation (the exclamation mark) can be used in front of the address
+Negation
+.Po
+the exclamation mark,
+.Ql \&!
+.Pc
+can be used in front of the address
 filter criteria.
 .Pp
 Further packet specification at present is limited to TCP and UDP
@@ -354,7 +359,8 @@ Rules that are defined for the link layer should pass the
 .Cm ether
 keyword after the pass or block instruction.
 EtherType is passed on the rule by preceeding the four digit hexadecimal constant
-EtherType with "Ex".
+EtherType with
+.Ql \&Ex .
 When a frame matches a rule with the
 .Cm final
 keyword, the rule is considered the last matching rule.
@@ -372,7 +378,8 @@ pass ether from 00:00:5E:00:53:00 to 00:00:5E:00:53:01 type Ex0800
 .Ed
 .Pp
 This passes frames with source MAC address 00:00:5E:00:53:00 and
-destination MAC address 00:00:5E:00:53:01 carrying IP packets(0800).
+destination MAC address 00:00:5E:00:53:01 carrying IP packets
+.Pq 0800 .
 Alternatively, layer 2 rules also support variables.
 .Pp
 .Dl block ether in final from $source_mac to $dest_mac type $ether_type
@@ -605,8 +612,8 @@ daemon.
 .It Cm normalize : Ar option1 Ns Op Li \&, Ar option2 ...
 Modify packets according to the specified normalization options.
 This requires the
-.Pa npf_ext_normalize kernel
-module, which would normally get auto-loaded by NPF.
+.Pa npf_ext_normalize
+kernel module, which would normally get auto-loaded by NPF.
 .El
 .Pp
 The available normalization options are:
