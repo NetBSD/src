@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.104 2026/01/13 22:16:42 uwe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.105 2026/01/13 22:27:32 uwe Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -141,7 +141,7 @@ all addresses will remain present.
 .Pp
 Three functions exist, to extract addresses from an interface with a chosen
 list type and IP address type:
-.Bl -tag -width "Fn ifaddrs interface" -offset indent
+.Bl -tag -width Fn -offset indent
 .It Fn inet4 interface
 Static list.
 IPv4 addresses.
@@ -276,7 +276,7 @@ To notify the sender of a blocking decision, three
 options can be used in conjunction with a
 .Ic block
 rule:
-.Bl -tag -width "Cm return-icmp" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm return
 Behaves as
 .Cm return-rst
@@ -468,13 +468,16 @@ The translation may be
 (stateless).
 The following mapping types are available:
 .Pp
-.Bl -tag -width "Cm \&<->" -offset indent -compact
+.Bl -tag -width Cm -offset indent -compact
 .It Cm \&->
-outbound NAT (translation of the source)
+outbound NAT
+.Pq translation of the source
 .It Cm \&<-
-inbound NAT (translation of the destination)
+inbound NAT
+.Pq translation of the destination
 .It Cm \&<->
-bi-directional NAT (combination of inbound and outbound NAT)
+bi-directional NAT
+.Pq combination of inbound and outbound NAT
 .El
 .Pp
 The following would translate the source (10.1.1.0/24) to the IP address
@@ -516,7 +519,7 @@ then a custom selection algorithm can be chosen using the
 .Cm algo
 keyword.
 The currently available algorithms for the dynamic translation are:
-.Bl -tag -width "Cm round-robin" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm ip-hash
 The translation address for a new connection is selected based on a
 hash of the original source and destination addresses.
@@ -535,7 +538,7 @@ chosen using the
 .Cm algo
 keyword.
 The currently available algorithms are:
-.Bl -tag -width "Cm netmap" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm netmap
 Network address mapping from one segment to another, leaving the host
 part as-is.
@@ -555,7 +558,7 @@ Such translation is performed by packet filter extensions called
 Application Level Gateways (ALGs).
 .Pp
 NPF supports the following ALGs:
-.Bl -tag -width "Cm icmp" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm icmp
 ICMP ALG.
 Applies to IPv4 and IPv6.
@@ -587,7 +590,7 @@ key-value pairs.
 Depending on the call, the key might represent the argument and the value
 might be optional.
 Available options:
-.Bl -tag -width "Cm log: Ar interface" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm log : Ar interface
 Log events.
 This requires the
@@ -607,7 +610,7 @@ module, which would normally get auto-loaded by NPF.
 .El
 .Pp
 The available normalization options are:
-.Bl -tag -width "Cm \*qmin-mss\*q Ar value" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm \*qmax-mss\*q Ar value
 Enforce a maximum value for the Maximum Segment Size (MSS) TCP option.
 Typically, for
