@@ -1,4 +1,4 @@
-/* $NetBSD: imx23timrot_fdt.c,v 1.1 2025/10/09 06:15:17 skrll Exp $ */
+/* $NetBSD: imx23timrot_fdt.c,v 1.2 2026/01/13 10:06:58 yurix Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx23timrot_fdt.c,v 1.1 2025/10/09 06:15:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx23timrot_fdt.c,v 1.2 2026/01/13 10:06:58 yurix Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,7 @@ imx23timrot_fdt_attach(device_t parent, device_t self, void *aux)
 		    "couldn't install systimer interrupt handler\n");
 		return;
 	}
-	aprint_normal_dev(self, ": systimer on %s", intrstr);
+	aprint_normal(": systimer on %s", intrstr);
 
 	/* Stat Timer Interrupt*/
 	if (!fdtbus_intr_str(phandle, 1, intrstr, sizeof(intrstr))) {
@@ -124,10 +124,7 @@ imx23timrot_fdt_attach(device_t parent, device_t self, void *aux)
 		    "couldn't install stattimer interrupt handler\n");
 		return;
 	}
-	aprint_normal_dev(self, ": stattimer on %s\n", intrstr);
-
-	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": stattimer on %s\n", intrstr);
 
 	struct apb_attach_args apbaa = {
 		.aa_name = "imx23timrot",
