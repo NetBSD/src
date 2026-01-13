@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.46 2025/04/26 03:01:39 pgoyette Exp $
+#	$NetBSD: Makefile.bootimage,v 1.47 2026/01/13 14:09:02 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -235,9 +235,8 @@ SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} \
 		    + ${EFISECTORS} + ${FATSECTORS} || test $$? -eq 1 || exit 1
 FATOFFSET=	${LABELSECTORS}
 
-# parameters for sunlabel
-FSCYLINDERS!=	expr ${FSSECTORS} / \( ${HEADS} \* ${SECTORS} \)
-SWAPCYLINDERS!=	expr ${SWAPSECTORS} / \( ${HEADS} \* ${SECTORS} \) || true
+# helper script for sunlabel
+DISKPROTO2SUNLABEL?=	${DISTRIBDIR}/common/bootimage/diskproto2sunlabel.awk
 
 .if ${USE_GPT} != "no"
 BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESTAMP} ${WORKMBR} show -i 2 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
@@ -624,9 +623,7 @@ ${IMGBASE}.img:	${TARGET_BLOCKS}
 .endif	# USE_GPT != "no"
 .if ${USE_SUNLABEL} != "no"
 	@echo Creating sun disklabel...
-	printf 'V ncyl %d\nV nhead %d\nV nsect %d\na %d %d/0/0\nb %d %d/0/0\nW\n' \
-	    ${CYLINDERS} ${HEADS} ${SECTORS} \
-	    ${FSOFFSET} ${FSCYLINDERS} ${FSCYLINDERS} ${SWAPCYLINDERS} | \
+	${TOOL_AWK} -f ${DISKPROTO2SUNLABEL} < ${WORKLABEL} | \
 	    ${TOOL_SUNLABEL} -nq ${WORKIMG}
 .endif
 .if ${USE_GPT} == "no"
