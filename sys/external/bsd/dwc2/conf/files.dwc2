@@ -1,9 +1,9 @@
-#	$NetBSD: files.dwc2,v 1.4 2021/12/20 11:54:32 simonb Exp $
+#	$NetBSD: files.dwc2,v 1.5 2026/01/14 07:32:43 skrll Exp $
 
 # DesignWare HS OTG Controller
 #
 
-device dwctwo: usbus, usbroothub, usb_dma, linux
+device dwctwo: usbus, usbroothub, usb_dma, fdt, linux
 file	external/bsd/dwc2/dwc2.c			dwctwo	needs-flag
 
 makeoptions	dwctwo	CPPFLAGS+="-I$S/external/bsd"

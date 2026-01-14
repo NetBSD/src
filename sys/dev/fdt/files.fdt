@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.76 2025/09/06 22:53:49 thorpej Exp $
+# $NetBSD: files.fdt,v 1.77 2026/01/14 07:32:43 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -248,6 +248,11 @@ file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
 device	usbnopphy: fdt_clock, fdt_gpio, fdt_phy, fdt_regulator
 attach	usbnopphy at fdt
 file	dev/fdt/usbnopphy.c			usbnopphy
+
+# Generic USB node
+device	usbnode: fdt_gpio, fdt_regulator
+attach	usbnode at fdt
+file	dev/fdt/usbnode.c			usbnode
 
 # Simple Amplifier Audio Driver
 device	simpleamp: fdt_dai, fdt_gpio, fdt_regulator
