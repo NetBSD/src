@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.135 2024/11/29 07:24:04 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.136 2026/01/14 08:12:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.135 2024/11/29 07:24:04 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.136 2026/01/14 08:12:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1079,10 +1079,11 @@ synopsis(FILE * stream)
 {
 	const char * progname = getprogname();
 
+	/* Note: don't use tabs in the message below. */
 	fprintf(stream,
 "usage: %s [-46AadefginpRtVv] [-b BUFSIZE] [-H HEADER] [-N NETRC] [-o OUTPUT]\n"
 "           [-P PORT] [-q QUITTIME] [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]]\n"
-"	    [-x XFERSIZE]\n"
+"           [-x XFERSIZE]\n"
 "           [[USER@]HOST [PORT]]\n"
 "           [[USER@]HOST:[PATH][/]]\n"
 "           [file:///PATH]\n"
@@ -1102,6 +1103,7 @@ usage_help(void)
 {
 	synopsis(stdout);
 #ifndef NO_USAGE
+	/* Note: don't use tabs in the message below. */
 	printf(
 "  -4            Only use IPv4 addresses\n"
 "  -6            Only use IPv6 addresses\n"
