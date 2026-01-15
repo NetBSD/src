@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2153 2026/01/06 13:35:58 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.2154 2026/01/15 21:40:56 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -190,19 +190,28 @@ run configure and update config files in include
 diff the new and previous config file and manually adjust
 
 Package:	nsd
-Version:	4.8.0
+Version:	4.14.0
 Current Vers:	4.14.0
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2026-01-05
+Date:		2026-01-15
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
 Location:	external/bsd/nsd/dist
+Release tag	nsd-M-m-t
+Current tag	nsd-1-14-0
 Notes:
-Use cleantags to import
-run configure and update config files in include
+- Use cleantags to import
+- run configure and update config files in include
+- autoconf does not work propelry:
+  configure does not work detecting sizeof off_t, comment it out.
+  autoreconf -f -i
+  other stuff hand-changed in config.h
+- needs the protobuf-c package to create export.h, build it and then
+  copy into dist
+- disable dnstap, needs too much stuff from pkgsrc
 
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
