@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.6 2024/02/17 17:43:20 christos Exp $
+# $NetBSD: Makefile,v 1.7 2026/01/15 21:35:19 christos Exp $
 
 LIBISPRIVATE=yes
 .include <bsd.init.mk>
 
-.PATH: ${NSD}/compat ${NSD}/util
-
-CPPFLAGS+=-I${NSD} -I${NSD}/../include
+SIMDZONE=${NSD}/simdzone/src
+.PATH: ${NSD}/compat ${NSD}/util ${SIMDZONE} ${SIMDZONE}/fallback
+CPPFLAGS+=-I${SIMDZONE}
 
 LIB=nsd
 SRCS=\
@@ -26,6 +26,7 @@ namedb.c \
 nsec3.c \
 options.c \
 packet.c \
+parser.c \
 popen3.c \
 proxy_protocol.c \
 query.c \
@@ -40,7 +41,8 @@ tsig-openssl.c \
 tsig.c \
 udb.c \
 util.c \
-verify.c
+verify.c \
+zone.c
 
 SRCS+=\
 b64_ntop.c \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11 2025/10/19 00:59:58 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.12 2026/01/15 21:35:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@ USE_FORT?= yes  # network client/server
 NSD:=${.PARSEDIR}/dist
 
 CPPFLAGS+=-D_NETBSD_SOURCE
-CPPFLAGS+=-I${NSD} -I${NSD}/../include
+CPPFLAGS+=-I${NSD} -I${NSD}/../include -I${NSD}/simdzone/include
+
 .PATH: ${NSD}
 
 .if (${USE_INET6} != "no")
