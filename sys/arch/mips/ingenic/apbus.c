@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.22 2026/01/15 06:22:51 skrll Exp $ */
+/*	$NetBSD: apbus.c,v 1.23 2026/01/15 16:57:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22 2026/01/15 06:22:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.23 2026/01/15 16:57:39 skrll Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22 2026/01/15 06:22:51 skrll Exp $");
 
 #include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
-
-#include <dev/fdt/fdtvar.h>
 
 #include "opt_ingenic.h"
 
@@ -294,9 +292,3 @@ apbus_print(void *aux, const char *pnp)
 #define	CHIP_W1_SYS_END(v)	0x20000000UL
 
 #include <mips/mips/bus_space_alignstride_chipdep.c>
-
-bus_space_tag_t
-fdtbus_bus_tag_create(int phandle, uint32_t flags)
-{
-	return &apbus_mbst;
-}

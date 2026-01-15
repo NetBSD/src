@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.35 2026/01/15 06:22:51 skrll Exp $
+#	$NetBSD: CI20,v 1.36 2026/01/15 16:57:38 skrll Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,13 +7,11 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.35 $"
+#ident 		"CI20-$Revision: 1.36 $"
 
 maxusers	32
 
 #makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
-
-options 	FDT
 
 options 	MIPS32R2
 makeoptions	CPUFLAGS+="-mips32r2"
@@ -136,7 +134,6 @@ apbus0		at mainbus?
 
 # On-chip UARTs
 com*		at apbus?
-com* 		at fdt?
 
 # EFUSE
 efuse* 		at apbus?

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.128 2026/01/14 07:32:43 skrll Exp $
+#	$NetBSD: GENERIC,v 1.129 2026/01/15 17:00:02 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -605,7 +605,6 @@ motg* 		at fdt?			# Mentor Graphics USB OTG
 ohci* 		at fdt?			# OHCI
 xhci* 		at fdt?			# XHCI
 usb* 		at usbus?
-usbnode*	at fdt?
 
 # Virtio devices
 virtio* 	at fdt?				# Virtio MMIO device

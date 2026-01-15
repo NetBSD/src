@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.106 2026/01/15 06:25:45 skrll Exp $	*/
+/*	$NetBSD: i2c.c,v 1.107 2026/01/15 16:56:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.106 2026/01/15 06:25:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.107 2026/01/15 16:56:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,26 +801,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 #endif
 #ifdef I2C_USE_FDT
 	case DEVHANDLE_TYPE_OF:
-#if 0
-		/*
-		 * XXX The same unfortunate situation as SPI controllers can
-		 * XXX happen when attaching an I2C controller on an otherwise
-		 * XXX FDT platform (CI20) that does not happen to currently
-		 * XXX have any platform SoC I2C controller drivers that carry
-		 * XXX the fdt_i2c config attribute that would pull in the
-		 * XXX function being called here.
-		 * XXX
-		 * XXX As it happens we can fairly safely elide this call
-		 * XXX because, at the moment (15 Jan 2026), there are no
-		 * XXX consumers of the registration it performs.  However,
-		 * XXX this points to a larger problem if needed a way to
-		 * XXX resolve these situations at runtime with some sort
-		 * XXX of "platform" abstraction rather than at kernel build
-		 * XXX time.
-		 */
 		fdtbus_register_i2c_controller(self, sc->sc_tag);
-#endif
-
 		break;
 #endif
 	default:
