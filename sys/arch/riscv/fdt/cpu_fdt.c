@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.5 2026/01/15 18:09:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4 2024/01/01 13:51:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.5 2026/01/15 18:09:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -198,7 +198,6 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	bus_addr_t hartid;
-
 
 	if (fdtbus_get_reg(phandle, 0, &hartid, NULL) != 0)
 		hartid = 0;
