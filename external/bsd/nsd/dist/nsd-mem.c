@@ -23,6 +23,7 @@
 #include "namedb.h"
 #include "difffile.h"
 #include "util.h"
+#include "ixfr.h"
 
 struct nsd nsd;
 
@@ -169,6 +170,7 @@ check_zone_mem(const char* tf, struct zone_options* zo,
 	/* init*/
 	memset(&zmem, 0, sizeof(zmem));
 	memset(&nsd, 0, sizeof(nsd));
+	nsd.region = region_create(xalloc, free);
 	nsd.db = db = namedb_open(opt);
 	if(!db) error("cannot open namedb");
 	zone = namedb_zone_create(db, dname, zo);
@@ -185,9 +187,11 @@ check_zone_mem(const char* tf, struct zone_options* zo,
 	print_zone_mem(&zmem);
 
 	/* delete the zone from memory */
+	zone_ixfr_free(zone->ixfr);
 	namedb_close(db);
 	udb_base_free(taskudb);
 	unlink(tf);
+	region_destroy(nsd.region);
 
 	/* add up totals */
 	add_mem(totmem, &zmem);
@@ -211,6 +215,8 @@ check_mem(struct nsd_options* opt)
 	account_total(opt, &totmem);
 	/* print statistics */
 	print_tot_mem(&totmem);
+
+	nsd_options_destroy(opt);
 }
 
 /* dummy functions to link */
@@ -219,7 +225,7 @@ int writepid(struct nsd * ATTR_UNUSED(nsd))
 {
 	        return 0;
 }
-void unlinkpid(const char * ATTR_UNUSED(file))
+void unlinkpid(const char * ATTR_UNUSED(file), const char* ATTR_UNUSED(username))
 {
 }
 void bind8_stats(struct nsd * ATTR_UNUSED(nsd))
@@ -274,7 +280,7 @@ main(int argc, char *argv[])
 		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
 		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
 	tsig_init(nsd.options->region);
-	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
+	if(!parse_options_file(nsd.options, configfile, NULL, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
 	if(!parse_zone_list_file(nsd.options)) {

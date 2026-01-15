@@ -36,6 +36,7 @@
 #include "options.h"
 #include "nsec3.h"
 #include "tsig.h"
+#include "rdata.h"
 
 /* [Bug #253] Adding unnecessary NS RRset may lead to undesired truncation.
  * This function determines if the final response packet needs the NS RRset
@@ -201,6 +202,34 @@ query_create(region_type *region, uint16_t *compressed_dname_offsets,
 	query->tsig_update_it = 1;
 	query->tsig_sign_it = 1;
 	return query;
+}
+
+query_type *
+query_create_with_buffer(region_type *region,
+	uint16_t *compressed_dname_offsets, size_t compressed_dname_size,
+	domain_type **compressed_dnames, struct buffer *buffer)
+{
+	query_type *query
+		= (query_type *) region_alloc_zero(region, sizeof(query_type));
+	/* create region with large block size, because the initial chunk
+	   saves many mallocs in the server */
+	query->region = region_create_custom(xalloc, free, 16384, 16384/8, 32, 0);
+	region_add_cleanup(region, query_cleanup, query);
+	query->compressed_dname_offsets = compressed_dname_offsets;
+	query->compressed_dnames = compressed_dnames;
+	query->packet = buffer;
+	query->compressed_dname_offsets_size = compressed_dname_size;
+	tsig_create_record(&query->tsig, region);
+	query->tsig_prepare_it = 1;
+	query->tsig_update_it = 1;
+	query->tsig_sign_it = 1;
+	return query;
+}
+
+void
+query_set_buffer_data(query_type *q, void *data, size_t data_capacity)
+{
+	buffer_create_from(q->packet, data, data_capacity);
 }
 
 void
@@ -451,10 +480,11 @@ answer_notify(struct nsd* nsd, struct query *query)
 			char address[128], proxy[128];
 			addr2str(&query->client_addr, address, sizeof(address));
 			addr2str(&query->remote_addr, proxy, sizeof(proxy));
-			VERBOSITY(2, (LOG_INFO, "notify for %s from %s via proxy %s refused because of proxy, %s %s",
+			VERBOSITY(2, (LOG_INFO, "notify for %s from %s via proxy %s refused because of proxy, %s%s%s",
 				dname_to_string(query->qname, NULL),
 				address, proxy,
-				(why?why->ip_address_spec:"."),
+				(why?why->ip_address_spec:""),
+				(why&&why->ip_address_spec[0]?" ":""),
 				(why ? ( why->nokey    ? "NOKEY"
 				       : why->blocked  ? "BLOCKED"
 				       : why->key_name )
@@ -465,8 +495,7 @@ answer_notify(struct nsd* nsd, struct query *query)
 	if((acl_num = acl_check_incoming(zone_opt->pattern->allow_notify, query,
 		&why)) != -1)
 	{
-		sig_atomic_t mode = NSD_PASS_TO_XFRD;
-		int s = nsd->this_child->parent_fd;
+		int s = nsd->serve2xfrd_fd_send[nsd->this_child->child_num];
 		uint16_t sz;
 		uint32_t acl_send = htonl(acl_num);
 		uint32_t acl_xfr;
@@ -484,14 +513,14 @@ answer_notify(struct nsd* nsd, struct query *query)
 			why->ip_address_spec,
 			why->nokey?"NOKEY":
 			(why->blocked?"BLOCKED":why->key_name)));
-		sz = buffer_limit(query->packet);
 		if(buffer_limit(query->packet) > MAX_PACKET_SIZE)
 			return query_error(query, NSD_RC_SERVFAIL);
 		/* forward to xfrd for processing
 		   Note. Blocking IPC I/O, but acl is OK. */
+		sz = buffer_limit(query->packet)
+		   + sizeof(acl_send) + sizeof(acl_xfr);
 		sz = htons(sz);
-		if(!write_socket(s, &mode, sizeof(mode)) ||
-			!write_socket(s, &sz, sizeof(sz)) ||
+		if(!write_socket(s, &sz, sizeof(sz)) ||
 			!write_socket(s, buffer_begin(query->packet),
 				buffer_limit(query->packet)) ||
 			!write_socket(s, &acl_send, sizeof(acl_send)) ||
@@ -531,10 +560,11 @@ answer_notify(struct nsd* nsd, struct query *query)
 	if (verbosity >= 2) {
 		char address[128];
 		addr2str(&query->client_addr, address, sizeof(address));
-		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s %s",
+		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s%s%s",
 			dname_to_string(query->qname, NULL),
 			address,
-			(why?why->ip_address_spec:"."),
+			(why?why->ip_address_spec:""),
+			(why&&why->ip_address_spec[0]?" ":""),
 			(why ? ( why->nokey    ? "NOKEY"
 			       : why->blocked  ? "BLOCKED"
 			       : why->key_name )
@@ -677,7 +707,7 @@ struct additional_rr_types rt_additional_rr_types[] = {
 
 static void
 add_additional_rrsets(struct query *query, answer_type *answer,
-		      rrset_type *master_rrset, size_t rdata_index,
+		      rrset_type *master_rrset, uint16_t rdata_offset,
 		      int allow_glue, struct additional_rr_types types[])
 {
 	size_t i;
@@ -685,11 +715,11 @@ add_additional_rrsets(struct query *query, answer_type *answer,
 	assert(query);
 	assert(answer);
 	assert(master_rrset);
-	assert(rdata_atom_is_domain(rrset_rrtype(master_rrset), rdata_index));
 
 	for (i = 0; i < master_rrset->rr_count; ++i) {
 		int j;
-		domain_type *additional = rdata_atom_domain(master_rrset->rrs[i].rdatas[rdata_index]);
+		domain_type *additional = rdata_domain_ref_offset(
+			master_rrset->rrs[i], rdata_offset);
 		domain_type *match = additional;
 
 		assert(additional);
@@ -767,30 +797,40 @@ add_rrset(struct query   *query,
 	case TYPE_NS:
 #if defined(INET6)
 		/* if query over IPv6, swap A and AAAA; put AAAA first */
-		add_additional_rrsets(query, answer, rrset, 0, 1,
+		add_additional_rrsets(query, answer, rrset,
+			0, 1,
 			(query->client_addr.ss_family == AF_INET6)?
 			swap_aaaa_additional_rr_types:
 			default_additional_rr_types);
 #else
-		add_additional_rrsets(query, answer, rrset, 0, 1,
+		add_additional_rrsets(query, answer, rrset,
+				      0, 1,
 				      default_additional_rr_types);
 #endif
 		break;
 	case TYPE_MB:
-		add_additional_rrsets(query, answer, rrset, 0, 0,
+		add_additional_rrsets(query, answer, rrset,
+				      0, 0,
 				      default_additional_rr_types);
 		break;
 	case TYPE_MX:
+		add_additional_rrsets(query, answer, rrset,
+				      2, 0,
+				      default_additional_rr_types);
+		break;
 	case TYPE_KX:
-		add_additional_rrsets(query, answer, rrset, 1, 0,
+		add_additional_rrsets(query, answer, rrset,
+				      2, 0,
 				      default_additional_rr_types);
 		break;
 	case TYPE_RT:
-		add_additional_rrsets(query, answer, rrset, 1, 0,
+		add_additional_rrsets(query, answer, rrset,
+				      2, 0,
 				      rt_additional_rr_types);
 		break;
 	case TYPE_SRV:
-		add_additional_rrsets(query, answer, rrset, 3, 0,
+		add_additional_rrsets(query, answer, rrset,
+				      6, 0,
 				      default_additional_rr_types);
 		break;
 	default:
@@ -827,10 +867,10 @@ query_synthesize_cname(struct query* q, struct answer* answer, const dname_type*
 	for(j=0; j<answer->rrset_count; ++j) {
 		if(answer->section[j] == ANSWER_SECTION &&
 			answer->rrsets[j]->rr_count == 1 &&
-			answer->rrsets[j]->rrs[0].type == TYPE_CNAME &&
-			dname_compare(domain_dname(answer->rrsets[j]->rrs[0].owner), from_name) == 0 &&
-			answer->rrsets[j]->rrs[0].rdata_count == 1 &&
-			dname_compare(domain_dname(answer->rrsets[j]->rrs[0].rdatas->domain), to_name) == 0) {
+			answer->rrsets[j]->rrs[0]->type == TYPE_CNAME &&
+			dname_compare(domain_dname(answer->rrsets[j]->rrs[0]->owner), from_name) == 0 &&
+			answer->rrsets[j]->rrs[0]->rdlength >= 1 &&
+			dname_compare(domain_dname(rdata_domain_ref(answer->rrsets[j]->rrs[0])), to_name) == 0) {
 			DEBUG(DEBUG_QUERY,2, (LOG_INFO, "loop for synthesized CNAME rrset for query %s", dname_to_string(q->qname, NULL)));
 			return 0;
 		}
@@ -886,20 +926,26 @@ query_synthesize_cname(struct query* q, struct answer* answer, const dname_type*
 	*to_closest_match = cname_dest;
 
 	/* allocate the CNAME RR */
-	rrset = (rrset_type*) region_alloc(q->region, sizeof(rrset_type));
+	rrset = (rrset_type*) region_alloc(q->region, sizeof(rrset_type)
+#ifdef PACKED_STRUCTS
+		+ sizeof(rr_type*)
+#endif
+		);
 	memset(rrset, 0, sizeof(rrset_type));
 	rrset->zone = q->zone;
 	rrset->rr_count = 1;
-	rrset->rrs = (rr_type*) region_alloc(q->region, sizeof(rr_type));
-	memset(rrset->rrs, 0, sizeof(rr_type));
-	rrset->rrs->owner = cname_domain;
-	rrset->rrs->ttl = ttl;
-	rrset->rrs->type = TYPE_CNAME;
-	rrset->rrs->klass = CLASS_IN;
-	rrset->rrs->rdata_count = 1;
-	rrset->rrs->rdatas = (rdata_atom_type*)region_alloc(q->region,
-		sizeof(rdata_atom_type));
-	rrset->rrs->rdatas->domain = cname_dest;
+#ifndef PACKED_STRUCTS
+	rrset->rrs = (rr_type**) region_alloc(q->region, sizeof(rr_type*));
+#endif
+	rrset->rrs[0] = (rr_type*) region_alloc(q->region,
+		sizeof(rr_type)+sizeof(void*));
+	memset(rrset->rrs[0], 0, sizeof(rr_type));
+	rrset->rrs[0]->owner = cname_domain;
+	rrset->rrs[0]->ttl = ttl;
+	rrset->rrs[0]->type = TYPE_CNAME;
+	rrset->rrs[0]->klass = CLASS_IN;
+	rrset->rrs[0]->rdlength = sizeof(void*);
+	memcpy(rrset->rrs[0]->rdata, &cname_dest, sizeof(void*));
 
 	if(!add_rrset(q, answer, ANSWER_SECTION, cname_domain, rrset)) {
 		DEBUG(DEBUG_QUERY,2, (LOG_INFO, "could not add synthesized CNAME rrset to packet for query %s", dname_to_string(q->qname, NULL)));
@@ -1087,7 +1133,7 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 		assert(rrset->rr_count > 0);
 		if (added) {
 			/* only process first CNAME record */
-			domain_type *closest_match = rdata_atom_domain(rrset->rrs[0].rdatas[0]);
+			domain_type *closest_match = rdata_domain_ref(rrset->rrs[0]);
 			domain_type *closest_encloser = closest_match;
 			zone_type* origzone = q->zone;
 			++q->cname_count;
@@ -1156,7 +1202,7 @@ answer_authoritative(struct nsd   *nsd,
 		/* process DNAME */
 		const dname_type* name = qname;
 		domain_type* src = closest_encloser;
-		domain_type *dest = rdata_atom_domain(rrset->rrs[0].rdatas[0]);
+		domain_type *dest = rdata_domain_ref(rrset->rrs[0]);
 		const dname_type* newname;
 		size_t newnum = 0;
 		zone_type* origzone = q->zone;
@@ -1190,7 +1236,7 @@ answer_authoritative(struct nsd   *nsd,
 		(void)namedb_lookup(nsd->db, newname, &closest_match, &closest_encloser);
 		/* synthesize CNAME record */
 		newnum = query_synthesize_cname(q, answer, name, newname,
-			src, closest_encloser, &closest_match, rrset->rrs[0].ttl);
+			src, closest_encloser, &closest_match, rrset->rrs[0]->ttl);
 		if(!newnum) {
 			/* could not synthesize the CNAME. */
 			/* return previous CNAMEs to make resolver recurse for us */
@@ -1339,10 +1385,11 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 				char address[128], proxy[128];
 				addr2str(&q->client_addr, address, sizeof(address));
 				addr2str(&q->remote_addr, proxy, sizeof(proxy));
-				VERBOSITY(2, (LOG_INFO, "query %s from %s via proxy %s refused because of proxy, %s %s",
+				VERBOSITY(2, (LOG_INFO, "query %s from %s via proxy %s refused because of proxy, %s%s%s",
 					dname_to_string(q->qname, NULL),
 					address, proxy,
-					(why?why->ip_address_spec:"."),
+					(why?why->ip_address_spec:""),
+					(why&&why->ip_address_spec[0]?" ":""),
 					(why ? ( why->nokey    ? "NOKEY"
 					      : why->blocked  ? "BLOCKED"
 					      : why->key_name )
@@ -1365,18 +1412,31 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 				why->ip_address_spec,
 				why->nokey?"NOKEY":
 				(why->blocked?"BLOCKED":why->key_name)));
+		} else if(q->qtype == TYPE_SOA
+		       &&  0 == dname_compare(q->qname,
+				(const dname_type*)q->zone->opts->node.key)
+		       && -1 != acl_check_incoming(
+				q->zone->opts->pattern->provide_xfr, q,&why)) {
+			assert(why);
+			DEBUG(DEBUG_QUERY,1, (LOG_INFO, "SOA apex query %s "
+				"passed request-xfr acl %s %s",
+				dname_to_string(q->qname, NULL),
+				why->ip_address_spec,
+				why->nokey?"NOKEY":
+				(why->blocked?"BLOCKED":why->key_name)));
 		} else {
-			if (verbosity >= 2) {
+			if (q->cname_count == 0 && verbosity >= 2) {
 				char address[128];
 				addr2str(&q->client_addr, address, sizeof(address));
-				VERBOSITY(2, (LOG_INFO, "query %s from %s refused, %s %s",
+				VERBOSITY(2, (LOG_INFO, "query %s from %s refused, %s%s%s",
 					dname_to_string(q->qname, NULL),
 					address,
 					why ? ( why->nokey    ? "NOKEY"
 					      : why->blocked  ? "BLOCKED"
 					      : why->key_name )
 					    : "no acl matches",
-					why?why->ip_address_spec:"."));
+					(why&&why->ip_address_spec[0]?" ":""),
+					why?why->ip_address_spec:""));
 			}
 			/* no zone for this */
 			if(q->cname_count == 0) {
@@ -1765,6 +1825,17 @@ query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 				6 + ( q->edns.ede_text_len
 			            ? q->edns.ede_text_len : 0);
 
+		if(q->edns.zoneversion
+		&& q->zone
+		&& q->zone->soa_rrset
+		&& q->zone->soa_rrset->rr_count >= 1
+		&& q->zone->soa_rrset->rrs[0]->rdlength >= 20 /* 5x 32bit numbers */ +2*sizeof(void*) /* two pointers to domain names */)
+			q->edns.opt_reserved_space += sizeof(uint16_t)
+			                           +  sizeof(uint16_t)
+			                           +  sizeof(uint8_t)
+			                           +  sizeof(uint8_t)
+			                           +  sizeof(uint32_t);
+
 		if(q->edns.opt_reserved_space == 0 || !buffer_available(
 			q->packet, 2+q->edns.opt_reserved_space)) {
 			/* fill with NULLs */
@@ -1778,6 +1849,24 @@ query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 				buffer_write(q->packet, edns->nsid, OPT_HDR);
 				/* nsid payload */
 				buffer_write(q->packet, nsd->nsid, nsd->nsid_len);
+			}
+			if(q->edns.zoneversion
+			&& q->zone
+			&& q->zone->soa_rrset
+			&& q->zone->soa_rrset->rr_count >= 1
+			&& q->zone->soa_rrset->rrs[0]->rdlength >= 20+2*sizeof(void*) /* 5x4 bytes and 2 pointers to domains */ ) {
+				uint32_t serial = 0;
+				buffer_write_u16(q->packet, ZONEVERSION_CODE);
+				buffer_write_u16( q->packet
+				                , sizeof(uint8_t)
+						+ sizeof(uint8_t)
+						+ sizeof(uint32_t));
+				buffer_write_u8(q->packet,
+				    domain_dname(q->zone->apex)->label_count - 1);
+				buffer_write_u8( q->packet
+				               , ZONEVERSION_SOA_SERIAL);
+				retrieve_soa_rdata_serial(q->zone->soa_rrset->rrs[0], &serial);
+				buffer_write_u32(q->packet, serial);
 			}
 			if(q->edns.cookie_status != COOKIE_NOT_PRESENT) {
 				/* cookie opt header */

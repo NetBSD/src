@@ -82,8 +82,8 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 		assert(query->axfr_zone->soa_rrset->rr_count == 1);
 		added = packet_encode_rr(query,
 					 query->axfr_zone->apex,
-					 &query->axfr_zone->soa_rrset->rrs[0],
-					 query->axfr_zone->soa_rrset->rrs[0].ttl);
+					 query->axfr_zone->soa_rrset->rrs[0],
+					 query->axfr_zone->soa_rrset->rrs[0]->ttl);
 		if (!added) {
 			/* XXX: This should never happen... generate error code? */
 			abort();
@@ -123,8 +123,8 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 					added = packet_encode_rr(
 						query,
 						query->axfr_current_domain,
-						&query->axfr_current_rrset->rrs[query->axfr_current_rr],
-						query->axfr_current_rrset->rrs[query->axfr_current_rr].ttl);
+						query->axfr_current_rrset->rrs[query->axfr_current_rr],
+						query->axfr_current_rrset->rrs[query->axfr_current_rr]->ttl);
 					if(total_added == 0) {
 						query->maxlen = oldmaxlen;
 						if(query_overflow(query)) {
@@ -154,8 +154,8 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 	assert(query->axfr_zone->soa_rrset->rr_count == 1);
 	added = packet_encode_rr(query,
 				 query->axfr_zone->apex,
-				 &query->axfr_zone->soa_rrset->rrs[0],
-				 query->axfr_zone->soa_rrset->rrs[0].ttl);
+				 query->axfr_zone->soa_rrset->rrs[0],
+				 query->axfr_zone->soa_rrset->rrs[0]->ttl);
 	if (added) {
 		++total_added;
 		query->tsig_sign_it = 1; /* sign last packet */
@@ -187,6 +187,27 @@ static int axfr_ixfr_can_admit_query(struct nsd* nsd, struct query* q)
 {
 	struct acl_options *acl = NULL;
 	struct zone_options* zone_opt;
+
+#ifdef HAVE_SSL
+	/* tls-auth-xfr-only is set and this is not an authenticated TLS */
+	if (nsd->options->tls_auth_xfr_only && !q->tls_auth) {
+		if (verbosity >= 2) {
+			char address[128], proxy[128];
+			addr2str(&q->client_addr, address, sizeof(address));
+			addr2str(&q->remote_addr, proxy, sizeof(proxy));
+			VERBOSITY(2, (LOG_INFO, "%s for %s from %s refused tls-auth-xfr-only",
+				(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+				dname_to_string(q->qname, NULL),
+				address));
+		}
+		RCODE_SET(q->packet, RCODE_REFUSE);
+		/* RFC8914 - Extended DNS Errors
+		 * 4.19.  Extended DNS Error Code 18 - Prohibited */
+		q->edns.ede = EDE_PROHIBITED;
+		return 0;
+	}
+#endif
+
 	zone_opt = zone_options_find(nsd->options, q->qname);
 	if(zone_opt && q->is_proxied && acl_check_incoming_block_proxy(
 		zone_opt->pattern->provide_xfr, q, &acl) == -1) {
@@ -234,15 +255,30 @@ static int axfr_ixfr_can_admit_query(struct nsd* nsd, struct query* q)
 		}
 		return 0;
 	}
+#ifdef HAVE_SSL
+	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s admitted acl %s %s %s",
+		(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+		acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY",
+		(q->tls||q->tls_auth)?(q->tls?"tls":"tls-auth"):""));
+#else
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s admitted acl %s %s",
 		(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
 		acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY"));
+#endif
 	if (verbosity >= 1) {
 		char a[128];
 		addr2str(&q->client_addr, a, sizeof(a));
+#ifdef HAVE_SSL
+		VERBOSITY(1, (LOG_INFO, "%s for %s from %s %s %s",
+			(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+			dname_to_string(q->qname, NULL), a,
+			(q->tls||q->tls_auth)?(q->tls?"tls":"tls-auth"):"",
+			q->cert_cn?q->cert_cn:"not-verified"));
+#else
 		VERBOSITY(1, (LOG_INFO, "%s for %s from %s",
 			(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
 			dname_to_string(q->qname, NULL), a));
+#endif
 	}
 	return 1;
 }

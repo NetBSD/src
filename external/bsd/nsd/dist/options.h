@@ -11,6 +11,9 @@
 #define OPTIONS_H
 
 #include <stdarg.h>
+#ifdef HAVE_SSL
+#include <openssl/ssl.h>
+#endif
 #include "region-allocator.h"
 #include "rbtree.h"
 struct query;
@@ -19,6 +22,7 @@ struct tsig_key;
 struct buffer;
 struct nsd;
 struct proxy_protocol_port_list;
+
 
 typedef struct nsd_options nsd_options_type;
 typedef struct pattern_options pattern_options_type;
@@ -35,6 +39,9 @@ typedef struct config_parser_state config_parser_state_type;
 #define VERIFY_ZONE_INHERIT (2)
 #define VERIFIER_FEED_ZONE_INHERIT (2)
 #define VERIFIER_TIMEOUT_INHERIT (-1)
+#define CATALOG_ROLE_INHERIT  (0)
+#define CATALOG_ROLE_CONSUMER (1)
+#define CATALOG_ROLE_PRODUCER (2)
 
 /*
  * Options global for nsd.
@@ -96,6 +103,7 @@ struct nsd_options {
 	int tcp_timeout;
 	int tcp_mss;
 	int outgoing_tcp_mss;
+	int tcp_listen_queue;
 	size_t ipv4_edns_size;
 	size_t ipv6_edns_size;
 	const char* pidfile;
@@ -109,9 +117,11 @@ struct nsd_options {
 	const char* zonelistfile;
 	const char* nsid;
 	int xfrd_reload_timeout;
+	int reload_config;
 	int zonefiles_check;
 	int zonefiles_write;
 	int log_time_ascii;
+	int log_time_iso;
 	int round_robin;
 	int minimal_responses;
 	int refuse_any;
@@ -129,8 +139,12 @@ struct nsd_options {
 	char* tls_service_pem;
 	/* TLS dedicated port */
 	const char* tls_port;
+	/* TLS-AUTH dedicated port */
+	const char* tls_auth_port;
 	/* TLS certificate bundle */
 	const char* tls_cert_bundle;
+	/* Answer XFR only from tls_auth_port and after authentication */
+	int tls_auth_xfr_only;
 
 	/* proxy protocol port list */
 	struct proxy_protocol_port_list* proxy_protocol_port;
@@ -149,6 +163,30 @@ struct nsd_options {
 	char* control_key_file;
 	/** certificate file for nsd-control */
 	char* control_cert_file;
+
+#ifdef USE_XDP
+	/** XDP interface name */
+	const char* xdp_interface;
+	/** XDP/eBPF program file path */
+	const char* xdp_program_path;
+	/** if NSD should load the XDP/eBPF program */
+	int xdp_program_load;
+	/** path to bpffs for pinned BPF objects */
+	const char* xdp_bpffs_path;
+	/** force copy mode instead of zero copy mode */
+	int xdp_force_copy;
+#endif
+
+#ifdef USE_METRICS
+	/** metrics section. enable toggle. */
+	int metrics_enable;
+	/** the interfaces the metrics endpoint should listen on */
+	struct ip_address_option* metrics_interface;
+	/** port number for the metrics endpoint */
+	int metrics_port;
+	/** HTTP path for the metrics endpoint */
+	char* metrics_path;
+#endif /* USE_METRICS */
 
 #ifdef RATELIMIT
 	/** number of buckets in rrl hashtable */
@@ -196,8 +234,12 @@ struct nsd_options {
 	int answer_cookie;
 	/** cookie secret */
 	char *cookie_secret;
+	/** cookie staging secret */
+	char *cookie_staging_secret;
 	/** path to cookie secret store */
-	char const* cookie_secret_file;
+	char *cookie_secret_file;
+	/** set when the cookie_secret_file whas not explicitely configured */
+	uint8_t cookie_secret_file_is_default;
 	/** enable verify */
 	int verify_enable;
 	/** list of ip addresses used to serve zones for verification */
@@ -292,7 +334,7 @@ struct pattern_options {
 	 */
 	uint8_t min_expire_time_expr;
 	uint64_t size_limit_xfr;
-	uint8_t multi_master_check;
+	uint8_t multi_primary_check;
 	uint8_t store_ixfr;
 	uint8_t store_ixfr_is_default;
 	uint64_t ixfr_size;
@@ -308,6 +350,10 @@ struct pattern_options {
 	uint8_t verifier_feed_zone_is_default;
 	int32_t verifier_timeout;
 	uint8_t verifier_timeout_is_default;
+	uint8_t catalog_role;
+	uint8_t catalog_role_is_default;
+	const char* catalog_member_pattern;
+	const char* catalog_producer_zone;
 } ATTR_PACKED;
 
 #define PATTERN_IMPLICIT_MARKER "_implicit_"
@@ -328,8 +374,26 @@ struct zone_options {
 	 * a anonymous pattern created in-place */
 	struct pattern_options* pattern;
 	/* zone is fixed into the main config, not in zonelist, cannot delete */
-	uint8_t part_of_config;
+	unsigned part_of_config        : 1;
+	unsigned is_catalog_member_zone: 1;
 } ATTR_PACKED;
+
+/*
+ * Options for catalog member zones
+ * assert(options->is_catalog_member_zone == 1)
+ * when options->pattern->catalog_producer_zone is set, this is a
+ * producer member zone, otherwise a consumer member zone.
+ * A catalog member zone is either a member zone of a catalog producer zone
+ * or a catalog consumer zone. They are mutually exclusive.
+ */
+struct catalog_member_zone {
+	struct zone_options          options;
+	const struct dname*          member_id;
+	/* node in the associated catalog consumer or producer zone */
+	rbnode_type                  node;
+} ATTR_PACKED;
+
+typedef void (*new_member_id_type)(struct catalog_member_zone* zone);
 
 union acl_addr_storage {
 #ifdef INET6
@@ -459,9 +523,13 @@ int nsd_options_insert_pattern(struct nsd_options* opt,
 /* parses options file. Returns false on failure. callback, if nonNULL,
  * gets called with error strings, default prints. */
 int parse_options_file(struct nsd_options* opt, const char* file,
-	void (*err)(void*,const char*), void* err_arg);
+	void (*err)(void*,const char*), void* err_arg,
+	struct nsd_options* old_opts);
 struct zone_options* zone_options_create(region_type* region);
 void zone_options_delete(struct nsd_options* opt, struct zone_options* zone);
+struct catalog_member_zone* catalog_member_zone_create(region_type* region);
+static inline struct catalog_member_zone* as_catalog_member_zone(struct zone_options* zopt)
+{ return zopt && zopt->is_catalog_member_zone ? (struct catalog_member_zone*)zopt : NULL; }
 /* find a zone by apex domain name, or NULL if not found. */
 struct zone_options* zone_options_find(struct nsd_options* opt,
 	const struct dname* apex);
@@ -488,12 +556,16 @@ void tls_auth_options_insert(struct nsd_options* opt, struct tls_auth_options* a
 struct tls_auth_options* tls_auth_options_find(struct nsd_options* opt, const char* name);
 /* read in zone list file. Returns false on failure */
 int parse_zone_list_file(struct nsd_options* opt);
+/* create (potential) catalog producer member entry and add to the zonelist */
+struct zone_options* zone_list_add_or_cat(struct nsd_options* opt,
+	const char* zname, const char* pname, new_member_id_type new_member_id);
 /* create zone entry and add to the zonelist file */
-struct zone_options* zone_list_add(struct nsd_options* opt, const char* zname,
-	const char* pname);
+static inline struct zone_options* zone_list_add(struct nsd_options* opt,
+	const char* zname, const char* pname)
+{ return zone_list_add_or_cat(opt, zname, pname, NULL); }
 /* create zonelist entry, do not insert in file (called by _add) */
 struct zone_options* zone_list_zone_insert(struct nsd_options* opt,
-	const char* nm, const char* patnm, int linesize, off_t off);
+	const char* nm, const char* patnm);
 void zone_list_del(struct nsd_options* opt, struct zone_options* zone);
 void zone_list_compact(struct nsd_options* opt);
 void zone_list_close(struct nsd_options* opt);
@@ -523,6 +595,9 @@ int acl_check_incoming(struct acl_options* acl, struct query* q,
 int acl_addr_matches_host(struct acl_options* acl, struct acl_options* host);
 int acl_addr_matches(struct acl_options* acl, struct query* q);
 int acl_addr_matches_proxy(struct acl_options* acl, struct query* q);
+#ifdef HAVE_SSL
+int acl_tls_hostname_matches(SSL* ssl, const char* acl_cert_cn);
+#endif
 int acl_key_matches(struct acl_options* acl, struct query* q);
 int acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz);
 int acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
@@ -544,6 +619,20 @@ int acl_equal(struct acl_options* p, struct acl_options* q);
 
 /* see if a zone is a slave or a master zone */
 int zone_is_slave(struct zone_options* opt);
+/* see if a zone is a catalog consumer */
+static inline int zone_is_catalog_consumer(struct zone_options* opt)
+{ return opt && opt->pattern
+             && opt->pattern->catalog_role == CATALOG_ROLE_CONSUMER; }
+static inline int zone_is_catalog_producer(struct zone_options* opt)
+{ return opt && opt->pattern
+             && opt->pattern->catalog_role == CATALOG_ROLE_PRODUCER; }
+static inline int zone_is_catalog_member(struct zone_options* opt)
+{ return opt && opt->is_catalog_member_zone; }
+static inline const char* zone_is_catalog_producer_member(struct zone_options* opt)
+{ return opt && opt->pattern && opt->pattern->catalog_producer_zone
+                              ? opt->pattern->catalog_producer_zone : NULL; }
+static inline int zone_is_catalog_consumer_member(struct zone_options* opt)
+{ return zone_is_catalog_member(opt) && !zone_is_catalog_producer_member(opt); }
 /* create zonefile name, returns static pointer (perhaps to options data) */
 const char* config_make_zonefile(struct zone_options* zone, struct nsd* nsd);
 

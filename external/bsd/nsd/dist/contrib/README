@@ -37,3 +37,28 @@ USE AT YOUR OWN RISK.
 * autocomplete_nsd-control.bash : It completes options, all commands and zone
   arguments for commands. From Christian Weiske. To use it, call:
   source contrib/autocomplete_nsd-control.bash
+
+* bug390.patch:
+  Patch that returns a superfluous NSEC3 RR on wildcard queries
+
+  This patch exists because there is a bug in the Bind9 resolver, before
+  version 9.9.0. Bind9 before that version can not validate NSEC3 wildcard
+  answer responses, it needs a superfluous NSEC3 RR. This patch will make
+  NSD provide that NSEC3 RR.
+
+  The patch was useful before there was a fix for the BIND resolver, to
+  work around the issue. It is no longer useful after BIND got fixed in
+  version 9.9.0 around 2013-05-16.
+
+* contrib/nsd-tmpfiles.conf.in, contrib/nsd.openrc.conf, contrib/nsd.openrc.in:
+  An OpenRC service script and config file.
+
+  The service script is integrated with the build system so that the
+  correct paths are obtained from ./configure and do not need to be
+  hard-coded.
+
+  The nsd-tmpfiles.conf file is for both systemd and OpenRC. If installed,
+  this will create at a boot a temporary "nsd" directory writable by the
+  nsd user. This makes it easier to use a local control socket because
+  the user no longer has to worry about creating the directory where
+  the socket will live.

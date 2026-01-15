@@ -97,8 +97,9 @@ struct xfrd_state {
 	/* communication channel with server_main */
 	struct event ipc_handler;
 	int ipc_handler_flags;
-	struct xfrd_tcp *ipc_conn;
-	struct buffer* ipc_pass;
+	/* 2 * nsd->child_count communication channels from the serve childs */
+	struct event    *notify_events;
+	struct xfrd_tcp *notify_pipes;
 	/* sending ipc to server_main */
 	uint8_t need_to_send_shutdown;
 	uint8_t need_to_send_reload;
@@ -119,6 +120,12 @@ struct xfrd_state {
 	int notify_udp_num;
 	/* first and last notify_zone* entries waiting for a UDP socket */
 	struct notify_zone *notify_waiting_first, *notify_waiting_last;
+
+	/* tree of catalog consumer zones. Processing is disabled if > 1. */
+	rbtree_type *catalog_consumer_zones;
+
+	/* tree of updated catalog producer zones for which the content to serve */
+	rbtree_type *catalog_producer_zones;
 };
 
 /*
@@ -130,7 +137,6 @@ struct xfrd_soa {
 	uint16_t type; /* = TYPE_SOA */
 	uint16_t klass; /* = CLASS_IN */
 	uint32_t ttl;
-	uint16_t rdata_count; /* = 7 */
 	/* format is 1 octet length, + wireformat dname.
 	   one more octet since parse_dname_wire_from_packet needs it.
 	   maximum size is allocated to avoid memory alloc/free. */

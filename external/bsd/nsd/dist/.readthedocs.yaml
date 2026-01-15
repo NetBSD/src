@@ -1,0 +1,36 @@
+version: 2
+
+build:
+  os: ubuntu-22.04
+  apt_packages:
+    - autoconf
+    - automake
+    - libtool
+    - make
+    - libevent-dev
+    - libssl-dev
+    - flex
+    - bison
+    - mandoc
+    - libprotobuf-c-dev
+    - protobuf-c-compiler
+    - libfstrm-dev
+  tools:
+    python: "3"
+  jobs:
+    pre_build:
+      - |
+        autoconf && autoheader
+        libtoolize -c -i
+        ./configure --with-libevent=yes --with-libssl=yes
+        make html
+
+sphinx:
+  configuration: doc/manual/conf.py
+
+python:
+  install:
+    - requirements: doc/manual/requirements.txt
+
+submodules:
+  include: all
