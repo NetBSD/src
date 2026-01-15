@@ -1,4 +1,4 @@
-/* $NetBSD: fixup.c,v 1.1 2026/01/09 22:54:27 jmcneill Exp $ */
+/* $NetBSD: fixup.c,v 1.2 2026/01/15 22:13:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2026 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fixup.c,v 1.1 2026/01/09 22:54:27 jmcneill Exp $");
+__RCSID("$NetBSD: fixup.c,v 1.2 2026/01/15 22:13:32 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,16 +61,6 @@ union instr {
 
 #define IBMESPRESSO_P(_pvr)	(((_pvr) >> 16) == 0x7001)
 
-static inline uint32_t
-_rtld_ppc_mfpvr(void)
-{
-	uint32_t pvr;
-
-	asm volatile ("mfpvr %0" : "=r"(pvr));
-
-	return pvr;
-}
-
 int
 _rtld_map_segment_fixup(Elf_Phdr *phdr, caddr_t data_addr, size_t data_size,
     int data_prot)
@@ -82,15 +72,20 @@ _rtld_map_segment_fixup(Elf_Phdr *phdr, caddr_t data_addr, size_t data_size,
 		ssize_t i;
 		size_t j;
 
-		_rtld_ppc_pvr = _rtld_ppc_mfpvr();
-		_rtld_fixup_init = true;
+		j = sizeof(_rtld_ppc_pvr);
+		i = _rtld_sysctl("machdep.pvr", &_rtld_ppc_pvr, &j);
+		if (i != CTLTYPE_INT) {
+			_rtld_ppc_pvr = 0;
+		}
 		j = sizeof(_rtld_ncpus);
 		i = _rtld_sysctl("hw.ncpu", &_rtld_ncpus, &j);
 		if (i != CTLTYPE_INT) {
 			_rtld_ncpus = 1;
 		}
+
+		_rtld_fixup_init = true;
 	}
-	if (!IBMESPRESSO_P(_rtld_ppc_pvr) && _rtld_ncpus == 1) {
+	if (!IBMESPRESSO_P(_rtld_ppc_pvr) || _rtld_ncpus == 1) {
 		return 0;
 	}
 	if ((phdr->p_flags & PF_X) == 0) {
