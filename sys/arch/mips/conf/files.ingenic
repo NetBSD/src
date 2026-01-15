@@ -1,14 +1,16 @@
-#	$NetBSD: files.ingenic,v 1.10 2017/05/21 06:49:13 skrll Exp $
+#	$NetBSD: files.ingenic,v 1.11 2026/01/15 06:22:51 skrll Exp $
 
 file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/locore_ingenic.S
+
+file	arch/mips/fdt/fdt_dma_machdep.c
 
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/ata/files.ata"			# ATA devices
 include "dev/usb/files.usb"			# USB devices
 
 # Ingenic system bus
-device	apbus { [addr=-1] }
+device	apbus { [addr=-1] }: fdt
 attach	apbus at mainbus
 file	arch/mips/ingenic/apbus.c		apbus
 
