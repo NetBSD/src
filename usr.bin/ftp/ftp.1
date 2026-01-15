@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.161 2025/10/28 08:21:07 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.162 2026/01/15 03:19:35 lukem Exp $
 .\"
-.\" Copyright (c) 1996-2025 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd October 28, 2024
+.Dd January 15, 2026
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -206,7 +206,7 @@ Causes
 .Nm
 to bypass normal login procedure, and use an anonymous login instead.
 .It Fl b Ar bufsize
-Change the input buffer size to
+Change the buffer size used for parsing HTTP response lines to
 .Ar bufsize
 bytes.
 The default
