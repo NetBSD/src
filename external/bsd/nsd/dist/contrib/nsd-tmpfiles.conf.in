@@ -1,0 +1,3 @@
+# Create a writable directory in case the user wants to
+# use a local control socket.
+d @runstatedir@/nsd 0750 @user@ @user@

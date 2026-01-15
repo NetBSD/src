@@ -1,5 +1,5 @@
-.TH "nsd\-control" "8" "Dec  6, 2023" "NLnet Labs" "nsd 4.8.0"
-.\" Copyright (c) 2011, NLnet Labs. All rights reserved.
+.TH "nsd\-control" "8" "Dec  4, 2025" "NLnet Labs" "nsd 4.14.0"
+.\" Copyright (c) 2011-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd\-control,
@@ -16,7 +16,8 @@
 .B nsd\-control
 performs remote administration on the \fInsd\fR(8) DNS server.  It reads
 the configuration file, contacts the nsd server over SSL, sends the
-command and displays the result.
+command and displays the result.  Commands that require a reload are queued
+and the result indicates the command was accepted.
 .P
 The available options are:
 .TP
@@ -80,7 +81,7 @@ Same as stats, but does not zero the counters.
 .B addzone <zone name> <pattern name>
 Add a new zone to the running server.  The zone is added to the zonelist
 file on disk, so it stays after a restart.  The pattern name determines
-the options for the new zone.  For slave zones a zone transfer is
+the options for the new zone.  For secondary zones a zone transfer is
 immediately attempted.  For zones with a zonefile, the zone file is
 attempted to be read in.
 .TP
@@ -114,28 +115,28 @@ path are created if necessary. With argument that zone is written if it
 was modified, without argument, all modified zones are written.
 .TP
 .B notify [<zone>]
-Send NOTIFY messages to slave servers.  Sends to the IP addresses
-configured in the 'notify:' lists for the master zones hosted on this
-server.  Usually NSD sends NOTIFY messages right away when a master zone
+Send NOTIFY messages to secondary servers.  Sends to the IP addresses
+configured in the 'notify:' lists for the primary zones hosted on this
+server.  Usually NSD sends NOTIFY messages right away when a primary zone
 serial is updated.  If a zone is given, notifies are sent for that zone.
-These slave servers are supposed to initiate a zone transfer request
-later (to this server or another master), this can be allowed via
+These secondary servers are supposed to initiate a zone transfer request
+later (to this server or another primary), this can be allowed via
 the 'provide\-xfr:' acl list configuration. With argument that zone is
 processed, without argument, all zones are processed.
 .TP
 .B transfer [<zone>]
-Attempt to update slave zones that are hosted on this server by contacting
-the masters.  The masters are configured via 'request\-xfr:' lists.
+Attempt to update secondary zones that are hosted on this server by contacting
+the primaries.  The primaries are configured via 'request\-xfr:' lists.
 If a zone is given, that zone is updated.  Usually NSD receives a NOTIFY
-from the masters (configured via 'allow\-notify:' acl list) that a new zone
+from the primaries (configured via 'allow\-notify:' acl list) that a new zone
 serial has to be transferred.  For zones with no content, NSD may have backed
-off from asking often because the masters did not respond, but this command
+off from asking often because the primaries did not respond, but this command
 will reset the backoff to its initial timeout, for frequent retries. With
 argument that zone is transferred, without argument, all zones are transferred.
 .TP
 .B force_transfer [<zone>]
-Force update slave zones that are hosted on this server.  Even if the
-master hosts the same serial number of the zone, a full AXFR is performed
+Force update secondary zones that are hosted on this server.  Even if the
+primary hosts the same serial number of the zone, a full AXFR is performed
 to fetch it.  If you want to use IXFR and check that the serial number
 increases, use the 'transfer' command. With argument that zone is
 transferred, without argument, all zones are transferred.
@@ -143,9 +144,9 @@ transferred, without argument, all zones are transferred.
 .B zonestatus [<zone>]
 Print state of the zone, the serial numbers and since when they have
 been acquired.  Also prints the notify action (to which server), and
-zone transfer (and from which master) if there is activity right now.
-The state of the zone is printed as: 'master' (master zones), 'ok' (slave
-zone is up\-to\-date), 'expired' (slave zone has expired), 'refreshing' (slave
+zone transfer (and from which primary) if there is activity right now.
+The state of the zone is printed as: 'primary' (primary zones), 'ok' (secondary
+zone is up\-to\-date), 'expired' (secondary zone has expired), 'refreshing' (secondary
 zone has transfers active).  The serial numbers printed are
 the 'served\-serial' (currently active), the 'commit\-serial' (is in reload),
 the 'notified\-serial' (got notify, busy fetching the data).  The serial
@@ -189,27 +190,27 @@ restart, for lasting changes edit the nsd.conf file or a file included from it.
 .B add_cookie_secret <secret>
 Add or replace a cookie secret persistently. <secret> needs to be an 128 bit
 hex string.
-
+.sp
 Cookie secrets can be either \fIactive\fR or \fIstaging\fR. \fIActive\fR cookie
 secrets are used to create DNS Cookies, but verification of a DNS Cookie
 succeeds with any of the \fIactive\fR or \fIstaging\fR cookie secrets. The
 state of the current cookie secrets can be printed with the
 \fBprint_cookie_secrets\fR command.
-
+.sp
 When there are no cookie secrets configured yet, the <secret> is added as
 \fIactive\fR. If there is already an \fIactive\fR cookie secret, the <secret>
 is added as \fIstaging\fR or replacing an existing \fIstaging\fR secret.
-
+.sp
 To "roll" a cookie secret used in an anycast set. The new secret has to be
 added as staging secret to \fBall\fR nodes in the anycast set. When \fBall\fR
 nodes can verify DNS Cookies with the new secret, the new secret can be
 activated with the \fBactivate_cookie_secret\fR command. After \fBall\fR nodes
 have the new secret \fIactive\fR for at least one hour, the previous secret can
 be dropped with the \fBdrop_cookie_secret\fR command.
-
+.sp
 Persistence is accomplished by writing to a file which if configured with the
 \fBcookie\-secret\-file\fR option in the server section of the config file.
-The default value for that is: @configdir@/nsd_cookiesecrets.txt .
+The default value for that is: @cookiesecretsfile@ .
 .TP
 .B drop_cookie_secret
 Drop the \fIstaging\fR cookie secret.
@@ -323,13 +324,13 @@ number of answers with TC flag set.
 .I num.dropped
 number of queries that were dropped because they failed sanity check.
 .TP
-.I zone.master
-number of master zones served.  These are zones with no 'request\-xfr:'
-entries.
+.I zone.primary
+number of primary zones served.  These are zones with no 'request\-xfr:'
+entries. Also output as 'zone.master' for backwards compatibility.
 .TP
-.I zone.slave
-number of slave zones served.  These are zones with 'request\-xfr'
-entries.
+.I zone.secondary
+number of secondary zones served.  These are zones with 'request\-xfr'
+entries. Also output as 'zone.slave' for backwards compatibility.
 .SH "FILES"
 .TP
 .I @nsdconfigfile@

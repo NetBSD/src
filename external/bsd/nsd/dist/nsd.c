@@ -1,7 +1,7 @@
 /*
  * nsd.c -- nsd(8)
  *
- * Copyright (c) 2001-2006, NLnet Labs. All rights reserved.
+ * Copyright (c) 2001-2024, NLnet Labs. All rights reserved.
  *
  * See LICENSE for the license.
  *
@@ -54,8 +54,17 @@
 #include "remote.h"
 #include "xfrd-disk.h"
 #include "ipc.h"
+#include "util.h"
+#ifdef USE_METRICS
+#include "metrics.h"
+#endif /* USE_METRICS */
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
+#endif
+#ifdef USE_XDP
+#include <sys/prctl.h>
+#include "xdp-server.h"
+#include "xdp-util.h"
 #endif
 #include "util/proxy_protocol.h"
 
@@ -79,7 +88,7 @@ usage (void)
 		"  -4                   Only listen to IPv4 connections.\n"
 		"  -6                   Only listen to IPv6 connections.\n"
 		"  -a ip-address[@port] Listen to the specified incoming IP address (and port)\n"
-		"                       May be specified multiple times).\n"
+		"                       (May be specified multiple times).\n"
 		"  -c configfile        Read specified configfile instead of %s.\n"
 		"  -d                   do not fork as a daemon process.\n"
 #ifndef NDEBUG
@@ -145,7 +154,7 @@ version(void)
 		);
 #endif
 	fprintf(stderr,
-		"Copyright (C) 2001-2020 NLnet Labs.  This is free software.\n"
+		"Copyright (C) 2001-2024 NLnet Labs.  This is free software.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
 		"FOR A PARTICULAR PURPOSE.\n");
 	exit(0);
@@ -521,74 +530,13 @@ figure_sockets(
 #endif
 }
 
-/* print server affinity for given socket. "*" if socket has no affinity with
-   any specific server, "x-y" if socket has affinity with more than two
-   consecutively numbered servers, "x" if socket has affinity with a specific
-   server number, which is not necessarily just one server. e.g. "1 3" is
-   printed if socket has affinity with servers number one and three, but not
-   server number two. */
-static ssize_t
-print_socket_servers(struct nsd_socket *sock, char *buf, size_t bufsz)
-{
-	int i, x, y, z, n = (int)(sock->servers->size);
-	char *sep = "";
-	size_t off, tot;
-	ssize_t cnt = 0;
-
-	assert(bufsz != 0);
-
-	off = tot = 0;
-	x = y = z = -1;
-	for (i = 0; i <= n; i++) {
-		if (i == n || !nsd_bitset_isset(sock->servers, i)) {
-			cnt = 0;
-			if (i == n && x == -1) {
-				assert(y == -1);
-				assert(z == -1);
-				cnt = snprintf(buf, bufsz, "-");
-			} else if (y > z) {
-				assert(x > z);
-				if (x == 0 && y == (n - 1)) {
-					assert(z == -1);
-					cnt = snprintf(buf+off, bufsz-off,
-					               "*");
-				} else if (x == y) {
-					cnt = snprintf(buf+off, bufsz-off,
-					               "%s%d", sep, x+1);
-				} else if (x == (y - 1)) {
-					cnt = snprintf(buf+off, bufsz-off,
-					               "%s%d %d", sep, x+1, y+1);
-				} else {
-					assert(y > (x + 1));
-					cnt = snprintf(buf+off, bufsz-off,
-					               "%s%d-%d", sep, x+1, y+1);
-				}
-			}
-			z = i;
-			if (cnt > 0) {
-				tot += (size_t)cnt;
-				off = (tot < bufsz) ? tot : bufsz - 1;
-				sep = " ";
-			} else if (cnt < 0) {
-				return -1;
-			}
-		} else if (x <= z) {
-			x = y = i;
-		} else {
-			assert(x > z);
-			y = i;
-		}
-	}
-
-	return tot;
-}
-
 static void
 print_sockets(
 	struct nsd_socket *udp, struct nsd_socket *tcp, size_t ifs)
 {
+#define SERVERBUF_SIZE_MAX (999*4+1) /* assume something big */
 	char sockbuf[INET6_ADDRSTRLEN + 6 + 1];
-	char *serverbuf;
+	char serverbuf[SERVERBUF_SIZE_MAX];
 	size_t i, serverbufsz, servercnt;
 	const char *fmt = "listen on ip-address %s (%s) with server(s): %s";
 	struct nsd_bitset *servers;
@@ -601,8 +549,7 @@ print_sockets(
 	assert(tcp != NULL);
 
 	servercnt = udp[0].servers->size;
-	serverbufsz = (((servercnt / 10) * servercnt) + servercnt) + 1;
-	serverbuf = xalloc(serverbufsz);
+	serverbufsz = SERVERBUF_SIZE_MAX;
 
 	/* warn user of unused servers */
 	servers = xalloc(nsd_bitset_size(servercnt));
@@ -611,12 +558,12 @@ print_sockets(
 	for(i = 0; i < ifs; i++) {
 		assert(udp[i].servers->size == servercnt);
 		addrport2str((void*)&udp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
-		print_socket_servers(&udp[i], serverbuf, serverbufsz);
+		(void)print_socket_servers(udp[i].servers, serverbuf, serverbufsz);
 		nsd_bitset_or(servers, servers, udp[i].servers);
 		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "udp", serverbuf));
 		assert(tcp[i].servers->size == servercnt);
 		addrport2str((void*)&tcp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
-		print_socket_servers(&tcp[i], serverbuf, serverbufsz);
+		(void)print_socket_servers(tcp[i].servers, serverbuf, serverbufsz);
 		nsd_bitset_or(servers, servers, tcp[i].servers);
 		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "tcp", serverbuf));
 	}
@@ -629,7 +576,6 @@ print_sockets(
 			                     "any specified ip-address", i+1);
 		}
 	}
-	free(serverbuf);
 	free(servers);
 }
 
@@ -659,7 +605,9 @@ readpid(const char *file)
 	}
 
 	if (((l = read(fd, pidbuf, sizeof(pidbuf)))) == -1) {
+		int errno_bak = errno;
 		close(fd);
+		errno = errno_bak;
 		return -1;
 	}
 
@@ -724,27 +672,32 @@ writepid(struct nsd *nsd)
 	}
 	close(fd);
 
-	if (chown(nsd->pidfile, nsd->uid, nsd->gid) == -1) {
-		log_msg(LOG_ERR, "cannot chown %u.%u %s: %s",
-			(unsigned) nsd->uid, (unsigned) nsd->gid,
-			nsd->pidfile, strerror(errno));
-		return -1;
-	}
-
 	return 0;
 }
 
 void
-unlinkpid(const char* file)
+unlinkpid(const char* file, const char* username)
 {
 	int fd = -1;
 
 	if (file && file[0]) {
 		/* truncate pidfile */
-		fd = open(file, O_WRONLY | O_TRUNC, 0644);
+		fd = open(file, O_WRONLY | O_TRUNC
+#ifdef O_NOFOLLOW
+			| O_NOFOLLOW
+#endif
+			, 0644);
 		if (fd == -1) {
 			/* Truncate the pid file.  */
-			log_msg(LOG_ERR, "can not truncate the pid file %s: %s", file, strerror(errno));
+			/* If there is a username configured, we assume that
+			 * due to privilege drops, NSD cannot truncate or
+			 * unlink the pid file. NSD does not chown the file
+			 * because that creates a privilege escape. */
+			if(username && username[0]) {
+				VERBOSITY(5, (LOG_INFO, "can not truncate the pid file %s: %s", file, strerror(errno)));
+			} else {
+				log_msg(LOG_ERR, "can not truncate the pid file %s: %s", file, strerror(errno));
+			}
 		} else {
 			close(fd);
 		}
@@ -754,9 +707,15 @@ unlinkpid(const char* file)
 			/* this unlink may not work if the pidfile is located
 			 * outside of the chroot/workdir or we no longer
 			 * have permissions */
-			VERBOSITY(3, (LOG_WARNING,
-				"failed to unlink pidfile %s: %s",
-				file, strerror(errno)));
+			if(username && username[0]) {
+				VERBOSITY(5, (LOG_INFO,
+					"failed to unlink pidfile %s: %s",
+					file, strerror(errno)));
+			} else {
+				VERBOSITY(3, (LOG_WARNING,
+					"failed to unlink pidfile %s: %s",
+					file, strerror(errno)));
+			}
 		}
 	}
 }
@@ -891,40 +850,6 @@ bind8_stats (struct nsd *nsd)
 }
 #endif /* BIND8_STATS */
 
-static
-int cookie_secret_file_read(nsd_type* nsd) {
-	char secret[NSD_COOKIE_SECRET_SIZE * 2 + 2/*'\n' and '\0'*/];
-	char const* file = nsd->options->cookie_secret_file;
-	FILE* f;
-	int corrupt = 0;
-	size_t count;
-
-	assert( nsd->options->cookie_secret_file != NULL );
-	f = fopen(file, "r");
-	/* a non-existing cookie file is not an error */
-	if( f == NULL ) { return errno != EPERM; }
-	/* cookie secret file exists and is readable */
-	nsd->cookie_count = 0;
-	for( count = 0; count < NSD_COOKIE_HISTORY_SIZE; count++ ) {
-		size_t secret_len = 0;
-		ssize_t decoded_len = 0;
-		if( fgets(secret, sizeof(secret), f) == NULL ) { break; }
-		secret_len = strlen(secret);
-		if( secret_len == 0 ) { break; }
-		assert( secret_len <= sizeof(secret) );
-		secret_len = secret[secret_len - 1] == '\n' ? secret_len - 1 : secret_len;
-		if( secret_len != NSD_COOKIE_SECRET_SIZE * 2 ) { corrupt++; break; }
-		/* needed for `hex_pton`; stripping potential `\n` */
-		secret[secret_len] = '\0';
-		decoded_len = hex_pton(secret, nsd->cookie_secrets[count].cookie_secret,
-		                       NSD_COOKIE_SECRET_SIZE);
-		if( decoded_len != NSD_COOKIE_SECRET_SIZE ) { corrupt++; break; }
-		nsd->cookie_count++;
-	}
-	fclose(f);
-	return corrupt == 0;
-}
-
 extern char *optarg;
 extern int optind;
 
@@ -966,14 +891,16 @@ main(int argc, char *argv[])
 	nsd.chrootdir	= 0;
 	nsd.nsid 	= NULL;
 	nsd.nsid_len 	= 0;
+	nsd.do_answer_cookie = 0;
 	nsd.cookie_count = 0;
+	nsd.cookie_secrets_source = COOKIE_SECRETS_NONE;
+	nsd.cookie_secrets_filename = NULL;
 
 	nsd.child_count = 0;
 	nsd.maximum_tcp_count = 0;
 	nsd.current_tcp_count = 0;
 	nsd.file_rotation_ok = 0;
 
-	nsd.do_answer_cookie = 1;
 
 	/* Set up our default identity to gethostname(2) */
 	if (gethostname(hostname, MAXHOSTNAMELEN) == 0) {
@@ -1134,7 +1061,7 @@ main(int argc, char *argv[])
 	pp_init(&write_uint16, &write_uint32);
 
 	/* Read options */
-	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
+	if(!parse_options_file(nsd.options, configfile, NULL, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
 	if(!parse_zone_list_file(nsd.options)) {
@@ -1178,6 +1105,32 @@ main(int argc, char *argv[])
 		nsd.child_count = nsd.options->server_count;
 	}
 
+#ifdef USE_XDP
+	/* make sure we will spawn enough servers to serve all queues of the
+	 * selected network device, otherwise traffic to these queues will take
+	 * the non-af_xdp path */
+	if (nsd.options->xdp_interface) {
+		int res = ethtool_channels_get(nsd.options->xdp_interface);
+		if (res <= 0) {
+			log_msg(LOG_ERR,
+			        "xdp: could not determine netdev queue count: %s. "
+			        "(attempting to continue with 1 queue)",
+			        strerror(errno));
+			nsd.xdp.xdp_server.queue_count = 1;
+		} else {
+			nsd.xdp.xdp_server.queue_count = res;
+		}
+
+		if (nsd.child_count < nsd.xdp.xdp_server.queue_count) {
+			log_msg(LOG_NOTICE,
+			        "xdp configured but server-count not high enough to serve "
+			        "all netdev queues, raising server-count to %u",
+			        nsd.xdp.xdp_server.queue_count);
+			nsd.child_count = nsd.xdp.xdp_server.queue_count;
+		}
+	}
+#endif
+
 #ifdef SO_REUSEPORT
 	if(nsd.options->reuseport && nsd.child_count > 1) {
 		nsd.reuseport = nsd.child_count;
@@ -1194,6 +1147,7 @@ main(int argc, char *argv[])
 	nsd.ipv6_edns_size = nsd.options->ipv6_edns_size;
 #ifdef HAVE_SSL
 	nsd.tls_ctx = NULL;
+	nsd.tls_auth_ctx = NULL;
 #endif
 
 	if(udp_port == 0)
@@ -1249,35 +1203,7 @@ main(int argc, char *argv[])
 #endif /* IPV6 MTU) */
 #endif /* defined(INET6) */
 
-	nsd.do_answer_cookie = nsd.options->answer_cookie;
-	if (nsd.cookie_count > 0)
-		; /* pass */
-
-	else if (nsd.options->cookie_secret) {
-		ssize_t len = hex_pton(nsd.options->cookie_secret,
-			nsd.cookie_secrets[0].cookie_secret, NSD_COOKIE_SECRET_SIZE);
-		if (len != NSD_COOKIE_SECRET_SIZE ) {
-			error("A cookie secret must be a "
-			      "128 bit hex string");
-		}
-		nsd.cookie_count = 1;
-	} else {
-		size_t j;
-		size_t const cookie_secret_len = NSD_COOKIE_SECRET_SIZE;
-		/* Calculate a new random secret */
-		srandom(getpid() ^ time(NULL));
-
-		for( j = 0; j < NSD_COOKIE_HISTORY_SIZE; j++) {
-#if defined(HAVE_SSL)
-			if (!RAND_status()
-			    || !RAND_bytes(nsd.cookie_secrets[j].cookie_secret, cookie_secret_len))
-#endif
-			for (i = 0; i < cookie_secret_len; i++)
-				nsd.cookie_secrets[j].cookie_secret[i] = random_generate(256);
-		}
-		// XXX: all we have is a random cookie, still pretend we have one
-		nsd.cookie_count = 1;
-	}
+	reconfig_cookies(&nsd, nsd.options);
 
 	if (nsd.nsid_len == 0 && nsd.options->nsid) {
 		if (strlen(nsd.options->nsid) % 2 != 0) {
@@ -1486,7 +1412,14 @@ main(int argc, char *argv[])
 	log_msg(LOG_NOTICE, "%s starting (%s)", argv0, PACKAGE_STRING);
 
 	/* Do we have a running nsd? */
-	if(nsd.pidfile && nsd.pidfile[0]) {
+	/* When there is a username configured, we assume that due to
+	 * privilege drops, the pidfile could not be removed by NSD and
+	 * as such could be lingering around. We could not remove it,
+	 * and also not chown it as that creates privilege escape problems.
+	 * The init system could remove the pidfile after use for us, but
+	 * it is not sure if it is configured to do so. */
+	if(nsd.pidfile && nsd.pidfile[0] &&
+		!(nsd.username && nsd.username[0])) {
 		if ((oldpid = readpid(nsd.pidfile)) == -1) {
 			if (errno != ENOENT) {
 				log_msg(LOG_ERR, "can't read pidfile %s: %s",
@@ -1512,6 +1445,23 @@ main(int argc, char *argv[])
 	if(nsd.use_cpu_affinity) {
 		set_cpu_affinity(nsd.cpuset);
 	}
+#endif
+
+#ifdef USE_XDP
+	/* Set XDP config */
+	nsd.xdp.xdp_server.region = nsd.region;
+	nsd.xdp.xdp_server.interface_name = nsd.options->xdp_interface;
+	nsd.xdp.xdp_server.bpf_prog_filename = nsd.options->xdp_program_path;
+	nsd.xdp.xdp_server.bpf_prog_should_load = nsd.options->xdp_program_load;
+	nsd.xdp.xdp_server.bpf_bpffs_path = nsd.options->xdp_bpffs_path;
+	nsd.xdp.xdp_server.force_copy = nsd.options->xdp_force_copy;
+	nsd.xdp.xdp_server.nsd = &nsd;
+
+	if (!nsd.options->xdp_interface)
+		log_msg(LOG_NOTICE, "XDP support is enabled, but not configured. Not using XDP.");
+
+	/* moved xdp_server_init to after privilege drop to prevent
+	 * problems with file ownership of bpf object pins. */
 #endif
 
 	print_sockets(nsd.udp, nsd.tcp, nsd.ifs);
@@ -1556,19 +1506,28 @@ main(int argc, char *argv[])
 		if(!(nsd.rc = daemon_remote_create(nsd.options)))
 			error("could not perform remote control setup");
 	}
+#ifdef USE_METRICS
+	if(nsd.options->metrics_enable) {
+		if(!(nsd.metrics = daemon_metrics_create(nsd.options)))
+			error("could not perform metrics server setup");
+	}
+#endif /* USE_METRICS */
 #if defined(HAVE_SSL)
 	if(nsd.options->tls_service_key && nsd.options->tls_service_key[0]
 	   && nsd.options->tls_service_pem && nsd.options->tls_service_pem[0]) {
+		/* normal tls port with no client authentication */
 		if(!(nsd.tls_ctx = server_tls_ctx_create(&nsd, NULL,
-			nsd.options->tls_service_ocsp)))
+		     nsd.options->tls_service_ocsp)))
 			error("could not set up tls SSL_CTX");
+		/* tls-auth port with required client authentication */
+		if(nsd.options->tls_auth_port) {
+			if(!(nsd.tls_auth_ctx = server_tls_ctx_create(&nsd,
+			     (char*)nsd.options->tls_cert_bundle,
+			     nsd.options->tls_service_ocsp)))
+				error("could not set up tls SSL_CTX");
+		}
 	}
 #endif /* HAVE_SSL */
-
-	if(nsd.options->cookie_secret_file && nsd.options->cookie_secret_file[0]
-	   && !cookie_secret_file_read(&nsd) ) {
-		log_msg(LOG_ERR, "cookie secret file corrupt or not readable");
-	}
 
 	/* Unless we're debugging, fork... */
 	if (!nsd.debug) {
@@ -1683,9 +1642,35 @@ main(int argc, char *argv[])
 			nsd.pidfile, strerror(errno));
 	}
 
+#ifdef USE_XDP
+	if (nsd.options->xdp_interface) {
+		/* initializing xdp needs the CAP_SYS_ADMIN, therefore doing it
+		 * before privilege drop (and not keeping CAP_SYS_ADMIN) */
+		if (xdp_server_init(&nsd.xdp.xdp_server)) {
+			log_msg(LOG_ERR, "failed to initialize XDP... disabling XDP.");
+			nsd.options->xdp_interface = NULL;
+		}
+	}
+#endif
+
 	/* Drop the permissions */
 #ifdef HAVE_GETPWNAM
 	if (*nsd.username) {
+#ifdef USE_XDP
+		if (nsd.options->xdp_interface) {
+			/* tell kernel to keep (permitted) privileges across uid change */
+			if (!prctl(PR_SET_KEEPCAPS, 1)) {
+				/* only keep needed capabilities across privilege drop */
+				/* this needs to be close to the privilege drop to prevent issues
+				 * with other setup functions like tls setup */
+				set_caps(0);
+			} else {
+				log_msg(LOG_ERR, "couldn't set keep capabilities... disabling XDP.");
+				nsd.options->xdp_interface = NULL;
+			}
+		}
+#endif /* USE_XDP */
+
 #ifdef HAVE_INITGROUPS
 		if(initgroups(nsd.username, nsd.gid) != 0)
 			log_msg(LOG_WARNING, "unable to initgroups %s: %s",
@@ -1715,8 +1700,17 @@ main(int argc, char *argv[])
 
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "dropped user privileges, run as %s",
 			nsd.username));
+
+#ifdef USE_XDP
+		/* enable capabilities after privilege drop */
+		if (nsd.options->xdp_interface) {
+			/* re-enable needed capabilities and drop setuid/gid capabilities */
+			set_caps(1);
+		}
+#endif /* USE_XDP */
 	}
 #endif /* HAVE_GETPWNAM */
+
 	xfrd_make_tempdir(&nsd);
 #ifdef USE_ZONE_STATS
 	options_zonestatnames_create(nsd.options);
@@ -1740,7 +1734,7 @@ main(int argc, char *argv[])
 #endif /* USE_DNSTAP */
 	}
 	if (server_prepare(&nsd) != 0) {
-		unlinkpid(nsd.pidfile);
+		unlinkpid(nsd.pidfile, nsd.username);
 		error("server preparation failed, %s could "
 			"not be started", argv0);
 	}

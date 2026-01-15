@@ -14,6 +14,13 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
+#ifdef HAVE_SSL
+#include <openssl/ssl.h>
+#include <openssl/x509v3.h>
+#endif
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 #include "options.h"
 #include "query.h"
 #include "tsig.h"
@@ -21,6 +28,7 @@
 #include "difffile.h"
 #include "rrl.h"
 #include "bitset.h"
+#include "xfrd.h"
 
 #include "configparser.h"
 config_parser_state_type* cfg_parser = 0;
@@ -57,8 +65,8 @@ nsd_options_create(region_type* region)
 	opt->ip_addresses = NULL;
 	opt->ip_transparent = 0;
 	opt->ip_freebind = 0;
-	opt->send_buffer_size = 0;
-	opt->receive_buffer_size = 0;
+	opt->send_buffer_size = 4*1024*1024;
+	opt->receive_buffer_size = 1*1024*1024;
 	opt->debug_mode = 0;
 	opt->verbosity = 0;
 	opt->hide_version = 0;
@@ -72,6 +80,7 @@ nsd_options_create(region_type* region)
 	opt->logfile = 0;
 	opt->log_only_syslog = 0;
 	opt->log_time_ascii = 1;
+	opt->log_time_iso = 0;
 	opt->round_robin = 0; /* also packet.h::round_robin */
 	opt->minimal_responses = 0; /* also packet.h::minimal_responses */
 	opt->confine_to_zone = 0;
@@ -85,6 +94,7 @@ nsd_options_create(region_type* region)
 	opt->tcp_timeout = TCP_TIMEOUT;
 	opt->tcp_mss = 0;
 	opt->outgoing_tcp_mss = 0;
+	opt->tcp_listen_queue = TCP_BACKLOG;
 	opt->ipv4_edns_size = EDNS_MAX_MESSAGE_LEN;
 	opt->ipv6_edns_size = EDNS_MAX_MESSAGE_LEN;
 	opt->pidfile = PIDFILE;
@@ -129,6 +139,7 @@ nsd_options_create(region_type* region)
 	opt->dnstap_log_auth_query_messages = 0;
 	opt->dnstap_log_auth_response_messages = 0;
 #endif
+	opt->reload_config = 0;
 	opt->zonefiles_check = 1;
 	opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
 	opt->xfrd_reload_timeout = 1;
@@ -136,11 +147,15 @@ nsd_options_create(region_type* region)
 	opt->tls_service_ocsp = NULL;
 	opt->tls_service_pem = NULL;
 	opt->tls_port = TLS_PORT;
+	opt->tls_auth_port = NULL;
 	opt->tls_cert_bundle = NULL;
+	opt->tls_auth_xfr_only = 0;
 	opt->proxy_protocol_port = NULL;
 	opt->answer_cookie = 0;
 	opt->cookie_secret = NULL;
-	opt->cookie_secret_file = CONFIGDIR"/nsd_cookiesecrets.txt";
+	opt->cookie_staging_secret = NULL;
+	opt->cookie_secret_file = NULL;
+	opt->cookie_secret_file_is_default = 1;
 	opt->control_enable = 0;
 	opt->control_interface = NULL;
 	opt->control_port = NSD_CONTROL_PORT;
@@ -148,6 +163,19 @@ nsd_options_create(region_type* region)
 	opt->server_cert_file = CONFIGDIR"/nsd_server.pem";
 	opt->control_key_file = CONFIGDIR"/nsd_control.key";
 	opt->control_cert_file = CONFIGDIR"/nsd_control.pem";
+#ifdef USE_XDP
+	opt->xdp_interface = NULL;
+	opt->xdp_program_path = SHAREDFILESDIR"/xdp-dns-redirect_kern.o";
+	opt->xdp_program_load = 1;
+	opt->xdp_bpffs_path = "/sys/fs/bpf";
+	opt->xdp_force_copy = 0;
+#endif
+#ifdef USE_METRICS
+	opt->metrics_enable = 0;
+	opt->metrics_interface = NULL;
+	opt->metrics_port = NSD_METRICS_PORT;
+	opt->metrics_path = "/metrics";
+#endif /* USE_METRICS */
 
 	opt->verify_enable = 0;
 	opt->verify_ip_addresses = NULL;
@@ -202,7 +230,8 @@ warn_if_directory(const char* filetype, FILE* f, const char* fname)
 
 int
 parse_options_file(struct nsd_options* opt, const char* file,
-	void (*err)(void*,const char*), void* err_arg)
+	void (*err)(void*,const char*), void* err_arg,
+	struct nsd_options* old_opts)
 {
 	FILE *in = 0;
 	struct pattern_options* pat;
@@ -244,8 +273,22 @@ parse_options_file(struct nsd_options* opt, const char* file,
 
 	opt->configfile = region_strdup(opt->region, file);
 
+	/* Set default cookie_secret_file value */
+	if(opt->cookie_secret_file_is_default && !opt->cookie_secret_file) {
+		opt->cookie_secret_file =
+			region_strdup(opt->region, COOKIESECRETSFILE);
+	}
+	/* Semantic errors */
+	if(opt->cookie_staging_secret && !opt->cookie_secret) {
+		c_error("a cookie-staging-secret cannot be configured without "
+		        "also providing a cookie-secret");
+	}
 	RBTREE_FOR(pat, struct pattern_options*, opt->patterns)
 	{
+		struct pattern_options* old_pat =
+			old_opts ? pattern_options_find(old_opts, pat->pname)
+			         : NULL;
+
 		/* lookup keys for acls */
 		for(acl=pat->allow_notify; acl; acl=acl->next)
 		{
@@ -284,6 +327,13 @@ parse_options_file(struct nsd_options* opt, const char* file,
 		}
 		for(acl=pat->provide_xfr; acl; acl=acl->next)
 		{
+			/* Find tls_auth */
+			if (acl->tls_auth_name) {
+				if (!(acl->tls_auth_options =
+			                tls_auth_options_find(opt, acl->tls_auth_name)))
+				    c_error("tls_auth %s in pattern %s could not be found",
+						acl->tls_auth_name, pat->pname);
+			}
 			if(acl->nokey || acl->blocked)
 				continue;
 			acl->key_options = key_options_find(opt, acl->key_name);
@@ -299,6 +349,43 @@ parse_options_file(struct nsd_options* opt, const char* file,
 			if(!acl->key_options)
 				c_error("key %s in pattern %s could not be found",
 					acl->key_name, pat->pname);
+		}
+		/* lookup zones for catalog-producer-zone options */
+		if(pat->catalog_producer_zone) {
+			struct zone_options* zopt;
+			const dname_type *dname = dname_parse(opt->region,
+					pat->catalog_producer_zone);
+			if(dname == NULL) {
+				; /* pass; already erred during parsing */
+
+			} else if (!(zopt = zone_options_find(opt, dname))) {
+				c_error("catalog producer zone %s in pattern "
+					"%s could not be found",
+					pat->catalog_producer_zone,
+					pat->pname);
+
+			} else if (!zone_is_catalog_producer(zopt)) {
+				c_error("catalog-producer-zone %s in pattern "
+					"%s is not configered as a "
+					"catalog: producer",
+					pat->catalog_producer_zone,
+					pat->pname);
+			}
+		}
+		if( !old_opts /* Okay to add a cat producer member zone pat */
+		|| (!old_pat) /* But not to add, change or del an existing */
+		|| ( old_pat && !old_pat->catalog_producer_zone
+		             &&     !pat->catalog_producer_zone)
+		|| ( old_pat &&  old_pat->catalog_producer_zone
+		             &&      pat->catalog_producer_zone
+		             && strcmp( old_pat->catalog_producer_zone
+		                      ,     pat->catalog_producer_zone) == 0)){
+			; /* No existing catalog producer member zone added
+			   * or changed. Everyting is fine: pass */
+		} else {
+			c_error("catalog-producer-zone in pattern %s cannot "
+				"be removed or changed on a running NSD",
+				pat->pname);
 		}
 	}
 
@@ -372,18 +459,26 @@ zone_list_free_insert(struct nsd_options* opt, int linesize, off_t off)
 	opt->zonefree_number++;
 }
 
-struct zone_options*
-zone_list_zone_insert(struct nsd_options* opt, const char* nm,
-	const char* patnm, int linesize, off_t off)
+static struct zone_options*
+zone_list_member_zone_insert(struct nsd_options* opt, const char* nm,
+	const char* patnm, int linesize, off_t off, const char* mem_idnm,
+	new_member_id_type new_member_id)
 {
 	struct pattern_options* pat = pattern_options_find(opt, patnm);
+	struct catalog_member_zone* cmz = NULL;
 	struct zone_options* zone;
+	char member_id_str[MAXDOMAINLEN * 5 + 3] = "ERROR!";
+	DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "zone_list_zone_insert(\"%s\", \"%s\""
+	        ", %d, \"%s\")", nm, patnm, linesize,
+		(mem_idnm ? mem_idnm : "<NULL>")));
 	if(!pat) {
 		log_msg(LOG_ERR, "pattern does not exist for zone %s "
 			"pattern %s", nm, patnm);
 		return NULL;
 	}
-	zone = zone_options_create(opt->region);
+	zone = pat->catalog_producer_zone
+	     ? &(cmz = catalog_member_zone_create(opt->region))->options
+	     : zone_options_create(opt->region);
 	zone->part_of_config = 0;
 	zone->name = region_strdup(opt->region, nm);
 	zone->linesize = linesize;
@@ -396,7 +491,38 @@ zone_list_zone_insert(struct nsd_options* opt, const char* nm,
 		region_recycle(opt->region, zone, sizeof(*zone));
 		return NULL;
 	}
+	if(!mem_idnm) {
+		if(cmz && new_member_id)
+			new_member_id(cmz);
+		if(cmz && cmz->member_id) {
+			/* Assume all bytes of member_id are printable.
+			 * plus 1 for space
+			 */
+			zone->linesize += label_length(dname_name(cmz->member_id)) + 1;
+			DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "new linesize: %d",
+				(int)zone->linesize));
+		}
+	} else if(!cmz)
+		log_msg(LOG_ERR, "member ID '%s' given, but no catalog-producer-"
+			"zone value provided in zone '%s' or pattern '%s'",
+			mem_idnm, nm, patnm);
+
+	else if(snprintf(member_id_str, sizeof(member_id_str),
+	    "%s.zones.%s", mem_idnm, pat->catalog_producer_zone) >=
+	    (int)sizeof(member_id_str))
+		log_msg(LOG_ERR, "syntax error in member ID '%s.zones.%s' for "
+			"zone '%s'", mem_idnm, pat->catalog_producer_zone, nm);
+
+	else if(!(cmz->member_id = dname_parse(opt->region, member_id_str)))
+		log_msg(LOG_ERR, "parse error in member ID '%s' for "
+			"zone '%s'", member_id_str, nm);
 	return zone;
+}
+
+struct zone_options*
+zone_list_zone_insert(struct nsd_options* opt,const char* nm,const char* patnm)
+{
+	return zone_list_member_zone_insert(opt, nm, patnm, 0, 0, NULL, NULL);
 }
 
 int
@@ -465,8 +591,42 @@ parse_zone_list_file(struct nsd_options* opt)
 
 			/* store offset and line size for zone entry */
 			/* and create zone entry in zonetree */
-			(void)zone_list_zone_insert(opt, nm, patnm, linesize,
-				ftello(opt->zonelist)-linesize);
+			(void)zone_list_member_zone_insert(opt, nm, patnm,
+				linesize, ftello(opt->zonelist)-linesize,
+				NULL, NULL);
+
+		} else if(strncmp(buf, "cat ", 4) == 0) {
+			int linesize = strlen(buf);
+			/* parse the 'add' line */
+			/* pick last space on the line, so that the domain
+			 * name can have a space in it (but not the pattern)*/
+			char* nm = buf + 4;
+			char* mem_idnm = strrchr(nm, ' '), *patnm;
+			if(!mem_idnm) {
+				/* parse error */
+				log_msg(LOG_ERR, "parse error in %s: '%s'",
+					opt->zonelistfile, buf);
+				continue;
+			}
+			*mem_idnm++ = 0;
+			patnm = strrchr(nm, ' ');
+			if(!patnm) {
+				*--mem_idnm = ' ';
+				/* parse error */
+				log_msg(LOG_ERR, "parse error in %s: '%s'",
+					opt->zonelistfile, buf);
+				continue;
+			}
+			*patnm++ = 0;
+			if(linesize && buf[linesize-1] == '\n')
+				buf[linesize-1] = 0;
+
+			/* store offset and line size for zone entry */
+			/* and create zone entry in zonetree */
+			(void)zone_list_member_zone_insert(opt, nm, patnm,
+				linesize, ftello(opt->zonelist)-linesize,
+				mem_idnm, NULL);
+
 		} else if(strncmp(buf, "del ", 4) == 0) {
 			/* store offset and line size for deleted entry */
 			int linesize = strlen(buf);
@@ -485,26 +645,62 @@ parse_zone_list_file(struct nsd_options* opt)
 void
 zone_options_delete(struct nsd_options* opt, struct zone_options* zone)
 {
+	struct catalog_member_zone* member_zone = as_catalog_member_zone(zone);
+
 	rbtree_delete(opt->zone_options, zone->node.key);
 	region_recycle(opt->region, (void*)zone->node.key, dname_total_size(
 		(dname_type*)zone->node.key));
-	region_recycle(opt->region, zone, sizeof(*zone));
+	if(!member_zone) {
+		region_recycle(opt->region, zone, sizeof(*zone));
+		return;
+	}
+	/* Because catalog member zones are in xfrd only deleted through
+	 * catalog_del_consumer_member_zone() or through
+	 * xfrd_del_catalog_producer_member(), which both clear the node,
+	 * and because member zones in the main and serve processes are not
+	 * indexed, *member_zone->node == *RBTREE_NULL.
+	 * member_id is cleared too by those delete function, but there may be
+	 * leftover member_id's from the initial zone.list processing, which
+	 * made it to the main and serve processes.
+	 */
+	assert(!memcmp(&member_zone->node, RBTREE_NULL, sizeof(*RBTREE_NULL)));
+	if(member_zone->member_id) {
+		region_recycle(opt->region, (void*)member_zone->member_id,
+				dname_total_size(member_zone->member_id));
+	}
+	region_recycle(opt->region, member_zone, sizeof(*member_zone));
 }
+
 
 /* add a new zone to the zonelist */
 struct zone_options*
-zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
+zone_list_add_or_cat(struct nsd_options* opt, const char* zname,
+		const char* pname, new_member_id_type new_member_id)
 {
 	int r;
 	struct zonelist_free* e;
 	struct zonelist_bucket* b;
-	int linesize = 6 + strlen(zname) + strlen(pname);
+	char zone_list_line[6 + 5 * MAXDOMAINLEN + 2024 + 65];
+	struct catalog_member_zone* cmz;
+
 	/* create zone entry */
-	struct zone_options* zone = zone_list_zone_insert(opt, zname, pname,
-		linesize, 0);
+	struct zone_options* zone = zone_list_member_zone_insert(
+		opt, zname, pname, 6 + strlen(zname) + strlen(pname),
+		0, NULL, new_member_id);
 	if(!zone)
 		return NULL;
 
+	if(zone_is_catalog_producer_member(zone)
+	&& (cmz = as_catalog_member_zone(zone))
+	&& cmz->member_id) {
+		snprintf(zone_list_line, sizeof(zone_list_line),
+			"cat %s %s %.*s\n", zname, pname,
+			(int)label_length(dname_name(cmz->member_id)),
+			(const char*)dname_name(cmz->member_id) + 1);
+	} else {
+		snprintf(zone_list_line, sizeof(zone_list_line),
+			"add %s %s\n", zname, pname);
+	}
 	/* use free entry or append to file or create new file */
 	if(!opt->zonelist || opt->zonelist_off == 0) {
 		/* create new file */
@@ -531,7 +727,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 		zone->off = ftello(opt->zonelist);
 		if(zone->off == -1)
 			log_msg(LOG_ERR, "ftello(%s): %s", opt->zonelistfile, strerror(errno));
-		r = fprintf(opt->zonelist, "add %s %s\n", zname, pname);
+		r = fprintf(opt->zonelist, "%s", zone_list_line);
 		if(r != zone->linesize) {
 			if(r == -1)
 				log_msg(LOG_ERR, "could not write to %s: %s",
@@ -561,7 +757,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 			zone_options_delete(opt, zone);
 			return NULL;
 		}
-		r = fprintf(opt->zonelist, "add %s %s\n", zname, pname);
+		r = fprintf(opt->zonelist, "%s", zone_list_line);
 		if(r != zone->linesize) {
 			if(r == -1)
 				log_msg(LOG_ERR, "could not write to %s: %s",
@@ -572,7 +768,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 			zone_options_delete(opt, zone);
 			return NULL;
 		}
-		opt->zonelist_off += linesize;
+		opt->zonelist_off += zone->linesize;
 		if(fflush(opt->zonelist) != 0) {
 			log_msg(LOG_ERR, "fflush %s: %s", opt->zonelistfile, strerror(errno));
 		}
@@ -587,7 +783,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 		zone_options_delete(opt, zone);
 		return NULL;
 	}
-	r = fprintf(opt->zonelist, "add %s %s\n", zname, pname);
+	r = fprintf(opt->zonelist, "%s", zone_list_line);
 	if(r != zone->linesize) {
 		if(r == -1)
 			log_msg(LOG_ERR, "could not write to %s: %s",
@@ -617,6 +813,11 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 void
 zone_list_del(struct nsd_options* opt, struct zone_options* zone)
 {
+	if (zone_is_catalog_consumer_member(zone)) {
+		/* catalog consumer member zones are not in the zones.list file */
+		zone_options_delete(opt, zone);
+		return;
+	}
 	/* put its space onto the free entry */
 	if(fseeko(opt->zonelist, zone->off, SEEK_SET) == -1) {
 		log_msg(LOG_ERR, "fseeko(%s): %s", opt->zonelistfile, strerror(errno));
@@ -691,10 +892,21 @@ zone_list_compact(struct nsd_options* opt)
 		return;
 	}
 	RBTREE_FOR(zone, struct zone_options*, opt->zone_options) {
+		struct catalog_member_zone* cmz;
+
 		if(zone->part_of_config)
 			continue;
-		r = fprintf(out, "add %s %s\n", zone->name,
-			zone->pattern->pname);
+		if(zone_is_catalog_producer_member(zone)
+		&& (cmz = as_catalog_member_zone(zone))
+		&& cmz->member_id) {
+			r = fprintf(out, "cat %s %s %.*s\n", zone->name,
+				zone->pattern->pname,
+				(int)label_length(dname_name(cmz->member_id)),
+				(const char*)dname_name(cmz->member_id) + 1);
+		} else {
+			r = fprintf(out, "add %s %s\n", zone->name,
+					zone->pattern->pname);
+		}
 		if(r < 0) {
 			log_msg(LOG_ERR, "write %s failed: %s", outname,
 				strerror(errno));
@@ -807,7 +1019,24 @@ zone_options_create(region_type* region)
 	zone->name = 0;
 	zone->pattern = 0;
 	zone->part_of_config = 0;
+	zone->is_catalog_member_zone = 0;
 	return zone;
+}
+
+struct catalog_member_zone*
+catalog_member_zone_create(region_type* region)
+{
+	struct catalog_member_zone* member_zone;
+	member_zone = (struct catalog_member_zone*)region_alloc(region,
+			sizeof(struct catalog_member_zone));
+	member_zone->options.node = *RBTREE_NULL;
+	member_zone->options.name = 0;
+	member_zone->options.pattern = 0;
+	member_zone->options.part_of_config = 0;
+	member_zone->options.is_catalog_member_zone = 1;
+	member_zone->member_id = NULL;
+	member_zone->node = *RBTREE_NULL;
+	return member_zone;
 }
 
 /* true is booleans are the same truth value */
@@ -896,7 +1125,7 @@ pattern_options_create(region_type* region)
 #ifdef RATELIMIT
 	p->rrl_whitelist = 0;
 #endif
-	p->multi_master_check = 0;
+	p->multi_primary_check = 0;
 	p->store_ixfr = 0;
 	p->store_ixfr_is_default = 1;
 	p->ixfr_size = IXFR_SIZE_DEFAULT;
@@ -912,7 +1141,10 @@ pattern_options_create(region_type* region)
 	p->verifier_feed_zone_is_default = 1;
 	p->verifier_timeout = VERIFIER_TIMEOUT_INHERIT;
 	p->verifier_timeout_is_default = 1;
-
+	p->catalog_role = CATALOG_ROLE_INHERIT;
+	p->catalog_role_is_default = 1;
+	p->catalog_member_pattern = NULL;
+	p->catalog_producer_zone = NULL;
 	return p;
 }
 
@@ -1099,7 +1331,7 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 #ifdef RATELIMIT
 	orig->rrl_whitelist = p->rrl_whitelist;
 #endif
-	orig->multi_master_check = p->multi_master_check;
+	orig->multi_primary_check = p->multi_primary_check;
 	orig->store_ixfr = p->store_ixfr;
 	orig->store_ixfr_is_default = p->store_ixfr_is_default;
 	orig->ixfr_size = p->ixfr_size;
@@ -1114,6 +1346,16 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 	orig->verifier_timeout_is_default = p->verifier_timeout_is_default;
 	orig->verifier_feed_zone = p->verifier_feed_zone;
 	orig->verifier_feed_zone_is_default = p->verifier_feed_zone_is_default;
+	orig->catalog_role = p->catalog_role;
+	orig->catalog_role_is_default = p->catalog_role_is_default;
+	if(p->catalog_member_pattern)
+		orig->catalog_member_pattern =
+			region_strdup(region, p->catalog_member_pattern);
+	else orig->catalog_member_pattern = NULL;
+	if(p->catalog_producer_zone)
+		orig->catalog_producer_zone =
+			region_strdup(region, p->catalog_producer_zone);
+	else orig->catalog_producer_zone = NULL;
 }
 
 void
@@ -1227,7 +1469,7 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 #ifdef RATELIMIT
 	if(p->rrl_whitelist != q->rrl_whitelist) return 0;
 #endif
-	if(!booleq(p->multi_master_check,q->multi_master_check)) return 0;
+	if(!booleq(p->multi_primary_check,q->multi_primary_check)) return 0;
 	if(p->size_limit_xfr != q->size_limit_xfr) return 0;
 	if(!booleq(p->store_ixfr,q->store_ixfr)) return 0;
 	if(!booleq(p->store_ixfr_is_default,q->store_ixfr_is_default)) return 0;
@@ -1248,6 +1490,19 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 	if(p->verifier_timeout != q->verifier_timeout) return 0;
 	if(!booleq(p->verifier_timeout_is_default,
 		q->verifier_timeout_is_default)) return 0;
+	if(p->catalog_role != q->catalog_role) return 0;
+	if(!booleq(p->catalog_role_is_default,
+		q->catalog_role_is_default)) return 0;
+	if(!p->catalog_member_pattern && q->catalog_member_pattern) return 0;
+	else if(p->catalog_member_pattern && !q->catalog_member_pattern) return 0;
+	else if(p->catalog_member_pattern && q->catalog_member_pattern) {
+		if(strcmp(p->catalog_member_pattern, q->catalog_member_pattern) != 0) return 0;
+	}
+	if(!p->catalog_producer_zone && q->catalog_producer_zone) return 0;
+	else if(p->catalog_producer_zone && !q->catalog_producer_zone) return 0;
+	else if(p->catalog_producer_zone && q->catalog_producer_zone) {
+		if(strcmp(p->catalog_producer_zone, q->catalog_producer_zone) != 0) return 0;
+	}
 	return 1;
 }
 
@@ -1456,7 +1711,7 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u8(b, p->min_retry_time_is_default);
 	marshal_u32(b, p->min_expire_time);
 	marshal_u8(b, p->min_expire_time_expr);
-	marshal_u8(b, p->multi_master_check);
+	marshal_u8(b, p->multi_primary_check);
 	marshal_u8(b, p->store_ixfr);
 	marshal_u8(b, p->store_ixfr_is_default);
 	marshal_u64(b, p->ixfr_size);
@@ -1472,6 +1727,10 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u8(b, p->verifier_feed_zone_is_default);
 	marshal_u32(b, p->verifier_timeout);
 	marshal_u8(b, p->verifier_timeout_is_default);
+	marshal_u8(b, p->catalog_role);
+	marshal_u8(b, p->catalog_role_is_default);
+	marshal_str(b, p->catalog_member_pattern);
+	marshal_str(b, p->catalog_producer_zone);
 }
 
 struct pattern_options*
@@ -1506,7 +1765,7 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->min_retry_time_is_default = unmarshal_u8(b);
 	p->min_expire_time = unmarshal_u32(b);
 	p->min_expire_time_expr = unmarshal_u8(b);
-	p->multi_master_check = unmarshal_u8(b);
+	p->multi_primary_check = unmarshal_u8(b);
 	p->store_ixfr = unmarshal_u8(b);
 	p->store_ixfr_is_default = unmarshal_u8(b);
 	p->ixfr_size = unmarshal_u64(b);
@@ -1522,6 +1781,10 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->verifier_feed_zone_is_default = unmarshal_u8(b);
 	p->verifier_timeout = unmarshal_u32(b);
 	p->verifier_timeout_is_default = unmarshal_u8(b);
+	p->catalog_role = unmarshal_u8(b);
+	p->catalog_role_is_default = unmarshal_u8(b);
+	p->catalog_member_pattern = unmarshal_str(r, b);
+	p->catalog_producer_zone = unmarshal_str(r, b);
 	return p;
 }
 
@@ -1721,9 +1984,16 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 
 	while(acl)
 	{
+#ifdef HAVE_SSL
+		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "testing acl %s %s %s",
+			acl->ip_address_spec, acl->nokey?"NOKEY":
+			(acl->blocked?"BLOCKED":acl->key_name),
+			(acl->tls_auth_name && q->tls_auth)?acl->tls_auth_name:""));
+#else
 		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "testing acl %s %s",
 			acl->ip_address_spec, acl->nokey?"NOKEY":
 			(acl->blocked?"BLOCKED":acl->key_name)));
+#endif
 		if(acl_addr_matches(acl, q) && acl_key_matches(acl, q)) {
 			if(!match)
 			{
@@ -1736,6 +2006,27 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 				return -1;
 			}
 		}
+#ifdef HAVE_SSL
+		/* we are in a acl with tls_auth */
+		if (acl->tls_auth_name && q->tls_auth) {
+			/* we have auth_domain_name in tls_auth */
+			if (acl->tls_auth_options && acl->tls_auth_options->auth_domain_name) {
+				if (!acl_tls_hostname_matches(q->tls_auth, acl->tls_auth_options->auth_domain_name)) {
+					VERBOSITY(3, (LOG_WARNING,
+							"client cert does not match %s %s",
+							acl->tls_auth_name, acl->tls_auth_options->auth_domain_name));
+					q->cert_cn = NULL;
+					return -1;
+				}
+				VERBOSITY(5, (LOG_INFO, "%s %s verified",
+					acl->tls_auth_name, acl->tls_auth_options->auth_domain_name));
+				q->cert_cn = acl->tls_auth_options->auth_domain_name;
+			} else {
+				/* nsd gives error on start for this, but check just in case */
+				log_msg(LOG_ERR, "auth-domain-name not defined in %s", acl->tls_auth_name);
+			}
+		}
+#endif
 		number++;
 		acl = acl->next;
 	}
@@ -1938,6 +2229,168 @@ acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t 
 	return 1;
 }
 #endif /* INET6 */
+
+#ifdef HAVE_SSL
+/* Code in for matches_subject_alternative_name and matches_common_name
+ * functions is from https://wiki.openssl.org/index.php/Hostname_validation
+ * with modifications.
+ *
+ * Obtained from: https://github.com/iSECPartners/ssl-conservatory
+ * Copyright (C) 2012, iSEC Partners.
+ * License: MIT License
+ * Author:  Alban Diquet
+ */
+static int matches_subject_alternative_name(
+	const char *acl_cert_cn, size_t acl_cert_cn_len, const X509 *cert)
+{
+	int result = 0;
+	int san_names_nb = -1;
+	STACK_OF(GENERAL_NAME) *san_names = NULL;
+
+	/* Try to extract the names within the SAN extension from the certificate */
+	san_names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	if (san_names == NULL)
+		return 0;
+
+	san_names_nb = sk_GENERAL_NAME_num(san_names);
+
+	/* Check each name within the extension */
+	for (int i = 0; i < san_names_nb && !result; i++) {
+		int len;
+		const char *str;
+		const GENERAL_NAME *current_name = sk_GENERAL_NAME_value(san_names, i);
+		/* Skip non-DNS SAN entries. */
+		if (current_name->type != GEN_DNS)
+			continue;
+#if HAVE_ASN1_STRING_GET0_DATA
+		str = (const char *)ASN1_STRING_get0_data(current_name->d.dNSName);
+#else
+		str = (const char *)ASN1_STRING_data(current_name->d.dNSName);
+#endif
+		if (str == NULL)
+			continue;
+		len = ASN1_STRING_length(current_name->d.dNSName);
+		if (acl_cert_cn_len == (size_t)len &&
+		    strncasecmp(str, acl_cert_cn, len) == 0)
+		{
+			result = 1;
+		} else {
+			/* Make sure there isn't an embedded NUL character in the DNS name */
+			/* From the man page: In general it cannot be assumed that the data
+			 * returned by ASN1_STRING_data() is null terminated or does not
+			 * contain embedded nulls. */
+			int pos = 0;
+			while (pos < len && str[pos] != 0)
+				pos++;
+			if (pos == len) {
+				DEBUG(DEBUG_XFRD, 2, (LOG_INFO,
+					"SAN %*s does not match acl for %s", len, str, acl_cert_cn));
+			} else {
+				DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "Malformed SAN in certificate"));
+				break;
+			}
+		}
+	}
+	sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
+
+	return result;
+}
+
+static int matches_common_name(
+	const char *acl_cert_cn, size_t acl_cert_cn_len, const X509 *cert)
+{
+	int len;
+	int common_name_loc = -1;
+	const char *common_name_str = NULL;
+	X509_NAME *subject_name = NULL;
+	X509_NAME_ENTRY *common_name_entry = NULL;
+	ASN1_STRING *common_name_asn1 = NULL;
+
+	if ((subject_name = X509_get_subject_name(cert)) == NULL)
+		return 0;
+
+	/* Find the position of the CN field in the Subject field of the certificate */
+	common_name_loc = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
+	if (common_name_loc < 0)
+		return 0;
+
+	/* Extract the CN field */
+	common_name_entry = X509_NAME_get_entry(subject_name, common_name_loc);
+	if (common_name_entry == NULL)
+		return 0;
+
+	/* Convert the CN field to a C string */
+	common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
+	if (common_name_asn1 == NULL)
+		return 0;
+
+#if HAVE_ASN1_STRING_GET0_DATA
+	common_name_str = (const char *)ASN1_STRING_get0_data(common_name_asn1);
+#else
+	common_name_str = (const char *)ASN1_STRING_data(common_name_asn1);
+#endif
+
+	len = ASN1_STRING_length(common_name_asn1);
+	if (acl_cert_cn_len == (size_t)len &&
+	    strncasecmp(acl_cert_cn, common_name_str, len) == 0)
+	{
+		return 1;
+	} else {
+		/* Make sure there isn't an embedded NUL character in the CN */
+		int pos = 0;
+		while (pos < len && common_name_str[pos] != 0)
+			pos++;
+		if (pos == len) {
+			DEBUG(DEBUG_XFRD, 2, (LOG_INFO,
+				"CN %*s does not match acl for %s", len, common_name_str, acl_cert_cn));
+		} else {
+			DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "Malformed CN in certificate"));
+		}
+	}
+
+	return 0;
+}
+
+int
+acl_tls_hostname_matches(SSL* tls_auth, const char *acl_cert_cn)
+{
+	int result = 0;
+	size_t acl_cert_cn_len;
+	X509 *client_cert;
+
+	assert(acl_cert_cn != NULL);
+
+#ifdef HAVE_SSL_GET1_PEER_CERTIFICATE
+	client_cert = SSL_get1_peer_certificate(tls_auth);
+#else
+	client_cert = SSL_get_peer_certificate(tls_auth);
+#endif
+
+	if (client_cert == NULL)
+		return 0;
+
+	/* OpenSSL provides functions for hostname checking from certificate
+	 * Following code should work but it doesn't.
+	 * Keep it for future test in order to not use custom code
+	 *
+	 * X509_VERIFY_PARAM *vpm = SSL_get0_param(tls_auth);
+	 * Hostname check is done here:
+	 * X509_VERIFY_PARAM_set1_host(vpm, acl_cert_cn, 0); // recommended
+	 * X509_check_host() // can also be used instead. Not recommended DANE-EE
+	 * SSL_get_verify_result(tls_auth) != X509_V_OK) // NOT ok
+	 * const char *peername = X509_VERIFY_PARAM_get0_peername(vpm); // NOT ok
+	 */
+
+	acl_cert_cn_len = strlen(acl_cert_cn);
+	/* semi follow RFC6125#section-6.4.4 check SAN DNS first */
+	if (!(result = matches_subject_alternative_name(acl_cert_cn, acl_cert_cn_len, client_cert)))
+		result = matches_common_name(acl_cert_cn, acl_cert_cn_len, client_cert);
+
+	X509_free(client_cert);
+
+	return result;
+}
+#endif
 
 int
 acl_key_matches(struct acl_options* acl, struct query* q)
@@ -2334,6 +2787,18 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 		c_error("could not find pattern %s", name);
 		return;
 	}
+	if( (!dest->pname || strncmp(dest->pname, PATTERN_IMPLICIT_MARKER,
+				strlen(PATTERN_IMPLICIT_MARKER)) == 0)
+	&& pat->catalog_producer_zone) {
+		c_error("patterns with an catalog-producer-zone option are to "
+		        "be used with \"nsd-control addzone\" only and cannot "
+			"be included from zone clauses in the config file");
+		return;
+	}
+	if((dest->catalog_role == CATALOG_ROLE_PRODUCER &&  pat->request_xfr)
+	|| ( pat->catalog_role == CATALOG_ROLE_PRODUCER && dest->request_xfr)){
+		c_error("catalog producer zones cannot be secondary zones");
+	}
 
 	/* apply settings */
 	if(pat->zonefile)
@@ -2397,8 +2862,8 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 	copy_and_append_acls(&dest->provide_xfr, pat->provide_xfr);
 	copy_and_append_acls(&dest->allow_query, pat->allow_query);
 	copy_and_append_acls(&dest->outgoing_interface, pat->outgoing_interface);
-	if(pat->multi_master_check)
-		dest->multi_master_check = pat->multi_master_check;
+	if(pat->multi_primary_check)
+		dest->multi_primary_check = pat->multi_primary_check;
 
 	if(!pat->verify_zone_is_default) {
 		dest->verify_zone = pat->verify_zone;
@@ -2435,6 +2900,16 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 		}
 		dest->verifier = vec;
 	}
+	if(!pat->catalog_role_is_default) {
+		dest->catalog_role = pat->catalog_role;
+		dest->catalog_role_is_default = 0;
+	}
+	if(pat->catalog_member_pattern)
+		dest->catalog_member_pattern = region_strdup(
+			cfg_parser->opt->region, pat->catalog_member_pattern);
+	if(pat->catalog_producer_zone)
+		dest->catalog_producer_zone = region_strdup(
+			cfg_parser->opt->region, pat->catalog_producer_zone);
 }
 
 void
@@ -2621,6 +3096,10 @@ resolve_interface_names(struct nsd_options* options)
 			addrs, options->region);
 	resolve_interface_names_for_ref(&options->control_interface, 
 			addrs, options->region);
+#ifdef USE_METRICS
+	resolve_interface_names_for_ref(&options->metrics_interface,
+			addrs, options->region);
+#endif /* USE_METRICS */
 
 	freeifaddrs(addrs);
 #else

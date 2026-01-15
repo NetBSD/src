@@ -3,11 +3,19 @@ Description=NSD DNS Server
 After=syslog.target network-online.target
 
 [Service]
-Type=notify
-ExecStart=/usr/sbin/nsd -d -c /etc/nsd/nsd.conf $NSD_EXTRA_OPTS
+Type=simple
+ExecStart=/usr/sbin/nsd -d -P "" -c /etc/nsd/nsd.conf $NSD_EXTRA_OPTS
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 PrivateTmp=true
+;
+; If Type=notify is wanted, then nsd has to be compiled with --enable-systemd
+; Also the systemd socket has to be available in chroot, if chroot is enabled.
+;
+; If SystemCallFilter is added for restrictions, omit ~@mount when also chroot
+; is used, because it blocks the chroot call. Chroot may be enabled by default
+; in NSD, it can be disabled in NSD with chroot: "" and in systemd
+; ReadWritePaths could be used to restrict access to filesystem paths.
 
 [Install]
 WantedBy=multi-user.target

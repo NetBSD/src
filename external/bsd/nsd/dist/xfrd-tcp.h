@@ -224,10 +224,11 @@ int conn_write(struct xfrd_tcp* conn);
 
 /* setup DNS packet for a query of this type */
 void xfrd_setup_packet(struct buffer* packet,
-        uint16_t type, uint16_t klass, const struct dname* dname, uint16_t qid);
+        uint16_t type, uint16_t klass, const struct dname* dname, uint16_t qid,
+	int* apex_compress);
 /* write soa in network format to the packet buffer */
 void xfrd_write_soa_buffer(struct buffer* packet,
-        const struct dname* apex, struct xfrd_soa* soa);
+        const struct dname* apex, struct xfrd_soa* soa, int apex_compress);
 /* use acl address to setup sockaddr struct, returns length of addr. */
 socklen_t xfrd_acl_sockaddr_to(struct acl_options* acl,
 #ifdef INET6
@@ -248,5 +249,10 @@ struct xfrd_tcp_pipeline* xfrd_tcp_pipeline_create(region_type* region,
 	int tcp_pipeline);
 /* pick num uint16_t values, from 0..max-1, store in array */
 void pick_id_values(uint16_t* array, int num, int max);
+
+#ifdef HAVE_SSL
+void get_cert_info(SSL* ssl, region_type* region, char** cert_serial,
+	char** key_id, char** cert_algorithm, char** tls_version);
+#endif
 
 #endif /* XFRD_TCP_H */
