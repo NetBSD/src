@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.418 2025/11/19 10:07:50 nia Exp $
+$NetBSD: acronyms.comp,v 1.419 2026/01/15 17:12:09 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -698,6 +698,7 @@ GPL	[GNU] General Public License
 GPR	general purpose register
 GPS	generalized processor sharing
 GPT	GUID partition table
+GPT	generative pre-trained transformer
 GPU	graphics processing unit
 GR	golden ratio
 GRE	generic routing encapsulation
