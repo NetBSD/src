@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.179 2025/12/06 06:20:23 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.180 2026/01/15 04:28:54 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2025 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.179 2025/12/06 06:20:23 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.180 2026/01/15 04:28:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -819,11 +819,12 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	if (dout == NULL)
 		goto abort;
 
+			/* Resize buf to sndbuf_size */
 	assert(sndbuf_size > 0);
-	if ((size_t)sndbuf_size > bufsize) {
+	if ((size_t)sndbuf_size != bufsize) {
 		if (buf)
 			(void)free(buf);
-		bufsize = sndbuf_size;
+		bufsize = MIN(sndbuf_size, XFERBUFMAX);
 		buf = ftp_malloc(bufsize);
 	}
 
@@ -1084,11 +1085,13 @@ recvrequest(const char *cmd, char *volatile local, const char *remote,
 		progress = 0;
 		preserve = 0;
 	}
+
+			/* Resize buf to rcvbuf_size */
 	assert(rcvbuf_size > 0);
-	if ((size_t)rcvbuf_size > bufsize) {
+	if ((size_t)rcvbuf_size != bufsize) {
 		if (buf)
 			(void)free(buf);
-		bufsize = rcvbuf_size;
+		bufsize = MIN(rcvbuf_size, XFERBUFMAX);
 		buf = ftp_malloc(bufsize);
 	}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.169 2025/12/06 06:20:23 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.170 2026/01/15 04:28:55 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2025 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.169 2025/12/06 06:20:23 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.170 2026/01/15 04:28:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1089,9 +1089,9 @@ setupsockbufsize(int sock)
 		    (void *)&rcvbuf_size, &slen) == -1)
 			err(1, "Unable to determine rcvbuf size");
 		if (rcvbuf_size <= 0)
-			rcvbuf_size = 8 * 1024;
-		if (rcvbuf_size > 8 * 1024 * 1024)
-			rcvbuf_size = 8 * 1024 * 1024;
+			rcvbuf_size = SOCKBUFMIN;
+		if (rcvbuf_size > SOCKBUFMAX)
+			rcvbuf_size = SOCKBUFMAX;
 		DPRINTF("setupsockbufsize: rcvbuf_size determined as %d\n",
 		    rcvbuf_size);
 	}
@@ -1101,9 +1101,9 @@ setupsockbufsize(int sock)
 		    (void *)&sndbuf_size, &slen) == -1)
 			err(1, "Unable to determine sndbuf size");
 		if (sndbuf_size <= 0)
-			sndbuf_size = 8 * 1024;
-		if (sndbuf_size > 8 * 1024 * 1024)
-			sndbuf_size = 8 * 1024 * 1024;
+			sndbuf_size = SOCKBUFMIN;
+		if (sndbuf_size > SOCKBUFMAX)
+			sndbuf_size = SOCKBUFMAX;
 		DPRINTF("setupsockbufsize: sndbuf_size determined as %d\n",
 		    sndbuf_size);
 	}

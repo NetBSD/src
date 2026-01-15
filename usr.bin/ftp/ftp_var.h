@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp_var.h,v 1.89 2024/09/25 16:55:39 christos Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.90 2026/01/15 04:28:55 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -180,6 +180,9 @@ SLIST_HEAD(http_headers, entry);
  */
 #define	FTPBUFLEN	(16 * 1024)
 #define	MAX_IN_PORT_T	0xffffU
+#define	SOCKBUFMIN	(8 * 1024)		/* 8 KiB min auto sockbuf size */
+#define	SOCKBUFMAX	(8 * 1024 * 1024)	/* 8 MiB max auto sockbuf size */
+#define	XFERBUFMAX	(128 * 1024)		/* 128 KiB max read()/write() */
 
 #define	HASHBYTES	1024	/* default mark for `hash' command */
 #define	DEFAULTINCR	1024	/* default increment for `rate' command */
@@ -305,8 +308,8 @@ GLOBAL	int	mflag;		/* flag: if != 0, then active multi command */
 
 GLOBAL	int	options;	/* used during socket creation */
 
-GLOBAL	int	sndbuf_size;	/* socket send buffer size */
-GLOBAL	int	rcvbuf_size;	/* socket receive buffer size */
+GLOBAL	int	sndbuf_size;	/* socket send buffer size; 0 = autoscale */
+GLOBAL	int	rcvbuf_size;	/* socket receive buffer size; 0 = autoscale */
 
 GLOBAL	int	macnum;		/* number of defined macros */
 GLOBAL	struct macel macros[16];

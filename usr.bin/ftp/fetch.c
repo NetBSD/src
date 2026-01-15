@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.242 2024/11/29 04:31:57 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.243 2026/01/15 04:28:54 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.242 2024/11/29 04:31:57 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.243 2026/01/15 04:28:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1529,7 +1529,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 			fputs("\n", ttyout);
 		}
 		if (0 == rcvbuf_size) {
-			rcvbuf_size = 8 * 1024; /* XXX */
+			rcvbuf_size = XFERBUFMAX;
 		}
 	} else {				/* ftp:// or http:// URLs */
 		int hasleading;
@@ -1696,11 +1696,12 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 	oldquit = xsignal(SIGQUIT, psummary);
 	oldint = xsignal(SIGINT, aborthttp);
 
+			/* Resize xferbuf to rcvbuf_size */
 	assert(rcvbuf_size > 0);
-	if ((size_t)rcvbuf_size > bufsize) {
+	if ((size_t)rcvbuf_size != bufsize) {
 		if (xferbuf)
 			(void)free(xferbuf);
-		bufsize = rcvbuf_size;
+		bufsize = MIN(rcvbuf_size, XFERBUFMAX);
 		xferbuf = ftp_malloc(bufsize);
 	}
 
