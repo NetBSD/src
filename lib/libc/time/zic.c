@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.97 2025/12/19 00:15:10 kre Exp $	*/
+/*	$NetBSD: zic.c,v 1.98 2026/01/16 20:05:00 nia Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,12 @@
 #endif
 
 #ifdef __NetBSD__
+#include <sys/param.h>
+#if defined(__NetBSD_Prereq__)
+#if __NetBSD_Prereq__(9,99,71)
 #define HAVE_GETRANDOM 1
+#endif
+#endif
 #define HAVE_SYS_STAT_H 1
 #define HAVE_SYMLINK 1
 #define HAVE_PWD_H 1
@@ -22,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.97 2025/12/19 00:15:10 kre Exp $");
+__RCSID("$NetBSD: zic.c,v 1.98 2026/01/16 20:05:00 nia Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
