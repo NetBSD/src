@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.48 2026/01/14 11:42:43 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.49 2026/01/16 23:37:19 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -532,9 +532,11 @@ ${WORKEFI}: ${TARGETFS}
 	    -t msdos -o F=32,c=1					\
 	    ${WORKEFI} ${EFIWORKDIR}
 
+.if defined(FATFILES)
 ${FATFILES}: ${TARGETFS}
 	# Some MD ${FATFILES} (bootloaders etc.) are assumed extracted
 	# to ${WORKDIR} from binary sets during ${TARGETFS} image build
+.endif
 
 ${WORKFAT}: ${FATFILES}
 	@echo create FAT partition for bootstrap files...
