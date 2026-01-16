@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.41 2025/02/17 13:04:17 wiz Exp $
+.\"	$NetBSD: sort.1,v 1.42 2026/01/16 18:07:11 jkoshy Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -506,9 +506,12 @@ utility silently supplies one.
 .Pp
 The current
 .Nm
-uses lexicographic radix sorting, which requires
-that sort keys be kept in memory (as opposed to previous versions which used quick
-and merge sorts and did not.)
+uses lexicographic radix sorting, which requires that sort keys be
+kept in memory
+.Po
+as opposed to previous versions which used quick and merge sorts and
+did not
+.Pc .
 Thus performance depends highly on efficient choice of sort keys, and the
 .Fl b
 option and the
