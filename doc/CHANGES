@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3216 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3217 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -131,3 +131,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		layer. [christos 20260109]
 	evbppc: Add support for the Nintendo Wii U. [jmcneill 20260109]
 	nsd: Import 4.14.0. [christos 20260115]
+	unbound(8): Import 1.24.2. [christos 20260116]
