@@ -279,7 +279,7 @@ imsg_composev(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
 }
 
 /*
- * Enqueue imsg with payload from ibuf buf. fd passing is not possible 
+ * Enqueue imsg with payload from ibuf buf. fd passing is not possible
  * with this function.
  */
 int
@@ -314,7 +314,6 @@ imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id,
  fail:
 	save_errno = errno;
 	ibuf_free(buf);
-	ibuf_free(hdrbuf);
 	errno = save_errno;
 	return (-1);
 }
