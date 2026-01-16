@@ -98,18 +98,19 @@ auth_zone_generate_zonemd_hash
 auth_zone_get_serial
 auth_zone_get_soa_rrset
 auth_zone_parse_notify_serial
+auth_zone_pickup_initial_zone
 auth_zone_read_zonefile
 auth_zone_set_fallback
 auth_zone_set_zonefile
 auth_zone_verify_zonemd
 auth_zone_write_file
 auth_zonemd_dnskey_lookup_callback
-auth_zones_answer
 auth_zones_apply_cfg
 auth_zones_can_fallback
 auth_zones_cleanup
 auth_zones_create
 auth_zones_delete
+auth_zones_downstream_answer
 auth_zones_find_zone
 auth_zones_get_mem
 auth_zones_lookup
@@ -221,6 +222,7 @@ compare_serial
 config_add_tag
 config_apply
 config_apply_max_rtt
+config_auto_slab_values
 config_collate_cat
 config_collate_func
 config_create
@@ -323,6 +325,7 @@ dname_pkt_hash
 dname_print
 dname_query_hash
 dname_remove_label
+dname_remove_label_limit_len
 dname_remove_labels
 dname_signame_label_count
 dname_str
@@ -635,6 +638,7 @@ listen_start_accept
 listen_stop_accept
 listening_ports_free
 listening_ports_open
+local_alias_shallow_copy_qname
 local_data_answer
 local_data_cmp
 local_data_find_tag_action
