@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.40 2025/12/01 14:05:07 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.41 2026/01/17 05:33:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,7 @@
 #include "opt_fdt.h"		/* XXX */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.40 2025/12/01 14:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.41 2026/01/17 05:33:51 skrll Exp $");
 
 #include "locators.h"
 
@@ -349,7 +349,7 @@ spi_attach(device_t parent, device_t self, void *aux)
 		 * XXX
 		 * XXX As it happens we can fairly safely elide this call
 		 * XXX because, at the moment (1 Dec 2025), there are no
-		 * XXX consumers of the registration if performs.  However,
+		 * XXX consumers of the registration it performs.  However,
 		 * XXX this points to a larger problem if needed a way to
 		 * XXX resolve these situations at runtime with some sort
 		 * XXX of "platform" abstraction rather than at kernel build
