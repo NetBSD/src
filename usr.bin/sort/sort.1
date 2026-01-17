@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.46 2026/01/17 21:17:23 jkoshy Exp $
+.\"	$NetBSD: sort.1,v 1.47 2026/01/17 21:49:02 uwe Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,8 +70,8 @@
 .Op Fl bdfHilmnrSsu
 .Oo
 .Fl k
-.Ar kstart Ns Op Cm \&, Ns Ar kend
-.Oc Ns ...
+.Ar kstart Ns Oo Cm \&, Ns Ar kend Oc Ar ...
+.Oc
 .Op Fl o Ar output
 .Op Fl R Ar char
 .Op Fl T Ar dir
@@ -82,8 +82,8 @@
 .Op Fl bdfilnru
 .Oo
 .Fl k
-.Ar kstart Ns Op Cm \&, Ns Ar kend
-.Oc Ns ...
+.Ar kstart Ns Oo Cm \&, Ns Ar kend Oc Ar ...
+.Oc
 .Op Fl R Ar char
 .Op Fl t Ar char
 .Op Ar
