@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.19 2022/10/15 11:07:38 jmcneill Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.20 2026/01/17 13:36:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -387,7 +387,7 @@ typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
  *	This structure describes a valid DMA range.
  */
 struct arm32_dma_range {
-	bus_addr_t	dr_sysbase;	/* system base address */
+	paddr_t		dr_sysbase;	/* system base address */
 	bus_addr_t	dr_busbase;	/* appears here on bus */
 	bus_size_t	dr_len;		/* length of range */
 	uint32_t	dr_flags;	/* flags for range */

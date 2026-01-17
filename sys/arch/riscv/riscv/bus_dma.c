@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.13 2026/01/17 07:05:57 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.14 2026/01/17 13:36:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2026/01/17 07:05:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 2026/01/17 13:36:23 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -147,14 +147,14 @@ int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
  */
 static inline struct riscv_dma_range *
 _bus_dma_paddr_inrange(struct riscv_dma_range *ranges, int nranges,
-    bus_addr_t curaddr)
+    paddr_t pa)
 {
 	struct riscv_dma_range *dr;
 	int i;
 
 	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
-		if (curaddr >= dr->dr_sysbase &&
-		    curaddr < (dr->dr_sysbase + dr->dr_len))
+		if (pa >= dr->dr_sysbase &&
+		    pa < (dr->dr_sysbase + dr->dr_len))
 			return dr;
 	}
 

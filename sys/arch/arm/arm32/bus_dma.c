@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.151 2025/12/08 22:27:52 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.152 2026/01/17 13:36:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.151 2025/12/08 22:27:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.152 2026/01/17 13:36:22 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -153,14 +153,14 @@ int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
  */
 static inline struct arm32_dma_range *
 _bus_dma_paddr_inrange(struct arm32_dma_range *ranges, int nranges,
-    bus_addr_t curaddr)
+    paddr_t pa)
 {
 	struct arm32_dma_range *dr;
 	int i;
 
 	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
-		if (curaddr >= dr->dr_sysbase &&
-		    curaddr < (dr->dr_sysbase + dr->dr_len))
+		if (pa >= dr->dr_sysbase &&
+		    pa < (dr->dr_sysbase + dr->dr_len))
 			return dr;
 	}
 
