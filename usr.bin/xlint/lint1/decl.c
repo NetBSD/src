@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.422 2026/01/11 18:11:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.423 2026/01/17 14:27:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.422 2026/01/11 18:11:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.423 2026/01/17 14:27:08 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -466,9 +466,9 @@ pack_struct_or_union(type_t *tp)
 }
 
 void
-dcs_add_alignas(tnode_t *tn)
+dcs_add_alignas(unsigned int al)
 {
-	dcs->d_mem_align = to_int_constant(tn, true);
+	dcs->d_mem_align = al;
 	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec))
 		// FIXME: The type must not be modified.
 		dcs->d_type->u.sou->sou_align = dcs->d_mem_align;

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.534 2026/01/11 18:11:38 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.535 2026/01/17 14:27:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.534 2026/01/11 18:11:38 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.535 2026/01/17 14:27:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1057,11 +1057,11 @@ type_attribute_list:
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	gcc_attribute_specifier
 |	T_ALIGNAS T_LPAREN type_type_specifier T_RPAREN {		/* C11 6.7.5 */
-		dcs_add_alignas(build_sizeof($3));
+		dcs_add_alignas(alignment($3));
 		$$ = no_type_attributes();
 	}
 |	T_ALIGNAS T_LPAREN constant_expression T_RPAREN {	/* C11 6.7.5 */
-		dcs_add_alignas($3);
+		dcs_add_alignas(to_int_constant($3, true));
 		$$ = no_type_attributes();
 	}
 |	T_PACKED {
@@ -2561,7 +2561,7 @@ gcc_attribute:
 		const char *name = $1->sb_name;
 		if (is_either(name, "aligned", "__aligned__")
 		    && $3->args_len == 1)
-			dcs_add_alignas($3->args[0]);
+			dcs_add_alignas(to_int_constant($3->args[0], true));
 		$$ = no_type_attributes();
 		if (is_either(name, "mode", "__mode__")
 		    && $3->args_len == 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.12 2026/01/17 14:23:03 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.13 2026/01/17 14:27:08 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -188,9 +188,9 @@ struct alignas_type {
 	unsigned alignas_type _Alignas(struct mem_1024bit);
 };
 
-// FIXME: Must be 128, as alignas_expr is at offset 0 with alignment 128,
+// The member alignas_expr is at offset 0 with alignment 128,
 // and alignas_type is at offset 4 with alignment max(1, 4).
-/* expect+1: error: negative array dimension (-2048) [20] */
+/* expect+1: error: negative array dimension (-128) [20] */
 typedef int reveal_sizeof_uint_1024[-(int)sizeof(struct alignas_type)];
 
 
