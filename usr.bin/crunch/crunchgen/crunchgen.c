@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.97 2025/12/16 04:18:06 riastradh Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.98 2026/01/17 14:41:58 rillig Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.97 2025/12/16 04:18:06 riastradh Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.98 2026/01/17 14:41:58 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -165,7 +165,7 @@ main(int argc, char **argv)
     if (argc > 0)
 	pname = argv[0];
 
-    while ((optc = getopt(argc, argv, "m:c:e:foqsD:L:OV:v:")) != -1) {
+    while ((optc = getopt(argc, argv, "m:c:e:foqD:L:OV:v:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
 	case 'q':	verbose = 0; break;
@@ -228,7 +228,7 @@ void
 usage(void)
 {
     fprintf(stderr, 
-	"%s [-FfOoPpqSs] [-c c-file-name] [-D src-root] [-d build-options]\n"
+	"Usage: %s [-FfOoPpqSs] [-c c-file-name] [-D src-root] [-d build-options]\n"
 	"\t  [-e exec-file-name] [-L lib-dir] [-m makefile-name]\n"
 	"\t  [-v var-spec] conf-file\n", pname);
     exit(1);
