@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.25 2026/01/09 22:54:34 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.26 2026/01/17 13:56:08 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.25 2026/01/09 22:54:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.26 2026/01/17 13:56:08 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -442,7 +442,8 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmap,
 		    datap, datalen, NULL, lflags);
 		if (error != 0) {
-			DPRINTF(("%s: dmamap load error = %d\n", error));
+			DPRINTF(("%s: dmamap load error = %d\n", __func__,
+			    error));
 			goto do_pio;
 		}
 		if (!sdmmc_alignment_ok(sc, sc->sc_dmap)) {
