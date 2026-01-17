@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.700 2026/01/11 18:11:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.701 2026/01/17 15:33:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.700 2026/01/11 18:11:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.701 2026/01/17 15:33:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -507,6 +507,33 @@ ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 }
 
 static integer_constraints
+ic_call(const function_call *call)
+{
+	if (!(call->func->tn_op == ADDR
+	    && call->func->u.ops.left->tn_op == NAME))
+		goto any;
+
+	const char *name = call->func->u.ops.left->u.sym->s_name;
+
+	if (strcmp(name, "strlen") == 0
+	    || strcmp(name, "strcspn") == 0
+	    || strcmp(name, "strspn") == 0
+	    || strcmp(name, "strlcpy") == 0
+	    || strcmp(name, "strlcat") == 0) {
+		integer_constraints c;
+		c.smin = 0;
+		c.smax = INT_MAX - 1;
+		c.umin = 0;
+		c.umax = INT_MAX - 1;
+		c.bclr = ~c.umax;
+		return c;
+	}
+
+any:
+	return ic_any(call->func->tn_type->t_subt->t_subt);
+}
+
+static integer_constraints
 ic_expr(const tnode_t *tn)
 {
 	integer_constraints lc, rc;
@@ -567,6 +594,8 @@ ic_expr(const tnode_t *tn)
 			return ic_any(tn->tn_type);
 		lc = ic_expr(tn->u.ops.left);
 		return ic_cvt(tn->tn_type, tn->u.ops.left->tn_type, lc);
+	case CALL:
+		return ic_call(tn->u.call);
 	default:
 		return ic_any(tn->tn_type);
 	}

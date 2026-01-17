@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.56 2025/09/14 14:42:52 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.57 2026/01/17 15:33:18 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -21,6 +21,7 @@ typedef signed char s8_t;
 typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long s64_t;
+typedef typeof(sizeof(0)) size_t;
 
 _Bool cond;
 char ch;
@@ -641,4 +642,25 @@ unsigned char
 combine_arithmetic_and_bit_operations(void)
 {
 	return 0xc0 | (u32 & 0x07c0) / 64;
+}
+
+size_t strlen(const char *);
+size_t strcspn(const char *, const char *);
+size_t strspn(const char *, const char *);
+size_t strlcpy(char *, const char *, size_t);
+size_t strlcat(char *, const char *, size_t);
+
+void
+string_length_functions(void)
+{
+	char buf[128];
+
+	// Assume that strings with length >= 2 GB are so rare
+	// that there is no point worrying about integer overflows here.
+
+	s32 = strlen("");
+	s32 = strcspn("", "");
+	s32 = strspn("", "");
+	s32 = strlcpy(buf, "", sizeof(buf));
+	s32 = strlcat(buf, "", sizeof(buf));
 }
