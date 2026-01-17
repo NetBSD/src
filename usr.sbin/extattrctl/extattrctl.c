@@ -1,4 +1,4 @@
-/*	$NetBSD: extattrctl.c,v 1.4 2011/08/31 13:32:36 joerg Exp $	*/
+/*	$NetBSD: extattrctl.c,v 1.5 2026/01/17 16:39:10 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -88,7 +88,7 @@ num_inodes_by_path(const char *path)
 
 	if (statvfs(path, &buf) == -1) {
 		warn("statvfs(%s)", path);
-		return (-1);
+		return (uint64_t)-1;
 	}
 
 	return (buf.f_files);
@@ -107,7 +107,7 @@ initattr(int argc, char *argv[])
 
 	flags = O_CREAT | O_WRONLY | O_TRUNC | O_EXCL;
 	optind = 0;
-	while ((ch = getopt(argc, argv, "fp:r:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "fp:")) != -1) {
 		switch (ch) {
 		case 'f':
 			flags &= ~O_EXCL;
@@ -115,24 +115,6 @@ initattr(int argc, char *argv[])
 		case 'p':
 			fs_path = optarg;
 			break;
-		case 'B':
-#if BYTE_ORDER == LITTLE_ENDIAN
-			if (strcmp(optarg, "le") == 0)
-				needswap = 0;
-			else if (strcmp(optarg, "be") == 0)
-				needswap = 1;
-			else
-				usage();
-#else
-			if (strcmp(optarg, "be") == 0)
-				needswap = 0;
-			else if (strcmp(optarg, "le") == 0)
-				needswap = 1;
-			else
-				usage();
-#endif
-			break;
-		case '?':
 		default:
 			usage();
 		}
