@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.46 2013/01/24 17:47:58 christos Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.47 2026/01/17 15:44:09 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.46 2013/01/24 17:47:58 christos Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.47 2026/01/17 15:44:09 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,10 +148,10 @@ main(int argc, char *argv[])
 		case 'o':
 			outfile = optarg;
 			break;
-#endif
 		case 'n':
 			block = 0;
 			break;
+#endif
 		case 'p':
 			pid = rpid(optarg);
 			pidset = 1;
