@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 2025/09/17 02:17:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.119 2026/01/17 23:43:46 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -14,16 +14,17 @@ MKNATIVE=		${.CURDIR}/mknative-${EXTERNAL_GCC_SUBDIR}
 CC_FOR_BUILD=		${HOST_CXX:Q}
 MKNATIVE?=		${.CURDIR}/mknative-gcc
 
-# Force C++11 so builds succeed on hosts where this isn't the compiler
-# default, e.g., NetBSD 8.x with GCC 5.5.
-.if ${HAVE_GCC} > 10
+# GCC since 10.x (at least) needs C++11
 HOST_CXXFLAGS+=		-std=c++11
-.endif
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MULTILIB_ARGS= --enable-multilib
 .else
 MULTILIB_ARGS= --disable-multilib
+.endif
+
+.if ${HAVE_GCC} >= 14
+GCC_LANGUAGES+= fortran
 .endif
 
 .if ${MKSOFTFLOAT} != "no" && ${MACHINE_CPU} != "m68k" \
@@ -117,6 +118,12 @@ MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libstdc++-v3 \
 	configure-target-libbacktrace \
 	configure-target-libobjc
+
+.if ${HAVE_GCC} >= 14
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libquadmath \
+	configure-target-libgfortran
+.endif
 
 # XXX needs to build libstdc++ fully, which fails
 .if 0

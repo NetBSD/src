@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.122 2025/10/29 05:35:15 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.123 2026/01/17 23:43:46 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -43,26 +43,6 @@ sanitise_includes () {
 		-e "s,-I$_SRC/external/lgpl3/gmp/lib/libgmp/arch/[a-z_0-9-]*,,g" \
 		-e "s,-I$_TOOLDIR/include,,g" \
 		-e "s,-I/usr/include/[^ 	]*,,"
-}
-
-##### lib/libg2c #####
-
-get_libg2c () {
-	mkdir -p $_OUTDIR/lib/libg2c3/arch/$_MACHINE_ARCH
-
-	write_c $_OUTDIRBASE/lib/libg2c3/arch/$_MACHINE_ARCH/config.h <$_TMPDIR/$_PLATFORM/libf2c/libU77/config.h
-	write_c $_OUTDIRBASE/lib/libg2c3/arch/$_MACHINE_ARCH/g2c.h <$_TMPDIR/$_PLATFORM/libf2c/g2c.h
-
-	{
-		getvars $_PLATFORM/libf2c/Makefile \
-			F2CEXT
-		getvars $_PLATFORM/libf2c/libF77/Makefile \
-			ALL_CFLAGS OBJS
-		getvars $_PLATFORM/libf2c/libI77/Makefile \
-			ALL_CFLAGS OBJS | sed 's,=,+=,'
-		getvars $_PLATFORM/libf2c/libU77/Makefile \
-			ALL_CFLAGS OBJS | sed 's,=,+=,'
-	} | write_mk $_OUTDIRBASE/lib/libg2c3/arch/$_MACHINE_ARCH/defs.mk
 }
 
 ##### lib/libgcc #####
@@ -168,6 +148,8 @@ get_libgomp () {
 
 	getvars $_PLATFORM/libgomp/Makefile \
 		libgomp_la_SOURCES \
+		nodist_libsubinclude_HEADERS \
+		nodist_finclude_HEADERS \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/defs.mk
 
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/config.h \
@@ -190,6 +172,43 @@ get_libbacktrace () {
 		<$_TMPDIR/$_PLATFORM/$_subdir/config.h
 	write_c $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/backtrace-supported.h \
 		<$_TMPDIR/$_PLATFORM/$_subdir/backtrace-supported.h
+}
+
+##### lib/libquadmath #####
+
+get_libquadmath () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir
+	# libquadmath config.h appears to be netbsd-cpu agnostic
+	write_c $_OUTDIRBASE/lib/$_subdir/config.h \
+		<$_TMPDIR/$_PLATFORM/$_subdir/config.h
+
+	getvars $_PLATFORM/$_subdir/Makefile \
+		libquadmath_la_SOURCES \
+		| write_mk $_OUTDIRBASE/lib/$_subdir/defs.mk
+}
+
+##### lib/libgfortran #####
+
+get_libgfortran () {
+	_subdir="$1"
+
+	mkdir -p $_OUTDIR/lib/$_subdir/arch/$_MACHINE_ARCH
+	write_c $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/config.h \
+		<$_TMPDIR/$_PLATFORM/$_subdir/config.h
+
+	getvars $_PLATFORM/$_subdir/Makefile \
+		libgfortran_la_SOURCES \
+		FPU_HOST_HEADER \
+		nodist_finclude_HEADERS \
+		gfor_c_HEADERS \
+		i_matmul_c i_matmulavx128_c i_matmull_c \
+		gfor_specific_src gfor_ieee_src gfor_ieee_helper_src \
+		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/defs.mk
+
+	write_mk $_OUTDIRBASE/lib/$_subdir/libgfortran.spec \
+		<$_TMPDIR/$_PLATFORM/libgfortran/libgfortran.spec
 }
 
 ##### lib/libobjc #####
@@ -376,6 +395,7 @@ get_gcc () {
 		getvars gcc/Makefile \
 			ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
 			GCC_OBJS GCOV_OBJS GCOV_DUMP_OBJS GXX_OBJS GTM_H PROTO_OBJS ${_extravars1} \
+			ALL_HOST_FRONTEND_OBJS \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
 			BUILD_PREFIX RTL_H RTL_BASE_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
 			D_TARGET_DEF \
@@ -392,7 +412,7 @@ get_gcc () {
 		getvars gcc/Makefile \
 			CXX_OBJS CXX_C_OBJS | sed 's/cp\///g'
 		getvars gcc/Makefile \
-			F77_OBJS | sed 's/f\///g'
+			F95_OBJS GFORTRAN_D_OBJS | sed 's/fortran\///g'
 		getvars libcpp/Makefile \
 			libcpp_a_OBJS
 		getvars gcc/Makefile \
@@ -510,6 +530,8 @@ gcc*)
 	get_libdecnumber libdecnumber
 	get_libgomp libgomp
 	get_libbacktrace libbacktrace
+	get_libquadmath libquadmath
+	get_libgfortran libgfortran
 	exit 0
 	;;
 
