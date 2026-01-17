@@ -1,4 +1,4 @@
-/*	$NetBSD: crunched_main.c,v 1.5 2011/05/15 21:28:51 christos Exp $	*/
+/*	$NetBSD: crunched_main.c,v 1.6 2026/01/17 14:48:58 rillig Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -25,7 +25,7 @@
  *			   University of Maryland at College Park
  */
 /*
- * crunched_main.c - main program for crunched binaries, it branches to a 
+ * crunched_main.c - main program for crunched binaries, it branches to a
  * 	particular subprogram based on the value of argv[0].  Also included
  *	is a little program invoked when the crunched binary is called via
  *	its EXECNAME.  This one prints out the list of compiled-in binaries,
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunched_main.c,v 1.5 2011/05/15 21:28:51 christos Exp $");
+__RCSID("$NetBSD: crunched_main.c,v 1.6 2026/01/17 14:48:58 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ main(int argc, char **argv, char **envp)
 static int
 crunched_main(int argc, char **argv, char **envp)
 {
-	if(argc <= 1) 
+	if(argc <= 1)
 		crunched_usage();
 
 	return main(--argc, ++argv, envp);
