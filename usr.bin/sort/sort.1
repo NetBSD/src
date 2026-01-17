@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.44 2026/01/17 19:29:44 uwe Exp $
+.\"	$NetBSD: sort.1,v 1.45 2026/01/17 20:40:59 uwe Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .Op Fl bdfHilmnrSsu
 .Oo
 .Fl k
-.Ar kstart Ns Op Li \&, Ns Ar kend
+.Ar kstart Ns Op Cm \&, Ns Ar kend
 .Oc
 .Op Fl o Ar output
 .Op Fl R Ar char
@@ -82,11 +82,11 @@
 .Op Fl bdfilnru
 .Oo
 .Fl k
-.Ar kstart Ns Op Li \&, Ns Ar kend
+.Ar kstart Ns Op Cm \&, Ns Ar kend
 .Op Fl t Ar char
 .Oc
 .Op Fl R Ar char
-.Op Ar file
+.Op Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -179,17 +179,20 @@ Ignore all non-printable characters.
 Sort by the string length of the field, not by the field itself.
 .It Fl n
 An initial numeric string, consisting of optional blank space, optional
-plus or minus sign, and zero or more digits (including decimal point)
+plus or minus sign, and zero or more digits
+.Pq including decimal point
 .\" with
 .\" optional radix character and thousands
 .\" separator
 .\" (as defined in the current locale),
 is sorted by arithmetic value.
-(The
+.Po
+The
 .Fl n
 option no longer implies the
 .Fl b
-option.)
+option
+.Pc .
 .It Fl r
 Reverse the sense of comparisons.
 .El
@@ -208,15 +211,13 @@ option applies globally to all
 options.
 Otherwise, the
 .Fl b
-option can be attached independently to each
-.Ar field
-argument of the
+option can be attached independently to each field argument of the
 .Fl k
 option (see below).
 Note that the
 .Fl b
 option has no effect unless key fields are specified.
-.It Fl k Ar kstart Ns Op Li \&, Ns Ar kend
+.It Fl k Ar kstart Ns Op Cm \&, Ns Ar kend
 Designates the starting position,
 .Ar kstart ,
 and optional ending position,
@@ -237,11 +238,20 @@ usually produces undesirable results.
 If char is not a single character, then it
 specifies the value of the desired record
 separator as an integer specified in any
-of the normal NNN, 0ooo, or 0xXXX ways,
-or as an octal value preceded by \e.
-Caution: do not attempt to specify Ctl-A
+of the normal
+.Ar ddd ,
+.Li 0 Ns Ar ooo ,
+or
+.Li 0x Ns Ar hh
+ways,
+or as an octal value preceded by a backslash
+.Pq Ql \e .
+.Em Caution :
+do not attempt to specify
+.Ql \e^A
+.Pq Tn SOH
 as
-.Dq -R 1
+.Sq Fl R Li 1
 which will not do what was intended at all!
 The default record separator is newline.
 .It Fl t Ar char
@@ -253,9 +263,12 @@ is not considered to be part of a field when determining
 key offsets (see below).
 Each occurrence of
 .Ar char
-is significant (for example,
-.Dq Ar charchar
-delimits an empty field).
+is significant
+.Po
+for example,
+.Sq Ao Ar char Ac Ns Aq Ar char
+delimits an empty field
+.Pc .
 If
 .Fl t
 is not specified, the default field separator is a sequence of
@@ -292,7 +305,7 @@ first field.
 Fields are specified
 by the
 .Fl k
-.Ar kstart Ns Op \&, Ns Ar kend
+.Ar kstart Ns Op Cm \&, Ns Ar kend
 argument.
 A missing
 .Ar kend
@@ -303,91 +316,97 @@ The arguments
 and
 .Ar kend
 have the form
-.Ar m Ns Li \&. Ns Ar n
+.Ar m Ns Op Cm \&. Ns Ar n
+.Pq Ar m\^ , n No > 0
 and can be followed by one or more of the letters
 .Cm b , d , f , i ,
 .Cm l , n ,
 and
 .Cm r ,
 which correspond to the options discussed above.
+.Pp
 A
 .Ar kstart
 position specified by
-.Ar m Ns Li \&. Ns Ar n
-.Pq Ar m , n No > 0
+.Ar m Ns Cm \&. Ns Ar n
 is interpreted as the
-.Ar n Ns th
+.Ar n Ap th
 character in the
-.Ar m Ns th
+.Ar m Ap th
 field.
 A missing
-.Li \&. Ns Ar n
+.Cm \&. Ns Ar n
 in
 .Ar kstart
 means
-.Ql \&.1 ,
+.Sq Cm \&.1 ,
 indicating the first character of the
-.Ar m Ns th
+.Ar m Ap th
 field; if the
 .Fl b
 option is in effect,
 .Ar n
 is counted from the first non-blank character in the
-.Ar m Ns th
+.Ar m Ap th
 field;
-.Ar m Ns Li \&.1b
+.Ar m Ns Cm \&.1b
 refers to the first non-blank character in the
-.Ar m Ns th
+.Ar m Ap th
 field.
 .Pp
 A
 .Ar kend
 position specified by
-.Ar m Ns Li \&. Ns Ar n
+.Ar m Ns Cm \&. Ns Ar n
 is interpreted as
 the
-.Ar n Ns th
-character (including separators) of the
-.Ar m Ns th
+.Ar n Ap th
+character
+.Pq including separators
+of the
+.Ar m Ap th
 field.
 A missing
-.Li \&. Ns Ar n
+.Cm \&. Ns Ar n
 indicates the last character of the
-.Ar m Ns th
+.Ar m Ap th
 field;
 .Ar m
 = \&0
 designates the end of a line.
+.Pp
 Thus the option
 .Fl k
 .Sm off
-.Xo
-.Ar v Li \&. Ar x Li \&,
-.Ar w Li \&. Ar y
-.Xc
+.Ar v Cm \&. Ar x Cm \&, Ar w Cm \&. Ar y
 .Sm on
-is synonymous with the obsolescent option
+is synonymous with the obsolescent options
 .Sm off
-.Cm \(pl Ar v-\&1 Li \&. Ar x-\&1
-.Fl Ar w-\&1 Li \&. Ar y ;
+.Cm \(pl Ar v\^ Li \-1 Cm \&. Ar x\^ Li \-1
 .Sm on
-when
+.Sm off
+.Fl Ar w\^ Li \-1 Cm \&. Ar y .
+.Sm on
+.
+When
 .Ar y
 is omitted,
 .Fl k
 .Sm off
-.Ar v Li \&. Ar x Li \&, Ar w
+.Ar v Cm \&. Ar x Cm \&, Ar w
 .Sm on
 is synonymous with
 .Sm off
-.Cm \(pl Ar v-\&1 Li \&. Ar x-\&1
-.Fl Ar w+1 Li \&.0 .
+.Cm \(pl Ar v\^ Li \-1 Cm \&. Ar x\^ Li \-1
+.Sm on
+.Sm off
+.Fl Ar w\^ Li +1 Cm \&.0 .
 .Sm on
 The obsolescent
 .Cm \(pl Ns Ar pos1
 .Fl Ns Ar pos2
-option is still supported, except for
-.Fl Ns Ar w Ns Li \&.0b ,
+options are still supported, except for
+.Fl Ar w Ns Cm \&.0b ,
 which has no
 .Fl k
 equivalent.
@@ -435,19 +454,21 @@ environment variable as the path in which to store
 temporary files.
 .El
 .Sh FILES
-.Bl -tag -width outputNUMBER+some -compact
+.Bl -tag -width ".Ar output\^ Ns Aq Li NUMBER" -compact
 .It Pa /tmp/sort.*
 Default temporary files.
-.It Ar output Ns NUMBER
+.It Ar output\^ Ns Aq Li NUMBER
 Temporary file which is used for output if
 .Ar output
 already exists.
 Once sorting is finished, this file replaces
 .Ar output
-(via
+.Po
+via
 .Xr link 2
 and
-.Xr unlink 2 ) .
+.Xr unlink 2
+.Pc .
 .El
 .Sh EXAMPLES
 To silently check if the lines in a file are sorted lexicographically,
