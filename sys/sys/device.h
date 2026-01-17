@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.192 2025/10/12 23:34:23 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.193 2026/01/17 02:01:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -433,12 +433,25 @@ struct cfdriver __CONCAT(name,_cd) = {					\
 }
 
 /*
+ * The cfattachiattr associates a cfattach (which normally does not
+ * carry interface attribute information) with a cfiattrdata (because
+ * in very rare cases, it may need to).
+ */
+struct cfattachiattr {
+	LIST_ENTRY(cfattachiattr) cfia_list;  /* entry on global list */
+	struct cfattach *cfia_attach;         /* ptr to cfattach */
+	const struct cfiattrdata *cfia_iattr; /* associated iattr data */
+};
+
+/*
  * The cfattachinit is a data structure used to associate a list of
  * cfattach's with cfdrivers as found in the static kernel configuration.
  */
 struct cfattachinit {
-	const char *cfai_name;		 /* driver name */
+	const char *cfai_name;             /* driver name */
 	struct cfattach * const *cfai_list;/* list of attachments */
+	                                   /* associated iattrs (if any */
+	struct cfattachiattr * const *cfai_iattrs;
 };
 
 /*
@@ -538,7 +551,8 @@ int	config_cfdata_detach(cfdata_t);
 
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
-const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
+const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *,
+					 const struct cfattach *);
 
 const char *cfdata_ifattr(const struct cfdata *);
 

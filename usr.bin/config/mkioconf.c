@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.36 2024/04/05 00:43:42 riastradh Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.37 2026/01/17 02:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.36 2024/04/05 00:43:42 riastradh Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.37 2026/01/17 02:01:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -282,8 +282,10 @@ emitexterns(FILE *fp)
 static void
 emitcfattachinit(FILE *fp)
 {
+	struct attrlist *al;
 	struct devbase *d;
 	struct deva *da;
+	int has_iattrs;
 
 	NEWLINE;
 	TAILQ_FOREACH(d, &allbases, d_next) {
@@ -303,6 +305,64 @@ emitcfattachinit(FILE *fp)
 		fprintf(fp, "NULL\n};\n");
 	}
 
+	has_iattrs = 0;
+	TAILQ_FOREACH(d, &allbases, d_next) {
+		if (!devbase_has_instances(d, WILD))
+			continue;
+		if (d->d_ahead == NULL)
+			continue;
+
+		for (da = d->d_ahead; da != NULL; da = da->d_bsame) {
+			if (!deva_has_instances(da, WILD))
+				continue;
+			if (da->d_has_iattrs == 0)
+				continue;
+
+			for (al = da->d_attrs; al != NULL; al = al->al_next) {
+				if (al->al_this->a_iattr) {
+					if (has_iattrs == 0) {
+						NEWLINE;
+						has_iattrs = 1;
+					}
+					fprintf(fp,
+	    "static struct cfattachiattr %s_cfattachiattr = {\n\t"
+	    "{ NULL }, &%s_ca, &%scf_iattrdata\n};\n",
+	    				    da->d_name, da->d_name,
+					    al->al_this->a_name);
+				}
+			}
+		}
+	}
+
+	if (has_iattrs) {
+		NEWLINE;
+		TAILQ_FOREACH(d, &allbases, d_next) {
+			if (!devbase_has_instances(d, WILD))
+				continue;
+			if (d->d_ahead == NULL)
+				continue;
+
+			for (da = d->d_ahead; da != NULL; da = da->d_bsame) {
+				if (!deva_has_instances(da, WILD))
+					continue;
+				if (da->d_has_iattrs == 0)
+					continue;
+				fprintf(fp,
+    "static struct cfattachiattr * const %s_cfattachiattrs[] = {\n\t",
+				    d->d_name);
+				for (al = da->d_attrs; al != NULL;
+				     al = al->al_next) {
+					if (al->al_this->a_iattr) {
+						fprintf(fp,
+						    "&%s_cfattachiattr, ",
+						    da->d_name);
+					}
+				}
+				fprintf(fp, "NULL\n};\n");
+			}
+		}
+	}
+
 	NEWLINE;
 	fprintf(fp, "%sconst struct cfattachinit cfattach%s%s[] = {\n",
 	    ioconfname ? "static " : "",
@@ -315,11 +375,23 @@ emitcfattachinit(FILE *fp)
 		if (d->d_ahead == NULL)
 			continue;
 
-		fprintf(fp, "\t{ \"%s\", %s_cfattachinit },\n",
+		fprintf(fp, "\t{ \"%s\", %s_cfattachinit, ",
 			    d->d_name, d->d_name);
+
+		for (da = d->d_ahead; da != NULL; da = da->d_bsame) {
+			if (!deva_has_instances(da, WILD))
+				continue;
+			if (da->d_has_iattrs)
+				break;
+		}
+		if (da != NULL)
+			fprintf(fp, "%s_cfattachiattrs", d->d_name);
+		else
+			fprintf(fp, "NULL");
+		fprintf(fp, " },\n");
 	}
 
-	fprintf(fp, "\t{ NULL, NULL }\n};\n");
+	fprintf(fp, "\t{ NULL, NULL, NULL }\n};\n");
 }
 
 static void

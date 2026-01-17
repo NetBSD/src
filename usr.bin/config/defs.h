@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.109 2024/04/05 00:43:42 riastradh Exp $	*/
+/*	$NetBSD: defs.h,v 1.110 2026/01/17 02:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -295,6 +295,7 @@ struct deva {
 	TAILQ_ENTRY(deva) d_next;	/* list of all instances */
 	struct	deva *d_bsame;		/* list on same base */
 	int	d_isdef;		/* set once properly defined */
+	int	d_has_iattrs;		/* has interface attributes */
 	struct	devbase *d_devbase;	/* the base device */
 	struct	nvlist *d_atlist;	/* e.g., "at tg" (attr list) */
 	struct	attrlist *d_attrs;	/* attributes, if any */

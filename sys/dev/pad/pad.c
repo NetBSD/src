@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.85 2023/05/27 14:51:47 nat Exp $ */
+/* $NetBSD: pad.c,v 1.86 2026/01/17 02:01:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.85 2023/05/27 14:51:47 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.86 2026/01/17 02:01:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -814,8 +814,8 @@ devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 static struct cfattach *pad_cfattachinit[] = { &pad_ca, NULL };
 
 static struct cfattachinit pad_cfattach[] = {
-	{ "pad", pad_cfattachinit },
-	{ NULL, NULL }
+	{ "pad", pad_cfattachinit, NULL },
+	{ NULL, NULL, NULL }
 };
 #endif
 

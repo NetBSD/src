@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.87 2025/01/07 14:21:11 joe Exp $	*/
+/*	$NetBSD: sem.c,v 1.88 2026/01/17 02:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.87 2025/01/07 14:21:11 joe Exp $");
+__RCSID("$NetBSD: sem.c,v 1.88 2026/01/17 02:01:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -656,6 +656,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	struct nvlist *nv;
 	struct attrlist *al;
 	struct attr *a;
+	int has_iattrs = 0;
 
 	if (dev == &errdev)
 		goto bad;
@@ -684,11 +685,14 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 		a = al->al_this;
 		if (a == &errattr)
 			continue;		/* already complained */
-		if (a->a_iattr || a->a_devclass != NULL)
-			cfgerror("`%s' is not a plain attribute", a->a_name);
+		if (a->a_iattr)
+			has_iattrs = 1;
+		if (a->a_devclass != NULL)
+			cfgerror("`%s' is a devclass attribute", a->a_name);
 	}
 
 	/* Committed!  Set up fields. */
+	deva->d_has_iattrs = has_iattrs;
 	deva->d_attrs = attrs;
 	deva->d_atlist = atlist;
 	deva->d_devbase = dev;
@@ -773,6 +777,7 @@ getdevattach(const char *name)
 		deva->d_name = name;
 		deva->d_bsame = NULL;
 		deva->d_isdef = 0;
+		deva->d_has_iattrs = 0;
 		deva->d_devbase = NULL;
 		deva->d_atlist = NULL;
 		deva->d_attrs = NULL;

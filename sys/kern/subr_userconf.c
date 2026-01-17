@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.28 2025/12/20 10:51:06 skrll Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.29 2026/01/17 02:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.28 2025/12/20 10:51:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.29 2026/01/17 02:01:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ userconf_pdev(short devno)
 	}
 	if (cfp) {
 		l = cd->cf_loc;
-		ia = cfiattr_lookup(cfp->cfp_iattr, 0);
+		ia = cfiattr_lookup(cfp->cfp_iattr, NULL, NULL);
 		KASSERT(ia);
 		ld = ia->ci_locdesc;
 		nld = ia->ci_loclen;
@@ -407,7 +407,8 @@ userconf_change(int devno)
 
 			cd = &cfdata[devno];
 			l = cd->cf_loc;
-			ia = cfiattr_lookup(cd->cf_pspec->cfp_iattr, 0);
+			ia = cfiattr_lookup(cd->cf_pspec->cfp_iattr, NULL,
+			    NULL);
 			KASSERT(ia);
 			ld = ia->ci_locdesc;
 			nld = ia->ci_loclen;
