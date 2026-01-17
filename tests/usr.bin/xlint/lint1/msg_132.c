@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.57 2026/01/17 15:33:18 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.58 2026/01/17 16:22:35 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -644,16 +644,21 @@ combine_arithmetic_and_bit_operations(void)
 	return 0xc0 | (u32 & 0x07c0) / 64;
 }
 
+long write(int, const char *, size_t);
+long read(int, char *, size_t);
+
 size_t strlen(const char *);
 size_t strcspn(const char *, const char *);
 size_t strspn(const char *, const char *);
 size_t strlcpy(char *, const char *, size_t);
 size_t strlcat(char *, const char *, size_t);
 
+
 void
-string_length_functions(void)
+limited_range_functions(void)
 {
-	char buf[128];
+	char buf127[127];
+	char buf128[128];
 
 	// Assume that strings with length >= 2 GB are so rare
 	// that there is no point worrying about integer overflows here.
@@ -661,6 +666,13 @@ string_length_functions(void)
 	s32 = strlen("");
 	s32 = strcspn("", "");
 	s32 = strspn("", "");
-	s32 = strlcpy(buf, "", sizeof(buf));
-	s32 = strlcat(buf, "", sizeof(buf));
+	s32 = strlcpy(buf128, "", sizeof(buf128));
+	s32 = strlcat(buf128, "", sizeof(buf128));
+
+	s8 = read(0, buf127, sizeof(buf127));
+	s8 = write(1, buf127, sizeof(buf127));
+	/* expect+1: warning: conversion from 'long' to 'signed char' may lose accuracy [132] */
+	s8 = read(0, buf128, sizeof(buf128));
+	/* expect+1: warning: conversion from 'long' to 'signed char' may lose accuracy [132] */
+	s8 = write(1, buf128, sizeof(buf128));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.701 2026/01/17 15:33:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.702 2026/01/17 16:22:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.701 2026/01/17 15:33:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.702 2026/01/17 16:22:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -507,6 +507,32 @@ ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 }
 
 static integer_constraints
+ic_unsigned_range(uint64_t minimum, uint64_t maximum)
+{
+	integer_constraints c;
+	lint_assert(minimum <= maximum);
+	c.smin = maximum <= INT64_MAX ? (int64_t)minimum : INT64_MIN;
+	c.smax = maximum <= INT64_MAX ? (int64_t)maximum : INT64_MAX;
+	c.umin = minimum;
+	c.umax = maximum;
+	c.bclr = ~c.umax;
+	return c;
+}
+
+static integer_constraints
+ic_signed_range(int64_t minimum, int64_t maximum)
+{
+	integer_constraints c;
+	lint_assert(minimum <= maximum);
+	c.smin = minimum;
+	c.smax = maximum;
+	c.umin = minimum >= 0 ? (uint64_t)minimum : 0;
+	c.umax = minimum >= 0 ? (uint64_t)maximum : UINT64_MAX;
+	c.bclr = ~c.umax;
+	return c;
+}
+
+static integer_constraints
 ic_call(const function_call *call)
 {
 	if (!(call->func->tn_op == ADDR
@@ -519,15 +545,14 @@ ic_call(const function_call *call)
 	    || strcmp(name, "strcspn") == 0
 	    || strcmp(name, "strspn") == 0
 	    || strcmp(name, "strlcpy") == 0
-	    || strcmp(name, "strlcat") == 0) {
-		integer_constraints c;
-		c.smin = 0;
-		c.smax = INT_MAX - 1;
-		c.umin = 0;
-		c.umax = INT_MAX - 1;
-		c.bclr = ~c.umax;
-		return c;
-	}
+	    || strcmp(name, "strlcat") == 0)
+		return ic_unsigned_range(0, INT_MAX - 1);
+	if ((strcmp(name, "read") == 0 || strcmp(name, "write") == 0)
+	    && call->args_len == 3
+	    && call->args[2]->tn_op == CON
+	    && is_uinteger(call->args[2]->tn_type->t_tspec)
+	    && call->args[2]->u.value.u.integer >= 0)
+		return ic_signed_range(-1, call->args[2]->u.value.u.integer);
 
 any:
 	return ic_any(call->func->tn_type->t_subt->t_subt);
