@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.11 2025/09/18 18:22:18 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.12 2026/01/17 14:23:03 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -176,6 +176,22 @@ int _Alignas(double) int_aligned_as_double;
 // In C11 6.7.6.3p14, "()" means "no information about the number of types".
 /* expect+1: warning: function declaration is not a prototype [287] */
 void function_without_parameters();
+
+
+// Ensure that _Alignas is based on alignment, not on struct size.
+struct mem_1024bit {
+	unsigned char data[1024];
+};
+
+struct alignas_type {
+	unsigned alignas_expr _Alignas(128);
+	unsigned alignas_type _Alignas(struct mem_1024bit);
+};
+
+// FIXME: Must be 128, as alignas_expr is at offset 0 with alignment 128,
+// and alignas_type is at offset 4 with alignment max(1, 4).
+/* expect+1: error: negative array dimension (-2048) [20] */
+typedef int reveal_sizeof_uint_1024[-(int)sizeof(struct alignas_type)];
 
 
 // In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.
