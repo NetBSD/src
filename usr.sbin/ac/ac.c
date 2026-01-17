@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.27 2022/05/24 06:28:02 andvar Exp $ */
+/* $NetBSD: ac.c,v 1.28 2026/01/17 15:36:28 rillig Exp $ */
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.27 2022/05/24 06:28:02 andvar Exp $");
+__RCSID("$NetBSD: ac.c,v 1.28 2026/01/17 15:36:28 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -274,6 +274,7 @@ main(int argc, char **argv)
 	int c;
 
 	fp = NULL;
+	/* LINTED 338 "option 'D' should be handled in the switch" */
 	while ((c = getopt(argc, argv, "Ddpt:w:")) != -1) {
 		switch (c) {
 #ifdef DEBUG
