@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.49 2023/03/01 08:38:50 riastradh Exp $	*/
+/*	$NetBSD: spl.S,v 1.50 2026/01/17 10:53:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -313,6 +313,7 @@ END(spllower)
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
+ * XenPV note: it seems that we can be called at spl0, so need to use CLI2()
  */
 IDTVEC(spllower)
 	pushq	%rbx
@@ -323,7 +324,7 @@ IDTVEC(spllower)
 1:
 	movl	%ebx,%eax		/* get cpl */
 	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
-	CLI(si)
+	CLI2(si, r12)
 	andq	CPUVAR(IPENDING),%rax	/* any non-masked bits left? */
 	jz	2f
 	bsrq	%rax,%rax
@@ -347,6 +348,7 @@ IDTVEC_END(spllower)
  * Important registers:
  *   ebx - cpl to restore
  *   r13 - address to resume loop at
+ *   rsi, rdi and r14 - free for local use
  */
 IDTVEC(doreti)
 	popq	%rbx			/* get previous priority */
@@ -355,7 +357,7 @@ IDTVEC(doreti)
 1:
 	movl    %ebx,%eax
 	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
-	CLI(si)
+	CLI2(si, r14)
 	andq	CPUVAR(IPENDING),%rax
 	jz	2f
 	bsrq	%rax,%rax		/* slow, but not worth optimizing */
@@ -378,7 +380,7 @@ IDTVEC(doreti)
 	movq	%rsp,%rdi
 	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(trap)
-	CLI(si)
+	CLI2(si, rdi)
 	jmp	.Ldoreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
@@ -389,6 +391,6 @@ IDTVEC(doreti)
 9:
 	STI(si)
 	call	_C_LABEL(do_pmap_load)
-	CLI(si)
+	CLI2(si, rdi)
 	jmp	.Ldoreti_checkast		/* recheck ASTs */
 IDTVEC_END(doreti)

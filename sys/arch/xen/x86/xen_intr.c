@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.31 2023/02/25 00:32:13 riastradh Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.32 2026/01/17 10:53:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.31 2023/02/25 00:32:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.32 2026/01/17 10:53:19 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pci.h"
@@ -540,3 +540,9 @@ __strong_alias(cpu_intr_init, xen_cpu_intr_init);
 __strong_alias(intr_allocate_io_intrsource, xen_intr_allocate_io_intrsource);
 __strong_alias(intr_free_io_intrsource, xen_intr_free_io_intrsource);
 #endif /* XENPV */
+
+
+#if defined(DIAGNOSTIC) && defined(XENPV)
+const char cli_panic[] = "cli with preemtion";
+const char sti_panic[] = "sti with interrupts enabled";
+#endif
