@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.15 2026/01/15 17:00:02 skrll Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.16 2026/01/17 05:45:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.15 2026/01/15 17:00:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.16 2026/01/17 05:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,9 @@ dwc2_fdt_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	fdt_add_bus(self, phandle, faa);
+
 	config_interrupts(self, dwc2_fdt_deferred);
 
 	return;
@@ -204,7 +207,7 @@ dwc2_fdt_deferred(device_t self)
 		return;
 	}
 	sc->sc_dwc2.sc_child = config_found(sc->sc_dwc2.sc_dev,
-	    &sc->sc_dwc2.sc_bus, usbctlprint, CFARGS_NONE);
+	    &sc->sc_dwc2.sc_bus, usbctlprint, CFARGS(.iattr = "usbus"));
 }
 
 static void
