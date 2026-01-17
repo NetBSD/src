@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.4 2025/02/02 11:29:37 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.5 2026/01/17 07:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -669,9 +669,6 @@ void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 	(*(t)->_dmatag_destroy)(t)
 
 #ifdef _RISCV_BUS_DMA_PRIVATE
-
-int	riscv_dma_range_intersect(struct riscv_dma_range *, int,
-	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
 
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
