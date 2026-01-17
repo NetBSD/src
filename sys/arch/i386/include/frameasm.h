@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.35 2022/07/30 14:11:00 riastradh Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.36 2026/01/17 10:59:10 bouyer Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -12,35 +12,115 @@
 #ifdef XEN
 /* XXX assym.h */
 #define TRAP_INSTR	int	$0x82
-#define XEN_BLOCK_EVENTS(reg)	movb	$1,EVTCHN_UPCALL_MASK(reg)
-#define XEN_UNBLOCK_EVENTS(reg)	movb	$0,EVTCHN_UPCALL_MASK(reg)
-#define XEN_TEST_PENDING(reg)	testb	$0xFF,EVTCHN_UPCALL_PENDING(reg)
 #endif /* XEN */
 
 #if defined(XENPV)
-#define CLI(reg)	movl	CPUVAR(VCPU),reg ;  \
-			XEN_BLOCK_EVENTS(reg)
-#define STI(reg)	movl	CPUVAR(VCPU),reg ;  \
-			XEN_UNBLOCK_EVENTS(reg)
-#define STIC(reg)	movl	CPUVAR(VCPU),reg ;  \
-			XEN_UNBLOCK_EVENTS(reg)  ; \
+/*
+ * acessing EVTCHN_UPCALL_MASK is safe only if preemption is disabled, i.e.:
+ * l_nopreempt is not 0, or
+ * ci_ilevel is not 0, or
+ * EVTCHN_UPCALL_MASK is not 0
+ * ci_idepth is not negative
+ */
+#ifdef DIAGNOSTIC
+#define CLI(reg)	\
+			movl	CPUVAR(CURLWP),reg ;  \
+			cmpl	$0, L_NOPREEMPT(reg); \
+			jne	199f; \
+			cmpb	$0, CPUVAR(ILEVEL); \
+			jne	199f; \
+			movl	CPUVAR(IDEPTH), reg; \
+			test	reg, reg; \
+			jns	199f; \
+			movl	$panicstr,reg ; \
+			cmpl	$0, 0(reg); \
+			jne	199f; \
+			pushl	$199f; \
+			movl	$_C_LABEL(cli_panic), reg; \
+			pushl	0(reg); \
+			call	_C_LABEL(panic); \
+			addl    $8,%esp; \
+199:			movl	CPUVAR(VCPU),reg ;  \
+			movb    $1,EVTCHN_UPCALL_MASK(reg)
+
+#define STI(reg) \
+			movl	CPUVAR(VCPU),reg ;  \
+			cmpb	$0, EVTCHN_UPCALL_MASK(reg) ; \
+			jne	198f ; \
+			movl	$panicstr,reg ; \
+			cmpl	$0, 0(reg); \
+			jne	198f; \
+			pushl	$198f; \
+			movl	$_C_LABEL(sti_panic), reg; \
+			pushl	0(reg); \
+			call	_C_LABEL(panic); \
+			addl    $8,%esp; \
+198:			movb	$0,EVTCHN_UPCALL_MASK(reg)
+
+
+/*
+ * Here we have a window where we could be migrated between enabling
+ * interrupts and testing * EVTCHN_UPCALL_PENDING. But it's not a big issue,
+ * at worst we'll call stipending() on the new CPU which have no pending
+ * interrupts, and the pending interrupts on the old CPU have already
+ * been processed.
+ */
+#define STIC(reg) \
+			movl	CPUVAR(VCPU),reg ;  \
+			cmpb	$0, EVTCHN_UPCALL_MASK(reg) ; \
+			jne	197f ; \
+			movl	$panicstr,reg ; \
+			cmpl	$0, 0(reg); \
+			jne	197f; \
+			pushl	$197f; \
+			movl	$_C_LABEL(sti_panic), reg; \
+			pushl	0(reg); \
+			call	_C_LABEL(panic); \
+			addl    $8,%esp; \
+197:			movl	CPUVAR(VCPU),reg ;  \
+			movb	$0,EVTCHN_UPCALL_MASK(reg); \
 			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
-#define PUSHF(reg) 	movl	CPUVAR(VCPU),reg ;  \
-			movzbl	EVTCHN_UPCALL_MASK(reg), reg; \
-			pushl	reg
+
+#else
+#define CLI(reg)	\
+			movl	CPUVAR(VCPU),reg ;  \
+			movb    $1,EVTCHN_UPCALL_MASK(reg)
+
+#define STI(reg) \
+			movl	CPUVAR(VCPU),reg ;  \
+			movb	$0,EVTCHN_UPCALL_MASK(reg)
+
+#define STIC(reg) \
+			movl	CPUVAR(VCPU),reg ;  \
+			movb	$0,EVTCHN_UPCALL_MASK(reg); \
+			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
+
+#endif /* DIAGNOSTIC */
+#define CLI2(reg, reg2) \
+			movl    CPUVAR(CURLWP),reg; \
+			incl	L_NOPREEMPT(reg); \
+			movl	CPUVAR(VCPU),reg2 ;  \
+			movb    $1,EVTCHN_UPCALL_MASK(reg2); \
+			decl	L_NOPREEMPT(reg);
+
+#define PUSHFCLI(reg, reg2) \
+			movl    CPUVAR(CURLWP),reg; \
+			incl	L_NOPREEMPT(reg); \
+			movl	CPUVAR(VCPU),reg2 ;  \
+			movzbl	EVTCHN_UPCALL_MASK(reg2), reg2; \
+			pushl	reg2 ; \
+			movl	CPUVAR(VCPU),reg2 ;  \
+			movb    $1,EVTCHN_UPCALL_MASK(reg2); \
+			decl	L_NOPREEMPT(reg);
+
 #define POPF(reg)	call _C_LABEL(xen_write_psl); \
 			addl    $4,%esp
 #else
 #define CLI(reg)	cli
+#define CLI2(reg, reg2)	cli
 #define STI(reg)	sti
-#define PUSHF(reg)	pushf
+#define PUSHFCLI(reg, reg2) pushf ; cli
 #define POPF(reg)	popf
-#ifdef XENPVHVM
-#define STIC(reg)	sti ; \
-			movl	CPUVAR(VCPU),reg ; \
-			XEN_UNBLOCK_EVENTS(reg)  ; \
-			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
-#endif /* XENPVHVM */
 
 #endif /* XENPV */
 

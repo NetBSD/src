@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.205 2025/12/31 15:33:50 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.206 2026/01/17 10:59:09 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.205 2025/12/31 15:33:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.206 2026/01/17 10:59:09 bouyer Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1746,7 +1746,10 @@ IDTVEC(syscall)
 	pushl	$2		/* size of instruction for restart */
 	pushl	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
+#ifndef XENPV
+	/* interrupts already enabled here on Xen */
 	STI(%eax)
+#endif
 
 #ifdef DIAGNOSTIC
 	movzbl	CPUVAR(ILEVEL),%ebx
@@ -1771,7 +1774,7 @@ IDTVEC(syscall)
 	addl	$4,%esp
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(%eax)
+	CLI2(%eax, %edx)
 	movl	L_MD_ASTPENDING(%edi), %eax
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
@@ -1785,7 +1788,7 @@ IDTVEC(syscall)
 	testl	%eax,%eax
 	jz	14f
 	/* process pending interrupts */
-	CLI(%eax)
+	CLI2(%eax, %ebx)
 	movzbl	CPUVAR(ILEVEL), %ebx
 	movl	$.Lsyscall_resume, %esi /* address to resume loop at */
 .Lsyscall_resume:
