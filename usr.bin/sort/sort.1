@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.43 2026/01/17 19:08:03 jkoshy Exp $
+.\"	$NetBSD: sort.1,v 1.44 2026/01/17 19:29:44 uwe Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -452,41 +452,36 @@ and
 .Sh EXAMPLES
 To silently check if the lines in a file are sorted lexicographically,
 use:
-.Bd -literal -offset indent
-$ sort -C file
-.Ed
+.Pp
+.Dl $ sort -C file
 .Pp
 To merge three pre-sorted files and write the merged result to stdout,
 use:
-.Bd -literal -offset indent
-$ sort -m file1 file2 file3
-.Ed
+.Pp
+.Dl $ sort -m file1 file2 file3
 .Pp
 To sort the lines in a file lexicographically using the second
 whitespace-separated field of each line as the sort key preserving any
 leading whitespace in the sort key, use:
-.Bd -literal -offset indent
-$ sort -k 2 file
-.Ed
+.Pp
+.Dl $ sort -k 2 file
 .Pp
 To sort the lines in a file lexicographically using the second
 whitespace-separated field on each line as the sort key ignoring any
 leading whitespace in the sort key, use:
-.Bd -literal -offset indent
-$ sort -k 2b file
-.Ed
+.Pp
+.Dl $ sort -k 2b file
 .Pp
 To sort the lines in a file numerically using the second
 whitespace-separated field on each line as the sort key, starting the
 sort key at the second non-blank character within the field, use:
-.Bd -literal -offset indent
-$ sort -k 2.2nb file
-.Ed
+.Pp
+.Dl $ sort -k 2.2nb file
 .Pp
 To lexicographically sort the lines of a file in reverse order, use:
-.Bd -literal -offset indent
-$ sort -r -f file
-.Ed
+.Pp
+.Dl $ sort -r -f file
+.
 .Sh EXIT STATUS
 Sort exits with one of the following values:
 .Bl -tag -width flag -compact
