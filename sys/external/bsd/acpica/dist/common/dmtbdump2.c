@@ -4,117 +4,9 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2025, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2025, Intel Corp.
  * All rights reserved.
- *
- * 2. License
- *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights. You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
- *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code. No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision. In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change. Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee. Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution. In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE. ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT, ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES. INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS. INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES. THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government. In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************
- *
- * Alternatively, you may choose to be licensed under the terms of the
- * following license:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -131,23 +23,23 @@
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Alternatively, you may choose to be licensed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
- *
- *****************************************************************************/
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #include <wchar.h>
 #include "acpi.h"
@@ -302,6 +194,14 @@ AcpiDmDumpIort (
             InfoTable = AcpiDmTableInfoIort6;
             Length = IortNode->Length - NodeOffset;
             IortRmr = ACPI_ADD_PTR (ACPI_IORT_RMR, IortNode, NodeOffset);
+            break;
+
+        case ACPI_IORT_NODE_IWB:
+
+            InfoTable = AcpiDmTableInfoIort7;
+            Length = ACPI_OFFSET (ACPI_IORT_IWB, DeviceName);
+            String = ACPI_ADD_PTR (char, IortNode, NodeOffset + Length);
+            Length += strlen (String) + 1;
             break;
 
         default:
@@ -473,6 +373,140 @@ NextSubtable:
         /* Point to next node subtable */
 
         Offset += IortNode->Length;
+    }
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmDumpIovt
+ *
+ * PARAMETERS:  Table               - A IOVT table
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Format the contents of a IOVT
+ *
+ ******************************************************************************/
+
+void
+AcpiDmDumpIovt (
+    ACPI_TABLE_HEADER       *Table)
+{
+    ACPI_STATUS             Status;
+    UINT32                  Offset;
+    UINT32                  EntryOffset;
+    UINT32                  EntryLength;
+    UINT32                  EntryType;
+    ACPI_IOVT_DEVICE_ENTRY  *DeviceEntry;
+    ACPI_IOVT_HEADER        *SubtableHeader;
+    ACPI_IOVT_IOMMU         *Subtable;
+    ACPI_DMTABLE_INFO       *InfoTable;
+    ACPI_TABLE_IOVT         *Iovt;
+
+
+    /* Main table */
+
+    Status = AcpiDmDumpTable (Table->Length, 0, Table, 0, AcpiDmTableInfoIovt);
+    if (ACPI_FAILURE (Status))
+    {
+        return;
+    }
+
+    Iovt = ACPI_CAST_PTR (ACPI_TABLE_IOVT, Table);
+    Offset = Iovt->IommuOffset;
+
+    /* Subtables */
+
+    SubtableHeader = ACPI_ADD_PTR (ACPI_IOVT_HEADER, Table, Offset);
+
+    while (Offset < Table->Length)
+    {
+        switch (SubtableHeader->Type)
+        {
+
+        case ACPI_IOVT_IOMMU_V1:
+
+            AcpiOsPrintf ("\n");
+            InfoTable = AcpiDmTableInfoIovt0;
+            break;
+
+        default:
+
+            AcpiOsPrintf ("\n**** Unknown IOVT subtable type 0x%X\n",
+                SubtableHeader->Type);
+
+            /* Attempt to continue */
+
+            if (!SubtableHeader->Length)
+            {
+                AcpiOsPrintf ("Invalid zero length subtable\n");
+                return;
+            }
+            goto NextSubtable;
+        }
+
+        /* Dump the subtable */
+
+        Status = AcpiDmDumpTable (Table->Length, Offset, SubtableHeader,
+            SubtableHeader->Length, InfoTable);
+        if (ACPI_FAILURE (Status))
+        {
+            return;
+        }
+
+        /* The hardware subtables (IOVT) can contain multiple device entries */
+
+        if (SubtableHeader->Type == ACPI_IOVT_IOMMU_V1)
+        {
+            Subtable = ACPI_ADD_PTR (ACPI_IOVT_IOMMU, Table, Offset);
+
+            EntryOffset = Offset + Subtable->DeviceEntryOffset;
+            /* Process all of the Device Entries */
+
+            do {
+                AcpiOsPrintf ("\n");
+
+                DeviceEntry = ACPI_ADD_PTR (ACPI_IOVT_DEVICE_ENTRY,
+                    Table, EntryOffset);
+                EntryType = DeviceEntry->Type;
+                EntryLength = DeviceEntry->Length;
+
+                switch (EntryType)
+                {
+                case ACPI_IOVT_DEVICE_ENTRY_SINGLE:
+                case ACPI_IOVT_DEVICE_ENTRY_START:
+                case ACPI_IOVT_DEVICE_ENTRY_END:
+                    InfoTable = AcpiDmTableInfoIovtdev;
+                    break;
+
+                default:
+                    InfoTable = AcpiDmTableInfoIovtdev;
+                    AcpiOsPrintf (
+                        "\n**** Unknown IOVT device entry type/length: "
+                        "0x%.2X/0x%X at offset 0x%.4X: (header below)\n",
+                        EntryType, EntryLength, EntryOffset);
+                    break;
+                }
+
+                /* Dump the Device Entry */
+
+                Status = AcpiDmDumpTable (Table->Length, EntryOffset,
+                    DeviceEntry, EntryLength, InfoTable);
+                if (ACPI_FAILURE (Status))
+                {
+                    return;
+                }
+
+                EntryOffset += EntryLength;
+            } while (EntryOffset < (Offset + Subtable->Header.Length));
+        }
+
+NextSubtable:
+        /* Point to next subtable */
+
+        Offset += SubtableHeader->Length;
+        SubtableHeader = ACPI_ADD_PTR (ACPI_IOVT_HEADER, SubtableHeader, SubtableHeader->Length);
     }
 }
 
@@ -1053,6 +1087,21 @@ AcpiDmDumpMadt (
         case ACPI_MADT_TYPE_PLIC:
 
             InfoTable = AcpiDmTableInfoMadt27;
+            break;
+
+        case ACPI_MADT_TYPE_GICV5_IRS:
+
+            InfoTable = AcpiDmTableInfoMadt28;
+            break;
+
+        case ACPI_MADT_TYPE_GICV5_ITS:
+
+            InfoTable = AcpiDmTableInfoMadt29;
+            break;
+
+        case ACPI_MADT_TYPE_GICV5_ITS_TRANSLATE:
+
+            InfoTable = AcpiDmTableInfoMadt30;
             break;
 
         default:
@@ -2290,8 +2339,16 @@ AcpiDmDumpPptt (
 
         case ACPI_PPTT_TYPE_CACHE:
 
-            InfoTable = AcpiDmTableInfoPptt1;
-            Length = sizeof (ACPI_PPTT_CACHE);
+            if (Table->Revision < 3)
+            {
+                InfoTable = AcpiDmTableInfoPptt1;
+                Length = sizeof (ACPI_PPTT_CACHE);
+            }
+            else
+            {
+                InfoTable = AcpiDmTableInfoPptt1a;
+                Length = sizeof (ACPI_PPTT_CACHE_V1);
+            }
             break;
 
         case ACPI_PPTT_TYPE_ID:
@@ -2350,22 +2407,6 @@ AcpiDmDumpPptt (
                 SubtableOffset += 4;
             }
             break;
-
-        case ACPI_PPTT_TYPE_CACHE:
-
-            if (Table->Revision < 3)
-            {
-                break;
-            }
-            Status = AcpiDmDumpTable (Table->Length, Offset + SubtableOffset,
-                ACPI_ADD_PTR (ACPI_SUBTABLE_HEADER, Subtable, SubtableOffset),
-                sizeof (ACPI_PPTT_CACHE_V1), AcpiDmTableInfoPptt1a);
-            if (ACPI_FAILURE (Status))
-            {
-                return;
-            }
-            break;
-
         default:
 
             break;
