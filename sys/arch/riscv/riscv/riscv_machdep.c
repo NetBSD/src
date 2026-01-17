@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.46 2025/10/12 04:08:26 thorpej Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.47 2026/01/17 07:13:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.46 2025/10/12 04:08:26 thorpej Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.47 2026/01/17 07:13:25 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -902,7 +902,6 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	/* Finish setting up lwp0 on our end before we call main() */
 	riscv_init_lwp0_uarea();
-
 
 	error = 0;
 	if ((boothowto & RB_MD1) == 0) {
