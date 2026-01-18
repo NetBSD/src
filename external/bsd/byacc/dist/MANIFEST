@@ -1,4 +1,4 @@
-MANIFEST for byacc, version t20240109
+MANIFEST for byacc, version t20241231
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 ACKNOWLEDGEMENTS                original version of byacc - 1993
@@ -44,6 +44,7 @@ yaccpar.c                       generated from yaccpar.skel
 yaccpar.skel                    data which can be transformed into skeleton.c
 package                         subdirectory
 package/byacc.spec              RPM file for byacc
+package/mingw-byacc.spec        mingw spec-file, for cross-compiles
 package/debian                  subdirectory
 package/debian/byacc2.docs      extra docs for byacc2 package
 package/debian/byacc2.postinst  post-install script for byacc2 package
@@ -52,12 +53,9 @@ package/debian/changelog        scripts from Debian package
 package/debian/control          scripts from Debian package
 package/debian/copyright        scripts from Debian package
 package/debian/rules            scripts from Debian package
+package/debian/watch            scripts from Debian package
 package/debian/source           subdirectory
 package/debian/source/format    scripts from Debian package
-package/debian                  subdirectory
-package/debian/watch            scripts from Debian package
-package                         subdirectory
-package/mingw-byacc.spec        mingw spec-file, for cross-compiles
 package/pkgsrc                  subdirectory
 package/pkgsrc/DESCR            scripts from NetBSD pkgsrc, for test-builds
 package/pkgsrc/Makefile         scripts from NetBSD pkgsrc, for test-builds
@@ -65,6 +63,78 @@ package/pkgsrc/PLIST            scripts from NetBSD pkgsrc, for test-builds
 package/pkgsrc/distinfo         scripts from NetBSD pkgsrc, for test-builds
 test                            subdirectory
 test/README                     summary of "test" directory
+test/btyacc_calc1.y             testcase for btyacc
+test/btyacc_demo.y              testcase for btyacc
+test/btyacc_destroy1.y          btyacc test-case for %parse-param
+test/btyacc_destroy2.y          btyacc test-case for %parse-param
+test/btyacc_destroy3.y          btyacc test-case for %parse-param
+test/calc.y                     example from VMS freeware version of byacc
+test/calc1.y                    advanced example from Steve Johnson's paper.
+test/calc2.y                    test-cases and reference files for %lex-param / %parse-param
+test/calc3.y                    test-cases and reference files for %lex-param / %parse-param
+test/calc_code_all.y            test-case for "%code" with all recognized keywords
+test/calc_code_default.y        test-case for "%code" with no keyword
+test/calc_code_imports.y        test-case for "%code imports"
+test/calc_code_provides.y       test-case for "%code provides"
+test/calc_code_requires.y       test-case for "%code requires"
+test/calc_code_top.y            test-case for "%code top"
+test/code_calc.y                reference input for testing
+test/code_debug.y               test-input, for -i, -o, -d options
+test/code_error.y               reference input for testing
+test/empty.y                    testcase for btyacc
+test/err_inherit1.y             testcase for btyacc
+test/err_inherit2.y             testcase for btyacc
+test/err_inherit3.y             testcase for btyacc
+test/err_inherit4.y             testcase for btyacc
+test/err_inherit5.y             testcase for btyacc
+test/err_syntax1.y              test-case with syntax error (and nonprinting character)
+test/err_syntax10.y             testcase for retyped_warning()
+test/err_syntax11.y             testcase for reprec_warning()
+test/err_syntax12.y             testcase for revalued_warning()
+test/err_syntax13.y             testcase for terminal_start()
+test/err_syntax14.y             testcase for restarted_warning() and undefined_goal()
+test/err_syntax15.y             testcase for no_grammar()
+test/err_syntax16.y             testcase for terminal_lhs()
+test/err_syntax17.y             testcase for unterminated_action()
+test/err_syntax18.y             testcase for dollar_warning()
+test/err_syntax19.y             testcase for dollar_error()
+test/err_syntax2.y              testcase for unterminated_comment()
+test/err_syntax20.y             testcase for undefined_symbol_warning()
+test/err_syntax21.y             testcase for unknown_rhs()
+test/err_syntax22.y             testcase for untyped_rhs()
+test/err_syntax23.y             testcase for untyped_lhs()
+test/err_syntax24.y             testcase for default_action_warning()
+test/err_syntax25.y             testcase for over_unionized()
+test/err_syntax26.y             testcase for unexpected_EOF()
+test/err_syntax27.y             testcase for missing_brace()
+test/err_syntax3.y              testcase for unterminated_string()
+test/err_syntax4.y              testcase for unterminated_text()
+test/err_syntax5.y              testcase for unterminated_union()
+test/err_syntax6.y              testcase for illegal_tag()
+test/err_syntax7.y              testcase for illegal_character()
+test/err_syntax7a.y             testcase for illegal_character()
+test/err_syntax7b.y             testcase for illegal_character()
+test/err_syntax8.y              testcase for used_reserved()
+test/err_syntax8a.y             testcase for used_reserved()
+test/err_syntax9.y              testcase for tokenized_start()
+test/error.y                    original version of byacc - 1993
+test/expr.oxout.h               stub for "run_make.sh"
+test/expr.oxout.y               test-case for "#line" feature
+test/grammar.y                  grammar from cproto
+test/inherit0.y                 testcase for btyacc
+test/inherit1.y                 testcase for btyacc
+test/inherit2.y                 testcase for btyacc
+test/ok_syntax1.y               testcase for valid literal syntax
+test/pure_calc.y                reference input for testing
+test/pure_error.y               reference input for testing
+test/quote_calc.y               test-case for %token using quoted name
+test/quote_calc2.y              test-case for %token using quoted name
+test/quote_calc3.y              test-case for %token using quoted name
+test/quote_calc4.y              test-case for %token using quoted name
+test/run_lint.sh                run lint, using the build-directory's makefile, on each ".c" file in test-directory
+test/run_make.sh                do a test-compile of each ".c" file in the test-directory
+test/run_test.sh                test-script for byacc
+test/varsyntax_calc1.y          testcase for btyacc
 test/btyacc                     subdirectory
 test/btyacc/big_b.error         exercise -L/-B options
 test/btyacc/big_b.output        exercise -L/-B options
@@ -410,79 +480,6 @@ test/btyacc/varsyntax_calc1.error  reference output for testing
 test/btyacc/varsyntax_calc1.output  reference output for testing
 test/btyacc/varsyntax_calc1.tab.c  reference output for testing
 test/btyacc/varsyntax_calc1.tab.h  reference output for testing
-test                            subdirectory
-test/btyacc_calc1.y             testcase for btyacc
-test/btyacc_demo.y              testcase for btyacc
-test/btyacc_destroy1.y          btyacc test-case for %parse-param
-test/btyacc_destroy2.y          btyacc test-case for %parse-param
-test/btyacc_destroy3.y          btyacc test-case for %parse-param
-test/calc.y                     example from VMS freeware version of byacc
-test/calc1.y                    advanced example from Steve Johnson's paper.
-test/calc2.y                    test-cases and reference files for %lex-param / %parse-param
-test/calc3.y                    test-cases and reference files for %lex-param / %parse-param
-test/calc_code_all.y            test-case for "%code" with all recognized keywords
-test/calc_code_default.y        test-case for "%code" with no keyword
-test/calc_code_imports.y        test-case for "%code imports"
-test/calc_code_provides.y       test-case for "%code provides"
-test/calc_code_requires.y       test-case for "%code requires"
-test/calc_code_top.y            test-case for "%code top"
-test/code_calc.y                reference input for testing
-test/code_debug.y               test-input, for -i, -o, -d options
-test/code_error.y               reference input for testing
-test/empty.y                    testcase for btyacc
-test/err_inherit1.y             testcase for btyacc
-test/err_inherit2.y             testcase for btyacc
-test/err_inherit3.y             testcase for btyacc
-test/err_inherit4.y             testcase for btyacc
-test/err_inherit5.y             testcase for btyacc
-test/err_syntax1.y              test-case with syntax error (and nonprinting character)
-test/err_syntax10.y             testcase for retyped_warning()
-test/err_syntax11.y             testcase for reprec_warning()
-test/err_syntax12.y             testcase for revalued_warning()
-test/err_syntax13.y             testcase for terminal_start()
-test/err_syntax14.y             testcase for restarted_warning() and undefined_goal()
-test/err_syntax15.y             testcase for no_grammar()
-test/err_syntax16.y             testcase for terminal_lhs()
-test/err_syntax17.y             testcase for unterminated_action()
-test/err_syntax18.y             testcase for dollar_warning()
-test/err_syntax19.y             testcase for dollar_error()
-test/err_syntax2.y              testcase for unterminated_comment()
-test/err_syntax20.y             testcase for undefined_symbol_warning()
-test/err_syntax21.y             testcase for unknown_rhs()
-test/err_syntax22.y             testcase for untyped_rhs()
-test/err_syntax23.y             testcase for untyped_lhs()
-test/err_syntax24.y             testcase for default_action_warning()
-test/err_syntax25.y             testcase for over_unionized()
-test/err_syntax26.y             testcase for unexpected_EOF()
-test/err_syntax27.y             testcase for missing_brace()
-test/err_syntax3.y              testcase for unterminated_string()
-test/err_syntax4.y              testcase for unterminated_text()
-test/err_syntax5.y              testcase for unterminated_union()
-test/err_syntax6.y              testcase for illegal_tag()
-test/err_syntax7.y              testcase for illegal_character()
-test/err_syntax7a.y             testcase for illegal_character()
-test/err_syntax7b.y             testcase for illegal_character()
-test/err_syntax8.y              testcase for used_reserved()
-test/err_syntax8a.y             testcase for used_reserved()
-test/err_syntax9.y              testcase for tokenized_start()
-test/error.y                    original version of byacc - 1993
-test/expr.oxout.h               stub for "run_make.sh"
-test/expr.oxout.y               test-case for "#line" feature
-test/grammar.y                  grammar from cproto
-test/inherit0.y                 testcase for btyacc
-test/inherit1.y                 testcase for btyacc
-test/inherit2.y                 testcase for btyacc
-test/ok_syntax1.y               testcase for valid literal syntax
-test/pure_calc.y                reference input for testing
-test/pure_error.y               reference input for testing
-test/quote_calc.y               test-case for %token using quoted name
-test/quote_calc2.y              test-case for %token using quoted name
-test/quote_calc3.y              test-case for %token using quoted name
-test/quote_calc4.y              test-case for %token using quoted name
-test/run_lint.sh                run lint, using the build-directory's makefile, on each ".c" file in test-directory
-test/run_make.sh                do a test-compile of each ".c" file in the test-directory
-test/run_test.sh                test-script for byacc
-test/varsyntax_calc1.y          testcase for btyacc
 test/yacc                       subdirectory
 test/yacc/big_b.error           exercise -L/-B options
 test/yacc/big_b.output          exercise -L/-B options

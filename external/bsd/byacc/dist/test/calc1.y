@@ -1,4 +1,4 @@
-/*	$NetBSD: calc1.y,v 1.1.1.6 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: calc1.y,v 1.1.1.7 2026/01/18 16:39:06 christos Exp $	*/
 
 %{
 
@@ -116,7 +116,7 @@ vexp	: dexp
 	{
 		$$.lo = $2;
 		$$.hi = $4;
-		if ( $$.lo > $$.hi ) 
+		if ( $$.lo > $$.hi )
 		{
 			(void) printf("interval out of order\n");
 			YYERROR;

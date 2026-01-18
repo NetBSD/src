@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_demo.y,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: btyacc_demo.y,v 1.1.1.4 2026/01/18 16:39:06 christos Exp $	*/
 
 /*
  * demonstrate enhancements derived from btyacc:
@@ -23,11 +23,11 @@ typedef int Scope;
 typedef int Type;
 enum Operator { ADD, SUB, MUL, MOD, DIV, DEREF };
 
-typedef unsigned char bool;
+typedef unsigned char mybool;
 typedef struct Decl {
     Scope *scope;
     Type  *type;
-    bool (*istype)(void);
+    mybool (*istype)(void);
 } Decl;
 
 #include "btyacc_demo.tab.h"
@@ -105,7 +105,7 @@ typename($e): opt_scope ID
 	$$ = d->type; ]
   ;
 
-input: decl_list(global_scope = new_scope(0)) ;
+input: decl_list(global_scope = new_scope(NULL)) ;
 decl_list($e): | decl_list decl($e) ;
 decl($e):
     decl_specs declarator_list($e,$1) ';' [YYVALID;]
@@ -119,12 +119,12 @@ decl($e):
 	finish_fn_def($2, $3); }
   ;
 
-decl_specs($e):	
+decl_specs($e):
     decl_spec			[ $$ = $1; ]
   | decl_specs decl_spec($e)	[ $$ = type_combine($1, $2); ]
   ;
 
-cv_quals:			[ $$ = 0; ]
+cv_quals:			[ $$ = NULL; ]
   | cv_quals cv_qual		[ $$ = type_combine($1, $2); ]
   ;
 
@@ -147,8 +147,8 @@ declarator_list($e, $t):
   ;
 
 declarator($e, $t):
-    /* empty */			[ if (!$t) YYERROR; ]	
-				{ $$ = declare($e, 0, $t); }
+    /* empty */			[ if (!$t) YYERROR; ]
+				{ $$ = declare($e, NULL, $t); }
   | ID				{ $$ = declare($e, $1, $t); }
   | '(' declarator($e, $t) ')'	{ $$ = $2; }
   | '*' cv_quals declarator($e, $t) %prec PREFIX
@@ -159,7 +159,7 @@ declarator($e, $t):
 	  { $$ = build_function($1, $3, $5); }
   ;
 
-formal_arg_list($e):		{ $$ = 0; }
+formal_arg_list($e):		{ $$ = NULL; }
   | nonempty_formal_arg_list	{ $$ = $1; }
   ;
 nonempty_formal_arg_list($e):
@@ -176,22 +176,22 @@ expr($e):
   | expr '*' expr($e)		{ $$ = build_expr($1, MUL, $3); }
   | expr '%' expr($e)		{ $$ = build_expr($1, MOD, $3); }
   | expr '/' expr($e)		{ $$ = build_expr($1, DIV, $3); }
-  | '*' expr($e) %prec PREFIX	{ $$ = build_expr(0, DEREF, $2); }
+  | '*' expr($e) %prec PREFIX	{ $$ = build_expr(NULL, DEREF, $2); }
   | ID				{ $$ = var_expr($e, $1); }
   | CONSTANT			{ $$ = $1; }
   ;
 
 statement($e):
-    decl			{ $$ = 0; }
+    decl			{ $$ = NULL; }
   | expr($e) ';' [YYVALID;]	{ $$ = build_expr_code($1); }
   | IF '(' expr($e) ')' THEN statement($e) ELSE statement($e) [YYVALID;]
     { $$ = build_if($3, $6, $8); }
   | IF '(' expr($e) ')' THEN statement($e) [YYVALID;]
-    { $$ = build_if($3, $6, 0); }
+    { $$ = build_if($3, $6, NULL); }
   | block_statement(new_scope($e)) [YYVALID;]{ $$ = $1; }
   ;
 
-statement_list($e):			{ $$ = 0; }
+statement_list($e):			{ $$ = NULL; }
   | statement_list statement($e)	{ $$ = code_append($1, $2); }
   ;
 

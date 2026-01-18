@@ -1,3 +1,118 @@
+2024-12-31  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/pkgsrc/distinfo: regen
+
+	* main.c: s/0/NULL/
+
+	* main.c: gcc warning
+
+	* reader.c:
+	make UCH() consistent wrt IS_xxxx macros (prompted by patch by Christos Zoulas)
+
+2024-12-31  Christos Zoulas <christos@NetBSD.org>
+
+	* main.c:
+	from NetBSD - if "-o" option is given, derive the filename of the ".h"
+	definitions-file by stripping commonly-used C/C++ suffixes such as ".c"
+	and then adding ".h"
+
+2024-12-31  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* main.c: provide a fallback definition for W_OK, e.g., for Windows
+
+	* package/pkgsrc/Makefile:
+	resync with pkgsrc in NetBSD 10 (report by Roland Illig)
+
+	* yacc.1: minor typographical fixes
+
+	* main.c: correct condition for using $TEMP environment variable
+	(report by Johann 'Myrkraverk' Oskarsson)
+
+	* VERSION, package/byacc.spec, package/debian/changelog,
+	  package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2024-12-21  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+2024-12-14  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* output.c, yaccpar.c: gcc15 zero vs null warnings
+
+	* test/yacc/calc.tab.c, test/yacc/calc1.tab.c, test/yacc/calc2.tab.c,
+	  test/yacc/calc3.tab.c, test/yacc/calc_code_all.tab.c,
+	  test/yacc/calc_code_default.tab.c, test/yacc/calc_code_imports.tab.c,
+	  test/yacc/calc_code_provides.tab.c,
+	  test/yacc/calc_code_requires.tab.c, test/yacc/calc_code_top.tab.c,
+	  test/yacc/code_calc.code.c, test/yacc/code_calc.tab.c,
+	  test/yacc/code_error.code.c, test/yacc/code_error.tab.c,
+	  test/yacc/defines1.calc.c, test/yacc/defines2.calc.c,
+	  test/yacc/defines3.calc.c, test/yacc/empty.tab.c,
+	  test/yacc/err_syntax10.tab.c, test/yacc/err_syntax11.tab.c,
+	  test/yacc/err_syntax12.tab.c, test/yacc/err_syntax18.tab.c,
+	  test/yacc/err_syntax20.tab.c, test/yacc/error.tab.c,
+	  test/yacc/expr.oxout.tab.c, test/yacc/grammar.tab.c,
+	  test/yacc/ok_syntax1.tab.c, test/yacc/pure_calc.tab.c,
+	  test/yacc/pure_error.tab.c, test/yacc/quote_calc-s.tab.c,
+	  test/yacc/quote_calc.tab.c, test/yacc/quote_calc2-s.tab.c,
+	  test/yacc/quote_calc2.tab.c, test/yacc/quote_calc3-s.tab.c,
+	  test/yacc/quote_calc3.tab.c, test/yacc/quote_calc4-s.tab.c,
+	  test/yacc/quote_calc4.tab.c, test/yacc/rename_debug.c,
+	  test/yacc/stdin1.calc.c, test/yacc/stdin2.calc.c,
+	  test/yacc/varsyntax_calc1.tab.c, test/btyacc/btyacc_calc1.tab.c,
+	  test/btyacc/btyacc_demo.tab.c, test/btyacc/btyacc_destroy1.tab.c,
+	  test/btyacc/btyacc_destroy2.tab.c, test/btyacc/btyacc_destroy3.tab.c,
+	  test/btyacc/calc.tab.c, test/btyacc/calc1.tab.c,
+	  test/btyacc/calc2.tab.c, test/btyacc/calc3.tab.c,
+	  test/btyacc/calc_code_all.tab.c, test/btyacc/calc_code_default.tab.c,
+	  test/btyacc/calc_code_imports.tab.c,
+	  test/btyacc/calc_code_provides.tab.c,
+	  test/btyacc/calc_code_requires.tab.c, test/btyacc/calc_code_top.tab.c,
+	  test/btyacc/code_calc.code.c, test/btyacc/code_calc.tab.c,
+	  test/btyacc/code_error.code.c, test/btyacc/code_error.tab.c,
+	  test/btyacc/defines1.calc.c, test/btyacc/defines2.calc.c,
+	  test/btyacc/defines3.calc.c, test/btyacc/empty.tab.c,
+	  test/btyacc/err_inherit3.tab.c, test/btyacc/err_inherit4.tab.c,
+	  test/btyacc/err_syntax10.tab.c, test/btyacc/err_syntax11.tab.c,
+	  test/btyacc/err_syntax12.tab.c, test/btyacc/err_syntax18.tab.c,
+	  test/btyacc/err_syntax20.tab.c, test/btyacc/error.tab.c,
+	  test/btyacc/expr.oxout.tab.c, test/btyacc/grammar.tab.c,
+	  test/btyacc/inherit0.tab.c, test/btyacc/inherit1.tab.c,
+	  test/btyacc/inherit2.tab.c, test/btyacc/ok_syntax1.tab.c,
+	  test/btyacc/pure_calc.tab.c, test/btyacc/pure_error.tab.c,
+	  test/btyacc/quote_calc-s.tab.c, test/btyacc/quote_calc.tab.c,
+	  test/btyacc/quote_calc2-s.tab.c, test/btyacc/quote_calc2.tab.c,
+	  test/btyacc/quote_calc3-s.tab.c, test/btyacc/quote_calc3.tab.c,
+	  test/btyacc/quote_calc4-s.tab.c, test/btyacc/quote_calc4.tab.c,
+	  test/btyacc/rename_debug.c, test/btyacc/stdin1.calc.c,
+	  test/btyacc/stdin2.calc.c, test/btyacc/varsyntax_calc1.tab.c:
+	regen
+
+	* lalr.c, mstring.c, reader.c, btyaccpar.c, test/expr.oxout.y,
+	  test/grammar.y, test/varsyntax_calc1.y, test/err_syntax27.y,
+	  test/calc1.y, test/btyacc_demo.y, test/btyacc_calc1.y, symtab.c,
+	  main.c, mkpar.c, lr0.c, defs.h, error.c:
+	gcc15 zero vs null warnings
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+
+	* package/pkgsrc/Makefile, VERSION, package/byacc.spec,
+	  package/debian/changelog, package/mingw-byacc.spec:
+	bump
+
+2024-07-28  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2024-07-27
+
+2024-06-03  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2024-05-27
+
 2024-01-09  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* yacc.1: minor cleanup
@@ -22,6 +137,10 @@
 2023-08-22  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* config.guess: 2023-08-22
+
+2023-05-31  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* package/pkgsrc/distinfo: resync with pkgsrc
 
 2023-05-21  Thomas E. Dickey  <dickey@invisible-island.net>
 
@@ -705,10 +824,8 @@
 	regen
 
 	* reader.c:
-	adapt a patch by Roland Illig which added #line directives with dummy
-	filename and line number, because the debug information was incorrect.
-	The actual fix (see output_semantic_actions) is to emit #line directives
-	which correspond to the code-file.
+	Modify output_semantic_actions to emit #line directives which correspond to
+	the code-file (adapted from a patch by Roland Illig).
 
 	* reader.c: simplify an ifdef so I can balance {/}
 
@@ -1811,7 +1928,7 @@
 	* mstring.c:
 	enable mstring() in regular byacc, since Zoulas' change relies upon it
 
-2019-11-03  Christos.Zoulas
+2019-11-03  Christos Zoulas <christos@NetBSD.org>
 
 	* defs.h, reader.c, output.c: add support for bison's "%code" feature
 	also fix a small bug: declare YYLTYPE externally when producing locations
@@ -2105,7 +2222,7 @@
 
 	* btyaccpar.c: regen
 
-2018-05-21  Christos.Zoulas
+2018-05-21  Christos Zoulas <christos@NetBSD.org>
 
 	* btyaccpar.skel:
 	improve compatibility with bison by changing the YYLLOC_DEFAULT macro to use
@@ -4328,7 +4445,7 @@
 	amend the last change so that yytname is #define'd as needed rather than
 	permanent - to avoid breaking cproto for instance.
 
-2014-01-01  Christos.Zoulas
+2014-01-01  Christos Zoulas <christos@NetBSD.org>
 
 	* output.c, defs.h, main.c, reader.c, skeleton.c:
 	changes to build ntpd using byacc:
@@ -4836,7 +4953,7 @@
 
 	* test/ftp.tab.c: regen
 
-2010-12-29  Christos.Zoulas
+2010-12-29  Christos Zoulas <christos@NetBSD.org>
 
 	* test/ftp.y:
 	improve example, which was stuck in 19XX and assumed file sizes were longs.
@@ -4860,7 +4977,7 @@
 
 	* test/calc2.tab.c, test/calc3.tab.c: regen
 
-2010-12-29  Christos.Zoulas
+2010-12-29  Christos Zoulas <christos@NetBSD.org>
 
 	* output.c: correct definition for YYERROR_DECL()
 
@@ -5542,7 +5659,7 @@
 	* makefile.in: add "." to include-path to pickup config.h
 
 	* reader.c:
-	apply fix suggested by Steve Dum for end_rule() in Redhat Bugzilla #112617.
+	apply fix for end_rule() in Redhat Bugzilla #112617 (suggested by Steve Dum).
 
 	* output.c:
 	correct a limit check in pack_vector() - report/analysis by William Evans
