@@ -1,6 +1,6 @@
-/*	$NetBSD: grammar.y,v 1.1.1.9 2021/02/20 20:30:07 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.1.1.10 2026/01/18 16:39:06 christos Exp $	*/
 
-/* Id: grammar.y,v 1.7 2020/03/30 23:55:49 tom Exp 
+/* Id: grammar.y,v 1.8 2024/12/14 15:24:09 tom Exp 
  *
  * yacc grammar for C function prototype generator
  * This was derived from the grammar in Appendix A of
@@ -157,7 +157,7 @@ typedef struct decl_spec {
 /* This is a list of function parameters. */
 typedef struct _ParameterList {
     struct parameter *first;	/* pointer to first parameter in list */
-    struct parameter *last;	/* pointer to last parameter in list */  
+    struct parameter *last;	/* pointer to last parameter in list */
     long begin_comment; 	/* begin offset of comment */
     long end_comment;		/* end offset of comment */
     char *comment;		/* comment at start of parameter list */
@@ -189,7 +189,7 @@ typedef struct parameter {
 /* This is a list of declarators. */
 typedef struct declarator_list {
     Declarator *first;		/* pointer to first declarator in list */
-    Declarator *last;		/* pointer to last declarator in list */  
+    Declarator *last;		/* pointer to last declarator in list */
 } DeclaratorList;
 
 /* #include "symbol.h" */
@@ -348,8 +348,8 @@ static int
 haveAnsiParam (void)
 {
     Parameter *p;
-    if (func_params != 0) {
-	for (p = func_params->first; p != 0; p = p->next) {
+    if (func_params != NULL) {
+	for (p = func_params->first; p != NULL; p = p->next) {
 	    if (p->declarator->func_def == FUNC_ANSI) {
 		return TRUE;
 	    }
@@ -681,14 +681,14 @@ struct_or_union_specifier
 	: struct_or_union any_id braces
 	{
 	    char *s;
-	    if ((s = implied_typedef()) == 0)
+	    if ((s = implied_typedef()) == NULL)
 	        (void)sprintf(s = buf, "%.*s %.*s", TEXT_LEN, $1.text, TEXT_LEN, $2.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
 	| struct_or_union braces
 	{
 	    char *s;
-	    if ((s = implied_typedef()) == 0)
+	    if ((s = implied_typedef()) == NULL)
 		(void)sprintf(s = buf, "%.*s {}", TEXT_LEN, $1.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
@@ -746,14 +746,14 @@ enum_specifier
 	: enumeration any_id braces
 	{
 	    char *s;
-	    if ((s = implied_typedef()) == 0)
+	    if ((s = implied_typedef()) == NULL)
 		(void)sprintf(s = buf, "enum %.*s", TEXT_LEN, $2.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}
 	| enumeration braces
 	{
 	    char *s;
-	    if ((s = implied_typedef()) == 0)
+	    if ((s = implied_typedef()) == NULL)
 		(void)sprintf(s = buf, "%.*s {}", TEXT_LEN, $1.text);
 	    new_decl_spec(&$$, s, $1.begin, DS_NONE);
 	}

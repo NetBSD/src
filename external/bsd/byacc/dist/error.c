@@ -1,6 +1,6 @@
-/*	$NetBSD: error.c,v 1.1.1.10 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.11 2026/01/18 16:39:06 christos Exp $	*/
 
-/* Id: error.c,v 1.17 2023/05/18 21:38:35 tom Exp  */
+/* Id: error.c,v 1.18 2024/12/14 14:34:34 tom Exp  */
 
 /* routines for printing error messages  */
 
@@ -51,7 +51,7 @@ print_pos(const char *st_line, const char *st_cptr)
 {
     const char *s;
 
-    if (st_line == 0)
+    if (st_line == NULL)
 	return;
     for (s = st_line; *s != '\n'; ++s)
     {

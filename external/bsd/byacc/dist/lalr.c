@@ -1,6 +1,6 @@
-/*	$NetBSD: lalr.c,v 1.1.1.10 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: lalr.c,v 1.1.1.11 2026/01/18 16:39:06 christos Exp $	*/
 
-/* Id: lalr.c,v 1.14 2021/05/20 23:57:23 tom Exp  */
+/* Id: lalr.c,v 1.15 2024/12/14 16:48:04 tom Exp  */
 
 #include "defs.h"
 
@@ -643,7 +643,7 @@ traverse(int i)
 void
 lalr_leaks(void)
 {
-    if (includes != 0)
+    if (includes != NULL)
     {
 	int i;
 

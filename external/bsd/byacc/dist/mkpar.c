@@ -1,6 +1,6 @@
-/*	$NetBSD: mkpar.c,v 1.1.1.11 2024/09/14 21:25:37 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.1.1.12 2026/01/18 16:39:06 christos Exp $	*/
 
-/* Id: mkpar.c,v 1.18 2021/05/20 23:57:23 tom Exp  */
+/* Id: mkpar.c,v 1.19 2024/12/14 14:36:50 tom Exp  */
 
 #include "defs.h"
 
@@ -79,7 +79,7 @@ get_shifts(int stateno)
     shifts *sp;
     Value_t *to_state2;
 
-    actions = 0;
+    actions = NULL;
     sp = shift_table[stateno];
     if (sp)
     {
@@ -137,7 +137,7 @@ add_reduce(action *actions,
 {
     action *temp, *prev, *next;
 
-    prev = 0;
+    prev = NULL;
     for (next = actions; next && next->symbol < symbol; next = next->next)
 	prev = next;
 
@@ -176,7 +176,7 @@ find_final_state(void)
     Value_t *to_state2;
     shifts *p;
 
-    if ((p = shift_table[0]) != 0)
+    if ((p = shift_table[0]) != NULL)
     {
 	int i;
 	int goal = ritem[1];
@@ -230,7 +230,7 @@ static void
 remove_conflicts(void)
 {
     int i;
-    action *p, *pref = 0;
+    action *p, *pref = NULL;
 
     SRtotal = 0;
     RRtotal = 0;
@@ -260,7 +260,7 @@ remove_conflicts(void)
 		p->suppressed = 1;
 		StartBacktrack(pref);
 	    }
-	    else if (pref != 0 && pref->action_code == SHIFT)
+	    else if (pref != NULL && pref->action_code == SHIFT)
 	    {
 		if (pref->prec > 0 && p->prec > 0)
 		{
