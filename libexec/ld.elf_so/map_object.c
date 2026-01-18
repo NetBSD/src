@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.70 2026/01/09 22:54:27 jmcneill Exp $	 */
+/*	$NetBSD: map_object.c,v 1.71 2026/01/18 19:19:09 jmcneill Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.70 2026/01/09 22:54:27 jmcneill Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.71 2026/01/18 19:19:09 jmcneill Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -367,7 +367,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		}
 
 #ifdef RTLD_MAP_OBJECT_FIXUP
-		if (_rtld_map_segment_fixup(segs[i], data_addr,
+		if (_rtld_map_segment_fixup(path, fd, ehdr, segs[i], data_addr,
 					    data_vlimit - data_vaddr,
 					    data_prot) == -1) {
 			goto error;

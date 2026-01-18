@@ -1,4 +1,4 @@
-/* $NetBSD: fixup.c,v 1.2 2026/01/15 22:13:32 jmcneill Exp $ */
+/* $NetBSD: fixup.c,v 1.3 2026/01/18 19:19:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2026 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fixup.c,v 1.2 2026/01/15 22:13:32 jmcneill Exp $");
+__RCSID("$NetBSD: fixup.c,v 1.3 2026/01/18 19:19:09 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,42 +61,15 @@ union instr {
 
 #define IBMESPRESSO_P(_pvr)	(((_pvr) >> 16) == 0x7001)
 
-int
-_rtld_map_segment_fixup(Elf_Phdr *phdr, caddr_t data_addr, size_t data_size,
-    int data_prot)
+static int
+_rtld_espresso_fixup_range(caddr_t data_addr, size_t data_size, int data_prot)
 {
-	uint32_t *start, *where, *end;
+	uint32_t *start, *end, *where;
 	union instr previ;
-
-	if (!_rtld_fixup_init) {
-		ssize_t i;
-		size_t j;
-
-		j = sizeof(_rtld_ppc_pvr);
-		i = _rtld_sysctl("machdep.pvr", &_rtld_ppc_pvr, &j);
-		if (i != CTLTYPE_INT) {
-			_rtld_ppc_pvr = 0;
-		}
-		j = sizeof(_rtld_ncpus);
-		i = _rtld_sysctl("hw.ncpu", &_rtld_ncpus, &j);
-		if (i != CTLTYPE_INT) {
-			_rtld_ncpus = 1;
-		}
-
-		_rtld_fixup_init = true;
-	}
-	if (!IBMESPRESSO_P(_rtld_ppc_pvr) || _rtld_ncpus == 1) {
-		return 0;
-	}
-	if ((phdr->p_flags & PF_X) == 0) {
-		return 0;
-	}
 
 	start = (uint32_t *)data_addr;
 	end = start + data_size / sizeof(*where);
 	previ.i_int = 0;
-
-	dbg(("fixup (espresso) from %p to %p\n", start, end));
 
 	if ((data_prot & PROT_WRITE) == 0 &&
 	    mprotect(start, data_size, data_prot | PROT_WRITE) == -1) {
@@ -139,6 +112,89 @@ next_opcode:
 		_rtld_error("Cannot write-protect segment: %s",
 		    xstrerror(errno));
 		return -1;
+	}
+
+	return 0;
+}
+
+static int
+_rtld_espresso_fixup(const char *path, int fd, Elf_Ehdr *ehdr, Elf_Phdr *phdr,
+    caddr_t data_addr, size_t data_size, int data_prot)
+{
+	Elf_Shdr *shdr;
+	size_t shdr_size;
+	int i;
+
+	if (_rtld_ncpus == 1 || ehdr->e_shnum == 0 ||
+	    (phdr->p_flags & PF_X) == 0) {
+		return 0;
+	}
+
+	shdr_size = (size_t)ehdr->e_shentsize * ehdr->e_shnum;
+	shdr = mmap(NULL, shdr_size, PROT_READ, MAP_FILE | MAP_SHARED, fd,
+	    ehdr->e_shoff);
+	if (shdr == MAP_FAILED) {
+		_rtld_error("%s: mmap of shdr failed: %s", path,
+		    xstrerror(errno));
+		return -1;
+	}
+
+	for (i = 0; i < ehdr->e_shnum; i++) {
+		Elf_Addr start = shdr[i].sh_addr;
+		Elf_Addr end = shdr[i].sh_addr + shdr[i].sh_size - 1;
+
+		if (shdr[i].sh_type != SHT_PROGBITS) {
+			continue;
+		}
+		if ((shdr[i].sh_flags & SHF_EXECINSTR) == 0) {
+			continue;
+		}
+
+		if (start >= phdr->p_vaddr &&
+		    end < phdr->p_vaddr + phdr->p_filesz) {
+			dbg(("%s: fixup (espresso) from %p to %p", path,
+			    (void *)start, (void *)end));
+
+			if (_rtld_espresso_fixup_range(
+			    data_addr + (start - phdr->p_vaddr),
+			    shdr[i].sh_size, data_prot) != 0) {
+				_rtld_error("%s: fixup failed", path);
+				munmap(shdr, shdr_size);
+				return -1;
+			}
+		}
+	}
+
+	munmap(shdr, shdr_size);
+
+	return 0;
+}
+
+int
+_rtld_map_segment_fixup(const char *path, int fd, Elf_Ehdr *ehdr,
+    Elf_Phdr *phdr, caddr_t data_addr, size_t data_size, int data_prot)
+{
+	if (!_rtld_fixup_init) {
+		ssize_t i;
+		size_t j;
+
+		j = sizeof(_rtld_ppc_pvr);
+		i = _rtld_sysctl("machdep.pvr", &_rtld_ppc_pvr, &j);
+		if (i != CTLTYPE_INT) {
+			_rtld_ppc_pvr = 0;
+		}
+		j = sizeof(_rtld_ncpus);
+		i = _rtld_sysctl("hw.ncpu", &_rtld_ncpus, &j);
+		if (i != CTLTYPE_INT) {
+			_rtld_ncpus = 1;
+		}
+
+		_rtld_fixup_init = true;
+	}
+
+	if (IBMESPRESSO_P(_rtld_ppc_pvr)) {
+		return _rtld_espresso_fixup(path, fd, ehdr, phdr, data_addr,
+		    data_size, data_prot);
 	}
 
 	return 0;
