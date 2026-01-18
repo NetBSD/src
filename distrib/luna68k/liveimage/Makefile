@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2026/01/18 00:12:11 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2026/01/18 14:56:16 tsutsui Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-luna68k-live	# gives ${IMGBASE}.img
 
@@ -44,7 +44,7 @@ ${WORKMDBOOTPART}: ${TARGETFS} ${MDBOOTPARTFILES}
 .endfor
 	${RM} -f ${WORKMDBOOTPART}
 	${TOOL_MAKEFS} -M ${MDBOOTPARTMB}m -m ${MDBOOTPARTMB}m		\
-	    -xx -F ${SPEC_BOOT}						\
+	    -xx -F ${SPEC_BOOT}	-N ${WORKDIR}/etc			\
 	    -B ${TARGET_ENDIANNESS}					\
 	    ${MAKEFS_TIMESTAMP}						\
 	    ${MDBOOTPARTMAKEFSOPTIONS}					\
