@@ -1,4 +1,4 @@
-/*	$NetBSD: starfive-jh7100.h,v 1.1.1.1 2026/01/18 05:21:41 skrll Exp $	*/
+/*	$NetBSD: starfive-jh7100.h,v 1.2 2026/01/18 15:08:53 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
