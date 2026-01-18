@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-msm8939.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-msm8939.h,v 1.1.1.2 2026/01/18 05:21:35 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -194,6 +194,13 @@
 #define GCC_VENUS0_CORE0_VCODEC0_CLK		183
 #define GCC_VENUS0_CORE1_VCODEC0_CLK		184
 #define GCC_OXILI_TIMER_CLK			185
+#define SYSTEM_MM_NOC_BFDCD_CLK_SRC		186
+#define CSI2_CLK_SRC				187
+#define GCC_CAMSS_CSI2_AHB_CLK			188
+#define GCC_CAMSS_CSI2_CLK			189
+#define GCC_CAMSS_CSI2PHY_CLK			190
+#define GCC_CAMSS_CSI2PIX_CLK			191
+#define GCC_CAMSS_CSI2RDI_CLK			192
 
 /* Indexes for GDSCs */
 #define BIMC_GDSC				0

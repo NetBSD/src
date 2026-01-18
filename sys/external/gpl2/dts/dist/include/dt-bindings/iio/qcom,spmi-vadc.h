@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,spmi-vadc.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,spmi-vadc.h,v 1.1.1.4 2026/01/18 05:21:44 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -241,12 +241,15 @@
 #define ADC7_GPIO3				0x0c
 #define ADC7_GPIO4				0x0d
 
+#define ADC7_SMB_TEMP				0x06
 #define ADC7_CHG_TEMP				0x10
 #define ADC7_USB_IN_V_16			0x11
 #define ADC7_VDC_16				0x12
 #define ADC7_CC1_ID				0x13
 #define ADC7_VREF_BAT_THERM			0x15
 #define ADC7_IIN_FB				0x17
+#define ADC7_ICHG_SMB				0x18
+#define ADC7_IIN_SMB				0x19
 
 /* 30k pull-up1 */
 #define ADC7_AMUX_THM1_30K_PU			0x24

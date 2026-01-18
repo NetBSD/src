@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.4 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.5 2026/01/18 05:21:46 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -35,7 +35,12 @@
 #define LED_COLOR_ID_MULTI	8	/* For multicolor LEDs */
 #define LED_COLOR_ID_RGB	9	/* For multicolor LEDs that can do arbitrary color,
 					   so this would include RGBW and similar */
-#define LED_COLOR_ID_MAX	10
+#define LED_COLOR_ID_PURPLE	10
+#define LED_COLOR_ID_ORANGE	11
+#define LED_COLOR_ID_PINK	12
+#define LED_COLOR_ID_CYAN	13
+#define LED_COLOR_ID_LIME	14
+#define LED_COLOR_ID_MAX	15
 
 /* Standard LED functions */
 /* Keyboard LEDs, usually it would be input4::capslock etc. */
@@ -43,6 +48,7 @@
 #define LED_FUNCTION_CAPSLOCK "capslock"
 #define LED_FUNCTION_SCROLLLOCK "scrolllock"
 #define LED_FUNCTION_NUMLOCK "numlock"
+#define LED_FUNCTION_FNLOCK "fnlock"
 /*   Obsolete equivalents: "tpacpi::thinklight" (IBM/Lenovo Thinkpads),
      "lp5523:kb{1,2,3,4,5,6}" (Nokia N900) */
 #define LED_FUNCTION_KBD_BACKLIGHT "kbd_backlight"
@@ -62,6 +68,13 @@
 #define LED_FUNCTION_MICMUTE "micmute"
 #define LED_FUNCTION_MUTE "mute"
 
+/* Used for player LEDs as found on game controllers from e.g. Nintendo, Sony. */
+#define LED_FUNCTION_PLAYER1 "player-1"
+#define LED_FUNCTION_PLAYER2 "player-2"
+#define LED_FUNCTION_PLAYER3 "player-3"
+#define LED_FUNCTION_PLAYER4 "player-4"
+#define LED_FUNCTION_PLAYER5 "player-5"
+
 /* Miscelleaus functions. Use functions above if you can. */
 #define LED_FUNCTION_ACTIVITY "activity"
 #define LED_FUNCTION_ALARM "alarm"
@@ -80,17 +93,24 @@
 #define LED_FUNCTION_INDICATOR "indicator"
 #define LED_FUNCTION_LAN "lan"
 #define LED_FUNCTION_MAIL "mail"
+#define LED_FUNCTION_MOBILE "mobile"
 #define LED_FUNCTION_MTD "mtd"
 #define LED_FUNCTION_PANIC "panic"
 #define LED_FUNCTION_PROGRAMMING "programming"
 #define LED_FUNCTION_RX "rx"
 #define LED_FUNCTION_SD "sd"
+#define LED_FUNCTION_SPEED_LAN "speed-lan"
+#define LED_FUNCTION_SPEED_WAN "speed-wan"
 #define LED_FUNCTION_STANDBY "standby"
 #define LED_FUNCTION_TORCH "torch"
 #define LED_FUNCTION_TX "tx"
 #define LED_FUNCTION_USB "usb"
 #define LED_FUNCTION_WAN "wan"
+#define LED_FUNCTION_WAN_ONLINE "wan-online"
 #define LED_FUNCTION_WLAN "wlan"
+#define LED_FUNCTION_WLAN_2GHZ "wlan-2ghz"
+#define LED_FUNCTION_WLAN_5GHZ "wlan-5ghz"
+#define LED_FUNCTION_WLAN_6GHZ "wlan-6ghz"
 #define LED_FUNCTION_WPS "wps"
 
 #endif /* __DT_BINDINGS_LEDS_H */

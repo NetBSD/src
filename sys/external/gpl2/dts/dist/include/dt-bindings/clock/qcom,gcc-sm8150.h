@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sm8150.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-sm8150.h,v 1.1.1.3 2026/01/18 05:21:36 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -241,9 +241,17 @@
 #define GCC_USB30_PRIM_BCR					26
 #define GCC_USB30_SEC_BCR					27
 #define GCC_USB_PHY_CFG_AHB2PHY_BCR				28
+#define GCC_VIDEO_AXIC_CLK_BCR					29
+#define GCC_VIDEO_AXI0_CLK_BCR					30
+#define GCC_VIDEO_AXI1_CLK_BCR					31
 
 /* GCC GDSCRs */
+#define PCIE_0_GDSC						0
+#define PCIE_1_GDSC						1
+#define UFS_CARD_GDSC						2
+#define UFS_PHY_GDSC						3
 #define USB30_PRIM_GDSC                     4
 #define USB30_SEC_GDSC						5
+#define EMAC_GDSC						6
 
 #endif

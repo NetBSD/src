@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm63268-reset.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: bcm63268-reset.h,v 1.1.1.2 2026/01/18 05:21:54 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ */
 
@@ -24,5 +24,9 @@
 #define BCM63268_RST_FAP1	16
 #define BCM63268_RST_PCIE_HARD	17
 #define BCM63268_RST_GPHY	18
+
+#define BCM63268_TRST_SW	29
+#define BCM63268_TRST_HW	30
+#define BCM63268_TRST_POR	31
 
 #endif /* __DT_BINDINGS_RESET_BCM63268_H */

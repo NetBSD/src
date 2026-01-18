@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm63268-clock.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: bcm63268-clock.h,v 1.1.1.2 2026/01/18 05:21:28 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ */
 
@@ -28,5 +28,18 @@
 #define BCM63268_CLK_NAND	20
 #define BCM63268_CLK_TBUS	27
 #define BCM63268_CLK_ROBOSW250	31
+
+#define BCM63268_TCLK_EPHY1		0
+#define BCM63268_TCLK_EPHY2		1
+#define BCM63268_TCLK_EPHY3		2
+#define BCM63268_TCLK_GPHY1		3
+#define BCM63268_TCLK_DSL		4
+#define BCM63268_TCLK_WAKEON_EPHY	6
+#define BCM63268_TCLK_WAKEON_DSL	7
+#define BCM63268_TCLK_FAP1		11
+#define BCM63268_TCLK_FAP2		15
+#define BCM63268_TCLK_UTO_50		16
+#define BCM63268_TCLK_UTO_EXTIN		17
+#define BCM63268_TCLK_USB_REF		18
 
 #endif /* __DT_BINDINGS_CLOCK_BCM63268_H */

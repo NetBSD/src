@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3328-cru.h,v 1.1.1.5 2020/01/03 14:33:06 skrll Exp $	*/
+/*	$NetBSD: rk3328-cru.h,v 1.1.1.6 2026/01/18 05:21:39 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -202,8 +202,6 @@
 #define HCLK_IEP		339
 #define HCLK_RGA		340
 #define HCLK_HDCP		341
-
-#define CLK_NR_CLKS		(HCLK_HDCP + 1)
 
 /* soft-reset indices */
 #define SRST_CORE0_PO		0

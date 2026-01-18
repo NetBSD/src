@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a73a4-clock.h,v 1.1.1.3 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: r8a73a4-clock.h,v 1.1.1.4 2026/01/18 05:21:37 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -25,6 +25,10 @@
 #define R8A73A4_CLK_ZX		13
 #define R8A73A4_CLK_ZS		14
 #define R8A73A4_CLK_HP		15
+
+/* MSTP1 */
+#define R8A73A4_CLK_TMU0	25
+#define R8A73A4_CLK_TMU3	21
 
 /* MSTP2 */
 #define R8A73A4_CLK_DMAC	18

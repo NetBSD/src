@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3568-cru.h,v 1.1.1.1 2021/11/07 16:50:00 jmcneill Exp $	*/
+/*	$NetBSD: rk3568-cru.h,v 1.1.1.2 2026/01/18 05:21:40 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -80,6 +80,7 @@
 #define CPLL_333M		9
 #define ARMCLK			10
 #define USB480M			11
+#define USB480M_PHY		12
 #define ACLK_CORE_NIU2BUS	18
 #define CLK_CORE_PVTM		19
 #define CLK_CORE_PVTM_CORE	20

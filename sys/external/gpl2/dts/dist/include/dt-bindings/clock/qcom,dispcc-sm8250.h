@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,dispcc-sm8250.h,v 1.1.1.1 2021/11/07 16:50:00 jmcneill Exp $	*/
+/*	$NetBSD: qcom,dispcc-sm8250.h,v 1.1.1.2 2026/01/18 05:21:34 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -66,6 +66,7 @@
 #define DISP_CC_MDSS_EDP_LINK_INTF_CLK		54
 #define DISP_CC_MDSS_EDP_PIXEL_CLK		55
 #define DISP_CC_MDSS_EDP_PIXEL_CLK_SRC		56
+#define DISP_CC_MDSS_EDP_LINK_DIV_CLK_SRC	57
 
 /* DISP_CC Reset */
 #define DISP_CC_MDSS_CORE_BCR			0

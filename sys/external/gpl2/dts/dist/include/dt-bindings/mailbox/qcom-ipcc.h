@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom-ipcc.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom-ipcc.h,v 1.1.1.2 2026/01/18 05:21:47 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause */
 /*
@@ -10,6 +10,7 @@
 
 /* Signal IDs for MPROC protocol */
 #define IPCC_MPROC_SIGNAL_GLINK_QMP	0
+#define IPCC_MPROC_SIGNAL_TZ		1
 #define IPCC_MPROC_SIGNAL_SMP2P		2
 #define IPCC_MPROC_SIGNAL_PING		3
 
@@ -31,6 +32,10 @@
 #define IPCC_CLIENT_PCIE1		14
 #define IPCC_CLIENT_PCIE2		15
 #define IPCC_CLIENT_SPSS		16
+#define IPCC_CLIENT_NSP1		18
+#define IPCC_CLIENT_TME			23
 #define IPCC_CLIENT_WPSS		24
+#define IPCC_CLIENT_GPDSP0		31
+#define IPCC_CLIENT_GPDSP1		32
 
 #endif

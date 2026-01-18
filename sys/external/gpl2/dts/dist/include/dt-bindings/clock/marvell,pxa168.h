@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell,pxa168.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: marvell,pxa168.h,v 1.1.1.3 2026/01/18 05:21:31 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DTS_MARVELL_PXA168_CLOCK_H
@@ -22,10 +22,13 @@
 #define PXA168_CLK_PLL1_2_1_5		19
 #define PXA168_CLK_PLL1_3_16		20
 #define PXA168_CLK_PLL1_192		21
+#define PXA168_CLK_PLL1_2_1_10		22
+#define PXA168_CLK_PLL1_2_3_16		23
 #define PXA168_CLK_UART_PLL		27
 #define PXA168_CLK_USB_PLL		28
+#define PXA168_CLK_CLK32_2		50
 
-/* apb periphrals */
+/* apb peripherals */
 #define PXA168_CLK_TWSI0		60
 #define PXA168_CLK_TWSI1		61
 #define PXA168_CLK_TWSI2		62
@@ -47,7 +50,7 @@
 #define PXA168_CLK_SSP4			78
 #define PXA168_CLK_TIMER		79
 
-/* axi periphrals */
+/* axi peripherals */
 #define PXA168_CLK_DFC			100
 #define PXA168_CLK_SDH0			101
 #define PXA168_CLK_SDH1			102
@@ -58,6 +61,8 @@
 #define PXA168_CLK_CCIC0		107
 #define PXA168_CLK_CCIC0_PHY		108
 #define PXA168_CLK_CCIC0_SPHY		109
+#define PXA168_CLK_SDH3			110
+#define PXA168_CLK_SDH01_AXI		111
+#define PXA168_CLK_SDH23_AXI		112
 
-#define PXA168_NR_CLKS			200
 #endif

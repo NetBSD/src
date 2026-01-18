@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5410.h,v 1.1.1.3 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: exynos5410.h,v 1.1.1.4 2026/01/18 05:21:29 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -62,7 +62,5 @@
 #define CLK_USBD300		366
 #define CLK_USBD301		367
 #define CLK_SSS			471
-
-#define CLK_NR_CLKS		512
 
 #endif /* _DT_BINDINGS_CLOCK_EXYNOS_5410_H */

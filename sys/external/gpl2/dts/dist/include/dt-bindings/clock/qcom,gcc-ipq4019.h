@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-ipq4019.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-ipq4019.h,v 1.1.1.2 2026/01/18 05:21:34 skrll Exp $	*/
 
 /* Copyright (c) 2015 The Linux Foundation. All rights reserved.
  *
@@ -167,5 +167,11 @@
 #define GCC_QDSS_BCR					69
 #define GCC_MPM_BCR					70
 #define GCC_SPDM_BCR					71
+#define ESS_MAC1_ARES					72
+#define ESS_MAC2_ARES					73
+#define ESS_MAC3_ARES					74
+#define ESS_MAC4_ARES					75
+#define ESS_MAC5_ARES					76
+#define ESS_PSGMII_ARES					77
 
 #endif

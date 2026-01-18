@@ -1,3 +1,5 @@
+/*	$NetBSD: r9a07g043-cpg.h,v 1.1.1.1 2026/01/18 05:21:38 skrll Exp $	*/
+
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
  *
  * Copyright (C) 2022 Renesas Electronics Corp.

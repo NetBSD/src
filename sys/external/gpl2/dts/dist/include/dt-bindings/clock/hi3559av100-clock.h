@@ -1,6 +1,6 @@
-/*	$NetBSD: hi3559av100-clock.h,v 1.1.1.1 2021/11/07 16:50:00 jmcneill Exp $	*/
+/*	$NetBSD: hi3559av100-clock.h,v 1.1.1.2 2026/01/18 05:21:30 skrll Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0-or-later or BSD-2-Clause */
+/* SPDX-License-Identifier: GPL-2.0-or-later OR BSD-2-Clause */
 /*
  * Copyright (c) 2019-2020, Huawei Tech. Co., Ltd.
  *

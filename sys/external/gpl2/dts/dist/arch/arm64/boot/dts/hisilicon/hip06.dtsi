@@ -211,18 +211,26 @@
 
 		cluster0_l2: l2-cache0 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster1_l2: l2-cache1 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster2_l2: l2-cache2 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster3_l2: l2-cache3 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 	};
 
@@ -248,6 +256,48 @@
 			#msi-cells = <1>;
 			reg = <0x0 0xc6000000 0x0 0x40000>;
 		};
+	};
+
+	eth2: ethernet-0 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <0>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	eth3: ethernet-1 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <1>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	eth0: ethernet-4 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <4>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	eth1: ethernet-5 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <5>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	refclk: refclk {
+		compatible = "fixed-clock";
+		clock-frequency = <50000000>;
+		#clock-cells = <0>;
 	};
 
 	timer {
@@ -366,12 +416,6 @@
 			};
 		};
 
-		refclk: refclk {
-			compatible = "fixed-clock";
-			clock-frequency = <50000000>;
-			#clock-cells = <0>;
-		};
-
 		usb_ohci: usb@a7030000 {
 			compatible = "generic-ohci";
 			reg = <0x0 0xa7030000 0x0 0x10000>;
@@ -428,7 +472,7 @@
 			};
 		};
 
-		dsaf0: dsa@c7000000 {
+		dsaf0: dsa@c5000000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "hisilicon,hns-dsaf-v2";
@@ -537,7 +581,7 @@
 
 			port@1 {
 				reg = <1>;
-				serdes-syscon= <&serdes_ctrl>;
+				serdes-syscon = <&serdes_ctrl>;
 				port-rst-offset = <1>;
 				port-mode-offset = <1>;
 				media-type = "fiber";
@@ -546,7 +590,7 @@
 			port@4 {
 				reg = <4>;
 				phy-handle = <&phy0>;
-				serdes-syscon= <&serdes_ctrl>;
+				serdes-syscon = <&serdes_ctrl>;
 				port-rst-offset = <4>;
 				port-mode-offset = <2>;
 				media-type = "copper";
@@ -555,47 +599,11 @@
 			port@5 {
 				reg = <5>;
 				phy-handle = <&phy1>;
-				serdes-syscon= <&serdes_ctrl>;
+				serdes-syscon = <&serdes_ctrl>;
 				port-rst-offset = <5>;
 				port-mode-offset = <3>;
 				media-type = "copper";
 			};
-		};
-
-		eth0: ethernet-4{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <4>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
-		};
-
-		eth1: ethernet-5{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <5>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
-		};
-
-		eth2: ethernet-0{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <0>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
-		};
-
-		eth3: ethernet-1{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <1>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
 		};
 
 		sas0: sas@c3000000 {
@@ -725,7 +733,7 @@
 			status = "disabled";
 		};
 
-		pcie0: pcie@a0090000 {
+		pcie0: pcie@b0000000 {
 			compatible = "hisilicon,hip06-pcie-ecam";
 			reg = <0 0xb0000000 0 0x2000000>,
 			      <0 0xa0090000 0 0x10000>;

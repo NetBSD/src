@@ -1,4 +1,4 @@
-/*	$NetBSD: mt65xx.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
+/*	$NetBSD: mt65xx.h,v 1.1.1.3 2026/01/18 05:21:51 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -17,6 +17,15 @@
 #define MTK_PUPD_SET_R1R0_01 101
 #define MTK_PUPD_SET_R1R0_10 102
 #define MTK_PUPD_SET_R1R0_11 103
+
+#define MTK_PULL_SET_RSEL_000  200
+#define MTK_PULL_SET_RSEL_001  201
+#define MTK_PULL_SET_RSEL_010  202
+#define MTK_PULL_SET_RSEL_011  203
+#define MTK_PULL_SET_RSEL_100  204
+#define MTK_PULL_SET_RSEL_101  205
+#define MTK_PULL_SET_RSEL_110  206
+#define MTK_PULL_SET_RSEL_111  207
 
 #define MTK_DRIVE_2mA  2
 #define MTK_DRIVE_4mA  4

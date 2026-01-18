@@ -5,7 +5,7 @@
  * Copyright 2020 Google LLC.
  */
 
-#include "sc7180-trogdor-lazor-limozeen-nots.dts"
+#include "sc7180-trogdor-lazor-limozeen-nots-r5.dts"
 
 / {
 	model = "Google Lazor Limozeen without Touchscreen (rev4)";
@@ -26,7 +26,7 @@
 		interrupt-parent = <&tlmm>;
 		interrupts = <58 IRQ_TYPE_EDGE_FALLING>;
 
-		vcc-supply = <&pp3300_fp_tp>;
+		vdd-supply = <&pp3300_fp_tp>;
 		hid-descr-addr = <0x20>;
 
 		wakeup-source;

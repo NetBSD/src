@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.4 2020/01/03 14:33:04 skrll Exp $	*/
+/*	$NetBSD: sun8i-h3-ccu.h,v 1.1.1.5 2026/01/18 05:21:42 skrll Exp $	*/
 
 /*
  * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
@@ -128,7 +128,7 @@
 #define CLK_USB_OHCI1		93
 #define CLK_USB_OHCI2		94
 #define CLK_USB_OHCI3		95
-
+#define CLK_DRAM		96
 #define CLK_DRAM_VE		97
 #define CLK_DRAM_CSI		98
 #define CLK_DRAM_DEINTERLACE	99

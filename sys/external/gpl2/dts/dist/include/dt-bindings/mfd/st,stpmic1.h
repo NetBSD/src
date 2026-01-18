@@ -1,6 +1,6 @@
-/*	$NetBSD: st,stpmic1.h,v 1.1.1.1 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: st,stpmic1.h,v 1.1.1.2 2026/01/18 05:21:49 skrll Exp $	*/
 
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause */
 /*
  * Copyright (C) STMicroelectronics 2018 - All Rights Reserved
  * Author: Philippe Peurichard <philippe.peurichard@st.com>,
