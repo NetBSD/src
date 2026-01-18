@@ -1,0 +1,2 @@
+# $NetBSD: spec.boot.in,v 1.1 2026/01/18 00:12:11 tsutsui Exp $
+.		type=dir uname=root gname=wheel mode=0755
