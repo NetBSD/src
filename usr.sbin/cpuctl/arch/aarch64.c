@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.25 2024/10/07 23:11:33 jakllsch Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.26 2026/01/18 06:35:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.25 2024/10/07 23:11:33 jakllsch Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.26 2026/01/18 06:35:16 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -83,7 +83,9 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Arm", "v8.2-A+" },
 	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Arm", "v8.2-A+" },
+	{ CPU_ID_CORTEXA520R0 & CPU_PARTMASK, "Cortex-A520", "Arm", "v9.2-A" },
 	{ CPU_ID_CORTEXA710R2 & CPU_PARTMASK, "Cortex-A710", "Arm", "v9.0-A" },
+	{ CPU_ID_CORTEXA720R0 & CPU_PARTMASK, "Cortex-A720", "Arm", "v9.2-A" },
 	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "Denver2", "NVIDIA", "v8-A" },
 	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "eMAG", "Ampere", "v8-A" },
 	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Arm", "v8.2-A+" },
@@ -99,6 +101,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_AMPERE1 & CPU_PARTMASK, "Ampere-1", "Ampere", "v8.6-A+" },
 	{ CPU_ID_AMPERE1A & CPU_PARTMASK, "Ampere-1A", "Ampere", "v8.6-A+" },
 	{ CPU_ID_A64FX & CPU_PARTMASK, "A64FX", "Fujitsu", "v8.2-A+" },
+	{ CPU_ID_ORYON & CPU_PARTMASK, "Oryon", "Qualcomm", "v8.7-A+" },
 };
 
 const struct impltab implids[] = {
