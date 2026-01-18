@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2157 2026/01/18 16:43:23 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2158 2026/01/18 17:40:33 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -525,11 +525,11 @@ When updating GDB, it is imperative to test that:
 
 Package:	binutils
 Version:	2.45
-Current Vers:	2.45
+Current Vers:	2.45.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
-Date:		2025-08-26
+Date:		2026-01-18
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
@@ -821,11 +821,11 @@ import. Talk to haad before importing new version.
 
 Package:	libpcap
 Version:	1.10.5
-Current Vers:	1.10.5
+Current Vers:	1.10.6
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2025-09-06
+Date:		2026-01-18
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -837,11 +837,11 @@ own copy of bpf_filter.c
 
 Package:	tcpdump
 Version:	4.99.5
-Current Vers:	4.99.5
+Current Vers:	4.99.6
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2025-09-03
+Date:		2026-01-18
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
@@ -1164,11 +1164,11 @@ markus is very cooperative about it):
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.1t/3.0.16/3.5.1
-Current Vers:	1.0.2zm/1.1.1zd/3.0.18/3.2.6/3.3.5/3.4.3/3.5.4
+Current Vers:	1.0.2zm/1.1.1zd/3.0.18/3.2.6/3.3.5/3.4.3/3.5.4,3.6.0
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-09-30
+Date:		2026-01-18
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
@@ -1290,11 +1290,11 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.10.1
-Current Vers:	3.10.5
+Current Vers:	3.10.7
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
 Home Page:	http://www.postfix.org/
-Date: 		2025-11-03
+Date: 		2026-01-18
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
@@ -1388,10 +1388,10 @@ original.
 
 Package:	sqlite
 Version:	3.45.1
-Current Vers:	3.50.3
+Current Vers:	3.51.2
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2025-07-29
+Date: 		2026-01-18
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
@@ -1438,11 +1438,11 @@ purposes.
 
 Package:	tmux
 Version:	3.5a
-Current Vers:	3.5a
+Current Vers:	3.6a
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
-Date: 		2024-11-09
+Date: 		2026-01-18
 Mailing List:	tmux-users@googlegroups.com
 Responsible:	christos
 License:	BSD
@@ -1457,13 +1457,15 @@ Package:	top
 Version:	3.8beta1
 Current Vers:	3.8beta1
 Maintainer:	William LeFebvre <wnl@groupsys.com>
-Archive Site:	http://www.unixtop.org/dist/top-3.8beta1.tar.gz
-Home Page:	http://www.unixtop.org/
-Mailing List:	top-spinners@ocee.groupsys.com
+Archive Site:	[dead] http://www.unixtop.org/dist/top-3.8beta1.tar.gz
+Home Page:	[dead] http://www.unixtop.org/
+Date: 		2026-01-18
+Mailing List:	[dead] top-spinners@ocee.groupsys.com
 Responsible:	simonb, christos
 License:	BSD (2-clause)
 Location:	external/bsd/top/dist
 Notes:
+We are the upstream now.
 
 Package:	traceroute
 Version:	1.4a12
