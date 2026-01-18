@@ -10569,6 +10569,10 @@ ia64_init_builtins (void)
       if ((decl = builtin_decl_explicit (BUILT_IN_FINITEL)) != NULL_TREE)
 	set_user_assembler_name (decl, "_Isfinitef128");
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 static tree

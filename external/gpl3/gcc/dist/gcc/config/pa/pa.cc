@@ -710,6 +710,10 @@ pa_init_builtins (void)
                                    NULL, NULL_TREE);
       pa_builtins[PA_BUILTIN_HUGE_VALQ] = decl;
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Implement TARGET_BUILTIN_DECL.  */

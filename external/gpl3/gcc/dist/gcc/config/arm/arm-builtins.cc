@@ -2709,6 +2709,10 @@ arm_init_builtins (void)
 					    ftype_cmse_nonsecure_caller,
 					    ARM_BUILTIN_CMSE_NONSECURE_CALLER);
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Implement TARGET_BUILTIN_DECL for general builtins.  */
