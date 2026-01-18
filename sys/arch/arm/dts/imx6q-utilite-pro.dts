@@ -1,4 +1,4 @@
-/* $NetBSD: imx6q-utilite-pro.dts,v 1.1 2020/07/09 14:08:44 uwe Exp $ */
+/* $NetBSD: imx6q-utilite-pro.dts,v 1.2 2026/01/18 05:50:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2020 Valery Ushakov
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/imx6q-utilite-pro.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/nxp/imx/imx6q-utilite-pro.dts"
 
 / {
 	chosen {

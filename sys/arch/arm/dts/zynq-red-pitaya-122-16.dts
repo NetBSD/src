@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 /dts-v1/;
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/zynq-7000.dtsi"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/xilinx/zynq-7000.dtsi"
 
 / {
 	model = "Red Pitaya SDRlab 122-16";

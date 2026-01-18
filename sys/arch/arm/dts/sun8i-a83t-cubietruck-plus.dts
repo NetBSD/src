@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-a83t-cubietruck-plus.dts,v 1.2 2021/12/11 19:24:20 mrg Exp $	*/
+/*	$NetBSD: sun8i-a83t-cubietruck-plus.dts,v 1.3 2026/01/18 05:50:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -26,5 +26,5 @@
  * SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-a83t-cubietruck-plus.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/allwinner/sun8i-a83t-cubietruck-plus.dts"
 #include "sun8i-a83t.dtsi"

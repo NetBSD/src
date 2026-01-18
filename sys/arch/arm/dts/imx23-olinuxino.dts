@@ -1,4 +1,4 @@
-/* $NetBSD: imx23-olinuxino.dts,v 1.1 2025/10/09 06:15:16 skrll Exp $ */
+/* $NetBSD: imx23-olinuxino.dts,v 1.2 2026/01/18 05:50:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/imx23-olinuxino.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/nxp/mxs/imx23-olinuxino.dts"
 
 / {
 	aliases {

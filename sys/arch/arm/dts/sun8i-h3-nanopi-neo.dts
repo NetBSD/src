@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-nanopi-neo.dts,v 1.5 2021/11/07 17:11:43 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-nanopi-neo.dts,v 1.6 2026/01/18 05:50:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017,2021 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-h3-nanopi-neo.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/allwinner/sun8i-h3-nanopi-neo.dts"
 
 / {
 	cpus {

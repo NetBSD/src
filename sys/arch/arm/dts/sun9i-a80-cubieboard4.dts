@@ -1,4 +1,4 @@
-/* $NetBSD: sun9i-a80-cubieboard4.dts,v 1.1 2019/05/28 21:57:21 jmcneill Exp $ */
+/* $NetBSD: sun9i-a80-cubieboard4.dts,v 1.2 2026/01/18 05:50:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun9i-a80-cubieboard4.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/allwinner/sun9i-a80-cubieboard4.dts"
 
 / {
 	reg_usb1_vbus: usb1-vbus {

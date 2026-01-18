@@ -1,4 +1,4 @@
-/* $NetBSD: omap3-beagle-xm.dts,v 1.3 2023/03/01 21:07:57 nia Exp $ */
+/* $NetBSD: omap3-beagle-xm.dts,v 1.4 2026/01/18 05:50:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/omap3-beagle-xm.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/ti/omap/omap3-beagle-xm.dts"
 
 / {
 	chosen {

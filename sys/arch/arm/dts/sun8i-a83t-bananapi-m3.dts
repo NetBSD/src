@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-a83t-bananapi-m3.dts,v 1.2 2018/06/30 12:23:24 jmcneill Exp $ */
+/* $NetBSD: sun8i-a83t-bananapi-m3.dts,v 1.3 2026/01/18 05:50:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,5 +26,5 @@
  * SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-a83t-bananapi-m3.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/allwinner/sun8i-a83t-bananapi-m3.dts"
 #include "sun8i-a83t.dtsi"
