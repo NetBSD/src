@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6qdl-clock.h,v 1.1.1.5 2020/01/03 14:33:04 skrll Exp $	*/
+/*	$NetBSD: imx6qdl-clock.h,v 1.1.1.6 2026/01/18 05:21:30 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -275,6 +275,8 @@
 #define IMX6QDL_CLK_MMDC_P0_IPG			263
 #define IMX6QDL_CLK_DCIC1			264
 #define IMX6QDL_CLK_DCIC2			265
-#define IMX6QDL_CLK_END				266
+#define IMX6QDL_CLK_ENET_REF_SEL		266
+#define IMX6QDL_CLK_ENET_REF_PAD		267
+#define IMX6QDL_CLK_END				268
 
 #endif /* __DT_BINDINGS_CLOCK_IMX6QDL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm-gic.h,v 1.1.1.3 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: arm-gic.h,v 1.1.1.4 2026/01/18 05:21:46 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
@@ -14,6 +14,8 @@
 
 #define GIC_SPI 0
 #define GIC_PPI 1
+#define GIC_ESPI 2
+#define GIC_EPPI 3
 
 /*
  * Interrupt specifier cell 2.

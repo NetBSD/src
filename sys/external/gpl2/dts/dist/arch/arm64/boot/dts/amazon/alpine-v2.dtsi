@@ -39,6 +39,7 @@
 / {
 	model = "Annapurna Labs Alpine v2";
 	compatible = "al,alpine-v2";
+	interrupt-parent = <&gic>;
 	#address-cells = <2>;
 	#size-cells = <2>;
 
@@ -89,6 +90,22 @@
 		clock-frequency = <1000000>;
 	};
 
+	timer {
+		compatible = "arm,armv8-timer";
+		interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
+			     <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
+			     <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
+			     <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
+	};
+
+	pmu {
+		compatible = "arm,cortex-a57-pmu";
+		interrupts = <GIC_SPI 104 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 105 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 106 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 107 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
@@ -96,22 +113,6 @@
 
 		interrupt-parent = <&gic>;
 		ranges;
-
-		timer {
-			compatible = "arm,armv8-timer";
-			interrupts = <GIC_PPI 13 IRQ_TYPE_LEVEL_LOW>,
-				     <GIC_PPI 14 IRQ_TYPE_LEVEL_LOW>,
-				     <GIC_PPI 11 IRQ_TYPE_LEVEL_LOW>,
-				     <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
-		};
-
-		pmu {
-			compatible = "arm,armv8-pmuv3";
-			interrupts = <GIC_SPI 104 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 105 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 106 IRQ_TYPE_LEVEL_HIGH>,
-				     <GIC_SPI 107 IRQ_TYPE_LEVEL_HIGH>;
-		};
 
 		gic: interrupt-controller@f0200000 {
 			compatible = "arm,gic-v3";
@@ -145,13 +146,12 @@
 		msix: msix@fbe00000 {
 			compatible = "al,alpine-msix";
 			reg = <0x0 0xfbe00000 0x0 0x100000>;
-			interrupt-controller;
 			msi-controller;
 			al,msi-base-spi = <160>;
 			al,msi-num-spis = <160>;
 		};
 
-		io-fabric {
+		io-fabric@fc000000 {
 			compatible = "simple-bus";
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -159,7 +159,6 @@
 
 			uart0: serial@1883000 {
 				compatible = "ns16550a";
-				device_type = "serial";
 				reg = <0x1883000 0x1000>;
 				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
 				clock-frequency = <500000000>;
@@ -170,7 +169,6 @@
 
 			uart1: serial@1884000 {
 				compatible = "ns16550a";
-				device_type = "serial";
 				reg = <0x1884000 0x1000>;
 				interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
 				clock-frequency = <500000000>;
@@ -181,7 +179,6 @@
 
 			uart2: serial@1885000 {
 				compatible = "ns16550a";
-				device_type = "serial";
 				reg = <0x1885000 0x1000>;
 				interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>;
 				clock-frequency = <500000000>;
@@ -192,7 +189,6 @@
 
 			uart3: serial@1886000 {
 				compatible = "ns16550a";
-				device_type = "serial";
 				reg = <0x1886000 0x1000>;
 				interrupts = <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
 				clock-frequency = <500000000>;

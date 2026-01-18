@@ -1,4 +1,4 @@
-/*	$NetBSD: r8a7779-clock.h,v 1.1.1.2 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: r8a7779-clock.h,v 1.1.1.3 2026/01/18 05:21:37 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -21,6 +21,7 @@
 #define R8A7779_CLK_OUT		7
 
 /* MSTP 0 */
+#define R8A7779_CLK_PWM		5
 #define R8A7779_CLK_HSPI	7
 #define R8A7779_CLK_TMU2	14
 #define R8A7779_CLK_TMU1	15
@@ -57,6 +58,5 @@
 #define R8A7779_CLK_SDHI0	23
 #define R8A7779_CLK_MMC1	30
 #define R8A7779_CLK_MMC0	31
-
 
 #endif /* __DT_BINDINGS_CLOCK_R8A7779_H__ */

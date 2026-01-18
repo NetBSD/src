@@ -5,7 +5,6 @@
 
 /dts-v1/;
 
-#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator.h>
 #include "sm8350.dtsi"
 #include "pm8350.dtsi"
@@ -18,6 +17,7 @@
 / {
 	model = "Qualcomm Technologies, Inc. sm8350 MTP";
 	compatible = "qcom,sm8350-mtp", "qcom,sm8350";
+	chassis-type = "handset";
 
 	aliases {
 		serial0 = &uart2;
@@ -44,7 +44,7 @@
 };
 
 &apps_rsc {
-	pm8350-rpmh-regulators {
+	regulators-0 {
 		compatible = "qcom,pm8350-rpmh-regulators";
 		qcom,pmic-id = "b";
 
@@ -135,7 +135,7 @@
 		};
 	};
 
-	pm8350c-rpmh-regulators {
+	regulators-1 {
 		compatible = "qcom,pm8350c-rpmh-regulators";
 		qcom,pmic-id = "c";
 
@@ -286,6 +286,19 @@
 	firmware-name = "qcom/sm8350/modem.mbn";
 };
 
+&pmk8350_rtc {
+	status = "okay";
+};
+
+&pon_pwrkey {
+	status = "okay";
+};
+
+&pon_resin {
+	status = "okay";
+	linux,code = <KEY_VOLUMEDOWN>;
+};
+
 &qupv3_id_0 {
 	status = "okay";
 };
@@ -312,15 +325,14 @@
 	vcc-max-microamp = <800000>;
 	vccq-supply = <&vreg_l9b_1p2>;
 	vccq-max-microamp = <900000>;
+	vdd-hba-supply = <&vreg_l9b_1p2>;
 };
 
 &ufs_mem_phy {
 	status = "okay";
 
 	vdda-phy-supply = <&vreg_l5b_0p88>;
-	vdda-max-microamp = <91600>;
 	vdda-pll-supply = <&vreg_l6b_1p2>;
-	vdda-pll-max-microamp = <19000>;
 };
 
 &usb_1 {
@@ -366,7 +378,7 @@
 };
 
 &ipa {
-	status = "okay";
-
+	qcom,gsi-loader = "self";
 	memory-region = <&pil_ipa_fw_mem>;
+	status = "okay";
 };

@@ -1,16 +1,9 @@
-/*	$NetBSD: mt6797-power.h,v 1.1.1.1 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: mt6797-power.h,v 1.1.1.2 2026/01/18 05:21:54 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017 MediaTek Inc.
  * Author: Mars.C <mars.cheng@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  */
 
 #ifndef _DT_BINDINGS_POWER_MT6797_POWER_H

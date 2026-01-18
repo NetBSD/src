@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-ipq8074.h,v 1.1.1.4 2021/11/07 16:49:59 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-ipq8074.h,v 1.1.1.5 2026/01/18 05:21:34 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -235,6 +235,7 @@
 #define GCC_PCIE0_AXI_S_BRIDGE_CLK		224
 #define GCC_PCIE0_RCHNG_CLK_SRC			225
 #define GCC_PCIE0_RCHNG_CLK			226
+#define GCC_CRYPTO_PPE_CLK			227
 
 #define GCC_BLSP1_BCR				0
 #define GCC_BLSP1_QUP1_BCR			1
@@ -368,5 +369,22 @@
 #define GCC_PCIE1_AHB_ARES			129
 #define GCC_PCIE1_AXI_MASTER_STICKY_ARES	130
 #define GCC_PCIE0_AXI_SLAVE_STICKY_ARES		131
+#define GCC_PPE_FULL_RESET			132
+#define GCC_UNIPHY0_SOFT_RESET			133
+#define GCC_UNIPHY0_XPCS_RESET			134
+#define GCC_UNIPHY1_SOFT_RESET			135
+#define GCC_UNIPHY1_XPCS_RESET			136
+#define GCC_UNIPHY2_SOFT_RESET			137
+#define GCC_UNIPHY2_XPCS_RESET			138
+#define GCC_EDMA_HW_RESET			139
+#define GCC_NSSPORT1_RESET			140
+#define GCC_NSSPORT2_RESET			141
+#define GCC_NSSPORT3_RESET			142
+#define GCC_NSSPORT4_RESET			143
+#define GCC_NSSPORT5_RESET			144
+#define GCC_NSSPORT6_RESET			145
+
+#define USB0_GDSC				0
+#define USB1_GDSC				1
 
 #endif

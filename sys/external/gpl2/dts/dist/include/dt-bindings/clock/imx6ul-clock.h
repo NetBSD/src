@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6ul-clock.h,v 1.1.1.4 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: imx6ul-clock.h,v 1.1.1.5 2026/01/18 05:21:30 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -258,7 +258,12 @@
 #define IMX6UL_CLK_GPIO4		247
 #define IMX6UL_CLK_GPIO5		248
 #define IMX6UL_CLK_MMDC_P1_IPG		249
+#define IMX6UL_CLK_ENET1_REF_125M	250
+#define IMX6UL_CLK_ENET1_REF_SEL	251
+#define IMX6UL_CLK_ENET1_REF_PAD	252
+#define IMX6UL_CLK_ENET2_REF_SEL	253
+#define IMX6UL_CLK_ENET2_REF_PAD	254
 
-#define IMX6UL_CLK_END			250
+#define IMX6UL_CLK_END			255
 
 #endif /* __DT_BINDINGS_CLOCK_IMX6UL_H */

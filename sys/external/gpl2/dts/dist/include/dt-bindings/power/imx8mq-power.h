@@ -1,4 +1,4 @@
-/*	$NetBSD: imx8mq-power.h,v 1.1.1.1 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: imx8mq-power.h,v 1.1.1.2 2026/01/18 05:21:54 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
 /*
@@ -19,5 +19,8 @@
 #define IMX8M_POWER_DOMAIN_MIPI_CSI1	8
 #define IMX8M_POWER_DOMAIN_MIPI_CSI2	9
 #define IMX8M_POWER_DOMAIN_PCIE2	10
+
+#define IMX8MQ_VPUBLK_PD_G1		0
+#define IMX8MQ_VPUBLK_PD_G2		1
 
 #endif

@@ -1,9 +1,9 @@
-/*	$NetBSD: nuvoton,npcm7xx-clock.h,v 1.1.1.1 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: nuvoton,npcm7xx-clock.h,v 1.1.1.2 2026/01/18 05:21:33 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Nuvoton NPCM7xx Clock Generator binding
- * clock binding number for all clocks supportted by nuvoton,npcm7xx-clk
+ * clock binding number for all clocks supported by nuvoton,npcm7xx-clk
  *
  * Copyright (C) 2018 Nuvoton Technologies tali.perry@nuvoton.com
  *

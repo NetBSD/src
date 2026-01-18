@@ -1,4 +1,4 @@
-/*	$NetBSD: rzg2l-pinctrl.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: rzg2l-pinctrl.h,v 1.1.1.2 2026/01/18 05:21:54 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
@@ -20,6 +20,6 @@
 #define RZG2L_PORT_PINMUX(b, p, f)	((b) * RZG2L_PINS_PER_PORT + (p) | ((f) << 16))
 
 /* Convert a port and pin label to its global pin index */
- #define RZG2L_GPIO(port, pin)	((port) * RZG2L_PINS_PER_PORT + (pin))
+#define RZG2L_GPIO(port, pin)	((port) * RZG2L_PINS_PER_PORT + (pin))
 
 #endif /* __DT_BINDINGS_RZG2L_PINCTRL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91-sama5d2_adc.h,v 1.1.1.1 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: at91-sama5d2_adc.h,v 1.1.1.2 2026/01/18 05:21:44 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -14,5 +14,8 @@
 #define AT91_SAMA5D2_ADC_Y_CHANNEL		25
 /* pressure channel index */
 #define AT91_SAMA5D2_ADC_P_CHANNEL		26
+
+/* SAMA7G5 Temperature sensor channel index. */
+#define AT91_SAMA7G5_ADC_TEMP_CHANNEL		31
 
 #endif

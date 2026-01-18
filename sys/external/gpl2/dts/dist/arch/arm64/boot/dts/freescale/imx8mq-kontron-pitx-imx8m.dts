@@ -65,7 +65,7 @@
 	status = "okay";
 
 	tpm@0 {
-		compatible = "infineon,slb9670";
+		compatible = "infineon,slb9670", "tcg,tpm_tis-spi";
 		reg = <0>;
 		spi-max-frequency = <43000000>;
 	};
@@ -245,20 +245,18 @@
 	pinctrl-0 = <&pinctrl_pcie0>;
 	reset-gpio = <&gpio1 9 GPIO_ACTIVE_LOW>;
 	clocks = <&clk IMX8MQ_CLK_PCIE1_ROOT>,
-		 <&clk IMX8MQ_CLK_PCIE1_AUX>,
+		 <&pcie0_refclk>,
 		 <&clk IMX8MQ_CLK_PCIE1_PHY>,
-		 <&pcie0_refclk>;
-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+		 <&clk IMX8MQ_CLK_PCIE1_AUX>;
 	status = "okay";
 };
 
 /* Intel Ethernet Controller I210/I211 */
 &pcie1 {
 	clocks = <&clk IMX8MQ_CLK_PCIE2_ROOT>,
-		 <&clk IMX8MQ_CLK_PCIE2_AUX>,
+		 <&pcie1_refclk>,
 		 <&clk IMX8MQ_CLK_PCIE2_PHY>,
-		 <&pcie1_refclk>;
-	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
+		 <&clk IMX8MQ_CLK_PCIE2_AUX>;
 	fsl,max-link-speed = <1>;
 	status = "okay";
 };
@@ -311,7 +309,7 @@
 &uart3 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart3>;
-	fsl,uart-has-rtscts;
+	uart-has-rtscts;
 	assigned-clocks = <&clk IMX8MQ_CLK_UART3>;
 	assigned-clock-parents = <&clk IMX8MQ_SYS1_PLL_80M>;
 	status = "okay";

@@ -1,4 +1,4 @@
-/*	$NetBSD: r7s9210-pinctrl.h,v 1.1.1.1 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: r7s9210-pinctrl.h,v 1.1.1.2 2026/01/18 05:21:54 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -44,6 +44,6 @@
 /*
  * Convert a port and pin label to its global pin index
  */
- #define RZA2_PIN(port, pin)	((port) * RZA2_PINS_PER_PORT + (pin))
+#define RZA2_PIN(port, pin)	((port) * RZA2_PINS_PER_PORT + (pin))
 
 #endif /* __DT_BINDINGS_PINCTRL_RENESAS_RZA2_H */

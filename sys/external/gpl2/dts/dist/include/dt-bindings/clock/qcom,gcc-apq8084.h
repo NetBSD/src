@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-apq8084.h,v 1.1.1.2 2020/01/03 14:33:04 skrll Exp $	*/
+/*	$NetBSD: qcom,gcc-apq8084.h,v 1.1.1.3 2026/01/18 05:21:34 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -341,6 +341,7 @@
 #define GCC_PCIE_1_MSTR_AXI_CLK				330
 #define GCC_PCIE_1_PIPE_CLK				331
 #define GCC_PCIE_1_SLV_AXI_CLK				332
+#define GCC_MMSS_GPLL0_CLK_SRC				333
 
 /* gdscs */
 #define USB_HS_HSIC_GDSC				0

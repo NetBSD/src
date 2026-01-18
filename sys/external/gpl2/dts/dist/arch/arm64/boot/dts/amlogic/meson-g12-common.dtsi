@@ -9,6 +9,7 @@
 #include <dt-bindings/clock/g12a-aoclkc.h>
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/interrupt-controller/amlogic,meson-g12a-gpio-intc.h>
 #include <dt-bindings/reset/amlogic,meson-g12a-reset.h>
 #include <dt-bindings/thermal/thermal.h>
 
@@ -58,7 +59,7 @@
 		secure-monitor = <&sm>;
 	};
 
-	gpu_opp_table: gpu-opp-table {
+	gpu_opp_table: opp-table-gpu {
 		compatible = "operating-points-v2";
 
 		opp-124999998 {
@@ -104,6 +105,12 @@
 		/* 3 MiB reserved for ARM Trusted Firmware (BL31) */
 		secmon_reserved: secmon@5000000 {
 			reg = <0x0 0x05000000 0x0 0x300000>;
+			no-map;
+		};
+
+		/* 32 MiB reserved for ARM Trusted Firmware (BL32) */
+		secmon_reserved_bl32: secmon@5300000 {
+			reg = <0x0 0x05300000 0x0 0x2000000>;
 			no-map;
 		};
 
@@ -159,61 +166,6 @@
 			status = "disabled";
 		};
 
-		thermal-zones {
-			cpu_thermal: cpu-thermal {
-				polling-delay = <1000>;
-				polling-delay-passive = <100>;
-				thermal-sensors = <&cpu_temp>;
-
-				trips {
-					cpu_passive: cpu-passive {
-						temperature = <85000>; /* millicelsius */
-						hysteresis = <2000>; /* millicelsius */
-						type = "passive";
-					};
-
-					cpu_hot: cpu-hot {
-						temperature = <95000>; /* millicelsius */
-						hysteresis = <2000>; /* millicelsius */
-						type = "hot";
-					};
-
-					cpu_critical: cpu-critical {
-						temperature = <110000>; /* millicelsius */
-						hysteresis = <2000>; /* millicelsius */
-						type = "critical";
-					};
-				};
-			};
-
-			ddr_thermal: ddr-thermal {
-				polling-delay = <1000>;
-				polling-delay-passive = <100>;
-				thermal-sensors = <&ddr_temp>;
-
-				trips {
-					ddr_passive: ddr-passive {
-						temperature = <85000>; /* millicelsius */
-						hysteresis = <2000>; /* millicelsius */
-						type = "passive";
-					};
-
-					ddr_critical: ddr-critical {
-						temperature = <110000>; /* millicelsius */
-						hysteresis = <2000>; /* millicelsius */
-						type = "critical";
-					};
-				};
-
-				cooling-maps {
-					map {
-						trip = <&ddr_passive>;
-						cooling-device = <&mali THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
-					};
-				};
-			};
-		};
-
 		ethmac: ethernet@ff3f0000 {
 			compatible = "amlogic,meson-g12a-dwmac",
 				     "snps,dwmac-3.70a",
@@ -262,6 +214,11 @@
 				#size-cells = <0>;
 				#sound-dai-cells = <0>;
 				status = "disabled";
+
+				assigned-clocks = <&clkc CLKID_HDMI_SEL>,
+						  <&clkc CLKID_HDMI>;
+				assigned-clock-parents = <&xtal>, <0>;
+				assigned-clock-rates = <0>, <24000000>;
 
 				/* VPU VENC Input */
 				hdmi_tx_venc_port: port@0 {
@@ -894,6 +851,22 @@
 						};
 					};
 
+					pwm_f_z_pins: pwm-f-z {
+						mux {
+							groups = "pwm_f_z";
+							function = "pwm_f";
+							bias-disable;
+						};
+					};
+
+					pwm_f_a_pins: pwm-f-a {
+						mux {
+							groups = "pwm_f_a";
+							function = "pwm_f";
+							bias-disable;
+						};
+					};
+
 					pwm_f_x_pins: pwm-f-x {
 						mux {
 							groups = "pwm_f_x";
@@ -1019,7 +992,7 @@
 						mux {
 							groups = "spdif_out_h";
 							function = "spdif_out";
-							drive-strength-microamp = <500>;
+							drive-strength-microamp = <3000>;
 							bias-disable;
 						};
 					};
@@ -1028,7 +1001,7 @@
 						mux {
 							groups = "spdif_out_a11";
 							function = "spdif_out";
-							drive-strength-microamp = <500>;
+							drive-strength-microamp = <3000>;
 							bias-disable;
 						};
 					};
@@ -1037,7 +1010,7 @@
 						mux {
 							groups = "spdif_out_a13";
 							function = "spdif_out";
-							drive-strength-microamp = <500>;
+							drive-strength-microamp = <3000>;
 							bias-disable;
 						};
 					};
@@ -1604,14 +1577,19 @@
 
 			dmc: bus@38000 {
 				compatible = "simple-bus";
-				reg = <0x0 0x38000 0x0 0x400>;
 				#address-cells = <2>;
 				#size-cells = <2>;
-				ranges = <0x0 0x0 0x0 0x38000 0x0 0x400>;
+				ranges = <0x0 0x0 0x0 0x38000 0x0 0x2000>;
 
 				canvas: video-lut@48 {
 					compatible = "amlogic,canvas";
 					reg = <0x0 0x48 0x0 0x14>;
+				};
+
+				pmu: pmu@80 {
+					reg = <0x0 0x80 0x0 0x40>,
+					      <0x0 0xc00 0x0 0x40>;
+					interrupts = <GIC_SPI 52 IRQ_TYPE_EDGE_RISING>;
 				};
 			};
 
@@ -1690,7 +1668,26 @@
 								       <250000000>,
 								       <0>; /* Do Nothing */
 					};
+
+					mipi_analog_dphy: phy {
+						compatible = "amlogic,g12a-mipi-dphy-analog";
+						#phy-cells = <0>;
+						status = "disabled";
+					};
 				};
+			};
+
+			mipi_dphy: phy@44000 {
+				compatible = "amlogic,axg-mipi-dphy";
+				reg = <0x0 0x44000 0x0 0x2000>;
+				clocks = <&clkc CLKID_MIPI_DSI_PHY>;
+				clock-names = "pclk";
+				resets = <&reset RESET_MIPI_DSI_PHY>;
+				reset-names = "phy";
+				phys = <&mipi_analog_dphy>;
+				phy-names = "analog";
+				#phy-cells = <0>;
+				status = "disabled";
 			};
 
 			usb3_pcie_phy: phy@46000 {
@@ -1727,7 +1724,7 @@
 					#address-cells = <1>;
 					#size-cells = <0>;
 
-					internal_ephy: ethernet_phy@8 {
+					internal_ephy: ethernet-phy@8 {
 						compatible = "ethernet-phy-id0180.3301",
 							     "ethernet-phy-ieee802.3-c22";
 						interrupts = <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>;
@@ -1749,9 +1746,6 @@
 				compatible = "amlogic,meson-gx-ao-sysctrl",
 					     "simple-mfd", "syscon";
 				reg = <0x0 0x0 0x0 0x100>;
-				#address-cells = <2>;
-				#size-cells = <2>;
-				ranges = <0x0 0x0 0x0 0x0 0x0 0x100>;
 
 				clkc_AO: clock-controller {
 					compatible = "amlogic,meson-g12a-aoclkc";
@@ -1760,251 +1754,278 @@
 					clocks = <&xtal>, <&clkc CLKID_CLK81>;
 					clock-names = "xtal", "mpeg-clk";
 				};
+			};
 
-				ao_pinctrl: pinctrl@14 {
-					compatible = "amlogic,meson-g12a-aobus-pinctrl";
-					#address-cells = <2>;
-					#size-cells = <2>;
-					ranges;
+			ao_pinctrl: pinctrl@14 {
+				compatible = "amlogic,meson-g12a-aobus-pinctrl";
+				#address-cells = <2>;
+				#size-cells = <2>;
+				ranges;
 
-					gpio_ao: bank@14 {
-						reg = <0x0 0x14 0x0 0x8>,
-						      <0x0 0x1c 0x0 0x8>,
-						      <0x0 0x24 0x0 0x14>;
-						reg-names = "mux",
-							    "ds",
-							    "gpio";
-						gpio-controller;
-						#gpio-cells = <2>;
-						gpio-ranges = <&ao_pinctrl 0 0 15>;
+				gpio_ao: bank@14 {
+					reg = <0x0 0x14 0x0 0x8>,
+					      <0x0 0x1c 0x0 0x8>,
+					      <0x0 0x24 0x0 0x14>;
+					reg-names = "mux",
+						    "ds",
+						    "gpio";
+					gpio-controller;
+					#gpio-cells = <2>;
+					gpio-ranges = <&ao_pinctrl 0 0 15>;
+				};
+
+				i2c_ao_sck_pins: i2c_ao_sck_pins {
+					mux {
+						groups = "i2c_ao_sck";
+						function = "i2c_ao";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					i2c_ao_sck_pins: i2c_ao_sck_pins {
-						mux {
-							groups = "i2c_ao_sck";
-							function = "i2c_ao";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				i2c_ao_sda_pins: i2c_ao_sda {
+					mux {
+						groups = "i2c_ao_sda";
+						function = "i2c_ao";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					i2c_ao_sda_pins: i2c_ao_sda {
-						mux {
-							groups = "i2c_ao_sda";
-							function = "i2c_ao";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				i2c_ao_sck_e_pins: i2c_ao_sck_e {
+					mux {
+						groups = "i2c_ao_sck_e";
+						function = "i2c_ao";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					i2c_ao_sck_e_pins: i2c_ao_sck_e {
-						mux {
-							groups = "i2c_ao_sck_e";
-							function = "i2c_ao";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				i2c_ao_sda_e_pins: i2c_ao_sda_e {
+					mux {
+						groups = "i2c_ao_sda_e";
+						function = "i2c_ao";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					i2c_ao_sda_e_pins: i2c_ao_sda_e {
-						mux {
-							groups = "i2c_ao_sda_e";
-							function = "i2c_ao";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				mclk0_ao_pins: mclk0-ao {
+					mux {
+						groups = "mclk0_ao";
+						function = "mclk0_ao";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					mclk0_ao_pins: mclk0-ao {
-						mux {
-							groups = "mclk0_ao";
-							function = "mclk0_ao";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				tdm_ao_b_din0_pins: tdm-ao-b-din0 {
+					mux {
+						groups = "tdm_ao_b_din0";
+						function = "tdm_ao_b";
+						bias-disable;
 					};
+				};
 
-					tdm_ao_b_din0_pins: tdm-ao-b-din0 {
-						mux {
-							groups = "tdm_ao_b_din0";
-							function = "tdm_ao_b";
-							bias-disable;
-						};
+				spdif_ao_out_pins: spdif-ao-out {
+					mux {
+						groups = "spdif_ao_out";
+						function = "spdif_ao_out";
+						drive-strength-microamp = <3000>;
+						bias-disable;
 					};
+				};
 
-					spdif_ao_out_pins: spdif-ao-out {
-						mux {
-							groups = "spdif_ao_out";
-							function = "spdif_ao_out";
-							drive-strength-microamp = <500>;
-							bias-disable;
-						};
+				tdm_ao_b_din1_pins: tdm-ao-b-din1 {
+					mux {
+						groups = "tdm_ao_b_din1";
+						function = "tdm_ao_b";
+						bias-disable;
 					};
+				};
 
-					tdm_ao_b_din1_pins: tdm-ao-b-din1 {
-						mux {
-							groups = "tdm_ao_b_din1";
-							function = "tdm_ao_b";
-							bias-disable;
-						};
+				tdm_ao_b_din2_pins: tdm-ao-b-din2 {
+					mux {
+						groups = "tdm_ao_b_din2";
+						function = "tdm_ao_b";
+						bias-disable;
 					};
+				};
 
-					tdm_ao_b_din2_pins: tdm-ao-b-din2 {
-						mux {
-							groups = "tdm_ao_b_din2";
-							function = "tdm_ao_b";
-							bias-disable;
-						};
+				tdm_ao_b_dout0_pins: tdm-ao-b-dout0 {
+					mux {
+						groups = "tdm_ao_b_dout0";
+						function = "tdm_ao_b";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					tdm_ao_b_dout0_pins: tdm-ao-b-dout0 {
-						mux {
-							groups = "tdm_ao_b_dout0";
-							function = "tdm_ao_b";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				tdm_ao_b_dout1_pins: tdm-ao-b-dout1 {
+					mux {
+						groups = "tdm_ao_b_dout1";
+						function = "tdm_ao_b";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					tdm_ao_b_dout1_pins: tdm-ao-b-dout1 {
-						mux {
-							groups = "tdm_ao_b_dout1";
-							function = "tdm_ao_b";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				tdm_ao_b_dout2_pins: tdm-ao-b-dout2 {
+					mux {
+						groups = "tdm_ao_b_dout2";
+						function = "tdm_ao_b";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					tdm_ao_b_dout2_pins: tdm-ao-b-dout2 {
-						mux {
-							groups = "tdm_ao_b_dout2";
-							function = "tdm_ao_b";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				tdm_ao_b_fs_pins: tdm-ao-b-fs {
+					mux {
+						groups = "tdm_ao_b_fs";
+						function = "tdm_ao_b";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					tdm_ao_b_fs_pins: tdm-ao-b-fs {
-						mux {
-							groups = "tdm_ao_b_fs";
-							function = "tdm_ao_b";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				tdm_ao_b_sclk_pins: tdm-ao-b-sclk {
+					mux {
+						groups = "tdm_ao_b_sclk";
+						function = "tdm_ao_b";
+						bias-disable;
+						drive-strength-microamp = <3000>;
 					};
+				};
 
-					tdm_ao_b_sclk_pins: tdm-ao-b-sclk {
-						mux {
-							groups = "tdm_ao_b_sclk";
-							function = "tdm_ao_b";
-							bias-disable;
-							drive-strength-microamp = <3000>;
-						};
+				tdm_ao_b_slv_fs_pins: tdm-ao-b-slv-fs {
+					mux {
+						groups = "tdm_ao_b_slv_fs";
+						function = "tdm_ao_b";
+						bias-disable;
 					};
+				};
 
-					tdm_ao_b_slv_fs_pins: tdm-ao-b-slv-fs {
-						mux {
-							groups = "tdm_ao_b_slv_fs";
-							function = "tdm_ao_b";
-							bias-disable;
-						};
+				tdm_ao_b_slv_sclk_pins: tdm-ao-b-slv-sclk {
+					mux {
+						groups = "tdm_ao_b_slv_sclk";
+						function = "tdm_ao_b";
+						bias-disable;
 					};
+				};
 
-					tdm_ao_b_slv_sclk_pins: tdm-ao-b-slv-sclk {
-						mux {
-							groups = "tdm_ao_b_slv_sclk";
-							function = "tdm_ao_b";
-							bias-disable;
-						};
+				uart_ao_a_pins: uart-a-ao {
+					mux {
+						groups = "uart_ao_a_tx",
+							 "uart_ao_a_rx";
+						function = "uart_ao_a";
+						bias-disable;
 					};
+				};
 
-					uart_ao_a_pins: uart-a-ao {
-						mux {
-							groups = "uart_ao_a_tx",
-								 "uart_ao_a_rx";
-							function = "uart_ao_a";
-							bias-disable;
-						};
+				uart_ao_a_cts_rts_pins: uart-ao-a-cts-rts {
+					mux {
+						groups = "uart_ao_a_cts",
+							 "uart_ao_a_rts";
+						function = "uart_ao_a";
+						bias-disable;
 					};
+				};
 
-					uart_ao_a_cts_rts_pins: uart-ao-a-cts-rts {
-						mux {
-							groups = "uart_ao_a_cts",
-								 "uart_ao_a_rts";
-							function = "uart_ao_a";
-							bias-disable;
-						};
+				uart_ao_b_2_3_pins: uart-ao-b-2-3 {
+					mux {
+						groups = "uart_ao_b_tx_2",
+							 "uart_ao_b_rx_3";
+						function = "uart_ao_b";
+						bias-disable;
 					};
+				};
 
-					pwm_a_e_pins: pwm-a-e {
-						mux {
-							groups = "pwm_a_e";
-							function = "pwm_a_e";
-							bias-disable;
-						};
+				uart_ao_b_8_9_pins: uart-ao-b-8-9 {
+					mux {
+						groups = "uart_ao_b_tx_8",
+							 "uart_ao_b_rx_9";
+						function = "uart_ao_b";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_a_pins: pwm-ao-a {
-						mux {
-							groups = "pwm_ao_a";
-							function = "pwm_ao_a";
-							bias-disable;
-						};
+				uart_ao_b_cts_rts_pins: uart-ao-b-cts-rts {
+					mux {
+						groups = "uart_ao_b_cts",
+							 "uart_ao_b_rts";
+						function = "uart_ao_b";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_b_pins: pwm-ao-b {
-						mux {
-							groups = "pwm_ao_b";
-							function = "pwm_ao_b";
-							bias-disable;
-						};
+				pwm_a_e_pins: pwm-a-e {
+					mux {
+						groups = "pwm_a_e";
+						function = "pwm_a_e";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_c_4_pins: pwm-ao-c-4 {
-						mux {
-							groups = "pwm_ao_c_4";
-							function = "pwm_ao_c";
-							bias-disable;
-						};
+				pwm_ao_a_pins: pwm-ao-a {
+					mux {
+						groups = "pwm_ao_a";
+						function = "pwm_ao_a";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_c_6_pins: pwm-ao-c-6 {
-						mux {
-							groups = "pwm_ao_c_6";
-							function = "pwm_ao_c";
-							bias-disable;
-						};
+				pwm_ao_b_pins: pwm-ao-b {
+					mux {
+						groups = "pwm_ao_b";
+						function = "pwm_ao_b";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_d_5_pins: pwm-ao-d-5 {
-						mux {
-							groups = "pwm_ao_d_5";
-							function = "pwm_ao_d";
-							bias-disable;
-						};
+				pwm_ao_c_4_pins: pwm-ao-c-4 {
+					mux {
+						groups = "pwm_ao_c_4";
+						function = "pwm_ao_c";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_d_10_pins: pwm-ao-d-10 {
-						mux {
-							groups = "pwm_ao_d_10";
-							function = "pwm_ao_d";
-							bias-disable;
-						};
+				pwm_ao_c_6_pins: pwm-ao-c-6 {
+					mux {
+						groups = "pwm_ao_c_6";
+						function = "pwm_ao_c";
+						bias-disable;
 					};
+				};
 
-					pwm_ao_d_e_pins: pwm-ao-d-e {
-						mux {
-							groups = "pwm_ao_d_e";
-							function = "pwm_ao_d";
-						};
+				pwm_ao_d_5_pins: pwm-ao-d-5 {
+					mux {
+						groups = "pwm_ao_d_5";
+						function = "pwm_ao_d";
+						bias-disable;
 					};
+				};
 
-					remote_input_ao_pins: remote-input-ao {
-						mux {
-							groups = "remote_ao_input";
-							function = "remote_ao_input";
-							bias-disable;
-						};
+				pwm_ao_d_10_pins: pwm-ao-d-10 {
+					mux {
+						groups = "pwm_ao_d_10";
+						function = "pwm_ao_d";
+						bias-disable;
+					};
+				};
+
+				pwm_ao_d_e_pins: pwm-ao-d-e {
+					mux {
+						groups = "pwm_ao_d_e";
+						function = "pwm_ao_d";
+					};
+				};
+
+				remote_input_ao_pins: remote-input-ao {
+					mux {
+						groups = "remote_ao_input";
+						function = "remote_ao_input";
+						bias-disable;
 					};
 				};
 			};
@@ -2046,7 +2067,8 @@
 			};
 
 			uart_AO: serial@3000 {
-				compatible = "amlogic,meson-gx-uart",
+				compatible = "amlogic,meson-g12a-uart",
+					     "amlogic,meson-gx-uart",
 					     "amlogic,meson-ao-uart";
 				reg = <0x0 0x3000 0x0 0x18>;
 				interrupts = <GIC_SPI 193 IRQ_TYPE_EDGE_RISING>;
@@ -2056,7 +2078,8 @@
 			};
 
 			uart_AO_B: serial@4000 {
-				compatible = "amlogic,meson-gx-uart",
+				compatible = "amlogic,meson-g12a-uart",
+					     "amlogic,meson-gx-uart",
 					     "amlogic,meson-ao-uart";
 				reg = <0x0 0x4000 0x0 0x18>;
 				interrupts = <GIC_SPI 197 IRQ_TYPE_EDGE_RISING>;
@@ -2150,6 +2173,15 @@
 					remote-endpoint = <&hdmi_tx_in>;
 				};
 			};
+
+			/* DPI output port */
+			dpi_port: port@2 {
+				reg = <2>;
+
+				dpi_out: endpoint {
+					remote-endpoint = <&mipi_dsi_in>;
+				};
+			};
 		};
 
 		gic: interrupt-controller@ffc01000 {
@@ -2185,6 +2217,48 @@
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				amlogic,channel-interrupts = <64 65 66 67 68 69 70 71>;
+			};
+
+			mipi_dsi: dsi@7000 {
+				compatible = "amlogic,meson-g12a-dw-mipi-dsi";
+				reg = <0x0 0x7000 0x0 0x1000>;
+				resets = <&reset RESET_MIPI_DSI_HOST>;
+				reset-names = "top";
+				clocks = <&clkc CLKID_MIPI_DSI_HOST>,
+					 <&clkc CLKID_MIPI_DSI_PXCLK>,
+					 <&clkc CLKID_CTS_ENCL>;
+				clock-names = "pclk", "bit", "px";
+				phys = <&mipi_dphy>;
+				phy-names = "dphy";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				status = "disabled";
+
+				assigned-clocks = <&clkc CLKID_MIPI_DSI_PXCLK_SEL>,
+					 <&clkc CLKID_CTS_ENCL_SEL>,
+					 <&clkc CLKID_VCLK2_SEL>;
+				assigned-clock-parents = <&clkc CLKID_GP0_PLL>,
+					 <&clkc CLKID_VCLK2_DIV1>,
+					 <&clkc CLKID_GP0_PLL>;
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					/* VPU VENC Input */
+					mipi_dsi_venc_port: port@0 {
+						reg = <0>;
+
+						mipi_dsi_in: endpoint {
+							remote-endpoint = <&dpi_out>;
+						};
+					};
+
+					/* DSI Output */
+					mipi_dsi_panel_port: port@1 {
+						reg = <1>;
+					};
+				};
 			};
 
 			watchdog: watchdog@f0d0 {
@@ -2293,7 +2367,8 @@
 			};
 
 			uart_C: serial@22000 {
-				compatible = "amlogic,meson-gx-uart";
+				compatible = "amlogic,meson-g12a-uart",
+					     "amlogic,meson-gx-uart";
 				reg = <0x0 0x22000 0x0 0x18>;
 				interrupts = <GIC_SPI 93 IRQ_TYPE_EDGE_RISING>;
 				clocks = <&xtal>, <&clkc CLKID_UART2>, <&xtal>;
@@ -2302,7 +2377,8 @@
 			};
 
 			uart_B: serial@23000 {
-				compatible = "amlogic,meson-gx-uart";
+				compatible = "amlogic,meson-g12a-uart",
+					     "amlogic,meson-gx-uart";
 				reg = <0x0 0x23000 0x0 0x18>;
 				interrupts = <GIC_SPI 75 IRQ_TYPE_EDGE_RISING>;
 				clocks = <&xtal>, <&clkc CLKID_UART1>, <&xtal>;
@@ -2311,7 +2387,8 @@
 			};
 
 			uart_A: serial@24000 {
-				compatible = "amlogic,meson-gx-uart";
+				compatible = "amlogic,meson-g12a-uart",
+					     "amlogic,meson-gx-uart";
 				reg = <0x0 0x24000 0x0 0x18>;
 				interrupts = <GIC_SPI 26 IRQ_TYPE_EDGE_RISING>;
 				clocks = <&xtal>, <&clkc CLKID_UART0>, <&xtal>;
@@ -2321,10 +2398,10 @@
 			};
 		};
 
-		sd_emmc_a: sd@ffe03000 {
+		sd_emmc_a: mmc@ffe03000 {
 			compatible = "amlogic,meson-axg-mmc";
 			reg = <0x0 0xffe03000 0x0 0x800>;
-			interrupts = <GIC_SPI 189 IRQ_TYPE_EDGE_RISING>;
+			interrupts = <GIC_SPI 189 IRQ_TYPE_LEVEL_HIGH>;
 			status = "disabled";
 			clocks = <&clkc CLKID_SD_EMMC_A>,
 				 <&clkc CLKID_SD_EMMC_A_CLK0>,
@@ -2333,10 +2410,10 @@
 			resets = <&reset RESET_SD_EMMC_A>;
 		};
 
-		sd_emmc_b: sd@ffe05000 {
+		sd_emmc_b: mmc@ffe05000 {
 			compatible = "amlogic,meson-axg-mmc";
 			reg = <0x0 0xffe05000 0x0 0x800>;
-			interrupts = <GIC_SPI 190 IRQ_TYPE_EDGE_RISING>;
+			interrupts = <GIC_SPI 190 IRQ_TYPE_LEVEL_HIGH>;
 			status = "disabled";
 			clocks = <&clkc CLKID_SD_EMMC_B>,
 				 <&clkc CLKID_SD_EMMC_B_CLK0>,
@@ -2348,7 +2425,7 @@
 		sd_emmc_c: mmc@ffe07000 {
 			compatible = "amlogic,meson-axg-mmc";
 			reg = <0x0 0xffe07000 0x0 0x800>;
-			interrupts = <GIC_SPI 191 IRQ_TYPE_EDGE_RISING>;
+			interrupts = <GIC_SPI 191 IRQ_TYPE_LEVEL_HIGH>;
 			status = "disabled";
 			clocks = <&clkc CLKID_SD_EMMC_C>,
 				 <&clkc CLKID_SD_EMMC_C_CLK0>,
@@ -2415,6 +2492,61 @@
 		};
 	};
 
+	thermal-zones {
+		cpu_thermal: cpu-thermal {
+			polling-delay = <1000>;
+			polling-delay-passive = <100>;
+			thermal-sensors = <&cpu_temp>;
+
+			trips {
+				cpu_passive: cpu-passive {
+					temperature = <85000>; /* millicelsius */
+					hysteresis = <2000>; /* millicelsius */
+					type = "passive";
+				};
+
+				cpu_hot: cpu-hot {
+					temperature = <95000>; /* millicelsius */
+					hysteresis = <2000>; /* millicelsius */
+					type = "hot";
+				};
+
+				cpu_critical: cpu-critical {
+					temperature = <110000>; /* millicelsius */
+					hysteresis = <2000>; /* millicelsius */
+					type = "critical";
+				};
+			};
+		};
+
+		ddr_thermal: ddr-thermal {
+			polling-delay = <1000>;
+			polling-delay-passive = <100>;
+			thermal-sensors = <&ddr_temp>;
+
+			trips {
+				ddr_passive: ddr-passive {
+					temperature = <85000>; /* millicelsius */
+					hysteresis = <2000>; /* millicelsius */
+					type = "passive";
+				};
+
+				ddr_critical: ddr-critical {
+					temperature = <110000>; /* millicelsius */
+					hysteresis = <2000>; /* millicelsius */
+					type = "critical";
+				};
+			};
+
+			cooling-maps {
+				map {
+					trip = <&ddr_passive>;
+					cooling-device = <&mali THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				};
+			};
+		};
+	};
+
 	timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <GIC_PPI 13
@@ -2435,4 +2567,17 @@
 		#clock-cells = <0>;
 	};
 
+	npu: npu@ff100000 {
+		compatible = "vivante,gc";
+		reg = <0x0 0xff100000 0x0 0x20000>;
+		interrupts = <0 147 4>;
+		clocks = <&clkc CLKID_NNA_CORE_CLK>,
+			 <&clkc CLKID_NNA_AXI_CLK>;
+		clock-names = "core", "bus";
+		assigned-clocks = <&clkc CLKID_NNA_CORE_CLK>,
+				  <&clkc CLKID_NNA_AXI_CLK>;
+		assigned-clock-rates = <800000000>, <800000000>;
+		resets = <&reset RESET_NNA>;
+		status = "disabled";
+	};
 };

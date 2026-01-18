@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3308-cru.h,v 1.1.1.1 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: rk3308-cru.h,v 1.1.1.2 2026/01/18 05:21:39 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -213,8 +213,6 @@
 #define PCLK_PWM2		232
 #define PCLK_CAN		233
 #define PCLK_OWIRE		234
-
-#define CLK_NR_CLKS		(PCLK_OWIRE + 1)
 
 /* soft-reset indices */
 

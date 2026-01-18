@@ -26,7 +26,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_gpio_keys>;
 
-		power {
+		button-power {
 			label = "Power Button";
 			gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
 			linux,code = <KEY_POWER>;
@@ -133,7 +133,7 @@
 	pinctrl-0 = <&pinctrl_i2c1>;
 	status = "okay";
 
-	i2cmux@70 {
+	i2c-mux@70 {
 		compatible = "nxp,pca9546";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_i2c1_pca9546>;
@@ -142,7 +142,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		i2c1a: i2c1@0 {
+		i2c1a: i2c@0 {
 			reg = <0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -152,14 +152,14 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_reg_arm_dram>;
 				reg = <0x60>;
-				regulator-min-microvolt =  <900000>;
+				regulator-min-microvolt = <900000>;
 				regulator-max-microvolt = <1000000>;
 				regulator-always-on;
 				vsel-gpios = <&gpio3 24 GPIO_ACTIVE_HIGH>;
 			};
 		};
 
-		i2c1b: i2c1@1 {
+		i2c1b: i2c@1 {
 			reg = <1>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -176,7 +176,7 @@
 			};
 		};
 
-		i2c1c: i2c1@2 {
+		i2c1c: i2c@2 {
 			reg = <2>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -186,14 +186,14 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_reg_soc_gpu_vpu>;
 				reg = <0x60>;
-				regulator-min-microvolt =  <900000>;
+				regulator-min-microvolt = <900000>;
 				regulator-max-microvolt = <1000000>;
 				regulator-always-on;
 				vsel-gpios = <&gpio2 20 GPIO_ACTIVE_HIGH>;
 			};
 		};
 
-		i2c1d: i2c1@3 {
+		i2c1d: i2c@3 {
 			reg = <3>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -216,13 +216,13 @@
 	pinctrl-0 = <&pinctrl_i2c4>;
 	status = "okay";
 
-	pca9546: i2cmux@70 {
+	pca9546: i2c-mux@70 {
 		compatible = "nxp,pca9546";
 		reg = <0x70>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		i2c4@0 {
+		i2c@0 {
 			reg = <0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -257,14 +257,14 @@
 			};
 		};
 
-		ddc_i2c_bus: i2c4@1 {
+		ddc_i2c_bus: i2c@1 {
 			reg = <1>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			clock-frequency = <100000>;
 		};
 
-		i2c4@3 {
+		i2c@3 {
 			reg = <3>;
 			#address-cells = <1>;
 			#size-cells = <0>;

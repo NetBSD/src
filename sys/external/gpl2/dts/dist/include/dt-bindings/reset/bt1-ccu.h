@@ -1,4 +1,4 @@
-/*	$NetBSD: bt1-ccu.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: bt1-ccu.h,v 1.1.1.2 2026/01/18 05:21:54 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -23,5 +23,14 @@
 
 #define CCU_SYS_SATA_REF_RST		0
 #define CCU_SYS_APB_RST			1
+#define CCU_SYS_DDR_FULL_RST		2
+#define CCU_SYS_DDR_INIT_RST		3
+#define CCU_SYS_PCIE_PCS_PHY_RST	4
+#define CCU_SYS_PCIE_PIPE0_RST		5
+#define CCU_SYS_PCIE_CORE_RST		6
+#define CCU_SYS_PCIE_PWR_RST		7
+#define CCU_SYS_PCIE_STICKY_RST		8
+#define CCU_SYS_PCIE_NSTICKY_RST	9
+#define CCU_SYS_PCIE_HOT_RST		10
 
 #endif /* __DT_BINDINGS_RESET_BT1_CCU_H */

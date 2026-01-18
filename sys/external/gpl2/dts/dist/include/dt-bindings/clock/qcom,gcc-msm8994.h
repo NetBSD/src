@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-msm8994.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-msm8994.h,v 1.1.1.4 2026/01/18 05:21:35 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -150,6 +150,18 @@
 #define GCC_USB30_SLEEP_CLK			138
 #define GCC_USB_HS_AHB_CLK			139
 #define GCC_USB_PHY_CFG_AHB2PHY_CLK	140
+#define CONFIG_NOC_CLK_SRC			141
+#define PERIPH_NOC_CLK_SRC			142
+#define SYSTEM_NOC_CLK_SRC			143
+#define GPLL0_OUT_MMSSCC			144
+#define GPLL0_OUT_MSSCC				145
+#define PCIE_0_PHY_LDO				146
+#define PCIE_1_PHY_LDO				147
+#define UFS_PHY_LDO					148
+#define USB_SS_PHY_LDO				149
+#define GCC_BOOT_ROM_AHB_CLK		150
+#define GCC_PRNG_AHB_CLK			151
+#define GCC_USB3_PHY_PIPE_CLK		152
 
 /* GDSCs */
 #define PCIE_GDSC			0
@@ -164,5 +176,6 @@
 #define PCIE_PHY_0_RESET		2
 #define PCIE_PHY_1_RESET		3
 #define QUSB2_PHY_RESET			4
+#define MSS_RESET				5
 
 #endif

@@ -7,6 +7,7 @@
 / {
 	model = "Samsung Galaxy A5U (EUR)";
 	compatible = "samsung,a5u-eur", "qcom,msm8916";
+	chassis-type = "handset";
 
 	reg_touch_key: regulator-touch-key {
 		compatible = "regulator-fixed";
@@ -14,7 +15,7 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 
-		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
@@ -28,6 +29,12 @@
 			"0", "0", "1";
 };
 
+&battery {
+	charge-term-current-microamp = <200000>;
+	constant-charge-current-max-microamp = <1500000>;
+	constant-charge-voltage-max-microvolt = <4350000>;
+};
+
 &blsp_i2c5 {
 	status = "okay";
 
@@ -35,13 +42,13 @@
 		compatible = "melfas,mms345l";
 
 		reg = <0x48>;
-		interrupt-parent = <&msmgpio>;
+		interrupt-parent = <&tlmm>;
 		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
 
 		touchscreen-size-x = <720>;
 		touchscreen-size-y = <1280>;
 
-		avdd-supply = <&reg_vdd_tsp>;
+		avdd-supply = <&reg_vdd_tsp_a>;
 		vdd-supply = <&pm8916_l6>;
 
 		pinctrl-names = "default";
@@ -49,10 +56,8 @@
 	};
 };
 
-&pronto {
-	iris {
-		compatible = "qcom,wcn3660b";
-	};
+&clk_pwm {
+	status = "okay";
 };
 
 &touchkey {
@@ -60,17 +65,25 @@
 	vdd-supply = <&reg_touch_key>;
 };
 
-&msmgpio {
-	tkey_en_default: tkey-en-default {
+&vibrator {
+	status = "okay";
+};
+
+&wcnss {
+	status = "okay";
+};
+
+&wcnss_iris {
+	compatible = "qcom,wcn3660b";
+};
+
+&wcnss_mem {
+	status = "okay";
+};
+
+&tlmm {
+	tkey_en_default: tkey-en-default-state {
 		pins = "gpio97";
-		function = "gpio";
-
-		drive-strength = <2>;
-		bias-disable;
-	};
-
-	ts_int_default: ts-int-default {
-		pins = "gpio13";
 		function = "gpio";
 
 		drive-strength = <2>;

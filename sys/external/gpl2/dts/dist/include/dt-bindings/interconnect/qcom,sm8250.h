@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,sm8250.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,sm8250.h,v 1.1.1.2 2026/01/18 05:21:46 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -117,9 +117,6 @@
 #define SLAVE_SERVICE_GEM_NOC_2		15
 #define SLAVE_SERVICE_GEM_NOC		16
 
-#define MASTER_IPA_CORE			0
-#define SLAVE_IPA_CORE			1
-
 #define MASTER_LLCC			0
 #define SLAVE_EBI_CH0			1
 
@@ -170,5 +167,12 @@
 #define SLAVE_PCIE_2			16
 #define SLAVE_QDSS_STM			17
 #define SLAVE_TCU			18
+
+#define MASTER_QUP_CORE_0		0
+#define MASTER_QUP_CORE_1		1
+#define MASTER_QUP_CORE_2		2
+#define SLAVE_QUP_CORE_0		3
+#define SLAVE_QUP_CORE_1		4
+#define SLAVE_QUP_CORE_2		5
 
 #endif

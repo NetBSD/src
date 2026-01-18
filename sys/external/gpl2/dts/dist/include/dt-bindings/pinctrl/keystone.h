@@ -1,18 +1,10 @@
-/*	$NetBSD: keystone.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: keystone.h,v 1.1.1.2 2026/01/18 05:21:50 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This header provides constants for Keystone pinctrl bindings.
  *
  * Copyright (C) 2016 Texas Instruments Incorporated - http://www.ti.com/
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed "as is" WITHOUT ANY WARRANTY of any
- * kind, whether express or implied; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  */
 
 #ifndef _DT_BINDINGS_PINCTRL_KEYSTONE_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell,pxa1928.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: marvell,pxa1928.h,v 1.1.1.3 2026/01/18 05:21:31 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DTS_MARVELL_PXA1928_CLOCK_H
@@ -38,7 +38,6 @@
 #define PXA1928_CLK_THSENS_CPU		0x26
 #define PXA1928_CLK_THSENS_VPU		0x27
 #define PXA1928_CLK_THSENS_GC		0x28
-#define PXA1928_APBC_NR_CLKS		0x30
 
 
 /* axi peripherals */
@@ -54,7 +53,5 @@
 #define PXA1928_CLK_SDH4		0x57
 #define PXA1928_CLK_GC3D		0x5d
 #define PXA1928_CLK_GC2D		0x5f
-
-#define PXA1928_APMU_NR_CLKS		0x60
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sm8350.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-sm8350.h,v 1.1.1.2 2026/01/18 05:21:36 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
@@ -10,7 +10,6 @@
 #define _DT_BINDINGS_CLK_QCOM_GCC_SM8350_H
 
 /* GCC HW clocks */
-#define CORE_BI_PLL_TEST_SE					0
 #define PCIE_0_PIPE_CLK						1
 #define PCIE_1_PIPE_CLK						2
 #define UFS_CARD_RX_SYMBOL_0_CLK				3

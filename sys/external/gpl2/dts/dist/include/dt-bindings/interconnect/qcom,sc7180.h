@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,sc7180.h,v 1.1.1.1 2021/11/07 16:49:57 jmcneill Exp $	*/
+/*	$NetBSD: qcom,sc7180.h,v 1.1.1.2 2026/01/18 05:21:45 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -109,9 +109,6 @@
 #define SLAVE_GEM_NOC_SNOC			10
 #define SLAVE_LLCC			11
 #define SLAVE_SERVICE_GEM_NOC			12
-
-#define MASTER_IPA_CORE			0
-#define SLAVE_IPA_CORE			1
 
 #define MASTER_LLCC			0
 #define SLAVE_EBI1			1

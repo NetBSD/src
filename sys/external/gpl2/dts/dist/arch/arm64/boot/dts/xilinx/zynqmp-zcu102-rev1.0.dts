@@ -4,7 +4,7 @@
  *
  * (C) Copyright 2016 - 2018, Xilinx, Inc.
  *
- * Michal Simek <michal.simek@xilinx.com>
+ * Michal Simek <michal.simek@amd.com>
  */
 
 #include "zynqmp-zcu102-revB.dts"
@@ -12,6 +12,14 @@
 / {
 	model = "ZynqMP ZCU102 Rev1.0";
 	compatible = "xlnx,zynqmp-zcu102-rev1.0", "xlnx,zynqmp-zcu102", "xlnx,zynqmp";
+};
+
+&rproc_split {
+	status = "okay";
+};
+
+&rproc_lockstep {
+	status = "disabled";
 };
 
 &eeprom {

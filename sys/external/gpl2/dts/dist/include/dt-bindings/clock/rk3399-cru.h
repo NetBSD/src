@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3399-cru.h,v 1.1.1.3 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: rk3399-cru.h,v 1.1.1.4 2026/01/18 05:21:39 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -337,8 +337,6 @@
 #define HCLK_SDIO_NOC			495
 #define HCLK_SDIOAUDIO_NOC		496
 
-#define CLK_NR_CLKS			(HCLK_SDIOAUDIO_NOC + 1)
-
 /* pmu-clocks indices */
 
 #define PLL_PPLL			1
@@ -379,8 +377,6 @@
 #define DCLK_CM0S_PMU			48
 #define PCLK_INTR_ARB_PMU		49
 #define HCLK_NOC_PMU			50
-
-#define CLKPMU_NR_CLKS			(HCLK_NOC_PMU + 1)
 
 /* soft-reset indices */
 
@@ -549,8 +545,8 @@
 #define SRST_H_PERILP0			171
 #define SRST_H_PERILP0_NOC		172
 #define SRST_ROM			173
-#define SRST_CRYPTO_S			174
-#define SRST_CRYPTO_M			175
+#define SRST_CRYPTO0_S			174
+#define SRST_CRYPTO0_M			175
 
 /* cru_softrst_con11 */
 #define SRST_P_DCF			176
@@ -558,7 +554,7 @@
 #define SRST_CM0S			178
 #define SRST_CM0S_DBG			179
 #define SRST_CM0S_PO			180
-#define SRST_CRYPTO			181
+#define SRST_CRYPTO0			181
 #define SRST_P_PERILP1_SGRF		182
 #define SRST_P_PERILP1_GRF		183
 #define SRST_CRYPTO1_S			184

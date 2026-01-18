@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3188-cru-common.h,v 1.1.1.4 2020/01/03 14:33:04 skrll Exp $	*/
+/*	$NetBSD: rk3188-cru-common.h,v 1.1.1.5 2026/01/18 05:21:38 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -133,8 +133,6 @@
 #define HCLK_VEPU		471
 #define HCLK_VDPU		472
 #define HCLK_HDMI		473
-
-#define CLK_NR_CLKS		(HCLK_HDMI + 1)
 
 /* soft-reset indices */
 #define SRST_MCORE		2

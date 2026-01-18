@@ -44,7 +44,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			phy: phy@0 {
+			phy: ethernet-phy@0 {
 				compatible = "ethernet-phy-ieee802.3-c22";
 				reg = <0x0>;
 				interrupt-parent = <&gpio>;
@@ -73,19 +73,19 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			channel@0 {
+			input@0 {
 				reg = <0x0>;
 				label = "VDD_SYS_GPU";
 				shunt-resistor-micro-ohms = <10000>;
 			};
 
-			channel@1 {
+			input@1 {
 				reg = <0x1>;
 				label = "VDD_SYS_SOC";
 				shunt-resistor-micro-ohms = <10000>;
 			};
 
-			channel@2 {
+			input@2 {
 				reg = <0x2>;
 				label = "VDD_3V8_WIFI";
 				shunt-resistor-micro-ohms = <10000>;
@@ -98,19 +98,19 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 
-			channel@0 {
+			input@0 {
 				reg = <0x0>;
 				label = "VDD_IN";
 				shunt-resistor-micro-ohms = <5000>;
 			};
 
-			channel@1 {
+			input@1 {
 				reg = <0x1>;
 				label = "VDD_SYS_CPU";
 				shunt-resistor-micro-ohms = <10000>;
 			};
 
-			channel@2 {
+			input@2 {
 				reg = <0x2>;
 				label = "VDD_5V0_DDR";
 				shunt-resistor-micro-ohms = <10000>;
@@ -145,6 +145,7 @@
 	/* SDMMC3 (SDIO) */
 	mmc@3440000 {
 		status = "okay";
+		vqmmc-supply = <&vddio_sdmmc3>;
 	};
 
 	/* SDMMC4 (eMMC) */
@@ -190,32 +191,6 @@
 		nvidia,invert-interrupt;
 	};
 
-	cpus {
-		cpu@0 {
-			enable-method = "psci";
-		};
-
-		cpu@1 {
-			enable-method = "psci";
-		};
-
-		cpu@2 {
-			enable-method = "psci";
-		};
-
-		cpu@3 {
-			enable-method = "psci";
-		};
-
-		cpu@4 {
-			enable-method = "psci";
-		};
-
-		cpu@5 {
-			enable-method = "psci";
-		};
-	};
-
 	bpmp {
 		i2c {
 			status = "okay";
@@ -234,6 +209,23 @@
 
 				pinctrl-names = "default";
 				pinctrl-0 = <&max77620_default>;
+
+				fps {
+					fps0 {
+						maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
+						maxim,shutdown-fps-time-period-us = <640>;
+					};
+
+					fps1 {
+						maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN1>;
+						maxim,shutdown-fps-time-period-us = <640>;
+					};
+
+					fps2 {
+						maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
+						maxim,shutdown-fps-time-period-us = <640>;
+					};
+				};
 
 				max77620_default: pinmux {
 					gpio0 {
@@ -281,23 +273,6 @@
 						pins = "gpio7";
 						function = "gpio";
 						drive-push-pull = <0>;
-					};
-				};
-
-				fps {
-					fps0 {
-						maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
-						maxim,shutdown-fps-time-period-us = <640>;
-					};
-
-					fps1 {
-						maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN1>;
-						maxim,shutdown-fps-time-period-us = <640>;
-					};
-
-					fps2 {
-						maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
-						maxim,shutdown-fps-time-period-us = <640>;
 					};
 				};
 
@@ -387,13 +362,39 @@
 		};
 	};
 
+	cpus {
+		cpu@0 {
+			enable-method = "psci";
+		};
+
+		cpu@1 {
+			enable-method = "psci";
+		};
+
+		cpu@2 {
+			enable-method = "psci";
+		};
+
+		cpu@3 {
+			enable-method = "psci";
+		};
+
+		cpu@4 {
+			enable-method = "psci";
+		};
+
+		cpu@5 {
+			enable-method = "psci";
+		};
+	};
+
 	psci {
 		compatible = "arm,psci-1.0";
 		status = "okay";
 		method = "smc";
 	};
 
-	gnd: regulator@0 {
+	gnd: regulator-gnd {
 		compatible = "regulator-fixed";
 		regulator-name = "GND";
 		regulator-min-microvolt = <0>;
@@ -402,7 +403,7 @@
 		regulator-boot-on;
 	};
 
-	vdd_5v0_sys: regulator@1 {
+	vdd_5v0_sys: regulator-vdd-5v0-sys {
 		compatible = "regulator-fixed";
 		regulator-name = "VDD_5V0_SYS";
 		regulator-min-microvolt = <5000000>;
@@ -411,7 +412,7 @@
 		regulator-boot-on;
 	};
 
-	vdd_1v8_ap: regulator@2 {
+	vdd_1v8_ap: regulator-vdd-1v8-ap {
 		compatible = "regulator-fixed";
 		regulator-name = "VDD_1V8_AP";
 		regulator-min-microvolt = <1800000>;
