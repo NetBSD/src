@@ -1,4 +1,4 @@
-/*	$NetBSD: err_syntax27.y,v 1.1.1.4 2026/01/18 16:39:06 christos Exp $	*/
+/*	$NetBSD: err_syntax27.y,v 1.2 2026/01/18 16:41:29 christos Exp $	*/
 
 %pure-parser
 

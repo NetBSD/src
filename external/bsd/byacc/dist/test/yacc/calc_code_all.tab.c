@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_all.tab.c,v 1.2 2024/09/14 21:29:04 christos Exp $	*/
+/*	$NetBSD: calc_code_all.tab.c,v 1.3 2026/01/18 16:41:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -248,16 +248,29 @@ static const YYINT calc_code_all_check[] = {             40,
 #define YYUNDFTOKEN 265
 #define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? YYUNDFTOKEN : (a))
 #if YYDEBUG
+#ifndef NULL
+#define NULL (void*)0
+#endif
 static const char *const calc_code_all_name[] = {
 
-"end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'%'","'&'",0,"'('","')'","'*'","'+'",0,"'-'",0,"'/'",0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'='",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"'|'",0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"DIGIT","LETTER","UMINUS",0,0,0,0,0,"illegal-symbol",
+"end-of-file",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'\\n'",NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'%'","'&'",NULL,"'('","')'","'*'",
+"'+'",NULL,"'-'",NULL,"'/'",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,"'='",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,"'|'",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"DIGIT","LETTER","UMINUS",NULL,
+NULL,NULL,NULL,NULL,"illegal-symbol",
 };
 static const char *const calc_code_all_rule[] = {
 "$accept : list",
@@ -297,7 +310,7 @@ int      yynerrs;
 #line 3 "calc_code_all.y"
 /* CODE-REQUIRES */ 
 /* %code "requires" block end */
-#line 299 "calc_code_all.tab.c"
+#line 312 "calc_code_all.tab.c"
 
 /* define the initial stack-sizes */
 #ifdef YYSTACKSIZE
@@ -331,7 +344,7 @@ static YYSTACKDATA yystack;
 #line 6 "calc_code_all.y"
 /* CODE-PROVIDES2 */ 
 /* %code "provides" block end */
-#line 333 "calc_code_all.tab.c"
+#line 346 "calc_code_all.tab.c"
 
 /* %code "" block start */
 #line 1 "calc_code_all.y"
@@ -339,7 +352,7 @@ static YYSTACKDATA yystack;
 #line 2 "calc_code_all.y"
 /* CODE-DEFAULT */ 
 /* %code "" block end */
-#line 341 "calc_code_all.tab.c"
+#line 354 "calc_code_all.tab.c"
 #line 73 "calc_code_all.y"
  /* start of programs */
 
@@ -382,7 +395,7 @@ yylex(void)
     }
     return( c );
 }
-#line 384 "calc_code_all.tab.c"
+#line 397 "calc_code_all.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -408,14 +421,14 @@ static int yygrowstack(YYSTACKDATA *data)
 
     i = (int) (data->s_mark - data->s_base);
     newss = (YYINT *)realloc(data->s_base, newsize * sizeof(*newss));
-    if (newss == 0)
+    if (newss == NULL)
         return YYENOMEM;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
     newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
-    if (newvs == 0)
+    if (newvs == NULL)
         return YYENOMEM;
 
     data->l_base = newvs;
@@ -449,7 +462,7 @@ YYPARSE_DECL()
 #if YYDEBUG
     const char *yys;
 
-    if ((yys = getenv("YYDEBUG")) != 0)
+    if ((yys = getenv("YYDEBUG")) != NULL)
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -584,79 +597,79 @@ yyreduce:
 case 3:
 #line 35 "calc_code_all.y"
 	{  yyerrok ; }
-#line 586 "calc_code_all.tab.c"
+#line 599 "calc_code_all.tab.c"
 break;
 case 4:
 #line 39 "calc_code_all.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
-#line 591 "calc_code_all.tab.c"
+#line 604 "calc_code_all.tab.c"
 break;
 case 5:
 #line 41 "calc_code_all.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
-#line 596 "calc_code_all.tab.c"
+#line 609 "calc_code_all.tab.c"
 break;
 case 6:
 #line 45 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-1]; }
-#line 601 "calc_code_all.tab.c"
+#line 614 "calc_code_all.tab.c"
 break;
 case 7:
 #line 47 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
-#line 606 "calc_code_all.tab.c"
+#line 619 "calc_code_all.tab.c"
 break;
 case 8:
 #line 49 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
-#line 611 "calc_code_all.tab.c"
+#line 624 "calc_code_all.tab.c"
 break;
 case 9:
 #line 51 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
-#line 616 "calc_code_all.tab.c"
+#line 629 "calc_code_all.tab.c"
 break;
 case 10:
 #line 53 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
-#line 621 "calc_code_all.tab.c"
+#line 634 "calc_code_all.tab.c"
 break;
 case 11:
 #line 55 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
-#line 626 "calc_code_all.tab.c"
+#line 639 "calc_code_all.tab.c"
 break;
 case 12:
 #line 57 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
-#line 631 "calc_code_all.tab.c"
+#line 644 "calc_code_all.tab.c"
 break;
 case 13:
 #line 59 "calc_code_all.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
-#line 636 "calc_code_all.tab.c"
+#line 649 "calc_code_all.tab.c"
 break;
 case 14:
 #line 61 "calc_code_all.y"
 	{  yyval = - yystack.l_mark[0]; }
-#line 641 "calc_code_all.tab.c"
+#line 654 "calc_code_all.tab.c"
 break;
 case 15:
 #line 63 "calc_code_all.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
-#line 646 "calc_code_all.tab.c"
+#line 659 "calc_code_all.tab.c"
 break;
 case 17:
 #line 68 "calc_code_all.y"
 	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
-#line 651 "calc_code_all.tab.c"
+#line 664 "calc_code_all.tab.c"
 break;
 case 18:
 #line 70 "calc_code_all.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
-#line 656 "calc_code_all.tab.c"
+#line 669 "calc_code_all.tab.c"
 break;
-#line 658 "calc_code_all.tab.c"
+#line 671 "calc_code_all.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

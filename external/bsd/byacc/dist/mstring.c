@@ -1,12 +1,12 @@
-/*	$NetBSD: mstring.c,v 1.7 2024/09/14 21:29:02 christos Exp $	*/
+/*	$NetBSD: mstring.c,v 1.8 2026/01/18 16:41:29 christos Exp $	*/
 
-/* Id: mstring.c,v 1.10 2023/02/26 10:15:01 tom Exp  */
+/* Id: mstring.c,v 1.11 2024/12/14 16:48:04 tom Exp  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mstring.c,v 1.7 2024/09/14 21:29:02 christos Exp $");
+__RCSID("$NetBSD: mstring.c,v 1.8 2026/01/18 16:41:29 christos Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -39,7 +39,7 @@ msprintf(struct mstring *s, const char *fmt, ...)
     {
 	buf_ptr = malloc(buf_len = 4096);
     }
-    if (buf_ptr == 0)
+    if (buf_ptr == NULL)
     {
 	return;
     }
@@ -53,10 +53,10 @@ msprintf(struct mstring *s, const char *fmt, ...)
 	if ((changed = (len > buf_len)) != 0)
 	{
 	    char *new_ptr = realloc(buf_ptr, (buf_len * 3) / 2);
-	    if (new_ptr == 0)
+	    if (new_ptr == NULL)
 	    {
 		free(buf_ptr);
-		buf_ptr = 0;
+		buf_ptr = NULL;
 		return;
 	    }
 	    buf_ptr = new_ptr;
@@ -88,9 +88,9 @@ msprintf(struct mstring *s, const char *fmt, ...)
 	else
 	{
 	    free(s->base);
-	    s->base = 0;
-	    s->ptr = 0;
-	    s->end = 0;
+	    s->base = NULL;
+	    s->ptr = NULL;
+	    s->end = NULL;
 	    return;
 	}
     }
@@ -113,7 +113,7 @@ mputchar(struct mstring *s, int ch)
 	}
 	else
 	{
-	    s->ptr = s->end = 0;
+	    s->ptr = s->end = NULL;
 	    return ch;
 	}
     }
@@ -128,14 +128,14 @@ msnew(void)
 
     if (n)
     {
-	if ((n->base = n->ptr = MALLOC(HEAD)) != 0)
+	if ((n->base = n->ptr = MALLOC(HEAD)) != NULL)
 	{
 	    n->end = n->base + HEAD;
 	}
 	else
 	{
 	    free(n);
-	    n = 0;
+	    n = NULL;
 	}
     }
     return n;
@@ -144,8 +144,8 @@ msnew(void)
 struct mstring *
 msrenew(char *value)
 {
-    struct mstring *r = 0;
-    if (value != 0)
+    struct mstring *r = NULL;
+    if (value != NULL)
     {
 	r = msnew();
 	r->base = value;
@@ -158,7 +158,7 @@ msrenew(char *value)
 char *
 msdone(struct mstring *s)
 {
-    char *r = 0;
+    char *r = NULL;
     if (s)
     {
 	mputc(s, 0);
@@ -218,7 +218,7 @@ void
 mstring_leaks(void)
 {
     free(buf_ptr);
-    buf_ptr = 0;
+    buf_ptr = NULL;
     buf_len = 0;
 }
 #endif

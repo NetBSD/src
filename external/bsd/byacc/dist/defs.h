@@ -1,6 +1,6 @@
-/*	$NetBSD: defs.h,v 1.20 2024/09/14 21:29:02 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.21 2026/01/18 16:41:29 christos Exp $	*/
 
-/* Id: defs.h,v 1.74 2023/05/18 21:28:05 tom Exp  */
+/* Id: defs.h,v 1.75 2024/12/14 14:34:38 tom Exp  */
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -192,9 +192,9 @@ SYM_CASES;
 #define REALLOC(p,n)	(realloc((char*)(p),(size_t)(n)))
 #define TREALLOC(t,p,n)	((t*)realloc((char*)(p), (size_t)(n) * sizeof(t)))
 
-#define DO_FREE(x)	if (x) { FREE(x); x = 0; }
+#define DO_FREE(x)	if (x) { FREE(x); x = NULL; }
 
-#define NO_SPACE(p)	do { if (p == 0) on_error(); assert(p != 0); } while (0)
+#define NO_SPACE(p)	do { if (p == NULL) on_error(); assert(p != NULL); } while (0)
 
 /* messages */
 #define PLURAL(n) ((n) > 1 ? "s" : "")

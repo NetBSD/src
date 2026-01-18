@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_calc2.tab.c,v 1.5 2024/09/14 21:29:05 christos Exp $	*/
+/*	$NetBSD: quote_calc2.tab.c,v 1.6 2026/01/18 16:41:31 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -262,18 +262,30 @@ static const YYINT quote_calc2_check[] = {               10,
 #define YYUNDFTOKEN 277
 #define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? YYUNDFTOKEN : (a))
 #if YYDEBUG
+#ifndef NULL
+#define NULL (void*)0
+#endif
 static const char *const quote_calc2_name[] = {
 
-"end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'%'","'&'",0,"'('","')'","'*'","'+'",0,"'-'",0,"'/'",0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'='",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"'|'",0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"OP_ADD","\"ADD\"","OP_SUB","\"SUB\"","OP_MUL","\"MUL\"","OP_DIV",
-"\"DIV\"","OP_MOD","\"MOD\"","OP_AND","\"AND\"","DIGIT","LETTER","UMINUS",0,0,0,
-0,0,"illegal-symbol",
+"end-of-file",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'\\n'",NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'%'","'&'",NULL,"'('","')'","'*'",
+"'+'",NULL,"'-'",NULL,"'/'",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,"'='",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,"'|'",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"OP_ADD","\"ADD\"","OP_SUB",
+"\"SUB\"","OP_MUL","\"MUL\"","OP_DIV","\"DIV\"","OP_MOD","\"MOD\"","OP_AND",
+"\"AND\"","DIGIT","LETTER","UMINUS",NULL,NULL,NULL,NULL,NULL,"illegal-symbol",
 };
 static const char *const quote_calc2_rule[] = {
 "$accept : list",
@@ -375,7 +387,7 @@ yylex(void) {
     }
     return( c );
 }
-#line 377 "quote_calc2.tab.c"
+#line 389 "quote_calc2.tab.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -401,14 +413,14 @@ static int yygrowstack(YYSTACKDATA *data)
 
     i = (int) (data->s_mark - data->s_base);
     newss = (YYINT *)realloc(data->s_base, newsize * sizeof(*newss));
-    if (newss == 0)
+    if (newss == NULL)
         return YYENOMEM;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
     newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
-    if (newvs == 0)
+    if (newvs == NULL)
         return YYENOMEM;
 
     data->l_base = newvs;
@@ -442,7 +454,7 @@ YYPARSE_DECL()
 #if YYDEBUG
     const char *yys;
 
-    if ((yys = getenv("YYDEBUG")) != 0)
+    if ((yys = getenv("YYDEBUG")) != NULL)
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -577,79 +589,79 @@ yyreduce:
 case 3:
 #line 35 "quote_calc2.y"
 	{  yyerrok ; }
-#line 579 "quote_calc2.tab.c"
+#line 591 "quote_calc2.tab.c"
 break;
 case 4:
 #line 39 "quote_calc2.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
-#line 584 "quote_calc2.tab.c"
+#line 596 "quote_calc2.tab.c"
 break;
 case 5:
 #line 41 "quote_calc2.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
-#line 589 "quote_calc2.tab.c"
+#line 601 "quote_calc2.tab.c"
 break;
 case 6:
 #line 45 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-1]; }
-#line 594 "quote_calc2.tab.c"
+#line 606 "quote_calc2.tab.c"
 break;
 case 7:
 #line 47 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
-#line 599 "quote_calc2.tab.c"
+#line 611 "quote_calc2.tab.c"
 break;
 case 8:
 #line 49 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
-#line 604 "quote_calc2.tab.c"
+#line 616 "quote_calc2.tab.c"
 break;
 case 9:
 #line 51 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
-#line 609 "quote_calc2.tab.c"
+#line 621 "quote_calc2.tab.c"
 break;
 case 10:
 #line 53 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
-#line 614 "quote_calc2.tab.c"
+#line 626 "quote_calc2.tab.c"
 break;
 case 11:
 #line 55 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
-#line 619 "quote_calc2.tab.c"
+#line 631 "quote_calc2.tab.c"
 break;
 case 12:
 #line 57 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
-#line 624 "quote_calc2.tab.c"
+#line 636 "quote_calc2.tab.c"
 break;
 case 13:
 #line 59 "quote_calc2.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
-#line 629 "quote_calc2.tab.c"
+#line 641 "quote_calc2.tab.c"
 break;
 case 14:
 #line 61 "quote_calc2.y"
 	{  yyval = - yystack.l_mark[0]; }
-#line 634 "quote_calc2.tab.c"
+#line 646 "quote_calc2.tab.c"
 break;
 case 15:
 #line 63 "quote_calc2.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
-#line 639 "quote_calc2.tab.c"
+#line 651 "quote_calc2.tab.c"
 break;
 case 17:
 #line 68 "quote_calc2.y"
 	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
-#line 644 "quote_calc2.tab.c"
+#line 656 "quote_calc2.tab.c"
 break;
 case 18:
 #line 70 "quote_calc2.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
-#line 649 "quote_calc2.tab.c"
+#line 661 "quote_calc2.tab.c"
 break;
-#line 651 "quote_calc2.tab.c"
+#line 663 "quote_calc2.tab.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

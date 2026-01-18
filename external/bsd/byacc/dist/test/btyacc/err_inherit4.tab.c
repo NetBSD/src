@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit4.tab.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
+/*	$NetBSD: err_inherit4.tab.c,v 1.7 2026/01/18 16:41:30 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -282,17 +282,29 @@ static const YYINT err_inherit4_ctable[] = {             -1,
 #define YYUNDFTOKEN 270
 #define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? YYUNDFTOKEN : (a))
 #if YYDEBUG
+#ifndef NULL
+#define NULL (void*)0
+#endif
 static const char *const err_inherit4_name[] = {
 
-"$end",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"error","GLOBAL","LOCAL","REAL","INTEGER",
-"NAME","$accept","declaration","namelist","locnamelist","class","type","$$1",
-"$$2","illegal-symbol",
+"$end",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,"error","GLOBAL","LOCAL","REAL","INTEGER","NAME","$accept","declaration",
+"namelist","locnamelist","class","type","$$1","$$2","illegal-symbol",
 };
 static const char *const err_inherit4_rule[] = {
 "$accept : declaration",
@@ -402,47 +414,47 @@ static YYSTACKDATA yystack;
 #if YYBTYACC
 
 /* Current parser state */
-static YYParseState *yyps = 0;
+static YYParseState *yyps = NULL;
 
 /* yypath != NULL: do the full parse, starting at *yypath parser state. */
-static YYParseState *yypath = 0;
+static YYParseState *yypath = NULL;
 
 /* Base of the lexical value queue */
-static YYSTYPE *yylvals = 0;
+static YYSTYPE *yylvals = NULL;
 
 /* Current position at lexical value queue */
-static YYSTYPE *yylvp = 0;
+static YYSTYPE *yylvp = NULL;
 
 /* End position of lexical value queue */
-static YYSTYPE *yylve = 0;
+static YYSTYPE *yylve = NULL;
 
 /* The last allocated position at the lexical value queue */
-static YYSTYPE *yylvlim = 0;
+static YYSTYPE *yylvlim = NULL;
 
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
 /* Base of the lexical position queue */
-static YYLTYPE *yylpsns = 0;
+static YYLTYPE *yylpsns = NULL;
 
 /* Current position at lexical position queue */
-static YYLTYPE *yylpp = 0;
+static YYLTYPE *yylpp = NULL;
 
 /* End position of lexical position queue */
-static YYLTYPE *yylpe = 0;
+static YYLTYPE *yylpe = NULL;
 
 /* The last allocated position at the lexical position queue */
-static YYLTYPE *yylplim = 0;
+static YYLTYPE *yylplim = NULL;
 #endif
 
 /* Current position at lexical token queue */
-static YYINT  *yylexp = 0;
+static YYINT  *yylexp = NULL;
 
-static YYINT  *yylexemes = 0;
+static YYINT  *yylexemes = NULL;
 #endif /* YYBTYACC */
 #line 80 "err_inherit4.y"
 
 extern int YYLEX_DECL();
 extern void YYERROR_DECL();
-#line 444 "err_inherit4.tab.c"
+#line 456 "err_inherit4.tab.c"
 
 /* Release memory associated with symbol. */
 #if ! defined YYDESTRUCT_IS_DECLARED
@@ -454,17 +466,17 @@ YYDESTRUCT_DECL()
 	case 263:
 #line 28 "err_inherit4.y"
 	{ }
-#line 456 "err_inherit4.tab.c"
+#line 468 "err_inherit4.tab.c"
 	break;
 	case 264:
 #line 28 "err_inherit4.y"
 	{ }
-#line 461 "err_inherit4.tab.c"
+#line 473 "err_inherit4.tab.c"
 	break;
 	case 265:
 #line 28 "err_inherit4.y"
 	{ }
-#line 466 "err_inherit4.tab.c"
+#line 478 "err_inherit4.tab.c"
 	break;
     }
 }
@@ -504,14 +516,14 @@ static int yygrowstack(YYSTACKDATA *data)
 
     i = (int) (data->s_mark - data->s_base);
     newss = (YYINT *)realloc(data->s_base, newsize * sizeof(*newss));
-    if (newss == 0)
+    if (newss == NULL)
         return YYENOMEM;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
     newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
-    if (newvs == 0)
+    if (newvs == NULL)
         return YYENOMEM;
 
     data->l_base = newvs;
@@ -519,7 +531,7 @@ static int yygrowstack(YYSTACKDATA *data)
 
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
     newps = (YYLTYPE *)realloc(data->p_base, newsize * sizeof(*newps));
-    if (newps == 0)
+    if (newps == NULL)
         return YYENOMEM;
 
     data->p_base = newps;
@@ -613,7 +625,7 @@ YYPARSE_DECL()
 #if YYDEBUG
     const char *yys;
 
-    if ((yys = getenv("YYDEBUG")) != 0)
+    if ((yys = getenv("YYDEBUG")) != NULL)
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -627,8 +639,8 @@ YYPARSE_DECL()
 #endif
 
 #if YYBTYACC
-    yyps = yyNewState(0); if (yyps == 0) goto yyenomem;
-    yyps->save = 0;
+    yyps = yyNewState(0); if (yyps == NULL) goto yyenomem;
+    yyps->save = NULL;
 #endif /* YYBTYACC */
     yym = 0;
     /* yyn is set below */
@@ -1142,63 +1154,63 @@ yyreduce:
 case 1:
 #line 52 "err_inherit4.y"
 yyval.cval = yystack.l_mark[-1].cval;
-#line 1144 "err_inherit4.tab.c"
+#line 1156 "err_inherit4.tab.c"
 break;
 case 2:
 #line 52 "err_inherit4.y"
 yyval.tval =  yystack.l_mark[-1].tval;
-#line 1149 "err_inherit4.tab.c"
+#line 1161 "err_inherit4.tab.c"
 break;
 case 3:
 #line 53 "err_inherit4.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; yyloc = yystack.p_mark[0]; }
-#line 1154 "err_inherit4.tab.c"
+#line 1166 "err_inherit4.tab.c"
 break;
 case 4:
 #line 55 "err_inherit4.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; yyloc = yystack.p_mark[-3]; }
-#line 1159 "err_inherit4.tab.c"
+#line 1171 "err_inherit4.tab.c"
 break;
 case 5:
 #line 58 "err_inherit4.y"
 	{ yyval.cval = cGLOBAL; }
-#line 1164 "err_inherit4.tab.c"
+#line 1176 "err_inherit4.tab.c"
 break;
 case 6:
 #line 59 "err_inherit4.y"
 	{ yyval.cval = cLOCAL; }
-#line 1169 "err_inherit4.tab.c"
+#line 1181 "err_inherit4.tab.c"
 break;
 case 7:
 #line 62 "err_inherit4.y"
 	{ yyval.tval = tREAL; }
-#line 1174 "err_inherit4.tab.c"
+#line 1186 "err_inherit4.tab.c"
 break;
 case 8:
 #line 63 "err_inherit4.y"
 	{ yyval.tval = tINTEGER; }
-#line 1179 "err_inherit4.tab.c"
+#line 1191 "err_inherit4.tab.c"
 break;
 case 9:
 #line 67 "err_inherit4.y"
 	{ yyval.nlist->s = mksymbol(yystack.l_mark[-2].tval, yystack.l_mark[-3].cval, yystack.l_mark[0].id);
 	      yyval.nlist->next = yystack.l_mark[-1].nlist;
 	    }
-#line 1186 "err_inherit4.tab.c"
+#line 1198 "err_inherit4.tab.c"
 break;
 case 10:
 #line 71 "err_inherit4.y"
 	{ yyval.nlist->s = mksymbol(yystack.l_mark[-1].tval, yystack.l_mark[-2].cval, yystack.l_mark[0].id);
 	      yyval.nlist->next = NULL;
 	    }
-#line 1193 "err_inherit4.tab.c"
+#line 1205 "err_inherit4.tab.c"
 break;
 case 11:
 #line 77 "err_inherit4.y"
 	{ yyval.nlist = yystack.l_mark[0].nlist; yyloc = yystack.p_mark[1]; }
-#line 1198 "err_inherit4.tab.c"
+#line 1210 "err_inherit4.tab.c"
 break;
-#line 1200 "err_inherit4.tab.c"
+#line 1212 "err_inherit4.tab.c"
     default:
         break;
     }

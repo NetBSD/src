@@ -1,8 +1,8 @@
-.\"	$NetBSD: yacc.1,v 1.11 2024/09/14 21:29:02 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.12 2026/01/18 16:41:29 christos Exp $
 .\"
-.\" Id: yacc.1,v 1.43 2024/01/10 00:30:34 tom Exp 
+.\" Id: yacc.1,v 1.44 2024/12/31 15:46:49 tom Exp 
 .\"
-.TH YACC 1 2024-01-09 "Berkeley Yacc" "User Commands"
+.TH YACC 1 2024-12-31 "Berkeley Yacc" "User Commands"
 .
 .ds N Yacc
 .ds n yacc
@@ -75,9 +75,9 @@ The
 .B \-b
 option changes the prefix prepended to the output file names to
 the string denoted by
-.I file_prefix.
+.IR file_prefix .
 The default prefix is the character
-.I y.
+.IR y .
 .TP
 .B \-B
 create a backtracking parser (compile-time configuration for \fBbtyacc\fP).
@@ -147,9 +147,9 @@ The
 .B \-p
 option changes the prefix prepended to yacc-generated symbols to
 the string denoted by
-.I symbol_prefix.
+.IR symbol_prefix .
 The default prefix is the string
-.B yy.
+.B "yy."
 .TP
 .B \-P
 create a reentrant parser, e.g., \*(``%pure\-parser\*(''.
@@ -210,7 +210,7 @@ The
 .B \-v
 option causes a human-readable description of the generated parser to
 be written to the file
-.I y.output.
+.IR y.output .
 .TP
 .B \-V
 print the version number to the standard output.

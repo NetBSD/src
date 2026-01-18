@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_calc1.y,v 1.1.1.4 2026/01/18 16:39:06 christos Exp $	*/
+/*	$NetBSD: btyacc_calc1.y,v 1.2 2026/01/18 16:41:29 christos Exp $	*/
 
 %PURE_PARSER
 %{

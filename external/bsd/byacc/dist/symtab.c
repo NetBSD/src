@@ -1,18 +1,18 @@
-/*	$NetBSD: symtab.c,v 1.11 2018/12/23 20:27:23 jakllsch Exp $	*/
+/*	$NetBSD: symtab.c,v 1.12 2026/01/18 16:41:29 christos Exp $	*/
 
-/* Id: symtab.c,v 1.11 2014/03/26 00:17:09 Tom.Shields Exp  */
+/* Id: symtab.c,v 1.12 2024/12/14 14:40:24 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.11 2018/12/23 20:27:23 jakllsch Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.12 2026/01/18 16:41:29 christos Exp $");
 
 /* TABLE_SIZE is the number of entries in the symbol table. */
 /* TABLE_SIZE must be a power of two.			    */
 
 #define	TABLE_SIZE 1024
 
-static bucket **symbol_table = 0;
+static bucket **symbol_table = NULL;
 bucket *first_symbol;
 bucket *last_symbol;
 
@@ -36,18 +36,18 @@ make_bucket(const char *name)
 {
     bucket *bp;
 
-    assert(name != 0);
+    assert(name != NULL);
 
     bp = TMALLOC(bucket, 1);
     NO_SPACE(bp);
 
-    bp->link = 0;
-    bp->next = 0;
+    bp->link = NULL;
+    bp->next = NULL;
 
     bp->name = TMALLOC(char, strlen(name) + 1);
     NO_SPACE(bp->name);
 
-    bp->tag = 0;
+    bp->tag = NULL;
     bp->value = UNDEFINED;
     bp->index = 0;
     bp->prec = 0;
@@ -55,9 +55,9 @@ make_bucket(const char *name)
     bp->assoc = TOKEN;
 #if defined(YYBTYACC)
     bp->args = -1;
-    bp->argnames = 0;
-    bp->argtags = 0;
-    bp->destructor = 0;
+    bp->argnames = NULL;
+    bp->argtags = NULL;
+    bp->destructor = NULL;
 #endif
     strcpy(bp->name, name);
 
@@ -97,7 +97,7 @@ create_symbol_table(void)
     NO_SPACE(symbol_table);
 
     for (i = 0; i < TABLE_SIZE; i++)
-	symbol_table[i] = 0;
+	symbol_table[i] = NULL;
 
     bp = make_bucket("error");
     bp->index = 1;
@@ -112,7 +112,7 @@ void
 free_symbol_table(void)
 {
     FREE(symbol_table);
-    symbol_table = 0;
+    symbol_table = NULL;
 }
 
 void

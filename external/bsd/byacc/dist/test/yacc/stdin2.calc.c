@@ -1,4 +1,4 @@
-/*	$NetBSD: stdin2.calc.c,v 1.2 2024/09/14 21:29:05 christos Exp $	*/
+/*	$NetBSD: stdin2.calc.c,v 1.3 2026/01/18 16:41:31 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -166,16 +166,29 @@ static const YYINT yycheck[] = {                         40,
 #define YYUNDFTOKEN 265
 #define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? YYUNDFTOKEN : (a))
 #if YYDEBUG
+#ifndef NULL
+#define NULL (void*)0
+#endif
 static const char *const yyname[] = {
 
-"end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'%'","'&'",0,"'('","')'","'*'","'+'",0,"'-'",0,"'/'",0,0,0,0,0,0,0,
-0,0,0,0,0,0,"'='",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"'|'",0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,"DIGIT","LETTER","UMINUS",0,0,0,0,0,"illegal-symbol",
+"end-of-file",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'\\n'",NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'%'","'&'",NULL,"'('","')'","'*'",
+"'+'",NULL,"'-'",NULL,"'/'",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,"'='",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,"'|'",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"DIGIT","LETTER","UMINUS",NULL,
+NULL,NULL,NULL,NULL,"illegal-symbol",
 };
 static const char *const yyrule[] = {
 "$accept : list",
@@ -278,7 +291,7 @@ yylex(void)
     }
     return( c );
 }
-#line 280 "stdin2.calc.c"
+#line 293 "stdin2.calc.c"
 
 #if YYDEBUG
 #include <stdio.h>	/* needed for printf */
@@ -304,14 +317,14 @@ static int yygrowstack(YYSTACKDATA *data)
 
     i = (int) (data->s_mark - data->s_base);
     newss = (YYINT *)realloc(data->s_base, newsize * sizeof(*newss));
-    if (newss == 0)
+    if (newss == NULL)
         return YYENOMEM;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
     newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
-    if (newvs == 0)
+    if (newvs == NULL)
         return YYENOMEM;
 
     data->l_base = newvs;
@@ -345,7 +358,7 @@ YYPARSE_DECL()
 #if YYDEBUG
     const char *yys;
 
-    if ((yys = getenv("YYDEBUG")) != 0)
+    if ((yys = getenv("YYDEBUG")) != NULL)
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -480,79 +493,79 @@ yyreduce:
 case 3:
 #line 28 "calc.y"
 	{  yyerrok ; }
-#line 482 "stdin2.calc.c"
+#line 495 "stdin2.calc.c"
 break;
 case 4:
 #line 32 "calc.y"
 	{  printf("%d\n",yystack.l_mark[0]);}
-#line 487 "stdin2.calc.c"
+#line 500 "stdin2.calc.c"
 break;
 case 5:
 #line 34 "calc.y"
 	{  regs[yystack.l_mark[-2]] = yystack.l_mark[0]; }
-#line 492 "stdin2.calc.c"
+#line 505 "stdin2.calc.c"
 break;
 case 6:
 #line 38 "calc.y"
 	{  yyval = yystack.l_mark[-1]; }
-#line 497 "stdin2.calc.c"
+#line 510 "stdin2.calc.c"
 break;
 case 7:
 #line 40 "calc.y"
 	{  yyval = yystack.l_mark[-2] + yystack.l_mark[0]; }
-#line 502 "stdin2.calc.c"
+#line 515 "stdin2.calc.c"
 break;
 case 8:
 #line 42 "calc.y"
 	{  yyval = yystack.l_mark[-2] - yystack.l_mark[0]; }
-#line 507 "stdin2.calc.c"
+#line 520 "stdin2.calc.c"
 break;
 case 9:
 #line 44 "calc.y"
 	{  yyval = yystack.l_mark[-2] * yystack.l_mark[0]; }
-#line 512 "stdin2.calc.c"
+#line 525 "stdin2.calc.c"
 break;
 case 10:
 #line 46 "calc.y"
 	{  yyval = yystack.l_mark[-2] / yystack.l_mark[0]; }
-#line 517 "stdin2.calc.c"
+#line 530 "stdin2.calc.c"
 break;
 case 11:
 #line 48 "calc.y"
 	{  yyval = yystack.l_mark[-2] % yystack.l_mark[0]; }
-#line 522 "stdin2.calc.c"
+#line 535 "stdin2.calc.c"
 break;
 case 12:
 #line 50 "calc.y"
 	{  yyval = yystack.l_mark[-2] & yystack.l_mark[0]; }
-#line 527 "stdin2.calc.c"
+#line 540 "stdin2.calc.c"
 break;
 case 13:
 #line 52 "calc.y"
 	{  yyval = yystack.l_mark[-2] | yystack.l_mark[0]; }
-#line 532 "stdin2.calc.c"
+#line 545 "stdin2.calc.c"
 break;
 case 14:
 #line 54 "calc.y"
 	{  yyval = - yystack.l_mark[0]; }
-#line 537 "stdin2.calc.c"
+#line 550 "stdin2.calc.c"
 break;
 case 15:
 #line 56 "calc.y"
 	{  yyval = regs[yystack.l_mark[0]]; }
-#line 542 "stdin2.calc.c"
+#line 555 "stdin2.calc.c"
 break;
 case 17:
 #line 61 "calc.y"
 	{  yyval = yystack.l_mark[0]; base = (yystack.l_mark[0]==0) ? 8 : 10; }
-#line 547 "stdin2.calc.c"
+#line 560 "stdin2.calc.c"
 break;
 case 18:
 #line 63 "calc.y"
 	{  yyval = base * yystack.l_mark[-1] + yystack.l_mark[0]; }
-#line 552 "stdin2.calc.c"
+#line 565 "stdin2.calc.c"
 break;
-#line 554 "stdin2.calc.c"
+#line 567 "stdin2.calc.c"
     }
     yystack.s_mark -= yym;
     yystate = *yystack.s_mark;

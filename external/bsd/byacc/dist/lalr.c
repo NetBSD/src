@@ -1,10 +1,10 @@
-/*	$NetBSD: lalr.c,v 1.12 2024/09/14 21:29:02 christos Exp $	*/
+/*	$NetBSD: lalr.c,v 1.13 2026/01/18 16:41:29 christos Exp $	*/
 
 #include "defs.h"
-/* Id: lalr.c,v 1.14 2021/05/20 23:57:23 tom Exp  */
+/* Id: lalr.c,v 1.15 2024/12/14 16:48:04 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lalr.c,v 1.12 2024/09/14 21:29:02 christos Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.13 2026/01/18 16:41:29 christos Exp $");
 
 typedef struct shorts
 {
@@ -645,7 +645,7 @@ traverse(int i)
 void
 lalr_leaks(void)
 {
-    if (includes != 0)
+    if (includes != NULL)
     {
 	int i;
 

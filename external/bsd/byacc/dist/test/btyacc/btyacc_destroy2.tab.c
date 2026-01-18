@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_destroy2.tab.c,v 1.6 2024/09/14 21:29:03 christos Exp $	*/
+/*	$NetBSD: btyacc_destroy2.tab.c,v 1.7 2026/01/18 16:41:29 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -332,17 +332,29 @@ static const YYINT destroy2_ctable[] = {                 -1,
 #define YYUNDFTOKEN 268
 #define YYTRANSLATE(a) ((a) > YYMAXTOKEN ? YYUNDFTOKEN : (a))
 #if YYDEBUG
+#ifndef NULL
+#define NULL (void*)0
+#endif
 static const char *const destroy2_name[] = {
 
-"$end",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,"'('","')'",0,0,"','",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"error","GLOBAL","LOCAL",
-"REAL","INTEGER","NAME","$accept","declaration","locnamelist","class","type",
-"namelist","illegal-symbol",
+"$end",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,"'('","')'",NULL,NULL,"','",NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+NULL,NULL,"error","GLOBAL","LOCAL","REAL","INTEGER","NAME","$accept",
+"declaration","locnamelist","class","type","namelist","illegal-symbol",
 };
 static const char *const destroy2_rule[] = {
 "$accept : declaration",
@@ -450,47 +462,47 @@ static YYSTACKDATA yystack;
 #if YYBTYACC
 
 /* Current parser state */
-static YYParseState *yyps = 0;
+static YYParseState *yyps = NULL;
 
 /* yypath != NULL: do the full parse, starting at *yypath parser state. */
-static YYParseState *yypath = 0;
+static YYParseState *yypath = NULL;
 
 /* Base of the lexical value queue */
-static YYSTYPE *yylvals = 0;
+static YYSTYPE *yylvals = NULL;
 
 /* Current position at lexical value queue */
-static YYSTYPE *yylvp = 0;
+static YYSTYPE *yylvp = NULL;
 
 /* End position of lexical value queue */
-static YYSTYPE *yylve = 0;
+static YYSTYPE *yylve = NULL;
 
 /* The last allocated position at the lexical value queue */
-static YYSTYPE *yylvlim = 0;
+static YYSTYPE *yylvlim = NULL;
 
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
 /* Base of the lexical position queue */
-static YYLTYPE *yylpsns = 0;
+static YYLTYPE *yylpsns = NULL;
 
 /* Current position at lexical position queue */
-static YYLTYPE *yylpp = 0;
+static YYLTYPE *yylpp = NULL;
 
 /* End position of lexical position queue */
-static YYLTYPE *yylpe = 0;
+static YYLTYPE *yylpe = NULL;
 
 /* The last allocated position at the lexical position queue */
-static YYLTYPE *yylplim = 0;
+static YYLTYPE *yylplim = NULL;
 #endif
 
 /* Current position at lexical token queue */
-static YYINT  *yylexp = 0;
+static YYINT  *yylexp = NULL;
 
-static YYINT  *yylexemes = 0;
+static YYINT  *yylexemes = NULL;
 #endif /* YYBTYACC */
 #line 89 "btyacc_destroy2.y"
 
 extern int YYLEX_DECL();
 extern void YYERROR_DECL();
-#line 492 "btyacc_destroy2.tab.c"
+#line 504 "btyacc_destroy2.tab.c"
 
 /* Release memory associated with symbol. */
 #if ! defined YYDESTRUCT_IS_DECLARED
@@ -509,7 +521,7 @@ YYDESTRUCT_DECL()
 		    free(pp->s); free(pp);
 		  }
 		}
-#line 511 "btyacc_destroy2.tab.c"
+#line 523 "btyacc_destroy2.tab.c"
 	break;
     }
 }
@@ -549,14 +561,14 @@ static int yygrowstack(YYSTACKDATA *data)
 
     i = (int) (data->s_mark - data->s_base);
     newss = (YYINT *)realloc(data->s_base, newsize * sizeof(*newss));
-    if (newss == 0)
+    if (newss == NULL)
         return YYENOMEM;
 
     data->s_base = newss;
     data->s_mark = newss + i;
 
     newvs = (YYSTYPE *)realloc(data->l_base, newsize * sizeof(*newvs));
-    if (newvs == 0)
+    if (newvs == NULL)
         return YYENOMEM;
 
     data->l_base = newvs;
@@ -564,7 +576,7 @@ static int yygrowstack(YYSTACKDATA *data)
 
 #if defined(YYLTYPE) || defined(YYLTYPE_IS_DECLARED)
     newps = (YYLTYPE *)realloc(data->p_base, newsize * sizeof(*newps));
-    if (newps == 0)
+    if (newps == NULL)
         return YYENOMEM;
 
     data->p_base = newps;
@@ -658,7 +670,7 @@ YYPARSE_DECL()
 #if YYDEBUG
     const char *yys;
 
-    if ((yys = getenv("YYDEBUG")) != 0)
+    if ((yys = getenv("YYDEBUG")) != NULL)
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -672,8 +684,8 @@ YYPARSE_DECL()
 #endif
 
 #if YYBTYACC
-    yyps = yyNewState(0); if (yyps == 0) goto yyenomem;
-    yyps->save = 0;
+    yyps = yyNewState(0); if (yyps == NULL) goto yyenomem;
+    yyps->save = NULL;
 #endif /* YYBTYACC */
     yym = 0;
     /* yyn is set below */
@@ -1188,37 +1200,37 @@ case 1:
   if (!yytrial)
 #line 62 "btyacc_destroy2.y"
 	{ yyval.nlist = yystack.l_mark[-5].nlist; }
-#line 1190 "btyacc_destroy2.tab.c"
+#line 1202 "btyacc_destroy2.tab.c"
 break;
 case 2:
   if (!yytrial)
 #line 64 "btyacc_destroy2.y"
 	{ yyval.nlist = yystack.l_mark[-3].nlist; }
-#line 1196 "btyacc_destroy2.tab.c"
+#line 1208 "btyacc_destroy2.tab.c"
 break;
 case 3:
   if (!yytrial)
 #line 67 "btyacc_destroy2.y"
 	{ yyval.cval = cGLOBAL; }
-#line 1202 "btyacc_destroy2.tab.c"
+#line 1214 "btyacc_destroy2.tab.c"
 break;
 case 4:
   if (!yytrial)
 #line 68 "btyacc_destroy2.y"
 	{ yyval.cval = cLOCAL; }
-#line 1208 "btyacc_destroy2.tab.c"
+#line 1220 "btyacc_destroy2.tab.c"
 break;
 case 5:
   if (!yytrial)
 #line 71 "btyacc_destroy2.y"
 	{ yyval.tval = tREAL; }
-#line 1214 "btyacc_destroy2.tab.c"
+#line 1226 "btyacc_destroy2.tab.c"
 break;
 case 6:
   if (!yytrial)
 #line 72 "btyacc_destroy2.y"
 	{ yyval.tval = tINTEGER; }
-#line 1220 "btyacc_destroy2.tab.c"
+#line 1232 "btyacc_destroy2.tab.c"
 break;
 case 7:
   if (!yytrial)
@@ -1226,7 +1238,7 @@ case 7:
 	{ yyval.nlist->s = mksymbol(yystack.l_mark[-2].tval, yystack.l_mark[-2].cval, yystack.l_mark[0].id);
 	      yyval.nlist->next = yystack.l_mark[-1].nlist;
 	    }
-#line 1228 "btyacc_destroy2.tab.c"
+#line 1240 "btyacc_destroy2.tab.c"
 break;
 case 8:
   if (!yytrial)
@@ -1234,15 +1246,15 @@ case 8:
 	{ yyval.nlist->s = mksymbol(0, 0, yystack.l_mark[0].id);
 	      yyval.nlist->next = NULL;
 	    }
-#line 1236 "btyacc_destroy2.tab.c"
+#line 1248 "btyacc_destroy2.tab.c"
 break;
 case 9:
   if (!yytrial)
 #line 86 "btyacc_destroy2.y"
 	{ yyval.nlist = yystack.l_mark[-5].nlist; }
-#line 1242 "btyacc_destroy2.tab.c"
+#line 1254 "btyacc_destroy2.tab.c"
 break;
-#line 1244 "btyacc_destroy2.tab.c"
+#line 1256 "btyacc_destroy2.tab.c"
     default:
         break;
     }
