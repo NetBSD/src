@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: dts2netbsd,v 1.4 2021/11/13 08:35:54 skrll Exp $ */
+#	$NetBSD: dts2netbsd,v 1.5 2026/01/18 06:02:54 skrll Exp $ */
 #
 # Copyright (c) 2013, 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,13 +33,13 @@
 # Instructions for importing new dts release:
 #
 #	$ cd /some/where/temporary
-#	$ ftp https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.x.y.tar.xz
-#	$ tar -jxvf linux-5.x.y.tar.xz
-#	$ DTSSRCS=$(pwd)/linux-5.x.y
+#	$ ftp https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.x.y.tar.xz
+#	$ tar -jxf linux-6.x.y.tar.xz
+#	$ DTSSRCS=$(pwd)/linux-6.x.y
 #	$ WRKDIR=/an/other/temporary
 #	$ sh /usr/src/sys/external/gpl2/dts/dts2netbsd $DTSSRCS $WRKDIR
 #	$ cd $WRKDIR
-#	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import dts from Linux 5.x.y" src/sys/external/gpl2/dts/dist LINUX linux-5_x_y
+#	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import dts from Linux 6.x.y" src/sys/external/gpl2/dts/dist LINUX linux-6_x_y
 #
 
 if [ $# -ne 2 ]; then echo "dts2netbsd src dest"; exit 1; fi
