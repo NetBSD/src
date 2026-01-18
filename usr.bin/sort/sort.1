@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.47 2026/01/17 21:49:02 uwe Exp $
+.\"	$NetBSD: sort.1,v 1.48 2026/01/18 19:16:18 jkoshy Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,15 +59,27 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 17, 2026
+.Dd January 18, 2026
 .Dt SORT 1
 .Os
 .Sh NAME
 .Nm sort
-.Nd sort or merge text files
+.Nd sort, merge or checked the sortedness of text files
 .Sh SYNOPSIS
 .Nm
-.Op Fl bdfHilmnrSsu
+.Op Fl bdfHilnrSsu
+.Oo
+.Fl k
+.Ar kstart Ns Oo Cm \&, Ns Ar kend Oc Ar ...
+.Oc
+.Op Fl o Ar output
+.Op Fl R Ar char
+.Op Fl T Ar dir
+.Op Fl t Ar char
+.Op Ar
+.Nm
+.Fl m
+.Op Fl bdfHilnrSsu
 .Oo
 .Fl k
 .Ar kstart Ns Oo Cm \&, Ns Ar kend Oc Ar ...
@@ -90,7 +102,38 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility sorts text files by lines.
+utility performs one of three operations on its input files:
+.Bl -enum
+.It
+If none of the options
+.Fl C ,
+.Fl c
+or
+.Fl m
+are specified, the
+.Nm
+utility will sort the lines of the specified input files together and
+write the result to the specified output.
+.It
+If the
+.Fl m
+option is specified, the
+.Nm
+utility will merge the lines of the specified input files and
+write the result to the specified output.
+The input files are expected to be presorted for this mode of
+operation.
+.It
+If either of the
+.Fl C
+or
+.Fl c
+options are specified, the
+.Nm
+utility will indicate by its exit status whether a single input file
+is correctly sorted.
+.El
+.Pp
 Comparisons are based on one or more sort keys extracted
 from each line of input, and are performed lexicographically.
 By default, if keys are not given,
