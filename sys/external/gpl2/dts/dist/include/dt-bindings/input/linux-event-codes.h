@@ -1,4 +1,4 @@
-/*	$NetBSD: linux-event-codes.h,v 1.10 2021/11/07 16:57:39 jmcneill Exp $	*/
+/*	$NetBSD: linux-event-codes.h,v 1.11 2026/01/18 05:39:24 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
@@ -280,7 +280,8 @@
 #define KEY_PAUSECD		201
 #define KEY_PROG3		202
 #define KEY_PROG4		203
-#define KEY_DASHBOARD		204	/* AL Dashboard */
+#define KEY_ALL_APPLICATIONS	204	/* AC Desktop Show All Applications */
+#define KEY_DASHBOARD		KEY_ALL_APPLICATIONS
 #define KEY_SUSPEND		205
 #define KEY_CLOSE		206	/* AC Close */
 #define KEY_PLAY		207
@@ -520,6 +521,7 @@
 #define KEY_NOTIFICATION_CENTER	0x1bc	/* Show/hide the notification center */
 #define KEY_PICKUP_PHONE	0x1bd	/* Answer incoming call */
 #define KEY_HANGUP_PHONE	0x1be	/* Decline incoming call */
+#define KEY_LINK_PHONE		0x1bf   /* AL Phone Syncing */
 
 #define KEY_DEL_EOL		0x1c0
 #define KEY_DEL_EOS		0x1c1
@@ -603,6 +605,7 @@
 
 #define KEY_ALS_TOGGLE		0x230	/* Ambient light sensor */
 #define KEY_ROTATE_LOCK_TOGGLE	0x231	/* Display rotation lock */
+#define KEY_REFRESH_RATE_TOGGLE	0x232	/* Display refresh rate toggle */
 
 #define KEY_BUTTONCONFIG		0x240	/* AL Button Configuration */
 #define KEY_TASKMANAGER		0x241	/* AL Task/Project Manager */
@@ -614,6 +617,12 @@
 #define KEY_ASSISTANT		0x247	/* AL Context-aware desktop assistant */
 #define KEY_KBD_LAYOUT_NEXT	0x248	/* AC Next Keyboard Layout Select */
 #define KEY_EMOJI_PICKER	0x249	/* Show/hide emoji picker (HUTRR101) */
+#define KEY_DICTATE		0x24a	/* Start or Stop Voice Dictation Session (HUTRR99) */
+#define KEY_CAMERA_ACCESS_ENABLE	0x24b	/* Enables programmatic access to camera devices. (HUTRR72) */
+#define KEY_CAMERA_ACCESS_DISABLE	0x24c	/* Disables programmatic access to camera devices. (HUTRR72) */
+#define KEY_CAMERA_ACCESS_TOGGLE	0x24d	/* Toggles the current state of the camera access control. (HUTRR72) */
+#define KEY_ACCESSIBILITY		0x24e	/* Toggles the system bound accessibility UI/command (HUTRR116) */
+#define KEY_DO_NOT_DISTURB		0x24f	/* Toggles the system-wide "Do Not Disturb" control (HUTRR94)*/
 
 #define KEY_BRIGHTNESS_MIN		0x250	/* Set Brightness to Minimum */
 #define KEY_BRIGHTNESS_MAX		0x251	/* Set Brightness to Maximum */
@@ -661,6 +670,27 @@
 
 /* Select an area of screen to be copied */
 #define KEY_SELECTIVE_SCREENSHOT	0x27a
+
+/* Move the focus to the next or previous user controllable element within a UI container */
+#define KEY_NEXT_ELEMENT               0x27b
+#define KEY_PREVIOUS_ELEMENT           0x27c
+
+/* Toggle Autopilot engagement */
+#define KEY_AUTOPILOT_ENGAGE_TOGGLE    0x27d
+
+/* Shortcut Keys */
+#define KEY_MARK_WAYPOINT              0x27e
+#define KEY_SOS                                0x27f
+#define KEY_NAV_CHART                  0x280
+#define KEY_FISHING_CHART              0x281
+#define KEY_SINGLE_RANGE_RADAR         0x282
+#define KEY_DUAL_RANGE_RADAR           0x283
+#define KEY_RADAR_OVERLAY              0x284
+#define KEY_TRADITIONAL_SONAR          0x285
+#define KEY_CLEARVU_SONAR              0x286
+#define KEY_SIDEVU_SONAR               0x287
+#define KEY_NAV_INFO                   0x288
+#define KEY_BRIGHTNESS_MENU            0x289
 
 /*
  * Some keyboards have keys which do not have a defined meaning, these keys
@@ -841,6 +871,7 @@
 #define ABS_TOOL_WIDTH		0x1c
 
 #define ABS_VOLUME		0x20
+#define ABS_PROFILE		0x21
 
 #define ABS_MISC		0x28
 
