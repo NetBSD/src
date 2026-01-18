@@ -1,20 +1,17 @@
-#	$NetBSD: Makefile,v 1.3 2016/03/16 05:42:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2026/01/18 08:07:06 mrg Exp $
 
 LIBISPRIVATE=   yes
 
-.include <bsd.init.mk>
+LIB=	backtrace
 
-LIB=		backtrace
+.include "Makefile.sources"
 
-DIST=		${GCCDIST}
-GNUHOSTDIST=    ${DIST}
+SRCS=	${BACKTRACE_SRCS}
 
-SRCS=		dwarf.c elf.c fileline.c mmap.c mmapio.c nounwind.c \
-		posix.c print.c state.c
-		
-CPPFLAGS+=	-I${DIST}/include -I${DIST}/libgcc
-CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
+.for _s in ${BACKTRACE_SRCS}
+CPPFLAGS.${_s}+=	${BACKTRACE_CPPFLAGS}
+.endfor
 
 .include <bsd.lib.mk>
 
-.PATH: ${DIST}/libbacktrace
+.PATH: ${GCCDIST}/libbacktrace

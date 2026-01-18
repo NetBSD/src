@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.sources,v 1.1 2026/01/18 08:07:06 mrg Exp $
+
+BACKTRACE_SRCS=		backtrace.c dwarf.c elf.c fileline.c mmap.c mmapio.c \
+			posix.c print.c simple.c sort.c state.c
+BACKTRACE_CPPFLAGS=	-I${GCCDIST}/../lib/libbacktrace/arch/${GCC_MACHINE_ARCH} \
+			-I${GCCDIST}/libbacktrace \
+			-I${GCCDIST}/include \
+			-I${GCCDIST}/libgcc \
+			-I${.CURDIR}/arch/${GCC_MACHINE_ARCH}
+
+.PATH: ${GCCDIST}/libbacktrace
