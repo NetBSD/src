@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.42 2025/10/20 14:31:37 nat Exp $
+#	$NetBSD: Makefile.inc,v 1.43 2026/01/18 08:51:07 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -77,6 +77,10 @@ CPPFLAGS+=	-DENABLE_SHARED_LIBGCC
 CPPFLAGS+=	-DNO_SHARED_LIBGCC_MULTILIB
 .endif
 .endif
+
+.for _f in ${G_ALL_HOST_FRONTEND_OBJS:.o=.cc}
+COPTS.${_f}+=	-DIN_GCC_FRONTEND
+.endfor
 
 NOCLANGERROR=	# defined
 
