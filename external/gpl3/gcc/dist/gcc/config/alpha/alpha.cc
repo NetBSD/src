@@ -6588,10 +6588,6 @@ alpha_builtin_function (const char *name, tree ftype,
     TREE_NOTHROW (decl) = 1;
 
   alpha_builtins [(int) code] = decl;
-
-#ifdef SUBTARGET_INIT_BUILTINS
-  SUBTARGET_INIT_BUILTINS;
-#endif
 }
 
 /* Helper function of alpha_init_builtins.  Add the COUNT built-in
@@ -6646,6 +6642,10 @@ alpha_init_builtins (void)
 
       vms_patch_builtins ();
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Expand an expression EXP that calls a built-in function,
