@@ -53,9 +53,6 @@ along with GCC; see the file COPYING3.  If not see
       } \
   }
 
-/* GCC m68k has no TARGET_INIT_BUILTINS, so simply use it.  */
-#define TARGET_INIT_BUILTINS SUBTARGET_INIT_BUILTINS
-
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
    deal with the GCC option '-posix', as well as an indication as to
    whether or not use of the FPU is allowed.  */

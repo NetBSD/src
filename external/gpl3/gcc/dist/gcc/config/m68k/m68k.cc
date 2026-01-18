@@ -162,6 +162,7 @@ static bool m68k_legitimate_address_p (machine_mode, rtx, bool,
 				       code_helper = ERROR_MARK);
 static void m68k_option_override (void);
 static void m68k_override_options_after_change (void);
+static void m68k_init_builtins (void);
 static rtx find_addr_reg (rtx);
 static const char *singlemove_string (rtx *);
 static void m68k_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
@@ -270,6 +271,9 @@ static HARD_REG_SET m68k_zero_call_used_regs (HARD_REG_SET);
 
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE m68k_option_override
+
+#undef TARGET_INIT_BUILTINS
+#define TARGET_INIT_BUILTINS m68k_init_builtins
 
 #undef TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE
 #define TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE m68k_override_options_after_change
@@ -716,6 +720,16 @@ m68k_option_override (void)
       else
 	m68k_sched_mac = MAC_NO;
     }
+}
+
+/* Implement TARGET_INIT_BUILTINS.  */
+
+static void
+m68k_init_builtins (void)
+{
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Implement TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE.  */
