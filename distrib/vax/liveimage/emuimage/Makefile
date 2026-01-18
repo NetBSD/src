@@ -1,18 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2026/01/16 12:15:48 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2026/01/18 07:59:28 tsutsui Exp $
 
 LIVEIMGBASE=	NetBSD-${DISTRIBVER}-vax-live	# gives ${IMGBASE}.img
 
 .include <bsd.own.mk>
 
-EMUIMAGEMB?=		1024		# open-simh ra0 can't handle >1GB image
-SWAPMB?=		64
-
-# Exclude man etc. due to size restriction
-KERN_SET=	kern-GENERIC
-SETS=		modules base comp etc misc rescue
-.if ${MKX11} != "no"
-SETS+=		xbase xetc xfont xserver
-.endif
+# MSCP RA92 disk (suggested in the "NetBSD SIMH HOW-TO" page) has
+# 2,940,951 blocks (1,505,766,912 bytes ~= 1436 MB)
+EMUIMAGEMB?=		1436
 
 KERN_SET=		kern-GENERIC
 LIVEIMAGEMB=		${EMUIMAGEMB}
