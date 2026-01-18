@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.151 2026/01/07 16:56:46 christos Exp $
+#	$NetBSD: sys.mk,v 1.152 2026/01/18 08:30:33 mrg Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -7,7 +7,10 @@
 
 unix?=		We run NetBSD.
 
-.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
+.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .r .p .l .y .sh
+_FORTRAN_SUFFIXES_NOCPP=.f .for .ftn .f90 .f95 .f03 .f08
+_FORTRAN_SUFFIXES_CPP=	.F .FOR .fpp .FPP .FTN .F90 .F95 .F03 .F08
+.SUFFIXES: ${_FORTRAN_SUFFIXES_NOCPP} ${_FORTRAN_SUFFIXES_CPP}
 
 .LIBS:		.a
 
@@ -155,22 +158,22 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f ${.PREFIX}.o
 
 # Fortran/Ratfor
-.f:
+${_FORTRAN_SUFFIXES_NOCPP}:
 	${COMPILE_LINK.f} ${EXEC_TARGET} ${.IMPSRC} ${LDLIBS}
-.f.o:
+${_FORTRAN_SUFFIXES_NOCPP:=.o}:
 	${COMPILE.f} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
-.f.a:
+${_FORTRAN_SUFFIXES_NOCPP:=.a}:
 	${COMPILE.f} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
 	rm -f ${.PREFIX}.o
 
-.F:
+${_FORTRAN_SUFFIXES_CPP}:
 	${COMPILE_LINK.F} ${EXEC_TARGET} ${.IMPSRC} ${LDLIBS}
-.F.o:
+${_FORTRAN_SUFFIXES_CPP:=.o}:
 	${COMPILE.F} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
-.F.a:
+${_FORTRAN_SUFFIXES_CPP:=.a}:
 	${COMPILE.F} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
 	rm -f ${.PREFIX}.o

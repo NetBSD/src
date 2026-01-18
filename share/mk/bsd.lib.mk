@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.425 2025/12/19 03:07:26 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.426 2026/01/18 08:30:33 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -154,9 +154,9 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # add additional suffixes not exported.
 # .po is used for profiling object files.
 # .pico is used for PIC object files.
-.SUFFIXES: .out .a .ln .pico .po .go .o .s .S .c .cc .cpp .cxx .C .m .F .f .r .y .l .cl .p .h
+.SUFFIXES: .out .a .ln .pico .po .go .o .s .S .c .cc .cpp .cxx .C .m .r .y .l .cl .p .h
 .SUFFIXES: .sh .m4 .m
-
+.SUFFIXES: ${_FORTRAN_SUFFIXES_NOCPP} ${_FORTRAN_SUFFIXES_CPP}
 
 # Set PICFLAGS to cc flags for producing position-independent code,
 # if not already set.
@@ -298,34 +298,65 @@ LIBSTRIPSHLIBOBJS=	yes
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.o:
+${_FORTRAN_SUFFIXES_NOCPP:=.o}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${.IMPSRC} ${OBJECT_TARGET}
+	${COMPILE.f} ${FOPTS.${.IMPSRC:T}} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.po:
+${_FORTRAN_SUFFIXES_NOCPP:=.po}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${PROFFLAGS} ${PGFLAGS} ${.IMPSRC} ${OBJECT_TARGET}
+	${COMPILE.f} ${PROFFLAGS} ${FOPTS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.go:
+${_FORTRAN_SUFFIXES_NOCPP:=.go}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${DEBUGFLAGS} -g ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${DEBUGFLAGS} ${FOPTS.${.IMPSRC:T}} -g ${.IMPSRC} -o ${.TARGET}
 
-.f.pico:
+${_FORTRAN_SUFFIXES_NOCPP:=.pico}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${FOPTS.${.IMPSRC:T}} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.ln:
+${_FORTRAN_SUFFIXES_NOCPP:=.ln}:
+	${_MKTARGET_COMPILE}
+	@echo Skipping lint for Fortran libraries.
+
+${_FORTRAN_SUFFIXES_CPP:=.o}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${FOPTS.${.IMPSRC:T}} ${.IMPSRC} ${OBJECT_TARGET}
+	${CTFCONVERT_RUN}
+.if defined(LIBSTRIPFOBJS)
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
+
+${_FORTRAN_SUFFIXES_CPP:=.po}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${PROFFLAGS} ${FOPTS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} ${OBJECT_TARGET}
+	${CTFCONVERT_RUN}
+.if defined(LIBSTRIPFOBJS)
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
+
+${_FORTRAN_SUFFIXES_CPP:=.go}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${DEBUGFLAGS} ${FOPTS.${.IMPSRC:T}} -g ${.IMPSRC} -o ${.TARGET}
+
+${_FORTRAN_SUFFIXES_CPP:=.pico}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${FOPTS.${.IMPSRC:T}} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
+.if defined(LIBSTRIPFOBJS)
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
+
+${_FORTRAN_SUFFIXES_CPP:=.ln}:
 	${_MKTARGET_COMPILE}
 	@echo Skipping lint for Fortran libraries.
 
