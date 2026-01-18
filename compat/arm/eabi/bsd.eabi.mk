@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.eabi.mk,v 1.7 2023/05/13 10:56:54 riastradh Exp $
+#	$NetBSD: bsd.eabi.mk,v 1.8 2026/01/18 10:54:48 mrg Exp $
 
 .if !defined(MLIBDIR)
 
@@ -61,6 +61,7 @@ CPUFLAGS+=		${EARM_COMPAT_FLAGS}
 LDADD+=			${EARM_COMPAT_FLAGS}
 LDFLAGS+=		${EARM_COMPAT_FLAGS}
 MKDEPFLAGS+=		${EARM_COMPAT_FLAGS}
+FFLAGS+=		${EARM_COMPAT_FLAGS}
 
 # sync with MKRELRO in bsd.own.mk
 NORELRO=		# defined

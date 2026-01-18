@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.o32.mk,v 1.17 2025/05/06 10:14:36 nia Exp $
+#	$NetBSD: bsd.o32.mk,v 1.18 2026/01/18 10:54:48 mrg Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 LD+=		-m elf32btsmip
@@ -19,6 +19,7 @@ CPUFLAGS+=	-mabi=32 -march=mips3
 LDADD+=		-mabi=32 -march=mips3
 LDFLAGS+=	-mabi=32 -march=mips3
 MKDEPFLAGS+=	-mabi=32 -march=mips3
+FFLAGS+=	-mabi=32 -march=mips3
 .endif
 
 # sync with MKRELRO in bsd.own.mk

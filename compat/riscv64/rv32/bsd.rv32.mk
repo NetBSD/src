@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rv32.mk,v 1.3 2019/04/18 10:07:07 mrg Exp $
+#	$NetBSD: bsd.rv32.mk,v 1.4 2026/01/18 10:54:49 mrg Exp $
 
 # Keep this out of the .ifndef section, otherwise bsd.own.mk overrides this
 .if empty(LD:M-m)
@@ -29,6 +29,7 @@ CPUFLAGS+=		${_RV32_OPTS}
 LDADD+=			${_RV32_OPTS}
 LDFLAGS+=		${_RV32_OPTS}
 MKDEPFLAGS+=		${_RV32_OPTS}
+FFLAGS+=		${_RV32_OPTS}
 .endif
 
 .include "../../Makefile.compat"
