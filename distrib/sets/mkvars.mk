@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.47 2025/05/13 21:36:26 nia Exp $
+# $NetBSD: mkvars.mk,v 1.48 2026/01/18 08:29:48 mrg Exp $
 
 #
 # Extra variables to print.
@@ -14,6 +14,7 @@ MKEXTRAVARS= \
 	HAVE_GCC \
 	HAVE_GDB \
 	HAVE_LIBGCC_EH \
+	HAVE_QUADMATH \
 	HAVE_MESA_VER \
 	HAVE_NVMM \
 	HAVE_OPENSSL \

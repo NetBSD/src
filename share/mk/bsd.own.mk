@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1462 2026/01/10 22:05:08 jmcneill Exp $
+#      $NetBSD: bsd.own.mk,v 1.1463 2026/01/18 08:29:48 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -131,6 +131,17 @@ MKGCCCMDS?=	no
     ${MACHINE_CPU} == "sh3"
 NOGCCISL=	# defined
 .endif
+
+#
+# Build GCC with libquadmath.
+# Eg:  grep '#define HAVE_FLOAT128 1' lib/libgfortran/arch/*/config.h
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "ia64"
+HAVE_QUADMATH?=	yes
+.endif
+HAVE_QUADMATH?=	no
 
 #
 # What binutils is used?

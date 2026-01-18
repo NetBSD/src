@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.212 2025/07/21 01:46:05 dholland Exp $
+#	$NetBSD: sets.subr,v 1.213 2026/01/18 08:29:48 mrg Exp $
 #
 
 #
@@ -258,7 +258,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.212 2025/07/21 01:46:05 dholland Exp $
+# 	# $NetBSD: sets.subr,v 1.213 2026/01/18 08:29:48 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -295,6 +295,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	mesa_ver=<n>		<n> = value of ${HAVE_MESA_VER}
 #	nvmm			${HAVE_NVMM} != no
 #	openssl=<n>		<n> = value of ${HAVE_OPENSSL}
+#	quadmath		${HAVE_QUADMATH} != no
 #	uefi			${HAVE_UEFI} != no
 #	efi_rt			${HAVE_EFI_RT} != no
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
@@ -449,6 +450,9 @@ list_set_files()
 			}
 			if ("efi_rt" in wanted) {
 				wanted["efi_rt=" "'"${HAVE_EFI_RT}"'"] = 1
+			}
+			if ("quadmath" in wanted) {
+				wanted["quadmath=" "'"${HAVE_QUADMATH}"'"] = 1
 			}
 			if (("man" in wanted) && ("catpages" in wanted))
 				wanted[".cat"] = 1
