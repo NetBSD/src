@@ -144,6 +144,11 @@
 		vc4: gpu {
 			compatible = "brcm,bcm2835-vc4";
 		};
+
+		fb: fb {
+			compatible = "brcm,bcm2835-fb";
+			status = "ok";
+		};
 	};
 };
 
