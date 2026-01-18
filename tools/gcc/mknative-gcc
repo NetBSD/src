@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.123 2026/01/17 23:43:46 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.124 2026/01/18 05:00:35 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -177,6 +177,13 @@ get_libbacktrace () {
 ##### lib/libquadmath #####
 
 get_libquadmath () {
+	# Don't fetch where not supported; it may leave empty files
+	case $_MACHINE_ARCH in
+	(x86_64|i386|ia64)
+		break ;;
+	(*)
+		return ;;
+	esac
 	_subdir="$1"
 
 	mkdir -p $_OUTDIR/lib/$_subdir
