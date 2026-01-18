@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.49 2026/01/16 23:37:19 tsutsui Exp $
+#	$NetBSD: Makefile.bootimage,v 1.50 2026/01/18 00:07:36 tsutsui Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -44,6 +44,11 @@
 #		set yes if target disk image requires GPT partition
 #		with hybrid MBR boot code
 #		(default: no; valid only if USE_GPT=yes)
+#	USE_MDBOOTPART
+#		set yes if target disk image requires port specific
+#		boot partition
+#		(default: no; if yes target rules of WORKMDBOOTPART should
+#		 be defined in MD liveimage/Makefiles)
 #	MBR_BOOTCODE
 #		optional MBR bootcode which should be installed by fdisk(8)
 #		(default: empty)
@@ -69,6 +74,9 @@
 #		(default: 128)
 #	FATMB
 #		FAT partition size in target image in MB
+#		(default: 0)
+#	MDBOOTPARTMB
+#		port specific boot partition size in target image in MB
 #		(default: 0)
 #	GPTSECTORS
 #		Size of a region reserved for the secondary GPT table/entry
@@ -182,6 +190,7 @@ MAKESPEC=	${HOST_SH} ${NETBSDSRCDIR}/etc/makespec
 USE_MBR?=	no
 USE_GPT?=	no
 USE_GPTMBR?=	no
+USE_MDBOOTPART?= no
 USE_SUNLABEL?=	no
 INSTALLBOOT_AFTER_DISKLABEL?=	no
 
@@ -198,12 +207,19 @@ EFIMB?=		128		# 128MB
 GPTSECTORS=	2048
 .endif
 FATMB?=		0
+MDBOOTPARTMB?=	0
 
 # XXX: SWAPMB could be zero and expr(1) returns exit status 1 in that case
 IMAGESECTORS!=	expr ${IMAGEMB} \* 1024 \* 1024 / 512
 SWAPSECTORS!=	expr ${SWAPMB} \* 1024 \* 1024 / 512 || true
 EFISECTORS!=	expr ${EFIMB} \* 1024 \* 1024 / 512 || true
 FATSECTORS!=	expr ${FATMB} \* 1024 \* 1024 / 512 || true
+
+.if ${USE_MDBOOTPART} != "no"
+MDBOOTPARTSECTORS!=	expr ${MDBOOTPARTMB} \* 1024 \* 1024 / 512 || true
+.else
+MDBOOTPARTSECTORS=	0
+.endif
 
 .if ${USE_MBR} == "no" && ${USE_GPT} == "no"
 LABELSECTORS?=	0
@@ -213,8 +229,16 @@ LABELSECTORS?=	0
 LABELSECTORS?=	2048	# 1MB aligned for modern flash devices
 .endif
 
+.if ${USE_MDBOOTPART} != "no"
+MDBOOTPARTOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS} + ${FATSECTORS} \
+			    || test $$? -eq 1 || exit 1
+.else
+MDBOOTPARTOFFSET=	0
+.endif
+
 FSSECTORS!=	expr ${IMAGESECTORS} - ${SWAPSECTORS} - ${LABELSECTORS} \
-		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS} || test $$? -eq 1 || exit 1
+		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS} \
+		    - ${MDBOOTPARTSECTORS} || test $$? -eq 1 || exit 1
 FSSIZE!=	expr ${FSSECTORS} \* 512 || test $$? -eq 1 || exit 1
 
 # parameters for disklabel and MBR
@@ -229,10 +253,13 @@ MBRNETBSD=	169
 MBRFAT?=	6	# 16-bit FAT, more than 32M
 
 BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} \
-		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS}
-FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS} + ${FATSECTORS} || test $$? -eq 1 || exit 1
+		    - ${EFISECTORS} - ${GPTSECTORS} - ${FATSECTORS} \
+		    - ${MDBOOTPARTSECTORS}
+FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS} + ${FATSECTORS} \
+		    + ${MDBOOTPARTSECTORS} || test $$? -eq 1 || exit 1
 SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} \
-		    + ${EFISECTORS} + ${FATSECTORS} || test $$? -eq 1 || exit 1
+		    + ${EFISECTORS} + ${FATSECTORS} \
+		    + ${MDBOOTPARTSECTORS} || test $$? -eq 1 || exit 1
 FATOFFSET=	${LABELSECTORS}
 
 # helper script for sunlabel
@@ -321,6 +348,8 @@ WORKIMG?=	work.img
 EFIWORKDIR?=	work.efidir
 WORKFAT?=	work.fat
 WORKFATDIR?=	work.fatdir
+WORKMDBOOTPART?= work.mdbootpart
+WORKMDBOOTPARTDIR?= work.mdbootpartdir
 
 .if ${USE_GPT} != "no"
 ${WORKFSTAB}: ${WORKMBR}
@@ -479,6 +508,9 @@ TARGET_BLOCKS+=	${WORKEFI}
 .if ${FATSECTORS} != 0
 TARGET_BLOCKS+=	${WORKFAT}
 .endif
+.if ${USE_MDBOOTPART} != "no"
+TARGET_BLOCKS+=	${WORKMDBOOTPART}
+.endif
 TARGET_BLOCKS+=	 ${TARGETFS}
 .if ${SWAPSECTORS} != 0
 TARGET_BLOCKS+=	${WORKSWAP}
@@ -490,6 +522,7 @@ TARGET_BLOCKS+=	${WORKGPT}
 CLEANFILES+=	${WORKMBR} ${WORKMBRTRUNC} ${WORKSWAP}
 CLEANFILES+=	${WORKEFI} ${WORKGPT}
 CLEANFILES+=	${WORKFAT}
+CLEANFILES+=	${WORKMDBOOTPART}
 CLEANFILES+=	${WORKLABEL}.tmp ${WORKLABEL}
 CLEANFILES+=	${WORKIMG} ${IMGBASE}.img
 
@@ -517,6 +550,8 @@ ${WORKLABEL}:
 	    -e "s/@@BSDPARTSECTORS@@/${BSDPARTSECTORS}/"		\
 	    -e "s/@@FATSECTORS@@/${FATSECTORS}/"			\
 	    -e "s/@@FATOFFSET@@/${FATOFFSET}/"				\
+	    -e "s/@@MDBOOTPARTSECTORS@@/${MDBOOTPARTSECTORS}/"		\
+	    -e "s/@@MDBOOTPARTOFFSET@@/${MDBOOTPARTOFFSET}/"		\
 	    < ${DISKPROTO_IN} > ${WORKLABEL}.tmp
 	mv ${WORKLABEL}.tmp ${WORKLABEL}
 
@@ -654,6 +689,7 @@ clean:
 	${RM} -fr ${WORKDIR}
 	${RM} -fr ${EFIWORKDIR}
 	${RM} -fr ${WORKFATDIR}
+	${RM} -fr ${WORKMDBOOTPARTDIR}
 
 prepare_md_post: .PHONY
 image_md_post: .PHONY
