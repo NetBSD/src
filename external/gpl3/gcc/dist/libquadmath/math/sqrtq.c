@@ -20,7 +20,9 @@ __float128
 sqrtq (const __float128 x)
 {
   __float128 y;
+#if !USE_SOFT_FP
   int exp;
+#endif
 
   if (isnanq (x) || (isinfq (x) && x > 0))
     return x;
