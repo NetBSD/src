@@ -1,4 +1,4 @@
-$NetBSD: README.gcc14,v 1.30 2025/12/06 19:39:59 mrg Exp $
+$NetBSD: README.gcc14,v 1.31 2026/01/19 02:20:51 mrg Exp $
 
 arch/feature list.
 
@@ -37,12 +37,12 @@ i386		y	b	y	y	y	y		?	?	y
 ia64		y	y[8]	y	y	y	y		y	?	y
 m68000		y	b	y	y	y	n[9]		?	?	?
 m68k		y	b	y	y	y	y		y[2]	?	?
-mipseb		y	b	y	y	y	y		?	?	?
-mipsel		y	b	y	y	y	y		?	?	?
-mips64eb	y	y	y	y	y	y		y	?	?
-mips64el	y	b	y	y	y	y		?	?	?
-mipsn64eb	y	b	y	y	y	y		?	?	?
-mipsn64el	y	b	y	y	y	y		?	?	?
+mipseb		y	b	y	y	y	y		?	?	y
+mipsel		y	b	y	y	y	y		?	?	y
+mips64eb	y	y	y	y	y	y		y	y	y
+mips64el	y	b	y	y	y	y		?	?	y
+mipsn64eb	y	b	y	y	y	y		?	y	y
+mipsn64el	y	b	y	y	y	y		?	?	y
 powerpc		y	b	y	y	y	y		y	?	y
 powerpc64	y	b	y	y	y	y		?	?	y
 sh3eb		y	b	y	y	y	?		?	?	?
