@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2514 2026/01/08 14:52:03 simonb Exp $
+#	$NetBSD: mi,v 1.2515 2026/01/19 02:45:14 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -41,6 +41,7 @@
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
 ./usr/bin/gcov-dump				comp-debug-bin		gcccmds
+./usr/bin/gfortran				comp-c-bin		gcccmds,gcc=14
 ./usr/bin/gdb					comp-debug-bin		gdb
 ./usr/bin/gdbtui				comp-debug-bin		gdb
 ./usr/bin/genassym				comp-util-bin
@@ -2492,8 +2493,12 @@
 ./usr/include/gcc-12/stdatomic.h			comp-obsolete	obsolete,gcc=14
 ./usr/include/gcc-12/tgmath.h				comp-gcc-include	gcc=12
 ./usr/include/gcc-12/tgmath.h				comp-obsolete	obsolete,gcc=14
+./usr/include/gcc-14/acc_prof.h				comp-gcc-include	gcc=14
 ./usr/include/gcc-14/omp.h				comp-gcc-include	gcc=14
 ./usr/include/gcc-14/openacc.h				comp-gcc-include	gcc=14
+./usr/include/gcc-14/finclude/ieee_arithmetic.mod	comp-gcc-include	gcc=14
+./usr/include/gcc-14/finclude/ieee_exceptions.mod	comp-gcc-include	gcc=14
+./usr/include/gcc-14/finclude/ieee_features.mod		comp-gcc-include	gcc=14
 ./usr/include/gcc-14/sanitizer/allocator_interface.h	comp-gcc-include	gcc=14
 ./usr/include/gcc-14/sanitizer/asan_interface.h		comp-gcc-include	gcc=14
 ./usr/include/gcc-14/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=14
@@ -4095,6 +4100,9 @@
 ./usr/lib/libgcc_p.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/libgcov.a				comp-c-lib		compatfile,gcc
+./usr/lib/libgfortran.a				comp-c-lib		compatfile,gcc=14
+./usr/lib/libgfortran.spec			comp-c-lib		gcc=14
+./usr/lib/libgfortran_p.a			comp-c-proflib		compatfile,gcc=14,profile
 ./usr/lib/libgmp.a				comp-obsolete		obsolete
 ./usr/lib/libgmp_p.a				comp-obsolete		obsolete
 ./usr/lib/libgnumalloc.a			comp-c-lib		compatfile
@@ -4238,6 +4246,8 @@
 ./usr/lib/libpthread_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libpuffs.a				comp-puffs-lib		compatfile
 ./usr/lib/libpuffs_p.a				comp-puffs-proflib	compatfile,profile
+./usr/lib/libquadmath.a				comp-c-lib		quadmath,compatfile,gcc=14
+./usr/lib/libquadmath_p.a			comp-c-proflib		quadmath,compatfile,gcc=14,profile
 ./usr/lib/libquota.a				comp-c-lib		compatfile
 ./usr/lib/libquota_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libradius.a				comp-c-lib		compatfile
@@ -4696,6 +4706,7 @@
 ./usr/libexec/cpp				comp-obsolete		pcc,obsolete
 ./usr/libexec/cxxcom				comp-cxx-bin		pcc
 ./usr/libexec/f771				comp-obsolete		obsolete
+./usr/libexec/f951				comp-c-bin		gcccmds,gcc=14
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
 ./usr/libexec/lto-wrapper			comp-c-bin		gcc,gcccmds,pic

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2024/07/01 04:03:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2026/01/19 02:45:14 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -22,5 +22,11 @@ SUBDIR+= libtsan
 .endif
 
 .endif
+
+# If libgfortran needs libquadmath, build it first.
+.if ${HAVE_QUADMATH} != no
+SUBDIR+= libquadmath .WAIT
+.endif
+SUBDIR+= libgfortran
 
 .include <bsd.subdir.mk>

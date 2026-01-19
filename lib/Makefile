@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.314 2025/12/28 16:50:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.315 2026/01/19 02:45:15 mrg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -338,6 +338,16 @@ SUBDIR+=	../sys/rump/net/lib
 
 # Lua bindings come last, they might depend on anything
 SUBDIR+=	lua
+
+#==================== 6th library dependency barrier ====================
+SUBDIR+=	.WAIT
+
+.if (${MKGCC} != "no" && ${HAVE_GCC:U0} >= 14)
+.if ${HAVE_QUADMATH} != "no"
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libquadmath
+.endif
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgfortran
+.endif
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>

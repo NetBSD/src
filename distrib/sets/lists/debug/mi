@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.505 2025/12/28 19:07:43 thorpej Exp $
+# $NetBSD: mi,v 1.506 2026/01/19 02:45:15 mrg Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -74,6 +74,7 @@
 ./usr/lib/libform_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcc
+./usr/lib/libgfortran_g.a			comp-c-debuglib		debuglib,compatfile,gcc=14
 ./usr/lib/libgnuctf_g.a				comp-obsolete		debuglib,compatfile,obsolete
 ./usr/lib/libgnumalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc
@@ -137,6 +138,7 @@
 ./usr/lib/libpthread_dbg_g.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpuffs_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libquadmath_g.a			comp-c-debuglib		quadmath,debuglib,compatfile,gcc=14
 ./usr/lib/libquota_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libradius_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/librefuse_g.a				comp-c-debuglib		debuglib,compatfile
@@ -579,6 +581,7 @@
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
+./usr/libdata/debug/usr/bin/gfortran.debug	comp-c-debug		gcccmds,debug,gcc=14
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbserver.debug	base-util-debug		gdb,gdbserver,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
@@ -988,6 +991,7 @@
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		!makemandb,debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/libexec/f951.debug	comp-c-debug		gcccmds,debug,gcc=14
 ./usr/libdata/debug/usr/libexec/hpropd.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/httpd.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/identd.debug	comp-netutil-debug	debug

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1027 2026/01/16 16:29:36 christos Exp $
+# $NetBSD: shl.mi,v 1.1028 2026/01/19 02:45:14 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -35,8 +35,6 @@
 ./lib/libcrypto.so.15.0				base-crypto-shlib       dynamicroot,openssl=30
 ./lib/libcrypto.so.16				base-crypto-shlib       dynamicroot,openssl=35
 ./lib/libcrypto.so.16.0				base-crypto-shlib       dynamicroot,openssl=35
-
-
 ./lib/libdevmapper.so				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot,lvm
@@ -353,6 +351,9 @@
 ./usr/lib/libgcc_s.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgcc_s.so.1				base-sys-shlib		compatfile,gcc
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		compatfile,gcc
+./usr/lib/libgfortran.so			base-sys-shlib		compatfile,gcc=14
+./usr/lib/libgfortran.so.5			base-sys-shlib		compatfile,gcc=14
+./usr/lib/libgfortran.so.5.0			base-sys-shlib		compatfile,gcc=14
 ./usr/lib/libgnumalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1.0			base-sys-shlib		compatfile
@@ -536,6 +537,9 @@
 ./usr/lib/libpuffs.so				base-puffs-shlib	compatfile
 ./usr/lib/libpuffs.so.2				base-puffs-shlib	compatfile
 ./usr/lib/libpuffs.so.2.0			base-puffs-shlib	compatfile
+./usr/lib/libquadmath.so			base-sys-shlib		quadmath,compatfile,gcc=14
+./usr/lib/libquadmath.so.0			base-sys-shlib		quadmath,compatfile,gcc=14
+./usr/lib/libquadmath.so.0.0			base-sys-shlib		quadmath,compatfile,gcc=14
 ./usr/lib/libquota.so				base-sys-shlib		compatfile
 ./usr/lib/libquota.so.1				base-sys-shlib		compatfile
 ./usr/lib/libquota.so.1.0			base-sys-shlib		compatfile

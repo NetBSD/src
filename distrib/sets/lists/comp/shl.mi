@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.366 2025/12/28 16:50:21 thorpej Exp $
+# $NetBSD: shl.mi,v 1.367 2026/01/19 02:45:15 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -54,6 +54,7 @@
 ./usr/lib/libgcc_eh_p.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_eh_pic.a			comp-obsolete		obsolete
 ./usr/lib/libgcc_pic.a				comp-obsolete		obsolete
+./usr/lib/libgfortran_pic.a			comp-c-piclib		compatfile,picinstall,gcc=14
 ./usr/lib/libgmp.so				comp-obsolete		obsolete
 ./usr/lib/libgmp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgnuctf.so.0			base-sys-shlib		compatfile,binutils=234
@@ -150,6 +151,7 @@
 ./usr/lib/libpthread_dbg_pic.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpuffs_pic.a			comp-puffs-piclib	compatfile,picinstall
+./usr/lib/libquadmath_pic.a			comp-c-piclib		quadmath,compatfile,picinstall,gcc=14
 ./usr/lib/libquota_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libradius_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/librefuse_pic.a			comp-refuse-piclib	compatfile,picinstall

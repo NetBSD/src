@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2023/08/01 05:57:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2026/01/19 02:45:14 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -43,8 +43,9 @@ CPPFLAGS+=	-I../backend
 .PATH: ${DIST}/gcc ${DIST}/gcc/common
 
 # Build the specs.h file
+# XXX Pull this list out of src/tools/gcc/Makefile:GCC_LANGUAGES
 CLEANFILES+=	specs.h
 specs.h: Makefile
-	for f in cp lto objc objcp; do \
+	for f in cp lto objc objcp fortran; do \
 		echo "#include \"$$f/lang-specs.h\""; \
 	done > specs.h
