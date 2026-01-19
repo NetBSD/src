@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.41 2024/01/23 17:24:38 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.42 2026/01/19 20:21:51 joe Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint) 
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.41 2024/01/23 17:24:38 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.42 2026/01/19 20:21:51 joe Exp $");
 #endif
 #endif
 
@@ -183,7 +183,7 @@ xprt_register(SVCXPRT *xprt)
 	__svc_xports[sock] = xprt;
 	if (sock != -1) {
 		if (svc_fdset_set(sock) == -1)
-			return FALSE;
+			goto out;
 	}
 	rwlock_unlock(&svc_fd_lock);
 	return (TRUE);
@@ -206,11 +206,11 @@ __xprt_unregister_unlocked(SVCXPRT *xprt)
 }
 
 /*
- * De-activate a transport handle. 
+ * De-activate a transport handle.
  */
 static void
 __xprt_do_unregister(SVCXPRT *xprt, bool_t dolock)
-{ 
+{
 	int sock, *fdmax;
 
 	_DIAGASSERT(xprt != NULL);
@@ -442,17 +442,17 @@ svc_find(rpcprog_t prog, rpcvers_t vers, struct svc_callout **prev, char *netid)
 bool_t
 svc_sendreply(SVCXPRT *xprt, xdrproc_t xdr_results, const char *xdr_location)
 {
-	struct rpc_msg rply; 
+	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
 
-	rply.rm_direction = REPLY;  
-	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
-	rply.acpted_rply.ar_verf = xprt->xp_verf; 
+	rply.rm_direction = REPLY;
+	rply.rm_reply.rp_stat = MSG_ACCEPTED;
+	rply.acpted_rply.ar_verf = xprt->xp_verf;
 	rply.acpted_rply.ar_stat = SUCCESS;
 	rply.acpted_rply.ar_results.where = xdr_location;
 	rply.acpted_rply.ar_results.proc = xdr_results;
-	return (SVC_REPLY(xprt, &rply)); 
+	return (SVC_REPLY(xprt, &rply));
 }
 
 /*
@@ -478,15 +478,15 @@ svcerr_noproc(SVCXPRT *xprt)
 void
 svcerr_decode(SVCXPRT *xprt)
 {
-	struct rpc_msg rply; 
+	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
 
-	rply.rm_direction = REPLY; 
-	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
+	rply.rm_direction = REPLY;
+	rply.rm_reply.rp_stat = MSG_ACCEPTED;
 	rply.acpted_rply.ar_verf = xprt->xp_verf;
 	rply.acpted_rply.ar_stat = GARBAGE_ARGS;
-	SVC_REPLY(xprt, &rply); 
+	SVC_REPLY(xprt, &rply);
 }
 
 /*
@@ -495,15 +495,15 @@ svcerr_decode(SVCXPRT *xprt)
 void
 svcerr_systemerr(SVCXPRT *xprt)
 {
-	struct rpc_msg rply; 
+	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
 
-	rply.rm_direction = REPLY; 
-	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
+	rply.rm_direction = REPLY;
+	rply.rm_reply.rp_stat = MSG_ACCEPTED;
 	rply.acpted_rply.ar_verf = xprt->xp_verf;
 	rply.acpted_rply.ar_stat = SYSTEM_ERR;
-	SVC_REPLY(xprt, &rply); 
+	SVC_REPLY(xprt, &rply);
 }
 
 #if 0
@@ -583,16 +583,16 @@ svcerr_weakauth(SVCXPRT *xprt)
 /*
  * Program unavailable error reply
  */
-void 
+void
 svcerr_noprog(SVCXPRT *xprt)
 {
-	struct rpc_msg rply;  
+	struct rpc_msg rply;
 
 	_DIAGASSERT(xprt != NULL);
 
-	rply.rm_direction = REPLY;   
-	rply.rm_reply.rp_stat = MSG_ACCEPTED;  
-	rply.acpted_rply.ar_verf = xprt->xp_verf;  
+	rply.rm_direction = REPLY;
+	rply.rm_reply.rp_stat = MSG_ACCEPTED;
+	rply.acpted_rply.ar_verf = xprt->xp_verf;
 	rply.acpted_rply.ar_stat = PROG_UNAVAIL;
 	SVC_REPLY(xprt, &rply);
 }
@@ -600,7 +600,7 @@ svcerr_noprog(SVCXPRT *xprt)
 /*
  * Program version mismatch error reply
  */
-void  
+void
 svcerr_progvers(SVCXPRT *xprt, rpcvers_t low_vers, rpcvers_t high_vers)
 {
 	struct rpc_msg rply;
@@ -626,9 +626,9 @@ svcerr_progvers(SVCXPRT *xprt, rpcvers_t low_vers, rpcvers_t high_vers)
  * the "raw" parameters (msg.rm_call.cb_cred and msg.rm_call.cb_verf) and
  * the "cooked" credentials (rqst->rq_clntcred).
  * However, this function does not know the structure of the cooked
- * credentials, so it make the following assumptions: 
+ * credentials, so it make the following assumptions:
  *   a) the structure is contiguous (no pointers), and
- *   b) the cred structure size does not exceed RQCRED_SIZE bytes. 
+ *   b) the cred structure size does not exceed RQCRED_SIZE bytes.
  * In all events, all three parameters are freed upon exit from this routine.
  * The storage is trivially management on the call stack in user land, but
  * is mallocated in kernel land.
