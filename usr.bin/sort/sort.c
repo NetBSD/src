@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.64 2017/01/10 21:13:45 christos Exp $	*/
+/*	$NetBSD: sort.c,v 1.65 2026/01/19 20:21:16 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
-__RCSID("$NetBSD: sort.c,v 1.64 2017/01/10 21:13:45 christos Exp $");
+__RCSID("$NetBSD: sort.c,v 1.65 2026/01/19 20:21:16 jkoshy Exp $");
 
 /* Sort sorts a file using an optional user-defined key.
  * Sort uses radix sort for internal sorting, and allows
@@ -399,12 +399,17 @@ usage(const char *msg)
 	if (msg != NULL)
 		(void)fprintf(stderr, "%s: %s\n", getprogname(), msg);
 	(void)fprintf(stderr,
-	    "usage: %s [-bdfHilmnrSsu] [-k kstart[,kend]] [-o output]"
-	    " [-R char] [-T dir]\n", pn);
+	    "usage: %s [-bdfHilnrSsu] [-k kstart[,kend] ...] [-o output]"
+	    " [-R char]\n", pn);
 	(void)fprintf(stderr,
-	    "             [-t char] [file ...]\n");
+	    "             [-T dir] [-t char] [file ...]\n");
 	(void)fprintf(stderr,
-	    "   or: %s -C|-c [-bdfilnru] [-k kstart[,kend]] [-o output]"
+	    "   or: %s -m [-bdfHilnrSsu] [-k kstart[,kend] ...] [-o output]"
+	    " [-R char]\n", pn);
+	(void)fprintf(stderr,
+	    "             [-T dir] [-t char] [file ...]\n");
+	(void)fprintf(stderr,
+	    "   or: %s -C|-c [-bdfilnru] [-k kstart[,kend] ...] [-o output]"
 	    " [-R char]\n", pn);
 	(void)fprintf(stderr,
 	    "             [-t char] [file]\n");
