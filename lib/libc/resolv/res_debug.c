@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.18 2023/08/09 07:01:09 riastradh Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.19 2026/01/19 15:23:10 joe Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.18 2023/08/09 07:01:09 riastradh Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.19 2026/01/19 15:23:10 joe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -717,11 +717,10 @@ p_option(u_long option) {
  */
 const char *
 p_time(u_int32_t value) {
-	char *nbuf = p_time_nbuf;
 
-	if (ns_format_ttl((u_long)value, nbuf, sizeof nbuf) < 0)
-		sprintf(nbuf, "%u", value);
-	return (nbuf);
+	if (ns_format_ttl((u_long)value, p_time_nbuf, sizeof(p_time_nbuf)) < 0)
+		snprintf(p_time_nbuf, sizeof(p_time_nbuf), "%u", value);
+	return (p_time_nbuf);
 }
 
 /*%
