@@ -1873,7 +1873,11 @@ tgamma (double x)
   static double eps = 0;
   
   if (eps == 0)
+#ifdef HAVE_NEXTAFTER
     eps = nextafter (1., 2.) - 1.;
+#else
+    eps = xminin;
+#endif
 
   parity = 0;
   fact = 1;
