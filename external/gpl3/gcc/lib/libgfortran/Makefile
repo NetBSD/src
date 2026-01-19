@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2026/01/19 09:26:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2026/01/19 09:41:06 mrg Exp $
 
 # XXX libgfortran also has a libcaf_single thing in here.
 
@@ -194,7 +194,7 @@ COPTS.${_f}+=	-Wno-error
 .endif
 
 # XXX
-.if ${MACHINE_ARCH} == "riscv32"
+.if ${MACHINE} == "riscv"
 COPTS.ISO_Fortran_binding.c+=	-Wno-error=format
 .endif
 
