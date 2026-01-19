@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2026/01/18 08:08:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2026/01/19 03:03:55 mrg Exp $
 
 PROG=		gfortran
 SRCS=		${G_GFORTRAN_D_OBJS:.o=.cc}
 
 .include "../Makefile.target-defines"
-
-NOMAN=		# defined
 
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2515 2026/01/19 02:45:14 mrg Exp $
+#	$NetBSD: mi,v 1.2516 2026/01/19 03:03:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4885,6 +4885,7 @@
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	gcccmds,.cat
 ./usr/share/man/cat1/gdb.0			comp-debug-catman	gdb,.cat
 ./usr/share/man/cat1/genassym.0			comp-util-catman	.cat
+./usr/share/man/cat1/gfortran.0			comp-c-catman		gcccmds,.cat,gcc=14
 ./usr/share/man/cat1/gprof.0			comp-debug-catman	binutils,.cat
 ./usr/share/man/cat1/ld.0			comp-util-catman	binutils,.cat
 ./usr/share/man/cat1/lex.0			comp-c-catman		.cat
@@ -13906,6 +13907,7 @@
 ./usr/share/man/html1/gcov.html			comp-debug-htmlman	gcccmds,html
 ./usr/share/man/html1/gdb.html			comp-debug-htmlman	gdb,html
 ./usr/share/man/html1/genassym.html		comp-util-htmlman	html
+./usr/share/man/html1/gfortran.html		comp-c-htmlman		gcccmds,html,gcc=14
 ./usr/share/man/html1/gprof.html		comp-debug-htmlman	binutils,html
 ./usr/share/man/html1/ld.html			comp-util-htmlman	binutils,html
 ./usr/share/man/html1/lex.html			comp-c-htmlman		html
@@ -22728,6 +22730,7 @@
 ./usr/share/man/man1/gcov.1			comp-debug-man		gcccmds,.man
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
 ./usr/share/man/man1/genassym.1			comp-util-man		.man
+./usr/share/man/man1/gfortran.1			comp-c-man		gcccmds,.man,gcc=14
 ./usr/share/man/man1/gprof.1			comp-debug-man		binutils,.man
 ./usr/share/man/man1/ld.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/lex.1			comp-c-man		.man
