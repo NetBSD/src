@@ -6627,6 +6627,10 @@ alpha_init_builtins (void)
 
       vms_patch_builtins ();
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Expand an expression EXP that calls a built-in function,
