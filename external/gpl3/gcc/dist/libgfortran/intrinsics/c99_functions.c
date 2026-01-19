@@ -1863,7 +1863,11 @@ tgamma (double x)
      7.93650793500350248e-04,        -2.777777777777681622553e-03,
      8.333333333333333331554247e-02,  5.7083835261e-03 };
 
+#ifdef __vax__
+  static const double xminin = 3.0e-39;
+#else
   static const double xminin = 2.23e-308;
+#endif
   static const double xbig = 171.624;
   static const double xnan = __builtin_nan ("0x0"), xinf = __builtin_inf ();
   static double eps = 0;

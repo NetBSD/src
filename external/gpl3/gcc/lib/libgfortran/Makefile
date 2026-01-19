@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2026/01/18 08:07:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2026/01/19 09:26:17 mrg Exp $
 
 # XXX libgfortran also has a libcaf_single thing in here.
 
@@ -181,6 +181,21 @@ INCSDIR=	${GCC_INCSDIR}/finclude
 # This is where GCC looks for it.
 FILES=		libgfortran.spec
 FILESDIR=	${LIBDIR}
+.endif
+
+.if ${MACHINE} == "vax"
+. for _f in unpack_i1.c unpack_i2.c unpack_i4.c unpack_i8.c unpack_r4.c unpack_r8.c unpack_c4.c unpack_c8.c
+COPTS.${_f}+=	${CC_WNO_MAYBE_UNINITIALIZED}
+. endfor
+# Ugh infinity/nan stuff
+. for _f in read.c erfc_scaled.c c99_functions.c trigd.c
+COPTS.${_f}+=	-Wno-error
+. endfor
+.endif
+
+# XXX
+.if ${MACHINE_ARCH} == "riscv32"
+COPTS.ISO_Fortran_binding.c+=	-Wno-error=format
 .endif
 
 .include <bsd.lib.mk>

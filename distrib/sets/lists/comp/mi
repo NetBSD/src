@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2516 2026/01/19 03:03:55 mrg Exp $
+#	$NetBSD: mi,v 1.2517 2026/01/19 09:26:18 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2496,9 +2496,9 @@
 ./usr/include/gcc-14/acc_prof.h				comp-gcc-include	gcc=14
 ./usr/include/gcc-14/omp.h				comp-gcc-include	gcc=14
 ./usr/include/gcc-14/openacc.h				comp-gcc-include	gcc=14
-./usr/include/gcc-14/finclude/ieee_arithmetic.mod	comp-gcc-include	gcc=14
-./usr/include/gcc-14/finclude/ieee_exceptions.mod	comp-gcc-include	gcc=14
-./usr/include/gcc-14/finclude/ieee_features.mod		comp-gcc-include	gcc=14
+./usr/include/gcc-14/finclude/ieee_arithmetic.mod	comp-gcc-include	gcc=14,!machine=vax
+./usr/include/gcc-14/finclude/ieee_exceptions.mod	comp-gcc-include	gcc=14,!machine=vax
+./usr/include/gcc-14/finclude/ieee_features.mod		comp-gcc-include	gcc=14,!machine=vax
 ./usr/include/gcc-14/sanitizer/allocator_interface.h	comp-gcc-include	gcc=14
 ./usr/include/gcc-14/sanitizer/asan_interface.h		comp-gcc-include	gcc=14
 ./usr/include/gcc-14/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=14
