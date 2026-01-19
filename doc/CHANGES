@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3219 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3220 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -134,3 +134,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	unbound(8): Import 1.24.2. [christos 20260116]
 	acpi(4): Updated ACPICA to 20251212. [christos 20260117]
 	byacc: Update to 20241231. [christos 20260118]
+	gfortran(1): Add for all platforms using GCC 14. [mrg 20260118]
