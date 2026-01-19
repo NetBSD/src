@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2026/01/19 09:41:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2026/01/19 11:48:40 mrg Exp $
 
 # XXX libgfortran also has a libcaf_single thing in here.
+
+# XXX
+NOLINT=	# defined
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
