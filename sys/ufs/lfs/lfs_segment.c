@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.306 2025/12/11 01:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.307 2026/01/20 15:30:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.306 2025/12/11 01:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.307 2026/01/20 15:30:15 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.306 2025/12/11 01:27:24 perseant E
 #include <sys/mount.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
+#include <sys/vnode_impl.h>
 #include <sys/workqueue.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -416,8 +417,19 @@ lfs_writevnodes_selector(void *cl, struct vnode *vp)
 	struct lfs_writevnodes_ctx *c = cl;
 	struct inode *ip;
 	int op = c->op;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
+
+	/*
+	 * A vnode being reclaimed will be in state VS_RECLAIMING
+	 * while it attemmpts to get the segment lock.  We hold the
+	 * segment lock, so we must skip these vnodes in order to
+	 * avoid a deadlock.
+	 */
+	if (vip->vi_state != VS_LOADED && vip->vi_state != VS_RECLAIMED
+	    && !IS_FLUSHING(c->fs, vp))
+	    return false;
 
 	ip = VTOI(vp);
 	if (ip == NULL || vp->v_type == VNON || ip->i_nlink <= 0)
