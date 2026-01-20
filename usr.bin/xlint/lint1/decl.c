@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.423 2026/01/17 14:27:08 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.424 2026/01/20 23:33:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.423 2026/01/17 14:27:08 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.424 2026/01/20 23:33:05 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -352,11 +352,8 @@ dcs_add_type(type_t *tp)
 			t = FCOMPLEX;
 		else if (dcs->d_complex_mod == DOUBLE)
 			t = DCOMPLEX;
-		else {
-			/* invalid type for _Complex */
-			error(308);
-			t = DCOMPLEX;	/* just as a fallback */
-		}
+		else if (dcs->d_abstract_type == NO_TSPEC)
+			t = COMPLEX;
 		dcs->d_complex_mod = NO_TSPEC;
 	}
 
@@ -395,9 +392,11 @@ dcs_add_type(type_t *tp)
 				dcs->d_invalid_type_combination = true;
 			dcs->d_abstract_type = t;
 		}
-	} else if (t == PTR) {
+	} else if (t == PTR)
 		dcs->d_type = tp;
-	} else {
+	else if (t == COMPLEX && dcs->d_abstract_type == NO_TSPEC)
+		dcs->d_abstract_type = t;
+	else {
 		if (dcs->d_abstract_type != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
@@ -723,6 +722,17 @@ dcs_merge_declaration_specifiers(void)
 	if (t == LDOUBLE && !allow_c90)
 		/* 'long double' requires C90 or later */
 		warning(266);
+	if (t == COMPLEX && c == FLOAT)
+		t = FCOMPLEX;
+	else if (t == COMPLEX && c == DOUBLE)
+		t = DCOMPLEX;
+	else if (t == COMPLEX && c == LDOUBLE)
+		t = LCOMPLEX;
+	else if (t == COMPLEX) {
+		/* invalid type for _Complex */
+		error(308);
+		t = DCOMPLEX;
+	}
 	if (l == LONG && t == DCOMPLEX) {
 		l = NO_TSPEC;
 		t = LCOMPLEX;
