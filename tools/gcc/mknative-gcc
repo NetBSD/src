@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.124 2026/01/18 05:00:35 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.125 2026/01/20 00:46:18 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -214,8 +214,8 @@ get_libgfortran () {
 		gfor_specific_src gfor_ieee_src gfor_ieee_helper_src \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/defs.mk
 
-	write_mk $_OUTDIRBASE/lib/$_subdir/libgfortran.spec \
-		<$_TMPDIR/$_PLATFORM/libgfortran/libgfortran.spec
+	write_mk $_OUTDIRBASE/lib/$_subdir/arch/$_MACHINE_ARCH/libgfortran.spec \
+		<$_TMPDIR/$_PLATFORM/$_subdir/libgfortran.spec
 }
 
 ##### lib/libobjc #####
