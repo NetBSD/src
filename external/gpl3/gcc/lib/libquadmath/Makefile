@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2026/01/18 08:07:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2026/01/20 18:06:12 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
+NOLINT=yes	# no complex128?
 
 .include <bsd.own.mk>
 
@@ -24,6 +25,9 @@ CPPFLAGS+= \
 LIBDPLIBS+=	m ${NETBSDSRCDIR}/lib/libm
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libquadmath/quadmath.map
+
+COPTS.mul.c += -Wno-error=stack-protector
+COPTS.printf_fp.c += -Wno-error=stack-protector
 
 .include <bsd.lib.mk>
 
