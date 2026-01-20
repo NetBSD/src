@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.84 2024/09/24 19:58:06 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.85 2026/01/20 23:46:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.84 2024/09/24 19:58:06 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.85 2026/01/20 23:46:36 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -87,6 +87,7 @@ gcc_builtins(void)
 	/* https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html */
 	static const char builtins[] =
 	    "typedef typeof(sizeof(0)) __lint_size_t;\n"
+	    "typedef long double __float128;\n"
 
 	    "void *alloca(__lint_size_t);\n"
 	    "void *__builtin_alloca(__lint_size_t);\n"

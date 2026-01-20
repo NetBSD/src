@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.6 2025/07/31 17:30:52 rillig Exp $	*/
+/*	$NetBSD: gcc.c,v 1.7 2026/01/20 23:46:36 rillig Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -126,3 +126,5 @@ atomic_functions(void)
 	/* expect+1: warning: conversion from 'unsigned long long' to 'char' may lose accuracy [132] */
 	c = __atomic_exchange_n(pv, 0, 0);
 }
+
+__float128 f128 = 0.0;
