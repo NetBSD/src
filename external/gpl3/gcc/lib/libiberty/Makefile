@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2025/09/18 03:15:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2026/01/20 20:27:26 christos Exp $
 
+NOLINT=yes	# XXX: too-many-errors
 LIBISPRIVATE=	yes
 
 .include <bsd.init.mk>
