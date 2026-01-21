@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.426 2026/01/18 08:30:33 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.427 2026/01/21 17:57:27 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -911,7 +911,7 @@ ${_DEST.LIB}/${_LIB_g.a}: ${_LIB_g.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no"
+.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no" && !defined(NOPICINSTALL)
 libinstall:: ${_DEST.LIB}/${_LIB_pic.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_pic.a}
 
