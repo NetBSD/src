@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: cmds.h,v 1.1.1.1.18.1 2026/01/22 19:02:27 martin Exp $	*/
 
 /* cmds.h -- declarations for cmds.c.
    Id: cmds.h,v 1.9 2004/11/26 00:48:35 karl Exp 
@@ -26,7 +26,7 @@
 /* The three arguments a command can get are a flag saying whether it is
    before argument parsing (START) or after (END), the starting position
    of the arguments, and the ending position.  */
-typedef void COMMAND_FUNCTION (); /* So we can say COMMAND_FUNCTION *foo; */
+typedef void COMMAND_FUNCTION (int, int, int);
 
 /* Each command has an associated function.  When the command is
    encountered in the text, the associated function is called with START
@@ -58,158 +58,158 @@ typedef struct acronym_desc
 } ACRONYM_DESC;
 
 /* Texinfo commands.  */
-extern void insert_self (int arg),
-  insert_space (int arg),
-  cm_ignore_line (void),
+extern void insert_self (int arg, int arg2, int arg3),
+  insert_space (int arg, int arg2, int arg3),
+  cm_ignore_line (int arg, int arg2, int arg3),
   cm_ignore_arg (int arg, int start_pos, int end_pos),
-  cm_comment (void),
-  cm_no_op (void);
+  cm_comment (int arg, int arg2, int arg3),
+  cm_no_op (int arg, int arg2, int arg3);
 
 /* Document structure and meta information.  */
-extern void cm_setfilename (void),
-  cm_settitle (void),
-  cm_documentdescription (void),
-  cm_node (void),
-  cm_menu (void),
-  cm_detailmenu (void),
-  cm_dircategory (void),
-  cm_direntry (void),
-  cm_bye (void);
+extern void cm_setfilename (int arg, int arg2, int arg3),
+  cm_settitle (int arg, int arg2, int arg3),
+  cm_documentdescription (int arg, int arg2, int arg3),
+  cm_node (int arg, int arg2, int arg3),
+  cm_menu (int arg, int arg2, int arg3),
+  cm_detailmenu (int arg, int arg2, int arg3),
+  cm_dircategory (int arg, int arg2, int arg3),
+  cm_direntry (int arg, int arg2, int arg3),
+  cm_bye (int arg, int arg2, int arg3);
 
 /* File inclusion.  */
-extern void cm_include (void),
-  cm_verbatiminclude (void);
+extern void cm_include (int arg, int arg2, int arg3),
+  cm_verbatiminclude (int arg, int arg2, int arg3);
 
 /* Cross referencing commands.  */
-extern void cm_anchor (int arg),
-  cm_xref (int arg),
-  cm_pxref (int arg),
-  cm_ref (int arg),
-  cm_inforef (int arg),
-  cm_uref (int arg);
+extern void cm_anchor (int arg, int arg2, int arg3),
+  cm_xref (int arg, int arg2, int arg3),
+  cm_pxref (int arg, int arg2, int arg3),
+  cm_ref (int arg, int arg2, int arg3),
+  cm_inforef (int arg, int arg2, int arg3),
+  cm_uref (int arg, int arg2, int arg3);
 
 /* Special insertions.  */
-extern void cm_LaTeX (int arg),
-  cm_TeX (int arg),
-  cm_bullet (int arg),
-  cm_colon (void),
-  cm_comma (int arg),
-  cm_copyright (int arg),
-  cm_dots (int arg),
-  cm_enddots (int arg),
-  cm_equiv (int arg),
-  cm_error (int arg),
-  cm_expansion (int arg),
-  cm_image (int arg),
-  cm_insert_copying (void),
-  cm_minus (int arg),
-  cm_point (int arg),
-  cm_print (int arg),
-  cm_punct (int arg),
-  cm_registeredsymbol (int arg),
-  cm_result (int arg);
+extern void cm_LaTeX (int arg, int arg2, int arg3),
+  cm_TeX (int arg, int arg2, int arg3),
+  cm_bullet (int arg, int arg2, int arg3),
+  cm_colon (int arg, int arg2, int arg3),
+  cm_comma (int arg, int arg2, int arg3),
+  cm_copyright (int arg, int arg2, int arg3),
+  cm_dots (int arg, int arg2, int arg3),
+  cm_enddots (int arg, int arg2, int arg3),
+  cm_equiv (int arg, int arg2, int arg3),
+  cm_error (int arg, int arg2, int arg3),
+  cm_expansion (int arg, int arg2, int arg3),
+  cm_image (int arg, int arg2, int arg3),
+  cm_insert_copying (int arg, int arg2, int arg3),
+  cm_minus (int arg, int arg2, int arg3),
+  cm_point (int arg, int arg2, int arg3),
+  cm_print (int arg, int arg2, int arg3),
+  cm_punct (int arg, int arg2, int arg3),
+  cm_registeredsymbol (int arg, int arg2, int arg3),
+  cm_result (int arg, int arg2, int arg3);
 
 /* Emphasis and markup.  */
-extern void cm_acronym (int arg),
-  cm_abbr (int arg),
-  cm_b (int arg),
-  cm_cite (int arg, int position),
-  cm_code (int arg),
-  cm_dfn (int arg, int position),
-  cm_dmn (int arg),
-  cm_email (int arg),
-  cm_emph (int arg),
-  cm_i (int arg),
-  cm_kbd (int arg),
-  cm_key (int arg),
-  cm_math (int arg),
+extern void cm_acronym (int arg, int arg2, int arg3),
+  cm_abbr (int arg, int arg2, int arg3),
+  cm_b (int arg, int arg2, int arg3),
+  cm_cite (int arg, int position, int arg3),
+  cm_code (int arg, int arg2, int arg3),
+  cm_dfn (int arg, int position, int arg3),
+  cm_dmn (int arg, int arg2, int arg3),
+  cm_email (int arg, int arg2, int arg3),
+  cm_emph (int arg, int arg2, int arg3),
+  cm_i (int arg, int arg2, int arg3),
+  cm_kbd (int arg, int arg2, int arg3),
+  cm_key (int arg, int arg2, int arg3),
+  cm_math (int arg, int arg2, int arg3),
   cm_not_fixed_width (int arg, int start, int end),
-  cm_r (int arg),
-  cm_sansserif (int arg),
+  cm_r (int arg, int arg2, int arg3),
+  cm_sansserif (int arg, int arg2, int arg3),
   cm_sc (int arg, int start_pos, int end_pos),
-  cm_slanted (int arg),
+  cm_slanted (int arg, int arg2, int arg3),
   cm_strong (int arg, int start_pos, int end_pos),
-  cm_tt (int arg),
+  cm_tt (int arg, int arg2, int arg3),
   cm_indicate_url (int arg, int start, int end),
   cm_var (int arg, int start_pos, int end_pos),
-  cm_verb (int arg);
+  cm_verb (int arg, int arg2, int arg3);
 
 /* Block environments.  */
-extern void cm_cartouche (void),
-  cm_group (void),
-  cm_display (void),
-  cm_smalldisplay (void),
-  cm_example (void),
-  cm_smallexample (void),
-  cm_smalllisp (void),
-  cm_lisp (void),
-  cm_format (void),
-  cm_smallformat (void),
-  cm_quotation (void),
-  cm_copying (void),
-  cm_flushleft (void),
-  cm_flushright (void),
-  cm_verbatim (void),
-  cm_end (void);
+extern void cm_cartouche (int arg, int arg2, int arg3),
+  cm_group (int arg, int arg2, int arg3),
+  cm_display (int arg, int arg2, int arg3),
+  cm_smalldisplay (int arg, int arg2, int arg3),
+  cm_example (int arg, int arg2, int arg3),
+  cm_smallexample (int arg, int arg2, int arg3),
+  cm_smalllisp (int arg, int arg2, int arg3),
+  cm_lisp (int arg, int arg2, int arg3),
+  cm_format (int arg, int arg2, int arg3),
+  cm_smallformat (int arg, int arg2, int arg3),
+  cm_quotation (int arg, int arg2, int arg3),
+  cm_copying (int arg, int arg2, int arg3),
+  cm_flushleft (int arg, int arg2, int arg3),
+  cm_flushright (int arg, int arg2, int arg3),
+  cm_verbatim (int arg, int arg2, int arg3),
+  cm_end (int arg, int arg2, int arg3);
 
 /* Tables, lists, enumerations.  */
-extern void cm_table (void),
-  cm_ftable (void),
-  cm_vtable (void),
-  cm_itemize (void),
-  cm_enumerate (void),
-  cm_multitable (void),
-  cm_headitem (void),
-  cm_item (void),
-  cm_itemx (void),
-  cm_tab (void);
+extern void cm_table (int arg, int arg2, int arg3),
+  cm_ftable (int arg, int arg2, int arg3),
+  cm_vtable (int arg, int arg2, int arg3),
+  cm_itemize (int arg, int arg2, int arg3),
+  cm_enumerate (int arg, int arg2, int arg3),
+  cm_multitable (int arg, int arg2, int arg3),
+  cm_headitem (int arg, int arg2, int arg3),
+  cm_item (int arg, int arg2, int arg3),
+  cm_itemx (int arg, int arg2, int arg3),
+  cm_tab (int arg, int arg2, int arg3);
 
-extern void cm_center (void),
-  cm_exdent (void),
-  cm_indent (void),
-  cm_noindent (void),
-  cm_noindent_cmd (void);
+extern void cm_center (int arg, int arg2, int arg3),
+  cm_exdent (int arg, int arg2, int arg3),
+  cm_indent (int arg, int arg2, int arg3),
+  cm_noindent (int arg, int arg2, int arg3),
+  cm_noindent_cmd (int arg, int arg2, int arg3);
 
 /* Line and page breaks.  */
-extern void cm_asterisk (void),
-  cm_sp (void),
-  cm_page (void);
+extern void cm_asterisk (int arg, int arg2, int arg3),
+  cm_sp (int arg, int arg2, int arg3),
+  cm_page (int arg, int arg2, int arg3);
 
 /* Non breaking words.  */
-extern void cm_tie (int arg),
-  cm_w (int arg);
+extern void cm_tie (int arg, int arg2, int arg3),
+  cm_w (int arg, int arg2, int arg3);
 
 /* Title page creation.  */
-extern void cm_titlepage (void),
-  cm_author (void),
-  cm_titlepage_cmds (void),
-  cm_titlefont (int arg),
-  cm_today (int arg);
+extern void cm_titlepage (int arg, int arg2, int arg3),
+  cm_author (int arg, int arg2, int arg3),
+  cm_titlepage_cmds (int arg, int arg2, int arg3),
+  cm_titlefont (int arg, int arg2, int arg3),
+  cm_today (int arg, int arg2, int arg3);
 
 /* Floats.  */
-extern void cm_float (void),
-  cm_caption (int arg),
-  cm_shortcaption (void),
-  cm_listoffloats (void);
+extern void cm_float (int arg, int arg2, int arg3),
+  cm_caption (int arg, int arg2, int arg3),
+  cm_shortcaption (int arg, int arg2, int arg3),
+  cm_listoffloats (int arg, int arg2, int arg3);
 
 /* Indices.  */
-extern void cm_kindex (void),
-  cm_cindex (void),
-  cm_findex (void),
-  cm_pindex (void),
-  cm_vindex (void),
-  cm_tindex (void),
-  cm_defindex (void),
-  cm_defcodeindex (void),
-  cm_synindex (void),
-  cm_printindex (void);
+extern void cm_kindex (int arg, int arg2, int arg3),
+  cm_cindex (int arg, int arg2, int arg3),
+  cm_findex (int arg, int arg2, int arg3),
+  cm_pindex (int arg, int arg2, int arg3),
+  cm_vindex (int arg, int arg2, int arg3),
+  cm_tindex (int arg, int arg2, int arg3),
+  cm_defindex (int arg, int arg2, int arg3),
+  cm_defcodeindex (int arg, int arg2, int arg3),
+  cm_synindex (int arg, int arg2, int arg3),
+  cm_printindex (int arg, int arg2, int arg3);
 
 /* Conditionals. */
-extern void cm_set (void),
-  cm_clear (void),
-  cm_ifset (void),
-  cm_ifclear (void),
-  cm_ifeq (void),
+extern void cm_set (int arg, int arg2, int arg3),
+  cm_clear (int arg, int arg2, int arg3),
+  cm_ifset (int arg, int arg2, int arg3),
+  cm_ifclear (int arg, int arg2, int arg3),
+  cm_ifeq (int arg, int arg2, int arg3),
   cm_value (int arg, int start_pos, int end_pos);
 
 #endif /* !CMDS_H */

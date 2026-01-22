@@ -1,4 +1,4 @@
-/*	$NetBSD: system.h,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
+/*	$NetBSD: system.h,v 1.2.18.1 2026/01/22 19:02:26 martin Exp $	*/
 
 /* system.h: system-dependent declarations; include this first.
    Id: system.h,v 1.12 2004/04/26 13:56:57 karl Exp 
@@ -119,6 +119,13 @@ extern char *strerror ();
 #define PATH_MAX _POSIX_PATH_MAX
 #endif
 
+/*
+ * configure never checks for the declarations of strcasecmp and strncasecmp.
+ * Hence the HAVE_DECL_*s for them are never defined in config.
+ * GCC 15.1 make conflicting prototypes an error.
+ * Therefore disable the following two conditions to appease GCC 15.1.
+ */
+#if 0 /* GCC 15.1 conflicting prototypes */
 #ifndef HAVE_DECL_STRCASECMP
 extern int strcasecmp ();
 #endif
@@ -126,6 +133,7 @@ extern int strcasecmp ();
 #ifndef HAVE_DECL_STRNCASECMP
 extern int strncasecmp ();
 #endif
+#endif /* GCC 15.1 conflicting prototypes */
 
 #ifndef HAVE_DECL_STRCOLL
 extern int strcoll ();

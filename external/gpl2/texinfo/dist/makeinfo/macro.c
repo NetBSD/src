@@ -1,4 +1,4 @@
-/*	$NetBSD: macro.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: macro.c,v 1.1.1.1.18.1 2026/01/22 19:02:27 martin Exp $	*/
 
 /* macro.c -- user-defined macros for Texinfo.
    Id: macro.c,v 1.6 2004/04/11 17:56:47 karl Exp 
@@ -702,13 +702,13 @@ define_macro (char *mactype, int recursive)
 }
 
 void 
-cm_macro (void)
+cm_macro (int arg, int arg2, int arg3)
 {
   define_macro ("macro", 0);
 }
 
 void 
-cm_rmacro (void)
+cm_rmacro (int arg, int arg2, int arg3)
 {
   define_macro ("rmacro", 1);
 }
@@ -737,7 +737,7 @@ delete_macro (char *name)
 }
 
 void
-cm_unmacro (void)
+cm_unmacro (int arg, int arg2, int arg3)
 {
   int i;
   char *line, *name;
@@ -993,7 +993,7 @@ static alias_type *aliases;
 /* @alias aname = cmdname */
 
 void
-cm_alias (void)
+cm_alias (int arg, int arg2, int arg3)
 {
   alias_type *a = xmalloc (sizeof (alias_type));
 
@@ -1052,7 +1052,7 @@ static enclosure_stack_type *enclosure_stack;
 
 /* @definfoenclose */
 void
-cm_definfoenclose (void)
+cm_definfoenclose (int arg, int arg2, int arg3)
 {
   enclosure_type *e = xmalloc (sizeof (enclosure_type));
 

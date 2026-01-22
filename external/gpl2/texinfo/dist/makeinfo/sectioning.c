@@ -1,4 +1,4 @@
-/*	$NetBSD: sectioning.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
+/*	$NetBSD: sectioning.c,v 1.2.18.1 2026/01/22 19:02:27 martin Exp $	*/
 
 /* sectioning.c -- for @chapter, @section, ..., @contents ...
    Id: sectioning.c,v 1.25 2004/07/05 22:23:23 karl Exp 
@@ -326,7 +326,7 @@ sectioning_underscore (char *cmd)
   /* If we're not indenting the first paragraph, we shall make it behave
      like @noindent is called directly after the section heading. */
   if (! do_first_par_indent)
-    cm_noindent ();
+    cm_noindent (0, 0, 0);
 
   temp = xmalloc (2 + strlen (cmd));
   temp[0] = COMMAND_PREFIX;
@@ -603,7 +603,7 @@ sectioning_html (int level, char *cmd)
 
 /* Shift the meaning of @section to @chapter. */
 void
-cm_raisesections (void)
+cm_raisesections (int arg, int arg2, int arg3)
 {
   discard_until ("\n");
   section_alist_offset--;
@@ -611,7 +611,7 @@ cm_raisesections (void)
 
 /* Shift the meaning of @chapter to @section. */
 void
-cm_lowersections (void)
+cm_lowersections (int arg, int arg2, int arg3)
 {
   discard_until ("\n");
   section_alist_offset++;
@@ -630,7 +630,7 @@ cm_ideprecated (int arg, int start, int end)
 /* Treat this just like @unnumbered.  The only difference is
    in node defaulting. */
 void
-cm_top (void)
+cm_top (int arg, int arg2, int arg3)
 {
   /* It is an error to have more than one @top. */
   if (top_node_seen && strcmp (current_node, "Top") != 0)
@@ -668,7 +668,7 @@ cm_top (void)
           return;
         }
 
-      cm_unnumbered ();
+      cm_unnumbered (0, 0, 0);
 
       /* The most recently defined node is the top node. */
       tag_table->flags |= TAG_FLAG_IS_TOP;
@@ -709,7 +709,7 @@ cm_top (void)
 
 /* The remainder of the text on this line is a chapter heading. */
 void
-cm_chapter (void)
+cm_chapter (int arg, int arg2, int arg3)
 {
   enum_marker = 0;
   sectioning_underscore ("chapter");
@@ -717,28 +717,28 @@ cm_chapter (void)
 
 /* The remainder of the text on this line is a section heading. */
 void
-cm_section (void)
+cm_section (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("section");
 }
 
 /* The remainder of the text on this line is a subsection heading. */
 void
-cm_subsection (void)
+cm_subsection (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("subsection");
 }
 
 /* The remainder of the text on this line is a subsubsection heading. */
 void
-cm_subsubsection (void)
+cm_subsubsection (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("subsubsection");
 }
 
 /* The remainder of the text on this line is an unnumbered heading. */
 void
-cm_unnumbered (void)
+cm_unnumbered (int arg, int arg2, int arg3)
 {
   enum_marker = UNNUMBERED_MAGIC;
   sectioning_underscore ("unnumbered");
@@ -746,7 +746,7 @@ cm_unnumbered (void)
 
 /* The remainder of the text on this line is an unnumbered section heading. */
 void
-cm_unnumberedsec (void)
+cm_unnumberedsec (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("unnumberedsec");
 }
@@ -754,7 +754,7 @@ cm_unnumberedsec (void)
 /* The remainder of the text on this line is an unnumbered
    subsection heading. */
 void
-cm_unnumberedsubsec (void)
+cm_unnumberedsubsec (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("unnumberedsubsec");
 }
@@ -762,14 +762,14 @@ cm_unnumberedsubsec (void)
 /* The remainder of the text on this line is an unnumbered
    subsubsection heading. */
 void
-cm_unnumberedsubsubsec (void)
+cm_unnumberedsubsubsec (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("unnumberedsubsubsec");
 }
 
 /* The remainder of the text on this line is an appendix heading. */
 void
-cm_appendix (void)
+cm_appendix (int arg, int arg2, int arg3)
 {
   /* Reset top level number so we start from Appendix A */
   if (enum_marker != APPENDIX_MAGIC)
@@ -780,14 +780,14 @@ cm_appendix (void)
 
 /* The remainder of the text on this line is an appendix section heading. */
 void
-cm_appendixsec (void)
+cm_appendixsec (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("appendixsec");
 }
 
 /* The remainder of the text on this line is an appendix subsection heading. */
 void
-cm_appendixsubsec (void)
+cm_appendixsubsec (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("appendixsubsec");
 }
@@ -795,38 +795,38 @@ cm_appendixsubsec (void)
 /* The remainder of the text on this line is an appendix
    subsubsection heading. */
 void
-cm_appendixsubsubsec (void)
+cm_appendixsubsubsec (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("appendixsubsubsec");
 }
 
 /* Compatibility functions substitute for chapter, section, etc. */
 void
-cm_majorheading (void)
+cm_majorheading (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("majorheading");
 }
 
 void
-cm_chapheading (void)
+cm_chapheading (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("chapheading");
 }
 
 void
-cm_heading (void)
+cm_heading (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("heading");
 }
 
 void
-cm_subheading (void)
+cm_subheading (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("subheading");
 }
 
 void
-cm_subsubheading (void)
+cm_subsubheading (int arg, int arg2, int arg3)
 {
   sectioning_underscore ("subsubheading");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.2.18.1 2026/01/22 19:02:26 martin Exp $	*/
 
 /* Getopt for GNU.
    NOTE: getopt is now part of the C library, so if you don't know what
@@ -126,7 +126,7 @@ static struct _getopt_data getopt_data;
    whose names are inconsistent.  */
 
 #ifndef getenv
-extern char *getenv ();
+extern char *getenv (const char *);
 #endif
 
 #endif /* not __GNU_LIBRARY__ */

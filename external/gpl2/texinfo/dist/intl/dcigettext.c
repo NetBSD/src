@@ -1,4 +1,4 @@
-/*	$NetBSD: dcigettext.c,v 1.1.1.1 2016/01/14 00:11:28 christos Exp $	*/
+/*	$NetBSD: dcigettext.c,v 1.1.1.1.18.1 2026/01/22 19:02:26 martin Exp $	*/
 
 /* Implementation of the internal dcigettext function.
    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
@@ -152,8 +152,6 @@ char *getwd ();
 # else
 #  if VMS
 #   define getcwd(buf, max) (getcwd) (buf, max, 0)
-#  else
-char *getcwd ();
 #  endif
 # endif
 # ifndef HAVE_STPCPY

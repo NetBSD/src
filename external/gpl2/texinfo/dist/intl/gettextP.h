@@ -1,4 +1,4 @@
-/*	$NetBSD: gettextP.h,v 1.1.1.1 2016/01/14 00:11:27 christos Exp $	*/
+/*	$NetBSD: gettextP.h,v 1.1.1.1.18.1 2026/01/22 19:02:26 martin Exp $	*/
 
 /* Header describing internals of libintl library.
    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
@@ -62,8 +62,7 @@
 # define SWAP(i) bswap_32 (i)
 #else
 static inline nls_uint32
-SWAP (i)
-     nls_uint32 i;
+SWAP (nls_uint32 i)
 {
   return (i << 24) | ((i & 0xff00) << 8) | ((i >> 8) & 0xff00) | (i >> 24);
 }

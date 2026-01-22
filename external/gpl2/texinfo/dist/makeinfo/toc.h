@@ -1,4 +1,4 @@
-/*	$NetBSD: toc.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: toc.h,v 1.1.1.1.18.1 2026/01/22 19:02:27 martin Exp $	*/
 
 /* toc.h -- table of contents handling.
    Id: toc.h,v 1.2 2004/04/11 17:56:47 karl Exp 
@@ -42,6 +42,6 @@ extern int toc_add_entry (char *tocname, int level,
 extern void toc_free (void);
 extern char *toc_find_section_of_node (char *node);
 
-extern void cm_contents (int arg);
+extern void cm_contents (int arg, int arg2, int arg3);
 
 #endif /* not TOC_H */

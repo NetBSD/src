@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_.h,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: getopt_.h,v 1.1.1.1.18.1 2026/01/22 19:02:26 martin Exp $	*/
 
 /* Declarations for getopt.
    Copyright (C) 1989-1994,1996-1999,2001,2003,2004
@@ -153,7 +153,7 @@ struct option
 extern int getopt (int ___argc, char *const *___argv, const char *__shortopts)
        __THROW;
 #else /* not __GNU_LIBRARY__ */
-extern int getopt ();
+extern int getopt (int, char * const *, const char *);
 #endif /* __GNU_LIBRARY__ */
 
 #ifndef __need_getopt
