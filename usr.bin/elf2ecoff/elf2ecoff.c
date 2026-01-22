@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.36.2.1 2025/09/23 16:01:28 martin Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.36.2.2 2026/01/22 20:20:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -425,9 +425,12 @@ usage:
 	}
 
 
-	if (debug)
-		fprintf(stderr, "writing syms at offset %#x\n",
-		    (uint32_t)(ep.f.f_symptr + sizeof(symhdr)));
+	if (debug) {
+		uint32_t symptr = needswap ? bswap32(ep.f.f_symptr) : ep.f.f_symptr;
+		fprintf(stderr, "writing symhdr at offset %#x, "
+		    "syms at offset %#x\n", symptr,
+		    (uint32_t)(symptr + sizeof(symhdr)));
+	}
 
 	/* Copy and translate the symbol table... */
 	elf_symbol_table_to_ecoff(outfile, infile, &ep,
@@ -591,12 +594,12 @@ write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
     int32_t extsymoff, int32_t extstroff, int32_t strsize)
 {
 
-	if (debug)
+	if (debug) {
+		uint32_t symptr = needswap ? bswap32(ep->f.f_symptr) : ep->f.f_symptr;
 		fprintf(stderr,
 		    "writing symhdr for %d entries at offset %#x\n",
-		    nesyms, ep->f.f_symptr);
-
-	ep->f.f_nsyms = sizeof(struct ecoff32_symhdr);
+		    nesyms, symptr);
+	}
 
 	memset(symhdrp, 0, sizeof(*symhdrp));
 	symhdrp->esymMax = nesyms;
@@ -614,9 +617,9 @@ write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
 	if (needswap) {
 		bswap32_region(&symhdrp->ilineMax,
 		    sizeof(*symhdrp) -  sizeof(symhdrp->magic) -
-		    sizeof(symhdrp->ilineMax));
+		    sizeof(symhdrp->vstamp));
 		symhdrp->magic = bswap16(symhdrp->magic);
-		symhdrp->ilineMax = bswap16(symhdrp->ilineMax);
+		symhdrp->vstamp = bswap16(symhdrp->vstamp);
 	}
 
 	safewrite(out, symhdrp, sizeof(*symhdrp),
@@ -665,7 +668,7 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 	uint32_t nextoff, symtabsize, ecoff_strsize;
 	int     nsyms, i;
 	struct ecoff32_symhdr symhdr;
-	int     padding;
+	int     align, padding;
 
 	/* Read in the ELF symbols. */
 	elf_read_syms(&elfsymtab, in, symoff, symsize, stroff, strsize);
@@ -675,18 +678,19 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 	nsyms = ecoffsymtab.nsymbols;
 
 	/* Compute output ECOFF symbol- and string-table offsets. */
-	ecoff_symhdr_off = ep->f.f_symptr;
+	/* XXX ep is already swapped here */
+	ecoff_symhdr_off = needswap ? bswap32(ep->f.f_symptr) : ep->f.f_symptr;
+	align = needswap ? (bswap16(ep->a.vstamp) < 23 ? 8 : 16) :
+	    ECOFF32_SEGMENT_ALIGNMENT(ep);
 
 	nextoff = ecoff_symhdr_off + sizeof(struct ecoff_symhdr);
 	stringtaboff = nextoff;
-	ecoff_strsize = ECOFF_ROUND(ecoffsymtab.stringsize,
-	    (ECOFF32_SEGMENT_ALIGNMENT(ep)));
-
+	ecoff_strsize = ECOFF_ROUND(ecoffsymtab.stringsize, align);
 
 	nextoff = stringtaboff + ecoff_strsize;
 	symtaboff = nextoff;
 	symtabsize = nsyms * sizeof(struct ecoff_extsym);
-	symtabsize = ECOFF_ROUND(symtabsize, ECOFF32_SEGMENT_ALIGNMENT(ep));
+	symtabsize = ECOFF_ROUND(symtabsize, align);
 
 	/* Write out the symbol header ... */
 	write_ecoff_symhdr(out, ep, &symhdr, nsyms, symtaboff,
@@ -703,12 +707,15 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 	/* Write out the symbol table... */
 	padding = symtabsize - (nsyms * sizeof(struct ecoff_extsym));
 
-	for (i = 0; i < nsyms; i++) {
-		struct ecoff_extsym *es = &ecoffsymtab.ecoff_syms[i];
-		es->es_flags	= bswap16(es->es_flags);
-		es->es_ifd	= bswap16(es->es_ifd);
-		bswap32_region(&es->es_strindex,
-		    sizeof(*es) - sizeof(es->es_flags) - sizeof(es->es_ifd));
+	if (needswap) {
+		for (i = 0; i < nsyms; i++) {
+			struct ecoff_extsym *es = &ecoffsymtab.ecoff_syms[i];
+			es->es_flags	= bswap16(es->es_flags);
+			es->es_ifd	= bswap16(es->es_ifd);
+			bswap32_region(&es->es_strindex,
+			    sizeof(*es) - sizeof(es->es_flags) -
+			    sizeof(es->es_ifd));
+		}
 	}
 	safewrite(out, ecoffsymtab.ecoff_syms,
 	    nsyms * sizeof(struct ecoff_extsym),
