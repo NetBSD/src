@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.34 2018/10/29 21:04:18 wiz Exp $
+.\"	$NetBSD: diskless.8,v 1.34.14.1 2026/01/22 19:25:22 martin Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 23, 2018
+.Dd January 8, 2026
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ dependence on system firmware support; not all platforms supported by
 are capable of being network booted.
 .Pp
 The protocols used to obtain a network address
-.Pq e.g. an Tn \&IP host address ,
+.Pq e.g. an \&IP host address ,
 include, but are not limited to:
 .Pp
 .Bl -tag -width BOOTP -offset indent -compact
@@ -106,7 +106,7 @@ The
 kernel doesn't care how it gets loaded and started.
 The protocols used to boot
 .Nx
-can be completely different than the ones that
+can be completely different from the ones that
 .Nx
 uses operationally, i.e. you can netboot the system using
 .Tn \&HP
@@ -196,7 +196,7 @@ kernel performs an
 mount of the root file system.
 .El
 .Pp
-Each of these phases are described in further detail below.
+Each of these phases is described in further detail below.
 .Ss 1. loading a boot program
 In phase 1, the system firmware loads a boot program.
 Firmware designs vary widely,
@@ -210,7 +210,7 @@ to determine the client's
 .Tn \&IP
 address and then use
 .Tn TFTP
-load a secondary bootstrap program from the server and filename
+to load a secondary bootstrap program from the server and filename
 specified in the
 .Tn BOOTP
 reply.
@@ -247,14 +247,12 @@ Some
 support booting from a network interface.
 .Ss 2. loading a kernel
 In phase 2, the secondary boot program loads a kernel.
-Operation in this phase depends on the design of the boot program
-.Po
-the design described here is the one used by
-.Tn Sun
+Operation in this phase depends on the design of the boot program.
+A secondary bootstrap program that uses
+.Tn RARP
 and
-.Nx Ns Tn /hp300
-.Pc .
-The boot program:
+.Tn Sun RPC BOOTPARAMS
+typically does the following:
 .Pp
 .Bl -enum -compact
 .It
@@ -292,28 +290,37 @@ read calls on the kernel file handle.
 transfers control to the kernel entry point.
 .El
 .Pp
-A
+A secondary bootstrap program that uses
 .Tn BOOTP
 and/or
 .Tn DHCP
-secondary bootstrap program will do the following:
+typically does the following:
 .Pp
 .Bl -enum -compact
 .It
 query for the client's bootstrap parameters.
 The response must include the client's
 .Tn \&IP
-address, and a
-.Tn TFTP
-server to load the
+address, server's
+.Tn \&IP
+address, an
+.Tn NFS
+root path, and a filename to load the
 .Nx
 kernel from.
 .It
-loads the
-.Nx
-kernel from the
-.Tn TFTP
-server.
+gets the root file handle by calling
+.Xr mountd 8
+with the server path for the client root file system.
+.It
+gets the kernel file handle by calling
+.Tn NFS
+.Fn lookup
+on the root file handle.
+.It
+loads the kernel using
+.Tn NFS
+read calls on the kernel file handle.
 .It
 transfers control to the kernel entry point.
 .El
@@ -538,7 +545,7 @@ The
 .Tn DHCP
 parameters required for network bootstrapping a system will vary
 from platform to platform, as dictated by each system's firmware.
-In particular, because the
+In particular, because
 .Tn DHCP
 is extensible, some hardware vendors have specified
 .Tn DHCP
@@ -595,11 +602,11 @@ system, the filename would be just C0C5600C
 these systems' firmware does not append the architecture name
 .Pc .
 The name used is architecture dependent, it simply has to match
-what the booting client's system firmware wishes to it to be.
+what the booting client's system firmware wishes it to be.
 .Pp
 If the client's system firmware fails to fetch the expected file,
 .Xr tcpdump 8
-can be used to discover which filename the client is being requested.
+can be used to discover which filename the client is requesting.
 Also, examination of
 .Xr tftpd 8
 log entries
