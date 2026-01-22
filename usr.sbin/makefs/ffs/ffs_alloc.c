@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.33 2025/06/27 19:55:38 andvar Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.33.2.1 2026/01/22 20:15:57 martin Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.33 2025/06/27 19:55:38 andvar Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.33.2.1 2026/01/22 20:15:57 martin Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -417,6 +417,14 @@ gotit:
 	ufs_add32(cgp->cg_cs.cs_nbfree, -1, needswap);
 	fs->fs_cstotal.cs_nbfree--;
 	fs->fs_cs(fs, ufs_rw32(cgp->cg_cgx, needswap)).cs_nbfree--;
+	if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+	    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+		int cylno;
+		cylno = old_cbtocylno(fs, bno);
+		ufs_add16(old_cg_blks(fs, cgp, cylno,
+		    needswap)[old_cbtorpos(fs, bno)], -1, needswap);
+		ufs_add32(old_cg_blktot(cgp, needswap)[cylno], -1, needswap);
+	}
 	fs->fs_fmod = 1;
 	blkno = ufs_rw32(cgp->cg_cgx, needswap) * fs->fs_fpg + bno;
 	return (blkno);
@@ -472,6 +480,13 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		ufs_add32(cgp->cg_cs.cs_nbfree, 1, needswap);
 		fs->fs_cstotal.cs_nbfree++;
 		fs->fs_cs(fs, cg).cs_nbfree++;
+		if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+		    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+			i = old_cbtocylno(fs, cgbno);
+			ufs_add16(old_cg_blks(fs, cgp, i,
+			    needswap)[old_cbtorpos(fs, cgbno)], 1, needswap);
+			ufs_add32(old_cg_blktot(cgp, needswap)[i], 1, needswap);
+		}
 	} else {
 		bbase = cgbno - ffs_fragnum(fs, cgbno);
 		/*
@@ -511,6 +526,15 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 			ufs_add32(cgp->cg_cs.cs_nbfree, 1, needswap);
 			fs->fs_cstotal.cs_nbfree++;
 			fs->fs_cs(fs, cg).cs_nbfree++;
+			if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+			    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+				i = old_cbtocylno(fs, bbase);
+				ufs_add16(old_cg_blks(fs, cgp, i,
+				    needswap)[old_cbtorpos(fs, bbase)], 1,
+				    needswap);
+				ufs_add32(old_cg_blktot(cgp, needswap)[i], 1,
+				    needswap);
+			}
 		}
 	}
 	fs->fs_fmod = 1;
