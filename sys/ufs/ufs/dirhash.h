@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.9 2021/08/19 20:56:36 andvar Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.10 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -29,6 +29,16 @@
 
 #ifndef _UFS_UFS_DIRHASH_H_
 #define _UFS_UFS_DIRHASH_H_
+
+#include <sys/types.h>
+
+#include <sys/mutex.h>
+#include <sys/queue.h>
+
+#include <ufs/ufs/dir.h>
+
+struct direct;
+struct inode;
 
 /*
  * For fast operations on large directories, we maintain a hash

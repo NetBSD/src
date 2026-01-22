@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.262 2022/03/27 16:24:59 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.263 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.262 2022/03/27 16:24:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.263 2026/01/22 03:23:36 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -75,43 +75,45 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.262 2022/03/27 16:24:59 christos Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/resourcevar.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/fstrans.h>
-#include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/dirent.h>
-#include <sys/lockf.h>
+#include <sys/file.h>
+#include <sys/fstrans.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lockf.h>
+#include <sys/malloc.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 #include <sys/wapbl.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
+#include <ufs/ext2fs/ext2fs_dir.h>
+#include <ufs/ext2fs/ext2fs_extern.h>
+#include <ufs/ffs/ffs_extern.h>
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_extern.h>
 #include <ufs/ufs/acl.h>
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_bswap.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_wapbl.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
-#include <ufs/ext2fs/ext2fs_extern.h>
-#include <ufs/ext2fs/ext2fs_dir.h>
-#include <ufs/ffs/ffs_extern.h>
-#include <ufs/lfs/lfs_extern.h>
-#include <ufs/lfs/lfs.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>

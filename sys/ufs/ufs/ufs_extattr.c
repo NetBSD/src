@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.55 2024/02/10 18:43:53 andvar Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.56 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,34 +48,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.55 2024/02/10 18:43:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.56 2026/01/22 03:23:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
-#include <sys/kauth.h>
-#include <sys/kernel.h>
-#include <sys/namei.h>
-#include <sys/kmem.h>
-#include <sys/fcntl.h>
-#include <sys/lwp.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/lock.h>
+#include <sys/types.h>
+
 #include <sys/dirent.h>
 #include <sys/extattr.h>
+#include <sys/fcntl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/lock.h>
+#include <sys/lwp.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/extattr.h>
-#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 int ufs_extattr_sync = 1;
 int ufs_extattr_autocreate = 1024;

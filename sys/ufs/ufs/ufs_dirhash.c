@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.41 2022/08/07 02:33:47 simonb Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.42 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,32 +28,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.41 2022/08/07 02:33:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.42 2026/01/22 03:23:36 riastradh Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/hash.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/types.h>
-#include <sys/hash.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <sys/atomic.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dirhash.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 
 /*

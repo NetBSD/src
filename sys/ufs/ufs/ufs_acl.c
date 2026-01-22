@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/ufs/ufs/ufs_acl.c 356669 2020-01-13 02:31:51Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.5 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.6 2026/01/22 03:23:36 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -45,25 +45,26 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.5 2023/02/22 21:49:45 riastradh Exp $"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/wapbl.h>
 #include <sys/types.h>
+
 #include <sys/acl.h>
 #include <sys/event.h>
 #include <sys/extattr.h>
+#include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/acl.h>
-#include <ufs/ufs/extattr.h>
 #include <ufs/ufs/dir.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/extattr.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <ufs/ffs/fs.h>
 

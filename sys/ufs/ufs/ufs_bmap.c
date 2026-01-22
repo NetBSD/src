@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.54 2022/11/17 06:40:40 chs Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.55 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,23 +37,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.54 2022/11/17 06:40:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.55 2026/01/22 03:23:36 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/systm.h>
 #include <sys/trace.h>
+#include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 static bool
 ufs_issequential(const struct ufsmount *ump, daddr_t daddr0, daddr_t daddr1)

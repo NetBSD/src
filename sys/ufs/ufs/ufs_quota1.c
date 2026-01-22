@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.26 2023/02/22 21:49:45 riastradh Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.27 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,23 +35,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.26 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.27 2026/01/22 03:23:36 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/file.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/kauth.h>
+#include <sys/types.h>
 
-#include <ufs/ufs/quota1.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+
 #include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/quota1.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
+#include <ufs/ufs/ufsmount.h>
 
 static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);

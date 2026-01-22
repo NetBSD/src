@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.61 2023/02/22 21:49:45 riastradh Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.62 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.61 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.62 2026/01/22 03:23:36 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -46,24 +46,26 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.61 2023/02/22 21:49:45 riastradh Ex
 #endif
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/buf.h>
+#include <sys/kauth.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/module.h>
 #include <sys/vnode.h>
-#include <sys/kmem.h>
-#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
 #include <sys/quotactl.h>
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufsmount.h>
 
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;

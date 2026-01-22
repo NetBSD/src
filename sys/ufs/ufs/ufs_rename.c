@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.14 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.15 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,9 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.14 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.15 2026/01/22 03:23:36 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>

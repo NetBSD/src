@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.112 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.113 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,36 +37,38 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.112 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.113 2026/01/22 03:23:36 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "opt_wapbl.h"
 #include "opt_uvmhist.h"
+#include "opt_wapbl.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/kernel.h>
-#include <sys/namei.h>
-#include <sys/kauth.h>
-#include <sys/wapbl.h>
-#include <sys/kmem.h>
+#include <sys/types.h>
 
-#include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
-#include <ufs/ufs/ufs_wapbl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
+
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
 #ifdef UFS_EXTATTR
 #include <ufs/ufs/extattr.h>
 #endif
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>

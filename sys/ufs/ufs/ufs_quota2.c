@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.46 2023/02/22 21:49:45 riastradh Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.47 2026/01/22 03:23:36 riastradh Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,29 +26,31 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.46 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.47 2026/01/22 03:23:36 riastradh Exp $");
+
+#include <sys/param.h>
+#include <sys/types.h>
 
 #include <sys/buf.h>
-#include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
 #include <sys/file.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
 #include <sys/kauth.h>
-#include <sys/wapbl.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
-#include <ufs/ufs/quota2.h>
 #include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/quota2.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 
 /*
  * LOCKING:

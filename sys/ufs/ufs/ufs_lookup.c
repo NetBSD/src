@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.159 2024/09/08 09:36:52 rillig Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.160 2026/01/22 03:23:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,35 +37,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.159 2024/09/08 09:36:52 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.160 2026/01/22 03:23:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/kernel.h>
 #include <sys/kauth.h>
-#include <sys/wapbl.h>
-#include <sys/proc.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <miscfs/genfs/genfs.h>
 
