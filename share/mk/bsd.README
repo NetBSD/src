@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.455 2025/06/27 21:36:22 andvar Exp $
+#	$NetBSD: bsd.README,v 1.455.2.1 2026/01/22 19:51:53 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -927,6 +927,10 @@ LIBDIR		Target directory for libraries.
 SHLIBINSTALLDIR Target directory for shared libraries if ${USE_SHLIBDIR}
 		is not "no".
 
+LIBSUBDIR	If nonempty, subdirectory of LIBDIR where this library
+		is installed.
+		Default: Empty.
+
 SHLIB_MAJOR
 SHLIB_MINOR
 SHLIB_TEENY	Major, minor, and teeny version numbers of shared library
@@ -1002,6 +1006,18 @@ PROGDPLIBS	A list of the tuples:
 		This variable may be used for individual libraries/programs,
 		as well as in parent directories to cache common libraries
 		as a build-time optimization.
+
+LIBDPSUBDIRS/
+PROGDPSUBDIRS/	A list of subdirectory paths _subdir_ for which the
+		ldflags
+
+			-L${SHLIBDIR}/${_subdir_}
+			-Wl,-rpath,${SHLIBDIR}/${_subdir_}
+
+		should be added, for libraries or programs that depend
+		on libraries which are installed in nonstandard
+		locations like /usr/lib/private.
+		Default: Empty.
 
 LIB_EXPSYM	File listing all symbols expected to be defined by the
 		library.  Each line has a single symbol.  If the symbol

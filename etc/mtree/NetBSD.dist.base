@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.259 2024/04/08 12:38:59 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.259.4.1 2026/01/22 19:51:54 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -360,6 +360,7 @@
 ./usr/lib/openssl/modules
 ./usr/lib/pkgconfig
 ./usr/lib/postfix
+./usr/lib/private
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
@@ -375,6 +376,7 @@
 ./usr/libdata/debug/usr/lib
 ./usr/libdata/debug/usr/lib/i18n
 ./usr/libdata/debug/usr/lib/named
+./usr/libdata/debug/usr/lib/private
 ./usr/libdata/debug/usr/lib/security
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.419.2.1 2025/11/15 10:11:08 martin Exp $
+#	$NetBSD: bsd.lib.mk,v 1.419.2.2 2026/01/22 19:51:53 martin Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -431,11 +431,14 @@ _LIB.so.debug:=${_LIB.so.full}.debug
 .endif
 .endif
 
-_DEST.LIB:=${DESTDIR}${LIBDIR}
-_DEST.OBJ:=${DESTDIR}${_LIBSODIR}
-_DEST.LINT:=${DESTDIR}${LINTLIBDIR}
-_DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}
-_DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}
+LIBSUBDIR?=		# empty
+_LIBSLASHSUBDIR=	${"${LIBSUBDIR}" == "":?:/${LIBSUBDIR}}
+
+_DEST.LIB:=${DESTDIR}${LIBDIR}${_LIBSLASHSUBDIR}
+_DEST.OBJ:=${DESTDIR}${_LIBSODIR}${_LIBSLASHSUBDIR}
+_DEST.LINT:=${DESTDIR}${LINTLIBDIR}${_LIBSLASHSUBDIR}
+_DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}${_LIBSLASHSUBDIR}
+_DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}${_LIBSLASHSUBDIR}
 
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
     || ${MAKELINKLIB} != "no" || ${MAKESTATICLIB} != "no"
@@ -462,13 +465,13 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 libinstall::
 .endif
 
-.if ${MKDEBUGLIB} != "no"
+.if ${MKDEBUGLIB} != "no" && ${MAKELINKLIB} != "no"
 _LIBS+=${_LIB_g.a}
 GOBJS+=${OBJS:.o=.go}
 DEBUGFLAGS?=-DDEBUG
 .endif
 
-.if ${MKPROFILE} != "no"
+.if ${MKPROFILE} != "no" && ${MAKELINKLIB} != "no"
 _LIBS+=${_LIB_p.a}
 POBJS+=${OBJS:.o=.po}
 PROFFLAGS?=-DGPROF -DPROF
@@ -590,6 +593,22 @@ _LIBLDOPTS+=	-Wl,-x
 .else
 _LIBLDOPTS+=	-Wl,-X
 .endif
+
+# XXX Provisional -- we should get this out of LIBDPLIBS for each
+# specific dependency so we can write the directory in one place where
+# the library is defined, and not copy and paste it everywhere the
+# library is used.
+#
+# XXX BEWARE: This should only be used by libraries that are private,
+# to link against libraries that are private.  If you are tempted to
+# use this in a library that we expose for applications to link
+# against, you need to find another way -- you can't link a library
+# against private dependencies without transitively exposing them to
+# applications.
+.for _subdir_ in ${LIBDPSUBDIRS:U}
+_LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR}/${_subdir_} \
+		-L=${SHLIBDIR}/${_subdir_}
+.endfor
 
 # gcc -shared now adds -lc automatically. For libraries other than libc and
 # libgcc* we add as a dependency the installed shared libc. For libc and
@@ -827,7 +846,7 @@ ${_DEST.LIB}/${_LIB.a}: ${_LIB.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKPROFILE} != "no"
+.if ${MKPROFILE} != "no" && ${MAKELINKLIB} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB_p.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_p.a}
 
@@ -844,7 +863,7 @@ ${_DEST.LIB}/${_LIB_p.a}: ${_LIB_p.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKDEBUGLIB} != "no"
+.if ${MKDEBUGLIB} != "no" && ${MAKELINKLIB} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB_g.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_g.a}
 

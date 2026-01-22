@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.359 2025/01/26 16:35:42 christos Exp $
+# $NetBSD: shl.mi,v 1.359.2.1 2026/01/22 19:51:53 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -269,7 +269,7 @@
 ./usr/lib/libsl_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libsqlite3_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libss_pic.a				comp-obsolete		obsolete
-./usr/lib/libssh_pic.a				comp-c-piclib		compatfile,picinstall
+./usr/lib/libssh_pic.a				comp-obsolete		obsolete
 ./usr/lib/libssl_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libssp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libstdc++_pic.a			comp-cxx-piclib		compatfile,picinstall,cxx,gcccmds,libstdcxx

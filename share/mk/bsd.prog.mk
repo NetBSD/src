@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.356.2.1 2025/11/20 18:46:46 martin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.356.2.2 2026/01/22 19:51:53 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -179,7 +179,6 @@ _LIBLIST=\
 	skey \
 	sl \
 	sqlite3 \
-	ssh \
 	ssl \
 	stdc++ \
 	supc++ \
@@ -222,8 +221,13 @@ LIBLDAP_DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBGSSAPI_DPADD} ${LIBSSL} \
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
-PAM_STATIC_LDADD+= -lssh
-PAM_STATIC_DPADD+= ${LIBSSH}
+.  if !defined(LIBDO.ssh)	# XXX use PROGDPLIBS instead
+LIBDO.ssh!=	cd ${NETBSDSRCDIR:Q}/crypto/external/bsd/openssh/lib && \
+		${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDO.ssh
+.  endif
+PAM_STATIC_LDADD+= -L${LIBDO.ssh} -lssh
+PAM_STATIC_DPADD+= ${LIBDO.ssh}/libssh.a
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
 	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lm
@@ -288,6 +292,15 @@ _PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
+
+# XXX Provisional -- we should get this out of PROGDPLIBS for each
+# specific dependency so we can write the directory in one place where
+# the library is defined, and not copy and paste it everywhere the
+# library is used.
+.for _subdir_ in ${PROGDPSUBDIRS:U}
+_PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR}/${_subdir_} \
+		-L=${SHLIBDIR}/${_subdir_}
+.endfor
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}

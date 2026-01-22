@@ -1,4 +1,15 @@
-#	$NetBSD: Makefile,v 1.42 2025/07/14 10:25:51 kre Exp $
+#	$NetBSD: Makefile,v 1.42.2.1 2026/01/22 19:51:52 martin Exp $
+
+# libssh is not meant for applications to link against -- it's a
+# private library of the ssh/sshd/&c. executables we ship.  So don't
+# install compat versions (we don't ship ssh/sshd/&c. as compat
+# executables, only as native ones) or expose the .so symlink or .a
+# static library for applications to link against.
+#
+# Note that while NOLINKLIB suppresses _installing_ the .so symlink,
+# the .so symlink is still created in the objdir so bin/ssh can still
+# use it to link.
+NOLINKLIB=		# defined
 
 .include <bsd.own.mk>
 

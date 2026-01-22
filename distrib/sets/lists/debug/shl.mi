@@ -1,8 +1,5 @@
-# $NetBSD: shl.mi,v 1.367.2.3 2025/12/20 13:51:19 martin Exp $
+# $NetBSD: shl.mi,v 1.367.2.4 2026/01/22 19:51:52 martin Exp $
 #
-./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
-./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcc
-./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libblocklist.so.0.1.debug		comp-sys-debug	debug,dynamicroot
@@ -298,7 +295,6 @@
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug		comp-sys-debug	debug,compatfile,skey
 ./usr/libdata/debug/usr/lib/libsl.so.7.0.debug			comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.5.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libssh.so.49.0.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libssl.so.14.0.debug		comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libssl.so.15.0.debug		comp-crypto-debug	debug,compatfile,openssl=30
@@ -331,6 +327,7 @@
 ./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
+./usr/libdata/debug/usr/lib/private/libssh.so.49.0.debug	comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/security/pam_afslog.so.4.debug	base-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/security/pam_chroot.so.4.debug	base-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/security/pam_deny.so.4.debug	base-sys-debug	debug,compatfile,pam
@@ -382,10 +379,3 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_onlyuse_static.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_use_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_use_static.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-obsolete	atf,debuglib,compattestfile,obsolete
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
-./usr/tests/libexec/ld.elf_so/libh_helper_dso3_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
-./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-obsolete	atf,debuglib,compattestfile,obsolete
