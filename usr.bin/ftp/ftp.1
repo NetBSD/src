@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.160 2024/11/29 05:40:14 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.160.2.1 2026/01/22 19:56:10 martin Exp $
 .\"
-.\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 29, 2024
+.Dd October 28, 2024
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -469,6 +469,9 @@ Terminate the
 session with the remote server, and
 return to the command interpreter.
 Any defined macros are erased.
+.It Ic connect Ar host Op Ar port
+A synonym for
+.Ic open .
 .It Ic \&cr
 Toggle carriage return stripping during
 .Ic type Cm ascii
