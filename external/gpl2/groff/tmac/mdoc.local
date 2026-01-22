@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.7.6.11 2024/12/20 18:31:34 martin Exp $
+.\" $NetBSD: mdoc.local,v 1.7.6.12 2026/01/22 19:20:38 martin Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .as doc-str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
 .
 .\" Default .Os value
-.ds doc-operating-system NetBSD\~10.1_STABLE
+.ds doc-operating-system NetBSD\~11.99
 .\" Default footer operating system value
-.ds doc-default-operating-system NetBSD\~10.1_STABLE
+.ds doc-default-operating-system NetBSD\~11.99
 .\" Other known versions, not yet in groff distribution
 .ds doc-operating-system-NetBSD-1.3.3  1.3.3
 .ds doc-operating-system-NetBSD-1.6.3  1.6.3
@@ -64,8 +64,9 @@
 .ds doc-operating-system-NetBSD-7.1    7.1
 .ds doc-operating-system-NetBSD-8.0    8.0
 .ds doc-operating-system-NetBSD-9.0    9.0
-.ds doc-operating-system-NetBSD-10.0    10.0
-.ds doc-operating-system-NetBSD-10.1    10.1
+.ds doc-operating-system-NetBSD-10.0  10.0
+.ds doc-operating-system-NetBSD-11.0  11.0
+.ds doc-operating-system-NetBSD-12.0  12.0
 .ds doc-operating-system-FreeBSD-4.11  4.11
 .ds doc-operating-system-FreeBSD-5.4   5.4
 .ds doc-operating-system-FreeBSD-5.5   5.5
@@ -78,10 +79,10 @@
 .ds doc-operating-system-FreeBSD-7.2   7.2
 .ds doc-operating-system-FreeBSD-8.0   8.0
 .ds doc-operating-system-FreeBSD-9.0   9.0
-.ds doc-operating-system-FreeBSD-10.0   10.0
-.ds doc-operating-system-FreeBSD-10.1   10.1
-.ds doc-operating-system-FreeBSD-11.0   11.0
-.ds doc-operating-system-FreeBSD-12.0   12.0
+.ds doc-operating-system-FreeBSD-10.0 10.0
+.ds doc-operating-system-FreeBSD-10.1 10.1
+.ds doc-operating-system-FreeBSD-11.0 11.0
+.ds doc-operating-system-FreeBSD-12.0 12.0
 .
 .
 .nr Dx 1
@@ -152,6 +153,7 @@
 .\" Local libraries not in groff
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)
 .ds doc-str-Lb-libbluetooth     Bluetooth Library (libbluetooth, \-lbluetooth)
+.ds doc-str-Lb-libbsdmalloc     Historic BSD allocator (libbsdmalloc, \-lbsdmalloc)
 .ds doc-str-Lb-libdm            Device-mapper Library (libdm, \-ldm)
 .ds doc-str-Lb-libexecinfo	Backtrace Access Library (libexecinfo, \-lexecinfo)
 .ds doc-str-Lb-libfetch         File Transfer Library for URLs (libfetch, \-lfetch)
