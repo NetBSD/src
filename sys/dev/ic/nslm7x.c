@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.79 2022/12/16 00:02:28 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.79.10.1 2026/01/22 20:33:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.79 2022/12/16 00:02:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.79.10.1 2026/01/22 20:33:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2119,6 +2119,22 @@ static const struct lm_sensor nct6779d_sensors[] = {
 		.type = ENVSYS_SFANRPM,
 		.bank = 4,
 		.reg = 0xc8,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan3",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xca,
+		.refresh = wb_nct6776f_refresh_fanrpm,
+		.rfact = 0
+	},
+	{
+		.desc = "Aux Fan4",
+		.type = ENVSYS_SFANRPM,
+		.bank = 4,
+		.reg = 0xce,
 		.refresh = wb_nct6776f_refresh_fanrpm,
 		.rfact = 0
 	},
