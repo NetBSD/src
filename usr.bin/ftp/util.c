@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.168 2024/09/25 16:53:58 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.168.2.1 2026/01/22 20:00:00 martin Exp $	*/
 
 /*-
- * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.168 2024/09/25 16:53:58 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.168.2.1 2026/01/22 20:00:00 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -1307,6 +1307,10 @@ isipv6addr(const char *addr)
  *	-1	error occurred
  *	-2	EOF encountered
  *	-3	line was too long
+ *
+ * TODO: handle EINTR? fgets() might fail with EINTR and not handle partial
+ * line reads. However, this function is either used with stdin or local
+ * files, so not fixing at this time.
  */
 int
 get_line(FILE *stream, char *buf, size_t buflen, const char **errormsg)
@@ -1494,6 +1498,58 @@ int
 ftp_poll(struct pollfd *fds, int nfds, int timeout)
 {
 	return poll(fds, nfds, timeout);
+}
+
+/*
+ * Internal version of getc(3) that retries EINTR/EAGAIN errors,
+ * and if fin_errno != NULL, sets fin_errno to errno on other conditions.
+ */
+int
+ftp_getc(FILE * fin, int * fin_errno)
+{
+	int res;
+
+	while ((res = getc(fin)) == EOF) {
+		if (feof(fin))
+			break;		/* return EOF */
+		if (ferror(fin)) {
+			if ((errno == EINTR) || (errno == EAGAIN)) {
+					/* retry on EINTR or EAGAIN */
+				clearerr(fin);
+				continue;
+			}
+			if (fin_errno != NULL)
+				*fin_errno = errno;
+		}
+		break;			/* return all other errors */
+	}
+	return res;
+}
+
+/*
+ * Internal version of putc(3) that retries EINTR/EAGAIN errors,
+ * and if fout_errno != NULL, sets fout_errno to errno on other conditions.
+ */
+int
+ftp_putc(int c, FILE * fout, int * fout_errno)
+{
+	int res;
+
+	while ((res = putc(c, fout)) == EOF) {
+		if (feof(fout))
+			break;		/* return EOF */
+		if (ferror(fout)) {
+			if ((errno == EINTR) || (errno == EAGAIN)) {
+					/* retry on EINTR or EAGAIN */
+				clearerr(fout);
+				continue;
+			}
+			if (fout_errno != NULL)
+				*fout_errno = errno;
+		}
+		break;			/* return all other errors */
+	}
+	return res;
 }
 
 /*
