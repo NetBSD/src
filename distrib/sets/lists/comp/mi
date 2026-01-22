@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2517 2026/01/19 09:26:18 mrg Exp $
+#	$NetBSD: mi,v 1.2518 2026/01/22 20:04:24 adam Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -23281,7 +23281,7 @@
 ./usr/share/man/man3/CTLOG_new.3	comp-c-man	.man
 ./usr/share/man/man3/CT_POLICY_EVAL_CTX_new.3	comp-c-man	.man
 ./usr/share/man/man3/DEFINE_STACK_OF.3	comp-c-man	.man
-./usr/share/man/man3/DES_random_key.3		comp-obsolete		obsolete
+./usr/share/man/man3/DES_random_key.3		comp-obsolete		.man,obsolete
 ./usr/share/man/man3/DH_generate_key.3		comp-c-man		.man
 ./usr/share/man/man3/DH_generate_parameters.3	comp-c-man		.man
 ./usr/share/man/man3/DH_get0_pqg.3	comp-c-man	.man
@@ -23529,7 +23529,7 @@
 ./usr/share/man/man3/GCQ_INIT_HEAD.3		comp-sys-man		.man
 ./usr/share/man/man3/GCQ_ITEM.3			comp-sys-man		.man
 ./usr/share/man/man3/GENERAL_NAME.3	comp-c-man	.man,openssl=35
-./usr/share/man/man3/HMAC.3			comp-obsolete		obsolete
+./usr/share/man/man3/HMAC.3			comp-obsolete		.man,obsolete
 ./usr/share/man/man3/IFTODT.3			comp-c-man		.man
 ./usr/share/man/man3/LIST.3			comp-c-man		.man
 ./usr/share/man/man3/LIST_EMPTY.3		comp-c-man		.man
@@ -23561,7 +23561,7 @@
 ./usr/share/man/man3/MD4Final.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Init.3			comp-c-man		.man
 ./usr/share/man/man3/MD4Update.3		comp-c-man		.man
-./usr/share/man/man3/MD5.3			comp-obsolete		obsolete
+./usr/share/man/man3/MD5.3			comp-obsolete		.man,obsolete
 ./usr/share/man/man3/MD5Data.3			comp-c-man		.man
 ./usr/share/man/man3/MD5End.3			comp-c-man		.man
 ./usr/share/man/man3/MD5File.3			comp-c-man		.man
