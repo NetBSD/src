@@ -44,7 +44,7 @@
 .\" for an already extremely slow package.
 .\"
 .
-.Dd July 27, 2018
+.Dd November 10, 2024
 .Os
 .Dt GROFF_MDOC 7
 .
@@ -1948,8 +1948,8 @@ are:
 .St -isoC-99
 .It Li -isoC-2011
 .St -isoC-2011
-.It Li -isoC-2018
-.St -isoC-2018
+.It Li -isoC-2023
+.St -isoC-2023
 .El
 .Pp
 .
@@ -1983,6 +1983,8 @@ Part 1: System API
 .St -p1003.1-2004
 .It Li -p1003.1-2008
 .St -p1003.1-2008
+.It Li -p1003.1-2024
+.St -p1003.1-2024
 .El
 .Pp
 .

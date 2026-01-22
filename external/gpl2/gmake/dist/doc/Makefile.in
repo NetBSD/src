@@ -281,6 +281,8 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	  exit 1; \
 	fi
 $(srcdir)/make.info: make.texi $(srcdir)/version.texi $(make_TEXINFOS)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_make.info:
 make.dvi: make.texi $(srcdir)/version.texi $(make_TEXINFOS)
 make.pdf: make.texi $(srcdir)/version.texi $(make_TEXINFOS)
 make.html: make.texi $(srcdir)/version.texi $(make_TEXINFOS)
