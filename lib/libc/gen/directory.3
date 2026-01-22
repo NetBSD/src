@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.44 2026/01/22 04:01:14 dholland Exp $
+.\"	$NetBSD: directory.3,v 1.45 2026/01/22 10:34:30 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
 .Dd January 21, 2026
 .Dt DIRECTORY 3
 .Os
+.
 .Sh NAME
 .Nm fdopendir ,
 .Nm opendir ,
@@ -43,28 +44,45 @@
 .Nm closedir ,
 .Nm dirfd
 .Nd directory operations
+.
 .Sh LIBRARY
 .Lb libc
+.
 .Sh SYNOPSIS
+.
 .In dirent.h
+.
 .Ft DIR *
 .Fn opendir "const char *filename"
+.
 .Ft DIR *
 .Fn fdopendir "int fd"
+.
 .Ft struct dirent *
 .Fn readdir "DIR *dirp"
+.
 .Ft int
-.Fn readdir_r "DIR * restrict dirp" "struct dirent * restrict entry" "struct dirent ** restrict result"
+.Fo readdir_r
+.Fa "DIR * restrict dirp"
+.Fa "struct dirent * restrict entry"
+.Fa "struct dirent ** restrict result"
+.Fc
+.
 .Ft long
 .Fn telldir "DIR *dirp"
+.
 .Ft void
 .Fn seekdir "DIR *dirp" "long loc"
+.
 .Ft void
 .Fn rewinddir "DIR *dirp"
+.
 .Ft int
 .Fn closedir "DIR *dirp"
+.
 .Ft int
 .Fn dirfd "DIR *dirp"
+.
 .Sh DESCRIPTION
 The type
 .Vt DIR
@@ -77,9 +95,11 @@ structure is similar to that of the
 structure maintained by the
 .Xr stdio 3
 library functions.
+.
 .Sh FUNCTIONS
 The following standard directory operations are defined.
-.Bl -tag -width XXX
+.Bl -tag -width Fn
+.
 .It Fn opendir "filename"
 The
 .Fn opendir
@@ -94,6 +114,7 @@ Otherwise,
 .Fn opendir
 returns
 .Dv NULL .
+.
 .It Fn fdopendir "fd"
 The
 .Fn fdopendir
@@ -118,6 +139,7 @@ other than by means of
 the behavior is undefined.
 The file descriptor can be closed by calling
 .Fn closedir .
+.
 .It Fn readdir "dirp"
 The
 .Fn readdir
@@ -134,13 +156,14 @@ The returned structure is described in
 .Xr dirent 3 .
 .Pp
 The returned pointer to the
-.Em dirent
+.Vt dirent
 structure points to data which may be overwritten by another call to
 .Fn readdir
 on the same directory stream.
 This data is not however overwritten by another call to
 .Fn readdir
 on a different directory stream.
+.
 .It Fn readdir_r "dirp" "entry" "result"
 The
 .Fn readdir_r
@@ -169,10 +192,14 @@ the
 .Fn readdir_r
 function may buffer several directory entries per actual read operation.
 Both functions mark for update the
-.Em st_atime
-field (see
-.Xr stat 2 )
+.Fa st_atime
+field
+.Po
+see
+.Xr stat 2
+.Pc
 of the directory each time the directory is actually read.
+.
 .It Fn telldir "dirp"
 The
 .Fn telldir
@@ -189,6 +216,7 @@ is the same as
 supplied as an argument to the
 .Fn seekdir
 call.
+.
 .It Fn seekdir "dirp" "loc"
 The
 .Fn seekdir
@@ -223,6 +251,7 @@ value becomes invalid.
 .Fn seekdir
 returns no value.
 There is no supported way to detect if the operation succeeded.
+.
 .It Fn rewinddir "dirp"
 The
 .Fn rewinddir
@@ -232,11 +261,14 @@ It also causes the directory stream to refer to the
 current state of the corresponding directory, as if a call to
 .Fn opendir
 was made.
-It is not specified whether this refers to the ``corresponding directory''
+It is not specified whether this refers to the
+.Dq corresponding directory
 by name or by underlying object.
-(These can differ if
+.Po
+These can differ if
 .Xr rename 2
-has been used.)
+has been used
+.Pc .
 .\" Note: currently the underlying fd is reopened if and only if
 .\" __DTF_READALL is in effect, which is true for union mounts and
 .\" nfs; documenting that exactly seems inadvisable since it might
@@ -245,6 +277,7 @@ has been used.)
 If
 .Fa dirp
 does not refer to a valid directory stream, the behavior is undefined.
+.
 .It Fn closedir "dirp"
 The
 .Fn closedir
@@ -253,6 +286,7 @@ and frees the structure associated with the
 .Fa dirp
 pointer,
 returning 0 on success and \-1 on failure.
+.
 .It Fn dirfd "dirp"
 The
 .Fn dirfd
@@ -294,13 +328,14 @@ if (dirp != NULL) {
 }
 return (NOT_FOUND);
 .Ed
+.
 .Sh COMPATIBILITY
 The described directory operations have traditionally been problematic
 in terms of portability.
 A good example is the semantics of
-.Sq \&.
+.Sq Li \&.
 (dot) and
-.Sq \&..
+.Sq Li \&..
 (dot-dot).
 Based on historical implementations,
 the rules about file descriptors apply to directory streams as well.
@@ -312,7 +347,8 @@ implemented by using file descriptors.
 The following additional remarks can be noted from the
 .St -p1003.1-2008
 standard.
-.Bl -bullet -offset 2n
+.Bl -bullet
+.
 .It
 If the type
 .Vt DIR
@@ -323,6 +359,7 @@ applications should be able to open only
 .Dv OPEN_MAX
 files and directories.
 Otherwise the limit is left as unspecified.
+.
 .It
 When a file descriptor is used to implement the directory stream, the
 .Fn closedir
@@ -332,12 +369,14 @@ flag had been set for the file descriptor.
 In other words, it is mandatory that
 .Fn closedir
 deallocates the file descriptor.
+.
 .It
 If directory streams are not implemented by using file descriptors,
 functions such as
 .Fn dirfd
 may fail with
 .Er ENOTSUP .
+.
 .It
 If a file is removed from or added to the directory
 after the most recent call to
@@ -347,6 +386,7 @@ or
 it is unspecified whether a subsequent call to
 .Fn readdir
 returns an entry for that file.
+.
 .It
 When using the function
 .Fn seekdir ,
@@ -363,6 +403,7 @@ and
 the results of any subsequent call to
 .Fn readdir
 are unspecified, possibly resulting in undefined behavior.
+.
 .It
 After a call to
 .Xr fork 2 ,
@@ -375,6 +416,7 @@ or
 However, if both the parent and child processes use these functions,
 the result is undefined.
 .El
+.
 .Sh ERRORS
 .\"
 .\" XXX: The errors should be enumerated.
@@ -382,12 +424,14 @@ the result is undefined.
 All described functions may set
 .Vt errno
 to indicate the error.
+.
 .Sh SEE ALSO
 .Xr close 2 ,
 .Xr lseek 2 ,
 .Xr open 2 ,
 .Xr read 2 ,
 .Xr dirent 3
+.
 .Sh STANDARDS
 The
 .Fn opendir ,
@@ -399,6 +443,7 @@ functions conform to
 .St -p1003.1-90 .
 The other functions conform to
 .St -p1003.1-2008 .
+.
 .Sh HISTORY
 The
 .Fn opendir ,
