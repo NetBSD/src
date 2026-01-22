@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.43 2021/02/17 23:51:04 dholland Exp $
+.\"	$NetBSD: directory.3,v 1.44 2026/01/22 04:01:14 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd February 17, 2021
+.Dd January 21, 2026
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -216,6 +216,13 @@ from which they are derived.
 If the directory is closed and then reopened, the
 .Fn telldir
 value cannot be re-used.
+If the directory is altered from the same or another process, the
+.Fn telldir
+value becomes invalid.
+.Pp
+.Fn seekdir
+returns no value.
+There is no supported way to detect if the operation succeeded.
 .It Fn rewinddir "dirp"
 The
 .Fn rewinddir
@@ -321,7 +328,7 @@ When a file descriptor is used to implement the directory stream, the
 .Fn closedir
 function behaves as if the
 .Dv FD_CLOEXEC
-had been set for the file descriptor.
+flag had been set for the file descriptor.
 In other words, it is mandatory that
 .Fn closedir
 deallocates the file descriptor.
