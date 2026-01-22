@@ -1,4 +1,4 @@
-/*	$NetBSD: unxz.c,v 1.9 2024/05/04 13:17:03 christos Exp $	*/
+/*	$NetBSD: unxz.c,v 1.9.4.1 2026/01/22 19:10:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unxz.c,v 1.9 2024/05/04 13:17:03 christos Exp $");
+__RCSID("$NetBSD: unxz.c,v 1.9.4.1 2026/01/22 19:10:17 martin Exp $");
 
 #include <stdarg.h>
 #include <errno.h>
@@ -45,38 +45,31 @@ unxz(int i, int o, char *pre, size_t prelen, off_t *bytes_in)
 	lzma_ret ret;
 	lzma_action action = LZMA_RUN;
 	off_t bytes_out, bp;
-	uint8_t ibuf[BUFSIZ];
 	uint8_t obuf[BUFSIZ];
+	uint8_t ibuf[BUFSIZ];
 
 	if (bytes_in == NULL)
 		bytes_in = &bp;
 
-	strm.next_in = ibuf;
-	memcpy(ibuf, pre, prelen);
-	strm.avail_in = read(i, ibuf + prelen, sizeof(ibuf) - prelen);
-	if (strm.avail_in == (size_t)-1)
-		maybe_err("read failed");
-	infile_newdata(strm.avail_in);
-	strm.avail_in += prelen;
+	strm.next_in = NULL;
+	strm.avail_in = 0;
 	*bytes_in = strm.avail_in;
 
 	if ((ret = lzma_stream_decoder(&strm, UINT64_MAX, flags)) != LZMA_OK)
 		maybe_errx("Can't initialize decoder (%d)", ret);
 
-	strm.next_out = NULL;
-	strm.avail_out = 0;
-	if ((ret = lzma_code(&strm, LZMA_RUN)) != LZMA_OK)
-		maybe_errx("Can't read headers (%d)", ret);
-
 	bytes_out = 0;
 	strm.next_out = obuf;
 	strm.avail_out = sizeof(obuf);
+
+	strm.next_in = (uint8_t *)pre;
+	strm.avail_in = prelen;
 
 	for (;;) {
 		check_siginfo();
 		if (strm.avail_in == 0) {
 			strm.next_in = ibuf;
-			strm.avail_in = read(i, ibuf, sizeof(ibuf));
+			strm.avail_in = read(i, ibuf, sizeof ibuf);
 			switch (strm.avail_in) {
 			case (size_t)-1:
 				maybe_err("read failed");

@@ -1,5 +1,5 @@
 /*	$FreeBSD: head/usr.bin/gzip/unpack.c 194579 2009-06-21 09:39:43Z delphij $	*/
-/*	$NetBSD: unpack.c,v 1.4 2023/06/10 04:45:25 simonb Exp $	*/
+/*	$NetBSD: unpack.c,v 1.4.4.1 2026/01/22 19:10:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Xin LI <delphij@FreeBSD.org>
@@ -87,6 +87,26 @@ typedef struct {
 	FILE		*fpOut;		/* Output stream */
 } unpack_descriptor_t;
 
+
+/*
+ * Simple wrapper around fgetc() to read the compressed data, that handles
+ * reading from the pre buffer.
+ *
+ * The pre/prelen are not part of unpack_descriptor_t{} as it is passed as
+ * const in one of the two callers.
+ */
+static int
+unpack_fgetc_in(const unpack_descriptor_t *unpackd,
+	char **pre, size_t *prelen)
+{
+
+	if (*prelen) {
+		(*prelen)--;
+		return (unsigned char)*((*pre)++);
+	}
+	return fgetc(unpackd->fpIn);
+}
+
 /*
  * Release resource allocated to an unpack descriptor.
  *
@@ -146,22 +166,31 @@ accepted_bytes(off_t *bytes_in, off_t newbytes)
  * Return value is uncompressed size.
  */
 static void
-unpack_parse_header(int in, int out, char *pre, size_t prelen, off_t *bytes_in,
+unpack_parse_header(int in, int out, char **pre, size_t *prelen, off_t *bytes_in,
     unpack_descriptor_t *unpackd)
 {
 	unsigned char hdr[PACK_HEADER_LENGTH];	/* buffer for header */
 	ssize_t bytesread;		/* Bytes read from the file */
 	int i, j, thisbyte;
+	size_t copysize = 0;
 
 	/* Prepend the header buffer if we already read some data */
-	if (prelen != 0)
-		memcpy(hdr, pre, prelen);
+	if (*prelen != 0) {
+		copysize = MIN(*prelen, sizeof hdr);
+		memcpy(hdr, *pre, copysize);
+		(*pre) += copysize;
+		(*prelen) -= copysize;
+		if (*prelen == 0)
+			*pre = NULL;
+	}
 
 	/* Read in and fill the rest bytes of header */
-	bytesread = read(in, hdr + prelen, PACK_HEADER_LENGTH - prelen);
-	if (bytesread < 0)
-		maybe_err("Error reading pack header");
-	infile_newdata(bytesread);
+	if (copysize < sizeof hdr) {
+		bytesread = read(in, hdr + copysize, PACK_HEADER_LENGTH - copysize);
+		if (bytesread < 0)
+			maybe_err("Error reading pack header");
+		infile_newdata(bytesread);
+	}
 
 	accepted_bytes(bytes_in, PACK_HEADER_LENGTH);
 
@@ -200,7 +229,7 @@ unpack_parse_header(int in, int out, char *pre, size_t prelen, off_t *bytes_in,
 	/* Read the levels symbol count table and calculate total */
 	unpackd->symbol_size = 1;		/* EOB */
 	for (i = 0; i <= unpackd->treelevels; i++) {
-		if ((thisbyte = fgetc(unpackd->fpIn)) == EOF)
+		if ((thisbyte = unpack_fgetc_in(unpackd, pre, prelen)) == EOF)
 			maybe_err("File appears to be truncated");
 		unpackd->symbolsin[i] = (unsigned char)thisbyte;
 		unpackd->symbol_size += unpackd->symbolsin[i];
@@ -228,7 +257,8 @@ unpack_parse_header(int in, int out, char *pre, size_t prelen, off_t *bytes_in,
 	for (i = 0; i <= unpackd->treelevels; i++) {
 		unpackd->tree[i] = unpackd->symbol_eob;
 		for (j = 0; j < unpackd->symbolsin[i]; j++) {
-			if ((thisbyte = fgetc(unpackd->fpIn)) == EOF)
+			thisbyte = unpack_fgetc_in(unpackd, pre, prelen);
+			if (thisbyte == EOF)
 				maybe_errx("Symbol table truncated");
 			*unpackd->symbol_eob++ = (char)thisbyte;
 		}
@@ -250,7 +280,8 @@ unpack_parse_header(int in, int out, char *pre, size_t prelen, off_t *bytes_in,
  * Decode huffman stream, based on the huffman tree.
  */
 static void
-unpack_decode(const unpack_descriptor_t *unpackd, off_t *bytes_in)
+unpack_decode(const unpack_descriptor_t *unpackd, char *pre, size_t prelen,
+	off_t *bytes_in)
 {
 	int thislevel, thiscode, thisbyte, inlevelindex;
 	int i;
@@ -268,7 +299,7 @@ unpack_decode(const unpack_descriptor_t *unpackd, off_t *bytes_in)
 	thislevel = 0;
 	thiscode = thisbyte = 0;
 
-	while ((thisbyte = fgetc(unpackd->fpIn)) != EOF) {
+	while ((thisbyte = unpack_fgetc_in(unpackd, &pre, &prelen)) != EOF) {
 		accepted_bytes(bytes_in, 1);
 		infile_newdata(1);
 		check_siginfo();
@@ -294,7 +325,8 @@ unpack_decode(const unpack_descriptor_t *unpackd, off_t *bytes_in)
 				    (bytes_out == unpackd->uncompressed_size))
 					goto finished;
 
-				fputc((*thissymbol), unpackd->fpOut);
+				if (!tflag)
+					fputc((*thissymbol), unpackd->fpOut);
 				bytes_out++;
 
 				/* Prepare for next input */
@@ -318,8 +350,8 @@ unpack(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 {
 	unpack_descriptor_t	unpackd;
 
-	unpack_parse_header(dup(in), dup(out), pre, prelen, bytes_in, &unpackd);
-	unpack_decode(&unpackd, bytes_in);
+	unpack_parse_header(dup(in), dup(out), &pre, &prelen, bytes_in, &unpackd);
+	unpack_decode(&unpackd, pre, prelen, bytes_in);
 	unpack_descriptor_fini(&unpackd);
 
 	/* If we reached here, the unpack was successful */

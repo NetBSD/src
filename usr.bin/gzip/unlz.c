@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.10 2024/05/04 13:18:06 christos Exp $	*/
+/*	$NetBSD: unlz.c,v 1.10.4.1 2026/01/22 19:10:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -279,11 +279,14 @@ lz_rd_decode_len(struct lz_range_decoder *rd, struct lz_len_model *lm,
 
 struct lz_decoder {
 	FILE *fin, *fout;
+	FILE *prein;
 	off_t pos, ppos, spos, dict_size;
 	bool wrapped;
 	uint32_t crc;
 	uint8_t *obuf;
 	struct lz_range_decoder rdec;
+	char *pre;
+	size_t prelen;
 };
 
 static int
@@ -307,6 +310,38 @@ lz_flush(struct lz_decoder *lz)
 	return 0;
 }
 
+static int
+lz_read(void *cookie, char *rbp, int num)
+{
+	int copylen = 0;
+	struct lz_decoder *lz = cookie;
+
+	if (lz->prelen) {
+		copylen = MIN(num, (int)lz->prelen);
+		memcpy(rbp, lz->pre, copylen);
+
+		lz->pre    += copylen;
+		lz->prelen -= copylen;
+		rbp        += copylen;
+		num        -= copylen;
+	}
+
+	if (num)
+		copylen += fread(rbp, 1, num, lz->prein);
+
+	return copylen;
+}
+
+static int
+lz_close(void *cookie)
+{
+	struct lz_decoder *lz = cookie;
+
+	fclose(lz->prein);
+
+	return 0;
+}
+
 static void
 lz_destroy(struct lz_decoder *lz)
 {
@@ -318,13 +353,30 @@ lz_destroy(struct lz_decoder *lz)
 }
 
 static int
-lz_create(struct lz_decoder *lz, int fin, int fdout, int dict_size)
+lz_create(struct lz_decoder *lz, int fin, int fdout, int dict_size,
+    char *pre, size_t prelen)
 {
 	memset(lz, 0, sizeof(*lz));
 
-	lz->fin = fdopen(dup(fin), "r");
-	if (lz->fin == NULL)
-		goto out;
+	if (prelen == 0) {
+		lz->fin = fdopen(dup(fin), "r");
+		if (lz->fin == NULL)
+			goto out;
+	} else {
+		/* Need to drain the pre-buffer first. */
+		lz->prein = fdopen(dup(fin), "r");
+		if (lz->prein == NULL)
+			goto out;
+
+		lz->fin = funopen(lz, lz_read, NULL, NULL, lz_close);
+		if (lz->fin == NULL) {
+			fclose(lz->prein);
+			goto out;
+		}
+
+		lz->pre = pre;
+		lz->prelen = prelen;
+	}
 
 	lz->fout = fdopen(dup(fdout), "w");
 	if (lz->fout == NULL)
@@ -537,12 +589,13 @@ lz_decode_member(struct lz_decoder *lz)
 
 
 static off_t
-lz_decode(int fin, int fdout, unsigned dict_size, off_t *insize)
+lz_decode(int fin, int fdout, unsigned dict_size, off_t *insize,
+    char *pre, size_t prelen)
 {
 	struct lz_decoder lz;
 	off_t rv = -1;
 
-	if (lz_create(&lz, fin, fdout, dict_size) == -1)
+	if (lz_create(&lz, fin, fdout, dict_size, pre, prelen) == -1)
 		return -1;
 
 	if (!lz_decode_member(&lz))
@@ -613,22 +666,32 @@ unlz(int fin, int fout, char *pre, size_t prelen, off_t *bytes_in)
 {
 	if (lz_crc[0] == 0)
 		lz_crc_init();
+	size_t copylen = 0;
 
 	char header[HDR_SIZE];
 
-	if (pre && prelen)
-		memcpy(header, pre, prelen);
+	if (pre && prelen) {
+		copylen = MIN(prelen, sizeof header);
+		memcpy(header, pre, copylen);
+
+		pre += copylen;
+		prelen -= copylen;
+	}
 	
-	ssize_t nr = read(fin, header + prelen, sizeof(header) - prelen);
-	switch (nr) {
-	case -1:
-		return -1;
-	case 0:
-		return prelen ? -1 : 0;
-	default:
-		if ((size_t)nr != sizeof(header) - prelen)
+	if (copylen < sizeof header) {
+		ssize_t nr = read(fin, header + copylen,
+		    sizeof(header) - copylen);
+
+		switch (nr) {
+		case -1:
 			return -1;
-		break;
+		case 0:
+			return prelen ? -1 : 0;
+		default:
+			if ((size_t)nr != sizeof(header) - copylen)
+				return -1;
+			break;
+		}
 	}
 
 	if (memcmp(header, hdrmagic, sizeof(hdrmagic)) != 0)
@@ -638,5 +701,5 @@ unlz(int fin, int fout, char *pre, size_t prelen, off_t *bytes_in)
 	if (dict_size == 0)
 		return -1;
 
-	return lz_decode(fin, fout, dict_size, bytes_in);
+	return lz_decode(fin, fout, dict_size, bytes_in, pre, prelen);
 }

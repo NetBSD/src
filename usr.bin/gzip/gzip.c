@@ -1,7 +1,7 @@
-/*	$NetBSD: gzip.c,v 1.127 2024/06/01 10:17:12 martin Exp $	*/
+/*	$NetBSD: gzip.c,v 1.127.4.1 2026/01/22 19:10:17 martin Exp $	*/
 
 /*
- * Copyright (c) 1997-2024 Matthew R. Green
+ * Copyright (c) 1997-2026 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997-2024 Matthew R. Green. "
+__COPYRIGHT("@(#) Copyright (c) 1997-2026 Matthew R. Green. "
 	    "All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.127 2024/06/01 10:17:12 martin Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.127.4.1 2026/01/22 19:10:17 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -176,7 +176,7 @@ static suffixes_t suffixes[] = {
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 #define SUFFIX_MAXLEN	30
 
-static	const char	gzip_version[] = "NetBSD gzip 20240203";
+static	const char	gzip_version[] = "NetBSD gzip 20260107";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
@@ -221,12 +221,12 @@ static	off_t	file_compress(char *, char *, size_t);
 static	off_t	file_uncompress(char *, char *, size_t);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
-static	void	handle_stdin(void);
+static	void	handle_fd_decomp(int fd);
 static	void	handle_stdout(void);
 static	void	print_ratio(off_t, off_t, FILE *);
 static	void	print_list(int fd, off_t, const char *, time_t);
-__dead static	void	usage(void);
-__dead static	void	display_version(void);
+static	void	usage(void) __dead;
+static	void	display_version(void) __dead;
 static	const suffixes_t *check_suffix(char *, int);
 static	ssize_t	read_retry(int, void *, size_t);
 static	ssize_t	write_retry(int, const void *, size_t);
@@ -251,6 +251,7 @@ static	void	check_siginfo(void);
 #else
 #define check_siginfo() /* nothing */
 #endif
+static	void	license(void) __dead;
 static	off_t	cat_fd(unsigned char *, size_t, off_t *, int fd);
 static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *);
@@ -307,14 +308,8 @@ static const struct option longopts[] = {
 	{ "version",		no_argument,		0,	'V' },
 	{ "fast",		no_argument,		0,	'1' },
 	{ "best",		no_argument,		0,	'9' },
-#if 0
-	/*
-	 * This is what else GNU gzip implements.  --ascii isn't useful
-	 * on NetBSD, and I don't care to have a --license.
-	 */
 	{ "ascii",		no_argument,		0,	'a' },
 	{ "license",		no_argument,		0,	'L' },
-#endif
 	{ NULL,			no_argument,		0,	0 },
 };
 #endif
@@ -349,7 +344,7 @@ main(int argc, char **argv)
 #ifdef SMALL
 #define OPT_LIST "123456789cdhlVn"
 #else
-#define OPT_LIST "123456789cdfhklNnqrS:tVv"
+#define OPT_LIST "123456789acdfhkLlNnqrS:tVv"
 #endif
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
@@ -373,12 +368,19 @@ main(int argc, char **argv)
 			display_version();
 			/* NOTREACHED */
 #ifndef SMALL
+		case 'a':
+			/* --ascii is already the default. */
+			break;
 		case 'f':
 			fflag = 1;
 			break;
 		case 'k':
 			kflag = 1;
 			break;
+		case 'L':
+			license();
+			/* NOTREACHED */
+
 		case 'N':
 			nflag = 0;
 			Nflag = 1;
@@ -427,7 +429,7 @@ main(int argc, char **argv)
 
 	if (argc == 0) {
 		if (dflag)	/* stdin mode */
-			handle_stdin();
+			handle_fd_decomp(STDIN_FILENO);
 		else		/* stdout mode */
 			handle_stdout();
 	} else {
@@ -1802,10 +1804,12 @@ cat_fd(unsigned char * prepend, size_t count, off_t *gsizep, int fd)
 }
 
 static void
-handle_stdin(void)
+handle_fd_decomp(int fd)
 {
 	struct stat isb;
-	unsigned char fourbytes[4];
+	unsigned char *prebuf = NULL;
+	size_t prebuf_len;
+	const size_t minbuf_len = 4; /* enough to identify the file */
 	size_t in_size;
 	off_t usize, gsize;
 	enum filetype method;
@@ -1815,13 +1819,13 @@ handle_stdin(void)
 #endif
 
 #ifndef SMALL
-	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
+	if (fflag == 0 && lflag == 0 && isatty(fd)) {
 		maybe_warnx("standard input is a terminal -- ignoring");
 		goto out;
 	}
 #endif
 
-	if (fstat(STDIN_FILENO, &isb) < 0) {
+	if (fstat(fd, &isb) < 0) {
 		maybe_warn("fstat");
 		goto out;
 	}
@@ -1829,23 +1833,31 @@ handle_stdin(void)
 		in_size = isb.st_size;
 	else
 		in_size = 0;
+	if (isb.st_blksize)
+		prebuf_len = isb.st_blksize;
+	else
+		prebuf_len = minbuf_len;
+	prebuf = malloc(prebuf_len);
+	if (prebuf == NULL)
+		maybe_err("malloc");
+
 	infile_set("(stdin)", in_size);
 
 	if (lflag) {
-		print_list(STDIN_FILENO, in_size, infile, isb.st_mtime);
+		print_list(fd, in_size, infile, isb.st_mtime);
 		goto out;
 	}
 
-	bytes_read = read_retry(STDIN_FILENO, fourbytes, sizeof fourbytes);
+	bytes_read = read_retry(fd, prebuf, prebuf_len);
 	if (bytes_read == -1) {
 		maybe_warn("can't read stdin");
 		goto out;
-	} else if (bytes_read != sizeof(fourbytes)) {
+	} else if ((size_t)bytes_read < minbuf_len) {
 		maybe_warnx("(stdin): unexpected end of file");
 		goto out;
 	}
 
-	method = file_gettype(fourbytes);
+	method = file_gettype(prebuf);
 	switch (method) {
 	default:
 #ifndef SMALL
@@ -1853,47 +1865,47 @@ handle_stdin(void)
 			maybe_warnx("unknown compression format");
 			goto out;
 		}
-		usize = cat_fd(fourbytes, sizeof fourbytes, &gsize, STDIN_FILENO);
+		usize = cat_fd(prebuf, bytes_read, &gsize, fd);
 		break;
 #endif
 	case FT_GZIP:
-		usize = gz_uncompress(STDIN_FILENO, STDOUT_FILENO,
-			      (char *)fourbytes, sizeof fourbytes, &gsize, "(stdin)");
+		usize = gz_uncompress(fd, STDOUT_FILENO,
+			      (char *)prebuf, bytes_read, &gsize, "(stdin)");
 		break;
 #ifndef NO_BZIP2_SUPPORT
 	case FT_BZIP2:
-		usize = unbzip2(STDIN_FILENO, STDOUT_FILENO,
-				(char *)fourbytes, sizeof fourbytes, &gsize);
+		usize = unbzip2(fd, STDOUT_FILENO,
+				(char *)prebuf, bytes_read, &gsize);
 		break;
 #endif
 #ifndef NO_COMPRESS_SUPPORT
 	case FT_Z:
-		if ((in = zdopen(STDIN_FILENO)) == NULL) {
+		if ((in = zdopen(fd)) == NULL) {
 			maybe_warnx("zopen of stdin");
 			goto out;
 		}
 
-		usize = zuncompress(in, stdout, (char *)fourbytes,
-		    sizeof fourbytes, &gsize);
+		usize = zuncompress(in, stdout, (char *)prebuf,
+		    bytes_read, &gsize);
 		fclose(in);
 		break;
 #endif
 #ifndef NO_PACK_SUPPORT
 	case FT_PACK:
-		usize = unpack(STDIN_FILENO, STDOUT_FILENO,
-			       (char *)fourbytes, sizeof fourbytes, &gsize);
+		usize = unpack(fd, STDOUT_FILENO,
+			       (char *)prebuf, bytes_read, &gsize);
 		break;
 #endif
 #ifndef NO_XZ_SUPPORT
 	case FT_XZ:
-		usize = unxz(STDIN_FILENO, STDOUT_FILENO,
-			     (char *)fourbytes, sizeof fourbytes, &gsize);
+		usize = unxz(fd, STDOUT_FILENO,
+			     (char *)prebuf, bytes_read, &gsize);
 		break;
 #endif
 #ifndef NO_LZ_SUPPORT
 	case FT_LZ:
-		usize = unlz(STDIN_FILENO, STDOUT_FILENO,
-			     (char *)fourbytes, sizeof fourbytes, &gsize);
+		usize = unlz(fd, STDOUT_FILENO,
+			     (char *)prebuf, bytes_read, &gsize);
 		break;
 #endif
 	}
@@ -1908,6 +1920,7 @@ handle_stdin(void)
 #endif
 
 out:
+	free(prebuf);
 	infile_clear();
 }
 
@@ -1969,7 +1982,7 @@ handle_pathname(char *path)
 	/* check for stdout/stdin */
 	if (path[0] == '-' && path[1] == '\0') {
 		if (dflag)
-			handle_stdin();
+			handle_fd_decomp(STDIN_FILENO);
 		else
 			handle_stdout();
 		return;
@@ -2005,7 +2018,20 @@ retry:
 
 	if (S_ISREG(sb.st_mode))
 		handle_file(path, &sb);
-	else
+	/* if decompressing to stdout, try to handle non-regular files */
+	else if (dflag && cflag &&
+		 (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode) ||
+		  S_ISFIFO(sb.st_mode) || S_ISSOCK(sb.st_mode))) {
+		int fd;
+
+		fd = open(path, O_RDONLY);
+		if (fd < 0) {
+			maybe_warn("open: %s", path);
+		} else {
+			handle_fd_decomp(fd);
+			close(fd);
+		}
+	} else
 		maybe_warnx("%s is not a regular file", path);
 
 out:
@@ -2235,6 +2261,26 @@ print_list_out(off_t out, off_t in, const char *outfile)
 	printf(" %s\n", outfile);
 }
 
+#ifndef SMALL
+static void
+license(void)
+{
+	fprintf(stderr, "%s\n", gzip_version);
+	fprintf(stderr, "%s\n",
+	    "Copyright (c) 1997-2026 Matthew R. Green\n"
+	    "All rights reserved.\n"
+	    "Redistribution and use in source and binary forms, with or without\n"
+	    "modification, are permitted provided that the following conditions\n"
+	    "are met:\n"
+	    "1. Redistributions of source code must retain the above copyright\n"
+	       "notice, this list of conditions and the following disclaimer.\n"
+	    "2. Redistributions in binary form must reproduce the above copyright\n"
+	       "notice, this list of conditions and the following disclaimer in the\n"
+	       "documentation and/or other materials provided with the distribution.");
+	exit(0);
+}
+#endif
+
 /* display the usage of NetBSD gzip */
 static void
 usage(void)
@@ -2247,6 +2293,7 @@ usage(void)
     " -1 --fast            fastest (worst) compression\n"
     " -2 .. -8             set compression level\n"
     " -9 --best            best (slowest) compression\n"
+    " -a --ascii           ignored on NetBSD\n"
     " -c --stdout          write to stdout, keep original files\n"
     "    --to-stdout\n"
     " -d --decompress      uncompress files\n"
@@ -2254,6 +2301,7 @@ usage(void)
     " -f --force           force overwriting & compress links\n"
     " -h --help            display this help\n"
     " -k --keep            don't delete input files during operation\n"
+    " -L --license         show the program copyright and license\n"
     " -l --list            list compressed file contents\n"
     " -N --name            save or restore original file name and time stamp\n"
     " -n --no-name         don't save original file name or time stamp\n"
