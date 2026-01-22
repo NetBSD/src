@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.34.34.1 2024/10/26 15:26:43 martin Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.34.34.2 2026/01/22 20:13:09 martin Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -406,9 +406,9 @@
 #define  SSR_APP_PERF_CLASS_A1		1
 #define  SSR_APP_PERF_CLASS_A2		2
 #define SSR_PERFORMANCE_ENHANCE(resp)	__bitfield((resp), 328, 8)
-#define  SSR_PERFORMANCE_ENHANCE_CACHE		__BIT(0)
+#define  SSR_PERFORMANCE_ENHANCE_CARD_MAINT	__BIT(0)
 #define  SSR_PERFORMANCE_ENHANCE_HOST_MAINT	__BIT(1)
-#define  SSR_PERFORMANCE_ENHANCE_CARD_MAINT	__BIT(2)
+#define  SSR_PERFORMANCE_ENHANCE_CACHE		__BIT(2)
 #define  SSR_PERFORMANCE_ENHANCE_COMMAND_QUEUE	__BITS(7,3)
 #define SSR_DISCARD_SUPPORT(resp)	__bitfield((resp), 313, 1)
 #define SSR_FULE_SUPPORT(resp)		__bitfield((resp), 312, 1)
