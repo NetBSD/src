@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.12 2013/05/06 08:02:20 skrll Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.12.42.1 2026/01/22 20:31:07 martin Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -36,6 +36,7 @@
 void    *xcalloc(size_t);
 void    *xmalloc(size_t);
 void    *xrealloc(void *, size_t);
+void    *xmalloc_aligned(size_t, size_t, size_t);
 char    *xstrdup(const char *);
 void	xfree(void *);
 

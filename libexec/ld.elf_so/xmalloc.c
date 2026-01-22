@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.12.44.1 2026/01/22 20:31:07 martin Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.12.44.1 2026/01/22 20:31:07 martin Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -95,7 +95,7 @@ __RCSID("$NetBSD: xmalloc.c,v 1.12 2013/01/24 17:57:29 christos Exp $");
 /*
  * Pre-allocate mmap'ed pages
  */
-#define	NPOOLPAGES	(32*1024/pagesz)
+#define	NPOOLPAGES	(32 * 1024 / pagesz)
 static char 		*pagepool_start, *pagepool_end;
 static int		morepages(int);
 #define PAGEPOOL_SIZE	(size_t)(pagepool_end - pagepool_start)
@@ -105,49 +105,35 @@ static int		morepages(int);
  * contains a pointer to the next free block, and the bottom two bits must
  * be zero.  When in use, the first byte is set to MAGIC, and the second
  * byte is the size index.  The remaining bytes are for alignment.
- * If range checking is enabled then a second word holds the size of the
- * requested block, less 1, rounded up to a multiple of sizeof(RMAGIC).
- * The order of elements is critical: ov_magic must overlay the low order
- * bits of ov_next, and ov_magic can not be a valid ov_next bit pattern.
  */
 union	overhead {
 	union	overhead *ov_next;	/* when free */
 	struct {
-		u_char	ovu_magic;	/* magic number */
-		u_char	ovu_index;	/* bucket # */
-#ifdef RCHECK
-		u_short	ovu_rmagic;	/* range magic number */
-		u_int	ovu_size;	/* actual block size */
-#endif
+		uint16_t	ovu_index;	/* bucket # */
+		uint8_t		ovu_magic;	/* magic number */
 	} ovu;
 #define	ov_magic	ovu.ovu_magic
 #define	ov_index	ovu.ovu_index
-#define	ov_rmagic	ovu.ovu_rmagic
-#define	ov_size		ovu.ovu_size
 };
 
 static void morecore(size_t);
 static void *imalloc(size_t);
 
 #define	MAGIC		0xef		/* magic # on accounting info */
-#define RMAGIC		0x5555		/* magic # on range info */
+#define	AMAGIC		0xdf		/* magic # for aligned alloc */
 
-#ifdef RCHECK
-#define	RSLOP		(sizeof (u_short))
-#else
-#define	RSLOP		0
-#endif
 
 /*
- * nextf[i] is the pointer to the next free block of size 2^(i+3).  The
- * smallest allocatable block is 8 bytes.  The overhead information
- * precedes the data area returned to the user.
+ * nextf[i] is the pointer to the next free block of size
+ * (FIRST_BUCKET_SIZE << i).  The overhead information precedes the data
+ * area returned to the user.
  */
+#define	FIRST_BUCKET_SHIFT	3
+#define	FIRST_BUCKET_SIZE	(1U << FIRST_BUCKET_SHIFT)
 #define	NBUCKETS 30
 static	union overhead *nextf[NBUCKETS];
 
 static	size_t pagesz;			/* page size */
-static	size_t pagebucket;		/* page size bucket */
 static	size_t pageshift;		/* page size shift */
 
 #ifdef MSTATS
@@ -158,13 +144,13 @@ static	size_t pageshift;		/* page size shift */
 static	u_int nmalloc[NBUCKETS];
 #endif
 
-#if defined(MALLOC_DEBUG) || defined(RCHECK)
+#if defined(MALLOC_DEBUG)
 #define	ASSERT(p)   if (!(p)) botch("p")
 static void
 botch(const char *s)
 {
-    xwarnx("\r\nassertion botched: %s\r\n", s);
-    abort();
+	xwarnx("\r\nassertion botched: %s\r\n", s);
+	abort();
 }
 #else
 #define	ASSERT(p)
@@ -173,19 +159,25 @@ botch(const char *s)
 #define TRACE()	xprintf("TRACE %s:%d\n", __FILE__, __LINE__)
 
 static void *
+cp2op(void *cp)
+{
+	return (((caddr_t)cp - sizeof(union overhead)));
+}
+
+static void *
 imalloc(size_t nbytes)
 {
-  	union overhead *op;
-  	size_t bucket;
-	size_t n, m;
-	unsigned amt;
+	union overhead *op;
+	size_t bucket;
+	size_t amt;
 
 	/*
-	 * First time malloc is called, setup page size and
-	 * align break pointer so all data will be page aligned.
+	 * First time malloc is called, setup page size.
 	 */
 	if (pagesz == 0) {
+		size_t n, m;
 		pagesz = n = _rtld_pagesz;
+		pageshift = ffs(pagesz) - 1;
 		if (morepages(NPOOLPAGES) == 0)
 			return NULL;
 		op = (union overhead *)(pagepool_start);
@@ -194,68 +186,63 @@ imalloc(size_t nbytes)
 			n += pagesz - m;
 		else
 			n -= m;
-  		if (n) {
+		if (n) {
 			pagepool_start += n;
 		}
-		bucket = 0;
-		amt = sizeof(union overhead);
-		while (pagesz > amt) {
-			amt <<= 1;
-			bucket++;
-		}
-		pagebucket = bucket;
-		pageshift = ffs(pagesz) - 1;
 	}
+
 	/*
 	 * Convert amount of memory requested into closest block size
 	 * stored in hash buckets which satisfies request.
 	 * Account for space used per block for accounting.
 	 */
-	if (nbytes <= (n = pagesz - sizeof (*op) - RSLOP)) {
-		if (sizeof(union overhead) & (sizeof(union overhead) - 1)) {
-		    amt = sizeof(union overhead) * 2;
-		    bucket = 1;
-		} else {
-		    amt = sizeof(union overhead); /* size of first bucket */
-		    bucket = 0;
-		}
-		n = -(sizeof (*op) + RSLOP);
-	} else {
-		amt = pagesz;
-		bucket = pagebucket;
-	}
-	while (nbytes > amt + n) {
+	amt = FIRST_BUCKET_SIZE;
+	bucket = 0;
+	while (nbytes > amt - sizeof(*op)) {
 		amt <<= 1;
-		if (amt == 0)
-			return (NULL);
 		bucket++;
+		if (amt == 0 || bucket >= NBUCKETS)
+			return (NULL);
 	}
 	/*
 	 * If nothing in hash bucket right now,
 	 * request more memory from the system.
 	 */
-  	if ((op = nextf[bucket]) == NULL) {
-  		morecore(bucket);
-  		if ((op = nextf[bucket]) == NULL)
-  			return (NULL);
+	if ((op = nextf[bucket]) == NULL) {
+		morecore(bucket);
+		if ((op = nextf[bucket]) == NULL)
+			return (NULL);
 	}
 	/* remove from linked list */
-  	nextf[bucket] = op->ov_next;
+	nextf[bucket] = op->ov_next;
 	op->ov_magic = MAGIC;
 	op->ov_index = bucket;
 #ifdef MSTATS
-  	nmalloc[bucket]++;
+	nmalloc[bucket]++;
 #endif
-#ifdef RCHECK
-	/*
-	 * Record allocated size of block and
-	 * bound space with magic numbers.
-	 */
-	op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
-	op->ov_rmagic = RMAGIC;
-  	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
-#endif
-  	return ((char *)(op + 1));
+	return ((char *)(op + 1));
+}
+
+void *
+xmalloc_aligned(size_t size, size_t align, size_t offset)
+{
+	void *mem;
+	union overhead *ov;
+	uintptr_t x;
+
+	if (align < FIRST_BUCKET_SIZE)
+		align = FIRST_BUCKET_SIZE;
+	offset &= align - 1;
+	mem = imalloc(size + align + offset + sizeof(union overhead));
+	if (mem == NULL)
+		return (NULL);
+	x = roundup2((uintptr_t)mem + sizeof(union overhead), align);
+	x += offset;
+	ov = cp2op((void *)x);
+	ov->ov_magic = AMAGIC;
+	ov->ov_index = x - (uintptr_t)mem + sizeof(union overhead);
+
+	return ((void *)x);
 }
 
 /*
@@ -264,24 +251,17 @@ imalloc(size_t nbytes)
 static void
 morecore(size_t bucket)
 {
-  	union overhead *op;
+	union overhead *op;
 	size_t sz;		/* size of desired block */
-  	size_t amt;		/* amount to allocate */
-  	size_t nblks;		/* how many blocks we get */
+	size_t amt;		/* amount to allocate */
+	size_t nblks;		/* how many blocks we get */
 
-	/*
-	 * sbrk_size <= 0 only for big, FLUFFY, requests (about
-	 * 2^30 bytes on a VAX, I think) or for a negative arg.
-	 */
-	sz = 1 << (bucket + 3);
-#ifdef MALLOC_DEBUG
-	ASSERT(sz > 0);
-#endif
+	sz = FIRST_BUCKET_SIZE << bucket;
 	if (sz < pagesz) {
 		amt = pagesz;
-		nblks = amt >> (bucket + 3);
+		nblks = amt >> (bucket + FIRST_BUCKET_SHIFT);
 	} else {
-		amt = sz + pagesz;
+		amt = sz;
 		nblks = 1;
 	}
 	if (amt > PAGEPOOL_SIZE)
@@ -294,89 +274,81 @@ morecore(size_t bucket)
 	 * Add new memory allocated to that on
 	 * free list for this hash bucket.
 	 */
-  	nextf[bucket] = op;
-  	while (--nblks > 0) {
+	nextf[bucket] = op;
+	while (--nblks > 0) {
 		op->ov_next = (union overhead *)((caddr_t)op + sz);
 		op = (union overhead *)((caddr_t)op + sz);
-  	}
+	}
 }
 
 void
 xfree(void *cp)
 {
-  	int size;
-	union overhead *op;
+	union overhead *op, *opx;
+	size_t size;
 
-  	if (cp == NULL)
-  		return;
-	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
-#ifdef MALLOC_DEBUG
-  	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
-#else
+	if (cp == NULL)
+		return;
+	opx = cp2op(cp);
+
+	op = opx->ov_magic == AMAGIC ? (void *)((caddr_t)cp - opx->ov_index) :
+	    opx;
+	ASSERT(op->ov_magic == MAGIC);		/* make sure it was in use */
 	if (op->ov_magic != MAGIC)
 		return;				/* sanity */
-#endif
-#ifdef RCHECK
-  	ASSERT(op->ov_rmagic == RMAGIC);
-	ASSERT(*(u_short *)((caddr_t)(op + 1) + op->ov_size) == RMAGIC);
-#endif
-  	size = op->ov_index;
-  	ASSERT(size < NBUCKETS);
-	op->ov_next = nextf[size];	/* also clobbers ov_magic */
-  	nextf[size] = op;
+	size = op->ov_index;
+	ASSERT(size < NBUCKETS);
+	op->ov_next = nextf[size];		/* also clobbers ov_magic */
+	nextf[size] = op;
 #ifdef MSTATS
-  	nmalloc[size]--;
+	nmalloc[size]--;
 #endif
 }
 
 static void *
 irealloc(void *cp, size_t nbytes)
 {
-  	size_t onb;
+	size_t onb;
 	size_t i;
 	union overhead *op;
-  	char *res;
+	char *res;
 
-  	if (cp == NULL)
-  		return (imalloc(nbytes));
+	if (cp == NULL)
+		return (imalloc(nbytes));
 	op = (union overhead *)((caddr_t)cp - sizeof (union overhead));
 	if (op->ov_magic != MAGIC) {
 		static const char *err_str =
 		    "memory corruption or double free in realloc\n";
 		extern char *__progname;
-	        write(STDERR_FILENO, __progname, strlen(__progname));
+		write(STDERR_FILENO, __progname, strlen(__progname));
 		write(STDERR_FILENO, err_str, strlen(err_str));
 		abort();
 	}
 
 	i = op->ov_index;
-	onb = 1 << (i + 3);
+	onb = 1 << (i + FIRST_BUCKET_SHIFT);
 	if (onb < pagesz)
-		onb -= sizeof (*op) + RSLOP;
+		onb -= sizeof (*op);
 	else
-		onb += pagesz - sizeof (*op) - RSLOP;
+		onb += pagesz - sizeof (*op);
 	/* avoid the copy if same size block */
 	if (i) {
 		i = 1 << (i + 2);
 		if (i < pagesz)
-			i -= sizeof (*op) + RSLOP;
+			i -= sizeof (*op);
 		else
-			i += pagesz - sizeof (*op) - RSLOP;
+			i += pagesz - sizeof (*op);
 	}
 	if (nbytes <= onb && nbytes > i) {
-#ifdef RCHECK
-		op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
-		*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
-#endif
 		return(cp);
 	}
-  	if ((res = imalloc(nbytes)) == NULL)
-  		return (NULL);
-  	if (cp != res) {	/* common optimization if "compacting" */
+	if ((res = imalloc(nbytes)) == NULL)
+		return (NULL);
+	if (cp != res) {	/* common optimization if "compacting" */
 		memcpy(res, cp, (nbytes < onb) ? nbytes : onb);
 		xfree(cp);
 	}
-  	return (res);
+	return (res);
 }
 
 #ifdef MSTATS
@@ -390,24 +362,24 @@ irealloc(void *cp, size_t nbytes)
 void
 mstats(char *s)
 {
-  	int i, j;
-  	union overhead *p;
-  	int totfree = 0,
-  	totused = 0;
+	int i, j;
+	union overhead *p;
+	int totfree = 0,
+	totused = 0;
 
-  	xprintf("Memory allocation statistics %s\nfree:\t", s);
-  	for (i = 0; i < NBUCKETS; i++) {
-  		for (j = 0, p = nextf[i]; p; p = p->ov_next, j++)
-  			;
-  		xprintf(" %d", j);
-  		totfree += j * (1 << (i + 3));
-  	}
-  	xprintf("\nused:\t");
-  	for (i = 0; i < NBUCKETS; i++) {
-  		xprintf(" %d", nmalloc[i]);
-  		totused += nmalloc[i] * (1 << (i + 3));
-  	}
-  	xprintf("\n\tTotal in use: %d, total free: %d\n",
+	xprintf("Memory allocation statistics %s\nfree:\t", s);
+	for (i = 0; i < NBUCKETS; i++) {
+		for (j = 0, p = nextf[i]; p; p = p->ov_next, j++)
+			;
+		xprintf(" %d", j);
+		totfree += j * (1 << (i + FIRST_BUCKET_SHIFT));
+	}
+	xprintf("\nused:\t");
+	for (i = 0; i < NBUCKETS; i++) {
+		xprintf(" %d", nmalloc[i]);
+		totused += nmalloc[i] * (1 << (i + FIRST_BUCKET_SHIFT));
+	}
+	xprintf("\n\tTotal in use: %d, total free: %d\n",
 	    totused, totfree);
 }
 #endif
