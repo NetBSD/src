@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.62 2026/01/22 03:23:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.63 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.62 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.63 2026/01/22 03:24:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.62 2026/01/22 03:23:36 riastradh Ex
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -81,7 +82,7 @@ int
 ufs_start(struct mount *mp, int flags)
 {
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -94,9 +95,9 @@ ufs_root(struct mount *mp, int lktype, struct vnode **vpp)
 	int error;
 
 	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, lktype, &nvp)) != 0)
-		return (error);
+		return error;
 	*vpp = nvp;
-	return (0);
+	return 0;
 }
 
 /*
@@ -129,7 +130,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 #if !defined(QUOTA) && !defined(QUOTA2)
 	(void) mp;
 	(void) args;
-	return (EOPNOTSUPP);
+	return SET_ERROR(EOPNOTSUPP);
 #else
 	struct lwp *l = curlwp;
 	int error;
@@ -137,7 +138,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	/* Mark the mount busy, as we're passing it to kauth(9). */
 	error = vfs_busy(mp);
 	if (error) {
-		return (error);
+		return error;
 	}
 	mutex_enter(mp->mnt_updating);
 
@@ -145,7 +146,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 
 	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
-	return (error);
+	return error;
 #endif
 }
 
@@ -179,7 +180,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 		break;
 
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		break;
 	}
 
@@ -187,7 +188,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	if (!error) {
 		/* Only check if there was no error above. */
 		if ((u_int)type >= MAXQUOTAS)
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 	}
 
 	if (error) {
@@ -223,11 +224,11 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 		break;
 
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
-	return (error);
+	return error;
 #endif
 
 /*
@@ -243,9 +244,9 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, int lktype, struct vnode **vpp)
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, lktype, &nvp)) != 0) {
 		if (error == ENOENT)
-			error = ESTALE;
+			error = SET_ERROR(ESTALE);
 		*vpp = NULLVP;
-		return (error);
+		return error;
 	}
 	ip = VTOI(nvp);
 	KASSERT(ip != NULL);
@@ -253,10 +254,10 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, int lktype, struct vnode **vpp)
 	    ((ip->i_mode & IFMT) == IFDIR && ip->i_size == 0)) {
 		vput(nvp);
 		*vpp = NULLVP;
-		return (ESTALE);
+		return SET_ERROR(ESTALE);
 	}
 	*vpp = nvp;
-	return (0);
+	return 0;
 }
 
 /*
@@ -336,7 +337,7 @@ ufs_modcmd(modcmd_t cmd, void *arg)
 		error = 0;
 		break;
 	default:
-		error = ENOTTY;
+		error = SET_ERROR(ENOTTY);
 		break;
 	}
 

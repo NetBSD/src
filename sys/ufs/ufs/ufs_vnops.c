@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.263 2026/01/22 03:23:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.264 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.263 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.264 2026/01/22 03:24:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.263 2026/01/22 03:23:36 riastradh Ex
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -164,11 +165,11 @@ ufs_create(void *v)
 	 */
 	error = ufs_makeinode(ap->a_vap, dvp, ulr, ap->a_vpp, ap->a_cnp);
 	if (error) {
-		return (error);
+		return error;
 	}
 	UFS_WAPBL_END(dvp->v_mount);
 	VOP_UNLOCK(*ap->a_vpp);
-	return (0);
+	return 0;
 }
 
 /*
@@ -211,9 +212,9 @@ ufs_mknod(void *v)
 out:
 	if (error != 0) {
 		*vpp = NULL;
-		return (error);
+		return error;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -236,8 +237,8 @@ ufs_open(void *v)
 	 */
 	if ((VTOI(ap->a_vp)->i_flags & APPEND) &&
 	    (ap->a_mode & (FWRITE | O_APPEND)) == FWRITE)
-		return (EPERM);
-	return (0);
+		return SET_ERROR(EPERM);
+	return 0;
 }
 
 /*
@@ -259,7 +260,7 @@ ufs_close(void *v)
 	vp = ap->a_vp;
 	if (vrefcnt(vp) > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	return (0);
+	return 0;
 }
 
 static int
@@ -281,7 +282,7 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, accmode_t accmode,
 		case VLNK:
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
-				return EROFS;
+				return SET_ERROR(EROFS);
 #if defined(QUOTA) || defined(QUOTA2)
 			error = chkdq(ip, 0, cred, 0);
 			if (error != 0)
@@ -301,14 +302,14 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, accmode_t accmode,
 
 	/* If it is a snapshot, nobody gets access to it. */
 	if ((ip->i_flags & SF_SNAPSHOT))
-		return EPERM;
+		return SET_ERROR(EPERM);
 	/*
 	 * If immutable bit set, nobody gets to write it.  "& ~VADMIN_PERMS"
 	 * permits the owner of the file to remove the IMMUTABLE flag.
 	 */
 	if ((accmode & (VMODIFY_PERMS & ~VADMIN_PERMS)) &&
 	    (ip->i_flags & IMMUTABLE))
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	return 0;
 }
@@ -472,7 +473,7 @@ ufs_getattr(void *v)
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
-	return (0);
+	return 0;
 }
 
 /*
@@ -510,21 +511,21 @@ ufs_setattr(void *v)
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-			error = EROFS;
+			error = SET_ERROR(EROFS);
 			goto out;
 		}
 
 		/* Snapshot flag cannot be set or cleared */
 		if ((vap->va_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) !=
 		    (ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))) {
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 			goto out;
 		}
 
@@ -566,7 +567,7 @@ ufs_setattr(void *v)
 		}
 	}
 	if (ip->i_flags & (IMMUTABLE | APPEND)) {
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 		goto out;
 	}
 	/*
@@ -574,7 +575,7 @@ ufs_setattr(void *v)
 	 */
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-			error = EROFS;
+			error = SET_ERROR(EROFS);
 			goto out;
 		}
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
@@ -593,7 +594,7 @@ ufs_setattr(void *v)
 		 */
 		switch (vp->v_type) {
 		case VDIR:
-			error = EISDIR;
+			error = SET_ERROR(EISDIR);
 			goto out;
 		case VCHR:
 		case VBLK:
@@ -601,11 +602,11 @@ ufs_setattr(void *v)
 			break;
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-				error = EROFS;
+				error = SET_ERROR(EROFS);
 				goto out;
 			}
 			if ((ip->i_flags & SF_SNAPSHOT) != 0) {
-				error = EPERM;
+				error = SET_ERROR(EPERM);
 				goto out;
 			}
 			error = ufs_truncate_retry(vp, 0, vap->va_size, cred);
@@ -613,7 +614,7 @@ ufs_setattr(void *v)
 				goto out;
 			break;
 		default:
-			error = EOPNOTSUPP;
+			error = SET_ERROR(EOPNOTSUPP);
 			goto out;
 		}
 	}
@@ -621,11 +622,11 @@ ufs_setattr(void *v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
 	    vap->va_birthtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-			error = EROFS;
+			error = SET_ERROR(EROFS);
 			goto out;
 		}
 		if ((ip->i_flags & SF_SNAPSHOT) != 0) {
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 			goto out;
 		}
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
@@ -657,13 +658,13 @@ ufs_setattr(void *v)
 	error = 0;
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-			error = EROFS;
+			error = SET_ERROR(EROFS);
 			goto out;
 		}
 		if ((ip->i_flags & SF_SNAPSHOT) != 0 &&
 		    (vap->va_mode & (S_IXUSR | S_IWUSR | S_IXGRP | S_IWGRP |
 		     S_IXOTH | S_IWOTH))) {
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 			goto out;
 		}
 		error = UFS_WAPBL_BEGIN(vp->v_mount);
@@ -674,7 +675,7 @@ ufs_setattr(void *v)
 	}
 out:
 	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, !HAS_ACLS(ip));
-	return (error);
+	return error;
 }
 
 #ifdef UFS_ACL
@@ -699,7 +700,7 @@ ufs_update_nfs4_acl_after_mode_change(struct vnode *vp, int mode,
 
 out:
 	acl_free(aclp);
-	return (error);
+	return error;
 }
 #endif /* UFS_ACL */
 
@@ -729,7 +730,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
 	    NULL, genfs_can_chmod(vp, cred, ip->i_uid, ip->i_gid, mode));
 	if (error)
-		return (error);
+		return error;
 
 #ifdef UFS_ACL
 	if ((vp->v_mount->mnt_flag & MNT_NFS4ACLS) != 0) {
@@ -745,7 +746,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, !HAS_ACLS(ip));
-	return (0);
+	return 0;
 }
 
 /*
@@ -783,7 +784,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_CHANGE_OWNERSHIP, vp,
 	    NULL, genfs_can_chown(vp, cred, ip->i_uid, ip->i_gid, uid, gid));
 	if (error)
-		return (error);
+		return error;
 
 #if defined(QUOTA) || defined(QUOTA2)
 	ogid = ip->i_gid;
@@ -809,13 +810,13 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, uid, ouid);
 	(void) chkdq(ip, change, cred, FORCE);
 	(void) chkiq(ip, 1, cred, FORCE);
-	return (error);
+	return error;
  good:
 #endif /* QUOTA || QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, !HAS_ACLS(ip));
-	return (0);
+	return 0;
 }
 
 int
@@ -856,7 +857,7 @@ ufs_remove(void *v)
 
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 	else {
 		error = UFS_WAPBL_BEGIN(mp);
 		if (error == 0) {
@@ -875,7 +876,7 @@ err:
 		vrele(vp);
 	else
 		vput(vp);
-	return (error);
+	return error;
 }
 
 /*
@@ -912,11 +913,11 @@ ufs_link(void *v)
 
 	ip = VTOI(vp);
 	if ((nlink_t)ip->i_nlink >= LINK_MAX) {
-		error = EMLINK;
+		error = SET_ERROR(EMLINK);
 		goto out1;
 	}
 	if (ip->i_flags & (IMMUTABLE | APPEND)) {
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 		goto out1;
 	}
 
@@ -952,7 +953,7 @@ ufs_link(void *v)
  out2:
 	if (abrt)
 		VOP_ABORTOP(dvp, cnp);
-	return (error);
+	return error;
 }
 
 /*
@@ -982,8 +983,8 @@ ufs_whiteout(void *v)
 	case LOOKUP:
 		/* 4.4 format directories support whiteout operations */
 		if (ump->um_maxsymlinklen > 0)
-			return (0);
-		return (EOPNOTSUPP);
+			return 0;
+		return SET_ERROR(EOPNOTSUPP);
 
 	case CREATE:
 		/* create a new directory whiteout */
@@ -1026,7 +1027,7 @@ ufs_whiteout(void *v)
 		/* NOTREACHED */
 	}
 	UFS_WAPBL_END(dvp->v_mount);
-	return (error);
+	return error;
 }
 
 #ifdef UFS_ACL
@@ -1070,7 +1071,7 @@ ufs_do_posix1e_acl_inheritance_dir(struct vnode *dvp, struct vnode *tvp,
 		DIP_ASSIGN(ip, mode, dmode);
 		error = 0;
 		goto out;
-	
+
 	default:
 		goto out;
 	}
@@ -1108,7 +1109,7 @@ out:
 	acl_free(acl);
 	acl_free(dacl);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -1187,7 +1188,7 @@ ufs_do_posix1e_acl_inheritance_file(struct vnode *dvp, struct vnode *tvp,
 out:
 	acl_free(acl);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -1212,7 +1213,7 @@ out:
 	acl_free(parent_aclp);
 	acl_free(child_aclp);
 
-	return (error);
+	return error;
 }
 #endif
 
@@ -1244,7 +1245,7 @@ ufs_mkdir(void *v)
 	KASSERT(vap->va_type == VDIR);
 
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
-		error = EMLINK;
+		error = SET_ERROR(EMLINK);
 		goto out;
 	}
 	/*
@@ -1374,7 +1375,7 @@ ufs_mkdir(void *v)
 		vput(tvp);
 	}
  out:
-	return (error);
+	return error;
 }
 
 int
@@ -1416,7 +1417,7 @@ ufs_rmdir(void *v)
 	 * No rmdir "." or of mounted directories please.
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto err;
 	}
 
@@ -1429,12 +1430,12 @@ ufs_rmdir(void *v)
 	error = 0;
 	if (ip->i_nlink != 2 ||
 	    !ufs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
-		error = ENOTEMPTY;
+		error = SET_ERROR(ENOTEMPTY);
 		goto out;
 	}
 	if ((dp->i_flags & APPEND) ||
 		(ip->i_flags & (IMMUTABLE | APPEND))) {
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 		goto out;
 	}
 	error = UFS_WAPBL_BEGIN(dvp->v_mount);
@@ -1545,7 +1546,7 @@ ufs_symlink(void *v)
 	if (error)
 		vrele(vp);
 out:
-	return (error);
+	return error;
 }
 
 /*
@@ -1613,7 +1614,7 @@ ufs_readdir(void *v)
 
 	if (callerbytes < _DIRENT_MINSIZE(dirent)) {
 		/* no room for even one struct dirent */
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	/*
@@ -1654,7 +1655,7 @@ ufs_readdir(void *v)
 
 	if (physstart >= physend) {
 		/* Need at least one block */
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	/*
@@ -1695,12 +1696,12 @@ ufs_readdir(void *v)
 	/* Base buffer space for CALLERBYTES of new data */
 	rawbufmax = callerbytes + skipstart;
 	if (rawbufmax < callerbytes)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	rawbufmax -= dropend;
 
 	if (rawbufmax < _DIRENT_MINSIZE(rawdp)) {
 		/* no room for even one struct direct */
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	/* read it */
@@ -1756,7 +1757,7 @@ ufs_readdir(void *v)
 				continue;
 			}
 			/* caller's start position wasn't on an entry */
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto out;
 		}
 		if (rawdp->d_reclen == 0) {
@@ -1848,9 +1849,9 @@ ufs_readlink(void *v)
 	if (isize < ump->um_maxsymlinklen ||
 	    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
-		return (0);
+		return 0;
 	}
-	return (UFS_BUFRD(vp, ap->a_uio, 0, ap->a_cred));
+	return UFS_BUFRD(vp, ap->a_uio, 0, ap->a_cred);
 }
 
 /*
@@ -1883,14 +1884,14 @@ ufs_strategy(void *v)
 		if (error) {
 			bp->b_error = error;
 			biodone(bp);
-			return (error);
+			return error;
 		}
 		if (bp->b_blkno == -1) /* no valid data */
 			clrbuf(bp);
 	}
 	if (bp->b_blkno < 0) { /* block is not on disk */
 		biodone(bp);
-		return (0);
+		return 0;
 	}
 	vp = ip->i_devvp;
 
@@ -1946,7 +1947,7 @@ ufs_print(void *v)
 	if (vp->v_type == VFIFO)
 		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
 	printf("\n");
-	return (0);
+	return 0;
 }
 
 /*
@@ -1967,7 +1968,7 @@ ufsspec_read(void *v)
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
 		VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
-	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_read), ap));
+	return VOCALL(spec_vnodeop_p, VOFFSET(vop_read), ap);
 }
 
 /*
@@ -1988,7 +1989,7 @@ ufsspec_write(void *v)
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
 		VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
-	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_write), ap));
+	return VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap);
 }
 
 /*
@@ -2009,7 +2010,7 @@ ufsspec_close(void *v)
 	vp = ap->a_vp;
 	if (vrefcnt(vp) > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
+	return VOCALL(spec_vnodeop_p, VOFFSET(vop_close), ap);
 }
 
 /*
@@ -2029,7 +2030,7 @@ ufsfifo_read(void *v)
 	 * Set access flag.
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_ACCESS;
-	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_read), ap));
+	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap);
 }
 
 /*
@@ -2049,7 +2050,7 @@ ufsfifo_write(void *v)
 	 * Set update and change flags.
 	 */
 	VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
-	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_write), ap));
+	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap);
 }
 
 /*
@@ -2070,7 +2071,7 @@ ufsfifo_close(void *v)
 	vp = ap->a_vp;
 	if (vrefcnt(ap->a_vp) > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
+	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), ap);
 }
 
 /*
@@ -2088,22 +2089,22 @@ ufs_pathconf(void *v)
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = LINK_MAX;
-		return (0);
+		return 0;
 	case _PC_NAME_MAX:
 		*ap->a_retval = FFS_MAXNAMLEN;
-		return (0);
+		return 0;
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
-		return (0);
+		return 0;
 	case _PC_PIPE_BUF:
 		*ap->a_retval = PIPE_BUF;
-		return (0);
+		return 0;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		return 0;
 	case _PC_NO_TRUNC:
 		*ap->a_retval = 1;
-		return (0);
+		return 0;
 #ifdef UFS_ACL
 	case _PC_ACL_EXTENDED:
 		if (ap->a_vp->v_mount->mnt_flag & MNT_POSIX1EACLS)
@@ -2130,18 +2131,18 @@ ufs_pathconf(void *v)
 		return 0;
 	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
-		return (0);
+		return 0;
 	case _PC_FILESIZEBITS:
 		*ap->a_retval = 42;
-		return (0);
+		return 0;
 	case _PC_SYMLINK_MAX:
 		*ap->a_retval = MAXPATHLEN;
-		return (0);
+		return 0;
 	case _PC_2_SYMLINKS:
 		*ap->a_retval = 1;
-		return (0);
+		return 0;
 	default:
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 	/* NOTREACHED */
 }
@@ -2244,7 +2245,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	error = UFS_WAPBL_BEGIN(dvp->v_mount);
 	if (error) {
 		vput(tvp);
-		return (error);
+		return error;
 	}
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	ip->i_nlink = 1;
@@ -2294,7 +2295,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 		goto bad;
 	*vpp = tvp;
 	cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
-	return (0);
+	return 0;
 
  bad:
 	/*
@@ -2307,7 +2308,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	UFS_WAPBL_END(dvp->v_mount);
 	vput(tvp);
-	return (error);
+	return error;
 }
 
 /*
@@ -2417,7 +2418,7 @@ ufs_bufio(enum uio_rw rw, struct vnode *vp, void *buf, size_t len, off_t off,
 	if (aresid)
 		*aresid = uio.uio_resid;
 	else if (uio.uio_resid && error == 0)
-		error = EIO;
+		error = SET_ERROR(EIO);
 
 	KASSERT(VOP_ISLOCKED(vp));
 	KASSERT(rw != UIO_WRITE || VOP_ISLOCKED(vp) == LK_EXCLUSIVE);

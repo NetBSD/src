@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.129 2024/10/19 14:13:44 jakllsch Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.130 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.129 2024/10/19 14:13:44 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.130 2026/01/22 03:24:19 riastradh Exp $");
 
 #include <sys/bitops.h>
+#include <sys/sdt.h>
 
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -88,9 +89,9 @@ READ(void *v)
 	if (vp->v_type == VDIR)
 		return BUFRD(vp, uio, ioflag, ap->a_cred);
 	if ((u_int64_t)uio->uio_offset > ump->um_maxfilesize)
-		return (EFBIG);
+		return SET_ERROR(EFBIG);
 	if (uio->uio_resid == 0)
-		return (0);
+		return 0;
 
 	if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT)
 		return ffs_snapshot_read(vp, uio, ioflag);
@@ -115,7 +116,7 @@ READ(void *v)
 
  out:
 	error = ufs_post_read_update(vp, ap->a_ioflag, error);
-	return (error);
+	return error;
 }
 
 /*
@@ -147,7 +148,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	    DIP(ip, blocks) != 0);
 
 	if (uio->uio_offset > ump->um_maxfilesize)
-		return EFBIG;
+		return SET_ERROR(EFBIG);
 	if (uio->uio_resid == 0)
 		return 0;
 
@@ -200,7 +201,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
  out:
 	error = ufs_post_read_update(vp, ioflag, error);
-	return (error);
+	return error;
 }
 
 static int
@@ -268,14 +269,14 @@ WRITE(void *v)
 	if (ioflag & IO_APPEND)
 		uio->uio_offset = ip->i_size;
 	if ((ip->i_flags & APPEND) && uio->uio_offset != ip->i_size)
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	fs = ip->I_FS;
 	if (uio->uio_offset < 0 ||
 	    (u_int64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
-		return (EFBIG);
+		return SET_ERROR(EFBIG);
 	if (uio->uio_resid == 0)
-		return (0);
+		return 0;
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -452,7 +453,7 @@ out:
 	    error);
 	UFS_WAPBL_END(vp->v_mount);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -488,7 +489,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	if (uio->uio_offset < 0 ||
 	    uio->uio_resid > ump->um_maxfilesize ||
 	    uio->uio_offset > (ump->um_maxfilesize - uio->uio_resid))
-		return EFBIG;
+		return SET_ERROR(EFBIG);
 	if (uio->uio_resid == 0)
 		return 0;
 
@@ -549,7 +550,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    error);
 
-	return (error);
+	return error;
 }
 
 static int

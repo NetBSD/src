@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.15 2026/01/22 03:23:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.16 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.15 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.16 2026/01/22 03:24:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.15 2026/01/22 03:23:36 riastradh Ex
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
+#include <sys/sdt.h>
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
 #include <sys/wapbl.h>
@@ -320,7 +321,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * sure there is room to do so.
 	 */
 	if ((nlink_t)VTOI(fvp)->i_nlink >= LINK_MAX)
-		return EMLINK;
+		return SET_ERROR(EMLINK);
 
 	directory_p = (fvp->v_type == VDIR);
 	KASSERT(directory_p == ((VTOI(fvp)->i_mode & IFMT) == IFDIR));
@@ -370,7 +371,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		 */
 		if (directory_p && reparent_p) {
 			if ((nlink_t)VTOI(tdvp)->i_nlink >= LINK_MAX) {
-				error = EMLINK;
+				error = SET_ERROR(EMLINK);
 				goto whymustithurtsomuch;
 			}
 			KASSERT((nlink_t)VTOI(tdvp)->i_nlink < LINK_MAX);
@@ -697,7 +698,7 @@ next:
 		if (! ((reclen < search_end) &&
 			(offset < (search_end - reclen)))) {
 			brelse(bp, 0);
-			return EIO;	/* XXX Panic?  What?  */
+			return SET_ERROR(EIO);	/* XXX Panic?  What?  */
 		}
 
 		/* We may not move past the search end.  */
@@ -818,7 +819,7 @@ ufs_gro_lookup(struct mount *mp, struct vnode *dvp,
 
 	error = relookup(dvp, &vp, cnp, 0 /* dummy */);
 	if ((error == 0) && (vp == NULL)) {
-		error = ENOENT;
+		error = SET_ERROR(ENOENT);
 		goto out;
 	} else if (error) {
 		return error;
@@ -876,7 +877,7 @@ ufs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 	    dirbuf.dotdot_name[0] != '.' ||
 	    dirbuf.dotdot_name[1] != '.')
 		/* XXX Panic?  Print warning?  */
-		return ENOTDIR;
+		return SET_ERROR(ENOTDIR);
 
 	*ino_ret = ufs_rw32(dirbuf.dotdot_ino,
 	    UFS_MPNEEDSWAP(VTOI(vp)->i_ump));
@@ -994,12 +995,12 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 			 * been recycled?
 			 */
 			vput(vp);
-			return ENOTDIR;
+			return SET_ERROR(ENOTDIR);
 		}
 
 		if (ufs_rmdired_p(vp)) {
 			vput(vp);
-			return ENOENT;
+			return SET_ERROR(ENOENT);
 		}
 	}
 }
@@ -1021,7 +1022,7 @@ ufs_gro_lock_directory(struct mount *mp, struct vnode *vp)
 
 	if (ufs_rmdired_p(vp)) {
 		VOP_UNLOCK(vp);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 
 	return 0;

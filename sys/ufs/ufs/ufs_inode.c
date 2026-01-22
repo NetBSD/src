@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.113 2026/01/22 03:23:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.114 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.113 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.114 2026/01/22 03:24:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -160,7 +160,7 @@ out:
 		panic("%s: dirty filesystem?", __func__);
 	}
 
-	return (allerror);
+	return allerror;
 }
 
 /*
@@ -188,7 +188,7 @@ ufs_reclaim(struct vnode *vp)
 	if (ip->i_dirhash != NULL)
 		ufsdirhash_free(ip);
 #endif
-	return (0);
+	return 0;
 }
 
 /*

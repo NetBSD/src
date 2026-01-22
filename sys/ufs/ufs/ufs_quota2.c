@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.47 2026/01/22 03:23:36 riastradh Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.48 2026/01/22 03:24:19 riastradh Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.47 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.48 2026/01/22 03:24:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.47 2026/01/22 03:23:36 riastradh Ex
 #include <sys/proc.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/wapbl.h>
@@ -507,7 +508,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					    quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
-				error = EDQUOT;
+				error = SET_ERROR(EDQUOT);
 				break;
 			case QL_S_DENY_GRACE:
 				if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
@@ -517,7 +518,7 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 					    quotatypes[i], limnames[vtype]);
 					dq->dq_flags |= DQ_WARN(vtype);
 				}
-				error = EDQUOT;
+				error = SET_ERROR(EDQUOT);
 				break;
 			case QL_S_ALLOW_SOFT:
 				if ((dq->dq_flags & DQ_WARN(vtype)) == 0) {
@@ -588,7 +589,7 @@ quota2_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	CTASSERT(QUOTA_IDTYPE_GROUP == GRPQUOTA);
 
 	if (ump->um_quotas[key->qk_idtype] == NULLVP)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 	error = UFS_WAPBL_BEGIN(ump->um_mountp);
 	if (error)
 		return error;
@@ -700,9 +701,9 @@ quota2_handle_cmd_del(struct ufsmount *ump, const struct quotakey *qk)
 	objtype = qk->qk_objtype;
 
 	if (ump->um_quotas[idtype] == NULLVP)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 	if (id == QUOTA_DEFAULTID)
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	/* get the default entry before locking the entry's buffer */
 	mutex_enter(&dqlock);
@@ -723,7 +724,7 @@ quota2_handle_cmd_del(struct ufsmount *ump, const struct quotakey *qk)
 	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		/* already clear, nothing to do */
-		error = ENOENT;
+		error = SET_ERROR(ENOENT);
 		goto out_il;
 	}
 	error = UFS_WAPBL_BEGIN(ump->um_mountp);
@@ -814,7 +815,7 @@ quota2_fetch_q2e(struct ufsmount *ump, const struct quotakey *qk,
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	error = getq2e(ump, qk->qk_idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
@@ -850,7 +851,7 @@ quota2_fetch_quotaval(struct ufsmount *ump, const struct quotakey *qk,
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
 		mutex_exit(&dq->dq_interlock);
 		dqrele(NULLVP, dq);
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 	}
 	error = getq2e(ump, qk->qk_idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, 0);
@@ -890,11 +891,11 @@ quota2_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 	CTASSERT(N_QL == 2);
 
 	if (qk->qk_objtype < 0 || qk->qk_objtype >= N_QL) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (ump->um_quotas[qk->qk_idtype] == NULLVP)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 	if (qk->qk_id == QUOTA_DEFAULTID) {
 		mutex_enter(&dqlock);
 		error = getq2h(ump, qk->qk_idtype, &bp, &q2h, 0);
@@ -985,26 +986,26 @@ static int
 q2cursor_check(struct ufsq2_cursor *cursor)
 {
 	if (cursor->q2c_magic != Q2C_MAGIC) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (cursor->q2c_hashsize < 0) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (cursor->q2c_users_done != 0 && cursor->q2c_users_done != 1) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (cursor->q2c_groups_done != 0 && cursor->q2c_groups_done != 1) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (cursor->q2c_defaults_done != 0 && cursor->q2c_defaults_done != 1) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (cursor->q2c_hashpos < 0 || cursor->q2c_uidpos < 0) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	if (cursor->q2c_blocks_done != 0 && cursor->q2c_blocks_done != 1) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	return 0;
 }
@@ -1061,7 +1062,7 @@ q2cursor_pickidtype(struct ufsq2_cursor *cursor, int *idtype_ret)
 	} else if (cursor->q2c_groups_done == 0) {
 		*idtype_ret = QUOTA_IDTYPE_GROUP;
 	} else {
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 	return 0;
 }
@@ -1152,7 +1153,7 @@ q2cursor_getkeys(struct ufsmount *ump, int idtype, struct ufsq2_cursor *cursor,
 	if (cursor->q2c_hashsize == 0) {
 		cursor->q2c_hashsize = quota2_hash_size;
 	} else if (cursor->q2c_hashsize != quota2_hash_size) {
-		error = EDEADLK;
+		error = SET_ERROR(EDEADLK);
 		goto scanfail;
 	}
 
@@ -1247,7 +1248,7 @@ q2cursor_getvals(struct ufsmount *ump, struct q2cursor_state *state,
 				    &q2e);
 				if (error == ENOENT) {
 					/* something changed - start over */
-					error = EDEADLK;
+					error = SET_ERROR(EDEADLK);
 				}
 				if (error) {
 					return error;
@@ -1447,7 +1448,7 @@ quota2_handle_cmd_cursorskipidtype(struct ufsmount *ump,
 		cursor->q2c_groups_done = 1;
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;

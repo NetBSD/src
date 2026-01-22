@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.55 2026/01/22 03:23:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.56 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.55 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.56 2026/01/22 03:24:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.55 2026/01/22 03:23:36 riastradh Exp 
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 #include <sys/trace.h>
 #include <sys/vnode.h>
@@ -92,7 +93,7 @@ ufs_bmap(void *v)
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = VTOI(ap->a_vp)->i_devvp;
 	if (ap->a_bnp == NULL)
-		return (0);
+		return 0;
 
 	error = ufs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
 	    ap->a_runp, ufs_issequential);
@@ -191,7 +192,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 				    ++bn, ++*runp);
 			}
 		}
-		return (0);
+		return 0;
 	} else if (bn < 0 && bn >= -UFS_NXADDR) {
 		KASSERT(ump->um_fstype == UFS2 && (ump->um_flags & UFS_EA) != 0);
 		daddr = ufs_rw64(ip->i_ffs2_extb[-1 - bn], UFS_MPNEEDSWAP(ump));
@@ -205,7 +206,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	if (!nump)
 		nump = &num;
 	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
-		return (error);
+		return error;
 
 	num = *nump;
 
@@ -252,7 +253,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			 * for detail.
 			 */
 
-			return (ENOMEM);
+			return SET_ERROR(ENOMEM);
 		}
 		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
@@ -267,7 +268,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			curlwp->l_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp, 0);
-				return (error);
+				return error;
 			}
 		}
 		if (ump->um_fstype == UFS1) {
@@ -311,7 +312,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT
 	    && daddr > 0 && daddr < ump->um_seqinc) {
 		*bnp = -1;
-		return (0);
+		return 0;
 	}
 	*bnp = blkptrtodb(ump, daddr);
 	if (*bnp == 0) {
@@ -322,7 +323,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			*bnp = -1;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -362,7 +363,7 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 	bn -= UFS_NDADDR;
 	for (lbc = 0, i = UFS_NIADDR;; i--, bn -= blockcnt) {
 		if (i == 0)
-			return (EFBIG);
+			return SET_ERROR(EFBIG);
 
 		lbc += ump->um_lognindir;
 		blockcnt = (int64_t)1 << lbc;
@@ -402,5 +403,5 @@ ufs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 	}
 	if (nump)
 		*nump = numlevels;
-	return (0);
+	return 0;
 }

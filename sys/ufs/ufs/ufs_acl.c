@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/ufs/ufs/ufs_acl.c 356669 2020-01-13 02:31:51Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.6 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.7 2026/01/22 03:24:19 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.6 2026/01/22 03:23:36 riastradh Exp $"
 #include <sys/extattr.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -179,11 +180,11 @@ ufs_getacl_nfs4_internal(struct vnode *vp, struct acl *aclp, struct lwp *l)
 		 */
 		acl_nfs4_sync_acl_from_mode(aclp, ip->i_mode, ip->i_uid);
 
-		return (0);
+		return 0;
 	}
 
 	if (error)
-		return (error);
+		return error;
 
 	if (len != sizeof(*aclp)) {
 		/*
@@ -196,7 +197,7 @@ ufs_getacl_nfs4_internal(struct vnode *vp, struct acl *aclp, struct lwp *l)
 		    "%zu bytes), inumber %ju on %s\n", __func__, len,
 		    (uintmax_t)ip->i_number, ip->i_fs->fs_fsmnt);
 
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	}
 
 	error = acl_nfs4_check(aclp, vp->v_type == VDIR);
@@ -205,10 +206,10 @@ ufs_getacl_nfs4_internal(struct vnode *vp, struct acl *aclp, struct lwp *l)
 		    "(failed acl_nfs4_check), inumber %ju on %s\n", __func__,
 		    (uintmax_t)ip->i_number, ip->i_fs->fs_fsmnt);
 
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -217,15 +218,15 @@ ufs_getacl_nfs4(struct vop_getacl_args *ap, struct lwp *l)
 	int error;
 
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS) == 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	error = VOP_ACCESSX(ap->a_vp, VREAD_ACL, ap->a_cred);
 	if (error)
-		return (error);
+		return error;
 
 	error = ufs_getacl_nfs4_internal(ap->a_vp, ap->a_aclp, l);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -250,13 +251,13 @@ ufs_get_oldacl(acl_type_t type, struct oldacl *old, struct vnode *vp,
 		break;
 	case ACL_TYPE_DEFAULT:
 		if (vp->v_type != VDIR)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		error = vn_extattr_get(vp, IO_NODELOCKED,
 		    POSIX1E_ACL_DEFAULT_EXTATTR_NAMESPACE,
 		    POSIX1E_ACL_DEFAULT_EXTATTR_NAME, &len, old, l);
 		break;
 	default:
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	if (error != 0)
@@ -271,10 +272,10 @@ ufs_get_oldacl(acl_type_t type, struct oldacl *old, struct vnode *vp,
 		printf("%s: Loaded invalid ACL "
 		    "(len = %zu), inumber %ju on %s\n", __func__, len,
 		    (uintmax_t)ip->i_number, ip->i_fs->fs_fsmnt);
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -296,7 +297,7 @@ ufs_getacl_posix1e(struct vop_getacl_args *ap, struct lwp *l)
 	 * ACLs, remove this check.
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_POSIX1EACLS) == 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	old = kmem_zalloc(sizeof(*old), KM_SLEEP);
 
@@ -355,7 +356,7 @@ ufs_getacl_posix1e(struct vop_getacl_args *ap, struct lwp *l)
 	}
 
 	kmem_free(old, sizeof(*old));
-	return (error);
+	return error;
 }
 
 int
@@ -364,12 +365,12 @@ ufs_getacl(void *v)
 	struct vop_getacl_args *ap = v;
 
 	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) == 0)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 
 	if (ap->a_type == ACL_TYPE_NFS4)
-		return (ufs_getacl_nfs4(ap, curlwp));
+		return ufs_getacl_nfs4(ap, curlwp);
 
-	return (ufs_getacl_posix1e(ap, curlwp));
+	return ufs_getacl_posix1e(ap, curlwp);
 }
 
 /*
@@ -409,10 +410,10 @@ ufs_setacl_nfs4_internal(struct vnode *vp, struct acl *aclp,
 	 * support for ACLs on the filesystem.
 	 */
 	if (error == ENOATTR)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 
 	if (error)
-		return (error);
+		return error;
 
 	mode = ip->i_mode;
 
@@ -430,7 +431,7 @@ ufs_setacl_nfs4_internal(struct vnode *vp, struct acl *aclp,
 	if (lock)
 		UFS_WAPBL_END(vp->v_mount);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -440,29 +441,29 @@ ufs_setacl_nfs4(struct vop_setacl_args *ap, struct lwp *l)
 	struct inode *ip = VTOI(ap->a_vp);
 
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS) == 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
-		return (EROFS);
+		return SET_ERROR(EROFS);
 
 	if (ap->a_aclp == NULL)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	error = VOP_ACLCHECK(ap->a_vp, ap->a_type, ap->a_aclp, ap->a_cred);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Authorize the ACL operation.
 	 */
 	if (ip->i_flags & (IMMUTABLE | APPEND))
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	/*
 	 * Must hold VWRITE_ACL or have appropriate privilege.
 	 */
 	if ((error = VOP_ACCESSX(ap->a_vp, VWRITE_ACL, l->l_cred)))
-		return (error);
+		return error;
 
 	/*
 	 * With NFSv4 ACLs, chmod(2) may need to add additional entries.
@@ -470,11 +471,11 @@ ufs_setacl_nfs4(struct vop_setacl_args *ap, struct lwp *l)
 	 * into two and appending "canonical six" entries at the end.
 	 */
 	if (ap->a_aclp->acl_cnt > (ACL_MAX_ENTRIES - 6) / 2)
-		return (ENOSPC);
+		return SET_ERROR(ENOSPC);
 
 	error = ufs_setacl_nfs4_internal(ap->a_vp, ap->a_aclp, l, true);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -495,7 +496,7 @@ ufs_setacl_posix1e(struct vnode *vp, int type, struct acl *aclp,
 	struct oldacl *old;
 
 	if ((vp->v_mount->mnt_flag & MNT_POSIX1EACLS) == 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * If this is a set operation rather than a delete operation,
@@ -508,7 +509,7 @@ ufs_setacl_posix1e(struct vnode *vp, int type, struct acl *aclp,
 		 */
 		error = VOP_ACLCHECK(vp, type, aclp, cred);
 		if (error != 0)
-			return (error);
+			return error;
 	} else {
 		/*
 		 * Delete operation.
@@ -516,25 +517,25 @@ ufs_setacl_posix1e(struct vnode *vp, int type, struct acl *aclp,
 		 * directory (ACL_TYPE_DEFAULT).
 		 */
 		if (type != ACL_TYPE_DEFAULT)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		if (vp->v_type != VDIR)
-			return (ENOTDIR);
+			return SET_ERROR(ENOTDIR);
 	}
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		return (EROFS);
+		return SET_ERROR(EROFS);
 
 	/*
 	 * Authorize the ACL operation.
 	 */
 	if (ip->i_flags & (IMMUTABLE | APPEND))
-		return (EPERM);
+		return SET_ERROR(EPERM);
 
 	/*
 	 * Must hold VADMIN (be file owner) or have appropriate privilege.
 	 */
 	if ((error = VOP_ACCESS(vp, VADMIN, cred)))
-		return (error);
+		return error;
 
 	switch(type) {
 	case ACL_TYPE_ACCESS:
@@ -580,16 +581,16 @@ ufs_setacl_posix1e(struct vnode *vp, int type, struct acl *aclp,
 		break;
 
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 	/*
 	 * Map lack of attribute definition in UFS_EXTATTR into lack of
 	 * support for ACLs on the filesystem.
 	 */
 	if (error == ENOATTR)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 	if (error != 0)
-		return (error);
+		return error;
 
 	if (type == ACL_TYPE_ACCESS) {
 		/*
@@ -606,7 +607,7 @@ ufs_setacl_posix1e(struct vnode *vp, int type, struct acl *aclp,
 		UFS_WAPBL_END(vp->v_mount);
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -614,7 +615,7 @@ ufs_setacl(void *v)
 {
 	struct vop_setacl_args *ap = v;
 	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) == 0)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 
 	if (ap->a_type == ACL_TYPE_NFS4)
 		return ufs_setacl_nfs4(ap, curlwp);
@@ -629,7 +630,7 @@ ufs_aclcheck_nfs4(struct vop_aclcheck_args *ap, struct lwp *l)
 	int is_directory = 0;
 
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS) == 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * With NFSv4 ACLs, chmod(2) may need to add additional entries.
@@ -637,12 +638,12 @@ ufs_aclcheck_nfs4(struct vop_aclcheck_args *ap, struct lwp *l)
 	 * into two and appending "canonical six" entries at the end.
 	 */
 	if (ap->a_aclp->acl_cnt > (ACL_MAX_ENTRIES - 6) / 2)
-		return (ENOSPC);
+		return SET_ERROR(ENOSPC);
 
 	if (ap->a_vp->v_type == VDIR)
 		is_directory = 1;
 
-	return (acl_nfs4_check(ap->a_aclp, is_directory));
+	return acl_nfs4_check(ap->a_aclp, is_directory);
 }
 
 static int
@@ -650,7 +651,7 @@ ufs_aclcheck_posix1e(struct vop_aclcheck_args *ap, struct lwp *l)
 {
 
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_POSIX1EACLS) == 0)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Verify we understand this type of ACL, and that it applies
@@ -663,17 +664,17 @@ ufs_aclcheck_posix1e(struct vop_aclcheck_args *ap, struct lwp *l)
 
 	case ACL_TYPE_DEFAULT:
 		if (ap->a_vp->v_type != VDIR)
-			return (EINVAL);
+			return SET_ERROR(EINVAL);
 		break;
 
 	default:
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	if (ap->a_aclp->acl_cnt > OLDACL_MAX_ENTRIES)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
-	return (acl_posix1e_check(ap->a_aclp));
+	return acl_posix1e_check(ap->a_aclp);
 }
 
 /*
@@ -685,7 +686,7 @@ ufs_aclcheck(void *v)
 	struct vop_aclcheck_args *ap = v;
 
 	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) == 0)
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 
 	if (ap->a_type == ACL_TYPE_NFS4)
 		return ufs_aclcheck_nfs4(ap, curlwp);

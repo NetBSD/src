@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.56 2026/01/22 03:23:36 riastradh Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.57 2026/01/22 03:24:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.56 2026/01/22 03:23:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.57 2026/01/22 03:24:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.56 2026/01/22 03:23:36 riastradh E
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/reboot.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
@@ -199,7 +200,7 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	default:
 		PNBUF_PUT(path);
 		*uelep = NULL;
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 		break;
 	}
 
@@ -291,7 +292,7 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		    __func__, attrname);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
 		*uelep = NULL;
-		return ESRCH; /* really internal error */
+		return SET_ERROR(ESRCH); /* really internal error */
 	}
 
 	printf("%s: EA backing store autocreated for %s\n",
@@ -381,11 +382,11 @@ ufs_extattr_start(struct mount *mp, struct lwp *l)
 	ufs_extattr_uepm_lock(ump);
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_INITIALIZED)) {
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 		goto unlock;
 	}
 	if (ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED) {
-		error = EBUSY;
+		error = SET_ERROR(EBUSY);
 		goto unlock;
 	}
 
@@ -524,7 +525,7 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	int error, eofflag = 0;
 
 	if (dvp->v_type != VDIR)
-		return ENOTDIR;
+		return SET_ERROR(ENOTDIR);
 
 	dirbuf = kmem_alloc(UFS_DIRBLKSIZ, KM_SLEEP);
 
@@ -667,7 +668,7 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 		vput(rvp);
 		printf("%s: `/' == `%s/%s' (%d)\n", __func__,
 		    mp->mnt_stat.f_mntonname, UFS_EXTATTR_FSROOTSUBDIR, EINVAL);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	KASSERT(VOP_ISLOCKED(rvp) == 0);
 	vrele(rvp);
@@ -758,19 +759,19 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	int error = 0;
 
 	if (!ufs_extattr_valid_attrname(attrnamespace, attrname))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	if (backing_vnode->v_type != VREG)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	attribute = kmem_zalloc(sizeof(*attribute), KM_SLEEP);
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED)) {
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 		goto free_exit;
 	}
 
 	if (ufs_extattr_find_attr(ump, attrnamespace, attrname)) {
-		error = EEXIST;
+		error = SET_ERROR(EEXIST);
 		goto free_exit;
 	}
 
@@ -800,7 +801,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 
 	if (auio.uio_resid != 0) {
 		printf("%s: malformed attribute header\n", __func__);
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto unlock_free_exit;
 	}
 
@@ -815,7 +816,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 		if (attribute->uele_fileheader.uef_magic != UFS_EXTATTR_MAGIC) {
 			printf("%s: invalid attribute header magic\n",
 			    __func__);
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto unlock_free_exit;
 		}
 	}
@@ -830,7 +831,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 		printf("%s: incorrect attribute header version %d != %d\n",
 		    __func__, attribute->uele_fileheader.uef_version,
 		    UFS_EXTATTR_VERSION);
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto unlock_free_exit;
 	}
 
@@ -858,11 +859,11 @@ ufs_extattr_disable(struct ufsmount *ump, int attrnamespace,
 	int error = 0;
 
 	if (!ufs_extattr_valid_attrname(attrnamespace, attrname))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	uele = ufs_extattr_find_attr(ump, attrnamespace, attrname);
 	if (!uele)
-		return ENODATA;
+		return SET_ERROR(ENODATA);
 
 	LIST_REMOVE(uele, uele_entries);
 
@@ -904,13 +905,13 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 	case UFS_EXTATTR_CMD_DISABLE:
 		if (filename_vp != NULL) {
 			VOP_UNLOCK(filename_vp);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		if (attrname != NULL)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	switch(cmd) {
@@ -940,7 +941,7 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 		return error;
 
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -997,7 +998,7 @@ ufs_extattr_get_header(struct vnode *vp, struct ufs_extattr_list_entry *uele,
 
 	/* Defined? */
 	if ((ueh->ueh_flags & UFS_EXTATTR_ATTR_FLAG_INUSE) == 0)
-		return ENODATA;
+		return SET_ERROR(ENODATA);
 
 	/* Valid for the current inode generation? */
 	if (ueh->ueh_i_gen != ip->i_gen) {
@@ -1010,12 +1011,12 @@ ufs_extattr_get_header(struct vnode *vp, struct ufs_extattr_list_entry *uele,
 		printf("%s: %s: inode gen inconsistency (%u, %jd)\n",
 		       __func__,  mp->mnt_stat.f_mntonname, ueh->ueh_i_gen,
 		       (intmax_t)ip->i_gen);
-		return ENODATA;
+		return SET_ERROR(ENODATA);
 	}
 
 	/* Local size consistency check. */
 	if (ueh->ueh_len > uele->uele_fileheader.uef_size)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	/* Return base offset */
 	if (bap != NULL)
@@ -1045,7 +1046,7 @@ vop_getextattr {
 	int error;
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -1074,7 +1075,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 	int error = 0;
 
 	if (strlen(name) == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = extattr_check_cred(vp, attrnamespace, cred, VREAD);
 	if (error)
@@ -1082,7 +1083,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute)
-		return ENODATA;
+		return SET_ERROR(ENODATA);
 
 	/*
 	 * Allow only offsets of zero to encourage the read/replace
@@ -1090,7 +1091,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 	 * atomicity, as we don't provide locks for extended attributes.
 	 */
 	if (uio != NULL && uio->uio_offset != 0)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	/*
 	 * Don't need to get a lock on the backing file if the getattr is
@@ -1162,7 +1163,7 @@ vop_listextattr {
 	int error;
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -1288,7 +1289,7 @@ vop_deleteextattr {
 	int error;
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -1320,7 +1321,7 @@ vop_setextattr {
 	int error;
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -1329,7 +1330,7 @@ vop_setextattr {
 	 */
 	if (ap->a_uio == NULL) {
 		ufs_extattr_uepm_unlock(ump);
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	error = ufs_extattr_set(ap->a_vp, ap->a_attrnamespace, ap->a_name,
@@ -1359,10 +1360,10 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 	int error = 0, ioflag;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		return EROFS;
+		return SET_ERROR(EROFS);
 
 	if (!ufs_extattr_valid_attrname(attrnamespace, name))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = extattr_check_cred(vp, attrnamespace, cred, VWRITE);
 	if (error)
@@ -1380,7 +1381,7 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 		}
 
 		if (error || !attribute)
-			return ENODATA;
+			return SET_ERROR(ENODATA);
 	}
 
 	/*
@@ -1390,7 +1391,7 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
  	 */
 	if (uio->uio_offset != 0 ||
 	    uio->uio_resid > attribute->uele_fileheader.uef_size)
-		return ENXIO;
+		return SET_ERROR(ENXIO);
 
 	/*
 	 * Find base offset of header in file based on file header size, and
@@ -1434,7 +1435,7 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 		goto vopunlock_exit;
 
 	if (local_aio.uio_resid != 0) {
-		error = ENXIO;
+		error = SET_ERROR(ENXIO);
 		goto vopunlock_exit;
 	}
 
@@ -1477,10 +1478,10 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 	int error = 0, ioflag;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		return EROFS;
+		return SET_ERROR(EROFS);
 
 	if (!ufs_extattr_valid_attrname(attrnamespace, name))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	error = extattr_check_cred(vp, attrnamespace, cred, VWRITE);
 	if (error)
@@ -1488,7 +1489,7 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute)
-		return ENODATA;
+		return SET_ERROR(ENODATA);
 
 	/*
 	 * Don't need to get a lock on the backing file if the getattr is
@@ -1523,7 +1524,7 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 		goto vopunlock_exit;
 
 	if (local_aio.uio_resid != 0)
-		error = ENXIO;
+		error = SET_ERROR(ENXIO);
 
  vopunlock_exit:
 	VOP_UNLOCK(attribute->uele_backing_vnode);
