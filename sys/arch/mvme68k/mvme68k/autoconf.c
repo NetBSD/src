@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 2024/01/18 05:12:30 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48.4.1 2026/01/22 19:30:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2024/01/18 05:12:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48.4.1 2026/01/22 19:30:05 martin Exp $");
 
 #include "opt_mvmeconf.h"
 
@@ -112,14 +112,12 @@ void
 device_register(device_t dev, void *aux)
 {
 	static device_t controller;
-	static int foundboot;
 	device_t parent = device_parent(dev);
 
-	if (foundboot)
+	if (booted_device)
 		return;
 
 	if (controller == NULL && parent) {
-
 		switch (machineid) {
 #ifdef MVME147
 		case MVME_147:
@@ -140,7 +138,6 @@ device_register(device_t dev, void *aux)
 			if (bootaddr == PCC_PADDR(PCC_LE_OFF) &&
 			    device_is_a(dev, "le")) {
 				booted_device = dev;
-				foundboot = 1;
 				return;
 			}
 
@@ -169,7 +166,6 @@ device_register(device_t dev, void *aux)
 			if (bootaddr == PCCTWO_PADDR(PCCTWO_IE_OFF) &&
 			    device_is_a(dev, "ie")) {
 				booted_device = dev;
-				foundboot = 1;
 				return;
 			}
 
@@ -190,12 +186,29 @@ device_register(device_t dev, void *aux)
 	    device_is_a(dev, "cd") ||
 	    device_is_a(dev, "st")) {
 		struct scsipibus_attach_args *sa = aux;
+		struct scsipi_periph *periph = sa->sa_periph;
 
-		if (device_parent(parent) != controller ||
-		    bootdevlun != sa->sa_periph->periph_target)
+		if (device_parent(parent) != controller)
 			return;
 
+		/*
+		 * bootdevlun is formatted like so:
+		 *
+		 *	tttt.llll
+		 *
+		 * So, a disk at SCSI ID 5 would have 0x50 as the
+		 * bootdevlun value.
+		 *
+		 * XXX True for all Bug revisions???
+		 */
+		int targ = (bootdevlun >> 4) & 0xf;
+		/* int lun  =  bootdevlun       & 0xf; */
+
+		if (periph->periph_target != targ)
+			return;
+
+		/* XXX Check LUN? */
+
 		booted_device = dev;
-		foundboot = 1;
 	}
 }
