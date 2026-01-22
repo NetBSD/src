@@ -1,4 +1,4 @@
-/*	$NetBSD: texindex.c,v 1.2 2016/01/14 00:34:53 christos Exp $	*/
+/*	$NetBSD: texindex.c,v 1.2.26.1 2026/01/22 19:20:39 martin Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
    Id: texindex.c,v 1.11 2004/04/11 17:56:47 karl Exp 
@@ -55,6 +55,7 @@ struct lineinfo
     long number;        /* The numeric value (for numeric comparison). */
   } key;
   long keylen;          /* Length of KEY field. */
+  size_t idx;		/* tie breaker */
 };
 
 /* This structure describes a field to use as a sort key. */
@@ -122,7 +123,7 @@ int compare_full (const void *, const void *);
 void pfatal_with_name (const char *name);
 void fatal (const char *format, const char *arg);
 void error (const char *format, const char *arg);
-void *xmalloc (), *xrealloc ();
+void *xmalloc (size_t), *xrealloc (void *, size_t);
 static char *concat3 (const char *, const char *, const char *);
 
 int
@@ -369,7 +370,9 @@ compare_full (const void *p1, const void *p2)
         }
     }
 
-  return 0;                     /* Lines match exactly. */
+  if (*line1 == *line2)
+    abort ();
+  return *line1 < *line2 ? -1 : 1;
 }
 
 /* Compare LINE1 and LINE2, described by structures
@@ -428,7 +431,9 @@ compare_prepared (const void *p1, const void *p2)
         }
     }
 
-  return 0;                     /* Lines match exactly. */
+  if (line1->idx == line2->idx)
+    abort ();
+  return line1->idx < line2->idx ? -1 : 1;
 }
 
 /* Like compare_full but more general.
@@ -472,7 +477,7 @@ find_field (struct keyfield *keyfield, char *str, long int *lengthptr)
 {
   char *start;
   char *end;
-  char *(*fun) ();
+  char *(*fun) (char*, int, int, int);
 
   if (keyfield->braced)
     fun = find_braced_pos;
@@ -799,11 +804,13 @@ sort_in_core (char *infile, int total, char *outfile)
 
   if (lineinfo)
     {
+      size_t idx = 0;
       struct lineinfo *lp;
       char **p;
 
       for (lp = lineinfo, p = linearray; p != nextline; lp++, p++)
         {
+	  lp->idx = idx++;
           lp->text = *p;
           lp->key.text = find_field (keyfields, *p, &lp->keylen);
           if (keyfields->numeric)

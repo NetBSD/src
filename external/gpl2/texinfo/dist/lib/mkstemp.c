@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstemp.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: mkstemp.c,v 1.1.1.1.26.1 2026/01/22 19:20:38 martin Exp $	*/
 
 /* Copyright (C) 1998, 1999, 2001 Free Software Foundation, Inc.
    This file is derived from the one in the GNU C Library.
@@ -31,7 +31,7 @@
 # define __GT_FILE 0
 #endif
 
-int __gen_tempname ();
+int __gen_tempname (char *, int); /* GCC 15.1 conflicting prototypes */
 
 /* Generate a unique temporary file name from TEMPLATE.
    The last six characters of TEMPLATE must be "XXXXXX";

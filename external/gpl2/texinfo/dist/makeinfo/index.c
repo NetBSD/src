@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.1.1.1 2016/01/14 00:11:29 christos Exp $	*/
+/*	$NetBSD: index.c,v 1.1.1.1.26.1 2026/01/22 19:20:39 martin Exp $	*/
 
 /* index.c -- indexing for Texinfo.
    Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp 
@@ -265,7 +265,7 @@ index_add_arg (char *name)
 
 /* The function which user defined index commands call. */
 static void
-gen_index (void)
+gen_index (int arg, int arg2, int arg3)
 {
   char *name = xstrdup (command);
   if (strlen (name) >= strlen ("index"))
@@ -426,13 +426,13 @@ gen_defindex (int code)
 }
 
 void
-cm_defindex (void)
+cm_defindex (int arg, int arg2, int arg3)
 {
   gen_defindex (0);
 }
 
 void
-cm_defcodeindex (void)
+cm_defcodeindex (int arg, int arg2, int arg3)
 {
   gen_defindex (1);
 }
@@ -441,7 +441,7 @@ cm_defcodeindex (void)
    Make the first one be a synonym for the second one, i.e. make the
    first one have the same index as the second one. */
 void
-cm_synindex (void)
+cm_synindex (int arg, int arg2, int arg3)
 {
   int source, target;
   char *abbrev1, *abbrev2;
@@ -471,37 +471,37 @@ cm_synindex (void)
 }
 
 void
-cm_pindex (void)                    /* Pinhead index. */
+cm_pindex (int arg, int arg2, int arg3)                    /* Pinhead index. */
 {
   index_add_arg ("pg");
 }
 
 void
-cm_vindex (void)                    /* Variable index. */
+cm_vindex (int arg, int arg2, int arg3)                    /* Variable index. */
 {
   index_add_arg ("vr");
 }
 
 void
-cm_kindex (void)                    /* Key index. */
+cm_kindex (int arg, int arg2, int arg3)                    /* Key index. */
 {
   index_add_arg ("ky");
 }
 
 void
-cm_cindex (void)                    /* Concept index. */
+cm_cindex (int arg, int arg2, int arg3)                    /* Concept index. */
 {
   index_add_arg ("cp");
 }
 
 void
-cm_findex (void)                    /* Function index. */
+cm_findex (int arg, int arg2, int arg3)                    /* Function index. */
 {
   index_add_arg ("fn");
 }
 
 void
-cm_tindex (void)                    /* Data Type index. */
+cm_tindex (int arg, int arg2, int arg3)                    /* Data Type index. */
 {
   index_add_arg ("tp");
 }
@@ -511,8 +511,32 @@ index_element_compare (const void *element1, const void *element2)
 {
   INDEX_ELT **elt1 = (INDEX_ELT **) element1;
   INDEX_ELT **elt2 = (INDEX_ELT **) element2;
+  int ret = 0;
 
-  return index_compare_fn ((*elt1)->entry, (*elt2)->entry);
+  /* Find a stable sort order.  */
+  if (ret == 0)
+    ret = index_compare_fn ((*elt1)->entry, (*elt2)->entry);
+  if (ret == 0)
+    ret = strcmp ((*elt1)->defining_file, (*elt2)->defining_file);
+  if (ret == 0)
+    ret = strcmp ((*elt1)->node, (*elt2)->node);
+  if (ret == 0) {
+    if ((*elt1)->defining_line < (*elt2)->defining_line)
+      ret = -1;
+    else if ((*elt1)->defining_line > (*elt2)->defining_line)
+      ret = 1;
+  }
+  if (ret == 0) {
+    if ((*elt1)->entry_number < (*elt2)->entry_number)
+      ret = -1;
+    else if ((*elt1)->entry_number > (*elt2)->entry_number)
+      ret = 1;
+  }
+  if (ret == 0) {
+    abort ();
+  }
+
+  return ret;
 }
 
 /* Force all index entries to be unique. */
@@ -702,7 +726,7 @@ int printing_index = 0;
 /* Takes one arg, a short name of an index to print.
    Outputs a menu of the sorted elements of the index. */
 void
-cm_printindex (void)
+cm_printindex (int arg, int arg2, int arg3)
 {
   char *index_name;
   get_rest_of_line (0, &index_name);
