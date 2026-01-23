@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.85 2026/01/22 20:45:33 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.86 2026/01/23 10:32:19 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1775,4 +1775,19 @@ usr.sbin/makefs/cd9660.c			1.61
 	makefs(8): PR 59889: honour the -m option to set the maximum disc
 	size for cd9660.
 	[nia, ticket #1224]
+
+external/bsd/unbound/dist/doc/example.conf.in		(apply patch)
+external/bsd/unbound/dist/doc/unbound.conf.5.in		(apply patch)
+external/bsd/unbound/dist/iterator/iter_scrub.c		(apply patch)
+external/bsd/unbound/dist/util/config_file.c		(apply patch)
+external/bsd/unbound/dist/util/config_file.h		(apply patch)
+external/bsd/unbound/dist/util/configlexer.c		(apply patch)
+external/bsd/unbound/dist/util/configlexer.lex		(apply patch)
+external/bsd/unbound/dist/util/configparser.c		(apply patch)
+external/bsd/unbound/dist/util/configparser.h		(apply patch)
+external/bsd/unbound/dist/util/configparser.y		(apply patch)
+external/bsd/unbound/include/config.h			(apply patch)
+
+	unbound: apply upstream patch to fix CVE-2025-11411.
+	[gutteridge, ticket #1225]
 
