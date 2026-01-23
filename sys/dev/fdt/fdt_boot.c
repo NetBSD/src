@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_boot.c,v 1.7 2024/12/20 07:55:45 mlelstv Exp $	*/
+/*	$NetBSD: fdt_boot.c,v 1.8 2026/01/23 07:09:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.7 2024/12/20 07:55:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.8 2026/01/23 07:09:48 skrll Exp $");
 
 #include "opt_efi.h"
 #include "opt_md.h"
@@ -361,7 +361,7 @@ fdt_map_efi_runtime(const char *prop, enum cpu_efirt_mem_type type)
 		const vaddr_t va = be64toh(map[1]);
 		const size_t sz = be64toh(map[2]);
 #if 0
-		VPRINTF("%s: %s %#" PRIxPADDR "-%#" PRIxVADDR " (%#" PRIxVADDR
+		printf("%s: %s %#" PRIxPADDR "-%#" PRIxVADDR " (%#" PRIxVADDR
 		    "-%#" PRIxVSIZE ")\n", __func__, prop, pa, pa + sz - 1,
 		    va, va + sz - 1);
 #endif
