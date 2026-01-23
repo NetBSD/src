@@ -273,6 +273,7 @@ server_stats_compile(struct worker* worker, struct ub_stats_info* s, int reset)
 	/* add in the values from the mesh */
 	s->svr.ans_secure += (long long)worker->env.mesh->ans_secure;
 	s->svr.ans_bogus += (long long)worker->env.mesh->ans_bogus;
+	s->svr.val_ops += (long long)worker->env.mesh->val_ops;
 	s->svr.ans_rcode_nodata += (long long)worker->env.mesh->ans_nodata;
 	s->svr.ans_expired += (long long)worker->env.mesh->ans_expired;
 	for(i=0; i<UB_STATS_RCODE_NUM; i++)
@@ -281,6 +282,12 @@ server_stats_compile(struct worker* worker, struct ub_stats_info* s, int reset)
 		s->svr.rpz_action[i] += (long long)worker->env.mesh->rpz_action[i];
 	timehist_export(worker->env.mesh->histogram, s->svr.hist,
 		NUM_BUCKETS_HIST);
+	s->svr.num_queries_discard_timeout +=
+		(long long)worker->env.mesh->num_queries_discard_timeout;
+	s->svr.num_queries_wait_limit +=
+		(long long)worker->env.mesh->num_queries_wait_limit;
+	s->svr.num_dns_error_reports +=
+		(long long)worker->env.mesh->num_dns_error_reports;
 	/* values from outside network */
 	s->svr.unwanted_replies = (long long)worker->back->unwanted_replies;
 	s->svr.qtcp_outgoing = (long long)worker->back->num_tcp_outgoing;
@@ -325,20 +332,8 @@ server_stats_compile(struct worker* worker, struct ub_stats_info* s, int reset)
 	s->svr.num_query_dnscrypt_replay = 0;
 #endif /* USE_DNSCRYPT */
 	if(worker->env.auth_zones) {
-		if(reset && !worker->env.cfg->stat_cumulative) {
-			lock_rw_wrlock(&worker->env.auth_zones->lock);
-		} else {
-			lock_rw_rdlock(&worker->env.auth_zones->lock);
-		}
-		s->svr.num_query_authzone_up = (long long)worker->env.
-			auth_zones->num_query_up;
-		s->svr.num_query_authzone_down = (long long)worker->env.
-			auth_zones->num_query_down;
-		if(reset && !worker->env.cfg->stat_cumulative) {
-			worker->env.auth_zones->num_query_up = 0;
-			worker->env.auth_zones->num_query_down = 0;
-		}
-		lock_rw_unlock(&worker->env.auth_zones->lock);
+		s->svr.num_query_authzone_up += (long long)worker->env.mesh->num_query_authzone_up;
+		s->svr.num_query_authzone_down += (long long)worker->env.mesh->num_query_authzone_down;
 	}
 	s->svr.mem_stream_wait =
 		(long long)tcp_req_info_get_stream_buffer_size();
@@ -346,6 +341,12 @@ server_stats_compile(struct worker* worker, struct ub_stats_info* s, int reset)
 		(long long)http2_get_query_buffer_size();
 	s->svr.mem_http2_response_buffer =
 		(long long)http2_get_response_buffer_size();
+#ifdef HAVE_NGTCP2
+	s->svr.mem_quic = (long long)doq_table_quic_size_get(
+		worker->daemon->doq_table);
+#else
+	s->svr.mem_quic = 0;
+#endif /* HAVE_NGTCP2 */
 
 	/* Set neg cache usage numbers */
 	set_neg_cache_stats(worker, &s->svr, reset);
@@ -391,6 +392,13 @@ void server_stats_obtain(struct worker* worker, struct worker* who,
 	else 	worker_send_cmd(who, worker_cmd_stats_noreset);
 	verbose(VERB_ALGO, "wait for stats reply");
 	if(tube_wait_timeout(worker->cmd, STATS_THREAD_WAIT) == 0) {
+#if defined(HAVE_PTHREAD) && defined(SIZEOF_PTHREAD_T) && defined(SIZEOF_UNSIGNED_LONG)
+#  if SIZEOF_PTHREAD_T == SIZEOF_UNSIGNED_LONG
+		unsigned long pthid = 0;
+		if(verbosity >= VERB_OPS)
+			memcpy(&pthid, &who->thr_id, sizeof(unsigned long));
+#  endif
+#endif
 		verbose(VERB_OPS, "no response from thread %d"
 #ifdef HAVE_GETTID
 			" LWP %u"
@@ -407,7 +415,7 @@ void server_stats_obtain(struct worker* worker, struct worker* who,
 #endif
 #if defined(HAVE_PTHREAD) && defined(SIZEOF_PTHREAD_T) && defined(SIZEOF_UNSIGNED_LONG)
 #  if SIZEOF_PTHREAD_T == SIZEOF_UNSIGNED_LONG
-			, (unsigned long)*((unsigned long*)&who->thr_id)
+			, pthid
 #  endif
 #endif
 			);
@@ -438,9 +446,15 @@ void server_stats_add(struct ub_stats_info* total, struct ub_stats_info* a)
 	total->svr.num_queries_cookie_valid += a->svr.num_queries_cookie_valid;
 	total->svr.num_queries_cookie_client += a->svr.num_queries_cookie_client;
 	total->svr.num_queries_cookie_invalid += a->svr.num_queries_cookie_invalid;
+	total->svr.num_queries_discard_timeout +=
+		a->svr.num_queries_discard_timeout;
+	total->svr.num_queries_wait_limit += a->svr.num_queries_wait_limit;
+	total->svr.num_dns_error_reports += a->svr.num_dns_error_reports;
 	total->svr.num_queries_missed_cache += a->svr.num_queries_missed_cache;
 	total->svr.num_queries_prefetch += a->svr.num_queries_prefetch;
 	total->svr.num_queries_timed_out += a->svr.num_queries_timed_out;
+	total->svr.num_query_authzone_up += a->svr.num_query_authzone_up;
+	total->svr.num_query_authzone_down += a->svr.num_query_authzone_down;
 	if (total->svr.max_query_time_us < a->svr.max_query_time_us)
 		total->svr.max_query_time_us = a->svr.max_query_time_us;
 	total->svr.sum_query_list_size += a->svr.sum_query_list_size;
@@ -448,9 +462,9 @@ void server_stats_add(struct ub_stats_info* total, struct ub_stats_info* a)
 #ifdef USE_DNSCRYPT
 	total->svr.num_query_dnscrypt_crypted += a->svr.num_query_dnscrypt_crypted;
 	total->svr.num_query_dnscrypt_cert += a->svr.num_query_dnscrypt_cert;
-	total->svr.num_query_dnscrypt_cleartext += \
+	total->svr.num_query_dnscrypt_cleartext +=
 		a->svr.num_query_dnscrypt_cleartext;
-	total->svr.num_query_dnscrypt_crypted_malformed += \
+	total->svr.num_query_dnscrypt_crypted_malformed +=
 		a->svr.num_query_dnscrypt_crypted_malformed;
 #endif /* USE_DNSCRYPT */
 	/* the max size reached is upped to higher of both */
@@ -467,6 +481,7 @@ void server_stats_add(struct ub_stats_info* total, struct ub_stats_info* a)
 		total->svr.qtls += a->svr.qtls;
 		total->svr.qtls_resume += a->svr.qtls_resume;
 		total->svr.qhttps += a->svr.qhttps;
+		total->svr.qquic += a->svr.qquic;
 		total->svr.qipv6 += a->svr.qipv6;
 		total->svr.qbit_QR += a->svr.qbit_QR;
 		total->svr.qbit_AA += a->svr.qbit_AA;
@@ -481,6 +496,7 @@ void server_stats_add(struct ub_stats_info* total, struct ub_stats_info* a)
 		total->svr.ans_rcode_nodata += a->svr.ans_rcode_nodata;
 		total->svr.ans_secure += a->svr.ans_secure;
 		total->svr.ans_bogus += a->svr.ans_bogus;
+		total->svr.val_ops += a->svr.val_ops;
 		total->svr.unwanted_replies += a->svr.unwanted_replies;
 		total->svr.unwanted_queries += a->svr.unwanted_queries;
 		total->svr.tcp_accept_usage += a->svr.tcp_accept_usage;
@@ -526,7 +542,8 @@ void server_stats_insquery(struct ub_server_stats* stats, struct comm_point* c,
 	else	stats->qclass_big++;
 	stats->qopcode[ LDNS_OPCODE_WIRE(sldns_buffer_begin(c->buffer)) ]++;
 	if(c->type != comm_udp) {
-		stats->qtcp++;
+		if(c->type != comm_doq)
+			stats->qtcp++;
 		if(c->ssl != NULL) {
 			stats->qtls++;
 #ifdef HAVE_SSL
@@ -535,6 +552,10 @@ void server_stats_insquery(struct ub_server_stats* stats, struct comm_point* c,
 #endif
 			if(c->type == comm_http)
 				stats->qhttps++;
+#ifdef HAVE_NGTCP2
+			else if(c->type == comm_doq)
+				stats->qquic++;
+#endif
 		}
 	}
 	if(repinfo && addr_is_ip6(&repinfo->remote_addr, repinfo->remote_addrlen))

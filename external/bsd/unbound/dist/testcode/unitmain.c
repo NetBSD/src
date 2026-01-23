@@ -205,6 +205,8 @@ net_test(void)
 		unit_assert(memcmp(&a6.sin6_addr, "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\000", 16) == 0);
 		addr_mask((struct sockaddr_storage*)&a6, l6, 64);
 		unit_assert(memcmp(&a6.sin6_addr, "\377\377\377\377\377\377\377\377\000\000\000\000\000\000\000\000", 16) == 0);
+		/* Check that negative value in net is not problematic. */
+		addr_mask((struct sockaddr_storage*)&a6, l6, -100);
 		addr_mask((struct sockaddr_storage*)&a6, l6, 0);
 		unit_assert(memcmp(&a6.sin6_addr, "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 16) == 0);
 	}
@@ -265,6 +267,28 @@ net_test(void)
 				(struct sockaddr_storage*)&a6, i,
 				(struct sockaddr_storage*)&b6, i, l6) == i);
 		}
+	}
+	/* test netblockstrtoaddr */
+	unit_show_func("util/net_help.c", "netblockstrtoaddr");
+	if(1) {
+		struct sockaddr_storage a;
+		socklen_t alen = 0;
+		int net = 0, res;
+		char astr[128];
+		memset(&a, 0, sizeof(a));
+
+		res = netblockstrtoaddr("1.2.3.0/24", 53, &a, &alen, &net);
+		unit_assert(res!=0 && net == 24);
+		addr_to_str(&a, alen, astr, sizeof(astr));
+		unit_assert(strcmp(astr, "1.2.3.0") == 0);
+		unit_assert(ntohs(((struct sockaddr_in*)&a)->sin_port)==53);
+
+		res = netblockstrtoaddr("2001:DB8:33:44::/64", 53,
+			&a, &alen, &net);
+		unit_assert(res!=0 && net == 64);
+		addr_to_str(&a, alen, astr, sizeof(astr));
+		unit_assert(strcmp(astr, "2001:db8:33:44::") == 0);
+		unit_assert(ntohs(((struct sockaddr_in6*)&a)->sin6_port)==53);
 	}
 	/* test sockaddr_cmp_addr */
 	unit_show_func("util/net_help.c", "sockaddr_cmp_addr");
@@ -431,103 +455,6 @@ rtt_test(void)
 	}
 	/* must be the same, timehist bucket is used in stats */
 	unit_assert(UB_STATS_BUCKET_NUM == NUM_BUCKETS_HIST);
-}
-
-#include "services/cache/infra.h"
-
-/* lookup and get key and data structs easily */
-static struct infra_data* infra_lookup_host(struct infra_cache* infra,
-	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
-	size_t zonelen, int wr, time_t now, struct infra_key** k)
-{
-	struct infra_data* d;
-	struct lruhash_entry* e = infra_lookup_nottl(infra, addr, addrlen,
-		zone, zonelen, wr);
-	if(!e) return NULL;
-	d = (struct infra_data*)e->data;
-	if(d->ttl < now) {
-		lock_rw_unlock(&e->lock);
-		return NULL;
-	}
-	*k = (struct infra_key*)e->key;
-	return d;
-}
-
-/** test host cache */
-static void
-infra_test(void)
-{
-	struct sockaddr_storage one;
-	socklen_t onelen;
-	uint8_t* zone = (uint8_t*)"\007example\003com\000";
-	size_t zonelen = 13;
-	struct infra_cache* slab;
-	struct config_file* cfg = config_create();
-	time_t now = 0;
-	uint8_t edns_lame;
-	int vs, to;
-	struct infra_key* k;
-	struct infra_data* d;
-	int init = 376;
-
-	unit_show_feature("infra cache");
-	unit_assert(ipstrtoaddr("127.0.0.1", 53, &one, &onelen));
-
-	slab = infra_create(cfg);
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, now,
-		&vs, &edns_lame, &to) );
-	unit_assert( vs == 0 && to == init && edns_lame == 0 );
-
-	unit_assert( infra_rtt_update(slab, &one, onelen, zone, zonelen, LDNS_RR_TYPE_A, -1, init, now) );
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, 
-			now, &vs, &edns_lame, &to) );
-	unit_assert( vs == 0 && to == init*2 && edns_lame == 0 );
-
-	unit_assert( infra_edns_update(slab, &one, onelen, zone, zonelen, -1, now) );
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, 
-			now, &vs, &edns_lame, &to) );
-	unit_assert( vs == -1 && to == init*2  && edns_lame == 1);
-
-	now += cfg->host_ttl + 10;
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, 
-			now, &vs, &edns_lame, &to) );
-	unit_assert( vs == 0 && to == init && edns_lame == 0 );
-	
-	unit_assert( infra_set_lame(slab, &one, onelen,
-		zone, zonelen,  now, 0, 0, LDNS_RR_TYPE_A) );
-	unit_assert( (d=infra_lookup_host(slab, &one, onelen, zone, zonelen, 0, now, &k)) );
-	unit_assert( d->ttl == now+cfg->host_ttl );
-	unit_assert( d->edns_version == 0 );
-	unit_assert(!d->isdnsseclame && !d->rec_lame && d->lame_type_A &&
-		!d->lame_other);
-	lock_rw_unlock(&k->entry.lock);
-
-	/* test merge of data */
-	unit_assert( infra_set_lame(slab, &one, onelen,
-		zone, zonelen,  now, 0, 0, LDNS_RR_TYPE_AAAA) );
-	unit_assert( (d=infra_lookup_host(slab, &one, onelen, zone, zonelen, 0, now, &k)) );
-	unit_assert(!d->isdnsseclame && !d->rec_lame && d->lame_type_A &&
-		d->lame_other);
-	lock_rw_unlock(&k->entry.lock);
-
-	/* test that noEDNS cannot overwrite known-yesEDNS */
-	now += cfg->host_ttl + 10;
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, 
-			now, &vs, &edns_lame, &to) );
-	unit_assert( vs == 0 && to == init && edns_lame == 0 );
-
-	unit_assert( infra_edns_update(slab, &one, onelen, zone, zonelen, 0, now) );
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, 
-			now, &vs, &edns_lame, &to) );
-	unit_assert( vs == 0 && to == init && edns_lame == 1 );
-
-	unit_assert( infra_edns_update(slab, &one, onelen, zone, zonelen, -1, now) );
-	unit_assert( infra_host(slab, &one, onelen, zone, zonelen, 
-			now, &vs, &edns_lame, &to) );
-	unit_assert( vs == 0 && to == init && edns_lame == 1 );
-
-	infra_delete(slab);
-	config_delete(cfg);
 }
 
 #include "util/edns.h"
@@ -1117,7 +1044,7 @@ static void edns_ede_encode_encodedecode(struct query_info* qinfo,
 	sldns_buffer_skip(pkt, 2 + 2);
 	/* decode */
 	unit_assert(parse_edns_from_query_pkt(pkt, edns, NULL, NULL, NULL, 0,
-		region) == 0);
+		region, NULL) == 0);
 }
 
 static void edns_ede_encode_check(struct edns_data* edns, int* found_ede,
@@ -1232,7 +1159,7 @@ static void edns_ede_answer_encode_test(void)
 	unit_assert(region);
 	rep = construct_reply_info_base(region,
 		LDNS_RCODE_NOERROR | BIT_QR, 1,
-		3600, 3600, 3600,
+		3600, 3600, 3600, 0,
 		0, 0, 0, 0,
 		sec_status_unchecked, LDNS_EDE_NONE);
 	unit_assert(rep);
@@ -1250,6 +1177,109 @@ static void edns_ede_answer_encode_test(void)
 	free(qinfo.qname);
 	regional_free_all(region);
 	regional_destroy(region);
+}
+
+#include "services/localzone.h"
+/* Utility function that compares two localzone trees */
+static void compare_localzone_trees(struct local_zones* z1,
+	struct local_zones* z2)
+{
+	struct local_zone *node1, *node2;
+	lock_rw_rdlock(&z1->lock);
+	lock_rw_rdlock(&z2->lock);
+	/* size should be the same */
+	unit_assert(z1->ztree.count == z2->ztree.count);
+	for(node1=(struct local_zone*)rbtree_first(&z1->ztree),
+		node2=(struct local_zone*)rbtree_first(&z2->ztree);
+		(rbnode_type*)node1 != RBTREE_NULL &&
+		(rbnode_type*)node2 != RBTREE_NULL;
+		node1=(struct local_zone*)rbtree_next((rbnode_type*)node1),
+		node2=(struct local_zone*)rbtree_next((rbnode_type*)node2)) {
+		int labs;
+		/* the same zone should be at the same nodes */
+		unit_assert(!dname_lab_cmp(
+			node1->name, node1->namelabs,
+			node2->name, node2->namelabs,
+			&labs));
+		/* the zone's parent should be the same on both nodes */
+		unit_assert(
+			(node1->parent == NULL && node2->parent == NULL) ||
+			(node1->parent != NULL && node2->parent != NULL));
+		if(node1->parent) {
+			unit_assert(!dname_lab_cmp(
+				node1->parent->name, node1->parent->namelabs,
+				node2->parent->name, node2->parent->namelabs,
+				&labs));
+		}
+	}
+	lock_rw_unlock(&z1->lock);
+	lock_rw_unlock(&z2->lock);
+}
+
+/* test that zone addition results in the same tree from both the configuration
+ * file and the unbound-control commands */
+static void localzone_parents_test(void)
+{
+	struct local_zones *z1, *z2;
+	size_t i;
+	char* zone_data[] = {
+		"one",
+		"a.b.c.one",
+		"b.c.one",
+		"c.one",
+		"two",
+		"c.two",
+		"b.c.two",
+		"a.b.c.two",
+		"a.b.c.three",
+		"b.c.three",
+		"c.three",
+		"three",
+		"c.four",
+		"b.c.four",
+		"a.b.c.four",
+		"four",
+		"."
+	};
+	unit_show_feature("localzones parent calculation");
+	z1 = local_zones_create();
+	z2 = local_zones_create();
+	/* parse test data */
+	for(i=0; i<sizeof(zone_data)/sizeof(zone_data[0]); i++) {
+		uint8_t* nm;
+		int nmlabs;
+		size_t nmlen;
+		struct local_zone* z;
+
+		/* This is the config way */
+		z = lz_enter_zone(z1, zone_data[i], "always_nxdomain",
+			LDNS_RR_CLASS_IN);
+		(void)z;  /* please compiler when no threading and no lock
+		code; the following line disappears and z stays unused */
+		lock_rw_unlock(&z->lock);
+		lz_init_parents(z1);
+
+		/* This is the unbound-control way */
+		nm = sldns_str2wire_dname(zone_data[i], &nmlen);
+		if(!nm) unit_assert(0);
+		nmlabs = dname_count_size_labels(nm, &nmlen);
+		lock_rw_wrlock(&z2->lock);
+		local_zones_add_zone(z2, nm, nmlen, nmlabs, LDNS_RR_CLASS_IN,
+			local_zone_always_nxdomain);
+		lock_rw_unlock(&z2->lock);
+	}
+	/* The trees should be the same, iterate and check the nodes */
+	compare_localzone_trees(z1, z2);
+
+	/* cleanup */
+	local_zones_delete(z1);
+	local_zones_delete(z2);
+}
+
+/** localzone unit tests */
+static void localzone_test(void)
+{
+	localzone_parents_test();
 }
 
 void unit_show_func(const char* file, const char* func)
@@ -1325,9 +1355,13 @@ main(int argc, char* argv[])
 	tcpreuse_test();
 	msgparse_test();
 	edns_ede_answer_encode_test();
+	localzone_test();
 #ifdef CLIENT_SUBNET
 	ecs_test();
 #endif /* CLIENT_SUBNET */
+#ifdef HAVE_NGTCP2
+	doq_test();
+#endif /* HAVE_NGTCP2 */
 	if(log_get_lock()) {
 		lock_basic_destroy((lock_basic_type*)log_get_lock());
 	}

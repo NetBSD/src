@@ -11,7 +11,9 @@ server:
 	access-control: 127.0.0.1 allow_snoop
 	qname-minimisation: no
 	minimal-responses: no
+	iter-scrub-promiscuous: no
 	serve-expired: yes
+	serve-expired-client-timeout: 0
 	prefetch: yes
 
 stub-zone:
@@ -117,7 +119,7 @@ HEX_EDNSDATA_BEGIN
 HEX_EDNSDATA_END
 ENTRY_END
 
-; This answer was cached but a prefetch was triggerred
+; This answer was cached but a prefetch was triggered
 STEP 12 CHECK_ANSWER
 ENTRY_BEGIN
 MATCH opcode qtype qname

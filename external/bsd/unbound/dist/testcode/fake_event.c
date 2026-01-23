@@ -52,6 +52,7 @@
 #include "util/data/msgreply.h"
 #include "util/data/msgencode.h"
 #include "util/data/dname.h"
+#include "util/storage/slabhash.h"
 #include "util/edns.h"
 #include "util/config_file.h"
 #include "services/listen_dnsport.h"
@@ -65,6 +66,7 @@
 #include "sldns/wire2str.h"
 #include "sldns/str2wire.h"
 #include "daemon/remote.h"
+#include "daemon/daemon.h"
 #include "util/timeval_func.h"
 #include <signal.h>
 struct worker;
@@ -154,6 +156,8 @@ repevt_string(enum replay_event_type t)
 	case repevt_assign:	 return "ASSIGN";
 	case repevt_traffic:	 return "TRAFFIC";
 	case repevt_infra_rtt:	 return "INFRA_RTT";
+	case repevt_flush_message: return "FLUSH_MESSAGE";
+	case repevt_expire_message: return "EXPIRE_MESSAGE";
 	default:		 return "UNKNOWN";
 	}
 }
@@ -182,6 +186,22 @@ delete_replay_answer(struct replay_answer* a)
 	}
 	free(a->pkt);
 	free(a);
+}
+
+/** Log the packet for a reply_packet from testpkts. */
+static void
+log_testpkt_reply_pkt(const char* txt, struct reply_packet* reppkt)
+{
+	if(!reppkt) {
+		log_info("%s <null>", txt);
+		return;
+	}
+	if(reppkt->reply_from_hex) {
+		log_pkt(txt, sldns_buffer_begin(reppkt->reply_from_hex),
+			sldns_buffer_limit(reppkt->reply_from_hex));
+		return;
+	}
+	log_pkt(txt, reppkt->reply_pkt, reppkt->reply_len);
 }
 
 /**
@@ -236,9 +256,8 @@ pending_find_match(struct replay_runtime* runtime, struct entry** entry,
 				p->start_step, p->end_step, (*entry)->lineno);
 			if(p->addrlen != 0)
 				log_addr(0, "matched ip", &p->addr, p->addrlen);
-			log_pkt("matched pkt: ",
-				(*entry)->reply_list->reply_pkt,
-				(*entry)->reply_list->reply_len);
+			log_testpkt_reply_pkt("matched pkt: ",
+				(*entry)->reply_list);
 			return 1;
 		}
 		p = p->next_range;
@@ -326,7 +345,7 @@ fill_buffer_with_reply(sldns_buffer* buffer, struct entry* entry, uint8_t* q,
 		while(reppkt && i--)
 			reppkt = reppkt->next;
 		if(!reppkt) fatal_exit("extra packet read from TCP stream but none is available");
-		log_pkt("extra_packet ", reppkt->reply_pkt, reppkt->reply_len);
+		log_testpkt_reply_pkt("extra packet ", reppkt);
 	}
 	if(reppkt->reply_from_hex) {
 		c = sldns_buffer_begin(reppkt->reply_from_hex);
@@ -458,8 +477,7 @@ fake_front_query(struct replay_runtime* runtime, struct replay_moment *todo)
 		repinfo.c->type = comm_udp;
 	fill_buffer_with_reply(repinfo.c->buffer, todo->match, NULL, 0, 0);
 	log_info("testbound: incoming QUERY");
-	log_pkt("query pkt", todo->match->reply_list->reply_pkt,
-		todo->match->reply_list->reply_len);
+	log_testpkt_reply_pkt("query pkt ", todo->match->reply_list);
 	/* call the callback for incoming queries */
 	if((*runtime->callback_query)(repinfo.c, runtime->cb_arg,
 		NETEVENT_NOERROR, &repinfo)) {
@@ -691,6 +709,66 @@ do_infra_rtt(struct replay_runtime* runtime)
 	free(dp);
 }
 
+/** Flush message from message cache. */
+static void
+do_flush_message(struct replay_runtime* runtime)
+{
+	struct replay_moment* now = runtime->now;
+	uint8_t rr[1024];
+	size_t rr_len = sizeof(rr), dname_len = 0;
+	hashvalue_type h;
+	struct query_info k;
+
+	if(sldns_str2wire_rr_question_buf(now->string, rr, &rr_len,
+		&dname_len, NULL, 0, NULL, 0) != 0)
+		fatal_exit("could not parse '%s'", now->string);
+
+	log_info("remove message %s", now->string);
+	k.qname = rr;
+	k.qname_len = dname_len;
+	k.qtype = sldns_wirerr_get_type(rr, rr_len, dname_len);
+	k.qclass = sldns_wirerr_get_class(rr, rr_len, dname_len);
+	k.local_alias = NULL;
+	h = query_info_hash(&k, 0);
+	slabhash_remove(runtime->daemon->env->msg_cache, h, &k);
+}
+
+/** Expire message from message cache. */
+static void
+do_expire_message(struct replay_runtime* runtime)
+{
+	struct replay_moment* now = runtime->now;
+	uint8_t rr[1024];
+	size_t rr_len = sizeof(rr), dname_len = 0;
+	hashvalue_type h;
+	struct query_info k;
+	struct lruhash_entry* e;
+
+	if(sldns_str2wire_rr_question_buf(now->string, rr, &rr_len,
+		&dname_len, NULL, 0, NULL, 0) != 0)
+		fatal_exit("could not parse '%s'", now->string);
+
+	log_info("expire message %s", now->string);
+	k.qname = rr;
+	k.qname_len = dname_len;
+	k.qtype = sldns_wirerr_get_type(rr, rr_len, dname_len);
+	k.qclass = sldns_wirerr_get_class(rr, rr_len, dname_len);
+	k.local_alias = NULL;
+	h = query_info_hash(&k, 0);
+
+	e = slabhash_lookup(runtime->daemon->env->msg_cache, h, &k, 0);
+	if(e) {
+		struct msgreply_entry* msg = (struct msgreply_entry*)e->key;
+		struct reply_info* rep = (struct reply_info*)msg->entry.data;
+		time_t expired = runtime->now_secs;
+		expired -= 3;
+		rep->ttl = expired;
+		rep->prefetch_ttl = expired;
+		rep->serve_expired_ttl = expired;
+		lock_rw_unlock(&msg->entry.lock);
+	}
+}
+
 /** perform exponential backoff on the timeout */
 static void
 expon_timeout_backoff(struct replay_runtime* runtime)
@@ -796,6 +874,14 @@ do_moment_and_advance(struct replay_runtime* runtime)
 		do_infra_rtt(runtime);
 		advance_moment(runtime);
 		break;
+	case repevt_flush_message:
+		do_flush_message(runtime);
+		advance_moment(runtime);
+		break;
+	case repevt_expire_message:
+		do_expire_message(runtime);
+		advance_moment(runtime);
+		break;
 	default:
 		fatal_exit("testbound: unknown event type %d",
 			runtime->now->evt_type);
@@ -828,8 +914,10 @@ run_scenario(struct replay_runtime* runtime)
 			runtime->now->evt_type == repevt_front_reply) {
 			answer_check_it(runtime);
 			advance_moment(runtime);
-		} else if(pending_matches_range(runtime, &entry, &pending)) {
-			answer_callback_from_entry(runtime, entry, pending);
+		} else if(runtime->now && pending_matches_range(runtime,
+			&entry, &pending)) {
+			if(entry)
+				answer_callback_from_entry(runtime, entry, pending);
 		} else {
 			do_moment_and_advance(runtime);
 		}
@@ -866,7 +954,12 @@ listen_create(struct comm_base* base, struct listen_port* ATTR_UNUSED(ports),
 	char* ATTR_UNUSED(http_endpoint),
 	int ATTR_UNUSED(http_notls),
 	struct tcl_list* ATTR_UNUSED(tcp_conn_limit),
-	void* ATTR_UNUSED(sslctx), struct dt_env* ATTR_UNUSED(dtenv),
+	void* ATTR_UNUSED(dot_sslctx), void* ATTR_UNUSED(doh_sslctx),
+	void* ATTR_UNUSED(quic_ssl),
+	struct dt_env* ATTR_UNUSED(dtenv),
+	struct doq_table* ATTR_UNUSED(table),
+	struct ub_randstate* ATTR_UNUSED(rnd),
+	struct config_file* ATTR_UNUSED(cfg),
 	comm_point_callback_type* cb, void *cb_arg)
 {
 	struct replay_runtime* runtime = (struct replay_runtime*)base;
@@ -1177,7 +1270,7 @@ struct serviced_query* outnet_serviced_query(struct outside_network* outnet,
 	struct query_info* qinfo, uint16_t flags, int dnssec,
 	int ATTR_UNUSED(want_dnssec), int ATTR_UNUSED(nocaps),
 	int ATTR_UNUSED(check_ratelimit),
-	int ATTR_UNUSED(tcp_upstream), int ATTR_UNUSED(ssl_upstream),
+	int tcp_upstream, int ATTR_UNUSED(ssl_upstream),
 	char* ATTR_UNUSED(tls_auth_name), struct sockaddr_storage* addr,
 	socklen_t addrlen, uint8_t* zone, size_t zonelen,
 	struct module_qstate* qstate, comm_point_callback_type* callback,
@@ -1187,7 +1280,7 @@ struct serviced_query* outnet_serviced_query(struct outside_network* outnet,
 	struct replay_runtime* runtime = (struct replay_runtime*)outnet->base;
 	struct fake_pending* pend = (struct fake_pending*)calloc(1,
 		sizeof(struct fake_pending));
-	char z[256];
+	char z[LDNS_MAX_DOMAINLEN];
 	log_assert(pend);
 	log_nametypeclass(VERB_OPS, "pending serviced query",
 		qinfo->qname, qinfo->qtype, qinfo->qclass);
@@ -1197,7 +1290,7 @@ struct serviced_query* outnet_serviced_query(struct outside_network* outnet,
 		(flags&~(BIT_RD|BIT_CD))?" MORE":"", (dnssec)?" DO":"");
 
 	/* create packet with EDNS */
-	pend->buffer = sldns_buffer_new(512);
+	pend->buffer = sldns_buffer_new(4096);
 	log_assert(pend->buffer);
 	sldns_buffer_write_u16(pend->buffer, 0); /* id */
 	sldns_buffer_write_u16(pend->buffer, flags);
@@ -1257,7 +1350,13 @@ struct serviced_query* outnet_serviced_query(struct outside_network* outnet,
 		edns.opt_list_in = NULL;
 		edns.opt_list_out = per_upstream_opt_list;
 		edns.opt_list_inplace_cb_out = NULL;
-		attach_edns_record(pend->buffer, &edns);
+		if(sldns_buffer_capacity(pend->buffer) >=
+			sldns_buffer_limit(pend->buffer)
+			+calc_edns_field_size(&edns)) {
+			attach_edns_record(pend->buffer, &edns);
+		} else {
+			verbose(VERB_ALGO, "edns field too large to fit");
+		}
 	}
 	memcpy(&pend->addr, addr, addrlen);
 	pend->addrlen = addrlen;
@@ -1268,7 +1367,7 @@ struct serviced_query* outnet_serviced_query(struct outside_network* outnet,
 	pend->callback = callback;
 	pend->cb_arg = callback_arg;
 	pend->timeout = UDP_AUTH_QUERY_TIMEOUT/1000;
-	pend->transport = transport_udp; /* pretend UDP */
+	pend->transport = tcp_upstream?transport_tcp:transport_udp;
 	pend->pkt = NULL;
 	pend->runtime = runtime;
 	pend->serviced = 1;
@@ -1403,6 +1502,11 @@ size_t outnet_get_mem(struct outside_network* ATTR_UNUSED(outnet))
 }
 
 size_t comm_point_get_mem(struct comm_point* ATTR_UNUSED(c))
+{
+	return 0;
+}
+
+size_t comm_timer_get_mem(struct comm_timer* ATTR_UNUSED(timer))
 {
 	return 0;
 }
@@ -1581,6 +1685,12 @@ void comm_timer_set(struct comm_timer* timer, struct timeval* tv)
 	log_info("fake timer set %d.%6.6d",
 		(int)t->tv.tv_sec, (int)t->tv.tv_usec);
 	timeval_add(&t->tv, &t->runtime->now_tv);
+}
+
+int comm_timer_is_set(struct comm_timer* timer)
+{
+	struct fake_timer* t = (struct fake_timer*)timer;
+	return t->enabled;
 }
 
 void comm_timer_delete(struct comm_timer* timer)
@@ -1856,7 +1966,8 @@ int comm_point_send_udp_msg(struct comm_point *c, sldns_buffer* packet,
 }
 
 int outnet_get_tcp_fd(struct sockaddr_storage* ATTR_UNUSED(addr),
-	socklen_t ATTR_UNUSED(addrlen), int ATTR_UNUSED(tcp_mss), int ATTR_UNUSED(dscp))
+	socklen_t ATTR_UNUSED(addrlen), int ATTR_UNUSED(tcp_mss),
+	int ATTR_UNUSED(dscp), int ATTR_UNUSED(nodelay))
 {
 	log_assert(0);
 	return -1;
@@ -1904,6 +2015,30 @@ http2_get_response_buffer_size(void)
 void http2_stream_add_meshstate(struct http2_stream* ATTR_UNUSED(h2_stream),
 	struct mesh_area* ATTR_UNUSED(mesh), struct mesh_state* ATTR_UNUSED(m))
 {
+}
+
+void http2_stream_remove_mesh_state(struct http2_stream* ATTR_UNUSED(h2_stream))
+{
+}
+
+void fast_reload_service_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(event),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+
+void fast_reload_thread_stop(
+	struct fast_reload_thread* ATTR_UNUSED(fast_reload_thread))
+{
+	/* nothing */
+}
+
+int fast_reload_client_callback(struct comm_point* ATTR_UNUSED(c),
+	void* ATTR_UNUSED(arg), int ATTR_UNUSED(error),
+        struct comm_reply* ATTR_UNUSED(repinfo))
+{
+	log_assert(0);
+	return 0;
 }
 
 /*********** End of Dummy routines ***********/

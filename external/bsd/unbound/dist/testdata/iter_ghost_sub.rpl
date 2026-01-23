@@ -3,6 +3,7 @@ server:
 	target-fetch-policy: "0 0 0 0 0"
 	qname-minimisation: "no"
 	minimal-responses: no
+	iter-scrub-promiscuous: no
 
 stub-zone:
 	name: "."
@@ -19,7 +20,7 @@ MATCH opcode qtype qname
 ADJUST copy_id
 REPLY QR NOERROR
 SECTION QUESTION
-. 86400 IN NS
+. IN NS
 SECTION ANSWER
 . 86400 IN NS	K.ROOT-SERVERS.NET.
 SECTION ADDITIONAL

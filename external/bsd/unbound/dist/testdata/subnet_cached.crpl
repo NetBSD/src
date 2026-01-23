@@ -15,13 +15,14 @@ server:
 	access-control: 127.0.0.1 allow_snoop
 	qname-minimisation: "no"
 	minimal-responses: no
+	iter-scrub-promiscuous: no
 
 stub-zone:
 	name: "."
 	stub-addr: 193.0.14.129 	# K.ROOT-SERVERS.NET.
 CONFIG_END
 
-SCENARIO_BEGIN Test validator with positive response
+SCENARIO_BEGIN Test subnet cached response
 
 ; K.ROOT-SERVERS.NET.
 RANGE_BEGIN 0 100

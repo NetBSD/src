@@ -70,8 +70,6 @@
 #include "util/data/msgreply.h"
 #include "util/data/msgencode.h"
 #include "util/tube.h"
-#include "iterator/iter_fwd.h"
-#include "iterator/iter_hints.h"
 #include "sldns/sbuffer.h"
 #include "sldns/str2wire.h"
 #ifdef USE_DNSTAP
@@ -100,8 +98,6 @@ libworker_delete_env(struct libworker* w)
 			!w->is_bg || w->is_bg_thread);
 		sldns_buffer_free(w->env->scratch_buffer);
 		regional_destroy(w->env->scratch);
-		forwards_delete(w->env->fwds);
-		hints_delete(w->env->hints);
 		ub_randfree(w->env->rnd);
 		free(w->env);
 	}
@@ -159,30 +155,19 @@ libworker_setup(struct ub_ctx* ctx, int is_bg, struct ub_event_base* eb)
 	}
 	w->env->scratch = regional_create_custom(cfg->msg_buffer_size);
 	w->env->scratch_buffer = sldns_buffer_new(cfg->msg_buffer_size);
-	w->env->fwds = forwards_create();
-	if(w->env->fwds && !forwards_apply_cfg(w->env->fwds, cfg)) { 
-		forwards_delete(w->env->fwds);
-		w->env->fwds = NULL;
-	}
-	w->env->hints = hints_create();
-	if(w->env->hints && !hints_apply_cfg(w->env->hints, cfg)) { 
-		hints_delete(w->env->hints);
-		w->env->hints = NULL;
-	}
 #ifdef HAVE_SSL
 	w->sslctx = connect_sslctx_create(NULL, NULL,
 		cfg->tls_cert_bundle, cfg->tls_win_cert);
 	if(!w->sslctx) {
 		/* to make the setup fail after unlock */
-		hints_delete(w->env->hints);
-		w->env->hints = NULL;
+		sldns_buffer_free(w->env->scratch_buffer);
+		w->env->scratch_buffer = NULL;
 	}
 #endif
 	if(!w->is_bg || w->is_bg_thread) {
 		lock_basic_unlock(&ctx->cfglock);
 	}
-	if(!w->env->scratch || !w->env->scratch_buffer || !w->env->fwds ||
-		!w->env->hints) {
+	if(!w->env->scratch || !w->env->scratch_buffer) {
 		libworker_delete(w);
 		return NULL;
 	}
@@ -307,6 +292,7 @@ libworker_do_cmd(struct libworker* w, uint8_t* msg, uint32_t len)
 			log_err("unknown command for bg worker %d", 
 				(int)context_serial_getcmd(msg, len));
 			/* and fall through to quit */
+			ATTR_FALLTHROUGH
 			/* fallthrough */
 		case UB_LIBCMD_QUIT:
 			free(msg);
@@ -437,7 +423,7 @@ int libworker_bg(struct ub_ctx* ctx)
 static int
 fill_canon(struct ub_result* res, uint8_t* s)
 {
-	char buf[255+2];
+	char buf[LDNS_MAX_DOMAINLEN];
 	dname_str(s, buf);
 	res->canonname = strdup(buf);
 	return res->canonname != 0;
@@ -644,8 +630,9 @@ int libworker_fg(struct ub_ctx* ctx, struct ctx_query* q)
 		free(qinfo.qname);
 		return UB_NOERROR;
 	}
-	if(ctx->env->auth_zones && auth_zones_answer(ctx->env->auth_zones,
-		w->env, &qinfo, &edns, NULL, w->back->udp_buff, w->env->scratch)) {
+	if(ctx->env->auth_zones && auth_zones_downstream_answer(
+		ctx->env->auth_zones, w->env, &qinfo, &edns, NULL,
+		w->back->udp_buff, w->env->scratch)) {
 		regional_free_all(w->env->scratch);
 		libworker_fillup_fg(q, LDNS_RCODE_NOERROR, 
 			w->back->udp_buff, sec_status_insecure, NULL, 0);
@@ -723,8 +710,9 @@ int libworker_attach_mesh(struct ub_ctx* ctx, struct ctx_query* q,
 			w->back->udp_buff, sec_status_insecure, NULL, 0);
 		return UB_NOERROR;
 	}
-	if(ctx->env->auth_zones && auth_zones_answer(ctx->env->auth_zones,
-		w->env, &qinfo, &edns, NULL, w->back->udp_buff, w->env->scratch)) {
+	if(ctx->env->auth_zones && auth_zones_downstream_answer(
+		ctx->env->auth_zones, w->env, &qinfo, &edns, NULL,
+		w->back->udp_buff, w->env->scratch)) {
 		regional_free_all(w->env->scratch);
 		free(qinfo.qname);
 		libworker_event_done_cb(q, LDNS_RCODE_NOERROR,
@@ -861,8 +849,9 @@ handle_newq(struct libworker* w, uint8_t* buf, uint32_t len)
 		free(qinfo.qname);
 		return;
 	}
-	if(w->ctx->env->auth_zones && auth_zones_answer(w->ctx->env->auth_zones,
-		w->env, &qinfo, &edns, NULL, w->back->udp_buff, w->env->scratch)) {
+	if(w->ctx->env->auth_zones && auth_zones_downstream_answer(
+		w->ctx->env->auth_zones, w->env, &qinfo, &edns, NULL,
+		w->back->udp_buff, w->env->scratch)) {
 		regional_free_all(w->env->scratch);
 		q->msg_security = sec_status_insecure;
 		add_bg_result(w, q, w->back->udp_buff, UB_NOERROR, NULL, 0);
@@ -1067,6 +1056,36 @@ void dtio_tap_callback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
 
 #ifdef USE_DNSTAP
 void dtio_mainfdcallback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
+
+void fast_reload_service_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+
+int fast_reload_client_callback(struct comm_point* ATTR_UNUSED(c),
+	void* ATTR_UNUSED(arg), int ATTR_UNUSED(error),
+        struct comm_reply* ATTR_UNUSED(repinfo))
+{
+	log_assert(0);
+	return 0;
+}
+
+#ifdef HAVE_NGTCP2
+void doq_client_event_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
+
+#ifdef HAVE_NGTCP2
+void doq_client_timer_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
 	void* ATTR_UNUSED(arg))
 {
 	log_assert(0);
