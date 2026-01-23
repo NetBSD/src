@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.92 2026/01/22 20:46:09 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.93 2026/01/23 10:38:18 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1234,4 +1234,19 @@ external/gpl2/texinfo/dist/util/texindex.c	(apply patch)
 
 	Fixes to allow building with newer compilers.
 	[mrg, ticket #1996]
+
+external/bsd/unbound/dist/doc/example.conf.in		(apply patch)
+external/bsd/unbound/dist/doc/unbound.conf.5.in		(apply patch)
+external/bsd/unbound/dist/iterator/iter_scrub.c		(apply patch)
+external/bsd/unbound/dist/util/config_file.c		(apply patch)
+external/bsd/unbound/dist/util/config_file.h		(apply patch)
+external/bsd/unbound/dist/util/configlexer.c		(apply patch)
+external/bsd/unbound/dist/util/configlexer.lex		(apply patch)
+external/bsd/unbound/dist/util/configparser.c		(apply patch)
+external/bsd/unbound/dist/util/configparser.h		(apply patch)
+external/bsd/unbound/dist/util/configparser.y		(apply patch)
+external/bsd/unbound/include/config.h			(apply patch)
+
+	unbound: apply upstream patch to fix CVE-2025-11411.
+	[gutteridge, ticket #1997]
 
