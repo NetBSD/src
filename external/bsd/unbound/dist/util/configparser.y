@@ -200,6 +200,7 @@ extern struct config_parser_state* cfg_parser;
 %token VAR_INTERFACE_TAG_ACTION VAR_INTERFACE_TAG_DATA
 %token VAR_PROXY_PROTOCOL_PORT VAR_STATISTICS_INHIBIT_ZERO
 %token VAR_HARDEN_UNKNOWN_ADDITIONAL VAR_DISABLE_EDNS_DO VAR_CACHEDB_NO_STORE
+%token VAR_ITER_SCRUB_PROMISCUOUS
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
@@ -333,7 +334,8 @@ content_server: server_num_threads | server_verbosity | server_port |
 	server_tcp_reuse_timeout | server_tcp_auth_query_timeout |
 	server_interface_automatic_ports | server_ede |
 	server_proxy_protocol_port | server_statistics_inhibit_zero |
-	server_harden_unknown_additional | server_disable_edns_do
+	server_harden_unknown_additional | server_disable_edns_do |
+	server_iter_scrub_promiscuous
 	;
 stubstart: VAR_STUB_ZONE
 	{
@@ -3876,6 +3878,16 @@ server_cookie_secret: VAR_COOKIE_SECRET STRING_ARG
 			cfg_parser->cfg->cookie_secret_len = secret_len;
 			memcpy(cfg_parser->cfg->cookie_secret, secret, sizeof(secret));
 		}
+		free($2);
+	}
+	;
+server_iter_scrub_promiscuous: VAR_ITER_SCRUB_PROMISCUOUS STRING_ARG
+	{
+		OUTYY(("P(server_iter_scrub_promiscuous:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->cfg->iter_scrub_promiscuous =
+			(strcmp($2, "yes")==0);
 		free($2);
 	}
 	;
