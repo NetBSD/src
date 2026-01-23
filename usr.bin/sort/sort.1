@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.50 2026/01/18 21:49:53 jkoshy Exp $
+.\"	$NetBSD: sort.1,v 1.51 2026/01/23 14:06:09 jkoshy Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 18, 2026
+.Dd January 23, 2026
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -524,23 +524,59 @@ use:
 .Pp
 .Dl $ sort -m file1 file2 file3
 .Pp
-To sort the lines in a file lexicographically using the second
-whitespace-separated field of each line as the sort key preserving any
-leading whitespace in the sort key, use:
+To sort lines lexicographically using the second whitespace-separated
+field of each line as the sort key preserving leading whitespace in
+the sort key, use:
+.Bd -literal -offset indent
+$ sort -k 2 <<EOF
+  aa bb
+  ab   bb
+EOF
+  ab   bb
+  aa bb
+$
+.Ed
 .Pp
-.Dl $ sort -k 2 file
+To sort lines lexicographically using the second whitespace-separated
+field on each line as the sort key ignoring any leading whitespace in
+the sort key, use:
+.Bd -literal -offset indent
+$ sort -k 2b <<EOF
+  aa bb
+  ab   bb
+EOF
+  aa bb
+  ab   bb
+$
+.Ed
 .Pp
-To sort the lines in a file lexicographically using the second
-whitespace-separated field on each line as the sort key ignoring any
-leading whitespace in the sort key, use:
+To sort lines numerically, using the second whitespace-separated field
+on each line as the sort key, starting the sort key at the second
+non-blank character within the field, use:
+.Bd -literal -offset indent
+$ sort -k 2.2nb <<EOF
+  aa  X42
+  ab Y24
+EOF
+  ab Y24
+  aa  X42
+$
+.Ed
 .Pp
-.Dl $ sort -k 2b file
-.Pp
-To sort the lines in a file numerically using the second
-whitespace-separated field on each line as the sort key, starting the
-sort key at the second non-blank character within the field, use:
-.Pp
-.Dl $ sort -k 2.2nb file
+To sort lines numerically with a sort key starting on the second
+character of the second whitespace delimited field and to further sort
+lines with equal keys lexicographically on the first whitespace
+delimited field, use:
+.Bd -literal -offset indent
+$ sort -k 2.2n -k 1 <<EOF
+  ab X42
+  aa Y42
+  ac Z43
+EOF
+  aa Y42
+  ab X42
+  ac Z43
+.Ed
 .Pp
 To lexicographically sort the lines of a file in reverse order, use:
 .Pp
