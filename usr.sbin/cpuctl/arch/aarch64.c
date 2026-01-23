@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.26 2026/01/18 06:35:16 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.27 2026/01/23 20:57:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.26 2026/01/18 06:35:16 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.27 2026/01/23 20:57:20 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -386,7 +386,7 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	{ .bitwidth = 0 }	/* end of table */
 };
 
-/* ID_AA64ISAR0_EL1 - AArch64 Instruction Set Attribute Register 0 */
+/* ID_AA64ISAR1_EL1 - AArch64 Instruction Set Attribute Register 1 */
 struct fieldinfo id_aa64isar1_fieldinfo[] = {
 	{
 		FIELDINFO(0, 4, "DPB") {
