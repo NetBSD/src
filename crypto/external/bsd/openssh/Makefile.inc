@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16.4.1 2026/01/22 19:51:55 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.16.4.2 2026/01/23 06:16:01 snj Exp $
 
 WARNS?=	4
 
@@ -47,18 +47,6 @@ CPPFLAGS+=-DX11BASE=\"/usr/X11R7\"
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 CPPFLAGS+=-DLIBWRAP
-Index: Makefile.inc
-===================================================================
-RCS file: /cvsroot/src/crypto/external/bsd/openssh/Makefile.inc,v
-retrieving revision 1.17
-retrieving revision 1.18
-diff -c -u -r1.17 -r1.18
---- Makefile.inc	23 Sep 2025 20:18:10 -0000	1.17
-+++ Makefile.inc	16 Dec 2025 04:32:03 -0000	1.18
-@@ -52,3 +52,10 @@
- LINTFLAGS+=	-X 231	# parameter unused
- LINTFLAGS+=	-X 247	# pointer cast to unrelated type
- LINTFLAGS+=	-X 351	# missing header declaration
 
 # We install libssh in /usr/lib/private so applications don't
 # accidentally link against it.  Set LIBSUBDIR so libssh.so.N and
