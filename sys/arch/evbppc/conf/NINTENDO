@@ -1,4 +1,4 @@
-# $NetBSD: NINTENDO,v 1.1 2026/01/09 22:54:27 jmcneill Exp $
+# $NetBSD: NINTENDO,v 1.2 2026/01/23 09:58:55 jmcneill Exp $
 #
 # Nintendo Wii
 #
@@ -144,6 +144,8 @@ gpio0		at hwgpio0
 gpioiic0	at gpio0 offset 0 mask 0xc000 flag 1
 iic0		at gpioiic0
 avenc0		at iic0 addr 0x70			# A/V Encoder
+hwgpio1		at ahb0 addr 0x0d000520 irq 11		# GPIO (Wii U)
+gpio1		at hwgpio1
 
 resetbtn0	at ahb0 irq 17				# Reset button
 

@@ -1,7 +1,7 @@
-/* $NetBSD: hwgpio.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $ */
+/* $NetBSD: hwgpio.c,v 1.2 2026/01/23 09:58:55 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2024-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwgpio.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwgpio.c,v 1.2 2026/01/23 09:58:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,13 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: hwgpio.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $");
 
 #include <machine/wii.h>
 #include <machine/wiiu.h>
+#include "ahb.h"
 
 #define PIN(_num, _name, _caps)		\
 	{ .pin_num = (_num), 		\
 	  .pin_caps = (_caps),		\
 	  .pin_defname = (_name),	\
 	}
-static gpio_pin_t hwgpio_pins[] = {
+
+static gpio_pin_t hwgpio0_pins_wii[] = {
 	PIN( 0, "POWER",	GPIO_PIN_INPUT),
 	PIN( 1, "SHUTDOWN",	GPIO_PIN_OUTPUT),
 	PIN( 2, "FAN",		GPIO_PIN_OUTPUT),
@@ -74,20 +76,69 @@ static gpio_pin_t hwgpio_pins[] = {
 	PIN(22, "DEBUG6",	GPIO_PIN_INPUT | GPIO_PIN_OUTPUT),
 	PIN(23, "DEBUG7",	GPIO_PIN_INPUT | GPIO_PIN_OUTPUT),
 };
+
+static gpio_pin_t hwgpio0_pins_wiiu[] = {
+	PIN( 0, "RtcSysInt",		GPIO_PIN_INPUT),
+	PIN( 1, "DwifiMode",		GPIO_PIN_OUTPUT),
+	PIN( 2, "FanPower",		GPIO_PIN_OUTPUT),
+	PIN( 3, "DcdcPowerControl",	GPIO_PIN_OUTPUT),
+	PIN( 5, "Esp10Workaround",	GPIO_PIN_OUTPUT),
+	PIN( 6, "DRCPWRREQ",		GPIO_PIN_OUTPUT),
+	PIN( 7, "JIG",			GPIO_PIN_INPUT),
+	PIN( 8, "PadPd",		GPIO_PIN_OUTPUT),
+	PIN(10, "EepromCs",		GPIO_PIN_OUTPUT),
+	PIN(11, "EepromSk",		GPIO_PIN_OUTPUT),
+	PIN(12, "EepromDo",		GPIO_PIN_OUTPUT),
+	PIN(13, "EepromDi",		GPIO_PIN_INPUT),
+	PIN(14, "Av0I2cClock",		GPIO_PIN_OUTPUT),
+	PIN(15, "Av0I2cData",		GPIO_PIN_INPUT | GPIO_PIN_OUTPUT),
+	PIN(24, "Av1I2cClock",		GPIO_PIN_OUTPUT),
+	PIN(25, "Av1I2cData",		GPIO_PIN_INPUT | GPIO_PIN_OUTPUT),
+	PIN(26, "MuteLamp",		GPIO_PIN_OUTPUT),
+	PIN(27, "BluetoothMode",	GPIO_PIN_OUTPUT),
+	PIN(28, "CcrhReset",		GPIO_PIN_OUTPUT),
+	PIN(29, "WifiMode",		GPIO_PIN_OUTPUT),
+	PIN(30, "Sdcc0s0Power",		GPIO_PIN_OUTPUT),
+};
+
+static gpio_pin_t hwgpio1_pins_wiiu[] = {
+	PIN( 0, "FanSpeed",		GPIO_PIN_OUTPUT),
+	PIN( 1, "SmcScl",		GPIO_PIN_OUTPUT),
+	PIN( 2, "SmcSda",		GPIO_PIN_INPUT | GPIO_PIN_OUTPUT),
+	PIN( 3, "DcdcPowerControl2",	GPIO_PIN_OUTPUT),
+	PIN( 4, "AvInt",		GPIO_PIN_INPUT),
+	PIN( 5, "Ccrhlo12",		GPIO_PIN_OUTPUT),
+	PIN( 6, "AvReset",		GPIO_PIN_OUTPUT),
+};
+
 #undef PIN
 
 struct hwgpio_softc {
 	struct gpio_chipset_tag	sc_gp;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
 	kmutex_t sc_lock;
 };
 
-#define	RD4(reg)		in32(reg)
-#define	WR4(reg, val)		out32((reg), (val))
+#define GPIO0_ADDR		0x0d0000c0
+#define GPIO1_ADDR		0x0d000520
+#define GPIO_SIZE		0x40
+
+#define GPIOB_OUT		0x00
+#define GPIOB_DIR		0x04
+#define GPIOB_IN		0x08
+
+#define	RD4(sc, reg)		\
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define	WR4(sc, reg, val)	\
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 static int
 hwgpio_pin_read(void *priv, int pin)
 {
-	return (RD4(HW_GPIOB_IN) & __BIT(pin)) != 0;
+	struct hwgpio_softc * const sc = priv;
+
+	return (RD4(sc, GPIOB_IN) & __BIT(pin)) != 0;
 }
 
 static void
@@ -97,13 +148,13 @@ hwgpio_pin_write(void *priv, int pin, int value)
 	uint32_t out;
 
 	mutex_enter(&sc->sc_lock);
-	out = RD4(HW_GPIOB_OUT);
+	out = RD4(sc, GPIOB_OUT);
 	if (value) {
 		out |= __BIT(pin);
 	} else {
 		out &= ~__BIT(pin);
 	}
-	WR4(HW_GPIOB_OUT, out);
+	WR4(sc, GPIOB_OUT, out);
 	mutex_exit(&sc->sc_lock);
 }
 
@@ -114,31 +165,48 @@ hwgpio_pin_ctl(void *priv, int pin, int flags)
 	uint32_t dir;
 
 	mutex_enter(&sc->sc_lock);
-	dir = RD4(HW_GPIOB_DIR);
+	dir = RD4(sc, GPIOB_DIR);
 	if (flags & GPIO_PIN_OUTPUT) {
 		dir |= __BIT(pin);
 	} else {
 		dir &= ~__BIT(pin);
 	}
-	WR4(HW_GPIOB_DIR, dir);
+	WR4(sc, GPIOB_DIR, dir);
 	mutex_exit(&sc->sc_lock);
 }
 
 static int
 hwgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return !wiiu_plat;
+	struct ahb_attach_args * const aaa = aux;
+
+	if (wiiu_plat) {
+		return aaa->aaa_addr == GPIO0_ADDR ||
+		       aaa->aaa_addr == GPIO1_ADDR;
+	} else {
+		return aaa->aaa_addr == GPIO0_ADDR;
+	}
 }
 
 static void
 hwgpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct hwgpio_softc * const sc = device_private(self);
+	struct ahb_attach_args * const aaa = aux;
 	struct gpio_chipset_tag *gp = &sc->sc_gp;
 	struct gpiobus_attach_args gba = {};
 	uint32_t in, out, dir;
-	u_int n;
+	gpio_pin_t *pins;
+	int error;
+	u_int n, npins;
 
+	sc->sc_bst = aaa->aaa_bst;
+	error = bus_space_map(sc->sc_bst, aaa->aaa_addr, GPIO_SIZE, 0,
+	    &sc->sc_bsh);
+	if (error != 0) {
+		aprint_error(": couldn't map registers (%d)\n", error);
+		return;
+	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	gp->gp_cookie = sc;
@@ -149,21 +217,36 @@ hwgpio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": GPIO\n");
 
-	in = RD4(HW_GPIOB_IN);
-	out = RD4(HW_GPIOB_OUT);
-	dir = RD4(HW_GPIOB_DIR);
-	for (n = 0; n < __arraycount(hwgpio_pins); n++) {
-		const uint32_t mask = __BIT(hwgpio_pins[n].pin_num);
-		if (dir & mask) {
-			hwgpio_pins[n].pin_state = (out & mask) != 0;
+	if (wiiu_plat) {
+		if (aaa->aaa_addr == GPIO0_ADDR) {
+			pins = hwgpio0_pins_wiiu;
+			npins = __arraycount(hwgpio0_pins_wiiu);
 		} else {
-			hwgpio_pins[n].pin_state = (in & mask) != 0;
+			KASSERT(aaa->aaa_addr == GPIO1_ADDR);
+			pins = hwgpio1_pins_wiiu;
+			npins = __arraycount(hwgpio1_pins_wiiu);
+		}
+	} else {
+		KASSERT(aaa->aaa_addr == GPIO0_ADDR);
+		pins = hwgpio0_pins_wii;
+		npins = __arraycount(hwgpio0_pins_wii);
+	}
+
+	in = RD4(sc, GPIOB_IN);
+	out = RD4(sc, GPIOB_OUT);
+	dir = RD4(sc, GPIOB_DIR);
+	for (n = 0; n < npins; n++) {
+		const uint32_t mask = __BIT(pins[n].pin_num);
+		if (dir & mask) {
+			pins[n].pin_state = (out & mask) != 0;
+		} else {
+			pins[n].pin_state = (in & mask) != 0;
 		}
 	}
 
 	gba.gba_gc = &sc->sc_gp;
-	gba.gba_pins = hwgpio_pins;
-	gba.gba_npins = __arraycount(hwgpio_pins);
+	gba.gba_pins = pins;
+	gba.gba_npins = npins;
 	config_found(self, &gba, NULL, CFARGS_NONE);
 }
 
