@@ -187,6 +187,10 @@ server:
 	# query upon encountering a CNAME record.
 	# max-query-restarts: 11
 
+	# Should the scrubber remove promiscuous NS from positive answers,
+	# protects against poison attempts.
+	# iter-scrub-promiscuous: yes
+
 	# msec for waiting for an unknown server to reply.  Increase if you
 	# are behind a slow satellite link, to eg. 1128.
 	# unknown-server-time-limit: 376
