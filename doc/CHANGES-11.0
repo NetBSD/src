@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.68 2026/01/22 20:36:59 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.69 2026/01/23 06:17:55 snj Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1385,16 +1385,16 @@ usr.bin/crunch/crunchgen/crunchgen.c		1.97
 	option for real.
 	[snj, ticket #149]
 
-crypto/external/bsd/openssh/Makefile.inc	1.18
+crypto/external/bsd/openssh/Makefile.inc	1.18 via patch
 crypto/external/bsd/openssh/lib/Makefile	1.45,1.46
 distrib/evbarm/instkernel/sshramdisk/Makefile	1.31
 distrib/evbarm/instkernel/sshramdisk/list	1.7
 distrib/sets/lists/base/mi			1.1371,1.1372
-distrib/sets/lists/base/shl.mi			1.1019,1.1020
+distrib/sets/lists/base/shl.mi			1.1019,1.1020 via patch
 distrib/sets/lists/comp/mi			1.2503,1.2504
 distrib/sets/lists/comp/shl.mi			1.362
 distrib/sets/lists/debug/mi			1.494,1.495
-distrib/sets/lists/debug/shl.mi			1.380-1.382
+distrib/sets/lists/debug/shl.mi			1.380-1.382 via patch
 distrib/sets/lists/xdebug/mi			1.52
 etc/mtree/NetBSD.dist.base			1.262
 etc/mtree/NetBSD.dist.compat.in			1.9
