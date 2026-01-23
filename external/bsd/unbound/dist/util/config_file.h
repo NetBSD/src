@@ -735,6 +735,9 @@ struct config_file {
 #endif
 	/** respond with Extended DNS Errors (RFC8914) */
 	int ede;
+	/** Should the iterator scrub promiscuous NS rrsets, from positive
+	* answers. */
+	int iter_scrub_promiscuous;
 };
 
 /** from cfg username, after daemonize setup performed */
