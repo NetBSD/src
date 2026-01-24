@@ -1,4 +1,4 @@
-# $NetBSD: NINTENDO,v 1.2 2026/01/23 09:58:55 jmcneill Exp $
+# $NetBSD: NINTENDO,v 1.3 2026/01/24 19:03:11 jmcneill Exp $
 #
 # Nintendo Wii
 #
@@ -179,6 +179,7 @@ include "dev/usb/usbdevices.config"
 include "dev/bluetooth/bluetoothdevices.config"
 
 # MII/PHY support
+rgephy*		at mii? phy ?
 urlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
