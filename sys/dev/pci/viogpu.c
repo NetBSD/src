@@ -1,4 +1,4 @@
-/*	$NetBSD: viogpu.c,v 1.2 2025/10/04 03:58:38 thorpej Exp $ */
+/*	$NetBSD: viogpu.c,v 1.3 2026/01/25 01:54:55 macallan Exp $ */
 /*	$OpenBSD: viogpu.c,v 1.3 2023/05/29 08:13:35 sf Exp $ */
 
 /*
@@ -824,7 +824,8 @@ viogpu_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_rpos = 16;
 	ri->ri_rnum = 8;
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_RESIZE;
+	scr->scr_flags |= VCONS_LOADFONT;
 	rasops_reconfig(ri, sc->sc_fb_height / ri->ri_font->fontheight,
 	    sc->sc_fb_width / ri->ri_font->fontwidth);
 
