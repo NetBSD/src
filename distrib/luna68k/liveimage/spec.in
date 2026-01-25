@@ -1,0 +1,2 @@
+# $NetBSD: spec.in,v 1.1.2.2 2026/01/25 16:31:06 martin Exp $
+./boot		type=dir uname=root gname=wheel mode=0755
