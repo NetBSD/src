@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.57 2022/09/08 06:57:44 knakahara Exp $	*/
+/*	$NetBSD: spl.S,v 1.57.4.1 2026/01/25 16:38:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.57 2022/09/08 06:57:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.57.4.1 2026/01/25 16:38:53 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -89,10 +89,9 @@ ENTRY(spllower)
 	movl	4(%esp),%ecx
 	cmpb	CPUVAR(ILEVEL),%cl
 	jae	1f
+	PUSHFCLI(%eax, %edx)
 	movl	CPUVAR(IUNMASK)(,%ecx,8),%edx
 	movl	CPUVAR(IUNMASK)+4(,%ecx,8),%eax
-	PUSHF(%eax)
-	CLI(%eax)
 	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
 	testl	CPUVAR(IPENDING)+4,%eax
@@ -205,7 +204,7 @@ IDTVEC(spllower)
 #endif
 .Lspllower_resume:
 #ifdef XENPV
-	CLI(%eax)
+	CLI2(%eax, %edi)
 #endif
 #if defined(DEBUG)
 #ifndef XENPV
@@ -330,7 +329,7 @@ LABEL(doreti_checkast)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	CLI(%eax)
+	CLI2(%eax, %esi)
 	jmp	5b
 END(doreti_checkast)
 
@@ -345,7 +344,7 @@ END(doreti_checkast)
 	call	_C_LABEL(stipending)
 	testl	%eax,%eax
 	jz	4f
-	CLI(%eax)
+	CLI2(%eax, %ecx)
 	jmp	.Ldoreti_resume_stic
 4:
 #endif
@@ -353,7 +352,7 @@ END(doreti_checkast)
 9:
 	STI(%eax)
 	call	_C_LABEL(pmap_load)
-	CLI(%eax)
+	CLI2(%eax, %ecx)
 	jmp	doreti_checkast	/* recheck ASTs */
 
 #if defined(DEBUG)
