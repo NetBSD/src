@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.185.2.1 2023/05/13 11:45:53 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.185.2.2 2026/01/25 16:41:13 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1308,7 +1308,7 @@ ENTRY(handle_syscall)
 	 * to ensure we don't take an interrupt with some of the user
 	 * registers loaded.
 	 */
-	CLI(si)
+	CLI2(si, rax)
 	/* Check for ASTs on exit to user mode. */
 	movl	L_MD_ASTPENDING(%r14),%eax
 	orl	CPUVAR(WANT_PMAPLOAD),%eax
@@ -1433,7 +1433,15 @@ IDTVEC(\name)
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
 	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
 #else
-	/* Xen already switched to kernel stack */
+	/*
+	 * Xen already switched to kernel stack.
+	 * But it didn't disable events
+	 */
+	pushq	%rsi
+	pushq	%rdi
+	CLI2(si, rdi)
+	popq	%rdi
+	popq	%rsi
 	addq	$0x10,%rsp	/* gap to match cs:rip */
 	pushq	$2		/* error code */
 	pushq	$T_ASTFLT
@@ -1475,6 +1483,11 @@ IDTVEC_END(syscall32)
 	TEXT_USER_BEGIN
 IDTVEC(osyscall)
 #ifdef XENPV
+	pushq	%rsi
+	pushq	%rdi
+	CLI2(si, rdi)
+	popq	%rdi
+	popq	%rsi
 	movq (%rsp),%rcx
 	movq 8(%rsp),%r11
 	addq $0x10,%rsp

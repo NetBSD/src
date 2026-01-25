@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.40 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.40.4.1 2026/01/25 16:41:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -299,6 +299,7 @@ LABEL(cx8_spllower_end)
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
+ * XenPV note: it seems that we can be called at spl0, so need to use CLI2()
  */
 	nop
 	.align	4	/* Avoid confusion with cx8_spllower_end */
@@ -312,7 +313,7 @@ IDTVEC(spllower)
 1:	movl	%ebx,%eax		/* get cpl */
 #if !defined(XENPV)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	CLI(si)
+	CLI2(si, r12)
 	andl	CPUVAR(IPENDING),%eax	/* any non-masked bits left? */
 	jz	2f
 	bsrl	%eax,%eax
@@ -323,7 +324,7 @@ IDTVEC(spllower)
 2:
 #if defined(XEN)
 	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
-	CLI(si)
+	CLI2(si, r12)
 	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
 	jz	3f
 	bsrl	%eax,%eax
@@ -348,6 +349,7 @@ IDTVEC_END(spllower)
  * Important registers:
  *   ebx - cpl to restore
  *   r13 - address to resume loop at
+ *   rsi, rdi and r14 - free for local use
  */
 IDTVEC(doreti)
 	popq	%rbx			/* get previous priority */
@@ -356,7 +358,7 @@ IDTVEC(doreti)
 1:	movl	%ebx,%eax
 #if !defined(XENPV)
 	movl	CPUVAR(IUNMASK)(,%rax,4),%eax
-	CLI(si)
+	CLI2(si, r14)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
 	bsrl	%eax,%eax		/* slow, but not worth optimizing */
@@ -367,7 +369,7 @@ IDTVEC(doreti)
 2:
 #if defined(XEN)
 	movl	CPUVAR(XUNMASK)(,%rax,4),%eax
-	CLI(si)
+	CLI2(si, r14)
 	andl	CPUVAR(XPENDING),%eax
 	jz	3f
 	bsrl	%eax,%eax		/* slow, but not worth optimizing */
@@ -392,7 +394,7 @@ LABEL(doreti_checkast)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
-	CLI(si)
+	CLI2(si, rdi)
 	jmp	doreti_checkast
 3:
 	CHECK_DEFERRED_SWITCH
@@ -402,7 +404,7 @@ LABEL(doreti_checkast)
 9:
 	STI(si)
 	call	_C_LABEL(do_pmap_load)
-	CLI(si)
+	CLI2(si, rdi)
 	jmp	doreti_checkast		/* recheck ASTs */
 END(doreti_checkast)
 IDTVEC_END(doreti)

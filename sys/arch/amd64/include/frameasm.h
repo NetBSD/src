@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.44 2019/05/18 13:32:12 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.44.2.1 2026/01/25 16:41:13 martin Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -21,20 +21,69 @@
 #define	XEN_ONLY2(x,y)	x,y
 #define	NOT_XEN(x)
 
+#ifdef DIAGNOSTIC
+/*
+ * acessing EVTCHN_UPCALL_MASK is safe only if preemption is disabled, i.e.:
+ * l_nopreempt is not 0, or
+ * ci_ilevel is not 0, or
+ * EVTCHN_UPCALL_MASK is not 0
+ * ci_idepth is not negative
+ */
+#define CLI(temp_reg) \
+ 	movq CPUVAR(CURLWP),%r ## temp_reg ;			\
+	cmpl $0, L_NOPREEMPT(%r ## temp_reg);			\
+	jne 199f;						\
+	cmpb $0, CPUVAR(ILEVEL);				\
+	jne 199f;						\
+	movl CPUVAR(IDEPTH), %e ## temp_reg;			\
+	test %e ## temp_reg, %e ## temp_reg;			\
+	jns 199f;						\
+ 	movq $_C_LABEL(panicstr),%r ## temp_reg ;			 	\
+	cmpq $0, 0(%r ## temp_reg);				\
+	jne 199f;						\
+	movq _C_LABEL(cli_panic), %rdi;				\
+	call _C_LABEL(panic);					\
+199:	movq CPUVAR(VCPU),%r ## temp_reg ;			\
+	movb $1,EVTCHN_UPCALL_MASK(%r ## temp_reg);
+
+#define STI(temp_reg) \
+ 	movq CPUVAR(VCPU),%r ## temp_reg ;			\
+	cmpb $0, EVTCHN_UPCALL_MASK(%r ## temp_reg);		\
+	jne 198f;						\
+ 	movq $_C_LABEL(panicstr),%r ## temp_reg ;		\
+	cmpq $0, 0(%r ## temp_reg);				\
+	jne 197f;						\
+	movq _C_LABEL(sti_panic), %rdi;				\
+	call _C_LABEL(panic);					\
+197:	movq CPUVAR(VCPU),%r ## temp_reg ;			\
+198:	movb $0,EVTCHN_UPCALL_MASK(%r ## temp_reg);
+#else
+
 #define CLI(temp_reg) \
  	movq CPUVAR(VCPU),%r ## temp_reg ;			\
 	movb $1,EVTCHN_UPCALL_MASK(%r ## temp_reg);
 
 #define STI(temp_reg) \
  	movq CPUVAR(VCPU),%r ## temp_reg ;			\
-	movb $0,EVTCHN_UPCALL_MASK(%r ## temp_reg);
+	movb $0,EVTCHN_UPCALL_MASK(%r ## temp_reg);		\
+
+#endif /* DIAGNOSTIC */
+
+/* CLI() with preemtion disabled */
+#define CLI2(temp_reg, temp_reg2) \
+ 	movq CPUVAR(CURLWP),% ## temp_reg2 ;			\
+	incl L_NOPREEMPT(% ## temp_reg2);			\
+ 	movq CPUVAR(VCPU),%r ## temp_reg ;			\
+	movb $1,EVTCHN_UPCALL_MASK(%r ## temp_reg);		\
+	decl L_NOPREEMPT(% ## temp_reg2);
 
 #else /* XENPV */
 #define	XEN_ONLY2(x,y)
 #define	NOT_XEN(x)	x
 #define CLI(temp_reg) cli
+#define CLI2(temp_reg, temp_reg2) cli
 #define STI(temp_reg) sti
-#endif	/* XEN */
+#endif	/* XENPV */
 
 #define HP_NAME_CLAC		1
 #define HP_NAME_STAC		2

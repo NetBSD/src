@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.43.2.1 2025/10/19 10:44:31 martin Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.43.2.2 2026/01/25 16:41:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -531,7 +531,7 @@ END(outsl)
 
 #ifndef XENPV
 ENTRY(setusergs)
-	CLI(ax)
+	CLI2(ax, rsi)
 	swapgs
 	movw	%di, %gs
 	swapgs

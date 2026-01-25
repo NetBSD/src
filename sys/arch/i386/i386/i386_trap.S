@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.18 2019/02/11 17:28:52 cherry Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.18.4.1 2026/01/25 16:41:13 martin Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.18 2019/02/11 17:28:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.18.4.1 2026/01/25 16:41:13 martin Exp $");
 #endif
 
 /*
@@ -214,6 +214,7 @@ IDTVEC(trap07)
 	pushl	$0			/* dummy error code */
 	pushl	$T_DNA
 	INTRENTRY
+	/* Xen note: this is going to panic so no need to deal with CLI */
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
@@ -278,7 +279,9 @@ IDTVEC(trap0f)
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
+#ifndef XENPV
 	STI(%eax)
+#endif
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
@@ -296,11 +299,12 @@ IDTVEC(trap10)
 	pushl	$T_ARITHTRAP
 .Ldo_fputrap:
 	INTRENTRY
+	CLI2(%eax, %ebx)
 	movl	CPUVAR(ILEVEL),%ebx
 	pushl	%esp
 	addl	$1,CPUVAR(NTRAP)	/* statistical info */
 	adcl	$0,CPUVAR(NTRAP)+4
-	call	_C_LABEL(fputrap)
+	call	_C_LABEL(fputrap) /* enables interrupts */
 	addl	$4,%esp
 	jmp	_C_LABEL(trapreturn)
 IDTVEC_END(trap10)
@@ -400,7 +404,9 @@ END(trap_return_fault_return)
 /* LINTSTUB: Ignore */
 ENTRY(alltraps)
 	INTRENTRY
+#ifndef XENPV
 	STI(%eax)
+#endif
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -413,10 +419,17 @@ calltrap:
 _C_LABEL(trapreturn):	.globl	trapreturn
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
+#ifdef XENPV
+	/*
+	 * trap() may, or may not, have disabled interrupts.
+	 * Make sure they're disabled before STIC()
+	 */
+	CLI2(%eax, %edx)
+#endif
 	jmp	6f
 .Lalltraps_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(%eax)
+	CLI2(%eax, %edx)
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 5:	CLEAR_ASTPENDING(%eax)
@@ -430,14 +443,15 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
+6:
 #ifdef XEN
 	STIC(%eax)
-	jz	6f
+	jz	22f
 	call	_C_LABEL(stipending)
 	testl	%eax,%eax
-	jz	6f
+	jz	22f
 	/* process pending interrupts */
-	CLI(%eax)
+	CLI2(%eax, %edx)
 	movl	CPUVAR(ILEVEL),%ebx
 	movl	$.Lalltraps_resume,%esi /* address to resume loop at */
 .Lalltraps_resume:
@@ -451,11 +465,12 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	jmp	*IS_RESUME(%eax)
 7:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	_C_LABEL(trapreturn)
+22:
 #endif /* XEN */
 #ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
+	INTRFASTEXIT
 #else
-6:	cmpl	CPUVAR(ILEVEL),%ebx
+	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	STI(%eax)
