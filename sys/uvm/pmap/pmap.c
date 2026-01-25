@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2024/05/06 07:18:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2026/01/25 10:36:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2024/05/06 07:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2026/01/25 10:36:05 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2123,7 +2123,7 @@ again:
 		apv = NULL;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 		/*
-		 * If need to deal with virtual cache aliases, keep mappings
+		 * If we need to deal with virtual cache aliases, keep mappings
 		 * in the kernel pmap at the head of the list.  This allows
 		 * the VCA code to easily use them for cache operations if
 		 * present.
