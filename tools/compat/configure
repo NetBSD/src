@@ -6957,7 +6957,7 @@ fi
 printf "%s\n" "#define HAVE_DECL_VWARNX $ac_have_decl" >>confdefs.h
 
 
-ac_fn_check_decl "$LINENO" "htobe16" "ac_cv_have_decl_htobe16" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "htobe16" "ac_cv_have_decl_htobe16" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_htobe16" = xyes
 then :
@@ -6967,7 +6967,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_HTOBE16 $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "htobe32" "ac_cv_have_decl_htobe32" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "htobe32" "ac_cv_have_decl_htobe32" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_htobe32" = xyes
 then :
@@ -6977,7 +6977,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_HTOBE32 $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "htobe64" "ac_cv_have_decl_htobe64" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "htobe64" "ac_cv_have_decl_htobe64" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_htobe64" = xyes
 then :
@@ -6987,7 +6987,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_HTOBE64 $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "htole16" "ac_cv_have_decl_htole16" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "htole16" "ac_cv_have_decl_htole16" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_htole16" = xyes
 then :
@@ -6997,7 +6997,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_HTOLE16 $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "htole32" "ac_cv_have_decl_htole32" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "htole32" "ac_cv_have_decl_htole32" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_htole32" = xyes
 then :
@@ -7007,7 +7007,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_HTOLE32 $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "htole64" "ac_cv_have_decl_htole64" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "htole64" "ac_cv_have_decl_htole64" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_htole64" = xyes
 then :
@@ -7017,7 +7017,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_HTOLE64 $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "be16toh" "ac_cv_have_decl_be16toh" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "be16toh" "ac_cv_have_decl_be16toh" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_be16toh" = xyes
 then :
@@ -7027,7 +7027,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_BE16TOH $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "be32toh" "ac_cv_have_decl_be32toh" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "be32toh" "ac_cv_have_decl_be32toh" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_be32toh" = xyes
 then :
@@ -7037,7 +7037,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_BE32TOH $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "be64toh" "ac_cv_have_decl_be64toh" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "be64toh" "ac_cv_have_decl_be64toh" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_be64toh" = xyes
 then :
@@ -7047,7 +7047,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_BE64TOH $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "le16toh" "ac_cv_have_decl_le16toh" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "le16toh" "ac_cv_have_decl_le16toh" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_le16toh" = xyes
 then :
@@ -7057,7 +7057,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_LE16TOH $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "le32toh" "ac_cv_have_decl_le32toh" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "le32toh" "ac_cv_have_decl_le32toh" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_le32toh" = xyes
 then :
@@ -7067,7 +7067,7 @@ else case e in #(
 esac
 fi
 printf "%s\n" "#define HAVE_DECL_LE32TOH $ac_have_decl" >>confdefs.h
-ac_fn_check_decl "$LINENO" "le64toh" "ac_cv_have_decl_le64toh" "#include <sys/types.h>
+ac_fn_check_decl "$LINENO" "le64toh" "ac_cv_have_decl_le64toh" "#include <sys/endian.h>
 " "$ac_c_undeclared_builtin_options" "CFLAGS"
 if test "x$ac_cv_have_decl_le64toh" = xyes
 then :

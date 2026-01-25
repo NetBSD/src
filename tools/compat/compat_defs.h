@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.125.2.1 2025/10/19 09:37:13 martin Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.125.2.2 2026/01/25 16:48:38 martin Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -1108,7 +1108,10 @@ int	 cgetset(const char *);
 int	 cgetstr(char *, const char *, char **);
 int	 cgetustr(char *, const char *, char **);
 
-/* <sys/endian.h> */
+
+#ifdef HAVE_SYS_ENDIAN_H
+#include <sys/endian.h>
+#endif
 
 #if WORDS_BIGENDIAN
 #if !HAVE_DECL_HTOBE16
