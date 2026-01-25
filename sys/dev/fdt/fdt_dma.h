@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_dma.h,v 1.1 2025/09/06 20:11:30 thorpej Exp $	*/
+/*	$NetBSD: fdt_dma.h,v 1.2 2026/01/25 20:09:45 yurix Exp $	*/
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -41,7 +41,8 @@ struct fdtbus_dma {
 
 enum fdtbus_dma_dir {
 	FDT_DMA_READ,		/* device -> memory */
-	FDT_DMA_WRITE		/* memory -> device */
+	FDT_DMA_WRITE,		/* memory -> device */
+	FDT_DMA_NO_XFER		/* dma operation without data transfer */
 };
 
 struct fdtbus_dma_opt {
@@ -55,6 +56,9 @@ struct fdtbus_dma_opt {
 struct fdtbus_dma_req {
 	bus_dma_segment_t *dreq_segs;	/* Memory */
 	int dreq_nsegs;
+
+	void *dreq_data;		/* Controller-specific ancillary data */
+	int dreq_datalen;		/* Size of dreq_data */
 
 	bus_addr_t dreq_dev_phys;	/* Device */
 	int dreq_sel;			/* Device selector */
