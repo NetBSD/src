@@ -123,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $
 /* main configuration routines */
 static int raidframe_booted = 0;
 
+/* RAID scrubbing starting*/
+
 static void rf_ConfigureDebug(RF_Config_t * cfgPtr);
 static void set_debug_option(char *name, long val);
 static void rf_UnconfigureArray(void);
