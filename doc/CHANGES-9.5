@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.93 2026/01/23 10:38:18 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.94 2026/01/25 16:45:52 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1249,4 +1249,28 @@ external/bsd/unbound/include/config.h			(apply patch)
 
 	unbound: apply upstream patch to fix CVE-2025-11411.
 	[gutteridge, ticket #1997]
+
+sys/arch/amd64/amd64/amd64_trap.S		1.56
+sys/arch/amd64/amd64/cpufunc.S			1.71
+sys/arch/amd64/amd64/locore.S			1.236
+sys/arch/amd64/amd64/spl.S			1.50
+sys/arch/amd64/include/frameasm.h		1.56
+sys/arch/i386/i386/i386_trap.S			1.25
+sys/arch/i386/i386/locore.S			1.206
+sys/arch/i386/i386/spl.S			1.59
+sys/arch/i386/include/frameasm.h		1.36
+sys/arch/x86/x86/fpu.c				1.94
+sys/arch/xen/x86/xen_intr.c			1.32
+						(all via patch)
+
+	xen: PR 58561: make sure kernel preemption won't cause write of
+	evtchn_upcall_mask of the wrong virtual CPU.
+	[bouyer, ticket #1998]
+
+sys/dev/pci/if_iwm.c				1.89
+
+	iwm(4): avoid various panics arising from mismatched
+	bus_dmamap_sync sizes (manifests as panic in m_copyback) and
+	command ring desynchronization.
+	[riastradh, ticket #1999]
 
