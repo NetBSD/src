@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.214.4.4 2025/10/01 17:19:00 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.214.4.5 2026/01/25 16:38:53 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1524,7 +1524,7 @@ ENTRY(handle_syscall)
 	 * to ensure we don't take an interrupt with some of the user
 	 * registers loaded.
 	 */
-	CLI(si)
+	CLI2(si, rax)
 	/* Check for ASTs on exit to user mode. */
 	movl	L_MD_ASTPENDING(%r14),%eax
 	orl	CPUVAR(WANT_PMAPLOAD),%eax
@@ -1651,7 +1651,9 @@ IDTVEC(\name)
 	 * But it didn't disable events
 	 */
 	pushq	%rsi
-	CLI(si)
+	pushq	%rdi
+	CLI2(si, rdi)
+	popq	%rdi
 	popq	%rsi
 	addq	$0x10,%rsp	/* gap to match cs:rip */
 	pushq	$2		/* error code */
@@ -1696,7 +1698,9 @@ IDTVEC_END(syscall32)
 IDTVEC(osyscall)
 #ifdef XENPV
 	pushq	%rsi
-	CLI(si)
+	pushq	%rdi
+	CLI2(si, rdi)
+	popq	%rdi
 	popq	%rsi
 	movq (%rsp),%rcx
 	movq 8(%rsp),%r11

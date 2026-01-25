@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.54.4.1 2024/09/20 10:17:22 martin Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.54.4.2 2026/01/25 16:38:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #ifdef	XENPV
-#define	PRE_TRAP	CLI(cx); movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
+#define	PRE_TRAP	CLI2(cx,r11); movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
 #endif
@@ -671,7 +671,7 @@ calltrap:
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
-	CLI(si)
+	CLI2(si, rdi)
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
