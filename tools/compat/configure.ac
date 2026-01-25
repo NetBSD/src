@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.99.6.3 2025/10/19 09:48:29 martin Exp $
+#	$NetBSD: configure.ac,v 1.99.6.4 2026/01/25 16:51:06 martin Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -259,7 +259,7 @@ AC_CHECK_DECLS([err, errc, errx, verrc, verrx, warn, warnc, warnx, vwarnc,
 
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64,
 		be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,,
-		[#include <sys/types.h>])
+		[#include <sys/endian.h>])
 
 AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [#include <machine/bswap.h>])
 
