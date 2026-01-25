@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.69.2.1 2025/10/19 10:29:19 martin Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.69.2.2 2026/01/25 16:36:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ ENTRY(wbinvd)
 END(wbinvd)
 
 ENTRY(setusergs)
-	CLI(ax)
+	CLI2(ax, rsi)
 	swapgs
 	movw	%di, %gs
 	swapgs

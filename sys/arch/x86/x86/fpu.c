@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.93 2025/05/14 23:39:54 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.93.2.1 2026/01/25 16:36:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.93 2025/05/14 23:39:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.93.2.1 2026/01/25 16:36:40 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -684,6 +684,7 @@ fputrap(struct trapframe *frame)
 #else
 		snprintf(where, sizeof(where), "%p", (void *)ip);
 #endif
+		x86_enable_intr();
 		panic("fpu trap from kernel at %s, trapframe %p\n", where,
 		    frame);
 	}

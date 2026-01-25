@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.24 2025/07/14 21:34:48 bouyer Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.24.2.1 2026/01/25 16:36:40 martin Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.24 2025/07/14 21:34:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.24.2.1 2026/01/25 16:36:40 martin Exp $");
 #endif
 
 /*
@@ -214,6 +214,7 @@ IDTVEC(trap07)
 	pushl	$0			/* dummy error code */
 	pushl	$T_DNA
 	INTRENTRY
+	/* Xen note: this is going to panic so no need to deal with CLI */
 #ifdef DIAGNOSTIC
 	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
@@ -278,7 +279,9 @@ IDTVEC(trap0f)
 	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
+#ifndef XENPV
 	STI(%eax)
+#endif
 #ifdef DIAGNOSTIC
 	movzbl	CPUVAR(ILEVEL),%ebx
 #endif
@@ -296,11 +299,12 @@ IDTVEC(trap10)
 	pushl	$T_ARITHTRAP
 .Ldo_fputrap:
 	INTRENTRY
+	CLI2(%eax, %ebx)
 	movzbl	CPUVAR(ILEVEL),%ebx
 	pushl	%esp
 	addl	$1,CPUVAR(NTRAP)	/* statistical info */
 	adcl	$0,CPUVAR(NTRAP)+4
-	call	_C_LABEL(fputrap)
+	call	_C_LABEL(fputrap) /* enables interrupts */
 	addl	$4,%esp
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap10)
@@ -400,7 +404,9 @@ END(trap_return_fault_return)
 /* LINTSTUB: Ignore */
 ENTRY(alltraps)
 	INTRENTRY
+#ifndef XENPV
 	STI(%eax)
+#endif
 
 LABEL(i386_calltrap_start)
 calltrap:
@@ -416,11 +422,18 @@ calltrap:
 .Lalltraps_checkusr:
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
+#ifdef XENPV
+	/*
+	 * trap() may, or may not, have disabled interrupts.
+	 * Make sure they're disabled before STIC()
+	 */
+	CLI2(%eax, %edx)
+#endif
 	jmp	6f
 
 .Lalltraps_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(%eax)
+	CLI2(%eax, %edx)
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 	CLEAR_ASTPENDING(%eax)
@@ -445,7 +458,7 @@ calltrap:
 	testl	%eax,%eax
 	jz	22f
 	/* process pending interrupts */
-	CLI(%eax)
+	CLI2(%eax, %edx)
 	movzbl	CPUVAR(ILEVEL),%ebx
 	movl	$.Lalltraps_resume,%esi /* address to resume loop at */
 .Lalltraps_resume:
@@ -493,7 +506,9 @@ calltrap:
 
 #ifdef DIAGNOSTIC
 .Lspl_error:
+#ifndef XENPV
 	STI(%eax)
+#endif
 	pushl	$4f
 	call	_C_LABEL(panic)
 	addl	$4,%esp
