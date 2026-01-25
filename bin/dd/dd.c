@@ -369,6 +369,10 @@ dd_in(void)
 	int64_t n;
 
 	for (flags = ddflags;;) {
+		/* Process count=0. */
+		if (cpy_cnt == LLONG_MAX)
+			return;
+
 		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
 			return;
 

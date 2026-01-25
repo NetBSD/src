@@ -149,10 +149,22 @@ swab_body() {
 	test_swab badcfehg bs=8
 }
 
+atf_test_case countzero
+countzero_head() {
+	atf_set "descr" "Tests count=0"
+}
+
+countzero_body() {
+	test_dd_length 512 \
+	    "{ dd if=/dev/zero bs=528 count=1 | \
+	     { dd of=/dev/null bs=16 skip=1 count=0; dd; }; } 2>/dev/null"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case length
 	atf_add_test_case io
 	atf_add_test_case seek
 	atf_add_test_case swab
+	atf_add_test_case countzero
 }

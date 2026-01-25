@@ -247,10 +247,9 @@ static void
 f_count(char *arg)
 {
 
-	cpy_cnt = strsuftoll("block count", arg, 0, LLONG_MAX);
+	cpy_cnt = strsuftoll("block count", arg, 0, LLONG_MAX - 1);
 	if (!cpy_cnt) {
-		summary();
-		exit(0);
+		cpy_cnt = LLONG_MAX;
 	}
 }
 
