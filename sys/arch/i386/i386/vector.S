@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.83 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: vector.S,v 1.83.4.1 2026/01/25 18:11:29 martin Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.83 2019/02/15 08:54:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.83.4.1 2026/01/25 18:11:29 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1090,14 +1090,30 @@ IDTVEC(hypervisor_pvhvm_callback)
 	movl	CPUVAR(ILEVEL),%ebx
 	jmp	doreti_checkast
 safesti:
+	/* we need to open-code STIC here, for the scrit label */
+#if defined(DIAGNOSTIC) && !defined(XENPVHVM)
+	/* PVHVM: interrupts disabled via cli, not EVTCHN_UPCALL_MASK */
+	movl    CPUVAR(VCPU),%esi
+	cmpb    $0, EVTCHN_UPCALL_MASK(%esi)
+	jne     197f
+	movl    $panicstr,%esi
+	cmpl    $0, 0(%esi)
+	jne     197f
+	pushl   $197f
+	movl    $_C_LABEL(sti_panic), %esi
+	pushl   0(%esi)
+	call    _C_LABEL(panic)
+	addl    $8,%esp
+197:
+#endif /* DIAGNOSTIC */
 	movl	CPUVAR(VCPU),%esi
-	XEN_UNBLOCK_EVENTS(%esi)	/* reenable event callbacks */
+	movb	$0,EVTCHN_UPCALL_MASK(%esi);	/* reenable event callbacks */
 scrit:	/**** START OF CRITICAL REGION ****/
-	XEN_TEST_PENDING(%esi)
+	testb   $0xff,EVTCHN_UPCALL_PENDING(%esi)
 	jnz	14f		/* process more events if necessary... */
 	INTRFASTEXIT
 critiret:
-14:	XEN_BLOCK_EVENTS(%esi)
+14:	CLI2(%esi, %eax)
 	jmp	11b
 ecrit:	/**** END OF CRITICAL REGION ****/
 /*
