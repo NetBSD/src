@@ -1,4 +1,4 @@
-# $NetBSD: t_dd.sh,v 1.5 2026/01/26 06:56:58 kre Exp $
+# $NetBSD: t_dd.sh,v 1.6 2026/01/26 07:28:13 kre Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -163,10 +163,50 @@ swab_body()
 	test_swab badcfehg bs=8
 }
 
+atf_test_case zerocount
+zerocount_head()
+{
+	atf_set descr "Test count=0, see PR bin/59942"
+}
+
+zerocount_body()
+{
+	test_dd_length 512 \
+	    "{ dd if=/dev/zero bs=528 count=1 | \
+	     { dd of=/dev/null bs=16 skip=1 count=0; dd; }; } 2>/dev/null"
+
+}
+
+atf_test_case zerocountextras
+zerocountextras_head()
+{
+	atf_set descr \
+	    "Test more oddments that should work (or not) with count=0"
+}
+
+zerocountextras_body()
+{
+	rm -f FOOBAR
+	atf_check -o empty -e ignore -s exit:0 \
+		dd if=/dev/null bs=32 count=0 of=FOOBAR
+	test -e FOOBAR ||
+		atf_fail "output file not created with count=0"
+	test -s FOOBAR &&
+		atf_fail "output file not created empty with count=0"
+	rm -f FOOBAR
+
+	atf_check -o empty -e not-empty -s exit:1 \
+		dd if=/dev/zorro bs=32 count=0 of=FOOBAR
+	atf_check -o empty -e not-empty -s exit:1 \
+		dd if=/dev/null bs=32 count=0 frogs=green
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case length
 	atf_add_test_case io
 	atf_add_test_case seek
 	atf_add_test_case swab
+	atf_add_test_case zerocount
+	atf_add_test_case zerocountextras
 }
