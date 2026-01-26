@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.36 2013/11/27 17:38:11 apb Exp $	*/
+/*	$NetBSD: gencat.c,v 1.37 2026/01/26 15:40:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.36 2013/11/27 17:38:11 apb Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.37 2026/01/26 15:40:33 christos Exp $");
 #endif
 
 /***********************************************************
@@ -444,6 +444,7 @@ getmsg(int fd, char *cptr, char quote)
 							*tptr += (*cptr - '0');
 							++cptr;
 						}
+						++tptr;
 					} else {
 						warning(cptr, "unrecognized escape sequence");
 					}
