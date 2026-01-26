@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.326 2026/01/11 17:23:29 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.327 2026/01/26 20:34:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.326 2026/01/11 17:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.327 2026/01/26 20:34:24 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2755,7 +2755,8 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 			    /* Just skip over the file handle */
 			    nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			    i = fxdr_unsigned(int, *tl);
-			    nfsm_adv(nfsm_rndup(i));
+			    if (i > 0)
+				    nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
 			    if (newvp == vp)
