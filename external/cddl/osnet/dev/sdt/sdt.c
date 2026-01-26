@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.20 2019/03/09 18:53:52 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.20.2.1 2026/01/26 12:31:31 martin Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/proc.h>
@@ -239,7 +239,7 @@ sdt_create_probe(struct sdt_probe *probe)
 	if (dtrace_probe_lookup(prov->id, mod, func, name) != DTRACE_IDNONE)
 		return;
 
-	(void)dtrace_probe_create(prov->id, mod, func, name, 1, probe);
+	(void)dtrace_probe_create(prov->id, mod, func, name, 0, probe);
 }
 
 /*
