@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ncm.c,v 1.2 2025/08/18 20:59:55 andvar Exp $	*/
+/*	$NetBSD: if_ncm.c,v 1.3 2026/01/26 01:27:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ncm.c,v 1.2 2025/08/18 20:59:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ncm.c,v 1.3 2026/01/26 01:27:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -331,7 +331,8 @@ ncm_uno_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	hdr_len = sizeof(*hdr) + sizeof(*ptr);
 	len = m->m_pkthdr.len;
 	KASSERT(hdr_len <= un->un_tx_bufsz);
-	KASSERT(len <= un->un_tx_bufsz - hdr_len);
+	if (len > un->un_tx_bufsz - hdr_len)
+		return 0;
 
 	hdr = (struct ncm_header16 *)c->unc_buf;
 	ptr = (struct ncm_dptab16 *)(hdr + 1);
