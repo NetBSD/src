@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.95 2026/01/25 18:11:29 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.96 2026/01/26 12:32:07 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1274,4 +1274,11 @@ sys/dev/pci/if_iwm.c				1.89
 	bus_dmamap_sync sizes (manifests as panic in m_copyback) and
 	command ring desynchronization.
 	[riastradh, ticket #1999]
+
+external/cddl/osnet/dev/sdt/sdt.c		1.25
+
+	dtrace_sdt: PR 59934: don't ignore the first stack frame
+	in sdt probes.
+	[riastradh, ticket #2000]
+
 
