@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 2024/02/16 21:32:17 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.152 2026/01/26 08:02:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2024/02/16 21:32:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2026/01/26 08:02:21 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1471,7 +1471,7 @@ pmap_deactivate_efirt(void)
 	    0, 0, 0);
 
 	ci->ci_pmap_asid_cur = KERNEL_PID;
-        tlb_set_asid(KERNEL_PID, pmap_kernel());
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 
 	pm->pm_activated = false;
 
