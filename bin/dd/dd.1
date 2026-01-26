@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.39 2026/01/26 08:37:29 kre Exp $
+.\"	$NetBSD: dd.1,v 1.40 2026/01/26 10:55:27 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,8 @@ displays the number of complete and partial input and output blocks
 and truncated input records to the standard error output.
 .Pp
 The following operands are available:
-.Bl -tag -width of=file
+.Bl -tag -width Cm
+.
 .It Cm bs= Ns Ar n
 Set both input and output block size, superseding the
 .Cm ibs
@@ -68,15 +69,17 @@ or
 .Cm sync
 are specified, then each input block is copied to the output as a
 single block without any aggregation of short blocks.
+.
 .It Cm cbs= Ns Ar n
 Set the conversion record size to
-.Va n
+.Ar n
 bytes.
 The conversion record size is required by the record oriented conversion
 values.
+.
 .It Cm count= Ns Ar n
 Copy only
-.Va n
+.Ar n
 input blocks.
 If
 .Ar n
@@ -85,48 +88,54 @@ is zero, copy nothing, after performing any
 or
 .Cm seek Pq Cm oseek
 operations.
+.
 .It Cm files= Ns Ar n
 Copy
-.Va n
+.Ar n
 input files before terminating.
 This operand is only applicable when the input device is a tape.
+.
 .It Cm ibs= Ns Ar n
 Set the input block size to
-.Va n
+.Ar n
 bytes instead of the default 512.
+.
 .It Cm if= Ns Ar file
 Read input from
 .Ar file
 instead of the standard input.
+.
 .It Cm iflag= Ns Ar flags
 Use comma-separated
 .Ar flags
 when calling
 .Xr open 2
 for the input file.
+Default value is
+.Ql rdonly .
 See the
 .Sx INPUT AND OUTPUT FLAGS
 section for details.
-Default value is
-.Va rdonly .
+.
 .It Cm iseek= Ns Ar n
 Seek on the input file
 .Ar n
 blocks.
 This is synonymous with
 .Cm skip= Ns Ar n .
+.
 .It Cm msgfmt= Ns Ar fmt
 Specify the message format
 .Ar fmt
 to be used when writing information to standard output.
 Possible values are:
-.Bl -tag -width xxxxx -offset indent -compact
-.It quiet
+.Bl -tag -width Cm
+.It Cm quiet
 turns off information summary report except for errors and
 .Cm progress .
-.It posix
+.It Cm posix
 default information summary report as specified by POSIX.
-.It human
+.It Cm human
 default information summary report extended with human-readable
 values.
 .El
@@ -137,56 +146,62 @@ does not correspond to any value given above,
 it contains a string that will be used as format specifier
 for the information summary output.
 Each conversion specification is introduced by the character
-.Cm % .
+.Ql % .
 The following ones are available:
-.Bl -tag -width xx -offset indent -compact
-.It b
+.Pp
+.\" cheat and use Ql instead of Li to add a bit more width
+.Bl -tag -width ".Ql b" -offset indent -compact
+.It Li b
 total number of bytes transferred
-.It B
+.It Li B
 total number of bytes transferred in
 .Xr humanize_number 3
 format
-.It e
+.It Li e
 speed transfer
-.It E
+.It Li E
 speed transfer in
 .Xr humanize_number 3
 format
-.It i
+.It Li i
 number of partial input block(s)
-.It I
+.It Li I
 number of full input block(s)
-.It o
+.It Li o
 number of partial output block(s)
-.It O
+.It Li O
 number of full output block(s)
-.It s
+.It Li s
 time elapsed since the beginning in
-.Do seconds.ms Dc
+.Dq seconds.ms
 format
-.It p
+.Pp
+.It Li p
 number of sparse output blocks
-.It t
+.It Li t
 number of truncated blocks
-.It w
+.It Li w
 number of odd-length swab blocks
-.It P
+.Pp
+.It Li P
 singular/plural of
-.Do block Dc
+.Dq block
 depending on number of sparse blocks
-.It T
+.It Li T
 singular/plural of
-.Do block Dc
+.Dq block
 depending on number of truncated blocks
-.It W
+.It Li W
 singular/plural of
-.Do block Dc
+.Dq block
 depending on number of swab blocks
 .El
+.
 .It Cm obs= Ns Ar n
 Set the output block size to
-.Va n
+.Ar n
 bytes instead of the default 512.
+.
 .It Cm of= Ns Ar file
 Write output to
 .Ar file
@@ -194,30 +209,34 @@ instead of the standard output.
 Any regular output file is truncated unless the
 .Cm notrunc
 conversion value is specified.
-If an initial portion of the output file is skipped (see the
+If an initial portion of the output file is skipped
+.Po
+see the
 .Cm seek
-operand)
+operand
+.Pc
 the output file is truncated at that point.
+.
 .It Cm oflag= Ns Ar flags
-Same as
-.Cm iflag
-but for the call to
+Use comma-separated
+.Ar flags
+when calling
 .Xr open 2
 on the output file.
 The default value is
-.Va creat ,
+.Ql creat ,
 which must be explicitly added in
 .Cm oflag
 if this option is used in order to output to a nonexistent file.
-The default or specified value is or'ed with
-.Va rdwr
-for a first
+The value is or'ed with
+.Ql rdwr
+for the first
 .Xr open 2
-attempt, then on failure with
-.Va wronly
-on a second attempt.
+attempt, then, if that has failed, with
+.Ql wronly
+on the second attempt.
 In both cases,
-.Va trunc
+.Ql trunc
 is automatically added if none of
 .Cm oseek ,
 .Cm seek ,
@@ -227,15 +246,17 @@ operands are used.
 See the
 .Sx INPUT AND OUTPUT FLAGS
 section for details.
+.
 .It Cm oseek= Ns Ar n
 Seek on the output file
 .Ar n
 blocks.
 This is synonymous with
 .Cm seek= Ns Ar n .
+.
 .It Cm seek= Ns Ar n
 Seek
-.Va n
+.Ar n
 blocks from the beginning of the output before copying.
 On non-tape devices, an
 .Xr lseek 2
@@ -249,9 +270,10 @@ If the seek operation is past the end of file, space from the current
 end of file to the specified offset is filled with blocks of
 .Tn NUL
 bytes.
+.
 .It Cm skip= Ns Ar n
 Skip
-.Va n
+.Ar n
 blocks from the beginning of the input before copying.
 On input which supports seeks, an
 .Xr lseek 2
@@ -260,22 +282,26 @@ Otherwise, input data is read and discarded.
 For pipes, the correct number of bytes is read.
 For all other devices, the correct number of blocks is read without
 distinguishing between a partial or complete block being read.
+.
 .It Cm progress= Ns Ar n
 Switch on display of progress if
-.Va n
+.Ar n
 is set to any non-zero value.
 This will cause a
-.Dq \&.
-to be printed (to the standard error output) for every
-.Va n
+.Ql \&.
+to be printed
+.Pq to the standard error output
+for every
+.Ar n
 full or partial blocks written to the output file.
+.
 .Sm off
-.It Cm conv= Cm value Op \&, Cm value \&...
+.It Cm conv= Ar value Op Cm \&, Ar value \~ Ar \&...
 .Sm on
 Where
-.Cm value
+.Ar value
 is one of the symbols from the following list.
-.Bl -tag -width unblock
+.Bl -tag -width Cm
 .It Cm ascii , oldascii
 The same as the
 .Cm unblock
@@ -285,11 +311,13 @@ to
 .Tn ASCII
 before the
 records are converted.
-(These values imply
+.Po
+These values imply
 .Cm unblock
 if the operand
 .Cm cbs
-is also specified.)
+is also specified.
+.Pc
 There are two conversion maps for
 .Tn ASCII .
 The value
@@ -324,11 +352,13 @@ to
 .Tn EBCDIC
 after the
 records are converted.
-(These values imply
+.Po
+These values imply
 .Cm block
 if the operand
 .Cm cbs
-is also specified.)
+is also specified.
+.Pc
 There are four conversion maps for
 .Tn EBCDIC .
 The value
@@ -347,8 +377,8 @@ and
 .Cm oldibm
 are maps used in historic
 .Tn AT&T
-and pre
-.Bx 4.3 Reno
+and
+.Pf pre- Bx 4.3 Reno
 systems.
 .It Cm lcase
 Transform uppercase characters into lowercase characters.
@@ -362,8 +392,9 @@ If the
 conversion is also specified, any missing input data will be replaced
 with
 .Tn NUL
-bytes (or with spaces if a block oriented conversion value was
-specified) and processed as a normal input buffer.
+bytes
+.Pq or with spaces if a block oriented conversion value was specified
+and processed as a normal input buffer.
 If the
 .Cm sync
 conversion is not specified, the input block is omitted from the output.
@@ -389,10 +420,10 @@ This option is incompatible with use of the
 block size specification.
 .It Cm sparse
 If one or more non-final output blocks would consist solely of
-.Dv NUL
+.Tn NUL
 bytes, try to seek the output file by the required space instead of
 filling them with
-.Dv NUL Ns s .
+.Tn NUL Ap s .
 This results in a sparse file on some file systems.
 .It Cm swab
 Swap every pair of input bytes.
@@ -419,22 +450,17 @@ appended.
 .Pp
 Where sizes are specified, a decimal number of bytes is expected.
 Two or more numbers may be separated by an
-.Dq x
+.Ql x
 to indicate a product.
 Each number may have one of the following optional suffixes:
-.Bl -tag -width 3n -offset indent -compact
-.It b
-Block; multiply by 512
-.It k
-Kibi; multiply by 1024 (1 KiB)
-.It m
-Mebi; multiply by 1048576 (1 MiB)
-.It g
-Gibi; multiply by 1073741824 (1 GiB)
-.It t
-Tebi; multiply by 1099511627776 (1 TiB)
-.It w
-Word; multiply by the number of bytes in an integer
+.Pp
+.Bl -column -offset indent ".Ql b" "block"
+.It Li b  Ta block  Ta multiply by 512
+.It Li k  Ta kibi   Ta multiply by 1024 (1 KiB)
+.It Li m  Ta mebi   Ta multiply by 1048576 (1 MiB)
+.It Li g  Ta gibi   Ta multiply by 1073741824 (1 GiB)
+.It Li t  Ta tebi   Ta multiply by 1099511627776 (1 TiB)
+.It Li w  Ta word   Ta multiply by the number of bytes in an integer
 .El
 .Pp
 When finished,
@@ -465,10 +491,12 @@ If
 receives a
 .Dv SIGINFO
 signal
-(see the
+.Po
+see the
 .Ic status
 argument for
-.Xr stty 1 ) ,
+.Xr stty 1
+.Pc ,
 the current input and output block counts will
 be written to the standard error output
 in the same format as the standard completion message.
@@ -482,10 +510,15 @@ in the same format as the standard completion message and
 .Nm
 will exit.
 .Sh INPUT AND OUTPUT FLAGS
-There are flags valid for input only, for output only, or for either.
+There are flags valid for input only
+.Pq Cm iflag ,
+for output only
+.Pq Cm oflag ,
+or for either.
 .Pp
 The flags that apply to both input and output are:
-.Bl -tag -width directory
+.Pp
+.Bl -tag -width ".Cm directory" -offset indent -compact
 .It Cm alt_io
 Use Alternative I/O.
 .It Cm async
@@ -519,7 +552,8 @@ All I/O will be performed with full synchronization.
 .El
 .Pp
 The flags that apply to only input are:
-.Bl -tag -width directory
+.Pp
+.Bl -tag -width ".Cm directory" -offset indent -compact
 .It Cm rdonly
 Set the read-only flag.
 .It Cm rdwr
@@ -531,7 +565,8 @@ option is also set.
 .El
 .Pp
 The flags that apply to only output are:
-.Bl -tag -width directory
+.Pp
+.Bl -tag -width ".Cm directory" -offset indent -compact
 .It Cm append
 Append to the output by default.
 .It Cm creat
@@ -561,7 +596,7 @@ compressed
 image to a removable drive, with
 .Xr progress 1
 output:
-.Bd -literal -unfilled -offset indent
+.Bd -literal -offset indent
 zcat NetBSD-9.2-amd64-install.img.gz | \\
     progress dd of=/dev/rsd0 bs=1m
 .Ed
