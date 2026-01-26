@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbnet.9,v 1.22 2024/02/04 05:43:06 mrg Exp $
+.\"	$NetBSD: usbnet.9,v 1.23 2026/01/26 00:19:29 gutteridge Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -93,7 +93,7 @@ no additional storage is required.
 A structure exists for receive and transmit chain management,
 .Va struct usbnet_chain ,
 that tracks the metadata for each transfer descriptor available,
-minimum of one each for Rx and Tx slot, and will be passed
+minimum of one each for Rx and Tx slots, and will be passed
 to the Rx and Tx callbacks.
 .Pp
 There is a
@@ -191,7 +191,7 @@ callback may be used instead to replace the framework's
 ioctl handler completely (i.e., the replacement should call any generic
 ioctl handlers such as
 .Fn ether_ioctl
-as required.)
+as required).
 For sending packets, the
 .Dq uno_tx_prepare
 callback must be used to convert
@@ -207,7 +207,7 @@ the support is split between the driver and the framework.
 A
 .Dq uno_rx_loop
 callback must be provided that loops over the incoming
-packet data found in a chain, performs necessary checking and passes
+packet data found in a chain, performs necessary checking, and passes
 the network frame up the stack via either
 .Fn usbnet_enqueue
 or
@@ -295,11 +295,11 @@ See the
 section for more details about these functions.
 .Bl -tag -width 4n
 .It Fn usbnet_attach un
-Initial stage attach of a usb network device.
+Initial stage attach of a USB network device.
 Performs internal initialization and memory allocation only \(em
 nothing is published yet.
 .It Fn usbnet_attach_ifp un if_flags if_extflags unm
-Final stage attach of usb network device.
+Final stage attach of a USB network device.
 Publishes the network interface to the rest of the system.
 .Pp
 If the passed in
@@ -624,7 +624,7 @@ Returns standard
 Handle a status change event for this interface.
 .El
 .Sh INTERRUPT PIPE
-The interrupt specific callback,
+The interrupt-specific callback,
 .Dq uno_intr ,
 is an optional callback that can be called periodically, registered by
 .Nm
@@ -632,12 +632,12 @@ using the
 .Fn usbd_open_pipe_intr
 function (instead of the
 .Fn usbd_open_pipe
-function.)
+function).
 The
 .Nm
 framework provides most of the interrupt handling and the callback
 simply inspects the returned buffer as necessary.
-To enable the this callback point the
+To enable this callback point the
 .Va struct usbnet
 member
 .Dq un_intr
@@ -646,7 +646,7 @@ to a
 structure with these members set:
 .Bl -tag -width 4n
 .It uni_buf
-Data buffer for interrupt status relies.
+Data buffer for interrupt status replies.
 .It uni_bufsz
 Size of the above buffer.
 .It uni_interval
@@ -715,7 +715,7 @@ upon the buffer size and more provided in
 .Va subnet ,
 so all code related to them should be deleted.
 .It Interface setup
-The vast majority of interface specific code should be deleted.
+The vast majority of interface-specific code should be deleted.
 For device-specific interface values, the
 .Va ifnet
 flags and exflags can be set, as well as the
@@ -737,7 +737,7 @@ should be eliminated.
 The device
 .Dq ioctl
 routine can use the default handling with a callback for additional
-device specific programming (multicast filters, etc.), which can be
+device-specific programming (multicast filters, etc.), which can be
 empty, or, the override ioctl can be used for heavier requirements.
 The device
 .Dq stop
@@ -763,11 +763,11 @@ should be deleted and any work moved into
 The
 .Nm
 framework handles the majority of handling of both network directions.
-The interface init routine should keep all of the device specific setup
+The interface init routine should keep all of the device-specific setup
 but replace all pipe management with a call to
 .Fn usbnet_init_rx_tx .
 The typical receive handling will normally be replaced with a receive
-loop functions that can accept one or more packets,
+loop function that can accept one or more packets,
 .Dq uno_rx_loop ,
 which can use either
 .Fn usbnet_enqueue
@@ -776,7 +776,7 @@ or
 to pass the packets up to higher layers.
 The typical interface
 .Dq if_start
-function and any additional functions used will normal be replaced
+function and any additional functions used will normally be replaced
 with a relatively simple
 .Dq uno_tx_prepare
 function that simply converts an
