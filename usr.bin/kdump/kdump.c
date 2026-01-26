@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.148 2026/01/26 21:11:20 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.149 2026/01/26 21:12:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.148 2026/01/26 21:11:20 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.149 2026/01/26 21:12:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: kdump.c,v 1.148 2026/01/26 21:11:20 christos Exp $");
 #include <err.h>
 #include <inttypes.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,7 +132,6 @@ static void	ktrcsw(struct ktr_csw *);
 static void	ktruser(struct ktr_user *, int);
 static void	ktrmib(int *, int);
 static void	ktrexecfd(struct ktr_execfd *);
-static void	ktrsigmask(struct ktr_sigmask *);
 static void	usage(void) __dead;
 static void	eprint(int);
 static void	rprint(register_t);
@@ -348,9 +346,6 @@ main(int argc, char **argv)
 		case KTR_MIB:
 			ktrmib(m, ktrlen);
 			break;
-		case KTR_SIGMASK:
-			ktrsigmask(m);
-			break;
 		default:
 			putchar('\n');
 			hexdump_buf(m, ktrlen, word_size ? word_size : 1);
@@ -481,10 +476,6 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_MIB:
 		type = "MIB";
-		break;
-	case KTR_SIGMASK:
-		type = "SIGMASK";
-		break;
 		break;
 	default:
 		(void)snprintf(unknown, sizeof(unknown), "UNKNOWN(%d)",
@@ -1087,68 +1078,6 @@ ktrexecfd(struct ktr_execfd *ktr)
 		printf("%s %d\n", dnames[ktr->ktr_dtype], ktr->ktr_fd);
 	else
 		printf("UNKNOWN(%u) %d\n", ktr->ktr_dtype, ktr->ktr_fd);
-}
-
-static int
-psigset(char *buf, size_t size, const sigset_t *set)
-{
-	size_t pos = 0;
-	bool first = true;
-	bool in_range = false;
-	int range_start = 0;
-	int ret;
-
-	for (int sig = 1; sig <= NSIG; sig++) {
-		bool isset = sigismember(set, sig) == 1;
-		if (!isset) {
-			in_range = false;
-			continue;
-		}
-
-		if (!in_range) {
-			ret = snprintf(buf + pos, size - pos, "%s%d",
-			    first ? "" : ",", sig);
-			if (ret < 0)
-				return -1;
-			pos += ret;
-			range_start = sig;
-			in_range = true;
-			first = false;
-		}
-
-		bool isnextset = sig < NSIG && sigismember(set, sig + 1) == 1;
-		if (!isnextset && sig > range_start) {
-			ret = snprintf(buf + pos, size - pos, "-%d", sig);
-			if (ret < 0)
-				return -1;
-			pos += ret;
-			in_range = false;
-		}
-	}
-
-	if (first && size > 0) {
-		ret = snprintf(buf, size, "*empty*");
-		if (ret < 0)
-			return -1;
-		pos += ret;
-	}
-
-    return (pos < size) ? (int)pos : -1;
-}
-
-static void
-ktrsigmask(struct ktr_sigmask *ktr)
-{
-	static const char *how[] = {
-		"*SIG_ZERO*", "SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"
-	};
-	char new[512], old[512], res[512];
-
-	psigset(new, sizeof(new), &ktr->ktr_nset);
-	psigset(old, sizeof(old), &ktr->ktr_oset);
-	psigset(res, sizeof(res), &ktr->ktr_rset);
-	printf("sigprocmask(%s, new=%s, old=%s) = %s\n",
-	    how[ktr->ktr_how & 3], new, old, res);
 }
 
 static void
