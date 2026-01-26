@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.88 2026/01/25 16:52:16 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.89 2026/01/26 12:26:28 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -1821,4 +1821,10 @@ tools/compat/configure.ac			1.113
 
 	build: fix build on newer NetBSD-current.
 	[skrll, ticket #1228]
+
+external/cddl/osnet/dev/sdt/sdt.c		1.25
+
+	dtrace_sdt: PR 59934: don't ignore the first stack frame
+	in sdt probes.
+	[riastradh, ticket #1229]
 
