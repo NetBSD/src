@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1406 2025/12/28 16:50:21 thorpej Exp $
+# $NetBSD: mi,v 1.1407 2026/01/27 20:01:47 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4935,6 +4935,7 @@
 ./usr/tests/usr.bin/cc/t_fuzzer_timeout			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_hello				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_libgomp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/cc/t_libm_cabs			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_allocated_memory		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_check_mem			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/cc/t_msan_free			tests-usr.bin-tests	compattestfile,atf

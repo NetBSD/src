@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2025/10/06 13:11:56 riastradh Exp $
+# $NetBSD: Makefile,v 1.11 2026/01/27 20:01:47 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,7 @@ TESTS_SH+=	$(UBSAN_TESTS)
 TESTS_SH+=	t_ctype_abuse
 TESTS_SH+=	t_hello
 TESTS_SH+=	t_libgomp
+TESTS_SH+=	t_libm_cabs
 TESTS_SH+=	t_pthread_abuse
 
 TESTS_SH+=	t_fuzzer_oom
