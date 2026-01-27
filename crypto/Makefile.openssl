@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.openssl,v 1.22 2025/07/13 20:31:43 christos Exp $
+#	$NetBSD: Makefile.openssl,v 1.23 2026/01/27 21:29:17 christos Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
@@ -25,6 +25,7 @@ CWARNFLAGS.clang+= -Wno-implicit-int-float-conversion
 # XXX: This warning seems to trigger incorrectly
 CWARNFLAGS.clang+=	-Wno-atomic-alignment
 
+LINTFLAGS+=	-Ac11
 LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
 LINTFLAGS+=	-X 129	# expression has null effect
 LINTFLAGS+=	-X 132	# conversion may lose accuracy
