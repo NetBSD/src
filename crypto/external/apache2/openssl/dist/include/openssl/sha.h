@@ -8,40 +8,36 @@
  */
 
 #ifndef OPENSSL_SHA_H
-# define OPENSSL_SHA_H
-# pragma once
+#define OPENSSL_SHA_H
+#pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_SHA_H
-# endif
-
-#ifdef USE_LIBC_SHA2
-# include <sha2.h>
+#include <openssl/macros.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+#define HEADER_SHA_H
 #endif
 
-# include <openssl/e_os2.h>
-# include <stddef.h>
+#include <openssl/e_os2.h>
+#include <stddef.h>
 
-# ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
-# endif
+#endif
 
-# define SHA_DIGEST_LENGTH 20
+#define SHA_DIGEST_LENGTH 20
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * ! SHA_LONG has to be at least 32 bits wide.                    !
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-#  define SHA_LONG unsigned int
+#define SHA_LONG unsigned int
 
-#  define SHA_LBLOCK      16
-#  define SHA_CBLOCK      (SHA_LBLOCK*4)/* SHA treats input data as a
-                                         * contiguous array of 32 bit wide
-                                         * big-endian values. */
-#  define SHA_LAST_BLOCK  (SHA_CBLOCK-8)
+#define SHA_LBLOCK 16
+#define SHA_CBLOCK (SHA_LBLOCK * 4) /* SHA treats input data as a      \
+                                     * contiguous array of 32 bit wide \
+                                     * big-endian values. */
+#define SHA_LAST_BLOCK (SHA_CBLOCK - 8)
 
 typedef struct SHAstate_st {
     SHA_LONG h0, h1, h2, h3, h4;
@@ -54,13 +50,13 @@ OSSL_DEPRECATEDIN_3_0 int SHA1_Init(SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Update(SHA_CTX *c, const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Final(unsigned char *md, SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
-# endif
+#endif
 
 unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md);
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define SHA256_CBLOCK   (SHA_LBLOCK*4)/* SHA-256 treats input data as a
-                                        * contiguous array of 32 bit wide
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+#define SHA256_CBLOCK (SHA_LBLOCK * 4) /* SHA-256 treats input data as a  \
+                                        * contiguous array of 32 bit wide \
                                         * big-endian values. */
 
 typedef struct SHA256state_st {
@@ -72,26 +68,26 @@ typedef struct SHA256state_st {
 
 OSSL_DEPRECATEDIN_3_0 int SHA224_Init(SHA256_CTX *c) __RENAME(_OpenSSL_SHA224_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Update(SHA256_CTX *c,
-                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA224_Update);
+    const void *data, size_t len) __RENAME(_OpenSSL_SHA224_Update);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Final(unsigned char *md, SHA256_CTX *c) __RENAME(_OpenSSL_SHA224_Final);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c) __RENAME(_OpenSSL_SHA256_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
-                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA256_Update);
+    const void *data, size_t len) __RENAME(_OpenSSL_SHA256_Update);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c) __RENAME(_OpenSSL_SHA256_Final);
 OSSL_DEPRECATEDIN_3_0 void SHA256_Transform(SHA256_CTX *c,
-                                            const unsigned char *data) __RENAME(_OpenSSL_SHA256_Transform);
-# endif
+    const unsigned char *data) __RENAME(_OpenSSL_SHA256_Transform);
+#endif
 
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md);
 unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
 
-# define SHA256_192_DIGEST_LENGTH 24
-# define SHA224_DIGEST_LENGTH    28
-# define SHA256_DIGEST_LENGTH    32
-# define SHA384_DIGEST_LENGTH    48
-# define SHA512_DIGEST_LENGTH    64
+#define SHA256_192_DIGEST_LENGTH 24
+#define SHA224_DIGEST_LENGTH 28
+#define SHA256_DIGEST_LENGTH 32
+#define SHA384_DIGEST_LENGTH 48
+#define SHA512_DIGEST_LENGTH 64
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * Unlike 32-bit digest algorithms, SHA-512 *relies* on SHA_LONG64
  * being exactly 64-bit wide. See Implementation Notes in sha512.c
@@ -102,14 +98,14 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
  * contiguous array of 64 bit
  * wide big-endian values.
  */
-#  define SHA512_CBLOCK   (SHA_LBLOCK*8)
-#  if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-#   define SHA_LONG64 unsigned __int64
-#  elif defined(__arch64__)
-#   define SHA_LONG64 unsigned long
-#  else
-#   define SHA_LONG64 unsigned long long
-#  endif
+#define SHA512_CBLOCK (SHA_LBLOCK * 8)
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+#define SHA_LONG64 unsigned __int64
+#elif defined(__arch64__)
+#define SHA_LONG64 unsigned long
+#else
+#define SHA_LONG64 unsigned long long
+#endif
 
 typedef struct SHA512state_st {
     SHA_LONG64 h[8];
@@ -123,21 +119,21 @@ typedef struct SHA512state_st {
 
 OSSL_DEPRECATEDIN_3_0 int SHA384_Init(SHA512_CTX *c) __RENAME(_OpenSSL_SHA384_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Update(SHA512_CTX *c,
-                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA384_Update);
+    const void *data, size_t len) __RENAME(_OpenSSL_SHA384_Update);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Final(unsigned char *md, SHA512_CTX *c) __RENAME(_OpenSSL_SHA384_Final);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Init(SHA512_CTX *c) __RENAME(_OpenSSL_SHA512_Init);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Update(SHA512_CTX *c,
-                                        const void *data, size_t len) __RENAME(_OpenSSL_SHA512_Update);
+    const void *data, size_t len) __RENAME(_OpenSSL_SHA512_Update);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Final(unsigned char *md, SHA512_CTX *c) __RENAME(_OpenSSL_SHA512_Final);
 OSSL_DEPRECATEDIN_3_0 void SHA512_Transform(SHA512_CTX *c,
-                                            const unsigned char *data) __RENAME(_OpenSSL_SHA512_Transform);
-# endif
+    const unsigned char *data) __RENAME(_OpenSSL_SHA512_Transform);
+#endif
 
 unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md);
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md);
 
-# ifdef  __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
 #endif

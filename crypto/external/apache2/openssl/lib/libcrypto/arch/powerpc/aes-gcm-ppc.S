@@ -1,364 +1,498 @@
 .machine	"any"
 .text
 
+.macro	SAVE_REGS
+	mflr	0
+	std	0, 16(1)
+	stdu	1,-512(1)
+
+	std	14, 112(1)
+	std	15, 120(1)
+	std	16, 128(1)
+	std	17, 136(1)
+	std	18, 144(1)
+	std	19, 152(1)
+	std	20, 160(1)
+	std	21, 168(1)
+	std	22, 176(1)
+	std	23, 184(1)
+	std	24, 192(1)
+
+	stxv	32+20, 256(1)
+	stxv	32+21, 256+16(1)
+	stxv	32+22, 256+32(1)
+	stxv	32+23, 256+48(1)
+	stxv	32+24, 256+64(1)
+	stxv	32+25, 256+80(1)
+	stxv	32+26, 256+96(1)
+	stxv	32+27, 256+112(1)
+	stxv	32+28, 256+128(1)
+	stxv	32+29, 256+144(1)
+	stxv	32+30, 256+160(1)
+	stxv	32+31, 256+176(1)
+.endm	
+
+.macro	RESTORE_REGS
+	lxv	32+20, 256(1)
+	lxv	32+21, 256+16(1)
+	lxv	32+22, 256+32(1)
+	lxv	32+23, 256+48(1)
+	lxv	32+24, 256+64(1)
+	lxv	32+25, 256+80(1)
+	lxv	32+26, 256+96(1)
+	lxv	32+27, 256+112(1)
+	lxv	32+28, 256+128(1)
+	lxv	32+29, 256+144(1)
+	lxv	32+30, 256+160(1)
+	lxv	32+31, 256+176(1)
+
+	ld	14, 112(1)
+	ld	15, 120(1)
+	ld	16, 128(1)
+	ld	17, 136(1)
+	ld	18, 144(1)
+	ld	19, 152(1)
+	ld	20, 160(1)
+	ld	21, 168(1)
+	ld	22, 176(1)
+	ld	23, 184(1)
+	ld	24, 192(1)
+
+	addi	1, 1, 512
+	ld	0, 16(1)
+	mtlr	0
+.endm	
 
 
+.macro	AES_CIPHER_4x r
+	.long	0x11EF0508
+	.long	0x12100508
+	.long	0x12310508
+	.long	0x12520508
+.endm	
 
 
-.macro	.Loop_aes_middle4x
-	xxlor	19+32, 1, 1
-	xxlor	20+32, 2, 2
-	xxlor	21+32, 3, 3
-	xxlor	22+32, 4, 4
+.macro	AES_CIPHER_8x r
+	.long	0x11EF0508
+	.long	0x12100508
+	.long	0x12310508
+	.long	0x12520508
+	.long	0x12730508
+	.long	0x12940508
+	.long	0x12B50508
+	.long	0x12D60508
+.endm	
 
-.long	0x11EF9D08
-.long	0x12109D08
-.long	0x12319D08
-.long	0x12529D08
-
-.long	0x11EFA508
-.long	0x1210A508
-.long	0x1231A508
-.long	0x1252A508
-
-.long	0x11EFAD08
-.long	0x1210AD08
-.long	0x1231AD08
-.long	0x1252AD08
-
-.long	0x11EFB508
-.long	0x1210B508
-.long	0x1231B508
-.long	0x1252B508
-
-	xxlor	19+32, 5, 5
-	xxlor	20+32, 6, 6
-	xxlor	21+32, 7, 7
-	xxlor	22+32, 8, 8
-
-.long	0x11EF9D08
-.long	0x12109D08
-.long	0x12319D08
-.long	0x12529D08
-
-.long	0x11EFA508
-.long	0x1210A508
-.long	0x1231A508
-.long	0x1252A508
-
-.long	0x11EFAD08
-.long	0x1210AD08
-.long	0x1231AD08
-.long	0x1252AD08
-
-.long	0x11EFB508
-.long	0x1210B508
-.long	0x1231B508
-.long	0x1252B508
-
-	xxlor	23+32, 9, 9
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
+.macro	.LOOP_8AES_STATE
+	AES_CIPHER_8x	23
+	AES_CIPHER_8x	24
+	AES_CIPHER_8x	25
+	AES_CIPHER_8x	26
+	AES_CIPHER_8x	27
+	AES_CIPHER_8x	28
+	AES_CIPHER_8x	29
+	AES_CIPHER_8x	1
 .endm	
 
 
 
 
 
-.macro	.Loop_aes_middle8x
-	xxlor	23+32, 1, 1
-	xxlor	24+32, 2, 2
-	xxlor	25+32, 3, 3
-	xxlor	26+32, 4, 4
 
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
 
-.long	0x11EFC508
-.long	0x1210C508
-.long	0x1231C508
-.long	0x1252C508
-.long	0x1273C508
-.long	0x1294C508
-.long	0x12B5C508
-.long	0x12D6C508
 
-.long	0x11EFCD08
-.long	0x1210CD08
-.long	0x1231CD08
-.long	0x1252CD08
-.long	0x1273CD08
-.long	0x1294CD08
-.long	0x12B5CD08
-.long	0x12D6CD08
 
-.long	0x11EFD508
-.long	0x1210D508
-.long	0x1231D508
-.long	0x1252D508
-.long	0x1273D508
-.long	0x1294D508
-.long	0x12B5D508
-.long	0x12D6D508
 
-	xxlor	23+32, 5, 5
-	xxlor	24+32, 6, 6
-	xxlor	25+32, 7, 7
-	xxlor	26+32, 8, 8
 
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
 
-.long	0x11EFC508
-.long	0x1210C508
-.long	0x1231C508
-.long	0x1252C508
-.long	0x1273C508
-.long	0x1294C508
-.long	0x12B5C508
-.long	0x12D6C508
+.macro	PPC_GFMUL128_8x
 
-.long	0x11EFCD08
-.long	0x1210CD08
-.long	0x1231CD08
-.long	0x1252CD08
-.long	0x1273CD08
-.long	0x1294CD08
-.long	0x12B5CD08
-.long	0x12D6CD08
+	.long	0x12EC7CC8
+	.long	0x130984C8
+	.long	0x13268CC8
+	.long	0x134394C8
 
-.long	0x11EFD508
-.long	0x1210D508
-.long	0x1231D508
-.long	0x1252D508
-.long	0x1273D508
-.long	0x1294D508
-.long	0x12B5D508
-.long	0x12D6D508
+	vxor	23, 23, 24
+	vxor	23, 23, 25
+	vxor	23, 23, 26
 
-	xxlor	23+32, 9, 9
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
+	.long	0x136D7CC8
+	.long	0x138A84C8
+	.long	0x13278CC8
+	.long	0x134494C8
+
+	vxor	24, 27, 28
+	vxor	24, 24, 25
+	vxor	24, 24, 26
+
+	.long	0x134E7CC8
+	.long	0x136B84C8
+	.long	0x13888CC8
+	.long	0x13A594C8
+
+	vxor	26, 26, 27
+	vxor	26, 26, 28
+	vxor	26, 26, 29
+
+
+	.long	0x139714C8
+
+	vxor	1, 1, 1
+	vsldoi	25, 24, 1, 8
+	vsldoi	1, 1, 24, 8
+	vxor	23, 23, 25
+
+
+
+
+	xxlor	32+29, 10, 10
+	vpermxor	23, 23, 28, 29
+
+	vxor	24, 26, 1
+
+
+
+
+
+
+
+	vpermxor	27, 23, 24, 29
+	.long	0x12F714C8
+	vxor	0, 23, 27
+
+	vxor	19, 19, 0
+
+
+	.long	0x1309A4C8
+	.long	0x1326ACC8
+	.long	0x1343B4C8
+	.long	0x12EC9CC8
+
+	vxor	23, 23, 24
+	vxor	23, 23, 25
+	vxor	23, 23, 26
+
+	.long	0x136D9CC8
+	.long	0x138AA4C8
+	.long	0x1327ACC8
+	.long	0x1344B4C8
+
+	vxor	24, 27, 28
+	vxor	24, 24, 25
+	vxor	24, 24, 26
+
+	.long	0x134E9CC8
+	.long	0x136BA4C8
+	.long	0x1388ACC8
+	.long	0x13A5B4C8
+
+	vxor	26, 26, 27
+	vxor	26, 26, 28
+	vxor	26, 26, 29
+
+
+	.long	0x139714C8
+
+	vxor	1, 1, 1
+	vsldoi	25, 24, 1, 8
+	vsldoi	1, 1, 24, 8
+	vxor	23, 23, 25
+
+
+
+
+	xxlor	32+29, 10, 10
+	vpermxor	23, 23, 28, 29
+
+	vxor	24, 26, 1
+
+
+
+
+
+
+
+	vpermxor	27, 23, 24, 29
+	.long	0x12F714C8
+	vxor	0, 23, 27
 .endm	
 
 
 
 
-ppc_aes_gcm_ghash:
-	vxor	15, 15, 0
-
-	xxlxor	29, 29, 29
-
-.long	0x12EC7CC8
-.long	0x130984C8
-.long	0x13268CC8
-.long	0x134394C8
-
-	vxor	23, 23, 24
-	vxor	23, 23, 25
-	vxor	23, 23, 26
-
-.long	0x130D7CC8
-.long	0x132A84C8
-.long	0x13478CC8
-.long	0x136494C8
-
-	vxor	24, 24, 25
-	vxor	24, 24, 26
-	vxor	24, 24, 27
 
 
-.long	0x139714C8
+.macro	PPC_GHASH1x H S1
 
-	xxlor	29+32, 29, 29
-	vsldoi	26, 24, 29, 8
-	vsldoi	29, 29, 24, 8
-	vxor	23, 23, 26
+	vxor	1, 1, 1
 
-	vsldoi	23, 23, 23, 8
-	vxor	23, 23, 28
+	.long	0x12C304C8
+	.long	0x12E404C8
+	.long	0x130504C8
 
-.long	0x130E7CC8
-.long	0x132B84C8
-.long	0x13488CC8
-.long	0x136594C8
+	.long	0x137614C8
 
-	vxor	24, 24, 25
-	vxor	24, 24, 26
-	vxor	24, 24, 27
-
-	vxor	24, 24, 29
-
-
-	vsldoi	27, 23, 23, 8
-.long	0x12F714C8
-	vxor	27, 27, 24
-	vxor	23, 23, 27
-
-	xxlor	32, 23+32, 23+32
-
-	blr	
-
-
-
-
-
-.macro	ppc_aes_gcm_ghash2_4x
-
-	vxor	15, 15, 0
-
-	xxlxor	29, 29, 29
-
-.long	0x12EC7CC8
-.long	0x130984C8
-.long	0x13268CC8
-.long	0x134394C8
-
-	vxor	23, 23, 24
-	vxor	23, 23, 25
-	vxor	23, 23, 26
-
-.long	0x130D7CC8
-.long	0x132A84C8
-.long	0x13478CC8
-.long	0x136494C8
-
-	vxor	24, 24, 25
-	vxor	24, 24, 26
-
-
-.long	0x139714C8
-
-	xxlor	29+32, 29, 29
-
-	vxor	24, 24, 27
-	vsldoi	26, 24, 29, 8
-	vsldoi	29, 29, 24, 8
-	vxor	23, 23, 26
-
-	vsldoi	23, 23, 23, 8
-	vxor	23, 23, 28
-
-.long	0x130E7CC8
-.long	0x132B84C8
-.long	0x13488CC8
-.long	0x136594C8
-
-	vxor	24, 24, 25
-	vxor	24, 24, 26
-	vxor	24, 24, 27
-
-	vxor	24, 24, 29
-
-
-	vsldoi	27, 23, 23, 8
-.long	0x12F714C8
-	vxor	27, 27, 24
-	vxor	27, 23, 27
-
-
-.long	0x1309A4C8
-.long	0x1326ACC8
-.long	0x1343B4C8
-	vxor	19, 19, 27
-.long	0x12EC9CC8
-
-	vxor	23, 23, 24
-	vxor	23, 23, 25
-	vxor	23, 23, 26
-
-.long	0x130D9CC8
-.long	0x132AA4C8
-.long	0x1347ACC8
-.long	0x1364B4C8
-
-	vxor	24, 24, 25
-	vxor	24, 24, 26
-
-
-.long	0x139714C8
-
-	xxlor	29+32, 29, 29
-
-	vxor	24, 24, 27
-	vsldoi	26, 24, 29, 8
-	vsldoi	29, 29, 24, 8
-	vxor	23, 23, 26
-
-	vsldoi	23, 23, 23, 8
-	vxor	23, 23, 28
-
-.long	0x130E9CC8
-.long	0x132BA4C8
-.long	0x1348ACC8
-.long	0x1365B4C8
-
-	vxor	24, 24, 25
-	vxor	24, 24, 26
-	vxor	24, 24, 27
-
-	vxor	24, 24, 29
-
-
-	vsldoi	27, 23, 23, 8
-.long	0x12F714C8
-	vxor	27, 27, 24
-	vxor	23, 23, 27
-
-	xxlor	32, 23+32, 23+32
-
-.endm	
-
-
-
-
-.macro	ppc_update_hash_1x
-	vxor	28, 28, 0
-
-	vxor	19, 19, 19
-
-.long	0x12C3E4C8
-.long	0x12E4E4C8
-.long	0x1305E4C8
-
-.long	0x137614C8
-
-	vsldoi	25, 23, 19, 8
-	vsldoi	26, 19, 23, 8
+	vsldoi	25, 23, 1, 8
+	vsldoi	26, 1, 23, 8
 	vxor	22, 22, 25
 	vxor	24, 24, 26
 
-	vsldoi	22, 22, 22, 8
-	vxor	22, 22, 27
+	xxlor	32+25, 10, 10
+	vpermxor	22, 22, 27, 25
 
-	vsldoi	20, 22, 22, 8
-.long	0x12D614C8
-	vxor	20, 20, 24
-	vxor	22, 22, 20
 
-	vor	0,22,22
 
+
+	vpermxor	23, 22, 24, 25
+	.long	0x12D614C8
+
+	vxor	\H, 22, 23
 .endm	
+
+
+
+
+
+
+
+.macro	.LOAD_HASH_TABLE
+
+	lxvb16x	32, 0, 8
+
+	vxor	1, 1, 1
+
+	li	10, 32
+	lxvd2x	2+32, 10, 8
+
+
+	li	10, 64
+	lxvd2x	4+32, 10, 8
+	vsldoi	3, 1, 4, 8
+	vsldoi	5, 4, 1, 8
+	li	10, 112
+	lxvd2x	7+32, 10, 8
+	vsldoi	6, 1, 7, 8
+	vsldoi	8, 7, 1, 8
+	li	10, 160
+	lxvd2x	10+32, 10, 8
+	vsldoi	9, 1, 10, 8
+	vsldoi	11, 10, 1, 8
+	li	10, 208
+	lxvd2x	13+32, 10, 8
+	vsldoi	12, 1, 13, 8
+	vsldoi	14, 13, 1, 8
+.endm	
+
+.macro	PROCESS_8X_AES_STATES
+	.long	0x11EF0D09
+	.long	0x12100D09
+	.long	0x12310D09
+	.long	0x12520D09
+	.long	0x12730D09
+	.long	0x12940D09
+	.long	0x12B50D09
+	.long	0x12D60D09
+
+	lxvb16x	32+23, 0, 14
+	lxvb16x	32+24, 15, 14
+	lxvb16x	32+25, 16, 14
+	lxvb16x	32+26, 17, 14
+	lxvb16x	32+27, 18, 14
+	lxvb16x	32+28, 19, 14
+	lxvb16x	32+29, 20, 14
+	lxvb16x	32+30, 21, 14
+	addi	14, 14, 128
+
+	vxor	15, 15, 23
+	vxor	16, 16, 24
+	vxor	17, 17, 25
+	vxor	18, 18, 26
+	vxor	19, 19, 27
+	vxor	20, 20, 28
+	vxor	21, 21, 29
+	vxor	22, 22, 30
+
+	stxvb16x	47, 0, 9
+	stxvb16x	48, 15, 9
+	stxvb16x	49, 16, 9
+	stxvb16x	50, 17, 9
+	stxvb16x	51, 18, 9
+	stxvb16x	52, 19, 9
+	stxvb16x	53, 20, 9
+	stxvb16x	54, 21, 9
+	addi	9, 9, 128
+.endm	
+
+.macro	COMPUTE_STATES
+	xxlor	32+15, 9, 9
+	vadduwm	15, 15, 31
+	vadduwm	16, 15, 31
+	vadduwm	17, 16, 31
+	vadduwm	18, 17, 31
+	vadduwm	19, 18, 31
+	vadduwm	20, 19, 31
+	vadduwm	21, 20, 31
+	vadduwm	22, 21, 31
+	xxlor	9, 32+22, 32+22
+
+	xxlxor	32+15, 32+15, 0
+	xxlxor	32+16, 32+16, 0
+	xxlxor	32+17, 32+17, 0
+	xxlxor	32+18, 32+18, 0
+	xxlxor	32+19, 32+19, 0
+	xxlxor	32+20, 32+20, 0
+	xxlxor	32+21, 32+21, 0
+	xxlxor	32+22, 32+22, 0
+.endm	
+
+
+
+
+
+
+
+
+.align	4
+aes_gcm_crypt_1x:
+.localentry	aes_gcm_crypt_1x,0
+
+	cmpdi	5, 16
+	bge	__More_1x
+	blr	
+__More_1x:
+	li	10, 16
+	divdu	12, 5, 10
+
+	xxlxor	32+15, 32+30, 0
+
+
+	lxv	32+16, 16(6)
+	lxv	32+17, 32(6)
+	lxv	32+18, 48(6)
+	lxv	32+19, 64(6)
+	lxv	32+20, 80(6)
+	lxv	32+21, 96(6)
+	lxv	32+28, 112(6)
+	lxv	32+29, 128(6)
+
+	lwz	23, 240(6)
+	addi	22, 23, -9
+
+	cmpdi	12, 0
+	bgt	__Loop_1x
+	blr	
+
+__Loop_1x:
+	mtctr	22
+	addi	10, 6, 144
+	.long	0x11EF8508
+	.long	0x11EF8D08
+	.long	0x11EF9508
+	.long	0x11EF9D08
+	.long	0x11EFA508
+	.long	0x11EFAD08
+	.long	0x11EFE508
+	.long	0x11EFED08
+
+__Loop_aes_1state:
+	lxv	32+1, 0(10)
+	.long	0x11EF0D08
+	addi	10, 10, 16
+	bdnz	__Loop_aes_1state
+	lxv	32+1, 0(10)
+	lxvb16x	11, 0, 14
+	.long	0x11EF0D09
+
+	xxlxor	32+15, 32+15, 11
+	stxvb16x	32+15, 0, 9
+	addi	14, 14, 16
+	addi	9, 9, 16
+
+	cmpdi	24, 0
+	bne	__Encrypt_1x
+	xxlor	15+32, 11, 11
+__Encrypt_1x:
+	vxor	15, 15, 0
+	PPC_GHASH1x	0, 15
+
+	addi	5, 5, -16
+	addi	11, 11, 16
+
+	vadduwm	30, 30, 31
+	xxlxor	32+15, 32+30, 0
+	addi	12, 12, -1
+	cmpdi	12, 0
+	bgt	__Loop_1x
+
+	stxvb16x	32+0, 0, 8
+	blr	
+.size	aes_gcm_crypt_1x,.-aes_gcm_crypt_1x
+
+
+
+
+
+
+
+
+.align	4
+__Process_partial:
+.localentry	__Process_partial,0
+
+
+	vspltisb	16,-1
+	li	12, 16
+	sub	12, 12, 5
+	sldi	12, 12, 3
+	mtvsrdd	32+17, 0, 12
+	vslo	16, 16, 17
+
+	lxvb16x	11, 0, 14
+	xxland	11, 11, 32+16
+
+
+	xxlxor	32+15, 32+30, 0
+	lwz	23, 240(6)
+	addi	22, 23, -1
+	mtctr	22
+	addi	10, 6, 16
+
+__Loop_aes_pstate:
+	lxv	32+1, 0(10)
+	.long	0x11EF0D08
+	addi	10, 10, 16
+	bdnz	__Loop_aes_pstate
+	lxv	32+1, 0(10)
+	.long	0x11EF0D09
+
+	xxlxor	32+15, 32+15, 11
+	vand	15, 15, 16
+
+
+
+	li	10, 224
+	stxvb16x	15+32, 10, 1
+	addi	10, 1, 223
+	addi	12, 9, -1
+	mtctr	5
+__Write_partial:
+	lbzu	22, 1(10)
+	stbu	22, 1(12)
+	bdnz	__Write_partial
+
+	cmpdi	24, 0
+	bne	__Encrypt_partial
+	xxlor	32+15, 11, 11
+__Encrypt_partial:
+	vxor	15, 15, 0
+	PPC_GHASH1x	0, 15
+	li	5, 0
+	stxvb16x	32+0, 0, 8
+	blr	
+.size	__Process_partial,.-__Process_partial
+
+
+
 
 
 
@@ -375,156 +509,78 @@ ppc_aes_gcm_ghash:
 .global	ppc_aes_gcm_encrypt
 .align	5
 ppc_aes_gcm_encrypt:
-_ppc_aes_gcm_encrypt:
+.localentry	ppc_aes_gcm_encrypt,0
 
-	stdu	1,-512(1)
-	mflr	0
-
-	std	14,112(1)
-	std	15,120(1)
-	std	16,128(1)
-	std	17,136(1)
-	std	18,144(1)
-	std	19,152(1)
-	std	20,160(1)
-	std	21,168(1)
-	li	9, 256
-	stvx	20, 9, 1
-	addi	9, 9, 16
-	stvx	21, 9, 1
-	addi	9, 9, 16
-	stvx	22, 9, 1
-	addi	9, 9, 16
-	stvx	23, 9, 1
-	addi	9, 9, 16
-	stvx	24, 9, 1
-	addi	9, 9, 16
-	stvx	25, 9, 1
-	addi	9, 9, 16
-	stvx	26, 9, 1
-	addi	9, 9, 16
-	stvx	27, 9, 1
-	addi	9, 9, 16
-	stvx	28, 9, 1
-	addi	9, 9, 16
-	stvx	29, 9, 1
-	addi	9, 9, 16
-	stvx	30, 9, 1
-	addi	9, 9, 16
-	stvx	31, 9, 1
-	std	0, 528(1)
-
-
-	lxvb16x	32, 0, 8
-
-
-	li	10, 32
-	lxvd2x	2+32, 10, 8
-	li	10, 48
-	lxvd2x	3+32, 10, 8
-	li	10, 64
-	lxvd2x	4+32, 10, 8
-	li	10, 80
-	lxvd2x	5+32, 10, 8
-
-	li	10, 96
-	lxvd2x	6+32, 10, 8
-	li	10, 112
-	lxvd2x	7+32, 10, 8
-	li	10, 128
-	lxvd2x	8+32, 10, 8
-
-	li	10, 144
-	lxvd2x	9+32, 10, 8
-	li	10, 160
-	lxvd2x	10+32, 10, 8
-	li	10, 176
-	lxvd2x	11+32, 10, 8
-
-	li	10, 192
-	lxvd2x	12+32, 10, 8
-	li	10, 208
-	lxvd2x	13+32, 10, 8
-	li	10, 224
-	lxvd2x	14+32, 10, 8
+	SAVE_REGS	
+.LOAD_HASH_TABLE	
 
 
 	lxvb16x	30+32, 0, 7
 
-	mr	12, 5
-	li	11, 0
+	mr	14, 3
+	mr	9, 4
 
 
 	vxor	31, 31, 31
 	vspltisb	22,1
 	vsldoi	31, 31, 22,1
 
+	addis	11, 2, permx@toc@ha
+	addi	11, 11, permx@toc@l
+	lxv	10, 0(11)
+	li	11, 0
 
 	lxv	0, 0(6)
-	lxv	1, 0x10(6)
-	lxv	2, 0x20(6)
-	lxv	3, 0x30(6)
-	lxv	4, 0x40(6)
-	lxv	5, 0x50(6)
-	lxv	6, 0x60(6)
-	lxv	7, 0x70(6)
-	lxv	8, 0x80(6)
-	lxv	9, 0x90(6)
-	lxv	10, 0xa0(6)
-
-
-	lwz	9,240(6)
 
 
 
-	xxlor	32+29, 0, 0
-	vxor	15, 30, 29
 
-	cmpdi	9, 10
-	beq	.Loop_aes_gcm_8x
+	cmpdi	5, 128
+	blt	__Process_more_enc
 
 
-	lxv	11, 0xb0(6)
-	lxv	12, 0xc0(6)
+	lxv	32+23, 16(6)
+	lxv	32+24, 32(6)
+	lxv	32+25, 48(6)
+	lxv	32+26, 64(6)
+	lxv	32+27, 80(6)
+	lxv	32+28, 96(6)
+	lxv	32+29, 112(6)
+	lxv	32+1, 128(6)
 
-	cmpdi	9, 12
-	beq	.Loop_aes_gcm_8x
+
+	lwz	23, 240(6)
+
+__Process_encrypt:
 
 
-	lxv	13, 0xd0(6)
-	lxv	14, 0xe0(6)
-	cmpdi	9, 14
-	beq	.Loop_aes_gcm_8x
 
-	b	aes_gcm_out
-
-.align	5
-.Loop_aes_gcm_8x:
-	mr	14, 3
-	mr	9, 4
-
+__Process_8x_enc:
 
 	li	10, 128
-	divdu	10, 5, 10
-	cmpdi	10, 0
-	beq	.Loop_last_block
+	divdu	12, 5, 10
 
-.long	0x13DEF8C0
-	vxor	16, 30, 29
-.long	0x13DEF8C0
-	vxor	17, 30, 29
-.long	0x13DEF8C0
-	vxor	18, 30, 29
-.long	0x13DEF8C0
-	vxor	19, 30, 29
-.long	0x13DEF8C0
-	vxor	20, 30, 29
-.long	0x13DEF8C0
-	vxor	21, 30, 29
-.long	0x13DEF8C0
-	vxor	22, 30, 29
+	addi	12, 12, -1
 
-	mtctr	10
+	vor	15,30,30
+	vadduwm	16, 15, 31
+	vadduwm	17, 16, 31
+	vadduwm	18, 17, 31
+	vadduwm	19, 18, 31
+	vadduwm	20, 19, 31
+	vadduwm	21, 20, 31
+	vadduwm	22, 21, 31
+	xxlor	9, 32+22, 32+22
+
+
+	xxlxor	32+15, 32+15, 0
+	xxlxor	32+16, 32+16, 0
+	xxlxor	32+17, 32+17, 0
+	xxlxor	32+18, 32+18, 0
+	xxlxor	32+19, 32+19, 0
+	xxlxor	32+20, 32+20, 0
+	xxlxor	32+21, 32+21, 0
+	xxlxor	32+22, 32+22, 0
 
 	li	15, 16
 	li	16, 32
@@ -534,366 +590,106 @@ _ppc_aes_gcm_encrypt:
 	li	20, 96
 	li	21, 112
 
-	lwz	10, 240(6)
-
-.Loop_8x_block:
-
-	lxvb16x	15, 0, 14
-	lxvb16x	16, 15, 14
-	lxvb16x	17, 16, 14
-	lxvb16x	18, 17, 14
-	lxvb16x	19, 18, 14
-	lxvb16x	20, 19, 14
-	lxvb16x	21, 20, 14
-	lxvb16x	22, 21, 14
-	addi	14, 14, 128
-
-.Loop_aes_middle8x	
-
-	xxlor	23+32, 10, 10
-
-	cmpdi	10, 10
-	beq	Do_next_ghash
-
-
-	xxlor	24+32, 11, 11
-
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
-
-.long	0x11EFC508
-.long	0x1210C508
-.long	0x1231C508
-.long	0x1252C508
-.long	0x1273C508
-.long	0x1294C508
-.long	0x12B5C508
-.long	0x12D6C508
-
-	xxlor	23+32, 12, 12
-
-	cmpdi	10, 12
-	beq	Do_next_ghash
-
-
-	xxlor	24+32, 13, 13
-
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
-
-.long	0x11EFC508
-.long	0x1210C508
-.long	0x1231C508
-.long	0x1252C508
-.long	0x1273C508
-.long	0x1294C508
-.long	0x12B5C508
-.long	0x12D6C508
-
-	xxlor	23+32, 14, 14
-
-	cmpdi	10, 14
-	beq	Do_next_ghash
-	b	aes_gcm_out
-
-Do_next_ghash:
 
 
 
-.long	0x11EFBD09
-.long	0x1210BD09
 
-	xxlxor	47, 47, 15
-	stxvb16x	47, 0, 9
-	xxlxor	48, 48, 16
-	stxvb16x	48, 15, 9
+	addi	22, 23, -9
+	mtctr	22
+	addi	10, 6, 144
 
-.long	0x1231BD09
-.long	0x1252BD09
+.LOOP_8AES_STATE	
 
-	xxlxor	49, 49, 17
-	stxvb16x	49, 16, 9
-	xxlxor	50, 50, 18
-	stxvb16x	50, 17, 9
+__PreLoop_aes_state:
+	lxv	32+1, 0(10)
+	AES_CIPHER_8x	1
+	addi	10, 10, 16
+	bdnz	__PreLoop_aes_state
+	lxv	32+1, 0(10)
 
-.long	0x1273BD09
-.long	0x1294BD09
-
-	xxlxor	51, 51, 19
-	stxvb16x	51, 18, 9
-	xxlxor	52, 52, 20
-	stxvb16x	52, 19, 9
-
-.long	0x12B5BD09
-.long	0x12D6BD09
-
-	xxlxor	53, 53, 21
-	stxvb16x	53, 20, 9
-	xxlxor	54, 54, 22
-	stxvb16x	54, 21, 9
-
-	addi	9, 9, 128
+	cmpdi	12, 0
+	beq	__Finish_ghash
 
 
-	ppc_aes_gcm_ghash2_4x	
 
-	xxlor	27+32, 0, 0
-.long	0x13DEF8C0
-	vor	29,30,30
-	vxor	15, 30, 27
-.long	0x13DEF8C0
-	vxor	16, 30, 27
-.long	0x13DEF8C0
-	vxor	17, 30, 27
-.long	0x13DEF8C0
-	vxor	18, 30, 27
-.long	0x13DEF8C0
-	vxor	19, 30, 27
-.long	0x13DEF8C0
-	vxor	20, 30, 27
-.long	0x13DEF8C0
-	vxor	21, 30, 27
-.long	0x13DEF8C0
-	vxor	22, 30, 27
 
-	addi	12, 12, -128
+__Loop_8x_block_enc:
+	PROCESS_8X_AES_STATES	
+
+
+	vxor	15, 15, 0
+	PPC_GFMUL128_8x	
+
+	COMPUTE_STATES	
+
+	addi	5, 5, -128
 	addi	11, 11, 128
 
-	bc	16,0,.Loop_8x_block
-
-	vor	30,29,29
-
-.Loop_last_block:
-	cmpdi	12, 0
-	beq	aes_gcm_out
-
-
-	li	10, 16
-	divdu	10, 12, 10
-
-	mtctr	10
-
-	lwz	10, 240(6)
-
-	cmpdi	12, 16
-	blt	Final_block
-
-.macro	.Loop_aes_middle_1x
-	xxlor	19+32, 1, 1
-	xxlor	20+32, 2, 2
-	xxlor	21+32, 3, 3
-	xxlor	22+32, 4, 4
-
-.long	0x11EF9D08
-.long	0x11EFA508
-.long	0x11EFAD08
-.long	0x11EFB508
-
-	xxlor	19+32, 5, 5
-	xxlor	20+32, 6, 6
-	xxlor	21+32, 7, 7
-	xxlor	22+32, 8, 8
-
-.long	0x11EF9D08
-.long	0x11EFA508
-.long	0x11EFAD08
-.long	0x11EFB508
-
-	xxlor	19+32, 9, 9
-.long	0x11EF9D08
-.endm	
-
-Next_rem_block:
-	lxvb16x	15, 0, 14
-
-.Loop_aes_middle_1x	
-
-	xxlor	23+32, 10, 10
-
-	cmpdi	10, 10
-	beq	Do_next_1x
+	lxv	32+23, 16(6)
+	lxv	32+24, 32(6)
+	lxv	32+25, 48(6)
+	lxv	32+26, 64(6)
+	lxv	32+27, 80(6)
+	lxv	32+28, 96(6)
+	lxv	32+29, 112(6)
+	lxv	32+1, 128(6)
 
 
-	xxlor	24+32, 11, 11
 
-.long	0x11EFBD08
-.long	0x11EFC508
+.LOOP_8AES_STATE	
+	mtctr	22
+	addi	10, 6, 144
 
-	xxlor	23+32, 12, 12
-
-	cmpdi	10, 12
-	beq	Do_next_1x
-
-
-	xxlor	24+32, 13, 13
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 14, 14
-
-	cmpdi	10, 14
-	beq	Do_next_1x
-
-Do_next_1x:
-.long	0x11EFBD09
-
-	xxlxor	47, 47, 15
-	stxvb16x	47, 0, 9
-	addi	14, 14, 16
-	addi	9, 9, 16
-
-	vor	28,15,15
-	ppc_update_hash_1x	
-
-	addi	12, 12, -16
-	addi	11, 11, 16
-	xxlor	19+32, 0, 0
-.long	0x13DEF8C0
-	vxor	15, 30, 19
-
-	bc	16,0,Next_rem_block
-
-	cmpdi	12, 0
-	beq	aes_gcm_out
-
-Final_block:
-.Loop_aes_middle_1x	
-
-	xxlor	23+32, 10, 10
-
-	cmpdi	10, 10
-	beq	Do_final_1x
-
-
-	xxlor	24+32, 11, 11
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 12, 12
-
-	cmpdi	10, 12
-	beq	Do_final_1x
-
-
-	xxlor	24+32, 13, 13
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 14, 14
-
-	cmpdi	10, 14
-	beq	Do_final_1x
-
-Do_final_1x:
-.long	0x11EFBD09
-
-	lxvb16x	15, 0, 14
-	xxlxor	47, 47, 15
-
-
-	li	15, 16
-	sub	15, 15, 12
-
-	vspltisb	16,-1
-	vspltisb	17,0
-	li	10, 192
-	stvx	16, 10, 1
+__LastLoop_aes_state:
+	lxv	32+1, 0(10)
+	AES_CIPHER_8x	1
 	addi	10, 10, 16
-	stvx	17, 10, 1
+	bdnz	__LastLoop_aes_state
 
-	addi	10, 1, 192
-	lxvb16x	16, 15, 10
-	xxland	47, 47, 16
+	lxv	32+1, 0(10)
 
-	vor	28,15,15
-	ppc_update_hash_1x	
+	addi	12, 12, -1
+	cmpdi	12, 0
+	bne	__Loop_8x_block_enc
 
 
-	bl	Write_partial_block
 
+
+__Finish_ghash:
+	PROCESS_8X_AES_STATES	
+
+
+	vxor	15, 15, 0
+	PPC_GFMUL128_8x	
+
+
+	xxlor	30+32, 9, 9
+	vadduwm	30, 30, 31
+	stxvb16x	32+0, 0, 8
+
+	addi	5, 5, -128
+	addi	11, 11, 128
+
+
+
+
+
+	cmpdi	5, 0
+	beq	aes_gcm_out
+
+__Process_more_enc:
+	li	24, 1
+	bl	aes_gcm_crypt_1x
+	cmpdi	5, 0
+	beq	aes_gcm_out
+
+	bl	__Process_partial
 	b	aes_gcm_out
 
+.size	ppc_aes_gcm_encrypt,.-ppc_aes_gcm_encrypt
 
 
 
-
-
-
-Write_partial_block:
-	li	10, 192
-	stxvb16x	15+32, 10, 1
-
-
-	addi	10, 9, -1
-	addi	16, 1, 191
-
-	mtctr	12
-	li	15, 0
-
-Write_last_byte:
-	lbzu	14, 1(16)
-	stbu	14, 1(10)
-	bc	16,0,Write_last_byte
-	blr	
-
-aes_gcm_out:
-
-	stxvb16x	32, 0, 8
-	add	3, 11, 12
-
-	li	9, 256
-	lvx	20, 9, 1
-	addi	9, 9, 16
-	lvx	21, 9, 1
-	addi	9, 9, 16
-	lvx	22, 9, 1
-	addi	9, 9, 16
-	lvx	23, 9, 1
-	addi	9, 9, 16
-	lvx	24, 9, 1
-	addi	9, 9, 16
-	lvx	25, 9, 1
-	addi	9, 9, 16
-	lvx	26, 9, 1
-	addi	9, 9, 16
-	lvx	27, 9, 1
-	addi	9, 9, 16
-	lvx	28, 9, 1
-	addi	9, 9, 16
-	lvx	29, 9, 1
-	addi	9, 9, 16
-	lvx	30, 9, 1
-	addi	9, 9, 16
-	lvx	31, 9, 1
-
-	ld	0, 528(1)
-	ld	14,112(1)
-	ld	15,120(1)
-	ld	16,128(1)
-	ld	17,136(1)
-	ld	18,144(1)
-	ld	19,152(1)
-	ld	20,160(1)
-	ld	21,168(1)
-
-	mtlr	0
-	addi	1, 1, 512
-	blr	
 
 
 
@@ -901,156 +697,78 @@ aes_gcm_out:
 .global	ppc_aes_gcm_decrypt
 .align	5
 ppc_aes_gcm_decrypt:
-_ppc_aes_gcm_decrypt:
+.localentry	ppc_aes_gcm_decrypt, 0
 
-	stdu	1,-512(1)
-	mflr	0
-
-	std	14,112(1)
-	std	15,120(1)
-	std	16,128(1)
-	std	17,136(1)
-	std	18,144(1)
-	std	19,152(1)
-	std	20,160(1)
-	std	21,168(1)
-	li	9, 256
-	stvx	20, 9, 1
-	addi	9, 9, 16
-	stvx	21, 9, 1
-	addi	9, 9, 16
-	stvx	22, 9, 1
-	addi	9, 9, 16
-	stvx	23, 9, 1
-	addi	9, 9, 16
-	stvx	24, 9, 1
-	addi	9, 9, 16
-	stvx	25, 9, 1
-	addi	9, 9, 16
-	stvx	26, 9, 1
-	addi	9, 9, 16
-	stvx	27, 9, 1
-	addi	9, 9, 16
-	stvx	28, 9, 1
-	addi	9, 9, 16
-	stvx	29, 9, 1
-	addi	9, 9, 16
-	stvx	30, 9, 1
-	addi	9, 9, 16
-	stvx	31, 9, 1
-	std	0, 528(1)
-
-
-	lxvb16x	32, 0, 8
-
-
-	li	10, 32
-	lxvd2x	2+32, 10, 8
-	li	10, 48
-	lxvd2x	3+32, 10, 8
-	li	10, 64
-	lxvd2x	4+32, 10, 8
-	li	10, 80
-	lxvd2x	5+32, 10, 8
-
-	li	10, 96
-	lxvd2x	6+32, 10, 8
-	li	10, 112
-	lxvd2x	7+32, 10, 8
-	li	10, 128
-	lxvd2x	8+32, 10, 8
-
-	li	10, 144
-	lxvd2x	9+32, 10, 8
-	li	10, 160
-	lxvd2x	10+32, 10, 8
-	li	10, 176
-	lxvd2x	11+32, 10, 8
-
-	li	10, 192
-	lxvd2x	12+32, 10, 8
-	li	10, 208
-	lxvd2x	13+32, 10, 8
-	li	10, 224
-	lxvd2x	14+32, 10, 8
+	SAVE_REGS	
+.LOAD_HASH_TABLE	
 
 
 	lxvb16x	30+32, 0, 7
 
-	mr	12, 5
-	li	11, 0
+	mr	14, 3
+	mr	9, 4
 
 
 	vxor	31, 31, 31
 	vspltisb	22,1
 	vsldoi	31, 31, 22,1
 
+	addis	11, 2, permx@toc@ha
+	addi	11, 11, permx@toc@l
+	lxv	10, 0(11)
+	li	11, 0
 
 	lxv	0, 0(6)
-	lxv	1, 0x10(6)
-	lxv	2, 0x20(6)
-	lxv	3, 0x30(6)
-	lxv	4, 0x40(6)
-	lxv	5, 0x50(6)
-	lxv	6, 0x60(6)
-	lxv	7, 0x70(6)
-	lxv	8, 0x80(6)
-	lxv	9, 0x90(6)
-	lxv	10, 0xa0(6)
-
-
-	lwz	9,240(6)
 
 
 
-	xxlor	32+29, 0, 0
-	vxor	15, 30, 29
 
-	cmpdi	9, 10
-	beq	.Loop_aes_gcm_8x_dec
+	cmpdi	5, 128
+	blt	__Process_more_dec
 
 
-	lxv	11, 0xb0(6)
-	lxv	12, 0xc0(6)
+	lxv	32+23, 16(6)
+	lxv	32+24, 32(6)
+	lxv	32+25, 48(6)
+	lxv	32+26, 64(6)
+	lxv	32+27, 80(6)
+	lxv	32+28, 96(6)
+	lxv	32+29, 112(6)
+	lxv	32+1, 128(6)
 
-	cmpdi	9, 12
-	beq	.Loop_aes_gcm_8x_dec
+
+	lwz	23, 240(6)
+
+__Process_decrypt:
 
 
-	lxv	13, 0xd0(6)
-	lxv	14, 0xe0(6)
-	cmpdi	9, 14
-	beq	.Loop_aes_gcm_8x_dec
 
-	b	aes_gcm_out
-
-.align	5
-.Loop_aes_gcm_8x_dec:
-	mr	14, 3
-	mr	9, 4
-
+__Process_8x_dec:
 
 	li	10, 128
-	divdu	10, 5, 10
-	cmpdi	10, 0
-	beq	.Loop_last_block_dec
+	divdu	12, 5, 10
 
-.long	0x13DEF8C0
-	vxor	16, 30, 29
-.long	0x13DEF8C0
-	vxor	17, 30, 29
-.long	0x13DEF8C0
-	vxor	18, 30, 29
-.long	0x13DEF8C0
-	vxor	19, 30, 29
-.long	0x13DEF8C0
-	vxor	20, 30, 29
-.long	0x13DEF8C0
-	vxor	21, 30, 29
-.long	0x13DEF8C0
-	vxor	22, 30, 29
+	addi	12, 12, -1
 
-	mtctr	10
+	vor	15,30,30
+	vadduwm	16, 15, 31
+	vadduwm	17, 16, 31
+	vadduwm	18, 17, 31
+	vadduwm	19, 18, 31
+	vadduwm	20, 19, 31
+	vadduwm	21, 20, 31
+	vadduwm	22, 21, 31
+	xxlor	9, 32+22, 32+22
+
+
+	xxlxor	32+15, 32+15, 0
+	xxlxor	32+16, 32+16, 0
+	xxlxor	32+17, 32+17, 0
+	xxlxor	32+18, 32+18, 0
+	xxlxor	32+19, 32+19, 0
+	xxlxor	32+20, 32+20, 0
+	xxlxor	32+21, 32+21, 0
+	xxlxor	32+22, 32+22, 0
 
 	li	15, 16
 	li	16, 32
@@ -1060,279 +778,215 @@ _ppc_aes_gcm_decrypt:
 	li	20, 96
 	li	21, 112
 
-	lwz	10, 240(6)
 
-.Loop_8x_block_dec:
 
-	lxvb16x	15, 0, 14
-	lxvb16x	16, 15, 14
-	lxvb16x	17, 16, 14
-	lxvb16x	18, 17, 14
-	lxvb16x	19, 18, 14
-	lxvb16x	20, 19, 14
-	lxvb16x	21, 20, 14
-	lxvb16x	22, 21, 14
+
+
+	addi	22, 23, -9
+	mtctr	22
+	addi	10, 6, 144
+
+.LOOP_8AES_STATE	
+
+__PreLoop_aes_state_dec:
+	lxv	32+1, 0(10)
+	AES_CIPHER_8x	1
+	addi	10, 10, 16
+	bdnz	__PreLoop_aes_state_dec
+	lxv	32+1, 0(10)
+
+	cmpdi	12, 0
+	beq	__Finish_ghash_dec
+
+
+
+
+__Loop_8x_block_dec:
+	.long	0x11EF0D09
+	.long	0x12100D09
+	.long	0x12310D09
+	.long	0x12520D09
+	.long	0x12730D09
+	.long	0x12940D09
+	.long	0x12B50D09
+	.long	0x12D60D09
+
+	lxvb16x	32+23, 0, 14
+	lxvb16x	32+24, 15, 14
+	lxvb16x	32+25, 16, 14
+	lxvb16x	32+26, 17, 14
+	lxvb16x	32+27, 18, 14
+	lxvb16x	32+28, 19, 14
+	lxvb16x	32+29, 20, 14
+	lxvb16x	32+30, 21, 14
 	addi	14, 14, 128
 
-.Loop_aes_middle8x	
+	vxor	15, 15, 23
+	vxor	16, 16, 24
+	vxor	17, 17, 25
+	vxor	18, 18, 26
+	vxor	19, 19, 27
+	vxor	20, 20, 28
+	vxor	21, 21, 29
+	vxor	22, 22, 30
 
-	xxlor	23+32, 10, 10
-
-	cmpdi	10, 10
-	beq	Do_last_aes_dec
-
-
-	xxlor	24+32, 11, 11
-
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
-
-.long	0x11EFC508
-.long	0x1210C508
-.long	0x1231C508
-.long	0x1252C508
-.long	0x1273C508
-.long	0x1294C508
-.long	0x12B5C508
-.long	0x12D6C508
-
-	xxlor	23+32, 12, 12
-
-	cmpdi	10, 12
-	beq	Do_last_aes_dec
-
-
-	xxlor	24+32, 13, 13
-
-.long	0x11EFBD08
-.long	0x1210BD08
-.long	0x1231BD08
-.long	0x1252BD08
-.long	0x1273BD08
-.long	0x1294BD08
-.long	0x12B5BD08
-.long	0x12D6BD08
-
-.long	0x11EFC508
-.long	0x1210C508
-.long	0x1231C508
-.long	0x1252C508
-.long	0x1273C508
-.long	0x1294C508
-.long	0x12B5C508
-.long	0x12D6C508
-
-	xxlor	23+32, 14, 14
-
-	cmpdi	10, 14
-	beq	Do_last_aes_dec
-	b	aes_gcm_out
-
-Do_last_aes_dec:
-
-
-
-.long	0x11EFBD09
-.long	0x1210BD09
-
-	xxlxor	47, 47, 15
 	stxvb16x	47, 0, 9
-	xxlxor	48, 48, 16
 	stxvb16x	48, 15, 9
-
-.long	0x1231BD09
-.long	0x1252BD09
-
-	xxlxor	49, 49, 17
 	stxvb16x	49, 16, 9
-	xxlxor	50, 50, 18
 	stxvb16x	50, 17, 9
-
-.long	0x1273BD09
-.long	0x1294BD09
-
-	xxlxor	51, 51, 19
 	stxvb16x	51, 18, 9
-	xxlxor	52, 52, 20
 	stxvb16x	52, 19, 9
-
-.long	0x12B5BD09
-.long	0x12D6BD09
-
-	xxlxor	53, 53, 21
 	stxvb16x	53, 20, 9
-	xxlxor	54, 54, 22
 	stxvb16x	54, 21, 9
 
 	addi	9, 9, 128
 
-	xxlor	15+32, 15, 15
-	xxlor	16+32, 16, 16
-	xxlor	17+32, 17, 17
-	xxlor	18+32, 18, 18
-	xxlor	19+32, 19, 19
-	xxlor	20+32, 20, 20
-	xxlor	21+32, 21, 21
-	xxlor	22+32, 22, 22
+	vor	15,23,23
+	vor	16,24,24
+	vor	17,25,25
+	vor	18,26,26
+	vor	19,27,27
+	vor	20,28,28
+	vor	21,29,29
+	vor	22,30,30
 
 
-	ppc_aes_gcm_ghash2_4x	
+	vxor	15, 15, 0
+	PPC_GFMUL128_8x	
 
-	xxlor	27+32, 0, 0
-.long	0x13DEF8C0
-	vor	29,30,30
-	vxor	15, 30, 27
-.long	0x13DEF8C0
-	vxor	16, 30, 27
-.long	0x13DEF8C0
-	vxor	17, 30, 27
-.long	0x13DEF8C0
-	vxor	18, 30, 27
-.long	0x13DEF8C0
-	vxor	19, 30, 27
-.long	0x13DEF8C0
-	vxor	20, 30, 27
-.long	0x13DEF8C0
-	vxor	21, 30, 27
-.long	0x13DEF8C0
-	vxor	22, 30, 27
-	addi	12, 12, -128
+	xxlor	32+15, 9, 9
+	vadduwm	15, 15, 31
+	vadduwm	16, 15, 31
+	vadduwm	17, 16, 31
+	vadduwm	18, 17, 31
+	vadduwm	19, 18, 31
+	vadduwm	20, 19, 31
+	vadduwm	21, 20, 31
+	vadduwm	22, 21, 31
+	xxlor	9, 32+22, 32+22
+
+	xxlor	32+27, 0, 0
+	vxor	15, 15, 27
+	vxor	16, 16, 27
+	vxor	17, 17, 27
+	vxor	18, 18, 27
+	vxor	19, 19, 27
+	vxor	20, 20, 27
+	vxor	21, 21, 27
+	vxor	22, 22, 27
+
+	addi	5, 5, -128
 	addi	11, 11, 128
 
-	bc	16,0,.Loop_8x_block_dec
+	lxv	32+23, 16(6)
+	lxv	32+24, 32(6)
+	lxv	32+25, 48(6)
+	lxv	32+26, 64(6)
+	lxv	32+27, 80(6)
+	lxv	32+28, 96(6)
+	lxv	32+29, 112(6)
+	lxv	32+1, 128(6)
 
-	vor	30,29,29
-
-.Loop_last_block_dec:
-	cmpdi	12, 0
-	beq	aes_gcm_out
-
-
-	li	10, 16
-	divdu	10, 12, 10
-
-	mtctr	10
-
-	lwz	10,240(6)
-
-	cmpdi	12, 16
-	blt	Final_block_dec
-
-Next_rem_block_dec:
-	lxvb16x	15, 0, 14
-
-.Loop_aes_middle_1x	
-
-	xxlor	23+32, 10, 10
-
-	cmpdi	10, 10
-	beq	Do_next_1x_dec
-
-
-	xxlor	24+32, 11, 11
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 12, 12
-
-	cmpdi	10, 12
-	beq	Do_next_1x_dec
-
-
-	xxlor	24+32, 13, 13
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 14, 14
-
-	cmpdi	10, 14
-	beq	Do_next_1x_dec
-
-Do_next_1x_dec:
-.long	0x11EFBD09
-
-	xxlxor	47, 47, 15
-	stxvb16x	47, 0, 9
-	addi	14, 14, 16
-	addi	9, 9, 16
-
-	xxlor	28+32, 15, 15
-	ppc_update_hash_1x	
-
-	addi	12, 12, -16
-	addi	11, 11, 16
-	xxlor	19+32, 0, 0
-.long	0x13DEF8C0
-	vxor	15, 30, 19
-
-	bc	16,0,Next_rem_block_dec
-
-	cmpdi	12, 0
-	beq	aes_gcm_out
-
-Final_block_dec:
-.Loop_aes_middle_1x	
-
-	xxlor	23+32, 10, 10
-
-	cmpdi	10, 10
-	beq	Do_final_1x_dec
-
-
-	xxlor	24+32, 11, 11
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 12, 12
-
-	cmpdi	10, 12
-	beq	Do_final_1x_dec
-
-
-	xxlor	24+32, 13, 13
-
-.long	0x11EFBD08
-.long	0x11EFC508
-
-	xxlor	23+32, 14, 14
-
-	cmpdi	10, 14
-	beq	Do_final_1x_dec
-
-Do_final_1x_dec:
-.long	0x11EFBD09
-
-	lxvb16x	15, 0, 14
-	xxlxor	47, 47, 15
-
-
-	li	15, 16
-	sub	15, 15, 12
-
-	vspltisb	16,-1
-	vspltisb	17,0
-	li	10, 192
-	stvx	16, 10, 1
+.LOOP_8AES_STATE	
+	mtctr	22
+	addi	10, 6, 144
+__LastLoop_aes_state_dec:
+	lxv	32+1, 0(10)
+	AES_CIPHER_8x	1
 	addi	10, 10, 16
-	stvx	17, 10, 1
+	bdnz	__LastLoop_aes_state_dec
+	lxv	32+1, 0(10)
 
-	addi	10, 1, 192
-	lxvb16x	16, 15, 10
-	xxland	47, 47, 16
+	addi	12, 12, -1
+	cmpdi	12, 0
+	bne	__Loop_8x_block_dec
 
-	xxlor	28+32, 15, 15
-	ppc_update_hash_1x	
+__Finish_ghash_dec:
+	.long	0x11EF0D09
+	.long	0x12100D09
+	.long	0x12310D09
+	.long	0x12520D09
+	.long	0x12730D09
+	.long	0x12940D09
+	.long	0x12B50D09
+	.long	0x12D60D09
+
+	lxvb16x	32+23, 0, 14
+	lxvb16x	32+24, 15, 14
+	lxvb16x	32+25, 16, 14
+	lxvb16x	32+26, 17, 14
+	lxvb16x	32+27, 18, 14
+	lxvb16x	32+28, 19, 14
+	lxvb16x	32+29, 20, 14
+	lxvb16x	32+30, 21, 14
+	addi	14, 14, 128
+
+	vxor	15, 15, 23
+	vxor	16, 16, 24
+	vxor	17, 17, 25
+	vxor	18, 18, 26
+	vxor	19, 19, 27
+	vxor	20, 20, 28
+	vxor	21, 21, 29
+	vxor	22, 22, 30
+
+	stxvb16x	47, 0, 9
+	stxvb16x	48, 15, 9
+	stxvb16x	49, 16, 9
+	stxvb16x	50, 17, 9
+	stxvb16x	51, 18, 9
+	stxvb16x	52, 19, 9
+	stxvb16x	53, 20, 9
+	stxvb16x	54, 21, 9
+	addi	9, 9, 128
+
+	vxor	15, 23, 0
+	vor	16,24,24
+	vor	17,25,25
+	vor	18,26,26
+	vor	19,27,27
+	vor	20,28,28
+	vor	21,29,29
+	vor	22,30,30
 
 
-	bl	Write_partial_block
+	PPC_GFMUL128_8x	
 
+	xxlor	30+32, 9, 9
+	vadduwm	30, 30, 31
+	stxvb16x	32+0, 0, 8
+
+	addi	5, 5, -128
+	addi	11, 11, 128
+
+
+
+
+
+	cmpdi	5, 0
+	beq	aes_gcm_out
+
+__Process_more_dec:
+	li	24, 0
+	bl	aes_gcm_crypt_1x
+	cmpdi	5, 0
+	beq	aes_gcm_out
+
+	bl	__Process_partial
 	b	aes_gcm_out
+.size	ppc_aes_gcm_decrypt,.-ppc_aes_gcm_decrypt
+
+aes_gcm_out:
+.localentry	aes_gcm_out,0
+
+	mr	3, 11
+
+	RESTORE_REGS	
+	blr	
+.size	aes_gcm_out,.-aes_gcm_out
+
+.rodata	
+.align	4
+
+permx:
+.long	0x4c5d6e7f, 0x08192a3b, 0xc4d5e6f7, 0x8091a2b3

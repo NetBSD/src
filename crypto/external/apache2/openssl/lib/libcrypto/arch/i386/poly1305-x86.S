@@ -1383,7 +1383,7 @@ _poly1305_emit_sse2:
 .byte	60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111
 .byte	114,103,62,0
 .align	4
-.comm	OPENSSL_ia32cap_P,16,4
+.comm	OPENSSL_ia32cap_P,40,4
 
 	.section ".note.gnu.property", "a"
 	.p2align 2
