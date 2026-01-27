@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2026/01/25 10:36:05 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2026/01/27 07:23:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2026/01/25 10:36:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2026/01/27 07:23:43 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -888,6 +888,65 @@ pmap_activate(struct lwp *l)
 }
 
 /*
+ *	Make a previously active pmap (vmspace) inactive.
+ */
+void
+pmap_deactivate(struct lwp *l)
+{
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "(l=%#jx pmap=%#jx)", (uintptr_t)l,
+	    (uintptr_t)pmap, 0, 0);
+	PMAP_COUNT(deactivate);
+
+	kpreempt_disable();
+	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
+	pmap_tlb_miss_lock_enter();
+	pmap_tlb_asid_deactivate(pmap);
+	pmap_segtab_deactivate(pmap);
+	pmap_tlb_miss_lock_exit();
+	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, " <-- done (%ju:%ju)", l->l_proc->p_pid,
+	    l->l_lid, 0, 0);
+}
+
+void
+pmap_update(struct pmap *pmap)
+{
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx)", (uintptr_t)pmap, 0, 0, 0);
+	PMAP_COUNT(update);
+
+	kpreempt_disable();
+#if defined(MULTIPROCESSOR) && defined(PMAP_TLB_NEED_SHOOTDOWN)
+	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
+	if (pending && pmap_tlb_shootdown_bystanders(pmap))
+		PMAP_COUNT(shootdown_ipis);
+#endif
+	pmap_tlb_miss_lock_enter();
+#if defined(DEBUG) && !defined(MULTIPROCESSOR)
+	pmap_tlb_check(pmap, pmap_md_tlb_check_entry);
+#endif /* DEBUG */
+
+	/*
+	 * If pmap_remove_all was called, we deactivated ourselves and nuked
+	 * our ASID.  Now we have to reactivate ourselves.
+	 */
+	if (__predict_false(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
+		pmap->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
+		pmap_tlb_asid_acquire(pmap, curlwp);
+		pmap_segtab_activate(pmap, curlwp);
+	}
+	pmap_tlb_miss_lock_exit();
+	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jd)",
+		    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
+}
+
+/*
  * Remove this page from all physical maps in which it resides.
  * Reflects back modify bits to the pager.
  */
@@ -1038,65 +1097,6 @@ pmap_pv_protect(paddr_t pa, vm_prot_t prot)
 	pmap_page_remove(mdpg);
 }
 #endif
-
-/*
- *	Make a previously active pmap (vmspace) inactive.
- */
-void
-pmap_deactivate(struct lwp *l)
-{
-	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(l=%#jx pmap=%#jx)", (uintptr_t)l,
-	    (uintptr_t)pmap, 0, 0);
-	PMAP_COUNT(deactivate);
-
-	kpreempt_disable();
-	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
-	pmap_tlb_miss_lock_enter();
-	pmap_tlb_asid_deactivate(pmap);
-	pmap_segtab_deactivate(pmap);
-	pmap_tlb_miss_lock_exit();
-	kpreempt_enable();
-
-	UVMHIST_LOG(pmaphist, " <-- done (%ju:%ju)", l->l_proc->p_pid,
-	    l->l_lid, 0, 0);
-}
-
-void
-pmap_update(struct pmap *pmap)
-{
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx)", (uintptr_t)pmap, 0, 0, 0);
-	PMAP_COUNT(update);
-
-	kpreempt_disable();
-#if defined(MULTIPROCESSOR) && defined(PMAP_TLB_NEED_SHOOTDOWN)
-	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
-	if (pending && pmap_tlb_shootdown_bystanders(pmap))
-		PMAP_COUNT(shootdown_ipis);
-#endif
-	pmap_tlb_miss_lock_enter();
-#if defined(DEBUG) && !defined(MULTIPROCESSOR)
-	pmap_tlb_check(pmap, pmap_md_tlb_check_entry);
-#endif /* DEBUG */
-
-	/*
-	 * If pmap_remove_all was called, we deactivated ourselves and nuked
-	 * our ASID.  Now we have to reactivate ourselves.
-	 */
-	if (__predict_false(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
-		pmap->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
-		pmap_tlb_asid_acquire(pmap, curlwp);
-		pmap_segtab_activate(pmap, curlwp);
-	}
-	pmap_tlb_miss_lock_exit();
-	kpreempt_enable();
-
-	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jd)",
-		    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
-}
 
 /*
  *	Remove the given range of addresses from the specified map.
