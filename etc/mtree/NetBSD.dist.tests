@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.212 2025/11/29 01:28:48 nia Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.213 2026/01/28 16:04:40 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -15,6 +15,7 @@
 ./usr/libdata/debug/usr/tests/compat/linux
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
+./usr/libdata/debug/usr/tests/crypto/libcrypto/store
 ./usr/libdata/debug/usr/tests/crypto/opencrypto
 ./usr/libdata/debug/usr/tests/dev
 ./usr/libdata/debug/usr/tests/dev/audio
