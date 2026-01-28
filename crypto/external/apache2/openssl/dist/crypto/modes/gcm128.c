@@ -386,11 +386,13 @@ void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 #endif
 #elif defined(__sparc__) || defined(__sparc)
 #include "crypto/sparc_arch.h"
+#if defined(__arch64__)
 #define GHASH_ASM_SPARC
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
     size_t len);
+#endif
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC))
 #include "crypto/ppc_arch.h"
 #define GHASH_ASM_PPC
