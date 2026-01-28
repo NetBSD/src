@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.3 2025/07/20 16:56:31 christos Exp $
+#	$NetBSD: man.inc,v 1.4 2026/01/28 14:04:32 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -349,7 +349,6 @@ EVP_sm4_cbc.3 \
 EVP_whirlpool.3 \
 GENERAL_NAME.3 \
 HMAC.3 \
-MD5.3 \
 MDC2_Init.3 \
 NCONF_new_ex.3 \
 OBJ_nid2obj.3 \
