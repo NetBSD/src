@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.6 2026/01/28 10:14:54 yurix Exp $ */
+/* $Id: imx23_digfilt.c,v 1.7 2026/01/28 10:18:11 yurix Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -105,16 +105,11 @@ static void digfilt_ai_reset(struct digfilt_softc *);
 	bus_space_read_4(sc->sc_iot, sc->sc_aohdl, (reg))
 #define AO_WR(sc, reg, val)						\
 	bus_space_write_4(sc->sc_iot, sc->sc_aohdl, (reg), (val))
-#define AI_RD(sc, reg)							\
-	bus_space_read_4(sc->sc_iot, sc->sc_aihdl, (reg))
-#define AI_WR(sc, reg, val)						\
-	bus_space_write_4(sc->sc_iot, sc->sc_aihdl, (reg), (val))
 
 struct digfilt_softc {
 	device_t sc_dev;
 	device_t sc_audiodev;
 	struct audio_format sc_format;
-	bus_space_handle_t sc_aihdl;
 	bus_space_handle_t sc_aohdl;
 	apbdma_softc_t sc_dmac;
 	bus_dma_tag_t sc_dmat;
@@ -254,15 +249,6 @@ digfilt_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_aohdl)) {
 		aprint_error_dev(sc->sc_dev,
 			"Unable to submap AUDIOOUT bus space\n");
-		return;
-	}
-
-	/* Map AUDIOIN subregion from parent bus space. */
-	if (bus_space_subregion(sc->sc_iot, sc->sc_hdl,
-	    (HW_AUDIOIN_BASE - HW_DIGFILT_BASE), HW_AUDIOIN_SIZE,
-	    &sc->sc_aihdl)) {
-		aprint_error_dev(sc->sc_dev,
-			"Unable to submap AUDIOIN bus space\n");
 		return;
 	}
 
@@ -1061,50 +1047,3 @@ digfilt_ao_set_rate(struct digfilt_softc *sc, int sr)
 
 	return;
 }
-#if 0
-/*
- * Reset the AUDIOIN block.
- *
- * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
- */
-static void
-digfilt_ai_reset(struct digfilt_softc *sc)
-{
-	unsigned int loop;
-
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
-	* asserted. Also clear CLKGATE so we can wait for its assertion below.
-	*/
-	AI_WR(sc, HW_AUDIOIN_CTRL_CLR, HW_AUDIOIN_CTRL_SFTRST);
-
-	/* Wait at least a microsecond for SFTRST to deassert. */
-	loop = 0;
-	while ((AI_RD(sc, HW_AUDIOIN_CTRL) & HW_AUDIOIN_CTRL_SFTRST) ||
-	    (loop < DIGFILT_SOFT_RST_LOOP))
-		loop++;
-
-	/* Clear CLKGATE so we can wait for its assertion below. */
-	AI_WR(sc, HW_AUDIOIN_CTRL_CLR, HW_AUDIOIN_CTRL_CLKGATE);
-
-	/* Soft-reset the block. */
-	AI_WR(sc, HW_AUDIOIN_CTRL_SET, HW_AUDIOIN_CTRL_SFTRST);
-
-	/* Wait until clock is in the gated state. */
-	while (!(AI_RD(sc, HW_AUDIOIN_CTRL) & HW_AUDIOIN_CTRL_CLKGATE));
-
-	/* Bring block out of reset. */
-	AI_WR(sc, HW_AUDIOIN_CTRL_CLR, HW_AUDIOIN_CTRL_SFTRST);
-
-	loop = 0;
-	while ((AI_RD(sc, HW_AUDIOIN_CTRL) & HW_AUDIOIN_CTRL_SFTRST) ||
-	    (loop < DIGFILT_SOFT_RST_LOOP))
-		loop++;
-
-	AI_WR(sc, HW_AUDIOIN_CTRL_CLR, HW_AUDIOIN_CTRL_CLKGATE);
-
-	/* Wait until clock is in the NON-gated state. */
-	while (AI_RD(sc, HW_AUDIOIN_CTRL) & HW_AUDIOIN_CTRL_CLKGATE);
-
-	return;
-}
-#endif
