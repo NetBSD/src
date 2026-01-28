@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2025/01/14 19:58:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.13 2026/01/28 20:14:35 christos Exp $
 
 LIBISPRIVATE=pic
 
@@ -38,6 +38,7 @@ stream.c \
 strtok.c \
 tcp.c \
 thread.c \
+thread-common.c \
 tty.c \
 udp.c
 
