@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.5 2025/10/02 06:51:15 skrll Exp $ */
+/* $Id: imx23_digfilt.c,v 1.6 2026/01/28 10:14:54 yurix Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ digfilt_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	/* HW supported formats. */
-	sc->sc_format.mode = AUMODE_PLAY|AUMODE_RECORD;
+	sc->sc_format.mode = AUMODE_PLAY;
 	sc->sc_format.encoding = AUDIO_ENCODING_SLINEAR_LE;
 	sc->sc_format.validbits = 16;
 	sc->sc_format.precision = 16;
@@ -363,6 +363,8 @@ digfilt_set_format(void *priv, int setmode,
 	struct digfilt_softc *sc = priv;
 
 	if ((setmode & AUMODE_PLAY)) {
+		sc->sc_pparam = *play;
+
 		/* At this point bitrate should be figured out. */
 		digfilt_ao_set_rate(sc, sc->sc_pparam.sample_rate);
 	}
@@ -372,7 +374,7 @@ digfilt_set_format(void *priv, int setmode,
 
 static int
 digfilt_round_blocksize(void *priv, int bs, int mode,
-const audio_params_t *param)
+			const audio_params_t *param)
 {
 	int blocksize;
 
@@ -460,6 +462,10 @@ digfilt_halt_output(void *priv)
 	struct digfilt_softc *sc = priv;
 
 	sc->sc_cmd_index = 0;
+
+	/* We have intr lock when this is called */
+	sc->sc_intr = NULL;
+
 	return 0;
 }
 
@@ -765,17 +771,13 @@ digfilt_freem(void *priv, void *kvap, size_t size)
 static size_t
 digfilt_round_buffersize(void *hdl, int direction, size_t bs)
 {
-	int bufsize;
-
-	bufsize = bs & ~(DIGFILT_BLOCKSIZE_MAX-1);
-
-	return bufsize;
+	return bs;
 }
 
 static int
 digfilt_get_props(void *sc)
 {
-	return (AUDIO_PROP_PLAYBACK | AUDIO_PROP_INDEPENDENT);
+	return AUDIO_PROP_PLAYBACK;
 }
 
 static void
@@ -818,7 +820,11 @@ dac_dma_intr(void *arg)
 		apbdma_ack_error_intr(sc->sc_dmac, DIGFILT_DMA_CHANNEL);
 	}
 
-	sc->sc_intr(sc->sc_intarg);
+	/* When halting, the driver finishes playing the current block, but
+	 * the audio subsystem no longer expects us to call back */
+	if(sc->sc_intr != NULL) {
+		sc->sc_intr(sc->sc_intarg);
+	}
 	apbdma_ack_intr(sc->sc_dmac, DIGFILT_DMA_CHANNEL);
 
 	mutex_exit(&sc->sc_intr_lock);
