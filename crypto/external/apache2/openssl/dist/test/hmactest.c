@@ -84,7 +84,6 @@ static struct test_st {
 
 static char *pt(unsigned char *md, unsigned int len);
 
-<<<<<<< hmactest.c
 #define UC(a)	((const unsigned char *)(a))
 
 
