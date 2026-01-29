@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1028 2026/01/19 02:45:14 mrg Exp $
+# $NetBSD: shl.mi,v 1.1029 2026/01/29 18:38:15 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -307,8 +307,8 @@
 ./usr/lib/libdm.so.0				base-sys-shlib		compatfile
 ./usr/lib/libdm.so.0.0				base-sys-shlib		compatfile
 ./usr/lib/libdns.so				base-bind-shlib		compatfile
-./usr/lib/libdns.so.23				base-bind-shlib		compatfile
-./usr/lib/libdns.so.23.2			base-bind-shlib		compatfile
+./usr/lib/libdns.so.24				base-bind-shlib		compatfile
+./usr/lib/libdns.so.24.0			base-bind-shlib		compatfile
 ./usr/lib/libdns_sd.so				base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
@@ -400,7 +400,7 @@
 ./usr/lib/libisccc.so.23.0			base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so				base-bind-shlib		compatfile
 ./usr/lib/libisccfg.so.23			base-bind-shlib		compatfile
-./usr/lib/libisccfg.so.23.0			base-bind-shlib		compatfile
+./usr/lib/libisccfg.so.23.1			base-bind-shlib		compatfile
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi,compatfile
