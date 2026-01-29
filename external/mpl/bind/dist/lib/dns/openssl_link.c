@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.12 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.13 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,10 +54,10 @@
 
 #include "openssl_shim.h"
 
-#define DST_RET(a)        \
-	{                 \
-		ret = a;  \
-		goto err; \
+#define DST_RET(a)            \
+	{                     \
+		result = a;   \
+		goto cleanup; \
 	}
 
 #if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
@@ -234,7 +234,7 @@ dst__openssl_fromlabel_engine(int key_base_id, const char *engine,
 			      const char *label, const char *pin,
 			      EVP_PKEY **ppub, EVP_PKEY **ppriv) {
 #if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
-	isc_result_t ret = ISC_R_SUCCESS;
+	isc_result_t result = ISC_R_SUCCESS;
 	ENGINE *e = NULL;
 
 	UNUSED(pin);
@@ -261,8 +261,8 @@ dst__openssl_fromlabel_engine(int key_base_id, const char *engine,
 	if (EVP_PKEY_base_id(*ppriv) != key_base_id) {
 		DST_RET(DST_R_BADKEYTYPE);
 	}
-err:
-	return ret;
+cleanup:
+	return result;
 #else  /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 	UNUSED(key_base_id);
 	UNUSED(engine);
@@ -279,7 +279,7 @@ dst__openssl_fromlabel_provider(int key_base_id, const char *label,
 				const char *pin, EVP_PKEY **ppub,
 				EVP_PKEY **ppriv) {
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-	isc_result_t ret = DST_R_OPENSSLFAILURE;
+	isc_result_t result = DST_R_OPENSSLFAILURE;
 	OSSL_STORE_CTX *ctx = NULL;
 
 	UNUSED(pin);
@@ -321,11 +321,11 @@ dst__openssl_fromlabel_provider(int key_base_id, const char *label,
 		OSSL_STORE_INFO_free(info);
 	}
 	if (*ppriv != NULL && *ppub != NULL) {
-		ret = ISC_R_SUCCESS;
+		result = ISC_R_SUCCESS;
 	}
-err:
+cleanup:
 	OSSL_STORE_close(ctx);
-	return ret;
+	return result;
 #else
 	UNUSED(key_base_id);
 	UNUSED(label);

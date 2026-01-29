@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.13 2025/07/17 19:01:46 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.14 2026/01/29 18:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include <isc/once.h>
+#include <isc/result.h>
 #include <isc/util.h>
 
 static const char *description[ISC_R_NRESULTS] = {
@@ -229,6 +230,7 @@ static const char *description[ISC_R_NRESULTS] = {
 	[DNS_R_NODOHPATH] = "no DOHPATH",
 	[DNS_R_NOSKRFILE] = "no SKR file",
 	[DNS_R_NOSKRBUNDLE] = "no available SKR bundle",
+	[DNS_R_LOOPDETECTED] = "fetch loop detected",
 
 	[DST_R_UNSUPPORTEDALG] = "algorithm is unsupported",
 	[DST_R_CRYPTOFAILURE] = "crypto failure",
@@ -483,6 +485,7 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	[DNS_R_NODOHPATH] = "DNS_R_NODOHPATH",
 	[DNS_R_NOSKRFILE] = "DNS_R_NOSKRFILE",
 	[DNS_R_NOSKRBUNDLE] = "DNS_R_NOSKRBUNDLE",
+	[DNS_R_LOOPDETECTED] = "DNS_R_LOOPDETECTED",
 
 	[DST_R_UNSUPPORTEDALG] = "DST_R_UNSUPPORTEDALG",
 	[DST_R_CRYPTOFAILURE] = "DST_R_CRYPTOFAILURE",

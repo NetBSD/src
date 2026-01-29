@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.25 2025/07/17 19:01:47 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.26 2026/01/29 18:37:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -922,10 +922,10 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 				     sizeof(log_buf));
 		if (rrl_result != DNS_RRL_RESULT_OK) {
 			/*
-			 * Log dropped errors in the query category
+			 * Log dropped errors in the query-errors category
 			 * so that they are not lost in silence.
 			 * Starts of rate-limited bursts are logged in
-			 * NS_LOGCATEGORY_RRL.
+			 * DNS_LOGCATEGORY_RRL.
 			 */
 			if (wouldlog) {
 				ns_client_log(client,

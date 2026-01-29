@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap-ptr_23.c,v 1.9 2025/01/26 16:25:35 christos Exp $	*/
+/*	$NetBSD: nsap-ptr_23.c,v 1.10 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,9 +156,7 @@ tostruct_in_nsap_ptr(ARGS_TOSTRUCT) {
 	REQUIRE(nsap_ptr != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nsap_ptr->common.rdclass = rdata->rdclass;
-	nsap_ptr->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsap_ptr->common, link);
+	DNS_RDATACOMMON_INIT(nsap_ptr, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

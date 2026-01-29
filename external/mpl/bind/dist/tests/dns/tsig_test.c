@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.5 2025/05/21 14:48:06 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.6 2026/01/29 18:37:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,14 +39,6 @@
 #include <tests/dns.h>
 
 #define TEST_ORIGIN "test"
-
-#define CHECK(r)                               \
-	{                                      \
-		result = (r);                  \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	}
 
 static int
 setup_test(void **state) {

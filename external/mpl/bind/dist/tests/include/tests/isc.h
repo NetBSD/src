@@ -1,4 +1,4 @@
-/*	$NetBSD: isc.h,v 1.4 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: isc.h,v 1.5 2026/01/29 18:37:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,6 +66,16 @@ teardown_managers(void **state);
 
 #ifndef TESTS_DIR
 #define TESTS_DIR "./"
+#endif
+
+/* cmocka<2.0.0 compatibility */
+#ifndef assert_int_in_range
+#define assert_int_in_range(value, min, max) \
+	assert_in_range((value), (min), (max))
+#endif
+#ifndef assert_uint_in_range
+#define assert_uint_in_range(value, min, max) \
+	assert_in_range((value), (min), (max))
 #endif
 
 /* clang-format off */
@@ -186,8 +196,8 @@ teardown_managers(void **state);
 		setup_mctx(NULL);                                                       \
 		setup_workers(NULL);                                                    \
                                                                                         \
-		while ((c = isc_commandline_parse(argc, argv, "dlt:")) != -1)           \
-		{                                                                       \
+		while ((c = isc_commandline_parse(argc, argv, "dlt:")) !=               \
+		       -1) {                                                            \
 			switch (c) {                                                    \
 			case 'd':                                                       \
 				debug = true;                                           \

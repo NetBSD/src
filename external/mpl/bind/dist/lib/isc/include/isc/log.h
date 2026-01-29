@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.9 2025/01/26 16:25:41 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.10 2026/01/29 18:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <syslog.h> /* XXXDCL NT */
+#include <unistd.h>
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>

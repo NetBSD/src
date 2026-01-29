@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.h,v 1.8 2025/01/26 16:25:28 christos Exp $	*/
+/*	$NetBSD: rrl.h,v 1.9 2026/01/29 18:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -114,11 +114,11 @@ struct dns_rrl_entry {
 	unsigned int log_qname : DNS_RRL_QNAMES_BITS;
 
 #define DNS_RRL_TS_GEN_BITS 2
-	unsigned int ts_gen : DNS_RRL_TS_GEN_BITS;
+	unsigned int ts_gen   : DNS_RRL_TS_GEN_BITS;
 	unsigned int ts_valid : 1;
 #define DNS_RRL_HASH_GEN_BITS 1
 	unsigned int hash_gen : DNS_RRL_HASH_GEN_BITS;
-	unsigned int logged : 1;
+	unsigned int logged   : 1;
 #define DNS_RRL_LOG_BITS 11
 	unsigned int log_secs : DNS_RRL_LOG_BITS;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nonce.h,v 1.5 2025/01/26 16:25:41 christos Exp $	*/
+/*	$NetBSD: nonce.h,v 1.6 2026/01/29 18:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <isc/lang.h>
+#include <isc/random.h>
 
 /*! \file isc/nonce.h
  * \brief Provides a function for generating an arbitrarily long nonce.
@@ -25,8 +26,10 @@
 
 ISC_LANG_BEGINDECLS
 
-void
-isc_nonce_buf(void *buf, size_t buflen);
+static inline void
+isc_nonce_buf(void *buf, size_t buflen) {
+	isc_random_buf(buf, buflen);
+}
 /*!<
  * Fill 'buf', up to 'buflen' bytes, with random data from the
  * crypto provider's random function.

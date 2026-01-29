@@ -1,4 +1,4 @@
-/*	$NetBSD: atma_34.c,v 1.9 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: atma_34.c,v 1.10 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -226,9 +226,7 @@ tostruct_in_atma(ARGS_TOSTRUCT) {
 	REQUIRE(atma != NULL);
 	REQUIRE(rdata->length != 0);
 
-	atma->common.rdclass = rdata->rdclass;
-	atma->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&atma->common, link);
+	DNS_RDATACOMMON_INIT(atma, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	atma->format = r.base[0];

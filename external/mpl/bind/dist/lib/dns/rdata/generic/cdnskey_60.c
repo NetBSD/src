@@ -1,4 +1,4 @@
-/*	$NetBSD: cdnskey_60.c,v 1.9 2025/01/26 16:25:30 christos Exp $	*/
+/*	$NetBSD: cdnskey_60.c,v 1.10 2026/01/29 18:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,9 +90,7 @@ tostruct_cdnskey(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_cdnskey);
 
-	dnskey->common.rdclass = rdata->rdclass;
-	dnskey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dnskey->common, link);
+	DNS_RDATACOMMON_INIT(dnskey, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_key(CALL_TOSTRUCT);
 }

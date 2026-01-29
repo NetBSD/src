@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.12 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.13 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -513,10 +513,17 @@ key_collision(dst_key_t *dstkey, dns_name_t *name, const char *dir,
 	}
 
 	ISC_LIST_INIT(matchkeys);
-	result = dns_dnssec_findmatchingkeys(name, NULL, dir, NULL, now, mctx,
-					     &matchkeys);
+	bool keykey = false;
+
+	/*
+	 * DNSKEY and KEY both use the same file names patterns so
+	 * we have to look for both sets of keys.
+	 */
+again:
+	result = dns_dnssec_findmatchingkeys(name, NULL, dir, NULL, now, keykey,
+					     mctx, &matchkeys);
 	if (result == ISC_R_NOTFOUND) {
-		return false;
+		goto try_key;
 	}
 
 	while (!ISC_LIST_EMPTY(matchkeys) && !conflict) {
@@ -560,17 +567,22 @@ key_collision(dst_key_t *dstkey, dns_name_t *name, const char *dir,
 		dns_dnsseckey_destroy(mctx, &key);
 	}
 
+try_key:
+	if (!conflict && !keykey) {
+		keykey = true;
+		goto again;
+	}
 	return conflict;
 }
 
 bool
-isoptarg(const char *arg, char **argv, void (*usage)(void)) {
+isoptarg(const char *arg, char **argv, void (*usage)(int ret)) {
 	if (!strcasecmp(isc_commandline_argument, arg)) {
 		if (argv[isc_commandline_index] == NULL) {
 			fprintf(stderr, "%s: missing argument -%c %s\n",
 				program, isc_commandline_option,
 				isc_commandline_argument);
-			usage();
+			usage(EXIT_FAILURE);
 		}
 		isc_commandline_argument = argv[isc_commandline_index];
 		/* skip to next argument */
@@ -630,6 +642,9 @@ kasp_from_conf(cfg_obj_t *config, isc_mem_t *mctx, isc_log_t *lctx,
 	const cfg_obj_t *keystores = NULL;
 	dns_keystore_t *ks = NULL, *ks_next;
 	dns_keystorelist_t kslist;
+	unsigned int options = (ISCCFG_KASPCONF_CHECK_ALGORITHMS |
+				ISCCFG_KASPCONF_CHECK_KEYLIST |
+				ISCCFG_KASPCONF_LOG_ERRORS);
 
 	ISC_LIST_INIT(kasplist);
 	ISC_LIST_INIT(kslist);
@@ -670,7 +685,7 @@ kasp_from_conf(cfg_obj_t *config, isc_mem_t *mctx, isc_log_t *lctx,
 			continue;
 		}
 
-		result = cfg_kasp_fromconfig(kconfig, NULL, true, mctx, lctx,
+		result = cfg_kasp_fromconfig(kconfig, NULL, options, mctx, lctx,
 					     &kslist, &kasplist, &kasp);
 		if (result != ISC_R_SUCCESS) {
 			fatal("failed to configure dnssec-policy '%s': %s",

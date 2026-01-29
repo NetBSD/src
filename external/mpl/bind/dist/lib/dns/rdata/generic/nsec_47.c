@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec_47.c,v 1.10 2025/01/26 16:25:32 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.11 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -167,9 +167,7 @@ tostruct_nsec(ARGS_TOSTRUCT) {
 	REQUIRE(nsec != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nsec->common.rdclass = rdata->rdclass;
-	nsec->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsec->common, link);
+	DNS_RDATACOMMON_INIT(nsec, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

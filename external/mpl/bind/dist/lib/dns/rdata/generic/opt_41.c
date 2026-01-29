@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.14 2025/07/17 19:01:46 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.15 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -330,9 +330,7 @@ tostruct_opt(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_opt);
 	REQUIRE(opt != NULL);
 
-	opt->common.rdclass = rdata->rdclass;
-	opt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&opt->common, link);
+	DNS_RDATACOMMON_INIT(opt, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	opt->length = r.length;

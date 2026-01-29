@@ -1,4 +1,4 @@
-/*	$NetBSD: urcu.h,v 1.2 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: urcu.h,v 1.3 2026/01/29 18:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -141,3 +141,32 @@
 
 #endif /* !defined(caa_container_of_check_null) */
 /* clang-format on */
+
+#ifdef __SANITIZE_THREAD__
+
+/*
+ * Restore the behaviour removed in
+ * https://github.com/urcu/userspace-rcu/commit/5cd787d0f953182a23d340669b20b150fd50c18c
+ * as we only use CMM_LOAD_SHARED() and CMM_STORE_SHARED() with atomic types.
+ */
+
+#undef CMM_LOAD_SHARED
+#define CMM_LOAD_SHARED(x) \
+	__atomic_load_n(cmm_cast_volatile(&(x)), __ATOMIC_RELAXED)
+
+#undef _CMM_LOAD_SHARED
+#define _CMM_LOAD_SHARED(x) CMM_LOAD_SHARED(x)
+
+#undef CMM_STORE_SHARED
+#define CMM_STORE_SHARED(x, v)                                \
+	__extension__({                                       \
+		__typeof__(v) _v = (v);                       \
+		__atomic_store_n(cmm_cast_volatile(&(x)), _v, \
+				 __ATOMIC_RELAXED);           \
+		_v;                                           \
+	})
+
+#undef _CMM_STORE_SHARED
+#define _CMM_STORE_SHARED(x, v) CMM_STORE_SHARED(x, v)
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.c,v 1.9 2025/01/26 16:25:35 christos Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.10 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -170,9 +170,7 @@ tostruct_in_nsap(ARGS_TOSTRUCT) {
 	REQUIRE(nsap != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nsap->common.rdclass = rdata->rdclass;
-	nsap->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsap->common, link);
+	DNS_RDATACOMMON_INIT(nsap, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	nsap->nsap_len = r.length;

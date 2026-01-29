@@ -1,4 +1,4 @@
-/*	$NetBSD: qp_p.h,v 1.2 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: qp_p.h,v 1.3 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,10 @@
  */
 
 #pragma once
+
+#include <isc/refcount.h>
+
+#include <dns/qp.h>
 
 /***********************************************************************
  *
@@ -141,22 +145,29 @@ enum {
  * size to make the allocator work harder.
  */
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-#define QP_CHUNK_LOG 7
+#define QP_CHUNK_LOG_MIN 7
+#define QP_CHUNK_LOG_MAX 7
 #else
-#define QP_CHUNK_LOG 10
+#define QP_CHUNK_LOG_MIN 3
+#define QP_CHUNK_LOG_MAX 12
 #endif
 
-STATIC_ASSERT(6 <= QP_CHUNK_LOG && QP_CHUNK_LOG <= 20,
-	      "qp-trie chunk size is unreasonable");
+STATIC_ASSERT(2 <= QP_CHUNK_LOG_MIN && QP_CHUNK_LOG_MIN <= QP_CHUNK_LOG_MAX,
+	      "qp-trie min chunk size is unreasonable");
+STATIC_ASSERT(6 <= QP_CHUNK_LOG_MAX && QP_CHUNK_LOG_MAX <= 20,
+	      "qp-trie max chunk size is unreasonable");
 
-#define QP_CHUNK_SIZE  (1U << QP_CHUNK_LOG)
+#define QP_CHUNK_SIZE  (1U << QP_CHUNK_LOG_MAX)
 #define QP_CHUNK_BYTES (QP_CHUNK_SIZE * sizeof(dns_qpnode_t))
+
+STATIC_ASSERT(QP_SAFETY_MARGIN >= QP_CHUNK_BYTES,
+	      "qp-trie safety margin too small");
 
 /*
  * We need a bitfield this big to count how much of a chunk is in use:
- * it needs to count from 0 up to and including `1 << QP_CHUNK_LOG`.
+ * it needs to count from 0 up to and including `1 << QP_CHUNK_LOG_MAX`.
  */
-#define QP_USAGE_BITS (QP_CHUNK_LOG + 1)
+#define QP_USAGE_BITS (QP_CHUNK_LOG_MAX + 1)
 
 /*
  * A chunk needs to be compacted if it is less full than this threshold.
@@ -268,6 +279,8 @@ ref_cell(dns_qpref_t ref) {
 typedef struct qp_usage {
 	/*% the allocation point, increases monotonically */
 	dns_qpcell_t used : QP_USAGE_BITS;
+	/*% the actual size of the allocation */
+	dns_qpcell_t capacity : QP_USAGE_BITS;
 	/*% count of nodes no longer needed, also monotonic */
 	dns_qpcell_t free : QP_USAGE_BITS;
 	/*% qp->base->ptr[chunk] != NULL */
@@ -322,6 +335,7 @@ typedef struct qp_rcuctx {
 	struct rcu_head rcu_head;
 	isc_mem_t *mctx;
 	dns_qpmulti_t *multi;
+	ISC_LINK(struct qp_rcuctx) link;
 	dns_qpchunk_t count;
 	dns_qpchunk_t chunk[];
 } qp_rcuctx_t;
@@ -479,6 +493,8 @@ struct dns_qp {
 	dns_qpcell_t used_count, free_count;
 	/*% free cells that cannot be recovered right now */
 	dns_qpcell_t hold_count;
+	/*% capacity of last allocated chunk, for exponential chunk growth */
+	dns_qpcell_t chunk_capacity;
 	/*% what kind of transaction was most recently started [MT] */
 	enum { QP_NONE, QP_WRITE, QP_UPDATE } transaction_mode : 2;
 	/*% compact the entire trie [MT] */
@@ -523,6 +539,8 @@ struct dns_qpmulti {
 	dns_qp_t *rollback;
 	/*% all snapshots of this trie */
 	ISC_LIST(dns_qpsnap_t) snapshots;
+	/*% refcount for memory reclamation */
+	isc_refcount_t references;
 };
 
 /***********************************************************************

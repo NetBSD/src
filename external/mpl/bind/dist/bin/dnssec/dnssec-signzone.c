@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.14 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.15 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,6 +62,7 @@
 #include <isc/string.h>
 #include <isc/tid.h>
 #include <isc/time.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #include <dns/db.h>
@@ -2853,7 +2854,7 @@ findkeys:
 	 * Find keys that match this zone in the key repository.
 	 */
 	result = dns_dnssec_findmatchingkeys(gorigin, NULL, directory, NULL,
-					     now, mctx, &matchkeys);
+					     now, false, mctx, &matchkeys);
 	if (result == ISC_R_NOTFOUND) {
 		result = ISC_R_SUCCESS;
 	}
@@ -3206,6 +3207,8 @@ writeset(const char *prefix, dns_rdatatype_t type) {
 }
 
 static void
+print_time(FILE *fp) ISC_ATTR_NONNULL(1);
+static void
 print_time(FILE *fp) {
 	time_t currenttime = time(NULL);
 	struct tm t, *tm = localtime_r(&currenttime, &t);
@@ -3222,6 +3225,8 @@ print_time(FILE *fp) {
 }
 
 static void
+print_version(FILE *fp) ISC_ATTR_NONNULL(1);
+static void
 print_version(FILE *fp) {
 	if (outputformat != dns_masterformat_text) {
 		return;
@@ -3231,10 +3236,10 @@ print_version(FILE *fp) {
 }
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "\t%s [options] zonefile [keys]\n", program);
 
@@ -3322,7 +3327,7 @@ usage(void) {
 	fprintf(stderr, "(default: all zone keys that have private keys)\n");
 	fprintf(stderr, "\tkeyfile (Kname+alg+tag)\n");
 
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 static void
@@ -3696,10 +3701,12 @@ main(int argc, char *argv[]) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			/* Does not return. */
+			usage(EXIT_FAILURE);
+
 		case 'h':
 			/* Does not return. */
-			usage();
+			usage(EXIT_SUCCESS);
 
 		case 'V':
 			/* Does not return. */
@@ -3792,7 +3799,7 @@ main(int argc, char *argv[]) {
 	argv += isc_commandline_index;
 
 	if (argc < 1) {
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	file = argv[0];
@@ -4059,6 +4066,7 @@ main(int argc, char *argv[]) {
 			fatal("failed to open temporary output file: %s",
 			      isc_result_totext(result));
 		}
+		INSIST(outfp != NULL);
 		removefile = true;
 		setfatalcallback(&removetempfile);
 	}
@@ -4176,6 +4184,8 @@ main(int argc, char *argv[]) {
 			    &sign_finish);
 	}
 	isc_mutex_destroy(&namelock);
+
+	rcu_barrier();
 
 	return vresult == ISC_R_SUCCESS ? 0 : 1;
 }

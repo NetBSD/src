@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.5 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.6 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -754,7 +754,9 @@ Exit:
 		if (decoder->_total_overhead >= 100 * 1024 &&
 		    decoder->_total_read - decoder->_total_overhead <
 			    decoder->_total_read / 4)
+		{
 			ret = -1;
+		}
 	}
 	return ret;
 }

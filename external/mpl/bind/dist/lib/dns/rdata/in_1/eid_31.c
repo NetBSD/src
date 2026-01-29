@@ -1,4 +1,4 @@
-/*	$NetBSD: eid_31.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: eid_31.c,v 1.11 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,9 +135,7 @@ tostruct_in_eid(ARGS_TOSTRUCT) {
 	REQUIRE(eid != NULL);
 	REQUIRE(rdata->length != 0);
 
-	eid->common.rdclass = rdata->rdclass;
-	eid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&eid->common, link);
+	DNS_RDATACOMMON_INIT(eid, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	eid->eid_len = r.length;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.16 2025/07/17 19:01:46 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.17 2026/01/29 18:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,14 +78,6 @@
 #define MAP_SYM 1 /* Unique type for isc_symtab */
 
 #define TOKEN_STRING(pctx) (pctx->token.value.as_textregion.base)
-
-/* Check a return value. */
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 /* Clean up a configuration object if non-NULL. */
 #define CLEANUP_OBJ(obj)                               \

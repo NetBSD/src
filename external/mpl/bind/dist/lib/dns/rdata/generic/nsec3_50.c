@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.10 2025/01/26 16:25:32 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.11 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -294,9 +294,7 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	REQUIRE(nsec3 != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nsec3->common.rdclass = rdata->rdclass;
-	nsec3->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsec3->common, link);
+	DNS_RDATACOMMON_INIT(nsec3, rdata->type, rdata->rdclass);
 
 	region.base = rdata->data;
 	region.length = rdata->length;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.11 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.12 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -677,19 +677,4 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		      ISC_MIN(rrsig->originalttl, ttl));
 	rdataset->ttl = ttl;
 	sigrdataset->ttl = ttl;
-}
-
-bool
-dns_rdataset_equals(const dns_rdataset_t *rdataset1,
-		    const dns_rdataset_t *rdataset2) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset1));
-	REQUIRE(DNS_RDATASET_VALID(rdataset2));
-
-	if (rdataset1->methods->equals != NULL &&
-	    rdataset1->methods->equals == rdataset2->methods->equals)
-	{
-		return (rdataset1->methods->equals)(rdataset1, rdataset2);
-	}
-
-	return false;
 }

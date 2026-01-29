@@ -1,4 +1,4 @@
-/*	$NetBSD: x25_19.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: x25_19.c,v 1.11 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -147,9 +147,7 @@ tostruct_x25(ARGS_TOSTRUCT) {
 	REQUIRE(x25 != NULL);
 	REQUIRE(rdata->length != 0);
 
-	x25->common.rdclass = rdata->rdclass;
-	x25->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&x25->common, link);
+	DNS_RDATACOMMON_INIT(x25, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	x25->x25_len = uint8_fromregion(&r);

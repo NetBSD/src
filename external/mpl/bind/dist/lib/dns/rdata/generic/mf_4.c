@@ -1,4 +1,4 @@
-/*	$NetBSD: mf_4.c,v 1.9 2025/01/26 16:25:32 christos Exp $	*/
+/*	$NetBSD: mf_4.c,v 1.10 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -148,9 +148,7 @@ tostruct_mf(ARGS_TOSTRUCT) {
 	REQUIRE(mf != NULL);
 	REQUIRE(rdata->length != 0);
 
-	mf->common.rdclass = rdata->rdclass;
-	mf->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&mf->common, link);
+	DNS_RDATACOMMON_INIT(mf, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &r);

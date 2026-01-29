@@ -1,4 +1,4 @@
-/*	$NetBSD: transportconf.c,v 1.3 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: transportconf.c,v 1.4 2026/01/29 18:36:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,18 +29,15 @@
 #include <named/log.h>
 #include <named/transportconf.h>
 
-#define create_name(id, name)                                      \
-	isc_buffer_t namesrc, namebuf;                             \
-	char namedata[DNS_NAME_FORMATSIZE + 1];                    \
-	dns_name_init(name, NULL);                                 \
-	isc_buffer_constinit(&namesrc, id, strlen(id));            \
-	isc_buffer_add(&namesrc, strlen(id));                      \
-	isc_buffer_init(&namebuf, namedata, sizeof(namedata));     \
-	result = (dns_name_fromtext(name, &namesrc, dns_rootname,  \
-				    DNS_NAME_DOWNCASE, &namebuf)); \
-	if (result != ISC_R_SUCCESS) {                             \
-		goto failure;                                      \
-	}
+#define create_name(id, name)                                  \
+	isc_buffer_t namesrc, namebuf;                         \
+	char namedata[DNS_NAME_FORMATSIZE + 1];                \
+	dns_name_init(name, NULL);                             \
+	isc_buffer_constinit(&namesrc, id, strlen(id));        \
+	isc_buffer_add(&namesrc, strlen(id));                  \
+	isc_buffer_init(&namebuf, namedata, sizeof(namedata)); \
+	CHECK(dns_name_fromtext(name, &namesrc, dns_rootname,  \
+				DNS_NAME_DOWNCASE, &namebuf));
 
 #define parse_transport_option(map, transport, name, setter)      \
 	{                                                         \
@@ -134,7 +131,7 @@ add_doh_transports(const cfg_obj_t *transportlist, dns_transport_list_t *list) {
 	}
 
 	return ISC_R_SUCCESS;
-failure:
+cleanup:
 	cfg_obj_log(doh, named_g_lctx, ISC_LOG_ERROR,
 		    "configuring DoH '%s': %s", dohid,
 		    isc_result_totext(result));
@@ -158,8 +155,7 @@ add_tls_transports(const cfg_obj_t *transportlist, dns_transport_list_t *list) {
 		tlsid = cfg_obj_asstring(cfg_map_getname(tls));
 
 		if (!strcmp(tlsid, "ephemeral")) {
-			result = ISC_R_UNEXPECTEDTOKEN;
-			goto failure;
+			CHECK(ISC_R_UNEXPECTEDTOKEN);
 		}
 
 		create_name(tlsid, &tlsname);
@@ -188,18 +184,13 @@ add_tls_transports(const cfg_obj_t *transportlist, dns_transport_list_t *list) {
 	}
 
 	return ISC_R_SUCCESS;
-failure:
+cleanup:
 	cfg_obj_log(tls, named_g_lctx, ISC_LOG_ERROR,
 		    "configuring tls '%s': %s", tlsid,
 		    isc_result_totext(result));
 
 	return result;
 }
-
-#define CHECK(f)                             \
-	if ((result = f) != ISC_R_SUCCESS) { \
-		goto failure;                \
-	}
 
 static isc_result_t
 transport_list_fromconfig(const cfg_obj_t *config, dns_transport_list_t *list) {
@@ -235,7 +226,7 @@ transport_list_add_ephemeral(dns_transport_list_t *list) {
 	dns_transport_set_tlsname(transport, "ephemeral");
 
 	return;
-failure:
+cleanup:
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 }
 
@@ -250,10 +241,7 @@ named_transports_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	transport_list_add_ephemeral(list);
 
 	if (config != NULL) {
-		result = transport_list_fromconfig(config, list);
-		if (result != ISC_R_SUCCESS) {
-			goto failure;
-		}
+		CHECK(transport_list_fromconfig(config, list));
 	}
 
 	if (vconfig != NULL) {
@@ -263,7 +251,7 @@ named_transports_fromconfig(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 	*listp = list;
 	return ISC_R_SUCCESS;
-failure:
+cleanup:
 	dns_transport_list_detach(&list);
 	return result;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.12 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.13 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,13 +31,6 @@
 #include <isc/util.h>
 
 #include <dns/ttl.h>
-
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
 
 static isc_result_t
 bind_ttl(isc_textregion_t *source, uint32_t *ttl);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-ksr.c,v 1.3 2025/07/17 19:01:43 christos Exp $	*/
+/*	$NetBSD: dnssec-ksr.c,v 1.4 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -99,23 +99,15 @@ static int min_dh = 128;
 
 #define READLINE(lex, opt, token)
 
-#define NEXTTOKEN(lex, opt, token)                       \
-	{                                                \
-		ret = isc_lex_gettoken(lex, opt, token); \
-		if (ret != ISC_R_SUCCESS)                \
-			goto cleanup;                    \
+#define NEXTTOKEN(lex, opt, token)                        \
+	{                                                 \
+		CHECK(isc_lex_gettoken(lex, opt, token)); \
 	}
 
-#define BADTOKEN()                           \
-	{                                    \
-		ret = ISC_R_UNEXPECTEDTOKEN; \
-		goto cleanup;                \
-	}
-
-#define CHECK(r)                    \
-	ret = (r);                  \
-	if (ret != ISC_R_SUCCESS) { \
-		goto fail;          \
+#define BADTOKEN()                              \
+	{                                       \
+		result = ISC_R_UNEXPECTEDTOKEN; \
+		goto cleanup;                   \
 	}
 
 isc_bufferlist_t cleanup_list = ISC_LIST_INITIALIZER;
@@ -221,15 +213,15 @@ get_dnskeys(ksr_ctx_t *ksr, dns_dnsseckeylist_t *keys) {
 	dns_dnsseckeylist_t keys_read;
 	dns_dnsseckey_t **keys_sorted;
 	int i = 0, n = 0;
-	isc_result_t ret;
+	isc_result_t result;
 
 	ISC_LIST_INIT(*keys);
 	ISC_LIST_INIT(keys_read);
-	ret = dns_dnssec_findmatchingkeys(name, NULL, ksr->keydir, NULL,
-					  ksr->now, mctx, &keys_read);
-	if (ret != ISC_R_SUCCESS && ret != ISC_R_NOTFOUND) {
+	result = dns_dnssec_findmatchingkeys(name, NULL, ksr->keydir, NULL,
+					     ksr->now, false, mctx, &keys_read);
+	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
 		fatal("failed to load existing keys from %s: %s", ksr->keydir,
-		      isc_result_totext(ret));
+		      isc_result_totext(result));
 	}
 	/* Sort on keytag. */
 	for (dns_dnsseckey_t *dk = ISC_LIST_HEAD(keys_read); dk != NULL;
@@ -346,7 +338,7 @@ create_key(ksr_ctx_t *ksr, dns_kasp_t *kasp, dns_kasp_key_t *kaspkey,
 	dst_key_t *key = NULL;
 	int options = (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC | DST_TYPE_STATE);
 	isc_buffer_t buf;
-	isc_result_t ret;
+	isc_result_t result;
 	isc_stdtime_t prepub;
 	uint16_t flags = DNS_KEYOWNER_ZONE;
 
@@ -444,26 +436,26 @@ create_key(ksr_ctx_t *ksr, dns_kasp_t *kasp, dns_kasp_key_t *kaspkey,
 				"Generating key pair for bundle %s: ", timestr);
 		}
 		if (ksr->keystore != NULL && ksr->policy != NULL) {
-			ret = dns_keystore_keygen(
+			result = dns_keystore_keygen(
 				ksr->keystore, name, ksr->policy,
 				dns_rdataclass_in, mctx, ksr->alg, ksr->size,
 				flags, &key);
 		} else if (show_progress) {
-			ret = dst_key_generate(name, ksr->alg, ksr->size, 0,
-					       flags, DNS_KEYPROTO_DNSSEC,
-					       dns_rdataclass_in, NULL, mctx,
-					       &key, &progress);
+			result = dst_key_generate(name, ksr->alg, ksr->size, 0,
+						  flags, DNS_KEYPROTO_DNSSEC,
+						  dns_rdataclass_in, NULL, mctx,
+						  &key, &progress);
 			fflush(stderr);
 		} else {
-			ret = dst_key_generate(name, ksr->alg, ksr->size, 0,
-					       flags, DNS_KEYPROTO_DNSSEC,
-					       dns_rdataclass_in, NULL, mctx,
-					       &key, NULL);
+			result = dst_key_generate(name, ksr->alg, ksr->size, 0,
+						  flags, DNS_KEYPROTO_DNSSEC,
+						  dns_rdataclass_in, NULL, mctx,
+						  &key, NULL);
 		}
 
-		if (ret != ISC_R_SUCCESS) {
+		if (result != ISC_R_SUCCESS) {
 			fatal("failed to generate key %s/%s: %s\n", namestr,
-			      algstr, isc_result_totext(ret));
+			      algstr, isc_result_totext(result));
 		}
 
 		/* Do not overwrite an existing key. */
@@ -474,9 +466,9 @@ create_key(ksr_ctx_t *ksr, dns_kasp_t *kasp, dns_kasp_key_t *kaspkey,
 			conflict = true;
 			if (verbose > 0) {
 				isc_buffer_clear(&buf);
-				ret = dst_key_buildfilename(key, 0, ksr->keydir,
-							    &buf);
-				if (ret == ISC_R_SUCCESS) {
+				result = dst_key_buildfilename(
+					key, 0, ksr->keydir, &buf);
+				if (result == ISC_R_SUCCESS) {
 					fprintf(stderr,
 						"%s: %s already exists, or "
 						"might collide with another "
@@ -524,20 +516,20 @@ create_key(ksr_ctx_t *ksr, dns_kasp_t *kasp, dns_kasp_key_t *kaspkey,
 		*expiration = 0;
 	}
 
-	ret = dst_key_tofile(key, options, ksr->keydir);
-	if (ret != ISC_R_SUCCESS) {
+	result = dst_key_tofile(key, options, ksr->keydir);
+	if (result != ISC_R_SUCCESS) {
 		char keystr[DST_KEY_FORMATSIZE];
 		dst_key_format(key, keystr, sizeof(keystr));
 		fatal("failed to write key %s: %s\n", keystr,
-		      isc_result_totext(ret));
+		      isc_result_totext(result));
 	}
 
 output:
 	isc_buffer_clear(&buf);
-	ret = dst_key_buildfilename(key, 0, NULL, &buf);
-	if (ret != ISC_R_SUCCESS) {
+	result = dst_key_buildfilename(key, 0, NULL, &buf);
+	if (result != ISC_R_SUCCESS) {
 		fatal("dst_key_buildfilename returned: %s\n",
-		      isc_result_totext(ret));
+		      isc_result_totext(result));
 	}
 	printf("%s\n", filename);
 	fflush(stdout);
@@ -550,12 +542,12 @@ static void
 print_rdata(dns_rdataset_t *rrset) {
 	isc_buffer_t target;
 	isc_region_t r;
-	isc_result_t ret;
+	isc_result_t result;
 	char buf[4096];
 
 	isc_buffer_init(&target, buf, sizeof(buf));
-	ret = dns_rdataset_totext(rrset, name, false, false, &target);
-	if (ret != ISC_R_SUCCESS) {
+	result = dns_rdataset_totext(rrset, name, false, false, &target);
+	if (result != ISC_R_SUCCESS) {
 		fatal("failed to print rdata");
 	}
 	isc_buffer_usedregion(&target, &r);
@@ -569,7 +561,7 @@ print_dnskeys(dns_kasp_key_t *kaspkey, dns_ttl_t ttl, dns_dnsseckeylist_t *keys,
 	char timestr[26]; /* Minimal buf as per ctime_r() spec. */
 	dns_rdatalist_t *rdatalist = NULL;
 	dns_rdataset_t rdataset = DNS_RDATASET_INIT;
-	isc_result_t ret = ISC_R_SUCCESS;
+	isc_result_t result = ISC_R_SUCCESS;
 	isc_stdtime_t next_bundle = next_inception;
 
 	isc_stdtime_tostring(inception, timestr, sizeof(timestr));
@@ -638,11 +630,11 @@ print_dnskeys(dns_kasp_key_t *kaspkey, dns_ttl_t ttl, dns_dnsseckeylist_t *keys,
 	dns_rdatalist_tordataset(rdatalist, &rdataset);
 	print_rdata(&rdataset);
 
-fail:
+cleanup:
 	/* Cleanup */
 	freerrset(&rdataset);
 
-	if (ret != ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS) {
 		fatal("failed to print %s/%s zsk key pair found for bundle %s",
 		      namestr, algstr, timestr);
 	}
@@ -655,7 +647,7 @@ sign_rrset(ksr_ctx_t *ksr, isc_stdtime_t inception, isc_stdtime_t expiration,
 	   dns_rdataset_t *rrset, dns_dnsseckeylist_t *keys) {
 	dns_rdatalist_t *rrsiglist = NULL;
 	dns_rdataset_t rrsigset = DNS_RDATASET_INIT;
-	isc_result_t ret;
+	isc_result_t result;
 	isc_stdtime_t next_bundle = expiration;
 
 	UNUSED(ksr);
@@ -670,10 +662,10 @@ sign_rrset(ksr_ctx_t *ksr, isc_stdtime_t inception, isc_stdtime_t expiration,
 		isc_buffer_init(&timebuf, timestr, sizeof(timestr));
 		isc_stdtime_tostring(inception, timestr, sizeof(timestr));
 		isc_buffer_init(&b, utc, sizeof(utc));
-		ret = dns_time32_totext(inception, &b);
-		if (ret != ISC_R_SUCCESS) {
+		result = dns_time32_totext(inception, &b);
+		if (result != ISC_R_SUCCESS) {
 			fatal("failed to convert bundle time32 to text: %s",
-			      isc_result_totext(ret));
+			      isc_result_totext(result));
 		}
 		isc_buffer_usedregion(&b, &r);
 		fprintf(stdout, ";; SignedKeyResponse 1.0 %.*s (%s)\n",
@@ -722,9 +714,9 @@ sign_rrset(ksr_ctx_t *ksr, isc_stdtime_t inception, isc_stdtime_t expiration,
 		rrsig = isc_mem_get(mctx, sizeof(*rrsig));
 		dns_rdata_init(rrsig);
 		isc_buffer_init(&buf, rdatabuf, sizeof(rdatabuf));
-		ret = dns_dnssec_sign(name, rrset, dk->key, &clockskew,
-				      &expiration, mctx, &buf, &rdata);
-		if (ret != ISC_R_SUCCESS) {
+		result = dns_dnssec_sign(name, rrset, dk->key, &clockskew,
+					 &expiration, mctx, &buf, &rdata);
+		if (result != ISC_R_SUCCESS) {
 			fatal("failed to sign KSR");
 		}
 		isc_buffer_usedregion(&buf, &rs);
@@ -757,7 +749,7 @@ get_keymaterial(ksr_ctx_t *ksr, dns_kasp_t *kasp, isc_stdtime_t inception,
 	dns_rdatalist_t *dnskeylist = isc_mem_get(mctx, sizeof(*dnskeylist));
 	dns_rdatalist_t *cdnskeylist = isc_mem_get(mctx, sizeof(*cdnskeylist));
 	dns_rdatalist_t *cdslist = isc_mem_get(mctx, sizeof(*cdslist));
-	isc_result_t ret = ISC_R_SUCCESS;
+	isc_result_t result = ISC_R_SUCCESS;
 	isc_stdtime_t next_bundle = next_inception;
 
 	dns_rdatalist_init(dnskeylist);
@@ -901,7 +893,7 @@ get_keymaterial(ksr_ctx_t *ksr, dns_kasp_t *kasp, isc_stdtime_t inception,
 
 	return next_bundle;
 
-fail:
+cleanup:
 	fatal("failed to create KSK/CDS/CDNSKEY");
 	return 0;
 }
@@ -998,7 +990,7 @@ parse_dnskey(isc_lex_t *lex, char *owner, isc_buffer_t *buf, dns_ttl_t *ttl) {
 	dns_name_t *dname = NULL;
 	dns_rdataclass_t rdclass = dns_rdataclass_in;
 	isc_buffer_t b;
-	isc_result_t ret;
+	isc_result_t result;
 	isc_token_t token;
 	unsigned int opt = ISC_LEXOPT_EOL;
 
@@ -1012,12 +1004,12 @@ parse_dnskey(isc_lex_t *lex, char *owner, isc_buffer_t *buf, dns_ttl_t *ttl) {
 	dname = dns_fixedname_initname(&dfname);
 	isc_buffer_init(&b, owner, strlen(owner));
 	isc_buffer_add(&b, strlen(owner));
-	ret = dns_name_fromtext(dname, &b, dns_rootname, 0, NULL);
-	if (ret != ISC_R_SUCCESS) {
-		return ret;
+	result = dns_name_fromtext(dname, &b, dns_rootname, 0, NULL);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
 	}
 	if (dns_name_compare(dname, name) != 0) {
-		return DNS_R_BADOWNERNAME;
+		CHECK(DNS_R_BADOWNERNAME);
 	}
 	isc_buffer_clear(&b);
 
@@ -1028,8 +1020,8 @@ parse_dnskey(isc_lex_t *lex, char *owner, isc_buffer_t *buf, dns_ttl_t *ttl) {
 	}
 
 	/* If it's a TTL, read the next one */
-	ret = dns_ttl_fromtext(&token.value.as_textregion, ttl);
-	if (ret == ISC_R_SUCCESS) {
+	result = dns_ttl_fromtext(&token.value.as_textregion, ttl);
+	if (result == ISC_R_SUCCESS) {
 		NEXTTOKEN(lex, opt, &token);
 	}
 	if (token.type != isc_tokentype_string) {
@@ -1037,8 +1029,8 @@ parse_dnskey(isc_lex_t *lex, char *owner, isc_buffer_t *buf, dns_ttl_t *ttl) {
 	}
 
 	/* If it's a class, read the next one */
-	ret = dns_rdataclass_fromtext(&rdclass, &token.value.as_textregion);
-	if (ret == ISC_R_SUCCESS) {
+	result = dns_rdataclass_fromtext(&rdclass, &token.value.as_textregion);
+	if (result == ISC_R_SUCCESS) {
 		NEXTTOKEN(lex, opt, &token);
 	}
 	if (token.type != isc_tokentype_string) {
@@ -1050,12 +1042,12 @@ parse_dnskey(isc_lex_t *lex, char *owner, isc_buffer_t *buf, dns_ttl_t *ttl) {
 		BADTOKEN();
 	}
 
-	ret = dns_rdata_fromtext(NULL, rdclass, dns_rdatatype_dnskey, lex, name,
-				 0, mctx, buf, NULL);
+	result = dns_rdata_fromtext(NULL, rdclass, dns_rdatatype_dnskey, lex,
+				    name, 0, mctx, buf, NULL);
 
 cleanup:
 	isc_lex_setcomments(lex, 0);
-	return ret;
+	return result;
 }
 
 static void
@@ -1128,14 +1120,14 @@ request(ksr_ctx_t *ksr) {
 		char utc[sizeof("YYYYMMDDHHSSMM")];
 		isc_buffer_t b;
 		isc_region_t r;
-		isc_result_t ret;
+		isc_result_t result;
 
 		isc_stdtime_tostring(inception, timestr, sizeof(timestr));
 		isc_buffer_init(&b, utc, sizeof(utc));
-		ret = dns_time32_totext(inception, &b);
-		if (ret != ISC_R_SUCCESS) {
+		result = dns_time32_totext(inception, &b);
+		if (result != ISC_R_SUCCESS) {
 			fatal("failed to convert bundle time32 to text: %s",
-			      isc_result_totext(ret));
+			      isc_result_totext(result));
 		}
 		isc_buffer_usedregion(&b, &r);
 		fprintf(stdout, ";; KeySigningRequest 1.0 %.*s (%s)\n",
@@ -1179,7 +1171,7 @@ sign(ksr_ctx_t *ksr) {
 	dns_dnsseckeylist_t keys;
 	dns_kasp_t *kasp = NULL;
 	dns_rdatalist_t *rdatalist = NULL;
-	isc_result_t ret;
+	isc_result_t result;
 	isc_stdtime_t inception;
 	isc_lex_t *lex = NULL;
 	isc_lexspecials_t specials;
@@ -1205,14 +1197,15 @@ sign(ksr_ctx_t *ksr) {
 	specials[')'] = 1;
 	specials['"'] = 1;
 	isc_lex_setspecials(lex, specials);
-	ret = isc_lex_openfile(lex, ksr->file);
-	if (ret != ISC_R_SUCCESS) {
+	result = isc_lex_openfile(lex, ksr->file);
+	if (result != ISC_R_SUCCESS) {
 		fatal("unable to open KSR file %s: %s", ksr->file,
-		      isc_result_totext(ret));
+		      isc_result_totext(result));
 	}
 
-	for (ret = isc_lex_gettoken(lex, opt, &token); ret == ISC_R_SUCCESS;
-	     ret = isc_lex_gettoken(lex, opt, &token))
+	for (result = isc_lex_gettoken(lex, opt, &token);
+	     result == ISC_R_SUCCESS;
+	     result = isc_lex_gettoken(lex, opt, &token))
 	{
 		if (token.type != isc_tokentype_string) {
 			fatal("bad KSR file %s(%lu): syntax error", ksr->file,
@@ -1278,13 +1271,13 @@ sign(ksr_ctx_t *ksr) {
 		readline:
 			/* Read remainder of header line */
 			do {
-				ret = isc_lex_gettoken(lex, opt, &token);
-				if (ret != ISC_R_SUCCESS) {
+				result = isc_lex_gettoken(lex, opt, &token);
+				if (result != ISC_R_SUCCESS) {
 					fatal("bad KSR file %s(%lu): bad "
 					      "header (%s)",
 					      ksr->file,
 					      isc_lex_getsourceline(lex),
-					      isc_result_totext(ret));
+					      isc_result_totext(result));
 				}
 			} while (token.type != isc_tokentype_eol);
 		} else {
@@ -1301,11 +1294,11 @@ sign(ksr_ctx_t *ksr) {
 			rdata = isc_mem_get(mctx, sizeof(*rdata));
 			dns_rdata_init(rdata);
 			isc_buffer_init(&buf, rdatabuf, sizeof(rdatabuf));
-			ret = parse_dnskey(lex, STR(token), &buf, &ttl);
-			if (ret != ISC_R_SUCCESS) {
+			result = parse_dnskey(lex, STR(token), &buf, &ttl);
+			if (result != ISC_R_SUCCESS) {
 				fatal("bad KSR file %s(%lu): bad DNSKEY (%s)",
 				      ksr->file, isc_lex_getsourceline(lex),
-				      isc_result_totext(ret));
+				      isc_result_totext(result));
 			}
 			isc_buffer_usedregion(&buf, &r);
 			isc_buffer_allocate(mctx, &newbuf, r.length);
@@ -1323,7 +1316,7 @@ sign(ksr_ctx_t *ksr) {
 		}
 	}
 
-	if (ret != ISC_R_EOF) {
+	if (result != ISC_R_EOF) {
 		fatal("bad KSR file %s(%lu): trailing garbage data", ksr->file,
 		      isc_lex_getsourceline(lex));
 	}
@@ -1341,14 +1334,14 @@ sign(ksr_ctx_t *ksr) {
 	fprintf(stdout, ";; SignedKeyResponse 1.0 generated at %s by %s\n",
 		timestr, PACKAGE_VERSION);
 
-fail:
+cleanup:
 	isc_lex_destroy(&lex);
 	cleanup(&keys, kasp);
 }
 
 int
 main(int argc, char *argv[]) {
-	isc_result_t ret;
+	isc_result_t result;
 	isc_buffer_t buf;
 	int ch;
 	char *endp;
@@ -1389,10 +1382,10 @@ main(int argc, char *argv[]) {
 			break;
 		case 'K':
 			ksr.keydir = isc_commandline_argument;
-			ret = try_dir(ksr.keydir);
-			if (ret != ISC_R_SUCCESS) {
+			result = try_dir(ksr.keydir);
+			if (result != ISC_R_SUCCESS) {
 				fatal("cannot open directory %s: %s",
-				      ksr.keydir, isc_result_totext(ret));
+				      ksr.keydir, isc_result_totext(result));
 			}
 			break;
 		case 'k':
@@ -1425,9 +1418,10 @@ main(int argc, char *argv[]) {
 		fatal("must provide a command and zone name");
 	}
 
-	ret = dst_lib_init(mctx, engine);
-	if (ret != ISC_R_SUCCESS) {
-		fatal("could not initialize dst: %s", isc_result_totext(ret));
+	result = dst_lib_init(mctx, engine);
+	if (result != ISC_R_SUCCESS) {
+		fatal("could not initialize dst: %s",
+		      isc_result_totext(result));
 	}
 
 	/*
@@ -1464,10 +1458,10 @@ main(int argc, char *argv[]) {
 	name = dns_fixedname_initname(&fname);
 	isc_buffer_init(&buf, argv[1], strlen(argv[1]));
 	isc_buffer_add(&buf, strlen(argv[1]));
-	ret = dns_name_fromtext(name, &buf, dns_rootname, 0, NULL);
-	if (ret != ISC_R_SUCCESS) {
+	result = dns_name_fromtext(name, &buf, dns_rootname, 0, NULL);
+	if (result != ISC_R_SUCCESS) {
 		fatal("invalid zone name %s: %s", argv[1],
-		      isc_result_totext(ret));
+		      isc_result_totext(result));
 	}
 
 	/* command */

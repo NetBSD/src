@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.3 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.4 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,13 +77,6 @@
 #define RESCONFMAXSEARCH      8U   /*%< max 8 domains in "search" entry */
 #define RESCONFMAXLINELEN     256U /*%< max size of a line */
 #define RESCONFMAXSORTLIST    10U  /*%< max 10 */
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 /*!
  * configuration data structure

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.11 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -146,9 +146,7 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 	REQUIRE(dhcid != NULL);
 	REQUIRE(rdata->length != 0);
 
-	dhcid->common.rdclass = rdata->rdclass;
-	dhcid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dhcid->common, link);
+	DNS_RDATACOMMON_INIT(dhcid, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

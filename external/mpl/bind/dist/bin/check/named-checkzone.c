@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.12 2025/01/26 16:24:31 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.13 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,10 +65,10 @@ static enum { progmode_check, progmode_compile } progmode;
 	} while (0)
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr,
 		"usage: %s [-djqvD] [-c class] "
 		"[-f inputformat] [-F outputformat] [-J filename] "
@@ -81,7 +81,7 @@ usage(void) {
 		"%s zonename [ (filename|-) ]\n",
 		prog_name,
 		progmode == progmode_check ? "[-o filename]" : "-o filename");
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 static void
@@ -433,9 +433,10 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					prog_name, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			usage(EXIT_FAILURE);
+
 		case 'h':
-			usage();
+			usage(EXIT_SUCCESS);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n", prog_name,
@@ -498,7 +499,7 @@ main(int argc, char **argv) {
 		if (output_filename == NULL) {
 			fprintf(stderr, "output file required, but not "
 					"specified\n");
-			usage();
+			usage(EXIT_FAILURE);
 		}
 	}
 
@@ -522,7 +523,7 @@ main(int argc, char **argv) {
 	if (argc - isc_commandline_index < 1 ||
 	    argc - isc_commandline_index > 2)
 	{
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);

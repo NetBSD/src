@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.14 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.15 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,7 @@
 #include <dns/cert.h>
 #include <dns/ds.h>
 #include <dns/dsdigest.h>
+#include <dns/dsync.h>
 #include <dns/keyflags.h>
 #include <dns/keyvalues.h>
 #include <dns/rcode.h>
@@ -38,16 +39,13 @@
 #include <dns/secalg.h>
 #include <dns/secproto.h>
 
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
-
 #define NUMBERSIZE sizeof("037777777777") /* 2^32-1 octal + NUL */
 
 #define TOTEXTONLY 0x01
+
+/* clang-format off */
+#define SENTINEL { 0, NULL, 0 }
+/* clang-format on */
 
 #define RCODENAMES                                     \
 	/* standard rcodes */                          \
@@ -132,6 +130,8 @@
 		{ DNS_DSDIGEST_SHA384, "SHA-384", 0 },                       \
 		{ DNS_DSDIGEST_SHA384, "SHA384", 0 }, { 0, NULL, 0 }
 
+#define DSYNCSCHEMES { DNS_DSYNCSCHEME_NOTIFY, "NOTIFY", 0 }, SENTINEL
+
 struct tbl {
 	unsigned int value;
 	const char *name;
@@ -145,6 +145,7 @@ static struct tbl secalgs[] = { SECALGNAMES };
 static struct tbl secprotos[] = { SECPROTONAMES };
 static struct tbl hashalgs[] = { HASHALGNAMES };
 static struct tbl dsdigests[] = { DSDIGESTNAMES };
+static struct tbl dsyncschemes[] = { DSYNCSCHEMES };
 
 static struct keyflag {
 	const char *name;
@@ -445,6 +446,41 @@ dns_dsdigest_format(dns_dsdigest_t typ, char *cp, unsigned int size) {
 	REQUIRE(cp != NULL && size > 0);
 	isc_buffer_init(&b, cp, size - 1);
 	result = dns_dsdigest_totext(typ, &b);
+	isc_buffer_usedregion(&b, &r);
+	r.base[r.length] = 0;
+	if (result != ISC_R_SUCCESS) {
+		r.base[0] = 0;
+	}
+}
+
+/*
+ * DSYNC Scheme
+ */
+
+isc_result_t
+dns_dsyncscheme_fromtext(dns_dsyncscheme_t *schemep, isc_textregion_t *source) {
+	unsigned int value;
+
+	REQUIRE(schemep != NULL);
+	RETERR(dns_mnemonic_fromtext(&value, source, dsyncschemes, 0xff));
+	*schemep = value;
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t
+dns_dsyncscheme_totext(dns_dsyncscheme_t scheme, isc_buffer_t *target) {
+	return dns_mnemonic_totext(scheme, target, dsyncschemes);
+}
+
+void
+dns_dsyncscheme_format(dns_dsyncscheme_t scheme, char *cp, unsigned int size) {
+	isc_buffer_t b;
+	isc_region_t r;
+	isc_result_t result;
+
+	REQUIRE(cp != NULL && size > 0);
+	isc_buffer_init(&b, cp, size - 1);
+	result = dns_dsyncscheme_totext(scheme, &b);
 	isc_buffer_usedregion(&b, &r);
 	r.base[r.length] = 0;
 	if (result != ISC_R_SUCCESS) {

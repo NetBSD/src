@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.10 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.11 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 #include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/string.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -265,10 +266,10 @@ emit(const char *dir, dns_rdata_t *rdata) {
 }
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s options [-K dir] keyfile\n\n", program);
 	fprintf(stderr, "    %s options -f file [keyname]\n\n", program);
@@ -291,7 +292,7 @@ usage(void) {
 	fprintf(stderr, "    -D sync date/[+-]offset/none: set/unset "
 			"CDS and CDNSKEY deletion date\n");
 
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 int
@@ -309,7 +310,7 @@ main(int argc, char **argv) {
 	dns_rdata_init(&rdata);
 
 	if (argc == 1) {
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);
@@ -385,10 +386,11 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			usage(EXIT_FAILURE);
+
 		case 'h':
 			/* Does not return. */
-			usage();
+			usage(EXIT_SUCCESS);
 
 		case 'V':
 			/* Does not return. */
@@ -466,6 +468,8 @@ main(int argc, char **argv) {
 		isc_mem_stats(mctx, stdout);
 	}
 	isc_mem_destroy(&mctx);
+
+	rcu_barrier();
 
 	fflush(stdout);
 	if (ferror(stdout)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator_test.c,v 1.4 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: dbiterator_test.c,v 1.5 2026/01/29 18:37:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -184,10 +184,10 @@ ISC_RUN_TEST_IMPL(reverse_nsec3) {
 
 /* seek: walk database starting at a particular node */
 static void
-test_seek_node(const char *filename, int flags, int nodes) {
-	isc_result_t result;
+test_seek_node(const char *filename, bool nsec3, int flags, int nodes) {
+	isc_result_t result, result3;
 	dns_db_t *db = NULL;
-	dns_dbiterator_t *iter = NULL;
+	dns_dbiterator_t *iter = NULL, *iter3 = NULL;
 	dns_dbnode_t *node = NULL;
 	dns_name_t *name, *seekname;
 	dns_fixedname_t f1, f2;
@@ -202,6 +202,9 @@ test_seek_node(const char *filename, int flags, int nodes) {
 	result = dns_db_createiterator(db, flags, &iter);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
+	result3 = dns_db_createiterator(db, flags, &iter3);
+	assert_int_equal(result3, ISC_R_SUCCESS);
+
 	result = make_name("c." TEST_ORIGIN, seekname);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
@@ -209,6 +212,14 @@ test_seek_node(const char *filename, int flags, int nodes) {
 	if (flags == DNS_DB_NSEC3ONLY) {
 		/* "c" isn't in the NSEC3 tree but the origin node is */
 		assert_int_equal(result, DNS_R_PARTIALMATCH);
+
+		/* NSEC3 iterator */
+		result3 = dns_dbiterator_seek3(iter3, seekname);
+		if (nsec3) {
+			assert_int_equal(result3, ISC_R_SUCCESS);
+		} else {
+			assert_int_equal(result3, ISC_R_NOMORE);
+		}
 	} else {
 		assert_int_equal(result, ISC_R_SUCCESS);
 	}
@@ -246,26 +257,29 @@ test_seek_node(const char *filename, int flags, int nodes) {
 	assert_int_equal(i, nodes);
 
 	dns_dbiterator_destroy(&iter);
+	dns_dbiterator_destroy(&iter3);
 	dns_db_detach(&db);
 }
 
 ISC_RUN_TEST_IMPL(seek_node) {
 	UNUSED(state);
 
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data", 0, 9);
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data",
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data", false, 0,
+		       9);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data", false,
 		       DNS_DB_NONSEC3, 9);
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data",
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone1.data", false,
 		       DNS_DB_NSEC3ONLY, 0);
 }
 
 ISC_RUN_TEST_IMPL(seek_node_nsec3) {
 	UNUSED(state);
 
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data", 0, 29);
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data",
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data", true, 0,
+		       29);
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data", true,
 		       DNS_DB_NONSEC3, 9);
-	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data",
+	test_seek_node(TESTS_DIR "/testdata/dbiterator/zone2.data", true,
 		       DNS_DB_NSEC3ONLY, 0);
 }
 

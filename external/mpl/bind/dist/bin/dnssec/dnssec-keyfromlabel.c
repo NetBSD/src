@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.12 2025/05/21 14:47:35 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.13 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,10 +48,10 @@ const char *program = "dnssec-keyfromlabel";
 static uint16_t tag_min = 0, tag_max = 0xffff;
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s -l label [options] name\n\n", program);
 	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
@@ -60,8 +60,8 @@ usage(void) {
 	fprintf(stderr, "    name: owner of the key\n");
 	fprintf(stderr, "Other options:\n");
 	fprintf(stderr, "    -a algorithm: \n"
-			"        RSASHA1 |\n"
-			"        NSEC3RSASHA1 |\n"
+			"        RSASHA1 (deprecated) |\n"
+			"        NSEC3RSASHA1 (deprecated) |\n"
 			"        RSASHA256 | RSASHA512 |\n"
 			"        ECDSAP256SHA256 | ECDSAP384SHA384 |\n"
 			"        ED25519 | ED448\n");
@@ -107,7 +107,7 @@ usage(void) {
 	fprintf(stderr, "     K<name>+<alg>+<id>.key, "
 			"K<name>+<alg>+<id>.private\n");
 
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 int
@@ -158,7 +158,7 @@ main(int argc, char **argv) {
 	isc_stdtime_t now = isc_stdtime_now();
 
 	if (argc == 1) {
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);
@@ -338,10 +338,12 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			/* Does not return. */
+			usage(EXIT_FAILURE);
+
 		case 'h':
 			/* Does not return. */
-			usage();
+			usage(EXIT_SUCCESS);
 
 		case 'V':
 			/* Does not return. */
@@ -582,6 +584,21 @@ main(int argc, char **argv) {
 		}
 	} else if (strcasecmp(nametype, "other") != 0) { /* DNSKEY */
 		fatal("invalid DNSKEY nametype %s", nametype);
+	}
+
+	switch (alg) {
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1: {
+		char algstr[DNS_SECALG_FORMATSIZE];
+		dns_secalg_format(alg, algstr, sizeof(algstr));
+		fprintf(stderr,
+			"WARNING: DNSKEY algorithm '%s' is deprecated. Please "
+			"migrate to another algorithm\n",
+			algstr);
+		break;
+	}
+	default:
+		break;
 	}
 
 	rdclass = strtoclass(classname);

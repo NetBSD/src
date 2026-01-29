@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.17 2025/05/21 14:48:02 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.18 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,19 +52,6 @@
 
 #define DNS_DCTX_MAGIC	  ISC_MAGIC('D', 'c', 't', 'x')
 #define DNS_DCTX_VALID(d) ISC_MAGIC_VALID(d, DNS_DCTX_MAGIC)
-
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
-
-#define CHECK(x)                          \
-	do {                              \
-		if ((x) != ISC_R_SUCCESS) \
-			goto cleanup;     \
-	} while (0)
 
 struct dns_master_style {
 	dns_masterstyle_flags_t flags; /* DNS_STYLEFLAG_* */

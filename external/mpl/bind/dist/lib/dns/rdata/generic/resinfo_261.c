@@ -1,4 +1,4 @@
-/*	$NetBSD: resinfo_261.c,v 1.3 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: resinfo_261.c,v 1.4 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,9 +78,7 @@ tostruct_resinfo(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_resinfo);
 
-	resinfo->common.rdclass = rdata->rdclass;
-	resinfo->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&resinfo->common, link);
+	DNS_RDATACOMMON_INIT(resinfo, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_txt(CALL_TOSTRUCT);
 }

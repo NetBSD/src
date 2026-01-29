@@ -1,4 +1,4 @@
-/*	$NetBSD: afsdb_18.c,v 1.9 2025/01/26 16:25:30 christos Exp $	*/
+/*	$NetBSD: afsdb_18.c,v 1.10 2026/01/29 18:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -209,9 +209,7 @@ tostruct_afsdb(ARGS_TOSTRUCT) {
 	REQUIRE(afsdb != NULL);
 	REQUIRE(rdata->length != 0);
 
-	afsdb->common.rdclass = rdata->rdclass;
-	afsdb->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&afsdb->common, link);
+	DNS_RDATACOMMON_INIT(afsdb, rdata->type, rdata->rdclass);
 
 	dns_name_init(&afsdb->server, NULL);
 

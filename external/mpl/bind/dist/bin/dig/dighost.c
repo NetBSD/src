@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.20 2025/07/17 19:01:43 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.21 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2756,6 +2756,7 @@ send_done(isc_nmhandle_t *handle, isc_result_t eresult, void *arg) {
 		}
 		query_detach(&query);
 		lookup_detach(&l);
+		check_if_done();
 		return;
 	} else if (eresult != ISC_R_SUCCESS) {
 		debug("send failed: %s", isc_result_totext(eresult));
@@ -3029,7 +3030,6 @@ start_tcp(dig_query_t *query) {
 	if (keep != NULL && isc_sockaddr_equal(&keepaddr, &query->sockaddr)) {
 		query->handle = keep;
 		launch_next_query(query);
-		query_detach(&query);
 		return;
 	} else if (keep != NULL) {
 		isc_nmhandle_detach(&keep);
@@ -3400,6 +3400,14 @@ try_next_server(dig_lookup_t *lookup) {
 		return false;
 	}
 
+	/*
+	 * We reach here only when either start_udp or start_tcp fails in
+	 * get_address(), at which point lookup's current_query must be attached
+	 * to the query that just failed. We need to detach it before trying
+	 * the next server similar to, e.g., recv_done().
+	 */
+	query_detach(&lookup->current_query);
+
 	debug("trying next server...");
 
 	if (lookup->tcp_mode) {
@@ -3432,19 +3440,11 @@ force_next(dig_query_t *query) {
 		return;
 	}
 
-	if (l->retries > 1) {
-		l->retries--;
-		debug("making new %s request, %d tries left",
-		      l->tcp_mode ? "TCP" : "UDP", l->retries);
-		requeue_lookup(l, true);
-		lookup_detach(&l);
-		isc_refcount_decrement0(&recvcount);
-		debug("recvcount=%" PRIuFAST32,
-		      isc_refcount_current(&recvcount));
-		query_detach(&query);
-		clear_current_lookup();
-		return;
-	}
+	/*
+	 * We don't retry this server unlike other similar cases such as
+	 * recv_done() because we're here due to get_address() failure,
+	 * which shouldn't be transient.
+	 */
 
 	if (query->readhandle != NULL) {
 		isc_refcount_decrement0(&recvcount);

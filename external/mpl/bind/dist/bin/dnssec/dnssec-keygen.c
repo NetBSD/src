@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.15 2025/07/17 19:01:43 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.16 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,7 @@ static int min_dh = 128;
 isc_log_t *lctx = NULL;
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
 progress(int p);
@@ -142,7 +142,7 @@ struct keygen_ctx {
 typedef struct keygen_ctx keygen_ctx_t;
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s [options] name\n\n", program);
 	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
@@ -154,7 +154,8 @@ usage(void) {
 			"statement\n");
 	fprintf(stderr, "    -a <algorithm>:\n");
 	if (!isc_fips_mode()) {
-		fprintf(stderr, "        RSASHA1 | NSEC3RSASHA1 |\n");
+		fprintf(stderr, "        RSASHA1 (deprecated) | NSEC3RSASHA1 "
+				"(deprecated) |\n");
 	}
 	fprintf(stderr, "        RSASHA256 | RSASHA512 |\n");
 	fprintf(stderr, "        ECDSAP256SHA256 | ECDSAP384SHA384 |\n");
@@ -162,10 +163,11 @@ usage(void) {
 	fprintf(stderr, "    -3: use NSEC3-capable algorithm\n");
 	fprintf(stderr, "    -b <key size in bits>:\n");
 	if (!isc_fips_mode()) {
-		fprintf(stderr, "        RSASHA1:\t[%d..%d]\n", min_rsa,
-			MAX_RSA);
-		fprintf(stderr, "        NSEC3RSASHA1:\t[%d..%d]\n", min_rsa,
-			MAX_RSA);
+		fprintf(stderr, "        RSASHA1 (deprecated) :\t[%d..%d]\n",
+			min_rsa, MAX_RSA);
+		fprintf(stderr,
+			"        NSEC3RSASHA1 (deprecated) :\t[%d..%d]\n",
+			min_rsa, MAX_RSA);
 	}
 	fprintf(stderr, "        RSASHA256:\t[%d..%d]\n", min_rsa, MAX_RSA);
 	fprintf(stderr, "        RSASHA512:\t[%d..%d]\n", min_rsa, MAX_RSA);
@@ -226,7 +228,7 @@ usage(void) {
 	fprintf(stderr, "     K<name>+<alg>+<id>.key, "
 			"K<name>+<alg>+<id>.private\n");
 
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 static void
@@ -504,14 +506,27 @@ keygen(keygen_ctx_t *ctx, isc_mem_t *mctx, int argc, char **argv) {
 	}
 
 	switch (ctx->alg) {
-	case DNS_KEYALG_RSASHA1:
-	case DNS_KEYALG_NSEC3RSASHA1:
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1:
+		dns_secalg_format(ctx->alg, algstr, sizeof(algstr));
+		fprintf(stderr,
+			"WARNING: DNSKEY algorithm '%s' is deprecated. Please "
+			"migrate to another algorithm\n",
+			algstr);
+		break;
+	default:
+		break;
+	}
+
+	switch (ctx->alg) {
+	case DST_ALG_RSASHA1:
+	case DST_ALG_NSEC3RSASHA1:
 		if (isc_fips_mode()) {
 			fatal("SHA1 based keys not supported in FIPS mode");
 		}
 		FALLTHROUGH;
-	case DNS_KEYALG_RSASHA256:
-	case DNS_KEYALG_RSASHA512:
+	case DST_ALG_RSASHA256:
+	case DST_ALG_RSASHA512:
 		if (ctx->size != 0 &&
 		    (ctx->size < min_rsa || ctx->size > MAX_RSA))
 		{
@@ -866,7 +881,7 @@ main(int argc, char **argv) {
 	};
 
 	if (argc == 1) {
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	isc_commandline_errprint = false;
@@ -1121,10 +1136,12 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			/* Does not return. */
+			usage(EXIT_FAILURE);
+
 		case 'h':
 			/* Does not return. */
-			usage();
+			usage(EXIT_SUCCESS);
 
 		case 'V':
 			/* Does not return. */

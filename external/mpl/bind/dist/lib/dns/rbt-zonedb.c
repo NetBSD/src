@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt-zonedb.c,v 1.3 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: rbt-zonedb.c,v 1.4 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,13 +65,6 @@
 
 #include "db_p.h"
 #include "rbtdb_p.h"
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 #define EXISTS(header)                                 \
 	((atomic_load_acquire(&(header)->attributes) & \

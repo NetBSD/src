@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.c,v 1.11 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.12 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -209,9 +209,7 @@ tostruct_txt(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_txt);
 	REQUIRE(txt != NULL);
 
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
+	DNS_RDATACOMMON_INIT(txt, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_txt(CALL_TOSTRUCT);
 }

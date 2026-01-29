@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.9 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.10 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,6 @@
 #include <stddef.h>
 
 #include <isc/ascii.h>
-#include <isc/entropy.h>
 #include <isc/hash.h> /* IWYU pragma: keep */
 #include <isc/random.h>
 #include <isc/result.h>
@@ -37,7 +36,7 @@ isc__hash_initialize(void) {
 	 */
 	uint8_t key[16] = { 1 };
 #if !FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-	isc_entropy_get(key, sizeof(key));
+	isc_random_buf(key, sizeof(key));
 #endif /* if FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 	STATIC_ASSERT(sizeof(key) >= sizeof(isc_hash_key),
 		      "sizeof(key) < sizeof(isc_hash_key)");

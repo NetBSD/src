@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.11 2025/01/26 16:25:31 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.12 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -355,9 +355,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	REQUIRE(ipseckey != NULL);
 	REQUIRE(rdata->length >= 3);
 
-	ipseckey->common.rdclass = rdata->rdclass;
-	ipseckey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ipseckey->common, link);
+	DNS_RDATACOMMON_INIT(ipseckey, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

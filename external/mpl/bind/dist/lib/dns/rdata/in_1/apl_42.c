@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.11 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -290,9 +290,7 @@ tostruct_in_apl(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_apl);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
-	apl->common.rdclass = rdata->rdclass;
-	apl->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&apl->common, link);
+	DNS_RDATACOMMON_INIT(apl, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	apl->apl_len = r.length;

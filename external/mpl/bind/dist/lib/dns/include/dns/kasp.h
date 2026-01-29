@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: kasp.h,v 1.9 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,6 +34,7 @@
 
 #include <dns/dnssec.h>
 #include <dns/keystore.h>
+#include <dns/name.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -113,6 +114,7 @@ struct dns_kasp {
 	dns_ttl_t zone_max_ttl;
 	uint32_t  zone_propagation_delay;
 	bool	  inline_signing;
+	bool	  manual_mode;
 
 	/* Parent settings */
 	dns_ttl_t parent_ds_ttl;
@@ -140,6 +142,8 @@ struct dns_kasp {
 /* Key roles */
 #define DNS_KASP_KEY_ROLE_KSK 0x01
 #define DNS_KASP_KEY_ROLE_ZSK 0x02
+
+#define DNS_KASP_KEY_FORMATSIZE (DNS_NAME_FORMATSIZE + 64)
 
 isc_result_t
 dns_kasp_create(isc_mem_t *mctx, const char *name, dns_kasp_t **kaspp);
@@ -443,6 +447,30 @@ void
 dns_kasp_setinlinesigning(dns_kasp_t *kasp, bool value);
 /*%<
  * Set inline-signing.
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, thawed kasp.
+ */
+
+bool
+dns_kasp_manualmode(dns_kasp_t *kasp);
+/*%<
+ * Should we use manual-mode for this DNSSEC policy?
+ *
+ * Requires:
+ *
+ *\li   'kasp' is a valid, frozen kasp.
+ *
+ * Returns:
+ *
+ *\li   true or false.
+ */
+
+void
+dns_kasp_setmanualmode(dns_kasp_t *kasp, bool value);
+/*%<
+ * Set manual-mode.
  *
  * Requires:
  *
@@ -761,6 +789,17 @@ dns_kasp_key_match(dns_kasp_key_t *key, dns_dnsseckey_t *dkey);
  *
  *\li  True, if the DNSSEC key matches.
  *\li  False, otherwise.
+ */
+
+void
+dns_kasp_key_format(dns_kasp_key_t *key, char *cp, unsigned int size);
+/*%<
+ * Write the identifying information about the policy key (role,
+ * algorithm, tag range) into a string 'cp' of size 'size'.
+ * Requires:
+ *
+ *\li  key != NULL
+ *\li  cp != NULL
  */
 
 bool

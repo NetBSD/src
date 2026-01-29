@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.11 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: private.c,v 1.12 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,13 +44,6 @@
 #define CREATE(x)  (((x) & DNS_NSEC3FLAG_CREATE) != 0)
 #define INITIAL(x) (((x) & DNS_NSEC3FLAG_INITIAL) != 0)
 #define NONSEC(x)  (((x) & DNS_NSEC3FLAG_NONSEC) != 0)
-
-#define CHECK(x)                             \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 /*
  * Work out if 'param' should be ignored or not (i.e. it is in the process
@@ -127,14 +120,14 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_nsec, 0,
 				     (isc_stdtime_t)0, &nsecset, NULL);
 
-	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
-		goto failure;
+	if (result != ISC_R_NOTFOUND) {
+		CHECK(result);
 	}
 
 	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_nsec3param, 0,
 				     (isc_stdtime_t)0, &nsec3paramset, NULL);
-	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
-		goto failure;
+	if (result != ISC_R_NOTFOUND) {
+		CHECK(result);
 	}
 
 	if (dns_rdataset_isassociated(&nsecset) &&
@@ -149,8 +142,8 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 		result = dns_db_findrdataset(db, node, ver, privatetype, 0,
 					     (isc_stdtime_t)0, &privateset,
 					     NULL);
-		if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
-			goto failure;
+		if (result != ISC_R_NOTFOUND) {
+			CHECK(result);
 		}
 	}
 
@@ -303,7 +296,7 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 
 success:
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	if (dns_rdataset_isassociated(&nsecset)) {
 		dns_rdataset_disassociate(&nsecset);
 	}
@@ -397,6 +390,6 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 	isc_buffer_putuint8(buf, 0);
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	return result;
 }

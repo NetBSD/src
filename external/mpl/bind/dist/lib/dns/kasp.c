@@ -1,4 +1,4 @@
-/*	$NetBSD: kasp.c,v 1.8 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: kasp.c,v 1.9 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -284,6 +284,22 @@ dns_kasp_setinlinesigning(dns_kasp_t *kasp, bool value) {
 	kasp->inline_signing = value;
 }
 
+bool
+dns_kasp_manualmode(dns_kasp_t *kasp) {
+	REQUIRE(DNS_KASP_VALID(kasp));
+	REQUIRE(kasp->frozen);
+
+	return kasp->manual_mode;
+}
+
+void
+dns_kasp_setmanualmode(dns_kasp_t *kasp, bool value) {
+	REQUIRE(DNS_KASP_VALID(kasp));
+	REQUIRE(!kasp->frozen);
+
+	kasp->manual_mode = value;
+}
+
 dns_ttl_t
 dns_kasp_zonemaxttl(dns_kasp_t *kasp, bool fallback) {
 	REQUIRE(DNS_KASP_VALID(kasp));
@@ -559,6 +575,21 @@ dns_kasp_key_match(dns_kasp_key_t *key, dns_dnsseckey_t *dkey) {
 
 	/* Found a match. */
 	return true;
+}
+
+void
+dns_kasp_key_format(dns_kasp_key_t *key, char *cp, unsigned int size) {
+	REQUIRE(key != NULL);
+	REQUIRE(cp != NULL);
+
+	char algstr[DNS_NAME_FORMATSIZE];
+	bool csk = dns_kasp_key_ksk(key) && dns_kasp_key_zsk(key);
+	const char *rolestr = (csk ? "csk"
+				   : (dns_kasp_key_ksk(key) ? "ksk" : "zsk"));
+
+	dns_secalg_format((dns_secalg_t)key->algorithm, algstr, sizeof(algstr));
+	snprintf(cp, size, "%s algorithm:%s length:%u tag-range:%u-%u", rolestr,
+		 algstr, dns_kasp_key_size(key), key->tag_min, key->tag_max);
 }
 
 uint8_t

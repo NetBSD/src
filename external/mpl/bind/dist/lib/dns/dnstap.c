@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.14 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.15 2026/01/29 18:37:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -122,13 +122,6 @@ struct dns_dtenv {
 	isc_log_rollsuffix_t suffix;
 	isc_stats_t *stats;
 };
-
-#define CHECK(x)                             \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 typedef struct ioq {
 	unsigned int generation;

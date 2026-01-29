@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.9 2025/01/26 16:25:32 christos Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.10 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,9 +149,7 @@ tostruct_nid(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	nid->common.rdclass = rdata->rdclass;
-	nid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nid->common, link);
+	DNS_RDATACOMMON_INIT(nid, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	nid->pref = uint16_fromregion(&region);

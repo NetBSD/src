@@ -1,4 +1,4 @@
-/*	$NetBSD: sshfp_44.c,v 1.11 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.12 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -206,9 +206,7 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	REQUIRE(sshfp != NULL);
 	REQUIRE(rdata->length != 0);
 
-	sshfp->common.rdclass = rdata->rdclass;
-	sshfp->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sshfp->common, link);
+	DNS_RDATACOMMON_INIT(sshfp, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

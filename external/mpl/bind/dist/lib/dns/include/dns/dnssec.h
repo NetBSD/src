@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.12 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.13 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -287,12 +287,15 @@ dns_dnssec_get_hints(dns_dnsseckey_t *key, isc_stdtime_t now);
 isc_result_t
 dns_dnssec_findmatchingkeys(const dns_name_t *origin, dns_kasp_t *kasp,
 			    const char *keydir, dns_keystorelist_t *keystores,
-			    isc_stdtime_t now, isc_mem_t *mctx,
+			    isc_stdtime_t now, bool rrtypekey, isc_mem_t *mctx,
 			    dns_dnsseckeylist_t *keylist);
 /*%<
  * Search for K* key files matching the name in 'origin'. If 'kasp' is not
  * NULL, search in the directories used in 'keystores'. Otherwise search in the
  * key-directory 'keydir'.
+ *
+ * If 'rrtypekey' is true, then KEY type keys are matched (e.g. for SIG(0)),
+ * otherwise DNSKEY type keys are matched for DNSSEC.
  *
  * Append all such keys, along with use hints gleaned from their
  * metadata, onto 'keylist'.  Skip any unsupported algorithms.

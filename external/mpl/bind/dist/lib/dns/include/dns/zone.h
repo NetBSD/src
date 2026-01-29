@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.15 2025/07/17 19:01:46 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.16 2026/01/29 18:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -105,6 +105,7 @@ typedef enum {
 	DNS_ZONEOPT_CHECKTTL = 1 << 28,	      /*%< check max-zone-ttl */
 	DNS_ZONEOPT_AUTOEMPTY = 1 << 29,      /*%< automatic empty zone */
 	DNS_ZONEOPT_CHECKSVCB = 1 << 30,      /*%< check SVBC records */
+	DNS_ZONEOPT_FORCEKEYMGR = 1ULL << 31, /*%< force keymgr step */
 	DNS_ZONEOPT___MAX = UINT64_MAX, /* trick to make the ENUM 64-bit wide */
 } dns_zoneopt_t;
 
@@ -2303,14 +2304,6 @@ dns_zone_getsignatures(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_signwithkey(dns_zone_t *zone, dns_secalg_t algorithm, uint16_t keyid,
-		     bool deleteit);
-/*%<
- * Initiate/resume signing of the entire zone with the zone DNSKEY(s)
- * that match the given algorithm and keyid.
- */
-
-isc_result_t
 dns_zone_addnsec3chain(dns_zone_t *zone, dns_rdata_nsec3param_t *nsec3param);
 /*%<
  * Incrementally add a NSEC3 chain that corresponds to 'nsec3param'.
@@ -2326,7 +2319,7 @@ dns_zone_getprivatetype(dns_zone_t *zone);
  */
 
 void
-dns_zone_rekey(dns_zone_t *zone, bool fullsign);
+dns_zone_rekey(dns_zone_t *zone, bool fullsign, bool forcekeymgr);
 /*%<
  * Update the zone's DNSKEY set from the key repository.
  *
@@ -2334,6 +2327,9 @@ dns_zone_rekey(dns_zone_t *zone, bool fullsign);
  * the zone with the new key.  Otherwise, if there are no keys or
  * if the new keys are for algorithms that have already signed the
  * zone, then the zone can be re-signed incrementally.
+ *
+ * If 'forcekeymgr' is true, trigger a rekey event and allow the
+ * next steps in the run to happen.
  */
 
 isc_result_t

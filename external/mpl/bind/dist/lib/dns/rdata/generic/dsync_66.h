@@ -1,4 +1,4 @@
-/*	$NetBSD: dsync_66.h,v 1.1.1.1 2026/01/29 18:19:55 christos Exp $	*/
+/*	$NetBSD: dsync_66.h,v 1.2 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

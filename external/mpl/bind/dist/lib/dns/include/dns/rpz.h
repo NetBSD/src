@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.h,v 1.12 2025/01/26 16:25:28 christos Exp $	*/
+/*	$NetBSD: rpz.h,v 1.13 2026/01/29 18:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/atomic.h>
 #include <isc/ht.h>
 #include <isc/lang.h>
 #include <isc/refcount.h>
@@ -156,6 +157,8 @@ struct dns_rpz_zone {
 	dns_rpz_zones_t *rpzs;		/* owner */
 	isc_time_t	 lastupdated;	/* last time the zone was processed
 					 * */
+	bool		 processed;	/* the zone is processed. */
+	bool		 dbregistered;	/* db callback notify is registered. */
 	bool		 updatepending; /* there is an update pending */
 	bool		 updaterunning; /* there is an update running */
 	isc_result_t	 updateresult;	/* result from the offloaded work */
@@ -207,6 +210,8 @@ struct dns_rpz_popt {
 	bool		qname_wait_recurse;
 	bool		nsip_wait_recurse;
 	bool		nsdname_wait_recurse;
+	bool		servfail_until_ready;
+	bool		slow_mode; /* Used for system tests with '-T rpzslow' */
 	unsigned int	min_ns_labels;
 	dns_rpz_num_t	num_zones;
 };
@@ -223,6 +228,9 @@ struct dns_rpz_zones {
 	dns_rpz_popt_t	   p;
 	dns_rpz_zone_t	  *zones[DNS_RPZ_MAX_ZONES];
 	dns_rpz_triggers_t triggers[DNS_RPZ_MAX_ZONES];
+
+	_Atomic(dns_rpz_num_t) zones_registered;
+	_Atomic(dns_rpz_num_t) zones_processed;
 
 	/*
 	 * RPZ policy version number.
@@ -266,6 +274,7 @@ struct dns_rpz_zones {
 	isc_rwlock_t search_lock;
 	isc_mutex_t  maint_lock;
 
+	bool first_time;
 	bool shuttingdown;
 
 	dns_rpz_cidr_node_t *cidr;
@@ -395,7 +404,8 @@ dns_rpz_decode_cname(dns_rpz_zone_t *rpz, dns_rdataset_t *rdataset,
 
 isc_result_t
 dns_rpz_new_zones(dns_view_t *view, isc_loopmgr_t *loopmgr, char *rps_cstr,
-		  size_t rps_cstr_size, dns_rpz_zones_t **rpzsp);
+		  size_t rps_cstr_size, dns_rpz_zones_t **rpzsp,
+		  bool first_time);
 
 isc_result_t
 dns_rpz_new_zone(dns_rpz_zones_t *rpzs, dns_rpz_zone_t **rpzp);

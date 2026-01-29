@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.14 2025/01/26 16:25:25 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.15 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -203,6 +203,9 @@ static isc_result_t
 dbiterator_seek(dns_dbiterator_t *iterator,
 		const dns_name_t *name DNS__DB_FLARG);
 static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator,
+		 const dns_name_t *name DNS__DB_FLARG);
+static isc_result_t
 dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG);
 static isc_result_t
 dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG);
@@ -215,9 +218,10 @@ static isc_result_t
 dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name);
 
 static dns_dbiteratormethods_t dbiterator_methods = {
-	dbiterator_destroy, dbiterator_first, dbiterator_last,
-	dbiterator_seek,    dbiterator_prev,  dbiterator_next,
-	dbiterator_current, dbiterator_pause, dbiterator_origin
+	dbiterator_destroy, dbiterator_first,	dbiterator_last,
+	dbiterator_seek,    dbiterator_seek3,	dbiterator_prev,
+	dbiterator_next,    dbiterator_current, dbiterator_pause,
+	dbiterator_origin
 };
 
 /*
@@ -1243,6 +1247,12 @@ dbiterator_seek(dns_dbiterator_t *iterator,
 		sdlziter->current = ISC_LIST_NEXT(sdlziter->current, link);
 	}
 	return ISC_R_NOTFOUND;
+}
+
+static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator ISC_ATTR_UNUSED,
+		 const dns_name_t *name ISC_ATTR_UNUSED DNS__DB_FLARG) {
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static isc_result_t

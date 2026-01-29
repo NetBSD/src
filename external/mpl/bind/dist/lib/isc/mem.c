@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.19 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,9 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
+#include <isc/backtrace.h>
 #include <isc/hash.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
@@ -169,6 +171,86 @@ struct isc_mempool {
  * Private Inline-able.
  */
 
+static size_t
+total_inuse(void) {
+	size_t inuse = 0;
+	LOCK(&contextslock);
+	for (isc_mem_t *ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
+	     ctx = ISC_LIST_NEXT(ctx, link))
+	{
+		inuse += isc_mem_inuse(ctx);
+	}
+	UNLOCK(&contextslock);
+
+	return inuse;
+}
+
+static void
+write_string(int fd, const char *str) {
+	int r = write(fd, str, strlen(str));
+	if (r == -1) {
+		abort();
+	}
+}
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x)  STRINGIFY(x)
+static void
+write_size(int fd, size_t size) {
+	char buf[sizeof(TOSTRING(SIZE_MAX)) + 1] = { 0 };
+
+	char *str = buf + (sizeof(buf) - 1);
+
+	if (size == 0) {
+		*--str = '0';
+	} else {
+		while (size) {
+			*--str = '0' + (size % 10);
+			size /= 10;
+		}
+	}
+
+	write_string(fd, str);
+}
+#undef TOSTRING
+#undef STRINGIFY
+
+static void
+write_errno(int fd, int errnum) {
+	char buf[BUFSIZ] = { 0 };
+	int ret = isc_string_strerror_r(errnum, buf, sizeof(buf));
+	if (ret == 0) {
+		write_string(fd, buf);
+	}
+}
+
+static void
+write_backtrace(int fd) {
+	void *tracebuf[ISC_BACKTRACE_MAXFRAME];
+	int nframes = isc_backtrace(tracebuf, ISC_BACKTRACE_MAXFRAME);
+
+	if (nframes > 0) {
+		isc_backtrace_symbols_fd(tracebuf, nframes, fd);
+	}
+}
+
+#define CHECK_OOM(ptr, size) (void)((ptr != NULL) || (oom(size), false))
+
+static void
+oom(size_t size) {
+	int fd = fileno(stderr);
+	write_string(fd, "Out of memory (trying to allocate ");
+	write_size(fd, size);
+	write_string(fd, ", total ");
+	write_size(fd, total_inuse());
+	write_string(fd, "): ");
+	write_errno(fd, errno);
+	write_string(fd, "\n");
+	write_backtrace(fd);
+
+	abort();
+}
+
 #if !ISC_MEM_TRACKLINES
 #define ADD_TRACE(mctx, ptr, size, file, line)
 #define DELETE_TRACE(mctx, ptr, size, file, line)
@@ -235,7 +317,7 @@ add_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size FLARG) {
 	idx = hash % DEBUG_TABLE_COUNT;
 
 	dl = mallocx(dlsize, mctx->jemalloc_flags);
-	INSIST(dl != NULL);
+	CHECK_OOM(dl, dlsize);
 
 	ISC_LINK_INIT(dl, link);
 	dl->ptr = ptr;
@@ -309,20 +391,18 @@ unlock:
  */
 static void *
 mem_get(isc_mem_t *ctx, size_t size, int flags) {
-	char *ret = NULL;
-
 	ADJUST_ZERO_ALLOCATION_SIZE(size);
 
-	ret = mallocx(size, flags | ctx->jemalloc_flags);
-	INSIST(ret != NULL);
+	void *ptr = mallocx(size, flags | ctx->jemalloc_flags);
+	CHECK_OOM(ptr, size);
 
 	if ((flags & ISC__MEM_ZERO) == 0 &&
 	    (ctx->flags & ISC_MEMFLAG_FILL) != 0)
 	{
-		memset(ret, 0xbe, size); /* Mnemonic for "beef". */
+		memset(ptr, 0xbe, size); /* Mnemonic for "beef". */
 	}
 
-	return ret;
+	return ptr;
 }
 
 /*!
@@ -347,7 +427,7 @@ mem_realloc(isc_mem_t *ctx, void *old_ptr, size_t old_size, size_t new_size,
 	ADJUST_ZERO_ALLOCATION_SIZE(new_size);
 
 	new_ptr = rallocx(old_ptr, new_size, flags | ctx->jemalloc_flags);
-	INSIST(new_ptr != NULL);
+	CHECK_OOM(new_ptr, new_size);
 
 	if ((flags & ISC__MEM_ZERO) == 0 &&
 	    (ctx->flags & ISC_MEMFLAG_FILL) != 0)
@@ -448,6 +528,8 @@ static void
 mem_shutdown(void) {
 	bool empty;
 
+	rcu_barrier();
+
 	isc__mem_checkdestroyed();
 
 	LOCK(&contextslock);
@@ -472,7 +554,7 @@ mem_create(isc_mem_t **ctxp, unsigned int debugging, unsigned int flags,
 	REQUIRE(ctxp != NULL && *ctxp == NULL);
 
 	ctx = mallocx(sizeof(*ctx), jemalloc_flags);
-	INSIST(ctx != NULL);
+	CHECK_OOM(ctx, sizeof(*ctx));
 
 	*ctx = (isc_mem_t){
 		.magic = MEM_MAGIC,
@@ -497,11 +579,11 @@ mem_create(isc_mem_t **ctxp, unsigned int debugging, unsigned int flags,
 #if ISC_MEM_TRACKLINES
 	if ((ctx->debugging & ISC_MEM_DEBUGRECORD) != 0) {
 		unsigned int i;
+		size_t debuglist_size = ISC_CHECKED_MUL(DEBUG_TABLE_COUNT,
+							sizeof(debuglist_t));
 
-		ctx->debuglist = mallocx(
-			ISC_CHECKED_MUL(DEBUG_TABLE_COUNT, sizeof(debuglist_t)),
-			jemalloc_flags);
-		INSIST(ctx->debuglist != NULL);
+		ctx->debuglist = mallocx(debuglist_size, jemalloc_flags);
+		CHECK_OOM(ctx->debuglist, debuglist_size);
 
 		for (i = 0; i < DEBUG_TABLE_COUNT; i++) {
 			ISC_LIST_INIT(ctx->debuglist[i]);

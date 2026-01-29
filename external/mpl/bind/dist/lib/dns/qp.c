@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.c,v 1.4 2025/01/27 15:40:36 christos Exp $	*/
+/*	$NetBSD: qp.c,v 1.5 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,7 +51,7 @@
 #include "qp_p.h"
 
 #ifndef DNS_QP_LOG_STATS
-#define DNS_QP_LOG_STATS 1
+#define DNS_QP_LOG_STATS 0
 #endif
 #ifndef DNS_QP_TRACE
 #define DNS_QP_TRACE 0
@@ -120,6 +120,19 @@ static isc_mutex_t qp_mutex = PTHREAD_MUTEX_INITIALIZER;
 	} while (0)
 #else
 #define TRACE(...)
+#endif
+
+#if DNS_QPMULTI_TRACE
+ISC_REFCOUNT_STATIC_TRACE_DECL(dns_qpmulti);
+#define dns_qpmulti_ref(ptr) dns_qpmulti__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_qpmulti_unref(ptr) \
+	dns_qpmulti__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_qpmulti_attach(ptr, ptrp) \
+	dns_qpmulti__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_qpmulti_detach(ptrp) \
+	dns_qpmulti__detach(ptrp, __func__, __FILE__, __LINE__)
+#else
+ISC_REFCOUNT_STATIC_DECL(dns_qpmulti);
 #endif
 
 /***********************************************************************
@@ -453,7 +466,7 @@ write_protect(dns_qp_t *qp, dns_qpchunk_t chunk) {
 
 #else
 
-#define chunk_get_raw(qp)	isc_mem_allocate(qp->mctx, QP_CHUNK_BYTES)
+#define chunk_get_raw(qp, size) isc_mem_allocate(qp->mctx, size)
 #define chunk_free_raw(qp, ptr) isc_mem_free(qp->mctx, ptr)
 
 #define chunk_shrink_raw(qp, ptr, size) isc_mem_reallocate(qp->mctx, ptr, size)
@@ -483,6 +496,22 @@ cells_immutable(dns_qp_t *qp, dns_qpref_t ref) {
 }
 
 /*
+ * Find the next power that is both bigger than size and prev_capacity,
+ * but still within the chunk min and max sizes.
+ */
+static dns_qpcell_t
+next_capacity(uint32_t prev_capacity, uint32_t size) {
+	/*
+	 * Unfortunately builtin_clz is undefined for 0. We work around this
+	 * issue by flooring the request size at 2.
+	 */
+	size = ISC_MAX3(size, prev_capacity, 2u);
+	uint32_t log2 = 32u - __builtin_clz(size - 1u);
+
+	return 1U << ISC_CLAMP(log2, QP_CHUNK_LOG_MIN, QP_CHUNK_LOG_MAX);
+}
+
+/*
  * Create a fresh bump chunk and allocate some twigs from it.
  */
 static dns_qpref_t
@@ -490,9 +519,15 @@ chunk_alloc(dns_qp_t *qp, dns_qpchunk_t chunk, dns_qpweight_t size) {
 	INSIST(qp->base->ptr[chunk] == NULL);
 	INSIST(qp->usage[chunk].used == 0);
 	INSIST(qp->usage[chunk].free == 0);
+	INSIST(qp->chunk_capacity <= QP_CHUNK_SIZE);
 
-	qp->base->ptr[chunk] = chunk_get_raw(qp);
-	qp->usage[chunk] = (qp_usage_t){ .exists = true, .used = size };
+	qp->chunk_capacity = next_capacity(qp->chunk_capacity * 2u, size);
+	qp->base->ptr[chunk] =
+		chunk_get_raw(qp, qp->chunk_capacity * sizeof(dns_qpnode_t));
+
+	qp->usage[chunk] = (qp_usage_t){ .exists = true,
+					 .used = size,
+					 .capacity = qp->chunk_capacity };
 	qp->used_count += size;
 	qp->bump = chunk;
 	qp->fender = 0;
@@ -572,7 +607,7 @@ alloc_twigs(dns_qp_t *qp, dns_qpweight_t size) {
 	dns_qpchunk_t chunk = qp->bump;
 	dns_qpcell_t cell = qp->usage[chunk].used;
 
-	if (cell + size <= QP_CHUNK_SIZE) {
+	if (cell + size <= qp->usage[chunk].capacity) {
 		qp->usage[chunk].used += size;
 		qp->used_count += size;
 		return make_ref(chunk, cell);
@@ -690,7 +725,7 @@ chunk_free(dns_qp_t *qp, dns_qpchunk_t chunk) {
  */
 static void
 recycle(dns_qp_t *qp) {
-	unsigned int free = 0;
+	unsigned int nfree = 0;
 
 	isc_nanosecs_t start = isc_time_monotonic();
 
@@ -699,15 +734,15 @@ recycle(dns_qp_t *qp) {
 		    qp->usage[chunk].exists && !qp->usage[chunk].immutable)
 		{
 			chunk_free(qp, chunk);
-			free++;
+			nfree++;
 		}
 	}
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
 	ISC_QP_ADD(recycle_time, time);
 
-	if (free > 0) {
-		LOG_STATS("qp recycle" PRItime "free %u chunks", time, free);
+	if (nfree > 0) {
+		LOG_STATS("qp recycle" PRItime "free %u chunks", time, nfree);
 		LOG_STATS("qp recycle leaf %u live %u used %u free %u hold %u",
 			  qp->leaf_count, qp->used_count - qp->free_count,
 			  qp->used_count, qp->free_count, qp->hold_count);
@@ -725,38 +760,47 @@ reclaim_chunks_cb(struct rcu_head *arg) {
 	REQUIRE(QPMULTI_VALID(multi));
 
 	LOCK(&multi->mutex);
-
 	dns_qp_t *qp = &multi->writer;
-	REQUIRE(QP_VALID(qp));
 
-	unsigned int free = 0;
-	isc_nanosecs_t start = isc_time_monotonic();
+	/*
+	 * If chunk_max is zero, chunks have already been freed.
+	 */
+	if (qp->chunk_max != 0) {
+		unsigned int free = 0;
+		isc_nanosecs_t start = isc_time_monotonic();
 
-	for (unsigned int i = 0; i < rcuctx->count; i++) {
-		dns_qpchunk_t chunk = rcuctx->chunk[i];
-		if (qp->usage[chunk].snapshot) {
-			/* cleanup when snapshot is destroyed */
-			qp->usage[chunk].snapfree = true;
-		} else {
-			chunk_free(qp, chunk);
-			free++;
+		INSIST(QP_VALID(qp));
+
+		for (unsigned int i = 0; i < rcuctx->count; i++) {
+			dns_qpchunk_t chunk = rcuctx->chunk[i];
+			if (qp->usage[chunk].snapshot) {
+				/* clean up when snapshot is destroyed */
+				qp->usage[chunk].snapfree = true;
+			} else {
+				chunk_free(qp, chunk);
+				free++;
+			}
+		}
+
+		isc_nanosecs_t time = isc_time_monotonic() - start;
+		recycle_time += time;
+
+		if (free > 0) {
+			LOG_STATS("qp reclaim" PRItime "free %u chunks", time,
+				  free);
+			LOG_STATS(
+				"qp reclaim leaf %u live %u used %u free %u "
+				"hold %u",
+				qp->leaf_count, qp->used_count - qp->free_count,
+				qp->used_count, qp->free_count, qp->hold_count);
 		}
 	}
 
+	UNLOCK(&multi->mutex);
+
+	dns_qpmulti_detach(&multi);
 	isc_mem_putanddetach(&rcuctx->mctx, rcuctx,
 			     STRUCT_FLEX_SIZE(rcuctx, chunk, rcuctx->count));
-
-	isc_nanosecs_t time = isc_time_monotonic() - start;
-	ISC_QP_ADD(recycle_time, time);
-
-	if (free > 0) {
-		LOG_STATS("qp reclaim" PRItime "free %u chunks", time, free);
-		LOG_STATS("qp reclaim leaf %u live %u used %u free %u hold %u",
-			  qp->leaf_count, qp->used_count - qp->free_count,
-			  qp->used_count, qp->free_count, qp->hold_count);
-	}
-
-	UNLOCK(&multi->mutex);
 }
 
 /*
@@ -801,6 +845,11 @@ reclaim_chunks(dns_qpmulti_t *multi) {
 		}
 	}
 
+	/*
+	 * Reference the qpmulti object to keep it from being
+	 * freed until reclaim_chunks_cb() runs.
+	 */
+	dns_qpmulti_ref(multi);
 	call_rcu(&rcuctx->rcu_head, reclaim_chunks_cb);
 
 	LOG_STATS("qp will reclaim %u chunks", count);
@@ -812,7 +861,7 @@ reclaim_chunks(dns_qpmulti_t *multi) {
  */
 static void
 marksweep_chunks(dns_qpmulti_t *multi) {
-	unsigned int free = 0;
+	unsigned int nfree = 0;
 
 	isc_nanosecs_t start = isc_time_monotonic();
 
@@ -835,15 +884,15 @@ marksweep_chunks(dns_qpmulti_t *multi) {
 		qpw->usage[chunk].snapmark = false;
 		if (qpw->usage[chunk].snapfree && !qpw->usage[chunk].snapshot) {
 			chunk_free(qpw, chunk);
-			free++;
+			nfree++;
 		}
 	}
 
 	isc_nanosecs_t time = isc_time_monotonic() - start;
 	ISC_QP_ADD(recycle_time, time);
 
-	if (free > 0) {
-		LOG_STATS("qp marksweep" PRItime "free %u chunks", time, free);
+	if (nfree > 0) {
+		LOG_STATS("qp marksweep" PRItime "free %u chunks", time, nfree);
 		LOG_STATS(
 			"qp marksweep leaf %u live %u used %u free %u hold %u",
 			qpw->leaf_count, qpw->used_count - qpw->free_count,
@@ -1053,12 +1102,13 @@ dns_qp_memusage(dns_qp_t *qp) {
 		.hold = qp->hold_count,
 		.free = qp->free_count,
 		.node_size = sizeof(dns_qpnode_t),
-		.chunk_size = QP_CHUNK_SIZE,
 		.fragmented = QP_NEEDGC(qp),
 	};
 
+	size_t chunk_usage_bytes = 0;
 	for (dns_qpchunk_t chunk = 0; chunk < qp->chunk_max; chunk++) {
 		if (qp->base->ptr[chunk] != NULL) {
+			chunk_usage_bytes += qp->usage[chunk].capacity;
 			memusage.chunk_count += 1;
 		}
 	}
@@ -1067,7 +1117,7 @@ dns_qp_memusage(dns_qp_t *qp) {
 	 * XXXFANF does not subtract chunks that have been shrunk,
 	 * and does not count unreclaimed dns_qpbase_t objects
 	 */
-	memusage.bytes = memusage.chunk_count * QP_CHUNK_BYTES +
+	memusage.bytes = chunk_usage_bytes +
 			 qp->chunk_max * sizeof(qp->base->ptr[0]) +
 			 qp->chunk_max * sizeof(qp->usage[0]);
 
@@ -1084,8 +1134,8 @@ dns_qpmulti_memusage(dns_qpmulti_t *multi) {
 
 	dns_qp_memusage_t memusage = dns_qp_memusage(qp);
 
-	if (qp->transaction_mode == QP_UPDATE) {
-		memusage.bytes -= QP_CHUNK_BYTES;
+	if (qp->transaction_mode == QP_UPDATE && qp->usage != NULL) {
+		memusage.bytes -= qp->usage[qp->bump].capacity;
 		memusage.bytes += qp->usage[qp->bump].used *
 				  sizeof(dns_qpnode_t);
 	}
@@ -1280,7 +1330,10 @@ dns_qpmulti_commit(dns_qpmulti_t *multi, dns_qp_t **qptp) {
  */
 void
 dns_qpmulti_rollback(dns_qpmulti_t *multi, dns_qp_t **qptp) {
-	unsigned int free = 0;
+	/*
+	 * nfree is only used when logging stats, hence the attribute.
+	 */
+	unsigned int nfree ISC_ATTR_UNUSED = 0;
 
 	REQUIRE(QPMULTI_VALID(multi));
 	REQUIRE(multi->writer.transaction_mode == QP_UPDATE);
@@ -1303,7 +1356,7 @@ dns_qpmulti_rollback(dns_qpmulti_t *multi, dns_qp_t **qptp) {
 				INSIST(!multi->rollback->usage[chunk].exists);
 				multi->rollback->base->ptr[chunk] = NULL;
 			}
-			free++;
+			nfree++;
 		}
 	}
 
@@ -1326,7 +1379,7 @@ dns_qpmulti_rollback(dns_qpmulti_t *multi, dns_qp_t **qptp) {
 	isc_nanosecs_t time = isc_time_monotonic() - start;
 	ISC_QP_ADD(rollback_time, time);
 
-	LOG_STATS("qp rollback" PRItime "free %u chunks", time, free);
+	LOG_STATS("qp rollback" PRItime "free %u chunks", time, nfree);
 
 	*qptp = NULL;
 	UNLOCK(&multi->mutex);
@@ -1470,12 +1523,12 @@ dns_qpmulti_create(isc_mem_t *mctx, const dns_qpmethods_t *methods, void *uctx,
 	REQUIRE(qpmp != NULL && *qpmp == NULL);
 
 	dns_qpmulti_t *multi = isc_mem_get(mctx, sizeof(*multi));
-	*multi = (dns_qpmulti_t){
-		.magic = QPMULTI_MAGIC,
-		.reader_ref = INVALID_REF,
-	};
+	*multi = (dns_qpmulti_t){ .magic = QPMULTI_MAGIC,
+				  .reader_ref = INVALID_REF,
+				  .references = ISC_REFCOUNT_INITIALIZER(1) };
 	isc_mutex_init(&multi->mutex);
 	ISC_LIST_INIT(multi->snapshots);
+
 	/*
 	 * Do not waste effort allocating a bump chunk that will be thrown
 	 * away when a transaction is opened. dns_qpmulti_update() always
@@ -1495,11 +1548,13 @@ destroy_guts(dns_qp_t *qp) {
 	if (qp->chunk_max == 0) {
 		return;
 	}
+
 	for (dns_qpchunk_t chunk = 0; chunk < qp->chunk_max; chunk++) {
 		if (qp->base->ptr[chunk] != NULL) {
 			chunk_free(qp, chunk);
 		}
 	}
+	qp->chunk_max = 0;
 	ENSURE(qp->used_count == 0);
 	ENSURE(qp->free_count == 0);
 	ENSURE(isc_refcount_current(&qp->base->refcount) == 1);
@@ -1525,7 +1580,26 @@ dns_qp_destroy(dns_qp_t **qptp) {
 }
 
 static void
-qpmulti_destroy_cb(struct rcu_head *arg) {
+qpmulti_free_mem(dns_qpmulti_t *multi) {
+	REQUIRE(QPMULTI_VALID(multi));
+
+	/* reassure thread sanitizer */
+	LOCK(&multi->mutex);
+	dns_qp_t *qp = &multi->writer;
+	UNLOCK(&multi->mutex);
+
+	isc_mutex_destroy(&multi->mutex);
+	isc_mem_putanddetach(&qp->mctx, multi, sizeof(*multi));
+}
+
+#if QPMULTI_TRACE
+ISC_REFCOUNT_STATIC_TRACE_IMPL(dns_qpmulti, qpmulti_free_mem)
+#else
+ISC_REFCOUNT_STATIC_IMPL(dns_qpmulti, qpmulti_free_mem)
+#endif
+
+static void
+qpmulti_destroy_guts_cb(struct rcu_head *arg) {
 	qp_rcuctx_t *rcuctx = caa_container_of(arg, qp_rcuctx_t, rcu_head);
 	REQUIRE(QPRCU_VALID(rcuctx));
 	/* only nonzero for reclaim_chunks_cb() */
@@ -1544,10 +1618,9 @@ qpmulti_destroy_cb(struct rcu_head *arg) {
 
 	UNLOCK(&multi->mutex);
 
-	isc_mutex_destroy(&multi->mutex);
+	dns_qpmulti_detach(&multi);
 	isc_mem_putanddetach(&rcuctx->mctx, rcuctx,
 			     STRUCT_FLEX_SIZE(rcuctx, chunk, rcuctx->count));
-	isc_mem_putanddetach(&qp->mctx, multi, sizeof(*multi));
 }
 
 void
@@ -1573,7 +1646,7 @@ dns_qpmulti_destroy(dns_qpmulti_t **qpmp) {
 		.multi = multi,
 	};
 	isc_mem_attach(qp->mctx, &rcuctx->mctx);
-	call_rcu(&rcuctx->rcu_head, qpmulti_destroy_cb);
+	call_rcu(&rcuctx->rcu_head, qpmulti_destroy_guts_cb);
 }
 
 /***********************************************************************

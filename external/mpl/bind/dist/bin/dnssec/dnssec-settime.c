@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-settime.c,v 1.10 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.11 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,10 +45,10 @@ const char *program = "dnssec-settime";
 static isc_mem_t *mctx = NULL;
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
@@ -103,7 +103,7 @@ usage(void) {
 	fprintf(stderr, "     K<name>+<alg>+<new id>.key, "
 			"K<name>+<alg>+<new id>.private\n");
 
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 static void
@@ -244,7 +244,7 @@ main(int argc, char **argv) {
 	options = DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE;
 
 	if (argc == 1) {
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);
@@ -341,10 +341,13 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			/* Does not return. */
+			usage(EXIT_FAILURE);
+
 		case 'h':
 			/* Does not return. */
-			usage();
+			usage(EXIT_SUCCESS);
+
 		case 'I':
 			if (setinact || unsetinact) {
 				fatal("-I specified more than once");
@@ -478,7 +481,7 @@ main(int argc, char **argv) {
 				case ' ':
 					break;
 				default:
-					usage();
+					usage(EXIT_FAILURE);
 					break;
 				}
 			} while (*p != '\0');

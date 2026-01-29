@@ -1,4 +1,4 @@
-/*	$NetBSD: svcb_64.c,v 1.6 2025/01/26 16:25:35 christos Exp $	*/
+/*	$NetBSD: svcb_64.c,v 1.7 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1015,9 +1015,7 @@ generic_tostruct_in_svcb(ARGS_TOSTRUCT) {
 	REQUIRE(svcb != NULL);
 	REQUIRE(rdata->length != 0);
 
-	svcb->common.rdclass = rdata->rdclass;
-	svcb->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&svcb->common, link);
+	DNS_RDATACOMMON_INIT(svcb, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

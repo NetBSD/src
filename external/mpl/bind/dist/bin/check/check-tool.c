@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.11 2025/01/26 16:24:31 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.12 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -58,13 +58,6 @@
 #ifndef CHECK_LOCAL
 #define CHECK_LOCAL 1
 #endif /* ifndef CHECK_LOCAL */
-
-#define CHECK(r)                             \
-	do {                                 \
-		result = (r);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 #define ERR_IS_CNAME	   1
 #define ERR_NO_ADDRESSES   2

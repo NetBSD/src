@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.11 2025/05/21 14:48:06 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.12 2026/01/29 18:37:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,7 @@
 #define NS_SERVER_TRANSFERSTUCK	    0x00020000U /*%< -T transferstuck */
 #define NS_SERVER_LOGRESPONSES	    0x00040000U /*%< log responses */
 #define NS_SERVER_COOKIEALWAYSVALID 0x00080000U /*%< -T cookiealwaysvalid */
+#define NS_SERVER_RPZSLOW	    0x00100000U /*%< -T rpzslow */
 
 /*%
  * Type for callback function to get hostname.

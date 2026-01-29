@@ -1,4 +1,4 @@
-/*	$NetBSD: qpcache.c,v 1.4 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: qpcache.c,v 1.5 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,13 +62,6 @@
 
 #include "db_p.h"
 #include "qpcache_p.h"
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 #define EXISTS(header)                                 \
 	((atomic_load_acquire(&(header)->attributes) & \
@@ -426,6 +419,9 @@ static isc_result_t
 dbiterator_seek(dns_dbiterator_t *iterator,
 		const dns_name_t *name DNS__DB_FLARG);
 static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator,
+		 const dns_name_t *name DNS__DB_FLARG);
+static isc_result_t
 dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG);
 static isc_result_t
 dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG);
@@ -438,9 +434,10 @@ static isc_result_t
 dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name);
 
 static dns_dbiteratormethods_t dbiterator_methods = {
-	dbiterator_destroy, dbiterator_first, dbiterator_last,
-	dbiterator_seek,    dbiterator_prev,  dbiterator_next,
-	dbiterator_current, dbiterator_pause, dbiterator_origin
+	dbiterator_destroy, dbiterator_first,	dbiterator_last,
+	dbiterator_seek,    dbiterator_seek3,	dbiterator_prev,
+	dbiterator_next,    dbiterator_current, dbiterator_pause,
+	dbiterator_origin
 };
 
 /*
@@ -1519,7 +1516,13 @@ find_coveringnsec(qpc_search_t *search, const dns_name_t *name,
 	 */
 	result = dns_qp_lookup(search->qpdb->nsec, name, NULL, &iter, NULL,
 			       (void **)&node, NULL);
-	if (result != DNS_R_PARTIALMATCH) {
+	/*
+	 * When DNS_R_PARTIALMATCH or ISC_R_NOTFOUND is returned from
+	 * dns_qp_lookup there is potentially a covering NSEC present
+	 * in the cache so we need to search for it.  Otherwise we are
+	 * done here.
+	 */
+	if (result != DNS_R_PARTIALMATCH && result != ISC_R_NOTFOUND) {
 		return ISC_R_NOTFOUND;
 	}
 
@@ -2456,7 +2459,7 @@ overmem(qpcache_t *qpdb, dns_slabheader_t *newheader,
 	 */
 	purgesize = 2 * (sizeof(qpcnode_t) +
 			 dns_name_size(&HEADERNODE(newheader)->name)) +
-		    rdataset_size(newheader) + 12288;
+		    rdataset_size(newheader) + QP_SAFETY_MARGIN;
 again:
 	do {
 		isc_rwlocktype_t nlocktype = isc_rwlocktype_none;
@@ -2989,39 +2992,43 @@ find_header:
 		 */
 		if (trust < header->trust && (ACTIVE(header, now) || header_nx))
 		{
-			dns_slabheader_destroy(&newheader);
-			if (addedrdataset != NULL) {
-				bindrdataset(qpdb, qpnode, header, now,
-					     nlocktype, tlocktype,
-					     addedrdataset DNS__DB_FLARG_PASS);
+			isc_result_t result = DNS_R_UNCHANGED;
+			bindrdataset(qpdb, qpnode, header, now, nlocktype,
+				     tlocktype,
+				     addedrdataset DNS__DB_FLARG_PASS);
+			if (ACTIVE(header, now) &&
+			    (options & DNS_DBADD_EQUALOK) != 0 &&
+			    dns_rdataslab_equalx(
+				    (unsigned char *)header,
+				    (unsigned char *)newheader,
+				    (unsigned int)(sizeof(*newheader)),
+				    qpdb->common.rdclass,
+				    (dns_rdatatype_t)header->type))
+			{
+				result = ISC_R_SUCCESS;
 			}
-			return DNS_R_UNCHANGED;
+			dns_slabheader_destroy(&newheader);
+			return result;
 		}
 
 		/*
-		 * Don't replace existing NS, A and AAAA RRsets in the
-		 * cache if they are already exist. This prevents named
-		 * being locked to old servers. Don't lower trust of
-		 * existing record if the update is forced. Nothing
-		 * special to be done w.r.t stale data; it gets replaced
-		 * normally further down.
+		 * Don't replace existing NS in the cache if they already exist
+		 * and replacing the existing one would increase the TTL. This
+		 * prevents named being locked to old servers. Don't lower trust
+		 * of existing record if the update is forced. Nothing special
+		 * to be done w.r.t stale data; it gets replaced normally
+		 * further down.
 		 */
 		if (ACTIVE(header, now) && header->type == dns_rdatatype_ns &&
 		    !header_nx && !newheader_nx &&
 		    header->trust >= newheader->trust &&
+		    header->ttl < newheader->ttl &&
 		    dns_rdataslab_equalx((unsigned char *)header,
 					 (unsigned char *)newheader,
 					 (unsigned int)(sizeof(*newheader)),
 					 qpdb->common.rdclass,
 					 (dns_rdatatype_t)header->type))
 		{
-			/*
-			 * Honour the new ttl if it is less than the
-			 * older one.
-			 */
-			if (header->ttl > newheader->ttl) {
-				setttl(header, newheader->ttl);
-			}
 			if (header->last_used != now) {
 				ISC_LIST_UNLINK(
 					qpdb->buckets[HEADERNODE(header)->locknum]
@@ -3055,7 +3062,7 @@ find_header:
 		}
 
 		/*
-		 * If we have will be replacing a NS RRset force its TTL
+		 * If we will be replacing a NS RRset force its TTL
 		 * to be no more than the current NS RRset's TTL.  This
 		 * ensures the delegations that are withdrawn are honoured.
 		 */
@@ -3064,6 +3071,11 @@ find_header:
 		    header->trust <= newheader->trust)
 		{
 			if (newheader->ttl > header->ttl) {
+				if (ZEROTTL(header)) {
+					DNS_SLABHEADER_SETATTR(
+						newheader,
+						DNS_SLABHEADERATTR_ZEROTTL);
+				}
 				newheader->ttl = header->ttl;
 			}
 		}
@@ -3075,17 +3087,11 @@ find_header:
 		     header->type == DNS_SIGTYPE(dns_rdatatype_ds)) &&
 		    !header_nx && !newheader_nx &&
 		    header->trust >= newheader->trust &&
+		    header->ttl < newheader->ttl &&
 		    dns_rdataslab_equal((unsigned char *)header,
 					(unsigned char *)newheader,
 					(unsigned int)(sizeof(*newheader))))
 		{
-			/*
-			 * Honour the new ttl if it is less than the
-			 * older one.
-			 */
-			if (header->ttl > newheader->ttl) {
-				setttl(header, newheader->ttl);
-			}
 			if (header->last_used != now) {
 				ISC_LIST_UNLINK(
 					qpdb->buckets[HEADERNODE(header)->locknum]
@@ -4096,6 +4102,12 @@ dbiterator_seek(dns_dbiterator_t *iterator,
 	qpdbiter->result = (result == DNS_R_PARTIALMATCH) ? ISC_R_SUCCESS
 							  : result;
 	return result;
+}
+
+static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator ISC_ATTR_UNUSED,
+		 const dns_name_t *name ISC_ATTR_UNUSED DNS__DB_FLARG) {
+	return ISC_R_NOTIMPLEMENTED;
 }
 
 static isc_result_t

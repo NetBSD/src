@@ -1,4 +1,4 @@
-/*	$NetBSD: l64_106.c,v 1.9 2025/01/26 16:25:31 christos Exp $	*/
+/*	$NetBSD: l64_106.c,v 1.10 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,9 +149,7 @@ tostruct_l64(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	l64->common.rdclass = rdata->rdclass;
-	l64->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&l64->common, link);
+	DNS_RDATACOMMON_INIT(l64, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	l64->pref = uint16_fromregion(&region);

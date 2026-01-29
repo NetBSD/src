@@ -1,4 +1,4 @@
-/*	$NetBSD: hashmap.c,v 1.2 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: hashmap.c,v 1.3 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,6 @@
 
 #include <isc/ascii.h>
 #include <isc/atomic.h>
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/hashmap.h>
 #include <isc/magic.h>

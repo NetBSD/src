@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone.c,v 1.3 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: qpzone.c,v 1.4 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,13 +65,6 @@
 
 #include "db_p.h"
 #include "qpzone_p.h"
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 #define NONEXISTENT(header)                            \
 	((atomic_load_acquire(&(header)->attributes) & \
@@ -359,6 +352,9 @@ static isc_result_t
 dbiterator_seek(dns_dbiterator_t *iterator,
 		const dns_name_t *name DNS__DB_FLARG);
 static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator,
+		 const dns_name_t *name DNS__DB_FLARG);
+static isc_result_t
 dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG);
 static isc_result_t
 dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG);
@@ -371,9 +367,10 @@ static isc_result_t
 dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name);
 
 static dns_dbiteratormethods_t dbiterator_methods = {
-	dbiterator_destroy, dbiterator_first, dbiterator_last,
-	dbiterator_seek,    dbiterator_prev,  dbiterator_next,
-	dbiterator_current, dbiterator_pause, dbiterator_origin
+	dbiterator_destroy, dbiterator_first,	dbiterator_last,
+	dbiterator_seek,    dbiterator_seek3,	dbiterator_prev,
+	dbiterator_next,    dbiterator_current, dbiterator_pause,
+	dbiterator_origin
 };
 
 typedef struct qpdb_dbiterator {
@@ -4389,10 +4386,60 @@ dbiterator_seek(dns_dbiterator_t *iterator,
 }
 
 static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator,
+		 const dns_name_t *name DNS__DB_FLARG) {
+	isc_result_t result;
+	qpdb_dbiterator_t *qpdbiter = (qpdb_dbiterator_t *)iterator;
+
+	if (qpdbiter->result != ISC_R_SUCCESS &&
+	    qpdbiter->result != ISC_R_NOTFOUND &&
+	    qpdbiter->result != DNS_R_PARTIALMATCH &&
+	    qpdbiter->result != ISC_R_NOMORE)
+	{
+		return qpdbiter->result;
+	}
+
+	if (qpdbiter->nsec3mode != nsec3only) {
+		return ISC_R_NOTIMPLEMENTED;
+	}
+
+	dereference_iter_node(qpdbiter DNS__DB_FLARG_PASS);
+
+	qpdbiter->current = &qpdbiter->nsec3iter;
+	result = dns_qp_lookup(qpdbiter->nsnap, name, NULL, qpdbiter->current,
+			       NULL, (void **)&qpdbiter->node, NULL);
+
+	switch (result) {
+	case ISC_R_SUCCESS:
+		reference_iter_node(qpdbiter DNS__DB_FLARG_PASS);
+		break;
+	case DNS_R_PARTIALMATCH:
+		/* dbiterator_next() will dereference the node */
+		reference_iter_node(qpdbiter DNS__DB_FLARG_PASS);
+
+		result = dbiterator_next(iterator);
+		if (result == ISC_R_NOMORE) {
+			result = dbiterator_first(iterator);
+		}
+		break;
+	case ISC_R_NOTFOUND:
+	default:
+		break;
+	}
+
+	qpdbiter->result = result;
+
+	return qpdbiter->result;
+}
+
+static isc_result_t
 dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 	isc_result_t result;
 	qpdb_dbiterator_t *qpdbiter = (qpdb_dbiterator_t *)iterator;
 	qpzonedb_t *qpdb = (qpzonedb_t *)iterator->db;
+	qpznode_t *node = NULL;
+	isc_rwlocktype_t nlocktype = isc_rwlocktype_none;
+	isc_rwlock_t *nlock = NULL;
 
 	REQUIRE(qpdbiter->node != NULL);
 
@@ -4400,7 +4447,12 @@ dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 		return qpdbiter->result;
 	}
 
-	dereference_iter_node(qpdbiter DNS__DB_FLARG_PASS);
+	/*
+	 * Defer the release of the current node until we have the prev node
+	 * from the QP tree.
+	 */
+	node = qpdbiter->node;
+	qpdbiter->node = NULL;
 
 	result = dns_qpiter_prev(qpdbiter->current, NULL,
 				 (void **)&qpdbiter->node, NULL);
@@ -4426,6 +4478,14 @@ dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 		}
 	}
 
+	/*
+	 * We have the prev node, we can release the previous current.
+	 */
+	nlock = &qpdb->buckets[node->locknum].lock;
+	NODE_RDLOCK(nlock, &nlocktype);
+	qpznode_release(qpdb, node, 0, &nlocktype DNS__DB_FLARG_PASS);
+	NODE_UNLOCK(nlock, &nlocktype);
+
 	if (result == ISC_R_SUCCESS) {
 		reference_iter_node(qpdbiter DNS__DB_FLARG_PASS);
 	} else {
@@ -4441,6 +4501,9 @@ dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 	isc_result_t result;
 	qpdb_dbiterator_t *qpdbiter = (qpdb_dbiterator_t *)iterator;
 	qpzonedb_t *qpdb = (qpzonedb_t *)iterator->db;
+	qpznode_t *node = NULL;
+	isc_rwlocktype_t nlocktype = isc_rwlocktype_none;
+	isc_rwlock_t *nlock = NULL;
 
 	REQUIRE(qpdbiter->node != NULL);
 
@@ -4448,7 +4511,12 @@ dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 		return qpdbiter->result;
 	}
 
-	dereference_iter_node(qpdbiter DNS__DB_FLARG_PASS);
+	/*
+	 * Defer the release of the current node until we have the next node
+	 * from the QP tree.
+	 */
+	node = qpdbiter->node;
+	qpdbiter->node = NULL;
 
 	result = dns_qpiter_next(qpdbiter->current, NULL,
 				 (void **)&qpdbiter->node, NULL);
@@ -4484,6 +4552,14 @@ dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 			}
 		}
 	}
+
+	/*
+	 * We have the next node, we can release the previous current.
+	 */
+	nlock = &qpdb->buckets[node->locknum].lock;
+	NODE_RDLOCK(nlock, &nlocktype);
+	qpznode_release(qpdb, node, 0, &nlocktype DNS__DB_FLARG_PASS);
+	NODE_UNLOCK(nlock, &nlocktype);
 
 	if (result == ISC_R_SUCCESS) {
 		reference_iter_node(qpdbiter DNS__DB_FLARG_PASS);

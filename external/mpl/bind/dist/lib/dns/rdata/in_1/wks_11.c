@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.11 2025/01/26 16:25:35 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.12 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -307,9 +307,7 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
 
-	wks->common.rdclass = rdata->rdclass;
-	wks->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&wks->common, link);
+	DNS_RDATACOMMON_INIT(wks, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	n = uint32_fromregion(&region);

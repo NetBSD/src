@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.12 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.13 2026/01/29 18:37:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -176,7 +176,7 @@ requests_cancel(void *arg) {
 	dns_request_t *request = NULL, *next = NULL;
 	uint32_t tid = isc_tid();
 
-	ISC_LIST_FOREACH_SAFE (requestmgr->requests[tid], request, link, next) {
+	ISC_LIST_FOREACH_SAFE(requestmgr->requests[tid], request, link, next) {
 		req_log(ISC_LOG_DEBUG(3), "%s(%" PRIu32 ": request %p",
 			__func__, tid, request);
 		if (DNS_REQUEST_COMPLETE(request)) {

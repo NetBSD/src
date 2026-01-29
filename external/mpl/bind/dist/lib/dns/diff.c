@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.10 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.11 2026/01/29 18:37:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,13 +37,6 @@
 #include <dns/rdatastruct.h>
 #include <dns/rdatatype.h>
 #include <dns/time.h>
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 #define DIFF_COMMON_LOGARGS \
 	dns_lctx, DNS_LOGCATEGORY_GENERAL, DNS_LOGMODULE_DIFF
@@ -517,7 +510,7 @@ diff_apply(const dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 	}
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	if (node != NULL) {
 		dns_db_detachnode(db, &node);
 	}
@@ -606,7 +599,7 @@ dns_diff_load(const dns_diff_t *diff, dns_rdatacallbacks_t *callbacks) {
 	}
 	result = ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	if (callbacks->commit != NULL) {
 		callbacks->commit(callbacks->add_private);
 	}
@@ -682,66 +675,74 @@ dns_diff_print(const dns_diff_t *diff, FILE *file) {
 
 	REQUIRE(DNS_DIFF_VALID(diff));
 
-	mem = isc_mem_get(diff->mctx, size);
+	int required_log_level = ISC_LOG_DEBUG(7);
 
-	for (t = ISC_LIST_HEAD(diff->tuples); t != NULL;
-	     t = ISC_LIST_NEXT(t, link))
-	{
-		isc_buffer_t buf;
-		isc_region_t r;
+	/*
+	 * Logging requires allocating a buffer and some costly translation to
+	 * text. Avoid it if possible.
+	 */
+	if (isc_log_wouldlog(dns_lctx, required_log_level) || file != NULL) {
+		mem = isc_mem_get(diff->mctx, size);
 
-		dns_rdatalist_t rdl;
-		dns_rdataset_t rds;
-		dns_rdata_t rd = DNS_RDATA_INIT;
+		for (t = ISC_LIST_HEAD(diff->tuples); t != NULL;
+		     t = ISC_LIST_NEXT(t, link))
+		{
+			isc_buffer_t buf;
+			isc_region_t r;
 
-		diff_tuple_tordataset(t, &rd, &rdl, &rds);
-	again:
-		isc_buffer_init(&buf, mem, size);
-		result = dns_rdataset_totext(&rds, &t->name, false, false,
-					     &buf);
+			dns_rdatalist_t rdl;
+			dns_rdataset_t rds;
+			dns_rdata_t rd = DNS_RDATA_INIT;
 
-		if (result == ISC_R_NOSPACE) {
-			isc_mem_put(diff->mctx, mem, size);
-			size += 1024;
-			mem = isc_mem_get(diff->mctx, size);
-			goto again;
-		}
+			diff_tuple_tordataset(t, &rd, &rdl, &rds);
+		again:
+			isc_buffer_init(&buf, mem, size);
+			result = dns_rdataset_totext(&rds, &t->name, false,
+						     false, &buf);
 
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
-		/*
-		 * Get rid of final newline.
-		 */
-		INSIST(buf.used >= 1 &&
-		       ((char *)buf.base)[buf.used - 1] == '\n');
-		buf.used--;
+			if (result == ISC_R_NOSPACE) {
+				isc_mem_put(diff->mctx, mem, size);
+				size += 1024;
+				mem = isc_mem_get(diff->mctx, size);
+				goto again;
+			}
 
-		isc_buffer_usedregion(&buf, &r);
-		switch (t->op) {
-		case DNS_DIFFOP_EXISTS:
-			op = "exists";
-			break;
-		case DNS_DIFFOP_ADD:
-			op = "add";
-			break;
-		case DNS_DIFFOP_DEL:
-			op = "del";
-			break;
-		case DNS_DIFFOP_ADDRESIGN:
-			op = "add re-sign";
-			break;
-		case DNS_DIFFOP_DELRESIGN:
-			op = "del re-sign";
-			break;
-		}
-		if (file != NULL) {
-			fprintf(file, "%s %.*s\n", op, (int)r.length,
-				(char *)r.base);
-		} else {
-			isc_log_write(DIFF_COMMON_LOGARGS, ISC_LOG_DEBUG(7),
-				      "%s %.*s", op, (int)r.length,
-				      (char *)r.base);
+			if (result != ISC_R_SUCCESS) {
+				goto cleanup;
+			}
+			/*
+			 * Get rid of final newline.
+			 */
+			INSIST(buf.used >= 1 &&
+			       ((char *)buf.base)[buf.used - 1] == '\n');
+			buf.used--;
+
+			isc_buffer_usedregion(&buf, &r);
+			switch (t->op) {
+			case DNS_DIFFOP_EXISTS:
+				op = "exists";
+				break;
+			case DNS_DIFFOP_ADD:
+				op = "add";
+				break;
+			case DNS_DIFFOP_DEL:
+				op = "del";
+				break;
+			case DNS_DIFFOP_ADDRESIGN:
+				op = "add re-sign";
+				break;
+			case DNS_DIFFOP_DELRESIGN:
+				op = "del re-sign";
+				break;
+			}
+			if (file != NULL) {
+				fprintf(file, "%s %.*s\n", op, (int)r.length,
+					(char *)r.base);
+			} else {
+				isc_log_write(DIFF_COMMON_LOGARGS,
+					      required_log_level, "%s %.*s", op,
+					      (int)r.length, (char *)r.base);
+			}
 		}
 	}
 	result = ISC_R_SUCCESS;

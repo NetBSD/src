@@ -1,4 +1,4 @@
-/*	$NetBSD: pipequeries.c,v 1.10 2025/01/26 16:24:58 christos Exp $	*/
+/*	$NetBSD: pipequeries.c,v 1.11 2026/01/29 18:37:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,7 +43,7 @@
 #include <dns/types.h>
 #include <dns/view.h>
 
-#define CHECK(str, x)                                        \
+#define CHECKM(str, x)                                       \
 	{                                                    \
 		if ((x) != ISC_R_SUCCESS) {                  \
 			fprintf(stderr, "I:%s: %s\n", (str), \
@@ -86,7 +86,7 @@ recvresponse(void *arg) {
 
 	result = dns_request_getresponse(request, response,
 					 DNS_MESSAGEPARSE_PRESERVEORDER);
-	CHECK("dns_request_getresponse", result);
+	CHECKM("dns_request_getresponse", result);
 
 	if (response->rcode != dns_rcode_noerror) {
 		result = dns_result_fromrcode(response->rcode);
@@ -103,7 +103,7 @@ recvresponse(void *arg) {
 	result = dns_message_sectiontotext(
 		response, DNS_SECTION_ANSWER, &dns_master_style_simple,
 		DNS_MESSAGETEXTFLAG_NOCOMMENTS, &outbuf);
-	CHECK("dns_message_sectiontotext", result);
+	CHECKM("dns_message_sectiontotext", result);
 	printf("%.*s", (int)isc_buffer_usedlength(&outbuf),
 	       (char *)isc_buffer_base(&outbuf));
 	fflush(stdout);
@@ -142,7 +142,7 @@ sendquery(void) {
 	isc_buffer_add(&buf, strlen(host));
 	result = dns_name_fromtext(dns_fixedname_name(&queryname), &buf,
 				   dns_rootname, 0, NULL);
-	CHECK("dns_name_fromtext", result);
+	CHECKM("dns_name_fromtext", result);
 
 	dns_message_create(mctx, NULL, NULL, DNS_MESSAGE_INTENTRENDER,
 			   &message);
@@ -166,7 +166,7 @@ sendquery(void) {
 		requestmgr, message, have_src ? &srcaddr : NULL, &dstaddr, NULL,
 		NULL, DNS_REQUESTOPT_TCP, NULL, TIMEOUT, 0, 0,
 		isc_loop_main(loopmgr), recvresponse, message, &request);
-	CHECK("dns_request_create", result);
+	CHECKM("dns_request_create", result);
 
 	return ISC_R_SUCCESS;
 }
@@ -263,13 +263,13 @@ main(int argc, char *argv[]) {
 
 	result = ISC_R_FAILURE;
 	if (inet_pton(AF_INET, "10.53.0.7", &inaddr) != 1) {
-		CHECK("inet_pton", result);
+		CHECKM("inet_pton", result);
 	}
 	isc_sockaddr_fromin(&srcaddr, &inaddr, 0);
 
 	result = ISC_R_FAILURE;
 	if (inet_pton(AF_INET, "10.53.0.4", &inaddr) != 1) {
-		CHECK("inet_pton", result);
+		CHECKM("inet_pton", result);
 	}
 	isc_sockaddr_fromin(&dstaddr, &inaddr, port);
 

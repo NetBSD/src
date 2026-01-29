@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.h,v 1.3 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: qp.h,v 1.4 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,6 +90,12 @@
 
 #include <dns/name.h>
 #include <dns/types.h>
+
+/*%
+ * How many bytes a qp-trie might allocate as part of an insert. Needed for
+ * overmem checks.
+ */
+#define QP_SAFETY_MARGIN ((1ul << 12ul) * 12)
 
 /*%
  * A `dns_qp_t` supports single-threaded read/write access.
@@ -308,7 +314,6 @@ typedef struct dns_qp_memusage {
 	size_t hold;	    /*%< nodes retained for readers */
 	size_t free;	    /*%< nodes to be reclaimed */
 	size_t node_size;   /*%< in bytes */
-	size_t chunk_size;  /*%< nodes per chunk */
 	size_t chunk_count; /*%< allocated chunks */
 	size_t bytes;	    /*%< total memory in chunks and metadata */
 	bool   fragmented;  /*%< trie needs compaction */

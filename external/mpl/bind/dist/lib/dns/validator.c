@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.18 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.19 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -380,6 +380,12 @@ trynsec3:
 static void
 resume_answer_with_key_done(void *arg);
 
+static bool
+over_max_fails(dns_validator_t *val);
+
+static void
+consume_validation_fail(dns_validator_t *val);
+
 static void
 resume_answer_with_key(void *arg) {
 	dns_validator_t *val = arg;
@@ -388,6 +394,13 @@ resume_answer_with_key(void *arg) {
 	isc_result_t result = select_signing_key(val, rdataset);
 	if (result == ISC_R_SUCCESS) {
 		val->keyset = &val->frdataset;
+	} else if (result != ISC_R_NOTFOUND) {
+		val->result = result;
+		if (over_max_fails(val)) {
+			INSIST(val->key == NULL);
+			val->result = ISC_R_QUOTA;
+		}
+		consume_validation_fail(val);
 	}
 
 	(void)validate_async_run(val, resume_answer_with_key_done);
@@ -396,6 +409,16 @@ resume_answer_with_key(void *arg) {
 static void
 resume_answer_with_key_done(void *arg) {
 	dns_validator_t *val = arg;
+
+	switch (val->result) {
+	case ISC_R_CANCELED:	 /* Validation was canceled */
+	case ISC_R_SHUTTINGDOWN: /* Server shutting down */
+	case ISC_R_QUOTA:	 /* Validation fails quota reached */
+		dns_validator_cancel(val);
+		break;
+	default:
+		break;
+	}
 
 	resume_answer(val);
 }
@@ -965,8 +988,9 @@ create_fetch(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	dns_validator_ref(val);
 	result = dns_resolver_createfetch(
 		val->view->resolver, name, type, NULL, NULL, NULL, NULL, 0,
-		fopts, 0, val->qc, val->gqc, val->loop, callback, val,
-		&val->edectx, &val->frdataset, &val->fsigrdataset, &val->fetch);
+		fopts, 0, val->qc, val->gqc, val->parent_fetch, val->loop,
+		callback, val, &val->edectx, &val->frdataset,
+		&val->fsigrdataset, &val->fetch);
 	if (result != ISC_R_SUCCESS) {
 		dns_validator_detach(&val);
 	}
@@ -1003,7 +1027,7 @@ create_validator(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	result = dns_validator_create(
 		val->view, name, type, rdataset, sig, NULL, vopts, val->loop,
 		cb, val, val->nvalidations, val->nfails, val->qc, val->gqc,
-		&val->edectx, &val->subvalidator);
+		val->parent_fetch, &val->edectx, &val->subvalidator);
 	if (result == ISC_R_SUCCESS) {
 		dns_validator_attach(val, &val->subvalidator->parent);
 		val->subvalidator->depth = val->depth + 1;
@@ -1072,6 +1096,14 @@ select_signing_key(dns_validator_t *val, dns_rdataset_t *rdataset) {
 				goto done;
 			}
 			dst_key_free(&val->key);
+		} else if (result != DST_R_UNSUPPORTEDALG) {
+			/*
+			 * We can encounter unsupported algorithm when the zone
+			 * is signed with both supported and unsupported
+			 * algorithm at the same time.  Stop looking in all
+			 * other failure cases.
+			 */
+			break;
 		}
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(rdataset);
@@ -1311,6 +1343,7 @@ selfsigned_dnskey(dns_validator_t *val) {
 	dns_name_t *name = val->name;
 	isc_result_t result;
 	isc_mem_t *mctx = val->view->mctx;
+	bool match = false;
 
 	if (rdataset->type != dns_rdatatype_dnskey) {
 		return DNS_R_NOKEYMATCH;
@@ -1351,17 +1384,16 @@ selfsigned_dnskey(dns_validator_t *val) {
 
 			/*
 			 * If the REVOKE bit is not set we have a
-			 * theoretically self signed DNSKEY RRset.
-			 * This will be verified later.
+			 * theoretically self-signed DNSKEY RRset;
+			 * this will be verified later.
+			 *
+			 * We don't return the answer yet, though,
+			 * because we need to check the remaining keys
+			 * and possbly remove them if they're revoked.
 			 */
 			if ((key.flags & DNS_KEYFLAG_REVOKE) == 0) {
-				return ISC_R_SUCCESS;
-			}
-
-			result = dns_dnssec_keyfromrdata(name, &keyrdata, mctx,
-							 &dstkey);
-			if (result != ISC_R_SUCCESS) {
-				continue;
+				match = true;
+				break;
 			}
 
 			/*
@@ -1371,6 +1403,20 @@ selfsigned_dnskey(dns_validator_t *val) {
 			if (DNS_TRUST_PENDING(rdataset->trust) &&
 			    dns_view_istrusted(val->view, name, &key))
 			{
+				result = dns_dnssec_keyfromrdata(
+					name, &keyrdata, mctx, &dstkey);
+				if (result == DST_R_UNSUPPORTEDALG) {
+					/* don't count towards max fails */
+					break; /* continue with next key */
+				} else if (result != ISC_R_SUCCESS) {
+					consume_validation(val);
+					if (over_max_fails(val)) {
+						return ISC_R_QUOTA;
+					}
+					consume_validation_fail(val);
+					break; /* continue with next key */
+				}
+
 				if (over_max_validations(val)) {
 					dst_key_free(&dstkey);
 					return ISC_R_QUOTA;
@@ -1404,6 +1450,8 @@ selfsigned_dnskey(dns_validator_t *val) {
 					}
 					consume_validation_fail(val);
 				}
+
+				dst_key_free(&dstkey);
 			} else if (rdataset->trust >= dns_trust_secure) {
 				/*
 				 * We trust this RRset so if the key is
@@ -1411,12 +1459,14 @@ selfsigned_dnskey(dns_validator_t *val) {
 				 */
 				dns_view_untrust(val->view, name, &key);
 			}
-
-			dst_key_free(&dstkey);
 		}
 	}
 
-	return DNS_R_NOKEYMATCH;
+	if (!match) {
+		return DNS_R_NOKEYMATCH;
+	}
+
+	return ISC_R_SUCCESS;
 }
 
 /*%
@@ -1601,7 +1651,7 @@ validate_answer_signing_key_done(void *arg);
 static void
 validate_answer_signing_key(void *arg) {
 	dns_validator_t *val = arg;
-	isc_result_t result = ISC_R_NOTFOUND;
+	isc_result_t result;
 
 	if (CANCELED(val) || CANCELING(val)) {
 		val->result = ISC_R_CANCELED;
@@ -1624,13 +1674,19 @@ validate_answer_signing_key(void *arg) {
 	default:
 		/* Select next signing key */
 		result = select_signing_key(val, val->keyset);
+		if (result == ISC_R_SUCCESS) {
+			INSIST(val->key != NULL);
+		} else if (result == ISC_R_NOTFOUND) {
+			INSIST(val->key == NULL);
+		} else {
+			val->result = result;
+			if (over_max_fails(val)) {
+				INSIST(val->key == NULL);
+				val->result = ISC_R_QUOTA;
+			}
+			consume_validation_fail(val);
+		}
 		break;
-	}
-
-	if (result == ISC_R_SUCCESS) {
-		INSIST(val->key != NULL);
-	} else {
-		INSIST(val->key == NULL);
 	}
 
 	(void)validate_async_run(val, validate_answer_signing_key_done);
@@ -1681,7 +1737,8 @@ validate_answer_process(void *arg) {
 	 * At this point we could check that the signature algorithm
 	 * was known and "sufficiently good".
 	 */
-	if (!dns_resolver_algorithm_supported(val->view->resolver, val->name,
+	if (!dns_resolver_algorithm_supported(val->view->resolver,
+					      &val->siginfo->signer,
 					      val->siginfo->algorithm))
 	{
 		if (val->unsupported_algorithm == 0) {
@@ -1877,14 +1934,15 @@ check_signer(dns_validator_t *val, dns_rdata_t *keyrdata, uint16_t keyid,
 	dns_rdata_rrsig_t sig;
 	dst_key_t *dstkey = NULL;
 	isc_result_t result;
+	dns_rdataset_t rdataset = DNS_RDATASET_INIT;
+	dns_rdataset_clone(val->sigrdataset, &rdataset);
 
-	for (result = dns_rdataset_first(val->sigrdataset);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdataset_next(val->sigrdataset))
+	for (result = dns_rdataset_first(&rdataset); result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(&rdataset))
 	{
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 
-		dns_rdataset_current(val->sigrdataset, &rdata);
+		dns_rdataset_current(&rdataset, &rdata);
 		result = dns_rdata_tostruct(&rdata, &sig, NULL);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		if (keyid != sig.keyid || algorithm != sig.algorithm) {
@@ -1894,10 +1952,7 @@ check_signer(dns_validator_t *val, dns_rdata_t *keyrdata, uint16_t keyid,
 			result = dns_dnssec_keyfromrdata(
 				val->name, keyrdata, val->view->mctx, &dstkey);
 			if (result != ISC_R_SUCCESS) {
-				/*
-				 * This really shouldn't happen, but...
-				 */
-				continue;
+				return result;
 			}
 		}
 		result = verify(val, dstkey, &rdata, sig.keyid);
@@ -1909,6 +1964,7 @@ check_signer(dns_validator_t *val, dns_rdata_t *keyrdata, uint16_t keyid,
 	if (dstkey != NULL) {
 		dst_key_free(&dstkey);
 	}
+	dns_rdataset_disassociate(&rdataset);
 
 	return result;
 }
@@ -3419,7 +3475,7 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 		     dns_message_t *message, unsigned int options,
 		     isc_loop_t *loop, isc_job_cb cb, void *arg,
 		     isc_counter_t *nvalidations, isc_counter_t *nfails,
-		     isc_counter_t *qc, isc_counter_t *gqc,
+		     isc_counter_t *qc, isc_counter_t *gqc, fetchctx_t *parent,
 		     dns_edectx_t *edectx, dns_validator_t **validatorp) {
 	isc_result_t result = ISC_R_FAILURE;
 	dns_validator_t *val = NULL;
@@ -3452,6 +3508,7 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 		.arg = arg,
 		.rdata = DNS_RDATA_INIT,
 		.cb_edectx = edectx,
+		.parent_fetch = parent,
 	};
 
 	dns_ede_init(view->mctx, &val->edectx);

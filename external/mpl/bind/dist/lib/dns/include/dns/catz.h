@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.h,v 1.9 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: catz.h,v 1.10 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -410,6 +410,24 @@ dns_catz_zones_shutdown(dns_catz_zones_t *catzs);
 
 typedef void (*dns_catz_entry_cb2)(dns_catz_entry_t *entry, void *arg1,
 				   void *arg2);
+
+void
+dns_catz_zone_prereconfig(dns_catz_zone_t *catz);
+/*%<
+ * Must be called before reconfiguring a catalog zone. Locks the catalog zone.
+ *
+ * Requires:
+ * \li	'catz' is a valid, unlocked dns_catz_zone_t.
+ */
+
+void
+dns_catz_zone_postreconfig(dns_catz_zone_t *catz);
+/*%<
+ * Must be called after reconfiguring a catalog zone. Unlocks the catalog zone.
+ *
+ * Requires:
+ * \li	'catz' is a valid, locked dns_catz_zone_t.
+ */
 
 void
 dns_catz_zone_for_each_entry2(dns_catz_zone_t *catz, dns_catz_entry_cb2 cb,

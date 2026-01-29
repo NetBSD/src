@@ -1,4 +1,4 @@
-/*	$NetBSD: null_10.c,v 1.9 2025/01/26 16:25:32 christos Exp $	*/
+/*	$NetBSD: null_10.c,v 1.10 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,9 +102,7 @@ tostruct_null(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_null);
 	REQUIRE(null != NULL);
 
-	null->common.rdclass = rdata->rdclass;
-	null->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&null->common, link);
+	DNS_RDATACOMMON_INIT(null, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	null->length = r.length;

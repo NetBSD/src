@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.c,v 1.10 2025/01/26 16:25:31 christos Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.11 2026/01/29 18:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -154,9 +154,7 @@ tostruct_l32(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	l32->common.rdclass = rdata->rdclass;
-	l32->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&l32->common, link);
+	DNS_RDATACOMMON_INIT(l32, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	l32->pref = uint16_fromregion(&region);

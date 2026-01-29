@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.15 2025/01/26 16:25:25 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.16 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,13 +57,6 @@
 #define TEMP_BUFFER_SZ	   8192
 #define TKEY_RANDOM_AMOUNT 16
 
-#define RETERR(x)                            \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
-
 static void
 tkey_log(const char *fmt, ...) ISC_FORMAT_PRINTF(1, 2);
 
@@ -103,12 +96,6 @@ dns_tkeyctx_destroy(dns_tkeyctx_t **tctxp) {
 	*tctxp = NULL;
 	mctx = tctx->mctx;
 
-	if (tctx->domain != NULL) {
-		if (dns_name_dynamic(tctx->domain)) {
-			dns_name_free(tctx->domain, mctx);
-		}
-		isc_mem_put(mctx, tctx->domain, sizeof(dns_name_t));
-	}
 	if (tctx->gssapi_keytab != NULL) {
 		isc_mem_free(mctx, tctx->gssapi_keytab);
 	}
@@ -230,7 +217,7 @@ process_gsstkey(dns_message_t *msg, dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 		return ISC_R_SUCCESS;
 	}
 	if (result != DNS_R_CONTINUE && result != ISC_R_SUCCESS) {
-		goto failure;
+		CHECK(result);
 	}
 
 	/*
@@ -246,8 +233,8 @@ process_gsstkey(dns_message_t *msg, dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 #endif /* HAVE_GSSAPI */
 		uint32_t expire;
 
-		RETERR(dst_key_fromgssapi(name, gss_ctx, ring->mctx, &dstkey,
-					  &intoken));
+		CHECK(dst_key_fromgssapi(name, gss_ctx, ring->mctx, &dstkey,
+					 &intoken));
 		/*
 		 * Limit keys to 1 hour or the context's lifetime whichever
 		 * is smaller.
@@ -259,11 +246,11 @@ process_gsstkey(dns_message_t *msg, dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 			expire = now + lifetime;
 		}
 #endif /* HAVE_GSSAPI */
-		RETERR(dns_tsigkey_createfromkey(
+		CHECK(dns_tsigkey_createfromkey(
 			name, dns__tsig_algfromname(&tkeyin->algorithm), dstkey,
 			true, false, principal, now, expire, ring->mctx,
 			&tsigkey));
-		RETERR(dns_tsigkeyring_add(ring, tsigkey));
+		CHECK(dns_tsigkeyring_add(ring, tsigkey));
 		dst_key_free(&dstkey);
 		tkeyout->inception = now;
 		tkeyout->expire = expire;
@@ -299,7 +286,7 @@ process_gsstkey(dns_message_t *msg, dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	if (tsigkey != NULL) {
 		dns_tsigkey_detach(&tsigkey);
 	}
@@ -387,24 +374,21 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	result = dns_message_findname(msg, DNS_SECTION_ADDITIONAL, qname,
 				      dns_rdatatype_tkey, 0, &name, &tkeyset);
 	if (result != ISC_R_SUCCESS) {
-		result = DNS_R_FORMERR;
 		tkey_log("dns_tkey_processquery: couldn't find a TKEY "
 			 "matching the question");
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	result = dns_rdataset_first(tkeyset);
 	if (result != ISC_R_SUCCESS) {
-		result = DNS_R_FORMERR;
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	dns_rdataset_current(tkeyset, &rdata);
-	RETERR(dns_rdata_tostruct(&rdata, &tkeyin, NULL));
+	CHECK(dns_rdata_tostruct(&rdata, &tkeyin, NULL));
 
 	if (tkeyin.error != dns_rcode_noerror) {
-		result = DNS_R_FORMERR;
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	/*
@@ -420,8 +404,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	{
 		tkey_log("dns_tkey_processquery: query was not "
 			 "properly signed - rejecting");
-		result = DNS_R_FORMERR;
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	tkeyout = (dns_rdata_tkey_t){
@@ -439,25 +422,10 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 		/*
 		 * A delete operation uses the fully specified qname.
 		 */
-		RETERR(process_deletetkey(signer, qname, &tkeyin, &tkeyout,
-					  ring));
+		CHECK(process_deletetkey(signer, qname, &tkeyin, &tkeyout,
+					 ring));
 		break;
 	case DNS_TKEYMODE_GSSAPI:
-		/*
-		 * For non-delete operations we do this:
-		 *
-		 * if (qname != ".")
-		 *	keyname = qname + defaultdomain
-		 * else
-		 *	keyname = <random hex> + defaultdomain
-		 */
-		if (tctx->domain == NULL && tkeyin.mode != DNS_TKEYMODE_GSSAPI)
-		{
-			tkey_log("dns_tkey_processquery: tkey-domain not set");
-			result = DNS_R_REFUSED;
-			goto failure;
-		}
-
 		keyname = dns_fixedname_initname(&fkeyname);
 
 		if (!dns_name_equal(qname, dns_rootname)) {
@@ -475,11 +443,11 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 
 			isc_nonce_buf(randomdata, sizeof(randomdata));
 			isc_buffer_init(&b, randomtext, sizeof(randomtext));
-			RETERR(isc_hex_totext(&r, 2, "", &b));
-			RETERR(dns_name_fromtext(keyname, &b, NULL, 0, NULL));
+			CHECK(isc_hex_totext(&r, 2, "", &b));
+			CHECK(dns_name_fromtext(keyname, &b, NULL, 0, NULL));
 		}
-		RETERR(dns_name_concatenate(keyname, dns_rootname, keyname,
-					    NULL));
+		CHECK(dns_name_concatenate(keyname, dns_rootname, keyname,
+					   NULL));
 
 		result = dns_tsigkey_find(&tsigkey, keyname, NULL, ring);
 		if (result == ISC_R_SUCCESS) {
@@ -487,15 +455,15 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 			dns_tsigkey_detach(&tsigkey);
 			break;
 		} else if (result == ISC_R_NOTFOUND) {
-			RETERR(process_gsstkey(msg, keyname, &tkeyin, tctx,
-					       &tkeyout, ring));
+			CHECK(process_gsstkey(msg, keyname, &tkeyin, tctx,
+					      &tkeyout, ring));
 			break;
 		}
-		goto failure;
+		goto cleanup;
 	case DNS_TKEYMODE_SERVERASSIGNED:
 	case DNS_TKEYMODE_RESOLVERASSIGNED:
 		result = DNS_R_NOTIMP;
-		goto failure;
+		goto cleanup;
 	default:
 		tkeyout.error = dns_tsigerror_badmode;
 	}
@@ -508,9 +476,9 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	if (tkeyout.key != NULL) {
 		isc_mem_put(tkeyout.mctx, tkeyout.key, tkeyout.keylen);
 	}
-	RETERR(result);
+	CHECK(result);
 
-	RETERR(dns_message_reply(msg, true));
+	CHECK(dns_message_reply(msg, true));
 	add_rdata_to_list(msg, keyname, &rdata, 0, &namelist);
 	while ((name = ISC_LIST_HEAD(namelist)) != NULL) {
 		ISC_LIST_UNLINK(namelist, name, link);
@@ -518,7 +486,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	}
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	free_namelist(msg, &namelist);
 	return result;
 }
@@ -670,11 +638,11 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 		return dns_result_fromrcode(rmsg->rcode);
 	}
 
-	RETERR(find_tkey(rmsg, &tkeyname, &rtkeyrdata, DNS_SECTION_ANSWER));
-	RETERR(dns_rdata_tostruct(&rtkeyrdata, &rtkey, NULL));
+	CHECK(find_tkey(rmsg, &tkeyname, &rtkeyrdata, DNS_SECTION_ANSWER));
+	CHECK(dns_rdata_tostruct(&rtkeyrdata, &rtkey, NULL));
 
-	RETERR(find_tkey(qmsg, &tkeyname, &qtkeyrdata, DNS_SECTION_ADDITIONAL));
-	RETERR(dns_rdata_tostruct(&qtkeyrdata, &qtkey, NULL));
+	CHECK(find_tkey(qmsg, &tkeyname, &qtkeyrdata, DNS_SECTION_ADDITIONAL));
+	CHECK(dns_rdata_tostruct(&qtkeyrdata, &qtkey, NULL));
 
 	if (rtkey.error != dns_rcode_noerror ||
 	    rtkey.mode != DNS_TKEYMODE_GSSAPI ||
@@ -682,8 +650,7 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 	{
 		tkey_log("dns_tkey_gssnegotiate: tkey mode invalid "
 			 "or error set(4)");
-		result = DNS_R_INVALIDTKEY;
-		goto failure;
+		CHECK(DNS_R_INVALIDTKEY);
 	}
 
 	isc_buffer_init(&intoken, rtkey.key, rtkey.keylen);
@@ -711,22 +678,22 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 		dns_name_clone(DNS_TSIG_GSSAPI_NAME, &tkey.algorithm);
 
 		dns_message_reset(qmsg, DNS_MESSAGE_INTENTRENDER);
-		RETERR(buildquery(qmsg, tkeyname, &tkey));
+		CHECK(buildquery(qmsg, tkeyname, &tkey));
 		return DNS_R_CONTINUE;
 	}
 
-	RETERR(dst_key_fromgssapi(dns_rootname, *context, rmsg->mctx, &dstkey,
-				  NULL));
+	CHECK(dst_key_fromgssapi(dns_rootname, *context, rmsg->mctx, &dstkey,
+				 NULL));
 
 	/*
 	 * XXXSRA This seems confused.  If we got CONTINUE from initctx,
 	 * the GSS negotiation hasn't completed yet, so we can't sign
 	 * anything yet.
 	 */
-	RETERR(dns_tsigkey_createfromkey(tkeyname, DST_ALG_GSSAPI, dstkey, true,
-					 false, NULL, rtkey.inception,
-					 rtkey.expire, ring->mctx, &tsigkey));
-	RETERR(dns_tsigkeyring_add(ring, tsigkey));
+	CHECK(dns_tsigkey_createfromkey(tkeyname, DST_ALG_GSSAPI, dstkey, true,
+					false, NULL, rtkey.inception,
+					rtkey.expire, ring->mctx, &tsigkey));
+	CHECK(dns_tsigkeyring_add(ring, tsigkey));
 	if (outkey == NULL) {
 		dns_tsigkey_detach(&tsigkey);
 	} else {
@@ -736,7 +703,7 @@ dns_tkey_gssnegotiate(dns_message_t *qmsg, dns_message_t *rmsg,
 	dst_key_free(&dstkey);
 	return result;
 
-failure:
+cleanup:
 	if (tsigkey != NULL) {
 		dns_tsigkey_detach(&tsigkey);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.11 2026/01/29 18:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,6 +82,7 @@ typedef ISC_LIST(dns_dns64_t) dns_dns64list_t;
 typedef struct dns_dnsseckey dns_dnsseckey_t;
 typedef ISC_LIST(dns_dnsseckey_t) dns_dnsseckeylist_t;
 typedef uint8_t			   dns_dsdigest_t;
+typedef uint8_t			   dns_dsyncscheme_t;
 typedef struct dns_dtdata	   dns_dtdata_t;
 typedef struct dns_dtenv	   dns_dtenv_t;
 typedef struct dns_dtmsg	   dns_dtmsg_t;

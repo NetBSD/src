@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.c,v 1.2 2025/01/26 16:25:51 christos Exp $	*/
+/*	$NetBSD: qp.c,v 1.3 2026/01/29 18:37:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,8 +179,8 @@ qp_test_dumpmulti(dns_qpmulti_t *multi) {
 
 void
 qp_test_dumpchunks(dns_qp_t *qp) {
-	dns_qpcell_t used = 0;
-	dns_qpcell_t free = 0;
+	dns_qpcell_t used_count = 0;
+	dns_qpcell_t free_count = 0;
 	dumpqp(qp, "qp");
 	for (dns_qpchunk_t c = 0; c < qp->chunk_max; c++) {
 		printf("qp %p chunk %u base %p "
@@ -188,10 +188,11 @@ qp_test_dumpchunks(dns_qp_t *qp) {
 		       qp, c, qp->base->ptr[c], qp->usage[c].used,
 		       qp->usage[c].free, qp->usage[c].immutable,
 		       qp->usage[c].discounted);
-		used += qp->usage[c].used;
-		free += qp->usage[c].free;
+		used_count += qp->usage[c].used;
+		free_count += qp->usage[c].free;
 	}
-	printf("qp %p total used %u free %u\n", qp, used, free);
+	printf("qp %p total used %" PRIu32 " free %" PRIu32 "\n", qp,
+	       used_count, free_count);
 	fflush(stdout);
 }
 

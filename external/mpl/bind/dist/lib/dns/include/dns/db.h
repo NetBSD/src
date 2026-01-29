@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.13 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.14 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -304,6 +304,7 @@ enum {
 #define DNS_DBADD_EXACT	   0x04
 #define DNS_DBADD_EXACTTTL 0x08
 #define DNS_DBADD_PREFETCH 0x10
+#define DNS_DBADD_EQUALOK  0x20
 /*@}*/
 
 /*%
@@ -1250,6 +1251,10 @@ dns__db_addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
  *	the old and new rdata sets.  If #DNS_DBADD_EXACTTTL is set then both
  *	the old and new rdata sets must have the same ttl.
  *
+ * \li	If the #DNS_DBADD_EQUALOK option is set, and the database is not
+ *	changed, compare the old and new rdatasets; if they are equal,
+ *	return #ISC_R_SUCCESS instead of #DNS_R_UNCHANGED.
+ *
  * \li	The 'now' field is ignored if 'db' is a zone database.  If 'db' is
  *	a cache database, then the added rdataset will expire no later than
  *	now + rdataset->ttl.
@@ -1279,8 +1284,12 @@ dns__db_addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
  * Returns:
  *
  * \li	#ISC_R_SUCCESS
- * \li	#DNS_R_UNCHANGED			The operation did not change
- * anything. \li	#ISC_R_NOMEMORY \li	#DNS_R_NOTEXACT
+ * \li	#DNS_R_UNCHANGED	The operation did not change anything.
+ * \li	#ISC_R_NOMEMORY
+ * \li	#DNS_R_NOTEXACT		The TTL didn't match and #DNS_DBADD_EXACTTTL
+ *				was set, or there was a partial overlap
+ *				between the old and new rdatasets and
+ *				DNS_DBADD_EXACT was set.
  *
  * \li	Other results are possible, depending upon the database
  *	implementation used.

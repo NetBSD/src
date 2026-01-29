@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.c,v 1.10 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.11 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -349,9 +349,7 @@ tostruct_in_a6(ARGS_TOSTRUCT) {
 	REQUIRE(a6 != NULL);
 	REQUIRE(rdata->length != 0);
 
-	a6->common.rdclass = rdata->rdclass;
-	a6->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&a6->common, link);
+	DNS_RDATACOMMON_INIT(a6, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 

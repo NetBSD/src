@@ -1,4 +1,4 @@
-/*	$NetBSD: px_26.c,v 1.9 2025/01/26 16:25:35 christos Exp $	*/
+/*	$NetBSD: px_26.c,v 1.10 2026/01/29 18:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -260,9 +260,7 @@ tostruct_in_px(ARGS_TOSTRUCT) {
 	REQUIRE(px != NULL);
 	REQUIRE(rdata->length != 0);
 
-	px->common.rdclass = rdata->rdclass;
-	px->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&px->common, link);
+	DNS_RDATACOMMON_INIT(px, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

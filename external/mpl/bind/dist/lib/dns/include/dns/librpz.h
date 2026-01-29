@@ -1,4 +1,4 @@
-/*	$NetBSD: librpz.h,v 1.11 2025/07/17 19:01:46 christos Exp $	*/
+/*	$NetBSD: librpz.h,v 1.12 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -173,7 +173,7 @@ typedef struct librpz_result {
 	librpz_dznum_t	   dznum;   /* dnsrpzd zone number */
 	librpz_cznum_t	   cznum;   /* librpz client zone number */
 	librpz_trig_t	   trig : LIBRPZ_TRIG_SIZE;
-	bool		   log : 1; /* log rewrite at given log level */
+	bool		   log	: 1; /* log rewrite at given log level */
 } librpz_result_t;
 
 /**

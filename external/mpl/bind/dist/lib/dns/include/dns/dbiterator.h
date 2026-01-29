@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator.h,v 1.8 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: dbiterator.h,v 1.9 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,6 +75,8 @@ typedef struct dns_dbiteratormethods {
 	isc_result_t (*last)(dns_dbiterator_t *iterator DNS__DB_FLARG);
 	isc_result_t (*seek)(dns_dbiterator_t	   *iterator,
 			     const dns_name_t *name DNS__DB_FLARG);
+	isc_result_t (*seek3)(dns_dbiterator_t	    *iterator,
+			      const dns_name_t *name DNS__DB_FLARG);
 	isc_result_t (*prev)(dns_dbiterator_t *iterator DNS__DB_FLARG);
 	isc_result_t (*next)(dns_dbiterator_t *iterator DNS__DB_FLARG);
 	isc_result_t (*current)(dns_dbiterator_t *iterator,
@@ -174,6 +176,30 @@ dns__dbiterator_seek(dns_dbiterator_t	   *iterator,
  *\li	#ISC_R_NOTFOUND
  *\li	#DNS_R_PARTIALMATCH
  *	(node is at name above requested named when name has children)
+ *
+ *\li	Other results are possible, depending on the DB implementation.
+ */
+
+#define dns_dbiterator_seek3(iterator, name) \
+	dns__dbiterator_seek3(iterator, name DNS__DB_FILELINE)
+isc_result_t
+dns__dbiterator_seek3(dns_dbiterator_t	    *iterator,
+		      const dns_name_t *name DNS__DB_FLARG);
+/*%<
+ * Move the node cursor to the node with NSEC3 name 'name'.
+ * If not found, the iterator is set to the next name.
+ *
+ * Requires:
+ *\li	'iterator' is a valid iterator.
+ *
+ *\li	'name' is a valid name.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOTFOUND
+ *\li	#ISC_R_NOMORE		There are no NSEC3 nodes in the database.
+ *\li	#ISC_R_NOTIMPLEMENTED
+ *	(this function is only implemented for NSEC3 only iterators)
  *
  *\li	Other results are possible, depending on the DB implementation.
  */

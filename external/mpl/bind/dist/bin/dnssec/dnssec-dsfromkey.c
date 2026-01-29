@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.13 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.14 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,7 @@
 #include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/string.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -320,6 +321,11 @@ emits(bool showall, bool cds, dns_rdata_t *rdata) {
 
 	n = sizeof(dtype) / sizeof(dtype[0]);
 	for (i = 0; i < n; i++) {
+		if (dtype[i] == DNS_DSDIGEST_SHA1) {
+			fprintf(stderr,
+				"WARNING: DS digest type %u is deprecated\n",
+				i);
+		}
 		if (dtype[i] != 0) {
 			emit(dtype[i], showall, cds, rdata);
 		}
@@ -327,10 +333,10 @@ emits(bool showall, bool cds, dns_rdata_t *rdata) {
 }
 
 noreturn static void
-usage(void);
+usage(int ret);
 
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr, "    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "    %s [options] -f zonefile [zonename]\n\n", program);
@@ -338,10 +344,10 @@ usage(void) {
 	fprintf(stderr, "    %s [-h|-V]\n\n", program);
 	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
 	fprintf(stderr, "Options:\n"
-			"    -1: digest algorithm SHA-1\n"
+			"    -1: digest algorithm SHA-1 (deprecated)\n"
 			"    -2: digest algorithm SHA-256\n"
-			"    -a algorithm: digest algorithm (SHA-1, SHA-256 or "
-			"SHA-384)\n"
+			"    -a algorithm: digest algorithm (SHA-1 "
+			"(deprecated), SHA-256 or SHA-384)\n"
 			"    -A: include all keys in DS set, not just KSKs (-f "
 			"only)\n"
 			"    -c class: rdata class for DS set (default IN) (-f "
@@ -357,7 +363,7 @@ usage(void) {
 			"    -V: print version information\n");
 	fprintf(stderr, "Output: DS or CDS RRs\n");
 
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 int
@@ -377,7 +383,7 @@ main(int argc, char **argv) {
 	dns_rdata_init(&rdata);
 
 	if (argc == 1) {
-		usage();
+		usage(EXIT_FAILURE);
 	}
 
 	isc_mem_create(&mctx);
@@ -447,10 +453,12 @@ main(int argc, char **argv) {
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
 			}
-			FALLTHROUGH;
+			/* Does not return. */
+			usage(EXIT_FAILURE);
+
 		case 'h':
 			/* Does not return. */
-			usage();
+			usage(EXIT_SUCCESS);
 
 		case 'V':
 			/* Does not return. */
@@ -556,6 +564,8 @@ main(int argc, char **argv) {
 		isc_mem_stats(mctx, stdout);
 	}
 	isc_mem_destroy(&mctx);
+
+	rcu_barrier();
 
 	fflush(stdout);
 	if (ferror(stdout)) {

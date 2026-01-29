@@ -1,4 +1,4 @@
-/*	$NetBSD: skr.c,v 1.2 2025/01/26 16:25:25 christos Exp $	*/
+/*	$NetBSD: skr.c,v 1.3 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,26 +27,17 @@
 #include <dns/time.h>
 #include <dns/ttl.h>
 
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
-
 #define READLINE(lex, opt, token)
 
-#define NEXTTOKEN(lex, opt, token)                       \
-	{                                                \
-		ret = isc_lex_gettoken(lex, opt, token); \
-		if (ret != ISC_R_SUCCESS)                \
-			goto cleanup;                    \
+#define NEXTTOKEN(lex, opt, token)                        \
+	{                                                 \
+		CHECK(isc_lex_gettoken(lex, opt, token)); \
 	}
 
-#define BADTOKEN()                           \
-	{                                    \
-		ret = ISC_R_UNEXPECTEDTOKEN; \
-		goto cleanup;                \
+#define BADTOKEN()                              \
+	{                                       \
+		result = ISC_R_UNEXPECTEDTOKEN; \
+		goto cleanup;                   \
 	}
 
 #define TOKENSIZ (8 * 1024)
@@ -63,7 +54,7 @@ parse_rr(isc_lex_t *lex, isc_mem_t *mctx, char *owner, dns_name_t *origin,
 	isc_buffer_t b;
 	isc_token_t token;
 	unsigned int opt = ISC_LEXOPT_EOL;
-	isc_result_t ret = ISC_R_SUCCESS;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	isc_lex_setcomments(lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 
@@ -74,12 +65,9 @@ parse_rr(isc_lex_t *lex, isc_mem_t *mctx, char *owner, dns_name_t *origin,
 	dname = dns_fixedname_initname(&dfname);
 	isc_buffer_init(&b, owner, strlen(owner));
 	isc_buffer_add(&b, strlen(owner));
-	ret = dns_name_fromtext(dname, &b, dns_rootname, 0, NULL);
-	if (ret != ISC_R_SUCCESS) {
-		return ret;
-	}
+	CHECK(dns_name_fromtext(dname, &b, dns_rootname, 0, NULL));
 	if (dns_name_compare(dname, origin) != 0) {
-		return DNS_R_BADOWNERNAME;
+		CHECK(DNS_R_BADOWNERNAME);
 	}
 	isc_buffer_clear(&b);
 
@@ -90,8 +78,8 @@ parse_rr(isc_lex_t *lex, isc_mem_t *mctx, char *owner, dns_name_t *origin,
 	}
 
 	/* If it's a TTL, read the next one */
-	ret = dns_ttl_fromtext(&token.value.as_textregion, ttl);
-	if (ret == ISC_R_SUCCESS) {
+	result = dns_ttl_fromtext(&token.value.as_textregion, ttl);
+	if (result == ISC_R_SUCCESS) {
 		NEXTTOKEN(lex, opt, &token);
 	}
 	if (token.type != isc_tokentype_string) {
@@ -99,8 +87,8 @@ parse_rr(isc_lex_t *lex, isc_mem_t *mctx, char *owner, dns_name_t *origin,
 	}
 
 	/* If it's a class, read the next one */
-	ret = dns_rdataclass_fromtext(&clas, &token.value.as_textregion);
-	if (ret == ISC_R_SUCCESS) {
+	result = dns_rdataclass_fromtext(&clas, &token.value.as_textregion);
+	if (result == ISC_R_SUCCESS) {
 		if (clas != rdclass) {
 			BADTOKEN();
 		}
@@ -111,8 +99,8 @@ parse_rr(isc_lex_t *lex, isc_mem_t *mctx, char *owner, dns_name_t *origin,
 	}
 
 	/* Must be the record type */
-	ret = dns_rdatatype_fromtext(rdtype, &token.value.as_textregion);
-	if (ret != ISC_R_SUCCESS) {
+	result = dns_rdatatype_fromtext(rdtype, &token.value.as_textregion);
+	if (result != ISC_R_SUCCESS) {
 		BADTOKEN();
 	}
 	switch (*rdtype) {
@@ -127,11 +115,11 @@ parse_rr(isc_lex_t *lex, isc_mem_t *mctx, char *owner, dns_name_t *origin,
 	}
 
 	dns_rdatacallbacks_init(&callbacks);
-	ret = dns_rdata_fromtext(*rdata, rdclass, *rdtype, lex, dname, 0, mctx,
-				 buf, &callbacks);
+	result = dns_rdata_fromtext(*rdata, rdclass, *rdtype, lex, dname, 0,
+				    mctx, buf, &callbacks);
 cleanup:
 	isc_lex_setcomments(lex, 0);
-	return ret;
+	return result;
 }
 
 static void
@@ -351,7 +339,7 @@ dns_skr_read(isc_mem_t *mctx, const char *filename, dns_name_t *origin,
 					filename, isc_lex_getsourceline(lex),
 					isc_result_totext(result));
 				isc_mem_put(mctx, rdata, sizeof(*rdata));
-				goto failure;
+				goto cleanup;
 			}
 
 			/* Create new diff tuple */
@@ -380,7 +368,7 @@ dns_skr_read(isc_mem_t *mctx, const char *filename, dns_name_t *origin,
 		addbundle(*skrp, &bundle);
 	}
 
-failure:
+cleanup:
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_ZONE, ISC_LOG_DEBUG(1),

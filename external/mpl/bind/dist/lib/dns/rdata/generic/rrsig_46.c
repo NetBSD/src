@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.11 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.12 2026/01/29 18:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -502,9 +502,7 @@ tostruct_rrsig(ARGS_TOSTRUCT) {
 	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
-	sig->common.rdclass = rdata->rdclass;
-	sig->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sig->common, link);
+	DNS_RDATACOMMON_INIT(sig, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

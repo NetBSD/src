@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.13 2025/05/21 14:47:34 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.14 2026/01/29 18:36:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,13 +48,6 @@ static const char *program = "named-checkconf";
 
 isc_log_t *logc = NULL;
 
-#define CHECK(r)                             \
-	do {                                 \
-		result = (r);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
-
 /*% usage */
 noreturn static void
 usage(void);
@@ -62,7 +55,7 @@ usage(void);
 static void
 usage(void) {
 	fprintf(stderr,
-		"usage: %s [-achijlvz] [-p [-x]] [-t directory] "
+		"usage: %s [-achijklvz] [-p [-x]] [-t directory] "
 		"[named.conf]\n",
 		program);
 	exit(EXIT_SUCCESS);
@@ -608,7 +601,7 @@ main(int argc, char **argv) {
 	/*
 	 * Process memory debugging argument first.
 	 */
-#define CMDLINE_FLAGS "acdhijlm:t:pvxz"
+#define CMDLINE_FLAGS "acdhijklm:t:pvxz"
 	while ((c = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (c) {
 		case 'm':
@@ -653,6 +646,10 @@ main(int argc, char **argv) {
 
 		case 'j':
 			nomerge = false;
+			break;
+
+		case 'k':
+			checkflags |= BIND_CHECK_KEYS;
 			break;
 
 		case 'l':

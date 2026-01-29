@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.14 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.15 2026/01/29 18:37:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -103,8 +103,6 @@ typedef struct dns_rdatasetmethods {
 	void (*getownercase)(const dns_rdataset_t *rdataset, dns_name_t *name);
 	isc_result_t (*addglue)(dns_rdataset_t	*rdataset,
 				dns_dbversion_t *version, dns_message_t *msg);
-	bool (*equals)(const dns_rdataset_t *rdataset1,
-		       const dns_rdataset_t *rdataset2);
 } dns_rdatasetmethods_t;
 
 #define DNS_RDATASET_MAGIC	ISC_MAGIC('D', 'N', 'S', 'R')
@@ -247,11 +245,6 @@ struct dns_rdataset {
  *
  * \def DNS_RDATASETATTR_LOADORDER
  *	Output the RRset in load order.
- *
- * \def DNS_RDATASETATTR_STALE_ADDED
- *	Set on rdatasets that were added during a stale-answer-client-timeout
- *	lookup. In other words, the RRset was added during a lookup of stale
- *	data and does not necessarily mean that the rdataset itself is stale.
  */
 
 #define DNS_RDATASETATTR_NONE	      0x00000000 /*%< No ordering. */
@@ -283,9 +276,9 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_STALE	      0x01000000
 #define DNS_RDATASETATTR_ANCIENT      0x02000000
 #define DNS_RDATASETATTR_STALE_WINDOW 0x04000000
-#define DNS_RDATASETATTR_STALE_ADDED  0x08000000
-#define DNS_RDATASETATTR_KEEPCASE     0x10000000
-#define DNS_RDATASETATTR_STATICSTUB   0x20000000
+/* #define DNS_RDATASETATTR_STALE_ADDED  0x08000000 - Obsolete */
+#define DNS_RDATASETATTR_KEEPCASE   0x10000000
+#define DNS_RDATASETATTR_STATICSTUB 0x20000000
 
 /*%
  * _OMITDNSSEC:
@@ -700,14 +693,4 @@ dns_trust_totext(dns_trust_t trust);
  * Display trust in textual form.
  */
 
-bool
-dns_rdataset_equals(const dns_rdataset_t *rdataset1,
-		    const dns_rdataset_t *rdataset2);
-/*%<
- * Returns true if the rdata in the rdataset is equal.
- *
- * Requires:
- * \li	'rdataset1' is a valid rdataset.
- * \li	'rdataset2' is a valid rdataset.
- */
 ISC_LANG_ENDDECLS

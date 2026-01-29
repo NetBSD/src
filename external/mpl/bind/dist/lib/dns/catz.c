@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.14 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.15 2026/01/29 18:37:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1977,7 +1977,7 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 	uint32_t i;
 	isc_netaddr_t netaddr;
 	char pbuf[sizeof("65535")]; /* used for port number */
-	char zname[DNS_NAME_FORMATSIZE];
+	char namebuf[DNS_NAME_FORMATSIZE];
 
 	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
 	REQUIRE(DNS_CATZ_ENTRY_VALID(entry));
@@ -1990,7 +1990,8 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 	isc_buffer_allocate(catz->catzs->mctx, &buffer, ISC_BUFFER_INCR);
 
 	isc_buffer_putstr(buffer, "zone \"");
-	dns_name_totext(&entry->name, DNS_NAME_OMITFINALDOT, buffer);
+	dns_name_format(&entry->name, namebuf, sizeof(namebuf));
+	isc_buffer_putstr(buffer, namebuf);
 	isc_buffer_putstr(buffer, "\" { type secondary; primaries");
 
 	isc_buffer_putstr(buffer, " { ");
@@ -2003,13 +2004,12 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 		case AF_INET6:
 			break;
 		default:
-			dns_name_format(&entry->name, zname,
-					DNS_NAME_FORMATSIZE);
+			dns_name_format(&entry->name, namebuf, sizeof(namebuf));
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 				      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
 				      "catz: zone '%s' uses an invalid primary "
 				      "(no IP address assigned)",
-				      zname);
+				      namebuf);
 			result = ISC_R_FAILURE;
 			goto cleanup;
 		}
@@ -2026,20 +2026,16 @@ dns_catz_generate_zonecfg(dns_catz_zone_t *catz, dns_catz_entry_t *entry,
 
 		if (entry->opts.masters.keys[i] != NULL) {
 			isc_buffer_putstr(buffer, " key ");
-			result = dns_name_totext(entry->opts.masters.keys[i],
-						 DNS_NAME_OMITFINALDOT, buffer);
-			if (result != ISC_R_SUCCESS) {
-				goto cleanup;
-			}
+			dns_name_format(entry->opts.masters.keys[i], namebuf,
+					sizeof(namebuf));
+			isc_buffer_putstr(buffer, namebuf);
 		}
 
 		if (entry->opts.masters.tlss[i] != NULL) {
 			isc_buffer_putstr(buffer, " tls ");
-			result = dns_name_totext(entry->opts.masters.tlss[i],
-						 DNS_NAME_OMITFINALDOT, buffer);
-			if (result != ISC_R_SUCCESS) {
-				goto cleanup;
-			}
+			dns_name_format(entry->opts.masters.tlss[i], namebuf,
+					sizeof(namebuf));
+			isc_buffer_putstr(buffer, namebuf);
 		}
 		isc_buffer_putstr(buffer, "; ");
 	}
@@ -2602,6 +2598,16 @@ dns_catz_postreconfig(dns_catz_zones_t *catzs) {
 	UNLOCK(&catzs->lock);
 	RUNTIME_CHECK(result == ISC_R_NOMORE);
 	isc_ht_iter_destroy(&iter);
+}
+
+void
+dns_catz_zone_prereconfig(dns_catz_zone_t *catz) {
+	LOCK(&catz->lock);
+}
+
+void
+dns_catz_zone_postreconfig(dns_catz_zone_t *catz) {
+	UNLOCK(&catz->lock);
 }
 
 void

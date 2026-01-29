@@ -1,4 +1,4 @@
-/*	$NetBSD: streamdns.c,v 1.3 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: streamdns.c,v 1.4 2026/01/29 18:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -95,6 +95,8 @@ streamdns_closing(isc_nmsocket_t *sock);
 
 static void
 streamdns_resume_processing(void *arg);
+static void
+async_streamdns_resume_processing(void *arg);
 
 static void
 streamdns_resumeread(isc_nmsocket_t *sock, isc_nmhandle_t *transphandle) {
@@ -195,8 +197,9 @@ streamdns_on_complete_dnsmessage(isc_dnsstream_assembler_t *dnsasm,
 		 * Process more DNS messages in the next loop tick.
 		 */
 		streamdns_pauseread(sock, transphandle);
-		isc_async_run(sock->worker->loop, streamdns_resume_processing,
-			      sock);
+		isc__nmsocket_attach(sock, &(isc_nmsocket_t *){ NULL });
+		isc_async_run(sock->worker->loop,
+			      async_streamdns_resume_processing, sock);
 	}
 
 	return false;
@@ -697,6 +700,15 @@ streamdns_resume_processing(void *arg) {
 	}
 
 	streamdns_handle_incoming_data(sock, sock->outerhandle, NULL, 0);
+}
+
+static void
+async_streamdns_resume_processing(void *arg) {
+	isc_nmsocket_t *sock = (isc_nmsocket_t *)arg;
+
+	streamdns_resume_processing(sock);
+
+	isc__nmsocket_detach(&sock);
 }
 
 static isc_result_t

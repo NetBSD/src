@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.13 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.14 2026/01/29 18:36:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -150,14 +150,6 @@ ISC_REFCOUNT_DECL(controlconnection);
 #endif
 
 #define CLOCKSKEW 300
-
-#define CHECK(x)                               \
-	{                                      \
-		result = (x);                  \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	}
 
 static void
 free_controlkey(controlkey_t *key, isc_mem_t *mctx) {
