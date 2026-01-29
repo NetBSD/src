@@ -13,7 +13,7 @@ extern "C" {
 
 #include <sys/sdt.h>
 
-#if _DTRACE_VERSION
+#if defined(DTRACE) && _DTRACE_VERSION
 
 #define	LIBISC_JOB_CB_AFTER(arg0, arg1, arg2) \
 	__dtrace_libisc___job_cb_after(arg0, arg1, arg2)

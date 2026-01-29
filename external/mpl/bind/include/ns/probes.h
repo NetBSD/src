@@ -13,7 +13,7 @@ extern "C" {
 
 #include <sys/sdt.h>
 
-#if _DTRACE_VERSION
+#if defined(DTRACE) && _DTRACE_VERSION
 
 #define	LIBNS_RRL_DROP(arg0, arg1, arg2, arg3) \
 	__dtrace_libns___rrl_drop(arg0, arg1, arg2, arg3)

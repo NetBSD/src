@@ -13,7 +13,7 @@ extern "C" {
 
 #include <sys/sdt.h>
 
-#if _DTRACE_VERSION
+#if defined(DTRACE) && _DTRACE_VERSION
 
 #define	LIBDNS_XFRIN_AXFR_FINALIZE_BEGIN(arg0, arg1) \
 	__dtrace_libdns___xfrin_axfr_finalize_begin(arg0, arg1)
