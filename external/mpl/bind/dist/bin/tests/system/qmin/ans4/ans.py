@@ -14,6 +14,7 @@ information regarding copyright ownership.
 from typing import AsyncGenerator
 
 import dns.rcode
+import dns.rdatatype
 
 from isctest.asyncserver import (
     AsyncDnsServer,
@@ -85,11 +86,15 @@ class IckyPtangZoopBoingSlowHandler(DelayedResponseHandler):
 
 def main() -> None:
     server = AsyncDnsServer()
-    server.install_response_handler(QueryLogger())
-    server.install_response_handler(StaleHandler())
-    server.install_response_handler(IckyPtangZoopBoingBadHandler())
-    server.install_response_handler(IckyPtangZoopBoingUglyHandler())
-    server.install_response_handler(IckyPtangZoopBoingSlowHandler())
+    server.install_response_handlers(
+        [
+            QueryLogger(),
+            StaleHandler(),
+            IckyPtangZoopBoingBadHandler(),
+            IckyPtangZoopBoingUglyHandler(),
+            IckyPtangZoopBoingSlowHandler(),
+        ]
+    )
     server.run()
 
 

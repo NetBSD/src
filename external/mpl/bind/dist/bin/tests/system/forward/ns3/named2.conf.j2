@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.3;
+	query-source-v6 address fd92:7065:b8e:ffff::3;
+	notify-source 10.53.0.3;
+	notify-source-v6 fd92:7065:b8e:ffff::3;
+	transfer-source 10.53.0.3;
+	transfer-source-v6 fd92:7065:b8e:ffff::3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { fd92:7065:b8e:ffff::3; };
+	forwarders { 10.53.0.6; };
+	dnssec-validation yes;
+};
+
+include "trusted.conf";
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+zone "." {
+	type hint;
+	file "root2.db";
+};

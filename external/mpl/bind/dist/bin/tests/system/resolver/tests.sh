@@ -238,9 +238,9 @@ for nscount in 1 2 3 4 5 6 7 8 9 10; do
   test "${sourcerecs}" -eq "${nscount}" || ret=1
   test "${sourcerecs}" -eq "${nscount}" || echo_i "NS count incorrect for target${nscount}.sourcens"
 
-  # Expected queries = 2 * number of NS records, up to a maximum of 10.
+  # Expected queries = 2 * number of NS records allowed at the first level, up to a maximum of 6.
   expected=$((nscount * 2))
-  if [ "$expected" -gt 10 ]; then expected=10; fi
+  if [ "$expected" -gt 6 ]; then expected=6; fi
   # Count the number of logged fetches
   nextpart ns5/named.run >/dev/null
   dig_with_opts @10.53.0.5 target${nscount}.sourcens A >dig.ns5.out.${nscount}.${n} || ret=1
@@ -460,7 +460,7 @@ grep "not subdomain of zone" ns1/named.run >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-copy_setports ns7/named2.conf.in ns7/named.conf
+cp ns7/named2.conf ns7/named.conf
 rndccmd 10.53.0.7 reconfig 2>&1 | sed 's/^/ns7 /' | cat_i
 
 n=$((n + 1))

@@ -13,7 +13,10 @@ information regarding copyright ownership.
 
 from typing import AsyncGenerator
 
-import dns
+import dns.name
+import dns.rcode
+import dns.rdatatype
+import dns.rrset
 
 from isctest.asyncserver import (
     ControllableAsyncDnsServer,
@@ -60,7 +63,6 @@ class ChaseDsHandler(ResponseHandler):
             response_rdata = ". . 0 0 0 0 0"
             response_section = qctx.response.authority
 
-        qctx.response.set_rcode(dns.rcode.NOERROR)
         qctx.response.use_edns(None)
 
         response_rrset = dns.rrset.from_text(
@@ -68,11 +70,14 @@ class ChaseDsHandler(ResponseHandler):
         )
         response_section.append(response_rrset)
 
-        yield DnsResponseSend(qctx.response, authoritative=True)
+        yield DnsResponseSend(qctx.response)
 
 
 def main() -> None:
-    server = ControllableAsyncDnsServer([ToggleResponsesCommand])
+    server = ControllableAsyncDnsServer(
+        default_rcode=dns.rcode.NOERROR, default_aa=True
+    )
+    server.install_control_command(ToggleResponsesCommand())
     server.install_response_handler(ChaseDsHandler())
     server.run()
 

@@ -243,7 +243,7 @@ $DIG $DIGOPTS test.nil. TXT @10.53.0.1 >dig.out.test$n.2 || ret=1
 grep -q -F "serial 4, fallback AXFR" dig.out.test$n.2 || ret=1
 
 # Ensure the expected error is logged.
-nextpart ns1/named.run | grep -q -F "SOA name mismatch" || ret=1
+nextpart ns1/named.run | grep -F "SOA name mismatch" >/dev/null || ret=1
 
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

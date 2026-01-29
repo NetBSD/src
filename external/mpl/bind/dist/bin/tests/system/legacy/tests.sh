@@ -250,7 +250,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 stop_server --use-rndc --port ${CONTROLPORT} ns1
-copy_setports ns1/named2.conf.in ns1/named.conf
+cp ns1/named2.conf ns1/named.conf
 start_server --noclean --restart --port ${PORT} ns1
 
 n=$((n + 1))

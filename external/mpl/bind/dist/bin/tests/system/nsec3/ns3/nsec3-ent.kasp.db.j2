@@ -1,0 +1,41 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+{% set serial = serial | default(1) %}
+
+$ORIGIN nsec3-ent.kasp.
+$TTL 300
+nsec3-ent.kasp.		IN	SOA  mname1. . (
+			@serial@  ; serial
+			20        ; refresh (20 seconds)
+			20        ; retry (20 seconds)
+			1814400   ; expire (3 weeks)
+			3600      ; minimum (1 hour)
+			)
+
+			NS	ns3
+ns3			A	10.53.0.3
+
+a			A	10.0.0.1
+b			A	10.0.0.2
+
+{% if serial == 1 %}
+c			A	10.0.0.3
+{% endif %}
+
+{% if serial == 2 %}
+d			A	10.0.0.3
+{% endif %}
+
+{% if serial == 3 %}
+c			A	10.0.0.3
+x.y.z			A	10.0.0.4
+{% endif %}

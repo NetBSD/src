@@ -20,9 +20,3 @@ $SHELL "${TOP_SRCDIR}/bin/tests/system/genzone.sh" 2 \
     -e '/AMTRELAY.*\# 2 0004/d' \
     -e '/GPOS.*"" "" ""/d' \
     -e '/URI.*30 40 ""/d' >ns1/example.db
-
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns2/named.conf.in ns2/named.conf
-copy_setports ns3/named.conf.in ns3/named.conf
-copy_setports ns4/named.conf.in ns4/named.conf
-copy_setports ns5/named.conf.in ns5/named.conf

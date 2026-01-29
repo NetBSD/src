@@ -1,0 +1,17 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 3600
+@ 			SOA	ns.victim. . 0 0 0 0 3600
+@			NS	ns
+ns			A	10.53.0.2
+prime			TXT	"this record is used for priming the cache of the targeted resolver"
+canary			TXT	"correct answer from the domain under attack"

@@ -259,6 +259,15 @@ sub reply_handler {
 	    push @auth, $rr;
 	}
 	$rcode = "NOERROR";
+    } elsif ($qname eq "cname.delegated.serve.stale") {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR("cname.delegated.serve.stale 2 IN CNAME cname-target.serve.stale.");
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($ssnegSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
     } elsif ($qname eq "ns.slow" ) {
 	if ($qtype eq "A") {
 	    my $rr = new Net::DNS::RR($slowA);

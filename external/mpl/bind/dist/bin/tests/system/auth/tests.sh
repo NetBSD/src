@@ -186,5 +186,15 @@ lines=$(wc -l <dig.out.test$n)
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status + ret))
 
+n=$((n + 1))
+echo_i "check delegation response to ANY query ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 foo.child.example.net any >dig.out.test$n || ret=1
+grep "ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 2" dig.out.test$n >/dev/null || ret=1
+grep 'child\.example\.net\..300.IN.NS.ns\.child\.example\.net\.$' dig.out.test$n >/dev/null || ret=1
+grep 'ns\.child\.example\.net\..300.IN.A.10\.53\.0\.1$' dig.out.test$n >/dev/null || ret=1
+[ $ret -eq 0 ] || echo_i "failed"
+status=$((status + ret))
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

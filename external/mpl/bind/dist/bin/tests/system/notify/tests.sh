@@ -46,7 +46,7 @@ for i in 1 2 3 4 5 6 7 8 9 10; do
   grep "status: NOERROR" dig.out.ns3.test$n >/dev/null || ret=1
   grep "flags:.* aa[ ;]" dig.out.ns3.test$n >/dev/null || ret=1
   nr=$(grep -c 'x[0-9].*sending notify to' ns2/named.run)
-  [ "$nr" -ge 23 ] || ret=1
+  [ "$nr" -ge 22 ] || ret=1
   [ $ret = 0 ] && break
   sleep 1
 done
@@ -94,7 +94,7 @@ END {
 	print "count:", count;
 	print "average:", average;
 	if (average < 0.180) exit(1);
-	if (count < 23) exit(1);
+	if (count < 22) exit(1);
 }' ns2/named.run >awk.out.ns2.test$n || ret=1
 test_end
 

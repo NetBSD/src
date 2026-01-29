@@ -139,28 +139,28 @@ status=$((status + ret))
 echo_i "checking that expirations that loop using serial arithmetic are handled ($n)"
 ret=0
 q=-q
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
-test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
+test $ret -eq 1 || $CHECKZONE $q dyn.example.net zones/crashzone.db >test.out.$n 2>&1 || ret=1
 n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -207,8 +207,63 @@ ret=0
 echo_i "checking integer overflow is prevented in \$GENERATE ($n)"
 $CHECKZONE -D example.com zones/generate-overflow.db >test.out.$n 2>&1 || ret=1
 lines=$(grep -c CNAME test.out.$n)
-echo $lines
 [ "$lines" -eq 1 ] || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "Checking for RSASHA1 deprecated warning ($n)"
+ret=0
+$CHECKZONE example zones/warn.deprecated.rsasha1.db >test.out.$n || ret=1
+grep "deprecated DNSKEY algorithm found: 5 (RSASHA1)" test.out.$n >/dev/null || ret=1
+grep "all DNSKEY algorithms found are deprecated" test.out.$n >/dev/null || ret=1
+grep "loaded serial 0 (DNSSEC signed)" test.out.$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "Checking for NSECRSASHA1 deprected warning ($n)"
+ret=0
+$CHECKZONE example zones/warn.deprecated.nsec3rsasha1.db >test.out.$n || ret=1
+grep "deprecated DNSKEY algorithm found: 7 (NSEC3RSASHA1)" test.out.$n >/dev/null || ret=1
+grep "all DNSKEY algorithms found are deprecated" test.out.$n >/dev/null || ret=1
+grep "loaded serial 0 (DNSSEC signed)" test.out.$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "Checking for SHA1 CDS digest warning ($n)"
+ret=0
+$CHECKZONE example zones/warn.deprecated.cds-sha1.db >test.out.$n || ret=1
+grep "zone example/IN: deprecated CDS digest type 1 (SHA-1)" test.out.$n >/dev/null || ret=1
+grep "loaded serial 0 (DNSSEC signed)" test.out.$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "Checking for SHA1 DS digest warning ($n)"
+ret=0
+$CHECKZONE example zones/warn.deprecated.digest-sha1.db >test.out.$n || ret=1
+grep "zone example/IN: child.example/DS deprecated digest type 1 (SHA-1)" test.out.$n >/dev/null || ret=1
+grep "loaded serial 0 (DNSSEC signed)" test.out.$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "Checking for RSASHA1 DS algorithm warning ($n)"
+ret=0
+$CHECKZONE example zones/warn.deprecated.ds-alg.db >test.out.$n || ret=1
+grep "zone example/IN: child.example/DS deprecated algorithm 5 (RSASHA1)" test.out.$n >/dev/null || ret=1
+grep "loaded serial 0 (DNSSEC signed)" test.out.$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "Checking for RSASHA1 KEY algorithm warning ($n)"
+ret=0
+$CHECKZONE example zones/warn.deprecated.key-alg.db >test.out.$n || ret=1
+grep "zone example/IN: example/KEY deprecated algorithm 5 (RSASHA1)" test.out.$n >/dev/null || ret=1
+grep "loaded serial 0 (DNSSEC signed)" test.out.$n >/dev/null || ret=1
+n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

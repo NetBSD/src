@@ -185,6 +185,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "*.inc.rst"]
 # The master toctree document.
 master_doc = "index"
 
+smartquotes = False
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

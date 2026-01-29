@@ -20,14 +20,16 @@ from typing import (
     Dict,
     List,
     Optional,
+    Set,
     Tuple,
-    Type,
     Union,
     cast,
 )
 
 import abc
 import asyncio
+import contextlib
+import copy
 import enum
 import functools
 import logging
@@ -38,22 +40,20 @@ import signal
 import struct
 import sys
 
+import dns.exception
 import dns.flags
 import dns.message
 import dns.name
 import dns.node
 import dns.rcode
+import dns.rdata
 import dns.rdataclass
+import dns.rdataset
 import dns.rdatatype
 import dns.rrset
+import dns.tsig
+import dns.version
 import dns.zone
-
-try:
-    RdataType = dns.rdatatype.RdataType
-    RdataClass = dns.rdataclass.RdataClass
-except AttributeError:  # dnspython < 2.0.0 compat
-    RdataType = int  # type: ignore
-    RdataClass = int  # type: ignore
 
 
 _UdpHandler = Callable[
@@ -113,6 +113,7 @@ class AsyncServer:
         tcp_handler: Optional[_TcpHandler],
         pidfile: Optional[str] = None,
     ) -> None:
+        self._abort_if_on_dnspython_version_less_than_2_0_0()
         logging.basicConfig(
             format="%(asctime)s %(levelname)8s  %(message)s",
             level=os.environ.get("ANS_LOG_LEVEL", "INFO").upper(),
@@ -139,6 +140,14 @@ class AsyncServer:
         self._tcp_handler: Optional[_TcpHandler] = tcp_handler
         self._pidfile: Optional[str] = pidfile
         self._work_done: Optional[asyncio.Future] = None
+
+    @classmethod
+    def _abort_if_on_dnspython_version_less_than_2_0_0(cls) -> None:
+        if dns.version.MAJOR < 2:
+            error = f"Using {cls.__name__} requires dnspython >= 2.0.0; "
+            error += 'add `pytest.importorskip("dns", minversion="2.0.0")` '
+            error += "to the test module to skip this test."
+            raise RuntimeError(error)
 
     def _get_ipv4_address_from_directory_name(self) -> str:
         containing_directory = pathlib.Path().absolute().stem
@@ -190,7 +199,10 @@ class AsyncServer:
     ) -> None:
         assert self._work_done
         exception = context.get("exception", RuntimeError(context["message"]))
-        self._work_done.set_exception(exception)
+        try:
+            self._work_done.set_exception(exception)
+        except asyncio.InvalidStateError:
+            pass
 
     def _setup_signals(self) -> None:
         loop = self._get_asyncio_loop()
@@ -199,7 +211,10 @@ class AsyncServer:
 
     def _signal_done(self) -> None:
         assert self._work_done
-        self._work_done.set_result(True)
+        try:
+            self._work_done.set_result(True)
+        except asyncio.InvalidStateError:
+            pass
 
     async def _listen_udp(self) -> None:
         if not self._udp_handler:
@@ -262,11 +277,17 @@ class QueryContext:
     response: dns.message.Message
     peer: Peer
     protocol: DnsProtocol
-    zone: Optional[dns.zone.Zone] = None
-    soa: Optional[dns.rrset.RRset] = None
-    node: Optional[dns.node.Node] = None
-    answer: Optional[dns.rdataset.Rdataset] = None
-    alias: Optional[dns.name.Name] = None
+    zone: Optional[dns.zone.Zone] = field(default=None, init=False)
+    soa: Optional[dns.rrset.RRset] = field(default=None, init=False)
+    node: Optional[dns.node.Node] = field(default=None, init=False)
+    answer: Optional[dns.rdataset.Rdataset] = field(default=None, init=False)
+    alias: Optional[dns.name.Name] = field(default=None, init=False)
+    _initialized_response: Optional[dns.message.Message] = field(
+        default=None, init=False
+    )
+    _initialized_response_with_zone_data: Optional[dns.message.Message] = field(
+        default=None, init=False
+    )
 
     @property
     def qname(self) -> dns.name.Name:
@@ -277,12 +298,29 @@ class QueryContext:
         return self.alias or self.qname
 
     @property
-    def qclass(self) -> RdataClass:
+    def qclass(self) -> dns.rdataclass.RdataClass:
         return self.query.question[0].rdclass
 
     @property
-    def qtype(self) -> RdataType:
+    def qtype(self) -> dns.rdatatype.RdataType:
         return self.query.question[0].rdtype
+
+    def prepare_new_response(
+        self, /, with_zone_data: bool = True
+    ) -> dns.message.Message:
+        if with_zone_data:
+            assert self._initialized_response_with_zone_data
+            self.response = copy.deepcopy(self._initialized_response_with_zone_data)
+        else:
+            assert self._initialized_response
+            self.response = copy.deepcopy(self._initialized_response)
+        return self.response
+
+    def save_initialized_response(self, /, with_zone_data: bool) -> None:
+        if with_zone_data:
+            self._initialized_response_with_zone_data = copy.deepcopy(self.response)
+        else:
+            self._initialized_response = copy.deepcopy(self.response)
 
 
 @dataclass
@@ -370,6 +408,157 @@ class ResponseDrop(ResponseAction):
         return None
 
 
+class _ConnectionTeardownRequested(Exception):
+    pass
+
+
+@dataclass
+class ResponseDropAndCloseConnection(ResponseAction):
+    """
+    Action which makes the server close the connection after the DNS query is
+    received by the server (TCP only).
+
+    The connection may be closed with a delay if requested.
+    """
+
+    delay: float = 0.0
+
+    async def perform(self) -> Optional[Union[dns.message.Message, bytes]]:
+        if self.delay > 0:
+            logging.info("Waiting %.1fs before closing TCP connection", self.delay)
+            await asyncio.sleep(self.delay)
+        raise _ConnectionTeardownRequested
+
+
+class ConnectionHandler(abc.ABC):
+    """
+    Base class for TCP connection handlers.
+
+    An installed connection handler is called when a new TCP connection is
+    established.  It may be used to perform arbitrary actions before
+    AsyncDnsServer processes DNS queries.
+    """
+
+    @abc.abstractmethod
+    async def handle(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, peer: Peer
+    ) -> None:
+        """
+        Handle the connection with the provided reader and writer.
+        """
+        raise NotImplementedError
+
+
+def block_reading(peer: Peer, writer_not_the_reader: asyncio.StreamWriter) -> None:
+    """
+    Block reads for the reader associated with the provided writer.
+
+    Yes, pass the writer, not the reader. See the comments below for details.
+    """
+
+    try:
+        # Python >= 3.7
+        loop = asyncio.get_running_loop()
+    except AttributeError:
+        # Python < 3.7
+        loop = asyncio.get_event_loop()
+
+    logging.info("Blocking reads from %s", peer)
+
+    # This is Michał's submission for the Ugliest Hack of the Year contest.
+    # (The alternative was implementing an asyncio transport from scratch.)
+    #
+    # In order to prevent the client socket from being read from, simply
+    # not calling `reader.read()` is not enough, because asyncio buffers
+    # incoming data itself on the transport level.  However, `StreamReader`
+    # does not expose the underlying transport as a property.  Therefore,
+    # cheat by extracting it from `StreamWriter` as it is the same
+    # bidirectional transport as for the read side (a `Transport`, which is
+    # a subclass of both `ReadTransport` and `WriteTransport`) and call
+    # `ReadTransport.pause_reading()` to remove the underlying socket from
+    # the set of descriptors monitored by the selector, thereby preventing
+    # any reads from happening on the client socket.  However...
+    loop.call_soon(writer_not_the_reader.transport.pause_reading)  # type: ignore
+
+    # ...due to `AsyncDnsServer._handle_tcp()` being a coroutine, by the
+    # time it gets executed, asyncio transport code will already have added
+    # the client socket to the set of descriptors monitored by the
+    # selector.  Therefore, if the client starts sending data immediately,
+    # a read from the socket will have already been scheduled by the time
+    # this handler gets executed.  There is no way to prevent that from
+    # happening, so work around it by abusing the fact that the transport
+    # at hand is specifically an instance of `_SelectorSocketTransport`
+    # (from asyncio.selector_events) and set the size of its read buffer to
+    # just a single byte.  This does give asyncio enough time to read that
+    # single byte from the client socket's buffer before that socket is
+    # removed from the set of monitored descriptors, but prevents the
+    # one-off read from emptying the client socket buffer _entirely_, which
+    # is enough to trigger sending an RST segment when the connection is
+    # closed shortly afterwards.
+    writer_not_the_reader.transport.max_size = 1  # type: ignore
+
+
+@dataclass
+class IgnoreAllConnections(ConnectionHandler):
+    """
+    A connection handler that makes the server not read anything from the
+    client socket, effectively ignoring all incoming connections.
+    """
+
+    _connections: Set[asyncio.StreamWriter] = field(default_factory=set)
+
+    async def handle(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, peer: Peer
+    ) -> None:
+        block_reading(peer, writer)
+        # Due to the way various asyncio-related objects (tasks, streams,
+        # transports, selectors) are referencing each other, pausing reads for
+        # a TCP transport (which in practice means removing the client socket
+        # from the set of descriptors monitored by a selector) can cause the
+        # client task (AsyncDnsServer._handle_tcp()) to be prematurely
+        # garbage-collected, causing asyncio code to raise a "Task was
+        # destroyed but it is pending!" exception.  Prevent that from happening
+        # by keeping a reference to each incoming TCP connection to protect its
+        # related asyncio objects from getting garbage-collected.  This
+        # prevents AsyncDnsServer from closing any of the ignored TCP
+        # connections indefinitely, which is obviously a pretty brain-dead idea
+        # for a production-grade DNS server, but AsyncDnsServer was never meant
+        # to be one and this hack reliably solves the problem at hand.
+        self._connections.add(writer)
+
+
+@dataclass
+class ConnectionReset(ConnectionHandler):
+    """
+    A connection handler that makes the server close the connection without
+    reading anything from the client socket.
+
+    The connection may be closed with a delay if requested.
+
+    The sole purpose of this handler is to trigger a connection reset, i.e. to
+    make the server send an RST segment; this happens when the server closes a
+    client's socket while there is still unread data in that socket's buffer.
+    If closing the connection _after_ the query is read by the server is enough
+    for a given use case, the ResponseDropAndCloseConnection response handler
+    should be used instead.
+    """
+
+    delay: float = 0.0
+
+    async def handle(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, peer: Peer
+    ) -> None:
+        block_reading(peer, writer)
+
+        if self.delay > 0:
+            logging.info(
+                "Waiting %.1fs before closing TCP connection from %s", self.delay, peer
+            )
+            await asyncio.sleep(self.delay)
+
+        raise _ConnectionTeardownRequested
+
+
 class ResponseHandler(abc.ABC):
     """
     Base class for generic response handlers.
@@ -414,6 +603,37 @@ class IgnoreAllQueries(ResponseHandler):
         self, qctx: QueryContext
     ) -> AsyncGenerator[ResponseAction, None]:
         yield ResponseDrop()
+
+
+class QnameHandler(ResponseHandler):
+    """
+    Base class used for deriving custom QNAME handlers.
+
+    The derived class must specify a list of `qnames` that it wants to handle.
+    Queries for exactly these QNAMEs will then be passed to the
+    `get_response()` method in the derived class.
+    """
+
+    @property
+    @abc.abstractmethod
+    def qnames(self) -> List[str]:
+        """
+        A list of QNAMEs handled by this class.
+        """
+        raise NotImplementedError
+
+    def __init__(self) -> None:
+        self._qnames: List[dns.name.Name] = [dns.name.from_text(d) for d in self.qnames]
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(QNAMEs: {', '.join(self.qnames)})"
+
+    def match(self, qctx: QueryContext) -> bool:
+        """
+        Handle queries whose QNAME matches any of the QNAMEs handled by this
+        class.
+        """
+        return qctx.qname in self._qnames
 
 
 class DomainHandler(ResponseHandler):
@@ -517,6 +737,71 @@ class _ZoneTree:
         return node.zone if node != self._root else None
 
 
+class _DnsMessageWithTsigDisabled(dns.message.Message):
+    """
+    A wrapper for `dns.message.Message` that works around a dnspython bug
+    causing exceptions to be raised when `make_response()` or `to_wire()` are
+    called for a message created using `dns.message.from_wire(keyring=False)`.
+
+    See https://github.com/rthalley/dnspython/issues/1205 for more details.
+    """
+
+    class _DisableTsigHandling(contextlib.ContextDecorator):
+        def __init__(self, message: Optional[dns.message.Message] = None) -> None:
+            self.original_tsig_sign = dns.tsig.sign
+            self.original_tsig_validate = dns.tsig.validate
+            if message:
+                self.tsig = message.tsig
+
+        def __enter__(self) -> None:
+            """
+            Override the `dns.tsig.sign` and `dns.tsig.validate` functions to prevent them
+            from failing on messages initialized with `dns.message.from_wire(keyring=False)`.
+            """
+
+            def sign(*_: Any, **__: Any) -> Tuple[dns.rdata.Rdata, None]:
+                assert self.tsig
+                return self.tsig[0], None
+
+            def validate(*_: Any, **__: Any) -> None:
+                return None
+
+            dns.tsig.sign = sign
+            dns.tsig.validate = validate
+
+        def __exit__(self, *_: Any, **__: Any) -> None:
+            dns.tsig.sign = self.original_tsig_sign
+            dns.tsig.validate = self.original_tsig_validate
+
+    @classmethod
+    def from_wire(cls, wire: bytes) -> "_DnsMessageWithTsigDisabled":
+        with cls._DisableTsigHandling():
+            message = dns.message.from_wire(wire, keyring=False)
+            message.__class__ = _DnsMessageWithTsigDisabled
+
+        return cast(_DnsMessageWithTsigDisabled, message)
+
+    @property
+    def had_tsig(self) -> bool:
+        """
+        Override the `had_tsig()` method to always return False, to prevent
+        `make_response()` from crashing.
+        """
+        return False
+
+    def to_wire(self, *args: Any, **kwargs: Any) -> bytes:
+        """
+        Override the `to_wire()` method to prevent it from trying to sign
+        the message with TSIG.
+        """
+        with self._DisableTsigHandling(self):
+            return super().to_wire(*args, **kwargs)
+
+
+class _NoKeyringType:
+    pass
+
+
 class AsyncDnsServer(AsyncServer):
     """
     DNS server which responds to queries based on zone data and/or custom
@@ -533,11 +818,24 @@ class AsyncDnsServer(AsyncServer):
     response from scratch, without using zone data at all.
     """
 
-    def __init__(self, acknowledge_manual_dname_handling: bool = False) -> None:
+    def __init__(
+        self,
+        /,
+        default_rcode: dns.rcode.Rcode = dns.rcode.REFUSED,
+        default_aa: bool = False,
+        keyring: Union[
+            Dict[dns.name.Name, dns.tsig.Key], None, _NoKeyringType
+        ] = _NoKeyringType(),
+        acknowledge_manual_dname_handling: bool = False,
+    ) -> None:
         super().__init__(self._handle_udp, self._handle_tcp, "ans.pid")
 
         self._zone_tree: _ZoneTree = _ZoneTree()
+        self._connection_handler: Optional[ConnectionHandler] = None
         self._response_handlers: List[ResponseHandler] = []
+        self._default_rcode = default_rcode
+        self._default_aa = default_aa
+        self._keyring = keyring
         self._acknowledge_manual_dname_handling = acknowledge_manual_dname_handling
 
         self._load_zones()
@@ -561,12 +859,25 @@ class AsyncDnsServer(AsyncServer):
         else:
             self._response_handlers.append(handler)
 
+    def install_response_handlers(self, handlers: List[ResponseHandler]) -> None:
+        for handler in handlers:
+            self.install_response_handler(handler)
+
     def uninstall_response_handler(self, handler: ResponseHandler) -> None:
         """
         Remove the specified handler from the list of response handlers.
         """
         logging.info("Uninstalling response handler: %s", handler)
         self._response_handlers.remove(handler)
+
+    def install_connection_handler(self, handler: ConnectionHandler) -> None:
+        """
+        Install a connection handler that will be called when a new TCP
+        connection is established.
+        """
+        if self._connection_handler:
+            raise RuntimeError("Only one connection handler can be installed")
+        self._connection_handler = handler
 
     def _load_zones(self) -> None:
         for entry in os.scandir():
@@ -577,12 +888,35 @@ class AsyncDnsServer(AsyncServer):
             self._zone_tree.add(zone)
 
     def _load_zone(self, zone_file_path: pathlib.Path) -> dns.zone.Zone:
-        origin = dns.name.from_text(zone_file_path.stem)
         logging.info("Loading zone file %s", zone_file_path)
-        with open(zone_file_path, encoding="utf-8") as zone_file:
-            zone = dns.zone.from_file(zone_file, origin, relativize=False)
+        zone = self._load_zone_file(zone_file_path)
         self._abort_if_dname_found_unless_acknowledged(zone)
         return zone
+
+    def _load_zone_file(self, zone_file_path: pathlib.Path) -> dns.zone.Zone:
+        try:
+            zone = self._load_zone_file_with_origin(zone_file_path)
+        except dns.zone.UnknownOrigin:
+            zone = self._load_zone_file_without_origin(zone_file_path)
+
+        return zone
+
+    def _load_zone_file_with_origin(
+        self, zone_file_path: pathlib.Path
+    ) -> dns.zone.Zone:
+        zone = dns.zone.from_file(str(zone_file_path), origin=None, relativize=False)
+        if zone.origin != dns.name.root:
+            error = "only the root zone may use $ORIGIN in the zone file; "
+            error += "for every other zone, its origin is determined by "
+            error += "the name of the file it is loaded from"
+            raise ValueError(error)
+        return zone
+
+    def _load_zone_file_without_origin(
+        self, zone_file_path: pathlib.Path
+    ) -> dns.zone.Zone:
+        origin = dns.name.from_text(zone_file_path.stem)
+        return dns.zone.from_file(str(zone_file_path), origin=origin, relativize=False)
 
     def _abort_if_dname_found_unless_acknowledged(self, zone: dns.zone.Zone) -> None:
         if self._acknowledge_manual_dname_handling:
@@ -615,15 +949,19 @@ class AsyncDnsServer(AsyncServer):
         peer = Peer(peer_info[0], peer_info[1])
         logging.debug("Accepted TCP connection from %s", peer)
 
-        while True:
-            try:
+        try:
+            if self._connection_handler:
+                await self._connection_handler.handle(reader, writer, peer)
+            while True:
                 wire = await self._read_tcp_query(reader, peer)
                 if not wire:
                     break
                 await self._send_tcp_response(writer, peer, wire)
-            except ConnectionResetError:
-                logging.error("TCP connection from %s reset by peer", peer)
-                return
+        except _ConnectionTeardownRequested:
+            pass
+        except ConnectionResetError:
+            logging.error("TCP connection from %s reset by peer", peer)
+            return
 
         logging.debug("Closing TCP connection from %s", peer)
         writer.close()
@@ -777,7 +1115,7 @@ class AsyncDnsServer(AsyncServer):
         Yield wire data to send as a response over the established transport.
         """
         try:
-            query = dns.message.from_wire(wire)
+            query = self._parse_message(wire)
         except dns.exception.DNSException as exc:
             logging.error("Invalid query from %s (%s): %s", peer, wire.hex(), exc)
             return
@@ -796,13 +1134,39 @@ class AsyncDnsServer(AsyncServer):
                     response_length = struct.pack("!H", len(response))
                     yield response_length + response
 
+    def _parse_message(self, wire: bytes) -> dns.message.Message:
+        try:
+            if isinstance(self._keyring, _NoKeyringType):
+                keyring = None
+            else:
+                keyring = self._keyring
+            return dns.message.from_wire(wire, keyring=keyring)
+        except dns.message.UnknownTSIGKey as exc:
+            if isinstance(self._keyring, _NoKeyringType):
+                error = "TSIG-signed query received but no `keyring` was provided; "
+                error += "either provide a keyring (in which case the server will "
+                error += "ignore any TSIG-invalid queries), or set `keyring=None` "
+                error += "explicitly to disable TSIG validation altogether. "
+                error += "This requires some hacking around a dnspython bug, "
+                error += "so there may be unexpected side effects."
+                raise ValueError(error) from exc
+            if self._keyring is None:
+                return _DnsMessageWithTsigDisabled.from_wire(wire)
+            raise
+
     async def _prepare_responses(
         self, qctx: QueryContext
     ) -> AsyncGenerator[Optional[Union[dns.message.Message, bytes]], None]:
         """
         Yield response(s) either from response handlers or zone data.
         """
+        qctx.response.set_rcode(self._default_rcode)
+        if self._default_aa:
+            qctx.response.flags |= dns.flags.AA
+        qctx.save_initialized_response(with_zone_data=False)
+
         self._prepare_response_from_zone_data(qctx)
+        qctx.save_initialized_response(with_zone_data=True)
 
         response_handled = False
         async for action in self._run_response_handlers(qctx):
@@ -848,8 +1212,8 @@ class AsyncDnsServer(AsyncServer):
             qctx.zone = zone
             return False
 
-        if not qctx.response.answer:
-            qctx.response.set_rcode(dns.rcode.REFUSED)
+        # RCODE is already set to self._default_rcode, i.e. REFUSED by default;
+        # it should also not be changed when following a CNAME chain
         return True
 
     def _delegation_response(self, qctx: QueryContext) -> bool:
@@ -927,6 +1291,7 @@ class AsyncDnsServer(AsyncServer):
         if not cname:
             return False
 
+        qctx.response.set_rcode(dns.rcode.NOERROR)
         cname_rrset = dns.rrset.RRset(qctx.current_qname, qctx.qclass, cname.rdtype)
         cname_rrset.update(cname)
         qctx.response.answer.append(cname_rrset)
@@ -979,22 +1344,29 @@ class ControllableAsyncDnsServer(AsyncDnsServer):
 
     _CONTROL_DOMAIN = "_control."
 
-    def __init__(self, commands: List[Type["ControlCommand"]]):
-        super().__init__()
-        self._control_domain = dns.name.from_text(self._CONTROL_DOMAIN)
-        self._commands: Dict[dns.name.Name, "ControlCommand"] = {}
-        for command_class in commands:
-            command = command_class()
-            command_subdomain = dns.name.Name([command.control_subdomain])
-            control_subdomain = command_subdomain.concatenate(self._control_domain)
-            try:
-                existing_command = self._commands[control_subdomain]
-            except KeyError:
-                self._commands[control_subdomain] = command
-            else:
-                raise RuntimeError(
-                    f"{control_subdomain} already handled by {existing_command}"
-                )
+    @functools.cached_property
+    def _control_domain(self) -> dns.name.Name:
+        return dns.name.from_text(self._CONTROL_DOMAIN)
+
+    @functools.cached_property
+    def _commands(self) -> Dict[dns.name.Name, "ControlCommand"]:
+        return {}
+
+    def install_control_commands(self, commands: List["ControlCommand"]) -> None:
+        for command in commands:
+            self.install_control_command(command)
+
+    def install_control_command(self, command: "ControlCommand") -> None:
+        command_subdomain = dns.name.Name([command.control_subdomain])
+        control_subdomain = command_subdomain.concatenate(self._control_domain)
+        try:
+            existing_command = self._commands[control_subdomain]
+        except KeyError:
+            self._commands[control_subdomain] = command
+        else:
+            raise RuntimeError(
+                f"{control_subdomain} already handled by {existing_command}"
+            )
 
     async def _prepare_responses(
         self, qctx: QueryContext

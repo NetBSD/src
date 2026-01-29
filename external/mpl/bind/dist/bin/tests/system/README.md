@@ -242,41 +242,6 @@ This script is responsible for setting up the configuration files used in the
 test. It is used by both the python and shell tests. It is interpreted just
 before the servers are started up for each test module.
 
-To cope with the varying port number, ports are not hard-coded into
-configuration files (or, for that matter, scripts that emulate nameservers).
-Instead, setup.sh is responsible for editing the configuration files to set the
-port numbers.
-
-To do this, configuration files should be supplied in the form of templates
-containing tokens identifying ports.  The tokens have the same name as the
-environment variables listed above, but are prefixed and suffixed by the "@"
-symbol.  For example, a fragment of a configuration file template might look
-like:
-
-    controls {
-        inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-    };
-
-    options {
-        query-source address 10.53.0.1;
-        notify-source 10.53.0.1;
-        transfer-source 10.53.0.1;
-        port @PORT@;
-        allow-new-zones yes;
-    };
-
-setup.sh should copy the template to the desired filename using the
-"copy_setports" shell function defined in "conf.sh", i.e.
-
-    copy_setports ns1/named.conf.in ns1/named.conf
-
-This replaces tokens like @PORT@ with the contents of the environment variables
-listed above. setup.sh should do this for all configuration files required when
-the test starts.
-
-("setup.sh" should also use this method for replacing the tokens in any Perl or
-Python name servers used in the test.)
-
 ### tests_*.py
 
 These are test modules containing tests written in python. Every test is a

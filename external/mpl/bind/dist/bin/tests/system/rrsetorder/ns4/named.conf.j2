@@ -20,7 +20,7 @@ options {
 	listen-on { 10.53.0.4; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 	notify yes;
 	rrset-order {
 		class IN type A name "host.example.com" order random;
@@ -28,7 +28,6 @@ options {
 
 };
 
-trust-anchors { };
 
 zone "." {
 	type hint;

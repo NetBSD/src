@@ -31,8 +31,11 @@ pytestmark = [
             "ns2/*.jnl",
             "ns2/*.signed",
             "ns2/dsset-*",
+            "ns2/dnssec.db",
             "ns2/dnssec.*.id",
+            "ns2/manykeys.db",
             "ns2/manykeys.*.id",
+            "ns2/settime.out.*",
             "ns2/signzone.out.*",
             "ns3/_default.nzd",
             "ns3/example-tcp.db",
@@ -148,6 +151,6 @@ def test_zone_with_many_keys_xml(statsport):
     )
 
 
-@isctest.mark.flaky(max_runs=2, rerun_filter=isctest.mark.with_tsan)
+@pytest.mark.flaky(max_runs=2)
 def test_traffic_xml(statsport):
     generic.test_traffic(fetch_traffic_xml, statsip="10.53.0.2", statsport=statsport)

@@ -1,0 +1,22 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "policies/autosign.conf";
+include "policies/kasp-fips.conf";
+include "named-common.conf";
+include "named-fips.conf";
+
+{% if RSASHA1_SUPPORTED == "1" %}
+include "policies/kasp-rsasha1.conf";
+include "named-rsasha1.conf";
+{% endif %}

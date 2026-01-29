@@ -94,7 +94,7 @@ def test_wildcard_rdtype_mismatch(
     # See RFC 4592 section 2.2.1.
     assume(name == SUFFIX or name.labels[-len(SUFFIX) - 1] != b"*")
 
-    query_msg = dns.message.make_query(name, rdtype)
+    query_msg = isctest.query.create(name, rdtype)
     response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
 
     isctest.check.is_response_to(response_msg, query_msg)
@@ -111,7 +111,7 @@ def test_wildcard_match(name: dns.name.Name, named_port: int) -> None:
     # See RFC 4592 section 2.2.1.
     assume(name.labels[-len(SUFFIX) - 1] != b"*")
 
-    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    query_msg = isctest.query.create(name, WILDCARD_RDTYPE)
     response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
 
     isctest.check.is_response_to(response_msg, query_msg)
@@ -140,7 +140,7 @@ def test_wildcard_with_star_not_synthesized(
     name: dns.name.Name, named_port: int
 ) -> None:
     """RFC 4592 section 2.2.1 ghost.*.example."""
-    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    query_msg = isctest.query.create(name, WILDCARD_RDTYPE)
     response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
 
     isctest.check.is_response_to(response_msg, query_msg)
@@ -170,7 +170,7 @@ def test_name_in_between_wildcards(name: dns.name.Name, named_port: int) -> None
         or name.labels[-len(NESTED_SUFFIX) - 1] != b"*"
     )
 
-    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    query_msg = isctest.query.create(name, WILDCARD_RDTYPE)
     response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
 
     isctest.check.is_response_to(response_msg, query_msg)
@@ -201,7 +201,7 @@ def test_name_nested_wildcard_subdomains_not_synthesized(
 
     `foo.*.*.*.nestedwild.test. A` must not be synthesized.
     """
-    query_msg = dns.message.make_query(name, WILDCARD_RDTYPE)
+    query_msg = isctest.query.create(name, WILDCARD_RDTYPE)
     response_msg = isctest.query.tcp(query_msg, IP_ADDR, named_port, timeout=TIMEOUT)
 
     isctest.check.is_response_to(response_msg, query_msg)

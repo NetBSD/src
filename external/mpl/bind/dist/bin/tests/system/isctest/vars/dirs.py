@@ -22,6 +22,7 @@ SYSTEM_TEST_DIR_GIT_PATH = "bin/tests/system"
 DIR_VARS = {
     "builddir": f"{AC_VARS['TOP_BUILDDIR']}/{SYSTEM_TEST_DIR_GIT_PATH}",
     "srcdir": f"{AC_VARS['TOP_SRCDIR']}/{SYSTEM_TEST_DIR_GIT_PATH}",
+    "HYPOTHESIS_STORAGE_DIRECTORY": f"{AC_VARS['TOP_BUILDDIR']}/{SYSTEM_TEST_DIR_GIT_PATH}/.hypothesis",
     "SYSTESTDIR": None,
 }
 

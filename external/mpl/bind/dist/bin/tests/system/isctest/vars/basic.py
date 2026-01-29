@@ -23,6 +23,7 @@ BASIC_VARS = {
     "CHECKCONF": f"{AC_VARS['TOP_BUILDDIR']}/bin/check/named-checkconf",
     "CHECKZONE": f"{AC_VARS['TOP_BUILDDIR']}/bin/check/named-checkzone",
     "DIG": f"{AC_VARS['TOP_BUILDDIR']}/bin/dig/dig",
+    "DELV": f"{AC_VARS['TOP_BUILDDIR']}/bin/delv/delv",
     "DNSTAPREAD": f"{AC_VARS['TOP_BUILDDIR']}/bin/tools/dnstap-read",
     "DSFROMKEY": f"{AC_VARS['TOP_BUILDDIR']}/bin/dnssec/dnssec-dsfromkey",
     "FEATURETEST": f"{AC_VARS['TOP_BUILDDIR']}/bin/tests/system/feature-test",
@@ -54,11 +55,6 @@ BASIC_VARS = {
     "TMPDIR": os.getenv("TMPDIR", "/tmp"),
     "KRB5_CONFIG": "/dev/null",  # we don't want a KRB5_CONFIG setting breaking the tests
     "KRB5_KTNAME": "dns.keytab",  # use local keytab instead of default /etc/krb5.keytab
-    "DELV": (
-        f"{AC_VARS['TOP_BUILDDIR']}/bin/delv/delv"
-        if not os.getenv("TSAN_OPTIONS", "")
-        else ":"  # workaround for GL#4119
-    ),
     "LC_ALL": "C",
     "ANS_LOG_LEVEL": "debug",
 }

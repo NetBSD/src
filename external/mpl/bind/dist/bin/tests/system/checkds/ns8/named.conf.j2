@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS8
+
+options {
+	query-source address 10.53.0.8;
+	notify-source 10.53.0.8;
+	transfer-source 10.53.0.8;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.8; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation no;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.8 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+zone "ns2" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns2.db";
+};
+
+zone "ns2-4" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns2-4.db";
+};
+
+zone "ns2-4-5" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns2-4-5.db";
+};
+
+zone "ns2-4-6" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns2-4-6.db";
+};
+
+zone "ns2-5-7" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns2-5-7.db";
+};
+
+zone "ns5" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns5.db";
+};
+
+zone "ns5-6-7" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns5-6-7.db";
+};
+
+zone "ns5-7" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns5-7.db";
+};
+
+zone "ns6" {
+	type secondary;
+	primaries source 10.53.0.8 { 10.53.0.2 port @PORT@; };
+	file "ns6.db";
+};

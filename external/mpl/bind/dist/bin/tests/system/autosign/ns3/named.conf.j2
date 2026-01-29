@@ -1,0 +1,393 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS3
+
+controls { /* empty */ };
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	session-keyfile "session.key";
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	notify yes;
+	dnssec-validation yes;
+	dnssec-loadkeys-interval 10;
+	allow-new-zones yes;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+# The default
+dnssec-policy "autosign" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+# Additional CSK
+dnssec-policy "sync" {
+	keys {
+		csk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+# NSEC3
+dnssec-policy "nsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout no salt-length 0;
+};
+
+# NSEC3 opt-out
+dnssec-policy "optout" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout yes salt-length 0;
+};
+
+# Jitter
+dnssec-policy "jitter" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	signatures-validity P10D;
+	signatures-validity-dnskey P10D;
+	signatures-refresh P2D;
+	signatures-jitter P8D;
+};
+
+# Jitter, NSEC3
+dnssec-policy "jitter-nsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	nsec3param iterations 0 optout no salt-length 0;
+
+	signatures-validity P10D;
+	signatures-validity-dnskey P10D;
+	signatures-refresh P2D;
+
+};
+
+# RSASHA256
+dnssec-policy "rsasha256" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm RSASHA256 2048;
+		zsk key-directory lifetime unlimited algorithm RSASHA256 2048;
+	};
+};
+
+# RSASHA512
+dnssec-policy "rsasha512" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm RSASHA512 2048;
+		zsk key-directory lifetime unlimited algorithm RSASHA512 2048;
+	};
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+zone "example" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	file "example.bk";
+};
+
+zone "bar" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	file "bar.bk";
+};
+
+zone "secure.example" {
+	type primary;
+	file "secure.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "insecure.example" {
+	type primary;
+	file "insecure.example.db";
+	dnssec-policy none;
+};
+
+zone "nsec3.example" {
+	type primary;
+	file "nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy nsec3;
+};
+
+zone "autonsec3.example" {
+	type primary;
+	file "autonsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy nsec3;
+};
+
+zone "optout.nsec3.example" {
+	type primary;
+	file "optout.nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy optout;
+};
+
+zone "nsec3.nsec3.example" {
+	type primary;
+	file "nsec3.nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy nsec3;
+};
+
+zone "jitter.nsec3.example" {
+	type primary;
+	file "jitter.nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy jitter-nsec3;
+	sig-signing-nodes 1000;
+	sig-signing-signatures 100;
+};
+
+zone "secure.nsec3.example" {
+	type primary;
+	file "secure.nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy nsec3;
+};
+
+zone "optout.example" {
+	type primary;
+	file "optout.example.db";
+	allow-update { any; };
+	dnssec-policy optout;
+};
+
+zone "secure.optout.example" {
+	type primary;
+	file "secure.optout.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy optout;
+};
+
+zone "nsec3.optout.example" {
+	type primary;
+	file "nsec3.optout.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy optout;
+};
+
+zone "optout.optout.example" {
+	type primary;
+	file "optout.optout.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy optout;
+};
+
+zone "rsasha256.example" {
+	type primary;
+	file "rsasha256.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy rsasha256;
+};
+
+zone "rsasha512.example" {
+	type primary;
+	file "rsasha512.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy rsasha512;
+};
+
+zone "nsec3-to-nsec.example" {
+	type primary;
+	file "nsec3-to-nsec.example.db";
+	allow-update { any; };
+	inline-signing no;
+	max-journal-size 10M;
+	dnssec-policy autosign;
+};
+
+zone "nsec3-to-nsec3.example" {
+	type primary;
+	file "nsec3-to-nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	max-journal-size 10M;
+	dnssec-policy nsec3;
+};
+
+zone "oldsigs.example" {
+	type primary;
+	file "oldsigs.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy jitter;
+	sig-signing-nodes 1000;
+	sig-signing-signatures 100;
+};
+
+zone "prepub.example" {
+	type primary;
+	file "prepub.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "ttl1.example" {
+	type primary;
+	file "ttl1.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "ttl2.example" {
+	type primary;
+	file "ttl2.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "ttl3.example" {
+	type primary;
+	file "ttl3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "ttl4.example" {
+	type primary;
+	file "ttl4.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "delay.example" {
+	type primary;
+	file "delay.example.db";
+};
+
+zone "nozsk.example" {
+	type primary;
+	file "nozsk.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "inaczsk.example" {
+	type primary;
+	file "inaczsk.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "noksk.example" {
+	type primary;
+	file "noksk.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "sync.example" {
+	type primary;
+	file "sync.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy sync;
+};
+
+zone "kskonly.example" {
+	type primary;
+	file "kskonly.example.db";
+	allow-update { any; };
+	dnssec-policy autosign;
+};
+
+zone "inaczsk2.example" {
+	type primary;
+	file "inaczsk2.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy autosign;
+};
+
+zone "delzsk.example." {
+	type primary;
+	file "delzsk.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy nsec3;
+};
+
+zone "dname-at-apex-nsec3.example" {
+	type primary;
+	file "dname-at-apex-nsec3.example.db";
+	allow-update { any; };
+	inline-signing no;
+	dnssec-policy nsec3;
+};
+
+{% if RSASHA1_SUPPORTED == "1" %}
+include "nsec-only.conf";
+{% endif %}
+
+include "trusted.conf";

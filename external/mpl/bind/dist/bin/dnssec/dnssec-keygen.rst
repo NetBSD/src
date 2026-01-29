@@ -38,21 +38,24 @@ Options
 
 .. option:: -3
 
-   This option uses an NSEC3-capable algorithm to generate a DNSSEC key. If this
-   option is used with an algorithm that has both NSEC and NSEC3
-   versions, then the NSEC3 version is selected; for example,
-   ``dnssec-keygen -3 -a RSASHA1`` specifies the NSEC3RSASHA1 algorithm.
+   This option uses an NSEC3-capable algorithm to generate a DNSSEC
+   key. If this option is used with an algorithm that has both NSEC
+   and NSEC3 versions, then the NSEC3 version is selected; for
+   example, ``dnssec-keygen -3 -a RSASHA1`` specifies the NSEC3RSASHA1
+   (deprecated) algorithm.
 
 .. option:: -a algorithm
 
-   This option selects the cryptographic algorithm. For DNSSEC keys, the value of
-   ``algorithm`` must be one of RSASHA1, NSEC3RSASHA1, RSASHA256,
-   RSASHA512, ECDSAP256SHA256, ECDSAP384SHA384, ED25519, or ED448.
+   This option selects the cryptographic algorithm. For DNSSEC keys,
+   the value of ``algorithm`` must be one of RSASHA1 (deprecated),
+   NSEC3RSASHA1 (deprecated), RSASHA256, RSASHA512, ECDSAP256SHA256,
+   ECDSAP384SHA384, ED25519, or ED448.
 
-   These values are case-insensitive. In some cases, abbreviations are
-   supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384 for
-   ECDSAP384SHA384. If RSASHA1 is specified along with the :option:`-3`
-   option, NSEC3RSASHA1 is used instead.
+   These values are case-insensitive. In some cases, abbreviations
+   are supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384
+   for ECDSAP384SHA384. If RSASHA1 (deprecated) is specified along
+   with the :option:`-3` option, NSEC3RSASHA1 (deprecated) is used
+   instead.
 
    This parameter *must* be specified except when using the :option:`-S`
    option, which copies the algorithm from the predecessor key.

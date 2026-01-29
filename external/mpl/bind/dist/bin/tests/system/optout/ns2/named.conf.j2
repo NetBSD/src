@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set reconfiged = reconfiged | default(False) %}
+{% set policy = "optout" if not reconfiged else "nsec" %}
+
+options {
+        port @PORT@;
+        pid-file "named.pid";
+        listen-on { 10.53.0.2; };
+        listen-on-v6 { none; };
+	allow-transfer { any; };
+        recursion no;
+        dnssec-validation no;
+        ixfr-from-differences yes;
+	sig-signing-nodes 900;
+	sig-signing-signatures 900;
+};
+
+include "controls.conf";
+
+dnssec-policy "optout" {
+	keys {
+		csk lifetime unlimited algorithm ecdsa256;
+	};
+	nsec3param iterations 0 optout yes salt-length 0;
+};
+
+dnssec-policy "nsec" {
+	keys {
+		csk lifetime unlimited algorithm ecdsa256;
+	};
+};
+
+zone "test" {
+	type primary;
+	file "test.db";
+	dnssec-policy "optout";
+	inline-signing yes;
+};
+
+zone "small.test" {
+	type primary;
+	file "small.test.db";
+	dnssec-policy "@policy@";
+	inline-signing yes;
+};

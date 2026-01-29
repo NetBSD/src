@@ -9,13 +9,13 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import dns
+
 import isctest
 
-import dns.message
 
-
-def test_database(servers, templates):
-    msg = dns.message.make_query("database.", "SOA")
+def test_database(ns1, templates):
+    msg = isctest.query.create("database.", "SOA")
 
     # checking pre reload zone
     res = isctest.query.tcp(msg, "10.53.0.1")
@@ -28,8 +28,8 @@ def test_database(servers, templates):
     )
 
     templates.render("ns1/named.conf", {"rname": "marka.isc.org."})
-    with servers["ns1"].watch_log_from_here() as watcher:
-        servers["ns1"].rndc("reload")
+    with ns1.watch_log_from_here() as watcher:
+        ns1.rndc("reload")
         watcher.wait_for_line("all zones loaded")
 
     # checking post reload zone

@@ -71,11 +71,8 @@ def do_work(named_proc, resolver_ip, instance, kill_method, n_workers, n_queries
 
     # helper function, 'command' is the rndc command to run
     def launch_rndc(command):
-        try:
-            instance.rndc(command, log=False)
-            return 0
-        except isctest.rndc.RNDCException:
-            return -1
+        ret = instance.rndc(command, raise_on_exception=False)
+        return 0 if ret.rc == 0 else -1
 
     # We're going to execute queries in parallel by means of a thread pool.
     # dnspython functions block, so we need to circumvent that.
@@ -105,7 +102,7 @@ def do_work(named_proc, resolver_ip, instance, kill_method, n_workers, n_queries
                     )
 
                 qname = relname + ".test"
-                msg = dns.message.make_query(qname, "A")
+                msg = isctest.query.create(qname, "A")
                 futures[
                     executor.submit(
                         isctest.query.udp, msg, resolver_ip, timeout=1, attempts=1

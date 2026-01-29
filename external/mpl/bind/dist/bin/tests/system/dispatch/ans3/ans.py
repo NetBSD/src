@@ -9,91 +9,37 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import os
-import select
-import signal
-import socket
-import sys
-import time
+from typing import AsyncGenerator
 
 import dns.flags
-import dns.message
+import dns.rcode
+
+from isctest.asyncserver import (
+    AsyncDnsServer,
+    ConnectionReset,
+    DnsProtocol,
+    DnsResponseSend,
+    QueryContext,
+    ResponseAction,
+    ResponseHandler,
+)
 
 
-def port():
-    env_port = os.getenv("PORT")
-    if env_port is None:
-        env_port = 5300
-    else:
-        env_port = int(env_port)
-
-    return env_port
-
-
-def udp_listen(port):
-    udp = socket.socket(type=socket.SOCK_DGRAM)
-    udp.bind(("10.53.0.3", port))
-
-    return udp
+class TruncateOnUdpHandler(ResponseHandler):
+    async def get_responses(
+        self, qctx: QueryContext
+    ) -> AsyncGenerator[ResponseAction, None]:
+        assert qctx.protocol == DnsProtocol.UDP, "This server only supports UDP"
+        qctx.response.flags |= dns.flags.TC
+        yield DnsResponseSend(qctx.response)
 
 
-def tcp_listen(port):
-    tcp = socket.socket(type=socket.SOCK_STREAM)
-    tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    tcp.bind(("10.53.0.3", port))
-    tcp.listen(100)
-
-    return tcp
+def main() -> None:
+    server = AsyncDnsServer(default_rcode=dns.rcode.NOERROR)
+    server.install_connection_handler(ConnectionReset(delay=1.0))
+    server.install_response_handler(TruncateOnUdpHandler())
+    server.run()
 
 
-def udp_tc_once(udp):
-    qrybytes, clientaddr = udp.recvfrom(65535)
-    qry = dns.message.from_wire(qrybytes)
-    answ = dns.message.make_response(qry)
-    answ.flags |= dns.flags.TC
-    answbytes = answ.to_wire()
-    udp.sendto(answbytes, clientaddr)
-
-
-def tcp_once(tcp):
-    csock, _clientaddr = tcp.accept()
-    time.sleep(5)
-    csock.close()
-
-
-def sigterm(signum, frame):
-    os.remove("ans.pid")
-    sys.exit(0)
-
-
-def write_pid():
-    with open("ans.pid", "w") as f:
-        pid = os.getpid()
-        f.write("{}".format(pid))
-
-
-signal.signal(signal.SIGTERM, sigterm)
-write_pid()
-
-udp = udp_listen(port())
-tcp = tcp_listen(port())
-
-input = [udp, tcp]
-
-while True:
-    try:
-        inputready, outputready, exceptready = select.select(input, [], [])
-    except select.error:
-        break
-    except socket.error:
-        break
-    except KeyboardInterrupt:
-        break
-
-    for s in inputready:
-        if s == udp:
-            udp_tc_once(udp)
-        if s == tcp:
-            tcp_once(tcp)
-
-sigterm(signal.SIGTERM, 0)
+if __name__ == "__main__":
+    main()

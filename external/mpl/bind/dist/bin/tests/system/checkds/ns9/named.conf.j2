@@ -1,0 +1,395 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS9
+
+include "trusted.conf";
+
+options {
+	query-source address 10.53.0.9;
+	notify-source 10.53.0.9;
+	transfer-source 10.53.0.9;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.9; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation yes;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.9 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+remote-servers "ns8" port @PORT@ {
+	10.53.0.8;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.1    - With one parental agent
+ * 1.1.1. - DS is correctly published in the parent.
+ */
+zone "good.explicit.dspublish.ns2" {
+	type primary;
+	file "good.explicit.dspublish.ns2.db";
+	dnssec-policy "default";
+	parental-agents { 10.53.0.8 port @PORT@; };
+};
+
+/* Same as above, but now with a reference to parental-agents. */
+zone "reference.explicit.dspublish.ns2" {
+	type primary;
+	file "reference.explicit.dspublish.ns2.db";
+	dnssec-policy "default";
+	parental-agents { "ns8"; };
+};
+
+/* Same as above, but now with resolver parental agent configured. */
+zone "resolver.explicit.dspublish.ns2" {
+	type primary;
+	file "resolver.explicit.dspublish.ns2.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.3 port @PORT@;
+	};
+};
+
+/* Same as above, but now with auto parental agents. */
+zone "good.yes.dspublish.ns2" {
+	type primary;
+	file "good.yes.dspublish.ns2.db";
+	dnssec-policy "default";
+};
+
+/* Same as above, but with checkds disabled. */
+zone "good.no.dspublish.ns2" {
+	type primary;
+	file "good.no.dspublish.ns2.db";
+	dnssec-policy "default";
+	checkds no;
+};
+
+/* Same as auto parental agents, but now without empty non-terminals. */
+zone "no-ent.ns2" {
+	type primary;
+	file "no-ent.ns2.db";
+	dnssec-policy "default";
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.1    - With one parental agent
+ * 1.1.2. - DS is not (yet) published in the parent.
+ */
+zone "not-yet.explicit.dspublish.ns5" {
+	type primary;
+	file "not-yet.explicit.dspublish.ns5.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.5 port @PORT@; // missing
+	};
+};
+
+zone "not-yet.yes.dspublish.ns5" {
+	type primary;
+	file "not-yet.yes.dspublish.ns5.db";
+	dnssec-policy "default";
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.1    - With one parental agent
+ * 1.1.3. - The parental agent is badly configured.
+ */
+zone "bad.explicit.dspublish.ns6" {
+	type primary;
+	file "bad.explicit.dspublish.ns6.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.6 port @PORT@; // bad
+	};
+};
+
+zone "bad.yes.dspublish.ns6" {
+	type primary;
+	file "bad.yes.dspublish.ns6.db";
+	dnssec-policy "default";
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.1    - With one parental agent
+ * 1.1.4. - DS is published, but has bogus signature
+ */
+// TODO
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.2    - With multiple parental agent
+ * 1.2.1. - DS is correctly published in all parents.
+ */
+zone "good.explicit.dspublish.ns2-4" {
+	type primary;
+	file "good.explicit.dspublish.ns2-4.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.8 port @PORT@;
+		10.53.0.4 port @PORT@;
+	};
+};
+
+zone "good.yes.dspublish.ns2-4" {
+	type primary;
+	file "good.yes.dspublish.ns2-4.db";
+	dnssec-policy "default";
+};
+
+zone "good.no.dspublish.ns2-4" {
+	type primary;
+	file "good.no.dspublish.ns2-4.db";
+	dnssec-policy "default";
+	checkds no;
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.2    - With multiple parental agent
+ * 1.2.2. - DS is not (yet) published in some parents.
+ */
+zone "incomplete.explicit.dspublish.ns2-4-5" {
+	type primary;
+	file "incomplete.explicit.dspublish.ns2-4-5.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.8 port @PORT@;
+		10.53.0.4 port @PORT@;
+		10.53.0.5 port @PORT@; // missing
+	};
+};
+
+zone "incomplete.yes.dspublish.ns2-4-5" {
+	type primary;
+	file "incomplete.yes.dspublish.ns2-4-5.db";
+	dnssec-policy "default";
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.2    - With multiple parental agent
+ * 1.2.3. - DS is not (yet) published in some parents.
+ */
+zone "bad.explicit.dspublish.ns2-4-6" {
+	type primary;
+	file "bad.explicit.dspublish.ns2-4-6.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.8 port @PORT@;
+		10.53.0.4 port @PORT@;
+		10.53.0.6 port @PORT@; // bad
+	};
+};
+
+zone "bad.yes.dspublish.ns2-4-6" {
+	type primary;
+	file "bad.yes.dspublish.ns2-4-6.db";
+	dnssec-policy "default";
+};
+
+/*
+ * 1.     Enabling DNSSEC
+ * 1.2    - With multiple parental agent
+ * 1.2.4. - DS is completely published, bogus signature.
+ */
+// TODO
+
+// TODO: Other test cases:
+// - check with TSIG
+// - check with TLS
+
+/*
+ * 2.     Going insecure
+ * 2.1    - With one parental agent
+ * 2.1.1. - DS is correctly withdrawn from the parent.
+ */
+zone "good.explicit.dsremoved.ns5" {
+	type primary;
+	file "good.explicit.dsremoved.ns5.db";
+	dnssec-policy "insecure";
+	parental-agents { 10.53.0.10 port @PORT@; };
+};
+
+zone "resolver.explicit.dsremoved.ns5" {
+	type primary;
+	file "resolver.explicit.dsremoved.ns5.db";
+	dnssec-policy "default";
+	parental-agents {
+		10.53.0.3 port @PORT@;
+	};
+};
+
+zone "good.yes.dsremoved.ns5" {
+	type primary;
+	file "good.yes.dsremoved.ns5.db";
+	dnssec-policy "insecure";
+};
+
+zone "good.no.dsremoved.ns5" {
+	type primary;
+	file "good.no.dsremoved.ns5.db";
+	dnssec-policy "insecure";
+	checkds no;
+};
+
+zone "no-ent.ns5" {
+	type primary;
+	file "no-ent.ns5.db";
+	dnssec-policy "default";
+};
+
+/*
+ * 2.     Going insecure
+ * 2.1    - With one parental agent
+ * 2.1.2. - DS is (still) published in the parent.
+ */
+zone "still-there.explicit.dsremoved.ns2" {
+	type primary;
+	file "still-there.explicit.dsremoved.ns2.db";
+	dnssec-policy "insecure";
+	parental-agents {
+		10.53.0.2 port @PORT@; // still published
+	};
+};
+
+zone "still-there.yes.dsremoved.ns2" {
+	type primary;
+	file "still-there.yes.dsremoved.ns2.db";
+	dnssec-policy "insecure";
+};
+
+/*
+ * 2.     Going insecure
+ * 2.1    - With one parental agent
+ * 2.1.3. - The parental agent is badly configured.
+ */
+zone "bad.explicit.dsremoved.ns6" {
+	type primary;
+	file "bad.explicit.dsremoved.ns6.db";
+	dnssec-policy "insecure";
+	parental-agents {
+		10.53.0.6 port @PORT@; // bad
+	};
+};
+
+zone "bad.yes.dsremoved.ns6" {
+	type primary;
+	file "bad.yes.dsremoved.ns6.db";
+	dnssec-policy "insecure";
+};
+
+/*
+ * 2.     Going insecure
+ * 2.1    - With one parental agent
+ * 2.1.4. - DS is withdrawn, but has bogus signature.
+ */
+// TODO
+
+/*
+ * 2.     Going insecure
+ * 2.2.    - With multiple parental agents
+ * 2.2.1.  - DS is correctly withdrawn from all parents.
+ */
+zone "good.explicit.dsremoved.ns5-7" {
+	type primary;
+	file "good.explicit.dsremoved.ns5-7.db";
+	dnssec-policy "insecure";
+	parental-agents {
+		10.53.0.10 port @PORT@;
+		10.53.0.7 port @PORT@;
+	};
+};
+
+zone "good.yes.dsremoved.ns5-7" {
+	type primary;
+	file "good.yes.dsremoved.ns5-7.db";
+	dnssec-policy "insecure";
+};
+
+zone "good.no.dsremoved.ns5-7" {
+	type primary;
+	file "good.no.dsremoved.ns5-7.db";
+	dnssec-policy "insecure";
+	checkds no;
+};
+
+/*
+ * 2.     Going insecure
+ * 2.2.    - With multiple parental agents
+ * 2.2.2.  - DS is not (yet) withdrawn from some parents.
+ */
+zone "incomplete.explicit.dsremoved.ns2-5-7" {
+	type primary;
+	file "incomplete.explicit.dsremoved.ns2-5-7.db";
+	dnssec-policy "insecure";
+	parental-agents {
+		10.53.0.2 port @PORT@; // still published
+		10.53.0.10 port @PORT@;
+		10.53.0.7 port @PORT@;
+	};
+};
+
+zone "incomplete.yes.dsremoved.ns2-5-7" {
+	type primary;
+	file "incomplete.yes.dsremoved.ns2-5-7.db";
+	dnssec-policy "insecure";
+};
+
+/*
+ * 2.     Going insecure
+ * 2.2.    - With multiple parental agents
+ * 2.2.3.  - One parental agent is badly configured.
+ */
+zone "bad.explicit.dsremoved.ns5-6-7" {
+	type primary;
+	file "bad.explicit.dsremoved.ns5-6-7.db";
+	dnssec-policy "insecure";
+	parental-agents {
+		10.53.0.10 port @PORT@;
+		10.53.0.7 port @PORT@;
+		10.53.0.6 port @PORT@; // bad
+	};
+};
+
+zone "bad.yes.dsremoved.ns5-6-7" {
+	type primary;
+	file "bad.yes.dsremoved.ns5-6-7.db";
+	dnssec-policy "insecure";
+};
+
+/*
+ * 2.     Going insecure
+ * 2.2.    - With multiple parental agents
+ * 2.2.4.  - DS is removed completely, bogus signature
+ */
+// TODO

@@ -23,4 +23,4 @@ from .basic import (
     critical,
 )
 
-from .watchlog import LogFile, WatchLogFromStart, WatchLogFromHere
+from .watchlog import WatchLogFromStart, WatchLogFromHere

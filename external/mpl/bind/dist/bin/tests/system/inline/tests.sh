@@ -629,7 +629,7 @@ grep "status: NOERROR" dig.out.ns5.test$n >/dev/null || ret=1
 grep "ANSWER: 1," dig.out.ns5.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "setup broken"; fi
 status=$((status + ret))
-copy_setports ns5/named.conf.post ns5/named.conf
+cp ns5/named2.conf ns5/named.conf
 (
   cd ns5
   $KEYGEN -q -a ${DEFAULT_ALGORITHM} bits

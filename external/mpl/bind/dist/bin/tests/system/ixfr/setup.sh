@@ -13,11 +13,6 @@
 
 . ../conf.sh
 
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns3/named.conf.in ns3/named.conf
-copy_setports ns4/named.conf.in ns4/named.conf
-copy_setports ns5/named.conf.in ns5/named.conf
-
 # Set up db files for zone "test" - this is a series of four
 # versions of the zone, the second and third having small changes
 # and the fourth having a large one.

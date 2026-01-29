@@ -17,3 +17,11 @@ cname1.stale.test.	1	CNAME	a1.stale.test.
 a1.stale.test.		1	A	192.0.2.1
 cname2.stale.test.	1	CNAME	a2.stale.test.
 a2.stale.test.		300	A	192.0.2.2
+
+cname-a1		1	CNAME	cname-a2
+cname-a2		300	CNAME	cname-a3
+cname-a3		300	A	192.0.2.1
+
+cname-b1		300	CNAME	cname-b2
+cname-b2		1	CNAME	cname-b3
+cname-b3		1	A	192.0.2.2

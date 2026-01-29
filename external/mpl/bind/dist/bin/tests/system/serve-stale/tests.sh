@@ -289,7 +289,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "updating ns1/named.conf ($n)"
 ret=0
-copy_setports ns1/named2.conf.in ns1/named.conf
+cp ns1/named2.conf ns1/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -535,7 +535,7 @@ echo_i "test server with serve-stale options set, low max-stale-ttl"
 n=$((n + 1))
 echo_i "updating ns1/named.conf ($n)"
 ret=0
-copy_setports ns1/named3.conf.in ns1/named.conf
+cp ns1/named3.conf ns1/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -895,7 +895,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "updating ns1/named.conf ($n)"
 ret=0
-copy_setports ns1/named4.conf.in ns1/named.conf
+cp ns1/named4.conf ns1/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -997,7 +997,7 @@ echo_i "test server with no serve-stale options set"
 n=$((n + 1))
 echo_i "updating ns3/named.conf ($n)"
 ret=0
-copy_setports ns3/named1.conf.in ns3/named.conf
+cp ns3/named1.conf ns3/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -1723,7 +1723,7 @@ echo_i "test stale-answer-client-timeout (off)"
 n=$((n + 1))
 echo_i "updating ns3/named.conf ($n)"
 ret=0
-copy_setports ns3/named3.conf.in ns3/named.conf
+cp ns3/named3.conf ns3/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -1850,7 +1850,7 @@ echo_i "test stale-answer-client-timeout (0)"
 n=$((n + 1))
 echo_i "updating ns3/named.conf ($n)"
 ret=0
-copy_setports ns3/named4.conf.in ns3/named.conf
+cp ns3/named4.conf ns3/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2096,6 +2096,73 @@ if [ $ret != 0 ]; then
 fi
 status=$((status + ret))
 
+# New CNAME scenario (GL #5243)
+n=$((n + 1))
+echo_i "prime cache cname-a1.stale.test A (stale-answer-client-timeout 0) ($n)"
+ret=0
+$DIG -p ${PORT} @10.53.0.3 cname-a1.stale.test A >dig.out.test$n || ret=1
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 3," dig.out.test$n >/dev/null || ret=1
+grep "cname-a1\.stale\.test\..*1.*IN.*CNAME.*cname-a2\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-a2\.stale\.test\..*300.*IN.*CNAME.*cname-a3\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-a3\.stale\.test\..*300.*IN.*A.*192\.0\.2\.1" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "prime cache cname-b1.stale.test A (stale-answer-client-timeout 0) ($n)"
+ret=0
+$DIG -p ${PORT} @10.53.0.3 cname-b1.stale.test A >dig.out.test$n || ret=1
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 3," dig.out.test$n >/dev/null || ret=1
+grep "cname-b1\.stale\.test\..*300.*IN.*CNAME.*cname-b2\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-b2\.stale\.test\..*1.*IN.*CNAME.*cname-b3\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-b3\.stale\.test\..*1.*IN.*A.*192\.0\.2\.2" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# Allow RRset to become stale.
+sleep 1
+
+n=$((n + 1))
+ret=0
+echo_i "check stale cname-a1.stale.test A comes from cache (stale-answer-client-timeout 0) ($n)"
+nextpart ns3/named.run >/dev/null
+$DIG -p ${PORT} @10.53.0.3 cname-a1.stale.test A >dig.out.test$n || ret=1
+wait_for_log 5 "cname-a1.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run || ret=1
+# Other records in chain are still good, so do not attempt a refresh
+grep "cname-a2.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run && ret=1
+grep "cname-a3.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run && ret=1
+# Check answer
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "EDE: 3 (Stale Answer): (stale data prioritized over lookup)" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 3," dig.out.test$n >/dev/null || ret=1
+grep "cname-a1\.stale\.test\..*3.*IN.*CNAME.*cname-a2\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-a2\.stale\.test\..*29[0-9].*IN.*CNAME.*cname-a3\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-a3\.stale\.test\..*29[0-9].*IN.*A.*192\.0\.2\.1" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+ret=0
+echo_i "check stale cname-b1.stale.test A comes from cache (stale-answer-client-timeout 0) ($n)"
+nextpart ns3/named.run >/dev/null
+$DIG -p ${PORT} @10.53.0.3 cname-b1.stale.test A >dig.out.test$n || ret=1
+wait_for_log 5 "cname-b2.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run || ret=1
+# The next one in the chain (cname-b3.stale.test) is likely not logged because
+# there is already a refresh in progress. And the first record in the chain is
+# still good, so do not attempt a refresh.
+grep "cname-b1.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run && ret=1
+# Check answer
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "EDE: 3 (Stale Answer): (stale data prioritized over lookup)" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 3," dig.out.test$n >/dev/null || ret=1
+grep "cname-b1\.stale\.test\..*29[0-9].*IN.*CNAME.*cname-b2\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-b2\.stale\.test\..*3.*IN.*CNAME.*cname-b3\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+grep "cname-b3\.stale\.test\..*3.*IN.*A.*192\.0\.2\.2" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 ####################################################################
 # Test for stale-answer-client-timeout 0 and stale-refresh-time 4. #
 ####################################################################
@@ -2104,7 +2171,7 @@ echo_i "test stale-answer-client-timeout (0) and stale-refresh-time (4)"
 n=$((n + 1))
 echo_i "updating ns3/named.conf ($n)"
 ret=0
-copy_setports ns3/named5.conf.in ns3/named.conf
+cp ns3/named5.conf ns3/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2289,7 +2356,7 @@ echo_i "test serve-stale's interaction with fetch-limits (cache only)"
 n=$((n + 1))
 echo_i "updating ns3/named.conf ($n)"
 ret=0
-copy_setports ns3/named6.conf.in ns3/named.conf
+cp ns3/named6.conf ns3/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2399,7 +2466,7 @@ echo_i "test serve-stale's interaction with fetch limits (dual-mode)"
 n=$((n + 1))
 echo_i "updating ns3/named.conf ($n)"
 ret=0
-copy_setports ns3/named7.conf.in ns3/named.conf
+cp ns3/named7.conf ns3/named.conf
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -2481,7 +2548,7 @@ n=$((n + 1))
 echo_i "check DNS64 processing of a stale negative answer ($n)"
 ret=0
 # configure ns3 with dns64
-copy_setports ns3/named8.conf.in ns3/named.conf
+cp ns3/named8.conf ns3/named.conf
 rndc_reload ns3 10.53.0.3
 # flush cache, enable ans2 responses, make sure serve-stale is on
 $RNDCCMD 10.53.0.3 flush >rndc.out.test$n.1 2>&1 || ret=1
@@ -2506,12 +2573,13 @@ grep "2001:aaaa" dig.out.2.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+# configure ns3 with stale-answer-client-timeout 0 and a delegated zone
+cp ns3/named9.conf ns3/named.conf
+rndc_reload ns3 10.53.0.3
+
 n=$((n + 1))
 echo_i "check serve-stale (stale-answer-client-timeout 0) with a delegation ($n)"
 ret=0
-# configure ns3 with stale-answer-client-timeout 0 and a delegated zone
-copy_setports ns3/named9.conf.in ns3/named.conf
-rndc_reload ns3 10.53.0.3
 # flush cache, enable ans2 responses, make sure serve-stale is on
 $RNDCCMD 10.53.0.3 flush >rndc.out.test$n.1 2>&1 || ret=1
 $DIG -p ${PORT} @10.53.0.2 txt enable >/dev/null || ret=1
@@ -2526,6 +2594,31 @@ $DIG -p ${PORT} @10.53.0.2 txt disable >/dev/null || ret=1
 sleep 2
 # resend the query; we should immediately get a stale answer
 $DIG -p ${PORT} @10.53.0.3 www.delegated.serve.stale >dig.out.2.test$n || ret=1
+grep -F "status: NOERROR" dig.out.2.test$n >/dev/null || ret=1
+grep -F "EDE: 3 (Stale Answer): (stale data prioritized over lookup)" dig.out.2.test$n >/dev/null || ret=1
+grep -F "10.53.0.99" dig.out.2.test$n >/dev/null || ret=1
+# re-enable responses
+$DIG -p ${PORT} @10.53.0.2 txt enable >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "check serve-stale (stale-answer-client-timeout 0) with a delegation which is a CNAME to a local zone ($n)"
+ret=0
+# flush cache, enable ans2 responses, make sure serve-stale is on
+$RNDCCMD 10.53.0.3 flush >rndc.out.test$n.1 2>&1 || ret=1
+$DIG -p ${PORT} @10.53.0.2 txt enable >/dev/null || ret=1
+$RNDCCMD 10.53.0.3 serve-stale on >rndc.out.test$n.2 2>&1 || ret=1
+# prime the cache with the A response
+$DIG -p ${PORT} @10.53.0.3 cname.delegated.serve.stale >dig.out.1.test$n || ret=1
+grep -F "status: NOERROR" dig.out.1.test$n >/dev/null || ret=1
+grep -F "10.53.0.99" dig.out.1.test$n >/dev/null || ret=1
+# disable responses from the auth server
+$DIG -p ${PORT} @10.53.0.2 txt disable >/dev/null || ret=1
+# wait two seconds for the previous answer to become stale
+sleep 2
+# resend the query; we should immediately get a stale answer
+$DIG -p ${PORT} @10.53.0.3 cname.delegated.serve.stale >dig.out.2.test$n || ret=1
 grep -F "status: NOERROR" dig.out.2.test$n >/dev/null || ret=1
 grep -F "EDE: 3 (Stale Answer): (stale data prioritized over lookup)" dig.out.2.test$n >/dev/null || ret=1
 grep -F "10.53.0.99" dig.out.2.test$n >/dev/null || ret=1

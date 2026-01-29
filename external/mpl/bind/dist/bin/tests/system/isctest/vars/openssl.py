@@ -10,7 +10,7 @@
 # information regarding copyright ownership.
 
 import os
-import re
+from re import compile as Re
 from typing import Optional
 
 from .. import log
@@ -33,7 +33,7 @@ def parse_openssl_config(path: Optional[str]):
         return
     assert os.path.isfile(path), f"{path} exists, but it's not a file"
 
-    regex = re.compile(r"([^=]+)=(.*)")
+    regex = Re(r"([^=]+)=(.*)")
     log.debug(f"parsing openssl config: {path}")
     with open(path, "r", encoding="utf-8") as conf:
         for line in conf:

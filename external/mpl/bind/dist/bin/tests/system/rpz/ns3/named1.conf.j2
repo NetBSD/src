@@ -1,0 +1,184 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * Main rpz test DNS server.
+ */
+
+{% set bad_dlz = bad_dlz | default(False) %}
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	statistics-file	"named.stats";
+	session-keyfile "session.key";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	notify yes;
+	minimal-responses no;
+	recursion yes;
+	dnssec-validation no;
+	min-refresh-time 1;
+	min-retry-time 1;
+
+	response-policy {
+	    zone "fast-expire";
+	    zone "bl"					max-policy-ttl 100;
+	    zone "bl-2";
+	    zone "bl-given"	policy given		recursive-only yes;
+	    zone "bl-passthru"	policy passthru;
+	    zone "bl-no-op"	policy no-op;		# obsolete for passthru
+	    zone "bl-disabled"	policy disabled;
+	    zone "bl-nodata"	policy nodata		recursive-only no;
+	    zone "bl-nxdomain"	policy nxdomain;
+	    zone "bl-cname"	policy cname txt-only.tld2.;
+	    zone "bl-wildcname"	policy cname *.tld4.;
+	    zone "bl-garden"	policy cname a12.tld2.;
+	    zone "bl-drop"	policy drop;
+	    zone "bl-tcp-only"	policy tcp-only;
+	    zone "bl.tld2";
+	    zone "manual-update-rpz"	ede forged;
+	    zone "mixed-case-rpz";
+	    zone "evil-cname"  policy cname a12.tld2. ede blocked;
+	    zone "wild-cname"  ede blocked;
+	    zone "slow-rpz";
+	}
+	add-soa yes
+	min-ns-dots 0
+	qname-wait-recurse yes
+	min-update-interval 0
+	nsdname-enable yes
+	nsip-enable yes
+	servfail-until-ready yes
+	;
+
+	include "../dnsrps.conf";
+	also-notify { 10.53.0.3 port @EXTRAPORT1@; };
+	notify-delay 0;
+};
+
+
+logging { category rpz { default_debug; }; };
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+
+zone "." { type hint; file "hints"; };
+
+zone "bl."		{type primary; file "bl.db";
+				allow-update {any;};};
+zone "bl-2."		{type primary; file "bl-2.db";
+				allow-update {any;};};
+zone "bl-given."	{type primary; file "bl-given.db";
+				allow-update {any;};};
+zone "bl-passthru."	{type primary; file "bl-passthru.db";
+				allow-update {any;};};
+zone "bl-no-op."	{type primary; file "bl-no-op.db";
+				allow-update {any;};};
+zone "bl-disabled."	{type primary; file "bl-disabled.db";
+				allow-update {any;};};
+zone "bl-nodata."	{type primary; file "bl-nodata.db";
+				allow-update {any;};};
+zone "bl-nxdomain."	{type primary; file "bl-nxdomain.db";
+				allow-update {any;};};
+zone "bl-cname."	{type primary; file "bl-cname.db";
+				allow-update {any;};};
+zone "bl-wildcname."	{type primary; file "bl-wildcname.db";
+				allow-update {any;};};
+zone "bl-garden."	{type primary; file "bl-garden.db";
+				allow-update {any;};};
+zone "bl-drop."		{type primary; file "bl-drop.db";
+				allow-update {any;};};
+zone "bl-tcp-only."	{type primary; file "bl-tcp-only.db";
+				allow-update {any;};};
+
+zone "bl.tld2."		{type secondary; file "bl.tld2.db"; primaries {10.53.0.2;};
+				request-ixfr no; masterfile-format text;};
+
+zone "crash1.tld2"	{type primary; file "crash1"; notify no;};
+zone "crash2.tld3."	{type primary; file "crash2"; notify no;};
+
+zone "manual-update-rpz." {
+	type primary;
+	file "manual-update-rpz.db";
+	notify no;
+};
+
+zone "mixed-case-rpz." {
+	type primary;
+	file "mixed-case-rpz.db";
+	notify no;
+};
+
+zone "slow-rpz." {
+    type primary;
+    file "slow-rpz.db";
+    notify no;
+};
+
+zone "fast-expire." {
+	type secondary;
+	file "fast-expire.db";
+	primaries { 10.53.0.5; };
+	notify no;
+};
+
+zone "stub." {
+	type stub;
+	primaries { 10.53.0.2; };
+};
+
+zone "static-stub." {
+	type static-stub;
+	server-addresses { 10.53.0.2; };
+};
+
+zone "stub-nomatch." {
+	type stub;
+	primaries { 10.53.0.10; };
+};
+
+zone "static-stub-nomatch." {
+	type static-stub;
+	server-addresses { 10.53.0.10; };
+};
+
+zone "evil-cname" {
+	type primary;
+	file "evil-cname.db";
+};
+
+zone "wild-cname" {
+	type primary;
+	file "wild-cname.db";
+};
+
+{% if bad_dlz %}
+# A faulty dlz configuration to check if named with response policy zones
+# survives a certain class of failed configuration attempts (see GL #3880).
+# "dlz" is used because the dlz processing code is located in an ideal place in
+# the view configuration function for the test to cover the view reverting code.
+	dlz "bad-dlz" {
+		database "dlopen bad-dlz.so example.org";
+	};
+{% endif %}

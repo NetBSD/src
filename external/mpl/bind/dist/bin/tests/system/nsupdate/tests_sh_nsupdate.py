@@ -13,7 +13,8 @@ import platform
 
 import pytest
 
-import isctest.mark
+# isctest.asyncserver requires dnspython >= 2.0.0
+pytest.importorskip("dns", minversion="2.0.0")
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -80,6 +81,6 @@ pytestmark = pytest.mark.extra_artifacts(
 MAX_RUNS = 2 if platform.system() == "FreeBSD" else 1  # GL#3846
 
 
-@isctest.mark.flaky(max_runs=MAX_RUNS)
+@pytest.mark.flaky(max_runs=MAX_RUNS)
 def test_nsupdate(run_tests_sh):
     run_tests_sh()

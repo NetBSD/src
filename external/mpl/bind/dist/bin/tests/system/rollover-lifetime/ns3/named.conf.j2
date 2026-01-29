@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set change_lifetime = change_lifetime | default(False) %}
+{% set longer = "short-lifetime" if not change_lifetime else "long-lifetime" %}
+{% set shorter = "long-lifetime" if not change_lifetime else "short-lifetime" %}
+{% set limit = "unlimited-lifetime" if not change_lifetime else "short-lifetime" %}
+{% set unlimit = "short-lifetime" if not change_lifetime else "unlimited-lifetime" %}
+
+include "kasp.conf";
+include "named.common.conf";
+
+zone longer-lifetime.kasp {
+	type primary;
+	file "longer-lifetime.db";
+	dnssec-policy @longer@;
+};
+
+zone shorter-lifetime.kasp {
+	type primary;
+	file "shorter-lifetime.db";
+	dnssec-policy @shorter@;
+};
+
+zone limit-lifetime.kasp {
+	type primary;
+	file "limit-lifetime.db";
+	dnssec-policy @limit@;
+};
+
+zone unlimit-lifetime.kasp {
+	type primary;
+	file "unlimit-lifetime.db";
+	dnssec-policy @unlimit@;
+};

@@ -1,0 +1,25 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL	3600
+@				IN	SOA	ns2.test. hostmaster.test. 1 7200 3600 24796800 3600
+				IN	NS	ns2
+
+ns2				IN	A	10.53.0.2
+
+a				IN	A	127.0.0.1
+
+dname				IN	DNAME	branch.example.
+under.dname			IN	TXT	"occluded"
+
+$GENERATE 1-50000	child$	IN	NS	ns.example.
+
+child303			IN	DS	7250 13 2 A30B3F78B6DDE9A4A9A2AD0C805518B4F49EC62E7D3F4531D33DE697 CDA01CB2

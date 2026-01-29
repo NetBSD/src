@@ -16,19 +16,11 @@
 
 set -e
 
-copy_setports ns2/named.conf.in ns2/named.conf
 (
   cd ns2
   $SHELL setup.sh
 )
 
-if [ $RSASHA1_SUPPORTED = 0 ]; then
-  copy_setports ns3/named-fips.conf.in ns3/named.conf
-else
-  copy_setports ns3/named-fips.conf.in ns3/named-fips.conf
-  # includes named-fips.conf
-  cp ns3/named1.conf.in ns3/named.conf
-fi
 (
   cd ns3
   $SHELL setup.sh

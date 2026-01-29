@@ -18,9 +18,8 @@ import isctest
 import isctest.mark
 import pytest
 
-import dns.message
-
 pytest.importorskip("dns", minversion="2.0.0")
+import dns.rrset
 
 pytestmark = [
     isctest.mark.with_dnstap,
@@ -34,35 +33,22 @@ pytestmark = [
 ]
 
 
-def run_rndc(server, rndc_command):
-    """
-    Send the specified 'rndc_command' to 'server' with a timeout of 10 seconds
-    """
-    rndc = isctest.vars.ALL["RNDC"]
-    port = isctest.vars.ALL["CONTROLPORT"]
-
-    cmdline = [rndc, "-c", "../_common/rndc.conf", "-p", port, "-s", server]
-    cmdline.extend(rndc_command)
-
-    isctest.run.cmd(cmdline)
-
-
-def test_dnstap_dispatch_socket_addresses():
+def test_dnstap_dispatch_socket_addresses(ns3):
     # Send some query to ns3 so that it records something in its dnstap file.
-    msg = dns.message.make_query("mail.example.", "A")
+    msg = isctest.query.create("mail.example.", "A")
     res = isctest.query.tcp(msg, "10.53.0.2", expected_rcode=dns.rcode.NOERROR)
     assert res.answer == [
         dns.rrset.from_text("mail.example.", 300, "IN", "A", "10.0.0.2")
     ]
 
     # Before continuing, roll dnstap file to ensure it is flushed to disk.
-    run_rndc("10.53.0.3", ["dnstap", "-roll", "1"])
+    ns3.rndc("dnstap -roll 1")
 
     # Move the dnstap file aside so that it is retained for troubleshooting.
     os.rename(os.path.join("ns3", "dnstap.out.0"), "dnstap.out.resolver_addresses")
 
     # Read the contents of the dnstap file using dnstap-read.
-    run = isctest.run.cmd(
+    dnstapread = isctest.run.cmd(
         [isctest.vars.ALL["DNSTAPREAD"], "dnstap.out.resolver_addresses"],
     )
 
@@ -78,7 +64,7 @@ def test_dnstap_dispatch_socket_addresses():
     bad_frames = []
     inspected_frames = 0
     addr_regex = r"^10\.53\.0\.[0-9]+:[0-9]{1,5}$"
-    for line in run.stdout.decode("utf-8").splitlines():
+    for line in dnstapread.out.splitlines():
         _, _, frame_type, addr1, _, addr2, _ = line.split(" ", 6)
         # Only inspect RESOLVER_QUERY and RESOLVER_RESPONSE frames.
         if frame_type not in ("RQ", "RR"):

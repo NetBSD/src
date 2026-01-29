@@ -101,11 +101,10 @@ def test_tsig_fuzz_rdata(
     error,
     mangle_orig_id,
     other,
-    servers,
+    ns1,
     named_port,
 ):
     alg, mac = alg_and_mac
-    ns1 = servers["ns1"]
     msg = dns.message.make_query("example.com.", "AXFR")
     msg.keyring = False  # don't validate received TSIG
 

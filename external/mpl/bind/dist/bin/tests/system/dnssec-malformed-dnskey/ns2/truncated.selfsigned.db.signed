@@ -1,0 +1,40 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+
+@		IN SOA	mname1. . (
+				1	; serial
+				600	; refresh
+				600	; retry
+				1200	; expire
+				600	; minimum
+				)
+
+@		NS	@
+@		A	10.53.0.2
+
+; The following DNSKEY is revoked and truncated. To trigger the test
+; condition, its key tag must be marked as trusted by the resolver.
+; Since the key isn't valid, all the RRSIGs in this file are bogus.
+@		DNSKEY	385 3 14 fQA=
+
+@		RRSIG	SOA 14 2 86400 20950926153053 20251013153053 33167 @ xxxx5f7U0DiPvKFxpB83mTyqkAO0TfM0 xe4ZMYoJUQEPYdd0GTNkFzI6crsbU0lQ t/V1YOxAt5B+T1ch9n5dhYwt7ZTqluI2 mr6myKMesdPl1zp1hEgkmFpCG3NOXl2Z
+@		RRSIG	NS 14 2 86400 20950926153053 20251013153053 33167 @ xxxxLBPc05g7v/K5UfGuXsHH8xd29eQb 5qWe+Ei4Qn0GlmH0x/VIJiJMZXuxD5S+ VhP7DiX7uKIxi0QS2DOK1aOMXq/2WiUV 2VBmYAoSUilMlJY84I2XbzqD5iz5y+yp
+@		RRSIG	A 14 2 86400 20950926153053 20251013153053 33167 @ xxxx6UguMh8jgdVox2UVURjEsAP0D8o2 mFofnFOd6eYf+49QlWD+GX6x60X/hPVi f2XFsajouCvT/ZSmoXKWad3RC1DLHF/H TdOGMKlT4DfvbeJV+N5N0bgu2Wv3QRdM
+@		RRSIG	DNSKEY 14 2 86400 20950926153053 20251013153053 33167 @ xxxxqayRNsL32Km0c9AjwN0RNktt4iGb 97Dwi0uiHPcM4eVNZR2w68XMUh43+nR1 DA1QE2RqIqt7soEIwi1z4kAczf7W1wrP 7dcbEwjxS9D1CefuNRG1xnj9wGsqKecI
+@		NSEC	a A NS SOA RRSIG NSEC DNSKEY
+@		RRSIG	NSEC 14 2 0 20950926153053 20251013153053 33167 @ xxxx4Y6vqeOJHWEeg0T0OY4z7BdDrTkn BY9Yra8zSjFEGZvIX3irPd81+u5xlA0T 9waJO2Y9W42IMrOeKdQt++QXVHsLhOYn 4NAF6RotHSb4cqv1DXI1PSchMaJ5FWwD
+
+a		A	10.53.0.2
+a		RRSIG	A 14 3 86400 20950926153053 20251013153053 33167 @ xxxxv31CNatB9xzj3AfTMlwiO0OqxbpJ cWrHN8zjj1ScXpqrHITfG/CZpoECDLWF wkXshDB/QMxHrnXkPKEcR2c9o5tcQT5R nHvtr7HT4Ob5PcY5DnItf3OWhE+bocmW
+a		NSEC	@ A RRSIG NSEC
+a		RRSIG	NSEC 14 3 0 20950926153053 20251013153053 33167 @ xxxxwMWbUxb3ScBKEVheQ2wFqujc6cyt 28GVCU0wPrBpK72HSsgdYme7IG8ZXGfa IWSU1Kf/om5+El7Tf2vDs7aI1yI7e7YG D5IxMejQg5v3/wtP7AJZXP5K9ICjq/ph

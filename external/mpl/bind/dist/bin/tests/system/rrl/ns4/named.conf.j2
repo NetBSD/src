@@ -23,7 +23,7 @@ options {
 	listen-on-v6 { none; };
 	notify no;
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 	max-udp-size 4096;
 
 	rate-limit {
@@ -38,7 +38,6 @@ options {
 	};
 };
 
-trust-anchors { };
 
 key rndc_key {
 	secret "1234abcd8765";

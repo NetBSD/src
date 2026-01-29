@@ -11,6 +11,7 @@
 
 import os
 import re
+from re import compile as Re
 
 import pytest
 
@@ -61,14 +62,14 @@ def test_verify_good_zone_nsec_next_name_case_mismatch():
     )
 
 
-def get_bad_zone_output(zone):
-    only_opt = ["-z"] if re.match(r"[zk]sk-only", zone) else []
-    output = isctest.run.cmd(
+def verify_bad_zone(zone):
+    only_opt = ["-z"] if re.search(r"^[zk]sk-only", zone) else []
+    cmd = isctest.run.cmd(
         [VERIFY, *only_opt, "-o", zone, f"zones/{zone}.bad"],
         raise_on_exception=False,
     )
-    stream = (output.stdout + output.stderr).decode("utf-8").replace("\n", "")
-    return stream
+    assert cmd.rc != 0
+    return cmd
 
 
 @pytest.mark.parametrize(
@@ -80,7 +81,8 @@ def get_bad_zone_output(zone):
     ],
 )
 def test_verify_bad_zone_files_dnskeyonly(zone):
-    assert re.match(r".*DNSKEY is not signed.*", get_bad_zone_output(zone))
+    cmd = verify_bad_zone(zone)
+    assert "DNSKEY is not signed" in cmd.err
 
 
 @pytest.mark.parametrize(
@@ -97,10 +99,8 @@ def test_verify_bad_zone_files_dnskeyonly(zone):
     ],
 )
 def test_verify_bad_zone_files_expired(zone):
-    assert re.match(
-        r".*signature has expired.*|.*No self-signed .*DNSKEY found.*",
-        get_bad_zone_output(zone),
-    )
+    cmd = verify_bad_zone(zone)
+    assert Re("signature has expired|No self-signed DNSKEY found") in cmd.err
 
 
 @pytest.mark.parametrize(
@@ -112,40 +112,33 @@ def test_verify_bad_zone_files_expired(zone):
     ],
 )
 def test_verify_bad_zone_files_unexpected_nsec_rrset(zone):
-    assert re.match(r".*unexpected NSEC RRset at.*", get_bad_zone_output(zone))
+    cmd = verify_bad_zone(zone)
+    assert "unexpected NSEC RRset at" in cmd.err
 
 
 def test_verify_bad_zone_files_bad_nsec_record():
-    assert re.match(
-        r".*Bad NSEC record for.*, next name mismatch.*",
-        get_bad_zone_output("ksk+zsk.nsec.broken-chain"),
-    )
+    cmd = verify_bad_zone("ksk+zsk.nsec.broken-chain")
+    assert Re("Bad NSEC record for.*, next name mismatch") in cmd.err
 
 
 def test_verify_bad_zone_files_bad_bitmap():
-    assert re.match(
-        r".*bit map mismatch.*", get_bad_zone_output("ksk+zsk.nsec.bad-bitmap")
-    )
+    cmd = verify_bad_zone("ksk+zsk.nsec.bad-bitmap")
+    assert "bit map mismatch" in cmd.err
 
 
 def test_verify_bad_zone_files_missing_nsec3_record():
-    assert re.match(
-        r".*Missing NSEC3 record for.*",
-        get_bad_zone_output("ksk+zsk.nsec3.missing-empty"),
-    )
+    cmd = verify_bad_zone("ksk+zsk.nsec3.missing-empty")
+    assert "Missing NSEC3 record for" in cmd.err
 
 
 def test_verify_bad_zone_files_no_dnssec_keys():
-    assert re.match(
-        r".*Zone contains no DNSSEC keys.*", get_bad_zone_output("unsigned")
-    )
+    cmd = verify_bad_zone("unsigned")
+    assert "Zone contains no DNSSEC keys" in cmd.err
 
 
 def test_verify_bad_zone_files_unequal_nsec3_chains():
-    assert re.match(
-        r".*Expected and found NSEC3 chains not equal.*",
-        get_bad_zone_output("ksk+zsk.nsec3.extra-nsec3"),
-    )
+    cmd = verify_bad_zone("ksk+zsk.nsec3.extra-nsec3")
+    assert "Expected and found NSEC3 chains not equal" in cmd.err
 
 
 # checking error message when -o is not used
@@ -153,27 +146,25 @@ def test_verify_bad_zone_files_unequal_nsec3_chains():
 def test_verify_soa_not_at_top_error():
     # when -o is not used, origin is set to zone file name,
     # which should cause an error in this case
-    output = isctest.run.cmd(
-        [VERIFY, "zones/ksk+zsk.nsec.good"], raise_on_exception=False
-    ).stderr.decode("utf-8")
-    assert "not at top of zone" in output
-    assert "use -o to specify a different zone origin" in output
+    cmd = isctest.run.cmd([VERIFY, "zones/ksk+zsk.nsec.good"], raise_on_exception=False)
+    assert "not at top of zone" in cmd.err
+    assert "use -o to specify a different zone origin" in cmd.err
 
 
 # checking error message when an invalid -o is specified
 # and a SOA record not at top of zone is found
 def test_verify_invalid_o_option_soa_not_at_top_error():
-    output = isctest.run.cmd(
+    cmd = isctest.run.cmd(
         [VERIFY, "-o", "invalid.origin", "zones/ksk+zsk.nsec.good"],
         raise_on_exception=False,
-    ).stderr.decode("utf-8")
-    assert "not at top of zone" in output
-    assert "use -o to specify a different zone origin" not in output
+    )
+    assert "not at top of zone" in cmd.err
+    assert "use -o to specify a different zone origin" not in cmd.err
 
 
 # checking dnssec-verify -J reads journal file
 def test_verify_j_reads_journal_file():
-    output = isctest.run.cmd(
+    cmd = isctest.run.cmd(
         [
             VERIFY,
             "-o",
@@ -182,5 +173,5 @@ def test_verify_j_reads_journal_file():
             "zones/updated.other.jnl",
             "zones/updated.other",
         ]
-    ).stdout.decode("utf-8")
-    assert "Loading zone 'updated' from file 'zones/updated.other'" in output
+    )
+    assert "Loading zone 'updated' from file 'zones/updated.other'" in cmd.out

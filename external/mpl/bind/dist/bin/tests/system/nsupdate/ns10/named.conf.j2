@@ -1,0 +1,61 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.10;
+	notify-source 10.53.0.10;
+	transfer-source 10.53.0.10;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	pid-file "named.pid";
+	session-keyfile "session.key";
+	listen-on { 10.53.0.10; };
+	listen-on tls ephemeral { 10.53.0.10; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	minimal-responses no;
+	dnssec-validation no;
+
+{% if FEATURE_GSSAPI == "1" %}
+{% raw %}
+	tkey-gssapi-credential "DNS/ns10.example.com@EXAMPLE.COM";
+{% endraw %}
+{% endif %}
+
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.10 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+zone "in-addr.arpa" {
+	type primary;
+	file "in-addr.db";
+	update-policy {	grant EXAMPLE.COM ms-subdomain-self-rhs . PTR; };
+};
+
+zone "example.com" {
+	type primary;
+	file "example.com.db";
+	update-policy {
+		grant EXAMPLE.COM ms-selfsub . ANY;
+		grant EXAMPLE.COM ms-subdomain _tcp.example.com SRV;
+		grant EXAMPLE.COM ms-subdomain-self-rhs self-srv.example.com SRV;
+	};
+};

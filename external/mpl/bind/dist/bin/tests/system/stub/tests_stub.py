@@ -26,20 +26,20 @@ pytestmark = pytest.mark.extra_artifacts(
 )
 
 
-def test_stub_zones_availability(servers):
+def test_stub_zones_availability(ns3):
     # check that the stub zone has been saved to disk
     assert os.path.exists("ns3/child.example.st")
 
     # try an AXFR that should be denied (NOTAUTH)
     def axfr_denied():
-        msg = dns.message.make_query("child.example.", "AXFR")
+        msg = isctest.query.create("child.example.", "AXFR")
         res = isctest.query.tcp(msg, "10.53.0.3")
         isctest.check.notauth(res)
 
     # look for stub zone data without recursion (should not be found)
     def stub_zone_lookout_without_recursion():
         # drop all flags (dns.flags.RD is set by default)
-        msg = dns.message.make_query("data.child.example.", "TXT")
+        msg = isctest.query.create("data.child.example.", "TXT")
         msg.flags = 0
         res = isctest.query.tcp(msg, "10.53.0.3")
         isctest.check.noerror(res)
@@ -54,7 +54,7 @@ def test_stub_zones_availability(servers):
     # look for stub zone data with recursion (should be found)
     def stub_zone_lookout_with_recursion():
         # dns.flags.RD is set by default
-        msg = dns.message.make_query("data.child.example.", "TXT")
+        msg = isctest.query.create("data.child.example.", "TXT")
         res = isctest.query.tcp(msg, "10.53.0.3")
         isctest.check.noerror(res)
         assert res.answer[0] == dns.rrset.from_text(
@@ -65,8 +65,8 @@ def test_stub_zones_availability(servers):
     stub_zone_lookout_without_recursion()
     stub_zone_lookout_with_recursion()
 
-    servers["ns3"].stop()
-    servers["ns3"].start(["--noclean", "--restart", "--port", os.environ["PORT"]])
+    ns3.stop()
+    ns3.start(["--noclean", "--restart", "--port", os.environ["PORT"]])
 
     axfr_denied()
     stub_zone_lookout_without_recursion()
@@ -79,7 +79,7 @@ def test_stub_glue_record_with_minimal_response():
     assert os.path.exists("ns5/example.db")
 
     # this query would fail if NS glue wasn't transferred
-    msg_txt = dns.message.make_query("target.example.", "TXT", want_dnssec=False)
+    msg_txt = isctest.query.create("target.example.", "TXT", dnssec=False)
     res_txt = isctest.query.tcp(msg_txt, "10.53.0.5")
     isctest.check.noerror(res_txt)
     assert res_txt.answer[0] == dns.rrset.from_text(
@@ -87,13 +87,13 @@ def test_stub_glue_record_with_minimal_response():
     )
 
     # ensure both IPv4 and IPv6 glue records were transferred
-    msg_a = dns.message.make_query("ns4.example.", "A")
+    msg_a = isctest.query.create("ns4.example.", "A")
     res_a = isctest.query.tcp(msg_a, "10.53.0.5")
     assert res_a.answer[0] == dns.rrset.from_text(
         "ns4.example.", "300", "IN", "A", "10.53.0.4"
     )
 
-    msg_aaaa = dns.message.make_query("ns4.example.", "AAAA")
+    msg_aaaa = isctest.query.create("ns4.example.", "AAAA")
     res_aaaa = isctest.query.tcp(msg_aaaa, "10.53.0.5")
     assert res_aaaa.answer[0] == dns.rrset.from_text(
         "ns4.example.", "300", "IN", "AAAA", "fd92:7065:b8e:ffff::4"

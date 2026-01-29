@@ -13,11 +13,6 @@
 
 . ../conf.sh
 
-if ! ${PYTHON} -c 'import dns'; then
-  echo_i "python dns module is required"
-  exit 1
-fi
-
 if ! ${PERL} -MNet::DNS -e ''; then
   echo_i "perl Net::DNS module is required"
   exit 1

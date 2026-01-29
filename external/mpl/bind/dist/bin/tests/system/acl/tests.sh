@@ -40,7 +40,7 @@ grep "^;" dig.out.${t} >/dev/null 2>&1 && {
   status=1
 }
 
-copy_setports ns2/named2.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 5
 
@@ -72,7 +72,7 @@ grep "^;" dig.out.${t} >/dev/null 2>&1 && {
 
 echo_i "testing nested ACL processing"
 # all combinations of 10.53.0.{1|2} with key {one|two}, should succeed
-copy_setports ns2/named3.conf.in ns2/named.conf
+cp ns2/named3.conf ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 5
 
@@ -139,7 +139,7 @@ grep "^;" dig.out.${t} >/dev/null 2>&1 || {
 }
 
 # now we only allow 10.53.0.1 *and* key one, or 10.53.0.2 *and* key two
-copy_setports ns2/named4.conf.in ns2/named.conf
+cp ns2/named4.conf ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 5
 
@@ -189,7 +189,7 @@ grep "^;" dig.out.${t} >/dev/null 2>&1 || {
 }
 
 echo_i "testing allow-query-on ACL processing"
-copy_setports ns2/named5.conf.in ns2/named.conf
+cp ns2/named5.conf ns2/named.conf
 rndc_reload ns2 10.53.0.2
 sleep 5
 t=$((t + 1))

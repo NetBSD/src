@@ -9,7 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import re
+from re import compile as Re
 
 import pytest
 
@@ -31,7 +31,7 @@ pytestmark = pytest.mark.extra_artifacts(
 @pytest.fixture(scope="module")
 def transfers_complete(servers):
     for zone in ["example", "example-aes-128", "example-aes-256", "example-chacha-20"]:
-        pattern = re.compile(
+        pattern = Re(
             f"transfer of '{zone}/IN' from 10.53.0.1#[0-9]+: Transfer completed"
         )
         for ns in ["ns2", "ns3", "ns4", "ns5"]:
@@ -84,7 +84,7 @@ def transfers_complete(servers):
 )
 # pylint: disable=redefined-outer-name,unused-argument
 def test_cipher_suites_tls_xfer(qname, ns, rcode, transfers_complete):
-    msg = dns.message.make_query(qname, "AXFR")
+    msg = isctest.query.create(qname, "AXFR")
     ans = isctest.query.tls(msg, f"10.53.0.{ns}")
     assert ans.rcode() == rcode
     if rcode == dns.rcode.NOERROR:

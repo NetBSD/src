@@ -29,11 +29,10 @@ options {
 	send-cookie no;
 	require-server-cookie no;
 	minimal-responses no;
-	dnssec-validation yes;
+	dnssec-validation no;
 	qname-minimization disabled;
 };
 
-trust-anchors { };
 
 server 10.53.0.1 { tcp-only yes; };
 

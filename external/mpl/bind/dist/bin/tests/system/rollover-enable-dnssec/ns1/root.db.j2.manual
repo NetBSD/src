@@ -1,0 +1,31 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+.			IN SOA	. a.root.servers.nil. (
+				2000042100	; serial
+				600		; refresh
+				600		; retry
+				1200		; expire
+				600		; minimum
+				)
+.			NS	a.root-servers.nil.
+a.root-servers.nil.	A	10.53.0.1
+
+{% for dnskey in dnskeys %}
+@dnskey@
+{% endfor %}
+
+{% for zone in delegations %}
+{% set ns_name = zone.ns.name + "." + zone.name %}
+@zone.name@		NS	@ns_name@
+@ns_name@		A	@zone.ns.ip@
+{% endfor %}

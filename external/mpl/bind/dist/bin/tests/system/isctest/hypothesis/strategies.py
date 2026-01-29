@@ -11,7 +11,8 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import List
+import collections.abc
+from typing import List, Union
 from warnings import warn
 
 from hypothesis.strategies import (
@@ -22,6 +23,7 @@ from hypothesis.strategies import (
     just,
     nothing,
     permutations,
+    sampled_from,
 )
 
 import dns.name
@@ -37,7 +39,9 @@ def dns_names(
     draw,
     *,
     prefix: dns.name.Name = dns.name.empty,
-    suffix: dns.name.Name = dns.name.root,
+    suffix: Union[
+        dns.name.Name, collections.abc.Iterable[dns.name.Name]
+    ] = dns.name.root,
     min_labels: int = 1,
     max_labels: int = 128,
 ) -> dns.name.Name:
@@ -71,6 +75,14 @@ def dns_names(
     """
 
     prefix = prefix.relativize(dns.name.root)
+    # Python str is iterable, but that's most probably not what user actually wanted
+    if isinstance(suffix, str):
+        raise NotImplementedError(
+            "ambiguous API use, convert suffix to Name or list to express intent"
+        )
+    if isinstance(suffix, collections.abc.Iterable):
+        suffix = draw(sampled_from(sorted(suffix)))
+    assert isinstance(suffix, dns.name.Name)
     suffix = suffix.derelativize(dns.name.root)
 
     try:

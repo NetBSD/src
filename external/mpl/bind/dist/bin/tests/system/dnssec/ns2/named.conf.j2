@@ -1,0 +1,237 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	notify yes;
+	dnssec-validation yes;
+	notify-delay 1;
+	minimal-responses no;
+};
+
+key rndc_key {
+        secret "1234abcd8765";
+        algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+        inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "dnssec" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "kskonly" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	signatures-validity 10d;
+	signatures-validity-dnskey 40d;
+};
+
+dnssec-policy "not-enough-hours-in-day" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	/* validity 500 days, with one 1 day jitter (resign in 499 days) */
+	signatures-jitter 1d;
+	signatures-validity-dnskey 500d;
+	signatures-validity 500d;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+zone "trusted" {
+	type primary;
+	file "trusted.db.signed";
+};
+
+zone "managed" {
+	type primary;
+	file "managed.db.signed";
+};
+
+zone "example" {
+	type primary;
+	file "example.db.signed";
+	allow-update { any; };
+};
+
+zone "insecure.secure.example" {
+	type primary;
+	file "insecure.secure.example.db";
+	allow-update { any; };
+};
+
+zone "rfc2335.example" {
+	type primary;
+	file "rfc2335.example.db";
+};
+
+zone "child.nsec3.example" {
+	type primary;
+	file "child.nsec3.example.db";
+	allow-update { none; };
+};
+
+zone "child.optout.example" {
+	type primary;
+	file "child.optout.example.db";
+	allow-update { none; };
+};
+
+zone "badparam" {
+	type primary;
+	file "badparam.db.bad";
+};
+
+zone "single-nsec3" {
+	type primary;
+	file "single-nsec3.db.signed";
+};
+
+zone "algroll" {
+	type primary;
+	file "algroll.db.signed";
+};
+
+zone "nsec3chain-test" {
+	type primary;
+	file "nsec3chain-test.db.signed";
+	allow-update {any;};
+};
+
+zone "in-addr.arpa" {
+	type primary;
+	file "in-addr.arpa.db.signed";
+};
+
+zone "cds.secure" {
+	type primary;
+	file "cds.secure.db.signed";
+};
+
+zone "cds-x.secure" {
+	type primary;
+	file "cds-x.secure.db.signed";
+};
+
+zone "cds-update.secure" {
+	type primary;
+	file "cds-update.secure.db.signed";
+	allow-update { any; };
+};
+
+zone "cds-auto.secure" {
+	type primary;
+	file "cds-auto.secure.db.signed";
+	dnssec-policy dnssec;
+	allow-update { any; };
+};
+
+zone "cdnskey.secure" {
+	type primary;
+	file "cdnskey.secure.db.signed";
+};
+
+zone "cdnskey-x.secure" {
+	type primary;
+	file "cdnskey-x.secure.db.signed";
+};
+
+zone "cdnskey-update.secure" {
+	type primary;
+	file "cdnskey-update.secure.db.signed";
+	allow-update { any; };
+};
+
+zone "cdnskey-auto.secure" {
+	type primary;
+	file "cdnskey-auto.secure.db.signed";
+	dnssec-policy dnssec;
+	allow-update { any; };
+};
+
+zone "updatecheck-kskonly.secure" {
+	type primary;
+	file "updatecheck-kskonly.secure.db.signed";
+	dnssec-policy kskonly;
+	allow-update { any; };
+};
+
+zone "corp" {
+	type primary;
+	file "corp.db";
+};
+
+zone "hours-vs-days" {
+	type primary;
+	file "hours-vs-days.db.signed";
+	dnssec-policy not-enough-hours-in-day;
+	allow-update { any; };
+};
+
+zone "too-many-iterations" {
+	type primary;
+	file "too-many-iterations.db.signed";
+};
+
+zone "inconsistent" {
+	type primary;
+	file "inconsistent.db.signed";
+};
+
+zone "lazy-ksk" {
+	type primary;
+	file "lazy-ksk.db";
+	dnssec-policy "dnssec";
+	allow-update { any; };
+};
+
+zone "dnskey-rrsigs-stripped" {
+	type primary;
+	file "dnskey-rrsigs-stripped.db.signed";
+};
+
+zone "ds-rrsigs-stripped" {
+	type primary;
+	file "ds-rrsigs-stripped.db.signed";
+};
+
+zone "child.ds-rrsigs-stripped" {
+	type primary;
+	file "child.ds-rrsigs-stripped.db.signed";
+};
+
+include "trusted.conf";

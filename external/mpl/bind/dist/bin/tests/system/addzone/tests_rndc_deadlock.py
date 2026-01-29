@@ -10,11 +10,11 @@
 # information regarding copyright ownership.
 
 import concurrent.futures
+import os
+import subprocess
 import time
 
 import pytest
-
-import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -43,29 +43,27 @@ def rndc_loop(test_state, domain, ns3):
         ["delzone", domain],
     ]
 
+    args = [os.environ["RNDC"]] + ns3.rndc_args.split()
     while not test_state["finished"]:
         for command in rndc_commands:
-            ns3.rndc(" ".join(command), ignore_errors=True, log=False)
+            # avoid using ns3.rndc() directly to avoid log spam
+            subprocess.run(args + " ".join(command), timeout=10, check=False)
 
 
 def check_if_server_is_responsive(ns3):
     """
     Check if server status can be successfully retrieved using "rndc status"
     """
-    try:
-        ns3.rndc("status", log=False)
-        return True
-    except isctest.rndc.RNDCException:
-        return False
+    cmd = ns3.rndc("status", raise_on_exception=False)
+    return cmd.rc == 0
 
 
-def test_rndc_deadlock(servers):
+def test_rndc_deadlock(ns3):
     """
     Test whether running "rndc addzone", "rndc modzone", and "rndc delzone"
     commands concurrently does not trigger a deadlock
     """
     test_state = {"finished": False}
-    ns3 = servers["ns3"]
 
     # Create 4 worker threads running "rndc" commands in a loop.
     with concurrent.futures.ThreadPoolExecutor() as executor:

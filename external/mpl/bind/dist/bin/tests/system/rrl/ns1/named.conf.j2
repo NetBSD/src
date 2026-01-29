@@ -22,9 +22,8 @@ options {
 	listen-on-v6 { none; };
 	notify no;
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 };
 
-trust-anchors { };
 
 zone "." {type primary; file "root.db";};

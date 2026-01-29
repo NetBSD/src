@@ -25,6 +25,17 @@ echo ns1.insecure A 10.53.0.1 >>"$zonefile"
 
 $SIGNER -P -o $zone $zonefile >/dev/null
 
+zone=no-apex-covering
+infile=no-apex-covering.db.in
+zonefile=no-apex-covering.db
+
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} $zone)
+cat "$infile" "$keyname.key" >"$zonefile"
+echo insecure NS ns1.insecure >>"$zonefile"
+echo ns1.insecure A 10.53.0.1 >>"$zonefile"
+
+$SIGNER -P -o $zone $zonefile >/dev/null
+
 zone=insecure.example
 infile=example.db.in
 zonefile=insecure.example.db

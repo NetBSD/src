@@ -1,0 +1,189 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% if FEATURE_FIPS_DH == "1" %}
+include "tls.conf";
+{% endif %}
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	session-keyfile "session.key";
+	listen-on { 10.53.0.1; 127.0.0.1; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	minimal-responses no;
+	update-quota 1;
+	dnssec-validation no;
+
+{% if FEATURE_FIPS_DH == "1" %}
+	tls-port @TLSPORT@;
+	listen-on tls ephemeral { 10.53.0.1; };
+	listen-on port @EXTRAPORT1@ tls tls-forward-secrecy { 10.53.0.1; };
+	listen-on port @EXTRAPORT2@ tls tls-forward-secrecy-mutual-tls { 10.53.0.1; };
+	listen-on port @EXTRAPORT3@ tls tls-expired { 10.53.0.1; };
+{% endif %}
+
+};
+
+acl named-acl {
+	any;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+key altkey {
+	algorithm @DEFAULT_HMAC@;
+	secret "1234abcd8765";
+};
+
+key restricted.example.nil {
+	algorithm @DEFAULT_HMAC@;
+	secret "1234abcd8765";
+};
+
+key zonesub-key.example.nil {
+	algorithm @DEFAULT_HMAC@;
+	secret "1234subk8765";
+};
+
+include "ddns.key";
+
+zone "example.nil" {
+	type primary;
+	file "example.db";
+	check-integrity no;
+	check-mx ignore;
+	update-policy {
+		grant zonesub-key.example.nil zonesub TXT;
+		grant ddns-key.example.nil subdomain example.nil ANY;
+		grant restricted.example.nil subdomain restricted.example.nil ANY;
+	};
+	allow-transfer { any; };
+};
+
+zone "max-ttl.nil" {
+	type primary;
+	file "max-ttl.db";
+	max-zone-ttl 300;
+	check-integrity no;
+	allow-update { named-acl; };
+	allow-transfer { any; };
+	max-records-per-type 3;
+};
+
+zone "other.nil" {
+	type primary;
+	file "other.db";
+	check-integrity no;
+	check-mx warn;
+	update-policy local;
+	allow-query { !10.53.0.2; any; };
+	allow-query-on { 10.53.0.1; 127.0.0.1; };
+	allow-transfer { any; };
+};
+
+remote-servers others {
+	10.53.0.2 port @PORT@;
+	10.53.0.2 port @PORT@ key altkey;
+};
+
+zone "update.nil" {
+	type primary;
+	file "update.db";
+	check-integrity no;
+	check-mx fail;
+	allow-update { any; };
+	allow-transfer { any; };
+	also-notify { others; };
+};
+
+zone "unixtime.nil" {
+	type primary;
+	file "unixtime.db";
+	check-integrity no;
+	allow-update { any; };
+	allow-transfer { any; };
+	serial-update-method unixtime;
+};
+
+zone "yyyymmddvv.nil" {
+	type primary;
+	file "yyyymmddvv.db";
+	check-integrity no;
+	allow-update { any; };
+	allow-transfer { any; };
+	serial-update-method date;
+};
+
+include "md5.key";
+include "sha1.key";
+include "sha224.key";
+include "sha256.key";
+include "sha384.key";
+include "sha512.key";
+include "legacy157.key";
+include "legacy161.key";
+include "legacy162.key";
+include "legacy163.key";
+include "legacy164.key";
+include "legacy165.key";
+
+zone "keytests.nil" {
+	type primary;
+	file "keytests.db";
+	update-policy {
+	    grant md5-key name md5.keytests.nil. ANY;
+	    grant sha1-key name sha1.keytests.nil. ANY;
+	    grant sha224-key name sha224.keytests.nil. ANY;
+	    grant sha256-key name sha256.keytests.nil. ANY;
+	    grant sha384-key name sha384.keytests.nil. ANY;
+	    grant sha512-key name sha512.keytests.nil. ANY;
+	    grant legacy-157 name 157.keytests.nil. ANY;
+	    grant legacy-161 name 161.keytests.nil. ANY;
+	    grant legacy-162 name 162.keytests.nil. ANY;
+	    grant legacy-163 name 163.keytests.nil. ANY;
+	    grant legacy-164 name 164.keytests.nil. ANY;
+	    grant legacy-165 name 165.keytests.nil. ANY;
+	};
+};
+
+zone "many.test" {
+	type primary;
+	allow-update { any; };
+	file "many.test.db";
+};
+
+zone "sample" {
+	type primary;
+	allow-update { any; };
+	file "sample.db";
+};
+
+zone "maxjournal.test" {
+	type primary;
+	allow-update { any; };
+	file "maxjournal.db";
+	max-journal-size default;
+};

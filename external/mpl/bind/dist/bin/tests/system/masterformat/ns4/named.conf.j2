@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS4
+
+options {
+	pid-file "named.pid";
+	listen-on port @PORT@ { 10.53.0.4; };
+	port @PORT@;
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	session-keyfile "session.key";
+	servfail-ttl 0;
+	dnssec-validation no;
+
+	/* Ridicously low on purpose */
+	max-records-per-type 1;
+	max-types-per-name 11;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "masterformat" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+/*
+ * This one should be okay, since the default policy only introduces one DNSKEY
+ * and each signature covering a different type is considered a separate RRset.
+ */
+zone "kasp-max-records-per-type" {
+	type primary;
+	file "kasp-max-records-per-type.db.raw";
+	masterfile-format raw;
+	dnssec-policy "default";
+	inline-signing no;
+	allow-update { any; };
+	allow-transfer { any; };
+};
+
+/*
+ * This one uses a ZSK / KSK, so that is two records in one RRset,
+ * thus it should fail to sign.
+ */
+zone "kasp-max-records-per-type-dnskey" {
+	type primary;
+	file "kasp-max-records-per-type-dnskey.db.raw";
+	masterfile-format raw;
+	dnssec-policy "masterformat";
+	inline-signing no;
+	allow-update { any; };
+	allow-transfer { any; };
+};
+
+/*
+ * The template zone is fine and should be possible to sign, but when
+ * adding an extra type to the apex the max-types-per-name will be exceeded,
+ * meaning the update should fail.
+ */
+zone "kasp-max-types-per-name" {
+	type primary;
+	file "kasp-max-types-per-name.db.raw";
+	masterfile-format raw;
+	dnssec-policy "default";
+	inline-signing no;
+	allow-update { any; };
+	allow-transfer { any; };
+};

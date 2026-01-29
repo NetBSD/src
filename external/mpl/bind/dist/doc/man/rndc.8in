@@ -145,10 +145,10 @@ Currently supported commands are:
 .INDENT 0.0
 .TP
 .B addzone zone [class [view]] configuration
-This command adds a zone while the server is running. This command requires the
-\fBallow\-new\-zones\fP option to be set to \fByes\fP\&. The configuration
-string specified on the command line is the zone configuration text
-that would ordinarily be placed in \fI\%named.conf\fP\&.
+This command adds a zone while the server is running. This command
+requires the \fBallow\-new\-zones\fP option to be set to \fByes\fP\&. The
+configuration string specified on the command line is the zone
+configuration text that would ordinarily be placed in \fI\%named.conf\fP\&.
 .sp
 The configuration is saved in a file called \fBviewname.nzf\fP (or, if
 \fI\%named\fP is compiled with liblmdb, an LMDB database file called
@@ -191,12 +191,19 @@ See also \fI\%rndc addzone\fP and \fI\%rndc modzone\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B dnssec (\-status | \-rollover \-key id [\-alg algorithm] [\-when time] | \-checkds [\-key id [\-alg algorithm]] [\-when time]  published | withdrawn)) zone [class [view]]
+.B dnssec (\-status | \-step | \-rollover \-key id [\-alg algorithm] [\-when time] | \-checkds [\-key id [\-alg algorithm]] [\-when time]  published | withdrawn)) zone [class [view]]
 This command allows you to interact with the \(dqdnssec\-policy\(dq of a given
 zone.
 .sp
 \fBrndc dnssec \-status\fP show the DNSSEC signing state for the specified
 zone.
+.sp
+\fBrndc dnssec \-step\fP sends a signal to an instance of \fI\%named\fP for a
+zone configured with \fBdnssec\-policy\fP in manual mode, telling it to
+continue with the operations that had previously been blocked but logged.
+This gives the human operator a chance to review the log messages,
+understand what will happen next and then, using \fBrndc dnssec \-step\fP, to
+inform \fI\%named\fP to proceed to the next stage.
 .sp
 \fBrndc dnssec \-rollover\fP allows you to schedule key rollover for a
 specific key (overriding the original key lifetime).
@@ -299,9 +306,7 @@ zone\(aqs DNSKEY RRset. Unlike \fI\%rndc sign\fP, however, the zone is not
 immediately re\-signed by the new keys, but is allowed to
 incrementally re\-sign over time.
 .sp
-This command requires that the zone be configured with a \fBdnssec\-policy\fP, and
-also requires the zone to be configured to allow dynamic DNS. (See \(dqDynamic
-Update Policies\(dq in the Administrator Reference Manual for more details.)
+This command requires that the zone be configured with a \fBdnssec\-policy\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -362,10 +367,10 @@ directory. The name will be chosen automatically by jemalloc.
 .INDENT 0.0
 .TP
 .B modzone zone [class [view]] configuration
-This command modifies the configuration of a zone while the server is running. This
-command requires the \fBallow\-new\-zones\fP option to be set to \fByes\fP\&.
-As with \fBaddzone\fP, the configuration string specified on the
-command line is the zone configuration text that would ordinarily be
+This command modifies the configuration of a zone while the server is
+running. This command requires the \fBallow\-new\-zones\fP option to be set
+to \fByes\fP\&.  As with \fBaddzone\fP, the configuration string specified on
+the command line is the zone configuration text that would ordinarily be
 placed in \fI\%named.conf\fP\&.
 .sp
 If the zone was originally added via \fI\%rndc addzone\fP, the
@@ -578,9 +583,11 @@ answers is currently enabled or disabled. It also reports the values of
 .INDENT 0.0
 .TP
 .B showzone zone [class [view]]
-This command prints the configuration of a running zone.
+If the server is configured with \fBallow\-new\-zones\fP set to \fByes\fP,
+then this command prints the configuration of a running zone.
 .sp
-See also \fI\%rndc zonestatus\fP\&.
+See also \fI\%rndc addzone\fP, \fI\%rndc modzone\fP\&.
+and \fI\%rndc delzone\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -589,11 +596,11 @@ This command fetches all DNSSEC keys for the given zone from the key directory (
 the \fBkey\-directory\fP option in the BIND 9 Administrator Reference
 Manual). If they are within their publication period, they are merged into
 the zone\(aqs DNSKEY RRset. If the DNSKEY RRset is changed, then the
-zone is automatically re\-signed with the new key set.
+zone is automatically re\-signed with the new key set. This will replace signatures
+of inactive keys with signatures from active keys, and update signatures that
+expire within the refresh interval.
 .sp
-This command requires that the zone be configured with a \fBdnssec\-policy\fP, and
-also requires the zone to be configured to allow dynamic DNS. (See \(dqDynamic
-Update Policies\(dq in the Administrator Reference Manual for more details.)
+This command requires that the zone be configured with a \fBdnssec\-policy\fP\&.
 .sp
 See also \fI\%rndc loadkeys\fP\&.
 .UNINDENT
@@ -765,6 +772,6 @@ Reference Manual.
 .SH AUTHOR
 Internet Systems Consortium
 .SH COPYRIGHT
-2025, Internet Systems Consortium
+2026, Internet Systems Consortium
 .\" Generated by docutils manpage writer.
 .

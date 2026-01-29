@@ -11,6 +11,9 @@
 
 import pytest
 
+# isctest.asyncserver requires dnspython >= 2.0.0
+pytest.importorskip("dns", minversion="2.0.0")
+
 pytestmark = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
@@ -22,10 +25,8 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/root.db",
         "ns1/root.db.signed",
         "ns2/named-tls.conf",
-        "ns2/options-tls.conf",
         "ns3/trusted.conf",
         "ns4/named-tls.conf",
-        "ns4/options-tls.conf",
         "ns9/named_dump.db",
     ]
 )

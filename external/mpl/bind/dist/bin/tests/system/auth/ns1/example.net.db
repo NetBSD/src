@@ -20,3 +20,5 @@ $TTL 300        ; 5 minutes
 			NS      ns
 ns                      A       10.53.0.1
 server			A	10.53.0.100
+child			NS	ns.child
+ns.child		A	10.53.0.1

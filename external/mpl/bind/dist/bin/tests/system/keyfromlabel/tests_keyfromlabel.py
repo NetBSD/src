@@ -11,7 +11,7 @@
 
 import hashlib
 import os
-import re
+from re import compile as Re
 import shutil
 
 import pytest
@@ -74,19 +74,16 @@ def token_init_and_cleanup():
     )
 
     try:
-        output = isctest.run.cmd(
-            token_init_command, env=EMPTY_OPENSSL_CONF_ENV
-        ).stdout.decode("utf-8")
-        assert "The token has been initialized and is reassigned to slot" in output
+        cmd = isctest.run.cmd(token_init_command, env=EMPTY_OPENSSL_CONF_ENV)
+        assert "The token has been initialized and is reassigned to slot" in cmd.out
         yield
     finally:
-        output = isctest.run.cmd(
+        cmd = isctest.run.cmd(
             token_cleanup_command,
             env=EMPTY_OPENSSL_CONF_ENV,
             raise_on_exception=False,
-        ).stdout.decode("utf-8")
-        assert re.search("Found token (.*) with matching token label", output)
-        assert re.search("The token (.*) has been deleted", output)
+        )
+        assert Re("Found token (.*) with matching token label") in cmd.out
 
 
 # pylint: disable-msg=too-many-locals
@@ -126,11 +123,9 @@ def test_keyfromlabel(alg_name, alg_type, alg_bits):
             HSMPIN,
         ]
 
-        output = isctest.run.cmd(
-            pkcs11_command, env=EMPTY_OPENSSL_CONF_ENV
-        ).stdout.decode("utf-8")
+        cmd = isctest.run.cmd(pkcs11_command, env=EMPTY_OPENSSL_CONF_ENV)
 
-        assert "Key pair generated" in output
+        assert "Key pair generated" in cmd.out
 
     def keyfromlabel(alg_name, zone, key_id, key_flag):
         key_flag = key_flag.split() if key_flag else []
@@ -140,18 +135,19 @@ def test_keyfromlabel(alg_name, alg_type, alg_bits):
             *os.environ.get("ENGINE_ARG", "").split(),
             "-a",
             alg_name,
+            "-y",
             "-l",
             f"pkcs11:token=softhsm2-keyfromlabel;object={key_id}-{zone};pin-source=pin",
             *key_flag,
             zone,
         ]
 
-        output = isctest.run.cmd(keyfrlab_command)
-        output_decoded = output.stdout.decode("utf-8").rstrip() + ".key"
+        cmd = isctest.run.cmd(keyfrlab_command)
+        keyfile = cmd.out.rstrip() + ".key"
 
-        assert os.path.exists(output_decoded)
+        assert os.path.exists(keyfile)
 
-        return output_decoded
+        return keyfile
 
     if f"{alg_name.upper()}_SUPPORTED" not in os.environ:
         pytest.skip(f"{alg_name} is not supported")

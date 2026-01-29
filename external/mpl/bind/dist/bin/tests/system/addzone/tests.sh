@@ -482,8 +482,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "reconfiguring server with multiple views"
-rm -f ns2/named.conf
-copy_setports ns2/named2.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 
 echo_i "adding new zone to external view ($n)"
@@ -608,8 +607,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "reconfiguring server with multiple views and new-zones-directory"
-rm -f ns2/named.conf
-copy_setports ns2/named3.conf.in ns2/named.conf
+cp ns2/named3.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 
 echo_i "checking new zone is still loaded after dir change ($n)"
@@ -686,7 +684,7 @@ status=$((status + ret))
 echo_i "check delzone after reconfig failure ($n)"
 ret=0
 $RNDCCMD 10.53.0.3 addzone 'inlinesec.example. IN { type secondary; file "inlinesec.db"; masterfile-format text; primaries { test; }; };' >/dev/null 2>&1 || ret=1
-copy_setports ns3/named2.conf.in ns3/named.conf
+cp ns3/named2.conf ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
 $RNDCCMD 10.53.0.3 delzone inlinesec.example >/dev/null 2>&1 || ret=1
 n=$((n + 1))

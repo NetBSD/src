@@ -20,13 +20,13 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 @live_internet_test
-def test_rfc5011_rootdnskeyrefresh(servers):
-    with servers["ns1"].watch_log_from_start() as watcher:
+def test_rfc5011_rootdnskeyrefresh(ns1):
+    with ns1.watch_log_from_start() as watcher:
         watcher.wait_for_line(
             "managed-keys-zone: Initializing automatic trust anchor management for zone '.'; DNSKEY ID 20326 is now trusted, waiving the normal 30-day waiting period"
         )
 
-    with servers["ns1"].watch_log_from_start() as watcher:
+    with ns1.watch_log_from_start() as watcher:
         watcher.wait_for_line(
             "managed-keys-zone: Initializing automatic trust anchor management for zone '.'; DNSKEY ID 38696 is now trusted, waiving the normal 30-day waiting period"
         )
