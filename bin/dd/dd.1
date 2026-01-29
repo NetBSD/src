@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.40 2026/01/26 10:55:27 uwe Exp $
+.\"	$NetBSD: dd.1,v 1.41 2026/01/29 01:52:15 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -224,10 +224,13 @@ when calling
 .Xr open 2
 on the output file.
 The default value is
-.Ql creat ,
-which must be explicitly added in
+.Ql creat .
+If the
 .Cm oflag
-if this option is used in order to output to a nonexistent file.
+operand is specified, the
+.Ql creat
+flag must be explicitly included when writing output to a nonexistent
+file.
 The value is or'ed with
 .Ql rdwr
 for the first
