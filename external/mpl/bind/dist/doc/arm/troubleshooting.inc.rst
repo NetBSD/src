@@ -119,7 +119,7 @@ about 1 kilobyte of data to be written to the key log file.
    performance.
 
 .. _Wireshark: https://www.wireshark.org/
-.. _solution: https://wiki.wireshark.org/TLS#tls-decryption
+.. _solution: https://wiki.wireshark.org/TLS
 
 Incrementing and Changing the Serial Number
 -------------------------------------------

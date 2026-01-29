@@ -1,0 +1,175 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS3
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	recursion no;
+	allow-transfer { any; };
+	notify yes;
+	try-tcp-refresh no;
+	notify-delay 0;
+	allow-new-zones yes;
+	dnssec-validation no;
+};
+
+dnssec-policy "inline" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "nsec3" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+	nsec3param iterations 0 optout no salt-length 0;
+};
+
+dnssec-policy "external" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		ksk key-directory lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @ALTERNATIVE_ALGORITHM@;
+	};
+};
+
+zone "bits" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	inline-signing yes;
+	dnssec-policy inline;
+	allow-update-forwarding { any; };
+	file "bits.bk";
+	sig-signing-signatures 1;	// force incremental processing
+};
+
+server 10.53.0.4 { request-ixfr no; };
+
+zone "noixfr" {
+	type secondary;
+	primaries { 10.53.0.4; };
+	inline-signing yes;
+	dnssec-policy inline;
+	allow-update-forwarding { any; };
+	file "noixfr.bk";
+};
+
+zone "primary" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy inline;
+	file "primary.db";
+	notify explicit;
+	also-notify {
+		10.53.0.3;
+	};
+};
+
+zone "dynamic" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy inline;
+	allow-update { any; };
+	file "dynamic.db";
+};
+
+zone "updated" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy inline;
+	allow-update { none; };
+	file "updated.db";
+};
+
+zone "expired" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy inline;
+	allow-update { any; };
+	file "expired.db";
+};
+
+zone "retransfer" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	inline-signing yes;
+	dnssec-policy inline;
+	file "retransfer.bk";
+};
+
+zone "nsec3" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy nsec3;
+	allow-update { any; };
+	file "nsec3.db";
+};
+
+zone "externalkey" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy external;
+	allow-update { any; };
+	file "externalkey.db";
+};
+
+zone "nokeys" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	inline-signing yes;
+	dnssec-policy insecure;
+	file "nokeys.bk";
+};
+
+zone "removedkeys-primary" {
+	type primary;
+	inline-signing yes;
+	dnssec-policy inline;
+	allow-update { any; };
+	also-notify { 10.53.0.2; };
+	file "removedkeys-primary.db";
+};
+
+zone "removedkeys-secondary" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	inline-signing yes;
+	dnssec-policy inline;
+	file "removedkeys-secondary.bk";
+};
+
+zone "unsupported" {
+	type primary;
+	file "unsupported.db";
+	inline-signing yes;
+	dnssec-policy inline;
+};
+
+include "delayedkeys.conf";

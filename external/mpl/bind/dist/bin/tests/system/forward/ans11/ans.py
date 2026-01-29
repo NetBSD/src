@@ -14,6 +14,7 @@ information regarding copyright ownership.
 from typing import AsyncGenerator
 
 import dns.rdatatype
+import dns.rrset
 
 from isctest.asyncserver import (
     ControllableAsyncDnsServer,
@@ -49,7 +50,8 @@ class ExtraAnswersHandler(DomainHandler):
 
 
 def main() -> None:
-    server = ControllableAsyncDnsServer(commands=[ToggleResponsesCommand])
+    server = ControllableAsyncDnsServer()
+    server.install_control_command(ToggleResponsesCommand())
     server.install_response_handler(ExtraAnswersHandler())
     server.run()
 

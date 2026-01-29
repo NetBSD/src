@@ -1,4 +1,4 @@
-/*	$NetBSD: hinfo_13.c,v 1.1.1.8 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: hinfo_13.c,v 1.1.1.9 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,9 +118,7 @@ tostruct_hinfo(ARGS_TOSTRUCT) {
 	REQUIRE(hinfo != NULL);
 	REQUIRE(rdata->length != 0);
 
-	hinfo->common.rdclass = rdata->rdclass;
-	hinfo->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&hinfo->common, link);
+	DNS_RDATACOMMON_INIT(hinfo, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	hinfo->cpu_len = uint8_fromregion(&region);

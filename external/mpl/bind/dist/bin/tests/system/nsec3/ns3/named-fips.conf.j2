@@ -1,0 +1,179 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set reconfiged = reconfiged | default(False) %}
+{% set nsec_to_nsec3 = "nsec" if not reconfiged else "nsec3" %}
+{% set nsec3_to_nsec = "nsec3" if not reconfiged else "nsec" %}
+{% set nsec3_change = "nsec3" if not reconfiged else "nsec3-other" %}
+{% set nsec3_from_optout = "optout" if not reconfiged else "nsec3" %}
+{% set nsec3_to_optout = "nsec3" if not reconfiged else "optout" %}
+
+{% if "nsec-to-nsec3.kasp" in zones %}
+/* This zone starts with NSEC, but will be reconfigured to use NSEC3. */
+zone "nsec-to-nsec3.kasp" {
+	type primary;
+	file "nsec-to-nsec3.kasp.db";
+	dnssec-policy "@nsec_to_nsec3@";
+};
+{% endif %}{# nsec-to-nsec3.kasp #}
+
+{% if "nsec3.kasp" in zones %}
+/* These zones use the default NSEC3 settings. */
+zone "nsec3.kasp" {
+	type primary;
+	file "nsec3.kasp.db";
+	dnssec-policy "nsec3";
+};
+{% endif %}{# nsec3.kasp #}
+
+{% if "nsec3-dynamic.kasp" in zones %}
+zone "nsec3-dynamic.kasp" {
+	type primary;
+	file "nsec3-dynamic.kasp.db";
+	dnssec-policy "nsec3";
+	allow-update { any; };
+};
+{% endif %}{# nsec3-dynamic.kasp #}
+
+{% if "nsec3-other.kasp" in zones %}
+/* This zone uses non-default NSEC3 settings. */
+zone "nsec3-other.kasp" {
+	type primary;
+	file "nsec3-other.kasp.db";
+	dnssec-policy "nsec3-other";
+};
+{% endif %}{# nsec3-other.kasp #}
+
+{% if "nsec3-change.kasp" in zones %}
+/* These zones will be reconfigured to use other NSEC3 settings. */
+zone "nsec3-change.kasp" {
+	type primary;
+	file "nsec3-change.kasp.db";
+	dnssec-policy "@nsec3_change@";
+};
+{% endif %}{# nsec3-change.kasp #}
+
+{% if "nsec3-dynamic-change.kasp" in zones %}
+zone "nsec3-dynamic-change.kasp" {
+	type primary;
+	file "nsec3-dynamic-change.kasp.db";
+	inline-signing no;
+	dnssec-policy "@nsec3_change@";
+	allow-update { any; };
+};
+{% endif %}{# nsec3-dynamic-change.kasp #}
+
+{% if "nsec3-to-optout.kasp" in zones %}
+/* The zone will be reconfigured to use opt-out. */
+zone "nsec3-to-optout.kasp" {
+	type primary;
+	file "nsec3-to-optout.kasp.db";
+	dnssec-policy "@nsec3_to_optout@";
+};
+{% endif %}{# nsec3-to-optout.kasp #}
+
+{% if "nsec3-from-optout.kasp" in zones %}
+/* The zone will be reconfigured to disable opt-out. */
+zone "nsec3-from-optout.kasp" {
+	type primary;
+	file "nsec3-from-optout.kasp.db";
+	dnssec-policy "@nsec3_from_optout@";
+};
+{% endif %}{# nsec3-from-optout.kasp #}
+
+{% if "nsec3-to-nsec.kasp" in zones %}
+/* The zone starts with NSEC3, but will be reconfigured to use NSEC. */
+zone "nsec3-to-nsec.kasp" {
+	type primary;
+	file "nsec3-to-nsec.kasp.db";
+	dnssec-policy "@nsec3_to_nsec@";
+};
+{% endif %}{# nsec3-to-nsec.kasp #}
+
+{% if "nsec3-fails-to-load.kasp" in zones %}
+/*
+ * The zone fails to load, this should not prevent shutdown.
+ * The zone is fixed after a reconfig.
+ */
+zone "nsec3-fails-to-load.kasp" {
+	type primary;
+	file "nsec3-fails-to-load.kasp.db";
+	dnssec-policy "nsec3";
+	allow-update { any; };
+};
+{% endif %}{# nsec3-fails-to-load.kasp #}
+
+{% if "nsec3-dynamic-to-inline.kasp" in zones %}
+/* These zones switch from dynamic to inline-signing or vice versa. */
+zone "nsec3-dynamic-to-inline.kasp" {
+	type primary;
+	file "nsec3-dynamic-to-inline.kasp.db";
+	dnssec-policy "nsec3";
+{% if not reconfiged %}
+	allow-update { any; };
+	inline-signing no;
+{% endif %}{# not reconfiged #}
+};
+{% endif %}{# nsec3-dynamic-to-inline.kasp #}
+
+{% if "nsec3-inline-to-dynamic.kasp" in zones %}
+zone "nsec3-inline-to-dynamic.kasp" {
+	type primary;
+	file "nsec3-inline-to-dynamic.kasp.db";
+	dnssec-policy "nsec3";
+{% if reconfiged %}
+	allow-update { any; };
+	inline-signing no;
+{% endif %}{# reconfiged #}
+};
+{% endif %}{# nsec3-inline-to-dynamic.kasp #}
+
+{% if "nsec3-ent.kasp" in zones %}
+/*
+ * This zone will have an empty nonterminal node added and a node deleted.
+ */
+zone "nsec3-ent.kasp" {
+	type primary;
+	file "nsec3-ent.kasp.db";
+	dnssec-policy "nsec3";
+	inline-signing yes;
+};
+{% endif %}{# nsec3-ent.kasp #}
+
+{% if not reconfiged %}
+
+{% if "nsec3-dynamic-update-inline.kasp" in zones %}
+/*
+ * Test adding a NSEC3 record to an inline-signing dnssec-policy zone.
+ */
+zone "nsec3-dynamic-update-inline.kasp" {
+	type primary;
+	file "nsec3-dynamic-update-inline.kasp.db";
+	allow-update { any; };
+	dnssec-policy "nsec";
+};
+{% endif %}{# nsec3-dynamic-update-inline.kasp #}
+
+{% if "nsec3-xfr-inline.kasp" in zones %}
+/*
+ * This zone will have an empty nonterminal node added and a node deleted.
+ */
+zone "nsec3-xfr-inline.kasp" {
+       type secondary;
+       file "nsec3-xfr-inline.kasp.db";
+       dnssec-policy "nsec";
+       primaries { 10.53.0.2; };
+};
+{% endif %}{# nsec3-xfr-inline.kasp #}
+
+{% endif %}{# not reconfiged #}

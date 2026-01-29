@@ -24,10 +24,9 @@ options {
 	allow-transfer { any; };
 	recursion no;
 	notify yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 };
 
-trust-anchors { };
 
 zone "." {
 	type hint;

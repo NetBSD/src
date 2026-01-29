@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.1.1.13 2025/05/21 14:40:59 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.1.1.14 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -417,9 +417,7 @@ tostruct_key(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_key);
 
-	key->common.rdclass = rdata->rdclass;
-	key->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&key->common, link);
+	DNS_RDATACOMMON_INIT(key, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_key(CALL_TOSTRUCT);
 }

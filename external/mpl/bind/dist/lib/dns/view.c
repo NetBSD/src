@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.16 2025/07/17 18:27:19 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.17 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,13 +66,6 @@
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 #define DNS_VIEW_DELONLYHASH 111
 

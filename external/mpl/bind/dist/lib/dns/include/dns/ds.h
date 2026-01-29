@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.h,v 1.1.1.7 2024/02/21 21:54:53 christos Exp $	*/
+/*	$NetBSD: ds.h,v 1.1.1.8 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,8 @@
 #define DNS_DSDIGEST_SHA256 (2)
 #define DNS_DSDIGEST_GOST   (3)
 #define DNS_DSDIGEST_SHA384 (4)
+
+#define DNS_DSDIGEST_MAX (255)
 
 /*
  * Assuming SHA-384 digest type.

@@ -16,6 +16,8 @@ ns1		A	10.53.0.1
 example		NS	ns1.example
 fun		NS	ns1.example
 ns1.example	A	10.53.0.1
+no-apex-covering NS	ns1.no-apex-covering
+ns1.no-apex-covering A	10.53.0.1
 dnamed		NS	ns1.dnamed
 ns1.dnamed	A	10.53.0.1
 minimal		NS	ns1.minimal

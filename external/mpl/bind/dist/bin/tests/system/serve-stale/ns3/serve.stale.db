@@ -18,4 +18,5 @@ test			IN NS	nss1.example.nxd.
 test			IN NS	nss2.example.nxd.
 
 delegated		IN NS	ns2.delegated.serve.stale.
+cname-target		IN A	10.53.0.99
 ns2.delegated		IN A	10.53.0.2

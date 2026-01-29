@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.c,v 1.1.1.9 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.1.1.10 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -308,9 +308,7 @@ tostruct_hip(ARGS_TOSTRUCT) {
 	REQUIRE(hip != NULL);
 	REQUIRE(rdata->length != 0);
 
-	hip->common.rdclass = rdata->rdclass;
-	hip->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&hip->common, link);
+	DNS_RDATACOMMON_INIT(hip, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

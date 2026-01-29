@@ -1,0 +1,109 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; 10.53.0.4; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion yes;
+	dnssec-validation no;
+	notify yes;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "views" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+view "internal" {
+	match-clients { 10.53.0.2;
+			10.53.0.3; };
+
+	zone "." {
+		type hint;
+		file "../../_common/root.hint";
+	};
+
+	zone "example" {
+		type primary;
+		file "internal.db";
+		allow-update { any; };
+	};
+
+	zone "clone" {
+		type primary;
+		file "clone.db";
+		allow-update { any; };
+	};
+
+	zone "1.10.in-addr.arpa" {
+		type primary;
+		file "1.10.in-addr.arpa.db";
+	};
+
+	zone "inline" {
+		type primary;
+		file "internal/inline.db";
+		key-directory "internal";
+		dnssec-policy views;
+		inline-signing yes;
+	};
+};
+
+view "external" {
+	match-clients { any; };
+
+	zone "." {
+		type hint;
+		file "../../_common/root.hint";
+	};
+
+	zone "example" {
+		type primary;
+		file "example.db";
+	};
+
+	zone "clone" {
+		in-view internal;
+		forward only;
+		forwarders { 10.53.0.5; };
+	};
+
+	zone "1.10.in-addr.arpa" {
+		in-view internal;
+	};
+
+	zone "inline" {
+		type primary;
+		file "external/inline.db";
+		key-directory "external";
+		dnssec-policy views;
+		inline-signing yes;
+	};
+};

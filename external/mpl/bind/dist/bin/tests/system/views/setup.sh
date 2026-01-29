@@ -17,12 +17,6 @@ set -e
 . ../conf.sh
 
 cp -f ns2/example1.db ns2/example.db
-
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns2/named1.conf.in ns2/named.conf
-copy_setports ns3/named1.conf.in ns3/named.conf
-copy_setports ns5/named.conf.in ns5/named.conf
-
 #
 # We remove k1 and k2 as KEYGEN is deterministic when given the
 # same source of "random" data and we want different keys for

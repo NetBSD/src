@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 20)dnl
-m4_define([bind_VERSION_PATCH], 11)dnl
+m4_define([bind_VERSION_PATCH], 18)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Stable Release)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -327,8 +327,10 @@ AC_SUBST([PYTEST])
 AM_CONDITIONAL([HAVE_PYTEST], [test -n "$PYTEST"])
 
 #
-# xsltproc is optional, it is used only by system test scripts.
+# Optional utilities, only used by system tests.
 #
+AC_PATH_PROG([JQ], [jq])
+AC_PATH_PROG([XMLLINT], [xmllint])
 AC_PATH_PROG([XSLTPROC], [xsltproc])
 
 #
@@ -1643,11 +1645,13 @@ AC_CONFIG_FILES([bin/tests/Makefile
 		 bin/tests/system/isctest/vars/.ac_vars/TOP_BUILDDIR
 		 bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR
 		 bin/tests/system/isctest/vars/.ac_vars/FSTRM_CAPTURE
+		 bin/tests/system/isctest/vars/.ac_vars/JQ
 		 bin/tests/system/isctest/vars/.ac_vars/SHELL
 		 bin/tests/system/isctest/vars/.ac_vars/PYTHON
 		 bin/tests/system/isctest/vars/.ac_vars/PERL
 		 bin/tests/system/isctest/vars/.ac_vars/CURL
 		 bin/tests/system/isctest/vars/.ac_vars/NC
+		 bin/tests/system/isctest/vars/.ac_vars/XMLLINT
 		 bin/tests/system/isctest/vars/.ac_vars/XSLTPROC
 		 bin/tests/system/isctest/vars/.ac_vars/PYTEST
 		 bin/tests/system/dyndb/driver/Makefile
@@ -1669,7 +1673,7 @@ AC_CONFIG_FILES([fuzz/Makefile])
 
 # Misc
 
-AC_CONFIG_FILES([util/check-make-install])
+AC_CONFIG_FILES([util/check-make-install.sh])
 
 #
 # Do it

@@ -30,16 +30,16 @@
 /* define if the ARM yield instruction is available */
 #undef HAVE_ARM_YIELD
 
-/* Define to 1 if you have the `backtrace_symbols' function. */
+/* Define to 1 if you have the 'backtrace_symbols' function. */
 #undef HAVE_BACKTRACE_SYMBOLS
 
-/* Define to 1 if you have the `BIO_read_ex' function. */
+/* Define to 1 if you have the 'BIO_read_ex' function. */
 #undef HAVE_BIO_READ_EX
 
-/* Define to 1 if you have the `BIO_write_ex' function. */
+/* Define to 1 if you have the 'BIO_write_ex' function. */
 #undef HAVE_BIO_WRITE_EX
 
-/* Define to 1 if you have the `BN_GENCB_new' function. */
+/* Define to 1 if you have the 'BN_GENCB_new' function. */
 #undef HAVE_BN_GENCB_NEW
 
 /* define if the compiler supports __builtin_add_overflow(). */
@@ -57,34 +57,34 @@
 /* define if the compiler supports __builtin_unreachable(). */
 #undef HAVE_BUILTIN_UNREACHABLE
 
-/* Define to 1 if you have the `chroot' function. */
+/* Define to 1 if you have the 'chroot' function. */
 #undef HAVE_CHROOT
 
-/* Define to 1 if you have the `clock_gettime' function. */
+/* Define to 1 if you have the 'clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
 /* Use CMocka */
 #undef HAVE_CMOCKA
 
-/* Define to 1 if you have the `cpuset_getaffinity' function. */
+/* Define to 1 if you have the 'cpuset_getaffinity' function. */
 #undef HAVE_CPUSET_GETAFFINITY
 
-/* Define to 1 if you have the `CRYPTO_zalloc' function. */
+/* Define to 1 if you have the 'CRYPTO_zalloc' function. */
 #undef HAVE_CRYPTO_ZALLOC
 
-/* Define to 1 if you have the declaration of `UV_UDP_LINUX_RECVERR', and to 0
+/* Define to 1 if you have the declaration of 'UV_UDP_LINUX_RECVERR', and to 0
    if you don't. */
 #undef HAVE_DECL_UV_UDP_LINUX_RECVERR
 
-/* Define to 1 if you have the declaration of `UV_UDP_MMSG_CHUNK', and to 0 if
+/* Define to 1 if you have the declaration of 'UV_UDP_MMSG_CHUNK', and to 0 if
    you don't. */
 #undef HAVE_DECL_UV_UDP_MMSG_CHUNK
 
-/* Define to 1 if you have the declaration of `UV_UDP_MMSG_FREE', and to 0 if
+/* Define to 1 if you have the declaration of 'UV_UDP_MMSG_FREE', and to 0 if
    you don't. */
 #undef HAVE_DECL_UV_UDP_MMSG_FREE
 
-/* Define to 1 if you have the declaration of `UV_UDP_RECVMMSG', and to 0 if
+/* Define to 1 if you have the declaration of 'UV_UDP_RECVMMSG', and to 0 if
    you don't. */
 #undef HAVE_DECL_UV_UDP_RECVMMSG
 
@@ -94,65 +94,65 @@
 /* Define to 1 to enable dnstap support */
 #undef HAVE_DNSTAP
 
-/* Define to 1 if you have the `ECDSA_SIG_get0' function. */
+/* Define to 1 if you have the 'ECDSA_SIG_get0' function. */
 #undef HAVE_ECDSA_SIG_GET0
 
-/* Define to 1 if you have the `ERR_get_error_all' function. */
+/* Define to 1 if you have the 'ERR_get_error_all' function. */
 #undef HAVE_ERR_GET_ERROR_ALL
 
-/* Define to 1 if you have the `EVP_CIPHER_CTX_free' function. */
+/* Define to 1 if you have the 'EVP_CIPHER_CTX_free' function. */
 #undef HAVE_EVP_CIPHER_CTX_FREE
 
-/* Define to 1 if you have the `EVP_CIPHER_CTX_new' function. */
+/* Define to 1 if you have the 'EVP_CIPHER_CTX_new' function. */
 #undef HAVE_EVP_CIPHER_CTX_NEW
 
-/* Define to 1 if you have the `EVP_default_properties_enable_fips' function.
+/* Define to 1 if you have the 'EVP_default_properties_enable_fips' function.
    */
 #undef HAVE_EVP_DEFAULT_PROPERTIES_ENABLE_FIPS
 
-/* Define to 1 if you have the `EVP_DigestSignInit' function. */
+/* Define to 1 if you have the 'EVP_DigestSignInit' function. */
 #undef HAVE_EVP_DIGESTSIGNINIT
 
-/* Define to 1 if you have the `EVP_DigestVerifyInit' function. */
+/* Define to 1 if you have the 'EVP_DigestVerifyInit' function. */
 #undef HAVE_EVP_DIGESTVERIFYINIT
 
-/* Define to 1 if you have the `EVP_MD_CTX_free' function. */
+/* Define to 1 if you have the 'EVP_MD_CTX_free' function. */
 #undef HAVE_EVP_MD_CTX_FREE
 
-/* Define to 1 if you have the `EVP_MD_CTX_get0_md' function. */
+/* Define to 1 if you have the 'EVP_MD_CTX_get0_md' function. */
 #undef HAVE_EVP_MD_CTX_GET0_MD
 
-/* Define to 1 if you have the `EVP_MD_CTX_new' function. */
+/* Define to 1 if you have the 'EVP_MD_CTX_new' function. */
 #undef HAVE_EVP_MD_CTX_NEW
 
-/* Define to 1 if you have the `EVP_MD_CTX_reset' function. */
+/* Define to 1 if you have the 'EVP_MD_CTX_reset' function. */
 #undef HAVE_EVP_MD_CTX_RESET
 
-/* Define to 1 if you have the `EVP_PKEY_eq' function. */
+/* Define to 1 if you have the 'EVP_PKEY_eq' function. */
 #undef HAVE_EVP_PKEY_EQ
 
-/* Define to 1 if you have the `EVP_PKEY_get0_EC_KEY' function. */
+/* Define to 1 if you have the 'EVP_PKEY_get0_EC_KEY' function. */
 #undef HAVE_EVP_PKEY_GET0_EC_KEY
 
-/* Define to 1 if you have the `EVP_PKEY_get0_RSA' function. */
+/* Define to 1 if you have the 'EVP_PKEY_get0_RSA' function. */
 #undef HAVE_EVP_PKEY_GET0_RSA
 
-/* Define to 1 if you have the `EVP_PKEY_new_raw_private_key' function. */
+/* Define to 1 if you have the 'EVP_PKEY_new_raw_private_key' function. */
 #undef HAVE_EVP_PKEY_NEW_RAW_PRIVATE_KEY
 
-/* Define to 1 if you have the `EVP_sha1' function. */
+/* Define to 1 if you have the 'EVP_sha1' function. */
 #undef HAVE_EVP_SHA1
 
-/* Define to 1 if you have the `EVP_sha224' function. */
+/* Define to 1 if you have the 'EVP_sha224' function. */
 #undef HAVE_EVP_SHA224
 
-/* Define to 1 if you have the `EVP_sha256' function. */
+/* Define to 1 if you have the 'EVP_sha256' function. */
 #undef HAVE_EVP_SHA256
 
-/* Define to 1 if you have the `EVP_sha384' function. */
+/* Define to 1 if you have the 'EVP_sha384' function. */
 #undef HAVE_EVP_SHA384
 
-/* Define to 1 if you have the `EVP_sha512' function. */
+/* Define to 1 if you have the 'EVP_sha512' function. */
 #undef HAVE_EVP_SHA512
 
 /* Define to 1 if you have the <execinfo.h> header file. */
@@ -161,13 +161,13 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
-/* Define to 1 if you have the `FIPS_mode' function. */
+/* Define to 1 if you have the 'FIPS_mode' function. */
 #undef HAVE_FIPS_MODE
 
-/* Define to 1 if you have the `flockfile' function. */
+/* Define to 1 if you have the 'flockfile' function. */
 #undef HAVE_FLOCKFILE
 
-/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+/* Define to 1 if fseeko (and ftello) are declared in stdio.h. */
 #undef HAVE_FSEEKO
 
 /* Define to 1 if the system has the `constructor' function attribute */
@@ -188,7 +188,7 @@
 /* Build with GeoIP2 support */
 #undef HAVE_GEOIP2
 
-/* Define to 1 if you have the `getc_unlocked' function. */
+/* Define to 1 if you have the 'getc_unlocked' function. */
 #undef HAVE_GETC_UNLOCKED
 
 /* Define to 1 if you have the <glob.h> header file. */
@@ -209,13 +209,13 @@
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 #undef HAVE_GSSAPI_KRB5_H
 
-/* Define to 1 if you have the `gss_acquire_cred' function. */
+/* Define to 1 if you have the 'gss_acquire_cred' function. */
 #undef HAVE_GSS_ACQUIRE_CRED
 
 /* Define to 1 if you have the <idn2.h> header file. */
 #undef HAVE_IDN2_H
 
-/* Define to 1 if you have the `if_nametoindex' function. */
+/* Define to 1 if you have the 'if_nametoindex' function. */
 #undef HAVE_IF_NAMETOINDEX
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -233,7 +233,7 @@
 /* Define to 1 if you have the <krb5.h> header file. */
 #undef HAVE_KRB5_H
 
-/* Define to 1 if you have the `krb5_init_context' function. */
+/* Define to 1 if you have the 'krb5_init_context' function. */
 #undef HAVE_KRB5_INIT_CONTEXT
 
 /* Define to 1 if you have the <krb5/krb5.h> header file. */
@@ -275,7 +275,7 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
-/* Define to 1 if you have the `OPENSSL_cleanup' function. */
+/* Define to 1 if you have the 'OPENSSL_cleanup' function. */
 #undef HAVE_OPENSSL_CLEANUP
 
 /* define if OpenSSL supports Ed25519 */
@@ -284,22 +284,22 @@
 /* define if OpenSSL supports Ed448 */
 #undef HAVE_OPENSSL_ED448
 
-/* Define to 1 if you have the `OPENSSL_init_crypto' function. */
+/* Define to 1 if you have the 'OPENSSL_init_crypto' function. */
 #undef HAVE_OPENSSL_INIT_CRYPTO
 
-/* Define to 1 if you have the `OPENSSL_init_ssl' function. */
+/* Define to 1 if you have the 'OPENSSL_init_ssl' function. */
 #undef HAVE_OPENSSL_INIT_SSL
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
-/* Define to 1 if you have the `pthread_attr_getstacksize' function. */
+/* Define to 1 if you have the 'pthread_attr_getstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_GETSTACKSIZE
 
-/* Define to 1 if you have the `pthread_attr_setstacksize' function. */
+/* Define to 1 if you have the 'pthread_attr_setstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
 
-/* Define to 1 if you have the `pthread_barrier_init' function. */
+/* Define to 1 if you have the 'pthread_barrier_init' function. */
 #undef HAVE_PTHREAD_BARRIER_INIT
 
 /* Define to 1 if PTHREAD_MUTEX_ADAPTIVE_NP is available */
@@ -311,22 +311,22 @@
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
 
-/* Define to 1 if you have the `pthread_rwlock_rdlock' function. */
+/* Define to 1 if you have the 'pthread_rwlock_rdlock' function. */
 #undef HAVE_PTHREAD_RWLOCK_RDLOCK
 
-/* Define to 1 if you have the `pthread_setname_np' function. */
+/* Define to 1 if you have the 'pthread_setname_np' function. */
 #undef HAVE_PTHREAD_SETNAME_NP
 
-/* Define to 1 if you have the `pthread_set_name_np' function. */
+/* Define to 1 if you have the 'pthread_set_name_np' function. */
 #undef HAVE_PTHREAD_SET_NAME_NP
 
-/* Define to 1 if you have the `pthread_spin_init' function. */
+/* Define to 1 if you have the 'pthread_spin_init' function. */
 #undef HAVE_PTHREAD_SPIN_INIT
 
-/* Define to 1 if you have the `pthread_yield' function. */
+/* Define to 1 if you have the 'pthread_yield' function. */
 #undef HAVE_PTHREAD_YIELD
 
-/* Define to 1 if you have the `pthread_yield_np' function. */
+/* Define to 1 if you have the 'pthread_yield_np' function. */
 #undef HAVE_PTHREAD_YIELD_NP
 
 /* Build with editline support */
@@ -341,46 +341,46 @@
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
 
-/* Define to 1 if you have the `RSA_set0_key' function. */
+/* Define to 1 if you have the 'RSA_set0_key' function. */
 #undef HAVE_RSA_SET0_KEY
 
-/* Define to 1 if you have the `sched_getaffinity' function. */
+/* Define to 1 if you have the 'sched_getaffinity' function. */
 #undef HAVE_SCHED_GETAFFINITY
 
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
-/* Define to 1 if you have the `sched_yield' function. */
+/* Define to 1 if you have the 'sched_yield' function. */
 #undef HAVE_SCHED_YIELD
 
 /* define if the SPARC pause instruction is available */
 #undef HAVE_SPARC_PAUSE
 
-/* Define to 1 if you have the `SSL_CTX_set1_cert_store' function. */
+/* Define to 1 if you have the 'SSL_CTX_set1_cert_store' function. */
 #undef HAVE_SSL_CTX_SET1_CERT_STORE
 
-/* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
+/* Define to 1 if you have the 'SSL_CTX_set_ciphersuites' function. */
 #undef HAVE_SSL_CTX_SET_CIPHERSUITES
 
-/* Define to 1 if you have the `SSL_CTX_set_keylog_callback' function. */
+/* Define to 1 if you have the 'SSL_CTX_set_keylog_callback' function. */
 #undef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
 
-/* Define to 1 if you have the `SSL_CTX_set_min_proto_version' function. */
+/* Define to 1 if you have the 'SSL_CTX_set_min_proto_version' function. */
 #undef HAVE_SSL_CTX_SET_MIN_PROTO_VERSION
 
-/* Define to 1 if you have the `SSL_CTX_up_ref' function. */
+/* Define to 1 if you have the 'SSL_CTX_up_ref' function. */
 #undef HAVE_SSL_CTX_UP_REF
 
-/* Define to 1 if you have the `SSL_peek_ex' function. */
+/* Define to 1 if you have the 'SSL_peek_ex' function. */
 #undef HAVE_SSL_PEEK_EX
 
-/* Define to 1 if you have the `SSL_read_ex' function. */
+/* Define to 1 if you have the 'SSL_read_ex' function. */
 #undef HAVE_SSL_READ_EX
 
-/* Define to 1 if you have the `SSL_SESSION_is_resumable' function. */
+/* Define to 1 if you have the 'SSL_SESSION_is_resumable' function. */
 #undef HAVE_SSL_SESSION_IS_RESUMABLE
 
-/* Define to 1 if you have the `SSL_write_ex' function. */
+/* Define to 1 if you have the 'SSL_write_ex' function. */
 #undef HAVE_SSL_WRITE_EX
 
 /* define if struct stat has st_mtim.tv_nsec field */
@@ -407,19 +407,19 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strlcat' function. */
+/* Define to 1 if you have the 'strlcat' function. */
 #undef HAVE_STRLCAT
 
-/* Define to 1 if you have the `strlcpy' function. */
+/* Define to 1 if you have the 'strlcpy' function. */
 #undef HAVE_STRLCPY
 
-/* Define to 1 if you have the `strnstr' function. */
+/* Define to 1 if you have the 'strnstr' function. */
 #undef HAVE_STRNSTR
 
-/* Define to 1 if you have the `sysconf' function. */
+/* Define to 1 if you have the 'sysconf' function. */
 #undef HAVE_SYSCONF
 
-/* Define to 1 if you have the `sysctlbyname' function. */
+/* Define to 1 if you have the 'sysctlbyname' function. */
 #undef HAVE_SYSCTLBYNAME
 
 /* Define to 1 if you have the <sys/cpuset.h> header file. */
@@ -458,19 +458,19 @@
 /* Define to 1 if you have the <threads.h> header file. */
 #undef HAVE_THREADS_H
 
-/* Define to 1 if you have the `TLS_client_method' function. */
+/* Define to 1 if you have the 'TLS_client_method' function. */
 #undef HAVE_TLS_CLIENT_METHOD
 
-/* Define to 1 if you have the `TLS_server_method' function. */
+/* Define to 1 if you have the 'TLS_server_method' function. */
 #undef HAVE_TLS_SERVER_METHOD
 
-/* Define to 1 if you have the `tzset' function. */
+/* Define to 1 if you have the 'tzset' function. */
 #undef HAVE_TZSET
 
 /* Define to 1 if you have the <uchar.h> header file. */
 #undef HAVE_UCHAR_H
 
-/* Define to 1 if the system has the type `uintptr_t'. */
+/* Define to 1 if the system has the type 'uintptr_t'. */
 #undef HAVE_UINTPTR_T
 
 /* define if uname is available */
@@ -482,7 +482,7 @@
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
 
-/* Define to 1 if you have the `X509_STORE_up_ref' function. */
+/* Define to 1 if you have the 'X509_STORE_up_ref' function. */
 #undef HAVE_X509_STORE_UP_REF
 
 /* Use zlib library */
@@ -568,7 +568,7 @@
 /* Compile-time Userspace-RCU version */
 #undef RCU_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
@@ -582,7 +582,7 @@
 /* Define if you want to use pthread rwlock implementation */
 #undef USE_PTHREAD_RWLOCK
 
-/* Enable extensions on AIX 3, Interix.  */
+/* Enable extensions on AIX, Interix, z/OS.  */
 #ifndef _ALL_SOURCE
 # undef _ALL_SOURCE
 #endif
@@ -643,11 +643,15 @@
 #ifndef __STDC_WANT_IEC_60559_DFP_EXT__
 # undef __STDC_WANT_IEC_60559_DFP_EXT__
 #endif
+/* Enable extensions specified by C23 Annex F.  */
+#ifndef __STDC_WANT_IEC_60559_EXT__
+# undef __STDC_WANT_IEC_60559_EXT__
+#endif
 /* Enable extensions specified by ISO/IEC TS 18661-4:2015.  */
 #ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
 # undef __STDC_WANT_IEC_60559_FUNCS_EXT__
 #endif
-/* Enable extensions specified by ISO/IEC TS 18661-3:2015.  */
+/* Enable extensions specified by C23 Annex H and ISO/IEC TS 18661-3:2015.  */
 #ifndef __STDC_WANT_IEC_60559_TYPES_EXT__
 # undef __STDC_WANT_IEC_60559_TYPES_EXT__
 #endif
@@ -700,34 +704,40 @@
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
-/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
+/* Define to 1 if necessary to make fseeko visible. */
 #undef _LARGEFILE_SOURCE
 
-/* Define for large files, on AIX-style hosts. */
+/* Define to 1 on platforms where this makes off_t a 64-bit type. */
 #undef _LARGE_FILES
+
+/* Number of bits in time_t, on hosts where this is settable. */
+#undef _TIME_BITS
 
 /* Select RFC3542 IPv6 API on macOS */
 #undef __APPLE_USE_RFC_3542
 
-/* Define to empty if `const' does not conform to ANSI C. */
+/* Define to 1 on platforms where this makes time_t a 64-bit type. */
+#undef __MINGW_USE_VC2005_COMPAT
+
+/* Define to empty if 'const' does not conform to ANSI C. */
 #undef const
 
-/* Define to `__inline__' or `__inline' if that's what the C compiler
+/* Define to '__inline__' or '__inline' if that's what the C compiler
    calls it, or to nothing if 'inline' is not supported under any name.  */
 #ifndef __cplusplus
 #undef inline
 #endif
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define as 'unsigned int' if <stddef.h> doesn't define. */
 #undef size_t
 
-/* Define to `int' if <sys/types.h> does not define. */
+/* Define as 'int' if <sys/types.h> doesn't define. */
 #undef ssize_t
 
 /* Define to the type of an unsigned integer type wide enough to hold a
    pointer, if such a type exists, and if the system does not define it. */
 #undef uintptr_t
 
-/* Define to empty if the keyword `volatile' does not work. Warning: valid
-   code using `volatile' can become incorrect without. Disable with care. */
+/* Define to empty if the keyword 'volatile' does not work. Warning: valid
+   code using 'volatile' can become incorrect without. Disable with care. */
 #undef volatile

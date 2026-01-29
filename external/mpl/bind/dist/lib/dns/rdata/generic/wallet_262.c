@@ -1,4 +1,4 @@
-/*	$NetBSD: wallet_262.c,v 1.1.1.1 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: wallet_262.c,v 1.1.1.2 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,9 +77,7 @@ tostruct_wallet(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_wallet);
 	REQUIRE(wallet != NULL);
 
-	wallet->common.rdclass = rdata->rdclass;
-	wallet->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&wallet->common, link);
+	DNS_RDATACOMMON_INIT(wallet, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_txt(CALL_TOSTRUCT);
 }

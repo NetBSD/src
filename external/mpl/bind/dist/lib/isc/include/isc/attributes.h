@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.h,v 1.1.1.3 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: attributes.h,v 1.1.1.4 2026/01/29 18:19:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -111,4 +111,10 @@
 #define ISC_CONSTEXPR constexpr
 #else
 #define ISC_CONSTEXPR static const
+#endif
+
+#if __has_attribute(__nonnull__)
+#define ISC_ATTR_NONNULL(...) __attribute__((__nonnull__(__VA_ARGS__)))
+#else
+#define ISC_ATTR_NONNULL(...)
 #endif

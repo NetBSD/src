@@ -1,4 +1,4 @@
-/*	$NetBSD: check.h,v 1.1.1.1 2025/01/26 16:12:32 christos Exp $	*/
+/*	$NetBSD: check.h,v 1.1.1.2 2026/01/29 18:19:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,6 +42,11 @@
 /*%<
  * Check the dnssec-policy DNSSEC algorithms against those
  * supported by the crypto provider.
+ */
+#define BIND_CHECK_KEYS 0x00000004
+/*%<
+ * Check the dnssec-policy DNSSEC keys against the key files
+ * in the key stores.
  */
 
 ISC_LANG_BEGINDECLS

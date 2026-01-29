@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.c,v 1.1.1.10 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.1.1.11 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -266,9 +266,7 @@ tostruct_tlsa(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 	REQUIRE(tlsa != NULL);
 
-	tlsa->common.rdclass = rdata->rdclass;
-	tlsa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&tlsa->common, link);
+	DNS_RDATACOMMON_INIT(tlsa, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_tlsa(CALL_TOSTRUCT);
 }

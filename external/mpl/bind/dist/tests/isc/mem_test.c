@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.1.1.3 2025/05/21 14:41:01 christos Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.1.1.4 2026/01/29 18:19:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -472,7 +472,7 @@ ISC_RUN_TEST_IMPL(isc_mem_traceflag) {
 	assert_non_null(p);
 	p = strchr(p + 1, '\n');
 	assert_non_null(p);
-	assert_in_range(p, 0, buf + sizeof(buf) - 3);
+	assert_uint_in_range(p, 0, buf + sizeof(buf) - 3);
 	assert_memory_equal(p + 2, "ptr ", 4);
 	p = strchr(p + 1, '\n');
 	assert_non_null(p);

@@ -37,6 +37,7 @@ pytestmark = pytest.mark.extra_artifacts(
                 "APL",
                 "ATMA",
                 "AVC",
+                "BRID",
                 "CAA",
                 "CDNSKEY",
                 "CDS",
@@ -49,11 +50,13 @@ pytestmark = pytest.mark.extra_artifacts(
                 "DNSKEY",
                 "DOA",
                 "DS",
+                "DSYNC",
                 "EID",
                 "EUI48",
                 "EUI64",
                 "GID",
                 "GPOS",
+                "HHIT",
                 "HINFO",
                 "HIP",
                 "HTTPS",
@@ -118,22 +121,18 @@ pytestmark = pytest.mark.extra_artifacts(
     ],
 )
 def test_rrchecker_list_standard_names(option, expected_result):
-    stdout = isctest.run.cmd([os.environ["RRCHECKER"], option]).stdout.decode("utf-8")
-    values = [line for line in stdout.split("\n") if line.strip()]
+    cmd = isctest.run.cmd([os.environ["RRCHECKER"], option])
+    values = [line for line in cmd.out.split("\n") if line.strip()]
 
     assert sorted(values) == sorted(expected_result)
 
 
 def run_rrchecker(option, rr_class, rr_type, rr_rest):
-    rrchecker_output = (
-        isctest.run.cmd(
-            [os.environ["RRCHECKER"], option],
-            input_text=f"{rr_class} {rr_type} {rr_rest}".encode("utf-8"),
-        )
-        .stdout.decode("utf-8")
-        .strip()
+    cmd = isctest.run.cmd(
+        [os.environ["RRCHECKER"], option],
+        input_text=f"{rr_class} {rr_type} {rr_rest}".encode("utf-8"),
     )
-    return rrchecker_output.split()
+    return cmd.out.strip().split()
 
 
 @pytest.mark.parametrize(
@@ -159,7 +158,7 @@ def test_rrchecker_conversions(option):
             ".",
             tempzone_file,
         ],
-    ).stdout.decode("utf-8")
+    ).out
     checkzone_output = [
         line for line in checkzone_output.splitlines() if not line.startswith(";")
     ]

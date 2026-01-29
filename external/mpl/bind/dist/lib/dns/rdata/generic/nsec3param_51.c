@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3param_51.c,v 1.1.1.9 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: nsec3param_51.c,v 1.1.1.10 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -230,9 +230,7 @@ tostruct_nsec3param(ARGS_TOSTRUCT) {
 	REQUIRE(nsec3param != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nsec3param->common.rdclass = rdata->rdclass;
-	nsec3param->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsec3param->common, link);
+	DNS_RDATACOMMON_INIT(nsec3param, rdata->type, rdata->rdclass);
 
 	region.base = rdata->data;
 	region.length = rdata->length;

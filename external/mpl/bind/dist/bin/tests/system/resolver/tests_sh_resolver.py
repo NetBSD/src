@@ -11,6 +11,7 @@
 
 import pytest
 
+
 pytestmark = pytest.mark.extra_artifacts(
     [
         ".digrc",

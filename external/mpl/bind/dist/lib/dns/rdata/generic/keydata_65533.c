@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.1.1.10 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.1.1.11 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -332,9 +332,7 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_keydata);
 	REQUIRE(keydata != NULL);
 
-	keydata->common.rdclass = rdata->rdclass;
-	keydata->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&keydata->common, link);
+	DNS_RDATACOMMON_INIT(keydata, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

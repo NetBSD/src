@@ -12,8 +12,8 @@ aaaa01.example.		3600	IN	AAAA	::1
 aaaa02.example.		3600	IN	AAAA	fd92:7065:b8e:ffff::5
 afsdb01.example.	3600	IN	AFSDB	0 hostname.example.
 afsdb02.example.	3600	IN	AFSDB	65535 .
-amtrelay01.example.	3600	IN	AMTRELAY 0 0 0
-amtrelay02.example.	3600	IN	AMTRELAY 0 1 0
+amtrelay01.example.	3600	IN	AMTRELAY 0 0 0 .
+amtrelay02.example.	3600	IN	AMTRELAY 0 1 0 .
 amtrelay03.example.	3600	IN	AMTRELAY 0 0 1 0.0.0.1
 amtrelay04.example.	3600	IN	AMTRELAY 0 0 2 ::
 amtrelay05.example.	3600	IN	AMTRELAY 0 0 3 example.net.
@@ -25,6 +25,7 @@ atma02.example.		3600	IN	ATMA	+61200000000
 atma03.example.		3600	IN	ATMA	1234567890abcdef
 atma04.example.		3600	IN	ATMA	fedcba0987654321
 avc.example.		3600	IN	AVC	"foo:bar"
+brid.example.		3600	IN	BRID	abcd
 caa01.example.		3600	IN	CAA	0 issue "ca.example.net; policy=ev"
 caa02.example.		3600	IN	CAA	128 tbs "Unknown"
 caa03.example.		3600	IN	CAA	128 tbs ""
@@ -49,12 +50,14 @@ ds01.example.		3600	IN	NS	ns42.example.
 ds01.example.		3600	IN	DS	12892 5 2 26584835CA80C81C91999F31CFAF2A0E89D4FF1C8FAFD0DDB31A85C7 19277C13
 ds02.example.		3600	IN	NS	ns43.example.
 ds02.example.		3600	IN	DS	12892 5 1 7AA4A3F416C2F2391FB7AB0D434F762CD62D1390
+dsync01.example.	3600	IN	DSYNC	CDS NOTIFY 53 .
 eid01.example.		3600	IN	EID	1289AB
 eui48.example.		3600	IN	EUI48	01-23-45-67-89-ab
 eui64.example.		3600	IN	EUI64	01-23-45-67-89-ab-cd-ef
 gid01.example.		3600	IN	GID	\# 1 03
 gpos01.example.		3600	IN	GPOS	"-22.6882" "116.8652" "250.0"
 gpos02.example.		3600	IN	GPOS	"" "" ""
+hhit.example.		3600	IN	HHIT	abcd
 hinfo01.example.	3600	IN	HINFO	"Generic PC clone" "NetBSD-1.4"
 hinfo02.example.	3600	IN	HINFO	"PC" "NetBSD"
 hip1.example.		3600	IN	HIP	2 200100107B1A74DF365639CC39F1D578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D

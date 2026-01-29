@@ -11,7 +11,8 @@
 
 import pytest
 
-import isctest.mark
+# isctest.asyncserver requires dnspython >= 2.0.0
+pytest.importorskip("dns", minversion="2.0.0")
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -25,6 +26,6 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 # The qmin test is inherently unstable, see GL #904 for details.
-@isctest.mark.flaky(max_runs=3)
+@pytest.mark.flaky(max_runs=3)
 def test_qmin(run_tests_sh):
     run_tests_sh()

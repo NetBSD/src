@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-cds.c,v 1.1.1.11 2025/01/26 16:12:19 christos Exp $	*/
+/*	$NetBSD: dnssec-cds.c,v 1.1.1.12 2026/01/29 18:19:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,6 +36,7 @@
 #include <isc/serial.h>
 #include <isc/string.h>
 #include <isc/time.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -1085,6 +1086,7 @@ cleanup(void) {
 		}
 		isc_mem_destroy(&mctx);
 	}
+	rcu_barrier();
 }
 
 int

@@ -16,6 +16,7 @@ dnssec-policy <string> {
 	dnskey-ttl <duration>;
 	inline-signing <boolean>;
 	keys { ( csk | ksk | zsk ) [ key-directory | key-store <string> ] lifetime <duration_or_unlimited> algorithm <string> [ tag-range <integer> <integer> ] [ <integer> ]; ... };
+	manual-mode <boolean>;
 	max-zone-ttl <duration>;
 	nsec3param [ iterations <integer> ] [ optout <boolean> ] [ salt-length <integer> ];
 	offline-ksk <boolean>;
@@ -265,7 +266,7 @@ options {
 	resolver-query-timeout <integer>;
 	resolver-use-dns64 <boolean>;
 	response-padding { <address_match_element>; ... } block-size <integer>;
-	response-policy { zone <string> [ add-soa <boolean> ] [ log <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ policy ( cname | disabled | drop | given | no-op | nodata | nxdomain | passthru | tcp-only <quoted_string> ) ] [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ ede <string> ]; ... } [ add-soa <boolean> ] [ break-dnssec <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ min-ns-dots <integer> ] [ nsip-wait-recurse <boolean> ] [ nsdname-wait-recurse <boolean> ] [ qname-wait-recurse <boolean> ] [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [ dnsrps-options { <unspecified-text> } ];
+	response-policy { zone <string> [ add-soa <boolean> ] [ log <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ policy ( cname | disabled | drop | given | no-op | nodata | nxdomain | passthru | tcp-only <quoted_string> ) ] [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ ede <string> ]; ... } [ add-soa <boolean> ] [ break-dnssec <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ min-ns-dots <integer> ] [ nsip-wait-recurse <boolean> ] [ nsdname-wait-recurse <boolean> ] [ qname-wait-recurse <boolean> ] [ recursive-only <boolean> ] [ servfail-until-ready <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [ dnsrps-options { <unspecified-text> } ];
 	responselog <boolean>;
 	reuseport <boolean>;
 	root-key-sentinel <boolean>;
@@ -304,8 +305,8 @@ options {
 	tcp-listen-queue <integer>;
 	tcp-receive-buffer <integer>;
 	tcp-send-buffer <integer>;
-	tkey-domain <quoted_string>;
-	tkey-gssapi-credential <quoted_string>;
+	tkey-domain <quoted_string>; // obsolete
+	tkey-gssapi-credential <quoted_string>; // deprecated
 	tkey-gssapi-keytab <quoted_string>;
 	tls-port <integer>;
 	transfer-format ( many-answers | one-answer );
@@ -551,7 +552,7 @@ view <string> [ <class> ] {
 	resolver-query-timeout <integer>;
 	resolver-use-dns64 <boolean>;
 	response-padding { <address_match_element>; ... } block-size <integer>;
-	response-policy { zone <string> [ add-soa <boolean> ] [ log <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ policy ( cname | disabled | drop | given | no-op | nodata | nxdomain | passthru | tcp-only <quoted_string> ) ] [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ ede <string> ]; ... } [ add-soa <boolean> ] [ break-dnssec <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ min-ns-dots <integer> ] [ nsip-wait-recurse <boolean> ] [ nsdname-wait-recurse <boolean> ] [ qname-wait-recurse <boolean> ] [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [ dnsrps-options { <unspecified-text> } ];
+	response-policy { zone <string> [ add-soa <boolean> ] [ log <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ policy ( cname | disabled | drop | given | no-op | nodata | nxdomain | passthru | tcp-only <quoted_string> ) ] [ recursive-only <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ ede <string> ]; ... } [ add-soa <boolean> ] [ break-dnssec <boolean> ] [ max-policy-ttl <duration> ] [ min-update-interval <duration> ] [ min-ns-dots <integer> ] [ nsip-wait-recurse <boolean> ] [ nsdname-wait-recurse <boolean> ] [ qname-wait-recurse <boolean> ] [ recursive-only <boolean> ] [ servfail-until-ready <boolean> ] [ nsip-enable <boolean> ] [ nsdname-enable <boolean> ] [ dnsrps-enable <boolean> ] [ dnsrps-options { <unspecified-text> } ];
 	root-key-sentinel <boolean>;
 	rrset-order { [ class <string> ] [ type <string> ] [ name <quoted_string> ] <string> <string>; ... };
 	send-cookie <boolean>;

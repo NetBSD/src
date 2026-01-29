@@ -12,10 +12,9 @@
 # information regarding copyright ownership.
 
 import pytest
+
 import isctest
 
-pytest.importorskip("dns")
-import dns.message
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -26,7 +25,7 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 def test_querysource_none():
-    msg = dns.message.make_query("example.", "A", want_dnssec=False)
+    msg = isctest.query.create("example.", "A", dnssec=False)
 
     res = isctest.query.udp(msg, "10.53.0.2")
     isctest.check.noerror(res)
@@ -43,7 +42,7 @@ def test_querysource_none():
     # using a different name below to make sure we don't use the
     # resolver cache
 
-    msg = dns.message.make_query("exampletwo.", "A", want_dnssec=False)
+    msg = isctest.query.create("exampletwo.", "A", dnssec=False)
 
     res = isctest.query.udp(msg, "fd92:7065:b8e:ffff::2")
     isctest.check.noerror(res)

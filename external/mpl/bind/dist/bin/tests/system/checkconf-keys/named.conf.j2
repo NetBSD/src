@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key-store "ksk" {
+	directory "ksk";
+};
+
+key-store "zsk" {
+	directory "zsk";
+};
+
+dnssec-policy "alternative-kz" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm RSASHA256 2048;
+		zsk key-directory lifetime unlimited algorithm RSASHA256 2048;
+	};
+};
+
+dnssec-policy "alternative-csk" {
+	keys {
+		csk key-directory lifetime unlimited algorithm RSASHA256 2048;
+	};
+};
+
+dnssec-policy "default-kz" {
+	keys {
+		ksk key-directory lifetime unlimited algorithm ECDSAP256SHA256;
+		zsk key-directory lifetime unlimited algorithm ECDSAP256SHA256;
+	};
+};
+
+dnssec-policy "default-csk" {
+	keys {
+		csk key-directory lifetime unlimited algorithm ECDSAP256SHA256;
+	};
+};
+
+
+dnssec-policy "keystores-kz" {
+	keys {
+		ksk key-store "ksk" lifetime unlimited algorithm ECDSAP256SHA256;
+		zsk key-store "zsk" lifetime unlimited algorithm ECDSAP256SHA256;
+	};
+};
+
+zone "default.example" {
+	type primary;
+	file "default.example.db";
+	dnssec-policy "default";
+};
+
+zone "alternative.kz.example" {
+	type primary;
+	file "alternative.kz.example.db";
+	dnssec-policy "alternative-kz";
+};
+
+zone "alternative.csk.example" {
+	type primary;
+	file "alternative.csk.example.db";
+	dnssec-policy "alternative-csk";
+};
+
+zone "default.kz.example" {
+	type primary;
+	file "default.kz.example.db";
+	dnssec-policy "default-kz";
+};
+
+zone "default.csk.example" {
+	type primary;
+	file "default.csk.example.db";
+	dnssec-policy "default-csk";
+};
+
+zone "keystores.kz.example" {
+	type primary;
+	file "keystores.kz.example.db";
+	dnssec-policy "keystores-kz";
+};

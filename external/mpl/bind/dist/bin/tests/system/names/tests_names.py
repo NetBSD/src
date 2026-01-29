@@ -13,8 +13,6 @@ import pytest
 
 pytest.importorskip("dns", minversion="2.7.0")
 
-
-import dns.message
 import isctest
 
 
@@ -22,7 +20,7 @@ import isctest
 # about twice as large as the answer with compression enabled, while
 # maintaining identical content.
 def test_names():
-    msg = dns.message.make_query("example.", "MX")
+    msg = isctest.query.create("example.", "MX")
     # Getting message size with compression enabled
     res_enabled = isctest.query.tcp(msg, ip="10.53.0.1", source="10.53.0.1")
     # Getting message size with compression disabled

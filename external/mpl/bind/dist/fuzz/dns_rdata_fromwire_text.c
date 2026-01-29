@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.1.1.7 2025/01/26 16:12:29 christos Exp $	*/
+/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.1.1.8 2026/01/29 18:19:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -212,5 +212,6 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	assert(target.used == size);
 	assert(!memcmp(target.base, data, size));
 
+cleanup:
 	return 0;
 }

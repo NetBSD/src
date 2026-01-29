@@ -16,6 +16,19 @@ import time
 from typing import List, Optional
 
 import isctest.log
+import isctest.text
+
+
+class CmdResult:
+    def __init__(self, proc=None):
+        self.proc = proc
+        self.rc = self.proc.returncode
+        self.out = isctest.text.Text("")
+        self.err = isctest.text.Text("")
+        if self.proc.stdout:
+            self.out = isctest.text.Text(self.proc.stdout.decode("utf-8"))
+        if self.proc.stderr:
+            self.err = isctest.text.Text(self.proc.stderr.decode("utf-8"))
 
 
 def cmd(
@@ -29,7 +42,7 @@ def cmd(
     input_text: Optional[bytes] = None,
     raise_on_exception=True,
     env: Optional[dict] = None,
-):
+) -> CmdResult:
     """Execute a command with given args as subprocess."""
     isctest.log.debug(f"isctest.run.cmd(): {' '.join(args)}")
 
@@ -59,13 +72,26 @@ def cmd(
             env=env,
         )
         print_debug_logs(proc)
-        return proc
+        return CmdResult(proc)
     except subprocess.CalledProcessError as exc:
         print_debug_logs(exc)
         isctest.log.debug(f"isctest.run.cmd(): (return code) {exc.returncode}")
         if raise_on_exception:
             raise exc
-        return exc
+        return CmdResult(exc)
+
+
+class EnvCmd:
+    """Helper for executing binaries from env with optional base parameters."""
+
+    def __init__(self, name: str, base_params: str = ""):
+        self.bin_path = os.environ[name]
+        self.base_params = base_params.split()
+
+    def __call__(self, params: str, **kwargs) -> CmdResult:
+        """Call the command. Keyword arguments from isctest.run.cmd() are supported."""
+        args = self.base_params + params.split()
+        return cmd([self.bin_path] + args, **kwargs)
 
 
 def _run_script(
@@ -101,17 +127,6 @@ def _run_script(
         if returncode:
             raise subprocess.CalledProcessError(returncode, command)
         isctest.log.debug("  exited with %d", returncode)
-
-
-class Dig:
-    def __init__(self, base_params: str = ""):
-        self.base_params = base_params
-
-    def __call__(self, params: str) -> str:
-        """Run the dig command with the given parameters and return the decoded output."""
-        return cmd(
-            [os.environ.get("DIG")] + f"{self.base_params} {params}".split(),
-        ).stdout.decode("utf-8")
 
 
 def shell(script: str, args: Optional[List[str]] = None) -> None:

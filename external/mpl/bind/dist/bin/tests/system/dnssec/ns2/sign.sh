@@ -63,7 +63,8 @@ for subdomain in digest-alg-unsupported ds-unsupported secure badds \
   ttlpatch split-dnssec split-smart expired expiring upper lower \
   dnskey-unknown dnskey-unsupported dnskey-unsupported-2 \
   dnskey-nsec3-unknown managed-future future revkey \
-  dname-at-apex-nsec3 occluded rsasha1 rsasha1-1024; do
+  dname-at-apex-nsec3 occluded rsasha1 rsasha1-1024 \
+  extrabadkey; do
   cp "../ns3/dsset-$subdomain.example." .
 done
 

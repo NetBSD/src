@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_2.c,v 1.1.1.8 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: ns_2.c,v 1.1.1.9 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -159,9 +159,7 @@ tostruct_ns(ARGS_TOSTRUCT) {
 	REQUIRE(ns != NULL);
 	REQUIRE(rdata->length != 0);
 
-	ns->common.rdclass = rdata->rdclass;
-	ns->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ns->common, link);
+	DNS_RDATACOMMON_INIT(ns, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

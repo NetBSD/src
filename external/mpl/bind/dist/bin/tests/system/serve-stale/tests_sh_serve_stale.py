@@ -24,5 +24,6 @@ pytestmark = pytest.mark.extra_artifacts(
 )
 
 
+@pytest.mark.flaky(max_runs=2)
 def test_serve_stale(run_tests_sh):
     run_tests_sh()

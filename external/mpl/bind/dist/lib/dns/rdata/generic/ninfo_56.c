@@ -1,4 +1,4 @@
-/*	$NetBSD: ninfo_56.c,v 1.1.1.9 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: ninfo_56.c,v 1.1.1.10 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,9 +77,7 @@ tostruct_ninfo(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
 	REQUIRE(ninfo != NULL);
 
-	ninfo->common.rdclass = rdata->rdclass;
-	ninfo->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ninfo->common, link);
+	DNS_RDATACOMMON_INIT(ninfo, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_txt(CALL_TOSTRUCT);
 }

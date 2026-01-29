@@ -1,4 +1,4 @@
-/*	$NetBSD: makejournal.c,v 1.1.1.2 2025/01/26 16:12:20 christos Exp $	*/
+/*	$NetBSD: makejournal.c,v 1.1.1.3 2026/01/29 18:19:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -157,6 +157,8 @@ cleanup:
 	if (mctx != NULL) {
 		isc_mem_destroy(&mctx);
 	}
+
+	rcu_barrier();
 
 	return result != ISC_R_SUCCESS ? 1 : 0;
 }

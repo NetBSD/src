@@ -1,4 +1,4 @@
-/*	$NetBSD: ede_test.c,v 1.1.1.1 2025/05/21 14:41:02 christos Exp $	*/
+/*	$NetBSD: ede_test.c,v 1.1.1.2 2026/01/29 18:19:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,7 @@ dns_ede_test_equals(const ede_test_expected_t *expected, size_t expected_count,
 		uint16_t code;
 		const unsigned char *txt;
 
-		assert_in_range(count, 0, expected_count);
+		assert_uint_in_range(count, 0, expected_count);
 		assert_int_equal(edns->code, DNS_OPT_EDE);
 
 		code = ISC_U8TO16_BE(edns->value);

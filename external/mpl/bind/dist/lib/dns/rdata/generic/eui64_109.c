@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64_109.c,v 1.1.1.8 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.1.1.9 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -141,9 +141,7 @@ tostruct_eui64(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	eui64->common.rdclass = rdata->rdclass;
-	eui64->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&eui64->common, link);
+	DNS_RDATACOMMON_INIT(eui64, rdata->type, rdata->rdclass);
 
 	memmove(eui64->eui64, rdata->data, rdata->length);
 	return ISC_R_SUCCESS;

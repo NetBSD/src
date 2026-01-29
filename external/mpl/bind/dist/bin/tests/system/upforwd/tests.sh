@@ -538,7 +538,7 @@ n=$((n + 1))
 ret=0
 echo_i "attempting updates that should exceed quota ($n)"
 # lower the update quota to 1.
-copy_setports ns3/named2.conf.in ns3/named.conf
+cp ns3/named2.conf ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
 nextpart ns3/named.run >/dev/null
 for loop in 1 2 3 4 5 6 7 8 9 10; do

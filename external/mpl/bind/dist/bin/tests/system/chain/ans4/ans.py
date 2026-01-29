@@ -19,8 +19,8 @@ import abc
 import logging
 import re
 
+import dns.name
 import dns.rcode
-import dns.rdata
 import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
@@ -33,11 +33,6 @@ from isctest.asyncserver import (
     QueryContext,
     ResponseAction,
 )
-
-try:
-    RdataType = dns.rdatatype.RdataType
-except AttributeError:  # dnspython < 2.0.0 compat
-    RdataType = int  # type: ignore
 
 
 class ChainNameGenerator:
@@ -105,13 +100,13 @@ class RecordGenerator(abc.ABC):
 
     @classmethod
     def create_rrset(
-        cls, owner: dns.name.Name, rrtype: RdataType, rdata: str
+        cls, owner: dns.name.Name, rrtype: dns.rdatatype.RdataType, rdata: str
     ) -> dns.rrset.RRset:
         return dns.rrset.from_text(owner, 86400, dns.rdataclass.IN, rrtype, rdata)
 
     @classmethod
     def create_rrset_signature(
-        cls, owner: dns.name.Name, rrtype: RdataType
+        cls, owner: dns.name.Name, rrtype: dns.rdatatype.RdataType
     ) -> dns.rrset.RRset:
         covers = dns.rdatatype.to_text(rrtype)
         ttl = "86400"
@@ -443,9 +438,8 @@ class ChainResponseHandler(DomainHandler):
         for rrset in self._additional_rrsets:
             qctx.response.additional.append(rrset)
 
-        qctx.response.set_rcode(dns.rcode.NOERROR)
         qctx.response.use_edns()
-        yield DnsResponseSend(qctx.response, authoritative=True)
+        yield DnsResponseSend(qctx.response)
 
     def _non_chain_answer(self, qctx: QueryContext) -> List[dns.rrset.RRset]:
         owner = qctx.qname
@@ -473,7 +467,10 @@ class ChainResponseHandler(DomainHandler):
 
 
 def main() -> None:
-    server = ControllableAsyncDnsServer(commands=[ChainSetupCommand])
+    server = ControllableAsyncDnsServer(
+        default_aa=True, default_rcode=dns.rcode.NOERROR
+    )
+    server.install_control_command(ChainSetupCommand())
     server.run()
 
 

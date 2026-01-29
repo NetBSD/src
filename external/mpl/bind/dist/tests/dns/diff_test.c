@@ -1,4 +1,4 @@
-/*	$NetBSD: diff_test.c,v 1.1.1.1 2025/01/26 16:12:37 christos Exp $	*/
+/*	$NetBSD: diff_test.c,v 1.1.1.2 2026/01/29 18:19:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,12 +21,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "isc/list.h"
-
 #define UNIT_TESTING
 #include <cmocka.h>
 
 #include <dns/diff.h>
+
+/* isc/list.h must be imported after cmocka to avoid redefinition errors */
+#include <isc/list.h>
 
 #include <tests/dns.h>
 

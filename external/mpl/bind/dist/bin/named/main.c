@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.18 2025/07/17 18:27:09 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.19 2026/01/29 18:19:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -144,6 +144,7 @@ static bool noedns = false;
 static bool nonearest = false;
 static bool nosoa = false;
 static bool notcp = false;
+static bool rpzslow = false;
 static bool sigvalinsecs = false;
 static bool transferinsecs = false;
 static bool transferslowly = false;
@@ -791,6 +792,8 @@ parse_T_opt(char *option) {
 		if (dns_zone_mkey_month < dns_zone_mkey_day) {
 			named_main_earlyfatal("bad mkeytimer");
 		}
+	} else if (!strcmp(option, "rpzslow")) {
+		rpzslow = true;
 	} else if (!strcmp(option, "sigvalinsecs")) {
 		sigvalinsecs = true;
 	} else if (!strcmp(option, "transferinsecs")) {
@@ -1369,6 +1372,9 @@ setup(void) {
 	}
 	if (notcp) {
 		ns_server_setoption(sctx, NS_SERVER_NOTCP, true);
+	}
+	if (rpzslow) {
+		ns_server_setoption(sctx, NS_SERVER_RPZSLOW, true);
 	}
 	if (sigvalinsecs) {
 		ns_server_setoption(sctx, NS_SERVER_SIGVALINSECS, true);

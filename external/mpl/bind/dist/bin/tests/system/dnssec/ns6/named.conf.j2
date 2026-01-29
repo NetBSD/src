@@ -1,0 +1,40 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS6
+
+options {
+	query-source address 10.53.0.6;
+	notify-source 10.53.0.6;
+	transfer-source 10.53.0.6;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.6; };
+	listen-on-v6 { none; };
+	recursion yes;
+	notify yes;
+	disable-algorithms . { @ALTERNATIVE_ALGORITHM@; };
+	dnssec-validation yes;
+};
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+zone "optout-tld" {
+	type primary;
+	file "optout-tld.db.signed";
+};
+
+include "trusted.conf";

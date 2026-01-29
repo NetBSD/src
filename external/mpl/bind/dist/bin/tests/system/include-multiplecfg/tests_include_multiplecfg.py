@@ -11,10 +11,10 @@
 
 import os
 
-import isctest
+import dns.rrset
 import pytest
 
-import dns.message
+import isctest
 
 
 @pytest.mark.parametrize(
@@ -26,7 +26,7 @@ import dns.message
     ],
 )
 def test_include_multiplecfg(qname):
-    msg = dns.message.make_query(qname, "A")
+    msg = isctest.query.create(qname, "A")
     res = isctest.query.tcp(msg, "10.53.0.2")
 
     isctest.check.noerror(res)

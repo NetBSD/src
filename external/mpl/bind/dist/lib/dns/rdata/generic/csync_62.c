@@ -1,4 +1,4 @@
-/*	$NetBSD: csync_62.c,v 1.1.1.8 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: csync_62.c,v 1.1.1.9 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -170,9 +170,7 @@ tostruct_csync(ARGS_TOSTRUCT) {
 	REQUIRE(csync != NULL);
 	REQUIRE(rdata->length != 0);
 
-	csync->common.rdclass = rdata->rdclass;
-	csync->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&csync->common, link);
+	DNS_RDATACOMMON_INIT(csync, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

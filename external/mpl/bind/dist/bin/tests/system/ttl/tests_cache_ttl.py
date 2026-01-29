@@ -13,9 +13,6 @@ import pytest
 
 import isctest
 
-pytest.importorskip("dns")
-import dns.message
-
 
 @pytest.mark.parametrize(
     "qname,rdtype,expected_ttl",
@@ -27,7 +24,7 @@ import dns.message
     ],
 )
 def test_cache_ttl(qname, rdtype, expected_ttl):
-    msg = dns.message.make_query(qname, rdtype)
+    msg = isctest.query.create(qname, rdtype)
     response = isctest.query.udp(msg, "10.53.0.2")
     for rr in response.answer + response.authority:
         assert rr.ttl == expected_ttl

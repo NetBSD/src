@@ -1,0 +1,86 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+tls local {
+	key-file "../self-signed-key.pem";
+	cert-file "../self-signed-cert.pem";
+};
+
+options {
+	query-source address 10.53.0.4;
+	notify-source 10.53.0.4;
+	transfer-source 10.53.0.4;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.4; };
+	listen-on tls local { 10.53.0.4; };             // DoT
+	listen-on-v6 { none; };
+	recursion no;
+	notify no;
+	ixfr-from-differences yes;
+	check-integrity no;
+	dnssec-validation no;
+};
+
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint";
+};
+
+tls tls-v1.3 {
+	protocols { TLSv1.3; };
+	cipher-suites "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256";
+	prefer-server-ciphers no;
+};
+
+zone "example" {
+	type secondary;
+	primaries { 10.53.0.1 tls tls-v1.3; };
+	file "example.db";
+	allow-transfer { any; };
+};
+
+tls tls-v1.3-chacha20 {
+	protocols { TLSv1.3; };
+	cipher-suites "TLS_CHACHA20_POLY1305_SHA256";
+	prefer-server-ciphers no;
+};
+
+zone "example-aes-128" {
+	type secondary;
+	primaries port @EXTRAPORT1@ { 10.53.0.1 tls tls-v1.3-chacha20; };
+	file "example-aes-128.db";
+	allow-transfer { any; };
+};
+
+zone "example-aes-256" {
+	type secondary;
+	primaries port @EXTRAPORT2@ { 10.53.0.1 tls tls-v1.3-chacha20; };
+	file "example-aes-256.db";
+	allow-transfer { any; };
+};
+
+zone "example-chacha-20" {
+	type secondary;
+	primaries port @EXTRAPORT3@ { 10.53.0.1 tls tls-v1.3-chacha20; };
+	file "example-chacha-20.db";
+	allow-transfer { any; };
+};

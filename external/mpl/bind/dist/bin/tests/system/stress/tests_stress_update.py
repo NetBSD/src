@@ -10,7 +10,6 @@
 # information regarding copyright ownership.
 
 import concurrent.futures
-import os
 import time
 
 import dns.update
@@ -27,22 +26,8 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 def rndc_loop(test_state, server):
-    rndc = os.getenv("RNDC")
-    port = os.getenv("CONTROLPORT")
-
-    cmdline = [
-        rndc,
-        "-c",
-        "../_common/rndc.conf",
-        "-p",
-        port,
-        "-s",
-        server,
-        "reload",
-    ]
-
     while not test_state["finished"]:
-        isctest.run.cmd(cmdline, raise_on_exception=False)
+        server.rndc("reload", raise_on_exception=False)
         time.sleep(1)
 
 

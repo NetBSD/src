@@ -399,7 +399,7 @@ status=$((status + ret))
 # Reconfigure ns4
 echo_i "reconfigure ns4"
 stop_server ns4
-copy_setports ns4/named2.conf.in ns4/named.conf
+cp ns4/named2.conf ns4/named.conf
 # Recompile zone
 $CHECKZONE -D -F raw -o ns4/kasp.db.raw kasp-max-types-per-name ns4/template.db >/dev/null 2>&1
 start_server --noclean --restart --port "${PORT}" ns4

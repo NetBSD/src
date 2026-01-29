@@ -1,0 +1,65 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.3;
+	query-source-v6 fd92:7065:b8e:ffff::3;
+	notify-source 10.53.0.3;
+	notify-source-v6 fd92:7065:b8e:ffff::3;
+	transfer-source 10.53.0.3;
+	transfer-source-v6 fd92:7065:b8e:ffff::3;
+	port @PORT@;
+	tls-port @TLSPORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	recursion no;
+	dnssec-validation no;
+	notify no;
+	minimal-responses no;
+	version none;  // make statistics independent of the version number
+	allow-new-zones yes;
+};
+
+statistics-channels { inet 10.53.0.3 port @EXTRAPORT1@ allow { localhost; }; };
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+server fd92:7065:b8e:ffff::1 {
+	tcp-only yes;
+};
+
+zone "example" {
+	type secondary;
+	file "example.db";
+	primaries { 10.53.0.1; };
+};
+
+zone "example-tcp" {
+	type secondary;
+	file "example-tcp.db";
+	primaries { fd92:7065:b8e:ffff::1; };
+};
+
+zone "example-tls" {
+	type secondary;
+	file "example-tls.db";
+	primaries { fd92:7065:b8e:ffff::1 tls ephemeral; };
+};

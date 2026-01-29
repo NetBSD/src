@@ -1,4 +1,4 @@
-/*	$NetBSD: skr_test.c,v 1.1.1.2 2025/07/17 18:27:22 christos Exp $	*/
+/*	$NetBSD: skr_test.c,v 1.1.1.3 2026/01/29 18:19:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -455,8 +455,9 @@ ISC_RUN_TEST_IMPL(skr_read) {
 
 	/* Get the KSK */
 	ISC_LIST_INIT(keys);
-	result = dns_dnssec_findmatchingkeys(
-		dname, NULL, TESTS_DIR "/testdata/skr/", NULL, 0, mctx, &keys);
+	result = dns_dnssec_findmatchingkeys(dname, NULL,
+					     TESTS_DIR "/testdata/skr/", NULL,
+					     0, false, mctx, &keys);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/* Create/read the SKR file */

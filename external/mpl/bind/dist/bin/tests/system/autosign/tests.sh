@@ -1086,7 +1086,7 @@ ret=0
 rekey_calls=$(grep "zone reconf.example.*next key event" ns3/named.run | wc -l)
 [ "$rekey_calls" -eq 0 ] || ret=1
 # ...then we add dnssec-policy and reconfigure
-($RNDCCMD 10.53.0.3 modzone reconf.example '{ type primary; file "reconf.example.db"; allow-update { any; }; dnssec-policy default; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
+($RNDCCMD 10.53.0.3 modzone reconf.example '{ type primary; file "reconf.example.db"; allow-update { any; }; dnssec-policy autosign; };' 2>&1 | sed 's/^/ns3 /' | cat_i) || ret=1
 rndc_reconfig ns3 10.53.0.3
 for i in 0 1 2 3 4 5 6 7 8 9; do
   lret=0
@@ -1255,17 +1255,19 @@ act=$(grep "DNSKEY .* is now active" ns3/named.run | wc -l)
 if [ $RSASHA1_SUPPORTED = 1 ]; then
   # Include two log lines for nsec-only zone.
   [ "$pub" -eq 53 ] || ret=1
-  [ "$act" -eq 53 ] || ret=1
+  [ "$act" -eq 54 ] || ret=1
 else
   [ "$pub" -eq 51 ] || ret=1
-  [ "$act" -eq 51 ] || ret=1
+  [ "$act" -eq 52 ] || ret=1
 fi
 rev=$(grep "DNSKEY .* is now revoked" ns3/named.run | wc -l)
 [ "$rev" -eq 0 ] || ret=1
+# inaczsk.example
 inac=$(grep "DNSKEY .* is now inactive" ns3/named.run | wc -l)
-[ "$inac" -eq 0 ] || ret=1
+[ "$inac" -eq 1 ] || ret=1
+# delzsk.example
 del=$(grep "DNSKEY .* is now deleted" ns3/named.run | wc -l)
-[ "$del" -eq 3 ] || ret=1
+[ "$del" -eq 1 ] || ret=1
 n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

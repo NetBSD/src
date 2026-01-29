@@ -128,10 +128,10 @@ Currently supported commands are:
 
 .. option:: addzone zone [class [view]] configuration
 
-   This command adds a zone while the server is running. This command requires the
-   ``allow-new-zones`` option to be set to ``yes``. The configuration
-   string specified on the command line is the zone configuration text
-   that would ordinarily be placed in :iscman:`named.conf`.
+   This command adds a zone while the server is running. This command
+   requires the ``allow-new-zones`` option to be set to ``yes``. The
+   configuration string specified on the command line is the zone
+   configuration text that would ordinarily be placed in :iscman:`named.conf`.
 
    The configuration is saved in a file called ``viewname.nzf`` (or, if
    :iscman:`named` is compiled with liblmdb, an LMDB database file called
@@ -171,13 +171,20 @@ Currently supported commands are:
 
    See also :option:`rndc addzone` and :option:`rndc modzone`.
 
-.. option:: dnssec (-status | -rollover -key id [-alg algorithm] [-when time] | -checkds [-key id [-alg algorithm]] [-when time]  published | withdrawn)) zone [class [view]]
+.. option:: dnssec (-status | -step | -rollover -key id [-alg algorithm] [-when time] | -checkds [-key id [-alg algorithm]] [-when time]  published | withdrawn)) zone [class [view]]
 
    This command allows you to interact with the "dnssec-policy" of a given
    zone.
 
    ``rndc dnssec -status`` show the DNSSEC signing state for the specified
    zone.
+
+   ``rndc dnssec -step`` sends a signal to an instance of :iscman:`named` for a
+   zone configured with ``dnssec-policy`` in manual mode, telling it to
+   continue with the operations that had previously been blocked but logged.
+   This gives the human operator a chance to review the log messages,
+   understand what will happen next and then, using ``rndc dnssec -step``, to
+   inform :iscman:`named` to proceed to the next stage.
 
    ``rndc dnssec -rollover`` allows you to schedule key rollover for a
    specific key (overriding the original key lifetime).
@@ -270,9 +277,7 @@ Currently supported commands are:
    immediately re-signed by the new keys, but is allowed to
    incrementally re-sign over time.
 
-   This command requires that the zone be configured with a ``dnssec-policy``, and
-   also requires the zone to be configured to allow dynamic DNS. (See "Dynamic
-   Update Policies" in the Administrator Reference Manual for more details.)
+   This command requires that the zone be configured with a ``dnssec-policy``.
 
 .. option:: managed-keys (status | refresh | sync | destroy) [class [view]]
 
@@ -328,10 +333,10 @@ Currently supported commands are:
 
 .. option:: modzone zone [class [view]] configuration
 
-   This command modifies the configuration of a zone while the server is running. This
-   command requires the ``allow-new-zones`` option to be set to ``yes``.
-   As with ``addzone``, the configuration string specified on the
-   command line is the zone configuration text that would ordinarily be
+   This command modifies the configuration of a zone while the server is
+   running. This command requires the ``allow-new-zones`` option to be set
+   to ``yes``.  As with ``addzone``, the configuration string specified on
+   the command line is the zone configuration text that would ordinarily be
    placed in :iscman:`named.conf`.
 
    If the zone was originally added via :option:`rndc addzone`, the
@@ -530,9 +535,11 @@ Currently supported commands are:
 
 .. option:: showzone zone [class [view]]
 
-   This command prints the configuration of a running zone.
+   If the server is configured with ``allow-new-zones`` set to ``yes``,
+   then this command prints the configuration of a running zone.
 
-   See also :option:`rndc zonestatus`.
+   See also :option:`rndc addzone`, :option:`rndc modzone`.
+   and :option:`rndc delzone`.
 
 .. option:: sign zone [class [view]]
 
@@ -540,11 +547,11 @@ Currently supported commands are:
    the ``key-directory`` option in the BIND 9 Administrator Reference
    Manual). If they are within their publication period, they are merged into
    the zone's DNSKEY RRset. If the DNSKEY RRset is changed, then the
-   zone is automatically re-signed with the new key set.
+   zone is automatically re-signed with the new key set. This will replace signatures
+   of inactive keys with signatures from active keys, and update signatures that
+   expire within the refresh interval.
 
-   This command requires that the zone be configured with a ``dnssec-policy``, and
-   also requires the zone to be configured to allow dynamic DNS. (See "Dynamic
-   Update Policies" in the Administrator Reference Manual for more details.)
+   This command requires that the zone be configured with a ``dnssec-policy``.
 
    See also :option:`rndc loadkeys`.
 

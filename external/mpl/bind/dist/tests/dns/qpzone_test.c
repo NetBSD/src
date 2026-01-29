@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone_test.c,v 1.1.1.2 2025/05/21 14:41:03 christos Exp $	*/
+/*	$NetBSD: qpzone_test.c,v 1.1.1.3 2026/01/29 18:19:57 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,11 +38,9 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
-#undef CHECK
 #include "qpzone.c"
 #pragma GCC diagnostic pop
 
-#undef CHECK
 #include <tests/dns.h>
 
 #define CASESET(header)                                \

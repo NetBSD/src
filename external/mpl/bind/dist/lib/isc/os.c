@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.3 2025/01/26 16:12:30 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4 2026/01/29 18:19:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,8 +89,9 @@ sched_affinity_ncpus(void) {
 		int i, n = 0;
 
 		for (i = 0; i < CPU_SETSIZE; ++i) {
-			if (CPU_ISSET(i, &cpus))
+			if (CPU_ISSET(i, &cpus)) {
 				++n;
+			}
 		}
 		return n;
 #endif
@@ -117,8 +118,9 @@ cpuset_affinity_ncpus(void) {
 	if (result != -1) {
 		int i, n = 0;
 		for (i = 0; i < CPU_SETSIZE; ++i) {
-			if (CPU_ISSET(i, &cpus))
+			if (CPU_ISSET(i, &cpus)) {
 				++n;
+			}
 		}
 		return n;
 	}

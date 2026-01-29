@@ -21,6 +21,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns*/*.nzd*",
         "ns*/catalog*.example.db",
         "ns*/*dom*.example.db",
+        "ns1/longlong.longlong.long.long.name.example.db",
         "ns1/tls1.example.db",
         "ns2/__catz__*.db",
         "ns2/named.conf.tmp",

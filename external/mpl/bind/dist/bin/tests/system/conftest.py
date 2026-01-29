@@ -12,7 +12,7 @@
 import filecmp
 import os
 from pathlib import Path
-import re
+from re import compile as Re
 import shutil
 import subprocess
 import tempfile
@@ -53,7 +53,7 @@ else:
 
 XDIST_WORKER = os.environ.get("PYTEST_XDIST_WORKER", "")
 FILE_DIR = os.path.abspath(Path(__file__).parent)
-ENV_RE = re.compile(b"([^=]+)=(.*)")
+ENV_RE = Re(b"([^=]+)=(.*)")
 PRIORITY_TESTS = [
     # Tests that are scheduled first. Speeds up parallel execution.
     "rpz/",
@@ -62,9 +62,9 @@ PRIORITY_TESTS = [
     "timeouts/",
     "upforwd/",
 ]
-PRIORITY_TESTS_RE = re.compile("|".join(PRIORITY_TESTS))
-SYSTEM_TEST_NAME_RE = re.compile(f"{SYSTEM_TEST_DIR_GIT_PATH}" + r"/([^/]+)")
-SYMLINK_REPLACEMENT_RE = re.compile(r"/tests(_.*)\.py")
+PRIORITY_TESTS_RE = Re("|".join(PRIORITY_TESTS))
+SYSTEM_TEST_NAME_RE = Re(f"{SYSTEM_TEST_DIR_GIT_PATH}" + r"/([^/]+)")
+SYMLINK_REPLACEMENT_RE = Re(r"/tests(_.*)\.py")
 
 # ----------------------- Global requirements ----------------------------
 
@@ -309,11 +309,14 @@ def logger(request, system_test_name):
 def expected_artifacts(request):
     common_artifacts = [
         ".libs/*",  # possible build artifacts, see GL #5055
-        "ns*/named.conf",
+        "ns*/named*.conf",
         "ns*/named.memstats",
         "ns*/named.run",
         "ns*/named.run.prev",
+        "core.[0-9]*-backtrace.txt",
+        "core.[0-9]*.gz",
         "pytest.log.txt",
+        "tsan.*.[0-9]*",
     ]
 
     if "USE_RR" in os.environ:
@@ -555,14 +558,26 @@ def system_test(
             pytest.skip("Prerequisites missing.")
 
     def setup_test():
-        templates.render_auto()
-        try:
-            isctest.run.shell(f"{system_test_dir}/setup.sh")
-        except FileNotFoundError:
-            pass  # setup.sh is optional
-        except subprocess.CalledProcessError as exc:
-            isctest.log.error("Failed to run test setup")
-            pytest.fail(f"setup.sh exited with {exc.returncode}")
+        template_data = None
+        bootstrap_fn = getattr(request.module, "bootstrap", None)
+        if bootstrap_fn:
+            isctest.log.debug("Running test bootstrap()")
+            try:
+                template_data = bootstrap_fn()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                isctest.log.error("Failed to run test bootstrap()")
+                kind = type(exc).__name__
+                pytest.fail(f"bootstrap() failed with {kind}")
+
+        templates.render_auto(template_data)
+
+        setup_sh_path = f"{system_test_dir}/setup.sh"
+        if os.path.exists(setup_sh_path):
+            try:
+                isctest.run.shell(f"{system_test_dir}/setup.sh")
+            except subprocess.CalledProcessError as exc:
+                isctest.log.error("Failed to run test setup.sh")
+                pytest.fail(f"setup.sh exited with {exc.returncode}")
 
     def start_servers():
         try:
@@ -634,3 +649,53 @@ def servers(system_test_dir):
             except ValueError:
                 continue
     return instances
+
+
+@pytest.fixture(scope="module")
+def ns1(servers):
+    return servers["ns1"]
+
+
+@pytest.fixture(scope="module")
+def ns2(servers):
+    return servers["ns2"]
+
+
+@pytest.fixture(scope="module")
+def ns3(servers):
+    return servers["ns3"]
+
+
+@pytest.fixture(scope="module")
+def ns4(servers):
+    return servers["ns4"]
+
+
+@pytest.fixture(scope="module")
+def ns5(servers):
+    return servers["ns5"]
+
+
+@pytest.fixture(scope="module")
+def ns6(servers):
+    return servers["ns6"]
+
+
+@pytest.fixture(scope="module")
+def ns7(servers):
+    return servers["ns7"]
+
+
+@pytest.fixture(scope="module")
+def ns8(servers):
+    return servers["ns8"]
+
+
+@pytest.fixture(scope="module")
+def ns9(servers):
+    return servers["ns9"]
+
+
+@pytest.fixture(scope="module")
+def ns10(servers):
+    return servers["ns10"]

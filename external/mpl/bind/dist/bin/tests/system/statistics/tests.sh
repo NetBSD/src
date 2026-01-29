@@ -150,11 +150,11 @@ n=$((n + 1))
 
 ret=0
 echo_i "checking that zones with slash are properly shown in XML output ($n)"
-if $FEATURETEST --have-libxml2 && [ -x ${CURL} ]; then
+if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XMLLINT}" ]; then
   ${CURL} http://10.53.0.1:${EXTRAPORT1}/xml/v3/zones >curl.out.${n} 2>/dev/null || ret=1
-  grep '<zone name="32/1.0.0.127-in-addr.example" rdataclass="IN">' curl.out.${n} >/dev/null || ret=1
+  test -n "$("$XMLLINT" --xpath '/statistics/views/view[@name="_default"]/zones/zone[@name="32/1.0.0.127-in-addr.example"]' curl.out.${n})" || ret=1
 else
-  echo_i "skipping test as libxml2 and/or curl was not found"
+  echo_i "skipping test as libxml2 and/or curl and/or xmllint was not found"
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -162,11 +162,11 @@ n=$((n + 1))
 
 ret=0
 echo_i "checking that zones return their type ($n)"
-if $FEATURETEST --have-libxml2 && [ -x ${CURL} ]; then
+if $FEATURETEST --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XMLLINT}" ]; then
   ${CURL} http://10.53.0.1:${EXTRAPORT1}/xml/v3/zones >curl.out.${n} 2>/dev/null || ret=1
-  grep '<zone name="32/1.0.0.127-in-addr.example" rdataclass="IN"><type>primary</type>' curl.out.${n} >/dev/null || ret=1
+  test -n "$("$XMLLINT" --xpath '/statistics/views/view[@name="_default"]/zones/zone[@name="32/1.0.0.127-in-addr.example"]/type[text()="primary"]' curl.out.${n})" || ret=1
 else
-  echo_i "skipping test as libxml2 and/or curl was not found"
+  echo_i "skipping test as libxml2 and/or curl and/or xmllint was not found"
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -230,23 +230,23 @@ n=$((n + 1))
 
 ret=0
 echo_i "checking bind9.xml socket statistics ($n)"
-if $FEATURETEST --have-libxml2 && [ -e stats.xml.out ] && [ -x "${XSLTPROC}" ]; then
+if $FEATURETEST --have-libxml2 && [ -e stats.xml.out ] && [ -x "${XSLTPROC}" ] && [ -x "${XMLLINT}" ]; then
   # Socket statistics (expect no errors)
-  grep "<counter name=\"TCP4AcceptFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP4BindFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP4ConnFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP4OpenFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP4RecvErr\">0</counter>" stats.xml.out >/dev/null || ret=1
-  # grep "<counter name=\"TCP4SendErr\">0</counter>" stats.xml.out >/dev/null || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP4AcceptFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP4BindFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP4ConnFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP4OpenFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP4RecvErr" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  # [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP4SendErr" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
 
-  grep "<counter name=\"TCP6AcceptFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP6BindFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP6ConnFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP6OpenFail\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP6RecvErr\">0</counter>" stats.xml.out >/dev/null || ret=1
-  grep "<counter name=\"TCP6SendErr\">0</counter>" stats.xml.out >/dev/null || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP6AcceptFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP6BindFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP6ConnFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP6OpenFail" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP6RecvErr" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
+  [ "$("$XMLLINT" --xpath 'count(/statistics/server/counters[@type="sockstat"]/counter[@name="TCP6SendErr" and text()="0"])' stats.xml.out)" -eq 1 ] || ret=1
 else
-  echo_i "skipping test as libxml2 and/or stats.xml.out file and/or xsltproc was not found"
+  echo_i "skipping test as libxml2 and/or stats.xml.out file and/or xsltproc and/or xmllint was not found"
 fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
@@ -258,17 +258,17 @@ ret=0
 rndc_stats ns2 10.53.0.2 || ret=1
 sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=0
 # turn on
-copy_setports ns2/named2.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 rndc_stats ns2 10.53.0.2 || ret=1
 sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null || ret=1
 # turn off
-copy_setports ns2/named.conf.in ns2/named.conf
+cp ns2/named1.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 rndc_stats ns2 10.53.0.2 || ret=1
 sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null && ret=0
 # turn on
-copy_setports ns2/named2.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 rndc_reconfig ns2 10.53.0.2
 rndc_stats ns2 10.53.0.2 || ret=1
 sed -n '/Per Zone Query Statistics/,/^++/p' $last_stats | grep -F '[example]' >/dev/null || ret=1

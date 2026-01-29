@@ -56,7 +56,7 @@ class CraftedTKEYQuery:
         rrset = dns.rrset.from_rdata(dns.name.root, dns.rdatatype.TKEY, rdata)
 
         # Prepare complete TKEY query to send
-        self.msg = dns.message.make_query(
+        self.msg = isctest.query.create(
             dns.name.root, dns.rdatatype.TKEY, dns.rdataclass.ANY
         )
         self.msg.additional.append(rrset)

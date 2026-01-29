@@ -1,0 +1,235 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set allow_query_blackhole = allow_query_blackhole | default(False) %}
+{% set bad_dlz = bad_dlz | default(False) %}
+{% set catalog4 = catalog4 | default(False) %}
+{% set catalog5 = catalog5 | default(False) %}
+{% set duplicate_zone = duplicate_zone | default(False) %}
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	allow-transfer { any; };
+	notify no;
+	notify-delay 0;
+	recursion no;
+	serial-query-rate 100;
+	dnssec-validation no;
+
+{% if allow_query_blackhole %}
+	allow-query { 10.53.0.99; };
+{% endif %}
+
+};
+
+/*
+ * The comment lines starting with "#Tn" markers below are designed to be
+ * uncommented by "tests.sh" when running the tests to perform some of required
+ * tests which need ns2 reconfgiuration.
+ */
+
+view "default" {
+
+	catalog-zones {
+		zone "catalog0.example"
+			/* unset default-primaries, see GL#5494 */
+			in-memory yes;
+		zone "catalog1.example"
+			default-masters { 10.53.0.1; }
+			min-update-interval 1s
+			in-memory no
+			zone-directory "zonedir";
+		zone "catalog2.example"
+			default-primaries { 10.53.0.1 port @EXTRAPORT1@; }
+			min-update-interval 1s
+			in-memory yes;
+		zone "catalog3.example"
+			default-masters { 10.53.0.1; }
+			min-update-interval 1s
+			zone-directory "nonexistent";
+
+{% if catalog4 %}
+		zone "catalog4.example"
+			min-update-interval 1s
+			default-masters { 10.53.0.1; };
+{% endif %}
+
+{% if catalog5 %}
+		zone "catalog5.example"
+			min-update-interval 1s
+			default-primaries { 10.53.0.1; };
+{% endif %}
+
+		zone "catalog6.example"
+			min-update-interval 1s
+			default-primaries { 10.53.0.1; };
+		zone "catalog-bad1.example"
+			default-masters { 10.53.0.1; }
+			min-update-interval 1s
+			in-memory yes;
+		zone "catalog-bad2.example"
+			default-masters { 10.53.0.1; }
+			min-update-interval 1s
+			in-memory yes;
+		zone "catalog-bad3.example"
+			default-masters { 10.53.0.1; }
+			min-update-interval 1s
+			in-memory yes;
+		zone "catalog-bad4.example"
+			default-masters { 10.53.0.1; }
+			min-update-interval 1s
+			in-memory yes;
+	};
+
+{% if bad_dlz %}
+	# A faulty dlz configuration to check if named and catz survive a certain class
+	# of failed configuration attempts (see GL #3060).
+	# We use "dlz" because the dlz processing code is located in an ideal place in
+	# the view configuration function for the test to cover the view reverting code.
+	dlz "bad-dlz" {
+		database "dlopen bad-dlz.so example.org";
+	};
+{% endif %}
+
+	zone "dom-existing.example" {
+	    type primary;
+	    file "dom-existing.example.db";
+	};
+
+	zone "dom-existing-forward.example" {
+	    type forward;
+	    forward only;
+	    forwarders { 10.53.0.1; };
+	};
+
+	zone "dom-existing-forward-off.example" {
+	    type forward;
+	    forward only;
+	    forwarders { };
+	};
+
+	zone "catalog0.example" {
+		type secondary;
+		file "catalog0.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog1.example" {
+		type secondary;
+		file "catalog1.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog2.example" {
+		type secondary;
+		file "catalog2.example.db";
+		primaries { 10.53.0.3; };
+	};
+
+	zone "catalog3.example" {
+		type secondary;
+		file "catalog3.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog4.example" {
+		type secondary;
+		file "catalog4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	zone "catalog6.example" {
+		type secondary;
+		file "catalog6.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+{% if duplicate_zone %}
+	# When the following zone configuration is enabled, "dom3.example" should
+	# already exist as a member of "catalog1.example", and named should be able
+	# to deal with that situation (see GL #3911). Make sure that this duplicate
+	# zone comes after the the "catalog1.example" zone in the configuration file.
+	zone "dom3.example" {
+	    type secondary;
+	    file "dom2.example.db";
+	};
+{% endif %}
+
+	# No "version" property
+	zone "catalog-bad1.example" {
+		type secondary;
+		file "catalog-bad1.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Unsupported "version" property
+	zone "catalog-bad2.example" {
+		type secondary;
+		file "catalog-bad2.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Two RRs in TXT RRset for the "version" property
+	zone "catalog-bad3.example" {
+		type secondary;
+		file "catalog-bad3.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+	# Type A "version" property
+	zone "catalog-bad4.example" {
+		type secondary;
+		file "catalog-bad4.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+};
+
+view "ch" ch {
+
+	catalog-zones {
+		zone "catalog-bad5.example"
+			default-masters { 10.53.0.1; }
+			in-memory yes;
+	};
+
+	# Non-IN class catalog zone
+	zone "catalog-bad5.example" ch {
+		type secondary;
+		file "catalog-bad5.example.db";
+		primaries { 10.53.0.1; };
+	};
+
+};
+
+key tsig_key. {
+	secret "LSAnCU+Z";
+	algorithm @DEFAULT_HMAC@;
+};
+
+key next_key. {
+	secret "LaAnCU+Z";
+	algorithm @DEFAULT_HMAC@;
+};

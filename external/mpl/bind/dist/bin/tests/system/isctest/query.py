@@ -99,3 +99,23 @@ def tls(*args, **kwargs) -> Any:
         raise RuntimeError(
             "dnspython 2.5.0 or newer is required for isctest.query.tls()"
         ) from e
+
+
+def create(
+    qname,
+    qtype,
+    qclass=dns.rdataclass.IN,
+    dnssec: bool = True,
+    cd: bool = False,
+    ad: bool = True,
+) -> dns.message.Message:
+    """Create DNS query with defaults suitable for our tests."""
+    msg = dns.message.make_query(
+        qname, qtype, qclass, use_edns=True, want_dnssec=dnssec
+    )
+    msg.flags = dns.flags.RD
+    if ad:
+        msg.flags |= dns.flags.AD
+    if cd:
+        msg.flags |= dns.flags.CD
+    return msg

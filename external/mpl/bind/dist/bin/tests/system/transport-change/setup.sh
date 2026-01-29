@@ -15,5 +15,3 @@
 . ../conf.sh
 
 $SHELL "${TOP_SRCDIR}"/bin/tests/system/genzone.sh 2 >ns1/example.db
-
-copy_setports ns1/named.conf.in ns1/named.conf

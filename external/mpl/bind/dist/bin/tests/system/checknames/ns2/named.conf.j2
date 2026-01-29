@@ -20,12 +20,11 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 	check-names response warn;
 	notify yes;
 };
 
-trust-anchors { };
 
 zone "." {
 	type hint;

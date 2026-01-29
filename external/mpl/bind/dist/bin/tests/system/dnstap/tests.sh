@@ -549,9 +549,7 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 HAS_PYYAML=0
-if [ -x "$PYTHON" ]; then
-  $PYTHON -c "import yaml" 2>/dev/null && HAS_PYYAML=1
-fi
+$PYTHON -c "import yaml" 2>/dev/null && HAS_PYYAML=1
 
 if [ $HAS_PYYAML -ne 0 ]; then
   echo_i "checking dnstap-read YAML output"

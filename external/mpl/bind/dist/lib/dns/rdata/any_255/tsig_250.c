@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.c,v 1.1.1.9 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.1.1.10 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -456,9 +456,7 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->length != 0);
 
 	tsig = (dns_rdata_any_tsig_t *)target;
-	tsig->common.rdclass = rdata->rdclass;
-	tsig->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&tsig->common, link);
+	DNS_RDATACOMMON_INIT(tsig, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

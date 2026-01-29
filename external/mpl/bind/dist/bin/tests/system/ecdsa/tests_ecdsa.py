@@ -12,7 +12,8 @@
 import os
 import pytest
 
-import dns.message
+import dns.flags
+
 import isctest
 
 
@@ -29,8 +30,7 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 def check_server_soa(resolver):
-    msg = dns.message.make_query(".", "SOA")
-    msg.flags += dns.flags.AD
+    msg = isctest.query.create(".", "SOA")
     res1 = isctest.query.tcp(msg, "10.53.0.1")
     res2 = isctest.query.tcp(msg, resolver)
     isctest.check.rrsets_equal(res1.answer, res2.answer)

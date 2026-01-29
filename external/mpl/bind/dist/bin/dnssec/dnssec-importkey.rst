@@ -40,6 +40,11 @@ possible to set publication (:option:`-P`) and deletion (:option:`-D`) times for
 key, which means the public key can be added to and removed from the
 DNSKEY RRset on schedule even if the true private key is stored offline.
 
+When using ``dnssec-policy``, do not use :program:`dnssec-importkey` to
+import key files that cannot be used for signing. In this case, simply publish the
+imported DNSKEY record in the zone, and make sure that the files are outside
+the configured ``key-directory``.
+
 Options
 ~~~~~~~
 

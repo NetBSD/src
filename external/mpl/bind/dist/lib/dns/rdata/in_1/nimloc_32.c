@@ -1,4 +1,4 @@
-/*	$NetBSD: nimloc_32.c,v 1.1.1.9 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: nimloc_32.c,v 1.1.1.10 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,9 +135,7 @@ tostruct_in_nimloc(ARGS_TOSTRUCT) {
 	REQUIRE(nimloc != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nimloc->common.rdclass = rdata->rdclass;
-	nimloc->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nimloc->common, link);
+	DNS_RDATACOMMON_INIT(nimloc, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	nimloc->nimloc_len = r.length;

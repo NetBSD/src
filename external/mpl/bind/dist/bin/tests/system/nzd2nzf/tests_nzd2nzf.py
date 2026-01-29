@@ -17,8 +17,6 @@ import isctest
 import isctest.mark
 import isctest.run
 
-import dns.message
-
 pytestmark = [
     isctest.mark.with_lmdb,
     pytest.mark.extra_artifacts(
@@ -27,40 +25,38 @@ pytestmark = [
 ]
 
 
-def test_nzd2nzf(servers):
+def test_nzd2nzf(ns1):
     zone_data = '"added.example" { type primary; file "added.db"; };'
-    msg = dns.message.make_query("a.added.example.", "A")
+    msg = isctest.query.create("a.added.example.", "A")
 
     # query for non-existing zone data
-    res = isctest.query.tcp(msg, servers["ns1"].ip)
+    res = isctest.query.tcp(msg, ns1.ip)
     isctest.check.refused(res)
 
     # add new zone into the default NZD using "rndc addzone"
-    servers["ns1"].rndc(f"addzone {zone_data}", log=False)
+    ns1.rndc(f"addzone {zone_data}")
 
     # query for existing zone data
-    res = isctest.query.tcp(msg, servers["ns1"].ip)
+    res = isctest.query.tcp(msg, ns1.ip)
     isctest.check.noerror(res)
 
-    servers["ns1"].stop()
+    ns1.stop()
 
     # dump "_default.nzd" to "_default.nzf" and check that it contains the expected content
     cfg_dir = "ns1"
-    stdout = isctest.run.cmd(
-        [os.environ["NZD2NZF"], "_default.nzd"], cwd=cfg_dir
-    ).stdout.decode("utf-8")
-    assert f"zone {zone_data}" in stdout
+    cmd = isctest.run.cmd([os.environ["NZD2NZF"], "_default.nzd"], cwd=cfg_dir)
+    assert f"zone {zone_data}" in cmd.out
     nzf_filename = os.path.join(cfg_dir, "_default.nzf")
     with open(nzf_filename, "w", encoding="utf-8") as nzf_file:
-        nzf_file.write(stdout)
+        nzf_file.write(cmd.out)
 
     # delete "_default.nzd" database
     nzd_filename = os.path.join(cfg_dir, "_default.nzd")
     os.remove(nzd_filename)
 
     # start ns1 again, it should migrate "_default.nzf" to "_default.nzd"
-    servers["ns1"].start(["--noclean", "--restart", "--port", os.environ["PORT"]])
+    ns1.start(["--noclean", "--restart", "--port", os.environ["PORT"]])
 
     # query for zone data from the migrated zone config
-    res = isctest.query.tcp(msg, servers["ns1"].ip)
+    res = isctest.query.tcp(msg, ns1.ip)
     isctest.check.noerror(res)

@@ -1,0 +1,51 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+.			IN SOA	. . (
+				2025063000	; serial
+				600		; refresh
+				600		; retry
+				1200		; expire
+				600		; minimum
+				)
+.			NS	a.root-servers.nil.
+
+02hc3em7bdd011a0gms3hkkjt2if5vp8.		A	10.0.0.0
+a.						A	10.0.0.1
+*.a.a.						A	10.0.0.6
+a.a.a.a.					A	10.0.0.3
+b.						A	10.0.0.2
+b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.b.	A	10.0.0.2
+cname.						CNAME	does-not-exist.
+cname.cname.					CNAME	cname.
+cname.ent.cname.				CNAME	cname.cname.
+d.						A	10.0.0.4
+dname-to-nowhere.				DNAME	does-not-exist.
+; DNAME owner longer than target to avoid YXDOMAIN dependent on QNAME
+insecure.					NS	a.root-servers.nil.
+ns.insecure.					A	10.53.0.3
+a.root-servers.nil.				A	10.53.0.1
+secure.						NS	a.root-servers.nil.
+secure.						DS	11111 13 255 00
+occluded.secure.				A	0.0.0.0
+*.wild.						A	10.0.0.6
+explicit.wild.					A	192.0.2.66
+z.						A	10.0.0.26
+
+; randomly generated subtree to excercise unknown corner cases
+; intentionally small, to not blow up algorithms with quadratic complexity in ZoneAnalyzer and name generator
+a.a.a.b.a.a.a.b.a.a.b.b.a.random.	TXT	"r"
+b.b.a.a.b.b.a.a.a.b.b.a.b.a.a.a.a.a.b.a.a.b.a.b.a.b.b.b.b.b.a.a.a.a.b.a.a.a.b.a.a.b.b.a.random.	TXT	"r"
+a.a.a.b.b.a.b.b.a.b.a.b.a.b.a.b.b.b.a.random.	TXT	"r"
+b.b.a.b.a.b.a.a.a.b.a.a.b.a.a.a.a.b.b.a.b.b.a.b.a.b.a.b.a.b.b.b.a.random.	TXT	"r"
+a.b.a.a.b.a.b.a.b.a.a.b.a.b.a.a.a.b.b.a.b.b.a.a.b.b.a.a.b.a.b.a.b.b.b.b.a.a.a.a.a.a.a.a.b.a.b.a.b.b.a.b.a.b.a.a.a.b.a.a.b.a.a.a.a.b.b.a.b.b.a.b.a.b.a.b.a.b.b.b.a.random.	TXT	"r"
+a.a.a.a.a.b.b.a.a.a.a.a.b.b.a.a.b.a.a.b.a.a.b.b.a.a.a.b.a.a.a.b.b.b.b.b.a.a.a.b.b.b.b.b.b.a.b.b.b.a.a.b.b.b.b.a.a.a.a.b.a.b.b.a.b.a.a.b.b.b.b.b.b.b.a.b.b.a.b.a.b.a.a.a.b.b.a.a.b.b.a.b.a.b.b.a.b.b.b.a.b.b.b.b.b.a.a.b.a.a.a.b.b.a.a.a.b.b.b.b.b.a.random.	TXT	"r"

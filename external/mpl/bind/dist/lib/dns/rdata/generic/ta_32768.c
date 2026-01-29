@@ -1,4 +1,4 @@
-/*	$NetBSD: ta_32768.c,v 1.1.1.9 2025/01/26 16:12:36 christos Exp $	*/
+/*	$NetBSD: ta_32768.c,v 1.1.1.10 2026/01/29 18:19:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,9 +87,7 @@ tostruct_ta(ARGS_TOSTRUCT) {
 	/*
 	 * Checked by generic_tostruct_ds().
 	 */
-	ds->common.rdclass = rdata->rdclass;
-	ds->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ds->common, link);
+	DNS_RDATACOMMON_INIT(ds, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_ds(CALL_TOSTRUCT);
 }

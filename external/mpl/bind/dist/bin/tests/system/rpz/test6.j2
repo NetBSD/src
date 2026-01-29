@@ -1,0 +1,38 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+server 10.53.0.3 @PORT@
+
+; Poke the radix tree a little.
+update add  128.1111.2222.3333.4444.5555.6666.7777.8888.rpz-ip.bl. 300 CNAME .
+update add  128.1111.2222.3333.4444.5555.6666.zz.rpz-ip.bl.	300 CNAME   .
+update add  128.1111.2222.3333.4444.5555.zz.8888.rpz-ip.bl.	300 CNAME   .
+update add  128.1111.2222.3333.4444.zz.8888.rpz-ip.bl.		300 CNAME   .
+update add  128.zz.3333.4444.0.0.8888.rpz-ip.bl.		300 CNAME   .
+update add  128.zz.3333.4444.0.7777.8888.rpz-ip.bl.		300 CNAME   .
+update add  128.zz.3333.4444.0.8777.8888.rpz-ip.bl.		300 CNAME   .
+update add  127.zz.3333.4444.0.8777.8888.rpz-ip.bl.		300 CNAME   .
+;
+;
+; regression testing for some old crashes
+update add  redirect.bl.	300 A		127.0.0.1
+update add  *.redirect.bl.	300 A		127.0.0.1
+update add  *.credirect.bl.	300 CNAME	google.com.
+;
+send
+

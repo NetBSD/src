@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.15 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.1.1.16 2026/01/29 18:19:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,6 +80,8 @@
 #define ISC_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define ISC_CLAMP(v, x, y) ((v) < (x) ? (x) : ((v) > (y) ? (y) : (v)))
+
+#define ISC_MAX3(a, b, c) ISC_MAX(ISC_MAX((a), (b)), (c))
 
 /*%
  * The UNCONST() macro can be used to omit warnings produced by certain
@@ -383,6 +385,29 @@ mock_assert(const int result, const char *const expression,
 	((cond) ? (void)0 : FATAL_ERROR("RUNTIME_CHECK(%s) failed", #cond))
 
 #endif /* UNIT_TESTING */
+
+/*
+ * Check for ISC_R_SUCCESS. On any other result, jump to a cleanup
+ * label. (This macro requires the function to define `result`
+ * and `cleanup:`.)
+ */
+#define CHECK(r)                             \
+	do {                                 \
+		result = (r);                \
+		if (result != ISC_R_SUCCESS) \
+			goto cleanup;        \
+	} while (0)
+
+/*
+ * Check for ISC_R_SUCCESS and continue if found. For any other
+ * result, return the result.
+ */
+#define RETERR(x)                        \
+	do {                             \
+		isc_result_t _r = (x);   \
+		if (_r != ISC_R_SUCCESS) \
+			return ((_r));   \
+	} while (0)
 
 /*%
  * Runtime check which logs the error value returned by a POSIX Threads

@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.h,v 1.1.1.8 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: tkey.h,v 1.1.1.9 2026/01/29 18:19:54 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,6 @@ ISC_LANG_BEGINDECLS
 #define DNS_TKEYMODE_DELETE	      5
 
 struct dns_tkeyctx {
-	dns_name_t	 *domain;
 	dns_gss_cred_id_t gsscred;
 	isc_mem_t	 *mctx;
 	char		 *gssapi_keytab;
