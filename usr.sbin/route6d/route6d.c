@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.74 2019/07/11 03:49:52 msaitoh Exp $	*/
+/*	$NetBSD: route6d.c,v 1.75 2026/01/29 01:39:46 gutteridge Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.74 2019/07/11 03:49:52 msaitoh Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.75 2026/01/29 01:39:46 gutteridge Exp $");
 #endif
 
 #include <stdbool.h>
@@ -2348,7 +2348,7 @@ krtread(int again)
 {
 	int mib[6];
 	size_t msize;
-	char *buf = NULL, *p, *lim;
+	char *buf, *p, *lim;
 	struct rt_msghdr *rtm;
 	int retry;
 	const char *errmsg;
@@ -2405,7 +2405,7 @@ rt_entry(struct rt_msghdr *rtm, int again)
 	struct netinfo6 *np;
 	int s;
 
-	sin6_dst = sin6_gw = sin6_mask = sin6_genmask = sin6_ifp = 0;
+	sin6_dst = sin6_gw = sin6_mask = sin6_genmask = sin6_ifp = NULL;
 	if ((rtm->rtm_flags & RTF_UP) == 0 || rtm->rtm_flags &
 	    (RTF_CONNECTED|RTF_BLACKHOLE)) {
 		return;		/* not interested in the link route */
