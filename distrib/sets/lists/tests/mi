@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1408 2026/01/28 20:08:34 christos Exp $
+# $NetBSD: mi,v 1.1409 2026/01/29 18:35:58 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -6671,6 +6671,50 @@
 ./usr/tests/usr.bin/netpgpverify			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
+./usr/tests/usr.bin/netpgpverify/data	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/NetBSD-6.0_hashes.asc.gz	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/a.gpg	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/b.gpg	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/det	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/det.sig	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/dsa-pubring.gpg	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected16	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected17	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected18	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected19	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected20	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected21	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected22	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected23	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected24	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected25	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected26	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected27	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected28	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected29	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected30	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected31	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected32	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected33	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected34	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected35	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected36	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected37	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected38	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected39	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected40	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected41	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected42	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected43	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected44	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected45	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/expected46	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/in1.asc	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/in1.gpg	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/in2.asc	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/in2.gpg	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/jj.asc	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/pubring.gpg	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/t_netpgpverify		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/patch				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/patch/Atffile			tests-usr.bin-tests	compattestfile,atf

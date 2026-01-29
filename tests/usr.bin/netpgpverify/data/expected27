@@ -1,0 +1,5 @@
+Good signature for [stdin] made Mon Oct 15 09:28:54 2012
+signature     4096/RSA (Encrypt or Sign) 064973ac4c4a706e 2009-06-23
+fingerprint   ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e 
+uid           NetBSD Security Officer <security-officer@NetBSD.org>
+

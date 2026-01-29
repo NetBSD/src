@@ -1,0 +1,16 @@
+To Do
+=====
+tests with -k sig
+detached sigs
+DSA
+
+Done
+====
+basics
+localise pgp_read_packets
+fix lint
+WARNS=5
+lib man page
+prog man page
+do we do it statically linked as well?
+multiple files in netpgpverify
