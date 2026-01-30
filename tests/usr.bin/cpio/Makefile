@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2024/06/10 07:31:51 kre Exp $
+# $NetBSD: Makefile,v 1.6 2026/01/30 19:03:37 jakllsch Exp $
 
 NOMAN=
 
@@ -27,7 +27,7 @@ SRCS.h_cpio= \
 test_main.c \
 test_utils.c \
 cmdline.c \
-err.c \
+lafe_err.c \
 test_0.c \
 test_basic.c \
 test_cmdline.c \
