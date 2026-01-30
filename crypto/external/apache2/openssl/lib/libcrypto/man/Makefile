@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2026/01/27 21:28:07 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2026/01/30 14:02:23 christos Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -14,10 +14,10 @@ VERSION!=	awk '/\#\#\#/ { print $$6; exit 0; };' ${OPENSSLDIST}/CHANGES.md
 make-manpages:
 	for sec in 1 3 5 7; do \
 	for i in ${OPENSSLDIST}/doc/man$$sec/*.pod; do \
-		fn=`basename $$i .pod`; \
-		if [ "$$fn" = "config" ]; then \
-		    fn=openssl-config; \
-		fi; \
+		fn=$$(basename $$i .pod); \
+		case $$fn in \
+		(config|HMAC|MD5|DES_random_key) fn=openssl-$$fn;; \
+		esac; \
 		case $$sec in \
 		1) if [ "$$fn" = "openssl" ]; then \
 			dst=$$fn.$$sec; \
@@ -29,9 +29,9 @@ make-manpages:
 		   fi;; \
 		*) dst=$$fn.$$sec;; \
 		esac; \
-		(cd `dirname $$i`; \
+		(cd $$(dirname $$i); \
 		 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-			`basename $$i`) | \
+			$$(basename $$i)) | \
 		sed -e 's/[[:space:]]*$$//' | \
 		perl libcrypto.pl > $$dst; \
 	done \

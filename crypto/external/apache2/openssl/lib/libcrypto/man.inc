@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.4 2026/01/28 14:04:32 christos Exp $
+#	$NetBSD: man.inc,v 1.5 2026/01/30 14:02:18 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -59,6 +59,7 @@ BIO_s_null.3 \
 BIO_s_socket.3 \
 BIO_sendmmsg.3 \
 BIO_set_callback.3 \
+BIO_set_flags.3 \
 BIO_should_retry.3 \
 BIO_socket_wait.3 \
 BN_BLINDING_new.3 \
@@ -85,6 +86,7 @@ BUF_MEM_new.3 \
 CMAC_CTX.3 \
 CMS_EncryptedData_decrypt.3 \
 CMS_EncryptedData_encrypt.3 \
+CMS_EncryptedData_set1_key.3 \
 CMS_EnvelopedData_create.3 \
 CMS_add0_cert.3 \
 CMS_add1_recipient_cert.3 \
@@ -182,6 +184,7 @@ EVP_CIPHER-RC4.7 \
 EVP_CIPHER-RC5.7 \
 EVP_CIPHER-SEED.7 \
 EVP_CIPHER-SM4.7 \
+EVP_CIPHER_CTX_get_app_data.3 \
 EVP_CIPHER_CTX_get_cipher_data.3 \
 EVP_CIPHER_CTX_get_original_iv.3 \
 EVP_CIPHER_meth_new.3 \
@@ -373,6 +376,7 @@ OPENSSL_instrument_bus.3 \
 OPENSSL_load_builtin_modules.3 \
 OPENSSL_load_u16_le.3 \
 OPENSSL_malloc.3 \
+OPENSSL_ppccap.3 \
 OPENSSL_riscvcap.3 \
 OPENSSL_s390xcap.3 \
 OPENSSL_secure_malloc.3 \
@@ -783,6 +787,9 @@ life_cycle-pkey.7 \
 life_cycle-rand.7 \
 o2i_SCT_LIST.3 \
 openssl-CA.pl.1 \
+openssl-DES_random_key.3 \
+openssl-HMAC.3 \
+openssl-MD5.3 \
 openssl-asn1parse.1 \
 openssl-ca.1 \
 openssl-ciphers.1 \
