@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.165 2023/04/02 18:15:24 ryo Exp $ */
+/*	$NetBSD: sysctl.c,v 1.166 2026/01/30 15:28:15 khorben Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.165 2023/04/02 18:15:24 ryo Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.166 2026/01/30 15:28:15 khorben Exp $");
 #endif
 #endif /* not lint */
 
@@ -2264,7 +2264,7 @@ kern_cp_time(HANDLER_ARGS)
 		rc = prog_sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
 		if (rc != 0)
 			return; /* XXX print an error, eh? */
-		n++; /* Add on space for the sum. */
+		n++; /* Add one space for the sum. */
 		sz = n * sizeof(u_int64_t) * CPUSTATES;
 	}
 	else {
