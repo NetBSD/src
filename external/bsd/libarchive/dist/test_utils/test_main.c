@@ -3022,7 +3022,7 @@ systemf(const char *fmt, ...)
 {
 	char buff[8192];
 #if USE_POSIX_SPAWN
-	char *argv[] = { "/bin/sh", "-c", buff, NULL };
+	const char * argv[] = { "/bin/sh", "-c", buff, NULL };
 	pid_t pid;
 #endif
 	va_list ap;
@@ -3034,7 +3034,7 @@ systemf(const char *fmt, ...)
 	if (verbosity > VERBOSITY_FULL)
 		logprintf("Cmd: %s\n", buff);
 #if USE_POSIX_SPAWN
-	if ((r = posix_spawn(&pid, *argv, NULL, NULL, argv, environ)) == 0) {
+	if ((r = posix_spawn(&pid, *argv, NULL, NULL, __UNCONST(argv), environ)) == 0) {
 		while (waitpid(pid, &r, 0) == -1) {
 			if (errno != EINTR)
 				return (-1);

@@ -232,7 +232,7 @@ DEFINE_TEST(test_write_format_mtree_digests_no_digests_set_non_empty_data)
 	struct archive *a;
 	struct archive_entry *entry;
 	struct expected_digests ed;
-	char *data = "abcd";
+	const char *data = "abcd";
 
 #ifdef ARCHIVE_HAS_MD5
 	assertEqualInt(ARCHIVE_OK, archive_md5_init(&expectedMd5Ctx));
