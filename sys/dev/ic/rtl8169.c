@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.181 2026/01/01 21:22:43 gutteridge Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.182 2026/01/30 23:51:06 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.181 2026/01/01 21:22:43 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.182 2026/01/30 23:51:06 gutteridge Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.181 2026/01/01 21:22:43 gutteridge Exp
 
 
 #include <sys/param.h>
+#include <sys/cprng.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
@@ -148,6 +149,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.181 2026/01/01 21:22:43 gutteridge Exp
 #define RE_LOCK(sc)		mutex_enter(&(sc)->sc_lock)
 #define RE_UNLOCK(sc)		mutex_exit(&(sc)->sc_lock)
 #define RE_ASSERT_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_lock))
+
+#define ETHER_IS_ZERO(addr) \
+	(!(addr[0] | addr[1] | addr[2] | addr[3] | addr[4] | addr[5]))
 
 static inline void re_set_bufaddr(struct re_desc *, bus_addr_t);
 
@@ -605,6 +609,7 @@ re_attach(struct rtk_softc *sc)
 	int error = 0, i;
 	const struct re_revision *rr;
 	const char *re_name = NULL;
+	uint32_t maclo, machi;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
 
@@ -775,6 +780,20 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
 #endif
+	/* 
+	 * Some chips don't provide a viable MAC address, e.g., what's present
+	 * on the NanoPi R4S (non-EE version).
+	 */
+	if (ETHER_IS_ZERO(eaddr)) {
+		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+		machi = cprng_strong32() & 0xffff;
+		eaddr[0] = maclo & 0xff;
+		eaddr[1] = (maclo >> 8) & 0xff;
+		eaddr[2] = (maclo >> 16) & 0xff;
+		eaddr[3] = (maclo >> 24) & 0xff;
+		eaddr[4] = machi & 0xff;
+		eaddr[5] = (machi >> 8) & 0xff;
+	}
 
 	/* Take PHY out of power down mode. */
 	if ((sc->sc_quirk & RTKQ_PHYWAKE_PM) != 0)
