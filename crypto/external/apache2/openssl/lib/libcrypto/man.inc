@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.5 2026/01/30 14:02:18 christos Exp $
+#	$NetBSD: man.inc,v 1.6 2026/01/30 16:22:12 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -118,7 +118,6 @@ CTLOG_STORE_new.3 \
 CTLOG_new.3 \
 CT_POLICY_EVAL_CTX_new.3 \
 DEFINE_STACK_OF.3 \
-DES_random_key.3 \
 DH_generate_key.3 \
 DH_generate_parameters.3 \
 DH_get0_pqg.3 \
@@ -351,7 +350,6 @@ EVP_sm3.3 \
 EVP_sm4_cbc.3 \
 EVP_whirlpool.3 \
 GENERAL_NAME.3 \
-HMAC.3 \
 MDC2_Init.3 \
 NCONF_new_ex.3 \
 OBJ_nid2obj.3 \
