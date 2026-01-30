@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.96 2026/01/26 12:32:07 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.97 2026/01/30 10:57:18 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1281,4 +1281,9 @@ external/cddl/osnet/dev/sdt/sdt.c		1.25
 	in sdt probes.
 	[riastradh, ticket #2000]
 
+usr.sbin/ypserv/yppush/yppush.c			1.26
+
+	yppush(8): PR 59750: fix select handling when _SC_OPEN_MAX
+	exceeds FD_SETSIZE.
+	[mrg, ticket #2001]
 
