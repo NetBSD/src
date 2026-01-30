@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.307 2026/01/20 15:30:15 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.308 2026/01/30 15:52:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.307 2026/01/20 15:30:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.308 2026/01/30 15:52:54 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -211,6 +211,8 @@ lfs_vflush(struct vnode *vp)
 	KASSERT(mutex_owned(&bufcache_lock) == false);
 	KASSERT(!(ip->i_state & IN_CLEANING));
 
+	lfs_writer_enter(fs, "vfwriter");
+
 	mutex_enter(vp->v_interlock);
 
 	/* If the node is being written, wait until that is done */
@@ -225,6 +227,7 @@ lfs_vflush(struct vnode *vp)
 	lfs_seglock(fs, SEGM_SYNC | ((error != 0) ? SEGM_RECLAIM : 0));
 	if (error != 0) {
 		fs->lfs_reclino = ip->i_number;
+		error = 0;
 	}
 
 	KASSERT(!(ip->i_state & IN_CLEANING));
@@ -240,7 +243,7 @@ lfs_vflush(struct vnode *vp)
 		}
 		KASSERT(vp->v_numoutput == 0);
 		mutex_exit(vp->v_interlock);
-	
+
 		mutex_enter(&bufcache_lock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
@@ -276,7 +279,7 @@ lfs_vflush(struct vnode *vp)
 
 		KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
 
-		return 0;
+		goto out;
 	}
 
 	fs->lfs_flushvp = vp;
@@ -295,7 +298,7 @@ lfs_vflush(struct vnode *vp)
 		KASSERT(vp->v_numoutput == 0);
 		mutex_exit(vp->v_interlock);
 
-		return error;
+		goto out;
 	}
 	sp = fs->lfs_sp;
 
@@ -404,7 +407,9 @@ lfs_vflush(struct vnode *vp)
 	fs->lfs_flushvp = NULL;
 	KASSERT(fs->lfs_flushvp_fakevref == 0);
 
-	return (0);
+ out:
+	lfs_writer_leave(fs);
+	return error;
 }
 
 struct lfs_writevnodes_ctx {
@@ -571,7 +576,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	 * If we know we're gonna need the writer lock, take it now to
 	 * preserve the lock order lfs_writer -> lfs_seglock.
 	 */
-	if (do_ckp) {
+	if (do_ckp && !LFS_SEGLOCK_HELD(fs)) {
 		lfs_writer_enter(fs, "ckpwriter");
 		writer_set = 1;
 	}
@@ -608,7 +613,6 @@ lfs_segwrite(struct mount *mp, int flags)
 
 			if (do_ckp ||
 			    (writer_set = lfs_writer_tryenter(fs)) != 0) {
-				KASSERT(writer_set);
 				KASSERT(fs->lfs_writer);
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
