@@ -1,4 +1,4 @@
-/*	$NetBSD: bc.y,v 1.2 2017/04/10 15:13:04 christos Exp $ */
+/*	$NetBSD: bc.y,v 1.3 2026/01/30 16:03:47 christos Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -475,7 +475,7 @@ return_expression	: /* empty */
 			| expression
 			    {
 			      if ($1 & EX_COMP)
-				ct_warn ("comparison in return expresion");
+				ct_warn ("comparison in return expression");
 			      if (!($1 & EX_PAREN))
 				ct_warn ("return expression requires parenthesis");
 			      if ($1 & EX_VOID)
