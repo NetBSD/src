@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.72 2026/01/26 12:25:14 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.73 2026/01/30 10:54:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -2177,4 +2177,10 @@ external/cddl/osnet/dev/sdt/sdt.c		1.25
 	dtrace_sdt: PR 59934: don't ignore the first stack frame
 	in sdt probes.
 	[riastradh, ticket #167]
+
+usr.sbin/ypserv/yppush/yppush.c			1.26
+
+	yppush(8): PR 59750: fix select handling when _SC_OPEN_MAX
+	exceeds FD_SETSIZE.
+	[mrg, ticket #168]
 
