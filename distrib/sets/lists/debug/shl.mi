@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.387 2026/01/29 18:38:15 christos Exp $
+# $NetBSD: shl.mi,v 1.388 2026/01/30 15:49:56 christos Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -67,7 +67,7 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libarchive.so.5.1.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libarchive.so.5.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libasan.so.5.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=10
 ./usr/libdata/debug/usr/lib/libasan.so.6.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=12
 ./usr/libdata/debug/usr/lib/libasan.so.7.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=14
