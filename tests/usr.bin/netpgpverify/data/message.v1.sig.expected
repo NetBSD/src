@@ -1,0 +1,5 @@
+Good signature for message.v1.sig made Thu Jan 29 23:26:23 2026
+signature     2048/RSA (Encrypt or Sign) 81913536d5b22a28 2026-01-29
+fingerprint   5bc4 b091 22be 606e d732 8a08 8191 3536 d5b2 2a28 
+uid           Test Key <test@example.com>
+

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1409 2026/01/29 18:35:58 wiz Exp $
+# $NetBSD: mi,v 1.1410 2026/01/30 09:01:07 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -6668,6 +6668,12 @@
 ./usr/tests/usr.bin/nbperf/h_nbperf			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/nbperf/hash_driver.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/nbperf/t_nbperf			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpkeys			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpkeys/Atffile		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpkeys/data			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpkeys/data/testkey-ec.pub			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpkeys/data/testkey-rsa.pub			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpkeys/t_netpgpkeys		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
@@ -6714,6 +6720,16 @@
 ./usr/tests/usr.bin/netpgpverify/data/in2.asc	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/data/in2.gpg	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/data/jj.asc	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.keyring	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v1.asc	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v1.asc.expected	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v1.sig	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v1.sig.expected	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v2.asc	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v2.asc.expected	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v2.sig	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/netpgpverify/data/message.v2.sig.expected	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/data/pubring.gpg	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/netpgpverify/t_netpgpverify		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/patch				tests-usr.bin-tests	compattestfile,atf

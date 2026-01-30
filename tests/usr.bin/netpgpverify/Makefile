@@ -1,10 +1,12 @@
-# $NetBSD: Makefile,v 1.2 2026/01/29 18:35:58 wiz Exp $
+# $NetBSD: Makefile,v 1.3 2026/01/30 09:01:08 wiz Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR= ${TESTSBASE}/usr.bin/netpgpverify
 
 TESTS_SH+= t_netpgpverify
+
+# data/D5B22A28.{pub,secret} is the keys used for message*
 
 FILESDIR=	${TESTSDIR}/data
 FILES+=		data/NetBSD-6.0_hashes.asc.gz
@@ -49,6 +51,16 @@ FILES+=		data/in1.gpg
 FILES+=		data/in2.asc
 FILES+=		data/in2.gpg
 FILES+=		data/jj.asc
+FILES+=		data/message
+FILES+=		data/message.keyring
+FILES+=		data/message.v1.asc
+FILES+=		data/message.v1.asc.expected
+FILES+=		data/message.v1.sig
+FILES+=		data/message.v1.sig.expected
+FILES+=		data/message.v2.asc
+FILES+=		data/message.v2.asc.expected
+FILES+=		data/message.v2.sig
+FILES+=		data/message.v2.sig.expected
 FILES+=		data/pubring.gpg
 
 .include <bsd.test.mk>
