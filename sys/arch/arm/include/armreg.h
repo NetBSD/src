@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.136 2022/12/03 20:24:21 ryo Exp $	*/
+/*	$NetBSD: armreg.h,v 1.137 2026/01/30 08:58:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -820,8 +820,8 @@ ARMREG_READ_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 
 ARMREG_WRITE_INLINE(ttbr, "p15,0,%0,c2,c0,0") /* Translation Table Base Register 0 */
 ARMREG_READ_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
 ARMREG_WRITE_INLINE(ttbr1, "p15,0,%0,c2,c0,1") /* Translation Table Base Register 1 */
-ARMREG_READ_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
-ARMREG_WRITE_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Register */
+ARMREG_READ_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Control Register */
+ARMREG_WRITE_INLINE(ttbcr, "p15,0,%0,c2,c0,2") /* Translation Table Base Control Register */
 /* cp15 c3 registers */
 ARMREG_READ_INLINE(dacr, "p15,0,%0,c3,c0,0") /* Domain Access Control Register */
 ARMREG_WRITE_INLINE(dacr, "p15,0,%0,c3,c0,0") /* Domain Access Control Register */
