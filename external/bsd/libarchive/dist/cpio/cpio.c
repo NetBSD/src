@@ -60,7 +60,7 @@
 #endif
 
 #include "cpio.h"
-#include "err.h"
+#include "lafe_err.h"
 #include "line_reader.h"
 #include "passphrase.h"
 
@@ -124,13 +124,21 @@ main(int argc, char *argv[])
 	cpio->buff_size = sizeof(buff);
 
 
-#if defined(HAVE_SIGACTION) && defined(SIGPIPE)
-	{ /* Ignore SIGPIPE signals. */
+#if defined(HAVE_SIGACTION)
+	{
 		struct sigaction sa;
 		sigemptyset(&sa.sa_mask);
 		sa.sa_flags = 0;
+#ifdef SIGPIPE
+		/* Ignore SIGPIPE signals. */
 		sa.sa_handler = SIG_IGN;
 		sigaction(SIGPIPE, &sa, NULL);
+#endif
+#ifdef SIGCHLD
+		/* Do not ignore SIGCHLD. */
+		sa.sa_handler = SIG_DFL;
+		sigaction(SIGCHLD, &sa, NULL);
+#endif
 	}
 #endif
 
@@ -717,7 +725,7 @@ file_to_archive(struct cpio *cpio, const char *srcpath)
 
 	if (cpio->uid_override >= 0)
 		archive_entry_set_uid(entry, cpio->uid_override);
-	if (cpio->gname_override != NULL)
+	if (cpio->uname_override != NULL)
 		archive_entry_set_uname(entry, cpio->uname_override);
 	if (cpio->gid_override >= 0)
 		archive_entry_set_gid(entry, cpio->gid_override);
@@ -1206,7 +1214,7 @@ list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 	else
 		strcpy(date, "invalid mtime");
 
-	fprintf(out, "%s%3d %-8s %-8s %8s %12s %s",
+	fprintf(out, "%s%3u %-8s %-8s %8s %12s %s",
 	    archive_entry_strmode(entry),
 	    archive_entry_nlink(entry),
 	    uname, gname, size, date,
