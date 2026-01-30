@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.352 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.353 2026/01/30 15:54:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.352 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.353 2026/01/30 15:54:29 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1886,7 +1886,7 @@ lfs_fcntl(void *v)
 	ino_t *inoa;
 	bool scramble;
 	ino_t maxino;
-	
+
 	/* Only respect LFS fcntls on fs root or Ifile */
 	if (VTOI(ap->a_vp)->i_number != ULFS_ROOTINO &&
 	    VTOI(ap->a_vp)->i_number != LFS_IFILE_INUM) {
@@ -2032,7 +2032,7 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_CKP | SEGM_FORCE_CKP);
 		/* Copy out write stats */
-		if (ap != NULL) {
+		if (ap != NULL && ap->a_data != NULL) {
 			lws.direct = 0;
 			lws.offset = lfs_btofsb(fs, fs->lfs_sp->bytes_written);
 			*(struct lfs_write_stats *)ap->a_data = lws;
