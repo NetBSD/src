@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.25 2021/07/24 21:31:39 andvar Exp $	*/
+/*	$NetBSD: yppush.c,v 1.25.6.1 2026/01/30 10:53:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor
@@ -429,7 +429,7 @@ _svc_run(void)
 	struct timeval tv;
 	int     rv, nfds;
 
-	nfds = sysconf(_SC_OPEN_MAX);
+	nfds = svc_maxfd + 1;
 	while (1) {
 
 		readfds = svc_fdset;	/* structure copy from global var */
