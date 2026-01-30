@@ -340,8 +340,14 @@ int canGrzip(void);
 /* Return true if this platform can run the "gzip" program. */
 int canGzip(void);
 
-/* Return true if this platform can run the specified command. */
-int canRunCommand(const char *);
+/* Return true if this platform can run the specified command.
+ *
+ * Result can be optionally cached with `*tested`:
+ *   - 0 if not tested yet
+ *   - <0 if already tested negative
+ *   - >0 if already tested positive
+ */
+int canRunCommand(const char *cmd, int *tested);
 
 /* Return true if this platform can run the "lrzip" program. */
 int canLrzip(void);
@@ -467,4 +473,4 @@ void assertVersion(const char *prog, const char *base);
 
 #include "test_utils.h"
 
-#endif	/* TEST_COMMON_H */
+#endif	/* !TEST_COMMON_H */

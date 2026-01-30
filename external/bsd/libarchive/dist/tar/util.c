@@ -41,7 +41,7 @@
 #endif
 
 #include "bsdtar.h"
-#include "err.h"
+#include "lafe_err.h"
 #include "passphrase.h"
 
 static size_t	bsdtar_expand_char(char *, size_t, size_t, char);
@@ -67,26 +67,26 @@ static const char *strip_components(const char *path, int elements);
  * malloc()), partly out of expedience (we have to call vsnprintf()
  * before malloc() anyway to find out how big a buffer we need; we may
  * as well point that first call at a small local buffer in case it
- * works), but mostly for safety (so we can use this to print messages
- * about out-of-memory conditions).
+ * works).
  */
 
 void
-safe_fprintf(FILE *f, const char *fmt, ...)
+safe_fprintf(FILE * restrict f, const char * restrict fmt, ...)
 {
 	char fmtbuff_stack[256]; /* Place to format the printf() string. */
 	char outbuff[256]; /* Buffer for outgoing characters. */
 	char *fmtbuff_heap; /* If fmtbuff_stack is too small, we use malloc */
 	char *fmtbuff;  /* Pointer to fmtbuff_stack or fmtbuff_heap. */
-	int fmtbuff_length;
+	size_t fmtbuff_length;
 	int length, n;
 	va_list ap;
 	const char *p;
-	unsigned i;
+	size_t i;
 	wchar_t wc;
 	char try_wc;
 
 	/* Use a stack-allocated buffer if we can, for speed and safety. */
+	memset(fmtbuff_stack, '\0', sizeof(fmtbuff_stack));
 	fmtbuff_heap = NULL;
 	fmtbuff_length = sizeof(fmtbuff_stack);
 	fmtbuff = fmtbuff_stack;
@@ -96,17 +96,21 @@ safe_fprintf(FILE *f, const char *fmt, ...)
 	length = vsnprintf(fmtbuff, fmtbuff_length, fmt, ap);
 	va_end(ap);
 
+	/* If vsnprintf will always fail, stop early. */
+	if (length < 0 && errno == EOVERFLOW)
+		return;
+
 	/* If the result was too large, allocate a buffer on the heap. */
-	while (length < 0 || length >= fmtbuff_length) {
-		if (length >= fmtbuff_length)
-			fmtbuff_length = length+1;
+	while (length < 0 || (size_t)length >= fmtbuff_length) {
+		if (length >= 0 && (size_t)length >= fmtbuff_length)
+			fmtbuff_length = (size_t)length + 1;
 		else if (fmtbuff_length < 8192)
 			fmtbuff_length *= 2;
 		else if (fmtbuff_length < 1000000)
 			fmtbuff_length += fmtbuff_length / 4;
 		else {
-			length = fmtbuff_length;
-			fmtbuff_heap[length-1] = '\0';
+			fmtbuff[fmtbuff_length - 1] = '\0';
+			length = (int)strlen(fmtbuff);
 			break;
 		}
 		free(fmtbuff_heap);
@@ -121,8 +125,9 @@ safe_fprintf(FILE *f, const char *fmt, ...)
 		} else {
 			/* Leave fmtbuff pointing to the truncated
 			 * string in fmtbuff_stack. */
+			fmtbuff_stack[sizeof(fmtbuff_stack) - 1] = '\0';
 			fmtbuff = fmtbuff_stack;
-			length = sizeof(fmtbuff_stack) - 1;
+			length = (int)strlen(fmtbuff);
 			break;
 		}
 	}
@@ -153,13 +158,13 @@ safe_fprintf(FILE *f, const char *fmt, ...)
 			} else {
 				/* Not printable, format the bytes. */
 				while (n-- > 0)
-					i += (unsigned)bsdtar_expand_char(
+					i += bsdtar_expand_char(
 					    outbuff, sizeof(outbuff), i, *p++);
 			}
 		} else {
 			/* After any conversion failure, don't bother
 			 * trying to convert the rest. */
-			i += (unsigned)bsdtar_expand_char(outbuff, sizeof(outbuff), i, *p++);
+			i += bsdtar_expand_char(outbuff, sizeof(outbuff), i, *p++);
 			try_wc = 0;
 		}
 
@@ -202,7 +207,8 @@ bsdtar_expand_char(char *buff, size_t buffsize, size_t offset, char c)
 		case '\v': buff[i++] = 'v'; break;
 		case '\\': buff[i++] = '\\'; break;
 		default:
-			snprintf(buff + i, buffsize - i, "%03o", 0xFF & (int)c);
+			snprintf(buff + i, buffsize - i, "%03o",
+			    0xFF & (unsigned int)c);
 			i += 3;
 		}
 	}
@@ -308,7 +314,10 @@ set_chdir(struct bsdtar *bsdtar, const char *newdir)
 		/* The -C /foo -C bar case; concatenate */
 		char *old_pending = bsdtar->pending_chdir;
 		size_t old_len = strlen(old_pending);
-        size_t new_len = old_len + strlen(newdir) + 2;
+		size_t newdir_len = strlen(newdir);
+		size_t new_len = old_len + newdir_len + 2;
+		if (old_len > SIZE_MAX - newdir_len - 2)
+		    lafe_errc(1, errno, "Path too long");
 		bsdtar->pending_chdir = malloc(new_len);
 		if (old_pending[old_len - 1] == '/')
 			old_pending[old_len - 1] = '\0';
@@ -328,7 +337,7 @@ do_chdir(struct bsdtar *bsdtar)
 		return;
 
 	if (chdir(bsdtar->pending_chdir) != 0) {
-		lafe_errc(1, 0, "could not chdir to '%s'\n",
+		lafe_errc(1, 0, "could not chdir to '%s'",
 		    bsdtar->pending_chdir);
 	}
 	free(bsdtar->pending_chdir);
@@ -562,6 +571,20 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 }
 
 /*
+ * Apply --mtime and --clamp-mtime options.
+ */
+void
+edit_mtime(struct bsdtar *bsdtar, struct archive_entry *entry)
+{
+	if (!bsdtar->has_mtime)
+		return;
+
+	__LA_TIME_T entry_mtime = archive_entry_mtime(entry);
+	if (!bsdtar->clamp_mtime || entry_mtime > bsdtar->mtime)
+		archive_entry_set_mtime(entry, bsdtar->mtime, 0);
+}
+
+/*
  * It would be nice to just use printf() for formatting large numbers,
  * but the compatibility problems are quite a headache.  Hence the
  * following simple utility function.
@@ -662,6 +685,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 {
 	char			 tmp[100];
 	size_t			 w;
+	size_t			 sw;
 	const char		*p;
 	const char		*fmt;
 	time_t			 tim;
@@ -684,7 +708,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	}
 	if (!now)
 		time(&now);
-	fprintf(out, "%s %d ",
+	fprintf(out, "%s %u ",
 	    archive_entry_strmode(entry),
 	    archive_entry_nlink(entry));
 
@@ -748,7 +772,10 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 #else
 	ltime = localtime(&tim);
 #endif
-	strftime(tmp, sizeof(tmp), fmt, ltime);
+	if (ltime)
+		sw = strftime(tmp, sizeof(tmp), fmt, ltime);
+	if (!ltime || !sw)
+		sprintf(tmp, "-- -- ----");
 	fprintf(out, " %s ", tmp);
 	safe_fprintf(out, "%s", archive_entry_pathname(entry));
 

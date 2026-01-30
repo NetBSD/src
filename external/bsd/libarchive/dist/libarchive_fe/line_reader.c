@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "err.h"
+#include "lafe_err.h"
 #include "line_reader.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__BORLANDC__)
@@ -64,6 +64,8 @@ lafe_line_reader(const char *pathname, int nullSeparator)
 
 	lr->nullSeparator = nullSeparator;
 	lr->pathname = strdup(pathname);
+	if (lr->pathname == NULL)
+		lafe_errc(1, ENOMEM, "Can't open %s", pathname);
 
 	if (strcmp(pathname, "-") == 0)
 		lr->f = stdin;

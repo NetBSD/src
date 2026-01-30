@@ -11,6 +11,7 @@
 #include <windows.h>
 #include <io.h>
 #include <fcntl.h>
+#include <share.h>
 
 #ifndef PRId64
 #define	PRId64 "I64"
@@ -43,4 +44,4 @@ int __tar_chdir(const char *);
 
 #endif
 
-#endif /* BSDTAR_WINDOWS_H */
+#endif /* !BSDTAR_WINDOWS_H */
