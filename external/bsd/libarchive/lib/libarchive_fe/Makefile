@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2017/04/20 13:11:04 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2026/01/30 15:49:13 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -7,7 +7,7 @@
 LIBISPRIVATE=	yes
 
 LIB=		archive_fe
-SRCS=		err.c line_reader.c passphrase.c
+SRCS=		lafe_err.c line_reader.c passphrase.c
 NOMAN=		yes
 
 .include <bsd.lib.mk>
