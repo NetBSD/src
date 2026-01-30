@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.61 2026/01/24 23:11:41 jmcneill Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.62 2026/01/30 22:36:02 gutteridge Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.61 2026/01/24 23:11:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.62 2026/01/30 22:36:02 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -909,6 +909,10 @@ ure_attach(device_t parent, device_t self, void *aux)
 	else
 		ure_read_mem(un, URE_PLA_BACKUP, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
+	/* 
+	 * Some chips don't provide a viable MAC address, e.g., what's present
+	 * on the NanoPi R1 and R2S.
+	 */
 	if (ETHER_IS_ZERO(eaddr)) {
 		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;
