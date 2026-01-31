@@ -1,4 +1,4 @@
-$NetBSD: licensing,v 1.2 2025/12/19 13:03:51 nia Exp $
+$NetBSD: licensing,v 1.3 2026/01/31 12:35:12 nia Exp $
 
 NetBSD Licensing
 ================
@@ -68,7 +68,8 @@ The directory under external/gpl2 contains several programs that
 could be replaced. Most of them are quite old versions now, chosen
 to avoid GPLv3:
 
-* diffutils - Could be replaced with FreeBSD/OpenBSD diff(1).
+* diffutils - Replaced with FreeBSD-derived diff(1). MKBSDDIFF is now
+  the default.
 * grep - Could be replaced with FreeBSD grep(1). Someone needs to
   compare the performance. Other grep implementations in C likely
   exist. A MKBSDGREP option exists, but the copy is probably old.
@@ -115,10 +116,8 @@ advertising clause:
   Wasabi Systems' intellectual property. Someone should figure this out,
   or we should use Foundation funds to acquire it.
 * 4-clause BSD licenses are also found in the tree belonging to
-  Cisco (primarily in SCTP code) and Intel (primarily in ia64 code).
-  These are huge corporations with publicly contactable legal
-  departments. It's also possible someone knows an insider who could
-  accelerate the process.
+  Cisco (primarily in SCTP code). It's also possible someone knows an
+  insider who could accelerate the process.
 
 Otherwise, the social and legal tasks mostly involve trying to find
 old contributors' current email addresses, and asking them for
