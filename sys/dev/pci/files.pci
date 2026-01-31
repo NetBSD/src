@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.451 2025/08/04 20:03:12 skrll Exp $
+#	$NetBSD: files.pci,v 1.452 2026/01/31 12:12:58 nia Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1225,3 +1225,7 @@ device	rge: ether, ifnet, arp, mii
 attach	rge at pci
 file	dev/pci/if_rge.c		rge
 
+# Bochs compatible framebuffer
+device	bochsfb: wsemuldisplaydev, rasops32, fb, vcons, videomode, edid
+attach	bochsfb at pci
+file	dev/pci/bochsfb.c		bochsfb

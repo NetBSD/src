@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1826 2026/01/05 10:16:58 wiz Exp $
+# $NetBSD: mi,v 1.1827 2026/01/31 12:12:57 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1065,6 +1065,7 @@
 ./usr/share/man/cat4/bmx280thp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/bnx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/boca.0			man-sys-catman		.cat
+./usr/share/man/cat4/bochsfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bpf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bpfjit.0			man-sys-catman		.cat
 ./usr/share/man/cat4/brgphy.0			man-sys-catman		.cat
@@ -4655,6 +4656,7 @@
 ./usr/share/man/man4/bmx280thp.4		man-sys-man		.man
 ./usr/share/man/man4/bnx.4			man-sys-man		.man
 ./usr/share/man/man4/boca.4			man-sys-man		.man
+./usr/share/man/man4/bochsfb.4			man-sys-man		.man
 ./usr/share/man/man4/bpf.4			man-sys-man		.man
 ./usr/share/man/man4/bpfjit.4			man-sys-man		.man
 ./usr/share/man/man4/brgphy.4			man-sys-man		.man
