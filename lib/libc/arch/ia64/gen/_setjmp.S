@@ -14,13 +14,7 @@
 //   notice, this list of conditions and the following disclaimer in the
 //    documentation and/or other materials provided with the distribution.
 // 
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-// 
-//    This product includes software developed by Intel Corporation and
-//    its contributors.
-// 
-// 4. Neither the name of Intel Corporation or its contributors may be
+// 3. Neither the name of Intel Corporation or its contributors may be
 //    used to endorse or promote products derived from this software
 //    without specific prior written permission.
 // 
@@ -51,7 +45,7 @@
     .file   "setjmp.s"
 
 #include <machine/asm.h>
-RCSID("$NetBSD: _setjmp.S,v 1.1 2015/04/17 12:51:05 martin Exp $");
+RCSID("$NetBSD: _setjmp.S,v 1.2 2026/01/31 12:19:41 nia Exp $");
 
 #include    <machine/setjmp.h>
 
