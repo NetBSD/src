@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.98 2025/12/31 15:33:51 andvar Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.99 2026/01/31 00:38:45 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.98 2025/12/31 15:33:51 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.99 2026/01/31 00:38:45 gutteridge Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -196,7 +196,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 
 	if (! ether_getaddr(sc->sc_dev, enaddr)) {
 		/*
-		 * If we did not get an externally configure address,
+		 * If we did not get an externally configured address,
 		 * try to read one from the current filter setup,
 		 * before resetting the chip.
 		 */
