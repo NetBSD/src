@@ -1225,3 +1225,7 @@ device	rge: ether, ifnet, arp, mii
 attach	rge at pci
 file	dev/pci/if_rge.c		rge
 
+# Bochs compatible framebuffer
+device	bochsfb: wsemuldisplaydev, rasops32, fb, vcons, videomode, edid
+attach	bochsfb at pci
+file	dev/pci/bochsfb.c		bochsfb
