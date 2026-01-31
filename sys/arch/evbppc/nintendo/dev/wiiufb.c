@@ -1,4 +1,4 @@
-/* $NetBSD: wiiufb.c,v 1.3 2026/01/10 23:55:24 jmcneill Exp $ */
+/* $NetBSD: wiiufb.c,v 1.4 2026/01/31 23:02:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.3 2026/01/10 23:55:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.4 2026/01/31 23:02:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,21 +57,65 @@ static bool	wiiufb_drc;
 #define WIIUFB_STRIDE		((wiiufb_drc ? 896 : 1280) * WIIUFB_BPP / NBBY)
 #define WIIUFB_SIZE		(WIIUFB_STRIDE * WIIUFB_HEIGHT)
 
-#define D1GRPH_SWAP_CNTL		0x610c
-#define D2GRPH_SWAP_CNTL		0x690c
+#define WIIUFB_CURMAX		64
+#define WIIUFB_CURSOR_SIZE	(WIIUFB_CURMAX * WIIUFB_CURMAX * 4)
+#define WIIUFB_CURSOR_ALIGN	0x1000
+#define WIIUFB_CURSOR_BITS	(WIIUFB_CURMAX * WIIUFB_CURMAX / NBBY)
+
+#define REG_OFFSET(d, r)		((d) * 0x800 + (r))
+#define DGRPH_SWAP_CNTL(d)		REG_OFFSET(d, 0x610c)
 #define  DGRPH_SWAP_ENDIAN_SWAP		__BITS(1, 0)
 #define  DGRPH_SWAP_ENDIAN_SWAP_8IN32	__SHIFTIN(2, DGRPH_SWAP_ENDIAN_SWAP)
-#define D1CRTC_BLANK_CONTROL		0x6084
-#define D2CRTC_BLANK_CONTROL		0x6884
+#define DCRTC_BLANK_CONTROL(d)		REG_OFFSET(d, 0x6084)
 #define  DCRTC_BLANK_DATA_EN		__BIT(8)
+#define DCUR_CONTROL(d)			REG_OFFSET(d, 0x6400)
+#define  DCUR_CONTROL_EN		__BIT(0)
+#define  DCUR_CONTROL_MODE		__BITS(9, 8)
+#define  DCUR_CONTROL_MODE_ARGB_PM	__SHIFTIN(2, DCUR_CONTROL_MODE)
+#define DCUR_SURFACE_ADDRESS(d)		REG_OFFSET(d, 0x6408)
+#define DCUR_SIZE(d)			REG_OFFSET(d, 0x6410)
+#define  DCUR_SIZE_HEIGHT(h)		((h) - 1)
+#define  DCUR_SIZE_WIDTH(w)		(((w) - 1) << 16)
+#define DCUR_POSITION(d)		REG_OFFSET(d, 0x6414)
+#define  DCUR_POSITION_Y(y)		(y)
+#define  DCUR_POSITION_X(x)		((x) << 16)
+#define DCUR_HOT_SPOT(d)		REG_OFFSET(d, 0x6418)
+#define  DCUR_HOT_SPOT_Y(y)		(y)
+#define  DCUR_HOT_SPOT_X(x)		((x) << 16)
+#define DCUR_UPDATE(d)			REG_OFFSET(d, 0x6424)
+#define  DCUR_UPDATE_LOCK		__BIT(16)
+
+struct wiiufb_dma {
+	bus_dmamap_t		dma_map;
+	bus_dma_tag_t		dma_tag;
+	bus_size_t		dma_size;
+	bus_dma_segment_t	dma_segs[1];
+	int			dma_nsegs;
+	void			*dma_addr;
+};
+
+struct wiiufb_cursor {
+	bool			c_enable;
+	struct wsdisplay_curpos	c_pos;
+	struct wsdisplay_curpos	c_hot;
+	struct wsdisplay_curpos	c_size;
+	uint32_t		c_cmap[2];
+	uint8_t			c_image[WIIUFB_CURSOR_BITS];
+	uint8_t			c_mask[WIIUFB_CURSOR_BITS];
+};
 
 struct wiiufb_softc {
 	struct genfb_softc	sc_gen;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+	bus_dma_tag_t		sc_dmat;
 
-	uint32_t		sc_blank_ctrl;
+	uint32_t		sc_disp;
+
+	struct wiiufb_cursor	sc_cursor;
+	struct wiiufb_cursor	sc_tempcursor;
+	struct wiiufb_dma	sc_curdma;
 };
 
 static int	wiiufb_match(device_t, cfdata_t, void *);
@@ -81,7 +125,12 @@ static bool	wiiufb_shutdown(device_t, int);
 static int	wiiufb_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 static paddr_t	wiiufb_mmap(void *, void *, off_t, int);
 
+static int	wiiufb_dma_alloc(struct wiiufb_softc *, bus_size_t, bus_size_t,
+				 int, struct wiiufb_dma *);
 static void	wiiufb_gpu_write(uint16_t, uint32_t);
+static uint32_t	wiiufb_gpu_read(uint16_t);
+static void	wiiufb_gpu_set(uint16_t, uint32_t);
+static void	wiiufb_gpu_clear(uint16_t, uint32_t);
 
 void		wiiufb_consinit(void);
 
@@ -118,9 +167,12 @@ wiiufb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	struct mainbus_attach_args *maa = aux;
 	void *bits;
+	int error;
 
 	sc->sc_gen.sc_dev = self;
 	sc->sc_bst = maa->maa_bst;
+	sc->sc_dmat = maa->maa_dmat;
+	sc->sc_disp = wiiufb_drc ? 1 : 0;
 
 	/*
 	 * powerpc bus_space_map will use the BAT mapping if present,
@@ -140,17 +192,23 @@ wiiufb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Wii U %s framebuffer (%ux%u %u-bpp @ 0x%08x)\n",
-	    wiiufb_drc ? "DRC" : "TV", WIIUFB_WIDTH, WIIUFB_HEIGHT,
+	    sc->sc_disp ? "DRC" : "TV", WIIUFB_WIDTH, WIIUFB_HEIGHT,
 	    WIIUFB_BPP, WIIUFB_BASE);
 
 	pmf_device_register1(self, NULL, NULL, wiiufb_shutdown);
 
+	error = wiiufb_dma_alloc(sc, WIIUFB_CURSOR_SIZE, WIIUFB_CURSOR_ALIGN,
+	    BUS_DMA_NOCACHE, &sc->sc_curdma);
+	if (error != 0) {
+		panic("couldn't alloc hardware cursor");
+	}
+	wiiufb_gpu_set(DCUR_UPDATE(sc->sc_disp), DCUR_UPDATE_LOCK);
+	wiiufb_gpu_set(DCUR_CONTROL(sc->sc_disp), 0);
+	wiiufb_gpu_clear(DCUR_UPDATE(sc->sc_disp), DCUR_UPDATE_LOCK);
+
 	genfb_cnattach();
 	prop_dictionary_set_bool(dict, "is_console", true);
 	genfb_attach(&sc->sc_gen, &wiiufb_ops);
-
-	sc->sc_blank_ctrl = wiiufb_drc ?
-	    D2CRTC_BLANK_CONTROL : D1CRTC_BLANK_CONTROL;
 }
 
 static bool
@@ -161,11 +219,243 @@ wiiufb_shutdown(device_t self, int flags)
 }
 
 static int
+wiiufb_dma_alloc(struct wiiufb_softc *sc, bus_size_t size, bus_size_t align,
+    int flags, struct wiiufb_dma *dma)
+{
+	bus_dma_tag_t dmat = sc->sc_dmat;
+	int error;
+
+	error = bus_dmamem_alloc(dmat, size, align, 0,
+	    dma->dma_segs, 1, &dma->dma_nsegs, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+
+	error = bus_dmamem_map(dmat, dma->dma_segs, dma->dma_nsegs,
+	    size, &dma->dma_addr, BUS_DMA_WAITOK | flags);
+	if (error)
+		goto free;
+
+	error = bus_dmamap_create(dmat, size, dma->dma_nsegs,
+	    size, 0, BUS_DMA_WAITOK, &dma->dma_map);
+	if (error)
+		goto unmap;
+
+	error = bus_dmamap_load(dmat, dma->dma_map, dma->dma_addr,
+	    size, NULL, BUS_DMA_WAITOK);
+	if (error)
+	    goto destroy;
+
+	dma->dma_size = size;
+	dma->dma_tag = dmat;
+
+	memset(dma->dma_addr, 0, dma->dma_size);
+
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(dmat, dma->dma_map);
+unmap:
+	bus_dmamem_unmap(dmat, dma->dma_addr, dma->dma_size);
+free:
+	bus_dmamem_free(dmat, dma->dma_segs, dma->dma_nsegs);
+
+	return error;
+}
+
+static void
+wiiufb_cursor_shape(struct wiiufb_softc *sc)
+{
+	const uint8_t *msk = sc->sc_cursor.c_mask;
+	const uint8_t *img = sc->sc_cursor.c_image;
+	uint32_t *out = sc->sc_curdma.dma_addr;
+	uint8_t bit;
+	int i, j, px;
+
+	for (i = 0; i < WIIUFB_CURMAX * NBBY; i++) {
+		bit = 1;
+		for (j = 0; j < 8; j++) {
+			px = ((*msk & bit) ? 2 : 0) | ((*img & bit) ? 1 : 0);
+			switch (px) {
+			case 0:
+			case 1:
+				*out = 0;
+				break;
+			case 2:
+			case 3:
+				*out = htole32(
+				    0xff000000 | sc->sc_cursor.c_cmap[px - 2]);
+				break;
+			}
+			out++;
+			bit <<= 1;
+		}
+		msk++;
+		img++;
+	}
+}
+
+static void
+wiiufb_cursor_visible(struct wiiufb_softc *sc)
+{
+	uint32_t control;
+
+	wiiufb_gpu_set(DCUR_UPDATE(sc->sc_disp), DCUR_UPDATE_LOCK);
+
+	if (sc->sc_cursor.c_enable) {
+		control = DCUR_CONTROL_EN | DCUR_CONTROL_MODE_ARGB_PM;
+	} else {
+		control = 0;
+	}
+	wiiufb_gpu_write(DCUR_CONTROL(sc->sc_disp), control);
+
+	wiiufb_gpu_clear(DCUR_UPDATE(sc->sc_disp), DCUR_UPDATE_LOCK);
+}
+
+static void
+wiiufb_cursor_position(struct wiiufb_softc *sc)
+{
+	int x, y;
+
+	wiiufb_gpu_set(DCUR_UPDATE(sc->sc_disp), DCUR_UPDATE_LOCK);
+
+	x = uimin(sc->sc_cursor.c_pos.x, WIIUFB_WIDTH - 1);
+	y = uimin(sc->sc_cursor.c_pos.y, WIIUFB_HEIGHT - 1);
+
+	wiiufb_gpu_write(DCUR_SIZE(sc->sc_disp),
+	    DCUR_SIZE_WIDTH(WIIUFB_CURMAX) |
+	    DCUR_SIZE_HEIGHT(WIIUFB_CURMAX));
+	wiiufb_gpu_write(DCUR_SURFACE_ADDRESS(sc->sc_disp),
+	    sc->sc_curdma.dma_segs[0].ds_addr);
+	wiiufb_gpu_write(DCUR_POSITION(sc->sc_disp),
+	    DCUR_POSITION_X(x) |
+	    DCUR_POSITION_Y(y));
+	wiiufb_gpu_write(DCUR_HOT_SPOT(sc->sc_disp),
+	    DCUR_HOT_SPOT_X(sc->sc_cursor.c_hot.x) |
+	    DCUR_HOT_SPOT_Y(sc->sc_cursor.c_hot.y));
+
+	wiiufb_gpu_clear(DCUR_UPDATE(sc->sc_disp), DCUR_UPDATE_LOCK);
+}
+
+static void
+wiiufb_cursor_update(struct wiiufb_softc *sc, unsigned which)
+{
+	if ((which & (WSDISPLAY_CURSOR_DOCMAP|WSDISPLAY_CURSOR_DOSHAPE)) != 0) {
+		wiiufb_cursor_shape(sc);
+	}
+
+	if ((which & WSDISPLAY_CURSOR_DOCUR) != 0) {
+		wiiufb_cursor_visible(sc);
+	}
+
+	wiiufb_cursor_position(sc);
+}
+
+static int
+wiiufb_set_cursor(struct wiiufb_softc *sc, struct wsdisplay_cursor *wc)
+{
+	uint8_t r[2], g[2], b[2];
+	unsigned which, index, count;
+	int i, err, pitch, size;
+	struct wiiufb_cursor *nc = &sc->sc_tempcursor;
+
+	which = wc->which;
+	*nc = sc->sc_cursor;
+
+	if ((which & WSDISPLAY_CURSOR_DOCMAP) != 0) {
+		index = wc->cmap.index;
+		count = wc->cmap.count;
+
+		if (index >= 2 || count > 2 - index) {
+			return EINVAL;
+		}
+
+		err = copyin(wc->cmap.red, &r[index], count);
+		if (err != 0) {
+			return err;
+		}
+		err = copyin(wc->cmap.green, &g[index], count);
+		if (err != 0) {
+			return err;
+		}
+		err = copyin(wc->cmap.blue, &b[index], count);
+		if (err != 0) {
+			return err;
+		}
+
+		for (i = index; i < index + count; i++) {
+			nc->c_cmap[i] =
+			    (r[i] << 16) + (g[i] << 8) + (b[i] << 0);
+		}
+	}
+
+	if ((which & WSDISPLAY_CURSOR_DOSHAPE) != 0) {
+		if (wc->size.x > WIIUFB_CURMAX || wc->size.y > WIIUFB_CURMAX) {
+			return EINVAL;
+		}
+
+		pitch = (wc->size.x + 7) / 8;
+		size = pitch * wc->size.y;
+
+		memset(nc->c_image, 0, sizeof(nc->c_image));
+		memset(nc->c_mask, 0, sizeof(nc->c_mask));
+		nc->c_size = wc->size;
+
+		if ((err = copyin(wc->image, nc->c_image, size)) != 0) {
+			return err;
+		}
+		if ((err = copyin(wc->mask, nc->c_mask, size)) != 0) {
+			return err;
+		}
+	}
+
+	if ((which & WSDISPLAY_CURSOR_DOHOT) != 0) {
+		nc->c_hot = wc->hot;
+		if (nc->c_hot.x >= nc->c_size.x) {
+			nc->c_hot.x = nc->c_size.x - 1;
+		}
+		if (nc->c_hot.y >= nc->c_size.y) {
+			nc->c_hot.y = nc->c_size.y - 1;
+		}
+	}
+
+	if ((which & WSDISPLAY_CURSOR_DOPOS) != 0) {
+		nc->c_pos = wc->pos;
+		if (nc->c_pos.x >= WIIUFB_WIDTH) {
+			nc->c_pos.x = WIIUFB_WIDTH - 1;
+		}
+		if (nc->c_pos.y >= WIIUFB_HEIGHT) {
+			nc->c_pos.y = WIIUFB_HEIGHT - 1;
+		}
+	}
+
+	if ((which & WSDISPLAY_CURSOR_DOCUR) != 0) {
+		nc->c_enable = wc->enable;
+	}
+
+	sc->sc_cursor = *nc;
+	wiiufb_cursor_update(sc, wc->which);
+
+	return 0;
+}
+
+static int
+wiiufb_set_curpos(struct wiiufb_softc *sc, struct wsdisplay_curpos *pos)
+{
+	sc->sc_cursor.c_pos.x = uimin(uimax(pos->x, 0), WIIUFB_WIDTH - 1);
+	sc->sc_cursor.c_pos.y = uimin(uimax(pos->y, 0), WIIUFB_HEIGHT - 1);
+
+	wiiufb_cursor_position(sc);
+
+	return 0;
+}
+
+static int
 wiiufb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 {
 	struct wiiufb_softc *sc = v;
 	struct wsdisplayio_bus_id *busid;
 	struct wsdisplayio_fbinfo *fbi;
+	struct wsdisplay_curpos *cp;
 	struct rasops_info *ri;
 	u_int video;
 	int error;
@@ -190,15 +480,30 @@ wiiufb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		video = *(u_int *)data;
 		switch (video) {
 		case WSDISPLAYIO_VIDEO_OFF:
-			wiiufb_gpu_write(sc->sc_blank_ctrl, DCRTC_BLANK_DATA_EN);
+			wiiufb_gpu_write(DCRTC_BLANK_CONTROL(sc->sc_disp),
+			    DCRTC_BLANK_DATA_EN);
 			break;
 		case WSDISPLAYIO_VIDEO_ON:
-			wiiufb_gpu_write(sc->sc_blank_ctrl, 0);
+			wiiufb_gpu_write(DCRTC_BLANK_CONTROL(sc->sc_disp), 0);
 			break;
 		default:
 			return EINVAL;
 		}
 		return 0;
+	case WSDISPLAYIO_GCURMAX:
+		cp = data;
+		cp->x = WIIUFB_CURMAX;
+		cp->y = WIIUFB_CURMAX;
+		return 0;
+	case WSDISPLAYIO_GCURPOS:
+		cp = data;
+		cp->x = sc->sc_cursor.c_pos.x;
+		cp->y = sc->sc_cursor.c_pos.y;
+		return 0;
+	case WSDISPLAYIO_SCURPOS:
+		return wiiufb_set_curpos(sc, data);
+	case WSDISPLAYIO_SCURSOR:
+		return wiiufb_set_cursor(sc, data);
 	}
 
 	return EPASSTHROUGH;
@@ -225,6 +530,25 @@ wiiufb_gpu_write(uint16_t reg, uint32_t data)
 	in32(LT_GPUINDDATA);
 }
 
+static uint32_t
+wiiufb_gpu_read(uint16_t reg)
+{
+	out32(LT_GPUINDADDR, LT_GPUINDADDR_REGSPACE_GPU | reg);
+	return in32(LT_GPUINDDATA);
+}
+
+static void
+wiiufb_gpu_set(uint16_t reg, uint32_t mask)
+{
+	wiiufb_gpu_write(reg, wiiufb_gpu_read(reg) | mask);
+}
+
+static void
+wiiufb_gpu_clear(uint16_t reg, uint32_t mask)
+{
+	wiiufb_gpu_write(reg, wiiufb_gpu_read(reg) & ~mask);
+}
+
 void
 wiiufb_consinit(void)
 {
@@ -246,15 +570,12 @@ wiiufb_consinit(void)
 	}
 
 	/* Blank the CRTC we are not using. */
-	if (wiiufb_drc) {
-		wiiufb_gpu_write(D1CRTC_BLANK_CONTROL, DCRTC_BLANK_DATA_EN);
-	} else {
-		wiiufb_gpu_write(D2CRTC_BLANK_CONTROL, DCRTC_BLANK_DATA_EN);
-	}
+	wiiufb_gpu_write(DCRTC_BLANK_CONTROL(wiiufb_drc ? 0 : 1),
+	    DCRTC_BLANK_DATA_EN);
 
 	/* Ensure that the ARGB8888 framebuffer is in a sane state. */
-	wiiufb_gpu_write(D1GRPH_SWAP_CNTL, DGRPH_SWAP_ENDIAN_SWAP_8IN32);
-	wiiufb_gpu_write(D2GRPH_SWAP_CNTL, DGRPH_SWAP_ENDIAN_SWAP_8IN32);
+	wiiufb_gpu_write(DGRPH_SWAP_CNTL(0), DGRPH_SWAP_ENDIAN_SWAP_8IN32);
+	wiiufb_gpu_write(DGRPH_SWAP_CNTL(1), DGRPH_SWAP_ENDIAN_SWAP_8IN32);
 
 	/*
 	 * Need to use the BAT mapping here as pmap isn't initialized yet.
