@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.22 2025/09/15 13:23:03 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.23 2026/02/01 10:50:23 jdc Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -35,6 +35,9 @@
 #define PCF8584_S2		0x02
 #define PCF8584_S3		0x03
 
+/* Write then read */
+#define REPEAT_START		1
+
 void		pcfiic_init(struct pcfiic_softc *);
 int		pcfiic_i2c_acquire_bus(void *, int);
 void		pcfiic_i2c_release_bus(void *, int);
@@ -42,9 +45,9 @@ int		pcfiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 		    size_t, void *, size_t, int);
 
 int		pcfiic_xmit(struct pcfiic_softc *, u_int8_t, const u_int8_t *,
-		    size_t, const u_int8_t *, size_t);
+		    size_t, const u_int8_t *, size_t, int);
 int		pcfiic_recv(struct pcfiic_softc *, u_int8_t, u_int8_t *,
-		    size_t);
+		    size_t, int);
 
 u_int8_t	pcfiic_read(struct pcfiic_softc *, bus_size_t);
 void		pcfiic_write(struct pcfiic_softc *, bus_size_t, u_int8_t);
@@ -71,15 +74,19 @@ pcfiic_init(struct pcfiic_softc *sc)
 
 void
 pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
-    int swapregs)
+    int flags)
 {
-	if (swapregs) {
+	if (flags & SWAP_REGS) {
 		sc->sc_regmap[PCF8584_S1] = PCF8584_S0;
 		sc->sc_regmap[PCF8584_S0] = PCF8584_S1;
 	} else {
 		sc->sc_regmap[PCF8584_S0] = PCF8584_S0;
 		sc->sc_regmap[PCF8584_S1] = PCF8584_S1;
 	}
+	if (flags & NEED_DELAY)
+		sc->sc_delay = 1;
+	else
+		sc->sc_delay = 0;
 	sc->sc_clock = clock;
 	sc->sc_addr = addr;
 
@@ -121,27 +128,38 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 
 	/*
 	 * If we are writing, write address, cmdbuf, buf.
-	 * If we are reading, write address, cmdbuf, then read address, buf.
+	 * If we are reading, either:
+	 *   write addr, cmdbuf, repeat-start, then read addr to buf, or:
+	 *   read addr to buf.
 	 */
 	if (I2C_OP_WRITE_P(op)) {
-		ret = pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen, buf, len);
+		ret = pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen,
+		    buf, len, 0);
 	} else {
-		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen, NULL, 0) != 0)
-			return (1);
-		ret = pcfiic_recv(sc, addr & 0x7f, buf, len);
+		if(cmdlen > 0) {
+			if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen,
+			    NULL, 0, REPEAT_START) != 0)
+				return (1);
+			ret = pcfiic_recv(sc, addr & 0x7f, buf, len,
+			    REPEAT_START);
+		} else
+			ret = pcfiic_recv(sc, addr & 0x7f, buf, len,
+			    0);
 	}
 	return (ret);
 }
 
 int
 pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *cmdbuf,
-    size_t cmdlen, const u_int8_t *buf, size_t len)
+    size_t cmdlen, const u_int8_t *buf, size_t len, int flags)
 {
-	int			i, err = 0;
+	int			i;
 	volatile u_int8_t	r;
 
-	if (pcfiic_wait_BBN(sc) != 0)
+	if (pcfiic_wait_BBN(sc) != 0) {
+		printf("%s: transmit failed (BBN)\n", device_xname(sc->sc_dev));
 		return (1);
+	}
 
 	pcfiic_write(sc, PCF8584_S0, addr << 1);
 	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
@@ -149,12 +167,14 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *cmdbuf,
 	for (i = 0; i <= cmdlen + len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
 			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			printf("%s: transmit failed at %d (PIN)\n",
+			    device_xname(sc->sc_dev), i);
 			return (1);
 		}
 
 		if (r & PCF8584_STATUS_LRB) {
-			err = 1;
-			break;
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			return (1);
 		}
 
 		if (i < cmdlen)
@@ -162,30 +182,42 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *cmdbuf,
 		else if (i < cmdlen + len)
 			pcfiic_write(sc, PCF8584_S0, buf[i - cmdlen]);
 	}
-	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
-	return (err);
+	if (flags != REPEAT_START)
+		pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+	return (0);
 }
 
 int
-pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len)
+pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len,
+    int flags)
 {
 	int			i = 0, err = 0;
 	volatile u_int8_t	r;
 
-	if (pcfiic_wait_BBN(sc) != 0)
-		return (1);
-
-	pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
-	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
+	if (flags != REPEAT_START) {
+		if (pcfiic_wait_BBN(sc) != 0) {
+			printf("%s: receive failed (BBN)\n",
+			    device_xname(sc->sc_dev));
+			return (1);
+		}
+		pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
+		pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
+	} else {
+		pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_REPSTART);
+		pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
+	}
 
 	for (i = 0; i <= len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
 			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			printf("%s: receive failed at %d (PIN)\n",
+			    device_xname(sc->sc_dev), i);
 			return (1);
 		}
 
 		if ((i != len) && (r & PCF8584_STATUS_LRB)) {
 			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
+			pcfiic_read(sc, PCF8584_S0);
 			return (1);
 		}
 
@@ -205,16 +237,27 @@ pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len)
 u_int8_t
 pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 {
+	u_int8_t val;
+
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
 	    BUS_SPACE_BARRIER_READ);
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r]));
+	val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r]);
+	if (sc->sc_delay)
+		delay(10);
+	return val;
 }
 
 void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
+	if (sc->sc_delay)
+		delay(10);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, PCF8584_S1, 1,
+	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
 	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF8584_S1);
+	if (sc->sc_delay)
+		delay(10);
 }
 
 void

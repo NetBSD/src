@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.6 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: pcf8584var.h,v 1.7 2026/02/01 10:50:23 jdc Exp $	*/
 /*	$OpenBSD: pcf8584var.h,v 1.5 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -29,9 +29,14 @@ struct pcfiic_softc {
 	u_int8_t		sc_regmap[2];
 
 	int			sc_poll;
+	int			sc_delay;
 
 	struct i2c_controller	sc_i2c;
 };
 
 void	pcfiic_attach(struct pcfiic_softc *, i2c_addr_t, u_int8_t, int);
 int	pcfiic_intr(void *);
+
+/* Quirks */
+#define SWAP_REGS	0x01
+#define NEED_DELAY	0x02
