@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1177 2026/01/11 18:13:15 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1178 2026/02/01 16:42:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1177 2026/01/11 18:13:15 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1178 2026/02/01 16:42:34 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -398,6 +398,7 @@ EvalStack_Details(Buffer *buf)
 		const char* value = elem->value != NULL
 		    && (kind == VSK_VARNAME || kind == VSK_EXPR)
 		    ? elem->value->str : NULL;
+		const GNode *gn;
 
 		Buf_AddStr(buf, "\t");
 		Buf_AddStr(buf, descr[kind]);
@@ -407,7 +408,16 @@ EvalStack_Details(Buffer *buf)
 			Buf_AddStr(buf, "\" with value \"");
 			Buf_AddStr(buf, value);
 		}
-		Buf_AddStr(buf, "\"\n");
+		if (kind == VSK_TARGET
+		    && (gn = Targ_FindNode(elem->str)) != NULL
+		    && gn->fname != NULL) {
+			Buf_AddStr(buf, "\" from ");
+			Buf_AddStr(buf, gn->fname);
+			Buf_AddStr(buf, ":");
+			Buf_AddInt(buf, (int)gn->lineno);
+			Buf_AddStr(buf, "\n");
+		} else
+			Buf_AddStr(buf, "\"\n");
 	}
 	return evalStack.len > 0;
 }

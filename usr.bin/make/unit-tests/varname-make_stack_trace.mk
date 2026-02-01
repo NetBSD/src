@@ -1,4 +1,4 @@
-# $NetBSD: varname-make_stack_trace.mk,v 1.3 2026/02/01 15:37:24 rillig Exp $
+# $NetBSD: varname-make_stack_trace.mk,v 1.4 2026/02/01 16:42:35 rillig Exp $
 #
 # Tests for the MAKE_STACK_TRACE environment variable, which controls whether
 # to print inter-process stack traces that are useful to narrow down where an
@@ -18,19 +18,19 @@ all: .PHONY
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} -j1 enabled-parallel || :
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} -j1 multi-stage-1
 
-# expect-not: in target "disabled-compat"
+# expect-not-matches: in target "disabled%-compat"
 disabled-compat: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
-# expect-not: in target "disabled-parallel"
+# expect-not-matches: in target "disabled%-parallel"
 disabled-parallel: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
-# expect: in target "enabled-compat"
+# expect: in target "enabled-compat" from varname-make_stack_trace.mk:31
 enabled-compat: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
-# expect: in target "enabled-parallel"
+# expect: in target "enabled-parallel" from varname-make_stack_trace.mk:35
 enabled-parallel: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
@@ -38,10 +38,10 @@ provoke-error: .PHONY
 	@echo ${:Z}
 
 # The stack trace must be printed exactly once.
-# expect: in target "multi-stage-4"
-# expect: in target "multi-stage-1"
-# expect-not: in target "multi-stage-4"
-# expect-not: in target "multi-stage-1"
+# expect: in target "multi-stage-4" from varname-make_stack_trace.mk:52
+# expect: in target "multi-stage-1" from varname-make_stack_trace.mk:46
+# expect-not-matches: in target "multi%-stage%-4"
+# expect-not-matches: in target "multi%-stage%-1"
 multi-stage-1: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-2
 multi-stage-2: .PHONY
