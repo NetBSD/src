@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.127 2023/08/03 08:32:52 mrg Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.128 2026/02/01 13:15:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.127 2023/08/03 08:32:52 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.128 2026/02/01 13:15:54 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -645,7 +645,7 @@ ultrix_sys_shmsys(struct lwp *l, const struct ultrix_sys_shmsys_args *uap, regis
 {
 
 #ifdef SYSVSHM
-	/* Ultrix SVSHM weirndess: */
+	/* Ultrix SVSHM weirdness: */
 	struct sys_shmat_args shmat_args;
 	struct compat_14_sys_shmctl_args shmctl_args;
 	struct sys_shmdt_args shmdt_args = {0};
