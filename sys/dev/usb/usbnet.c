@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.121 2024/11/10 11:53:04 mlelstv Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.122 2026/02/01 03:33:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.121 2024/11/10 11:53:04 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.122 2026/02/01 03:33:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -521,26 +521,31 @@ usbnet_start_locked(struct ifnet *ifp)
 	idx = cd->uncd_tx_prod;
 	count = 0;
 	while (cd->uncd_tx_cnt < un->un_tx_list_cnt) {
-		IFQ_POLL(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL) {
 			DPRINTF("start called, queue empty", 0, 0, 0, 0);
 			break;
 		}
-		KASSERT(m->m_pkthdr.len <= un->un_tx_bufsz);
+		if ((unsigned)m->m_pkthdr.len > un->un_tx_bufsz) {
+			DPRINTF("oversize packet, %ju > %ju",
+			    (unsigned)m->m_pkthdr.len, un->un_tx_bufsz, 0, 0);
+			if_statinc(ifp, if_oerrors);
+			m_freem(m);
+			continue;
+		}
+		KASSERTMSG((unsigned)m->m_pkthdr.len <= un->un_tx_bufsz,
+		    "m->m_pkthdr.len=%d bufsz=%u",
+		    m->m_pkthdr.len, un->un_tx_bufsz);
 
-		struct usbnet_chain *c = &cd->uncd_tx_chain[idx];
+		struct usbnet_chain *const c = &cd->uncd_tx_chain[idx];
+		KASSERT(c->unc_xfer != NULL);
 
 		length = uno_tx_prepare(un, m, c);
 		if (length == 0) {
 			DPRINTF("uno_tx_prepare gave zero length", 0, 0, 0, 0);
 			if_statinc(ifp, if_oerrors);
-			break;
-		}
-
-		if (__predict_false(c->unc_xfer == NULL)) {
-			DPRINTF("unc_xfer is NULL", 0, 0, 0, 0);
-			if_statinc(ifp, if_oerrors);
-			break;
+			m_freem(m);
+			continue;
 		}
 
 		usbd_setup_xfer(c->unc_xfer, c, c->unc_buf, length,
@@ -552,11 +557,10 @@ usbnet_start_locked(struct ifnet *ifp)
 			DPRINTF("usbd_transfer on %#jx for %ju bytes: %jd",
 			    (uintptr_t)c->unc_buf, length, err, 0);
 			if_statinc(ifp, if_oerrors);
-			break;
+			m_freem(m);
+			continue;
 		}
 		done_transmit = true;
-
-		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
