@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.362 2026/01/03 19:57:38 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.363 2026/02/01 15:30:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -886,7 +886,7 @@ void Parse_End(void);
 void PrintLocation(FILE *, bool, const GNode *);
 const char *GetParentStackTrace(void);
 char *GetStackTrace(bool);
-void PrintStackTrace(bool);
+void PrintStackTrace(FILE *, bool);
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
 bool Parse_VarAssign(const char *, bool, GNode *) MAKE_ATTR_USE;
 void Parse_File(const char *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.753 2025/06/28 22:39:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.754 2026/02/01 15:30:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.753 2025/06/28 22:39:27 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.754 2026/02/01 15:30:46 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -476,11 +476,11 @@ add_parent_stack_trace:
 }
 
 void
-PrintStackTrace(bool includingInnermost)
+PrintStackTrace(FILE *f, bool includingInnermost)
 {
 	char *stackTrace = GetStackTrace(includingInnermost);
-	fprintf(stderr, "%s", stackTrace);
-	fflush(stderr);
+	fprintf(f, "%s", stackTrace);
+	fflush(f);
 	free(stackTrace);
 }
 
@@ -597,7 +597,7 @@ ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
 
 	if (level == PARSE_FATAL || DEBUG(PARSE)
 	    || (gn == NULL && includes.len == 0 /* see PrintLocation */))
-		PrintStackTrace(false);
+		PrintStackTrace(f, false);
 }
 
 static void MAKE_ATTR_PRINTFLIKE(3, 4)
