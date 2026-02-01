@@ -1,4 +1,4 @@
-# $NetBSD: varname-make_stack_trace.mk,v 1.1 2025/06/13 03:51:18 rillig Exp $
+# $NetBSD: varname-make_stack_trace.mk,v 1.2 2026/02/01 15:20:18 rillig Exp $
 #
 # Tests for the MAKE_STACK_TRACE environment variable, which controls whether
 # to print inter-process stack traces that are useful to narrow down where an
@@ -16,6 +16,7 @@ all: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 disabled-parallel || :
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} enabled-compat || :
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} -j1 enabled-parallel || :
+	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} -j1 multi-stage-1
 
 # expect-not: in target "disabled-compat"
 disabled-compat: .PHONY
@@ -35,3 +36,18 @@ enabled-parallel: .PHONY
 
 provoke-error: .PHONY
 	@echo ${:Z}
+
+# FIXME: Don't print the stack trace twice.
+# expect: in target "multi-stage-4"
+# expect: in target "multi-stage-1"
+# expect: in target "multi-stage-4"
+# expect: in target "multi-stage-1"
+multi-stage-1: .PHONY
+	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-2
+multi-stage-2: .PHONY
+	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-3
+multi-stage-3: .PHONY
+	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-4
+multi-stage-4: .PHONY
+	@${MAKE:U} -f ${MAKEFILE} -j1 multi-stage-5
+multi-stage-5: .PHONY
