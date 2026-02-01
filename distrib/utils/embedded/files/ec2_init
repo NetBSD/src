@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ec2_init,v 1.6 2023/09/27 00:27:07 riastradh Exp $
+# $NetBSD: ec2_init,v 1.7 2026/02/01 22:57:34 jschauma Exp $
 #
 # PROVIDE: ec2_init
 # REQUIRE: NETWORKING
@@ -13,6 +13,12 @@ rcvar=${name}
 start_cmd="ec2_init"
 stop_cmd=":"
 
+IMDS_IP="169.254.169.254"
+if ! route get default >/dev/null 2>&1; then
+	IMDS_IP="[fd00:ec2::254]"
+fi
+
+METADATA_URL="http://${IMDS_IP}/latest/meta-data/"
 CLOUD_TYPE=EC2	# default
 
 case "$(/sbin/sysctl -n machdep.dmi.chassis-asset-tag 2>/dev/null)" in
@@ -24,12 +30,12 @@ esac
 case ${CLOUD_TYPE} in
 EC2)
 	EC2_USER="ec2-user"
-	METADATA_URL="http://169.254.169.254/latest/meta-data/"
+	METADATA_URL="http://${IMDS_IP}/latest/meta-data/"
 	SSH_KEY_URL="public-keys/0/openssh-key"
 	;;
 OCI)
 	EC2_USER="opc"
-	METADATA_URL="http://169.254.169.254/opc/v1/instance/"
+	METADATA_URL="http://${IMDS_IP}/opc/v1/instance/"
 	SSH_KEY_URL="metadata/ssh_authorized_keys"
 	;;
 esac
@@ -38,7 +44,7 @@ HOSTNAME_URL="hostname"
 
 SSH_KEY_FILE="/home/${EC2_USER}/.ssh/authorized_keys"
 
-OS_METADATA_URL="http://169.254.169.254/openstack/latest/meta_data.json"
+OS_METADATA_URL="http://${IMDS_IP}/openstack/latest/meta_data.json"
 
 ec2_newuser()
 {
@@ -95,7 +101,7 @@ ec2_init()
 	fi
 
 	# May contain a "random_seed".
-	OS_METADATA="$(ftp -o - -q 2 ${OS_METADATA_URL})"
+	OS_METADATA="$(ftp -o - -q 2 ${OS_METADATA_URL} 2>/dev/null)"
 	if echo "$OS_METADATA" | grep -q random_seed; then
 		echo "$OS_METADATA" | extract_random_seed |
 		    base64 -di >> /dev/urandom
