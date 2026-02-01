@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.22 2026/01/04 01:42:08 riastradh Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.23 2026/02/01 03:32:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.22 2026/01/04 01:42:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.23 2026/02/01 03:32:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.22 2026/01/04 01:42:08 riastradh 
 #include <sys/module.h>
 #include <sys/ptrace.h>
 #include <sys/sched.h>
+#include <sys/sdt.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
@@ -76,7 +77,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	sy = l->l_sysent;
 	if (sy->sy_call != sys_nomodule) {
 		kernconfig_unlock();
-		return ERESTART;
+		return SET_ERROR(ERESTART);
 	}
 	/*
 	 * Try to autoload a module to satisfy the request.  If it 
@@ -96,7 +97,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 			    	break;
 			}
 			kernconfig_unlock();
-			return ERESTART;
+			return SET_ERROR(ERESTART);
 		}
 	kernconfig_unlock();
 #endif	/* MODULAR */
@@ -125,13 +126,13 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
 		if (sp[i].sp_code >= SYS_NSYSENT)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		if (sy[sp[i].sp_code].sy_call != sys_nomodule &&
 		    sy[sp[i].sp_code].sy_call != sys_nosys) {
 #ifdef DIAGNOSTIC
 			printf("syscall %d is busy\n", sp[i].sp_code);
 #endif
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 	}
 	/* Everything looks good, patch them in. */
@@ -201,7 +202,7 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 		for (i = 0; sp[i].sp_call != NULL; i++) {
 			sy[sp[i].sp_code].sy_call = sp[i].sp_call;
 		}
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 
 	return 0;
@@ -262,7 +263,7 @@ trace_enter(register_t code, const struct sysent *sy, const void *args)
 		proc_stoptrace(TRAP_SCE, code, args, NULL, 0);
 		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
 			/* tracer will emulate syscall for us */
-			error = EJUSTRETURN;
+			error = SET_ERROR(EJUSTRETURN);
 		}
 	}
 #endif
