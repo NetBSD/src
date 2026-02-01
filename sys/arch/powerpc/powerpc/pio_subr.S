@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.18 2020/07/06 10:31:24 rin Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.19 2026/02/01 08:55:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -37,7 +37,7 @@
  *	We use rotlw instead of slw because rotlw ignores bit 26 and slw
  *	doesn't.  However, this may make the high bits of the offset rotate
  *	in the low bits but if that happens then the offset was too large
- *	to being with.
+ *	to begin with.
  */
 #ifdef DEBUG
 #define	DBGSYNC	sync
