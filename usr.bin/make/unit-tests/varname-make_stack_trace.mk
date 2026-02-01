@@ -1,4 +1,4 @@
-# $NetBSD: varname-make_stack_trace.mk,v 1.2 2026/02/01 15:20:18 rillig Exp $
+# $NetBSD: varname-make_stack_trace.mk,v 1.3 2026/02/01 15:37:24 rillig Exp $
 #
 # Tests for the MAKE_STACK_TRACE environment variable, which controls whether
 # to print inter-process stack traces that are useful to narrow down where an
@@ -37,11 +37,11 @@ enabled-parallel: .PHONY
 provoke-error: .PHONY
 	@echo ${:Z}
 
-# FIXME: Don't print the stack trace twice.
+# The stack trace must be printed exactly once.
 # expect: in target "multi-stage-4"
 # expect: in target "multi-stage-1"
-# expect: in target "multi-stage-4"
-# expect: in target "multi-stage-1"
+# expect-not: in target "multi-stage-4"
+# expect-not: in target "multi-stage-1"
 multi-stage-1: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-2
 multi-stage-2: .PHONY

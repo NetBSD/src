@@ -47,13 +47,4 @@ make: warning: Invalid internal option "-J" in "<curdir>"; see the manual page
 	in make[2] in directory "<curdir>"
 	in target "multi-stage-1"
 	in make[1] in directory "<curdir>"
-	in make[5] in directory "<curdir>"
-	in target "multi-stage-4"
-	in make[4] in directory "<curdir>"
-	in target "multi-stage-3"
-	in make[3] in directory "<curdir>"
-	in target "multi-stage-2"
-	in make[2] in directory "<curdir>"
-	in target "multi-stage-1"
-	in make[1] in directory "<curdir>"
 exit status 0

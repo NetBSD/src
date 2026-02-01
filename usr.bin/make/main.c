@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.664 2026/02/01 15:30:46 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.665 2026/02/01 15:37:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.664 2026/02/01 15:30:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.665 2026/02/01 15:37:24 rillig Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1204,7 +1204,6 @@ InitMaxJobs(void)
 		    "Invalid internal option \"-J\" in \"%s\"; "
 		    "see the manual page",
 		    curdir);
-		PrintStackTrace(stderr, true);
 		return;
 	}
 	if (forceJobs || opts.compatMake ||
