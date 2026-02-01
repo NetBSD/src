@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.150 2026/02/01 19:41:46 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.151 2026/02/01 20:17:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.150 2026/02/01 19:41:46 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.151 2026/02/01 20:17:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1114,7 +1114,7 @@ psigset(char *buf, size_t size, const sigset_t *set)
 			first = false;
 		}
 
-		bool isnextset = sig < NSIG && sigismember(set, sig + 1);
+		bool isnextset = sig < NSIG - 1 && sigismember(set, sig + 1);
 		if (!isnextset && sig > range_start) {
 			ret = snprintf(buf + pos, size - pos, "-%d", sig);
 			if ((size_t)ret >= size - pos)
@@ -1141,7 +1141,7 @@ ktrsigmask(struct ktr_sigmask *ktr)
 	psigset(new, sizeof(new), &ktr->ktr_nset);
 	psigset(old, sizeof(old), &ktr->ktr_oset);
 	psigset(res, sizeof(res), &ktr->ktr_rset);
-	printf("sigprocmask(%s, new=[%s], old=[%s]) = [%s]\n",
+	printf("%s([%s]) [%s] -> [%s]\n",
 	    how[ktr->ktr_how & 3], new, old, res);
 }
 
