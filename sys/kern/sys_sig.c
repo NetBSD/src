@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.61 2025/12/19 04:43:16 riastradh Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.62 2026/02/01 19:41:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,12 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.61 2025/12/19 04:43:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.62 2026/02/01 19:41:46 christos Exp $");
 
 #include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/ktrace.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
@@ -584,14 +585,14 @@ out:
 int
 sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 {
-	sigset_t *mask = &l->l_sigmask;
+	sigset_t omask, *mask = &l->l_sigmask;
 	bool more;
 
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
-	if (oss) {
-		*oss = *mask;
-	}
+	if (!oss)
+		oss = &omask;
+	*oss = *mask;
 
 	if (nss == NULL) {
 		return 0;
@@ -614,6 +615,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 		return EINVAL;
 	}
 	sigminusset(&sigcantmask, mask);
+	ktrsigmask(how, nss, oss, mask);
 	if (more && sigispending(l, 0)) {
 		/*
 		 * Check for pending signals on return to user.

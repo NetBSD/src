@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.52 2026/01/04 01:41:59 riastradh Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.53 2026/02/01 19:41:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.52 2026/01/04 01:41:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.53 2026/02/01 19:41:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -124,6 +124,7 @@ __strong_alias(ktr_mib,nullop);
 __strong_alias(ktr_execarg,nullop);
 __strong_alias(ktr_execenv,nullop);
 __strong_alias(ktr_execfd,nullop);
+__strong_alias(ktr_sigmask,nullop);
 
 __strong_alias(sys_fktrace,sys_nosys);	/* Syscalls */
 __strong_alias(sys_ktrace,sys_nosys);

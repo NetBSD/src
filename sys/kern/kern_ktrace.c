@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.187 2026/01/04 01:35:33 riastradh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.188 2026/02/01 19:41:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.187 2026/01/04 01:35:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.188 2026/02/01 19:41:46 christos Exp $");
 
 #include <sys/param.h>
 
@@ -666,6 +666,27 @@ ktr_execfd(int fd, u_int dtype)
 
 	ktp->ktr_fd = fd;
 	ktp->ktr_dtype = dtype;
+	ktraddentry(l, kte, KTA_WAITOK);
+}
+
+void
+ktr_sigmask(int how, const sigset_t *nset, const sigset_t *oset,
+    const sigset_t *rset)
+{
+	struct ktrace_entry *kte;
+	struct ktr_sigmask *ktp;
+	lwp_t *l = curlwp;
+
+	if (!KTRPOINT(l->l_proc, KTR_SIGMASK))
+		return;
+
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_SIGMASK, sizeof(*ktp)))
+		return;
+
+	ktp->ktr_how = how;
+	ktp->ktr_nset = *nset;
+	ktp->ktr_oset = *oset;
+	ktp->ktr_rset = *rset;
 	ktraddentry(l, kte, KTA_WAITOK);
 }
 
