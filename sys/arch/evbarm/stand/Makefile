@@ -1,15 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2021/09/16 20:17:47 andvar Exp $
+#	$NetBSD: Makefile,v 1.15 2026/02/01 11:31:29 yurix Exp $
 
 .include <bsd.endian.mk>
 
 .if ${MACHINE_CPU} == "arm"
 SUBDIR+= gzboot
 SUBDIR+= boot2440
-.if ${TARGET_ENDIANNESS} == "1234"
-# According to the i.MX23 Reference Manual section 3.1, Page 3-3:
-# "The i.MX23 always operates in little-endian mode."
-SUBDIR+= bootimx23
-.endif
 .endif
 
 .if ${HAVE_UEFI:Uno} == "yes"

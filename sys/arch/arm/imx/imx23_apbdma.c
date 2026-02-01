@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.c,v 1.5 2025/10/02 06:51:15 skrll Exp $ */
+/* $Id: imx23_apbdma.c,v 1.6 2026/02/01 11:31:27 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,33 +34,55 @@
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
 
+#include <dev/fdt/fdtvar.h>
+
 #include <arm/imx/imx23_apbdma.h>
 #include <arm/imx/imx23_apbdmareg.h>
-#include <arm/imx/imx23_apbdmavar.h>
 #include <arm/imx/imx23_apbhdmareg.h>
 #include <arm/imx/imx23_apbxdmareg.h>
 #include <arm/imx/imx23var.h>
 
-static int	apbdma_match(device_t, cfdata_t, void *);
-static void	apbdma_attach(device_t, device_t, void *);
-static int	apbdma_activate(device_t, enum devact);
+/* DMA command control register bits. */
+#define APBDMA_CMD_XFER_COUNT		__BITS(31, 16)
+#define APBDMA_CMD_CMDPIOWORDS		__BITS(15, 12)
+#define APBDMA_CMD_RESERVED		__BITS(11, 9)
+#define APBDMA_CMD_HALTONTERMINATE	__BIT(8)
+#define APBDMA_CMD_WAIT4ENDCMD		__BIT(7)
+#define APBDMA_CMD_SEMAPHORE		__BIT(6)
+#define APBDMA_CMD_NANDWAIT4READY	__BIT(5)
+#define APBDMA_CMD_NANDLOCK		__BIT(4)
+#define APBDMA_CMD_IRQONCMPLT		__BIT(3)
+#define APBDMA_CMD_CHAIN		__BIT(2)
+#define APBDMA_CMD_COMMAND		__BITS(1, 0)
 
-CFATTACH_DECL3_NEW(apbdma,
-	sizeof(struct apbdma_softc),
-	apbdma_match,
-	apbdma_attach,
-	NULL,
-	apbdma_activate,
-	NULL,
-	NULL,
-	0);
+#define APBDMA_CMD_XFER_MAX_BYTES	65535
 
-static void	apbdma_reset(struct apbdma_softc *);
-static void	apbdma_init(struct apbdma_softc *);
+/* DMA command types. */
+#define APBDMA_CMD_NO_DMA_XFER		0
+#define APBDMA_CMD_DMA_WRITE		1
+#define APBDMA_CMD_DMA_READ		2
+#define APBDMA_CMD_DMA_SENSE		3
+
+/* Flags. */
+#define F_APBH_DMA			__BIT(0)
+#define F_APBX_DMA			__BIT(1)
+
+/* Number of channels. */
+#define AHB_MAX_DMA_CHANNELS		16
+
+/* Return codes for apbdma_intr_status() */
+#define DMA_IRQ_CMDCMPLT		0
+#define DMA_IRQ_TERM			1
+#define DMA_IRQ_BUS_ERROR		2
+
+/* Supported number of PIO words */
+#define MAX_PIO_WORDS 3
+
+#define HW_APB_CHN_NXTCMDAR(base, channel)	(base + (0x70 * channel))
+#define HW_APB_CHN_SEMA(base, channel)	(base + (0x70 * channel))
 
 #define DMA_RD(sc, reg)							\
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, (reg))
@@ -69,78 +91,371 @@ static void	apbdma_init(struct apbdma_softc *);
 
 #define APBDMA_SOFT_RST_LOOP 455 /* At least 1 us ... */
 
-static int
-apbdma_match(device_t parent, cfdata_t match, void *aux)
+struct imx23_apbdma_fdt_config {
+	u_int flags;
+	u_int num_channels;
+};
+
+struct imx23_apbdma_command {
+	void *next;		/* Physical address. */
+	uint32_t control;
+	void *buffer;		/* Physical address. */
+	uint32_t pio_words[MAX_PIO_WORDS];
+};
+
+struct imx23_apbdma_softc;
+struct imx23_apbdma_channel {
+	u_int chan_index;
+	void (*chan_cb)(void *);
+	void *chan_cbarg;
+	struct imx23_apbdma_softc *chan_parent;
+};
+
+struct imx23_apbdma_softc {
+	device_t sc_dev;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamp;
+	bus_space_handle_t sc_ioh;
+	bus_space_tag_t sc_iot;
+	u_int flags;
+	struct imx23_apbdma_channel sc_chan[AHB_MAX_DMA_CHANNELS];
+	bus_size_t sc_cmd_sz;
+	struct imx23_apbdma_command *sc_cmds;
+	bus_dma_segment_t sc_ds[1];
+};
+
+static int	imx23_apbdma_match(device_t, cfdata_t, void *);
+static void	imx23_apbdma_attach(device_t, device_t, void *);
+static void 	imx23_apbdma_reset(struct imx23_apbdma_softc *);
+static void	imx23_apbdma_init(struct imx23_apbdma_softc *);
+static void *	imx23_apbdma_fdt_acquire(device_t, const void *, size_t,
+		   			 void (*)(void *), void *);
+static void 	imx23_apbdma_fdt_release(device_t, void *);
+static int 	imx23_apbdma_fdt_transfer(device_t, void *,
+			  		  struct fdtbus_dma_req *);
+static void 	imx23_apbdma_fdt_halt(device_t, void *);
+static int	imx23_apbdma_intr(void *);
+
+CFATTACH_DECL_NEW(imx23apbdma, sizeof(struct imx23_apbdma_softc),
+		  imx23_apbdma_match, imx23_apbdma_attach, NULL, NULL);
+
+static const struct fdtbus_dma_controller_func imx23_apbdma_fdt_dma_funcs = {
+	.acquire = imx23_apbdma_fdt_acquire,
+	.release = imx23_apbdma_fdt_release,
+	.transfer = imx23_apbdma_fdt_transfer,
+	.halt = imx23_apbdma_fdt_halt,
+};
+
+static const struct imx23_apbdma_fdt_config imx23_apbh_config = {
+	.flags = F_APBH_DMA,
+	.num_channels = 8,
+};
+static const struct imx23_apbdma_fdt_config imx23_apbx_config = {
+	.flags = F_APBX_DMA,
+	.num_channels = 16,
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx23-dma-apbh", .data = &imx23_apbh_config },
+	{ .compat = "fsl,imx23-dma-apbx", .data = &imx23_apbx_config },
+	DEVICE_COMPAT_EOL
+};
+
+static void *
+imx23_apbdma_fdt_acquire(device_t dev, const void *data, size_t len,
+		   void (*cb)(void *), void *cbarg)
 {
-	struct apb_attach_args *aa = aux;
+	struct imx23_apbdma_softc *sc = device_private(dev);
+	struct imx23_apbdma_channel *chan;
+	const uint32_t *specifier = data;
 
-	if (aa->aa_addr == HW_APBHDMA_BASE && aa->aa_size == HW_APBHDMA_SIZE)
-			return 1;
+	// get channel index
+	if (len != 4) {
+		return NULL;
+	}
+	const u_int chan_index = be32toh(specifier[0]);
 
-	if (aa->aa_addr == HW_APBXDMA_BASE && aa->aa_size == HW_APBXDMA_SIZE)
-			return 1;
+	chan = &sc->sc_chan[chan_index];
+
+	chan->chan_cb = cb;
+	chan->chan_cbarg = cbarg;
+
+	/* Enable CMDCMPLT_IRQ. */
+	DMA_WR(sc, HW_APB_CTRL1_SET, (1<<chan->chan_index)<<16);
+
+	return chan;
+}
+
+static void
+imx23_apbdma_fdt_release(device_t dev, void *priv)
+{
+	/* do nothing */
+}
+
+static int
+imx23_apbdma_fdt_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
+{
+	struct imx23_apbdma_softc *sc = device_private(dev);
+	struct imx23_apbdma_channel *chan = priv;
+	uint32_t reg;
+	uint8_t val;
+
+	struct imx23_apbdma_command *cmd = &sc->sc_cmds[chan->chan_index];
+
+	if ((req->dreq_dir == FDT_DMA_NO_XFER && req->dreq_nsegs != 0) ||
+	    (req->dreq_dir != FDT_DMA_NO_XFER && req->dreq_nsegs != 1)) {
+		return EINVAL;
+	}
+	if (req->dreq_nsegs > 0 &&
+	    req->dreq_segs[0].ds_len > APBDMA_CMD_XFER_MAX_BYTES) {
+		return EINVAL;
+	}
+	if (req->dreq_datalen > MAX_PIO_WORDS) {
+		return EINVAL;
+	}
+
+	/* write command buffer */
+	bus_size_t transfer_len = 0;
+	if (req->dreq_nsegs > 0) {
+		transfer_len = req->dreq_segs[0].ds_len;
+		cmd->buffer = (void *)req->dreq_segs[0].ds_addr;
+	}
+	cmd->next = NULL;
+	cmd->control = __SHIFTIN(transfer_len, APBDMA_CMD_XFER_COUNT) |
+		       __SHIFTIN(req->dreq_datalen, APBDMA_CMD_CMDPIOWORDS) |
+		       APBDMA_CMD_HALTONTERMINATE | APBDMA_CMD_SEMAPHORE |
+		       APBDMA_CMD_IRQONCMPLT;
+	if (req->dreq_block_irq) {
+		cmd->control |= APBDMA_CMD_WAIT4ENDCMD;
+	}
+	/* The fdt subsystem and the imx23 documentation use opposite naming */
+	if (req->dreq_dir == FDT_DMA_WRITE) {
+		cmd->control |=
+		    __SHIFTIN(APBDMA_CMD_DMA_READ, APBDMA_CMD_COMMAND);
+	} else if (req->dreq_dir == FDT_DMA_READ) {
+		cmd->control |=
+		    __SHIFTIN(APBDMA_CMD_DMA_WRITE, APBDMA_CMD_COMMAND);
+	} else {
+		cmd->control |=
+		    __SHIFTIN(APBDMA_CMD_NO_DMA_XFER, APBDMA_CMD_COMMAND);
+	}
+	uint32_t *pio_words = req->dreq_data;
+	for (int i = 0; i < req->dreq_datalen; i++) {
+		cmd->pio_words[i] = pio_words[i];
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamp,
+			chan->chan_index * sizeof(struct imx23_apbdma_command),
+			sizeof(struct imx23_apbdma_command),
+			BUS_DMASYNC_PREWRITE);
+
+	/* set the address of the dma command */
+	bus_addr_t phys_cmd_addr =
+	    sc->sc_ds[0].ds_addr +
+	    chan->chan_index * sizeof(struct imx23_apbdma_command);
+	if (sc->flags & F_APBH_DMA)
+		reg =
+		    HW_APB_CHN_NXTCMDAR(HW_APBH_CH0_NXTCMDAR, chan->chan_index);
+	else
+		reg =
+		    HW_APB_CHN_NXTCMDAR(HW_APBX_CH0_NXTCMDAR, chan->chan_index);
+	DMA_WR(sc, reg, phys_cmd_addr);
+
+	/* increase semaphore to start dma transfer */
+	if (sc->flags & F_APBH_DMA) {
+		reg = HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, chan->chan_index);
+		val = __SHIFTIN(1, HW_APBH_CH0_SEMA_INCREMENT_SEMA);
+	} else {
+		reg = HW_APB_CHN_SEMA(HW_APBX_CH0_SEMA, chan->chan_index);
+		val = __SHIFTIN(1, HW_APBX_CH0_SEMA_INCREMENT_SEMA);
+	}
+	DMA_WR(sc, reg, val);
 
 	return 0;
 }
 
 static void
-apbdma_attach(device_t parent, device_t self, void *aux)
+imx23_apbdma_fdt_halt(device_t dev, void *priv)
 {
-	struct apb_attach_args *aa = aux;
-	struct apbdma_softc *sc = device_private(self);
-	struct apb_softc *sc_parent = device_private(parent);
-	static u_int apbdma_attached = 0;
-
-	if ((strncmp(device_xname(parent), "apbh", 4) == 0) &&
-	    (apbdma_attached & F_APBH_DMA))
-		return;
-	if ((strncmp(device_xname(parent), "apbx", 4) == 0) &&
-	    (apbdma_attached & F_APBX_DMA))
-		return;
-
-	sc->sc_dev = self;
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_dmat = aa->aa_dmat;
-
-	if (bus_space_map(sc->sc_iot,
-	    aa->aa_addr, aa->aa_size, 0, &sc->sc_ioh)) {
-		aprint_error_dev(sc->sc_dev, "unable to map bus space\n");
-		return;
-	}
-
-	if (strncmp(device_xname(parent), "apbh", 4) == 0)
-		sc->flags = F_APBH_DMA;
-
-	if (strncmp(device_xname(parent), "apbx", 4) == 0)
-		sc->flags = F_APBX_DMA;
-
-	apbdma_reset(sc);
-	apbdma_init(sc);
-
-	if (sc->flags & F_APBH_DMA)
-		apbdma_attached |= F_APBH_DMA;
-	if (sc->flags & F_APBX_DMA)
-		apbdma_attached |= F_APBX_DMA;
-
-	sc_parent->dmac = self;
-
-	/* Initialize mutex to control concurrent access from the drivers. */
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
-
-	if (sc->flags & F_APBH_DMA)
-		aprint_normal(": APBH DMA\n");
-	else if (sc->flags & F_APBX_DMA)
-		aprint_normal(": APBX DMA\n");
-	else
-		panic("dma flag missing!\n");
-
-	return;
+	/* do nothing */
 }
 
 static int
-apbdma_activate(device_t self, enum devact act)
+imx23_apbdma_intr(void *frame)
 {
-	return EOPNOTSUPP;
+	struct imx23_apbdma_channel *chan = frame;
+	struct imx23_apbdma_softc *sc = chan->chan_parent;
+	unsigned int reason = 0;
+
+	/* Check if this was command complete IRQ. */
+	if (DMA_RD(sc, HW_APB_CTRL1) & (1<<chan->chan_index))
+		reason = DMA_IRQ_CMDCMPLT;
+
+	/* Check if error was set. */
+	if (DMA_RD(sc, HW_APB_CTRL2) & (1<<chan->chan_index)) {
+		if (DMA_RD(sc, HW_APB_CTRL2) & (1<<chan->chan_index)<<16)
+			reason = DMA_IRQ_BUS_ERROR;
+		else
+			reason = DMA_IRQ_TERM;
+	}
+
+	if (reason) {
+		/* acknowledge error */
+		DMA_WR(sc, HW_APB_CTRL2_CLR, (1<<chan->chan_index));
+	} else {
+		/* acknowledge completion */
+		if (sc->flags & F_APBH_DMA) {
+			DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<chan->chan_index));
+		} else {
+			DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<chan->chan_index));
+		}
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamp, 0, sc->sc_cmd_sz,
+			BUS_DMASYNC_POSTWRITE);
+
+	if (chan->chan_cb != NULL) {
+		chan->chan_cb(chan->chan_cbarg);
+	}
+
+	if (reason == DMA_IRQ_TERM) {
+		/* reset the dma channel */
+		if (sc->flags & F_APBH_DMA) {
+			DMA_WR(sc, HW_APB_CTRL0_SET,
+			       __SHIFTIN((1 << chan->chan_index),
+					 HW_APBH_CTRL0_RESET_CHANNEL));
+			while (DMA_RD(sc, HW_APB_CTRL0) &
+			       HW_APBH_CTRL0_RESET_CHANNEL)
+				;
+		} else {
+			DMA_WR(sc, HW_APBX_CHANNEL_CTRL_SET,
+			       __SHIFTIN((1 << chan->chan_index),
+					 HW_APBH_CTRL0_RESET_CHANNEL));
+			while (DMA_RD(sc, HW_APBX_CHANNEL_CTRL) &
+			       (1 << chan->chan_index))
+				;
+		}
+	}
+
+	return 1;
+}
+
+static int
+imx23_apbdma_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct fdt_attach_args *const faa = aux;
+
+	return of_compatible_match(faa->faa_phandle, compat_data);
+}
+
+static void
+imx23_apbdma_attach(device_t parent, device_t self, void *aux)
+{
+	struct imx23_apbdma_softc *const sc = device_private(self);
+	struct fdt_attach_args *const faa = aux;
+	const int phandle = faa->faa_phandle;
+	const struct imx23_apbdma_fdt_config *config;
+	int rsegs;
+	int len;
+	char intrstr[128];
+
+	// find out if we are for APBH or APBX
+	config = of_compatible_lookup(phandle, compat_data)->data;
+	sc->flags = config->flags;
+
+	sc->sc_dev = self;
+	sc->sc_iot = faa->faa_bst;
+	sc->sc_dmat = faa->faa_dmat;
+
+	/* Map control registers */
+	bus_addr_t addr;
+	bus_size_t size;
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get register address\n");
+		return;
+	}
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh)) {
+		aprint_error(": couldn't map registers\n");
+		return;
+	}
+
+	/* initialize DMA */
+	sc->sc_cmd_sz =
+	    AHB_MAX_DMA_CHANNELS * sizeof(struct imx23_apbdma_command);
+	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_cmd_sz, PAGE_SIZE, 0,
+			     sc->sc_ds, 1, &rsegs, BUS_DMA_WAITOK)) {
+		aprint_error(": Unable to allocate DMA memory\n");
+		return;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, sc->sc_ds, rsegs, sc->sc_cmd_sz,
+			   (void **)&sc->sc_cmds, BUS_DMA_WAITOK)) {
+		aprint_error(": Unable to allocate DMA memory\n");
+		return;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
+			      BUS_DMA_WAITOK, &sc->sc_dmamp)) {
+		aprint_error(": Unable to create DMA map\n");
+		return;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamp, sc->sc_cmds,
+			    sc->sc_cmd_sz, NULL, BUS_DMA_WAITOK)) {
+		aprint_error(": Unable to load dma mapping\n");
+		return;
+	}
+
+	/* establish interrupts */
+	const u_int *specifier = fdtbus_get_prop(phandle, "interrupts", &len);
+	KASSERT(len == sizeof(u_int)*config->num_channels);
+	for (int i = 0; i < config->num_channels; i++) {
+		u_int irq = be32toh(specifier[i]);
+
+		/* irq = 0 means channel is unused*/
+		if (irq == 0)
+			continue;
+
+		/* Some channels share an irq. Only establish it once. */
+		bool skip = false;
+		for (int j = 0; j<i;j++) {
+			if (be32toh(specifier[j]) == irq) {
+				skip = true;
+				break;
+			}
+		}
+		if (skip) {
+			continue;
+		}
+
+		if (!fdtbus_intr_str(phandle, i, intrstr, sizeof(intrstr))) {
+			aprint_error(": failed to decode interrupt\n");
+			return;
+		}
+		void *ih = fdtbus_intr_establish_xname(
+		    phandle, i, IPL_SCHED, FDT_INTR_MPSAFE, imx23_apbdma_intr,
+		    &sc->sc_chan[i], device_xname(self));
+		if (ih == NULL) {
+			aprint_error_dev(
+			    self, ": couldn't install interrupt handler %s\n",
+			    intrstr);
+			return;
+		}
+	}
+
+	/* initialize our controller */
+	for (int i = 0; i < AHB_MAX_DMA_CHANNELS; i++) {
+		sc->sc_chan[i].chan_index = i;
+		sc->sc_chan[i].chan_parent = sc;
+	}
+	imx23_apbdma_reset(sc);
+	imx23_apbdma_init(sc);
+
+	fdtbus_register_dma_controller(self, phandle,
+				       &imx23_apbdma_fdt_dma_funcs);
+
+	if (sc->flags & F_APBH_DMA) {
+		aprint_normal(": type=apbh\n");
+	} else if (sc->flags & F_APBX_DMA) {
+		aprint_normal(": type=apbx\n");
+	}
 }
 
 /*
@@ -148,8 +463,8 @@ apbdma_activate(device_t self, enum devact act)
  *
  * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
  */
-static void
-apbdma_reset(struct apbdma_softc *sc)
+void
+imx23_apbdma_reset(struct imx23_apbdma_softc *sc)
 {
 	unsigned int loop;
 
@@ -193,8 +508,8 @@ apbdma_reset(struct apbdma_softc *sc)
 /*
  * Initialize APB{H,X}DMA block.
  */
-static void
-apbdma_init(struct apbdma_softc *sc)
+void
+imx23_apbdma_init(struct imx23_apbdma_softc *sc)
 {
 
 	if (sc->flags & F_APBH_DMA) {
@@ -202,224 +517,4 @@ apbdma_init(struct apbdma_softc *sc)
 		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_APB_BURST4_EN);
 	}
 	return;
-}
-
-/*
- * Chain DMA commands together.
- *
- * Set src->next point to trg's physical DMA mapped address.
- */
-void
-apbdma_cmd_chain(apbdma_command_t src, apbdma_command_t trg, void *buf,
-    bus_dmamap_t dmap)
-{
-	int i;
-	bus_size_t daddr;
-	bus_addr_t trg_offset;
-
-	trg_offset = (bus_addr_t)trg - (bus_addr_t)buf;
-	daddr = 0;
-
-	for (i = 0; i < dmap->dm_nsegs; i++) {
-		daddr += dmap->dm_segs[i].ds_len;
-		if (trg_offset < daddr) {
-			src->next = (void *)(dmap->dm_segs[i].ds_addr +
-			    (trg_offset - (daddr - dmap->dm_segs[i].ds_len)));
-			break;
-		}
-	}
-
-	return;
-}
-
-/*
- * Set DMA command buffer.
- *
- * Set cmd->buffer point to physical DMA address at offset in DMA map.
- */
-void
-apbdma_cmd_buf(apbdma_command_t cmd, bus_addr_t offset, bus_dmamap_t dmap)
-{
-	int i;
-	bus_size_t daddr;
-
-	daddr = 0;
-
-	for (i = 0; i < dmap->dm_nsegs; i++) {
-		daddr += dmap->dm_segs[i].ds_len;
-		if (offset < daddr) {
-			cmd->buffer = (void *)(dmap->dm_segs[i].ds_addr +
-			    (offset - (daddr - dmap->dm_segs[i].ds_len)));
-			break;
-		}
-	}
-
-	return;
-}
-
-/*
- * Initialize DMA channel.
- */
-void
-apbdma_chan_init(struct apbdma_softc *sc, unsigned int channel)
-{
-
-	mutex_enter(&sc->sc_lock);
-
-	/* Enable CMDCMPLT_IRQ. */
-	DMA_WR(sc, HW_APB_CTRL1_SET, (1<<channel)<<16);
-
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-/*
- * Set command chain for DMA channel.
- */
-#define HW_APB_CHN_NXTCMDAR(base, channel)	(base + (0x70 * channel))
-void
-apbdma_chan_set_chain(struct apbdma_softc *sc, unsigned int channel,
-	bus_dmamap_t dmap)
-{
-	uint32_t reg;
-
-	if (sc->flags & F_APBH_DMA)
-		reg = HW_APB_CHN_NXTCMDAR(HW_APBH_CH0_NXTCMDAR, channel);
-	else
-		reg = HW_APB_CHN_NXTCMDAR(HW_APBX_CH0_NXTCMDAR, channel);
-
-	mutex_enter(&sc->sc_lock);
-	DMA_WR(sc, reg, dmap->dm_segs[0].ds_addr);
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-/*
- * Initiate DMA transfer.
- */
-#define HW_APB_CHN_SEMA(base, channel)	(base + (0x70 * channel))
-void
-apbdma_run(struct apbdma_softc *sc, unsigned int channel)
-{
-	uint32_t reg;
-	uint8_t val;
-
-	if (sc->flags & F_APBH_DMA) {
-		reg = HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, channel);
-		val = __SHIFTIN(1, HW_APBH_CH0_SEMA_INCREMENT_SEMA);
-	 } else {
-		reg = HW_APB_CHN_SEMA(HW_APBX_CH0_SEMA, channel);
-		val = __SHIFTIN(1, HW_APBX_CH0_SEMA_INCREMENT_SEMA);
-	}
-
-	mutex_enter(&sc->sc_lock);
-	DMA_WR(sc, reg, val);
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-/*
- * Acknowledge command complete IRQ.
- */
-void
-apbdma_ack_intr(struct apbdma_softc *sc, unsigned int channel)
-{
-
-	mutex_enter(&sc->sc_lock);
-	if (sc->flags & F_APBH_DMA) {
-		DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<channel));
-	} else {
-		DMA_WR(sc, HW_APB_CTRL1_CLR, (1<<channel));
-	}
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-/*
- * Acknowledge error IRQ.
- */
-void
-apbdma_ack_error_intr(struct apbdma_softc *sc, unsigned int channel)
-{
-
-	mutex_enter(&sc->sc_lock);
-	DMA_WR(sc, HW_APB_CTRL2_CLR, (1<<channel));
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-/*
- * Return reason for the IRQ.
- */
-unsigned int
-apbdma_intr_status(struct apbdma_softc *sc, unsigned int channel)
-{
-	unsigned int reason;
-
-	reason = 0;
-
-	mutex_enter(&sc->sc_lock);
-
-	/* Check if this was command complete IRQ. */
-	if (DMA_RD(sc, HW_APB_CTRL1) & (1<<channel))
-		reason = DMA_IRQ_CMDCMPLT;
-
-	/* Check if error was set. */
-	if (DMA_RD(sc, HW_APB_CTRL2) & (1<<channel)) {
-		if (DMA_RD(sc, HW_APB_CTRL2) & (1<<channel)<<16)
-			reason = DMA_IRQ_BUS_ERROR;
-		else
-			reason = DMA_IRQ_TERM;
-	}
-
-	mutex_exit(&sc->sc_lock);
-
-	return reason;
-}
-
-/*
- * Reset DMA channel.
- * Use only for devices on APBH bus.
- */
-void
-apbdma_chan_reset(struct apbdma_softc *sc, unsigned int channel)
-{
-
-	mutex_enter(&sc->sc_lock);
-
-	if (sc->flags & F_APBH_DMA) {
-		DMA_WR(sc, HW_APB_CTRL0_SET,
-		    __SHIFTIN((1<<channel), HW_APBH_CTRL0_RESET_CHANNEL));
-		while(DMA_RD(sc, HW_APB_CTRL0) & HW_APBH_CTRL0_RESET_CHANNEL);
-	} else {
-		DMA_WR(sc, HW_APBX_CHANNEL_CTRL_SET,
-			__SHIFTIN((1<<channel), HW_APBH_CTRL0_RESET_CHANNEL));
-		while(DMA_RD(sc, HW_APBX_CHANNEL_CTRL) & (1<<channel));
-	}
-
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-void
-apbdma_wait(struct apbdma_softc *sc, unsigned int channel)
-{
-
-	mutex_enter(&sc->sc_lock);
-
-	if (sc->flags & F_APBH_DMA) {
-		while (DMA_RD(sc, HW_APB_CHN_SEMA(HW_APBH_CH0_SEMA, channel)) & HW_APBH_CH0_SEMA_PHORE)
-			;
-	 } else {
-		while (DMA_RD(sc, HW_APB_CHN_SEMA(HW_APBX_CH0_SEMA, channel)) & HW_APBX_CH0_SEMA_PHORE)
-			;
-	}
-
-	mutex_exit(&sc->sc_lock);
 }

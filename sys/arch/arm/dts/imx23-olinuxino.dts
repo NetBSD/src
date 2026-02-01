@@ -1,4 +1,4 @@
-/* $NetBSD: imx23-olinuxino.dts,v 1.2 2026/01/18 05:50:28 skrll Exp $ */
+/* $NetBSD: imx23-olinuxino.dts,v 1.3 2026/02/01 11:31:27 yurix Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -38,5 +38,23 @@
 
 	chosen {
 		stdout-path = "serial2:115200n8";
+	};
+
+	apb@80000000 {
+		apbh-bus@80000000 {
+			digctl@8001c000 {
+				status = "okay";
+			};
+		};
+
+		apbx-bus@80040000 {
+			audio-out@80048000 {
+				compatible = "fsl,imx23-audioout";
+				interrupts = <6>;
+				dmas = <&dma_apbx 1>;
+				dma-names = "tx";
+				status = "okay";
+			};
+		};
 	};
 };

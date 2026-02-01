@@ -1,4 +1,4 @@
-/* $Id: imx23var.h,v 1.3 2025/10/09 06:15:17 skrll Exp $ */
+/* $Id: imx23var.h,v 1.4 2026/02/01 11:31:29 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -48,33 +48,6 @@
 
 extern struct bus_space imx23_bus_space;
 extern struct arm32_bus_dma_tag imx23_bus_dma_tag;
-
-struct apb_attach_args {
-	bus_space_tag_t aa_iot;
-	bus_dma_tag_t aa_dmat;
-	const char *aa_name;
-	bus_addr_t aa_addr;
-	bus_size_t aa_size;
-	int8_t aa_irq;
-};
-
-struct apb_softc {
-	device_t	sc_dev;
-	device_t	dmac; /* DMA controller device for this bus. */
-};
-
-struct ahb_attach_args {
-	bus_space_tag_t aa_iot;
-	bus_dma_tag_t aa_dmat;
-	const char *aa_name;
-	bus_addr_t aa_addr;
-	bus_size_t aa_size;
-	int8_t aa_irq;
-};
-
-struct ahb_softc {
-	device_t	sc_dev;
-};
 
 #endif /* !_LOCORE */
 #endif /* !_ARM_IMX_IMX23VAR_H */

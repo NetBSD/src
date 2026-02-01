@@ -16,6 +16,10 @@ options 	SOC_IMX23
 #options 	LOCKDEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+# options 	USBVERBOSE	# verbose USB device autoconfig messages
+
 # Heartbeat checks
 options 	HEARTBEAT
 options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
@@ -59,6 +63,12 @@ imx23icoll* 		at fdt? pass 1	# imx23 interrupt driver
 # Timers
 imx23timrot* 		at fdt? pass 2		# imx23 timer
 
+# DMA controller
+imx23apbdma* 	at fdt? pass 1			# NXP i.MX23 DMA controller
+
+# Clock Controllers
+imx23clkctrl*	at fdt? pass 1			# i.MX23 clock controller
+
 # general FDT devices
 fclock* 	at fdt? pass 1
 ffclock* 	at fdt? pass 1
@@ -68,15 +78,82 @@ gpiokeys* 	at fdt?
 wskbd* 		at gpiokeys? console ? mux 1
 gpioleds* 	at fdt?
 
+# SDMMC
+imx23mmc* 	at fdt? pass 2			# i.MX23 SD/MMC
+sdmmc* 		at sdmmcbus?
+ld0 		at sdmmc0
+ld1 		at sdmmc1
+ld2 		at sdmmc2
+ld3 		at sdmmc3
+ld* 		at sdmmc?
+
 # Performance monitors
 pseudo-device 	tprof
+
+# GPIOs
+imx23pctl* 			at fdt?	pass 1		# imx23 pin control+gpio
+gpio* 					at gpiobus?
 
 # UART
 com* 		at fdt?	pass 4		# UART
 plcom* 		at fdt?	pass 4		# ARM PL011 UART
 
+# Various
+imx23digctl* at fdt? pass 1		# i.MX23 digctl block
+imx23rtc* at fdt? pass 2			# i.MX23 rtc block
+
+# I2C - needed for the USB subsystem
+iicmux* 	at fdt? pass 5		# I2C mux virtual controllers
+iic* 		at i2cbus?
+
+# USB
+imx23usbphy*	at fdt? pass 1	# i.MX23 usb phy
+
+imxusbc* 	at fdt? pass 6 # i.MX23 usb controller
+
+ehci* 		at imxusbc?
+
+usb*		at ehci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+ugen*		at uhub? port ?
+
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
 # Audio
+imx23digfilt* at fdt? pass 6 # i.MX23 audio output
 audio* 		at audiobus?
+
+# MII/PHY support
+atphy* 		at mii? phy ?		# Attansic/Atheros PHYs
+exphy* 		at mii? phy ?		# 3Com internal PHYs
+gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy* 	at mii? phy ?		# Level One LXT-1000 PHYs
+gphyter* 	at mii? phy ?		# NS83861 Gig-E PHY
+icsphy* 	at mii? phy ?		# Integrated Circuit Systems ICS189x
+igphy* 		at mii? phy ?		# Intel IGP01E1000
+ihphy* 		at mii? phy ?		# Intel 82577 PHYs
+ikphy* 		at mii? phy ?		# Intel 82563 PHYs
+inphy* 		at mii? phy ?		# Intel 82555 PHYs
+iophy* 		at mii? phy ?		# Intel 82553 PHYs
+lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
+makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+micphy*		at mii? phy ?		# Micrel KSZ[89]xxx PHYs
+nsphy* 		at mii? phy ?		# NS83840 PHYs
+nsphyter* 	at mii? phy ?		# NS83843 PHYs
+pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
+qsphy* 		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+rdcphy* 	at mii? phy ?		# RDC R6040 10/100 PHY
+rgephy* 	at mii? phy ?		# Realtek 8169S/8110S internal PHYs
+rlphy* 		at mii? phy ?		# Realtek 8139/8201L PHYs
+smscphy* 	at mii? phy ?		# SMSC LAN87xx PHYs
+sqphy* 		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+tlphy* 		at mii? phy ?		# ThunderLAN PHYs
+tqphy* 		at mii? phy ?		# TDK Semiconductor PHYs
+urlphy* 	at mii? phy ?		# Realtek RTL8150L internal PHYs
+ukphy* 		at mii? phy ?		# generic unknown PHYs
 
 # Pull in optional local configuration - always at end
 cinclude	"arch/evbarm/conf/GENERIC_V5.local"

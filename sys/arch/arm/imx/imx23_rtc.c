@@ -1,4 +1,4 @@
-/* $Id: imx23_rtc.c,v 1.3 2025/10/02 06:51:16 skrll Exp $ */
+/* $Id: imx23_rtc.c,v 1.4 2026/02/01 11:31:28 yurix Exp $ */
 
 /*
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,35 +36,29 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 
+#include <dev/fdt/fdtvar.h>
+
 #include <arm/imx/imx23_rtcreg.h>
-#include <arm/imx/imx23_rtcvar.h>
 #include <arm/imx/imx23var.h>
 
-typedef struct rtc_softc {
+struct imx23_rtc_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_hdl;
-} *rtc_softc_t;
+};
 
-static int	rtc_match(device_t, cfdata_t, void *);
-static void	rtc_attach(device_t, device_t, void *);
-static int	rtc_activate(device_t, enum devact);
+static int	imx23_rtc_match(device_t, cfdata_t, void *);
+static void	imx23_rtc_attach(device_t, device_t, void *);
 
-static void     rtc_init(struct rtc_softc *);
-static void     rtc_reset(struct rtc_softc *);
+static void     imx23_rtc_reset(struct imx23_rtc_softc *);
 
-static rtc_softc_t _sc = NULL;
+CFATTACH_DECL_NEW(imx23rtc, sizeof(struct imx23_rtc_softc), imx23_rtc_match,
+		  imx23_rtc_attach, NULL, NULL);
 
-CFATTACH_DECL3_NEW(rtc,
-        sizeof(struct rtc_softc),
-        rtc_match,
-        rtc_attach,
-        NULL,
-        rtc_activate,
-        NULL,
-        NULL,
-        0
-);
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx23-rtc" },
+	DEVICE_COMPAT_EOL
+};
 
 #define RTC_RD(sc, reg)                                                 \
         bus_space_read_4(sc->sc_iot, sc->sc_hdl, (reg))
@@ -74,80 +68,39 @@ CFATTACH_DECL3_NEW(rtc,
 #define RTC_SOFT_RST_LOOP 455 /* At least 1 us ... */
 
 static int
-rtc_match(device_t parent, cfdata_t match, void *aux)
+imx23_rtc_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct apb_attach_args *aa = aux;
+	struct fdt_attach_args * const faa = aux;
 
-	if ((aa->aa_addr == HW_RTC_BASE) &&
-	    (aa->aa_size == HW_RTC_BASE_SIZE))
-		return 1;
-
-	return 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
-rtc_attach(device_t parent, device_t self, void *aux)
+imx23_rtc_attach(device_t parent, device_t self, void *aux)
 {
-	struct rtc_softc *sc = device_private(self);
-	struct apb_attach_args *aa = aux;
-	static int rtc_attached = 0;
+	struct imx23_rtc_softc * const sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 
 	sc->sc_dev = self;
-	sc->sc_iot = aa->aa_iot;
+	sc->sc_iot = faa->faa_bst;
 
-	if (rtc_attached) {
-		aprint_error_dev(sc->sc_dev, "rtc is already attached\n");
+	bus_addr_t addr;
+	bus_size_t size;
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get register address\n");
 		return;
 	}
-
-	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
-	    &sc->sc_hdl))
-	{
-		aprint_error_dev(sc->sc_dev, "Unable to map bus space\n");
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_hdl)) {
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
-
-
-	rtc_init(sc);
-	rtc_reset(sc);
 
 	aprint_normal("\n");
 
-	rtc_attached = 1;
+	imx23_rtc_reset(sc);
 
-	return;
-}
-
-static int
-rtc_activate(device_t self, enum devact act)
-{
-
-	return EOPNOTSUPP;
-}
-
-static void
-rtc_init(struct rtc_softc *sc)
-{
-	_sc = sc;
-	return;
-}
-
-/*
- * Remove pulldown resistors on the headphone outputs.
- */
-void
-rtc_release_gnd(int val)
-{
-	struct rtc_softc *sc = _sc;
-
-        if (sc == NULL) {
-                aprint_error("rtc is not initialized");
-                return;
-        }
-	if(val)
-		RTC_WR(sc, HW_RTC_PERSISTENT0_SET, (1<<19));
-	else
-		RTC_WR(sc, HW_RTC_PERSISTENT0_CLR, (1<<19));
+	RTC_WR(sc, HW_RTC_PERSISTENT0_SET, (1<<19));
 
 	return;
 }
@@ -158,7 +111,7 @@ rtc_release_gnd(int val)
  * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
  */
 static void
-rtc_reset(struct rtc_softc *sc)
+imx23_rtc_reset(struct imx23_rtc_softc *sc)
 {
         unsigned int loop;
 
