@@ -1,7 +1,7 @@
-/* $NetBSD: wiiu.h,v 1.2 2026/01/10 22:45:57 jmcneill Exp $ */
+/* $NetBSD: wiiu.h,v 1.3 2026/02/01 12:09:40 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2025-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,9 @@
 
 #define WIIU_PI_BASE			0x0c000000
 
+#define WIIU_GX2_BASE			0x0c200000
+#define WIIU_GX2_SIZE			0x80000
+
 #define WIIU_DSP_BASE			0x0c280000
 
 /* Processor interface registers */
@@ -59,6 +62,7 @@
 
 /* Latte IRQs */
 #define WIIU_PI_IRQ_MB_CPU(n)		(20 + (n))
+#define WIIU_PI_IRQ_GPU7		23
 
 /* Latte registers */
 #define LT_PPCnINT1STS(n)		(HOLLYWOOD_PRIV_BASE + 0x440 + (n) * 0x10)

@@ -1,4 +1,4 @@
-/* $NetBSD: wiiufb.c,v 1.4 2026/01/31 23:02:54 jmcneill Exp $ */
+/* $NetBSD: wiiufb.c,v 1.5 2026/02/01 12:09:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.4 2026/01/31 23:02:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wiiufb.c,v 1.5 2026/02/01 12:09:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,8 @@ struct wiiufb_softc {
 	struct wiiufb_dma	sc_curdma;
 };
 
+static struct wiiufb_softc *wiiufb_sc;
+
 static int	wiiufb_match(device_t, cfdata_t, void *);
 static void	wiiufb_attach(device_t, device_t, void *);
 
@@ -171,8 +173,15 @@ wiiufb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gen.sc_dev = self;
 	sc->sc_bst = maa->maa_bst;
+	error = bus_space_map(sc->sc_bst, maa->maa_addr, WIIU_GX2_SIZE, 0,
+	    &sc->sc_bsh);
+	if (error != 0) {
+		panic("couldn't map registers");
+	}
 	sc->sc_dmat = maa->maa_dmat;
 	sc->sc_disp = wiiufb_drc ? 1 : 0;
+
+	wiiufb_sc = sc;
 
 	/*
 	 * powerpc bus_space_map will use the BAT mapping if present,
@@ -525,16 +534,26 @@ wiiufb_mmap(void *v, void *vs, off_t off, int prot)
 static void
 wiiufb_gpu_write(uint16_t reg, uint32_t data)
 {
-	out32(LT_GPUINDADDR, LT_GPUINDADDR_REGSPACE_GPU | reg);
-	out32(LT_GPUINDDATA, data);
-	in32(LT_GPUINDDATA);
+	if (wiiufb_sc != NULL) {
+		bus_space_write_4(wiiufb_sc->sc_bst, wiiufb_sc->sc_bsh,
+		    reg, data);
+	} else {
+		out32(LT_GPUINDADDR, LT_GPUINDADDR_REGSPACE_GPU | reg);
+		out32(LT_GPUINDDATA, data);
+		in32(LT_GPUINDDATA);
+	}
 }
 
 static uint32_t
 wiiufb_gpu_read(uint16_t reg)
 {
-	out32(LT_GPUINDADDR, LT_GPUINDADDR_REGSPACE_GPU | reg);
-	return in32(LT_GPUINDDATA);
+	if (wiiufb_sc != NULL) {
+		return bus_space_read_4(wiiufb_sc->sc_bst, wiiufb_sc->sc_bsh,
+		    reg);
+	} else {
+		out32(LT_GPUINDADDR, LT_GPUINDADDR_REGSPACE_GPU | reg);
+		return in32(LT_GPUINDDATA);
+	}
 }
 
 static void

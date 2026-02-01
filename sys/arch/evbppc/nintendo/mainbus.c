@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 2026/01/09 22:54:29 jmcneill Exp $ */
+/* $NetBSD: mainbus.c,v 1.2 2026/02/01 12:09:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2026/01/09 22:54:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2026/02/01 12:09:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,8 +104,13 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &maa, mainbus_print, CFARGS_NONE);
 
 	maa.maa_name = "genfb";
-	maa.maa_addr = VI_BASE;
-	maa.maa_irq = PI_IRQ_VI;
+	if (wiiu_native) {
+		maa.maa_addr = WIIU_GX2_BASE;
+		maa.maa_irq = WIIU_PI_IRQ_GPU7;
+	} else {
+		maa.maa_addr = VI_BASE;
+		maa.maa_irq = PI_IRQ_VI;
+	}
 	config_found(self, &maa, mainbus_print, CFARGS_NONE);
 
 	maa.maa_name = "ahb";
