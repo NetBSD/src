@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.13 2021/06/14 13:52:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.14 2026/02/01 10:57:03 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ struct adm1026_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
-	bool sc_multi_read;
 
 	uint8_t sc_rev, sc_cfg[2];
 	int sc_nfans, sc_ntemps;	/* Map sysmon numbers to sensors */
@@ -113,16 +112,15 @@ static void adm1026_read_fan(struct adm1026_softc *sc, envsys_data_t *edata);
 static void adm1026_read_temp(struct adm1026_softc *sc, envsys_data_t *edata);
 static void adm1026_read_volt(struct adm1026_softc *sc, envsys_data_t *edata);
 
-static int adm1026_read_reg_int(i2c_tag_t, i2c_addr_t,
-    uint8_t reg, bool multi_read, uint8_t *val);
+static int adm1026_read_reg_int(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg,
+    uint8_t *val);
 static int adm1026_write_reg(struct adm1026_softc *sc,
     uint8_t reg, uint8_t val);
 
 static inline int
 adm1026_read_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t *val)
 {
-	return adm1026_read_reg_int(sc->sc_tag, sc->sc_address, reg,
-	    sc->sc_multi_read, val);
+	return adm1026_read_reg_int(sc->sc_tag, sc->sc_address, reg, val);
 }
 
 CFATTACH_DECL_NEW(adm1026hm, sizeof(struct adm1026_softc),
@@ -157,14 +155,14 @@ adm1026_ident(i2c_tag_t tag, i2c_addr_t addr, int probe_only, uint8_t *rev)
 	int err;
 
 	/* Manufacturer ID and revision/stepping */
-	err = adm1026_read_reg_int(tag, addr, ADM1026_ID, false, &val);
+	err = adm1026_read_reg_int(tag, addr, ADM1026_ID, &val);
 	if (err || val != ADM1026_MANF_ID) {
 		if (!probe_only)
 			aprint_verbose("adm1026_ident: "
 			    "manufacturer ID invalid or missing\n");
 		return 0;
 	}
-	err = adm1026_read_reg_int(tag, addr, ADM1026_REV, false, rev);
+	err = adm1026_read_reg_int(tag, addr, ADM1026_REV, rev);
 	if (err || ADM1026_REVISION(*rev) != ADM1026_MANF_REV) {
 		if (!probe_only)
 			aprint_verbose("adm1026_ident: "
@@ -187,8 +185,6 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
 
-	sc->sc_multi_read = false;
-	prop_dictionary_get_bool(props, "multi_read", &sc->sc_multi_read);
 	if (prop_dictionary_get_uint8(props, "fan_div2", &fan_div2) != 0)
 		div2_val = fan_div2;
 	else
@@ -494,51 +490,13 @@ adm1026_read_volt(struct adm1026_softc *sc, envsys_data_t *edata)
 }
 
 static int
-adm1026_read_reg_int(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg,
-    bool multi_read, uint8_t *val)
+adm1026_read_reg_int(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t *val)
 {
-#define ADM1026_READ_RETRIES	5
-	int i, j, err = 0;
-	uint8_t creg, cval, tmp[ADM1026_READ_RETRIES + 1];
+	int err = 0;
 
 	if ((err = iic_acquire_bus(tag, 0)) != 0)
 		return err;
-	/* Standard ADM1026 */
-	if (multi_read == false) {
-		err = iic_exec(tag, I2C_OP_READ_WITH_STOP,
-		    addr, &reg, 1, val, 1, 0);
-	/*
-	 * The ADM1026 found in some Sun machines sometimes reads bogus values.
-	 * We'll read at least twice and check that we get (nearly) the same
-	 * value.  If not, we'll read another register and then re-read the
-	 * first.
-	 */
-	} else {
-		if (reg == ADM1026_CONF1)
-			creg = ADM1026_CONF2;
-		else
-			creg = ADM1026_CONF1;
-		if ((err = iic_exec(tag, I2C_OP_READ_WITH_STOP,
-		    addr, &reg, 1, &tmp[0], 1, 0)) != 0) {
-			iic_release_bus(tag, 0);
-			return err;
-		}
-		for (i = 1; i <= ADM1026_READ_RETRIES; i++) {
-			if ((err = iic_exec(tag, I2C_OP_READ_WITH_STOP,
-			    addr, &reg, 1, &tmp[i], 1, 0)) != 0)
-				break;
-			for (j = 0; j < i; j++)
-				if (abs(tmp[j] - tmp[i]) < 3) {
-					*val = tmp[i];
-					iic_release_bus(tag, 0);
-					return 0;
-				}
-			if ((err = iic_exec(tag, I2C_OP_READ_WITH_STOP,
-			    addr, &creg, 1, &cval, 1, 0)) != 0)
-				break;
-			err = -1;	/* Return error if we don't match. */
-		}
-	}
+	err = iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, &reg, 1, val, 1, 0);
 	iic_release_bus(tag, 0);
 	return err;
 }
