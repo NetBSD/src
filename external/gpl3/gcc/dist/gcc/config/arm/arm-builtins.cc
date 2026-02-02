@@ -2668,6 +2668,10 @@ arm_init_builtins (void)
 				ARM_BUILTIN_CMSE_NONSECURE_CALLER, BUILT_IN_MD,
 				NULL, NULL_TREE);
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Return the ARM builtin for CODE.  */

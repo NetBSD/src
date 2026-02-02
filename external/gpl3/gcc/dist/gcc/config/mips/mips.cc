@@ -16819,6 +16819,10 @@ mips_init_builtins (void)
 	  mips_get_builtin_decl_index[d->icode] = i;
 	}
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Implement TARGET_BUILTIN_DECL.  */

@@ -10316,6 +10316,10 @@ sh_init_builtins (void)
       else if (d->icode == CODE_FOR_set_fpscr)
 	sh_builtin_set_fpscr = d->fndecl;
     }
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Implement TARGET_ATOMIC_ASSIGN_EXPAND_FENV.  */

@@ -11071,6 +11071,10 @@ sparc_init_builtins (void)
 
   if (TARGET_VIS)
     sparc_vis_init_builtins ();
+
+#ifdef SUBTARGET_INIT_BUILTINS
+  SUBTARGET_INIT_BUILTINS;
+#endif
 }
 
 /* Create builtin functions for FPU instructions.  */
