@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.324.4.1 2023/12/11 12:32:40 martin Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.324.4.2 2026/02/02 17:40:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.324.4.1 2023/12/11 12:32:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.324.4.2 2026/02/02 17:40:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1333,7 +1333,7 @@ retry:
 				nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
 					+ NFSX_V3WRITEVERF);
 				rlen = fxdr_unsigned(int, *tl++);
-				if (rlen == 0) {
+				if (rlen <= 0 || rlen > len) {
 					error = NFSERR_IO;
 					m_freem(mrep);
 					break;
@@ -2755,7 +2755,8 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 			    /* Just skip over the file handle */
 			    nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			    i = fxdr_unsigned(int, *tl);
-			    nfsm_adv(nfsm_rndup(i));
+			    if (i > 0)
+				    nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
 			    if (newvp == vp)
