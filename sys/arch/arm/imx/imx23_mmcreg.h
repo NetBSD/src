@@ -1,4 +1,4 @@
-/* $Id: imx23_mmcreg.h,v 1.1 2026/02/02 06:14:58 skrll Exp $ */
+/* $NetBSD: imx23_mmcreg.h,v 1.2 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

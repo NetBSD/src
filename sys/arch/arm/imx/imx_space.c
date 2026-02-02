@@ -1,7 +1,7 @@
-/* $Id: imx_space.c,v 1.7 2023/04/21 15:00:48 skrll Exp $ */
+/* $NetBSD: imx_space.c,v 1.8 2026/02/02 06:23:37 skrll Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx_space.c,v 1.7 2023/04/21 15:00:48 skrll Exp $ */
+/*	$NetBSD: imx_space.c,v 1.8 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.

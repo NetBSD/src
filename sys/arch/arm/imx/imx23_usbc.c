@@ -1,4 +1,4 @@
-/* $NetBSD $ */
+/*	$NetBSD: imx23_usbc.c,v 1.3 2026/02/02 06:23:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.

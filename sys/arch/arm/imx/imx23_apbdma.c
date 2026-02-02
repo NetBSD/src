@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.c,v 1.6 2026/02/01 11:31:27 yurix Exp $ */
+/* $NetBSD: imx23_apbdma.c,v 1.7 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

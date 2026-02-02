@@ -1,3 +1,5 @@
+/* $NetBSD: imx51_uart.c,v 1.5 2026/02/02 06:23:37 skrll Exp $ */
+
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -26,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_uart.c,v 1.4 2017/09/08 05:29:12 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_uart.c,v 1.5 2026/02/02 06:23:37 skrll Exp $");
 
 #include "opt_imx.h"
 #include "opt_imxuart.h"

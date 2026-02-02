@@ -1,3 +1,5 @@
+/*	$NetBSD: imxwdogreg.h,v 1.4 2026/02/02 06:23:37 skrll Exp $	^/
+
 /*-
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.

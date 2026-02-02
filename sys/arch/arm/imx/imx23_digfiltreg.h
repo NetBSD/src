@@ -1,4 +1,4 @@
-/* $Id: imx23_digfiltreg.h,v 1.1 2015/01/10 12:16:28 jmcneill Exp $ */
+/* $NetBSD: imx23_digfiltreg.h,v 1.2 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.

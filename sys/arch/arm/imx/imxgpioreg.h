@@ -1,3 +1,5 @@
+/* $NetBSD: imxgpioreg.h,v 1.3 2026/02/02 06:23:37 skrll Exp $ */
+
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.

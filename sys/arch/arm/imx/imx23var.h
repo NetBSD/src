@@ -1,4 +1,4 @@
-/* $Id: imx23var.h,v 1.4 2026/02/01 11:31:29 yurix Exp $ */
+/* $NetBSD: imx23var.h,v 1.5 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

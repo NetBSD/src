@@ -1,4 +1,4 @@
-/* $Id: imx23_icollreg.h,v 1.3 2013/03/03 10:33:56 jkunz Exp $ */
+/* $NetBSD: imx23_icollreg.h,v 1.4 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $Id: imx23_pinctrl.c,v 1.7 2026/02/01 11:31:28 yurix Exp $ */
+/* $NetBSD: imx23_pinctrl.c,v 1.8 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.

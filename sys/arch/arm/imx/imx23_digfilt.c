@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.8 2026/02/01 11:31:28 yurix Exp $ */
+/* $NetBSD: imx23_digfilt.c,v 1.9 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.

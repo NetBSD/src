@@ -1,4 +1,4 @@
-/* $Id: imx23_dma.c,v 1.1 2012/11/20 19:06:13 jkunz Exp $ */
+/* $NetBSD: imx23_dma.c,v 1.2 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $Id: imx23_pinctrlreg.h,v 1.2 2013/10/07 17:36:40 matt Exp $ */
+/* $NetBSD: imx23_pinctrlreg.h,v 1.3 2026/02/02 06:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
