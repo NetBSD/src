@@ -1,4 +1,4 @@
-/* $Id: imx23_mmc.c,v 1.1 2026/02/01 11:31:28 yurix Exp $ */
+/* $Id: imx23_mmc.c,v 1.2 2026/02/02 06:10:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -598,7 +598,7 @@ imx23_mmc_dma_intr(void *arg)
 	struct imx23_mmc_softc *sc = arg;
 
 	mutex_enter(&sc->sc_lock);
-	
+
 	sc->sc_state = SSP_STATE_IDLE;
 
 	/* Signal thread that interrupt was handled. */
