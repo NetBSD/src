@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_icoll.c,v 1.8 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_icoll.c,v 1.9 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx23_icoll.c,v 1.8 2026/02/02 06:23:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx23_icoll.c,v 1.9 2026/02/02 09:21:30 yurix Exp $");
 
 #include <sys/param.h>
 
@@ -198,8 +198,6 @@ imx23_icoll_intr_dispatch(struct clockframe *frame)
 
 	/* Restore the saved spl. */
 	splx(saved_spl);
-
-	return;
 }
 
 /*
@@ -236,8 +234,6 @@ imx23_icoll_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 		ICOLL_CLR_IRQ(sc, irqbase + b);
 		irq_mask &= ~(1<<b);
 	}
-
-	return;
 }
 
 static int
@@ -249,7 +245,7 @@ imx23_icoll_find_pending_irqs(struct pic_softc *pic)
 static void
 imx23_icoll_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
-	return; /* Nothing to establish. */
+	/* Nothing to establish. */
 }
 
 static void
@@ -413,6 +409,4 @@ imx23_icoll_reset(struct imx23_icoll_softc *sc)
 
 	/* Wait until clock is in the NON-gated state. */
 	while (ICOLL_READ(sc, HW_ICOLL_CTRL) & HW_ICOLL_CTRL_CLKGATE);
-
-	return;
 }

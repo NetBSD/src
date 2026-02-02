@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_pinctrl.c,v 1.8 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_pinctrl.c,v 1.9 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -526,8 +526,6 @@ imx23_pinctrl_attach(device_t parent, device_t self, void *aux)
 
 		fdtbus_register_gpio_controller(self, child, &imx23_gpio_funcs);
 	}
-
-	return;
 }
 
 static void
@@ -546,7 +544,7 @@ imx23_pinctrl_gp_gc_open(void *cookie, device_t dev)
 static	void
 imx23_pinctrl_gp_gc_close(void *cookie, device_t dev)
 {
-	return;
+    /* do nothing */
 }
 
 static	int
@@ -572,8 +570,6 @@ imx23_pinctrl_gp_pin_write(void *cookie, int pin, int value)
 		PINCTRL_WR(sc, PIN2DOUT_SET_REG(pin), PIN2DOUT_MASK(pin));
 	else
 		PINCTRL_WR(sc, PIN2DOUT_CLR_REG(pin), PIN2DOUT_MASK(pin));
-
-	return;
 }
 
 /*

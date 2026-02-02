@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_digfilt.c,v 1.9 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_digfilt.c,v 1.10 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ imx23_digfilt_attach(device_t parent, device_t self, void *aux)
 
 	uint32_t v = AO_RD(sc, HW_AUDIOOUT_VERSION);
 	aprint_normal(": DIGFILT Block v%" __PRIuBIT ".%" __PRIuBIT
-		".%" __PRIuBIT "\n",
+		".%" __PRIuBIT "",
 		__SHIFTOUT(v, HW_AUDIOOUT_VERSION_MAJOR),
 		__SHIFTOUT(v, HW_AUDIOOUT_VERSION_MINOR),
 		__SHIFTOUT(v, HW_AUDIOOUT_VERSION_STEP));
@@ -272,8 +272,6 @@ imx23_digfilt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
-
-	return;
 }
 
 static int
@@ -666,8 +664,6 @@ imx23_digfilt_freem(void *priv, void *kvap, size_t size)
 
 	bus_dmamem_unmap(sc->sc_dmat, kvap, size);
 	bus_dmamem_free(sc->sc_dmat, sc->sc_ds, DIGFILT_DMA_NSEGS);
-
-	return;
 }
 
 static size_t
@@ -689,8 +685,6 @@ imx23_digfilt_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
-
-	return;
 }
 
 /*
@@ -754,8 +748,6 @@ imx23_digfilt_ao_apply_mutes(struct imx23_digfilt_softc *sc)
 	else
 		AO_WR(sc, HW_AUDIOOUT_SPEAKERCTRL_CLR,
 		    HW_AUDIOOUT_SPEAKERCTRL_MUTE);
-
-	return;
 }
 
 /*
@@ -830,8 +822,6 @@ imx23_digfilt_ao_reset(struct imx23_digfilt_softc *sc)
 
 	/* Wait until clock is in the NON-gated state. */
 	while (AO_RD(sc, HW_AUDIOOUT_CTRL) & HW_AUDIOOUT_CTRL_CLKGATE);
-
-	return;
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_space.c,v 1.4 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_space.c,v 1.5 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -159,8 +159,6 @@ imx23_bs_unmap(void *space, bus_space_handle_t handle, bus_size_t size)
 		/* Device was statically mapped. */
 		return;
 	}
-
-	return;
 }
 
 int
@@ -183,7 +181,7 @@ imx23_bs_alloc(void *space, bus_addr_t reg_start, bus_addr_t reg_end,
 void
 imx23_bs_free(void *space, bus_space_handle_t handle, bus_size_t size)
 {
-	return;
+	/* do nothing */
 }
 
 void *
@@ -204,5 +202,5 @@ imx23_bs_barrier(void *space, bus_space_handle_t handle,
 	bus_size_t offset,
 	bus_size_t length, int flags)
 {
-	return;
+    /* do nothing */
 }

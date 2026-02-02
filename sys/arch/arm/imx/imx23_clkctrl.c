@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_clkctrl.c,v 1.6 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_clkctrl.c,v 1.7 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -102,6 +102,4 @@ imx23_clkctrl_attach(device_t parent, device_t self, void *aux)
 	CLKCTRL_WR(sc, HW_CLKCTRL_XTAL_CLR, HW_CLKCTRL_XTAL_FILT_CLK24M_GATE);
 
 	aprint_normal("\n");
-
-	return;
 }

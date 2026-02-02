@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_apbdma.c,v 1.7 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_apbdma.c,v 1.8 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -501,8 +501,6 @@ imx23_apbdma_reset(struct imx23_apbdma_softc *sc)
 
 	/* Wait until clock is in the NON-gated state. */
 	while (DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE);
-
-	return;
 }
 
 /*

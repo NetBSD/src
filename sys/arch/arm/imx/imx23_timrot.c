@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_timrot.c,v 1.8 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_timrot.c,v 1.9 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -187,8 +187,6 @@ imx23_timrot_cpu_initclocks(void)
 		      __SHIFTIN(SOURCE_32KHZ_HZ / stathz - 1,
 				HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
 	TIMER_WRITE(sc, HW_TIMROT_TIMCTRL1, ctrl);
-
-	return;
 }
 
 /*
@@ -274,6 +272,4 @@ imx23_timrot_reset(struct imx23_timrot_softc *sc)
 	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_CLKGATE);
 	/* Wait until clock is in the NON-gated state. */
 	while (TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE);
-
-	return;
 }

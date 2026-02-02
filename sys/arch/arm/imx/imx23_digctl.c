@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_digctl.c,v 1.5 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_digctl.c,v 1.6 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ struct imx23_digctl_softc {
 static int	imx23_digctl_match(device_t, cfdata_t, void *);
 static void	imx23_digctl_attach(device_t, device_t, void *);
 
-static void     imx23_digctl_reset(struct imx23_digctl_softc *);
 static void     imx23_digctl_init(struct imx23_digctl_softc *);
 
 /* timecounter. */
@@ -105,7 +104,6 @@ imx23_digctl_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	imx23_digctl_reset(sc);
 	imx23_digctl_init(sc);
 
 	/*
@@ -125,17 +123,6 @@ imx23_digctl_attach(device_t parent, device_t self, void *aux)
 
 	/* Enable USB clocks */
 	DCTL_WR(sc, HW_DIGCTL_CTRL_CLR, HW_DIGCTL_CTRL_USB_CLKGATE);
-
-	return;
-}
-
-/*
- * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
- */
-static void
-imx23_digctl_reset(struct imx23_digctl_softc *sc)
-{
-        return;
 }
 
 static void

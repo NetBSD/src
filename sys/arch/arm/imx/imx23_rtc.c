@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_rtc.c,v 1.5 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_rtc.c,v 1.6 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -101,8 +101,6 @@ imx23_rtc_attach(device_t parent, device_t self, void *aux)
 	imx23_rtc_reset(sc);
 
 	RTC_WR(sc, HW_RTC_PERSISTENT0_SET, (1<<19));
-
-	return;
 }
 
 /*

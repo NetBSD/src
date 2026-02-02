@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_mmc.c,v 1.3 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_mmc.c,v 1.4 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -247,8 +247,6 @@ imx23_mmc_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to attach sdmmc\n");
 		return;
 	}
-
-	return;
 }
 
 /*
@@ -433,8 +431,6 @@ imx23_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 out:
 	mutex_exit(&sc->sc_lock);
-
-	return;
 }
 
 static void
@@ -450,7 +446,6 @@ imx23_mmc_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
 	struct imx23_mmc_softc *sc = sch;
 	aprint_error_dev(sc->sc_dev, "issp_card_intr_ack not implemented\n");
-	return;
 }
 
 /*
@@ -542,8 +537,6 @@ imx23_mmc_init(struct imx23_mmc_softc *sc)
 	reg |= __SHIFTIN(0x7, HW_SSP_CTRL1_WORD_LENGTH) |
 	    __SHIFTIN(0x3, HW_SSP_CTRL1_SSP_MODE);
 	SSP_WR(sc, HW_SSP_CTRL1, reg);
-
-	return;
 }
 
 /*

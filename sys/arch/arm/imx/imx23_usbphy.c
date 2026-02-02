@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_usbphy.c,v 1.4 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_usbphy.c,v 1.5 2026/02/02 09:21:30 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -105,8 +105,6 @@ imx23_usbphy_attach(device_t parent, device_t self, void *aux)
         aprint_normal(": USB PHY v%" __PRIuBIT ".%" __PRIuBIT "\n",
             __SHIFTOUT(phy_version, HW_USBPHY_VERSION_MAJOR),
             __SHIFTOUT(phy_version, HW_USBPHY_VERSION_MINOR));
-
-	return;
 }
 
 
@@ -184,6 +182,4 @@ imx23_usbphy_init(struct imx23_usbphy_softc *sc)
 
 	/* Ungate PLL clock to USB PHY. */
 	PHY_WR(sc, HW_USBPHY_IP_SET, HW_USBPHY_IP_EN_USB_CLKS);
-
-	return;
 }

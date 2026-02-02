@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_platform.c,v 1.1 2025/10/09 06:15:16 skrll Exp $ */
+/* $NetBSD: imx23_platform.c,v 1.2 2026/02/02 09:21:30 yurix Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -143,8 +143,6 @@ imx23_platform_delay(unsigned int us)
 		last = elapsed;
 
 	} while (total < us);
-
-	return;
 }
 
 static u_int
