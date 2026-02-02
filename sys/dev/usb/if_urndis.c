@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.49 2023/10/01 06:55:27 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.49.8.1 2026/02/02 19:58:44 martin Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.49 2023/10/01 06:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.49.8.1 2026/02/02 19:58:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,6 +105,35 @@ static const struct usb_devno urndis_devs[] = {
 	{ USB_VENDOR_SAMSUNG,	USB_PRODUCT_SAMSUNG_ANDROID },
 	{ USB_VENDOR_ONEPLUS,	USB_PRODUCT_ONEPLUS_A5010 }
 };
+
+/*
+ * Supported class/interface/protocol IDs.
+ */
+static const struct urndis_interface {
+	uByte		uif_class;
+	uByte		uif_subclass;
+	uByte		uif_proto;
+} urndis_interfaces[] = {
+	{ UICLASS_WIRELESS, UISUBCLASS_RF, UIPROTO_RNDIS },
+	{ UICLASS_MISC, UISUBCLASS_MISC_RNDIS, UIPROTO_MISC_RNDIS_ETHERNET },
+};
+
+static const struct urndis_interface *
+urndis_interface_lookup(const usb_interface_descriptor_t *id)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(urndis_interfaces); i++) {
+		const struct urndis_interface *uif = &urndis_interfaces[i];
+
+		if (id->bInterfaceClass == uif->uif_class &&
+		    id->bInterfaceSubClass == uif->uif_subclass &&
+		    id->bInterfaceProtocol == uif->uif_proto)
+			return uif;
+	}
+
+	return NULL;
+}
 
 static usbd_status
 urndis_ctrl_msg(struct usbnet *un, uint8_t rt, uint8_t r,
@@ -879,9 +908,11 @@ urndis_match(device_t parent, cfdata_t match, void *aux)
 	if (id == NULL)
 		return UMATCH_NONE;
 
-	if (id->bInterfaceClass == UICLASS_WIRELESS &&
-	    id->bInterfaceSubClass == UISUBCLASS_RF &&
-	    id->bInterfaceProtocol == UIPROTO_RNDIS)
+	/*
+	 * XXX Shouldn't we check vendor/product first as
+	 * higher-priority than interface?
+	 */
+	if (urndis_interface_lookup(id) != NULL)
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
 	return usb_lookup(urndis_devs, uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL ?
