@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.92 2026/02/01 11:31:27 yurix Exp $
+# $NetBSD: ad.arm,v 1.93 2026/02/02 13:25:43 skrll Exp $
 #
 ./libexec/ld.elf_so-oabi			base-obsolete		obsolete
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
@@ -15,6 +15,7 @@
 ./usr/mdec/boot32				base-sysutil-bin	endian=1234
 ./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234
 ./usr/mdec/bootarm.efi				base-sysutil-bin	uefi
+./usr/mdec/bootimx23				base-sysutil-bin	obsolete
 ./usr/mdec/bootmini2440				base-sysutil-bin
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
 ./usr/mdec/gzboot_GEMINI_0x01600000.bin		base-sysutil-bin	endian=1234
