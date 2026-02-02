@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.56.4.1 2024/08/07 10:04:47 martin Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.56.4.2 2026/02/02 19:43:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.56.4.1 2024/08/07 10:04:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.56.4.2 2026/02/02 19:43:27 martin Exp $");
 
 #include "opt_dtrace.h"
 
@@ -764,7 +764,7 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 		/*
 		 * Remember current uptime, it would be used in
-		 * ECANCELED/ERESTART case.
+		 * EINTR/ERESTART case.
 		 */
 		getnanouptime(&tsstart);
 	} else {
@@ -806,21 +806,31 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 
 	/*
 	 * Set up the sigwait list and wait for signal to arrive.
-	 * We can either be woken up or time out.
+	 * Four possible outcomes:
+	 * 1. woken by one of the requested signals (l_sigwaited is NULL)
+	 * 2. interrupted by some other signal (error=EINTR/ERESTART)
+	 * 3. timed out (error=EAGAIN, a.k.a. EWOULDBLOCK)
+	 * 4. spurious wakeup
 	 */
 	l->l_sigwaited = &ksi;
 	LIST_INSERT_HEAD(&p->p_sigwaiters, l, l_sigwaiter);
 	error = cv_timedwait_sig(&l->l_sigcv, p->p_lock, timo);
 
 	/*
-	 * Need to find out if we woke as a result of _lwp_wakeup() or a
-	 * signal outside our wait set.
+	 * Delivery of any of the requested signals will remove us from
+	 * the list of signal waiters and null out l_sigwaited.  So if
+	 * l_sigwaited is nonnull, then we weren't woken by one of the
+	 * requested signals, and we must remove ourselves from the
+	 * list.
+	 *
+	 * XXX What happens if delivery of a requested signal races
+	 * with timeout?  Should signal delivery win, or should timeout
+	 * win?  Currently timeout wins: if error is EAGAIN, we just
+	 * return that _even if_ a signal was delivered to us.  Seems
+	 * wrong!
 	 */
 	if (l->l_sigwaited != NULL) {
-		if (error == EINTR) {
-			/* Wakeup via _lwp_wakeup(). */
-			error = ECANCELED;
-		} else if (!error) {
+		if (!error) {
 			/* Spurious wakeup - arrange for syscall restart. */
 			error = ERESTART;
 		}
@@ -833,8 +843,21 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 	 * If the sleep was interrupted (either by signal or wakeup), update
 	 * the timeout and copyout new value back.  It would be used when
 	 * the syscall would be restarted or called again.
+	 *
+	 * This copyout is not used by POSIX sigtimedwait, but it is
+	 * used by the NetBSD __sigtimedwait syscall so if interrupted
+	 * by a signal handler with SA_RESTART, it can wait for only
+	 * the remaining time.
+	 *
+	 * XXX This introduces some unnecessary timing drift, because
+	 * we don't convert the timeout to an absolute deadline, so,
+	 * e.g., the time spent in the signal handler in userland
+	 * doesn't count toward the timeout.  Should replace this
+	 * syscall either by one that either gives up and maps ERESTART
+	 * to EINTR, or converts timeout to absolute deadline in-place
+	 * so it maintains the deadline on restart.
 	 */
-	if (timo && (error == ERESTART || error == ECANCELED)) {
+	if (timo && (error == ERESTART || error == EINTR)) {
 		getnanouptime(&tsnow);
 
 		/* Compute how much time has passed since start. */
@@ -847,8 +870,17 @@ sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
 			error = EAGAIN;
 		else {
 			/* Copy updated timeout to userland. */
-			error = (*storets)(&ts, SCARG(uap, timeout),
+			int error1 = (*storets)(&ts, SCARG(uap, timeout),
 			    sizeof(ts));
+
+			/*
+			 * Only override error (ERESTART/EINTR) if the
+			 * copyout failed (EFAULT).  Don't override it
+			 * if the copyout succeeded; we should not
+			 * return 0 in this branch.
+			 */
+			if (error1)
+				error = error1;
 		}
 	}
 out:
