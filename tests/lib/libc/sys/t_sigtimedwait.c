@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigtimedwait.c,v 1.2 2013/03/08 23:18:00 martin Exp $ */
+/* $NetBSD: t_sigtimedwait.c,v 1.2.36.1 2026/02/02 20:53:20 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,15 +27,26 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sigtimedwait.c,v 1.2 2013/03/08 23:18:00 martin Exp $");
+__RCSID("$NetBSD: t_sigtimedwait.c,v 1.2.36.1 2026/02/02 20:53:20 martin Exp $");
 
 #include <sys/time.h>
+
+#include <atf-c.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <atf-c.h>
+#include <unistd.h>
 
+#include "h_macros.h"
+
+static void
+on_alarm(int signo)
+{
+	const char msg[] = "SIGALRM delivered\n";
+
+	(void)write(STDERR_FILENO, msg, strlen(msg));
+}
 
 ATF_TC(sigtimedwait_all0timeout);
 
@@ -51,16 +62,20 @@ ATF_TC_BODY(sigtimedwait_all0timeout, tc)
 	sigset_t block;
 	struct timespec ts, before, after, len;
 	siginfo_t info;
-	int r;
+	int signo, error;
 
-	sigemptyset(&block);
+	RL(sigemptyset(&block));
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
-	clock_gettime(CLOCK_MONOTONIC, &before);
-	r = sigtimedwait(&block, &info, &ts);
-	clock_gettime(CLOCK_MONOTONIC, &after);
-	ATF_REQUIRE(r == -1);
-	ATF_REQUIRE_ERRNO(EAGAIN, errno);
+	RL(clock_gettime(CLOCK_MONOTONIC, &before));
+	signo = sigtimedwait(&block, &info, &ts);
+	error = errno;
+	RL(clock_gettime(CLOCK_MONOTONIC, &after));
+	ATF_REQUIRE_MSG(signo == -1, "signo=%d, expected -1/EAGAIN=%d",
+	    signo, EAGAIN);
+	errno = error;
+	ATF_REQUIRE_MSG(errno == EAGAIN, "errno=%d (%s), expected EAGAIN=%d",
+	    error, strerror(error), EAGAIN);
 	timespecsub(&after, &before, &len);
 	ATF_REQUIRE(len.tv_sec < 1);
 }
@@ -78,18 +93,19 @@ ATF_TC_BODY(sigtimedwait_NULL_timeout, tc)
 	sigset_t sig;
 	siginfo_t info;
 	struct itimerval it;
-	int r;
+	int signo;
 
 	/* arrange for a SIGALRM signal in a few seconds */
 	memset(&it, 0, sizeof it);
 	it.it_value.tv_sec = 5;
-	ATF_REQUIRE(setitimer(ITIMER_REAL, &it, NULL) == 0);
+	RL(setitimer(ITIMER_REAL, &it, NULL));
 
 	/* wait without timeout */
-	sigemptyset(&sig);
-	sigaddset(&sig, SIGALRM);
-	r = sigtimedwait(&sig, &info, NULL);
-	ATF_REQUIRE(r == SIGALRM);
+	RL(sigemptyset(&sig));
+	RL(sigaddset(&sig, SIGALRM));
+	RL(signo = sigtimedwait(&sig, &info, NULL));
+	ATF_REQUIRE_MSG(signo == SIGALRM, "signo=%d, expected SIGALRM=%d",
+	    signo, SIGALRM);
 }
 
 ATF_TC(sigtimedwait_small_timeout);
@@ -106,14 +122,114 @@ ATF_TC_BODY(sigtimedwait_small_timeout, tc)
 	sigset_t block;
 	struct timespec ts;
 	siginfo_t info;
-	int r;
+	int signo, error;
 
-	sigemptyset(&block);
+	RL(sigemptyset(&block));
 	ts.tv_sec = 5;
 	ts.tv_nsec = 0;
-	r = sigtimedwait(&block, &info, &ts);
-	ATF_REQUIRE(r == -1);
-	ATF_REQUIRE_ERRNO(EAGAIN, errno);
+	signo = sigtimedwait(&block, &info, &ts);
+	ATF_REQUIRE_MSG(signo == -1, "signo=%d, expected -1/EAGAIN=%d",
+	    signo, EAGAIN);
+	error = errno;
+	ATF_REQUIRE_MSG(errno == EAGAIN, "errno=%d (%s), expected EAGAIN=%d",
+	    error, strerror(error), EAGAIN);
+}
+
+ATF_TC(sigtimedwait_small_timeout_alarm);
+
+ATF_TC_HEAD(sigtimedwait_small_timeout_alarm, tc)
+{
+	atf_tc_set_md_var(tc, "timeout", "15");
+	atf_tc_set_md_var(tc, "descr", "Test sigtimedwait with a small "
+	    "timeout");
+}
+
+ATF_TC_BODY(sigtimedwait_small_timeout_alarm, tc)
+{
+	sigset_t block;
+	struct sigaction sa = {.sa_handler = &on_alarm}; /* no SA_RESTART */
+	struct timespec ts;
+	siginfo_t info;
+	int signo;
+
+	RL(sigaction(SIGALRM, &sa, NULL));
+
+	RL(sigemptyset(&block));
+	ts.tv_sec = 5;
+	ts.tv_nsec = 0;
+	RL(sigaddset(&block, SIGALRM));
+	RL(sigprocmask(SIG_BLOCK, &block, NULL));
+	REQUIRE_LIBC(alarm(1), (unsigned)-1);
+	RL(signo = sigtimedwait(&block, &info, &ts));
+	ATF_REQUIRE_MSG(signo == SIGALRM, "signo=%d, expected SIGALRM=%d",
+	    signo, SIGALRM);
+}
+
+ATF_TC(sigtimedwait_small_timeout_other_sig);
+
+ATF_TC_HEAD(sigtimedwait_small_timeout_other_sig, tc)
+{
+	atf_tc_set_md_var(tc, "timeout", "15");
+	atf_tc_set_md_var(tc, "descr", "Test sigtimedwait interruption "
+	    "by a signal it's not waiting for");
+}
+
+ATF_TC_BODY(sigtimedwait_small_timeout_other_sig, tc)
+{
+	sigset_t sig;
+	struct sigaction sa = {.sa_handler = &on_alarm}; /* no SA_RESTART */
+	struct timespec ts;
+	siginfo_t info;
+	int signo, error;
+
+	RL(sigaction(SIGALRM, &sa, NULL));
+
+	RL(sigemptyset(&sig));
+	ts.tv_sec = 5;
+	ts.tv_nsec = 0;
+	RL(sigaddset(&sig, SIGUSR1));
+	RL(sigprocmask(SIG_BLOCK, &sig, NULL));
+	REQUIRE_LIBC(alarm(1), (unsigned)-1);
+	/*
+	 * This returns 0 sometimes, when it should return -1/EINTR
+	 * because some signal unblocked was delivered.
+	 */
+	signo = sigtimedwait(&sig, &info, &ts);
+	ATF_REQUIRE_MSG(signo == -1, "signo=%d, expected -1/EINTR=%d",
+	    signo, EINTR);
+	error = errno;
+	ATF_REQUIRE_MSG(errno == EINTR, "errno=%d (%s), expected EINTR=%d",
+	    error, strerror(error), EINTR);
+}
+
+ATF_TC(sigwaitinfo_other_sig);
+
+ATF_TC_HEAD(sigwaitinfo_other_sig, tc)
+{
+	atf_tc_set_md_var(tc, "timeout", "15");
+	atf_tc_set_md_var(tc, "descr", "Test sigwaitinfo interruption "
+	    "by a signal it's not waiting for");
+}
+
+ATF_TC_BODY(sigwaitinfo_other_sig, tc)
+{
+	sigset_t sig;
+	struct sigaction sa = {.sa_handler = &on_alarm}; /* no SA_RESTART */
+	siginfo_t info;
+	int signo, error;
+
+	RL(sigaction(SIGALRM, &sa, NULL));
+
+	RL(sigemptyset(&sig));
+	RL(sigaddset(&sig, SIGUSR1));
+	RL(sigprocmask(SIG_BLOCK, &sig, NULL));
+	REQUIRE_LIBC(alarm(1), (unsigned)-1);
+	signo = sigwaitinfo(&sig, &info);
+	ATF_REQUIRE_MSG(signo == -1, "signo=%d, expected -1/EINTR=%d",
+	    signo, EINTR);
+	error = errno;
+	ATF_REQUIRE_MSG(errno == EINTR, "errno=%d (%s), expected EINTR=%d",
+	    error, strerror(error), EINTR);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -121,6 +237,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sigtimedwait_all0timeout);
 	ATF_TP_ADD_TC(tp, sigtimedwait_NULL_timeout);
 	ATF_TP_ADD_TC(tp, sigtimedwait_small_timeout);
+	ATF_TP_ADD_TC(tp, sigtimedwait_small_timeout_alarm);
+	ATF_TP_ADD_TC(tp, sigtimedwait_small_timeout_other_sig);
+	ATF_TP_ADD_TC(tp, sigwaitinfo_other_sig);
 
 	return atf_no_error();
 }
