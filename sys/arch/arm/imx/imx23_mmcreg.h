@@ -1,4 +1,4 @@
-/* $Id: imx23_sspreg.h,v 1.1 2012/11/20 19:06:14 jkunz Exp $ */
+/* $Id: imx23_mmcreg.h,v 1.1 2026/02/02 06:14:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
