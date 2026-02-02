@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_rtc.c,v 1.6 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_rtc.c,v 1.7 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -111,40 +111,40 @@ imx23_rtc_attach(device_t parent, device_t self, void *aux)
 static void
 imx23_rtc_reset(struct imx23_rtc_softc *sc)
 {
-        unsigned int loop;
+	unsigned int loop;
 
-        /* Prepare for soft-reset by making sure that SFTRST is not currently
-        * asserted. Also clear CLKGATE so we can wait for its assertion below.
-        */
-        RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_SFTRST);
+	/* Prepare for soft-reset by making sure that SFTRST is not currently
+	* asserted. Also clear CLKGATE so we can wait for its assertion below.
+	*/
+	RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_SFTRST);
 
-        /* Wait at least a microsecond for SFTRST to deassert. */
-        loop = 0;
-        while ((RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_SFTRST) ||
-            (loop < RTC_SOFT_RST_LOOP))
-                loop++;
+	/* Wait at least a microsecond for SFTRST to deassert. */
+	loop = 0;
+	while ((RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_SFTRST) ||
+	    (loop < RTC_SOFT_RST_LOOP))
+		loop++;
 
-        /* Clear CLKGATE so we can wait for its assertion below. */
-        RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_CLKGATE);
+	/* Clear CLKGATE so we can wait for its assertion below. */
+	RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_CLKGATE);
 
-        /* Soft-reset the block. */
-        RTC_WR(sc, HW_RTC_CTRL_SET, HW_RTC_CTRL_SFTRST);
+	/* Soft-reset the block. */
+	RTC_WR(sc, HW_RTC_CTRL_SET, HW_RTC_CTRL_SFTRST);
 
-        /* Wait until clock is in the gated state. */
-        while (!(RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_CLKGATE));
+	/* Wait until clock is in the gated state. */
+	while (!(RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_CLKGATE))
+		 continue;
 
-        /* Bring block out of reset. */
-        RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_SFTRST);
+	/* Bring block out of reset. */
+	RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_SFTRST);
 
-        loop = 0;
-        while ((RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_SFTRST) ||
-            (loop < RTC_SOFT_RST_LOOP))
-                loop++;
+	loop = 0;
+	while ((RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_SFTRST) ||
+	    (loop < RTC_SOFT_RST_LOOP))
+		loop++;
 
-        RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_CLKGATE);
+	RTC_WR(sc, HW_RTC_CTRL_CLR, HW_RTC_CTRL_CLKGATE);
 
-        /* Wait until clock is in the NON-gated state. */
-        while (RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_CLKGATE);
-
-        return;
+	/* Wait until clock is in the NON-gated state. */
+	while (RTC_RD(sc, HW_RTC_CTRL) & HW_RTC_CTRL_CLKGATE)
+		continue;
 }

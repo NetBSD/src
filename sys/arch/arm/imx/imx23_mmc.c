@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_mmc.c,v 1.4 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_mmc.c,v 1.5 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -438,7 +438,6 @@ imx23_mmc_card_enable_intr(sdmmc_chipset_handle_t sch, int irq)
 {
 	struct imx23_mmc_softc *sc = sch;
 	aprint_error_dev(sc->sc_dev, "issp_card_enable_intr not implemented\n");
-	return;
 }
 
 static void
@@ -476,7 +475,8 @@ imx23_mmc_reset(struct imx23_mmc_softc *sc)
 	SSP_WR(sc, HW_SSP_CTRL0_SET, HW_SSP_CTRL0_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(SSP_RD(sc, HW_SSP_CTRL0) & HW_SSP_CTRL0_CLKGATE));
+	while (!(SSP_RD(sc, HW_SSP_CTRL0) & HW_SSP_CTRL0_CLKGATE))
+		continue;
 
 	/* Bring block out of reset. */
 	SSP_WR(sc, HW_SSP_CTRL0_CLR, HW_SSP_CTRL0_SFTRST);
@@ -489,9 +489,8 @@ imx23_mmc_reset(struct imx23_mmc_softc *sc)
 	SSP_WR(sc, HW_SSP_CTRL0_CLR, HW_SSP_CTRL0_CLKGATE);
 
 	/* Wait until clock is in the NON-gated state. */
-	while (SSP_RD(sc, HW_SSP_CTRL0) & HW_SSP_CTRL0_CLKGATE);
-
-	return;
+	while (SSP_RD(sc, HW_SSP_CTRL0) & HW_SSP_CTRL0_CLKGATE)
+		continue;
 }
 
 /*

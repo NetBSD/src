@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_timrot.c,v 1.9 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_timrot.c,v 1.10 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -200,8 +200,6 @@ setstatclockrate(int newhz)
 	TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
 		      __SHIFTIN(SOURCE_32KHZ_HZ / newhz - 1,
 				HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
-
-	return;
 }
 
 /*
@@ -259,7 +257,8 @@ imx23_timrot_reset(struct imx23_timrot_softc *sc)
 	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_SET, HW_TIMROT_ROTCTRL_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE));
+	while (!(TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE))
+		continue;
 
 	/* Bring block out of reset. */
 	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_SFTRST);
@@ -271,5 +270,6 @@ imx23_timrot_reset(struct imx23_timrot_softc *sc)
 
 	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_CLKGATE);
 	/* Wait until clock is in the NON-gated state. */
-	while (TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE);
+	while (TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE)
+		continue;
 }

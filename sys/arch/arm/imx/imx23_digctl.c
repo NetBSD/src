@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_digctl.c,v 1.6 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_digctl.c,v 1.7 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ static void
 imx23_digctl_init(struct imx23_digctl_softc *sc)
 {
 	_sc = sc;
-	return;
 }
 
 /*

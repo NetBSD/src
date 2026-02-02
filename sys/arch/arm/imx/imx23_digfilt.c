@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_digfilt.c,v 1.10 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_digfilt.c,v 1.11 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ imx23_digfilt_attach(device_t parent, device_t self, void *aux)
 
 	uint32_t v = AO_RD(sc, HW_AUDIOOUT_VERSION);
 	aprint_normal(": DIGFILT Block v%" __PRIuBIT ".%" __PRIuBIT
-		".%" __PRIuBIT "",
+		".%" __PRIuBIT,
 		__SHIFTOUT(v, HW_AUDIOOUT_VERSION_MAJOR),
 		__SHIFTOUT(v, HW_AUDIOOUT_VERSION_MINOR),
 		__SHIFTOUT(v, HW_AUDIOOUT_VERSION_STEP));
@@ -758,8 +758,8 @@ imx23_digfilt_ao_init(struct imx23_digfilt_softc *sc)
 {
 
 	AO_WR(sc, HW_AUDIOOUT_ANACLKCTRL_CLR, HW_AUDIOOUT_ANACLKCTRL_CLKGATE);
-	while ((AO_RD(sc, HW_AUDIOOUT_ANACLKCTRL) &
-	    HW_AUDIOOUT_ANACLKCTRL_CLKGATE));
+	while ((AO_RD(sc, HW_AUDIOOUT_ANACLKCTRL) & HW_AUDIOOUT_ANACLKCTRL_CLKGATE))
+		continue;
 
 	/* Hold headphones outputs at ground. */
 	AO_WR(sc, HW_AUDIOOUT_ANACTRL_SET, HW_AUDIOOUT_ANACTRL_HP_HOLD_GND);
@@ -776,8 +776,6 @@ imx23_digfilt_ao_init(struct imx23_digfilt_softc *sc)
 	    HW_AUDIOOUT_PWRDN_CAPLESS |
 	    HW_AUDIOOUT_PWRDN_HEADPHONE
 	);
-
-	return;
 }
 
 /*
@@ -808,7 +806,8 @@ imx23_digfilt_ao_reset(struct imx23_digfilt_softc *sc)
 	AO_WR(sc, HW_AUDIOOUT_CTRL_SET, HW_AUDIOOUT_CTRL_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(AO_RD(sc, HW_AUDIOOUT_CTRL) & HW_AUDIOOUT_CTRL_CLKGATE));
+	while (!(AO_RD(sc, HW_AUDIOOUT_CTRL) & HW_AUDIOOUT_CTRL_CLKGATE))
+		continue;
 
 	/* Bring block out of reset. */
 	AO_WR(sc, HW_AUDIOOUT_CTRL_CLR, HW_AUDIOOUT_CTRL_SFTRST);
@@ -821,7 +820,8 @@ imx23_digfilt_ao_reset(struct imx23_digfilt_softc *sc)
 	AO_WR(sc, HW_AUDIOOUT_CTRL_CLR, HW_AUDIOOUT_CTRL_CLKGATE);
 
 	/* Wait until clock is in the NON-gated state. */
-	while (AO_RD(sc, HW_AUDIOOUT_CTRL) & HW_AUDIOOUT_CTRL_CLKGATE);
+	while (AO_RD(sc, HW_AUDIOOUT_CTRL) & HW_AUDIOOUT_CTRL_CLKGATE)
+		continue;
 }
 
 static void
@@ -892,6 +892,4 @@ imx23_digfilt_ao_set_rate(struct imx23_digfilt_softc *sc, int sr)
 	AO_WR(sc, HW_AUDIOOUT_DACSRR, val);
 
 	val = AO_RD(sc, HW_AUDIOOUT_DACSRR);
-
-	return;
 }

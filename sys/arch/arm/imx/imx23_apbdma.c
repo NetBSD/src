@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_apbdma.c,v 1.8 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_apbdma.c,v 1.9 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -324,16 +324,14 @@ imx23_apbdma_intr(void *frame)
 			DMA_WR(sc, HW_APB_CTRL0_SET,
 			       __SHIFTIN((1 << chan->chan_index),
 					 HW_APBH_CTRL0_RESET_CHANNEL));
-			while (DMA_RD(sc, HW_APB_CTRL0) &
-			       HW_APBH_CTRL0_RESET_CHANNEL)
-				;
+			while (DMA_RD(sc, HW_APB_CTRL0) & HW_APBH_CTRL0_RESET_CHANNEL)
+				continue;
 		} else {
 			DMA_WR(sc, HW_APBX_CHANNEL_CTRL_SET,
 			       __SHIFTIN((1 << chan->chan_index),
 					 HW_APBH_CTRL0_RESET_CHANNEL));
-			while (DMA_RD(sc, HW_APBX_CHANNEL_CTRL) &
-			       (1 << chan->chan_index))
-				;
+			while (DMA_RD(sc, HW_APBX_CHANNEL_CTRL) & (1 << chan->chan_index))
+				continue;
 		}
 	}
 
@@ -487,7 +485,8 @@ imx23_apbdma_reset(struct imx23_apbdma_softc *sc)
 	DMA_WR(sc, HW_APB_CTRL0_SET, HW_APB_CTRL0_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE));
+	while (!(DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE))
+		continue;
 
 	/* Bring block out of reset. */
 	DMA_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_SFTRST);
@@ -500,7 +499,8 @@ imx23_apbdma_reset(struct imx23_apbdma_softc *sc)
 	DMA_WR(sc, HW_APB_CTRL0_CLR, HW_APB_CTRL0_CLKGATE);
 
 	/* Wait until clock is in the NON-gated state. */
-	while (DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE);
+	while (DMA_RD(sc, HW_APB_CTRL0) & HW_APB_CTRL0_CLKGATE)
+		continue;
 }
 
 /*
@@ -514,5 +514,4 @@ imx23_apbdma_init(struct imx23_apbdma_softc *sc)
 		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_AHB_BURST8_EN);
 		DMA_WR(sc, HW_APBH_CTRL0_SET, HW_APBH_CTRL0_APB_BURST4_EN);
 	}
-	return;
 }

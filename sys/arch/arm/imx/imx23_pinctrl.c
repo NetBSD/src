@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_pinctrl.c,v 1.9 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_pinctrl.c,v 1.10 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -532,7 +532,6 @@ static void
 imx23_pinctrl_init(struct imx23_pinctrl_softc *sc)
 {
 	_sc = sc;
-	return;
 }
 
 static	int
@@ -621,6 +620,4 @@ imx23_pinctrl_gp_pin_ctl(void *cookie, int pin, int flags)
 			PINCTRL_WR(sc, PIN2PULL_CLR_REG(pin),
 				PIN2PULL_MASK(pin));
 	}
-
-	return;
 }

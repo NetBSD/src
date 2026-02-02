@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_usbphy.c,v 1.5 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_usbphy.c,v 1.6 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -116,43 +116,43 @@ imx23_usbphy_attach(device_t parent, device_t self, void *aux)
 static void
 imx23_usbphy_reset(struct imx23_usbphy_softc *sc)
 {
-        unsigned int loop;
+	unsigned int loop;
 
-        /* Prepare for soft-reset by making sure that SFTRST is not currently
-         * asserted. Also clear CLKGATE so we can wait for its assertion below.
-         */
-        PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_SFTRST);
+	/* Prepare for soft-reset by making sure that SFTRST is not currently
+	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
+	 */
+	PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_SFTRST);
 
-        /* Wait at least a microsecond for SFTRST to deassert. */
-        loop = 0;
-        while ((PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_SFTRST) ||
-            (loop < USBPHY_SOFT_RST_LOOP))
-                loop++;
+	/* Wait at least a microsecond for SFTRST to deassert. */
+	loop = 0;
+	while ((PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_SFTRST) ||
+	    (loop < USBPHY_SOFT_RST_LOOP))
+		loop++;
 
-        /* Clear CLKGATE so we can wait for its assertion below. */
-        PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_CLKGATE);
+	/* Clear CLKGATE so we can wait for its assertion below. */
+	PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_CLKGATE);
 
-        /* Soft-reset the block. */
-        PHY_WR(sc, HW_USBPHY_CTRL_SET, HW_USBPHY_CTRL_SFTRST);
+	/* Soft-reset the block. */
+	PHY_WR(sc, HW_USBPHY_CTRL_SET, HW_USBPHY_CTRL_SFTRST);
 
-        /* Wait until clock is in the gated state. */
-        while (!(PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_CLKGATE));
+	/* Wait until clock is in the gated state. */
+	while (!(PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_CLKGATE))
+		continue;
 
-        /* Bring block out of reset. */
-        PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_SFTRST);
+	/* Bring block out of reset. */
+	PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_SFTRST);
 
-        loop = 0;
-        while ((PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_SFTRST) ||
-            (loop < USBPHY_SOFT_RST_LOOP))
-                loop++;
+	loop = 0;
+	while ((PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_SFTRST) ||
+	    (loop < USBPHY_SOFT_RST_LOOP))
+		loop++;
 
-        PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_CLKGATE);
+	PHY_WR(sc, HW_USBPHY_CTRL_CLR, HW_USBPHY_CTRL_CLKGATE);
 
-        /* Wait until clock is in the NON-gated state. */
-        while (PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_CLKGATE);
-
-        return;
-}
+	/* Wait until clock is in the NON-gated state. */
+	while (PHY_RD(sc, HW_USBPHY_CTRL) & HW_USBPHY_CTRL_CLKGATE)
+		continue;
+	}
 
 /*
  * Enable USB PHY.

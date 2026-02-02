@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_icoll.c,v 1.9 2026/02/02 09:21:30 yurix Exp $ */
+/* $NetBSD: imx23_icoll.c,v 1.10 2026/02/02 09:51:40 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx23_icoll.c,v 1.9 2026/02/02 09:21:30 yurix Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx23_icoll.c,v 1.10 2026/02/02 09:51:40 yurix Exp $");
 
 #include <sys/param.h>
 
@@ -217,8 +217,6 @@ imx23_icoll_unblock_irqs(struct pic_softc *pic, size_t irq_base,
 		ICOLL_SET_IRQ(sc, irq_base + b);
 		irq_mask &= ~(1<<b);
 	}
-
-	return;
 }
 
 static void
@@ -394,7 +392,8 @@ imx23_icoll_reset(struct imx23_icoll_softc *sc)
 	ICOLL_WRITE(sc, HW_ICOLL_CTRL_SET, HW_ICOLL_CTRL_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(ICOLL_READ(sc, HW_ICOLL_CTRL) & HW_ICOLL_CTRL_CLKGATE));
+	while (!(ICOLL_READ(sc, HW_ICOLL_CTRL) & HW_ICOLL_CTRL_CLKGATE))
+		continue;
 
 	/* Bring block out of reset. */
 	ICOLL_WRITE(sc, HW_ICOLL_CTRL_CLR, HW_ICOLL_CTRL_SFTRST);
@@ -408,5 +407,6 @@ imx23_icoll_reset(struct imx23_icoll_softc *sc)
 	ICOLL_WRITE(sc, HW_ICOLL_CTRL_CLR, HW_ICOLL_CTRL_CLKGATE);
 
 	/* Wait until clock is in the NON-gated state. */
-	while (ICOLL_READ(sc, HW_ICOLL_CTRL) & HW_ICOLL_CTRL_CLKGATE);
+	while (ICOLL_READ(sc, HW_ICOLL_CTRL) & HW_ICOLL_CTRL_CLKGATE)
+		continue;
 }
