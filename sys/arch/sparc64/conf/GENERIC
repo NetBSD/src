@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.246 2026/02/02 04:17:51 mrg Exp $
+# $NetBSD: GENERIC,v 1.247 2026/02/02 07:58:42 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.246 $"
+#ident		"GENERIC-$Revision: 1.247 $"
 
 maxusers	64
 
@@ -241,7 +241,7 @@ clock*	at ebus?
 rtc*	at ebus?
 
 ## bq4802 compatible clock found on ebus on Ultra 45.
-#bq4802rtc* 	at ebus?
+bq4802rtc* 	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
