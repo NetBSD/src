@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.43 2024/01/26 07:10:04 mlelstv Exp $	*/
+/*	$NetBSD: args.c,v 1.43.4.1 2026/02/02 17:49:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.43 2024/01/26 07:10:04 mlelstv Exp $");
+__RCSID("$NetBSD: args.c,v 1.43.4.1 2026/02/02 17:49:07 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,10 +248,6 @@ f_count(char *arg)
 {
 
 	cpy_cnt = strsuftoll("block count", arg, 0, LLONG_MAX);
-	if (!cpy_cnt) {
-		summary();
-		exit(0);
-	}
 }
 
 static void
