@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.24 2024/07/08 22:33:43 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.24.2.1 2026/02/02 18:07:58 martin Exp $	*/
 /* $OpenBSD: auth.h,v 1.108 2024/05/17 06:42:04 jsg Exp $ */
 
 /*
@@ -31,8 +31,6 @@
 
 #include <signal.h>
 #include <stdio.h>
-
-#include <openssl/rsa.h>
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>

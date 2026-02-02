@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2025/04/09 19:43:19 christos Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2026/02/02 18:08:04 martin Exp $
 
 NOMAN=	yes
 .include <bsd.own.mk>
@@ -13,8 +13,8 @@ SRCS=	auth-rhosts.c auth-passwd.c auth2-pubkeyfile.c \
 	auth-krb5.c auth2-chall.c groupaccess.c \
 	auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	monitor.c monitor_wrap.c srclimit.c \
-	kexgexs.c sftp-server.c sftp-common.c \
+	misc-agent.c monitor.c monitor_wrap.c srclimit.c \
+	sftp-server.c sftp-common.c \
 	sftp-realpath.c sshd-session.c pfilter.c
 
 COPTS.auth-options.c+=	-Wno-pointer-sign
@@ -69,6 +69,12 @@ CPPFLAGS+=-DSMALL
 .else
 LDADD+=	-lblocklist
 DPADD+=	${LIBBLOCKLIST}
+.endif
+
+.include "../Makefile.inc"
+
+.ifdef WITH_OPENSSL
+SRCS+= kexgexs.c
 .endif
 
 COPTS.sshlogin.c+=	${CC_WNO_STRINGOP_TRUNCATION}

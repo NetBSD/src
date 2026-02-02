@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.27 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.75 2025/02/15 01:48:30 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.27.2.1 2026/02/02 18:08:01 martin Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.78 2025/09/25 06:25:38 djm Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.27 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.27.2.1 2026/02/02 18:08:01 martin Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -130,8 +130,10 @@ valid_request(struct passwd *pw, char *host, struct sshkey **ret, char **pkalgp,
 	/* client host name, handle trailing dot */
 	if ((r = sshbuf_get_cstring(b, &p, &len)) != 0)
 		fatal_fr(r, "parse hostname");
-	debug2_f("check expect chost %s got %s", host, p);
-	if (strlen(host) != len - 1)
+	debug2_f("check expect chost \"%s\" got \"%s\"", host, p);
+	if (len == 0)
+		fail++;
+	else if (strlen(host) != len - 1)
 		fail++;
 	else if (p[len - 1] != '.')
 		fail++;
@@ -201,12 +203,8 @@ main(int argc, char **argv)
 
 	i = 0;
 	/* XXX This really needs to read sshd_config for the paths */
-#ifdef WITH_DSA
-	key_fd[i++] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
-#endif
 	key_fd[i++] = open(_PATH_HOST_ECDSA_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_ED25519_KEY_FILE, O_RDONLY);
-	key_fd[i++] = open(_PATH_HOST_XMSS_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
 
 	if ((pw = getpwuid(getuid())) == NULL)

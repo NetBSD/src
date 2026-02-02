@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-krb5.c,v 1.11 2024/07/08 22:33:43 christos Exp $	*/
+/*	$NetBSD: auth2-krb5.c,v 1.11.2.1 2026/02/02 18:07:59 martin Exp $	*/
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -24,10 +24,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-krb5.c,v 1.11 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: auth2-krb5.c,v 1.11.2.1 2026/02/02 18:07:59 martin Exp $");
 
 #include <krb5.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "ssh2.h"
 #include "xmalloc.h"

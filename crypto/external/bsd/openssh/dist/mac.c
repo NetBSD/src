@@ -1,5 +1,6 @@
-/*	$NetBSD: mac.c,v 1.16 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: mac.c,v 1.35 2019/09/06 04:53:27 djm Exp $ */
+/*	$NetBSD: mac.c,v 1.16.12.1 2026/02/02 18:07:59 martin Exp $	*/
+/* $OpenBSD: mac.c,v 1.37 2025/09/05 10:01:35 dtucker Exp $ */
+
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,12 +26,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.16 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.16.12.1 2026/02/02 18:07:59 martin Exp $");
 #include <sys/types.h>
 
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "digest.h"
 #include "hmac.h"
@@ -82,22 +83,13 @@ static const struct macalg macs[] = {
 char *
 mac_alg_list(char sep)
 {
-	char *ret = NULL, *tmp;
-	size_t nlen, rlen = 0;
+	char *ret = NULL;
 	const struct macalg *m;
+	char sep_str[2] = {sep, '\0'};
 
-	for (m = macs; m->name != NULL; m++) {
-		if (ret != NULL)
-			ret[rlen++] = sep;
-		nlen = strlen(m->name);
-		if ((tmp = realloc(ret, rlen + nlen + 2)) == NULL) {
-			free(ret);
-			return NULL;
-		}
-		ret = tmp;
-		memcpy(ret + rlen, m->name, nlen + 1);
-		rlen += nlen;
-	}
+	for (m = macs; m->name != NULL; m++)
+		xextendf(&ret, sep_str, "%s", m->name);
+
 	return ret;
 }
 

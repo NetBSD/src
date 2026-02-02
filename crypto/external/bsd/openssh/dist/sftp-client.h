@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.h,v 1.18 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: sftp-client.h,v 1.39 2023/09/08 05:56:13 djm Exp $ */
+/*	$NetBSD: sftp-client.h,v 1.18.4.1 2026/02/02 18:08:00 martin Exp $	*/
+/* $OpenBSD: sftp-client.h,v 1.40 2025/09/15 05:17:37 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -66,6 +66,7 @@ struct sftp_limits {
  * a pointer to a initialized sftp_conn struct on success.
  */
 struct sftp_conn *sftp_init(int, int, u_int, u_int, u_int64_t);
+void sftp_free(struct sftp_conn *);
 
 u_int sftp_proto_version(struct sftp_conn *);
 

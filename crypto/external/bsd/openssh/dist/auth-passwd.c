@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-passwd.c,v 1.13 2023/07/07 07:04:17 rin Exp $	*/
-/* $OpenBSD: auth-passwd.c,v 1.48 2020/10/18 11:32:01 djm Exp $ */
+/*	$NetBSD: auth-passwd.c,v 1.13.4.1 2026/02/02 18:07:58 martin Exp $	*/
+/* $OpenBSD: auth-passwd.c,v 1.49 2025/05/08 17:32:53 tedu Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.13 2023/07/07 07:04:17 rin Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.13.4.1 2026/02/02 18:07:58 martin Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -112,7 +112,7 @@ static void
 warn_expiry(Authctxt *authctxt, auth_session_t *as)
 {
 	int r;
-	quad_t pwtimeleft, actimeleft, daysleft, pwwarntime, acwarntime;
+	int64_t pwtimeleft, actimeleft, daysleft, pwwarntime, acwarntime;
 
 	pwwarntime = acwarntime = TWO_WEEKS;
 

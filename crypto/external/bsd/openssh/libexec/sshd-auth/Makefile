@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2025/04/15 22:40:20 christos Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2026/02/02 18:08:04 martin Exp $
 
 NOMAN=	yes
 .include <bsd.own.mk>
@@ -28,7 +28,7 @@ dns.c \
 fatal.c \
 groupaccess.c \
 hostfile.c \
-kexgexs.c \
+misc-agent.c \
 monitor_wrap.c \
 pfilter.c \
 readpass.c \
@@ -96,6 +96,12 @@ CPPFLAGS+=-DSMALL
 .else
 LDADD+=	-lblocklist
 DPADD+=	${LIBBLOCKLIST}
+.endif
+
+.include "../Makefile.inc"
+
+.ifdef WITH_OPENSSL
+SRCS+= kexgexs.c
 .endif
 
 COPTS.sshlogin.c+=	${CC_WNO_STRINGOP_TRUNCATION}

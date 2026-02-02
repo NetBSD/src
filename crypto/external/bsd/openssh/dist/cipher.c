@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.24 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: cipher.c,v 1.124 2025/03/14 09:49:49 tb Exp $ */
+/*	$NetBSD: cipher.c,v 1.24.2.1 2026/02/02 18:07:59 martin Exp $	*/
+/* $OpenBSD: cipher.c,v 1.125 2025/09/02 11:08:34 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.24 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.24.2.1 2026/02/02 18:07:59 martin Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: cipher.c,v 1.24 2025/04/09 15:49:32 christos Exp $");
 #endif
 
 // XXX: from libressl
+#ifdef WITH_OPENSSL
 #define HAVE_EVP_CIPHER_CTX_IV
 
 static int
@@ -84,6 +85,7 @@ EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
 	}
 	return 1;
 }
+#endif
 // XXX: end
 
 struct sshcipher_ctx {
@@ -145,25 +147,16 @@ static const struct sshcipher ciphers[] = {
 char *
 cipher_alg_list(char sep, int auth_only)
 {
-	char *tmp, *ret = NULL;
-	size_t nlen, rlen = 0;
+	char *ret = NULL;
 	const struct sshcipher *c;
+	char sep_str[2] = {sep, '\0'};
 
 	for (c = ciphers; c->name != NULL; c++) {
 		if ((c->flags & CFLAG_INTERNAL) != 0)
 			continue;
 		if (auth_only && c->auth_len == 0)
 			continue;
-		if (ret != NULL)
-			ret[rlen++] = sep;
-		nlen = strlen(c->name);
-		if ((tmp = realloc(ret, rlen + nlen + 2)) == NULL) {
-			free(ret);
-			return NULL;
-		}
-		ret = tmp;
-		memcpy(ret + rlen, c->name, nlen + 1);
-		rlen += nlen;
+		xextendf(&ret, sep_str, "%s", c->name);
 	}
 	return ret;
 }

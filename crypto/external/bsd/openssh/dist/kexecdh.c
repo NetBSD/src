@@ -1,5 +1,6 @@
-/*	$NetBSD: kexecdh.c,v 1.8 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: kexecdh.c,v 1.10 2019/01/21 10:40:11 djm Exp $ */
+/*	$NetBSD: kexecdh.c,v 1.8.14.1 2026/02/02 18:07:59 martin Exp $	*/
+/* $OpenBSD: kexecdh.c,v 1.11 2025/10/03 00:08:02 djm Exp $ */
+
 /*
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
@@ -26,13 +27,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdh.c,v 1.8 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: kexecdh.c,v 1.8.14.1 2026/02/02 18:07:59 martin Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 
+#include <openssl/bn.h>
 #include <openssl/ecdh.h>
 
 #include "sshkey.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-ed25519.c,v 1.19 2022/10/28 00:44:44 djm Exp $ */
+/* $OpenBSD: ssh-ed25519.c,v 1.20 2025/07/24 06:12:08 djm Exp $ */
 /*
  * Copyright (c) 2013 Markus Friedl <markus@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 #define SSHKEY_INTERNAL
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ed25519.c,v 1.10 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: ssh-ed25519.c,v 1.10.4.1 2026/02/02 18:08:01 martin Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -149,10 +149,9 @@ ssh_ed25519_sign(struct sshkey *key,
     const char *alg, const char *sk_provider, const char *sk_pin, u_int compat)
 {
 	u_char *sig = NULL;
-	size_t slen = 0, len;
+	size_t slen = 0;
 	unsigned long long smlen;
 	int r, ret;
-	struct sshbuf *b = NULL;
 
 	if (lenp != NULL)
 		*lenp = 0;
@@ -173,13 +172,40 @@ ssh_ed25519_sign(struct sshkey *key,
 		r = SSH_ERR_INVALID_ARGUMENT; /* XXX better error? */
 		goto out;
 	}
+	if ((r = ssh_ed25519_encode_store_sig(sig, smlen - datalen,
+	    sigp, lenp)) != 0)
+		goto out;
+
+	/* success */
+	r = 0;
+ out:
+	freezero(sig, slen);
+	return r;
+}
+
+int
+ssh_ed25519_encode_store_sig(const u_char *sig, size_t slen,
+    u_char **sigp, size_t *lenp)
+{
+	struct sshbuf *b = NULL;
+	int r = -1;
+	size_t len;
+
+	if (lenp != NULL)
+		*lenp = 0;
+	if (sigp != NULL)
+		*sigp = NULL;
+
+	if (slen != crypto_sign_ed25519_BYTES)
+		return SSH_ERR_INVALID_ARGUMENT;
+
 	/* encode signature */
 	if ((b = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 	if ((r = sshbuf_put_cstring(b, "ssh-ed25519")) != 0 ||
-	    (r = sshbuf_put_string(b, sig, smlen - datalen)) != 0)
+	    (r = sshbuf_put_string(b, sig, slen)) != 0)
 		goto out;
 	len = sshbuf_len(b);
 	if (sigp != NULL) {
@@ -195,9 +221,6 @@ ssh_ed25519_sign(struct sshkey *key,
 	r = 0;
  out:
 	sshbuf_free(b);
-	if (sig != NULL)
-		freezero(sig, slen);
-
 	return r;
 }
 

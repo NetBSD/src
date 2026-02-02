@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.38 2025/03/20 18:43:03 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.162 2024/09/15 01:18:26 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.38.2.1 2026/02/02 18:07:58 martin Exp $	*/
+/* $OpenBSD: auth.c,v 1.163 2025/09/15 04:39:15 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.38 2025/03/20 18:43:03 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.38.2.1 2026/02/02 18:07:58 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -808,6 +808,7 @@ auth_activate_options(struct ssh *ssh, struct sshauthopt *opts)
 		error("Inconsistent authentication options: %s", emsg);
 		return -1;
 	}
+	sshauthopt_free(old);
 	return 0;
 }
 

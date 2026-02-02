@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.25 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.52 2024/10/14 01:57:50 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.25.2.1 2026/02/02 18:08:00 martin Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.53 2025/07/04 07:47:35 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -28,6 +28,10 @@
 
 #ifndef _MM_WRAP_H_
 #define _MM_WRAP_H_
+
+#define MONITOR_MAX_MSGLEN		(4 * 1024 * 1024)
+/* The configuration has to fit in a monitor message along with other state */
+#define MONITOR_MAX_CFGLEN		(MONITOR_MAX_MSGLEN - (64 * 1024))
 
 enum mm_keytype { MM_NOKEY, MM_HOSTKEY, MM_USERKEY };
 
@@ -62,6 +66,8 @@ int mm_sshkey_verify(const struct sshkey *, const u_char *, size_t,
 void mm_decode_activate_server_options(struct ssh *ssh, struct sshbuf *m);
 
 #ifdef GSSAPI
+#include "ssh-gss.h"
+
 OM_uint32 mm_ssh_gssapi_server_ctx(Gssctxt **, gss_OID);
 OM_uint32 mm_ssh_gssapi_accept_ctx(Gssctxt *,
    gss_buffer_desc *, gss_buffer_desc *, OM_uint32 *);

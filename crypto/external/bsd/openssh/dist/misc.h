@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.31 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.110 2024/09/25 01:24:04 djm Exp $ */
+/*	$NetBSD: misc.h,v 1.31.2.1 2026/02/02 18:08:00 martin Exp $	*/
+/* $OpenBSD: misc.h,v 1.112 2025/09/25 06:33:19 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -110,11 +110,14 @@ int	 parse_pattern_interval(const char *, char **, int *);
 int	 path_absolute(const char *);
 int	 stdfd_devnull(int, int, int);
 int	 lib_contains_symbol(const char *, const char *);
+char	*get_homedir(void);
 
 int	bcrypt_pbkdf(const char *, size_t, const u_int8_t *, size_t,
     u_int8_t *, size_t, unsigned int);
 
 struct passwd *pwcopy(struct passwd *);
+void	 pwfree(struct passwd *); /* NB. only use with pwcopy */
+
 const char *ssh_gai_strerror(int);
 
 typedef void privdrop_fn(struct passwd *);
@@ -233,6 +236,11 @@ void ptimeout_deadline_monotime(struct timespec *pt, time_t when);
 int ptimeout_get_ms(struct timespec *pt);
 struct timespec *ptimeout_get_tsp(struct timespec *pt);
 int ptimeout_isset(struct timespec *pt);
+
+/* misc-agent.c */
+char	*agent_hostname_hash(void);
+int	 agent_listener(const char *, const char *, int *, char **);
+void	 agent_cleanup_stale(const char *, int);
 
 /* readpass.c */
 

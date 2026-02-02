@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-rsa.c,v 1.20 2024/09/24 21:32:19 christos Exp $	*/
-/* $OpenBSD: ssh-rsa.c,v 1.80 2024/08/15 00:51:51 djm Exp $ */
+/*	$NetBSD: ssh-rsa.c,v 1.20.2.1 2026/02/02 18:08:01 martin Exp $	*/
+/* $OpenBSD: ssh-rsa.c,v 1.82 2025/10/03 00:08:02 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
@@ -18,9 +18,10 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-rsa.c,v 1.20 2024/09/24 21:32:19 christos Exp $");
+__RCSID("$NetBSD: ssh-rsa.c,v 1.20.2.1 2026/02/02 18:08:01 martin Exp $");
 #include <sys/types.h>
 
+#include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
@@ -306,8 +307,8 @@ ssh_rsa_deserialize_private(const char *ktype, struct sshbuf *b,
 	return r;
 }
 
-static const char *
-rsa_hash_alg_ident(int hash_alg)
+const char *
+ssh_rsa_hash_alg_ident(int hash_alg)
 {
 	switch (hash_alg) {
 	case SSH_DIGEST_SHA1:
@@ -341,8 +342,8 @@ rsa_hash_id_from_ident(const char *ident)
  * all the cases of rsa_hash_id_from_ident() but also the certificate key
  * types.
  */
-static int
-rsa_hash_id_from_keyname(const char *alg)
+int
+ssh_rsa_hash_id_from_keyname(const char *alg)
 {
 	int r;
 
@@ -407,7 +408,6 @@ ssh_rsa_sign(struct sshkey *key,
 	size_t diff, len = 0;
 	int slen = 0;
 	int hash_alg, ret = SSH_ERR_INTERNAL_ERROR;
-	struct sshbuf *b = NULL;
 
 	if (lenp != NULL)
 		*lenp = 0;
@@ -417,7 +417,7 @@ ssh_rsa_sign(struct sshkey *key,
 	if (alg == NULL || strlen(alg) == 0)
 		hash_alg = SSH_DIGEST_SHA1;
 	else
-		hash_alg = rsa_hash_id_from_keyname(alg);
+		hash_alg = ssh_rsa_hash_id_from_keyname(alg);
 
 	if (key == NULL || key->pkey == NULL || hash_alg == -1 ||
 	    sshkey_type_plain(key->type) != KEY_RSA)
@@ -439,16 +439,42 @@ ssh_rsa_sign(struct sshkey *key,
 		ret = SSH_ERR_INTERNAL_ERROR;
 		goto out;
 	}
+	if ((ret = ssh_rsa_encode_store_sig(hash_alg, sig, slen,
+	    sigp, lenp)) != 0)
+		goto out;
 
-	/* encode signature */
+	/* success */
+	ret = 0;
+ out:
+	freezero(sig, slen);
+	return ret;
+}
+
+int
+ssh_rsa_encode_store_sig(int hash_alg, const u_char *sig, size_t slen,
+    u_char **sigp, size_t *lenp)
+{
+	struct sshbuf *b = NULL;
+	int ret = SSH_ERR_INTERNAL_ERROR;
+	size_t len;
+
+	if (lenp != NULL)
+		*lenp = 0;
+	if (sigp != NULL)
+		*sigp = NULL;
+
+	/* Encode signature */
 	if ((b = sshbuf_new()) == NULL) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((ret = sshbuf_put_cstring(b, rsa_hash_alg_ident(hash_alg))) != 0 ||
+	if ((ret = sshbuf_put_cstring(b,
+	    ssh_rsa_hash_alg_ident(hash_alg))) != 0 ||
 	    (ret = sshbuf_put_string(b, sig, slen)) != 0)
 		goto out;
 	len = sshbuf_len(b);
+
+	/* Store signature */
 	if (sigp != NULL) {
 		if ((*sigp = malloc(len)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
@@ -460,7 +486,6 @@ ssh_rsa_sign(struct sshkey *key,
 		*lenp = len;
 	ret = 0;
  out:
-	freezero(sig, slen);
 	sshbuf_free(b);
 	return ret;
 }
@@ -499,7 +524,7 @@ ssh_rsa_verify(const struct sshkey *key,
 	 * legacy reasons, but otherwise the signature type should match.
 	 */
 	if (alg != NULL && strcmp(alg, "ssh-rsa-cert-v01@openssh.com") != 0) {
-		if ((want_alg = rsa_hash_id_from_keyname(alg)) == -1) {
+		if ((want_alg = ssh_rsa_hash_id_from_keyname(alg)) == -1) {
 			ret = SSH_ERR_INVALID_ARGUMENT;
 			goto out;
 		}

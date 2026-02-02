@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.43 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.410 2024/12/03 22:30:03 jsg Exp $ */
+/*	$NetBSD: clientloop.c,v 1.43.2.1 2026/02/02 18:07:59 martin Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.415 2025/09/25 06:23:19 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.43 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.43.2.1 2026/02/02 18:07:59 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -143,7 +143,8 @@ extern char *forward_agent_sock_path;
  * because this is updated in a signal handler.
  */
 static volatile sig_atomic_t received_window_change_signal = 0;
-static volatile sig_atomic_t received_signal = 0;
+static volatile sig_atomic_t siginfo_received = 0;
+static volatile sig_atomic_t received_signal = 0; /* exit signals */
 
 /* Time when backgrounded control master using ControlPersist should exit */
 static time_t control_persist_exit_time = 0;
@@ -221,6 +222,13 @@ static void
 window_change_handler(int sig)
 {
 	received_window_change_signal = 1;
+}
+
+/* Signal handler for SIGINFO */
+static void
+siginfo_handler(int sig)
+{
+	siginfo_received = 1;
 }
 
 /*
@@ -1449,7 +1457,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	struct pollfd *pfd = NULL;
 	u_int npfd_alloc = 0, npfd_active = 0;
 	double start_time, total_time;
-	int channel_did_enqueue = 0, r;
+	int interactive = -1, channel_did_enqueue = 0, r;
 	u_int64_t ibytes, obytes;
 	int conn_in_ready, conn_out_ready;
 	sigset_t bsigset, osigset;
@@ -1518,6 +1526,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	if (ssh_signal(SIGTERM, SIG_IGN) != SIG_IGN)
 		ssh_signal(SIGTERM, signal_handler);
 	ssh_signal(SIGWINCH, window_change_handler);
+	ssh_signal(SIGINFO, siginfo_handler);
 
 	if (have_pty)
 		enter_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
@@ -1540,7 +1549,8 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	    sigaddset(&bsigset, SIGHUP) == -1 ||
 	    sigaddset(&bsigset, SIGINT) == -1 ||
 	    sigaddset(&bsigset, SIGQUIT) == -1 ||
-	    sigaddset(&bsigset, SIGTERM) == -1)
+	    sigaddset(&bsigset, SIGTERM) == -1 ||
+	    sigaddset(&bsigset, SIGINFO) == -1)
 		error_f("bsigset setup: %s", strerror(errno));
 
 	/* Main loop of the client for the interactive session mode. */
@@ -1581,6 +1591,10 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 		 */
 		if (sigprocmask(SIG_BLOCK, &bsigset, &osigset) == -1)
 			error_f("bsigset sigprocmask: %s", strerror(errno));
+		if (siginfo_received) {
+			siginfo_received = 0;
+			channel_report_open(ssh, SYSLOG_LEVEL_INFO);
+		}
 		if (quit_pending)
 			break;
 		client_wait_until_can_do_something(ssh, &pfd, &npfd_alloc,
@@ -1611,6 +1625,12 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 		 * sender.
 		 */
 		if (conn_out_ready) {
+			if (interactive != !channel_has_bulk(ssh)) {
+				interactive = !channel_has_bulk(ssh);
+				debug2_f("session QoS is now %s", interactive ?
+				    "interactive" : "non-interactive");
+				ssh_packet_set_interactive(ssh, interactive);
+			}
 			if ((r = ssh_packet_write_poll(ssh)) < 0) {
 				sshpkt_fatal(ssh, r,
 				    "%s: ssh_packet_write_poll", __func__);
@@ -1865,7 +1885,7 @@ client_request_tun_fwd(struct ssh *ssh, int tun_mode,
 	char *ifname = NULL;
 
 	if (tun_mode == SSH_TUNMODE_NO)
-		return 0;
+		return NULL;
 
 	debug("Requesting tun unit %d in mode %d", local_tun, tun_mode);
 
@@ -2434,6 +2454,7 @@ client_global_hostkeys_prove_confirm(struct ssh *ssh, int type,
 	/* Make the edits to known_hosts */
 	update_known_hosts(ctx);
  out:
+	sshbuf_free(signdata);
 	hostkeys_update_ctx_free(ctx);
 	hostkeys_update_complete = 1;
 	client_repledge();
@@ -2704,9 +2725,6 @@ client_session2_setup(struct ssh *ssh, int id, int want_tty, int want_subsystem,
 
 	if ((c = channel_lookup(ssh, id)) == NULL)
 		fatal_f("channel %d: unknown channel", id);
-
-	ssh_packet_set_interactive(ssh, want_tty,
-	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 	if (want_tty) {
 		struct winsize ws;

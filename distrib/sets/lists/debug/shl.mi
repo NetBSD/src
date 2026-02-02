@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.367.2.5 2026/01/23 16:15:15 martin Exp $
+# $NetBSD: shl.mi,v 1.367.2.6 2026/02/02 18:07:57 martin Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -327,7 +327,7 @@
 ./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
-./usr/libdata/debug/usr/lib/private/libssh.so.49.0.debug	comp-secsh-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/private/libssh.so.50.0.debug	comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/security/pam_afslog.so.4.debug	base-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/security/pam_chroot.so.4.debug	base-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/security/pam_deny.so.4.debug	base-sys-debug	debug,compatfile,pam

@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.16.4.2 2026/01/23 06:16:01 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.16.4.3 2026/02/02 18:07:58 martin Exp $
 
 WARNS?=	4
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client/server
+
+# Avoid increasing the binary size by not linking with libcrypto
+# on static platforms.
+.if ${MACHINE_ARCH} != "m68000"
 WITH_OPENSSL=1
+.endif
 
 SSHDIST?= ${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 
@@ -20,7 +25,12 @@ CPPFLAGS+=-DHAVE_STDLIB_H
 CPPFLAGS+=-DOPENSSL_API_COMPAT=0x10100000L
 .endif
 
-CPPFLAGS+=-DWITH_OPENSSL -DENABLE_PKCS11 -DWITH_XMSS -DWITH_ZLIB -DWITH_DSA
+.ifdef WITH_OPENSSL
+CPPFLAGS+=-DWITH_OPENSSL -DENABLE_PKCS11
+.endif
+
+CPPFLAGS+=-DWITH_ZLIB
+
 .if !defined(NOPIC)
 CPPFLAGS+=-DHAVE_DLOPEN
 .endif
@@ -47,6 +57,11 @@ CPPFLAGS+=-DX11BASE=\"/usr/X11R7\"
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 CPPFLAGS+=-DLIBWRAP
+
+LINTFLAGS+=	-X 117	# nonportable '>>' on signed integer type
+LINTFLAGS+=	-X 231	# parameter unused
+LINTFLAGS+=	-X 247	# pointer cast to unrelated type
+LINTFLAGS+=	-X 351	# missing header declaration
 
 # We install libssh in /usr/lib/private so applications don't
 # accidentally link against it.  Set LIBSUBDIR so libssh.so.N and

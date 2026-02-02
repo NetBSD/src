@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.16 2025/02/18 17:53:24 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.32 2020/03/13 03:17:07 djm Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.16.2.1 2026/02/02 18:07:59 martin Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.33 2025/09/29 21:30:15 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,13 +26,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.16 2025/02/18 17:53:24 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.16.2.1 2026/02/02 18:07:59 martin Exp $");
 
 #include <sys/param.h>
+#ifdef GSSAPI
+
 #include <sys/types.h>
 #include <sys/queue.h>
-
-#ifdef GSSAPI
 
 #include <string.h>
 #include <unistd.h>
