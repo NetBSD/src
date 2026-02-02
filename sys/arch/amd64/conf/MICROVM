@@ -1,4 +1,4 @@
-# $NetBSD: MICROVM,v 1.3.2.1 2025/08/25 16:04:04 martin Exp $
+# $NetBSD: MICROVM,v 1.3.2.2 2026/02/02 17:46:18 martin Exp $
 #
 # MICROVM kernel configuration, for use with Qemu microvm machine type
 # or Firecracker.
@@ -23,3 +23,7 @@ machine amd64 x86 xen
 include         "arch/x86/conf/MICROVM.common"
 
 options         EXEC_ELF64      # exec ELF binaries
+options 	MODULAR		# new style module(7) framework
+
+options 	MEMORY_DISK_HOOKS	# enable md specific hooks
+options 	MEMORY_DISK_DYNAMIC	# enable dynamic resizing

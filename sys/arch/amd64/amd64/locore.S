@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.230.2.2 2026/01/25 16:36:40 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.230.2.3 2026/02/02 17:46:18 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1187,7 +1187,69 @@ ENTRY(start_pvh)
 	shrl $2, %ecx
 	rep movsl
 
-	/* Copy cmdline_paddr after hvm_start_info */
+	/* Copy hvm_modlist_entry[] after hvm_start_info */
+	xor %ecx, %ecx
+	mov %ecx, START_INFO_MODLIST_PADDR(%eax)
+	movl START_INFO_NR_MODULES(%eax), %ecx	/* Get nr_modules */
+	testl %ecx, %ecx			/* if(nr_modules == 0) */
+	jz .modlist_copy_done			/*   goto modlist_copy_done */
+	movl %edi, START_INFO_MODLIST_PADDR(%eax) /* Set new modlist_paddr in hvm_start_info */
+	movl START_INFO_MODLIST_PADDR(%ebx), %esi
+	pushl %eax
+	movl $HVM_MODLIST_ENTRY_SIZE, %eax	/* eax = sizeof(hvm_modlist_entry) */
+	mull %ecx				/* eax * ecx => edx:eax */
+	movl %eax, %ecx
+	shrl $2, %ecx
+	rep movsl
+	popl %eax
+
+	/* Copy the modules after the hvm_modlist_entry[] */
+	xorl %ecx, %ecx				/* ecx = i = 0 */
+.module_copy:
+	/* eax points to our hvm_start_info */
+	/* ecx is our counter (i) */
+	/* Copy the module */
+	movl START_INFO_MODLIST_PADDR(%eax), %edx /* edx = &hvm_modlist_entry[0] */
+	pushl %eax
+	movl $HVM_MODLIST_ENTRY_SIZE, %eax	/* eax = sizeof(hvm_modlist_entry) */
+	pushl %ecx
+	pushl %edx
+	mull %ecx				/* eax * ecx => edx:eax */
+	popl %edx
+	addl %eax, %edx				/* edx = &hvm_modlist_entry[i] */
+	popl %ecx
+	/* Copy the module's cmdline */
+	movl MODLIST_ENTRY_CMDLINE(%edx), %esi
+	xorl %eax, %eax
+	movl %eax, MODLIST_ENTRY_CMDLINE(%edx)	/* hvm_modlist_entry[i].cmdline = NULL */
+	cmpl %eax, %esi
+	popl %eax
+	je .module_cmdline_copy_done
+	movl %edi, MODLIST_ENTRY_CMDLINE(%edx)	/* Set new cmdline_paddr in hvm_modlist_entry */
+	pushl %eax
+.module_cmdline_copy:
+	movb (%esi), %al
+	movsb
+	cmp $0, %al
+	jne .module_cmdline_copy
+	popl %eax
+.module_cmdline_copy_done:
+	/* Copy the module's content */
+	movl MODLIST_ENTRY_PADDR(%edx), %esi	/* esi = hvm_modlist_entry[i].paddr */
+	movl %edi, MODLIST_ENTRY_PADDR(%edx)	/* Set new paddr in hvm_modlist_entry */
+	pushl %ecx
+	movl MODLIST_ENTRY_SIZE(%edx), %ecx	/* ecx = hvm_modlist_entry[i].size */
+	rep movsb
+	popl %ecx
+	inc %ecx				/* i++ */
+	pushl %eax
+	movl START_INFO_NR_MODULES(%ebx), %eax	/* eax = nr_modules */
+	cmpl %eax, %ecx				/* if (ecx != nr_modules) */
+	popl %eax
+	jne .module_copy			/*   goto module_copy */
+.modlist_copy_done:
+
+	/* Copy cmdline_paddr after the modules */
 	movl CMDLINE_PADDR(%ebx), %esi
 	movl %edi, CMDLINE_PADDR(%eax)	/* Set new cmdline_paddr in hvm_start_info */
 .cmdline_copy:
