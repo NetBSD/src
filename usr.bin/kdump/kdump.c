@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.151 2026/02/01 20:17:06 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.152 2026/02/02 15:25:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.151 2026/02/01 20:17:06 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.152 2026/02/02 15:25:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1391,7 +1391,6 @@ ktrgenio(struct ktr_genio *ktr, int len)
 static void
 ktrpsig(void *v, int len)
 {
-	int signo, first;
 	struct {
 		struct ktr_psig ps;
 		siginfo_t si;
@@ -1403,18 +1402,10 @@ ktrpsig(void *v, int len)
 	if (psig->ps.action == SIG_DFL)
 		(void)printf("SIG_DFL");
 	else {
-		(void)printf("caught handler=%p mask=(", psig->ps.action);
-		first = 1;
-		for (signo = 1; signo < NSIG; signo++) {
-			if (sigismember(&psig->ps.mask, signo)) {
-				if (first)
-					first = 0;
-				else
-					(void)printf(",");
-				(void)printf("%d", signo);
-			}
-		}
-		(void)printf(")");
+		char set[512];
+		psigset(set, sizeof(set), &psig->ps.mask);
+		(void)printf("caught handler=%p mask=[%s]", psig->ps.action,
+		    set);
 	}
 	switch (len) {
 	case sizeof(struct ktr_psig):
