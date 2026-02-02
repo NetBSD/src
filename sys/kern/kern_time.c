@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.228 2025/03/19 14:27:05 pho Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.228.2.1 2026/02/02 19:37:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.228 2025/03/19 14:27:05 pho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.228.2.1 2026/02/02 19:37:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -873,7 +873,7 @@ itimer_callout(void *arg)
 	 */
 	itimer_transition(&it->it_time, &now, &next, &overruns);
 	it->it_time.it_value = next;
-	it->it_overruns += overruns;
+	it->it_overruns += MIN(INT_MAX - overruns, overruns);
 
 	/*
 	 * Reset the callout, if it's not going away.
@@ -1798,7 +1798,8 @@ ptimer_intr(void *cookie)
 			continue;
 		}
 		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
-			it->it_overruns++;
+			if (it->it_overruns < INT_MAX)
+				it->it_overruns++;
 			continue;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time_arith.c,v 1.3.2.1 2025/10/19 09:41:04 martin Exp $	*/
+/*	$NetBSD: subr_time_arith.c,v 1.3.2.2 2026/02/02 19:37:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.3.2.1 2025/10/19 09:41:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time_arith.c,v 1.3.2.2 2026/02/02 19:37:17 martin Exp $");
 
 #include <sys/types.h>
 
@@ -606,8 +606,7 @@ itimer_transition(const struct itimerspec *restrict it,
 		 * overruns.  Advance by one interval -- unless that
 		 * would overflow.
 		 */
-		*overrunsp += MIN(INT_MAX - *overrunsp,
-		    (next_val - last_val) / interval);
+		*overrunsp = MIN(INT_MAX, (next_val - last_val) / interval);
 		if (__predict_false(next_val > INT64_MAX - interval))
 			goto overflow;
 		next_val += interval;
