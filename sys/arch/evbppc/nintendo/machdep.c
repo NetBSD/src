@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2026/01/10 23:10:01 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2026/02/03 11:42:15 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2026/01/10 23:10:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2026/02/03 11:42:15 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -587,6 +587,9 @@ cpu_reboot(int howto, char *what)
 static void
 wii_setup(void)
 {
+	/* Enable PPC access to EXI bus. */
+	out32(HW_AIPPROT, in32(HW_AIPPROT) | ENAHBIOPI);
+
 	if (!wiiu_plat) {
 		/* Turn on the drive slot LED. */
 		wii_slot_led(true);
@@ -596,9 +599,6 @@ wii_setup(void)
 
 		/* Enable PPC access to DI_SPIN GPIO. */
 		out32(HW_GPIO_OWNER, in32(HW_GPIO_OWNER) | __BIT(GPIO_DI_SPIN));
-
-		/* Enable PPC access to EXI bus. */
-		out32(HW_AIPPROT, in32(HW_AIPPROT) | ENAHBIOPI);
 
 		/* Enable DVD video support. */
 		out32(HW_COMPAT, in32(HW_COMPAT) & ~DVDVIDEO);
