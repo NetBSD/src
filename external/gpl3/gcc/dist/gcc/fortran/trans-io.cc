@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gfortran.h"
 #include "trans.h"
 #include "stringpool.h"
+#include "file-prefix-map.h"
 #include "fold-const.h"
 #include "stor-layout.h"
 #include "trans-stmt.h"
@@ -1052,7 +1053,8 @@ set_error_locus (stmtblock_t * block, tree var, locus * where)
 				TREE_TYPE (p->field), locus_file,
 				p->field, NULL_TREE);
   f = where->lb->file;
-  str = gfc_build_cstring_const (f->filename);
+  str = gfc_build_cstring_const (
+    remap_debug_filename (remap_profile_filename (f->filename)));
 
   str = gfc_build_addr_expr (pchar_type_node, str);
   gfc_add_modify (block, locus_file, str);
