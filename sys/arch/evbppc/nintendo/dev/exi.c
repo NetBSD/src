@@ -1,4 +1,4 @@
-/* $NetBSD: exi.c,v 1.1 2026/01/09 22:54:29 jmcneill Exp $ */
+/* $NetBSD: exi.c,v 1.2 2026/02/03 11:47:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.1 2026/01/09 22:54:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exi.c,v 1.2 2026/02/03 11:47:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,18 +145,22 @@ exi_rescan(device_t self, const char *ifattr, const int *locs)
 			struct exi_attach_args eaa = {};
 			uint16_t command = 0x0000; /* ID command */
 			uint32_t id = 0;
+			bool force;
 
 			if (ch->ch_child[dev] != NULL) {
 				continue;
 			}
 
-			exi_select(chan, dev, EXI_FREQ_8MHZ);
-			exi_send_imm(chan, dev, &command, sizeof(command));
-			exi_recv_imm(chan, dev, &id, sizeof(id));
-			exi_unselect(chan);
+			force = chan == 0 && dev == 1;
+			if (!force) {
+				exi_select(chan, dev, EXI_FREQ_8MHZ);
+				exi_send_imm(chan, dev, &command, sizeof(command));
+				exi_recv_imm(chan, dev, &id, sizeof(id));
+				exi_unselect(chan);
 
-			if (id == 0xffffffff) {
-				continue;
+				if (id == 0xffffffff) {
+					continue;
+				}
 			}
 
 			eaa.eaa_id = id;

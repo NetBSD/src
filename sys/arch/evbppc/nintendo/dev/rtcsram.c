@@ -1,7 +1,7 @@
-/* $NetBSD: rtcsram.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $ */
+/* $NetBSD: rtcsram.c,v 1.2 2026/02/03 11:47:18 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2024-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.2 2026/02/03 11:47:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,13 +37,16 @@ __KERNEL_RCSID(0, "$NetBSD: rtcsram.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $")
 
 #include <lib/libkern/libkern.h>
 
+#include <machine/wii.h>
+#include <machine/wiiu.h>
+
 #include "exi.h"
 
-#define	WII_RTCSRAM_ID		0xfffff308
 #define	WII_RTCSRAM_FREQ	EXI_FREQ_8MHZ
 
 #define	RTC_BASE		0x20000000
 #define	SRAM_BASE		0x20000100
+#define	SRAM_BIAS		0x20000400
 
 #define	WRITE_OFFSET		0x80000000
 
@@ -83,8 +86,10 @@ static void	rtcsram_write_4(struct rtcsram_softc *, uint32_t, uint32_t);
 static void	rtcsram_read_buf(struct rtcsram_softc *, uint32_t, void *,
 				 size_t);
 
-static int	rtcsram_gettime(todr_chip_handle_t, struct timeval *);
-static int	rtcsram_settime(todr_chip_handle_t, struct timeval *);
+static int	rtcsram_gettime_nobias(todr_chip_handle_t, struct timeval *);
+static int	rtcsram_settime_nobias(todr_chip_handle_t, struct timeval *);
+static int	rtcsram_gettime_bias(todr_chip_handle_t, struct timeval *);
+static int	rtcsram_settime_bias(todr_chip_handle_t, struct timeval *);
 
 CFATTACH_DECL_NEW(rtcsram, sizeof(struct rtcsram_softc),
 	rtcsram_match, rtcsram_attach, NULL, NULL);
@@ -94,7 +99,8 @@ rtcsram_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct exi_attach_args * const eaa = aux;
 
-	return eaa->eaa_id == WII_RTCSRAM_ID;
+	/* RTC / SRAM is always on channel 0, device 1. */
+	return eaa->eaa_chan == 0 && eaa->eaa_device == 1;
 }
 
 static void
@@ -115,8 +121,13 @@ rtcsram_attach(device_t parent, device_t self, void *aux)
 	    sizeof(sc->sc_sram));
 
 	sc->sc_todr.todr_dev = self;
-	sc->sc_todr.todr_gettime = rtcsram_gettime;
-	sc->sc_todr.todr_settime = rtcsram_settime;
+	if (wiiu_plat) {
+		sc->sc_todr.todr_gettime = rtcsram_gettime_bias;
+		sc->sc_todr.todr_settime = rtcsram_settime_bias;
+	} else {
+		sc->sc_todr.todr_gettime = rtcsram_gettime_nobias;
+		sc->sc_todr.todr_settime = rtcsram_settime_nobias;
+	}
 	todr_attach(&sc->sc_todr);
 }
 
@@ -155,7 +166,7 @@ rtcsram_read_buf(struct rtcsram_softc *sc, uint32_t offset, void *data,
 }
 
 static int
-rtcsram_gettime(todr_chip_handle_t ch, struct timeval *tv)
+rtcsram_gettime_nobias(todr_chip_handle_t ch, struct timeval *tv)
 {
 	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
 	uint32_t val;
@@ -168,11 +179,35 @@ rtcsram_gettime(todr_chip_handle_t ch, struct timeval *tv)
 }
 
 static int
-rtcsram_settime(todr_chip_handle_t ch, struct timeval *tv)
+rtcsram_settime_nobias(todr_chip_handle_t ch, struct timeval *tv)
 {
 	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
 
 	rtcsram_write_4(sc, RTC_BASE, tv->tv_sec);
+
+	return 0;
+}
+
+static int
+rtcsram_gettime_bias(todr_chip_handle_t ch, struct timeval *tv)
+{
+	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
+	uint32_t val;
+
+	val = rtcsram_read_4(sc, RTC_BASE);
+	tv->tv_sec = (uint64_t)val + sc->sc_sram.counter_bias;
+	tv->tv_usec = 0;
+
+	return 0;
+}
+
+static int
+rtcsram_settime_bias(todr_chip_handle_t ch, struct timeval *tv)
+{
+	struct rtcsram_softc * const sc = device_private(ch->todr_dev);
+
+	sc->sc_sram.counter_bias = tv->tv_sec - rtcsram_read_4(sc, RTC_BASE);
+	rtcsram_write_4(sc, SRAM_BIAS, sc->sc_sram.counter_bias);
 
 	return 0;
 }
