@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.36 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.37 2026/02/03 08:47:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.36 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.37 2026/02/03 08:47:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,7 +95,6 @@ extract_cacheunit(int level, bool insn, int cachetype,
 	cunit->cache_way_size = cunit->cache_line_size * cunit->cache_sets;
 	cunit->cache_size = cunit->cache_way_size * cunit->cache_ways;
 }
-
 
 /* Must be called on each processor */
 void __noasan
@@ -175,7 +174,6 @@ aarch64_getcacheinfo(struct cpu_info *ci)
 		cachetype = CACHE_TYPE_PIPT;
 	}
 }
-
 
 void
 aarch64_parsecacheinfo(struct cpu_info *ci)
@@ -306,8 +304,6 @@ aarch64_printcacheinfo(device_t dev, struct cpu_info *ci)
 			break;
 }
 
-
-
 static inline void
 ln_dcache_wb_all(int level, struct aarch64_cache_unit *cunit)
 {
@@ -419,6 +415,20 @@ aarch64_dcache_wb_all(void)
 	dsb(ish);
 }
 
+bool
+aarch64_earlydevice_va_p(void)
+{
+	/* This function may be called before enabling MMU, or mapping KVA */
+	if ((reg_sctlr_el1_read() & SCTLR_M) == 0)
+		return false;
+
+	/* device mapping will be available after pmap_devmap_bootstrap() */
+	if (!pmap_devmap_bootstrapped_p())
+		return false;
+
+	return true;
+}
+
 int
 set_cpufuncs(void)
 {
@@ -426,7 +436,6 @@ set_cpufuncs(void)
 
 	return aarch64_setcpufuncs(&cpu_info_store[0]);
 }
-
 
 int
 aarch64_setcpufuncs(struct cpu_info *ci)

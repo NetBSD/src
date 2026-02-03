@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.28 2024/12/30 19:13:48 jmcneill Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.29 2026/02/03 08:47:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -36,9 +36,6 @@
 
 #include <sys/cpu.h>
 
-#include <uvm/uvm_extern.h>
-#include <uvm/pmap/pmap_devmap.h>
-
 extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
@@ -56,6 +53,7 @@ void aarch64_cpu_idle_wfi(void);
 
 int set_cpufuncs(void);
 int aarch64_setcpufuncs(struct cpu_info *);
+bool aarch64_earlydevice_va_p(void);
 void aarch64_getcacheinfo(struct cpu_info *);
 void aarch64_parsecacheinfo(struct cpu_info *);
 void aarch64_printcacheinfo(device_t, struct cpu_info *);
@@ -91,6 +89,7 @@ void aarch64_tlbi_by_asid_va_ll(int, vaddr_t);	/*  an ASID, a VA, lastlevel */
 
 /* misc */
 #define cpu_idnum()			aarch64_cpuid()
+#define cpu_earlydevice_va_p()		aarch64_earlydevice_va_p()
 
 /* cache op */
 #define cpu_dcache_wbinv_all()		aarch64_dcache_wbinv_all()
@@ -131,20 +130,6 @@ cpu_clusterid(void)
 {
 
 	return __SHIFTOUT(reg_mpidr_el1_read(), MPIDR_AFF1);
-}
-
-static inline bool
-cpu_earlydevice_va_p(void)
-{
-	/* This function may be called before enabling MMU, or mapping KVA */
-	if ((reg_sctlr_el1_read() & SCTLR_M) == 0)
-		return false;
-
-	/* device mapping will be available after pmap_devmap_bootstrap() */
-	if (!pmap_devmap_bootstrapped_p())
-		return false;
-
-	return true;
 }
 
 #endif /* _KERNEL */
