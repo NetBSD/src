@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-expr.h"	/* For create_tmp_var_raw.  */
 #include "trans.h"
 #include "stringpool.h"
+#include "file-prefix-map.h"
 #include "fold-const.h"
 #include "tree-iterator.h"
 #include "trans-stmt.h"
@@ -597,11 +598,11 @@ trans_runtime_error_vararg (tree errorfunc, locus* where, const char* msgid,
     {
       line = LOCATION_LINE (where->lb->location);
       message = xasprintf ("At line %d of file %s",  line,
-			   where->lb->file->filename);
+			   remap_debug_filename(remap_profile_filename(where->lb->file->filename)));
     }
   else
     message = xasprintf ("In file '%s', around line %d",
-			 gfc_source_file, LOCATION_LINE (input_location) + 1);
+			 remap_debug_filename(remap_profile_filename(gfc_source_file)), LOCATION_LINE (input_location) + 1);
 
   arg = gfc_build_addr_expr (pchar_type_node,
 			     gfc_build_localized_cstring_const (message));
