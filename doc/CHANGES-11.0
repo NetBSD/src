@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.74 2026/02/02 20:31:58 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.75 2026/02/03 20:51:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -2418,4 +2418,67 @@ tests/usr.bin/cc/t_libm_cabs.sh			1.1
 	Add a test to confirm that __builtin_cabsl() is renamed to
 	__c99_cabsl().
 	[mrg, ticket #181]
+
+lib/libc/Makefile.inc				(apply patch)
+sys/modules/Makefile.inc			(apply patch)
+sys/arch/amd64/conf/GENERIC			(apply patch)
+sys/arch/amd64/conf/XEN3_DOM0			(apply patch)
+sys/arch/amd64/conf/XEN3_DOMU			(apply patch)
+sys/arch/cobalt/conf/GENERIC			(apply patch)
+sys/arch/evbarm/conf/ADI_BRH			(apply patch)
+sys/arch/evbarm/conf/ARMADAXP			(apply patch)
+sys/arch/evbarm/conf/ARMADILLO9			(apply patch)
+sys/arch/evbarm/conf/BCM5301X			(apply patch)
+sys/arch/evbarm/conf/BCM56340			(apply patch)
+sys/arch/evbarm/conf/CP3100			(apply patch)
+sys/arch/evbarm/conf/CUBOX			(apply patch)
+sys/arch/evbarm/conf/DNS323			(apply patch)
+sys/arch/evbarm/conf/GEMINI			(apply patch)
+sys/arch/evbarm/conf/GEMINI_MASTER		(apply patch)
+sys/arch/evbarm/conf/GEMINI_SLAVE		(apply patch)
+sys/arch/evbarm/conf/GENERIC.common		(apply patch)
+sys/arch/evbarm/conf/GUMSTIX			(apply patch)
+sys/arch/evbarm/conf/HPT5325			(apply patch)
+sys/arch/evbarm/conf/IMX31LITE			(apply patch)
+sys/arch/evbarm/conf/IQ31244			(apply patch)
+sys/arch/evbarm/conf/IQ80310			(apply patch)
+sys/arch/evbarm/conf/IQ80321			(apply patch)
+sys/arch/evbarm/conf/IXDP425			(apply patch)
+sys/arch/evbarm/conf/IXM1200			(apply patch)
+sys/arch/evbarm/conf/KUROBOX_PRO		(apply patch)
+sys/arch/evbarm/conf/KURONAS_X4			(apply patch)
+sys/arch/evbarm/conf/LUBBOCK			(apply patch)
+sys/arch/evbarm/conf/MMNET_GENERIC		(apply patch)
+sys/arch/evbarm/conf/MPCSA_GENERIC		(apply patch)
+sys/arch/evbarm/conf/NSLU2			(apply patch)
+sys/arch/evbarm/conf/OPENBLOCKS_A6		(apply patch)
+sys/arch/evbarm/conf/OPENBLOCKS_AX3		(apply patch)
+sys/arch/evbarm/conf/SHEEVAPLUG			(apply patch)
+sys/arch/evbarm/conf/SMDK2800			(apply patch)
+sys/arch/evbarm/conf/TEAMASA_NPWR		(apply patch)
+sys/arch/evbarm/conf/TEAMASA_NPWR_FC		(apply patch)
+sys/arch/evbarm/conf/TS7200			(apply patch)
+sys/arch/evbarm/conf/TWINTAIL			(apply patch)
+sys/arch/evbarm/conf/VIPER			(apply patch)
+sys/arch/evbarm/conf/ZAO425			(apply patch)
+sys/arch/evbppc/conf/INSTALL_OPENBLOCKS266	(apply patch)
+sys/arch/evbppc/conf/INSTALL_WALNUT		(apply patch)
+sys/arch/hpcmips/conf/LCARD			(apply patch)
+sys/arch/i386/conf/GENERIC			(apply patch)
+sys/arch/i386/conf/XEN3PAE_DOM0			(apply patch)
+sys/arch/i386/conf/XEN3PAE_DOMU			(apply patch)
+sys/arch/mvmeppc/conf/GENERIC			(apply patch)
+sys/arch/pmax/conf/GENERIC			(apply patch)
+sys/arch/sandpoint/conf/SANDPOINT		(apply patch)
+sys/arch/shark/conf/GENERIC			(apply patch)
+sys/arch/shark/conf/OFWGENCFG			(apply patch)
+sys/arch/sparc/conf/GENERIC			(apply patch)
+sys/arch/sparc64/conf/GENERIC			(apply patch)
+sys/arch/usermode/conf/GENERIC.common		(apply patch)
+sys/arch/virt68k/conf/GENERIC			(apply patch)
+sys/arch/zaurus/conf/GENERIC			(apply patch)
+
+	Remove "options DIAGNOSTIC" and "options DEBUG" from all kernels
+	and _DIAGNOSTIC from libc.
+	[martin, ticket #182]
 
