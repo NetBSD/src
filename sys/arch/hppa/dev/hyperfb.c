@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.28 2026/01/20 14:33:25 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.29 2026/02/03 10:23:41 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.28 2026/01/20 14:33:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.29 2026/02/03 10:23:41 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.28 2026/01/20 14:33:25 macallan Exp $"
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
@@ -100,6 +101,9 @@ struct	hyperfb_softc {
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
 	int sc_video_on;
+	/* glyphcache etc. */
+	void (*sc_putchar)(void *, int, int, u_int, long);
+	glyphcache sc_gc;
 };
 
 extern struct cfdriver hyperfb_cd;
@@ -132,6 +136,7 @@ static void	hyperfb_bitblt(void *, int, int, int, int, int,
 
 static void	hyperfb_cursor(void *, int, int, int);
 static void	hyperfb_putchar(void *, int, int, u_int, long);
+static void	hyperfb_putchar_aa(void *, int, int, u_int, long);
 static void	hyperfb_copycols(void *, int, int, int, int);
 static void	hyperfb_erasecols(void *, int, int, int, long);
 static void	hyperfb_copyrows(void *, int, int, int);
@@ -221,6 +226,17 @@ hyperfb_dba(struct hyperfb_softc *sc, uint32_t mode)
 }
 
 static inline void
+hyperfb_both(struct hyperfb_softc *sc, uint32_t mode)
+{
+	if ((sc->sc_dba != mode) || (sc->sc_sba != mode)) {
+		hyperfb_wait(sc);
+		hyperfb_write4(sc, NGLE_BAboth, mode);
+		sc->sc_dba = mode;
+		sc->sc_sba = mode;
+	}
+}
+
+static inline void
 hyperfb_setup_fb(struct hyperfb_softc *sc)
 {
 
@@ -230,15 +246,11 @@ hyperfb_setup_fb(struct hyperfb_softc *sc)
 	 */
 	hyperfb_wait(sc);
 	if ((sc->sc_mode != WSDISPLAYIO_MODE_EMUL) && sc->sc_24bit) {
-		hyperfb_sba(sc,
-		    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
-		hyperfb_dba(sc,
+		hyperfb_both(sc,
 		    BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
 		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 	} else {
-		hyperfb_sba(sc,
-		    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINovly, 0));
-		hyperfb_dba(sc,
+		hyperfb_both(sc,
 		    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINovly, 0));
 		hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 	}
@@ -253,8 +265,11 @@ hyperfb_setup_fb24(struct hyperfb_softc *sc)
 {
 
 	hyperfb_wait(sc);
-	hyperfb_sba(sc, BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
-	hyperfb_dba(sc, BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
+	hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
+	    HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE);
+	hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
+	    HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE);
+	hyperfb_both(sc, BA(FractDcd, Otc01, Ots08, AddrLong, 0, BINapp0F8, 0));
 	hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 	hyperfb_write4(sc, NGLE_IBO, 0x83000300);
 	//IBOvals(RopSrc,0,BitmapExtent08,0,DataDynamic,1,0,0)
@@ -436,8 +451,14 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &hyperfb_accessops);
 	sc->vd.init_screen = hyperfb_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	ri = &sc->sc_console_screen.scr_ri;
+
+	sc->sc_gc.gc_bitblt = hyperfb_bitblt;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = RopSrc;
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
 	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
@@ -450,6 +471,13 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	hyperfb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 	hyperfb_restore_palette(sc);
+
+	glyphcache_init(&sc->sc_gc, 1024,
+			1024,
+			1280,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			defattr);
 
 	if (sc->sc_is_console) {
 
@@ -471,12 +499,6 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint, CFARGS_NONE);
 
 	hyperfb_setup_fb(sc);
-	{
-		int i;
-		for (i = 0; i < 128; i += 4) {
-			printf("%08x: %08x\n", i + 0x38000, hyperfb_read4(sc, i + 0x38000));
-		}
-	}
 }
 
 static void
@@ -494,8 +516,8 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = 1024;
 #endif
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB /*|
-		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA*/;
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB |
+		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	ri->ri_bits = (void *)sc->sc_fb;
 	rasops_init(ri, 0, 0);
@@ -508,11 +530,15 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 
+	sc->sc_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.copyrows = hyperfb_copyrows;
 	ri->ri_ops.copycols = hyperfb_copycols;
 	ri->ri_ops.eraserows = hyperfb_eraserows;
 	ri->ri_ops.erasecols = hyperfb_erasecols;
 	ri->ri_ops.cursor = hyperfb_cursor;
+	if (FONT_IS_ALPHA(ri->ri_font)) {
+		ri->ri_ops.putchar = hyperfb_putchar_aa;
+	} else
 	ri->ri_ops.putchar = hyperfb_putchar;
 }
 
@@ -563,6 +589,7 @@ hyperfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
 				hyperfb_setup(sc);
 				hyperfb_restore_palette(sc);
+				glyphcache_wipe(&sc->sc_gc);
 				hyperfb_rectfill(sc, 0, 0, sc->sc_width,
 				    sc->sc_height, ms->scr_ri.ri_devcmap[
 				    (ms->scr_defattr >> 16) & 0xff]);
@@ -749,8 +776,7 @@ hyperfb_putpalreg(struct hyperfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
     uint8_t b)
 {
 	mutex_enter(&sc->sc_hwlock);
-	hyperfb_sba(sc, BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
-	hyperfb_dba(sc, BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
+	hyperfb_both(sc, BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
 	hyperfb_write4(sc, NGLE_IBO,
 	  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
 	hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
@@ -776,18 +802,19 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	sc->sc_hot_y = 0;
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
+	sc->sc_sba = sc->sc_dba = 0;
 
 	/* first enable all planes */
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_HCRX_PLANE_ENABLE, 0xffffffff);
 
 	/* hyperbowl */
+	hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
+	    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
+	hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
+	    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
+	/* write must happen twice because hw bug */
 	if (sc->sc_24bit) {
-		/* write must happen twice because hw bug */
-		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
-		    HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE);
-		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
-		    HYPERBOWL_MODE01_8_24_LUT0_TRANSPARENT_LUT1_OPAQUE);
 		hyperfb_write4(sc, NGLE_HCRX_HB_MODE2, HYPERBOWL_MODE2_8_24);
 		/* Set lut 0 to be the direct color */
 		hyperfb_write4(sc, NGLE_REG_42, 0x014c0148);
@@ -795,10 +822,6 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		hyperfb_write4(sc, NGLE_REG_44, 0x034c0348);
 		hyperfb_write4(sc, NGLE_REG_45, 0x444c4448);
 	} else {
-		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
-		    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
-		hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
-		    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
 
 		hyperfb_write4(sc, NGLE_REG_42, 0);
 		hyperfb_write4(sc, NGLE_REG_43, 0);
@@ -837,6 +860,8 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_DST_XY, 0x05000000);
 	hyperfb_write4(sc, NGLE_RECT_SIZE_START, 0x00040001);
+	hyperfb_write4(sc, NGLE_CPR, 0x00000000);
+	hyperfb_wait(sc);
 
 	/*
 	 * on 24bit-capable hardware we:
@@ -846,9 +871,9 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	 */
 	if (sc->sc_24bit) {
 		/* overlay transparency */
-		hyperfb_wait_fifo(sc, 7);
 		hyperfb_dba(sc,
 		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
+		hyperfb_wait_fifo(sc, 7);
 		hyperfb_write4(sc, NGLE_IBO,
 		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
 		            0, 0)); //0x03000300
@@ -863,7 +888,6 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		hyperfb_write4(sc, NGLE_BINC_DATA, 0x0);
 
 		hyperfb_wait(sc);
-		hyperfb_write4(sc, NGLE_CPR, 0x00000000);
 
 		/* clear 24bit buffer */
 		hyperfb_wait(sc);
@@ -884,9 +908,7 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		    (sc->sc_width << 16) | sc->sc_height);
 
 		/* write a linear ramp into CMAP0 */
-		hyperfb_sba(sc, 
-		    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
-		hyperfb_dba(sc, 
+		hyperfb_both(sc, 
 		    BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
 		hyperfb_wait_fifo(sc, 2);
 		hyperfb_write4(sc, NGLE_IBO, 
@@ -906,13 +928,6 @@ hyperfb_setup(struct hyperfb_softc *sc)
 		hyperfb_wait(sc);
 	}
 
-	hyperfb_setup_fb(sc);
-
-	/* make sure video output is enabled */
-	hyperfb_wait(sc);
-	hyperfb_write4(sc, NGLE_HCRX_MISCVID,
-	    hyperfb_read4(sc, NGLE_HCRX_MISCVID) | 0x0a000000);
-
 	/* cursor mask */
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_HCRX_CURSOR_ADDR, 0);
@@ -930,8 +945,7 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	}
 
 	/* colour map */
-	hyperfb_sba(sc, BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
-	hyperfb_dba(sc, BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
+	hyperfb_both(sc, BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
 	hyperfb_wait_fifo(sc, 2);
 	hyperfb_write4(sc, NGLE_IBO,
 	  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
@@ -943,6 +957,7 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_BINC_SRC, 0);
 	hyperfb_write4(sc, NGLE_HCRX_LUTBLT, LBC_ENABLE | LBC_TYPE_CURSOR | 4);
+	hyperfb_wait(sc);
 	hyperfb_setup_fb(sc);
 
 	hyperfb_move_cursor(sc, 100, 100);
@@ -959,6 +974,7 @@ hyperfb_set_video(struct hyperfb_softc *sc, int on)
 	sc->sc_video_on = on;
 
 	hyperfb_wait(sc);
+	hyperfb_write4(sc, NGLE_HCRX_VBUS, 0);
 	reg = hyperfb_read4(sc, NGLE_HCRX_MISCVID);
 
 	if (on) {
@@ -966,6 +982,12 @@ hyperfb_set_video(struct hyperfb_softc *sc, int on)
 	} else {
 		hyperfb_write4(sc, NGLE_HCRX_MISCVID, reg & ~HCRX_VIDEO_ENABLE);
 	}
+	/*
+	 * XXX
+	 * force writing BAboth, otherwise strange things happen here...
+	 */
+	sc->sc_sba = 0;
+	hyperfb_setup_fb(sc);
 }
 
 static inline void
@@ -1005,9 +1027,18 @@ hyperfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 {
 	struct hyperfb_softc *sc = cookie;
 
-	hyperfb_sba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-	hyperfb_dba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
-	hyperfb_wait_fifo(sc, 5);
+	if (ys > 1023) {
+		hyperfb_sba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
+		ys -= 1024;
+	} else
+		hyperfb_sba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
+	if (yd > 1023) {
+		hyperfb_dba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
+		yd -= 1024;
+	} else
+		hyperfb_dba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
+	hyperfb_wait_fifo(sc, 6);
+	hyperfb_write1(sc, NGLE_CONTROL_FB, 0);
 	hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 	hyperfb_write4(sc, NGLE_IBO, ((rop << 8) & 0xf00) | 0x23000000);
 	/* IBOvals(rop, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0) */
@@ -1071,7 +1102,7 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct hyperfb_softc *sc = scr->scr_cookie;
 	void *data;
-	int i, x, y, wi, he/*, rv = GC_NOPE*/;
+	int i, x, y, wi, he;
 	uint32_t bg, fg, mask, cmask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1142,6 +1173,50 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data16++;
 		}
 	}
+}
+
+static void
+hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct hyperfb_softc *sc = scr->scr_cookie;
+	int x, y, wi, he, rv = GC_NOPE;
+	uint32_t bg;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
+		return;
+
+	if (!CHAR_IN_FONT(c, font))
+		return;
+
+	if (row == ri->ri_crow && col == ri->ri_ccol) {
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+
+	if (c == 0x20) {
+		hyperfb_rectfill(sc, x, y, wi, he, bg);
+		return;
+	}
+
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+
+	hyperfb_setup_fb(sc);
+	sc->sc_putchar(cookie, row, col, c, attr);
+
+	if (rv == GC_ADD)
+		glyphcache_add(&sc->sc_gc, c, x, y);
 }
 
 static void
