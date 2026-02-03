@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.19 2025/04/12 15:49:49 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.20 2026/02/03 20:41:38 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -237,9 +237,6 @@ sequence_of_structs(void)
 		uint16_t f87_exp_sign;
 	} __packed _Alignas(2);
 
-	// FIXME: This otherwise unused struct declaration influences the
-	// offsets checked below. Without this struct, sizeof(struct save87)
-	// is calculated correctly as 108 below.
 	struct fpaccfx {
 		struct fpacc87 r _Alignas(16);
 	};
@@ -255,10 +252,8 @@ sequence_of_structs(void)
 
 	/* expect+1: error: negative array dimension (-20) [20] */
 	typedef int o1[-(int)((unsigned long)(&(((struct save87 *)0)->s87_dp)))];
-	// FIXME: must be 28.
-	/* expect+1: error: negative array dimension (-32) [20] */
+	/* expect+1: error: negative array dimension (-28) [20] */
 	typedef int o2[-(int)((unsigned long)(&(((struct save87 *)0)->s87_ac)))];
-	// FIXME: must be 108.
-	/* expect+1: error: negative array dimension (-112) [20] */
+	/* expect+1: error: negative array dimension (-108) [20] */
 	typedef int reveal[-(int)sizeof(struct save87)];
 }

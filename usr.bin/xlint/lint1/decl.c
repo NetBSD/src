@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.424 2026/01/20 23:33:05 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.425 2026/02/03 20:41:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.424 2026/01/20 23:33:05 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.425 2026/02/03 20:41:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -468,8 +468,8 @@ void
 dcs_add_alignas(unsigned int al)
 {
 	dcs->d_mem_align = al;
-	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec))
-		// FIXME: The type must not be modified.
+	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec)
+	    && !dcs->d_finished)
 		dcs->d_type->u.sou->sou_align = dcs->d_mem_align;
 	debug_func_dcs(__func__);
 }
@@ -650,6 +650,7 @@ dcs_begin_type(void)
 	// keep d_first_dlsym
 	// keep d_last_dlsym
 	dcs->d_func_proto_syms = NULL;
+	dcs->d_finished = false;
 	// keep d_enclosing
 
 	debug_func_dcs(__func__);
@@ -794,6 +795,7 @@ dcs_end_type(void)
 		    & -align_in_bits;
 	}
 
+	dcs->d_finished = true;
 	debug_dcs();
 	debug_leave();
 }

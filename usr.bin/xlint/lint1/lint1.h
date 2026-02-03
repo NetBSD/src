@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.237 2025/07/11 19:03:01 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.238 2026/02/03 20:41:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -386,6 +386,8 @@ typedef struct decl_level {
 	sym_t	*d_func_proto_syms;	/* symbols defined in prototype, such
 					 * as tagged types or parameter names,
 					 * may overlap d_func_params */
+	bool	d_finished;	/* the declaration-specifiers are complete,
+				 * the declarator is being parsed */
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
 
