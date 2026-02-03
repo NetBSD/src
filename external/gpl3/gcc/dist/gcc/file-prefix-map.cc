@@ -199,7 +199,7 @@ remap_debug_filename (const char *filename)
 
 /*****
  ***** The following code is a NetBSD extension that allows regex and
- ***** \[0-9] substitutition arguments.
+ ***** \[0-9] substitution arguments.
  *****/
 
 /* Perform user-specified mapping of debug filename prefixes.  Return
