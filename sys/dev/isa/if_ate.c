@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.51 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.52 2026/02/03 21:34:56 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.51 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.52 2026/02/03 21:34:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ ate_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/*
-	 * See if the sepcified address is valid for MB86965A JLI mode.
+	 * See if the specified address is valid for MB86965A JLI mode.
 	 */
 	for (i = 0; i < NATE_IOMAP; i++)
 		if (ate_iomap[i] == ia->ia_io[0].ir_addr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.13 2008/04/12 06:27:01 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.14 2026/02/03 21:34:56 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.13 2008/04/12 06:27:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.14 2026/02/03 21:34:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ fmv_isa_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	/*
-	 * See if the sepcified address is valid for FMV-180 series.
+	 * See if the specified address is valid for FMV-180 series.
 	 */
 	for (i = 0; i < NFMV_IOMAP; i++)
 		if (fmv_iomap[i] == ia->ia_io[0].ir_addr)

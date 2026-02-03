@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.18 2023/12/28 12:13:56 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.19 2026/02/03 21:34:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.18 2023/12/28 12:13:56 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.19 2026/02/03 21:34:56 andvar Exp $");
 #endif  /* !__lint */
 
 #include <util.h>
@@ -295,7 +295,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 		 * Here is a new revelation that ECMA didnt explain
 		 * (at least not well).
 		 * ALL . and .. records store the name "\0" and "\1"
-		 * resepctively. So, for each directory, we have to
+		 * respectively. So, for each directory, we have to
 		 * make a new node.
 		 *
 		 * This is where it gets kinda messy, since we have to
