@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.616.2.2 2025/10/20 14:09:34 martin Exp $
+# $NetBSD: GENERIC,v 1.616.2.3 2026/02/03 20:51:23 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.616.2.2 $"
+#ident		"GENERIC-$Revision: 1.616.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -113,7 +113,7 @@ xbd*		at xenbus?		# Xen virtual block device
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support

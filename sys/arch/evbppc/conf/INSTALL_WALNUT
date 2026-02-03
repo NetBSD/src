@@ -1,15 +1,15 @@
-# 	$NetBSD: INSTALL_WALNUT,v 1.9 2011/06/08 05:03:43 matt Exp $
+# 	$NetBSD: INSTALL_WALNUT,v 1.9.92.1 2026/02/03 20:51:24 snj Exp $
 
 include "arch/evbppc/conf/WALNUT"
 
-#ident 		"INSTALL_WALNUT-$Revision: 1.9 $"
+#ident 		"INSTALL_WALNUT-$Revision: 1.9.92.1 $"
 
 include "arch/evbppc/conf/INSTALL.inc"
 
 # DEBUG options turned on:
 
 #options 	LOCKDEBUG
-options 	DIAGNOSTIC
+#options 	DIAGNOSTIC
 #makeoptions	DEBUG="-g"
 #options 	DEBUG
 #options 	SYSCALL_DEBUG

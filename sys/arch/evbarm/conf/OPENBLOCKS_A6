@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.47 2025/06/01 05:43:55 rin Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.47.2.1 2026/02/03 20:51:24 snj Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6/A7 kernel
 #
@@ -116,8 +116,8 @@ options 	USBVERBOSE	# Verbose USB device auto configuration messages
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger

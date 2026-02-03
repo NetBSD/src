@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.44 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: VIPER,v 1.44.12.1 2026/02/03 20:51:24 snj Exp $
 #
 #	Arcom Viper
 #
@@ -103,7 +103,7 @@ options 	IRQSTATS	# manage IRQ statistics
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

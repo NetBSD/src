@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.111 2024/01/29 18:27:11 christos Exp $
+#	$NetBSD: GUMSTIX,v 1.111.4.1 2026/02/03 20:51:24 snj Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -122,8 +122,8 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	LOCKDEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

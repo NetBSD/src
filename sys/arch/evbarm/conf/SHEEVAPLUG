@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.76 2024/01/29 18:27:11 christos Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.76.4.1 2026/02/03 20:51:24 snj Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -126,8 +126,8 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	LOCKDEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

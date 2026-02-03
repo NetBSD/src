@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2024/01/23 17:24:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.22.4.1 2026/02/03 20:51:26 snj Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -30,7 +30,11 @@ RUMPRUN?=	no
 
 WARNS=5
 CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
-CPPFLAGS+=	-D_DIAGNOSTIC -D_LIBC_INTERNAL
+CPPFLAGS+=	-D_LIBC_INTERNAL
+
+# leave this on its own line for easier switching on release branches
+CPPFLAGS+=	-D_DIAGNOSTIC
+
 .if defined(MLIBDIR)
 CPPFLAGS+=	-DMLIBDIR=\"${MLIBDIR}\"
 .endif

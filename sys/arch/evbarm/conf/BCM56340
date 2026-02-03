@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.23 2024/02/16 16:28:50 skrll Exp $
+#	$NetBSD: BCM56340,v 1.23.4.1 2026/02/03 20:51:24 snj Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -128,8 +128,8 @@ options 	RNDVERBOSE	# Verbose rnd messages
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
 #options 	LOCKDEBUG	# Enable lock debugging
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
