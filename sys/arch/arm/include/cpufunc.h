@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.93 2025/10/09 05:05:55 rin Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.94 2026/02/04 05:52:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -438,7 +438,7 @@ extern uint32_t cpu_ttb;
  * Miscellany
  */
 
-int get_pc_str_offset	(void);
+int get_pc_str_offset(void);
 
 bool cpu_gtmr_exists_p(void);
 u_int cpu_clusterid(void);
