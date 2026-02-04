@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.444 2026/01/28 18:52:23 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.445 2026/02/04 06:00:02 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.444 2026/01/28 18:52:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.445 2026/02/04 06:00:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7841,7 +7841,7 @@ pmap_pte_init_armv7(void)
 	 * visibility by subsequent translation table walks.  That means we can
 	 * map everything shareable and cached and the right thing will happen.
 	 */
-        if (__SHIFTOUT(armreg_mmfr3_read(), __BITS(23,20))) {
+	if (__SHIFTOUT(armreg_mmfr3_read(), __BITS(23,20))) {
 		pmap_needs_pte_sync = 0;
 
 		/*
