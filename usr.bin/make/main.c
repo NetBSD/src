@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.665 2026/02/01 15:37:24 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.666 2026/02/05 23:26:07 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.665 2026/02/01 15:37:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.666 2026/02/05 23:26:07 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1342,6 +1342,8 @@ main_Init(int argc, char **argv)
 	Global_Set("MACHINE", machine);
 	Global_Set("MACHINE_ARCH", machine_arch);
 #ifdef MAKE_VERSION
+	Global_Set_ReadOnly(".MAKE.VERSION", MAKE_VERSION);
+	/* for backwards compatibility */
 	Global_Set("MAKE_VERSION", MAKE_VERSION);
 #endif
 	Global_Set_ReadOnly(".newline", "\n");
