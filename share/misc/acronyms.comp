@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.419 2026/01/15 17:12:09 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.420 2026/02/06 17:33:27 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1172,6 +1172,8 @@ NTP	Network Time Protocol
 NUMA	non-uniform memory access
 NURBS	non-uniform rational basis spline
 NVD	National Vulnerability Database
+NVM	Non-Volatile Memory
+NVME	Non-Volatile Memory Express
 NVMM	NetBSD Virtual Machine Monitor
 NVMM	non-volatile main memory
 NVRAM	non-volatile random access memory
