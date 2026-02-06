@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.75 2026/02/03 20:51:52 snj Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.76 2026/02/06 08:24:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -2482,3 +2482,8 @@ sys/arch/zaurus/conf/GENERIC			(apply patch)
 	and _DIAGNOSTIC from libc.
 	[martin, ticket #182]
 
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h					(manually edited)
+
+	Welcome to 11.0_RC1!
+	[martin]
