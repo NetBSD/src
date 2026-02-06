@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.94 2026/02/06 07:51:36 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.95 2026/02/06 08:29:47 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -268,6 +268,10 @@ gpt_write(gpt_t gpt, map_t map)
 	off_t ofs;
 	size_t count;
 
+	if (gpt->flags & GPT_READONLY) {
+		gpt_warnx(gpt, "Readonly mode, no changes made");
+		return 0;
+	}
 	count = (size_t)(map->map_size * gpt->secsz);
 	ofs = map->map_start * gpt->secsz;
 	if (lseek(gpt->fd, ofs, SEEK_SET) != ofs ||
@@ -500,6 +504,15 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 		
 	gpt->fd = opendisk(dev, mode, gpt->device_name,
 	    sizeof(gpt->device_name), 0);
+	if (gpt->fd == -1 && !(gpt->flags & GPT_READONLY) && errno == EACCES) {
+		gpt->fd = opendisk(dev, O_RDONLY, gpt->device_name,
+			    sizeof(gpt->device_name), 0);
+		if (gpt->fd != -1) {
+			gpt_warnx(gpt,
+			    "No write permission, enabling readonly (-r) mode");
+			gpt->flags |= GPT_READONLY;
+		}
+	}
 	if (gpt->fd == -1) {
 		strlcpy(gpt->device_name, dev, sizeof(gpt->device_name));
 		gpt_warn(gpt, "Cannot open");
@@ -722,6 +735,9 @@ gpt_write_crc(gpt_t gpt, map_t map, map_t tbl)
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 
+	if (gpt->flags & GPT_READONLY)
+		return 0;
+
 	if (gpt_write(gpt, map) == -1) {
 		gpt_warn(gpt, "Error writing crc map");
 		return -1;
@@ -738,6 +754,10 @@ gpt_write_crc(gpt_t gpt, map_t map, map_t tbl)
 int
 gpt_write_primary(gpt_t gpt)
 {
+	if (gpt->flags & GPT_READONLY) {
+		gpt_warnx(gpt, "Readonly mode, device unchanged");
+		return 0;
+	}
 	return gpt_write_crc(gpt, gpt->gpt, gpt->tbl);
 }
 
