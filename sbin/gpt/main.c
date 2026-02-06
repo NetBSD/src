@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2025/02/23 20:47:19 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2026/02/06 11:14:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.15 2025/02/23 20:47:19 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2026/02/06 11:14:37 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -42,6 +42,9 @@ __RCSID("$NetBSD: main.c,v 1.15 2025/02/23 20:47:19 christos Exp $");
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
+#include <ctype.h>
+
 #include <sys/stat.h>
 #ifndef NBTOOL_CONFIG_H
 #include <util.h>
@@ -49,6 +52,7 @@ __RCSID("$NetBSD: main.c,v 1.15 2025/02/23 20:47:19 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static const struct gpt_cmd c_null = { 0 };
 
@@ -140,9 +144,10 @@ main(int argc, char *argv[])
 	char *cmd, *p, *dev = NULL;
 	int ch, i;
 	u_int secsz = 0;
-	off_t mediasz = 0;
+	uintmax_t mediasz = 0;
 	int flags = 0;
 	int verbose = 0;
+	int sectormult = 0;
 	time_t timestamp = 0;
 	gpt_t gpt;
 
@@ -169,8 +174,74 @@ main(int argc, char *argv[])
 		case 'm':
 			if (mediasz > 0)
 				usage();
-			mediasz = strtol(optarg, &p, 10);
-			if (*p != 0 || mediasz < 1)
+			errno = 0;
+			mediasz = strtoull(optarg, &p, 10);
+			if (errno != 0 || mediasz < 1)
+				usage();
+			while (isspace(*(unsigned char *)p))
+				p++;
+			ch = *(unsigned char *)p;
+			if (islower(ch))
+				ch = toupper(ch);
+			switch (ch) {
+			/*
+			case 'B': handled after switch, nothing to do here
+			*/
+			case 'S':
+				if (mediasz > UINTMAX_MAX /
+				    (secsz ? secsz: 512))
+					errx(EXIT_FAILURE,
+					    "Media size too large");
+				if (secsz != 0) {
+					mediasz *= secsz;
+				} else {
+					mediasz *= 512;	/* HACK */
+					sectormult = 1;
+				}
+				continue;
+			case 'K':
+				if (mediasz >= UINTMAX_MAX / 1024)
+					usage();
+				mediasz *= 1024;
+				p++;
+				break;
+			case 'M':
+				if (mediasz >= UINTMAX_MAX / (1024L * 1024L))
+					usage();
+				mediasz *= 1024L * 1024L;
+				p++;
+				break;
+			case 'G':
+				if (mediasz >= UINTMAX_MAX /
+				    (1024L * 1024L * 1024L))
+					usage();
+				mediasz *= 1024L * 1024L * 1024L;
+				p++;
+				break;
+			case 'T':
+				if (mediasz >= UINTMAX_MAX / (uintmax_t)
+				    1024 * 1024 * 1024 * 1024)
+					usage();
+				mediasz *= (uintmax_t)1024 * 1024 * 1024 * 1024;
+				p++;
+				break;
+			case 'P':
+				if (mediasz >= UINTMAX_MAX / (uintmax_t)
+				    1024 * 1024 * 1024 * 1024 * 1024)
+					usage();
+				mediasz *= (uintmax_t)
+				    1024 * 1024 * 1024 * 1024 * 1024;
+				p++;
+				break;
+
+			/* note no default case, errors handled just below */
+
+			}
+			if (*p == 'i' && (p[1] == 'B' || p[1] == 'b'))
+				p++;
+			if (*p == 'B' || *p == 'b')
+				p++;
+			if (*p != '\0')
 				usage();
 			break;
 		case 'n':
@@ -185,6 +256,12 @@ main(int argc, char *argv[])
 		case 's':
 			if (gpt_uint_get(NULL, &secsz) == -1)
 				usage();
+			if (sectormult) {
+				if (mediasz / 512 > UINTMAX_MAX / secsz)
+					usage();
+				mediasz = mediasz / 512 * secsz;
+				sectormult = 0;
+			}
 			break;
 		case 'T':
 			flags |= GPT_TIMESTAMP;
@@ -218,9 +295,15 @@ main(int argc, char *argv[])
 
 	if (*dev != '-') {
 		gpt = gpt_open(dev, flags | cmdsw[i]->flags,
-		    verbose, mediasz, secsz, timestamp);
+		    verbose, (off_t)mediasz, secsz, timestamp);
 		if (gpt == NULL)
 			return EXIT_FAILURE;
+		if (sectormult && mediasz == (uintmax_t)gpt->mediasz) {
+			if (mediasz / 512 > UINTMAX_MAX / gpt->secsz)
+				errx(EXIT_FAILURE, "media size too large");
+			gpt->mediasz /= 512;	/* UNHACK */
+			gpt->mediasz *= gpt->secsz;
+		}
 	} else {
 		if ((cmdsw[i]->flags & GPT_OPTDEV) == 0)
 			errx(EXIT_FAILURE,
