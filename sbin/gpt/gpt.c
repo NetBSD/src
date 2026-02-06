@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.93 2025/12/17 16:18:11 nia Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.94 2026/02/06 07:51:36 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -183,13 +183,10 @@ utf16_to_utf8(const uint16_t *s16, size_t s16len, uint8_t *s8, size_t s8len)
 void
 utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 {
-	size_t s16idx, s8idx, s8len;
+	size_t s16idx, s8idx;
 	uint32_t utfchar = 0;
 	unsigned int c, utfbytes;
 
-	s8len = 0;
-	while (s8[s8len++] != 0)
-		;
 	s8idx = s16idx = 0;
 	utfbytes = 0;
 	do {
@@ -1277,7 +1274,7 @@ gpt_attr_list(char *buf, size_t len, uint64_t attributes)
 	 * (it does build however).
 	 */
 			if (gpt_attr[i].mask & (gpt_attr[i].mask - 1)) {
-				/* This only happens in bits 46..63 */
+				/* This only happens in bits 48..63 */
 
 				/*
 				 * xbuf is big enough for "=65535\0"
