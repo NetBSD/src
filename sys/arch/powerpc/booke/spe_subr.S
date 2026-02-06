@@ -31,7 +31,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: spe_subr.S,v 1.6 2021/07/24 21:31:34 andvar Exp $")
+RCSID("$NetBSD: spe_subr.S,v 1.7 2026/02/06 22:40:47 andvar Exp $")
 
 	.text
 #ifndef __clang__
@@ -139,7 +139,7 @@ ENTRY(vec_unload_to_vreg)
 	evaddumiaaw %r0,%r0		/* r0 = accum + r0 */
 	evstdd %r0,(8 << 4)(%r3)	/* store it */
 
-	evmergelo %r0,%r4,%r0		/* retore r0's high half */
+	evmergelo %r0,%r4,%r0		/* restore r0's high half */
 
 	/*
 	 * The SPEFSCR will be restored when the exception returns.

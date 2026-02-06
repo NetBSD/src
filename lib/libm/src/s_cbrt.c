@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cbrt.c,v 1.13 2013/11/20 12:29:13 joerg Exp $");
+__RCSID("$NetBSD: s_cbrt.c,v 1.14 2026/02/06 22:40:47 andvar Exp $");
 #endif
 
 #include "namespace.h"
@@ -81,7 +81,7 @@ cbrt(double x)
 	r=(r-t)/(w+r);	/* r-s is exact */
 	t=t+t*r;
 
-    /* retore the sign bit */
+    /* restore the sign bit */
 	GET_HIGH_WORD(high,t);
 	SET_HIGH_WORD(t,high|sign);
 	return(t);

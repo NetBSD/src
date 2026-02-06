@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.c,v 1.7 2022/03/24 12:12:00 andvar Exp $	*/
+/*	$NetBSD: n_cbrt.c,v 1.8 2026/02/06 22:40:48 andvar Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -122,7 +122,7 @@ cbrt(double x)
 	t=t+t*r;
 
 
-    /* retore the sign bit */
+    /* restore the sign bit */
 	pt[n0] |= sign;
 	return(t);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.21 2022/12/20 04:57:01 blymn Exp $	*/
+/*	$NetBSD: slk.c,v 1.22 2026/02/06 22:40:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #include <limits.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.21 2022/12/20 04:57:01 blymn Exp $");
+__RCSID("$NetBSD: slk.c,v 1.22 2026/02/06 22:40:47 andvar Exp $");
 #endif				/* not lint */
 
 #include <limits.h>
@@ -242,7 +242,7 @@ slk_refresh(void)
 
 /*
  * slk_restore --
- *	Retore slk to the screen after a slk_clear.
+ *	Restore slk to the screen after a slk_clear.
  */
 int
 slk_restore(void)
@@ -438,7 +438,7 @@ __slk_noutrefresh(SCREEN *screen)
 
 /*
  * __slk_restore --
- *	Retore slk to the screen after a slk_clear.
+ *	Restore slk to the screen after a slk_clear.
  */
 static int
 __slk_restore(SCREEN *screen)

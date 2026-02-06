@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_cbrtf.c,v 1.7 2002/05/26 22:01:54 wiz Exp $");
+__RCSID("$NetBSD: s_cbrtf.c,v 1.8 2026/02/06 22:40:47 andvar Exp $");
 #endif
 
 #include "math.h"
@@ -65,7 +65,7 @@ cbrtf(float x)
 	s=C+r*t;
 	t*=G+F/(s+E+D/s);
 
-    /* retore the sign bit */
+    /* restore the sign bit */
 	GET_FLOAT_WORD(high,t);
 	SET_FLOAT_WORD(t,high|sign);
 	return(t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: qat_ae.c,v 1.2 2021/12/05 07:28:20 msaitoh Exp $	*/
+/*	$NetBSD: qat_ae.c,v 1.3 2026/02/06 22:40:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat_ae.c,v 1.2 2021/12/05 07:28:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat_ae.c,v 1.3 2026/02/06 22:40:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1619,7 +1619,7 @@ qat_ae_exec_ucode(struct qat_softc *sc, u_char ae, u_char ctx,
 	}
 #endif
 
-	/* retore to previous states: */
+	/* restore to previous states: */
 	/* disable context */
 	qat_ae_disable_ctx(sc, ae, 1 << ctx);
 	if (ninst <= MAX_EXEC_INST) {
