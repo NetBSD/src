@@ -1,4 +1,4 @@
-.\"	$NetBSD: bochsfb.4,v 1.1 2026/01/31 12:12:58 nia Exp $
+.\"	$NetBSD: bochsfb.4,v 1.2 2026/02/06 02:08:15 uwe Exp $
 .\"
 .\" Copyright (c) 2025
 .\"	 The NetBSD Foundation, Inc.  All rights reserved.
@@ -37,8 +37,8 @@
 .Cd "bochsfb* at pci?"
 .Cd "wsdisplay* at bochsfb?"
 .Ss Options
-.Cd "options	BOCHSFB_DEFAULT_WIDTH=integer"
-.Cd "options	BOCHSFB_DEFAULT_HEIGHT=integer"
+.Cd options BOCHSFB_DEFAULT_WIDTH= Ns Ar integer
+.Cd options BOCHSFB_DEFAULT_HEIGHT= Ns Ar integer
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,7 +55,9 @@ compatible framebuffer.
 When a memory-mapped DISPI bar with an EDID block is present,
 .Nm
 uses the preferred mode reported by the display.
-Devices without EDID support (such as virtio-vga) fall back to a 1024x768
+Devices without EDID support
+.Pq such as virtio-vga
+fall back to a 1024x768
 32-bit mode.
 If no MMIO bar is available, the driver accesses the DISPI registers via the
 legacy VGA I/O ports.
