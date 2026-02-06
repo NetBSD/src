@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.27 2026/02/06 07:56:08 kre Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.28 2026/02/06 07:58:25 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.27 2026/02/06 07:56:08 kre Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.28 2026/02/06 07:58:25 kre Exp $");
 #endif
 
 #include <err.h>
@@ -93,7 +93,7 @@ static const struct {
 	{ GPT_ENT_TYPE_OPENBSD_DATA, "obsd", "OpenBSD data" },
 	{ GPT_ENT_TYPE_VMWARE_VMKCORE, "vmcore", "VMware VMkernel core dump" },
 	{ GPT_ENT_TYPE_VMWARE_VMFS, "vmfs", "VMware VMFS" },
-	{ GPT_ENT_TYPE_VMWARE_RESERVED, "vmresered", "VMware reserved" },
+	{ GPT_ENT_TYPE_VMWARE_RESERVED, "vmreserved", "VMware reserved" },
 	{ GPT_ENT_TYPE_SIFIVE_BBL, "sifive-bbl", "SiFive BBL" },
 };
 
