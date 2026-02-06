@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3225 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3226 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -132,11 +132,30 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	evbppc: Add support for the Nintendo Wii U. [jmcneill 20260109]
 	nsd: Import 4.14.0. [christos 20260115]
 	unbound(8): Import 1.24.2. [christos 20260116]
+	kernel: Add basic support for USB nodes in flattened device trees.
+		[skrll 20260117]
+	evbarm, riscv: Update to Linux 6.12.66 device trees. [skrll 20260118]
 	acpi(4): Updated ACPICA to 20251212. [christos 20260117]
 	byacc: Update to 20241231. [christos 20260118]
 	gfortran(1): Add for all platforms using GCC 14. [mrg 20260118]
+	evbppc: wiiu: Add GPIO support. [jmcneill 20260123]
+	ure(4): Performance improvements, enable 32K RX buffers where
+		possible. [jmcneill 20260124]
 	OpenSSL: Imported 3.5.5. [christos 20260127]
 	rge(4): Add support for RTL 8125D variant [pgoyette 20260128]
+	ia64: Relicense from 4-clause to 3-clause BSD. [nia 20260129]
 	libuv: Import version 1.51.0. [christos 20260128]
 	bind: Import version 9.20.18. [christos 20260129]
 	libarchive: Import libarchive-3.8.5. [christos 20260130]
+	bochsfb(4): Import Jiaxun Yang's bochsfb(4) driver. This is
+		mostly useful on QEMU platforms without firmware runtime
+		video support (e.g. using the -kernel option). Enabled
+		for aarch64. [nia 20260131]
+	evbppc: wiiu: Add hardware cursor support. [jmcneill 20260131]
+	evbarm: Convert imx23_olinuxino support to use flattened device
+		trees. [yurix 20260201]
+	sparc64: Add a driver for the Texas Instruments bq4802Y/bq4802LY
+		RTC chip, used in the Sun Ultra 45. [jdc 20260201]
+	hppa: hyperfb: Add support for translucent fonts and the glyph
+		cache. [macallan 20260203]
+	evbppc: wiiu: Add RTC support. [jmcneill 20260103]
