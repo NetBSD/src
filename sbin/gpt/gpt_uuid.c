@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.26 2025/10/11 18:55:31 thorpej Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.27 2026/02/06 07:56:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.26 2025/10/11 18:55:31 thorpej Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.27 2026/02/06 07:56:08 kre Exp $");
 #endif
 
 #include <err.h>
@@ -342,7 +342,7 @@ gpt_uuid_tstamp(gpt_t gpt, struct dce_uuid *u, size_t l __unused)
 	/* Set UUID fields for version 1 */
 	u->time_low = x & UINT64_C(0xffffffff);
 	u->time_mid = (x >> 32) & 0xffff;
-	u->time_hi_and_version = 0x1000 | ((x >> 48) & 0xfff);
+	u->time_hi_and_version = (unsigned short)(0x1000 | ((x >> 48) & 0xfff));
 
 	/*
 	 * The clock sequence should make UUIDs unique in case
