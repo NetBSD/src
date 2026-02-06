@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.96 2026/02/06 09:02:21 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.97 2026/02/06 09:43:31 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -513,6 +513,12 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 			gpt->flags |= GPT_READONLY;
 		}
 	}
+	if (gpt->fd == -1 && !(gpt->flags & GPT_READONLY) && mediasz != 0 &&
+	    errno == ENOENT) {
+		strlcpy(gpt->device_name, dev, sizeof(gpt->device_name));
+		/* No opendisk() with O_CREAT, but we want a file, so OK */
+		gpt->fd = open(dev, O_RDWR|O_EXCL|O_CREAT, 0644);
+	}
 	if (gpt->fd == -1) {
 		strlcpy(gpt->device_name, dev, sizeof(gpt->device_name));
 		gpt_warn(gpt, "Cannot open");
@@ -591,6 +597,22 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 
 	if (map_init(gpt, devsz) == -1)
 		goto eclose;
+
+	if (gpt->flags & GPT_FILE && gpt->sb.st_size == 0) {
+		if (gpt->flags & GPT_READONLY) {
+			gpt_warnx(gpt, "Cannot operate on empty file with -r");
+			goto close;
+		}
+		if (!mediasz) {
+			gpt_warnx(gpt, "Need -m mediasz to use an empty file");
+			goto close;
+		}
+		if (truncate(gpt->device_name, gpt->mediasz) == -1) {
+			gpt_warn(gpt, "truncate(%ju) failed",
+			    (uintmax_t)gpt->mediasz);
+			goto close;
+		}
+	}
 
 	idx = 1;
 	if (gpt_mbr(gpt, 0LL, &idx, 0U) == -1)
