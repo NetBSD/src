@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.95 2026/02/06 08:29:47 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.96 2026/02/06 09:02:21 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -525,6 +525,11 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	}
 
 	if ((gpt->sb.st_mode & S_IFMT) != S_IFREG) {
+		if ((gpt->sb.st_mode & S_IFMT) != S_IFCHR &&
+		    (gpt->sb.st_mode & S_IFMT) != S_IFBLK) {
+			gpt_warnx(gpt, "Not a device or plain file");
+			goto close;
+		}
 		if (gpt->secsz == 0) {
 #ifdef DIOCGSECTORSIZE
 			if (ioctl(gpt->fd, DIOCGSECTORSIZE, &gpt->secsz) == -1) {
@@ -555,8 +560,10 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 			gpt->secsz = 512;	/* Fixed size for files. */
 		if (gpt->mediasz == 0) {
 			if (gpt->sb.st_size % gpt->secsz) {
-				gpt_warn(gpt, "Media size not a multiple of sector size (%u)\n", gpt->secsz);
-				errno = EINVAL;
+				gpt_warnx(gpt,
+				    "Media size (%jd) is not a multiple of"
+				    "sector size (%u)\n",
+				    (intmax_t)gpt->sb.st_size, gpt->secsz);
 				goto close;
 			}
 			gpt->mediasz = gpt->sb.st_size;
@@ -583,13 +590,13 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 	}
 
 	if (map_init(gpt, devsz) == -1)
-		goto close;
+		goto eclose;
 
 	idx = 1;
 	if (gpt_mbr(gpt, 0LL, &idx, 0U) == -1)
-		goto close;
+		goto eclose;
 	if ((found = gpt_gpt(gpt, 1LL, 1)) == -1)
-		goto close;
+		goto eclose;
 
 	if (found) {
 		struct map *map;
@@ -605,19 +612,20 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 		lba = le64toh(hdr->hdr_lba_alt);
 		if (hdr && lba > 0 && lba < (uint64_t)devsz) {
 			if (gpt_gpt(gpt, (off_t)lba, found) == -1)
-				goto close;
+				goto eclose;
 		}
 	} else {
 		if (gpt_gpt(gpt, devsz - 1LL, found) == -1)
-			goto close;
+			goto eclose;
 	}
 
 	return gpt;
 
- close:
+ eclose:;
+	gpt_warn(gpt, "No GPT found");
+ close:;
 	if (gpt->fd != -1)
 		close(gpt->fd);
-	gpt_warn(gpt, "No GPT found");
 	free(gpt);
 	return NULL;
 }
