@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.97 2026/02/06 09:43:31 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.98 2026/02/06 11:14:14 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1016,11 +1016,22 @@ gpt_size_get(gpt_t gpt, off_t *size)
 		return 0;
 	}
 	if ((*p == 'b' || *p == 'B') && p[1] == '\0') {
+		if (sectors % gpt->secsz) {
+			gpt_warnx(gpt,
+			    "Size must be a multiple of sector size (%u)",
+			    gpt->secsz);
+			return -1;
+		}
 		*size = sectors;
 		return 0;
 	}
 	if (dehumanize_number(optarg, &human_num) < 0)
 		return -1;
+	if (human_num % gpt->secsz) {
+		gpt_warnx(gpt, "Size must be a multiple of sector size (%u)",
+		    gpt->secsz);
+		return -1;
+	}
 	*size = human_num;
 	return 0;
 }
