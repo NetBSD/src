@@ -135,5 +135,6 @@
 #define RAIDFRAME_GET_INFO          _IOWR('r', 42, RF_DeviceConfig_t *)	/* get configuration */
 #define RAIDFRAME_CONFIGURE         _IOW ('r',  43, void *)	/* configure the driver */
 #define RAIDFRAME_RESCAN  _IO ('r', 44)
+#define RAIDFRAME_SCRUB	_IOW('r', 45, RF_Scrub_t *)
 #endif				/* !_RF_RAIDFRAMEIO_H_ */
 

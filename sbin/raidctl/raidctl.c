@@ -94,6 +94,7 @@ static  void rf_output_pmstat(int, int);
 static  void rf_pm_configure(int, int, char *, int[]);
 static  void rf_simple_create(int, int, char *[]);
 static  unsigned int xstrtouint(const char *);
+static	void rf_scrub_begin(int, int, char *[]);
 
 int verbose;
 
@@ -141,8 +142,12 @@ main(int argc,char *argv[])
 	last_unit = 0;
 	openmode = O_RDWR;	/* default to read/write */
 
-	if (argc > 5) {
-		/* we have at least 5 args, so it might be a simplified config */
+	if (argc > 5 || (argc > 2 && !strncmp(argv[2], "scrub", 5))) {
+
+		/*
+		 * we have at least 5 args, so it might be a simplified config
+		 * for cases where we will be doing scrubbing, args may be less than 5
+		 */
 
 		strlcpy(name, argv[1], sizeof(name));
 		fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 0);
@@ -168,6 +173,8 @@ main(int argc,char *argv[])
 				strlcpy(autoconf, "yes", sizeof(autoconf));
 				set_autoconfig(fd, raidID, autoconf);
 
+			} else if (strncmp(argv[2], "scrub", 5) == 0) {
+				rf_scrub_begin(fd, argc-3, &argv[3]);
 			} else
 				usage();
 
@@ -434,7 +441,6 @@ do_ioctl(int fd, unsigned long command, void *arg, const char *ioctl_name)
 	if (prog_ioctl(fd, command, arg) == -1)
 		err(1, "ioctl (%s) failed", ioctl_name);
 }
-
 
 static void
 rf_configure(int fd, char *config_file, int force)
@@ -1225,6 +1231,66 @@ get_time_string(char *string, size_t len, int simple_time)
 		snprintf(string,len,"   --:--");
 	}
 
+}
+
+static void
+rf_scrub_begin(int fd, int argc, char *argv[])
+{
+	int rate;
+	int portion;
+	RF_Scrub_t scrb;
+	/* initialize default values for scrubbing */
+	scrb.rate = 2 * 1000 * 1000;
+	scrb.portion_begin = 0;
+	scrb.portion_end = 100;
+
+	for (int i = 0; i < argc; i++)
+	{
+		if (strcmp(argv[i], "rate") == 0) {
+			if (argc == i + 1)
+				errx(1, "scrubbing rate unspecified");
+
+			char *c;
+			double bps = strtod(argv[++i], &c);
+			if (bps == 0)
+				errx(1, "invalid input rate");
+
+			if (c != NULL) {
+				if (!strcmp(c, "B"))
+					; /* do nothing */
+				else if (!strcmp(c, "KB"))
+					scrb.rate = bps * 1000;
+				else if (!strcmp(c, "MB"))
+					scrb.rate = bps * 1000 * 1000;
+				else if (!strcmp(c, "GB"))
+					scrb.rate = bps * 1000 * 1000 * 1000;
+			} else
+				errx(1, "no scrubbing rate unit specified");
+
+		}
+		else if (strcmp(argv[i], "portion") == 0) {
+			if (argc <= i + 2) /* do argc check once */
+				errx(1, "portion needs a lower to upper bound range");
+
+			portion = atoi(argv[++i]); /* i increased */
+			if (portion >= 100)
+				errx(1, "begin scrubbing portion range should be less than 100 percent");
+			scrb.portion_begin = portion;
+
+			portion = atoi(argv[++i]);
+			if (portion > 100)
+				errx(1, "scrubbing portion upper bound should not be more than 100 percent");
+			scrb.portion_end = portion;
+
+			if (scrb.portion_begin >= scrb.portion_end) {
+				errx(1, "upper bound must be greater than lower bound for scrub portions");
+			}
+
+		}
+	}
+
+	do_ioctl(fd, RAIDFRAME_SCRUB, &scrb,
+		"RAIDFRAME_COMPONENT_SCRUB");
 }
 
 /* Simplified RAID creation with a single command line... */

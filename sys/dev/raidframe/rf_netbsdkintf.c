@@ -1611,6 +1611,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return retcode;
 		return rf_construct(rs, k_cfg);
 
+	case RAIDFRAME_COMPONENT_SCRUB:
+	/* think about kernel later */
+
 		/* shutdown the system */
 	case RAIDFRAME_SHUTDOWN:
 
