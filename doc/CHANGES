@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3226 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3227 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -158,4 +158,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		RTC chip, used in the Sun Ultra 45. [jdc 20260201]
 	hppa: hyperfb: Add support for translucent fonts and the glyph
 		cache. [macallan 20260203]
-	evbppc: wiiu: Add RTC support. [jmcneill 20260103]
+	evbppc: wiiu: Add RTC support. [jmcneill 20260203]
