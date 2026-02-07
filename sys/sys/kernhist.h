@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.28 2026/02/05 07:49:07 skrll Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.29 2026/02/07 06:40:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -47,7 +47,7 @@
 
 struct kern_history_ent {
 	struct bintime bt; 		/* time stamp */
-	uint32_t cpunum;
+	uint32_t cpunum;		/* cpu number */
 	uint32_t call;			/* function call number */
 	const char *fmt;		/* printf format */
 	size_t fmtlen;			/* length of printf format */
