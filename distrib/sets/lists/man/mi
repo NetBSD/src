@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1827 2026/01/31 12:12:57 nia Exp $
+# $NetBSD: mi,v 1.1828 2026/02/07 17:19:31 gutteridge Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1218,6 +1218,7 @@
 ./usr/share/man/cat4/evbarm/vcaudio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/vchiq.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbmips/aupci.0		man-sys-catman		.cat
+./usr/share/man/cat4/evbmips/cnmac.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbmips/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbppc/cpc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbppc/intro_pmppc.0	man-sys-catman		.cat
@@ -4809,6 +4810,7 @@
 ./usr/share/man/man4/evbarm/vcaudio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/vchiq.4		man-sys-man		.man
 ./usr/share/man/man4/evbmips/aupci.4		man-sys-man		.man
+./usr/share/man/man4/evbmips/cnmac.4		man-sys-man		.man
 ./usr/share/man/man4/evbmips/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbppc/cpc.4		man-sys-man		.man
 ./usr/share/man/man4/evbppc/intro_pmppc.4	man-sys-man		.man

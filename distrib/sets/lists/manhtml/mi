@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2026/01/31 12:12:57 nia Exp $
+# $NetBSD: mi,v 1.47 2026/02/07 17:19:31 gutteridge Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1099,6 +1099,7 @@
 ./usr/share/man/html4/evbarm/vcaudio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/vchiq.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbmips/aupci.html	man-sys-htmlman		html
+./usr/share/man/html4/evbmips/cnmac.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbmips/intro.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbppc/cpc.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbppc/intro_pmppc.html	man-sys-htmlman		html
