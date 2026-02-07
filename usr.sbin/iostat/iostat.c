@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.72 2023/10/30 19:43:33 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.73 2026/02/07 19:04:34 kre Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.72 2023/10/30 19:43:33 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.73 2026/02/07 19:04:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,8 @@ main(int argc, char *argv[])
 			height = strtol(optarg, &ep, 10);
 			if (height < 0 || *ep != '\0')
 				errx(1, "bad height (-H) value.");
-			height += 2;	/* magic, but needed to be sane */
+			if (height > 0)
+				height += 2; /* magic, but needed to be sane */
 			break;
 #if 0
 		case 'i':
