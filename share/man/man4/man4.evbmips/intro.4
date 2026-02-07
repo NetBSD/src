@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.8 2017/02/18 22:39:00 wiz Exp $
+.\"     $NetBSD: intro.4,v 1.9 2026/02/07 17:46:49 gutteridge Exp $
 .\"
 .\" Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2017
+.Dd February 7, 2026
 .Dt INTRO 4 evbmips
 .Os
 .Sh NAME
@@ -95,6 +95,9 @@ The following systems are supported:
 .It AMD Alchemy Pb1500
 .It AMD Alchemy Pb1550
 .It Atheros AR5001AP
+.It Cavium OCTEON Plus CN50xx
+.It Cavium OCTEON III CN71xx
+.It Imagination Creator Ci20
 .It MIPS Malta
 .It Plat'Home OpenMicroServer OMSAL-400
 .It Senao/Engenius 5354AP1 Aries2
@@ -114,6 +117,8 @@ Local system bus
 PCI bridge
 .It aucom, com
 serial communications interface
+.It cnmac
+gigabit Ethernet
 .It ohci
 USB 1.1 host controller
 .El
@@ -137,6 +142,7 @@ bus and associated device drivers.
 .Xr config 1 ,
 .Xr autoconf 4 ,
 .Xr evbmips/aupci 4
+.Xr evbmips/cnmac 4
 .Sh HISTORY
 This
 .Tn evbmips
