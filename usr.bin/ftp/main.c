@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.136 2026/01/14 08:12:11 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.137 2026/02/07 03:11:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.136 2026/01/14 08:12:11 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.137 2026/02/07 03:11:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,7 +427,7 @@ main(int volatile argc, char **volatile argv)
 
 		case 'x':
 			sndbuf_size = strsuftoi(optarg);
-			if (sndbuf_size < 1)
+			if (sndbuf_size < 0)
 				errx(1, "Bad xferbuf value: %s", optarg);
 			rcvbuf_size = sndbuf_size;
 			break;

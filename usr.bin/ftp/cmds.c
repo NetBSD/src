@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.144 2024/10/04 18:05:43 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.145 2026/02/07 03:11:20 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.144 2024/10/04 18:05:43 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.145 2026/02/07 03:11:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2667,11 +2667,6 @@ setxferbuf(int argc, char *argv[])
 
 	if ((size = strsuftoi(argv[1])) == -1)
 		goto usage;
-
-	if (size == 0) {
-		fprintf(ttyout, "%s: size must be positive.\n", argv[0]);
-		goto usage;
-	}
 
 	if (dir & RATE_PUT)
 		sndbuf_size = size;

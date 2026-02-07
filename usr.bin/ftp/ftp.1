@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.162 2026/01/15 03:19:35 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.163 2026/02/07 03:11:20 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd January 15, 2026
+.Dd February 7, 2026
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1600,6 +1600,9 @@ verbose is on.
 .It Ic xferbuf Ar size
 Set the size of the socket send and receive buffers to
 .Ar size .
+If
+.Ar size
+is 0, the default values for the operating system are used.
 .It Ic \&? Op Ar command
 A synonym for
 .Ic help .
