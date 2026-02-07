@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.12 2026/02/07 03:12:04 riastradh Exp $
+# $NetBSD: Makefile.rules.inc,v 1.13 2026/02/07 08:53:28 kre Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -11,17 +11,6 @@ OBJS+=			${et_src:.et=.o}
 ${et_src:.et=.c} ${et_src:.et=.h}: ${et_src} ${TOOL_COMPILE_ET}
 	${_MKTARGET_CREATE}
 	${TOOL_COMPILE_ET} ${.ALLSRC:[1]}
-
-# Hack to ensure compile_et runs only once to generate the .c and .h
-# files at the same time -- this ensures that parallel make(1) won't
-# run the recipes for the .c and .h targets at the same time in two
-# jobs, and after it creates the .c file, it will re-check to see
-# whether it needs to create the .h file.
-#
-# Consider fixing this properly with a multi-output batch recipe as in:
-# PR bin/59962: make(1): grouped target rules for batch recipes
-#
-.ORDER: ${et_src:.et=.c} ${et_src:.et=.h}
 
 .endfor
 
@@ -49,25 +38,22 @@ ASN1_INCS += ${src:.asn1=_asn1.h}
 DPSRCS +=	${src:.asn1=_asn1.h} ${src:.asn1=_asn1-priv.h}
 OBJS +=		${ASN1_FILES.${src}:.x=.o}
 
-${src:.asn1=_asn1.h}: ${src:.asn1=_asn1.hx}
+${ASN1_FILES.${src}}: ${src:.asn1=.ts}
+
+${src:.asn1=_asn1.h}: ${src:.asn1=.ts}
 	${_MKTARGET_CREATE}
 	@${TOOL_SED} -E 						\
 	    -e 's,#include <(.*)_asn1\.h>,#include <krb5/\1_asn1.h>,'	\
 	    2> /dev/null < ${src:.asn1=_asn1.hx} > ${src:.asn1=_asn1.h}
 
-${src:.asn1=_asn1-priv.h}: ${src:.asn1=_asn1-priv.hx}
+${src:.asn1=_asn1-priv.h}: ${src:.asn1=.ts}
 	${_MKTARGET_CREATE}
 	@cmp -s ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}	\
 	    2> /dev/null ||						\
 	    cp ${src:.asn1=_asn1-priv.hx} ${src:.asn1=_asn1-priv.h}
 
-_ASN1_FILES.${src}=	${ASN1_FILES.${src}}
-_ASN1_FILES.${src}+=	${src:.asn1=.ts}
-_ASN1_FILES.${src}+=	${src:.asn1=_asn1.hx}
-_ASN1_FILES.${src}+=	${src:.asn1=_asn1-priv.hx}
-
 .if exists(${src:.asn1=.opt})
-${_ASN1_FILES.${src}}: ${src} ${src:.asn1=.opt} ${TOOL_ASN1_COMPILE}
+${src:.asn1=.ts}: ${src} ${src:.asn1=.opt} ${TOOL_ASN1_COMPILE}
 	${_MKTARGET_CREATE}
 	@touch $@
 	${TOOL_ASN1_COMPILE}			\
@@ -75,25 +61,13 @@ ${_ASN1_FILES.${src}}: ${src} ${src:.asn1=.opt} ${TOOL_ASN1_COMPILE}
 		--option-file=${.ALLSRC:[2]}	\
 		${.ALLSRC:[1]} ${src:.asn1=_asn1}
 .else
-${_ASN1_FILES.${src}}: ${src} ${TOOL_ASN1_COMPILE}
+${src:.asn1=.ts}: ${src} ${TOOL_ASN1_COMPILE}
 	${_MKTARGET_CREATE}
 	@touch $@
 	${TOOL_ASN1_COMPILE}			\
 		${ASN1_OPTS.${src}}		\
 		${.ALLSRC:[1]} ${src:.asn1=_asn1}
 .endif
-
-# Hack to ensure asn1_compile runs only once to generate the .x, .ts,
-# .hx, and -priv.hx files at the same time -- this ensures that
-# parallel make(1) won't run the recipes for the .x/.ts/.hx/-priv.hx
-# targets at the same time in two jobs, and after it creates the .x
-# file, it will re-check to see whether it needs to create the .ts
-# file, and so on.
-#
-# Consider fixing this properly with a multi-output batch recipe as in:
-# PR bin/59962: make(1): grouped target rules for batch recipes
-#
-.ORDER: ${_ASN1_FILES.${src}}
 
 .if ${MKREPRO:Uno} == "yes"
 NORMALIZE_SRC=-e "s@${NETBSDSRCDIR}@/usr/src@g" 
@@ -121,17 +95,6 @@ SLC_INCS+=	${slc_src:.in=.h}
 ${slc_src:.in=.c} ${slc_src:.in=.h}: ${slc_src}
 	${_MKTARGET_CREATE}
 	${TOOL_SLC} ${.ALLSRC}
-
-# Hack to ensure slc runs only once to generate the .c and .h files at
-# the same time -- this ensures that parallel make(1) won't run the
-# recipes for the .c and .h targets at the same time in two jobs, and
-# after it creates the .c file, it will re-check to see whether it
-# needs to create the .h file.
-#
-# Consider fixing this properly with a multi-output batch recipe as in:
-# PR bin/59962: make(1): grouped target rules for batch recipes
-#
-.ORDER: ${slc_src:.et=.c} ${slc_src:.et=.h}
 
 .endfor
 
