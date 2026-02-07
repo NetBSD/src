@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.230 2026/01/04 01:54:46 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.231 2026/02/07 01:47:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.230 2026/01/04 01:54:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.231 2026/02/07 01:47:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1403,8 +1403,8 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	itimer_lock();
  restart:
 	if ((it = pts->pts_timers[timerid]) == NULL) {
-		itimer_unlock();
-		return SET_ERROR(EINVAL);
+		error = SET_ERROR(EINVAL);
+		goto out;
 	}
 
 	if (ovalue)
@@ -1426,12 +1426,22 @@ dotimer_settime(int timerid, struct itimerspec *value,
 				} else { /* CLOCK_MONOTONIC */
 					getnanouptime(&now);
 				}
+				if (!timespecaddok(&it->it_time.it_value,
+					&now)) {
+					error = SET_ERROR(EINVAL);
+					goto out;
+				}
 				timespecadd(&it->it_time.it_value, &now,
 				    &it->it_time.it_value);
 			}
 		} else {
 			if ((flags & TIMER_ABSTIME) != 0) {
 				getnanotime(&now);
+				if (!timespecsubok(&it->it_time.it_value,
+					&now)) {
+					error = SET_ERROR(EINVAL);
+					goto out;
+				}
 				timespecsub(&it->it_time.it_value, &now,
 				    &it->it_time.it_value);
 				if (!timespecisset(&it->it_time.it_value) ||
@@ -1449,9 +1459,10 @@ dotimer_settime(int timerid, struct itimerspec *value,
 		goto restart;
 	}
 	KASSERT(error == 0);
+ out:
 	itimer_unlock();
 
-	return 0;
+	return error;
 }
 
 /*
