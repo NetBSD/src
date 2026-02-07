@@ -1,4 +1,4 @@
-/* $NetBSD: wiiu.h,v 1.3 2026/02/01 12:09:40 jmcneill Exp $ */
+/* $NetBSD: wiiu.h,v 1.4 2026/02/07 13:06:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -99,6 +99,10 @@ struct wiiu_argv {
 	uint32_t	initrd;
 	uint32_t	initrd_len;
 };
+
+/* linux-loader IPC protocol */
+#define CMD_POWEROFF			0xcafe0001
+#define CMD_REBOOT			0xcafe0002
 
 /* Declared in sys/arch/evbppc/nintendo/machdep.c */
 extern bool wiiu_plat;

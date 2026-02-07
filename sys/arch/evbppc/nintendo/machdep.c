@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2026/02/03 11:42:15 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2026/02/07 13:06:19 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2026/02/03 11:42:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2026/02/07 13:06:19 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -623,9 +623,7 @@ static void
 wii_poweroff(void)
 {
 	if (wiiu_native) {
-#if notyet
-		wiiu_wood_ipc(0xcafe0001);	/* CMD_POWEROFF */
-#endif
+		wiiu_wood_ipc(CMD_POWEROFF);
 	} else {
 		out32(HW_GPIOB_OUT, in32(HW_GPIOB_OUT) | __BIT(GPIO_SHUTDOWN));
 	}
@@ -635,11 +633,7 @@ static void
 wii_reset(void)
 {
 	if (wiiu_native) {
-#if notyet
-		wiiu_wood_ipc(0xcafe0002);	/* CMD_REBOOT */
-#else
-		wiiu_wood_ipc(0xcafe0001);	/* CMD_POWEROFF */
-#endif
+		wiiu_wood_ipc(CMD_REBOOT);
 	} else {
 		out32(HW_RESETS, in32(HW_RESETS) & ~RSTBINB);
 	}
