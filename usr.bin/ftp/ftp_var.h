@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.91 2026/02/07 03:11:20 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.92 2026/02/08 08:31:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@
 #endif
 
 #include <sys/param.h>
-#include <sys/queue.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -165,15 +164,6 @@ enum {
 	FEAT_TVFS,		/* TVFS (not used) */
 	FEAT_max
 };
-
-/*
- * Custom HTTP headers
- */
-struct entry {
-	SLIST_ENTRY(entry)	entries;
-	const char		*header;
-};
-SLIST_HEAD(http_headers, entry);
 
 /*
  * Global defines
@@ -265,6 +255,7 @@ GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	epsv6;		/* use EPSV/EPRT on IPv6 connections */
 GLOBAL	int	epsv6bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	editing;	/* command line editing enabled */
+GLOBAL	StringList *custom_headers;	/* stringlist with custom HTTP headers */
 GLOBAL	int	features[FEAT_max];	/* remote FEATures supported */
 
 #ifndef NO_EDITCOMPLETE
@@ -333,7 +324,6 @@ GLOBAL	int	 data;
 
 extern	struct cmd		cmdtab[];
 extern	struct option		optiontab[];
-extern	struct http_headers	custom_headers;
 
 extern	size_t ftp_buflen;
 

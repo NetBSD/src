@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.244 2026/02/07 03:11:20 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.245 2026/02/08 08:31:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.244 2026/02/07 03:11:20 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.245 2026/02/08 08:31:58 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -864,7 +864,7 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
     const struct urlinfo *ui)
 {
 	const char *leading = hasleading ? ", " : "  (";
-	struct entry *np;
+	size_t i;
 
 	if (isproxy) {
 		if (verbose) {
@@ -882,8 +882,10 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
 	print_host(fin, ui);
 	fetch_printf(fin, "Accept: */*\r\n");
 	fetch_printf(fin, "Connection: close\r\n");
-	SLIST_FOREACH(np, &custom_headers, entries) {
-		fetch_printf(fin, "%s\r\n", np->header);
+	for (i = 0; i < custom_headers->sl_cur; i++) {
+		fetch_printf(fin, "%s\r\n", custom_headers->sl_str[i]);
+		DPRINTF("%s: sending custom header `%s'\n", __func__,
+		    custom_headers->sl_str[i]);
 	}
 
 	if (restart_point) {

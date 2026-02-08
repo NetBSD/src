@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.137 2026/02/07 03:11:20 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.138 2026/02/08 08:31:58 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.137 2026/02/07 03:11:20 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.138 2026/02/08 08:31:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,14 +134,11 @@ static int	usage(void);
 static int	usage_help(void);
 static void	setupoption(const char *, const char *, const char *);
 
-struct http_headers custom_headers;
-
 int
 main(int volatile argc, char **volatile argv)
 {
 	int ch, rval;
 	struct passwd *pw;
-	struct entry *p;
 	char *cp, *ep, *anonpass, *upload_path, *src_addr;
 	const char *anonuser;
 	int dumbterm, isupload;
@@ -270,7 +267,7 @@ main(int volatile argc, char **volatile argv)
 		}
 	}
 
-	SLIST_INIT(&custom_headers);
+	custom_headers = ftp_sl_init();
 	while ((ch = getopt(argc, argv, ":46Aab:defgH:iN:no:P:pq:Rr:s:T:tu:Vvx:")) != -1) {
 		switch (ch) {
 		case '4':
@@ -320,9 +317,7 @@ main(int volatile argc, char **volatile argv)
 			break;
 
 		case 'H':
-			p = ftp_malloc(sizeof(*p));
-			p->header = ftp_strdup(optarg);
-			SLIST_INSERT_HEAD(&custom_headers, p, entries);
+			ftp_sl_add(custom_headers, ftp_strdup(optarg));
 			break;
 
 		case 'i':
