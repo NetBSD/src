@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.35 2024/09/20 07:49:31 rin Exp $
+.\"	$NetBSD: awk.1,v 1.36 2026/02/08 11:21:55 rillig Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd July 5, 2022
+.Dd February 8, 2026
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -644,7 +644,7 @@ in a pattern.
 A pattern may consist of two patterns separated by a comma;
 in this case, the action is performed for all lines
 from an occurrence of the first pattern
-though an occurrence of the second.
+up to and including an occurrence of the second.
 .Pp
 A relational expression is one of the following:
 .Bl -tag -offset indent -width Fn -compact
