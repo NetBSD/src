@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.90 2025/08/15 11:36:44 skrll Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.91 2026/02/08 10:28:04 nia Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.90 2025/08/15 11:36:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.91 2026/02/08 10:28:04 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1185,7 +1185,7 @@ svm_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->u.io.in = (info & SVM_EXIT_IO_IN) != 0;
 	exit->u.io.port = __SHIFTOUT(info, SVM_EXIT_IO_PORT);
 
-	if (svm_decode_assist) {
+	if (__predict_true(svm_decode_assist)) {
 		KASSERT(__SHIFTOUT(info, SVM_EXIT_IO_SEG) < 6);
 		exit->u.io.seg = __SHIFTOUT(info, SVM_EXIT_IO_SEG);
 	} else {
