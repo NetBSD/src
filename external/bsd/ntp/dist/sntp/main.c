@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2024/08/18 20:47:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2026/02/08 14:53:15 christos Exp $	*/
 
 #include <config.h>
 
@@ -581,8 +581,10 @@ queue_xmt(
 	gettimeofday_cached(base, &start_cb);
 	xctx->sched = start_cb.tv_sec + (2 * xmt_delay);
 
-	LINK_SORT_SLIST(xmt_q, xctx, (xctx->sched < L_S_S_CUR()->sched),
-			link, xmt_ctx);
+	if (xmt_q) {
+		LINK_SORT_SLIST(xmt_q, xctx, (xctx->sched < L_S_S_CUR()->sched),
+				link, xmt_ctx);
+	}
 	if (xmt_q == xctx) {
 		/*
 		 * The new entry is the first scheduled.  The timer is
@@ -984,6 +986,7 @@ void sntp_addremove_fd(
 		return;
 	}
 
+	make_socket_nonblocking(fd);
 	ev = event_new(base, fd, EV_READ | EV_PERSIST,
 		       &worker_resp_cb, c);
 	if (NULL == ev) {
