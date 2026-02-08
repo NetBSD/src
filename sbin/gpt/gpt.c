@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.98 2026/02/06 11:14:14 kre Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.99 2026/02/08 05:28:19 kim Exp $");
 #endif
 
 #include <sys/types.h>
@@ -567,7 +567,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
 		if (gpt->mediasz == 0) {
 			if (gpt->sb.st_size % gpt->secsz) {
 				gpt_warnx(gpt,
-				    "Media size (%jd) is not a multiple of"
+				    "Media size (%jd) is not a multiple of "
 				    "sector size (%u)\n",
 				    (intmax_t)gpt->sb.st_size, gpt->secsz);
 				goto close;
