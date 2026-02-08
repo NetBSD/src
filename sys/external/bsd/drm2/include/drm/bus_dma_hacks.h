@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.25 2022/07/19 23:19:44 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.26 2026/02/08 16:49:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -119,7 +119,13 @@ bus_dmatag_bounces_paddr(bus_dma_tag_t dmat, paddr_t pa)
 	}
 	return true;
 #elif defined(__powerpc__)
-	return dmat->_bounce_thresh && pa >= dmat->_bounce_thresh;
+	if (dmat->_bounce_thresh_min != 0 && pa < dmat->_bounce_thresh_min) {
+		return false;
+	}
+	if (dmat->_bounce_thresh_max != 0 && pa >= dmat->_bounce_thresh_max) {
+		return false;
+	}
+	return true;
 #elif defined(__sparc__) || defined(__sparc64__)
 	return false;		/* no bounce buffers ever */
 #elif defined(__alpha__)
