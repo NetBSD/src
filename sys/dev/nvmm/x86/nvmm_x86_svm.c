@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.92 2026/02/08 10:39:30 nia Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.93 2026/02/08 11:46:52 nia Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.92 2026/02/08 10:39:30 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.93 2026/02/08 11:46:52 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,6 +729,7 @@ svm_excp_has_error(uint8_t vector)
 	case 13:	/* #GP */
 	case 14:	/* #PF */
 	case 17:	/* #AC */
+	case 21:	/* #CP */
 	case 30:	/* #SX */
 		return 1;
 	default:
