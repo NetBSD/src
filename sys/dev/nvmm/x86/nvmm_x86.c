@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.23 2022/10/06 00:22:16 msaitoh Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.24 2026/02/08 10:59:52 nia Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.23 2022/10/06 00:22:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.24 2026/02/08 10:59:52 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	    /* CPUID_SEF_QM excluded */
 	    CPUID_SEF_FPUCSDS |
 	    /* CPUID_SEF_MPX excluded */
-	    CPUID_SEF_PQE |
+	    /* CPUID_SEF_PQE excluded */
 	    /* CPUID_SEF_AVX512F excluded */
 	    /* CPUID_SEF_AVX512DQ excluded */
 	    CPUID_SEF_RDSEED |
@@ -358,14 +358,14 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_00000007 = {
 	    /* CPUID_SEF_SRBDS_CTRL excluded */
 	    CPUID_SEF_MD_CLEAR |
 	    /* CPUID_SEF_TSX_FORCE_ABORT excluded */
-	    CPUID_SEF_SERIALIZE |
+	    CPUID_SEF_SERIALIZE
 	    /* CPUID_SEF_HYBRID excluded */
 	    /* CPUID_SEF_TSXLDTRK excluded */
 	    /* CPUID_SEF_CET_IBT excluded */
 	    /* CPUID_SEF_IBRS excluded */
 	    /* CPUID_SEF_STIBP excluded */
 	    /* CPUID_SEF_L1D_FLUSH excluded */
-	    CPUID_SEF_ARCH_CAP
+	    /* CPUID_SEF_ARCH_CAP excluded */
 	    /* CPUID_SEF_CORE_CAP excluded */
 	    /* CPUID_SEF_SSBD excluded */
 };
@@ -402,8 +402,23 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	    /* CPUID_L2IPERFC excluded */
 	    /* CPUID_MWAITX excluded */
 	.edx =
+	    CPUID_FPU |
+	    CPUID_VME |
+	    CPUID_DE |
+	    CPUID_PSE |
+	    CPUID_TSC |
+	    CPUID_MSR |
+	    CPUID_PAE |
+	    /* CPUID_MCE excluded */
+	    CPUID_CX8 |
+	    CPUID_APIC |
 	    CPUID_SYSCALL |
-	    CPUID_MPC |
+	    /* CPUID_MTRR excluded */
+	    CPUID_PGE |
+	    /* CPUID_MCA excluded */
+	    CPUID_CMOV |
+	    CPUID_PAT |
+	    CPUID_PSE36 |
 	    CPUID_XD |
 	    CPUID_MMXX |
 	    CPUID_MMX |
