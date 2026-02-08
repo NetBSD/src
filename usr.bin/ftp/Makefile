@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2025/10/19 01:00:00 riastradh Exp $
+#	$NetBSD: Makefile,v 1.45 2026/02/08 09:00:54 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -30,8 +30,6 @@ CPPFLAGS+= -DINET6
 
 cmds.o fetch.o: version.h
 main.o:	ftp_var.h
-
-CWARNFLAGS.gcc+=	${CC_WNO_FORMAT_OVERFLOW}
 
 .if ${MACHINE_CPU} == "m68k"
 COPTS.ftp.c+=	-Wno-error=clobbered

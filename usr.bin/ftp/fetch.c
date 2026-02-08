@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.245 2026/02/08 08:31:58 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.246 2026/02/08 09:00:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.245 2026/02/08 08:31:58 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.246 2026/02/08 09:00:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1189,7 +1189,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			if (! (token = match_token(&cp, "chunked"))) {
 				warnx(
 			    "Unsupported transfer encoding `%s'",
-				    token);
+				    cp);
 				goto cleanup_fetch_url;
 			}
 			(*ischunked)++;
@@ -1200,7 +1200,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			|| match_token(&cp, "WWW-Authenticate:")) {
 			if (! (token = match_token(&cp, "Basic"))) {
 				DPRINTF("%s: skipping unknown auth "
-				    "scheme `%s'\n", __func__, token);
+				    "scheme `%s'\n", __func__, cp);
 				continue;
 			}
 			FREEPTR(*auth);
@@ -1335,7 +1335,7 @@ connectmethod(FETCH *fin, const char *url, const char *penv,
 			if (!(token = match_token(&cp, "Basic"))) {
 				DPRINTF(
 				    "%s: skipping unknown auth scheme `%s'\n",
-				    __func__, token);
+				    __func__, cp);
 				continue;
 			}
 			FREEPTR(*auth);
