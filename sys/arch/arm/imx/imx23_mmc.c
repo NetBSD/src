@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_mmc.c,v 1.5 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_mmc.c,v 1.6 2026/02/08 22:19:05 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -240,7 +240,8 @@ imx23_mmc_attach(device_t parent, device_t self, void *aux)
 	saa.saa_dmat	= faa->faa_dmat;
 	saa.saa_clkmin	= SSP_CLK_MIN;
 	saa.saa_clkmax	= SSP_CLK_MAX;
-	saa.saa_caps	= SMC_CAPS_DMA | SMC_CAPS_4BIT_MODE;
+	saa.saa_caps	= SMC_CAPS_DMA | SMC_CAPS_4BIT_MODE |
+		          SMC_CAPS_MULTI_SEG_DMA;
 
 	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL, CFARGS_NONE);
 	if (sc->sc_sdmmc == NULL) {

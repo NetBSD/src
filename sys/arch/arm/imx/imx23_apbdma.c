@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_apbdma.c,v 1.9 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_apbdma.c,v 1.10 2026/02/08 22:19:05 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
 /* Supported number of PIO words */
 #define MAX_PIO_WORDS 3
 
+/* Memory allocated for per-segment command buffer */
+#define IMX23_DMA_MAX_SEGMENTS 16
+
 #define HW_APB_CHN_NXTCMDAR(base, channel)	(base + (0x70 * channel))
 #define HW_APB_CHN_SEMA(base, channel)	(base + (0x70 * channel))
 
@@ -109,19 +112,19 @@ struct imx23_apbdma_channel {
 	void (*chan_cb)(void *);
 	void *chan_cbarg;
 	struct imx23_apbdma_softc *chan_parent;
+	bus_dmamap_t chan_dmamp;
+	bus_dma_segment_t chan_ds[1];
+	bus_size_t chan_cmd_sz;
+	struct imx23_apbdma_command *chan_cmds;
 };
 
 struct imx23_apbdma_softc {
 	device_t sc_dev;
 	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_dmamp;
 	bus_space_handle_t sc_ioh;
 	bus_space_tag_t sc_iot;
 	u_int flags;
 	struct imx23_apbdma_channel sc_chan[AHB_MAX_DMA_CHANNELS];
-	bus_size_t sc_cmd_sz;
-	struct imx23_apbdma_command *sc_cmds;
-	bus_dma_segment_t sc_ds[1];
 };
 
 static int	imx23_apbdma_match(device_t, cfdata_t, void *);
@@ -129,12 +132,18 @@ static void	imx23_apbdma_attach(device_t, device_t, void *);
 static void 	imx23_apbdma_reset(struct imx23_apbdma_softc *);
 static void	imx23_apbdma_init(struct imx23_apbdma_softc *);
 static void *	imx23_apbdma_fdt_acquire(device_t, const void *, size_t,
-		   			 void (*)(void *), void *);
+					 void (*)(void *), void *);
 static void 	imx23_apbdma_fdt_release(device_t, void *);
 static int 	imx23_apbdma_fdt_transfer(device_t, void *,
-			  		  struct fdtbus_dma_req *);
+					  struct fdtbus_dma_req *);
 static void 	imx23_apbdma_fdt_halt(device_t, void *);
 static int	imx23_apbdma_intr(void *);
+static int 	imx23_apbdma_pio_transfer(struct imx23_apbdma_softc *sc,
+					  struct imx23_apbdma_channel *chan,
+					  struct fdtbus_dma_req *req);
+static int 	imx23_apbdma_data_transfer(struct imx23_apbdma_softc *sc,
+					   struct imx23_apbdma_channel *chan,
+					   struct fdtbus_dma_req *req);
 
 CFATTACH_DECL_NEW(imx23apbdma, sizeof(struct imx23_apbdma_softc),
 		  imx23_apbdma_match, imx23_apbdma_attach, NULL, NULL);
@@ -168,8 +177,9 @@ imx23_apbdma_fdt_acquire(device_t dev, const void *data, size_t len,
 	struct imx23_apbdma_softc *sc = device_private(dev);
 	struct imx23_apbdma_channel *chan;
 	const uint32_t *specifier = data;
+	int rsegs;
 
-	// get channel index
+	/* get channel index */
 	if (len != 4) {
 		return NULL;
 	}
@@ -183,13 +193,130 @@ imx23_apbdma_fdt_acquire(device_t dev, const void *data, size_t len,
 	/* Enable CMDCMPLT_IRQ. */
 	DMA_WR(sc, HW_APB_CTRL1_SET, (1<<chan->chan_index)<<16);
 
+	/* Prepare DMA command buffers for channel */
+	chan->chan_cmd_sz = IMX23_DMA_MAX_SEGMENTS *
+			    sizeof(struct imx23_apbdma_command);
+	if (bus_dmamem_alloc(sc->sc_dmat, chan->chan_cmd_sz, PAGE_SIZE, 0,
+			     chan->chan_ds, 1, &rsegs, BUS_DMA_WAITOK)) {
+		return NULL;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, chan->chan_ds, rsegs, chan->chan_cmd_sz,
+			   (void **)&chan->chan_cmds, BUS_DMA_WAITOK)) {
+		return NULL;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
+			      BUS_DMA_WAITOK, &chan->chan_dmamp)) {
+		return NULL;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, chan->chan_dmamp, chan->chan_cmds,
+			    chan->chan_cmd_sz, NULL, BUS_DMA_WAITOK)) {
+		return NULL;
+	}
+
+	/* link next address field of commands */
+	struct imx23_apbdma_command *pa_cmd = (void *) chan->chan_ds[0].ds_addr;
+	for (int i = 0; i < IMX23_DMA_MAX_SEGMENTS - 1; i++) {
+		chan->chan_cmds[i].next = &pa_cmd[i + 1].next;
+	}
+
 	return chan;
 }
 
 static void
 imx23_apbdma_fdt_release(device_t dev, void *priv)
 {
-	/* do nothing */
+	struct imx23_apbdma_softc *sc = device_private(dev);
+	struct imx23_apbdma_channel *chan = priv;
+
+	bus_dmamap_unload(sc->sc_dmat, chan->chan_dmamp);
+	bus_dmamap_destroy(sc->sc_dmat, chan->chan_dmamp);
+	bus_dmamem_unmap(sc->sc_dmat, chan->chan_cmds, chan->chan_cmd_sz);
+	bus_dmamem_free(sc->sc_dmat, chan->chan_ds, 1);
+}
+
+static int imx23_apbdma_pio_transfer(struct imx23_apbdma_softc *sc,
+				     struct imx23_apbdma_channel *chan,
+				     struct fdtbus_dma_req *req)
+{
+	/* some sanity checks */
+	if (req->dreq_nsegs != 0) {
+		return EINVAL;
+	}
+	if (req->dreq_datalen > MAX_PIO_WORDS) {
+		return EINVAL;
+	}
+
+	/* prepare command */
+	chan->chan_cmds[0].control = __SHIFTIN(0, APBDMA_CMD_XFER_COUNT) |
+		       __SHIFTIN(req->dreq_datalen, APBDMA_CMD_CMDPIOWORDS) |
+		       __SHIFTIN(APBDMA_CMD_NO_DMA_XFER, APBDMA_CMD_COMMAND) |
+		       APBDMA_CMD_HALTONTERMINATE | APBDMA_CMD_SEMAPHORE |
+		       APBDMA_CMD_IRQONCMPLT;
+	if (req->dreq_block_irq) {
+		chan->chan_cmds[0].control |= APBDMA_CMD_WAIT4ENDCMD;
+	}
+	/* copy PIO words */
+	uint32_t *pio_words = req->dreq_data;
+	for (int i = 0; i < req->dreq_datalen; i++) {
+		chan->chan_cmds[0].pio_words[i] = pio_words[i];
+	}
+
+	return 0;
+}
+
+static int imx23_apbdma_data_transfer(struct imx23_apbdma_softc *sc,
+				      struct imx23_apbdma_channel *chan,
+				      struct fdtbus_dma_req *req)
+{
+	/* some sanity checks */
+	if (req->dreq_nsegs < 0 || req->dreq_nsegs > IMX23_DMA_MAX_SEGMENTS) {
+		return EINVAL;
+	}
+	for (int i = 0; i < req->dreq_nsegs; i++) {
+		if (req->dreq_segs[i].ds_len > APBDMA_CMD_XFER_MAX_BYTES) {
+			return EINVAL;
+		}
+	}
+	if (req->dreq_datalen > MAX_PIO_WORDS) {
+		return EINVAL;
+	}
+
+	/* The fdt subsystem and the imx23 documentation use opposite naming */
+	uint32_t dma_dir;
+	if (req->dreq_dir == FDT_DMA_WRITE) {
+		dma_dir = __SHIFTIN(APBDMA_CMD_DMA_READ, APBDMA_CMD_COMMAND);
+	} else {
+		dma_dir = __SHIFTIN(APBDMA_CMD_DMA_WRITE, APBDMA_CMD_COMMAND);
+	}
+
+	/* prepare commands */
+	for (int i = 0; i < req->dreq_nsegs; i++) {
+		chan->chan_cmds[i].buffer = (void *)req->dreq_segs[i].ds_addr;
+		chan->chan_cmds[i].control =
+		    __SHIFTIN(req->dreq_segs[i].ds_len, APBDMA_CMD_XFER_COUNT) |
+		    __SHIFTIN(0, APBDMA_CMD_CMDPIOWORDS) | dma_dir |
+		    APBDMA_CMD_HALTONTERMINATE | APBDMA_CMD_CHAIN;
+	}
+
+	/* special case: first command does PIO */
+	uint32_t *pio_words = req->dreq_data;
+	for (int i = 0; i < req->dreq_datalen; i++) {
+		chan->chan_cmds[0].pio_words[i] = pio_words[i];
+	}
+	chan->chan_cmds[0].control &= ~APBDMA_CMD_CMDPIOWORDS;
+	chan->chan_cmds[0].control |=
+		__SHIFTIN(req->dreq_datalen, APBDMA_CMD_CMDPIOWORDS);
+
+	/* special case: last command needs to raise interrupt */
+	int tail_index = req->dreq_nsegs - 1;
+	chan->chan_cmds[tail_index].control &= ~APBDMA_CMD_CHAIN;
+	chan->chan_cmds[tail_index].control |=
+		APBDMA_CMD_SEMAPHORE | APBDMA_CMD_IRQONCMPLT;
+	if (req->dreq_block_irq) {
+		chan->chan_cmds[tail_index].control |= APBDMA_CMD_WAIT4ENDCMD;
+	}
+
+	return 0;
 }
 
 static int
@@ -197,69 +324,31 @@ imx23_apbdma_fdt_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 {
 	struct imx23_apbdma_softc *sc = device_private(dev);
 	struct imx23_apbdma_channel *chan = priv;
+	int error = 0;
 	uint32_t reg;
 	uint8_t val;
 
-	struct imx23_apbdma_command *cmd = &sc->sc_cmds[chan->chan_index];
-
-	if ((req->dreq_dir == FDT_DMA_NO_XFER && req->dreq_nsegs != 0) ||
-	    (req->dreq_dir != FDT_DMA_NO_XFER && req->dreq_nsegs != 1)) {
-		return EINVAL;
-	}
-	if (req->dreq_nsegs > 0 &&
-	    req->dreq_segs[0].ds_len > APBDMA_CMD_XFER_MAX_BYTES) {
-		return EINVAL;
-	}
-	if (req->dreq_datalen > MAX_PIO_WORDS) {
-		return EINVAL;
-	}
-
-	/* write command buffer */
-	bus_size_t transfer_len = 0;
-	if (req->dreq_nsegs > 0) {
-		transfer_len = req->dreq_segs[0].ds_len;
-		cmd->buffer = (void *)req->dreq_segs[0].ds_addr;
-	}
-	cmd->next = NULL;
-	cmd->control = __SHIFTIN(transfer_len, APBDMA_CMD_XFER_COUNT) |
-		       __SHIFTIN(req->dreq_datalen, APBDMA_CMD_CMDPIOWORDS) |
-		       APBDMA_CMD_HALTONTERMINATE | APBDMA_CMD_SEMAPHORE |
-		       APBDMA_CMD_IRQONCMPLT;
-	if (req->dreq_block_irq) {
-		cmd->control |= APBDMA_CMD_WAIT4ENDCMD;
-	}
-	/* The fdt subsystem and the imx23 documentation use opposite naming */
-	if (req->dreq_dir == FDT_DMA_WRITE) {
-		cmd->control |=
-		    __SHIFTIN(APBDMA_CMD_DMA_READ, APBDMA_CMD_COMMAND);
-	} else if (req->dreq_dir == FDT_DMA_READ) {
-		cmd->control |=
-		    __SHIFTIN(APBDMA_CMD_DMA_WRITE, APBDMA_CMD_COMMAND);
+	if (req->dreq_dir == FDT_DMA_NO_XFER) {
+		error = imx23_apbdma_pio_transfer(sc, chan, req);
+		if (error)
+			return error;
 	} else {
-		cmd->control |=
-		    __SHIFTIN(APBDMA_CMD_NO_DMA_XFER, APBDMA_CMD_COMMAND);
-	}
-	uint32_t *pio_words = req->dreq_data;
-	for (int i = 0; i < req->dreq_datalen; i++) {
-		cmd->pio_words[i] = pio_words[i];
+		error = imx23_apbdma_data_transfer(sc, chan, req);
+		if (error)
+			return error;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamp,
-			chan->chan_index * sizeof(struct imx23_apbdma_command),
-			sizeof(struct imx23_apbdma_command),
+	bus_dmamap_sync(sc->sc_dmat, chan->chan_dmamp, 0, chan->chan_cmd_sz,
 			BUS_DMASYNC_PREWRITE);
 
 	/* set the address of the dma command */
-	bus_addr_t phys_cmd_addr =
-	    sc->sc_ds[0].ds_addr +
-	    chan->chan_index * sizeof(struct imx23_apbdma_command);
 	if (sc->flags & F_APBH_DMA)
 		reg =
 		    HW_APB_CHN_NXTCMDAR(HW_APBH_CH0_NXTCMDAR, chan->chan_index);
 	else
 		reg =
 		    HW_APB_CHN_NXTCMDAR(HW_APBX_CH0_NXTCMDAR, chan->chan_index);
-	DMA_WR(sc, reg, phys_cmd_addr);
+	DMA_WR(sc, reg, chan->chan_ds[0].ds_addr);
 
 	/* increase semaphore to start dma transfer */
 	if (sc->flags & F_APBH_DMA) {
@@ -311,7 +400,7 @@ imx23_apbdma_intr(void *frame)
 		}
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamp, 0, sc->sc_cmd_sz,
+	bus_dmamap_sync(sc->sc_dmat, chan->chan_dmamp, 0, chan->chan_cmd_sz,
 			BUS_DMASYNC_POSTWRITE);
 
 	if (chan->chan_cb != NULL) {
@@ -353,7 +442,6 @@ imx23_apbdma_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args *const faa = aux;
 	const int phandle = faa->faa_phandle;
 	const struct imx23_apbdma_fdt_config *config;
-	int rsegs;
 	int len;
 	char intrstr[128];
 
@@ -374,30 +462,6 @@ imx23_apbdma_attach(device_t parent, device_t self, void *aux)
 	}
 	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh)) {
 		aprint_error(": couldn't map registers\n");
-		return;
-	}
-
-	/* initialize DMA */
-	sc->sc_cmd_sz =
-	    AHB_MAX_DMA_CHANNELS * sizeof(struct imx23_apbdma_command);
-	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_cmd_sz, PAGE_SIZE, 0,
-			     sc->sc_ds, 1, &rsegs, BUS_DMA_WAITOK)) {
-		aprint_error(": Unable to allocate DMA memory\n");
-		return;
-	}
-	if (bus_dmamem_map(sc->sc_dmat, sc->sc_ds, rsegs, sc->sc_cmd_sz,
-			   (void **)&sc->sc_cmds, BUS_DMA_WAITOK)) {
-		aprint_error(": Unable to allocate DMA memory\n");
-		return;
-	}
-	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
-			      BUS_DMA_WAITOK, &sc->sc_dmamp)) {
-		aprint_error(": Unable to create DMA map\n");
-		return;
-	}
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamp, sc->sc_cmds,
-			    sc->sc_cmd_sz, NULL, BUS_DMA_WAITOK)) {
-		aprint_error(": Unable to load dma mapping\n");
 		return;
 	}
 
@@ -506,7 +570,7 @@ imx23_apbdma_reset(struct imx23_apbdma_softc *sc)
 /*
  * Initialize APB{H,X}DMA block.
  */
-void
+static void
 imx23_apbdma_init(struct imx23_apbdma_softc *sc)
 {
 
