@@ -49,12 +49,18 @@ length_head()
 }
 length_body()
 {
+	local dev="/dev/fd/5"
+
+	if [ ! -c "$dev" ]
+	then
+		atf_skip "fdescfs not mounted"
+	fi
 	test_dd_length 512 \
-	    "dd if=/dev/zero of=/dev/fd/5 count=1 5>&1 >/dev/null 2>/dev/null"
+	    "dd if=/dev/zero of=$dev count=1 5>&1 >/dev/null 2>/dev/null"
 	test_dd_length 512 \
-	    "dd if=/dev/zero of=/dev/fd/5 count=1 5>&1 >&- 2>/dev/null"
+	    "dd if=/dev/zero of=$dev count=1 5>&1 >&- 2>/dev/null"
 	test_dd_length 512 \
-	    "dd if=/dev/zero of=/dev/fd/5 count=1 5>&1 >&- 2>&-"
+	    "dd if=/dev/zero of=$dev count=1 5>&1 >&- 2>&-"
 }
 
 test_dd_io()
