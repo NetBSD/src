@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.420 2026/02/06 17:33:27 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.421 2026/02/09 02:31:28 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1230,6 +1230,7 @@ OTP	one time password
 OTP	open telecom platform
 OU	organizational unit
 OUI	organizationally unique identifier
+OVMF	Open Virtual Machine Firmware
 OWASP	Open Web Application Security Project
 OWL	Web Ontology Language
 P2P	PCI to PCI
