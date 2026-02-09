@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.28 2026/02/06 07:58:25 kre Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.29 2026/02/09 08:08:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.28 2026/02/06 07:58:25 kre Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.29 2026/02/09 08:08:36 kre Exp $");
 #endif
 
 #include <err.h>
@@ -144,8 +144,11 @@ gpt_uuid_symbolic(char *buf, size_t bufsiz, const struct dce_uuid *u)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0)
-			return (int)strlcpy(buf, gpt_nv[i].n, bufsiz);
+		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0) {
+			if (gpt_nv[i].n)
+				return (int)strlcpy(buf, gpt_nv[i].n, bufsiz);
+			break;
+		}
 	return -1;
 }
 
@@ -155,8 +158,11 @@ gpt_uuid_descriptive(char *buf, size_t bufsiz, const struct dce_uuid *u)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0)
-			return (int)strlcpy(buf, gpt_nv[i].d, bufsiz);
+		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0) {
+			if (gpt_nv[i].d)
+				return (int)strlcpy(buf, gpt_nv[i].d, bufsiz);
+			break;
+		}
 	return -1;
 }
 
@@ -215,7 +221,7 @@ gpt_uuid_parse_symbolic(const char *s, struct dce_uuid *u)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		if (strcmp(gpt_nv[i].n, s) == 0) {
+		if (gpt_nv[i].n && strcmp(gpt_nv[i].n, s) == 0) {
 			*u = gpt_nv[i].u;
 			return 0;
 		}
@@ -262,7 +268,9 @@ gpt_uuid_help(const char *prefix)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		printf("%s%18.18s\t%s\n", prefix, gpt_nv[i].n, gpt_nv[i].d);
+		printf("%s%18.18s\t%s\n", prefix,
+		    gpt_nv[i].n ? gpt_nv[i].n : "-",
+		    gpt_nv[i].d ? gpt_nv[i].d : "?");
 }
 
 void
@@ -293,7 +301,7 @@ gpt_uuid_random(gpt_t gpt, struct dce_uuid *u, size_t n)
 			goto out;
 		}
 		if (nread == 0) {
-			gpt_warn(gpt, "EOF from /dev/urandom");
+			gpt_warnx(gpt, "EOF from /dev/urandom");
 			goto out;
 		}
 		if ((size_t)nread > n) {
