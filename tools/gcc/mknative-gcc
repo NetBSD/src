@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.125 2026/01/20 00:46:18 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.126 2026/02/09 06:12:38 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -193,6 +193,7 @@ get_libquadmath () {
 
 	getvars $_PLATFORM/$_subdir/Makefile \
 		libquadmath_la_SOURCES \
+		nodist_libsubinclude_HEADERS \
 		| write_mk $_OUTDIRBASE/lib/$_subdir/defs.mk
 }
 
