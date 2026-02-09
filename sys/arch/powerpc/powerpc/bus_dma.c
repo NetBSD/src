@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.57 2026/01/09 22:54:34 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.58 2026/02/09 10:49:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.57 2026/01/09 22:54:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.58 2026/02/09 10:49:17 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -429,6 +429,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_size_t sgsize, isgsize;
 	bus_size_t busaddr, curaddr, lastaddr, baddr, bmask;
 	int seg, iseg, first;
+	bus_size_t size0 = size;
 
 	if (size == 0)
 		return 0;
@@ -436,7 +437,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	lastaddr = 0;
 	bmask = ~(map->_dm_boundary - 1);
 
-	first = 0;
+	first = 1;
 	iseg = 0;
 	busaddr = segs[iseg].ds_addr;
 	isgsize = segs[iseg].ds_len;
@@ -503,15 +504,24 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		lastaddr = curaddr + sgsize;
 		size -= sgsize;
 		if ((isgsize -= sgsize) == 0) {
-			iseg++;
+			if (++iseg == nsegs) {
+				++seg;
+				break;
+			}
 			KASSERT(iseg < nsegs);
 			busaddr = segs[iseg].ds_addr;
 			isgsize = segs[iseg].ds_len;
 		}
 	}
 
-	if (size > 0)
+	if (size > 0) {
+		map->dm_nsegs = 0;
+		map->dm_mapsize = 0;
 		return EFBIG;
+	}
+
+	map->dm_nsegs = seg;
+	map->dm_mapsize = size0;
 
 	return 0;
 }
