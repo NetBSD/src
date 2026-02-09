@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: prepare-import.sh,v 1.6 2024/11/09 13:13:54 wiz Exp $
+# $NetBSD: prepare-import.sh,v 1.7 2026/02/09 08:36:49 wiz Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -61,7 +61,7 @@ cleanup_dist() {
 	rm dist/compat/forkpty-aix.c
 	rm dist/compat/forkpty-hpux.c
 	rm dist/compat/forkpty-sunos.c
-	rm dist/compat/getopt.c
+	rm dist/compat/getopt_long.c
 	rm dist/compat/queue.h
 	rm dist/compat/setenv.c
 	rm dist/compat/strcasestr.c

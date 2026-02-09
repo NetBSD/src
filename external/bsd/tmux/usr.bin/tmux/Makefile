@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2025/09/25 16:46:26 christos Exp $
+# $NetBSD: Makefile,v 1.41 2026/02/09 08:36:50 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -240,16 +240,16 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.5a\" \
+-DPACKAGE_STRING=\"tmux\ 3.6a\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.5a\" \
+-DPACKAGE_VERSION=\"3.6a\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
 -DTMUX_LOCK_CMD='"lock -np"' \
 -DTMUX_TERM='"tmux-256color"' \
--DTMUX_VERSION='"3.5a"' \
--DVERSION=\"3.5a\" \
+-DTMUX_VERSION='"3.6a"' \
+-DVERSION=\"3.6a\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_NETBSD_SOURCE \
@@ -261,9 +261,9 @@ CPPFLAGS+=	\
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
-COPTS.format.c += -Wno-format-nonliteral
-COPTS.input.c += -Wno-sign-compare -Wno-pointer-sign
-COPTS.tty.c += -Wno-pointer-sign
+COPTS.format.c+=	-Wno-format-nonliteral
+COPTS.input.c+=		-Wno-sign-compare -Wno-pointer-sign
+COPTS.tty.c+=		-Wno-pointer-sign
 COPTS.utempter.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
 COPTS.cmd-run-shell.c += ${CC_WNO_MAYBE_UNINITIALIZED}
