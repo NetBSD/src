@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.99 2026/02/08 05:28:19 kim Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.100 2026/02/09 12:49:18 kre Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1408,18 +1408,49 @@ gpt_attr_update(gpt_t gpt, u_int entry, uint64_t set, uint64_t clr)
 }
 
 int
-gpt_uint_get(gpt_t gpt, u_int *entry)
+gpt_scaled_uint_get(gpt_t gpt, u_int *entry)
 {
 	char *p;
+
 	if (*entry > 0)
 		return -1;
 	*entry = (u_int)strtoul(optarg, &p, 10);
+	if (*p == 'k' || *p == 'K') {
+		if (*entry > UINT_MAX/1024) {
+			gpt_warnx(gpt, "Value too big '%s'", optarg);
+			return -1;
+		}
+		*entry *= 1024;
+		if (*++p == 'i')
+			p++;
+	}
+	if (*p == 'b' || *p == 'B')
+		p++;
 	if (*p != 0 || *entry < 1) {
+		gpt_warnx(gpt, "Bad number `%s'", optarg);
+		return -1;
+	}
+	return 0;
+}
+
+int
+gpt_uint_get(gpt_t gpt, u_int *entry)
+{
+	char *p;
+
+	if (*entry > 0)
+		return -1;
+	errno = 0;
+	*entry = (u_int)strtoul(optarg, &p, 10);
+	if (*p != 0 || *entry < 1) {
+		if (errno == 0)
+			errno = EINVAL;
 		gpt_warn(gpt, "Bad number `%s'", optarg);
 		return -1;
 	}
 	return 0;
 }
+
 int
 gpt_uuid_get(gpt_t gpt, gpt_uuid_t *uuid)
 {
@@ -1497,3 +1528,4 @@ gpt_add_hdr(gpt_t gpt, int type, off_t loc)
 	}
 	return 0;
 }
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2026/02/06 11:14:37 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2026/02/09 12:49:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.16 2026/02/06 11:14:37 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2026/02/09 12:49:18 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 			flags |= GPT_QUIET;
 			break;
 		case 's':
-			if (gpt_uint_get(NULL, &secsz) == -1)
+			if (gpt_scaled_uint_get(NULL, &secsz) == -1)
 				usage();
 			if (sectormult) {
 				if (mediasz / 512 > UINTMAX_MAX / secsz)
