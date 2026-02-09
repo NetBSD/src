@@ -43,20 +43,20 @@ const char	*socket_path;
 int		 ptm_fd = -1;
 const char	*shell_command;
 
-static __dead void	 usage(void);
+static __dead void	 usage(int);
 static char		*make_label(const char *, char **);
 
 static int		 areshell(const char *);
 static const char	*getshell(void);
 
 static __dead void
-usage(void)
+usage(int status)
 {
-	fprintf(stderr,
-	    "usage: %s [-2CDlNuVv] [-c shell-command] [-f file] [-L socket-name]\n"
+	fprintf(status ? stderr : stdout,
+	    "usage: %s [-2CDhlNuVv] [-c shell-command] [-f file] [-L socket-name]\n"
 	    "            [-S socket-path] [-T features] [command [flags]]\n",
 	    getprogname());
-	exit(1);
+	exit(status);
 }
 
 static const char *
@@ -139,7 +139,7 @@ expand_path(const char *path, const char *home)
 }
 
 static void
-expand_paths(const char *s, char ***paths, u_int *n, int ignore_errors)
+expand_paths(const char *s, char ***paths, u_int *n, int no_realpath)
 {
 	const char	*home = find_home();
 	char		*copy, *next, *tmp, resolved[PATH_MAX], *expanded;
@@ -156,15 +156,15 @@ expand_paths(const char *s, char ***paths, u_int *n, int ignore_errors)
 			log_debug("%s: invalid path: %s", __func__, next);
 			continue;
 		}
-		if (realpath(expanded, resolved) == NULL) {
-			log_debug("%s: realpath(\"%s\") failed: %s", __func__,
-			    expanded, strerror(errno));
-			if (ignore_errors) {
+		if (no_realpath)
+			path = expanded;
+		else {
+			if (realpath(expanded, resolved) == NULL) {
+				log_debug("%s: realpath(\"%s\") failed: %s", __func__,
+			  expanded, strerror(errno));
 				free(expanded);
 				continue;
 			}
-			path = expanded;
-		} else {
 			path = xstrdup(resolved);
 			free(expanded);
 		}
@@ -196,7 +196,7 @@ make_label(const char *label, char **cause)
 		label = "default";
 	uid = getuid();
 
-	expand_paths(TMUX_SOCK, &paths, &n, 1);
+	expand_paths(TMUX_SOCK, &paths, &n, 0);
 	if (n == 0) {
 		xasprintf(cause, "no suitable socket path");
 		return (NULL);
@@ -222,7 +222,7 @@ make_label(const char *label, char **cause)
 		xasprintf(cause, "%s is not a directory", base);
 		goto fail;
 	}
-	if (sb.st_uid != uid || (sb.st_mode & S_IRWXO) != 0) {
+	if (sb.st_uid != uid || (sb.st_mode & TMUX_SOCK_PERM) != 0) {
 		xasprintf(cause, "directory %s has unsafe permissions", base);
 		goto fail;
 	}
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 		environ_set(global_environ, "PWD", 0, "%s", cwd);
 	expand_paths(TMUX_CONF, &cfg_files, &cfg_nfiles, 1);
 
-	while ((opt = getopt(argc, argv, "2c:CDdf:lL:NqS:T:uUvV")) != -1) {
+	while ((opt = getopt(argc, argv, "2c:CDdf:hlL:NqS:T:uUvV")) != -1) {
 		switch (opt) {
 		case '2':
 			tty_add_features(&feat, "256", ":,");
@@ -408,6 +408,8 @@ main(int argc, char **argv)
 			cfg_files[cfg_nfiles++] = xstrdup(optarg);
 			cfg_quiet = 0;
 			break;
+		case 'h':
+			usage(0);
 		case 'V':
 			printf("tmux %s\n", getversion());
 			exit(0);
@@ -437,16 +439,16 @@ main(int argc, char **argv)
 			log_add_level();
 			break;
 		default:
-			usage();
+			usage(1);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
 	if (shell_command != NULL && argc != 0)
-		usage();
+		usage(1);
 	if ((flags & CLIENT_NOFORK) && argc != 0)
-		usage();
+		usage(1);
 
 	if ((ptm_fd = getptmfd()) == -1)
 		err(1, "getptmfd");

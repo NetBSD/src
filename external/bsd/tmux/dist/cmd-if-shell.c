@@ -124,7 +124,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	    -1) == NULL) {
 		cmdq_error(item, "failed to run command: %s", shellcmd);
 		free(shellcmd);
-		free(cdata);
+		cmd_if_shell_free(cdata);
 		return (CMD_RETURN_ERROR);
 	}
 	free(shellcmd);
@@ -157,7 +157,7 @@ cmd_if_shell_callback(struct job *job)
 	if (cmdlist == NULL) {
 		if (cdata->item == NULL) {
 			*error = toupper((u_char)*error);
-			status_message_set(c, -1, 1, 0, "%s", error);
+			status_message_set(c, -1, 1, 0, 0, "%s", error);
 		} else
 			cmdq_error(cdata->item, "%s", error);
 		free(error);
