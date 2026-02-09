@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.17 2022/11/21 16:06:00 kre Exp $
+# $NetBSD: t_gpt.sh,v 1.18 2026/02/09 23:20:42 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,15 +82,17 @@ prepare() {
 
 prepare_2part() {
 	prepare
-	silence gpt create "$disk"
-	match "$(partaddmsg 1 34 1024)" gpt add -t efi -s 1024 "$disk"
-	match "$(partaddmsg 2 1058 9150)" gpt add "$disk"
+	silence gpt -T0 create "$disk"
+	match "$(partaddmsg 1 34 1024)" gpt -T1 add -t efi -s 1024 "$disk"
+	match "$(partaddmsg 2 1058 9150)" gpt -T2 add "$disk"
 }
 
 # Calling this from tests does not work. BUG!
 check_2part() {
 	file "$src/gpt.2part.show.normal" gpt show "$disk"
+	file "$src/gpt.2part.show.normal-p" gpt show -p "$disk"
 	file "$src/gpt.2part.show.uuid" gpt show -u "$disk"
+	file "$src/gpt.2part.show.uuid-p" gpt show -p -u "$disk"
 }
 
 partaddmsg() {
@@ -137,8 +139,11 @@ create_empty_head() {
 
 create_empty_body() {
 	prepare
+	file "$src/gpt.empty.show.clean" gpt show "$disk"
+	file "$src/gpt.empty.show.clean-p" gpt show -p "$disk"
 	silence gpt create "$disk"
 	file "$src/gpt.empty.show.normal" gpt show "$disk"
+	file "$src/gpt.empty.show.normal-p" gpt show -p "$disk"
 }
 
 atf_test_case create_2part
@@ -241,8 +246,10 @@ resize_2part_body() {
 	zerodd seek="$newsize" count=1
 	match 'Moving secondary GPT header' gpt resizedisk "$disk"
 	file "$src/gpt.resizedisk.show.normal" gpt show "$disk"
+	file "$src/gpt.resizedisk.show.normal-p" gpt show -p "$disk"
 	match "$(partresmsg 2 1058 19390)" gpt resize -i 2 "$disk"
 	file "$src/gpt.resizepart.show.normal" gpt show "$disk"
+	file "$src/gpt.resizepart.show.normal-p" gpt show -p "$disk"
 }
 
 atf_test_case remove_2part
@@ -256,6 +263,8 @@ remove_2part_body() {
 	    -i 1 "$disk"
 	file "$src/gpt.removepart.show.normal" \
 	    gpt show "$disk"
+	file "$src/gpt.removepart.show.normal-p" \
+	    gpt show -p "$disk"
 }
 
 atf_test_case label_2part
@@ -269,6 +278,8 @@ label_2part_body() {
 	match "$(partlblmsg 2)" gpt label -i 2 -l tomato "$disk"
 	file "$src/gpt.2part.show.label" \
 	    gpt show -l "$disk"
+	file "$src/gpt.2part.show.label-p" \
+	    gpt show -lp "$disk"
 }
 
 atf_test_case bootable_2part
@@ -301,8 +312,9 @@ migrate_disklabel_body() {
 	silence fdisk -fi "$disk"
 	silence fdisk -fu0s "169/63/$((size / 10))" "$disk"
 	silence disklabel -R "$disk" "$src/gpt.disklabel"
-	matcherr "$(migratemsg 5)" gpt migrate "$disk"
+	matcherr "$(migratemsg 5)" gpt -T0 migrate "$disk"
 	file "$src/gpt.disklabel.show.normal" gpt show "$disk"
+	file "$src/gpt.disklabel.show.normal-p" gpt show -p "$disk"
 }
 
 atf_init_test_cases() {
