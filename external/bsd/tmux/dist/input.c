@@ -3200,7 +3200,7 @@ input_reply_clipboard(struct bufferevent *bev, const char *buf, size_t len,
 void
 input_set_buffer_size(size_t buffer_size)
 {
-	log_debug("%s: %lu -> %lu", __func__, input_buffer_size, buffer_size);
+	log_debug("%s: %zu -> %zu", __func__, input_buffer_size, buffer_size);
 	input_buffer_size = buffer_size;
 }
 
