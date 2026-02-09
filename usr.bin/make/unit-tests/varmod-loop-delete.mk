@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop-delete.mk,v 1.8 2026/02/09 22:03:34 rillig Exp $
+# $NetBSD: varmod-loop-delete.mk,v 1.9 2026/02/09 22:04:54 rillig Exp $
 #
 # Tests for the variable modifier ':@', which as a side effect allows to
 # delete an arbitrary variable.
@@ -51,7 +51,7 @@ delete-active-variable-in-target:
 .endif
 
 
-# On NetBSD 11.99.x with dlmalloc and MALLOC_CONF=junk:true, the output is:
+# On NetBSD 11.99.x with jemalloc and MALLOC_CONF=junk:true, the output is:
 #	make: varmod-loop-delete.mk:72: Unknown modifier ":Z2"
 #	        while evaluating "${:U 333 :@v@...${:Z1}@:Z2}" with value "...${:Z1}"
 #	        while evaluating variable "INNER.1" with value "${:U 333 :@v@...${:Z1}@:Z2}"
