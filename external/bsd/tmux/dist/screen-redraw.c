@@ -973,7 +973,8 @@ screen_redraw_draw_pane_scrollbar(struct screen_redraw_ctx *ctx,
 	u_int		 sb_pos = ctx->pane_scrollbars_pos, slider_h, slider_y;
 	int		 sb_w = wp->scrollbar_style.width;
 	int		 sb_pad = wp->scrollbar_style.pad;
-	int		 cm_y, cm_size, xoff = wp->xoff, ox = ctx->ox;
+        u_int		 cm_y, cm_size;
+        int		 xoff = wp->xoff, ox = ctx->ox;
 	int		 sb_x, sb_y = (int)(wp->yoff - ctx->oy); /* sb top */
 
 	if (window_pane_mode(wp) == WINDOW_PANE_NO_MODE) {

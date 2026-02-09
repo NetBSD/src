@@ -613,7 +613,7 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 					ud.data[0] = newkey - 0x60;
 			}
 			if (ud.data[0] != 255)
-				input_key_write(__func__, bev, &ud.data[0], 1);
+				input_key_write(__func__, bev, (char *)&ud.data[0], 1);
 			return (0);
 		}
 		key = newkey|(key & (KEYC_MASK_FLAGS|KEYC_MASK_MODIFIERS));

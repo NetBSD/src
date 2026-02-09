@@ -699,8 +699,6 @@ msgbuf_queuelen(struct msgbuf *msgbuf)
 void
 msgbuf_clear(struct msgbuf *msgbuf)
 {
-	struct ibuf	*buf;
-
 	/* write side */
 	ibufq_flush(&msgbuf->bufs);
 
@@ -793,7 +791,7 @@ msgbuf_write(int fd, struct msgbuf *msgbuf)
 
 	if (buf0 != NULL) {
 		msg.msg_control = (caddr_t)&cmsgbuf.buf;
-		msg.msg_controllen = CMSG_SPACE(sizeof(int));
+		msg.msg_controllen = CMSG_SPACE(sizeof(cmsgbuf.buf));
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 		cmsg->cmsg_level = SOL_SOCKET;

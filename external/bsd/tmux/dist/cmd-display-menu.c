@@ -397,7 +397,7 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 	int			 modify = popup_present(tc);
 	int			 flags = -1, argc = 0;
 	enum box_lines		 lines = BOX_LINES_DEFAULT;
-	u_int			 px, py, w, h, count = args_count(args);
+	u_int			 px, py, w = 0, h = 0, count = args_count(args);
 	struct args_value	*av;
 	struct environ		*env = NULL;
 	struct options		*o = s->curw->window->options;

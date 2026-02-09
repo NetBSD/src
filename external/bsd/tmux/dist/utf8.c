@@ -341,7 +341,7 @@ utf8_add_to_width_cache(const char *s)
 #ifdef HAVE_UTF8PROC
 		if (utf8proc_mbtowc(&wc, ud[0].data, ud[0].size) <= 0) {
 #else
-		if (mbtowc(&wc, ud[0].data, ud[0].size) <= 0) {
+		if (mbtowc(&wc, (char *)ud[0].data, ud[0].size) <= 0) {
 #endif
 			free(ud);
 			free(copy);
