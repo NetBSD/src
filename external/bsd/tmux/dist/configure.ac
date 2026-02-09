@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT([tmux], 3.5a)
+AC_INIT([tmux], 3.6a)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -219,7 +219,7 @@ AC_SEARCH_LIBS(clock_gettime, rt)
 # musl does not set optarg to NULL for flags without arguments (although it is
 # not required to, but it is helpful) 3) there are probably other weird
 # implementations.
-AC_LIBOBJ(getopt)
+AC_LIBOBJ(getopt_long)
 
 # Look for libevent. Try libevent_core or libevent with pkg-config first then
 # look for the library.
@@ -638,9 +638,9 @@ else
 	AC_LIBOBJ(err)
 fi
 
-# Look for imsg_init in libutil.
-AC_SEARCH_LIBS(imsg_init, util, found_imsg_init=yes, found_imsg_init=no)
-if test "x$found_imsg_init" = xyes; then
+# Look for imsg_add in libutil.
+AC_SEARCH_LIBS(imsg_add, util, found_imsg_add=yes, found_imsg_add=no)
+if test "x$found_imsg_add" = xyes; then
 	AC_DEFINE(HAVE_IMSG)
 else
 	AC_LIBOBJ(imsg)
@@ -982,21 +982,21 @@ AM_CONDITIONAL(IS_NETBSD, test "x$PLATFORM" = xnetbsd)
 AM_CONDITIONAL(IS_OPENBSD, test "x$PLATFORM" = xopenbsd)
 AM_CONDITIONAL(IS_SUNOS, test "x$PLATFORM" = xsunos)
 AM_CONDITIONAL(IS_HPUX, test "x$PLATFORM" = xhpux)
+AM_CONDITIONAL(IS_CYGWIN, test "x$PLATFORM" = xcygwin)
 AM_CONDITIONAL(IS_HAIKU, test "x$PLATFORM" = xhaiku)
 AM_CONDITIONAL(IS_UNKNOWN, test "x$PLATFORM" = xunknown)
 
 # Set the default lock command
 DEFAULT_LOCK_CMD="lock -np"
-AC_MSG_CHECKING(lock-command)
 if test "x$PLATFORM" = xlinux; then
 	AC_CHECK_PROG(found_vlock, vlock, yes, no)
 	if test "x$found_vlock" = xyes; then
 		DEFAULT_LOCK_CMD="vlock"
 	fi
 fi
+AC_MSG_CHECKING(lock-command)
 AC_MSG_RESULT($DEFAULT_LOCK_CMD)
 AC_SUBST(DEFAULT_LOCK_CMD)
-
 
 # Save our CFLAGS/CPPFLAGS/LDFLAGS for the Makefile and restore the old user
 # variables.
