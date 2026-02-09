@@ -53,7 +53,13 @@ static struct input_key_entry input_key_defaults[] = {
 	{ .key = KEYC_PASTE_START,
 	  .data = "\033[200~"
 	},
+	{ .key = KEYC_PASTE_START|KEYC_IMPLIED_META,
+	  .data = "\033[200~"
+	},
 	{ .key = KEYC_PASTE_END,
+	  .data = "\033[201~"
+	},
+	{ .key = KEYC_PASTE_END|KEYC_IMPLIED_META,
 	  .data = "\033[201~"
 	},
 
@@ -307,6 +313,12 @@ static struct input_key_entry input_key_defaults[] = {
 	{ .key = KEYC_DC|KEYC_BUILD_MODIFIERS,
 	  .data = "\033[3;_~"
 	},
+	{ .key = KEYC_REPORT_DARK_THEME,
+	  .data = "\033[?997;1n"
+	},
+	{ .key = KEYC_REPORT_LIGHT_THEME,
+	  .data = "\033[?997;2n"
+	},
 };
 static const key_code input_key_modifiers[] = {
 	0,
@@ -498,9 +510,12 @@ input_key_vt10x(struct bufferevent *bev, key_code key)
 		return (0);
 	}
 
-	/* Prevent TAB and RET from being swallowed by C0 remapping logic. */
+	/*
+	 * Prevent TAB, CR and LF from being swallowed by the C0 remapping
+	 * logic.
+	 */
 	onlykey = key & KEYC_MASK_KEY;
-	if (onlykey == '\r' || onlykey == '\t')
+	if (onlykey == '\r' || onlykey == '\n' || onlykey == '\t')
 		key &= ~KEYC_CTRL;
 
 	/*
@@ -539,25 +554,22 @@ input_key_mode1(struct bufferevent *bev, key_code key)
 
 	log_debug("%s: key in %llx", __func__, key);
 
+	/* A regular or shifted key + Meta. */
+	if ((key & (KEYC_CTRL | KEYC_META)) == KEYC_META)
+		return (input_key_vt10x(bev, key));
+
 	/*
 	 * As per
 	 * https://invisible-island.net/xterm/modified-keys-us-pc105.html.
 	 */
 	onlykey = key & KEYC_MASK_KEY;
-	if ((key & (KEYC_META | KEYC_CTRL)) == KEYC_CTRL &&
+	if ((key & KEYC_CTRL) &&
 	    (onlykey == ' ' ||
 	     onlykey == '/' ||
 	     onlykey == '@' ||
 	     onlykey == '^' ||
 	     (onlykey >= '2' && onlykey <= '8') ||
 	     (onlykey >= '@' && onlykey <= '~')))
-		return (input_key_vt10x(bev, key));
-
-	/*
-	 * A regular key + Meta. In the absence of a standard to back this, we
-	 * mimic what iTerm 2 does.
-	 */
-	if ((key & (KEYC_CTRL | KEYC_META)) == KEYC_META)
 		return (input_key_vt10x(bev, key));
 
 	return (-1);
@@ -585,14 +597,31 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	/* Is this backspace? */
 	if ((key & KEYC_MASK_KEY) == KEYC_BSPACE) {
 		newkey = options_get_number(global_options, "backspace");
-		if (newkey >= 0x7f)
-			newkey = '\177';
-		key = newkey|(key & (KEYC_MASK_MODIFIERS|KEYC_MASK_FLAGS));
+		log_debug("%s: key 0x%llx is backspace -> 0x%llx", __func__,
+		    key, newkey);
+		if ((key & KEYC_MASK_MODIFIERS) == 0) {
+			ud.data[0] = 255;
+			if ((newkey & KEYC_MASK_MODIFIERS) == 0)
+				ud.data[0] = newkey;
+			else if ((newkey & KEYC_MASK_MODIFIERS) == KEYC_CTRL) {
+				newkey &= KEYC_MASK_KEY;
+				if (newkey == '?')
+					ud.data[0] = 0x7f;
+				else if (newkey >= '@' && newkey <= '_')
+					ud.data[0] = newkey - 0x40;
+				else if (newkey >= 'a' && newkey <= 'z')
+					ud.data[0] = newkey - 0x60;
+			}
+			if (ud.data[0] != 255)
+				input_key_write(__func__, bev, &ud.data[0], 1);
+			return (0);
+		}
+		key = newkey|(key & (KEYC_MASK_FLAGS|KEYC_MASK_MODIFIERS));
 	}
 
 	/* Is this backtab? */
 	if ((key & KEYC_MASK_KEY) == KEYC_BTAB) {
-		if ((s->mode & EXTENDED_KEY_MODES) != 0) {
+		if (s->mode & MODE_KEYS_EXTENDED_2) {
 			/* When in xterm extended mode, remap into S-Tab. */
 			key = '\011' | (key & ~KEYC_MASK_KEY) | KEYC_SHIFT;
 		} else {
@@ -641,8 +670,7 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	if (ike != NULL) {
 		log_debug("%s: found key 0x%llx: \"%s\"", __func__, key,
 		    ike->data);
-		if ((key == KEYC_PASTE_START || key == KEYC_PASTE_END) &&
-		    (~s->mode & MODE_BRACKETPASTE))
+		if (KEYC_IS_PASTE(key) && (~s->mode & MODE_BRACKETPASTE))
 			return (0);
 		if ((key & KEYC_META) && (~key & KEYC_IMPLIED_META))
 			input_key_write(__func__, bev, "\033", 1);

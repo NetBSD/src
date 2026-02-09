@@ -38,6 +38,14 @@
 #include <event2/bufferevent_compat.h>
 #else
 #include <event.h>
+#ifndef EVBUFFER_EOL_LF
+/*
+ * This doesn't really work because evbuffer_readline is broken, but gets us to
+ * build with very old (older than 1.4.14) libevent.
+ */
+#define EVBUFFER_EOL_LF
+#define evbuffer_readln(a, b, c) evbuffer_readline(a)
+#endif
 #endif
 
 #ifdef HAVE_MALLOC_TRIM
@@ -442,7 +450,7 @@ void		*recallocarray(void *, size_t, size_t, size_t);
 /* systemd.c */
 int		 systemd_activated(void);
 int		 systemd_create_socket(int, char **);
-int		 systemd_move_pid_to_new_cgroup(pid_t, char **);
+int		 systemd_move_to_new_cgroup(char **);
 #endif
 
 #ifdef HAVE_UTF8PROC
@@ -459,11 +467,11 @@ int		 utf8proc_wctomb(char *, wchar_t);
 
 /* getopt.c */
 #ifndef HAVE_BSD_GETOPT
-extern int	BSDopterr;
-extern int	BSDoptind;
-extern int	BSDoptopt;
-extern int	BSDoptreset;
-extern char    *BSDoptarg;
+extern int	 BSDopterr;
+extern int	 BSDoptind;
+extern int	 BSDoptopt;
+extern int	 BSDoptreset;
+extern char	*BSDoptarg;
 int	BSDgetopt(int, char *const *, const char *);
 #define getopt(ac, av, o)  BSDgetopt(ac, av, o)
 #define opterr             BSDopterr
