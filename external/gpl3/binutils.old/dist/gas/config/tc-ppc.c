@@ -1,5 +1,5 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -902,7 +902,7 @@ ppc_parse_name (const char *name, expressionS *exp, enum expr_mode mode)
   /* If we have an absolute symbol or a reg, then we know its value
      now.  Copy the symbol value expression to propagate X_md.  */
   bool done = false;
-  if (mode != expr_defer
+  if (!expr_defer_p (mode)
       && !S_FORCE_RELOC (sym, 0))
     {
       segT segment = S_GET_SEGMENT (sym);
@@ -1098,9 +1098,9 @@ unsigned int ppc_apuinfo_num_alloc;
 #endif /* OBJ_ELF */
 
 #ifdef OBJ_ELF
-const char *const md_shortopts = "b:l:usm:K:VQ:";
+const char md_shortopts[] = "b:l:usm:K:VQ:";
 #else
-const char *const md_shortopts = "um:";
+const char md_shortopts[] = "um:";
 #endif
 #define OPTION_NOPS (OPTION_MD_BASE + 0)
 const struct option md_longopts[] = {
@@ -1391,6 +1391,8 @@ PowerPC options:\n"));
 -mpower9, -mpwr9        generate code for Power9 architecture\n"));
   fprintf (stream, _("\
 -mpower10, -mpwr10      generate code for Power10 architecture\n"));
+  fprintf (stream, _("\
+-mpower11, -mpwr11      generate code for Power11 architecture\n"));
   fprintf (stream, _("\
 -mlibresoc              generate code for Libre-SOC architecture\n"));
   fprintf (stream, _("\
@@ -1949,7 +1951,7 @@ ppc_cleanup (void)
     char *p;
     asection *seg = now_seg;
     subsegT subseg = now_subseg;
-    asection *apuinfo_secp = (asection *) NULL;
+    asection *apuinfo_secp = NULL;
     unsigned int i;
 
     /* Create the .PPC.EMB.apuinfo section.  */
@@ -1957,13 +1959,13 @@ ppc_cleanup (void)
     bfd_set_section_flags (apuinfo_secp, SEC_HAS_CONTENTS | SEC_READONLY);
 
     p = frag_more (4);
-    md_number_to_chars (p, (valueT) 8, 4);
+    md_number_to_chars (p, 8, 4);
 
     p = frag_more (4);
-    md_number_to_chars (p, (valueT) ppc_apuinfo_num * 4, 4);
+    md_number_to_chars (p, ppc_apuinfo_num * 4, 4);
 
     p = frag_more (4);
-    md_number_to_chars (p, (valueT) 2, 4);
+    md_number_to_chars (p, 2, 4);
 
     p = frag_more (8);
     strcpy (p, APUINFO_LABEL);
@@ -1971,7 +1973,7 @@ ppc_cleanup (void)
     for (i = 0; i < ppc_apuinfo_num; i++)
       {
 	p = frag_more (4);
-	md_number_to_chars (p, (valueT) ppc_apuinfo_list[i], 4);
+	md_number_to_chars (p, ppc_apuinfo_list[i], 4);
       }
 
     frag_align (2, 0, 0);
@@ -2069,7 +2071,7 @@ ppc_insert_operand (uint64_t insn,
 
       errmsg = NULL;
       insn = (*operand->insert) (insn, val, cpu, &errmsg);
-      if (errmsg != (const char *) NULL)
+      if (errmsg != NULL)
 	as_bad_where (file, line, "%s", errmsg);
     }
   else
@@ -2296,7 +2298,7 @@ ppc_elf_suffix (char **str_p, expressionS *exp_p)
 	  }
 	*str_p = str;
 
-	if (reloc == (int) BFD_RELOC_PPC64_TOC
+	if (reloc == BFD_RELOC_PPC64_TOC
 	    && exp_p->X_op == O_symbol
 	    && strcmp (S_GET_NAME (exp_p->X_add_symbol), ".TOC.") == 0)
 	  {
@@ -2309,7 +2311,7 @@ ppc_elf_suffix (char **str_p, expressionS *exp_p)
 	    && (ppc_cpu & PPC_OPCODE_POWER10) == 0)
 	  reloc = BFD_RELOC_PPC64_REL24_P9NOTOC;
 
-	return (bfd_reloc_code_real_type) reloc;
+	return reloc;
       }
 
   return BFD_RELOC_NONE;
@@ -2390,8 +2392,8 @@ ppc_elf_lcomm (int xxx ATTRIBUTE_UNUSED)
 
   /* Just after name is now '\0'.  */
   p = input_line_pointer;
-  *p = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
       as_bad (_("expected comma after symbol-name: rest of line ignored."));
@@ -2468,8 +2470,7 @@ ppc_elf_lcomm (int xxx ATTRIBUTE_UNUSED)
   if (S_GET_SEGMENT (symbolP) == bss_section)
     symbol_get_frag (symbolP)->fr_symbol = 0;
   symbol_set_frag (symbolP, frag_now);
-  pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
-		    (char *) 0);
+  pfrag = frag_var (rs_org, 1, 1, 0, symbolP, size, NULL);
   *pfrag = 0;
   S_SET_SIZE (symbolP, size);
   S_SET_SEGMENT (symbolP, bss_section);
@@ -2490,8 +2491,8 @@ ppc_elf_localentry (int ignore ATTRIBUTE_UNUSED)
   elf_symbol_type *elfsym;
 
   p = input_line_pointer;
-  *p = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
       *p = 0;
@@ -2778,7 +2779,7 @@ ppc_xcoff_suffix (char **str_p)
 	&& (ppc_obj64 ? ptr->valid64 : ptr->valid32))
       {
 	*str_p = str;
-	return (bfd_reloc_code_real_type) ptr->reloc;
+	return ptr->reloc;
       }
 
   return BFD_RELOC_NONE;
@@ -2946,7 +2947,7 @@ ppc_frob_label (symbolS *sym)
   /* Set the class of a label based on where it is defined.  This handles
      symbols without suffixes.  Also, move the symbol so that it follows
      the csect symbol.  */
-  if (ppc_current_csect != (symbolS *) NULL)
+  if (ppc_current_csect != NULL)
     {
       if (symbol_get_tc (sym)->symbol_class == -1)
 	symbol_get_tc (sym)->symbol_class = symbol_get_tc (ppc_current_csect)->symbol_class;
@@ -3323,14 +3324,14 @@ md_assemble (char *str)
   unsigned int insn_length;
 
   /* Get the opcode.  */
-  for (s = str; *s != '\0' && ! ISSPACE (*s); s++)
+  for (s = str; ! is_end_of_stmt (*s) && ! is_whitespace (*s); s++)
     ;
   if (*s != '\0')
     *s++ = '\0';
 
   /* Look up the opcode in the hash table.  */
-  opcode = (const struct powerpc_opcode *) str_hash_find (ppc_hash, str);
-  if (opcode == (const struct powerpc_opcode *) NULL)
+  opcode = str_hash_find (ppc_hash, str);
+  if (opcode == NULL)
     {
       as_bad (_("unrecognized opcode: `%s'"), str);
       ppc_clear_labels ();
@@ -3349,7 +3350,7 @@ md_assemble (char *str)
     }
 
   str = s;
-  while (ISSPACE (*str))
+  while (is_whitespace (*str))
     ++str;
 
 #ifdef OBJ_XCOFF
@@ -3451,7 +3452,7 @@ md_assemble (char *str)
 	      if (operand->insert)
 		{
 		  insn = (*operand->insert) (insn, val, ppc_cpu, &errmsg);
-		  if (errmsg != (const char *) NULL)
+		  if (errmsg != NULL)
 		    as_bad ("%s", errmsg);
 		}
 	      else if (operand->shift >= 0)
@@ -3494,7 +3495,7 @@ md_assemble (char *str)
 		   && (operand->flags & PPC_OPERAND_GPR_0) != 0))
 	    as_warn (_("invalid register expression"));
 	  insn = ppc_insert_operand (insn, operand, ex.X_add_number,
-				     ppc_cpu, (char *) NULL, 0);
+				     ppc_cpu, NULL, 0);
 	}
       else if (ex.X_op == O_constant
 	       || (ex.X_op == O_big && ex.X_add_number > 0))
@@ -3514,13 +3515,6 @@ md_assemble (char *str)
 	  char *orig_str = str;
 	  bfd_reloc_code_real_type reloc = ppc_elf_suffix (&str, &ex);
 
-	  if (ex.X_op == O_constant)
-	    {
-	      val = ex.X_add_number;
-	      if (sizeof (ex.X_add_number) < sizeof (val)
-		  && (ex.X_add_number < 0) != ex.X_extrabit)
-		val = val ^ ((addressT) -1 ^ (uint64_t) -1);
-	    }
 	  if (reloc != BFD_RELOC_NONE)
 	    switch (reloc)
 	      {
@@ -3699,7 +3693,7 @@ md_assemble (char *str)
 		  else
 		    insn = ppc_insert_operand (insn, operand,
 					       ppc_obj64 ? 13 : 2,
-					       ppc_cpu, (char *) NULL, 0);
+					       ppc_cpu, NULL, 0);
 		  break;
 
 		  /* We'll only use the 32 (or 64) bit form of these relocations
@@ -3972,7 +3966,7 @@ md_assemble (char *str)
 	    {
 	      do
 		++str;
-	      while (ISSPACE (*str));
+	      while (is_whitespace (*str));
 	      endc = ',';
 	    }
 	}
@@ -4001,7 +3995,7 @@ md_assemble (char *str)
 	}
     }
 
-  while (ISSPACE (*str))
+  while (is_whitespace (*str))
     ++str;
 
   if (*str != '\0')
@@ -4087,12 +4081,14 @@ md_assemble (char *str)
 	 a label attached to the instruction.  By "attached" we mean
 	 on the same source line as the instruction and without any
 	 intervening semicolons.  */
-      dot_value = frag_now_fix ();
-      dot_frag = frag_now;
+      symbol_set_value_now (&dot_symbol);
       for (l = insn_labels; l != NULL; l = l->next)
 	{
-	  symbol_set_frag (l->label, dot_frag);
-	  S_SET_VALUE (l->label, dot_value);
+	  addressT value;
+
+	  symbol_set_frag (l->label,
+			   symbol_get_frag_and_value (&dot_symbol, &value));
+	  S_SET_VALUE (l->label, value);
 	}
     }
 
@@ -4468,8 +4464,7 @@ ppc_comm (int lcomm)
       frag_align (align, 0, 0);
 
       symbol_set_frag (def_sym, frag_now);
-      pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, def_sym,
-			def_size, (char *) NULL);
+      pfrag = frag_var (rs_org, 1, 1, 0, def_sym, def_size, NULL);
       *pfrag = 0;
       S_SET_SEGMENT (def_sym, section->segment);
       symbol_get_tc (def_sym)->align = align;
@@ -4645,14 +4640,14 @@ ppc_change_csect (symbolS *sym, offsetT align)
 	frag_align (align, 0, 0);
 
       symbol_set_frag (sym, frag_now);
-      S_SET_VALUE (sym, (valueT) frag_now_fix ());
+      S_SET_VALUE (sym, frag_now_fix ());
 
       symbol_get_tc (sym)->align = align;
       symbol_get_tc (sym)->output = 1;
       symbol_get_tc (sym)->within = sym;
 
       for (list = section->csects;
-	   symbol_get_tc (list)->next != (symbolS *) NULL;
+	   symbol_get_tc (list)->next != NULL;
 	   list = symbol_get_tc (list)->next)
 	;
       symbol_get_tc (list)->next = sym;
@@ -5034,14 +5029,14 @@ ppc_ref (int ignore ATTRIBUTE_UNUSED)
       fix_at_start (symbol_get_frag (ppc_current_csect), 0,
 		    symbol_find_or_make (name), 0, false, BFD_RELOC_NONE);
 
-      *input_line_pointer = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       c = *input_line_pointer;
       if (c == ',')
 	{
 	  input_line_pointer++;
 	  SKIP_WHITESPACE ();
-	  if (is_end_of_line[(unsigned char) *input_line_pointer])
+	  if (is_end_of_stmt (*input_line_pointer))
 	    {
 	      as_bad (_("missing symbol name"));
 	      ignore_rest_of_line ();
@@ -5125,7 +5120,7 @@ ppc_stabx (int ignore ATTRIBUTE_UNUSED)
       exp.X_add_number = 0;
       /* Fall through.  */
     case O_constant:
-      S_SET_VALUE (sym, (valueT) exp.X_add_number);
+      S_SET_VALUE (sym, exp.X_add_number);
       symbol_set_frag (sym, &zero_address_frag);
       break;
 
@@ -5293,7 +5288,7 @@ ppc_function (int ignore ATTRIBUTE_UNUSED)
   /* Ignore any [PR] suffix.  */
   name = ppc_canonicalize_symbol_name (name);
   s = strchr (name, '[');
-  if (s != (char *) NULL
+  if (s != NULL
       && strcmp (s + 1, "PR]") == 0)
     *s = '\0';
 
@@ -5394,7 +5389,6 @@ ppc_bf (int ignore ATTRIBUTE_UNUSED)
       saved_bi_sym = 0;
     }
 
-
   symbol_get_tc (sym)->output = 1;
 
   ppc_frob_label (sym);
@@ -5464,13 +5458,13 @@ ppc_biei (int ei)
     saved_bi_sym = sym;
 
   for (look = last_biei ? last_biei : symbol_rootP;
-       (look != (symbolS *) NULL
+       (look != NULL
 	&& (S_GET_STORAGE_CLASS (look) == C_FILE
 	    || S_GET_STORAGE_CLASS (look) == C_BINCL
 	    || S_GET_STORAGE_CLASS (look) == C_EINCL));
        look = symbol_next (look))
     ;
-  if (look != (symbolS *) NULL)
+  if (look != NULL)
     {
       symbol_remove (sym, &symbol_rootP, &symbol_lastP);
       symbol_insert (sym, look, &symbol_rootP, &symbol_lastP);
@@ -5636,7 +5630,7 @@ ppc_ec (int ignore ATTRIBUTE_UNUSED)
 static void
 ppc_toc (int ignore ATTRIBUTE_UNUSED)
 {
-  if (ppc_toc_csect != (symbolS *) NULL)
+  if (ppc_toc_csect != NULL)
     subseg_set (data_section, symbol_get_tc (ppc_toc_csect)->subseg);
   else
     {
@@ -5653,7 +5647,7 @@ ppc_toc (int ignore ATTRIBUTE_UNUSED)
       sym = symbol_find_or_make ("TOC[TC0]");
       symbol_set_frag (sym, frag_now);
       S_SET_SEGMENT (sym, data_section);
-      S_SET_VALUE (sym, (valueT) frag_now_fix ());
+      S_SET_VALUE (sym, frag_now_fix ());
       symbol_get_tc (sym)->subseg = subseg;
       symbol_get_tc (sym)->output = 1;
       symbol_get_tc (sym)->within = sym;
@@ -5661,7 +5655,7 @@ ppc_toc (int ignore ATTRIBUTE_UNUSED)
       ppc_toc_csect = sym;
 
       for (list = ppc_xcoff_data_section.csects;
-	   symbol_get_tc (list)->next != (symbolS *) NULL;
+	   symbol_get_tc (list)->next != NULL;
 	   list = symbol_get_tc (list)->next)
 	;
       symbol_get_tc (list)->next = sym;
@@ -5769,7 +5763,7 @@ ppc_tc (int ignore ATTRIBUTE_UNUSED)
     char endc;
     symbolS *sym;
 
-    if (ppc_toc_csect == (symbolS *) NULL
+    if (ppc_toc_csect == NULL
 	|| ppc_toc_csect != ppc_current_csect)
       {
 	as_bad (_(".tc not in .toc section"));
@@ -5799,7 +5793,7 @@ ppc_tc (int ignore ATTRIBUTE_UNUSED)
 	symbol_set_frag (label, symbol_get_frag (sym));
 	S_SET_VALUE (label, S_GET_VALUE (sym));
 
-	while (! is_end_of_line[(unsigned char) *input_line_pointer])
+	while (! is_end_of_stmt (*input_line_pointer))
 	  ++input_line_pointer;
 
 	return;
@@ -5807,7 +5801,7 @@ ppc_tc (int ignore ATTRIBUTE_UNUSED)
 
     S_SET_SEGMENT (sym, now_seg);
     symbol_set_frag (sym, frag_now);
-    S_SET_VALUE (sym, (valueT) frag_now_fix ());
+    S_SET_VALUE (sym, frag_now_fix ());
 
     /* AIX assembler seems to allow any storage class to be set in .tc.
        But for now, only XMC_TC and XMC_TE are supported by us.  */
@@ -5834,7 +5828,7 @@ ppc_tc (int ignore ATTRIBUTE_UNUSED)
 
   /* Skip the TOC symbol name.  */
   while (is_part_of_name (*input_line_pointer)
-	 || *input_line_pointer == ' '
+	 || is_whitespace (*input_line_pointer)
 	 || *input_line_pointer == '['
 	 || *input_line_pointer == ']'
 	 || *input_line_pointer == '{'
@@ -5942,6 +5936,7 @@ ppc_machine (int ignore ATTRIBUTE_UNUSED)
       if (ppc_cpu != old_cpu)
 	ppc_setup_opcodes ();
     }
+  free (cpu_string);
 
   demand_empty_rest_of_line ();
 }
@@ -6012,7 +6007,7 @@ ppc_symbol_new_hook (symbolS *sym)
     return;
 
   s = strchr (S_GET_NAME (sym), '[');
-  if (s == (const char *) NULL)
+  if (s == NULL)
     {
       /* There is no suffix.  */
       return;
@@ -6113,7 +6108,7 @@ ppc_frob_symbol (symbolS *sym)
   if (sym == abs_section_sym)
     return 1;
 
-  if (symbol_get_tc (sym)->real_name != (char *) NULL)
+  if (symbol_get_tc (sym)->real_name != NULL)
     S_SET_NAME (sym, symbol_get_tc (sym)->real_name);
   else
     {
@@ -6122,7 +6117,7 @@ ppc_frob_symbol (symbolS *sym)
 
       name = S_GET_NAME (sym);
       s = strchr (name, '[');
-      if (s != (char *) NULL)
+      if (s != NULL)
 	{
 	  unsigned int len;
 	  char *snew;
@@ -6134,7 +6129,7 @@ ppc_frob_symbol (symbolS *sym)
 	}
     }
 
-  if (set_end != (symbolS *) NULL)
+  if (set_end != NULL)
     {
       SA_SET_SYM_ENDNDX (set_end, sym);
       set_end = NULL;
@@ -6142,15 +6137,11 @@ ppc_frob_symbol (symbolS *sym)
 
   if (SF_GET_FUNCTION (sym))
     {
-      /* Make sure coff_last_function is reset. Otherwise, we won't create
-         the auxent for the next function.  */
-      coff_last_function = 0;
       ppc_last_function = sym;
-      if (symbol_get_tc (sym)->u.size != (symbolS *) NULL)
+      if (symbol_get_tc (sym)->u.size != NULL)
 	{
 	  resolve_symbol_value (symbol_get_tc (sym)->u.size);
-	  SA_SET_SYM_FSIZE (sym,
-			    (long) S_GET_VALUE (symbol_get_tc (sym)->u.size));
+	  SA_SET_SYM_FSIZE (sym, S_GET_VALUE (symbol_get_tc (sym)->u.size));
 	}
       else
 	{
@@ -6166,16 +6157,12 @@ ppc_frob_symbol (symbolS *sym)
   else if (S_GET_STORAGE_CLASS (sym) == C_FCN
 	   && strcmp (S_GET_NAME (sym), ".ef") == 0)
     {
-      if (ppc_last_function == (symbolS *) NULL)
+      if (ppc_last_function == NULL)
 	as_bad (_(".ef with no preceding .function"));
       else
 	{
 	  set_end = ppc_last_function;
 	  ppc_last_function = NULL;
-
-	  /* We don't have a C_EFCN symbol, but we need to force the
-	     COFF backend to believe that it has seen one.  */
-	  coff_last_function = NULL;
 	}
     }
 
@@ -6213,7 +6200,7 @@ ppc_frob_symbol (symbolS *sym)
 	{
 	  /* This is a csect symbol.  x_scnlen is the size of the
 	     csect.  */
-	  if (symbol_get_tc (sym)->next == (symbolS *) NULL)
+	  if (symbol_get_tc (sym)->next == NULL)
 	    a->u.auxent.x_csect.x_scnlen.u64
 	      = bfd_section_size (S_GET_SEGMENT (sym)) - S_GET_VALUE (sym);
 	  else
@@ -6268,10 +6255,10 @@ ppc_frob_symbol (symbolS *sym)
 	  next = symbol_next (sym);
 	  while (symbol_get_tc (next)->symbol_class == XMC_TC0)
 	    next = symbol_next (next);
-	  if (next == (symbolS *) NULL
+	  if (next == NULL
 	      || (!ppc_is_toc_sym (next)))
 	    {
-	      if (ppc_after_toc_frag == (fragS *) NULL)
+	      if (ppc_after_toc_frag == NULL)
 		a->u.auxent.x_csect.x_scnlen.u64
 		  = bfd_section_size (data_section) - S_GET_VALUE (sym);
 	      else
@@ -6304,14 +6291,14 @@ ppc_frob_symbol (symbolS *sym)
 	  /* Skip the initial dummy symbol.  */
 	  csect = symbol_get_tc (csect)->next;
 
-	  if (csect == (symbolS *) NULL)
+	  if (csect == NULL)
 	    {
 	      as_warn (_("warning: symbol %s has no csect"), S_GET_NAME (sym));
 	      a->u.auxent.x_csect.x_scnlen.u64 = 0;
 	    }
 	  else
 	    {
-	      while (symbol_get_tc (csect)->next != (symbolS *) NULL)
+	      while (symbol_get_tc (csect)->next != NULL)
 		{
 		  resolve_symbol_value (symbol_get_tc (csect)->next);
 		  if (S_GET_VALUE (symbol_get_tc (csect)->next)
@@ -6347,7 +6334,7 @@ ppc_frob_symbol (symbolS *sym)
       asymbol *bsym = symbol_get_bfdsym (symbol_get_tc (sym)->within);
       combined_entry_type *c = coffsymbol (bsym)->native;
 
-      S_SET_VALUE (sym, (valueT) (size_t) c);
+      S_SET_VALUE (sym, (uintptr_t) c);
       coffsymbol (symbol_get_bfdsym (sym))->native->fix_value = 1;
     }
   else if (S_GET_STORAGE_CLASS (sym) == C_STSYM)
@@ -6506,7 +6493,7 @@ md_section_align (asection *seg ATTRIBUTE_UNUSED, valueT addr)
 #else
   int align = bfd_section_alignment (seg);
 
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 #endif
 }
 
@@ -6609,17 +6596,17 @@ ppc_fix_adjustable (fixS *fix)
   if (bfd_section_flags (symseg) & SEC_DEBUGGING)
     return 1;
 
-  if (ppc_toc_csect != (symbolS *) NULL
+  if (ppc_toc_csect != NULL
       && fix->fx_addsy != ppc_toc_csect
       && symseg == data_section
       && val >= ppc_toc_frag->fr_address
-      && (ppc_after_toc_frag == (fragS *) NULL
+      && (ppc_after_toc_frag == NULL
 	  || val < ppc_after_toc_frag->fr_address))
     {
       symbolS *sy;
 
       for (sy = symbol_next (ppc_toc_csect);
-	   sy != (symbolS *) NULL;
+	   sy != NULL;
 	   sy = symbol_next (sy))
 	{
 	  TC_SYMFIELD_TYPE *sy_tc = symbol_get_tc (sy);
@@ -6892,10 +6879,13 @@ ppc_nop_select (void)
 }
 
 void
-ppc_handle_align (struct frag *fragP)
+ppc_handle_align (segT sec, struct frag *fragP)
 {
   valueT count = (fragP->fr_next->fr_address
 		  - (fragP->fr_address + fragP->fr_fix));
+  if (count == 0)
+    return;
+
   char *dest = fragP->fr_literal + fragP->fr_fix;
   enum ppc_nop_encoding_for_rs_align_code nop_select = *dest & 0xff;
 
@@ -6903,8 +6893,7 @@ ppc_handle_align (struct frag *fragP)
      We could pad with zeros up to an instruction boundary then follow
      with nops but odd counts indicate data in an executable section
      so padding with zeros is most appropriate.  */
-  if (count == 0
-      || (nop_select == PPC_NOP_VLE ? (count & 1) != 0 : (count & 3) != 0))
+  if (nop_select == PPC_NOP_VLE ? (count & 1) != 0 : (count & 3) != 0)
     {
       *dest = 0;
       return;
@@ -6922,26 +6911,13 @@ ppc_handle_align (struct frag *fragP)
 
       if (count > 4 * nop_limit && count < 0x2000000)
 	{
-	  struct frag *rest;
-
-	  /* Make a branch, then follow with nops.  Insert another
-	     frag to handle the nops.  */
+	  /* Make a branch, then follow with nops.  */
 	  md_number_to_chars (dest, 0x48000000 + count, 4);
+	  dest += 4;
+	  fragP->fr_fix += 4;
 	  count -= 4;
 	  if (count == 0)
 	    return;
-
-	  rest = xmalloc (SIZEOF_STRUCT_FRAG + 4);
-	  memcpy (rest, fragP, SIZEOF_STRUCT_FRAG);
-	  fragP->fr_next = rest;
-	  fragP = rest;
-	  rest->fr_address += rest->fr_fix + 4;
-	  rest->fr_fix = 0;
-	  /* If we leave the next frag as rs_align_code we'll come here
-	     again, resulting in a bunch of branches rather than a
-	     branch followed by nops.  */
-	  rest->fr_type = rs_align;
-	  dest = rest->fr_literal;
 	}
 
       md_number_to_chars (dest, 0x60000000, 4);
@@ -6955,7 +6931,9 @@ ppc_handle_align (struct frag *fragP)
 	     reduce the number of nops in the current frag by one.  */
 	  if (count > 4)
 	    {
-	      struct frag *group_nop = xmalloc (SIZEOF_STRUCT_FRAG + 4);
+	      segment_info_type *seginfo = seg_info (sec);
+	      struct obstack *ob = &seginfo->frchainP->frch_obstack;
+	      struct frag *group_nop = frag_alloc (ob, 4);
 
 	      memcpy (group_nop, fragP, SIZEOF_STRUCT_FRAG);
 	      group_nop->fr_address = group_nop->fr_next->fr_address - 4;
@@ -6982,7 +6960,7 @@ ppc_handle_align (struct frag *fragP)
 void
 md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 {
-  valueT value = * valP;
+  valueT value = *valP;
   offsetT fieldval;
   const struct powerpc_operand *operand;
 
@@ -7009,7 +6987,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
      use *valP, and must use fx_offset instead.  If the relocation
      is PC-relative, we then need to re-apply md_pcrel_from_section
      to this new relocation value.  */
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
   else
@@ -7752,17 +7730,17 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
   static arelent *relocs[3];
   arelent *reloc;
 
-  relocs[0] = reloc = XNEW (arelent);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  relocs[0] = reloc;
   relocs[1] = NULL;
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   /* BFD_RELOC_PPC64_TLS_PCREL generates R_PPC64_TLS with an odd r_offset.  */
   if (fixp->fx_r_type == BFD_RELOC_PPC64_TLS_PCREL)
     reloc->address++;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("reloc %d not supported by object file format"),
@@ -7773,27 +7751,22 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 
   if (fixp->fx_subsy != NULL)
     {
-      relocs[1] = reloc = XNEW (arelent);
+      reloc = notes_alloc (sizeof (arelent));
+      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+      relocs[1] = reloc;
       relocs[2] = NULL;
-
-      reloc->sym_ptr_ptr = XNEW (asymbol *);
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
       reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_PPC_NEG);
       reloc->addend = fixp->fx_addnumber;
 
-      if (reloc->howto == (reloc_howto_type *) NULL)
+      if (reloc->howto == NULL)
         {
 	  as_bad_subtract (fixp);
-	  free (relocs[1]->sym_ptr_ptr);
-	  free (relocs[1]);
-	  free (relocs[0]->sym_ptr_ptr);
-	  free (relocs[0]);
 	  relocs[0] = NULL;
         }
     }
-
 
   return relocs;
 }

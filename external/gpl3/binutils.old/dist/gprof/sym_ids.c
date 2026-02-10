@@ -1,6 +1,6 @@
 /* sym_ids.c
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
-
+
 #include "gprof.h"
 #include "libiberty.h"
 #include "safe-ctype.h"
@@ -278,13 +278,14 @@ sym_id_parse (void)
   Sym *sym, *left, *right;
   struct sym_id *id;
   Sym_Table *tab;
+  Sym_Table *symtab = get_symtab_direct ();
 
   /* Convert symbol ids into Syms, so we can deal with them more easily.  */
   for (id = id_list; id; id = id->next)
     parse_id (id);
 
   /* First determine size of each table.  */
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       for (id = id_list; id; id = id->next)
 	{
@@ -315,7 +316,7 @@ sym_id_parse (void)
     }
 
   /* Make a second pass through symtab, creating syms as necessary.  */
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       for (id = id_list; id; id = id->next)
 	{

@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #
 
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -685,7 +685,6 @@ TARGET_CPU_CFILES = \
 	config/tc-msp430.c \
 	config/tc-mt.c \
 	config/tc-nds32.c \
-	config/tc-nios2.c \
 	config/tc-ns32k.c \
 	config/tc-or1k.c \
 	config/tc-pdp11.c \
@@ -759,7 +758,6 @@ TARGET_CPU_HFILES = \
 	config/tc-msp430.h \
 	config/tc-mt.h \
 	config/tc-nds32.h \
-	config/tc-nios2.h \
 	config/tc-ns32k.h \
 	config/tc-or1k.h \
 	config/tc-pdp11.h \
@@ -841,7 +839,6 @@ TARG_ENV_HFILES = \
 	config/te-hppa.h \
 	config/te-hppa64.h \
 	config/te-hppalinux64.h \
-	config/te-ia64aix.h \
 	config/te-interix.h \
 	config/te-lynx.h \
 	config/te-macos.h \
@@ -862,9 +859,6 @@ TARG_ENV_CFILES = \
 MULTI_CFILES = \
 	config/e-crisaout.c \
 	config/e-criself.c \
-	config/e-i386aout.c \
-	config/e-i386coff.c \
-	config/e-i386elf.c \
 	config/e-mipself.c
 
 CONFIG_ATOF_CFILES = \
@@ -997,7 +991,6 @@ CPU_DOCS = \
 	doc/c-mmix.texi \
 	doc/c-mt.texi \
 	doc/c-msp430.texi \
-	doc/c-nios2.texi \
 	doc/c-nds32.texi \
 	doc/c-ns32k.texi \
 	doc/c-or1k.texi \
@@ -1191,8 +1184,6 @@ config/tc-mt.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-nds32.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
-config/tc-nios2.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-ns32k.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/tc-or1k.$(OBJEXT): config/$(am__dirstamp) \
@@ -1285,12 +1276,6 @@ config/e-crisaout.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/e-criself.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
-config/e-i386aout.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
-config/e-i386coff.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
-config/e-i386elf.$(OBJEXT): config/$(am__dirstamp) \
-	config/$(DEPDIR)/$(am__dirstamp)
 config/e-mipself.$(OBJEXT): config/$(am__dirstamp) \
 	config/$(DEPDIR)/$(am__dirstamp)
 config/m68k-parse.$(OBJEXT): config/$(am__dirstamp) \
@@ -1370,9 +1355,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/bfin-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-crisaout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-criself.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386aout.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386coff.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-i386elf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/e-mipself.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/kvx-parse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/loongarch-lex.Po@am__quote@
@@ -1432,7 +1414,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-msp430.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-mt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-nds32.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-nios2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-ns32k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-or1k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/tc-pdp11.Po@am__quote@

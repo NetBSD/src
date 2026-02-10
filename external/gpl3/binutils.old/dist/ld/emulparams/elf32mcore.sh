@@ -30,10 +30,6 @@ TEMPLATE_NAME=elf
 
 # This code gets inserted into the generic elf32.sc linker script
 # and allows us to define our own command line switches.
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_BASE_FILE		300
-'
-
 PARSE_AND_LIST_LONGOPTS='
   {"base-file", required_argument, NULL, OPTION_BASE_FILE},
 '
@@ -46,6 +42,6 @@ PARSE_AND_LIST_ARGS_CASES='
     case OPTION_BASE_FILE:
       link_info.base_file = fopen (optarg, FOPEN_WB);
       if (link_info.base_file == NULL)
-	einfo (_("%F%P: cannot open base file %s\n"), optarg);
+	fatal (_("%P: cannot open base file %s\n"), optarg);
       break;
 '

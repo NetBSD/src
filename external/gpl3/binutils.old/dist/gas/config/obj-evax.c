@@ -1,5 +1,5 @@
 /* obj-evax.c - EVAX (openVMS/Alpha) object file format.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
    Extensively enhanced by Douglas Rupp of AdaCore.
@@ -107,8 +107,7 @@ evax_frob_symbol (symbolS *sym, int *punt)
 
   else if ((symbol->flags & BSF_GLOBAL) && (symbol->flags & BSF_FUNCTION))
     {
-      struct evax_private_udata_struct *udata
-	= (struct evax_private_udata_struct *)symbol->udata.p;
+      struct evax_private_udata_struct *udata = symbol->udata.p;
 
       /* Fix up equates of function definitions.  */
       while (udata->enbsym == NULL)

@@ -1,7 +1,7 @@
 /* Utilities to execute a program in a subprocess (possibly linked by pipes
    with other subprocesses), and wait for it.  Generic Unix version
    (also used for UWIN and VMS).
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -695,6 +695,7 @@ pex_unix_exec_child (struct pex_obj *obj ATTRIBUTE_UNUSED,
 	{
 	  *err = ret;
 	  *errmsg = "posix_spawnp";
+	  pid = -1; /* The value of pid is unspecified on failure.  */
 	  goto exit;
 	}
     }
@@ -705,6 +706,7 @@ pex_unix_exec_child (struct pex_obj *obj ATTRIBUTE_UNUSED,
 	{
 	  *err = ret;
 	  *errmsg = "posix_spawn";
+	  pid = -1;
 	  goto exit;
 	}
     }

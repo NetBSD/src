@@ -1,5 +1,5 @@
 /* tc-m32r.h -- Header file for tc-m32r.c.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -42,6 +42,9 @@ extern const char *m32r_target_format (void);
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1
 
+/* '||' denotes parallel instruction */
+#define DOUBLEBAR_PARALLEL
+
 #define DIFF_EXPR_OK		/* .-foo gets turned into PC relative relocs.  */
 
 /* We don't need to handle .word strangely.  */
@@ -60,9 +63,9 @@ extern long m32r_relax_frag (segT, fragS *, long);
 
 /* Fill in rs_align_code fragments.  */
 extern void m32r_handle_align (fragS *);
-#define HANDLE_ALIGN(f)  m32r_handle_align (f)
+#define HANDLE_ALIGN(s, f)  m32r_handle_align (f)
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (1 + 2 + 4)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (1 + 2 + 4)
 
 /* Values passed to md_apply_fix don't include the symbol value.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0

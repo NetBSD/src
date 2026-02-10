@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -363,8 +363,7 @@ arc_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      elf_arc_link_hash_newfunc,
-				      sizeof (struct elf_arc_link_hash_entry),
-				      ARC_ELF_DATA))
+				      sizeof (struct elf_arc_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1045,9 +1044,6 @@ static bool
 arc_elf_final_write_processing (bfd *abfd)
 {
   unsigned long emf;
-  int osver = bfd_elf_get_obj_attr_int (abfd, OBJ_ATTR_PROC,
-					Tag_ARC_ABI_osver);
-  flagword e_flags = elf_elfheader (abfd)->e_flags & ~EF_ARC_OSABI_MSK;
 
   switch (bfd_get_mach (abfd))
     {
@@ -1062,12 +1058,15 @@ arc_elf_final_write_processing (bfd *abfd)
   elf_elfheader (abfd)->e_machine = emf;
 
   /* Record whatever is the current syscall ABI version.  */
+  int osver = bfd_elf_get_obj_attr_int (abfd, OBJ_ATTR_PROC,
+					Tag_ARC_ABI_osver);
+  flagword e_flags = elf_elfheader (abfd)->e_flags;
   if (osver)
-    e_flags |= ((osver & 0x0f) << 8);
-  else
+    e_flags = (e_flags & ~EF_ARC_OSABI_MSK) | ((osver & 0x0f) << 8);
+  else if ((e_flags & EF_ARC_OSABI_MSK) == 0)
     e_flags |= E_ARC_OSABI_V3;
 
-  elf_elfheader (abfd)->e_flags |= e_flags;
+  elf_elfheader (abfd)->e_flags = e_flags;
   return _bfd_elf_final_write_processing (abfd);
 }
 
@@ -2486,9 +2485,6 @@ elf_arc_finish_dynamic_symbol (bfd * output_bfd,
     {
       struct elf_arc_link_hash_table *arc_htab = elf_arc_hash_table (info);
 
-      if (arc_htab == NULL)
-	return false;
-
       if (h->dynindx == -1
 	  || (h->root.type != bfd_link_hash_defined
 	      && h->root.type != bfd_link_hash_defweak)
@@ -2715,8 +2711,8 @@ elf_arc_finish_dynamic_sections (bfd * output_bfd,
 
 /* Set the sizes of the dynamic sections.  */
 static bool
-elf_arc_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-			       struct bfd_link_info *info)
+elf_arc_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			    struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
@@ -2724,7 +2720,8 @@ elf_arc_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   dynobj = htab->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->dynamic_sections_created)
     {
@@ -2738,6 +2735,7 @@ elf_arc_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof (ELF_DYNAMIC_INTERPRETER);
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
 
       /* Add some entries to the .dynamic section.  We fill in some of
@@ -2800,6 +2798,7 @@ elf_arc_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs_exist);
@@ -3140,7 +3139,7 @@ arc_elf_relax_section (bfd *abfd, asection *sec,
 #define elf_backend_finish_dynamic_symbol    elf_arc_finish_dynamic_symbol
 
 #define elf_backend_finish_dynamic_sections  elf_arc_finish_dynamic_sections
-#define elf_backend_size_dynamic_sections    elf_arc_size_dynamic_sections
+#define elf_backend_late_size_sections       elf_arc_late_size_sections
 
 #define elf_backend_can_gc_sections	1
 #define elf_backend_want_got_plt	1
