@@ -1,4 +1,4 @@
-# $NetBSD: t_crt0.sh,v 1.5 2018/12/27 19:33:52 christos Exp $
+# $NetBSD: t_crt0.sh,v 1.6 2026/02/10 07:28:24 skrll Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -105,6 +105,16 @@ initfini_array_body()
 	atf_check -x "$(atf_get_srcdir)/h_initfini_array"
 }
 
+atf_test_case preinit_array
+preinit_array_head()
+{
+	atf_set "descr" "Checks support for preinit_array sections"
+}
+preinit_array_body()
+{
+	atf_check -x "$(atf_get_srcdir)/h_preinit_array"
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case initfini1
@@ -112,4 +122,5 @@ atf_init_test_cases()
 	atf_add_test_case initfini3
 	atf_add_test_case initfini4
 	atf_add_test_case initfini_array
+	atf_add_test_case preinit_array
 }
