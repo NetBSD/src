@@ -1,5 +1,5 @@
 /* tc-mn10300.c -- Assembler code for the Matsushita 10300
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -107,14 +107,14 @@ static int fc;
    verify that certain registers do not match.  */
 int mn10300_reg_operands[MN10300_MAX_OPERANDS];
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 #define HAVE_AM33_2 (current_machine == AM33_2)
 #define HAVE_AM33   (current_machine == AM33 || HAVE_AM33_2)
@@ -466,7 +466,6 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
   static unsigned long label_count = 0;
   char buf[40];
 
-  subseg_change (sec, 0);
   if (fragP->fr_subtype == 0)
     {
       fix_new (fragP, fragP->fr_fix + 1, 1, fragP->fr_symbol,
@@ -902,7 +901,7 @@ md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_section_alignment (seg);
 
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 void
@@ -923,7 +922,7 @@ md_begin (void)
     {
       if (strcmp (prev_name, op->name))
 	{
-	  prev_name = (char *) op->name;
+	  prev_name = op->name;
 	  str_hash_insert (mn10300_hash, op->name, op, 0);
 	}
       op++;
@@ -1103,7 +1102,7 @@ check_operand (const struct mn10300_operand *operand,
 
       test = val;
 
-      if (test < (offsetT) min || test > (offsetT) max)
+      if (test < min || test > max)
 	return false;
     }
   return true;
@@ -1146,8 +1145,9 @@ mn10300_insert_operand (unsigned long *insnp,
 
       test = val;
 
-      if (test < (offsetT) min || test > (offsetT) max)
-	as_warn_value_out_of_range (_("operand"), test, (offsetT) min, (offsetT) max, file, line);
+      if (test < min || test > max)
+	as_warn_value_out_of_range (_("operand"), test, (offsetT) min,
+				    (offsetT) max, file, line);
     }
 
   if ((operand->flags & MN10300_OPERAND_SPLIT) != 0)
@@ -1209,20 +1209,20 @@ mn10300_insert_operand (unsigned long *insnp,
     }
   else if ((operand->flags & MN10300_OPERAND_EXTENDED) == 0)
     {
-      *insnp |= (((long) val & ((1 << operand->bits) - 1))
+      *insnp |= ((val & ((1 << operand->bits) - 1))
 		 << (operand->shift + shift));
 
       if ((operand->flags & MN10300_OPERAND_REPEATED) != 0)
-	*insnp |= (((long) val & ((1 << operand->bits) - 1))
+	*insnp |= ((val & ((1 << operand->bits) - 1))
 		   << (operand->shift + shift + operand->bits));
     }
   else
     {
-      *extensionp |= (((long) val & ((1 << operand->bits) - 1))
+      *extensionp |= ((val & ((1 << operand->bits) - 1))
 		      << (operand->shift + shift));
 
       if ((operand->flags & MN10300_OPERAND_REPEATED) != 0)
-	*extensionp |= (((long) val & ((1 << operand->bits) - 1))
+	*extensionp |= ((val & ((1 << operand->bits) - 1))
 			<< (operand->shift + shift + operand->bits));
     }
 }
@@ -1241,13 +1241,13 @@ md_assemble (char *str)
   int match;
 
   /* Get the opcode.  */
-  for (s = str; *s != '\0' && !ISSPACE (*s); s++)
+  for (s = str; !is_end_of_stmt (*s) && !is_whitespace (*s); s++)
     ;
   if (*s != '\0')
     *s++ = '\0';
 
   /* Find the first opcode with the proper name.  */
-  opcode = (struct mn10300_opcode *) str_hash_find (mn10300_hash, str);
+  opcode = str_hash_find (mn10300_hash, str);
   if (opcode == NULL)
     {
       as_bad (_("Unrecognized opcode: `%s'"), str);
@@ -1255,7 +1255,7 @@ md_assemble (char *str)
     }
 
   str = s;
-  while (ISSPACE (*str))
+  while (is_whitespace (*str))
     ++str;
 
   input_line_pointer = str;
@@ -1304,7 +1304,7 @@ md_assemble (char *str)
 	      next_opindex = 0;
 	    }
 
-	  while (*str == ' ' || *str == ',')
+	  while (is_whitespace (*str) || *str == ',')
 	    ++str;
 
 	  if (operand->flags & MN10300_OPERAND_RELAX)
@@ -1764,7 +1764,7 @@ md_assemble (char *str)
 	  str = input_line_pointer;
 	  input_line_pointer = hold;
 
-	  while (*str == ' ' || *str == ',')
+	  while (is_whitespace (*str) || *str == ',')
 	    ++str;
 	}
 
@@ -1815,10 +1815,10 @@ md_assemble (char *str)
       break;
     }
 
-  while (ISSPACE (*str))
+  while (is_whitespace (*str))
     ++str;
 
-  if (*str != '\0')
+  if (!is_end_of_stmt (*str))
     as_bad (_("junk at end of line: `%s'"), str);
 
   input_line_pointer = str;
@@ -2145,7 +2145,7 @@ md_assemble (char *str)
 
 	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
 				  reloc_size / 8, &fixups[i].exp, pcrel,
-				  ((bfd_reloc_code_real_type) reloc));
+				  reloc);
 
 	      if (pcrel)
 		fixP->fx_offset += offset;
@@ -2169,7 +2169,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
   static arelent * relocs[MAX_RELOC_EXPANSION + 1];
   arelent *reloc;
 
-  reloc = XNEW (arelent);
+  reloc = notes_alloc (sizeof (arelent));
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
   if (reloc->howto == NULL)
@@ -2177,8 +2177,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("reloc %d not supported by object file format"),
 		    (int) fixp->fx_r_type);
-      free (reloc);
-      return & no_relocs;
+      return &no_relocs;
     }
 
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -2205,7 +2204,7 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 	 even local symbols defined in the same section.  */
       if (ssec != absolute_section || asec != absolute_section)
 	{
-	  arelent * reloc2 = XNEW (arelent);
+	  arelent *reloc2 = notes_alloc (sizeof (arelent));
 
 	  relocs[0] = reloc2;
 	  relocs[1] = reloc;
@@ -2213,18 +2212,18 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 	  reloc2->address = reloc->address;
 	  reloc2->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_MN10300_SYM_DIFF);
 	  reloc2->addend = - S_GET_VALUE (fixp->fx_subsy);
-	  reloc2->sym_ptr_ptr = XNEW (asymbol *);
+	  reloc2->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
 	  *reloc2->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
 
 	  reloc->addend = fixp->fx_offset;
 	  if (asec == absolute_section)
 	    {
 	      reloc->addend += S_GET_VALUE (fixp->fx_addsy);
-	      reloc->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      reloc->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	    }
 	  else
 	    {
-	      reloc->sym_ptr_ptr = XNEW (asymbol *);
+	      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
 	      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
 	    }
 
@@ -2258,18 +2257,16 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 	      break;
 
 	    default:
-	      reloc->sym_ptr_ptr
-		= (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
+	      reloc->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      return relocs;
 	    }
 
-	  free (reloc);
-	  return & no_relocs;
+	  return &no_relocs;
 	}
     }
   else
     {
-      reloc->sym_ptr_ptr = XNEW (asymbol *);
+      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       reloc->addend = fixp->fx_offset;
     }
@@ -2315,7 +2312,7 @@ md_estimate_size_before_relax (fragS *fragp, asection *seg)
 long
 md_pcrel_from (fixS *fixp)
 {
-  if (fixp->fx_addsy != (symbolS *) NULL
+  if (fixp->fx_addsy != NULL
       && (!S_IS_DEFINED (fixp->fx_addsy) || S_IS_WEAK (fixp->fx_addsy)))
     /* The symbol is undefined or weak.  Let the linker figure it out.  */
     return 0;
@@ -2328,7 +2325,7 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg)
 {
   char * fixpos = fixP->fx_where + fixP->fx_frag->fr_literal;
   int size = 0;
-  int value = (int) * valP;
+  int value = *valP;
 
   gas_assert (fixP->fx_r_type < BFD_RELOC_UNUSED);
 
@@ -2478,13 +2475,13 @@ mn10300_parse_name (char const *name,
       /* If we have an absolute symbol or a reg,
 	 then we know its value now.  */
       segment = S_GET_SEGMENT (exprP->X_add_symbol);
-      if (mode != expr_defer && segment == absolute_section)
+      if (!expr_defer_p (mode) && segment == absolute_section)
 	{
 	  exprP->X_op = O_constant;
 	  exprP->X_add_number = S_GET_VALUE (exprP->X_add_symbol);
 	  exprP->X_add_symbol = NULL;
 	}
-      else if (mode != expr_defer && segment == reg_section)
+      else if (!expr_defer_p (mode) && segment == reg_section)
 	{
 	  exprP->X_op = O_register;
 	  exprP->X_add_number = S_GET_VALUE (exprP->X_add_symbol);

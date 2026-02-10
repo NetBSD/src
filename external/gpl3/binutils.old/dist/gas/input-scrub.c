@@ -1,5 +1,5 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -150,6 +150,21 @@ input_scrub_reinit (void)
   memcpy (buffer_start, BEFORE_STRING, (int) BEFORE_SIZE);
 }
 
+/* Finish off old buffers.  */
+
+static void
+input_scrub_free (void)
+{
+  if (sb_index != (size_t) -1)
+    {
+      sb_kill (&from_sb);
+      sb_index = -1;
+    }
+  free (buffer_start);
+  buffer_start = NULL;
+  input_file_end ();
+}
+
 /* Push the state of input reading and scrubbing so that we can #include.
    The return value is a 'void *' (fudged for old compilers) to a save
    area, which can be restored by passing it to input_scrub_pop().  */
@@ -188,16 +203,29 @@ input_scrub_pop (struct input_save *saved)
 {
   char *saved_position;
 
-  input_scrub_end ();		/* Finish off old buffer */
+  input_scrub_free ();
 
   input_file_pop (saved->input_file_save);
   saved_position = saved->saved_position;
   buffer_start = saved->buffer_start;
   buffer_length = saved->buffer_length;
-  physical_input_file = saved->physical_input_file;
+
+  /* When expanding an #APP / #NO_APP block, original lines are re-
+     processed, so whatever they did to physical file/line needs
+     retaining.  If logical file/line weren't changed, the logical
+     line number will want bumping by a corresponding value.  */
+  if (from_sb_expansion != expanding_app)
+    {
+      if (logical_input_file == 0 && logical_input_line == -1u
+	  && saved->logical_input_line != -1u)
+	saved->logical_input_line
+	  += physical_input_line - saved->physical_input_line;
+      physical_input_file = saved->physical_input_file;
+      physical_input_line = saved->physical_input_line;
+    }
   logical_input_file = saved->logical_input_file;
-  physical_input_line = saved->physical_input_line;
   logical_input_line = saved->logical_input_line;
+
   is_linefile = saved->is_linefile;
   sb_index = saved->sb_index;
   from_sb = saved->from_sb;
@@ -228,12 +256,9 @@ input_scrub_begin (void)
 void
 input_scrub_end (void)
 {
-  if (buffer_start)
-    {
-      free (buffer_start);
-      buffer_start = 0;
-      input_file_end ();
-    }
+  while (next_saved_file != NULL)
+    input_scrub_pop (next_saved_file);
+  input_scrub_free ();
 }
 
 /* Start reading input from a new file.
@@ -270,9 +295,12 @@ input_scrub_include_sb (sb *from, char *position, enum expansion expansion)
 {
   int newline;
 
-  if (macro_nest > max_macro_nest)
-    as_fatal (_("macros nested too deeply"));
-  ++macro_nest;
+  if (expansion != expanding_app)
+    {
+      if (macro_nest > max_macro_nest)
+	as_fatal (_("macros nested too deeply"));
+      ++macro_nest;
+    }
 
 #ifdef md_macro_start
   if (expansion == expanding_macro)
@@ -325,7 +353,6 @@ input_scrub_next_buffer (char **bufp)
     {
       if (sb_index >= from_sb.len)
 	{
-	  sb_kill (&from_sb);
 	  if (from_sb_expansion == expanding_macro)
 	    {
 	      cond_finish_check (macro_nest);
@@ -335,7 +362,8 @@ input_scrub_next_buffer (char **bufp)
 	      md_macro_end ();
 #endif
 	    }
-	  --macro_nest;
+	  if (from_sb_expansion != expanding_app)
+	    --macro_nest;
 	  partial_where = NULL;
 	  partial_size = 0;
 	  if (next_saved_file != NULL)
@@ -386,18 +414,13 @@ input_scrub_next_buffer (char **bufp)
 	  ++p;
 	}
 
-      if (multibyte_handling == multibyte_warn)
-	(void) scan_for_multibyte_characters ((const unsigned char *) p,
-					      (const unsigned char *) limit,
-					      true /* Generate warnings */);
-
       /* We found a newline in the newly read chars.  */
       partial_where = p;
       partial_size = limit - p;
 
       /* Save the fragment after that last newline.  */
-      memcpy (save_source, partial_where, (int) AFTER_SIZE);
-      memcpy (partial_where, AFTER_STRING, (int) AFTER_SIZE);
+      memcpy (save_source, partial_where, AFTER_SIZE);
+      memcpy (partial_where, AFTER_STRING, AFTER_SIZE);
       return partial_where;
 
     read_more:
@@ -437,7 +460,7 @@ seen_at_least_1_file (void)
 void
 bump_line_counters (void)
 {
-  if (sb_index == (size_t) -1)
+  if (sb_index == (size_t) -1 || from_sb_expansion == expanding_app)
     ++physical_input_line;
 
   if (logical_input_line != -1u)

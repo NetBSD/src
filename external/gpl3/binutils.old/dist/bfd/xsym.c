@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -61,7 +61,6 @@
   _bfd_generic_copy_link_hash_symbol_type
 #define bfd_sym_bfd_final_link			    _bfd_generic_final_link
 #define bfd_sym_bfd_link_split_section		    _bfd_generic_link_split_section
-#define bfd_sym_get_section_contents_in_window	    _bfd_generic_get_section_contents_in_window
 #define bfd_sym_bfd_link_check_relocs		    _bfd_generic_link_check_relocs
 
 extern const bfd_target sym_vec;
@@ -131,7 +130,7 @@ bfd_sym_read_name_table (bfd *abfd, bfd_sym_header_block *dshb)
   size_t table_offset = dshb->dshb_nte.dti_first_page * dshb->dshb_page_size;
 
   if (bfd_seek (abfd, table_offset, SEEK_SET) != 0)
-    return false;
+    return NULL;
   return _bfd_alloc_and_read (abfd, table_size, table_size);
 }
 
@@ -2225,8 +2224,6 @@ bfd_sym_scan (bfd *abfd, bfd_sym_version version, bfd_sym_data_struct *mdata)
   bfdsec->filepos = 0;
   bfdsec->alignment_power = 0;
 
-  abfd->tdata.sym_data = mdata;
-
   return 0;
 }
 
@@ -2234,7 +2231,7 @@ bfd_cleanup
 bfd_sym_object_p (bfd *abfd)
 {
   bfd_sym_version version = -1;
-  bfd_sym_data_struct *mdata;
+  bfd_sym_data_struct *mdata = NULL;
 
   if (bfd_seek (abfd, 0, SEEK_SET) != 0
       || bfd_sym_read_version (abfd, &version) != 0)
@@ -2247,12 +2244,15 @@ bfd_sym_object_p (bfd *abfd)
   if (bfd_sym_scan (abfd, version, mdata) != 0)
     goto wrong;
 
+  abfd->tdata.sym_data = mdata;
   return _bfd_no_cleanup;
 
  wrong:
   bfd_set_error (bfd_error_wrong_format);
 
  fail:
+  if (mdata)
+    bfd_release (abfd, mdata);
   return NULL;
 }
 

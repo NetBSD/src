@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.prog,v 1.10 2025/08/24 17:57:16 christos Exp $
+#	$NetBSD: Makefile.prog,v 1.11 2026/02/10 19:59:54 christos Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
 
-BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
-CPPFLAGS+=	-I${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}
-
 .include <bsd.init.mk>
+
+BINUTILS_MACHINE_ARCH?=${MACHINE_ARCH:C/armv[4-7]/arm/}
+CPPFLAGS+=	-I${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/../common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"

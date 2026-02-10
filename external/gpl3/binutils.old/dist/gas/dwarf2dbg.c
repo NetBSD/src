@@ -1,5 +1,5 @@
 /* dwarf2dbg.c - DWARF2 debug support
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -171,10 +171,18 @@ struct line_entry
   struct dwarf2_line_info loc;
 };
 
-/* Don't change the offset of next in line_entry.  set_or_check_view
-   calls in dwarf2_gen_line_info_1 depend on it.  */
-static char unused[offsetof(struct line_entry, next) ? -1 : 1]
-ATTRIBUTE_UNUSED;
+/* Given line_entry list HEAD and PTAIL pointers, return a pointer to
+   the last line_entry on the list.  */
+static inline struct line_entry *
+line_entry_at_tail (void *head, struct line_entry **ptail)
+{
+  /* If the list is empty ptail points at head.  */
+  if (head == NULL)
+    return NULL;
+  /* Otherwise ptail points to line_entry.next of the last entry.  */
+  void *p = (char *) ptail - offsetof (struct line_entry, next);
+  return p;
+}
 
 struct line_subseg
 {
@@ -528,7 +536,8 @@ dwarf2_gen_line_info_1 (symbolS *label, struct dwarf2_line_info *loc)
   /* Subseg heads are chained to previous subsegs in
      dwarf2_finish.  */
   if (loc->filenum != -1u && loc->u.view && lss->head)
-    set_or_check_view (e, (struct line_entry *) lss->ptail, lss->head);
+    set_or_check_view (e, line_entry_at_tail (lss->head, lss->ptail),
+		       lss->head);
 
   *lss->ptail = e;
   lss->ptail = &e->next;
@@ -650,9 +659,8 @@ get_directory_table_entry (const char *dirname,
 		 is set to the current build directory).  Since we are
 		 about to create a directory entry that is not the
 		 same, allocate the current directory first.  */
-	      (void) get_directory_table_entry (pwd, file0_dirname,
-						strlen (pwd), true);
-	      d = 1;
+	      (void) get_directory_table_entry (pwd, pwd, strlen (pwd), true);
+	      d = dirs_in_use;
 	    }
 	  else
 	    d = 0;
@@ -678,18 +686,17 @@ get_directory_table_entry (const char *dirname,
 }
 
 static bool
-assign_file_to_slot (unsigned int i, const char *file, unsigned int dir)
+assign_file_to_slot (valueT i, const char *file, unsigned int dir)
 {
   if (i >= files_allocated)
     {
       unsigned int want = i + 32;
 
-      /* Catch wraparound.  */
-      if (want < files_allocated
-	  || want < i
-	  || want > UINT_MAX / sizeof (struct file_entry))
+      /* If this array is taking 1G or more, someone is using silly
+	 file numbers.  */
+      if (want < i || want > UINT_MAX / 4 / sizeof (struct file_entry))
 	{
-	  as_bad (_("file number %u is too big"), i);
+	  as_bad (_("file number %" PRIu64 " is too big"), (uint64_t) i);
 	  return false;
 	}
 
@@ -843,7 +850,7 @@ purge_generated_debug (bool thelot)
 static bool
 allocate_filename_to_slot (const char *dirname,
 			   const char *filename,
-			   unsigned int num,
+			   valueT num,
 			   bool with_md5)
 {
   const char *file;
@@ -883,6 +890,8 @@ allocate_filename_to_slot (const char *dirname,
 		}
 	      
 	      dirs[files[num].dir] = xmemdup0 (dirname, strlen (dirname));
+	      if (dirs_in_use <= files[num].dir)
+		dirs_in_use = files[num].dir + 1;
 	    }
 	    
 	  return true;
@@ -911,14 +920,17 @@ allocate_filename_to_slot (const char *dirname,
 		    }
 
 		  dirs[files[num].dir] = xmemdup0 (filename, file - filename);
+		  if (dirs_in_use <= files[num].dir)
+		    dirs_in_use = files[num].dir + 1;
 		}
 	      return true;
 	    }
 	}
 
     fail:
-      as_bad (_("file table slot %u is already occupied by a different file (%s%s%s vs %s%s%s)"),
-	      num,
+      as_bad (_("file table slot %u is already occupied by a different file"
+		" (%s%s%s vs %s%s%s)"),
+	      (unsigned int) num,
 	      dir == NULL ? "" : dir,
 	      dir == NULL ? "" : "/",
 	      files[num].filename,
@@ -964,7 +976,7 @@ allocate_filename_to_slot (const char *dirname,
   d = get_directory_table_entry (dirname, file0_dirname, dirlen, num == 0);
   i = num;
 
-  if (! assign_file_to_slot (i, file, d))
+  if (!assign_file_to_slot (num, file, d))
     return false;
 
   if (with_md5)
@@ -1224,15 +1236,7 @@ dwarf2_directive_filename (void)
     purge_generated_debug (false);
   debug_type = DEBUG_NONE;
 
-  if (num != (unsigned int) num
-      || num >= (size_t) -1 / sizeof (struct file_entry) - 32)
-    {
-      as_bad (_("file number %lu is too big"), (unsigned long) num);
-      return NULL;
-    }
-
-  if (! allocate_filename_to_slot (dirname, filename, (unsigned int) num,
-				   with_md5))
+  if (!allocate_filename_to_slot (dirname, filename, num, with_md5))
     return NULL;
 
   return filename;
@@ -1326,21 +1330,21 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
       if (strcmp (p, "basic_block") == 0)
 	{
 	  current.flags |= DWARF2_FLAG_BASIC_BLOCK;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else if (strcmp (p, "prologue_end") == 0)
 	{
 	  if (dwarf_level < 3)
 	    dwarf_level = 3;
 	  current.flags |= DWARF2_FLAG_PROLOGUE_END;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else if (strcmp (p, "epilogue_begin") == 0)
 	{
 	  if (dwarf_level < 3)
 	    dwarf_level = 3;
 	  current.flags |= DWARF2_FLAG_EPILOGUE_BEGIN;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else if (strcmp (p, "is_stmt") == 0)
 	{
@@ -1442,7 +1446,7 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
 	  return;
 	}
 
-      SKIP_WHITESPACE_AFTER_NAME ();
+      SKIP_WHITESPACE ();
     }
 
   demand_empty_rest_of_line ();
@@ -1628,7 +1632,7 @@ size_inc_line_addr (int line_delta, addressT addr_delta)
     }
 
   /* Bias the line delta by the base.  */
-  tmp = line_delta - DWARF2_LINE_BASE;
+  tmp = (unsigned) line_delta - DWARF2_LINE_BASE;
 
   /* If the line increment is out of range of a special opcode, we
      must encode it with DW_LNS_advance_line.  */
@@ -1699,7 +1703,7 @@ emit_inc_line_addr (int line_delta, addressT addr_delta, char *p, int len)
     }
 
   /* Bias the line delta by the base.  */
-  tmp = line_delta - DWARF2_LINE_BASE;
+  tmp = (unsigned) line_delta - DWARF2_LINE_BASE;
 
   /* If the line increment is out of range of a special opcode, we
      must encode it with DW_LNS_advance_line.  */
@@ -3024,6 +3028,11 @@ out_debug_str (segT str_seg, symbolS **name_sym, symbolS **comp_dir_sym,
   int len;
   int first_file = DWARF2_LINE_VERSION > 4 ? 0 : 1;
 
+  if (files_in_use == 0)
+    abort ();
+  if (first_file == 0 && files[first_file].filename == NULL)
+    first_file = 1;
+
   subseg_set (str_seg, 0);
 
   /* DW_AT_name.  We don't have the actual file name that was present
@@ -3031,8 +3040,7 @@ out_debug_str (segT str_seg, symbolS **name_sym, symbolS **comp_dir_sym,
      We're not supposed to get called unless at least one line number
      entry was emitted, so this should always be defined.  */
   *name_sym = symbol_temp_new_now_octets ();
-  if (files_in_use == 0)
-    abort ();
+
   if (files[first_file].dir)
     {
       char *dirname = remap_debug_filename (dirs[files[first_file].dir]);
@@ -3195,8 +3203,7 @@ dwarf2_finish (void)
 	  /* Link the first view of subsequent subsections to the
 	     previous view.  */
 	  if (lss->head && lss->head->loc.u.view)
-	    set_or_check_view (lss->head,
-			       !s->head ? NULL : (struct line_entry *)ptail,
+	    set_or_check_view (lss->head, line_entry_at_tail (s->head, ptail),
 			       s->head ? s->head->head : NULL);
 	  *ptail = lss->head;
 	  lss->head = NULL;

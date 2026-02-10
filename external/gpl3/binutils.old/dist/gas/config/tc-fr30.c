@@ -1,5 +1,5 @@
 /* tc-fr30.c -- Assembler for the Fujitsu FR30.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -55,13 +55,13 @@ const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
 #define FR30_SHORTOPTS ""
-const char * md_shortopts = FR30_SHORTOPTS;
+const char md_shortopts[] = FR30_SHORTOPTS;
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED,
@@ -156,7 +156,7 @@ md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
 
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 symbolS *
@@ -272,7 +272,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS * fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     /* The symbol is undefined (or is defined but not in this section).
@@ -359,7 +359,7 @@ fr30_is_colon_insn (char *start, char *nul_char)
     {
       /* Nope - check to see a 'd' follows the colon.  */
       if (   (i_l_p[1] == 'd' || i_l_p[1] == 'D')
-	  && (i_l_p[2] == ' ' || i_l_p[2] == '\t' || i_l_p[2] == '\n'))
+	  && (is_whitespace (i_l_p[2]) || is_end_of_stmt (i_l_p[2])))
 	{
 	  /* Yup - it might be delay slot instruction.  */
 	  int           i;
@@ -393,17 +393,17 @@ fr30_is_colon_insn (char *start, char *nul_char)
     }
 
   /* Check to see if the text following the colon is '8'.  */
-  if (i_l_p[1] == '8' && (i_l_p[2] == ' ' || i_l_p[2] == '\t'))
+  if (i_l_p[1] == '8' && is_whitespace (i_l_p[2]))
     return restore_colon (i_l_p + 2, nul_char);
 
   /* Check to see if the text following the colon is '20'.  */
   else if (i_l_p[1] == '2' && i_l_p[2] =='0'
-	   && (i_l_p[3] == ' ' || i_l_p[3] == '\t'))
+	   && is_whitespace (i_l_p[3]))
     return restore_colon (i_l_p + 3, nul_char);
 
   /* Check to see if the text following the colon is '32'.  */
   else if (i_l_p[1] == '3' && i_l_p[2] =='2'
-	   && (i_l_p[3] == ' ' || i_l_p[3] == '\t'))
+	   && is_whitespace (i_l_p[3]))
     return restore_colon (i_l_p + 3, nul_char);
 
   return 0;

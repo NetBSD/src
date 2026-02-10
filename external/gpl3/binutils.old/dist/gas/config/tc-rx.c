@@ -1,5 +1,5 @@
 /* tc-rx.c -- Assembler for the Renesas RX
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -78,10 +78,10 @@ enum options
 };
 
 #define RX_SHORTOPTS ""
-const char * md_shortopts = RX_SHORTOPTS;
+const char md_shortopts[] = RX_SHORTOPTS;
 
 /* Assembler options.  */
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {"mbig-endian-data", no_argument, NULL, OPTION_BIG},
   {"mlittle-endian-data", no_argument, NULL, OPTION_LITTLE},
@@ -105,7 +105,7 @@ struct option md_longopts[] =
   {"mno-allow-string-insns", no_argument, NULL, OPTION_DISALLOW_STRING_INSNS},
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 struct cpu_type
 {
@@ -282,7 +282,8 @@ rx_include (int ignore)
   last_char = find_end_of_line (filename, false);
   input_line_pointer = last_char;
 
-  while (last_char >= filename && (* last_char == ' ' || * last_char == '\n'))
+  while (last_char >= filename
+	 && (is_whitespace (* last_char) || is_end_of_stmt (* last_char)))
     -- last_char;
   end_char = *(++ last_char);
   * last_char = 0;
@@ -425,14 +426,14 @@ parse_rx_section (char * name)
 	{
 	  *p = end_char;
 
-	  if (end_char == ' ')
-	    while (ISSPACE (*p))
+	  if (is_whitespace (end_char))
+	    while (is_whitespace (*p))
 	      p++;
 
 	  if (*p == '=')
 	    {
 	      ++ p;
-	      while (ISSPACE (*p))
+	      while (is_whitespace (*p))
 		p++;
 	      switch (*p)
 		{
@@ -517,7 +518,7 @@ rx_section (int ignore)
     {
       int len = p - input_line_pointer;
 
-      while (ISSPACE (*++p))
+      while (is_whitespace (*++p))
 	;
 
       if (*p != '"' && *p != '#')
@@ -1060,7 +1061,7 @@ rx_equ (char * name, char * expression)
   char * name_end;
   char * saved_ilp;
 
-  while (ISSPACE (* name))
+  while (is_whitespace (* name))
     name ++;
 
   for (name_end = name + 1; *name_end; name_end ++)
@@ -1094,7 +1095,7 @@ scan_for_infix_rx_pseudo_ops (char * str)
     return false;
 
   /* A real pseudo-op must be preceded by whitespace.  */
-  if (dot[-1] != ' ' && dot[-1] != '\t')
+  if (!is_whitespace (dot[-1]))
     return false;
 
   pseudo_op = dot + 1;
@@ -2251,13 +2252,13 @@ rx_cons_fix_new (fragS *	frag,
 	type = BFD_RELOC_RX_DIFF;
     }
 
-  fix_new_exp (frag, where, (int) size, exp, 0, type);
+  fix_new_exp (frag, where, size, exp, 0, type);
 }
 
 void
-md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
-	      valueT *     t ATTRIBUTE_UNUSED,
-	      segT         s ATTRIBUTE_UNUSED)
+md_apply_fix (struct fix *f,
+	      valueT *t,
+	      segT s ATTRIBUTE_UNUSED)
 {
   /* Instruction bytes are always little endian.  */
   char * op;
@@ -2273,7 +2274,7 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
 #define OP4(x) op[target_big_endian ? 3-x : x]
 
   op = f->fx_frag->fr_literal + f->fx_where;
-  val = (unsigned long) * t;
+  val = *t;
 
   /* Opcode words are always the same endian.  Data words are either
      big or little endian.  */
@@ -2466,11 +2467,11 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
       fixp->fx_subsy = NULL;
     }
 
-  reloc[0]		  = XNEW (arelent);
-  reloc[0]->sym_ptr_ptr   = XNEW (asymbol *);
-  * reloc[0]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-  reloc[0]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
-  reloc[0]->addend        = fixp->fx_offset;
+  reloc[0] = notes_alloc (sizeof (arelent));
+  reloc[0]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  *reloc[0]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  reloc[0]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc[0]->addend = fixp->fx_offset;
 
   if (fixp->fx_r_type == BFD_RELOC_RX_32_OP
       && fixp->fx_subsy)
@@ -2487,54 +2488,54 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
   switch (fixp->fx_r_type)
     {
     case BFD_RELOC_RX_DIFF:
-      reloc[0]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      reloc[0]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[1]		      = XNEW (arelent);
-      reloc[1]->sym_ptr_ptr   = XNEW (asymbol *);
-      * reloc[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
-      reloc[1]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
-      reloc[1]->addend        = 0;
-      reloc[1]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      reloc[1] = notes_alloc (sizeof (arelent));
+      reloc[1]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+      *reloc[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
+      reloc[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[1]->addend = 0;
+      reloc[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[2]		      = XNEW (arelent);
-      reloc[2]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
-      reloc[2]->addend        = 0;
-      reloc[2]->sym_ptr_ptr   = reloc[1]->sym_ptr_ptr;
-      reloc[2]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[2] = notes_alloc (sizeof (arelent));
+      reloc[2]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
+      reloc[2]->addend = 0;
+      reloc[2]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
+      reloc[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
-      reloc[3]		      = XNEW (arelent);
+      reloc[3] = notes_alloc (sizeof (arelent));
       switch (fixp->fx_size)
 	{
 	case 1:
-	  reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS8);
+	  reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS8);
 	  break;
 	case 2:
 	  if (!is_opcode && target_big_endian)
-	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16_REV);
+	    reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16_REV);
 	  else if (is_opcode)
-	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UL);
+	    reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UL);
 	  else
-	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16);
+	    reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16);
 	  break;
 	case 4:
 	  if (!is_opcode && target_big_endian)
-	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32_REV);
+	    reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32_REV);
 	  else
-	    reloc[3]->howto   = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
+	    reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
 	  break;
 	}
-      reloc[3]->addend      = 0;
+      reloc[3]->addend = 0;
       reloc[3]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[3]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[3]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc[4] = NULL;
       break;
 
     case BFD_RELOC_RX_GPRELL:
-      reloc[0]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      reloc[0]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[1]		      = XNEW (arelent);
-      reloc[1]->sym_ptr_ptr   = XNEW (asymbol *);
+      reloc[1] = notes_alloc (sizeof (arelent));
+      reloc[1]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       if (gp_symbol == NULL)
 	{
 	  if (symbol_table_frozen)
@@ -2550,31 +2551,31 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
 	  else
 	    gp_symbol = symbol_get_bfdsym (symbol_find_or_make ("__gp"));
 	}
-      * reloc[1]->sym_ptr_ptr = gp_symbol;
-      reloc[1]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
-      reloc[1]->addend        = 0;
-      reloc[1]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      *reloc[1]->sym_ptr_ptr = gp_symbol;
+      reloc[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[1]->addend = 0;
+      reloc[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[2]		    = XNEW (arelent);
-      reloc[2]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
-      reloc[2]->addend      = 0;
+      reloc[2] = notes_alloc (sizeof (arelent));
+      reloc[2]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
+      reloc[2]->addend = 0;
       reloc[2]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[2]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
-      reloc[3]		    = XNEW (arelent);
-      reloc[3]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UL);
-      reloc[3]->addend      = 0;
+      reloc[3] = notes_alloc (sizeof (arelent));
+      reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UL);
+      reloc[3]->addend = 0;
       reloc[3]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[3]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[3]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc[4] = NULL;
       break;
 
     case BFD_RELOC_RX_GPRELW:
-      reloc[0]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      reloc[0]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[1]		      = XNEW (arelent);
-      reloc[1]->sym_ptr_ptr   = XNEW (asymbol *);
+      reloc[1] = notes_alloc (sizeof (arelent));
+      reloc[1]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       if (gp_symbol == NULL)
 	{
 	  if (symbol_table_frozen)
@@ -2590,31 +2591,31 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
 	  else
 	    gp_symbol = symbol_get_bfdsym (symbol_find_or_make ("__gp"));
 	}
-      * reloc[1]->sym_ptr_ptr = gp_symbol;
-      reloc[1]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
-      reloc[1]->addend        = 0;
-      reloc[1]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      *reloc[1]->sym_ptr_ptr = gp_symbol;
+      reloc[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[1]->addend = 0;
+      reloc[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[2]		    = XNEW (arelent);
-      reloc[2]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
-      reloc[2]->addend      = 0;
+      reloc[2] = notes_alloc (sizeof (arelent));
+      reloc[2]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
+      reloc[2]->addend = 0;
       reloc[2]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[2]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
-      reloc[3]		    = XNEW (arelent);
-      reloc[3]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UW);
-      reloc[3]->addend      = 0;
+      reloc[3] = notes_alloc (sizeof (arelent));
+      reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16UW);
+      reloc[3]->addend = 0;
       reloc[3]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[3]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[3]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc[4] = NULL;
       break;
 
     case BFD_RELOC_RX_GPRELB:
-      reloc[0]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      reloc[0]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[1]		      = XNEW (arelent);
-      reloc[1]->sym_ptr_ptr   = XNEW (asymbol *);
+      reloc[1] = notes_alloc (sizeof (arelent));
+      reloc[1]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       if (gp_symbol == NULL)
 	{
 	  if (symbol_table_frozen)
@@ -2630,40 +2631,40 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
 	  else
 	    gp_symbol = symbol_get_bfdsym (symbol_find_or_make ("__gp"));
 	}
-      * reloc[1]->sym_ptr_ptr = gp_symbol;
-      reloc[1]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
-      reloc[1]->addend        = 0;
-      reloc[1]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      *reloc[1]->sym_ptr_ptr = gp_symbol;
+      reloc[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[1]->addend = 0;
+      reloc[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[2]		    = XNEW (arelent);
-      reloc[2]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
-      reloc[2]->addend      = 0;
+      reloc[2] = notes_alloc (sizeof (arelent));
+      reloc[2]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_SUBTRACT);
+      reloc[2]->addend = 0;
       reloc[2]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[2]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
-      reloc[3]		    = XNEW (arelent);
-      reloc[3]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16U);
-      reloc[3]->addend      = 0;
+      reloc[3] = notes_alloc (sizeof (arelent));
+      reloc[3]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS16U);
+      reloc[3]->addend = 0;
       reloc[3]->sym_ptr_ptr = reloc[1]->sym_ptr_ptr;
-      reloc[3]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[3]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc[4] = NULL;
       break;
 
     case BFD_RELOC_RX_NEG32:
-      reloc[0]->howto         = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
+      reloc[0]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_SYM);
 
-      reloc[1]		    = XNEW (arelent);
-      reloc[1]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_NEG);
-      reloc[1]->addend      = 0;
+      reloc[1] = notes_alloc (sizeof (arelent));
+      reloc[1]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_OP_NEG);
+      reloc[1]->addend = 0;
       reloc[1]->sym_ptr_ptr = reloc[0]->sym_ptr_ptr;
-      reloc[1]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
-      reloc[2]		    = XNEW (arelent);
-      reloc[2]->howto       = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
-      reloc[2]->addend      = 0;
+      reloc[2] = notes_alloc (sizeof (arelent));
+      reloc[2]->howto = bfd_reloc_type_lookup (stdoutput, BFD_RELOC_RX_ABS32);
+      reloc[2]->addend = 0;
       reloc[2]->sym_ptr_ptr = reloc[0]->sym_ptr_ptr;
-      reloc[2]->address     = fixp->fx_frag->fr_address + fixp->fx_where;
+      reloc[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       reloc[3] = NULL;
       break;
