@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -182,11 +182,12 @@ static void
 init_tracelevel ()
 {
 #if DEBUG
-  char *s = CALL_UTIL (getenv)("SP_COLLECTOR_TRACELEVEL");
+  char *s = CALL_UTIL (getenv)(SP_COLLECTOR_TRACELEVEL);
   if (s != NULL)
     __collector_tracelevel = CALL_UTIL (atoi)(s);
-  TprintfT (DBG_LT0, "collector: SP_COLLECTOR_TRACELEVEL=%d\n", __collector_tracelevel);
-  s = CALL_UTIL (getenv)("SP_COLLECTOR_DEBUG");
+  TprintfT (DBG_LT0, "collector: %s=%d\n", SP_COLLECTOR_TRACELEVEL,
+	   __collector_tracelevel);
+  s = CALL_UTIL (getenv)(SP_COLLECTOR_DEBUG);
   if (s != NULL)
     collector_debug_opt = CALL_UTIL (atoi)(s) & ~(SP_DUMP_TIME | SP_DUMP_FLAG);
 #endif
@@ -210,15 +211,10 @@ get_collector_interface ()
 static void
 collector_module_init (CollectorInterface *col_intf)
 {
-  int nmodules = 0;
-
   ModuleInitFunc next_init = (ModuleInitFunc) dlsym (RTLD_DEFAULT, "__collector_module_init");
   if (next_init != NULL)
-    {
-      nmodules++;
-      next_init (col_intf);
-    }
-  TprintfT (DBG_LT1, "collector_module_init: %d modules\n", nmodules);
+    next_init (col_intf);
+  TprintfT (DBG_LT1, "collector_module_init: %d modules\n", next_init ? 1 : 0);
 }
 
 /*   Routines concerned with general experiment start and stop */
@@ -244,21 +240,24 @@ collector_init ()
   collector_module_init (get_collector_interface ());
 
   /* determine experiment name */
-  char *exp = CALL_UTIL (getenv)("SP_COLLECTOR_EXPNAME");
+  char *exp = CALL_UTIL (getenv)(SP_COLLECTOR_EXPNAME);
   if ((exp == NULL) || (CALL_UTIL (strlen)(exp) == 0))
     {
-      TprintfT (DBG_LT0, "collector_init: SP_COLLECTOR_EXPNAME undefined - no experiment to start\n");
+      TprintfT (DBG_LT0, "collector_init: %s undefined. no experiment to start\n",
+		SP_COLLECTOR_EXPNAME);
       /* not set -- no experiment to run */
       return;
     }
   else
-    TprintfT (DBG_LT1, "collector_init: found SP_COLLECTOR_EXPNAME = %s\n", exp);
+    TprintfT (DBG_LT1, "collector_init: found %s = %s\n",
+		SP_COLLECTOR_EXPNAME, exp);
 
   /* determine the data descriptor for the experiment */
-  char *params = CALL_UTIL (getenv)("SP_COLLECTOR_PARAMS");
+  char *params = CALL_UTIL (getenv)(SP_COLLECTOR_PARAMS);
   if (params == NULL)
     {
-      TprintfT (0, "collector_init: SP_COLLECTOR_PARAMS undefined - no experiment to start\n");
+      TprintfT (0, "collector_init: %s undefined - no experiment to start\n",
+		SP_COLLECTOR_EXPNAME);
       return;
     }
 
@@ -499,7 +498,8 @@ __collector_open_experiment (const char *exp, const char *params, sp_origin_t or
       return COL_ERROR_EXPOPEN;
     }
   __collector_start_time = collector_interface.getHiResTime ();
-  TprintfT (DBG_LT1, "\n\t\t__collector_open_experiment(SP_COLLECTOR_EXPNAME=%s, params=%s, origin=%d); setting start_time\n",
+  TprintfT (DBG_LT1, "\n\t\t__collector_open_experiment(%s=%s, params=%s, "
+		     "origin=%d); setting start_time\n", SP_COLLECTOR_EXPNAME,
 	    exp, params, origin);
   if (environ)
     __collector_env_printall ("__collector_open_experiment", environ);
@@ -553,23 +553,20 @@ __collector_open_experiment (const char *exp, const char *params, sp_origin_t or
   is_founder = getpid ();
   if (origin != SP_ORIGIN_DBX_ATTACH)
     {
-      envar = CALL_UTIL (getenv)("SP_COLLECTOR_FOUNDER");
+      envar = CALL_UTIL (getenv)(SP_COLLECTOR_FOUNDER);
       if (envar)
 	is_founder = CALL_UTIL (atoi)(envar);
       if (is_founder != 0)
 	{
 	  if (is_founder != getpid ())
 	    {
-	      TprintfT (0, "__collector_open_experiment SP_COLLECTOR_FOUNDER=%d != pid(%d)\n",
-			is_founder, getpid ());
-	      //CALL_UTIL(fprintf)(stderr, "__collector_open_experiment SP_COLLECTOR_FOUNDER=%d != pid(%d); not recording experiment\n",
-	      //is_founder, getpid() );
-	      //return COL_ERROR_UNEXP_FOUNDER;
+	      TprintfT (0, "__collector_open_experiment %s=%d != pid(%d)\n",
+			SP_COLLECTOR_FOUNDER, is_founder, getpid ());
 	      is_founder = 0; // Special case (CR 22917352)
 	    }
 	  /* clear FOUNDER for descendant experiments */
-	  TprintfT (0, "__collector_open_experiment setting SP_COLLECTOR_FOUNDER=0\n");
-	  CALL_UTIL (strlcpy)(buffer, "SP_COLLECTOR_FOUNDER=0", sizeof (buffer));
+	  TprintfT (0, "__collector_open_experiment setting %s=0\n", SP_COLLECTOR_FOUNDER);
+	  CALL_UTIL (snprintf)(buffer, sizeof (buffer), "%s=0", SP_COLLECTOR_FOUNDER);
 	  CALL_UTIL (putenv)(buffer);
 	}
     }
@@ -622,8 +619,10 @@ __collector_open_experiment (const char *exp, const char *params, sp_origin_t or
 	  return COL_ERROR_BADDIR;
 	}
       static char exp_name_env[MAXPATHLEN + 1];
-      TprintfT (DBG_LT1, "collector_open_experiment: setting SP_COLLECTOR_EXPNAME to %s\n", __collector_exp_dir_name);
-      CALL_UTIL (snprintf)(exp_name_env, sizeof (exp_name_env), "SP_COLLECTOR_EXPNAME=%s", __collector_exp_dir_name);
+      TprintfT (DBG_LT1, "collector_open_experiment: setting %s to %s\n",
+		SP_COLLECTOR_EXPNAME, __collector_exp_dir_name);
+      CALL_UTIL (snprintf)(exp_name_env, sizeof (exp_name_env), "%s=%s",
+			   SP_COLLECTOR_EXPNAME, __collector_exp_dir_name);
       CALL_UTIL (putenv)(exp_name_env);
     }
   /* Check that the name is that of a directory (new structure) */
@@ -1054,8 +1053,10 @@ collector_tail_init (const char *parent_exp_name)
       if (collector_exp_dir_append_x (linenum, parent_exp_name) != 0)
 	return COL_ERROR_BADDIR;
       static char exp_name_env[MAXPATHLEN + 1];
-      CALL_UTIL (snprintf)(exp_name_env, sizeof (exp_name_env), "SP_COLLECTOR_EXPNAME=%s", __collector_exp_dir_name);
-      TprintfT (DBG_LT1, "collector_tail_init: setting SP_COLLECTOR_EXPNAME to %s\n", __collector_exp_dir_name);
+      CALL_UTIL (snprintf)(exp_name_env, sizeof (exp_name_env), "%s=%s",
+		 SP_COLLECTOR_EXPNAME, __collector_exp_dir_name);
+      TprintfT (DBG_LT1, "collector_tail_init: setting %s to %s\n",
+		SP_COLLECTOR_EXPNAME, __collector_exp_dir_name);
       CALL_UTIL (putenv)(exp_name_env);
     }
   /* initialize the segments map and mmap interposition */
@@ -1157,7 +1158,7 @@ __collector_SIGCHLD_signal_handler (int sig, siginfo_t *si, void *context)
    * before the handler knows the value of mychild_pid.
    */
   if (calling_pid == mychild_pid)
-    // er_archive has exited; so restore the user handler
+    // gprofng_archive has exited; so restore the user handler
     __collector_sigaction (SIGCHLD, &original_sigchld_sigaction, NULL);
   else
     {
@@ -1274,7 +1275,7 @@ __collector_close_experiment ()
   if (project_home && archive_mode && __collector_strcmp (archive_mode, "off"))
     {
       /* construct a command to launch it */
-      char *er_archive_name = "/bin/gp-archive";
+      char *er_archive_name = "/bin/gprofng-archive";
       size_t cmdlen = CALL_UTIL (strlen)(project_home) + CALL_UTIL (strlen)(er_archive_name) + 1;
       char *command = (char*) alloca (cmdlen);
       CALL_UTIL (snprintf)(command, cmdlen, "%s%s", project_home, er_archive_name);
@@ -1344,10 +1345,9 @@ __collector_close_experiment ()
       return;
     }
 
-  struct sigaction sa;
-  CALL_UTIL (memset)(&sa, 0, sizeof (struct sigaction));
+  static struct sigaction sigaction_0 = {.sa_flags = SA_SIGINFO };
+  struct sigaction sa = sigaction_0;
   sa.sa_sigaction = __collector_SIGCHLD_signal_handler;
-  sa.sa_flags = SA_SIGINFO;
   __collector_sigaction (SIGCHLD, &sa, &original_sigchld_sigaction);
 
   /* linetrace interposition takes care of unsetting Environment variables */
@@ -1584,7 +1584,7 @@ __collector_resume_experiment ()
 }
 
 /* Code to support Samples and Pause/Resume */
-void collector_sample () __attribute__ ((weak, alias ("__collector_sample")));
+void collector_sample (char *name) __attribute__ ((weak, alias ("__collector_sample")));
 void
 __collector_sample (char *name)
 {
@@ -1784,7 +1784,7 @@ __collector_pause ()
 }
 
 void
-__collector_pause_m (char *reason)
+__collector_pause_m (const char *reason)
 {
   hrtime_t now;
   char xreason[MAXPATHLEN];
@@ -2051,8 +2051,15 @@ log_header_write (sp_origin_t origin)
     {
       long page_size = CALL_UTIL (sysconf)(_SC_PAGESIZE);
       long npages = CALL_UTIL (sysconf)(_SC_PHYS_PAGES);
-      __collector_log_write ("<system hostname=\"%s\" arch=\"%s\" os=\"%s %s\" pagesz=\"%ld\" npages=\"%ld\">\n",
-			     sysinfo.nodename, sysinfo.machine, sysinfo.sysname, sysinfo.release, page_size, npages);
+#ifdef WORDS_BIGENDIAN
+      int bigendian = 1;
+#else
+      int bigendian = 0;
+#endif
+      __collector_log_write ("<system hostname=\"%s\" arch=\"%s\" os=\"%s %s\" "
+		"pagesz=\"%ld\" npages=\"%ld\" bigendian=\"%d\">\n",
+		sysinfo.nodename, sysinfo.machine, sysinfo.sysname,
+		sysinfo.release, page_size, npages, bigendian);
     }
 
   //YXXX Updating this section?  Check similar cut/paste code in:
@@ -2319,7 +2326,6 @@ ovw_write ()
     return 0;
   int fd;
   int res;
-  struct prusage usage;
   struct rusage rusage;
   hrtime_t hrt, delta;
 
@@ -2335,9 +2341,9 @@ ovw_write ()
       return ( hrt);
     }
 
-  CALL_UTIL (memset)(&usage, 0, sizeof (struct prusage));
+  static struct prusage usage_0 = { .pr_count = 1 };
+  struct prusage usage = usage_0;
   usage.pr_lwpid = getpid ();
-  usage.pr_count = 1;
   usage.pr_tstamp.tv_sec = hrt / NANOSEC;
   usage.pr_tstamp.tv_nsec = hrt % NANOSEC;
   usage.pr_create.tv_sec = starttime / NANOSEC;
@@ -2451,8 +2457,8 @@ __collector_dlog (int tflag, int level, char *format, ...)
 
 static void (*__real__exit) (int status) = NULL; /* libc only: _exit */
 static void (*__real__Exit) (int status) = NULL; /* libc only: _Exit */
-void _exit () __attribute__ ((weak, alias ("__collector_exit")));
-void _Exit () __attribute__ ((weak, alias ("__collector_Exit")));
+void _exit (int status) __attribute__ ((weak, alias ("__collector_exit")));
+void _Exit (int status) __attribute__ ((weak, alias ("__collector_Exit")));
 
 void
 __collector_exit (int status)

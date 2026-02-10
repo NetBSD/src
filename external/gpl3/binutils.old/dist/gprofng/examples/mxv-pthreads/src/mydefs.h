@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -63,8 +63,7 @@ int get_user_options (int     argc,
 		      int64_t *number_of_rows,
 		      int64_t *number_of_columns,
 		      int64_t *repeat_count,
-		      int64_t *number_of_threads,
-		      bool    *verbose);
+		      int64_t *number_of_threads);
 
 void init_data (int64_t m,
 		int64_t n,

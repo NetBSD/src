@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -35,10 +35,7 @@
 #include "StringBuilder.h"
 #include "DbeFile.h"
 #include "StringMap.h"
-
-#define DISASM_REL_NONE     0     /* symtab search only */
-#define DISASM_REL_ONLY     1     /* relocation search only */
-#define DISASM_REL_TARG     2     /* relocatoin then symtab */
+#include "Symbol.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // class StabReader
@@ -61,105 +58,6 @@ private:
   int StrTabSize;
   int StabEntSize;
 };
-
-///////////////////////////////////////////////////////////////////////////////
-// class Symbol
-
-class Symbol
-{
-public:
-  Symbol (Vector<Symbol*> *vec = NULL);
-
-  ~Symbol ()
-  {
-    free (name);
-  }
-
-  inline Symbol *
-  cardinal ()
-  {
-    return alias ? alias : this;
-  }
-
-  static void dump (Vector<Symbol*> *vec, char*msg);
-
-  Function *func;
-  Sp_lang_code lang_code;
-  uint64_t value; // st_value used in sym_name()
-  uint64_t save;
-  int64_t size;
-  uint64_t img_offset; // image offset in the ELF file
-  char *name;
-  Symbol *alias;
-  int local_ind;
-  int flags;
-  bool defined;
-};
-
-Symbol::Symbol (Vector<Symbol*> *vec)
-{
-  func = NULL;
-  lang_code = Sp_lang_unknown;
-  value = 0;
-  save = 0;
-  size = 0;
-  img_offset = 0;
-  name = NULL;
-  alias = NULL;
-  local_ind = -1;
-  flags = 0;
-  defined = false;
-  if (vec)
-    vec->append (this);
-}
-
-void
-Symbol::dump (Vector<Symbol*> *vec, char*msg)
-{
-  if (!DUMP_ELF_SYM || vec == NULL || vec->size () == 0)
-    return;
-  printf (NTXT ("======= Symbol::dump: %s =========\n"
-		"         value |    img_offset     | flags|local_ind|\n"), msg);
-  for (int i = 0; i < vec->size (); i++)
-    {
-      Symbol *sp = vec->fetch (i);
-      printf (NTXT ("  %3d %8lld |0x%016llx |%5d |%8d |%s\n"),
-	      i, (long long) sp->value, (long long) sp->img_offset, sp->flags,
-	      sp->local_ind, sp->name ? sp->name : NTXT ("NULL"));
-    }
-  printf (NTXT ("\n===== END of Symbol::dump: %s =========\n\n"), msg);
-}
-
-// end of class Symbol
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// class Reloc
-class Reloc
-{
-public:
-  Reloc ();
-  ~Reloc ();
-  uint64_t type;
-  uint64_t value;
-  uint64_t addend;
-  char *name;
-};
-
-Reloc::Reloc ()
-{
-  type = 0;
-  value = 0;
-  addend = 0;
-  name = NULL;
-}
-
-Reloc::~Reloc ()
-{
-  free (name);
-}
-// end of class Reloc
-///////////////////////////////////////////////////////////////////////////////
 
 enum
 {
@@ -232,51 +130,59 @@ SymImgOffsetCmp (const void *a, const void *b)
 	  (item1->img_offset == item2->img_offset) ? SymNameCmp (a, b) : -1;
 }
 
-static int
-RelValueCmp (const void *a, const void *b)
-{
-  Reloc *item1 = *((Reloc **) a);
-  Reloc *item2 = *((Reloc **) b);
-  return (item1->value > item2->value) ? 1 :
-	  (item1->value == item2->value) ? 0 : -1;
-}
+/* Remove all duplicate symbols which can be in SymLst.  The
+   duplication is due to processing of both static and dynamic
+   symbols.  This function is called before computing symbol
+   aliases.  */
 
-Stabs *
-Stabs::NewStabs (char *_path, char *lo_name)
+void
+Stabs::removeDupSyms ()
 {
-  Stabs *stabs = new Stabs (_path, lo_name);
-  if (stabs->status != Stabs::DBGD_ERR_NONE)
+  long ind, i, last;
+  Symbol *symA, *symB;
+  SymLst->sort (SymImgOffsetCmp);
+
+  last = 0;
+  ind = SymLst->size ();
+  for (i = 0; i < ind; i++)
     {
-      delete stabs;
-      return NULL;
+      symA = SymLst->fetch (i);
+      if (symA->img_offset == 0) // Ignore this bad symbol
+	continue;
+
+      SymLst->put (last++, symA);
+      for (long k = i + 1; k < ind; k++, i++)
+	{
+	  symB = SymLst->fetch (k);
+	  if (symA->img_offset != symB->img_offset)
+	    break;
+	  if (strcmp (symA->name, symB->name) != 0)
+	    break;
+	}
     }
-  return stabs;
+  SymLst->truncate (last);
 }
 
-Stabs::Stabs (char *_path, char *_lo_name)
+Stabs::Stabs (Elf *elf, char *_lo_name)
 {
-  path = dbe_strdup (_path);
+  elfDis = elf;
+  elfDbg = elf->gnu_debug_file ? elf->gnu_debug_file : elf;
+  path = dbe_strdup (elf->get_location ());
   lo_name = dbe_strdup (_lo_name);
   SymLstByName = NULL;
   pltSym = NULL;
   SymLst = new Vector<Symbol*>;
-  RelLst = new Vector<Reloc*>;
-  RelPLTLst = new Vector<Reloc*>;
   LocalLst = new Vector<Symbol*>;
   LocalFile = new Vector<char*>;
   LocalFileIdx = new Vector<int>;
   last_PC_to_sym = NULL;
   dwarf = NULL;
-  elfDbg = NULL;
-  elfDis = NULL;
   stabsModules = NULL;
   textsz = 0;
   wsize = Wnone;
-  st_check_symtab = st_check_relocs = false;
+  st_check_symtab = false;
   status = DBGD_ERR_NONE;
 
-  if (openElf (false) == NULL)
-    return;
   switch (elfDis->elf_getclass ())
     {
     case ELFCLASS32:
@@ -286,77 +192,7 @@ Stabs::Stabs (char *_path, char *_lo_name)
       wsize = W64;
       break;
     }
-  isRelocatable = elfDis->elf_getehdr ()->e_type == ET_REL;
-  for (unsigned int pnum = 0; pnum < elfDis->elf_getehdr ()->e_phnum; pnum++)
-    {
-      Elf_Internal_Phdr *phdr = elfDis->get_phdr (pnum);
-      if (phdr->p_type == PT_LOAD && phdr->p_flags == (PF_R | PF_X))
-	{
-	  if (textsz == 0)
-	    textsz = phdr->p_memsz;
-	  else
-	    {
-	      textsz = 0;
-	      break;
-	    }
-	}
-    }
-}
-
-Stabs::~Stabs ()
-{
-  delete SymLstByName;
-  Destroy (SymLst);
-  Destroy (RelLst);
-  Destroy (RelPLTLst);
-  Destroy (LocalFile);
-  delete elfDis;
-  delete dwarf;
-  delete LocalLst;
-  delete LocalFileIdx;
-  delete stabsModules;
-  free (path);
-  free (lo_name);
-}
-
-Elf *
-Stabs::openElf (char *fname, Stab_status &st)
-{
-  Elf::Elf_status elf_status;
-  Elf *elf = Elf::elf_begin (fname, &elf_status);
-  if (elf == NULL)
-    {
-      switch (elf_status)
-	{
-	case Elf::ELF_ERR_CANT_OPEN_FILE:
-	case Elf::ELF_ERR_CANT_MMAP:
-	case Elf::ELF_ERR_BIG_FILE:
-	  st = DBGD_ERR_CANT_OPEN_FILE;
-	  break;
-	case Elf::ELF_ERR_BAD_ELF_FORMAT:
-	default:
-	  st = DBGD_ERR_BAD_ELF_FORMAT;
-	  break;
-	}
-      return NULL;
-    }
-  if (elf->elf_version (EV_CURRENT) == EV_NONE)
-    {
-      // ELF library out of date
-      delete elf;
-      st = DBGD_ERR_BAD_ELF_LIB;
-      return NULL;
-    }
-
-  Elf_Internal_Ehdr *ehdrp = elf->elf_getehdr ();
-  if (ehdrp == NULL)
-    {
-      // check machine
-      delete elf;
-      st = DBGD_ERR_BAD_ELF_FORMAT;
-      return NULL;
-    }
-  switch (ehdrp->e_machine)
+  switch (elfDis->elf_getehdr ()->e_machine)
     {
     case EM_SPARC:
       platform = Sparc;
@@ -381,29 +217,42 @@ Stabs::openElf (char *fname, Stab_status &st)
       platform = Unknown;
       break;
     }
-  return elf;
+  isRelocatable = elfDis->elf_getehdr ()->e_type == ET_REL;
+  for (unsigned int pnum = 0; pnum < elfDis->elf_getehdr ()->e_phnum; pnum++)
+    {
+      Elf_Internal_Phdr *phdr = elfDis->get_phdr (pnum);
+      if (phdr->p_type == PT_LOAD && phdr->p_flags == (PF_R | PF_X))
+	{
+	  if (textsz == 0)
+	    textsz = phdr->p_memsz;
+	  else
+	    {
+	      textsz = 0;
+	      break;
+	    }
+	}
+    }
+}
+
+Stabs::~Stabs ()
+{
+  delete SymLstByName;
+  Destroy (SymLst);
+  Destroy (LocalFile);
+  delete dwarf;
+  delete LocalLst;
+  delete LocalFileIdx;
+  delete stabsModules;
+  free (path);
+  free (lo_name);
 }
 
 Elf *
 Stabs::openElf (bool dbg_info)
 {
-  if (status != DBGD_ERR_NONE)
-    return NULL;
-  if (elfDis == NULL)
-    {
-      elfDis = openElf (path, status);
-      if (elfDis == NULL)
-	return NULL;
-    }
-  if (!dbg_info)
-    return elfDis;
-  if (elfDbg == NULL)
-    {
-      elfDbg = elfDis->find_ancillary_files (lo_name);
-      if (elfDbg == NULL)
-	elfDbg = elfDis;
-    }
-  return elfDbg;
+  if (dbg_info)
+    return elfDbg;
+  return elfDis;
 }
 
 bool
@@ -412,7 +261,6 @@ Stabs::read_symbols (Vector<Function*> *functions)
   if (openElf (true) == NULL)
     return false;
   check_Symtab ();
-  check_Relocs ();
   if (functions)
     {
       Function *fp;
@@ -423,42 +271,6 @@ Stabs::read_symbols (Vector<Function*> *functions)
       }
     }
   return true;
-}
-
-char *
-Stabs::sym_name (uint64_t target, uint64_t instr, int flag)
-{
-  long index;
-  if (flag == DISASM_REL_ONLY || flag == DISASM_REL_TARG)
-    {
-      Reloc *relptr = new Reloc;
-      relptr->value = instr;
-      index = RelLst->bisearch (0, -1, &relptr, RelValueCmp);
-      if (index >= 0)
-	{
-	  delete relptr;
-	  return RelLst->fetch (index)->name;
-	}
-      if (!is_relocatable ())
-	{
-	  relptr->value = target;
-	  index = RelPLTLst->bisearch (0, -1, &relptr, RelValueCmp);
-	  if (index >= 0)
-	    {
-	      delete relptr;
-	      return RelPLTLst->fetch (index)->name;
-	    }
-	}
-      delete relptr;
-    }
-  if (flag == DISASM_REL_NONE || flag == DISASM_REL_TARG || !is_relocatable ())
-    {
-      Symbol *sptr;
-      sptr = map_PC_to_sym (target);
-      if (sptr && sptr->value == target)
-	return sptr->name;
-    }
-  return NULL;
 }
 
 Symbol *
@@ -1673,7 +1485,8 @@ Stabs::fixSymtabAlias ()
       for (; i < k; i++)
 	{
 	  sym = SymLst->fetch (i);
-	  sym->alias = bestAlias;
+	  if (sym != bestAlias)
+	    sym->alias = bestAlias;
 	  sym->size = maxSize;
 	}
       i--;
@@ -1703,43 +1516,33 @@ Stabs::check_Symtab ()
 	  pltSym->flags |= SYM_PLT;
 	}
     }
-  if (elf->symtab)
-    readSymSec (elf->symtab, elf);
-  else
-    {
-      readSymSec (elf->SUNW_ldynsym, elf);
-      readSymSec (elf->dynsym, elf);
-    }
+
+  // Read first static symbols
+  readSymSec (elf, false);
+
+  // Read dynamic symbols
+  readSymSec (elf, true);
 }
 
 void
-Stabs::readSymSec (unsigned int sec, Elf *elf)
+Stabs::readSymSec (Elf *elf, bool is_dynamic)
 {
   Symbol *sitem;
   Sp_lang_code local_lcode;
-  if (sec == 0)
-    return;
-  // Get ELF data
-  Elf_Data *data = elf->elf_getdata (sec);
-  if (data == NULL)
-    return;
-  uint64_t SymtabSize = data->d_size;
-  Elf_Internal_Shdr *shdr = elf->get_shdr (sec);
-
-  if ((SymtabSize == 0) || (shdr->sh_entsize == 0))
-    return;
-  Elf_Data *data_str = elf->elf_getdata (shdr->sh_link);
-  if (data_str == NULL)
-    return;
-  char *Strtab = (char *) data_str->d_buf;
+  unsigned int tot = elf->elf_getSymCount (is_dynamic);
 
   // read func symbolic table
-  for (unsigned int n = 0, tot = SymtabSize / shdr->sh_entsize; n < tot; n++)
+  for (unsigned int n = 0; n < tot; n++)
     {
       Elf_Internal_Sym Sym;
-      elf->elf_getsym (data, n, &Sym);
-      const char *st_name = Sym.st_name < data_str->d_size ?
-	  (Strtab + Sym.st_name) : NTXT ("no_name");
+      asymbol *asym;
+      asym = elf->elf_getsym (n, &Sym, is_dynamic);
+      // TBD: convert this check to an assert
+      if (asym == NULL)
+	break;
+      const char *st_name = bfd_asymbol_name (asym);
+      if (st_name == NULL)
+	continue;
       switch (GELF_ST_TYPE (Sym.st_info))
 	{
 	case STT_FUNC:
@@ -1814,147 +1617,11 @@ Stabs::readSymSec (unsigned int sec, Elf *elf)
 	  }
 	}
     }
+  removeDupSyms ();
   fixSymtabAlias ();
   SymLst->sort (SymValueCmp);
   get_save_addr (elf->need_swap_endian);
-  dump ();
-}//check_Symtab
-
-void
-Stabs::check_Relocs ()
-{
-  // We may have many relocation tables to process: .rela.text%foo,
-  // rela.text%bar, etc. On Intel, compilers generate .rel.text sections
-  // which have to be processed as well. A lot of rework is needed here.
-  Symbol *sptr = NULL;
-  if (st_check_relocs)
-    return;
-  st_check_relocs = true;
-
-  Elf *elf = openElf (false);
-  if (elf == NULL)
-    return;
-  for (unsigned int sec = 1; sec < elf->elf_getehdr ()->e_shnum; sec++)
-    {
-      bool use_rela, use_PLT;
-      char *name = elf->get_sec_name (sec);
-      if (name == NULL)
-	continue;
-      if (strncmp (name, NTXT (".rela.text"), 10) == 0)
-	{
-	  use_rela = true;
-	  use_PLT = false;
-	}
-      else if (streq (name, NTXT (".rela.plt")))
-	{
-	  use_rela = true;
-	  use_PLT = true;
-	}
-      else if (strncmp (name, NTXT (".rel.text"), 9) == 0)
-	{
-	  use_rela = false;
-	  use_PLT = false;
-	}
-      else if (streq (name, NTXT (".rel.plt")))
-	{
-	  use_rela = false;
-	  use_PLT = true;
-	}
-      else
-	continue;
-
-      Elf_Internal_Shdr *shdr = elf->get_shdr (sec);
-      if (shdr == NULL)
-	continue;
-
-      // Get ELF data
-      Elf_Data *data = elf->elf_getdata (sec);
-      if (data == NULL)
-	continue;
-      uint64_t ScnSize = data->d_size;
-      uint64_t EntSize = shdr->sh_entsize;
-      if ((ScnSize == 0) || (EntSize == 0))
-	continue;
-      int tot = (int) (ScnSize / EntSize);
-
-      // Get corresponding text section
-      Elf_Internal_Shdr *shdr_txt = elf->get_shdr (shdr->sh_info);
-      if (shdr_txt == NULL)
-	continue;
-      if (!(shdr_txt->sh_flags & SHF_EXECINSTR))
-	    continue;
-
-      // Get corresponding symbol table section
-      Elf_Internal_Shdr *shdr_sym = elf->get_shdr (shdr->sh_link);
-      if (shdr_sym == NULL)
-	continue;
-      Elf_Data *data_sym = elf->elf_getdata (shdr->sh_link);
-
-      // Get corresponding string table section
-      Elf_Data *data_str = elf->elf_getdata (shdr_sym->sh_link);
-      if (data_str == NULL)
-	continue;
-      char *Strtab = (char*) data_str->d_buf;
-      for (int n = 0; n < tot; n++)
-	{
-	  Elf_Internal_Sym sym;
-	  Elf_Internal_Rela rela;
-	  char *symName;
-	  if (use_rela)
-	    elf->elf_getrela (data, n, &rela);
-	  else
-	    {
-	      // GElf_Rela is extended GElf_Rel
-	      elf->elf_getrel (data, n, &rela);
-	      rela.r_addend = 0;
-	    }
-
-	  int ndx = (int) GELF_R_SYM (rela.r_info);
-	  elf->elf_getsym (data_sym, ndx, &sym);
-	  switch (GELF_ST_TYPE (sym.st_info))
-	    {
-	    case STT_FUNC:
-	    case STT_OBJECT:
-	    case STT_NOTYPE:
-	      if (sym.st_name == 0 || sym.st_name >= data_str->d_size)
-		continue;
-	      symName = Strtab + sym.st_name;
-	      break;
-	    case STT_SECTION:
-	      {
-		Elf_Internal_Shdr *secHdr = elf->get_shdr (sym.st_shndx);
-		if (secHdr == NULL)
-		  continue;
-		if (sptr == NULL)
-		  sptr = new Symbol;
-		sptr->value = secHdr->sh_offset + rela.r_addend;
-		long index = SymLst->bisearch (0, -1, &sptr, SymFindCmp);
-		if (index == -1)
-		  continue;
-		Symbol *sp = SymLst->fetch (index);
-		if (sptr->value != sp->value)
-		  continue;
-		symName = sp->name;
-		break;
-	      }
-	    default:
-	      continue;
-	    }
-	  Reloc *reloc = new Reloc;
-	  reloc->name = dbe_strdup (symName);
-	  reloc->type = GELF_R_TYPE (rela.r_info);
-	  reloc->value = use_PLT ? rela.r_offset
-		  : rela.r_offset + shdr_txt->sh_offset;
-	  reloc->addend = rela.r_addend;
-	  if (use_PLT)
-	    RelPLTLst->append (reloc);
-	  else
-	    RelLst->append (reloc);
-	}
-    }
-  delete sptr;
-  RelLst->sort (RelValueCmp);
-} //check_Relocs
+}
 
 void
 Stabs::get_save_addr (bool need_swap_endian)
@@ -2395,57 +2062,6 @@ Stabs::append_Function (Module *module, char *fname)
   return func;
 }
 
-Function *
-Stabs::append_Function (Module *module, char *linkerName, uint64_t pc)
-{
-  Dprintf (DEBUG_STABS, NTXT ("Stabs::append_Function: module=%s linkerName=%s pc=0x%llx\n"),
-	   STR (module->get_name ()), STR (linkerName), (unsigned long long) pc);
-  long i;
-  Symbol *sitem = NULL, *sp;
-  Function *func;
-  sp = new Symbol;
-  if (pc)
-    {
-      sp->value = pc;
-      i = SymLst->bisearch (0, -1, &sp, SymFindCmp);
-      if (i != -1)
-	sitem = SymLst->fetch (i);
-    }
-
-  if (!sitem && linkerName)
-    {
-      if (SymLstByName == NULL)
-	{
-	  SymLstByName = SymLst->copy ();
-	  SymLstByName->sort (SymNameCmp);
-	}
-      sp->name = linkerName;
-      i = SymLstByName->bisearch (0, -1, &sp, SymNameCmp);
-      sp->name = NULL;
-      if (i != -1)
-	sitem = SymLstByName->fetch (i);
-    }
-  delete sp;
-
-  if (!sitem)
-    return NULL;
-  if (sitem->alias)
-    sitem = sitem->alias;
-  if (sitem->func)
-    return sitem->func;
-
-  sitem->func = func = dbeSession->createFunction ();
-  func->img_fname = path;
-  func->img_offset = sitem->img_offset;
-  func->save_addr = sitem->save;
-  func->size = sitem->size;
-  func->module = module;
-  func->set_name (sitem->name); //XXXX ?? Now call it to set obj->name
-  module->functions->append (func);
-  module->loadobject->functions->append (func);
-  return func;
-}// Stabs::append_Function
-
 Dwarf *
 Stabs::openDwarf ()
 {
@@ -2453,6 +2069,7 @@ Stabs::openDwarf ()
     {
       dwarf = new Dwarf (this);
       check_Symtab ();
+      dump();
     }
   return dwarf;
 }
@@ -2477,8 +2094,8 @@ Stabs::dump ()
 	printf ("  %3d: %5d '%s'\n", i, LocalFileIdx->fetch (i),
 		LocalFile->fetch (i));
     }
-  Symbol::dump (SymLst, NTXT ("SymLst"));
-  Symbol::dump (LocalLst, NTXT ("LocalLst"));
+  SymLst->dump ("SymLst");
+  LocalLst->dump ("LocalLst");
   printf (NTXT ("\n===== END of Stabs::dump: %s =========\n\n"),
   path ? path : NTXT ("NULL"));
 }

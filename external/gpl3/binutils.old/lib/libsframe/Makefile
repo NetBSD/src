@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2025/08/24 17:07:38 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2026/02/10 19:47:18 christos Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -11,7 +11,7 @@ NODEBUGLIB=	# defined
 
 LIB=		sframe
 
-BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+BINUTILS_MACHINE_ARCH?=${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 .include "${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"
 

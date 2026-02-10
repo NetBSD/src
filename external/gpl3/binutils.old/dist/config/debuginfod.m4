@@ -15,7 +15,7 @@ AC_DEFUN([AC_DEBUGINFOD],
 # Define HAVE_LIBDEBUGINFOD_FIND_SECTION if libdebuginfod is found with
 # version >= 0.188.
 AC_ARG_WITH([debuginfod],
-  AC_HELP_STRING([--with-debuginfod], [Enable debuginfo lookups with debuginfod (auto/yes/no)]),
+  AS_HELP_STRING([--with-debuginfod], [Enable debuginfo lookups with debuginfod (auto/yes/no)]),
   [], [with_debuginfod=auto])
 AC_MSG_CHECKING([whether to use debuginfod])
 AC_MSG_RESULT([$with_debuginfod])

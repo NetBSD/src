@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@
 # define DIAGNOSTIC_IGNORE_SELF_MOVE DIAGNOSTIC_IGNORE ("-Wself-move")
 # define DIAGNOSTIC_IGNORE_DEPRECATED_DECLARATIONS \
   DIAGNOSTIC_IGNORE ("-Wdeprecated-declarations")
-# define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER \
-  DIAGNOSTIC_IGNORE ("-Wdeprecated-register")
+# define DIAGNOSTIC_IGNORE_REGISTER DIAGNOSTIC_IGNORE ("-Wregister")
+
 # if __has_warning ("-Wenum-compare-switch")
 #  define DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES \
    DIAGNOSTIC_IGNORE ("-Wenum-compare-switch")
@@ -76,19 +76,13 @@
 # define DIAGNOSTIC_ERROR_SWITCH \
   DIAGNOSTIC_ERROR ("-Wswitch")
 
-# if __has_warning ("-Wenum-constexpr-conversion")
-#  define DIAGNOSTIC_IGNORE_ENUM_CONSTEXPR_CONVERSION \
-   DIAGNOSTIC_IGNORE ("-Wenum-constexpr-conversion")
-# endif
-
 #elif defined (__GNUC__) /* GCC */
 
 # define DIAGNOSTIC_IGNORE_DEPRECATED_DECLARATIONS \
   DIAGNOSTIC_IGNORE ("-Wdeprecated-declarations")
 
 # if __GNUC__ >= 7
-#  define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER \
-   DIAGNOSTIC_IGNORE ("-Wregister")
+#  define DIAGNOSTIC_IGNORE_REGISTER DIAGNOSTIC_IGNORE ("-Wregister")
 # endif
 
 # define DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION \
@@ -128,8 +122,8 @@
 # define DIAGNOSTIC_IGNORE_DEPRECATED_DECLARATIONS
 #endif
 
-#ifndef DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
-# define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
+#ifndef DIAGNOSTIC_IGNORE_REGISTER
+# define DIAGNOSTIC_IGNORE_REGISTER
 #endif
 
 #ifndef DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES
@@ -158,10 +152,6 @@
 
 #ifndef DIAGNOSTIC_ERROR_SWITCH
 # define DIAGNOSTIC_ERROR_SWITCH
-#endif
-
-#ifndef DIAGNOSTIC_IGNORE_ENUM_CONSTEXPR_CONVERSION
-# define DIAGNOSTIC_IGNORE_ENUM_CONSTEXPR_CONVERSION
 #endif
 
 #endif /* DIAGNOSTICS_H */

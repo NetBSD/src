@@ -25,7 +25,7 @@ PARSE_AND_LIST_ARGS_CASE_Z_LAM='
 	  else if (strcmp (optarg + 15, "error") == 0)
 	    params.lam_u48_report = prop_report_error;
 	  else
-	    einfo (_("%F%P: invalid option for -z lam-u48-report=: %s\n"),
+	    fatal (_("%P: invalid option for -z lam-u48-report=: %s\n"),
 		   optarg + 15);
 	}
       else if (strcmp (optarg, "lam-u57") == 0)
@@ -39,7 +39,7 @@ PARSE_AND_LIST_ARGS_CASE_Z_LAM='
 	  else if (strcmp (optarg + 15, "error") == 0)
 	    params.lam_u57_report = prop_report_error;
 	  else
-	    einfo (_("%F%P: invalid option for -z lam-u57-report=: %s\n"),
+	    fatal (_("%P: invalid option for -z lam-u57-report=: %s\n"),
 		   optarg + 15);
 	}
       else if (strncmp (optarg, "lam-report=", 11) == 0)
@@ -60,7 +60,7 @@ PARSE_AND_LIST_ARGS_CASE_Z_LAM='
 	      params.lam_u57_report = prop_report_error;
 	    }
 	  else
-	    einfo (_("%F%P: invalid option for -z lam-report=: %s\n"),
+	    fatal (_("%P: invalid option for -z lam-report=: %s\n"),
 		   optarg + 11);
 	}
 '

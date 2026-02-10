@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -40,7 +40,6 @@ class ComC;
 class Elf;
 class Dwarf;
 class Symbol;
-class Reloc;
 struct cpf_stabs_t;
 class SourceFile;
 template <typename Key_t, typename Value_t> class Map;
@@ -77,8 +76,7 @@ class Stabs {
 	DBGD_ERR_CHK_SUM
     };
 
-    static Stabs *NewStabs(char *_path, char *lo_name);
-    Stabs(char *_path, char *_lo_name);
+    Stabs(Elf *elf, char *_lo_name);
     ~Stabs();
 
     bool	is_relocatable(){ return isRelocatable; }
@@ -86,12 +84,12 @@ class Stabs {
     Platform_t	get_platform()	{ return platform; }
     WSize_t	get_class()	{ return wsize;}
     Stab_status	get_status()    { return status;}
+    Vector<Symbol *> *get_symbols() { return SymLst; }
 
     Stab_status	read_stabs(ino64_t srcInode, Module *module, Vector<ComC*> *comComs, bool readDwarf = false);
     Stab_status	read_archive(LoadObject *lo);
     bool	read_symbols(Vector<Function*> *functions);
     uint64_t	mapOffsetToAddress(uint64_t img_offset);
-    char	*sym_name(uint64_t target, uint64_t instr, int flag);
   Elf *openElf (bool dbg_info = false);
     void        read_hwcprof_info(Module *module);
     void        dump();
@@ -101,7 +99,6 @@ class Stabs {
     static Function *find_func(char *fname, Vector<Function*> *functions, bool fortran, bool inner_names=false);
     Module	*append_Module(LoadObject *lo, char *name, int lastMod = 0);
     Function	*append_Function(Module *module, char *fname);
-    Function	*append_Function(Module *module, char *linkerName, uint64_t pc);
     Function	*map_PC_to_func(uint64_t pc, uint64_t &low_pc, Vector<Function*> *functions);
     char		*path;			// path to the object file
     char                *lo_name;       // User name of load object
@@ -129,26 +126,23 @@ class Stabs {
 
     // Interface with Elf Symbol Table
     void                check_Symtab();
-    void                readSymSec(unsigned int sec, Elf *elf);
-    void                check_Relocs();
+    void		readSymSec (Elf *elf, bool is_dynamic);
     void                get_save_addr(bool need_swap_endian);
     Symbol              *map_PC_to_sym(uint64_t pc);
     Symbol              *pltSym;
     Vector<Symbol*>	*SymLst;		// list of func symbols
     Vector<Symbol*>	*SymLstByName;		// list of func symbols sorted by Name
-    Vector<Reloc*>	*RelLst;		// list of text relocations
-    Vector<Reloc*>	*RelPLTLst;		// list of PLT relocations
     Vector<Symbol*>	*LocalLst;		// list of local func symbols
     Vector<char*>	*LocalFile;		// list of local files
     Vector<int>		*LocalFileIdx;		// start index in LocalLst
 
-    Elf         *openElf(char *fname, Stab_status &st);
     Map<const char*, Symbol*> *get_elf_symbols();
     Dwarf       *dwarf;
 
-    bool        st_check_symtab, st_check_relocs;
+    bool	st_check_symtab;
     Function	*createFunction(LoadObject *lo, Module *module, Symbol *sym);
     void        fixSymtabAlias();
+    void	removeDupSyms ();
 
     // Interface with dwarf
     Dwarf       *openDwarf();
