@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2016/10/26 17:03:44 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2026/02/10 19:47:18 christos Exp $
 
 .include <bsd.own.mk>
 
-BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+BINUTILS_MACHINE_ARCH?=${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 .if ${MKBINUTILS} != "no" && exists(${.CURDIR}/common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/common/arch/${BINUTILS_MACHINE_ARCH}/defs.mk"

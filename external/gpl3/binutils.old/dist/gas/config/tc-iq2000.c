@@ -1,5 +1,5 @@
 /* tc-iq2000.c -- Assembler for the Sitera IQ2000.
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -108,12 +108,12 @@ static struct iq2000_hi_fixup * iq2000_hi_fixup_list;
 /* Macro hash table, which we will add to.  */
 extern struct htab *macro_hash;
 
-const char *md_shortopts = "";
-struct option md_longopts[] =
+const char md_shortopts[] = "";
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED,
@@ -198,29 +198,29 @@ static const char * li_expn    = "\n\
 
 static iq2000_macro_defs_s iq2000_macro_defs[] =
 {
-  {"abs",   (const char **) & abs_expn,   (const char **) & abs_args},
-  {"la",    (const char **) & la_expn,    (const char **) & la_args},
-  {"bge",   (const char **) & bge_expn,   (const char **) & bxx_args},
-  {"bgeu",  (const char **) & bgeu_expn,  (const char **) & bxx_args},
-  {"bgt",   (const char **) & bgt_expn,   (const char **) & bxx_args},
-  {"bgtu",  (const char **) & bgtu_expn,  (const char **) & bxx_args},
-  {"ble",   (const char **) & ble_expn,   (const char **) & bxx_args},
-  {"bleu",  (const char **) & bleu_expn,  (const char **) & bxx_args},
-  {"blt",   (const char **) & blt_expn,   (const char **) & bxx_args},
-  {"bltu",  (const char **) & bltu_expn,  (const char **) & bxx_args},
-  {"sge",   (const char **) & sge_expn,   (const char **) & sxx_args},
-  {"sgeu",  (const char **) & sgeu_expn,  (const char **) & sxx_args},
-  {"sle",   (const char **) & sle_expn,   (const char **) & sxx_args},
-  {"sleu",  (const char **) & sleu_expn,  (const char **) & sxx_args},
-  {"sgt",   (const char **) & sgt_expn,   (const char **) & sxx_args},
-  {"sgtu",  (const char **) & sgtu_expn,  (const char **) & sxx_args},
-  {"seq",   (const char **) & seq_expn,   (const char **) & sxx_args},
-  {"sne",   (const char **) & sne_expn,   (const char **) & sxx_args},
-  {"neg",   (const char **) & neg_expn,   (const char **) & neg_args},
-  {"negu",  (const char **) & negu_expn,  (const char **) & neg_args},
-  {"li",    (const char **) & li_expn,    (const char **) & li_args},
-  {"ori32", (const char **) & ori32_expn, (const char **) & ai32_args},
-  {"andi32",(const char **) & andi32_expn,(const char **) & ai32_args},
+  {"abs",    &abs_expn,    abs_args},
+  {"la",     &la_expn,     la_args},
+  {"bge",    &bge_expn,    bxx_args},
+  {"bgeu",   &bgeu_expn,   bxx_args},
+  {"bgt",    &bgt_expn,    bxx_args},
+  {"bgtu",   &bgtu_expn,   bxx_args},
+  {"ble",    &ble_expn,    bxx_args},
+  {"bleu",   &bleu_expn,   bxx_args},
+  {"blt",    &blt_expn,    bxx_args},
+  {"bltu",   &bltu_expn,   bxx_args},
+  {"sge",    &sge_expn,    sxx_args},
+  {"sgeu",   &sgeu_expn,   sxx_args},
+  {"sle",    &sle_expn,    sxx_args},
+  {"sleu",   &sleu_expn,   sxx_args},
+  {"sgt",    &sgt_expn,    sxx_args},
+  {"sgtu",   &sgtu_expn,   sxx_args},
+  {"seq",    &seq_expn,    sxx_args},
+  {"sne",    &sne_expn,    sxx_args},
+  {"neg",    &neg_expn,    neg_args},
+  {"negu",   &negu_expn,   neg_args},
+  {"li",     &li_expn,     li_args},
+  {"ori32",  &ori32_expn,  ai32_args},
+  {"andi32", &andi32_expn, ai32_args},
 };
 
 static void
@@ -425,7 +425,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 symbolS *
@@ -482,7 +482,7 @@ md_convert_frag (bfd   * abfd  ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS * fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
@@ -682,7 +682,7 @@ s_iq2000_set (int x ATTRIBUTE_UNUSED)
   char *name = input_line_pointer, ch;
   char *save_ILP = input_line_pointer;
 
-  while (!is_end_of_line[(unsigned char) *input_line_pointer])
+  while (!is_end_of_stmt (*input_line_pointer))
     input_line_pointer++;
   ch = *input_line_pointer;
   *input_line_pointer = '\0';
@@ -728,10 +728,10 @@ iq2000_fix_adjustable (fixS * fixP)
 {
   bfd_reloc_code_real_type reloc_type;
 
-  if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
+  if (fixP->fx_r_type >= BFD_RELOC_UNUSED)
     {
       const CGEN_INSN *insn = NULL;
-      int opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
+      int opindex = fixP->fx_r_type - BFD_RELOC_UNUSED;
       const CGEN_OPERAND *operand = cgen_operand_lookup_by_num(gas_cgen_cpu_desc, opindex);
 
       reloc_type = md_cgen_lookup_reloc (insn, operand, fixP);
@@ -790,7 +790,7 @@ get_symbol (void)
   symbolS *p;
 
   c = get_symbol_name (&name);
-  p = (symbolS *) symbol_find_or_make (name);
+  p = symbol_find_or_make (name);
   (void) restore_line_pointer (c);
   return p;
 }
@@ -803,7 +803,7 @@ s_iq2000_end (int x ATTRIBUTE_UNUSED)
   symbolS *p;
   int maybe_text;
 
-  if (!is_end_of_line[(unsigned char) *input_line_pointer])
+  if (!is_end_of_stmt (*input_line_pointer))
     {
       p = get_symbol ();
       demand_empty_rest_of_line ();

@@ -1,5 +1,5 @@
 /* BFD back end for Lynx core files
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Stu Grossman of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -120,7 +120,8 @@ lynx_core_file_p (bfd *abfd)
   if (!core_hdr (abfd))
     return NULL;
 
-  strncpy (core_command (abfd), pss.pname, PNMLEN + 1);
+  strncpy (core_command (abfd), pss.pname, PNMLEN);
+  core_command (abfd)[PNMLEN] = 0;
 
   /* Compute the size of the thread contexts */
 

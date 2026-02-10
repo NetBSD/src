@@ -1,7 +1,7 @@
 /*  bb_exit_func.c - dumps all the basic-block statistics linked into
     the bb_head chain to .d files.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -23,7 +23,7 @@
    This code was contributed by:
 
      David Mosberger-Tang <David.Mosberger@acm.org>  */
-
+
 #include <stdio.h>
 #include <strings.h>
 #include "bfd.h"

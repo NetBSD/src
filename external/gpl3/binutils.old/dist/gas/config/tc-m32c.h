@@ -1,5 +1,5 @@
 /* tc-m32c.h -- Header file for tc-m32c.c.
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -79,5 +79,3 @@ extern int m32c_is_colon_insn (char *, char *);
 #define H_TICK_HEX 1
 
 #define NOP_OPCODE (bfd_get_mach (stdoutput) == bfd_mach_m32c ? 0xde : 0x04)
-#define HANDLE_ALIGN(fragP)
-#define MAX_MEM_FOR_RS_ALIGN_CODE 1

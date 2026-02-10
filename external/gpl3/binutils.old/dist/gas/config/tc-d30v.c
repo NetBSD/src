@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,7 +27,7 @@
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
 const char line_separator_chars[] = "";
-const char *md_shortopts          = "OnNcC";
+const char md_shortopts[]         = "OnNcC";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
@@ -107,12 +107,12 @@ static symbolS *d30v_last_label;
 #define NOP_RIGHT  ((long long) NOP)
 #define NOP2 (FM00 | NOP_LEFT | NOP_RIGHT)
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Opcode hash table.  */
 static htab_t d30v_hash;
@@ -164,7 +164,7 @@ register_name (expressionS *expressionP)
   int reg_number;
   char c, *p = input_line_pointer;
 
-  while (*p && *p != '\n' && *p != '\r' && *p != ',' && *p != ' ' && *p != ')')
+  while (!is_end_of_stmt (*p) && *p != ',' && !is_whitespace (*p) && *p != ')')
     p++;
 
   c = *p;
@@ -306,11 +306,11 @@ md_section_align (asection *seg, valueT addr)
 void
 md_begin (void)
 {
-  struct d30v_opcode *opcode;
+  const struct d30v_opcode *opcode;
   d30v_hash = str_htab_create ();
 
   /* Insert opcode names into a hash table.  */
-  for (opcode = (struct d30v_opcode *) d30v_opcode_table; opcode->name; opcode++)
+  for (opcode = d30v_opcode_table; opcode->name; opcode++)
       str_hash_insert (d30v_hash, opcode->name, opcode, 0);
 
   fixups = &FixUps[0];
@@ -328,7 +328,7 @@ postfix (char *p)
 {
   while (*p != '-' && *p != '+')
     {
-      if (*p == 0 || *p == '\n' || *p == '\r' || *p == ' ' || *p == ',')
+      if (is_end_of_stmt (*p) || is_whitespace (*p) || *p == ',')
 	break;
       p++;
     }
@@ -400,7 +400,7 @@ get_operands (expressionS exp[], int cmp_hack)
 
   while (*p)
     {
-      while (*p == ' ' || *p == '\t' || *p == ',')
+      while (is_whitespace (*p) || *p == ',')
 	p++;
 
       if (*p == 0 || *p == '\n' || *p == '\r')
@@ -484,8 +484,8 @@ build_insn (struct d30v_insn *opcode, expressionS *opers)
   int i, bits, shift, flags;
   unsigned long number, id = 0;
   long long insn;
-  struct d30v_opcode *op = opcode->op;
-  struct d30v_format *form = opcode->form;
+  const struct d30v_opcode *op = opcode->op;
+  const struct d30v_format *form = opcode->form;
 
   insn =
     opcode->ecc << 28 | op->op1 << 25 | op->op2 << 20 | form->modifier << 18;
@@ -682,8 +682,8 @@ parallel_ok (struct d30v_insn *op1,
   int i, j, shift, regno, bits, ecc;
   unsigned long flags, mask, flags_set1, flags_set2, flags_used1, flags_used2;
   unsigned long ins, mod_reg[2][3], used_reg[2][3], flag_reg[2];
-  struct d30v_format *f;
-  struct d30v_opcode *op;
+  const struct d30v_format *f;
+  const struct d30v_opcode *op;
 
   /* Section 4.3: Both instructions must not be IU or MU only.  */
   if ((op1->op->unit == IU && op2->op->unit == IU)
@@ -1122,14 +1122,14 @@ write_2_short (struct d30v_insn *opcode1,
    It must look at all formats for an opcode and use the operands
    to choose the correct one.  Return NULL on error.  */
 
-static struct d30v_format *
-find_format (struct d30v_opcode *opcode,
+static const struct d30v_format *
+find_format (const struct d30v_opcode *opcode,
 	     expressionS myops[],
 	     int fsize,
 	     int cmp_hack)
 {
   int match, opcode_index, i = 0, j, k;
-  struct d30v_format *fm;
+  const struct d30v_format *fm;
 
   if (opcode == NULL)
     return NULL;
@@ -1145,7 +1145,7 @@ find_format (struct d30v_opcode *opcode,
       if (fsize == FORCE_LONG && opcode_index < LONG)
 	continue;
 
-      fm = (struct d30v_format *) &d30v_format_table[opcode_index];
+      fm = &d30v_format_table[opcode_index];
       k = opcode_index;
       while (fm->form == opcode_index)
 	{
@@ -1266,7 +1266,7 @@ find_format (struct d30v_opcode *opcode,
 
 	      return fm;
 	    }
-	  fm = (struct d30v_format *) &d30v_format_table[++k];
+	  fm = &d30v_format_table[++k];
 	}
     }
   return NULL;
@@ -1294,7 +1294,7 @@ do_assemble (char *str,
   long long      insn;
 
   /* Drop leading whitespace.  */
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
 
   /* Find the opcode end.  */
@@ -1302,7 +1302,7 @@ do_assemble (char *str,
        *op_end
        && nlen < (NAME_BUF_LEN - 1)
        && *op_end != '/'
-       && !is_end_of_line[(unsigned char) *op_end] && *op_end != ' ';
+       && !is_end_of_stmt (*op_end) && !is_whitespace (*op_end);
        op_end++)
     {
       name[nlen] = TOLOWER (op_start[nlen]);
@@ -1339,7 +1339,7 @@ do_assemble (char *str,
   if (startswith (name, "cmp"))
     {
       int p, i;
-      char **d30v_str = (char **) d30v_cc_names;
+      const char **d30v_str = d30v_cc_names;
 
       if (name[3] == 'u')
 	p = 4;
@@ -1387,7 +1387,7 @@ do_assemble (char *str,
     }
 
   /* Find the first opcode with the proper name.  */
-  opcode->op = (struct d30v_opcode *) str_hash_find (d30v_hash, name);
+  opcode->op = str_hash_find (d30v_hash, name);
   if (opcode->op == NULL)
     {
       as_bad (_("unknown opcode: %s"), name);
@@ -1757,8 +1757,8 @@ arelent *
 tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
@@ -1785,7 +1785,7 @@ md_estimate_size_before_relax (fragS *fragp ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS *fixp, segT sec)
 {
-  if (fixp->fx_addsy != (symbolS *) NULL
+  if (fixp->fx_addsy != NULL
       && (!S_IS_DEFINED (fixp->fx_addsy)
 	  || (S_GET_SEGMENT (fixp->fx_addsy) != sec)))
     return 0;
@@ -1829,7 +1829,7 @@ d30v_start_line (void)
 {
   char *c = input_line_pointer;
 
-  while (ISSPACE (*c))
+  while (is_whitespace (*c))
     c++;
 
   if (*c == '.')
@@ -1888,7 +1888,7 @@ d30v_cons_align (int size)
     ++log_size;
 
   if (d30v_current_align < log_size)
-    d30v_align (log_size, (char *) NULL, NULL);
+    d30v_align (log_size, NULL, NULL);
   else if (d30v_current_align > log_size)
     d30v_current_align = log_size;
   d30v_last_label = NULL;
@@ -1901,37 +1901,37 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   unsigned long insn, insn2;
   long value = *valP;
 
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
   /* We don't support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   /* Fetch the instruction, insert the fully resolved operand
      value, and stuff the instruction back again.  */
   where = fixP->fx_frag->fr_literal + fixP->fx_where;
-  insn = bfd_getb32 ((unsigned char *) where);
+  insn = bfd_getb32 (where);
 
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_8:
-      *(unsigned char *) where = value;
+      *where = value;
       break;
 
     case BFD_RELOC_16:
-      bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb16 (value, where);
       break;
 
     case BFD_RELOC_64:
-      bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
-      bfd_putb32 (0, ((unsigned char *) where) + 4);
+      bfd_putb32 (value, where);
+      bfd_putb32 (0, where + 4);
       break;
 
     case BFD_RELOC_D30V_6:
       check_size (value, 6, fixP->fx_file, fixP->fx_line);
       insn |= value & 0x3F;
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+      bfd_putb32 (insn, where);
       break;
 
     case BFD_RELOC_D30V_9_PCREL:
@@ -1944,13 +1944,13 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       check_size (value, 9, fixP->fx_file, fixP->fx_line);
       insn |= ((value >> 3) & 0x3F) << 12;
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+      bfd_putb32 (insn, where);
       break;
 
     case BFD_RELOC_D30V_15:
       check_size (value, 15, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0xFFF;
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+      bfd_putb32 (insn, where);
       break;
 
     case BFD_RELOC_D30V_15_PCREL:
@@ -1963,13 +1963,13 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       check_size (value, 15, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0xFFF;
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+      bfd_putb32 (insn, where);
       break;
 
     case BFD_RELOC_D30V_21:
       check_size (value, 21, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0x3FFFF;
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+      bfd_putb32 (insn, where);
       break;
 
     case BFD_RELOC_D30V_21_PCREL:
@@ -1982,29 +1982,29 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       check_size (value, 21, fixP->fx_file, fixP->fx_line);
       insn |= (value >> 3) & 0x3FFFF;
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+      bfd_putb32 (insn, where);
       break;
 
     case BFD_RELOC_D30V_32:
-      insn2 = bfd_getb32 ((unsigned char *) where + 4);
+      insn2 = bfd_getb32 (where + 4);
       insn |= (value >> 26) & 0x3F;		/* Top 6 bits.  */
       insn2 |= ((value & 0x03FC0000) << 2);	/* Next 8 bits.  */
       insn2 |= value & 0x0003FFFF;		/* Bottom 18 bits.  */
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
-      bfd_putb32 ((bfd_vma) insn2, (unsigned char *) where + 4);
+      bfd_putb32 (insn, where);
+      bfd_putb32 (insn2, where + 4);
       break;
 
     case BFD_RELOC_D30V_32_PCREL:
-      insn2 = bfd_getb32 ((unsigned char *) where + 4);
+      insn2 = bfd_getb32 (where + 4);
       insn |= (value >> 26) & 0x3F;		/* Top 6 bits.  */
       insn2 |= ((value & 0x03FC0000) << 2);	/* Next 8 bits.  */
       insn2 |= value & 0x0003FFFF;		/* Bottom 18 bits.  */
-      bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
-      bfd_putb32 ((bfd_vma) insn2, (unsigned char *) where + 4);
+      bfd_putb32 (insn, where);
+      bfd_putb32 (insn2, where + 4);
       break;
 
     case BFD_RELOC_32:
-      bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb32 (value, where);
       break;
 
     default:

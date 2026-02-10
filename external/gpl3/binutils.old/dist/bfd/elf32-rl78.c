@@ -1,5 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1440,8 +1440,8 @@ rl78_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bool
-rl78_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-			       struct bfd_link_info *info)
+rl78_elf_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *splt;
@@ -1459,6 +1459,7 @@ rl78_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   splt->contents = (bfd_byte *) bfd_zalloc (dynobj, splt->size);
   if (splt->contents == NULL)
     return false;
+  splt->alloced = 1;
 
   return true;
 }
@@ -2610,8 +2611,8 @@ rl78_elf_relax_section (bfd *abfd,
 
 #define bfd_elf32_bfd_relax_section		rl78_elf_relax_section
 #define elf_backend_check_relocs		rl78_elf_check_relocs
-#define elf_backend_always_size_sections \
-  rl78_elf_always_size_sections
+#define elf_backend_early_size_sections \
+  rl78_elf_early_size_sections
 #define elf_backend_finish_dynamic_sections \
   rl78_elf_finish_dynamic_sections
 

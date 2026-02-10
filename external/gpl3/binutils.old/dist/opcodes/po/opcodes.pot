@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
-"POT-Creation-Date: 2024-01-29 14:44+0000\n"
+"POT-Creation-Date: 2025-07-13 08:45+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,31 +16,31 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: aarch64-asm.c:874
+#: aarch64-asm.c:895
 msgid "specified register cannot be read from"
 msgstr ""
 
-#: aarch64-asm.c:883
+#: aarch64-asm.c:904
 msgid "specified register cannot be written to"
 msgstr ""
 
 #. Invalid option.
-#: aarch64-dis.c:103 arc-dis.c:807 arm-dis.c:12303 kvx-dis.c:154
+#: aarch64-dis.c:103 arc-dis.c:795 arm-dis.c:11968 kvx-dis.c:154
 #, c-format
 msgid "unrecognised disassembler option: %s"
 msgstr ""
 
-#: aarch64-dis.c:3956
+#: aarch64-dis.c:4137
 #, c-format
 msgid "this `%s' should have an immediately preceding `%s'"
 msgstr ""
 
-#: aarch64-dis.c:3963
+#: aarch64-dis.c:4144
 #, c-format
 msgid "expected `%s' after previous `%s'"
 msgstr ""
 
-#: aarch64-dis.c:4389
+#: aarch64-dis.c:4570
 #, c-format
 msgid ""
 "\n"
@@ -48,349 +48,348 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: aarch64-dis.c:4393
+#: aarch64-dis.c:4574
 #, c-format
 msgid ""
 "\n"
 "  no-aliases         Don't print instruction aliases.\n"
 msgstr ""
 
-#: aarch64-dis.c:4396
+#: aarch64-dis.c:4577
 #, c-format
 msgid ""
 "\n"
 "  aliases            Do print instruction aliases.\n"
 msgstr ""
 
-#: aarch64-dis.c:4399
+#: aarch64-dis.c:4580
 #, c-format
 msgid ""
 "\n"
 "  no-notes         Don't print instruction notes.\n"
 msgstr ""
 
-#: aarch64-dis.c:4402
+#: aarch64-dis.c:4583
 #, c-format
 msgid ""
 "\n"
 "  notes            Do print instruction notes.\n"
 msgstr ""
 
-#: aarch64-dis.c:4406
+#: aarch64-dis.c:4587
 #, c-format
 msgid ""
 "\n"
 "  debug_dump         Temp switch for debug trace.\n"
 msgstr ""
 
-#: aarch64-dis.c:4410 arc-dis.c:1607 arc-dis.c:1630 arc-dis.c:1633
-#: kvx-dis.c:1586 loongarch-dis.c:337 mips-dis.c:2903 mips-dis.c:2915
-#: mips-dis.c:2918 nfp-dis.c:2995 riscv-dis.c:1489 riscv-dis.c:1492
+#: aarch64-dis.c:4591 arc-dis.c:1585 arc-dis.c:1608 arc-dis.c:1611
+#: kvx-dis.c:1586 loongarch-dis.c:342 mips-dis.c:2930 mips-dis.c:2942
+#: mips-dis.c:2945 nfp-dis.c:3002 riscv-dis.c:1750 riscv-dis.c:1753
 #, c-format
 msgid "\n"
 msgstr ""
 
-#: aarch64-opc.c:1446
+#: aarch64-opc.c:1476
 msgid "immediate value"
 msgstr ""
 
-#: aarch64-opc.c:1456
+#: aarch64-opc.c:1486
 msgid "immediate offset"
 msgstr ""
 
-#: aarch64-opc.c:1466
+#: aarch64-opc.c:1496
 msgid "register number"
 msgstr ""
 
-#: aarch64-opc.c:1476
+#: aarch64-opc.c:1506
 msgid "register element index"
 msgstr ""
 
-#: aarch64-opc.c:1486
+#: aarch64-opc.c:1516
 msgid "shift amount"
 msgstr ""
 
-#: aarch64-opc.c:1498
+#: aarch64-opc.c:1528
 msgid "multiplier"
 msgstr ""
 
-#: aarch64-opc.c:1617
+#: aarch64-opc.c:1697
 msgid "expected a selection register in the range w12-w15"
 msgstr ""
 
-#: aarch64-opc.c:1621
+#: aarch64-opc.c:1701
 msgid "expected a selection register in the range w8-w11"
 msgstr ""
 
-#: aarch64-opc.c:1640
+#: aarch64-opc.c:1720
 msgid "starting offset is not a multiple of 2"
 msgstr ""
 
-#: aarch64-opc.c:1641
+#: aarch64-opc.c:1721
 msgid "starting offset is not a multiple of 4"
 msgstr ""
 
-#: aarch64-opc.c:1649
+#: aarch64-opc.c:1729
 msgid "expected a single offset rather than a range"
 msgstr ""
 
-#: aarch64-opc.c:1653
+#: aarch64-opc.c:1733
 msgid "expected a range of two offsets"
 msgstr ""
 
-#: aarch64-opc.c:1656
+#: aarch64-opc.c:1736
 msgid "expected a range of four offsets"
 msgstr ""
 
-#: aarch64-opc.c:1737
+#: aarch64-opc.c:1817
 msgid "second reg in pair should be xzr if first is xzr"
 msgstr ""
 
-#: aarch64-opc.c:1751
+#: aarch64-opc.c:1831
 msgid "reg pair must start from even reg"
 msgstr ""
 
-#: aarch64-opc.c:1757
+#: aarch64-opc.c:1837
 msgid "reg pair must be contiguous"
 msgstr ""
 
-#: aarch64-opc.c:1771
+#: aarch64-opc.c:1851
 msgid "extraneous register"
 msgstr ""
 
-#: aarch64-opc.c:1777
+#: aarch64-opc.c:1857
 msgid "missing register"
 msgstr ""
 
-#: aarch64-opc.c:1788
+#: aarch64-opc.c:1868
 msgid "stack pointer register expected"
 msgstr ""
 
-#: aarch64-opc.c:1906 aarch64-opc.c:1922
+#: aarch64-opc.c:2007 aarch64-opc.c:2023
 msgid "start register out of range"
 msgstr ""
 
-#: aarch64-opc.c:2094 aarch64-opc.c:2102 aarch64-opc.c:2125
+#: aarch64-opc.c:2216 aarch64-opc.c:2224 aarch64-opc.c:2247
 msgid "unexpected address writeback"
 msgstr ""
 
-#: aarch64-opc.c:2113
+#: aarch64-opc.c:2235
 msgid "address writeback expected"
 msgstr ""
 
-#: aarch64-opc.c:2173
+#: aarch64-opc.c:2295
 msgid "negative or unaligned offset expected"
 msgstr ""
 
-#: aarch64-opc.c:2230
+#: aarch64-opc.c:2352
 msgid "invalid register offset"
 msgstr ""
 
-#: aarch64-opc.c:2252
+#: aarch64-opc.c:2374
 msgid "invalid post-increment amount"
 msgstr ""
 
-#: aarch64-opc.c:2268 aarch64-opc.c:2814
+#: aarch64-opc.c:2390 aarch64-opc.c:2945
 msgid "invalid shift amount"
 msgstr ""
 
-#: aarch64-opc.c:2281
+#: aarch64-opc.c:2403
 msgid "invalid extend/shift operator"
 msgstr ""
 
-#: aarch64-opc.c:2327 aarch64-opc.c:2614 aarch64-opc.c:2649 aarch64-opc.c:2668
-#: aarch64-opc.c:2676 aarch64-opc.c:2767 aarch64-opc.c:2944 aarch64-opc.c:3044
-#: aarch64-opc.c:3057
-msgid "immediate out of range"
-msgstr ""
-
-#: aarch64-opc.c:2357 aarch64-opc.c:2399 aarch64-opc.c:2462 aarch64-opc.c:2496
+#: aarch64-opc.c:2478 aarch64-opc.c:2520 aarch64-opc.c:2588 aarch64-opc.c:2622
 msgid "invalid addressing mode"
 msgstr ""
 
-#: aarch64-opc.c:2454
+#: aarch64-opc.c:2580
 msgid "index register xzr is not allowed"
 msgstr ""
 
-#: aarch64-opc.c:2523
+#: aarch64-opc.c:2649
 msgid "invalid increment amount"
 msgstr ""
 
-#: aarch64-opc.c:2602 aarch64-opc.c:2624 aarch64-opc.c:2847 aarch64-opc.c:2855
-#: aarch64-opc.c:2921 aarch64-opc.c:2950
+#: aarch64-opc.c:2732 aarch64-opc.c:2754 aarch64-opc.c:2978 aarch64-opc.c:2986
+#: aarch64-opc.c:3052 aarch64-opc.c:3081
 msgid "invalid shift operator"
 msgstr ""
 
-#: aarch64-opc.c:2608
+#: aarch64-opc.c:2738
 msgid "shift amount must be 0 or 12"
 msgstr ""
 
-#: aarch64-opc.c:2631
+#: aarch64-opc.c:2744 aarch64-opc.c:2779 aarch64-opc.c:2798 aarch64-opc.c:2806
+#: aarch64-opc.c:2898 aarch64-opc.c:3075 aarch64-opc.c:3175 aarch64-opc.c:3188
+msgid "immediate out of range"
+msgstr ""
+
+#: aarch64-opc.c:2761
 msgid "shift amount must be a multiple of 16"
 msgstr ""
 
-#: aarch64-opc.c:2643
+#: aarch64-opc.c:2773
 msgid "negative immediate value not allowed"
 msgstr ""
 
-#: aarch64-opc.c:2778
+#: aarch64-opc.c:2909
 msgid "immediate zero expected"
 msgstr ""
 
-#: aarch64-opc.c:2792
+#: aarch64-opc.c:2923
 msgid "rotate expected to be 0, 90, 180 or 270"
 msgstr ""
 
-#: aarch64-opc.c:2803
+#: aarch64-opc.c:2934
 msgid "rotate expected to be 90 or 270"
 msgstr ""
 
-#: aarch64-opc.c:2863
+#: aarch64-opc.c:2994
 msgid "shift is not permitted"
 msgstr ""
 
-#: aarch64-opc.c:2888
+#: aarch64-opc.c:3019
 msgid "invalid value for immediate"
 msgstr ""
 
-#: aarch64-opc.c:2913
+#: aarch64-opc.c:3044
 msgid "shift amount must be 0 or 16"
 msgstr ""
 
-#: aarch64-opc.c:2934
+#: aarch64-opc.c:3065
 msgid "floating-point immediate expected"
 msgstr ""
 
-#: aarch64-opc.c:2968
+#: aarch64-opc.c:3099
 msgid "no shift amount allowed for 8-bit constants"
 msgstr ""
 
-#: aarch64-opc.c:2978
+#: aarch64-opc.c:3109
 msgid "shift amount must be 0 or 8"
 msgstr ""
 
-#: aarch64-opc.c:2991
+#: aarch64-opc.c:3122
 msgid "immediate too big for element size"
 msgstr ""
 
-#: aarch64-opc.c:2998
+#: aarch64-opc.c:3129
 msgid "invalid arithmetic immediate"
 msgstr ""
 
-#: aarch64-opc.c:3012
+#: aarch64-opc.c:3143
 msgid "floating-point value must be 0.5 or 1.0"
 msgstr ""
 
-#: aarch64-opc.c:3022
+#: aarch64-opc.c:3153
 msgid "floating-point value must be 0.5 or 2.0"
 msgstr ""
 
-#: aarch64-opc.c:3032
+#: aarch64-opc.c:3163
 msgid "floating-point value must be 0.0 or 1.0"
 msgstr ""
 
-#: aarch64-opc.c:3063
+#: aarch64-opc.c:3194
 msgid "invalid replicated MOV immediate"
 msgstr ""
 
-#: aarch64-opc.c:3121
+#: aarch64-opc.c:3252
 msgid "byte index must be a multiple of 8"
 msgstr ""
 
-#: aarch64-opc.c:3151
+#: aarch64-opc.c:3290
 msgid ""
 "the register-index form of PRFM does not accept opcodes in the range 24-31"
 msgstr ""
 
-#: aarch64-opc.c:3204
+#: aarch64-opc.c:3359
 msgid "extend operator expected"
 msgstr ""
 
-#: aarch64-opc.c:3217
+#: aarch64-opc.c:3372
 msgid "missing extend operator"
 msgstr ""
 
-#: aarch64-opc.c:3223
+#: aarch64-opc.c:3378
 msgid "'LSL' operator not allowed"
 msgstr ""
 
-#: aarch64-opc.c:3244
+#: aarch64-opc.c:3399
 msgid "W register expected"
 msgstr ""
 
-#: aarch64-opc.c:3255
+#: aarch64-opc.c:3410
 msgid "shift operator expected"
 msgstr ""
 
-#: aarch64-opc.c:3262
+#: aarch64-opc.c:3417
 msgid "'ROR' operator not allowed"
 msgstr ""
 
-#: aarch64-opc.c:4715
+#: aarch64-opc.c:4971
 msgid "reading from a write-only register"
 msgstr ""
 
-#: aarch64-opc.c:4717
+#: aarch64-opc.c:4973
 msgid "writing to a read-only register"
 msgstr ""
 
-#: aarch64-opc.c:5241
+#: aarch64-opc.c:5515
 msgid "the three register operands must be distinct from one another"
 msgstr ""
 
-#: aarch64-opc.c:5352
+#: aarch64-opc.c:5626
 msgid "destination register differs from preceding instruction"
 msgstr ""
 
-#: aarch64-opc.c:5355
+#: aarch64-opc.c:5629
 msgid "source register differs from preceding instruction"
 msgstr ""
 
-#: aarch64-opc.c:5358
+#: aarch64-opc.c:5632
 msgid "size register differs from preceding instruction"
 msgstr ""
 
-#: aarch64-opc.c:5406
+#: aarch64-opc.c:5680
 msgid "instruction opens new dependency sequence without ending previous one"
 msgstr ""
 
-#: aarch64-opc.c:5435
+#: aarch64-opc.c:5709
 msgid "previous `movprfx' sequence not closed"
 msgstr ""
 
-#: aarch64-opc.c:5454
+#: aarch64-opc.c:5740
 msgid "SVE instruction expected after `movprfx'"
 msgstr ""
 
-#: aarch64-opc.c:5467
+#: aarch64-opc.c:5753
 msgid "SVE `movprfx' compatible instruction expected"
 msgstr ""
 
-#: aarch64-opc.c:5555
+#: aarch64-opc.c:5841
 msgid "predicated instruction expected after `movprfx'"
 msgstr ""
 
-#: aarch64-opc.c:5567
+#: aarch64-opc.c:5853
 msgid "merging predicate expected due to preceding `movprfx'"
 msgstr ""
 
-#: aarch64-opc.c:5579
+#: aarch64-opc.c:5865
 msgid "predicate register differs from that in preceding `movprfx'"
 msgstr ""
 
-#: aarch64-opc.c:5598
+#: aarch64-opc.c:5884
 msgid "output register of preceding `movprfx' not used in current instruction"
 msgstr ""
 
-#: aarch64-opc.c:5611
+#: aarch64-opc.c:5897
 msgid "output register of preceding `movprfx' expected as output"
 msgstr ""
 
-#: aarch64-opc.c:5623
+#: aarch64-opc.c:5909
 msgid "output register of preceding `movprfx' used as input"
 msgstr ""
 
-#: aarch64-opc.c:5639
+#: aarch64-opc.c:5925
 msgid "register size not compatible with previous `movprfx'"
 msgstr ""
 
@@ -402,7 +401,7 @@ msgstr ""
 msgid "jump hint unaligned"
 msgstr ""
 
-#: arc-dis.c:380
+#: arc-dis.c:368
 msgid ""
 "\n"
 "Warning: disassembly may be wrong due to guessed opcode class choice.\n"
@@ -410,62 +409,62 @@ msgid ""
 "\t\t\t\t"
 msgstr ""
 
-#: arc-dis.c:442
+#: arc-dis.c:430
 msgid "An error occurred while generating the extension instruction operations"
 msgstr ""
 
-#: arc-dis.c:850
+#: arc-dis.c:838
 #, c-format
 msgid "unrecognised disassembler CPU option: %s"
 msgstr ""
 
-#: arc-dis.c:1323
+#: arc-dis.c:1300
 msgid ""
 "\n"
 "Warning: illegal use of double register pair.\n"
 msgstr ""
 
-#: arc-dis.c:1489
+#: arc-dis.c:1467
 msgid "Enforce the designated architecture while decoding."
 msgstr ""
 
-#: arc-dis.c:1491
+#: arc-dis.c:1469
 msgid "Recognize DSP instructions."
 msgstr ""
 
-#: arc-dis.c:1493
+#: arc-dis.c:1471
 msgid "Recognize FPX SP instructions."
 msgstr ""
 
-#: arc-dis.c:1495
+#: arc-dis.c:1473
 msgid "Recognize FPX DP instructions."
 msgstr ""
 
-#: arc-dis.c:1497
+#: arc-dis.c:1475
 msgid "Recognize FPU QuarkSE-EM instructions."
 msgstr ""
 
-#: arc-dis.c:1499
+#: arc-dis.c:1477
 msgid "Recognize double assist FPU instructions."
 msgstr ""
 
-#: arc-dis.c:1501
+#: arc-dis.c:1479
 msgid "Recognize single precision FPU instructions."
 msgstr ""
 
-#: arc-dis.c:1503
+#: arc-dis.c:1481
 msgid "Recognize double precision FPU instructions."
 msgstr ""
 
-#: arc-dis.c:1505
+#: arc-dis.c:1483
 msgid "Recognize NPS400 instructions."
 msgstr ""
 
-#: arc-dis.c:1507
+#: arc-dis.c:1485
 msgid "Use only hexadecimal number to print immediates."
 msgstr ""
 
-#: arc-dis.c:1582
+#: arc-dis.c:1560
 #, c-format
 msgid ""
 "\n"
@@ -473,7 +472,7 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: arc-dis.c:1616 mips-dis.c:2910 riscv-dis.c:1484
+#: arc-dis.c:1594 mips-dis.c:2937 riscv-dis.c:1745
 #, c-format
 msgid ""
 "\n"
@@ -481,7 +480,7 @@ msgid ""
 "   "
 msgstr ""
 
-#: arc-dis.c:1626
+#: arc-dis.c:1604
 #, c-format
 msgid ""
 "\n"
@@ -649,67 +648,63 @@ msgstr ""
 msgid "invalid position, should be one of: 0,4,8,...124."
 msgstr ""
 
-#: arm-dis.c:5204
+#: arm-dis.c:4934
 msgid "Select raw register names"
 msgstr ""
 
-#: arm-dis.c:5206
+#: arm-dis.c:4936
 msgid "Select register names used by GCC"
 msgstr ""
 
-#: arm-dis.c:5208
+#: arm-dis.c:4938
 msgid "Select register names used in ARM's ISA documentation"
 msgstr ""
 
-#: arm-dis.c:5210
+#: arm-dis.c:4940
 msgid "Assume all insns are Thumb insns"
 msgstr ""
 
-#: arm-dis.c:5211
+#: arm-dis.c:4941
 msgid "Examine preceding label to determine an insn's type"
 msgstr ""
 
-#: arm-dis.c:5212
+#: arm-dis.c:4942
 msgid "Select register names used in the APCS"
 msgstr ""
 
-#: arm-dis.c:5214
+#: arm-dis.c:4944
 msgid "Select register names used in the ATPCS"
 msgstr ""
 
-#: arm-dis.c:5216
+#: arm-dis.c:4946
 msgid "Select special register names used in the ATPCS"
 msgstr ""
 
-#: arm-dis.c:5218
+#: arm-dis.c:4948
 msgid "Enable CDE extensions for coprocessor N space"
 msgstr ""
 
-#: arm-dis.c:8530
-msgid "<illegal precision>"
-msgstr ""
-
-#: arm-dis.c:12264
+#: arm-dis.c:11929
 #, c-format
 msgid "unrecognised register name set: %s"
 msgstr ""
 
-#: arm-dis.c:12278
+#: arm-dis.c:11943
 #, c-format
 msgid "cde coprocessor not between 0-7: %s"
 msgstr ""
 
-#: arm-dis.c:12284
+#: arm-dis.c:11949
 #, c-format
 msgid "coproc must have an argument: %s"
 msgstr ""
 
-#: arm-dis.c:12297
+#: arm-dis.c:11962
 #, c-format
 msgid "coprocN argument takes options \"generic\", \"cde\", or \"CDE\": %s"
 msgstr ""
 
-#: arm-dis.c:13016
+#: arm-dis.c:12684
 #, c-format
 msgid ""
 "\n"
@@ -749,7 +744,7 @@ msgid ""
 msgstr ""
 
 #. The option without '=' should be defined above.
-#: bpf-dis.c:90 riscv-dis.c:120 riscv-dis.c:157
+#: bpf-dis.c:90 riscv-dis.c:124 riscv-dis.c:162
 #, c-format
 msgid "unrecognized disassembler option: %s"
 msgstr ""
@@ -815,12 +810,12 @@ msgstr ""
 msgid "Address 0x%<PRIx64> is out of bounds.\n"
 msgstr ""
 
-#: disassemble.c:862
+#: disassemble.c:854
 #, c-format
 msgid "assertion fail %s:%d"
 msgstr ""
 
-#: disassemble.c:863
+#: disassemble.c:855
 msgid "Please report this bug"
 msgstr ""
 
@@ -861,14 +856,14 @@ msgstr ""
 
 #: epiphany-asm.c:456 fr30-asm.c:311 frv-asm.c:1264 ip2k-asm.c:512
 #: iq2000-asm.c:460 lm32-asm.c:350 m32c-asm.c:1585 m32r-asm.c:329
-#: mep-asm.c:1286 mt-asm.c:596 or1k-asm.c:576 xstormy16-asm.c:277
+#: mep-asm.c:1288 mt-asm.c:596 or1k-asm.c:576 xstormy16-asm.c:277
 #, c-format
 msgid "internal error: unrecognized field %d while parsing"
 msgstr ""
 
 #: epiphany-asm.c:508 fr30-asm.c:363 frv-asm.c:1316 ip2k-asm.c:564
 #: iq2000-asm.c:512 lm32-asm.c:402 m32c-asm.c:1637 m32r-asm.c:381
-#: mep-asm.c:1338 mt-asm.c:648 or1k-asm.c:628 xstormy16-asm.c:329
+#: mep-asm.c:1340 mt-asm.c:648 or1k-asm.c:628 xstormy16-asm.c:329
 msgid "missing mnemonic in syntax string"
 msgstr ""
 
@@ -880,8 +875,8 @@ msgstr ""
 #: iq2000-asm.c:740 iq2000-asm.c:847 lm32-asm.c:537 lm32-asm.c:541
 #: lm32-asm.c:630 lm32-asm.c:737 m32c-asm.c:1772 m32c-asm.c:1776
 #: m32c-asm.c:1865 m32c-asm.c:1972 m32r-asm.c:516 m32r-asm.c:520
-#: m32r-asm.c:609 m32r-asm.c:716 mep-asm.c:1473 mep-asm.c:1477 mep-asm.c:1566
-#: mep-asm.c:1673 mt-asm.c:783 mt-asm.c:787 mt-asm.c:876 mt-asm.c:983
+#: m32r-asm.c:609 m32r-asm.c:716 mep-asm.c:1475 mep-asm.c:1479 mep-asm.c:1568
+#: mep-asm.c:1675 mt-asm.c:783 mt-asm.c:787 mt-asm.c:876 mt-asm.c:983
 #: or1k-asm.c:763 or1k-asm.c:767 or1k-asm.c:856 or1k-asm.c:963
 #: xstormy16-asm.c:464 xstormy16-asm.c:468 xstormy16-asm.c:557
 #: xstormy16-asm.c:664
@@ -890,40 +885,40 @@ msgstr ""
 
 #: epiphany-asm.c:690 fr30-asm.c:545 frv-asm.c:1498 ip2k-asm.c:746
 #: iq2000-asm.c:694 lm32-asm.c:584 m32c-asm.c:1819 m32r-asm.c:563
-#: mep-asm.c:1520 mt-asm.c:830 or1k-asm.c:810 xstormy16-asm.c:511
+#: mep-asm.c:1522 mt-asm.c:830 or1k-asm.c:810 xstormy16-asm.c:511
 #, c-format
 msgid "syntax error (expected char `%c', found `%c')"
 msgstr ""
 
 #: epiphany-asm.c:700 fr30-asm.c:555 frv-asm.c:1508 ip2k-asm.c:756
 #: iq2000-asm.c:704 lm32-asm.c:594 m32c-asm.c:1829 m32r-asm.c:573
-#: mep-asm.c:1530 mt-asm.c:840 or1k-asm.c:820 xstormy16-asm.c:521
+#: mep-asm.c:1532 mt-asm.c:840 or1k-asm.c:820 xstormy16-asm.c:521
 #, c-format
 msgid "syntax error (expected char `%c', found end of instruction)"
 msgstr ""
 
 #: epiphany-asm.c:730 fr30-asm.c:585 frv-asm.c:1538 ip2k-asm.c:786
 #: iq2000-asm.c:734 lm32-asm.c:624 m32c-asm.c:1859 m32r-asm.c:603
-#: mep-asm.c:1560 mt-asm.c:870 or1k-asm.c:850 xstormy16-asm.c:551
+#: mep-asm.c:1562 mt-asm.c:870 or1k-asm.c:850 xstormy16-asm.c:551
 msgid "junk at end of line"
 msgstr ""
 
 #: epiphany-asm.c:842 fr30-asm.c:697 frv-asm.c:1650 ip2k-asm.c:898
 #: iq2000-asm.c:846 lm32-asm.c:736 m32c-asm.c:1971 m32r-asm.c:715
-#: mep-asm.c:1672 mt-asm.c:982 or1k-asm.c:962 xstormy16-asm.c:663
+#: mep-asm.c:1674 mt-asm.c:982 or1k-asm.c:962 xstormy16-asm.c:663
 msgid "unrecognized form of instruction"
 msgstr ""
 
 #: epiphany-asm.c:856 fr30-asm.c:711 frv-asm.c:1664 ip2k-asm.c:912
 #: iq2000-asm.c:860 lm32-asm.c:750 m32c-asm.c:1985 m32r-asm.c:729
-#: mep-asm.c:1686 mt-asm.c:996 or1k-asm.c:976 xstormy16-asm.c:677
+#: mep-asm.c:1688 mt-asm.c:996 or1k-asm.c:976 xstormy16-asm.c:677
 #, c-format
 msgid "bad instruction `%.50s...'"
 msgstr ""
 
 #: epiphany-asm.c:859 fr30-asm.c:714 frv-asm.c:1667 ip2k-asm.c:915
 #: iq2000-asm.c:863 lm32-asm.c:753 m32c-asm.c:1988 m32r-asm.c:732
-#: mep-asm.c:1689 mt-asm.c:999 or1k-asm.c:979 xstormy16-asm.c:680
+#: mep-asm.c:1691 mt-asm.c:999 or1k-asm.c:979 xstormy16-asm.c:680
 #, c-format
 msgid "bad instruction `%.50s'"
 msgstr ""
@@ -947,7 +942,7 @@ msgstr ""
 
 #. Default text to print if an instruction isn't recognized.
 #: epiphany-dis.c:41 fr30-dis.c:41 frv-dis.c:41 ip2k-dis.c:41 iq2000-dis.c:41
-#: lm32-dis.c:41 m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:293
+#: lm32-dis.c:41 m32c-dis.c:41 m32r-dis.c:41 mep-dis.c:41 mmix-dis.c:294
 #: mt-dis.c:41 nds32-dis.c:64 or1k-dis.c:41 xstormy16-dis.c:41
 msgid "*unknown*"
 msgstr ""
@@ -1106,11 +1101,11 @@ msgstr ""
 msgid "Don't understand 0x%x \n"
 msgstr ""
 
-#: i386-dis.c:8436
+#: i386-dis.c:8738
 msgid "<internal disassembler error>"
 msgstr ""
 
-#: i386-dis.c:8684
+#: i386-dis.c:8986
 #, c-format
 msgid ""
 "\n"
@@ -1119,86 +1114,86 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: i386-dis.c:8688
+#: i386-dis.c:8990
 #, c-format
 msgid "  x86-64      Disassemble in 64bit mode\n"
 msgstr ""
 
-#: i386-dis.c:8689
+#: i386-dis.c:8991
 #, c-format
 msgid "  i386        Disassemble in 32bit mode\n"
 msgstr ""
 
-#: i386-dis.c:8690
+#: i386-dis.c:8992
 #, c-format
 msgid "  i8086       Disassemble in 16bit mode\n"
 msgstr ""
 
-#: i386-dis.c:8691
+#: i386-dis.c:8993
 #, c-format
 msgid "  att         Display instruction in AT&T syntax\n"
 msgstr ""
 
-#: i386-dis.c:8692
+#: i386-dis.c:8994
 #, c-format
 msgid "  intel       Display instruction in Intel syntax\n"
 msgstr ""
 
-#: i386-dis.c:8693
+#: i386-dis.c:8995
 #, c-format
 msgid ""
 "  att-mnemonic  (AT&T syntax only)\n"
 "              Display instruction with AT&T mnemonic\n"
 msgstr ""
 
-#: i386-dis.c:8695
+#: i386-dis.c:8997
 #, c-format
 msgid ""
 "  intel-mnemonic  (AT&T syntax only)\n"
 "              Display instruction with Intel mnemonic\n"
 msgstr ""
 
-#: i386-dis.c:8697
+#: i386-dis.c:8999
 #, c-format
 msgid "  addr64      Assume 64bit address size\n"
 msgstr ""
 
-#: i386-dis.c:8698
+#: i386-dis.c:9000
 #, c-format
 msgid "  addr32      Assume 32bit address size\n"
 msgstr ""
 
-#: i386-dis.c:8699
+#: i386-dis.c:9001
 #, c-format
 msgid "  addr16      Assume 16bit address size\n"
 msgstr ""
 
-#: i386-dis.c:8700
+#: i386-dis.c:9002
 #, c-format
 msgid "  data32      Assume 32bit data size\n"
 msgstr ""
 
-#: i386-dis.c:8701
+#: i386-dis.c:9003
 #, c-format
 msgid "  data16      Assume 16bit data size\n"
 msgstr ""
 
-#: i386-dis.c:8702
+#: i386-dis.c:9004
 #, c-format
 msgid "  suffix      Always display instruction suffix in AT&T syntax\n"
 msgstr ""
 
-#: i386-dis.c:8703
+#: i386-dis.c:9005
 #, c-format
 msgid "  amd64       Display instruction in AMD64 ISA\n"
 msgstr ""
 
-#: i386-dis.c:8704
+#: i386-dis.c:9006
 #, c-format
 msgid "  intel64     Display instruction in Intel64 ISA\n"
 msgstr ""
 
-#: i386-dis.c:9459
+#: i386-dis.c:9796
 msgid "64-bit address is disabled"
 msgstr ""
 
@@ -1364,7 +1359,7 @@ msgstr ""
 msgid "internal error: lm32_cgen_cpu_open: no endianness specified"
 msgstr ""
 
-#: loongarch-dis.c:329
+#: loongarch-dis.c:334
 #, c-format
 msgid ""
 "\n"
@@ -1372,14 +1367,14 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: loongarch-dis.c:333
+#: loongarch-dis.c:338
 #, c-format
 msgid ""
 "\n"
 "    no-aliases    Use canonical instruction forms.\n"
 msgstr ""
 
-#: loongarch-dis.c:335
+#: loongarch-dis.c:340
 #, c-format
 msgid ""
 "\n"
@@ -1504,12 +1499,12 @@ msgstr ""
 msgid "internal error: m32r_cgen_cpu_open: no endianness specified"
 msgstr ""
 
-#: m68k-dis.c:1403
+#: m68k-dis.c:1405
 #, c-format
 msgid "<function code %d>"
 msgstr ""
 
-#: m68k-dis.c:1567
+#: m68k-dis.c:1590
 #, c-format
 msgid "<internal error in opcode table: %s %s>\n"
 msgstr ""
@@ -1522,28 +1517,28 @@ msgstr ""
 msgid "Only $sp or $15 allowed for this opcode"
 msgstr ""
 
-#: mep-asm.c:308 mep-asm.c:504
-#, c-format
+#: mep-asm.c:309 mep-asm.c:506
+#, no-c-format
 msgid "invalid %function() here"
 msgstr ""
 
-#: mep-asm.c:336
+#: mep-asm.c:337
 msgid "Immediate is out of range -32768 to 32767"
 msgstr ""
 
-#: mep-asm.c:356
+#: mep-asm.c:357
 msgid "Immediate is out of range 0 to 65535"
 msgstr ""
 
-#: mep-asm.c:549 mep-asm.c:562
+#: mep-asm.c:551 mep-asm.c:564
 msgid "Immediate is out of range -512 to 511"
 msgstr ""
 
-#: mep-asm.c:554 mep-asm.c:563
+#: mep-asm.c:556 mep-asm.c:565
 msgid "Immediate is out of range -128 to 127"
 msgstr ""
 
-#: mep-asm.c:558
+#: mep-asm.c:560
 msgid "Value is not aligned enough"
 msgstr ""
 
@@ -1569,86 +1564,86 @@ msgstr ""
 msgid "illegal MEP INDEX setting '%x' in ELF header e_flags field"
 msgstr ""
 
-#: mips-dis.c:1907 mips-dis.c:2140
+#: mips-dis.c:1934 mips-dis.c:2167
 #, c-format
 msgid "# internal error, undefined operand in `%s %s'"
 msgstr ""
 
-#: mips-dis.c:2745
+#: mips-dis.c:2772
 msgid "Use canonical instruction forms.\n"
 msgstr ""
 
-#: mips-dis.c:2747
+#: mips-dis.c:2774
 msgid "Recognize MSA instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2749
+#: mips-dis.c:2776
 msgid "Recognize the virtualization ASE instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2751
+#: mips-dis.c:2778
 msgid ""
 "Recognize the eXtended Physical Address (XPA) ASE\n"
 "                  instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2754
+#: mips-dis.c:2781
 msgid "Recognize the Global INValidate (GINV) ASE instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2758
+#: mips-dis.c:2785
 msgid ""
 "Recognize the Loongson MultiMedia extensions Instructions (MMI) ASE "
 "instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2762
+#: mips-dis.c:2789
 msgid "Recognize the Loongson Content Address Memory (CAM)  instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2766
+#: mips-dis.c:2793
 msgid "Recognize the Loongson EXTensions (EXT)  instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2770
+#: mips-dis.c:2797
 msgid "Recognize the Loongson EXTensions R2 (EXT2)  instructions.\n"
 msgstr ""
 
-#: mips-dis.c:2773
+#: mips-dis.c:2800
 msgid ""
 "Print GPR names according to specified ABI.\n"
 "                  Default: based on binary being disassembled.\n"
 msgstr ""
 
-#: mips-dis.c:2776
+#: mips-dis.c:2803
 msgid ""
 "Print FPR names according to specified ABI.\n"
 "                  Default: numeric.\n"
 msgstr ""
 
-#: mips-dis.c:2779
+#: mips-dis.c:2806
 msgid ""
 "Print CP0 register names according to specified architecture.\n"
 "                  Default: based on binary being disassembled.\n"
 msgstr ""
 
-#: mips-dis.c:2783
+#: mips-dis.c:2810
 msgid ""
 "Print HWR names according to specified architecture.\n"
 "                  Default: based on binary being disassembled.\n"
 msgstr ""
 
-#: mips-dis.c:2786
+#: mips-dis.c:2813
 msgid "Print GPR and FPR names according to specified ABI.\n"
 msgstr ""
 
-#: mips-dis.c:2788
+#: mips-dis.c:2815
 msgid ""
 "Print CP0 register and HWR names according to specified\n"
 "                  architecture."
 msgstr ""
 
-#: mips-dis.c:2874
+#: mips-dis.c:2901
 #, c-format
 msgid ""
 "\n"
@@ -1671,11 +1666,11 @@ msgstr ""
 msgid "(unknown)"
 msgstr ""
 
-#: mmix-dis.c:247 mmix-dis.c:255
+#: mmix-dis.c:248 mmix-dis.c:256
 msgid "*illegal*"
 msgstr ""
 
-#: mmix-dis.c:529
+#: mmix-dis.c:530
 #, c-format
 msgid "*unknown operands type: %d*"
 msgstr ""
@@ -1791,21 +1786,26 @@ msgstr ""
 msgid "File has no ME-Config section."
 msgstr ""
 
-#: nfp-dis.c:2572
+#. See PR 31843 for an example of this.
+#: nfp-dis.c:2565
+msgid "The ME-Config section is corrupt."
+msgstr ""
+
+#: nfp-dis.c:2579
 msgid "File has invalid ME-Config section."
 msgstr ""
 
-#: nfp-dis.c:2719
+#: nfp-dis.c:2726
 #, c-format
 msgid "Error processing section %u "
 msgstr ""
 
-#: nfp-dis.c:2748
+#: nfp-dis.c:2755
 #, c-format
 msgid "Invalid NFP option: %s"
 msgstr ""
 
-#: nfp-dis.c:2986
+#: nfp-dis.c:2993
 #, c-format
 msgid ""
 "\n"
@@ -1813,23 +1813,13 @@ msgid ""
 "with the -M switch (multiple options should be separated by commas):\n"
 msgstr ""
 
-#: nfp-dis.c:2990
+#: nfp-dis.c:2997
 #, c-format
 msgid ""
 "\n"
 "  no-pc\t\t    Don't print program counter prefix.\n"
 "  ctx4\t\t    Force disassembly using 4-context mode.\n"
 "  ctx8\t\t    Force 8-context mode, takes precedence."
-msgstr ""
-
-#: nios2-dis.c:135
-#, c-format
-msgid "out of memory"
-msgstr ""
-
-#: nios2-dis.c:263
-#, c-format
-msgid "internal error: broken opcode descriptor for `%s %s'"
 msgstr ""
 
 #. I and Z are output operands and can`t be immediate
@@ -1850,29 +1840,29 @@ msgstr ""
 msgid "internal relocation type invalid"
 msgstr ""
 
-#: or1k-desc.c:2041
+#: or1k-desc.c:2043
 #, c-format
 msgid ""
 "internal error: or1k_cgen_rebuild_tables: conflicting insn-chunk-bitsize "
 "values: `%d' vs. `%d'"
 msgstr ""
 
-#: or1k-desc.c:2129
+#: or1k-desc.c:2131
 #, c-format
 msgid "internal error: or1k_cgen_cpu_open: unsupported argument `%d'"
 msgstr ""
 
-#: or1k-desc.c:2148
+#: or1k-desc.c:2150
 #, c-format
 msgid "internal error: or1k_cgen_cpu_open: no endianness specified"
 msgstr ""
 
-#: ppc-dis.c:418
+#: ppc-dis.c:428
 #, c-format
 msgid "warning: ignoring unknown -M%s option"
 msgstr ""
 
-#: ppc-dis.c:1256
+#: ppc-dis.c:1276
 #, c-format
 msgid ""
 "\n"
@@ -1908,142 +1898,150 @@ msgstr ""
 msgid "invalid offset: must be in the range [-512, -8] and be a multiple of 8"
 msgstr ""
 
-#: ppc-opc.c:706
+#: ppc-opc.c:752
 msgid "invalid R operand"
 msgstr ""
 
-#: ppc-opc.c:761
+#: ppc-opc.c:807
 msgid "invalid mask field"
 msgstr ""
 
-#: ppc-opc.c:784
+#: ppc-opc.c:830
 msgid "invalid mfcr mask"
 msgstr ""
 
-#: ppc-opc.c:902 ppc-opc.c:920
+#: ppc-opc.c:948 ppc-opc.c:966
 msgid "illegal L operand value"
 msgstr ""
 
-#: ppc-opc.c:943
+#: ppc-opc.c:989
 msgid "illegal WC operand value"
 msgstr ""
 
-#: ppc-opc.c:1040
+#: ppc-opc.c:1086
 msgid "incompatible L operand value"
 msgstr ""
 
-#: ppc-opc.c:1239 ppc-opc.c:1274
+#: ppc-opc.c:1285 ppc-opc.c:1320
 msgid "illegal bitmask"
 msgstr ""
 
-#: ppc-opc.c:1418
+#: ppc-opc.c:1464
 msgid "address register in load range"
 msgstr ""
 
-#: ppc-opc.c:1458
+#: ppc-opc.c:1504
 msgid "illegal PL operand value"
 msgstr ""
 
-#: ppc-opc.c:1539
+#: ppc-opc.c:1585
 msgid "index register in load range"
 msgstr ""
 
-#: ppc-opc.c:1568 ppc-opc.c:1654
+#: ppc-opc.c:1614 ppc-opc.c:1700
 msgid "source and target register operands must be different"
 msgstr ""
 
-#: ppc-opc.c:1599
-msgid "invalid register operand when updating"
+#: ppc-opc.c:1645
+msgid "invalid base address register operand"
 msgstr ""
 
-#: ppc-opc.c:1717
+#: ppc-opc.c:1763
 msgid "illegal immediate value"
 msgstr ""
 
-#: ppc-opc.c:2024
+#: ppc-opc.c:2070
 msgid "invalid bat number"
 msgstr ""
 
-#: ppc-opc.c:2059
+#: ppc-opc.c:2105
 msgid "invalid sprg number"
 msgstr ""
 
-#: ppc-opc.c:2096
+#: ppc-opc.c:2142
 msgid "invalid tbr number"
 msgstr ""
 
-#: ppc-opc.c:2203 ppc-opc.c:2271
+#: ppc-opc.c:2249 ppc-opc.c:2317
 msgid "VSR overlaps ACC operand"
 msgstr ""
 
-#: ppc-opc.c:2380
+#: ppc-opc.c:2426
 msgid "invalid constant"
 msgstr ""
 
-#: ppc-opc.c:2482 ppc-opc.c:2505 ppc-opc.c:2528 ppc-opc.c:2551
+#: ppc-opc.c:2448
+msgid "invalid M value"
+msgstr ""
+
+#: ppc-opc.c:2550 ppc-opc.c:2573 ppc-opc.c:2596 ppc-opc.c:2619
 msgid "UIMM = 00000 is illegal"
 msgstr ""
 
-#: ppc-opc.c:2574
+#: ppc-opc.c:2642
 msgid "UIMM values >7 are illegal"
 msgstr ""
 
-#: ppc-opc.c:2597
+#: ppc-opc.c:2665
 msgid "UIMM values >15 are illegal"
 msgstr ""
 
-#: ppc-opc.c:2620
+#: ppc-opc.c:2688
 msgid "GPR odd is illegal"
 msgstr ""
 
-#: ppc-opc.c:2643 ppc-opc.c:2666
+#: ppc-opc.c:2711 ppc-opc.c:2734
 msgid "invalid offset"
 msgstr ""
 
-#: ppc-opc.c:2689
+#: ppc-opc.c:2757
 msgid "invalid Ddd value"
 msgstr ""
 
-#: ppc-opc.c:2742 ppc-opc.c:2769
+#: ppc-opc.c:2810 ppc-opc.c:2837
 msgid "invalid TH value"
 msgstr ""
 
 #. Invalid options with '=', no option name before '=',
 #. and no value after '='.
-#: riscv-dis.c:128
+#: riscv-dis.c:132
 #, c-format
 msgid "unrecognized disassembler option with '=': %s"
 msgstr ""
 
-#: riscv-dis.c:142
+#: riscv-dis.c:147
 #, c-format
 msgid "unknown privileged spec set by %s=%s"
 msgstr ""
 
-#: riscv-dis.c:149
+#: riscv-dis.c:154
 #, c-format
 msgid ""
 "mis-matched privilege spec set by %s=%s, the elf privilege attribute is %s"
 msgstr ""
 
-#: riscv-dis.c:763
+#: riscv-dis.c:929
 #, c-format
 msgid "# internal error, undefined modifier (%c)"
 msgstr ""
 
-#: riscv-dis.c:1365
+#: riscv-dis.c:1623
+msgid "Disassemble without checking architecture string."
+msgstr ""
+
+#: riscv-dis.c:1626
 msgid "Print numeric register names, rather than ABI names."
 msgstr ""
 
-#: riscv-dis.c:1368
+#: riscv-dis.c:1629
 msgid "Disassemble only into canonical instructions."
 msgstr ""
 
-#: riscv-dis.c:1371
+#: riscv-dis.c:1632
 msgid "Print the CSR according to the chosen privilege spec."
 msgstr ""
 
-#: riscv-dis.c:1447
+#: riscv-dis.c:1708
 #, c-format
 msgid ""
 "\n"
@@ -2087,24 +2085,25 @@ msgstr ""
 msgid "Disassemble in ESA architecture mode"
 msgstr ""
 
-#: s390-dis.c:45
+#. TRANSLATORS: Please do not translate 'z/Architecture' as this is a technical name.
+#: s390-dis.c:46
 msgid "Disassemble in z/Architecture mode"
 msgstr ""
 
-#: s390-dis.c:46
+#: s390-dis.c:47
 msgid "Print unknown instructions according to length from first two bits"
 msgstr ""
 
-#: s390-dis.c:48
+#: s390-dis.c:49
 msgid "Print instruction description as comment"
 msgstr ""
 
-#: s390-dis.c:82
+#: s390-dis.c:83
 #, c-format
 msgid "unknown S/390 disassembler option: %s"
 msgstr ""
 
-#: s390-dis.c:516
+#: s390-dis.c:584
 #, c-format
 msgid ""
 "\n"

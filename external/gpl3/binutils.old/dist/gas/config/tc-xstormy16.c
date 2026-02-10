@@ -1,5 +1,5 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -56,13 +56,13 @@ const char FLT_CHARS[]            = "dD";
 #define O_fptr_symbol	(O_max + 1)
 
 #define XSTORMY16_SHORTOPTS ""
-const char * md_shortopts = XSTORMY16_SHORTOPTS;
+const char md_shortopts[] = XSTORMY16_SHORTOPTS;
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int    c ATTRIBUTE_UNUSED,
@@ -331,7 +331,7 @@ md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS * fixP, segT sec)
 {
-  if ((fixP->fx_addsy != (symbolS *) NULL
+  if ((fixP->fx_addsy != NULL
        && (! S_IS_DEFINED (fixP->fx_addsy)
 	   || S_GET_SEGMENT (fixP->fx_addsy) != sec))
       || xstormy16_force_relocation (fixP))
@@ -474,16 +474,16 @@ xstormy16_md_apply_fix (fixS *   fixP,
 	break;
       }
 
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
   /* We don't actually support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
-  if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
+  if (fixP->fx_r_type >= BFD_RELOC_UNUSED)
     {
-      int opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
+      int opindex = fixP->fx_r_type - BFD_RELOC_UNUSED;
       const CGEN_OPERAND *operand = cgen_operand_lookup_by_num (cd, opindex);
       const char *errmsg;
       bfd_reloc_code_real_type reloc_type;
@@ -496,7 +496,7 @@ xstormy16_md_apply_fix (fixS *   fixP,
 	  CGEN_FIELDS *fields = xmalloc (CGEN_CPU_SIZEOF_FIELDS (cd));
 
 	  CGEN_CPU_SET_FIELDS_BITSIZE (cd) (fields, CGEN_INSN_BITSIZE (insn));
-	  CGEN_CPU_SET_VMA_OPERAND (cd) (cd, opindex, fields, (bfd_vma) value);
+	  CGEN_CPU_SET_VMA_OPERAND (cd) (cd, opindex, fields, value);
 
 #if CGEN_INT_INSN_P
 	  {
@@ -507,7 +507,7 @@ xstormy16_md_apply_fix (fixS *   fixP,
 
 	    /* ??? 0 is passed for `pc'.  */
 	    errmsg = CGEN_CPU_INSERT_OPERAND (cd) (cd, opindex, fields,
-						   &insn_value, (bfd_vma) 0);
+						   &insn_value, 0);
 	    cgen_put_insn_value (cd, (unsigned char *) where,
 				 CGEN_INSN_BITSIZE (insn), insn_value,
 				 gas_cgen_cpu_desc->insn_endian);
@@ -516,7 +516,7 @@ xstormy16_md_apply_fix (fixS *   fixP,
 	  /* ??? 0 is passed for `pc'.  */
 	  errmsg = CGEN_CPU_INSERT_OPERAND (cd) (cd, opindex, fields,
 						 (unsigned char *) where,
-						 (bfd_vma) 0);
+						 0);
 #endif
 	  if (errmsg)
 	    as_bad_where (fixP->fx_file, fixP->fx_line, "%s", errmsg);
