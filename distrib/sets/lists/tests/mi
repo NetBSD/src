@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1412 2026/02/10 03:27:48 kre Exp $
+# $NetBSD: mi,v 1.1413 2026/02/10 07:43:40 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -2678,6 +2678,7 @@
 ./usr/tests/lib/csu/h_initfini2				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini_array			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/h_preinit_array			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_crt0				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_hello				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_ifunc_static			tests-lib-tests		compattestfile,atf

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.506 2026/01/19 02:45:15 mrg Exp $
+# $NetBSD: mi,v 1.507 2026/02/10 07:43:40 skrll Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1991,6 +1991,7 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini_array.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/csu/h_preinit_array.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libarchive/h_libarchive.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_bluetooth.debug	tests-lib-debug		bluetooth,debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_data.debug		tests-lib-debug		bluetooth,debug,atf,compattestfile
