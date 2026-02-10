@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.S,v 1.4 2026/02/10 06:22:14 skrll Exp $	*/
+/*	$NetBSD: crt0.S,v 1.5 2026/02/10 19:57:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.4 2026/02/10 06:22:14 skrll Exp $")
+RCSID("$NetBSD: crt0.S,v 1.5 2026/02/10 19:57:12 skrll Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -56,7 +56,7 @@ _ENTRY(_start_setgp)
 	ret
 END(_start_setgp)
 
-	.section	.preinit_array, "aw", @progbits
+	.section	.preinit_array, "aw"
 	.p2align	PTR_SCALESHIFT
 	PTR_WORD	_start_setgp
 
