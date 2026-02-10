@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2026/02/09 11:27:50 martin Exp $
+# $NetBSD: Makefile,v 1.43 2026/02/10 07:02:41 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -256,10 +256,6 @@ CPPFLAGS+=	\
 -D_POSIX_PTHREAD_SEMANTICS=1 \
 -D_TANDEM_SOURCE=1 \
 -D__EXTENSIONS__=1
-
-.if ${MKDTRACE:Uno} != "no"
-CPPFLAGS+=-DHAVE_LIBPROC_H=1
-.endif
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
