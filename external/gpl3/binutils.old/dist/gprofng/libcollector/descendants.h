@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -44,7 +44,6 @@ typedef enum
   LM_TRACK_LINEAGE  = 1,    /* env vars preserved, recording */
 } line_mode_t;
 
-extern line_mode_t line_mode;
 extern int user_follow_mode;
 extern int java_mode;
 extern int dbg_current_mode; 	/* for debug only */
@@ -56,19 +55,6 @@ extern char **sp_env_backup;
 #define PUSH_REENTRANCE(x)  ((*(x))++)
 #define POP_REENTRANCE(x)   ((*(x))--)
 
-/* environment variables that must be forwarded to descendents */
-#define SP_COLLECTOR_PARAMS         "SP_COLLECTOR_PARAMS"
-#define SP_COLLECTOR_EXPNAME        "SP_COLLECTOR_EXPNAME"
-#define SP_COLLECTOR_FOLLOW_SPEC    "SP_COLLECTOR_FOLLOW_SPEC"
-#define SP_COLLECTOR_FOUNDER        "SP_COLLECTOR_FOUNDER"
-#define SP_PRELOAD_STRINGS          "SP_COLLECTOR_PRELOAD"
-#define LD_PRELOAD_STRINGS          "LD_PRELOAD"
-#define SP_LIBPATH_STRINGS          "SP_COLLECTOR_LIBRARY_PATH"
-#define LD_LIBPATH_STRINGS          "LD_LIBRARY_PATH"
-#define JAVA_TOOL_OPTIONS          "JAVA_TOOL_OPTIONS"
-#define COLLECTOR_JVMTI_OPTION     "-agentlib:gp-collector"
-
-extern int __collector_linetrace_shutdown_hwcs_6830763_XXXX;
 extern void __collector_env_unset (char *envp[]);
 extern void __collector_env_save_preloads ();
 extern char ** __collector_env_backup ();

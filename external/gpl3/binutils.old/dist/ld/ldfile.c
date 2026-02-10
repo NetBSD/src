@@ -1,5 +1,5 @@
 /* Linker file opening and searching.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -63,6 +63,7 @@ typedef struct search_arch
 } search_arch_type;
 
 static search_dirs_type **search_tail_ptr = &search_head;
+static search_dirs_type *script_search;
 static search_arch_type *search_arch_head;
 static search_arch_type **search_arch_tail_ptr = &search_arch_head;
 
@@ -109,7 +110,7 @@ ldfile_add_remap (const char * pattern, const char * renamed)
     }
 }
 
-void
+static void
 ldfile_remap_input_free (void)
 {
   while (input_remaps != NULL)
@@ -183,7 +184,7 @@ ldfile_add_remap_file (const char * file)
 
       if (*p == '\0')
 	{
-	  einfo ("%F%P: malformed remap file entry: %s\n", line);
+	  fatal ("%P: malformed remap file entry: %s\n", line);
 	  continue;
 	}
 
@@ -195,7 +196,7 @@ ldfile_add_remap_file (const char * file)
 
       if (*p == '\0')
 	{
-	  einfo ("%F%P: malformed remap file entry: %s\n", line);
+	  fatal ("%P: malformed remap file entry: %s\n", line);
 	  continue;
 	}
 
@@ -329,6 +330,18 @@ ldfile_add_library_path (const char *name, bool cmdline)
     new_dirs->name = xstrdup (name);
 }
 
+static void
+ldfile_library_path_free (search_dirs_type **root)
+{
+  search_dirs_type *ent;
+  while ((ent = *root) != NULL)
+    {
+      *root = ent->next;
+      free ((void *) ent->name);
+      free (ent);
+    }
+}
+
 /* Try to open a BFD for a lang_input_statement.  */
 
 bool
@@ -348,7 +361,7 @@ ldfile_try_open_bfd (const char *attempt,
   if (entry->the_bfd == NULL)
     {
       if (bfd_get_error () == bfd_error_invalid_target)
-	einfo (_("%F%P: invalid BFD target `%s'\n"), entry->target);
+	fatal (_("%P: invalid BFD target `%s'\n"), entry->target);
       return false;
     }
 
@@ -425,18 +438,11 @@ ldfile_try_open_bfd (const char *attempt,
 			  if (token == ',')
 			    {
 			      if ((token = yylex ()) != NAME)
-				{
-				  free (arg1);
-				  continue;
-				}
+				continue;
 			      arg2 = yylval.name;
 			      if ((token = yylex ()) != ','
 				  || (token = yylex ()) != NAME)
-				{
-				  free (arg1);
-				  free (arg2);
-				  continue;
-				}
+				continue;
 			      arg3 = yylval.name;
 			      token = yylex ();
 			    }
@@ -455,18 +461,12 @@ ldfile_try_open_bfd (const char *attempt,
 			      if (strcmp (arg, lang_get_output_target ()) != 0)
 				skip = 1;
 			    }
-			  free (arg1);
-			  free (arg2);
-			  free (arg3);
 			  break;
 			case NAME:
 			case LNAME:
 			case VERS_IDENTIFIER:
 			case VERS_TAG:
-			  free (yylval.name);
-			  break;
 			case INT:
-			  free (yylval.bigint.str);
 			  break;
 			}
 		      token = yylex ();
@@ -491,7 +491,7 @@ ldfile_try_open_bfd (const char *attempt,
 
 	  if (!entry->flags.dynamic && (entry->the_bfd->flags & DYNAMIC) != 0)
 	    {
-	      einfo (_("%F%P: attempted static link of dynamic object `%s'\n"),
+	      fatal (_("%P: attempted static link of dynamic object `%s'\n"),
 		     attempt);
 	      bfd_close (entry->the_bfd);
 	      entry->the_bfd = NULL;
@@ -532,6 +532,8 @@ ldfile_try_open_bfd (const char *attempt,
       && !no_more_claiming
       && bfd_check_format (entry->the_bfd, bfd_object))
     plugin_maybe_claim (entry);
+  else
+    cmdline_check_object_only_section (entry->the_bfd, false);
 #endif /* BFD_SUPPORTS_PLUGINS */
 
   /* It opened OK, the format checked out, and the plugins have had
@@ -711,6 +713,12 @@ ldfile_open_file (lang_input_statement_type *entry)
 	  else
 	    einfo (_("%P: cannot find %s: %E\n"), entry->local_sym_name);
 
+	  /* Be kind to users who are creating static executables, but
+	     have forgotten to install the necessary static libraries.  */
+	  if (entry->flags.dynamic == false && startswith (entry->local_sym_name, "-l"))
+	    einfo (_("%P: have you installed the static version of the %s library ?\n"),
+		     entry->local_sym_name + 2);
+
 	  /* PR 25747: Be kind to users who forgot to add the
 	     "lib" prefix to their library when it was created.  */
 	  for (arch = search_arch_head; arch != NULL; arch = arch->next)
@@ -827,7 +835,6 @@ ldfile_find_command_file (const char *name,
   search_dirs_type *search;
   FILE *result = NULL;
   char *path;
-  static search_dirs_type *script_search;
 
   if (!default_only)
     {
@@ -846,6 +853,7 @@ ldfile_find_command_file (const char *name,
 	  search_tail_ptr = &script_search;
 	  ldfile_add_library_path (script_dir, true);
 	  search_tail_ptr = save_tail_ptr;
+	  free (script_dir);
 	}
     }
 
@@ -871,19 +879,7 @@ ldfile_find_command_file (const char *name,
   return result;
 }
 
-enum script_open_style {
-  script_nonT,
-  script_T,
-  script_defaultT
-};
-
-struct script_name_list
-{
-  struct script_name_list *next;
-  enum script_open_style open_how;
-  char name[1];
-};
-
+struct script_name_list *processed_scripts = NULL;
 /* Open command file NAME.  */
 
 static void
@@ -891,7 +887,6 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
 {
   FILE *ldlex_input_stack;
   bool sysrooted;
-  static struct script_name_list *processed_scripts = NULL;
   struct script_name_list *script;
   size_t len;
 
@@ -902,15 +897,12 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
       if ((open_how != script_nonT || script->open_how != script_nonT)
 	  && strcmp (name, script->name) == 0)
 	{
-	  einfo (_("%F%P: error: linker script file '%s'"
+	  fatal (_("%P: error: linker script file '%s'"
 		   " appears multiple times\n"), name);
 	  return;
 	}
     }
 
-  /* FIXME: This memory is never freed, but that should not really matter.
-     It will be released when the linker exits, and it is unlikely to ever
-     be more than a few tens of bytes.  */
   len = strlen (name);
   script = xmalloc (sizeof (*script) + len);
   script->next = processed_scripts;
@@ -924,7 +916,7 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
   if (ldlex_input_stack == NULL)
     {
       bfd_set_error (bfd_error_system_call);
-      einfo (_("%F%P: cannot open linker script file %s: %E\n"), name);
+      fatal (_("%P: cannot open linker script file %s: %E\n"), name);
       return;
     }
 
@@ -933,6 +925,17 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
   lineno = 1;
 
   saved_script_handle = ldlex_input_stack;
+}
+
+static void
+ldfile_script_free (struct script_name_list **root)
+{
+  struct script_name_list *ent;
+  while ((ent = *root) != NULL)
+    {
+      *root = ent->next;
+      free (ent);
+    }
 }
 
 /* Open command file NAME in the current directory, -L directories,
@@ -979,6 +982,18 @@ ldfile_add_arch (const char *in_name)
 
 }
 
+static void
+ldfile_arch_free (search_arch_type **root)
+{
+  search_arch_type *ent;
+  while ((ent = *root) != NULL)
+    {
+      *root = ent->next;
+      free (ent->name);
+      free (ent);
+    }
+}
+
 /* Set the output architecture.  */
 
 void
@@ -995,5 +1010,19 @@ ldfile_set_output_arch (const char *string, enum bfd_architecture defarch)
   else if (defarch != bfd_arch_unknown)
     ldfile_output_architecture = defarch;
   else
-    einfo (_("%F%P: cannot represent machine `%s'\n"), string);
+    fatal (_("%P: cannot represent machine `%s'\n"), string);
+}
+
+/* Tidy up memory.  */
+
+void
+ldfile_free (void)
+{
+  ldfile_remap_input_free ();
+  ldfile_library_path_free (&script_search);
+  search_tail_ptr = &search_head;
+  ldfile_library_path_free (&search_head);
+  search_arch_tail_ptr = &search_arch_head;
+  ldfile_arch_free (&search_arch_head);
+  ldfile_script_free (&processed_scripts);
 }

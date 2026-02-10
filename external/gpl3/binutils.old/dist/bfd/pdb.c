@@ -1,5 +1,5 @@
 /* BFD back-end for PDB Multi-Stream Format archives.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -412,7 +412,8 @@ pdb_allocate_block (uint32_t *num_blocks, uint32_t block_size)
 
 static bool
 pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
-		     uint32_t block_map_addr, uint32_t * num_blocks)
+		     uint32_t block_map_addr, uint32_t * num_blocks,
+		     uint32_t *stream0_start)
 {
   char tmp[sizeof (uint32_t)];
   uint32_t block, left, block_map_off;
@@ -561,6 +562,9 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 	      return false;
 	    }
 
+	  if (arelt == abfd->archive_head && i == 0)
+	    *stream0_start = file_block;
+
 	  left -= sizeof (uint32_t);
 
 	  /* Read file contents into buffer.  */
@@ -617,7 +621,8 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 }
 
 static bool
-pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
+pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks,
+		  uint32_t stream0_start)
 {
   char *buf;
   uint32_t num_intervals = (num_blocks + block_size - 1) / block_size;
@@ -625,8 +630,6 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
   buf = bfd_malloc (block_size);
   if (!buf)
     return false;
-
-  num_blocks--;			/* Superblock not included.  */
 
   for (uint32_t i = 0; i < num_intervals; i++)
     {
@@ -636,8 +639,8 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
 	  return false;
 	}
 
-      /* All of our blocks are contiguous, making our free block map simple.
-         0 = used, 1 = free.  */
+      /* All of our blocks are contiguous, making our free block map
+	 relatively simple.  0 = used, 1 = free.  */
 
       if (num_blocks >= 8)
 	memset (buf, 0,
@@ -650,12 +653,46 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
 
 	  if (num_blocks % 8)
 	    {
-	      buf[off] = (1 << (8 - (num_blocks % 8))) - 1;
+	      buf[off] = 256 - (1 << (num_blocks % 8));
 	      off++;
 	    }
 
 	  if (off < block_size)
 	    memset (buf + off, 0xff, block_size - off);
+	}
+
+      /* Mark the blocks allocated to stream 0 as free.  This is because stream
+	 0 is intended to be used for the previous MSF directory, to allow
+	 atomic updates.  This doesn't apply to us, as we rewrite the whole
+	 file whenever any change is made.  */
+
+      if (i == 0 && abfd->archive_head)
+	{
+	  bfd *arelt = abfd->archive_head;
+	  uint32_t stream0_blocks =
+	    (bfd_get_size (arelt) + block_size - 1) / block_size;
+
+	  if (stream0_start % 8)
+	    {
+	      unsigned int high_bit;
+
+	      high_bit = (stream0_start % 8) + stream0_blocks;
+	      if (high_bit > 8)
+		high_bit = 8;
+
+	      buf[stream0_start / 8] |=
+		(1 << high_bit) - (1 << (stream0_start % 8));
+
+	      stream0_blocks -= high_bit - (stream0_start % 8);
+	      stream0_start += high_bit - (stream0_start % 8);
+	    }
+
+	  memset (buf + (stream0_start / 8), 0xff, stream0_blocks / 8);
+	  stream0_start += stream0_blocks / 8;
+	  stream0_blocks %= 8;
+
+	  if (stream0_blocks > 0)
+	    buf[stream0_start / 8] |= (1 << stream0_blocks) - 1;
 	}
 
       if (num_blocks < block_size * 8)
@@ -681,6 +718,7 @@ pdb_write_contents (bfd *abfd)
   uint32_t num_blocks;
   uint32_t num_files = 0;
   uint32_t num_directory_bytes = sizeof (uint32_t);
+  uint32_t stream0_start = 0;
   bfd *arelt;
 
   if (bfd_write (pdb_magic, sizeof (pdb_magic), abfd) != sizeof (pdb_magic))
@@ -735,10 +773,11 @@ pdb_write_contents (bfd *abfd)
     return false;
 
   if (!pdb_write_directory
-      (abfd, block_size, num_files, block_map_addr, &num_blocks))
+      (abfd, block_size, num_files, block_map_addr, &num_blocks,
+       &stream0_start))
     return false;
 
-  if (!pdb_write_bitmap (abfd, block_size, num_blocks))
+  if (!pdb_write_bitmap (abfd, block_size, num_blocks, stream0_start))
     return false;
 
   /* Write num_blocks now we know it.  */
@@ -759,7 +798,6 @@ pdb_write_contents (bfd *abfd)
 #define pdb_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define pdb_new_section_hook _bfd_generic_new_section_hook
 #define pdb_get_section_contents _bfd_generic_get_section_contents
-#define pdb_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 #define pdb_close_and_cleanup _bfd_generic_close_and_cleanup
 
 #define pdb_slurp_armap _bfd_noarchive_slurp_armap

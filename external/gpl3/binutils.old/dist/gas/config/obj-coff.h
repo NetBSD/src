@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -49,12 +49,7 @@
 #endif
 
 #ifdef TC_I386
-#ifdef TE_PEP
-#include "coff/x86_64.h"
-#else
-#include "coff/i386.h"
-#endif
-
+#include "coff/x86.h"
 #ifndef TARGET_FORMAT
 #ifdef TE_PEP
 #define TARGET_FORMAT "coff-x86-64"
@@ -247,10 +242,10 @@
 extern int text_lineno_number;
 extern int coff_line_base;
 extern int coff_n_line_nos;
-extern symbolS *coff_last_function;
 
 #define obj_emit_lineno(WHERE, LINE, FILE_START)	abort ()
 #define obj_app_file(name)           c_dot_file_symbol (name)
+#define obj_assign_symbol(S)         coff_assign_symbol (S)
 #define obj_frob_symbol(S,P) 	     coff_frob_symbol (S, & P)
 #define obj_frob_section(S)	     coff_frob_section (S)
 #define obj_frob_file_after_relocs() coff_frob_file_after_relocs ()
@@ -274,12 +269,9 @@ extern symbolS *coff_last_function;
 #endif
 #endif
 
-/* Sanity check.  */
-
-extern const pseudo_typeS coff_pseudo_table[];
-
+extern void coff_pop_insert (void);
 #ifndef obj_pop_insert
-#define obj_pop_insert() pop_insert (coff_pseudo_table)
+#define obj_pop_insert() coff_pop_insert ()
 #endif
 
 /* In COFF, if a symbol is defined using .def/.val SYM/.endef, it's OK
@@ -322,6 +314,7 @@ extern int  S_GET_STORAGE_CLASS          (symbolS *);
 extern void SA_SET_SYM_ENDNDX            (symbolS *, symbolS *);
 extern void coff_add_linesym             (symbolS *);
 extern void c_dot_file_symbol            (const char *);
+extern void coff_assign_symbol           (symbolS *);
 extern void coff_frob_symbol             (symbolS *, int *);
 extern void coff_adjust_symtab           (void);
 extern void coff_frob_section            (segT);
@@ -336,7 +329,7 @@ extern void pecoff_obj_clear_weak_hook   (symbolS *);
 #endif
 extern void obj_coff_section             (int);
 extern segT obj_coff_add_segment         (const char *);
-extern void obj_coff_section             (int);
+extern void obj_coff_def                 (int);
 extern segT s_get_segment                (symbolS *);
 #ifndef tc_coff_symbol_emit_hook
 extern void tc_coff_symbol_emit_hook     (symbolS *);

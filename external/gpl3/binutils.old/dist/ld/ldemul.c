@@ -1,5 +1,5 @@
 /* ldemul.c -- clearing house for ld emulation states
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -34,6 +34,14 @@
 #include "ldemul-list.h"
 
 static ld_emulation_xfer_type *ld_emulation;
+
+struct bfd_link_hash_entry *
+ldemul_find_alt_start_symbol (struct bfd_sym_chain *entry)
+{
+  if (ld_emulation->find_alt_start_symbol)
+    return ld_emulation->find_alt_start_symbol (entry);
+  return NULL;
+}
 
 void
 ldemul_hll (char *name)
@@ -299,6 +307,12 @@ before_allocation_default (void)
 void
 finish_default (void)
 {
+  lang_output_section_statement_type *os;
+  for (os = (void *) lang_os_list.head; os != NULL; os = os->next)
+    {
+      free (os->data);
+      os->data = NULL;
+    }
   if (!bfd_link_relocatable (&link_info))
     _bfd_fix_excluded_sec_syms (link_info.output_bfd, &link_info);
 }
@@ -343,7 +357,7 @@ ldemul_choose_mode (char *target)
   einfo (_("%P: unrecognised emulation mode: %s\n"), target);
   einfo (_("Supported emulations: "));
   ldemul_list_emulations (stderr);
-  einfo ("%F\n");
+  fatal ("\n");
 }
 
 void

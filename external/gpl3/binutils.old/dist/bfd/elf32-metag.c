@@ -1,5 +1,5 @@
 /* Meta support for 32-bit ELF
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1022,8 +1022,7 @@ elf_metag_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&htab->etab, abfd,
 				      metag_link_hash_newfunc,
-				      sizeof (struct elf_metag_link_hash_entry),
-				      METAG_ELF_DATA))
+				      sizeof (struct elf_metag_link_hash_entry)))
     {
       free (htab);
       return NULL;
@@ -2717,8 +2716,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *eh, void *inf)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_metag_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				 struct bfd_link_info *info)
+elf_metag_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
 {
   struct elf_metag_link_hash_table *htab;
   bfd *dynobj;
@@ -2729,7 +2728,7 @@ elf_metag_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   htab = metag_link_hash_table (info);
   dynobj = htab->etab.dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
 
   if (htab->etab.dynamic_sections_created)
     {
@@ -2741,6 +2740,7 @@ elf_metag_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -2885,7 +2885,8 @@ elf_metag_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
-      else if (reloc_section)
+      s->alloced = 1;
+      if (reloc_section)
 	{
 	  unsigned char *contents = s->contents;
 	  Elf32_External_Rela reloc;
@@ -3342,7 +3343,7 @@ metag_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
      section.  The user should fix his linker script.  */
   if (hsh->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
+    info->callbacks->fatal (_("%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    hsh->target_section);
 
@@ -3965,6 +3966,7 @@ elf_metag_build_stubs (struct bfd_link_info *info)
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
 	return false;
+      stub_sec->alloced = 1;
       stub_sec->size = 0;
     }
 
@@ -4019,7 +4021,7 @@ elf_metag_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_backend_adjust_dynamic_symbol	elf_metag_adjust_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol	elf_metag_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections	elf_metag_finish_dynamic_sections
-#define elf_backend_size_dynamic_sections	elf_metag_size_dynamic_sections
+#define elf_backend_late_size_sections		elf_metag_late_size_sections
 #define elf_backend_omit_section_dynsym \
 	_bfd_elf_omit_section_dynsym_all
 #define elf_backend_init_file_header		elf_metag_init_file_header

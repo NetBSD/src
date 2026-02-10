@@ -2,7 +2,7 @@
 # Generated from: NetBSD: mknative-binutils,v 1.16 2024/06/30 16:11:11 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
-G_VERSION=2.42
+G_VERSION=2.45
 G_DEFS=-DHAVE_CONFIG_H
 G_INCLUDES=
 G_PROGRAMS=size objdump ar  strings ranlib objcopy   addr2line readelf elfedit   nm-new strip-new cxxfilt bfdtest1 bfdtest2 
@@ -14,13 +14,13 @@ G_size_OBJECTS=size.o bucomm.o version.o filemode.o
 G_size_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
 G_objdump_OBJECTS=objdump.o dwarf.o prdbg.o  demanguse.o rddbg.o debug.o stabs.o  rdcoff.o bucomm.o version.o filemode.o  elfcomm.o
 G_objdump_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la ../opcodes/libopcodes.la ../libctf/libctf.la  ../libsframe/libsframe.la
-G_ar_OBJECTS=arparse.o arlex.o ar.o  not-ranlib.o arsup.o rename.o  binemul.o emul_vanilla.o bucomm.o version.o filemode.o
+G_ar_OBJECTS=arparse.o arlex.o not-ranlib.o  arsup.o rename.o binemul.o  emul_vanilla.o bucomm.o version.o filemode.o
 G_ar_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
 G_strings_OBJECTS=strings.o bucomm.o version.o filemode.o
 G_strings_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
-G_ranlib_OBJECTS=ar.o is-ranlib.o arparse.o  arlex.o arsup.o rename.o  binemul.o emul_vanilla.o bucomm.o version.o filemode.o
+G_ranlib_OBJECTS=arparse.o arlex.o  is-ranlib.o arsup.o rename.o  binemul.o emul_vanilla.o bucomm.o version.o filemode.o
 G_ranlib_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
-G_objcopy_OBJECTS=objcopy.o not-strip.o  rename.o rddbg.o debug.o stabs.o  rdcoff.o wrstabs.o bucomm.o version.o filemode.o
+G_objcopy_OBJECTS=not-strip.o rename.o  rddbg.o debug.o stabs.o  rdcoff.o wrstabs.o bucomm.o version.o filemode.o
 G_objcopy_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
 G_addr2line_OBJECTS=addr2line.o bucomm.o version.o filemode.o
 G_addr2line_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
@@ -30,7 +30,7 @@ G_elfedit_OBJECTS=elfedit.o version.o  elfcomm.o
 G_elfedit_DEPENDENCIES= ../libiberty/libiberty.a
 G_nm_new_OBJECTS=nm.o demanguse.o bucomm.o version.o filemode.o
 G_nm_new_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
-G_strip_new_OBJECTS=objcopy.o is-strip.o  rename.o rddbg.o debug.o stabs.o  rdcoff.o wrstabs.o bucomm.o version.o filemode.o
+G_strip_new_OBJECTS=is-strip.o rename.o  rddbg.o debug.o stabs.o  rdcoff.o wrstabs.o bucomm.o version.o filemode.o
 G_strip_new_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la
 G_cxxfilt_OBJECTS=cxxfilt.o bucomm.o version.o filemode.o
 G_cxxfilt_DEPENDENCIES= ../libiberty/libiberty.a ../bfd/libbfd.la

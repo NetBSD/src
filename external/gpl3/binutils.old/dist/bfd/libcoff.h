@@ -3,7 +3,7 @@
    Run "make headers" in your build bfd/ to regenerate.  */
 
 /* BFD COFF object file private structure.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -44,6 +44,7 @@ extern "C" {
 #define obj_relocbase(bfd)	      (coff_data (bfd)->relocbase)
 #define obj_raw_syments(bfd)	      (coff_data (bfd)->raw_syments)
 #define obj_raw_syment_count(bfd)     (coff_data (bfd)->raw_syment_count)
+#define obj_coff_keep_raw_syms(bfd)   (coff_data (bfd)->keep_raw_syms)
 #define obj_convert(bfd)	      (coff_data (bfd)->conversion_table)
 #define obj_conv_table_size(bfd)      (coff_data (bfd)->conv_table_size)
 #define obj_coff_external_syms(bfd)   (coff_data (bfd)->external_syms)
@@ -95,6 +96,8 @@ typedef struct coff_tdata
      backend flag _bfd_coff_long_section_names.  */
   bool long_section_names;
 
+  /* If this is TRUE, raw_syments may not be released.  */
+  bool keep_raw_syms;
   /* If this is TRUE, the external_syms may not be freed.  */
   bool keep_syms;
   /* If this is TRUE, the strings may not be freed.  */
@@ -639,9 +642,6 @@ extern bool bfd_coff_gc_sections
 extern const char *bfd_coff_group_name
   (bfd *, const asection *);
 
-#define coff_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
-
 /* Functions in xcofflink.c.  */
 
 extern long _bfd_xcoff_get_dynamic_symtab_upper_bound
@@ -864,11 +864,6 @@ typedef struct
     (bfd *, struct bfd_link_info *, bfd *, asection *,
      struct internal_reloc *, bool *);
 
-  bool (*_bfd_coff_link_add_one_symbol)
-    (struct bfd_link_info *, bfd *, const char *, flagword,
-     asection *, bfd_vma, const char *, bool, bool,
-     struct bfd_link_hash_entry **);
-
   bool (*_bfd_coff_link_output_has_begun)
     (bfd *, struct coff_final_link_info *);
 
@@ -1005,10 +1000,6 @@ typedef struct
 #define bfd_coff_adjust_symndx(obfd, info, ibfd, sec, rel, adjustedp)\
   ((coff_backend_info (abfd)->_bfd_coff_adjust_symndx)\
    (obfd, info, ibfd, sec, rel, adjustedp))
-#define bfd_coff_link_add_one_symbol(info, abfd, name, flags, section,\
-				     value, string, cp, coll, hashp)\
-  ((coff_backend_info (abfd)->_bfd_coff_link_add_one_symbol)\
-   (info, abfd, name, flags, section, value, string, cp, coll, hashp))
 
 #define bfd_coff_link_output_has_begun(a,p) \
   ((coff_backend_info (a)->_bfd_coff_link_output_has_begun) (a, p))

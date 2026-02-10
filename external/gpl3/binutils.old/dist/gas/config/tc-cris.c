@@ -1,5 +1,5 @@
 /* tc-cris.c -- Assembler code for the CRIS CPU core.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -211,7 +211,7 @@ static int warn_for_branch_expansion = 0;
 static int err_for_dangerous_mul_placement
  = (XCONCAT2 (arch_,DEFAULT_CRIS_ARCH) != arch_crisv32);
 
-const char cris_comment_chars[] = ";";
+const char comment_chars[] = ";";
 
 /* This array holds the chars that only start a comment at the beginning of
    a line.  If the line seems to have the form '# 123 filename'
@@ -414,7 +414,7 @@ const relax_typeS md_cris_relax_table[] =
 #undef BDAP_WB
 
 /* Target-specific multicharacter options, not const-declared.  */
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
 #define OPTION_NO_US (OPTION_MD_BASE + 0)
   {"no-underscore", no_argument, NULL, OPTION_NO_US},
@@ -432,8 +432,8 @@ struct option md_longopts[] =
 };
 
 /* Not const-declared.  */
-size_t md_longopts_size = sizeof (md_longopts);
-const char *md_shortopts = "hHN";
+const size_t md_longopts_size = sizeof (md_longopts);
+const char md_shortopts[] = "hHN";
 
 /* At first glance, this may seems wrong and should be 4 (ba + nop); but
    since a short_jump must skip a *number* of long jumps, it must also be
@@ -877,7 +877,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 
     case ENCODE_RELAX (STATE_COND_BRANCH, STATE_DWORD):
       gen_cond_branch_32 (fragP->fr_opcode, var_partp, fragP,
-			  fragP->fr_symbol, (symbolS *) NULL,
+			  fragP->fr_symbol, NULL,
 			  fragP->fr_offset);
       /* Ten bytes added: a branch, nop and a jump.  */
       var_part_size = 2 + 2 + 4 + 2;
@@ -885,7 +885,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 
     case ENCODE_RELAX (STATE_COND_BRANCH_PIC, STATE_DWORD):
       gen_cond_branch_32 (fragP->fr_opcode, var_partp, fragP,
-			  fragP->fr_symbol, (symbolS *) NULL,
+			  fragP->fr_symbol, NULL,
 			  fragP->fr_offset);
       /* Twelve bytes added: a branch, nop and a pic-branch-32.  */
       var_part_size = 2 + 2 + 4 + 2 + 2;
@@ -893,7 +893,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 
     case ENCODE_RELAX (STATE_COND_BRANCH_V32, STATE_DWORD):
       gen_cond_branch_32 (fragP->fr_opcode, var_partp, fragP,
-			  fragP->fr_symbol, (symbolS *) NULL,
+			  fragP->fr_symbol, NULL,
 			  fragP->fr_offset);
       /* Twelve bytes added: a branch, nop and another branch and nop.  */
       var_part_size = 2 + 2 + 2 + 4 + 2;
@@ -1274,7 +1274,7 @@ md_assemble (char *str)
       opcodep = cris_insn_first_word_frag ();
 
       /* Output the prefix opcode.  */
-      md_number_to_chars (opcodep, (long) prefix.opcode, 2);
+      md_number_to_chars (opcodep, prefix.opcode, 2);
 
       /* Having a specified reloc only happens for DIP and for BDAP with
 	 PIC or TLS operands, but it is ok to drop through here for the other
@@ -1324,7 +1324,7 @@ md_assemble (char *str)
     opcodep = frag_more (2);
 
   /* Output the instruction opcode.  */
-  md_number_to_chars (opcodep, (long) (output_instruction.opcode), 2);
+  md_number_to_chars (opcodep, output_instruction.opcode, 2);
 
   /* Output the symbol-dependent instruction stuff.  */
   if (output_instruction.insn_type == CRIS_INSN_BRANCH)
@@ -1392,8 +1392,7 @@ md_assemble (char *str)
 			 ? 12 : 10);
 
 	  gen_cond_branch_32 (opcodep, cond_jump, frag_now,
-			      output_instruction.expr.X_add_symbol,
-			      (symbolS *) NULL,
+			      output_instruction.expr.X_add_symbol, NULL,
 			      output_instruction.expr.X_add_number);
 	}
     }
@@ -1552,7 +1551,7 @@ cris_process_instruction (char *insn_text, struct cris_instruction *out_insnp,
     }
 
   /* Find the instruction.  */
-  instruction = (struct cris_opcode *) str_hash_find (op_hash, insn_text);
+  instruction = str_hash_find (op_hash, insn_text);
   if (instruction == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), insn_text);
@@ -1682,7 +1681,7 @@ cris_process_instruction (char *insn_text, struct cris_instruction *out_insnp,
 	      if (modified_char == '.' && *s == '.')
 		{
 		  if ((s[1] != 'd' && s[1] == 'D')
-		      || ! ISSPACE (s[2]))
+		      || ! is_whitespace (s[2]))
 		    break;
 		  s += 2;
 		  continue;
@@ -2094,7 +2093,7 @@ cris_process_instruction (char *insn_text, struct cris_instruction *out_insnp,
 
 	      /* As discard_rest_of_line, but without continuing to the
 		 next line.  */
-	      while (!is_end_of_line[(unsigned char) *input_line_pointer])
+	      while (!is_end_of_stmt (*input_line_pointer))
 		input_line_pointer++;
 	      return;
 	    }
@@ -3231,7 +3230,7 @@ get_flags (char **cPP, int *flagsp)
 	     whitespace.  Anything else, and we consider it a failure.  */
 	  if (**cPP != ','
 	      && **cPP != 0
-	      && ! ISSPACE (**cPP))
+	      && ! is_whitespace (**cPP))
 	    return 0;
 	  else
 	    return 1;
@@ -3953,9 +3952,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       return 0;
     }
 
-  relP = XNEW (arelent);
-  gas_assert (relP != 0);
-  relP->sym_ptr_ptr = XNEW (asymbol *);
+  relP = notes_alloc (sizeof (arelent));
+  relP->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *relP->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   relP->address = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -4040,16 +4038,15 @@ void
 md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 {
   /* This assignment truncates upper bits if valueT is 64 bits (as with
-     --enable-64-bit-bfd), which is fine here, though we cast to avoid
-     any compiler warnings.  */
-  long val = (long) *valP;
+     --enable-64-bit-bfd), which is fine here.  */
+  long val = *valP;
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   if (fixP->fx_addsy == 0 && !fixP->fx_pcrel)
     fixP->fx_done = 1;
 
   /* We can't actually support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   /* This operand-type is scaled.  */
@@ -4279,7 +4276,7 @@ cris_arch_from_string (const char **str)
       int len = strlen (ap->name);
 
       if (strncmp (*str, ap->name, len) == 0
-	  && (str[0][len] == 0 || ISSPACE (str[0][len])))
+	  && (is_end_of_stmt (str[0][len]) || is_whitespace (str[0][len])))
 	{
 	  *str += strlen (ap->name);
 	  return ap->arch;

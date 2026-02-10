@@ -46,7 +46,7 @@
 @copying
 This document is the manual for @ProductName{}, last updated @value{UPDATED}.
 
-Copyright @copyright{} 2022-2024 Free Software Foundation, Inc.
+Copyright @copyright{} 2022-2025 Free Software Foundation, Inc.
 
 @c -- @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -95,7 +95,7 @@ section entitled ``GNU Free Documentation License.''
 @menu
 * Introduction::                      About this manual.
 * Overview::                          A brief overview of @ProductName{}.
-* A Mini Tutorial::                   A short tutorial covering the key features.
+* A Mini Tutorial::                   A short tutorial with the key features.
 * The gprofng Tools::                 An overview of the tools supported.
 * Performance Data Collection::       Record the performance information.
 * View the Performance Information::  Different ways to view the data.
@@ -113,14 +113,14 @@ Introduction
 Overview
 
 * Main Features::                     A high level overview.
-* Sampling versus Tracing::           The pros and cons of sampling versus tracing.
+* Sampling versus Tracing::           The pros and cons of both approaches.
 * Steps Needed to Create a Profile::  How to create a profile.
 
 A Mini Tutorial
 
-* Getting Started::                 The basics of profiling with @ProductName().
-* Support for Multithreading::      Commands specific to multithreaded applications.
-* View Multiple Experiments::       Analyze multiple experiments simultaneously.
+* Getting Started::                 The basics of profiling with gprofng.
+* Support for Multithreading::      Commands for multithreaded applications.
+* View Multiple Experiments::       Analyze multiple experiments. 
 * Profile Hardware Event Counters:: How to use hardware event counters.
 * Java Profiling::                  How to profile a Java application.
 
@@ -196,7 +196,7 @@ good luck tackling performance bottlenecks.
 @c -- A new node --------------------------------------------------------------
 @c cccccc @node    A Brief Overview of @ProductName{}
 @node    Overview
-@chapter A Brief Overview of @ProductName{}
+@chapter A Brief Overview of gprofng
 @c ----------------------------------------------------------------------------
 
 @menu
@@ -231,16 +231,16 @@ Profiling is supported for an application written in C, C++, Java, or Scala.
 @c TBD Java: up to 1.8 full support, support other than for modules
 
 @item
-Shared libraries are supported.  The information is presented at the instruction
-level.
+Shared libraries are supported.  The information is presented at the
+instruction level.
 
 @item
 The following multithreading programming models are supported: Pthreads,
 OpenMP, and Java threads.
 
 @item
-This tool works with unmodified production level executables.  There is no need to
-recompile the code, but if the @samp{-g} option has been used when building
+This tool works with unmodified production level executables.  There is no need
+to recompile the code, but if the @samp{-g} option has been used when building
 the application, source line level information is available.
 
 @item
@@ -263,8 +263,9 @@ a caller-callees overview are available.
 Through filters, the user can zoom in on an area of interest.
 
 @item
-Two or more profiles can be aggregated, or used in a comparison.  This comparison
-can be obtained at the function, source line, and disassembly level.
+Two or more profiles can be aggregated, or used in a comparison.  This
+comparison can be obtained at the function, source line, and disassembly
+level.
 
 @item
 Through a simple scripting language, and customization of the metrics shown,
@@ -309,18 +310,18 @@ Since there is no need to recompile, existing executables can be used
 and the profile measures the behaviour of exactly the same executable that is
 used in production runs.
 
-With sampling, one inherently profiles a different executable, because
-the calls to the instrumentation library may affect the compiler optimizations
-and run time behaviour.
+With tracing, one inherently profiles a different executable, because
+the calls to the instrumentation library may affect runtime behaviour.
 
 @item
-With sampling, there are very few restrictions on what can be profiled and even without
-access to the source code, a basic profile can be made.
+With sampling, there are very few restrictions on what can be profiled and
+even without access to the source code, a basic profile can be made.
 
 @item
 A downside of sampling is that, depending on the sampling frequency, small
 functions may be missed or not captured accurately.  Although this is rare,
-this may happen and is the reason why the user has control over the sampling rate.
+this may happen and is the reason why the user has control over the sampling
+rate.
 
 @item
 While tracing produces precise information, sampling is statistical in nature.
@@ -344,10 +345,11 @@ generated.  This is followed by a viewing step to create a report from the
 information that has been gathered.
 
 Every @ProductName{} command starts with @ToolName{}, the name of the driver.
-This is followed by a keyword to define the high level functionality.  Depending
-on this keyword, a third qualifier may be needed to further narrow down the request.
-This combination is then followed by options that are specific to the functionality
-desired.
+This is followed by a keyword to define the high level functionality.
+Depending on this keyword, a third qualifier may be needed to further narrow
+down the request.
+This combination is then followed by options that are specific to the
+functionality desired.
 
 The command to gather, or ``collect'', the performance data is called
 @CollectApp{}.  Aside from numerous options, this command takes the name
@@ -448,9 +450,9 @@ is
 @command{mxv-pthreads}.
 
 The matrix sizes can be set through the @code{-m} and @code{-n} options.  The
-number of threads is set with the @code{-t} option.  These are additional threads
-that are used in the multiplication. To increase the duration of the run, the
-computations are executed repeatedly.
+number of threads is set with the @code{-t} option.  These are additional
+threads that are used in the multiplication.  To increase the duration of
+the run, the computations are executed repeatedly.
 
 This is an example that multiplies a @math{8000} by @math{4000} matrix with
 a vector of length @math{4000}.  Although this is a multithreaded application,
@@ -499,22 +501,23 @@ mxv: error check passed - rows = 8000 columns = 4000 threads = 1
 @end smallexample
 
 We see a message that an experiment directory with the name @file{test.1.er}
-has been created.  The process id is also echoed. The application completes
+has been created.  The process id is also echoed.  The application completes
 as usual and we have our first experiment directory that can be analyzed.
 
 The tool we use for this is called @DisplayText{}.  It takes the name of
 the experiment directory as an argument.
 
 @cindex Interpreter mode
-If invoked this way, the tool starts in the interactive @emph{interpreter} mode.
-While in this environment, commands can be given and the tool responds.  This is
-illustrated below:
+If invoked this way, the tool starts in the interactive @emph{interpreter}
+mode.
+While in this environment, commands can be given and the tool responds.  This
+is illustrated below:
 
 @smallexample
 @verbatim
 $ gprofng display text test.1.er
 Warning: History and command editing is not supported on this system.
-(gp-display-text) quit
+(gprofng-display-text) quit
 $
 @end verbatim
 @end smallexample
@@ -544,8 +547,6 @@ $ gprofng display text -functions test.1.er
 
 @smallexample
 @verbatim
-$ gprofng display text -functions test.1.er
-
 Functions sorted by metric: Exclusive Total CPU Time
 
 Excl. Total   Incl. Total    Name
@@ -569,7 +570,9 @@ CPU           CPU
 @end verbatim
 @end smallexample
 
-As easy and simple as these steps are, we do have a first profile of our program!
+@noindent
+As easy and simple as these steps are, we do have a first profile of our
+program!
 
 There are five columns.  The first four contain the
 @cindex Total CPU time
@@ -578,28 +581,30 @@ is the sum of the user and system time. @xref{Inclusive and Exclusive Metrics}
 for an explanation of ``exclusive'' and ``inclusive'' times.
 
 The first line echoes the metric that is used to sort the output.  By default,
-this is the exclusive CPU time, but through the @command{sort} command, the sort
-metric can be changed by the user.
+this is the exclusive CPU time, but through the @command{sort} command, the
+sort metric can be changed by the user.
 
 Next, there are four columns with the exclusive and inclusive CPU times and the
 respective percentages.  This is followed by the name of the function.
 
 @IndexSubentry{Miscellaneous, @code{<Total>}}
-The function with the name @code{<Total>} is not a user function. It is a 
+The function with the name @code{<Total>} is not a user function.  It is a
 pseudo function introduced by @ToolName{}.  It is used to display the
 accumulated measured metric values.  In this example, we see that the total
 CPU time of this job was 9.367 seconds and it is scaled to 100%.  All
 other percentages in the same column are relative to this number.
 
-@c -- If the metric is derived, for example the @code{IPC}, the value shown under
-@c -- @code{<Total>} is based upon the total values of the that are metrics used to
+@c -- If the metric is derived, for example the @code{IPC}, the value shown
+@c -- under
+@c -- @code{<Total>} is based upon the total values of the that are metrics
+@c -- used to
 @c -- compute the derived metric.
 @c -- @IndexSubentry{Hardware event counters, IPC}
 
 With 8.926 seconds, function @code{mxv_core} takes 95.30% of the
-total time and is by far the most time consuming function.  
-The exclusive and inclusive metrics are identical, which means that is a 
-leaf function not calling any other functions.
+total time and is by far the most time consuming function.
+The exclusive and inclusive metrics are identical, which means that it
+is a leaf function not calling any other functions.
 
 The next function in the list is @code{init_data}.  Although with 4.49%,
 the CPU time spent in this part is modest, this is an interesting entry because
@@ -615,7 +620,7 @@ certainly not familiar.  It is one of the internal functions used by
 the exclusive time is zero.  This means it doesn't contribute to the
 performance.
 
-The question is how we know where this function originates from?  There are
+The question is how we know where this function originates from.  There are
 several commands to dig deeper an get more details on a function.
 @xref{Information on Load Objects}.
 
@@ -842,16 +847,16 @@ Load Object: mxv-pthreads (found as test.1.er/archives/...)
 @end verbatim
 @end smallexample
 
-For each instruction, the timing values are given and we can immediately 
+For each instruction, the timing values are given and we can immediately
 identify the most expensive instructions.  As with the source level view,
 these are marked with the @code{##} symbol.
 
 It comes as no surprise that the time consuming instructions originate from
 the source code at lines 54-55.
 One thing to note is that the source line numbers no longer appear in
-sequential order. 
+sequential order.
 This is because the compiler has re-ordered the instructions as part of
-the code optimizations it has performed. 
+the code optimizations it has performed.
 
 As illustrated below and similar to the @command{lines} command, we can get
 an overview of the instructions executed by using the
@@ -1050,9 +1055,9 @@ Be aware that the name of the experiment directory has to end with @file{.er}.
 
 @IndexSubentry{Options,  @code{-limit}}
 @IndexSubentry{Commands, @code{limit}}
-The @command{limit} @var{<n>} command can be used to control the number of lines
-printed in various views. For example it impacts the function view, but also
-takes effect for other display commands, like @command{lines}.
+The @command{limit} @var{<n>} command can be used to control the number of
+lines printed in various views.  For example it impacts the function view, but
+also takes effect for other display commands, like @command{lines}.
 
 The argument @var{<n>} should be a positive integer number.  It sets the number
 of lines in the (function) view.  A value of zero resets the limit to the
@@ -1198,11 +1203,12 @@ CPU           CPU
 @end smallexample
 
 In the first part of the output the comment lines in the script file are
-echoed.  These are interleaved with an acknowledgement message for the commands.
+echoed.  These are interleaved with an acknowledgement message for the
+commands.
 
 This is followed by a profile consisting of 5 lines only.  For both metrics,
-the percentages plus the timings are given.  The numbers are sorted with respect
-to the exclusive total CPU time.  Although this is the default, for
+the percentages plus the timings are given.  The numbers are sorted with
+respect to the exclusive total CPU time.  Although this is the default, for
 demonstration purposes we use the @command{sort} command to explicitly define
 the metric for the sort.
 
@@ -1219,7 +1225,7 @@ It is seen that function @code{mxv_core} is responsbile for
 
 The call tree shows the dynamic structure of the application by displaying the
 functions executed and their parent.  The CPU time attributed to each function
-is shown as well. This view helps to find the most expensive
+is shown as well.  This view helps to find the most expensive
 execution path in the program.
 
 @IndexSubentry{Options,  @code{-calltree}}
@@ -1360,7 +1366,7 @@ marked with the @samp{<} and @samp{>} symbols.
 Experiment: mxv.1.thr.er
 No errors
 No warnings
-Archive command ` /usr/bin/gp-archive -n -a on --outfile
+Archive command ` /usr/bin/gprofng-archive -n -a on --outfile
                      <apath>/archive.log <apath>/mxv.1.thr.er'
 
 Target command (64-bit): './mxv-pthreads -m 8000 -n 4000 -t 1'
@@ -1486,11 +1492,10 @@ By default, clock profiling  is enabled when conducting hardware event counter
 experiments (@xref{Profile Hardware Event Counters}).
 With the @code{-p off} option, this can be disabled.
 
-If an explicit value is set for the sampling, the number can be an integer or a
-floating-point number.
-A suffix of @samp{u} for microseconds, or @samp{m} for milliseconds is supported.
-If no suffix is used, the value is assumed to be in milliseconds.
-
+If an explicit value is set for the sampling, the number can be an integer or
+a floating-point number.
+A suffix of @samp{u} for microseconds, or @samp{m} for milliseconds is
+supported.  If no suffix is used, the value is assumed to be in milliseconds.
 For example, the following command sets the sampling rate to
 5123.4 microseconds:
 
@@ -1500,12 +1505,12 @@ $ gprofng collect app -p 5123.4u ./mxv-pthreads -m 8000 -n 4000 -t 1
 @end smallexample
 @end cartouche
 
-If the value is smaller than the clock profiling minimum, a warning message is issued
-and it is set to the minimum.
-In case it is not a multiple of the clock profiling resolution, it is silently rounded
-down to the nearest multiple of the clock resolution.
-If the value exceeds the clock profiling maximum, is negative, or zero, an error is
-reported.
+If the value is smaller than the clock profiling minimum, a warning message
+is issued and it is set to the minimum.
+In case it is not a multiple of the clock profiling resolution, it is
+silently rounded down to the nearest multiple of the clock resolution.
+If the value exceeds the clock profiling maximum, is negative, or zero, an
+error is reported.
 
 @IndexSubentry{Options,  @code{-header}}
 @IndexSubentry{Commands, @code{header}}
@@ -1527,8 +1532,8 @@ Luckily there are three commands that come in handy then.
 @IndexSubentry{Commands, @code{fsingle}}
 @IndexSubentry{Options,  @code{-fsummary}}
 @IndexSubentry{Commands, @code{fsummary}}
-These commands are @command{objects}, @command{fsingle}, and @command{fsummary}.
-They provide details on
+These commands are @command{objects}, @command{fsingle}, and
+@command{fsummary}.  They provide details on
 @cindex Load objects
 load objects (@xref{Load Objects and Functions}).
 
@@ -1564,9 +1569,10 @@ The output includes the name and path of the target executable:
 
 @IndexSubentry{Options,  @code{-fsingle}}
 @IndexSubentry{Commands, @code{fsingle}}
-The @command{fsingle} command may be used to get more details on a specific entry
-in the function view, say.  For example, the command below provides additional
-information on the @code{pthread_create} function shown in the function overview.
+The @command{fsingle} command may be used to get more details on a specific
+entry in the function view, say.  For example, the command below provides
+additional information on the @code{pthread_create} function shown in the
+function overview.
 
 @cartouche
 @smallexample
@@ -1574,8 +1580,8 @@ $ gprofng display text -fsingle pthread_create mxv.1.thr.er
 @end smallexample
 @end cartouche
 
-Below the output from this command.  It has been somewhat modified to match the
-display requirements.
+Below the output from this command.  It has been somewhat modified to match
+the display requirements.
 
 @smallexample
 @verbatim
@@ -1615,26 +1621,26 @@ $ gprofng display text -fsummary mxv.1.thr.er
 Functions sorted by metric: Exclusive Total CPU Time
 
 <Total>
-        Exclusive Total CPU Time: 9.703 (100.0%)
-        Inclusive Total CPU Time: 9.703 (100.0%)
-                            Size:     0
-                      PC Address: 1:0x00000000
-                     Source File: (unknown)
-                     Object File: (unknown)
-                     Load Object: <Total>
-                    Mangled Name:
-                         Aliases:
+       Exclusive Total CPU Time: 9.703 (100.0%)
+       Inclusive Total CPU Time: 9.703 (100.0%)
+                           Size:     0
+                     PC Address: 1:0x00000000
+                    Source File: (unknown)
+                    Object File: (unknown)
+                    Load Object: <Total>
+                   Mangled Name:
+                        Aliases:
 
 mxv_core
-        Exclusive Total CPU Time: 9.226 ( 95.1%)
-        Inclusive Total CPU Time: 9.226 ( 95.1%)
-                            Size:    80
-                      PC Address: 2:0x00001d56
-                     Source File: <apath>/src/mxv.c
-                     Object File: mxv.1.thr.er/archives/mxv-pthreads_ss_pf53V__5
-                     Load Object: <apath>/mxv-pthreads
-                    Mangled Name:
-                         Aliases:
+       Exclusive Total CPU Time: 9.226 ( 95.1%)
+       Inclusive Total CPU Time: 9.226 ( 95.1%)
+                           Size:    80
+                     PC Address: 2:0x00001d56
+                    Source File: <apath>/src/mxv.c
+                    Object File: mxv.1.thr.er/archives/mxv-pthreads_ss_pf53V__5
+                    Load Object: <apath>/mxv-pthreads
+                   Mangled Name:
+                        Aliases:
 
           ... etc ...
 @end verbatim
@@ -1671,11 +1677,12 @@ $ gprofng collect app -O mxv.2.thr.er ./$exe -m $m -n $n -t 2
 @end cartouche
 
 First of all, in as far as @ProductName{} is concerned, no changes are needed.
-Nothing special is needed to profile a multithreaded job when using @ToolName{}.
+Nothing special is needed to profile a multithreaded job when using
+@ToolName{}.
 
 The same is true when displaying the performance results.  The same commands
-that were used before work unmodified.  For example, this is all that is needed to
-get a function overview:
+that were used before work unmodified.  For example, this is all that is
+needed to get a function overview:
 
 @cartouche
 @smallexample
@@ -1683,6 +1690,7 @@ $ gprofng display text -limit 5 -functions mxv.2.thr.er
 @end smallexample
 @end cartouche
 
+@noindent
 This produces the following familiar looking output:
 
 @smallexample
@@ -1825,7 +1833,7 @@ number(s) specified.  This means that the script above shows which
 function(s) each thread executes and how much CPU time they consumed.
 Both the exclusive timings and their percentages are given.
 
-Note that technically this command is a filter and persistent.  The 
+Note that technically this command is a filter and persistent.  The
 selection remains active until changed through another thread selection
 command, or when it is reset with the @samp{all} selection list.
 
@@ -1900,8 +1908,8 @@ CPU
 
 When analyzing the performance of a multithreaded application, it is sometimes
 useful to know whether threads have mostly executed on the same core, say, or
-if they have wandered across multiple cores.  This sort of stickiness is usually
-referred to as
+if they have wandered across multiple cores.  This sort of stickiness is
+usually referred to as
 @cindex Thread affinity
 @emph{thread affinity}.
 
@@ -1916,8 +1924,8 @@ displays how many CPUs have been used.
 @IndexSubentry{Options,  @code{-cpus}}
 @IndexSubentry{Commands, @code{cpus}}
 The equivalent of the @command{threads} threads command, is the @command{cpus}
-command, which shows the numbers of the CPUs that were used and the metric values
-for each one of them.  Both commands are demonstrated below.
+command, which shows the numbers of the CPUs that were used and the metric
+values for each one of them.  Both commands are demonstrated below.
 
 @cartouche
 @smallexample
@@ -1951,7 +1959,7 @@ The first table shows that there is only one experiment and that all of the
 four CPUs have been selected.  The second table shows the exclusive metrics
 for each of the CPUs that have been used.
 
-As also echoed in the output, the data is sorted with respect to the 
+As also echoed in the output, the data is sorted with respect to the
 exclusive CPU time, but it is very easy to sort the data by the CPU id
 @IndexSubentry{Options, -sort}
 @IndexSubentry{Commands, sort}
@@ -2088,10 +2096,10 @@ CPU only.
 @section View Multiple Experiments
 @c ----------------------------------------------------------------------------
 
-One thing we did not cover sofar is that @ToolName{} fully supports the analysis
-of multiple experiments.  The @DisplayText{} tool accepts a list of experiments.
-The data can either be aggregated across the experiments, or used in a
-comparison.
+One thing we did not cover sofar is that @ToolName{} fully supports the
+analysis of multiple experiments.  The @DisplayText{} tool accepts a list of
+experiments.  The data can either be aggregated across the experiments, or
+used in a comparison.
 
 The default is to aggregate the metric values across the experiments that have
 been loaded.  The @command{compare} command can be used to enable the
@@ -2110,7 +2118,7 @@ If the data for multiple experiments is aggregrated, the @DisplayText{} tool
 shows the combined results.
 For example, below is the script to show the function view for the data
 aggregated over two experiments, drop the first experiment and then show
-the function view fo the second experiment only. 
+the function view for the second experiment only.
 We will call it @file{my-script-agg}.
 
 @cartouche
@@ -2203,7 +2211,7 @@ up and the percentages are adjusted accordingly.
 @subsection Comparison of Experiments
 @c ----------------------------------------------------------------------------
 
-The support for multiple experiments really shines in comparison mode.  
+The support for multiple experiments really shines in comparison mode.
 @cindex Compare experiments
 In comparison mode, the data for the various experiments is shown side by
 side, as illustrated below where we compare the results for the multithreaded
@@ -2277,7 +2285,7 @@ The values shown are relative to this difference.  For example if a ratio
 is below one, it means the reference value was higher.
 
 In the example below, we use the same two experiments used in the comparison
-above. The script is also nearly identical.  The only change is that we now
+above.  The script is also nearly identical.  The only change is that we now
 use the @samp{delta} keyword.
 
 As before, the number of lines is restricted to 5 and we focus on
@@ -3248,7 +3256,7 @@ analysis of one or more experiments that have been created using
 The GUI part of @ProductName{} is a GNU project.  This is the link to the
 @url{https://savannah.gnu.org/projects/gprofng-gui, gprofng GUI page}.
 This page contains more information (e.g. how to clone the repo).
-There is also a 
+There is also a
 @url{https://ftp.gnu.org/gnu/gprofng-gui, tar file distribution directory}
 with tar files that include everything that is needed to build and install
 the GUI code.  Various versions are available here.
@@ -3266,7 +3274,7 @@ The @file{gprofng.rc}
 file is used to define default settings for the @DisplayText{}, @Archive{},
 and @DisplaySRC{} tools, but the user can override these defaults through
 local configuration settings when building and installing from the source
-code..
+code.
 
 There are three files that are checked when the tool starts up.  The first
 file has pre-defined settings and comes with the installation, but through
@@ -3279,7 +3287,7 @@ mentioned tools:
 
 @item
 The system-wide filename is called @file{gprofng.rc} and is located in
-the @file{/etc} subdirectory in case an RPM was used for the installation..
+the @file{/etc} subdirectory in case an RPM was used for the installation.
 
 If @ProductName{} has been built from the source, this file is in
 subdirectory @file{etc} in the top level installation directory.
@@ -3365,7 +3373,7 @@ metric corresponding to the default sort metric for the function list.
 @IndexSubentry{Commands, @code{en_desc}}
 
 Set the mode for reading descendant experiments to @samp{on} (enable all
-descendants) or @samp{off} to disable all descendants. If
+descendants) or @samp{off} to disable all descendants.  If
 @samp{=}@var{regex} is used, enable data from those experiments whose
 executable name matches the regular expression.
 
@@ -3381,7 +3389,7 @@ no performance data are ignored by @DisplayText{}.
 @c ----------------------------------------------------------------------------
 
 Various filter commands are supported by @DisplayText{}.
-Thanks to the use of filters, the user can zoom in on a certain area of 
+Thanks to the use of filters, the user can zoom in on a certain area of
 interest.  With filters, it is possible to select one or more threads to
 focus on, define a window in time, select specific call stacks, etc.
 @IndexSubentry{Filters, Intro}
@@ -3456,7 +3464,7 @@ functions
 @end verbatim
 @end smallexample
 
-In general, filters behave differently than commands or options. In 
+In general, filters behave differently than commands or options.  In
 particular there may be an interaction between different filter definitions.
 
 For example, as explained above, in the first script file the
@@ -3592,8 +3600,8 @@ Display the total number of CPUs that have been used during the experiment(s).
 @IndexSubentry{Commands, @code{cpus}}
 
 Show a list of CPUs that were used by the application, along with the metrics
-that have been recorded. The CPUs are represented by a CPU number and show the
-Total CPU time by default.
+that have been recorded.  The CPUs are represented by a CPU number and show
+the Total CPU time by default.
 
 Note that since the data is sorted with respect to the default metric, it may
 be useful to use the @command{sort name} command to show the list sorted with
@@ -3604,7 +3612,7 @@ respect to the CPU id.
 @IndexSubentry{Commands, @code{GCEvents}}
 
 This commands is for Java applications only.  It shows any Garbage Collection
-(GC) events that have occurred while the application was executing..
+(GC) events that have occurred while the application was executing.
 
 @item lwp_list
 @IndexSubentry{Options,  @code{-lwp_list}}
@@ -3619,14 +3627,14 @@ Displays the list of LWPs processed during the experiment(s).
 For each experiment that has been loaded, this command displays a list of
 processes that were created by the application, along with their metrics.
 The processes are represented by process ID (PID) numbers and show the
-Total CPU time metric by default. If additional metrics are recorded in
+Total CPU time metric by default.  If additional metrics are recorded in
 an experiment, these are shown as well.
 
 @item samples
 @IndexSubentry{Options,  @code{-samples}}
 @IndexSubentry{Commands, @code{samples}}
 
-Display a list of sample points and their metrics,  which reflect the
+Display a list of sample points and their metrics, which reflect the
 microstates recorded at each sample point in the loaded experiment.
 The samples are represented by sample numbers and show the Total CPU time
 by default.  Other metrics might also be displayed if enabled.
@@ -3712,7 +3720,7 @@ instruction line in the file, the line on which the metrics occur has a
 @IndexSubentry{Options,  @code{-printmode}}
 @IndexSubentry{Commands, @code{printmode}}
 
-Set the print mode. If the keyword is @code{text}, printing will be done in
+Set the print mode.  If the keyword is @code{text}, printing will be done in
 tabular form using plain text.  In case the @code{html} keyword is selected,
 the output is formatted as an HTML table.
 
@@ -3794,7 +3802,7 @@ be concatenated.
 @IndexSubentry{Commands, @code{pathmap}}
 
 If a file cannot be found using the path list set by @command{addpath}, or
-the @command{setpath} command, one or more path remappings may be set with the 
+the @command{setpath} command, one or more path remappings may be set with the
 @command{pathmap} command.
 
 With path mapping, the user can specify how to replace the leading component
@@ -3808,7 +3816,7 @@ The resulting path is used to find the file.
 For example, if a source file located in directory @file{/tmp}
 is shown in the @DisplayText{} output, but should instead be taken from
 @file{/home/demo}, the following @file{pathmap} command redefines the
-path: 
+path:
 
 @smallexample
 $ gprofng diplay text -pathmap /tmp /home/demo -source ...
@@ -3821,8 +3829,8 @@ tried until the file is found.
 @IndexSubentry{Options,  @code{-setpath}}
 @IndexSubentry{Commands, @code{setpath}}
 
-Set the path used to find source and object files. The path is defined
-through the @var{path-list} keyword. It is a colon separated list of
+Set the path used to find source and object files.  The path is defined
+through the @var{path-list} keyword.  It is a colon separated list of
 directories, jar files, or zip files.
 If any directory has a colon character in it, escape it with a
 backslash (@samp{\}).
@@ -3834,7 +3842,7 @@ You can abbreviate it with a single @samp{$} character.
 The default path is @samp{$expts:..} which is the directories of the
 loaded experiments and the current working directory.
 
-Use @command{setpath} with no argument to display the current path. 
+Use @command{setpath} with no argument to display the current path.
 
 Note that @command{setpath} commands @emph{are not allowed .gprofng.rc
 configuration files}.
@@ -3898,9 +3906,9 @@ this terminology is explained in detail.
 
 @cindex PC
 @cindex Program Counter
-The @emph{Program Counter}, or PC for short, keeps track where program execution is.
-The address of the next instruction to be executed is stored in a special
-purpose register in the processor, or core.
+The @emph{Program Counter}, or PC for short, keeps track where program
+execution is.  The address of the next instruction to be executed is stored
+in a special purpose register in the processor, or core.
 
 @cindex Instruction pointer
 The PC is sometimes also referred to as the @emph{instruction pointer}, but
@@ -3922,9 +3930,9 @@ includes the CPU time spent in @code{B} and @code{C}.
 
 @cindex Exclusive metric
 In contrast with this, the @emph{exclusive} value for a metric is computed
-by excluding the metric values used by other functions called.  In our imaginary
-example, the exclusive CPU time for function @code{A} is the time spent outside
-calling functions @code{B} and @code{C}.
+by excluding the metric values used by other functions called.  In our
+imaginary example, the exclusive CPU time for function @code{A} is the
+time spent outside calling functions @code{B} and @code{C}.
 
 @cindex Leaf function
 In case of a @emph{leaf function}, the inclusive and exclusive values for the
@@ -4081,12 +4089,12 @@ Select all cores from experiments 1 and 2.
 @end table
 
 Recall that there are several list commands that show the mapping between the
-numbers and the targets. 
+numbers and the targets.
 
 @IndexSubentry{Options, @code{-experiment_list}}
 @IndexSubentry{Commands, @code{experiment_list}}
 For example, the @command{experiment_list} command shows the name(s) of the
-experiment(s) loaded and the associated number. In this example it is used
+experiment(s) loaded and the associated number.  In this example it is used
 to get this information for a range of experiments:
 
 @cartouche
@@ -4119,41 +4127,45 @@ the executable.
 During execution, the program may also dynamically load objects.
 
 @cindex Load object
-A @emph{load object} is defined to be an executable, or shared object.  A shared
-library is an example of a load object in @ToolName{}.
+A @emph{load object} is defined to be an executable, or shared object.  A
+shared library is an example of a load object in @ToolName{}.
 
-Each load object, contains a text section with the instructions generated by the
-compiler, a data section for data, and various symbol tables.
+Each load object, contains a text section with the instructions generated by
+the compiler, a data section for data, and various symbol tables.
 All load objects must contain an
 @cindex ELF
 ELF
 symbol table, which gives the names and addresses of all the globally known
 functions in that object.
 
-Load objects compiled with the -g option contain additional symbolic information
-that can augment the ELF symbol table and provide information about functions that
-are not global, additional information about object modules from which the functions
-came, and line number information relating addresses to source lines.
+Load objects compiled with the -g option contain additional symbolic
+information that can augment the ELF symbol table and provide information
+about functions that are not global, additional information about object
+modules from which the functions came, and line number information relating
+addresses to source lines.
 
 The term
 @cindex Function
 @emph{function}
 is used to describe a set of instructions that represent a high-level operation
-described in the source code.  The term also covers methods as used in C++ and in
-the Java programming language.
+described in the source code.  The term also covers methods as used in C++
+and in the Java programming language.
 
 In the @ToolName{} context, functions are provided in source code format.
-Normally their names appear in the symbol table representing a set of addresses.
+Normally their names appear in the symbol table representing a set of
+addresses.
 @cindex Program Counter
 @cindex PC
-If the Program Counter (PC) is within that set, the program is executing within that function.
+If the Program Counter (PC) is within that set, the program is executing within
+that function.
 
-In principle, any address within the text segment of a load object can be mapped to a
-function.  Exactly the same mapping is used for the leaf PC and all the other PCs on the
-call stack.
+In principle, any address within the text segment of a load object can be
+mapped to a function.  Exactly the same mapping is used for the leaf PC and
+all the other PCs on the call stack.
 
-Most of the functions correspond directly to the source model of the program, but
-there are exceptions.  This topic is however outside of the scope of this guide.
+Most of the functions correspond directly to the source model of the program,
+but there are exceptions.  This topic is however outside of the scope of this
+guide.
 
 @c ----------------------------------------------------------------------------
 @node    The Concept of a CPU in gprofng
@@ -4187,8 +4199,8 @@ event counters.
 
 On the hardware side, this means that in the processor there are one or more
 registers dedicated to count certain activities, or ``events''.
-Examples of such events are the number of instructions executed, or the number
-of cache misses at level 2 in the memory hierarchy.
+Examples of such events are the number of instructions executed, or the
+number of cache misses at level 2 in the memory hierarchy.
 
 While there is a limited set of such registers, the user can map events onto
 them.  In case more than one register is available, this allows for the
@@ -4198,9 +4210,10 @@ A simple, yet powerful, example is to simultaneously count the number of CPU
 cycles and the number of instructions excuted.  These two numbers can then be
 used to compute the
 @cindex IPC
-@emph{IPC} value.  IPC stands for ``Instructions Per Clockcycle'' and each processor
-has a maximum.  For example, if this maximum number is 2, it means the
-processor is capable of executing two instructions every clock cycle.
+@emph{IPC} value.  IPC stands for ``Instructions Per Clockcycle'' and each
+processor has an architecturally defined maximum.  For example, if this
+maximum number is 2, it means the processor is capable of executing two
+instructions every clock cycle.
 
 Whether this is actually achieved, depends on several factors, including the
 instruction characteristics.
@@ -4304,8 +4317,9 @@ in the @code{gprofng/doc} subdirectory.
 For example, if you have set the build directory to be @var{<my-build-dir>},
 go to subdirectory @var{<my-build-dir>/gprofng/doc}.
 
-This subdirectory has a single filed called @file{Makefile} that can be used to
-build the documentation in various formats.  We recommend to use these commands.
+This subdirectory has a single file called @file{Makefile} that can be used to
+build the documentation in various formats.  We recommend to use these
+commands.
 
 There are four commands to generate the documentation in the @code{html} or
 @code{pdf} format.  It is assumed that you are in directory @code{gprofng/doc}
@@ -4323,12 +4337,12 @@ Create the pdf file in the current directory.
 Create and install the html file in the binutils documentation directory.
 
 @item make install-pdf
-Creat and install the pdf file in the binutils documentation directory.
+Create and install the pdf file in the binutils documentation directory.
 
 @end table
 
-For example, to install this document in the binutils documentation directory, the
-commands below may be executed.  In this notation, @var{<format>}
+For example, to install this document in the binutils documentation directory,
+the commands below may be executed.  In this notation, @var{<format>}
 is one of @code{html}, or @code{pdf}:
 
 @smallexample
@@ -4338,9 +4352,10 @@ $ make install-<format>
 @end verbatim
 @end smallexample
 
-The binutils installation directory is either the default @code{/usr/local} or the one
-that has been set with the @code{--prefix} option as part of the @code{configure}
-command.  In this example we symbolize this location with @code{<install>}.
+The binutils installation directory is either the default @code{/usr/local} or
+the one that has been set with the @code{--prefix} option as part of the
+@code{configure} command.  In this example we symbolize this location with
+@code{<install>}.
 
 The documentation directory is @code{<install>/share/doc/gprofng} in case
 @code{html} or @code{pdf} is selected and @code{<install>/share/info} for the
@@ -4385,7 +4400,7 @@ In this appendix the man pages for the various @ProductName{} tools are listed.
 @section Man page for @command{gprofng collect app}
 @c ----------------------------------------------------------------------------
 
-@include gp-collect-app.texi
+@include gprofng-collect-app.texi
 
 @c -- A new node --------------------------------------------------------------
 @page
@@ -4393,7 +4408,7 @@ In this appendix the man pages for the various @ProductName{} tools are listed.
 @section Man page for @command{gprofng display text}
 @c ----------------------------------------------------------------------------
 
-@include gp-display-text.texi
+@include gprofng-display-text.texi
 
 @c -- A new node --------------------------------------------------------------
 @page
@@ -4401,7 +4416,7 @@ In this appendix the man pages for the various @ProductName{} tools are listed.
 @section Man page for @command{gprofng display html}
 @c ----------------------------------------------------------------------------
 
-@include gp-display-html.texi
+@include gprofng-display-html.texi
 
 @c -- A new node --------------------------------------------------------------
 @page
@@ -4409,7 +4424,7 @@ In this appendix the man pages for the various @ProductName{} tools are listed.
 @section Man page for @command{gprofng display src}
 @c ----------------------------------------------------------------------------
 
-@include gp-display-src.texi
+@include gprofng-display-src.texi
 
 @c -- A new node --------------------------------------------------------------
 @page
@@ -4417,7 +4432,7 @@ In this appendix the man pages for the various @ProductName{} tools are listed.
 @section Man page for @command{gprofng archive}
 @c ----------------------------------------------------------------------------
 
-@include gp-archive.texi
+@include gprofng-archive.texi
 
 @ifnothtml
 @node       Index

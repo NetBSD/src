@@ -1,5 +1,5 @@
 /* dwarf.h - DWARF support header file
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -83,6 +83,7 @@ enum dwarf_section_display_enum
   pubnames,
   gnu_pubnames,
   eh_frame,
+  eh_frame_hdr,
   macinfo,
   macro,
   str,
@@ -101,6 +102,7 @@ enum dwarf_section_display_enum
   weaknames,
   gdb_index,
   debug_names,
+  sframe,
   trace_info,
   trace_abbrev,
   trace_aranges,
@@ -239,9 +241,9 @@ extern unsigned long dwarf_start_die;
 
 extern int dwarf_check;
 
-extern void init_dwarf_regnames_by_elf_machine_code (unsigned int);
-extern void init_dwarf_regnames_by_bfd_arch_and_mach (enum bfd_architecture arch,
-						      unsigned long mach);
+extern void init_dwarf_by_elf_machine_code (unsigned int);
+extern void init_dwarf_by_bfd_arch_and_mach (enum bfd_architecture arch,
+					     unsigned long mach);
 
 extern bool load_debug_section (enum dwarf_section_display_enum, void *);
 extern void free_debug_section (enum dwarf_section_display_enum);

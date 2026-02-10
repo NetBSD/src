@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I . -I .. -I ../.. 
 
-bin_SCRIPTS   = gp-display-html
+bin_SCRIPTS   = gprofng-display-html
 CLEANFILES    = $(bin_SCRIPTS)
 
 do_subst = sed -e 's/BINUTILS_VERSION/$(VERSION)/'
 
-gp-display-html: gp-display-html.in Makefile
+gprofng-display-html: $(srcdir)/gp-display-html.in
 	$(do_subst) < $(srcdir)/gp-display-html.in > $@
 	chmod +x $@

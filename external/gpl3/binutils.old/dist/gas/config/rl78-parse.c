@@ -4623,7 +4623,7 @@ find_bit_index (char *tok)
 	{
 	  last_digit = tok;
 	}
-      else if (ISSPACE (*tok))
+      else if (is_whitespace (*tok))
 	{
 	  /* skip */
 	}
@@ -4647,7 +4647,7 @@ rl78_lex (void)
   char * save_input_pointer;
   char * bit = NULL;
 
-  while (ISSPACE (*rl78_lex_start)
+  while (is_whitespace (*rl78_lex_start)
 	 && rl78_lex_start != rl78_lex_end)
     rl78_lex_start ++;
 
