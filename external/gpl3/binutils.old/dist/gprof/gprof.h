@@ -132,4 +132,6 @@ extern bool first_output;		/* no output so far? */
 
 extern void done (int status) ATTRIBUTE_NORETURN;
 
+extern void symtab_init (void);
+
 #endif /* gprof_h */

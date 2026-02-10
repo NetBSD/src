@@ -1,5 +1,5 @@
 /* BFD back-end for OSF/1 core files.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -92,7 +92,8 @@ osf_core_core_file_p (bfd *abfd)
   if (!core_hdr (abfd))
     return NULL;
 
-  strncpy (core_command (abfd), core_header.name, MAXCOMLEN + 1);
+  strncpy (core_command (abfd), core_header.name, MAXCOMLEN);
+  core_command (abfd)[MAXCOMLEN] = 0;
   core_signal (abfd) = core_header.signo;
 
   for (i = 0; i < core_header.nscns; i++)

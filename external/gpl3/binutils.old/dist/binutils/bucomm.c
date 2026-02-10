@@ -1,5 +1,5 @@
 /* bucomm.c -- Bin Utils COMmon code.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -435,6 +435,7 @@ display_info (void)
   if (!arg.error)
     display_target_tables (&arg);
 
+  free (arg.info);
   return arg.error;
 }
 

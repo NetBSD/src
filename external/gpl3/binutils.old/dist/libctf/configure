@@ -15989,6 +15989,9 @@ done
 
 
 
+save_ASAN_OPTIONS="$ASAN_OPTIONS"
+  ASAN_OPTIONS=detect_leaks=0
+  export ASAN_OPTIONS
 
 for ac_func in getpagesize
 do :
@@ -16166,6 +16169,8 @@ $as_echo "#define HAVE_MMAP 1" >>confdefs.h
 
 fi
 rm -f conftest.mmap conftest.txt
+
+  ASAN_OPTIONS="$save_ASAN_OPTIONS"
 
 # Needed for BFD capability checks.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlsym" >&5
@@ -16547,7 +16552,7 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
  presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
  esac
 
-for ac_header in byteswap.h endian.h
+for ac_header in byteswap.h endian.h valgrind/valgrind.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -16947,7 +16952,10 @@ fi
 
 
 # Use a version script, if possible, or an -export-symbols-regex otherwise.
+# First figure out the version script flag: then massage the script, if
+# needed.
 decommented_version_script=
+no_version_script=
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for linker versioning flags" >&5
 $as_echo_n "checking for linker versioning flags... " >&6; }
 if ${ac_cv_libctf_version_script+:} false; then :
@@ -16964,7 +16972,7 @@ int ctf_foo (void) { return 0; }
 				    int main (void) { return ctf_foo(); }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_libctf_version_script="-Wl,--version-script='$srcdir/libctf.ver'"
+  ac_cv_libctf_version_script="-Wl,--version-script"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -16989,22 +16997,30 @@ rm -f core conftest.err conftest.$ac_objext \
 
    if test -z "$ac_cv_libctf_version_script"; then
      ac_cv_libctf_version_script='-export-symbols-regex ctf_.*'
+     no_version_script=t
    fi
    rm -f conftest.ver
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_libctf_version_script" >&5
 $as_echo "$ac_cv_libctf_version_script" >&6; }
+
+# Ensure that no symbols exist in the version script for libctf-nobfd.so
+# that do not exist in the shared library itself, since some linkers (Solaris)
+# add such symbols with type NOTYPE, and others (LLVM) complain loudly
+# and fail to link.
+grep -v 'libctf only' $srcdir/libctf.ver > libctf-nobfd.ver
+
 if test -n "$decommented_version_script"; then
    # Solaris's version scripts use shell-style comments rather than the C-style
    # used by GNU ld.  Use cpp to strip the comments out.  (cpp exists under this
    # name on all platforms that support ld -z gnu-version-script.)
-   # Also ensure that no symbols exist in the version script for libctf-nobfd.so
-   # that do not exist in the shared library itself, since some linkers add such
-   # symbols with type NOTYPE.
    /lib/cpp < $srcdir/libctf.ver > libctf-decommented.ver
-   grep -v 'libctf only' $srcdir/libctf.ver | /lib/cpp > libctf-nobfd-decommented.ver
+   /lib/cpp < $srcdir/libctf-nobfd.ver > libctf-nobfd-decommented.ver
    VERSION_FLAGS="$ac_cv_libctf_version_script='libctf-decommented.ver'"
    VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script='libctf-nobfd-decommented.ver'"
+elif test -z "$no_version_script"; then
+   VERSION_FLAGS="$ac_cv_libctf_version_script='$srcdir/libctf.ver'"
+   VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script='libctf-nobfd.ver'"
 else
    VERSION_FLAGS="$ac_cv_libctf_version_script"
    VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script"

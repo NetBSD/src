@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -23,10 +23,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <queue>
+
 #include "vec.h"
 #include "util.h"
 #include "ipcio.h"
@@ -63,7 +60,7 @@ IPCrequest::IPCrequest (int sz, int reqID, int chID)
   channelID = chID;
   status = INITIALIZED;
   idx = 0;
-  buf = (char *) malloc (size);
+  buf = (char *) xmalloc (size);
   cancelImmediate = false;
 }
 
@@ -149,7 +146,7 @@ readSVal (IPCrequest *req)
       ipc_trace ("  readSVal: <NULL>\n");
       return NULL;
     }
-  char *str = (char *) malloc (len + 1);
+  char *str = (char *) xmalloc (len + 1);
   char *s = str;
   *s = (char) 0;
   while (len--)
@@ -774,6 +771,16 @@ writeString (const char *s, IPCrequest* req)
   OUTS->sendSVal (s);
   writeResponseWithHeader (req->getRequestID (), req->getChannelID (),
 			   RESPONSE_TYPE_COMPLETE, RESPONSE_STATUS_SUCCESS, OUTS);
+}
+
+void
+writeError (const char *s, IPCrequest* req)
+{
+  IPCresponse *OUTS = responseBufferPool->getNewResponse (BUFFER_SIZE_LARGE);
+  OUTS->sendByte (L_STRING);
+  OUTS->sendSVal (s);
+  writeResponseWithHeader (req->getRequestID (), req->getChannelID (),
+			   RESPONSE_TYPE_COMPLETE, RESPONSE_STATUS_ERROR, OUTS);
 }
 
 void

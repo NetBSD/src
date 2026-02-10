@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -1350,7 +1350,7 @@ mkstemp (char *template)
   unsigned pktSize;
   if (NULL_PTR (mkstemp))
     init_io_intf ();
-  if (CHCK_REENTRANCE (guard) || template == NULL)
+  if (CHCK_REENTRANCE (guard))
     return CALL_REAL (mkstemp)(template);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
@@ -1405,7 +1405,7 @@ mkstemps (char *template, int slen)
   unsigned pktSize;
   if (NULL_PTR (mkstemps))
     init_io_intf ();
-  if (CHCK_REENTRANCE (guard) || template == NULL)
+  if (CHCK_REENTRANCE (guard))
     return CALL_REAL (mkstemps)(template, slen);
   PUSH_REENTRANCE (guard);
   hrtime_t reqt = gethrtime ();
@@ -1485,7 +1485,7 @@ close (int fildes)
 
 /*------------------------------------------------------------- fopen */
 static FILE*
-gprofng_fopen (FILE*(real_fopen) (), const char *filename, const char *mode)
+gprofng_fopen (FILE*(real_fopen) (const char *, const char *), const char *filename, const char *mode)
 {
   int *guard;
   FILE *fp = NULL;
@@ -1559,7 +1559,7 @@ DCL_FOPEN (fopen)
 
 /*------------------------------------------------------------- fclose */
 static int
-gprofng_fclose (int(real_fclose) (), FILE *stream)
+gprofng_fclose (int(real_fclose) (FILE *), FILE *stream)
 {
   int *guard;
   int stat;
@@ -1645,7 +1645,7 @@ fflush (FILE *stream)
 
 /*------------------------------------------------------------- fdopen */
 static FILE*
-gprofng_fdopen (FILE*(real_fdopen) (), int fildes, const char *mode)
+gprofng_fdopen (FILE*(real_fdopen) (int, const char *), int fildes, const char *mode)
 {
   int *guard;
   FILE *fp = NULL;
@@ -2957,7 +2957,7 @@ DCL_FGETPOS (fgetpos)
 
 /*------------------------------------------------------------- fgetpos64 */
 static int
-gprofng_fgetpos64 (int(real_fgetpos64) (), FILE *stream, fpos64_t *pos)
+gprofng_fgetpos64 (int(real_fgetpos64) (FILE *, fpos64_t *), FILE *stream, fpos64_t *pos)
 {
   int *guard;
   int ret;

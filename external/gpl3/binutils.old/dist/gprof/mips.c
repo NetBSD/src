@@ -46,6 +46,7 @@ mips_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   int offset;
   Sym *child;
   static bool inited = false;
+  Sym_Table *symtab = get_symtab ();
 
   if (!inited)
     {
@@ -75,7 +76,7 @@ mips_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	  dest_pc = (pc & ~(bfd_vma) 0xfffffff) | offset;
 	  if (hist_check_address (dest_pc))
 	    {
-	      child = sym_lookup (&symtab, dest_pc);
+	      child = sym_lookup (symtab, dest_pc);
               if (child)
 		{
 	          DBG (CALLDEBUG,

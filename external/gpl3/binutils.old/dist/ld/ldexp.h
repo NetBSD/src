@@ -1,5 +1,5 @@
 /* ldexp.h -
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -250,9 +250,9 @@ fill_type *exp_get_fill
   (etree_type *, fill_type *, char *);
 bfd_vma exp_get_abs_int
   (etree_type *, int, char *);
-void ldexp_init (void);
+void ldexp_init (bool);
 void ldexp_finalize_syms (void);
 bool ldexp_is_final_sym_absolute (const struct bfd_link_hash_entry *);
-void ldexp_finish (void);
+void ldexp_finish (bool);
 
 #endif

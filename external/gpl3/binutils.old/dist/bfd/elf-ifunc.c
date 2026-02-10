@@ -1,5 +1,5 @@
 /* ELF STT_GNU_IFUNC support.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -139,9 +139,9 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 	  || info->export_dynamic)
       && h->pointer_equality_needed)
     {
-      info->callbacks->einfo
+      info->callbacks->fatal
 	/* xgettext:c-format */
-	(_("%F%P: dynamic STT_GNU_IFUNC symbol `%s' with pointer "
+	(_("%P: dynamic STT_GNU_IFUNC symbol `%s' with pointer "
 	   "equality in `%pB' can not be used when making an "
 	   "executable; recompile with -fPIE and relink with -pie\n"),
 	 h->root.root.string,

@@ -279,7 +279,7 @@
 #define PACKAGE_NAME "bfd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "bfd 2.42"
+#define PACKAGE_STRING "bfd 2.45"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bfd"
@@ -288,7 +288,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.42"
+#define PACKAGE_VERSION "2.45"
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
@@ -352,7 +352,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.42"
+#define VERSION "2.45"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

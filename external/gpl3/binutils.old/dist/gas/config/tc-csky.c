@@ -1,5 +1,5 @@
 /* tc-csky.c -- Assembler for C-SKY
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
    Created by Lifang Xia (lifang_xia@c-sky.com)
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
@@ -632,102 +632,120 @@ struct csky_cpu_info
 
 
 #define CSKY_FEATURES_DEF_NULL()            \
-   {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+   {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_e(isa_e)          \
    {FEATURE_DSP_EXT(isa_e),                 \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},     \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_t(isa_t)          \
    {FEATURE_TRUST(isa_t),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},     \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_f(isa_f)          \
    {FEATURE_FLOAT(isa_f),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},     \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_v(isa_v)          \
    {FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},     \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_ef(isa_e, isa_f)  \
    {FEATURE_DSP_EXT(isa_e),                 \
     FEATURE_FLOAT(isa_f),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0},              \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_jt(isa_j, isa_t)  \
    {FEATURE_JAVA(isa_j),                    \
     FEATURE_TRUST(isa_t),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0},              \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_efht(isa_e, isa_f, isa_h, isa_t) \
    {FEATURE_DSP_EXT(isa_e),                 \
     FEATURE_FLOAT(isa_f),                   \
     FEATURE_SHIELD(isa_h),                  \
     FEATURE_TRUST(isa_t),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0},                                \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_efv(isa_e, isa_f, isa_v) \
    {FEATURE_DSP_EXT(isa_e),                 \
     FEATURE_FLOAT(isa_f),                   \
     FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0},                       \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_eft(isa_e, isa_f, isa_t) \
    {FEATURE_DSP_EXT(isa_e),                 \
     FEATURE_FLOAT(isa_f),                   \
     FEATURE_TRUST(isa_t),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0},                       \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_d(isa_d) \
-   {FEATURE_DSP(isa_d),             \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+   {FEATURE_DSP(isa_d),                     \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},     \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_df(isa_d, isa_f)  \
-   {FEATURE_DSP(isa_d),             \
-    FEATURE_FLOAT(isa_f),               \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+   {FEATURE_DSP(isa_d),                     \
+    FEATURE_FLOAT(isa_f),                   \
+    {0,0,0}, {0,0,0}, {0,0,0},              \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_ft(isa_f, isa_t)  \
    {FEATURE_FLOAT(isa_f),                   \
     FEATURE_TRUST(isa_t),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0},              \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_tv(isa_t, isa_v)  \
    {FEATURE_TRUST(isa_t),                   \
     FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0}, {0,0,0},              \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_fv(isa_f, isa_v)  \
    {FEATURE_FLOAT(isa_f),                   \
     FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
-
+    {0,0,0}, {0,0,0}, {0,0,0},              \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_dft(isa_d, isa_f, isa_t) \
    {FEATURE_DSP(isa_d),                     \
     FEATURE_FLOAT(isa_f),                   \
     FEATURE_TRUST(isa_t),                   \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0},                       \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_dfv(isa_d, isa_f, isa_v) \
    {FEATURE_DSP(isa_d),                     \
     FEATURE_FLOAT(isa_f),                   \
     FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0},                       \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_ftv(isa_f, isa_t, isa_v) \
    {FEATURE_FLOAT(isa_f),                   \
     FEATURE_TRUST(isa_t),                   \
     FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0}, {0,0,0},                       \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_FEATURES_DEF_eftv(isa_e, isa_f, isa_t, isa_v) \
    {FEATURE_DSP_EXT(isa_e),                 \
     FEATURE_FLOAT(isa_f),                   \
     FEATURE_TRUST(isa_t),                   \
     FEATURE_VDSP(isa_v),                    \
-    {0}, {0}, {0}, {0}, {0}, {0}}
+    {0,0,0},                                \
+    {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 
 #define CSKY_CPU_REVERISON_r0p0(isa)        \
@@ -740,13 +758,15 @@ struct csky_cpu_info
     {3, 0, isa}
 
 #define CSKY_CPU_REVERISON_RESERVED()  \
-{{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+  {{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, \
+   {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 #define CSKY_CPU_REVERISON_R3(isa1, isa2, isa3) \
   {CSKY_CPU_REVERISON_r1p0(isa1),           \
    CSKY_CPU_REVERISON_r2p0(isa2),           \
    CSKY_CPU_REVERISON_r3p0(isa3),           \
-   {0}, {0}, {0}, {0}, {0}, {0}, {0}}
+   {0,0,0}, {0,0,0},                        \
+   {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}}
 
 /* CSKY cpus table.  */
 const struct csky_cpu_info csky_cpus[] =
@@ -936,7 +956,11 @@ const struct csky_cpu_info csky_cpus[] =
 /* Start of private CPUs.  */
 /* End of private CPUs.  */
 
-  {NULL},
+  {NULL,
+   0,
+   0,
+   CSKY_FEATURES_DEF_NULL(),
+   CSKY_CPU_REVERISON_RESERVED()}
 };
 
 int md_short_jump_size = 2;
@@ -967,9 +991,9 @@ const char EXP_CHARS[] = "eE";
 
 const char FLT_CHARS[] = "rRsSfFdDxXeEpP";
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
-struct option md_longopts[] = {
+const struct option md_longopts[] = {
 #define OPTION_MARCH (OPTION_MD_BASE + 0)
   {"march", required_argument, NULL, OPTION_MARCH},
 #define OPTION_MCPU (OPTION_MD_BASE + 1)
@@ -1023,7 +1047,7 @@ struct option md_longopts[] = {
   {"mvdsp", no_argument, &do_opt_mvdsp, CSKY_ISA_VDSP},
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 static struct csky_insn_info csky_insn;
 
@@ -1926,11 +1950,11 @@ mapping_state (map_state state)
    {
      struct frag * const frag_first = seg_info (now_seg)->frchainP->frch_root;
      if (frag_now != frag_first || frag_now_fix () > 0)
-       make_mapping_symbol (MAP_DATA, (valueT) 0, frag_first);
+       make_mapping_symbol (MAP_DATA, 0, frag_first);
    }
 
   seg_info (now_seg)->tc_segment_info_data.current_state = state;
-  make_mapping_symbol (state, (valueT) frag_now_fix (), frag_now);
+  make_mapping_symbol (state, frag_now_fix (), frag_now);
 }
 
 /* Dump the literal pool.  */
@@ -2247,7 +2271,7 @@ lex_got (enum bfd_reloc_code_real *reloc,
   unsigned int j;
 
   for (cp = input_line_pointer; *cp != '@'; cp++)
-    if (is_end_of_line[(unsigned char) *cp])
+    if (is_end_of_stmt (*cp))
       return NULL;
 
   for (j = 0; j < sizeof (gotrel) / sizeof (gotrel[0]); j++)
@@ -2287,7 +2311,7 @@ parse_exp (char *s, expressionS *e)
   char *new;
 
   /* Skip whitespace.  */
-  while (ISSPACE (*s))
+  while (is_whitespace (*s))
     ++s;
 
   save = input_line_pointer;
@@ -2332,17 +2356,17 @@ parse_fexp (char *s, expressionS *e, unsigned char isdouble, uint64_t *dbnum)
   know (length <= 8);
   know (err != NULL || length > 0);
 
-  if (!is_end_of_line[(unsigned char) *input_line_pointer])
+  if (!is_end_of_stmt (*input_line_pointer))
     as_bad (_("immediate operand required"));
-  while (!is_end_of_line[(unsigned char) *input_line_pointer])
+  while (!is_end_of_stmt (*input_line_pointer))
     input_line_pointer++;
 
   if (err)
     {
       as_bad (_("bad floating literal: %s"), err);
-      while (!is_end_of_line[(unsigned char) *input_line_pointer])
+      while (!is_end_of_stmt (*input_line_pointer))
 	input_line_pointer++;
-      know (is_end_of_line[(unsigned char) input_line_pointer[-1]]);
+      know (is_end_of_stmt (input_line_pointer[-1]));
       return input_line_pointer;
     }
 
@@ -3278,14 +3302,14 @@ csky_count_operands (char *str)
   unsigned int oprnd_num;
   int bracket_cnt = 0;
 
-  if (is_end_of_line[(unsigned char) *oper_end])
+  if (is_end_of_stmt (*oper_end))
     oprnd_num = 0;
   else
     oprnd_num = 1;
 
   /* Count how many operands.  */
   if (oprnd_num)
-    while (!is_end_of_line[(unsigned char) *oper_end])
+    while (!is_end_of_stmt (*oper_end))
       {
 	if (*oper_end == '(' || *oper_end == '<')
 	  {
@@ -3325,14 +3349,14 @@ parse_opcode (char *str)
   char macro_name[OPCODE_MAX_LEN + 1];
 
   /* Remove space ahead of string.  */
-  while (ISSPACE (*str))
+  while (is_whitespace (*str))
     str++;
   opcode_end = str;
 
   /* Find the opcode end.  */
   while (nlen < OPCODE_MAX_LEN
-	 && !is_end_of_line [(unsigned char) *opcode_end]
-	 && *opcode_end != ' ')
+	 && !is_end_of_stmt (*opcode_end)
+	 && !is_whitespace (*opcode_end))
     {
       /* Is csky force 32 or 16 instruction?  */
       if (IS_CSKY_V2 (mach_flag)
@@ -3378,7 +3402,7 @@ parse_opcode (char *str)
   macro_name[nlen] = '\0';
 
   /* Get csky_insn.opcode_end.  */
-  while (ISSPACE (*opcode_end))
+  while (is_whitespace (*opcode_end))
     opcode_end++;
   csky_insn.opcode_end = opcode_end;
 
@@ -3386,10 +3410,8 @@ parse_opcode (char *str)
   csky_insn.number = csky_count_operands (opcode_end);
 
   /* Find hash by name in csky_macros_hash and csky_opcodes_hash.  */
-  csky_insn.macro = (struct csky_macro_info *) str_hash_find (csky_macros_hash,
-							      macro_name);
-  csky_insn.opcode = (struct csky_opcode *) str_hash_find (csky_opcodes_hash,
-							   name);
+  csky_insn.macro = str_hash_find (csky_macros_hash, macro_name);
+  csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
 
   if (csky_insn.macro == NULL && csky_insn.opcode == NULL)
     return false;
@@ -3614,8 +3636,7 @@ get_operand_value (struct csky_opcode_info *op,
 	  if (val <= 6)
 	    {
 	      const char *name = "movi";
-	      csky_insn.opcode = (struct csky_opcode *)
-		str_hash_find (csky_opcodes_hash, name);
+	      csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
 	      csky_insn.val[csky_insn.idx - 1] = 1 << val;
 	    }
 	  return true;
@@ -3648,8 +3669,7 @@ get_operand_value (struct csky_opcode_info *op,
 	    if (log <= 6)
 	      {
 		const char *name = "movi";
-		csky_insn.opcode = (struct csky_opcode *)
-		  str_hash_find (csky_opcodes_hash, name);
+		csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
 		as_warn (_("translating mgeni to movi"));
 	      }
 	    else
@@ -3686,8 +3706,7 @@ get_operand_value (struct csky_opcode_info *op,
 	  if (mask_val > 0 && mask_val < 8)
 	    {
 	      const char *op_movi = "movi";
-	      csky_insn.opcode = (struct csky_opcode *)
-		str_hash_find (csky_opcodes_hash, op_movi);
+	      csky_insn.opcode = str_hash_find (csky_opcodes_hash, op_movi);
 	      if (csky_insn.opcode == NULL)
 		return false;
 	      csky_insn.val[csky_insn.idx - 1] = (1 << mask_val) - 1;
@@ -3747,8 +3766,7 @@ get_operand_value (struct csky_opcode_info *op,
 	  if (mask_val > 0 && mask_val < 16)
 	    {
 	      const char *op_movi = "movi";
-	      csky_insn.opcode = (struct csky_opcode *)
-		str_hash_find (csky_opcodes_hash, op_movi);
+	      csky_insn.opcode = str_hash_find (csky_opcodes_hash, op_movi);
 	      if (csky_insn.opcode == NULL)
 		return false;
 	      csky_insn.val[csky_insn.idx - 1] = (1 << (mask_val + 1)) - 1;
@@ -4333,13 +4351,13 @@ parse_operands_op (char *str, struct csky_opcode_info *op)
 
       for (j = 0; j < csky_insn.number; j++)
 	{
-	  while (ISSPACE (*oper))
+	  while (is_whitespace (*oper))
 	    oper++;
 	  flag_pass = get_operand_value (&op[i], &oper,
 					 &op[i].oprnd.oprnds[j]);
 	  if (!flag_pass)
 	    break;
-	  while (ISSPACE (*oper))
+	  while (is_whitespace (*oper))
 	    oper++;
 	  /* Skip the ','.  */
 	  if (j < csky_insn.number - 1 && op[i].operand_num != -1)
@@ -4353,7 +4371,7 @@ parse_operands_op (char *str, struct csky_opcode_info *op)
 		  break;
 		}
 	    }
-	  else if (!is_end_of_line[(unsigned char) *oper])
+	  else if (!is_end_of_stmt (*oper))
 	    {
 	      SET_ERROR_STRING (ERROR_BAD_END, NULL);
 	      flag_pass = false;
@@ -4578,7 +4596,7 @@ md_assemble (char *str)
   mapping_state (MAP_TEXT);
   /* Tie dwarf2 debug info to every insn if set option --gdwarf2.  */
   dwarf2_emit_insn (0);
-  while (ISSPACE (* str))
+  while (is_whitespace (* str))
     str++;
   /* Get opcode from str.  */
   if (!parse_opcode (str))
@@ -5251,7 +5269,7 @@ md_pcrel_from_section (fixS * fixP, segT seg)
 {
   /* If the symbol is undefined or defined in another section
      we leave the add number alone for the linker to fix it later.  */
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != seg))
     return fixP->fx_size;
@@ -5302,7 +5320,7 @@ csky_cons_fix_new (fragS *frag,
 	reloc = BFD_RELOC_32;
 	break;
       }
-  fixP = fix_new_exp (frag, off, (int) len, exp, 0, reloc);
+  fixP = fix_new_exp (frag, off, len, exp, 0, reloc);
   if (BFD_RELOC_CKCORE_TLS_IE32 == insn_reloc
       || BFD_RELOC_CKCORE_TLS_GD32 == insn_reloc
       || BFD_RELOC_CKCORE_TLS_LDM32 == insn_reloc)
@@ -5578,25 +5596,25 @@ md_apply_fix (fixS   *fixP,
 	  case BFD_RELOC_CKCORE_PCREL_IMM8BY4:
 	  case BFD_RELOC_CKCORE_PCREL_IMM10BY4:
 	  case BFD_RELOC_CKCORE_PCREL_IMM16BY4:
-	    max = (offsetT) howto->dst_mask;
+	    max = howto->dst_mask;
 	    min = 0;
 	    break;
 	    /* lrw16.  */
 	  case BFD_RELOC_CKCORE_PCREL_IMM7BY4:
 	    if (do_extend_lrw)
-	      max = (offsetT)((1 << (howto->bitsize + 1)) - 2);
+	      max = ((valueT) 1 << (howto->bitsize + 1)) - 2;
 	    else
-	      max = (offsetT)((1 << howto->bitsize) - 1);
+	      max = ((valueT) 1 << howto->bitsize) - 1;
 	    min = 0;
 	    break;
 	    /* flrws, flrwd: the offset bits are divided in two parts.  */
 	  case BFD_RELOC_CKCORE_PCREL_FLRW_IMM8BY4:
-	    max = (offsetT)((1 << howto->bitsize) - 1);
+	    max = ((valueT) 1 << howto->bitsize) - 1;
 	    min = 0;
 	    break;
 	    /* Offset is signed.  */
 	  default:
-	    max = (offsetT)(howto->dst_mask >> 1);
+	    max = howto->dst_mask >> 1;
 	    min = - max - 1;
 	    issigned = 1;
 	  }
@@ -5612,7 +5630,7 @@ md_apply_fix (fixS   *fixP,
 	if (do_extend_lrw && (opcode & 0xfc00) == CSKYV2_INST_LRW16)
 	  val &= 0xff;
 	else
-	  val &= issigned ? (offsetT)(howto->dst_mask) : max;
+	  val &= issigned ? (offsetT) howto->dst_mask : max;
 
 	if (fixP->fx_r_type == BFD_RELOC_CKCORE_PCREL_BLOOP_IMM4BY4)
 	  val = (val & 0xf) << 12;
@@ -5655,10 +5673,10 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
 
   if (fixP->fx_pcrel
       && fixP->fx_r_type == BFD_RELOC_CKCORE_ADDR32)
-      fixP->fx_r_type = BFD_RELOC_CKCORE_PCREL32;
+    fixP->fx_r_type = BFD_RELOC_CKCORE_PCREL32;
 
-  rel = xmalloc (sizeof (arelent));
-  rel->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+  rel = notes_alloc (sizeof (arelent));
+  rel->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *rel->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   rel->howto = bfd_reloc_type_lookup (stdoutput, fixP->fx_r_type);
   rel->addend = fixP->fx_offset;
@@ -5905,7 +5923,7 @@ static int
 csky_get_macro_operand (char *src_s, char *dst_s, char end_sym)
 {
   int nlen = 0;
-  while (ISSPACE (*src_s))
+  while (is_whitespace (*src_s))
     ++src_s;
   while (*src_s != end_sym)
     dst_s[nlen++] = *(src_s++);
@@ -6475,8 +6493,7 @@ v1_work_jbsr (void)
     {
       /* Using jsri instruction.  */
       const char *name = "jsri";
-      csky_insn.opcode = (struct csky_opcode *)
-	str_hash_find (csky_opcodes_hash, name);
+      csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
       csky_insn.opcode_idx = 0;
       csky_insn.isize = 2;
 
@@ -6823,8 +6840,7 @@ bool
 v2_work_rotlc (void)
 {
   const char *name = "addc";
-  csky_insn.opcode
-    = (struct csky_opcode *) str_hash_find (csky_opcodes_hash, name);
+  csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
   csky_insn.opcode_idx = 0;
   if (csky_insn.isize == 2)
     {
@@ -6861,8 +6877,7 @@ v2_work_bgeni (void)
       name = "movih";
       val >>= 16;
     }
-  csky_insn.opcode
-    = (struct csky_opcode *) str_hash_find (csky_opcodes_hash, name);
+  csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
   csky_insn.opcode_idx = 0;
   csky_insn.val[1] = val;
 
@@ -6879,8 +6894,7 @@ bool
 v2_work_not (void)
 {
   const char *name = "nor";
-  csky_insn.opcode
-    = (struct csky_opcode *) str_hash_find (csky_opcodes_hash, name);
+  csky_insn.opcode = str_hash_find (csky_opcodes_hash, name);
   csky_insn.opcode_idx = 0;
   if (csky_insn.number == 1)
     {
@@ -7675,7 +7689,7 @@ csky_cons (int nbytes)
 			howto->name, nbytes);
 	      else
 		{
-		  register char *p = frag_more ((int) nbytes);
+		  register char *p = frag_more (nbytes);
 		  int offset = nbytes - size;
 
 		  fix_new_exp (frag_now,
@@ -7684,7 +7698,7 @@ csky_cons (int nbytes)
 		}
 	    }
 	  else
-	    emit_expr (&exp, (unsigned int) nbytes);
+	    emit_expr (&exp, nbytes);
 	  if (now_seg == text_section)
 	    poolspan += nbytes;
 	}
@@ -7778,11 +7792,11 @@ csky_s_section (int ignore)
      pool.  */
   char * ilp = input_line_pointer;
 
-  while (*ilp != 0 && ISSPACE (*ilp))
+  while (is_whitespace (*ilp))
     ++ ilp;
 
   if (startswith (ilp, ".line")
-      && (ISSPACE (ilp[5]) || *ilp == '\n' || *ilp == '\r'))
+      && (is_whitespace (ilp[5]) || is_end_of_stmt (ilp[5])))
     ;
   else
     dump_literals (0);
@@ -7847,8 +7861,7 @@ static void
 csky_stack_size (int arg ATTRIBUTE_UNUSED)
 {
   expressionS exp;
-  stack_size_entry *sse
-    = (stack_size_entry *) xcalloc (1, sizeof (stack_size_entry));
+  stack_size_entry *sse = xcalloc (1, sizeof (stack_size_entry));
 
   expression (&exp);
   if (exp.X_op == O_symbol)

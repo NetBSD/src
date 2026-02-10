@@ -1,6 +1,6 @@
 /* hist.c  -  Histogram related operations.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
-
+
 #include "gprof.h"
 #include "libiberty.h"
 #include "search_list.h"
@@ -109,12 +109,12 @@ read_histogram_header (histogram *record,
       done (1);
     }
 
-  n_hist_scale = (double)((record->highpc - record->lowpc) / sizeof (UNIT))
+  n_hist_scale = (double)(record->highpc - record->lowpc) / sizeof (UNIT)
     / record->num_bins;
 
   if (first)
     {
-      /* We don't try to veryfy profrate is the same for all histogram
+      /* We don't try to verify profrate is the same for all histogram
 	 records.  If we have two histogram records for the same
 	 address range and profiling samples is done as often
 	 as possible as opposed on timer, then the actual profrate will
@@ -155,8 +155,8 @@ read_histogram_header (histogram *record,
       if (fabs (hist_scale - n_hist_scale) > 0.000001)
 	{
 	  fprintf (stderr,
-		   _("%s: different scales in histogram records"),
-		   whoami);
+		   _("%s: different scales in histogram records: %f != %f\n"),
+		   whoami, hist_scale, n_hist_scale);
 	  done (1);
 	}
     }
@@ -294,8 +294,9 @@ scale_and_align_entries (void)
   Sym *sym;
   bfd_vma bin_of_entry;
   bfd_vma bin_of_code;
+  Sym_Table *symtab = get_symtab ();
 
-  for (sym = symtab.base; sym < symtab.limit; sym++)
+  for (sym = symtab->base; sym < symtab->limit; sym++)
     {
       histogram *r = find_histogram_for_pc (sym->addr);
 
@@ -366,6 +367,7 @@ hist_assign_samples_1 (histogram *r)
   unsigned int bin_count;
   unsigned int i, j, k;
   double count_time, credit;
+  Sym_Table *symtab = get_symtab ();
 
   bfd_vma lowpc = r->lowpc / sizeof (UNIT);
 
@@ -392,10 +394,10 @@ hist_assign_samples_1 (histogram *r)
 
          PR gprof/13325: Make sure that K does not get decremented
 	 and J will never be less than 0.  */
-      for (j = k - 1; j < symtab.len; k = ++j)
+      for (j = k - 1; j < symtab->len; k = ++j)
 	{
-	  sym_low_pc = symtab.base[j].hist.scaled_addr;
-	  sym_high_pc = symtab.base[j + 1].hist.scaled_addr;
+	  sym_low_pc = symtab->base[j].hist.scaled_addr;
+	  sym_high_pc = symtab->base[j + 1].hist.scaled_addr;
 
 	  /* If high end of bin is below entry address,
 	     go for next bin.  */
@@ -414,12 +416,12 @@ hist_assign_samples_1 (histogram *r)
 	      DBG (SAMPLEDEBUG,
 		   printf (
 	       "[assign_samples] [0x%lx,0x%lx) %s gets %f ticks %ld overlap\n",
-			   (unsigned long) symtab.base[j].addr,
+			   (unsigned long) symtab->base[j].addr,
 			   (unsigned long) (sizeof (UNIT) * sym_high_pc),
-			   symtab.base[j].name, overlap * count_time / hist_scale,
+			   symtab->base[j].name, overlap * count_time / hist_scale,
 			   (long) overlap));
 
-	      addr = symtab.base[j].addr;
+	      addr = symtab->base[j].addr;
 	      credit = overlap * count_time / hist_scale;
 
 	      /* Credit symbol if it appears in INCL_FLAT or that
@@ -429,7 +431,7 @@ hist_assign_samples_1 (histogram *r)
 		  || (syms[INCL_FLAT].len == 0
 		      && !sym_lookup (&syms[EXCL_FLAT], addr)))
 		{
-		  symtab.base[j].hist.time += credit;
+		  symtab->base[j].hist.time += credit;
 		}
 	      else
 		{
@@ -443,7 +445,7 @@ hist_assign_samples_1 (histogram *r)
 			    total_time));
 }
 
-/* Calls 'hist_assign_sampes_1' for all histogram records read so far. */
+/* Calls 'hist_assign_samples_1' for all histogram records read so far. */
 void
 hist_assign_samples (void)
 {
@@ -569,6 +571,7 @@ hist_print (void)
   unsigned log_scale;
   double top_time;
   bfd_vma addr;
+  Sym_Table *symtab = get_symtab ();
 
   if (first_output)
     first_output = false;
@@ -592,12 +595,12 @@ hist_print (void)
 
   /* Sort the symbol table by time (call-count and name as secondary
      and tertiary keys).  */
-  time_sorted_syms = (Sym **) xmalloc (symtab.len * sizeof (Sym *));
+  time_sorted_syms = (Sym **) xmalloc (symtab->len * sizeof (Sym *));
 
-  for (sym_index = 0; sym_index < symtab.len; ++sym_index)
-    time_sorted_syms[sym_index] = &symtab.base[sym_index];
+  for (sym_index = 0; sym_index < symtab->len; ++sym_index)
+    time_sorted_syms[sym_index] = &symtab->base[sym_index];
 
-  qsort (time_sorted_syms, symtab.len, sizeof (Sym *), cmp_time);
+  qsort (time_sorted_syms, symtab->len, sizeof (Sym *), cmp_time);
 
   if (bsd_style_output)
     {
@@ -611,7 +614,7 @@ hist_print (void)
       top_dog = 0;
       top_time = 0.0;
 
-      for (sym_index = 0; sym_index < symtab.len; ++sym_index)
+      for (sym_index = 0; sym_index < symtab->len; ++sym_index)
 	{
 	  sym = time_sorted_syms[sym_index];
 
@@ -648,7 +651,7 @@ hist_print (void)
      I-cache misses etc.).  */
   print_header (SItab[log_scale].prefix);
 
-  for (sym_index = 0; sym_index < symtab.len; ++sym_index)
+  for (sym_index = 0; sym_index < symtab->len; ++sym_index)
     {
       addr = time_sorted_syms[sym_index]->addr;
 
@@ -724,7 +727,7 @@ hist_clip_symbol_address (bfd_vma *p_lowpc, bfd_vma *p_highpc)
     *p_highpc = *p_lowpc;
 }
 
-/* Find and return exising histogram record having the same lowpc and
+/* Find and return existing histogram record having the same lowpc and
    highpc as passed via the parameters.  Return NULL if nothing is found.
    The return value is valid until any new histogram is read.  */
 static histogram *

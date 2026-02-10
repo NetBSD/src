@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -17,7 +17,5 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
-/* Linked with objcopy.o to flag that this program is 'strip' (not
-   'objcopy').  */
-
-int is_strip = 1;
+#define is_strip 1
+#include "objcopy.c"

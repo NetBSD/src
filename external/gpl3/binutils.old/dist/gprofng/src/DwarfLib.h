@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -23,9 +23,11 @@
 
 #include "dwarf2.h"
 
-class ElfReloc;
 class Dwr_type;
+class Function;
+class Range;
 class SourceFile;
+class Symbol;
 
 template <class ITEM> class Vector;
 template <class ITEM> class DbeArray;
@@ -73,13 +75,6 @@ public:
     return (uint32_t) GetULEB128 ();
   }
 
-  bool
-  inRange (uint64_t left, uint64_t right)
-  {
-    return (offset >= left) && (offset < right);
-  };
-
-  ElfReloc *reloc;
   uint64_t sizeSec;
   uint64_t size;
   uint64_t offset;
@@ -90,7 +85,6 @@ public:
   int segment_selector_size; // DWARF 5
 
 private:
-  bool isCopy;
   unsigned char *data;
   bool bounds_violation (uint64_t sz);
 };
@@ -260,6 +254,45 @@ public:
   Dwr_type *put_dwr_type (Dwr_Tag *dwrTag);
 };
 
+class ExtRange
+{
+public:
+  ExtRange (uint64_t _off, uint64_t _low, uint64_t _high)
+  {
+    offset = _off;
+    low = _low;
+    high = _high;
+  };
+
+  uint64_t offset;
+  uint64_t low;
+  uint64_t high;
+};
+
+class Dwr_rng_entry
+{
+public:
+  Dwr_rng_entry ();
+  ~Dwr_rng_entry ();
+  void dump();
+  static char *rng_entry2str(int val);
+
+  Dwarf_Half version;
+  Dwarf_Small address_size;
+  Dwarf_Small segment_selector_size;
+  int offset_entry_count;
+  uint64_t length;
+  uint64_t offset;
+  bool fmt64;
+  Vector <ExtRange *> *ranges;
+};
+
+typedef struct Source
+{
+  int lineno;
+  SourceFile *sf;
+} source_t;
+
 class DwrCU
 {
 public:
@@ -280,6 +313,8 @@ public:
   uint64_t cu_header_offset;
   uint64_t cu_offset;
   uint64_t next_cu_offset;
+  Vector<Symbol*> *symbols;    // all symbols in this CU are sorted by pc
+  Vector<Symbol*> *symbols_sorted_by_name;
   Vector<DwrInlinedSubr*> *dwrInlinedSubrs;
   Vector<SourceFile *> *srcFiles;
   bool isMemop;
@@ -287,7 +322,15 @@ public:
 
 private:
   void build_abbrevTable (DwrSec *debug_abbrevSec, uint64_t stmt_list_offset);
-  Function *append_Function (Dwarf_cnt *ctx);
+  Function *append_Function (Symbol *sym, const char *outerName);
+  void set_up_funcs (int64_t offset);
+  void inherit_prop (int64_t offset, source_t *src);
+  void update_source (Symbol *sym, source_t *prop);
+  Symbol *find_declaration (int64_t offset, source_t *prop);
+  SourceFile *get_source (int fileno);
+  Vector<Symbol *> *get_symbols (Vector<Symbol *> *syms = NULL);
+  Vector <Range *> *get_ranges();
+  void set_source (Function *func);
   void parse_inlined_subroutine (Dwarf_cnt *ctx);
   uint64_t get_low_pc ();
   uint64_t get_high_pc (uint64_t low_pc);
@@ -316,6 +359,10 @@ private:
   DwrLineRegs *dwrLineReg;
   DbeArray<DwrAbbrevTable> *abbrevTable;
   DbeArray<Dwr_Attr> *abbrevAtForm;
+  Vector<Symbol*> *tmp_syms;    // reused vector for get_symbols()
+  Dwr_rng_entry *rng_list;        // entry in the .debug_rnglists section
+  bool rng_list_inited;
+  uint64_t base_address;        // low_pc in compile_unit
 };
 
 #endif /* _DWARFLIB_H_ */

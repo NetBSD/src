@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include <errno.h>
+#include <libgen.h>
 
 #include "util.h"
 #include "StringBuilder.h"
@@ -86,7 +87,6 @@ LoadObject::LoadObject (const char *loname)
   size = 0;
   type = SEG_UNKNOWN;
   isReadStabs = false;
-  need_swap_endian = false;
   instHTable = new DbeInstr*[LO_InstHTableSize];
   for (int i = 0; i < LO_InstHTableSize; i++)
     instHTable[i] = NULL;
@@ -102,7 +102,6 @@ LoadObject::LoadObject (const char *loname)
   noname = dbeSession->createUnknownModule (this);
   modules->put (noname->get_name (), noname);
   pathname = NULL;
-  arch_name = NULL;
   runTimePath = NULL;
   objStabs = NULL;
   firstExp = NULL;
@@ -135,7 +134,6 @@ LoadObject::~LoadObject ()
   delete modules;
   delete elf_lo;
   free (pathname);
-  free (arch_name);
   free (runTimePath);
   delete objStabs;
   delete warnq;
@@ -167,45 +165,66 @@ LoadObject::get_elf ()
 	  {
 	  case Elf::ELF_ERR_CANT_OPEN_FILE:
 	    append_msg (CMSG_ERROR, GTXT ("Cannot open ELF file `%s'"), fnm);
-	    break;
+	    return NULL;
 	  case Elf::ELF_ERR_BAD_ELF_FORMAT:
 	  default:
 	    append_msg (CMSG_ERROR, GTXT ("Cannot read ELF header of `%s'"),
 			fnm);
-	    break;
+	    return NULL;
 	  }
+      if (dbeFile->inArchive)
+	{
+	  // Try to find gnu_debug and gnu debug_alt files in archive
+	  char *nm = dbe_sprintf ("%s_debug", fnm);
+          elf_lo->gnu_debug_file = Elf::elf_begin (nm);
+	  free (nm);
+	  if (elf_lo->gnu_debug_file)
+	    {
+	      nm = dbe_sprintf ("%s_debug_alt", fnm);
+	      elf_lo->gnu_debug_file->gnu_debugalt_file = Elf::elf_begin (nm);
+	      free (nm);
+	    }
+	  nm = dbe_sprintf ("%s_alt", fnm);
+	  elf_lo->gnu_debugalt_file = Elf::elf_begin (nm);
+	  free (nm);
+	}
+      else if (checksum != 0 && elf_lo->elf_checksum () != 0 &&
+	  checksum != elf_lo->elf_checksum ())
+	{
+	  char *msg = dbe_sprintf (GTXT ("%s has an unexpected checksum value;"
+				  "perhaps it was rebuilt. File ignored"),
+				  dbeFile->get_location ());
+	  commentq->append (new Emsg (CMSG_ERROR, msg));
+	  delete msg;
+	  delete elf_lo;
+	  elf_lo = NULL;
+	  return NULL;
+	}
+      elf_lo->find_gnu_debug_files ();
+      elf_lo->find_ancillary_files (get_pathname ());
     }
   return elf_lo;
 }
 
 Stabs *
-LoadObject::openDebugInfo (char *fname, Stabs::Stab_status *stp)
+LoadObject::openDebugInfo (Stabs::Stab_status *stp)
 {
   if (objStabs == NULL)
     {
-      if (fname == NULL)
-	return NULL;
-      objStabs = new Stabs (fname, get_pathname ());
-      Stabs::Stab_status st = objStabs->get_status ();
-      if ((st == Stabs::DBGD_ERR_NONE) && (checksum != 0))
+      Stabs::Stab_status st = Stabs::DBGD_ERR_BAD_ELF_LIB;
+      Elf *elf = get_elf ();
+      if (elf)
 	{
-	  Elf *elf = get_elf ();
-	  if (elf && (checksum != elf->elf_checksum ()))
+	  objStabs = new Stabs (elf, get_pathname ());
+	  st = objStabs->get_status ();
+	  if (st != Stabs::DBGD_ERR_NONE)
 	    {
-	      char *buf = dbe_sprintf (GTXT ("*** Note: '%s' has an unexpected checksum value; perhaps it was rebuilt. File ignored"),
-				       fname);
-	      commentq->append (new Emsg (CMSG_ERROR, buf));
-	      delete buf;
-	      st = Stabs::DBGD_ERR_CHK_SUM;
+	      delete objStabs;
+	      objStabs = NULL;
 	    }
 	}
       if (stp)
 	*stp = st;
-      if (st != Stabs::DBGD_ERR_NONE)
-	{
-	  delete objStabs;
-	  objStabs = NULL;
-	}
     }
   return objStabs;
 }
@@ -298,18 +317,21 @@ LoadObject::dump_functions (FILE *out)
 	if (fitem->alias && fitem->alias != fitem)
 	  fprintf (out, "id %6llu, @0x%llx -        %s == alias of '%s'\n",
 		   (ull_t) fitem->id, (ull_t) fitem->img_offset,
-		   fitem->get_name (), fitem->alias->get_name ());
+		   fitem->get_mangled_name (), fitem->alias->get_mangled_name ());
 	else
 	  {
 	    mname = fitem->module ? fitem->module->file_name : noname->file_name;
 	    sname = fitem->getDefSrcName ();
-	    fprintf (out,
-		     "id %6llu, @0x%llx - 0x%llx [save 0x%llx] o-%lld sz-%lld %s (module = %s)",
-		     (ull_t) fitem->id, (ull_t) fitem->img_offset,
-		     (ull_t) (fitem->img_offset + fitem->size),
-		     (ull_t) fitem->save_addr, (ull_t) fitem->img_offset,
-		     (ll_t) fitem->size, fitem->get_name (), mname);
-	    if (sname && !streq (sname, mname))
+	    fprintf (out, "id %6llu, @0x%llx-0x%llx sz-%lld", (ull_t) fitem->id,
+		    (ull_t) fitem->img_offset,
+		    (ull_t) (fitem->img_offset + fitem->size),
+		    (ll_t) fitem->size);
+	    if (fitem->save_addr != 0)
+	      fprintf (out, " [save 0x%llx]", (ull_t) fitem->save_addr);
+	    if (strcmp (fitem->get_mangled_name (), fitem->get_name ()) != 0)
+	      fprintf (out, " [%s]", fitem->get_mangled_name ());
+	    fprintf (out, " %s (module = %s)", fitem->get_name (), mname);
+	    if (sname && strcmp (basename (sname), basename (mname)) != 0)
 	      fprintf (out, " (Source = %s)", sname);
 	    fprintf (out, "\n");
 	  }
@@ -557,7 +579,7 @@ fixFuncAlias (Vector<Function*> *SymLst)
 void
 LoadObject::post_process_functions ()
 {
-  if (flags & SEG_FLAG_DYNAMIC || platform == Java)
+  if ((flags & SEG_FLAG_DYNAMIC) != 0 || platform == Java)
     return;
 
   char *msg = GTXT ("Processing Load Object Data");
@@ -714,42 +736,17 @@ LoadObject::read_stabs ()
     return ARCHIVE_SUCCESS;
   else
     {
-      Arch_status st = ARCHIVE_WRONG_ARCH;
       Elf *elf = get_elf ();
       if (elf == NULL)
 	{
-	  if (read_archive () == 0)
-	    st = ARCHIVE_SUCCESS;
-	  else
-	    {
-	      char *msg = dbe_sprintf (GTXT ("*** Warning: Can't open file: %s"),
-				       dbeFile->get_name ());
-	      warnq->append (new Emsg (CMSG_ERROR, msg));
-	      delete msg;
-	    }
+	  char *msg = dbe_sprintf (GTXT ("Can't open file: %s"),
+				   dbeFile->get_name ());
+	  warnq->append (new Emsg (CMSG_ERROR, msg));
+	  delete msg;
+	  return ARCHIVE_ERR_OPEN;
 	}
-      else if (checksum != 0 && checksum != elf->elf_checksum ())
-	{
-	  if (read_archive () == 0)
-	    st = ARCHIVE_SUCCESS;
-	  else
-	    {
-	      char *msg = dbe_sprintf (
-				       GTXT ("*** Note: '%s' has an unexpected checksum value; perhaps it was rebuilt. File ignored"),
-				       dbeFile->get_location ());
-	      commentq->append (new Emsg (CMSG_ERROR, msg));
-	      delete msg;
-	    }
-	}
-      if (st == ARCHIVE_SUCCESS)    // An old archive is used
-	return st;
-
       Stabs::Stab_status status = Stabs::DBGD_ERR_CANT_OPEN_FILE;
-      char *location = dbeFile->get_location (true);
-      if (location == NULL)
-	return ARCHIVE_ERR_OPEN;
-
-      if (openDebugInfo (location, &status))
+      if (openDebugInfo (&status))
 	{
 	  status = objStabs->read_archive (this);
 	  isRelocatable = objStabs->is_relocatable ();
@@ -782,273 +779,6 @@ LoadObject::read_stabs ()
 	}
     }
   return stabs_status;
-}
-
-#define ARCH_STRLEN(s)      ((strlen(s) + 4) & ~0x3 )
-
-static int
-offsetCmp (const void *a, const void *b)
-{
-  uint32_t o1 = ((inst_info_t *) a)->offset;
-  uint32_t o2 = ((inst_info_t *) b)->offset;
-  return o1 == o2 ? 0 : (o1 < o2 ? -1 : 1);
-}
-
-int
-LoadObject::read_archive ()
-{
-  if (arch_name == NULL)
-    return 1;
-  Module *mod = NULL;
-  Function *func = NULL;
-  char *buf;
-  Data_window *dwin = new Data_window (arch_name);
-  if (dwin->not_opened ())
-    {
-      delete dwin;
-      buf = dbe_sprintf (GTXT ("*** Warning: Error opening file for reading: %s: %s"),
-			 arch_name, strerror (errno));
-      warnq->append (new Emsg (CMSG_ERROR, buf));
-      delete buf;
-      return 1;
-    }
-  dwin->need_swap_endian = need_swap_endian;
-
-  // Prevent reading earlier archive files, which didn't support versioning.
-  int64_t offset = 0;
-  ARCH_common *cpkt = (ARCH_common*) dwin->bind (offset, sizeof (ARCH_common));
-  uint16_t v16;
-  if (cpkt)
-    {
-      v16 = (uint16_t) cpkt->type;
-      if (dwin->decode (v16) != ARCH_SEGMENT)
-	cpkt = NULL;
-    }
-  if (cpkt == NULL)
-    {
-      buf = dbe_sprintf (GTXT ("archive file malformed %s"), arch_name);
-      warnq->append (new Emsg (CMSG_WARN, buf));
-      delete buf;
-      return 1;
-    }
-
-  char *msg = NULL;
-  unsigned long long pointer_invalid = 0;
-  for (int64_t last_offset = -5000;;)
-    {
-      cpkt = (ARCH_common*) dwin->bind (offset, sizeof (ARCH_common));
-      if (cpkt == NULL)
-	break;
-      v16 = (uint16_t) cpkt->size;
-      uint32_t cpktsize = dwin->decode (v16);
-      cpkt = (ARCH_common*) dwin->bind (offset, cpktsize);
-      if ((cpkt == NULL) || (cpktsize == 0))
-	{
-	  buf = dbe_sprintf (GTXT ("archive file malformed %s"), arch_name);
-	  warnq->append (new Emsg (CMSG_WARN, buf));
-	  delete buf;
-	  break;
-	}
-
-      // Update the progress bar
-      if (dbeSession->is_interactive () && ((offset - last_offset) >= 5000))
-	{
-	  last_offset = offset;
-	  int percent = (int) (100.0 * offset / dwin->get_fsize ());
-	  if (msg == NULL)
-	    msg = dbe_sprintf (GTXT ("Reading Load Object Data: %s"), name);
-	  theApplication->set_progress (percent, (percent != 0) ? NULL : msg);
-	}
-      char *ptr = (char *) cpkt;
-      v16 = (uint16_t) cpkt->type;
-      switch (dwin->decode (v16))
-	{
-	case ARCH_SEGMENT:
-	  {
-	    ARCH_segment *aseg = (ARCH_segment*) cpkt;
-	    if (dwin->decode (aseg->version) != ARCH_VERSION)
-	      {
-		buf = dbe_sprintf (GTXT ("Archive file version mismatch for %s"), arch_name);
-		warnq->append (new Emsg (CMSG_ERROR, buf));
-		delete buf;
-		if (dbeSession->is_interactive ())
-		  theApplication->set_progress (0, "");
-		return 1;
-	      }
-	    if (size == 0)
-	      size = dwin->decode (aseg->textsz);
-	    Platform_t pltf = (Platform_t) dwin->decode (aseg->platform);
-	    if (pltf != Unknown)
-	      {
-		platform = pltf; // override if known
-		wsize = (platform == Sparcv9 || platform == Amd64) ? W64 : W32;
-	      }
-	    break;
-	  }
-	case ARCH_MSG:
-	  {
-	    ARCH_message *amsg = (ARCH_message*) cpkt;
-	    buf = status_str ((Arch_status) dwin->decode (amsg->errcode));
-	    commentq->append (new Emsg (CMSG_ARCHIVE, buf));
-	    free (buf);
-	    break;
-	  }
-	case ARCH_INF:
-	  {
-	    ARCH_info *ainf = (ARCH_info*) cpkt;
-	    Emsg *m = new Emsg (CMSG_ARCHIVE, (char*) (ainf + 1));
-	    commentq->append (m);
-	    break;
-	  }
-	case ARCH_MODULE:
-	  {
-	    ARCH_module *amod = (ARCH_module*) cpkt;
-	    char *str = ((char*) amod) + sizeof (ARCH_module);
-	    if (streq (str, SP_UNKNOWN_NAME) &&
-		streq (str + ARCH_STRLEN (str), SP_UNKNOWN_NAME))
-	      {
-		mod = noname;
-		break;
-	      }
-	    mod = dbeSession->createModule (this, str);
-	    mod->lang_code = (Sp_lang_code) dwin->decode (amod->lang_code);
-	    mod->fragmented = dwin->decode (amod->fragmented);
-	    str += ARCH_STRLEN (str);
-	    mod->set_file_name (dbe_strdup (str));
-	    modules->put (get_basename (str), mod);
-	    break;
-	  }
-	case ARCH_FUNCTION:
-	  {
-	    if (mod == NULL)
-	      break;
-	    ARCH_function *afnc = (ARCH_function*) cpkt;
-	    func = dbeSession->createFunction ();
-	    func->img_offset = dwin->decode (afnc->offset);
-	    func->size = dwin->decode (afnc->size);
-	    func->save_addr = dwin->decode (afnc->save_addr)
-		    - dwin->decode (afnc->offset);
-	    func->module = mod;
-	    func->set_name (((char*) afnc) + sizeof (ARCH_function));
-	    mod->functions->append (func);
-	    functions->append (func);
-	    break;
-	  }
-	case ARCH_LDINSTR:
-	  if (mod == NULL)
-	    break;
-	  Dprintf (DEBUG_LOADOBJ, "LDINSTR list for %s\n", mod->get_name ());
-	  if (mod->infoList == NULL)
-	    mod->infoList = new Vector<inst_info_t*>;
-	  for (memop_info_t *mp = (memop_info_t*) (ptr + sizeof (ARCH_aninfo));
-		  (char*) mp < ptr + cpktsize; mp++)
-	    {
-	      memop_info_t *memop = new memop_info_t;
-	      memop->offset = dwin->decode (mp->offset);
-	      memop->id = dwin->decode (mp->id);
-	      memop->signature = dwin->decode (mp->signature);
-	      memop->datatype_id = dwin->decode (mp->datatype_id);
-	      mod->ldMemops.append (memop);
-
-	      inst_info_t *instop = new inst_info_t;
-	      instop->type = CPF_INSTR_TYPE_LD;
-	      instop->offset = memop->offset;
-	      instop->memop = memop;
-	      mod->infoList->incorporate (instop, offsetCmp);
-	      Dprintf (DEBUG_LOADOBJ,
-		       "ld: offset=0x%04x id=0x%08x sig=0x%08x dtid=0x%08x\n",
-		       memop->offset, memop->id, memop->signature,
-		       memop->datatype_id);
-	    }
-	  Dprintf (DEBUG_LOADOBJ, "LDINSTR list of %lld for %s\n",
-		   (long long) mod->ldMemops.size (), mod->get_name ());
-	  break;
-	case ARCH_STINSTR:
-	  if (mod == NULL)
-	    break;
-	  Dprintf (DEBUG_LOADOBJ, NTXT ("STINSTR list for %s\n"), mod->get_name ());
-	  if (mod->infoList == NULL)
-	    mod->infoList = new Vector<inst_info_t*>;
-	  for (memop_info_t *mp = (memop_info_t*) (ptr + sizeof (ARCH_aninfo));
-		  ((char *) mp) < ptr + cpktsize; mp++)
-	    {
-	      memop_info_t *memop = new memop_info_t;
-	      memop->offset = dwin->decode (mp->offset);
-	      memop->id = dwin->decode (mp->id);
-	      memop->signature = dwin->decode (mp->signature);
-	      memop->datatype_id = dwin->decode (mp->datatype_id);
-	      mod->stMemops.append (memop);
-
-	      inst_info_t *instop = new inst_info_t;
-	      instop->type = CPF_INSTR_TYPE_ST;
-	      instop->offset = memop->offset;
-	      instop->memop = memop;
-	      mod->infoList->incorporate (instop, offsetCmp);
-	      Dprintf (DEBUG_LOADOBJ,
-		       "st: offset=0x%04x id=0x%08x sig=0x%08x dtid=0x%08x\n",
-		       memop->offset, memop->id, memop->signature,
-		       memop->datatype_id);
-	    }
-	  Dprintf (DEBUG_LOADOBJ, "STINSTR list of %lld for %s\n",
-		   (long long) mod->stMemops.size (), mod->get_name ());
-	  break;
-	case ARCH_PREFETCH:
-	  if (mod == NULL)
-	    break;
-	  Dprintf (DEBUG_LOADOBJ, "PFINSTR list for %s\n", mod->get_name ());
-	  if (mod->infoList == NULL)
-	    mod->infoList = new Vector<inst_info_t*>;
-	  for (memop_info_t *mp = (memop_info_t*) (ptr + sizeof (ARCH_aninfo));
-		  ((char*) mp) < ptr + cpkt->size; mp++)
-	    {
-	      memop_info_t *memop = new memop_info_t;
-	      memop->offset = dwin->decode (mp->offset);
-	      memop->id = dwin->decode (mp->id);
-	      memop->signature = dwin->decode (mp->signature);
-	      memop->datatype_id = dwin->decode (mp->datatype_id);
-	      mod->pfMemops.append (memop);
-
-	      inst_info_t *instop = new inst_info_t;
-	      instop->type = CPF_INSTR_TYPE_PREFETCH;
-	      instop->offset = memop->offset;
-	      instop->memop = memop;
-	      mod->infoList->incorporate (instop, offsetCmp);
-	      Dprintf (DEBUG_LOADOBJ,
-		       "pf: offset=0x%04x id=0x%08x sig=0x%08x dtid=0x%08x\n",
-		       memop->offset, memop->id, memop->signature,
-		       memop->datatype_id);
-	    }
-	  Dprintf (DEBUG_LOADOBJ, "PFINSTR list of %lld for %s\n",
-		   (long long) mod->pfMemops.size (), mod->get_name ());
-	  break;
-	case ARCH_BRTARGET:
-	  if (mod == NULL)
-	    break;
-	  for (target_info_t *tp = (target_info_t*) (ptr + sizeof (ARCH_aninfo));
-		  ((char*) tp) < ptr + cpkt->size; tp++)
-	    {
-	      target_info_t *bTarget = new target_info_t;
-	      bTarget->offset = dwin->decode (tp->offset);
-	      mod->bTargets.append (bTarget);
-	    }
-	  Dprintf (DEBUG_LOADOBJ, "BRTARGET list of %lld for %s\n",
-		   (long long) mod->infoList->size (), mod->get_name ());
-	  break;
-	default:
-	  /* Check if the prointer is valid - should be even. */
-	  pointer_invalid = (unsigned long long) (offset + cpktsize) & 1;
-	  break; // ignore unknown packets
-	}
-      if (pointer_invalid)
-	break;
-      offset += cpktsize;
-    }
-  delete msg;
-  delete dwin;
-
-  if (dbeSession->is_interactive ())
-    theApplication->set_progress (0, NTXT (""));
-  return 0;
 }
 
 char *

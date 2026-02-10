@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -21,6 +21,7 @@
 
 #include "sysdep.h"
 #include "bfd.h"
+#include "elf-bfd.h"
 #include "libbfd.h"
 #include "objalloc.h"
 
@@ -1038,6 +1039,207 @@ bfd_get_bits (const void *p, int bits, bool big_p)
   return data;
 }
 
+#ifdef USE_MMAP
+/* Allocate a page to track mmapped memory and return the page and
+   the first entry.  Return NULL if mmap fails.  */
+
+static struct bfd_mmapped *
+bfd_allocate_mmapped_page (bfd *abfd, struct bfd_mmapped_entry **entry)
+{
+  struct bfd_mmapped * mmapped
+    = (struct bfd_mmapped *) mmap (NULL, _bfd_pagesize,
+				   PROT_READ | PROT_WRITE,
+				   MAP_PRIVATE | MAP_ANONYMOUS,
+				   -1, 0);
+  if (mmapped == MAP_FAILED)
+    return NULL;
+
+  mmapped->next = abfd->mmapped;
+  mmapped->max_entry
+    = ((_bfd_pagesize - offsetof (struct bfd_mmapped, entries))
+       / sizeof (struct bfd_mmapped_entry));
+  mmapped->next_entry = 1;
+  abfd->mmapped = mmapped;
+  *entry = mmapped->entries;
+  return mmapped;
+}
+
+/* Mmap a memory region of RSIZE bytes at the current file offset.
+   Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
+   on invalid input and MAP_FAILED for mmap failure.  */
+
+static void *
+bfd_mmap_local (bfd *abfd, size_t rsize, void **map_addr, size_t *map_size)
+{
+  /* We mmap on the underlying file.  In an archive it might be nice
+     to limit RSIZE to the element size, but that can be fuzzed and
+     the offset returned by bfd_tell is relative to the start of the
+     element.  Therefore to reliably stop access beyond the end of a
+     file (and resulting bus errors) we must work with the underlying
+     file offset and size, and trust that callers will limit access to
+     within an archive element.  */
+  while (abfd->my_archive != NULL
+	 && !bfd_is_thin_archive (abfd->my_archive))
+    abfd = abfd->my_archive;
+
+  ufile_ptr filesize = bfd_get_size (abfd);
+  ufile_ptr offset = bfd_tell (abfd);
+  if (filesize < offset || filesize - offset < rsize)
+    {
+      bfd_set_error (bfd_error_file_truncated);
+      return NULL;
+    }
+
+  void *mem;
+  mem = bfd_mmap (abfd, NULL, rsize, PROT_READ | PROT_WRITE, MAP_PRIVATE,
+		  offset, map_addr, map_size);
+  return mem;
+}
+
+/* Mmap a memory region of RSIZE bytes at the current offset.
+   Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
+   on invalid input and MAP_FAILED for mmap failure.  */
+
+void *
+_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
+		     size_t *map_size)
+{
+  /* Use mmap only if section size >= the minimum mmap section size.  */
+  if (rsize < _bfd_minimum_mmap_size)
+    {
+      void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
+      /* NB: Set *MAP_ADDR to MEM and *MAP_SIZE to 0 to indicate that
+	 _bfd_malloc_and_read is called.  */
+      *map_addr = mem;
+      *map_size = 0;
+      return mem;
+    }
+
+  return bfd_mmap_local (abfd, rsize, map_addr, map_size);
+}
+
+/* Munmap RSIZE bytes at PTR.  */
+
+void
+_bfd_munmap_temporary (void *ptr, size_t rsize)
+{
+  /* NB: Since _bfd_munmap_temporary is called like free, PTR may be
+     NULL.  Otherwise, PTR and RSIZE must be valid.  If RSIZE is 0,
+     free is called.  */
+  if (ptr == NULL)
+    return;
+  if (rsize != 0)
+    {
+      if (munmap (ptr, rsize) != 0)
+	abort ();
+    }
+  else
+    free (ptr);
+}
+
+/* Mmap a memory region of RSIZE bytes at the current offset.
+   Return NULL on invalid input or mmap failure.  */
+
+void *
+_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+{
+  /* Use mmap only if section size >= the minimum mmap section size.  */
+  if (rsize < _bfd_minimum_mmap_size)
+    return _bfd_alloc_and_read (abfd, rsize, rsize);
+
+  void *mem, *map_addr;
+  size_t map_size;
+  mem = bfd_mmap_local (abfd, rsize, &map_addr, &map_size);
+  if (mem == NULL)
+    return mem;
+  if (mem == MAP_FAILED)
+    return _bfd_alloc_and_read (abfd, rsize, rsize);
+
+  struct bfd_mmapped_entry *entry;
+  unsigned int next_entry;
+  struct bfd_mmapped *mmapped = abfd->mmapped;
+  if (mmapped != NULL
+      && (next_entry = mmapped->next_entry) < mmapped->max_entry)
+    {
+      entry = &mmapped->entries[next_entry];
+      mmapped->next_entry++;
+    }
+  else
+    {
+      mmapped = bfd_allocate_mmapped_page (abfd, &entry);
+      if (mmapped == NULL)
+	{
+	  munmap (map_addr, map_size);
+	  return NULL;
+	}
+    }
+
+  entry->addr = map_addr;
+  entry->size = map_size;
+
+  return mem;
+}
+#endif
+
+/* Attempt to read *SIZE_P bytes from ABFD's iostream to *DATA_P.
+   Return true if the full the amount has been read.  If *DATA_P is
+   NULL, mmap should be used, return the memory address at the
+   current offset in *DATA_P as well as return mmap address and size
+   in *MMAP_BASE and *SIZE_P.  Otherwise, return NULL in *MMAP_BASE
+   and 0 in *SIZE_P.  If FINAL_LINK is true, this is called from
+   elf_link_read_relocs_from_section.  */
+
+bool
+_bfd_mmap_read_temporary (void **data_p, size_t *size_p,
+			  void **mmap_base, bfd *abfd,
+			  bool final_link ATTRIBUTE_UNUSED)
+{
+  void *data = *data_p;
+  size_t size = *size_p;
+
+#ifdef USE_MMAP
+  /* NB: When FINAL_LINK is true, the size of the preallocated buffer
+     is _bfd_minimum_mmap_size and use mmap if the data size >=
+     _bfd_minimum_mmap_size.  Otherwise, use mmap if ABFD isn't an IR
+     input or the data size >= _bfd_minimum_mmap_size.  */
+  bool use_mmmap;
+  bool mmap_size = size >= _bfd_minimum_mmap_size;
+  if (final_link)
+    use_mmmap = mmap_size;
+  else
+    use_mmmap = (mmap_size
+		 && data == NULL
+		 && (abfd->flags & BFD_PLUGIN) == 0);
+  if (use_mmmap)
+    {
+      void *mmaped = _bfd_mmap_temporary (abfd, size, mmap_base, size_p);
+      /* MAP_FAILED is returned when called from GDB on an object with
+	 opncls_iovec.  Use bfd_read in this case.  */
+      if (mmaped != MAP_FAILED)
+	{
+	  if (mmaped == NULL)
+	    abort ();
+	  *data_p = mmaped;
+	  return true;
+	}
+    }
+#endif
+
+  if (data == NULL)
+    {
+      data = bfd_malloc (size);
+      if (data == NULL)
+	return false;
+      *data_p = data;
+      /* NB: _bfd_munmap_temporary will free *MMAP_BASE if *SIZE_P == 0.  */
+      *mmap_base = data;
+    }
+  else
+    *mmap_base = NULL;
+  *size_p = 0;
+  return bfd_read (data, size, abfd) == size;
+}
+
 /* Default implementation */
 
 bool
@@ -1061,6 +1263,19 @@ _bfd_generic_get_section_contents (bfd *abfd,
       return false;
     }
 
+#ifdef USE_MMAP
+  if (section->mmapped_p
+      && (section->contents != NULL || location != NULL))
+    {
+      _bfd_error_handler
+	/* xgettext:c-format */
+	(_("%pB: mapped section %pA has non-NULL buffer"),
+	 abfd, section);
+      bfd_set_error (bfd_error_invalid_operation);
+      return false;
+    }
+#endif
+
   sz = bfd_get_section_limit_octets (abfd, section);
   if (offset + count < count
       || offset + count > sz
@@ -1073,68 +1288,49 @@ _bfd_generic_get_section_contents (bfd *abfd,
       return false;
     }
 
-  if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
-      || bfd_read (location, count, abfd) != count)
+  if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0)
     return false;
 
-  return true;
-}
-
-bool
-_bfd_generic_get_section_contents_in_window
-  (bfd *abfd ATTRIBUTE_UNUSED,
-   sec_ptr section ATTRIBUTE_UNUSED,
-   bfd_window *w ATTRIBUTE_UNUSED,
-   file_ptr offset ATTRIBUTE_UNUSED,
-   bfd_size_type count ATTRIBUTE_UNUSED)
-{
 #ifdef USE_MMAP
-  bfd_size_type sz;
-
-  if (count == 0)
-    return true;
-  if (abfd->xvec->_bfd_get_section_contents
-      != _bfd_generic_get_section_contents)
+  if (section->mmapped_p)
     {
-      /* We don't know what changes the bfd's get_section_contents
-	 method may have to make.  So punt trying to map the file
-	 window, and let get_section_contents do its thing.  */
-      /* @@ FIXME : If the internal window has a refcount of 1 and was
-	 allocated with malloc instead of mmap, just reuse it.  */
-      bfd_free_window (w);
-      w->i = bfd_zmalloc (sizeof (bfd_window_internal));
-      if (w->i == NULL)
+      if (location != 0
+	  || bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+	abort ();
+
+      location = bfd_mmap_local (abfd, count,
+				 &elf_section_data (section)->contents_addr,
+				 &elf_section_data (section)->contents_size);
+
+      if (location == NULL)
 	return false;
-      w->i->data = bfd_malloc (count);
-      if (w->i->data == NULL)
+
+      /* Check for iovec not supporting mmap.  */
+      if (location != MAP_FAILED)
 	{
-	  free (w->i);
-	  w->i = NULL;
+	  section->contents = location;
+	  return true;
+	}
+
+      /* Malloc the buffer and call bfd_read.  */
+      location = (bfd_byte *) bfd_malloc (count);
+      if (location == NULL)
+	{
+	  if (bfd_get_error () == bfd_error_no_memory)
+	    _bfd_error_handler
+	      /* xgettext:c-format */
+	      (_("error: %pB(%pA) is too large (%#" PRIx64 " bytes)"),
+	       abfd, section, (uint64_t) count);
 	  return false;
 	}
-      w->i->mapped = 0;
-      w->i->refcount = 1;
-      w->size = w->i->size = count;
-      w->data = w->i->data;
-      return bfd_get_section_contents (abfd, section, w->data, offset, count);
+      section->contents = location;
     }
-  if (abfd->direction != write_direction && section->rawsize != 0)
-    sz = section->rawsize;
-  else
-    sz = section->size;
-  if (offset + count < count
-      || offset + count > sz
-      || (abfd->my_archive != NULL
-	  && !bfd_is_thin_archive (abfd->my_archive)
-	  && ((ufile_ptr) section->filepos + offset + count
-	      > arelt_size (abfd)))
-      || ! bfd_get_file_window (abfd, section->filepos + offset, count, w,
-				true))
-    return false;
-  return true;
-#else
-  abort ();
 #endif
+
+  if (bfd_read (location, count, abfd) != count)
+    return false;
+
+  return true;
 }
 
 /* This generic function can only be used in implementations where creating
@@ -1318,11 +1514,29 @@ _bfd_write_unsigned_leb128 (bfd_byte *p, bfd_byte *end, bfd_vma val)
 }
 
 bool
-_bfd_generic_init_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
-					asection *isec ATTRIBUTE_UNUSED,
-					bfd *obfd ATTRIBUTE_UNUSED,
-					asection *osec ATTRIBUTE_UNUSED,
-					struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
+_bfd_generic_bfd_copy_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
+					    asection *isec ATTRIBUTE_UNUSED,
+					    bfd *obfd ATTRIBUTE_UNUSED,
+					    asection *osec ATTRIBUTE_UNUSED,
+					    struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
 {
   return true;
 }
+
+#ifdef HAVE_MMAP
+uintptr_t _bfd_pagesize;
+uintptr_t _bfd_pagesize_m1;
+uintptr_t _bfd_minimum_mmap_size;
+
+__attribute__ ((unused, constructor))
+static void
+bfd_init_pagesize (void)
+{
+  _bfd_pagesize = getpagesize ();
+  if (_bfd_pagesize == 0)
+    abort ();
+  _bfd_pagesize_m1 = _bfd_pagesize - 1;
+  /* The minimum section size to use mmap.  */
+  _bfd_minimum_mmap_size = _bfd_pagesize * 4;
+}
+#endif

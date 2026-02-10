@@ -1,5 +1,5 @@
 /* read.h - of read.c
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,27 +29,20 @@ extern bool input_from_string;
 
 #ifdef PERMIT_WHITESPACE
 #define SKIP_WHITESPACE()			\
-  ((*input_line_pointer == ' ') ? ++input_line_pointer : 0)
+  (is_whitespace (*input_line_pointer) ? ++input_line_pointer : 0)
 #define SKIP_ALL_WHITESPACE()			\
-  while (*input_line_pointer == ' ') ++input_line_pointer
+  while (is_whitespace (*input_line_pointer)) ++input_line_pointer
 #else
-#define SKIP_WHITESPACE() know (*input_line_pointer != ' ' )
+#define SKIP_WHITESPACE() know (!is_whitespace (*input_line_pointer))
 #define SKIP_ALL_WHITESPACE() SKIP_WHITESPACE()
 #endif
 
-#define SKIP_WHITESPACE_AFTER_NAME()		\
-  do						\
-    {						\
-      if (* input_line_pointer == '"')		\
-	++ input_line_pointer;			\
-      if (* input_line_pointer == ' ')		\
-	++ input_line_pointer;			\
-    }						\
-  while (0)
-
-#define	LEX_NAME	(1)	/* may continue a name */
+#define LEX_NAME	(1)	/* may continue a name */
 #define LEX_BEGIN_NAME	(2)	/* may begin a name */
 #define LEX_END_NAME	(4)	/* ends a name */
+#define LEX_WHITE	(8)	/* whitespace */
+#define LEX_EOS	(0x10)  /* end of statement */
+#define LEX_EOL	(0x20)  /* end of line */
 
 #define is_name_beginner(c) \
   ( lex_type[(unsigned char) (c)] & LEX_BEGIN_NAME )
@@ -57,6 +50,19 @@ extern bool input_from_string;
   ( lex_type[(unsigned char) (c)] & LEX_NAME       )
 #define is_name_ender(c) \
   ( lex_type[(unsigned char) (c)] & LEX_END_NAME   )
+#define is_whitespace(c) \
+  ( lex_type[(unsigned char) (c)] & LEX_WHITE      )
+
+/* Don't allow safe-ctype.h's counterparts to be used.  */
+#undef ISSPACE
+#undef ISBLANK
+
+/* The distinction of "line" and "statement" sadly is blurred by unhelpful
+   naming in a few places.  Most users really mean "end of statement".  */
+#define is_end_of_stmt(c) \
+  ( lex_type[(unsigned char) (c)] & (LEX_EOS | LEX_EOL) )
+#define is_end_of_line(c) \
+  ( lex_type[(unsigned char) (c)] & LEX_EOL )
 
 #ifndef is_a_char
 #define CHAR_MASK	(0xff)
@@ -65,7 +71,6 @@ extern bool input_from_string;
 #endif /* is_a_char() */
 
 extern char lex_type[];
-extern char is_end_of_line[];
 
 extern int is_it_end_of_statement (void);
 extern char *find_end_of_line (char *, int);
@@ -154,71 +159,72 @@ extern void stabs_begin (void);
 extern void stabs_end (void);
 extern void do_repeat (size_t, const char *, const char *, const char *);
 extern void end_repeat (int);
-extern void do_parse_cons_expression (expressionS *, int);
-
+extern TC_PARSE_CONS_RETURN_TYPE do_parse_cons_expression (expressionS *, int);
 extern void generate_lineno_debug (void);
-
-extern void s_abort (int) ATTRIBUTE_NORETURN;
-extern void s_align_bytes (int arg);
-extern void s_align_ptwo (int);
 extern void do_align (unsigned int align, char *fill, unsigned int length,
 		      unsigned int max);
 extern void bss_alloc (symbolS *, addressT, unsigned);
 extern offsetT parse_align (int);
 extern symbolS *s_comm_internal (int, symbolS *(*) (int, symbolS *, addressT));
 extern symbolS *s_lcomm_internal (int, symbolS *, addressT);
+extern void temp_ilp (char *);
+extern void restore_ilp (void);
+extern void evaluate_deferred_diags (void);
 extern void s_file_string (char *);
-extern void s_file (int);
-extern void s_linefile (int);
+
+extern void s_abort (int) ATTRIBUTE_NORETURN;
+extern void s_align_bytes (int);
+extern void s_align_ptwo (int);
+extern void s_base64 (int);
 extern void s_bundle_align_mode (int);
 extern void s_bundle_lock (int);
 extern void s_bundle_unlock (int);
 extern void s_comm (int);
 extern void s_data (int);
 extern void s_desc (int);
-extern void s_else (int arg);
-extern void s_elseif (int arg);
-extern void s_end (int arg);
-extern void s_endif (int arg);
+extern void s_else (int);
+extern void s_elseif (int);
+extern void s_end (int);
+extern void s_endif (int);
 extern void s_err (int);
 extern void s_errwarn (int);
 extern void s_fail (int);
+extern void s_file (int);
 extern void s_fill (int);
-extern void s_float_space (int mult);
+extern void s_float_space (int);
 extern void s_func (int);
-extern void s_globl (int arg);
-extern void s_if (int arg);
-extern void s_ifb (int arg);
-extern void s_ifc (int arg);
-extern void s_ifdef (int arg);
-extern void s_ifeqs (int arg);
-extern void s_ignore (int arg);
-extern void s_include (int arg);
-extern void s_irp (int arg);
-extern void s_lcomm (int needs_align);
-extern void s_lcomm_bytes (int needs_align);
-extern void s_leb128 (int sign);
+extern void s_globl (int);
+extern void s_if (int);
+extern void s_ifb (int);
+extern void s_ifc (int);
+extern void s_ifdef (int);
+extern void s_ifeqs (int);
+extern void s_ignore (int);
+extern void s_incbin (int);
+extern void s_include (int);
+extern void s_irp (int);
+extern void s_lcomm (int);
+extern void s_lcomm_bytes (int);
+extern void s_leb128 (int);
+extern void s_linefile (int);
 extern void s_linkonce (int);
 extern void s_lsym (int);
 extern void s_macro (int);
 extern void s_mexit (int);
 extern void s_mri (int);
 extern void s_mri_common (int);
+extern void s_nop (int);
+extern void s_nops (int);
 extern void s_org (int);
 extern void s_print (int);
 extern void s_purgem (int);
 extern void s_rept (int);
+extern void s_rva (int);
 extern void s_set (int);
-extern void s_space (int mult);
-extern void s_nop (int);
-extern void s_nops (int);
-extern void s_stab (int what);
+extern void s_space (int);
+extern void s_stab (int);
 extern void s_struct (int);
 extern void s_text (int);
-extern void stringer (int append_zero);
-extern void s_xstab (int what);
-extern void s_rva (int);
-extern void s_incbin (int);
 extern void s_weakref (int);
-extern void temp_ilp (char *);
-extern void restore_ilp (void);
+extern void s_xstab (int);
+extern void stringer (int);

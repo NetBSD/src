@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -49,6 +49,7 @@ private:
 int
 main (int argc, char *argv[])
 {
+  xmalloc_set_program_name (argv[0]);
   Gprofng *gprofng = new Gprofng (argc, argv);
   gprofng->start();
   delete gprofng;
@@ -93,7 +94,7 @@ Gprofng::usage ()
     "\n"
     "The man pages for the commands below can be viewed using the command name with\n"
     "\"gprofng\" replaced by \"gp\" and the spaces replaced by a dash (\"-\"). For\n"
-    "example the man page name for \"gprofng collect app\" is \"gp-collect-app\".\n"
+    "example the man page name for \"gprofng collect app\" is \"gprofng-collect-app\".\n"
     "\n"
     "The following combination of commands and keywords are supported:\n"
     "\n"
@@ -153,7 +154,9 @@ Gprofng::usage ()
     "\n"
     "See also:\n"
     "\n"
-    "gp-archive(1), gp-collect-app(1), gp-display-html(1), gp-display-src(1), gp-display-text(1)\n"));
+    "gprofng-archive(1), gprofng-collect-app(1), gprofng-display-html(1), "
+    "gprofng-display-src(1), gprofng-display-text(1)\n"
+    "\nReport bugs to <https://sourceware.org/bugzilla/>\n"));
 
 /*
   printf ( GTXT (
@@ -180,13 +183,13 @@ Gprofng::exec_cmd (char *tool_name, int argc, char **argv)
     const char *keyword;
     const char *app_name;
   } app_names [] = {
-    { "archive", NULL, "gp-archive"},
-    { "collect", "app", "gp-collect-app"},
-    { "collect", "kernel", "gp-collect-kernel"},
-    { "display", "text", "gp-display-text"},
-    { "display", "gui", "gp-display-gui"},
-    { "display", "html", "gp-display-html"},
-    { "display", "src", "gp-display-src"},
+    { "archive", NULL, "gprofng-archive"},
+    { "collect", "app", "gprofng-collect-app"},
+    { "collect", "kernel", "gprofng-collect-kernel"},
+    { "display", "text", "gprofng-display-text"},
+    { "display", "gui", "gprofng-display-gui"},
+    { "display", "html", "gprofng-display-html"},
+    { "display", "src", "gprofng-display-src"},
     { NULL, NULL}
   };
 
@@ -228,7 +231,7 @@ Gprofng::exec_cmd (char *tool_name, int argc, char **argv)
 
   const char *aname = app_names[first].app_name;
 
-  char **arr = (char **) malloc ((argc + 5) * sizeof (char *));
+  char **arr = (char **) xmalloc ((argc + 5) * sizeof (char *));
   char *pname = get_name ();
   char *exe_name = dbe_sprintf ("%.*s%s",
 			(int) (get_basename (pname) - pname), pname, aname);
@@ -238,7 +241,7 @@ Gprofng::exec_cmd (char *tool_name, int argc, char **argv)
 			    app_names[first].keyword);
   else
     arr[n++] = dbe_sprintf ("--whoami=%s %s", whoami, tool_name);
-  if (strcmp (aname, "gp-display-gui") == 0)
+  if (strcmp (aname, "gprofng-display-gui") == 0)
     {
       if (access (exe_name, X_OK | F_OK) != 0)
         { // gprofng GUI can be installed to the other directory.
@@ -246,6 +249,18 @@ Gprofng::exec_cmd (char *tool_name, int argc, char **argv)
 	    printf ("gprofng: Cannot find '%s'\n", exe_name);
 	  free (exe_name);
 	  exe_name = get_realpath (aname);  // Use $PATH to find gprofng GUI
+	  if (*exe_name != '/')
+	    { // New gprofng-gui is not installed. Try to find the old one.
+	      char *nm = get_realpath ("gp-display-gui");
+	      if (*nm == '/')
+		{
+		  if (verbose)
+		    printf ("gprofng: New gprofng GUI is not installed.\n"
+			    "Use the old one '%s'\n", nm);
+		  free (exe_name);
+		  exe_name = nm;
+		}
+	    }
 	}
       arr[n++] = dbe_sprintf ("--gprofngdir=%.*s",
 			      (int) (get_basename (pname) - pname), pname);
