@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.223 2026/02/10 06:03:30 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.224 2026/02/10 19:58:13 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.223 2026/02/10 06:03:30 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.224 2026/02/10 19:58:13 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -296,9 +296,8 @@ _rtld_call_preinit_functions(sigset_t *mask)
 	 * Process the init_array if it exists.  Simply go from  start
 	 * to end.
 	 */
-	while (obj->preinit_arraysz > 0) {
-		fptr_t preinit = *obj->preinit_array++;
-		obj->preinit_arraysz--;
+	for (size_t i = 0; i < obj->preinit_arraysz; i++) {
+		fptr_t preinit = obj->preinit_array[i];
 		dbg (("calling preinit_array function %s at %p",
 		    obj->path, (void *)preinit));
 		_rtld_call_initfini_function(preinit, mask);
