@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.754 2026/02/01 15:30:46 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.755 2026/02/10 18:53:34 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.754 2026/02/01 15:30:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.755 2026/02/10 18:53:34 sjg Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1980,46 +1980,6 @@ Parse_Var(VarAssign *var, GNode *scope)
 }
 
 
-/*
- * See if the command possibly calls a sub-make by using the
- * expressions ${.MAKE}, ${MAKE} or the plain word "make".
- */
-static bool
-MaybeSubMake(const char *cmd)
-{
-	const char *start;
-
-	for (start = cmd; *start != '\0'; start++) {
-		const char *p = start;
-		char endc;
-
-		/* XXX: What if progname != "make"? */
-		if (strncmp(p, "make", 4) == 0)
-			if (start == cmd || !ch_isalnum(p[-1]))
-				if (!ch_isalnum(p[4]))
-					return true;
-
-		if (*p != '$')
-			continue;
-		p++;
-
-		if (*p == '{')
-			endc = '}';
-		else if (*p == '(')
-			endc = ')';
-		else
-			continue;
-		p++;
-
-		if (*p == '.')	/* Accept either ${.MAKE} or ${MAKE}. */
-			p++;
-
-		if (strncmp(p, "MAKE", 4) == 0 && p[4] == endc)
-			return true;
-	}
-	return false;
-}
-
 /* Append the command to the target node. */
 static void
 GNode_AddCommand(GNode *gn, char *cmd)
@@ -2030,8 +1990,6 @@ GNode_AddCommand(GNode *gn, char *cmd)
 	/* if target already supplied, ignore commands */
 	if (!(gn->type & OP_HAS_COMMANDS)) {
 		Lst_Append(&gn->commands, cmd);
-		if (MaybeSubMake(cmd))
-			gn->type |= OP_SUBMAKE;
 		RememberLocation(gn);
 	} else {
 		Parse_Error(PARSE_WARNING,

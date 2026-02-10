@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.376 2026/02/05 23:26:08 sjg Exp $
+# $NetBSD: Makefile,v 1.377 2026/02/10 18:53:34 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -541,6 +541,9 @@ SED_CMDS.job-output-long-lines= \
 	-e '/^aa*--- job-b ---$$/d' \
 	-e '/^bb*--- job-a ---$$/d'
 
+SED_CMDS.gnode-submake=		${STD_SED_CMDS.dj}
+SED_CMDS.gnode-submake=		${STD_SED_CMDS.dg2}
+
 # meta line numbers can vary based on filemon implementation
 SED_CMDS.meta-ignore= -e 's,\(\.meta:\)[1-9][0-9]*:,\1<line>:,'
 
@@ -588,7 +591,10 @@ SED_CMDS.varname-empty=		${.OBJDIR .PARSEDIR .PATH .SHELL .SYSPATH:L:@v@-e '/\\$
 # Some tests need an additional round of postprocessing.
 POSTPROC.depsrc-wait=		sed -e '/^---/d' -e 's,^\(: Making 3[abc]\)[123]$$,\1,'
 POSTPROC.deptgt-suffixes=	awk '/^\#\*\*\* Suffixes/,/^never-stop/'
-POSTPROC.gnode-submake=		awk '/Begin input graph/, /^$$/'
+POSTPROC.gnode-submake=		\
+	awk '/Begin input graph/, /^\# \.END/ { \
+		if (/made,/) print $$0 \
+	}'
 POSTPROC.varname-dot-make-mode=	sed 's,^\(: Making [abc]\)[123]$$,\1,'
 
 # Some tests reuse other tests, which makes them unnecessarily fragile.

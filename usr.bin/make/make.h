@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.363 2026/02/01 15:30:46 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.364 2026/02/10 18:53:34 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -396,6 +396,8 @@ typedef struct GNodeFlags {
 	bool fromDepend:1;
 	/* We do it once only */
 	bool doneAllsrc:1;
+	/* Have we checked for submake? */
+	bool doneSubmake:1;
 	/* Used by MakePrintStatus */
 	bool cycle:1;
 	/* Used by MakePrintStatus */

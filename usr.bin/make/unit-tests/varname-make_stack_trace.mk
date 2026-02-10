@@ -1,4 +1,4 @@
-# $NetBSD: varname-make_stack_trace.mk,v 1.4 2026/02/01 16:42:35 rillig Exp $
+# $NetBSD: varname-make_stack_trace.mk,v 1.5 2026/02/10 18:53:34 sjg Exp $
 #
 # Tests for the MAKE_STACK_TRACE environment variable, which controls whether
 # to print inter-process stack traces that are useful to narrow down where an
@@ -17,6 +17,7 @@ all: .PHONY
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} enabled-compat || :
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} -j1 enabled-parallel || :
 	@MAKE_STACK_TRACE=yes ${MAKE} -f ${MAKEFILE} -j1 multi-stage-1
+	@rm -f .make
 
 # expect-not-matches: in target "disabled%-compat"
 disabled-compat: .PHONY
@@ -26,11 +27,11 @@ disabled-compat: .PHONY
 disabled-parallel: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
-# expect: in target "enabled-compat" from varname-make_stack_trace.mk:31
+# expect: in target "enabled-compat" from varname-make_stack_trace.mk:32
 enabled-compat: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
-# expect: in target "enabled-parallel" from varname-make_stack_trace.mk:35
+# expect: in target "enabled-parallel" from varname-make_stack_trace.mk:36
 enabled-parallel: .PHONY
 	@${MAKE} -f ${MAKEFILE} provoke-error
 
@@ -38,16 +39,19 @@ provoke-error: .PHONY
 	@echo ${:Z}
 
 # The stack trace must be printed exactly once.
-# expect: in target "multi-stage-4" from varname-make_stack_trace.mk:52
-# expect: in target "multi-stage-1" from varname-make_stack_trace.mk:46
+# expect: in target "multi-stage-4" from varname-make_stack_trace.mk:53
+# expect: in target "multi-stage-1" from varname-make_stack_trace.mk:47
 # expect-not-matches: in target "multi%-stage%-4"
 # expect-not-matches: in target "multi%-stage%-1"
-multi-stage-1: .PHONY
+multi-stage-1: .PHONY .make
 	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-2
 multi-stage-2: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-3
 multi-stage-3: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 multi-stage-4
 multi-stage-4: .PHONY
-	@${MAKE:U} -f ${MAKEFILE} -j1 multi-stage-5
+	@./.make -f ${MAKEFILE} -j1 multi-stage-5
 multi-stage-5: .PHONY
+
+.make:
+	@ln -sf ${MAKE} ${.TARGET}

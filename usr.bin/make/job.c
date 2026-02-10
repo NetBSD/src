@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.519 2025/08/04 15:40:39 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.520 2026/02/10 18:53:34 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.519 2025/08/04 15:40:39 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.520 2026/02/10 18:53:34 sjg Exp $");
 
 
 #ifdef USE_SELECT
@@ -959,6 +959,34 @@ JobWriteSpecials(Job *job, ShellWriter *wr, const char *escCmd, bool run,
 }
 
 /*
+ * See if the command possibly calls a sub-make by checking
+ * for the progname (sans any [level]).
+ */
+bool
+MaybeSubMake(const char *cmd)
+{
+	static char *make;
+	static size_t len;
+	char *p;
+	
+	if (make == NULL) {
+		make = bmake_strdup(progname);
+		make[strcspn(make, "[")] = '\0';
+		len = strlen(make);
+	}
+	for (p = strstr(cmd, make); p != NULL; p = strstr(&p[1], make)) {
+		if (p == cmd || p[-1] == '/' || ch_isspace(p[-1])) {
+			if (p[len] == '\0' || ch_isspace(p[len])) {
+				DEBUG1(JOB, "MaybeSubMake: matched \"%.16s...\"\n",
+				    p);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
  * Write a shell command to the job's commands file, to be run later.
  *
  * If the command starts with '@' and neither the -s nor the -n flag was
@@ -990,6 +1018,12 @@ JobWriteCommand(Job *job, ShellWriter *wr, StringListNode *ln, const char *ucmd)
 	xcmd = Var_SubstInTarget(ucmd, job->node);
 	/* TODO: handle errors */
 	xcmdStart = xcmd;
+
+	if (job->node->flags.doneSubmake == false
+	    && (job->node->type & (OP_MAKE | OP_SUBMAKE)) == 0) {
+		if (MaybeSubMake(xcmd))
+			job->node->type |= OP_SUBMAKE;
+	}
 
 	cmdTemplate = "%s\n";
 
@@ -1093,6 +1127,7 @@ JobWriteCommands(Job *job)
 		JobWriteCommand(job, &wr, ln, ln->datum);
 		seen = true;
 	}
+	job->node->flags.doneSubmake = true;
 
 	return seen;
 }
