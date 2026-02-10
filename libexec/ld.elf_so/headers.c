@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.77 2026/02/10 06:03:30 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.78 2026/02/10 18:35:18 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.77 2026/02/10 06:03:30 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.78 2026/02/10 18:35:18 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -319,7 +319,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_INIT_ARRAYSZ:
 			obj->init_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
-			dbg(("headers: DT_INIT_ARRAYZ %zu",
+			dbg(("headers: DT_INIT_ARRAYSZ %zu",
 			    obj->init_arraysz));
 			break;
 #endif
@@ -340,7 +340,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_FINI_ARRAYSZ:
 			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
-			dbg(("headers: DT_FINI_ARRAYZ %zu",
+			dbg(("headers: DT_FINI_ARRAYSZ %zu",
 			    obj->fini_arraysz));
 			break;
 #endif
