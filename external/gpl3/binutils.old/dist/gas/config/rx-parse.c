@@ -4929,7 +4929,7 @@ rx_lex (void)
   unsigned int ci;
   char * save_input_pointer;
 
-  while (ISSPACE (*rx_lex_start)
+  while (is_whitespace (*rx_lex_start)
 	 && rx_lex_start != rx_lex_end)
     rx_lex_start ++;
 

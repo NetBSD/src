@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #   Contributed by Loongson Ltd.
 #
 # This file is part of the GNU Binutils.
@@ -25,6 +25,22 @@ fragment <<EOF
 #include "elf/loongarch.h"
 #include "elfxx-loongarch.h"
 
+EOF
+
+# Disable linker relaxation if set address of section or segment.
+PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
+    case OPTION_SECTION_START:
+    case OPTION_TTEXT:
+    case OPTION_TBSS:
+    case OPTION_TDATA:
+    case OPTION_TTEXT_SEGMENT:
+    case OPTION_TRODATA_SEGMENT:
+    case OPTION_TLDATA_SEGMENT:
+      link_info.disable_target_specific_optimizations = 2;
+      return false;
+'
+
+fragment <<EOF
 static void
 larch_elf_before_allocation (void)
 {
@@ -42,7 +58,7 @@ larch_elf_before_allocation (void)
 	ENABLE_RELAXATION;
     }
 
-  link_info.relax_pass = 2;
+  link_info.relax_pass = 3;
 }
 
 static void
@@ -67,11 +83,11 @@ gld${EMULATION_NAME}_after_allocation (void)
       && !bfd_link_relocatable (&link_info))
     {
       if (lang_phdr_list == NULL)
-        elf_seg_map (link_info.output_bfd) = NULL;
+	elf_seg_map (link_info.output_bfd) = NULL;
       if (!_bfd_elf_map_sections_to_segments (link_info.output_bfd,
 					      &link_info,
 					      NULL))
-        einfo (_("%F%P: map sections to segments failed: %E\n"));
+	fatal (_("%P: map sections to segments failed: %E\n"));
     }
 
   /* Adjust program header size and .eh_frame_hdr size before
@@ -86,23 +102,7 @@ gld${EMULATION_NAME}_after_allocation (void)
   ldelf_map_segments (need_layout);
 }
 
-/* This is a convenient point to tell BFD about target specific flags.
-   After the output has been created, but before inputs are read.  */
-
-static void
-larch_create_output_section_statements (void)
-{
-  /* See PR 22920 for an example of why this is necessary.  */
-  if (strstr (bfd_get_target (link_info.output_bfd), "loong") == NULL)
-    {
-      einfo (_("%F%P: error: cannot change output format"
-	       " whilst linking %s binaries\n"), "LoongArch");
-      return;
-    }
-}
-
 EOF
 
 LDEMUL_BEFORE_ALLOCATION=larch_elf_before_allocation
 LDEMUL_AFTER_ALLOCATION=gld${EMULATION_NAME}_after_allocation
-LDEMUL_CREATE_OUTPUT_SECTION_STATEMENTS=larch_create_output_section_statements

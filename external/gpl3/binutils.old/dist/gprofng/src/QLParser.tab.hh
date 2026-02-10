@@ -45,15 +45,16 @@
 #ifndef YY_YY_QLPARSER_TAB_HH_INCLUDED
 # define YY_YY_QLPARSER_TAB_HH_INCLUDED
 // "%code requires" blocks.
-#line 33 "QLParser.yy"
+#line 34 "QLParser.yy"
 
+#include "libiberty.h"
 #include "QLParser.h"
 #include "DbeSession.h"
 #include "Expression.h"
 #include "Table.h"
 #include "i18n.h"
 
-#line 57 "QLParser.tab.hh"
+#line 58 "QLParser.tab.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -192,9 +193,9 @@
 # define YYDEBUG 0
 #endif
 
-#line 67 "QLParser.yy"
+#line 69 "QLParser.yy"
 namespace QL {
-#line 198 "QLParser.tab.hh"
+#line 199 "QLParser.tab.hh"
 
 
 
@@ -2057,9 +2058,9 @@ switch (yykind)
   }
 
 
-#line 67 "QLParser.yy"
+#line 69 "QLParser.yy"
 } // QL
-#line 2063 "QLParser.tab.hh"
+#line 2064 "QLParser.tab.hh"
 
 
 

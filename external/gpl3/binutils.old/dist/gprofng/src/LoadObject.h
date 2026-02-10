@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -117,13 +117,6 @@ public:
     return pathname;
   }
 
-  void
-  set_archname (char *aname)
-  {
-    free (arch_name);
-    arch_name = aname;
-  }
-
   bool
   is_relocatable ()
   {
@@ -144,7 +137,7 @@ public:
   Module *get_comparable_Module (Module *mod);
   void append_module (Module *mod);
   Elf *get_elf ();
-  Stabs *openDebugInfo (char *fname, Stabs::Stab_status *stp = NULL);
+  Stabs *openDebugInfo (Stabs::Stab_status *stp = NULL);
   Arch_status read_stabs ();
   Arch_status sync_read_stabs ();
   void post_process_functions ();
@@ -167,7 +160,6 @@ public:
 
   unsigned int flags;           // SEG_FLAG_*
   bool isReadStabs;
-  bool need_swap_endian;
   int seg_idx;                  // for compatibility (ADDRESS)
   seg_type type;
   int64_t size;                 // size of loadobject in bytes
@@ -193,7 +185,6 @@ private:
   char *pathname;               // User name of object file
   ino64_t inode;                // inode number of segment file
   bool isRelocatable;           // is relocatable .o
-  char *arch_name;              // .archive name
   Emsgqueue *warnq;
   Emsgqueue *commentq;
   Function **funcHTable;        // hash table for functions
@@ -202,7 +193,6 @@ private:
   HashMap<char*, Module*> *seg_modules_map; // to find a comparable module
 
   static int func_compare (const void *p1, const void *p2);
-  int read_archive ();
   void init_datatypes ();
   void update_datatypes (Module*, Vaddr, uint32_t datatype_id);
 };

@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+#   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -159,7 +159,7 @@ m68hc11elf_create_output_section_statements (void)
 			     bfd_get_arch (link_info.output_bfd),
 			     bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%F%P: can not create BFD: %E\n"));
+      fatal (_("%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -322,11 +322,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_NO_TRAMPOLINE		300
-#define OPTION_BANK_WINDOW		301
-'
-
 # The options are repeated below so that no abbreviations are allowed.
 # Otherwise -s matches stub-group-size
 PARSE_AND_LIST_LONGOPTS='

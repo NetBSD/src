@@ -371,3 +371,10 @@ bfd_alloc'd memory owned by @var{abfd}.  Returns a pointer the
 newly allocated name, or NULL if the allocation failed.
 
 @end deftypefn
+@findex bfd_extract_object_only_section
+@subsubsection @code{bfd_extract_object_only_section}
+@deftypefn {Function} const char *bfd_extract_object_only_section (bfd *abfd); 
+Takes a @var{ABFD} and extract the .gnu_object_only section into
+a temporary file.
+
+@end deftypefn

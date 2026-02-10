@@ -1,5 +1,5 @@
 /* tc-tile.h - Macros and type defines for a TILEPro chip.
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -39,10 +39,10 @@
 
 #define DIFF_EXPR_OK   /* foo-. gets turned into PC relative relocs */
 
-#define HANDLE_ALIGN(fragp) tilepro_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp) tilepro_handle_align (fragp)
 extern void tilepro_handle_align (struct frag *);
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE (7 + 8)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (7 + 8)
 
 struct tilepro_operand;
 #define TC_FIX_TYPE const struct tilepro_operand *

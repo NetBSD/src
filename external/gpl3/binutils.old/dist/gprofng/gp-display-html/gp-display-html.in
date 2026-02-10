@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #   Contributed by Oracle.
 #
 #   This file is part of GNU Binutils.
@@ -25,7 +25,7 @@ use warnings;
 # Disable before release
 # use Perl::Critic;
 
-use bignum;
+use bigint;
 use List::Util qw (max);
 use Cwd qw (abs_path cwd);
 use File::Basename;
@@ -87,7 +87,7 @@ my $g_test_code = $FALSE;
 #------------------------------------------------------------------------------
 # GPROFNG commands and files used.
 #------------------------------------------------------------------------------
-my $GP_DISPLAY_TEXT = "gp-display-text";
+my $GP_DISPLAY_TEXT = "gprofng-display-text";
 
 my $g_gp_output_file   = $GP_DISPLAY_TEXT.".stdout.log";
 my $g_gp_error_logfile = $GP_DISPLAY_TEXT.".stderr.log";
@@ -195,9 +195,9 @@ my $thresh = 0;
 # Define the driver command, tool name and version number.
 #------------------------------------------------------------------------------
 $driver_cmd       = "gprofng display html";
-$tool_name        = "gp-display-html";
+$tool_name        = "gprofng-display-html";
 #$binutils_version = "2.38.50";
-$binutils_version = "BINUTILS_VERSION";
+$binutils_version = "2.43.0";
 $version_info     = $tool_name . " GNU binutils version " . $binutils_version;
 
 #------------------------------------------------------------------------------
@@ -908,7 +908,8 @@ sub main
 #------------------------------------------------------------------------------
   $outputdir = append_forward_slash ($outputdir);
 
-  gp_message ("debug", $subr_name, "prepared outputdir = $outputdir");
+  $msg = "prepared outputdir = ". $outputdir;
+  gp_message ("debug", $subr_name, $msg);
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -920,6 +921,13 @@ sub main
   $detail_metrics        = 'e.totalcpu';
   $detail_metrics_system = 'e.totalcpu:e.system';
   $call_metrics          = 'a.totalcpu';
+
+  $msg = "set detail_metrics_system = " . $detail_metrics_system;
+  gp_message ("debug", $subr_name, $msg);
+  $msg = "set detail_metrics        = " . $detail_metrics;
+  gp_message ("debug", $subr_name, $msg);
+  $msg = "set call_metrics          = " . $call_metrics;
+  gp_message ("debug", $subr_name, $msg);
 
   my $cmd_options;
   my $metrics_cmd;
@@ -1029,15 +1037,15 @@ sub main
   $number_of_metrics = split (":", $summary_metrics);
 
   $msg = "summary_metrics       = " . $summary_metrics;
-  gp_message ("debugXL", $subr_name, $msg);
+  gp_message ("debugM", $subr_name, $msg);
   $msg = "detail_metrics        = " . $detail_metrics;
-  gp_message ("debugXL", $subr_name, $msg);
+  gp_message ("debugM", $subr_name, $msg);
   $msg = "detail_metrics_system = " . $detail_metrics_system;
-  gp_message ("debugXL", $subr_name, $msg);
+  gp_message ("debugM", $subr_name, $msg);
   $msg = "call_metrics          = " . $call_metrics;
-  gp_message ("debugXL", $subr_name, $msg);
+  gp_message ("debugM", $subr_name, $msg);
   $msg = "number_of_metrics     = " . $number_of_metrics;
-  gp_message ("debugXL", $subr_name, $msg);
+  gp_message ("debugM", $subr_name, $msg);
 
 #------------------------------------------------------------------------------
 # TBD Find a way to better handle this situation:
@@ -1488,6 +1496,9 @@ sub check_and_define_cmds
     {
       $target_cmd = "(command -v $cmd; echo \$\?)";
 
+      $msg = "check target_cmd = " . $target_cmd;
+      gp_message ("debug", $subr_name, $msg);
+
       ($error_code, $output_cmd) = execute_system_cmd ($target_cmd);
 
       if ($error_code != 0)
@@ -1926,7 +1937,7 @@ sub check_availability_tool
   my $target_cmd;
 
 #------------------------------------------------------------------------------
-# Get the path to gp-display-text.
+# Get the path to gprofng-display-text.
 #------------------------------------------------------------------------------
   my ($error_occurred_ref, $gp_path_ref, $return_value_ref) =
 		       find_path_to_gp_display_text ($location_gp_command_ref);
@@ -1940,7 +1951,7 @@ sub check_availability_tool
 
   if (not $error_occurred)
 #------------------------------------------------------------------------------
-# All is well and gp-display-text has been located.
+# All is well and gprofng-display-text has been located.
 #------------------------------------------------------------------------------
     {
       $g_path_to_tools = $return_value;
@@ -4098,8 +4109,7 @@ sub extract_info_from_map_xml
 } #-- End of subroutine extract_info_from_map_xml
 
 #------------------------------------------------------------------------------
-# This routine analyzes the metric line and extracts the metric specifics
-# from it.
+# This routine analyzes the metric line and extracts the metric details.
 # Example input: Exclusive Total CPU Time: e.%totalcpu
 #------------------------------------------------------------------------------
 sub extract_metric_specifics
@@ -4113,11 +4123,13 @@ sub extract_metric_specifics
   my $metric_visibility;
   my $metric_name;
   my $metric_spec;
+  my $msg;
 
 # Ruud   if (($metric =~ /\s*(.*):\s+(\S)((\.\S+)|(\+\S+))/) && !($metric =~/^Current/)){
   if (($metric_line =~ /\s*(.+):\s+([ei])([\.\+%]+)(\S*)/) and !($metric_line =~/^Current/))
     {
-      gp_message ("debug", $subr_name, "line of interest: $metric_line");
+      $msg = "input line = " . $metric_line;
+      gp_message ("debug", $subr_name, $msg);
 
       $metric_description = $1;
       $metric_flavor      = $2;
@@ -4152,6 +4164,17 @@ sub extract_metric_specifics
 #------------------------------------------------------------------------------
 #          $metric_spec =~ s/\%//;
 #          print "DB: after  \$metric_spec = $metric_spec\n";
+
+      $msg = "on return: metric_spec        = " . $metric_spec;
+      gp_message ("debugM", $subr_name, $msg);
+      $msg = "on return: metric_flavor      = " . $metric_flavor;
+      gp_message ("debugM", $subr_name, $msg);
+      $msg = "on return: metric_visibility  = " . $metric_visibility;
+      gp_message ("debugM", $subr_name, $msg);
+      $msg = "on return: metric_name        = " .  $metric_name;
+      gp_message ("debugM", $subr_name, $msg);
+      $msg = "on return: metric_description = " . $metric_description;
+      gp_message ("debugM", $subr_name, $msg);
 
       return ($metric_spec, $metric_flavor, $metric_visibility,
               $metric_name, $metric_description);
@@ -4402,7 +4425,7 @@ sub extract_option_value
       $msg .= " in a future update";
       gp_message ("warning", $subr_name, $msg);
 
-      $msg  = "please check the man page of gp-display-html";
+      $msg  = "please check the gprofng-display-html man page";
       $msg .= " for more details";
       gp_message ("warning", $subr_name, $msg);
       $g_total_warning_count++;
@@ -4632,7 +4655,7 @@ sub find_keyword_in_string
 
 #------------------------------------------------------------------------------
 # Retrieve the absolute path that was used to execute the command.  This path
-# is used to execute gp-display-text later on.
+# is used to execute gprofng-display-text later on.
 #------------------------------------------------------------------------------
 sub find_path_to_gp_display_text
 {
@@ -7034,7 +7057,19 @@ sub generate_function_level_info
 #------------------------------------------------------------------------------
   print SCRIPT_PC "# outfile $outputdir"."gp-metrics-calls-PC\n";
   print SCRIPT_PC "outfile $outputdir"."gp-metrics-calls-PC\n";
-  $script_pc_metrics = "address:$call_metrics";
+#------------------------------------------------------------------------------
+# TBD: fix the situation that call_metrics is empty.
+#------------------------------------------------------------------------------
+  if ($call_metrics ne "")
+    {
+      $script_pc_metrics = "address:$call_metrics";
+    }
+  else
+    {
+      $script_pc_metrics = "address";
+      $msg = "warning: call_metrics is empty - only address field printed";
+      gp_message ("debug", $subr_name, $msg);
+    }
   print SCRIPT_PC "# metrics $script_pc_metrics\n";
   print SCRIPT_PC "metrics $script_pc_metrics\n";
 
@@ -7808,7 +7843,7 @@ sub generate_html_function_blocks
 #------------------------------------------------------------------------------
 # Get all the metrics available
 #
-# (gp-display-text) metric_list
+# (gprofng-display-text) metric_list
 # Current metrics: e.totalcpu:i.totalcpu:e.cycles:e+insts:e+llm:name
 # Current Sort Metric: Exclusive Total CPU Time ( e.totalcpu )
 # Available metrics:
@@ -9106,6 +9141,7 @@ sub get_hot_functions
   my $expr_name;
   my $first_metric;
   my $gp_display_text_cmd;
+  my $msg;
   my $ignore_value;
 
   my @sort_fields = ();
@@ -9123,6 +9159,15 @@ sub get_hot_functions
 
   @sort_fields = split (":", $summary_metrics);
 
+#-- RUUD
+
+  $msg = "summary_metrics = " . $summary_metrics;
+  gp_message ("debug", $subr_name, $msg);
+  for my $field (@sort_fields)
+    {
+     $msg = "metric field = " . $field; 
+     gp_message ("debug", $subr_name, $msg);
+    }
 #------------------------------------------------------------------------------
 # This is extremely unlikely to happen, but if so, it is a fatal error.
 #------------------------------------------------------------------------------
@@ -10469,7 +10514,7 @@ sub msg_display_text_failure
 } #-- End of subroutine msg_display_text_failure
 
 #------------------------------------------------------------------------------
-# TBD.
+# TBD. Still needed? I think this entire function and usage can be removed.
 #------------------------------------------------------------------------------
 sub name_regex
 {
@@ -10479,16 +10524,21 @@ sub name_regex
 
   my %metric_description = %{ $metric_description_ref };
 
+  my $msg;
+
   my @splitted_metrics;
   my $splitted_metrics;
   my $m;
   my $mf;
   my $nf;
-  my $re;
+  my $re = "This value should never show up anywhere";
   my $Xre;
-  my $noPCfile;
+#------------------------------------------------------------------------------
+# Make sure to check for these to have a value.
+#------------------------------------------------------------------------------
+  my $noPCfile = undef;
+  my $reported_metrics = undef;
   my @reported_metrics;
-  my $reported_metrics;
   my $hdr_regex;
   my $hdr_href_regex;
   my $hdr_src_regex;
@@ -10606,152 +10656,174 @@ sub name_regex
 #
 # TBD: This should be done only once!
 #------------------------------------------------------------------------------
-  @reported_metrics = split (":", $reported_metrics);
-  for my $i (@reported_metrics)
+  if (not defined($reported_metrics))
     {
-      gp_message ("debugXL", $subr_name, "reported_metrics = $i");
+      $msg = "reported_metrics is not defined";
+      gp_message ("debug", $subr_name, $msg);
     }
-
-  $hdr_regex      = "^\\s*";
-  $hdr_href_regex = "^\\s*";
-  $hdr_src_regex  = "^(\\s+|<i>\\s+)";
-
-  for my $m (@reported_metrics)
+  else
     {
+      $msg = "reported_metrics = " . $reported_metrics;
+      gp_message ("debug", $subr_name, $msg);
 
-      my $description = ${ retrieve_metric_description (\$m, \%metric_description) };
-      gp_message ("debugXL", $subr_name, "m = $m description = $description");
-      if (substr ($m,0,1) eq "e")
+      @reported_metrics = split (":", $reported_metrics);
+      for my $i (@reported_metrics)
         {
-          push (@moo,"$m:$description\n");
-          $hdr_regex .= "(Excl\\.\.*)";
-          $hdr_href_regex .= "(<a.*>)(Excl\\.)(<\/a>)([^<]+)";
-          $hdr_src_regex .= "(Excl\\.\.*)";
-          next;
+          gp_message ("debugXL", $subr_name, "reported_metrics = $i");
         }
-      if (substr ($m,0,1) eq "i")
+
+      $hdr_regex      = "^\\s*";
+      $hdr_href_regex = "^\\s*";
+      $hdr_src_regex  = "^(\\s+|<i>\\s+)";
+    
+      for my $m (@reported_metrics)
         {
-          push (@moo,"$m:$description\n");
-          $hdr_regex .= "(Incl\\.\.*)";
-          $hdr_href_regex .= "(<a.*>)(Incl\\.)(<\/a>)([^<]+)";
-          $hdr_src_regex .= "(Incl\\.\.*)";
-          next;
-        }
-      if (substr ($m,0,1) eq "a")
-        {
-          my $a;
-          my $am;
-          $a = $m;
-          $a =~ s/^a/e/;
-          $am = ${ retrieve_metric_description (\$a, \%metric_description) };
-          $am =~ s/Exclusive/Attributed/;
-          push (@moo,"$m:$am\n");
-          $hdr_regex .= "(Attr\\.\.*)";
-          $hdr_href_regex .= "(<a.*>)(Attr\\.)(<\/a>)([^<]+)";
-          $hdr_src_regex .= "(Attr\\.\.*)";next;
+
+          my $description = ${ retrieve_metric_description (\$m, \%metric_description) };
+          gp_message ("debugXL", $subr_name, "m = $m description = $description");
+          if (substr ($m,0,1) eq "e")
+            {
+              push (@moo,"$m:$description\n");
+              $hdr_regex .= "(Excl\\.\.*)";
+              $hdr_href_regex .= "(<a.*>)(Excl\\.)(<\/a>)([^<]+)";
+              $hdr_src_regex .= "(Excl\\.\.*)";
+              next;
+            }
+          if (substr ($m,0,1) eq "i")
+            {
+              push (@moo,"$m:$description\n");
+              $hdr_regex .= "(Incl\\.\.*)";
+              $hdr_href_regex .= "(<a.*>)(Incl\\.)(<\/a>)([^<]+)";
+              $hdr_src_regex .= "(Incl\\.\.*)";
+              next;
+            }
+          if (substr ($m,0,1) eq "a")
+            {
+              my $a;
+              my $am;
+              $a = $m;
+              $a =~ s/^a/e/;
+              $am = ${ retrieve_metric_description (\$a, \%metric_description) };
+              $am =~ s/Exclusive/Attributed/;
+              push (@moo,"$m:$am\n");
+              $hdr_regex .= "(Attr\\.\.*)";
+              $hdr_href_regex .= "(<a.*>)(Attr\\.)(<\/a>)([^<]+)";
+              $hdr_src_regex .= "(Attr\\.\.*)";next;
+            }
         }
     }
+    
+      $hdr_regex      .= "(Name\.*)";
+      $hdr_href_regex .= "(Name\.*)";
 
-  $hdr_regex      .= "(Name\.*)";
-  $hdr_href_regex .= "(Name\.*)";
+      @splitted_metrics = split (":","$metrics");
+      $nf               = scalar (@splitted_metrics);
+      gp_message ("debug", $subr_name,"number of fields in $metrics -> $nf");
 
-  @splitted_metrics = split (":","$metrics");
-  $nf               = scalar (@splitted_metrics);
-  gp_message ("debug", $subr_name,"number of fields in $metrics -> $nf");
+      if (not defined($noPCfile))
+        {
+          $msg = "noPCfile is not defined";
+          gp_message ("debug", $subr_name, $msg);
+        }
+      else
+        {
+          $msg = "noPCfile = " . $noPCfile;
+          gp_message ("debug", $subr_name, $msg);
 
-  open (ZMETRICS, ">", "$noPCfile.metrics")
-    or die ("Not able to open file $noPCfile.metrics for writing - '$!'");
-  gp_message ("debug", $subr_name, "$noPCfile - opened file $noPCfile.metrics for writing");
+          open (ZMETRICS, ">", "$noPCfile.metrics")
+            or die ("Not able to open file $noPCfile.metrics for writing - '$!'");
+          gp_message ("debug", $subr_name, "$noPCfile - opened file $noPCfile.metrics for writing");
+    
+          print ZMETRICS @moo;
+          close (ZMETRICS);
 
-  print ZMETRICS @moo;
-  close (ZMETRICS);
+          gp_message ("debug", $subr_name, "wrote file $noPCfile.metrics");
 
-  gp_message ("debug", $subr_name, "wrote file $noPCfile.metrics");
+          open (XREGEXP, ">", "$noPCfile.c.regex")
+            or die ("Not able to open file $noPCfile.c.regex for writing - '$!'");
+          gp_message ("debug", $subr_name, "$noPCfile - opened file $noPCfile.c.regex for writing");
 
-  open (XREGEXP, ">", "$noPCfile.c.regex")
-    or die ("Not able to open file $noPCfile.c.regex for writing - '$!'");
-  gp_message ("debug", $subr_name, "$noPCfile - opened file $noPCfile.c.regex for writing");
+          print XREGEXP "\# Number of metric fields\n";
+          print XREGEXP "$nf\n";
+          print XREGEXP "\# Header regex\n";
+          print XREGEXP "$hdr_regex\n";
+          print XREGEXP "\# href Header regex\n";
+          print XREGEXP "$hdr_href_regex\n";
+          print XREGEXP "\# src Header regex\n";
+          print XREGEXP "$hdr_src_regex\n";
 
-  print XREGEXP "\# Number of metric fields\n";
-  print XREGEXP "$nf\n";
-  print XREGEXP "\# Header regex\n";
-  print XREGEXP "$hdr_regex\n";
-  print XREGEXP "\# href Header regex\n";
-  print XREGEXP "$hdr_href_regex\n";
-  print XREGEXP "\# src Header regex\n";
-  print XREGEXP "$hdr_src_regex\n";
-
-  $mf = 1;
+          $mf = 1;
 #---------------------------------------------------------------------------
 # Find the index of "field" in the metric list, plus one.
 #---------------------------------------------------------------------------
-  if ( ($field eq "functions") or ($field eq "calls") or ($field eq "calltree"))
-    {
-      $mf = $nf + 1;
-    }
-  else
-    {
-      for my $candidate_metric (@splitted_metrics)
-        {
-          gp_message ("debugXL", $subr_name, "field = $field candidate_metric = $candidate_metric and mf = $mf");
-          if ($candidate_metric eq $field)
+          if ( ($field eq "functions") or ($field eq "calls") or ($field eq "calltree"))
             {
-              last;
-            }
-          $mf++;
-        }
-    }
-  gp_message ("debugXL", $subr_name, "Final value mf = $mf");
-
-  if ($mf == 1)
-    {
-      $re = "^\\s*(\\S+)"; # metric value
-    }
-  else
-    {
-      $re = "^\\s*\\S+";
-    }
-  $Xre = "^\\s*(\\S+)";
-
-  $m = 2;
-  while (--$nf)
-    {
-      if ($nf)
-        {
-          if ($m == $mf)
-            {
-              $re .= "\\s+(\\S+)"; # metric value
+              $mf = $nf + 1;
             }
           else
             {
-              $re .= "\\s+\\S+";
+              for my $candidate_metric (@splitted_metrics)
+                {
+                  gp_message ("debugXL", $subr_name, "field = $field candidate_metric = $candidate_metric and mf = $mf");
+                  if ($candidate_metric eq $field)
+                    {
+                      last;
+                    }
+                  $mf++;
+                }
             }
-          if ($nf != 1)
+          gp_message ("debugXL", $subr_name, "Final value mf = $mf");
+
+          if ($mf == 1)
             {
-              $Xre .= "\\s+(\\S+)";
+              $re = "^\\s*(\\S+)"; # metric value
             }
-          $m++;
+          else
+            {
+              $re = "^\\s*\\S+";
+            }
+          $Xre = "^\\s*(\\S+)";
+
+          $m = 2;
+          while (--$nf)
+            {
+              if ($nf)
+                {
+                  if ($m == $mf)
+                    {
+                      $re .= "\\s+(\\S+)"; # metric value
+                    }
+                  else
+                    {
+                      $re .= "\\s+\\S+";
+                    }
+                  if ($nf != 1)
+                    {
+                      $Xre .= "\\s+(\\S+)";
+                    }
+                  $m++;
+                }
+            }
+
+          if ($field eq "calltree")
+            {
+              $re .= "\\s+.*\\+-(.*)"; # name
+              $Xre .= "\\s+.*\\+-(.*)\$"; # name (Right?)
+            }
+          else
+            {
+              $re .= "\\s+(.*)"; # name
+              $Xre .= "\\s+(.*)\$"; # name
+            }
+
+          print XREGEXP "\# Metrics and Name regex\n";
+          print XREGEXP "$Xre\n";
+          close (XREGEXP);
+        
+          gp_message ("debug", $subr_name, "wrote file $noPCfile.c.regex");
+          gp_message ("debugXL", $subr_name, "on return Xre = $Xre");
+          gp_message ("debugXL", $subr_name, "on return re  = $re");
         }
-    }
-
-  if ($field eq "calltree")
-    {
-      $re .= "\\s+.*\\+-(.*)"; # name
-      $Xre .= "\\s+.*\\+-(.*)\$"; # name (Right?)
-    }
-  else
-    {
-      $re .= "\\s+(.*)"; # name
-      $Xre .= "\\s+(.*)\$"; # name
-    }
-
-  print XREGEXP "\# Metrics and Name regex\n";
-  print XREGEXP "$Xre\n";
-  close (XREGEXP);
-
-  gp_message ("debug", $subr_name, "wrote file $noPCfile.c.regex");
-  gp_message ("debugXL", $subr_name, "on return Xre = $Xre");
-  gp_message ("debugXL", $subr_name, "on return re  = $re");
 
   return ($re);
 
@@ -11388,7 +11460,7 @@ sub prepend_backslashes
 } #-- End of subroutine prepend_backslashes
 
 #------------------------------------------------------------------------------
-# TBD
+# TBD Still needed?
 #------------------------------------------------------------------------------
 sub preprocess_function_files
 {
@@ -12061,7 +12133,7 @@ sub print_user_settings
 sub print_version_info
 {
   print "$version_info\n";
-  print "Copyright (C) 2023 Free Software Foundation, Inc.\n";
+  print "Copyright (C) 2025 Free Software Foundation, Inc.\n";
   print "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n";
   print "This is free software: you are free to change and redistribute it.\n";
   print "There is NO WARRANTY, to the extent permitted by law.\n";
@@ -12467,6 +12539,7 @@ sub process_function_files
 #------------------------------------------------------------------------------
 # TBD: Name cleanup needed.
 #------------------------------------------------------------------------------
+  my $msg;
 
   my $number_of_metrics;
   my $expr_name;
@@ -12669,7 +12742,11 @@ sub process_function_files
 #------------------------------------------------------------------------------
 # Strip the internal number from the address field.
 #------------------------------------------------------------------------------
+      $msg = "address_field before regex = " . $address_field;
+      gp_message ("debugXL", $subr_name, $msg);
       $address_field =~ s/$remove_number_regex//;
+      $msg = "address_field after  regex = " . $address_field;
+      gp_message ("debugXL", $subr_name, $msg);
 
 ##      $disfile = "file\.$routine_index\.dis";
       $disfile = "file." . $routine_index . "." . $g_html_base_file_name{"disassembly"};
@@ -13553,6 +13630,13 @@ sub process_metrics_data
   my $detail_metrics_system;
   my $call_metrics;
 
+#------------------------------------------------------------------------------
+# The regex section.
+#------------------------------------------------------------------------------
+  my $metrics_line_regex         = '\s*(.*):\s+(\d+\.?\d*)';
+  my $metric_of_interest_1_regex = '^Exclusive\ *';
+  my $metric_of_interest_2_regex = '^Inclusive\ *';
+
   if ($g_user_settings{"default_metrics"}{"current_value"} eq "off")
     {
       $msg  = "g_user_settings{default_metrics}{current_value} = ";
@@ -13575,104 +13659,103 @@ sub process_metrics_data
       gp_message ("debug", $subr_name, "opened $outfile2 to parse metric value data");
 
 #------------------------------------------------------------------------------
-# Below an example of the file that has just been opened.  The lines I marked
-# with a * has been wrapped by my for readability.  This is not the case in the
-# file, but makes for a really long line.
-#
-# Also, the data comes from one PC experiment and two HWC experiments.
+# Below an example of the file that has just been opened.
 #------------------------------------------------------------------------------
 # <Total>
-#              Exclusive Total CPU Time:      32.473 (100.0%)
-#              Inclusive Total CPU Time:      32.473 (100.0%)
-#                  Exclusive CPU Cycles:      23.586 (100.0%)
-#                               " count: 47054706905
-#                  Inclusive CPU Cycles:      23.586 (100.0%)
-#                               " count: 47054706905
-#       Exclusive Instructions Executed: 54417033412 (100.0%)
-#       Inclusive Instructions Executed: 54417033412 (100.0%)
-#     Exclusive Last-Level Cache Misses:   252730685 (100.0%)
-#     Inclusive Last-Level Cache Misses:   252730685 (100.0%)
-#  *   Exclusive Instructions Per Cycle:      Inclusive Instructions Per Cycle:
-#  *         Exclusive Cycles Per Instruction:
-#  *         Inclusive Cycles Per Instruction:
-#  *         Size:           0
-#                            PC Address: 1:0x00000000
-#                           Source File: (unknown)
-#                           Object File: (unknown)
-#                           Load Object: <Total>
-#                          Mangled Name:
-#                               Aliases:
+# 	            Exclusive Total CPU Time:      3.232 (100.0%)
+# 	            Inclusive Total CPU Time:      3.232 (100.0%)
+# 	              Exclusive insts Events: 7628146366 (100.0%)
+# 	              Inclusive insts Events: 7628146366 (100.0%)
+# 	             Exclusive cycles Events: 5167454376 (100.0%)
+# 	             Inclusive cycles Events: 5167454376 (100.0%)
+# 	   Exclusive dTLB-load-misses Events:          0 (  0. %)
+# 	   Inclusive dTLB-load-misses Events:          0 (  0. %)
+# 	    Exclusive Instructions Per Cycle:      1.476
+# 	    Inclusive Instructions Per Cycle:      1.476
+# 	    Exclusive Cycles Per Instruction:      0.677
+# 	    Inclusive Cycles Per Instruction:      0.677
+# 	Exclusive branch-instructions Events: 1268741580 (100.0%)
+# 	Inclusive branch-instructions Events: 1268741580 (100.0%)
+# 	                                Size:          0
+# 	                          PC Address: 1:0x00000000
+# 	                         Source File: (unknown)
+# 	                         Object File: (unknown)
+# 	                         Load Object: <Total>
+# 	                        Mangled Name:
+# 	                             Aliases:
 #------------------------------------------------------------------------------
 
       while (<METRICTOTALS>)
         {
           $metricdata = $_; chomp ($metricdata);
-          gp_message ("debug", $subr_name, "file metrictotals: $metricdata");
+
+          $msg = "file metrictotals: input line = " . $metricdata;
+          gp_message ("debug", $subr_name, $msg);
 
 #------------------------------------------------------------------------------
 # Ignoring whitespace, search for any line with a ":" in it, followed by
-# a number with or without a dot.  So, an integer or floating-point number.
+# a number with, or without, a dot.  So, an integer or floating-point number.
 #------------------------------------------------------------------------------
-          if ($metricdata =~ /\s*(.*):\s+(\d+\.*\d*)/)
+          if ($metricdata =~ /$metrics_line_regex/) 
             {
-              gp_message ("debug", $subr_name, "  candidate => $metricdata");
-              $metric = $1;
-              $value  = $2;
-              if ( ($metric eq "PC Address") or ($metric eq "Size"))
+              $msg = "selected input line for processing"; 
+              gp_message ("debug", $subr_name, $msg);
+
+              if (defined($1) and defined($2))
                 {
-                  gp_message ("debug", $subr_name, "  skipped => $metric $value");
+                  $metric = $1;
+                  $value  = $2;
+                  $msg = "metric = " . $metric; 
+                  gp_message ("debug", $subr_name, $msg);
+                  $msg = "value  = " . $value;
+                  gp_message ("debug", $subr_name, $msg);
+                }
+              else
+                {
+                  $msg = "unexpected input in " . $metricdata;
+                  gp_message ("assertion", $subr_name, $msg);
+                }
+
+#------------------------------------------------------------------------------
+# Select the metrics of interest.
+#------------------------------------------------------------------------------
+              if (($metric =~ /$metric_of_interest_1_regex/) or
+                  ($metric =~ /$metric_of_interest_2_regex/) )
+                {
+                  $msg  = "metric of interest = " . $metric;
+                  $msg .= " - proceed with processing";
+                  gp_message ("debug", $subr_name, $msg);
+                }
+              else
+                {
+                  $msg  = "metric = " . $metric;
+                  $msg .= " - ignored and further processing is skipped";
+                  gp_message ("debug", $subr_name, $msg);
                   next;
                 }
-              gp_message ("debug", $subr_name, "  proceed => $metric $value");
+
+#------------------------------------------------------------------------------
+# When we get here, it means that this is a metric we want to process.
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# TBD - Still needed? Don't see it in the input anymore (?)
+#------------------------------------------------------------------------------
               if ($metric eq '" count')
 #------------------------------------------------------------------------------
 # Hardware counter experiments have this info.  Note that this line is not the
 # first one to be encountered, so $last_metric has been defined already.
 #------------------------------------------------------------------------------
                 {
-                  $metric = $last_metric." Count"; # we presume .......
-                  gp_message ("debug", $subr_name, "last_metric = $last_metric metric = $metric");
+                  $metric = $last_metric . " Count";
+                  $msg = "last_metric = $last_metric metric = $metric";
+                  gp_message ("debug", $subr_name, $msg);
                 }
-              $i=index ($metricdata,":");
-              $r=rindex ($metricdata,":");
-              gp_message ("debug", $subr_name, "metricdata = $metricdata => i = $i r = $r");
-              if ($i == $r)
-                {
-                  if ($value > 0) # Not interested in metrics contributing zero
-                    {
-                      $metric_value{$metric} = $value;
-                      gp_message ("debug", $subr_name, "archived metric_value{$metric} = $metric_value{$metric}");
-                      # e.g. $metric_value{Exclusive Total Thread Time} = 302.562
-                      # e.g. $metric_value{Exclusive Instructions Executed} = 2415126222484
-                    }
-                }
-              else
-#------------------------------------------------------------------------------
-# TBD This code deals with an old bug and may be removed.
-#------------------------------------------------------------------------------
-                { # er_print bug - e.g.
-#  Exclusive Instructions Per Cycle:       Inclusive Instructions Per Cycle:       Exclusive Cycles Per Instruction:   Inclusive Cycles Per Instruction:             Exclusive OpenMP Work Time: 162.284 (100.0%)
-                  gp_message ("debug", $subr_name, "metrictotals odd line:->$metricdata<-");
-                  $r=rindex ($metricdata,":",$r-1);
-                  if ($r == -1)
-                    { # ignore
-                      gp_message ("debug", $subr_name, "metrictotals odd line ignored<-");
-                      $last_metric = "foo";
-                      next;
-                    }
-                  my ($good_part)=substr ($metricdata,$r+1);
-                  if ($good_part =~ /\s*(.*):\s+(\d+\.*\d*)/)
-                    {
-                      $metric = $1;
-                      $value  = $2;
-                      if ($value>0) # Not interested in metrics contributing zero
-                        {
-                          $metric_value{$metric} = $value;
-                          $msg = "metrictotals odd line rescued '$metric'=$value";
-                          gp_message ("debug", $subr_name, $msg);
-                        }
-                    }
-                }
+
+              $metric_value{$metric} = $value;
+              $msg = "archived: metric_value{$metric} = " .
+                     $metric_value{$metric};
+              gp_message ("debug", $subr_name, $msg);
 #------------------------------------------------------------------------------
 # Preserve the current metric.
 #------------------------------------------------------------------------------
@@ -13684,20 +13767,26 @@ sub process_metrics_data
 
     if (scalar (keys %metric_value) == 0)
 #------------------------------------------------------------------------------
-# If we have no metrics > 0, fudge a "Exclusive Total CPU Time", else we
-# blow up later.
-#
-# TBD: See if this can be handled differently.
+# This means that there are no metrics in the input file.  That is a fatal
+# error and execution is terminated.
 #------------------------------------------------------------------------------
       {
-        $metric_value{"Exclusive Total CPU Time"} = 0;
-        gp_message ("debug", $subr_name, "no metrics found and a stub was added");
+        $msg = "no metrics have been found in the input file";
+        gp_message ("assertion", $subr_name, $msg);
       }
-
-  for my $metric (sort keys %metric_value)
-    {
-      gp_message ("debug", $subr_name, "Stored metric_value{$metric} = $metric_value{$metric}");
-    }
+    else
+#------------------------------------------------------------------------------
+# All is well.  Print the metrics that have been found.
+#------------------------------------------------------------------------------
+      {
+        $msg = "stored the following metrics and values:";
+        gp_message ("debug", $subr_name, $msg);
+        for my $metric (sort keys %metric_value)
+          {
+            $msg = "metric_value{$metric} = " . $metric_value{$metric};
+            gp_message ("debug", $subr_name, $msg);
+          }
+      }
 
   gp_message ("debug", $subr_name, "proceed to process file $outfile1");
 
@@ -13740,7 +13829,7 @@ sub process_metrics_data
       $metric_line = $_;
       chomp ($metric_line);
 
-      gp_message ("debug", $subr_name, "processing line $metric_line");
+      gp_message ("debug", $subr_name, "processing line: $metric_line");
 #------------------------------------------------------------------------------
 # The original regex has bugs because the line should not be allowed to start
 # with a ":".  So this is wrong:
@@ -13759,113 +13848,113 @@ sub process_metrics_data
 #------------------------------------------------------------------------------
 # Ruud   if (($metric =~ /\s*(.*):\s+(\S)((\.\S+)|(\+\S+))/) && !($metric =~/^Current/)){
 
-      ($metric_spec, $metric_flavor, $metric_visibility, $metric_name, $metric_text) =
+      ($metric_spec, $metric_flavor, $metric_visibility, $metric_name,
+       $metric_text) =
               extract_metric_specifics ($metric_line);
 
 #      if (($metric_line =~ /\s*(.+):\s+([ei])([\.\+%]+)(\S*)/) and !($metric_line =~/^Current/))
       if ($metric_spec eq "skipped")
         {
-          gp_message ("debug", $subr_name, "skipped line: $metric_line");
+          $msg = "skipped processing line: " . $metric_line;
+          gp_message ("debug", $subr_name, $msg);
+          next
         }
-      else
+      $msg = "line of interest: " . $metric_line;
+      gp_message ("debug", $subr_name, $msg);
+
+      $metric_found{$metric_spec} = $TRUE;
+
+#------------------------------------------------------------------------------
+# TBD
+# Currently always FALSE since this feature has not been fully implemented yet.
+#------------------------------------------------------------------------------
+      if ($g_user_settings{"ignore_metrics"}{"defined"})
         {
-          gp_message ("debug", $subr_name, "line of interest: $metric_line");
-
-          $metric_found{$metric_spec} = 1;
-
-          if ($g_user_settings{"ignore_metrics"}{"defined"})
+          gp_message ("debug", $subr_name, "check for $metric_spec");
+          if (exists ($ignored_metrics{$metric_name}))
             {
-              gp_message ("debug", $subr_name, "check for $metric_spec");
-              if (exists ($ignored_metrics{$metric_name}))
-                {
-                  gp_message ("debug", $subr_name, "user asked to ignore metric $metric_name");
-                  next;
-                }
-              }
+              $msg = "user asked to ignore metric " . $metric_name;
+              gp_message ("debug", $subr_name, $msg);
+              $msg = "further processing of line of interest is skipped";
+              gp_message ("debug", $subr_name, $msg);
+              next;
+            }
+        }
 
 #------------------------------------------------------------------------------
 # This metric is not on the ignored list and qualifies, so store it.
 #------------------------------------------------------------------------------
-          $metric_description{$metric_spec} = $metric_text;
+      $metric_description{$metric_spec} = $metric_text;
 
 # TBD: add for other visibilities too, like +
-          gp_message ("debug", $subr_name, "stored $metric_description{$metric_spec}          = $metric_description{$metric_spec}");
+      $msg  = "stored metric_description{$metric_spec} = ";
+      $msg .= $metric_description{$metric_spec};
+      gp_message ("debug", $subr_name, $msg);
 
-          if ($metric_flavor ne "e")
-            {
-              gp_message ("debug", $subr_name, "metric $metric_spec is ignored");
-            }
-          else
+      if ($metric_flavor ne "e")
+        {
+          $msg = "metric $metric_spec is ignored";
+          gp_message ("debug", $subr_name, $msg);
+          $msg = "further processing of this line is skipped";
+          gp_message ("debug", $subr_name, $msg);
+        }
+      else
 #------------------------------------------------------------------------------
 # Only the exclusive metrics are shown.
 #------------------------------------------------------------------------------
-            {
-              gp_message ("debug", $subr_name, "metric $metric_spec ($metric_text) is considered");
+        {
+          $msg = "metric $metric_spec ($metric_text) is considered";
+          gp_message ("debug", $subr_name, $msg);
 
-              if ($metric_spec =~ /user/)
-                {
-                  $user_metrics = $TRUE;
-                  gp_message ("debug", $subr_name, "m: user_metrics set to TRUE");
-                }
-              elsif ($metric_spec =~ /system/)
-                {
-                  $system_metrics = $TRUE;
-                  gp_message ("debug", $subr_name, "m: system_metrics set to TRUE");
-                }
-              elsif ($metric_spec =~ /wall/)
-                {
-                  $wall_metrics = $TRUE;
-                  gp_message ("debug", $subr_name, "m: wall_metrics set to TRUE");
-                }
 #------------------------------------------------------------------------------
-# TBD I don't see why these need to be skipped.  Also, should be totalcpu.
+# Legacy metrics, but may re-appear one day and so the code is left in here.
 #------------------------------------------------------------------------------
-              elsif (($metric_spec =~ /^e\.total$/) or ($metric_spec =~/^e\.total_cpu$/))
+          if ($metric_spec =~ /user/)
+            {
+              $user_metrics = $TRUE;
+              $msg = "user_metrics set to TRUE";
+              gp_message ("debug", $subr_name, $msg);
+            }
+          elsif ($metric_spec =~ /system/)
+            {
+              $system_metrics = $TRUE;
+              $msg = "system_metrics set to TRUE";
+              gp_message ("debug", $subr_name, $msg);
+            }
+          elsif ($metric_spec =~ /wall/)
+            {
+              $wall_metrics = $TRUE;
+              $msg = "wall_metrics set to TRUE";
+              gp_message ("debug", $subr_name, $msg);
+            }
+          elsif (defined ($metric_value{$metric_text}))
+            {
+              $msg  = "total attributed to this metric ";
+              $msg .= "metric_value{" . $metric_text . "} = ";
+              $msg .= $metric_value{$metric_text};
+              gp_message ("debug", $subr_name, $msg);
+
+              if ($summary_metrics ne '')
                 {
-                # skip total thread time and total CPU time
-                  gp_message ("debug", $subr_name, "m: skip above");
-                }
-              elsif (defined ($metric_value{$metric_text}))
-                {
-                  gp_message ("debug", $subr_name, "Total attributed to this metric metric_value{$metric_text} = $metric_value{$metric_text}");
-                  if ($summary_metrics ne '')
-                    {
-                      $summary_metrics = $summary_metrics.':'.$metric_spec;
-                      gp_message ("debug", $subr_name, "updated summary_metrics = $summary_metrics - 1");
-                      if ($metric_spec !~ /\.wait$|\.ulock$|\.text$|\.data$|\.owait$|total$|mpiwork$|mpiwait$|ompwork$|ompwait$/)
-                        {
-                          $detail_metrics = $detail_metrics.':'.$metric_spec;
-                          gp_message ("debug", $subr_name, "updated m:detail_metrics=$detail_metrics - 1");
-                          $detail_metrics_system = $detail_metrics_system.':'.$metric_spec;
-                          gp_message ("debug", $subr_name, "updated m:detail_metrics_system=$detail_metrics_system - 1");
-                        }
-                      else
-                        {
-                          gp_message ("debug", $subr_name, "m: no want above metric for detail_metrics or detail_metrics_system");
-                        }
-                    }
-                  else
-                    {
-                      $summary_metrics = $metric_spec;
-                      gp_message ("debug", $subr_name, "initialized summary_metrics = $summary_metrics - 2");
-                      if ($metric_spec !~ /\.wait$|\.ulock$|\.text$|\.data$|\.owait$|total$|mpiwork$|mpiwait$|ompwork$|ompwait$/)
-                        {
-                          $detail_metrics = $metric_spec;
-                          gp_message ("debug", $subr_name, "m:detail_metrics=$detail_metrics - 2");
-                          $detail_metrics_system = $metric_spec;
-                          gp_message ("debug", $subr_name, "m:detail_metrics_system=$detail_metrics_system - 2");
-                        }
-                      else
-                        {
-                          gp_message ("debug", $subr_name, "m: no want above metric for detail_metrics or detail_metrics_system");
-                        }
-                    }
-                  gp_message ("debug", $subr_name, " metric $metric_spec added");
+                  $summary_metrics .= ':' . $metric_spec;
+                  $msg = "updated summary_metrics = " . $summary_metrics;
+                  gp_message ("debug", $subr_name, $msg);
                 }
               else
                 {
-                  gp_message ("debug", $subr_name, "m: no want above metric was a 0 total");
+                  $summary_metrics = $metric_spec;
+                  $msg = "initialized summary_metrics = " . $summary_metrics;
+                  gp_message ("debug", $subr_name, $msg);
                 }
+              gp_message ("debug", $subr_name, "metric $metric_spec added");
+            }
+          else
+            {
+#------------------------------------------------------------------------------
+# TBD: This doesn't seem to make much sense.
+#------------------------------------------------------------------------------
+              $msg = "no action taken for " . $metric_spec;
+              gp_message ("debug", $subr_name, $msg);
             }
         }
     }
@@ -13874,21 +13963,32 @@ sub process_metrics_data
 
   if ($wall_metrics > 0)
     {
-      gp_message ("debug", $subr_name,"m:wall_metrics set adding to summary_metrics");
+      $msg = "adding e.wall to summary_metrics";
+      gp_message ("debug", $subr_name, $msg);
       $summary_metrics = "e.wall:".$summary_metrics;
-      gp_message ("debug", $subr_name,"m:summary_metrics=$summary_metrics - 3");
+      $msg = "after update summary_metrics = " . $summary_metrics;
+      gp_message ("debug", $subr_name, $msg);
     }
 
   if ($system_metrics > 0)
     {
-      gp_message ("debug", $subr_name,"m:system_metrics set adding to summary_metrics,call_metrics and detail_metrics_system");
-      $summary_metrics       = "e.system:".$summary_metrics;
-      $call_metrics          = "i.system:".$call_metrics;
-      $detail_metrics_system ='e.system:'.$detail_metrics_system;
+      $msg = "adding e.system to summary_metrics and detail_metrics_system";
+      gp_message ("debug", $subr_name, $msg);
 
-      gp_message ("debug", $subr_name,"m:summary_metrics=$summary_metrics - 4");
-      gp_message ("debug", $subr_name,"m:call_metrics=$call_metrics");
-      gp_message ("debug", $subr_name,"m:detail_metrics_system=$detail_metrics_system - 3");
+      $summary_metrics        = "e.system:" . $summary_metrics;
+      $detail_metrics_system  = "e.system:" . $detail_metrics_system;
+
+      $msg = "adding i.system to call_metrics";
+      gp_message ("debug", $subr_name, $msg);
+
+      $call_metrics = "i.system:" . $call_metrics;
+
+      $msg = "after update summary_metrics       = " . $summary_metrics;
+      gp_message ("debug", $subr_name, $msg);
+      $msg = "after update call_metrics          = " . $call_metrics;
+      gp_message ("debug", $subr_name, $msg);
+      $msg = "after update detail_metrics_system = " . $detail_metrics_system;
+      gp_message ("debug", $subr_name, $msg);
     }
 
 
@@ -13898,7 +13998,6 @@ sub process_metrics_data
 
   if ($user_metrics > 0)
     {
-      gp_message ("debug", $subr_name,"m:user_metrics set adding to summary_metrics,detail_metrics,detail_metrics_system and call_metrics");
 # Ruud      if (!exists ($IMETRICS{"i.user"})){
       if ($g_user_settings{"ignore_metrics"}{"defined"} and exists ($ignored_metrics{"user"}))
         {
@@ -13908,14 +14007,12 @@ sub process_metrics_data
         {
           $summary_metrics = "e.user:i.user:".$summary_metrics;
         }
+
       $detail_metrics        = "e.user:".$detail_metrics;
       $detail_metrics_system = "e.user:".$detail_metrics_system;
 
-      gp_message ("debug", $subr_name,"m:summary_metrics=$summary_metrics - 5");
-      gp_message ("debug", $subr_name,"m:detail_metrics=$detail_metrics - 3");
-      gp_message ("debug", $subr_name,"m:detail_metrics_system=$detail_metrics_system - 4");
-
-      if ($g_user_settings{"ignore_metrics"}{"defined"} and exists ($ignored_metrics{"user"}))
+      if ($g_user_settings{"ignore_metrics"}{"defined"} and
+          exists ($ignored_metrics{"user"}))
         {
           $call_metrics = "a.user:".$call_metrics;
         }
@@ -13923,28 +14020,47 @@ sub process_metrics_data
         {
           $call_metrics = "a.user:i.user:".$call_metrics;
         }
-      gp_message ("debug", $subr_name,"m:call_metrics=$call_metrics - 2");
+      $msg = "updated summary_metrics = " . $summary_metrics;
+      gp_message ("debug", $subr_name, $msg);
+      $msg = "updated detail_metrics        = " . $detail_metrics;
+      gp_message ("debug", $subr_name, $msg);
+      $msg = "updated detail_metrics_system = " . $detail_metrics_system;
+      gp_message ("debug", $subr_name, $msg);
+      $msg = "updated call_metrics          = " . $call_metrics;
+      gp_message ("debug", $subr_name, $msg);
+
     }
 
+#------------------------------------------------------------------------------
+# TBD
+# It doesn't look right in case call_metrics ends up being set to ""
+#------------------------------------------------------------------------------
   if ($call_metrics eq "")
     {
       $call_metrics = $detail_metrics;
-
-      gp_message ("debug", $subr_name,"m:call_metrics is not set, setting it to detail_metrics ");
-      gp_message ("debug", $subr_name,"m:call_metrics=$call_metrics - 3");
+      $msg = "call_metrics is not set, setting it to " . $call_metrics;
+      gp_message ("debug", $subr_name, $msg);
+      if ($detail_metrics eq '')
+        {
+          $msg  = "detail_metrics and call_metrics are blank and could";
+          $msg .= " cause trouble later on";
+          gp_message ("debug", $subr_name, $msg);
+        }
     }
 
   for my $metric (sort keys %ignored_metrics)
     {
       if ($ignored_metrics{$metric})
         {
-          gp_message ("debug", $subr_name, "active metric, but ignored: $metric");
+          $msg = "active metric, but ignored: " . $metric;
+          gp_message ("debug", $subr_name, $msg);
         }
 
     }
 
-  return (\%metric_value, \%metric_description, \%metric_found, $user_metrics, $system_metrics, $wall_metrics,
-          $summary_metrics, $detail_metrics, $detail_metrics_system, $call_metrics);
+  return (\%metric_value, \%metric_description, \%metric_found, $user_metrics,
+          $system_metrics, $wall_metrics, $summary_metrics, $detail_metrics,
+          $detail_metrics_system, $call_metrics);
 
 } #-- End of subroutine process_metrics_data
 

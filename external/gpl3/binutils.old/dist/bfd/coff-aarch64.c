@@ -1,5 +1,5 @@
 /* BFD back-end for AArch64 COFF files.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -352,6 +352,7 @@ coff_aarch64_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real
     return &arm64_reloc_howto_branch26;
   case BFD_RELOC_AARCH64_ADR_HI21_PCREL:
   case BFD_RELOC_AARCH64_ADR_HI21_NC_PCREL:
+  case BFD_RELOC_AARCH64_ADR_GOT_PAGE:
     return &arm64_reloc_howto_page21;
   case BFD_RELOC_AARCH64_TSTBR14:
     return &arm64_reloc_howto_branch14;
@@ -364,6 +365,7 @@ coff_aarch64_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED, bfd_reloc_code_real
   case BFD_RELOC_AARCH64_LDST32_LO12:
   case BFD_RELOC_AARCH64_LDST64_LO12:
   case BFD_RELOC_AARCH64_LDST128_LO12:
+  case BFD_RELOC_AARCH64_LD64_GOT_LO12_NC:
     return &arm64_reloc_howto_pgoff12l;
   case BFD_RELOC_AARCH64_BRANCH19:
     return &arm64_reloc_howto_branch19;
@@ -761,6 +763,35 @@ coff_pe_aarch64_relocate_section (bfd *output_bfd,
 	    break;
 	  }
 
+	case IMAGE_REL_ARM64_REL32:
+	  {
+	    uint64_t cur_vma;
+	    int64_t addend, val;
+
+	    addend = bfd_getl32 (contents + rel->r_vaddr);
+
+	    if (addend & 0x80000000)
+	      addend |= 0xffffffff00000000;
+
+	    dest_vma += addend;
+	    cur_vma = input_section->output_section->vma
+		      + input_section->output_offset
+		      + rel->r_vaddr;
+
+	    val = dest_vma - cur_vma;
+
+	    if (val > 0xffffffff || val < -0x100000000)
+	      (*info->callbacks->reloc_overflow)
+		(info, h ? &h->root : NULL, syms[symndx]._n._n_name,
+		"IMAGE_REL_ARM64_REL32", addend, input_bfd,
+		input_section, rel->r_vaddr - input_section->vma);
+
+	    bfd_putl32 (val, contents + rel->r_vaddr);
+	    rel->r_type = IMAGE_REL_ARM64_ABSOLUTE;
+
+	    break;
+	  }
+
 	case IMAGE_REL_ARM64_PAGEOFFSET_12L:
 	  {
 	    uint32_t opcode, val;
@@ -876,10 +907,8 @@ coff_pe_aarch64_relocate_section (bfd *output_bfd,
 	  }
 
 	default:
-	  info->callbacks->einfo (_("%F%P: Unhandled relocation type %u\n"),
+	  info->callbacks->fatal (_("%P: Unhandled relocation type %u\n"),
 				  rel->r_type);
-	  BFD_FAIL ();
-	  return false;
 	}
     }
 
@@ -908,7 +937,6 @@ coff_aarch64_new_section_hook (bfd *abfd, asection *section)
 #define coff_aarch64_close_and_cleanup coff_close_and_cleanup
 #define coff_aarch64_bfd_free_cached_info coff_bfd_free_cached_info
 #define coff_aarch64_get_section_contents coff_get_section_contents
-#define coff_aarch64_get_section_contents_in_window coff_get_section_contents_in_window
 
 /* Target vectors.  */
 const bfd_target

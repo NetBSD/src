@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -63,7 +63,7 @@ hwcdrv_enable_mt (hwcfuncs_tsd_get_fn_t tsd_ftn)
 
 HWCDRV_API int
 hwcdrv_get_descriptions (hwcf_hwc_cb_t *hwc_find_action,
-			 hwcf_attr_cb_t *attr_find_action)
+			 hwcf_attr_cb_t *attr_find_action, Hwcentry *hwcdef)
 {
   return 0;
 }
@@ -162,10 +162,10 @@ ctrdefprint (int dbg_lvl, const char * hdr, Hwcentry*phwcdef)
 {
   TprintfT (dbg_lvl, "%s: name='%s', int_name='%s',"
 	    " reg_num=%d, timecvt=%d, memop=%d, "
-	    "interval=%d, tag=%u, reg_list=%p\n",
+	    "interval=%d, tag=%u\n",
 	    hdr, phwcdef->name, phwcdef->int_name, phwcdef->reg_num,
 	    phwcdef->timecvt, phwcdef->memop, phwcdef->val,
-	    phwcdef->sort_order, phwcdef->reg_list);
+	    phwcdef->sort_order);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -198,7 +198,7 @@ hwcfuncs_errmsg_get (char *buf, size_t bufsize, int enable)
 }
 
 /* used by cpc to log an error */
-IS_GLOBAL void
+static void
 hwcfuncs_int_capture_errmsg (const char *fn, int subcode,
 			     const char *fmt, va_list ap)
 {
@@ -288,6 +288,12 @@ process_data_descriptor (const char *defstring)
 	  break;
 	}
       hwcdef[idx].config = strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+      hwcdef[idx].config1 = strtol (dsp, &dsp, 0);
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
@@ -637,39 +643,6 @@ hwcfuncs_get_ctrs (unsigned *defcnt)
   if (defcnt)
     *defcnt = hwcdef_cnt;
   return hwctable;
-}
-
-/* return 1 if <regno> is in Hwcentry's list */
-IS_GLOBAL int
-regno_is_valid (const Hwcentry * pctr, regno_t regno)
-{
-  regno_t *reg_list = pctr->reg_list;
-  if (REG_LIST_IS_EMPTY (reg_list))
-    return 0;
-  if (regno == REGNO_ANY)   /* wildcard */
-    return 1;
-  for (int ii = 0; ii < MAX_PICS; ii++)
-    {
-      regno_t tmp = reg_list[ii];
-      if (REG_LIST_EOL (tmp))   /* end of list */
-	break;
-      if (tmp == regno)     /* is in list */
-	return 1;
-    }
-  return 0;
-}
-
-/* supplied by hwcdrv_api drivers */
-IS_GLOBAL int
-hwcfuncs_assign_regnos (Hwcentry* entries[],
-			unsigned numctrs)
-{
-  if (numctrs > cpcN_npics)
-    {
-      logerr (GTXT ("More than %d counters were specified\n"), cpcN_npics); /*!*/
-      return HWCFUNCS_ERROR_HWCARGS;
-    }
-  return hwcdrv_driver->hwcdrv_assign_regnos (entries, numctrs);
 }
 
 extern hwcdrv_api_t hwcdrv_pcl_api;

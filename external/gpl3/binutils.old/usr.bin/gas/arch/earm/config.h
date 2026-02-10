@@ -65,6 +65,9 @@
 /* Define default value for RISC-V -mpriv-spec */
 /* #undef DEFAULT_RISCV_PRIV_SPEC */
 
+/* Define to 1 if you want to check x86 TLS relocation by default. */
+#define DEFAULT_X86_TLS_CHECK 1
+
 /* Define to 1 if you want to generate GNU x86 used ISA and feature properties
    by default. */
 #define DEFAULT_X86_USED_NOTE 0
@@ -90,10 +93,6 @@
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 /* #undef HAVE_DCGETTEXT */
-
-/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_ASPRINTF 1
 
 /* Is the prototype for getopt in <unistd.h> in the expected format? */
 #define HAVE_DECL_GETOPT 1
@@ -240,7 +239,7 @@
 #define PACKAGE_NAME "gas"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gas 2.42"
+#define PACKAGE_STRING "gas 2.45"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gas"
@@ -249,7 +248,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.42"
+#define PACKAGE_VERSION "2.45"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -258,16 +257,16 @@
 /* #undef STRICTCOFF */
 
 /* Target alias. */
-#define TARGET_ALIAS "armv4--netbsdelf-eabi"
+#define TARGET_ALIAS "armv7--netbsdelf-eabi"
 
 /* Define as 1 if big endian. */
 #define TARGET_BYTES_BIG_ENDIAN 0
 
 /* Canonical target. */
-#define TARGET_CANONICAL "armv4--netbsdelf-eabi"
+#define TARGET_CANONICAL "armv7--netbsdelf-eabi"
 
 /* Target CPU. */
-#define TARGET_CPU "armv4"
+#define TARGET_CPU "armv7"
 
 /* Target OS. */
 #define TARGET_OS "netbsdelf-eabi"
@@ -316,7 +315,7 @@
 /* #undef USING_CGEN */
 
 /* Version number of package */
-#define VERSION "2.42"
+#define VERSION "2.45"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

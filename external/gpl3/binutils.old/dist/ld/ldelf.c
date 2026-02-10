@@ -1,5 +1,5 @@
 /* ELF emulation code for targets using elf.em.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -63,6 +63,7 @@ static lang_input_statement_type *global_found;
 static struct stat global_stat;
 static struct bfd_link_needed_list *global_vercheck_needed;
 static bool global_vercheck_failed;
+static bool orphan_init_done;
 
 void
 ldelf_after_parse (void)
@@ -74,7 +75,7 @@ ldelf_after_parse (void)
       && link_info.nointerp)
     {
       if (link_info.dynamic_undefined_weak > 0)
-	einfo (_("%P: warning: -z dynamic-undefined-weak ignored\n"));
+	queue_unknown_cmdline_warning ("-z dynamic-undefined-weak");
       link_info.dynamic_undefined_weak = 0;
     }
 
@@ -94,7 +95,7 @@ ldelf_after_parse (void)
       else if (!link_info.maxpagesize_is_set)
 	link_info.maxpagesize = link_info.commonpagesize;
       else
-	einfo (_("%F%P: common page size (0x%v) > maximum page size (0x%v)\n"),
+	fatal (_("%P: common page size (0x%v) > maximum page size (0x%v)\n"),
 	       link_info.commonpagesize, link_info.maxpagesize);
     }
 }
@@ -120,7 +121,7 @@ ldelf_load_symbols (lang_input_statement_type *entry)
 
   if (entry->flags.just_syms
       && (bfd_get_file_flags (entry->the_bfd) & DYNAMIC) != 0)
-    einfo (_("%F%P: %pB: --just-symbols may not be used on DSO\n"),
+    fatal (_("%P: %pB: --just-symbols may not be used on DSO\n"),
 	   entry->the_bfd);
 
   if (link_class == 0
@@ -320,7 +321,7 @@ ldelf_try_needed (struct dt_needed *needed, int force, int is_linux)
       struct bfd_link_needed_list *needs;
 
       if (! bfd_elf_get_bfd_needed_list (abfd, &needs))
-	einfo (_("%F%P: %pB: bfd_elf_get_bfd_needed_list failed: %E\n"), abfd);
+	fatal (_("%P: %pB: bfd_elf_get_bfd_needed_list failed: %E\n"), abfd);
 
       if (needs != NULL)
 	{
@@ -368,7 +369,7 @@ ldelf_try_needed (struct dt_needed *needed, int force, int is_linux)
      can only check that using stat.  */
 
   if (bfd_stat (abfd, &global_stat) != 0)
-    einfo (_("%F%P: %pB: bfd_stat failed: %E\n"), abfd);
+    fatal (_("%P: %pB: bfd_stat failed: %E\n"), abfd);
 
   /* First strip off everything before the last '/'.  */
   soname = lbasename (bfd_get_filename (abfd));
@@ -407,7 +408,7 @@ ldelf_try_needed (struct dt_needed *needed, int force, int is_linux)
 
   /* Add this file into the symbol table.  */
   if (! bfd_link_add_symbols (abfd, &link_info))
-    einfo (_("%F%P: %pB: error adding symbols: %E\n"), abfd);
+    fatal (_("%P: %pB: error adding symbols: %E\n"), abfd);
 
   return true;
 }
@@ -614,7 +615,10 @@ ldelf_search_needed (const char *path, struct dt_needed *n, int force,
       needed.name = filename;
 
       if (ldelf_try_needed (&needed, force, is_linux))
-	return true;
+	{
+	  free (filename);
+	  return true;
+	}
 
       free (filename);
 
@@ -1202,7 +1206,7 @@ ldelf_handle_dt_needed (struct elf_link_hash_table *htab,
 	  && elf_dt_name (abfd) != NULL)
 	{
 	  if (bfd_elf_add_dt_needed_tag (abfd, &link_info) < 0)
-	    einfo (_("%F%P: failed to add DT_NEEDED dynamic tag\n"));
+	    fatal (_("%P: failed to add DT_NEEDED dynamic tag\n"));
 	}
 
   link_info.input_bfds_tail = save_input_bfd_tail;
@@ -1253,10 +1257,8 @@ ldelf_after_open (int use_libpath, int native, int is_linux, int is_freebsd,
 		     bfd_get_target (link_info.output_bfd));
 
       if (link_info.out_implib_bfd == NULL)
-	{
-	  einfo (_("%F%P: %s: can't open for writing: %E\n"),
-		 command_line.out_implib_filename);
-	}
+	fatal (_("%P: %s: can't open for writing: %E\n"),
+	       command_line.out_implib_filename);
     }
 
   if (ldelf_emit_note_gnu_build_id != NULL
@@ -1310,7 +1312,7 @@ ldelf_after_open (int use_libpath, int native, int is_linux, int is_freebsd,
 	  && (elf_tdata (abfd)->elf_header->e_type == ET_EXEC
 	      || (elf_tdata (abfd)->elf_header->e_type == ET_DYN
 		  && elf_tdata (abfd)->is_pie)))
-	einfo (_("%F%P: cannot use executable file '%pB' as input to a link\n"),
+	fatal (_("%P: cannot use executable file '%pB' as input to a link\n"),
 	       abfd);
     }
 
@@ -1364,7 +1366,7 @@ ldelf_after_open (int use_libpath, int native, int is_linux, int is_freebsd,
 		}
 	      else if (seen_type != type)
 		{
-		  einfo (_("%F%P: compact frame descriptions incompatible with"
+		  fatal (_("%P: compact frame descriptions incompatible with"
 			   " DWARF2 .eh_frame from %pB\n"),
 			 type == DWARF2_EH_HDR ? abfd : elfbfd);
 		  break;
@@ -1406,7 +1408,7 @@ ldelf_after_open (int use_libpath, int native, int is_linux, int is_freebsd,
 
   if (link_info.eh_frame_hdr_type == COMPACT_EH_HDR)
     if (!bfd_elf_parse_eh_frame_entries (NULL, &link_info))
-      einfo (_("%F%P: failed to parse EH frame entries\n"));
+      fatal (_("%P: failed to parse EH frame entries\n"));
 
   ldelf_handle_dt_needed (htab, use_libpath, native, is_linux,
 			  is_freebsd, elfsize, prefix);
@@ -1454,14 +1456,12 @@ write_build_id (bfd *abfd)
     }
   i_shdr = &elf_section_data (asec->output_section)->this_hdr;
 
-  if (i_shdr->contents == NULL)
-    {
-      if (asec->contents == NULL)
-	asec->contents = (unsigned char *) xmalloc (asec->size);
-      contents = asec->contents;
-    }
-  else
+  if (i_shdr->contents != NULL)
     contents = i_shdr->contents + asec->output_offset;
+  else if (asec->contents != NULL)
+    contents = asec->contents;
+  else
+    contents = xmalloc (asec->size);
 
   e_note = (Elf_External_Note *) contents;
   size = offsetof (Elf_External_Note, name[sizeof "GNU"]);
@@ -1481,8 +1481,11 @@ write_build_id (bfd *abfd)
 
   position = i_shdr->sh_offset + asec->output_offset;
   size = asec->size;
-  return (bfd_seek (abfd, position, SEEK_SET) == 0
-	  && bfd_write (contents, size, abfd) == size);
+  bool ret = (bfd_seek (abfd, position, SEEK_SET) == 0
+	      && bfd_write (contents, size, abfd) == size);
+  if (i_shdr->contents == NULL && asec->contents == NULL)
+    free (contents);
+  return ret;
 }
 
 /* Make .note.gnu.build-id section, and set up elf_tdata->build_id.  */
@@ -1543,14 +1546,12 @@ write_package_metadata (bfd *abfd)
     }
   i_shdr = &elf_section_data (asec->output_section)->this_hdr;
 
-  if (i_shdr->contents == NULL)
-    {
-      if (asec->contents == NULL)
-	asec->contents = (unsigned char *) xmalloc (asec->size);
-      contents = asec->contents;
-    }
-  else
+  if (i_shdr->contents != NULL)
     contents = i_shdr->contents + asec->output_offset;
+  else if (asec->contents != NULL)
+    contents = asec->contents;
+  else
+    contents = xmalloc (asec->size);
 
   e_note = (Elf_External_Note *) contents;
   size = offsetof (Elf_External_Note, name[sizeof "FDO"]);
@@ -1569,8 +1570,11 @@ write_package_metadata (bfd *abfd)
 
   position = i_shdr->sh_offset + asec->output_offset;
   size = asec->size;
-  return (bfd_seek (abfd, position, SEEK_SET) == 0
-	  && bfd_write (contents, size, abfd) == size);
+  bool ret = (bfd_seek (abfd, position, SEEK_SET) == 0
+	      && bfd_write (contents, size, abfd) == size);
+  if (i_shdr->contents == NULL && asec->contents == NULL)
+    free (contents);
+  return ret;
 }
 
 /* Make .note.package section.
@@ -1663,7 +1667,7 @@ ldelf_find_exp_assignment (etree_type *exp)
 					       &link_info,
 					       exp->assign.dst, provide,
 					       exp->assign.hidden))
-	    einfo (_("%F%P: failed to record assignment to %s: %E\n"),
+	    fatal (_("%P: failed to record assignment to %s: %E\n"),
 		   exp->assign.dst);
 	}
       ldelf_find_exp_assignment (exp->assign.src);
@@ -1746,7 +1750,7 @@ ldelf_append_to_separated_string (char **to, char *op_arg)
    sections, but before any sizes or addresses have been set.  */
 
 void
-ldelf_before_allocation (char *audit, char *depaudit,
+ldelf_before_allocation (char **audit, char **depaudit,
 			 const char *default_interpreter_name)
 {
   const char *rpath;
@@ -1766,8 +1770,7 @@ ldelf_before_allocation (char *audit, char *depaudit,
       if (!bfd_link_relocatable (&link_info))
 	{
 	  struct elf_link_hash_table *htab = elf_hash_table (&link_info);
-	  struct elf_link_hash_entry *h
-	    = elf_link_hash_lookup (htab, "__ehdr_start", false, false, true);
+	  struct elf_link_hash_entry *h = htab->hehdr_start;
 
 	  /* Only adjust the export class if the symbol was referenced
 	     and not defined, otherwise leave it alone.  */
@@ -1815,33 +1818,31 @@ ldelf_before_allocation (char *audit, char *depaudit,
 	   a dep audit entry.  */
 	if (audit_libs && *audit_libs != '\0')
 	  {
-	    char *cp = xstrdup (audit_libs);
+	    char *copy_audit_libs = xstrdup (audit_libs);
+	    char *cp = copy_audit_libs;
 	    do
 	      {
-		int more = 0;
 		char *cp2 = strchr (cp, config.rpath_separator);
 
 		if (cp2)
-		  {
-		    *cp2 = '\0';
-		    more = 1;
-		  }
+		  *cp2++ = '\0';
 
-		if (cp != NULL && *cp != '\0')
-		  ldelf_append_to_separated_string (&depaudit, cp);
+		if (*cp != '\0')
+		  ldelf_append_to_separated_string (depaudit, cp);
 
-		cp = more ? ++cp2 : NULL;
+		cp = cp2;
 	      }
 	    while (cp != NULL);
+	    free (copy_audit_libs);
 	  }
       }
 
   if (! (bfd_elf_size_dynamic_sections
 	 (link_info.output_bfd, command_line.soname, rpath,
-	  command_line.filter_shlib, audit, depaudit,
+	  command_line.filter_shlib, *audit, *depaudit,
 	  (const char * const *) command_line.auxiliary_filters,
 	  &link_info, &sinterp)))
-    einfo (_("%F%P: failed to set dynamic section sizes: %E\n"));
+    fatal (_("%P: failed to set dynamic section sizes: %E\n"));
 
   if (sinterp != NULL)
     {
@@ -1851,6 +1852,7 @@ ldelf_before_allocation (char *audit, char *depaudit,
       if (default_interpreter_name != NULL)
 	{
 	  sinterp->contents = (bfd_byte *) default_interpreter_name;
+	  sinterp->alloced = 1;
 	  sinterp->size = strlen ((char *) sinterp->contents) + 1;
 	}
     }
@@ -1878,8 +1880,8 @@ ldelf_before_allocation (char *audit, char *depaudit,
 	msg = (char *) xmalloc ((size_t) (sz + 1));
 	if (! bfd_get_section_contents (is->the_bfd, s,	msg,
 					(file_ptr) 0, sz))
-	  einfo (_("%F%P: %pB: can't read contents of section .gnu.warning: %E\n"),
-		 is->the_bfd);
+	  fatal (_("%P: %pB: can't read contents of section %pA: %E\n"),
+		 is->the_bfd, s);
 	msg[sz] = '\0';
 	(*link_info.callbacks->warning) (&link_info, msg,
 					 (const char *) NULL, is->the_bfd,
@@ -1906,7 +1908,7 @@ ldelf_before_allocation (char *audit, char *depaudit,
   before_allocation_default ();
 
   if (!bfd_elf_size_dynsym_hash_dynstr (link_info.output_bfd, &link_info))
-    einfo (_("%F%P: failed to set dynamic section sizes: %E\n"));
+    fatal (_("%P: failed to set dynamic section sizes: %E\n"));
 
   if (ehdr_start != NULL)
     {
@@ -2086,6 +2088,7 @@ elf_orphan_compatible (asection *in, asection *out)
       && (elf_next_in_group (out) != NULL
 	  || ((elf_section_flags (in) & SHF_LINK_ORDER) != 0
 	      && (elf_section_flags (out) & SHF_LINK_ORDER) != 0
+	      && elf_linked_to_section (in) != NULL
 	      && (elf_linked_to_section (in)->output_section
 		  != elf_linked_to_section (out)->output_section))
 	  || ((elf_section_flags (out) ^ elf_section_flags (in))
@@ -2101,7 +2104,7 @@ elf_orphan_compatible (asection *in, asection *out)
 lang_output_section_statement_type *
 ldelf_place_orphan (asection *s, const char *secname, int constraint)
 {
-  static struct orphan_save hold[] =
+  static struct orphan_save orig_hold[] =
     {
       { ".text",
 	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
@@ -2118,7 +2121,7 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
       { ".bss",
 	SEC_ALLOC,
 	0, 0, 0, 0 },
-      { 0,
+      { NULL,
 	SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_DATA,
 	0, 0, 0, 0 },
       { ".interp",
@@ -2131,6 +2134,7 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
 	SEC_HAS_CONTENTS,
 	0, 0, 0, 0 },
     };
+  static struct orphan_save hold[ARRAY_SIZE (orig_hold)];
   enum orphan_save_index
     {
       orphan_text = 0,
@@ -2143,7 +2147,6 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
       orphan_sdata,
       orphan_nonalloc
     };
-  static int orphan_init_done = 0;
   struct orphan_save *place;
   lang_output_section_statement_type *after;
   lang_output_section_statement_type *os;
@@ -2272,16 +2275,21 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
 
   if (!orphan_init_done)
     {
-      struct orphan_save *ho;
+      struct orphan_save *ho, *horig;
 
-      for (ho = hold; ho < hold + sizeof (hold) / sizeof (hold[0]); ++ho)
-	if (ho->name != NULL)
-	  {
-	    ho->os = lang_output_section_find (ho->name);
-	    if (ho->os != NULL && ho->os->flags == 0)
-	      ho->os->flags = ho->flags;
-	  }
-      orphan_init_done = 1;
+      for (ho = hold, horig = orig_hold;
+	   ho < hold + ARRAY_SIZE (hold);
+	   ++ho, ++horig)
+	{
+	  *ho = *horig;
+	  if (ho->name != NULL)
+	    {
+	      ho->os = lang_output_section_find (ho->name);
+	      if (ho->os != NULL && ho->os->flags == 0)
+		ho->os->flags = ho->flags;
+	    }
+	}
+      orphan_init_done = true;
     }
 
   /* If this is a final link, then always put .gnu.warning.SYMBOL
@@ -2328,7 +2336,18 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
 	   && (elfinput
 	       ? sh_type == SHT_NOTE
 	       : startswith (secname, ".note")))
-    place = &hold[orphan_interp];
+    {
+      /* PR 32219: Check that the .interp section
+	 exists before attaching orphans to it.  */
+      if (lang_output_section_find (hold[orphan_interp].name))
+	place = &hold[orphan_interp];
+      /* Next best place: after .rodata.  */
+      else if (lang_output_section_find (hold[orphan_rodata].name))
+	place = &hold[orphan_rodata];
+      /* Last attempt: the .text section.  */
+      else
+	place = &hold[orphan_text];
+    }
   else if ((flags & (SEC_LOAD | SEC_HAS_CONTENTS | SEC_THREAD_LOCAL)) == 0)
     place = &hold[orphan_bss];
   else if ((flags & SEC_SMALL_DATA) != 0)
@@ -2416,4 +2435,14 @@ ldelf_set_output_arch (void)
   set_output_arch_default ();
   if (link_info.output_bfd->xvec->flavour == bfd_target_elf_flavour)
     elf_link_info (link_info.output_bfd) = &link_info;
+}
+
+void
+ldelf_finish (void)
+{
+  /* Support the object-only output.  */
+  if (config.emit_gnu_object_only)
+    orphan_init_done = false;
+
+  finish_default ();
 }

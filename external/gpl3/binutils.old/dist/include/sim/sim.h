@@ -1,6 +1,6 @@
 /* This file defines the interface between the simulator and gdb.
 
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -160,14 +160,14 @@ SIM_RC sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
    at virtual address MEM and store in BUF.  Result is number of bytes
    read, or zero if error.  */
 
-uint64_t sim_read (SIM_DESC sd, uint64_t mem, void *buf, uint64_t length);
+uint64_t sim_read (SIM_DESC sd, uint64_t addr, void *buf, uint64_t length);
 
 
 /* Store LENGTH bytes from BUF into the simulated program's
    memory. Store bytes starting at virtual address MEM. Result is
    number of bytes write, or zero if error.  */
 
-uint64_t sim_write (SIM_DESC sd, uint64_t mem, const void *buf, uint64_t length);
+uint64_t sim_write (SIM_DESC sd, uint64_t addr, const void *buf, uint64_t length);
 
 
 /* Fetch register REGNO storing its raw (target endian) value in the

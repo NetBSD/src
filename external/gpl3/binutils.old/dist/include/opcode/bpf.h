@@ -1,5 +1,5 @@
 /* bpf.h - BPF opcode list for binutils.
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    Contributed by Oracle Inc.
 
@@ -188,9 +188,9 @@ enum bpf_insn_id
   BPF_INSN_ENDLE16, BPF_INSN_ENDLE32, BPF_INSN_ENDLE64,
   BPF_INSN_ENDBE16, BPF_INSN_ENDBE32, BPF_INSN_ENDBE64,
   /* Absolute load instructions.  */
-  BPF_INSN_LDABSB, BPF_INSN_LDABSH, BPF_INSN_LDABSW, BPF_INSN_LDABSDW,
+  BPF_INSN_LDABSB, BPF_INSN_LDABSH, BPF_INSN_LDABSW,
   /* Indirect load instructions.  */
-  BPF_INSN_LDINDB, BPF_INSN_LDINDH, BPF_INSN_LDINDW, BPF_INSN_LDINDDW,
+  BPF_INSN_LDINDB, BPF_INSN_LDINDH, BPF_INSN_LDINDW,
   /* Generic load instructions (to register.)  */
   BPF_INSN_LDXB, BPF_INSN_LDXH, BPF_INSN_LDXW, BPF_INSN_LDXDW,
   /* Generic signed load instructions.  */

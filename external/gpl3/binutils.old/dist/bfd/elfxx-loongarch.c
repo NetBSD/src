@@ -1,5 +1,5 @@
 /* LoongArch-specific support for ELF.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    Based on RISC-V target.
@@ -55,6 +55,8 @@ static bool
 reloc_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *val);
 static bool
 reloc_sign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val);
+static bool
+reloc_unsign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val);
 
 static bfd_reloc_status_type
 loongarch_elf_add_sub_reloc (bfd *, arelent *, asymbol *, void *,
@@ -278,8 +280,8 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 
   LOONGARCH_HOWTO (R_LARCH_IRELATIVE,	  /* type (12).  */
 	 0,				  /* rightshift */
-	 4,				  /* size */
-	 32,				  /* bitsize */
+	 8,				  /* size */
+	 64,				  /* bitsize */
 	 false,				  /* pc_relative */
 	 0,				  /* bitpos */
 	 complain_overflow_dont,	  /* complain_on_overflow */
@@ -312,7 +314,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 
   LOONGARCH_HOWTO (R_LARCH_TLS_DESC64,	  /* type (14).  */
 	 0,				  /* rightshift.  */
-	 4,				  /* size.  */
+	 8,				  /* size.  */
 	 64,				  /* bitsize.  */
 	 false,				  /* pc_relative.  */
 	 0,				  /* bitpos.  */
@@ -415,7 +417,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0x7c00,				  /* dst_mask */
 	 false,					  /* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_S_10_5,	  /* bfd_reloc_code_real_type */
-	 reloc_bits,				  /* adjust_reloc_bits */
+	 reloc_sign_bits,			  /* adjust_reloc_bits */
 	 NULL),					  /* larch_reloc_type_name */
 
   LOONGARCH_HOWTO (R_LARCH_SOP_POP_32_U_10_12,	  /* type (39).  */
@@ -432,7 +434,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0x3ffc00,				  /* dst_mask */
 	 false,					  /* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_U_10_12,	  /* bfd_reloc_code_real_type */
-	 reloc_bits,				  /* adjust_reloc_bits */
+	 reloc_unsign_bits,			  /* adjust_reloc_bits */
 	 NULL),					  /* larch_reloc_type_name */
 
   LOONGARCH_HOWTO (R_LARCH_SOP_POP_32_S_10_12,	  /* type (40).  */
@@ -449,7 +451,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0x3ffc00,				  /* dst_mask */
 	 false,					  /* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_S_10_12,	  /* bfd_reloc_code_real_type */
-	 reloc_bits,				  /* adjust_reloc_bits */
+	 reloc_sign_bits,			  /* adjust_reloc_bits */
 	 NULL),					  /* larch_reloc_type_name */
 
   LOONGARCH_HOWTO (R_LARCH_SOP_POP_32_S_10_16,	  /* type (41).  */
@@ -466,7 +468,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0x3fffc00,				  /* dst_mask */
 	 false,					  /* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_S_10_16,	  /* bfd_reloc_code_real_type */
-	 reloc_bits,				  /* adjust_reloc_bits */
+	 reloc_sign_bits,			  /* adjust_reloc_bits */
 	 NULL),					  /* larch_reloc_type_name */
 
   LOONGARCH_HOWTO (R_LARCH_SOP_POP_32_S_10_16_S2, /* type (42).  */
@@ -500,7 +502,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0x1ffffe0,				  /* dst_mask */
 	 false,					  /* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_S_5_20,	  /* bfd_reloc_code_real_type */
-	 reloc_bits,				  /* adjust_reloc_bits */
+	 reloc_sign_bits,			  /* adjust_reloc_bits */
 	 NULL),					  /* larch_reloc_type_name */
 
   LOONGARCH_HOWTO (R_LARCH_SOP_POP_32_S_0_5_10_16_S2,
@@ -514,8 +516,8 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 bfd_elf_generic_reloc,			  /* special_function.  */
 	 "R_LARCH_SOP_POP_32_S_0_5_10_16_S2",	  /* name.  */
 	 false,					  /* partial_inplace.  */
-	 0xfc0003e0,				  /* src_mask */
-	 0xfc0003e0,				  /* dst_mask */
+	 0x0,					  /* src_mask */
+	 0x03fffc1f,				  /* dst_mask */
 	 false,					  /* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_S_0_5_10_16_S2,
 						  /* bfd_reloc_code_real_type */
@@ -548,13 +550,13 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0,					/* bitpos.  */
 	 complain_overflow_unsigned,		/* complain_on_overflow.  */
 	 bfd_elf_generic_reloc,			/* special_function.  */
-	 "R_LARCH_SOP_POP_32_S_U",		/* name.  */
+	 "R_LARCH_SOP_POP_32_U",		/* name.  */
 	 false,					/* partial_inplace.  */
 	 0xffffffff00000000,			/* src_mask */
 	 0x00000000ffffffff,			/* dst_mask */
 	 false,					/* pcrel_offset */
 	 BFD_RELOC_LARCH_SOP_POP_32_U,		/* bfd_reloc_code_real_type */
-	 reloc_bits,				/* adjust_reloc_bits */
+	 reloc_unsign_bits,			/* adjust_reloc_bits */
 	 NULL),					/* larch_reloc_type_name */
 
   /* 8-bit in-place addition, for local label subtraction.  */
@@ -1388,7 +1390,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 0xffffffff,				/* dst_mask */
 	 false,					/* pcrel_offset */
 	 BFD_RELOC_LARCH_32_PCREL,		/* bfd_reloc_code_real_type */
-	 NULL,					/* adjust_reloc_bits */
+	 reloc_sign_bits,			/* adjust_reloc_bits */
 	 NULL),					/* larch_reloc_type_name */
 
   /* The paired relocation may be relaxed.  */
@@ -1991,9 +1993,11 @@ reloc_bits (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bool
-reloc_sign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val)
+reloc_bits_sanity (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val,
+		   unsigned int sign)
 {
-  if (howto->complain_on_overflow != complain_overflow_signed)
+  if ((sign && howto->complain_on_overflow != complain_overflow_signed)
+      || (!sign && howto->complain_on_overflow != complain_overflow_unsigned))
     return false;
 
   bfd_signed_vma val = (bfd_signed_vma)(*fix_val);
@@ -2014,7 +2018,7 @@ reloc_sign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val)
     }
 
   bfd_signed_vma mask = ((bfd_signed_vma)0x1 << (howto->bitsize
-			  + howto->rightshift - 1)) - 1;
+			  + howto->rightshift - sign)) - 1;
 
   /* Positive number: high part is all 0;
      Negative number: if high part is not all 0, high part must be all 1.
@@ -2062,6 +2066,18 @@ reloc_sign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val)
 
   *fix_val = val;
   return true;
+}
+
+static bool
+reloc_sign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val)
+{
+  return reloc_bits_sanity (abfd, howto, fix_val, 1);
+}
+
+static bool
+reloc_unsign_bits (bfd *abfd, reloc_howto_type *howto, bfd_vma *fix_val)
+{
+  return reloc_bits_sanity (abfd, howto, fix_val, 0);
 }
 
 bool
@@ -2155,11 +2171,11 @@ loongarch_elf_add_sub_reloc_uleb128 (bfd *abfd,
   if (output_bfd != NULL)
     return bfd_reloc_continue;
 
-  relocation = symbol->value + symbol->section->output_section->vma
-    + symbol->section->output_offset + reloc_entry->addend;
+  relocation = (symbol->value + symbol->section->output_section->vma
+		+ symbol->section->output_offset + reloc_entry->addend);
 
-  bfd_size_type octets = reloc_entry->address
-    * bfd_octets_per_byte (abfd, input_section);
+  bfd_size_type octets = (reloc_entry->address
+			  * bfd_octets_per_byte (abfd, input_section));
   if (!bfd_reloc_offset_in_range (reloc_entry->howto, abfd,
 				  input_section, octets))
     return bfd_reloc_outofrange;
@@ -2179,8 +2195,11 @@ loongarch_elf_add_sub_reloc_uleb128 (bfd *abfd,
       break;
     }
 
-  bfd_vma mask = (1 << (7 * len)) - 1;
-  relocation = relocation & mask;
+  if (7 * len < sizeof (bfd_vma))
+    {
+      bfd_vma mask = ((bfd_vma) 1 << (7 * len)) - 1;
+      relocation = relocation & mask;
+    }
   loongarch_write_unsigned_leb128 (p, len, relocation);
   return bfd_reloc_ok;
 }

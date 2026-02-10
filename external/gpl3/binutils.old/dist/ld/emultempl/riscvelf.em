@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -31,16 +31,6 @@ EOF
 
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.  */
-PARSE_AND_LIST_PROLOGUE=${PARSE_AND_LIST_PROLOGUE}'
-enum risccv_opt
-{
-  OPTION_RELAX_GP = 321,
-  OPTION_NO_RELAX_GP,
-  OPTION_CHECK_ULEB128,
-  OPTION_NO_CHECK_ULEB128,
-};
-'
-
 PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
     { "relax-gp", no_argument, NULL, OPTION_RELAX_GP },
     { "no-relax-gp", no_argument, NULL, OPTION_NO_RELAX_GP },
@@ -141,7 +131,7 @@ riscv_create_output_section_statements (void)
 	 These will only be created if the output format is a RISC-V format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo (_("%F%P: error: cannot change output format"
+      fatal (_("%P: error: cannot change output format"
 	       " whilst linking %s binaries\n"), "RISC-V");
       return;
     }

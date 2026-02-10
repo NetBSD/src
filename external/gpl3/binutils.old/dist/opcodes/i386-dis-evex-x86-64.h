@@ -1,50 +1,25 @@
-  /* X86_64_EVEX_0F90 */
+  /* X86_64_EVEX_0F384A */
   {
     { Bad_Opcode },
-    { VEX_W_TABLE (VEX_W_0F90_L_0) },
+    { VEX_W_TABLE (EVEX_W_0F384A_X86_64) },
   },
-  /* X86_64_EVEX_0F91 */
+  /* X86_64_EVEX_0F386D */
   {
     { Bad_Opcode },
-    { VEX_W_TABLE (VEX_W_0F91_L_0) },
+    { VEX_W_TABLE (EVEX_W_0F386D_X86_64) },
   },
-  /* X86_64_EVEX_0F92 */
+  /* X86_64_EVEX_0F3A07 */
   {
     { Bad_Opcode },
-    { VEX_W_TABLE (VEX_W_0F92_L_0) },
+    { VEX_W_TABLE (EVEX_W_0F3A07_X86_64) },
   },
-  /* X86_64_EVEX_0F93 */
+  /* X86_64_EVEX_0F3A77 */
   {
     { Bad_Opcode },
-    { VEX_W_TABLE (VEX_W_0F93_L_0) },
+    { VEX_W_TABLE (EVEX_W_0F3A77_X86_64) },
   },
-  /* X86_64_EVEX_0F38F2 */
+  /* X86_64_EVEX_MAP5_6F */
   {
     { Bad_Opcode },
-    { PREFIX_TABLE (PREFIX_VEX_0F38F2_L_0) },
-  },
-  /* X86_64_EVEX_0F38F3 */
-  {
-    { Bad_Opcode },
-    { PREFIX_TABLE (PREFIX_VEX_0F38F3_L_0) },
-  },
-  /* X86_64_EVEX_0F38F5 */
-  {
-    { Bad_Opcode },
-    { PREFIX_TABLE (PREFIX_VEX_0F38F5_L_0) },
-  },
-  /* X86_64_EVEX_0F38F6 */
-  {
-    { Bad_Opcode },
-    { PREFIX_TABLE(PREFIX_VEX_0F38F6_L_0) },
-  },
-  /* X86_64_EVEX_0F38F7 */
-  {
-    { Bad_Opcode },
-    { PREFIX_TABLE(PREFIX_VEX_0F38F7_L_0) },
-  },
-  /* X86_64_EVEX_0F3AF0 */
-  {
-    { Bad_Opcode },
-    { PREFIX_TABLE (PREFIX_VEX_0F3AF0_L_0) },
+    { PREFIX_TABLE (PREFIX_EVEX_MAP5_6F_X86_64) },
   },
