@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2024 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2025 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -814,7 +814,7 @@ zero if the target is little endian.
 @cindex md_show_usage
 @cindex md_after_parse_args
 GAS uses these variables and functions during option processing.
-@code{md_shortopts} is a @code{const char *} which GAS adds to the machine
+@code{md_shortopts} is a @code{const char []} which GAS adds to the machine
 independent string passed to @code{getopt}.  @code{md_longopts} is a
 @code{struct option []} which GAS adds to the machine independent long options
 passed to @code{getopt}; you may use @code{OPTION_MD_BASE}, defined in

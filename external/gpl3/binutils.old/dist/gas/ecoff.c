@@ -1,5 +1,5 @@
 /* ECOFF debugging support.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -36,6 +36,7 @@
 #include "aout/stab_gnu.h"
 #include "filenames.h"
 #include "safe-ctype.h"
+#include "ecoff-bfd.h"
 
 /* Why isn't this in coff/sym.h?  */
 #define ST_RFDESCAPE 0xfff
@@ -812,8 +813,8 @@ typedef struct varray {
 #endif
 
 #define INIT_VARRAY(type) {	/* macro to initialize a varray */	\
-  (vlinks_t *)0,		/* first */				\
-  (vlinks_t *)0,		/* last */				\
+  0,				/* first */				\
+  0,				/* last */				\
   0,				/* num_allocated */			\
   sizeof (type),		/* object_size */			\
   OBJECTS_PER_PAGE (type),	/* objects_per_page */			\
@@ -979,22 +980,22 @@ static const efdr_t init_file = {
     0,			/* cbLine:	size of lines for this file */
   },
 
-  (FDR *)0,		/* orig_fdr:	original file header pointer */
-  (char *)0,		/* name:	pointer to filename */
+  0,			/* orig_fdr:	original file header pointer */
+  0,			/* name:	pointer to filename */
   0,			/* fake:	whether this is a faked .file */
   0,			/* void_type:	ptr to aux node for void type */
   0,			/* int_type:	ptr to aux node for int type */
-  (scope_t *)0,		/* cur_scope:	current scope being processed */
+  0,			/* cur_scope:	current scope being processed */
   0,			/* file_index:	current file # */
   0,			/* nested_scopes: # nested scopes */
   INIT_VARRAY (char),	/* strings:	local string varray */
-  INIT_VARRAY (localsym_t),	/* symbols:	local symbols varray */
+  INIT_VARRAY (localsym_t), /* symbols:	local symbols varray */
   INIT_VARRAY (proc_t),	/* procs:	procedure varray */
   INIT_VARRAY (aux_t),	/* aux_syms:	auxiliary symbols varray */
 
-  (struct efdr *)0,	/* next_file:	next file structure */
+  0,			/* next_file:	next file structure */
 
-  (htab_t)0,		/* str_hash:	string hash table */
+  0,			/* str_hash:	string hash table */
   { 0 },		/* thash_head:	type hash table */
 };
 
@@ -1378,17 +1379,17 @@ static const st_t map_coff_sym_type[] = {
 };
 
 /* Keep track of different sized allocation requests.  */
-static alloc_info_t alloc_counts[(int) alloc_type_last];
+static alloc_info_t alloc_counts[alloc_type_last];
 
 /* Record whether we have seen any debugging information.  */
 int ecoff_debugging_seen = 0;
 
 /* Various statics.  */
-static efdr_t  *cur_file_ptr	= (efdr_t *) 0;	/* current file desc. header */
-static proc_t  *cur_proc_ptr	= (proc_t *) 0;	/* current procedure header */
-static proc_t  *first_proc_ptr  = (proc_t *) 0; /* first procedure header */
-static thead_t *top_tag_head	= (thead_t *) 0; /* top level tag head */
-static thead_t *cur_tag_head	= (thead_t *) 0; /* current tag head */
+static efdr_t  *cur_file_ptr	= 0;		/* current file desc. header */
+static proc_t  *cur_proc_ptr	= 0;		/* current procedure header */
+static proc_t  *first_proc_ptr  = 0;		/* first procedure header */
+static thead_t *top_tag_head	= 0;		/* top level tag head */
+static thead_t *cur_tag_head	= 0;		/* current tag head */
 #ifdef ECOFF_DEBUG
 static int	debug		= 0; 		/* trace functions */
 #endif
@@ -1477,8 +1478,8 @@ ecoff_read_begin_hook (void)
 {
   tag_hash = str_htab_create ();
   top_tag_head = allocate_thead ();
-  top_tag_head->first_tag = (tag_t *) NULL;
-  top_tag_head->free = (thead_t *) NULL;
+  top_tag_head->first_tag = NULL;
+  top_tag_head->free = NULL;
   top_tag_head->prev = cur_tag_head;
   cur_tag_head = top_tag_head;
 }
@@ -1495,9 +1496,9 @@ ecoff_symbol_new_hook (symbolS *symbolP)
      symbol created by md_begin which may required special handling at
      some point.  Creating a dummy file with a dummy name is certainly
      wrong.  */
-  if (cur_file_ptr == (efdr_t *) NULL
+  if (cur_file_ptr == NULL
       && seen_at_least_1_file ())
-    add_file ((const char *) NULL, 0, 1);
+    add_file (NULL, 0, 1);
   obj = symbol_get_obj (symbolP);
   obj->ecoff_file = cur_file_ptr;
   obj->ecoff_symbol = NULL;
@@ -1523,18 +1524,18 @@ add_varray_page (varray_t *vp /* varray to add page to */)
 
 #ifdef MALLOC_CHECK
   if (vp->object_size > 1)
-    new_links->datum = (page_type *) xcalloc (1, vp->object_size);
+    new_links->datum = xcalloc (1, vp->object_size);
   else
 #endif
     new_links->datum = allocate_page ();
 
-  alloc_counts[(int) alloc_type_varray].total_alloc++;
-  alloc_counts[(int) alloc_type_varray].total_pages++;
+  alloc_counts[alloc_type_varray].total_alloc++;
+  alloc_counts[alloc_type_varray].total_pages++;
 
   new_links->start_index = vp->num_allocated;
   vp->objects_last_page = 0;
 
-  if (vp->first == (vlinks_t *) NULL)		/* first allocation? */
+  if (vp->first == NULL)			/* first allocation? */
     vp->first = vp->last = new_links;
   else
     {						/* 2nd or greater allocation */
@@ -1558,8 +1559,8 @@ add_string (varray_t *vp,			/* string obstack */
   if (len >= PAGE_USIZE)
     as_fatal (_("string too big (%lu bytes)"), len);
 
-  hash_ptr = (shash_t *) str_hash_find (hash_tbl, str);
-  if (hash_ptr == (shash_t *) NULL)
+  hash_ptr = str_hash_find (hash_tbl, str);
+  if (hash_ptr == NULL)
     {
       if (vp->objects_last_page + len >= PAGE_USIZE)
 	{
@@ -1582,7 +1583,7 @@ add_string (varray_t *vp,			/* string obstack */
 	as_fatal (_("duplicate %s"), str);
     }
 
-  if (ret_hash != (shash_t **) NULL)
+  if (ret_hash != NULL)
     *ret_hash = hash_ptr;
 
   return hash_ptr->indx;
@@ -1606,9 +1607,9 @@ add_ecoff_symbol (const char *str,	/* symbol name */
   tag_t *ptag_next;
   varray_t *vp;
   int scope_delta = 0;
-  shash_t *hash_ptr = (shash_t *) NULL;
+  shash_t *hash_ptr = NULL;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->symbols;
@@ -1618,32 +1619,32 @@ add_ecoff_symbol (const char *str,	/* symbol name */
 
   psym = &vp->last->datum->sym[vp->objects_last_page++];
 
-  if (str == (const char *) NULL && sym_value != (symbolS *) NULL)
+  if (str == NULL && sym_value != NULL)
     psym->name = S_GET_NAME (sym_value);
   else
     psym->name = str;
   psym->as_sym = sym_value;
-  if (sym_value != (symbolS *) NULL)
+  if (sym_value != NULL)
     symbol_get_obj (sym_value)->ecoff_symbol = psym;
   psym->addend = addend;
   psym->file_ptr = cur_file_ptr;
   psym->proc_ptr = cur_proc_ptr;
-  psym->begin_ptr = (localsym_t *) NULL;
-  psym->index_ptr = (aux_t *) NULL;
-  psym->forward_ref = (forward_t *) NULL;
+  psym->begin_ptr = NULL;
+  psym->index_ptr = NULL;
+  psym->forward_ref = NULL;
   psym->sym_index = -1;
   memset (&psym->ecoff_sym, 0, sizeof (EXTR));
   psym->ecoff_sym.asym.value = value;
-  psym->ecoff_sym.asym.st = (unsigned) type;
-  psym->ecoff_sym.asym.sc = (unsigned) storage;
+  psym->ecoff_sym.asym.st = type;
+  psym->ecoff_sym.asym.sc = storage;
   psym->ecoff_sym.asym.index = indx;
 
   /* If there is an associated symbol, we wait until the end of the
      assembly before deciding where to put the name (it may be just an
      external symbol).  Otherwise, this is just a debugging symbol and
      the name should go with the current file.  */
-  if (sym_value == (symbolS *) NULL)
-    psym->ecoff_sym.asym.iss = ((str == (const char *) NULL)
+  if (sym_value == NULL)
+    psym->ecoff_sym.asym.iss = (str == NULL
 				? 0
 				: add_string (&cur_file_ptr->strings,
 					      cur_file_ptr->str_hash,
@@ -1657,7 +1658,7 @@ add_ecoff_symbol (const char *str,	/* symbol name */
 
   /* Save the symbol within the hash table if this is a static
      item, and it has a name.  */
-  if (hash_ptr != (shash_t *) NULL
+  if (hash_ptr != NULL
       && (type == st_Global || type == st_Static || type == st_Label
 	  || type == st_Proc || type == st_StaticProc))
     hash_ptr->sym_ptr = psym;
@@ -1695,11 +1696,11 @@ add_ecoff_symbol (const char *str,	/* symbol name */
 
     case st_End:
       pscope = cur_file_ptr->cur_scope;
-      if (pscope == (scope_t *) NULL)
+      if (pscope == NULL)
 	as_fatal (_("too many st_End's"));
       else
 	{
-	  st_t begin_type = (st_t) pscope->lsym->ecoff_sym.asym.st;
+	  st_t begin_type = pscope->lsym->ecoff_sym.asym.st;
 
 	  psym->begin_ptr = pscope->lsym;
 
@@ -1714,10 +1715,10 @@ add_ecoff_symbol (const char *str,	/* symbol name */
 	      cur_tag_head = ptag_head->prev;
 
 	      for (ptag = ptag_head->first_tag;
-		   ptag != (tag_t *) NULL;
+		   ptag != NULL;
 		   ptag = ptag_next)
 		{
-		  if (ptag->forward_ref != (forward_t *) NULL)
+		  if (ptag->forward_ref != NULL)
 		    add_unknown_tag (ptag);
 
 		  ptag_next = ptag->same_block;
@@ -1801,7 +1802,7 @@ add_aux_sym_symint (symint_t aux_word /* auxiliary information word */)
   varray_t *vp;
   aux_t *aux_ptr;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->aux_syms;
@@ -1824,7 +1825,7 @@ add_aux_sym_rndx (int file_index, symint_t sym_index)
   varray_t *vp;
   aux_t *aux_ptr;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->aux_syms;
@@ -1854,22 +1855,22 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
   int i;
   AUXU aux;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->aux_syms;
 
   memset (&aux, 0, sizeof (aux));
-  aux.ti.bt = (int) t->basic_type;
+  aux.ti.bt = t->basic_type;
   aux.ti.continued = 0;
   aux.ti.fBitfield = t->bitfield;
 
-  aux.ti.tq0 = (int) t->type_qualifiers[0];
-  aux.ti.tq1 = (int) t->type_qualifiers[1];
-  aux.ti.tq2 = (int) t->type_qualifiers[2];
-  aux.ti.tq3 = (int) t->type_qualifiers[3];
-  aux.ti.tq4 = (int) t->type_qualifiers[4];
-  aux.ti.tq5 = (int) t->type_qualifiers[5];
+  aux.ti.tq0 = t->type_qualifiers[0];
+  aux.ti.tq1 = t->type_qualifiers[1];
+  aux.ti.tq2 = t->type_qualifiers[2];
+  aux.ti.tq3 = t->type_qualifiers[3];
+  aux.ti.tq4 = t->type_qualifiers[4];
+  aux.ti.tq5 = t->type_qualifiers[5];
 
   /* For anything that adds additional information, we must not hash,
      so check here, and reset our state.  */
@@ -1902,17 +1903,17 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
       hi %= THASH_SIZE;
 
       for (hash_ptr = hash_tbl[hi];
-	   hash_ptr != (thash_t *)0;
+	   hash_ptr;
 	   hash_ptr = hash_ptr->next)
 	{
 	  if (aux.isym == hash_ptr->type.isym)
 	    break;
 	}
 
-      if (hash_ptr != (thash_t *) NULL && state == hash_yes)
+      if (hash_ptr != NULL && state == hash_yes)
 	return hash_ptr->indx;
 
-      if (hash_ptr == (thash_t *) NULL)
+      if (hash_ptr == NULL)
 	{
 	  hash_ptr = allocate_thash ();
 	  hash_ptr->next = hash_tbl[hi];
@@ -1942,7 +1943,7 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
      for an enum bitfield.  */
 
   if (t->bitfield)
-    (void) add_aux_sym_symint ((symint_t) t->sizes[t->num_sizes - 1]);
+    (void) add_aux_sym_symint (t->sizes[t->num_sizes - 1]);
 
   /* Add tag information if needed.  Structure, union, and enum
      references add 2 aux symbols: a [file index, symbol index]
@@ -1956,7 +1957,7 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
       localsym_t *sym = t->tag_ptr->sym;
       forward_t *forward_ref = allocate_forward ();
 
-      if (sym != (localsym_t *) NULL)
+      if (sym != NULL)
 	{
 	  forward_ref->next = sym->forward_ref;
 	  sym->forward_ref = forward_ref;
@@ -1983,7 +1984,7 @@ add_aux_sym_tir (type_info_t *t,	/* current type information */
 			       cur_file_ptr->int_type);
 
       (void) add_aux_sym_symint (cur_file_ptr->file_index);	/* file index*/
-      (void) add_aux_sym_symint ((symint_t) 0);			/* low bound */
+      (void) add_aux_sym_symint (0);				/* low bound */
       (void) add_aux_sym_symint (t->dimensions[i] - 1);		/* high bound*/
       (void) add_aux_sym_symint ((t->dimensions[i] == 0)	/* stride */
 				 ? 0
@@ -2006,16 +2007,16 @@ get_tag (const char *tag,	/* tag name */
   shash_t *hash_ptr;
   tag_t *tag_ptr;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     as_fatal (_("no current file pointer"));
 
-  hash_ptr = (shash_t *) str_hash_find (tag_hash, tag);
+  hash_ptr = str_hash_find (tag_hash, tag);
 
-  if (hash_ptr != (shash_t *) NULL
-      && hash_ptr->tag_ptr != (tag_t *) NULL)
+  if (hash_ptr != NULL
+      && hash_ptr->tag_ptr != NULL)
     {
       tag_ptr = hash_ptr->tag_ptr;
-      if (sym != (localsym_t *) NULL)
+      if (sym != NULL)
 	{
 	  tag_ptr->basic_type = basic_type;
 	  tag_ptr->ifd        = cur_file_ptr->file_index;
@@ -2024,7 +2025,7 @@ get_tag (const char *tag,	/* tag name */
       return tag_ptr;
     }
 
-  if (hash_ptr == (shash_t *) NULL)
+  if (hash_ptr == NULL)
     {
       char *perm;
 
@@ -2035,12 +2036,12 @@ get_tag (const char *tag,	/* tag name */
     }
 
   tag_ptr = allocate_tag ();
-  tag_ptr->forward_ref	= (forward_t *) NULL;
+  tag_ptr->forward_ref	= NULL;
   tag_ptr->hash_ptr	= hash_ptr;
   tag_ptr->same_name	= hash_ptr->tag_ptr;
   tag_ptr->basic_type	= basic_type;
   tag_ptr->sym		= sym;
-  tag_ptr->ifd		= ((sym == (localsym_t *) NULL)
+  tag_ptr->ifd		= (sym == NULL
 			   ? (symint_t) -1
 			   : cur_file_ptr->file_index);
   tag_ptr->same_block	= cur_tag_head->first_tag;
@@ -2078,23 +2079,11 @@ add_unknown_tag (tag_t *ptag /* pointer to tag information */)
     }
 #endif
 
-  sym = add_ecoff_symbol (name,
-			  st_Block,
-			  sc_Info,
-			  (symbolS *) NULL,
-			  (bfd_vma) 0,
-			  (symint_t) 0,
-			  (symint_t) 0);
+  sym = add_ecoff_symbol (name, st_Block, sc_Info, NULL, 0, 0, 0);
 
-  (void) add_ecoff_symbol (name,
-			   st_End,
-			   sc_Info,
-			   (symbolS *) NULL,
-			   (bfd_vma) 0,
-			   (symint_t) 0,
-			   (symint_t) 0);
+  (void) add_ecoff_symbol (name, st_End, sc_Info, NULL, 0, 0, 0);
 
-  for (pf = &sym->forward_ref; *pf != (forward_t *) NULL; pf = &(*pf)->next)
+  for (pf = &sym->forward_ref; *pf != NULL; pf = &(*pf)->next)
     ;
   *pf = ptag->forward_ref;
 }
@@ -2122,7 +2111,7 @@ add_procedure (char *func /* func name */, int aent)
   if (aent)
     return;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     as_fatal (_("no current file pointer"));
 
   vp = &cur_file_ptr->procs;
@@ -2132,7 +2121,7 @@ add_procedure (char *func /* func name */, int aent)
 
   cur_proc_ptr = new_proc_ptr = &vp->last->datum->proc[vp->objects_last_page++];
 
-  if (first_proc_ptr == (proc_t *) NULL)
+  if (first_proc_ptr == NULL)
     first_proc_ptr = new_proc_ptr;
 
   vp->num_allocated++;
@@ -2143,18 +2132,16 @@ add_procedure (char *func /* func name */, int aent)
   new_proc_ptr->pdr.lnHigh = -1;
 
   /* Push the start of the function.  */
-  new_proc_ptr->sym = add_ecoff_symbol ((const char *) NULL, st_Proc, sc_Text,
-					sym, (bfd_vma) 0, (symint_t) 0,
-					(symint_t) 0);
+  new_proc_ptr->sym = add_ecoff_symbol (NULL, st_Proc, sc_Text, sym, 0, 0, 0);
 
   ++proc_cnt;
 
   /* Fill in the linenos preceding the .ent, if any.  */
-  if (noproc_lineno != (lineno_list_t *) NULL)
+  if (noproc_lineno != NULL)
     {
       lineno_list_t *l;
 
-      for (l = noproc_lineno; l != (lineno_list_t *) NULL; l = l->next)
+      for (l = noproc_lineno; l != NULL; l = l->next)
 	l->proc = new_proc_ptr;
       *last_lineno_ptr = noproc_lineno;
       while (*last_lineno_ptr != NULL)
@@ -2162,7 +2149,7 @@ add_procedure (char *func /* func name */, int aent)
 	  last_lineno = *last_lineno_ptr;
 	  last_lineno_ptr = &last_lineno->next;
 	}
-      noproc_lineno = (lineno_list_t *) NULL;
+      noproc_lineno = NULL;
     }
 }
 
@@ -2189,11 +2176,11 @@ add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
 
   /* If the file name is NULL, then no .file symbol appeared, and we
      want to use the actual file name.  */
-  if (file_name == (const char *) NULL)
+  if (file_name == NULL)
     {
-      if (first_file != (efdr_t *) NULL)
+      if (first_file != NULL)
 	as_fatal (_("fake .file after real one"));
-      file_name = as_where ((unsigned int *) NULL);
+      file_name = as_where (NULL);
 
       /* Automatically generate ECOFF debugging information, since I
          think that's what other ECOFF assemblers do.  We don't do
@@ -2220,7 +2207,7 @@ add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
       (void) add_ecoff_symbol (file_name, st_Nil, sc_Nil,
 			       symbol_new (FAKE_LABEL_NAME, now_seg,
 					   frag_now, frag_now_fix ()),
-			       (bfd_vma) 0, 0, ECOFF_MARK_STAB (N_SOL));
+			       0, 0, ECOFF_MARK_STAB (N_SOL));
       return;
     }
 
@@ -2241,7 +2228,7 @@ add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
 
   /* See if the file has already been created.  */
   for (fil_ptr = first_file;
-       fil_ptr != (efdr_t *) NULL;
+       fil_ptr != NULL;
        fil_ptr = fil_ptr->next_file)
     {
       if (first_ch == fil_ptr->name[0]
@@ -2256,7 +2243,7 @@ add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
     }
 
   /* If this is a new file, create it.  */
-  if (fil_ptr == (efdr_t *) NULL)
+  if (fil_ptr == NULL)
     {
       if (file_desc.objects_last_page == file_desc.objects_per_page)
 	add_varray_page (&file_desc);
@@ -2274,19 +2261,14 @@ add_file (const char *file_name, int indx ATTRIBUTE_UNUSED, int fake)
       fil_ptr->str_hash = str_htab_create ();
 
       /* Make sure 0 byte in string table is null  */
-      add_string (&fil_ptr->strings,
-		  fil_ptr->str_hash,
-		  "",
-		  (shash_t **)0);
+      add_string (&fil_ptr->strings, fil_ptr->str_hash, "", NULL);
 
       if (strlen (file_name) > PAGE_USIZE - 2)
 	as_fatal (_("filename goes over one page boundary"));
 
       /* Push the start of the filename. We assume that the filename
          will be stored at string offset 1.  */
-      (void) add_ecoff_symbol (file_name, st_File, sc_Text,
-			       (symbolS *) NULL, (bfd_vma) 0,
-			       (symint_t) 0, (symint_t) 0);
+      (void) add_ecoff_symbol (file_name, st_File, sc_Text, NULL, 0, 0, 0);
       fil_ptr->fdr.rss = 1;
       fil_ptr->name = &fil_ptr->strings.last->datum->byte[1];
 
@@ -2411,14 +2393,14 @@ ecoff_directive_begin (int ignore ATTRIBUTE_UNUSED)
   char *name;
   char name_end;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     {
       as_warn (_(".begin directive without a preceding .file directive"));
       demand_empty_rest_of_line ();
       return;
     }
 
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       as_warn (_(".begin directive without a preceding .ent directive"));
       demand_empty_rest_of_line ();
@@ -2427,9 +2409,8 @@ ecoff_directive_begin (int ignore ATTRIBUTE_UNUSED)
 
   name_end = get_symbol_name (&name);
 
-  (void) add_ecoff_symbol ((const char *) NULL, st_Block, sc_Text,
-			   symbol_find_or_make (name),
-			   (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
+  (void) add_ecoff_symbol (NULL, st_Block, sc_Text,
+			   symbol_find_or_make (name), 0, 0, 0);
 
   (void) restore_line_pointer (name_end);
 
@@ -2448,14 +2429,14 @@ ecoff_directive_bend (int ignore ATTRIBUTE_UNUSED)
   char name_end;
   symbolS *endsym;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     {
       as_warn (_(".bend directive without a preceding .file directive"));
       demand_empty_rest_of_line ();
       return;
     }
 
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       as_warn (_(".bend directive without a preceding .ent directive"));
       demand_empty_rest_of_line ();
@@ -2468,11 +2449,10 @@ ecoff_directive_bend (int ignore ATTRIBUTE_UNUSED)
      corresponding symbol.  We fill in the offset when we write out
      the symbol.  */
   endsym = symbol_find (name);
-  if (endsym == (symbolS *) NULL)
+  if (endsym == NULL)
     as_warn (_(".bend directive names unknown symbol"));
   else
-    (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text, endsym,
-			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
+    (void) add_ecoff_symbol (NULL, st_End, sc_Text, endsym, 0, 0, 0);
 
   restore_line_pointer (name_end);
 
@@ -2510,7 +2490,7 @@ ecoff_directive_def (int ignore ATTRIBUTE_UNUSED)
 
   name_end = get_symbol_name (&name);
 
-  if (coff_sym_name != (char *) NULL)
+  if (coff_sym_name != NULL)
     as_warn (_(".def pseudo-op used inside of .def/.endef; ignored"));
   else if (*name == '\0')
     as_warn (_("empty symbol name in .def; ignored"));
@@ -2524,9 +2504,9 @@ ecoff_directive_def (int ignore ATTRIBUTE_UNUSED)
       coff_storage_class = sc_Nil;
       coff_symbol_typ = st_Nil;
       coff_is_function = 0;
-      coff_tag = (char *) NULL;
+      coff_tag = NULL;
       coff_value = 0;
-      coff_sym_value = (symbolS *) NULL;
+      coff_sym_value = NULL;
       coff_sym_addend = 0;
     }
 
@@ -2546,7 +2526,7 @@ ecoff_directive_dim (int ignore ATTRIBUTE_UNUSED)
   int dimens[N_TQ];
   int i;
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".dim pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
@@ -2594,7 +2574,7 @@ ecoff_directive_scl (int ignore ATTRIBUTE_UNUSED)
 {
   long val;
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".scl pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
@@ -2619,7 +2599,7 @@ ecoff_directive_size (int ignore ATTRIBUTE_UNUSED)
   int sizes[N_TQ];
   int i;
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".size pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
@@ -2669,7 +2649,7 @@ ecoff_directive_type (int ignore ATTRIBUTE_UNUSED)
   tq_t *tq_ptr;
   tq_t *tq_shft;
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".type pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
@@ -2736,7 +2716,7 @@ ecoff_directive_tag (int ignore ATTRIBUTE_UNUSED)
   char *name;
   char name_end;
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".tag pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
@@ -2760,7 +2740,7 @@ ecoff_directive_val (int ignore ATTRIBUTE_UNUSED)
 {
   expressionS exp;
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".val pseudo-op used outside of .def/.endef; ignored"));
       demand_empty_rest_of_line ();
@@ -2798,26 +2778,26 @@ ecoff_directive_endef (int ignore ATTRIBUTE_UNUSED)
 
   demand_empty_rest_of_line ();
 
-  if (coff_sym_name == (char *) NULL)
+  if (coff_sym_name == NULL)
     {
       as_warn (_(".endef pseudo-op used before .def; ignored"));
       return;
     }
 
   name = coff_sym_name;
-  coff_sym_name = (char *) NULL;
+  coff_sym_name = NULL;
 
   /* If the symbol is a static or external, we have already gotten the
      appropriate type and class, so make sure we don't override those
      values.  This is needed because there are some type and classes
      that are not in COFF, such as short data, etc.  */
-  if (coff_sym_value != (symbolS *) NULL)
+  if (coff_sym_value != NULL)
     {
       coff_symbol_typ = st_Nil;
       coff_storage_class = sc_Nil;
     }
 
-  coff_type.extra_sizes = coff_tag != (char *) NULL;
+  coff_type.extra_sizes = coff_tag != NULL;
   if (coff_type.num_dims > 0)
     {
       int diff = coff_type.num_dims - coff_type.num_sizes;
@@ -2873,14 +2853,13 @@ ecoff_directive_endef (int ignore ATTRIBUTE_UNUSED)
 	  || coff_type.basic_type == bt_Union
 	  || coff_type.basic_type == bt_Enum)
 	{
-	  if (coff_tag == (char *) NULL)
+	  if (coff_tag == NULL)
 	    {
 	      as_warn (_("no tag specified for %s"), name);
 	      return;
 	    }
 
-	  coff_type.tag_ptr = get_tag (coff_tag, (localsym_t *) NULL,
-				       coff_type.basic_type);
+	  coff_type.tag_ptr = get_tag (coff_tag, NULL, coff_type.basic_type);
 	}
 
       if (coff_is_function)
@@ -2921,7 +2900,7 @@ ecoff_directive_endef (int ignore ATTRIBUTE_UNUSED)
          that any error reporting above gives the correct name.  */
     case st_End:
       free (name);
-      name = (char *) NULL;
+      name = NULL;
       coff_value = 0;
       coff_inside_enumeration = 0;
       break;
@@ -2939,30 +2918,23 @@ ecoff_directive_endef (int ignore ATTRIBUTE_UNUSED)
     }
 
   /* Add the symbol.  */
-  sym = add_ecoff_symbol (name,
-			  coff_symbol_typ,
-			  coff_storage_class,
-			  coff_sym_value,
-			  coff_sym_addend,
-			  (symint_t) coff_value,
-			  indx);
+  sym = add_ecoff_symbol (name, coff_symbol_typ, coff_storage_class,
+			  coff_sym_value, coff_sym_addend, coff_value, indx);
 
   /* deal with struct, union, and enum tags.  */
   if (coff_symbol_typ == st_Block)
     {
       /* Create or update the tag information.  */
-      tag_t *tag_ptr = get_tag (name,
-				sym,
-				coff_type.basic_type);
+      tag_t *tag_ptr = get_tag (name, sym, coff_type.basic_type);
       forward_t **pf;
 
       /* Remember any forward references.  */
       for (pf = &sym->forward_ref;
-	   *pf != (forward_t *) NULL;
+	   *pf != NULL;
 	   pf = &(*pf)->next)
 	;
       *pf = tag_ptr->forward_ref;
-      tag_ptr->forward_ref = (forward_t *) NULL;
+      tag_ptr->forward_ref = NULL;
     }
 }
 
@@ -2975,14 +2947,14 @@ ecoff_directive_end (int ignore ATTRIBUTE_UNUSED)
   char name_end;
   symbolS *ent;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     {
       as_warn (_(".end directive without a preceding .file directive"));
       demand_empty_rest_of_line ();
       return;
     }
 
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       as_warn (_(".end directive without a preceding .ent directive"));
       demand_empty_rest_of_line ();
@@ -3004,19 +2976,19 @@ ecoff_directive_end (int ignore ATTRIBUTE_UNUSED)
      current location, and put in the offset when we write out the
      symbol.  */
   ent = symbol_find (name);
-  if (ent == (symbolS *) NULL)
+  if (ent == NULL)
     as_warn (_(".end directive names unknown symbol"));
   else
-    (void) add_ecoff_symbol ((const char *) NULL, st_End, sc_Text,
+    (void) add_ecoff_symbol (NULL, st_End, sc_Text,
 			     symbol_new (FAKE_LABEL_NAME, now_seg,
 					 frag_now, frag_now_fix ()),
-			     (bfd_vma) 0, (symint_t) 0, (symint_t) 0);
+			     0, 0, 0);
 
 #ifdef md_flush_pending_output
   md_flush_pending_output ();
 #endif
 
-  cur_proc_ptr = (proc_t *) NULL;
+  cur_proc_ptr = NULL;
 
   (void) restore_line_pointer (name_end);
   demand_empty_rest_of_line ();
@@ -3030,10 +3002,10 @@ ecoff_directive_ent (int aent)
   char *name;
   char name_end;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
-    add_file ((const char *) NULL, 0, 1);
+  if (cur_file_ptr == NULL)
+    add_file (NULL, 0, 1);
 
-  if (!aent && cur_proc_ptr != (proc_t *) NULL)
+  if (!aent && cur_proc_ptr != NULL)
     {
       as_warn (_("second .ent directive found before .end directive"));
       demand_empty_rest_of_line ();
@@ -3103,7 +3075,7 @@ ecoff_directive_file (int ignore ATTRIBUTE_UNUSED)
   char *name;
   int len;
 
-  if (cur_proc_ptr != (proc_t *) NULL)
+  if (cur_proc_ptr != NULL)
     {
       as_warn (_("no way to handle .file within .ent/.end section"));
       demand_empty_rest_of_line ();
@@ -3127,7 +3099,7 @@ ecoff_directive_fmask (int ignore ATTRIBUTE_UNUSED)
 {
   long val;
 
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       as_warn (_(".fmask outside of .ent"));
       demand_empty_rest_of_line ();
@@ -3155,7 +3127,7 @@ ecoff_directive_frame (int ignore ATTRIBUTE_UNUSED)
 {
   long val;
 
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       as_warn (_(".frame outside of .ent"));
       demand_empty_rest_of_line ();
@@ -3191,7 +3163,7 @@ ecoff_directive_mask (int ignore ATTRIBUTE_UNUSED)
 {
   long val;
 
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       as_warn (_(".mask outside of .ent"));
       demand_empty_rest_of_line ();
@@ -3220,7 +3192,7 @@ ecoff_directive_loc (int ignore ATTRIBUTE_UNUSED)
   lineno_list_t *list;
   symint_t lineno;
 
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     {
       as_warn (_(".loc before .file"));
       demand_empty_rest_of_line ();
@@ -3250,16 +3222,16 @@ ecoff_directive_loc (int ignore ATTRIBUTE_UNUSED)
      ECOFF line number info.  */
   if (stabs_seen)
     {
-      (void) add_ecoff_symbol ((char *) NULL, st_Label, sc_Text,
+      (void) add_ecoff_symbol (NULL, st_Label, sc_Text,
 			       symbol_new (FAKE_LABEL_NAME, now_seg,
 					   frag_now, frag_now_fix ()),
-			       (bfd_vma) 0, 0, lineno);
+			       0, 0, lineno);
       return;
     }
 
   list = allocate_lineno_list ();
 
-  list->next = (lineno_list_t *) NULL;
+  list->next = NULL;
   list->file = cur_file_ptr;
   list->proc = cur_proc_ptr;
   list->frag = frag_now;
@@ -3272,12 +3244,12 @@ ecoff_directive_loc (int ignore ATTRIBUTE_UNUSED)
   /* A .loc directive will sometimes appear before a .ent directive,
      which means that cur_proc_ptr will be NULL here.  Arrange to
      patch this up.  */
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       lineno_list_t **pl;
 
       pl = &noproc_lineno;
-      while (*pl != (lineno_list_t *) NULL)
+      while (*pl != NULL)
 	pl = &(*pl)->next;
       *pl = list;
     }
@@ -3314,9 +3286,7 @@ mark_stabs (int ignore ATTRIBUTE_UNUSED)
     {
       /* Add a dummy @stabs symbol.  */
       stabs_seen = 1;
-      (void) add_ecoff_symbol (stabs_symbol, st_Nil, sc_Info,
-			       (symbolS *) NULL,
-			       (bfd_vma) 0, (symint_t) -1,
+      (void) add_ecoff_symbol (stabs_symbol, st_Nil, sc_Info, NULL, 0, -1,
 			       ECOFF_MARK_STAB (0));
     }
 }
@@ -3350,7 +3320,7 @@ ecoff_directive_weakext (int ignore ATTRIBUTE_UNUSED)
 
       ++input_line_pointer;
       SKIP_WHITESPACE ();
-      if (! is_end_of_line[(unsigned char) *input_line_pointer])
+      if (! is_end_of_stmt (*input_line_pointer))
 	{
 	  expression (&exp);
 	  if (exp.X_op != O_symbol)
@@ -3435,9 +3405,9 @@ ecoff_stab (int what,
     as_warn (_(".stab%c: ignoring non-zero other field"), what);
 
   /* Make sure we have a current file.  */
-  if (cur_file_ptr == (efdr_t *) NULL)
+  if (cur_file_ptr == NULL)
     {
-      add_file ((const char *) NULL, 0, 1);
+      add_file (NULL, 0, 1);
       save_file_ptr = cur_file_ptr;
     }
 
@@ -3460,7 +3430,7 @@ ecoff_stab (int what,
 
 #ifndef NO_LISTING
       if (listing)
-	listing_source_line ((unsigned int) desc);
+	listing_source_line (desc);
 #endif
 
       dummy_symr.index = desc;
@@ -3494,11 +3464,11 @@ ecoff_stab (int what,
 	{
 	  st = st_Nil;
 	  sc = sc_Nil;
-	  sym = (symbolS *) NULL;
+	  sym = NULL;
 	  value = get_absolute_expression ();
 	  addend = 0;
 	}
-      else if (! is_name_beginner ((unsigned char) *input_line_pointer))
+      else if (! is_name_beginner (*input_line_pointer))
 	{
 	  as_warn (_("illegal .stab%c directive, bad character"), what);
 	  return;
@@ -3537,25 +3507,18 @@ ecoff_stab (int what,
   /* Don't store the stabs symbol we are creating as the type of the
      ECOFF symbol.  We want to compute the type of the ECOFF symbol
      independently.  */
-  if (sym != (symbolS *) NULL)
+  if (sym != NULL)
     hold = symbol_get_obj (sym)->ecoff_symbol;
 
   (void) add_ecoff_symbol (string, st, sc, sym, addend, value, indx);
 
-  if (sym != (symbolS *) NULL)
+  if (sym != NULL)
     symbol_get_obj (sym)->ecoff_symbol = hold;
 
   /* Restore normal file type.  */
   cur_file_ptr = save_file_ptr;
 }
 
-static asection ecoff_scom_section;
-static const asymbol ecoff_scom_symbol =
-  GLOBAL_SYM_INIT (SCOMMON, &ecoff_scom_section);
-static asection ecoff_scom_section =
-  BFD_FAKE_SECTION (ecoff_scom_section, &ecoff_scom_symbol,
-		    SCOMMON, 0, SEC_IS_COMMON | SEC_SMALL_DATA);
-
 /* Frob an ECOFF symbol.  Small common symbols go into a special
    .scommon section rather than bfd_com_section.  */
 
@@ -3566,7 +3529,7 @@ ecoff_frob_symbol (symbolS *sym)
       && S_GET_VALUE (sym) > 0
       && S_GET_VALUE (sym) <= bfd_get_gp_size (stdoutput))
     {
-      S_SET_SEGMENT (sym, &ecoff_scom_section);
+      S_SET_SEGMENT (sym, &_bfd_ecoff_scom_section);
     }
 
   /* Double check weak symbols.  */
@@ -3621,7 +3584,7 @@ ecoff_padding_adjust (const struct ecoff_debug_swap *backend,
 	(void) ecoff_add_bytes (buf, bufend, *buf + offset, add);
       memset (*buf + offset, 0, add);
       offset += add;
-      if (bufptrptr != (char **) NULL)
+      if (bufptrptr != NULL)
 	*bufptrptr = *buf + offset;
     }
 
@@ -3648,14 +3611,14 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
   lineno_list_t first;
   lineno_list_t *local_first_lineno = first_lineno;
 
-  if (linecntptr != (long *) NULL)
+  if (linecntptr != NULL)
     *linecntptr = 0;
 
   bufptr = *buf + offset;
 
-  file = (efdr_t *) NULL;
-  proc = (proc_t *) NULL;
-  last = (lineno_list_t *) NULL;
+  file = NULL;
+  proc = NULL;
+  last = NULL;
   c = offset;
   iline = 0;
   totcount = 0;
@@ -3673,8 +3636,8 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
      Don't do this for ECOFF assembly source line numbers.  They work
      without this extra attention.  */
   if (debug_type != DEBUG_ECOFF
-      && first_proc_ptr != (proc_t *) NULL
-      && local_first_lineno != (lineno_list_t *) NULL
+      && first_proc_ptr != NULL
+      && local_first_lineno != NULL
       && ((S_GET_VALUE (first_proc_ptr->sym->as_sym)
 	   + bfd_section_vma (S_GET_SEGMENT (first_proc_ptr->sym->as_sym)))
 	  != 0))
@@ -3689,7 +3652,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
       local_first_lineno = &first;
     }
 
-  for (l = local_first_lineno; l != (lineno_list_t *) NULL; l = l->next)
+  for (l = local_first_lineno; l != NULL; l = l->next)
     {
       long count;
       long delta;
@@ -3697,7 +3660,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
       /* Get the offset to the memory address of the next line number
          (in words).  Do this first, so that we can skip ahead to the
          next useful line number entry.  */
-      if (l->next == (lineno_list_t *) NULL)
+      if (l->next == NULL)
 	{
 	  /* We want a count of zero, but it will be decremented
 	     before it is used.  */
@@ -3706,9 +3669,8 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
       else if (l->next->frag->fr_address + l->next->paddr
 	       > l->frag->fr_address + l->paddr)
 	{
-	  count = ((l->next->frag->fr_address + l->next->paddr
-		    - (l->frag->fr_address + l->paddr))
-		   >> 2);
+	  count = (l->next->frag->fr_address + l->next->paddr
+		   - (l->frag->fr_address + l->paddr)) >> 2;
 	}
       else
 	{
@@ -3718,13 +3680,13 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
 
       if (l->file != file || l->proc != proc)
 	{
-	  if (l->proc != proc && proc != (proc_t *) NULL)
+	  if (l->proc != proc && proc != NULL)
 	    proc->pdr.lnHigh = last->lineno;
-	  if (l->file != file && file != (efdr_t *) NULL)
+	  if (l->file != file && file != NULL)
 	    {
 	      file->fdr.cbLine = c - file->fdr.cbLineOffset;
 	      file->fdr.cline = totcount + count;
-	      if (linecntptr != (long *) NULL)
+	      if (linecntptr != NULL)
 		*linecntptr += totcount + count;
 	      totcount = 0;
 	    }
@@ -3734,7 +3696,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
 	      efdr_t *last_file = file;
 
 	      file = l->file;
-	      if (last_file != (efdr_t *) NULL)
+	      if (last_file != NULL)
 		file->fdr.ilineBase
 		  = last_file->fdr.ilineBase + last_file->fdr.cline;
 	      else
@@ -3744,7 +3706,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
 	  if (l->proc != proc)
 	    {
 	      proc = l->proc;
-	      if (proc != (proc_t *) NULL)
+	      if (proc != NULL)
 		{
 		  proc->pdr.lnLow = l->lineno;
 		  proc->pdr.cbLineOffset = c - file->fdr.cbLineOffset;
@@ -3752,13 +3714,13 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
 		}
 	    }
 
-	  last = (lineno_list_t *) NULL;
+	  last = NULL;
 	}
 
       totcount += count;
 
       /* Get the offset to this line number.  */
-      if (last == (lineno_list_t *) NULL)
+      if (last == NULL)
 	delta = 0;
       else
 	delta = l->lineno - last->lineno;
@@ -3822,7 +3784,7 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
       while (count > 0)
 	{
 	  if (bufptr >= *bufend)
-	    bufptr = ecoff_add_bytes (buf, bufend, bufptr, (long) 1);
+	    bufptr = ecoff_add_bytes (buf, bufend, bufptr, 1);
 	  /* 1 is added to each count read.  */
 	  --count;
 	  if (count > 0x0f)
@@ -3842,15 +3804,15 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
       last = l;
     }
 
-  if (proc != (proc_t *) NULL)
+  if (proc != NULL)
     proc->pdr.lnHigh = last->lineno;
-  if (file != (efdr_t *) NULL)
+  if (file != NULL)
     {
       file->fdr.cbLine = c - file->fdr.cbLineOffset;
       file->fdr.cline = totcount;
     }
 
-  if (linecntptr != (long *) NULL)
+  if (linecntptr != NULL)
     *linecntptr += totcount;
 
   c = ecoff_padding_adjust (backend, buf, bufend, c, &bufptr);
@@ -3879,7 +3841,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 
   /* The symbols are stored by file.  */
   for (file_link = file_desc.first;
-       file_link != (vlinks_t *) NULL;
+       file_link != NULL;
        file_link = file_link->next)
     {
       int ifilesym;
@@ -3887,7 +3849,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
       efdr_t *fil_ptr;
       efdr_t *fil_end;
 
-      if (file_link->next == (vlinks_t *) NULL)
+      if (file_link->next == NULL)
 	fil_cnt = file_desc.objects_last_page;
       else
 	fil_cnt = file_desc.objects_per_page;
@@ -3900,14 +3862,14 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 	  fil_ptr->fdr.isymBase = isym;
 	  ifilesym = isym;
 	  for (sym_link = fil_ptr->symbols.first;
-	       sym_link != (vlinks_t *) NULL;
+	       sym_link != NULL;
 	       sym_link = sym_link->next)
 	    {
 	      int sym_cnt;
 	      localsym_t *sym_ptr;
 	      localsym_t *sym_end;
 
-	      if (sym_link->next == (vlinks_t *) NULL)
+	      if (sym_link->next == NULL)
 		sym_cnt = fil_ptr->symbols.objects_last_page;
 	      else
 		sym_cnt = fil_ptr->symbols.objects_per_page;
@@ -3930,7 +3892,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		     information for the external).  */
 		  local = 1;
 		  as_sym = sym_ptr->as_sym;
-		  if (as_sym != (symbolS *) NULL)
+		  if (as_sym != NULL)
 		    {
 		      symint_t indx;
 
@@ -3940,12 +3902,12 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		         we must offset it by the vma of the section,
 		         just as BFD does, because BFD will not see
 		         this value).  */
-		      if (sym_ptr->ecoff_sym.asym.st == (int) st_Block
-			  && sym_ptr->ecoff_sym.asym.sc == (int) sc_Text)
+		      if (sym_ptr->ecoff_sym.asym.st == st_Block
+			  && sym_ptr->ecoff_sym.asym.sc == sc_Text)
 			{
 			  symbolS *begin_sym;
 
-			  know (sym_ptr->proc_ptr != (proc_t *) NULL);
+			  know (sym_ptr->proc_ptr != NULL);
 			  begin_sym = sym_ptr->proc_ptr->sym->as_sym;
 			  if (S_GET_SEGMENT (as_sym)
 			      != S_GET_SEGMENT (begin_sym))
@@ -4052,8 +4014,8 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 			      sc = sc_Data;
 			    }
 
-			  sym_ptr->ecoff_sym.asym.st = (int) st;
-			  sym_ptr->ecoff_sym.asym.sc = (int) sc;
+			  sym_ptr->ecoff_sym.asym.st = st;
+			  sym_ptr->ecoff_sym.asym.sc = sc;
 			}
 
 		      /* This is just an external symbol if it is
@@ -4065,8 +4027,8 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		      if ((S_IS_EXTERNAL (as_sym)
 			   || S_IS_WEAK (as_sym)
 			   || ! S_IS_DEFINED (as_sym))
-			  && sym_ptr->proc_ptr == (proc_t *) NULL
-			  && sym_ptr->ecoff_sym.asym.st != (int) st_Nil
+			  && sym_ptr->proc_ptr == NULL
+			  && sym_ptr->ecoff_sym.asym.st != st_Nil
 			  && ! ECOFF_IS_STAB (&sym_ptr->ecoff_sym.asym))
 			local = 0;
 
@@ -4086,13 +4048,13 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 			  add_string (&fil_ptr->strings,
 				      fil_ptr->str_hash,
 				      sym_ptr->name,
-				      (shash_t **) NULL);
+				      NULL);
 		    }
 
 		  /* We now know the index of this symbol; fill in
 		     locations that have been waiting for that
 		     information.  */
-		  if (sym_ptr->begin_ptr != (localsym_t *) NULL)
+		  if (sym_ptr->begin_ptr != NULL)
 		    {
 		      localsym_t *begin_ptr;
 		      st_t begin_type;
@@ -4101,7 +4063,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		      begin_ptr = sym_ptr->begin_ptr;
 		      know (begin_ptr->sym_index != -1);
 		      sym_ptr->ecoff_sym.asym.index = begin_ptr->sym_index;
-		      if (sym_ptr->ecoff_sym.asym.sc != (int) sc_Info)
+		      if (sym_ptr->ecoff_sym.asym.sc != sc_Info)
 			sym_ptr->ecoff_sym.asym.iss =
 			  begin_ptr->ecoff_sym.asym.iss;
 
@@ -4120,7 +4082,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 			}
 		      else
 			{
-			  know (begin_ptr->index_ptr != (aux_t *) NULL);
+			  know (begin_ptr->index_ptr != NULL);
 			  begin_ptr->index_ptr->data.isym =
 			    isym - ifilesym + 1;
 			}
@@ -4133,8 +4095,8 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		      if (begin_type == st_Proc
 			  || begin_type == st_StaticProc)
 			{
-			  know (as_sym != (symbolS *) NULL);
-			  know (begin_ptr->as_sym != (symbolS *) NULL);
+			  know (as_sym != NULL);
+			  know (begin_ptr->as_sym != NULL);
 			  if (S_GET_SEGMENT (as_sym)
 			      != S_GET_SEGMENT (begin_ptr->as_sym))
 			    as_warn (_(".begin/.bend in different segments"));
@@ -4153,12 +4115,12 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 #endif
 			}
 		      else if (begin_type == st_Block
-			       && sym_ptr->ecoff_sym.asym.sc != (int) sc_Info)
+			       && sym_ptr->ecoff_sym.asym.sc != sc_Info)
 			{
 			  symbolS *begin_sym;
 
-			  know (as_sym != (symbolS *) NULL);
-			  know (sym_ptr->proc_ptr != (proc_t *) NULL);
+			  know (as_sym != NULL);
+			  know (sym_ptr->proc_ptr != NULL);
 			  begin_sym = sym_ptr->proc_ptr->sym->as_sym;
 			  if (S_GET_SEGMENT (as_sym)
 			      != S_GET_SEGMENT (begin_sym))
@@ -4169,7 +4131,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		    }
 
 		  for (f = sym_ptr->forward_ref;
-		       f != (forward_t *) NULL;
+		       f != NULL;
 		       f = f->next)
 		    {
 		      know (local);
@@ -4189,7 +4151,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 
 		      sym_ptr->sym_index = isym;
 
-		      if (sym_ptr->proc_ptr != (proc_t *) NULL
+		      if (sym_ptr->proc_ptr != NULL
 			  && sym_ptr->proc_ptr->sym == sym_ptr)
 			sym_ptr->proc_ptr->pdr.isym = isym - ifilesym;
 
@@ -4199,7 +4161,7 @@ ecoff_build_symbols (const struct ecoff_debug_swap *backend,
 		  /* Record the local symbol index and file number in
 		     case this is an external symbol.  Note that this
 		     destroys the asym.index field.  */
-		  if (as_sym != (symbolS *) NULL
+		  if (as_sym != NULL
 		      && symbol_get_obj (as_sym)->ecoff_symbol == sym_ptr)
 		    {
 		      if ((sym_ptr->ecoff_sym.asym.st == st_Proc
@@ -4243,14 +4205,14 @@ ecoff_build_procs (const struct ecoff_debug_swap *backend,
 
   /* The procedures are stored by file.  */
   for (file_link = file_desc.first;
-       file_link != (vlinks_t *) NULL;
+       file_link != NULL;
        file_link = file_link->next)
     {
       int fil_cnt;
       efdr_t *fil_ptr;
       efdr_t *fil_end;
 
-      if (file_link->next == (vlinks_t *) NULL)
+      if (file_link->next == NULL)
 	fil_cnt = file_desc.objects_last_page;
       else
 	fil_cnt = file_desc.objects_per_page;
@@ -4264,14 +4226,14 @@ ecoff_build_procs (const struct ecoff_debug_swap *backend,
 	  fil_ptr->fdr.ipdFirst = iproc;
 	  first = 1;
 	  for (proc_link = fil_ptr->procs.first;
-	       proc_link != (vlinks_t *) NULL;
+	       proc_link != NULL;
 	       proc_link = proc_link->next)
 	    {
 	      int prc_cnt;
 	      proc_t *proc_ptr;
 	      proc_t *proc_end;
 
-	      if (proc_link->next == (vlinks_t *) NULL)
+	      if (proc_link->next == NULL)
 		prc_cnt = fil_ptr->procs.objects_last_page;
 	      else
 		prc_cnt = fil_ptr->procs.objects_per_page;
@@ -4332,14 +4294,14 @@ ecoff_build_aux (const struct ecoff_debug_swap *backend,
 
   /* The aux entries are stored by file.  */
   for (file_link = file_desc.first;
-       file_link != (vlinks_t *) NULL;
+       file_link != NULL;
        file_link = file_link->next)
     {
       int fil_cnt;
       efdr_t *fil_ptr;
       efdr_t *fil_end;
 
-      if (file_link->next == (vlinks_t *) NULL)
+      if (file_link->next == NULL)
 	fil_cnt = file_desc.objects_last_page;
       else
 	fil_cnt = file_desc.objects_per_page;
@@ -4352,14 +4314,14 @@ ecoff_build_aux (const struct ecoff_debug_swap *backend,
 	  fil_ptr->fdr.fBigendian = bigendian;
 	  fil_ptr->fdr.iauxBase = iaux;
 	  for (aux_link = fil_ptr->aux_syms.first;
-	       aux_link != (vlinks_t *) NULL;
+	       aux_link != NULL;
 	       aux_link = aux_link->next)
 	    {
 	      int aux_cnt;
 	      aux_t *aux_ptr;
 	      aux_t *aux_end;
 
-	      if (aux_link->next == (vlinks_t *) NULL)
+	      if (aux_link->next == NULL)
 		aux_cnt = fil_ptr->aux_syms.objects_last_page;
 	      else
 		aux_cnt = fil_ptr->aux_syms.objects_per_page;
@@ -4421,7 +4383,7 @@ ecoff_build_aux (const struct ecoff_debug_swap *backend,
 
   return ecoff_padding_adjust (backend, buf, bufend,
 			       offset + iaux * sizeof (union aux_ext),
-			       (char **) NULL);
+			       NULL);
 }
 
 /* Copy out the strings from a varray_t.  This returns the number of
@@ -4442,12 +4404,12 @@ ecoff_build_strings (char **buf,
   istr = 0;
 
   for (str_link = vp->first;
-       str_link != (vlinks_t *) NULL;
+       str_link != NULL;
        str_link = str_link->next)
     {
       unsigned long str_cnt;
 
-      if (str_link->next == (vlinks_t *) NULL)
+      if (str_link->next == NULL)
 	str_cnt = vp->objects_last_page;
       else
 	str_cnt = vp->objects_per_page;
@@ -4477,14 +4439,14 @@ ecoff_build_ss (const struct ecoff_debug_swap *backend,
   iss = 0;
 
   for (file_link = file_desc.first;
-       file_link != (vlinks_t *) NULL;
+       file_link != NULL;
        file_link = file_link->next)
     {
       int fil_cnt;
       efdr_t *fil_ptr;
       efdr_t *fil_end;
 
-      if (file_link->next == (vlinks_t *) NULL)
+      if (file_link->next == NULL)
 	fil_cnt = file_desc.objects_last_page;
       else
 	fil_cnt = file_desc.objects_per_page;
@@ -4502,8 +4464,7 @@ ecoff_build_ss (const struct ecoff_debug_swap *backend,
 	}
     }
 
-  return ecoff_padding_adjust (backend, buf, bufend, offset + iss,
-			       (char **) NULL);
+  return ecoff_padding_adjust (backend, buf, bufend, offset + iss, NULL);
 }
 
 /* Swap out the file descriptors.  */
@@ -4526,14 +4487,14 @@ ecoff_build_fdr (const struct ecoff_debug_swap *backend,
   fdr_out = *buf + offset;
 
   for (file_link = file_desc.first;
-       file_link != (vlinks_t *) NULL;
+       file_link != NULL;
        file_link = file_link->next)
     {
       int fil_cnt;
       efdr_t *fil_ptr;
       efdr_t *fil_end;
 
-      if (file_link->next == (vlinks_t *) NULL)
+      if (file_link->next == NULL)
 	fil_cnt = file_desc.objects_last_page;
       else
 	fil_cnt = file_desc.objects_per_page;
@@ -4562,7 +4523,7 @@ ecoff_setup_ext (void)
 {
   symbolS *sym;
 
-  for (sym = symbol_rootP; sym != (symbolS *) NULL; sym = symbol_next (sym))
+  for (sym = symbol_rootP; sym != NULL; sym = symbol_next (sym))
     {
       if (symbol_get_obj (sym)->ecoff_symbol == NULL)
 	continue;
@@ -4576,8 +4537,8 @@ ecoff_setup_ext (void)
 
 	  lsym = symbol_get_obj (sym)->ecoff_symbol;
 	  lsym->ecoff_sym.asym.value = 0;
-	  lsym->ecoff_sym.asym.st = (int) st_Nil;
-	  lsym->ecoff_sym.asym.sc = (int) sc_Nil;
+	  lsym->ecoff_sym.asym.st = st_Nil;
+	  lsym->ecoff_sym.asym.sc = sc_Nil;
 	  lsym->ecoff_sym.asym.index = indexNil;
 	}
 
@@ -4605,15 +4566,15 @@ ecoff_build_debug (HDRR *hdr,
   unsigned long offset;
 
   /* Make sure we have a file.  */
-  if (first_file == (efdr_t *) NULL)
-    add_file ((const char *) NULL, 0, 1);
+  if (first_file == NULL)
+    add_file (NULL, 0, 1);
 
   /* Handle any top level tags.  */
   for (ptag = top_tag_head->first_tag;
-       ptag != (tag_t *) NULL;
+       ptag != NULL;
        ptag = ptag_next)
     {
-      if (ptag->forward_ref != (forward_t *) NULL)
+      if (ptag->forward_ref != NULL)
 	add_unknown_tag (ptag);
 
       ptag_next = ptag->same_block;
@@ -4627,17 +4588,17 @@ ecoff_build_debug (HDRR *hdr,
      symbol that has not already received it.  */
   hold_file_ptr = cur_file_ptr;
   hold_proc_ptr = cur_proc_ptr;
-  cur_proc_ptr = (proc_t *) NULL;
-  for (sym = symbol_rootP; sym != (symbolS *) NULL; sym = symbol_next (sym))
+  cur_proc_ptr = NULL;
+  for (sym = symbol_rootP; sym != NULL; sym = symbol_next (sym))
     {
       if (symbol_get_obj (sym)->ecoff_symbol != NULL
-	  || symbol_get_obj (sym)->ecoff_file == (efdr_t *) NULL
+	  || symbol_get_obj (sym)->ecoff_file == NULL
 	  || (symbol_get_bfdsym (sym)->flags & BSF_SECTION_SYM) != 0)
 	continue;
 
       cur_file_ptr = symbol_get_obj (sym)->ecoff_file;
-      add_ecoff_symbol ((const char *) NULL, st_Nil, sc_Nil, sym,
-			(bfd_vma) 0, S_GET_VALUE (sym), indexNil);
+      add_ecoff_symbol (NULL, st_Nil, sc_Nil, sym,
+			0, S_GET_VALUE (sym), indexNil);
     }
   cur_proc_ptr = hold_proc_ptr;
   cur_file_ptr = hold_file_ptr;
@@ -4647,12 +4608,12 @@ ecoff_build_debug (HDRR *hdr,
      files.  */
   end_warning = 0;
   for (fil_ptr = first_file;
-       fil_ptr != (efdr_t *) NULL;
+       fil_ptr != NULL;
        fil_ptr = fil_ptr->next_file)
     {
       cur_file_ptr = fil_ptr;
-      while (cur_file_ptr->cur_scope != (scope_t *) NULL
-	     && cur_file_ptr->cur_scope->prev != (scope_t *) NULL)
+      while (cur_file_ptr->cur_scope != NULL
+	     && cur_file_ptr->cur_scope->prev != NULL)
 	{
 	  cur_file_ptr->cur_scope = cur_file_ptr->cur_scope->prev;
 	  if (! end_warning && ! cur_file_ptr->fake)
@@ -4661,13 +4622,8 @@ ecoff_build_debug (HDRR *hdr,
 	      end_warning = 1;
 	    }
 	}
-      if (cur_file_ptr->cur_scope != (scope_t *) NULL)
-	(void) add_ecoff_symbol ((const char *) NULL,
-				 st_End, sc_Text,
-				 (symbolS *) NULL,
-				 (bfd_vma) 0,
-				 (symint_t) 0,
-				 (symint_t) 0);
+      if (cur_file_ptr->cur_scope != NULL)
+	(void) add_ecoff_symbol (NULL, st_End, sc_Text, NULL, 0, 0, 0);
     }
 
   /* Build the symbolic information.  */
@@ -4756,7 +4712,7 @@ ecoff_build_debug (HDRR *hdr,
 static page_type *
 allocate_cluster (unsigned long npages)
 {
-  page_type *value = (page_type *) xmalloc (npages * PAGE_USIZE);
+  page_type *value = xmalloc (npages * PAGE_USIZE);
 
 #ifdef ECOFF_DEBUG
   if (debug > 3)
@@ -4809,23 +4765,23 @@ allocate_scope (void)
 
 #ifndef MALLOC_CHECK
 
-  ptr = alloc_counts[(int) alloc_type_scope].free_list.f_scope;
-  if (ptr != (scope_t *) NULL)
-    alloc_counts[(int) alloc_type_scope].free_list.f_scope = ptr->free;
+  ptr = alloc_counts[alloc_type_scope].free_list.f_scope;
+  if (ptr != NULL)
+    alloc_counts[alloc_type_scope].free_list.f_scope = ptr->free;
   else
     {
-      int unallocated	= alloc_counts[(int) alloc_type_scope].unallocated;
-      page_type *cur_page	= alloc_counts[(int) alloc_type_scope].cur_page;
+      int unallocated = alloc_counts[alloc_type_scope].unallocated;
+      page_type *cur_page = alloc_counts[alloc_type_scope].cur_page;
 
       if (unallocated == 0)
 	{
 	  unallocated = PAGE_SIZE / sizeof (scope_t);
-	  alloc_counts[(int) alloc_type_scope].cur_page = cur_page = allocate_page ();
-	  alloc_counts[(int) alloc_type_scope].total_pages++;
+	  alloc_counts[alloc_type_scope].cur_page = cur_page = allocate_page ();
+	  alloc_counts[alloc_type_scope].total_pages++;
 	}
 
       ptr = &cur_page->scope[--unallocated];
-      alloc_counts[(int) alloc_type_scope].unallocated = unallocated;
+      alloc_counts[alloc_type_scope].unallocated = unallocated;
     }
 
 #else
@@ -4834,7 +4790,7 @@ allocate_scope (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_scope].total_alloc++;
+  alloc_counts[alloc_type_scope].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -4844,13 +4800,13 @@ allocate_scope (void)
 static void
 free_scope (scope_t *ptr)
 {
-  alloc_counts[(int) alloc_type_scope].total_free++;
+  alloc_counts[alloc_type_scope].total_free++;
 
 #ifndef MALLOC_CHECK
-  ptr->free = alloc_counts[(int) alloc_type_scope].free_list.f_scope;
-  alloc_counts[(int) alloc_type_scope].free_list.f_scope = ptr;
+  ptr->free = alloc_counts[alloc_type_scope].free_list.f_scope;
+  alloc_counts[alloc_type_scope].free_list.f_scope = ptr;
 #else
-  free ((void *) ptr);
+  free (ptr);
 #endif
 }
 
@@ -4863,18 +4819,18 @@ allocate_vlinks (void)
 
 #ifndef MALLOC_CHECK
 
-  int unallocated = alloc_counts[(int) alloc_type_vlinks].unallocated;
-  page_type *cur_page = alloc_counts[(int) alloc_type_vlinks].cur_page;
+  int unallocated = alloc_counts[alloc_type_vlinks].unallocated;
+  page_type *cur_page = alloc_counts[alloc_type_vlinks].cur_page;
 
   if (unallocated == 0)
     {
       unallocated = PAGE_SIZE / sizeof (vlinks_t);
-      alloc_counts[(int) alloc_type_vlinks].cur_page = cur_page = allocate_page ();
-      alloc_counts[(int) alloc_type_vlinks].total_pages++;
+      alloc_counts[alloc_type_vlinks].cur_page = cur_page = allocate_page ();
+      alloc_counts[alloc_type_vlinks].total_pages++;
     }
 
   ptr = &cur_page->vlinks[--unallocated];
-  alloc_counts[(int) alloc_type_vlinks].unallocated = unallocated;
+  alloc_counts[alloc_type_vlinks].unallocated = unallocated;
 
 #else
 
@@ -4882,7 +4838,7 @@ allocate_vlinks (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_vlinks].total_alloc++;
+  alloc_counts[alloc_type_vlinks].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -4896,18 +4852,18 @@ allocate_shash (void)
 
 #ifndef MALLOC_CHECK
 
-  int unallocated = alloc_counts[(int) alloc_type_shash].unallocated;
-  page_type *cur_page = alloc_counts[(int) alloc_type_shash].cur_page;
+  int unallocated = alloc_counts[alloc_type_shash].unallocated;
+  page_type *cur_page = alloc_counts[alloc_type_shash].cur_page;
 
   if (unallocated == 0)
     {
       unallocated = PAGE_SIZE / sizeof (shash_t);
-      alloc_counts[(int) alloc_type_shash].cur_page = cur_page = allocate_page ();
-      alloc_counts[(int) alloc_type_shash].total_pages++;
+      alloc_counts[alloc_type_shash].cur_page = cur_page = allocate_page ();
+      alloc_counts[alloc_type_shash].total_pages++;
     }
 
   ptr = &cur_page->shash[--unallocated];
-  alloc_counts[(int) alloc_type_shash].unallocated = unallocated;
+  alloc_counts[alloc_type_shash].unallocated = unallocated;
 
 #else
 
@@ -4915,7 +4871,7 @@ allocate_shash (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_shash].total_alloc++;
+  alloc_counts[alloc_type_shash].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -4929,18 +4885,18 @@ allocate_thash (void)
 
 #ifndef MALLOC_CHECK
 
-  int unallocated = alloc_counts[(int) alloc_type_thash].unallocated;
-  page_type *cur_page = alloc_counts[(int) alloc_type_thash].cur_page;
+  int unallocated = alloc_counts[alloc_type_thash].unallocated;
+  page_type *cur_page = alloc_counts[alloc_type_thash].cur_page;
 
   if (unallocated == 0)
     {
       unallocated = PAGE_SIZE / sizeof (thash_t);
-      alloc_counts[(int) alloc_type_thash].cur_page = cur_page = allocate_page ();
-      alloc_counts[(int) alloc_type_thash].total_pages++;
+      alloc_counts[alloc_type_thash].cur_page = cur_page = allocate_page ();
+      alloc_counts[alloc_type_thash].total_pages++;
     }
 
   ptr = &cur_page->thash[--unallocated];
-  alloc_counts[(int) alloc_type_thash].unallocated = unallocated;
+  alloc_counts[alloc_type_thash].unallocated = unallocated;
 
 #else
 
@@ -4948,7 +4904,7 @@ allocate_thash (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_thash].total_alloc++;
+  alloc_counts[alloc_type_thash].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -4962,23 +4918,23 @@ allocate_tag (void)
 
 #ifndef MALLOC_CHECK
 
-  ptr = alloc_counts[(int) alloc_type_tag].free_list.f_tag;
-  if (ptr != (tag_t *) NULL)
-    alloc_counts[(int) alloc_type_tag].free_list.f_tag = ptr->free;
+  ptr = alloc_counts[alloc_type_tag].free_list.f_tag;
+  if (ptr != NULL)
+    alloc_counts[alloc_type_tag].free_list.f_tag = ptr->free;
   else
     {
-      int unallocated = alloc_counts[(int) alloc_type_tag].unallocated;
-      page_type *cur_page = alloc_counts[(int) alloc_type_tag].cur_page;
+      int unallocated = alloc_counts[alloc_type_tag].unallocated;
+      page_type *cur_page = alloc_counts[alloc_type_tag].cur_page;
 
       if (unallocated == 0)
 	{
 	  unallocated = PAGE_SIZE / sizeof (tag_t);
-	  alloc_counts[(int) alloc_type_tag].cur_page = cur_page = allocate_page ();
-	  alloc_counts[(int) alloc_type_tag].total_pages++;
+	  alloc_counts[alloc_type_tag].cur_page = cur_page = allocate_page ();
+	  alloc_counts[alloc_type_tag].total_pages++;
 	}
 
       ptr = &cur_page->tag[--unallocated];
-      alloc_counts[(int) alloc_type_tag].unallocated = unallocated;
+      alloc_counts[alloc_type_tag].unallocated = unallocated;
     }
 
 #else
@@ -4987,7 +4943,7 @@ allocate_tag (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_tag].total_alloc++;
+  alloc_counts[alloc_type_tag].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -4997,13 +4953,13 @@ allocate_tag (void)
 static void
 free_tag (tag_t *ptr)
 {
-  alloc_counts[(int) alloc_type_tag].total_free++;
+  alloc_counts[alloc_type_tag].total_free++;
 
 #ifndef MALLOC_CHECK
-  ptr->free = alloc_counts[(int) alloc_type_tag].free_list.f_tag;
-  alloc_counts[(int) alloc_type_tag].free_list.f_tag = ptr;
+  ptr->free = alloc_counts[alloc_type_tag].free_list.f_tag;
+  alloc_counts[alloc_type_tag].free_list.f_tag = ptr;
 #else
-  free ((PTR_T) ptr);
+  free (ptr);
 #endif
 }
 
@@ -5016,18 +4972,18 @@ allocate_forward (void)
 
 #ifndef MALLOC_CHECK
 
-  int unallocated = alloc_counts[(int) alloc_type_forward].unallocated;
-  page_type *cur_page = alloc_counts[(int) alloc_type_forward].cur_page;
+  int unallocated = alloc_counts[alloc_type_forward].unallocated;
+  page_type *cur_page = alloc_counts[alloc_type_forward].cur_page;
 
   if (unallocated == 0)
     {
       unallocated = PAGE_SIZE / sizeof (forward_t);
-      alloc_counts[(int) alloc_type_forward].cur_page = cur_page = allocate_page ();
-      alloc_counts[(int) alloc_type_forward].total_pages++;
+      alloc_counts[alloc_type_forward].cur_page = cur_page = allocate_page ();
+      alloc_counts[alloc_type_forward].total_pages++;
     }
 
   ptr = &cur_page->forward[--unallocated];
-  alloc_counts[(int) alloc_type_forward].unallocated = unallocated;
+  alloc_counts[alloc_type_forward].unallocated = unallocated;
 
 #else
 
@@ -5035,7 +4991,7 @@ allocate_forward (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_forward].total_alloc++;
+  alloc_counts[alloc_type_forward].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -5049,23 +5005,23 @@ allocate_thead (void)
 
 #ifndef MALLOC_CHECK
 
-  ptr = alloc_counts[(int) alloc_type_thead].free_list.f_thead;
-  if (ptr != (thead_t *) NULL)
-    alloc_counts[(int) alloc_type_thead].free_list.f_thead = ptr->free;
+  ptr = alloc_counts[alloc_type_thead].free_list.f_thead;
+  if (ptr != NULL)
+    alloc_counts[alloc_type_thead].free_list.f_thead = ptr->free;
   else
     {
-      int unallocated = alloc_counts[(int) alloc_type_thead].unallocated;
-      page_type *cur_page = alloc_counts[(int) alloc_type_thead].cur_page;
+      int unallocated = alloc_counts[alloc_type_thead].unallocated;
+      page_type *cur_page = alloc_counts[alloc_type_thead].cur_page;
 
       if (unallocated == 0)
 	{
 	  unallocated = PAGE_SIZE / sizeof (thead_t);
-	  alloc_counts[(int) alloc_type_thead].cur_page = cur_page = allocate_page ();
-	  alloc_counts[(int) alloc_type_thead].total_pages++;
+	  alloc_counts[alloc_type_thead].cur_page = cur_page = allocate_page ();
+	  alloc_counts[alloc_type_thead].total_pages++;
 	}
 
       ptr = &cur_page->thead[--unallocated];
-      alloc_counts[(int) alloc_type_thead].unallocated = unallocated;
+      alloc_counts[alloc_type_thead].unallocated = unallocated;
     }
 
 #else
@@ -5074,7 +5030,7 @@ allocate_thead (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_thead].total_alloc++;
+  alloc_counts[alloc_type_thead].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -5084,13 +5040,13 @@ allocate_thead (void)
 static void
 free_thead (thead_t *ptr)
 {
-  alloc_counts[(int) alloc_type_thead].total_free++;
+  alloc_counts[alloc_type_thead].total_free++;
 
 #ifndef MALLOC_CHECK
-  ptr->free = (thead_t *) alloc_counts[(int) alloc_type_thead].free_list.f_thead;
-  alloc_counts[(int) alloc_type_thead].free_list.f_thead = ptr;
+  ptr->free = alloc_counts[alloc_type_thead].free_list.f_thead;
+  alloc_counts[alloc_type_thead].free_list.f_thead = ptr;
 #else
-  free ((PTR_T) ptr);
+  free (ptr);
 #endif
 }
 
@@ -5101,18 +5057,18 @@ allocate_lineno_list (void)
 
 #ifndef MALLOC_CHECK
 
-  int unallocated = alloc_counts[(int) alloc_type_lineno].unallocated;
-  page_type *cur_page = alloc_counts[(int) alloc_type_lineno].cur_page;
+  int unallocated = alloc_counts[alloc_type_lineno].unallocated;
+  page_type *cur_page = alloc_counts[alloc_type_lineno].cur_page;
 
   if (unallocated == 0)
     {
       unallocated = PAGE_SIZE / sizeof (lineno_list_t);
-      alloc_counts[(int) alloc_type_lineno].cur_page = cur_page = allocate_page ();
-      alloc_counts[(int) alloc_type_lineno].total_pages++;
+      alloc_counts[alloc_type_lineno].cur_page = cur_page = allocate_page ();
+      alloc_counts[alloc_type_lineno].total_pages++;
     }
 
   ptr = &cur_page->lineno[--unallocated];
-  alloc_counts[(int) alloc_type_lineno].unallocated = unallocated;
+  alloc_counts[alloc_type_lineno].unallocated = unallocated;
 
 #else
 
@@ -5120,7 +5076,7 @@ allocate_lineno_list (void)
 
 #endif
 
-  alloc_counts[(int) alloc_type_lineno].total_alloc++;
+  alloc_counts[alloc_type_lineno].total_alloc++;
   memset (ptr, 0, sizeof (*ptr));
   return ptr;
 }
@@ -5144,7 +5100,7 @@ ecoff_set_gp_prolog_size (int sz)
 int
 ecoff_no_current_file (void)
 {
-  return cur_file_ptr == (efdr_t *) NULL;
+  return cur_file_ptr == NULL;
 }
 
 void
@@ -5156,13 +5112,13 @@ ecoff_generate_asm_lineno (void)
 
   filename = as_where (&lineno);
 
-  if (current_stabs_filename == (char *) NULL
+  if (current_stabs_filename == NULL
       || filename_cmp (current_stabs_filename, filename))
     add_file (filename, 0, 1);
 
   list = allocate_lineno_list ();
 
-  list->next = (lineno_list_t *) NULL;
+  list->next = NULL;
   list->file = cur_file_ptr;
   list->proc = cur_proc_ptr;
   list->frag = frag_now;
@@ -5175,12 +5131,12 @@ ecoff_generate_asm_lineno (void)
   /* A .loc directive will sometimes appear before a .ent directive,
      which means that cur_proc_ptr will be NULL here.  Arrange to
      patch this up.  */
-  if (cur_proc_ptr == (proc_t *) NULL)
+  if (cur_proc_ptr == NULL)
     {
       lineno_list_t **pl;
 
       pl = &noproc_lineno;
-      while (*pl != (lineno_list_t *) NULL)
+      while (*pl != NULL)
 	pl = &(*pl)->next;
       *pl = list;
     }

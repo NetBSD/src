@@ -1,5 +1,5 @@
 /* A program to test BFD.
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -53,6 +53,8 @@ main (int argc, char **argv)
        last = next)
     {
       next = bfd_openr_next_archived_file (archive, last);
+      if (next == last)
+	die ("next_archived_file");
       bfd_close (last);
       count++;
     }
@@ -62,6 +64,8 @@ main (int argc, char **argv)
        last = next)
     {
       next = bfd_openr_next_archived_file (archive, last);
+      if (next == last)
+	die ("next_archived_file");
       bfd_close (last);
       count--;
     }

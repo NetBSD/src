@@ -1,5 +1,5 @@
 /* tc-mmix.c -- Assembler for Don Knuth's MMIX.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -80,7 +80,7 @@ static void mmix_cons (int);
    }						\
  while (0)
 
-const char *md_shortopts = "x";
+const char md_shortopts[] = "x";
 static int current_fb_label = -1;
 static char *pending_label = NULL;
 
@@ -189,7 +189,7 @@ static int doing_bspec = 0;
 static const char *bspec_file;
 static unsigned int bspec_line;
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
  {
 #define OPTION_RELAX  (OPTION_MD_BASE)
 #define OPTION_NOEXPAND  (OPTION_RELAX + 1)
@@ -215,7 +215,7 @@ struct option md_longopts[] =
    {NULL, no_argument, NULL, 0}
  };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 static htab_t mmix_opcode_hash;
 
@@ -382,7 +382,7 @@ const pseudo_typeS md_pseudo_table[] =
    {NULL, 0, 0}
  };
 
-const char mmix_comment_chars[] = "%!";
+const char comment_chars[] = "%!";
 
 /* A ':' is a valid symbol character in mmixal.  It's the prefix
    delimiter, but other than that, it works like a symbol character,
@@ -441,16 +441,6 @@ mmix_fill_nops (char *opcodep, int n)
     md_number_to_chars (opcodep + i * 4, SWYM_INSN_BYTE << 24, 4);
 }
 
-/* See macro md_parse_name in tc-mmix.h.  */
-
-int
-mmix_current_location (void (*fn) (expressionS *), expressionS *exp)
-{
-  (*fn) (exp);
-
-  return 1;
-}
-
 /* Get up to three operands, filling them into the exp array.
    General idea and code stolen from the tic80 port.  */
 
@@ -464,11 +454,11 @@ get_operands (int max_operands, char *s, expressionS *exp)
   while (nextchar == ',')
     {
       /* Skip leading whitespace */
-      while (*p == ' ' || *p == '\t')
+      while (is_whitespace (*p))
 	p++;
 
       /* Check to see if we have any operands left to parse */
-      if (*p == 0 || *p == '\n' || *p == '\r')
+      if (is_end_of_stmt (*p))
 	{
 	  break;
 	}
@@ -499,7 +489,7 @@ get_operands (int max_operands, char *s, expressionS *exp)
       p = input_line_pointer;
 
       /* Skip leading whitespace */
-      while (*p == ' ' || *p == '\t')
+      while (is_whitespace (*p))
 	p++;
       nextchar = *p++;
     }
@@ -514,7 +504,7 @@ get_operands (int max_operands, char *s, expressionS *exp)
   /* Mark the end of the valid operands with an illegal expression.  */
   exp[numexp].X_op = O_illegal;
 
-  return (numexp);
+  return numexp;
 }
 
 /* Get the value of a special register, or -1 if the name does not match
@@ -555,7 +545,7 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
   int regno;
 
   /* Skip leading whitespace */
-  while (*p == ' ' || *p == '\t')
+  while (is_whitespace (*p))
     p++;
 
   input_line_pointer = p;
@@ -575,7 +565,7 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
       p = input_line_pointer;
 
       /* Skip whitespace */
-      while (*p == ' ' || *p == '\t')
+      while (is_whitespace (*p))
 	p++;
 
       if (*p == ',')
@@ -583,7 +573,7 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
 	  p++;
 
 	  /* Skip whitespace */
-	  while (*p == ' ' || *p == '\t')
+	  while (is_whitespace (*p))
 	    p++;
 	  sregp = p;
 	  input_line_pointer = sregp;
@@ -604,7 +594,7 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
       p = input_line_pointer;
 
       /* Skip whitespace */
-      while (*p == ' ' || *p == '\t')
+      while (is_whitespace (*p))
 	p++;
 
       if (*p == ',')
@@ -612,7 +602,7 @@ get_putget_operands (struct mmix_opcode *insn, char *operands,
 	  p++;
 
 	  /* Skip whitespace */
-	  while (*p == ' ' || *p == '\t')
+	  while (is_whitespace (*p))
 	    p++;
 
 	  input_line_pointer = p;
@@ -735,7 +725,7 @@ static void
 mmix_discard_rest_of_line (void)
 {
   while (*input_line_pointer
-	 && (! is_end_of_line[(unsigned char) *input_line_pointer]
+	 && (! is_end_of_stmt (*input_line_pointer)
 	     || TC_EOL_IN_INSN (input_line_pointer)))
     input_line_pointer++;
 }
@@ -839,13 +829,13 @@ md_assemble (char *str)
        ++operands)
     ;
 
-  if (ISSPACE (*operands))
+  if (is_whitespace (*operands))
     {
       modified_char = *operands;
       *operands++ = '\0';
     }
 
-  instruction = (struct mmix_opcode *) str_hash_find (mmix_opcode_hash, str);
+  instruction = str_hash_find (mmix_opcode_hash, str);
   if (instruction == NULL)
     {
       as_bad (_("unknown opcode: `%s'"), str);
@@ -1922,7 +1912,7 @@ mmix_assemble_return_nonzero (char *str)
   /* Normal instruction handling downcases, so we must too.  */
   while (ISALNUM (*s2))
     {
-      if (ISUPPER ((unsigned char) *s2))
+      if (ISUPPER (*s2))
 	*s2 = TOLOWER (*s2);
       s2++;
     }
@@ -2075,7 +2065,7 @@ s_greg (int unused ATTRIBUTE_UNUSED)
   if (c == '"')
     c = * ++ input_line_pointer;
 
-  if (! is_end_of_line[(unsigned char) c])
+  if (! is_end_of_stmt (c))
     input_line_pointer++;
 
   if (*p)
@@ -2436,12 +2426,11 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 void
 md_apply_fix (fixS *fixP, valueT *valP, segT segment)
 {
-  char *buf  = fixP->fx_where + fixP->fx_frag->fr_literal;
+  char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
   /* Note: use offsetT because it is signed, valueT is unsigned.  */
-  offsetT val  = (offsetT) * valP;
-  segT symsec
-    = (fixP->fx_addsy == NULL
-       ? absolute_section : S_GET_SEGMENT (fixP->fx_addsy));
+  offsetT val = *valP;
+  segT symsec = (fixP->fx_addsy == NULL
+		 ? absolute_section : S_GET_SEGMENT (fixP->fx_addsy));
 
   /* If the fix is relative to a symbol which is not defined, or, (if
      pcrel), not in the same segment as the fix, we cannot resolve it
@@ -2500,8 +2489,8 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment)
     case BFD_RELOC_MMIX_PUSHJ_STUBBABLE:
       /* If this fixup is out of range, punt to the linker to emit an
 	 error.  This should only happen with -no-expand.  */
-      if (val < -(((offsetT) 1 << 19)/2)
-	  || val >= ((offsetT) 1 << 19)/2 - 1
+      if (val < -((1 << 19) / 2)
+	  || val >= (1 << 19) / 2 - 1
 	  || (val & 3) != 0)
 	{
 	  if (warn_on_expansion)
@@ -2524,8 +2513,8 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment)
     case BFD_RELOC_MMIX_JMP:
       /* If this fixup is out of range, punt to the linker to emit an
 	 error.  This should only happen with -no-expand.  */
-      if (val < -(((offsetT) 1 << 27)/2)
-	  || val >= ((offsetT) 1 << 27)/2 - 1
+      if (val < -((1 << 27) / 2)
+	  || val >= (1 << 27) / 2 - 1
 	  || (val & 3) != 0)
 	{
 	  if (warn_on_expansion)
@@ -2784,7 +2773,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
 		  && (bfd_vma) val + 256 > lowest_data_loc
 		  && bfd_is_abs_section (addsec))
 		{
-		  val -= (offsetT) lowest_data_loc;
+		  val -= lowest_data_loc;
 		  addsy = section_symbol (data_section);
 		}
 	      /* Likewise text section.  */
@@ -2792,7 +2781,7 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
 		       && (bfd_vma) val + 256 > lowest_text_loc
 		       && bfd_is_abs_section (addsec))
 		{
-		  val -= (offsetT) lowest_text_loc;
+		  val -= lowest_text_loc;
 		  addsy = section_symbol (text_section);
 		}
 	    }
@@ -2888,9 +2877,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixP)
       return NULL;
     }
 
-  relP = XNEW (arelent);
-  gas_assert (relP != 0);
-  relP->sym_ptr_ptr = XNEW (asymbol *);
+  relP = notes_alloc (sizeof (arelent));
+  relP->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *relP->sym_ptr_ptr = baddsy;
   relP->address = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -2935,7 +2923,11 @@ mmix_handle_mmixal (void)
   /* If we're on a line with a label, check if it's a mmixal fb-label.
      Save an indicator and skip the label; it must be set only after all
      fb-labels of expressions are evaluated.  */
-  if (ISDIGIT (s[0]) && s[1] == 'H' && ISSPACE (s[2]))
+  if (ISDIGIT (s[0]) && s[1] == 'H'
+      /* A lone "1H" on a line is valid: we'll then see is_end_of_stmt()
+	 being true for the following character (likely a '\n' but '\n'
+	 doesn't count as is_whitespace).  */
+      && (is_whitespace (s[2]) || is_end_of_stmt (s[2])))
     {
       current_fb_label = s[0] - '0';
 
@@ -2946,12 +2938,12 @@ mmix_handle_mmixal (void)
       s += 2;
       input_line_pointer = s;
 
-      while (*s && ISSPACE (*s) && ! is_end_of_line[(unsigned int) *s])
+      while (is_whitespace (*s))
 	s++;
 
       /* For errors emitted here, the book-keeping is off by one; the
 	 caller is about to bump the counters.  Adjust the error messages.  */
-      if (is_end_of_line[(unsigned int) *s])
+      if (is_end_of_stmt (*s))
 	{
 	  unsigned int line;
 	  const char * name = as_where (&line);
@@ -2984,7 +2976,7 @@ mmix_handle_mmixal (void)
       return;
     }
 
-  if (*s == 0 || is_end_of_line[(unsigned int) *s])
+  if (is_end_of_stmt (*s))
     /* We avoid handling empty lines here.  */
     return;
 
@@ -2997,9 +2989,7 @@ mmix_handle_mmixal (void)
 
   /* Find the start of the instruction or pseudo following the label,
      if there is one.  */
-  for (insn = s;
-       *insn && ISSPACE (*insn) && ! is_end_of_line[(unsigned int) *insn];
-       insn++)
+  for (insn = s; is_whitespace (*insn); insn++)
     /* Empty */
     ;
 
@@ -3014,7 +3004,7 @@ mmix_handle_mmixal (void)
 	      instruction or MMIXAL-pseudo (getting its alignment).  Thus
 	      is acts like a "normal" :-ended label.  Ditto if it's
 	      followed by a non-MMIXAL pseudo.  */
-	   && !is_end_of_line[(unsigned int) *insn]
+	   && !is_end_of_stmt (*insn)
 	   && *insn != '.')
     {
       /* For labels that don't end in ":", we save it so we can later give
@@ -3049,7 +3039,7 @@ mmix_handle_mmixal (void)
   while (*s)
     {
       c = *s++;
-      if (is_end_of_line[(unsigned int) c])
+      if (is_end_of_stmt (c))
 	break;
       if (c == MAGIC_FB_BACKWARD_CHAR || c == MAGIC_FB_FORWARD_CHAR)
 	as_bad (_("invalid characters in input"));
@@ -3059,34 +3049,24 @@ mmix_handle_mmixal (void)
   s = insn;
 
   /* Skip the insn.  */
-  while (*s
-	 && ! ISSPACE (*s)
-	 && *s != ';'
-	 && ! is_end_of_line[(unsigned int) *s])
+  while (! is_whitespace (*s) && ! is_end_of_stmt (*s))
     s++;
 
   /* Skip the spaces after the insn.  */
-  while (*s
-	 && ISSPACE (*s)
-	 && *s != ';'
-	 && ! is_end_of_line[(unsigned int) *s])
+  while (is_whitespace (*s))
     s++;
 
   /* Skip the operands.  While doing this, replace [0-9][BF] with
      (MAGIC_FB_BACKWARD_CHAR|MAGIC_FB_FORWARD_CHAR)[0-9].  */
-  while ((c = *s) != 0
-	 && ! ISSPACE (c)
-	 && c != ';'
-	 && ! is_end_of_line[(unsigned int) c])
+  while (! is_whitespace (c = *s) && ! is_end_of_stmt (c))
     {
       if (c == '"')
 	{
 	  s++;
 
 	  /* FIXME: Test-case for semi-colon in string.  */
-	  while (*s
-		 && *s != '"'
-		 && (! is_end_of_line[(unsigned int) *s] || *s == ';'))
+	  while (*s != '"'
+		 && (! is_end_of_stmt (*s) || *s == ';'))
 	    s++;
 
 	  if (*s == '"')
@@ -3112,10 +3092,7 @@ mmix_handle_mmixal (void)
     }
 
   /* Skip any spaces after the operands.  */
-  while (*s
-	 && ISSPACE (*s)
-	 && *s != ';'
-	 && !is_end_of_line[(unsigned int) *s])
+  while (is_whitespace (*s))
     s++;
 
   /* If we're now looking at a semi-colon, then it's an end-of-line
@@ -3125,7 +3102,8 @@ mmix_handle_mmixal (void)
   /* Make IS into an EQU by replacing it with "= ".  Only match upper-case
      though; let lower-case be a syntax error.  */
   s = insn;
-  if (s[0] == 'I' && s[1] == 'S' && ISSPACE (s[2]))
+  if (s[0] == 'I' && s[1] == 'S'
+      && (is_whitespace (s[2]) || is_end_of_stmt (s[2])))
     {
       *s = '=';
       s[1] = ' ';
@@ -3174,7 +3152,7 @@ mmix_handle_mmixal (void)
   else if (s[0] == 'G'
 	   && s[1] == 'R'
 	   && startswith (s, "GREG")
-	   && (ISSPACE (s[4]) || is_end_of_line[(unsigned char) s[4]]))
+	   && (is_whitespace (s[4]) || is_end_of_stmt (s[4])))
     {
       input_line_pointer = s + 4;
 
@@ -3304,7 +3282,7 @@ mmix_force_relocation (fixS *fixP)
 long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
@@ -3459,9 +3437,8 @@ mmix_md_relax_frag (segT seg, fragS *fragP, long stretch)
 	if (fragP == seginfo->tc_segment_info_data.last_stubfrag)
 	  seginfo->tc_segment_info_data.nstubs = 0;
 
-	return
-	   (mmix_relax_table[fragP->fr_subtype].rlx_length
-	    - mmix_relax_table[prev_type].rlx_length);
+	return (mmix_relax_table[fragP->fr_subtype].rlx_length
+		- mmix_relax_table[prev_type].rlx_length);
       }
 
     case ENCODE_RELAX (STATE_PUSHJ, STATE_MAX):
@@ -3656,7 +3633,7 @@ mmix_md_finish (void)
       if (! merge_gregs)
 	continue;
 
-      osymval = (offsetT) S_GET_VALUE (symbolP);
+      osymval = S_GET_VALUE (symbolP);
       osymfrag = symbol_get_frag (symbolP);
 
       /* If the symbol isn't defined, we can't say that another symbol
@@ -3708,10 +3685,8 @@ mmix_md_finish (void)
 static int
 cmp_greg_symbol_fixes (const void *parg, const void *qarg)
 {
-  const struct mmix_symbol_greg_fixes *p
-    = (const struct mmix_symbol_greg_fixes *) parg;
-  const struct mmix_symbol_greg_fixes *q
-    = (const struct mmix_symbol_greg_fixes *) qarg;
+  const struct mmix_symbol_greg_fixes *p = parg;
+  const struct mmix_symbol_greg_fixes *q = qarg;
 
   return p->offs > q->offs ? 1 : p->offs < q->offs ? -1 : 0;
 }
@@ -3749,7 +3724,7 @@ mmix_frob_file (void)
 	}
 
       sym = fixP->fx_addsy;
-      offs = (offsetT) fixP->fx_offset;
+      offs = fixP->fx_offset;
 
       /* If the symbol is defined, then it must be resolved to a section
 	 symbol at this time, or else we don't know how to handle it.  */
@@ -3772,7 +3747,7 @@ mmix_frob_file (void)
 	  && (bfd_vma) offs + 256 > lowest_data_loc
 	  && bfd_is_abs_section (S_GET_SEGMENT (sym)))
 	{
-	  offs -= (offsetT) lowest_data_loc;
+	  offs -= lowest_data_loc;
 	  sym = section_symbol (data_section);
 	}
       /* Likewise text section.  */
@@ -3780,7 +3755,7 @@ mmix_frob_file (void)
 	       && (bfd_vma) offs + 256 > lowest_text_loc
 	       && bfd_is_abs_section (S_GET_SEGMENT (sym)))
 	{
-	  offs -= (offsetT) lowest_text_loc;
+	  offs -= lowest_text_loc;
 	  sym = section_symbol (text_section);
 	}
 
@@ -4108,7 +4083,7 @@ s_loc (int ignore ATTRIBUTE_UNUSED)
 	  loc_asserts->frag = frag_now;
 	}
 
-      p = frag_var (rs_org, 1, 1, (relax_substateT) 0, sym, off, (char *) 0);
+      p = frag_var (rs_org, 1, 1, 0, sym, off, NULL);
       *p = 0;
     }
 
@@ -4269,7 +4244,7 @@ mmix_cons (int nbytes)
 
   SKIP_WHITESPACE ();
 
-  if (is_end_of_line[(unsigned int) *input_line_pointer])
+  if (is_end_of_stmt (*input_line_pointer))
     {
       /* Default to zero if the expression was absent.  */
 
@@ -4278,7 +4253,7 @@ mmix_cons (int nbytes)
       exp.X_unsigned = 0;
       exp.X_add_symbol = NULL;
       exp.X_op_symbol = NULL;
-      emit_expr (&exp, (unsigned int) nbytes);
+      emit_expr (&exp, nbytes);
     }
   else
     do
@@ -4296,7 +4271,7 @@ mmix_cons (int nbytes)
 		exp.X_op = O_constant;
 		exp.X_add_number = c;
 		exp.X_unsigned = 1;
-		emit_expr (&exp, (unsigned int) nbytes);
+		emit_expr (&exp, nbytes);
 	      }
 
 	    if (input_line_pointer[-1] != '\"')
@@ -4313,7 +4288,7 @@ mmix_cons (int nbytes)
 	  default:
 	    {
 	      expression (&exp);
-	      emit_expr (&exp, (unsigned int) nbytes);
+	      emit_expr (&exp, nbytes);
 	      SKIP_WHITESPACE ();
 	    }
 	    break;

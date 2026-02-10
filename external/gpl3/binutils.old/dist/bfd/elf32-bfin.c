@@ -1,5 +1,5 @@
 /* ADI Blackfin BFD support for 32-bit ELF.
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1742,8 +1742,7 @@ bfinfdpic_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      BFIN_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -3929,6 +3928,7 @@ _bfinfdpic_size_got_plt (bfd *output_bfd,
 				 bfinfdpic_got_section (info)->size);
       if (bfinfdpic_got_section (info)->contents == NULL)
 	return false;
+      bfinfdpic_got_section (info)->alloced = 1;
     }
 
   if (elf_hash_table (info)->dynamic_sections_created)
@@ -3948,6 +3948,7 @@ _bfinfdpic_size_got_plt (bfd *output_bfd,
 				 bfinfdpic_gotrel_section (info)->size);
       if (bfinfdpic_gotrel_section (info)->contents == NULL)
 	return false;
+      bfinfdpic_gotrel_section (info)->alloced = 1;
     }
 
   bfinfdpic_gotfixup_section (info)->size = (gpinfop->g.fixups + 1) * 4;
@@ -3960,6 +3961,7 @@ _bfinfdpic_size_got_plt (bfd *output_bfd,
 				 bfinfdpic_gotfixup_section (info)->size);
       if (bfinfdpic_gotfixup_section (info)->contents == NULL)
 	return false;
+      bfinfdpic_gotfixup_section (info)->alloced = 1;
     }
 
   if (elf_hash_table (info)->dynamic_sections_created)
@@ -3974,6 +3976,7 @@ _bfinfdpic_size_got_plt (bfd *output_bfd,
 				 bfinfdpic_pltrel_section (info)->size);
       if (bfinfdpic_pltrel_section (info)->contents == NULL)
 	return false;
+      bfinfdpic_pltrel_section (info)->alloced = 1;
     }
 
   /* Add 4 bytes for every block of at most 65535 lazy PLT entries,
@@ -4019,6 +4022,7 @@ _bfinfdpic_size_got_plt (bfd *output_bfd,
 				 bfinfdpic_plt_section (info)->size);
       if (bfinfdpic_plt_section (info)->contents == NULL)
 	return false;
+      bfinfdpic_plt_section (info)->alloced = 1;
     }
 
   return true;
@@ -4027,8 +4031,8 @@ _bfinfdpic_size_got_plt (bfd *output_bfd,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
-				      struct bfd_link_info *info)
+elf32_bfinfdpic_late_size_sections (bfd *output_bfd,
+				    struct bfd_link_info *info)
 {
   struct elf_link_hash_table *htab;
   bfd *dynobj;
@@ -4037,7 +4041,8 @@ elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
 
   htab = elf_hash_table (info);
   dynobj = htab->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->dynamic_sections_created)
     {
@@ -4048,6 +4053,7 @@ elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -4086,7 +4092,7 @@ elf32_bfinfdpic_size_dynamic_sections (bfd *output_bfd,
 }
 
 static bool
-elf32_bfinfdpic_always_size_sections (bfd *output_bfd,
+elf32_bfinfdpic_early_size_sections (bfd *output_bfd,
 				     struct bfd_link_info *info)
 {
   if (!bfd_link_relocatable (info)
@@ -4836,8 +4842,7 @@ bfin_link_hash_table_create (bfd * abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (ret, abfd, bfin_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      BFIN_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -5044,11 +5049,8 @@ bfin_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* Apply the required alignment.  */
   s->size = BFD_ALIGN (s->size, (bfd_size_type) (1 << power_of_two));
-  if (power_of_two > bfd_section_alignment (s))
-    {
-      if (!bfd_set_section_alignment (s, power_of_two))
-	return false;
-    }
+  if (!bfd_link_align_section (s, power_of_two))
+    return false;
 
   /* Define the symbol as being at this point in the section.  */
   h->root.u.def.section = s;
@@ -5123,15 +5125,16 @@ bfin_discard_copies (struct elf_link_hash_entry *h, void * inf)
 }
 
 static bool
-bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
-			    struct bfd_link_info *info)
+bfin_late_size_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
+			 struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -5142,6 +5145,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
   else
@@ -5229,6 +5233,7 @@ bfin_size_dynamic_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL && s->size != 0)
 	return false;
+      s->alloced = 1;
     }
 
   if (elf_hash_table (info)->dynamic_sections_created)
@@ -5309,6 +5314,7 @@ bfd_bfin_elf32_create_embedded_relocs (bfd *abfd,
   relsec->contents = (bfd_byte *) bfd_alloc (abfd, amt);
   if (relsec->contents == NULL)
     goto error_return;
+  relsec->alloced = 1;
 
   p = relsec->contents;
 
@@ -5423,8 +5429,7 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #define elf_backend_check_relocs	bfin_check_relocs
 #define elf_backend_adjust_dynamic_symbol \
 					bfin_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-					bfin_size_dynamic_sections
+#define elf_backend_late_size_sections	bfin_late_size_sections
 #define elf_backend_relocate_section	bfin_relocate_section
 #define elf_backend_finish_dynamic_symbol \
 					bfin_finish_dynamic_symbol
@@ -5470,9 +5475,9 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #undef bfd_elf32_bfd_link_hash_table_create
 #define bfd_elf32_bfd_link_hash_table_create \
 		bfinfdpic_elf_link_hash_table_create
-#undef elf_backend_always_size_sections
-#define elf_backend_always_size_sections \
-		elf32_bfinfdpic_always_size_sections
+#undef elf_backend_early_size_sections
+#define elf_backend_early_size_sections \
+		elf32_bfinfdpic_early_size_sections
 
 #undef elf_backend_create_dynamic_sections
 #define elf_backend_create_dynamic_sections \
@@ -5480,9 +5485,9 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #undef elf_backend_adjust_dynamic_symbol
 #define elf_backend_adjust_dynamic_symbol \
 		elf32_bfinfdpic_adjust_dynamic_symbol
-#undef elf_backend_size_dynamic_sections
-#define elf_backend_size_dynamic_sections \
-		elf32_bfinfdpic_size_dynamic_sections
+#undef elf_backend_late_size_sections
+#define elf_backend_late_size_sections \
+		elf32_bfinfdpic_late_size_sections
 #undef elf_backend_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol \
 		elf32_bfinfdpic_finish_dynamic_symbol

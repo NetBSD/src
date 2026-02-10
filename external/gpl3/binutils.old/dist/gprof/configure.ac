@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 m4_include([../bfd/version.m4])
-AC_INIT([gprof], BFD_VERSION)
+AC_INIT([gprof], [BFD_VERSION])
 AC_CONFIG_SRCDIR([gprof.c])
 
 AC_CANONICAL_TARGET([])
@@ -32,7 +32,6 @@ dnl config.h, to avoid any possible confusion with the bfd config.h.
 AC_CONFIG_HEADERS([gconfig.h:gconfig.in])
 
 AC_PROG_CC
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_INSTALL
 
@@ -44,8 +43,8 @@ AC_CHECK_HEADERS(sys/time.h)
 AC_CHECK_FUNCS(setitimer)
 
 ALL_LINGUAS="bg da de eo es fi fr ga hu id it ja ms nl pt_BR ro ru rw sr sv tr uk vi"
-ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
+ZW_GNU_GETTEXT_SISTER_DIR
 
 AM_MAINTAINER_MODE
 AM_CONDITIONAL(GENINSRC_NEVER, false)
@@ -74,7 +73,20 @@ AC_SUBST(docdir)
 AC_SUBST(htmldir)
 AC_SUBST(pdfdir)
 
-AC_CONFIG_FILES([Makefile po/Makefile.in:po/Make-in])
-AC_OUTPUT
+AC_CACHE_CHECK([whether gprof tests can run],
+  [gprof_cv_sys_native], [dnl
+  gprof_cv_sys_native=no
+  if test x"${host}" = x"${target}" \
+     && ${CC-cc} -O2 -fno-omit-frame-pointer -pg -o tst-gmon $srcdir/testsuite/tst-gmon.c; then
+    rm -f gmon.out
+    ./tst-gmon
+    if test -s gmon.out; then
+      gprof_cv_sys_native=yes
+    fi
+    rm -f tst-gmon gmon.out
+  fi])
+AM_CONDITIONAL(NATIVE, test "$gprof_cv_sys_native" = "yes")
+
+AC_OUTPUT(Makefile testsuite/Makefile po/Makefile.in:po/Make-in)
 
 GNU_MAKE_JOBSERVER

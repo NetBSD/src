@@ -70,7 +70,7 @@
 #line 1 "defparse.y"
  /* defparse.y - parser for .def files */
 
-/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -693,8 +693,8 @@ static const yytype_uint8 yyrline[] =
      146,   150,   151,   154,   159,   160,   161,   162,   163,   164,
      165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
      175,   176,   177,   178,   179,   180,   181,   182,   185,   186,
-     192,   198,   204,   211,   212,   216,   217,   221,   222,   226,
-     227,   230,   231,   234,   236,   240,   241,   242,   243
+     192,   199,   206,   215,   216,   220,   221,   225,   226,   230,
+     231,   234,   235,   238,   240,   244,   245,   246,   247
 };
 #endif
 
@@ -1735,93 +1735,97 @@ yyreduce:
           {
 	    char *name = xmalloc (strlen ((yyvsp[0].id)) + 2);
 	    sprintf (name, ".%s", (yyvsp[0].id));
+	    free ((yyvsp[0].id));
 	    (yyval.id) = name;
 	  }
-#line 1741 "defparse.c"
+#line 1742 "defparse.c"
     break;
 
   case 81: /* opt_name2: keyword_as_name '.' opt_name2  */
-#line 199 "defparse.y"
+#line 200 "defparse.y"
           {
 	    char *name = xmalloc (strlen ((yyvsp[-2].id_const)) + 1 + strlen ((yyvsp[0].id)) + 1);
 	    sprintf (name, "%s.%s", (yyvsp[-2].id_const), (yyvsp[0].id));
+	    free ((yyvsp[0].id));
 	    (yyval.id) = name;
 	  }
-#line 1751 "defparse.c"
+#line 1753 "defparse.c"
     break;
 
   case 82: /* opt_name2: ID '.' opt_name2  */
-#line 205 "defparse.y"
+#line 207 "defparse.y"
           {
 	    char *name = xmalloc (strlen ((yyvsp[-2].id)) + 1 + strlen ((yyvsp[0].id)) + 1);
 	    sprintf (name, "%s.%s", (yyvsp[-2].id), (yyvsp[0].id));
+	    free ((yyvsp[-2].id));
+	    free ((yyvsp[0].id));
 	    (yyval.id) = name;
 	  }
-#line 1761 "defparse.c"
+#line 1765 "defparse.c"
     break;
 
   case 83: /* opt_name: opt_name2  */
-#line 211 "defparse.y"
+#line 215 "defparse.y"
                     { (yyval.id) =(yyvsp[0].id); }
-#line 1767 "defparse.c"
+#line 1771 "defparse.c"
     break;
 
   case 84: /* opt_name: %empty  */
-#line 212 "defparse.y"
-                        { (yyval.id)=""; }
-#line 1773 "defparse.c"
+#line 216 "defparse.y"
+                        { (yyval.id) = xstrdup (""); }
+#line 1777 "defparse.c"
     break;
 
   case 85: /* opt_ordinal: '@' NUMBER  */
-#line 216 "defparse.y"
+#line 220 "defparse.y"
                          { (yyval.number)=(yyvsp[0].number);}
-#line 1779 "defparse.c"
+#line 1783 "defparse.c"
     break;
 
   case 86: /* opt_ordinal: %empty  */
-#line 217 "defparse.y"
+#line 221 "defparse.y"
                          { (yyval.number)=-1;}
-#line 1785 "defparse.c"
+#line 1789 "defparse.c"
     break;
 
   case 87: /* opt_import_name: EQUAL opt_name2  */
-#line 221 "defparse.y"
+#line 225 "defparse.y"
                                 { (yyval.id) = (yyvsp[0].id); }
-#line 1791 "defparse.c"
+#line 1795 "defparse.c"
     break;
 
   case 88: /* opt_import_name: %empty  */
-#line 222 "defparse.y"
+#line 226 "defparse.y"
                         { (yyval.id) = 0; }
-#line 1797 "defparse.c"
+#line 1801 "defparse.c"
     break;
 
   case 89: /* opt_equal_name: '=' opt_name2  */
-#line 226 "defparse.y"
+#line 230 "defparse.y"
                         { (yyval.id) = (yyvsp[0].id); }
-#line 1803 "defparse.c"
+#line 1807 "defparse.c"
     break;
 
   case 90: /* opt_equal_name: %empty  */
-#line 227 "defparse.y"
+#line 231 "defparse.y"
                         { (yyval.id) =  0; }
-#line 1809 "defparse.c"
+#line 1813 "defparse.c"
     break;
 
   case 91: /* opt_base: BASE '=' NUMBER  */
-#line 230 "defparse.y"
+#line 234 "defparse.y"
                                 { (yyval.number)= (yyvsp[0].number);}
-#line 1815 "defparse.c"
+#line 1819 "defparse.c"
     break;
 
   case 92: /* opt_base: %empty  */
-#line 231 "defparse.y"
+#line 235 "defparse.y"
                 { (yyval.number)=-1;}
-#line 1821 "defparse.c"
+#line 1825 "defparse.c"
     break;
 
 
-#line 1825 "defparse.c"
+#line 1829 "defparse.c"
 
       default: break;
     }

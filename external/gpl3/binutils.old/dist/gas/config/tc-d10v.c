@@ -1,5 +1,5 @@
 /* tc-d10v.c -- Assembler code for the Mitsubishi D10V
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -28,7 +28,7 @@
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
 const char line_separator_chars[] = "";
-const char *md_shortopts          = "O";
+const char md_shortopts[]         = "O";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
@@ -88,7 +88,7 @@ enum options
   OPTION_NOGSTABSPACKING
 };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {"nowarnswap", no_argument, NULL, OPTION_NOWARNSWAP},
   {"gstabspacking",  no_argument, NULL, OPTION_GSTABSPACKING},
@@ -98,7 +98,7 @@ struct option md_longopts[] =
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Opcode hash table.  */
 static htab_t d10v_hash;
@@ -140,8 +140,7 @@ register_name (expressionS *expressionP)
   int reg_number;
   char c, *p = input_line_pointer;
 
-  while (*p
-	 && *p != '\n' && *p != '\r' && *p != ',' && *p != ' ' && *p != ')')
+  while (!is_end_of_stmt (*p) && *p != ',' && !is_whitespace (*p) && *p != ')')
     p++;
 
   c = *p;
@@ -276,7 +275,7 @@ void
 md_begin (void)
 {
   const char *prev_name = "";
-  struct d10v_opcode *opcode;
+  const struct d10v_opcode *opcode;
   d10v_hash = str_htab_create ();
 
   /* Insert unique names into hash table.  The D10v instruction set
@@ -284,11 +283,11 @@ md_begin (void)
      on the operands.  This hash table then provides a quick index to
      the first opcode with a particular name in the opcode table.  */
 
-  for (opcode = (struct d10v_opcode *) d10v_opcodes; opcode->name; opcode++)
+  for (opcode = d10v_opcodes; opcode->name; opcode++)
     {
       if (strcmp (prev_name, opcode->name))
 	{
-	  prev_name = (char *) opcode->name;
+	  prev_name = opcode->name;
 	  str_hash_insert (d10v_hash, opcode->name, opcode, 0);
 	}
     }
@@ -326,7 +325,7 @@ postfix (char *p)
 }
 
 static bfd_reloc_code_real_type
-get_reloc (struct d10v_operand *op)
+get_reloc (const struct d10v_operand *op)
 {
   int bits = op->bits;
 
@@ -356,9 +355,9 @@ get_operands (expressionS exp[])
 
   while (*p)
     {
-      while (*p == ' ' || *p == '\t' || *p == ',')
+      while (is_whitespace (*p) || *p == ',')
 	p++;
-      if (*p == 0 || *p == '\n' || *p == '\r')
+      if (is_end_of_stmt (*p))
 	break;
 
       if (*p == '@')
@@ -565,7 +564,7 @@ build_insn (struct d10v_opcode *opcode,
 	  else
 	    {
 	      fixups->fix[fixups->fc].reloc =
-		get_reloc ((struct d10v_operand *) &d10v_operands[opcode->operands[i]]);
+		get_reloc (&d10v_operands[opcode->operands[i]]);
 
 	      /* Check that an immediate was passed to ops that expect one.  */
 	      if ((flags & OPERAND_NUM)
@@ -1410,12 +1409,12 @@ do_assemble (char *str, struct d10v_opcode **opcode)
   expressionS myops[6];
 
   /* Drop leading whitespace.  */
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
 
   /* Find the opcode end.  */
   for (op_start = op_end = (unsigned char *) str;
-       *op_end && !is_end_of_line[*op_end] && *op_end != ' ';
+       !is_end_of_stmt (*op_end) && !is_whitespace (*op_end);
        op_end++)
     {
       name[nlen] = TOLOWER (op_start[nlen]);
@@ -1429,7 +1428,7 @@ do_assemble (char *str, struct d10v_opcode **opcode)
     return -1;
 
   /* Find the first opcode with the proper name.  */
-  *opcode = (struct d10v_opcode *) str_hash_find (d10v_hash, name);
+  *opcode = str_hash_find (d10v_hash, name);
   if (*opcode == NULL)
     return -1;
 
@@ -1450,12 +1449,12 @@ arelent *
 tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("reloc %d not supported by object file format"),
@@ -1482,7 +1481,7 @@ md_estimate_size_before_relax (fragS *fragp ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS *fixp, segT sec)
 {
-  if (fixp->fx_addsy != (symbolS *) NULL
+  if (fixp->fx_addsy != NULL
       && (!S_IS_DEFINED (fixp->fx_addsy)
 	  || (S_GET_SEGMENT (fixp->fx_addsy) != sec)))
     return 0;
@@ -1498,11 +1497,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   int op_type;
   int left = 0;
 
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
   /* We don't actually support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   op_type = fixP->fx_r_type;
@@ -1522,13 +1521,13 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       else
 	fixP->fx_r_type =
-	  get_reloc ((struct d10v_operand *) &d10v_operands[op_type]);
+	  get_reloc (&d10v_operands[op_type]);
     }
 
   /* Fetch the instruction, insert the fully resolved operand
      value, and stuff the instruction back again.  */
   where = fixP->fx_frag->fr_literal + fixP->fx_where;
-  insn = bfd_getb32 ((unsigned char *) where);
+  insn = bfd_getb32 (where);
 
   switch (fixP->fx_r_type)
     {
@@ -1552,13 +1551,13 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       /* Instruction addresses are always right-shifted by 2.  */
       value >>= AT_WORD_RIGHT_SHIFT;
       if (fixP->fx_size == 2)
-	bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+	bfd_putb16 (value, where);
       else
 	{
 	  struct d10v_opcode *rep, *repi;
 
-	  rep = (struct d10v_opcode *) str_hash_find (d10v_hash, "rep");
-	  repi = (struct d10v_opcode *) str_hash_find (d10v_hash, "repi");
+	  rep = str_hash_find (d10v_hash, "rep");
+	  repi = str_hash_find (d10v_hash, "repi");
 	  if ((insn & FM11) == FM11
 	      && ((repi != NULL
 		   && (insn & repi->mask) == (unsigned) repi->opcode)
@@ -1570,14 +1569,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	       fixP->fx_line);
 	  insn =
 	    d10v_insert_operand (insn, op_type, (offsetT) value, left, fixP);
-	  bfd_putb32 ((bfd_vma) insn, (unsigned char *) where);
+	  bfd_putb32 (insn, where);
 	}
       break;
     case BFD_RELOC_32:
-      bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb32 (value, where);
       break;
     case BFD_RELOC_16:
-      bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb16 (value, where);
       break;
     case BFD_RELOC_8:
       *where = value;

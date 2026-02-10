@@ -41,6 +41,18 @@ even if bfd_get_cacheable() returns false.
 returned if all is well.
 
 @end deftypefn
+@findex bfd_cache_set_uncloseable
+@subsubsection @code{bfd_cache_set_uncloseable}
+@deftypefn {Function} bool bfd_cache_set_uncloseable (bfd *abfd, bool value, bool *old); 
+Internal function to mark ABFD as either closeable or not.
+This is used by bfd_check_format_matches to avoid races
+where bfd_cache_close_all is called in another thread.
+VALUE is true to mark the BFD as temporarily uncloseable
+by the cache; false to mark it as closeable once again.
+OLD, if non-NULL, is set to the previous value of the flag.
+Returns false on error, true on success.
+
+@end deftypefn
 @findex bfd_cache_size
 @subsubsection @code{bfd_cache_size}
 @deftypefn {Function} unsigned bfd_cache_size (void); 
