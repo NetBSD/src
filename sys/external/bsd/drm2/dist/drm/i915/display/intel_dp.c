@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.7 2021/12/19 12:41:54 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.8 2026/02/10 03:48:27 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.7 2021/12/19 12:41:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.8 2026/02/10 03:48:27 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c.h>
@@ -1184,7 +1184,7 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp)
 {
 	struct drm_i915_private *i915 = dp_to_i915(intel_dp);
 	i915_reg_t ch_ctl = intel_dp->aux_ch_ctl_reg(intel_dp);
-	const unsigned int timeout_ms = 10;
+	enum { timeout_ms = 10 };
 	u32 status;
 	bool done;
 
