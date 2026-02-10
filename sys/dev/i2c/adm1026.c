@@ -1,3 +1,5 @@
+/* $NetBSD: adm1026.c,v 1.16 2026/02/10 12:07:01 jdc Exp $ */
+
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.15 2026/02/06 16:45:36 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.16 2026/02/10 12:07:01 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,33 +43,68 @@ __KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.15 2026/02/06 16:45:36 jdc Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/adm1026reg.h>
 
+/* Temperature sensors descriptions and registers */
+struct adm1026_temp_info {
+	const char* desc;
+	uint8_t v_reg, t_reg, h_reg, l_reg, check_tdm2;
+};
+
+static struct adm1026_temp_info adm1026_temps_table[] = {
+	{ "internal", ADM1026_INT_TEMP_VAL, ADM1026_INT_THERM_HIGH,
+	    ADM1026_INT_TEMP_HIGH, ADM1026_INT_TEMP_LOW, 0 },
+	{ "external 1", ADM1026_TDM1_VAL, ADM1026_TDM1_THERM_HIGH,
+	    ADM1026_TDM1_HIGH, ADM1026_TDM1_LOW, 0 },
+	{ "external 2", ADM1026_TDM2_AIN9_VAL, ADM1026_TDM2_THERM_HIGH,
+	    ADM1026_TDM2_AIN9_HIGH, ADM1026_TDM2_AIN9_LOW, 1 },
+};
+
 /* Voltage/analog sensors descriptions and registers */
 struct adm1026_volts_info {
 	const char* desc;
-	int incr;
-	uint8_t reg, check_tdm2;
+	int incr, offset;
+	uint8_t v_reg, h_reg, l_reg, check_tdm2;
 };
 
-/* Voltage maximums (in mV) from datasheet table 7 divided by 255 increments */
+/* Voltage maximums (in mV) from datasheet table 7 divided by 254 increments */
 static struct adm1026_volts_info adm1026_volts_table[] = {
-	{ "Vbatt", 15624, ADM1026_VBAT_VAL, 0 },
-	{ "V3.3 standby", 17345, ADM1026_33VSTBY_VAL, 0 },
-	{ "V3.3 main", 17345, ADM1026_33VMAIN_VAL, 0 },
-	{ "V5.0", 26016, ADM1026_50V_VAL, 0 },
-	{ "Vccp", 11718, ADM1026_VCCP_VAL, 0 },
-	{ "V+12", 62502, ADM1026_12V_VAL, 0 },
-	{ "V-12", -62502, ADM1026_N12V_VAL, 0 },
-	{ "V3.0 0", 11718, ADM1026_AIN_VAL(0), 0 },
-	{ "V3.0 1", 11718, ADM1026_AIN_VAL(1), 0 },
-	{ "V3.0 2", 11718, ADM1026_AIN_VAL(2), 0 },
-	{ "V3.0 3", 11718, ADM1026_AIN_VAL(3), 0 },
-	{ "V3.0 4", 11718, ADM1026_AIN_VAL(4), 0 },
-	{ "V3.0 5", 11718, ADM1026_AIN_VAL(5), 0 },
-	{ "V2.5 0", 9765, ADM1026_AIN_VAL(6), 0 },
-	{ "V2.5 1", 9765, ADM1026_AIN_VAL(7), 0 },
-	{ "V2.5 2", 9765, ADM1026_AIN8_VAL, 1 },
-	{ "V2.5 3", 9765, ADM1026_TDM2_AIN9_VAL, 1 }
+	{ "Vbatt", 15685, 0, ADM1026_VBAT_VAL,
+	    ADM1026_VBATT_HIGH, ADM1026_VBATT_LOW, 0 },
+	{ "V3.3 standby", 17413, 0, ADM1026_33VSTBY_VAL,
+	    ADM1026_33V_STBY_HIGH, ADM1026_33V_STBY_LOW, 0 },
+	{ "V3.3 main", 17413, 0, ADM1026_33VMAIN_VAL,
+	    ADM1026_33V_MAIN_HIGH, ADM1026_33V_MAIN_LOW, 0 },
+	{ "V5.0", 26145, 0, ADM1026_50V_VAL,
+	    ADM1026_50V_HIGH, ADM1026_50V_LOW, 0 },
+	{ "Vccp", 11763, 0, ADM1026_VCCP_VAL,
+	    ADM1026_VCCP_HIGH, ADM1026_VCCP_LOW, 0 },
+	{ "V+12", 62748, 0, ADM1026_12V_VAL,
+	    ADM1026_12V_HIGH, ADM1026_12V_LOW, 0 },
+	{ "V-12", 72268, -15928000, ADM1026_N12V_VAL,
+	    ADM1026_N12V_HIGH, ADM1026_N12V_LOW,0 },
+	{ "V3.0 0", 11763, 0, ADM1026_AIN_VAL(0),
+	    ADM1026_AIN_HIGH(0), ADM1026_AIN_LOW(0), 0 },
+	{ "V3.0 1", 11763, 0, ADM1026_AIN_VAL(1),
+	    ADM1026_AIN_HIGH(1), ADM1026_AIN_LOW(1), 0 },
+	{ "V3.0 2", 11763, 0, ADM1026_AIN_VAL(2),
+	    ADM1026_AIN_HIGH(2), ADM1026_AIN_LOW(2), 0 },
+	{ "V3.0 3", 11763, 0, ADM1026_AIN_VAL(3),
+	    ADM1026_AIN_HIGH(3), ADM1026_AIN_LOW(3), 0 },
+	{ "V3.0 4", 11763, 0, ADM1026_AIN_VAL(4),
+	    ADM1026_AIN_HIGH(4), ADM1026_AIN_LOW(4), 0 },
+	{ "V3.0 5", 11763, 0, ADM1026_AIN_VAL(5),
+	    ADM1026_AIN_HIGH(5), ADM1026_AIN_LOW(5), 0 },
+	{ "V2.5 0", 9803, 0, ADM1026_AIN_VAL(6),
+	    ADM1026_AIN_HIGH(6), ADM1026_AIN_LOW(6), 0 },
+	{ "V2.5 1", 9803, 0, ADM1026_AIN_VAL(7),
+	    ADM1026_AIN_HIGH(7), ADM1026_AIN_LOW(7), 0 },
+	{ "V2.5 2", 9803, 0, ADM1026_AIN8_VAL,
+	    ADM1026_AIN8_HIGH, ADM1026_AIN8_LOW, 1 },
+	{ "V2.5 3", 9803, 0, ADM1026_TDM2_AIN9_VAL,
+	    ADM1026_TDM2_AIN9_HIGH, ADM1026_TDM2_AIN9_LOW, 1 },
 };
+
+#define VBATT_NUM	0	/* Vbatt is first in the table */
+#define VBATT_MIN	0x60	/* 1.5V is the minimum valid reading */
 
 /* Maximum number of each type of sensor */
 #define ADM1026_MAX_FANS	8
@@ -82,17 +119,40 @@ static struct adm1026_volts_info adm1026_volts_table[] = {
 #define ADM1026_TEMP_NUM(x)	(x + ADM1026_MAX_FANS)
 #define ADM1026_VOLT_NUM(x)	(x + ADM1026_MAX_FANS + ADM1026_MAX_TEMPS)
 
+/* Fan conversions */
+#define VAL_TO_SPEED(val, div)	(1350000 / (val * div))
+#define SPEED_TO_VAL(spd, div)	((1350000 / (spd * div)) & 0xff)
+
+/* Temperature conversions */
+#define VAL_TO_TEMP(val)	(val & 0x80 ? \
+    145150000 + 1000000 * (val & 0x7f) : /* -128C */ \
+    273150000 + 1000000 * val)
+#define TEMP_TO_VAL(temp)	((temp < 273150000 ? \
+    ((temp - 145150000) / 1000000) ^ 0x80 : \
+    (temp - 273150000) / 1000000) & 0xff)
+
+/* Voltage conversions */
+#define VAL_TO_VOLT(val, num)	(val * adm1026_volts_table[num].incr + \
+    adm1026_volts_table[num].offset)
+#define VOLT_TO_VAL(volt, num)	(((volt - adm1026_volts_table[num].offset) / \
+    adm1026_volts_table[num].incr) & 0xff)
+
+
 struct adm1026_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
+	bool sc_monitor;
 
-	uint8_t sc_rev, sc_cfg[2];
-	int sc_fandiv[ADM1026_MAX_FANS], sc_temp_off[ADM1026_MAX_TEMPS];
+	uint8_t sc_cfg[2];
+	int sc_fandiv[ADM1026_MAX_FANS];
 	int sc_nfans, sc_ntemps, sc_nvolts;
 	int sc_map[ADM1026_MAX_SENSORS];  /* Map sysmon numbers to sensors */
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[ADM1026_MAX_SENSORS];
+	uint8_t sc_thermlim[ADM1026_MAX_SENSORS];
+	uint8_t sc_highlim[ADM1026_MAX_SENSORS];
+	uint8_t sc_lowlim[ADM1026_MAX_SENSORS];
 };
 
 static int adm1026_match(device_t, cfdata_t, void *);
@@ -102,14 +162,33 @@ static int adm1026_detach(device_t, int);
 bool adm1026_pmf_suspend(device_t, const pmf_qual_t *);
 bool adm1026_pmf_resume(device_t, const pmf_qual_t *);
 
+static int adm1026_start_monitor(struct adm1026_softc *, int, uint8_t);
+static int adm1026_stop_monitor(struct adm1026_softc *);
 static int adm1026_setup_fans(struct adm1026_softc *, int, uint8_t);
 static int adm1026_setup_temps(struct adm1026_softc *);
 static int adm1026_setup_volts(struct adm1026_softc *);
 
 void adm1026_refresh(struct sysmon_envsys *, envsys_data_t *);
-static void adm1026_read_fan(struct adm1026_softc *, envsys_data_t *);
-static void adm1026_read_temp(struct adm1026_softc *, envsys_data_t *);
-static void adm1026_read_volt(struct adm1026_softc *, envsys_data_t *);
+static void adm1026_read_fan_val(struct adm1026_softc *, envsys_data_t *);
+static void adm1026_read_temp_val(struct adm1026_softc *, envsys_data_t *);
+static void adm1026_read_volt_val(struct adm1026_softc *, envsys_data_t *);
+
+void adm1026_get_limits(struct sysmon_envsys *, envsys_data_t *,
+    sysmon_envsys_lim_t *, uint32_t *);
+void adm1026_set_limits(struct sysmon_envsys *, envsys_data_t *,
+    sysmon_envsys_lim_t *, uint32_t *);
+static void adm1026_get_fan_limits(struct adm1026_softc *,
+    envsys_data_t *, sysmon_envsys_lim_t *, uint32_t *);
+static void adm1026_get_temp_limits(struct adm1026_softc *,
+    envsys_data_t *, sysmon_envsys_lim_t *, uint32_t *);
+static void adm1026_get_volt_limits(struct adm1026_softc *,
+    envsys_data_t *, sysmon_envsys_lim_t *, uint32_t *);
+static void adm1026_set_fan_limits(struct adm1026_softc *,
+    envsys_data_t *, sysmon_envsys_lim_t *, uint32_t *);
+static void adm1026_set_temp_limits(struct adm1026_softc *,
+    envsys_data_t *, sysmon_envsys_lim_t *, uint32_t *);
+static void adm1026_set_volt_limits(struct adm1026_softc *,
+    envsys_data_t *, sysmon_envsys_lim_t *, uint32_t *);
 
 static int adm1026_read_reg_int(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *);
 static int adm1026_write_reg(struct adm1026_softc *, uint8_t, uint8_t);
@@ -177,7 +256,7 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	struct adm1026_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	prop_dictionary_t props = device_properties(self);
-	uint8_t reg, val, fan_div2, fan_mask;
+	uint8_t reg, val, rev, fan_div2, fan_mask;
 	int div2_val;
 
 	sc->sc_tag = ia->ia_tag;
@@ -191,9 +270,9 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	if (prop_dictionary_get_uint8(props, "fan_mask", &fan_mask) == 0)
 		fan_mask = 0x00;	/* 4 + 4 fans */
 
-	(void) adm1026_ident(sc->sc_tag, sc->sc_address, 0, &sc->sc_rev);
+	(void) adm1026_ident(sc->sc_tag, sc->sc_address, 0, &rev);
 	aprint_normal(": ADM1026 hardware monitor: rev. 0x%x, step. 0x%x\n",
-	    ADM1026_REVISION(sc->sc_rev), ADM1026_STEPPING(sc->sc_rev));
+	    ADM1026_REVISION(rev), ADM1026_STEPPING(rev));
 
 #if 0	/* ADM1026_DEBUG */
         do {
@@ -220,16 +299,14 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (!(val & ADM1026_CONF1_MONITOR)) {
+		sc->sc_monitor = 1;
 		aprint_normal_dev(sc->sc_dev,
 		    ": starting monitoring, waiting 1.8s for readings\n");
 		val |= ADM1026_CONF1_MONITOR;
-		if (adm1026_write_reg(sc, reg, val) != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    ": unable to write conf1\n");
+		if (adm1026_start_monitor(sc, 0, val))
 			return;
-		}
-		delay(1800000);
-	}
+	} else
+		sc->sc_monitor = 0;
 	sc->sc_cfg[0] = val;
 
 	sc->sc_sme = sysmon_envsys_create();
@@ -246,9 +323,11 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%d fans, %d temperatures, %d voltages\n",
 	    sc->sc_nfans, sc->sc_ntemps, sc->sc_nvolts);
 
-        sc->sc_sme->sme_name = device_xname(self);
-        sc->sc_sme->sme_cookie = sc;
-        sc->sc_sme->sme_refresh = adm1026_refresh;
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = adm1026_refresh;
+	sc->sc_sme->sme_get_limits = adm1026_get_limits;
+	sc->sc_sme->sme_set_limits = adm1026_set_limits;
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(self,
 		    "unable to register with sysmon\n");
@@ -266,20 +345,29 @@ bad:
 	return;
 }
 
-/*
- * We could stop (suspend/detach) and restart (resume) monitoring,
- * but we don't do that because some machines have separate
- * management hardware which can read the sensors.
- */
+/* Stop (suspend/detach) and restart (resume) monitoring, if we started it. */
 bool
 adm1026_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 {
+
+	struct adm1026_softc *sc = device_private(dev);
+
+	if (sc->sc_monitor == 1) {
+		if (adm1026_stop_monitor(sc))
+			return false;
+	}
 	return true;
 }
 
 bool
 adm1026_pmf_resume(device_t dev, const pmf_qual_t *qual)
 {
+	struct adm1026_softc *sc = device_private(dev);
+
+	if (sc->sc_monitor == 1) {
+		if (adm1026_start_monitor(sc, 1, 0))
+			return false;
+	}
 	return true;
 }
 
@@ -293,14 +381,62 @@ adm1026_detach(device_t self, int flags)
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
 
+	if (sc->sc_monitor == 1) {
+		if (!adm1026_stop_monitor(sc))
+			return 1;
+	}
+	return 0;
+}
+
+static int adm1026_start_monitor(struct adm1026_softc *sc, int do_read,
+	uint8_t newval)
+{
+	uint8_t reg, val;
+
+	reg = ADM1026_CONF1;
+	if (do_read) {
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    ": unable to read conf1\n");
+			return 1;
+		}
+		val |= ADM1026_CONF1_MONITOR;
+	} else
+		val = newval;
+
+	if (adm1026_write_reg(sc, reg, val) != 0) {
+		aprint_error_dev(sc->sc_dev, ": unable to write conf1\n");
+		return 1;
+	}
+
+	delay(1800000);
+
+	return 0;
+}
+
+static int adm1026_stop_monitor(struct adm1026_softc *sc)
+{
+	uint8_t reg, val;
+
+	reg = ADM1026_CONF1;
+	if (adm1026_read_reg(sc, reg, &val) != 0) {
+		device_printf(sc->sc_dev, ": unable to read conf1\n");
+		return 1;
+	}
+
+	val &= ~ADM1026_CONF1_MONITOR;
+	if (adm1026_write_reg(sc, reg, val) != 0) {
+		device_printf(sc->sc_dev, ": unable to write conf1\n");
+		return 1;
+	}
 	return 0;
 }
 
 static int
 adm1026_setup_fans(struct adm1026_softc *sc, int div2_val, uint8_t fan_mask)
 {
-	int i, map;
-	uint8_t reg, div1, div2;
+	int i, map, snum;
+	uint8_t reg, div1, div2, val;
 
 	/* Read fan-related registers (configuration and divisors) */
 	reg = ADM1026_CONF2;
@@ -330,6 +466,9 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val, uint8_t fan_mask)
 	sc->sc_fandiv[5] = 1 << ADM1026_FAN5_DIV(div2);
 	sc->sc_fandiv[6] = 1 << ADM1026_FAN6_DIV(div2);
 	sc->sc_fandiv[7] = 1 << ADM1026_FAN7_DIV(div2);
+	for (i = 0; i < ADM1026_MAX_FANS; i++)
+		if (sc->sc_fandiv[i] < 1)
+			sc->sc_fandiv[i] = 1;
 
 	/*
 	 * Check configuration2 register to see which pins are fans.
@@ -337,7 +476,6 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val, uint8_t fan_mask)
 	 * how many fans are present in each group (numbers 0-3 and 4-7).
 	 */
 	for (i = 0; i < ADM1026_MAX_FANS; i++) {
-		sc->sc_sensor[ADM1026_FAN_NUM(i)].state = ENVSYS_SINVALID;
 		/* Check configuration2 register to see which pins are fans. */
 		if (!ADM1026_PIN_IS_FAN(sc->sc_cfg[1], i))
 			continue;
@@ -345,17 +483,31 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val, uint8_t fan_mask)
 		if (!ADM1026_PIN_IS_FAN(fan_mask, i))
 			continue;
 
-		sc->sc_sensor[ADM1026_FAN_NUM(i)].units = ENVSYS_SFANRPM;
-		snprintf(sc->sc_sensor[ADM1026_FAN_NUM(i)].desc,
-		    sizeof(sc->sc_sensor[ADM1026_FAN_NUM(i)].desc),
-		    "fan %d", ADM1026_FAN_NUM(i));
+		snum = ADM1026_FAN_NUM(i);
+
+		/* Store initial limit */
+		reg = ADM1026_FAN_HIGH(i);
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read fan %d limit\n", i);
+			return 1;
+		}
+		sc->sc_highlim[snum] = val;
+
+		/* Set up sysmon sensor */
+		sc->sc_sensor[snum].units = ENVSYS_SFANRPM;
+		sc->sc_sensor[snum].state = ENVSYS_SINVALID;
+		sc->sc_sensor[snum].flags = ENVSYS_FMONLIMITS;
+		snprintf(sc->sc_sensor[snum].desc,
+		    sizeof(sc->sc_sensor[snum].desc), "fan %d", snum);
 		if (sysmon_envsys_sensor_attach(
-		    sc->sc_sme, &sc->sc_sensor[ADM1026_FAN_NUM(i)])) {
+		    sc->sc_sme, &sc->sc_sensor[snum])) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach fan %d at sysmon\n", i);
 			return 1;
 		}
-		map = sc->sc_sensor[ADM1026_FAN_NUM(i)].sensor;
+
+		map = sc->sc_sensor[snum].sensor;
 		sc->sc_map[map] = i;
 		sc->sc_nfans++;
 	}
@@ -365,58 +517,57 @@ adm1026_setup_fans(struct adm1026_softc *sc, int div2_val, uint8_t fan_mask)
 static int
 adm1026_setup_temps(struct adm1026_softc *sc)
 {
-	int i, map;
+	int i, map, snum;
 	uint8_t reg, val;
 
-	/* Temperature offsets */
-	reg = ADM1026_INT_TEMP_OFF;
-	if (adm1026_read_reg(sc, reg, &val) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to read int temp. off.\n");
-		return 1;
-	}
-	if (val & 0x80)
-		sc->sc_temp_off[0] = 0 - 1000000 * (val & 0x7f);
-	else
-		sc->sc_temp_off[0] = 1000000 * (val & 0x7f);
-	reg = ADM1026_TDM1_OFF;
-	if (adm1026_read_reg(sc, reg, &val) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to read tdm1 off.\n");
-		return 1;
-	}
-	if (val & 0x80)
-		sc->sc_temp_off[1] = 0 - 1000000 * (val & 0x7f);
-	else
-		sc->sc_temp_off[1] = 1000000 * (val & 0x7f);
-	reg = ADM1026_TDM2_OFF;
-	if (adm1026_read_reg(sc, reg, &val) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to read tdm2 off.\n");
-		return 1;
-	}
-	if (val & 0x80)
-		sc->sc_temp_off[2] = 0 - 1000000 * (val & 0x7f);
-	else
-		sc->sc_temp_off[2] = 1000000 * (val & 0x7f);
-
-	strlcpy(sc->sc_sensor[ADM1026_TEMP_NUM(0)].desc, "internal", 
-	    sizeof(sc->sc_sensor[ADM1026_TEMP_NUM(0)].desc));
-	strlcpy(sc->sc_sensor[ADM1026_TEMP_NUM(1)].desc, "external 1",
-	    sizeof(sc->sc_sensor[ADM1026_TEMP_NUM(1)].desc));
-	strlcpy(sc->sc_sensor[ADM1026_TEMP_NUM(2)].desc, "external 2",
-	    sizeof(sc->sc_sensor[ADM1026_TEMP_NUM(2)].desc));
 	for (i = 0; i < ADM1026_MAX_TEMPS; i++) {
 		/* Check configuration1 register to see if TDM2 is configured */
-		if (i == 2 && !ADM1026_PIN_IS_TDM2(sc->sc_cfg[0]))
+		if (adm1026_temps_table[i].check_tdm2 &&
+		    !ADM1026_PIN_IS_TDM2(sc->sc_cfg[0]))
 			continue;
-		sc->sc_sensor[ADM1026_TEMP_NUM(i)].units = ENVSYS_STEMP;
-		sc->sc_sensor[ADM1026_TEMP_NUM(i)].state = ENVSYS_SINVALID;
+
+		snum = ADM1026_TEMP_NUM(i);
+
+		/* Store initial limits */
+		reg = adm1026_temps_table[i].t_reg;
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read temp %d therm limit\n", i);
+			return 1;
+		}
+		sc->sc_thermlim[snum] = val;
+
+		reg = adm1026_temps_table[i].h_reg;
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read temp %d high limit\n", i);
+			return 1;
+		}
+		sc->sc_highlim[snum] = val;
+
+		reg = adm1026_temps_table[i].l_reg;
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read temp %d low limit\n", i);
+			return 1;
+		}
+		sc->sc_lowlim[snum] = val;
+
+		/* Set up sysmon sensor */
+		strlcpy(sc->sc_sensor[snum].desc,
+		    adm1026_temps_table[i].desc,
+		    sizeof(sc->sc_sensor[snum].desc));
+		sc->sc_sensor[snum].units = ENVSYS_STEMP;
+		sc->sc_sensor[snum].state = ENVSYS_SINVALID;
+		sc->sc_sensor[snum].flags = 
+		    ENVSYS_FMONLIMITS | ENVSYS_FHAS_ENTROPY;
 		if (sysmon_envsys_sensor_attach(
-		    sc->sc_sme, &sc->sc_sensor[ADM1026_TEMP_NUM(i)])) {
+		    sc->sc_sme, &sc->sc_sensor[snum])) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to attach temp %d at sysmon\n", i);
 			return 1;
 		}
-		map = sc->sc_sensor[ADM1026_TEMP_NUM(i)].sensor;
+		map = sc->sc_sensor[snum].sensor;
 		sc->sc_map[map] = i;
 		sc->sc_ntemps++;
 	}
@@ -426,25 +577,47 @@ adm1026_setup_temps(struct adm1026_softc *sc)
 static int
 adm1026_setup_volts(struct adm1026_softc *sc)
 {
-	int i, map;
+	int i, map, snum;
+	uint8_t reg, val;
 
 	for (i = 0; i < ADM1026_MAX_VOLTS; i++) {
 		/* Check configuration1 register to see if TDM2 is configured */
 		if (adm1026_volts_table[i].check_tdm2 &&
 		    ADM1026_PIN_IS_TDM2(sc->sc_cfg[0]))
 			continue;
-		strlcpy(sc->sc_sensor[ADM1026_VOLT_NUM(i)].desc,
-		    adm1026_volts_table[i].desc,
-		    sizeof(sc->sc_sensor[ADM1026_VOLT_NUM(i)].desc));
-		sc->sc_sensor[ADM1026_VOLT_NUM(i)].units = ENVSYS_SVOLTS_DC;
-		sc->sc_sensor[ADM1026_VOLT_NUM(i)].state = ENVSYS_SINVALID;
-		if (sysmon_envsys_sensor_attach(
-		    sc->sc_sme, &sc->sc_sensor[ADM1026_VOLT_NUM(i)])) {
+
+		snum = ADM1026_VOLT_NUM(i);
+
+		/* Store initial limits */
+		reg = adm1026_volts_table[i].h_reg;
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "unable to attach volts %d at sysmon\n", i);
+			    "unable to read volt %d high limit\n", i);
 			return 1;
 		}
-		map = sc->sc_sensor[ADM1026_VOLT_NUM(i)].sensor;
+		sc->sc_highlim[snum] = val;
+
+		reg = adm1026_volts_table[i].l_reg;
+		if (adm1026_read_reg(sc, reg, &val) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to read volt %d low limit\n", i);
+			return 1;
+		}
+		sc->sc_lowlim[snum] = val;
+
+		/* Set up sysmon sensor */
+		strlcpy(sc->sc_sensor[snum].desc,
+		    adm1026_volts_table[i].desc,
+		    sizeof(sc->sc_sensor[snum].desc));
+		sc->sc_sensor[snum].units = ENVSYS_SVOLTS_DC;
+		sc->sc_sensor[snum].state = ENVSYS_SINVALID;
+		sc->sc_sensor[snum].flags = ENVSYS_FMONLIMITS;
+		if (sysmon_envsys_sensor_attach(
+		    sc->sc_sme, &sc->sc_sensor[snum])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return 1;
+		}
+		map = sc->sc_sensor[snum].sensor;
 		sc->sc_map[map] = i;
 		sc->sc_nvolts++;
 	}
@@ -457,15 +630,15 @@ adm1026_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct adm1026_softc *sc = sme->sme_cookie;
 
 	if (edata->sensor < sc->sc_nfans)
-		adm1026_read_fan(sc, edata);
+		adm1026_read_fan_val(sc, edata);
 	else if (edata->sensor < sc->sc_nfans + sc->sc_ntemps)
-		adm1026_read_temp(sc, edata);
+		adm1026_read_temp_val(sc, edata);
 	else
-		adm1026_read_volt(sc, edata);
+		adm1026_read_volt_val(sc, edata);
 }
 
 static void
-adm1026_read_fan(struct adm1026_softc *sc, envsys_data_t *edata)
+adm1026_read_fan_val(struct adm1026_softc *sc, envsys_data_t *edata)
 {
 	int fan = sc->sc_map[edata->sensor];
 	uint8_t	reg, val;
@@ -478,52 +651,227 @@ adm1026_read_fan(struct adm1026_softc *sc, envsys_data_t *edata)
 	if (val == 0xff || val == 0x00)	/* Fan missing or stopped */
 		edata->value_cur = 0;
 	else
-		edata->value_cur = 1350000 / (val * sc->sc_fandiv[fan]);
+		edata->value_cur = VAL_TO_SPEED(val, sc->sc_fandiv[fan]);
 	edata->state = ENVSYS_SVALID;
 }
 
 static void
-adm1026_read_temp(struct adm1026_softc *sc, envsys_data_t *edata)
+adm1026_read_temp_val(struct adm1026_softc *sc, envsys_data_t *edata)
 {
 	int temp = sc->sc_map[edata->sensor];
 	uint8_t	reg, val;
 
-	if (temp == 0)
-		reg = ADM1026_INT_TEMP_VAL;
-	else if (temp == 1)
-		reg = ADM1026_TDM1_VAL;
-	else
-		reg = ADM1026_TDM2_AIN9_VAL;
+	reg = adm1026_temps_table[temp].v_reg;
 	if (adm1026_read_reg(sc, reg, &val) != 0) {
 		edata->state = ENVSYS_SINVALID;
 		return;
 	}
 
-	if (val & 0x80)	/* Negative temperature */
-		edata->value_cur = 273150000 - sc->sc_temp_off[temp] -
-		    1000000 * (val & 0x7f);
-	else		/* Positive temperature */
-		edata->value_cur = 273150000 - sc->sc_temp_off[temp] +
-		    1000000 * val;
+	edata->value_cur = VAL_TO_TEMP(val);
 	edata->state = ENVSYS_SVALID;
 }
 
 static void
-adm1026_read_volt(struct adm1026_softc *sc, envsys_data_t *edata)
+adm1026_read_volt_val(struct adm1026_softc *sc, envsys_data_t *edata)
 {
 	int volt = sc->sc_map[edata->sensor];
 	uint8_t	reg, val;
 
-	reg = adm1026_volts_table[volt].reg;
+	reg = adm1026_volts_table[volt].v_reg;
 	if (adm1026_read_reg(sc, reg, &val) != 0) {
 		edata->state = ENVSYS_SINVALID;
 		return;
 	}
 	/* Vbatt is not valid for < 1.5V */
-	if (volt == 0 && val < 0x60)
+	if (volt == VBATT_NUM && val < VBATT_MIN)
 		edata->state = ENVSYS_SINVALID;
-	edata->value_cur = (int) val * adm1026_volts_table[volt].incr;
+	edata->value_cur = VAL_TO_VOLT(val, volt);
 	edata->state = ENVSYS_SVALID;
+}
+
+void
+adm1026_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	struct adm1026_softc *sc = sme->sme_cookie;
+
+	if (edata->sensor < sc->sc_nfans)
+		adm1026_get_fan_limits(sc, edata, limits, props);
+	else if (edata->sensor < sc->sc_nfans + sc->sc_ntemps)
+		adm1026_get_temp_limits(sc, edata, limits, props);
+	else
+		adm1026_get_volt_limits(sc, edata, limits, props);
+}
+
+static void
+adm1026_get_fan_limits(struct adm1026_softc *sc, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int fan = sc->sc_map[edata->sensor];
+	uint8_t	reg, val;
+
+	/* The chip measures intervals, so the high limit is for low speed. */
+	*props &= ~PROP_WARNMIN;
+
+	reg = ADM1026_FAN_HIGH(fan);
+	if (adm1026_read_reg(sc, reg, &val) != 0)
+		return;
+	if (val == 0x00)	/* No limit */
+		return;
+	limits->sel_warnmin = VAL_TO_SPEED(val, sc->sc_fandiv[fan]);
+	*props |= PROP_WARNMIN;
+}
+
+static void
+adm1026_get_temp_limits(struct adm1026_softc *sc, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int temp = sc->sc_map[edata->sensor];
+	uint8_t	reg, val;
+
+	*props &= ~(PROP_CRITMAX | PROP_WARNMAX | PROP_WARNMIN);
+
+	reg = adm1026_temps_table[temp].h_reg;
+	if (adm1026_read_reg(sc, reg, &val) != 0)
+		return;
+	limits->sel_critmax = VAL_TO_TEMP(val);
+	*props |= PROP_CRITMAX;
+
+	reg = adm1026_temps_table[temp].t_reg;
+	if (adm1026_read_reg(sc, reg, &val) != 0)
+		return;
+	limits->sel_warnmax = VAL_TO_TEMP(val);
+	*props |= PROP_WARNMAX;
+
+	reg = adm1026_temps_table[temp].l_reg;
+	if (adm1026_read_reg(sc, reg, &val) != 0)
+		return;
+	limits->sel_warnmin = VAL_TO_TEMP(val);
+	*props |= PROP_WARNMIN;
+}
+
+static void
+adm1026_get_volt_limits(struct adm1026_softc *sc, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int volt = sc->sc_map[edata->sensor];
+	uint8_t	reg, val;
+
+	*props &= ~(PROP_WARNMAX | PROP_WARNMIN);
+
+	reg = adm1026_volts_table[volt].h_reg;
+	if (adm1026_read_reg(sc, reg, &val) != 0)
+		return;
+	limits->sel_warnmax = VAL_TO_VOLT(val, volt);
+	*props |= PROP_WARNMAX;
+
+	reg = adm1026_volts_table[volt].l_reg;
+	if (adm1026_read_reg(sc, reg, &val) != 0)
+		return;
+	limits->sel_warnmin = VAL_TO_VOLT(val, volt);
+	*props |= PROP_WARNMIN;
+}
+
+void
+adm1026_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	struct adm1026_softc *sc = sme->sme_cookie;
+
+	if (edata->sensor < sc->sc_nfans)
+		adm1026_set_fan_limits(sc, edata, limits, props);
+	else if (edata->sensor < sc->sc_nfans + sc->sc_ntemps)
+		adm1026_set_temp_limits(sc, edata, limits, props);
+	else
+		adm1026_set_volt_limits(sc, edata, limits, props);
+}
+
+static void
+adm1026_set_fan_limits(struct adm1026_softc *sc, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int fan = sc->sc_map[edata->sensor];
+	uint8_t	reg, val;
+
+	if (*props & PROP_WARNMIN) {
+		if (limits == NULL)	/* Restore defaults */
+			val = sc->sc_highlim[fan];
+		else {
+			if (limits->sel_warnmin == 0)
+				val = 0xff;
+			else
+				val = SPEED_TO_VAL(limits->sel_warnmin,
+				    sc->sc_fandiv[fan]);
+		}
+		reg = ADM1026_FAN_HIGH(fan);
+		adm1026_write_reg(sc, reg, val);
+	}
+}
+
+static void
+adm1026_set_temp_limits(struct adm1026_softc *sc, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int temp = sc->sc_map[edata->sensor];
+	uint8_t	reg, val;
+
+	if (*props & PROP_CRITMAX) {
+		if (limits == NULL)	/* Restore defaults */
+			val = sc->sc_highlim[edata->sensor];
+		else {
+			val = TEMP_TO_VAL(limits->sel_critmax);
+		}
+		reg = adm1026_temps_table[temp].h_reg;
+		adm1026_write_reg(sc, reg, val);
+	}
+
+	if (*props & PROP_WARNMAX) {
+		if (limits == NULL)	/* Restore defaults */
+			val = sc->sc_thermlim[edata->sensor];
+		else {
+			val = TEMP_TO_VAL(limits->sel_warnmax);
+		}
+		reg = adm1026_temps_table[temp].t_reg;
+		adm1026_write_reg(sc, reg, val);
+	}
+
+	if (*props & PROP_WARNMIN) {
+		if (limits == NULL)	/* Restore defaults */
+			val = sc->sc_lowlim[edata->sensor];
+		else {
+			val = TEMP_TO_VAL(limits->sel_warnmin);
+		}
+		reg = adm1026_temps_table[temp].l_reg;
+		adm1026_write_reg(sc, reg, val);
+	}
+}
+
+static void
+adm1026_set_volt_limits(struct adm1026_softc *sc, envsys_data_t *edata,
+	sysmon_envsys_lim_t *limits, uint32_t *props)
+{
+	int volt = sc->sc_map[edata->sensor];
+	uint8_t	reg, val;
+
+	if (*props & PROP_WARNMAX) {
+		if (limits == NULL)	/* Restore defaults */
+			val = sc->sc_highlim[edata->sensor];
+		else {
+			val = VOLT_TO_VAL(limits->sel_warnmax, volt);
+		}
+		reg = adm1026_volts_table[volt].h_reg;
+		adm1026_write_reg(sc, reg, val);
+	}
+
+	if (*props & PROP_WARNMIN) {
+		if (limits == NULL)	/* Restore defaults */
+			val = sc->sc_lowlim[edata->sensor];
+		else {
+			val = VOLT_TO_VAL(limits->sel_warnmin, volt);
+		}
+		reg = adm1026_volts_table[volt].l_reg;
+		adm1026_write_reg(sc, reg, val);
+	}
 }
 
 static int

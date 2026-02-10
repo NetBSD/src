@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026reg.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026reg.h,v 1.6 2026/02/10 12:07:01 jdc Exp $");
 
 #define ADM1026_ADDR1		0x2c
 
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: adm1026reg.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
 #define ADM1026_GPIO_CONF3	0x0a
 #define ADM1026_GPIO_CONF4	0x0b
 #define ADM1026_EEPROM2		0x0c
-#define ADM1026_INT_THERM_MAX	0x0d
-#define ADM1026_TDM1_THERM_MAX	0x0e
-#define ADM1026_TDM2_THERM_MAX	0x0f
-#define ADM1026_INT_FAN_MIN	0x10
+#define ADM1026_INT_THERM_HIGH	0x0d
+#define ADM1026_TDM1_THERM_HIGH	0x0e
+#define ADM1026_TDM2_THERM_HIGH	0x0f
+#define ADM1026_INT_FAN_MIN	0x10	/* Automatic fan control minimums */
 #define ADM1026_TDM1_FAN_MIN	0x11
 #define ADM1026_TDM2_FAN_MIN	0x12
 #define ADM1026_EEPROM3		0x13
@@ -95,34 +95,34 @@ __KERNEL_RCSID(0, "$NetBSD: adm1026reg.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
 #define ADM1026_AIN_VAL(x)	(0x30 + x)
 /* 8 fan value registers: 0x38 to 0x3f */
 #define ADM1026_FAN_VAL(x)	(0x38 + x)
-#define ADM1026_TDM1_MAX	0x40
-#define ADM1026_TDM2_AIN9_MAX	0x41
-#define ADM1026_33V_STBY_MAX	0x42
-#define ADM1026_33V_MAIN_MAX	0x43
-#define ADM1026_50V_MAX		0x44
-#define ADM1026_VCCP_MAX	0x45
-#define ADM1026_12V_MAX		0x46
-#define ADM1026_N12V_MAX	0x47
-#define ADM1026_TDM1_MIN	0x48
-#define ADM1026_TDM2_AIN9_MIN	0x49
-#define ADM1026_33V_STBY_MIN	0x4a
-#define ADM1026_33V_MAIN_MIN	0x4b
-#define ADM1026_50V_MIN		0x4c
-#define ADM1026_VCCP_MIN	0x4d
-#define ADM1026_12V_MIN		0x4e
-#define ADM1026_N12V_MIN	0x4f
+#define ADM1026_TDM1_HIGH	0x40
+#define ADM1026_TDM2_AIN9_HIGH	0x41
+#define ADM1026_33V_STBY_HIGH	0x42
+#define ADM1026_33V_MAIN_HIGH	0x43
+#define ADM1026_50V_HIGH	0x44
+#define ADM1026_VCCP_HIGH	0x45
+#define ADM1026_12V_HIGH	0x46
+#define ADM1026_N12V_HIGH	0x47
+#define ADM1026_TDM1_LOW	0x48
+#define ADM1026_TDM2_AIN9_LOW	0x49
+#define ADM1026_33V_STBY_LOW	0x4a
+#define ADM1026_33V_MAIN_LOW	0x4b
+#define ADM1026_50V_LOW		0x4c
+#define ADM1026_VCCP_LOW	0x4d
+#define ADM1026_12V_LOW		0x4e
+#define ADM1026_N12V_LOW	0x4f
 /* 8 analog in high limit registers: 0x50 to 0x57 */
-#define ADM1026_AIN_MAX(x)	(0x50 + x)
+#define ADM1026_AIN_HIGH(x)	(0x50 + x)
 /* 8 analog in low limit registers: 0x58 to 0x5f */
-#define ADM1026_AIN_MIN(x)	(0x58 + x)
-/* 8 fan high limit registers: 0x60 to 0x67 (no low limit registers) */
-#define ADM1026_FAN_MAX(x)	(0x60 + x)
-#define ADM1026_INT_TEMP_MAX	0x68
-#define ADM1026_INT_TEMP_MIN	0x69
-#define ADM1026_VBATT_MAX	0x6a
-#define ADM1026_VBATT_MIN	0x6b
-#define ADM1026_AIN8_MAX	0x6c
-#define ADM1026_AIN8_MIN	0x6d
+#define ADM1026_AIN_LOW(x)	(0x58 + x)
+/* 8 fan high limit registers: 0x60 to 0x67 (high limit = low speed) */
+#define ADM1026_FAN_HIGH(x)	(0x60 + x)
+#define ADM1026_INT_TEMP_HIGH	0x68
+#define ADM1026_INT_TEMP_LOW	0x69
+#define ADM1026_VBATT_HIGH	0x6a
+#define ADM1026_VBATT_LOW	0x6b
+#define ADM1026_AIN8_HIGH	0x6c
+#define ADM1026_AIN8_LOW	0x6d
 #define ADM1026_TDM1_OFF	0x6e
 #define ADM1026_TDM2_OFF	0x6f
 
