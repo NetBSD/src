@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.377 2026/02/10 18:53:34 sjg Exp $
+# $NetBSD: Makefile,v 1.378 2026/02/10 22:33:36 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -557,6 +557,7 @@ SED_CMDS.opt-debug-lint+=	${STD_SED_CMDS.regex}
 SED_CMDS.opt-jobs-no-action=	${STD_SED_CMDS.hide-from-output}
 SED_CMDS.opt-no-action-runflags= ${STD_SED_CMDS.hide-from-output}
 SED_CMDS.opt-where-am-i=	-e '/usr.obj/d'
+SED_CMDS.opt-where-am-i+=	-e '/\/\//d'
 # For Compat_RunCommand, useShell == false.
 SED_CMDS.sh-dots=		-e 's,^.*\.\.\.:.*,<not found: ...>,'
 # For Compat_RunCommand, useShell == true.
