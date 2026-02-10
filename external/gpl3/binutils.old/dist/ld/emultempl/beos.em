@@ -7,7 +7,7 @@ else
 fi
 fragment <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -70,22 +70,6 @@ gld${EMULATION_NAME}_before_parse (void)
 
 /* PE format extra command line options.  */
 
-/* Used for setting flags in the PE header. */
-#define OPTION_BASE_FILE		(300  + 1)
-#define OPTION_DLL			(OPTION_BASE_FILE + 1)
-#define OPTION_FILE_ALIGNMENT		(OPTION_DLL + 1)
-#define OPTION_IMAGE_BASE		(OPTION_FILE_ALIGNMENT + 1)
-#define OPTION_MAJOR_IMAGE_VERSION	(OPTION_IMAGE_BASE + 1)
-#define OPTION_MAJOR_OS_VERSION		(OPTION_MAJOR_IMAGE_VERSION + 1)
-#define OPTION_MAJOR_SUBSYSTEM_VERSION	(OPTION_MAJOR_OS_VERSION + 1)
-#define OPTION_MINOR_IMAGE_VERSION	(OPTION_MAJOR_SUBSYSTEM_VERSION + 1)
-#define OPTION_MINOR_OS_VERSION		(OPTION_MINOR_IMAGE_VERSION + 1)
-#define OPTION_MINOR_SUBSYSTEM_VERSION	(OPTION_MINOR_OS_VERSION + 1)
-#define OPTION_SECTION_ALIGNMENT	(OPTION_MINOR_SUBSYSTEM_VERSION + 1)
-#define OPTION_STACK			(OPTION_SECTION_ALIGNMENT + 1)
-#define OPTION_SUBSYSTEM		(OPTION_STACK + 1)
-#define OPTION_HEAP			(OPTION_SUBSYSTEM + 1)
-
 static void
 gld${EMULATION_NAME}_add_options
   (int ns ATTRIBUTE_UNUSED, char **shortopts ATTRIBUTE_UNUSED, int nl,
@@ -98,7 +82,6 @@ gld${EMULATION_NAME}_add_options
     {"dll", no_argument, NULL, OPTION_DLL},
     {"file-alignment", required_argument, NULL, OPTION_FILE_ALIGNMENT},
     {"heap", required_argument, NULL, OPTION_HEAP},
-    {"image-base", required_argument, NULL, OPTION_IMAGE_BASE},
     {"major-image-version", required_argument, NULL, OPTION_MAJOR_IMAGE_VERSION},
     {"major-os-version", required_argument, NULL, OPTION_MAJOR_OS_VERSION},
     {"major-subsystem-version", required_argument, NULL, OPTION_MAJOR_SUBSYSTEM_VERSION},
@@ -227,7 +210,7 @@ set_pe_subsystem (void)
 	  return;
 	}
     }
-  einfo (_("%F%P: invalid subsystem type %s\n"), optarg);
+  fatal (_("%P: invalid subsystem type %s\n"), optarg);
 }
 
 
@@ -237,9 +220,7 @@ set_pe_value (char *name)
   char *end;
   set_pe_name (name,  strtoul (optarg, &end, 0));
   if (end == optarg)
-    {
-      einfo (_("%F%P: invalid hex number for PE parameter '%s'\n"), optarg);
-    }
+    fatal (_("%P: invalid hex number for PE parameter '%s'\n"), optarg);
 
   optarg = end;
 }
@@ -254,9 +235,7 @@ set_pe_stack_heap (char *resname, char *comname)
       set_pe_value (comname);
     }
   else if (*optarg)
-    {
-      einfo (_("%F%P: strange hex info for PE parameter '%s'\n"), optarg);
-    }
+    fatal (_("%P: strange hex info for PE parameter '%s'\n"), optarg);
 }
 
 
@@ -271,7 +250,7 @@ gld${EMULATION_NAME}_handle_option (int optc)
     case OPTION_BASE_FILE:
       link_info.base_file = fopen (optarg, FOPEN_WB);
       if (link_info.base_file == NULL)
-	einfo (_("%F%P: cannot open base file %s\n"), optarg);
+	fatal (_("%P: cannot open base file %s\n"), optarg);
       break;
 
       /* PE options */
@@ -380,9 +359,7 @@ gld${EMULATION_NAME}_after_open (void)
      FIXME: This should be done via a function, rather than by
      including an internal BFD header.  */
   if (!obj_pe (link_info.output_bfd))
-    {
-      einfo (_("%F%P: PE operations on non PE file\n"));
-    }
+    fatal (_("%P: PE operations on non PE file\n"));
 
   pe_data(link_info.output_bfd)->pe_opthdr = pe;
   pe_data(link_info.output_bfd)->dll = init[DLLOFF].value;
@@ -431,12 +408,12 @@ sort_by_file_name (const void *a, const void *b)
 
       if (!bfd_get_section_contents (sa->owner, sa, &a_sec, (file_ptr) 0,
 				     (bfd_size_type) sizeof (a_sec)))
-	einfo (_("%F%P: %pB: can't read contents of section .idata: %E\n"),
+	fatal (_("%P: %pB: can't read contents of section .idata: %E\n"),
 	       sa->owner);
 
       if (!bfd_get_section_contents (sb->owner, sb, &b_sec, (file_ptr) 0,
 				     (bfd_size_type) sizeof (b_sec)))
-	einfo (_("%F%P: %pB: can't read contents of section .idata: %E\n"),
+	fatal (_("%P: %pB: can't read contents of section .idata: %E\n"),
 	       sb->owner);
 
       i = a_sec < b_sec ? -1 : 0;
@@ -668,7 +645,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
   /* Everything from the '\$' on gets deleted so don't allow '\$' as the
      first character.  */
   if (*secname == '\$')
-    einfo (_("%F%P: section %s has '\$' as first character\n"), secname);
+    fatal (_("%P: section %s has '\$' as first character\n"), secname);
   if (strchr (secname + 1, '\$') == NULL)
     return NULL;
 
@@ -698,7 +675,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
       }
   ps[0] = 0;
   if (l == NULL)
-    einfo (_("%F%P: *(%s\$) missing from linker script\n"), output_secname);
+    fatal (_("%P: *(%s\$) missing from linker script\n"), output_secname);
 
   /* Link the input section in and we're done for now.
      The sections still have to be sorted, but that has to wait until

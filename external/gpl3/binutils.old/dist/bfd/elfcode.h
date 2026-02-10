@@ -1,5 +1,5 @@
 /* ELF executable support for BFD.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -1195,6 +1195,7 @@ elf_checksum_contents (bfd *abfd,
       Elf_Internal_Shdr i_shdr;
       Elf_External_Shdr x_shdr;
       bfd_byte *contents, *free_contents;
+      asection *sec = NULL;
 
       i_shdr = *i_shdrp[count];
       i_shdr.sh_offset = 0;
@@ -1210,8 +1211,6 @@ elf_checksum_contents (bfd *abfd,
       contents = i_shdr.contents;
       if (contents == NULL)
 	{
-	  asection *sec;
-
 	  sec = bfd_section_from_elf_index (abfd, count);
 	  if (sec != NULL)
 	    {
@@ -1220,7 +1219,7 @@ elf_checksum_contents (bfd *abfd,
 		{
 		  /* Force rereading from file.  */
 		  sec->flags &= ~SEC_IN_MEMORY;
-		  if (!bfd_malloc_and_get_section (abfd, sec, &free_contents))
+		  if (!_bfd_elf_mmap_section_contents (abfd, sec, &free_contents))
 		    continue;
 		  contents = free_contents;
 		}
@@ -1229,7 +1228,7 @@ elf_checksum_contents (bfd *abfd,
       if (contents != NULL)
 	{
 	  (*process) (contents, i_shdr.sh_size, arg);
-	  free (free_contents);
+	  _bfd_elf_munmap_section_contents (sec, free_contents);
 	}
     }
 
@@ -1594,7 +1593,7 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
       if (ELF_R_SYM (rela.r_info) == STN_UNDEF)
 	/* FIXME: This and the error case below mean that we have a
 	   symbol on relocs that is not elf_symbol_type.  */
-	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
       else if (ELF_R_SYM (rela.r_info) > symcount)
 	{
 	  _bfd_error_handler
@@ -1602,7 +1601,7 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 	    (_("%pB(%pA): relocation %d has invalid symbol index %ld"),
 	     abfd, asect, i, (long) ELF_R_SYM (rela.r_info));
 	  bfd_set_error (bfd_error_bad_value);
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	}
       else
 	{
@@ -1615,11 +1614,12 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 
       relent->addend = rela.r_addend;
 
+      res = false;
       if ((entsize == sizeof (Elf_External_Rela)
-	   && ebd->elf_info_to_howto != NULL)
-	  || ebd->elf_info_to_howto_rel == NULL)
+	   || ebd->elf_info_to_howto_rel == NULL)
+	  && ebd->elf_info_to_howto != NULL)
 	res = ebd->elf_info_to_howto (abfd, relent, &rela);
-      else
+      else if (ebd->elf_info_to_howto_rel != NULL)
 	res = ebd->elf_info_to_howto_rel (abfd, relent, &rela);
 
       if (! res || relent->howto == NULL)

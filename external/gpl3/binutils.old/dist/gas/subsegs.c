@@ -1,5 +1,5 @@
 /* subsegs.c - subsegments -
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -50,8 +50,21 @@ subsegs_end (struct obstack **obs)
   for (; *obs; obs++)
     _obstack_free (*obs, NULL);
   _obstack_free (&frchains, NULL);
-  bfd_set_section_userdata (bfd_abs_section_ptr, NULL);
+  bfd_set_section_userdata (bfd_com_section_ptr, NULL);
   bfd_set_section_userdata (bfd_und_section_ptr, NULL);
+  bfd_set_section_userdata (bfd_abs_section_ptr, NULL);
+  bfd_set_section_userdata (bfd_ind_section_ptr, NULL);
+  /* Reverse bfd_std_section_init, so the sections look as they did
+     initially.  This, and clearing out userdata above, is so we don't
+     leave dangling pointers into freed memory for oss-fuzz to mess
+     with.  */
+  asymbol *global_syms = bfd_com_section_ptr->symbol;
+  bfd_und_section_ptr->used_by_bfd = NULL;
+  bfd_und_section_ptr->symbol = global_syms + (bfd_und_section_ptr
+					       - bfd_com_section_ptr);
+  bfd_abs_section_ptr->used_by_bfd = NULL;
+  bfd_abs_section_ptr->symbol = global_syms + (bfd_abs_section_ptr
+					       - bfd_com_section_ptr);
 }
 
 static void
@@ -119,7 +132,7 @@ subseg_set_rest (segT seg, subsegT subseg)
     {
       /* This should be the only code that creates a frchainS.  */
 
-      newP = (frchainS *) obstack_alloc (&frchains, sizeof (frchainS));
+      newP = obstack_alloc (&frchains, sizeof (frchainS));
       newP->frch_subseg = subseg;
       newP->fix_root = NULL;
       newP->fix_tail = NULL;
@@ -127,7 +140,7 @@ subseg_set_rest (segT seg, subsegT subseg)
 #if __GNUC__ >= 2
       obstack_alignment_mask (&newP->frch_obstack) = __alignof__ (fragS) - 1;
 #endif
-      newP->frch_frag_now = frag_alloc (&newP->frch_obstack);
+      newP->frch_frag_now = frag_alloc (&newP->frch_obstack, 0);
       newP->frch_frag_now->fr_type = rs_fill;
       newP->frch_cfi_data = NULL;
       newP->frch_ginsn_data = NULL;

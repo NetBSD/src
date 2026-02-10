@@ -1,5 +1,5 @@
 /* windres.c -- a program to manipulate Windows resources
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -106,26 +106,6 @@ struct include_dir
 };
 
 static struct include_dir *include_dirs;
-
-/* Static functions.  */
-
-static void res_init (void);
-static int extended_menuitems (const rc_menuitem *);
-static enum res_format format_from_name (const char *, int);
-static enum res_format format_from_filename (const char *, int);
-static void usage (FILE *, int);
-static int cmp_res_entry (const void *, const void *);
-static rc_res_directory *sort_resources (rc_res_directory *);
-static void reswr_init (void);
-static const char * quot (const char *);
-
-static rc_uint_type target_get_8 (const void *, rc_uint_type);
-static void target_put_8 (void *, rc_uint_type);
-static rc_uint_type target_get_16 (const void *, rc_uint_type);
-static void target_put_16 (void *, rc_uint_type);
-static rc_uint_type target_get_32 (const void *, rc_uint_type);
-static void target_put_32 (void *, rc_uint_type);
-
 
 /* When we are building a resource tree, we allocate everything onto
    an obstack, so that we can free it all at once if we want.  */
@@ -504,12 +484,6 @@ extended_dialog (const rc_dialog *dialog)
 
 /* Return whether MENUITEMS are a MENU or a MENUEX.  */
 
-int
-extended_menu (const rc_menu *menu)
-{
-  return extended_menuitems (menu->items);
-}
-
 static int
 extended_menuitems (const rc_menuitem *menuitems)
 {
@@ -540,6 +514,12 @@ extended_menuitems (const rc_menuitem *menuitems)
     }
 
   return 0;
+}
+
+int
+extended_menu (const rc_menu *menu)
+{
+  return extended_menuitems (menu->items);
 }
 
 /* Convert a string to a format type, or exit if it can't be done.  */
@@ -885,10 +865,7 @@ main (int argc, char **argv)
 
 	case OPTION_PREPROCESSOR:
 	  if (strchr (optarg, ' '))
-	    {
-	      if (asprintf (& preprocessor, "\"%s\"", optarg) == -1)
-		preprocessor = optarg;
-	    }
+	    preprocessor = xasprintf ("\"%s\"", optarg);
 	  else
 	    preprocessor = optarg;	    
 	  break;
@@ -1079,23 +1056,24 @@ main (int argc, char **argv)
   /* Write the output file.  */
   reswr_init ();
 
+  bool ok;
   switch (output_format)
     {
     default:
       abort ();
     case RES_FORMAT_RC:
-      write_rc_file (output_filename, resources);
+      ok = write_rc_file (output_filename, resources);
       break;
     case RES_FORMAT_RES:
-      write_res_file (output_filename, resources);
+      ok = write_res_file (output_filename, resources);
       break;
     case RES_FORMAT_COFF:
-      write_coff_file (output_filename, target, resources);
+      ok = write_coff_file (output_filename, target, resources);
       break;
     }
 
-  xexit (0);
-  return 0;
+  xexit (ok ? 0 : 1);
+  return ok ? 0 : 1;
 }
 
 static void
@@ -1117,13 +1095,18 @@ windres_open_as_binary (const char *filename, int rdmode)
 {
   bfd *abfd;
 
-  abfd = (rdmode ? bfd_openr (filename, "binary") : bfd_openw (filename, "binary"));
-  if (! abfd)
-    fatal ("can't open `%s' for %s", filename, (rdmode ? "input" : "output"));
-
-  if (rdmode && ! bfd_check_format (abfd, bfd_object))
-    fatal ("can't open `%s' for input.", filename);
-
+  if (rdmode)
+    {
+      abfd = bfd_openr (filename, "binary");
+      if (abfd == NULL || !bfd_check_format (abfd, bfd_object))
+	fatal ("can't open `%s' for input", filename);
+    }
+  else
+    {
+      abfd = bfd_openw (filename, "binary");
+      if (abfd == NULL || !bfd_set_format (abfd, bfd_object))
+	fatal ("can't open `%s' for output", filename);
+    }
   return abfd;
 }
 
@@ -1197,6 +1180,60 @@ get_windres_bfd_content (windres_bfd *wrbfd, void *data, rc_uint_type off,
     abort ();
 }
 
+static void
+target_put_8 (void *p, rc_uint_type value)
+{
+  assert (!! p);
+  *((bfd_byte *) p)=(bfd_byte) value;
+}
+
+static void
+target_put_16 (void *p, rc_uint_type value)
+{
+  assert (!! p);
+
+  if (target_is_bigendian)
+    bfd_putb16 (value, p);
+  else
+    bfd_putl16 (value, p);
+}
+
+static void
+target_put_32 (void *p, rc_uint_type value)
+{
+  assert (!! p);
+
+  if (target_is_bigendian)
+    bfd_putb32 (value, p);
+  else
+    bfd_putl32 (value, p);
+}
+
+static rc_uint_type
+target_get_8 (const void *p)
+{
+  rc_uint_type ret = *((const bfd_byte *) p);
+  return ret & 0xff;
+}
+
+static rc_uint_type
+target_get_16 (const void *p)
+{
+  if (target_is_bigendian)
+    return bfd_getb16 (p);
+  else
+    return bfd_getl16 (p);
+}
+
+static rc_uint_type
+target_get_32 (const void *p)
+{
+  if (target_is_bigendian)
+    return bfd_getb32 (p);
+  else
+    return bfd_getl32 (p);
+}
+
 void
 windres_put_8 (windres_bfd *wrbfd, void *p, rc_uint_type value)
 {
@@ -1256,14 +1293,12 @@ windres_put_32 (windres_bfd *wrbfd, void *data, rc_uint_type value)
 }
 
 rc_uint_type
-windres_get_8 (windres_bfd *wrbfd, const void *data, rc_uint_type length)
+windres_get_8 (windres_bfd *wrbfd, const void *data)
 {
-  if (length < 1)
-    fatal ("windres_get_8: unexpected eob.");
   switch (WR_KIND(wrbfd))
     {
     case WR_KIND_TARGET:
-      return target_get_8 (data, length);
+      return target_get_8 (data);
     case WR_KIND_BFD:
     case WR_KIND_BFD_BIN_B:
     case WR_KIND_BFD_BIN_L:
@@ -1275,14 +1310,12 @@ windres_get_8 (windres_bfd *wrbfd, const void *data, rc_uint_type length)
 }
 
 rc_uint_type
-windres_get_16 (windres_bfd *wrbfd, const void *data, rc_uint_type length)
+windres_get_16 (windres_bfd *wrbfd, const void *data)
 {
-  if (length < 2)
-    fatal ("windres_get_16: unexpected eob.");
   switch (WR_KIND(wrbfd))
     {
     case WR_KIND_TARGET:
-      return target_get_16 (data, length);
+      return target_get_16 (data);
     case WR_KIND_BFD:
     case WR_KIND_BFD_BIN_B:
       return bfd_get_16 (WR_BFD(wrbfd), data);
@@ -1295,14 +1328,12 @@ windres_get_16 (windres_bfd *wrbfd, const void *data, rc_uint_type length)
 }
 
 rc_uint_type
-windres_get_32 (windres_bfd *wrbfd, const void *data, rc_uint_type length)
+windres_get_32 (windres_bfd *wrbfd, const void *data)
 {
-  if (length < 4)
-    fatal ("windres_get_32: unexpected eob.");
   switch (WR_KIND(wrbfd))
     {
     case WR_KIND_TARGET:
-      return target_get_32 (data, length);
+      return target_get_32 (data);
     case WR_KIND_BFD:
     case WR_KIND_BFD_BIN_B:
       return bfd_get_32 (WR_BFD(wrbfd), data);
@@ -1312,71 +1343,6 @@ windres_get_32 (windres_bfd *wrbfd, const void *data, rc_uint_type length)
       abort ();
     }
   return 0;
-}
-
-static rc_uint_type
-target_get_8 (const void *p, rc_uint_type length)
-{
-  rc_uint_type ret;
-
-  if (length < 1)
-    fatal ("Resource too small for getting 8-bit value.");
-
-  ret = (rc_uint_type) *((const bfd_byte *) p);
-  return ret & 0xff;
-}
-
-static rc_uint_type
-target_get_16 (const void *p, rc_uint_type length)
-{
-  if (length < 2)
-    fatal ("Resource too small for getting 16-bit value.");
-
-  if (target_is_bigendian)
-    return bfd_getb16 (p);
-  else
-    return bfd_getl16 (p);
-}
-
-static rc_uint_type
-target_get_32 (const void *p, rc_uint_type length)
-{
-  if (length < 4)
-    fatal ("Resource too small for getting 32-bit value.");
-
-  if (target_is_bigendian)
-    return bfd_getb32 (p);
-  else
-    return bfd_getl32 (p);
-}
-
-static void
-target_put_8 (void *p, rc_uint_type value)
-{
-  assert (!! p);
-  *((bfd_byte *) p)=(bfd_byte) value;
-}
-
-static void
-target_put_16 (void *p, rc_uint_type value)
-{
-  assert (!! p);
-
-  if (target_is_bigendian)
-    bfd_putb16 (value, p);
-  else
-    bfd_putl16 (value, p);
-}
-
-static void
-target_put_32 (void *p, rc_uint_type value)
-{
-  assert (!! p);
-
-  if (target_is_bigendian)
-    bfd_putb32 (value, p);
-  else
-    bfd_putl32 (value, p);
 }
 
 static int isInComment = 0;

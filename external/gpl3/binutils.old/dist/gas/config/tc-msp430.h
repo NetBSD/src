@@ -1,5 +1,5 @@
 /* This file is tc-msp430.h
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -99,7 +99,7 @@
 
 /* Support symbols like: C$$IO$$.  */
 #undef  LEX_DOLLAR
-#define LEX_DOLLAR 1
+#define LEX_DOLLAR LEX_NAME
 
 #define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 0
 /*   An `.lcomm' directive with no explicit alignment parameter will

@@ -1,5 +1,5 @@
 /* tc-hppa.c -- Assemble for the PA
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1200,7 +1200,7 @@ fix_new_hppa (fragS *frag,
     new_fix = fix_new_exp (frag, where, size, exp, pcrel, r_type);
   else
     new_fix = fix_new (frag, where, size, add_symbol, offset, pcrel, r_type);
-  new_fix->tc_fix_data = (void *) hppa_fix;
+  new_fix->tc_fix_data = hppa_fix;
   hppa_fix->fx_r_type = r_type;
   hppa_fix->fx_r_field = r_field;
   hppa_fix->fx_r_format = r_format;
@@ -1265,8 +1265,7 @@ cons_fix_new_hppa (fragS *frag, int where, int size, expressionS *exp,
       hppa_field_selector = e_fsel;
     }
 
-  fix_new_hppa (frag, where, size,
-		(symbolS *) NULL, (offsetT) 0, exp, 0, rel_type,
+  fix_new_hppa (frag, where, size, NULL, 0, exp, 0, rel_type,
 		hppa_field_selector, size * 8, 0, 0);
 }
 
@@ -1348,17 +1347,12 @@ tc_gen_reloc (asection *section, fixS *fixp)
   int n_relocs;
   int i;
 
-  hppa_fixp = (struct hppa_fix_struct *) fixp->tc_fix_data;
   if (fixp->fx_addsy == 0)
     return &no_relocs;
 
+  hppa_fixp = fixp->tc_fix_data;
   gas_assert (hppa_fixp != 0);
   gas_assert (section != 0);
-
-  reloc = XNEW (arelent);
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
-  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
 
   /* Allow fixup_segment to recognize hand-written pc-relative relocations.
      When we went through cons_fix_new_hppa, we classified them as complex.  */
@@ -1388,11 +1382,10 @@ tc_gen_reloc (asection *section, fixS *fixp)
   for (n_relocs = 0; codes[n_relocs]; n_relocs++)
     ;
 
-  relocs = XNEWVEC (arelent *, n_relocs + 1);
-  reloc = XNEWVEC (arelent, n_relocs);
+  relocs = notes_alloc (sizeof (*relocs) * (n_relocs + 1));
+  reloc = notes_alloc (sizeof (*reloc) * n_relocs);
   for (i = 0; i < n_relocs; i++)
     relocs[i] = &reloc[i];
-
   relocs[n_relocs] = NULL;
 
 #ifdef OBJ_ELF
@@ -1447,13 +1440,13 @@ tc_gen_reloc (asection *section, fixS *fixp)
 	  break;
 	}
 
-      reloc->sym_ptr_ptr = XNEW (asymbol *);
+      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       reloc->howto = bfd_reloc_type_lookup (stdoutput,
 					    (bfd_reloc_code_real_type) code);
       reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
-      gas_assert (reloc->howto && (unsigned int) code == reloc->howto->type);
+      gas_assert (reloc->howto && code == reloc->howto->type);
       break;
     }
 #else /* OBJ_SOM */
@@ -1463,7 +1456,7 @@ tc_gen_reloc (asection *section, fixS *fixp)
     {
       code = *codes[i];
 
-      relocs[i]->sym_ptr_ptr = XNEW (asymbol *);
+      relocs[i]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
       *relocs[i]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
       relocs[i]->howto =
 	bfd_reloc_type_lookup (stdoutput,
@@ -1477,36 +1470,25 @@ tc_gen_reloc (asection *section, fixS *fixp)
 	     of two symbols.  With that in mind we fill in all four
 	     relocs now and break out of the loop.  */
 	  gas_assert (i == 1);
-	  relocs[0]->sym_ptr_ptr
-	    = (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
-	  relocs[0]->howto
-	    = bfd_reloc_type_lookup (stdoutput,
-				     (bfd_reloc_code_real_type) *codes[0]);
-	  relocs[0]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+	  /* relocs[0] and relocs[1] have been initialised above.  We can
+	     use relocs[0]->sym_ptr_ptr allocation for relocs[2].  */
+	  relocs[2]->sym_ptr_ptr = relocs[0]->sym_ptr_ptr;
+	  relocs[0]->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  relocs[0]->addend = 0;
-	  relocs[1]->sym_ptr_ptr = XNEW (asymbol *);
-	  *relocs[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-	  relocs[1]->howto
-	    = bfd_reloc_type_lookup (stdoutput,
-				     (bfd_reloc_code_real_type) *codes[1]);
-	  relocs[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[1]->addend = 0;
-	  relocs[2]->sym_ptr_ptr = XNEW (asymbol *);
 	  *relocs[2]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
 	  relocs[2]->howto
 	    = bfd_reloc_type_lookup (stdoutput,
 				     (bfd_reloc_code_real_type) *codes[2]);
 	  relocs[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[2]->addend = 0;
-	  relocs[3]->sym_ptr_ptr
-	    = (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relocs[3]->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  relocs[3]->howto
 	    = bfd_reloc_type_lookup (stdoutput,
 				     (bfd_reloc_code_real_type) *codes[3]);
 	  relocs[3]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[3]->addend = 0;
-	  relocs[4]->sym_ptr_ptr
-	    = (asymbol **) bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relocs[4]->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  relocs[4]->howto
 	    = bfd_reloc_type_lookup (stdoutput,
 				     (bfd_reloc_code_real_type) *codes[4]);
@@ -1546,7 +1528,6 @@ tc_gen_reloc (asection *section, fixS *fixp)
 	case R_N0SEL:
 	case R_N1SEL:
 	  /* There is no symbol or addend associated with these fixups.  */
-	  relocs[i]->sym_ptr_ptr = XNEW (asymbol *);
 	  *relocs[i]->sym_ptr_ptr = symbol_get_bfdsym (dummy_symbol);
 	  relocs[i]->addend = 0;
 	  break;
@@ -1555,7 +1536,6 @@ tc_gen_reloc (asection *section, fixS *fixp)
 	case R_ENTRY:
 	case R_EXIT:
 	  /* There is no symbol associated with these fixups.  */
-	  relocs[i]->sym_ptr_ptr = XNEW (asymbol *);
 	  *relocs[i]->sym_ptr_ptr = symbol_get_bfdsym (dummy_symbol);
 	  relocs[i]->addend = fixp->fx_offset;
 	  break;
@@ -1582,7 +1562,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 
   if (fragP->fr_type == rs_machine_dependent)
     {
-      switch ((int) fragP->fr_subtype)
+      switch (fragP->fr_subtype)
 	{
 	case 0:
 	  fragP->fr_type = rs_fill;
@@ -1609,7 +1589,7 @@ valueT
 md_section_align (asection *segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
-  int align2 = (1 << align) - 1;
+  valueT align2 = ((valueT) 1 << align) - 1;
 
   return (size + align2) & ~align2;
 }
@@ -1631,26 +1611,26 @@ md_estimate_size_before_relax (fragS *fragP, asection *segment ATTRIBUTE_UNUSED)
 
 #ifdef OBJ_ELF
 # ifdef WARN_COMMENTS
-const char *md_shortopts = "Vc";
+const char md_shortopts[] = "Vc";
 # else
-const char *md_shortopts = "V";
+const char md_shortopts[] = "V";
 # endif
 #else
 # ifdef WARN_COMMENTS
-const char *md_shortopts = "c";
+const char md_shortopts[] = "c";
 # else
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 # endif
 #endif
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
 #ifdef WARN_COMMENTS
   {"warn-comment", no_argument, NULL, 'c'},
 #endif
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char *arg ATTRIBUTE_UNUSED)
@@ -1745,7 +1725,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     fixP->fx_done = 1;
 
   /* There should be a HPPA specific fixup associated with the GAS fixup.  */
-  hppa_fixP = (struct hppa_fix_struct *) fixP->tc_fix_data;
+  hppa_fixP = fixP->tc_fix_data;
   if (hppa_fixP == NULL)
     {
       as_bad_where (fixP->fx_file, fixP->fx_line,
@@ -2032,7 +2012,7 @@ pa_parse_number (char **s, int is_float)
   bool have_prefix;
 
   /* Skip whitespace before the number.  */
-  while (*p == ' ' || *p == '\t')
+  while (is_whitespace (*p))
     p = p + 1;
 
   pa_number = -1;
@@ -2248,12 +2228,12 @@ pa_parse_fp_cmp_cond (char **s)
 	  *s += strlen (fp_cond_map[i].string);
 	  /* If not a complete match, back up the input string and
 	     report an error.  */
-	  if (**s != ' ' && **s != '\t')
+	  if (!is_whitespace (**s))
 	    {
 	      *s -= strlen (fp_cond_map[i].string);
 	      break;
 	    }
-	  while (**s == ' ' || **s == '\t')
+	  while (is_whitespace (**s))
 	    *s = *s + 1;
 	  return cond;
 	}
@@ -2262,7 +2242,7 @@ pa_parse_fp_cmp_cond (char **s)
   as_bad (_("Invalid FP Compare Condition: %s"), *s);
 
   /* Advance over the bogus completer.  */
-  while (**s != ',' && **s != ' ' && **s != '\t')
+  while (**s != ',' && !is_whitespace (**s))
     *s += 1;
 
   return 0;
@@ -2435,18 +2415,18 @@ pa_chk_field_selector (char **str)
   char *s = *str;
 
   /* Read past any whitespace.  */
-  while (*s == ' ' || *s == '\t')
+  while (is_whitespace (*s))
     s++;
   *str = s;
 
-  if (is_end_of_line [(unsigned char) s[0]])
+  if (is_end_of_stmt (s[0]))
     return e_fsel;
   else if (s[1] == '\'' || s[1] == '%')
     {
       name[0] = TOLOWER (s[0]);
       name[1] = 0;
     }
-  else if (is_end_of_line [(unsigned char) s[1]])
+  else if (is_end_of_stmt (s[1]))
     return e_fsel;
   else if (s[2] == '\'' || s[2] == '%')
     {
@@ -2454,7 +2434,7 @@ pa_chk_field_selector (char **str)
       name[1] = TOLOWER (s[1]);
       name[2] = 0;
     }
-  else if (is_end_of_line [(unsigned char) s[2]])
+  else if (is_end_of_stmt (s[2]))
     return e_fsel;
   else if (s[3] == '\'' || s[3] == '%')
     {
@@ -2566,7 +2546,7 @@ pa_get_number (struct pa_it *insn, char **strp)
      contain no whitespace.  */
 
   s = *strp;
-  while (*s != ',' && *s != ' ' && *s != '\t')
+  while (*s != ',' && !is_whitespace (*s))
     s++;
 
   c = *s;
@@ -2646,7 +2626,7 @@ pa_parse_nonneg_cmpsub_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -2716,7 +2696,7 @@ pa_parse_neg_cmpsub_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -2791,7 +2771,7 @@ pa_parse_cmpb_64_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -2884,7 +2864,7 @@ pa_parse_cmpib_64_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -2947,7 +2927,7 @@ pa_parse_nonneg_add_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -3016,7 +2996,7 @@ pa_parse_neg_add_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -3089,7 +3069,7 @@ pa_parse_addb_64_cmpltr (char **s)
   if (**s == ',')
     {
       *s += 1;
-      while (**s != ',' && **s != ' ' && **s != '\t')
+      while (**s != ',' && !is_whitespace (**s))
 	*s += 1;
       c = **s;
       **s = 0x00;
@@ -3197,7 +3177,7 @@ pa_ip (char *str)
 
   /* Convert everything up to the first whitespace character into lower
      case.  */
-  for (s = str; *s != ' ' && *s != '\t' && *s != '\n' && *s != '\0'; s++)
+  for (s = str; !is_whitespace (*s) && !is_end_of_stmt (*s); s++)
     *s = TOLOWER (*s);
 
   /* Skip to something interesting.  */
@@ -3217,17 +3197,19 @@ pa_ip (char *str)
 
       /*FALLTHROUGH */
 
-    case ' ':
+    zap_char:
       *s++ = '\0';
       break;
 
     default:
+      if (is_whitespace (*s))
+	goto zap_char;
       as_bad (_("Unknown opcode: `%s'"), str);
       return;
     }
 
   /* Look up the opcode in the hash table.  */
-  if ((insn = (struct pa_opcode *) str_hash_find (op_hash, str)) == NULL)
+  if ((insn = str_hash_find (op_hash, str)) == NULL)
     {
       as_bad (_("Unknown opcode: `%s'"), str);
       return;
@@ -3258,7 +3240,7 @@ pa_ip (char *str)
       for (args = insn->args;; ++args)
 	{
 	  /* Absorb white space in instruction.  */
-	  while (*s == ' ' || *s == '\t')
+	  while (is_whitespace (*s))
 	    s++;
 
 	  switch (*args)
@@ -3283,8 +3265,12 @@ pa_ip (char *str)
 	    case '(':
 	    case ')':
 	    case ',':
-	    case ' ':
 	      if (*s++ == *args)
+		continue;
+	      break;
+
+	    case ' ':
+	      if (is_whitespace (*s++))
 		continue;
 	      break;
 
@@ -3301,7 +3287,7 @@ pa_ip (char *str)
 	       is there.  */
 	    case '!':
 	      /* Skip whitespace before register.  */
-	      while (*s == ' ' || *s == '\t')
+	      while (is_whitespace (*s))
 		s = s + 1;
 
 	      if (!strncasecmp (s, "%sar", 4))
@@ -3975,7 +3961,7 @@ pa_ip (char *str)
 			  break;
 
 			name = s;
-			while (*s != ',' && *s != ' ' && *s != '\t')
+			while (*s != ',' && !is_whitespace (*s))
 			  s += 1;
 			c = *s;
 			*s = 0x00;
@@ -4150,7 +4136,7 @@ pa_ip (char *str)
 			  break;
 
 			name = s;
-			while (*s != ',' && *s != ' ' && *s != '\t')
+			while (*s != ',' && !is_whitespace (*s))
 			  s += 1;
 			c = *s;
 			*s = 0x00;
@@ -4298,7 +4284,7 @@ pa_ip (char *str)
 			  break;
 
 			name = s;
-			while (*s != ',' && *s != ' ' && *s != '\t')
+			while (*s != ',' && !is_whitespace (*s))
 			  s += 1;
 			c = *s;
 			*s = 0x00;
@@ -4372,7 +4358,7 @@ pa_ip (char *str)
 			  break;
 
 			name = s;
-			while (*s != ',' && *s != ' ' && *s != '\t')
+			while (*s != ',' && !is_whitespace (*s))
 			  s += 1;
 			c = *s;
 			*s = 0x00;
@@ -4516,7 +4502,7 @@ pa_ip (char *str)
 			    s += 3;
 			  }
 			/* ",*" is a valid condition.  */
-			else if (*args != 'U' || (*s != ' ' && *s != '\t'))
+			else if (*args != 'U' || !is_whitespace (*s))
 			  as_bad (_("Invalid Unit Instruction Condition."));
 		      }
 		    /* 32-bit is default for no condition.  */
@@ -5775,7 +5761,7 @@ md_assemble (char *str)
 		  where = frag_more (0);
 		  u = UNWIND_LOW32 (&last_call_info->ci_unwind.descriptor);
 		  fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
-				NULL, (offsetT) 0, NULL,
+				NULL, 0, NULL,
 				0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
 		}
 #endif
@@ -5799,7 +5785,7 @@ md_assemble (char *str)
   /* If necessary output more stuff.  */
   if (the_insn.reloc != R_HPPA_NONE)
     fix_new_hppa (frag_now, (to - frag_now->fr_literal), 4, NULL,
-		  (offsetT) 0, &the_insn.exp, the_insn.pcrel,
+		  0, &the_insn.exp, the_insn.pcrel,
 		  (int) the_insn.reloc, the_insn.field_selector,
 		  the_insn.format, the_insn.arg_reloc, 0);
 
@@ -5869,7 +5855,7 @@ pa_brtab (int begin ATTRIBUTE_UNUSED)
   char *where = frag_more (0);
 
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
-		NULL, (offsetT) 0, NULL,
+		NULL, 0, NULL,
 		0, begin ? R_HPPA_BEGIN_BRTAB : R_HPPA_END_BRTAB,
 		e_fsel, 0, 0, 0);
 #endif
@@ -5893,7 +5879,7 @@ pa_try (int begin ATTRIBUTE_UNUSED)
      the beginning and end of exception handling regions).  */
 
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
-		NULL, (offsetT) 0, begin ? NULL : &exp,
+		NULL, 0, begin ? NULL : &exp,
 		0, begin ? R_HPPA_BEGIN_TRY : R_HPPA_END_TRY,
 		e_fsel, 0, 0, 0);
 #endif
@@ -6032,10 +6018,8 @@ pa_build_unwind_subspace (struct call_info *call_info)
 
   /* Relocation info. for start offset of the function.  */
   md_number_to_chars (p, 0, 4);
-  fix_new_hppa (frag_now, p - frag_now->fr_literal, 4,
-		symbolP, (offsetT) 0,
-		(expressionS *) NULL, 0, reloc,
-		e_fsel, 32, 0, 0);
+  fix_new_hppa (frag_now, p - frag_now->fr_literal, 4, symbolP, 0,
+		NULL, 0, reloc, e_fsel, 32, 0, 0);
 
   /* Relocation info. for end offset of the function.
 
@@ -6046,9 +6030,8 @@ pa_build_unwind_subspace (struct call_info *call_info)
      finished with its work.  */
   md_number_to_chars (p + 4, 0, 4);
   fix_new_hppa (frag_now, p + 4 - frag_now->fr_literal, 4,
-		call_info->end_symbol, (offsetT) 0,
-		(expressionS *) NULL, 0, reloc,
-		e_fsel, 32, 0, 0);
+		call_info->end_symbol, 0,
+		NULL, 0, reloc, e_fsel, 32, 0, 0);
 
   /* Dump the descriptor.  */
   unwind = UNWIND_LOW32 (&call_info->ci_unwind.descriptor);
@@ -6348,8 +6331,7 @@ pa_entry (int unused ATTRIBUTE_UNUSED)
       where = frag_more (0);
       u = UNWIND_LOW32 (&last_call_info->ci_unwind.descriptor);
       fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
-		    NULL, (offsetT) 0, NULL,
-		    0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
+		    NULL, 0, NULL, 0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
     }
 #endif
 }
@@ -6507,8 +6489,7 @@ process_exit (void)
      if we split the unwind bits up between the relocations which
      denote the entry and exit points.  */
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
-		NULL, (offsetT) 0,
-		NULL, 0, R_HPPA_EXIT, e_fsel, 0, 0,
+		NULL, 0, NULL, 0, R_HPPA_EXIT, e_fsel, 0, 0,
 		UNWIND_HIGH32 (&last_call_info->ci_unwind.descriptor));
 #endif
 }
@@ -6634,7 +6615,7 @@ pa_type_args (symbolS *symbolP, int is_export)
      than BFD understands.  This is how we get this information
      to the SOM BFD backend.  */
 #ifdef obj_set_symbol_type
-  obj_set_symbol_type (bfdsym, (int) type);
+  obj_set_symbol_type (bfdsym, type);
 #else
   (void) type;
 #endif
@@ -7024,8 +7005,8 @@ pa_procend (int unused ATTRIBUTE_UNUSED)
 		  where = frag_more (0);
 		  u = UNWIND_LOW32 (&last_call_info->ci_unwind.descriptor);
 		  fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
-				NULL, (offsetT) 0, NULL,
-				0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
+				NULL, 0, NULL, 0, R_HPPA_ENTRY, e_fsel,
+				0, 0, u);
 		}
 #endif
 	    }
@@ -7567,7 +7548,6 @@ pa_subspace (int create_new)
       /* Now that all the flags are set, update an existing subspace,
 	 or create a new one.  */
       if (ssd)
-
 	current_subspace = update_subspace (space, ss_name, loadable,
 					    code_only, comdat, common,
 					    dup_common, sort, zero, access_ctr,
@@ -7992,7 +7972,7 @@ pa_subsegment_to_subspace (asection *seg, subsegT subseg)
 	  for (subspace_chain = space_chain->sd_subspaces;
 	       subspace_chain;
 	       subspace_chain = subspace_chain->ssd_next)
-	    if (subspace_chain->ssd_subseg == (int) subseg)
+	    if (subspace_chain->ssd_subseg == subseg)
 	      return subspace_chain;
 	}
     }
@@ -8330,7 +8310,7 @@ hppa_fix_adjustable (fixS *fixp)
 #endif
   struct hppa_fix_struct *hppa_fix;
 
-  hppa_fix = (struct hppa_fix_struct *) fixp->tc_fix_data;
+  hppa_fix = fixp->tc_fix_data;
 
 #ifdef OBJ_ELF
   /* LR/RR selectors are implicitly used for a number of different relocation
@@ -8449,14 +8429,14 @@ hppa_force_relocation (struct fix *fixp)
 {
   struct hppa_fix_struct *hppa_fixp;
 
-  hppa_fixp = (struct hppa_fix_struct *) fixp->tc_fix_data;
+  hppa_fixp = fixp->tc_fix_data;
 #ifdef OBJ_SOM
-  if (fixp->fx_r_type == (int) R_HPPA_ENTRY
-      || fixp->fx_r_type == (int) R_HPPA_EXIT
-      || fixp->fx_r_type == (int) R_HPPA_BEGIN_BRTAB
-      || fixp->fx_r_type == (int) R_HPPA_END_BRTAB
-      || fixp->fx_r_type == (int) R_HPPA_BEGIN_TRY
-      || fixp->fx_r_type == (int) R_HPPA_END_TRY
+  if (fixp->fx_r_type == R_HPPA_ENTRY
+      || fixp->fx_r_type == R_HPPA_EXIT
+      || fixp->fx_r_type == R_HPPA_BEGIN_BRTAB
+      || fixp->fx_r_type == R_HPPA_END_BRTAB
+      || fixp->fx_r_type == R_HPPA_BEGIN_TRY
+      || fixp->fx_r_type == R_HPPA_END_TRY
       || (fixp->fx_addsy != NULL && fixp->fx_subsy != NULL
 	  && (hppa_fixp->segment->flags & SEC_CODE) != 0))
     return 1;
@@ -8558,7 +8538,7 @@ pa_vtable_entry (int ignore ATTRIBUTE_UNUSED)
       hppa_fix->fx_r_format = 32;
       hppa_fix->fx_arg_reloc = 0;
       hppa_fix->segment = now_seg;
-      new_fix->tc_fix_data = (void *) hppa_fix;
+      new_fix->tc_fix_data = hppa_fix;
       new_fix->fx_r_type = (int) R_PARISC_GNU_VTENTRY;
     }
 }
@@ -8579,7 +8559,7 @@ pa_vtable_inherit (int ignore ATTRIBUTE_UNUSED)
       hppa_fix->fx_r_format = 32;
       hppa_fix->fx_arg_reloc = 0;
       hppa_fix->segment = now_seg;
-      new_fix->tc_fix_data = (void *) hppa_fix;
+      new_fix->tc_fix_data = hppa_fix;
       new_fix->fx_r_type = (int) R_PARISC_GNU_VTINHERIT;
     }
 }

@@ -1,6 +1,6 @@
 /* tc-wasm32.c -- Assembler code for the wasm32 target.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -78,7 +78,7 @@ const char comment_chars[] = ";#";
 const char line_comment_chars[] = ";#";
 const char line_separator_chars[] = "";
 
-const char *md_shortopts = "m:";
+const char md_shortopts[] = "m:";
 
 const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "dD";
@@ -94,12 +94,12 @@ const pseudo_typeS md_pseudo_table[] =
 
 static htab_t wasm32_hash;
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* No relaxation/no machine-dependent frags.  */
 
@@ -178,7 +178,7 @@ valueT
 md_section_align (asection * seg, valueT addr)
 {
   int align = bfd_section_alignment (seg);
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 /* Apply a fixup, return TRUE if done (and no relocation is
@@ -204,7 +204,7 @@ void
 md_apply_fix (fixS * fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-  long val = (long) *valP;
+  valueT val = *valP;
 
   if (fixP->fx_pcrel)
     {
@@ -229,7 +229,7 @@ md_apply_fix (fixS * fixP, valueT * valP, segT seg ATTRIBUTE_UNUSED)
 static inline char *
 skip_space (char *s)
 {
-  while (*s == ' ' || *s == '\t')
+  while (is_whitespace (*s))
     ++s;
   return s;
 }
@@ -368,7 +368,7 @@ wasm32_leb128 (char **line, int bits, int sign)
       return str != str0;
     }
 
-  reloc = XNEW (struct reloc_list);
+  reloc = notes_alloc (sizeof (*reloc));
   reloc->u.a.offset_sym = expr_build_dot ();
   if (ex.X_op == O_symbol)
     {
@@ -411,7 +411,7 @@ wasm32_leb128 (char **line, int bits, int sign)
 
 	  signature = strndup (input_line_pointer + 1, siglength);
 
-	  reloc2 = XNEW (struct reloc_list);
+	  reloc2 = notes_alloc (sizeof (*reloc2));
 	  reloc2->u.a.offset_sym = expr_build_dot ();
 	  reloc2->u.a.sym = symbol_find_or_make (signature);
 	  reloc2->u.a.addend = 0;
@@ -746,7 +746,7 @@ md_assemble (char *str)
   if (!op[0])
     as_bad (_("can't find opcode "));
 
-  opcode = (struct wasm32_opcode_s *) str_hash_find (wasm32_hash, op);
+  opcode = str_hash_find (wasm32_hash, op);
 
   if (opcode == NULL)
     {
@@ -797,8 +797,8 @@ tc_gen_reloc (asection * sec ATTRIBUTE_UNUSED, fixS * fixp)
 {
   arelent *reloc;
 
-  reloc = (arelent *) xmalloc (sizeof (*reloc));
-  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 

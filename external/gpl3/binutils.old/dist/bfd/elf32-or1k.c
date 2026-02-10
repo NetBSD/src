@@ -1,5 +1,5 @@
 /* Or1k-specific support for 32-bit ELF.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    PIC parts added by Stefan Kristiansson, stefan.kristiansson@saunalahti.fi,
@@ -977,8 +977,7 @@ elf_or1k_plt_entry_size (bfd_vma plt_index)
 static bool
 elf_or1k_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_or1k_obj_tdata),
-				  OR1K_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_or1k_obj_tdata));
 }
 
 /* Create an entry in an or1k ELF linker hash table.  */
@@ -1028,8 +1027,7 @@ or1k_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      or1k_elf_link_hash_newfunc,
-				      sizeof (struct elf_or1k_link_hash_entry),
-				      OR1K_ELF_DATA))
+				      sizeof (struct elf_or1k_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2451,8 +2449,6 @@ or1k_elf_finish_dynamic_symbol (bfd *output_bfd,
   bfd_byte *loc;
 
   htab = or1k_elf_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -3047,8 +3043,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * inf)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				struct bfd_link_info *info)
+or1k_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   struct elf_or1k_link_hash_table *htab;
   bfd *dynobj;
@@ -3061,7 +3057,8 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->root.dynamic_sections_created)
     {
@@ -3072,6 +3069,7 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -3207,9 +3205,9 @@ or1k_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 but this way if it does, we get a R_OR1K_NONE reloc instead
 	 of garbage.  */
       s->contents = bfd_zalloc (dynobj, s->size);
-
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -3414,7 +3412,7 @@ or1k_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #define elf_backend_copy_indirect_symbol	or1k_elf_copy_indirect_symbol
 #define elf_backend_create_dynamic_sections	_bfd_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	or1k_elf_finish_dynamic_sections
-#define elf_backend_size_dynamic_sections	or1k_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		or1k_elf_late_size_sections
 #define elf_backend_adjust_dynamic_symbol	or1k_elf_adjust_dynamic_symbol
 #define elf_backend_finish_dynamic_symbol	or1k_elf_finish_dynamic_symbol
 

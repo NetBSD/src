@@ -1,13 +1,15 @@
 # translation to Russian
 # Copyright (C) 2003, 2005, 2006, 2009 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
+#
 # Yuri Kozlov <yuray@komyakino.ru>, 2010, 2017, 2020, 2023.
+# SPDX-FileCopyrightText: 2010, 2017, 2020, 2023, 2025 Yuri Kozlov <yuray@komyakino.ru>
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.39.90\n"
+"Project-Id-Version: gprof 2.44.90\n"
 "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
-"POT-Creation-Date: 2022-12-31 12:22+0000\n"
-"PO-Revision-Date: 2023-01-05 09:38+0300\n"
+"POT-Creation-Date: 2025-07-13 08:49+0100\n"
+"PO-Revision-Date: 2025-07-18 06:50+0300\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
 "Language: ru\n"
@@ -15,49 +17,49 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
-"X-Generator: Lokalize 20.12.0\n"
+"X-Generator: Lokalize 25.04.0\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: alpha.c:102 mips.c:54
+#: alpha.c:103 mips.c:55
 msgid "<indirect child>"
 msgstr "<косвенный потомок>"
 
-#: alpha.c:107 mips.c:59
+#: alpha.c:108 mips.c:60
 #, c-format
 msgid "[find_call] %s: 0x%lx to 0x%lx\n"
 msgstr "[find_call] %s: 0x%lx к 0x%lx\n"
 
-#: alpha.c:129
+#: alpha.c:132
 #, c-format
 msgid "[find_call] 0x%lx: jsr%s <indirect_child>\n"
 msgstr "[find_call] 0x%lx: jsr%s <косвенный_потомок>\n"
 
-#: alpha.c:139
+#: alpha.c:142
 #, c-format
 msgid "[find_call] 0x%lx: bsr"
 msgstr "[find_call] 0x%lx: bsr"
 
-#: basic_blocks.c:128 call_graph.c:89 hist.c:106
+#: basic_blocks.c:129 call_graph.c:90 hist.c:106
 #, c-format
 msgid "%s: %s: unexpected end of file\n"
 msgstr "%s: %s: неожиданный конец файла\n"
 
-#: basic_blocks.c:196
+#: basic_blocks.c:199
 #, c-format
 msgid "%s: warning: ignoring basic-block exec counts (use -l or --line)\n"
 msgstr "%s: предупреждение: игнорируется счётчик выполнений простого блока (используйте -l или --line)\n"
 
 #. FIXME: This only works if bfd_vma is unsigned long.
-#: basic_blocks.c:289 basic_blocks.c:299
+#: basic_blocks.c:294 basic_blocks.c:304
 #, c-format
 msgid "%s:%d: (%s:0x%lx) %lu executions\n"
 msgstr "%s:%d: (%s:0x%lx) %lu выполнений\n"
 
-#: basic_blocks.c:290 basic_blocks.c:300
+#: basic_blocks.c:295 basic_blocks.c:305
 msgid "<unknown>"
 msgstr "<неизвестно>"
 
-#: basic_blocks.c:543
+#: basic_blocks.c:545
 #, c-format
 msgid ""
 "\n"
@@ -74,7 +76,7 @@ msgstr ""
 "     Строка      Счётчик\n"
 "\n"
 
-#: basic_blocks.c:567
+#: basic_blocks.c:569
 #, c-format
 msgid ""
 "\n"
@@ -85,22 +87,22 @@ msgstr ""
 "Итог по выполнению:\n"
 "\n"
 
-#: basic_blocks.c:568
+#: basic_blocks.c:570
 #, c-format
 msgid "%9ld   Executable lines in this file\n"
 msgstr "%9ld   исполняемых строк в этом файле\n"
 
-#: basic_blocks.c:570
+#: basic_blocks.c:572
 #, c-format
 msgid "%9ld   Lines executed\n"
 msgstr "%9ld   строк выполнено\n"
 
-#: basic_blocks.c:571
+#: basic_blocks.c:573
 #, c-format
 msgid "%9.2f   Percent of the file executed\n"
 msgstr "%9.2f   процент файла выполнено\n"
 
-#: basic_blocks.c:575
+#: basic_blocks.c:577
 #, c-format
 msgid ""
 "\n"
@@ -109,12 +111,12 @@ msgstr ""
 "\n"
 "%9lu   Полное количество выполненных строк\n"
 
-#: basic_blocks.c:577
+#: basic_blocks.c:579
 #, c-format
 msgid "%9.2f   Average executions per line\n"
 msgstr "%9.2f   Среднее количество выполнений на строку\n"
 
-#: call_graph.c:68
+#: call_graph.c:69
 #, c-format
 msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
 msgstr "[cg_tally] ребро из %s в %s проходит %lu раз\n"
@@ -137,7 +139,7 @@ msgstr ""
 "\t\t\tГраф вызовов\n"
 "\n"
 
-#: cg_print.c:79 hist.c:470
+#: cg_print.c:79 hist.c:472
 #, c-format
 msgid ""
 "\n"
@@ -193,7 +195,7 @@ msgstr "сама"
 msgid "descendants"
 msgstr "потомков"
 
-#: cg_print.c:102 hist.c:496
+#: cg_print.c:102 hist.c:498
 msgid "name"
 msgstr "имя"
 
@@ -221,7 +223,7 @@ msgstr "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <самопроизвольн�
 msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <самопроизвольно>\n"
 
-#: cg_print.c:593
+#: cg_print.c:595
 #, c-format
 msgid ""
 "Index by function name\n"
@@ -230,147 +232,142 @@ msgstr ""
 "Индекс по имени функции\n"
 "\n"
 
-#: cg_print.c:650 cg_print.c:659
+#: cg_print.c:652 cg_print.c:661
 #, c-format
 msgid "<cycle %d>"
 msgstr "<цикл %d>"
 
-#: corefile.c:61
+#: corefile.c:63
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: не удалось разобрать отображённый файл %s.\n"
 
-#: corefile.c:89 corefile.c:524
+#: corefile.c:91 corefile.c:532
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: не удалось открыть %s.\n"
 
-#: corefile.c:193
+#: corefile.c:195
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: не в исполняемым формате\n"
 
-#: corefile.c:204
+#: corefile.c:206
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: не удалось найти раздел .text в %s\n"
 
-#: corefile.c:278
+#: corefile.c:287
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr "%s: не хватает место для %lu байт в пространстве кода\n"
 
-#: corefile.c:292
+#: corefile.c:301
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr "%s: не удалось выполнить -c\n"
 
-#: corefile.c:331
+#: corefile.c:340
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c не поддерживается на архитектуре %s\n"
 
-#: corefile.c:533 corefile.c:640
+#: corefile.c:543 corefile.c:647
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: файл «%s» не содержит символов\n"
 
-#: corefile.c:538
+#: corefile.c:548
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr "%s: в файле «%s» содержится слишком много символов\n"
 
-#: corefile.c:907
-#, c-format
-msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
-msgstr "%s: кто-то обсчитался: ltab.len=%d вместо %ld\n"
-
-#: gmon_io.c:81
+#: gmon_io.c:85
 #, c-format
 msgid "%s: address size has unexpected value of %u\n"
 msgstr "%s: размер адреса содержит неожиданное значение %u\n"
 
-#: gmon_io.c:298 gmon_io.c:394
+#: gmon_io.c:302 gmon_io.c:402
 #, c-format
 msgid "%s: file too short to be a gmon file\n"
 msgstr "%s: файл слишком короткий, чтобы быть файлом gmon\n"
 
-#: gmon_io.c:308 gmon_io.c:437
+#: gmon_io.c:312 gmon_io.c:445
 #, c-format
 msgid "%s: file `%s' has bad magic cookie\n"
 msgstr "%s: файл «%s» содержит неправильный идентификатор формата файла\n"
 
-#: gmon_io.c:319
+#: gmon_io.c:323
 #, c-format
 msgid "%s: file `%s' has unsupported version %d\n"
 msgstr "%s: файл «%s» в формате неподдерживаемой версии %d\n"
 
-#: gmon_io.c:349
+#: gmon_io.c:357
 #, c-format
 msgid "%s: %s: found bad tag %d (file corrupted?)\n"
 msgstr "%s: %s: найдена неправильная метка %d (файл повреждён?)\n"
 
-#: gmon_io.c:416
+#: gmon_io.c:424
 #, c-format
 msgid "%s: profiling rate incompatible with first gmon file\n"
 msgstr "%s: степень профилирования несовместима с первым файлом gmon\n"
 
-#: gmon_io.c:467
+#: gmon_io.c:475
 #, c-format
 msgid "%s: incompatible with first gmon file\n"
 msgstr "%s: несовместимо с первым файлом gmon\n"
 
-#: gmon_io.c:497
+#: gmon_io.c:505
 #, c-format
 msgid "%s: file '%s' does not appear to be in gmon.out format\n"
 msgstr "%s: кажется, содержимое файла «%s» не в формате gmon.out\n"
 
-#: gmon_io.c:510
+#: gmon_io.c:518
 #, c-format
 msgid "%s: unexpected EOF after reading %d/%d bins\n"
 msgstr "%s: неожиданный EOF после чтения %d/%d bins\n"
 
-#: gmon_io.c:542
+#: gmon_io.c:550
 #, c-format
 msgid "time is in ticks, not seconds\n"
 msgstr "время в тиках, а не в секундах\n"
 
-#: gmon_io.c:548 gmon_io.c:728
+#: gmon_io.c:556 gmon_io.c:739
 #, c-format
 msgid "%s: don't know how to deal with file format %d\n"
 msgstr "%s: непонятно что делать с файлом в формате %d\n"
 
-#: gmon_io.c:558
+#: gmon_io.c:566
 #, c-format
 msgid "File `%s' (version %d) contains:\n"
 msgstr "Файл «%s» (версия %d) содержит:\n"
 
-#: gmon_io.c:561
+#: gmon_io.c:569
 #, c-format
 msgid "\t%d histogram record\n"
 msgstr "\t%d запись гистограммы\n"
 
-#: gmon_io.c:562
+#: gmon_io.c:570
 #, c-format
 msgid "\t%d histogram records\n"
 msgstr "\t%d записей гистограммы\n"
 
-#: gmon_io.c:564
+#: gmon_io.c:572
 #, c-format
 msgid "\t%d call-graph record\n"
 msgstr "\t%d запись графа вызовов\n"
 
-#: gmon_io.c:565
+#: gmon_io.c:573
 #, c-format
 msgid "\t%d call-graph records\n"
 msgstr "\t%d записей графа вызовов\n"
 
-#: gmon_io.c:567
+#: gmon_io.c:575
 #, c-format
 msgid "\t%d basic-block count record\n"
 msgstr "\t%d запись счётчика простых блоков\n"
 
-#: gmon_io.c:568
+#: gmon_io.c:576
 #, c-format
 msgid "\t%d basic-block count records\n"
 msgstr "\t%d записей счётчика простых блоков\n"
@@ -447,17 +444,17 @@ msgstr "%s: неизвестный стиль декодирования «%s»\
 msgid "%s: Only one of --function-ordering and --file-ordering may be specified.\n"
 msgstr "%s: можно указать что-то одно: --function-ordering или --file-ordering.\n"
 
-#: gprof.c:544
+#: gprof.c:533
 #, c-format
 msgid "%s: sorry, file format `prof' is not yet supported\n"
 msgstr "%s: файл в формате «prof» пока не поддерживается\n"
 
-#: gprof.c:598
+#: gprof.c:587
 #, c-format
 msgid "%s: gmon.out file is missing histogram\n"
 msgstr "%s: в файле gmon.out нет гистограммы\n"
 
-#: gprof.c:605
+#: gprof.c:594
 #, c-format
 msgid "%s: gmon.out file is missing call-graph data\n"
 msgstr "%s: в файле gmon.out нет данных по графу вызовов\n"
@@ -486,8 +483,8 @@ msgstr ""
 
 #: hist.c:158
 #, c-format
-msgid "%s: different scales in histogram records"
-msgstr "%s: различные масштабы в записях гистограммы"
+msgid "%s: different scales in histogram records: %f != %f\n"
+msgstr "%s: различные масштабы в записях гистограммы: %f != %f\n"
 
 #: hist.c:195
 #, c-format
@@ -499,12 +496,12 @@ msgstr "%s: перекрывающиеся записи гистограммы\n
 msgid "%s: %s: unexpected EOF after reading %u of %u samples\n"
 msgstr "%s: %s: неожиданный EOF после чтения %u из %u образцов\n"
 
-#: hist.c:466
+#: hist.c:468
 #, c-format
 msgid "%c%c/call"
 msgstr "%c%c/вызовов"
 
-#: hist.c:474
+#: hist.c:476
 #, c-format
 msgid ""
 " for %.2f%% of %.2f %s\n"
@@ -513,7 +510,7 @@ msgstr ""
 " для %.2f%% из %.2f %s\n"
 "\n"
 
-#: hist.c:480
+#: hist.c:482
 #, c-format
 msgid ""
 "\n"
@@ -522,7 +519,7 @@ msgstr ""
 "\n"
 "Все образцы считаются как %g %s.\n"
 
-#: hist.c:485
+#: hist.c:487
 #, c-format
 msgid ""
 " no time accumulated\n"
@@ -531,27 +528,27 @@ msgstr ""
 " нет накопленного времени\n"
 "\n"
 
-#: hist.c:492
+#: hist.c:494
 msgid "cumulative"
 msgstr "суммарное"
 
-#: hist.c:492
+#: hist.c:494
 msgid "self  "
 msgstr "сама  "
 
-#: hist.c:492
+#: hist.c:494
 msgid "total "
 msgstr "всего "
 
-#: hist.c:495
+#: hist.c:497
 msgid "time"
 msgstr "время"
 
-#: hist.c:495
+#: hist.c:497
 msgid "calls"
 msgstr "вызовы"
 
-#: hist.c:584
+#: hist.c:587
 #, c-format
 msgid ""
 "\n"
@@ -564,22 +561,22 @@ msgstr ""
 "\n"
 "плоский профиль:\n"
 
-#: hist.c:590
+#: hist.c:593
 #, c-format
 msgid "Flat profile:\n"
 msgstr "Плоский профиль:\n"
 
-#: hist.c:711
+#: hist.c:714
 #, c-format
 msgid "%s: found a symbol that covers several histogram records"
 msgstr "%s: найден символ, который присутствует в нескольких записях гистограммы"
 
-#: mips.c:71
+#: mips.c:74
 #, c-format
 msgid "[find_call] 0x%lx: jal"
 msgstr "[find_call] 0x%lx: jal"
 
-#: mips.c:99
+#: mips.c:102
 #, c-format
 msgid "[find_call] 0x%lx: jalr\n"
 msgstr "[find_call] 0x%lx: jalr\n"
@@ -598,3 +595,7 @@ msgstr "*** Файл %s:\n"
 #, c-format
 msgid " <cycle %d>"
 msgstr " <цикл %d>"
+
+#, c-format
+#~ msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
+#~ msgstr "%s: кто-то обсчитался: ltab.len=%d вместо %ld\n"

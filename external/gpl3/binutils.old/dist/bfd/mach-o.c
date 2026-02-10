@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -583,14 +583,16 @@ bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
 
 bool
 bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd, asection *isection,
-					  bfd *obfd, asection *osection)
+					  bfd *obfd, asection *osection,
+					  struct bfd_link_info *link_info)
 {
-  bfd_mach_o_section *os = bfd_mach_o_get_mach_o_section (osection);
-  bfd_mach_o_section *is = bfd_mach_o_get_mach_o_section (isection);
-
-  if (ibfd->xvec->flavour != bfd_target_mach_o_flavour
+  if (link_info != NULL
+      || ibfd->xvec->flavour != bfd_target_mach_o_flavour
       || obfd->xvec->flavour != bfd_target_mach_o_flavour)
     return true;
+
+  bfd_mach_o_section *os = bfd_mach_o_get_mach_o_section (osection);
+  bfd_mach_o_section *is = bfd_mach_o_get_mach_o_section (isection);
 
   BFD_ASSERT (is != NULL && os != NULL);
 
@@ -1489,9 +1491,9 @@ bfd_mach_o_canonicalize_non_scattered_reloc (bfd *abfd,
     {
       /* PR 17512: file: 8396-1185-0.004.  */
       if (num >= (unsigned) bfd_mach_o_count_symbols (abfd))
-	sym = bfd_und_section_ptr->symbol_ptr_ptr;
+	sym = &bfd_und_section_ptr->symbol;
       else if (syms == NULL)
-	sym = bfd_und_section_ptr->symbol_ptr_ptr;
+	sym = &bfd_und_section_ptr->symbol;
       else
 	/* An external symbol number.  */
 	sym = syms + num;
@@ -1503,7 +1505,7 @@ bfd_mach_o_canonicalize_non_scattered_reloc (bfd *abfd,
 	 This value is almost certainly not a valid section number, hence
 	 this specific case to avoid an assertion failure.
 	 Target specific swap_reloc_in routine should adjust that.  */
-      sym = bfd_abs_section_ptr->symbol_ptr_ptr;
+      sym = &bfd_abs_section_ptr->symbol;
     }
   else
     {
@@ -1516,7 +1518,7 @@ malformed mach-o reloc: section index is greater than the number of sections"));
 	}
 
       /* A section number.  */
-      sym = mdata->sections[num - 1]->bfdsection->symbol_ptr_ptr;
+      sym = &mdata->sections[num - 1]->bfdsection->symbol;
       /* For a symbol defined in section S, the addend (stored in the
 	 binary) contains the address of the section.  To comply with
 	 bfd convention, subtract the section address.
@@ -1554,7 +1556,7 @@ bfd_mach_o_pre_canonicalize_one_reloc (bfd *abfd,
   bfd_vma addr;
 
   addr = bfd_get_32 (abfd, raw->r_address);
-  res->sym_ptr_ptr = bfd_und_section_ptr->symbol_ptr_ptr;
+  res->sym_ptr_ptr = &bfd_und_section_ptr->symbol;
   res->addend = 0;
 
   if (addr & BFD_MACH_O_SR_SCATTERED)
@@ -1578,7 +1580,7 @@ bfd_mach_o_pre_canonicalize_one_reloc (bfd *abfd,
 	  bfd_mach_o_section *sect = mdata->sections[j];
 	  if (symnum >= sect->addr && symnum < sect->addr + sect->size)
 	    {
-	      res->sym_ptr_ptr = sect->bfdsection->symbol_ptr_ptr;
+	      res->sym_ptr_ptr = &sect->bfdsection->symbol;
 	      res->addend = symnum - sect->addr;
 	      break;
 	    }
@@ -3520,40 +3522,31 @@ bfd_mach_o_read_header (bfd *abfd, file_ptr hdr_off, bfd_mach_o_header *header)
 bool
 bfd_mach_o_new_section_hook (bfd *abfd, asection *sec)
 {
-  bfd_mach_o_section *s;
-  unsigned bfdalign = bfd_section_alignment (sec);
-
-  s = bfd_mach_o_get_mach_o_section (sec);
+  bfd_mach_o_section *s = bfd_zalloc (abfd, sizeof (*s));
   if (s == NULL)
+    return false;
+  sec->used_by_bfd = s;
+  s->bfdsection = sec;
+
+  /* Create the Darwin seg/sect name pair from the bfd name.
+     If this is a canonical name for which a specific paiting exists
+     there will also be defined flags, type, attribute and alignment
+     values.  */
+  const mach_o_section_name_xlat *xlat
+    = bfd_mach_o_convert_section_name_to_mach_o (abfd, sec, s);
+  if (xlat != NULL)
     {
-      flagword bfd_flags;
-      static const mach_o_section_name_xlat * xlat;
-
-      s = (bfd_mach_o_section *) bfd_zalloc (abfd, sizeof (*s));
-      if (s == NULL)
-	return false;
-      sec->used_by_bfd = s;
-      s->bfdsection = sec;
-
-      /* Create the Darwin seg/sect name pair from the bfd name.
-	 If this is a canonical name for which a specific paiting exists
-	 there will also be defined flags, type, attribute and alignment
-	 values.  */
-      xlat = bfd_mach_o_convert_section_name_to_mach_o (abfd, sec, s);
-      if (xlat != NULL)
-	{
-	  s->flags = xlat->macho_sectype | xlat->macho_secattr;
-	  s->align = xlat->sectalign > bfdalign ? xlat->sectalign
-						: bfdalign;
-	  bfd_set_section_alignment (sec, s->align);
-	  bfd_flags = bfd_section_flags (sec);
-	  if (bfd_flags == SEC_NO_FLAGS)
-	    bfd_set_section_flags (sec, xlat->bfd_flags);
-	}
-      else
-	/* Create default flags.  */
-	bfd_mach_o_set_section_flags_from_bfd (abfd, sec);
+      s->flags = xlat->macho_sectype | xlat->macho_secattr;
+      unsigned bfdalign = bfd_section_alignment (sec);
+      s->align = xlat->sectalign > bfdalign ? xlat->sectalign : bfdalign;
+      bfd_set_section_alignment (sec, s->align);
+      flagword bfd_flags = bfd_section_flags (sec);
+      if (bfd_flags == SEC_NO_FLAGS)
+	bfd_set_section_flags (sec, xlat->bfd_flags);
     }
+  else
+    /* Create default flags.  */
+    bfd_mach_o_set_section_flags_from_bfd (abfd, sec);
 
   return _bfd_generic_new_section_hook (abfd, sec);
 }
@@ -5085,7 +5078,7 @@ bfd_mach_o_flatten_sections (bfd *abfd)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
   bfd_mach_o_load_command *cmd;
-  long csect = 0;
+  unsigned long csect;
   size_t amt;
 
   /* Count total number of sections.  */
@@ -5129,6 +5122,7 @@ bfd_mach_o_flatten_sections (bfd *abfd)
 	    mdata->sections[csect++] = sec;
 	}
     }
+  BFD_ASSERT (mdata->nsects == csect);
   return true;
 }
 
@@ -5263,8 +5257,6 @@ bfd_mach_o_scan (bfd *abfd,
       break;
     }
 
-  abfd->tdata.mach_o_data = mdata;
-
   bfd_mach_o_convert_architecture (header->cputype, header->cpusubtype,
 				   &cpu_type, &cpu_subtype);
   if (cpu_type == bfd_arch_unknown)
@@ -5320,7 +5312,10 @@ bfd_mach_o_scan (bfd *abfd,
 	    }
 
 	  if (!bfd_mach_o_read_command (abfd, cur, filesize))
-	    return false;
+	    {
+	      bfd_set_error (bfd_error_wrong_format);
+	      return false;
+	    }
 	}
     }
 
@@ -5443,18 +5438,21 @@ bfd_mach_o_header_p (bfd *abfd,
 
   mdata = (bfd_mach_o_data_struct *) bfd_zalloc (abfd, sizeof (*mdata));
   if (mdata == NULL)
-    goto fail;
+    return NULL;
+  abfd->tdata.mach_o_data = mdata;
+
   mdata->hdr_offset = hdr_off;
 
   if (!bfd_mach_o_scan (abfd, &header, mdata))
-    goto wrong;
+    {
+      bfd_release (abfd, mdata);
+      return NULL;
+    }
 
   return _bfd_no_cleanup;
 
  wrong:
   bfd_set_error (bfd_error_wrong_format);
-
- fail:
   return NULL;
 }
 
@@ -5541,7 +5539,11 @@ bfd_mach_o_fat_archive_p (bfd *abfd)
 
   if (bfd_seek (abfd, 0, SEEK_SET) != 0
       || bfd_read (&hdr, sizeof (hdr), abfd) != sizeof (hdr))
-    goto error;
+    {
+      if (bfd_get_error () != bfd_error_system_call)
+	goto wrong;
+      goto error;
+    }
 
   adata = bfd_alloc (abfd, sizeof (mach_o_fat_data_struct));
   if (adata == NULL)
@@ -5550,12 +5552,12 @@ bfd_mach_o_fat_archive_p (bfd *abfd)
   adata->magic = bfd_getb32 (hdr.magic);
   adata->nfat_arch = bfd_getb32 (hdr.nfat_arch);
   if (adata->magic != 0xcafebabe)
-    goto error;
+    goto wrong;
   /* Avoid matching Java bytecode files, which have the same magic number.
      In the Java bytecode file format this field contains the JVM version,
      which starts at 43.0.  */
   if (adata->nfat_arch > 30)
-    goto error;
+    goto wrong;
 
   if (_bfd_mul_overflow (adata->nfat_arch,
 			 sizeof (mach_o_fat_archentry), &amt))
@@ -5596,10 +5598,11 @@ bfd_mach_o_fat_archive_p (bfd *abfd)
 
   return _bfd_no_cleanup;
 
+ wrong:
+  bfd_set_error (bfd_error_wrong_format);
  error:
   if (adata != NULL)
     bfd_release (abfd, adata);
-  bfd_set_error (bfd_error_wrong_format);
   return NULL;
 }
 
@@ -6019,9 +6022,9 @@ bfd_mach_o_core_file_failing_command (bfd *abfd)
   int ret;
 
   ret = bfd_mach_o_core_fetch_environment (abfd, &buf, &len);
-  if (ret < 0)
+  if (ret < 0 || len == 0)
     return NULL;
-
+  buf[len - 1] = 0;
   return (char *) buf;
 }
 
@@ -6037,7 +6040,7 @@ bfd_mach_o_lookup_uuid_command (bfd *abfd)
   bfd_mach_o_load_command *uuid_cmd = NULL;
   int ncmd = bfd_mach_o_lookup_command (abfd, BFD_MACH_O_LC_UUID, &uuid_cmd);
   if (ncmd != 1 || uuid_cmd == NULL)
-    return false;
+    return NULL;
   return &uuid_cmd->command.uuid;
 }
 

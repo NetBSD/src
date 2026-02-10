@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -80,6 +80,8 @@
 #		for standard sections, without initial "." or suffixes.
 #       SYMBOL_ABI_ALIGNMENT - minimum alignment in bytes which needs to be
 #               applied to every symbol definition
+#       ALL_TEXT_BEFORE_RO - put all code sections before read-only
+#               sections
 #
 # When adding sections, do note that the names of some sections are used
 # when specifying the start address of the next.
@@ -113,6 +115,48 @@
 #
 #  Each of these can also have corresponding .rel.* and .rela.* sections.
 
+# ------------------------------------------------------------------------
+# The multiple forms of conditional shell script syntax that are used in
+# this file can be confusing, so here is a quick explanation of how they
+# work:
+#
+# The following all mean "if foo is defined then do/insert <stuff>":
+#
+#    test -z "$foo" || <stuff> 
+#    test -n "$foo" && <stuff>
+#    if test -n "$foo"; then <stuff>
+#    if [ -n "$foo" ]; then <stuff>
+#    ${foo-<stuff>}
+#
+# Whereas the following all mean "if foo is undefined then do/insert <stuff>":
+#
+#    test -n "$foo" || <stuff>
+#    test -z "$foo" && <stuff>
+#    if test -z "$foo"; then <stuff>
+#    if [ -z "$foo" ]; then <stuff>
+#    ${foo+<stuff>}
+#
+# If multiple symbols are tested together then they operate as an IOR for
+# positive tests and a NOR for negative tests.  ie, the following all do
+# <stuff> if either or both of <foo> and <bar> are defined:
+#
+#    test -z "$foo$bar" || <stuff> 
+#    test -n "$foo$bar" && <stuff>
+#    if test -n "$foo$bar"; then <stuff>
+#
+# Whilst the following only do <stuff> if neither <foo> nor <bar> are defined:
+#
+#    test -n "$foo$bar" || <stuff>
+#    if -z "$foo$bar"; then <stuff>
+#    test -z "$foo$bar" && <stuff>
+#
+# Also:
+#   foo=${foo-${bar-${baz}}}
+# means:
+#   If foo is defined, leave it unchanged.  Otherwise if bar is defined
+#   then set foo equal to bar, otherwise set foo equal to baz.
+# ------------------------------------------------------------------------
+
 test -z "$TEXT_START_SYMBOLS" && TEXT_START_SYMBOLS="PROVIDE_HIDDEN (__eprol = .);"
 test -z "$ENTRY" && ENTRY=_start
 if test -n "$NOP"; then
@@ -136,6 +180,7 @@ test "$LD_FLAG" = "N" && DATA_ADDR=.
 test -z "${ETEXT_NAME}" && ETEXT_NAME=${USER_LABEL_PREFIX}etext
 test -n "$RELRO_NOW" && unset SEPARATE_GOTPLT
 test -z "$ATTRS_SECTIONS" && ATTRS_SECTIONS=".gnu.attributes 0 : { KEEP (*(.gnu.attributes)) }"
+
 if test -z "$DATA_SEGMENT_ALIGN"; then
   test -n "$CREATE_SHLIB$CREATE_PIE" && test -n "$SHLIB_DATA_ADDR" && COMMONPAGESIZE=""
   test -z "$CREATE_SHLIB$CREATE_PIE" && test -n "$DATA_ADDR" && COMMONPAGESIZE=""
@@ -144,7 +189,8 @@ if test -z "$DATA_SEGMENT_ALIGN"; then
   DATA_SEGMENT_END=""
   if test -n "${COMMONPAGESIZE}"; then
     if test "${SEGMENT_SIZE}" != "${MAXPAGESIZE}"; then
-      DATA_SEGMENT_ALIGN="ALIGN (${SEGMENT_SIZE}) - ((${MAXPAGESIZE} - .) & (${MAXPAGESIZE} - 1)); . = DATA_SEGMENT_ALIGN (${MAXPAGESIZE}, ${COMMONPAGESIZE})"
+      DATA_SEGMENT_ALIGN="ALIGN (${SEGMENT_SIZE}) - ((${MAXPAGESIZE} - .) & (${MAXPAGESIZE} - 1)); \
+      . = DATA_SEGMENT_ALIGN (${MAXPAGESIZE}, ${COMMONPAGESIZE})"
     else
       DATA_SEGMENT_ALIGN="DATA_SEGMENT_ALIGN (${MAXPAGESIZE}, ${COMMONPAGESIZE})"
     fi
@@ -152,15 +198,19 @@ if test -z "$DATA_SEGMENT_ALIGN"; then
     DATA_SEGMENT_RELRO_END=". = DATA_SEGMENT_RELRO_END (${SEPARATE_GOTPLT-0}, .);"
   fi
 fi
+
 if test -z "${INITIAL_READONLY_SECTIONS}${CREATE_SHLIB}"; then
   INITIAL_READONLY_SECTIONS=".interp       ${RELOCATING-0} : { *(.interp) }"
 fi
+
 if test -z "$PLT"; then
   IPLT=".iplt         ${RELOCATING-0} : { *(.iplt) }"
   PLT=".plt          ${RELOCATING-0} : { *(.plt)${RELOCATING+${IREL_IN_PLT+ *(.iplt)}} }
   ${IREL_IN_PLT-$IPLT}"
 fi
+
 test -n "${DATA_PLT-${BSS_PLT-text}}" && TEXT_PLT=
+
 if test -z "$GOT"; then
   if test -z "$SEPARATE_GOTPLT"; then
     GOT=".got          ${RELOCATING-0} : {${RELOCATING+ *(.got.plt) *(.igot.plt)} *(.got)${RELOCATING+ *(.igot)} }"
@@ -196,7 +246,7 @@ RELA_IPLT=".rela.iplt    ${RELOCATING-0} :
 DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".${RODATA_NAME}       ${RELOCATING-0} : { *(.${RODATA_NAME}${RELOCATING+ .${RODATA_NAME}.* .gnu.linkonce.r.*}) }"
 DATARELRO=".data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*) }"
-DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) }"
+DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) *(.gnu_object_only) }"
 if test -z "${NO_SMALL_DATA}"; then
   SBSS=".${SBSS_NAME}         ${RELOCATING-0} :
   {
@@ -233,17 +283,21 @@ if test -z "${NO_SMALL_DATA}"; then
 else
   NO_SMALL_DATA=" "
 fi
+
 if test -z "${SDATA_GOT}${DATA_GOT}"; then
   if test -n "${NO_SMALL_DATA}"; then
     DATA_GOT=" "
   fi
 fi
+
 if test -z "${SDATA_GOT}${DATA_GOT}"; then
   if test -z "${NO_SMALL_DATA}"; then
     SDATA_GOT=" "
   fi
 fi
+
 test -n "$SEPARATE_GOTPLT" && SEPARATE_GOTPLT=" "
+
 test "${LARGE_SECTIONS}" = "yes" && REL_LARGE="
   .rel.ldata    ${RELOCATING-0} : { *(.rel.ldata${RELOCATING+ .rel.ldata.* .rel.gnu.linkonce.l.*}) }
   .rela.ldata   ${RELOCATING-0} : { *(.rela.ldata${RELOCATING+ .rela.ldata.* .rela.gnu.linkonce.l.*}) }
@@ -251,23 +305,7 @@ test "${LARGE_SECTIONS}" = "yes" && REL_LARGE="
   .rela.lbss    ${RELOCATING-0} : { *(.rela.lbss${RELOCATING+ .rela.lbss.* .rela.gnu.linkonce.lb.*}) }
   .rel.lrodata  ${RELOCATING-0} : { *(.rel.lrodata${RELOCATING+ .rel.lrodata.* .rel.gnu.linkonce.lr.*}) }
   .rela.lrodata ${RELOCATING-0} : { *(.rela.lrodata${RELOCATING+ .rela.lrodata.* .rela.gnu.linkonce.lr.*}) }"
-test "${LARGE_SECTIONS}" = "yes" && LARGE_BSS="
-  .lbss ${RELOCATING-0} :
-  {
-    ${RELOCATING+*(.dynlbss)}
-    *(.lbss${RELOCATING+ .lbss.* .gnu.linkonce.lb.*})
-    ${RELOCATING+*(LARGE_COMMON)}
-  }"
-test "${LARGE_SECTIONS}" = "yes" && LARGE_SECTIONS="
-  .lrodata ${RELOCATING-0} ${RELOCATING+ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1))} :
-  {
-    *(.lrodata${RELOCATING+ .lrodata.* .gnu.linkonce.lr.*})
-  }
-  .ldata ${RELOCATING-0} ${RELOCATING+ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1))} :
-  {
-    *(.ldata${RELOCATING+ .ldata.* .gnu.linkonce.l.*})
-    ${RELOCATING+. = ALIGN(. != 0 ? ${ALIGNMENT} : 1);}
-  }"
+
 if test "${ENABLE_INITFINI_ARRAY}" = "yes"; then
   SORT_INIT_ARRAY="KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))"
   SORT_FINI_ARRAY="KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))"
@@ -279,26 +317,6 @@ else
   CTORS_IN_INIT_ARRAY=
   DTORS_IN_FINI_ARRAY=
 fi
-PREINIT_ARRAY=".preinit_array    :
-  {
-    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__preinit_array_start"));}
-    KEEP (*(.preinit_array))
-    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__preinit_array_end"));}
-  }"
-INIT_ARRAY=".init_array    :
-  {
-    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__init_array_start"));}
-    ${SORT_INIT_ARRAY}
-    KEEP (*(.init_array ${CTORS_IN_INIT_ARRAY}))
-    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__init_array_end"));}
-  }"
-FINI_ARRAY=".fini_array    :
-  {
-    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__fini_array_start"));}
-    ${SORT_FINI_ARRAY}
-    KEEP (*(.fini_array ${DTORS_IN_FINI_ARRAY}))
-    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__fini_array_end"));}
-  }"
 CTOR=".ctors        ${CONSTRUCTING-0} :
   {
     ${CONSTRUCTING+${CTOR_START}}
@@ -335,32 +353,6 @@ DTOR=".dtors        ${CONSTRUCTING-0} :
     KEEP (*(.dtors))
     ${CONSTRUCTING+${DTOR_END}}
   }"
-STACK=".stack        ${RELOCATING-0}${RELOCATING+${STACK_ADDR}} :
-  {
-    ${RELOCATING+$(def_symbol "_stack");}
-    *(.stack)
-    ${RELOCATING+${STACK_SENTINEL}}
-  }"
-test "${HAVE_NOINIT}" = "yes" && NOINIT="
-  /* This section contains data that is not initialized during load,
-     or during the application's initialization sequence.  */
-  .noinit ${RELOCATING-0} (NOLOAD) : ${RELOCATING+ALIGN(${ALIGNMENT})}
-  {
-    ${RELOCATING+PROVIDE (__noinit_start = .);}
-    *(.noinit${RELOCATING+ .noinit.* .gnu.linkonce.n.*})
-    ${RELOCATING+. = ALIGN(${ALIGNMENT});}
-    ${RELOCATING+PROVIDE (__noinit_end = .);}
-  }"
-test "${HAVE_PERSISTENT}" = "yes" && PERSISTENT="
-  /* This section contains data that is initialized during load,
-     but not during the application's initialization sequence.  */
-  .persistent ${RELOCATING-0} : ${RELOCATING+ALIGN(${ALIGNMENT})}
-  {
-    ${RELOCATING+PROVIDE (__persistent_start = .);}
-    *(.persistent${RELOCATING+ .persistent.* .gnu.linkonce.p.*})
-    ${RELOCATING+. = ALIGN(${ALIGNMENT});}
-    ${RELOCATING+PROVIDE (__persistent_end = .);}
-  }"
 
 TEXT_START_ADDR="SEGMENT_START(\"text-segment\", ${TEXT_START_ADDR})"
 SHLIB_TEXT_START_ADDR="SEGMENT_START(\"text-segment\", ${SHLIB_TEXT_START_ADDR:-0})"
@@ -369,6 +361,11 @@ SHLIB_TEXT_START_ADDR="SEGMENT_START(\"text-segment\", ${SHLIB_TEXT_START_ADDR:-
 # between .plt and .text.
 if test -z "$TINY_READONLY_SECTION"; then
   case "$LD_FLAG" in
+    *ro*textonly*)
+      ALL_TEXT_BEFORE_RO=" "
+      SEPARATE_TEXT=" "
+      TEXT_SEGMENT_ALIGN=". = ALIGN(${MAXPAGESIZE});"
+      ;;
     *textonly*)
       SEPARATE_TEXT=" "
       TEXT_SEGMENT_ALIGN=". = ALIGN(${MAXPAGESIZE});"
@@ -389,15 +386,46 @@ else
    test -z "${TEXT_BASE_ADDRESS}" && TEXT_BASE_ADDRESS="${TEXT_START_ADDR}"
 fi
 
+# ===========================================================================
+# Functions for generating parts of the linker script
+
+# Helper function for putting comments into scripts.
+# Useful when trying to track down script composition problems.
+# Use by adding:
+#   emit_comment "a message"
+# wherever necessary.
+
+emit_comment()
+{
 cat <<EOF
-/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
+  /* $1 */
+EOF
+}
+
+align_to_default_symbol_alignment()
+{
+cat <<EOF
+  ${RELOCATING+. = ALIGN(${ALIGNMENT});}
+EOF
+}
+
+align_to_default_section_alignment()
+{
+cat <<EOF
+  ${RELOCATING+. = ALIGN(. != 0 ? ${ALIGNMENT} : 1);}
+EOF
+}
+
+emit_header()
+{
+cat <<EOF
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
    notice and this notice are preserved.  */
 
-OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}",
-	      "${LITTLE_OUTPUT_FORMAT}")
+OUTPUT_FORMAT("${OUTPUT_FORMAT}", "${BIG_OUTPUT_FORMAT}", "${LITTLE_OUTPUT_FORMAT}")
 OUTPUT_ARCH(${OUTPUT_ARCH})
 ${RELOCATING+ENTRY(${ENTRY})}
 
@@ -408,27 +436,77 @@ ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
   if gld -r is used and the intermediate file has sections starting
   at non-zero addresses.  Could be a Solaris ld bug, could be a GNU ld
   bug.  But for now assigning the zero vmas works.  */}
-
-SECTIONS
-{
-  ${RELOCATING+${SEPARATE_TEXT-/* Read-only sections, merged into text segment: */}}
-  ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+PROVIDE (__executable_start = ${TEXT_START_ADDR}); . = ${TEXT_BASE_ADDRESS};}}}
-  ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR}${SIZEOF_HEADERS_CODE};}}
-  ${CREATE_PIE+${RELOCATING+PROVIDE (__executable_start = ${SHLIB_TEXT_START_ADDR}); . = ${SHLIB_TEXT_START_ADDR}${SIZEOF_HEADERS_CODE};}}
 EOF
+}
 
 emit_early_ro()
 {
-  cat <<EOF
+cat <<EOF
   ${INITIAL_READONLY_SECTIONS}
+EOF
+}
+
+emit_noinit()
+{
+  if test "${HAVE_NOINIT}" != "yes"; then
+    return
+  fi
+cat <<EOF  
+  /* This section contains data that is not initialized during load,
+     or during the application's initialization sequence.  */
+  .noinit ${RELOCATING-0} (NOLOAD) : ${RELOCATING+ALIGN(${ALIGNMENT})}
+  {
+    ${RELOCATING+PROVIDE (__noinit_start = .);}
+    *(.noinit${RELOCATING+ .noinit.* .gnu.linkonce.n.*})
+    $(align_to_default_symbol_alignment)
+    ${RELOCATING+PROVIDE (__noinit_end = .);}
+  }
+EOF
+}
+
+emit_persistent()
+{
+  if test "${HAVE_PERSISTENT}" != "yes"; then
+    return
+  fi
+cat <<EOF    
+  /* This section contains data that is initialized during load,
+     but not during the application's initialization sequence.  */
+  .persistent ${RELOCATING-0} : ${RELOCATING+ALIGN(${ALIGNMENT})}
+  {
+    ${RELOCATING+PROVIDE (__persistent_start = .);}
+    *(.persistent${RELOCATING+ .persistent.* .gnu.linkonce.p.*})
+    $(align_to_default_symbol_alignment)
+    ${RELOCATING+PROVIDE (__persistent_end = .);}
+  }
+EOF
+}
+
+emit_executable_start()
+{
+cat <<EOF
+  ${RELOCATING+${SEPARATE_TEXT-/* Read-only sections, merged into text segment: */}}
+
+  ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+PROVIDE (__executable_start = ${TEXT_START_ADDR});
+  . = ${TEXT_BASE_ADDRESS};}}}
+
+  ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR}${SIZEOF_HEADERS_CODE};}}
+
+  ${CREATE_PIE+${RELOCATING+PROVIDE (__executable_start = ${SHLIB_TEXT_START_ADDR});
+  . = ${SHLIB_TEXT_START_ADDR}${SIZEOF_HEADERS_CODE};}}
+
+  /* Place the build-id as close to the ELF headers as possible.  This
+     maximises the chance the build-id will be present in core files,
+     which GDB can then use to locate the associated debuginfo file.  */
   .note.gnu.build-id ${RELOCATING-0}: { *(.note.gnu.build-id) }
 EOF
 }
 
-test -n "${SEPARATE_CODE}" || emit_early_ro
+emit_dyn()
+{
+  test -n "${RELOCATING+0}" || unset NON_ALLOC_DYN
+  test -z "${NON_ALLOC_DYN}" || TEXT_DYNAMIC=
 
-test -n "${RELOCATING+0}" || unset NON_ALLOC_DYN
-test -z "${NON_ALLOC_DYN}" || TEXT_DYNAMIC=
 cat > ldscripts/dyntmp.$$ <<EOF
   ${TEXT_DYNAMIC+${DYNAMIC}}
   .hash         ${RELOCATING-0} : { *(.hash) }
@@ -445,6 +523,7 @@ if [ "x$COMBRELOC" = x ]; then
 else
   COMBRELOCCAT="cat > $COMBRELOC"
 fi
+
 eval $COMBRELOCCAT <<EOF
   ${INITIAL_RELOC_SECTIONS}
   .rel.init     ${RELOCATING-0} : { *(.rel.init) }
@@ -490,16 +569,21 @@ cat >> ldscripts/dyntmp.$$ <<EOF
   .rel.dyn      ${RELOCATING-0} :
     {
 EOF
+
 sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rela\./d;/__rela_iplt_/d;s/^.*: { *\(.*\)}$/      \1/' $COMBRELOC >> ldscripts/dyntmp.$$
+
 cat >> ldscripts/dyntmp.$$ <<EOF
     }
   .rela.dyn     ${RELOCATING-0} :
     {
 EOF
+
 sed -e '/^[	 ]*[{}][	 ]*$/d;/:[	 ]*$/d;/\.rel\./d;/__rel_iplt_/d;s/^.*: { *\(.*\)}/      \1/' $COMBRELOC >> ldscripts/dyntmp.$$
+
 cat >> ldscripts/dyntmp.$$ <<EOF
     }
 EOF
+
 fi
 
 cat >> ldscripts/dyntmp.$$ <<EOF
@@ -520,8 +604,6 @@ cat >> ldscripts/dyntmp.$$ <<EOF
   ${OTHER_PLT_RELOC_SECTIONS}
 EOF
 
-emit_dyn()
-{
   if test -z "${NO_REL_RELOCS}${NO_RELA_RELOCS}"; then
     cat ldscripts/dyntmp.$$
   else
@@ -532,17 +614,28 @@ emit_dyn()
       sed -e '/^[	 ]*\.rel\.[^}]*$/,/}/d;/^[	 ]*\.rel\./d;/__rel_iplt_/d' ldscripts/dyntmp.$$
     fi
   fi
+  
   rm -f ldscripts/dyntmp.$$
+
   if test -n "${HAVE_DT_RELR}"; then
     echo "  .relr.dyn : { *(.relr.dyn) }"
   fi
 }
 
-test -n "${NON_ALLOC_DYN}${SEPARATE_CODE}" || emit_dyn
-
+align_text()
+{
+  if test -n "$TEXT_SEGMENT_ALIGN"; then
 cat <<EOF
+  ${RELOCATING+/* Align the text segment.  */}
   ${RELOCATING+${TEXT_SEGMENT_ALIGN}}
+EOF
+fi
+}
 
+emit_text()
+{
+cat <<EOF
+  /* Start of the executable code region.  */
   .init         ${RELOCATING-0}${RELOCATING+${INIT_ADDR}} :
   {
     ${RELOCATING+${INIT_START}}
@@ -551,7 +644,9 @@ cat <<EOF
   } ${FILL}
 
   ${TEXT_PLT+${PLT_NEXT_DATA-${PLT} ${OTHER_PLT_SECTIONS}}}
+  
   ${TINY_READONLY_SECTION}
+  
   .text         ${RELOCATING-0} :
   {
     ${RELOCATING+${TEXT_START_SYMBOLS}}
@@ -566,46 +661,59 @@ cat <<EOF
     *(.gnu.warning)
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
   } ${FILL}
+  
   .fini         ${RELOCATING-0}${RELOCATING+${FINI_ADDR}} :
   {
     ${RELOCATING+${FINI_START}}
     KEEP (*(SORT_NONE(.fini)))
     ${RELOCATING+${FINI_END}}
   } ${FILL}
+EOF
+}
+
+emit_text_end_symbols()
+{
+cat <<EOF
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT-PROVIDE (__${ETEXT_NAME} = .);}}
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT-PROVIDE (_${ETEXT_NAME} = .);}}
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT-PROVIDE (${ETEXT_NAME} = .);}}
-  ${RELOCATING+${TEXT_SEGMENT_ALIGN}}
+EOF
+}
+
+align_rodata()
+{
+cat <<EOF
+  /* Start of the Read Only Data region.  */
 EOF
 
 if test -n "${SEPARATE_CODE}${SEPARATE_TEXT}"; then
+
   if test -n "${RODATA_ADDR}"; then
-    RODATA_ADDR="\
-SEGMENT_START(\"rodata-segment\", ${RODATA_ADDR}) + SIZEOF_HEADERS"
+    RODATA_ADDR="SEGMENT_START(\"rodata-segment\", ${RODATA_ADDR}) + SIZEOF_HEADERS"
   else
     RODATA_ADDR="ALIGN(${SEGMENT_SIZE}) + (. & (${MAXPAGESIZE} - 1))"
     RODATA_ADDR="SEGMENT_START(\"rodata-segment\", ${RODATA_ADDR})"
   fi
+  
   if test -n "${SHLIB_RODATA_ADDR}"; then
-    SHLIB_RODATA_ADDR="\
-SEGMENT_START(\"rodata-segment\", ${SHLIB_RODATA_ADDR}) + SIZEOF_HEADERS"
+    SHLIB_RODATA_ADDR="SEGMENT_START(\"rodata-segment\", ${SHLIB_RODATA_ADDR}) + SIZEOF_HEADERS"
   else
     SHLIB_RODATA_ADDR="ALIGN(${SEGMENT_SIZE}) + (. & (${MAXPAGESIZE} - 1))"
     SHLIB_RODATA_ADDR="SEGMENT_START(\"rodata-segment\", ${SHLIB_RODATA_ADDR})"
   fi
-  cat <<EOF
+  
+cat <<EOF
   ${RELOCATING+/* Adjust the address for the rodata segment.  We want to adjust up to
      the same address within the page on the next page up.  */
   ${CREATE_SHLIB-${CREATE_PIE-. = ${RODATA_ADDR};}}
   ${CREATE_SHLIB+. = ${SHLIB_RODATA_ADDR};}
   ${CREATE_PIE+. = ${SHLIB_RODATA_ADDR};}}
 EOF
-  if test -n "${SEPARATE_CODE}"; then
-    emit_early_ro
-    emit_dyn
-  fi
 fi
+}
 
+emit_rodata()
+{
 cat <<EOF
   ${WRITABLE_RODATA-${RODATA}}
   .${RODATA_NAME}1      ${RELOCATING-0} : { *(.${RODATA_NAME}1) }
@@ -617,28 +725,69 @@ cat <<EOF
   .sframe       ${RELOCATING-0} : ONLY_IF_RO { *(.sframe)${RELOCATING+ *(.sframe.*)} }
   .gcc_except_table ${RELOCATING-0} : ONLY_IF_RO { *(.gcc_except_table${RELOCATING+ .gcc_except_table.*}) }
   .gnu_extab ${RELOCATING-0} : ONLY_IF_RO { *(.gnu_extab*) }
+
   /* These sections are generated by the Sun/Oracle C++ compiler.  */
   .exception_ranges ${RELOCATING-0} : ONLY_IF_RO { *(.exception_ranges${RELOCATING+*}) }
+
   ${TEXT_PLT+${PLT_NEXT_DATA+${PLT} ${OTHER_PLT_SECTIONS}}}
 
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (__${ETEXT_NAME} = .);}}
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (_${ETEXT_NAME} = .);}}
   ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (${ETEXT_NAME} = .);}}
+EOF
+}
 
+align_data()
+{
+cat <<EOF
+  /* Start of the Read Write Data region.  */
   ${RELOCATING+/* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */}
   ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+. = ${DATA_ADDR-${DATA_SEGMENT_ALIGN}};}}}
   ${CREATE_SHLIB+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}
   ${CREATE_PIE+. = ${SHLIB_DATA_ADDR-${DATA_SEGMENT_ALIGN}};}
+EOF
+}
 
-  /* Exception handling  */
+emit_init_fini_arrays()
+{
+cat <<EOF
+.preinit_array    :
+  {
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__preinit_array_start"));}
+    KEEP (*(.preinit_array))
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__preinit_array_end"));}
+  }
+
+  .init_array    :
+  {
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__init_array_start"));}
+    ${SORT_INIT_ARRAY}
+    KEEP (*(.init_array ${CTORS_IN_INIT_ARRAY}))
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__init_array_end"));}
+  }
+
+  .fini_array    :
+  {
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__fini_array_start"));}
+    ${SORT_FINI_ARRAY}
+    KEEP (*(.fini_array ${DTORS_IN_FINI_ARRAY}))
+    ${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__fini_array_end"));}
+  }
+EOF
+}
+
+emit_data()
+{
+cat <<EOF
+  /* Exception handling.  */
   .eh_frame     ${RELOCATING-0} : ONLY_IF_RW { KEEP (*(.eh_frame))${RELOCATING+ *(.eh_frame.*)} }
   .sframe       ${RELOCATING-0} : ONLY_IF_RW { *(.sframe)${RELOCATING+ *(.sframe.*)} }
   .gnu_extab    ${RELOCATING-0} : ONLY_IF_RW { *(.gnu_extab) }
   .gcc_except_table ${RELOCATING-0} : ONLY_IF_RW { *(.gcc_except_table${RELOCATING+ .gcc_except_table.*}) }
   .exception_ranges ${RELOCATING-0} : ONLY_IF_RW { *(.exception_ranges${RELOCATING+*}) }
 
-  /* Thread Local Storage sections  */
+  /* Thread Local Storage sections.  */
   .tdata	${RELOCATING-0} :
    {
      ${RELOCATING+${CREATE_SHLIB-PROVIDE_HIDDEN ($(def_symbol "__tdata_start"));}}
@@ -646,11 +795,11 @@ cat <<EOF
    }
   .tbss		${RELOCATING-0} : { *(.tbss${RELOCATING+ .tbss.* .gnu.linkonce.tb.*})${RELOCATING+ *(.tcommon)} }
 
-  ${RELOCATING+${PREINIT_ARRAY}}
-  ${RELOCATING+${INIT_ARRAY}}
-  ${RELOCATING+${FINI_ARRAY}}
+  ${RELOCATING+$(emit_init_fini_arrays)}
+
   ${SMALL_DATA_CTOR-${RELOCATING+${CTOR}}}
   ${SMALL_DATA_DTOR-${RELOCATING+${DTOR}}}
+
   .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
 
   ${RELOCATING+${DATARELRO}}
@@ -672,77 +821,273 @@ cat <<EOF
 
   ${DATA_PLT+${PLT_BEFORE_GOT-${PLT}}}
 
-  .data         ${RELOCATING-0} :
+  .data         ${RELOCATING-0}${RELOCATING+${DATA_SECTION_ALIGNMENT}} :
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data${RELOCATING+ .data.* .gnu.linkonce.d.*})
     ${CONSTRUCTING+SORT(CONSTRUCTORS)}
   }
+
   .data1        ${RELOCATING-0} : { *(.data1) }
+
   ${WRITABLE_RODATA+${RODATA}}
   ${OTHER_READWRITE_SECTIONS}
+
   ${SMALL_DATA_CTOR+${RELOCATING+${CTOR}}}
   ${SMALL_DATA_DTOR+${RELOCATING+${DTOR}}}
   ${SDATA_GOT+${DATA_PLT+${PLT_BEFORE_GOT+${PLT}}}}
+  
   ${SDATA_GOT+${RELOCATING+${OTHER_GOT_SYMBOLS+. = .; ${OTHER_GOT_SYMBOLS}}}}
+
   ${SDATA_GOT+${GOT}}
   ${SDATA_GOT+${OTHER_GOT_SECTIONS}}
+
   ${DATA_SDATA-${SDATA}}
   ${DATA_SDATA-${OTHER_SDATA_SECTIONS}}
+
   ${RELOCATING+${SYMBOL_ABI_ALIGNMENT+. = ALIGN(${SYMBOL_ABI_ALIGNMENT});}}
-  ${RELOCATING+${DATA_END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}$(def_symbol "_edata")${CREATE_SHLIB+)}; PROVIDE ($(def_symbol "edata"));}}
-  ${PERSISTENT}
+  ${RELOCATING+${DATA_END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}$(def_symbol "_edata")${CREATE_SHLIB+)};
+  PROVIDE ($(def_symbol "edata"));}}
+
+  $(emit_persistent)
+
   ${RELOCATING+. = ALIGN(ALIGNOF(NEXT_SECTION));}
   ${RELOCATING+${CREATE_SHLIB+PROVIDE (}$(def_symbol "__bss_start")${CREATE_SHLIB+)};}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
+
   ${DATA_SDATA-${SBSS}}
   ${BSS_PLT+${PLT}}
   .${BSS_NAME}          ${RELOCATING-0} :
   {
-   ${RELOCATING+*(.dynbss)}
-   *(.${BSS_NAME}${RELOCATING+ .${BSS_NAME}.* .gnu.linkonce.b.*})
-   ${RELOCATING+*(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.
-      FIXME: Why do we need it? When there is no .bss section, we do not
-      pad the .data section.  */
-   . = ALIGN(. != 0 ? ${ALIGNMENT} : 1);}
+    ${RELOCATING+*(.dynbss)}
+    *(.${BSS_NAME}${RELOCATING+ .${BSS_NAME}.* .gnu.linkonce.b.*})
+    ${RELOCATING+*(COMMON)}
+    /* Align here to ensure that in the common case of there only being one
+       type of .bss section, the section occupies space up to _end.
+       Align after .bss to ensure correct alignment even if the
+       .bss section disappears because there are no input sections.
+       FIXME: Why do we need it? When there is no .bss section, we do not
+       pad the .data section.  */
+    $(align_to_default_section_alignment)
   }
-  ${OTHER_BSS_SECTIONS}
-  ${LARGE_BSS_AFTER_BSS+${LARGE_BSS}}
-  ${RELOCATING+${OTHER_BSS_END_SYMBOLS}}
-  ${NOINIT}
-  ${RELOCATING+. = ALIGN(${ALIGNMENT});}
-EOF
 
-LARGE_DATA_ADDR=". = SEGMENT_START(\"ldata-segment\", ${LARGE_DATA_ADDR-.});"
-SHLIB_LARGE_DATA_ADDR=". = SEGMENT_START(\"ldata-segment\", ${SHLIB_LARGE_DATA_ADDR-.});"
+  ${OTHER_BSS_SECTIONS}
+
+  $(emit_large_bss 0)
+
+  ${RELOCATING+${OTHER_BSS_END_SYMBOLS}}
+
+  $(emit_noinit)
+
+  $(align_to_default_symbol_alignment)
+EOF
+}
+
+align_large_data()
+{
+  LARGE_DATA_ADDR=". = SEGMENT_START(\"ldata-segment\", ${LARGE_DATA_ADDR-.});"
+  SHLIB_LARGE_DATA_ADDR=". = SEGMENT_START(\"ldata-segment\", ${SHLIB_LARGE_DATA_ADDR-.});"
 
 cat <<EOF
+  /* Start of the Large Data region.  */
   ${RELOCATING+${CREATE_SHLIB-${CREATE_PIE-${LARGE_DATA_ADDR}}}}
   ${CREATE_SHLIB+${SHLIB_LARGE_DATA_ADDR}}
   ${CREATE_PIE+${SHLIB_LARGE_DATA_ADDR}}
-  ${LARGE_SECTIONS}
-  ${LARGE_BSS_AFTER_BSS-${LARGE_BSS}}
-  ${RELOCATING+. = ALIGN(${ALIGNMENT});}
+EOF
+}
+
+emit_large_bss()
+{
+  if test "${LARGE_SECTIONS}" != "yes"; then
+    return
+  fi
+
+  if test "$1" = "0"; then
+    if test -n "${LARGE_BSS_AFTER_BSS}"; then
+      return
+    fi
+  else
+    if test -z "${LARGE_BSS_AFTER_BSS}"; then
+      return
+    fi
+  fi  
+
+cat <<EOF
+  .lbss ${RELOCATING-0} :
+    {
+      ${RELOCATING+*(.dynlbss)}
+      *(.lbss${RELOCATING+ .lbss.* .gnu.linkonce.lb.*})
+      ${RELOCATING+*(LARGE_COMMON)}
+    }
+EOF
+}
+
+emit_large_data()
+{
+  if test "${LARGE_SECTIONS}" != "yes"; then
+    return
+  fi
+    
+cat <<EOF
+  .lrodata ${RELOCATING-0} ${RELOCATING+ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1))} :
+  {
+    *(.lrodata${RELOCATING+ .lrodata.* .gnu.linkonce.lr.*})
+  }
+
+  .ldata ${RELOCATING-0} ${RELOCATING+ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1))} :
+  {
+    *(.ldata${RELOCATING+ .ldata.* .gnu.linkonce.l.*})
+    $(align_to_default_section_alignment)
+  }
+
+  $(emit_large_bss 1)
+EOF
+}
+
+emit_end_symbols()
+{
+cat <<EOF
   ${RELOCATING+${OTHER_END_SYMBOLS}}
-  ${RELOCATING+${END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}$(def_symbol "_end")${CREATE_SHLIB+)}; PROVIDE ($(def_symbol "end"));}}
+
+  ${RELOCATING+${END_SYMBOLS-${CREATE_SHLIB+PROVIDE (}$(def_symbol "_end")${CREATE_SHLIB+)};
+  PROVIDE ($(def_symbol "end"));}}
+
   ${RELOCATING+${DATA_SEGMENT_END}}
+EOF
+}
+
+emit_tiny_data()
+{
+cat <<EOF
+  /* Start of the Tiny Data region.  */
   ${TINY_DATA_SECTION}
   ${TINY_BSS_SECTION}
-  ${STACK_ADDR+${STACK}}
 EOF
+}
 
-test -z "${NON_ALLOC_DYN}" || emit_dyn
+emit_stack()
+{
+  if test -z "${STACK_ADDR}"; then
+    return
+  fi
 
-source_sh $srcdir/scripttempl/misc-sections.sc
-source_sh $srcdir/scripttempl/DWARF.sc
+cat <<EOF
+  /* Stack.  */
+  .stack        ${RELOCATING-0}${RELOCATING+${STACK_ADDR}} :
+  {
+    ${RELOCATING+$(def_symbol "_stack");}
+    *(.stack)
+    ${RELOCATING+${STACK_SENTINEL}}
+  }
+EOF
+}
+
+emit_misc()
+{
+  source_sh $srcdir/scripttempl/misc-sections.sc
+  source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
   ${ATTRS_SECTIONS}
   ${OTHER_SECTIONS}
   ${RELOCATING+${OTHER_SYMBOLS}}
   ${RELOCATING+${DISCARDED}}
+EOF
+}
+
+# ===========================================================================
+# The script:
+
+emit_header
+
+cat <<EOF
+SECTIONS
+{
+EOF
+
+  emit_executable_start
+
+  #------Early Read Only Data -----------------------------------------------
+
+  if test -z "${ALL_TEXT_BEFORE_RO}"; then
+    # We are allowed to put R/O sections before code sections.
+    # Doing so either puts read only data into the code segment, if the data
+    # and code sections are contiguous, or creates a data segment followed by
+    # a code segment, followed by another data segment (for read/write data).
+    # Having three segments like this makes the binary bigger, which is a
+    # problem for some scenarios, eg containers.  On the other hand, having
+    # data in an executable code segment means that it might provide an
+    # avenue of attack for bad actors, which is a security risk.
+
+    test -n "${SEPARATE_CODE}" || emit_early_ro
+    test -n "${NON_ALLOC_DYN}${SEPARATE_CODE}" || emit_dyn
+
+    # We only need the alignment if we have emitted some sections.
+    if test -z "${SEPARATE_CODE}"; then
+      align_text
+    elif test -z "${NON_ALLOC_DYN}${SEPARATE_CODE}"; then
+      align_text
+    fi
+  fi
+  
+  #------Executable Code ----------------------------------------------------
+
+  # We do not invoke "align_text" here as doing so will increase the file
+  # size.  Normally having the text segment at the start of the file will
+  # automatically mean that it is aligned and if we have emitted any R/O
+  # sections due to the code above, then extra alignment will have already
+  # been generated.
+
+  emit_text
+  emit_text_end_symbols
+
+  # FIXME: We emit the text segment alignment operations again here.
+  # (If they are defined).  It is not clear why we do this.
+
+  align_text
+
+  #------Read Only Data -----------------------------------------------------
+
+  align_rodata
+
+  # If we have not already emitted the early read only data sections then do
+  # so now.  Also if the dynamic section has not already been emitted and we
+  # can put it into the data segment, then do that here as well.
+
+  if test -n "${ALL_TEXT_BEFORE_RO}"; then
+    test -n "${SEPARATE_CODE}" || emit_early_ro
+    test -n "${NON_ALLOC_DYN}${SEPARATE_CODE}" || emit_dyn
+  fi
+  test -z "${SEPARATE_CODE}" || emit_early_ro
+  test -z "${SEPARATE_CODE}" || emit_dyn
+
+  # Now emit the rest of the read only data.
+
+  emit_rodata
+
+  #------Read Write Data ----------------------------------------------------
+
+  align_data
+  emit_data
+  
+  align_large_data
+  emit_large_data
+
+  align_to_default_symbol_alignment
+  emit_end_symbols
+
+  # FIXME: Should the tiny data sections appear before the end symbols ?
+
+  emit_tiny_data
+
+  #------Miscellaneous ------------------------------------------------------
+
+  emit_stack
+
+  test -z "${NON_ALLOC_DYN}" || emit_dyn
+
+  emit_misc
+
+cat <<EOF
 }
 EOF

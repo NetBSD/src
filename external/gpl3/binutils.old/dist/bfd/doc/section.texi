@@ -367,6 +367,12 @@ typedef struct bfd_section
   /* Nonzero if this section uses RELA relocations, rather than REL.  */
   unsigned int use_rela_p:1;
 
+  /* Nonzero if section contents are mmapped.  */
+  unsigned int mmapped_p:1;
+
+  /* Nonzero if section contents should not be freed.  */
+  unsigned int alloced:1;
+
   /* Bits used by various backends.  The generic code doesn't touch
      these fields.  */
 
@@ -487,7 +493,6 @@ typedef struct bfd_section
 
   /* A symbol which points at this section only.  */
   struct bfd_symbol *symbol;
-  struct bfd_symbol **symbol_ptr_ptr;
 
   /* Early in the link process, map_head and map_tail are used to build
      a list of input sections attached to an output section.  Later,
@@ -779,7 +784,7 @@ case *@var{buf} will be NULL.
 @end deftypefn
 @findex bfd_copy_private_section_data
 @subsubsection @code{bfd_copy_private_section_data}
-@deftypefn {Function} bool bfd_copy_private_section_data (bfd *ibfd, asection *isec, bfd *obfd, asection *osec); 
+@deftypefn {Function} bool bfd_copy_private_section_data (bfd *ibfd, asection *isec, bfd *obfd, asection *osec, struct bfd_link_info *link_info); 
 Copy private section information from @var{isec} in the BFD
 @var{ibfd} to the section @var{osec} in the BFD @var{obfd}.
 Return @code{TRUE} on success, @code{FALSE} on error.  Possible error
@@ -792,9 +797,9 @@ returns are:
 Not enough memory exists to create private data for @var{osec}.
 @end itemize
 @example
-#define bfd_copy_private_section_data(ibfd, isection, obfd, osection) \
+#define bfd_copy_private_section_data(ibfd, isec, obfd, osec, link_info) \
        BFD_SEND (obfd, _bfd_copy_private_section_data, \
-                 (ibfd, isection, obfd, osection))
+                 (ibfd, isec, obfd, osec, link_info))
 @end example
 
 @end deftypefn
@@ -816,9 +821,9 @@ Returns group name if @var{sec} is a member of a group.
 Remove all members of @var{group} from the output.
 
 @end deftypefn
-@findex _bfd_section_size_insane
-@subsubsection @code{_bfd_section_size_insane}
-@deftypefn {Function} bool _bfd_section_size_insane (bfd *abfd, asection *sec); 
+@findex bfd_section_size_insane
+@subsubsection @code{bfd_section_size_insane}
+@deftypefn {Function} bool bfd_section_size_insane (bfd *abfd, asection *sec); 
 Returns true if the given section has a size that indicates
 it cannot be read from file.  Return false if the size is OK
 or* this function can't say one way or the other.

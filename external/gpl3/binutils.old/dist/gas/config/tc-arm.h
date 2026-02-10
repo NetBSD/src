@@ -1,5 +1,5 @@
 /* This file is tc-arm.h
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 
@@ -203,9 +203,6 @@ void arm_copy_symbol_attributes (symbolS *, symbolS *);
 
 #define TC_CONS_FIX_NEW cons_fix_new_arm
 
-#define MAX_MEM_ALIGNMENT_BYTES    6
-#define MAX_MEM_FOR_RS_ALIGN_CODE ((1 << MAX_MEM_ALIGNMENT_BYTES) - 1)
-
 /* For frags in code sections we need to record whether they contain
    ARM code or THUMB code.  This is that if they have to be aligned,
    they can contain the correct type of no-op instruction.  */
@@ -230,20 +227,14 @@ arm_min (int am_p1, int am_p2)
 #define TC_FRAG_TYPE		struct arm_frag_type
 #define TC_FRAG_INIT(fragp, max_bytes) arm_init_frag (fragp, max_bytes)
 #define TC_ALIGN_ZERO_IS_DEFAULT 1
-#define HANDLE_ALIGN(fragp)	arm_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp) arm_handle_align (fragp)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4)
 /* PR gas/19276: COFF/PE segment alignment is already handled in coff_frob_section().  */
 #ifndef TE_PE
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)				\
   ((!(FRCHAIN)->frch_next && subseg_text_p (SEG))		\
    ? arm_min (2, get_recorded_alignment (SEG)) : 0)
 #endif
-
-#define md_do_align(N, FILL, LEN, MAX, LABEL)					\
-  if (FILL == NULL && (N) != 0 && ! need_pass_2 && subseg_text_p (now_seg))	\
-    {										\
-      arm_frag_align_code (N, MAX);						\
-      goto LABEL;								\
-    }
 
 #define DWARF2_LINE_MIN_INSN_LENGTH 	2
 
@@ -339,7 +330,6 @@ struct arm_segment_info_type
 
 #define MD_PCREL_FROM_SECTION(F,S) md_pcrel_from_section(F,S)
 
-extern void arm_frag_align_code (int, int);
 extern void arm_validate_fix (struct fix *);
 extern const char * elf32_arm_target_format (void);
 extern void arm_elf_change_section (void);

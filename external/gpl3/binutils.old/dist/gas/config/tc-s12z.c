@@ -1,5 +1,5 @@
 /* tc-s12z.c -- Assembler code for the Freescale S12Z
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -84,9 +84,9 @@ s12z_strtol (const char *str, char ** endptr)
 
 /* Options and initialization.  */
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
   {
 #define OPTION_REG_PREFIX (OPTION_MD_BASE)
    {"mreg-prefix", required_argument, NULL, OPTION_REG_PREFIX},
@@ -95,7 +95,7 @@ struct option md_longopts[] =
    {NULL, no_argument, NULL, 0}
   };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 
 relax_typeS md_relax_table[] =
@@ -186,7 +186,7 @@ valueT
 md_section_align (asection *seg, valueT addr)
 {
   int align = bfd_section_alignment (seg);
-  return ((addr + (1 << align) - 1) & -(1 << align));
+  return (addr + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 void
@@ -207,7 +207,7 @@ s12z_init_after_args (void)
 static char *
 skip_whites (char *p)
 {
-  while (*p == ' ' || *p == '\t')
+  while (is_whitespace (*p))
     p++;
 
   return p;
@@ -347,7 +347,7 @@ static bool
 lex_match_string (const char *s)
 {
   char *p = input_line_pointer;
-  while (p != 0 && *p != '\t' && *p != ' ' && *p != '\0')
+  while (p != 0 && !is_whitespace (*p) && !is_end_of_stmt (*p))
     {
       p++;
     }
@@ -579,9 +579,7 @@ lex_opr (uint8_t *buffer, int *n_bytes, expressionS *exp,
 	    }
 	  else if (lex_reg_name (REG_BIT_Dn, &reg2))
 	    {
-	      if (c >= -1 * (long) (0x1u << 17)
-		  &&
-		  c < (long) (0x1u << 17) - 1)
+	      if (c >= -1 * (1L << 17) && c < (1L << 17) - 1)
 		{
 		  *n_bytes = 3;
 		  *xb = 0x80;
@@ -3790,7 +3788,7 @@ md_assemble (char *str)
   /* Find the opcode end and get the opcode in 'name'.  The opcode is forced
      lower case (the opcode table only has lower case op-codes).  */
   for (op_start = op_end = str;
-       *op_end && !is_end_of_line[(int)*op_end] && *op_end != ' ';
+       !is_end_of_stmt (*op_end) && !is_whitespace (*op_end);
        op_end++)
     {
       name[nlen] = TOLOWER (op_start[nlen]);
@@ -3884,12 +3882,14 @@ md_estimate_size_before_relax (fragS *fragP ATTRIBUTE_UNUSED, asection *segment 
 arelent *
 tc_gen_reloc (asection *section, fixS *fixp)
 {
-  arelent *reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  arelent *reloc;
+
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("Relocation %d is not supported by object file format."),
@@ -3928,11 +3928,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 {
   long value = *valP;
 
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
   /* We don't actually support subtracting a symbol.  */
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     as_bad_subtract (fixP);
 
   /*
@@ -3944,23 +3944,23 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_8:
-      ((bfd_byte *) where)[0] = (bfd_byte) value;
+      where[0] = value;
       break;
     case BFD_RELOC_16:
-      bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb16 (value, where);
       break;
     case BFD_RELOC_24:
-      bfd_putb24 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb24 (value, where);
       break;
     case BFD_RELOC_S12Z_OPR:
       {
         switch (fixP->fx_size)
           {
           case 3:
-            bfd_putb24 ((bfd_vma) value, (unsigned char *) where);
+            bfd_putb24 (value, where);
             break;
           case 2:
-            bfd_putb16 ((bfd_vma) value, (unsigned char *) where);
+            bfd_putb16 (value, where);
             break;
           default:
             abort ();
@@ -3968,14 +3968,14 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
       }
       break;
     case BFD_RELOC_32:
-      bfd_putb32 ((bfd_vma) value, (unsigned char *) where);
+      bfd_putb32 (value, where);
       break;
     case BFD_RELOC_16_PCREL:
       if (value < -0x4000 || value > 0x3FFF)
 	as_bad_where (fixP->fx_file, fixP->fx_line,
 		      _("Value out of 16-bit range."));
 
-      bfd_putb16 ((bfd_vma) value | 0x8000, (unsigned char *) where);
+      bfd_putb16 (value | 0x8000, where);
       break;
 
     default:

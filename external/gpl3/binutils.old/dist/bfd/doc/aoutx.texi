@@ -120,7 +120,7 @@ structure @var{execp}.
 @end deftypefn
 @findex aout_@var{size}_swap_exec_header_out
 @subsubsection @code{aout_@var{size}_swap_exec_header_out}
-@deftypefn {Function} void aout_@var{size}_swap_exec_header_out (bfd *abfd, struct internal_exec *execp, struct external_exec *raw_bytes); 
+@deftypefn {Function} bool aout_@var{size}_swap_exec_header_out (bfd *abfd, struct internal_exec *execp, struct external_exec *raw_bytes); 
 Swap the information in an internal exec header structure
 @var{execp} into the buffer @var{raw_bytes} ready for writing to disk.
 
