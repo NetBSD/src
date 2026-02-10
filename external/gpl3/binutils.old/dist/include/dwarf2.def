@@ -1,7 +1,7 @@
 /* -*- c -*-
    Declarations and definitions of codes relating to the DWARF2 and
    DWARF3 symbolic debugging information formats.
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Written by Gary Funck (gary@intrepid.com) The Ada Joint Program
    Office (AJPO), Florida State University and Silicon Graphics Inc.
@@ -785,6 +785,8 @@ DW_CFA (DW_CFA_hi_user, 0x3f)
 
 /* SGI/MIPS specific.  */
 DW_CFA (DW_CFA_MIPS_advance_loc8, 0x1d)
+/* AArch64 extensions.  */
+DW_CFA (DW_CFA_AARCH64_negate_ra_state_with_pc, 0x2c)
 /* GNU extensions.
    NOTE: DW_CFA_GNU_window_save is multiplexed on Sparc and AArch64.  */
 DW_CFA (DW_CFA_GNU_window_save, 0x2d)

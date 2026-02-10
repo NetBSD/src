@@ -1,5 +1,5 @@
 /* tc-s390.h -- Header file for tc-s390.c.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Written by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -98,3 +98,34 @@ extern int s390_cie_data_alignment;
 extern void s390_elf_final_processing (void);
 
 #define elf_tc_final_processing s390_elf_final_processing
+
+/* SFrame.  */
+
+/* Whether SFrame stack trace info is supported.  */
+extern bool s390_support_sframe_p (void);
+#define support_sframe_p s390_support_sframe_p
+
+/* The stack pointer DWARF register number for SFrame CFA tracking.  */
+extern const unsigned int s390_sframe_cfa_sp_reg;
+#define SFRAME_CFA_SP_REG s390_sframe_cfa_sp_reg
+
+/* The frame pointer DWARF register number for SFrame CFA and FP tracking.  */
+extern const unsigned int s390_sframe_cfa_fp_reg;
+#define SFRAME_CFA_FP_REG s390_sframe_cfa_fp_reg
+
+/* The return address DWARF register number for SFrame RA tracking.  */
+extern const unsigned int s390_sframe_cfa_ra_reg;
+#define SFRAME_CFA_RA_REG s390_sframe_cfa_ra_reg
+
+/* Whether SFrame return address tracking is needed.  */
+extern bool s390_sframe_ra_tracking_p (void);
+#define sframe_ra_tracking_p s390_sframe_ra_tracking_p
+
+/* The fixed offset from CFA for SFrame to recover the return address.
+   (useful only when SFrame RA tracking is not needed).  */
+extern offsetT s390_sframe_cfa_ra_offset (void);
+#define sframe_cfa_ra_offset s390_sframe_cfa_ra_offset
+
+/* The abi/arch identifier for SFrame.  */
+unsigned char s390_sframe_get_abi_arch (void);
+#define sframe_get_abi_arch s390_sframe_get_abi_arch

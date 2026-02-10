@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -272,7 +272,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -597,6 +597,8 @@ SHLIB_LARGE_DATA_ADDR=". = SEGMENT_START(\"ldata-segment\", ${SHLIB_LARGE_DATA_A
   ${TINY_DATA_SECTION}
   ${TINY_BSS_SECTION}
   ${STACK_ADDR+${STACK}}
+
+  ${RELOCATING+${DISCARDED}}
 EOF
 
 test -z "${NON_ALLOC_DYN}" || emit_dyn
@@ -608,6 +610,5 @@ cat <<EOF
   ${ATTRS_SECTIONS}
   ${OTHER_SECTIONS}
   ${RELOCATING+${OTHER_SYMBOLS}}
-  ${RELOCATING+${DISCARDED}}
 }
 EOF

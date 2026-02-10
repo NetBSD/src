@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -202,7 +202,7 @@ spu_elf_load_ovl_mgr (void)
       /* User supplied __ovly_load.  */
     }
   else if (mgr_stream->start == mgr_stream->end)
-    einfo (_("%F%P: no built-in overlay manager\n"));
+    fatal (_("%P: no built-in overlay manager\n"));
   else
     {
       lang_input_statement_type *ovl_is;
@@ -379,7 +379,7 @@ spu_elf_open_overlay_script (void)
   if (script == NULL)
     {
     file_err:
-      einfo (_("%F%P: can not open script: %E\n"));
+      fatal (_("%P: can not open script: %E\n"));
     }
   return script;
 }
@@ -432,7 +432,7 @@ gld${EMULATION_NAME}_finish (void)
 	einfo (_("%P: --auto-overlay ignored with zero local store range\n"));
     }
 
-  finish_default ();
+  ldelf_finish ();
 }
 
 static char *
@@ -589,30 +589,6 @@ fi
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_SPU_PLUGIN		301
-#define OPTION_SPU_NO_OVERLAYS		(OPTION_SPU_PLUGIN + 1)
-#define OPTION_SPU_COMPACT_STUBS	(OPTION_SPU_NO_OVERLAYS + 1)
-#define OPTION_SPU_STUB_SYMS		(OPTION_SPU_COMPACT_STUBS + 1)
-#define OPTION_SPU_NON_OVERLAY_STUBS	(OPTION_SPU_STUB_SYMS + 1)
-#define OPTION_SPU_LOCAL_STORE		(OPTION_SPU_NON_OVERLAY_STUBS + 1)
-#define OPTION_SPU_STACK_ANALYSIS	(OPTION_SPU_LOCAL_STORE + 1)
-#define OPTION_SPU_STACK_SYMS		(OPTION_SPU_STACK_ANALYSIS + 1)
-#define OPTION_SPU_AUTO_OVERLAY		(OPTION_SPU_STACK_SYMS + 1)
-#define OPTION_SPU_AUTO_RELINK		(OPTION_SPU_AUTO_OVERLAY + 1)
-#define OPTION_SPU_OVERLAY_RODATA	(OPTION_SPU_AUTO_RELINK + 1)
-#define OPTION_SPU_SOFT_ICACHE		(OPTION_SPU_OVERLAY_RODATA + 1)
-#define OPTION_SPU_LINE_SIZE		(OPTION_SPU_SOFT_ICACHE + 1)
-#define OPTION_SPU_NUM_LINES		(OPTION_SPU_LINE_SIZE + 1)
-#define OPTION_SPU_LRLIVE		(OPTION_SPU_NUM_LINES + 1)
-#define OPTION_SPU_NON_IA_TEXT		(OPTION_SPU_LRLIVE + 1)
-#define OPTION_SPU_FIXED_SPACE		(OPTION_SPU_NON_IA_TEXT + 1)
-#define OPTION_SPU_RESERVED_SPACE	(OPTION_SPU_FIXED_SPACE + 1)
-#define OPTION_SPU_EXTRA_STACK		(OPTION_SPU_RESERVED_SPACE + 1)
-#define OPTION_SPU_NO_AUTO_OVERLAY	(OPTION_SPU_EXTRA_STACK + 1)
-#define OPTION_SPU_EMIT_FIXUPS		(OPTION_SPU_NO_AUTO_OVERLAY + 1)
-'
-
 PARSE_AND_LIST_LONGOPTS='
   { "plugin", no_argument, NULL, OPTION_SPU_PLUGIN },
   { "soft-icache", no_argument, NULL, OPTION_SPU_SOFT_ICACHE },
@@ -719,7 +695,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	    if (*end == 0)
 	      break;
 	  }
-	einfo (_("%F%P: invalid --local-store address range `%s'\''\n"), optarg);
+	fatal (_("%P: invalid --local-store address range `%s'\''\n"), optarg);
       }
       break;
 
@@ -755,12 +731,12 @@ PARSE_AND_LIST_ARGS_CASES='
       if (!num_lines_set)
 	params.num_lines = 32;
       else if ((params.num_lines & -params.num_lines) != params.num_lines)
-	einfo (_("%F%P: invalid --num-lines/--num-regions `%u'\''\n"),
+	fatal (_("%P: invalid --num-lines/--num-regions `%u'\''\n"),
 	       params.num_lines);
       if (!line_size_set)
 	params.line_size = 1024;
       else if ((params.line_size & -params.line_size) != params.line_size)
-	einfo (_("%F%P: invalid --line-size/--region-size `%u'\''\n"),
+	fatal (_("%P: invalid --line-size/--region-size `%u'\''\n"),
 	       params.line_size);
       break;
 
@@ -781,7 +757,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	    && (params.ovly_flavour != ovly_soft_icache
 		|| (params.num_lines & -params.num_lines) == params.num_lines))
 	  break;
-	einfo (_("%F%P: invalid --num-lines/--num-regions `%s'\''\n"), optarg);
+	fatal (_("%P: invalid --num-lines/--num-regions `%s'\''\n"), optarg);
       }
       break;
 
@@ -794,7 +770,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	    && (params.ovly_flavour != ovly_soft_icache
 		|| (params.line_size & -params.line_size) == params.line_size))
 	  break;
-	einfo (_("%F%P: invalid --line-size/--region-size `%s'\''\n"), optarg);
+	fatal (_("%P: invalid --line-size/--region-size `%s'\''\n"), optarg);
       }
       break;
 
@@ -803,7 +779,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	char *end;
 	params.auto_overlay_fixed = strtoul (optarg, &end, 0);
 	if (*end != 0)
-	  einfo (_("%F%P: invalid --fixed-space value `%s'\''\n"), optarg);
+	  fatal (_("%P: invalid --fixed-space value `%s'\''\n"), optarg);
       }
       break;
 
@@ -812,7 +788,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	char *end;
 	params.auto_overlay_reserved = strtoul (optarg, &end, 0);
 	if (*end != 0)
-	  einfo (_("%F%P: invalid --reserved-space value `%s'\''\n"), optarg);
+	  fatal (_("%P: invalid --reserved-space value `%s'\''\n"), optarg);
       }
       break;
 
@@ -821,7 +797,7 @@ PARSE_AND_LIST_ARGS_CASES='
 	char *end;
 	params.extra_stack_space = strtol (optarg, &end, 0);
 	if (*end != 0)
-	  einfo (_("%F%P: invalid --extra-stack-space value `%s'\''\n"), optarg);
+	  fatal (_("%P: invalid --extra-stack-space value `%s'\''\n"), optarg);
       }
       break;
 

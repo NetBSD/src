@@ -1,3 +1,35 @@
+2025-07-13  Nick Clifton  <nickc@redhat.com>
+
+	* 2.45 Branch point.
+
+2025-01-19  Nick Clifton  <nickc@redhat.com>
+
+	* 2.44 Branch point.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
+2024-04-07  Simon Marchi  <simon.marchi@efficios.com>
+
+	* diagnostics.h (DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER): Rename
+	to...
+	(DIAGNOSTIC_IGNORE_REGISTER): ... this.  Ignore `-Wregister`
+	instead of `-Wdeprecated-register`.
+
+2024-02-14  Yuriy Kolerov  <ykolerov@synopsys.com>
+
+	* opcode/arc.h (enum insn_class_t): Add DBNZ class.
+
+2024-02-12  Frederic Cambus  <fred@statdns.com>
+
+	* elf/common.h (PT_OPENBSD_SYSCALLS): Define.
+
+2024-01-29  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* opcode/bpf.h (enum bpf_insn_id): Remove BPF_INSN_LDINDDW and
+	BPF_INSN_LDABSDW instructions.
+
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
 	* 2.42 branch point.
@@ -555,7 +587,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

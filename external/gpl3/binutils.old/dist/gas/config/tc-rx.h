@@ -1,5 +1,5 @@
 /* tc-rx.h - header file for Renesas RX
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -96,8 +96,8 @@ extern void rx_cons_fix_new (fragS *, int, int, expressionS *,
       goto around;							\
     }
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE 8
-#define HANDLE_ALIGN(FRAG) rx_handle_align (FRAG)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) 8
+#define HANDLE_ALIGN(SEC, FRAG) rx_handle_align (FRAG)
 extern void rx_handle_align (fragS *);
 
 #define RELOC_EXPANSION_POSSIBLE 1

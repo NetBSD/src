@@ -211,12 +211,18 @@ struct bfd
   /* Set if this is a plugin output file.  */
   unsigned int lto_output : 1;
 
-  /* Set if this is a slim LTO object not loaded with a compiler plugin.  */
-  unsigned int lto_slim_object : 1;
-
   /* Do not attempt to modify this file.  Set when detecting errors
      that BFD is not prepared to handle for objcopy/strip.  */
   unsigned int read_only : 1;
+
+  /* LTO object type.  */
+  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 3;
+
+  /* Set if this BFD is currently being processed by
+     bfd_check_format_matches.  This is checked by the cache to
+     avoid closing the BFD in this case.  This should only be
+     examined or modified while the BFD lock is held.  */
+  unsigned int in_format_matches : 1;
 
   /* Set to dummy BFD created when claimed by a compiler plug-in
      library.  */
@@ -241,6 +247,9 @@ struct bfd
 
   /* The last section on the section list.  */
   struct bfd_section *section_last;
+
+  /* The object-only section on the section list.  */
+  struct bfd_section *object_only_section;
 
   /* The number of sections.  */
   unsigned int section_count;
@@ -339,6 +348,9 @@ struct bfd
 
   /* For input BFDs, the build ID, if the object has one. */
   const struct bfd_build_id *build_id;
+
+  /* For input BFDs, mmapped entries. */
+  struct bfd_mmapped *mmapped;
 @};
 
 @end example
@@ -431,12 +443,6 @@ is non-NULL and non-empty, the error string printed is preceded
 by @var{message}, a colon, and a space.  It is followed by a newline.
 
 @end deftypefn
-@findex _bfd_clear_error_data
-@subsubsection @code{_bfd_clear_error_data}
-@deftypefn {Function} void _bfd_clear_error_data (void); 
-Free any data associated with the BFD error.
-
-@end deftypefn
 @findex bfd_asprintf
 @subsubsection @code{bfd_asprintf}
 @deftypefn {Function} char *bfd_asprintf (const char *fmt, ...); 
@@ -461,6 +467,21 @@ The BFD error handler acts like vprintf.
 typedef void (*bfd_error_handler_type) (const char *, va_list);
 
 @end example
+
+@example
+typedef int (*bfd_print_callback) (void *, const char *, ...);
+@end example
+@findex bfd_print_error
+@subsubsection @code{bfd_print_error}
+@deftypefn {Function} void bfd_print_error (bfd_print_callback print_func, void *stream, const char *fmt, va_list ap); 
+This formats FMT and AP according to BFD "printf" rules,
+sending the output to STREAM by repeated calls to PRINT_FUNC.
+PRINT_FUNC is a printf-like function; it does not need to
+implement the BFD printf format extensions.  This can be used
+in a callback that is set via bfd_set_error_handler to turn
+the error into ordinary output.
+
+@end deftypefn
 @findex _bfd_error_handler
 @subsubsection @code{_bfd_error_handler}
 @deftypefn {Function} void _bfd_error_handler (const char *fmt, ...) ATTRIBUTE_PRINTF_1; 
@@ -485,9 +506,18 @@ function.
 @end deftypefn
 @findex _bfd_set_error_handler_caching
 @subsubsection @code{_bfd_set_error_handler_caching}
-@deftypefn {Function} bfd_error_handler_type _bfd_set_error_handler_caching (bfd *); 
+@deftypefn {Function} struct per_xvec_messages *_bfd_set_error_handler_caching (struct per_xvec_messages *); 
 Set the BFD error handler function to one that stores messages
-to the per_xvec_warn array.  Returns the previous function.
+to the per_xvec_messages object.  Returns the previous object
+to which messages are stored.  Note that two sequential calls
+to this with a non-NULL argument will cause output to be
+dropped, rather than gathered.
+
+@end deftypefn
+@findex _bfd_restore_error_handler_caching
+@subsubsection @code{_bfd_restore_error_handler_caching}
+@deftypefn {Function} void _bfd_restore_error_handler_caching (struct per_xvec_messages *); 
+Reset the BFD error handler object to an earlier value.
 
 @end deftypefn
 @findex bfd_set_error_program_name
@@ -560,16 +590,25 @@ to work on different BFD objects at the same time.
 @example
 typedef bool (*bfd_lock_unlock_fn_type) (void *);
 @end example
+@findex _bfd_threading_enabled
+@subsubsection @code{_bfd_threading_enabled}
+@deftypefn {Function} bool _bfd_threading_enabled (void); 
+Return true if threading is enabled, false if not.
+
+@end deftypefn
 @findex bfd_thread_init
 @subsubsection @code{bfd_thread_init}
 @deftypefn {Function} bool bfd_thread_init (bfd_lock_unlock_fn_type lock, bfd_lock_unlock_fn_type unlock, void *data); 
 Initialize BFD threading.  The functions passed in will be
 used to lock and unlock global data structures.  This may only
 be called a single time in a given process.  Returns true on
-success and false on error.  DATA is passed verbatim to the
-lock and unlock functions.  The lock and unlock functions
-should return true on success, or set the BFD error and return
-false on failure.
+success and false on error.  On error, the caller should
+assume that BFD cannot be used by multiple threads.  DATA is
+passed verbatim to the lock and unlock functions.  The lock
+and unlock functions should return true on success, or set the
+BFD error and return false on failure.  Note also that the
+lock must be a recursive lock: BFD may attempt to acquire the
+lock when it is already held by the current thread.
 
 @end deftypefn
 @findex bfd_thread_cleanup
@@ -942,5 +981,11 @@ other such chars that would otherwise confuse the demangler.
 If passed a g++ v3 ABI mangled name, returns a buffer allocated
 with malloc holding the demangled name.  Returns NULL otherwise
 and on memory alloc failure.
+
+@end deftypefn
+@findex bfd_group_signature
+@subsubsection @code{bfd_group_signature}
+@deftypefn {Function} asymbol *bfd_group_signature (asection *group, asymbol **isympp); 
+Return a pointer to the symbol used as a signature for GROUP.
 
 @end deftypefn

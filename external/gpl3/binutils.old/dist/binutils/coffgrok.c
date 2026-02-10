@@ -1,5 +1,5 @@
 /* coffgrok.c
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -65,13 +65,13 @@ static bfd *                    abfd;
 static struct coff_scope *
 empty_scope (void)
 {
-  return (struct coff_scope *) (xcalloc (sizeof (struct coff_scope), 1));
+  return (struct coff_scope *) (xcalloc (1, sizeof (struct coff_scope)));
 }
 
 static struct coff_symbol *
 empty_symbol (void)
 {
-  return (struct coff_symbol *) (xcalloc (sizeof (struct coff_symbol), 1));
+  return (struct coff_symbol *) (xcalloc (1, sizeof (struct coff_symbol)));
 }
 
 static void
@@ -279,7 +279,7 @@ do_where (unsigned int i)
 static struct coff_line *
 do_lines (int i, char *name ATTRIBUTE_UNUSED)
 {
-  struct coff_line *res = (struct coff_line *) xcalloc (sizeof (struct coff_line), 1);
+  struct coff_line *res = (struct coff_line *) xcalloc (1, sizeof (struct coff_line));
   asection *s;
   unsigned int l;
 
@@ -316,8 +316,8 @@ do_lines (int i, char *name ATTRIBUTE_UNUSED)
 		  /* Add two extra records, one for the prologue and one for the epilogue.  */
 		  c += 1;
 		  res->nlines = c;
-		  res->lines = (int *) (xcalloc (sizeof (int), c));
-		  res->addresses = (int *) (xcalloc (sizeof (int), c));
+		  res->lines = (int *) (xcalloc (c, sizeof (int)));
+		  res->addresses = (int *) (xcalloc (c, sizeof (int)));
 		  res->lines[0] = start_line;
 		  res->addresses[0] = rawsyms[i].u.syment.n_value - s->vma;
 		  for (c = 0;
@@ -725,7 +725,7 @@ doit (void)
 	    struct coff_sfile *n =
 	      (struct coff_sfile *) xmalloc (sizeof (struct coff_sfile));
 
-	    n->section = (struct coff_isection *) xcalloc (sizeof (struct coff_isection), abfd->section_count + 1);
+	    n->section = (struct coff_isection *) xcalloc (abfd->section_count + 1, sizeof (struct coff_isection));
 	    cur_sfile = n;
 	    n->name = N(sym);
 	    n->next = 0;
@@ -878,7 +878,8 @@ coff_grok (bfd *inabfd)
     bfd_fatal (bfd_get_filename (abfd));
   rawsyms = obj_raw_syments (abfd);
   rawcount = obj_raw_syment_count (abfd);
-  tindex = (struct coff_symbol **) (xcalloc (sizeof (struct coff_symbol *), rawcount));
+  tindex = (struct coff_symbol **) (xcalloc (rawcount,
+					     sizeof (struct coff_symbol *)));
 
   p = doit ();
   return p;

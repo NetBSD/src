@@ -1,5 +1,5 @@
 /* x86_64 ELF support for BFD.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Jan Hubicka <jh@suse.cz>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -92,13 +92,33 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
      /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
 	instruction starts at 4 bytes before the relocation offset.  */
      RELOC_NUMBER (R_X86_64_CODE_4_GOTPC32_TLSDESC, 45)
+     /* Load from 32 bit signed pc relative offset to GOT entry if the
+	instruction starts at 5 bytes before the relocation offset,
+	relaxable.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTPCRELX, 46)
+     /* PC relative offset to IE GOT entry if the instruction starts at
+        5 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 47)
+     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+	instruction starts at 5 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 48)
+     /* Load from 32 bit signed pc relative offset to GOT entry if the
+	instruction starts at 6 bytes before the relocation offset,
+	relaxable.  */
+     RELOC_NUMBER (R_X86_64_CODE_6_GOTPCRELX, 49)
+     /* PC relative offset to IE GOT entry if the instruction starts at
+        6 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 50)
+     /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
+	instruction starts at 6 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_6_GOTPC32_TLSDESC, 51)
      RELOC_NUMBER (R_X86_64_GNU_VTINHERIT, 250)       /* GNU C++ hack  */
      RELOC_NUMBER (R_X86_64_GNU_VTENTRY, 251)         /* GNU C++ hack  */
 END_RELOC_NUMBERS (R_X86_64_max)
 
 /* Processor specific section types.  */
 
-#define SHT_X86_64_UNWIND	0x70000001	/* unwind information */
+#define SHT_X86_64_UNWIND	(SHT_LOPROC + 1)  /* Unwind information.  */
 
 /* Like SHN_COMMON but the symbol will be allocated in the .lbss
    section.  */

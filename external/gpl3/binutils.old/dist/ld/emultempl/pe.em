@@ -7,18 +7,18 @@ else
 fi
 
 case ${target} in
-  *-*-cygwin*)
-    cygwin_behavior=1
+  *-*-mingw*)
+    mingw_behavior=1
     ;;
   *)
-    cygwin_behavior=0;
+    mingw_behavior=0
     ;;
 esac
 
 rm -f e${EMULATION_NAME}.c
 (echo;echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
-/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -126,9 +126,10 @@ fragment <<EOF
 #define DEFAULT_PSEUDO_RELOC_VERSION 1
 #endif
 
-#define DEFAULT_DLL_CHARACTERISTICS	(${cygwin_behavior} ? 0 : \
-					   IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE \
-					 | IMAGE_DLL_CHARACTERISTICS_NX_COMPAT)
+#define DEFAULT_DLL_CHARACTERISTICS	(${mingw_behavior} \
+					 ? IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE \
+					   | IMAGE_DLL_CHARACTERISTICS_NX_COMPAT \
+					 : 0)
 
 #if defined(TARGET_IS_i386pe) || ! defined(DLL_SUPPORT)
 #define	PE_DEF_SUBSYSTEM		IMAGE_SUBSYSTEM_WINDOWS_CUI
@@ -160,6 +161,7 @@ static char * thumb_entry_symbol = NULL;
 static lang_assignment_statement_type *image_base_statement = 0;
 static unsigned short pe_dll_characteristics = DEFAULT_DLL_CHARACTERISTICS;
 static bool insert_timestamp = true;
+static bool orphan_init_done;
 static const char *emit_build_id;
 #ifdef PDB_H
 static int pdb;
@@ -235,84 +237,6 @@ fragment <<EOF
 
 /* PE format extra command line options.  */
 
-/* Used for setting flags in the PE header.  */
-enum options
-{
-  OPTION_BASE_FILE = 300 + 1,
-  OPTION_DLL,
-  OPTION_FILE_ALIGNMENT,
-  OPTION_IMAGE_BASE,
-  OPTION_MAJOR_IMAGE_VERSION,
-  OPTION_MAJOR_OS_VERSION,
-  OPTION_MAJOR_SUBSYSTEM_VERSION,
-  OPTION_MINOR_IMAGE_VERSION,
-  OPTION_MINOR_OS_VERSION,
-  OPTION_MINOR_SUBSYSTEM_VERSION,
-  OPTION_SECTION_ALIGNMENT,
-  OPTION_STACK,
-  OPTION_SUBSYSTEM,
-  OPTION_HEAP,
-  OPTION_SUPPORT_OLD_CODE,
-  OPTION_OUT_DEF,
-  OPTION_EXPORT_ALL,
-  OPTION_EXCLUDE_SYMBOLS,
-  OPTION_EXCLUDE_ALL_SYMBOLS,
-  OPTION_KILL_ATS,
-  OPTION_STDCALL_ALIASES,
-  OPTION_ENABLE_STDCALL_FIXUP,
-  OPTION_DISABLE_STDCALL_FIXUP,
-  OPTION_THUMB_ENTRY,
-  OPTION_WARN_DUPLICATE_EXPORTS,
-  OPTION_IMP_COMPAT,
-  OPTION_ENABLE_AUTO_IMAGE_BASE,
-  OPTION_DISABLE_AUTO_IMAGE_BASE,
-  OPTION_DLL_SEARCH_PREFIX,
-  OPTION_NO_DEFAULT_EXCLUDES,
-  OPTION_DLL_ENABLE_AUTO_IMPORT,
-  OPTION_DLL_DISABLE_AUTO_IMPORT,
-  OPTION_ENABLE_EXTRA_PE_DEBUG,
-  OPTION_EXCLUDE_LIBS,
-  OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC,
-  OPTION_DLL_DISABLE_RUNTIME_PSEUDO_RELOC,
-  OPTION_LARGE_ADDRESS_AWARE,
-  OPTION_DISABLE_LARGE_ADDRESS_AWARE,
-  OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V1,
-  OPTION_DLL_ENABLE_RUNTIME_PSEUDO_RELOC_V2,
-  OPTION_EXCLUDE_MODULES_FOR_IMPLIB,
-  OPTION_USE_NUL_PREFIXED_IMPORT_TABLES,
-  OPTION_NO_LEADING_UNDERSCORE,
-  OPTION_LEADING_UNDERSCORE,
-  OPTION_ENABLE_LONG_SECTION_NAMES,
-  OPTION_DISABLE_LONG_SECTION_NAMES,
-/* DLLCharacteristics flags.  */
-  OPTION_DYNAMIC_BASE,
-  OPTION_FORCE_INTEGRITY,
-  OPTION_NX_COMPAT,
-  OPTION_NO_ISOLATION,
-  OPTION_NO_SEH,
-  OPTION_NO_BIND,
-  OPTION_WDM_DRIVER,
-  OPTION_TERMINAL_SERVER_AWARE,
-/* Determinism.  */
-  OPTION_INSERT_TIMESTAMP,
-  OPTION_NO_INSERT_TIMESTAMP,
-  OPTION_BUILD_ID,
-#ifdef PDB_H
-  OPTION_PDB,
-#endif
-  OPTION_ENABLE_RELOC_SECTION,
-  OPTION_DISABLE_RELOC_SECTION,
-/* DLL Characteristics flags.  */
-  OPTION_DISABLE_DYNAMIC_BASE,
-  OPTION_DISABLE_FORCE_INTEGRITY,
-  OPTION_DISABLE_NX_COMPAT,
-  OPTION_DISABLE_NO_ISOLATION,
-  OPTION_DISABLE_NO_SEH,
-  OPTION_DISABLE_NO_BIND,
-  OPTION_DISABLE_WDM_DRIVER,
-  OPTION_DISABLE_TERMINAL_SERVER_AWARE
-};
-
 static void
 gld${EMULATION_NAME}_add_options
   (int ns ATTRIBUTE_UNUSED,
@@ -329,7 +253,6 @@ gld${EMULATION_NAME}_add_options
     {"dll", no_argument, NULL, OPTION_DLL},
     {"file-alignment", required_argument, NULL, OPTION_FILE_ALIGNMENT},
     {"heap", required_argument, NULL, OPTION_HEAP},
-    {"image-base", required_argument, NULL, OPTION_IMAGE_BASE},
     {"major-image-version", required_argument, NULL, OPTION_MAJOR_IMAGE_VERSION},
     {"major-os-version", required_argument, NULL, OPTION_MAJOR_OS_VERSION},
     {"major-subsystem-version", required_argument, NULL, OPTION_MAJOR_SUBSYSTEM_VERSION},
@@ -726,7 +649,7 @@ set_pe_subsystem (void)
 
       if (v[i].name == NULL)
 	{
-	  einfo (_("%F%P: invalid subsystem type %s\n"), optarg);
+	  fatal (_("%P: invalid subsystem type %s\n"), optarg);
 	  return;
 	}
 
@@ -747,7 +670,7 @@ set_pe_value (char *name)
   set_pe_name (name,  strtoul (optarg, &end, 0));
 
   if (end == optarg)
-    einfo (_("%F%P: invalid hex number for PE parameter '%s'\n"), optarg);
+    fatal (_("%P: invalid hex number for PE parameter '%s'\n"), optarg);
 
   optarg = end;
 }
@@ -764,7 +687,7 @@ set_pe_stack_heap (char *resname, char *comname)
       set_pe_value (comname);
     }
   else if (*optarg)
-    einfo (_("%F%P: strange hex info for PE parameter '%s'\n"), optarg);
+    fatal (_("%P: strange hex info for PE parameter '%s'\n"), optarg);
 }
 
 #define DEFAULT_BUILD_ID_STYLE	"md5"
@@ -780,7 +703,7 @@ gld${EMULATION_NAME}_handle_option (int optc)
     case OPTION_BASE_FILE:
       link_info.base_file = fopen (optarg, FOPEN_WB);
       if (link_info.base_file == NULL)
-	einfo (_("%F%P: cannot open base file %s\n"), optarg);
+	fatal (_("%P: cannot open base file %s\n"), optarg);
       break;
 
       /* PE options.  */
@@ -1309,7 +1232,7 @@ make_runtime_ref (void)
     = bfd_wrapped_link_hash_lookup (link_info.output_bfd, &link_info,
 				    rr, true, false, true);
   if (!h)
-    einfo (_("%F%P: bfd_link_hash_lookup failed: %E\n"));
+    fatal (_("%P: bfd_link_hash_lookup failed: %E\n"));
   else
     {
       if (h->type == bfd_link_hash_new)
@@ -1607,7 +1530,7 @@ gld${EMULATION_NAME}_after_open (void)
   if (bfd_get_flavour (link_info.output_bfd) != bfd_target_coff_flavour
       || coff_data (link_info.output_bfd) == NULL
       || !obj_pe (link_info.output_bfd))
-    einfo (_("%F%P: cannot perform PE operations on non PE output file '%pB'\n"),
+    fatal (_("%P: cannot perform PE operations on non PE output file '%pB'\n"),
 	   link_info.output_bfd);
 
   pe_data (link_info.output_bfd)->pe_opthdr = pe;
@@ -1680,7 +1603,7 @@ gld${EMULATION_NAME}_after_open (void)
 	 These will only be created if the output format is an arm format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo (_("%F%P: error: cannot change output format "
+      fatal (_("%P: error: cannot change output format "
 	       "whilst linking %s binaries\n"), "ARM");
       return;
     }
@@ -1740,7 +1663,7 @@ gld${EMULATION_NAME}_after_open (void)
 
 		    if (!bfd_generic_link_read_symbols (is->the_bfd))
 		      {
-			einfo (_("%F%P: %pB: could not read symbols: %E\n"),
+			fatal (_("%P: %pB: could not read symbols: %E\n"),
 			       is->the_bfd);
 			return;
 		      }
@@ -1826,13 +1749,28 @@ gld${EMULATION_NAME}_after_open (void)
 
 	    /* Microsoft import libraries may contain archive members for
 	       one or more DLLs, together with static object files.
-	       Inspect all members that are named *.dll - check whether
-	       they contain .idata sections. Do the renaming of all
-	       archive members that seem to be Microsoft style import
-	       objects.  */
+	       The head and sentinels are regular COFF object files,
+	       while the thunks are special ILF files that get synthesized
+	       by bfd into COFF object files.
+
+	       As Microsoft import libraries can be for a module with
+	       almost any file name (*.dll, *.exe, etc), we can't easily
+	       know which archive members to inspect.
+
+	       Inspect all members, except ones named *.o or *.obj (which
+	       is the case both for regular static libraries or for GNU
+	       style import libraries). Archive members with file names other
+	       than *.o or *.obj, that do contain .idata sections, are
+	       considered to be Microsoft style import objects, and are
+	       renamed accordingly.
+
+	       If this heuristic is wrong and we apply this on archive members
+	       that already have unique names, it shouldn't make any difference
+	       as we only append a suffix on the names.  */
 	    pnt = strrchr (bfd_get_filename (is->the_bfd), '.');
 
-	    if (pnt != NULL && (fileext_cmp (pnt + 1, "dll") == 0))
+	    if (pnt != NULL && (fileext_cmp (pnt + 1, "o") != 0 &&
+				fileext_cmp (pnt + 1, "obj") != 0))
 	      {
 		int idata2 = 0, reloc_count = 0, idata = 0;
 		asection *sec;
@@ -1847,8 +1785,8 @@ gld${EMULATION_NAME}_after_open (void)
 		    reloc_count += sec->reloc_count;
 		  }
 
-		/* An archive member named .dll, but not having any .idata
-		   sections - apparently not a Microsoft import object
+		/* An archive member not named .o or .obj, but not having any
+		   .idata sections - apparently not a Microsoft import object
 		   after all: Skip renaming it.  */
 		if (!idata)
 		  continue;
@@ -1912,7 +1850,7 @@ gld${EMULATION_NAME}_after_open (void)
 
 		if (!bfd_generic_link_read_symbols (is->the_bfd))
 		  {
-		    einfo (_("%F%P: %pB: could not read symbols: %E\n"),
+		    fatal (_("%P: %pB: could not read symbols: %E\n"),
 			   is->the_bfd);
 		    return;
 		  }
@@ -2023,7 +1961,7 @@ gld${EMULATION_NAME}_unrecognized_file (lang_input_statement_type *entry ATTRIBU
 
 	      h = bfd_link_hash_lookup (link_info.hash, buf, true, true, true);
 	      if (h == (struct bfd_link_hash_entry *) NULL)
-		einfo (_("%F%P: bfd_link_hash_lookup failed: %E\n"));
+		fatal (_("%P: bfd_link_hash_lookup failed: %E\n"));
 	      if (h->type == bfd_link_hash_new)
 		{
 		  h->type = bfd_link_hash_undefined;
@@ -2096,6 +2034,10 @@ gld${EMULATION_NAME}_recognized_file (lang_input_statement_type *entry ATTRIBUTE
 static void
 gld${EMULATION_NAME}_finish (void)
 {
+  /* Support the object-only output.  */
+  if (config.emit_gnu_object_only)
+    orphan_init_done = false;
+
 #if defined(TARGET_IS_armpe) || defined(TARGET_IS_arm_wince_pe)
   struct bfd_link_hash_entry * h;
 
@@ -2255,7 +2197,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 
   if (os == NULL)
     {
-      static struct orphan_save hold[] =
+      static struct orphan_save orig_hold[] =
 	{
 	  { ".text",
 	    SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE,
@@ -2273,6 +2215,7 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 	    SEC_ALLOC,
 	    0, 0, 0, 0 }
 	};
+      static struct orphan_save hold[ARRAY_SIZE (orig_hold)];
       enum orphan_save_index
 	{
 	  orphan_text = 0,
@@ -2281,7 +2224,6 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 	  orphan_data,
 	  orphan_bss
 	};
-      static int orphan_init_done = 0;
       struct orphan_save *place;
       lang_output_section_statement_type *after;
       etree_type *address;
@@ -2290,15 +2232,20 @@ gld${EMULATION_NAME}_place_orphan (asection *s,
 
       if (!orphan_init_done)
 	{
-	  struct orphan_save *ho;
-	  for (ho = hold; ho < hold + sizeof (hold) / sizeof (hold[0]); ++ho)
-	    if (ho->name != NULL)
-	      {
-		ho->os = lang_output_section_find (ho->name);
-		if (ho->os != NULL && ho->os->flags == 0)
-		  ho->os->flags = ho->flags;
-	      }
-	  orphan_init_done = 1;
+	  struct orphan_save *ho, *horig;
+	  for (ho = hold, horig = orig_hold;
+	       ho < hold + ARRAY_SIZE (hold);
+	       ++ho, ++horig)
+	    {
+	      *ho = *horig;
+	      if (ho->name != NULL)
+		{
+		  ho->os = lang_output_section_find (ho->name);
+		  if (ho->os != NULL && ho->os->flags == 0)
+		    ho->os->flags = ho->flags;
+	        }
+	    }
+	  orphan_init_done = true;
 	}
 
       flags = s->flags;
@@ -2501,6 +2448,55 @@ gld${EMULATION_NAME}_find_potential_libraries
 {
   return ldfile_open_file_search (name, entry, "", ".lib");
 }
+
+static struct bfd_link_hash_entry *
+gld${EMULATION_NAME}_find_alt_start_symbol
+  (struct bfd_sym_chain *entry)
+{
+#if defined (TARGET_IS_i386pe)
+  bool entry_has_stdcall_suffix;
+#endif
+  struct bfd_link_hash_entry *h;
+  size_t entry_name_len;
+  char *symbol_name;
+  const char *prefix;
+  const char *suffix;
+
+  entry_name_len = strlen (entry->name);
+
+  if (is_underscoring ())
+    prefix = "_";
+  else
+    prefix = "";
+
+#if defined (TARGET_IS_i386pe)
+  if ((entry_name_len > 2 && entry->name[entry_name_len-2] == '@' && ISDIGIT (entry->name[entry_name_len-1]))
+      || (entry_name_len > 3 && entry->name[entry_name_len-3] == '@' && ISDIGIT (entry->name[entry_name_len-2]) && ISDIGIT (entry->name[entry_name_len-1]))
+      || (entry_name_len > 4 && entry->name[entry_name_len-4] == '@' && ISDIGIT (entry->name[entry_name_len-3]) && ISDIGIT (entry->name[entry_name_len-2]) && ISDIGIT (entry->name[entry_name_len-1])))
+    entry_has_stdcall_suffix = true;
+  else
+    entry_has_stdcall_suffix = false;
+
+  if (!entry_has_stdcall_suffix && (bfd_link_dll (&link_info) || dll))
+    suffix = "@12";
+  else if (!entry_has_stdcall_suffix && pe_subsystem == 1 /* NT kernel driver */)
+    suffix = "@8";
+  else
+#endif
+    suffix = "";
+
+  if (*prefix == '\0' && *suffix == '\0')
+    return NULL;
+
+  symbol_name = xmalloc (entry_name_len + 5);
+  strcpy (symbol_name, prefix);
+  strcat (symbol_name, entry->name);
+  strcat (symbol_name, suffix);
+
+  h = bfd_link_hash_lookup (link_info.hash, symbol_name, false, false, true);
+  free (symbol_name);
+  return h;
+}
 
 static char *
 gld${EMULATION_NAME}_get_script (int *isfile)
@@ -2579,5 +2575,6 @@ LDEMUL_UNRECOGNIZED_FILE=gld${EMULATION_NAME}_unrecognized_file
 LDEMUL_LIST_OPTIONS=gld${EMULATION_NAME}_list_options
 LDEMUL_RECOGNIZED_FILE=gld${EMULATION_NAME}_recognized_file
 LDEMUL_FIND_POTENTIAL_LIBRARIES=gld${EMULATION_NAME}_find_potential_libraries
+LDEMUL_FIND_START_SYMBOL=gld${EMULATION_NAME}_find_alt_start_symbol
 
 source_em ${srcdir}/emultempl/emulation.em

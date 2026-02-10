@@ -1,5 +1,5 @@
 /* d30v.h -- Header file for D30V opcode table
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Solutions
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -279,8 +279,8 @@ extern const struct d30v_format d30v_format_table[];
 /* formats, 2 SHORT_A forms and a LONG form. */
 struct d30v_insn
 {
-  struct d30v_opcode *op;	/* pointer to an entry in the opcode table */
-  struct d30v_format *form;	/* pointer to an entry in the format table */
+  const struct d30v_opcode *op;	/* pointer to an entry in the opcode table */
+  const struct d30v_format *form; /* pointer to an entry in the format table */
   int ecc;			/* execution condition code */
 };
 

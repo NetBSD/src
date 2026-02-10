@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -405,16 +405,11 @@ struct opcode16
    %q			print shifter argument
    %u			print condition code (unconditional in ARM mode,
                           UNPREDICTABLE if not AL in Thumb)
-   %A			print address for ldc/stc/ldf/stf instruction
+   %A			print address for ldc/stc instruction
    %B			print vstm/vldm register list
    %C			print vscclrm register list
-   %I                   print cirrus signed shift immediate: bits 0..3|4..6
    %J			print register for VLDR instruction
    %K			print address for VLDR instruction
-   %F			print the COUNT field of a LFM/SFM instruction.
-   %P			print floating point precision in arithmetic insn
-   %Q			print floating point precision in ldf/stf insn
-   %R			print floating point rounding mode
 
    %<bitfield>c		print as a condition code (for vsel)
    %<bitfield>r		print as an ARM register
@@ -424,8 +419,6 @@ struct opcode16
    %<bitfield>k		print immediate for VFPv3 conversion instruction
    %<bitfield>x		print the bitfield in hex
    %<bitfield>X		print the bitfield as 1 hex digit without leading "0x"
-   %<bitfield>f		print a floating point constant if >7 else a
-			floating point register
    %<bitfield>w         print as an iWMMXt width field - [bhwd]ss/us
    %<bitfield>g         print as an iWMMXt 64-bit register
    %<bitfield>G         print as an iWMMXt general purpose or control register
@@ -707,94 +700,6 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_CORE_LOW (0),
     SENTINEL_IWMMXT_END, 0, "" },
 
-  /* Floating point coprocessor (FPA) instructions.  */
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e000100, 0x0ff08f10, "adf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e100100, 0x0ff08f10, "muf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e200100, 0x0ff08f10, "suf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e300100, 0x0ff08f10, "rsf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e400100, 0x0ff08f10, "dvf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e500100, 0x0ff08f10, "rdf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e600100, 0x0ff08f10, "pow%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e700100, 0x0ff08f10, "rpw%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e800100, 0x0ff08f10, "rmf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e900100, 0x0ff08f10, "fml%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ea00100, 0x0ff08f10, "fdv%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb00100, 0x0ff08f10, "frd%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ec00100, 0x0ff08f10, "pol%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e008100, 0x0ff08f10, "mvf%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e108100, 0x0ff08f10, "mnf%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e208100, 0x0ff08f10, "abs%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e308100, 0x0ff08f10, "rnd%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e408100, 0x0ff08f10, "sqt%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e508100, 0x0ff08f10, "log%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e608100, 0x0ff08f10, "lgn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e708100, 0x0ff08f10, "exp%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e808100, 0x0ff08f10, "sin%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e908100, 0x0ff08f10, "cos%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ea08100, 0x0ff08f10, "tan%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb08100, 0x0ff08f10, "asn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ec08100, 0x0ff08f10, "acs%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ed08100, 0x0ff08f10, "atn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ee08100, 0x0ff08f10, "urd%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ef08100, 0x0ff08f10, "nrm%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e000110, 0x0ff00f1f, "flt%c%P%R\t%16-18f, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e100110, 0x0fff0f98, "fix%c%R\t%12-15r, %0-2f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e200110, 0x0fff0fff, "wfs%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e300110, 0x0fff0fff, "rfs%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e400110, 0x0fff0fff, "wfc%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e500110, 0x0fff0fff, "rfc%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e90f110, 0x0ff8fff0, "cmf%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb0f110, 0x0ff8fff0, "cnf%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ed0f110, 0x0ff8fff0, "cmfe%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ef0f110, 0x0ff8fff0, "cnfe%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0c000100, 0x0e100f00, "stf%c%Q\t%12-14f, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0c100100, 0x0e100f00, "ldf%c%Q\t%12-14f, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
-    0x0c000200, 0x0e100f00, "sfm%c\t%12-14f, %F, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
-    0x0c100200, 0x0e100f00, "lfm%c\t%12-14f, %F, %A"},
-
   /* Armv8.1-M Mainline instructions.  */
   {T32, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
     0xec9f0b00, 0xffbf0f01, "vscclrm%c\t%C"},
@@ -1040,180 +945,6 @@ static const struct sopcode32 coprocessor_opcodes[] =
     0x0e800a00, 0x0fb00f50, "vdiv%c.f32\t%y1, %y2, %y0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e800b00, 0x0fb00f50, "vdiv%c.f64\t%z1, %z2, %z0"},
-
-  /* Cirrus coprocessor instructions.  */
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d100400, 0x0f500f00, "cfldrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c100400, 0x0f500f00, "cfldrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d500400, 0x0f500f00, "cfldrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c500400, 0x0f500f00, "cfldrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d100500, 0x0f500f00, "cfldr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c100500, 0x0f500f00, "cfldr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d500500, 0x0f500f00, "cfldr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c500500, 0x0f500f00, "cfldr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d000400, 0x0f500f00, "cfstrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c000400, 0x0f500f00, "cfstrs%c\t%{R:mvf%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d400400, 0x0f500f00, "cfstrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c400400, 0x0f500f00, "cfstrd%c\t%{R:mvd%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d000500, 0x0f500f00, "cfstr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c000500, 0x0f500f00, "cfstr32%c\t%{R:mvfx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d400500, 0x0f500f00, "cfstr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c400500, 0x0f500f00, "cfstr64%c\t%{R:mvdx%12-15d%}, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000450, 0x0ff00ff0, "cfmvsr%c\t%{R:mvf%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100450, 0x0ff00ff0, "cfmvrs%c\t%12-15r, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000410, 0x0ff00ff0, "cfmvdlr%c\t%{R:mvd%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100410, 0x0ff00ff0, "cfmvrdl%c\t%12-15r, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000430, 0x0ff00ff0, "cfmvdhr%c\t%{R:mvd%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100430, 0x0ff00fff, "cfmvrdh%c\t%12-15r, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000510, 0x0ff00fff, "cfmv64lr%c\t%{R:mvdx%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100510, 0x0ff00fff, "cfmvr64l%c\t%12-15r, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000530, 0x0ff00fff, "cfmv64hr%c\t%{R:mvdx%16-19d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100530, 0x0ff00fff, "cfmvr64h%c\t%12-15r, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200440, 0x0ff00fff, "cfmval32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100440, 0x0ff00fff, "cfmv32al%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200460, 0x0ff00fff, "cfmvam32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100460, 0x0ff00fff, "cfmv32am%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200480, 0x0ff00fff, "cfmvah32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100480, 0x0ff00fff, "cfmv32ah%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004a0, 0x0ff00fff, "cfmva32%c\t%{R:mvax%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004a0, 0x0ff00fff, "cfmv32a%c\t%{R:mvfx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004c0, 0x0ff00fff, "cfmva64%c\t%{R:mvax%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004c0, 0x0ff00fff, "cfmv64a%c\t%{R:mvdx%12-15d%}, %{R:mvax%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004e0, 0x0fff0fff, "cfmvsc32%c\t%{R:dspsc%}, %{R:mvdx%12-15d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004e0, 0x0fff0fff, "cfmv32sc%c\t%{R:mvdx%12-15d%}, %{R:dspsc%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000400, 0x0ff00fff, "cfcpys%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000420, 0x0ff00fff, "cfcpyd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000460, 0x0ff00fff, "cfcvtsd%c\t%{R:mvd%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000440, 0x0ff00fff, "cfcvtds%c\t%{R:mvf%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000480, 0x0ff00fff, "cfcvt32s%c\t%{R:mvf%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004a0, 0x0ff00fff, "cfcvt32d%c\t%{R:mvd%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004c0, 0x0ff00fff, "cfcvt64s%c\t%{R:mvf%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004e0, 0x0ff00fff, "cfcvt64d%c\t%{R:mvd%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100580, 0x0ff00fff, "cfcvts32%c\t%{R:mvfx%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005a0, 0x0ff00fff, "cfcvtd32%c\t%{R:mvfx%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005c0, 0x0ff00fff, "cftruncs32%c\t%{R:mvfx%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005e0, 0x0ff00fff, "cftruncd32%c\t%{R:mvfx%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000550, 0x0ff00ff0, "cfrshl32%c\t%{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000570, 0x0ff00ff0, "cfrshl64%c\t%{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000500, 0x0ff00f10, "cfsh32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{I:#%I%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200500, 0x0ff00f10, "cfsh64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{I:#%I%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100490, 0x0ff00ff0, "cfcmps%c\t%12-15r, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004b0, 0x0ff00ff0, "cfcmpd%c\t%12-15r, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100590, 0x0ff00ff0, "cfcmp32%c\t%12-15r, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005b0, 0x0ff00ff0, "cfcmp64%c\t%12-15r, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300400, 0x0ff00fff, "cfabss%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300420, 0x0ff00fff, "cfabsd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300440, 0x0ff00fff, "cfnegs%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300460, 0x0ff00fff, "cfnegd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300480, 0x0ff00ff0, "cfadds%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004a0, 0x0ff00ff0, "cfaddd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004c0, 0x0ff00ff0, "cfsubs%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004e0, 0x0ff00ff0, "cfsubd%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100400, 0x0ff00ff0, "cfmuls%c\t%{R:mvf%12-15d%}, %{R:mvf%16-19d%}, %{R:mvf%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100420, 0x0ff00ff0, "cfmuld%c\t%{R:mvd%12-15d%}, %{R:mvd%16-19d%}, %{R:mvd%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300500, 0x0ff00fff, "cfabs32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300520, 0x0ff00fff, "cfabs64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300540, 0x0ff00fff, "cfneg32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300560, 0x0ff00fff, "cfneg64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300580, 0x0ff00ff0, "cfadd32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005a0, 0x0ff00ff0, "cfadd64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005c0, 0x0ff00ff0, "cfsub32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005e0, 0x0ff00ff0, "cfsub64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100500, 0x0ff00ff0, "cfmul32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100520, 0x0ff00ff0, "cfmul64%c\t%{R:mvdx%12-15d%}, %{R:mvdx%16-19d%}, %{R:mvdx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100540, 0x0ff00ff0, "cfmac32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100560, 0x0ff00ff0, "cfmsc32%c\t%{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000600, 0x0ff00f10,
-    "cfmadd32%c\t%{R:mvax%5-7d%}, %{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100600, 0x0ff00f10,
-    "cfmsub32%c\t%{R:mvax%5-7d%}, %{R:mvfx%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200600, 0x0ff00f10,
-    "cfmadda32%c\t%{R:mvax%5-7d%}, %{R:mvax%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300600, 0x0ff00f10,
-    "cfmsuba32%c\t%{R:mvax%5-7d%}, %{R:mvax%12-15d%}, %{R:mvfx%16-19d%}, %{R:mvfx%0-3d%}"},
 
   /* VFP Fused multiply add instructions.  */
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
@@ -2763,7 +2494,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMLA,
    0xee010e40, 0xef811f70,
-   "vmla%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+   "vmla%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
 
   /* Vector VMLALDAV.  Note must appear before VMLADAV due to instruction
      opcode aliasing.  */
@@ -3628,11 +3359,13 @@ static const struct mopcode32 mve_opcodes[] =
    %m			print register mask for ldm/stm instruction
    %o			print operand2 (immediate or register + shift)
    %p			print 'p' iff bits 12-15 are 15
+   %O			print 'OBSOLETE' iff bits 12-15 are 15
    %t			print 't' iff bit 21 set and bit 24 clear
    %B			print arm BLX(1) destination
    %C			print the PSR sub type.
    %U			print barrier type.
    %P			print address for pli instruction.
+   %T			print 'from Armv4T onwards'
 
    %<bitfield>r		print as an ARM register
    %<bitfield>T		print as an ARM register + 1
@@ -3661,8 +3394,8 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0xe7f000f0, 0xfff000f0, "udf\t%{I:#%e%}"},
 
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T | ARM_EXT_V5),
-    0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4),
+    0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r%T"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x00000090, 0x0fe000f0, "mul%20's%c\t%16-19R, %0-3R, %8-11R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
@@ -4237,32 +3970,32 @@ static const struct opcode32 arm_opcodes[] =
     0x01000000, 0x0fb00cff, "mrs%c\t%12-15R, %R"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o"},
+    0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o"},
+    0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o"},
+    0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03300000, 0x0ff00000, "teq%p%c\t%16-19r, %o"},
+    0x03300000, 0x0ff00000, "teq%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o"},
+    0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o"},
+    0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o"},
+    0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o"},
+    0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o"},
+    0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o"},
+    0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o"},
+    0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o"},
+    0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x03800000, 0x0fe00000, "orr%20's%c\t%12-15r, %16-19r, %o"},
@@ -5185,9 +4918,6 @@ static const char *const arm_conditional[] =
 {"eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
  "hi", "ls", "ge", "lt", "gt", "le", "al", "<und>", ""};
 
-static const char *const arm_fp_const[] =
-{"0.0", "1.0", "2.0", "3.0", "4.0", "5.0", "0.5", "10.0"};
-
 static const char *const arm_shift[] =
 {"lsl", "lsr", "asr", "ror"};
 
@@ -5550,7 +5280,7 @@ is_mve_okay_in_it (enum mve_instructions matched_insn)
 }
 
 static bool
-is_mve_architecture (struct disassemble_info *info)
+is_v81m_architecture (struct disassemble_info *info)
 {
   struct arm_private_data *private_data = info->private_data;
   arm_feature_set allowed_arches = private_data->features;
@@ -7965,6 +7695,34 @@ print_mve_size (struct disassemble_info *info,
     }
 }
 
+/* Return true if INSN is a shift insn with an immediate shift amount
+   which needs decoding as per print_mve_shift_n.  */
+
+static bool
+mve_shift_insn_p (enum mve_instructions insn)
+{
+  switch (insn)
+    {
+    case MVE_VQSHL_T2:
+    case MVE_VQSHLU_T3:
+    case MVE_VQSHRN:
+    case MVE_VQSHRUN:
+    case MVE_VQRSHRN:
+    case MVE_VQRSHRUN:
+    case MVE_VRSHR:
+    case MVE_VRSHRN:
+    case MVE_VSHL_T1:
+    case MVE_VSHLL_T1:
+    case MVE_VSHR:
+    case MVE_VSHRN:
+    case MVE_VSLI:
+    case MVE_VSRI:
+      return true;
+    default:
+      return false;
+    }
+}
+
 static void
 print_mve_shift_n (struct disassemble_info *info, long given,
 		   enum mve_instructions matched_insn)
@@ -8445,25 +8203,6 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			arm_conditional[cond]);
 		  break;
 
-		case 'I':
-		  /* Print a Cirrus/DSP shift immediate.  */
-		  /* Immediates are 7bit signed ints with bits 0..3 in
-		     bits 0..3 of opcode and bits 4..6 in bits 5..7
-		     of opcode.  */
-		  {
-		    int imm;
-
-		    imm = (given & 0xf) | ((given & 0xe0) >> 1);
-
-		    /* Is ``imm'' a negative number?  */
-		    if (imm & 0x40)
-		      imm -= 0x80;
-
-		    func (stream, dis_style_immediate, "%d", imm);
-		  }
-
-		  break;
-
 		case 'J':
 		  {
 		    unsigned long regno
@@ -8495,76 +8234,6 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			break;
 		      }
 		  }
-		  break;
-
-		case 'F':
-		  switch (given & 0x00408000)
-		    {
-		    case 0:
-		      func (stream, dis_style_immediate, "4");
-		      break;
-		    case 0x8000:
-		      func (stream, dis_style_immediate, "1");
-		      break;
-		    case 0x00400000:
-		      func (stream, dis_style_immediate, "2");
-		      break;
-		    default:
-		      func (stream, dis_style_immediate, "3");
-		    }
-		  break;
-
-		case 'P':
-		  switch (given & 0x00080080)
-		    {
-		    case 0:
-		      func (stream, dis_style_mnemonic, "s");
-		      break;
-		    case 0x80:
-		      func (stream, dis_style_mnemonic, "d");
-		      break;
-		    case 0x00080000:
-		      func (stream, dis_style_mnemonic, "e");
-		      break;
-		    default:
-		      func (stream, dis_style_text, _("<illegal precision>"));
-		      break;
-		    }
-		  break;
-
-		case 'Q':
-		  switch (given & 0x00408000)
-		    {
-		    case 0:
-		      func (stream, dis_style_mnemonic, "s");
-		      break;
-		    case 0x8000:
-		      func (stream, dis_style_mnemonic, "d");
-		      break;
-		    case 0x00400000:
-		      func (stream, dis_style_mnemonic, "e");
-		      break;
-		    default:
-		      func (stream, dis_style_mnemonic, "p");
-		      break;
-		    }
-		  break;
-
-		case 'R':
-		  switch (given & 0x60)
-		    {
-		    case 0:
-		      break;
-		    case 0x20:
-		      func (stream, dis_style_mnemonic, "p");
-		      break;
-		    case 0x40:
-		      func (stream, dis_style_mnemonic, "m");
-		      break;
-		    default:
-		      func (stream, dis_style_mnemonic, "z");
-		      break;
-		    }
 		  break;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -8661,14 +8330,6 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			  func (stream, dis_style_immediate, "%ld",
 				from - value);
 			}
-			break;
-
-		      case 'f':
-			if (value > 7)
-			  func (stream, dis_style_immediate, "#%s",
-				arm_fp_const[value & 7]);
-			else
-			  func (stream, dis_style_register, "f%ld", value);
 			break;
 
 		      case 'w':
@@ -10225,35 +9886,11 @@ print_insn_mve (struct disassemble_info *info, long given)
 				  arm_regnames[value]);
 			    break;
 			  case 'd':
-			    if (insn->mve_op == MVE_VQSHL_T2
-				|| insn->mve_op == MVE_VQSHLU_T3
-				|| insn->mve_op == MVE_VRSHR
-				|| insn->mve_op == MVE_VRSHRN
-				|| insn->mve_op == MVE_VSHL_T1
-				|| insn->mve_op == MVE_VSHLL_T1
-				|| insn->mve_op == MVE_VSHR
-				|| insn->mve_op == MVE_VSHRN
-				|| insn->mve_op == MVE_VSLI
-				|| insn->mve_op == MVE_VSRI)
+			    if (mve_shift_insn_p (insn->mve_op))
 			      print_mve_shift_n (info, given, insn->mve_op);
 			    else if (insn->mve_op == MVE_VSHLL_T2)
-			      {
-				switch (value)
-				  {
-				  case 0x00:
-				    func (stream, dis_style_immediate, "8");
-				    break;
-				  case 0x01:
-				    func (stream, dis_style_immediate, "16");
-				    break;
-				  case 0x10:
-				    print_mve_undefined (info, UNDEF_SIZE_0);
-				    break;
-				  default:
-				    assert (0);
-				    break;
-				  }
-			      }
+			      func (stream, dis_style_immediate, "%s",
+				    mve_vec_sizename[value]);
 			    else
 			      {
 				if (insn->mve_op == MVE_VSHLC && value == 0)
@@ -10468,6 +10105,18 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      value_in_comment = print_arm_address (pc, info, given | (1 << P_BIT));
 		      break;
 
+		    case 'T':
+		      /* Armv4 does not have a BX instruction, however, when
+			 assembled with the --fix-v4bx option GAS will accept
+			 and assemble a BX instruction when assembling for
+			 Armv4.  When disassembling we also disassemble it as a
+			 BX instruction, but do make the user aware that this
+			 instruction is only supported on HW from Armv4T
+			 onwards.  */
+		      if (info->mach == bfd_mach_arm_4)
+			func (stream, dis_style_text, "\t@ from Armv4T onwards");
+		      break;
+
 		    case 'S':
 		      allow_unpredictable = true;
 		      /* Fall through.  */
@@ -10679,19 +10328,12 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 'p':
 		      if ((given & 0x0000f000) == 0x0000f000)
-			{
-			  arm_feature_set arm_ext_v6 =
-			    ARM_FEATURE_CORE_LOW (ARM_EXT_V6);
-
-			  /* The p-variants of tst/cmp/cmn/teq are the pre-V6
-			     mechanism for setting PSR flag bits.  They are
-			     obsolete in V6 onwards.  */
-			  if (! ARM_CPU_HAS_FEATURE (private_data->features, \
-						     arm_ext_v6))
-			    func (stream, dis_style_mnemonic, "p");
-			  else
-			    is_unpredictable = true;
-			}
+			func (stream, dis_style_mnemonic, "p");
+		      break;
+		    case 'O':
+		      if ((given & 0x0000f000) == 0x0000f000)
+			func (stream, dis_style_text,
+			      "\t@ p-variant is OBSOLETE");
 		      break;
 
 		    case 't':
@@ -11357,6 +10999,14 @@ psr_name (int regno)
     case 0x12: return "BASEPRI_MAX";
     case 0x13: return "FAULTMASK";
     case 0x14: return "CONTROL";
+    case 0x20: return "PAC_KEY_P_0";
+    case 0x21: return "PAC_KEY_P_1";
+    case 0x22: return "PAC_KEY_P_2";
+    case 0x23: return "PAC_KEY_P_3";
+    case 0x24: return "PAC_KEY_U_0";
+    case 0x25: return "PAC_KEY_U_1";
+    case 0x26: return "PAC_KEY_U_2";
+    case 0x27: return "PAC_KEY_U_3";
     case 0x88: return "MSP_NS";
     case 0x89: return "PSP_NS";
     case 0x8a: return "MSPLIM_NS";
@@ -11366,6 +11016,14 @@ psr_name (int regno)
     case 0x93: return "FAULTMASK_NS";
     case 0x94: return "CONTROL_NS";
     case 0x98: return "SP_NS";
+    case 0xa0: return "PAC_KEY_P_0_NS";
+    case 0xa1: return "PAC_KEY_P_1_NS";
+    case 0xa2: return "PAC_KEY_P_2_NS";
+    case 0xa3: return "PAC_KEY_P_3_NS";
+    case 0xa4: return "PAC_KEY_U_0_NS";
+    case 0xa5: return "PAC_KEY_U_1_NS";
+    case 0xa6: return "PAC_KEY_U_2_NS";
+    case 0xa7: return "PAC_KEY_U_3_NS";
     default: return "<unknown>";
     }
 }
@@ -11378,7 +11036,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
   const struct opcode32 *insn;
   void *stream = info->stream;
   fprintf_styled_ftype func = info->fprintf_styled_func;
-  bool is_mve = is_mve_architecture (info);
+  bool is_mve = is_v81m_architecture (info);
   enum disassembler_style base_style = dis_style_mnemonic;
   enum disassembler_style old_base_style = base_style;
 
@@ -12029,6 +11687,10 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    if (given & 0x100)
 		      func (stream, dis_style_register, "c");
 		  }
+		else if (is_v81m_architecture (info))
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
+
 		else if ((given & 0x20) == 0x20)
 		  {
 		    char const* name;
@@ -12052,8 +11714,11 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		break;
 
 	      case 'D':
-		if (((given & 0xff) == 0)
-		    || ((given & 0x20) == 0x20))
+		if (is_v81m_architecture (info))
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
+		else if (((given & 0xff) == 0)
+			 || ((given & 0x20) == 0x20))
 		  {
 		    char const* name;
 		    unsigned sm = (given & 0xf0000) >> 16;
@@ -12631,15 +12296,12 @@ select_arm_features (unsigned long mach,
     case bfd_mach_arm_3:	 ARM_SET_FEATURES (ARM_ARCH_V3); break;
     case bfd_mach_arm_3M:	 ARM_SET_FEATURES (ARM_ARCH_V3M); break;
     case bfd_mach_arm_4:	 ARM_SET_FEATURES (ARM_ARCH_V4); break;
+    case bfd_mach_arm_ep9312:
     case bfd_mach_arm_4T:	 ARM_SET_FEATURES (ARM_ARCH_V4T); break;
     case bfd_mach_arm_5:	 ARM_SET_FEATURES (ARM_ARCH_V5); break;
     case bfd_mach_arm_5T:	 ARM_SET_FEATURES (ARM_ARCH_V5T); break;
     case bfd_mach_arm_5TE:	 ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
     case bfd_mach_arm_XScale:	 ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
-    case bfd_mach_arm_ep9312:
-	ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
-					   ARM_CEXT_MAVERICK | FPU_MAVERICK));
-       break;
     case bfd_mach_arm_iWMMXt:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
     case bfd_mach_arm_iWMMXt2:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
     case bfd_mach_arm_5TEJ:	 ARM_SET_FEATURES (ARM_ARCH_V5TEJ); break;
@@ -12660,7 +12322,7 @@ select_arm_features (unsigned long mach,
 	  ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, armv8_6_ext_fset);
 	  break;
 	}
-    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R); break;
+    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R_CRC); break;
     case bfd_mach_arm_8M_BASE:	 ARM_SET_FEATURES (ARM_ARCH_V8M_BASE); break;
     case bfd_mach_arm_8M_MAIN:	 ARM_SET_FEATURES (ARM_ARCH_V8M_MAIN); break;
     case bfd_mach_arm_8_1M_MAIN:
@@ -12726,9 +12388,15 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
     {
       static struct arm_private_data private;
 
-      if ((info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
+      if (info->flavour != bfd_target_elf_flavour
+	  && (info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
 	/* If the user did not use the -m command line switch then default to
 	   disassembling all types of ARM instruction.
+
+	   If this is an arm elf target, build attributes will be used to
+	   determine info->mach, which enable us to be more accurate when
+	   disassembling since we know what the target architecture version is.
+	   For any other target see the comment below:
 
 	   The info->mach value has to be ignored as this will be based on
 	   the default archictecture for the target and/or hints in the notes

@@ -1,3 +1,5 @@
+source_sh ${srcdir}/emulparams/dt-relr.sh
+
 ARCH="aarch64:ilp32"
 MACHINE=
 NOP=0x1f2003d5

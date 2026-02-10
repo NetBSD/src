@@ -1,6 +1,6 @@
 /* tc.h - target cpu dependent
 
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,6 +21,10 @@
 
 /* In theory (mine, at least!) the machine dependent part of the assembler
    should only have to include one file.  This one.  -- JF */
+
+extern const char md_shortopts[];
+extern const struct option md_longopts[];
+extern const size_t md_longopts_size;
 
 extern const pseudo_typeS md_pseudo_table[];
 

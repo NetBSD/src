@@ -12,6 +12,9 @@
 #endif
 #define __CONFIG_H__ 1
 
+/* Define if building universal (internal helper macro) */
+/* #undef AC_APPLE_UNIVERSAL_BUILD */
+
 /* Should ar and ranlib use -D behavior by default? */
 #define DEFAULT_AR_DETERMINISTIC 0
 
@@ -51,10 +54,6 @@
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 /* #undef HAVE_DCGETTEXT */
-
-/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_ASPRINTF 1
 
 /* Define to 1 if you have the declaration of `environ', and to 0 if you
    don't. */
@@ -209,7 +208,7 @@
 #define PACKAGE_NAME "binutils"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "binutils 2.42"
+#define PACKAGE_STRING "binutils 2.45"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "binutils"
@@ -218,7 +217,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.42"
+#define PACKAGE_VERSION "2.45"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -259,7 +258,19 @@
 
 
 /* Version number of package */
-#define VERSION "2.42"
+#define VERSION "2.45"
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
+#endif
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

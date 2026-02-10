@@ -1,5 +1,5 @@
 /* MIPS ELF specific backend routines.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -67,9 +67,7 @@ extern bool _bfd_mips_elf_check_relocs
   (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *);
 extern bool _bfd_mips_elf_adjust_dynamic_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *);
-extern bool _bfd_mips_elf_always_size_sections
-  (bfd *, struct bfd_link_info *);
-extern bool _bfd_mips_elf_size_dynamic_sections
+extern bool _bfd_mips_elf_late_size_sections
   (bfd *, struct bfd_link_info *);
 extern int _bfd_mips_elf_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,

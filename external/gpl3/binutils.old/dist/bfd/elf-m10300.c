@@ -1,5 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2646,8 +2646,8 @@ mn10300_elf_relax_section (bfd *abfd,
   bfd_vma align_gap_adjustment;
 
   if (bfd_link_relocatable (link_info))
-    (*link_info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    link_info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   /* Assume nothing changes.  */
   *again = false;
@@ -4618,8 +4618,7 @@ elf32_mn10300_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->static_hash_table->root, abfd,
 				      elf32_mn10300_link_hash_newfunc,
-				      sizeof (struct elf32_mn10300_link_hash_entry),
-				      MN10300_ELF_DATA))
+				      sizeof (struct elf32_mn10300_link_hash_entry)))
     {
       free (ret->static_hash_table);
       free (ret);
@@ -4630,8 +4629,7 @@ elf32_mn10300_link_hash_table_create (bfd *abfd)
   abfd->link.hash = NULL;
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf32_mn10300_link_hash_newfunc,
-				      sizeof (struct elf32_mn10300_link_hash_entry),
-				      MN10300_ELF_DATA))
+				      sizeof (struct elf32_mn10300_link_hash_entry)))
     {
       abfd->is_linker_output = true;
       abfd->link.hash = &ret->static_hash_table->root.root;
@@ -5015,8 +5013,8 @@ _bfd_mn10300_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-_bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
-					struct bfd_link_info * info)
+_bfd_mn10300_elf_late_size_sections (bfd * output_bfd,
+				     struct bfd_link_info * info)
 {
   struct elf32_mn10300_link_hash_table *htab = elf32_mn10300_hash_table (info);
   bfd * dynobj;
@@ -5024,7 +5022,8 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
   bool relocs;
 
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -5035,6 +5034,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
   else
@@ -5121,6 +5121,7 @@ _bfd_mn10300_elf_size_dynamic_sections (bfd * output_bfd,
       s->contents = bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -5465,8 +5466,7 @@ _bfd_mn10300_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UN
 static bool
 mn10300_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_mn10300_obj_tdata),
-				  MN10300_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_mn10300_obj_tdata));
 }
 
 #define bfd_elf32_mkobject	mn10300_elf_mkobject
@@ -5511,8 +5511,8 @@ mn10300_elf_mkobject (bfd *abfd)
   _bfd_mn10300_elf_create_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol \
   _bfd_mn10300_elf_adjust_dynamic_symbol
-#define elf_backend_size_dynamic_sections \
-  _bfd_mn10300_elf_size_dynamic_sections
+#define elf_backend_late_size_sections \
+  _bfd_mn10300_elf_late_size_sections
 #define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_symbol \
   _bfd_mn10300_elf_finish_dynamic_symbol

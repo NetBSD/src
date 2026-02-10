@@ -1,5 +1,5 @@
 /* tc-mmix.h -- Header file for tc-mmix.c.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -26,9 +26,6 @@
 #define TARGET_ARCH bfd_arch_mmix
 #define TARGET_BYTES_BIG_ENDIAN 1
 
-extern const char mmix_comment_chars[];
-#define tc_comment_chars mmix_comment_chars
-
 extern const char mmix_symbol_chars[];
 #define tc_symbol_chars mmix_symbol_chars
 
@@ -51,15 +48,12 @@ extern void mmix_md_begin (void);
 extern void mmix_md_finish (void);
 #define md_finish mmix_md_finish
 
-extern int mmix_current_location \
-  (void (*fn) (expressionS *), expressionS *);
 extern int mmix_parse_predefined_name (char *, expressionS *);
 
 extern char *mmix_current_prefix;
 
-/* A bit ugly, since we "know" that there's a static function
-   current_location that does what we want.  We also strip off a leading
-   ':' in another ugly way.
+/* Besides the special casing of "@" we also strip off a leading ':' in an
+   ugly way.
 
    The [DVWIOUZX]_Handler symbols are provided when-used.  */
 
@@ -68,7 +62,7 @@ extern int mmix_gnu_syntax;
  (! mmix_gnu_syntax						\
   && (name[0] == '@'						\
       ? (! is_part_of_name (name[1])				\
-	 && mmix_current_location (current_location, exp))	\
+	 && (current_location (exp, mode), 1))			\
       : ((name[0] == ':' || ISUPPER (name[0]))			\
 	 && mmix_parse_predefined_name (name, exp))))
 

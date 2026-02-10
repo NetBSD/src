@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ dnl
 
 m4_include([../bfd/version.m4])
 m4_include([../config/debuginfod.m4])
-AC_INIT([binutils], BFD_VERSION)
+AC_INIT([binutils], [BFD_VERSION])
 AC_CONFIG_SRCDIR(ar.c)
 
 AC_CANONICAL_TARGET
@@ -28,8 +28,9 @@ AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
+
+AC_C_BIGENDIAN
 
 LT_INIT
 ACX_LARGEFILE
@@ -155,8 +156,8 @@ AC_PROG_YACC
 AM_PROG_LEX
 
 ALL_LINGUAS="bg ca da es fi fr hr id it ja pt ro ru rw sk sr sv tr uk vi zh_CN zh_TW"
-ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
+ZW_GNU_GETTEXT_SISTER_DIR
 
 AM_MAINTAINER_MODE
 AM_CONDITIONAL(GENINSRC_NEVER, false)
@@ -197,7 +198,7 @@ AC_SUBST(DEMANGLER_NAME)
 AC_CHECK_HEADERS(fcntl.h inttypes.h stdint.h sys/file.h \
 		 sys/stat.h sys/time.h sys/types.h unistd.h)
 AC_HEADER_SYS_WAIT
-AC_FUNC_MMAP
+GCC_AC_FUNC_MMAP
 AC_CHECK_FUNCS(fseeko fseeko64 getc_unlocked mkdtemp mkstemp utimensat utimes)
 
 AC_MSG_CHECKING([for mbstate_t])
@@ -278,7 +279,7 @@ if test $bu_cv_header_utime_h = yes; then
   AC_DEFINE(HAVE_GOOD_UTIME_H, 1, [Does <utime.h> define struct utimbuf?])
 fi
 
-AC_CHECK_DECLS([asprintf, environ, getc_unlocked, stpcpy, strnlen])
+AC_CHECK_DECLS([environ, getc_unlocked, stpcpy, strnlen])
 
 # Link in zlib/zstd if we can.  This allows us to read compressed debug
 # sections.  This is used only by readelf.c (objdump uses bfd for
@@ -290,7 +291,7 @@ BFD_BINARY_FOPEN
 
 # Support for the msgpack C library.
 AC_ARG_WITH([msgpack],
-	    AC_HELP_STRING([--with-msgpack], [Enable msgpack support (auto/yes/no)]),
+	    AS_HELP_STRING([--with-msgpack], [Enable msgpack support (auto/yes/no)]),
 	    [],
 	    [with_msgpack=auto])
 

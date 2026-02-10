@@ -1,6 +1,6 @@
 %{ /* defparse.y - parser for .def files */
 
-/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -193,23 +193,27 @@ opt_name2: ID { $$ = $1; }
 	  {
 	    char *name = xmalloc (strlen ($2) + 2);
 	    sprintf (name, ".%s", $2);
+	    free ($2);
 	    $$ = name;
 	  }
 	| keyword_as_name '.' opt_name2
 	  {
 	    char *name = xmalloc (strlen ($1) + 1 + strlen ($3) + 1);
 	    sprintf (name, "%s.%s", $1, $3);
+	    free ($3);
 	    $$ = name;
 	  }
 	| ID '.' opt_name2
 	  {
 	    char *name = xmalloc (strlen ($1) + 1 + strlen ($3) + 1);
 	    sprintf (name, "%s.%s", $1, $3);
+	    free ($1);
+	    free ($3);
 	    $$ = name;
 	  }
 	;
 opt_name: opt_name2 { $$ =$1; }
-	|		{ $$=""; }
+	|		{ $$ = xstrdup (""); }
 	;
 
 opt_ordinal:

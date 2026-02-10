@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2012-2024 Free Software Foundation, Inc.
+# Copyright (C) 2012-2025 Free Software Foundation, Inc.
 # Contributed by Andes Technology Corporation.
 #
 # This file is part of the GNU Binutils.
@@ -44,7 +44,7 @@ nds32_elf_create_output_section_statements (void)
   if (strstr (bfd_get_target (link_info.output_bfd), "nds32") == NULL)
     {
       /* Check the output target is nds32.  */
-      einfo (_("%F%P: error: cannot change output format whilst "
+      fatal (_("%P: error: cannot change output format whilst "
 	       "linking %s binaries\n"), "NDS32");
       return;
     }
@@ -96,7 +96,7 @@ nds32_elf_after_open (void)
 	       && abi_ver != (elf_elfheader (abfd)->e_flags & EF_NDS_ABI))
 	{
 	  /* Incompatible objects.  */
-	  einfo (_("%F%P: %pB: ABI version of object files mismatched\n"),
+	  fatal (_("%P: %pB: ABI version of object files mismatched\n"),
 		 abfd);
 	}
     }
@@ -132,18 +132,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_BASELINE			301
-#define OPTION_ELIM_GC_RELOCS		(OPTION_BASELINE + 1)
-#define OPTION_FP_AS_GP			(OPTION_BASELINE + 2)
-#define OPTION_NO_FP_AS_GP		(OPTION_BASELINE + 3)
-#define OPTION_REDUCE_FP_UPDATE		(OPTION_BASELINE + 4)
-#define OPTION_NO_REDUCE_FP_UPDATE	(OPTION_BASELINE + 5)
-#define OPTION_EXPORT_SYMBOLS		(OPTION_BASELINE + 6)
-#define OPTION_HYPER_RELAX		(OPTION_BASELINE + 7)
-#define OPTION_TLSDESC_TRAMPOLINE	(OPTION_BASELINE + 8)
-#define OPTION_NO_TLSDESC_TRAMPOLINE	(OPTION_BASELINE + 9)
-'
 PARSE_AND_LIST_LONGOPTS='
   { "mfp-as-gp", no_argument, NULL, OPTION_FP_AS_GP},
   { "mno-fp-as-gp", no_argument, NULL, OPTION_NO_FP_AS_GP},
@@ -195,7 +183,7 @@ PARSE_AND_LIST_ARGS_CASES='
       {
 	sym_ld_script = fopen (optarg, FOPEN_WT);
 	if(sym_ld_script == NULL)
-	  einfo (_("%F%P: cannot open map file %s: %E\n"), optarg);
+	  fatal (_("%P: cannot open map file %s: %E\n"), optarg);
       }
     break;
   case OPTION_HYPER_RELAX:

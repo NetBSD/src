@@ -7,7 +7,7 @@ if test -n "${with_target_subdir}"; then
   AM_ENABLE_MULTILIB(, ..)
 fi
 
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 
 # This works around an automake problem.
 mkinstalldirs="`cd $ac_aux_dir && ${PWDCMD-pwd}`/mkinstalldirs"
@@ -60,7 +60,7 @@ m4_rename_force([real_PRECIOUS],[_AC_ARG_VAR_PRECIOUS])
 
 AC_SUBST(CFLAGS)
 
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Find CPP now so that any conditional tests below won't do it and
 # thereby make the resulting definitions conditional.

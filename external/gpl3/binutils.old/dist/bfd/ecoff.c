@@ -1,5 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -661,18 +661,6 @@ _bfd_ecoff_slurp_symbolic_info (bfd *abfd,
 /* ECOFF symbol table routines.  The ECOFF symbol table is described
    in gcc/mips-tfile.c.  */
 
-/* ECOFF uses two common sections.  One is the usual one, and the
-   other is for small objects.  All the small objects are kept
-   together, and then referenced via the gp pointer, which yields
-   faster assembler code.  This is what we use for the small common
-   section.  */
-static asection ecoff_scom_section;
-static const asymbol ecoff_scom_symbol =
-  GLOBAL_SYM_INIT (SCOMMON, &ecoff_scom_section);
-static asection ecoff_scom_section =
-  BFD_FAKE_SECTION (ecoff_scom_section, &ecoff_scom_symbol,
-		    SCOMMON, 0, SEC_IS_COMMON | SEC_SMALL_DATA);
-
 /* Create an empty symbol.  */
 
 asymbol *
@@ -813,7 +801,7 @@ ecoff_set_symbol_info (bfd *abfd,
 	}
       /* Fall through.  */
     case scSCommon:
-      asym->section = &ecoff_scom_section;
+      asym->section = &_bfd_ecoff_scom_section;
       asym->flags = 0;
       break;
     case scVarRegister:
@@ -966,6 +954,7 @@ _bfd_ecoff_slurp_symbol_table (bfd *abfd)
       if (fdr_ptr->isymBase < 0
 	  || fdr_ptr->isymBase > symhdr->isymMax
 	  || fdr_ptr->csym < 0
+	  || fdr_ptr->csym > symhdr->isymMax - fdr_ptr->isymBase
 	  || fdr_ptr->csym > ((long) bfd_get_symcount (abfd)
 			      - (internal_ptr - internal))
 	  || fdr_ptr->issBase < 0
@@ -1451,11 +1440,13 @@ _bfd_ecoff_print_symbol (bfd *abfd,
   const struct ecoff_debug_swap * const debug_swap
     = &ecoff_backend (abfd)->debug_swap;
   FILE *file = (FILE *)filep;
+  const char *symname = (symbol->name != bfd_symbol_error_name
+			 ? symbol->name : _("<corrupt>"));
 
   switch (how)
     {
     case bfd_print_symbol_name:
-      fprintf (file, "%s", symbol->name);
+      fprintf (file, "%s", symname);
       break;
     case bfd_print_symbol_more:
       if (ecoffsymbol (symbol)->local)
@@ -1525,7 +1516,7 @@ _bfd_ecoff_print_symbol (bfd *abfd,
 		 (unsigned) ecoff_ext.asym.sc,
 		 (unsigned) ecoff_ext.asym.index,
 		 jmptbl, cobol_main, weakext,
-		 symbol->name);
+		 symname);
 
 	if (ecoffsymbol (symbol)->fdr != NULL
 	    && ecoff_ext.asym.index != indexNil)
@@ -1682,7 +1673,7 @@ ecoff_slurp_reloc_table (bfd *abfd,
       (*backend->swap_reloc_in) (abfd,
 				 external_relocs + i * external_reloc_size,
 				 &intern);
-      rptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+      rptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
       rptr->addend = 0;
 
       if (intern.r_extern)
@@ -1726,7 +1717,7 @@ ecoff_slurp_reloc_table (bfd *abfd,
 	      sec = bfd_get_section_by_name (abfd, sec_name);
 	      if (sec != NULL)
 		{
-		  rptr->sym_ptr_ptr = sec->symbol_ptr_ptr;
+		  rptr->sym_ptr_ptr = &sec->symbol;
 		  rptr->addend = - bfd_section_vma (sec);
 		}
 	    }
@@ -3141,9 +3132,9 @@ _bfd_ecoff_write_armap (bfd *abfd,
      complain that the index is out of date.  Actually, the Ultrix
      linker just checks the archive name; the GNU linker may check the
      date.  */
-  stat (bfd_get_filename (abfd), &statbuf);
-  _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%ld",
-		    (long) (statbuf.st_mtime + 60));
+  if (stat (bfd_get_filename (abfd), &statbuf) == 0)
+    _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%ld",
+		      (long) (statbuf.st_mtime + ARMAP_TIME_OFFSET));
 
   /* The DECstation uses zeroes for the uid, gid and mode of the
      armap.  */
@@ -3277,8 +3268,8 @@ ecoff_link_hash_newfunc (struct bfd_hash_entry *entry,
       ret->abfd = NULL;
       ret->written = 0;
       ret->small = 0;
+      memset ((void *) &ret->esym, 0, sizeof ret->esym);
     }
-  memset ((void *) &ret->esym, 0, sizeof ret->esym);
 
   return (struct bfd_hash_entry *) ret;
 }
@@ -3438,7 +3429,7 @@ ecoff_link_add_externals (bfd *abfd,
 	    }
 	  /* Fall through.  */
 	case scSCommon:
-	  section = &ecoff_scom_section;
+	  section = &_bfd_ecoff_scom_section;
 	  break;
 	case scSUndefined:
 	  section = bfd_und_section_ptr;
@@ -3960,7 +3951,7 @@ ecoff_reloc_link_order (bfd *output_bfd,
   if (type == bfd_section_reloc_link_order)
     {
       section = link_order->u.reloc.p->u.section;
-      rel.sym_ptr_ptr = section->symbol_ptr_ptr;
+      rel.sym_ptr_ptr = &section->symbol;
     }
   else
     {

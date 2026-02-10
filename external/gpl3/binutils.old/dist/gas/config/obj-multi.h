@@ -1,5 +1,5 @@
 /* Multiple object format emulation.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -44,6 +44,11 @@
 #define obj_app_file(NAME)				\
 	(this_format->app_file				\
 	 ? (*this_format->app_file) (NAME)		\
+	 : (void) 0)
+
+#define obj_assign_symbol(S)				\
+	(this_format->assign_symbol			\
+	 ? (*this_format->assign_symbol) (S)		\
 	 : (void) 0)
 
 #define obj_frob_symbol(S,P)				\

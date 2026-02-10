@@ -1,5 +1,5 @@
 /* bfd back-end for HP PA-RISC SOM objects.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah.
@@ -4914,7 +4914,7 @@ som_set_reloc_info (unsigned char *fixup,
 	  rptr->address = offset;
 	  rptr->howto = &som_hppa_howto_table[op];
 	  rptr->addend = 0;
-	  rptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  rptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	}
 
       /* Set default input length to 0.  Get the opcode class index
@@ -5328,14 +5328,12 @@ extern const bfd_target hppa_som_vec;
 static bool
 som_new_section_hook (bfd *abfd, asection *newsect)
 {
-  if (!newsect->used_by_bfd)
-    {
-      size_t amt = sizeof (struct som_section_data_struct);
+  size_t amt = sizeof (struct som_section_data_struct);
 
-      newsect->used_by_bfd = bfd_zalloc (abfd, amt);
-      if (!newsect->used_by_bfd)
-	return false;
-    }
+  newsect->used_by_bfd = bfd_zalloc (abfd, amt);
+  if (!newsect->used_by_bfd)
+    return false;
+
   newsect->alignment_power = 3;
 
   /* We allow more than three sections internally.  */
@@ -5374,17 +5372,17 @@ static bool
 som_bfd_copy_private_section_data (bfd *ibfd,
 				   asection *isection,
 				   bfd *obfd,
-				   asection *osection)
+				   asection *osection,
+				   struct bfd_link_info *link_info)
 {
-  size_t amt;
-
   /* One day we may try to grok other private data.  */
-  if (ibfd->xvec->flavour != bfd_target_som_flavour
+  if (link_info != NULL
+      || ibfd->xvec->flavour != bfd_target_som_flavour
       || obfd->xvec->flavour != bfd_target_som_flavour
       || (!som_is_space (isection) && !som_is_subspace (isection)))
     return true;
 
-  amt = sizeof (struct som_copyable_section_data_struct);
+  size_t amt = sizeof (struct som_copyable_section_data_struct);
   som_section_data (osection)->copy_data = bfd_zalloc (obfd, amt);
   if (som_section_data (osection)->copy_data == NULL)
     return false;
@@ -5403,7 +5401,8 @@ som_bfd_copy_private_section_data (bfd *ibfd,
 	{
 	  /* User has specified a subspace without its containing space.  */
 	  _bfd_error_handler (_("%pB[%pA]: no output section for space %pA"),
-	    obfd, osection, som_section_data (osection)->copy_data->container);
+			      obfd, osection,
+			      som_section_data (osection)->copy_data->container);
 	  return false;
 	}
     }
@@ -6762,7 +6761,6 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_make_debug_symbol		_bfd_nosymbols_bfd_make_debug_symbol
 #define som_read_minisymbols			_bfd_generic_read_minisymbols
 #define som_minisymbol_to_symbol		_bfd_generic_minisymbol_to_symbol
-#define som_get_section_contents_in_window	_bfd_generic_get_section_contents_in_window
 #define som_bfd_get_relocated_section_contents	bfd_generic_get_relocated_section_contents
 #define som_bfd_relax_section			bfd_generic_relax_section
 #define som_bfd_link_hash_table_create		_bfd_generic_link_hash_table_create

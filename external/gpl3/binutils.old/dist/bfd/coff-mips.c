@@ -1,5 +1,5 @@
 /* BFD back-end for MIPS Extended-Coff files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -368,7 +368,7 @@ mips_adjust_reloc_in (bfd *abfd,
   /* If the type is MIPS_R_IGNORE, make sure this is a reference to
      the absolute section so that the reloc is ignored.  */
   if (intern->r_type == MIPS_R_IGNORE)
-    rptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+    rptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 
   rptr->howto = &mips_howto_table[intern->r_type];
 }
@@ -1316,7 +1316,7 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
     _bfd_ecoff_mkobject_hook, _bfd_ecoff_styp_to_sec_flags,
     _bfd_ecoff_set_alignment_hook, _bfd_ecoff_slurp_symbol_table,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL
+    NULL, NULL,
   },
   /* Supported architecture.  */
   bfd_arch_mips,
@@ -1395,10 +1395,6 @@ static const struct ecoff_backend_data mips_ecoff_backend_data =
 /* Getting relocated section contents is generic.  */
 #define _bfd_ecoff_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
-
-/* Handling file windows is generic.  */
-#define _bfd_ecoff_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 
 /* Relaxing sections is MIPS specific.  */
 #define _bfd_ecoff_bfd_relax_section bfd_generic_relax_section

@@ -1,5 +1,5 @@
 /* elfcomm.c -- common code for ELF format file.
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -59,6 +59,20 @@ warn (const char *message, ...)
 
   va_start (args, message);
   fprintf (stderr, _("%s: Warning: "), program_name);
+  vfprintf (stderr, message, args);
+  va_end (args);
+}
+
+void
+inform (const char *message, ...)
+{
+  va_list args;
+
+  /* Try to keep info messages in sync with the program's normal output.  */
+  fflush (stdout);
+
+  va_start (args, message);
+  fprintf (stderr, _("%s: Info: "), program_name);
   vfprintf (stderr, message, args);
   va_end (args);
 }

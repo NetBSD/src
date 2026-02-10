@@ -1,5 +1,5 @@
 /* tc-epiphany.c -- Assembler for the Adapteva EPIPHANY
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -103,16 +103,16 @@ enum options
   OPTION_CPU_EPIPHANY16
 };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "mepiphany ",  no_argument, NULL, OPTION_CPU_EPIPHANY },
   { "mepiphany16", no_argument, NULL, OPTION_CPU_EPIPHANY16 },
   { NULL,          no_argument, NULL, 0 },
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED, const char * arg ATTRIBUTE_UNUSED)
@@ -154,7 +154,7 @@ md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
 
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 
@@ -248,10 +248,10 @@ epiphany_PIC_related_p (symbolS *sym)
 void
 epiphany_apply_fix (fixS *fixP, valueT *valP, segT seg)
 {
-  if (fixP->fx_addsy == (symbolS *) NULL)
+  if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
 
-  if (((int) fixP->fx_r_type < (int) BFD_RELOC_UNUSED)
+  if ((fixP->fx_r_type < BFD_RELOC_UNUSED)
       && fixP->fx_done)
     {
       /* Install EPIPHANY-dependent relocations HERE because nobody else
@@ -314,7 +314,7 @@ static const unsigned char nop_pattern[] = { 0xa2, 0x01 };
 void
 epiphany_handle_align (fragS *fragp)
 {
-  int bytes, fix;
+  int bytes;
   char *p;
 
   if (fragp->fr_type != rs_align_code)
@@ -322,23 +322,19 @@ epiphany_handle_align (fragS *fragp)
 
   bytes = fragp->fr_next->fr_address - fragp->fr_address - fragp->fr_fix;
   p = fragp->fr_literal + fragp->fr_fix;
-  fix = 0;
 
   if (bytes & 1)
     {
-      fix = 1;
       *p++ = 0;
       bytes--;
+      fragp->fr_fix++;
     }
 
-  if (bytes & 2)
+  if (bytes != 0)
     {
+      fragp->fr_var = 2;
       memcpy (p, nop_pattern, 2);
-      p += 2;
-      bytes -= 2;
-      fix += 2;
     }
-  fragp->fr_fix += fix;
 }
 
 /* Read a comma separated incrementing list of register names
@@ -353,7 +349,7 @@ parse_reglist (const char * s, int * mask)
     {
       long value;
 
-      while (*s == ' ')
+      while (is_whitespace (*s))
 	++s;
 
       /* Parse a list with "," or "}" as limiters.  */
@@ -371,7 +367,7 @@ parse_reglist (const char * s, int * mask)
 	return _("register is out of order");
       *mask |= regmask;
 
-      while (*s==' ')
+      while (is_whitespace (*s))
 	++s;
 
       if (*s == '}')
@@ -946,7 +942,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
       fixP->fx_r_type = fixP->fx_cgen.opinfo;
     }
 
-  md_number_to_chars (displacement, (valueT) addend, extension + 1);
+  md_number_to_chars (displacement, addend, extension + 1);
 
   fragP->fr_fix += (extension & -2); /* 0,2 or 4 bytes added.  */
 }
@@ -960,7 +956,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
 long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (!S_IS_DEFINED (fixP->fx_addsy)
 	  || (S_GET_SEGMENT (fixP->fx_addsy) != sec)
 	  || S_IS_EXTERNAL (fixP->fx_addsy)
@@ -1029,10 +1025,10 @@ epiphany_fix_adjustable (fixS *fixP)
 {
  bfd_reloc_code_real_type reloc_type;
 
-  if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
+  if (fixP->fx_r_type >= BFD_RELOC_UNUSED)
     {
       const CGEN_INSN *insn = fixP->fx_cgen.insn;
-      int opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
+      int opindex = fixP->fx_r_type - BFD_RELOC_UNUSED;
       const CGEN_OPERAND *operand =
 	cgen_operand_lookup_by_num (gas_cgen_cpu_desc, opindex);
 

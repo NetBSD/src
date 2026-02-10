@@ -203,8 +203,7 @@ BFD_JUMP_TABLE macros.
   NAME##_close_and_cleanup, \
   NAME##_bfd_free_cached_info, \
   NAME##_new_section_hook, \
-  NAME##_get_section_contents, \
-  NAME##_get_section_contents_in_window
+  NAME##_get_section_contents
 
   /* Called when the BFD is being closed to do any necessary cleanup.  */
   bool (*_close_and_cleanup) (bfd *);
@@ -215,14 +214,11 @@ BFD_JUMP_TABLE macros.
   /* Read the contents of a section.  */
   bool (*_bfd_get_section_contents) (bfd *, sec_ptr, void *, file_ptr,
                                      bfd_size_type);
-  bool (*_bfd_get_section_contents_in_window) (bfd *, sec_ptr, bfd_window *,
-                                               file_ptr, bfd_size_type);
 
   /* Entry points to copy private data.  */
 #define BFD_JUMP_TABLE_COPY(NAME) \
   NAME##_bfd_copy_private_bfd_data, \
   NAME##_bfd_merge_private_bfd_data, \
-  _bfd_generic_init_private_section_data, \
   NAME##_bfd_copy_private_section_data, \
   NAME##_bfd_copy_private_symbol_data, \
   NAME##_bfd_copy_private_header_data, \
@@ -235,16 +231,10 @@ BFD_JUMP_TABLE macros.
   /* Called to merge BFD general private data from one object file
      to a common output file when linking.  */
   bool (*_bfd_merge_private_bfd_data) (bfd *, struct bfd_link_info *);
-  /* Called to initialize BFD private section data from one object file
-     to another.  */
-#define bfd_init_private_section_data(ibfd, isec, obfd, osec, link_info) \
-       BFD_SEND (obfd, _bfd_init_private_section_data, \
-                 (ibfd, isec, obfd, osec, link_info))
-  bool (*_bfd_init_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
-                                          struct bfd_link_info *);
   /* Called to copy BFD private section data from one object file
      to another.  */
-  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr);
+  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
+                                          struct bfd_link_info *);
   /* Called to copy BFD private symbol data from one symbol
      to another.  */
   bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol *,
@@ -606,20 +596,14 @@ bfd_keep_unused_section_symbols (const bfd *abfd)
   return abfd->xvec->keep_unused_section_symbols;
 @}
 
-@end example
-@findex _bfd_per_xvec_warn
-@subsubsection @code{_bfd_per_xvec_warn}
-@deftypefn {Function} struct per_xvec_message **_bfd_per_xvec_warn (const bfd_target *, size_t); 
-Return a location for the given target xvec to use for
-warnings specific to that target.  If TARG is NULL, returns
-the array of per_xvec_message pointers, otherwise if ALLOC is
-zero, returns a pointer to a pointer to the list of messages
-for TARG, otherwise (both TARG and ALLOC non-zero), allocates
-a new   per_xvec_message with space for a string of ALLOC
-bytes and returns a pointer to a pointer to it.  May return a
-pointer to a NULL pointer on allocation failure.
+static inline bool
+bfd_target_supports_archives (const bfd *abfd)
+@{
+  return (abfd->xvec->_bfd_check_format[bfd_archive]
+          != abfd->xvec->_bfd_check_format[bfd_unknown]);
+@}
 
-@end deftypefn
+@end example
 @findex bfd_set_default_target
 @subsubsection @code{bfd_set_default_target}
 @deftypefn {Function} bool bfd_set_default_target (const char *name); 

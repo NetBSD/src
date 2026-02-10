@@ -1,5 +1,5 @@
 /* atof_ieee.c - turn a Flonum into an IEEE floating point number
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -147,12 +147,12 @@ make_invalid_floating_point_number (LITTLENUM_TYPE *words)
 {
   as_bad (_("cannot create floating-point number"));
   /* Zero the leftmost bit.  */
-  words[0] = (LITTLENUM_TYPE) ((unsigned) -1) >> 1;
-  words[1] = (LITTLENUM_TYPE) -1;
-  words[2] = (LITTLENUM_TYPE) -1;
-  words[3] = (LITTLENUM_TYPE) -1;
-  words[4] = (LITTLENUM_TYPE) -1;
-  words[5] = (LITTLENUM_TYPE) -1;
+  words[0] = (LITTLENUM_TYPE) -1 >> 1;
+  words[1] = -1;
+  words[2] = -1;
+  words[3] = -1;
+  words[4] = -1;
+  words[5] = -1;
 }
 
 /* Build a floating point constant at str into a IEEE floating
@@ -283,7 +283,7 @@ atof_ieee (char *str,			/* Text to convert to binary.  */
 
     default:
       make_invalid_floating_point_number (words);
-      return (NULL);
+      return NULL;
     }
 
   return atof_ieee_detail (str, precision, exponent_bits, words, NULL);
@@ -553,7 +553,7 @@ gen_to_words (LITTLENUM_TYPE *words, int precision, long exponent_bits)
 	      tmp_bits = prec_bits;
 	      while (tmp_bits > LITTLENUM_NUMBER_OF_BITS)
 		{
-		  if (lp[n] != (LITTLENUM_TYPE) - 1)
+		  if (lp[n] != (LITTLENUM_TYPE) -1)
 		    break;
 		  --n;
 		  tmp_bits -= LITTLENUM_NUMBER_OF_BITS;
@@ -835,17 +835,17 @@ ieee_md_atof (int type,
 
   if (big_wordian)
     {
-      for (wordP = words; prec --;)
+      for (wordP = words; prec--;)
 	{
-	  md_number_to_chars (litP, (valueT) (* wordP ++), sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, *wordP++, sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }
   else
     {
-      for (wordP = words + prec; prec --;)
+      for (wordP = words + prec; prec--;)
 	{
-	  md_number_to_chars (litP, (valueT) (* -- wordP), sizeof (LITTLENUM_TYPE));
+	  md_number_to_chars (litP, *--wordP, sizeof (LITTLENUM_TYPE));
 	  litP += sizeof (LITTLENUM_TYPE);
 	}
     }

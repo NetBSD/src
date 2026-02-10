@@ -1,5 +1,5 @@
 /* ELF object file format.
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -150,7 +150,8 @@ extern void elf_end (void);
 
 int elf_s_get_other (symbolS *);
 #ifndef S_GET_OTHER
-#define S_GET_OTHER(S)	(elf_s_get_other (S))
+#define S_GET_OTHER(S) \
+  (elf_symbol (symbol_get_bfdsym (S))->internal_elf_sym.st_other)
 #endif
 #ifndef S_SET_OTHER
 #define S_SET_OTHER(S,V) \
@@ -223,11 +224,7 @@ void elf_obj_symbol_new_hook (symbolS *);
 #define obj_symbol_new_hook	elf_obj_symbol_new_hook
 #endif
 
-void elf_obj_symbol_clone_hook (symbolS *, symbolS *);
-#ifndef obj_symbol_clone_hook
-#define obj_symbol_clone_hook	elf_obj_symbol_clone_hook
-#endif
-
+void elf_copy_symbol_size (symbolS *, symbolS *);
 void elf_copy_symbol_attributes (symbolS *, symbolS *);
 #ifndef OBJ_COPY_SYMBOL_ATTRIBUTES
 #define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST, SRC) \
@@ -296,5 +293,7 @@ extern void elf_ecoff_set_ext (symbolS *, struct ecoff_extr *);
 extern asection *elf_com_section_ptr;
 extern symbolS * elf_common_parse (int ignore ATTRIBUTE_UNUSED, symbolS *symbolP,
 				   addressT size);
+
+extern void elf_set_group_name (asection *, const char *);
 
 #endif /* _OBJ_ELF_H */

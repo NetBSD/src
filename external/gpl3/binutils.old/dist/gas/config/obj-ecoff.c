@@ -1,5 +1,5 @@
 /* ECOFF object file format.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -195,30 +195,6 @@ obj_ecoff_set_ext (symbolS *sym, EXTR *ext)
   (*debug_swap->swap_ext_out) (stdoutput, ext, esym->native);
 }
 
-static int
-ecoff_sec_sym_ok_for_reloc (asection *sec ATTRIBUTE_UNUSED)
-{
-  return 1;
-}
-
-static void
-obj_ecoff_frob_symbol (symbolS *sym, int *puntp ATTRIBUTE_UNUSED)
-{
-  ecoff_frob_symbol (sym);
-}
-
-static void
-ecoff_pop_insert (void)
-{
-  pop_insert (obj_pseudo_table);
-}
-
-static int
-ecoff_separate_stab_sections (void)
-{
-  return 0;
-}
-
 /* These are the pseudo-ops we support in this file.  Only those
    relating to debugging information are supported here.
 
@@ -282,6 +258,32 @@ const pseudo_typeS obj_pseudo_table[] =
   { NULL,	s_ignore,		0 }
 };
 
+#ifdef USE_EMULATIONS
+
+static int
+ecoff_sec_sym_ok_for_reloc (asection *sec ATTRIBUTE_UNUSED)
+{
+  return 1;
+}
+
+static void
+obj_ecoff_frob_symbol (symbolS *sym, int *puntp ATTRIBUTE_UNUSED)
+{
+  ecoff_frob_symbol (sym);
+}
+
+static void
+ecoff_pop_insert (void)
+{
+  pop_insert (obj_pseudo_table);
+}
+
+static int
+ecoff_separate_stab_sections (void)
+{
+  return 0;
+}
+
 const struct format_ops ecoff_format_ops =
 {
   bfd_target_ecoff_flavour,
@@ -293,6 +295,7 @@ const struct format_ops ecoff_format_ops =
   0,	/* begin.  */
   0,	/* end.  */
   ecoff_new_file,
+  NULL, /* assign_symbol */
   obj_ecoff_frob_symbol,
   ecoff_frob_file,
   0,	/* frob_file_before_adjust.  */
@@ -309,7 +312,6 @@ const struct format_ops ecoff_format_ops =
   0,	/* s_get_type.  */
   0,	/* s_set_type.  */
   0,	/* copy_symbol_attributes.  */
-  ecoff_generate_asm_lineno,
   ecoff_stab,
   ecoff_separate_stab_sections,
   0,	/* init_stab_section.  */
@@ -321,3 +323,5 @@ const struct format_ops ecoff_format_ops =
   ecoff_symbol_clone_hook,
   0	/* adjust_symtab.  */
 };
+
+#endif /* USE_EMULATIONS */

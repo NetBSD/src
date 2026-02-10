@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -186,7 +186,6 @@ TARGET_CPU_CFILES = \
 	config/tc-msp430.c \
 	config/tc-mt.c \
 	config/tc-nds32.c \
-	config/tc-nios2.c \
 	config/tc-ns32k.c \
 	config/tc-or1k.c \
 	config/tc-pdp11.c \
@@ -260,7 +259,6 @@ TARGET_CPU_HFILES = \
 	config/tc-msp430.h \
 	config/tc-mt.h \
 	config/tc-nds32.h \
-	config/tc-nios2.h \
 	config/tc-ns32k.h \
 	config/tc-or1k.h \
 	config/tc-pdp11.h \
@@ -342,7 +340,6 @@ TARG_ENV_HFILES = \
 	config/te-hppa.h \
 	config/te-hppa64.h \
 	config/te-hppalinux64.h \
-	config/te-ia64aix.h \
 	config/te-interix.h \
 	config/te-lynx.h \
 	config/te-macos.h \
@@ -363,9 +360,6 @@ TARG_ENV_CFILES = \
 MULTI_CFILES = \
 	config/e-crisaout.c \
 	config/e-criself.c \
-	config/e-i386aout.c \
-	config/e-i386coff.c \
-	config/e-i386elf.c \
 	config/e-mipself.c
 
 CONFIG_ATOF_CFILES = \

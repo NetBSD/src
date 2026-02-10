@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,7 +113,6 @@ target_triplet = @target@
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
-	$(top_srcdir)/../config/bfd64.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
 	$(top_srcdir)/../config/gettext.m4 \
@@ -125,7 +124,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/lib-ld.m4 \
 	$(top_srcdir)/../config/lib-link.m4 \
 	$(top_srcdir)/../config/lib-prefix.m4 \
-	$(top_srcdir)/../config/nls.m4 \
+	$(top_srcdir)/../config/mmap.m4 $(top_srcdir)/../config/nls.m4 \
 	$(top_srcdir)/../config/override.m4 \
 	$(top_srcdir)/../config/pkg.m4 \
 	$(top_srcdir)/../config/plugins.m4 \
@@ -179,8 +178,8 @@ am__installdirs = "$(DESTDIR)$(bfdlibdir)" "$(DESTDIR)$(infodir)" \
 	"$(DESTDIR)$(bfdincludedir)"
 LTLIBRARIES = $(bfdlib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-am__objects_1 = archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo \
-	cache.lo coff-bfd.lo compress.lo corefile.lo elf-properties.lo \
+am__objects_1 = archive.lo archures.lo bfd.lo bfdio.lo cache.lo \
+	coff-bfd.lo compress.lo corefile.lo elf-properties.lo \
 	format.lo hash.lo libbfd.lo linker.lo merge.lo opncls.lo \
 	reloc.lo section.lo simple.lo stab-syms.lo stabs.lo syms.lo \
 	targets.lo binary.lo ihex.lo srec.lo tekhex.lo verilog.lo
@@ -542,7 +541,7 @@ BFD_H = bfd.h
 # need two copies of the executable, one to download and one for the
 # debugger).
 BFD32_LIBS = \
-	archive.lo archures.lo bfd.lo bfdio.lo bfdwin.lo cache.lo \
+	archive.lo archures.lo bfd.lo bfdio.lo cache.lo \
 	coff-bfd.lo compress.lo corefile.lo elf-properties.lo format.lo \
 	hash.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo \
 	section.lo simple.lo stab-syms.lo stabs.lo syms.lo targets.lo \
@@ -550,7 +549,7 @@ BFD32_LIBS = \
 
 BFD64_LIBS = archive64.lo
 BFD32_LIBS_CFILES = \
-	archive.c archures.c bfd.c bfdio.c bfdwin.c cache.c coff-bfd.c \
+	archive.c archures.c bfd.c bfdio.c cache.c coff-bfd.c \
 	compress.c corefile.c elf-properties.c format.c hash.c \
 	libbfd.c linker.c merge.c opncls.c reloc.c \
 	section.c simple.c stab-syms.c stabs.c syms.c targets.c \
@@ -610,7 +609,6 @@ ALL_MACHINES = \
 	cpu-mt.lo \
 	cpu-nds32.lo \
 	cpu-nfp.lo \
-	cpu-nios2.lo \
 	cpu-ns32k.lo \
 	cpu-openrisc.lo \
 	cpu-or1k.lo \
@@ -695,7 +693,6 @@ ALL_MACHINES_CFILES = \
 	cpu-mt.c \
 	cpu-nds32.c \
 	cpu-nfp.c \
-	cpu-nios2.c \
 	cpu-ns32k.c \
 	cpu-or1k.c \
 	cpu-pdp11.c \
@@ -802,8 +799,6 @@ BFD32_BACKENDS = \
 	elf32-msp430.lo \
 	elf32-mt.lo \
 	elf32-nds32.lo \
-	elf32-nios2.lo \
-	elf32-openrisc.lo \
 	elf32-or1k.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
@@ -939,8 +934,6 @@ BFD32_BACKENDS_CFILES = \
 	elf32-msp430.c \
 	elf32-mt.c \
 	elf32-nds32.c \
-	elf32-nios2.c \
-	elf32-openrisc.c \
 	elf32-or1k.c \
 	elf32-pj.c \
 	elf32-ppc.c \
@@ -1177,7 +1170,7 @@ SOURCE_HFILES = \
 	ecoff-bfd.h ecoffswap.h \
 	elf32-arm.h elf32-avr.h elf32-bfin.h elf32-cr16.h elf32-csky.h \
 	elf32-dlx.h elf32-hppa.h elf32-m68hc1x.h elf32-m68k.h \
-	elf32-metag.h elf32-nds32.h elf32-nios2.h elf32-ppc.h \
+	elf32-metag.h elf32-nds32.h elf32-ppc.h \
 	elf32-rx.h elf32-score.h elf32-sh-relocs.h elf32-spu.h \
 	elf32-tic6x.h elf32-tilegx.h elf32-tilepro.h elf32-v850.h \
 	elf64-hppa.h elf64-ppc.h elf64-tilegx.h \
@@ -1224,13 +1217,13 @@ EXTRA_libbfd_la_SOURCES = $(CFILES)
 libbfd_la_DEPENDENCIES = $(OFILES) ofiles ../libsframe/libsframe.la
 libbfd_la_LIBADD = `cat ofiles` @SHARED_LIBADD@ $(LIBDL) $(ZLIB) $(ZSTD_LIBS) ../libsframe/libsframe.la
 BFD_H_FILES = bfd-in.h libbfd.c hash.c section.c syms.c \
-	archive.c archures.c bfd.c bfdio.c bfdwin.c \
+	archive.c archures.c bfd.c bfdio.c \
 	cache.c compress.c corefile.c format.c linker.c opncls.c \
 	reloc.c simple.c stab-syms.c stabs.c targets.c
 
 BFD64_H_FILES = archive64.c
 LIBBFD_H_FILES = libbfd-in.h libbfd.c bfd.c bfdio.c \
-	archive.c archures.c bfdwin.c cache.c hash.c linker.c opncls.c \
+	archive.c archures.c cache.c hash.c linker.c opncls.c \
 	reloc.c section.c stabs.c targets.c
 
 LIBCOFF_H_FILES = libcoff-in.h coffcode.h
@@ -1263,7 +1256,6 @@ DOCFILES = \
 	doc/bfdio.texi \
 	doc/bfdt.texi \
 	doc/bfdver.texi \
-	doc/bfdwin.texi \
 	doc/cache.texi \
 	doc/coffcode.texi \
 	doc/corefile.texi \
@@ -1287,7 +1279,6 @@ DOCFILES = \
 SRCDOC = \
 	$(srcdir)/aoutx.h $(srcdir)/archive.c \
 	$(srcdir)/archures.c $(srcdir)/bfd.c \
-	$(srcdir)/bfdio.c $(srcdir)/bfdwin.c \
 	$(srcdir)/cache.c $(srcdir)/coffcode.h \
 	$(srcdir)/corefile.c $(srcdir)/elf.c \
 	$(srcdir)/elfcode.h $(srcdir)/format.c \
@@ -1300,20 +1291,19 @@ SRCDOC = \
 SRCPROT = $(srcdir)/archive.c $(srcdir)/archures.c \
 	$(srcdir)/bfd.c $(srcdir)/coffcode.h $(srcdir)/corefile.c \
 	$(srcdir)/format.c $(srcdir)/libbfd.c \
-	$(srcdir)/bfdio.c $(srcdir)/bfdwin.c \
 	$(srcdir)/opncls.c $(srcdir)/reloc.c \
 	$(srcdir)/section.c $(srcdir)/syms.c \
 	$(srcdir)/targets.c
 
 SRCIPROT = $(srcdir)/cache.c $(srcdir)/libbfd.c \
-	$(srcdir)/bfdio.c $(srcdir)/bfdwin.c \
+	$(srcdir)/bfdio.c \
 	$(srcdir)/reloc.c $(srcdir)/cpu-h8300.c \
 	$(srcdir)/archures.c
 
 TEXIDIR = $(srcdir)/../texinfo/fsf
 info_TEXINFOS = doc/bfd.texi
 doc_bfd_TEXINFOS = $(DOCFILES) doc/bfdsumm.texi
-AM_MAKEINFOFLAGS = --no-split -I "$(srcdir)/doc" -I doc
+AM_MAKEINFOFLAGS = --no-split -I "$(srcdir)/doc" -P doc
 TEXI2DVI = texi2dvi -I "$(srcdir)/doc" -I doc
 MKDOC = doc/chew$(EXEEXT_FOR_BUILD)
 
@@ -1330,7 +1320,7 @@ REGEN_TEXI = \
 	$(MKDOC) -f $(srcdir)/doc/doc.str < $< > $@.tmp; \
 	texi=$@; \
 	texi=$${texi%.stamp}.texi; \
-	test -e $$texi || test ! -f $(srcdir)/$$texi || $(LN_S) $(srcdir)/$$texi .; \
+	test -e $$texi || test ! -f $(srcdir)/$$texi || $(LN_S) $(abs_srcdir)/$$texi $$texi; \
 	$(SHELL) $(srcdir)/../move-if-change $@.tmp $$texi; \
 	touch $@; \
 	)
@@ -1460,7 +1450,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archures.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bfd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bfdio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bfdwin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/binary.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cache.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cf-i386lynx.Plo@am__quote@
@@ -1534,7 +1523,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nds32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nfp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nios2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-ns32k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-openrisc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-or1k.Plo@am__quote@
@@ -1626,8 +1614,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-mt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-or1k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-nds32.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-nios2.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-openrisc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-or1k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-pj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-ppc.Plo@am__quote@
@@ -2515,7 +2501,7 @@ coff-tic54x.lo: coff-tic54x.c
 $(MKDOC): doc/chew.stamp ; @true
 doc/chew.stamp: $(srcdir)/doc/chew.c doc/$(am__dirstamp)
 	$(AM_V_CCLD)$(CC_FOR_BUILD) -o doc/chw$$$$$(EXEEXT_FOR_BUILD) $(CFLAGS_FOR_BUILD) \
-	  $(CPPFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) \
+	  $(WARN_CFLAGS_FOR_BUILD) $(CPPFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) \
 	  -I. -I$(srcdir) -Idoc -I$(srcdir)/../include -I$(srcdir)/../intl -I../intl \
 	  $(srcdir)/doc/chew.c && \
 	$(SHELL) $(srcdir)/../move-if-change \

@@ -1,5 +1,5 @@
 /* hash.c -- gas hash table code
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,7 +25,7 @@
 hashval_t
 hash_string_tuple (const void *e)
 {
-  string_tuple_t *tuple = (string_tuple_t *) e;
+  const string_tuple_t *tuple = e;
   return htab_hash_string (tuple->key);
 }
 
@@ -34,8 +34,8 @@ hash_string_tuple (const void *e)
 int
 eq_string_tuple (const void *a, const void *b)
 {
-  const string_tuple_t *ea = (const string_tuple_t *) a;
-  const string_tuple_t *eb = (const string_tuple_t *) b;
+  const string_tuple_t *ea = a;
+  const string_tuple_t *eb = b;
 
   return strcmp (ea->key, eb->key) == 0;
 }

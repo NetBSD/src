@@ -2413,7 +2413,6 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-
 # This works around an automake problem.
 mkinstalldirs="`cd $ac_aux_dir && ${PWDCMD-pwd}`/mkinstalldirs"
 
@@ -10746,7 +10745,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10749 "configure"
+#line 10748 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10852,7 +10851,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10855 "configure"
+#line 10854 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11245,12 +11244,6 @@ if test -n "$with_cross_host"; then
    # We ignore --with-system-zlib in this case.
    target_all=libzgcj.la
 else
-   if test x$gcc_no_link = xyes; then
-  if test "x${ac_cv_func_mmap_fixed_mapped+set}" != xset; then
-    ac_cv_func_mmap_fixed_mapped=no
-  fi
-fi
-if test "x${ac_cv_func_mmap_fixed_mapped}" != xno; then
 
 
 
@@ -11452,7 +11445,6 @@ $as_echo "#define HAVE_MMAP 1" >>confdefs.h
 fi
 rm -f conftest.mmap conftest.txt
 
-fi
    for ac_func in memcpy strerror
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

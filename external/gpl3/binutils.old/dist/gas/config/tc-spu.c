@@ -1,6 +1,6 @@
 /* spu.c -- Assembler for the IBM Synergistic Processing Unit (SPU)
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -120,8 +120,8 @@ md_begin (void)
     str_hash_insert (op_hash, spu_opcodes[i].mnemonic, &spu_opcodes[i], 0);
 }
 
-const char *md_shortopts = "";
-struct option md_longopts[] = {
+const char md_shortopts[] = "";
+const struct option md_longopts[] = {
 #define OPTION_APUASM (OPTION_MD_BASE)
   {"apuasm", no_argument, NULL, OPTION_APUASM},
 #define OPTION_DD2 (OPTION_MD_BASE+1)
@@ -132,7 +132,7 @@ struct option md_longopts[] = {
   {"mdd3.0", no_argument, NULL, OPTION_DD3},
   { NULL, no_argument, NULL, 0 }
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* When set (by -apuasm) our assembler emulates the behaviour of apuasm.
  * e.g. don't add bias to float conversion and don't right shift
@@ -263,7 +263,7 @@ md_assemble (char *op)
 
   /* skip over instruction to find parameters */
 
-  for (param = op; *param != 0 && !ISSPACE (*param); param++)
+  for (param = op; !is_end_of_stmt (*param) && !is_whitespace (*param); param++)
     ;
   c = *param;
   *param = 0;
@@ -273,7 +273,7 @@ md_assemble (char *op)
 
   /* try to find the instruction in the hash table */
 
-  if ((format = (struct spu_opcode *) str_hash_find (op_hash, op)) == NULL)
+  if ((format = str_hash_find (op_hash, op)) == NULL)
     {
       as_bad (_("Invalid mnemonic '%s'"), op);
       return;
@@ -298,7 +298,7 @@ md_assemble (char *op)
 	  insn.reloc[i] = BFD_RELOC_NONE;
 	}
       insn.opcode = format->opcode;
-      insn.tag = (enum spu_insns) (format - spu_opcodes);
+      insn.tag = format - spu_opcodes;
 
       syntax_error_arg = 0;
       syntax_error_param = 0;
@@ -388,7 +388,7 @@ calcop (struct spu_opcode *format, const char *param, struct spu_insn *insn)
       arg = format->arg[i];
       syntax_error_arg = i;
 
-      while (ISSPACE (*param))
+      while (is_whitespace (*param))
         param++;
       if (*param == 0 || *param == ',')
 	return 0;
@@ -406,7 +406,7 @@ calcop (struct spu_opcode *format, const char *param, struct spu_insn *insn)
       if (!param)
 	return 0;
 
-      while (ISSPACE (*param))
+      while (is_whitespace (*param))
         param++;
 
       if (arg != A_P && paren)
@@ -426,7 +426,7 @@ calcop (struct spu_opcode *format, const char *param, struct spu_insn *insn)
 	    }
 	}
     }
-  while (ISSPACE (*param))
+  while (is_whitespace (*param))
     param++;
   return !paren && (*param == 0 || *param == '\n');
 }
@@ -569,7 +569,7 @@ get_reg (const char *param, struct spu_insn *insn, int arg, int accept_expr)
       char *save_ptr;
       expressionS ex;
       save_ptr = input_line_pointer;
-      input_line_pointer = (char *)param;
+      input_line_pointer = (char *) param;
       expression (&ex);
       param = input_line_pointer;
       input_line_pointer = save_ptr;
@@ -721,16 +721,11 @@ md_create_short_jump (char *ptr,
 		      fragS *frag,
 		      symbolS *to_symbol)
 {
-  ptr[0] = (char) 0xc0;
+  ptr[0] = 0xc0;
   ptr[1] = 0x00;
   ptr[2] = 0x00;
   ptr[3] = 0x00;
-  fix_new (frag,
-	   ptr - frag->fr_literal,
-	   4,
-	   to_symbol,
-	   (offsetT) 0,
-	   0,
+  fix_new (frag, ptr - frag->fr_literal, 4, to_symbol, 0, 0,
 	   BFD_RELOC_SPU_PCREL16);
 }
 
@@ -743,16 +738,11 @@ md_create_long_jump (char *ptr,
 		     fragS *frag,
 		     symbolS *to_symbol)
 {
-  ptr[0] = (char) 0xc0;
+  ptr[0] = 0xc0;
   ptr[1] = 0x00;
   ptr[2] = 0x00;
   ptr[3] = 0x00;
-  fix_new (frag,
-	   ptr - frag->fr_literal,
-	   4,
-	   to_symbol,
-	   (offsetT) 0,
-	   0,
+  fix_new (frag, ptr - frag->fr_literal, 4, to_symbol, 0, 0,
 	   BFD_RELOC_SPU_PCREL16);
 }
 #endif
@@ -867,18 +857,16 @@ arelent *
 tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
-  if (reloc->howto == (reloc_howto_type *) NULL)
+  if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("reloc %d not supported by object file format"),
 		    (int) fixp->fx_r_type);
-      free (reloc->sym_ptr_ptr);
-      free (reloc);
       return NULL;
     }
   reloc->addend = fixp->fx_addnumber;
@@ -952,7 +940,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   valueT val = *valP;
   char *place = fixP->fx_where + fixP->fx_frag->fr_literal;
 
-  if (fixP->fx_subsy != (symbolS *) NULL)
+  if (fixP->fx_subsy != NULL)
     {
       /* We can't actually support subtracting a symbol.  */
       as_bad_subtract (fixP);

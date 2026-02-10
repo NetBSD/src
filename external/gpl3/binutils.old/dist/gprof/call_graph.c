@@ -1,6 +1,6 @@
 /* call_graph.c  -  Create call graphs.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
-
+
 #include "gprof.h"
 #include "search_list.h"
 #include "source.h"
@@ -35,9 +35,10 @@ cg_tally (bfd_vma from_pc, bfd_vma self_pc, unsigned long count)
 {
   Sym *parent;
   Sym *child;
+  Sym_Table *symtab = get_symtab ();
 
-  parent = sym_lookup (&symtab, from_pc);
-  child = sym_lookup (&symtab, self_pc);
+  parent = sym_lookup (symtab, from_pc);
+  child = sym_lookup (symtab, self_pc);
 
   if (child == NULL || parent == NULL)
     return;
@@ -51,10 +52,10 @@ cg_tally (bfd_vma from_pc, bfd_vma self_pc, unsigned long count)
 
      For normal profiling, is_func will be set on all symbols, so this
      code will do nothing.  */
-  while (child >= symtab.base && ! child->is_func)
+  while (child >= symtab->base && ! child->is_func)
     --child;
 
-  if (child < symtab.base)
+  if (child < symtab->base)
     return;
 
   /* Keep arc if it is on INCL_ARCS table or if the INCL_ARCS table
@@ -108,8 +109,9 @@ cg_write_arcs (FILE *ofp, const char *filename)
 {
   Arc *arc;
   Sym *sym;
+  Sym_Table *symtab = get_symtab ();
 
-  for (sym = symtab.base; sym < symtab.limit; sym++)
+  for (sym = symtab->base; sym < symtab->limit; sym++)
     {
       for (arc = sym->cg.children; arc; arc = arc->next_child)
 	{

@@ -6,7 +6,7 @@ OUTPUT_FORMAT="elf64-littleriscv"
 # On Linux, first look for 64 bit LP64D target libraries in /lib64/lp64d as per
 # the glibc ABI, and then /lib64 for backward compatility.
 case "$target" in
-  riscv64*-linux*)
+  riscv*-linux*)
     case "$EMULATION_NAME" in
       *64*)
 	LIBPATH_SUFFIX="64/lp64d 64";;

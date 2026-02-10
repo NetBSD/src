@@ -1,5 +1,5 @@
 /* a.out object file format
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -155,7 +155,7 @@ obj_aout_line (int ignore ATTRIBUTE_UNUSED)
   /* Assume delimiter is part of expression.
      BSD4.2 as fails with delightful bug, so we
      are not being incompatible here.  */
-  new_logical_line ((char *) NULL, (int) (get_absolute_expression ()));
+  new_logical_line (NULL, get_absolute_expression ());
   demand_empty_rest_of_line ();
 }
 
@@ -221,13 +221,15 @@ obj_aout_type (int ignore ATTRIBUTE_UNUSED)
   s_ignore (0);
 }
 
-/* Support for an AOUT emulation.  */
+static const pseudo_typeS aout_pseudo_table[];
 
-static void
+void
 aout_pop_insert (void)
 {
   pop_insert (aout_pseudo_table);
 }
+
+#ifdef USE_EMULATIONS /* Support for an AOUT emulation.  */
 
 static int
 obj_aout_s_get_other (symbolS *sym)
@@ -298,6 +300,7 @@ const struct format_ops aout_format_ops =
   0,	/* begin.  */
   0,	/* end.  */
   0,	/* app_file.  */
+  NULL, /* assign_symbol */
   obj_aout_frob_symbol,
   0,	/* frob_file.  */
   0,	/* frob_file_before_adjust.  */
@@ -314,7 +317,6 @@ const struct format_ops aout_format_ops =
   obj_aout_s_get_type,
   obj_aout_s_set_type,
   0,	/* copy_symbol_attributes.  */
-  0,	/* generate_asm_lineno.  */
   obj_aout_process_stab,
   obj_aout_separate_stab_sections,
   0,	/* init_stab_section.  */
@@ -327,7 +329,9 @@ const struct format_ops aout_format_ops =
   0	/* adjust_symtab.  */
 };
 
-const pseudo_typeS aout_pseudo_table[] =
+#endif /* USE_EMULATIONS */
+
+static const pseudo_typeS aout_pseudo_table[] =
 {
   {"line", obj_aout_line, 0},	/* Source code line number.  */
   {"ln", obj_aout_line, 0},	/* COFF line number that we use anyway.  */

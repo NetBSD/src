@@ -1,3 +1,37 @@
+2025-07-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR ld/32580
+	* configure.ac <*-*-solaris2*>: Enforce SHELL=/bin/bash.
+	* configure: Regenerate.
+
+2025-07-13  Nick Clifton  <nickc@redhat.com>
+
+	* 2.45 Branch point.
+
+2025-02-08  Alexandre Oliva <oliva@adacore.com>
+
+	* testsuite/ld-sparc/got-def.s: New test.
+	* testsuite/ld-sparc/sparc.exp: Add it.
+
+2025-01-19  Nick Clifton  <nickc@redhat.com>
+
+	* 2.44 Branch point.
+
+2024-10-18  WANG Xuerui <git@xen0n.name>
+
+	* testsuite/ld-loongarch-elf/64_pcrel.d: Update assertions after
+	changing the target max page size to 64KiB.
+	* testsuite/ld-loongarch-elf/data-got.d: Likewise.
+	* testsuite/ld-loongarch-elf/desc-relex.d: Likewise.
+	* testsuite/ld-loongarch-elf/relax-align-ignore-start.d: Likewise.
+	* testsuite/ld-loongarch-elf/tlsdesc_abs.d: Make the fuzzy match work
+	as intended by not checking exact instruction words.
+	* testsuite/ld-loongarch-elf/tlsdesc_extreme.d: Likewise.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
 	* configure: Regenerate.
@@ -2518,7 +2552,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

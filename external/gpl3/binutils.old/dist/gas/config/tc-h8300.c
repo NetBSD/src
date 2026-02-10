@@ -1,5 +1,5 @@
 /* tc-h8300.c -- Assemble code for the Renesas H8/300
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -146,8 +146,10 @@ pint (int arg ATTRIBUTE_UNUSED)
 static void
 h8300_elf_section (int push)
 {
-  static const char * known_data_sections [] = { ".rodata", ".tdata", ".tbss" };
-  static const char * known_data_prefixes [] = { ".debug", ".zdebug", ".gnu.warning" };
+  static const char * known_data_sections []
+    = { ".rodata", ".tdata", ".tbss", ".gnu_object_only" };
+  static const char * known_data_prefixes []
+    = { ".debug", ".zdebug", ".gnu.warning" };
   char * saved_ilp = input_line_pointer;
   const char * name;
 
@@ -1902,12 +1904,12 @@ md_assemble (char *str)
   int size, i;
 
   /* Drop leading whitespace.  */
-  while (*str == ' ')
+  while (is_whitespace (*str))
     str++;
 
   /* Find the op code end.  */
   for (op_start = op_end = str;
-       *op_end != 0 && *op_end != ' ';
+       !is_end_of_stmt (*op_end) && !is_whitespace (*op_end);
        op_end++)
     {
       if (*op_end == '.')
@@ -1935,8 +1937,7 @@ md_assemble (char *str)
     while (*++slash)
       *slash = TOLOWER (*slash);
 
-  instruction = (const struct h8_instruction *)
-    str_hash_find (opcode_hash_control, op_start);
+  instruction = str_hash_find (opcode_hash_control, op_start);
 
   if (instruction == NULL)
     {
@@ -2076,15 +2077,15 @@ md_atof (int type, char *litP, int *sizeP)
 #define OPTION_H_TICK_HEX      (OPTION_MD_BASE)
 #define OPTION_MACH            (OPTION_MD_BASE+1)
 
-const char *md_shortopts = "";
-struct option md_longopts[] =
+const char md_shortopts[] = "";
+const struct option md_longopts[] =
 {
   { "h-tick-hex", no_argument,	      NULL, OPTION_H_TICK_HEX  },
   { "mach", required_argument, NULL, OPTION_MACH },
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 struct mach_func
 {
@@ -2222,7 +2223,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
-  return ((size + (1 << align) - 1) & (-1U << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 void
@@ -2300,8 +2301,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 	}
     }
 
-  rel = XNEW (arelent);
-  rel->sym_ptr_ptr = XNEW (asymbol *);
+  rel = notes_alloc (sizeof (arelent));
+  rel->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   rel->address = fixp->fx_frag->fr_address + fixp->fx_where;
   rel->addend = fixp->fx_offset;

@@ -1,5 +1,5 @@
 /* tc-rl78.c -- Assembler for the Renesas RL78
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -288,10 +288,10 @@ enum options
 };
 
 #define RL78_SHORTOPTS ""
-const char * md_shortopts = RL78_SHORTOPTS;
+const char md_shortopts[] = RL78_SHORTOPTS;
 
 /* Assembler options.  */
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {"relax", no_argument, NULL, OPTION_RELAX},
   {"norelax", no_argument, NULL, OPTION_NORELAX},
@@ -303,7 +303,7 @@ struct option md_longopts[] =
   {"m64bit-doubles", no_argument, NULL, OPTION_64BIT_DOUBLES},
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char * arg ATTRIBUTE_UNUSED)
@@ -425,15 +425,13 @@ md_number_to_chars (char * buf, valueT val, int n)
 static void
 require_end_of_expr (const char *fname)
 {
-  while (* input_line_pointer == ' '
-	 || * input_line_pointer == '\t')
+  while (is_whitespace (* input_line_pointer))
     input_line_pointer ++;
 
-  if (! * input_line_pointer
-      || strchr ("\n\r,", * input_line_pointer)
+  if (is_end_of_stmt (* input_line_pointer)
+      || * input_line_pointer == ','
       || strchr (comment_chars, * input_line_pointer)
-      || strchr (line_comment_chars, * input_line_pointer)
-      || strchr (line_separator_chars, * input_line_pointer))
+      || strchr (line_comment_chars, * input_line_pointer))
     return;
 
   as_bad (_("%%%s() must be outermost term in expression"), fname);
@@ -707,7 +705,7 @@ rl78_cons_fix_new (fragS *	frag,
 	type = BFD_RELOC_RL78_DIFF;
     }
 
-  fixP = fix_new_exp (frag, where, (int) size, exp, 0, type);
+  fixP = fix_new_exp (frag, where, size, exp, 0, type);
   switch (exp->X_md)
     {
       /* These are intended to have values larger than the container,
@@ -1257,11 +1255,11 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
       fixp->fx_subsy = NULL;
     }
 
-  reloc[0]		  = XNEW (arelent);
-  reloc[0]->sym_ptr_ptr   = XNEW (asymbol *);
-  * reloc[0]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-  reloc[0]->address       = fixp->fx_frag->fr_address + fixp->fx_where;
-  reloc[0]->addend        = fixp->fx_offset;
+  reloc[0] = notes_alloc (sizeof (arelent));
+  reloc[0]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  *reloc[0]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  reloc[0]->address = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc[0]->addend = fixp->fx_offset;
 
   if (fixp->fx_r_type == BFD_RELOC_RL78_32_OP
       && fixp->fx_subsy)
@@ -1269,13 +1267,13 @@ tc_gen_reloc (asection * seg ATTRIBUTE_UNUSED, fixS * fixp)
       fixp->fx_r_type = BFD_RELOC_RL78_DIFF;
     }
 
-#define OPX(REL,SYM,ADD)							\
-  reloc[rp]		   = XNEW (arelent);		\
-  reloc[rp]->sym_ptr_ptr   = XNEW (asymbol *);		\
-  reloc[rp]->howto         = bfd_reloc_type_lookup (stdoutput, REL);		\
-  reloc[rp]->addend        = ADD;						\
-  * reloc[rp]->sym_ptr_ptr = SYM;						\
-  reloc[rp]->address       = fixp->fx_frag->fr_address + fixp->fx_where;	\
+#define OPX(REL,SYM,ADD)						\
+  reloc[rp] = notes_alloc (sizeof (arelent));				\
+  reloc[rp]->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));		\
+  reloc[rp]->howto = bfd_reloc_type_lookup (stdoutput, REL);		\
+  reloc[rp]->addend = ADD;						\
+  *reloc[rp]->sym_ptr_ptr = SYM;					\
+  reloc[rp]->address = fixp->fx_frag->fr_address + fixp->fx_where;	\
   reloc[++rp] = NULL
 #define OPSYM(SYM) OPX(BFD_RELOC_RL78_SYM, SYM, 0)
 
@@ -1422,7 +1420,7 @@ md_apply_fix (struct fix * f ATTRIBUTE_UNUSED,
     return;
 
   op = f->fx_frag->fr_literal + f->fx_where;
-  val = (unsigned long) * t;
+  val = *t;
 
   if (f->fx_addsy == NULL)
     f->fx_done = 1;
@@ -1510,5 +1508,5 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }

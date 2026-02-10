@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2024 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2025 Free Software Foundation, Inc.
 @c Contributed by ARM Ltd.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -116,7 +116,7 @@ following architecture names are recognized: @code{armv8-a},
 @code{armv8.1-a}, @code{armv8.2-a}, @code{armv8.3-a}, @code{armv8.4-a}
 @code{armv8.5-a}, @code{armv8.6-a}, @code{armv8.7-a}, @code{armv8.8-a},
 @code{armv8.9-a}, @code{armv8-r}, @code{armv9-a}, @code{armv9.1-a},
-@code{armv9.2-a}, @code{armv9.3-a} and @code{armv9.4-a}.
+@code{armv9.2-a}, @code{armv9.3-a}, @code{armv9.4-a} and @code{armv9.5-a}.
 
 If both @option{-mcpu} and @option{-march} are specified, the
 assembler will use the setting for @option{-mcpu}.  If neither are
@@ -135,6 +135,12 @@ is enabled by default.
 @cindex @code{-mno-verbose-error} command-line option, AArch64
 @item -mno-verbose-error
 This option disables verbose error messages in AArch64 gas.
+
+@cindex @code{-menable-sysreg-checking} command-line option, AArch64
+@item -menable-sysreg-checking
+This option enables error messages that are issued if an attempt is made to
+assemble a system register access which will not execute on the target
+architecture.
 
 @end table
 @c man end
@@ -161,14 +167,18 @@ automatically cause those extensions to be disabled.
 @headitem Extension @tab Depends upon @tab Description
 @item @code{aes} @tab @code{simd}
  @tab Enable the AES and PMULL cryptographic extensions.
-@item @code{b16b16} @tab @code{sve2}
- @tab Enable BFloat16 to BFloat16 arithmetic for SVE2 and SME2.
 @item @code{bf16} @tab @code{fp}
  @tab Enable BFloat16 extension.
+@item @code{brbe} @tab
+ @tab Enable the Branch Record Buffer extension.
 @item @code{chk} @tab
  @tab Enable the Check Feature Status Extension.
+@item @code{cmpbr} @tab
+ @tab Enable Compare and Branch instructions.
 @item @code{compnum} @tab @code{simd}
  @tab Enable the complex number SIMD extensions.  An alias of @code{fcma}.
+@item @code{cpa} @tab
+ @tab Enable the Checked Pointer Arithmetic extension.
 @item @code{crc} @tab
  @tab Enable CRC instructions.
 @item @code{crypto} @tab @code{simd}
@@ -183,19 +193,35 @@ automatically cause those extensions to be disabled.
  @tab Enable the F32 Matrix Multiply extension
 @item @code{f64mm} @tab @code{sve}
  @tab Enable the F64 Matrix Multiply extension.
+@item @code{f8f16mm} @tab @code{simd} @code{fp8}
+ @tab Enable 8-bit floating-point matrix multiply-accumulate to half-precision instructions.
+@item @code{f8f32mm} @tab @code{simd} @code{fp}
+ @tab Enable 8-bit floating-point matrix multiply-accumulate to single-precision instructions.
+@item @code{faminmax} @tab @code{simd}
+ @tab Enable the famin and famax instructions.
 @item @code{fcma} @tab @code{fp16}, @code{simd}
  @tab Enable the complex number SIMD extensions.
 @item @code{flagm} @tab
  @tab Enable Flag Manipulation instructions.
 @item @code{flagm2} @tab @code{flagm}
  @tab Enable FlagM2 flag conversion instructions.
+@item @code{fp} @tab
+ @tab Enable floating-point extensions.
+@item @code{fp8} @tab
+ @tab Enable the Floating Point 8 (FP8) extension.
+@item @code{fp8dot2} @tab @code{fp8}
+ @tab Enable the FP8 2-way dot product instructions.
+@item @code{fp8dot4} @tab @code{fp8}
+ @tab Enable the FP8 4-way dot product instructions.
+@item @code{fp8fma} @tab @code{fp8}
+ @tab Enable the FP8 FMA instructions.
 @item @code{fp16fml} @tab @code{fp16}
  @tab Enable Armv8.2 16-bit floating-point multiplication variant support.
 @item @code{fp16} @tab @code{fp}
  @tab Enable Armv8.2 16-bit floating-point support.
-@item @code{fp} @tab
- @tab Enable floating-point extensions.
-@item @code{frintts} @tab @code{simd}
+@item @code{fprcvt} @tab @code{fp}
+ @tab Enable Armv9.6 fprcvt instructions.
+@item @code{frintts} @tab @code{fp}
  @tab Enable floating-point round to integral value instructions.
 @item @code{gcs} @tab
  @tab Enable the Guarded Control Stack Extension.
@@ -215,18 +241,28 @@ automatically cause those extensions to be disabled.
  @tab Enable Large System extensions.
 @item @code{lse128} @tab @code{lse}
  @tab Enable the 128-bit Atomic Instructions extension.
+@item @code{lsfe} @tab @code{fp}
+ @tab Enable Large System Float Extension.
+@item @code{lsui} @tab
+ @tab Enable Unprivileged Load/Store instructions.
+@item @code{lut} @tab @code{simd}
+ @tab Enable the Lookup Table (LUT) extension.
 @item @code{memtag} @tab
  @tab Enable Armv8.5-A Memory Tagging Extensions.
 @item @code{mops} @tab
  @tab Enable Armv8.8-A memcpy and memset acceleration instructions
+@item @code{occmo} @tab
+ @tab Enable Outer Cacheable Cache Maintenance Operations.
 @item @code{pan} @tab
  @tab Enable Privileged Access Never support.
 @item @code{pauth} @tab
  @tab Enable Pointer Authentication.
+@item @code{pops} @tab
+ @tab Enable Point of Physical Storage.
 @item @code{predres} @tab
- @tab Enable the Execution and Data and Prediction instructions.
+ @tab Enable execution and data prediction restriction instructions.
 @item @code{predres2} @tab @code{predres}
- @tab Enable Prediction instructions.
+ @tab Enable additional prediction restriction instructions.
 @item @code{profile} @tab
  @tab Enable statistical profiling extensions.
 @item @code{ras} @tab
@@ -255,23 +291,53 @@ automatically cause those extensions to be disabled.
  @tab Enable Advanced SIMD extensions.
 @item @code{sm4} @tab @code{simd}
  @tab Enable the SM3 and SM4 cryptographic extensions.
-@item @code{sme} @tab @code{sve2}, @code{bf16}
- @tab Enable the Scalable Matrix Extension.
+@item @code{sme} @tab @code{bf16}, @code{fp16}, @code{fcma}
+ @tab Enable the Scalable Matrix Extension.  This will also enable @code{sve2}, but disabling @code{sve2} does not disable @code{sme}.
+@item @code{sme-b16b16} @tab @code{sme2}, @code{sve-b16b16}
+ @tab Enable SME ZA-targeting non-widening BFloat16 instructions.
+@item @code{sme-f8f16} @tab @code{sme2}, @code{fp8}
+ @tab Enable the SME F8F16 Extension.
+@item @code{sme-f8f32} @tab @code{sme2}, @code{fp8}
+ @tab Enable the SME F8F32 Extension.
+@item @code{sme-f16f16} @tab @code{sme2}
+ @tab Enable the SME2 F16F16 Extension.
 @item @code{sme-f64f64} @tab @code{sme}
  @tab Enable SME F64F64 Extension.
 @item @code{sme-i16i64} @tab @code{sme}
  @tab Enable SME I16I64 Extension.
+@item @code{sme-lutv2} @tab
+ @tab Enable SME Lookup Table v2 (LUTv2) extension.
 @item @code{sme2} @tab @code{sme}
  @tab Enable SME2.
 @item @code{sme2p1} @tab @code{sme2}
  @tab Enable SME2.1.
+@item @code{sme2p2} @tab @code{sme2p1}
+ @tab Enable SME2.2.
 @item @code{ssbs} @tab
  @tab Enable Speculative Store Bypassing Safe state read and write.
+@item @code{ssve-aes} @tab @code{sme2}, @code{sve-aes}
+ @tab Enable SVE AES instructions in streaming mode.
+@item @code{ssve-fp8dot2} @tab @code{sme2}, @code{fp8}
+ @tab Enable the Streaming SVE FP8 2-way dot product instructions.
+@item @code{ssve-fp8dot4} @tab @code{sme2}, @code{fp8}
+ @tab Enable the Streaming SVE FP8 4-way dot product instructions.
+@item @code{ssve-fp8fma} @tab @code{sme2}, @code{fp8}
+ @tab Enable the Streaming SVE FP8 FMA instructions.
 @item @code{sve} @tab @code{fcma}
  @tab Enable the Scalable Vector Extension.
+@item @code{sve-aes} @tab @code{aes}
+ @tab Enable the SVE2 AES and PMULL Extensions.
+@item @code{sve-aes2} @tab
+@tab Enable the SVE-AES2 extension.
+@item @code{sve-b16b16} @tab
+@tab Enable the SVE B16B16 extension.  These instructions also require either @code{+sve2} or @code{+sme2}.
+@item @code{sve-bfscale} @tab
+@tab Enable the SVE BFSCALE extension. These instructions also require either @code{+sve2} or @code{+sme2}.
+@item @code{sve-f16f32mm} @tab @code{sve}
+@tab Enable the SVE_F16F32MM extension.
 @item @code{sve2} @tab @code{sve}
  @tab Enable SVE2.
-@item @code{sve2-aes} @tab @code{sve2}, @code{aes}
+@item @code{sve2-aes} @tab @code{sve2}, @code{sve-aes}
  @tab Enable the SVE2 AES and PMULL Extensions.
 @item @code{sve2-bitperm} @tab @code{sve2}
  @tab Enable the SVE2 BITPERM Extension.
@@ -281,6 +347,8 @@ automatically cause those extensions to be disabled.
  @tab Enable the SVE2 SM4 Extension.
 @item @code{sve2p1} @tab @code{sve2}
  @tab Enable SVE2.1.
+@item @code{sve2p2} @tab @code{sve2p1}
+ @tab Enable SVE2.2.
 @item @code{the} @tab
  @tab Enable the Translation Hardening Extension.
 @item @code{tme} @tab
@@ -308,6 +376,8 @@ automatically cause those extensions to be disabled.
 @item @code{armv9.2-a} @tab @code{armv9.1-a}, @code{armv8.7-a}
 @item @code{armv9.3-a} @tab @code{armv9.2-a}, @code{armv8.8-a}
 @item @code{armv9.4-a} @tab @code{armv9.3-a}, @code{armv8.9-a}
+@item @code{armv9.5-a} @tab @code{armv9.4-a}, @code{cpa}, @code{lut}, @code{faminmax}
+@item @code{armv9.6-a} @tab @code{armv9.5-a}, @code{cmpbr}, @code{fprcvt}, @code{lsui}, @code{occmo}, @code{sve2p2}
 @item @code{armv8-r} @tab @code{armv8.4-a+nolor}
 @end multitable
 
@@ -343,9 +413,9 @@ The @samp{#} can be optionally used to indicate immediate operands.
 
 @cindex AArch64 register names
 @cindex register names, AArch64
-Please refer to the section @samp{4.4 Register Names} of
-@samp{ARMv8 Instruction Set Overview}, which is available at
-@uref{http://infocenter.arm.com}.
+Please refer to the section @samp{Register names} of @samp{Arm
+Architecture Reference Manual for A-profile architecture}, which
+is available at @uref{https://developer.arm.com/}.
 
 @node AArch64-Relocations
 @subsection Relocations
@@ -430,6 +500,14 @@ incrementally to the architecture being compiled for.
 
 @c BBBBBBBBBBBBBBBBBBBBBBBBBB
 @c CCCCCCCCCCCCCCCCCCCCCCCCCC
+
+@cindex @code{.cfi_mte_tagged_frame} directive, AArch64
+@item	@code{.cfi_mte_tagged_frame}
+The @code{.cfi_mte_tagged_frame} directive inserts a 'G' character into the
+CIE corresponding to the current frame's FDE, meaning that the associated
+frames may modify MTE tags on the stack space they use.  This information is
+intended to be used by the stack unwinder in order to properly untag stack
+frames.
 
 @cindex @code{.cpu} directive, AArch64
 @item .cpu @var{name}
@@ -595,8 +673,8 @@ already there) and a PC-relative LDR instruction will be generated.
 @end table
 
 For more information on the AArch64 instruction set and assembly language
-notation, see @samp{ARMv8 Instruction Set Overview} available at
-@uref{http://infocenter.arm.com}.
+notation, see @samp{Arm Architecture Reference Manual for A-profile
+architecture} available at @uref{https://developer.arm.com/}.
 
 
 @node AArch64 Mapping Symbols

@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under LynxOS.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -46,7 +46,8 @@
 		       * obj_reloc_entry_size (abfd));			\
     execp->a_drsize = ((obj_datasec (abfd)->reloc_count)		\
 		       * obj_reloc_entry_size (abfd));			\
-    NAME (aout, swap_exec_header_out) (abfd, execp, &exec_bytes);	\
+    if (!NAME (aout, swap_exec_header_out) (abfd, execp, &exec_bytes))	\
+      return false;							\
 									\
     if (bfd_seek (abfd, 0, SEEK_SET) != 0				\
 	|| bfd_write (&exec_bytes, EXEC_BYTES_SIZE,			\
@@ -284,7 +285,7 @@ NAME(lynx,swap_ext_reloc_out) (bfd *abfd,
       if (symbols != NULL && r_index < bfd_get_symcount (abfd))		\
 	cache_ptr->sym_ptr_ptr = symbols + r_index;			\
       else								\
-	cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;	\
+	cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;		\
       cache_ptr->addend = ad;						\
     }									\
   else									\
@@ -295,23 +296,23 @@ NAME(lynx,swap_ext_reloc_out) (bfd *abfd,
 	{								\
 	case N_TEXT:							\
 	case N_TEXT | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr  = obj_textsec(abfd)->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr  = &obj_textsec(abfd)->symbol;		\
 	  cache_ptr->addend = ad  - su->textsec->vma;			\
 	  break;							\
 	case N_DATA:							\
 	case N_DATA | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr  = obj_datasec(abfd)->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr  = &obj_datasec(abfd)->symbol;		\
 	  cache_ptr->addend = ad - su->datasec->vma;			\
 	  break;							\
 	case N_BSS:							\
 	case N_BSS | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr  = obj_bsssec(abfd)->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr  = &obj_bsssec(abfd)->symbol;		\
 	  cache_ptr->addend = ad - su->bsssec->vma;			\
 	  break;							\
 	default:							\
 	case N_ABS:							\
 	case N_ABS | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;	\
 	  cache_ptr->addend = ad;					\
 	  break;							\
 	}								\

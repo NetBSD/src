@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script
 dnl
-dnl   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ dnl <http://www.gnu.org/licenses/>.
 dnl
 
 m4_include([../bfd/version.m4])
-AC_INIT([ld], BFD_VERSION)
+AC_INIT([ld], [BFD_VERSION])
 AC_CONFIG_SRCDIR(ldmain.c)
 
 AC_CANONICAL_TARGET
@@ -28,10 +28,22 @@ AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE
 
+case $target in
+  *-*-solaris2*)
+    case "$SHELL" in
+      *bash*)
+        ;;
+      *)
+        # PR 32580: Force use of bash to avoid corrupt linker scripts.
+        SHELL=/bin/bash
+        ;;
+    esac
+    ;;
+esac
+
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_GREP
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_INSTALL
 PKG_PROG_PKG_CONFIG
@@ -197,7 +209,7 @@ esac])dnl
 # Decide if DT_TEXTREL check should be enabled in ELF linker.
 ac_default_ld_textrel_check=unset
 AC_ARG_ENABLE([textrel-check],
-	      AC_HELP_STRING([--enable-textrel-check=@<:@yes|no|warning|error@:>@],
+	      AS_HELP_STRING([--enable-textrel-check=@<:@yes|no|warning|error@:>@],
 			     [enable DT_TEXTREL check in ELF linker]),
 [case "${enableval}" in
   yes|no|warning|error) ac_default_ld_textrel_check=${enableval} ;;
@@ -213,6 +225,16 @@ AC_ARG_ENABLE(separate-code,
   no) ac_default_ld_z_separate_code=0 ;;
 esac])
 
+# Decide if --rosegment should be enabled in the ELF linker by default.
+ac_default_ld_rosegment=unset
+AC_ARG_ENABLE(rosegment,
+	      AS_HELP_STRING([--enable-rosegment],
+	      [enable --rosegment in the ELF linker by default]),
+[case "${enableval}" in
+  yes) ac_default_ld_rosegment=1 ;;
+  no)  ac_default_ld_rosegment=0 ;;
+esac])
+
 # Decide if -z mark-plt should be enabled in ELF x86-64 linker by default.
 ac_default_ld_z_mark_plt=unset
 AC_ARG_ENABLE(mark-plt,
@@ -221,6 +243,16 @@ AC_ARG_ENABLE(mark-plt,
 [case "${enableval}" in
   yes) ac_default_ld_z_mark_plt=1 ;;
   no) ac_default_ld_z_mark_plt=0 ;;
+esac])
+
+# Decide if -z memory-seal should be enabled in ELF linker by default.
+ac_default_ld_z_memory_seal=unset
+AC_ARG_ENABLE(memory-seal,
+	      AS_HELP_STRING([--enable-memory-seal],
+	      [enable -z memory-seal in ELF linker by default]),
+[case "${enableval}" in
+  yes) ac_default_ld_z_memory_seal=1 ;;
+  no) ac_default_ld_z_memory_seal=0 ;;
 esac])
 
 
@@ -369,8 +401,8 @@ fi
 # host-specific stuff:
 
 ALL_LINGUAS="bg da de es fi fr ga id it ja pt_BR ru sr sv tr uk vi zh_CN zh_TW"
-ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
+ZW_GNU_GETTEXT_SISTER_DIR
 
 AC_EXEEXT
 
@@ -395,13 +427,13 @@ AC_SUBST(NATIVE_LIB_DIRS)
 AC_CHECK_HEADERS(fcntl.h elf-hints.h limits.h inttypes.h stdint.h \
 		 sys/file.h sys/mman.h sys/param.h sys/stat.h sys/time.h \
 		 sys/types.h unistd.h)
-AC_CHECK_FUNCS(close glob lseek mkstemp open realpath waitpid)
+AC_CHECK_FUNCS(close getrusage glob lseek mkstemp open realpath waitpid)
 
 BFD_BINARY_FOPEN
 
-AC_CHECK_DECLS([asprintf, environ, stpcpy])
+AC_CHECK_DECLS([environ, stpcpy])
 
-AC_FUNC_MMAP
+GCC_AC_FUNC_MMAP
 
 AC_SEARCH_LIBS([dlopen], [dl])
 
@@ -414,6 +446,28 @@ if test $ld_cv_decl_getopt_unistd_h = yes; then
   AC_DEFINE([HAVE_DECL_GETOPT], 1,
 	    [Is the prototype for getopt in <unistd.h> in the expected format?])
 fi
+
+dnl xxhash support from gdbsupport/common.m4
+AC_MSG_CHECKING([whether to use xxhash])
+AC_ARG_WITH(xxhash,
+  AS_HELP_STRING([--with-xxhash], [use inlined libxxhash for hashing (faster) (auto/yes/no)]),
+  [], [with_xxhash=auto])
+if test "x$with_xxhash" != "xno"; then
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
+#define XXH_INLINE_ALL
+#include <xxhash.h>
+XXH128_hash_t r;
+void foo (void) { r = XXH128("foo", 3, 0); }
+])],[
+  with_xxhash=yes
+  AC_DEFINE([WITH_XXHASH], 1, [whether to use inline xxhash])
+],[
+  if test "$with_xxhash" = yes; then
+    AC_MSG_ERROR([xxhash is missing or unusable])
+  fi
+  with_xxhash=no])
+fi
+AC_MSG_RESULT([$with_xxhash])
 
 # Link in zlib/zstd if we can.  This allows us to read and write
 # compressed debug sections.
@@ -454,11 +508,11 @@ do
       EMUL=$targ_emul
     fi
 
-    if test x${enable_64_bit_bfd} = xno; then
+    if test x${have_64_bit_bfd} = xno; then
       . ${srcdir}/../bfd/config.bfd
     fi
 
-    if test x${enable_64_bit_bfd} = xyes; then
+    if test x${have_64_bit_bfd} = xyes; then
       targ_extra_emuls="$targ_extra_emuls $targ64_extra_emuls"
       targ_extra_libpath="$targ_extra_libpath $targ64_extra_libpath"
     fi
@@ -572,12 +626,26 @@ AC_DEFINE_UNQUOTED(DEFAULT_LD_Z_SEPARATE_CODE,
   $ac_default_ld_z_separate_code,
   [Define to 1 if you want to enable -z separate-code in ELF linker by default.])
 
+if test "${ac_default_ld_rosegment}" = unset; then
+  ac_default_ld_rosegment=0
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_LD_ROSEGMENT,
+  $ac_default_ld_rosegment,
+  [Define to 1 if you want to enable --rosegment in the ELF linker by default.])
+
 if test "${ac_default_ld_z_mark_plt}" = unset; then
   ac_default_ld_z_mark_plt=0
 fi
 AC_DEFINE_UNQUOTED(DEFAULT_LD_Z_MARK_PLT,
   $ac_default_ld_z_mark_plt,
   [Define to 1 if you want to enable -z mark-plt in ELF x86-64 linker by default.])
+
+if test "${ac_default_ld_z_memory_seal}" = unset; then
+  ac_default_ld_z_memory_seal=0
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_LD_Z_MEMORY_SEAL,
+  $ac_default_ld_z_memory_seal,
+  [Define to 1 if you want to enable -z memory_seal in ELF linker by default.])
 
 
 AC_DEFINE_UNQUOTED(DEFAULT_LD_WARN_EXECSTACK,
@@ -631,7 +699,7 @@ AC_SUBST(TDIRS)
 AM_SUBST_NOTMAKE(TDIRS)
 
 if test x${all_targets} = xtrue; then
-  if test x${enable_64_bit_bfd} = xyes; then
+  if test x${have_64_bit_bfd} = xyes; then
     EMULATION_OFILES='$(ALL_EMULATIONS) $(ALL_64_EMULATIONS)'
     EMUL_EXTRA_OFILES='$(ALL_EMUL_EXTRA_OFILES) $(ALL_64_EMUL_EXTRA_OFILES)'
   else

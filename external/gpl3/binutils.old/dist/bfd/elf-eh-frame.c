@@ -1,5 +1,5 @@
 /* .eh_frame section optimization.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -345,7 +345,7 @@ next_cie_fde_offset (const struct eh_cie_fde *ent,
 static bool
 skip_cfa_op (bfd_byte **iter, bfd_byte *end, unsigned int encoded_ptr_width)
 {
-  bfd_byte op;
+  bfd_byte op = 0;
   bfd_vma length;
 
   if (!read_byte (iter, end, &op))
@@ -359,6 +359,7 @@ skip_cfa_op (bfd_byte **iter, bfd_byte *end, unsigned int encoded_ptr_width)
     case DW_CFA_remember_state:
     case DW_CFA_restore_state:
     case DW_CFA_GNU_window_save:
+    case DW_CFA_AARCH64_negate_ra_state_with_pc:
       /* No arguments.  */
       return true;
 
@@ -605,7 +606,9 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
       || (sec->flags & SEC_HAS_CONTENTS) == 0
       || sec->sec_info_type != SEC_INFO_TYPE_NONE)
     {
-      /* This file does not contain .eh_frame information.  */
+      /* This file does not contain .eh_frame information or
+	 .eh_frame has already been parsed, as can happen with
+	 --gc-sections.  */
       return;
     }
 
@@ -618,7 +621,7 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 
   /* Read the frame unwind information from abfd.  */
 
-  REQUIRE (bfd_malloc_and_get_section (abfd, sec, &ehbuf));
+  REQUIRE (_bfd_elf_mmap_section_contents (abfd, sec, &ehbuf));
 
   /* If .eh_frame section size doesn't fit into int, we cannot handle
      it (it would need to use 64-bit .eh_frame format anyway).  */
@@ -655,9 +658,9 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
       REQUIRE (skip_bytes (&buf, end, hdr_length - 4));
     }
 
-  sec_info = (struct eh_frame_sec_info *)
-      bfd_zmalloc (sizeof (struct eh_frame_sec_info)
-		   + (num_entries - 1) * sizeof (struct eh_cie_fde));
+  sec_info = bfd_zalloc (abfd,
+			 (sizeof (struct eh_frame_sec_info)
+			  + (num_entries - 1) * sizeof (struct eh_cie_fde)));
   REQUIRE (sec_info);
 
   /* We need to have a "struct cie" for each CIE in this section.  */
@@ -799,6 +802,9 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 		switch (*aug++)
 		  {
 		  case 'B':
+		  case 'G':
+		    if (abfd->arch_info->arch != bfd_arch_aarch64)
+		      goto unrecognized;
 		    break;
 		  case 'L':
 		    REQUIRE (read_byte (&buf, end, &cie->lsda_encoding));
@@ -840,6 +846,7 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 		      REQUIRE (skip_bytes (&buf, end, per_width));
 		    }
 		    break;
+		  unrecognized:
 		  default:
 		    /* Unrecognized augmentation. Better bail out.  */
 		    goto free_no_table;
@@ -1012,8 +1019,8 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
 	  unsigned int cnt;
 	  bfd_byte *p;
 
-	  this_inf->set_loc = (unsigned int *)
-	      bfd_malloc ((set_loc_count + 1) * sizeof (unsigned int));
+	  this_inf->set_loc
+	    = bfd_alloc (abfd, (set_loc_count + 1) * sizeof (unsigned int));
 	  REQUIRE (this_inf->set_loc);
 	  this_inf->set_loc[0] = set_loc_count;
 	  p = insns;
@@ -1050,9 +1057,8 @@ _bfd_elf_parse_eh_frame (bfd *abfd, struct bfd_link_info *info,
     (_("error in %pB(%pA); no .eh_frame_hdr table will be created"),
      abfd, sec);
   hdr_info->u.dwarf.table = false;
-  free (sec_info);
  success:
-  free (ehbuf);
+  _bfd_elf_munmap_section_contents (sec, ehbuf);
   free (local_cies);
 #undef REQUIRE
 }
@@ -1307,7 +1313,7 @@ find_merged_cie (bfd *abfd, struct bfd_link_info *info, asection *sec,
   if (new_cie == NULL)
     {
       /* Keep CIE_INF and record it in the hash table.  */
-      new_cie = (struct cie *) malloc (sizeof (struct cie));
+      new_cie = bfd_malloc (sizeof (*new_cie));
       if (new_cie == NULL)
 	return cie_inf;
 
@@ -1627,6 +1633,10 @@ _bfd_elf_discard_section_eh_frame_hdr (struct bfd_link_info *info)
       htab_delete (hdr_info->u.dwarf.cies);
       hdr_info->u.dwarf.cies = NULL;
     }
+
+  if (info->eh_frame_hdr_type == 0
+      || bfd_link_relocatable (info))
+    return false;
 
   sec = hdr_info->hdr_sec;
   if (sec == NULL)
@@ -2145,7 +2155,6 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 			/* Fall thru */
 		      case bfd_arch_frv:
 		      case bfd_arch_i386:
-		      case bfd_arch_nios2:
 			BFD_ASSERT (htab->hgot != NULL
 				    && ((htab->hgot->root.type
 					 == bfd_link_hash_defined)
@@ -2406,7 +2415,7 @@ write_dwarf_eh_frame_hdr (bfd *abfd, struct bfd_link_info *info)
   struct elf_link_hash_table *htab;
   struct eh_frame_hdr_info *hdr_info;
   asection *sec;
-  bool retval = true;
+  bool retval = false;
 
   htab = elf_hash_table (info);
   hdr_info = &htab->eh_info;
@@ -2422,14 +2431,11 @@ write_dwarf_eh_frame_hdr (bfd *abfd, struct bfd_link_info *info)
     size += 4 + hdr_info->u.dwarf.fde_count * 8;
   contents = (bfd_byte *) bfd_malloc (size);
   if (contents == NULL)
-    return false;
+    goto out;
 
   eh_frame_sec = bfd_get_section_by_name (abfd, ".eh_frame");
   if (eh_frame_sec == NULL)
-    {
-      free (contents);
-      return false;
-    }
+    goto out;
 
   memset (contents, 0, EH_FRAME_HDR_SIZE);
   /* Version.  */
@@ -2453,6 +2459,7 @@ write_dwarf_eh_frame_hdr (bfd *abfd, struct bfd_link_info *info)
     }
   bfd_put_32 (abfd, encoded_eh_frame, contents + 4);
 
+  retval = true;
   if (contents[2] != DW_EH_PE_omit)
     {
       unsigned int i;
@@ -2503,11 +2510,12 @@ write_dwarf_eh_frame_hdr (bfd *abfd, struct bfd_link_info *info)
   /* FIXME: octets_per_byte.  */
   if (!bfd_set_section_contents (abfd, sec->output_section, contents,
 				 (file_ptr) sec->output_offset,
-				 sec->size))
+				 size))
     retval = false;
+ out:
   free (contents);
-
   free (hdr_info->u.dwarf.array);
+  hdr_info->u.dwarf.array = NULL;
   return retval;
 }
 

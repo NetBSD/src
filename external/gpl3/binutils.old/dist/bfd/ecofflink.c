@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -32,7 +32,18 @@
 #include "coff/ecoff.h"
 #include "libcoff.h"
 #include "libecoff.h"
-
+
+/* ECOFF uses two common sections.  One is the usual one, and the
+   other is for small objects.  All the small objects are kept
+   together, and then referenced via the gp pointer, which yields
+   faster assembler code.  This is what we use for the small common
+   section.  */
+static const asymbol ecoff_scom_symbol =
+  GLOBAL_SYM_INIT (SCOMMON, &_bfd_ecoff_scom_section);
+asection _bfd_ecoff_scom_section =
+  BFD_FAKE_SECTION (_bfd_ecoff_scom_section, &ecoff_scom_symbol,
+		    SCOMMON, 0, SEC_IS_COMMON | SEC_SMALL_DATA);
+
 /* Routines to swap auxiliary information in and out.  I am assuming
    that the auxiliary information format is always going to be target
    independent.  */

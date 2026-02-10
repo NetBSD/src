@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -828,16 +828,12 @@ bfd_elf64_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 static bool
 mmix_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct _mmix_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  struct _mmix_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -1500,7 +1496,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  /* Shift this reloc to the end of the relocs to maintain
 		     the r_offset sorted reloc order.  */
 		  relcpy = *rel;
-		  memmove (rel, rel + 1, (char *) relend - (char *) rel);
+		  memmove (rel, rel + 1, (char *) relend - (char *) (rel + 1));
 		  relend[-1] = relcpy;
 
 		  /* Back up one reloc, or else we'd skip the next reloc
@@ -2389,6 +2385,7 @@ _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
     = contents = bfd_alloc (bpo_greg_owner, bpo_gregs_section->size);
   if (contents == NULL)
     return false;
+  bpo_gregs_section->alloced = 1;
 
   /* Sanity check: If these numbers mismatch, some relocation has not been
      accounted for and the rest of gregdata is probably inconsistent.
@@ -2865,6 +2862,7 @@ mmix_elf_relax_section (bfd *abfd,
 
 #define ELF_ARCH		bfd_arch_mmix
 #define ELF_MACHINE_CODE	EM_MMIX
+#define ELF_TARGET_ID		MMIX_ELF_DATA
 
 /* According to mmix-doc page 36 (paragraph 45), this should be (1LL << 48LL).
    However, that's too much for something somewhere in the linker part of

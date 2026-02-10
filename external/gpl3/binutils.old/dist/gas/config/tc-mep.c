@@ -1,5 +1,5 @@
 /* tc-mep.c -- Assembler for the Toshiba Media Processor.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -139,7 +139,7 @@ static struct mep_hi_fixup * mep_hi_fixup_list;
 #define OPTION_NODSP		(OPTION_MD_BASE + 32)
 #define OPTION_LIBRARY		(OPTION_MD_BASE + 33)
 
-struct option md_longopts[] = {
+const struct option md_longopts[] = {
   { "EB",          no_argument, NULL, OPTION_EB},
   { "EL",          no_argument, NULL, OPTION_EL},
   { "mconfig",     required_argument, NULL, OPTION_CONFIG},
@@ -170,7 +170,7 @@ struct option md_longopts[] = {
   { "mno-dsp",     no_argument, NULL, OPTION_NODSP},
   { "mlibrary",    no_argument, NULL, OPTION_LIBRARY},
   { NULL, 0, NULL, 0 } };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Options which default to on/off together.  See the comment where
    this is used for details.  Note that CP and CP64 are not in this
@@ -189,7 +189,7 @@ size_t md_longopts_size = sizeof (md_longopts);
 	| (1 << CGEN_INSN_OPTIONAL_UCI_INSN) \
 	| (1 << CGEN_INSN_OPTIONAL_DSP_INSN) )
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 static int optbits = 0;
 static int optbitset = 0;
 
@@ -1381,7 +1381,7 @@ valueT
 md_section_align (segT segment, valueT size)
 {
   int align = bfd_section_alignment (segment);
-  return ((size + (1 << align) - 1) & -(1 << align));
+  return (size + ((valueT) 1 << align) - 1) & -((valueT) 1 << align);
 }
 
 
@@ -1807,7 +1807,7 @@ mep_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 long
 md_pcrel_from_section (fixS *fixP, segT sec)
 {
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
 	  || S_IS_WEAK (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
@@ -2051,10 +2051,10 @@ mep_fix_adjustable (fixS *fixP)
 {
   bfd_reloc_code_real_type reloc_type;
 
-  if ((int) fixP->fx_r_type >= (int) BFD_RELOC_UNUSED)
+  if (fixP->fx_r_type >= BFD_RELOC_UNUSED)
     {
       const CGEN_INSN *insn = NULL;
-      int opindex = (int) fixP->fx_r_type - (int) BFD_RELOC_UNUSED;
+      int opindex = fixP->fx_r_type - BFD_RELOC_UNUSED;
       const CGEN_OPERAND *operand
 	= cgen_operand_lookup_by_num(gas_cgen_cpu_desc, opindex);
       reloc_type = md_cgen_lookup_reloc (insn, operand, fixP);

@@ -1,5 +1,5 @@
 /* elfcomm.h -- include file of common code for ELF format file.
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    Originally developed by Eric Youngdale <eric@andante.jic.com>
    Modifications by Nick Clifton <nickc@redhat.com>
@@ -28,6 +28,7 @@
 
 extern void error (const char *, ...) ATTRIBUTE_PRINTF_1;
 extern void warn (const char *, ...) ATTRIBUTE_PRINTF_1;
+extern void inform (const char *, ...) ATTRIBUTE_PRINTF_1;
 
 extern void (*byte_put) (unsigned char *, uint64_t, unsigned int);
 extern void byte_put_little_endian (unsigned char *, uint64_t, unsigned int);

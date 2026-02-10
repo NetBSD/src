@@ -1,5 +1,5 @@
 /* vms.c -- BFD back-end for EVAX (openVMS/Alpha) files.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    Initial version written by Klaus Kaempf (kkaempf@rmi.de)
    Major rewrite by Adacore.
@@ -2790,7 +2790,6 @@ alpha_vms_free_private (bfd *abfd)
 static bfd_cleanup
 alpha_vms_object_p (bfd *abfd)
 {
-  void *tdata_save = abfd->tdata.any;
   unsigned int test_len;
   unsigned char *buf;
 
@@ -2798,10 +2797,7 @@ alpha_vms_object_p (bfd *abfd)
 
   /* Allocate alpha-vms specific data.  */
   if (!vms_initialize (abfd))
-    {
-      abfd->tdata.any = tdata_save;
-      return NULL;
-    }
+    return NULL;
 
   if (bfd_seek (abfd, 0, SEEK_SET))
     goto error_ret;
@@ -2913,9 +2909,7 @@ alpha_vms_object_p (bfd *abfd)
 
  error_ret:
   alpha_vms_free_private (abfd);
-  if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-    bfd_release (abfd, abfd->tdata.any);
-  abfd->tdata.any = tdata_save;
+  bfd_release (abfd, abfd->tdata.any);
   return NULL;
 }
 
@@ -5592,8 +5586,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	      {
 		if (PRIV (sections) == NULL || cur_psidx >= (int) PRIV (section_count))
 		  goto fail;
-		reloc->sym_ptr_ptr =
-		  PRIV (sections)[cur_psidx]->symbol_ptr_ptr;
+		reloc->sym_ptr_ptr = &PRIV (sections)[cur_psidx]->symbol;
 	      }
 	    else
 	      reloc->sym_ptr_ptr = NULL;
@@ -6110,20 +6103,23 @@ static void
 evax_bfd_print_emh (FILE *file, unsigned char *rec, unsigned int rec_len)
 {
   struct vms_emh_common *emh = (struct vms_emh_common *)rec;
-  unsigned int subtype;
+  int subtype = -1;
   int extra;
 
-  subtype = (unsigned) bfd_getl16 (emh->subtyp);
+  if (rec_len >= sizeof (*emh))
+    subtype = bfd_getl16 (emh->subtyp);
 
   /* xgettext:c-format */
-  fprintf (file, _("  EMH %u (len=%u): "), subtype, rec_len);
+  fprintf (file, _("  EMH %d (len=%u): "), subtype, rec_len);
 
   /* PR 21618: Check for invalid lengths.  */
-  if (rec_len < sizeof (* emh))
+  if (rec_len < sizeof (*emh))
     {
-      fprintf (file, _("   Error: The length is less than the length of an EMH record\n"));
+      fprintf (file, _("   Error: %s min length is %u\n"),
+	       "EMH", (unsigned) sizeof (*emh));
       return;
     }
+
   extra = rec_len - sizeof (struct vms_emh_common);
 
   switch (subtype)
@@ -6138,7 +6134,8 @@ evax_bfd_print_emh (FILE *file, unsigned char *rec, unsigned int rec_len)
 	/* PR 21840: Check for invalid lengths.  */
 	if (rec_len < sizeof (* mhd))
 	  {
-	    fprintf (file, _("   Error: The record length is less than the size of an EMH_MHD record\n"));
+	    fprintf (file, _("   Error: %s min length is %u\n"),
+		     "EMH_MHD", (unsigned) sizeof (*mhd));
 	    return;
 	  }
 	fprintf (file, _("Module header\n"));
@@ -6214,9 +6211,10 @@ evax_bfd_print_eeom (FILE *file, unsigned char *rec, unsigned int rec_len)
   fprintf (file, _("  EEOM (len=%u):\n"), rec_len);
 
   /* PR 21618: Check for invalid lengths.  */
-  if (rec_len < sizeof (* eeom))
+  if (rec_len < 10)
     {
-      fprintf (file, _("   Error: The length is less than the length of an EEOM record\n"));
+      fprintf (file, _("   Error: %s min length is %u\n"),
+	       "EEOM", 10);
       return;
     }
 
@@ -6224,7 +6222,8 @@ evax_bfd_print_eeom (FILE *file, unsigned char *rec, unsigned int rec_len)
 	   (unsigned)bfd_getl32 (eeom->total_lps));
   fprintf (file, _("   completion code: %u\n"),
 	   (unsigned)bfd_getl16 (eeom->comcod));
-  if (rec_len > 10)
+
+  if (rec_len >= sizeof (*eeom))
     {
       fprintf (file, _("   transfer addr flags: 0x%02x\n"), eeom->tfrflg);
       fprintf (file, _("   transfer addr psect: %u\n"),
@@ -7505,6 +7504,8 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
       /* xgettext:c-format */
       fprintf (file, _(" type: %3u, len: %3u (at 0x%08x): "),
 	       type, len, off);
+      if (len > dst_size)
+	len = dst_size;
       if (len < sizeof (dsth))
 	{
 	  fputc ('\n', file);
@@ -7713,16 +7714,19 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
 	case DST__K_RECBEG:
 	  {
 	    struct vms_dst_recbeg *recbeg = (void *)buf;
-	    unsigned char *name = buf + sizeof (*recbeg);
 
 	    if (len > sizeof (*recbeg))
 	      {
+		unsigned char *name = buf + sizeof (*recbeg);
 		int nlen = len - sizeof (*recbeg) - 1;
+
 		if (name[0] < nlen)
 		  nlen = name[0];
 		fprintf (file, _("recbeg: name: %.*s\n"), nlen, name + 1);
+
 		evax_bfd_print_valspec (buf, len, 4, file);
-		len -= 1 + nlen;
+
+		len -= sizeof (*recbeg) + 1 + nlen;
 		if (len >= 4)
 		  fprintf (file, _("    len: %u bits\n"),
 			   (unsigned) bfd_getl32 (name + 1 + nlen));
@@ -8319,18 +8323,26 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	}
       /* xgettext:c-format */
       fprintf (file, _("Image identification: (major: %u, minor: %u)\n"),
-	       (unsigned)bfd_getl32 (eihi.majorid),
-	       (unsigned)bfd_getl32 (eihi.minorid));
-      fprintf (file, _(" image name       : %.*s\n"),
-	       eihi.imgnam[0], eihi.imgnam + 1);
+	       (unsigned) bfd_getl32 (eihi.majorid),
+	       (unsigned) bfd_getl32 (eihi.minorid));
+      unsigned int nlen = eihi.imgnam[0];
+      if (nlen > sizeof (eihi.imgnam) - 1)
+	nlen = sizeof (eihi.imgnam) - 1;
+      fprintf (file, _(" image name       : %.*s\n"), nlen, eihi.imgnam + 1);
       fprintf (file, _(" link time        : %s\n"),
 	       vms_time_to_str (eihi.linktime));
-      fprintf (file, _(" image ident      : %.*s\n"),
-	       eihi.imgid[0], eihi.imgid + 1);
-      fprintf (file, _(" linker ident     : %.*s\n"),
-	       eihi.linkid[0], eihi.linkid + 1);
-      fprintf (file, _(" image build ident: %.*s\n"),
-	       eihi.imgbid[0], eihi.imgbid + 1);
+      nlen = eihi.imgid[0];
+      if (nlen > sizeof (eihi.imgid) - 1)
+	nlen = sizeof (eihi.imgid) - 1;
+      fprintf (file, _(" image ident      : %.*s\n"), nlen, eihi.imgid + 1);
+      nlen = eihi.linkid[0];
+      if (nlen > sizeof (eihi.linkid) - 1)
+	nlen = sizeof (eihi.linkid) - 1;
+      fprintf (file, _(" linker ident     : %.*s\n"), nlen, eihi.linkid + 1);
+      nlen = eihi.imgbid[0];
+      if (nlen > sizeof (eihi.imgbid) -1 )
+	nlen = sizeof (eihi.imgbid) - 1;
+      fprintf (file, _(" image build ident: %.*s\n"), nlen, eihi.imgbid + 1);
     }
   if (eihs_off != 0)
     {
@@ -8463,10 +8475,15 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	}
       fputs (_(")\n"), file);
       if (val & EISD__M_GBL)
-	/* xgettext:c-format */
-	fprintf (file, _(" ident: 0x%08x, name: %.*s\n"),
-		 (unsigned)bfd_getl32 (eisd.ident),
-		 eisd.gblnam[0], eisd.gblnam + 1);
+	{
+	  unsigned int nlen = eisd.gblnam[0];
+	  if (nlen > sizeof (eisd.gblnam) - 1)
+	    nlen = sizeof (eisd.gblnam) - 1;
+	  /* xgettext:c-format */
+	  fprintf (file, _(" ident: 0x%08x, name: %.*s\n"),
+		   (unsigned) bfd_getl32 (eisd.ident),
+		   nlen, eisd.gblnam + 1);
+	}
       eisd_off += len;
     }
 
@@ -8617,11 +8634,14 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	       j++, shlstoff += sizeof (struct vms_shl))
 	    {
 	      struct vms_shl *shl = (struct vms_shl *) (buf + shlstoff);
+	      unsigned int nlen = shl->imgnam[0];
+	      if (nlen > sizeof (shl->imgnam) - 1)
+		nlen = sizeof (shl->imgnam) - 1;
 	      fprintf (file,
 		       /* xgettext:c-format */
 		       _("  %u: size: %u, flags: 0x%02x, name: %.*s\n"),
 		       j, shl->size, shl->flags,
-		       shl->imgnam[0], shl->imgnam + 1);
+		       nlen, shl->imgnam + 1);
 	    }
 	}
       if (qrelfixoff != 0)
@@ -9260,6 +9280,7 @@ alpha_vms_build_fixups (struct bfd_link_info *info)
 
   sec = alpha_vms_link_hash (info)->fixup;
   sec->contents = content;
+  sec->alloced = 1;
   sec->size = sz;
 
   eiaf = (struct vms_eiaf *)content;
@@ -9665,6 +9686,7 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	  o->contents = bfd_alloc (abfd, o->size);
 	  if (o->contents == NULL)
 	    return false;
+	  o->alloced = 1;
 	}
       if (o->flags & SEC_LOAD)
 	{
@@ -9813,6 +9835,7 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	      if (contents == NULL)
 		return false;
 	      dmt->contents = contents;
+	      dmt->alloced = 1;
 	      dmt->size = off;
 	    }
 	  else
@@ -9834,12 +9857,15 @@ alpha_vms_get_section_contents (bfd *abfd, asection *section,
 				void *buf, file_ptr offset,
 				bfd_size_type count)
 {
-  asection *sec;
-
-  /* Image are easy.  */
-  if (bfd_get_file_flags (abfd) & (EXEC_P | DYNAMIC))
+  /* Handle image sections.  */
+  if (section->filepos != 0
+      || (section->flags & SEC_HAS_CONTENTS) == 0)
     return _bfd_generic_get_section_contents (abfd, section,
 					      buf, offset, count);
+
+  /* A section with a zero filepos implies the section has no direct
+     file backing.  Its contents must be calculated by processing ETIR
+     records.  */
 
   /* Safety check.  */
   if (offset + count < count
@@ -9849,33 +9875,33 @@ alpha_vms_get_section_contents (bfd *abfd, asection *section,
       return false;
     }
 
-  /* If the section is already in memory, just copy it.  */
-  if (section->flags & SEC_IN_MEMORY)
-    {
-      BFD_ASSERT (section->contents != NULL);
-      memcpy (buf, section->contents + offset, count);
-      return true;
-    }
   if (section->size == 0)
     return true;
 
-  /* Alloc in memory and read ETIRs.  */
-  for (sec = abfd->sections; sec; sec = sec->next)
+  /* If we haven't yet read ETIR/EDBG/ETBT records, do so.  */
+  if ((section->flags & SEC_IN_MEMORY) == 0)
     {
-      BFD_ASSERT (sec->contents == NULL);
-
-      if (sec->size != 0 && (sec->flags & SEC_HAS_CONTENTS))
+      /* Alloc memory and read ETIRs.  */
+      for (asection *sec = abfd->sections; sec; sec = sec->next)
 	{
-	  sec->contents = bfd_alloc (abfd, sec->size);
-	  if (sec->contents == NULL)
-	    return false;
+	  if (sec->size != 0
+	      && sec->filepos == 0
+	      && (sec->flags & SEC_HAS_CONTENTS) != 0)
+	    {
+	      BFD_ASSERT (sec->contents == NULL);
+
+	      sec->contents = bfd_zalloc (abfd, sec->size);
+	      sec->flags |= SEC_IN_MEMORY;
+	      if (sec->contents == NULL)
+		return false;
+	      sec->alloced = 1;
+	    }
 	}
+      if (!alpha_vms_read_sections_content (abfd, NULL))
+	return false;
     }
-  if (!alpha_vms_read_sections_content (abfd, NULL))
-    return false;
-  for (sec = abfd->sections; sec; sec = sec->next)
-    if (sec->contents)
-      sec->flags |= SEC_IN_MEMORY;
+
+  BFD_ASSERT (section->contents != NULL);
   memcpy (buf, section->contents + offset, count);
   return true;
 }
@@ -10089,6 +10115,7 @@ _bfd_vms_set_section_contents (bfd * abfd,
       section->contents = bfd_alloc (abfd, section->size);
       if (section->contents == NULL)
 	return false;
+      section->alloced = 1;
 
       memcpy (section->contents + offset, location, (size_t) count);
     }
@@ -10158,7 +10185,6 @@ bfd_vms_get_data (bfd *abfd)
 #define alpha_vms_bfd_free_cached_info	   _bfd_bool_bfd_true
 #define alpha_vms_new_section_hook	   vms_new_section_hook
 #define alpha_vms_set_section_contents	   _bfd_vms_set_section_contents
-#define alpha_vms_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 
 #define alpha_vms_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents

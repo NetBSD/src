@@ -1,5 +1,5 @@
 /* BFD back-end for ARM COFF files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1809,6 +1809,7 @@ bfd_arm_allocate_interworking_sections (struct bfd_link_info * info)
 
       s->size = globals->arm_glue_size;
       s->contents = foo;
+      s->alloced = 1;
     }
 
   if (globals->thumb_glue_size != 0)
@@ -1824,6 +1825,7 @@ bfd_arm_allocate_interworking_sections (struct bfd_link_info * info)
 
       s->size = globals->thumb_glue_size;
       s->contents = foo;
+      s->alloced = 1;
     }
 
   return true;
@@ -1874,8 +1876,8 @@ record_arm_to_thumb_glue (struct bfd_link_info *	info,
      it.  */
   bh = NULL;
   val = globals->arm_glue_size + 1;
-  bfd_coff_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
-				BSF_GLOBAL, s, val, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
+				    BSF_GLOBAL, s, val, NULL, true, false, &bh);
 
   free (tmp_name);
 
@@ -1927,8 +1929,8 @@ record_thumb_to_arm_glue (struct bfd_link_info *	info,
 
   bh = NULL;
   val = globals->thumb_glue_size + 1;
-  bfd_coff_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
-				BSF_GLOBAL, s, val, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
+				    BSF_GLOBAL, s, val, NULL, true, false, &bh);
 
   /* If we mark it 'thumb', the disassembler will do a better job.  */
   myh = (struct coff_link_hash_entry *) bh;
@@ -1950,8 +1952,8 @@ record_thumb_to_arm_glue (struct bfd_link_info *	info,
 
   bh = NULL;
   val = globals->thumb_glue_size + (globals->support_old_code ? 8 : 4);
-  bfd_coff_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
-				BSF_LOCAL, s, val, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
+				    BSF_LOCAL, s, val, NULL, true, false, &bh);
 
   free (tmp_name);
 

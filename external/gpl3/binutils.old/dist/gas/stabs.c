@@ -1,5 +1,5 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -163,7 +163,7 @@ aout_process_stab (int what, const char *string, int type, int other, int desc)
       /* .stabd sets the name to NULL.  Why?  */
       S_SET_NAME (symbol, NULL);
       symbol_set_frag (symbol, frag_now);
-      S_SET_VALUE (symbol, (valueT) frag_now_fix ());
+      S_SET_VALUE (symbol, frag_now_fix ());
     }
 
   symbol_append (symbol, symbol_lastP, &symbol_rootP, &symbol_lastP);
@@ -323,7 +323,7 @@ s_stab_generic (int what,
       switch (type)
 	{
 	case N_SLINE:
-	  listing_source_line ((unsigned int) desc);
+	  listing_source_line (desc);
 	  break;
 	case N_SO:
 	case N_SOL:
@@ -358,10 +358,10 @@ s_stab_generic (int what,
       /* At least for now, stabs in a special stab section are always
 	 output as 12 byte blocks of information.  */
       p = frag_more (8);
-      md_number_to_chars (p, (valueT) stroff, 4);
-      md_number_to_chars (p + 4, (valueT) type, 1);
-      md_number_to_chars (p + 5, (valueT) other, 1);
-      md_number_to_chars (p + 6, (valueT) desc, 2);
+      md_number_to_chars (p, stroff, 4);
+      md_number_to_chars (p + 4, type, 1);
+      md_number_to_chars (p + 5, other, 1);
+      md_number_to_chars (p + 6, desc, 2);
 
       if (what == 's' || what == 'n')
 	{
@@ -453,8 +453,8 @@ s_desc (int ignore ATTRIBUTE_UNUSED)
 
   c = get_symbol_name (&name);
   p = input_line_pointer;
-  *p = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
       *p = 0;
@@ -644,10 +644,8 @@ stabs_generate_asm_func (const char *funcname, const char *startlabname)
     }
 
   as_where (&lineno);
-  if (asprintf (&buf, "\"%s:F1\",%d,0,%d,%s",
-		funcname, N_FUN, lineno + 1, startlabname) == -1)
-    as_fatal ("%s", xstrerror (errno));
-
+  buf = xasprintf ("\"%s:F1\",%d,0,%d,%s",
+		   funcname, N_FUN, lineno + 1, startlabname);
   temp_ilp (buf);
   s_stab ('s');
   restore_ilp ();
@@ -670,9 +668,7 @@ stabs_generate_asm_endfunc (const char *funcname ATTRIBUTE_UNUSED,
   ++endfunc_label_count;
   colon (sym);
 
-  if (asprintf (&buf, "\"\",%d,0,0,%s-%s", N_FUN, sym, startlabname) == -1)
-    as_fatal ("%s", xstrerror (errno));
-
+  buf = xasprintf ("\"\",%d,0,0,%s-%s", N_FUN, sym, startlabname);
   temp_ilp (buf);
   s_stab ('s');
   restore_ilp ();

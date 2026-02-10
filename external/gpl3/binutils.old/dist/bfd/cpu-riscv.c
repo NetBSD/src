@@ -1,5 +1,5 @@
 /* BFD backend for RISC-V
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -118,6 +118,7 @@ const struct riscv_spec riscv_priv_specs[] =
   {"1.10",  PRIV_SPEC_CLASS_1P10},
   {"1.11",  PRIV_SPEC_CLASS_1P11},
   {"1.12",  PRIV_SPEC_CLASS_1P12},
+  {"1.13",  PRIV_SPEC_CLASS_1P13},
 };
 
 /* Get the corresponding CSR version class by giving privilege

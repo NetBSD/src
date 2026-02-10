@@ -1,5 +1,5 @@
 /* DWARF 2 support.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted from gdb/dwarf2read.c by Gavin Koch of Cygnus Solutions
    (gavin@cygnus.com).
@@ -292,12 +292,6 @@ struct dwarf2_debug
   /* Per-file stuff.  */
   struct dwarf2_debug_file f, alt;
 
-  /* Pointer to the original bfd for which debug was loaded.  This is what
-     we use to compare and so check that the cached debug data is still
-     valid - it saves having to possibly dereference the gnu_debuglink each
-     time.  */
-  bfd *orig_bfd;
-
   /* If the most recent call to bfd_find_nearest_line was given an
      address in an inlined function, preserve a pointer into the
      calling chain for subsequent calls to bfd_find_inliner_info to
@@ -314,6 +308,9 @@ struct dwarf2_debug
 
   /* Array of sections with adjusted VMA.  */
   struct adjusted_section *adjusted_sections;
+
+  /* Used to validate the cached debug data.  */
+  unsigned int orig_bfd_id;
 
   /* Number of times find_line is called.  This is used in
      the heuristic for enabling the info hash tables.  */
@@ -716,7 +713,7 @@ read_section (bfd *abfd,
 	  return false;
 	}
 
-      if (_bfd_section_size_insane (abfd, msec))
+      if (bfd_section_size_insane (abfd, msec))
 	{
 	  /* PR 26946 */
 	  _bfd_error_handler (_("DWARF error: section %s is too big"),
@@ -1725,12 +1722,17 @@ mangle_style (int lang)
     {
     case DW_LANG_Ada83:
     case DW_LANG_Ada95:
+    case DW_LANG_Ada2005:
+    case DW_LANG_Ada2012:
       return DMGL_GNAT;
 
     case DW_LANG_C_plus_plus:
     case DW_LANG_C_plus_plus_03:
     case DW_LANG_C_plus_plus_11:
     case DW_LANG_C_plus_plus_14:
+    case DW_LANG_C_plus_plus_17:
+    case DW_LANG_C_plus_plus_20:
+    case DW_LANG_C_plus_plus_23:
       return DMGL_GNU_V3;
 
     case DW_LANG_Java:
@@ -1751,12 +1753,17 @@ mangle_style (int lang)
     case DW_LANG_Cobol74:
     case DW_LANG_Cobol85:
     case DW_LANG_Fortran77:
+    case DW_LANG_Fortran18:
+    case DW_LANG_Fortran23:
     case DW_LANG_Pascal83:
     case DW_LANG_PLI:
     case DW_LANG_C99:
     case DW_LANG_UPC:
     case DW_LANG_C11:
+    case DW_LANG_C17:
+    case DW_LANG_C23:
     case DW_LANG_Mips_Assembler:
+    case DW_LANG_Assembly:
     case DW_LANG_Upc:
     case DW_LANG_HP_Basic91:
     case DW_LANG_HP_IMacro:
@@ -2151,6 +2158,7 @@ insert_arange_in_trie (bfd *abfd,
   bfd_vma clamped_low_pc, clamped_high_pc;
   int ch, from_ch, to_ch;
   bool is_full_leaf = false;
+  bool splitting_leaf_will_help = false;
 
   /* See if we can extend any of the existing ranges.  This merging
      isn't perfect (if merging opens up the possibility of merging two existing
@@ -2176,11 +2184,31 @@ insert_arange_in_trie (bfd *abfd,
 	}
 
       is_full_leaf = leaf->num_stored_in_leaf == trie->num_room_in_leaf;
+
+      if (is_full_leaf && trie_pc_bits < VMA_BITS)
+	{
+	  /* See if we have at least one leaf that does _not_ cover the
+	     entire bucket, so that splitting will actually reduce the number
+	     of elements in at least one of the child nodes.  (For simplicity,
+	     we don't test the range we're inserting, but it will be counted
+	     on the next insertion where we're full, if any.)   */
+	  bfd_vma bucket_high_pc =
+	    trie_pc + ((bfd_vma) -1 >> trie_pc_bits);  /* Inclusive.  */
+	  for (i = 0; i < leaf->num_stored_in_leaf; ++i)
+	    {
+	      if (leaf->ranges[i].low_pc > trie_pc
+		  || leaf->ranges[i].high_pc <= bucket_high_pc)
+		{
+		  splitting_leaf_will_help = true;
+		  break;
+		}
+	    }
+	}
     }
 
   /* If we're a leaf with no more room and we're _not_ at the bottom,
      convert to an interior node.  */
-  if (is_full_leaf && trie_pc_bits < VMA_BITS)
+  if (is_full_leaf && splitting_leaf_will_help)
     {
       const struct trie_leaf *leaf = (struct trie_leaf *) trie;
       unsigned int i;
@@ -2202,8 +2230,9 @@ insert_arange_in_trie (bfd *abfd,
 	}
     }
 
-  /* If we're a leaf with no more room and we _are_ at the bottom,
-     we have no choice but to just make it larger. */
+  /* If we're a leaf with no more room and we _are_ at the bottom
+     (or splitting it won't help), we have no choice but to just
+     make it larger.  */
   if (is_full_leaf)
     {
       const struct trie_leaf *leaf = (struct trie_leaf *) trie;
@@ -2894,10 +2923,9 @@ decode_line_info (struct comp_unit *unit)
 
       if (table->num_files)
 	{
-	  if (table->use_dir_and_file_0)
-	    filename = concat_filename (table, 0);
-	  else
-	    filename = concat_filename (table, 1);
+	  /* PR 30783: Always start with a file index of 1, even
+	     for DWARF-5.  */
+	  filename = concat_filename (table, 1);
 	}
 
       /* Decode the table.  */
@@ -5380,7 +5408,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 
   if (stash != NULL)
     {
-      if (stash->orig_bfd == abfd
+      if (stash->orig_bfd_id == abfd->id
 	  && section_vma_same (abfd, stash))
 	{
 	  /* Check that we did previously find some debug information
@@ -5404,7 +5432,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	return false;
       *pinfo = stash;
     }
-  stash->orig_bfd = abfd;
+  stash->orig_bfd_id = abfd->id;
   stash->debug_sections = debug_sections;
   stash->f.syms = symbols;
   if (!save_section_vma (abfd, stash))
@@ -5485,7 +5513,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
   if (! find_debug_info (debug_bfd, debug_sections, msec))
     {
       /* Case 1: only one info section.  */
-      total_size = msec->size;
+      total_size = bfd_get_section_limit_octets (debug_bfd, msec);
       if (! read_section (debug_bfd, &stash->debug_sections[debug_info],
 			  symbols, 0,
 			  &stash->f.dwarf_info_buffer, &total_size))
@@ -5498,15 +5526,16 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	   msec;
 	   msec = find_debug_info (debug_bfd, debug_sections, msec))
 	{
-	  if (_bfd_section_size_insane (debug_bfd, msec))
+	  if (bfd_section_size_insane (debug_bfd, msec))
 	    goto restore_vma;
+	  bfd_size_type readsz = bfd_get_section_limit_octets (debug_bfd, msec);
 	  /* Catch PR25070 testcase overflowing size calculation here.  */
-	  if (total_size + msec->size < total_size)
+	  if (total_size + readsz < total_size)
 	    {
 	      bfd_set_error (bfd_error_no_memory);
 	      goto restore_vma;
 	    }
-	  total_size += msec->size;
+	  total_size += readsz;
 	}
 
       stash->f.dwarf_info_buffer = (bfd_byte *) bfd_malloc (total_size);
@@ -5518,10 +5547,8 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	   msec;
 	   msec = find_debug_info (debug_bfd, debug_sections, msec))
 	{
-	  bfd_size_type size;
-
-	  size = msec->size;
-	  if (size == 0)
+	  bfd_size_type readsz = bfd_get_section_limit_octets (debug_bfd, msec);
+	  if (readsz == 0)
 	    continue;
 
 	  if (!(bfd_simple_get_relocated_section_contents
@@ -5529,7 +5556,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 		 symbols)))
 	    goto restore_vma;
 
-	  total_size += size;
+	  total_size += readsz;
 	}
     }
 
@@ -6127,6 +6154,8 @@ _bfd_dwarf2_cleanup_debug_info (bfd *abfd, void **pinfo)
       free (file->dwarf_line_buffer);
       free (file->dwarf_abbrev_buffer);
       free (file->dwarf_info_buffer);
+      free (file->dwarf_addr_buffer);
+      free (file->dwarf_str_offsets_buffer);
       if (file == &stash->alt)
 	break;
       file = &stash->alt;

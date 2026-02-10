@@ -1,3 +1,53 @@
+2025-07-13  Nick Clifton  <nickc@redhat.com>
+
+	* 2.45 Branch point.
+
+2025-01-19  Nick Clifton  <nickc@redhat.com>
+
+	* 2.44 Branch point.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
+2024-02-19 Will Hawkins  <hawkinsw@obs.cr>
+
+	* config/tc-bpf.c (parse_expression): Change switch to if so that
+	error condition is handled.
+	* testsuite/gas/bpf/indcall-badoperand.d: New test.
+	* testsuite/gas/bpf/indcall-badoperand.l: Likewise.
+	* testsuite/gas/bpf/indcall-badoperand.s: Likewise.
+	* testsuite/gas/bpf/bpf.exp: Invoke new test.
+
+2024-02-19  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* config/tc-bpf.c (md_assemble): Fix to take into account that
+	parse_expression can return NULL.
+	(PARSE_ERROR): Avoid passing invalid length to parse_error.
+
+2024-02-15 Will Hawkins  <hawkinsw@obs.cr>
+
+	* testsuite/gas/bpf/indcall-1-pseudoc.d: Do not select xbpf cpu
+	version.
+	* testsuite/gas/bpf/indcall-1.d: Likewise.
+
+2024-02-14  Yuriy Kolerov  <ykolerov@synopsys.com>
+
+	* config/tc-arc.c (is_br_jmp_insn_p): Add check against "DBNZ".
+
+2024-01-29  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* doc/c-bpf.texi (BPF Instructions): There is no indirect 64-bit
+	load instruction.
+	(BPF Instructions): There is no absolute 64-bit load instruction.
+	* testsuite/gas/bpf/mem.s: Update test accordingly.
+	* testsuite/gas/bpf/mem-be-pseudoc.d: Likewise.
+	* testsuite/gas/bpf/mem-be.d: Likewise.
+	* testsuite/gas/bpf/mem-pseudoc.d: Likewise.
+	* testsuite/gas/bpf/mem-pseudoc.s: Likewise.
+	* testsuite/gas/bpf/mem.d: Likewise.
+	* testsuite/gas/bpf/mem.s: Likewise.
+
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
 	* configure: Regenerate.
@@ -3356,7 +3406,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
