@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.29 2026/02/03 10:23:41 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.30 2026/02/10 09:50:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.29 2026/02/03 10:23:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.30 2026/02/10 09:50:23 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -91,7 +91,7 @@ struct	hyperfb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_fbflag;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -102,7 +102,6 @@ struct	hyperfb_softc {
 	int sc_hot_x, sc_hot_y, sc_enabled;
 	int sc_video_on;
 	/* glyphcache etc. */
-	void (*sc_putchar)(void *, int, int, u_int, long);
 	glyphcache sc_gc;
 };
 
@@ -237,6 +236,15 @@ hyperfb_both(struct hyperfb_softc *sc, uint32_t mode)
 }
 
 static inline void
+hyperfb_fbflag(struct hyperfb_softc *sc, int flag)
+{
+	if (flag != 0) flag = 1;
+	if (sc->sc_fbflag == flag) return;
+	sc->sc_fbflag = flag;
+	hyperfb_write1(sc, NGLE_CONTROL_FB, flag);
+}
+
+static inline void
 hyperfb_setup_fb(struct hyperfb_softc *sc)
 {
 
@@ -257,7 +265,7 @@ hyperfb_setup_fb(struct hyperfb_softc *sc)
 	hyperfb_write4(sc, NGLE_IBO, 0x83000300);
 	//IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, 1, 0, 0);
 	hyperfb_wait(sc);
-	hyperfb_write1(sc, NGLE_CONTROL_FB, 1);
+	hyperfb_fbflag(sc, 1);
 }
 
 static inline void
@@ -274,7 +282,7 @@ hyperfb_setup_fb24(struct hyperfb_softc *sc)
 	hyperfb_write4(sc, NGLE_IBO, 0x83000300);
 	//IBOvals(RopSrc,0,BitmapExtent08,0,DataDynamic,1,0,0)
 	hyperfb_wait(sc);
-	hyperfb_write1(sc, NGLE_CONTROL_FB, 1);
+	hyperfb_fbflag(sc, 1);
 }
 
 int
@@ -530,7 +538,6 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 
-	sc->sc_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.copyrows = hyperfb_copyrows;
 	ri->ri_ops.copycols = hyperfb_copycols;
 	ri->ri_ops.eraserows = hyperfb_eraserows;
@@ -995,10 +1002,11 @@ hyperfb_fillmode(struct hyperfb_softc *sc)
 {
 	hyperfb_dba(sc,
 	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINovly, 0));
-	hyperfb_wait_fifo(sc, 3);
+	hyperfb_wait_fifo(sc, 4);
 	hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 	hyperfb_write4(sc, NGLE_IBO,
 	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0, 0, 0));
+	hyperfb_fbflag(sc, 0);
 }
 
 static void
@@ -1038,7 +1046,7 @@ hyperfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	} else
 		hyperfb_dba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
 	hyperfb_wait_fifo(sc, 6);
-	hyperfb_write1(sc, NGLE_CONTROL_FB, 0);
+	hyperfb_fbflag(sc, 0);
 	hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
 	hyperfb_write4(sc, NGLE_IBO, ((rop << 8) & 0xf00) | 0x23000000);
 	/* IBOvals(rop, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0) */
@@ -1184,6 +1192,10 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct hyperfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE;
 	uint32_t bg;
+	uint32_t latch = 0, bg8, fg8, pixel, mask;
+	int i, line, r, g, b, aval;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint8_t *data8;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1212,8 +1224,72 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
-	hyperfb_setup_fb(sc);
-	sc->sc_putchar(cookie, row, col, c, attr);
+	hyperfb_dba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINovly, 0));
+	hyperfb_wait_fifo(sc, 6);
+	hyperfb_fbflag(sc, 0);
+	hyperfb_write4(sc, NGLE_PLANEMASK, 0xff);
+	hyperfb_write4(sc, NGLE_IBO,
+	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+
+	/*
+	 * This is for masking off pixels at the end of a line if it's not a
+	 * multiple of 4. Would be nice if we knew where the clipping registers
+	 * live...
+	 */ 
+	mask = 0xf0000000 << (4 - (wi & 3));
+
+	data8 = WSFONT_GLYPH(c, font);
+
+	for (line = 0; line < he; line++) {
+		/* setup BINC write */
+		hyperfb_wait_fifo(sc, wi / 2);
+		hyperfb_write4(sc, NGLE_BINC_DST, (x << 2) | ((y + line) << 13));
+		hyperfb_write4(sc, NGLE_BINC_MASK, 0xffffffff);
+		for (i = 0; i < wi; i++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			latch = (latch << 8) | pixel;
+			/* write in 32bit chunks */
+			if ((i & 3) == 3) {
+				hyperfb_write4(sc, NGLE_BINC_DATA_R, latch);
+				latch = 0;
+			}
+			data8++;
+		}
+		/* if we have pixels left in latch write them out */
+		if ((i & 3) != 0) {
+			latch = latch << ((4 - (i & 3)) << 3);	
+			hyperfb_write4(sc, NGLE_BINC_MASK, mask);
+			hyperfb_write4(sc, NGLE_BINC_DATA_R, latch);
+		}
+	}
 
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
