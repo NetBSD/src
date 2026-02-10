@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2026/02/09 12:49:18 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2026/02/10 05:08:21 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.17 2026/02/09 12:49:18 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2026/02/10 05:08:21 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -119,22 +119,22 @@ get_tstamp(const char *b)
 	struct stat st;
 	char *eb;
 	long long l;
-#ifndef HAVE_NBTOOL_CONFIG_H
-	time_t when;
-#endif
 
 	if (stat(b, &st) != -1)
 		return (time_t)st.st_mtime;
 
-#ifndef HAVE_NBTOOL_CONFIG_H
-	errno = 0;
-	if ((when = parsedate(b, NULL, NULL)) != -1 || errno == 0)
-		return when;
-#endif
 	errno = 0;
 	l = strtoll(b, &eb, 0);
-	if (b == eb || *eb || errno)
+	if (b == eb || *eb || errno) {
+#ifndef HAVE_NBTOOL_CONFIG_H
+		time_t when;
+
+		errno = 0;
+		if ((when = parsedate(b, NULL, NULL)) != -1 || errno == 0)
+			return when;
+#endif
 		errx(EXIT_FAILURE, "Can't parse timestamp `%s'", b);
+	}
 	return (time_t)l;
 }
 

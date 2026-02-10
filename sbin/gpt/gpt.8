@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.87 2026/02/09 17:21:27 kre Exp $
+.\" $NetBSD: gpt.8,v 1.88 2026/02/10 05:08:21 kre Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -189,10 +189,41 @@ command applied to the affected
 .It Fl T Ar timestamp
 Specify a timestamp to be used for uuid generation so that uuids
 are not random and can be consistent for reproducible builds.
-The timestamp can be a pathname, where the timestamps are derived from
-that file, a parsable date for parsedate(3) (this option is not
-yet available in the tools build), or an integer value interpreted
-as the number of seconds from the Epoch.
+Each time a command which will create uuids is run,
+e.g.:
+.Nm
+.Cm add ,
+.Nm
+.Cm create ,
+.Nm
+.Cm migrate ,
+or
+.Nm
+.Cm uuid ,
+with the same
+.Ar device
+or another device which will be used in the same system,
+if
+.Fl T
+is to be used,
+it should be given a different timestamp from that used with
+any other uuid which might be used in the same system as
+.Ar device .
+Otherise the same uuids will be generated for multiple uses,
+and not be unique.
+This option should not be used other than for testing,
+or making temporary filesystems for distributions, etc.
+When this option is not given,
+timestamps are based upon a random number supplied by the kernel.
+.Pp
+The
+.Ar timestamp
+can be a pathname,
+where the timestamps are derived from the file named,
+an integer value interpreted
+as the number of seconds from the Epoch,
+or a parsable date string for parsedate(3) (this final option is not
+yet available in the tools build).
 .It Fl v
 Controls the verbosity level.
 The level increases with every occurrence of this option.
