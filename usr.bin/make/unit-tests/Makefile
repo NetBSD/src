@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.378 2026/02/10 22:33:36 sjg Exp $
+# $NetBSD: Makefile,v 1.379 2026/02/11 21:39:21 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -733,7 +733,7 @@ LIMIT_RESOURCES?=	:
 # each other, and because they use different environment variables and
 # command line options.
 .SUFFIXES: .mk .rawout .out
-.mk.rawout:
+.mk.rawout:	.META
 	@${_MKMSG_TEST:Uecho '#      test '} ${.PREFIX}
 	@set -eu; \
 	${LIMIT_RESOURCES}; \
@@ -778,7 +778,7 @@ _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e '/MAKE.VERSION/d'
 _SED_CMDS+=	-e '/EGREP=/d'
 
-.rawout.out:
+.rawout.out:	.META
 	@${TOOL_SED} ${_SED_CMDS} ${SED_CMDS.${.PREFIX:T}} ${_SED_CMDS_LAST} \
 	  < ${.IMPSRC} > ${.TARGET}.tmp
 	@${POSTPROC.${.PREFIX:T}:D \
