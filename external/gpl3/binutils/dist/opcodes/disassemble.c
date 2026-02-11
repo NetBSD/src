@@ -1,5 +1,5 @@
 /* Select disassembly routine for specified architecture.
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -824,28 +824,30 @@ remove_whitespace_and_extra_commas (char *options)
   return (strlen (options) != 0) ? options : NULL;
 }
 
-/* Like STRCMP, but treat ',' the same as '\0' so that we match
-   strings like "foobar" against "foobar,xxyyzz,...".  */
+/* Call FUNC for each comma separated option in INFO->disassembler_options,
+   passing a zero terminated option and DATA.  The iteration terminates
+   should FUNC return false.  */
 
-int
-disassembler_options_cmp (const char *s1, const char *s2)
+bool
+for_each_disassembler_option (struct disassemble_info *info,
+			      bool (*func) (const char *, void *),
+			      void *data)
 {
-  unsigned char c1, c2;
-
-  do
-    {
-      c1 = (unsigned char) *s1++;
-      if (c1 == ',')
-	c1 = '\0';
-      c2 = (unsigned char) *s2++;
-      if (c2 == ',')
-	c2 = '\0';
-      if (c1 == '\0')
-	return c1 - c2;
-    }
-  while (c1 == c2);
-
-  return c1 - c2;
+  char *opt = (char *) info->disassembler_options;
+  bool ok = true;
+  if (opt != NULL)
+    while (ok)
+      {
+	char *opt_end = strchr (opt, ',');
+	if (opt_end != NULL)
+	  *opt_end = 0;
+	ok = func (opt, data);
+	if (opt_end == NULL)
+	  break;
+	*opt_end = ',';
+	opt = opt_end + 1;
+      }
+  return ok;
 }
 
 void

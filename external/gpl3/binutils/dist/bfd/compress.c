@@ -1,5 +1,5 @@
 /* Compressed section support (intended for debug sections).
-   Copyright (C) 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,7 +24,9 @@
 #include <zstd.h>
 #endif
 #include "bfd.h"
+#ifdef OBJ_MAYBE_ELF
 #include "elf-bfd.h"
+#endif
 #include "libbfd.h"
 #include "safe-ctype.h"
 #include "libiberty.h"
@@ -155,10 +157,11 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
 
   switch (bfd_get_flavour (abfd))
     {
+#ifdef OBJ_MAYBE_ELF
     case bfd_target_elf_flavour:
       if ((abfd->flags & BFD_COMPRESS_GABI) != 0)
 	{
-	  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+	  elf_backend_data *bed = get_elf_backend_data (abfd);
 	  struct bfd_elf_section_data * esd = elf_section_data (sec);
 	  enum compression_type ch_type = (abfd->flags & BFD_COMPRESS_ZSTD
 					   ? ch_compress_zstd
@@ -195,6 +198,7 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
 
       /* Clear the SHF_COMPRESSED bit.  */
       elf_section_flags (sec) &= ~SHF_COMPRESSED;
+#endif /* OBJ_MAYBE_ELF */
       /* Fall through.  */
 
     default:
@@ -215,17 +219,19 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
    compression header is valid.  */
 
 static bool
-bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
-			      asection *sec,
-			      enum compression_type *ch_type,
-			      bfd_size_type *uncompressed_size,
-			      unsigned int *uncompressed_alignment_power)
+bfd_check_compression_header (bfd *abfd ATTRIBUTE_UNUSED,
+			      bfd_byte *contents ATTRIBUTE_UNUSED,
+			      asection *sec ATTRIBUTE_UNUSED,
+			      enum compression_type *ch_type ATTRIBUTE_UNUSED,
+			      bfd_size_type *uncompressed_size ATTRIBUTE_UNUSED,
+			      unsigned int *uncompressed_alignment_power ATTRIBUTE_UNUSED)
 {
+#ifdef OBJ_MAYBE_ELF
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour
       && (elf_section_flags (sec) & SHF_COMPRESSED) != 0)
     {
       Elf_Internal_Chdr chdr;
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      elf_backend_data *bed = get_elf_backend_data (abfd);
       if (bed->s->elfclass == ELFCLASS32)
 	{
 	  Elf32_External_Chdr *echdr = (Elf32_External_Chdr *) contents;
@@ -250,6 +256,7 @@ bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
 	  return true;
 	}
     }
+#endif /* OBJ_MAYBE_ELF */
 
   return false;
 }
@@ -266,8 +273,10 @@ DESCRIPTION
 */
 
 int
-bfd_get_compression_header_size (bfd *abfd, asection *sec)
+bfd_get_compression_header_size (bfd *abfd ATTRIBUTE_UNUSED,
+				 asection *sec ATTRIBUTE_UNUSED)
 {
+#ifdef OBJ_MAYBE_ELF
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
       if (sec == NULL)
@@ -283,6 +292,7 @@ bfd_get_compression_header_size (bfd *abfd, asection *sec)
       else
 	return sizeof (Elf64_External_Chdr);
     }
+#endif /* OBJ_MAYBE_ELF */
 
   return 0;
 }
@@ -303,11 +313,10 @@ DESCRIPTION
 */
 
 bool
-bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
-			   const char **new_name, bfd_size_type *new_size)
+bfd_convert_section_setup (bfd *ibfd ATTRIBUTE_UNUSED, asection *isec,
+			   bfd *obfd, const char **new_name,
+			   bfd_size_type *new_size)
 {
-  bfd_size_type hdr_size;
-
   if ((isec->flags & SEC_DEBUGGING) != 0
       && (isec->flags & SEC_HAS_CONTENTS) != 0)
     {
@@ -340,6 +349,7 @@ bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
     }
   *new_size = bfd_section_size (isec);
 
+#ifdef OBJ_MAYBE_ELF
   /* Do nothing if either input or output aren't ELF.  */
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
@@ -362,7 +372,7 @@ bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
     return true;
 
   /* Do nothing if the input section isn't a SHF_COMPRESSED section. */
-  hdr_size = bfd_get_compression_header_size (ibfd, isec);
+  bfd_size_type hdr_size = bfd_get_compression_header_size (ibfd, isec);
   if (hdr_size == 0)
     return true;
 
@@ -371,6 +381,9 @@ bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
     *new_size += sizeof (Elf64_External_Chdr) - sizeof (Elf32_External_Chdr);
   else
     *new_size -= sizeof (Elf64_External_Chdr) - sizeof (Elf32_External_Chdr);
+
+#endif /* OBJ_MAYBE_ELF */
+
   return true;
 }
 
@@ -392,9 +405,13 @@ DESCRIPTION
 */
 
 bool
-bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
-			      bfd_byte **ptr, bfd_size_type *ptr_size)
+bfd_convert_section_contents (bfd *ibfd ATTRIBUTE_UNUSED,
+			      sec_ptr isec ATTRIBUTE_UNUSED,
+			      bfd *obfd ATTRIBUTE_UNUSED,
+			      bfd_byte **ptr ATTRIBUTE_UNUSED,
+			      bfd_size_type *ptr_size ATTRIBUTE_UNUSED)
 {
+#ifdef OBJ_MAYBE_ELF
   bfd_byte *contents;
   bfd_size_type ihdr_size, ohdr_size, size;
   Elf_Internal_Chdr chdr;
@@ -499,6 +516,8 @@ bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
     }
 
   *ptr_size = size;
+#endif /* OBJ_MAYBE_ELF */
+
   return true;
 }
 
@@ -666,8 +685,10 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec)
   if (compressed_size >= uncompressed_size)
     {
       memcpy (buffer, input_buffer, uncompressed_size);
+#ifdef OBJ_MAYBE_ELF
       if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
 	elf_section_flags (sec) &= ~SHF_COMPRESSED;
+#endif
       sec->compress_status = COMPRESS_SECTION_NONE;
     }
   else

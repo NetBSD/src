@@ -1,5 +1,5 @@
 /* write.c - emit .o file
-   Copyright (C) 1986-2025 Free Software Foundation, Inc.
+   Copyright (C) 1986-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,6 +27,11 @@
 #include "dwarf2dbg.h"
 #include "compress-debug.h"
 #include "codeview.h"
+
+#ifndef FINALIZE_SECTION_RELOCS
+#define FINALIZE_SECTION_RELOCS(sec, relocs, n)	\
+  bfd_finalize_section_relocs (stdoutput, sec, n ? relocs : NULL, n)
+#endif
 
 #ifndef TC_FORCE_RELOCATION
 #define TC_FORCE_RELOCATION(FIX)		\
@@ -632,6 +637,10 @@ size_seg (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *xxx ATTRIBUTE_UNUSED)
 #ifdef obj_frob_section
   obj_frob_section (sec);
 #endif
+
+  if (sec->entsize && (sec->size % sec->entsize))
+    as_warn (_("section `%s' size (%#" PRIx64 ") is not a multiple of its entry size %#x"),
+	     sec->name, (uint64_t) sec->size, sec->entsize);
 }
 
 #ifdef DEBUG2
@@ -1410,11 +1419,8 @@ write_relocs (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   }
 #endif
 
-  bfd_set_reloc (stdoutput, sec, n ? relocs : NULL, n);
-
-#ifdef SET_SECTION_RELOCS
-  SET_SECTION_RELOCS (sec, relocs, n);
-#endif
+  if (!FINALIZE_SECTION_RELOCS (sec, relocs, n))
+    as_bad (_("%s: unable to finalize relocations"), sec->name);
 
 #ifdef DEBUG3
   {
@@ -1452,7 +1458,6 @@ compress_frag (bool use_zstd, void *ctx, const char *contents, int in_size,
       avail_out = obstack_room (ob);
       if (avail_out <= 0)
 	{
-	  obstack_finish (ob);
 	  f = frag_alloc (ob, 0);
 	  f->fr_type = rs_fill;
 	  (*last_newf)->fr_next = f;
@@ -1566,10 +1571,7 @@ compress_debug (bfd *abfd, asection *sec, void *xxx ATTRIBUTE_UNUSED)
       avail_out = obstack_room (ob);
       if (avail_out <= 0)
 	{
-	  fragS *newf;
-
-	  obstack_finish (ob);
-	  newf = frag_alloc (ob, 0);
+	  fragS *newf = frag_alloc (ob, 0);
 	  newf->fr_type = rs_fill;
 	  last_newf->fr_next = newf;
 	  last_newf = newf;
@@ -2242,7 +2244,7 @@ write_object_file (void)
 	char *table_ptr;
 	addressT table_addr;
 	addressT from_addr, to_addr;
-	int n, m;
+	int n;
 
 	subseg_change (lie->seg, lie->subseg);
 	fragP = lie->dispfrag;
@@ -2267,9 +2269,9 @@ write_object_file (void)
 	table_ptr += md_short_jump_size;
 	table_addr += md_short_jump_size;
 
-	for (m = 0;
+	for (;
 	     lie && lie->dispfrag == fragP;
-	     m++, lie = lie->next_broken_word)
+	     lie = lie->next_broken_word)
 	  {
 	    if (lie->added == 2)
 	      continue;

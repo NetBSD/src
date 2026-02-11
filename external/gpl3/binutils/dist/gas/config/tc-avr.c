@@ -1,6 +1,6 @@
 /* tc-avr.c -- Assembler code for the ATMEL AVR
 
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of GAS, the GNU Assembler.

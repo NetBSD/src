@@ -1,5 +1,5 @@
 /* Renesas RX specific support for 32-bit ELF.
-   Copyright (C) 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -652,7 +652,8 @@ rx_elf_relocate_section
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_RX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -1806,9 +1807,7 @@ rx_offset_for_reloc (bfd *		      abfd,
 	    {
 	      if ((ssec->flags & SEC_MERGE)
 		  && ssec->sec_info_type == SEC_INFO_TYPE_MERGE)
-		symval = _bfd_merged_section_offset (abfd, & ssec,
-						     elf_section_data (ssec)->sec_info,
-						     symval);
+		symval = _bfd_merged_section_offset (abfd, & ssec, symval);
 	    }
 
 	  /* Now make the offset relative to where the linker is putting it.  */
@@ -3139,6 +3138,9 @@ rx_elf_merge_private_bfd_data (bfd * ibfd, struct bfd_link_info *info)
   flagword new_flags;
   bool error = false;
 
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
+
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
 
@@ -3685,13 +3687,13 @@ rx_final_link (bfd * abfd, struct bfd_link_info * info)
 	}
     }
 
-  return bfd_elf_final_link (abfd, info);
+  return _bfd_elf_final_link (abfd, info);
 }
 
 static bool
 elf32_rx_modify_headers (bfd *abfd, struct bfd_link_info *info)
 {
-  const struct elf_backend_data * bed;
+  elf_backend_data *bed;
   struct elf_obj_tdata * tdata;
   Elf_Internal_Phdr * phdr;
   unsigned int count;

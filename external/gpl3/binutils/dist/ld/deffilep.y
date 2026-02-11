@@ -1,6 +1,6 @@
 %{ /* deffilep.y - parser for .def files */
 
-/*   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+/*   Copyright (C) 1995-2026 Free Software Foundation, Inc.
 
      This file is part of GNU Binutils.
 
@@ -380,8 +380,7 @@ static struct directive *directives = 0;
 def_file *
 def_file_empty (void)
 {
-  def_file *rv = xmalloc (sizeof (def_file));
-  memset (rv, 0, sizeof (def_file));
+  def_file *rv = xcalloc (1, sizeof (*rv));
   rv->is_dll = -1;
   rv->base_address = (bfd_vma) -1;
   rv->stack_reserve = rv->stack_commit = -1;
@@ -698,20 +697,20 @@ def_file_add_export (def_file *fdef,
   if (*is_dup)
     return (fdef->exports + pos);
 
-  if ((unsigned)fdef->num_exports >= fdef->max_exports)
+  if ((unsigned) fdef->num_exports >= fdef->max_exports)
     {
       fdef->max_exports += SYMBOL_LIST_ARRAY_GROW;
       fdef->exports = xrealloc (fdef->exports,
-				fdef->max_exports * sizeof (def_file_export));
+				fdef->max_exports * sizeof (*fdef->exports));
     }
 
   e = fdef->exports + pos;
   /* If we're inserting in the middle of the array, we need to move the
      following elements forward.  */
-  if (pos != (unsigned)fdef->num_exports)
-    memmove (&e[1], e, (sizeof (def_file_export) * (fdef->num_exports - pos)));
+  if (pos != (unsigned) fdef->num_exports)
+    memmove (e + 1, e, (sizeof (*e) * (fdef->num_exports - pos)));
   /* Wipe the element for use as a new entry.  */
-  memset (e, 0, sizeof (def_file_export));
+  memset (e, 0, sizeof (*e));
   e->name = xstrdup (external_name);
   e->internal_name = xstrdup (internal_name);
   e->its_name = (its_name ? xstrdup (its_name) : NULL);
@@ -828,7 +827,7 @@ fill_in_import (def_file_import *i,
 		const char *internal_name,
 		const char *its_name)
 {
-  memset (i, 0, sizeof (def_file_import));
+  memset (i, 0, sizeof (*i));
   if (name)
     i->name = xstrdup (name);
   i->module = module;
@@ -861,17 +860,17 @@ def_file_add_import (def_file *fdef,
   if (*is_dup)
     return fdef->imports + pos;
 
-  if ((unsigned)fdef->num_imports >= fdef->max_imports)
+  if ((unsigned) fdef->num_imports >= fdef->max_imports)
     {
       fdef->max_imports += SYMBOL_LIST_ARRAY_GROW;
       fdef->imports = xrealloc (fdef->imports,
-				fdef->max_imports * sizeof (def_file_import));
+				fdef->max_imports * sizeof (*fdef->imports));
     }
   i = fdef->imports + pos;
   /* If we're inserting in the middle of the array, we need to move the
      following elements forward.  */
-  if (pos != (unsigned)fdef->num_imports)
-    memmove (i + 1, i, sizeof (def_file_import) * (fdef->num_imports - pos));
+  if (pos != (unsigned) fdef->num_imports)
+    memmove (i + 1, i, sizeof (*i) * (fdef->num_imports - pos));
 
   fill_in_import (i, name, def_stash_module (fdef, module), ordinal,
 		  internal_name, its_name);
@@ -900,27 +899,26 @@ def_file_add_import_from (def_file *fdef,
 			     module, ordinal, &is_dup);
   if (is_dup)
     return -1;
-  if (fdef->imports && pos != (unsigned)fdef->num_imports)
+  if (fdef->imports && pos != (unsigned) fdef->num_imports)
     {
       i = fdef->imports + pos;
       if (i->module && strcmp (i->module->name, module) == 0)
 	return -1;
     }
 
-  if ((unsigned)fdef->num_imports + num_imports - 1 >= fdef->max_imports)
+  if ((unsigned) fdef->num_imports + num_imports - 1 >= fdef->max_imports)
     {
-      fdef->max_imports = fdef->num_imports + num_imports +
-			  SYMBOL_LIST_ARRAY_GROW;
+      fdef->max_imports
+	= fdef->num_imports + num_imports + SYMBOL_LIST_ARRAY_GROW;
 
       fdef->imports = xrealloc (fdef->imports,
-				fdef->max_imports * sizeof (def_file_import));
+				fdef->max_imports * sizeof (*fdef->imports));
     }
   i = fdef->imports + pos;
   /* If we're inserting in the middle of the array, we need to move the
      following elements forward.  */
-  if (pos != (unsigned)fdef->num_imports)
-    memmove (i + num_imports, i,
-	     sizeof (def_file_import) * (fdef->num_imports - pos));
+  if (pos != (unsigned) fdef->num_imports)
+    memmove (i + num_imports, i, sizeof (*i) * (fdef->num_imports - pos));
 
   return pos;
 }
@@ -1014,17 +1012,18 @@ def_file_add_exclude_symbol (def_file *fdef, const char *name)
   if (fdef->num_exclude_symbols >= fdef->max_exclude_symbols)
     {
       fdef->max_exclude_symbols += SYMBOL_LIST_ARRAY_GROW;
-      fdef->exclude_symbols = xrealloc (fdef->exclude_symbols,
-					fdef->max_exclude_symbols * sizeof (def_file_exclude_symbol));
+      fdef->exclude_symbols
+	= xrealloc (fdef->exclude_symbols,
+		    fdef->max_exclude_symbols * sizeof (*fdef->exclude_symbols));
     }
 
   e = fdef->exclude_symbols + pos;
   /* If we're inserting in the middle of the array, we need to move the
      following elements forward.  */
   if (pos != fdef->num_exclude_symbols)
-    memmove (&e[1], e, (sizeof (def_file_exclude_symbol) * (fdef->num_exclude_symbols - pos)));
+    memmove (e + 1, e, sizeof (*e) * (fdef->num_exclude_symbols - pos));
   /* Wipe the element for use as a new entry.  */
-  memset (e, 0, sizeof (def_file_exclude_symbol));
+  memset (e, 0, sizeof (*e));
   e->symbol_name = xstrdup (name);
   fdef->num_exclude_symbols++;
   return e;
@@ -1196,14 +1195,11 @@ def_section (const char *name, int attr)
     {
       max_sections = ROUND_UP (def->num_section_defs+1, 4);
 
-      if (def->section_defs)
-	def->section_defs = xrealloc (def->section_defs,
-				      max_sections * sizeof (def_file_import));
-      else
-	def->section_defs = xmalloc (max_sections * sizeof (def_file_import));
+      def->section_defs = xrealloc (def->section_defs,
+				    max_sections * sizeof (*def->section_defs));
     }
   s = def->section_defs + def->num_section_defs;
-  memset (s, 0, sizeof (def_file_section));
+  memset (s, 0, sizeof (*s));
   s->name = xstrdup (name);
   if (attr & 1)
     s->flag_read = 1;
@@ -1388,10 +1384,7 @@ put_buf (char c)
   if (bufptr == buflen)
     {
       buflen += 50;		/* overly reasonable, eh?  */
-      if (buffer)
-	buffer = xrealloc (buffer, buflen + 1);
-      else
-	buffer = xmalloc (buflen + 1);
+      buffer = xrealloc (buffer, buflen + 1);
     }
   buffer[bufptr++] = c;
   buffer[bufptr] = 0;		/* not optimal, but very convenient.  */

@@ -1,5 +1,5 @@
 /* listing.c - maintain assembly listings
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

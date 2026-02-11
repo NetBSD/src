@@ -1,5 +1,5 @@
 /* SEC_MERGE support.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -132,8 +132,6 @@ struct sec_merge_sec_info
   struct sec_merge_sec_info *next;
   /* The corresponding section.  */
   asection *sec;
-  /* Pointer to merge_info pointing to us.  */
-  void **psecinfo;
   /* The merge entity this is a part of.  */
   struct sec_merge_info *sinfo;
   /* The section associated with sinfo (i.e. the representative section).
@@ -610,9 +608,8 @@ sec_merge_emit (bfd *abfd, struct sec_merge_sec_info *secinfo,
 /* Register a SEC_MERGE section as a candidate for merging.
    This function is called for all non-dynamic SEC_MERGE input sections.  */
 
-bool
-_bfd_add_merge_section (bfd *abfd, void **psinfo, asection *sec,
-			void **psecinfo)
+static bool
+_bfd_add_merge_section (bfd *abfd, void **psinfo, asection *sec)
 {
   struct sec_merge_info *sinfo;
   struct sec_merge_sec_info *secinfo;
@@ -671,12 +668,11 @@ _bfd_add_merge_section (bfd *abfd, void **psinfo, asection *sec,
 
   /* Initialize the descriptor for this input section.  */
 
-  *psecinfo = secinfo = bfd_zalloc (abfd, sizeof (*secinfo));
-  if (*psecinfo == NULL)
+  sec->sec_info = secinfo = bfd_zalloc (abfd, sizeof (*secinfo));
+  if (sec->sec_info == NULL)
     goto error_return;
 
   secinfo->sec = sec;
-  secinfo->psecinfo = psecinfo;
 
   /* Search for a matching output merged section.  */
   for (sinfo = (struct sec_merge_info *) *psinfo; sinfo; sinfo = sinfo->next)
@@ -710,10 +706,12 @@ _bfd_add_merge_section (bfd *abfd, void **psinfo, asection *sec,
   secinfo->sinfo = sinfo;
   secinfo->reprsec = sinfo->chain->sec;
 
+  sec->sec_info_type = SEC_INFO_TYPE_MERGE;
+
   return true;
 
  error_return:
-  *psecinfo = NULL;
+  sec->sec_info = NULL;
   return false;
 }
 
@@ -876,7 +874,7 @@ is_suffix (const struct sec_merge_hash_entry *A,
 		 B->str, B->len) == 0;
 }
 
-/* This is a helper function for _bfd_merge_sections.  It attempts to
+/* This is a helper function for bfd_merge_sections.  It attempts to
    merge strings matching suffixes of longer strings.  */
 static struct sec_merge_sec_info *
 merge_strings (struct sec_merge_info *sinfo)
@@ -975,11 +973,10 @@ merge_strings (struct sec_merge_info *sinfo)
 /* This function is called once after all SEC_MERGE sections are registered
    with _bfd_merge_section.  */
 
-bool
-_bfd_merge_sections (bfd *abfd,
-		     struct bfd_link_info *info ATTRIBUTE_UNUSED,
-		     void *xsinfo,
-		     void (*remove_hook) (bfd *, asection *))
+static bool
+merge_sections (bfd *abfd,
+		struct bfd_link_info *info ATTRIBUTE_UNUSED,
+		void *xsinfo)
 {
   struct sec_merge_info *sinfo;
 
@@ -997,9 +994,9 @@ _bfd_merge_sections (bfd *abfd,
 	if (secinfo->sec->flags & SEC_EXCLUDE
 	    || !record_section (sinfo, secinfo))
 	  {
-	    *secinfo->psecinfo = NULL;
-	    if (remove_hook)
-	      (*remove_hook) (abfd, secinfo->sec);
+	    BFD_ASSERT (secinfo->sec->sec_info_type == SEC_INFO_TYPE_MERGE);
+	    secinfo->sec->sec_info = NULL;
+	    secinfo->sec->sec_info_type = SEC_INFO_TYPE_NONE;
 	  }
 	else if (align)
 	  {
@@ -1058,17 +1055,42 @@ _bfd_merge_sections (bfd *abfd,
   return true;
 }
 
+/* Finish SEC_MERGE section merging.  */
+
+bool
+bfd_merge_sections (bfd *obfd, struct bfd_link_info *info)
+{
+  const bfd *ibfd;
+  asection *sec;
+
+  if (!obfd->xvec->merge_sections)
+    return true;
+
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
+    if ((ibfd->flags & DYNAMIC) == 0)
+      for (sec = ibfd->sections; sec != NULL; sec = sec->next)
+	if ((sec->flags & SEC_MERGE) != 0
+	    && !bfd_is_abs_section (sec->output_section)
+	    && !_bfd_add_merge_section (obfd,
+					&info->hash->merge_info,
+					sec))
+	      return false;
+
+  if (info->hash->merge_info == NULL)
+    return true;
+
+  return merge_sections (obfd, info, info->hash->merge_info);
+}
+
 /* Write out the merged section.  */
 
 bool
-_bfd_write_merged_section (bfd *output_bfd, asection *sec, void *psecinfo)
+_bfd_write_merged_section (bfd *output_bfd, asection *sec)
 {
-  struct sec_merge_sec_info *secinfo;
+  struct sec_merge_sec_info *secinfo = sec->sec_info;
   file_ptr pos;
   unsigned char *contents;
-  Elf_Internal_Shdr *hdr;
-
-  secinfo = (struct sec_merge_sec_info *) psecinfo;
+  Elf_Internal_Shdr *hdr = NULL;
 
   if (!secinfo)
     return false;
@@ -1077,8 +1099,9 @@ _bfd_write_merged_section (bfd *output_bfd, asection *sec, void *psecinfo)
     return true;
 
   /* FIXME: octets_per_byte.  */
-  hdr = &elf_section_data (sec->output_section)->this_hdr;
-  if (hdr->sh_offset == (file_ptr) -1)
+  if (bfd_get_flavour (output_bfd) == bfd_target_elf_flavour)
+    hdr = &elf_section_data (sec->output_section)->this_hdr;
+  if (hdr != NULL && hdr->sh_offset == (file_ptr) -1)
     {
       /* We must compress this section.  Write output to the
 	 buffer.  */
@@ -1108,12 +1131,10 @@ _bfd_write_merged_section (bfd *output_bfd, asection *sec, void *psecinfo)
 
 bfd_vma
 _bfd_merged_section_offset (bfd *output_bfd ATTRIBUTE_UNUSED, asection **psec,
-			    void *psecinfo, bfd_vma offset)
+			    bfd_vma offset)
 {
-  struct sec_merge_sec_info *secinfo;
   asection *sec = *psec;
-
-  secinfo = (struct sec_merge_sec_info *) psecinfo;
+  struct sec_merge_sec_info *secinfo = sec->sec_info;
 
   if (!secinfo)
     return offset;
@@ -1125,7 +1146,8 @@ _bfd_merged_section_offset (bfd *output_bfd ATTRIBUTE_UNUSED, asection **psec,
 	  /* xgettext:c-format */
 	  (_("%pB: access beyond end of merged section (%" PRId64 ")"),
 	   sec->owner, (int64_t) offset);
-      return secinfo->first_str ? sec->size : 0;
+      *psec = sec = secinfo->reprsec;
+      return sec->size;
     }
 
   if (secinfo->fast_state != 2)

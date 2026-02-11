@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,8 @@ TEXINFO_TEX         = .
 MAKEINFOHTML        = $(MAKEINFO) --html --no-split
 
 man_MANS = gprofng.1 gprofng-archive.1 gprofng-collect-app.1 \
-	gprofng-display-html.1 gprofng-display-src.1 gprofng-display-text.1
+	gprofng-display-html.1 gprofng-display-src.1 gprofng-display-text.1 \
+	gprofng-display-gmon.1
 
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
@@ -54,6 +55,7 @@ gprofng-collect-app.1: $(srcdir)/gprofng-collect-app.texi
 gprofng-display-html.1: $(srcdir)/gprofng-display-html.texi
 gprofng-display-src.1: $(srcdir)/gprofng-display-src.texi
 gprofng-display-text.1: $(srcdir)/gprofng-display-text.texi
+gprofng-display-gmon.1: $(srcdir)/gprofng-display-gmon.texi
 
 MAINTAINERCLEANFILES = gprofng.info $(man_MANS)
 EXTRA_DIST = $(man_MANS) version.texi

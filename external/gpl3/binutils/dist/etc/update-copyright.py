@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (C) 2013-2025 Free Software Foundation, Inc.
+# Copyright (C) 2013-2026 Free Software Foundation, Inc.
 #
 # This script is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -177,10 +177,10 @@ class Copyright:
         self.errors = errors
 
         # Characters in a range of years.  Include '.' for typos.
-        ranges = '[0-9](?:[-0-9.,\s]|\s+and\s+)*[0-9]'
+        ranges = r'[0-9](?:[-0-9.,\s]|\s+and\s+)*[0-9]'
 
         # Non-whitespace characters in a copyright holder's name.
-        name = '[\w.,-]'
+        name = r'[\w.,-]'
 
         # Matches one year.
         self.year_re = re.compile ('[0-9]+')
@@ -192,29 +192,29 @@ class Copyright:
         self.copyright_re = re.compile (
             # 1: 'Copyright (C)', etc.
             '([Cc]opyright'
-            '|[Cc]opyright\s+\([Cc]\)'
-            '|[Cc]opyright\s+%s'
-            '|[Cc]opyright\s+&copy;'
-            '|[Cc]opyright\s+@copyright{}'
-            '|@set\s+copyright[\w-]+)'
+            r'|[Cc]opyright\s+\([Cc]\)'
+            r'|[Cc]opyright\s+%s'
+            r'|[Cc]opyright\s+&copy;'
+            r'|[Cc]opyright\s+@copyright{}'
+            r'|@set\s+copyright[\w-]+)'
 
             # 2: the years.  Include the whitespace in the year, so that
             # we can remove any excess.
-            '(\s*(?:' + ranges + ',?'
-            '|@value\{[^{}]*\})\s*)'
+            r'(\s*(?:' + ranges + ',?'
+            r'|@value\{[^{}]*\})\s*)'
 
             # 3: 'by ', if used
-            '(by\s+)?'
+            r'(by\s+)?'
 
             # 4: the copyright holder.  Don't allow multiple consecutive
             # spaces, so that right-margin gloss doesn't get caught
             # (e.g. gnat_ugn.texi).
-            '(' + name + '(?:\s?' + name + ')*)?')
+            '(' + name + r'(?:\s?' + name + ')*)?')
 
         # A regexp for notices that might have slipped by.  Just matching
         # 'copyright' is too noisy, and 'copyright.*[0-9]' falls foul of
         # HTML header markers, so check for 'copyright' and two digits.
-        self.other_copyright_re = re.compile ('(^|[^\._])copyright[^=]*[0-9][0-9]',
+        self.other_copyright_re = re.compile (r'(^|[^\._])copyright[^=]*[0-9][0-9]',
                                               re.IGNORECASE)
         self.comment_re = re.compile('#+|[*]+|;+|%+|//+|@c |dnl ')
         self.holders = { '@copying': '@copying' }
@@ -562,6 +562,15 @@ class ConfigFilter (GenericFilter):
                     return True
         return GenericFilter.skip_file (self, dir, filename)
 
+class BinutilsFilter (GenericFilter):
+    def __init__ (self):
+        GenericFilter.__init__ (self)
+
+        self.skip_files |= set ([
+                # this file has a copyright message as part of its data
+                'psql.rc',
+                ])
+
 class LdFilter (GenericFilter):
     def __init__ (self):
         GenericFilter.__init__ (self)
@@ -598,6 +607,7 @@ class BinutilsCopyright (Copyright):
         self.add_external_author ('Synopsys Inc.')
         self.add_external_author ('Alan Woodland')
         self.add_external_author ('Diego Elio Petteno')
+        self.add_external_author ('Kalray SA.')
 
 class BinutilsCmdLine (CmdLine):
     def __init__ (self):
@@ -605,7 +615,7 @@ class BinutilsCmdLine (CmdLine):
 
         self.add_dir ('.', TopLevelFilter())
         self.add_dir ('bfd')
-        self.add_dir ('binutils')
+        self.add_dir ('binutils', BinutilsFilter())
         self.add_dir ('config', ConfigFilter())
         self.add_dir ('cpu')
         self.add_dir ('elfcpp')

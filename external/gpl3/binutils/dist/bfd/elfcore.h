@@ -1,5 +1,5 @@
 /* ELF core file support for BFD.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -90,7 +90,6 @@ elf_core_file_p (bfd *abfd)
   Elf_Internal_Ehdr *i_ehdrp;	/* Elf file header, internal form.  */
   Elf_Internal_Phdr *i_phdrp;	/* Elf program header, internal form.  */
   unsigned int phindex;
-  const struct elf_backend_data *ebd;
   bfd_size_type amt;
   ufile_ptr filesize;
 
@@ -140,7 +139,7 @@ elf_core_file_p (bfd *abfd)
   elf_debug_file (i_ehdrp);
 #endif
 
-  ebd = get_elf_backend_data (abfd);
+  elf_backend_data *ebd = get_elf_backend_data (abfd);
 
   /* Check that the ELF e_machine field matches what this particular
      BFD format expects.  */
@@ -153,9 +152,7 @@ elf_core_file_p (bfd *abfd)
       && ebd->elf_machine_code != EM_NONE)
     goto wrong;
 
-  if (ebd->elf_machine_code != EM_NONE
-      && i_ehdrp->e_ident[EI_OSABI] != ebd->elf_osabi
-      && ebd->elf_osabi != ELFOSABI_NONE)
+  if (ebd->osabi_exact && i_ehdrp->e_ident[EI_OSABI] != ebd->elf_osabi)
     goto wrong;
 
   /* If there is no program header, or the type is not a core file, then
@@ -350,7 +347,7 @@ NAME(_bfd_elf, core_find_build_id)
     }
 
   elf_swap_ehdr_in (abfd, &x_ehdr, &i_ehdr);
-#if DEBUG
+#if DEBUG & 1
   elf_debug_file (&i_ehdr);
 #endif
 
@@ -381,8 +378,8 @@ NAME(_bfd_elf, core_find_build_id)
 
       if (i_phdr->p_type == PT_NOTE && i_phdr->p_filesz > 0)
 	{
-	  elf_read_notes (abfd, offset + i_phdr->p_offset,
-			  i_phdr->p_filesz, i_phdr->p_align);
+	  _bfd_elf_read_notes (abfd, offset + i_phdr->p_offset,
+			       i_phdr->p_filesz, i_phdr->p_align);
 
 	  /* Make sure ABFD returns to processing the program headers.  */
 	  if (bfd_seek (abfd,

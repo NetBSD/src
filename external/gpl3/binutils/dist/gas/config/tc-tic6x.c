@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -688,7 +688,7 @@ static bool tic6x_attributes_set_explicitly[NUM_KNOWN_OBJ_ATTRIBUTES];
 static void
 s_tic6x_c6xabi_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_PROC);
 
   if (tag < NUM_KNOWN_OBJ_ATTRIBUTES)
     tic6x_attributes_set_explicitly[tag] = true;
@@ -697,7 +697,7 @@ s_tic6x_c6xabi_attribute (int ignored ATTRIBUTE_UNUSED)
 typedef struct
 {
   const char *name;
-  int tag;
+  obj_attr_tag_t tag;
 } tic6x_attribute_table;
 
 static const tic6x_attribute_table tic6x_attributes[] =
@@ -4373,7 +4373,7 @@ tic6x_frag_init (fragS *fragp)
 /* Set an attribute if it has not already been set by the user.  */
 
 static void
-tic6x_set_attribute_int (int tag, int value)
+tic6x_set_attribute_int (obj_attr_tag_t tag, int value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES)
@@ -4625,8 +4625,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
   text_name = segment_name (text_seg);
   if (streq (text_name, ".text"))
     text_name = "";
-
-  if (startswith (text_name, ".gnu.linkonce.t."))
+  else if (startswith (text_name, ".gnu.linkonce.t."))
     {
       prefix = prefix_once;
       text_name += strlen (".gnu.linkonce.t.");

@@ -1,5 +1,5 @@
 /* This file is tc-m68k.h
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -154,5 +154,8 @@ struct m68k_tc_sy
 };
 
 #define TC_SYMFIELD_TYPE struct m68k_tc_sy
+
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
 
 #endif /* TC_M68K_H */

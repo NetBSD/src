@@ -1,6 +1,6 @@
 /* This file is tc-m68851.h
 
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

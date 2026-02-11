@@ -1,3 +1,7 @@
+2025-09-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config.bfd <powerpc-*-solaris2*>: Remove.
+
 2025-07-13  Nick Clifton  <nickc@redhat.com>
 
 	* 2.45 Branch point.
@@ -2991,7 +2995,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2025 Free Software Foundation, Inc.
+Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

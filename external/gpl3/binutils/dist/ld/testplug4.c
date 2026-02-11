@@ -1,6 +1,6 @@
 /* Test plugin for the GNU linker.  Check non-object IR file as well as
    get_input_file, get_view, release_input_file and get_symbols interfaces.
-   Copyright (C) 2016-2025 Free Software Foundation, Inc.
+   Copyright (C) 2016-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,7 +21,6 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#if BFD_SUPPORTS_PLUGINS
 #include "plugin-api.h"
 #include "filenames.h"
 /* For ARRAY_SIZE macro only - we don't link the library itself.  */
@@ -681,4 +680,3 @@ oncleanup (void)
   fflush (NULL);
   return cleanup_ret;
 }
-#endif /* BFD_SUPPORTS_PLUGINS */

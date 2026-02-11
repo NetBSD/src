@@ -1,5 +1,5 @@
 /* TILE-Gx ELF specific backend routines.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,72 +24,80 @@
 extern enum elf_reloc_type_class
 tilegx_reloc_type_class (const struct bfd_link_info *,
 			 const asection *,
-			 const Elf_Internal_Rela *);
+			 const Elf_Internal_Rela *) ATTRIBUTE_HIDDEN;
 
 extern reloc_howto_type *
-tilegx_reloc_name_lookup (bfd *, const char *);
+tilegx_reloc_name_lookup (bfd *, const char *) ATTRIBUTE_HIDDEN;
 
 extern struct bfd_link_hash_table *
-tilegx_elf_link_hash_table_create (bfd *);
+tilegx_elf_link_hash_table_create (bfd *) ATTRIBUTE_HIDDEN;
 
 extern reloc_howto_type *
-tilegx_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+tilegx_reloc_type_lookup (bfd *, bfd_reloc_code_real_type) ATTRIBUTE_HIDDEN;
 
 extern void
 tilegx_elf_copy_indirect_symbol (struct bfd_link_info *,
 				 struct elf_link_hash_entry *,
-				 struct elf_link_hash_entry *);
+				 struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 
 extern bool
-tilegx_elf_create_dynamic_sections (bfd *, struct bfd_link_info *);
+tilegx_elf_create_dynamic_sections (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 tilegx_elf_check_relocs (bfd *, struct bfd_link_info *,
-			 asection *, const Elf_Internal_Rela *);
+			 asection *, const Elf_Internal_Rela *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *,
-				  struct elf_link_hash_entry *);
+				  struct elf_link_hash_entry *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 tilegx_elf_omit_section_dynsym (bfd *,
 				struct bfd_link_info *,
-				asection *);
+				asection *) ATTRIBUTE_HIDDEN;
 
 extern bool
-tilegx_elf_late_size_sections (bfd *, struct bfd_link_info *);
+tilegx_elf_late_size_sections (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 extern int
 tilegx_elf_relocate_section (bfd *, struct bfd_link_info *,
 			     bfd *, asection *,
 			     bfd_byte *, Elf_Internal_Rela *,
 			     Elf_Internal_Sym *,
-			     asection **);
+			     asection **) ATTRIBUTE_HIDDEN;
 
 extern asection *
 tilegx_elf_gc_mark_hook (asection *,
 			 struct bfd_link_info *,
-			 Elf_Internal_Rela *,
+			 struct elf_reloc_cookie *,
 			 struct elf_link_hash_entry *,
-			 Elf_Internal_Sym *);
+			 unsigned int) ATTRIBUTE_HIDDEN;
 
 extern bfd_vma
-tilegx_elf_plt_sym_val (bfd_vma, const asection *, const arelent *);
+tilegx_elf_plt_sym_val (bfd_vma, const asection *, const arelent *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-tilegx_info_to_howto_rela (bfd *, arelent *, Elf_Internal_Rela *);
+tilegx_info_to_howto_rela (bfd *, arelent *, Elf_Internal_Rela *)
+  ATTRIBUTE_HIDDEN;
 
 extern int
-tilegx_additional_program_headers (bfd *, struct bfd_link_info *);
+tilegx_additional_program_headers (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 tilegx_elf_finish_dynamic_symbol (bfd *,
 				  struct bfd_link_info *,
 				  struct elf_link_hash_entry *,
-				  Elf_Internal_Sym *);
+				  Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
 
 extern bool
-tilegx_elf_finish_dynamic_sections (bfd *, struct bfd_link_info *);
+tilegx_elf_finish_dynamic_sections (bfd *, struct bfd_link_info *, bfd_byte *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-_bfd_tilegx_elf_merge_private_bfd_data (bfd *, struct bfd_link_info *);
+_bfd_tilegx_elf_merge_private_bfd_data (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;

@@ -1,5 +1,32 @@
 -*- text -*-
 
+Changes in 2.46:
+
+* Add --gnu-tls-tag/--no-gnu-tls-tag options to i386 ELF linker to add
+  the GLIBC_ABI_GNU_TLS version dependency in output if input object
+  files call ___tls_get_addr.  Also added --enable-gnu-tls-tag configure
+  option to enable --gnu-tls-tag by default.
+
+* Add --gnu2-tls-tag/--no-gnu2-tls-tag options to i386 and x86-64 ELF
+  linkers to add the GLIBC_ABI_GNU2_TLS version dependency in output if
+  input object files have R_386_TLS_DESC_CALL or R_X86_64_TLSDESC_CALL
+  relocation.  Also added --enable-gnu2-tls-tag configure option to
+  enable --gnu2-tls-tag by default.
+
+* NaCl target support is removed.
+
+* New command line option --discard-sframe which disables the
+  emission of .sframe output section in the linked output.  This option also
+  prohibits the creation of SFrame stack trace info for linker-generated
+  sections like PLT.  The existing linker option
+  --no-ld-generated-unwind-info no longer controls creation of .sframe data
+  for PLT.
+
+* The linker now supports processing and merging SFrame Version 3 sections.
+  The linker does not combine SFrame sections of older versions with SFrame
+  Version 3 sections.  SFrame Version 2 sections should not be enabled in the
+  wild.
+
 Changes in 2.45:
 
 * On s390 64-bit (s390x), generate SFrame stack trace information (.sframe)
@@ -1092,7 +1119,7 @@ Changes in version 2.1:
   other utilities should work on Risc/Ultrix and Irix.
 
 
-Copyright (C) 2012-2025 Free Software Foundation, Inc.
+Copyright (C) 2012-2026 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

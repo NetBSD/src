@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -583,10 +583,10 @@ static const reloc_map tilepro_reloc_map [] =
   TH_REMAP (BFD_RELOC_HI16_S,		       R_TILEPRO_HA16)
 
   /* Custom relocations. */
-  TH_REMAP (BFD_RELOC_TILEPRO_COPY,	       R_TILEPRO_COPY)
-  TH_REMAP (BFD_RELOC_TILEPRO_GLOB_DAT,	       R_TILEPRO_GLOB_DAT)
-  TH_REMAP (BFD_RELOC_TILEPRO_JMP_SLOT,	       R_TILEPRO_JMP_SLOT)
-  TH_REMAP (BFD_RELOC_TILEPRO_RELATIVE,	       R_TILEPRO_RELATIVE)
+  TH_REMAP (BFD_RELOC_COPY,		       R_TILEPRO_COPY)
+  TH_REMAP (BFD_RELOC_GLOB_DAT,		       R_TILEPRO_GLOB_DAT)
+  TH_REMAP (BFD_RELOC_JMP_SLOT,		       R_TILEPRO_JMP_SLOT)
+  TH_REMAP (BFD_RELOC_RELATIVE,		       R_TILEPRO_RELATIVE)
   TH_REMAP (BFD_RELOC_TILEPRO_BROFF_X1,	       R_TILEPRO_BROFF_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_JOFFLONG_X1,     R_TILEPRO_JOFFLONG_X1)
   TH_REMAP (BFD_RELOC_TILEPRO_JOFFLONG_X1_PLT, R_TILEPRO_JOFFLONG_X1_PLT)
@@ -1200,7 +1200,7 @@ tilepro_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
   flagword flags;
   asection *s, *s_got;
   struct elf_link_hash_entry *h;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   /* This function may be called more than once.  */
@@ -1783,13 +1783,13 @@ tilepro_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 static asection *
 tilepro_elf_gc_mark_hook (asection *sec,
 			  struct bfd_link_info *info,
-			  Elf_Internal_Rela *rel,
+			  struct elf_reloc_cookie *cookie,
 			  struct elf_link_hash_entry *h,
-			  Elf_Internal_Sym *sym)
+			  unsigned int symndx)
 {
   if (h != NULL)
     {
-      switch (ELF32_R_TYPE (rel->r_info))
+      switch (ELF32_R_TYPE (cookie->rel->r_info))
 	{
 	case R_TILEPRO_GNU_VTINHERIT:
 	case R_TILEPRO_GNU_VTENTRY:
@@ -1803,7 +1803,7 @@ tilepro_elf_gc_mark_hook (asection *sec,
     {
       struct bfd_link_hash_entry *bh;
 
-      switch (ELF32_R_TYPE (rel->r_info))
+      switch (ELF32_R_TYPE (cookie->rel->r_info))
 	{
 	case R_TILEPRO_TLS_GD_CALL:
 	  /* This reloc implicitly references __tls_get_addr.  We know
@@ -1823,11 +1823,11 @@ tilepro_elf_gc_mark_hook (asection *sec,
 	  h->mark = 1;
 	  if (h->is_weakalias)
 	    weakdef (h)->mark = 1;
-	  sym = NULL;
+	  symndx = 0;
 	}
     }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2199,7 +2199,7 @@ tilepro_elf_late_size_sections (bfd *output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF32_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF32_DYNAMIC_INTERPRETER;
@@ -2607,7 +2607,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_TILEPRO_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -3580,7 +3581,8 @@ tilepro_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 
 static bool
 tilepro_elf_finish_dynamic_sections (bfd *output_bfd,
-				     struct bfd_link_info *info)
+				     struct bfd_link_info *info,
+				     bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn;

@@ -25,7 +25,7 @@
 
 ;;; add-log.el --- change log maintenance commands for Emacs
 
-;; Copyright (C) 1985-2025 Free Software Foundation, Inc.
+;; Copyright (C) 1985-2026 Free Software Foundation, Inc.
 
 ;; Keywords: maint
 

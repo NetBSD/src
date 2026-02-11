@@ -1,5 +1,5 @@
 /* libdeps plugin for the GNU linker.
-   Copyright (C) 2020-2025 Free Software Foundation, Inc.
+   Copyright (C) 2020-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -20,7 +20,6 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#if BFD_SUPPORTS_PLUGINS
 #include "plugin-api.h"
 
 #include <ctype.h> /* For isspace.  */
@@ -340,4 +339,3 @@ onload (struct ld_plugin_tv *tv)
   fflush (NULL);
   return LDPS_OK;
 }
-#endif /* BFD_SUPPORTS_PLUGINS */

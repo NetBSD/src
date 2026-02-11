@@ -1,5 +1,5 @@
 /* RISC-V-specific support for ELF.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on TILE-Gx and MIPS targets.
@@ -43,7 +43,7 @@ static bfd_reloc_status_type riscv_elf_ignore_reloc
 
 /* The relocation table used for SHT_RELA sections.  */
 
-static reloc_howto_type howto_table[] =
+static const reloc_howto_type howto_table[] =
 {
   /* No relocation.  */
   HOWTO (R_RISCV_NONE,			/* type */
@@ -879,9 +879,12 @@ static reloc_howto_type howto_table[] =
 	 false) 			/* pcrel_offset */
 };
 
-static reloc_howto_type howto_table_internal[] =
+static const reloc_howto_type howto_table_internal[] =
 {
   /* R_RISCV_DELETE.  */
+  EMPTY_HOWTO (0),
+
+  /* R_RISCV_DELETE_AND_RELAX.  */
   EMPTY_HOWTO (0),
 
   /* High 6 bits of 18-bit absolute address.  */
@@ -1204,7 +1207,7 @@ struct riscv_implicit_subset
 		      const riscv_subset_t *);
 };
 /* Please added in order since this table is only run once time.  */
-static struct riscv_implicit_subset riscv_implicit_subsets[] =
+static const struct riscv_implicit_subset riscv_implicit_subsets[] =
 {
   {"g", "+i,+m,+a,+f,+d,+zicsr,+zifencei", check_implicit_always},
   {"e", "+i", check_implicit_always},
@@ -1303,6 +1306,8 @@ static struct riscv_implicit_subset riscv_implicit_subsets[] =
   {"zvksc", "+zvks,+zvbc", check_implicit_always},
   {"zvks", "+zvksed,+zvksh,+zvkb,+zvkt", check_implicit_always},
 
+  {"sdtrig", "+zicsr", check_implicit_always},
+
   {"smaia", "+ssaia", check_implicit_always},
   {"smcdeleg", "+ssccfg", check_implicit_always},
   {"smcsrind", "+sscsrind", check_implicit_always},
@@ -1322,6 +1327,7 @@ static struct riscv_implicit_subset riscv_implicit_subsets[] =
   {"sscounterenw", "+zicsr", check_implicit_always},
   {"ssctr", "+zicsr", check_implicit_always},
   {"ssstateen", "+zicsr", check_implicit_always},
+  {"ssstrict", "+zicsr", check_implicit_always},
   {"sstc", "+zicsr", check_implicit_always},
   {"sstvala", "+zicsr", check_implicit_always},
   {"sstvecd", "+zicsr", check_implicit_always},
@@ -1336,7 +1342,7 @@ static struct riscv_implicit_subset riscv_implicit_subsets[] =
 };
 
 /* This table records the mapping form RISC-V Profiles into march string.  */
-static struct riscv_profiles riscv_profiles_table[] =
+static const struct riscv_profiles riscv_profiles_table[] =
 {
   /* RVI20U only contains the base extension 'i' as mandatory extension.  */
   {"rvi20u64", "rv64i"},
@@ -1408,7 +1414,7 @@ struct riscv_supported_ext
 
 /* The standard extensions must be added in canonical order.  */
 
-static struct riscv_supported_ext riscv_supported_std_ext[] =
+static const struct riscv_supported_ext riscv_supported_std_ext[] =
 {
   {"e",		ISA_SPEC_CLASS_20191213,	1, 9, 0 },
   {"e",		ISA_SPEC_CLASS_20190608,	1, 9, 0 },
@@ -1443,115 +1449,116 @@ static struct riscv_supported_ext riscv_supported_std_ext[] =
   {NULL, 0, 0, 0, 0}
 };
 
-static struct riscv_supported_ext riscv_supported_std_z_ext[] =
+static const struct riscv_supported_ext riscv_supported_std_z_ext[] =
 {
-  {"zic64b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"ziccamoa",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"ziccif",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicclsm",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"ziccrse",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicbom",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicbop",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicboz",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicond",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicntr",		ISA_SPEC_CLASS_DRAFT,		2, 0,  0 },
-  {"zicsr",		ISA_SPEC_CLASS_20191213,	2, 0,  0 },
-  {"zicsr",		ISA_SPEC_CLASS_20190608,	2, 0,  0 },
-  {"zifencei",		ISA_SPEC_CLASS_20191213,	2, 0,  0 },
-  {"zifencei",		ISA_SPEC_CLASS_20190608,	2, 0,  0 },
-  {"zihintntl",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zihintpause",	ISA_SPEC_CLASS_DRAFT,		2, 0,  0 },
-  {"zihpm",		ISA_SPEC_CLASS_DRAFT,		2, 0,  0 },
-  {"zimop",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicfiss",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zicfilp",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zilsd",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zmmul",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"za64rs",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"za128rs",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zaamo",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zabha",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zacas",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zalrsc",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zawrs",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zfbfmin",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zfa",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zfh",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zfhmin",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zfinx",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zdinx",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zqinx",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zhinx",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zhinxmin",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zbb",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zba",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zbc",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zbs",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zbkb",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zbkc",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zbkx",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zk",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zkn",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zknd",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zkne",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zknh",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zkr",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zks",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zksed",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zksh",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zkt",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zve32x",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zve32f",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zve64x",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zve64f",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zve64d",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvbb",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvbc",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvfbfmin",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvfbfwma",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvfh",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvfhmin",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvkb",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvkg",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvkn",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvkng",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvknc",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvkned",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvknha",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvknhb",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvksed",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvksh",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvks",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvksg",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvksc",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvkt",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl32b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl64b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl128b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl256b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl512b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl1024b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl2048b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl4096b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl8192b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl16384b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl32768b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zvl65536b",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"ztso",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zca",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zcb",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zce",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zcf",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zcd",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zcmop",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zcmp",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zcmt",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
-  {"zclsd",		ISA_SPEC_CLASS_DRAFT,		1, 0,  0 },
+  {"zic64b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"ziccamoa",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"ziccif",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicclsm",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"ziccrse",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicbom",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicbop",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicboz",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicond",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicntr",		ISA_SPEC_CLASS_DRAFT,		2, 0, 0 },
+  {"zicsr",		ISA_SPEC_CLASS_20191213,	2, 0, 0 },
+  {"zicsr",		ISA_SPEC_CLASS_20190608,	2, 0, 0 },
+  {"zifencei",		ISA_SPEC_CLASS_20191213,	2, 0, 0 },
+  {"zifencei",		ISA_SPEC_CLASS_20190608,	2, 0, 0 },
+  {"zihintntl",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zihintpause",	ISA_SPEC_CLASS_DRAFT,		2, 0, 0 },
+  {"zihpm",		ISA_SPEC_CLASS_DRAFT,		2, 0, 0 },
+  {"zimop",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicfiss",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zicfilp",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zilsd",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zmmul",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"za64rs",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"za128rs",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zaamo",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zabha",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zacas",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zalrsc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zawrs",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zfbfmin",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zfa",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zfh",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zfhmin",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zfinx",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zdinx",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zqinx",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zhinx",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zhinxmin",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zbb",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zba",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zbc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zbs",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zbkb",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zbkc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zbkx",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zk",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zkn",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zknd",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zkne",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zknh",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zkr",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zks",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zksed",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zksh",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zkt",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zve32x",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zve32f",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zve64x",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zve64f",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zve64d",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvbb",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvbc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvfbfmin",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvfbfwma",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvfh",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvfhmin",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvkb",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvkg",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvkn",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvkng",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvknc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvkned",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvknha",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvknhb",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvksed",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvksh",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvks",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvksg",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvksc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvkt",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl32b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl64b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl128b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl256b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl512b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl1024b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl2048b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl4096b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl8192b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl16384b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl32768b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zvl65536b",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"ztso",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zca",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zcb",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zce",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zcf",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zcd",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zcmop",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zcmp",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zcmt",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"zclsd",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {NULL, 0, 0, 0, 0}
 };
 
-static struct riscv_supported_ext riscv_supported_std_s_ext[] =
+static const struct riscv_supported_ext riscv_supported_std_s_ext[] =
 {
+  {"sdtrig",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"sha",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"shcounterenw",	ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"shgatpa",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
@@ -1576,6 +1583,7 @@ static struct riscv_supported_ext riscv_supported_std_s_ext[] =
   {"sscounterenw",	ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"ssctr",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"ssstateen",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
+  {"ssstrict",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"sstc",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"sstvala",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
   {"sstvecd",		ISA_SPEC_CLASS_DRAFT,		1, 0, 0 },
@@ -1597,12 +1605,12 @@ static struct riscv_supported_ext riscv_supported_std_s_ext[] =
   {NULL, 0, 0, 0, 0}
 };
 
-static struct riscv_supported_ext riscv_supported_std_zxm_ext[] =
+static const struct riscv_supported_ext riscv_supported_std_zxm_ext[] =
 {
   {NULL, 0, 0, 0, 0}
 };
 
-static struct riscv_supported_ext riscv_supported_vendor_x_ext[] =
+static const struct riscv_supported_ext riscv_supported_vendor_x_ext[] =
 {
   {"xcvalu",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xcvbi",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
@@ -1629,9 +1637,9 @@ static struct riscv_supported_ext riscv_supported_vendor_x_ext[] =
   {"xventanacondops",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xsfvcp",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xsfcease",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
-  {"xsfvqmaccqoq",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0},
-  {"xsfvqmaccdod",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0},
-  {"xsfvfnrclipxfqf",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0},
+  {"xsfvqmaccqoq",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
+  {"xsfvqmaccdod",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
+  {"xsfvfnrclipxfqf",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xmipscbop",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xmipscmov",		ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
   {"xmipsexectl",	ISA_SPEC_CLASS_DRAFT,	1, 0, 0 },
@@ -1639,7 +1647,7 @@ static struct riscv_supported_ext riscv_supported_vendor_x_ext[] =
   {NULL, 0, 0, 0, 0}
 };
 
-const struct riscv_supported_ext *riscv_all_supported_ext[] =
+static const struct riscv_supported_ext *riscv_all_supported_ext[] =
 {
   riscv_supported_std_ext,
   riscv_supported_std_z_ext,
@@ -1701,7 +1709,7 @@ riscv_get_prefix_class (const char *arch)
 
 static bool
 riscv_known_prefixed_ext (const char *ext,
-			  struct riscv_supported_ext *known_exts)
+			  const struct riscv_supported_ext *known_exts)
 {
   size_t i;
   for (i = 0; known_exts[i].name != NULL; ++i)
@@ -1894,7 +1902,7 @@ riscv_get_default_ext_version (enum riscv_spec_class *default_isa_spec,
       || *default_isa_spec == ISA_SPEC_CLASS_NONE)
     return;
 
-  struct riscv_supported_ext *table = NULL;
+  const struct riscv_supported_ext *table = NULL;
   enum riscv_prefix_ext_class class = riscv_get_prefix_class (name);
   switch (class)
     {
@@ -2185,7 +2193,7 @@ riscv_update_subset1 (riscv_parse_subset_t *, riscv_subset_t *, const char *);
 static void
 riscv_parse_add_implicit_subsets (riscv_parse_subset_t *rps)
 {
-  struct riscv_implicit_subset *t = riscv_implicit_subsets;
+  const struct riscv_implicit_subset *t = riscv_implicit_subsets;
   for (; t->ext; t++)
     {
       riscv_subset_t *subset = NULL;
@@ -3123,6 +3131,15 @@ riscv_multi_subset_supports_ext (riscv_parse_subset_t *rps,
       return "zabha";
     case INSN_CLASS_ZACAS:
       return "zacas";
+    case INSN_CLASS_ZABHA_AND_ZACAS:
+      if (!riscv_subset_supports (rps, "zabha"))
+	{
+	  if (!riscv_subset_supports (rps, "zacas"))
+	    return _ ("zabha' and `zacas");
+	  else
+	    return "zabha";
+	}
+      return "zacas";
     case INSN_CLASS_ZALRSC:
       return "zalrsc";
     case INSN_CLASS_ZAWRS:
@@ -3336,8 +3353,18 @@ riscv_multi_subset_supports_ext (riscv_parse_subset_t *rps,
       return "xtheadvdot";
     case INSN_CLASS_XTHEADZVAMO:
       return "xtheadzvamo";
+    case INSN_CLASS_XVENTANACONDOPS:
+      return "xventanacondops";
+    case INSN_CLASS_XSFVCP:
+      return "xsfvcp";
     case INSN_CLASS_XSFCEASE:
       return "xsfcease";
+    case INSN_CLASS_XSFVQMACCQOQ:
+      return "xsfvqmaccqoq";
+    case INSN_CLASS_XSFVQMACCDOD:
+      return "xsfvqmaccdod";
+    case INSN_CLASS_XSFVFNRCLIPXFQF:
+      return "xsfvfnrclipxfqf";
     default:
       rps->error_handler
         (_("internal: unreachable INSN_CLASS_*"));
@@ -3437,8 +3464,8 @@ _bfd_riscv_elf_link_setup_gnu_properties (struct bfd_link_info *info,
 					    | SEC_READONLY | SEC_HAS_CONTENTS
 					    | SEC_DATA));
 	  if (sec == NULL)
-	    info->callbacks->einfo (
-	      _ ("%F%P: failed to create GNU property section\n"));
+	    info->callbacks->fatal (
+	      _("%P: failed to create GNU property section\n"));
 
 	  elf_section_type (sec) = SHT_NOTE;
 	}

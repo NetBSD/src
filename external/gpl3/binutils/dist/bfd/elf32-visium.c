@@ -1,6 +1,6 @@
 /* Visium-specific support for 32-bit ELF.
 
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -615,17 +615,9 @@ visium_elf_relocate_section (bfd *output_bfd,
 	}
 
       if (sec != NULL && discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, input_section,
-			       contents, rel->r_offset);
-
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, 1, relend, R_VISIUM_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -708,18 +700,19 @@ visium_elf_relocate_section (bfd *output_bfd,
 
 static asection *
 visium_elf_gc_mark_hook (asection *sec, struct bfd_link_info *info,
-			 Elf_Internal_Rela *rel, struct elf_link_hash_entry *h,
-			 Elf_Internal_Sym *sym)
+			 struct elf_reloc_cookie *cookie,
+			 struct elf_link_hash_entry *h,
+			 unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_VISIUM_GNU_VTINHERIT:
       case R_VISIUM_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 static bool
@@ -750,8 +743,7 @@ visium_elf_set_private_flags (bfd *abfd, flagword flags)
 static bool
 visium_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   BFD_ASSERT (!elf_flags_init (obfd)
@@ -785,6 +777,9 @@ visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   const char *mcm = "mcm";
   const char *mcm24 = "mcm24";
   const char *gr6 = "gr6";
+
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
@@ -857,6 +852,7 @@ visium_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 #define ELF_ARCH		bfd_arch_visium
 #define ELF_MACHINE_CODE	EM_VISIUM
 #define ELF_OSABI		ELFOSABI_STANDALONE
+#define	ELF_OSABI_EXACT		1
 #define ELF_MAXPAGESIZE		1
 
 #define TARGET_BIG_SYM		visium_elf32_vec

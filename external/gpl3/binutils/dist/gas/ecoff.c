@@ -1,5 +1,5 @@
 /* ECOFF debugging support.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    This file was put together by Ian Lance Taylor <ian@cygnus.com>.  A
    good deal of it comes directly from mips-tfile.c, by Michael
@@ -3322,6 +3322,9 @@ ecoff_directive_weakext (int ignore ATTRIBUTE_UNUSED)
       SKIP_WHITESPACE ();
       if (! is_end_of_stmt (*input_line_pointer))
 	{
+#ifdef md_expr_init_rest
+	  md_expr_init_rest (&exp);
+#endif
 	  expression (&exp);
 	  if (exp.X_op != O_symbol)
 	    {
@@ -3480,6 +3483,9 @@ ecoff_stab (int what,
 	  sc = sc_Nil;
 	  st = st_Nil;
 
+#ifdef md_expr_init_rest
+	  md_expr_init_rest (&exp);
+#endif
 	  expression (&exp);
 	  if (exp.X_op == O_constant)
 	    {
@@ -3606,7 +3612,6 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
   efdr_t *file;
   proc_t *proc;
   unsigned long c;
-  long iline;
   long totcount;
   lineno_list_t first;
   lineno_list_t *local_first_lineno = first_lineno;
@@ -3620,7 +3625,6 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
   proc = NULL;
   last = NULL;
   c = offset;
-  iline = 0;
   totcount = 0;
 
   /* FIXME?  Now that MIPS embedded-PIC is gone, it may be safe to
@@ -3800,7 +3804,6 @@ ecoff_build_lineno (const struct ecoff_debug_swap *backend,
 	  ++c;
 	}
 
-      ++iline;
       last = l;
     }
 

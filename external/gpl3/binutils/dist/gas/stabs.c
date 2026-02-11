@@ -1,5 +1,5 @@
 /* Generic stabs parsing for gas.
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -229,14 +229,14 @@ s_stab_generic (int what,
 	obstack_free (&notes, stab_secname);
 
       subseg_set (stab, 0);
-      if (!seg_info (stab)->hadone)
+      if (!seg_info (stab)->stab_seen)
 	{
 	  bfd_set_section_flags (stab,
 				 SEC_READONLY | SEC_RELOC | SEC_DEBUGGING);
 #ifdef INIT_STAB_SECTION
 	  INIT_STAB_SECTION (stab, stabstr);
 #endif
-	  seg_info (stab)->hadone = 1;
+	  seg_info (stab)->stab_seen = 1;
 	}
     }
   else if (freenames)
@@ -259,11 +259,7 @@ s_stab_generic (int what,
 
       string = demand_copy_C_string (&length);
       if (string == NULL)
-	{
-	  as_warn (_(".stab%c: missing string"), what);
-	  ignore_rest_of_line ();
-	  goto out2;
-	}
+	goto out2;
       /* FIXME: We should probably find some other temporary storage
 	 for string, rather than leaking memory if someone else
 	 happens to use the notes obstack.  */
@@ -296,26 +292,6 @@ s_stab_generic (int what,
 	goto out;
       SKIP_WHITESPACE ();
     }
-
-#ifdef TC_PPC
-#ifdef OBJ_ELF
-  /* Solaris on PowerPC has decided that .stabd can take 4 arguments, so if we were
-     given 4 arguments, make it a .stabn */
-  else if (what == 'd')
-    {
-      char *save_location = input_line_pointer;
-
-      SKIP_WHITESPACE ();
-      if (*input_line_pointer == ',')
-	{
-	  input_line_pointer++;
-	  what = 'n';
-	}
-      else
-	input_line_pointer = save_location;
-    }
-#endif /* OBJ_ELF */
-#endif /* TC_PPC */
 
 #ifndef NO_LISTING
   if (listing)
@@ -422,6 +398,9 @@ s_xstab (int what)
   char *stab_secname, *stabstr_secname;
 
   stab_secname = demand_copy_C_string (&length);
+  if (stab_secname == NULL)
+    /* as_bad error has been reported.  */
+    return;
   SKIP_WHITESPACE ();
   if (*input_line_pointer == ',')
     {

@@ -1,5 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -214,6 +214,10 @@ struct bfd_link_hash_table
   struct bfd_link_hash_entry *undefs_tail;
   /* Function to free the hash table on closing BFD.  */
   void (*hash_table_free) (bfd *);
+
+  /* A pointer to information used to merge SEC_MERGE sections.  */
+  void *merge_info;
+
   /* The type of the link hash table.  */
   enum bfd_link_hash_table_type type;
 };
@@ -470,6 +474,10 @@ struct bfd_link_info
   /* FALSE if .eh_frame unwind info should be generated for PLT and other
      linker created sections, TRUE if it should be omitted.  */
   unsigned int no_ld_generated_unwind_info: 1;
+
+  /* TRUE if no .sframe stack trace info should be generated for the output.
+     This includes linker generated SFrame info as well.  */
+  unsigned int discard_sframe: 1;
 
   /* TRUE if BFD should generate a "task linked" object file,
      similar to relocatable but also with globals converted to
@@ -896,6 +904,11 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, bfd * abfd,
      asection * current_section, asection * previous_section,
      bool new_segment);
+  /* Choose a neighbouring section to the given excluded section, or
+     the absolute section if no suitable neighbours are found that
+     will be output.  */
+  asection *(*nearby_section)
+    (bfd *, asection *, bfd_vma);
   /* This callback provides a chance for callers of the BFD to examine the
      ELF (dynamic) string table once it is complete.  */
   void (*examine_strtab)
@@ -1013,6 +1026,9 @@ struct bfd_link_order_reloc
 /* Allocate a new link_order for a section.  */
 extern struct bfd_link_order *bfd_new_link_order (bfd *, asection *);
 
+/* Attempt to merge SEC_MERGE sections.  */
+extern bool bfd_merge_sections (bfd *, struct bfd_link_info *);
+
 struct bfd_section_already_linked;
 
 extern bool bfd_section_already_linked_table_init (void);
@@ -1021,11 +1037,7 @@ extern bool _bfd_handle_already_linked
   (struct bfd_section *, struct bfd_section_already_linked *,
    struct bfd_link_info *);
 
-extern struct bfd_section *_bfd_nearby_section
-  (bfd *, struct bfd_section *, bfd_vma);
-
-extern void _bfd_fix_excluded_sec_syms
-  (bfd *, struct bfd_link_info *);
+extern void bfd_fix_excluded_sec_syms (struct bfd_link_info *);
 
 /* These structures are used to describe version information for the
    ELF linker.  These structures could be manipulated entirely inside

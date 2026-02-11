@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,10 +108,15 @@ host_triplet = @host@
 target_triplet = @target@
 subdir = gp-display-html
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../libtool.m4 \
-	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
-	$(top_srcdir)/../ltversion.m4 $(top_srcdir)/../lt~obsolete.m4 \
-	$(top_srcdir)/acinclude.m4 $(top_srcdir)/../config/warnings.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../config/clang-plugin.m4 \
+	$(top_srcdir)/../config/depstand.m4 \
+	$(top_srcdir)/../config/gcc-plugin.m4 \
+	$(top_srcdir)/../config/lead-dot.m4 \
+	$(top_srcdir)/../config/override.m4 \
+	$(top_srcdir)/../libtool.m4 $(top_srcdir)/../ltoptions.m4 \
+	$(top_srcdir)/../ltsugar.m4 $(top_srcdir)/../ltversion.m4 \
+	$(top_srcdir)/../lt~obsolete.m4 $(top_srcdir)/acinclude.m4 \
+	$(top_srcdir)/../config/warnings.m4 \
 	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/ax_pthread.m4 \
 	$(top_srcdir)/config/bison.m4 $(top_srcdir)/../bfd/version.m4 \
@@ -228,6 +233,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
+LLVM_CONFIG = @LLVM_CONFIG@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -235,6 +241,7 @@ MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
+NOLTO_CFLAGS = @NOLTO_CFLAGS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -300,6 +307,7 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
+nolto_cflags = @nolto_cflags@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
 prefix = @prefix@

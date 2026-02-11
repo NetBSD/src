@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script
 dnl
-dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -245,6 +245,27 @@ AC_ARG_ENABLE(mark-plt,
   no) ac_default_ld_z_mark_plt=0 ;;
 esac])
 
+# Decide if --gnu2-tls-tag should be enabled in ELF i386 and x86-64
+# linkers by default.
+ac_default_ld_enable_gnu2_tls_tag=unset
+AC_ARG_ENABLE(gnu2-tls-tag,
+	      AS_HELP_STRING([--enable-gnu2-tls-tag],
+	      [enable --gnu2-tls-tag in ELF i386/x86-64 linker by default]),
+[case "${enableval}" in
+  yes) ac_default_ld_enable_gnu2_tls_tag=1 ;;
+  no) ac_default_ld_enable_gnu2_tls_tag=0 ;;
+esac])
+
+# Decide if --gnu-tls-tag should be enabled in ELF i386 linker by default.
+ac_default_ld_enable_gnu_tls_tag=unset
+AC_ARG_ENABLE(gnu-tls-tag,
+	      AS_HELP_STRING([--enable-gnu-tls-tag],
+	      [enable --gnu-tls-tag in ELF i386 linker by default]),
+[case "${enableval}" in
+  yes) ac_default_ld_enable_gnu_tls_tag=1 ;;
+  no) ac_default_ld_enable_gnu_tls_tag=0 ;;
+esac])
+
 # Decide if -z memory-seal should be enabled in ELF linker by default.
 ac_default_ld_z_memory_seal=unset
 AC_ARG_ENABLE(memory-seal,
@@ -326,7 +347,7 @@ esac],
 [case "${target}" in
   # Enable gnu hash only on GNU targets, but not mips
   mips*-*-*) enable_default_hash_style=sysv ;;
-  *-*-gnu* | *-*-linux* | *-*-nacl*) enable_default_hash_style=both ;;
+  *-*-gnu* | *-*-linux*) enable_default_hash_style=both ;;
   *) enable_default_hash_style=sysv ;;
 esac])
 
@@ -401,7 +422,6 @@ fi
 # host-specific stuff:
 
 ALL_LINGUAS="bg da de es fi fr ga id it ja pt_BR ru sr sv tr uk vi zh_CN zh_TW"
-AM_PO_SUBDIRS
 ZW_GNU_GETTEXT_SISTER_DIR
 
 AC_EXEEXT
@@ -427,11 +447,11 @@ AC_SUBST(NATIVE_LIB_DIRS)
 AC_CHECK_HEADERS(fcntl.h elf-hints.h limits.h inttypes.h stdint.h \
 		 sys/file.h sys/mman.h sys/param.h sys/stat.h sys/time.h \
 		 sys/types.h unistd.h)
-AC_CHECK_FUNCS(close getrusage glob lseek mkstemp open realpath waitpid)
+AC_CHECK_FUNCS(close getrusage glob lseek mkstemp open realpath waitpid mallinfo mallinfo2)
 
 BFD_BINARY_FOPEN
 
-AC_CHECK_DECLS([environ, stpcpy])
+AC_CHECK_DECLS([environ, stpcpy, strtoull])
 
 GCC_AC_FUNC_MMAP
 
@@ -486,6 +506,7 @@ TDIRS=
 elf_list_options=false
 elf_shlib_list_options=false
 elf_plt_unwind_list_options=false
+elf_sframe_list_options=false
 for targ_alias in `echo $target_alias $enable_targets | sed 's/,/ /g'`
 do
   if test "$targ_alias" = "all"; then
@@ -493,6 +514,7 @@ do
     elf_list_options=true
     elf_shlib_list_options=true
     elf_plt_unwind_list_options=true
+    elf_sframe_list_options=true
   else
     # Canonicalize the secondary target names.
     result=`$ac_config_sub $targ_alias 2>/dev/null`
@@ -517,7 +539,7 @@ do
       targ_extra_libpath="$targ_extra_libpath $targ64_extra_libpath"
     fi
 
-    for i in $targ_emul $targ_extra_emuls $targ_extra_libpath; do
+    for i in $targ_emul $targ_extra_libpath $targ_extra_emuls; do
 	case " $all_emuls " in
 	*" e${i}.o "*) ;;
 	*)
@@ -547,6 +569,9 @@ tdir_$i=$result"
 	    fi
 	    if test x${PLT_UNWIND} = xyes; then
 	      elf_plt_unwind_list_options=true
+	    fi
+	    if test x${SFRAME_INFO} = xyes; then
+	      elf_sframe_list_options=true
 	    fi
 	  fi
 	  ;;
@@ -647,6 +672,23 @@ AC_DEFINE_UNQUOTED(DEFAULT_LD_Z_MEMORY_SEAL,
   $ac_default_ld_z_memory_seal,
   [Define to 1 if you want to enable -z memory_seal in ELF linker by default.])
 
+if test "${ac_default_ld_enable_gnu2_tls_tag}" = unset; then
+  # Default to enable --gnu2-tls-tag if libc.so has the GLIBC_ABI_GNU2_TLS
+  # version.
+  ac_default_ld_enable_gnu2_tls_tag=2
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_LD_GNU2_TLS_TAG,
+  $ac_default_ld_enable_gnu2_tls_tag,
+  [Define to 1 if you want to enable --gnu2-tls-tag in ELF i386/x86-64 linker by default.])
+
+if test "${ac_default_ld_enable_gnu_tls_tag}" = unset; then
+  # Default to enable --gnu-tls-tag if libc.so has the GLIBC_ABI_GNU_TLS
+  # version.
+  ac_default_ld_enable_gnu_tls_tag=2
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_LD_GNU_TLS_TAG,
+  $ac_default_ld_enable_gnu_tls_tag,
+  [Define to 1 if you want to enable --gnu-tls-tag in ELF i386 linker by default.])
 
 AC_DEFINE_UNQUOTED(DEFAULT_LD_WARN_EXECSTACK,
   $ac_default_ld_warn_execstack,
@@ -693,6 +735,7 @@ AC_DEFINE_UNQUOTED([DEFAULT_EMIT_GNU_HASH],
 AC_SUBST(elf_list_options)
 AC_SUBST(elf_shlib_list_options)
 AC_SUBST(elf_plt_unwind_list_options)
+AC_SUBST(elf_sframe_list_options)
 AC_SUBST(EMUL)
 
 AC_SUBST(TDIRS)

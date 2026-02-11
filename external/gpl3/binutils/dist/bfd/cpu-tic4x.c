@@ -1,5 +1,5 @@
 /* bfd back-end for TMS320C[34]x support
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -28,15 +28,14 @@ static bool
 tic4x_scan (const struct bfd_arch_info *info,
 	    const char *string)
 {
-  /* Allow strings of form [ti][Cc][34][0-9], let's not be too picky
+  /* Allow strings of form (tms320|ti|)[Cc][34], let's not be too picky
      about strange numbered machines in C3x or C4x series.  */
   if (string[0] == 't' && string[1] == 'i')
     string += 2;
+  else if (startswith (string, "tms320"))
+    string += 6;
   if (*string == 'C' || *string == 'c')
     string++;
-  if (string[1] < '0' && string[1] > '9')
-    return false;
-
   if (*string == '3')
     return (info->mach == bfd_mach_tic3x);
   else if (*string == '4')

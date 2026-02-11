@@ -1,5 +1,5 @@
 /* BFD XCOFF object file private structure.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Written by Tom Rix, Redhat.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -21,6 +21,8 @@
 
 #ifndef LIBXCOFF_H
 #define LIBXCOFF_H
+
+#include "hidden.h"
 
 /* This is the backend information kept for XCOFF files.  This
    structure is constant for a particular backend.  The first element
@@ -235,21 +237,23 @@ typedef bool xcoff_reloc_function (bfd *, asection *, bfd *,
 typedef bool xcoff_complain_function (bfd *, bfd_vma, bfd_vma,
 					     struct reloc_howto_struct *);
 
-extern xcoff_reloc_function *const xcoff_calculate_relocation[];
-extern xcoff_complain_function *const xcoff_complain_overflow[];
+extern xcoff_reloc_function *const xcoff_calculate_relocation[]
+  ATTRIBUTE_HIDDEN;
+extern xcoff_complain_function *const xcoff_complain_overflow[]
+  ATTRIBUTE_HIDDEN;
 
 #define XCOFF_NO_LONG_SECTION_NAMES  (false), bfd_coff_set_long_section_names_disallowed
 
 /* Relocation functions */
-extern xcoff_reloc_function xcoff_reloc_type_noop;
-extern xcoff_reloc_function xcoff_reloc_type_fail;
-extern xcoff_reloc_function xcoff_reloc_type_pos;
-extern xcoff_reloc_function xcoff_reloc_type_neg;
-extern xcoff_reloc_function xcoff_reloc_type_rel;
-extern xcoff_reloc_function xcoff_reloc_type_toc;
-extern xcoff_reloc_function xcoff_reloc_type_ba;
-extern xcoff_reloc_function xcoff_reloc_type_crel;
-extern xcoff_reloc_function xcoff_reloc_type_tls;
+extern xcoff_reloc_function xcoff_reloc_type_noop ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_fail ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_pos ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_neg ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_rel ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_toc ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_ba ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_crel ATTRIBUTE_HIDDEN;
+extern xcoff_reloc_function xcoff_reloc_type_tls ATTRIBUTE_HIDDEN;
 
 /* Structure to describe dwarf sections.
    Useful to convert from XCOFF section name to flag and vice-versa.

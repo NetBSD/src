@@ -1,5 +1,5 @@
 /* SFrame format description.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
    This file is part of libsframe.
 
@@ -74,10 +74,11 @@ extern "C"
 /* SFrame format versions.  */
 #define SFRAME_VERSION_1	1
 #define SFRAME_VERSION_2	2
+#define SFRAME_VERSION_3        3
 /* SFrame magic number.  */
 #define SFRAME_MAGIC		0xdee2
 /* Current version of SFrame format.  */
-#define SFRAME_VERSION	SFRAME_VERSION_2
+#define SFRAME_VERSION	SFRAME_VERSION_3
 
 /* Various flags for SFrame.  */
 
@@ -97,6 +98,10 @@ extern "C"
   (SFRAME_F_FDE_SORTED | SFRAME_F_FRAME_POINTER \
    | SFRAME_F_FDE_FUNC_START_PCREL)
 
+/* Set of all defined flags in SFrame V3.  */
+#define SFRAME_V3_F_ALL_FLAGS \
+  (SFRAME_F_FDE_SORTED | SFRAME_F_FDE_FUNC_START_PCREL)
+
 #define SFRAME_CFA_FIXED_FP_INVALID 0
 #define SFRAME_CFA_FIXED_RA_INVALID 0
 
@@ -111,28 +116,34 @@ extern "C"
 #define SFRAME_FRE_TYPE_ADDR2	1
 #define SFRAME_FRE_TYPE_ADDR4	2
 
-/* SFrame Function Descriptor Entry types.
+/* SFrame Function Descriptor Entry PC types.
 
-   The SFrame format has two possible representations for functions.  The
-   choice of which type to use is made according to the instruction patterns
-   in the relevant program stub.
+   The SFrame format has two possible representations for functions' PC Type.
+   The choice of which PC type to use is made according to the instruction
+   patterns in the relevant program stub.
 
-   An SFrame FDE of type SFRAME_FDE_TYPE_PCINC is an indication
-   that the PCs in the FREs should be treated as increments in bytes.  This is
-   used for a bulk of the executable code of a program, which contains
-   instructions with no specific pattern.
+   For more details, see the (renamed to) entries SFRAME_V3_FDE_PCTYPE_INC and
+   SFRAME_V3_FDE_PCTYPE_MASK for SFrame V3.  */
 
-   An SFrame FDE of type SFRAME_FDE_TYPE_PCMASK is an indication
-   that the PCs in the FREs should be treated as masks.  This type is useful
-   for the cases when a small pattern of instructions in a program stub is
-   repeatedly to cover a specific functionality.  Typical usescases are pltN
-   entries, trampolines etc.  */
-
-/* Unwinders perform a (PC >= FRE_START_ADDR) to look up a matching FRE.  */
+/* Unwinders perform a (PC >= FRE_START_ADDR) to look up a matching FRE.
+   NB: Use SFRAME_V3_FDE_PCTYPE_INC in SFrame V3 instead.  */
 #define SFRAME_FDE_TYPE_PCINC   0
 /* Unwinders perform a (PC % REP_BLOCK_SIZE >= FRE_START_ADDR) to look up a
-   matching FRE.  */
+   matching FRE.  NB: Use SFRAME_V3_FDE_PCTYPE_MASK in SFrame V3 instead.  */
 #define SFRAME_FDE_TYPE_PCMASK  1
+
+/* SFrame FDE types.  */
+
+/* Default FDE type.  */
+#define SFRAME_FDE_TYPE_DEFAULT	  0
+/* Flexible Frame FDE type.
+   The recovery rule for CFA, RA and FP allow more flexibility.  Examples of
+   patterns supported include:
+     - CFA may be non-SP/FP based.
+     - CFA, FP may encode dereferencing of register after offset adjustment
+     - RA may be in a non-default register.
+   Currently used for SFRAME_ABI_AMD64_ENDIAN_LITTLE.  */
+#define SFRAME_FDE_TYPE_FLEX	  1
 
 typedef struct sframe_preamble
 {
@@ -183,7 +194,7 @@ typedef struct sframe_header
 #define SFRAME_AARCH64_PAUTH_KEY_A    0 /* Key A.  */
 #define SFRAME_AARCH64_PAUTH_KEY_B    1 /* Key B.  */
 
-typedef struct sframe_func_desc_entry
+typedef struct sframe_func_desc_entry_v2
 {
   /* Function start address.  Encoded as a signed offset, relative to the
      beginning of the current FDE.  */
@@ -210,7 +221,7 @@ typedef struct sframe_func_desc_entry
      SFRAME_FDE_TYPE_PCMASK.  */
   uint8_t sfde_func_rep_size;
   uint16_t sfde_func_padding2;
-} ATTRIBUTE_PACKED sframe_func_desc_entry;
+} ATTRIBUTE_PACKED sframe_func_desc_entry_v2;
 
 /* Macros to compose and decompose function info in FDE.  */
 
@@ -227,12 +238,134 @@ typedef struct sframe_func_desc_entry
 #define SFRAME_V1_FUNC_INFO_UPDATE_PAUTH_KEY(pauth_key, fde_info) \
   ((((pauth_key) & 0x1) << 5) | ((fde_info) & 0xdf))
 
+/* SFrame V2 has similar SFrame FDE representation as SFrame V1.  */
+
+#define SFRAME_V2_FUNC_INFO(fde_type, fre_enc_type) \
+  (SFRAME_V1_FUNC_INFO (fde_type, fre_enc_type))
+
+#define SFRAME_V2_FUNC_FRE_TYPE(data)    (SFRAME_V1_FUNC_FRE_TYPE (data))
+#define SFRAME_V2_FUNC_PC_TYPE(data)     (SFRAME_V1_FUNC_FDE_TYPE (data))
+#define SFRAME_V2_FUNC_PAUTH_KEY(data)   (SFRAME_V1_FUNC_PAUTH_KEY (data))
+
+#define SFRAME_V2_FUNC_INFO_UPDATE_PAUTH_KEY(pauth_key, fde_info) \
+  SFRAME_V1_FUNC_INFO_UPDATE_PAUTH_KEY (pauth_key, fde_info)
+
+/* SFrame Function Descriptor Entry PC types.
+
+   The SFrame format has two possible representations for functions' PC Type.
+   The choice of which PC type to use is made according to the instruction
+   patterns in the relevant program stub.
+
+   The PC type SFRAME_V3_FDE_PCTYPE_INC is an indication that the PCs in the
+   FREs should be treated as increments in bytes.  This is used for a bulk of
+   the executable code of a program, which contains instructions with no
+   specific pattern.
+
+   The PC type SFRAME_V3_FDE_PCTYPE_MASK is an indication that the PCs in the
+   FREs should be treated as masks.  This type is useful for the cases when a
+   small pattern of instructions in a program stub is repeatedly to cover a
+   specific functionality.  Typical usescases are pltN entries, trampolines
+   etc.
+
+   NB: In SFrame version 2 or lower, the names SFRAME_FDE_TYPE_PCINC and
+   SFRAME_FDE_TYPE_PCMASK were used.  */
+
+/* Unwinders perform a (PC >= FRE_START_ADDR) to look up a matching FRE.  */
+#define SFRAME_V3_FDE_PCTYPE_INC   SFRAME_FDE_TYPE_PCINC
+/* Unwinders perform a (PC % REP_BLOCK_SIZE >= FRE_START_ADDR) to look up a
+   matching FRE.  */
+#define SFRAME_V3_FDE_PCTYPE_MASK  SFRAME_FDE_TYPE_PCMASK
+
+typedef struct sframe_func_desc_idx_v3
+{
+  /* Offset to the function start address.  Encoded as a signed offset,
+     relative to the beginning of the current FDE.  */
+  int64_t sfdi_func_start_offset;
+  /* Size of the function in bytes.  */
+  uint32_t sfdi_func_size;
+  /* Offset of the first SFrame Frame Row Entry of the function, relative to the
+     beginning of the SFrame Frame Row Entry sub-section.  */
+  uint32_t sfdi_func_start_fre_off;
+} ATTRIBUTE_PACKED sframe_func_desc_idx_v3;
+
+typedef struct sframe_func_desc_attr_v3
+{
+  /* Number of frame row entries for the function.  */
+  uint16_t sfda_func_num_fres;
+  /* Additional information for stack tracing from the function:
+     - 4-bits: Identify the FRE type used for the function.
+     - 1-bit: Identify the PC type of the function - mask or inc.
+     - 1-bit: PAC authorization A/B key (aarch64).
+     - 1-bits: Unused.
+     - 1-bit: Signal frame.
+     -------------------------------------------------------------------------------
+     | Signal |   Unused    |  PAC auth A/B key (aarch64) |   FDE   |   FRE Type   |
+     | frame  |             |        Unused (amd64)       | PC Type |              |
+     -------------------------------------------------------------------------------
+     8        7             6                             5         4              0     */
+  uint8_t sfda_func_info;
+  /* Additional information for stack tracing from the function:
+     - 5-bits: FDE type.
+     - 3-bits: Unused.
+     ------------------------------------------------------------
+     |                     Unused                 |  FDE Type   |
+     |                                            |             |
+     ------------------------------------------------------------
+     8                7             6             5             0     */
+  uint8_t sfda_func_info2;
+  /* Size of the block of repeating insns.  Used for SFrame FDEs of type
+     SFRAME_V3_FDE_PCTYPE_MASK.  */
+  uint8_t sfda_func_rep_size;
+} ATTRIBUTE_PACKED sframe_func_desc_attr_v3;
+
+#define SFRAME_V3_FDE_FUNC_INFO(fde_pc_type, fre_type) \
+  (SFRAME_V2_FUNC_INFO (fde_pc_type, fre_type))
+
+/* Mask for the ABI/arch specific FDE type (lower 5 bits).  */
+#define SFRAME_V3_FDE_TYPE_MASK		      0x01f
+/* Get the FDE type from the info2 byte.  */
+#define SFRAME_V3_FDE_TYPE(info2) \
+  ((info2) & SFRAME_V3_FDE_TYPE_MASK)
+#define SFRAME_V3_FDE_FRE_TYPE(info)          (SFRAME_V2_FUNC_FRE_TYPE (info))
+#define SFRAME_V3_FDE_PC_TYPE(info)           (SFRAME_V2_FUNC_PC_TYPE (info))
+#define SFRAME_V3_AARCH64_FDE_PAUTH_KEY(info) (SFRAME_V2_FUNC_PAUTH_KEY (info))
+#define SFRAME_V3_FDE_SIGNAL_P(info)           (((info) >> 7) & 0x1)
+
+/* Set the FDE type in the info2 byte, preserving upper bits.  */
+#define SFRAME_V3_SET_FDE_TYPE(info2, fde_type) \
+  (((info2) & ~SFRAME_V3_FDE_TYPE_MASK) \
+   | ((fde_type) & SFRAME_V3_FDE_TYPE_MASK))
+
+#define SFRAME_V3_FDE_UPDATE_PAUTH_KEY(pauth_key, info) \
+  SFRAME_V2_FUNC_INFO_UPDATE_PAUTH_KEY (pauth_key, info)
+
+#define SFRAME_V3_FDE_UPDATE_SIGNAL_P(signal_p, info)  \
+  ((((signal_p) & 0x1) << 7) | ((info) & 0x7f))
+
+#define SFRAME_V3_FLEX_FDE_CTRLWORD_ENCODE(reg, deref_p, reg_p) \
+  ((((reg) << 0x3) | (0 << 0x2) | (((deref_p) & 0x1) << 0x1) | ((reg_p) & 0x1)))
+
+#define SFRAME_V3_FLEX_FDE_CTRLWORD_REGNUM(data)    ((data) >> 3)
+#define SFRAME_V3_FLEX_FDE_CTRLWORD_DEREF_P(data)   (((data) >> 1) & 0x1)
+#define SFRAME_V3_FLEX_FDE_CTRLWORD_REG_P(data)     ((data) & 0x1)
+
+#define SFRAME_V3_FRE_RA_UNDEFINED_P(fre_info) \
+  (SFRAME_V2_FRE_RA_UNDEFINED_P (fre_info))
+
 /* Size of stack frame offsets in an SFrame Frame Row Entry.  A single
    SFrame FRE has all offsets of the same size.  Offset size may vary
    across frame row entries.  */
 #define SFRAME_FRE_OFFSET_1B	  0
 #define SFRAME_FRE_OFFSET_2B	  1
 #define SFRAME_FRE_OFFSET_4B	  2
+
+/* In SFrame V3, with the addition of flexible FDE, usage of term "offsets"
+   (for the varlen data trailing the SFrame FRE) is inappropriate.  Use the
+   terminology of "data word" instead.  A single SFrame FRE has all data words
+   of the same size.  Size of data words may vary across frame row entries.  */
+#define SFRAME_FRE_DATAWORD_1B	    SFRAME_FRE_OFFSET_1B
+#define SFRAME_FRE_DATAWORD_2B	    SFRAME_FRE_OFFSET_2B
+#define SFRAME_FRE_DATAWORD_4B	    SFRAME_FRE_OFFSET_4B
 
 /* An SFrame Frame Row Entry can be SP or FP based.  */
 #define SFRAME_BASE_REG_FP	0
@@ -256,14 +389,15 @@ typedef struct sframe_fre_info
 {
   /* Information about
      - 1 bit: base reg for CFA
-     - 4 bits: Number of offsets (N).  A value of upto 3 is allowed to track
-     all three of CFA, FP and RA (fixed implicit order).
-     - 2 bits: information about size of the offsets (S) in bytes.
-     Valid values are SFRAME_FRE_OFFSET_1B, SFRAME_FRE_OFFSET_2B,
-     SFRAME_FRE_OFFSET_4B
+     - 4 bits: Number of data words (N).  Typically for default FDE type, a
+     value of upto 3 suffices to track all three of CFA, FP and RA (fixed
+     implicit order).
+     - 2 bits: information about size of the data words (S) in bytes.
+     Valid values are SFRAME_FRE_DATAWORD_1B, SFRAME_FRE_DATAWORD_2B,
+     SFRAME_FRE_DATAWORD_4B.
      - 1 bit: Mangled RA state bit (aarch64 only).
      ----------------------------------------------------------------------------------
-     | Mangled-RA (aarch64) |  Size of offsets   |   Number of offsets    |   base_reg |
+     | Mangled-RA (aarch64) | Size of Data Words |  Number of Data Words  |   base_reg |
      | Unused (amd64, s390x)|                    |                        |            |
      ----------------------------------------------------------------------------------
      8                     7                    5                        1            0
@@ -287,10 +421,22 @@ typedef struct sframe_fre_info
 #define SFRAME_V1_FRE_OFFSET_COUNT(data)	  (((data) >> 1) & 0xf)
 #define SFRAME_V1_FRE_OFFSET_SIZE(data)		  (((data) >> 5) & 0x3)
 #define SFRAME_V1_FRE_MANGLED_RA_P(data)	  (((data) >> 7) & 0x1)
+#define SFRAME_V2_FRE_RA_UNDEFINED_P(data)	  (SFRAME_V1_FRE_OFFSET_COUNT (data) == 0)
+
+/* In SFrame V3, with the introduction of flexible FDE type
+   SFRAME_FDE_TYPE_FLEX, the variable-length data following SFrame FRE header
+   may contain unsigned Control Data Words or signed Offset Data Words.  These
+   are referred to as 'Data Words'.  Note that the usage of the term 'Word'
+   here is colloquial, the size of a data word is determined by applicable
+   bits.  */
+#define SFRAME_V3_FRE_DATAWORD_COUNT(data)	\
+  SFRAME_V1_FRE_OFFSET_COUNT (data)
+#define SFRAME_V3_FRE_DATAWORD_SIZE(data) \
+  SFRAME_V1_FRE_OFFSET_SIZE (data)
 
 /* SFrame Frame Row Entry definitions.
 
-   Used for AMD64, AARCH64, and s390x.
+   Used for Default FDEs in AMD64, AARCH64, and s390x.
 
    An SFrame Frame Row Entry is a self-sufficient record which contains
    information on how to generate the stack trace for the specified range of
@@ -298,7 +444,7 @@ typedef struct sframe_fre_info
      S is the size of the stack frame offset for the FRE, and
      N is the number of stack frame offsets in the FRE
 
-   The interpretation of FRE stack offsets is ABI-specific:
+   The interpretation of FRE stack offsets for default FDEs is ABI-specific:
 
    AMD64:
      offset1 (interpreted as CFA = BASE_REG + offset1)
@@ -329,9 +475,10 @@ typedef struct sframe_fre_info
 	offset2 (intrepreted as FP = CFA + offset2)
       fi
     fi
-    Note that in s390x, if a FP/RA offset2/offset3 value has the least-
-    significant bit set it represents a DWARF register number shifted to the
-    left by 1 to restore the FP/RA value from.
+    Note that in s390x, if a FP/RA is to be restored from a register, flex FDEs
+    are used in SFrame V3.  In SFrame V2, default FDEs were used: the
+    least-significant bit of the offset was set to indicate that the encoded
+    value is a DWARF register number shifted to the left by 1.
 */
 
 /* Used when SFRAME_FRE_TYPE_ADDR1 is specified as FRE type.  */

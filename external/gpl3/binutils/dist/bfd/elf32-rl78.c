@@ -1,5 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -772,7 +772,8 @@ rl78_elf_relocate_section
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_RL78_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -1185,6 +1186,9 @@ rl78_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword old_flags;
   bool error = false;
 
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
+
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
 
@@ -1405,7 +1409,8 @@ rl78_elf_check_relocs
 
 static bool
 rl78_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+				  struct bfd_link_info *info,
+				  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *splt;
@@ -1889,9 +1894,7 @@ rl78_offset_for_reloc (bfd *			abfd,
 	    {
 	      if ((ssec->flags & SEC_MERGE)
 		  && ssec->sec_info_type == SEC_INFO_TYPE_MERGE)
-		symval = _bfd_merged_section_offset (abfd, & ssec,
-						     elf_section_data (ssec)->sec_info,
-						     symval);
+		symval = _bfd_merged_section_offset (abfd, & ssec, symval);
 	    }
 
 	  /* Now make the offset relative to where the linker is putting it.  */

@@ -1,5 +1,5 @@
 /* tc-hppa.c -- Assemble for the PA
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -54,10 +54,10 @@ typedef elf_symbol_type obj_symbol_type;
 
 #if TARGET_ARCH_SIZE == 64
 /* How to generate a relocation.  */
-#define hppa_gen_reloc_type _bfd_elf64_hppa_gen_reloc_type
+#define hppa_gen_reloc_type bfd_elf64_hppa_gen_reloc_type
 #define elf_hppa_reloc_final_type elf64_hppa_reloc_final_type
 #else
-#define hppa_gen_reloc_type _bfd_elf32_hppa_gen_reloc_type
+#define hppa_gen_reloc_type bfd_elf32_hppa_gen_reloc_type
 #define elf_hppa_reloc_final_type elf32_hppa_reloc_final_type
 #endif
 

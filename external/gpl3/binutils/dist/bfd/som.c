@@ -1,5 +1,5 @@
 /* bfd back-end for HP PA-RISC SOM objects.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah.
@@ -4351,7 +4351,9 @@ som_bfd_derive_misc_symbol_info (bfd *abfd ATTRIBUTE_UNUSED,
 
      The behavior of these flags is not well documentmented, so there
      may be bugs and some surprising interactions with other flags.  */
-  if (som_section_data (sym->section)
+  if (sym->section->owner != NULL
+      && sym->section->owner->xvec->flavour == bfd_target_som_flavour
+      && som_section_data (sym->section)
       && som_section_data (sym->section)->subspace_dict
       && info->symbol_scope == SS_UNIVERSAL
       && (info->symbol_type == ST_ENTRY
@@ -5345,20 +5347,26 @@ som_new_section_hook (bfd *abfd, asection *newsect)
 
 static bool
 som_bfd_copy_private_symbol_data (bfd *ibfd,
-				  asymbol *isymbol,
-				  bfd *obfd,
-				  asymbol *osymbol)
+				  asymbol **isymbol,
+				  bfd *obfd ATTRIBUTE_UNUSED,
+				  asymbol **osymbol)
 {
-  struct som_symbol *input_symbol = (struct som_symbol *) isymbol;
-  struct som_symbol *output_symbol = (struct som_symbol *) osymbol;
-
-  /* One day we may try to grok other private data.  */
-  if (ibfd->xvec->flavour != bfd_target_som_flavour
-      || obfd->xvec->flavour != bfd_target_som_flavour)
-    return false;
+  if (ibfd->xvec->flavour != bfd_target_som_flavour)
+    {
+      /* The som backend makes use of som specific symbol fields
+	 when outputting symbols.  */
+      asymbol *osym = som_make_empty_symbol (obfd);
+      if (osym == NULL)
+	return false;
+      memcpy (osym, *isymbol, sizeof (*osym));
+      osym->the_bfd = obfd;
+      return true;
+    }
 
   /* The only private information we need to copy is the argument relocation
      bits.  */
+  struct som_symbol *input_symbol = (struct som_symbol *) *isymbol;
+  struct som_symbol *output_symbol = (struct som_symbol *) *osymbol;
   output_symbol->tc_data.ap.hppa_arg_reloc =
     input_symbol->tc_data.ap.hppa_arg_reloc;
 
@@ -5378,7 +5386,6 @@ som_bfd_copy_private_section_data (bfd *ibfd,
   /* One day we may try to grok other private data.  */
   if (link_info != NULL
       || ibfd->xvec->flavour != bfd_target_som_flavour
-      || obfd->xvec->flavour != bfd_target_som_flavour
       || (!som_is_space (isection) && !som_is_subspace (isection)))
     return true;
 
@@ -5417,8 +5424,7 @@ static bool
 som_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   /* One day we may try to grok other private data.  */
-  if (ibfd->xvec->flavour != bfd_target_som_flavour
-      || obfd->xvec->flavour != bfd_target_som_flavour)
+  if (ibfd->xvec->flavour != bfd_target_som_flavour)
     return true;
 
   /* Allocate some memory to hold the data we need.  */
@@ -6771,7 +6777,6 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_final_link			_bfd_generic_final_link
 #define som_bfd_gc_sections			bfd_generic_gc_sections
 #define som_bfd_lookup_section_flags		bfd_generic_lookup_section_flags
-#define som_bfd_merge_sections			bfd_generic_merge_sections
 #define som_bfd_is_group_section		bfd_generic_is_group_section
 #define som_bfd_group_name			bfd_generic_group_name
 #define som_bfd_discard_group			bfd_generic_discard_group
@@ -6784,7 +6789,7 @@ som_bfd_link_split_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
 #define som_bfd_set_private_flags		_bfd_generic_bfd_set_private_flags
 #define som_find_inliner_info			_bfd_nosymbols_find_inliner_info
 #define som_bfd_link_check_relocs		_bfd_generic_link_check_relocs
-#define som_set_reloc				_bfd_generic_set_reloc
+#define som_finalize_section_relocs		_bfd_generic_finalize_section_relocs
 
 const bfd_target hppa_som_vec =
 {
@@ -6805,6 +6810,7 @@ const bfd_target hppa_som_vec =
   14,				/* AR_max_namelen.  */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

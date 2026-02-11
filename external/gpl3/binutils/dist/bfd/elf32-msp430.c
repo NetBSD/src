@@ -1,5 +1,5 @@
 /*  MSP430-specific support for 32-bit ELF
-    Copyright (C) 2002-2025 Free Software Foundation, Inc.
+    Copyright (C) 2002-2026 Free Software Foundation, Inc.
     Contributed by Dmitry Diky <diwil@mail.ru>
 
     This file is part of BFD, the Binary File Descriptor library.
@@ -1477,7 +1477,8 @@ elf32_msp430_relocate_section (bfd * output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_MSP430_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -2679,7 +2680,7 @@ elf32_msp430_obj_attrs_handle_unknown (bfd *abfd, int tag)
    string or both.  */
 
 static int
-elf32_msp430_obj_attrs_arg_type (int tag)
+elf32_msp430_obj_attrs_arg_type (obj_attr_tag_t tag)
 {
   if (tag == Tag_compatibility)
     return ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL;
@@ -2952,6 +2953,7 @@ elf32_msp430_eh_frame_address_size (bfd *abfd,
 #define ELF_MACHINE_ALT1	EM_MSP430_OLD
 #define ELF_MAXPAGESIZE		4
 #define	ELF_OSABI		ELFOSABI_STANDALONE
+#define ELF_OSABI_EXACT		1
 
 #define TARGET_LITTLE_SYM	msp430_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-msp430"
@@ -2979,7 +2981,7 @@ elf32_msp430_eh_frame_address_size (bfd *abfd,
 #define elf32_bed		elf32_msp430_ti_bed
 
 #undef	ELF_OSABI
-#define	ELF_OSABI		ELFOSABI_NONE
+#undef	ELF_OSABI_EXACT
 
 static const struct bfd_elf_special_section msp430_ti_elf_special_sections[] =
 {

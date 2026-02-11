@@ -1,5 +1,5 @@
 /* ldmisc.c
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -36,6 +36,27 @@
 #include "ldlex.h"
 #include "ldmain.h"
 #include "ldfile.h"
+
+static size_t
+count_modifiers (const char *scan)
+{
+  size_t mods = strspn (scan, "-+ #0");
+
+  while (scan[mods] != '0' && ISDIGIT (scan[mods]))
+    ++mods;
+  if (scan[mods] == '.')
+    ++mods;
+  while (scan[mods] != '0' && ISDIGIT (scan[mods]))
+    ++mods;
+
+  return mods;
+}
+
+static char *
+make_cfmt (const char *fmt, int nr)
+{
+  return xasprintf ("%%%.*s", nr, fmt);
+}
 
 /*
  %% literal %
@@ -77,6 +98,7 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
   {
     int i;
     long l;
+    long long ll;
     void *p;
     bfd_vma v;
     struct {
@@ -89,6 +111,7 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	Bad,
 	Int,
 	Long,
+	LongLong,
 	Ptr,
 	Vma,
 	RelAddr
@@ -118,6 +141,9 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      arg_no = *scan - '1';
 	      scan += 2;
 	    }
+
+	  /* Skip most modifiers that printf() permits.  */
+	  scan += count_modifiers (scan);
 
 	  arg_type = Bad;
 	  switch (*scan++)
@@ -157,11 +183,19 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      break;
 
 	    case 'l':
-	      if (*scan == 'd' || *scan == 'u' || *scan == 'x')
-		{
-		  ++scan;
-		  arg_type = Long;
-		}
+	      {
+		bool ll_type = false;
+		if (*scan == 'l')
+		  {
+		    ll_type = true;
+		    ++scan;
+		  }
+		if (*scan == 'd' || *scan == 'u' || *scan == 'x')
+		  {
+		    ++scan;
+		    arg_type = (ll_type ? LongLong : Long);
+		  }
+	      }
 	      break;
 
 	    default:
@@ -186,6 +220,9 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	  break;
 	case Long:
 	  args[arg_no].l = va_arg (ap, long);
+	  break;
+	case LongLong:
+	  args[arg_no].ll = va_arg (ap, long long);
 	  break;
 	case Ptr:
 	  args[arg_no].p = va_arg (ap, void *);
@@ -217,6 +254,8 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 
       if (*fmt == '%')
 	{
+	  size_t mods;
+
 	  fmt++;
 
 	  arg_no = arg_count;
@@ -226,8 +265,14 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      fmt += 2;
 	    }
 
+	  /* Record modifiers that printf() permits and that we support.  */
+	  mods = count_modifiers (fmt);
+	  fmt += mods;
+
 	  switch (*fmt++)
 	    {
+	      char *cfmt;
+
 	    case '\0':
 	      --fmt;
 	      /* Fall through.  */
@@ -514,60 +559,48 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 		    }
 		  fprintf (fp, "%s", name);
 		}
-	      else
+	      else /* Native (host) void* pointer, like printf().  */
 		{
-		  /* native (host) void* pointer, like printf */
-		  fprintf (fp, "%p", args[arg_no].p);
+		  /* Fallthru */
+	    case 's': /* Arbitrary string, like printf().  */
+		  cfmt = make_cfmt (fmt - 1 - mods, mods + 1);
+		  fprintf (fp, cfmt, args[arg_no].p);
+		  free (cfmt);
 		  ++arg_count;
 		}
 	      break;
 
-	    case 's':
-	      /* arbitrary string, like printf */
-	      fprintf (fp, "%s", (char *) args[arg_no].p);
+	    case 'd': /* Integer, like printf().  */
+	    case 'u': /* Unsigned integer, like printf().  */
+	    case 'x': /* Unsigned integer, like printf().  */
+	      cfmt = make_cfmt (fmt - 1 - mods, mods + 1);
+	      fprintf (fp, cfmt, args[arg_no].i);
+	      free (cfmt);
 	      ++arg_count;
 	      break;
 
-	    case 'd':
-	      /* integer, like printf */
-	      fprintf (fp, "%d", args[arg_no].i);
-	      ++arg_count;
-	      break;
-
-	    case 'u':
-	      /* unsigned integer, like printf */
-	      fprintf (fp, "%u", args[arg_no].i);
-	      ++arg_count;
-	      break;
-
-	    case 'x':
-	      /* unsigned integer, like printf */
-	      fprintf (fp, "%x", args[arg_no].i);
-	      ++arg_count;
-	      break;
-
-	    case 'l':
-	      if (*fmt == 'd')
-		{
-		  fprintf (fp, "%ld", args[arg_no].l);
-		  ++arg_count;
-		  ++fmt;
-		  break;
-		}
-	      else if (*fmt == 'u')
-		{
-		  fprintf (fp, "%lu", args[arg_no].l);
-		  ++arg_count;
-		  ++fmt;
-		  break;
-		}
-	      else if (*fmt == 'x')
-		{
-		  fprintf (fp, "%lx", args[arg_no].l);
-		  ++arg_count;
-		  ++fmt;
-		  break;
-		}
+	    case 'l': /* (Unsigned) (long) long integer, like printf().  */
+	      {
+		bool ll_type = false;
+		if (*fmt == 'l')
+		  {
+		    fmt++;
+		    ll_type = true;
+		  }
+		if (*fmt == 'd' || *fmt == 'u' || *fmt == 'x')
+		  {
+		    unsigned int mods_len = (ll_type ? 2 : 1);
+		    cfmt = make_cfmt (fmt - mods_len - mods, mods + mods_len + 1);
+		    if (ll_type)
+		      fprintf (fp, cfmt, args[arg_no].ll);
+		    else
+		      fprintf (fp, cfmt, args[arg_no].l);
+		    free (cfmt);
+		    ++arg_count;
+		    ++fmt;
+		    break;
+		  }
+	      }
 	      /* Fallthru */
 
 	    default:

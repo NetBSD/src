@@ -1,5 +1,5 @@
 /* atof_generic.c - turn a string of digits into a Flonum
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

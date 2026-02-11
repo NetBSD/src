@@ -1,6 +1,6 @@
 /* ELF64/HPPA support
 
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,7 +29,7 @@
 extern elf_hppa_reloc_type elf64_hppa_reloc_final_type
   (bfd *, elf_hppa_reloc_type, int, unsigned int);
 
-extern elf_hppa_reloc_type ** _bfd_elf64_hppa_gen_reloc_type
+extern elf_hppa_reloc_type **bfd_elf64_hppa_gen_reloc_type
   (bfd *, elf_hppa_reloc_type, int, unsigned int, int, asymbol *);
 
 /* Define groups of basic relocations.  FIXME:  These should

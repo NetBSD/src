@@ -1,5 +1,5 @@
 /* BFD back-end for AArch64 PE IMAGE COFF files.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,6 +23,8 @@
 
 #define TARGET_SYM             aarch64_pe_le_vec
 #define TARGET_NAME            "pe-aarch64-little"
+#define TARGET_SYM_BIG         aarch64_pe_bigobj_le_vec
+#define TARGET_NAME_BIG        "pe-bigobj-aarch64-little"
 #define TARGET_ARCHITECTURE    bfd_arch_aarch64
 #define TARGET_PAGESIZE        4096
 #define TARGET_BIG_ENDIAN      0
@@ -32,6 +34,7 @@
 /* Rename the above into.. */
 #define COFF_WITH_peAArch64
 #define COFF_WITH_PE
+#define COFF_WITH_PE_BIGOBJ
 #define PCRELOFFSET       true
 
 /* Long section names not allowed in executable images, only object files.  */

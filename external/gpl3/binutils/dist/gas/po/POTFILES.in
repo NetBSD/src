@@ -26,6 +26,8 @@ config/obj-coff.c
 config/obj-coff.h
 config/obj-ecoff.c
 config/obj-ecoff.h
+config/obj-elf-attr.c
+config/obj-elf-attr.h
 config/obj-elf.c
 config/obj-elf.h
 config/obj-evax.c

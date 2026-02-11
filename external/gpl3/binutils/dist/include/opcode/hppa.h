@@ -1,5 +1,5 @@
 /* Table of opcodes for the PA-RISC.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).

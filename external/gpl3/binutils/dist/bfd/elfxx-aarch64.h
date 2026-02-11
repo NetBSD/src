@@ -1,5 +1,5 @@
 /* AArch64-specific backend routines.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -107,6 +107,9 @@ struct elf_aarch64_obj_tdata
   /* Software protections options.  */
   struct aarch64_protection_opts sw_protections;
 
+  /* The merge of object attributes already occured.  */
+  bool oa_merge_done;
+
   /* Number of reported BTI issues.  */
   int n_bti_issues;
 
@@ -187,14 +190,14 @@ extern bool elf32_aarch64_build_stubs
 
 /* AArch64 relative relocation packing support for ELF64.  */
 extern bool elf64_aarch64_size_relative_relocs
-  (struct bfd_link_info *, bool *);
+  (struct bfd_link_info *, bool *) ATTRIBUTE_HIDDEN;
 extern bool elf64_aarch64_finish_relative_relocs
-  (struct bfd_link_info *);
+  (struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 /* AArch64 relative relocation packing support for ELF32.  */
 extern bool elf32_aarch64_size_relative_relocs
-  (struct bfd_link_info *, bool *);
+  (struct bfd_link_info *, bool *) ATTRIBUTE_HIDDEN;
 extern bool elf32_aarch64_finish_relative_relocs
-  (struct bfd_link_info *);
+  (struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 /* Take the PAGE component of an address or offset.  */
 #define PG(x)	     ((x) & ~ (bfd_vma) 0xfff)
@@ -205,56 +208,100 @@ extern bool elf32_aarch64_finish_relative_relocs
 #define AARCH64_ADRP_OP_MASK	0x9F000000
 
 extern bfd_signed_vma
-_bfd_aarch64_sign_extend (bfd_vma, int);
+_bfd_aarch64_sign_extend (bfd_vma, int) ATTRIBUTE_HIDDEN;
 
 extern uint32_t
-_bfd_aarch64_decode_adrp_imm (uint32_t);
+_bfd_aarch64_decode_adrp_imm (uint32_t) ATTRIBUTE_HIDDEN;
 
 extern uint32_t
-_bfd_aarch64_reencode_adr_imm (uint32_t, uint32_t);
+_bfd_aarch64_reencode_adr_imm (uint32_t, uint32_t) ATTRIBUTE_HIDDEN;
 
 extern bfd_reloc_status_type
 _bfd_aarch64_elf_put_addend (bfd *, bfd_byte *, bfd_reloc_code_real_type,
-			     reloc_howto_type *, bfd_signed_vma);
+			     reloc_howto_type *, bfd_signed_vma)
+			    ATTRIBUTE_HIDDEN;
 
 extern bfd_vma
 _bfd_aarch64_elf_resolve_relocation (bfd *, bfd_reloc_code_real_type, bfd_vma,
-				     bfd_vma, bfd_vma, bool);
+				     bfd_vma, bfd_vma, bool) ATTRIBUTE_HIDDEN;
 
 extern bool
-_bfd_aarch64_elf_grok_prstatus (bfd *, Elf_Internal_Note *);
+_bfd_aarch64_elf_grok_prstatus (bfd *, Elf_Internal_Note *) ATTRIBUTE_HIDDEN;
 
 extern bool
-_bfd_aarch64_elf_grok_psinfo (bfd *, Elf_Internal_Note *);
+_bfd_aarch64_elf_grok_psinfo (bfd *, Elf_Internal_Note *) ATTRIBUTE_HIDDEN;
 
 extern char *
-_bfd_aarch64_elf_write_core_note (bfd *, char *, int *, int, ...);
+_bfd_aarch64_elf_write_core_note (bfd *, char *, int *, int, ...)
+  ATTRIBUTE_HIDDEN;
 
 #define elf_backend_grok_prstatus	_bfd_aarch64_elf_grok_prstatus
 #define elf_backend_grok_psinfo		_bfd_aarch64_elf_grok_psinfo
 #define elf_backend_write_core_note	_bfd_aarch64_elf_write_core_note
 
+extern obj_attr_version_t
+_bfd_aarch64_obj_attrs_version_dec (uint8_t) ATTRIBUTE_HIDDEN;
+
+extern uint8_t
+_bfd_aarch64_obj_attrs_version_enc (obj_attr_version_t) ATTRIBUTE_HIDDEN;
+
+extern const known_subsection_v2_t aarch64_obj_attr_v2_known_subsections[2]
+  ATTRIBUTE_HIDDEN;
+
 extern bfd *
-_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *);
+_bfd_aarch64_elf_link_setup_object_attributes (struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
+
+extern void
+_bfd_aarch64_oav2_record (obj_attr_subsection_v2_t *, Tag_Feature_Set, uint32_t)
+  ATTRIBUTE_HIDDEN;
+
+extern void
+_bfd_aarch64_translate_gnu_props_to_obj_attrs
+  (const bfd *, const elf_property_list *) ATTRIBUTE_HIDDEN;
+
+extern void
+_bfd_aarch64_translate_obj_attrs_to_gnu_props
+  (bfd *, const obj_attr_subsection_v2_t *) ATTRIBUTE_HIDDEN;
+
+extern bool
+_bfd_aarch64_oav2_default_value (const struct bfd_link_info *,
+				 const obj_attr_info_t *,
+				 const obj_attr_subsection_v2_t *,
+				 obj_attr_v2_t *) ATTRIBUTE_HIDDEN;
+
+extern obj_attr_v2_merge_result_t
+_bfd_aarch64_oav2_attr_merge (const struct bfd_link_info *, const bfd *,
+			      const obj_attr_subsection_v2_t *,
+			      const obj_attr_v2_t *, const obj_attr_v2_t *,
+			      const obj_attr_v2_t *) ATTRIBUTE_HIDDEN;
+
+extern bfd *
+_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern enum elf_property_kind
 _bfd_aarch64_elf_parse_gnu_properties (bfd *, unsigned int,
-				       bfd_byte *, unsigned int);
+				       bfd_byte *, unsigned int)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *, bfd *,
 				       elf_property *, elf_property *,
-				       uint32_t);
+				       uint32_t) ATTRIBUTE_HIDDEN;
 
 extern void
-_bfd_aarch64_elf_check_bti_report (struct bfd_link_info *, bfd *);
+_bfd_aarch64_elf_check_bti_report (const struct bfd_link_info *, const bfd *)
+  ATTRIBUTE_HIDDEN;
 
 extern void
-_bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *, bfd *);
+_bfd_aarch64_elf_check_gcs_report (const struct bfd_link_info *, const bfd *)
+  ATTRIBUTE_HIDDEN;
 
 extern void
 _bfd_aarch64_elf_link_fixup_gnu_properties (struct bfd_link_info *,
-					    elf_property_list **);
+					    elf_property_list **)
+  ATTRIBUTE_HIDDEN;
 
 #define elf_backend_parse_gnu_properties	\
   _bfd_aarch64_elf_parse_gnu_properties

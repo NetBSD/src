@@ -1,5 +1,5 @@
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -531,14 +531,14 @@ new_logical_line (const char *fname, int line_number)
 void
 as_report_context (void)
 {
-  const struct input_save *saved = next_saved_file;
+  const struct input_save *saved;
   enum expansion expansion = from_sb_expansion;
   int indent = 1;
 
   if (!macro_nest)
     return;
 
-  do
+  for (saved = next_saved_file; saved; saved = saved->next_saved_file)
     {
       if (expansion != expanding_macro)
 	/* Nothing.  */;
@@ -553,7 +553,6 @@ as_report_context (void)
       expansion = saved->from_sb_expansion;
       ++indent;
     }
-  while ((saved = saved->next_saved_file) != NULL);
 }
 
 /* Return the current physical input file name and line number, if known  */
@@ -583,10 +582,10 @@ as_where (unsigned int *linep)
 
   if (macro_nest && is_linefile)
     {
-      const struct input_save *saved = next_saved_file;
+      const struct input_save *saved;
       enum expansion expansion = from_sb_expansion;
 
-      do
+      for (saved = next_saved_file; saved; saved = saved->next_saved_file)
 	{
 	  if (expansion != expanding_macro)
 	    /* Nothing.  */;
@@ -606,7 +605,6 @@ as_where (unsigned int *linep)
 
 	  expansion = saved->from_sb_expansion;
 	}
-      while ((saved = saved->next_saved_file) != NULL);
     }
 
   return file;

@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,18 +19,21 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-reloc_howto_type *ia64_elf_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+reloc_howto_type *ia64_elf_reloc_type_lookup (bfd *, bfd_reloc_code_real_type)
+  ATTRIBUTE_HIDDEN;
 
-reloc_howto_type *ia64_elf_reloc_name_lookup (bfd *, const char *);
+reloc_howto_type *ia64_elf_reloc_name_lookup (bfd *, const char *)
+  ATTRIBUTE_HIDDEN;
 
-reloc_howto_type *ia64_elf_lookup_howto (unsigned int rtype);
+reloc_howto_type *ia64_elf_lookup_howto (unsigned int rtype) ATTRIBUTE_HIDDEN;
 
-bool ia64_elf_relax_br (bfd_byte *contents, bfd_vma off);
-void ia64_elf_relax_brl (bfd_byte *contents, bfd_vma off);
-void ia64_elf_relax_ldxmov (bfd_byte *contents, bfd_vma off);
+bool ia64_elf_relax_br (bfd_byte *contents, bfd_vma off) ATTRIBUTE_HIDDEN;
+void ia64_elf_relax_brl (bfd_byte *contents, bfd_vma off) ATTRIBUTE_HIDDEN;
+void ia64_elf_relax_ldxmov (bfd_byte *contents, bfd_vma off) ATTRIBUTE_HIDDEN;
 
 bfd_reloc_status_type ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v,
-					      unsigned int r_type);
+					      unsigned int r_type)
+  ATTRIBUTE_HIDDEN;
 
 /* IA64 Itanium code generation.  Called from linker.  */
 extern void bfd_elf32_ia64_after_parse

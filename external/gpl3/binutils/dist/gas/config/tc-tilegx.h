@@ -1,5 +1,5 @@
 /* tc-tilegx.h - Macros and type defines for a TILE-Gx chip.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -42,7 +42,8 @@ extern const char * tilegx_target_format (void);
 #define HANDLE_ALIGN(sec, fragp) tilegx_handle_align (fragp)
 extern void tilegx_handle_align (struct frag *);
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (7 + 8)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) \
+  (2 * TILEGX_BUNDLE_SIZE_IN_BYTES - 1)
 
 struct tilegx_operand;
 #define TC_FIX_TYPE const struct tilegx_operand *

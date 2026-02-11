@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename ld.info
-@c Copyright (C) 1991-2025 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2026 Free Software Foundation, Inc.
 @syncodeindex ky cp
 @c man begin INCLUDE
 @include configdoc.texi
@@ -56,7 +56,7 @@ This file documents the @sc{gnu} linker LD
 @end ifset
 version @value{VERSION}.
 
-Copyright @copyright{} 1991-2025 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2026 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -93,7 +93,7 @@ section entitled ``GNU Free Documentation License''.
 
 @vskip 0pt plus 1filll
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2025 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2026 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -1085,8 +1085,8 @@ something as follows:
 @kindex --pop-state
 @cindex pop state governing input file handling
 @item --pop-state
-Undoes the effect of --push-state, restores the previous values of the
-flags governing input file handling.
+Undoes the effect of @option{--push-state}, restores the previous values
+of the flags governing input file handling.
 
 @kindex -q
 @kindex --emit-relocs
@@ -1744,6 +1744,34 @@ Supported for Linux/i386 and Linux/x86_64.
 @end table
 
 Other keywords are ignored for Solaris compatibility.
+
+@item --gnu-tls-tag
+@itemx --no-gnu-tls-tag
+Add @code{GLIBC_ABI_GNU_TLS} version tag dependency in output programs
+and shared libraries when linking against glibc if input relocatable
+object files call @code{___tls_get_addr}.  The output will fail to load
+and run at run-time against glibc which doesn't define the
+@code{GLIBC_ABI_GNU_TLS} version tag.  Unless disabled by the
+@option{--disable-gnu-tls-tag} configure option at the linker build
+time, when no options are specified, linker will add the
+@code{GLIBC_ABI_GNU_TLS} version tag dependency if inputs have
+@code{___tls_get_addr} call and libc.so defines the
+@code{GLIBC_ABI_GNU_TLS} version tag.  Supported for Linux/i386.
+
+@item --gnu2-tls-tag
+@itemx --no-gnu2-tls-tag
+Add @code{GLIBC_ABI_GNU2_TLS} version tag dependency in output programs
+and shared libraries when linking against glibc if input relocatable
+object files have @code{R_386_TLS_DESC_CALL} or
+@code{R_X86_64_TLSDESC_CALL} relocation.  The output will fail to load
+and run at run-time against glibc which doesn't define the
+@code{GLIBC_ABI_GNU2_TLS} version tag.  Unless disabled by the
+@option{--disable-gnu2-tls-tag} configure option at the linker build
+time, when no options are specified, linker will add the
+@code{GLIBC_ABI_GNU2_TLS} version tag dependency if inputs have
+@code{R_386_TLS_DESC_CALL} or @code{R_X86_64_TLSDESC_CALL} relocation
+and libc.so defines the @code{GLIBC_ABI_GNU2_TLS} version tag.
+Supported for Linux/i386 and Linux/x86_64.
 
 @kindex -(
 @cindex groups of archives
@@ -2741,21 +2769,25 @@ linker's command line.  Note: if both the environment variable and the
 takes precedence.
 
 The extended information reported includes the cpu time used and, if
-the @var{getrusage()} system library call is available then memory use
-is recorded as well.  This information is reported for individual
-parts of the linking process which are referred to as @emph{phases}.
-In addition the information is also reported for a special phase
-called @emph{ALL} which covers the entire linking process.  Note that
+the @var{getrusage()} system library call is available then maximum
+set size and the user and system run times as well.  In addition if
+the @var{mallinfo} or @var{mallinfo2} system library calls are
+available then the total memory usage is reported,
+
+The information is displayed for individual parts of the linking
+process which are referred to as @emph{phases}.  Note that
 individual phases can contain or overlap with each other so it should
 not be assumed that the overall resources used by the linker is the
 sum of the resources used by the individual phases.
 
-In addition when extended information is being reported the linker
-version, command line arguments and linker start time are also
-included.  This makes it easier to handle the situation where multiple
-links are being invoked by a build system and to indentify exactly
-which arguments were responsible for producing the statistics that are
-reported.
+In addition the information is also reported for a special phase
+called @emph{ALL} which covers the entire linking process.  
+
+When extended information is being reported the linker version,
+command line arguments and linker start time are also included.  This
+makes it easier to handle the situation where multiple links are being
+invoked by a build system and to indentify exactly which arguments
+were responsible for producing the statistics that are reported.
 
 The extended output looks something like this:
 
@@ -2764,15 +2796,15 @@ Stats: linker version: (GNU Binutils) 2.44.50.20250401
 Stats: linker started: Wed Apr  2 09:36:41 2025
 Stats: args: ld -z norelro -z nomemory-seal -z no-separate-code -o a.out [...]
 
-Stats: phase               cpu time    memory      user time    system time    
-Stats: name                (microsec)   (KiB)      (seconds)      (seconds)    
-Stats: ALL                   390082    217740              0              0    
-Stats: ctf processing            12         0              0              0    
-Stats: string merge            1324         0              0              0    
-Stats: parsing                  349       288              0              0    
-Stats: plugins                    1         0              0              0    
-Stats: processing files      259616    214524              0              0    
-Stats: write                 116493         0              0              0    
+Stats: phase               cpu time       rss      user time    system time     memory
+Stats: name                (microsec)   (KiB)      (seconds)      (seconds)      (KiB)
+Stats: ALL                   390082    217740              0              0   25219440
+Stats: ctf processing            12         0              0              0          0
+Stats: string merge            1324         0              0              0     406544
+Stats: parsing                  349       288              0              0     119792
+Stats: plugins                    1         0              0              0          0
+Stats: processing files      259616    214524              0              0   31569120
+Stats: write                 116493         0              0              0      48096
 @end smallexample
 
 @kindex --no-stats
@@ -3219,9 +3251,13 @@ section and ELF @code{PT_GNU_EH_FRAME} segment header.
 @item --no-ld-generated-unwind-info
 Request creation of @code{.eh_frame} unwind info for linker
 generated code sections like PLT.  This option is on by default
-if linker generated unwind info is supported.  This option also
-controls the generation of @code{.sframe} stack trace info for linker
-generated code sections like PLT.
+if linker generated unwind info is supported.
+
+@kindex --discard-sframe
+@item --discard-sframe
+Discard @code{.sframe} stack trace info from the output.  This option also
+prohibits the creation of SFrame stack trace data for linker generated code
+sections like PLT.  This option is off by default.
 
 @kindex --enable-new-dtags
 @kindex --disable-new-dtags
@@ -3242,6 +3278,8 @@ close to @var{number}.  Increasing this value can reduce the length of
 time it takes the linker to perform its tasks, at the expense of
 increasing the linker's memory requirements.  Similarly reducing this
 value can reduce the memory requirements at the expense of speed.
+The default value is 4051 under normal circumstances and 1021 if the
+@option{--reduce-memory-overheads} command line option is used.
 
 @kindex --hash-style=@var{style}
 @item --hash-style=@var{style}
@@ -3307,7 +3345,10 @@ enable other tradeoffs in future versions of the linker.
 @item --max-cache-size=@var{size}
 @command{ld} normally caches the relocation information and symbol tables
 of input files in memory with the unlimited size.  This option sets the
-maximum cache size to @var{size}.
+maximum cache size to @var{size}.  Note - if the
+@option{--no-keep-memory} command line option has been used then the
+linker acts as if the maximum cache size has been set to 0 - ie
+nothing is retained.
 
 @kindex --build-id
 @kindex --build-id=@var{style}
@@ -6783,8 +6824,8 @@ depends upon @samp{VERS_1.1}.  The script binds the symbol @samp{foo2}
 to the version node @samp{VERS_1.2}.
 
 Finally, the version script defines node @samp{VERS_2.0}.  This node
-depends upon @samp{VERS_1.2}.  The scripts binds the symbols @samp{bar1}
-and @samp{bar2} are bound to the version node @samp{VERS_2.0}.
+depends upon @samp{VERS_1.2}.  The script binds the symbols @samp{bar1}
+and @samp{bar2} to the version node @samp{VERS_2.0}.
 
 When the linker finds a symbol defined in a library which is not
 specifically bound to a version node, it will effectively bind it to an
@@ -8333,43 +8374,35 @@ markings on input objects and marks the output with GCS if all conditions are
 validated.
 @itemize
 @item @samp{implicit} (default if @samp{-z gcs} is omitted) enables GCS marking
-on the output if, and only if, all input objects composing the link unit are
-marked with GCS.
+on the output if, and only if, all input static objects are marked with GCS.
 @item @samp{always} forces the marking of the output with GCS.
 @item @samp{never} ignores any GCS marking on the input objects, and does not
 mark the output with GCS.
 @end itemize
 
 @kindex -z gcs-report[=none|warning|error]
-@cindex Control warnings for missing GCS markings.
-The @samp{-z gcs-report[=none|warning|error]} option specifies how to report the
-missing GCS markings on inputs, i.e. the GNU_PROPERTY_AARCH64_FEATURE_1_GCS
-property. By default, if the option is omitted and @samp{-z gcs} is provided,
-warnings are emitted.
+@cindex Control diagnostics for missing GCS markings on static input objects.
+When @samp{-z gcs=always} is specified, then the @samp{-z gcs-report[=none|warning|error]}
+option can be used to specify how to report missing GCS markings (i.e.
+the GNU_PROPERTY_AARCH64_FEATURE_1_GCS property) on static inputs.
 @itemize
-@item @samp{none} disables any warning messages.
-@item @samp{warning} (the default value) emits warning messages when input objects
-composing the link unit are missing GCS markings.
-@item @samp{error} turns the warning messages into errors.
+@item @samp{none} disables the diagnostic messages.
+@item @samp{warning} (the default value) emits diagnostic messages as warnings.
+@item @samp{error} emits diagnostic messages as errors.
 @end itemize
 If issues are found, a maximum of 20 messages will be emitted, and then a summary
 with the total number of issues will be displayed at the end.
 
-@kindex -z gcs-report-dynamic=none|warning|error
-@cindex Control warnings for missing GCS markings on dynamic input objects.
-The @samp{-z gcs-report-dynamic=none|warning|error} option specifies how to
-report the missing GCS markings on dynamic input objects, i.e. the
-GNU_PROPERTY_AARCH64_FEATURE_1_GCS property. By default, if the option is
-omitted, it inherits the value of @samp{-z gcs-report}. However, the inherited
-value is capped to @samp{warning} as some user might want to only report errors
-in the currently built module, and not the shared dependencies. It is therefore
-necessary to use an explicit @samp{-z gcs-report-dynamic=error} option if you
-want the linker to error on GCS issues in the shared libraries.
+@kindex -z gcs-report-dynamic[=none|warning|error]
+@cindex Control diagnostics for missing GCS markings on dynamic input objects.
+If @samp{-z gcs} is not specified on the command line, or if it has the value
+@samp{implicit} or @samp{always}, then the @samp{-z gcs-report-dynamic[=none|warning|error]}
+option specifies how to report the missing GCS markings (i.e. the GNU_PROPERTY_AARCH64_FEATURE_1_GCS
+property) on dynamic input objects.
 @itemize
-@item @samp{none} disables any warning messages.
-@item @samp{warning} emits warning messages when dynamic objects are missing
-GCS markings.
-@item @samp{error} turns the warning messages into errors.
+@item @samp{none} (default value when @samp{-z gcs=implicit}) disables the diagnostic messages.
+@item @samp{warning} (default value when @samp{-z gcs=always}) emits diagnostic messages as warnings.
+@item @samp{error} emits diagnostic messages as errors.
 @end itemize
 If issues are found, a maximum of 20 messages will be emitted, and then a summary
 with the total number of issues will be displayed at the end.

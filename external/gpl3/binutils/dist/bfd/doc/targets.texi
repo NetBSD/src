@@ -105,6 +105,11 @@ For operations which index on the BFD format:
 #define TARGET_KEEP_UNUSED_SECTION_SYMBOLS true
 #endif
 
+/* Define to TRUE if section merging is supported by the backend.  */
+#ifndef TARGET_MERGE_SECTIONS
+#define TARGET_MERGE_SECTIONS false
+#endif
+
 @end example
 This is the structure which defines the type of BFD this is.  The
 @code{xvec} member of the struct @code{bfd} itself points here.  Each
@@ -156,6 +161,9 @@ typedef struct bfd_target
 
  /* TRUE if unused section symbols should be kept.  */
   bool keep_unused_section_symbols;
+
+  /* TRUE if section merging is supported by the backend.  */
+  bool merge_sections;
 
   /* Entries for byte swapping for data. These are different from the
      other entry points, since they don't take a BFD as the first argument.
@@ -237,8 +245,8 @@ BFD_JUMP_TABLE macros.
                                           struct bfd_link_info *);
   /* Called to copy BFD private symbol data from one symbol
      to another.  */
-  bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol *,
-                                         bfd *, asymbol *);
+  bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol **,
+                                         bfd *, asymbol **);
   /* Called to copy BFD private header data from one object file
      to another.  */
   bool (*_bfd_copy_private_header_data) (bfd *, bfd *);
@@ -360,14 +368,15 @@ BFD_JUMP_TABLE macros.
 #define BFD_JUMP_TABLE_RELOCS(NAME) \
   NAME##_get_reloc_upper_bound, \
   NAME##_canonicalize_reloc, \
-  NAME##_set_reloc, \
+  NAME##_finalize_section_relocs, \
   NAME##_bfd_reloc_type_lookup, \
   NAME##_bfd_reloc_name_lookup
 
   long (*_get_reloc_upper_bound) (bfd *, sec_ptr);
   long (*_bfd_canonicalize_reloc) (bfd *, sec_ptr, arelent **,
                                    struct bfd_symbol **);
-  void (*_bfd_set_reloc) (bfd *, sec_ptr, arelent **, unsigned int);
+  bool (*_bfd_finalize_section_relocs) (bfd *, sec_ptr, arelent **,
+                                        unsigned int);
   /* See documentation on reloc types.  */
   reloc_howto_type *
        (*reloc_type_lookup) (bfd *, bfd_reloc_code_real_type);
@@ -398,7 +407,6 @@ BFD_JUMP_TABLE macros.
   NAME##_bfd_link_check_relocs, \
   NAME##_bfd_gc_sections, \
   NAME##_bfd_lookup_section_flags, \
-  NAME##_bfd_merge_sections, \
   NAME##_bfd_is_group_section, \
   NAME##_bfd_group_name, \
   NAME##_bfd_discard_group, \
@@ -453,9 +461,6 @@ BFD_JUMP_TABLE macros.
   /* Sets the bitmask of allowed and disallowed section flags.  */
   bool (*_bfd_lookup_section_flags) (struct bfd_link_info *,
                                      struct flag_info *, asection *);
-
-  /* Attempt to merge SEC_MERGE sections.  */
-  bool (*_bfd_merge_sections) (bfd *, struct bfd_link_info *);
 
   /* Is this section a member of a group?  */
   bool (*_bfd_is_group_section) (bfd *, const struct bfd_section *);

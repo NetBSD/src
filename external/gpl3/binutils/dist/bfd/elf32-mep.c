@@ -1,5 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -489,7 +489,8 @@ mep_elf_relocate_section
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_MEP_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -578,6 +579,9 @@ mep_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   /* Check if we have the same endianness.  */
   if (!_bfd_generic_verify_endian_match (ibfd, info))
     return false;
+
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;

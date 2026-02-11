@@ -1,5 +1,5 @@
 /* Print NFP instructions for objdump.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of the GNU opcodes library.
@@ -2731,31 +2731,33 @@ init_nfp6000_priv (nfp_priv_data * priv, struct disassemble_info *dinfo)
   return true;
 }
 
+static bool
+nfp_parse_option (const char *option, void *data)
+{
+  nfp_opts *opts = data;
+
+  if (strcmp (option, "no-pc") == 0)
+    opts->show_pc = 0;
+  else if (strcmp (option, "ctx4") == 0)
+    {
+      if (!opts->ctx_mode)
+	opts->ctx_mode = 4;
+    }
+  else if (strcmp (option, "ctx8") == 0)
+    opts->ctx_mode = 8;
+  else
+    {
+      opcodes_error_handler (_("invalid NFP option: %s"), option);
+      return false;
+    }
+  return true;
+}
+
 static int
 parse_disassembler_options (nfp_opts * opts, struct disassemble_info *dinfo)
 {
-  const char *option;
-
-  if (dinfo->disassembler_options == NULL)
-    return 0;
-
-  FOR_EACH_DISASSEMBLER_OPTION (option, dinfo->disassembler_options)
-  {
-    if (disassembler_options_cmp (option, "no-pc") == 0)
-      opts->show_pc = 0;
-    else if (disassembler_options_cmp (option, "ctx4") == 0)
-      {
-	if (!opts->ctx_mode)
-	  opts->ctx_mode = 4;
-      }
-    else if (disassembler_options_cmp (option, "ctx8") == 0)
-      opts->ctx_mode = 8;
-    else
-      {
-	dinfo->fprintf_func (dinfo->stream, _("Invalid NFP option: %s"), option);
-	return _NFP_ERR_STOP;
-      }
-  }
+  if (!for_each_disassembler_option (dinfo, nfp_parse_option, opts))
+    return _NFP_ERR_STOP;
 
   return 0;
 }

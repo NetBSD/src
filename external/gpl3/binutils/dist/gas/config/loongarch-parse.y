@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,6 +20,7 @@
 #include "as.h"
 #include "loongarch-lex.h"
 #include "loongarch-parse.h"
+#include "bfd/elfxx-loongarch.h"
 static void yyerror (const char *s ATTRIBUTE_UNUSED)
 {
 };
@@ -133,7 +134,7 @@ reloc (const char *op_c_str, const char *id_c_str, offsetT addend)
     btype = BFD_RELOC_LARCH_B26;
   else
     {
-      btype = loongarch_larch_reloc_name_lookup (NULL, op_c_str);
+      btype = bfd_elf_loongarch_larch_reloc_name_lookup (NULL, op_c_str);
       if (btype == BFD_RELOC_NONE)
 	as_fatal (_("unsupported modifier %s"), op_c_str);
     }

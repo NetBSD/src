@@ -1,5 +1,5 @@
 /* CTF format description.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -213,8 +213,9 @@ typedef struct ctf_header
 #define CTF_F_NEWFUNCINFO 0x2		/* New v3 func info section format.  */
 #define CTF_F_IDXSORTED 0x4		/* Index sections already sorted.  */
 #define CTF_F_DYNSTR 0x8		/* Strings come from .dynstr.  */
+#define CTF_F_ARRNELEMS 0x10		/* Array elems no longer reversed.  */
 #define CTF_F_MAX (CTF_F_COMPRESS | CTF_F_NEWFUNCINFO | CTF_F_IDXSORTED	\
-		   | CTF_F_DYNSTR)
+		   | CTF_F_DYNSTR | CTF_F_ARRNELEMS)
 
 typedef struct ctf_lblent
 {

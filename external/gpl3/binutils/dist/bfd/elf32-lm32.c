@@ -1,5 +1,5 @@
 /* Lattice Mico32-specific support for 32-bit ELF
-   Copyright (C) 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -444,10 +444,10 @@ static const struct lm32_reloc_map lm32_reloc_map[] =
   { BFD_RELOC_LM32_16_GOT,	R_LM32_16_GOT },
   { BFD_RELOC_LM32_GOTOFF_HI16, R_LM32_GOTOFF_HI16 },
   { BFD_RELOC_LM32_GOTOFF_LO16, R_LM32_GOTOFF_LO16 },
-  { BFD_RELOC_LM32_COPY,	R_LM32_COPY },
-  { BFD_RELOC_LM32_GLOB_DAT,	R_LM32_GLOB_DAT },
-  { BFD_RELOC_LM32_JMP_SLOT,	R_LM32_JMP_SLOT },
-  { BFD_RELOC_LM32_RELATIVE,	R_LM32_RELATIVE },
+  { BFD_RELOC_COPY,		R_LM32_COPY },
+  { BFD_RELOC_GLOB_DAT,		R_LM32_GLOB_DAT },
+  { BFD_RELOC_JMP_SLOT,		R_LM32_JMP_SLOT },
+  { BFD_RELOC_RELATIVE,		R_LM32_RELATIVE },
 };
 
 static reloc_howto_type *
@@ -794,7 +794,8 @@ lm32_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_LM32_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -1095,19 +1096,19 @@ lm32_elf_relocate_section (bfd *output_bfd,
 static asection *
 lm32_elf_gc_mark_hook (asection *sec,
 		       struct bfd_link_info *info,
-		       Elf_Internal_Rela *rel,
+		       struct elf_reloc_cookie *cookie,
 		       struct elf_link_hash_entry *h,
-		       Elf_Internal_Sym *sym)
+		       unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_LM32_GNU_VTINHERIT:
       case R_LM32_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Look through the relocs for a section during the first phase.  */
@@ -1256,7 +1257,8 @@ lm32_elf_check_relocs (bfd *abfd,
 
 static bool
 lm32_elf_finish_dynamic_sections (bfd *output_bfd,
-				  struct bfd_link_info *info)
+				  struct bfd_link_info *info,
+				  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   struct elf_lm32_link_hash_table *htab;
   bfd *dynobj;
@@ -1925,7 +1927,7 @@ lm32_elf_late_size_sections (bfd *output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->root.interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -2199,7 +2201,7 @@ lm32_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   struct elf_lm32_link_hash_table *htab;
   flagword flags, pltflags;
   asection *s;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   int ptralign = 2; /* 32bit */
 
   htab = lm32_elf_hash_table (info);
@@ -2331,15 +2333,13 @@ lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   unsigned i;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   if (! _bfd_elf_copy_private_bfd_data (ibfd, obfd))
     return false;
 
-  if (! elf_tdata (ibfd) || ! elf_tdata (ibfd)->phdr
-      || ! elf_tdata (obfd) || ! elf_tdata (obfd)->phdr)
+  if (! elf_tdata (ibfd)->phdr || ! elf_tdata (obfd)->phdr)
     return true;
 
   /* Copy the stack size.  */

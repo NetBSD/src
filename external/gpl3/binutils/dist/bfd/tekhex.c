@@ -1,5 +1,5 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright (C) 1992-2025 Free Software Foundation, Inc.
+   Copyright (C) 1992-2026 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -655,7 +655,7 @@ move_section_contents (bfd *abfd,
 	{
 	  /* Different chunk, so move pointer. */
 	  d = find_chunk (abfd, chunk_number, must_write);
-	  if (!d)
+	  if (!d && must_write)
 	    return false;
 	  prev_number = chunk_number;
 	}
@@ -963,7 +963,6 @@ tekhex_print_symbol (bfd *abfd,
 #define tekhex_bfd_relax_section		    bfd_generic_relax_section
 #define tekhex_bfd_gc_sections			    bfd_generic_gc_sections
 #define tekhex_bfd_lookup_section_flags		    bfd_generic_lookup_section_flags
-#define tekhex_bfd_merge_sections		    bfd_generic_merge_sections
 #define tekhex_bfd_is_group_section		    bfd_generic_is_group_section
 #define tekhex_bfd_group_name			    bfd_generic_group_name
 #define tekhex_bfd_discard_group		    bfd_generic_discard_group
@@ -993,6 +992,7 @@ const bfd_target tekhex_vec =
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

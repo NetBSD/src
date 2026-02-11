@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ BFD_H = bfd.h
 # debugger).
 BFD32_LIBS = \
 	archive.lo archures.lo bfd.lo bfdio.lo cache.lo \
-	coff-bfd.lo compress.lo corefile.lo elf-properties.lo format.lo \
+	coff-bfd.lo compress.lo corefile.lo format.lo \
 	hash.lo libbfd.lo linker.lo merge.lo opncls.lo reloc.lo \
 	section.lo simple.lo stab-syms.lo stabs.lo syms.lo targets.lo \
 	binary.lo ihex.lo srec.lo tekhex.lo verilog.lo
@@ -85,7 +85,7 @@ BFD64_LIBS = archive64.lo
 
 BFD32_LIBS_CFILES = \
 	archive.c archures.c bfd.c bfdio.c cache.c coff-bfd.c \
-	compress.c corefile.c elf-properties.c format.c hash.c \
+	compress.c corefile.c format.c hash.c \
 	libbfd.c linker.c merge.c opncls.c reloc.c \
 	section.c simple.c stab-syms.c stabs.c syms.c targets.c \
 	binary.c ihex.c srec.c tekhex.c verilog.c
@@ -289,7 +289,7 @@ BFD32_BACKENDS = \
 	elf-ifunc.lo \
 	elf-m10200.lo \
 	elf-m10300.lo \
-	elf-nacl.lo \
+	elf-properties.lo \
 	elf-sframe.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
@@ -423,7 +423,7 @@ BFD32_BACKENDS_CFILES = \
 	elf-ifunc.c \
 	elf-m10200.c \
 	elf-m10300.c \
-	elf-nacl.c \
+	elf-properties.c \
 	elf-sframe.c \
 	elf-strtab.c \
 	elf-vxworks.c \
@@ -707,12 +707,12 @@ SOURCE_HFILES = \
 	elf32-metag.h elf32-nds32.h elf32-ppc.h \
 	elf32-rx.h elf32-score.h elf32-sh-relocs.h elf32-spu.h \
 	elf32-tic6x.h elf32-tilegx.h elf32-tilepro.h elf32-v850.h \
-	elf64-hppa.h elf64-ppc.h elf64-tilegx.h \
+	elf64-hppa.h elf64-ppc.h elf64-tilegx.h elf-attrs.h \
 	elf-bfd.h elfcode.h elfcore.h elf-hppa.h elf-linker-x86.h \
-	elf-linux-core.h elf-nacl.h elf-s390.h elf-vxworks.h \
+	elf-linux-core.h elf-s390.h elf-vxworks.h \
 	elfxx-aarch64.h elfxx-ia64.h elfxx-mips.h elfxx-riscv.h \
 	elfxx-sparc.h elfxx-tilegx.h elfxx-x86.h elfxx-loongarch.h \
-	genlink.h go32stub.h \
+	genlink.h go32stub.h hidden.h \
 	libaout.h libbfd.h libcoff.h libecoff.h libhppa.h \
 	libpei.h libxcoff.h \
 	mach-o.h \

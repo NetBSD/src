@@ -1,5 +1,5 @@
 /* tc-csky.h -- Header file for tc-csky.c
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of GAS, the GNU Assembler.
@@ -106,4 +106,7 @@ extern long csky_relax_frag (segT, fragS *, long);
 const char * elf32_csky_target_format (void);
 #endif
 
-#endif
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
+
+#endif /* TC_CSKY */

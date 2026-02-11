@@ -1,6 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright (C) 2006-2025 Free Software Foundation, Inc.
+   Copyright (C) 2006-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -3428,7 +3428,7 @@ struct _mos_param {
 
 /* Set linker_mark and gc_mark on any sections that we will put in
    overlays.  These flags are used by the generic ELF linker, but we
-   won't be continuing on to bfd_elf_final_link so it is OK to use
+   won't be continuing on to _bfd_elf_final_link() so it is OK to use
    them.  linker_mark is clear before we get here.  Set segment_mark
    on sections that are part of a pasted function (excluding the last
    section).
@@ -4744,7 +4744,7 @@ spu_elf_final_link (bfd *output_bfd, struct bfd_link_info *info)
   if (!spu_elf_build_stubs (info))
     info->callbacks->fatal (_("%P: can not build overlay stubs: %E\n"));
 
-  return bfd_elf_final_link (output_bfd, info);
+  return _bfd_elf_final_link (output_bfd, info);
 }
 
 /* Called when not normally emitting relocs, ie. !bfd_link_relocatable (info)
@@ -4938,7 +4938,8 @@ spu_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_SPU_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -5134,7 +5135,8 @@ spu_elf_relocate_section (bfd *output_bfd,
 
 static bool
 spu_elf_finish_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				 struct bfd_link_info *info ATTRIBUTE_UNUSED)
+				 struct bfd_link_info *info ATTRIBUTE_UNUSED,
+				 bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   return true;
 }
@@ -5351,7 +5353,7 @@ spu_elf_modify_headers (bfd *abfd, struct bfd_link_info *info)
 {
   if (info != NULL)
     {
-      const struct elf_backend_data *bed;
+      elf_backend_data *bed;
       struct elf_obj_tdata *tdata;
       Elf_Internal_Phdr *phdr, *last;
       struct spu_link_hash_table *htab;

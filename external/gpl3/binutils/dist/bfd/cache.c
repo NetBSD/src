@@ -1,6 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -177,6 +177,7 @@ bfd_cache_delete (bfd *abfd)
   BFD_ASSERT (open_files > 0);
   --open_files;
   abfd->flags |= BFD_CLOSED_BY_CACHE;
+  abfd->last_io = bfd_io_force;
 
   return ret;
 }

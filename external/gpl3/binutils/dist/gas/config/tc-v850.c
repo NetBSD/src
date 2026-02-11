@@ -1,5 +1,5 @@
 /* tc-v850.c -- Assembler code for the NEC V850
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -344,14 +344,9 @@ v850_comm (int area)
 	  int old_subsec;
 	  char *pfrag;
 	  int align;
-	  flagword applicable;
 
 	  old_sec = now_seg;
 	  old_subsec = now_subseg;
-
-	  applicable = bfd_applicable_section_flags (stdoutput);
-
-	  applicable &= SEC_ALLOC;
 
 	  switch (area)
 	    {

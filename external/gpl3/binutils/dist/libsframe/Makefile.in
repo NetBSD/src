@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2019-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,10 +113,13 @@ target_triplet = @target@
 @BUILD_INFO_TRUE@am__append_3 = doc/sframe-spec.info
 check_PROGRAMS = $(am__EXEEXT_1)
 @HAVE_COMPAT_DEJAGNU_TRUE@am__append_4 = testsuite/libsframe.decode/be-flipping \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/be-flipping-v3 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/frecnt-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/frecnt-2 \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/frecnt-v2 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.encode/encode-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfre-1 \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfre-flex-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfunc-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-1 \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-2
@@ -124,8 +127,10 @@ subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../bfd/acinclude.m4 \
 	$(top_srcdir)/../config/acx.m4 \
+	$(top_srcdir)/../config/clang-plugin.m4 \
 	$(top_srcdir)/../config/dejagnu.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
+	$(top_srcdir)/../config/gcc-plugin.m4 \
 	$(top_srcdir)/../config/jobserver.m4 \
 	$(top_srcdir)/../config/lead-dot.m4 \
 	$(top_srcdir)/../config/mmap.m4 \
@@ -189,10 +194,13 @@ libsframe_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @INSTALL_LIBBFD_FALSE@am_libsframe_la_rpath =
 @INSTALL_LIBBFD_TRUE@am_libsframe_la_rpath = -rpath $(libdir)
 @HAVE_COMPAT_DEJAGNU_TRUE@am__EXEEXT_1 = testsuite/libsframe.decode/be-flipping$(EXEEXT) \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/be-flipping-v3$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/frecnt-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/frecnt-2$(EXEEXT) \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.decode/frecnt-v2$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.encode/encode-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfre-1$(EXEEXT) \
+@HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfre-flex-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/findfunc-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-1$(EXEEXT) \
 @HAVE_COMPAT_DEJAGNU_TRUE@	testsuite/libsframe.find/plt-findfre-2$(EXEEXT)
@@ -201,42 +209,52 @@ am_testsuite_libsframe_decode_be_flipping_OBJECTS = testsuite/libsframe.decode/t
 testsuite_libsframe_decode_be_flipping_OBJECTS =  \
 	$(am_testsuite_libsframe_decode_be_flipping_OBJECTS)
 testsuite_libsframe_decode_be_flipping_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+	$(testsuite_LDADD)
+am_testsuite_libsframe_decode_be_flipping_v3_OBJECTS = testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.$(OBJEXT)
+testsuite_libsframe_decode_be_flipping_v3_OBJECTS =  \
+	$(am_testsuite_libsframe_decode_be_flipping_v3_OBJECTS)
+testsuite_libsframe_decode_be_flipping_v3_DEPENDENCIES =  \
+	$(testsuite_LDADD)
 am_testsuite_libsframe_decode_frecnt_1_OBJECTS = testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_1-frecnt-1.$(OBJEXT)
 testsuite_libsframe_decode_frecnt_1_OBJECTS =  \
 	$(am_testsuite_libsframe_decode_frecnt_1_OBJECTS)
-testsuite_libsframe_decode_frecnt_1_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+testsuite_libsframe_decode_frecnt_1_DEPENDENCIES = $(testsuite_LDADD)
 am_testsuite_libsframe_decode_frecnt_2_OBJECTS = testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_2-frecnt-2.$(OBJEXT)
 testsuite_libsframe_decode_frecnt_2_OBJECTS =  \
 	$(am_testsuite_libsframe_decode_frecnt_2_OBJECTS)
-testsuite_libsframe_decode_frecnt_2_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+testsuite_libsframe_decode_frecnt_2_DEPENDENCIES = $(testsuite_LDADD)
+am_testsuite_libsframe_decode_frecnt_v2_OBJECTS = testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.$(OBJEXT)
+testsuite_libsframe_decode_frecnt_v2_OBJECTS =  \
+	$(am_testsuite_libsframe_decode_frecnt_v2_OBJECTS)
+testsuite_libsframe_decode_frecnt_v2_DEPENDENCIES =  \
+	$(testsuite_LDADD)
 am_testsuite_libsframe_encode_encode_1_OBJECTS = testsuite/libsframe.encode/testsuite_libsframe_encode_encode_1-encode-1.$(OBJEXT)
 testsuite_libsframe_encode_encode_1_OBJECTS =  \
 	$(am_testsuite_libsframe_encode_encode_1_OBJECTS)
-testsuite_libsframe_encode_encode_1_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+testsuite_libsframe_encode_encode_1_DEPENDENCIES = $(testsuite_LDADD)
 am_testsuite_libsframe_find_findfre_1_OBJECTS = testsuite/libsframe.find/testsuite_libsframe_find_findfre_1-findfre-1.$(OBJEXT)
 testsuite_libsframe_find_findfre_1_OBJECTS =  \
 	$(am_testsuite_libsframe_find_findfre_1_OBJECTS)
-testsuite_libsframe_find_findfre_1_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+testsuite_libsframe_find_findfre_1_DEPENDENCIES = $(testsuite_LDADD)
+am_testsuite_libsframe_find_findfre_flex_1_OBJECTS = testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.$(OBJEXT)
+testsuite_libsframe_find_findfre_flex_1_OBJECTS =  \
+	$(am_testsuite_libsframe_find_findfre_flex_1_OBJECTS)
+testsuite_libsframe_find_findfre_flex_1_DEPENDENCIES =  \
+	$(testsuite_LDADD)
 am_testsuite_libsframe_find_findfunc_1_OBJECTS = testsuite/libsframe.find/testsuite_libsframe_find_findfunc_1-findfunc-1.$(OBJEXT)
 testsuite_libsframe_find_findfunc_1_OBJECTS =  \
 	$(am_testsuite_libsframe_find_findfunc_1_OBJECTS)
-testsuite_libsframe_find_findfunc_1_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+testsuite_libsframe_find_findfunc_1_DEPENDENCIES = $(testsuite_LDADD)
 am_testsuite_libsframe_find_plt_findfre_1_OBJECTS = testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.$(OBJEXT)
 testsuite_libsframe_find_plt_findfre_1_OBJECTS =  \
 	$(am_testsuite_libsframe_find_plt_findfre_1_OBJECTS)
 testsuite_libsframe_find_plt_findfre_1_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+	$(testsuite_LDADD)
 am_testsuite_libsframe_find_plt_findfre_2_OBJECTS = testsuite/libsframe.find/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.$(OBJEXT)
 testsuite_libsframe_find_plt_findfre_2_OBJECTS =  \
 	$(am_testsuite_libsframe_find_plt_findfre_2_OBJECTS)
 testsuite_libsframe_find_plt_findfre_2_DEPENDENCIES =  \
-	${top_builddir}/libsframe.la
+	$(testsuite_LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -273,19 +291,25 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libsframe_la_SOURCES) \
 	$(testsuite_libsframe_decode_be_flipping_SOURCES) \
+	$(testsuite_libsframe_decode_be_flipping_v3_SOURCES) \
 	$(testsuite_libsframe_decode_frecnt_1_SOURCES) \
 	$(testsuite_libsframe_decode_frecnt_2_SOURCES) \
+	$(testsuite_libsframe_decode_frecnt_v2_SOURCES) \
 	$(testsuite_libsframe_encode_encode_1_SOURCES) \
 	$(testsuite_libsframe_find_findfre_1_SOURCES) \
+	$(testsuite_libsframe_find_findfre_flex_1_SOURCES) \
 	$(testsuite_libsframe_find_findfunc_1_SOURCES) \
 	$(testsuite_libsframe_find_plt_findfre_1_SOURCES) \
 	$(testsuite_libsframe_find_plt_findfre_2_SOURCES)
 DIST_SOURCES = $(libsframe_la_SOURCES) \
 	$(testsuite_libsframe_decode_be_flipping_SOURCES) \
+	$(testsuite_libsframe_decode_be_flipping_v3_SOURCES) \
 	$(testsuite_libsframe_decode_frecnt_1_SOURCES) \
 	$(testsuite_libsframe_decode_frecnt_2_SOURCES) \
+	$(testsuite_libsframe_decode_frecnt_v2_SOURCES) \
 	$(testsuite_libsframe_encode_encode_1_SOURCES) \
 	$(testsuite_libsframe_find_findfre_1_SOURCES) \
+	$(testsuite_libsframe_find_findfre_flex_1_SOURCES) \
 	$(testsuite_libsframe_find_findfunc_1_SOURCES) \
 	$(testsuite_libsframe_find_plt_findfre_1_SOURCES) \
 	$(testsuite_libsframe_find_plt_findfre_2_SOURCES)
@@ -369,7 +393,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/../compile $(top_srcdir)/../config.guess \
 	$(top_srcdir)/../config.sub $(top_srcdir)/../depcomp \
 	$(top_srcdir)/../install-sh $(top_srcdir)/../ltmain.sh \
-	$(top_srcdir)/../missing $(top_srcdir)/../mkinstalldirs
+	$(top_srcdir)/../missing $(top_srcdir)/../mkinstalldirs README
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -424,6 +448,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
+LLVM_CONFIG = @LLVM_CONFIG@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -510,7 +535,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
 #
-#   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -535,7 +560,7 @@ DISTCLEANFILES = $(am__append_2)
 MAINTAINERCLEANFILES = $(am__append_3)
 INCDIR = $(srcdir)/../include
 # include libctf for swap.h
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../libctf
+AM_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/../libctf
 AM_CFLAGS = @ac_libsframe_warn_cflags@
 libsframe_version_info = -version-info `grep -v '^\#' $(srcdir)/libtool-version`
 @HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_FALSE@libsframe_version_script = -Wl,--version-script=$(srcdir)/libsframe.ver
@@ -557,30 +582,41 @@ EXTRA_DIST = libtool-version libsframe.ver
 EXPECT = expect
 RUNTEST = runtest
 RUNTESTFLAGS = 
+testsuite_LDADD = $(top_builddir)/libsframe.la
+testsuite_CPPFLAGS = -I$(srcdir)/testsuite -I$(srcdir)/../include
 testsuite_libsframe_decode_be_flipping_SOURCES = testsuite/libsframe.decode/be-flipping.c
-testsuite_libsframe_decode_be_flipping_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_decode_be_flipping_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_decode_be_flipping_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_decode_be_flipping_CPPFLAGS = $(testsuite_CPPFLAGS)
+testsuite_libsframe_decode_be_flipping_v3_SOURCES = testsuite/libsframe.decode/be-flipping-v3.c
+testsuite_libsframe_decode_be_flipping_v3_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_decode_be_flipping_v3_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_decode_frecnt_1_SOURCES = testsuite/libsframe.decode/frecnt-1.c
-testsuite_libsframe_decode_frecnt_1_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_decode_frecnt_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_decode_frecnt_1_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_decode_frecnt_1_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_decode_frecnt_2_SOURCES = testsuite/libsframe.decode/frecnt-2.c
-testsuite_libsframe_decode_frecnt_2_LDADD = ${top_builddir}/libsframe.la 
-testsuite_libsframe_decode_frecnt_2_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_decode_frecnt_2_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_decode_frecnt_2_CPPFLAGS = $(testsuite_CPPFLAGS)
+testsuite_libsframe_decode_frecnt_v2_SOURCES = testsuite/libsframe.decode/frecnt-v2.c
+testsuite_libsframe_decode_frecnt_v2_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_decode_frecnt_v2_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_encode_encode_1_SOURCES = testsuite/libsframe.encode/encode-1.c
-testsuite_libsframe_encode_encode_1_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_encode_encode_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_encode_encode_1_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_encode_encode_1_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_find_findfre_1_SOURCES = testsuite/libsframe.find/findfre-1.c
-testsuite_libsframe_find_findfre_1_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_find_findfre_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_find_findfre_1_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_find_findfre_1_CPPFLAGS = $(testsuite_CPPFLAGS)
+testsuite_libsframe_find_findfre_flex_1_SOURCES = testsuite/libsframe.find/findfre-flex-1.c
+testsuite_libsframe_find_findfre_flex_1_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_find_findfre_flex_1_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_find_findfunc_1_SOURCES = testsuite/libsframe.find/findfunc-1.c
-testsuite_libsframe_find_findfunc_1_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_find_findfunc_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_find_findfunc_1_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_find_findfunc_1_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_find_plt_findfre_1_SOURCES = testsuite/libsframe.find/plt-findfre-1.c
-testsuite_libsframe_find_plt_findfre_1_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_find_plt_findfre_1_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_find_plt_findfre_1_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_find_plt_findfre_1_CPPFLAGS = $(testsuite_CPPFLAGS)
 testsuite_libsframe_find_plt_findfre_2_SOURCES = testsuite/libsframe.find/plt-findfre-2.c
-testsuite_libsframe_find_plt_findfre_2_LDADD = ${top_builddir}/libsframe.la
-testsuite_libsframe_find_plt_findfre_2_CPPFLAGS = -I${top_srcdir}/../include -Wall
+testsuite_libsframe_find_plt_findfre_2_LDADD = $(testsuite_LDADD)
+testsuite_libsframe_find_plt_findfre_2_CPPFLAGS = $(testsuite_CPPFLAGS)
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -706,6 +742,13 @@ testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping-be-flipping.$(
 testsuite/libsframe.decode/be-flipping$(EXEEXT): $(testsuite_libsframe_decode_be_flipping_OBJECTS) $(testsuite_libsframe_decode_be_flipping_DEPENDENCIES) $(EXTRA_testsuite_libsframe_decode_be_flipping_DEPENDENCIES) testsuite/libsframe.decode/$(am__dirstamp)
 	@rm -f testsuite/libsframe.decode/be-flipping$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_decode_be_flipping_OBJECTS) $(testsuite_libsframe_decode_be_flipping_LDADD) $(LIBS)
+testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.$(OBJEXT):  \
+	testsuite/libsframe.decode/$(am__dirstamp) \
+	testsuite/libsframe.decode/$(DEPDIR)/$(am__dirstamp)
+
+testsuite/libsframe.decode/be-flipping-v3$(EXEEXT): $(testsuite_libsframe_decode_be_flipping_v3_OBJECTS) $(testsuite_libsframe_decode_be_flipping_v3_DEPENDENCIES) $(EXTRA_testsuite_libsframe_decode_be_flipping_v3_DEPENDENCIES) testsuite/libsframe.decode/$(am__dirstamp)
+	@rm -f testsuite/libsframe.decode/be-flipping-v3$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_decode_be_flipping_v3_OBJECTS) $(testsuite_libsframe_decode_be_flipping_v3_LDADD) $(LIBS)
 testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_1-frecnt-1.$(OBJEXT):  \
 	testsuite/libsframe.decode/$(am__dirstamp) \
 	testsuite/libsframe.decode/$(DEPDIR)/$(am__dirstamp)
@@ -720,6 +763,13 @@ testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_2-frecnt-2.$(OBJEXT
 testsuite/libsframe.decode/frecnt-2$(EXEEXT): $(testsuite_libsframe_decode_frecnt_2_OBJECTS) $(testsuite_libsframe_decode_frecnt_2_DEPENDENCIES) $(EXTRA_testsuite_libsframe_decode_frecnt_2_DEPENDENCIES) testsuite/libsframe.decode/$(am__dirstamp)
 	@rm -f testsuite/libsframe.decode/frecnt-2$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_decode_frecnt_2_OBJECTS) $(testsuite_libsframe_decode_frecnt_2_LDADD) $(LIBS)
+testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.$(OBJEXT):  \
+	testsuite/libsframe.decode/$(am__dirstamp) \
+	testsuite/libsframe.decode/$(DEPDIR)/$(am__dirstamp)
+
+testsuite/libsframe.decode/frecnt-v2$(EXEEXT): $(testsuite_libsframe_decode_frecnt_v2_OBJECTS) $(testsuite_libsframe_decode_frecnt_v2_DEPENDENCIES) $(EXTRA_testsuite_libsframe_decode_frecnt_v2_DEPENDENCIES) testsuite/libsframe.decode/$(am__dirstamp)
+	@rm -f testsuite/libsframe.decode/frecnt-v2$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_decode_frecnt_v2_OBJECTS) $(testsuite_libsframe_decode_frecnt_v2_LDADD) $(LIBS)
 testsuite/libsframe.encode/$(am__dirstamp):
 	@$(MKDIR_P) testsuite/libsframe.encode
 	@: > testsuite/libsframe.encode/$(am__dirstamp)
@@ -746,6 +796,13 @@ testsuite/libsframe.find/testsuite_libsframe_find_findfre_1-findfre-1.$(OBJEXT):
 testsuite/libsframe.find/findfre-1$(EXEEXT): $(testsuite_libsframe_find_findfre_1_OBJECTS) $(testsuite_libsframe_find_findfre_1_DEPENDENCIES) $(EXTRA_testsuite_libsframe_find_findfre_1_DEPENDENCIES) testsuite/libsframe.find/$(am__dirstamp)
 	@rm -f testsuite/libsframe.find/findfre-1$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_find_findfre_1_OBJECTS) $(testsuite_libsframe_find_findfre_1_LDADD) $(LIBS)
+testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.$(OBJEXT):  \
+	testsuite/libsframe.find/$(am__dirstamp) \
+	testsuite/libsframe.find/$(DEPDIR)/$(am__dirstamp)
+
+testsuite/libsframe.find/findfre-flex-1$(EXEEXT): $(testsuite_libsframe_find_findfre_flex_1_OBJECTS) $(testsuite_libsframe_find_findfre_flex_1_DEPENDENCIES) $(EXTRA_testsuite_libsframe_find_findfre_flex_1_DEPENDENCIES) testsuite/libsframe.find/$(am__dirstamp)
+	@rm -f testsuite/libsframe.find/findfre-flex-1$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testsuite_libsframe_find_findfre_flex_1_OBJECTS) $(testsuite_libsframe_find_findfre_flex_1_LDADD) $(LIBS)
 testsuite/libsframe.find/testsuite_libsframe_find_findfunc_1-findfunc-1.$(OBJEXT):  \
 	testsuite/libsframe.find/$(am__dirstamp) \
 	testsuite/libsframe.find/$(DEPDIR)/$(am__dirstamp)
@@ -781,10 +838,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsframe_la-sframe-error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libsframe_la-sframe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping-be-flipping.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_1-frecnt-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_2-frecnt-2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.encode/$(DEPDIR)/testsuite_libsframe_encode_encode_1-encode-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_1-findfre-1.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfunc_1-findfunc-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_1-plt-findfre-1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_plt_findfre_2-plt-findfre-2.Po@am__quote@
@@ -848,6 +908,20 @@ testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping-be-flipping.ob
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_be_flipping_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping-be-flipping.obj `if test -f 'testsuite/libsframe.decode/be-flipping.c'; then $(CYGPATH_W) 'testsuite/libsframe.decode/be-flipping.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.decode/be-flipping.c'; fi`
 
+testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.o: testsuite/libsframe.decode/be-flipping-v3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_be_flipping_v3_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.o -MD -MP -MF testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Tpo -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.o `test -f 'testsuite/libsframe.decode/be-flipping-v3.c' || echo '$(srcdir)/'`testsuite/libsframe.decode/be-flipping-v3.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Tpo testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.decode/be-flipping-v3.c' object='testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_be_flipping_v3_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.o `test -f 'testsuite/libsframe.decode/be-flipping-v3.c' || echo '$(srcdir)/'`testsuite/libsframe.decode/be-flipping-v3.c
+
+testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.obj: testsuite/libsframe.decode/be-flipping-v3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_be_flipping_v3_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.obj -MD -MP -MF testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Tpo -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.obj `if test -f 'testsuite/libsframe.decode/be-flipping-v3.c'; then $(CYGPATH_W) 'testsuite/libsframe.decode/be-flipping-v3.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.decode/be-flipping-v3.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Tpo testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.decode/be-flipping-v3.c' object='testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_be_flipping_v3_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_be_flipping_v3-be-flipping-v3.obj `if test -f 'testsuite/libsframe.decode/be-flipping-v3.c'; then $(CYGPATH_W) 'testsuite/libsframe.decode/be-flipping-v3.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.decode/be-flipping-v3.c'; fi`
+
 testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_1-frecnt-1.o: testsuite/libsframe.decode/frecnt-1.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_frecnt_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_1-frecnt-1.o -MD -MP -MF testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_1-frecnt-1.Tpo -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_1-frecnt-1.o `test -f 'testsuite/libsframe.decode/frecnt-1.c' || echo '$(srcdir)/'`testsuite/libsframe.decode/frecnt-1.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_1-frecnt-1.Tpo testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_1-frecnt-1.Po
@@ -876,6 +950,20 @@ testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_2-frecnt-2.obj: tes
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_frecnt_2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_2-frecnt-2.obj `if test -f 'testsuite/libsframe.decode/frecnt-2.c'; then $(CYGPATH_W) 'testsuite/libsframe.decode/frecnt-2.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.decode/frecnt-2.c'; fi`
 
+testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.o: testsuite/libsframe.decode/frecnt-v2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_frecnt_v2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.o -MD -MP -MF testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Tpo -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.o `test -f 'testsuite/libsframe.decode/frecnt-v2.c' || echo '$(srcdir)/'`testsuite/libsframe.decode/frecnt-v2.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Tpo testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.decode/frecnt-v2.c' object='testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_frecnt_v2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.o `test -f 'testsuite/libsframe.decode/frecnt-v2.c' || echo '$(srcdir)/'`testsuite/libsframe.decode/frecnt-v2.c
+
+testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.obj: testsuite/libsframe.decode/frecnt-v2.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_frecnt_v2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.obj -MD -MP -MF testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Tpo -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.obj `if test -f 'testsuite/libsframe.decode/frecnt-v2.c'; then $(CYGPATH_W) 'testsuite/libsframe.decode/frecnt-v2.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.decode/frecnt-v2.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Tpo testsuite/libsframe.decode/$(DEPDIR)/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.decode/frecnt-v2.c' object='testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_decode_frecnt_v2_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.decode/testsuite_libsframe_decode_frecnt_v2-frecnt-v2.obj `if test -f 'testsuite/libsframe.decode/frecnt-v2.c'; then $(CYGPATH_W) 'testsuite/libsframe.decode/frecnt-v2.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.decode/frecnt-v2.c'; fi`
+
 testsuite/libsframe.encode/testsuite_libsframe_encode_encode_1-encode-1.o: testsuite/libsframe.encode/encode-1.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_encode_encode_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.encode/testsuite_libsframe_encode_encode_1-encode-1.o -MD -MP -MF testsuite/libsframe.encode/$(DEPDIR)/testsuite_libsframe_encode_encode_1-encode-1.Tpo -c -o testsuite/libsframe.encode/testsuite_libsframe_encode_encode_1-encode-1.o `test -f 'testsuite/libsframe.encode/encode-1.c' || echo '$(srcdir)/'`testsuite/libsframe.encode/encode-1.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.encode/$(DEPDIR)/testsuite_libsframe_encode_encode_1-encode-1.Tpo testsuite/libsframe.encode/$(DEPDIR)/testsuite_libsframe_encode_encode_1-encode-1.Po
@@ -903,6 +991,20 @@ testsuite/libsframe.find/testsuite_libsframe_find_findfre_1-findfre-1.obj: tests
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.find/findfre-1.c' object='testsuite/libsframe.find/testsuite_libsframe_find_findfre_1-findfre-1.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_findfre_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.find/testsuite_libsframe_find_findfre_1-findfre-1.obj `if test -f 'testsuite/libsframe.find/findfre-1.c'; then $(CYGPATH_W) 'testsuite/libsframe.find/findfre-1.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.find/findfre-1.c'; fi`
+
+testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.o: testsuite/libsframe.find/findfre-flex-1.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_findfre_flex_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.o -MD -MP -MF testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Tpo -c -o testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.o `test -f 'testsuite/libsframe.find/findfre-flex-1.c' || echo '$(srcdir)/'`testsuite/libsframe.find/findfre-flex-1.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Tpo testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.find/findfre-flex-1.c' object='testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_findfre_flex_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.o `test -f 'testsuite/libsframe.find/findfre-flex-1.c' || echo '$(srcdir)/'`testsuite/libsframe.find/findfre-flex-1.c
+
+testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.obj: testsuite/libsframe.find/findfre-flex-1.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_findfre_flex_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.obj -MD -MP -MF testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Tpo -c -o testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.obj `if test -f 'testsuite/libsframe.find/findfre-flex-1.c'; then $(CYGPATH_W) 'testsuite/libsframe.find/findfre-flex-1.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.find/findfre-flex-1.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Tpo testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='testsuite/libsframe.find/findfre-flex-1.c' object='testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_findfre_flex_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o testsuite/libsframe.find/testsuite_libsframe_find_findfre_flex_1-findfre-flex-1.obj `if test -f 'testsuite/libsframe.find/findfre-flex-1.c'; then $(CYGPATH_W) 'testsuite/libsframe.find/findfre-flex-1.c'; else $(CYGPATH_W) '$(srcdir)/testsuite/libsframe.find/findfre-flex-1.c'; fi`
 
 testsuite/libsframe.find/testsuite_libsframe_find_findfunc_1-findfunc-1.o: testsuite/libsframe.find/findfunc-1.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(testsuite_libsframe_find_findfunc_1_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT testsuite/libsframe.find/testsuite_libsframe_find_findfunc_1-findfunc-1.o -MD -MP -MF testsuite/libsframe.find/$(DEPDIR)/testsuite_libsframe_find_findfunc_1-findfunc-1.Tpo -c -o testsuite/libsframe.find/testsuite_libsframe_find_findfunc_1-findfunc-1.o `test -f 'testsuite/libsframe.find/findfunc-1.c' || echo '$(srcdir)/'`testsuite/libsframe.find/findfunc-1.c

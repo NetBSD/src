@@ -1,5 +1,5 @@
 /* COFF information shared by Intel 386/486 and AMD 64 (aka x86-64).
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

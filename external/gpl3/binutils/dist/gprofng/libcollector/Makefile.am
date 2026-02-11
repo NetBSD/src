@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # <http://www.gnu.org/licenses/>.
 
 AUTOMAKE_OPTIONS = foreign
-ACLOCAL_AMFLAGS = -I . -I ../.. 
+ACLOCAL_AMFLAGS = -I . -I ../..  -I ../../config
 
 CSOURCES = \
 	gethrtime.c \
@@ -39,7 +39,7 @@ CSOURCES = \
 	collector.c \
 	$(NULL)
 
-AM_CFLAGS = $(GPROFNG_CFLAGS) $(GPROFNG_NO_NONNULL_COMPARE_CFLAGS)
+AM_CFLAGS = $(GPROFNG_CFLAGS) $(GPROFNG_NO_NONNULL_COMPARE_CFLAGS) $(NOLTO_CFLAGS)
 AM_CPPFLAGS = $(GPROFNG_CPPFLAGS) -I.. -I$(srcdir) \
 	-I$(srcdir)/../common -I$(srcdir)/../src \
 	-I$(srcdir)/../../include
@@ -56,6 +56,7 @@ pkglib_LTLIBRARIES = libgp-collector.la libgp-collectorAPI.la libgp-heap.la \
 	libgp-sync.la libgp-iotrace.la
 
 libgp_collector_la_SOURCES = $(CSOURCES)
+libgp_collector_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_collector_la_CPPFLAGS = $(AM_CPPFLAGS) $(jdk_inc) \
 	-I../../bfd -I$(srcdir)/../..
 # Prevent libtool from reordering -Wl,--no-as-needed after -lrt by
@@ -64,15 +65,19 @@ libgp_collector_la_LDFLAGS = $(AM_LDFLAGS)
 libgp_collector_la_LIBADD = $(CLOCK_GETTIME_LINK)
 
 libgp_heap_la_SOURCES = heaptrace.c
+libgp_heap_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_heap_la_LDFLAGS = $(AM_LDFLAGS)
 
 libgp_sync_la_SOURCES = synctrace.c
+libgp_sync_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_sync_la_LDFLAGS = $(AM_LDFLAGS)
 
 libgp_iotrace_la_SOURCES = iotrace.c
+libgp_iotrace_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_iotrace_la_LDFLAGS = $(AM_LDFLAGS)
 
 libgp_collectorAPI_la_SOURCES = collectorAPI.c
+libgp_collectorAPI_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_collectorAPI_la_LIBADD = -lc -ldl
 
 .PHONY: install-data-local

@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1060,7 +1060,7 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
       if (*ptr != '%')
 	{
 	  /* While we have regular characters, print them.  */
-	  char *end = strchr (ptr, '%');
+	  const char *end = strchr (ptr, '%');
 	  if (end != NULL)
 	    result = print (stream, "%.*s", (int) (end - ptr), ptr);
 	  else
@@ -2199,19 +2199,21 @@ bfd_canonicalize_reloc (bfd *abfd,
 
 /*
 FUNCTION
-	bfd_set_reloc
+	bfd_finalize_section_relocs
 
 SYNOPSIS
-	void bfd_set_reloc
+	bool bfd_finalize_section_relocs
 	  (bfd *abfd, asection *sec, arelent **rel, unsigned int count);
 
 DESCRIPTION
-	Set the relocation pointer and count within
-	section @var{sec} to the values @var{rel} and @var{count}.
-	The argument @var{abfd} is ignored.
+	Set the relocation pointer and count within section @var{sec}
+	to the values @var{rel} and @var{count}, and take any other
+	actions required at the conclusion of section relocation
+	processing.
 
-.#define bfd_set_reloc(abfd, asect, location, count) \
-.	BFD_SEND (abfd, _bfd_set_reloc, (abfd, asect, location, count))
+.#define bfd_finalize_section_relocs(abfd, asect, location, count) \
+.	BFD_SEND (abfd, _bfd_finalize_section_relocs, \
+.		  (abfd, asect, location, count))
 */
 
 /*
@@ -2645,9 +2647,6 @@ DESCRIPTION
 .#define bfd_lookup_section_flags(link_info, flag_info, section) \
 .	BFD_SEND (abfd, _bfd_lookup_section_flags, (link_info, flag_info, section))
 .
-.#define bfd_merge_sections(abfd, link_info) \
-.	BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))
-.
 .#define bfd_is_group_section(abfd, sec) \
 .	BFD_SEND (abfd, _bfd_is_group_section, (abfd, sec))
 .
@@ -2798,7 +2797,7 @@ is32bit (bfd *abfd)
 {
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      elf_backend_data *bed = get_elf_backend_data (abfd);
       return bed->s->elfclass == ELFCLASS32;
     }
 
@@ -2950,9 +2949,7 @@ bfd_emul_get_commonpagesize (const char *emul)
   if (target != NULL
       && target->flavour == bfd_target_elf_flavour)
     {
-      const struct elf_backend_data *bed;
-
-      bed = xvec_get_elf_backend_data (target);
+      elf_backend_data *bed = xvec_get_elf_backend_data (target);
       return bed->commonpagesize;
     }
   return 0;
@@ -3091,7 +3088,7 @@ bfd_group_signature (asection *group, asymbol **isympp)
   ghdr = &elf_section_data (group)->this_hdr;
   if (ghdr->sh_link == elf_onesymtab (abfd))
     {
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      elf_backend_data *bed = get_elf_backend_data (abfd);
       Elf_Internal_Shdr *symhdr = &elf_symtab_hdr (abfd);
 
       if (ghdr->sh_info > 0

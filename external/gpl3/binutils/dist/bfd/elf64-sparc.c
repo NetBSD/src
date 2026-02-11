@@ -1,5 +1,5 @@
 /* SPARC-specific support for 64-bit ELF
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -251,7 +251,7 @@ elf64_sparc_canonicalize_reloc (bfd *abfd, sec_ptr section,
 {
   arelent *tblptr;
   unsigned int i;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
 
   if (! bed->s->slurp_reloc_table (abfd, section, symbols, false))
     return -1;
@@ -314,11 +314,11 @@ elf64_sparc_canonicalize_dynamic_reloc (bfd *abfd, arelent **storage,
 
 /* Install a new set of internal relocs.  */
 
-static void
-elf64_sparc_set_reloc (bfd *abfd ATTRIBUTE_UNUSED,
-		       asection *asect,
-		       arelent **location,
-		       unsigned int count)
+static bool
+elf64_sparc_finalize_section_relocs (bfd *abfd ATTRIBUTE_UNUSED,
+				     asection *asect,
+				     arelent **location,
+				     unsigned int count)
 {
   asect->orelocation = location;
   canon_reloc_count (asect) = count;
@@ -326,6 +326,7 @@ elf64_sparc_set_reloc (bfd *abfd ATTRIBUTE_UNUSED,
     asect->flags |= SEC_RELOC;
   else
     asect->flags &= ~SEC_RELOC;
+  return true;
 }
 
 /* Write out the relocs.  */
@@ -672,8 +673,7 @@ elf64_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword new_flags, old_flags;
   int new_mm, old_mm;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   new_flags = elf_elfheader (ibfd)->e_flags;
@@ -804,7 +804,7 @@ elf64_sparc_reloc_type_class (const struct bfd_link_info *info,
 			      const Elf_Internal_Rela *rela)
 {
   bfd *abfd = info->output_bfd;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct _bfd_sparc_elf_link_hash_table *htab
     = _bfd_sparc_elf_hash_table (info);
   BFD_ASSERT (htab != NULL);
@@ -849,7 +849,7 @@ elf64_sparc_reloc_type_class (const struct bfd_link_info *info,
    ELF64_R_TYPE_DATA field.  This structure is used to redirect the
    relocation handling routines.  */
 
-const struct elf_size_info elf64_sparc_size_info =
+static const struct elf_size_info elf64_sparc_size_info =
 {
   sizeof (Elf64_External_Ehdr),
   sizeof (Elf64_External_Phdr),
@@ -889,6 +889,7 @@ const struct elf_size_info elf64_sparc_size_info =
 #define TARGET_BIG_NAME	"elf64-sparc"
 #define ELF_ARCH	bfd_arch_sparc
 #define ELF_TARGET_ID	SPARC_ELF_DATA
+#define ELF_OSABI	ELFOSABI_GNU
 #define ELF_MAXPAGESIZE 0x100000
 #define ELF_COMMONPAGESIZE 0x2000
 
@@ -908,8 +909,8 @@ const struct elf_size_info elf64_sparc_size_info =
   elf64_sparc_canonicalize_reloc
 #define bfd_elf64_canonicalize_dynamic_reloc \
   elf64_sparc_canonicalize_dynamic_reloc
-#define bfd_elf64_set_reloc \
-  elf64_sparc_set_reloc
+#define bfd_elf64_finalize_section_relocs \
+  elf64_sparc_finalize_section_relocs
 #define elf_backend_add_symbol_hook \
   elf64_sparc_add_symbol_hook
 #define elf_backend_get_symbol_type \
@@ -995,6 +996,8 @@ const struct elf_size_info elf64_sparc_size_info =
 #define TARGET_BIG_NAME "elf64-sparc-freebsd"
 #undef	ELF_OSABI
 #define	ELF_OSABI ELFOSABI_FREEBSD
+#undef	ELF_OSABI_EXACT
+#define	ELF_OSABI_EXACT 1
 
 #undef  elf64_bed
 #define elf64_bed				elf64_sparc_fbsd_bed
@@ -1008,23 +1011,19 @@ const struct elf_size_info elf64_sparc_size_info =
 #undef	TARGET_BIG_NAME
 #define	TARGET_BIG_NAME				"elf64-sparc-sol2"
 
-#undef ELF_TARGET_OS
+#undef  ELF_TARGET_OS
 #define ELF_TARGET_OS				is_solaris
-
-/* Restore default: we cannot use ELFOSABI_SOLARIS, otherwise ELFOSABI_NONE
-   objects won't be recognized.  */
 #undef	ELF_OSABI
+#define	ELF_OSABI				ELFOSABI_SOLARIS
+#undef	ELF_OSABI_EXACT
 
-#undef elf64_bed
+#undef  elf64_bed
 #define elf64_bed				elf64_sparc_sol2_bed
 
 /* The 64-bit static TLS arena size is rounded to the nearest 16-byte
    boundary.  */
-#undef elf_backend_static_tls_alignment
+#undef  elf_backend_static_tls_alignment
 #define elf_backend_static_tls_alignment	16
-
-#undef  elf_backend_strtab_flags
-#define elf_backend_strtab_flags       SHF_STRINGS
 
 static bool
 elf64_sparc_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUSED,
@@ -1042,5 +1041,4 @@ elf64_sparc_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUSE
 
 #include "elf64-target.h"
 
-#undef  elf_backend_strtab_flags
 #undef  elf_backend_copy_special_section_fields

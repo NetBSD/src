@@ -24,7 +24,7 @@ esac
 rm -f e${EMULATION_NAME}.c
 (echo;echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
-/* Copyright (C) 2006-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2026 Free Software Foundation, Inc.
    Written by Kai Tietz, OneVision Software GmbH&CoKg.
 
    This file is part of the GNU Binutils.
@@ -246,6 +246,8 @@ gld${EMULATION_NAME}_before_parse (void)
   config.has_shared = 1;
   link_info.pei386_auto_import = 1;
   link_info.pei386_runtime_pseudo_reloc = 2; /* Use by default version 2.  */
+#else
+  pep_dll_enable_reloc_section = 0;
 #endif
 }
 
@@ -1602,6 +1604,9 @@ gld${EMULATION_NAME}_after_open (void)
   else
     pep_exe_build_sections (link_info.output_bfd, &link_info);
 #endif
+#else /* !DLL_SUPPORT */
+  if (!bfd_link_relocatable (&link_info))
+    pep_exe_build_sections (link_info.output_bfd, &link_info);
 #endif /* DLL_SUPPORT */
 
   {
@@ -1944,6 +1949,9 @@ gld${EMULATION_NAME}_finish (void)
 
   if (pep_out_def_filename)
     pep_dll_generate_def_file (pep_out_def_filename);
+#else /* !DLL_SUPPORT */
+  if (!bfd_link_relocatable (&link_info))
+    pep_exe_fill_sections (link_info.output_bfd, &link_info);
 #endif /* DLL_SUPPORT */
 
   /* I don't know where .idata gets set as code, but it shouldn't be.  */

@@ -1,8 +1,8 @@
-This is ldint.info, produced by makeinfo version 7.1.1 from ldint.texi.
+This is ldint.info, produced by makeinfo version 7.2 from ldint.texi.
 
 This file documents the internals of the GNU linker ld.
 
-   Copyright © 1992-2025 Free Software Foundation, Inc.  Contributed by
+   Copyright © 1992-2026 Free Software Foundation, Inc.  Contributed by
 Cygnus Support.
 
    Permission is granted to copy, distribute and/or modify this document
@@ -1171,19 +1171,18 @@ recommend releasing these examples in parallel under your choice of free
 software license, such as the GNU General Public License, to permit
 their use in free software.
 
-
 
 Tag Table:
-Node: Top1090
-Node: README1895
-Node: Emulations2131
-Node: emulation parameters4454
-Node: linker scripts7846
-Node: linker emulations18230
-Node: Emulation Walkthrough20716
-Node: Architecture Specific27495
-Node: ix8627923
-Node: GNU Free Documentation License32271
+Node: Top1088
+Node: README1893
+Node: Emulations2129
+Node: emulation parameters4452
+Node: linker scripts7844
+Node: linker emulations18228
+Node: Emulation Walkthrough20714
+Node: Architecture Specific27493
+Node: ix8627921
+Node: GNU Free Documentation License32269
 
 End Tag Table
 

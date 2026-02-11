@@ -1,5 +1,5 @@
 /* Object file "section" support for the BFD library.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -565,6 +565,10 @@ CODE_FRAGMENT
 .     regions is enabled.  *}
 .  struct bfd_section *already_assigned;
 .
+.  {* A pointer used for various section optimizations.  sec_info_type
+.     qualifies which one it is.  *}
+.  void *sec_info;
+.
 .  {* Explicitly specified section type, if non-zero.  *}
 .  unsigned int type;
 .
@@ -747,8 +751,8 @@ INTERNAL
 .  {* symbol,                                                        *}	\
 .     (struct bfd_symbol *) SYM,					\
 .									\
-.  {* map_head, map_tail, already_assigned, type                     *}	\
-.     { NULL }, { NULL }, NULL,             0				\
+.  {* map_head, map_tail, already_assigned, sec_info, type           *}	\
+.     { NULL }, { NULL }, NULL,             NULL,     0			\
 .									\
 .  }
 .
@@ -1664,11 +1668,6 @@ bfd_malloc_and_get_section (bfd *abfd, sec_ptr sec, bfd_byte **buf)
 /*
 FUNCTION
 	bfd_copy_private_section_data
-
-SYNOPSIS
-	bool bfd_copy_private_section_data
-	  (bfd *ibfd, asection *isec, bfd *obfd, asection *osec,
-	   struct bfd_link_info *link_info);
 
 DESCRIPTION
 	Copy private section information from @var{isec} in the BFD

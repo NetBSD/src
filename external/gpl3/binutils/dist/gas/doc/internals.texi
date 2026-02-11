@@ -1,5 +1,5 @@
 \input texinfo
-@c  Copyright (C) 1991-2025 Free Software Foundation, Inc.
+@c  Copyright (C) 1991-2026 Free Software Foundation, Inc.
 @setfilename internals.info
 @node Top
 @top Assembler Internals
@@ -1697,11 +1697,11 @@ completed, but before the relocations have been generated.
 If you define this macro, GAS will call it after the relocs have been
 generated.
 
-@item SET_SECTION_RELOCS (@var{sec}, @var{relocs}, @var{n})
-@cindex SET_SECTION_RELOCS
-If you define this, it will be called after the relocations have been set for
-the section @var{sec}.  The list of relocations is in @var{relocs}, and the
-number of relocations is in @var{n}.
+@item FINALIZE_SECTION_RELOCS (@var{sec}, @var{relocs}, @var{n})
+@cindex FINALIZE_SECTION_RELOCS
+If you define this, it will be called to finalize relocations for the section
+@var{sec}.  The list of relocations is in @var{relocs}, and the number of
+relocations is in @var{n}.
 @end table
 
 @node Emulations

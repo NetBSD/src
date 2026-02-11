@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2026 Free Software Foundation, Inc.
 #   Contributed by:
 #   Brain.lin (brain.lin@sunplusct.com)
 #   Mei Ligang (ligang@sunnorth.com.cn)

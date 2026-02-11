@@ -1,5 +1,5 @@
 /* gen-sframe.h - Support for generating SFrame.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,10 +21,27 @@
 #ifndef GENSFRAME_H
 #define GENSFRAME_H
 
-#define SFRAME_FRE_ELEM_LOC_REG		0
-#define SFRAME_FRE_ELEM_LOC_STACK	1
+/* Errors shouldn't be emitted either if SFrames are default-enabled, as
+   we interpret default-enabled as "opportunistic SFrames".  Users don't
+   want to be bothered by something preventing emission of SFrames in
+   such a case.  */
+#define sframe_as_bad(format, ...) \
+  do {					       \
+    if (flag_gen_sframe == GEN_SFRAME_ENABLED) \
+      as_bad (format, __VA_ARGS__);            \
+  } while (0)
 
-#define SFRAME_FRE_BASE_REG_INVAL	((unsigned int)-1)
+/* The entity is not tracked.  */
+#define SFRAME_FRE_ELEM_LOC_NONE	0
+/* The location of the tracked entity is based on a register.  May or may not
+   involve dereferencing.  */
+#define SFRAME_FRE_ELEM_LOC_REG		1
+/* The location of the tracked entity is based on the CFA.  In theory, may or
+   may not involve dereferencing.  */
+#define SFRAME_FRE_ELEM_LOC_STACK	2
+
+/* An invalid register number.  */
+#define SFRAME_FRE_REG_INVALID		((unsigned int)-1)
 
 /* SFrame Frame Row Entry (FRE).
 
@@ -55,22 +72,34 @@ struct sframe_row_entry
   /* Whether the return address is mangled with pauth code.  */
   bool mangled_ra_p;
 
+  /* Whether RA is undefined.  */
+  bool ra_undefined_p;
+
   /* Track CFA base (architectural) register ID.  */
   unsigned int cfa_base_reg;
   /* Offset from the CFA base register for recovering CFA.  */
   offsetT cfa_offset;
+  /* Whether CFA recovery needs dereferencing.  This is tracked for
+     SFRAME_FDE_TYPE_FLEX FDE type.  */
+  bool cfa_deref_p;
 
-  /* Track the other register used as base register for CFA.  Specify whether
-     it is in register or memory.  */
-  unsigned int base_reg;
-  unsigned int bp_loc;
-  /* If the other register is stashed on stack, note the offset.  */
-  offsetT bp_offset;
+  /* Track FP location.  Specify whether it is in register or memory.  */
+  unsigned int fp_loc;
+  unsigned int fp_reg;
+  /* If the FP is stashed on stack, note the offset.  */
+  offsetT fp_offset;
+  /* Whether FP recovery needs dereferencing.  This is tracked for
+     SFRAME_FDE_TYPE_FLEX FDE type.  */
+  bool fp_deref_p;
 
   /* Track RA location.  Specify whether it is in register or memory.  */
   unsigned int ra_loc;
+  unsigned int ra_reg;
   /* If RA is stashed on stack, note the offset.  */
   offsetT ra_offset;
+  /* Whether RA recovery needs dereferencing.  This is tracked for FDE type
+     SFRAME_FDE_TYPE_FLEX.  */
+  bool ra_deref_p;
 };
 
 /* SFrame Function Description Entry.  */
@@ -84,6 +113,8 @@ struct sframe_func_entry
      like the start_address and the segment is made available via this
      member.  */
   const struct fde_entry *dw_fde;
+  /* Whether the current FDE will use SFRAME_FDE_TYPE_FLEX representation.  */
+  bool fde_flex_p;
 
   /* Reference to the first FRE for this function.  */
   struct sframe_row_entry *sframe_fres;
@@ -113,6 +144,10 @@ struct sframe_xlate_ctx
   struct sframe_row_entry *cur_fre;
   /* Remember FRE for an eventual restore.  */
   struct sframe_row_entry *remember_fre;
+
+  /* Whether the current FRE requires a more flexible frame encoding, hence
+     needing SFRAME_FDE_TYPE_FLEX FDE type.  */
+  bool flex_p;
 
   unsigned num_xlate_fres;
 };
@@ -144,7 +179,8 @@ struct sframe_version_ops
   unsigned char (*set_fre_info) (unsigned int, unsigned int, unsigned int,
 				 bool);
   /* set SFrame Func info.  */
-  unsigned char (*set_func_info) (unsigned int, unsigned int, unsigned int);
+  unsigned char (*set_func_info) (unsigned int, unsigned int, unsigned int,
+				  bool);
 };
 
 /* Generate SFrame stack trace info and prepare contents for the output.

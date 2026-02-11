@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RX.
-   Copyright (C) 2008-2025 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 

@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -1264,7 +1264,7 @@ static reloc_howto_type elf_mips_howto_table_rela[] =
 
   /* Get the higher value of a 64 bit addend.  */
   HOWTO (R_MIPS_HIGHER,		/* type */
-	 0,			/* rightshift */
+	 32,			/* rightshift */
 	 4,			/* size */
 	 16,			/* bitsize */
 	 false,			/* pc_relative */
@@ -1279,7 +1279,7 @@ static reloc_howto_type elf_mips_howto_table_rela[] =
 
   /* Get the highest value of a 64 bit addend.  */
   HOWTO (R_MIPS_HIGHEST,	/* type */
-	 0,			/* rightshift */
+	 48,			/* rightshift */
 	 4,			/* size */
 	 16,			/* bitsize */
 	 false,			/* pc_relative */
@@ -1294,7 +1294,7 @@ static reloc_howto_type elf_mips_howto_table_rela[] =
 
   /* High 16 bits of displacement in global offset table.  */
   HOWTO (R_MIPS_CALL_HI16,	/* type */
-	 0,			/* rightshift */
+	 16,			/* rightshift */
 	 4,			/* size */
 	 16,			/* bitsize */
 	 false,			/* pc_relative */
@@ -3685,9 +3685,9 @@ bfd_elf32_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &elf_mips_gnu_pcrel32;
     case BFD_RELOC_MIPS_EH:
       return &elf_mips_eh_howto;
-    case BFD_RELOC_MIPS_COPY:
+    case BFD_RELOC_COPY:
       return &elf_mips_copy_howto;
-    case BFD_RELOC_MIPS_JUMP_SLOT:
+    case BFD_RELOC_JMP_SLOT:
       return &elf_mips_jump_slot_howto;
     default:
       bfd_set_error (bfd_error_bad_value);
@@ -4184,6 +4184,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_mips_rtype_to_howto	mips_elf_n32_rtype_to_howto
 #define bfd_elf32_bfd_is_target_special_symbol \
 					_bfd_mips_elf_is_target_special_symbol
+#define bfd_elf32_finalize_section_relocs \
+					_bfd_mips_elf_finalize_section_relocs
 #define bfd_elf32_find_nearest_line	_bfd_mips_elf_find_nearest_line
 #define bfd_elf32_find_nearest_line_with_alt \
 				_bfd_mips_elf_find_nearest_line_with_alt
@@ -4254,6 +4256,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 
 #undef	ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_FREEBSD
+#undef	ELF_OSABI_EXACT
+#define	ELF_OSABI_EXACT			1
 
 #undef	elf32_bed
 #define elf32_bed				elf32_fbsd_tradbed

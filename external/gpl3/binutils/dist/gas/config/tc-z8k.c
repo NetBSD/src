@@ -1,5 +1,5 @@
 /* tc-z8k.c -- Assemble code for the Zilog Z800n
-   Copyright (C) 1992-2025 Free Software Foundation, Inc.
+   Copyright (C) 1992-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -1032,7 +1032,6 @@ build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSE
 {
   unsigned char *output_ptr = buffer;
   int c;
-  int nibble;
   unsigned int *class_ptr;
 
   frag_wane (frag_now);
@@ -1044,7 +1043,7 @@ build_bytes (opcode_entry_type *this_try, struct z8k_op *operand ATTRIBUTE_UNUSE
   memset (buffer, 0, sizeof (buffer));
   class_ptr = this_try->byte_info;
 
-  for (nibble = 0; (c = *class_ptr++); nibble++)
+  while ((c = *class_ptr++) != 0)
     {
 
       switch (c & CLASS_MASK)

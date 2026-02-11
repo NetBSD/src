@@ -1,5 +1,5 @@
 /* tc-mep.c -- Assembler for the Toshiba Media Processor.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -2081,12 +2081,12 @@ mep_fix_adjustable (fixS *fixP)
 }
 
 bfd_vma
-mep_elf_section_letter (int letter, const char **ptrmsg)
+mep_elf_section_letter (int letter, const char **extra)
 {
   if (letter == 'v')
     return SHF_MEP_VLIW;
 
-  *ptrmsg = _("bad .section directive: want a,v,w,x,M,S in string");
+  *extra = "v";
   return -1;
 }
 

@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF64" files.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    Written Clinton Popetz.
    Contributed by Cygnus Support.
 
@@ -2377,9 +2377,9 @@ xcoff64_generate_rtinit (bfd *abfd, const char *init, const char *fini,
   filehdr.f_symptr = data_scnhdr.s_relptr + data_scnhdr.s_nreloc * RELSZ;
 
   bfd_coff_swap_filehdr_out (abfd, &filehdr, filehdr_ext);
-  bfd_coff_swap_scnhdr_out (abfd, &text_scnhdr, &scnhdr_ext[SCNHSZ * 0]);
-  bfd_coff_swap_scnhdr_out (abfd, &data_scnhdr, &scnhdr_ext[SCNHSZ * 1]);
-  bfd_coff_swap_scnhdr_out (abfd, &bss_scnhdr, &scnhdr_ext[SCNHSZ * 2]);
+  bfd_coff_swap_scnhdr_out (abfd, &text_scnhdr, &scnhdr_ext[SCNHSZ * 0], NULL);
+  bfd_coff_swap_scnhdr_out (abfd, &data_scnhdr, &scnhdr_ext[SCNHSZ * 1], NULL);
+  bfd_coff_swap_scnhdr_out (abfd, &bss_scnhdr, &scnhdr_ext[SCNHSZ * 2], NULL);
   bool ret = true;
   if (bfd_write (filehdr_ext, FILHSZ, abfd) != FILHSZ
       || bfd_write (scnhdr_ext, 3 * SCNHSZ, abfd) != 3 * SCNHSZ
@@ -2568,6 +2568,7 @@ const bfd_target rs6000_xcoff64_vec =
     15,				/* ar_max_namelen */
     0,				/* match priority.  */
     TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+    TARGET_MERGE_SECTIONS,
 
     /* data */
     bfd_getb64,
@@ -2664,7 +2665,7 @@ const bfd_target rs6000_xcoff64_vec =
     /* Reloc */
     coff_get_reloc_upper_bound,
     coff_canonicalize_reloc,
-    _bfd_generic_set_reloc,
+    _bfd_generic_finalize_section_relocs,
     xcoff64_reloc_type_lookup,
     xcoff64_reloc_name_lookup,
 
@@ -2685,7 +2686,6 @@ const bfd_target rs6000_xcoff64_vec =
     _bfd_generic_link_check_relocs,
     bfd_generic_gc_sections,
     bfd_generic_lookup_section_flags,
-    bfd_generic_merge_sections,
     bfd_generic_is_group_section,
     bfd_generic_group_name,
     bfd_generic_discard_group,
@@ -2838,6 +2838,7 @@ const bfd_target rs6000_xcoff64_aix_vec =
     15,				/* ar_max_namelen */
     0,				/* match priority.  */
     TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+    TARGET_MERGE_SECTIONS,
 
     /* data */
     bfd_getb64,
@@ -2934,7 +2935,7 @@ const bfd_target rs6000_xcoff64_aix_vec =
     /* Reloc */
     coff_get_reloc_upper_bound,
     coff_canonicalize_reloc,
-    _bfd_generic_set_reloc,
+    _bfd_generic_finalize_section_relocs,
     xcoff64_reloc_type_lookup,
     xcoff64_reloc_name_lookup,
 
@@ -2955,7 +2956,6 @@ const bfd_target rs6000_xcoff64_aix_vec =
     _bfd_generic_link_check_relocs,
     bfd_generic_gc_sections,
     bfd_generic_lookup_section_flags,
-    bfd_generic_merge_sections,
     bfd_generic_is_group_section,
     bfd_generic_group_name,
     bfd_generic_discard_group,

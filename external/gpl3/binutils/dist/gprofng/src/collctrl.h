@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2026 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -258,6 +258,7 @@ public:
   char *set (char *, const char *); /* set control's value */
   char *unset (char *); /* reset control's value to its default */
   void set_project_home (char *);
+  char *create_exp_dir ();
 
 private:
   int interactive;      /* 1 - dbx, 0 - collect */
@@ -380,7 +381,6 @@ private:
   void determine_profile_params ();
   char *preprocess_names ();
   char *get_exp_name (const char *);
-  char *create_exp_dir ();
   void build_data_desc ();
   char *check_group ();
   char *join_group ();

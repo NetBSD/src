@@ -524,3 +524,13 @@
   {
     { "vmovw",	{ EXwS, XMScalar }, 0 },
   },
+  /* EVEX_W_MAP6_80 */
+  {
+    { EVEX_LEN_TABLE (EVEX_LEN_MAP6_80_W_0) },
+    { EVEX_LEN_TABLE (EVEX_LEN_MAP6_80_W_1) },
+  },
+  /* EVEX_W_MAP6_81 */
+  {
+    { "vbitrevb", { XM, EXx }, NO_PREFIX },
+    { Bad_Opcode }
+  }

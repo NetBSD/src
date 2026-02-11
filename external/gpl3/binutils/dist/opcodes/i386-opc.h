@@ -1,5 +1,5 @@
 /* Declarations for Intel 80386 opcode table
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -205,6 +205,8 @@ enum i386_cpu
   CpuAVX512_BF16,
   /* Intel AVX-512 VP2INTERSECT Instructions support required.  */
   CpuAVX512_VP2INTERSECT,
+  /* AMD AVX-512 BMM Instructions support required.  */
+  CpuAVX512_BMM,
   /* TDX Instructions support required.  */
   CpuTDX,
   /* Intel AVX VNNI Instructions support required.  */
@@ -320,6 +322,12 @@ enum i386_cpu
   CpuRMPQUERY,
   /* RMPREAD instruction required */
   CpuRMPREAD,
+  /* Intel APX New Conditional Instructions support required.  */
+  CpuAPX_NCI,
+  /* Intel APX Non-Destructive Destination support required.  */
+  CpuAPX_NDD,
+  /* Intel APX No-Flags-update support required.  */
+  CpuAPX_NF,
 
   /* NOTE: These items, which can be combined with other ISA flags above, need
      to remain second to last and in sync with CPU_FLAGS_COMMON. */
@@ -497,6 +505,7 @@ typedef union i386_cpu_flags
       unsigned int cpuavx512_bitalg:1;
       unsigned int cpuavx512_bf16:1;
       unsigned int cpuavx512_vp2intersect:1;
+      unsigned int cpuavx512_bmm:1;
       unsigned int cputdx:1;
       unsigned int cpuavx_vnni:1;
       unsigned int cpuavx512_fp16:1;
@@ -555,6 +564,9 @@ typedef union i386_cpu_flags
       unsigned int cpusnp:1;
       unsigned int cpurmpquery:1;
       unsigned int cpurmpread:1;
+      unsigned int cpuapx_nci:1;
+      unsigned int cpuapx_ndd:1;
+      unsigned int cpuapx_nf:1;
       CPU_FLAGS_COMMON;
 #ifdef CpuUnused
       unsigned int unused:(CpuNumOfBits - CpuUnused);
@@ -663,13 +675,14 @@ enum
   BNDPrefixOk,
 #define PrefixNone		0
 #define PrefixRep		1
-#define PrefixHLERelease	2 /* Okay with an XRELEASE (0xf3) prefix. */
-#define PrefixNoTrack		3
+#define PrefixRepe		2
+#define PrefixHLERelease	3 /* Okay with an XRELEASE (0xf3) prefix. */
+#define PrefixNoTrack		4
   /* Prefixes implying "LOCK okay" must come after Lock. All others have
      to come before.  */
-#define PrefixLock		4
-#define PrefixHLELock		5 /* Okay with a LOCK prefix.  */
-#define PrefixHLEAny		6 /* Okay with or without a LOCK prefix.  */
+#define PrefixLock		5
+#define PrefixHLELock		6 /* Okay with a LOCK prefix.  */
+#define PrefixHLEAny		7 /* Okay with or without a LOCK prefix.  */
   PrefixOk,
   /* opcode is a prefix */
   IsPrefix,

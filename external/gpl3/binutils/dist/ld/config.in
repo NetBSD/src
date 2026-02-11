@@ -31,6 +31,14 @@
    when a .note-GNU-stack section is missing. */
 #undef DEFAULT_LD_EXECSTACK
 
+/* Define to 1 if you want to enable --gnu2-tls-tag in ELF i386/x86-64 linker
+   by default. */
+#undef DEFAULT_LD_GNU2_TLS_TAG
+
+/* Define to 1 if you want to enable --gnu-tls-tag in ELF i386 linker by
+   default. */
+#undef DEFAULT_LD_GNU_TLS_TAG
+
 /* Define to 1 if you want to enable --rosegment in the ELF linker by default.
    */
 #undef DEFAULT_LD_ROSEGMENT
@@ -110,6 +118,10 @@
    */
 #undef HAVE_DECL_STPCPY
 
+/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRTOULL
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -151,6 +163,12 @@
 
 /* Define to 1 if you have the `lseek' function. */
 #undef HAVE_LSEEK
+
+/* Define to 1 if you have the `mallinfo' function. */
+#undef HAVE_MALLINFO
+
+/* Define to 1 if you have the `mallinfo2' function. */
+#undef HAVE_MALLINFO2
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H

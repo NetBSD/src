@@ -1,5 +1,5 @@
 /* ldemul.c -- clearing house for ld emulation states
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -314,7 +314,7 @@ finish_default (void)
       os->data = NULL;
     }
   if (!bfd_link_relocatable (&link_info))
-    _bfd_fix_excluded_sec_syms (link_info.output_bfd, &link_info);
+    bfd_fix_excluded_sec_syms (&link_info);
 }
 
 void

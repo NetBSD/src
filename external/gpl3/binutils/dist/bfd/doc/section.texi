@@ -510,6 +510,10 @@ typedef struct bfd_section
      regions is enabled.  */
   struct bfd_section *already_assigned;
 
+  /* A pointer used for various section optimizations.  sec_info_type
+     qualifies which one it is.  */
+  void *sec_info;
+
   /* Explicitly specified section type, if non-zero.  */
   unsigned int type;
 
@@ -784,7 +788,6 @@ case *@var{buf} will be NULL.
 @end deftypefn
 @findex bfd_copy_private_section_data
 @subsubsection @code{bfd_copy_private_section_data}
-@deftypefn {Function} bool bfd_copy_private_section_data (bfd *ibfd, asection *isec, bfd *obfd, asection *osec, struct bfd_link_info *link_info); 
 Copy private section information from @var{isec} in the BFD
 @var{ibfd} to the section @var{osec} in the BFD @var{obfd}.
 Return @code{TRUE} on success, @code{FALSE} on error.  Possible error
@@ -802,7 +805,6 @@ Not enough memory exists to create private data for @var{osec}.
                  (ibfd, isec, obfd, osec, link_info))
 @end example
 
-@end deftypefn
 @findex bfd_generic_is_group_section
 @subsubsection @code{bfd_generic_is_group_section}
 @deftypefn {Function} bool bfd_generic_is_group_section (bfd *, const asection *sec); 

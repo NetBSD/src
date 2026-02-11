@@ -1,5 +1,5 @@
 /* ppc-dis.c -- Disassemble PowerPC instructions
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
    This file is part of the GNU opcodes library.
@@ -72,7 +72,7 @@ struct ppc_mopt {
   ppc_cpu_t sticky;
 };
 
-struct ppc_mopt ppc_opts[] = {
+static const struct ppc_mopt ppc_opts[] = {
   { "403",     PPC_OPCODE_PPC | PPC_OPCODE_403,
     0 },
   { "405",     PPC_OPCODE_PPC | PPC_OPCODE_403 | PPC_OPCODE_405,
@@ -325,7 +325,7 @@ ppc_parse_cpu (ppc_cpu_t ppc_cpu, ppc_cpu_t *sticky, const char *arg)
   unsigned int i;
 
   for (i = 0; i < ARRAY_SIZE (ppc_opts); i++)
-    if (disassembler_options_cmp (ppc_opts[i].opt, arg) == 0)
+    if (strcmp (ppc_opts[i].opt, arg) == 0)
       {
 	if (ppc_opts[i].sticky)
 	  {
@@ -351,13 +351,36 @@ ppc_parse_cpu (ppc_cpu_t ppc_cpu, ppc_cpu_t *sticky, const char *arg)
   return ppc_cpu;
 }
 
+struct ppc_parse_data
+{
+  ppc_cpu_t dialect;
+  ppc_cpu_t sticky;
+};
+
+static bool
+ppc_parse_option (const char *opt, void *data)
+{
+  struct ppc_parse_data *res = data;
+  ppc_cpu_t new_cpu;
+
+  if (strcmp (opt, "32") == 0)
+    res->dialect &= ~(ppc_cpu_t) PPC_OPCODE_64;
+  else if (strcmp (opt, "64") == 0)
+    res->dialect |= PPC_OPCODE_64;
+  else if ((new_cpu = ppc_parse_cpu (res->dialect, &res->sticky, opt)) != 0)
+    res->dialect = new_cpu;
+  else
+    /* xgettext: c-format */
+    opcodes_error_handler (_("warning: ignoring unknown -M%s option"), opt);
+  return true;
+}
+
 /* Determine which set of machines to disassemble for.  */
 
 static void
 powerpc_init_dialect (struct disassemble_info *info)
 {
-  ppc_cpu_t dialect = 0;
-  ppc_cpu_t sticky = 0;
+  struct ppc_parse_data out = { 0, 0 };
   struct dis_private *priv = calloc (1, sizeof (*priv));
 
   if (priv == NULL)
@@ -367,69 +390,57 @@ powerpc_init_dialect (struct disassemble_info *info)
     {
     case bfd_mach_ppc_403:
     case bfd_mach_ppc_403gc:
-      dialect = ppc_parse_cpu (dialect, &sticky, "403");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "403");
       break;
     case bfd_mach_ppc_405:
-      dialect = ppc_parse_cpu (dialect, &sticky, "405");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "405");
       break;
     case bfd_mach_ppc_601:
-      dialect = ppc_parse_cpu (dialect, &sticky, "601");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "601");
       break;
     case bfd_mach_ppc_750:
-      dialect = ppc_parse_cpu (dialect, &sticky, "750cl");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "750cl");
       break;
     case bfd_mach_ppc_a35:
     case bfd_mach_ppc_rs64ii:
     case bfd_mach_ppc_rs64iii:
-      dialect = ppc_parse_cpu (dialect, &sticky, "pwr2") | PPC_OPCODE_64;
+      out.dialect = (ppc_parse_cpu (out.dialect, &out.sticky, "pwr2")
+		     | PPC_OPCODE_64);
       break;
     case bfd_mach_ppc_e500:
-      dialect = ppc_parse_cpu (dialect, &sticky, "e500");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "e500");
       break;
     case bfd_mach_ppc_e500mc:
-      dialect = ppc_parse_cpu (dialect, &sticky, "e500mc");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "e500mc");
       break;
     case bfd_mach_ppc_e500mc64:
-      dialect = ppc_parse_cpu (dialect, &sticky, "e500mc64");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "e500mc64");
       break;
     case bfd_mach_ppc_e5500:
-      dialect = ppc_parse_cpu (dialect, &sticky, "e5500");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "e5500");
       break;
     case bfd_mach_ppc_e6500:
-      dialect = ppc_parse_cpu (dialect, &sticky, "e6500");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "e6500");
       break;
     case bfd_mach_ppc_titan:
-      dialect = ppc_parse_cpu (dialect, &sticky, "titan");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "titan");
       break;
     case bfd_mach_ppc_vle:
-      dialect = ppc_parse_cpu (dialect, &sticky, "vle");
+      out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "vle");
       break;
     default:
       if (info->arch == bfd_arch_powerpc)
-	dialect = ppc_parse_cpu (dialect, &sticky, "power11") | PPC_OPCODE_ANY;
+	out.dialect = (ppc_parse_cpu (out.dialect, &out.sticky, "power11")
+		       | PPC_OPCODE_ANY);
       else
-	dialect = ppc_parse_cpu (dialect, &sticky, "pwr");
+	out.dialect = ppc_parse_cpu (out.dialect, &out.sticky, "pwr");
       break;
     }
 
-  const char *opt;
-  FOR_EACH_DISASSEMBLER_OPTION (opt, info->disassembler_options)
-    {
-      ppc_cpu_t new_cpu = 0;
-
-      if (disassembler_options_cmp (opt, "32") == 0)
-	dialect &= ~(ppc_cpu_t) PPC_OPCODE_64;
-      else if (disassembler_options_cmp (opt, "64") == 0)
-	dialect |= PPC_OPCODE_64;
-      else if ((new_cpu = ppc_parse_cpu (dialect, &sticky, opt)) != 0)
-	dialect = new_cpu;
-      else
-	/* xgettext: c-format */
-	opcodes_error_handler (_("warning: ignoring unknown -M%s option"), opt);
-    }
+  for_each_disassembler_option (info, ppc_parse_option, &out);
 
   info->private_data = priv;
-  private_data (info)->dialect = dialect;
+  private_data (info)->dialect = out.dialect;
 }
 
 #define PPC_OPCD_SEGS (1 + PPC_OP (-1))

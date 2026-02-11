@@ -1,6 +1,6 @@
 /* tc-i386-ginsn.c -- Ginsn generation for the x86-64 ISA
 
-   Copyright (C) 2024-2025 Free Software Foundation, Inc.
+   Copyright (C) 2024-2026 Free Software Foundation, Inc.
 
    This file is part of GAS.
 

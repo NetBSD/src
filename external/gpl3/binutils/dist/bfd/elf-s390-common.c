@@ -1,5 +1,5 @@
 /* IBM S/390-specific support for ELF 32 and 64 bit functions
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -118,7 +118,7 @@ s390_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 {
   flagword flags;
   asection *s;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   if (htab->iplt != NULL)

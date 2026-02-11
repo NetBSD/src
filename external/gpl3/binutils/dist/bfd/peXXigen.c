@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -289,7 +289,7 @@ _bfd_XXi_swap_aux_in (bfd *	abfd,
 
   /* PR 17521: Make sure that all fields in the aux structure
      are initialised.  */
-  memset (in, 0, sizeof * in);
+  memset (in, 0, sizeof (*in));
   switch (in_class)
     {
     case C_FILE:
@@ -299,6 +299,9 @@ _bfd_XXi_swap_aux_in (bfd *	abfd,
 	  in->x_file.x_n.x_n.x_offset = H_GET_32 (abfd, ext->x_file.x_n.x_offset);
 	}
       else
+#if FILNMLEN != E_FILNMLEN
+#error we need to cope with truncating or extending x_fname
+#endif
 	memcpy (in->x_file.x_n.x_fname, ext->x_file.x_fname, FILNMLEN);
       return;
 
@@ -373,7 +376,10 @@ _bfd_XXi_swap_aux_out (bfd *  abfd,
 	  H_PUT_32 (abfd, in->x_file.x_n.x_n.x_offset, ext->x_file.x_n.x_offset);
 	}
       else
-	memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, sizeof (ext->x_file.x_fname));
+#if FILNMLEN != E_FILNMLEN
+#error we need to cope with truncating or extending x_fname
+#endif
+	memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, E_FILNMLEN);
 
       return AUXESZ;
 
@@ -913,7 +919,8 @@ _bfd_XX_only_swap_filehdr_out (bfd * abfd, void * in, void * out)
 }
 
 unsigned int
-_bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
+_bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out,
+			  const asection *section)
 {
   struct internal_scnhdr *scnhdr_int = (struct internal_scnhdr *) in;
   SCNHDR *scnhdr_ext = (SCNHDR *) out;
@@ -982,9 +989,8 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
        sections (.idata, .data, .bss, .CRT) must have IMAGE_SCN_MEM_WRITE set
        (this is especially important when dealing with the .idata section since
        the addresses for routines from .dlls must be overwritten).  If .reloc
-       section data is ever generated, we must add IMAGE_SCN_MEM_DISCARDABLE
-       (0x02000000).  Also, the resource data should also be read and
-       writable.  */
+       section data is ever generated, we generally need to add
+       IMAGE_SCN_MEM_DISCARDABLE (0x02000000).  */
 
     /* FIXME: Alignment is also encoded in this field, at least on
        ARM-WINCE.  Although - how do we get the original alignment field
@@ -997,7 +1003,7 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
     }
     pe_required_section_flags;
 
-    pe_required_section_flags known_sections [] =
+    static const pe_required_section_flags known_sections [] =
       {
 	{ ".CRT",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".arch",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE | IMAGE_SCN_ALIGN_8BYTES },
@@ -1015,7 +1021,7 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
 	{ ".xdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
       };
 
-    pe_required_section_flags * p;
+    const pe_required_section_flags * p;
 
     /* We have defaulted to adding the IMAGE_SCN_MEM_WRITE flag, but now
        we know exactly what this specific section wants so we remove it
@@ -1030,10 +1036,16 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
 	 p++)
       if (memcmp (scnhdr_int->s_name, p->section_name, SCNNMLEN) == 0)
 	{
+	  unsigned long must_have = p->must_have;
+
 	  if (memcmp (scnhdr_int->s_name, ".text", sizeof ".text")
 	      || (bfd_get_file_flags (abfd) & WP_TEXT))
 	    scnhdr_int->s_flags &= ~IMAGE_SCN_MEM_WRITE;
-	  scnhdr_int->s_flags |= p->must_have;
+	  /* Avoid forcing in the discardable flag if the section itself is
+	     allocated.  */
+	  if (section->flags & SEC_ALLOC)
+	    must_have &= ~IMAGE_SCN_MEM_DISCARDABLE;
+	  scnhdr_int->s_flags |= must_have;
 	  break;
 	}
 
@@ -2992,8 +3004,7 @@ _bfd_XX_bfd_copy_private_bfd_data_common (bfd * ibfd, bfd * obfd)
   bfd_size_type size;
 
   /* One day we may try to grok other private data.  */
-  if (ibfd->xvec->flavour != bfd_target_coff_flavour
-      || obfd->xvec->flavour != bfd_target_coff_flavour)
+  if (ibfd->xvec->flavour != bfd_target_coff_flavour)
     return true;
 
   ipe = pe_data (ibfd);
@@ -3119,8 +3130,7 @@ _bfd_XX_bfd_copy_private_section_data (bfd *ibfd,
 				       struct bfd_link_info *link_info)
 {
   if (link_info != NULL
-      || bfd_get_flavour (ibfd) != bfd_target_coff_flavour
-      || bfd_get_flavour (obfd) != bfd_target_coff_flavour)
+      || bfd_get_flavour (ibfd) != bfd_target_coff_flavour)
     return true;
 
   if (coff_section_data (ibfd, isec) != NULL

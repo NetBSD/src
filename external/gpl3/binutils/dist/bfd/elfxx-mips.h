@@ -1,5 +1,5 @@
 /* MIPS ELF specific backend routines.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -36,135 +36,146 @@ enum reloc_check
 struct ecoff_debug_info;
 
 extern bool _bfd_mips_elf_mkobject
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_free_cached_info
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_new_section_hook
-  (bfd *, asection *);
+  (bfd *, asection *) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_symbol_processing
-  (bfd *, asymbol *);
+  (bfd *, asymbol *) ATTRIBUTE_HIDDEN;
 extern unsigned int _bfd_mips_elf_eh_frame_address_size
-  (bfd *, const asection *);
+  (bfd *, const asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_name_local_section_symbols
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_section_processing
-  (bfd *, Elf_Internal_Shdr *);
+  (bfd *, Elf_Internal_Shdr *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_section_from_shdr
-  (bfd *, Elf_Internal_Shdr *, const char *, int);
+  (bfd *, Elf_Internal_Shdr *, const char *, int) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_fake_sections
-  (bfd *, Elf_Internal_Shdr *, asection *);
+  (bfd *, Elf_Internal_Shdr *, asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_section_from_bfd_section
-  (bfd *, asection *, int *);
+  (bfd *, asection *, int *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_add_symbol_hook
   (bfd *, struct bfd_link_info *, Elf_Internal_Sym *,
-   const char **, flagword *, asection **, bfd_vma *);
+   const char **, flagword *, asection **, bfd_vma *) ATTRIBUTE_HIDDEN;
 extern int _bfd_mips_elf_link_output_symbol_hook
   (struct bfd_link_info *, const char *, Elf_Internal_Sym *,
-   asection *, struct elf_link_hash_entry *);
+   asection *, struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_create_dynamic_sections
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_check_relocs
-  (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *);
+  (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *)
+  ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_adjust_dynamic_symbol
-  (struct bfd_link_info *, struct elf_link_hash_entry *);
+  (struct bfd_link_info *, struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_late_size_sections
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern int _bfd_mips_elf_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **);
+   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_finish_dynamic_symbol
   (bfd *, struct bfd_link_info *, struct elf_link_hash_entry *,
-   Elf_Internal_Sym *);
+   Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_vxworks_finish_dynamic_symbol
   (bfd *, struct bfd_link_info *, struct elf_link_hash_entry *,
-   Elf_Internal_Sym *);
+   Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_finish_dynamic_sections
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *, bfd_byte *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_sort_relocs_p
-  (asection *);
+  (asection *) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_final_write_processing
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_final_write_processing
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern int _bfd_mips_elf_additional_program_headers
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_modify_segment_map
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern asection * _bfd_mips_elf_gc_mark_hook
-  (asection *, struct bfd_link_info *, Elf_Internal_Rela *,
-   struct elf_link_hash_entry *, Elf_Internal_Sym *);
+  (asection *, struct bfd_link_info *, struct elf_reloc_cookie *,
+   struct elf_link_hash_entry *, unsigned int) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_copy_indirect_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *,
-   struct elf_link_hash_entry *);
+   struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_hide_symbol
-  (struct bfd_link_info *, struct elf_link_hash_entry *, bool);
+  (struct bfd_link_info *, struct elf_link_hash_entry *, bool) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_ignore_discarded_relocs
-  (asection *);
+  (asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_is_target_special_symbol
-  (bfd *abfd, asymbol *sym);
+  (bfd *abfd, asymbol *sym) ATTRIBUTE_HIDDEN;
+extern bool _bfd_mips_elf_finalize_section_relocs
+  (bfd *, asection *, arelent **, unsigned int) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_find_nearest_line
   (bfd *, asymbol **, asection *, bfd_vma,
-   const char **, const char **, unsigned int *, unsigned int *);
+   const char **, const char **, unsigned int *, unsigned int *)
+  ATTRIBUTE_HIDDEN;
 #define _bfd_mips_elf_find_nearest_line_with_alt \
   _bfd_nosymbols_find_nearest_line_with_alt
 extern bool _bfd_mips_elf_find_inliner_info
-  (bfd *, const char **, const char **, unsigned int *);
+  (bfd *, const char **, const char **, unsigned int *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_set_section_contents
-  (bfd *, asection *, const void *, file_ptr, bfd_size_type);
+  (bfd *, asection *, const void *, file_ptr, bfd_size_type) ATTRIBUTE_HIDDEN;
 extern bfd_byte *_bfd_elf_mips_get_relocated_section_contents
   (bfd *, struct bfd_link_info *, struct bfd_link_order *,
-   bfd_byte *, bool, asymbol **);
+   bfd_byte *, bool, asymbol **) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_relax_section
   (bfd *abfd, asection *sec, struct bfd_link_info *link_info,
-   bool *again);
+   bool *again) ATTRIBUTE_HIDDEN;
 extern struct bfd_link_hash_table *_bfd_mips_elf_link_hash_table_create
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern struct bfd_link_hash_table *_bfd_mips_vxworks_link_hash_table_create
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_final_link
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_merge_private_bfd_data
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_set_private_flags
-  (bfd *, flagword);
+  (bfd *, flagword) ATTRIBUTE_HIDDEN;
 extern const char * _bfd_mips_fp_abi_string
-  (int);
+  (int) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_print_private_bfd_data
-  (bfd *, void *);
+  (bfd *, void *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_discard_info
-  (bfd *, struct elf_reloc_cookie *, struct bfd_link_info *);
+  (bfd *, struct elf_reloc_cookie *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_write_section
-  (bfd *, struct bfd_link_info *, asection *, bfd_byte *);
+  (bfd *, struct bfd_link_info *, asection *, bfd_byte *) ATTRIBUTE_HIDDEN;
 
 extern bool _bfd_mips_elf_read_ecoff_info
-  (bfd *, asection *, struct ecoff_debug_info *);
+  (bfd *, asection *, struct ecoff_debug_info *) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_reloc_unshuffle
-  (bfd *, int, bool, bfd_byte *);
+  (bfd *, int, bool, bfd_byte *) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_reloc_shuffle
-  (bfd *, int, bool, bfd_byte *);
+  (bfd *, int, bool, bfd_byte *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_reloc_offset_in_range
-  (bfd *, asection *, arelent *, enum reloc_check);
+  (bfd *, asection *, arelent *, enum reloc_check) ATTRIBUTE_HIDDEN;
 extern bfd_reloc_status_type _bfd_mips_elf_gprel16_with_gp
-  (bfd *, asymbol *, arelent *, asection *, bool, void *, bfd_vma);
+  (bfd *, asymbol *, arelent *, asection *, bool, void *, bfd_vma)
+  ATTRIBUTE_HIDDEN;
 extern bfd_reloc_status_type _bfd_mips_elf32_gprel16_reloc
-  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **)
+  ATTRIBUTE_HIDDEN;
 extern bfd_reloc_status_type _bfd_mips_elf_hi16_reloc
-  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **)
+  ATTRIBUTE_HIDDEN;
 extern bfd_reloc_status_type _bfd_mips_elf_got16_reloc
-  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **)
+  ATTRIBUTE_HIDDEN;
 extern bfd_reloc_status_type _bfd_mips_elf_lo16_reloc
-  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **)
+  ATTRIBUTE_HIDDEN;
 extern bfd_reloc_status_type _bfd_mips_elf_generic_reloc
-  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+  (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **)
+  ATTRIBUTE_HIDDEN;
 extern unsigned long _bfd_elf_mips_mach
   (flagword);
 extern bfd_vma _bfd_mips_elf_sign_extend
-  (bfd_vma, int);
+  (bfd_vma, int) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_merge_symbol_attribute
-  (struct elf_link_hash_entry *, unsigned int, bool, bool);
-extern char *_bfd_mips_elf_get_target_dtag (bfd_vma);
+  (struct elf_link_hash_entry *, unsigned int, bool, bool) ATTRIBUTE_HIDDEN;
+extern char *_bfd_mips_elf_get_target_dtag
+  (bfd_vma) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_ignore_undef_symbol
-  (struct elf_link_hash_entry *);
+  (struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern void _bfd_mips_elf_use_plts_and_copy_relocs
   (struct bfd_link_info *);
 extern void _bfd_mips_elf_linker_flags
@@ -175,23 +186,27 @@ extern bool _bfd_mips_elf_init_stubs
   (struct bfd_link_info *,
    asection *(*) (const char *, asection *, asection *));
 extern bfd_vma _bfd_mips_elf_plt_sym_val
-  (bfd_vma, const asection *, const arelent *rel);
+  (bfd_vma, const asection *, const arelent *rel) ATTRIBUTE_HIDDEN;
 extern long _bfd_mips_elf_get_synthetic_symtab
-  (bfd *, long, asymbol **, long, asymbol **, asymbol **);
+  (bfd *, long, asymbol **, long, asymbol **, asymbol **) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_elf_gc_mark_extra_sections
-  (struct bfd_link_info *, elf_gc_mark_hook_fn);
+  (struct bfd_link_info *, elf_gc_mark_hook_fn) ATTRIBUTE_HIDDEN;
 extern bool _bfd_mips_init_file_header
-  (bfd *abfd, struct bfd_link_info *link_info);
+  (bfd *abfd, struct bfd_link_info *link_info) ATTRIBUTE_HIDDEN;
 
-extern const struct bfd_elf_special_section _bfd_mips_elf_special_sections [];
+extern const struct bfd_elf_special_section
+  _bfd_mips_elf_special_sections [] ATTRIBUTE_HIDDEN;
 
-extern bool _bfd_mips_elf_common_definition (Elf_Internal_Sym *);
+extern bool _bfd_mips_elf_common_definition
+  (Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
 
-extern int _bfd_mips_elf_compact_eh_encoding (struct bfd_link_info *);
-extern int _bfd_mips_elf_cant_unwind_opcode (struct bfd_link_info *);
+extern int _bfd_mips_elf_compact_eh_encoding
+  (struct bfd_link_info *) ATTRIBUTE_HIDDEN;
+extern int _bfd_mips_elf_cant_unwind_opcode
+  (struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 extern void _bfd_mips_elf_record_xhash_symbol
-  (struct elf_link_hash_entry *h, bfd_vma xlat_loc);
+  (struct elf_link_hash_entry *h, bfd_vma xlat_loc) ATTRIBUTE_HIDDEN;
 
 /* MIPS ABI flags data access.  For the disassembler.  */
 extern struct elf_internal_abiflags_v0 *bfd_mips_elf_get_abiflags (bfd *);

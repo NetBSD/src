@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,6 +87,13 @@ CCSOURCES = \
 	UserLabel.cc \
 	util.cc \
 	Dbe.cc \
+	gmon_io.cc \
+	gmon_basic_blocks.cc \
+	gmon_call_graph.cc \
+	gmon_hist.cc \
+	gmon_symtab.cc \
+	gmon_cg_arcs.cc \
+	gmon_corefile.cc \
 	$(NULL)
 
 CSOURCES = \
@@ -114,7 +121,7 @@ AM_CPPFLAGS = $(GPROFNG_CPPFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" \
 	-I$(srcdir)/../../include -I$(srcdir)/../../opcodes \
 	-I../../bfd -I$(srcdir)/../../bfd $(ZLIBINC)
 AM_CFLAGS = $(GPROFNG_CFLAGS) $(PTHREAD_CFLAGS) \
-	$(GPROFNG_NO_SWITCH_CFLAGS)
+	$(GPROFNG_NO_SWITCH_CFLAGS) $(NOLTO_CFLAGS)
 AM_CXXFLAGS = $(AM_CFLAGS)
 
 # bison generates two files QLParser.tab.cc, QLParser.tab.hh.
@@ -139,6 +146,7 @@ diststuff: info
 
 lib_LTLIBRARIES = $(LIBGPROFNG)
 libgprofng_la_SOURCES = $(CCSOURCES) $(CSOURCES)
+libgprofng_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgprofng_la_LDFLAGS = -version-info 0:0:0
 
 # Pass -lpthread instead of $(PTHREAD_LIBS) due to $(PTHREAD_LIBS) being empty
@@ -154,22 +162,30 @@ dbe_DATA = $(srcdir)/gprofng.rc
 
 
 bin_PROGRAMS = gprofng-archive gprofng-collect-app gprofng \
-	gprofng-display-text gprofng-display-src
+	gprofng-display-text gprofng-display-src gprofng-gmon
 
 gprofng_archive_SOURCES = gp-archive.cc ArchiveExp.cc
+gprofng_archive_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 gprofng_archive_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 
 gprofng_collect_app_SOURCES = gp-collect-app.cc checks.cc envsets.cc count.cc
+gprofng_collect_app_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 gprofng_collect_app_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 
 gprofng_SOURCES = gprofng.cc
+gprofng_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 gprofng_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 
 gprofng_display_src_SOURCES = gp-display-src.cc
+gprofng_display_src_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 gprofng_display_src_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 
 gprofng_display_text_SOURCES = gp-display-text.cc ipc.cc ipcio.cc
+gprofng_display_text_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 gprofng_display_text_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
+
+gprofng_gmon_SOURCES = gp-gmon.cc
+gprofng_gmon_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 
 # Distribution involves building the binaries to generate the manpage,
 # so ensure that the necessary libraries are built at dist time.

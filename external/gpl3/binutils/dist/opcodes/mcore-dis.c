@@ -1,5 +1,5 @@
 /* Disassemble Motorola M*Core instructions.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -179,10 +179,13 @@ print_insn_mcore (bfd_vma memaddr,
 	case OBRc:
 	case SI:
 	case SIa:
-	case OMa:
 	case OMb:
 	case OMc:
 	  (*print_func) (stream, "\t%s, %d", name, (inst >> 4) & 0x1F);
+	  break;
+
+	case OMa:
+	  (*print_func) (stream, "\t%s, %d", name, 32);
 	  break;
 
 	case I7:
@@ -196,7 +199,7 @@ print_insn_mcore (bfd_vma memaddr,
 
 	case BR:
 	  {
-	    uint32_t val = ((inst & 0x3FF) ^ 0x400) - 0x400;
+	    uint32_t val = ((inst & 0x7FF) ^ 0x400) - 0x400;
 
 	    val = memaddr + 2 + (val << 1);
 	    (*print_func) (stream, "\t0x%x", val);

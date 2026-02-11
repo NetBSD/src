@@ -1,5 +1,5 @@
 /* BFD back-end for HP/UX core files.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
 
@@ -379,6 +379,7 @@ const bfd_target core_hpux_vec =
     16,				/* ar_max_namelen */
     0,				/* match priority.  */
     TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+    false,			/* merge sections */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 32 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 16 bit data */

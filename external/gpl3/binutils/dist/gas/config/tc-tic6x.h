@@ -1,5 +1,5 @@
 /* Definitions for TI C6X assembler.
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,7 +18,9 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+#ifndef TC_TIC6X
 #define TC_TIC6X 1
+
 #define TARGET_BYTES_BIG_ENDIAN 0
 #define WORKING_DOT_WORD
 #define DOUBLEBAR_PARALLEL
@@ -225,3 +227,8 @@ struct fde_entry;
 void tic6x_cfi_endproc (struct fde_entry *fde);
 
 #define tc_cfi_section_name ".c6xabi.exidx"
+
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
+
+#endif /* TC_TIC6X */

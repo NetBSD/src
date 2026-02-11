@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2055,7 +2055,7 @@ lookup_line (bfd *abfd,
       PDR pdr;
       unsigned char *line_ptr;
       unsigned char *line_end;
-      int lineno;
+      unsigned int lineno;
       /* This file uses ECOFF debugging information.  Each FDR has a
 	 list of procedure descriptors (PDR).  The address in the FDR
 	 is the absolute address of the first procedure.  The address
@@ -2203,16 +2203,14 @@ lookup_line (bfd *abfd,
 	  int delta;
 	  unsigned int count;
 
-	  delta = *line_ptr >> 4;
-	  if (delta >= 0x8)
-	    delta -= 0x10;
+	  delta = (*line_ptr >> 4) & 0xf;
+	  delta = (delta ^ 8) - 8;
 	  count = (*line_ptr & 0xf) + 1;
 	  ++line_ptr;
 	  if (delta == -8)
 	    {
-	      delta = (((line_ptr[0]) & 0xff) << 8) + ((line_ptr[1]) & 0xff);
-	      if (delta >= 0x8000)
-		delta -= 0x10000;
+	      delta = (((line_ptr[0]) & 0xff) << 8) | ((line_ptr[1]) & 0xff);
+	      delta = (delta ^ 0x8000) - 0x8000;
 	      line_ptr += 2;
 	    }
 	  lineno += delta;
@@ -2273,7 +2271,7 @@ lookup_line (bfd *abfd,
 						 + proc_sym.iss);
 	    }
 	}
-      if (lineno == ilineNil)
+      if (lineno == (unsigned) ilineNil)
 	lineno = 0;
       line_info->cache.line_num = lineno;
     }

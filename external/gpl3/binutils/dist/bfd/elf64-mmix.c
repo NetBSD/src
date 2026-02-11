@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1426,7 +1426,8 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_MMIX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -1761,19 +1762,19 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
 static asection *
 mmix_elf_gc_mark_hook (asection *sec,
 		       struct bfd_link_info *info,
-		       Elf_Internal_Rela *rel,
+		       struct elf_reloc_cookie *cookie,
 		       struct elf_link_hash_entry *h,
-		       Elf_Internal_Sym *sym)
+		       unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF64_R_TYPE (rel->r_info))
+    switch (ELF64_R_TYPE (cookie->rel->r_info))
       {
       case R_MMIX_GNU_VTINHERIT:
       case R_MMIX_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Sort register relocs to come before expanding relocs.  */
@@ -2215,7 +2216,7 @@ mmix_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 
-  if (! bfd_elf_final_link (abfd, info))
+  if (! _bfd_elf_final_link (abfd, info))
     return false;
 
   /* Since this section is marked SEC_LINKER_CREATED, it isn't output by

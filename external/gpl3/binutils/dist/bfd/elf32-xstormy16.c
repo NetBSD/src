@@ -1,5 +1,5 @@
 /* Xstormy16-specific support for 32-bit ELF.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -824,7 +824,8 @@ xstormy16_elf_relocate_section (bfd *			output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_XSTORMY16_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -957,7 +958,8 @@ xstormy16_elf_relocate_section (bfd *			output_bfd ATTRIBUTE_UNUSED,
 
 static bool
 xstormy16_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
-				       struct bfd_link_info *info)
+				       struct bfd_link_info *info,
+				       bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj = elf_hash_table (info)->dynobj;
   asection *splt = elf_hash_table (info)->splt;
@@ -987,19 +989,19 @@ xstormy16_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
 static asection *
 xstormy16_elf_gc_mark_hook (asection *sec,
 			    struct bfd_link_info *info,
-			    Elf_Internal_Rela *rel,
+			    struct elf_reloc_cookie *cookie,
 			    struct elf_link_hash_entry *h,
-			    Elf_Internal_Sym *sym)
+			    unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_XSTORMY16_GNU_VTINHERIT:
       case R_XSTORMY16_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 #define ELF_ARCH		bfd_arch_xstormy16

@@ -1,6 +1,6 @@
 /* AArch64 ELF support for BFD.
 
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -58,6 +58,23 @@
 /* AArch64-specific values for st_other.  */
 #define STO_AARCH64_VARIANT_PCS	0x80  /* Symbol may follow different call
 					 convention from the base PCS.  */
+
+/* Tags used in aeabi_feature_and_bits subsection.
+   See document 'Build Attributes for the Arm 64-bit Architecture (AArch64)
+   7.4 aeabi_feature_and_bits subsection'.  */
+typedef enum Tag_Feature_Set {
+  Tag_Feature_BTI = 0,
+  Tag_Feature_PAC = 1,
+  Tag_Feature_GCS = 2,
+} Tag_Feature_Set;
+
+/* Tags used in aeabi_pauthabi subsection.
+   See document 'Build Attributes for the Arm 64-bit Architecture (AArch64)
+   7.5 Pointer Authentication Signing Schema.  */
+typedef enum Tag_PAuth_Info {
+  Tag_PAuth_Platform = 1,
+  Tag_PAuth_Schema = 2,
+} Tag_PAuth_Info;
 
 /* Relocation types.  */
 

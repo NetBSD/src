@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2026 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -1047,7 +1047,8 @@ xtensa_colocate_literals (reloc_deps_graph *deps,
 	iter_stack_update (stack_p);
     }
 
-  lang_for_each_statement_worker (xtensa_ldlang_clear_addresses, statement);
+  lang_for_each_statement_worker (xtensa_ldlang_clear_addresses,
+				  statement, true);
 }
 
 
@@ -1283,7 +1284,8 @@ input_section_linked (asection *sec)
 {
   input_section_found = false;
   input_section_target = sec;
-  lang_for_each_statement_worker (input_section_linked_worker, stat_ptr->head);
+  lang_for_each_statement_worker (input_section_linked_worker,
+				  stat_ptr->head, true);
   return input_section_found;
 }
 
@@ -1505,7 +1507,8 @@ xtensa_wild_group_interleave_callback (lang_statement_union_type *statement)
 static void
 xtensa_wild_group_interleave (lang_statement_union_type *s)
 {
-  lang_for_each_statement_worker (xtensa_wild_group_interleave_callback, s);
+  lang_for_each_statement_worker (xtensa_wild_group_interleave_callback,
+				  s, true);
 }
 
 
@@ -1664,7 +1667,7 @@ xtensa_colocate_output_literals_callback (lang_statement_union_type *statement)
 	  ld_xtensa_insert_page_offsets (0, statement, deps,
 					 xtensa_use_literal_pages);
 	  lang_for_each_statement_worker (xtensa_ldlang_clear_addresses,
-					  statement);
+					  statement, true);
 	}
 
       /* Clean up.  */
@@ -1676,7 +1679,8 @@ xtensa_colocate_output_literals_callback (lang_statement_union_type *statement)
 static void
 xtensa_colocate_output_literals (lang_statement_union_type *s)
 {
-  lang_for_each_statement_worker (xtensa_colocate_output_literals_callback, s);
+  lang_for_each_statement_worker (xtensa_colocate_output_literals_callback,
+				  s, true);
 }
 
 

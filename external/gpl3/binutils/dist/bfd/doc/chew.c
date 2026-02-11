@@ -1,5 +1,5 @@
 /* chew
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
    This file is part of BFD, the Binary File Descriptor library.

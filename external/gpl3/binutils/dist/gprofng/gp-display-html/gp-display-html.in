@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #   Contributed by Oracle.
 #
 #   This file is part of GNU Binutils.
@@ -12133,7 +12133,7 @@ sub print_user_settings
 sub print_version_info
 {
   print "$version_info\n";
-  print "Copyright (C) 2025 Free Software Foundation, Inc.\n";
+  print "Copyright (C) 2026 Free Software Foundation, Inc.\n";
   print "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n";
   print "This is free software: you are free to change and redistribute it.\n";
   print "There is NO WARRANTY, to the extent permitted by law.\n";

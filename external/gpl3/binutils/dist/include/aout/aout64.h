@@ -1,6 +1,6 @@
 /* `a.out' object-file definitions, including extensions to 64-bit fields
 
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ struct external_exec
 
 /* Magic numbers for a.out files.  */
 
-#if ARCH_SIZE==64
+#if defined(ARCH_SIZE) && ARCH_SIZE == 64
 #define OMAGIC 0x1001		/* Code indicating object file.  */
 #define ZMAGIC 0x1002		/* Code indicating demand-paged executable.  */
 #define NMAGIC 0x1003		/* Code indicating pure executable.  */

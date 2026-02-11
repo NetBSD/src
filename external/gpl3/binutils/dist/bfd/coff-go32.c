@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 COFF files (DJGPP variant).
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by DJ Delorie.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -61,7 +61,7 @@
    used for coff-go32-exe (coff-stgo32.c).  */
 bool _bfd_go32_mkobject (bfd *);
 void _bfd_go32_swap_scnhdr_in (bfd *, void *, void *);
-unsigned int _bfd_go32_swap_scnhdr_out (bfd *, void *, void *);
+unsigned int _bfd_go32_swap_scnhdr_out (bfd *, void *, void *, const asection *);
 
 #define coff_mkobject _bfd_go32_mkobject
 #define coff_SWAP_scnhdr_in _bfd_go32_swap_scnhdr_in
@@ -119,7 +119,8 @@ _bfd_go32_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
 }
 
 unsigned int
-_bfd_go32_swap_scnhdr_out (bfd * abfd, void * in, void * out)
+_bfd_go32_swap_scnhdr_out (bfd *abfd, void *in, void *out,
+			   const asection *section ATTRIBUTE_UNUSED)
 {
   struct internal_scnhdr *scnhdr_int = (struct internal_scnhdr *) in;
   SCNHDR *scnhdr_ext = (SCNHDR *) out;

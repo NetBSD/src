@@ -1,5 +1,5 @@
 /* Textual dumping of CTF data.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -326,7 +326,7 @@ ctf_dump_header (ctf_dict_t *fp, ctf_dump_state_t *state)
 
   if (fp->ctf_openflags > 0)
     {
-      if (asprintf (&flagstr, "%s%s%s%s%s%s%s",
+      if (asprintf (&flagstr, "%s%s%s%s%s%s%s%s%s",
 		    fp->ctf_openflags & CTF_F_COMPRESS
 		    ? "CTF_F_COMPRESS": "",
 		    (fp->ctf_openflags & CTF_F_COMPRESS)
@@ -342,6 +342,12 @@ ctf_dump_header (ctf_dict_t *fp, ctf_dump_state_t *state)
 		    fp->ctf_openflags & (CTF_F_IDXSORTED)
 		    && (fp->ctf_openflags & ~(CTF_F_COMPRESS | CTF_F_NEWFUNCINFO
 					      | CTF_F_IDXSORTED))
+		    ? ", " : "",
+		    fp->ctf_openflags & CTF_F_ARRNELEMS
+		    ? "CTF_F_ARRNELEMS" : "",
+		    fp->ctf_openflags & (CTF_F_ARRNELEMS)
+		    && (fp->ctf_openflags & ~(CTF_F_COMPRESS | CTF_F_NEWFUNCINFO
+					      | CTF_F_IDXSORTED | CTF_F_ARRNELEMS))
 		    ? ", " : "",
 		    fp->ctf_openflags & CTF_F_DYNSTR
 		    ? "CTF_F_DYNSTR" : "") < 0)

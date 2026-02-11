@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -295,7 +295,7 @@ ia64_elf_reloc_type_lookup (bfd *abfd,
 
     case BFD_RELOC_IA64_IPLTMSB:	rtype = R_IA64_IPLTMSB; break;
     case BFD_RELOC_IA64_IPLTLSB:	rtype = R_IA64_IPLTLSB; break;
-    case BFD_RELOC_IA64_COPY:		rtype = R_IA64_COPY; break;
+    case BFD_RELOC_COPY:		rtype = R_IA64_COPY; break;
     case BFD_RELOC_IA64_LTOFF22X:	rtype = R_IA64_LTOFF22X; break;
     case BFD_RELOC_IA64_LDXMOV:		rtype = R_IA64_LDXMOV; break;
 

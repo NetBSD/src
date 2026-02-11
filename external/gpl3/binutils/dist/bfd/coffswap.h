@@ -1,5 +1,5 @@
 /* Generic COFF swapping routines, for BFD.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -422,13 +422,10 @@ coff_swap_aux_in (bfd *abfd,
 	  in->x_file.x_n.x_n.x_offset = H_GET_32 (abfd, ext->x_file.x_n.x_offset);
 	}
       else
-	{
 #if FILNMLEN != E_FILNMLEN
-#error we need to cope with truncating or extending FILNMLEN
-#else
-	  memcpy (in->x_file.x_n.x_fname, ext->x_file.x_fname, FILNMLEN);
+#error we need to cope with truncating or extending x_fname
 #endif
-	}
+	memcpy (in->x_file.x_n.x_fname, ext->x_file.x_fname, FILNMLEN);
       goto end;
 
     case C_STAT:
@@ -521,13 +518,10 @@ coff_swap_aux_out (bfd * abfd,
 	  H_PUT_32 (abfd, in->x_file.x_n.x_n.x_offset, ext->x_file.x_n.x_offset);
 	}
       else
-	{
 #if FILNMLEN != E_FILNMLEN
-#error we need to cope with truncating or extending FILNMLEN
-#else
-	  memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, FILNMLEN);
+#error we need to cope with truncating or extending xfname
 #endif
-	}
+	memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, E_FILNMLEN);
       goto end;
 
     case C_STAT:
@@ -781,7 +775,8 @@ coff_swap_scnhdr_in (bfd * abfd, void * ext, void * in)
 
 ATTRIBUTE_UNUSED
 static unsigned int
-coff_swap_scnhdr_out (bfd * abfd, void * in, void * out)
+coff_swap_scnhdr_out (bfd * abfd, void * in, void * out,
+		      const asection *section ATTRIBUTE_UNUSED)
 {
   struct internal_scnhdr *scnhdr_int = (struct internal_scnhdr *) in;
   SCNHDR *scnhdr_ext = (SCNHDR *) out;

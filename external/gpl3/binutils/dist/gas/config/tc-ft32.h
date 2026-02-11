@@ -1,6 +1,6 @@
 /* tc-ft32.h -- Header file for tc-ft32.c.
 
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of GAS, the GNU Assembler.

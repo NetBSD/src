@@ -1,5 +1,5 @@
 /* tc-cris.h -- Header file for tc-cris.c, the CRIS GAS port.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.

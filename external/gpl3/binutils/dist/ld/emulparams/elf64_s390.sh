@@ -1,4 +1,5 @@
 source_sh ${srcdir}/emulparams/plt_unwind.sh
+source_sh ${srcdir}/emulparams/sframe-info.sh
 SCRIPT_NAME=elf
 ELFSIZE=64
 OUTPUT_FORMAT="elf64-s390"

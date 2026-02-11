@@ -1,5 +1,5 @@
 /* tc-xstormy16.c -- Assembler for the Sanyo XSTORMY16.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

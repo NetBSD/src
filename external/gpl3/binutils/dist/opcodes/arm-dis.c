@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -2536,7 +2536,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMLAS,
    0xee011e40, 0xef811f70,
-   "vmlas%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+   "vmlas%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
 
   /* Vector VRMLSLDAVH.  Note must appear before VMLSDAV due to instruction
      opcode aliasing.  */
@@ -11904,52 +11904,43 @@ arm_symbol_is_valid (asymbol * sym,
   return (name && *name != '$' && strncmp (name, "__tagsym$$", 10));
 }
 
-/* Parse the string of disassembler options.  */
+/* Parse a disassembler option.  */
 
-static void
-parse_arm_disassembler_options (const char *options)
+static bool
+arm_parse_option (const char *opt, void *data ATTRIBUTE_UNUSED)
 {
-  const char *opt;
-
-  force_thumb = false;
-  FOR_EACH_DISASSEMBLER_OPTION (opt, options)
+  if (startswith (opt, "reg-names-"))
     {
-      if (startswith (opt, "reg-names-"))
-	{
-	  unsigned int i;
-	  for (i = 0; i < NUM_ARM_OPTIONS; i++)
-	    if (disassembler_options_cmp (opt, regnames[i].name) == 0)
-	      {
-		regname_selected = i;
-		break;
-	      }
+      unsigned int i;
+      for (i = 0; i < NUM_ARM_OPTIONS; i++)
+	if (strcmp (opt, regnames[i].name) == 0)
+	  {
+	    regname_selected = i;
+	    break;
+	  }
 
-	  if (i >= NUM_ARM_OPTIONS)
-	    /* xgettext: c-format */
-	    opcodes_error_handler (_("unrecognised register name set: %s"),
-				   opt);
-	}
-      else if (startswith (opt, "force-thumb"))
-	force_thumb = 1;
-      else if (startswith (opt, "no-force-thumb"))
-	force_thumb = 0;
-      else if (startswith (opt, "coproc"))
+      if (i >= NUM_ARM_OPTIONS)
+	/* xgettext: c-format */
+	opcodes_error_handler (_("unrecognised register name set: %s"),
+			       opt);
+    }
+  else if (startswith (opt, "force-thumb"))
+    force_thumb = 1;
+  else if (startswith (opt, "no-force-thumb"))
+    force_thumb = 0;
+  else if (startswith (opt, "coproc"))
+    {
+      const char *procptr = opt + sizeof ("coproc") - 1;
+      char *endptr;
+      uint8_t coproc_number = strtol (procptr, &endptr, 10);
+      if (endptr != procptr + 1 || coproc_number > 7)
+	opcodes_error_handler (_("cde coprocessor not between 0-7: %s"),
+			       opt);
+      else if (*endptr != '=')
+	opcodes_error_handler (_("coproc must have an argument: %s"),
+			       opt);
+      else
 	{
-	  const char *procptr = opt + sizeof ("coproc") - 1;
-	  char *endptr;
-	  uint8_t coproc_number = strtol (procptr, &endptr, 10);
-	  if (endptr != procptr + 1 || coproc_number > 7)
-	    {
-	      opcodes_error_handler (_("cde coprocessor not between 0-7: %s"),
-				     opt);
-	      continue;
-	    }
-	  if (*endptr != '=')
-	    {
-	      opcodes_error_handler (_("coproc must have an argument: %s"),
-				     opt);
-	      continue;
-	    }
 	  endptr += 1;
 	  if (startswith (endptr, "generic"))
 	    cde_coprocs &= ~(1 << coproc_number);
@@ -11957,18 +11948,15 @@ parse_arm_disassembler_options (const char *options)
 		   || startswith (endptr, "CDE"))
 	    cde_coprocs |= (1 << coproc_number);
 	  else
-	    {
-	      opcodes_error_handler (
-		  _("coprocN argument takes options \"generic\","
-		    " \"cde\", or \"CDE\": %s"), opt);
-	    }
+	    opcodes_error_handler
+	      (_("coprocN argument takes options \"generic\","
+		 " \"cde\", or \"CDE\": %s"), opt);
 	}
-      else
-	/* xgettext: c-format */
-	opcodes_error_handler (_("unrecognised disassembler option: %s"), opt);
     }
-
-  return;
+  else
+    /* xgettext: c-format */
+    opcodes_error_handler (_("unrecognised disassembler option: %s"), opt);
+  return true;
 }
 
 static bool
@@ -12377,7 +12365,8 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
 
   if (info->disassembler_options)
     {
-      parse_arm_disassembler_options (info->disassembler_options);
+      force_thumb = false;
+      for_each_disassembler_option (info, arm_parse_option, NULL);
 
       /* To avoid repeated parsing of these options, we remove them here.  */
       info->disassembler_options = NULL;

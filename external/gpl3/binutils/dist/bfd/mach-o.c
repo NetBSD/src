@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -561,15 +561,16 @@ bfd_mach_o_append_command (bfd *abfd, bfd_mach_o_load_command *cmd)
    to the output symbol.  */
 
 bool
-bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
-					 asymbol *isymbol,
+bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd,
+					 asymbol **isymbol,
 					 bfd *obfd ATTRIBUTE_UNUSED,
-					 asymbol *osymbol)
+					 asymbol **osymbol)
 {
-  bfd_mach_o_asymbol *os, *is;
+  if (ibfd->xvec->flavour != bfd_target_mach_o_flavour)
+    return true;
 
-  os = (bfd_mach_o_asymbol *)osymbol;
-  is = (bfd_mach_o_asymbol *)isymbol;
+  bfd_mach_o_asymbol *os = (bfd_mach_o_asymbol *) *osymbol;
+  bfd_mach_o_asymbol *is = (bfd_mach_o_asymbol *) *isymbol;
   os->n_type = is->n_type;
   os->n_sect = is->n_sect;
   os->n_desc = is->n_desc;
@@ -582,13 +583,14 @@ bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
    to the output section.  */
 
 bool
-bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd, asection *isection,
-					  bfd *obfd, asection *osection,
+bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd,
+					  asection *isection,
+					  bfd *obfd ATTRIBUTE_UNUSED,
+					  asection *osection,
 					  struct bfd_link_info *link_info)
 {
   if (link_info != NULL
-      || ibfd->xvec->flavour != bfd_target_mach_o_flavour
-      || obfd->xvec->flavour != bfd_target_mach_o_flavour)
+      || ibfd->xvec->flavour != bfd_target_mach_o_flavour)
     return true;
 
   bfd_mach_o_section *os = bfd_mach_o_get_mach_o_section (osection);
@@ -731,8 +733,7 @@ bfd_mach_o_bfd_copy_private_header_data (bfd *ibfd, bfd *obfd)
   bfd_mach_o_data_struct *omdata;
   bfd_mach_o_load_command *icmd;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_mach_o_flavour
-      || bfd_get_flavour (obfd) != bfd_target_mach_o_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_mach_o_flavour)
     return true;
 
   BFD_ASSERT (bfd_mach_o_valid (ibfd));

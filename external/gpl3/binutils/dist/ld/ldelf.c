@@ -1,5 +1,5 @@
 /* ELF emulation code for targets using elf.em.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -1291,6 +1291,7 @@ ldelf_after_open (int use_libpath, int native, int is_linux, int is_freebsd,
 	}
     }
 
+  get_elf_backend_data (link_info.output_bfd)->setup_object_attributes (&link_info);
   get_elf_backend_data (link_info.output_bfd)->setup_gnu_properties (&link_info);
 
   /* Do not allow executable files to be used as inputs to the link.  */
@@ -1388,9 +1389,7 @@ ldelf_after_open (int use_libpath, int native, int is_linux, int is_freebsd,
 	}
       if (elfbfd)
 	{
-	  const struct elf_backend_data *bed;
-
-	  bed = get_elf_backend_data (elfbfd);
+	  elf_backend_data *bed = get_elf_backend_data (elfbfd);
 	  s = bfd_make_section_with_flags (elfbfd, ".eh_frame_hdr",
 					   bed->dynamic_sec_flags
 					   | SEC_READONLY);
@@ -1436,7 +1435,7 @@ id_note_section_size (bfd *abfd ATTRIBUTE_UNUSED)
 static bool
 write_build_id (bfd *abfd)
 {
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_obj_tdata *t = elf_tdata (abfd);
   const char *style;
   asection *asec;
@@ -1763,7 +1762,7 @@ ldelf_before_allocation (char **audit, char **depaudit,
 
   if (is_elf_hash_table (link_info.hash))
     {
-      _bfd_elf_tls_setup (link_info.output_bfd, &link_info);
+      bfd_elf_tls_setup (link_info.output_bfd, &link_info);
 
       /* Make __ehdr_start hidden if it has been referenced, to
 	 prevent the symbol from being dynamic.  */
@@ -2094,8 +2093,8 @@ elf_orphan_compatible (asection *in, asection *out)
 	  || ((elf_section_flags (out) ^ elf_section_flags (in))
 	      & (SHF_MASKPROC | SHF_MASKOS)) != 0))
     return false;
-  return _bfd_elf_match_sections_by_type (link_info.output_bfd, out,
-					  in->owner, in);
+  return bfd_elf_match_sections_by_type (link_info.output_bfd, out,
+					 in->owner, in);
 }
 
 /* Place an orphan section.  We use this to put random SHF_ALLOC
@@ -2314,8 +2313,8 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
 	    && ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
 	    && (nexts->owner->flags & DYNAMIC) == 0
 	    && !bfd_input_just_syms (nexts->owner)
-	    && _bfd_elf_match_sections_by_type (nexts->owner, nexts,
-						s->owner, s))
+	    && bfd_elf_match_sections_by_type (nexts->owner, nexts,
+					       s->owner, s))
 	  flags = (((flags ^ SEC_READONLY)
 		    | (nexts->flags ^ SEC_READONLY))
 		   ^ SEC_READONLY);
@@ -2383,7 +2382,7 @@ ldelf_place_orphan (asection *s, const char *secname, int constraint)
       if (after == NULL)
 	after
 	  = lang_output_section_find_by_flags (s, flags, &place->os,
-					       _bfd_elf_match_sections_by_type);
+					       bfd_elf_match_sections_by_type);
       if (after == NULL)
 	/* *ABS* is always the first output section statement.  */
 	after = (void *) lang_os_list.head;

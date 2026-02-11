@@ -1,5 +1,5 @@
 /* tc-d30v.c -- Assembler code for the Mitsubishi D30V
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,6 +27,8 @@
 const char comment_chars[]        = ";";
 const char line_comment_chars[]   = "#";
 const char line_separator_chars[] = "";
+/* Must do this if we want VLIW instruction with "->" or "<-".  */
+const char d30v_symbol_chars[]    = "-";
 const char md_shortopts[]         = "OnNcC";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";

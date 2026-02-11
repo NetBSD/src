@@ -1,5 +1,5 @@
 /* AArch64-specific support for ELF.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -21,8 +21,10 @@
 #include "sysdep.h"
 #include "bfd.h"
 #include "elf-bfd.h"
+#include "elf/aarch64.h"
 #include "elfxx-aarch64.h"
 #include "libbfd.h"
+#include "libiberty.h"
 #include <stdarg.h>
 #include <string.h>
 
@@ -705,9 +707,9 @@ typedef struct
 } bfd_search_result_t;
 
 static inline bool
-bfd_is_non_dynamic_elf_object (bfd *abfd, const struct elf_backend_data *out_be)
+bfd_is_non_dynamic_elf_object (bfd *abfd, elf_backend_data *out_be)
 {
-  const struct elf_backend_data *in_be = get_elf_backend_data (abfd);
+  elf_backend_data *in_be = get_elf_backend_data (abfd);
 
   return bfd_get_flavour (abfd) == bfd_target_elf_flavour
     && bfd_count_sections (abfd) != 0
@@ -722,7 +724,7 @@ bfd_is_non_dynamic_elf_object (bfd *abfd, const struct elf_backend_data *out_be)
 static bfd_search_result_t
 bfd_linear_search_one_with_gnu_property (struct bfd_link_info *info)
 {
-  const struct elf_backend_data *be = get_elf_backend_data (info->output_bfd);
+  elf_backend_data *be = get_elf_backend_data (info->output_bfd);
 
   bfd_search_result_t res = {
     .pbfd = NULL,
@@ -853,7 +855,7 @@ _bfd_aarch64_elf_check_gnu_properties_linked_dynamic_objects (
   struct bfd_link_info * info,
   const uint32_t outprop)
 {
-  const struct elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
+  elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
   const int elf_machine_code = bed->elf_machine_code;
   const unsigned int elfclass = bed->s->elfclass;
 
@@ -866,6 +868,388 @@ _bfd_aarch64_elf_check_gnu_properties_linked_dynamic_objects (
 	&& (get_elf_backend_data (pbfd)->s->elfclass == elfclass))
       _bfd_aarch64_compare_dynamic_obj_prop_against_outprop(info, outprop,
 	pbfd);
+}
+
+/* Decode the encoded version number corresponding to the Object Attribute
+   version.  Return the version on success, UNSUPPORTED on failure.  */
+obj_attr_version_t
+_bfd_aarch64_obj_attrs_version_dec (uint8_t encoded_version)
+{
+  if (encoded_version == 'A')
+    return OBJ_ATTR_V2;
+  return OBJ_ATTR_VERSION_UNSUPPORTED;
+}
+
+/* Encode the Object Attribute version into a byte.  */
+uint8_t
+_bfd_aarch64_obj_attrs_version_enc (obj_attr_version_t version)
+{
+  if (version == OBJ_ATTR_V2)
+    return 'A';
+  abort ();
+}
+
+/* List of known attributes in the subsection "aeabi_feature_and_bits".
+   Note: the array below has to be sorted by the tag's integer value that can
+   be found in the document "Build Attributes for the Arm® 64-bit Architecture
+   (AArch64)".  */
+static const obj_attr_info_t known_attrs_aeabi_feature_and_bits[] =
+{
+  { .tag = {"Tag_Feature_BTI", Tag_Feature_BTI} },
+  { .tag = {"Tag_Feature_PAC", Tag_Feature_PAC} },
+  { .tag = {"Tag_Feature_GCS", Tag_Feature_GCS} },
+};
+
+/* List of known attributes in the subsection "aeabi_pauthabi".
+   Notes:
+   - "aeabi_pauthabi" is a required subsection to use PAuthABI (which is
+     today only supported by LLVM, unsupported by GCC 15 and lower. There is no
+     plan to add support for it in the future). A value of 0 for any the tags
+     below means that the user did not permit this entity to use the PAuthABI.
+   - the array below has to be sorted by the tag's integer value that can be
+     found in the document "Build Attributes for the Arm® 64-bit Architecture
+     (AArch64)".  */
+static const obj_attr_info_t known_attrs_aeabi_pauthabi[] =
+{
+  { .tag = {"Tag_PAuth_Platform", Tag_PAuth_Platform} },
+  { .tag = {"Tag_PAuth_Schema", Tag_PAuth_Schema} },
+};
+
+/* List of known subsections.
+   Note: this array is exported by the backend, and has to be sorted using
+   the same criteria as in _bfd_elf_obj_attr_subsection_v2_cmp().  */
+const known_subsection_v2_t aarch64_obj_attr_v2_known_subsections[2] =
+{
+  {
+    .subsec_name = "aeabi_feature_and_bits",
+    .known_attrs = known_attrs_aeabi_feature_and_bits,
+    .optional = true,
+    .encoding = OA_ENC_ULEB128,
+    .len = ARRAY_SIZE (known_attrs_aeabi_feature_and_bits),
+  },
+  {
+    .subsec_name = "aeabi_pauthabi",
+    .known_attrs = known_attrs_aeabi_pauthabi,
+    .optional = false,
+    .encoding = OA_ENC_ULEB128,
+    .len = ARRAY_SIZE (known_attrs_aeabi_pauthabi),
+  },
+};
+
+/* Record the pair (TAG, VALUE) into SUBSEC.  */
+void
+_bfd_aarch64_oav2_record (obj_attr_subsection_v2_t *subsec,
+			  Tag_Feature_Set feature_tag,
+			  uint32_t value)
+{
+  union obj_attr_value_v2 data;
+  data.uint = value;
+  obj_attr_v2_t *attr = bfd_elf_obj_attr_v2_init (feature_tag, data);
+  LINKED_LIST_APPEND (obj_attr_v2_t) (subsec, attr);
+}
+
+/* Wrapper around the recording of the pair (TAG, VALUE) into SUBSEC called from
+   a context of translation from GNU properties.  */
+static void
+obj_attr_v2_record_tag_value (obj_attr_subsection_v2_t *subsec,
+			      Tag_Feature_Set tag,
+			      bool value)
+{
+  obj_attr_v2_t *attr;
+  attr = bfd_obj_attr_v2_find_by_tag (subsec, tag, false);
+  if (attr != NULL)
+    {
+      if (attr->val.uint != value)
+	{
+	  /* If we find an existing value for the given object attributes and
+	     this value is different from the new one, it can mean two things:
+	       - either the values are conflicting, and we need to raise an
+	       error.
+	       - either there are several GNU properties AARCH64_FEATURE_1_AND
+	       which were recorded, but its final value is the result of the
+	       merge of those separate values.
+	     For now, only the second case occurs.  */
+	  uint32_t merged_val = attr->val.uint | value;
+	  _bfd_aarch64_oav2_record (subsec, tag, merged_val);
+	}
+      /* else: nothing to do.  */
+    }
+  else
+    _bfd_aarch64_oav2_record (subsec, tag, value);
+}
+
+/* Translate the relevant GNU properties in P to their Object Attributes v2
+   equivalents.  */
+void
+_bfd_aarch64_translate_gnu_props_to_obj_attrs
+  (const bfd *abfd, const elf_property_list *p)
+{
+  if (p->property.pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND)
+    {
+      const elf_property *prop = &p->property;
+      BFD_ASSERT (prop->pr_kind == property_number);
+
+      obj_attr_subsection_v2_t *subsec = bfd_obj_attr_subsection_v2_find_by_name
+	(elf_obj_attr_subsections (abfd).first, "aeabi_feature_and_bits", false);
+
+      bool new_subsec = false;
+      if (subsec == NULL)
+	{
+	  subsec = bfd_elf_obj_attr_subsection_v2_init
+	    (xstrdup ("aeabi_feature_and_bits"), OA_SUBSEC_PUBLIC, true,
+	     OA_ENC_ULEB128);
+	  new_subsec = true;
+	}
+
+      bool bti_bit = prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
+      bool pac_bit = prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_PAC;
+      bool gcs_bit = prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+
+      obj_attr_v2_record_tag_value (subsec, Tag_Feature_BTI, bti_bit);
+      obj_attr_v2_record_tag_value (subsec, Tag_Feature_PAC, pac_bit);
+      obj_attr_v2_record_tag_value (subsec, Tag_Feature_GCS, gcs_bit);
+
+      if (new_subsec)
+	LINKED_LIST_APPEND (obj_attr_subsection_v2_t)
+	  (&elf_obj_attr_subsections (abfd), subsec);
+    }
+}
+
+/* Translate relevant Object Attributes v2 in SUBSEC to GNU properties.  */
+void
+_bfd_aarch64_translate_obj_attrs_to_gnu_props
+  (bfd *abfd, const obj_attr_subsection_v2_t *subsec)
+{
+  /* Note: there is no need to create the GNU properties section here.  It will
+     be handled later by setup_gnu_properties.  */
+
+  if (strcmp (subsec->name, "aeabi_feature_and_bits") == 0)
+    {
+      uint32_t gnu_property_aarch64_features = 0;
+
+      for (const obj_attr_v2_t *attr = subsec->first;
+	   attr != NULL;
+	   attr = attr->next)
+	{
+	  if (attr->tag == Tag_Feature_BTI && attr->val.uint == 1)
+	    gnu_property_aarch64_features |= GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
+	  else if (attr->tag == Tag_Feature_PAC && attr->val.uint == 1)
+	    gnu_property_aarch64_features |= GNU_PROPERTY_AARCH64_FEATURE_1_PAC;
+	  else if (attr->tag == Tag_Feature_GCS && attr->val.uint == 1)
+	    gnu_property_aarch64_features |= GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+	}
+
+      /* Note: _bfd_elf_get_property find the existing property, or create one.
+	 The insertion is already done by it.  */
+      elf_property *prop
+	= _bfd_elf_get_property (abfd, GNU_PROPERTY_AARCH64_FEATURE_1_AND, 4);
+      prop->u.number |= gnu_property_aarch64_features;
+      prop->pr_kind = property_number;
+    }
+}
+
+/* Check whether the given ATTR is managed by the backend, and if that is the
+   case, initialize ATTR with its default value coming from the known tag
+   registry.
+   True if the default value for the tag is managed by the backend, and was
+   initialized.  False otherwise.  */
+bool
+_bfd_aarch64_oav2_default_value
+  (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+   const obj_attr_info_t *tag_info ATTRIBUTE_UNUSED,
+   const obj_attr_subsection_v2_t *subsec ATTRIBUTE_UNUSED,
+   obj_attr_v2_t *attr ATTRIBUTE_UNUSED)
+{
+  /* For now, there is no default value set by the backend.  The default BTI and
+     GCS values are set by the respective command-line options '-z force-bti'
+     and '-z gcs'.  */
+
+  return false;
+}
+
+/* Merge the values from LHS, RHS, FROZEN, and return the merge result.  LHS,
+   RHS and FROZEN correspond to an attribute from SUBSEC with the same tag, but
+   from three different contexts:
+    - LHS corresponds to the global merge result.
+    - RHS corresponds to the new value that is merged into the global merge
+      result.
+    - FROZEN corresponds to the value coming from some configuration context
+      (usually a command-line option) and which is immutable for the whole
+      merge process.  */
+obj_attr_v2_merge_result_t
+_bfd_aarch64_oav2_attr_merge (const struct bfd_link_info *info,
+			      const bfd *abfd,
+			      const obj_attr_subsection_v2_t *subsec,
+			      const obj_attr_v2_t *lhs, const obj_attr_v2_t *rhs,
+			      const obj_attr_v2_t *frozen)
+{
+  obj_attr_v2_merge_result_t res = {
+    .merge = false,
+    .val.uint = 0,
+    .reason = OAv2_MERGE_OK,
+  };
+
+  /* No need to list required sections here, they are handled separately as
+     they require a perfect one-to-one match for all the tag values.  */
+  if (strcmp (subsec->name, "aeabi_feature_and_bits") == 0)
+    {
+      BFD_ASSERT (subsec->encoding == OA_ENC_ULEB128 && subsec->optional);
+      const obj_attr_info_t *attr_info
+	= _bfd_obj_attr_v2_find_known_by_tag (get_elf_backend_data (abfd),
+					      subsec->name, lhs->tag);
+      if (attr_info == NULL)
+	{
+	  info->callbacks->einfo
+	    (_("%pB: warning: cannot merge unknown tag 'Tag_unknown_%" PRIu64 "'"
+	       " (=0x%" PRIx32 ") in subsection '%s'\n"),
+	     abfd, rhs->tag, rhs->val.uint, subsec->name);
+	  res.reason = OAv2_MERGE_UNSUPPORTED;
+	  return res;
+	}
+
+      /* For now, there is no different between the tags of this section, all
+	 will be merged in the same way.  */
+      res = _bfd_obj_attr_v2_merge_AND (info, abfd, subsec, lhs, rhs, frozen);
+
+      const aarch64_protection_opts *sw_protections
+	= &elf_aarch64_tdata (info->output_bfd)->sw_protections;
+      aarch64_feature_marking_report bti_report = sw_protections->bti_report;
+      aarch64_feature_marking_report gcs_report = sw_protections->gcs_report;
+
+      if (rhs->tag == Tag_Feature_BTI
+	  && bti_report != MARKING_NONE
+	  && (sw_protections->plt_type & PLT_BTI)
+	  && rhs->val.uint == 0)
+	_bfd_aarch64_elf_check_bti_report (info, abfd);
+
+      if ((rhs->tag == Tag_Feature_GCS) && (gcs_report != MARKING_NONE)
+       && (sw_protections->gcs_type == GCS_ALWAYS) && (rhs->val.uint == 0))
+	_bfd_aarch64_elf_check_gcs_report (info, abfd);
+
+      /* Make sure that frozen bits don't disappear from REF when it will be
+	 compared to the next file.  */
+      if (frozen != NULL)
+	res.val.uint |= frozen->val.uint;
+    }
+  else
+    res.reason = OAv2_MERGE_UNSUPPORTED;
+
+  return res;
+}
+
+/* Check for incompatibilities with PAuthABI attributes.  */
+static bool
+aarch64_check_pauthabi_attributes (const struct bfd_link_info *info)
+{
+  /* The subsection "aeabi_pauthabi" contains information about the Pointer
+     Authentication Signing schema when the object uses an extension to ELF,
+     PAUTHABI64, which is today only supported by LLVM, and not supported by
+     GCC 15 toolchain or ealier ones.  There is no plan to add support for it
+     in the future.  The pointers that are signed as well as the modifiers and
+     key used for each type of pointer are known as the signing schema.
+     The AEABI Build attributes specification defines the following tuple values
+     of (Tag_Pauth_Platform, Tag_Pauth_Schema):
+       - The tuple (0, 0) is obtained when both attributes are explicitly set to
+	 0 or are implicitly set to 0 due to the rules for setting default values
+	 for public tags.  This represents an ELF file which makes no use of the
+	 PAuthABI extension.
+       - The tuple (0, 1) is reserved for the "Invalid" platform.  ELF files with
+	 an "Invalid" platform are incompatible with the PAuth ABI Extension.
+       - The tuples (0, N) where N > 1 are reserved.
+       - The tuples (M, N) where M is the id of one of the registered platforms
+	 defined in PAuthABI64, represents a valid signing schema.  (M, 0)
+	 represents a schema version of 0 for platform M.
+     Given that the GNU linker does not support PAuthABI, it cannot do anything
+     with values others than (0, 0) or (0, 1).
+     The check below enforces either that the output object has either no
+     subsection "aeabi_pauthabi", or the tuple is set to (0, 0) and (0, 1).  */
+
+  obj_attr_subsection_v2_t *subsecs
+    = elf_obj_attr_subsections (info->output_bfd).first;
+  const obj_attr_subsection_v2_t *subsec
+    = bfd_obj_attr_subsection_v2_find_by_name (subsecs, "aeabi_pauthabi", true);
+  if (subsec == NULL)
+    return true;
+
+  int platform_id = 0;
+  int version_id = 0;
+
+  const obj_attr_v2_t *attr
+    = bfd_obj_attr_v2_find_by_tag (subsec, Tag_PAuth_Platform, true);
+  if (attr != NULL)
+    platform_id = attr->val.uint;
+
+  attr = bfd_obj_attr_v2_find_by_tag (subsec, Tag_PAuth_Schema, true);
+  if (attr != NULL)
+    version_id = attr->val.uint;
+
+  if (! ((platform_id == 0 && version_id == 0)
+      || (platform_id == 0 && version_id == 1)))
+    {
+      info->callbacks->einfo
+	(_("%Xerror: the GNU linker does not support PAuthABI.  Any value "
+	   "different from (platform = 0, schema = 0) or (platform = 0, schema "
+	   "= 1) is not supported.\n"));
+      return false;
+    }
+
+  return true;
+}
+
+/* Merge the AEABI Build Attributes present in the input BFDs, raise any
+   compatibility issue, and write the merge result to OBFD.
+
+   AArch64 backend declares two vendor subsections, and their associated tags:
+    - aeabi_feature_and_bits: contains tags that describe the same optional
+      bits as the GNU_PROPERTY_AARCH64_FEATURE_1_AND.  For now, the following
+      attributes are recognized:
+	- Tag_Feature_BTI: means that all the executable sections are
+	  compatible with Branch Target Identification (BTI) mechanism.
+	- Tag_Feature_PAC: means that all the executable sections have been
+	  protected with Return Address Signing.
+	- Tag_Feature_GCS: means that all the executable sections are
+	  compatible with the Guarded Control Stack (GCS) extension.
+    - aeabi_pauthabi: contains information about the Pointer Authentication
+      Signing schema when the object uses an extension to ELF, PAUTHABI64,
+      which is currently not supported by GCC toolchain.  The pointers that
+      are signed as well as the modifiers and key used for each type of pointer
+      are known as the signing schema.  The support of this subsection is there
+      for completeness with the AEABI Build Attributes document, and allows
+      readelf to dump the data nicely, and the linker to detect a use of a
+      signing schema, and error.
+	- Tag_PAuth_Paltform: the platform vendor id.
+	- Tag_PAuth_Schema: the version numner of the schema.
+
+    For backward-compatibilty purpose, AArch64 backend translates
+    GNU_PROPERTY_AARCH64_FEATURE_1_AND in input files to its OAv2 equivalents.
+    The frozen set of OAv2 is populated with values derived from command-line
+    options for BTI (-z force-bti) and GCS (-z gcs=*).
+    It also reports incompatibilities for BTI and GCS, and set BTI PLT type
+    depending on the OAv2 merge result.
+    Regarding incompatibilities, only the ones detected in objects constituting
+    the output link unit will be reported.  Supports for detecting incompatibi-
+    -lities in shared objects might be a future work to bring it in pair with
+    thenGNU properties merge.  However, since OAv2 are translated to GNU
+    properties, detection will still happen so this feature seems redundant and
+    of little value given the backward compatibility support for GNU properties
+    is required (see next paragraph).
+    Finally, it translates OAv2s in subsection "aeabi_feature_and_bits" to
+    GNU_PROPERTY_AARCH64_FEATURE_1_AND as GNU properties are required for
+    the dynamic linker (it does not understand OAv2s yet).  */
+bfd *
+_bfd_aarch64_elf_link_setup_object_attributes (struct bfd_link_info *info)
+{
+  bfd *pbfd = _bfd_elf_link_setup_object_attributes (info);
+
+  /* Check PAuthABI compatibility.  */
+  if (! aarch64_check_pauthabi_attributes (info))
+    return NULL;
+
+  /* Set the flag marking whether the merge of object attributes was done so
+     that setup_gnu_properties does not raise the same errors/warning again.  */
+  elf_aarch64_tdata (info->output_bfd)->oa_merge_done = true;
+
+  return pbfd;
 }
 
 /* Find the first input bfd with GNU property and merge it with GPROP.  If no
@@ -888,22 +1272,32 @@ _bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info)
 
 	 Note: If there is no .gnu.note.property section, we might think that
 	 elf_properties (res.pbfd) is always NULL.  However, this is not always
-	 true.  In PR23900: old linkers were treating .note.gnu.property as a
-	 generic note section, so old objects might contain properties inside
-	 .note instead of .note.gnu.property. In this case, the section won't be
-	 detected but the properties are still parsed. Consequently,
-	 elf_properties (res.pbfd) is populated and different from NULL (see
-	 https://sourceware.org/bugzilla/show_bug.cgi?id=23900 for more
-	 details).  */
-      if (res.sec == NULL && elf_properties (res.pbfd) == NULL)
+	 true for the following reasons:
+	 - PR23900: old linkers were treating .note.gnu.property as a generic
+	   note section, so old objects might contain properties inside .note
+	   instead of .note.gnu.property.  In this case, the section won't be
+	   detected but the properties are still parsed.  Consequently,
+	   elf_properties (res.pbfd) is populated and different from NULL (see
+	   https://sourceware.org/bugzilla/show_bug.cgi?id=23900 for more
+	   details).
+	 - since the introduction of the object attributes, once the merge
+	   of the OAs is done, some of the OAs can be translated to GNU
+	   properties like GNU_PROPERTY_AARCH64_FEATURE_1_AND.  In this case,
+	   we need to check explicitly for the presence of the GNU properties
+	   that might be added by the BAs merge.  */
+      if (res.sec == NULL
+	  && (elf_properties (res.pbfd) == NULL
+	      || _bfd_elf_find_property (elf_properties (res.pbfd),
+					 GNU_PROPERTY_AARCH64_FEATURE_1_AND,
+					 NULL)))
 	_bfd_aarch64_elf_create_gnu_property_section (info, res.pbfd);
 
       /* Merge the found input property with output properties. Note: if no
 	 property was found, _bfd_elf_get_property will create one.  */
-      elf_property *prop =
-	_bfd_elf_get_property (res.pbfd,
-			       GNU_PROPERTY_AARCH64_FEATURE_1_AND,
-			       4);
+      elf_property *prop
+	= _bfd_elf_get_property (res.pbfd,
+				 GNU_PROPERTY_AARCH64_FEATURE_1_AND,
+				 4);
 
       /* Check for a feature mismatch and report issue (if any) before this
 	 information get lost as the value of ebfd will be overriden with
@@ -1098,11 +1492,13 @@ _bfd_aarch64_elf_link_fixup_gnu_properties
 
 /* Check AArch64 BTI report.  */
 void
-_bfd_aarch64_elf_check_bti_report (struct bfd_link_info *info, bfd *ebfd)
+_bfd_aarch64_elf_check_bti_report (const struct bfd_link_info *info,
+				   const bfd *abfd)
 {
   struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
 
-  if (tdata->sw_protections.bti_report == MARKING_NONE)
+  if (elf_aarch64_tdata (info->output_bfd)->oa_merge_done
+      || tdata->sw_protections.bti_report == MARKING_NONE)
     return;
 
   ++tdata->n_bti_issues;
@@ -1117,14 +1513,16 @@ _bfd_aarch64_elf_check_bti_report (struct bfd_link_info *info, bfd *ebfd)
     : _("%X%pB: error: BTI is required by -z force-bti, but this input object "
 	"file lacks the necessary property note.\n");
 
-  info->callbacks->einfo (msg, ebfd);
+  info->callbacks->einfo (msg, abfd);
 }
 
+/* Check AArch64 GCS report.  */
 void
-_bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *info, bfd *ebfd)
+_bfd_aarch64_elf_check_gcs_report (const struct bfd_link_info *info,
+				   const bfd *abfd)
 {
   struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
-  bool dynamic_obj = (ebfd->flags & DYNAMIC) != 0;
+  bool dynamic_obj = (abfd->flags & DYNAMIC) != 0;
 
   if (dynamic_obj)
     {
@@ -1136,7 +1534,8 @@ _bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *info, bfd *ebfd)
     }
   else
     {
-      if (tdata->sw_protections.gcs_report == MARKING_NONE)
+      if (elf_aarch64_tdata (info->output_bfd)->oa_merge_done
+	  || tdata->sw_protections.gcs_report == MARKING_NONE)
 	return;
       ++tdata->n_gcs_issues;
       if (tdata->n_gcs_issues > GNU_PROPERTY_ISSUES_MAX)
@@ -1161,5 +1560,5 @@ _bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *info, bfd *ebfd)
       : _("%X%pB: error: GCS is required by -z gcs, but this input object file "
 	  "lacks the necessary property note.\n");
 
-  info->callbacks->einfo (msg, ebfd);
+  info->callbacks->einfo (msg, abfd);
 }

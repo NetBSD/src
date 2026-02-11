@@ -1,4 +1,5 @@
 source_sh ${srcdir}/emulparams/plt_unwind.sh
+source_sh ${srcdir}/emulparams/sframe-info.sh
 source_sh ${srcdir}/emulparams/extern_protected_data.sh
 source_sh ${srcdir}/emulparams/dynamic_undefined_weak.sh
 source_sh ${srcdir}/emulparams/reloc_overflow.sh
@@ -21,7 +22,7 @@ COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 ARCH="i386:x86-64"
 MACHINE=
 TEMPLATE_NAME=elf
-EXTRA_EM_FILE="elf-x86"
+EXTRA_EM_FILE="elf-x86-64-glibc"
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes
@@ -34,6 +35,8 @@ OTHER_PLT_SECTIONS="
 .plt.got      ${RELOCATING-0} : { *(.plt.got) }
 .plt.sec      ${RELOCATING-0} : { *(.plt.sec) }
 "
+OTHER_GOT_RELOC_SECTIONS="
+  .rela.tls	${RELOCATING-0} : { *(.rela.tls) }"
 
 if [ "x${host}" = "x${target}" ]; then
   case " $EMULATION_LIBPATH " in
@@ -42,8 +45,8 @@ if [ "x${host}" = "x${target}" ]; then
   esac
 fi
 
-# Linux/Solaris modify the default library search path to first include
-# a 64-bit specific directory.
+# Linux modifies the default library search path to first include a 64-bit
+# specific directory.
 case "$target" in
   x86_64*-linux*|i[3-7]86-*-linux-*)
     case "$EMULATION_NAME" in
@@ -52,8 +55,4 @@ case "$target" in
 	;;
     esac
     ;;
-  *-*-solaris2*)
-    LIBPATH_SUFFIX=/amd64
-    ELF_INTERPRETER_NAME=\"/lib/amd64/ld.so.1\"
-  ;;
 esac

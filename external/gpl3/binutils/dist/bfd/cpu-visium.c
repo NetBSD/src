@@ -1,6 +1,6 @@
 /* BFD support for the Visium processor.
 
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 

@@ -1,5 +1,5 @@
 /* tc-hppa.h -- Header file for the PA
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

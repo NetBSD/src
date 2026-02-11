@@ -1,5 +1,5 @@
 /* frags.h - Header file for the frag concept.
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -78,7 +78,7 @@ struct frag {
   unsigned int insn_addr:6;
 
   /* What state is my tail in? */
-  relax_stateT fr_type;
+  ENUM_BITFIELD (_relax_state) fr_type : 8;
   relax_substateT fr_subtype;
 
 #ifdef USING_CGEN

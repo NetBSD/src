@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2006-2025 Free Software Foundation, Inc.
+   Copyright (C) 2006-2026 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -136,8 +136,8 @@ struct _score_elf_section_data
   {
     struct score_got_info *got_info;
     bfd_byte *tdata;
-  }
-  u;
+  } u;
+  bfd_byte *hi16_rel_addr;
 };
 
 #define score_elf_section_data(sec) \
@@ -189,8 +189,6 @@ struct _score_elf_section_data
 /* The default alignment for sections, as a power of two.  */
 #define SCORE_ELF_LOG_FILE_ALIGN(abfd)\
   (get_elf_backend_data (abfd)->s->log_file_align)
-
-static bfd_byte *hi16_rel_addr;
 
 /* This will be used when we sort the dynamic relocation records.  */
 static bfd *reldyn_sorting_bfd;
@@ -309,12 +307,13 @@ static bfd_reloc_status_type
 score_elf_hi16_reloc (bfd *abfd ATTRIBUTE_UNUSED,
 		      arelent *reloc_entry,
 		      asymbol *symbol ATTRIBUTE_UNUSED,
-		      void * data,
-		      asection *input_section ATTRIBUTE_UNUSED,
+		      void *data,
+		      asection *input_section,
 		      bfd *output_bfd ATTRIBUTE_UNUSED,
 		      char **error_message ATTRIBUTE_UNUSED)
 {
-  hi16_rel_addr = (bfd_byte *) data + reloc_entry->address;
+  score_elf_section_data (input_section)->hi16_rel_addr
+    = (bfd_byte *) data + reloc_entry->address;
   return bfd_reloc_ok;
 }
 
@@ -330,8 +329,10 @@ score_elf_lo16_reloc (bfd *abfd,
   bfd_vma addend = 0, offset = 0;
   unsigned long val;
   unsigned long hi16_offset, hi16_value, uvalue;
+  bfd_byte *hi16_rel_addr;
 
-  hi16_value = score_bfd_get_32 (abfd, hi16_rel_addr);
+  hi16_rel_addr = score_elf_section_data (input_section)->hi16_rel_addr;
+  hi16_value = hi16_rel_addr ? score_bfd_get_32 (abfd, hi16_rel_addr) : 0;
   hi16_offset = ((((hi16_value >> 16) & 0x3) << 15) | (hi16_value & 0x7fff)) >> 1;
   addend = score_bfd_get_32 (abfd, (bfd_byte *) data + reloc_entry->address);
   offset = ((((addend >> 16) & 0x3) << 15) | (addend & 0x7fff)) >> 1;
@@ -339,9 +340,13 @@ score_elf_lo16_reloc (bfd *abfd,
   if (reloc_entry->address > input_section->size)
     return bfd_reloc_outofrange;
   uvalue = ((hi16_offset << 16) | (offset & 0xffff)) + val;
-  hi16_offset = (uvalue >> 16) << 1;
-  hi16_value = (hi16_value & ~0x37fff) | (hi16_offset & 0x7fff) | ((hi16_offset << 1) & 0x30000);
-  score_bfd_put_32 (abfd, hi16_value, hi16_rel_addr);
+  if (hi16_rel_addr)
+    {
+      hi16_offset = (uvalue >> 16) << 1;
+      hi16_value = ((hi16_value & ~0x37fff)
+		    | (hi16_offset & 0x7fff) | ((hi16_offset << 1) & 0x30000));
+      score_bfd_put_32 (abfd, hi16_value, hi16_rel_addr);
+    }
   offset = (uvalue & 0xffff) << 1;
   addend = (addend & ~0x37fff) | (offset & 0x7fff) | ((offset << 1) & 0x30000);
   score_bfd_put_32 (abfd, addend, (bfd_byte *) data + reloc_entry->address);
@@ -613,8 +618,10 @@ score_elf_got_lo16_reloc (bfd *abfd,
   bfd_vma addend = 0, offset = 0;
   signed long val;
   signed long hi16_offset, hi16_value, uvalue;
+  bfd_byte *hi16_rel_addr;
 
-  hi16_value = score_bfd_get_32 (abfd, hi16_rel_addr);
+  hi16_rel_addr = score_elf_section_data (input_section)->hi16_rel_addr;
+  hi16_value = hi16_rel_addr ? score_bfd_get_32 (abfd, hi16_rel_addr) : 0;
   hi16_offset = ((((hi16_value >> 16) & 0x3) << 15) | (hi16_value & 0x7fff)) >> 1;
   addend = score_bfd_get_32 (abfd, (bfd_byte *) data + reloc_entry->address);
   offset = ((((addend >> 16) & 0x3) << 15) | (addend & 0x7fff)) >> 1;
@@ -622,12 +629,16 @@ score_elf_got_lo16_reloc (bfd *abfd,
   if (reloc_entry->address > input_section->size)
     return bfd_reloc_outofrange;
   uvalue = ((hi16_offset << 16) | (offset & 0xffff)) + val;
-  if ((uvalue > -0x8000) && (uvalue < 0x7fff))
-    hi16_offset = 0;
-  else
-    hi16_offset = (uvalue >> 16) & 0x7fff;
-  hi16_value = (hi16_value & ~0x37fff) | (hi16_offset & 0x7fff) | ((hi16_offset << 1) & 0x30000);
-  score_bfd_put_32 (abfd, hi16_value, hi16_rel_addr);
+  if (hi16_rel_addr)
+    {
+      if ((uvalue > -0x8000) && (uvalue < 0x7fff))
+	hi16_offset = 0;
+      else
+	hi16_offset = (uvalue >> 16) & 0x7fff;
+      hi16_value = ((hi16_value & ~0x37fff)
+		    | (hi16_offset & 0x7fff) | ((hi16_offset << 1) & 0x30000));
+      score_bfd_put_32 (abfd, hi16_value, hi16_rel_addr);
+    }
   offset = (uvalue & 0xffff) << 1;
   addend = (addend & ~0x37fff) | (offset & 0x7fff) | ((offset << 1) & 0x30000);
   score_bfd_put_32 (abfd, addend, (bfd_byte *) data + reloc_entry->address);
@@ -2407,7 +2418,7 @@ s3_bfd_score_elf_relocate_section (bfd *output_bfd,
       if (bfd_link_pic (info))
 	{
 	  asection * p;
-	  const struct elf_backend_data *bed = get_elf_backend_data (output_bfd);
+	  elf_backend_data *bed = get_elf_backend_data (output_bfd);
 
 	  for (p = output_bfd->sections; p ; p = p->next)
 	    if ((p->flags & SEC_EXCLUDE) == 0
@@ -2671,7 +2682,8 @@ s3_bfd_score_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_SCORE_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -3242,7 +3254,7 @@ s3_bfd_score_elf_late_size_sections (bfd *output_bfd, struct bfd_link_info *info
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = strlen (ELF_DYNAMIC_INTERPRETER) + 1;
 	  s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
@@ -3549,7 +3561,8 @@ s3_bfd_score_elf_finish_dynamic_symbol (bfd *output_bfd,
 /* Finish up the dynamic sections.  */
 static bool
 s3_bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
-					  struct bfd_link_info *info)
+					  struct bfd_link_info *info,
+					  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn;
@@ -3862,19 +3875,19 @@ s3_bfd_score_elf_ignore_discarded_relocs (asection *sec)
 static asection *
 s3_bfd_score_elf_gc_mark_hook (asection *sec,
 			       struct bfd_link_info *info,
-			       Elf_Internal_Rela *rel,
+			       struct elf_reloc_cookie *cookie,
 			       struct elf_link_hash_entry *h,
-			       Elf_Internal_Sym *sym)
+			       unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_SCORE_GNU_VTINHERIT:
       case R_SCORE_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Support for core dump NOTE sections.  */
@@ -4011,12 +4024,11 @@ s3_elf32_score_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((ibfd->flags & DYNAMIC) != 0)
     return true;
 
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
+
   in_flags  = elf_elfheader (ibfd)->e_flags;
   out_flags = elf_elfheader (obfd)->e_flags;
-
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return true;
 
   in_flags = elf_elfheader (ibfd)->e_flags;
   out_flags = elf_elfheader (obfd)->e_flags;
@@ -4216,12 +4228,13 @@ _bfd_score_elf_finish_dynamic_symbol (bfd *output_bfd,
 
 static bool
 _bfd_score_elf_finish_dynamic_sections (bfd *output_bfd,
-					struct bfd_link_info *info)
+					struct bfd_link_info *info,
+					bfd_byte *buf)
 {
   if (bfd_get_mach (output_bfd) == bfd_mach_score3)
-    return s3_bfd_score_elf_finish_dynamic_sections (output_bfd, info);
+    return s3_bfd_score_elf_finish_dynamic_sections (output_bfd, info, buf);
   else
-    return s7_bfd_score_elf_finish_dynamic_sections (output_bfd, info);
+    return s7_bfd_score_elf_finish_dynamic_sections (output_bfd, info, buf);
 }
 
 static bool
@@ -4299,14 +4312,14 @@ _bfd_score_elf_ignore_discarded_relocs (asection *sec)
 static asection *
 _bfd_score_elf_gc_mark_hook (asection *sec,
 			     struct bfd_link_info *info,
-			     Elf_Internal_Rela *rel,
+			     struct elf_reloc_cookie *cookie,
 			     struct elf_link_hash_entry *h,
-			     Elf_Internal_Sym *sym)
+			     unsigned int symndx)
 {
   if (bfd_get_mach (info->input_bfds) == bfd_mach_score3)
-    return s3_bfd_score_elf_gc_mark_hook (sec, info, rel, h, sym);
+    return s3_bfd_score_elf_gc_mark_hook (sec, info, cookie, h, symndx);
   else
-    return s7_bfd_score_elf_gc_mark_hook (sec, info, rel, h, sym);
+    return s7_bfd_score_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 static bool

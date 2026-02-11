@@ -1,5 +1,5 @@
 /* Main program of GNU linker.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
    This file is part of the GNU Binutils.
@@ -40,10 +40,7 @@
 #include "ldfile.h"
 #include "ldemul.h"
 #include "ldctor.h"
-#if BFD_SUPPORTS_PLUGINS
 #include "plugin.h"
-#include "plugin-api.h"
-#endif /* BFD_SUPPORTS_PLUGINS */
 
 /* Somewhere above, sys/stat.h got included.  */
 #if !defined(S_ISDIR) && defined(S_IFDIR)
@@ -54,6 +51,10 @@
 
 #if defined (HAVE_GETRUSAGE)
 #include <sys/resource.h>
+#endif
+
+#if defined (HAVE_MALLINFO2) || defined (HAVE_MALLINFO)
+#include <malloc.h>
 #endif
 
 #ifndef TARGET_SYSTEM_ROOT
@@ -70,7 +71,7 @@ char *default_target;
 const char *output_filename = "a.out";
 
 /* Name this program was invoked by.  */
-char *program_name;
+const char *program_name;
 
 /* The prefix for system library directories.  */
 const char *ld_sysroot;
@@ -158,6 +159,7 @@ static struct bfd_link_callbacks link_callbacks =
   info_msg,
   minfo,
   ldlang_override_segment_assignment,
+  ldlang_nearby_section,
   ldlang_ctf_acquire_strings,
   NULL,
   ldlang_ctf_new_dynsym,
@@ -228,13 +230,11 @@ ld_cleanup (void)
       inext = ibfd->link.next;
       bfd_close_all_done (ibfd);
     }
-#if BFD_SUPPORTS_PLUGINS
   /* Note - we do not call ld_plugin_start (PHASE_PLUGINS) here as this
      function is only called when the linker is exiting - ie after any
      stats may have been reported, and potentially in the middle of a
      phase where we have already started recording plugin stats.  */
   plugin_call_cleanup ();
-#endif
   if (output_filename && delete_output_file_on_failure)
     unlink_if_ordinary (output_filename);
 }
@@ -293,6 +293,11 @@ struct ld_phase_data
   struct rusage   begin;
   struct rusage   use;
 #endif
+
+#if defined (HAVE_MALLINFO2) || defined (HAVE_MALLINFO)
+  size_t          begin_blks;
+  size_t          used_blks;
+#endif
 };
 
 static struct ld_phase_data phase_data [NUM_PHASES] =
@@ -304,7 +309,14 @@ static struct ld_phase_data phase_data [NUM_PHASES] =
   [PHASE_PLUGINS] = { .name = "plugins" },
   [PHASE_PROCESS] = { .name = "processing files" },
   [PHASE_WRITE]   = { .name = "write" },
+  [PHASE_DEBUG]   = { .name = "debug" }
 };
+
+void
+ld_set_phase_name (ld_phase phase, const char * name)
+{
+  phase_data[phase].name = name ? name : "<unnamed>";
+}
 
 void
 ld_start_phase (ld_phase phase)
@@ -349,6 +361,14 @@ ld_start_phase (ld_phase phase)
   
   memcpy (& pd->begin, & usage, sizeof usage);
 #endif
+
+#if defined (HAVE_MALLINFO2)
+  struct mallinfo2 mi2 = mallinfo2 ();
+  pd->begin_blks = mi2.uordblks;
+#elif defined (HAVE_MALLINFO)
+  struct mallinfo mi = mallinfo ();
+  pd->begin_blks = mi.uordblks;
+#endif
 }
 
 void
@@ -358,10 +378,14 @@ ld_stop_phase (ld_phase phase)
 
   if (!pd->started)
     {
-      /* We set the broken flag to indicate that the data
-	 recorded for this phase is inconsistent.  */
-      pd->broken = true;
-      return;
+      /* It does not matter if the debug phase has not been started.  */
+      if (phase != PHASE_DEBUG)
+	{
+	  /* We set the broken flag to indicate that the data
+	     recorded for this phase is inconsistent.  */
+	  pd->broken = true;
+	  return;
+	}
     }
 
   pd->duration += get_run_time () - pd->start;
@@ -425,6 +449,33 @@ ld_stop_phase (ld_phase phase)
 	pd->use.ru_maxrss += usage.ru_maxrss - pd->begin.ru_maxrss;
     }
 #endif
+
+#if defined (HAVE_MALLINFO2)
+  /* FIXME: How do we know if mallinfo2() has failed ?  */
+  struct mallinfo2 mi2 = mallinfo2 ();
+  pd->used_blks += mi2.uordblks - pd->begin_blks;
+#elif defined (HAVE_MALLINFO)
+  struct mallinfo mi = mallinfo ();
+  pd->used_blks += mi.uordblks - pd->begin_blks;
+#endif
+
+  if (phase == PHASE_DEBUG)
+    {
+      /* FIXME: Should we report other resources as well ?  */
+      /* FIXME: Can we integrate this code with report_phases() ?  */
+
+      fprintf (stderr, "stats: %s: cpu time: %ld ", pd->name, pd->duration);
+#if defined (HAVE_GETRUSAGE)
+      fprintf (stderr, "rss: %ld ", pd->use.ru_maxrss);
+#endif
+#if defined (HAVE_MALLINFO2) || defined (HAVE_MALLINFO)
+      fprintf (stderr, "memory: %ld", (long) pd->used_blks);
+#endif
+      fprintf (stderr, "\n");
+
+      /* Reset the counters to zero.  */
+      memset (((char *) pd) + sizeof (pd->name), 0, (sizeof (* pd)) - sizeof (pd->name));
+    }
 }
 
 static void
@@ -477,9 +528,12 @@ report_phases (FILE * file, time_t * start, char ** argv)
 #if defined (HAVE_GETRUSAGE)  
     /* Note: keep these columns in sync with the
        information recorded in ld_stop_phase().  */
-    COLUMNS_FIELD ("memory", "(KiB)")
+    COLUMNS_FIELD ("rss", "(KiB)")
     COLUMNS_FIELD ("user time", "(seconds)")
     COLUMNS_FIELD ("system time", "(seconds)")
+#endif
+#if defined (HAVE_MALLINFO2) || defined (HAVE_MALLINFO)
+    COLUMNS_FIELD ("memory", "(KiB)")
 #endif
   };
 
@@ -489,7 +543,12 @@ report_phases (FILE * file, time_t * start, char ** argv)
 
   size_t maxwidth = 1;
   for (i = 0; i < NUM_PHASES; i++)
-    maxwidth = max (maxwidth, strlen (phase_data[i].name));
+    {
+      struct ld_phase_data * pd = phase_data + i;
+
+      if (pd->name != NULL)
+	maxwidth = max (maxwidth, strlen (pd->name));
+    }
 
   fprintf (file, "%s", STATS_PREFIX);
 
@@ -547,6 +606,9 @@ report_phases (FILE * file, time_t * start, char ** argv)
       /* This should not be needed...  */      
       const char * name = pd->name ? pd->name : "<unnamed>";
 
+      if (i == PHASE_DEBUG)
+	continue;
+
       if (pd->broken)
 	{
 	  fprintf (file, "%s %s: %s",
@@ -556,7 +618,7 @@ report_phases (FILE * file, time_t * start, char ** argv)
 
       fprintf (file, "%s", STATS_PREFIX);
 
-      /* Care must be taken to keep the lines below in sync with
+      /* Care must be taken to keep the numbers below in sync with
 	 entries in the columns_info array.
 	 FIXME: There ought to be a better way to do this...  */
       COLUMN_ENTRY (name, "s", 0);
@@ -566,10 +628,26 @@ report_phases (FILE * file, time_t * start, char ** argv)
       COLUMN_ENTRY ((int64_t) pd->use.ru_utime.tv_sec, PRId64, 3);
       COLUMN_ENTRY ((int64_t) pd->use.ru_stime.tv_sec, PRId64, 4);
 #endif
+#if defined (HAVE_MALLINFO2) || defined (HAVE_MALLINFO)
+      COLUMN_ENTRY ((int64_t) pd->used_blks / 1024, PRId64, 5);
+#endif
       fprintf (file, "\n");
     }
 
   fflush (file);
+}
+
+static void
+set_program_name (const char *argv0)
+{
+  program_name = argv0;
+
+#if defined (__linux__) && _POSIX_VERSION >= 200112L
+  char name[PATH_MAX];
+  ssize_t len = readlink ("/proc/self/exe", name, ARRAY_SIZE (name));
+  if (len > 0 && (size_t)len < ARRAY_SIZE (name))
+    program_name = xmemdup (name, len, len + 1);
+#endif
 }
 
 int
@@ -586,7 +664,7 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
-  program_name = argv[0];
+  set_program_name (argv[0]);
   xmalloc_set_program_name (program_name);
 
   /* Check the LD_STATS environment variable before parsing the command line
@@ -725,12 +803,10 @@ main (int argc, char **argv)
 
   ld_stop_phase (PHASE_PARSE);
   
-#if BFD_SUPPORTS_PLUGINS
   ld_start_phase (PHASE_PLUGINS);
   /* Now all the plugin arguments have been gathered, we can load them.  */
   plugin_load_plugins ();
   ld_stop_phase (PHASE_PLUGINS);
-#endif /* BFD_SUPPORTS_PLUGINS */
 
   ld_start_phase (PHASE_PARSE);
 
@@ -1308,7 +1384,6 @@ add_archive_element (struct bfd_link_info *info,
      (if enabled) may possibly alter it to point to a replacement
      BFD, but we still want to output the original BFD filename.  */
   orig_input = *input;
-#if BFD_SUPPORTS_PLUGINS
   /* Don't claim a fat IR object if no IR object should be claimed.  */
   if (link_info.lto_plugin_active
       && (!no_more_claiming
@@ -1337,7 +1412,6 @@ add_archive_element (struct bfd_link_info *info,
     }
   else
     cmdline_check_object_only_section (input->the_bfd, false);
-#endif /* BFD_SUPPORTS_PLUGINS */
 
   if (link_info.input_bfds_tail == &input->the_bfd->link.next
       || input->the_bfd->link.next != NULL)

@@ -1,6 +1,6 @@
 /* tc-wasm32.c -- Assembler code for the wasm32 target.
 
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

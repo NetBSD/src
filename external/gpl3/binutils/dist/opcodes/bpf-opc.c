@@ -1,5 +1,5 @@
 /* bpf-opc.c - BPF opcodes.
-   Copyright (C) 2023-2025 Free Software Foundation, Inc.
+   Copyright (C) 2023-2026 Free Software Foundation, Inc.
 
    Contributed by Oracle Inc.
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2026 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -110,6 +110,7 @@ Gprofng::usage ()
     " gprofng display gui     invoke the GUI to graphically analyze the results.\n"
 */
     " gprofng display src     display source or disassembly with compiler annotations.\n"
+    " gprofng display gmon    convert a gmon file into a gprofng experiment.\n"
     "\n"
     "Miscellaneous commands\n"
     "\n"
@@ -190,6 +191,7 @@ Gprofng::exec_cmd (char *tool_name, int argc, char **argv)
     { "display", "gui", "gprofng-display-gui"},
     { "display", "html", "gprofng-display-html"},
     { "display", "src", "gprofng-display-src"},
+    { "display", "gmon", "gprofng-gmon"},
     { NULL, NULL}
   };
 

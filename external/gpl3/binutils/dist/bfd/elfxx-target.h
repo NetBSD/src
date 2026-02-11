@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -46,8 +46,8 @@
 #ifndef bfd_elfNN_canonicalize_reloc
 #define bfd_elfNN_canonicalize_reloc	_bfd_elf_canonicalize_reloc
 #endif
-#ifndef bfd_elfNN_set_reloc
-#define bfd_elfNN_set_reloc		_bfd_generic_set_reloc
+#ifndef bfd_elfNN_finalize_section_relocs
+#define bfd_elfNN_finalize_section_relocs _bfd_generic_finalize_section_relocs
 #endif
 #ifndef bfd_elfNN_find_nearest_line
 #define bfd_elfNN_find_nearest_line	_bfd_elf_find_nearest_line
@@ -141,9 +141,6 @@
 #endif
 #ifndef elf_backend_stack_align
 #define elf_backend_stack_align 16
-#endif
-#ifndef elf_backend_strtab_flags
-#define elf_backend_strtab_flags 0
 #endif
 #ifndef elf_backend_use_mmap
 #define elf_backend_use_mmap false
@@ -278,11 +275,10 @@
 #define bfd_elfNN_bfd_define_start_stop bfd_elf_define_start_stop
 #endif
 #ifndef bfd_elfNN_bfd_final_link
-#define bfd_elfNN_bfd_final_link	bfd_elf_final_link
+#define bfd_elfNN_bfd_final_link	_bfd_elf_final_link
 #endif
-#ifndef bfd_elfNN_bfd_merge_sections
-#define bfd_elfNN_bfd_merge_sections	_bfd_elf_merge_sections
-#endif
+#undef TARGET_MERGE_SECTIONS
+#define TARGET_MERGE_SECTIONS true
 #else /* ! defined (elf_backend_relocate_section) */
 /* If no backend relocate_section routine, use the generic linker.
    Note - this will prevent the port from being able to use some of
@@ -305,9 +301,6 @@
 #endif
 #ifndef bfd_elfNN_bfd_final_link
 #define bfd_elfNN_bfd_final_link	_bfd_generic_final_link
-#endif
-#ifndef bfd_elfNN_bfd_merge_sections
-#define bfd_elfNN_bfd_merge_sections	bfd_generic_merge_sections
 #endif
 #endif /* ! defined (elf_backend_relocate_section) */
 
@@ -344,7 +337,7 @@
 #endif
 
 #ifndef bfd_elfNN_print_symbol
-#define bfd_elfNN_print_symbol bfd_elf_print_symbol
+#define bfd_elfNN_print_symbol _bfd_elf_print_symbol
 #endif
 
 #ifndef elf_symbol_leading_char
@@ -373,6 +366,10 @@
 
 #ifndef ELF_OSABI
 #define ELF_OSABI ELFOSABI_NONE
+#endif
+
+#ifndef ELF_OSABI_EXACT
+#define ELF_OSABI_EXACT 0
 #endif
 
 #ifndef ELF_MAXPAGESIZE
@@ -552,7 +549,34 @@
 #define elf_backend_obj_attrs_arg_type		NULL
 #endif
 #ifndef elf_backend_obj_attrs_section_type
-#define elf_backend_obj_attrs_section_type		SHT_GNU_ATTRIBUTES
+#define elf_backend_obj_attrs_section_type	SHT_GNU_ATTRIBUTES
+#endif
+#ifndef elf_backend_default_obj_attr_version
+#define elf_backend_default_obj_attr_version	OBJ_ATTR_V1
+#endif
+#ifndef elf_backend_obj_attrs_version_dec
+#define elf_backend_obj_attrs_version_dec	_bfd_obj_attrs_version_dec
+#endif
+#ifndef elf_backend_obj_attrs_version_enc
+#define elf_backend_obj_attrs_version_enc	_bfd_obj_attrs_version_enc
+#endif
+#ifndef elf_backend_obj_attr_v2_known_subsections
+#define elf_backend_obj_attr_v2_known_subsections	NULL
+#endif
+#ifndef elf_backend_obj_attr_v2_known_subsections_size
+#define elf_backend_obj_attr_v2_known_subsections_size	0
+#endif
+#ifndef elf_backend_translate_gnu_props_to_obj_attrs
+#define elf_backend_translate_gnu_props_to_obj_attrs	NULL
+#endif
+#ifndef elf_backend_translate_obj_attrs_to_gnu_props
+#define elf_backend_translate_obj_attrs_to_gnu_props	NULL
+#endif
+#ifndef elf_backend_obj_attr_v2_default_value
+#define elf_backend_obj_attr_v2_default_value	NULL
+#endif
+#ifndef elf_backend_obj_attr_v2_merge
+#define elf_backend_obj_attr_v2_merge	NULL
 #endif
 #ifndef elf_backend_obj_attrs_order
 #define elf_backend_obj_attrs_order		NULL
@@ -565,6 +589,9 @@
 #endif
 #ifndef elf_backend_merge_gnu_properties
 #define elf_backend_merge_gnu_properties	NULL
+#endif
+#ifndef elf_backend_setup_object_attributes
+#define elf_backend_setup_object_attributes	_bfd_elf_link_setup_object_attributes
 #endif
 #ifndef elf_backend_setup_gnu_properties
 #define elf_backend_setup_gnu_properties	_bfd_elf_link_setup_gnu_properties
@@ -658,9 +685,6 @@
 #endif
 #ifndef elf_backend_can_make_lsda_relative_eh_frame
 #define elf_backend_can_make_lsda_relative_eh_frame	_bfd_elf_can_make_relative
-#endif
-#ifndef elf_backend_can_make_multiple_eh_frame
-#define elf_backend_can_make_multiple_eh_frame 0
 #endif
 #ifndef elf_backend_encode_eh_address
 #define elf_backend_encode_eh_address		_bfd_elf_encode_eh_address
@@ -806,26 +830,29 @@
 #ifndef elf_backend_symbol_section_index
 #define elf_backend_symbol_section_index NULL
 #endif
- 
+
 #ifndef elf_match_priority
 #define elf_match_priority \
-  (ELF_ARCH == bfd_arch_unknown ? 2 : ELF_OSABI == ELFOSABI_NONE ? 1 : 0)
+  (ELF_ARCH == bfd_arch_unknown ? 2 \
+   : ELF_OSABI == ELFOSABI_NONE || !ELF_OSABI_EXACT ? 1 \
+   : 0)
 #endif
 
-extern const struct elf_size_info _bfd_elfNN_size_info;
+extern const struct elf_size_info _bfd_elfNN_size_info ATTRIBUTE_HIDDEN;
 
 static const struct elf_backend_data elfNN_bed =
 {
-  ELF_ARCH,			/* arch */
-  ELF_TARGET_ID,		/* target_id */
-  ELF_TARGET_OS,		/* target_os */
-  ELF_MACHINE_CODE,		/* elf_machine_code */
-  ELF_OSABI,			/* elf_osabi  */
-  ELF_MAXPAGESIZE,		/* maxpagesize */
-  ELF_MINPAGESIZE,		/* minpagesize */
-  ELF_COMMONPAGESIZE,		/* commonpagesize */
-  ELF_P_ALIGN,			/* p_align */
-  ELF_DYNAMIC_SEC_FLAGS,	/* dynamic_sec_flags */
+  ELF_ARCH,
+  ELF_OSABI,
+  ELF_MACHINE_CODE,
+  ELF_TARGET_ID,
+  ELF_TARGET_OS,
+  ELF_OSABI_EXACT,
+  ELF_MAXPAGESIZE,
+  ELF_MINPAGESIZE,
+  ELF_COMMONPAGESIZE,
+  ELF_P_ALIGN,
+  ELF_DYNAMIC_SEC_FLAGS,
   elf_backend_arch_data,
   elf_info_to_howto,
   elf_info_to_howto_rel,
@@ -899,7 +926,6 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_eh_frame_address_size,
   elf_backend_can_make_relative_eh_frame,
   elf_backend_can_make_lsda_relative_eh_frame,
-  elf_backend_can_make_multiple_eh_frame,
   elf_backend_encode_eh_address,
   elf_backend_write_section,
   elf_backend_add_glibc_version_dependency,
@@ -932,10 +958,20 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_obj_attrs_section,
   elf_backend_obj_attrs_arg_type,
   elf_backend_obj_attrs_section_type,
+  elf_backend_default_obj_attr_version,
+  elf_backend_obj_attrs_version_dec,
+  elf_backend_obj_attrs_version_enc,
+  elf_backend_obj_attr_v2_known_subsections,
+  elf_backend_obj_attr_v2_known_subsections_size,
+  elf_backend_translate_gnu_props_to_obj_attrs,
+  elf_backend_translate_obj_attrs_to_gnu_props,
+  elf_backend_obj_attr_v2_default_value,
+  elf_backend_obj_attr_v2_merge,
   elf_backend_obj_attrs_order,
   elf_backend_obj_attrs_handle_unknown,
   elf_backend_parse_gnu_properties,
   elf_backend_merge_gnu_properties,
+  elf_backend_setup_object_attributes,
   elf_backend_setup_gnu_properties,
   elf_backend_fixup_gnu_properties,
   elf_backend_compact_eh_encoding,
@@ -946,7 +982,6 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_write_secondary_reloc_section,
   elf_backend_static_tls_alignment,
   elf_backend_stack_align,
-  elf_backend_strtab_flags,
   elf_backend_collect,
   elf_backend_type_change_ok,
   elf_backend_may_use_rel_p,
@@ -1027,6 +1062,7 @@ const bfd_target TARGET_BIG_SYM =
 
   /* TRUE if unused section symbols should be kept.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS,
+  TARGET_MERGE_SECTIONS,
 
   /* Routines to byte-swap various sized integers from the data sections */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
@@ -1132,6 +1168,7 @@ const bfd_target TARGET_LITTLE_SYM =
 
   /* TRUE if unused section symbols should be kept.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS,
+  TARGET_MERGE_SECTIONS,
 
   /* Routines to byte-swap various sized integers from the data sections */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,

@@ -1,5 +1,5 @@
 /* tc-metag.c -- Assembler for the Imagination Technologies Meta.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of GAS, the GNU Assembler.

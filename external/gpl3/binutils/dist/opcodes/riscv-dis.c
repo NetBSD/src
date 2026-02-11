@@ -1,5 +1,5 @@
 /* RISC-V disassembler
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -1612,7 +1612,7 @@ typedef enum
 
 /* Valid RISCV disassembler options.  */
 
-static struct
+static const struct
 {
   const char *name;
   const char *description;

@@ -348,7 +348,7 @@ typedef struct
     (bfd *, void *, void *);
 
   unsigned int (*_bfd_coff_swap_scnhdr_out)
-    (bfd *, void *, void *);
+    (bfd *, void *, void *, const asection *);
 
   unsigned int _bfd_filhsz;
   unsigned int _bfd_aoutsz;
