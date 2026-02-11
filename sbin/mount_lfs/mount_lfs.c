@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.39 2016/02/21 22:51:29 christos Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.40 2026/02/11 14:28:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.39 2016/02/21 22:51:29 christos Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.40 2026/02/11 14:28:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ mount_lfs_parseargs(int argc, char *argv[],
 		case 'o':
 			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
-				err(1, "getmntopts");
+				err(EXIT_FAILURE, "getmntopts");
 			freemntopts(mp);
 			break;
 		case 's':
@@ -167,7 +167,7 @@ mount_lfs(int argc, char *argv[])
 	oldflags = MNT_RDONLY; /* If not mounted, pretend r/o */
 	if (mntflags & MNT_UPDATE) {
 		if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
-			err(1, "getmntinfo");
+			err(EXIT_FAILURE, "getmntinfo");
 		for (i = 0; i < mntsize; i++) {
 			if (strcmp(mntbuf[i].f_mntfromname, args.fspec) == 0) {
 				oldflags = mntbuf[i].f_flag;
@@ -192,7 +192,7 @@ mount_lfs(int argc, char *argv[])
 			errcause = strerror(errno);
 			break;
 		}
-		errx(1, "%s on %s: %s", args.fspec, fs_name, errcause);
+		errx(EXIT_FAILURE, "%s on %s: %s", args.fspec, fs_name, errcause);
 	}
 
 #ifdef WANT_CLEANER
@@ -211,7 +211,7 @@ mount_lfs(int argc, char *argv[])
 	__USE(oldflags);
 #endif /* WANT_CLEANER */
 
-	exit(0);
+	return EXIT_SUCCESS;
 }
 
 #ifdef WANT_CLEANER
@@ -224,7 +224,7 @@ kill_daemon(char *pidname)
 
 	fp = fopen(pidname, "r");
 	if (fp) {
-		fgets(s, 80, fp);
+		fgets(s, sizeof(s), fp);
 		pid = atoi(s);
 		if (pid)
 			kill(pid, SIGINT);
@@ -242,7 +242,7 @@ kill_cleaner(char *name)
 	/* Parent first */
 	asprintf(&pidname, "%slfs_cleanerd:m:%s.pid", _PATH_VARRUN, name);
 	if (!pidname)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	off = strlen(_PATH_VARRUN);
 	while((cp = strchr(pidname + off, '/')) != NULL)
 		*cp = '|';
@@ -252,7 +252,7 @@ kill_cleaner(char *name)
 	/* Then child */
 	asprintf(&pidname, "%slfs_cleanerd:s:%s.pid", _PATH_VARRUN, name);
 	if (!pidname)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	off = strlen(_PATH_VARRUN);
 	while((cp = strchr(pidname + off, '/')) != NULL)
 		*cp = '|';
@@ -283,7 +283,7 @@ invoke_cleaner(char *name)
 	*ap = NULL;
 
 	execv(args[0], __UNCONST(args));
-	err(1, "exec %s", _PATH_LFS_CLEANERD);
+	err(EXIT_FAILURE, "exec %s", _PATH_LFS_CLEANERD);
 }
 #endif /* WANT_CLEANER */
 
@@ -293,5 +293,5 @@ usage(void)
 	(void)fprintf(stderr,
 		"usage: %s [-bdins] [-N nsegs] [-o options] special node\n",
 		getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
