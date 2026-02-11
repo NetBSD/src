@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.520 2026/02/10 18:53:34 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.521 2026/02/11 14:25:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.520 2026/02/10 18:53:34 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.521 2026/02/11 14:25:52 christos Exp $");
 
 
 #ifdef USE_SELECT
@@ -967,7 +967,7 @@ MaybeSubMake(const char *cmd)
 {
 	static char *make;
 	static size_t len;
-	char *p;
+	const char *p;
 	
 	if (make == NULL) {
 		make = bmake_strdup(progname);
