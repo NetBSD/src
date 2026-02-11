@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.462 2025/12/28 18:43:25 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.463 2026/02/11 22:15:40 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -8,7 +8,7 @@ by convention, named with the suffix ".mk".
 Other sources of relevant documentation are BUILDING in the top
 level of the NetBSD source tree, and the mk.conf(5) man page.
 
-Note: this file is not intended to replace reading through the .mk
+Note: this README file is not intended to replace reading through the .mk
 files for anything tricky.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -16,8 +16,8 @@ files for anything tricky.
 RANDOM THINGS WORTH KNOWING:
 
 The files are simply C-style #include files, and pretty much behave like
-you'd expect.  The syntax is slightly different in that a single '.' is
-used instead of the hash mark, i.e. ".include <bsd.prog.mk>".
+you would expect.  The syntax is slightly different in that a single '.'
+is used instead of the hash mark, i.e. ".include <bsd.prog.mk>".
 
 One difference that will save you lots of debugging time is that inclusion
 of the file is normally done at the *end* of the Makefile.  The reason for
@@ -42,8 +42,8 @@ variable assignment is the overriding one, i.e. if the Makefile has:
 the command "make b" will echo "bar".  This is for compatibility with the
 way the V7 make behaved.
 
-It's fairly difficult to make the BSD .mk files work when you're building
-multiple programs in a single directory.  It's a lot easier to split up the
+It is fairly difficult to make the BSD .mk files work when you're building
+multiple programs in a single directory.  It is a lot easier to split up the
 programs than to deal with the problem.  Most of the agony comes from making
 the "obj" directory stuff work right, not because we switched to a new version
 of make.  So, don't get mad at us, figure out a better way to handle multiple
@@ -51,10 +51,10 @@ architectures so we can quit using the symbolic link stuff.  (Imake doesn't
 count.)
 
 The file .depend in the source directory is expected to contain dependencies
-for the source files.  This file is read automatically by make after reading
-the Makefile.
+for the source files.  The .depend file is read automatically by make after
+reading the Makefile.
 
-The variable DESTDIR works as before.  It's not set anywhere but will change
+The variable DESTDIR works as before.  It is not set anywhere but will change
 the tree where the file gets installed.
 
 The profiled libraries are no longer built in a different directory than
@@ -161,7 +161,7 @@ DESTDIR		Directory to contain the built NetBSD system.  If set,
 
 		Note: build.sh will provide a default of
 		"destdir.MACHINE" (in the top-level .OBJDIR) unless run
-		in `expert' mode with the -E option.
+		in 'expert' mode with the -E option.
 
 		Default: Empty string if USETOOLS=yes; otherwise unset.
 
@@ -170,7 +170,7 @@ RELEASEDIR	If set, specifies the directory to which a release(7)
 		If specified, must be an absolute path.
 
 		Note: build.sh will provide a default of "releasedir" (in
-		the top-level .OBJDIR) unless run in `expert' mode with
+		the top-level .OBJDIR) unless run in 'expert' mode with
 		the -E option.
 
 		Default: Unset.
@@ -248,7 +248,7 @@ TODO: NOFULLRELRO should just be a defined test for consistency.
 =-=-=-=-=   sys.mk   =-=-=-=-=
 
 The include file <sys.mk> has the default rules for all makes, in the BSD
-environment or otherwise.  You probably don't want to touch this file.
+environment or otherwise.  You probably don't want to touch <sys.mk>.
 
 =-=-=-=-=   bsd.own.mk   =-=-=-=-=
 
@@ -256,7 +256,7 @@ The include file <bsd.own.mk> contains source tree configuration parameters,
 such as the owners, groups, etc. for both manual pages and binaries, and
 a few global "feature configuration" parameters.
 
-It has no targets.
+<bsd.own.mk> has no targets.
 
 To get system-specific configuration parameters, <bsd.own.mk> will try to
 include the mk.conf(5) file specified by the MAKECONF variable, which may
@@ -670,17 +670,68 @@ centralized place.
 they use the same default owners etc. as the rest of the tree.
 
 
+=-=-=-=-=   bsd.buildinstall.mk  =-=-=-=-=
+
+The include file <bsd.buildinstall.mk> defines the 'build_install' target
+to compute the list of subdirectories delimited by .WAIT barriers, and
+create an appropriate ordered list of commands in the 'build_install' target.
+
+<bsd.buildinstall.mk> uses the following variables:
+
+SUBDIR		A list of subdirectories that should be built as well.
+		Each of the targets will execute the same target in the
+		subdirectories.
+		See the description of SUBDIR in <bsd.subdir.mk> for
+		an explanation of the .WAIT token.
+
+
+=-=-=-=-=   bsd.clang-analyze.mk   =-=-=-=-=
+
+The include file <bsd.clang-analyze.mk> defines the 'analyze' target
+to run clang's static analyzer "clang-analyzer".
+
+<bsd.clang-analyze.mk> uses the following variables:
+
+CLANG_ANALYZE_CFLAGS
+		CFLAGS for clang-analyzer.
+		Defaults to CFLAGS with -Wa,--fata-warnings removed.
+
+CLANG_ANALYZE_CHECKERS
+		clang-analyzer checks to run.
+		Default: core, decode, security, unix.
+
+CLANG_ANALYZE_CXXFLAGS
+		CXXFLAGS for clang-analyzer.
+		Defaults to CXXFLAGS with -Wa,--fata-warnings removed.
+
+CLANG_ANALYZE_FLAGS
+		Flags for clang-analyzer, includes --analyze and
+		analyzers listed in CLANG_ANALYZE_CHECKERS.
+
+<bsd.clang-analyzers.mk> defines the following variables:
+
+CLANG_ANALYZE_OUTPUT
+		List of filenames to create with ".clang-analyzer" suffix,
+		derived from CLANG_ANALYZE_SRCS.
+
+CLANG_ANALYZE_SRCS
+		List of source files to analyser, derived from entries in
+		SRCS and DPSRCS that have a suffix of ".c", ".C", ".cc",
+		".cpp", or ".cxx".
+
+
 =-=-=-=-=   bsd.clean.mk   =-=-=-=-=
 
-The include file <bsd.clean.mk> defines the clean and cleandir
-targets.  It uses the following variables:
+The include file <bsd.clean.mk> defines the 'clean' and 'cleandir' targets.
 
-CLEANFILES	Files to remove for both the clean and cleandir targets.
+<bsd.clean.mk> uses the following variables:
 
-CLEANDIRFILES	Files to remove for the cleandir target, but not for
-		the clean target.
+CLEANFILES	Files to remove for both the 'clean' and 'cleandir' targets.
 
-MKCLEANSRC	Controls whether or not the clean and cleandir targets
+CLEANDIRFILES	Files to remove for the 'cleandir' target, but not for
+		the 'clean' target.
+
+MKCLEANSRC	Controls whether or not the 'clean' and 'cleandir' targets
 		will delete files from both the object directory,
 		${.OBJDIR}, and the source directory, ${.CURDIR}.
 
@@ -703,7 +754,7 @@ MKCLEANSRC	Controls whether or not the clean and cleandir targets
 		are no stray files in the source directories, then you
 		may set MKCLEANSRC=no to save some time.
 
-MKCLEANVERIFY	Controls whether or not the clean and cleandir targets
+MKCLEANVERIFY	Controls whether or not the 'clean' and 'cleandir' targets
 		will verify that files have been deleted.
 
 		If MKCLEANVERIFY is set to "no", then the files will
@@ -719,8 +770,8 @@ MKCLEANVERIFY	Controls whether or not the clean and cleandir targets
 		read-only file systems, or the like, then you may set
 		MKCLEANVERIFY=no to save some time.
 
-To use the clean and cleandir targets defined in <bsd.clean.mk>, other
-Makefiles or bsd.*.mk files should append file names to the CLEANFILES
+To use the 'clean' and 'cleandir' targets defined in <bsd.clean.mk>, other
+Makefiles or <bsd.*.mk> files should append file names to the CLEANFILES
 or CLEANDIRFILES variables.  For example:
 
 	    CLEANFILES+= a.out
@@ -730,26 +781,52 @@ or CLEANDIRFILES variables.  For example:
 
 The files listed in CLEANFILES and CLEANDIRFILES must not be
 directories, because the potential risk from running "rm -rf" commands
-in bsd.clean.mk is considered too great.  If you want to recursively
+in <bsd.clean.mk> is considered too great.  If you want to recursively
 delete a directory as part of "make clean" or "make cleandir" then you
 need to provide your own target.
+
 
 =-=-=-=-=   bsd.dep.mk   =-=-=-=-=
 
 The include file <bsd.dep.mk> contains the default targets for building
-.depend files.  It creates .d files from entries in SRCS and DPSRCS
+.depend files.  <bsd.dep.mk> creates .d files from entries in SRCS and DPSRCS
 that are C, C++, or Objective C source files, and builds .depend from the
 .d files.  All other files in SRCS and all of DPSRCS will be used as
 dependencies for the .d files.  In order for this to function correctly,
 it should be .included after all other .mk files and directives that may
-modify SRCS or DPSRCS.  It uses the following variables:
+modify SRCS or DPSRCS.
+
+<bsd.dep.mk> uses the following variables:
 
 SRCS		List of source files to build the program.
 
 DPSRCS		List of source files which are needed for generating
 		dependencies, but are not needed in ${SRCS}.
 
-NODPSRCS	TODO
+NODPSRCS	List of source files to not add to .depend.
+
+
+=-=-=-=-=   bsd.doc.mk  =-=-=-=-=
+
+The include file <bsd.doc.mk> contains the targets for building
+roff documentation.
+
+TODO: variables
+
+
+=-=-=-=-=   bsd.dtb.mk  =-=-=-=-=
+
+The include file <bsd.dtb.mk> contains the targets for building
+device tree blobs.
+
+TODO: variables
+
+
+=-=-=-=-=   bsd.endian.mk  =-=-=-=-=
+
+The include file <bsd.endian.mk> determines the target endian and
+defines the variable TARGET_ENDIANNESS.
+
 
 =-=-=-=-=   bsd.files.mk   =-=-=-=-=
 
@@ -759,8 +836,8 @@ from <bsd.lib.mk> and <bsd.prog.mk>, and uses the following variables:
 FILES		The list of files to install.
 
 CONFIGFILES	Similar semantics to FILES, except that the files
-		are installed by the `configinstall' target,
-		not the `install' target.
+		are installed by the 'configinstall' target,
+		not the 'install' target.
 		The FILES* variables documented below also apply.
 
 FILESOWN	File owner.  [${BINOWN}]
@@ -788,32 +865,33 @@ FILESBUILD	If this variable is defined, then its value will be
 		Otherwise, the default will be "no".
 
 FILESBUILD_<fn> A value different from "no" will add the file to the list of
-		targets to be built by `realall'.  Users of that variable
+		targets to be built by 'realall'.  Users of that variable
 		should provide a target to build the file.
 
 
 BUILDSYMLINKS	List of two word items:
 			lnsrc lntgt
 		For each lnsrc item, create a symlink named lntgt.
-		The lntgt symlinks are removed by the cleandir target.
+		The lntgt symlinks are removed by the 'cleandir' target.
 
 UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 		tree. Each one will be decoded with ${TOOL_UUDECODE}.
-		The source files have a `.uue' suffix, the generated files do
+		The source files have a ".uue" suffix, the generated files do
 		not.
 
 UUDECODE_FILES_RENAME_<fn>
 		Rename the output from the decode to the provided name.
 
 		Note: These files are simply decoded, with no install or other
-		rule applying implicitly except being added to the clean
+		rule applying implicitly except being added to the 'clean'
 		target.
+
 
 =-=-=-=-=   bsd.gcc.mk   =-=-=-=-=
 
 The include file <bsd.gcc.mk> computes various parameters related to GCC
-support libraries.  It defines no targets.  <bsd.own.mk> MUST be included
-before <bsd.gcc.mk>.
+support libraries.  <bsd.gcc.mk> defines no targets. <bsd.own.mk> MUST be
+included before <bsd.gcc.mk>.
 
 The primary users of <bsd.gcc.mk> are <bsd.prog.mk> and <bsd.lib.mk>, each
 of which need to know where to find certain GCC support libraries.
@@ -836,9 +914,29 @@ _GCC_CRTENDS	The full path name to crtendS.o.
 _GCC_LIBGCCDIR	The directory where libgcc.a is located.
 
 
+=-=-=-=-=   bsd.hostinit.mk  =-=-=-=-=
+
+The include file <bsd.hostinit.mk> is included for host program builds
+that don't need MKREPRO, lint, manual pages, info files, etc.
+
+
+=-=-=-=-=   bsd.hostlib.mk   =-=-=-=-=
+
+The include file <bsd.hostlib.mk> is included for host library builds.
+
+TODO: variables
+
+
+=-=-=-=-=   bsd.hostprog.mk  =-=-=-=-=
+
+The include file <bsd.hostprog.mk> is included for host program builds.
+
+TODO: variables
+
+
 =-=-=-=-=   bsd.inc.mk   =-=-=-=-=
 
-The include file <bsd.inc.mk> defines the includes target and uses the
+The include file <bsd.inc.mk> defines the 'includes' target and uses the
 variables:
 
 INCS		The list of include files.
@@ -859,15 +957,23 @@ INCSNAME_<file> The name file <file> should be installed as, if not <file>,
 =-=-=-=-=   bsd.info.mk   =-=-=-=-=
 
 The include file <bsd.info.mk> is used to generate and install GNU Info
-documentation from respective Texinfo source files.  It defines three
-implicit targets (.txi.info, .texi.info, and .texinfo.info), and uses the
-following variables:
+documentation from respective Texinfo source files.
+
+<bsd.info.mk> defines three implicit targets ('.txi.info', '.texi.info',
+and '.texinfo.info'), and uses the following variables:
 
 TEXINFO		List of Texinfo source files.  Info documentation will
 		consist of single files with the extension replaced by
 		.info.
 
 INFOFLAGS	Options to pass to makeinfo.  []
+
+
+=-=-=-=-=   bsd.init.mk   =-=-=-=-=
+
+The include file <bsd.init.mk> is included by most other <bsd.*.mk> files,
+and includes the file named "../Makefile.inc" if it exists,
+as well as the include file <bsd.own.mk>.
 
 
 =-=-=-=-=   bsd.kernobj.mk   =-=-=-=-=
@@ -899,30 +1005,42 @@ rather than make assumptions about the location of the compiled kernel.
 
 =-=-=-=-=   bsd.kinc.mk   =-=-=-=-=
 
-The include file <bsd.kinc.mk> defines the many targets (includes,
-subdirectories, etc.), and is used by kernel makefiles to handle
-include file installation.  It is intended to be included alone, by
-kernel Makefiles.  It uses similar variables to <bsd.inc.mk>.
+The include file <bsd.kinc.mk> defines the many targets ('includes',
+'subdirectories', etc.), and is used by kernel makefiles to handle
+include file installation.  <bsd.kinc.mk> is intended to be included alone,
+by kernel Makefiles, and uses similar variables to <bsd.inc.mk>.
 Please see <bsd.kinc.mk> for more details, and keep the documentation
 in that file up to date.
 
-=-=-=-=-=   bsd.syscall.mk =-=-=-=-=
 
-The include file <bsd.syscall.mk> contains the logic to create syscall
-files for various emulations. It includes <bsd.kinc.mk> to handle the
-rest of the targets.
+=-=-=-=-=   bsd.klinks.mk   =-=-=-=-=
+
+The include file <bsd.klinks.mk> is included to create kernel include
+directories.
+
+TODO: variables
+
+
+=-=-=-=-=   bsd.kmodule.mk   =-=-=-=-=
+
+The include file <bsd.kmodule.mk> is included to create kernel modules.
+
+TODO: variables
+
 
 =-=-=-=-=   bsd.lib.mk   =-=-=-=-=
 
-The include file <bsd.lib.mk> has support for building libraries.  It has
-the same eight targets as <bsd.prog.mk>: all, clean, cleandir, depend,
-includes, install, lint, and tags.  Additionally, it has a checkver target
-which checks for installed shared object libraries whose version is greater
-that the version of the source. It has a limited number of suffixes,
-consistent with the current needs of the BSD tree.  <bsd.lib.mk> includes
-<bsd.shlib.mk> to get shared library parameters.
+The include file <bsd.lib.mk> has support for building libraries.
+<bsd.lib.mk> has the same targets as <bsd.prog.mk>: 'all', 'clean',
+'cleandir', 'depend', 'distclean', 'includes', 'install', 'lint', and 'tags'.
+Additionally, <bsd.lib.mk> has a 'checkver' target which checks for installed
+shared object libraries whose version is greater that the version of the source.
 
-It sets/uses the following variables:
+<bsd.lib.mk> has a limited number of suffixes, consistent with the current
+needs of the BSD tree.  <bsd.lib.mk> includes <bsd.shlib.mk> to get shared
+library parameters.
+
+<bsd.lib.mk> sets/uses the following variables:
 
 LIB		The name of the library to build.
 
@@ -995,7 +1113,7 @@ PROGDPLIBS	A list of the tuples:
 
 		For each tuple;
 		     *	LIBDO.libname contains the .OBJDIR of the library
-			`libname', and if it is not set it is determined
+			'libname', and if it is not set it is determined
 			from the srcdir and added to MAKEOVERRIDES (the
 			latter is to allow for build time optimization).
 		     *	LDADD gets  -L${LIBDO.libname} -llibname    added.
@@ -1025,16 +1143,16 @@ PROGDPSUBDIRS/	A list of subdirectory paths _subdir_ for which the
 
 LIB_EXPSYM	File listing all symbols expected to be defined by the
 		library.  Each line has a single symbol.  If the symbol
-		is versioned, it is followed by `@@', if it is the
-		default version, or `@', if not, and the symbol
+		is versioned, it is followed by '@@', if it is the
+		default version, or '@', if not, and the symbol
 		version.  The lines must be sorted in LANG=C.
 
 		bsd.lib.mk checks to make sure exactly the set of
-		symbols in this file is defined when the library is
-		built; if not, the build will fail and print a diff
-		from the expected symbols to the actual symbols.
+		symbols in the file named in LIB_EXPSYM is defined when the
+		library is built; if not, the build will fail and print a
+		diff from the expected symbols to the actual symbols.
 		During development, you can update the expected symbols
-		from the actual ones with `make update-symbols'.
+		from the actual ones with 'make update-symbols'.
 
 VERSION_MAP	Path to an ld version script to use when linking the
 		library.  Resolved from .PATH like a target
@@ -1044,7 +1162,7 @@ VERSION_MAP	Path to an ld version script to use when linking the
 The include file <bsd.lib.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
 
-It has rules for building profiled objects; profiled libraries are
+<bsd.lib.mk> has rules for building profiled objects; profiled libraries are
 built by default.
 
 Libraries are ranlib'd when made.
@@ -1056,8 +1174,8 @@ The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
 and is included from <bsd.lib.mk> and <bsd.prog.mk>.
 
 LINKSOWN, LINKSGRP, and LINKSMODE, are relevant only if a metadata log
-is used. The defaults may be modified by other bsd.*.mk files which
-include bsd.links.mk.  In the future, these variables may be replaced
+is used. The defaults may be modified by other <bsd.*.mk> files which
+include <bsd.links.mk>.  In the future, these variables may be replaced
 by a method for explicitly recording hard links in a metadata log.
 
 LINKS		The list of hard links, consisting of pairs of paths:
@@ -1067,8 +1185,8 @@ LINKS		The list of hard links, consisting of pairs of paths:
 			LINKS=/bin/test /bin/[
 
 CONFIGLINKS	Similar semantics to LINKS, except that the links
-		are installed by the `configinstall' target,
-		not the `install' target.
+		are installed by the 'configinstall' target,
+		not the 'install' target.
 
 SYMLINKS	The list of symbolic links, consisting of pairs of paths:
 			source-file target-file
@@ -1078,8 +1196,8 @@ SYMLINKS	The list of symbolic links, consisting of pairs of paths:
 			SYMLINKS=/bin/tar /usr/bin/tar
 
 CONFIGSYMLINKS	Similar semantics to SYMLINKS, except that the symbolic links
-		are installed by the `configinstall' target,
-		not the `install' target.
+		are installed by the 'configinstall' target,
+		not the 'install' target.
 
 LINKSOWN	Link owner.  [${BINOWN}]
 
@@ -1094,12 +1212,19 @@ LINKSGRP_<fn>	Link group of the specific file <fn>.
 LINKSMODE_<fn>	Link mode of the specific file <fn>.
 
 
+=-=-=-=-=   bsd.lua.mk   =-=-=-=-=
+
+The include file <bsd.lua.mk> is included to create Lua modules.
+
+TODO: variables
+
+
 =-=-=-=-=   bsd.man.mk   =-=-=-=-=
 
 The include file <bsd.man.mk> handles installing manual pages and their
 links.
 
-It has a three targets:
+<bsd.man.mk> has a three targets:
 
 	catinstall:
 		Install the preformatted manual pages and their links.
@@ -1108,7 +1233,7 @@ It has a three targets:
 	maninstall:
 		Install the manual page sources and their links.
 
-It sets/uses the following variables:
+<bsd.man.mk> sets/uses the following variables:
 
 MANDIR		Base path for manual installation.
 
@@ -1129,6 +1254,13 @@ MLINKS		List of manual page links (using a .1 - .9 suffix).  The
 
 The include file <bsd.man.mk> includes a file named "../Makefile.inc" if
 it exists.
+
+
+=-=-=-=-=   bsd.nls.mk   =-=-=-=-=
+
+The include file <bsd.nls.mk> is included to create NLS message catalogs.
+
+TODO: variables
 
 
 =-=-=-=-=   bsd.obj.mk   =-=-=-=-=
@@ -1153,7 +1285,7 @@ and this is determined by a simple string prefix comparison -- object
 directories are created in a separate object directory tree, and a
 symlink to the object directory in that tree is created in the source
 directory; otherwise, "make obj" assumes that you're not in the main
-source tree and that it's not safe to use a separate object tree.
+source tree and that it is not safe to use a separate object tree.
 
 Several variables used by <bsd.obj.mk> control exactly what
 directories and links get created during a "make obj":
@@ -1188,11 +1320,11 @@ BUILDID		Identifier for the build.  If set, this should be a short
 =-=-=-=-=   bsd.prog.mk   =-=-=-=-=
 
 The include file <bsd.prog.mk> handles building programs from one or
-more source files, along with their manual pages.  It has a limited number
-of suffixes, consistent with the current needs of the BSD tree.
+more source files, along with their manual pages.  <bsd.prog.mk> has a limited
+number of suffixes, consistent with the current needs of the BSD tree.
 <bsd.prog.mk> includes <bsd.shlib.mk> to get shared library parameters.
 
-It has eight targets:
+<bsd.prog.mk> provides the targets:
 
 	all:
 		build the program and its manual page.  This also
@@ -1203,26 +1335,27 @@ It has eight targets:
 		remove the program, any object files and the files a.out,
 		Errs, errs, mklog, and ${PROG}.core.
 	cleandir:
-		remove all of the files removed by the target clean, as
+		remove all of the files removed by the target 'clean', as
 		well as .depend, tags, and any manual pages.
-		`distclean' is a synonym for `cleandir'.
 	depend:
 		make the dependencies for the source files, and store
 		them in the file .depend.
+	distclean:
+		synonym for 'cleandir'.
 	includes:
 		install any header files.
 	install:
 		install the program and its manual pages; if the Makefile
-		does not itself define the target install, the targets
-		beforeinstall and afterinstall may also be used to cause
-		actions immediately before and after the install target
+		does not itself define the target 'install', the targets
+		'beforeinstall' and 'afterinstall' may also be used to cause
+		actions immediately before and after the 'install' target
 		is executed.
 	lint:
 		run lint on the source files
 	tags:
 		create a tags file for the source files.
 
-It sets/uses the following variables:
+<bsd.prog.mk> sets/uses the following variables:
 
 BINGRP		Binary group.
 
@@ -1230,9 +1363,10 @@ BINOWN		Binary owner.
 
 BINMODE		Binary mode.
 
-CLEANDIRFILES	Additional files to remove for the cleandir target.
+CLEANDIRFILES	Additional files to remove for the 'cleandir' target.
 
-CLEANFILES	Additional files to remove for the clean and cleandir targets.
+CLEANFILES	Additional files to remove for the 'clean' and 'cleandir'
+		targets.
 
 CONFIGOPTS	Additional options to config(1) when building kernels.
 
@@ -1316,7 +1450,7 @@ PROGS_CXX	Multiple C++ programs to build from a single directory.
 		uses SRCS.${_P}, defaulting to ${_P}.cc.
 
 SRCS		List of source files to build the program.  If SRCS is not
-		defined, it's assumed to be ${PROG}.c or ${PROG_CXX}.cc.
+		defined, it is assumed to be ${PROG}.c or ${PROG_CXX}.cc.
 
 DPSRCS		List of source files which are needed for generating
 		dependencies, but are not needed in ${SRCS}.
@@ -1500,6 +1634,8 @@ STRIPFLAG	The option passed to the install program to cause the binary
 SUBDIR		A list of subdirectories that should be built as well.
 		Each of the targets will execute the same target in the
 		subdirectories.
+		See the description of SUBDIR in <bsd.subdir.mk> for
+		an explanation of the .WAIT token.
 
 SCRIPTS		A list of interpreter scripts [file.{sh,csh,pl,awk,...}].
 		These are installed exactly like programs.
@@ -1560,11 +1696,19 @@ RPC_SVCFLAGS	Additional options passed to builds of RPC_SVCFILES.
 RPC_XDIR	Directory containing .x/.h files
 
 
+=-=-=-=-=   bsd.sanitizer.mk   =-=-=-=-=
+
+The include file <bsd.sanitizer.mk> is included to run sanitizers.
+
+TODO: currently unused in tree?
+TODO: variables.
+
+
 =-=-=-=-=   bsd.shlib.mk   =-=-=-=-=
 
 The include file <bsd.shlib.mk> computes parameters for shared library
-installation and use.  It defines no targets.  <bsd.own.mk> MUST be
-included before <bsd.shlib.mk>.
+installation and use.  <bsd.shlib.mk> defines no targets.
+<bsd.own.mk> MUST be included before <bsd.shlib.mk>.
 
 <bsd.own.mk> sets the following variables, if they are not already defined
 (defaults are in brackets):
@@ -1590,9 +1734,11 @@ SHLINKDIR	Path to use for shared linker when building a program.
 =-=-=-=-=   bsd.subdir.mk   =-=-=-=-=
 
 The include file <bsd.subdir.mk> contains the default targets for building
-subdirectories.  It has the same eight targets as <bsd.prog.mk>: all,
-clean, cleandir, depend, includes, install, lint, and tags.  It uses the
-following variables:
+subdirectories.  <bsd.subdir.mk> has the same targets as <bsd.prog.mk>:
+'all', 'clean', 'cleandir', 'depend', 'distclean', 'includes', 'install',
+'lint', and 'tags'.
+
+<bsd.subdir.mk> uses the following variables:
 
 NOSUBDIR	If this variable is defined, then the SUBDIR variable
 		will be ignored and subdirectories will not be processed.
@@ -1608,20 +1754,34 @@ SUBDIR		For all of the directories listed in ${SUBDIR}, the
 		and other special sources.
 
 
+=-=-=-=-=   bsd.syscall.mk =-=-=-=-=
+
+The include file <bsd.syscall.mk> contains the logic to create syscall
+files for various emulations. <bsd.syscall.mk> includes <bsd.kinc.mk>
+to handle the rest of the targets.
+
+
+=-=-=-=-=   bsd.test.mk   =-=-=-=-=
+
+The include file <bsd.test.mk> is included to create test programs.
+
+TODO: variables
+
+
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 
 The include file <bsd.x11.mk> contains parameters and targets for
-cross-building X11 from ${X11SRCDIR.<package>}.  It should be included
-after the general Makefile contents but before the include files such as
-<bsd.prog.mk> and <bsd.lib.mk>.
+cross-building X11 from ${X11SRCDIR.<package>}.  <bsd.x11.mk> should be
+included after the general Makefile contents but before the include files
+such as <bsd.prog.mk> and <bsd.lib.mk>.
 
-It provides the following targets:
+<bsd.x11.mk> provides the following targets:
 	.man.1 .man.3 .man.4 .man.5 .man.7 .man.8:
 		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
 		these rules convert from X11's manual page source
 		into an mdoc.old source file.
 
-It sets the following variables:
+<bsd.x11.mk> sets the following variables:
 
 BINDIR			Set to ${X11BINDIR}.
 			To override, define after including <bsd.x11.mk>
@@ -1656,15 +1816,15 @@ X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
 
 X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
 
-X11TOOL_UNXCOMM		Command line to convert `XCOMM' comments to `#'
+X11TOOL_UNXCOMM		Command line to convert 'XCOMM' comments to '#'
 
-It uses the following variables:
+<bsd.x11.mk> uses the following variables:
 
 APPDEFS			List of app-default files to install.
 
 CPPSCRIPTS		List of files/scripts to run through cpp(1)
 			and then ${X11TOOL_UNXCOMM}.  The source files
-			have a `.cpp' suffix, the generated files do not.
+			have a '.cpp' suffix, the generated files do not.
 
 CPPSCRIPTFLAGS		Additional options to cpp(1) when building CPPSCRIPTS.
 
@@ -1680,9 +1840,10 @@ internally by other system files.
 =-=-=-=-=   bsd.sys.mk   =-=-=-=-=
 
 The include file <bsd.sys.mk> is used by other system mk files and
-it is not intended to be included standalone. It contains rules and
-system build variables. It requires bsd.own.mk to be included first.
-It contains overrides that are used when building the NetBSD source tree.
+it is not intended to be included standalone. <bsd.sys.mk> contains rules
+and system build variables. <bsd.sys.mk> requires <bsd.own.mk> to be included
+first.  <bsd.sys.mk> contains overrides that are used when building the NetBSD
+source tree.
 
 The following variables control how various files are compiled/built.
 (Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
@@ -1700,9 +1861,9 @@ AFLAGS		Options to ${CC} when compiling or linking .s or .S
 
 BUILDSEED	g++(1) uses random numbers when compiling C++ code.  This
 		variable seeds the g++(1) random number generator using
-		-frandom-seed with this value.  By default, it is set to
-		"NetBSD-(majorversion)".  Using a fixed value causes C++
-		binaries to be the same when built from the same sources,
+		-frandom-seed with this value.  By default, this variable is
+		set to "NetBSD-(majorversion)".  Using a fixed value causes
+		C++ binaries to be the same when built from the same sources,
 		resulting in identical (reproducible) builds.  Additional
 		information is available in the g++(1) documentation of
 		-frandom-seed.
@@ -1802,7 +1963,7 @@ YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
 Other variables of note (incomplete list):
 
 NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
-		passed to it.
+		passed to clang.
 
 NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
 		that cause warnings to be fatal, such as:
@@ -1817,10 +1978,12 @@ WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=5
 			WARNS=6
 
+
 =-=-=-=-=   bsd.host.mk   =-=-=-=-=
 
-This file is automatically included from bsd.own.mk. It contains settings
-for all the HOST_* variables that are used in host programs and libraries.
+The include file <bsd.host.mk> is automatically included from <bsd.own.mk>.
+<bsd.host.mk> contains settings for all the HOST_* variables that are used in
+host programs and libraries.
 
 HOST_AR			The host archive processing command
 
@@ -1865,5 +2028,16 @@ HOST_OSTYPE		The host OSNAME-RELEASE-ARCH tupple
 HOST_RANLIB		The host command to create random access archives
 
 HOST_SH			The host Bourne shell interpreter name (absolute path)
+
+
+=-=-=-=-=   bsd.ioconf.mk   =-=-=-=-=
+
+The include file <bsd.ioconf.mk> is used to build helper files for the
+kernel, including "ioconf.c", "ioconf.h", and "locators.h".
+
+<bsd.ioconf.mk> is not intended to be included by user Makefiles.
+
+TODO: variables
+
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
